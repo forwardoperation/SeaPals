@@ -41,13 +41,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-
-          <a
-            href="#signup"
-            className="rounded-full border border-cyan-200 bg-white px-4 py-2 text-sm font-medium shadow-sm transition hover:-translate-y-0.5 hover:shadow"
-          >
-            Join the list
-          </a>
         </header>
 
         <div className="grid flex-1 items-center gap-10 py-12 md:grid-cols-2 md:py-20">
