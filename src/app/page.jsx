@@ -33,30 +33,46 @@ export default function HomePage() {
               className="h-12 w-auto"
             />
             <div>
-              <div className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-700">
-                SeaPals TCG
-              </div>
-              <div className="mt-1 text-sm text-slate-500">
-                An ocean-inspired trading card game
-              </div>
             </div>
           </div>
         </header>
 
         <div className="grid flex-1 items-center gap-10 py-12 md:grid-cols-2 md:py-20">
           <div>
-            <div className="inline-flex items-center rounded-full border border-cyan-200 bg-white px-3 py-1 text-xs font-medium text-cyan-700 shadow-sm">
-              Coming soon
+  
+            <div className="flex flex-col justify-start -mt-8 md:-mt-12">
+            <div className="inline-flex items-center rounded-full border border-cyan-300 bg-white/80 backdrop-blur px-6 py-2 text-2xl font-semibold text-cyan-700 shadow-md">
+                Coming soon
             </div>
 
             <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
-              Build your reef. Collect your crew. Dive into SeaPals.
+                Collect SeaPals Build your Reef Play with Friends
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-              Discover a vibrant world of marine life through beautifully designed collectible
-              cards. Join early to see new cards, artwork, and development updates before launch.
+                Discover a vibrant world of marine life through beautifully designed collectible
+                cards. Join early to see new cards, artwork, and development updates before launch.
             </p>
+
+            {/* NEW SECTION */}
+            <div className="mt-10 max-w-xl">
+                <h2 className="text-sm font-semibold tracking-widest text-cyan-600 uppercase">
+                What is SeaPals?
+                </h2>
+
+                <p className="mt-3 text-base text-slate-600 leading-relaxed">
+                SeaPals is an ocean-inspired trading card game where you build your own living reef.
+                </p>
+
+                <p className="mt-3 text-base text-slate-600 leading-relaxed">
+                Grow coral, collect marine life, and shape a thriving underwater ecosystem as you compete against friends. Every card you play expands your reef and changes your strategy.
+                </p>
+
+                <p className="mt-3 text-base text-slate-600 leading-relaxed">
+                The goal is simple: build the strongest reef and win.
+                </p>
+            </div>
+            </div>
 
             <div className="mt-8 flex flex-wrap gap-3 text-sm text-slate-600">
               <span className="rounded-full bg-white px-4 py-2 shadow-sm">Card reveals</span>
