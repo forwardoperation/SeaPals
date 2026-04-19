@@ -3,40 +3,26 @@ import Image from "next/image";
 export default function HomePage() {
   const cards = [
     {
-      src: "/images/cards/french-angelfish.png",
-      alt: "Reef Fish",
+      src: "/images/cards/fish/french-angelfish.png",
+      alt: "French Angelfish",
     },
     {
-      src: "/images/cards/bull-shark.png",
-      alt: "Apex Predator",
+      src: "/images/cards/apex/bull-shark.png",
+      alt: "Bull Shark",
     },
     {
-      src: "/images/cards/blue-whale.png",
+      src: "/images/cards/filter-feeders/blue-whale.png",
       alt: "Blue Whale",
     },
     {
-      src: "/images/cards/killer-whales.png",
-      alt: "Killer Whales",
+      src: "/images/cards/apex/killer-whale.png",
+      alt: "Killer Whale",
     },
   ];
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50 via-cyan-50 to-white text-slate-800">
       <section className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10 md:px-10">
-        <header className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/images/brand/sea-pals-tcg-logo.png"
-              alt="SeaPals Logo"
-              width={300}
-              height={120}
-              className="h-12 w-auto"
-            />
-            <div>
-            </div>
-          </div>
-        </header>
-
         <div className="grid flex-1 items-center gap-10 py-12 md:grid-cols-2 md:py-20">
           <div>
   
