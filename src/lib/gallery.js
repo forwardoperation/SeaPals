@@ -8,6 +8,7 @@ const CATEGORY_CONFIG = [
   { slug: "fish", title: "Fish" },
   { slug: "invertebrates", title: "Invertebrates" },
   { slug: "coral", title: "Coral" },
+  { slug: "support", title: "Support" },
 ];
 
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);

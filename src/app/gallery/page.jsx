@@ -13,9 +13,6 @@ function CategorySection({ title, slug, images }) {
   return (
     <section id={slug} className="scroll-mt-28">
       <div className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-700">
-          Creature Class
-        </p>
         <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
       </div>
 
