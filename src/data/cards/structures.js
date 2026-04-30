@@ -6,55 +6,82 @@ export const structureCards = [
     name: "Rock Arch",
     kind: CardKind.STRUCTURE,
     category: CardCategory.STRUCTURE,
-    image: "/images/cards/support/rock-arch.png",
-
+    image: "/images/cards/structures/rock-arch.png",
     sortOrder: 300,
-
     cost: { rp: 4 },
-
     tags: ["structure", "reef-feature", "rock-arch"],
-
     playRequirements: [],
-
     passives: [],
-
     onPlay: [],
-
     actions: [],
-
     set: {
       id: "genesis",
       name: "Genesis",
-      collectorNumber: null,
-      totalInSet: null,
+      collectorNumber: 1,
+      totalInSet: 100,
     },
   },
+
   {
     id: "drop-off",
     name: "Drop Off",
     kind: CardKind.STRUCTURE,
     category: CardCategory.STRUCTURE,
-    image: "/images/cards/support/drop-off.png",
-
+    image: "/images/cards/structures/drop-off.png",
     sortOrder: 301,
-
     cost: { rp: 4 },
-
-    tags: ["structure", "reef-feature", "drop-off"],
-
+    tags: ["structure", "reef-feature", "drop-off", "deep-water"],
     playRequirements: [],
-
     passives: [],
-
     onPlay: [],
-
     actions: [],
-
     set: {
       id: "genesis",
       name: "Genesis",
-      collectorNumber: null,
-      totalInSet: null,
+      collectorNumber: 1,
+      totalInSet: 100,
+    },
+  },
+
+  {
+    id: "ship-wreck",
+    name: "Ship Wreck",
+    kind: CardKind.STRUCTURE,
+    category: CardCategory.STRUCTURE,
+    image: "/images/cards/structures/ship-wreck.png",
+    sortOrder: 302,
+    cost: { rp: 4 },
+    tags: ["structure", "reef-feature", "ship-wreck", "shelter"],
+    playRequirements: [],
+    passives: [],
+    onPlay: [],
+    actions: [],
+    set: {
+      id: "genesis",
+      name: "Genesis",
+      collectorNumber: 1,
+      totalInSet: 100,
+    },
+  },
+
+  {
+    id: "marine-sanctuary",
+    name: "Marine Sanctuary",
+    kind: CardKind.STRUCTURE,
+    category: CardCategory.STRUCTURE,
+    image: "/images/cards/structures/marine-sanctuary.png",
+    sortOrder: 303,
+    cost: { rp: 4 },
+    tags: ["structure", "reef-feature", "marine-sanctuary", "sanctuary"],
+    playRequirements: [],
+    passives: [],
+    onPlay: [],
+    actions: [],
+    set: {
+      id: "genesis",
+      name: "Genesis",
+      collectorNumber: 1,
+      totalInSet: 100,
     },
   },
 ];
