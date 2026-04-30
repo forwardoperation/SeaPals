@@ -30,11 +30,15 @@ function cardNameFromPath(filePath) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function publicUrlPath(filePath) {
+  return filePath.replace(/^public\//, "");
+}
+
 function buildBroadcast({ files, siteUrl }) {
   const galleryUrl = `${siteUrl.replace(/\/$/, "")}/gallery`;
   const cards = files.map((filePath) => ({
     name: cardNameFromPath(filePath),
-    imageUrl: `${siteUrl.replace(/\/$/, "")}/${filePath}`,
+    imageUrl: `${siteUrl.replace(/\/$/, "")}/${publicUrlPath(filePath)}`,
   }));
   const subject =
     cards.length === 1
@@ -106,7 +110,7 @@ async function main() {
     subscriber_filter: [],
     send_at: sendAt,
     thumbnail_alt: files.length === 1 ? cardNameFromPath(files[0]) : "SeaPals card art",
-    thumbnail_url: `${siteUrl.replace(/\/$/, "")}/${files[0]}`,
+    thumbnail_url: `${siteUrl.replace(/\/$/, "")}/${publicUrlPath(files[0])}`,
   };
 
   if (process.env.KIT_FROM_EMAIL) {
