@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { allCards } from "@/data/cards";
+import { allCards, cardsById } from "@/data/cards";
+import { getDeckAnalytics } from "@/lib/tournaments/deckAnalytics";
+import { validateDeck } from "@/lib/tournaments/validateDeck";
 
 const CARD_TABS = [
   { label: "Coral", value: "coral" },
@@ -10,6 +12,8 @@ const CARD_TABS = [
   { label: "Apex", value: "apex" },
   { label: "Predator", value: "predator" },
   { label: "Fish", value: "fish" },
+  { label: "Invertebrate", value: "invertebrate" },
+  { label: "Filter Feeder", value: "filter-feeder" },
   { label: "Structure", value: "structure" },
 ];
 
@@ -59,6 +63,15 @@ function formatSlotType(slot) {
 
   return `${slot.kind} slot`;
 }
+
+function getSubmissionErrorMessage(error) {
+  if (error?.message?.includes("edit_token")) {
+    return "Deck edit links are not set up in Supabase yet. Run supabase/deck-submission-review.sql in the Supabase SQL editor, then try again.";
+  }
+
+  return error?.message ?? "Deck submission failed.";
+}
+
 function CardDetails({ card }) {
   const abilities = [
     ...formatEffects(card.passives),
@@ -167,6 +180,77 @@ function CardDetails({ card }) {
   );
 }
 
+function AnalyticsBar({ label, value, detail }) {
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <span className="text-sm font-bold text-slate-800">{label}</span>
+        {detail && <span className="text-xs font-semibold text-slate-500">{detail}</span>}
+      </div>
+      <div className="h-3 overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-cyan-400 transition-all"
+          style={{ width: `${value}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function DeckAnalyticsPanel({ analytics, tournament }) {
+  return (
+    <section className="rounded-3xl border border-cyan-200 bg-sky-50 p-5 shadow-sm">
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">Deck Analytics</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Live balance based on selected cards, victory points, cost, dice, and card effects.
+          </p>
+        </div>
+        <div className="text-sm font-semibold text-slate-700">
+          VP: {analytics.totalVictoryPoints} / 30 · Avg RP:{" "}
+          {analytics.averageRpCost.toFixed(1)} · Cards: {analytics.totalCards} /{" "}
+          {tournament.deck_size}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-6 lg:grid-cols-2">
+        <div>
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-600">
+            Class VP Share
+          </h3>
+          <div className="space-y-3">
+            {analytics.classBars.map((bar) => (
+              <AnalyticsBar
+                key={bar.category}
+                label={bar.label}
+                value={bar.percent}
+                detail={`${bar.victoryPoints} VP`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-600">
+            Deck Profile
+          </h3>
+          <div className="space-y-3">
+            {analytics.traitBars.map((bar) => (
+              <AnalyticsBar
+                key={bar.label}
+                label={bar.label}
+                value={bar.value}
+                detail={`${bar.value}%`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Info({ label, value }) {
   return (
     <div className="rounded-xl bg-slate-50 p-3">
@@ -178,8 +262,11 @@ function Info({ label, value }) {
   );
 }
 
-export default function EnterTournamentPage({ params }) {
+export default function EnterTournamentPage({ params, searchParams }) {
   const [slug, setSlug] = useState("");
+  const [submissionId, setSubmissionId] = useState("");
+  const [editToken, setEditToken] = useState("");
+  const [editingSubmission, setEditingSubmission] = useState(null);
   const [tournament, setTournament] = useState(null);
   const [activeTab, setActiveTab] = useState("coral");
   const [openCardId, setOpenCardId] = useState(null);
@@ -187,16 +274,21 @@ export default function EnterTournamentPage({ params }) {
   const [playerEmail, setPlayerEmail] = useState("");
   const [deckName, setDeckName] = useState("");
   const [quantities, setQuantities] = useState({});
+  const [adminNotes, setAdminNotes] = useState("");
   const [message, setMessage] = useState("");
+  const [validationAttempted, setValidationAttempted] = useState(false);
 
   useEffect(() => {
     async function loadParams() {
       const resolvedParams = await params;
+      const resolvedSearchParams = await searchParams;
       setSlug(resolvedParams.slug);
+      setSubmissionId(resolvedSearchParams?.submission ?? "");
+      setEditToken(resolvedSearchParams?.token ?? "");
     }
 
     loadParams();
-  }, [params]);
+  }, [params, searchParams]);
 
   useEffect(() => {
     if (!slug) return;
@@ -213,6 +305,38 @@ export default function EnterTournamentPage({ params }) {
 
     loadTournament();
   }, [slug]);
+
+  useEffect(() => {
+    if (!submissionId || !editToken) return;
+
+    async function loadSubmission() {
+      const { data, error } = await supabase
+        .from("deck_submissions")
+        .select("*")
+        .eq("id", submissionId)
+        .eq("edit_token", editToken)
+        .single();
+
+      if (error || !data) {
+        setMessage("This deck edit link is invalid or expired.");
+        return;
+      }
+
+      setEditingSubmission(data);
+      setPlayerName(data.player_name ?? "");
+      setPlayerEmail(data.player_email ?? "");
+      setDeckName(data.deck_name ?? "");
+      setAdminNotes(data.admin_notes ?? "");
+
+      const nextQuantities = {};
+      for (const entry of data.cards ?? []) {
+        nextQuantities[entry.cardId] = String(entry.quantity);
+      }
+      setQuantities(nextQuantities);
+    }
+
+    loadSubmission();
+  }, [submissionId, editToken]);
 
   const filteredCards = useMemo(() => {
     return allCards.filter((card) => card.category === activeTab);
@@ -231,32 +355,112 @@ export default function EnterTournamentPage({ params }) {
     (sum, entry) => sum + entry.quantity,
     0
   );
+  const hasCorrectCardCount = totalCards === tournament?.deck_size;
+  const cardCountDifference = (tournament?.deck_size ?? 0) - totalCards;
+  const deckAnalytics = useMemo(
+    () => getDeckAnalytics(selectedCards),
+    [selectedCards]
+  );
+  const tabCounts = useMemo(() => {
+    const counts = Object.fromEntries(CARD_TABS.map((tab) => [tab.value, 0]));
+
+    for (const [cardId, quantity] of Object.entries(quantities)) {
+      const card = cardsById[cardId];
+      const numericQuantity = Number(quantity);
+
+      if (!card || !Number.isFinite(numericQuantity) || numericQuantity <= 0) {
+        continue;
+      }
+
+      counts[card.category] = (counts[card.category] ?? 0) + numericQuantity;
+    }
+
+    return counts;
+  }, [quantities]);
+
+  const deckValidation = useMemo(() => {
+    if (!tournament) {
+      return { isValid: false, errors: [], warnings: [] };
+    }
+
+    return validateDeck(
+      {
+        playerName,
+        deckName,
+        cards: selectedCards,
+      },
+      tournament
+    );
+  }, [deckName, playerName, selectedCards, tournament]);
 
   async function submitDeck(event) {
     event.preventDefault();
     setMessage("");
+    setValidationAttempted(true);
 
     if (!tournament) return;
 
-    const { error } = await supabase.from("deck_submissions").insert({
+    if (!deckValidation.isValid) {
+      setMessage("Please fix the deck issues before submitting.");
+      return;
+    }
+
+    const payload = {
       tournament_id: tournament.id,
       player_name: playerName,
       player_email: playerEmail,
       deck_name: deckName,
       cards: selectedCards,
       status: "pending",
+      admin_notes: "",
+    };
+
+    if (editingSubmission) {
+      const { data: wasSaved, error } = await supabase.rpc(
+        "update_deck_submission_with_token",
+        {
+          submission_id: editingSubmission.id,
+          submission_edit_token: editToken,
+          player_name: playerName,
+          player_email: playerEmail,
+          deck_name: deckName,
+          deck_cards: selectedCards,
+        }
+      );
+
+      if (error) {
+        setMessage(getSubmissionErrorMessage(error));
+        return;
+      }
+
+      if (!wasSaved) {
+        setMessage("Deck changes were not saved. Please use the latest edit link and try again.");
+        return;
+      }
+
+      setMessage("Deck changes submitted for review.");
+      setEditingSubmission((current) => ({ ...current, ...payload }));
+      setAdminNotes("");
+      return;
+    }
+
+    const { error } = await supabase.from("deck_submissions").insert({
+      ...payload,
+      edit_token: crypto.randomUUID(),
     });
 
     if (error) {
-      setMessage(error.message);
+      setMessage(getSubmissionErrorMessage(error));
       return;
     }
 
     setMessage("Deck submitted for review.");
+
     setPlayerName("");
     setPlayerEmail("");
     setDeckName("");
     setQuantities({});
+    setValidationAttempted(false);
     setOpenCardId(null);
   }
 
@@ -268,13 +472,35 @@ export default function EnterTournamentPage({ params }) {
     <main className="space-y-8">
       <section>
         <h1 className="text-4xl font-bold text-slate-900">
-          Enter {tournament.name}
+          {editingSubmission ? "Edit" : "Enter"} {tournament.name}
         </h1>
         <p className="mt-2 text-slate-600">Deck Size: {tournament.deck_size}</p>
         <p className="text-slate-600">
           Selected Cards: {totalCards} / {tournament.deck_size}
         </p>
       </section>
+
+      {(validationAttempted ||
+        (totalCards > 0 && totalCards !== tournament.deck_size)) &&
+        deckValidation.errors.length > 0 && (
+          <section className="rounded-3xl border border-rose-200 bg-rose-50 p-5 text-rose-900">
+            <h2 className="text-lg font-bold">Deck Issues</h2>
+            <ul className="mt-2 list-disc pl-5">
+              {deckValidation.errors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+        </section>
+      )}
+
+      <DeckAnalyticsPanel analytics={deckAnalytics} tournament={tournament} />
+
+      {adminNotes && (
+        <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+          <h2 className="text-lg font-bold">Admin Notes</h2>
+          <p className="mt-2 whitespace-pre-wrap">{adminNotes}</p>
+        </section>
+      )}
 
       <form
         onSubmit={submitDeck}
@@ -305,6 +531,17 @@ export default function EnterTournamentPage({ params }) {
                 }`}
               >
                 {tab.label}
+                {tabCounts[tab.value] > 0 && (
+                  <span
+                    className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+                      activeTab === tab.value
+                        ? "bg-white/20 text-white"
+                        : "bg-white text-slate-600"
+                    }`}
+                  >
+                    {tabCounts[tab.value]}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -371,9 +608,20 @@ export default function EnterTournamentPage({ params }) {
 
         <button
           type="submit"
-          className="rounded-xl bg-sky-600 px-5 py-3 font-bold text-white hover:bg-sky-700"
+          disabled={!hasCorrectCardCount}
+          className="rounded-xl bg-sky-600 px-5 py-3 font-bold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
-          Submit Deck
+          {!hasCorrectCardCount
+            ? cardCountDifference > 0
+              ? `Select ${cardCountDifference} more card${
+                  cardCountDifference === 1 ? "" : "s"
+                }`
+              : `Remove ${Math.abs(cardCountDifference)} card${
+                  Math.abs(cardCountDifference) === 1 ? "" : "s"
+                }`
+            : editingSubmission
+              ? "Submit Changes"
+              : "Submit Deck"}
         </button>
 
         {message && (
@@ -386,7 +634,7 @@ export default function EnterTournamentPage({ params }) {
   );
 }
 
-function Field({ label, value, setValue }) {
+function Field({ label, value, setValue, required = true }) {
   return (
     <div>
       <label className="block text-sm font-semibold text-slate-700">
@@ -395,7 +643,8 @@ function Field({ label, value, setValue }) {
       <input
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        required={label !== "Player Email"}
+        required={required}
+        type={label === "Player Email" ? "email" : "text"}
         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
       />
     </div>

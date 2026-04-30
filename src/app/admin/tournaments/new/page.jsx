@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
 function slugify(value) {
@@ -44,9 +45,18 @@ export default function NewTournamentPage() {
 
   return (
     <main className="mx-auto max-w-2xl">
-      <h1 className="text-4xl font-bold text-slate-900">
-        Create Tournament
-      </h1>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-4xl font-bold text-slate-900">
+          Create Tournament
+        </h1>
+
+        <Link
+          href="/admin/tournaments"
+          className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 font-bold text-slate-700 hover:bg-slate-50"
+        >
+          Manage Tournaments
+        </Link>
+      </div>
 
       <form
         onSubmit={createTournament}

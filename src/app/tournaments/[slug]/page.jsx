@@ -1,5 +1,21 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import TournamentLeaderboard from "./TournamentLeaderboard";
+
+export const dynamic = "force-dynamic";
+
+async function getMatchResults(tournamentId) {
+  const { data, error } = await supabase
+    .from("match_results")
+    .select("*")
+    .eq("tournament_id", tournamentId);
+
+  if (error) {
+    return [];
+  }
+
+  return data ?? [];
+}
 
 export default async function TournamentDetailPage({ params }) {
   const { slug } = await params;
@@ -13,6 +29,13 @@ export default async function TournamentDetailPage({ params }) {
   if (error || !tournament) {
     return <main>Tournament not found.</main>;
   }
+
+  const { data: decks } = await supabase
+    .from("deck_submissions")
+    .select("*")
+    .eq("tournament_id", tournament.id)
+    .eq("status", "approved");
+  const matches = await getMatchResults(tournament.id);
 
   return (
     <main className="space-y-8">
@@ -35,6 +58,12 @@ export default async function TournamentDetailPage({ params }) {
           Enter Tournament
         </Link>
       )}
+
+      <TournamentLeaderboard
+        tournamentId={tournament.id}
+        decks={decks ?? []}
+        matches={matches}
+      />
     </main>
   );
 }

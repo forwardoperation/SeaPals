@@ -39,7 +39,12 @@ export const apexCards = [
       commonName: "Great White Shark",
       scientificName: "Carcharodon carcharias",
     },
-    playRequirements: [REQUIRES_STRUCTURE],
+    playRequirements: [
+      {
+        ...REQUIRES_STRUCTURE,
+        text: "Can only be played if a Drop Off structure card is in play on your reef.",
+      },
+    ],
     passives: [INTIMIDATION_PASSIVE],
     onPlay: [
       {
