@@ -96,25 +96,30 @@ async function main() {
 
   const broadcast = buildBroadcast({ files, siteUrl });
   const sendAt = mode === "send" ? new Date(Date.now() + 10 * 60 * 1000).toISOString() : null;
+  const payload = {
+    content: broadcast.content,
+    description: broadcast.description,
+    public: true,
+    published_at: new Date().toISOString(),
+    preview_text: broadcast.previewText,
+    subject: broadcast.subject,
+    subscriber_filter: [],
+    send_at: sendAt,
+    thumbnail_alt: files.length === 1 ? cardNameFromPath(files[0]) : "SeaPals card art",
+    thumbnail_url: `${siteUrl.replace(/\/$/, "")}/${files[0]}`,
+  };
+
+  if (process.env.KIT_FROM_EMAIL) {
+    payload.email_address = process.env.KIT_FROM_EMAIL;
+  }
+
   const response = await fetch(KIT_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Kit-Api-Key": apiKey,
     },
-    body: JSON.stringify({
-      content: broadcast.content,
-      description: broadcast.description,
-      public: true,
-      published_at: new Date().toISOString(),
-      preview_text: broadcast.previewText,
-      subject: broadcast.subject,
-      subscriber_filter: [],
-      send_at: sendAt,
-      email_address: process.env.KIT_FROM_EMAIL || null,
-      thumbnail_alt: files.length === 1 ? cardNameFromPath(files[0]) : "SeaPals card art",
-      thumbnail_url: `${siteUrl.replace(/\/$/, "")}/${files[0]}`,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
