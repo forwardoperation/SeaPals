@@ -60,10 +60,9 @@ function buildBroadcast({ files, siteUrl }) {
     .join("");
 
   const content = `
-    <h1>New SeaPals art just surfaced</h1>
+    <h1>A New SeaPal Just Surfaced!</h1>
     <p>
-      The SeaPals first set is moving forward, and ${cards.length === 1 ? "a new card has" : "new cards have"}
-      joined the gallery.
+      ${cards.length === 1 ? "A new card has" : "New cards have"} joined the gallery.
     </p>
     ${cardList}
     <p>
