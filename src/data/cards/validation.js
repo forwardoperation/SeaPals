@@ -1,3 +1,5 @@
+const KINDS_WITHOUT_COST = ["support", "condition"];
+
 export function validateCards(cards) {
   const ids = new Set();
 
@@ -11,7 +13,7 @@ export function validateCards(cards) {
     if (!card.category) throw new Error(`${card.id} missing category`);
     if (!card.image) throw new Error(`${card.id} missing image`);
 
-    if (card.kind !== "support" && card.cost == null) {
+    if (!KINDS_WITHOUT_COST.includes(card.kind) && card.cost == null) {
       throw new Error(`${card.id} missing cost`);
     }
 

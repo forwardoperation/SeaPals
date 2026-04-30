@@ -1,4 +1,11 @@
-import { CardKind, CardCategory, EffectType, Timing, Weakness } from "./types";
+import {
+  CardKind,
+  CardCategory,
+  EffectType,
+  Timing,
+  Weakness,
+  Zone,
+} from "./types";
 
 export const conditionCards = [
   {

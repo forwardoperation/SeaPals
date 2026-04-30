@@ -7,6 +7,33 @@ import {
   Zone,
 } from "./types";
 
+const SlotType = {
+  APEX: "apex",
+  PREDATOR: "predator",
+  FISH: "fish",
+  INVERTEBRATE: "invertebrate",
+};
+
+const slot = (type, count = 1) => {
+  const acceptsByType = {
+    [SlotType.APEX]: [
+      CardCategory.APEX,
+      CardCategory.PREDATOR,
+      CardCategory.FISH,
+    ],
+    [SlotType.PREDATOR]: [CardCategory.PREDATOR, CardCategory.FISH],
+    [SlotType.FISH]: [CardCategory.FISH],
+    [SlotType.INVERTEBRATE]: [CardCategory.INVERTEBRATE],
+  };
+
+  return {
+    kind: CardKind.CREATURE,
+    slotType: type,
+    acceptsCategories: acceptsByType[type],
+    count,
+  };
+};
+
 const photosynthesis = (amount) => ({
   id: "photosynthesis",
   name: "Photosynthesis",
@@ -33,14 +60,10 @@ export const coralCards = [
     stage: 0,
     stageLabel: "Base",
     image: "/images/cards/coral/elkhorn-coral-base.png",
-
     sortOrder: 1,
-
     cost: { rp: 1 },
     health: 10,
-
     tags: ["coral", "base", "structure", "elkhorn"],
-
     bio: {
       commonName: "Elkhorn Coral",
       scientificName: "Acropora palmata",
@@ -51,18 +74,12 @@ export const coralCards = [
       length: "1’ 2”",
       weight: "3 lbs",
     },
-
     weaknesses: [
       Weakness.STORM,
       Weakness.HIGH_TEMPERATURE,
       Weakness.DISEASE,
     ],
-
-    slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 1 },
-      { kind: CardKind.CREATURE, tags: ["invertebrate"], count: 1 },
-    ],
-
+    slots: [slot(SlotType.FISH, 1), slot(SlotType.INVERTEBRATE, 1)],
     upgrade: {
       canUpgrade: true,
       nextCardId: "elkhorn-coral-stage-1",
@@ -70,15 +87,11 @@ export const coralCards = [
       cost: { rp: 2 },
       text: "Upgrade to Elkhorn Coral Stage 1.",
     },
-
     passives: [photosynthesis(1)],
-
     onPlay: [],
     actions: [],
-
     flavorText:
       "Its antler-like branches break waves and shelter young fish in shallow reefs.",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -95,14 +108,10 @@ export const coralCards = [
     stage: 1,
     stageLabel: "Stage 1",
     image: "/images/cards/coral/elkhorn-coral-stage-1.png",
-
     sortOrder: 2,
-
     cost: { rp: 2 },
     health: 20,
-
     tags: ["coral", "stage-1", "structure", "elkhorn"],
-
     bio: {
       commonName: "Elkhorn Coral",
       scientificName: "Acropora palmata",
@@ -113,18 +122,16 @@ export const coralCards = [
       length: "3’ 2”",
       weight: "50 lbs",
     },
-
     weaknesses: [
       Weakness.STORM,
       Weakness.HIGH_TEMPERATURE,
       Weakness.DISEASE,
     ],
-
     slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 2 },
-      { kind: CardKind.CREATURE, tags: ["invertebrate"], count: 1 },
+      slot(SlotType.FISH, 2),
+      slot(SlotType.INVERTEBRATE, 2),
+      slot(SlotType.PREDATOR, 1),
     ],
-
     upgrade: {
       canUpgrade: true,
       nextCardId: "elkhorn-coral-stage-2",
@@ -132,7 +139,6 @@ export const coralCards = [
       cost: { rp: 6 },
       text: "Upgrade to Elkhorn Coral Stage 2.",
     },
-
     passives: [
       photosynthesis(2),
       {
@@ -147,13 +153,10 @@ export const coralCards = [
         },
       },
     ],
-
     onPlay: [],
     actions: [],
-
     flavorText:
       "Its wide, flattened limbs catch sunlight efficiently in turbulent water.",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -170,14 +173,10 @@ export const coralCards = [
     stage: 2,
     stageLabel: "Stage 2",
     image: "/images/cards/coral/elkhorn-coral-stage-2.png",
-
     sortOrder: 3,
-
     cost: { rp: 6 },
     health: 30,
-
     tags: ["coral", "stage-2", "structure", "elkhorn"],
-
     bio: {
       commonName: "Elkhorn Coral",
       scientificName: "Acropora palmata",
@@ -188,20 +187,17 @@ export const coralCards = [
       length: "5’ 1”",
       weight: "200 lbs",
     },
-
     weaknesses: [
       Weakness.STORM,
       Weakness.HIGH_TEMPERATURE,
       Weakness.DISEASE,
     ],
-
     slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 3 },
-      { kind: CardKind.CREATURE, tags: ["invertebrate"], count: 3 },
+      slot(SlotType.PREDATOR, 2),
+      slot(SlotType.INVERTEBRATE, 3),
+      slot(SlotType.APEX, 1),
     ],
-
     upgrade: noUpgrade,
-
     passives: [
       photosynthesis(6),
       {
@@ -217,13 +213,10 @@ export const coralCards = [
         },
       },
     ],
-
     onPlay: [],
     actions: [],
-
     flavorText:
       "Elkhorn coral is a rugged reef builder with thick branches that resemble elk antlers.",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -240,14 +233,10 @@ export const coralCards = [
     stage: 0,
     stageLabel: "Base",
     image: "/images/cards/coral/boulder-star-coral-base.png",
-
     sortOrder: 10,
-
     cost: { rp: 2 },
     health: 20,
-
     tags: ["coral", "base", "boulder-star"],
-
     bio: {
       commonName: "Boulder Star Coral",
       scientificName: "",
@@ -258,11 +247,11 @@ export const coralCards = [
       length: "6”",
       weight: "2 lbs",
     },
-
     weaknesses: [Weakness.HIGH_TEMPERATURE, Weakness.DISEASE],
-
-    slots: [{ kind: CardKind.CREATURE, tags: ["fish"], count: 2 }],
-
+    slots: [
+      slot(SlotType.FISH, 2),
+      slot(SlotType.INVERTEBRATE, 2),
+    ],
     upgrade: {
       canUpgrade: true,
       nextCardId: "boulder-star-coral-stage-1",
@@ -270,14 +259,10 @@ export const coralCards = [
       cost: { rp: 3 },
       text: "Upgrade to Boulder Star Coral Stage 1.",
     },
-
     passives: [photosynthesis(1)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -294,14 +279,10 @@ export const coralCards = [
     stage: 1,
     stageLabel: "Stage 1",
     image: "/images/cards/coral/boulder-star-coral-stage-1.png",
-
     sortOrder: 11,
-
     cost: { rp: 3 },
     health: 40,
-
     tags: ["coral", "stage-1", "boulder-star"],
-
     bio: {
       commonName: "Boulder Star Coral",
       scientificName: "",
@@ -312,14 +293,8 @@ export const coralCards = [
       length: "3’ 8”",
       weight: "350 lbs",
     },
-
     weaknesses: [Weakness.HIGH_TEMPERATURE, Weakness.DISEASE],
-
-    slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 2 },
-      { kind: CardKind.CREATURE, tags: ["invertebrate"], count: 1 },
-    ],
-
+    slots: [slot(SlotType.FISH, 1),slot(SlotType.PREDATOR, 2), slot(SlotType.INVERTEBRATE, 3)],
     upgrade: {
       canUpgrade: true,
       nextCardId: "boulder-star-coral-stage-2",
@@ -327,14 +302,10 @@ export const coralCards = [
       cost: { rp: 7 },
       text: "Upgrade to Boulder Star Coral Stage 2.",
     },
-
     passives: [photosynthesis(2)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -351,14 +322,10 @@ export const coralCards = [
     stage: 2,
     stageLabel: "Stage 2",
     image: "/images/cards/coral/boulder-star-coral-stage-2.png",
-
     sortOrder: 12,
-
     cost: { rp: 7 },
     health: 80,
-
     tags: ["coral", "stage-2", "boulder-star"],
-
     bio: {
       commonName: "Boulder Star Coral",
       scientificName: "",
@@ -369,16 +336,9 @@ export const coralCards = [
       length: "3’ 3”",
       weight: "925 lbs",
     },
-
     weaknesses: [Weakness.DISEASE],
-
-    slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 3 },
-      { kind: CardKind.CREATURE, tags: ["apex"], count: 1 },
-    ],
-
+    slots: [slot(SlotType.PREDATOR, 2), slot(SlotType.APEX, 1), slot(SlotType.INVERTEBRATE, 3)],
     upgrade: noUpgrade,
-
     passives: [
       {
         id: "sturdy",
@@ -386,7 +346,7 @@ export const coralCards = [
         text: "All corals on your reef gain +10 HP.",
         timing: Timing.PASSIVE,
         effect: {
-          type: "modifyHealth",
+          type: EffectType.MODIFY_HEALTH,
           targetKind: CardKind.CORAL,
           controller: "you",
           amount: 10,
@@ -394,12 +354,9 @@ export const coralCards = [
       },
       photosynthesis(5),
     ],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -416,14 +373,10 @@ export const coralCards = [
     stage: 0,
     stageLabel: "Base",
     image: "/images/cards/coral/pillar-coral-base.png",
-
     sortOrder: 20,
-
     cost: { rp: 3 },
     health: 40,
-
     tags: ["coral", "base", "pillar"],
-
     bio: {
       commonName: "Pillar Coral",
       scientificName: "",
@@ -434,28 +387,21 @@ export const coralCards = [
       length: "6’",
       weight: "300 lbs",
     },
-
     weaknesses: [
       Weakness.STORM,
       Weakness.HIGH_TEMPERATURE,
       Weakness.DISEASE,
     ],
-
     slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 1 },
-      { kind: CardKind.CREATURE, tags: ["invertebrate"], count: 1 },
-      { kind: CardKind.CREATURE, tags: ["apex"], count: 1 },
+      slot(SlotType.FISH, 1),
+      slot(SlotType.INVERTEBRATE, 2),
+      slot(SlotType.PREDATOR, 1),
     ],
-
     upgrade: noUpgrade,
-
     passives: [photosynthesis(2)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -472,14 +418,10 @@ export const coralCards = [
     stage: 0,
     stageLabel: "Base",
     image: "/images/cards/coral/brain-coral-base.png",
-
     sortOrder: 30,
-
     cost: { rp: 1 },
     health: 10,
-
     tags: ["coral", "base", "brain"],
-
     bio: {
       commonName: "Brain Coral",
       scientificName: "",
@@ -490,11 +432,8 @@ export const coralCards = [
       length: "6”",
       weight: "10 lbs",
     },
-
     weaknesses: [Weakness.DISEASE],
-
-    slots: [{ kind: CardKind.CREATURE, tags: ["fish"], count: 1 }],
-
+    slots: [slot(SlotType.FISH, 1),slot(SlotType.INVERTEBRATE, 1)],
     upgrade: {
       canUpgrade: true,
       nextCardId: "brain-coral-stage-1",
@@ -502,14 +441,10 @@ export const coralCards = [
       cost: { rp: 2 },
       text: "Upgrade to Brain Coral Stage 1.",
     },
-
     passives: [photosynthesis(1)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -526,14 +461,10 @@ export const coralCards = [
     stage: 1,
     stageLabel: "Stage 1",
     image: "/images/cards/coral/brain-coral-stage-1.png",
-
     sortOrder: 31,
-
     cost: { rp: 2 },
     health: 20,
-
     tags: ["coral", "stage-1", "brain"],
-
     bio: {
       commonName: "Brain Coral",
       scientificName: "",
@@ -544,14 +475,8 @@ export const coralCards = [
       length: "8”",
       weight: "40 lbs",
     },
-
     weaknesses: [Weakness.DISEASE],
-
-    slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 1 },
-      { kind: CardKind.CREATURE, tags: ["invertebrate"], count: 1 },
-    ],
-
+    slots: [slot(SlotType.FISH, 1),slot(SlotType.PREDATOR, 1), slot(SlotType.INVERTEBRATE, 2)],
     upgrade: {
       canUpgrade: true,
       nextCardId: "brain-coral-stage-2",
@@ -559,14 +484,10 @@ export const coralCards = [
       cost: { rp: 5 },
       text: "Upgrade to Brain Coral Stage 2.",
     },
-
     passives: [photosynthesis(2)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -583,14 +504,10 @@ export const coralCards = [
     stage: 2,
     stageLabel: "Stage 2",
     image: "/images/cards/coral/brain-coral-stage-2.png",
-
     sortOrder: 32,
-
     cost: { rp: 5 },
     health: 60,
-
     tags: ["coral", "stage-2", "brain"],
-
     bio: {
       commonName: "Brain Coral",
       scientificName: "",
@@ -601,16 +518,9 @@ export const coralCards = [
       length: "1’ 8”",
       weight: "110 lbs",
     },
-
     weaknesses: [Weakness.DISEASE],
-
-    slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 3 },
-      { kind: CardKind.CREATURE, tags: ["apex"], count: 1 },
-    ],
-
+    slots: [slot(SlotType.PREDATOR, 2), slot(SlotType.APEX, 1), slot(SlotType.INVERTEBRATE, 3)],
     upgrade: noUpgrade,
-
     passives: [
       photosynthesis(5),
       {
@@ -633,12 +543,9 @@ export const coralCards = [
         },
       },
     ],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -655,14 +562,10 @@ export const coralCards = [
     stage: 0,
     stageLabel: "Base",
     image: "/images/cards/coral/lettuce-coral-base.png",
-
     sortOrder: 40,
-
     cost: { rp: 1 },
     health: 10,
-
     tags: ["coral", "base", "lettuce"],
-
     bio: {
       commonName: "Lettuce Coral",
       scientificName: "",
@@ -673,11 +576,8 @@ export const coralCards = [
       length: "8”",
       weight: "12 lbs",
     },
-
     weaknesses: [Weakness.HIGH_TEMPERATURE, Weakness.DISEASE],
-
-    slots: [{ kind: CardKind.CREATURE, tags: ["fish"], count: 1 }],
-
+    slots: [slot(SlotType.FISH, 1),slot(SlotType.INVERTEBRATE, 1)],
     upgrade: {
       canUpgrade: true,
       nextCardId: "lettuce-coral-stage-1",
@@ -685,14 +585,10 @@ export const coralCards = [
       cost: { rp: 2 },
       text: "Upgrade to Lettuce Coral Stage 1.",
     },
-
     passives: [photosynthesis(1)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -709,14 +605,10 @@ export const coralCards = [
     stage: 1,
     stageLabel: "Stage 1",
     image: "/images/cards/coral/lettuce-coral-stage-1.png",
-
     sortOrder: 41,
-
     cost: { rp: 2 },
     health: 30,
-
     tags: ["coral", "stage-1", "lettuce"],
-
     bio: {
       commonName: "Lettuce Coral",
       scientificName: "",
@@ -727,23 +619,13 @@ export const coralCards = [
       length: "3’ 4”",
       weight: "24 lbs",
     },
-
     weaknesses: [Weakness.HIGH_TEMPERATURE, Weakness.DISEASE],
-
-    slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 2 },
-      { kind: CardKind.CREATURE, tags: ["invertebrate"], count: 1 },
-    ],
-
+    slots: [slot(SlotType.FISH, 1),slot(SlotType.PREDATOR, 1), slot(SlotType.INVERTEBRATE, 2)],
     upgrade: noUpgrade,
-
     passives: [photosynthesis(3)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -760,14 +642,10 @@ export const coralCards = [
     stage: 0,
     stageLabel: "Base",
     image: "/images/cards/coral/staghorn-coral-base.png",
-
     sortOrder: 50,
-
     cost: { rp: 1 },
     health: 10,
-
     tags: ["coral", "base", "staghorn"],
-
     bio: {
       commonName: "Staghorn Coral",
       scientificName: "",
@@ -778,17 +656,13 @@ export const coralCards = [
       length: "3’",
       weight: "35 lbs",
     },
-
     weaknesses: [
       Weakness.STORM,
       Weakness.HIGH_TEMPERATURE,
       Weakness.DISEASE,
     ],
-
-    slots: [{ kind: CardKind.CREATURE, tags: ["fish"], count: 1 }],
-
+    slots: [slot(SlotType.FISH, 1),slot(SlotType.INVERTEBRATE, 1)],
     upgrade: noUpgrade,
-
     passives: [
       photosynthesis(1),
       {
@@ -797,19 +671,16 @@ export const coralCards = [
         text: "Search your deck for another Staghorn Coral and place it into your hand.",
         timing: Timing.ON_PLAY,
         effect: {
-          type: "searchDeck",
+          type: EffectType.SEARCH_DECK,
           targetCardId: "staghorn-coral-base",
           destination: Zone.HAND,
           amount: 1,
         },
       },
     ],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -826,14 +697,10 @@ export const coralCards = [
     stage: 0,
     stageLabel: "Base",
     image: "/images/cards/coral/clubfinger-coral-base.png",
-
     sortOrder: 60,
-
     cost: { rp: 1 },
     health: 10,
-
     tags: ["coral", "base", "clubfinger"],
-
     bio: {
       commonName: "Clubfinger Coral",
       scientificName: "",
@@ -844,15 +711,12 @@ export const coralCards = [
       length: "4.5”",
       weight: "300 g",
     },
-
     weaknesses: [
       Weakness.STORM,
       Weakness.HIGH_TEMPERATURE,
       Weakness.DISEASE,
     ],
-
-    slots: [{ kind: CardKind.CREATURE, tags: ["fish"], count: 1 }],
-
+    slots: [slot(SlotType.FISH, 1),slot(SlotType.INVERTEBRATE, 1)],
     upgrade: {
       canUpgrade: true,
       nextCardId: "clubfinger-coral-stage-1",
@@ -860,14 +724,10 @@ export const coralCards = [
       cost: { rp: 2 },
       text: "Upgrade to Clubfinger Coral Stage 1.",
     },
-
     passives: [photosynthesis(1)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -884,14 +744,10 @@ export const coralCards = [
     stage: 1,
     stageLabel: "Stage 1",
     image: "/images/cards/coral/clubfinger-coral-stage-1.png",
-
     sortOrder: 61,
-
     cost: { rp: 2 },
     health: 30,
-
     tags: ["coral", "stage-1", "clubfinger"],
-
     bio: {
       commonName: "Clubfinger Coral",
       scientificName: "",
@@ -902,27 +758,17 @@ export const coralCards = [
       length: "1’ 8”",
       weight: "12 lbs",
     },
-
     weaknesses: [
       Weakness.STORM,
       Weakness.HIGH_TEMPERATURE,
       Weakness.DISEASE,
     ],
-
-    slots: [
-      { kind: CardKind.CREATURE, tags: ["fish"], count: 2 },
-      { kind: CardKind.CREATURE, tags: ["invertebrate"], count: 1 },
-    ],
-
+    slots: [slot(SlotType.FISH, 2), slot(SlotType.INVERTEBRATE, 2)],
     upgrade: noUpgrade,
-
     passives: [photosynthesis(2)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
@@ -939,14 +785,10 @@ export const coralCards = [
     stage: 0,
     stageLabel: "Base",
     image: "/images/cards/coral/mustard-hill-coral-base.png",
-
     sortOrder: 70,
-
     cost: { rp: 3 },
     health: 30,
-
     tags: ["coral", "base", "mustard-hill"],
-
     bio: {
       commonName: "Mustard Hill Coral",
       scientificName: "",
@@ -957,20 +799,13 @@ export const coralCards = [
       length: "8”",
       weight: "12 lbs",
     },
-
     weaknesses: [],
-
-    slots: [{ kind: CardKind.CREATURE, tags: ["fish"], count: 1 }],
-
+    slots: [slot(SlotType.FISH, 1), slot(SlotType.INVERTEBRATE, 1)],
     upgrade: noUpgrade,
-
     passives: [photosynthesis(2)],
-
     onPlay: [],
     actions: [],
-
     flavorText: "",
-
     set: {
       id: "genesis",
       name: "Genesis",
