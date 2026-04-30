@@ -1,5 +1,6 @@
 import { CardKind } from "@/data/cards/types";
 import { cardsById } from "@/data/cards";
+import { getDeckStats } from "./deckStats";
 import { getTournamentDeckRules, isBaseCoral } from "./deckRules";
 
 export function validateDeck(deck, tournament) {
@@ -81,6 +82,14 @@ export function validateDeck(deck, tournament) {
 
   if (rules.requireBaseCoral && !hasBaseCoral) {
     errors.push("Deck must contain at least one base coral.");
+  }
+
+  const stats = getDeckStats(deck);
+
+  if (stats.totalVictoryPoints < rules.minVictoryPoints) {
+    errors.push(
+      `Deck must include at least ${rules.minVictoryPoints} total victory points. Current total: ${stats.totalVictoryPoints}.`
+    );
   }
 
   return {
