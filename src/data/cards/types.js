@@ -18,6 +18,80 @@ export const CardCategory = {
   CONDITION: "condition",
 };
 
+export const CreatureZone = {
+  REEF: "reef",
+  OCEAN: "ocean",
+  DEEP: "deep",
+};
+
+export const CreatureClass = {
+  INVERTEBRATE: "invertebrate",
+  CORAL: "coral",
+  FILTER_FEEDER: "filter_feeder",
+  FISH: "fish",
+  PREDATOR: "predator",
+  APEX: "apex",
+};
+
+export function formatCreatureZone(zone) {
+  if (!zone) return "";
+
+  return String(zone)
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+export function formatCreatureClass(creatureClass) {
+  if (!creatureClass) return "";
+
+  return String(creatureClass)
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+export function formatCreatureType(card) {
+  if (!card?.zone || !card?.class) return "";
+  return `${formatCreatureZone(card.zone)} ${formatCreatureClass(card.class)}`;
+}
+
+export function getAcceptedClassesForSlot(slotClass) {
+  switch (slotClass) {
+    case CreatureClass.FISH:
+      return [CreatureClass.FISH];
+
+    case CreatureClass.PREDATOR:
+      return [CreatureClass.FISH, CreatureClass.PREDATOR];
+
+    case CreatureClass.APEX:
+      return [CreatureClass.FISH, CreatureClass.PREDATOR, CreatureClass.APEX];
+
+    case CreatureClass.INVERTEBRATE:
+      return [CreatureClass.INVERTEBRATE];
+
+    case CreatureClass.FILTER_FEEDER:
+      return [CreatureClass.FILTER_FEEDER];
+
+    default:
+      return [slotClass];
+  }
+}
+
+export function makeCreatureSlot(zone, slotClass) {
+  return {
+    zone,
+    slotClass,
+    accepts: getAcceptedClassesForSlot(slotClass),
+  };
+}
+
+export function canCardOccupySlot(card, slot) {
+  if (!card || !slot) return false;
+  if (card.zone !== slot.zone) return false;
+  return slot.accepts?.includes(card.class) ?? false;
+}
+
 export const Weakness = {
   STORM: "storm",
   HIGH_TEMPERATURE: "high-temperature",

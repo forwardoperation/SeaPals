@@ -1,9 +1,10 @@
 import Image from "next/image";
 import { getGalleryData } from "@/lib/gallery";
+import { formatCreatureType } from "@/data/cards/types";
 
 export const metadata = {
   title: "Gallery | SeaPals TCG",
-  description: "Browse SeaPals cards by category.",
+  description: "Browse SeaPals cards by zone, class, and category.",
 };
 
 function formatLabel(value) {
@@ -55,7 +56,13 @@ function MetadataRow({ label, value }) {
 }
 
 function RuleList({ title, items }) {
-  const visibleItems = items?.filter((item) => item?.text || item?.name);
+  const visibleItems = items
+    ?.map((item, index) =>
+      typeof item === "string"
+        ? { id: `${title}-${index}`, text: item }
+        : item
+    )
+    .filter((item) => item?.text || item?.name);
 
   if (!visibleItems || visibleItems.length === 0) return null;
 
@@ -91,13 +98,13 @@ function ProgressBar({ value }) {
 
 function ArtProgress({ categories }) {
   const categoryStats = categories
-    .map((category) => {
-      const total = category.images.length;
-      const complete = category.images.filter((image) => image.hasImage).length;
+    .map((zone) => {
+      const total = zone.images.length;
+      const complete = zone.images.filter((image) => image.hasImage).length;
       const percent = total > 0 ? Math.round((complete / total) * 100) : 0;
 
       return {
-        ...category,
+        ...zone,
         total,
         complete,
         percent,
@@ -105,14 +112,18 @@ function ArtProgress({ categories }) {
     })
     .filter((category) => category.total > 0);
 
-  const totalCards = categoryStats.reduce(
-    (sum, category) => sum + category.total,
-    0
-  );
-  const completedCards = categoryStats.reduce(
-    (sum, category) => sum + category.complete,
-    0
-  );
+  const uniqueCards = new Map();
+
+  for (const category of categories) {
+    for (const image of category.images) {
+      uniqueCards.set(image.cardId, image);
+    }
+  }
+
+  const totalCards = uniqueCards.size;
+  const completedCards = Array.from(uniqueCards.values()).filter(
+    (image) => image.hasImage
+  ).length;
   const overallPercent =
     totalCards > 0 ? Math.round((completedCards / totalCards) * 100) : 0;
 
@@ -127,7 +138,7 @@ function ArtProgress({ categories }) {
             The SeaPals set is {overallPercent}% illustrated
           </h2>
           <p className="mt-3 text-base leading-relaxed text-slate-600 md:text-lg">
-            New card art is landing category by category as the game swims toward
+            New card art is landing zone by zone as the game swims toward
             a complete first set.
           </p>
         </div>
@@ -208,7 +219,7 @@ function CardMetadata({ image }) {
     <div className="mt-3 rounded-2xl border border-cyan-100 bg-white/95 p-4 text-sm shadow-sm">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">
-          {formatLabel(card.category)}
+          {formatCreatureType(card) || formatLabel(card.category)}
         </p>
         <h3 className="mt-1 text-lg font-semibold text-slate-900">
           {cardDisplayName(card, image.name)}
@@ -221,12 +232,20 @@ function CardMetadata({ image }) {
       <dl className="mt-4 grid grid-cols-2 gap-2">
         <StatPill label="Cost" value={formatCost(card.cost)} />
         <StatPill label="VP" value={card.victoryPoints} />
-        <StatPill label="Defense" value={card.defense?.dice} />
+        <StatPill
+          label="Defense"
+          value={
+            typeof card.defense === "string"
+              ? card.defense
+              : card.defense?.dice
+          }
+        />
         <StatPill label="Health" value={card.health} />
       </dl>
 
       <div className="mt-4 space-y-1 text-slate-600">
         <MetadataRow label="Kind" value={formatLabel(card.kind)} />
+        <MetadataRow label="Type" value={formatCreatureType(card)} />
         <MetadataRow label="Role" value={card.bio?.role} />
         <MetadataRow label="Species" value={card.bio?.species} />
         <MetadataRow label="Region" value={card.bio?.region} />
@@ -257,18 +276,19 @@ function CardMetadata({ image }) {
         <RuleList title="Passives" items={card.passives} />
         <RuleList title="On Play" items={card.onPlay} />
         <RuleList title="Actions" items={card.actions} />
+        <RuleList title="Special Rules" items={card.specialRules} />
       </div>
     </div>
   );
 }
 
-function CategorySection({ title, slug, images }) {
+function TypeSection({ title, slug, images }) {
   if (!images || images.length === 0) return null;
 
   return (
     <section id={slug} className="scroll-mt-28">
       <div className="mb-6">
-        <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
+        <h3 className="text-3xl font-bold text-slate-900">{title}</h3>
       </div>
 
       <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
@@ -299,6 +319,35 @@ function CategorySection({ title, slug, images }) {
   );
 }
 
+function ZoneSection({ zone }) {
+  return (
+    <section id={zone.slug} className="scroll-mt-28 space-y-10">
+      <div>
+        <h2 className="text-4xl font-bold text-slate-900">{zone.title}</h2>
+        {zone.images.length === 0 && (
+          <div className="mt-6 rounded-[2rem] border border-dashed border-cyan-200 bg-white/75 p-8 text-slate-600 shadow-sm">
+            <p className="text-lg font-semibold text-slate-900">
+              No {zone.title.toLowerCase()} cards yet.
+            </p>
+            <p className="mt-2">
+              This set is ready for future SeaPals cards when the game expands.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {zone.groups.map((group) => (
+        <TypeSection
+          key={group.slug}
+          title={group.title}
+          slug={group.slug}
+          images={group.images}
+        />
+      ))}
+    </section>
+  );
+}
+
 export default async function GalleryPage() {
   const categories = await getGalleryData();
 
@@ -316,7 +365,7 @@ export default async function GalleryPage() {
         </h1>
 
         <p className="mt-4 max-w-3xl text-base text-slate-600 md:text-lg">
-          Browse SeaPals cards by class and type.
+          Browse SeaPals cards by zone, then by card type.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
@@ -333,11 +382,9 @@ export default async function GalleryPage() {
       </section>
 
       {categories.map((category) => (
-        <CategorySection
+        <ZoneSection
           key={category.slug}
-          title={category.title}
-          slug={category.slug}
-          images={category.images}
+          zone={category}
         />
       ))}
     </main>
