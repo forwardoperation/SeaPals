@@ -1,6 +1,18 @@
 import { allCards } from "@/data/cards";
+import { CreatureZone } from "@/data/cards/types";
 
-const CATEGORY_CONFIG = [
+const ZONE_CONFIG = [
+  { slug: "reef", title: "Reef Set", label: "Reef", zone: CreatureZone.REEF },
+  {
+    slug: "ocean",
+    title: "Ocean Set",
+    label: "Ocean",
+    zone: CreatureZone.OCEAN,
+  },
+  { slug: "deep", title: "Deep Set", label: "Deep", zone: CreatureZone.DEEP },
+];
+
+const TYPE_CONFIG = [
   { slug: "filter-feeders", title: "Filter Feeders", category: "filter-feeder" },
   { slug: "apex", title: "Apex", category: "apex" },
   { slug: "predator", title: "Predator", category: "predator" },
@@ -41,6 +53,10 @@ const IMAGE_PATH_OVERRIDES = {
   "spinner-dolphins": "/images/cards/predator/spinner-dolpins.png",
 };
 
+function cardZone(card) {
+  return card.zone ?? CreatureZone.REEF;
+}
+
 function galleryCard(card) {
   const src = IMAGE_PATH_OVERRIDES[card.id] ?? card.image ?? null;
   const hasPngImage = Boolean(
@@ -57,16 +73,26 @@ function galleryCard(card) {
 }
 
 export async function getGalleryData() {
-  return CATEGORY_CONFIG.map((category) => ({
-    slug: category.slug,
-    title: category.title,
-    images: allCards
-      .filter(
-        (card) =>
-          card.category === category.category ||
-          card.kind === category.category
-      )
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map(galleryCard),
-  }));
+  return ZONE_CONFIG.map((zone) => {
+    const zoneCards = allCards.filter((card) => cardZone(card) === zone.zone);
+    const groups = TYPE_CONFIG.map((type) => ({
+      slug: `${zone.slug}-${type.slug}`,
+      title: `${zone.label} ${type.title}`,
+      images: zoneCards
+        .filter(
+          (card) =>
+            card.category === type.category || card.kind === type.category
+        )
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(galleryCard),
+    })).filter((type) => type.images.length > 0);
+
+    return {
+      ...zone,
+      images: zoneCards
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(galleryCard),
+      groups,
+    };
+  });
 }

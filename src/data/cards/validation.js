@@ -13,6 +13,11 @@ export function validateCards(cards) {
     if (!card.category) throw new Error(`${card.id} missing category`);
     if (!card.image) throw new Error(`${card.id} missing image`);
 
+    if (card.kind === "creature") {
+      if (!card.zone) throw new Error(`${card.id} creature missing zone`);
+      if (!card.class) throw new Error(`${card.id} creature missing class`);
+    }
+
     if (!KINDS_WITHOUT_COST.includes(card.kind) && card.cost == null) {
       throw new Error(`${card.id} missing cost`);
     }

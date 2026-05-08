@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { allCards, cardsById } from "@/data/cards";
+import {
+  formatCreatureClass,
+  formatCreatureType,
+  formatCreatureZone,
+} from "@/data/cards/types";
 import { getDeckAnalytics } from "@/lib/tournaments/deckAnalytics";
 import { validateDeck } from "@/lib/tournaments/validateDeck";
 
@@ -23,8 +28,10 @@ function getCardDisplayName(card) {
 
 function getCardSubtitle(card) {
   const parts = [];
+  const creatureType = formatCreatureType(card);
 
-  if (card.category) parts.push(card.category);
+  if (creatureType) parts.push(creatureType);
+  else if (card.category) parts.push(card.category);
   if (card.kind) parts.push(card.kind);
   if (card.kind === "coral" && card.stageLabel) parts.push(card.stageLabel);
   if (card.bio?.scientificName) parts.push(card.bio.scientificName);
@@ -39,16 +46,33 @@ function formatCost(card) {
   return `${card.cost.rp} RP`;
 }
 
-function formatEffects(items = []) {
-  return items.map((item) => ({
-    id: item.id,
-    name: item.name,
-    text: item.text,
-    effects: item.effects ?? (item.effect ? [item.effect] : []),
-  }));
+function formatEffects(items = [], prefix = "effect") {
+  return items.map((item, index) => {
+    if (typeof item === "string") {
+      return {
+        id: `${prefix}-${index}`,
+        name: "",
+        text: item,
+        effects: [],
+      };
+    }
+
+    return {
+      id: item.id,
+      name: item.name,
+      text: item.text,
+      effects: item.effects ?? (item.effect ? [item.effect] : []),
+    };
+  });
 }
 
 function formatSlotType(slot) {
+  if (slot.zone && slot.slotClass) {
+    return `${formatCreatureZone(slot.zone)} ${formatCreatureClass(
+      slot.slotClass
+    )}`;
+  }
+
   if (slot.slotType) {
     return `${slot.slotType} slot`;
   }
@@ -74,9 +98,10 @@ function getSubmissionErrorMessage(error) {
 
 function CardDetails({ card }) {
   const abilities = [
-    ...formatEffects(card.passives),
-    ...formatEffects(card.onPlay),
-    ...formatEffects(card.actions),
+    ...formatEffects(card.passives, "passive"),
+    ...formatEffects(card.onPlay, "on-play"),
+    ...formatEffects(card.actions, "action"),
+    ...formatEffects(card.specialRules, "special-rule"),
   ];
 
   return (
@@ -88,7 +113,16 @@ function CardDetails({ card }) {
           <Info label="Victory Points" value={card.victoryPoints} />
         )}
 
-        {card.defense?.dice && <Info label="Defense" value={card.defense.dice} />}
+        {(typeof card.defense === "string" || card.defense?.dice) && (
+          <Info
+            label="Defense"
+            value={
+              typeof card.defense === "string"
+                ? card.defense
+                : card.defense.dice
+            }
+          />
+        )}
 
         {card.health != null && <Info label="HP" value={card.health} />}
 

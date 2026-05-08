@@ -5,13 +5,16 @@ import {
   Timing,
   Weakness,
   Zone,
+  CreatureClass,
+  CreatureZone,
+  makeCreatureSlot,
 } from "./types";
 
 const SlotType = {
-  APEX: "apex",
-  PREDATOR: "predator",
-  FISH: "fish",
-  INVERTEBRATE: "invertebrate",
+  APEX: CreatureClass.APEX,
+  PREDATOR: CreatureClass.PREDATOR,
+  FISH: CreatureClass.FISH,
+  INVERTEBRATE: CreatureClass.INVERTEBRATE,
 };
 
 const slot = (type, count = 1) => {
@@ -27,6 +30,7 @@ const slot = (type, count = 1) => {
   };
 
   return {
+    ...makeCreatureSlot(CreatureZone.REEF, type),
     kind: CardKind.CREATURE,
     slotType: type,
     acceptsCategories: acceptsByType[type],
