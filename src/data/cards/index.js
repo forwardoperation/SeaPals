@@ -3,23 +3,48 @@ import { fishCards } from "./creatures/fish";
 import { predatorCards } from "./creatures/predators";
 import { invertebrateCards } from "./creatures/invertebrates";
 import { filterFeederCards } from "./creatures/filterFeeders";
+import { deepCreatureCards } from "./creatures/deep";
 import { coralCards } from "./coral";
+import { deepCoralCards } from "./deepCoral";
 import { supportCards } from "./support";
 import { structureCards } from "./structures";
 import { conditionCards } from "./conditions";
 import { validateCards } from "./validation";
+import { CardCategory, CardKind, CreatureClass, CreatureZone } from "./types";
+
+const creatureClassByCategory = {
+  [CardCategory.APEX]: CreatureClass.APEX,
+  [CardCategory.FISH]: CreatureClass.FISH,
+  [CardCategory.FILTER_FEEDER]: CreatureClass.FILTER_FEEDER,
+  [CardCategory.INVERTEBRATE]: CreatureClass.INVERTEBRATE,
+  [CardCategory.PREDATOR]: CreatureClass.PREDATOR,
+};
+
+function normalizeCreatureCard(card) {
+  if (card.kind !== CardKind.CREATURE) return card;
+
+  return {
+    ...card,
+    zone: card.zone ?? CreatureZone.REEF,
+    class: card.class ?? creatureClassByCategory[card.category],
+  };
+}
 
 export const allCards = [
   ...coralCards,
   ...fishCards,
+  ...deepCoralCards,
   ...apexCards,
   ...predatorCards,
   ...invertebrateCards,
   ...filterFeederCards,
+  ...deepCreatureCards,
   ...structureCards,
   ...supportCards,
   ...conditionCards,
-].sort((a, b) => a.sortOrder - b.sortOrder);
+]
+  .map(normalizeCreatureCard)
+  .sort((a, b) => a.sortOrder - b.sortOrder);
 
 validateCards(allCards);
 
