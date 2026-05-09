@@ -39,6 +39,7 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/fish/picasso-triggerfish.png",
   "/images/cards/fish/spanish-hogfish.png",
   "/images/cards/fish/spectacled-parrotfish.png",
+  "/images/cards/invertebrates/blue-crab.png",
   "/images/cards/invertebrates/emerald-crab.png",
   "/images/cards/predator/moray-eel.png",
   "/images/cards/predator/spinner-dolpins.png",
