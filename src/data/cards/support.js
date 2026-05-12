@@ -268,7 +268,7 @@ export const supportCards = [
     name: "Deep Sea Fishing",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/deep-sea-fishing.png",
+    image: "/images/cards/support/deep-sea-fishing-rod.png",
     sortOrder: 510,
 
     text: "Search your deck for a predator or apex and place it into your hand. Shuffle your deck afterwards.",
