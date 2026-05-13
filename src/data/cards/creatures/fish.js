@@ -496,10 +496,10 @@ export const fishCards = [
 
   {
     id: "flounder",
-    name: "Flounder",
+    name: "Southern Flounder",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/flounder.png",
+    image: "/images/cards/fish/southern-flounder.png",
     sortOrder: 209,
 
     cost: { rp: 3 },
@@ -507,10 +507,10 @@ export const fishCards = [
     tags: ["creature", "fish", "flounder"],
 
     bio: {
-      commonName: "Flounder",
-      scientificName: "",
+      commonName: "Southern Flounder",
+      scientificName: "Paralichthys lethostigma",
       role: "Reef Fish",
-      region: "Caribbean",
+      region: "Western Atlantic",
       length: "2’ 2”",
       weight: "7 lbs",
     },

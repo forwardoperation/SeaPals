@@ -37,6 +37,7 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/fish/cleaner-wrasse.png",
   "/images/cards/fish/french-angelfish.png",
   "/images/cards/fish/picasso-triggerfish.png",
+  "/images/cards/fish/southern-flounder.png",
   "/images/cards/fish/spanish-hogfish.png",
   "/images/cards/fish/spectacled-parrotfish.png",
   "/images/cards/invertebrates/blue-crab.png",
@@ -48,6 +49,7 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/support/crab-trap.png",
   "/images/cards/support/deep-sea-fishing-rod.png",
   "/images/cards/support/full-heal.png",
+  "/images/cards/support/poison-heal.png",
   "/images/cards/support/remote-search.png",
 ]);
 
