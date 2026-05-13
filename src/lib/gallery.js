@@ -45,7 +45,10 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/predator/spinner-dolpins.png",
   "/images/cards/predator/thresher-shark.png",
   "/images/cards/support/coral-cement.png",
+  "/images/cards/support/crab-trap.png",
   "/images/cards/support/deep-sea-fishing-rod.png",
+  "/images/cards/support/full-heal.png",
+  "/images/cards/support/remote-search.png",
 ]);
 
 const IMAGE_PATH_OVERRIDES = {
