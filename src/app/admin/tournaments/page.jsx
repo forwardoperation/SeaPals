@@ -39,15 +39,19 @@ export default function AdminTournamentsPage() {
     setMessage("");
     setDeletingId(tournament.id);
 
-    const { error } = await supabase
-      .from("tournaments")
-      .delete()
-      .eq("id", tournament.id);
+    const { data, error } = await supabase.rpc("delete_tournament", {
+      tournament_id: tournament.id,
+    });
 
     setDeletingId("");
 
     if (error) {
       setMessage(error.message);
+      return;
+    }
+
+    if (!data) {
+      setMessage("Tournament was not deleted. Refresh and try again.");
       return;
     }
 
