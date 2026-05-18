@@ -5,13 +5,6 @@ import { cardsById } from "@/data/cards";
 import { supabase } from "@/lib/supabaseClient";
 import { getDeckAnalytics } from "@/lib/tournaments/deckAnalytics";
 
-const emptyMatchForm = {
-  id: "",
-  deckAId: "",
-  deckBId: "",
-  winnerDeckId: "",
-};
-
 function normalizeDeck(deck) {
   return {
     id: deck.id,
@@ -19,6 +12,7 @@ function normalizeDeck(deck) {
     deckName: deck.deck_name ?? deck.deckName ?? "",
     cards: Array.isArray(deck.cards) ? deck.cards : [],
     status: deck.status,
+    createdAt: deck.created_at ?? deck.createdAt ?? "",
   };
 }
 
@@ -117,6 +111,107 @@ function buildLeaderboard(decks, matches) {
         a.losses - b.losses ||
         a.deckName.localeCompare(b.deckName)
     );
+}
+
+function nextPowerOfTwo(value) {
+  if (value <= 1) return 1;
+
+  return 2 ** Math.ceil(Math.log2(value));
+}
+
+function getMatchKey(deckAId, deckBId) {
+  return [deckAId, deckBId].sort().join(":");
+}
+
+function getBracketSeeds(decks) {
+  return [...decks].sort(
+    (a, b) =>
+      a.createdAt.localeCompare(b.createdAt) ||
+      a.deckName.localeCompare(b.deckName) ||
+      a.playerName.localeCompare(b.playerName)
+  );
+}
+
+function buildSeedSlots(decks) {
+  const seeds = getBracketSeeds(decks);
+  const bracketSize = nextPowerOfTwo(seeds.length);
+  const slots = Array(bracketSize).fill(null);
+  let left = 0;
+  let right = bracketSize - 1;
+
+  seeds.forEach((deck, index) => {
+    if (index % 2 === 0) {
+      slots[left] = deck;
+      left += 1;
+    } else {
+      slots[right] = deck;
+      right -= 1;
+    }
+  });
+
+  return slots;
+}
+
+function buildBracketRounds(decks, matches) {
+  if (decks.length < 2) return [];
+
+  const matchesByPair = new Map();
+
+  for (const match of matches) {
+    if (!match.deckAId || !match.deckBId) continue;
+    matchesByPair.set(getMatchKey(match.deckAId, match.deckBId), match);
+  }
+
+  const rounds = [];
+  let slots = buildSeedSlots(decks);
+  let roundIndex = 0;
+
+  while (slots.length > 1) {
+    const round = {
+      index: roundIndex,
+      title:
+        slots.length === 2
+          ? "Final"
+          : slots.length === 4
+            ? "Semifinals"
+            : `Round ${roundIndex + 1}`,
+      matches: [],
+    };
+    const nextSlots = [];
+
+    for (let index = 0; index < slots.length; index += 2) {
+      const deckA = slots[index];
+      const deckB = slots[index + 1];
+      const match =
+        deckA && deckB
+          ? matchesByPair.get(getMatchKey(deckA.id, deckB.id)) ?? null
+          : null;
+      const automaticWinner = deckA && !deckB ? deckA : deckB && !deckA ? deckB : null;
+      const winner =
+        automaticWinner ??
+        (match?.winnerDeckId
+          ? [deckA, deckB].find((deck) => deck?.id === match.winnerDeckId) ?? null
+          : null);
+
+      round.matches.push({
+        id: `${roundIndex}-${index / 2}`,
+        roundIndex,
+        matchIndex: index / 2,
+        deckA,
+        deckB,
+        match,
+        winner,
+        isBye: Boolean(automaticWinner),
+      });
+      nextSlots.push(winner);
+    }
+
+    rounds.push(round);
+    slots = nextSlots;
+    roundIndex += 1;
+  }
+
+  return rounds;
 }
 
 function getMatchupRows(deck, decksById, matches) {
@@ -315,6 +410,129 @@ function DeckCardList({ cards }) {
   );
 }
 
+function BracketDeckSlot({ deck, winner, disabled, onWinnerClick }) {
+  const isWinner = deck && winner?.id === deck.id;
+
+  if (!deck) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-400">
+        Bye
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onWinnerClick(deck.id)}
+      disabled={disabled}
+      className={`w-full rounded-xl border px-3 py-3 text-left transition disabled:cursor-not-allowed ${
+        isWinner
+          ? "border-emerald-300 bg-emerald-50 text-emerald-950"
+          : "border-slate-200 bg-white text-slate-800 hover:border-sky-300 hover:bg-sky-50"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="font-bold">{deck.deckName}</div>
+          <div className="mt-0.5 text-xs font-semibold text-slate-500">
+            {deck.playerName}
+          </div>
+        </div>
+        {isWinner && (
+          <span className="rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">
+            Win
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
+function TournamentBracket({ rounds, savingMatchId, onSaveWinner, onClearMatch }) {
+  if (rounds.length === 0) {
+    return (
+      <p className="mt-5 rounded-2xl bg-slate-50 p-4 text-slate-500">
+        Approve at least two decks to generate a bracket.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-5 overflow-x-auto pb-3">
+      <div
+        className="grid min-w-max gap-4"
+        style={{
+          gridTemplateColumns: `repeat(${rounds.length}, minmax(250px, 1fr))`,
+        }}
+      >
+        {rounds.map((round) => (
+          <section key={round.index} className="space-y-3">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+              {round.title}
+            </h3>
+            <div className="space-y-4">
+              {round.matches.map((match) => {
+                const canUpdate = Boolean(match.deckA && match.deckB);
+                const savingKey = match.match?.id ?? match.id;
+                const isSaving = savingMatchId === savingKey;
+
+                return (
+                  <div
+                    key={match.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-3"
+                  >
+                    <div className="space-y-2">
+                      <BracketDeckSlot
+                        deck={match.deckA}
+                        winner={match.winner}
+                        disabled={!canUpdate || isSaving}
+                        onWinnerClick={(winnerDeckId) =>
+                          onSaveWinner(match, winnerDeckId)
+                        }
+                      />
+                      <BracketDeckSlot
+                        deck={match.deckB}
+                        winner={match.winner}
+                        disabled={!canUpdate || isSaving}
+                        onWinnerClick={(winnerDeckId) =>
+                          onSaveWinner(match, winnerDeckId)
+                        }
+                      />
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between gap-3 text-xs font-semibold text-slate-500">
+                      <span>
+                        {match.isBye
+                          ? "Advances by bye"
+                          : match.winner
+                            ? "Winner selected"
+                            : canUpdate
+                              ? "Choose winner"
+                              : "Waiting for prior result"}
+                      </span>
+                      {match.match && (
+                        <button
+                          type="button"
+                          onClick={() => onClearMatch(match.match.id)}
+                          disabled={isSaving}
+                          className="font-bold text-rose-600 hover:text-rose-700 disabled:text-slate-300"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function TournamentLeaderboard({
   tournamentId,
   decks = [],
@@ -324,7 +542,6 @@ export default function TournamentLeaderboard({
   const [matchResults, setMatchResults] = useState(() =>
     matches.map(normalizeMatch)
   );
-  const [matchForm, setMatchForm] = useState(emptyMatchForm);
   const [savingMatchId, setSavingMatchId] = useState("");
   const [message, setMessage] = useState("");
   const normalizedDecks = useMemo(() => decks.map(normalizeDeck), [decks]);
@@ -336,6 +553,10 @@ export default function TournamentLeaderboard({
     () => buildLeaderboard(normalizedDecks, normalizedMatches),
     [normalizedDecks, normalizedMatches]
   );
+  const bracketRounds = useMemo(
+    () => buildBracketRounds(normalizedDecks, normalizedMatches),
+    [normalizedDecks, normalizedMatches]
+  );
   const decksById = useMemo(
     () => Object.fromEntries(normalizedDecks.map((deck) => [deck.id, deck])),
     [normalizedDecks]
@@ -345,45 +566,11 @@ export default function TournamentLeaderboard({
   const matchupRows = openDeck
     ? getMatchupRows(openDeck, decksById, normalizedMatches)
     : [];
-  const selectedMatchDecks = useMemo(() => {
-    return normalizedDecks.filter(
-      (deck) => deck.id === matchForm.deckAId || deck.id === matchForm.deckBId
-    );
-  }, [matchForm.deckAId, matchForm.deckBId, normalizedDecks]);
-
   useEffect(() => {
     setMatchResults(matches.map(normalizeMatch));
   }, [matches]);
 
-  function getDeckLabel(deckId) {
-    const deck = decksById[deckId];
-    if (!deck) return "Unknown deck";
-
-    return `${deck.deckName} (${deck.playerName})`;
-  }
-
-  function updateMatchForm(nextValues) {
-    setMatchForm((current) => {
-      const next = { ...current, ...nextValues };
-
-      if (
-        next.winnerDeckId &&
-        next.winnerDeckId !== next.deckAId &&
-        next.winnerDeckId !== next.deckBId
-      ) {
-        next.winnerDeckId = "";
-      }
-
-      return next;
-    });
-  }
-
-  function resetMatchForm() {
-    setMatchForm(emptyMatchForm);
-  }
-
-  async function saveMatch(event) {
-    event.preventDefault();
+  async function saveBracketWinner(bracketMatch, winnerDeckId) {
     setMessage("");
 
     if (!tournamentId) {
@@ -391,30 +578,26 @@ export default function TournamentLeaderboard({
       return;
     }
 
-    if (!matchForm.deckAId || !matchForm.deckBId || !matchForm.winnerDeckId) {
-      setMessage("Choose two decks and a winner.");
+    if (!bracketMatch.deckA || !bracketMatch.deckB) {
+      setMessage("This bracket match is waiting for both decks.");
       return;
     }
 
-    if (matchForm.deckAId === matchForm.deckBId) {
-      setMessage("A match needs two different decks.");
-      return;
-    }
+    const savingKey = bracketMatch.match?.id ?? bracketMatch.id;
+    setSavingMatchId(savingKey);
 
-    setSavingMatchId(matchForm.id || "new");
-
-    const { data, error } = matchForm.id
+    const { data, error } = bracketMatch.match
       ? await supabase.rpc("update_match_result", {
-          match_id: matchForm.id,
-          match_deck_a_id: matchForm.deckAId,
-          match_deck_b_id: matchForm.deckBId,
-          match_winner_deck_id: matchForm.winnerDeckId,
+          match_id: bracketMatch.match.id,
+          match_deck_a_id: bracketMatch.deckA.id,
+          match_deck_b_id: bracketMatch.deckB.id,
+          match_winner_deck_id: winnerDeckId,
         })
       : await supabase.rpc("create_match_result", {
           match_tournament_id: tournamentId,
-          match_deck_a_id: matchForm.deckAId,
-          match_deck_b_id: matchForm.deckBId,
-          match_winner_deck_id: matchForm.winnerDeckId,
+          match_deck_a_id: bracketMatch.deckA.id,
+          match_deck_b_id: bracketMatch.deckB.id,
+          match_winner_deck_id: winnerDeckId,
         });
 
     setSavingMatchId("");
@@ -425,26 +608,25 @@ export default function TournamentLeaderboard({
     }
 
     if (!data) {
-      setMessage("Match result was not saved. Refresh and try again.");
+      setMessage("Bracket result was not saved. Refresh and try again.");
       return;
     }
 
     const savedMatch = {
-      id: matchForm.id || data,
-      deckAId: matchForm.deckAId,
-      deckBId: matchForm.deckBId,
-      winnerDeckId: matchForm.winnerDeckId,
+      id: bracketMatch.match?.id || data,
+      deckAId: bracketMatch.deckA.id,
+      deckBId: bracketMatch.deckB.id,
+      winnerDeckId,
     };
 
     setMatchResults((current) =>
-      matchForm.id
+      bracketMatch.match
         ? current.map((match) =>
-            match.id === matchForm.id ? savedMatch : match
+            match.id === bracketMatch.match.id ? savedMatch : match
           )
         : [savedMatch, ...current]
     );
-    resetMatchForm();
-    setMessage(matchForm.id ? "Match result updated." : "Match result added.");
+    setMessage("Bracket result saved.");
   }
 
   async function deleteMatch(matchId) {
@@ -473,161 +655,33 @@ export default function TournamentLeaderboard({
     setMatchResults((current) =>
       current.filter((match) => match.id !== matchId)
     );
-    if (matchForm.id === matchId) resetMatchForm();
     setMessage("Match result deleted.");
   }
 
   return (
     <section className="space-y-4">
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">
-              Match Results
-            </h2>
-            <p className="mt-1 text-slate-600">
-              Add or edit match outcomes for the leaderboard.
-            </p>
-          </div>
-          <p className="text-sm font-semibold text-slate-600">
-            {normalizedDecks.length} approved deck
-            {normalizedDecks.length === 1 ? "" : "s"}
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">
+            Tournament Bracket
+          </h2>
+          <p className="mt-1 text-slate-600">
+            Click a deck in each matchup to advance it. The bracket expands to
+            fit the number of approved entries.
           </p>
         </div>
+
+        <TournamentBracket
+          rounds={bracketRounds}
+          savingMatchId={savingMatchId}
+          onSaveWinner={saveBracketWinner}
+          onClearMatch={deleteMatch}
+        />
 
         {message && (
           <p className="mt-4 rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-700">
             {message}
           </p>
-        )}
-
-        <form
-          onSubmit={saveMatch}
-          className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto]"
-        >
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">Deck A</span>
-            <select
-              value={matchForm.deckAId}
-              onChange={(event) =>
-                updateMatchForm({ deckAId: event.target.value })
-              }
-              className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
-            >
-              <option value="">Choose deck</option>
-              {normalizedDecks.map((deck) => (
-                <option key={deck.id} value={deck.id}>
-                  {deck.deckName} ({deck.playerName})
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">Deck B</span>
-            <select
-              value={matchForm.deckBId}
-              onChange={(event) =>
-                updateMatchForm({ deckBId: event.target.value })
-              }
-              className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
-            >
-              <option value="">Choose deck</option>
-              {normalizedDecks.map((deck) => (
-                <option key={deck.id} value={deck.id}>
-                  {deck.deckName} ({deck.playerName})
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">Winner</span>
-            <select
-              value={matchForm.winnerDeckId}
-              onChange={(event) =>
-                updateMatchForm({ winnerDeckId: event.target.value })
-              }
-              className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
-            >
-              <option value="">Choose winner</option>
-              {selectedMatchDecks.map((deck) => (
-                <option key={deck.id} value={deck.id}>
-                  {deck.deckName}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="flex items-end gap-2">
-            <button
-              type="submit"
-              disabled={savingMatchId === (matchForm.id || "new")}
-              className="rounded-xl bg-sky-600 px-5 py-3 font-bold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              {matchForm.id ? "Update" : "Add"}
-            </button>
-            {matchForm.id && (
-              <button
-                type="button"
-                onClick={resetMatchForm}
-                className="rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
-
-        {normalizedMatches.length > 0 ? (
-          <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600">
-                <tr>
-                  <th className="px-4 py-3 font-bold">Deck A</th>
-                  <th className="px-4 py-3 font-bold">Deck B</th>
-                  <th className="px-4 py-3 font-bold">Winner</th>
-                  <th className="px-4 py-3 font-bold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {normalizedMatches.map((match) => (
-                  <tr key={match.id} className="border-t border-slate-100">
-                    <td className="px-4 py-3 text-slate-700">
-                      {getDeckLabel(match.deckAId)}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700">
-                      {getDeckLabel(match.deckBId)}
-                    </td>
-                    <td className="px-4 py-3 font-bold text-slate-900">
-                      {getDeckLabel(match.winnerDeckId)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setMatchForm(match)}
-                          className="rounded-xl border border-slate-300 px-3 py-2 font-bold text-slate-700 hover:bg-slate-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteMatch(match.id)}
-                          disabled={savingMatchId === match.id}
-                          className="rounded-xl bg-rose-600 px-3 py-2 font-bold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="mt-5 text-slate-500">No match results yet.</p>
         )}
       </section>
 
