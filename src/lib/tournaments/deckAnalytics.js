@@ -70,6 +70,12 @@ function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+function normalizeTraitScore(score, totalCards) {
+  if (!totalCards) return 0;
+
+  return clampScore((score / totalCards) * 10);
+}
+
 function diceValue(dice) {
   if (!dice || typeof dice !== "string") return 0;
   const match = dice.match(/D(\d+)/i);
@@ -379,17 +385,27 @@ export function getDeckAnalytics(cards = []) {
   consistency = Math.max(0, consistency);
   tempo = Math.max(0, tempo);
 
-  const traitTotal = Math.max(1, offense + defense + economy + consistency + tempo);
-
   analytics.traitBars = [
-    { label: "Offense", value: clampScore((offense / traitTotal) * 100) },
-    { label: "Defense", value: clampScore((defense / traitTotal) * 100) },
-    { label: "Economy", value: clampScore((economy / traitTotal) * 100) },
+    {
+      label: "Offense",
+      value: normalizeTraitScore(offense, analytics.totalCards),
+    },
+    {
+      label: "Defense",
+      value: normalizeTraitScore(defense, analytics.totalCards),
+    },
+    {
+      label: "Economy",
+      value: normalizeTraitScore(economy, analytics.totalCards),
+    },
     {
       label: "Consistency",
-      value: clampScore((consistency / traitTotal) * 100),
+      value: normalizeTraitScore(consistency, analytics.totalCards),
     },
-    { label: "Tempo", value: clampScore((tempo / traitTotal) * 100) },
+    {
+      label: "Tempo",
+      value: normalizeTraitScore(tempo, analytics.totalCards),
+    },
   ];
 
   return analytics;

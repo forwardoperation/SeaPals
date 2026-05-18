@@ -205,7 +205,7 @@ export const invertebrateCards = [
     },
 
     playRequirements: [],
-    passives: [],
+    passives: [ecoBoost(1)],
 
     onPlay: [],
 

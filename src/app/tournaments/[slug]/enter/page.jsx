@@ -4,6 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { allCards, cardsById } from "@/data/cards";
 import {
+  CUSTOM_DECK_OPTION,
+  DEFAULT_PREBUILT_DECK_ID,
+  getPrebuiltDeckById,
+  prebuiltDecks,
+} from "@/data/tournaments/prebuiltDecks";
+import {
   formatCreatureClass,
   formatCreatureType,
   formatCreatureZone,
@@ -20,6 +26,17 @@ const CARD_TABS = [
   { label: "Invertebrate", value: "invertebrate" },
   { label: "Filter Feeder", value: "filter-feeder" },
   { label: "Structure", value: "structure" },
+];
+
+const PRESET_SUMMARY_GROUPS = [
+  { label: "Coral", category: "coral" },
+  { label: "Support", category: "support" },
+  { label: "Fish", category: "fish" },
+  { label: "Predator", category: "predator" },
+  { label: "Apex", category: "apex" },
+  { label: "Filter Feeder", category: "filter-feeder" },
+  { label: "Invertebrate", category: "invertebrate" },
+  { label: "Structure", category: "structure" },
 ];
 
 function getCardDisplayName(card) {
@@ -296,7 +313,106 @@ function Info({ label, value }) {
   );
 }
 
+function entriesToQuantities(entries) {
+  const nextQuantities = {};
+
+  for (const entry of entries) {
+    if (cardsById[entry.cardId]) {
+      nextQuantities[entry.cardId] = String(entry.quantity);
+    }
+  }
+
+  return nextQuantities;
+}
+
+function getDefaultPrebuiltDeck() {
+  return getPrebuiltDeckById(DEFAULT_PREBUILT_DECK_ID);
+}
+
+function DeckPresetSummary({ deck }) {
+  const availableCards = deck.cards.filter((entry) => cardsById[entry.cardId]);
+  const unavailableCards = deck.cards.filter((entry) => !cardsById[entry.cardId]);
+  const listedTotal = deck.cards.reduce((sum, entry) => sum + entry.quantity, 0);
+  const selectableTotal = availableCards.reduce(
+    (sum, entry) => sum + entry.quantity,
+    0
+  );
+  const groupedCards = PRESET_SUMMARY_GROUPS.map((group) => ({
+    ...group,
+    cards: availableCards
+      .filter((entry) => cardsById[entry.cardId]?.category === group.category)
+      .sort((first, second) => {
+        const firstCard = cardsById[first.cardId];
+        const secondCard = cardsById[second.cardId];
+        const firstName = `${getCardDisplayName(firstCard)} ${
+          firstCard.stageLabel ?? ""
+        }`;
+        const secondName = `${getCardDisplayName(secondCard)} ${
+          secondCard.stageLabel ?? ""
+        }`;
+
+        return firstName.localeCompare(secondName);
+      }),
+  })).filter((group) => group.cards.length > 0);
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">{deck.name}</h3>
+          <p className="text-sm text-slate-600">
+            Standard issued deck list. Choose Custom to edit card quantities.
+          </p>
+        </div>
+        <p className="text-sm font-bold text-slate-700">
+          {listedTotal} listed / {selectableTotal} selectable
+        </p>
+      </div>
+
+      {unavailableCards.length > 0 && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          Missing card data:{" "}
+          {unavailableCards
+            .map((entry) => `${entry.quantity}x ${entry.unavailableName ?? entry.cardId}`)
+            .join(", ")}
+        </div>
+      )}
+
+      <div className="mt-5 space-y-5">
+        {groupedCards.map((group) => (
+          <section key={group.category}>
+            <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+              {group.label}
+            </h4>
+            <div className="mt-2 grid gap-2 md:grid-cols-2">
+              {group.cards.map((entry) => {
+                const card = cardsById[entry.cardId];
+
+                return (
+                  <div
+                    key={entry.cardId}
+                    className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm"
+                  >
+                    <span className="font-semibold text-slate-800">
+                      {getCardDisplayName(card)}
+                      {card.stageLabel ? ` - ${card.stageLabel}` : ""}
+                    </span>
+                    <span className="font-bold text-slate-500">
+                      x{entry.quantity}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function EnterTournamentPage({ params, searchParams }) {
+  const defaultPrebuiltDeck = getDefaultPrebuiltDeck();
   const [slug, setSlug] = useState("");
   const [submissionId, setSubmissionId] = useState("");
   const [editToken, setEditToken] = useState("");
@@ -306,8 +422,13 @@ export default function EnterTournamentPage({ params, searchParams }) {
   const [openCardId, setOpenCardId] = useState(null);
   const [playerName, setPlayerName] = useState("");
   const [playerEmail, setPlayerEmail] = useState("");
-  const [deckName, setDeckName] = useState("");
-  const [quantities, setQuantities] = useState({});
+  const [deckName, setDeckName] = useState(defaultPrebuiltDeck?.name ?? "");
+  const [selectedDeckOption, setSelectedDeckOption] = useState(
+    DEFAULT_PREBUILT_DECK_ID
+  );
+  const [quantities, setQuantities] = useState(() =>
+    defaultPrebuiltDeck ? entriesToQuantities(defaultPrebuiltDeck.cards) : {}
+  );
   const [adminNotes, setAdminNotes] = useState("");
   const [message, setMessage] = useState("");
   const [validationAttempted, setValidationAttempted] = useState(false);
@@ -357,6 +478,7 @@ export default function EnterTournamentPage({ params, searchParams }) {
       }
 
       setEditingSubmission(data);
+      setSelectedDeckOption(CUSTOM_DECK_OPTION);
       setPlayerName(data.player_name ?? "");
       setPlayerEmail(data.player_email ?? "");
       setDeckName(data.deck_name ?? "");
@@ -371,6 +493,11 @@ export default function EnterTournamentPage({ params, searchParams }) {
 
     loadSubmission();
   }, [submissionId, editToken]);
+
+  const selectedPrebuiltDeck = useMemo(
+    () => getPrebuiltDeckById(selectedDeckOption),
+    [selectedDeckOption]
+  );
 
   const filteredCards = useMemo(() => {
     return allCards.filter((card) => card.category === activeTab);
@@ -426,6 +553,21 @@ export default function EnterTournamentPage({ params, searchParams }) {
       tournament
     );
   }, [deckName, playerName, selectedCards, tournament]);
+
+  function selectDeckOption(deckId) {
+    setSelectedDeckOption(deckId);
+    setOpenCardId(null);
+    setValidationAttempted(false);
+
+    const prebuiltDeck = getPrebuiltDeckById(deckId);
+
+    if (!prebuiltDeck) {
+      return;
+    }
+
+    setDeckName(prebuiltDeck.name);
+    setQuantities(entriesToQuantities(prebuiltDeck.cards));
+  }
 
   async function submitDeck(event) {
     event.preventDefault();
@@ -492,8 +634,11 @@ export default function EnterTournamentPage({ params, searchParams }) {
 
     setPlayerName("");
     setPlayerEmail("");
-    setDeckName("");
-    setQuantities({});
+    setDeckName(defaultPrebuiltDeck?.name ?? "");
+    setSelectedDeckOption(DEFAULT_PREBUILT_DECK_ID);
+    setQuantities(
+      defaultPrebuiltDeck ? entriesToQuantities(defaultPrebuiltDeck.cards) : {}
+    );
     setValidationAttempted(false);
     setOpenCardId(null);
   }
@@ -544,11 +689,32 @@ export default function EnterTournamentPage({ params, searchParams }) {
           <Field label="Player Name" value={playerName} setValue={setPlayerName} />
           <Field label="Player Email" value={playerEmail} setValue={setPlayerEmail} />
           <Field label="Deck Name" value={deckName} setValue={setDeckName} />
+          <div>
+            <label className="block text-sm font-semibold text-slate-700">
+              Deck Type
+            </label>
+            <select
+              value={selectedDeckOption}
+              onChange={(event) => selectDeckOption(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+            >
+              {prebuiltDecks.map((deck) => (
+                <option key={deck.id} value={deck.id}>
+                  {deck.name}
+                </option>
+              ))}
+              <option value={CUSTOM_DECK_OPTION}>Custom Deck</option>
+            </select>
+          </div>
         </div>
 
         <section>
           <h2 className="mb-4 text-2xl font-bold text-slate-900">Deck List</h2>
 
+          {selectedPrebuiltDeck ? (
+            <DeckPresetSummary deck={selectedPrebuiltDeck} />
+          ) : (
+            <>
           <div className="mb-5 flex flex-wrap gap-2">
             {CARD_TABS.map((tab) => (
               <button
@@ -638,6 +804,8 @@ export default function EnterTournamentPage({ params, searchParams }) {
               );
             })}
           </div>
+            </>
+          )}
         </section>
 
         <button
