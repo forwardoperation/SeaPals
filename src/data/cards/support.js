@@ -77,14 +77,14 @@ export const supportCards = [
   },
 
   {
-    id: "full-heal",
-    name: "Full Heal",
+    id: "coral-heal",
+    name: "Coral Heal",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
     image: "/images/cards/support/full-heal.png",
     sortOrder: 502,
 
-    text: "Choose one of your corals and remove all status effects from it.",
+    text: "Choose one of your corals, remove all effects from it.",
 
     effects: [
       {
