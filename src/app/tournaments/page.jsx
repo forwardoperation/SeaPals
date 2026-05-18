@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import Image from "next/image";
 import Link from "next/link";
 
 export const metadata = {
@@ -17,9 +18,14 @@ export default async function TournamentsPage() {
 
   return (
     <main className="space-y-6">
-      <h1 className="text-4xl font-bold text-slate-900">
-        Tournaments
-      </h1>
+      <Image
+        src="/images/brand/SeaPals-Tournament.png"
+        alt="SeaPals Tournament"
+        width={420}
+        height={150}
+        priority
+        className="h-auto w-full max-w-xs sm:max-w-sm"
+      />
 
       <div className="grid gap-4">
         {tournaments.map((t) => (
