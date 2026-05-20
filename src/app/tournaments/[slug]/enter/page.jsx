@@ -25,7 +25,7 @@ const CARD_TABS = [
   { label: "Fish", value: "fish" },
   { label: "Invertebrate", value: "invertebrate" },
   { label: "Filter Feeder", value: "filter-feeder" },
-  { label: "Structure", value: "structure" },
+  { label: "Environment", value: "environment" },
 ];
 
 const PRESET_SUMMARY_GROUPS = [
@@ -36,7 +36,7 @@ const PRESET_SUMMARY_GROUPS = [
   { label: "Apex", category: "apex" },
   { label: "Filter Feeder", category: "filter-feeder" },
   { label: "Invertebrate", category: "invertebrate" },
-  { label: "Structure", category: "structure" },
+  { label: "Environment", category: "environment" },
 ];
 
 function getCardDisplayName(card) {
@@ -58,7 +58,7 @@ function getCardSubtitle(card) {
 
 function formatCost(card) {
   if (card.kind === "support") return "Free to play";
-  if (card.kind === "condition") return "Environment card";
+  if (card.kind === "condition") return "Condition card";
   if (!card.cost?.rp) return "No RP cost";
   return `${card.cost.rp} RP`;
 }

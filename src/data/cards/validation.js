@@ -18,6 +18,10 @@ export function validateCards(cards) {
       if (!card.class) throw new Error(`${card.id} creature missing class`);
     }
 
+    if (card.subtype && card.kind !== "creature") {
+      throw new Error(`${card.id} has creature subtype but is not a creature`);
+    }
+
     if (!KINDS_WITHOUT_COST.includes(card.kind) && card.cost == null) {
       throw new Error(`${card.id} missing cost`);
     }

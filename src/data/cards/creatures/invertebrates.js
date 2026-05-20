@@ -1,20 +1,20 @@
 import { CardKind, CardCategory, EffectType, Timing, Zone } from "../types";
 
-const requiresAnyStructure = {
-  id: "requires-structure",
+const requiresAnyEnvironment = {
+  id: "requires-environment",
   type: "kindInPlay",
-  requiredKind: CardKind.STRUCTURE,
+  requiredKind: CardKind.ENVIRONMENT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if a structure card is in play on your reef.",
+  text: "Can only be played if an environment card is in play on your reef.",
 };
 
 const requiresShipWreck = {
   id: "requires-ship-wreck",
   type: "cardInPlay",
   cardId: "ship-wreck",
-  requiredKind: CardKind.STRUCTURE,
+  requiredKind: CardKind.ENVIRONMENT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if a Ship Wreck structure card is in play on your reef.",
+  text: "Can only be played if a Ship Wreck environment card is in play on your reef.",
 };
 
 const toxicPassive = {
@@ -757,7 +757,7 @@ export const invertebrateCards = [
       weight: "1.5 lbs",
     },
 
-    playRequirements: [requiresAnyStructure],
+    playRequirements: [requiresAnyEnvironment],
 
     passives: [ecoBoost(4)],
 

@@ -1,20 +1,20 @@
 import { CardKind, CardCategory, EffectType, Timing, Zone } from "../types";
 
-const requiresAnyStructure = {
-  id: "requires-structure",
+const requiresAnyEnvironment = {
+  id: "requires-environment",
   type: "kindInPlay",
-  requiredKind: CardKind.STRUCTURE,
+  requiredKind: CardKind.ENVIRONMENT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if a structure card is in play on your reef.",
+  text: "Can only be played if an environment card is in play on your reef.",
 };
 
 const requiresMarineSanctuary = {
   id: "requires-marine-sanctuary",
   type: "cardInPlay",
   cardId: "marine-sanctuary",
-  requiredKind: CardKind.STRUCTURE,
+  requiredKind: CardKind.ENVIRONMENT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if a Marine Sanctuary structure card is in play on your reef.",
+  text: "Can only be played if a Marine Sanctuary environment card is in play on your reef.",
 };
 
 const attackEffect = ({ dice, repeat = 1, categories, advantage = false }) => ({
@@ -74,7 +74,7 @@ export const predatorCards = [
       {
         id: "ambush-hunt",
         name: "Ambush Hunt",
-        text: "Perform a D6 attack against an opponent’s fish or predator. If a structure card is in play on your reef, add 1D4 to your attack roll.",
+        text: "Perform a D6 attack against an opponent’s fish or predator. If an environment card is in play on your reef, add 1D4 to your attack roll.",
         effects: [
           attackEffect({
             dice: "D6",
@@ -85,7 +85,7 @@ export const predatorCards = [
           {
             condition: {
               type: "kindInPlay",
-              requiredKind: CardKind.STRUCTURE,
+              requiredKind: CardKind.ENVIRONMENT,
               zone: Zone.YOUR_REEF,
             },
             modifier: {
@@ -139,7 +139,7 @@ export const predatorCards = [
       {
         id: "feeding-frenzy",
         name: "Feeding Frenzy",
-        text: "1 Bite. If a structure card is in play, add +1 more bite for each Reef Shark on your reef. Max 3.",
+        text: "1 Bite. If an environment card is in play, add +1 more bite for each Reef Shark on your reef. Max 3.",
         effects: [
           {
             ...biteEffect({
@@ -153,7 +153,7 @@ export const predatorCards = [
               maxBonus: 3,
               requires: {
                 type: "kindInPlay",
-                requiredKind: CardKind.STRUCTURE,
+                requiredKind: CardKind.ENVIRONMENT,
                 zone: Zone.YOUR_REEF,
               },
             },
@@ -204,7 +204,7 @@ export const predatorCards = [
       {
         id: "quick-strike",
         name: "Quick Strike",
-        text: "1 Bite. If a Ship Wreck structure is on your reef, perform a second Bite.",
+        text: "1 Bite. If a Ship Wreck environment is on your reef, perform a second Bite.",
         effects: [
           {
             ...biteEffect({
@@ -219,7 +219,7 @@ export const predatorCards = [
               requires: {
                 type: "cardInPlay",
                 cardId: "ship-wreck",
-                requiredKind: CardKind.STRUCTURE,
+                requiredKind: CardKind.ENVIRONMENT,
                 zone: Zone.YOUR_REEF,
               },
             },
@@ -379,7 +379,7 @@ export const predatorCards = [
       {
         id: "tail-whip",
         name: "Tail Whip",
-        text: "If Drop Off Structure is in play on your reef, subtract 2 from your opponent’s defensive dice roll.",
+        text: "If Drop Off environment is in play on your reef, subtract 2 from your opponent’s defensive dice roll.",
         effects: [
           {
             type: "modifyDefenseRoll",
@@ -389,7 +389,7 @@ export const predatorCards = [
             requires: {
               type: "cardInPlay",
               cardId: "drop-off",
-              requiredKind: CardKind.STRUCTURE,
+              requiredKind: CardKind.ENVIRONMENT,
               zone: Zone.YOUR_REEF,
             },
           },
@@ -459,7 +459,7 @@ export const predatorCards = [
             requires: {
               type: "cardInPlay",
               cardId: "marine-sanctuary",
-              requiredKind: CardKind.STRUCTURE,
+              requiredKind: CardKind.ENVIRONMENT,
               zone: Zone.YOUR_REEF,
             },
           },

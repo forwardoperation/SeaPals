@@ -19,7 +19,7 @@ const TYPE_CONFIG = [
   { slug: "fish", title: "Fish", category: "fish" },
   { slug: "invertebrates", title: "Invertebrates", category: "invertebrate" },
   { slug: "coral", title: "Coral", category: "coral" },
-  { slug: "structures", title: "Structures", category: "structure" },
+  { slug: "environments", title: "Environments", category: "environment" },
   { slug: "support", title: "Support", category: "support" },
 ];
 

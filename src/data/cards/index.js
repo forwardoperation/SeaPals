@@ -4,10 +4,14 @@ import { predatorCards } from "./creatures/predators";
 import { invertebrateCards } from "./creatures/invertebrates";
 import { filterFeederCards } from "./creatures/filterFeeders";
 import { deepCreatureCards } from "./creatures/deep";
+import {
+  oceanicBaitballCards,
+  oceanicCreatureCards,
+} from "./creatures/oceanic";
 import { coralCards } from "./coral";
 import { deepCoralCards } from "./deepCoral";
 import { supportCards } from "./support";
-import { structureCards } from "./structures";
+import { environmentCards } from "./environments";
 import { conditionCards } from "./conditions";
 import { validateCards } from "./validation";
 import { CardCategory, CardKind, CreatureClass, CreatureZone } from "./types";
@@ -38,8 +42,10 @@ export const allCards = [
   ...predatorCards,
   ...invertebrateCards,
   ...filterFeederCards,
+  ...oceanicBaitballCards,
+  ...oceanicCreatureCards,
   ...deepCreatureCards,
-  ...structureCards,
+  ...environmentCards,
   ...supportCards,
   ...conditionCards,
 ]

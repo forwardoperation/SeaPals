@@ -156,12 +156,12 @@ export const supportCards = [
     image: "/images/cards/support/scientist-jes.png",
     sortOrder: 505,
 
-    text: "Search your deck for a structure card and place it into your hand. Shuffle your deck afterwards. Draw 2 cards.",
+    text: "Search your deck for an environment card and place it into your hand. Shuffle your deck afterwards. Draw 2 cards.",
 
     effects: [
       {
         type: EffectType.SEARCH_DECK,
-        targetKind: CardKind.STRUCTURE,
+        targetKind: CardKind.ENVIRONMENT,
         amount: 1,
         destination: Zone.HAND,
         shuffleAfterwards: true,
