@@ -2,7 +2,7 @@ export const CardKind = {
   CREATURE: "creature",
   CORAL: "coral",
   SUPPORT: "support",
-  STRUCTURE: "structure",
+  ENVIRONMENT: "environment",
   CONDITION: "condition",
 };
 
@@ -14,7 +14,7 @@ export const CardCategory = {
   FILTER_FEEDER: "filter-feeder",
   CORAL: "coral",
   SUPPORT: "support",
-  STRUCTURE: "structure",
+  ENVIRONMENT: "environment",
   CONDITION: "condition",
 };
 
@@ -31,6 +31,11 @@ export const CreatureClass = {
   FISH: "fish",
   PREDATOR: "predator",
   APEX: "apex",
+};
+
+export const CreatureSubtype = {
+  BAITBALL: "baitball",
+  OCEANIC: "oceanic",
 };
 
 export function formatCreatureZone(zone) {
@@ -51,9 +56,25 @@ export function formatCreatureClass(creatureClass) {
     .join(" ");
 }
 
+export function formatCreatureSubtype(subtype) {
+  if (!subtype) return "";
+
+  return String(subtype)
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export function formatCreatureType(card) {
   if (!card?.zone || !card?.class) return "";
-  return `${formatCreatureZone(card.zone)} ${formatCreatureClass(card.class)}`;
+
+  return [
+    formatCreatureZone(card.zone),
+    formatCreatureSubtype(card.subtype),
+    formatCreatureClass(card.class),
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function getAcceptedClassesForSlot(slotClass) {
@@ -105,7 +126,7 @@ export const CardIcon = {
   CORAL: "coral_icon",
   FISH: "fish_icon",
   INVERTEBRATE: "invertebrate_icon",
-  STRUCTURE: "structure_icon",
+  ENVIRONMENT: "environment_icon",
 
   D10_ATTACK: "d10_attack",
 };
@@ -145,6 +166,8 @@ export const EffectType = {
 
   // Special board/game objects
   CREATE_ATTACKABLE_VP_CARD: "createAttackableVpCard",
+  CREATE_BAITBALL_STACK: "createBaitballStack",
+  MODIFY_PREY_DENSITY: "modifyPreyDensity",
 
   // Upgrades / attachments
   UPGRADE_CARD: "upgradeCard",

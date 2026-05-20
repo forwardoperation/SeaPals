@@ -21,7 +21,7 @@ const CATEGORY_LABELS = {
   fish: "Fish",
   invertebrate: "Invertebrate",
   "filter-feeder": "Filter Feeder",
-  structure: "Structure",
+  environment: "Environment",
   condition: "Condition",
 };
 
@@ -33,7 +33,7 @@ const CATEGORY_ORDER = [
   "fish",
   "invertebrate",
   "filter-feeder",
-  "structure",
+  "environment",
   "condition",
 ];
 
