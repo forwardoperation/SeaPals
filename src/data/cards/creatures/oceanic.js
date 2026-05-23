@@ -239,7 +239,7 @@ const oceanicCreatureData = [
     defense: "D20",
   },
   {
-    id: "oceanic-manta-ray",
+    id: "manta-ray",
     name: "Manta Ray",
     class: CreatureClass.FILTER_FEEDER,
     rp: 8,
@@ -248,7 +248,7 @@ const oceanicCreatureData = [
     defense: "D10",
   },
   {
-    id: "humpback-whale-oceanic",
+    id: "humpback-whale",
     name: "Humpback Whale",
     class: CreatureClass.FILTER_FEEDER,
     rp: 10,
@@ -258,7 +258,7 @@ const oceanicCreatureData = [
     defense: "D20",
   },
   {
-    id: "blue-whale-oceanic",
+    id: "blue-whale",
     name: "Blue Whale",
     class: CreatureClass.FILTER_FEEDER,
     rp: 14,
@@ -268,7 +268,7 @@ const oceanicCreatureData = [
     defense: "D20",
   },
   {
-    id: "whale-shark-oceanic",
+    id: "whale-shark",
     name: "Whale Shark",
     class: CreatureClass.FILTER_FEEDER,
     rp: 9,
@@ -277,7 +277,7 @@ const oceanicCreatureData = [
     defense: "D20",
   },
   {
-    id: "ocean-sunfish-oceanic",
+    id: "ocean-sunfish",
     name: "Ocean Sunfish",
     class: CreatureClass.FILTER_FEEDER,
     rp: 8,
@@ -710,4 +710,3 @@ export const oceanicCreatureCards = oceanicCreatureData.map((card, index) => {
     set: { id: "oceanic", name: "Oceanic", collectorNumber: null, totalInSet: null },
   };
 });
-

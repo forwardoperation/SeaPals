@@ -1,5 +1,7 @@
 import { allCards } from "@/data/cards";
 import { CreatureZone } from "@/data/cards/types";
+import fs from "node:fs";
+import path from "node:path";
 
 const ZONE_CONFIG = [
   { slug: "reef", title: "Reef Set", label: "Reef", zone: CreatureZone.REEF },
@@ -67,7 +69,9 @@ function cardZone(card) {
 function galleryCard(card) {
   const src = IMAGE_PATH_OVERRIDES[card.id] ?? card.image ?? null;
   const hasPngImage = Boolean(
-    src?.toLowerCase().endsWith(".png") && AVAILABLE_IMAGE_PATHS.has(src)
+    src?.toLowerCase().endsWith(".png") &&
+      (AVAILABLE_IMAGE_PATHS.has(src) ||
+        fs.existsSync(path.join(process.cwd(), "public", src.replace(/^\//, ""))))
   );
 
   return {

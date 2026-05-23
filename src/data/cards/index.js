@@ -2,7 +2,6 @@ import { apexCards } from "./creatures/apex";
 import { fishCards } from "./creatures/fish";
 import { predatorCards } from "./creatures/predators";
 import { invertebrateCards } from "./creatures/invertebrates";
-import { filterFeederCards } from "./creatures/filterFeeders";
 import { deepCreatureCards } from "./creatures/deep";
 import {
   oceanicBaitballCards,
@@ -41,7 +40,6 @@ export const allCards = [
   ...apexCards,
   ...predatorCards,
   ...invertebrateCards,
-  ...filterFeederCards,
   ...oceanicBaitballCards,
   ...oceanicCreatureCards,
   ...deepCreatureCards,
