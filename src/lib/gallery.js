@@ -1,7 +1,5 @@
 import { allCards } from "@/data/cards";
 import { CreatureZone } from "@/data/cards/types";
-import fs from "node:fs";
-import path from "node:path";
 
 const ZONE_CONFIG = [
   { slug: "reef", title: "Reef Set", label: "Reef", zone: CreatureZone.REEF },
@@ -53,6 +51,46 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/support/full-heal.png",
   "/images/cards/support/poison-heal.png",
   "/images/cards/support/remote-search.png",
+  "/images/cards/support/Deep/rov-lights.png",
+  "/images/cards/apex/Deep/colossal-squid.png",
+  "/images/cards/apex/Deep/giant-phantom-jelly.png",
+  "/images/cards/apex/Deep/giant-squid.png",
+  "/images/cards/apex/Deep/greenland-shark.png",
+  "/images/cards/coral/Deep/bamboo-coral-base.png",
+  "/images/cards/coral/Deep/bamboo-coral-stage-1.png",
+  "/images/cards/coral/Deep/bamboo-coral-stage-2.png",
+  "/images/cards/coral/Deep/black-coral-base.png",
+  "/images/cards/coral/Deep/black-coral-stage-1.png",
+  "/images/cards/coral/Deep/black-coral-stage-2.png",
+  "/images/cards/coral/Deep/deep-sea-vent.png",
+  "/images/cards/coral/Deep/mushroom-coral-base.png",
+  "/images/cards/coral/Deep/mushroom-coral-stage-1.png",
+  "/images/cards/coral/Deep/mushroom-coral-stage-2.png",
+  "/images/cards/fish/Deep/barrel-eye-fish.png",
+  "/images/cards/fish/Deep/black-swallower.png",
+  "/images/cards/fish/Deep/bristlemouth.png",
+  "/images/cards/fish/Deep/coelacanth.png",
+  "/images/cards/fish/Deep/fangtooth-fish.png",
+  "/images/cards/fish/Deep/humpback-anglerfish.png",
+  "/images/cards/fish/Deep/owlfish.png",
+  "/images/cards/fish/Deep/pacific-grenadier.png",
+  "/images/cards/fish/Deep/tripod-fish.png",
+  "/images/cards/fish/Deep/viperfish.png",
+  "/images/cards/invertebrates/Deep/brittlestar.png",
+  "/images/cards/invertebrates/Deep/deep-cucumber.png",
+  "/images/cards/invertebrates/Deep/deep-sea-jelly.png",
+  "/images/cards/invertebrates/Deep/dumbo-octopus.png",
+  "/images/cards/invertebrates/Deep/giant-isopod.png",
+  "/images/cards/invertebrates/Deep/giant-red-shrimp.png",
+  "/images/cards/invertebrates/Deep/giant-tube-worm.png",
+  "/images/cards/invertebrates/Deep/peacock-squid.png",
+  "/images/cards/invertebrates/Deep/vampire-squid.png",
+  "/images/cards/predator/Deep/chimera.png",
+  "/images/cards/predator/Deep/cookie-cutter-shark.png",
+  "/images/cards/predator/Deep/deep-sea-skate.png",
+  "/images/cards/predator/Deep/frilled-shark.png",
+  "/images/cards/predator/Deep/goblin-shark.png",
+  "/images/cards/predator/Deep/gulper-eel.png",
 ]);
 
 const IMAGE_PATH_OVERRIDES = {
@@ -69,9 +107,7 @@ function cardZone(card) {
 function galleryCard(card) {
   const src = IMAGE_PATH_OVERRIDES[card.id] ?? card.image ?? null;
   const hasPngImage = Boolean(
-    src?.toLowerCase().endsWith(".png") &&
-      (AVAILABLE_IMAGE_PATHS.has(src) ||
-        fs.existsSync(path.join(process.cwd(), "public", src.replace(/^\//, ""))))
+    src?.toLowerCase().endsWith(".png") && AVAILABLE_IMAGE_PATHS.has(src)
   );
 
   return {
