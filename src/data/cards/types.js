@@ -163,6 +163,7 @@ export const EffectType = {
   // Play restrictions / permissions
   PREVENT_CARD_PLAY: "preventCardPlay",
   ENABLE_FILTER_FEEDER_PLAY: "enableFilterFeederPlay",
+  ENABLE_TARGETING_HIDDEN_CREATURES: "enableTargetingHiddenCreatures",
 
   // Special board/game objects
   CREATE_ATTACKABLE_VP_CARD: "createAttackableVpCard",

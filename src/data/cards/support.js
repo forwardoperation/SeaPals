@@ -445,4 +445,23 @@ export const supportCards = [
       },
     ],
   },
+
+  {
+    id: "rov-lights",
+    name: "ROV Lights",
+    kind: CardKind.SUPPORT,
+    ...standardSupportRules,
+    image: "/images/cards/support/Deep/rov-lights.png",
+    sortOrder: 518,
+
+    text: "Creatures hidden by Abyss can be targeted this turn.",
+
+    effects: [
+      {
+        type: EffectType.ENABLE_TARGETING_HIDDEN_CREATURES,
+        source: "abyss",
+        duration: Duration.THIS_TURN,
+      },
+    ],
+  },
 ];
