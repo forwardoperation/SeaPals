@@ -21,6 +21,7 @@ const OFFENSE_EFFECTS = new Set([
   "stunCoral",
   "preventCardPlay",
   "grantAdvantage",
+  "modifyAttackRoll",
 ]);
 
 const ECONOMY_EFFECTS = new Set([
@@ -105,15 +106,108 @@ function collectEffects(value, effects = []) {
   return effects;
 }
 
-function getCardEffects(card) {
-  return collectEffects([
+function collectTextRules(value, rules = []) {
+  if (!value) return rules;
+
+  if (typeof value === "string") {
+    rules.push(value);
+    return rules;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectTextRules(item, rules);
+    }
+    return rules;
+  }
+
+  return rules;
+}
+
+function wordToNumber(value) {
+  const normalized = String(value ?? "").toLowerCase();
+  if (normalized === "one") return 1;
+  if (normalized === "two") return 2;
+  if (normalized === "three") return 3;
+  if (normalized === "four") return 4;
+  return Number(normalized) || 1;
+}
+
+function getStringRuleEffects(card) {
+  const effects = [];
+  const rules = collectTextRules([
     card.passives,
     card.onPlay,
     card.actions,
-    card.playRequirements,
-    card.effect,
-    card.effects,
+    card.specialRules,
   ]);
+
+  for (const rule of rules) {
+    const text = rule.toLowerCase();
+    const attackMatch = text.match(
+      /(?:(one|two|three|four|\d+)\s+)?(?:x\s*)?d(\d+)(?:\s*[+-]\s*\d+)?\s+attacks?/i
+    );
+
+    if (attackMatch) {
+      effects.push({
+        type: EffectType.ATTACK,
+        attackDice: `D${attackMatch[2]}`,
+        repeat: wordToNumber(attackMatch[1]),
+        target: { controller: "opponent" },
+      });
+    }
+
+    const damageMatch = text.match(/(?:inflict|deal)\s+(\d+)\s*hp\s+(?:of\s+)?damage/i);
+    if (damageMatch) {
+      effects.push({
+        type: EffectType.DAMAGE,
+        amount: { type: "fixed", value: Number(damageMatch[1]) },
+        target: { controller: "opponent" },
+      });
+    }
+
+    if (text.includes("opponent") && text.includes("discard")) {
+      effects.push({
+        type: EffectType.DISCARD_RANDOM_CARD,
+        targetPlayer: "opponent",
+      });
+    }
+
+    if (text.includes("opponent") && text.includes("coral") && text.includes("stun")) {
+      effects.push({
+        type: EffectType.STUN_CORAL,
+        target: { controller: "opponent" },
+      });
+    }
+
+    const attackBuffMatch = text.match(/\+(\d+)\s+(?:on|to)\s+(?:your\s+)?(?:dice\s+rolls?|attack(?: rolls?)?)/i);
+    if (attackBuffMatch) {
+      effects.push({
+        type: "modifyAttackRoll",
+        amount: Number(attackBuffMatch[1]),
+      });
+    }
+
+    if (text.includes("gain advantage") && text.includes("attack")) {
+      effects.push({ type: "grantAdvantage" });
+    }
+  }
+
+  return effects;
+}
+
+function getCardEffects(card) {
+  return [
+    ...collectEffects([
+      card.passives,
+      card.onPlay,
+      card.actions,
+      card.playRequirements,
+      card.effect,
+      card.effects,
+    ]),
+    ...getStringRuleEffects(card),
+  ];
 }
 
 function hasEffectType(effects, targetTypes) {
@@ -204,6 +298,11 @@ function getCardTraitScores(card, effects, rpCost) {
 
     if (OFFENSE_EFFECTS.has(effect.type)) {
       scores.offense += targetsOpponent(effect) ? 5 : 3;
+    }
+
+    if (effect.type === "modifyAttackRoll") {
+      scores.offense += Math.max(2, amount * 4);
+      scores.tempo += Math.max(1, amount);
     }
 
     if (
