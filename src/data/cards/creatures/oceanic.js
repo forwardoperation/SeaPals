@@ -632,6 +632,11 @@ const oceanicCreatureData = [
   },
 ];
 
+const imageByCardId = {
+  "manta-ray": "/images/cards/filter-feeders/manta-ray.png",
+  "blue-whale": "/images/cards/filter-feeders/blue-whale.png",
+};
+
 function stageLabel(stage) {
   if (stage === "base") return "Base";
   if (stage === "stage1") return "Stage 1";
@@ -691,7 +696,7 @@ export const oceanicCreatureCards = oceanicCreatureData.map((card, index) => {
     category: categoryByClass[card.class],
     zone: CreatureZone.OCEAN,
     subtype: CreatureSubtype.OCEANIC,
-    image: `/images/cards/ocean/${card.id}.png`,
+    image: imageByCardId[card.id] ?? `/images/cards/ocean/${card.id}.png`,
     sortOrder: 720 + index,
     cost: { rp: card.rp },
     victoryPoints: card.vp,
