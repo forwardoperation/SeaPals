@@ -1,4 +1,11 @@
-import { CardKind, CardCategory, EffectType, Timing, Zone } from "../types";
+import {
+  CardKind,
+  CardCategory,
+  CreatureZone,
+  EffectType,
+  Timing,
+  Zone,
+} from "../types";
 
 const requiresAnyEnvironment = {
   id: "requires-environment",
@@ -49,7 +56,7 @@ export const predatorCards = [
     name: "Green Moray Eel",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/moray-eel.png",
+    image: "/images/cards/predator/reef/moray-eel.png",
     sortOrder: 100,
 
     cost: { rp: 4 },
@@ -114,7 +121,7 @@ export const predatorCards = [
     name: "Reef Shark",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/reef-shark.png",
+    image: "/images/cards/predator/reef/reef-shark.png",
     sortOrder: 101,
 
     cost: { rp: 4 },
@@ -354,7 +361,8 @@ export const predatorCards = [
     name: "Thresher Shark",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/thresher-shark.png",
+    zone: CreatureZone.OCEAN,
+    image: "/images/cards/predator/oceanic/thresher-shark.png",
     sortOrder: 105,
 
     cost: { rp: 5 },
@@ -425,7 +433,7 @@ export const predatorCards = [
     name: "Spinner Dolphins",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/spinner-dolphins.png",
+    image: "/images/cards/predator/reef/spinner-dolphins.png",
     sortOrder: 106,
 
     cost: { rp: 4 },

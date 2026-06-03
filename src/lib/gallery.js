@@ -42,9 +42,10 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/fish/spectacled-parrotfish.png",
   "/images/cards/invertebrates/blue-crab.png",
   "/images/cards/invertebrates/emerald-crab.png",
-  "/images/cards/predator/moray-eel.png",
-  "/images/cards/predator/spinner-dolpins.png",
-  "/images/cards/predator/thresher-shark.png",
+  "/images/cards/predator/reef/moray-eel.png",
+  "/images/cards/predator/reef/reef-shark.png",
+  "/images/cards/predator/reef/spinner-dolphins.png",
+  "/images/cards/predator/oceanic/thresher-shark.png",
   "/images/cards/support/coral-cement.png",
   "/images/cards/support/crab-trap.png",
   "/images/cards/support/deep-sea-fishing-rod.png",
@@ -96,8 +97,7 @@ const AVAILABLE_IMAGE_PATHS = new Set([
 const IMAGE_PATH_OVERRIDES = {
   "bottlenose-dolphin": "/images/cards/apex/bottlenose-dolpin.png",
   "killer-whales": "/images/cards/apex/killer-whale.png",
-  "green-moray-eel": "/images/cards/predator/moray-eel.png",
-  "spinner-dolphins": "/images/cards/predator/spinner-dolpins.png",
+  "green-moray-eel": "/images/cards/predator/reef/moray-eel.png",
 };
 
 function cardZone(card) {
