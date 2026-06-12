@@ -626,7 +626,7 @@ export default function InstructionsPage() {
             <div className="mt-5 grid items-center gap-5 md:grid-cols-[1fr_auto_1fr]">
               <div className="rounded-lg bg-blue-50 p-3 ring-1 ring-blue-100">
                 <Image
-                  src="/images/cards/predator/spinner-dolphins.png"
+                  src="/images/cards/predator/reef/spinner-dolphins.png"
                   alt="Spinner Dolphins card"
                   width={240}
                   height={336}
@@ -651,7 +651,7 @@ export default function InstructionsPage() {
 
               <div className="rounded-lg bg-cyan-50 p-3 ring-1 ring-cyan-100">
                 <Image
-                  src="/images/cards/fish/picasso-triggerfish.png"
+                  src="/images/cards/fish/Reef/picasso-triggerfish.png"
                   alt="Picasso Triggerfish card"
                   width={240}
                   height={336}

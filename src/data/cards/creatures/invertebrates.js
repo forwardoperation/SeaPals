@@ -189,7 +189,7 @@ export const invertebrateCards = [
     name: "Emerald Crab",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/emerald-crab.png",
+    image: "/images/cards/invertebrates/Reef/emerald-crab.png",
     sortOrder: 302,
 
     cost: { rp: 1 },
@@ -234,7 +234,7 @@ export const invertebrateCards = [
     name: "Blue Crab",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/blue-crab.png",
+    image: "/images/cards/invertebrates/Reef/blue-crab.png",
     sortOrder: 303,
 
     cost: { rp: 2 },

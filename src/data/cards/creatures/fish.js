@@ -123,7 +123,7 @@ export const fishCards = [
     subtitle: "Cleaner",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/cleaner-wrasse.png",
+    image: "/images/cards/fish/Reef/cleaner-wrasse.png",
     sortOrder: 201,
 
     cost: { rp: 2 },
@@ -176,7 +176,7 @@ export const fishCards = [
     subtitle: "Picasso",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/picasso-triggerfish.png",
+    image: "/images/cards/fish/Reef/picasso-triggerfish.png",
     sortOrder: 202,
 
     cost: { rp: 2 },
@@ -446,7 +446,7 @@ export const fishCards = [
     name: "Lionfish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/lionfish.png",
+    image: "/images/cards/fish/Reef/Lionfish.png",
     sortOrder: 208,
 
     cost: { rp: 3 },
@@ -499,7 +499,7 @@ export const fishCards = [
     name: "Southern Flounder",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/southern-flounder.png",
+    image: "/images/cards/fish/Reef/southern-flounder.png",
     sortOrder: 209,
 
     cost: { rp: 3 },
@@ -578,7 +578,7 @@ export const fishCards = [
     name: "French Angelfish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/french-angelfish.png",
+    image: "/images/cards/fish/Reef/french-angelfish.png",
     sortOrder: 211,
 
     cost: { rp: 5 },
@@ -620,7 +620,7 @@ export const fishCards = [
     name: "Spanish Hogfish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/spanish-hogfish.png",
+    image: "/images/cards/fish/Reef/spanish-hogfish.png",
     sortOrder: 212,
 
     cost: { rp: 2 },
@@ -754,7 +754,7 @@ export const fishCards = [
     name: "Blue Tang",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/blue-tang.png",
+    image: "/images/cards/fish/Reef/blue-tang.png",
     sortOrder: 215,
 
     cost: { rp: 1 },
@@ -786,7 +786,7 @@ export const fishCards = [
     subtitle: "Spectacled",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/spectacled-parrotfish.png",
+    image: "/images/cards/fish/Reef/spectacled-parrotfish.png",
     sortOrder: 216,
 
     cost: { rp: 5 },

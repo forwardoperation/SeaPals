@@ -3,19 +3,19 @@ import Image from "next/image";
 export default function HomePage() {
   const cards = [
     {
-      src: "/images/cards/fish/french-angelfish.png",
+      src: "/images/cards/fish/Reef/french-angelfish.png",
       alt: "French Angelfish",
     },
     {
-      src: "/images/cards/apex/bull-shark.png",
+      src: "/images/cards/apex/Reef/bull-shark.png",
       alt: "Bull Shark",
     },
     {
-      src: "/images/cards/filter-feeders/blue-whale.png",
+      src: "/images/cards/filter-feeders/Oceanic/blue-whale.png",
       alt: "Blue Whale",
     },
     {
-      src: "/images/cards/apex/killer-whale.png",
+      src: "/images/cards/apex/Oceanic/killer-whale.png",
       alt: "Killer Whale",
     },
   ];

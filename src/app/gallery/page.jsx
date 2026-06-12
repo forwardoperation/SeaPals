@@ -97,13 +97,15 @@ function ProgressBar({ value }) {
 }
 
 function ArtProgress({ categories }) {
+  const countsAsPrerelease = (image, zoneSlug) =>
+    zoneSlug === "deep" || image.card?.zone === "deep" || image.card?.prerelease;
+
   const categoryStats = categories
     .map((zone) => {
       const total = zone.images.length;
-      const complete =
-        zone.slug === "deep"
-          ? 0
-          : zone.images.filter((image) => image.hasImage).length;
+      const complete = zone.images.filter(
+        (image) => image.hasImage && !countsAsPrerelease(image, zone.slug)
+      ).length;
       const percent = total > 0 ? Math.round((complete / total) * 100) : 0;
 
       return {
@@ -125,8 +127,7 @@ function ArtProgress({ categories }) {
 
   const totalCards = uniqueCards.size;
   const completedCards = Array.from(uniqueCards.values()).filter((image) => {
-    const isPrereleaseDeep = image.card?.zone === "deep";
-    return image.hasImage && !isPrereleaseDeep;
+    return image.hasImage && !countsAsPrerelease(image);
   }).length;
   const overallPercent =
     totalCards > 0 ? Math.round((completedCards / totalCards) * 100) : 0;
