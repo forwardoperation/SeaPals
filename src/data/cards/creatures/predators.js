@@ -362,6 +362,8 @@ export const predatorCards = [
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
     zone: CreatureZone.OCEAN,
+    prerelease: true,
+    galleryHidden: true,
     image: "/images/cards/predator/oceanic/thresher-shark.png",
     sortOrder: 105,
 
