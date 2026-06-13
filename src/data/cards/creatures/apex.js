@@ -15,12 +15,12 @@ const INTIMIDATION_PASSIVE = {
   },
 };
 
-const REQUIRES_ENVIRONMENT = {
-  id: "requires-environment",
+const REQUIRES_habitat = {
+  id: "requires-habitat",
   type: "kindInPlay",
-  requiredKind: CardKind.ENVIRONMENT,
+  requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if an environment card is in play on your reef.",
+  text: "Can only be played if a habitat card is in play on your reef.",
 };
 
 const reefApexCards = [
@@ -41,8 +41,8 @@ const reefApexCards = [
     },
     playRequirements: [
       {
-        ...REQUIRES_ENVIRONMENT,
-        text: "Can only be played if a Drop Off environment card is in play on your reef.",
+        ...REQUIRES_habitat,
+        text: "Can only be played if a Drop Off habitat card is in play on your reef.",
       },
     ],
     passives: [INTIMIDATION_PASSIVE],
@@ -89,8 +89,8 @@ const reefApexCards = [
     },
     playRequirements: [
       {
-        ...REQUIRES_ENVIRONMENT,
-        text: "Can only be played if a Drop Off environment card is in play on your reef.",
+        ...REQUIRES_habitat,
+        text: "Can only be played if a Drop Off habitat card is in play on your reef.",
       },
     ],
     passives: [INTIMIDATION_PASSIVE],
@@ -135,7 +135,7 @@ const reefApexCards = [
       commonName: "Hammerhead Shark",
       scientificName: "Sphyrnidae",
     },
-    playRequirements: [REQUIRES_ENVIRONMENT],
+    playRequirements: [REQUIRES_habitat],
     passives: [INTIMIDATION_PASSIVE],
     onPlay: [
       {
@@ -177,7 +177,7 @@ const reefApexCards = [
       commonName: "Bull Shark",
       scientificName: "Carcharhinus leucas",
     },
-    playRequirements: [REQUIRES_ENVIRONMENT],
+    playRequirements: [REQUIRES_habitat],
     passives: [INTIMIDATION_PASSIVE],
     onPlay: [
       {
@@ -215,8 +215,8 @@ const reefApexCards = [
     },
     playRequirements: [
       {
-        ...REQUIRES_ENVIRONMENT,
-        text: "Can only be played if a Drop Off environment card is in play on your reef.",
+        ...REQUIRES_habitat,
+        text: "Can only be played if a Drop Off habitat card is in play on your reef.",
       },
     ],
     onPlay: [
@@ -256,7 +256,7 @@ const reefApexCards = [
       {
         id: "requires-sanctuary",
         type: "kindInPlay",
-        requiredKind: CardKind.ENVIRONMENT,
+        requiredKind: CardKind.HABITAT,
         text: "Requires Marine Sanctuary.",
       },
     ],
@@ -291,7 +291,7 @@ const reefApexCards = [
     cost: { rp: 10 },
     victoryPoints: 10,
     tags: ["apex", "orca"],
-    playRequirements: [REQUIRES_ENVIRONMENT],
+    playRequirements: [REQUIRES_habitat],
     onPlay: [
       {
         id: "apex-hunter",

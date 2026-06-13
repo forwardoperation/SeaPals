@@ -10,7 +10,7 @@ import {
 import { coralCards } from "./coral";
 import { deepCoralCards } from "./deepCoral";
 import { supportCards } from "./support";
-import { environmentCards } from "./environments";
+import { habitatCards } from "./environments";
 import { conditionCards } from "./conditions";
 import { validateCards } from "./validation";
 import { CardCategory, CardKind, CreatureClass, CreatureZone } from "./types";
@@ -43,10 +43,11 @@ export const allCards = [
   ...oceanicBaitballCards,
   ...oceanicCreatureCards,
   ...deepCreatureCards,
-  ...environmentCards,
+  ...habitatCards,
   ...supportCards,
   ...conditionCards,
 ]
+  .filter((card) => !card.galleryHidden)
   .map(normalizeCreatureCard)
   .sort((a, b) => a.sortOrder - b.sortOrder);
 

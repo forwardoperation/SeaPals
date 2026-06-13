@@ -237,7 +237,7 @@ function CardMetadata({ image }) {
       <dl className="mt-4 grid grid-cols-2 gap-2">
         <StatPill label="Cost" value={formatCost(card.cost)} />
         <StatPill label="VP" value={card.victoryPoints} />
-        <StatPill label="Prey Density" value={card.preyDensity} />
+        <StatPill label="School Density" value={card.schoolDensity} />
         <StatPill
           label="Defense"
           value={

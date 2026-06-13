@@ -15,8 +15,8 @@ function slugify(value) {
 export default function NewTournamentPage() {
   const [name, setName] = useState("");
   const [status, setStatus] = useState("draft");
-  const [deckSize, setDeckSize] = useState(40);
-  const [maxCopiesPerCard, setMaxCopiesPerCard] = useState(3);
+  const [deckSize, setDeckSize] = useState(60);
+  const [maxCopiesPerCard, setMaxCopiesPerCard] = useState(4);
   const [message, setMessage] = useState("");
 
   async function createTournament(event) {

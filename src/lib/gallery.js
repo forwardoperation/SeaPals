@@ -19,7 +19,7 @@ const TYPE_CONFIG = [
   { slug: "fish", title: "Fish", category: "fish" },
   { slug: "invertebrates", title: "Invertebrates", category: "invertebrate" },
   { slug: "coral", title: "Coral", category: "coral" },
-  { slug: "environments", title: "Environments", category: "environment" },
+  { slug: "habitats", title: "Habitats", category: "habitat" },
   { slug: "support", title: "Support", category: "support" },
 ];
 
@@ -97,6 +97,7 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/predator/oceanic/wahoo.png",
   "/images/cards/predator/oceanic/yellowfin-tuna.png",
   "/images/cards/support/coral-cement.png",
+  "/images/cards/support/cast-net.png",
   "/images/cards/support/crab-trap.png",
   "/images/cards/support/deep-sea-fishing-rod.png",
   "/images/cards/support/full-heal.png",

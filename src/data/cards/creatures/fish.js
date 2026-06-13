@@ -4,7 +4,7 @@ const requiresMarineSanctuary = {
   id: "requires-marine-sanctuary",
   type: "cardInPlay",
   cardId: "marine-sanctuary",
-  requiredKind: CardKind.ENVIRONMENT,
+  requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
   text: "Can only be played if Marine Sanctuary is in play on your reef.",
 };
