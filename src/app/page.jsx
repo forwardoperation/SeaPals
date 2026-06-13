@@ -155,7 +155,7 @@ export default function HomePage() {
           </div>
           <div className="rounded-2xl bg-white p-5 shadow-sm">
             <div className="font-semibold text-slate-800">Discover</div>
-            <p className="mt-2">Explore new marine creatures and environments.</p>
+            <p className="mt-2">Explore new marine creatures and habitats.</p>
           </div>
         </section>
       </section>

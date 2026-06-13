@@ -1,7 +1,10 @@
-import { CardKind } from "@/data/cards/types";
 import { cardsById } from "@/data/cards";
 import { getDeckStats } from "./deckStats";
-import { getTournamentDeckRules, isBaseCoral } from "./deckRules";
+import {
+  getTournamentDeckRules,
+  isBaseFoundation,
+  isFoundation,
+} from "./deckRules";
 
 export function validateDeck(deck, tournament) {
   const rules = getTournamentDeckRules(tournament);
@@ -30,8 +33,8 @@ export function validateDeck(deck, tournament) {
   }
 
   let totalCards = 0;
-  let coralCount = 0;
-  let hasBaseCoral = false;
+  let foundationCount = 0;
+  let hasBaseFoundation = false;
 
   for (const entry of deck.cards) {
     const quantity = Number(entry.quantity);
@@ -63,12 +66,12 @@ export function validateDeck(deck, tournament) {
       errors.push(`${card.name} is restricted to 1 copy.`);
     }
 
-    if (card.kind === CardKind.CORAL) {
-      coralCount += quantity;
+    if (isFoundation(card)) {
+      foundationCount += quantity;
     }
 
-    if (isBaseCoral(card)) {
-      hasBaseCoral = true;
+    if (isBaseFoundation(card)) {
+      hasBaseFoundation = true;
     }
   }
 
@@ -76,12 +79,14 @@ export function validateDeck(deck, tournament) {
     errors.push(`Deck must contain exactly ${rules.deckSize} cards.`);
   }
 
-  if (coralCount < rules.minCoralCards) {
-    errors.push(`Deck must contain at least ${rules.minCoralCards} coral card.`);
+  if (foundationCount < rules.minFoundationCards) {
+    errors.push(
+      `Deck must contain at least ${rules.minFoundationCards} foundation card.`
+    );
   }
 
-  if (rules.requireBaseCoral && !hasBaseCoral) {
-    errors.push("Deck must contain at least one base coral.");
+  if (rules.requireBaseFoundation && !hasBaseFoundation) {
+    errors.push("Deck must contain at least one base foundation.");
   }
 
   const stats = getDeckStats(deck);
