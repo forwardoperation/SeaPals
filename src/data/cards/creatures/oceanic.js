@@ -15,7 +15,7 @@ const categoryByClass = {
 };
 
 const creatureSchoolRule =
-  "You may only have three Creature School stacks in your play area. Creature Schools may be targeted by any attack that can target fish. The attack does damage to HP by taking the attack dice roll * 10.";
+  "Creature Schools may be targeted by any attack that can target fish. The attack does damage to HP by taking the attack dice roll * 10.";
 
 const creatureSchoolMomentum =
   "Momentum: Search your deck for a Creature School card with a different name. Show it to your opponent, place it into your hand, then shuffle your deck.";

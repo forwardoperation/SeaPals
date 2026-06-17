@@ -185,7 +185,7 @@ export const predatorCards = [
     name: "Great Barracuda",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/great-barracuda.png",
+    image: "/images/cards/predator/reef/great-barracuda.png",
     sortOrder: 102,
 
     cost: { rp: 3 },
@@ -251,7 +251,7 @@ export const predatorCards = [
     name: "Goliath Grouper",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/goliath-grouper.png",
+    image: "/images/cards/predator/reef/goliath-grouper.png",
     sortOrder: 103,
 
     cost: { rp: 6 },
