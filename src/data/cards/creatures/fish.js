@@ -321,7 +321,7 @@ export const fishCards = [
     name: "Clownfish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/clownfish.png",
+    image: "/images/cards/fish/Reef/Clownfish.png",
     sortOrder: 205,
 
     cost: { rp: 2 },

@@ -112,7 +112,7 @@ export const invertebrateCards = [
     name: "Anemone",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/anemone.png",
+    image: "/images/cards/invertebrates/Reef/anemone.png",
     sortOrder: 301,
 
     cost: { rp: 4 },
