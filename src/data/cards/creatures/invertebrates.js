@@ -1,20 +1,20 @@
 import { CardKind, CardCategory, EffectType, Timing, Zone } from "../types";
 
-const requiresAnyEnvironment = {
-  id: "requires-environment",
+const requiresAnyhabitat = {
+  id: "requires-habitat",
   type: "kindInPlay",
-  requiredKind: CardKind.ENVIRONMENT,
+  requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if an environment card is in play on your reef.",
+  text: "Can only be played if a habitat card is in play on your reef.",
 };
 
 const requiresShipWreck = {
   id: "requires-ship-wreck",
   type: "cardInPlay",
   cardId: "ship-wreck",
-  requiredKind: CardKind.ENVIRONMENT,
+  requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if a Ship Wreck environment card is in play on your reef.",
+  text: "Can only be played if a Ship Wreck habitat card is in play on your reef.",
 };
 
 const toxicPassive = {
@@ -112,7 +112,7 @@ export const invertebrateCards = [
     name: "Anemone",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/anemone.png",
+    image: "/images/cards/invertebrates/Reef/anemone.png",
     sortOrder: 301,
 
     cost: { rp: 4 },
@@ -189,7 +189,7 @@ export const invertebrateCards = [
     name: "Emerald Crab",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/emerald-crab.png",
+    image: "/images/cards/invertebrates/Reef/emerald-crab.png",
     sortOrder: 302,
 
     cost: { rp: 1 },
@@ -234,7 +234,7 @@ export const invertebrateCards = [
     name: "Blue Crab",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/blue-crab.png",
+    image: "/images/cards/invertebrates/Reef/blue-crab.png",
     sortOrder: 303,
 
     cost: { rp: 2 },
@@ -757,7 +757,7 @@ export const invertebrateCards = [
       weight: "1.5 lbs",
     },
 
-    playRequirements: [requiresAnyEnvironment],
+    playRequirements: [requiresAnyhabitat],
 
     passives: [ecoBoost(4)],
 

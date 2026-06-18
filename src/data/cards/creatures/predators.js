@@ -1,27 +1,26 @@
 import {
   CardKind,
   CardCategory,
-  CreatureZone,
   EffectType,
   Timing,
   Zone,
 } from "../types";
 
-const requiresAnyEnvironment = {
-  id: "requires-environment",
+const requiresAnyhabitat = {
+  id: "requires-habitat",
   type: "kindInPlay",
-  requiredKind: CardKind.ENVIRONMENT,
+  requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if an environment card is in play on your reef.",
+  text: "Can only be played if a habitat card is in play on your reef.",
 };
 
 const requiresMarineSanctuary = {
   id: "requires-marine-sanctuary",
   type: "cardInPlay",
   cardId: "marine-sanctuary",
-  requiredKind: CardKind.ENVIRONMENT,
+  requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if a Marine Sanctuary environment card is in play on your reef.",
+  text: "Can only be played if a Marine Sanctuary habitat card is in play on your reef.",
 };
 
 const attackEffect = ({ dice, repeat = 1, categories, advantage = false }) => ({
@@ -81,7 +80,7 @@ export const predatorCards = [
       {
         id: "ambush-hunt",
         name: "Ambush Hunt",
-        text: "Perform a D6 attack against an opponent’s fish or predator. If an environment card is in play on your reef, add 1D4 to your attack roll.",
+        text: "Perform a D6 attack against an opponent’s fish or predator. If a habitat card is in play on your reef, add 1D4 to your attack roll.",
         effects: [
           attackEffect({
             dice: "D6",
@@ -92,7 +91,7 @@ export const predatorCards = [
           {
             condition: {
               type: "kindInPlay",
-              requiredKind: CardKind.ENVIRONMENT,
+              requiredKind: CardKind.HABITAT,
               zone: Zone.YOUR_REEF,
             },
             modifier: {
@@ -146,7 +145,7 @@ export const predatorCards = [
       {
         id: "feeding-frenzy",
         name: "Feeding Frenzy",
-        text: "1 Bite. If an environment card is in play, add +1 more bite for each Reef Shark on your reef. Max 3.",
+        text: "1 Bite. If a habitat card is in play, add +1 more bite for each Reef Shark on your reef. Max 3.",
         effects: [
           {
             ...biteEffect({
@@ -160,7 +159,7 @@ export const predatorCards = [
               maxBonus: 3,
               requires: {
                 type: "kindInPlay",
-                requiredKind: CardKind.ENVIRONMENT,
+                requiredKind: CardKind.HABITAT,
                 zone: Zone.YOUR_REEF,
               },
             },
@@ -186,7 +185,7 @@ export const predatorCards = [
     name: "Great Barracuda",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/great-barracuda.png",
+    image: "/images/cards/predator/reef/great-barracuda.png",
     sortOrder: 102,
 
     cost: { rp: 3 },
@@ -211,7 +210,7 @@ export const predatorCards = [
       {
         id: "quick-strike",
         name: "Quick Strike",
-        text: "1 Bite. If a Ship Wreck environment is on your reef, perform a second Bite.",
+        text: "1 Bite. If a Ship Wreck habitat is on your reef, perform a second Bite.",
         effects: [
           {
             ...biteEffect({
@@ -226,7 +225,7 @@ export const predatorCards = [
               requires: {
                 type: "cardInPlay",
                 cardId: "ship-wreck",
-                requiredKind: CardKind.ENVIRONMENT,
+                requiredKind: CardKind.HABITAT,
                 zone: Zone.YOUR_REEF,
               },
             },
@@ -252,7 +251,7 @@ export const predatorCards = [
     name: "Goliath Grouper",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/goliath-grouper.png",
+    image: "/images/cards/predator/reef/goliath-grouper.png",
     sortOrder: 103,
 
     cost: { rp: 6 },
@@ -357,11 +356,12 @@ export const predatorCards = [
   },
 
   {
-    id: "thresher-shark",
+    id: "thresher-shark-legacy-reef",
     name: "Thresher Shark",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    zone: CreatureZone.OCEAN,
+    prerelease: true,
+    galleryHidden: true,
     image: "/images/cards/predator/oceanic/thresher-shark.png",
     sortOrder: 105,
 
@@ -387,7 +387,7 @@ export const predatorCards = [
       {
         id: "tail-whip",
         name: "Tail Whip",
-        text: "If Drop Off environment is in play on your reef, subtract 2 from your opponent’s defensive dice roll.",
+        text: "If Drop Off habitat is in play on your reef, subtract 2 from your opponent’s defensive dice roll.",
         effects: [
           {
             type: "modifyDefenseRoll",
@@ -397,7 +397,7 @@ export const predatorCards = [
             requires: {
               type: "cardInPlay",
               cardId: "drop-off",
-              requiredKind: CardKind.ENVIRONMENT,
+              requiredKind: CardKind.HABITAT,
               zone: Zone.YOUR_REEF,
             },
           },
@@ -467,7 +467,7 @@ export const predatorCards = [
             requires: {
               type: "cardInPlay",
               cardId: "marine-sanctuary",
-              requiredKind: CardKind.ENVIRONMENT,
+              requiredKind: CardKind.HABITAT,
               zone: Zone.YOUR_REEF,
             },
           },

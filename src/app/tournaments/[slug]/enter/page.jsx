@@ -25,7 +25,7 @@ const CARD_TABS = [
   { label: "Fish", value: "fish" },
   { label: "Invertebrate", value: "invertebrate" },
   { label: "Filter Feeder", value: "filter-feeder" },
-  { label: "Environment", value: "environment" },
+  { label: "Habitat", value: "habitat" },
 ];
 
 const PRESET_SUMMARY_GROUPS = [
@@ -36,7 +36,7 @@ const PRESET_SUMMARY_GROUPS = [
   { label: "Apex", category: "apex" },
   { label: "Filter Feeder", category: "filter-feeder" },
   { label: "Invertebrate", category: "invertebrate" },
-  { label: "Environment", category: "environment" },
+  { label: "Habitat", category: "habitat" },
 ];
 
 function getCardDisplayName(card) {

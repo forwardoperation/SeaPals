@@ -156,12 +156,12 @@ export const supportCards = [
     image: "/images/cards/support/scientist-jes.png",
     sortOrder: 505,
 
-    text: "Search your deck for an environment card and place it into your hand. Shuffle your deck afterwards. Draw 2 cards.",
+    text: "Search your deck for a habitat card and place it into your hand. Shuffle your deck afterwards. Draw 2 cards.",
 
     effects: [
       {
         type: EffectType.SEARCH_DECK,
-        targetKind: CardKind.ENVIRONMENT,
+        targetKind: CardKind.HABITAT,
         amount: 1,
         destination: Zone.HAND,
         shuffleAfterwards: true,
@@ -231,13 +231,14 @@ export const supportCards = [
     image: "/images/cards/support/restocking.png",
     sortOrder: 508,
 
-    text: "Choose up to three fish in your discard pile and shuffle them into your deck.",
+    text: "Choose up to three non-Creature School fish in your discard pile and shuffle them into your deck.",
 
     effects: [
       {
         type: EffectType.RECOVER_CARD_FROM_DISCARD,
         targetKind: CardKind.CREATURE,
         targetCategories: [CardCategory.FISH],
+        excludeTags: ["creature-school"],
         amount: 3,
         destination: Zone.DECK,
         shuffleAfterwards: true,
@@ -385,13 +386,38 @@ export const supportCards = [
     image: "/images/cards/support/fishing.png",
     sortOrder: 515,
 
-    text: "Search your deck for a fish, show it to your opponent, and place it into your hand.",
+    text: "Search your deck for a non-Creature School fish, show it to your opponent, and place it into your hand.",
 
     effects: [
       {
         type: EffectType.SEARCH_DECK,
         targetKind: CardKind.CREATURE,
         targetCategories: [CardCategory.FISH],
+        excludeTags: ["creature-school"],
+        amount: 1,
+        destination: Zone.HAND,
+        revealToOpponent: true,
+        shuffleAfterwards: true,
+      },
+    ],
+  },
+
+  {
+    id: "cast-net",
+    name: "Cast Net",
+    kind: CardKind.SUPPORT,
+    ...standardSupportRules,
+    image: "/images/cards/support/cast-net.png",
+    sortOrder: 516,
+
+    text: "Search your deck for a Creature School, show it to your opponent, and place it into your hand.",
+
+    effects: [
+      {
+        type: EffectType.SEARCH_DECK,
+        targetKind: CardKind.CREATURE,
+        targetCategories: [CardCategory.FISH],
+        targetTags: ["creature-school"],
         amount: 1,
         destination: Zone.HAND,
         revealToOpponent: true,
@@ -406,7 +432,7 @@ export const supportCards = [
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
     image: "/images/cards/support/crab-trap.png",
-    sortOrder: 516,
+    sortOrder: 517,
 
     text: "Search your deck for up to two invertebrates, show them to your opponent, and place them into your hand.",
 
@@ -429,7 +455,7 @@ export const supportCards = [
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
     image: "/images/cards/support/recovery.png",
-    sortOrder: 517,
+    sortOrder: 518,
 
     text: "Flip a coin. If heads, put a discarded card into your hand.",
 
@@ -452,7 +478,7 @@ export const supportCards = [
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
     image: "/images/cards/support/Deep/rov-lights.png",
-    sortOrder: 518,
+    sortOrder: 519,
 
     text: "Creatures hidden by Abyss can be targeted this turn.",
 
