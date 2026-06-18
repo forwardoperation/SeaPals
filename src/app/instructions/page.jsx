@@ -22,7 +22,7 @@ const creatureTypes = [
         name: "Filter Feeder",
         icon: `${iconBase}/filter-feeder-icon.png`,
         description:
-          "A specific filter-feeder icon. These Pals usually require a feeding event or enough prey density before they can enter play.",
+          "A specific filter-feeder icon. These Pals usually require a feeding event or enough school density before they can enter play.",
       },
       {
         name: "Any Filter Feeder",
@@ -49,7 +49,7 @@ const creatureTypes = [
         name: "Oceanic Apex",
         icon: `${iconBase}/oceanic-apex-icon.png`,
         description:
-          "Open-water apex hunters that usually depend on prey density or oceanic play requirements.",
+          "Open-water apex hunters that usually depend on school density or oceanic play requirements.",
       },
       {
         name: "Deep Apex",
@@ -82,7 +82,7 @@ const creatureTypes = [
         name: "Oceanic Predator",
         icon: `${iconBase}/oceanic-predator-icon.png`,
         description:
-          "Fast open-water predators that often care about prey density, bait balls, or Open Ocean.",
+          "Fast open-water predators that often care about school density, Creature Schools, or Open Ocean.",
       },
       {
         name: "Deep Predator",
@@ -115,7 +115,7 @@ const creatureTypes = [
         name: "Oceanic Fish",
         icon: `${iconBase}/oceanic-fish-icon.png`,
         description:
-          "Open-water fish that help support prey-density strategies and oceanic food chains.",
+          "Open-water fish that help support school-density strategies and oceanic food chains.",
       },
       {
         name: "Deep Fish",
@@ -127,13 +127,13 @@ const creatureTypes = [
         name: "Bait Ball",
         icon: `${iconBase}/bait-ball-icon.png`,
         description:
-          "An oceanic Fish foundation. Bait balls create prey density and take attack-roll damage times 10.",
+          "An oceanic Fish foundation. Creature Schools create school density and take attack-roll damage times 10.",
       },
       {
         name: "Any Fish",
         icon: `${iconBase}/fish-any.png`,
         description:
-          "A target icon that can choose any Fish subtype, including bait balls when the attack can target fish.",
+          "A target icon that can choose any Fish subtype, including Creature Schools when the attack can target fish.",
       },
     ],
   },
@@ -154,7 +154,7 @@ const creatureTypes = [
         name: "Oceanic Invertebrate",
         icon: `${iconBase}/oceanic-invertebrate-icon.png`,
         description:
-          "Open-water invertebrates that support oceanic decks with disruption, poison, or prey-density plays.",
+          "Open-water invertebrates that support oceanic decks with disruption, poison, or school-density plays.",
       },
       {
         name: "Deep Invertebrate",
@@ -198,14 +198,14 @@ const creatureTypes = [
     ],
   },
   {
-    name: "Environment",
+    name: "Habitat",
     icon: `${iconBase}/environment_icon.png`,
     color: "bg-slate-50 text-slate-800 ring-slate-200",
     description:
       "Playable habitat cards that change what your ecosystem can support, such as Marine Sanctuary, Open Ocean, or Abyss.",
     subtypes: [
       {
-        name: "Reef Environment",
+        name: "Reef Habitat",
         icon: `${iconBase}/environment_icon.png`,
         description:
           "Reef-focused habitat cards and structures that support coral reef strategies.",
@@ -214,7 +214,7 @@ const creatureTypes = [
         name: "Open Ocean",
         icon: `${iconBase}/environment_icon.png`,
         description:
-          "An oceanic habitat signal that enables open-water Pals and prey-density strategies.",
+          "An oceanic habitat signal that enables open-water Pals and school-density strategies.",
       },
       {
         name: "Abyss",
@@ -231,7 +231,7 @@ const deckTypes = [
     name: "Foundation Deck",
     accent: "border-amber-300 bg-amber-50",
     description:
-      "Your habitat engine. Reef play uses coral here; oceanic play can use bait balls and prey-density foundations.",
+      "Your habitat engine. Reef play uses coral here; oceanic play can use Creature Schools and school-density foundations.",
     examples: "Base coral, coral upgrades, bait ball stages",
   },
   {
@@ -711,7 +711,7 @@ export default function InstructionsPage() {
             <div className="mt-5 grid items-center gap-5 md:grid-cols-[1fr_auto_1fr]">
               <div className="rounded-lg bg-blue-50 p-3 ring-1 ring-blue-100">
                 <Image
-                  src="/images/cards/predator/spinner-dolphins.png"
+                  src="/images/cards/predator/reef/spinner-dolphins.png"
                   alt="Spinner Dolphins card"
                   width={240}
                   height={336}
@@ -736,7 +736,7 @@ export default function InstructionsPage() {
 
               <div className="rounded-lg bg-cyan-50 p-3 ring-1 ring-cyan-100">
                 <Image
-                  src="/images/cards/fish/picasso-triggerfish.png"
+                  src="/images/cards/fish/Reef/picasso-triggerfish.png"
                   alt="Picasso Triggerfish card"
                   width={240}
                   height={336}

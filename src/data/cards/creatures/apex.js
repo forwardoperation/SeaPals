@@ -15,22 +15,22 @@ const INTIMIDATION_PASSIVE = {
   },
 };
 
-const REQUIRES_ENVIRONMENT = {
-  id: "requires-environment",
+const REQUIRES_habitat = {
+  id: "requires-habitat",
   type: "kindInPlay",
-  requiredKind: CardKind.ENVIRONMENT,
+  requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if an environment card is in play on your reef.",
+  text: "Can only be played if a habitat card is in play on your reef.",
 };
 
-export const apexCards = [
+const reefApexCards = [
   // 🦈 GREAT WHITE
   {
     id: "great-white",
     name: "Great White",
     kind: CardKind.CREATURE,
     category: CardCategory.APEX,
-    image: "/images/cards/apex/great-white.png",
+    image: "/images/cards/apex/Reef/great-white.png",
     sortOrder: 10,
     cost: { rp: 8 },
     victoryPoints: 9,
@@ -41,8 +41,8 @@ export const apexCards = [
     },
     playRequirements: [
       {
-        ...REQUIRES_ENVIRONMENT,
-        text: "Can only be played if a Drop Off environment card is in play on your reef.",
+        ...REQUIRES_habitat,
+        text: "Can only be played if a Drop Off habitat card is in play on your reef.",
       },
     ],
     passives: [INTIMIDATION_PASSIVE],
@@ -78,7 +78,7 @@ export const apexCards = [
     name: "Tiger Shark",
     kind: CardKind.CREATURE,
     category: CardCategory.APEX,
-    image: "/images/cards/apex/tiger-shark.png",
+    image: "/images/cards/apex/Reef/tiger-shark.png",
     sortOrder: 15,
     cost: { rp: 7 },
     victoryPoints: 7,
@@ -89,8 +89,8 @@ export const apexCards = [
     },
     playRequirements: [
       {
-        ...REQUIRES_ENVIRONMENT,
-        text: "Can only be played if a Drop Off environment card is in play on your reef.",
+        ...REQUIRES_habitat,
+        text: "Can only be played if a Drop Off habitat card is in play on your reef.",
       },
     ],
     passives: [INTIMIDATION_PASSIVE],
@@ -126,7 +126,7 @@ export const apexCards = [
     name: "Hammerhead",
     kind: CardKind.CREATURE,
     category: CardCategory.APEX,
-    image: "/images/cards/apex/hammerhead.png",
+    image: "/images/cards/apex/Reef/hammerhead.png",
     sortOrder: 18,
     cost: { rp: 6 },
     victoryPoints: 6,
@@ -135,7 +135,7 @@ export const apexCards = [
       commonName: "Hammerhead Shark",
       scientificName: "Sphyrnidae",
     },
-    playRequirements: [REQUIRES_ENVIRONMENT],
+    playRequirements: [REQUIRES_habitat],
     passives: [INTIMIDATION_PASSIVE],
     onPlay: [
       {
@@ -168,7 +168,7 @@ export const apexCards = [
     name: "Bull Shark",
     kind: CardKind.CREATURE,
     category: CardCategory.APEX,
-    image: "/images/cards/apex/bull-shark.png",
+    image: "/images/cards/apex/Reef/bull-shark.png",
     sortOrder: 20,
     cost: { rp: 6 },
     victoryPoints: 6,
@@ -177,7 +177,7 @@ export const apexCards = [
       commonName: "Bull Shark",
       scientificName: "Carcharhinus leucas",
     },
-    playRequirements: [REQUIRES_ENVIRONMENT],
+    playRequirements: [REQUIRES_habitat],
     passives: [INTIMIDATION_PASSIVE],
     onPlay: [
       {
@@ -205,7 +205,7 @@ export const apexCards = [
     name: "Pilot Whale",
     kind: CardKind.CREATURE,
     category: CardCategory.APEX,
-    image: "/images/cards/apex/pilot-whale.png",
+    image: "/images/cards/apex/Oceanic/pilot-whale.png",
     sortOrder: 25,
     cost: { rp: 7 },
     victoryPoints: 7,
@@ -215,8 +215,8 @@ export const apexCards = [
     },
     playRequirements: [
       {
-        ...REQUIRES_ENVIRONMENT,
-        text: "Can only be played if a Drop Off environment card is in play on your reef.",
+        ...REQUIRES_habitat,
+        text: "Can only be played if a Drop Off habitat card is in play on your reef.",
       },
     ],
     onPlay: [
@@ -247,7 +247,7 @@ export const apexCards = [
     name: "Bottlenose Dolphin",
     kind: CardKind.CREATURE,
     category: CardCategory.APEX,
-    image: "/images/cards/apex/bottlenose-dolphin.png",
+    image: "/images/cards/apex/Reef/bottlenose-dolpin.png",
     sortOrder: 30,
     cost: { rp: 5 },
     victoryPoints: 5,
@@ -256,7 +256,7 @@ export const apexCards = [
       {
         id: "requires-sanctuary",
         type: "kindInPlay",
-        requiredKind: CardKind.ENVIRONMENT,
+        requiredKind: CardKind.HABITAT,
         text: "Requires Marine Sanctuary.",
       },
     ],
@@ -286,12 +286,12 @@ export const apexCards = [
     name: "Killer Whales",
     kind: CardKind.CREATURE,
     category: CardCategory.APEX,
-    image: "/images/cards/apex/killer-whales.png",
+    image: "/images/cards/apex/Oceanic/killer-whale.png",
     sortOrder: 35,
     cost: { rp: 10 },
     victoryPoints: 10,
     tags: ["apex", "orca"],
-    playRequirements: [REQUIRES_ENVIRONMENT],
+    playRequirements: [REQUIRES_habitat],
     onPlay: [
       {
         id: "apex-hunter",
@@ -308,3 +308,7 @@ export const apexCards = [
     defense: { dice: "D20" },
   },
 ];
+
+export const apexCards = reefApexCards.filter(
+  (card) => !["pilot-whale", "killer-whales"].includes(card.id)
+);

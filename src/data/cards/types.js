@@ -2,7 +2,7 @@ export const CardKind = {
   CREATURE: "creature",
   CORAL: "coral",
   SUPPORT: "support",
-  ENVIRONMENT: "environment",
+  HABITAT: "habitat",
   CONDITION: "condition",
 };
 
@@ -14,7 +14,7 @@ export const CardCategory = {
   FILTER_FEEDER: "filter-feeder",
   CORAL: "coral",
   SUPPORT: "support",
-  ENVIRONMENT: "environment",
+  HABITAT: "habitat",
   CONDITION: "condition",
 };
 
@@ -126,7 +126,7 @@ export const CardIcon = {
   CORAL: "coral_icon",
   FISH: "fish_icon",
   INVERTEBRATE: "invertebrate_icon",
-  ENVIRONMENT: "environment_icon",
+  HABITAT: "environment_icon",
 
   D10_ATTACK: "d10_attack",
 };

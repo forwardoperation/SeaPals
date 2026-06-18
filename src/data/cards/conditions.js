@@ -344,7 +344,7 @@ export const conditionCards = [
     effects: [
       {
         type: EffectType.CREATE_ATTACKABLE_VP_CARD,
-        controller: "environment",
+        controller: "habitat",
         health: 40,
         victoryPoints: 4,
         damageToVpRatio: {
@@ -360,7 +360,7 @@ export const conditionCards = [
       },
     ],
 
-    text: "Place this card on the side of the environment deck. For every 10 damage done to this card, gain 1 VP. Any predator or apex with an attack action may target the Sardine Run.",
+    text: "Place this card on the side of the habitat deck. For every 10 damage done to this card, gain 1 VP. Any predator or apex with an attack action may target the Sardine Run.",
   },
 
   {
@@ -388,6 +388,6 @@ export const conditionCards = [
       },
     ],
 
-    text: "Place this card on the side of the environment deck. A Filter Feeder class creature may now be played onto a player’s reef. Each player may only play one filter feeder.",
+    text: "Place this card on the side of the habitat deck. A Filter Feeder class creature may now be played onto a player’s reef. Each player may only play one filter feeder.",
   },
 ];
