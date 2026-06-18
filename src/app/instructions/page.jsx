@@ -376,6 +376,51 @@ const coralWeaknessExamples = [
   },
 ];
 
+const playWalkthroughSteps = [
+  {
+    title: "Before the Game Begins",
+    image: "/images/instructions/1-before-the-game-begins.png",
+    commentary:
+      "Each player separates their deck into a Foundation Deck and a Pals Deck. Place the shared Conditions Deck where every player can see it.",
+  },
+  {
+    title: "Draw Your Starting Hand",
+    image: "/images/instructions/2-setup-round-draw-eight-cards.png",
+    commentary:
+      "Draw 4 cards from your Foundation Deck and 4 cards from your Pals Deck. Each player starts with 3 RP.",
+  },
+  {
+    title: "Play a Starting Foundation",
+    image: "/images/instructions/3-setup-round-play-pillar-coral.png",
+    commentary:
+      "During setup, spend starting RP to play a valid foundation card, such as a base coral. If you cannot play one, redraw your Foundation hand.",
+  },
+  {
+    title: "Start the Round",
+    image: "/images/instructions/4-start-of-the-round.png",
+    commentary:
+      "Reveal the next Conditions card at the start of the round. Apply its effect before players take their turns.",
+  },
+  {
+    title: "Start Your Turn",
+    image: "/images/instructions/5-start-of-your-turn.png",
+    commentary:
+      "Collect 1 RP, collect RP from your active foundations, discard RP above your bank max, then choose which personal deck to draw from.",
+  },
+  {
+    title: "Play a Pal",
+    image: "/images/instructions/6-play-fish-onto-your-ecosystem.png",
+    commentary:
+      "Spend RP to play a Pal into a legal habitat slot. The slot icon must match the Pal habitat and class rules.",
+  },
+  {
+    title: "Build Your Foundation",
+    image: "/images/instructions/7-play-coral-onto-your-system.png",
+    commentary:
+      "You can also spend RP to play or upgrade foundation cards. More foundation usually means more RP, more HP, and more legal slots.",
+  },
+];
+
 function Icon({ src, alt, size = 48 }) {
   return (
     <Image
@@ -503,6 +548,46 @@ export default function InstructionsPage() {
             <li>5. If you cannot play a valid foundation, redraw your Foundation hand.</li>
             <li>6. Begin the first round once every player has a starting foundation.</li>
           </ol>
+        </div>
+      </section>
+
+      <section className="my-14">
+        <SectionHeader eyebrow="Walkthrough" title="Beginning Play Step by Step">
+          Follow these images in order for the setup round, start of round, and the
+          first decisions on your turn.
+        </SectionHeader>
+
+        <div className="mt-8 grid gap-6">
+          {playWalkthroughSteps.map((step, index) => (
+            <article
+              key={step.title}
+              className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-cyan-100"
+            >
+              <div className="grid gap-0 lg:grid-cols-[0.7fr_1.3fr]">
+                <div className="flex flex-col justify-center p-5 md:p-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-700 text-sm font-bold text-white">
+                    {index + 1}
+                  </div>
+                  <h3 className="mt-4 text-2xl font-bold text-slate-950">
+                    {step.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+                    {step.commentary}
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 p-3 md:p-5">
+                  <Image
+                    src={step.image}
+                    alt={`${step.title} walkthrough`}
+                    width={1400}
+                    height={900}
+                    className="h-auto w-full rounded-lg shadow-sm ring-1 ring-slate-200"
+                  />
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
