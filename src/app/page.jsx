@@ -128,6 +128,13 @@ export default function HomePage() {
                     className="w-full rounded-xl border border-slate-200 px-4 py-4 text-lg outline-none transition focus:border-cyan-500"
                 />
 
+                <input
+                    type="text"
+                    name="fields[referred_by]"
+                    placeholder="Who sent you? (optional)"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-4 text-lg outline-none transition focus:border-cyan-500"
+                />
+
                 <button
                     type="submit"
                     className="w-full rounded-2xl bg-[#07507D] px-4 py-4 text-lg font-bold text-white shadow-lg transition hover:brightness-110"
