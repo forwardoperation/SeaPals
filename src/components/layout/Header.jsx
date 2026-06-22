@@ -49,6 +49,10 @@ export default function Header() {
           Tournaments
         </Link>
 
+        <Link href="/surveys" className={linkClass("/surveys")}>
+          Survey
+        </Link>
+
         <a
           href="/#signup"
           className="flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold text-center text-slate-700 transition-all duration-200 hover:bg-sky-50 hover:text-sky-700"
