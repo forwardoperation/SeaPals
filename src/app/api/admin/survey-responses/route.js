@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 function isAuthorized(request) {
-  const configuredToken = process.env.SURVEY_ADMIN_TOKEN;
-  const providedToken = request.headers.get("x-admin-token");
+  const configuredToken = process.env.SURVEY_ADMIN_TOKEN?.trim();
+  const providedToken = request.headers.get("x-admin-token")?.trim();
 
   return Boolean(configuredToken && providedToken && providedToken === configuredToken);
 }
