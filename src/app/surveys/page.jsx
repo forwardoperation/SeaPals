@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { SURVEY_SECTIONS, SURVEY_TITLE } from "@/data/survey/questions";
 
 const TOTAL_STEPS = SURVEY_SECTIONS.length;
+const RESULTS_URL = "https://seapalstcg.com/surveys/results";
 
 function getInitialAnswers() {
   const answers = {};
@@ -238,7 +239,7 @@ export default function SurveyPage() {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
-              href="/surveys/results"
+              href={RESULTS_URL}
               className="rounded-xl bg-sky-600 px-5 py-3 font-bold text-white hover:bg-sky-700"
             >
               View Summary
@@ -262,17 +263,25 @@ export default function SurveyPage() {
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 py-6">
-      <section>
-        <p className="text-sm font-bold uppercase tracking-wide text-sky-700">
-          {SURVEY_TITLE}
-        </p>
-        <h1 className="mt-2 text-4xl font-bold text-slate-900">
-          Help us make SeaPals even better
-        </h1>
-        <p className="mt-3 max-w-2xl text-slate-600">
-          Answer a few questions about what you like, what could improve, and what
-          you would like to see next.
-        </p>
+      <section className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wide text-sky-700">
+            {SURVEY_TITLE}
+          </p>
+          <h1 className="mt-2 text-4xl font-bold text-slate-900">
+            Help us make SeaPals even better
+          </h1>
+          <p className="mt-3 max-w-2xl text-slate-600">
+            Answer a few questions about what you like, what could improve, and what
+            you would like to see next.
+          </p>
+        </div>
+        <Link
+          href={RESULTS_URL}
+          className="inline-flex items-center justify-center rounded-xl border border-sky-300 bg-white px-5 py-3 font-bold text-sky-700 shadow-sm hover:bg-sky-50"
+        >
+          View Results
+        </Link>
       </section>
 
       <section className="rounded-3xl border border-cyan-200 bg-white p-5 shadow-sm">
@@ -349,4 +358,3 @@ export default function SurveyPage() {
     </main>
   );
 }
-
