@@ -161,6 +161,48 @@ function cardZone(card) {
   return card.zone ?? CreatureZone.REEF;
 }
 
+function compactRuleList(items) {
+  return items?.map((item, index) => {
+    if (typeof item === "string") {
+      return { id: `rule-${index}`, text: item };
+    }
+
+    return {
+      id: item.id ?? `rule-${index}`,
+      name: item.name,
+      text: item.text,
+    };
+  });
+}
+
+function compactCard(card) {
+  return {
+    bio: card.bio,
+    bonusVictoryPoints: card.bonusVictoryPoints?.text
+      ? { text: card.bonusVictoryPoints.text }
+      : null,
+    category: card.category,
+    cost: card.cost,
+    defense: card.defense,
+    flavorText: card.flavorText,
+    health: card.health,
+    kind: card.kind,
+    name: card.name,
+    passives: compactRuleList(card.passives),
+    playRequirements: compactRuleList(card.playRequirements),
+    prerelease: card.prerelease,
+    schoolDensity: card.schoolDensity,
+    set: card.set,
+    specialRules: compactRuleList(card.specialRules),
+    stageLabel: card.stageLabel,
+    subtitle: card.subtitle,
+    tags: card.tags,
+    victoryPoints: card.victoryPoints,
+    weaknesses: card.weaknesses,
+    zone: card.zone,
+  };
+}
+
 function galleryCard(card) {
   const src = IMAGE_PATH_OVERRIDES[card.id] ?? card.image ?? null;
   const hasPngImage = Boolean(
@@ -172,7 +214,7 @@ function galleryCard(card) {
     name: card.name,
     src,
     hasImage: hasPngImage,
-    card,
+    card: compactCard(card),
   };
 }
 
