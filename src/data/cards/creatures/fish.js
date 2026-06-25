@@ -1,12 +1,12 @@
 import { CardKind, CardCategory, EffectType, Timing, Zone } from "../types";
 
-const requiresMarineSanctuary = {
-  id: "requires-marine-sanctuary",
+const requiresCoralReef = {
+  id: "requires-coral-reef",
   type: "cardInPlay",
-  cardId: "marine-sanctuary",
+  cardId: "coral-reef",
   requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if Marine Sanctuary is in play on your reef.",
+  text: "Can only be played if Coral Reef is in play on your reef.",
 };
 
 const coralDamage = (amount) => ({
@@ -587,10 +587,10 @@ export const fishCards = [
       amount: 2,
       condition: {
         type: "cardInPlay",
-        cardId: "marine-sanctuary",
+        cardId: "coral-reef",
         zone: Zone.YOUR_REEF,
       },
-      text: "If Marine Sanctuary is in play, gain two additional victory points while this card is on your reef.",
+      text: "If Coral Reef is in play, gain two additional victory points while this card is on your reef.",
     },
 
     tags: ["creature", "fish", "angelfish"],
@@ -681,10 +681,10 @@ export const fishCards = [
       targetCardId: "twinspot-butterflyfish",
       condition: {
         type: "cardInPlay",
-        cardId: "marine-sanctuary",
+        cardId: "coral-reef",
         zone: Zone.YOUR_REEF,
       },
-      text: "If Marine Sanctuary is in play, gain an additional victory point for each Twinspot Butterflyfish on your reef.",
+      text: "If Coral Reef is in play, gain an additional victory point for each Twinspot Butterflyfish on your reef.",
     },
 
     tags: ["creature", "fish", "butterflyfish"],
@@ -722,10 +722,10 @@ export const fishCards = [
       amount: 1,
       condition: {
         type: "cardInPlay",
-        cardId: "marine-sanctuary",
+        cardId: "coral-reef",
         zone: Zone.YOUR_REEF,
       },
-      text: "If Marine Sanctuary is in play, gain one additional victory point while this card is on your reef.",
+      text: "If Coral Reef is in play, gain one additional victory point while this card is on your reef.",
     },
 
     tags: ["creature", "fish", "angelfish"],
@@ -770,7 +770,7 @@ export const fishCards = [
       weight: "300 g",
     },
 
-    playRequirements: [requiresMarineSanctuary],
+    playRequirements: [requiresCoralReef],
     passives: [],
     onPlay: [],
     actions: [],
@@ -812,7 +812,7 @@ export const fishCards = [
       {
         id: "chomp",
         name: "Chomp",
-        text: "If Marine Sanctuary is in play, inflict 1D4 × 10 damage to an opponent’s coral. Otherwise, inflict 10 HP damage to an opponent’s coral.",
+        text: "If Coral Reef is in play, inflict 1D4 × 10 damage to an opponent’s coral. Otherwise, inflict 10 HP damage to an opponent’s coral.",
         effects: [
           coralDiceDamage({
             dice: "D4",
@@ -824,7 +824,7 @@ export const fishCards = [
           {
             condition: {
               type: "cardInPlay",
-              cardId: "marine-sanctuary",
+              cardId: "coral-reef",
               zone: Zone.YOUR_REEF,
             },
             modifier: {

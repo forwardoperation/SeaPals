@@ -14,13 +14,13 @@ const requiresAnyhabitat = {
   text: "Can only be played if a habitat card is in play on your reef.",
 };
 
-const requiresMarineSanctuary = {
-  id: "requires-marine-sanctuary",
+const requiresCoralReef = {
+  id: "requires-coral-reef",
   type: "cardInPlay",
-  cardId: "marine-sanctuary",
+  cardId: "coral-reef",
   requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if a Marine Sanctuary habitat card is in play on your reef.",
+  text: "Can only be played if a Coral Reef habitat card is in play on your reef.",
 };
 
 const attackEffect = ({ dice, repeat = 1, categories, advantage = false }) => ({
@@ -210,7 +210,7 @@ export const predatorCards = [
       {
         id: "quick-strike",
         name: "Quick Strike",
-        text: "1 Bite. If a Ship Wreck habitat is on your reef, perform a second Bite.",
+        text: "1 Bite. If a Coral Reef habitat is on your reef, perform a second Bite.",
         effects: [
           {
             ...biteEffect({
@@ -219,12 +219,12 @@ export const predatorCards = [
             }),
             bonusRepeats: {
               type: "cardInPlay",
-              cardId: "ship-wreck",
+              cardId: "coral-reef",
               controller: "you",
               amount: 1,
               requires: {
                 type: "cardInPlay",
-                cardId: "ship-wreck",
+                cardId: "coral-reef",
                 requiredKind: CardKind.HABITAT,
                 zone: Zone.YOUR_REEF,
               },
@@ -268,7 +268,7 @@ export const predatorCards = [
       weight: "800 lbs",
     },
 
-    playRequirements: [requiresMarineSanctuary],
+    playRequirements: [requiresCoralReef],
 
     passives: [],
 
@@ -320,7 +320,7 @@ export const predatorCards = [
       weight: "425 lbs",
     },
 
-    playRequirements: [requiresMarineSanctuary],
+    playRequirements: [requiresCoralReef],
 
     passives: [],
 
@@ -387,7 +387,7 @@ export const predatorCards = [
       {
         id: "tail-whip",
         name: "Tail Whip",
-        text: "If Drop Off habitat is in play on your reef, subtract 2 from your opponent’s defensive dice roll.",
+        text: "If Coral Reef habitat is in play on your reef, subtract 2 from your opponent’s defensive dice roll.",
         effects: [
           {
             type: "modifyDefenseRoll",
@@ -396,7 +396,7 @@ export const predatorCards = [
             duration: "thisAttack",
             requires: {
               type: "cardInPlay",
-              cardId: "drop-off",
+              cardId: "coral-reef",
               requiredKind: CardKind.HABITAT,
               zone: Zone.YOUR_REEF,
             },
@@ -458,7 +458,7 @@ export const predatorCards = [
       {
         id: "expert-hunter",
         name: "Expert Hunter",
-        text: "If Marine Sanctuary is in play, gain advantage on attacks against fish.",
+        text: "If Coral Reef is in play, gain advantage on attacks against fish.",
         effects: [
           {
             type: "grantAdvantage",
@@ -466,7 +466,7 @@ export const predatorCards = [
             duration: "thisCard",
             requires: {
               type: "cardInPlay",
-              cardId: "marine-sanctuary",
+              cardId: "coral-reef",
               requiredKind: CardKind.HABITAT,
               zone: Zone.YOUR_REEF,
             },
