@@ -45,6 +45,10 @@ export default function Header() {
           Gallery
         </Link>
 
+        <Link href="/decks" className={linkClass("/decks")}>
+          Decks
+        </Link>
+
         <Link href="/tournaments" className={linkClass("/tournaments")}>
           Tournaments
         </Link>

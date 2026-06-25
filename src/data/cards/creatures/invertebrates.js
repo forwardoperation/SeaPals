@@ -8,13 +8,13 @@ const requiresAnyhabitat = {
   text: "Can only be played if a habitat card is in play on your reef.",
 };
 
-const requiresShipWreck = {
-  id: "requires-ship-wreck",
+const requiresCoralReef = {
+  id: "requires-coral-reef",
   type: "cardInPlay",
-  cardId: "ship-wreck",
+  cardId: "coral-reef",
   requiredKind: CardKind.HABITAT,
   zone: Zone.YOUR_REEF,
-  text: "Can only be played if a Ship Wreck habitat card is in play on your reef.",
+  text: "Can only be played if a Coral Reef habitat card is in play on your reef.",
 };
 
 const toxicPassive = {
@@ -701,7 +701,7 @@ export const invertebrateCards = [
       weight: "2 lbs",
     },
 
-    playRequirements: [requiresShipWreck],
+    playRequirements: [requiresCoralReef],
 
     passives: [],
 
