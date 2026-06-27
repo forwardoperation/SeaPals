@@ -41,6 +41,10 @@ export default function Header() {
           Instructions
         </Link>
 
+        <Link href="/tutorial" className={linkClass("/tutorial")}>
+          Tutorial
+        </Link>
+
         <Link href="/gallery" className={linkClass("/gallery")}>
           Gallery
         </Link>
