@@ -390,7 +390,7 @@ const oceanicCreatureData = [
     vp: 9,
     schoolDensityRequirement: 180,
     defense: "D20",
-    image: "/images/cards/ocean/whale-shark.png",
+    image: "/images/cards/filter-feeders/Oceanic/whale-shark.png",
   },
   {
     id: "ocean-sunfish",
