@@ -645,7 +645,7 @@ export const coralCards = [
     category: CardCategory.CORAL,
     stage: 0,
     stageLabel: "Base",
-    image: "/images/cards/coral/staghorn-coral-base.png",
+    image: "/images/cards/coral/Reef/staghorn-coral.png",
     sortOrder: 50,
     cost: { rp: 1 },
     health: 10,
