@@ -82,7 +82,7 @@ export const fishCards = [
     subtitle: "Fairy",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/fairy-parrotfish.png",
+    image: "/images/cards/fish/Reef/fairy-parrotfish.png",
     sortOrder: 200,
 
     cost: { rp: 2 },
