@@ -224,7 +224,7 @@ export const fishCards = [
     subtitle: "Bluestriped",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/bluestriped-grunt.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 203,
 
     cost: { rp: 1 },
@@ -273,7 +273,7 @@ export const fishCards = [
     name: "Frogfish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/frogfish.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 204,
 
     cost: { rp: 2 },
@@ -298,7 +298,8 @@ export const fishCards = [
         name: "Sneak Attack",
         text: "Perform 1 Bite.",
         effects: [
-          biteEffect({
+          attackEffect({
+            dice: "D4",
             categories: [CardCategory.FISH, CardCategory.INVERTEBRATE],
           }),
         ],
@@ -342,12 +343,11 @@ export const fishCards = [
       {
         id: "symbiosis",
         name: "Symbiosis",
-        text: "Can be placed inside an anemone’s slots. If inside of an anemone, it is considered to be covered and also cannot be pierced.",
+        text: "Can be placed inside an anemone’s slots.",
         timing: Timing.PASSIVE,
         effect: {
           type: "specialPlacement",
           allowedHostTags: ["anemone"],
-          grantsConditions: ["covered", "cannotBePierced"],
         },
       },
     ],
@@ -365,7 +365,7 @@ export const fishCards = [
     name: "Boxfish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/boxfish.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 206,
 
     cost: { rp: 2 },
@@ -397,7 +397,7 @@ export const fishCards = [
     name: "Porcupine Fish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/porcupinefish.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 207,
 
     cost: { rp: 2 },
@@ -449,20 +449,32 @@ export const fishCards = [
     image: "/images/cards/fish/Reef/Lionfish.png",
     sortOrder: 208,
 
-    cost: { rp: 3 },
-    victoryPoints: 3,
-    tags: ["creature", "fish", "lionfish", "toxic"],
+    cost: { rp: 4 },
+    victoryPoints: 0,
+    tags: ["creature", "fish", "lionfish", "toxic", "invasive"],
 
     bio: {
       commonName: "Lionfish",
       scientificName: "",
       role: "Reef Fish",
-      region: "Caribbean",
+      region: "Worldwide",
       length: "13”",
       weight: "2.3 lbs",
     },
 
     playRequirements: [],
+    specialRules: [
+      "You may play this creature onto one of your opponent’s reefs. It may possess any coral slot type. Your opponent may remove it with a specialized Support card or a successful attack.",
+    ],
+    specialPlacement: {
+      controller: "opponent",
+      zone: Zone.OPPONENT_REEF,
+      acceptsAnyCoralSlot: true,
+    },
+    removalRules: {
+      controller: "opponent",
+      methods: ["specializedSupport", "successfulAttack"],
+    },
     passives: [
       {
         ...toxicPassive,
@@ -470,25 +482,10 @@ export const fishCards = [
       },
     ],
 
-    onPlay: [
-      {
-        id: "gulp",
-        name: "Gulp",
-        text: "1 Bite.",
-        effects: [
-          biteEffect({
-            categories: [CardCategory.FISH, CardCategory.INVERTEBRATE],
-          }),
-        ],
-        icons: {
-          attack: "bite",
-          targetable: [CardCategory.FISH, CardCategory.INVERTEBRATE],
-        },
-      },
-    ],
+    onPlay: [],
 
     actions: [],
-    defense: { dice: "D4" },
+    defense: { dice: "D4-2" },
     flavorText:
       "Lionfish drift like ornate fans, herding small fish with wide fins before a lightning strike.",
     set: { id: "genesis", name: "Genesis", collectorNumber: null, totalInSet: null },
@@ -530,7 +527,7 @@ export const fishCards = [
     name: "Sargeant Major",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/sargeant-major.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 210,
 
     cost: { rp: 1 },
@@ -581,7 +578,7 @@ export const fishCards = [
     image: "/images/cards/fish/Reef/french-angelfish.png",
     sortOrder: 211,
 
-    cost: { rp: 5 },
+    cost: { rp: 4 },
     victoryPoints: 3,
     bonusVictoryPoints: {
       amount: 2,
@@ -670,7 +667,7 @@ export const fishCards = [
     subtitle: "Twinspot",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/twinspot-butterflyfish.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 213,
 
     cost: { rp: 2 },
@@ -713,7 +710,7 @@ export const fishCards = [
     name: "Queen Angelfish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/queen-angelfish.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 214,
 
     cost: { rp: 4 },

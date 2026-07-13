@@ -91,8 +91,8 @@ const scenes = [
   },
   {
     phase: "Your Turn 1",
-    text: "A turn begins with Choose and Collect. Draw from the Pals Deck, gain 1 RP, then collect 1 RP from Brain Coral.",
-    menu: ["Choose Pals Deck.", "Gain 1 turn RP.", "Collect 1 RP from coral."],
+    text: "A turn begins with Collect and Choose. Gain 1 turn RP, collect 1 RP from Brain Coral, apply your RP bank cap, then draw from the Pals Deck.",
+    menu: ["Gain 1 turn RP.", "Collect 1 RP from coral.", "Apply the RP bank cap.", "Choose Pals Deck and draw."],
     foundationDrawn: true,
     palsDrawn: true,
     handExtra: [ids.blueCrab],
@@ -105,7 +105,7 @@ const scenes = [
       { cardId: ids.triggerfish, slot: "Fish" },
     ],
     opponentVp: 2,
-    prompt: "Draw + Collect",
+    prompt: "Collect + Draw",
   },
   {
     phase: "Hand Menu",
