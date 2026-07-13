@@ -276,12 +276,18 @@ export const predatorCards = [
       {
         id: "ambush",
         name: "Ambush",
-        text: "1 Bite.",
+        text: "1 Bite. If Coral Reef is in your ecosystem, add +4 to your attack.",
         effects: [
-          biteEffect({
-            count: 1,
-            categories: [CardCategory.FISH, CardCategory.PREDATOR],
-          }),
+          {
+            ...biteEffect({
+              count: 1,
+              categories: [CardCategory.FISH, CardCategory.PREDATOR],
+            }),
+            conditionalModifiers: [{
+              condition: { type: "cardInPlay", cardId: "coral-reef" },
+              modifier: { type: "fixed", amount: 4 },
+            }],
+          },
         ],
         icons: {
           attack: "bite",
@@ -303,7 +309,7 @@ export const predatorCards = [
     name: "Green Sea Turtle",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/green-sea-turtle.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 104,
 
     cost: { rp: 4 },

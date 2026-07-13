@@ -64,12 +64,12 @@ export const invertebrateCards = [
     name: "Sea Urchin",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/sea-urchin.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 300,
 
     cost: { rp: 1 },
     victoryPoints: 1,
-    tags: ["creature", "invertebrate", "urchin"],
+    tags: ["creature", "invertebrate", "urchin", "sea-urchin"],
 
     bio: {
       commonName: "Sea Urchin",
@@ -157,22 +157,14 @@ export const invertebrateCards = [
       {
         id: "symbiosis",
         name: "Symbiosis",
-        text: "Attach to one of your corals in play. Search your hand for a Clownfish and attach it to this anemone.",
+        text: "Search your hand for a Clownfish and attach it to this anemone in your ecosystem. One anemone can hold up to two Clownfish.",
         effects: [
           {
             type: EffectType.ATTACH_TO_CARD,
             from: Zone.HAND,
-            target: {
-              controller: "you",
-              kind: CardKind.CORAL,
-              zone: Zone.YOUR_REEF,
-            },
-          },
-          {
-            type: "attachCardFromHand",
             targetCardTags: ["clownfish"],
             destination: "thisCard",
-            optional: true,
+            amount: 1,
           },
         ],
       },
@@ -300,7 +292,7 @@ export const invertebrateCards = [
     name: "Arrow Crab",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/arrow-crab.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 304,
 
     cost: { rp: 1 },
@@ -354,7 +346,7 @@ export const invertebrateCards = [
     name: "Mantis Shrimp",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/mantis-shrimp.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 305,
 
     cost: { rp: 3 },
@@ -401,7 +393,7 @@ export const invertebrateCards = [
     name: "Leather Starfish",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/leather-starfish.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 306,
 
     cost: { rp: 1 },
@@ -446,7 +438,7 @@ export const invertebrateCards = [
     name: "Cleaner Shrimp",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/cleaner-shrimp.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 307,
 
     cost: { rp: 1 },
@@ -501,7 +493,7 @@ export const invertebrateCards = [
     name: "Crown of Thorns",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/crown-of-thorns.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 308,
 
     cost: { rp: 2 },
@@ -574,7 +566,7 @@ export const invertebrateCards = [
     name: "Nudibranch",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/nudibranch.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 309,
 
     cost: { rp: 1 },
@@ -628,7 +620,7 @@ export const invertebrateCards = [
     name: "Giant Triton",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/giant-triton.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 310,
 
     cost: { rp: 2 },
@@ -686,7 +678,7 @@ export const invertebrateCards = [
     name: "Octopus",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/octopus.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 311,
 
     cost: { rp: 6 },
@@ -742,7 +734,7 @@ export const invertebrateCards = [
     name: "Oysters",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/oysters.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 312,
 
     cost: { rp: 6 },
@@ -773,7 +765,7 @@ export const invertebrateCards = [
     name: "Giant Clam",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/giant-clam.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 313,
 
     cost: { rp: 5 },

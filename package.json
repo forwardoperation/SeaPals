@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "test": "node --test src/app/simulator/*.test.mjs",
     "dev": "next dev",
     "start": "next start",
     "cloudflare:build": "next build --webpack && opennextjs-cloudflare build --skipNextBuild",
