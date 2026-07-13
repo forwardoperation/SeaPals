@@ -23,6 +23,15 @@ const REQUIRES_habitat = {
   text: "Can only be played if a habitat card is in play on your reef.",
 };
 
+const REQUIRES_CORAL_REEF = {
+  id: "requires-coral-reef",
+  type: "cardInPlay",
+  requiredKind: CardKind.HABITAT,
+  cardId: "coral-reef",
+  zone: Zone.YOUR_REEF,
+  text: "Can only be played if a Coral Reef Habitat is in your ecosystem.",
+};
+
 const reefApexCards = [
   // 🦈 GREAT WHITE
   {
@@ -33,24 +42,19 @@ const reefApexCards = [
     image: "/images/cards/apex/Reef/great-white.png",
     sortOrder: 10,
     cost: { rp: 8 },
-    victoryPoints: 9,
+    victoryPoints: 8,
     tags: ["apex", "shark"],
     bio: {
       commonName: "Great White Shark",
       scientificName: "Carcharodon carcharias",
     },
-    playRequirements: [
-      {
-        ...REQUIRES_habitat,
-        text: "Can only be played if a Drop Off habitat card is in play on your reef.",
-      },
-    ],
+    playRequirements: [REQUIRES_CORAL_REEF],
     passives: [INTIMIDATION_PASSIVE],
     onPlay: [
       {
         id: "crushing-jaws",
         name: "Crushing Jaws",
-        text: "Inflict 60 HP damage to an opponent’s coral. Then perform a D20 attack three times.",
+        text: "Inflict 60 HP damage to an opponent’s coral. Then perform a D12 attack three times.",
         effects: [
           {
             type: "damage",
@@ -63,8 +67,11 @@ const reefApexCards = [
           },
           {
             type: "attack",
-            attackDice: "D20",
+            attackDice: "D12",
             repeat: 3,
+            target: {
+              categories: [CardCategory.FILTER_FEEDER, CardCategory.APEX, CardCategory.PREDATOR, CardCategory.FISH],
+            },
           },
         ],
       },
@@ -87,18 +94,13 @@ const reefApexCards = [
       commonName: "Tiger Shark",
       scientificName: "Galeocerdo cuvier",
     },
-    playRequirements: [
-      {
-        ...REQUIRES_habitat,
-        text: "Can only be played if a Drop Off habitat card is in play on your reef.",
-      },
-    ],
+    playRequirements: [REQUIRES_CORAL_REEF],
     passives: [INTIMIDATION_PASSIVE],
     onPlay: [
       {
         id: "decimate",
         name: "Decimate",
-        text: "Inflict 50 HP damage to an opponent’s coral. Then perform a D20 attack twice.",
+        text: "Inflict 50 HP damage to an opponent’s coral. Then perform a D12 attack twice.",
         effects: [
           {
             type: "damage",
@@ -111,8 +113,11 @@ const reefApexCards = [
           },
           {
             type: "attack",
-            attackDice: "D20",
+            attackDice: "D12",
             repeat: 2,
+            target: {
+              categories: [CardCategory.FILTER_FEEDER, CardCategory.APEX, CardCategory.PREDATOR, CardCategory.FISH],
+            },
           },
         ],
       },
@@ -135,7 +140,7 @@ const reefApexCards = [
       commonName: "Hammerhead Shark",
       scientificName: "Sphyrnidae",
     },
-    playRequirements: [REQUIRES_habitat],
+    playRequirements: [REQUIRES_CORAL_REEF],
     passives: [INTIMIDATION_PASSIVE],
     onPlay: [
       {
@@ -150,11 +155,19 @@ const reefApexCards = [
               dice: "D4",
               multiplier: 10,
             },
+            target: {
+              controller: "opponent",
+              kind: CardKind.CORAL,
+              zone: Zone.OPPONENT_REEF,
+            },
           },
           {
             type: "attack",
             attackDice: "D8",
             repeat: 2,
+            target: {
+              categories: [CardCategory.APEX, CardCategory.PREDATOR, CardCategory.FISH],
+            },
           },
         ],
       },
@@ -177,21 +190,30 @@ const reefApexCards = [
       commonName: "Bull Shark",
       scientificName: "Carcharhinus leucas",
     },
-    playRequirements: [REQUIRES_habitat],
+    playRequirements: [REQUIRES_CORAL_REEF],
     passives: [INTIMIDATION_PASSIVE],
     onPlay: [
       {
         id: "tear-apart",
         name: "Tear Apart",
+        text: "Inflict 1D4 × 10 damage to an opponent’s coral. Then perform a D10 attack twice.",
         effects: [
           {
             type: "damage",
             amount: { type: "dice", dice: "D4", multiplier: 10 },
+            target: {
+              controller: "opponent",
+              kind: CardKind.CORAL,
+              zone: Zone.OPPONENT_REEF,
+            },
           },
           {
             type: "attack",
             attackDice: "D10",
             repeat: 2,
+            target: {
+              categories: [CardCategory.APEX, CardCategory.PREDATOR, CardCategory.FISH],
+            },
           },
         ],
       },
@@ -254,10 +276,11 @@ const reefApexCards = [
     tags: ["apex", "dolphin"],
     playRequirements: [
       {
-        id: "requires-sanctuary",
-        type: "kindInPlay",
+        id: "requires-coral-reef",
+        type: "cardInPlay",
         requiredKind: CardKind.HABITAT,
-        text: "Requires Marine Sanctuary.",
+        cardId: "coral-reef",
+        text: "Can only be played if a Coral Reef Habitat is in your ecosystem.",
       },
     ],
     onPlay: [
@@ -273,6 +296,17 @@ const reefApexCards = [
           {
             type: "attack",
             attackDice: "D10",
+            target: {
+              controller: "opponent",
+              kind: CardKind.CREATURE,
+              categories: [CardCategory.APEX, CardCategory.PREDATOR, CardCategory.FISH],
+              zone: Zone.OPPONENT_REEF,
+            },
+          },
+          {
+            type: "grantAdvantage",
+            targetCategories: [CardCategory.FISH],
+            duration: "thisCard",
           },
         ],
       },

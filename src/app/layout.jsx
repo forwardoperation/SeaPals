@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import Header from "@/components/layout/Header";
+import RulesChat from "@/components/rules/RulesChat";
 import Script from "next/script";
 
 export const metadata = {
@@ -17,6 +18,8 @@ export default function RootLayout({ children }) {
           <Header />
           <div className="mt-8">{children}</div>
         </div>
+
+        <RulesChat />
 
         {/* Google Analytics */}
         <Script

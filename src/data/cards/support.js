@@ -1,6 +1,7 @@
 import {
   CardKind,
   CardCategory,
+  CreatureZone,
   EffectType,
   Timing,
   Zone,
@@ -12,11 +13,6 @@ const standardSupportRules = {
   category: CardCategory.SUPPORT,
   timing: Timing.ACTION_PHASE,
   playRestrictions: [
-    {
-      type: "locksFurtherSupportPlays",
-      duration: Duration.THIS_TURN,
-      text: "You cannot play another Support Card after this one.",
-    },
     {
       type: "phaseOnly",
       phase: GamePhase.MAIN,
@@ -31,10 +27,11 @@ export const supportCards = [
     name: "Spearfishing",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/spearfishing.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 500,
 
-    text: "Discard one fish or predator in play on your reef and collect its RP cost.",
+    text: "Discard one fish or predator in play on your reef and collect its RP cost. You cannot play another Support card this turn.",
+    locksFurtherSupportsThisTurn: true,
 
     effects: [
       {
@@ -60,10 +57,11 @@ export const supportCards = [
     name: "Coral Gardener",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/coral-gardener.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 501,
 
-    text: "Search your deck for a coral and place it into your hand.",
+    text: "Search your deck for a coral and place it into your hand. You cannot play another Support card this turn.",
+    locksFurtherSupportsThisTurn: true,
 
     effects: [
       {
@@ -104,10 +102,11 @@ export const supportCards = [
     name: "Capt. Dani",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/capt-dani.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 503,
 
-    text: "Search your deck for a Filter Feeder creature and place it into your hand. Shuffle your deck afterwards.",
+    text: "Search your deck for a Filter Feeder creature and place it into your hand. Shuffle your deck afterwards. You cannot play another Support card this turn.",
+    locksFurtherSupportsThisTurn: true,
 
     effects: [
       {
@@ -126,10 +125,11 @@ export const supportCards = [
     name: "Dr. Evans",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/dr-evans.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 504,
 
-    text: "Discard your hand and draw 7 cards.",
+    text: "Discard your hand and draw 7 cards. You cannot play another Support card this turn.",
+    locksFurtherSupportsThisTurn: true,
 
     effects: [
       {
@@ -153,10 +153,11 @@ export const supportCards = [
     name: "Scientist Jes",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/scientist-jes.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 505,
 
-    text: "Search your deck for a habitat card and place it into your hand. Shuffle your deck afterwards. Draw 2 cards.",
+    text: "Search your deck for a habitat card and place it into your hand, then shuffle. OR draw 2 cards. You cannot play another Support card this turn.",
+    locksFurtherSupportsThisTurn: true,
 
     effects: [
       {
@@ -178,7 +179,7 @@ export const supportCards = [
     name: "Whirlpool",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/whirlpool.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 506,
 
     text: "Choose one of your opponent’s corals. That coral produces 1 RP less next round.",
@@ -202,10 +203,11 @@ export const supportCards = [
     name: "Super Whirlpool",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/super-whirlpool.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 507,
 
-    text: "Spend 1 RP to play this card. Choose one of your opponent’s corals. That coral produces 2 RP less next round.",
+    text: "Spend 1 RP to play this card. Choose one of your opponent’s corals. That coral produces 2 RP less next round. You cannot play another Support card this turn.",
+    locksFurtherSupportsThisTurn: true,
 
     cost: { rp: 1 },
 
@@ -228,19 +230,20 @@ export const supportCards = [
     name: "Restocking",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/restocking.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 508,
 
-    text: "Choose up to three non-Creature School fish in your discard pile and shuffle them into your deck.",
+    text: "Choose up to three fish in your discard pile and shuffle them into your deck. You cannot play another Support card this turn.",
+    locksFurtherSupportsThisTurn: true,
 
     effects: [
       {
         type: EffectType.RECOVER_CARD_FROM_DISCARD,
         targetKind: CardKind.CREATURE,
         targetCategories: [CardCategory.FISH],
-        excludeTags: ["creature-school"],
         amount: 3,
         destination: Zone.DECK,
+        routeByPersonalDeck: true,
         shuffleAfterwards: true,
       },
     ],
@@ -251,10 +254,11 @@ export const supportCards = [
     name: "Robotic Survey",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/robotic-survey.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 509,
 
-    text: "Look at the top 5 cards of your deck and rearrange them in any way you see fit.",
+    text: "Look at the top 5 cards of your deck and rearrange them in any way you see fit. You cannot play another Support card this turn.",
+    locksFurtherSupportsThisTurn: true,
 
     effects: [
       {
@@ -272,7 +276,7 @@ export const supportCards = [
     image: "/images/cards/support/deep-sea-fishing-rod.png",
     sortOrder: 510,
 
-    text: "Search your deck for a predator or apex and place it into your hand. Shuffle your deck afterwards.",
+    text: "Search your deck for a predator or apex, show it to your opponent, and place it into your hand. Shuffle your deck afterwards.",
 
     effects: [
       {
@@ -281,6 +285,7 @@ export const supportCards = [
         targetCategories: [CardCategory.PREDATOR, CardCategory.APEX],
         amount: 1,
         destination: Zone.HAND,
+        revealToOpponent: true,
         shuffleAfterwards: true,
       },
     ],
@@ -291,7 +296,7 @@ export const supportCards = [
     name: "Explorer Jordan",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/explorer-jordan.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 511,
 
     text: "Look at the top 5 cards of your deck. You may reveal a creature of any class from among them, show it to your opponent, and add it to your hand. Shuffle the rest.",
@@ -362,7 +367,7 @@ export const supportCards = [
     image: "/images/cards/support/poison-heal.png",
     sortOrder: 514,
 
-    text: "Your next predator attack has poison immunity.",
+    text: "On your next attack, ignore any effects from Toxic.",
 
     effects: [
       {
@@ -372,7 +377,6 @@ export const supportCards = [
         target: {
           controller: "you",
           kind: CardKind.CREATURE,
-          categories: [CardCategory.PREDATOR],
         },
       },
     ],
@@ -383,7 +387,7 @@ export const supportCards = [
     name: "Fishing",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/fishing.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 515,
 
     text: "Search your deck for a non-Creature School fish, show it to your opponent, and place it into your hand.",
@@ -454,7 +458,7 @@ export const supportCards = [
     name: "Recovery",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    image: "/images/cards/support/recovery.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 518,
 
     text: "Flip a coin. If heads, put a discarded card into your hand.",
@@ -480,13 +484,18 @@ export const supportCards = [
     image: "/images/cards/support/Deep/rov-lights.png",
     sortOrder: 519,
 
-    text: "Creatures hidden by Abyss can be targeted this turn.",
+    text: "Your attacks get +2 when targeting Deep creatures this turn.",
 
     effects: [
       {
-        type: EffectType.ENABLE_TARGETING_HIDDEN_CREATURES,
-        source: "abyss",
+        type: "modifyAttackRoll",
+        amount: 2,
         duration: Duration.THIS_TURN,
+        target: {
+          controller: "opponent",
+          kind: CardKind.CREATURE,
+          zone: CreatureZone.DEEP,
+        },
       },
     ],
   },
