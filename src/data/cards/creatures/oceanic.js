@@ -278,7 +278,7 @@ const oceanicCreatureData = [
       "Discard one Oceanic Predator or two Oceanic Fish in your ecosystem to play.",
     ],
     onPlay: [
-      "Breach Strike: Perform 2 D8+5 attacks targeting apex, predator, or fish.",
+      "Breach Strike: Perform 2 D8+5 attacks targeting apex or predator.",
     ],
     passives: [
       "Open Pursuit: Gain +3 on attacks when Open Ocean Habitat is in your ecosystem.",
@@ -296,7 +296,7 @@ const oceanicCreatureData = [
       "Discard one Oceanic Predator or two Oceanic Fish in your ecosystem to play.",
     ],
     onPlay: [
-      "Deep Hunt: Perform 2 D12 attacks targeting predators. Can target predators hidden by the Abyss.",
+      "Deep Hunt: Perform 2 D12 attacks targeting filter feeders, apex, or predators. Can target predators hidden by the Abyss.",
     ],
     passives: [
       "Battle of the Titans: If this Sperm Whale is attacking a Giant or Colossal Squid, gain +6.",
@@ -315,7 +315,7 @@ const oceanicCreatureData = [
     ],
     onPlay: [
       "Echo Disruption: Your opponent cannot play support cards on their next turn.",
-      "Deep Hunt: Perform 2 D12 attacks. Can target predators hidden by the Abyss.",
+      "Deep Hunt: Perform 2 D12 attacks targeting filter feeders, apex, or predators. Can target predators hidden by the Abyss.",
     ],
     prerelease: false,
     defense: "D10",
@@ -330,7 +330,7 @@ const oceanicCreatureData = [
     specialRules: [
       "Discard one Oceanic Predator or two Oceanic Fish in your ecosystem to play.",
     ],
-    onPlay: ["Apex Hunter: Perform 2 D20 attacks. Attacks have advantage."],
+    onPlay: ["Apex Hunter: Perform 2 D20 attacks targeting filter feeders, apex, or predators. Attacks have advantage."],
     prerelease: false,
     defense: "D20",
     image: "/images/cards/apex/Oceanic/killer-whale.png",
@@ -342,7 +342,8 @@ const oceanicCreatureData = [
     rp: 8,
     vp: 10,
     schoolDensityRequirement: 180,
-    defense: "D20",
+    playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],
+    defense: "D8",
     image: "/images/cards/filter-feeders/Oceanic/basking-shark.png",
   },
   {
@@ -355,6 +356,7 @@ const oceanicCreatureData = [
     rp: 8,
     vp: 10,
     schoolDensityRequirement: 170,
+    playRequirements: ["Requires Open Ocean or Coral Reef Habitat in your ecosystem."],
     defense: "D10",
     image: "/images/cards/filter-feeders/Reef/manta-ray.png",
     tags: ["creature", "reef", "filter-feeder"],
@@ -369,7 +371,7 @@ const oceanicCreatureData = [
     schoolDensityRequirement: 200,
     passives: ["Massive: Have advantage on defensive dice rolls."],
     defense: "D20",
-    image: "/images/cards/ocean/humpback-whale.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
   },
   {
     id: "blue-whale",
@@ -378,6 +380,7 @@ const oceanicCreatureData = [
     rp: 14,
     vp: 16,
     schoolDensityRequirement: 250,
+    playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],
     passives: ["Massive: Have advantage on defensive dice rolls."],
     defense: "D20",
     image: "/images/cards/filter-feeders/Oceanic/blue-whale.png",
@@ -387,8 +390,9 @@ const oceanicCreatureData = [
     name: "Whale Shark",
     class: CreatureClass.FILTER_FEEDER,
     rp: 9,
-    vp: 9,
+    vp: 11,
     schoolDensityRequirement: 180,
+    playRequirements: ["Requires Open Ocean or Coral Reef Habitat in your ecosystem."],
     defense: "D20",
     image: "/images/cards/filter-feeders/Oceanic/whale-shark.png",
   },
@@ -398,9 +402,10 @@ const oceanicCreatureData = [
     class: CreatureClass.FILTER_FEEDER,
     rp: 8,
     vp: 8,
-    schoolDensityRequirement: 160,
+    schoolDensityRequirement: 150,
+    playRequirements: ["Requires Open Ocean or Coral Reef Habitat in your ecosystem."],
     defense: "D8",
-    image: "/images/cards/ocean/ocean-sunfish.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
   },
   {
     id: "flying-fish",

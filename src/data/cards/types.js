@@ -149,12 +149,14 @@ export const EffectType = {
   // Resources / economy
   GAIN_RESOURCE: "gainResource",
   MODIFY_PLAY_COST: "modifyPlayCost",
+  MODIFY_SCHOOL_DENSITY_REQUIREMENT: "modifySchoolDensityRequirement",
   MODIFY_RP_BANK_CAP: "modifyRpBankCap",
   MODIFY_RP_GENERATION: "modifyRpGeneration",
   PREVENT_RP_GENERATION: "preventRpGeneration",
 
   // Card flow
   DRAW_CARDS: "drawCards",
+  MODIFY_TURN_DRAW: "modifyTurnDraw",
   SEARCH_DECK: "searchDeck",
   DISCARD_RANDOM_CARD: "discardRandomCard",
   RECOVER_CARD_FROM_DISCARD: "recoverCardFromDiscard",

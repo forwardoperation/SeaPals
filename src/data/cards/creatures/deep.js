@@ -22,7 +22,7 @@ const deepCreatureData = [
     rp: 2,
     vp: 1,
     defense: "D4-2",
-    passives: ["Darkness Shroud: Cannot be targeted if Abyss is in your play area."],
+    passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
     actions: ["Call for Family: Search your deck for a Deep Fish and put it into your hand. Cost: 1RP."],
   },
   {
@@ -35,7 +35,7 @@ const deepCreatureData = [
     defense: "D4-2",
     passives: [
       "Big Eyes: Can target creatures hidden by the Abyss.",
-      "Darkness Shroud: Cannot be targeted if Abyss is in your play area.",
+      "Darkness Shroud: If Abyss is in play, gain +2 Defense.",
     ],
     onPlay: ["Snap: D4 attack targeting Deep Fish."],
   },
@@ -47,7 +47,6 @@ const deepCreatureData = [
     rp: 3,
     vp: 3,
     defense: "D6",
-    passives: ["Darkness Shroud: Cannot be targeted if Abyss is in your play area."],
     onPlay: ["Bite: D4 attack targeting Deep Fish. If Abyss is in your play area, add +2 to your dice roll."],
   },
   {
@@ -57,8 +56,8 @@ const deepCreatureData = [
     image: "/images/cards/fish/Deep/viperfish.png",
     rp: 3,
     vp: 2,
-    defense: "D4",
-    passives: ["Darkness Shroud: Cannot be targeted if Abyss is in your play area."],
+    defense: "D4-2",
+    passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
     onPlay: ["Trap: D6 attack targeting Deep Fish."],
   },
   {
@@ -69,7 +68,7 @@ const deepCreatureData = [
     rp: 2,
     vp: 2,
     defense: "D4-2",
-    passives: ["Darkness Shroud: Cannot be targeted if Abyss is in your play area."],
+    passives: ["Darkness Shroud: If Abyss is in play, gain +4 Defense."],
     onPlay: ["Surface Scan: Draw 2 cards."],
   },
   {
@@ -80,7 +79,7 @@ const deepCreatureData = [
     rp: 3,
     vp: 2,
     defense: "D4-2",
-    passives: ["Darkness Shroud: Cannot be targeted if Abyss is in your play area."],
+    passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
     onPlay: ["Snatch: D6 attack targeting Deep Fish."],
   },
   {
@@ -91,7 +90,8 @@ const deepCreatureData = [
     rp: 2,
     vp: 2,
     defense: "D4-2",
-    onPlay: ["Eyes Bigger Than Stomach: D4-1 attack targeting Predator, Apex, or Filter Feeder. If you successfully consume a card, discard this card."],
+    onPlay: ["Eyes Bigger Than Stomach: D4-1 attack targeting Predator, Apex, or Filter Feeder. If you successfully consume an Apex or Predator, discard this card."],
+    selfDiscardAfterConsumeCategories: [CardCategory.APEX, CardCategory.PREDATOR],
   },
   {
     id: "tripod-fish",
@@ -112,6 +112,11 @@ const deepCreatureData = [
     rp: 4,
     vp: 2,
     defense: "D6",
+    bonusVictoryPoints: {
+      amount: 2,
+      condition: { type: "cardInPlay", cardId: "abyss" },
+      text: "If Abyss is in your play area, gain two additional victory points while this card is on your reef.",
+    },
     specialRules: ["If Abyss is in your play area, gain two additional victory points while this card is on your reef."],
     passives: ["Ancient Resilience: Once per game, if this card would be removed, keep it instead."],
   },
@@ -124,10 +129,7 @@ const deepCreatureData = [
     rp: 3,
     vp: 3,
     defense: "D4-2",
-    passives: [
-      "Self Illumination: Can target creatures hidden by the Abyss.",
-      "Darkness Shroud: Cannot be targeted if Abyss is in your play area.",
-    ],
+    passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
     onPlay: ["Lure: D4 attack targeting Deep Fish. If Abyss is in your play area, gain advantage."],
   },
   {
@@ -138,7 +140,6 @@ const deepCreatureData = [
     rp: 3,
     vp: 3,
     defense: "D6",
-    passives: ["Night Vision: Can target creatures hidden by the Abyss."],
     onPlay: ["Bite: D6 attack targeting Deep Fish or Deep Predator. If Abyss is in your play area, add +2 to your roll."],
   },
   {
@@ -149,7 +150,7 @@ const deepCreatureData = [
     rp: 3,
     vp: 3,
     defense: "D4-2",
-    passives: ["Darkness Shroud: Cannot be targeted if Abyss is in your play area."],
+    passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
     onPlay: ["Swallow Up: D6 attack targeting Deep Fish or Deep Predator."],
   },
   {
@@ -160,7 +161,6 @@ const deepCreatureData = [
     rp: 4,
     vp: 4,
     defense: "D8",
-    passives: ["Darkness Shroud: Cannot be targeted if Abyss is in your play area."],
     onPlay: ["Crunch: Two D6 attacks targeting Deep Invertebrates. If Abyss is in your play area, gain advantage."],
   },
   {
@@ -219,7 +219,6 @@ const deepCreatureData = [
     vp: 14,
     defense: "D12",
     specialRules: ["Can only be played if Abyss is in your play area."],
-    passives: ["Giant Eye: Can target creatures hidden by the Abyss."],
     onPlay: [
       "Ensnare: Flip a coin. If heads, the defending creature gets -6 defense on your next attack. You may perform this once per attack.",
       "Grab from the Deep: Three D12 attacks targeting all creature classes.",
@@ -245,9 +244,9 @@ const deepCreatureData = [
     vp: 6,
     defense: "D8",
     specialRules: ["Can only be played if Abyss is in your play area."],
-    passives: [
-      "Cloak in Darkness: Choose one of your opponent's coral. That coral is now stunned.",
-      "Phantom Boost: All of your attacks have +3 on dice rolls.",
+    passives: ["Phantom Boost: All of your attacks have +3 on dice rolls."],
+    actions: [
+      "Cloak in Darkness: Choose one of your opponent's coral. That coral is now stunned. You may only perform this once per turn. Cost: 0RP.",
     ],
   },
   {

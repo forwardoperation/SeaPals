@@ -1,10 +1,10 @@
 import {
   CardKind,
   CardCategory,
+  CreatureZone,
   EffectType,
   Timing,
   Weakness,
-  Zone,
 } from "./types";
 
 export const conditionCards = [
@@ -13,7 +13,7 @@ export const conditionCards = [
     name: "Red Tide",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/red-tide.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 400,
 
@@ -43,7 +43,7 @@ export const conditionCards = [
     name: "Abundant Sunlight",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/abundant-sunlight.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 401,
 
@@ -68,7 +68,7 @@ export const conditionCards = [
     name: "Clear Water",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/clear-water.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 402,
 
@@ -96,7 +96,7 @@ export const conditionCards = [
     name: "Murky Water",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/murky-water.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 403,
 
@@ -124,7 +124,7 @@ export const conditionCards = [
     name: "Bleak Overcast",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/bleak-overcast.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 404,
 
@@ -150,7 +150,7 @@ export const conditionCards = [
     name: "Undertow",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/undertow.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 405,
 
@@ -175,7 +175,7 @@ export const conditionCards = [
     name: "Algae Bloom",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/algae-bloom.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 406,
 
@@ -201,7 +201,7 @@ export const conditionCards = [
     name: "Jelly Field",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/jelly-field.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 407,
 
@@ -226,7 +226,7 @@ export const conditionCards = [
     name: "Severe Coral Bleaching",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/severe-coral-bleaching.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 408,
 
@@ -252,7 +252,7 @@ export const conditionCards = [
     name: "Fishing Nets",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/fishing-nets.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 409,
 
@@ -265,12 +265,12 @@ export const conditionCards = [
         type: EffectType.PREVENT_CARD_PLAY,
         affectedPlayers: "all",
         targetKind: CardKind.CREATURE,
-        targetCategories: [CardCategory.PREDATOR, CardCategory.APEX],
+        targetCategories: [CardCategory.FILTER_FEEDER, CardCategory.APEX],
         duration: "round",
       },
     ],
 
-    text: "Mega and Apex class cannot be played while this card is in play.",
+    text: "Filter Feeders and Apex creatures cannot be played while this card is in play.",
   },
 
   {
@@ -278,7 +278,7 @@ export const conditionCards = [
     name: "Coral Disease",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/coral-disease.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 410,
 
@@ -304,7 +304,7 @@ export const conditionCards = [
     name: "Hurricane",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/hurricane.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 411,
 
@@ -330,64 +330,55 @@ export const conditionCards = [
     name: "Sardine Run!",
     kind: CardKind.CONDITION,
     category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/sardine-run.png",
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
 
     sortOrder: 412,
 
-    tags: ["condition", "persistent", "vp-source"],
-
-    timing: "persistent",
-
-    health: 40,
-    victoryPoints: 4,
-
-    effects: [
-      {
-        type: EffectType.CREATE_ATTACKABLE_VP_CARD,
-        controller: "habitat",
-        health: 40,
-        victoryPoints: 4,
-        damageToVpRatio: {
-          damage: 10,
-          victoryPoints: 1,
-        },
-        targetableBy: {
-          kind: CardKind.CREATURE,
-          categories: [CardCategory.PREDATOR, CardCategory.APEX],
-          requiresActionType: "attack",
-        },
-        discardWhenHealthReaches: 0,
-      },
-    ],
-
-    text: "Place this card on the side of the habitat deck. For every 10 damage done to this card, gain 1 VP. Any predator or apex with an attack action may target the Sardine Run.",
-  },
-
-  {
-    id: "krill-ball",
-    name: "Krill Ball!",
-    kind: CardKind.CONDITION,
-    category: CardCategory.CONDITION,
-    image: "/images/cards/conditions/krill-ball.png",
-
-    sortOrder: 413,
-
-    tags: ["condition", "persistent", "filter-feeding-event"],
+    tags: ["condition", "persistent", "school-density-event"],
 
     timing: "persistent",
 
     effects: [
       {
-        type: EffectType.ENABLE_FILTER_FEEDER_PLAY,
+        type: EffectType.MODIFY_SCHOOL_DENSITY_REQUIREMENT,
         affectedPlayers: "all",
         targetKind: CardKind.CREATURE,
-        targetCategories: [CardCategory.FILTER_FEEDER],
-        destination: Zone.YOUR_REEF,
+        targetCategories: [CardCategory.PREDATOR],
+        targetZone: CreatureZone.OCEAN,
+        amount: -30,
         maxPerPlayer: 1,
         consumeWhenUsed: true,
       },
     ],
 
-    text: "Place this card on the side of the habitat deck. A Filter Feeder class creature may now be played onto a player’s reef. Each player may only play one filter feeder.",
+    text: "The next Oceanic Predator each player plays costs 30 less School Density. Each player may only gain this reduction once.",
+  },
+
+  {
+    id: "krill-ball",
+    name: "Krill Bloom",
+    kind: CardKind.CONDITION,
+    category: CardCategory.CONDITION,
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
+
+    sortOrder: 413,
+
+    tags: ["condition", "persistent", "filter-feeding-event", "school-density-event"],
+
+    timing: "persistent",
+
+    effects: [
+      {
+        type: EffectType.MODIFY_SCHOOL_DENSITY_REQUIREMENT,
+        affectedPlayers: "all",
+        targetKind: CardKind.CREATURE,
+        targetCategories: [CardCategory.FILTER_FEEDER],
+        amount: -150,
+        maxPerPlayer: 1,
+        consumeWhenUsed: true,
+      },
+    ],
+
+    text: "The next Filter Feeder each player plays costs 150 less School Density. Each player may only gain this reduction once.",
   },
 ];

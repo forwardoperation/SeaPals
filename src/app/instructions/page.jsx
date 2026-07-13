@@ -246,7 +246,7 @@ const deckTypes = [
     accent: "border-violet-300 bg-violet-50",
     description:
       "A shared deck revealed round by round. Conditions affect all players and can reshape the ecosystem.",
-    examples: "Hurricane, Red Tide, Krill Ball, Sardine Run",
+    examples: "Hurricane, Red Tide, Krill Bloom, Sardine Run",
   },
 ];
 
@@ -323,12 +323,12 @@ const slotRows = [
 
 const turnSteps = [
   {
-    name: "Choose",
-    description: "Draw from your Foundation Deck or Pals Deck.",
+    name: "Collect",
+    description: "Gain 1 RP, collect from your active foundations, then discard RP above your bank cap.",
   },
   {
-    name: "Collect",
-    description: "Gain 1 RP, then collect from your active foundations.",
+    name: "Choose",
+    description: "Draw from your Foundation Deck or Pals Deck.",
   },
   {
     name: "Build",
@@ -405,7 +405,7 @@ const playWalkthroughSteps = [
     title: "Start Your Turn",
     image: "/images/instructions/5-start-of-your-turn.png",
     commentary:
-      "Collect 1 RP, collect RP from your active foundations, discard RP above your bank max, then choose which personal deck to draw from.",
+      "Collect 1 RP plus RP from your active foundations, then discard RP above your bank cap. After collection is complete, choose which personal deck to draw from.",
   },
   {
     title: "Play a Pal",
