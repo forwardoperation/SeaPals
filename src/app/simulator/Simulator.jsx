@@ -8111,10 +8111,10 @@ export default function Simulator() {
                 <button type="button" disabled={!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target} onClick={completeDrEvans} className="mt-5 w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400">Discard Hand &amp; Draw Selected Cards</button>
               </div>
             ) : modal === "hand" ? (
-              <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)]">
-                <div className="max-h-[560px] overflow-y-auto rounded-3xl border border-cyan-300/20 bg-slate-950/35 p-4" style={{ minWidth: 180 }}>
+              <div className="flex min-h-0 flex-col gap-3 lg:grid lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-4">
+                <div className="order-2 overflow-x-auto overflow-y-hidden rounded-3xl border border-cyan-300/20 bg-slate-950/35 p-3 overscroll-contain lg:order-1 lg:max-h-[560px] lg:overflow-x-hidden lg:overflow-y-auto lg:p-4" style={{ minWidth: 180 }}>
                   {modalCards.length ? (
-                    <div className="space-y-3">
+                    <div className="flex w-max gap-2 lg:block lg:w-auto lg:space-y-3">
                       {modalCards.map((cardId, cardIndex) => {
                         const card = cardsById[cardId] || { name: cardId };
                         const selected = cardId === selectedHandCard;
@@ -8127,15 +8127,16 @@ export default function Simulator() {
                               setSelectedHandCard(cardId);
                               setPlayError("");
                             }}
-                            className={`w-full rounded-3xl border p-2 text-left transition ${
+                            className={`w-24 shrink-0 rounded-2xl border p-1.5 text-left transition lg:w-full lg:rounded-3xl lg:p-2 ${
                               isSetup && !getPlayError(card) ? "seapals-setup-playable-card border-emerald-300/60 bg-emerald-400/15" : selected ? "border-cyan-400 bg-cyan-400/15" : "border-white/10 bg-white/5 hover:border-cyan-300/40"
                             }`}
                           >
                             <img
                               src={card.image}
                               alt={card.name}
-                              className="h-36 w-full rounded-2xl object-contain"
+                              className="h-24 w-full rounded-xl object-contain lg:h-36 lg:rounded-2xl"
                             />
+                            <span className="mt-1 block truncate px-1 text-center text-[10px] font-bold text-white lg:hidden">{card.name}</span>
                           </button>
                         );
                       })}
@@ -8147,14 +8148,14 @@ export default function Simulator() {
                   )}
                 </div>
 
-                <div className="rounded-3xl border border-cyan-300/20 bg-slate-950/35 p-4 shadow-inner">
+                <div className="order-1 rounded-3xl border border-cyan-300/20 bg-slate-950/35 p-3 shadow-inner lg:order-2 lg:p-4">
                   {selectedHandCard ? (
-                    <div className="space-y-4">
-                      <div className="rounded-3xl border border-white/10 bg-slate-950/45 p-4 shadow-sm">
+                    <div className="space-y-3 lg:space-y-4">
+                      <div className="rounded-2xl border border-white/10 bg-slate-950/45 p-2 shadow-sm lg:rounded-3xl lg:p-4">
                         <img
                           src={cardsById[selectedHandCard]?.image}
                           alt={cardsById[selectedHandCard]?.name}
-                          className="h-[560px] w-full rounded-[1.5rem] object-contain"
+                          className="h-[30dvh] min-h-[190px] max-h-[280px] w-full rounded-2xl object-contain lg:h-[560px] lg:max-h-none lg:rounded-[1.5rem]"
                         />
                       </div>
                       <div className="space-y-2 text-center">
@@ -8169,7 +8170,7 @@ export default function Simulator() {
                           type="button"
                           disabled={Boolean(selectedHandPlayError)}
                           onClick={() => playCardFromHand(selectedHandCard)}
-                          className="mx-auto rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-8 py-3 text-sm font-black text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400"
+                          className="mx-auto w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-8 py-3 text-sm font-black text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 lg:w-auto"
                         >
                           Play Card
                         </button>
