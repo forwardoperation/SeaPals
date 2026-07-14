@@ -132,7 +132,7 @@ function getBracketSeeds(decks) {
   );
 }
 
-function buildSeedSlots(decks) {
+function buildDefaultSeedSlots(decks) {
   const seeds = getBracketSeeds(decks);
   const bracketSize = nextPowerOfTwo(seeds.length);
   const slots = Array(bracketSize).fill(null);
@@ -152,7 +152,50 @@ function buildSeedSlots(decks) {
   return slots;
 }
 
-function buildBracketRounds(decks, matches) {
+function buildSeedSlots(decks, savedOrder = []) {
+  const defaultSlots = buildDefaultSeedSlots(decks);
+
+  if (!Array.isArray(savedOrder) || savedOrder.length === 0) {
+    return defaultSlots;
+  }
+
+  const decksById = new Map(decks.map((deck) => [deck.id, deck]));
+  const slots = Array(defaultSlots.length).fill(null);
+  const placedDeckIds = new Set();
+
+  savedOrder.slice(0, slots.length).forEach((deckId, index) => {
+    const deck = deckId ? decksById.get(deckId) : null;
+
+    if (deck && !placedDeckIds.has(deck.id)) {
+      slots[index] = deck;
+      placedDeckIds.add(deck.id);
+    }
+  });
+
+  for (const defaultDeck of defaultSlots) {
+    if (!defaultDeck || placedDeckIds.has(defaultDeck.id)) continue;
+
+    const openSlotIndex = slots.findIndex((slot) => !slot);
+    if (openSlotIndex === -1) break;
+    slots[openSlotIndex] = defaultDeck;
+    placedDeckIds.add(defaultDeck.id);
+  }
+
+  return slots;
+}
+
+function getSeedOrder(decks, savedOrder = []) {
+  return buildSeedSlots(decks, savedOrder).map((deck) => deck?.id ?? null);
+}
+
+function seedOrdersMatch(first, second) {
+  return (
+    first.length === second.length &&
+    first.every((deckId, index) => deckId === second[index])
+  );
+}
+
+function buildBracketRounds(decks, matches, seedOrder = []) {
   if (decks.length < 2) return [];
 
   const matchesByPair = new Map();
@@ -163,7 +206,7 @@ function buildBracketRounds(decks, matches) {
   }
 
   const rounds = [];
-  let slots = buildSeedSlots(decks);
+  let slots = buildSeedSlots(decks, seedOrder);
   let roundIndex = 0;
 
   while (slots.length > 1) {
@@ -410,46 +453,192 @@ function DeckCardList({ cards }) {
   );
 }
 
-function BracketDeckSlot({ deck, winner, disabled, onWinnerClick }) {
+function BracketDeckSlot({
+  deck,
+  winner,
+  disabled,
+  onWinnerClick,
+  canReorder = false,
+  slotIndex,
+  selectedForMove = false,
+  hasSelectedSlot = false,
+  isDropTarget = false,
+  onMoveClick,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+}) {
   const isWinner = deck && winner?.id === deck.id;
+  const reorderClasses = isDropTarget
+    ? "ring-2 ring-sky-400 ring-offset-2"
+    : selectedForMove
+      ? "ring-2 ring-amber-400 ring-offset-2"
+      : "";
 
   if (!deck) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-400">
-        Bye
+      <div
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        className={`rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-400 transition ${reorderClasses}`}
+      >
+        {canReorder && hasSelectedSlot ? (
+          <button
+            type="button"
+            onClick={() => onMoveClick(slotIndex, false)}
+            className="w-full text-left font-bold text-sky-700 hover:text-sky-900"
+          >
+            Move here
+          </button>
+        ) : (
+          "Bye"
+        )}
       </div>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => onWinnerClick(deck.id)}
-      disabled={disabled}
-      className={`w-full rounded-xl border px-3 py-3 text-left transition disabled:cursor-not-allowed ${
+    <div
+      draggable={canReorder}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      className={`flex rounded-xl border transition ${reorderClasses} ${
         isWinner
           ? "border-emerald-300 bg-emerald-50 text-emerald-950"
           : "border-slate-200 bg-white text-slate-800 hover:border-sky-300 hover:bg-sky-50"
-      }`}
+      } ${canReorder ? "cursor-grab active:cursor-grabbing" : ""}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-bold">{deck.deckName}</div>
-          <div className="mt-0.5 text-xs font-semibold text-slate-500">
-            {deck.playerName}
+      <button
+        type="button"
+        onClick={() => onWinnerClick(deck.id)}
+        disabled={disabled}
+        className="min-w-0 flex-1 px-3 py-3 text-left disabled:cursor-not-allowed"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="font-bold">{deck.deckName}</div>
+            <div className="mt-0.5 text-xs font-semibold text-slate-500">
+              {deck.playerName}
+            </div>
           </div>
+          {isWinner && (
+            <span className="rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">
+              Win
+            </span>
+          )}
         </div>
-        {isWinner && (
-          <span className="rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">
-            Win
-          </span>
-        )}
-      </div>
-    </button>
+      </button>
+      {canReorder && (
+        <button
+          type="button"
+          onClick={() => onMoveClick(slotIndex, true)}
+          aria-label={
+            selectedForMove
+              ? `Cancel moving ${deck.deckName}`
+              : hasSelectedSlot
+                ? `Swap with ${deck.deckName}`
+                : `Move ${deck.deckName}`
+          }
+          aria-pressed={selectedForMove}
+          title={
+            hasSelectedSlot && !selectedForMove
+              ? "Swap with selected deck"
+              : "Drag, or click to select a new position"
+          }
+          className={`m-1 flex w-9 shrink-0 items-center justify-center rounded-lg text-lg font-black transition ${
+            selectedForMove
+              ? "bg-amber-100 text-amber-700"
+              : "text-slate-400 hover:bg-sky-100 hover:text-sky-700"
+          }`}
+        >
+          <span aria-hidden="true">&#8597;</span>
+        </button>
+      )}
+    </div>
   );
 }
 
-function TournamentBracket({ rounds, savingMatchId, onSaveWinner, onClearMatch }) {
+function TournamentBracket({
+  rounds,
+  savingMatchId,
+  pairingsDirty,
+  onMoveSeed,
+  onSavePairings,
+  onResetPairings,
+  onSaveWinner,
+  onClearMatch,
+}) {
+  const [draggedSlot, setDraggedSlot] = useState(null);
+  const [dropTargetSlot, setDropTargetSlot] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const isSavingPairings = savingMatchId === "bracket-seeding";
+
+  function moveSeed(sourceSlot, targetSlot) {
+    if (
+      sourceSlot === null ||
+      targetSlot === null ||
+      sourceSlot === targetSlot
+    ) {
+      return;
+    }
+
+    onMoveSeed(sourceSlot, targetSlot);
+  }
+
+  function handleMoveClick(slotIndex, hasDeck) {
+    if (selectedSlot === null) {
+      if (hasDeck) setSelectedSlot(slotIndex);
+      return;
+    }
+
+    if (selectedSlot === slotIndex) {
+      setSelectedSlot(null);
+      return;
+    }
+
+    moveSeed(selectedSlot, slotIndex);
+    setSelectedSlot(null);
+  }
+
+  function handleDragStart(event, slotIndex) {
+    setDraggedSlot(slotIndex);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(slotIndex));
+  }
+
+  function handleDragOver(event, slotIndex) {
+    if (draggedSlot === slotIndex) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDropTargetSlot(slotIndex);
+  }
+
+  function handleDrop(event, targetSlot) {
+    event.preventDefault();
+    const transferredValue = event.dataTransfer.getData("text/plain");
+    const transferredSlot = transferredValue === "" ? null : Number(transferredValue);
+    const sourceSlot = draggedSlot ?? transferredSlot;
+
+    if (Number.isInteger(sourceSlot)) {
+      moveSeed(sourceSlot, targetSlot);
+    }
+
+    setDraggedSlot(null);
+    setDropTargetSlot(null);
+    setSelectedSlot(null);
+  }
+
+  function endDrag() {
+    setDraggedSlot(null);
+    setDropTargetSlot(null);
+  }
+
   if (rounds.length === 0) {
     return (
       <p className="mt-5 rounded-2xl bg-slate-50 p-4 text-slate-500">
@@ -459,23 +648,82 @@ function TournamentBracket({ rounds, savingMatchId, onSaveWinner, onClearMatch }
   }
 
   return (
-    <div className="mt-5 overflow-x-auto pb-3">
-      <div
-        className="grid min-w-max gap-4"
-        style={{
-          gridTemplateColumns: `repeat(${rounds.length}, minmax(250px, 1fr))`,
-        }}
-      >
-        {rounds.map((round) => (
-          <section key={round.index} className="space-y-3">
+    <div className="mt-5">
+      <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-bold text-slate-900">Edit first-round pairings</p>
+          <p className="mt-0.5 text-sm text-slate-600">
+            Drag a deck to another slot, or use its arrow control to select and
+            swap it.
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              onResetPairings();
+              setSelectedSlot(null);
+            }}
+            disabled={!pairingsDirty || isSavingPairings}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={onSavePairings}
+            disabled={!pairingsDirty || isSavingPairings}
+            className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-bold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {isSavingPairings ? "Saving..." : "Save pairings"}
+          </button>
+        </div>
+      </div>
+
+      {pairingsDirty && (
+        <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+          This is a preview. Save the pairings before choosing winners.
+        </p>
+      )}
+
+      <div className="overflow-x-auto pb-3">
+        <div
+          className="grid min-w-max gap-4"
+          style={{
+            gridTemplateColumns: `repeat(${rounds.length}, minmax(250px, 1fr))`,
+          }}
+        >
+          {rounds.map((round) => (
+            <section key={round.index} className="space-y-3">
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
               {round.title}
             </h3>
             <div className="space-y-4">
               {round.matches.map((match) => {
-                const canUpdate = Boolean(match.deckA && match.deckB);
+                const canUpdate = Boolean(
+                  !pairingsDirty && match.deckA && match.deckB
+                );
                 const savingKey = match.match?.id ?? match.id;
                 const isSaving = savingMatchId === savingKey;
+                const canReorder = round.index === 0 && !isSavingPairings;
+                const deckASlotIndex = match.matchIndex * 2;
+                const deckBSlotIndex = deckASlotIndex + 1;
+
+                const getReorderProps = (slotIndex) => ({
+                  canReorder,
+                  slotIndex,
+                  selectedForMove: selectedSlot === slotIndex,
+                  hasSelectedSlot: selectedSlot !== null,
+                  isDropTarget: dropTargetSlot === slotIndex,
+                  onMoveClick: handleMoveClick,
+                  onDragStart: (event) => handleDragStart(event, slotIndex),
+                  onDragEnd: endDrag,
+                  onDragOver: (event) => handleDragOver(event, slotIndex),
+                  onDragLeave: () => {
+                    if (dropTargetSlot === slotIndex) setDropTargetSlot(null);
+                  },
+                  onDrop: (event) => handleDrop(event, slotIndex),
+                });
 
                 return (
                   <div
@@ -490,6 +738,7 @@ function TournamentBracket({ rounds, savingMatchId, onSaveWinner, onClearMatch }
                         onWinnerClick={(winnerDeckId) =>
                           onSaveWinner(match, winnerDeckId)
                         }
+                        {...getReorderProps(deckASlotIndex)}
                       />
                       <BracketDeckSlot
                         deck={match.deckB}
@@ -498,6 +747,7 @@ function TournamentBracket({ rounds, savingMatchId, onSaveWinner, onClearMatch }
                         onWinnerClick={(winnerDeckId) =>
                           onSaveWinner(match, winnerDeckId)
                         }
+                        {...getReorderProps(deckBSlotIndex)}
                       />
                     </div>
 
@@ -526,8 +776,9 @@ function TournamentBracket({ rounds, savingMatchId, onSaveWinner, onClearMatch }
                 );
               })}
             </div>
-          </section>
-        ))}
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -535,27 +786,40 @@ function TournamentBracket({ rounds, savingMatchId, onSaveWinner, onClearMatch }
 
 export default function TournamentLeaderboard({
   tournamentId,
+  bracketSeedOrder = [],
   decks = [],
   matches = [],
 }) {
+  const normalizedDecks = useMemo(() => decks.map(normalizeDeck), [decks]);
+  const incomingSeedOrder = useMemo(
+    () => getSeedOrder(normalizedDecks, bracketSeedOrder),
+    [bracketSeedOrder, normalizedDecks]
+  );
   const [openDeckId, setOpenDeckId] = useState("");
   const [matchResults, setMatchResults] = useState(() =>
     matches.map(normalizeMatch)
   );
+  const [seedOrder, setSeedOrder] = useState(incomingSeedOrder);
+  const [savedSeedOrder, setSavedSeedOrder] = useState(incomingSeedOrder);
   const [savingMatchId, setSavingMatchId] = useState("");
   const [message, setMessage] = useState("");
-  const normalizedDecks = useMemo(() => decks.map(normalizeDeck), [decks]);
   const normalizedMatches = useMemo(
     () => matchResults.map(normalizeMatch),
     [matchResults]
   );
+  const pairingsDirty = !seedOrdersMatch(seedOrder, savedSeedOrder);
   const leaderboard = useMemo(
     () => buildLeaderboard(normalizedDecks, normalizedMatches),
     [normalizedDecks, normalizedMatches]
   );
   const bracketRounds = useMemo(
-    () => buildBracketRounds(normalizedDecks, normalizedMatches),
-    [normalizedDecks, normalizedMatches]
+    () =>
+      buildBracketRounds(
+        normalizedDecks,
+        pairingsDirty ? [] : normalizedMatches,
+        seedOrder
+      ),
+    [normalizedDecks, normalizedMatches, pairingsDirty, seedOrder]
   );
   const decksById = useMemo(
     () => Object.fromEntries(normalizedDecks.map((deck) => [deck.id, deck])),
@@ -569,6 +833,77 @@ export default function TournamentLeaderboard({
   useEffect(() => {
     setMatchResults(matches.map(normalizeMatch));
   }, [matches]);
+
+  useEffect(() => {
+    setSeedOrder(incomingSeedOrder);
+    setSavedSeedOrder(incomingSeedOrder);
+  }, [incomingSeedOrder]);
+
+  function moveFirstRoundSeed(sourceSlot, targetSlot) {
+    setSeedOrder((current) => {
+      if (
+        sourceSlot < 0 ||
+        targetSlot < 0 ||
+        sourceSlot >= current.length ||
+        targetSlot >= current.length
+      ) {
+        return current;
+      }
+
+      const next = [...current];
+      [next[sourceSlot], next[targetSlot]] = [
+        next[targetSlot],
+        next[sourceSlot],
+      ];
+      return next;
+    });
+    setMessage("");
+  }
+
+  function resetPairings() {
+    setSeedOrder([...savedSeedOrder]);
+    setMessage("Pairing changes reset.");
+  }
+
+  async function savePairings() {
+    if (!tournamentId || !pairingsDirty) return;
+
+    if (
+      matchResults.length > 0 &&
+      !window.confirm(
+        `Saving these pairings will delete ${matchResults.length} existing match ${
+          matchResults.length === 1 ? "result" : "results"
+        } and reset the bracket. Continue?`
+      )
+    ) {
+      return;
+    }
+
+    setSavingMatchId("bracket-seeding");
+    setMessage("");
+
+    const { data, error } = await supabase.rpc("reseed_tournament_bracket", {
+      bracket_tournament_id: tournamentId,
+      bracket_deck_ids: seedOrder,
+    });
+
+    setSavingMatchId("");
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    if (!data) {
+      setMessage("Pairings were not saved. Refresh and try again.");
+      return;
+    }
+
+    const savedOrder = [...seedOrder];
+    setSavedSeedOrder(savedOrder);
+    setMatchResults([]);
+    setMessage("First-round pairings saved. The bracket has been reset.");
+  }
 
   async function saveBracketWinner(bracketMatch, winnerDeckId) {
     setMessage("");
@@ -666,14 +1001,18 @@ export default function TournamentLeaderboard({
             Tournament Bracket
           </h2>
           <p className="mt-1 text-slate-600">
-            Click a deck in each matchup to advance it. The bracket expands to
-            fit the number of approved entries.
+            Drag first-round decks to change the pairings, then click a deck in
+            each matchup to advance it.
           </p>
         </div>
 
         <TournamentBracket
           rounds={bracketRounds}
           savingMatchId={savingMatchId}
+          pairingsDirty={pairingsDirty}
+          onMoveSeed={moveFirstRoundSeed}
+          onSavePairings={savePairings}
+          onResetPairings={resetPairings}
           onSaveWinner={saveBracketWinner}
           onClearMatch={deleteMatch}
         />

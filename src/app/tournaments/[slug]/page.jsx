@@ -73,6 +73,7 @@ export default async function TournamentDetailPage({ params }) {
 
       <TournamentLeaderboard
         tournamentId={tournament.id}
+        bracketSeedOrder={tournament.bracket_seed_order ?? []}
         decks={decks ?? []}
         matches={matches}
       />
