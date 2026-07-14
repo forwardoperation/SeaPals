@@ -259,6 +259,7 @@ test("reads the requested slot habitat separately from a habitat word in the car
 
 test("routes specific gameplay intents before loose lexical matches", () => {
   const cases = [
+    ["How do I start playing?", "Starting a game"],
     ["I just sat down to play—what cards and RP do I begin with?", "Starting a game"],
     ["If my upgraded Coral was already hurt, does it heal?", "Coral upgrades"],
     ["Can a cloaked creature still be chosen as an attack target?", "Cloak and Transparency"],

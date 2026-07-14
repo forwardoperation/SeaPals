@@ -123,8 +123,54 @@ function htmlToText(value) {
     .trim();
 }
 
+const VOID_HTML_TAGS = new Set([
+  "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr",
+]);
+
+function stripRulesIgnoredHtml(value) {
+  const source = String(value ?? "");
+  const tagPattern = /<\/?([a-z][a-z0-9:-]*)\b[^>]*>/gi;
+  const output = [];
+  const ignoredStack = [];
+  let copyFrom = 0;
+  let match;
+
+  while ((match = tagPattern.exec(source))) {
+    const rawTag = match[0];
+    const tagName = match[1].toLowerCase();
+    const isClosing = /^<\//.test(rawTag);
+    const isSelfClosing = /\/\s*>$/.test(rawTag) || VOID_HTML_TAGS.has(tagName);
+    const startsIgnoredRegion =
+      !isClosing && /\bdata-rules-ignore(?:\s|=|>|\/)/i.test(rawTag);
+
+    if (!ignoredStack.length) {
+      if (!startsIgnoredRegion) continue;
+
+      output.push(source.slice(copyFrom, match.index));
+      copyFrom = match.index + rawTag.length;
+      if (!isSelfClosing) ignoredStack.push(tagName);
+      continue;
+    }
+
+    if (!isClosing && !isSelfClosing) {
+      ignoredStack.push(tagName);
+      continue;
+    }
+
+    if (isClosing) {
+      const matchingIndex = ignoredStack.lastIndexOf(tagName);
+      if (matchingIndex >= 0) ignoredStack.length = matchingIndex;
+
+      if (!ignoredStack.length) copyFrom = match.index + rawTag.length;
+    }
+  }
+
+  if (!ignoredStack.length) output.push(source.slice(copyFrom));
+  return output.join(" ");
+}
+
 export function extractRulesChunksFromHtml(html) {
-  const source = String(html ?? "");
+  const source = stripRulesIgnoredHtml(html);
   const main = source.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] ?? source;
   const headingPattern = /<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
   const headings = [...main.matchAll(headingPattern)];
