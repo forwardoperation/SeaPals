@@ -1,3 +1,5 @@
+import { PLAYER_GLOSSARY } from "../data/rules/playerGlossary.mjs";
+
 function cleanText(value) {
   return String(value ?? "")
     .replace(/\s+/g, " ")
@@ -79,7 +81,14 @@ export function getCardAliases(card) {
     aliases.add(`${cleanText(card.subtitle)} ${cleanText(card.name)}`);
     aliases.add(`${cleanText(card.name)} ${cleanText(card.subtitle)}`);
   }
-  if (card?.stageLabel) aliases.add(`${cleanText(card.name)} ${cleanText(card.stageLabel)}`);
+  if (card?.stageLabel) {
+    const name = cleanText(card.name);
+    const stage = cleanText(card.stageLabel);
+    aliases.add(`${name} ${stage}`);
+    // Players commonly move the stage before the card kind when speaking, for
+    // example "Clubfinger Stage 1 Coral" instead of "Clubfinger Coral — Stage 1".
+    if (/\s+Coral$/i.test(name)) aliases.add(name.replace(/\s+Coral$/i, ` ${stage} Coral`));
+  }
   return [...aliases].filter(Boolean);
 }
 
@@ -137,7 +146,11 @@ export function describeCard(card) {
       health,
       kind: card?.kind ?? "",
       printedRules: uniqueRules,
+      schoolDensity: typeof card?.schoolDensity === "number" ? card.schoolDensity : null,
+      schoolDensityRequirement: typeof card?.schoolDensityRequirement === "number" ? card.schoolDensityRequirement : null,
       slots: card?.slots ?? [],
+      stage: card?.stage ?? null,
+      stageLabel: cleanText(card?.stageLabel),
       subtype: card?.subtype ?? "",
       victoryPoints: vp,
       weaknesses: card?.weaknesses ?? [],
@@ -173,10 +186,92 @@ export function createCardKnowledge(cards = []) {
   });
 }
 
+function namedAbilityEntries(card) {
+  const fields = [
+    ["passives", "passive ability"],
+    ["onPlay", "On Play ability"],
+    ["actions", "action"],
+    ["maintenance", "maintenance ability"],
+    ["specialRules", "special rule"],
+  ];
+  const entries = [];
+  for (const [field, type] of fields) {
+    const values = Array.isArray(card?.[field]) ? card[field] : card?.[field] ? [card[field]] : [];
+    for (const value of values) {
+      if (typeof value === "string") {
+        const match = cleanText(value).match(/^([^:]{2,64}):\s*(.+)$/);
+        if (match) entries.push({ name: cleanText(match[1]), text: sentence(match[2]), type });
+        continue;
+      }
+      if (!value || typeof value !== "object") continue;
+      const name = cleanText(value.name);
+      const text = sentence(value.text ?? value.description);
+      if (name && text) entries.push({ name, text, type });
+    }
+  }
+  return entries;
+}
+
+export function createNamedAbilityKnowledge(cards = []) {
+  const groups = new Map();
+  for (const card of cards) {
+    for (const ability of namedAbilityEntries(card)) {
+      const key = slug(ability.name);
+      if (!key) continue;
+      const group = groups.get(key) ?? { name: ability.name, occurrences: [] };
+      group.occurrences.push({ ability, card });
+      groups.set(key, group);
+    }
+  }
+
+  return [...groups.entries()].map(([key, group]) => {
+    const holders = [...new Map(group.occurrences.map(({ card }) => [card.id, card])).values()];
+    const types = [...new Set(group.occurrences.map(({ ability }) => ability.type))];
+    const variants = [...new Map(group.occurrences.map(({ ability }) => [normalizeAbilityText(ability.text), ability.text])).values()];
+    const holderNames = holders.map(getCardDisplayName);
+    const printedText = variants.length === 1
+      ? variants[0]
+      : group.occurrences.map(({ ability, card }) => `${getCardDisplayName(card)}: ${ability.text}`).join(" ");
+    return {
+      id: `ability:${key}`,
+      title: group.name,
+      text: `${group.name} is a ${joinAbilityTypes(types)}. ${printedText} It appears on ${joinNames(holderNames)}.`,
+      aliases: [group.name, `${group.name} ability`, ...types.map((type) => `${group.name} ${type}`)],
+      keywords: ["ability", "abilities", "effect", "passive", ...holderNames],
+      source: "ability",
+      sourceLabel: `Cards with ${group.name}`,
+      sourceHref: `/gallery#card-${holders[0].id}`,
+      sourceCards: holders.map((card) => ({
+        id: `card:${card.id}`,
+        label: `Card — ${getCardDisplayName(card)}`,
+        href: `/gallery#card-${card.id}`,
+      })),
+      entity: { id: key, type: "ability", label: group.name },
+      variants,
+    };
+  });
+}
+
+function normalizeAbilityText(value) {
+  return cleanText(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function joinAbilityTypes(types) {
+  if (types.length <= 1) return types[0] ?? "named ability";
+  return `${types.slice(0, -1).join(", ")} or ${types.at(-1)}`;
+}
+
+function joinNames(names) {
+  if (names.length <= 1) return names[0] ?? "the current card data";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names.at(-1)}`;
+}
+
 function normalizeRule(rule, _index, source) {
   const normalizedSource = rule.source ?? source;
   const sourceLabels = {
     current: "How to Play",
+    glossary: "SeaPals glossary",
     knowledge: "SeaPals rules reference",
     ruling: "Official ruling",
   };
@@ -200,10 +295,12 @@ export function buildRulesKnowledgeBank({
   simulatorRules = [],
 } = {}) {
   const entries = [
+    ...PLAYER_GLOSSARY.map((rule, index) => normalizeRule(rule, index, "glossary")),
     ...currentRules.map((rule, index) => normalizeRule(rule, index, "current")),
     ...coreRules.map((rule, index) => normalizeRule(rule, index, "knowledge")),
     ...simulatorRules.map((rule, index) => normalizeRule(rule, index + coreRules.length, "knowledge")),
     ...officialRulings.map((rule, index) => normalizeRule(rule, index, "ruling")),
+    ...createNamedAbilityKnowledge(cards),
     ...createCardKnowledge(cards),
   ];
   const seen = new Set();

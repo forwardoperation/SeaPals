@@ -55,6 +55,10 @@ function BotMark() {
   );
 }
 
+function formatMessageText(text) {
+  return String(text ?? "").replace(/\s+(?=\d+\.\s)/g, "\n");
+}
+
 export default function RulesChat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -167,7 +171,7 @@ export default function RulesChat() {
                   }`}
                 >
                   {message.title ? <p className="mb-1 font-bold text-slate-950">{message.title}</p> : null}
-                  <p>{message.text}</p>
+                  <p className="whitespace-pre-line">{formatMessageText(message.text)}</p>
                   {message.options?.length ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {message.options.map((option) => (

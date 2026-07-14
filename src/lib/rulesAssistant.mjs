@@ -251,33 +251,43 @@ export function findRulesAnswer(question, chunks) {
 
 export function explainDieNotation(question) {
   const value = String(question ?? "");
-  const matches = [...value.matchAll(/\bD(\d+)(?:\s*([+-])\s*(\d+))?\b/gi)];
+  const matches = [...value.matchAll(/\b(\d+)?\s*D(\d+)(?:\s*([+-])\s*(\d+))?(?:\s*(?:[xX\u00d7*])\s*(\d+))?\b/gi)];
   if (new Set(matches.map((candidate) => candidate[0].replace(/\s+/g, "").toUpperCase())).size !== 1) return null;
   const match = matches[0];
   if (!match) return null;
 
-  const sides = Number(match[1]);
-  if (!Number.isInteger(sides) || sides < 1) return null;
+  const count = Number(match[1] || 1);
+  const sides = Number(match[2]);
+  if (!Number.isInteger(count) || count < 1 || !Number.isInteger(sides) || sides < 1) return null;
 
   const normalizedQuestion = normalize(value);
   const asksAboutNotation =
     normalizedQuestion === normalize(match[0])
-    || /\b(mean|means|meaning|notation)\b/.test(normalizedQuestion)
+    || /\b(explain|mean|means|meaning|notation)\b/.test(normalizedQuestion)
     || /\bhow\b.*\b(work|works|roll|rolled)\b/.test(normalizedQuestion)
-    || /\bwhat\s+(?:does|is)\b.*\b(?:do|for)\b/.test(normalizedQuestion);
+    || /^what\s+(?:does|is)\b/.test(normalizedQuestion);
   if (!asksAboutNotation) return null;
 
-  const modifier = match[2] ? Number(`${match[2]}${match[3]}`) : 0;
-  const notation = `D${sides}${modifier > 0 ? `+${modifier}` : modifier < 0 ? modifier : ""}`;
+  const modifier = match[3] ? Number(`${match[3]}${match[4]}`) : 0;
+  const multiplier = match[5] ? Number(match[5]) : 1;
+  const notation = `${match[1] ? count : ""}D${sides}${modifier > 0 ? `+${modifier}` : modifier < 0 ? modifier : ""}${multiplier !== 1 ? ` × ${multiplier}` : ""}`;
   const modifierExplanation = modifier > 0
     ? ` Then add ${modifier} to the number rolled.`
     : modifier < 0
       ? ` Then subtract ${Math.abs(modifier)} from the number rolled; the final total cannot go below zero.`
       : "";
+  const rollExplanation = count === 1
+    ? `roll one ${sides}-sided die`
+    : `roll ${count} ${sides}-sided dice and add them together`;
+  const naturalMinimum = count;
+  const naturalMaximum = count * sides;
+  const multiplierExplanation = multiplier !== 1
+    ? ` Then multiply that result by ${multiplier}, so the possible unmodified results are ${naturalMinimum * multiplier} through ${naturalMaximum * multiplier} in steps of ${multiplier}.`
+    : "";
 
   return {
     title: `Dice notation: ${notation}`,
-    text: `${notation} means roll one ${sides}-sided die.${modifierExplanation} The natural roll can be any whole number from 1 through ${sides}. In SeaPals, use that result when the notation appears on an attack, defense, or other card effect.`,
+    text: `${notation} means ${rollExplanation}.${modifierExplanation}${multiplierExplanation} The natural dice total can be any whole number from ${naturalMinimum} through ${naturalMaximum}. In SeaPals, use the final result for the damage, healing, attack, defense, or other effect named by the card.`,
     confidence: "high",
   };
 }
