@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { answerRulesQuestion } from "./rulesEngine.mjs";
 import { buildRulesKnowledgeBank } from "./rulesKnowledgeBank.mjs";
+import { SIMULATOR_RULES } from "./seapalsRulesKnowledge.mjs";
 
 const cards = [
   {
@@ -46,6 +47,25 @@ const cards = [
     category: "condition",
     text: "Storm weaknesses stop affected Coral from producing RP this round.",
   },
+  {
+    id: "great-white",
+    name: "Great White",
+    kind: "creature",
+    category: "apex",
+    class: "apex",
+    zone: "reef",
+    cost: { rp: 8 },
+    passives: [{ name: "Intimidation", text: "Opponent's fish cost +1 RP to play." }],
+  },
+  {
+    id: "tiger-shark",
+    name: "Tiger Shark",
+    kind: "creature",
+    category: "apex",
+    class: "apex",
+    zone: "reef",
+    passives: [{ name: "Intimidation", text: "Opponent's fish cost +1 RP to play." }],
+  },
 ];
 
 const simulatorRules = [
@@ -83,12 +103,82 @@ const simulatorRules = [
 
 const rules = buildRulesKnowledgeBank({ cards, simulatorRules });
 
+function buildWeakPointRules() {
+  return buildRulesKnowledgeBank({
+    cards: [...cards, {
+      id: "black-marlin",
+      name: "Black Marlin",
+      kind: "creature",
+      category: "apex",
+      class: "apex",
+      zone: "ocean",
+      onPlay: ["Quick Strikes: Perform 4 D6 attacks targeting fish. Defending Fish have -1 Defense against these attacks."],
+      defense: "D12",
+    }],
+    simulatorRules: SIMULATOR_RULES,
+  });
+}
+
+function buildStrategyGapRules() {
+  const strategyCards = [
+    { id: "crown-of-thorns", name: "Crown of Thorns", kind: "creature", category: "invertebrate", actions: [{ name: "Stun", text: "Flip a coin. If heads, choose one of your opponent's corals and it is now stunned." }], passives: [{ name: "Toxic", text: "If eaten, flip a coin. If tails, discard the consuming creature." }] },
+    { id: "giant-phantom-jelly", name: "Giant Phantom Jelly", kind: "creature", category: "apex", actions: ["Cloak in Darkness: Choose one of your opponent's coral. That coral is now stunned. You may only perform this once per turn. Cost: 0RP."] },
+    { id: "man-o-war", name: "Man O' War", kind: "creature", category: "invertebrate", actions: ["Nerve Agent: Flip a coin. If heads, your opponent's coral is now stunned. Cost: 2 RP."] },
+    { id: "coral-heal", name: "Coral Heal", kind: "support", text: "Choose one of your corals, remove all effects from it." },
+    { id: "poison-heal", name: "Poison Heal", kind: "support", text: "On your next attack, ignore any effects from Toxic." },
+    { id: "giant-triton", name: "Giant Triton", kind: "creature", category: "invertebrate", passives: [{ name: "Toxic Immunity", text: "Immune to Crown of Thorns toxic effect." }] },
+    { id: "sea-urchin", name: "Sea Urchin", kind: "creature", category: "invertebrate", passives: [{ name: "Spines", text: "Add +20 HP to any coral attached to." }] },
+    { id: "sargeant-major", name: "Sargeant Major", kind: "creature", category: "fish", passives: [{ name: "Coral Protector", text: "Any coral this fish is attached to gains +10 HP." }] },
+    { id: "boulder-star-coral-stage-2", name: "Boulder Star Coral", stageLabel: "Stage 2", kind: "coral", health: 80, passives: [{ name: "Sturdy", text: "All corals on your reef gain +10 HP." }] },
+    { id: "coral-cement", name: "Coral Cement", kind: "support", text: "Heal 20 HP on one of your corals." },
+    { id: "green-sea-turtle", name: "Green Sea Turtle", kind: "creature", category: "predator", onPlay: [{ name: "Coral Heal", text: "Choose one of your corals and restore 1D6 × 10 HP." }] },
+    { id: "deep_mushroom_stage2", name: "Deep Mushroom", stageLabel: "Stage 2", kind: "coral", health: 60, passives: ["Recovery: Once per turn, you may heal 10 HP of any coral on your reef."] },
+    { id: "manta-ray", name: "Manta Ray", kind: "creature", category: "filter_feeder", schoolDensityRequirement: 170, cost: { rp: 8 } },
+  ];
+  return buildRulesKnowledgeBank({ cards: strategyCards, simulatorRules: SIMULATOR_RULES });
+}
+
 test("answers card questions from structured data and cites the card", () => {
   const answer = answerRulesQuestion("How much does Fairy Parrotfish cost?", rules);
   assert.equal(answer.kind, "answer");
   assert.match(answer.text, /2 RP/);
   assert.deepEqual(answer.sources.map((source) => source.id), ["card:fairy-parrotfish"]);
   assert.equal(answer.sources[0].href, "/gallery#card-fairy-parrotfish");
+});
+
+test("routes an exact named passive before generic ability rules", () => {
+  const answer = answerRulesQuestion("what does the passive ability Intimidation do?", rules);
+  assert.equal(answer.kind, "answer");
+  assert.equal(answer.title, "Intimidation");
+  assert.match(answer.text, /Opponent's fish cost \+1 RP to play/i);
+  assert.match(answer.text, /passive ability/i);
+  assert.deepEqual(answer.sources.map((source) => source.id), ["ability:intimidation", "card:tiger-shark"]);
+  assert.ok(answer.sources.every((source) => source.href.startsWith("/gallery#card-")));
+});
+
+test("defines the Special Rules card label instead of substituting special hosts", () => {
+  const answer = answerRulesQuestion("Can you explain to me what special rules are?", rules);
+  assert.equal(answer.kind, "answer");
+  assert.equal(answer.title, "Special Rules");
+  assert.match(answer.text, /card-specific instructions/i);
+  assert.match(answer.text, /does not mean attachments or special hosts/i);
+  assert.deepEqual(answer.sources.map((source) => source.id), ["glossary:special-rules"]);
+});
+
+test("clarifies an undocumented definition instead of returning a related rule", () => {
+  const answer = answerRulesQuestion("What are pressure markers?", rules);
+  assert.equal(answer.kind, "clarification");
+  assert.match(answer.text, /don't want to substitute a merely related rule/i);
+  assert.equal(answer.sources.length, 0);
+});
+
+test("keeps the active card after explaining one of its named abilities", () => {
+  const card = answerRulesQuestion("What does Great White do?", rules);
+  const ability = answerRulesQuestion("What does its passive ability Intimidation do?", rules, card.context);
+  const followUp = answerRulesQuestion("Okay, and what does it cost?", rules, ability.context);
+  assert.equal(ability.title, "Intimidation");
+  assert.match(followUp.text, /Great White costs 8 RP/);
+  assert.equal(followUp.sources[0].id, "card:great-white");
 });
 
 test("retains card context across two follow-up questions", () => {
@@ -255,4 +345,184 @@ test("surfaces conflicting maintained sources instead of silently choosing one",
   assert.equal(answer.kind, "clarification");
   assert.match(answer.text, /conflicting published values/i);
   assert.equal(answer.sources.length, 2);
+});
+
+test("answers the seven reported targeting, deck-building, modifier, and attack-count questions directly", () => {
+  const screenshotRules = buildWeakPointRules();
+  const cases = [
+    {
+      question: "how do I know what can be attacked by an on play ability?",
+      includes: [/target icons/i, /(?:legal|allowed) (?:card )?famil/i, /restriction/i],
+    },
+    {
+      question: "how do I know if an attack can target a fish?",
+      includes: [/fish/i, /only if/i, /target/i],
+    },
+    {
+      question: "can you tell me the difference between a reef predator and a deep predator?",
+      includes: [/(?:predator is (?:the same |a )?creature class|share the predator class)/i, /reef (?:habitat|slots?)/i, /deep (?:habitat|slots?)/i],
+    },
+    {
+      question: "what makes a good deck?",
+      includes: [/60[- ]cards?/i, /habitat/i, /foundation/i, /support/i],
+    },
+    {
+      question: "can you help me build a new deck?",
+      includes: [/choose/i, /strategy|theme/i, /60 cards/i, /4 copies/i],
+    },
+    {
+      question: "If a defense has -2 on it, what does that mean?",
+      includes: [/subtract 2/i, /defense roll/i, /die size/i],
+    },
+    {
+      question: "what does the x4 mean for the black marlin attack?",
+      includes: [/four separate attacks/i, /d6/i, /fish/i, /-1 defense/i],
+    },
+  ];
+
+  for (const { question, includes } of cases) {
+    const answer = answerRulesQuestion(question, screenshotRules);
+    assert.equal(answer.kind, "answer", question);
+    assert.ok(answer.sources.length > 0, `${question} must cite its rules`);
+    for (const pattern of includes) assert.match(answer.text, pattern, question);
+  }
+});
+
+test("generalizes the seven reported weak points across fresh player phrasings", () => {
+  const screenshotRules = buildWeakPointRules();
+  const groups = [
+    {
+      questions: [
+        "Where do I look to see which creatures an On Play effect can hit?",
+        "What tells me whether an ability is allowed to affect an Apex?",
+        "Can an attack hit any Fish just because it shows Fish?",
+        "How are legal targets chosen for an attack?",
+        "Which icons decide who an ability can target?",
+      ],
+      includes: [/target/i, /restriction/i],
+    },
+    {
+      questions: [
+        "How is a Deep Fish different from a Reef Fish?",
+        "Compare an Oceanic Apex with a Reef Apex.",
+        "Are Reef Predators and Deep Predators the same class?",
+        "What changes between a Reef Predator and an Oceanic Predator?",
+        "Deep Fish versus Reef Fish: is that habitat or class?",
+      ],
+      includes: [/habitat zone/i, /class/i],
+    },
+    {
+      questions: [
+        "How should I put together a strong deck?",
+        "Please help me create my first deck.",
+        "Do you have deck-building tips for a beginner?",
+        "How do I make a consistent deck?",
+        "I want to start a new deck. Where do I begin?",
+      ],
+      includes: [/60[- ]cards?/i, /foundation/i],
+    },
+    {
+      questions: [
+        "What does +3 Attack mean?",
+        "How does -1 Defense apply?",
+        "Does -2 Defense shrink the die? What does it do?",
+        "If an attack shows +4, how do I use that?",
+        "How does a +2 roll modifier work?",
+      ],
+      includes: [/(?:add|subtract) \d+/i, /not the die size/i],
+    },
+    {
+      questions: [
+        "Black Marlin shows x4. What is that symbol?",
+        "Does x4 on Black Marlin mean multiply the damage?",
+        "For Black Marlin, how many attacks is x4?",
+        "What does \u00d74 on Black Marlin do?",
+        "On Black Marlin, is x4 one big attack or several attacks?",
+      ],
+      includes: [/four separate attacks/i, /d6/i],
+    },
+  ];
+
+  for (const group of groups) {
+    for (const question of group.questions) {
+      const answer = answerRulesQuestion(question, screenshotRules);
+      assert.equal(answer.kind, "answer", question);
+      assert.ok(answer.sources.length > 0, `${question} must cite its rules`);
+      for (const pattern of group.includes) assert.match(answer.text, pattern, question);
+    }
+  }
+});
+
+test("answers the reported Deep Fish versus Reef Fish comparison with the requested class", () => {
+  const screenshotRules = buildWeakPointRules();
+  const answer = answerRulesQuestion("what's the difference between a deep fish and a reef fish?", screenshotRules);
+
+  assert.equal(answer.kind, "answer");
+  assert.equal(answer.title, "Deep Fish vs. Reef Fish");
+  assert.match(answer.text, /both are Fish creatures/i);
+  assert.match(answer.text, /Deep habitat/i);
+  assert.match(answer.text, /Reef habitat/i);
+  assert.match(answer.text, /Deep Fish, Predator, or Apex slot/i);
+  assert.match(answer.text, /Reef Fish, Predator, or Apex slot/i);
+  assert.doesNotMatch(answer.text, /Reef Predator and a Deep Predator/i);
+  assert.ok(answer.sources.length >= 2);
+});
+
+test("answers the five reported strategy and card-notation gaps directly", () => {
+  const strategyRules = buildStrategyGapRules();
+  const cases = [
+    {
+      question: "how can a coral become stunned?",
+      title: "How a Coral becomes Stunned",
+      includes: [/printed card effect/i, /Crown of Thorns/i, /Giant Phantom Jelly/i, /Man O' War/i, /Coral Heal/i],
+    },
+    {
+      question: "how can you defeat a creature with toxic?",
+      title: "Playing around Toxic",
+      includes: [/does not make the creature immune/i, /Poison Heal/i, /Giant Triton/i, /non-consuming/i],
+    },
+    {
+      question: "how can you best protect coral from attacks?",
+      title: "Protecting Coral from attacks",
+      includes: [/maximum HP/i, /Sea Urchin/i, /Sargeant Major/i, /Boulder Star Coral/i, /Coral Cement/i, /Green Sea Turtle/i, /Deep Mushroom/i],
+    },
+    {
+      question: "what does 1d4 * 10 mean?",
+      title: "Dice notation: 1D4 × 10",
+      includes: [/roll one 4-sided die/i, /multiply that result by 10/i, /10 through 40/i],
+    },
+    {
+      question: "If a cards has 170SD written on it, what does that mean?",
+      title: "170 SD requirement",
+      includes: [/School Density/i, /at least 170/i, /checked, not spent/i, /Manta Ray/i],
+    },
+  ];
+
+  for (const { question, title, includes } of cases) {
+    const answer = answerRulesQuestion(question, strategyRules);
+    assert.equal(answer.kind, "answer", question);
+    assert.equal(answer.title, title, question);
+    assert.ok(answer.sources.length > 0, `${question} must cite its rules or cards`);
+    for (const pattern of includes) assert.match(answer.text, pattern, question);
+  }
+});
+
+test("generalizes the five reported strategy and notation gaps across player phrasing", () => {
+  const strategyRules = buildStrategyGapRules();
+  const groups = [
+    { title: "How a Coral becomes Stunned", questions: ["What effects can Stun my Coral?", "How does an opponent get a coral stunned?", "Which cards can make Corals become stunned?"] },
+    { title: "Playing around Toxic", questions: ["What's the safest way to attack something Toxic?", "How do I counter a Toxic creature?", "Can I get past Toxic and still beat it?"] },
+    { title: "Protecting Coral from attacks", questions: ["What cards help my Coral survive damage?", "How should I defend my corals from an opponent?", "What are good ways to keep Coral safe from attacks?"] },
+    { title: "Dice notation: 1D4 × 10", questions: ["How does 1D4 x10 work?", "Explain 1d4×10", "What is 1 d4 * 10 on a card?"] },
+    { title: "170 SD requirement", questions: ["What is the 170 SD symbol?", "A card says 170 school density—what do I need?", "Do I spend 170SD to play the card?"] },
+  ];
+
+  for (const group of groups) {
+    for (const question of group.questions) {
+      const answer = answerRulesQuestion(question, strategyRules);
+      assert.equal(answer.kind, "answer", question);
+      assert.equal(answer.title, group.title, question);
+      assert.ok(answer.sources.length > 0, `${question} must cite its rules or cards`);
+    }
+  }
 });

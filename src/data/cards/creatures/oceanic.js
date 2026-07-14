@@ -685,7 +685,7 @@ const oceanicCreatureData = [
     vp: 3,
     schoolDensityRequirement: 50,
     onPlay: [
-      "Speedstrike: 1D6 attack targeting fish. Add +2 if targeting a Creature School.",
+      "Speedstrike: 1D6 attack targeting predator or fish. Add +2 if targeting a Creature School.",
     ],
     defense: "D6",
     image: "/images/cards/predator/oceanic/wahoo.png",
@@ -714,7 +714,7 @@ const oceanicCreatureData = [
     vp: 4,
     schoolDensityRequirement: 50,
     onPlay: [
-      "Speedstrike: 1D6 attack targeting fish. Add +2 if targeting a Creature School.",
+      "Speedstrike: 1D6 attack targeting predator or fish. Add +2 if targeting a Creature School.",
     ],
     passives: [
       "Corral: Attacks against Creature Schools gain +1 on attack rolls. Max +2.",

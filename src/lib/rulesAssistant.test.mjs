@@ -153,6 +153,7 @@ test("explains D20 and modified dice notation without relying on the model", () 
   const d20 = findRulesAnswer("What does D20 mean?", rules);
   const bonus = findRulesAnswer("How does D20+2 work?", rules);
   const penalty = findRulesAnswer("What does D6-1 mean?", rules);
+  const multiplied = findRulesAnswer("What does 1D4 * 10 mean?", rules);
 
   assert.match(relevant[0]?.title ?? "", /D20 mean/i);
   assert.equal(d20?.title, "Dice notation: D20");
@@ -160,5 +161,8 @@ test("explains D20 and modified dice notation without relying on the model", () 
   assert.match(d20?.text ?? "", /1 through 20/i);
   assert.match(bonus?.text ?? "", /add 2/i);
   assert.match(penalty?.text ?? "", /subtract 1/i);
+  assert.equal(multiplied?.title, "Dice notation: 1D4 × 10");
+  assert.match(multiplied?.text ?? "", /multiply that result by 10/i);
+  assert.match(multiplied?.text ?? "", /10 through 40/i);
   assert.equal(shouldSynthesizeWithModel(relevant), false);
 });

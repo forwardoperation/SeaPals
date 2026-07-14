@@ -1,5 +1,10 @@
 import { answerRulesQuestion } from "./rulesEngine.mjs";
 
+const EQUIVALENT_SOURCE_GROUPS = [
+  new Set(["glossary:opposed-tie", "knowledge:how-normal-attacks-resolve", "knowledge:how-attacking-works", "knowledge:defense-rolls"]),
+  new Set(["glossary:condition", "knowledge:what-conditions-cards-are-used-for"]),
+];
+
 function requiredRule(rules, pattern) {
   const rule = rules.find((candidate) => pattern.test(candidate.title));
   if (!rule) throw new Error(`The rules exam requires a source matching ${pattern}.`);
@@ -85,6 +90,9 @@ export function createRulesExam(rules, size = 500) {
 
   const generalRules = rules.filter((rule) => {
     if (rule.source === "card" || rule.source === "current") return false;
+    if (rule.source === "ability" && rules.some((candidate) => (
+      candidate.source === "card" && candidate.title.toLowerCase() === rule.title.toLowerCase()
+    ))) return false;
     const title = rule.title.toLowerCase();
     return !rules.some((candidate) => (
       candidate !== rule
@@ -144,7 +152,10 @@ export function runRulesExam(exam, rules) {
     const sourceIds = (answer?.sources ?? []).map((source) => source.id);
     const kindMatches = answer?.kind === item.expectedKind;
     const expectedSourceIds = item.expectedSourceIds ?? (item.expectedSourceId ? [item.expectedSourceId] : []);
-    const sourceMatches = !expectedSourceIds.length || expectedSourceIds.some((sourceId) => sourceIds.includes(sourceId));
+    const sourceMatches = !expectedSourceIds.length || expectedSourceIds.some((sourceId) => (
+      sourceIds.includes(sourceId)
+      || EQUIVALENT_SOURCE_GROUPS.some((group) => group.has(sourceId) && sourceIds.some((actualId) => group.has(actualId)))
+    ));
     return {
       ...item,
       actualKind: answer?.kind ?? "none",
