@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "audit:rules": "node scripts/audit-rules-chat.cjs --seed=0x5ea5a1 --enforce && node scripts/audit-rules-chat.cjs --seed=0xc0a1be --enforce && node scripts/audit-rules-chat.cjs --seed=0x0cea11 --enforce",
     "build": "next build",
-    "test": "node --test src/app/simulator/*.test.mjs",
+    "test": "node --test src/app/simulator/*.test.mjs src/lib/rulesAssistant.test.mjs src/lib/rulesEngine.test.mjs src/lib/rulesExam.test.mjs src/lib/rulesAdversarial.test.mjs",
+    "test:simulator": "node --test src/app/simulator/*.test.mjs",
+    "test:rules": "node --test src/lib/rulesAssistant.test.mjs src/lib/rulesEngine.test.mjs src/lib/rulesExam.test.mjs src/lib/rulesAdversarial.test.mjs",
     "dev": "next dev",
     "start": "next start",
     "cloudflare:build": "next build --webpack && opennextjs-cloudflare build --skipNextBuild",
@@ -22,6 +25,7 @@
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.4",
     "@tailwindcss/postcss": "^4.1.0",
+    "jiti": "^2.6.1",
     "postcss": "^8.5.0",
     "tailwindcss": "^4.1.0",
     "wrangler": "^4.86.0"

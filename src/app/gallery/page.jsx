@@ -299,7 +299,11 @@ function TypeSection({ title, slug, images }) {
 
       <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
         {images.map((image, index) => (
-          <details key={image.cardId ?? image.src} className="group">
+          <details
+            key={image.cardId ?? image.src}
+            id={image.cardId ? `card-${image.cardId}` : undefined}
+            className="group scroll-mt-28"
+          >
             <summary className="list-none cursor-pointer outline-none">
               {image.hasImage ? (
                 <div className="transition hover:-translate-y-1">

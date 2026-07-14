@@ -686,7 +686,9 @@ export default function InstructionsPage() {
               <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
                 <div className="text-sm font-bold text-slate-950">Die</div>
                 <p className="mt-1 text-xs leading-5 text-slate-600">
-                  Match the D-number on the attack icon to the dice reference.
+                  The D-number tells you how many sides the die has. D20 means
+                  roll one 20-sided die for a result from 1 through 20. Apply
+                  any + or - modifier after the roll.
                 </p>
               </div>
               <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
