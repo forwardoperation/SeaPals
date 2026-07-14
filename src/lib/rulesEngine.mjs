@@ -212,6 +212,10 @@ const INTENT_ROUTES = [
     title: /^School Density requirements$/i,
   },
   {
+    question: /^\s*(?:how|where)\s+(?:do|should|can)\s+(?:i|we)\s+(?:start|begin)(?:\s+(?:playing|the game|a game|seapals|sea pals))?\s*[?.!]*$/i,
+    title: /^Starting a game$/i,
+  },
+  {
     question: /(?=.*\b(?:begin|start|starting|sit down)\b)(?=.*\b(?:cards?|hand|rp|resources?)\b)/i,
     title: /^Starting a game$/i,
   },

@@ -67,6 +67,23 @@ test("extracts nested rules by heading boundaries", () => {
   assert.match(extracted[3].text, /Ties go to the defender/);
 });
 
+test("excludes page navigation and decorative labels from current rules", () => {
+  const html = `
+    <main>
+      <h1>How to Play</h1>
+      <p>Learn the game in a few minutes.</p>
+      <nav data-rules-ignore="true"><a href="#setup">Setup</a><a href="#combat">Combat</a></nav>
+      <div data-rules-ignore="true"><div>Nested navigation</div><p>Complete reference</p></div>
+      <h2>Advanced Rules</h2>
+      <p>Specific card text overrides a general rule.</p>
+    </main>`;
+
+  const extracted = extractRulesChunksFromHtml(html);
+  assert.equal(extracted[0].text, "Learn the game in a few minutes.");
+  assert.equal(extracted[1].title, "Advanced Rules");
+  assert.doesNotMatch(extracted[0].text, /Setup|Combat|Nested navigation|Complete reference/);
+});
+
 test("every proposed question has a useful built-in answer", () => {
   const proposedQuestions = [
     "How do I start a game?",
