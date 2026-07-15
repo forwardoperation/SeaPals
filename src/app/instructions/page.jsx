@@ -66,7 +66,8 @@ const glossary = [
   ["Action", "An ability you choose to use at its printed timing after paying its cost and choosing legal targets."],
   ["Defense", "The target's roll against a normal attack. A tied total means the defender stays in play."],
   ["School Density", "An Oceanic value supplied by Creature Schools. It is checked for requirements, not spent like RP."],
-  ["Discard", "Cards that are spent, discarded, or destroyed. They are no longer in play."],
+  ["Discard", "Cards that are spent, discarded, or destroyed unless another rule gives them a different destination."],
+  ["Lost Zone", "Where destroyed Apex and Filter Feeder cards go instead of the discard pile."],
 ];
 
 const faqQuestions = [
@@ -124,6 +125,11 @@ const faqQuestions = [
     question: "What happens to VP when a card leaves play?",
     answer:
       "Subtract that card's VP from your current total immediately. Conditional VP also stops counting whenever its printed requirement is no longer true.",
+  },
+  {
+    question: "Which cards go to the Lost Zone when destroyed?",
+    answer:
+      "Destroyed Apex and Filter Feeder cards go to their owner's Lost Zone instead of the discard pile. This applies only when the card is destroyed. If one is discarded as a cost or by another effect, it goes to discard unless that effect explicitly names the Lost Zone.",
   },
   {
     question: "Do Support cards stay in play?",
@@ -800,7 +806,7 @@ export default function InstructionsPage() {
                     "Roll the printed attack die. The target rolls its Defense die.",
                     "Apply valid + or − modifiers. A modified total cannot go below 0.",
                     "The attacker succeeds only if its final total is higher. A tie goes to the defender.",
-                    "A successful normal attack discards the defending creature unless an effect saves it.",
+                    "A successful normal attack destroys the defending creature unless an effect saves it. Put a destroyed Apex or Filter Feeder in its owner's Lost Zone; put other destroyed creatures in discard unless their text says otherwise.",
                   ].map((step, index) => (
                     <li key={step} className="flex gap-3">
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cyan-400 text-xs font-black text-slate-950">{index + 1}</span>
@@ -915,6 +921,18 @@ export default function InstructionsPage() {
               </RuleDetails>
 
               <RuleDetails
+                title="Lost Zone"
+                summary="Destroyed Apex and Filter Feeder cards do not enter the discard pile"
+              >
+                <ul className="space-y-2">
+                  <li>• When an <strong>Apex</strong> or <strong>Filter Feeder</strong> is destroyed, place that physical card in its owner's Lost Zone instead of the discard pile.</li>
+                  <li>• A card in the Lost Zone is no longer in play, so its VP and in-play abilities stop applying immediately.</li>
+                  <li>• Destroying and discarding are different instructions. An Apex or Filter Feeder discarded as a cost, sacrifice, hand-limit overflow, or card effect goes to discard unless that instruction explicitly names the Lost Zone.</li>
+                  <li>• Other destroyed cards go to discard unless their own printed text gives them another destination.</li>
+                </ul>
+              </RuleDetails>
+
+              <RuleDetails
                 title="Combat keywords and dice"
                 summary="Advantage, disadvantage, Toxic, Regenerate, Cloak, Transparency, and Massive"
               >
@@ -968,11 +986,11 @@ export default function InstructionsPage() {
                   method before play or check the latest official ruling.
                 </p>
                 <p className="mt-3">
-                  The Lost Zone exists as a table zone, but no complete general rule
-                  sends cards there. Stunned can be applied by printed effects, but it
-                  has no universal extra penalty or automatic expiration in the current
-                  rules. Do not add either behavior unless a printed or official rule
-                  explicitly supplies it.
+                  Stunned can be applied by printed effects, but it has no universal
+                  extra penalty or automatic expiration in the current rules. Do not
+                  add that behavior unless a printed or official rule explicitly
+                  supplies it. The Lost Zone is defined above for destroyed Apex and
+                  Filter Feeder cards.
                 </p>
               </RuleDetails>
             </div>

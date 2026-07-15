@@ -369,9 +369,10 @@ const oceanicCreatureData = [
     rp: 10,
     vp: 12,
     schoolDensityRequirement: 200,
+    playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],
     passives: ["Massive: Have advantage on defensive dice rolls."],
     defense: "D20",
-    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
+    image: "/images/cards/filter-feeders/Oceanic/Humpback Whale.png",
   },
   {
     id: "blue-whale",
@@ -383,7 +384,7 @@ const oceanicCreatureData = [
     playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],
     passives: ["Massive: Have advantage on defensive dice rolls."],
     defense: "D20",
-    image: "/images/cards/filter-feeders/Oceanic/blue-whale.png",
+    image: "/images/cards/filter-feeders/Oceanic/Blue Whale.png",
   },
   {
     id: "whale-shark",
@@ -394,7 +395,7 @@ const oceanicCreatureData = [
     schoolDensityRequirement: 180,
     playRequirements: ["Requires Open Ocean or Coral Reef Habitat in your ecosystem."],
     defense: "D20",
-    image: "/images/cards/filter-feeders/Oceanic/whale-shark.png",
+    image: "/images/cards/filter-feeders/Oceanic/Whale Shark.png",
   },
   {
     id: "ocean-sunfish",
@@ -405,7 +406,7 @@ const oceanicCreatureData = [
     schoolDensityRequirement: 150,
     playRequirements: ["Requires Open Ocean or Coral Reef Habitat in your ecosystem."],
     defense: "D8",
-    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
+    image: "/images/cards/filter-feeders/Oceanic/ocean-sunfish.png",
   },
   {
     id: "flying-fish",

@@ -65,9 +65,10 @@ limitation instead of inventing a rule.
 
 ## Known rule/data boundaries
 
-- The repository exposes a Lost Zone UI concept but currently defines no card effect,
-  zone transition, or rule that sends a card there. The zone remains inspectable and
-  empty until the source-of-truth rules define movement.
+- Apex and Filter Feeder card data now defines the printed destruction destination:
+  when one of those creatures is destroyed in combat, the simulator moves it to its
+  owner's Lost Zone instead of discard. Effects that merely discard or sacrifice a
+  card still use the discard pile unless their text explicitly says otherwise.
 - `Stunned` is stored and shown, but current card/rules data does not define its
   automatic gameplay consequence.
 - Complex companion effects on an otherwise supported attack resolve the documented

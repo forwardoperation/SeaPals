@@ -29,6 +29,10 @@ function shuffle(arr, random = Math.random) {
 const defaultDeckId = "coral-garden";
 const CARD_ART_FALLBACK = "/images/brand/SeaPalsTCGLogoWhite.svg";
 
+function destroyedCardGoesToLostZone(card) {
+  return card?.destroyedDestination === "lost-zone";
+}
+
 function createDeck(deckType, deckId = defaultDeckId, random = Math.random) {
   const selectedDeck = prebuiltDecks.find((deck) => deck.id === deckId) ?? prebuiltDecks[0];
   const ids = (selectedDeck?.cards ?? []).flatMap((entry) => {
@@ -107,6 +111,7 @@ function createInitialGameState(deckId = defaultDeckId, opponentDeckId = deckId,
       reefCreatureInstances: [],
       orphanCreatures: [],
       discardPile: [],
+      lostZone: [],
       blueCrabRecycleUsedTurn: null,
       supportBlockedUntilRound: 0,
       resilienceUsedCardIds: [],
@@ -2389,7 +2394,17 @@ export default function Simulator() {
         reefCreatures: nextReefInstances.map((instance) => instance.cardId),
         reefCreatureInstances: nextReefInstances,
         orphanCreatures: nextOpponentOrphans,
-        discardPile: defenderKept ? opponent.discardPile : [targetEntry.card.id, ...(targetEntry.orphanIndex >= 0 || targetEntry.hostedIndex >= 0 ? [] : (targetEntry.slot?.hostedCardIds ?? []).filter(Boolean)), ...opponent.discardPile],
+        discardPile: defenderKept
+          ? opponent.discardPile
+          : [
+              ...(destroyedCardGoesToLostZone(targetEntry.card) ? [] : [targetEntry.card.id]),
+              ...(targetEntry.orphanIndex >= 0 || targetEntry.hostedIndex >= 0 ? [] : (targetEntry.slot?.hostedCardIds ?? []).filter(Boolean)),
+              ...opponent.discardPile,
+            ],
+        lostZone:
+          !defenderKept && destroyedCardGoesToLostZone(targetEntry.card)
+            ? [targetEntry.card.id, ...(opponent.lostZone ?? [])]
+            : opponent.lostZone ?? [],
         rp: Math.max(0, opponent.rp - (regenerateTriggered ? regenerateResolution.rpCost : 0)),
         resilienceUsedCardIds: resilienceTriggered ? [...(opponent.resilienceUsedCardIds ?? []), targetEntry.instanceId] : opponent.resilienceUsedCardIds,
       }));
@@ -2429,7 +2444,7 @@ export default function Simulator() {
           ? ` Opponent's Blue Crab recycled ${opponentActualRecycleRp} RP (half the Fish's cost, rounded up and capped by its bank).`
           : " Opponent's Blue Crab triggered, but its RP bank was already at its cap."
         : "";
-      const survivalMessage = resilienceTriggered ? ` Ancient Resilience kept ${targetEntry.card.name} in play and is now used for this game.` : regenerateTriggered ? ` The opponent automatically paid 1 RP for Regenerate to keep ${targetEntry.card.name} in play.` : ` The defender was discarded.`;
+      const survivalMessage = resilienceTriggered ? ` Ancient Resilience kept ${targetEntry.card.name} in play and is now used for this game.` : regenerateTriggered ? ` The opponent automatically paid 1 RP for Regenerate to keep ${targetEntry.card.name} in play.` : destroyedCardGoesToLostZone(targetEntry.card) ? ` The destroyed defender was placed in the opponent's Lost Zone.` : ` The defender was discarded.`;
       const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: defenderKept ? "survived" : "discarded" }, { attackerSurvives: !attackerDiscardedAfterConsume, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
       const collapseMessage = getContinuousHealthCollapseMessage(nextOpponentProjection.collateral);
       const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The attack succeeded.${survivalMessage}${toxicMessage}${selfDiscardMessage}${recycleMessage}${collapseMessage ? ` ${collapseMessage}` : ""}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
@@ -2452,9 +2467,10 @@ export default function Simulator() {
           });
         }
         else setPlayerCorals((current) => current.map((coral) => coral.id === attackerCoralId ? { ...coral, slots: coral.slots.map((slot) => slot.id === attackerSlot?.id ? { ...slot, cardId: null, cardInstanceId: null, hostedCardIds: [] } : slot) } : coral));
-        setDiscardPile((current) => [attacker.id, ...current]);
+        if (destroyedCardGoesToLostZone(attacker)) setLostZone((current) => [attacker.id, ...current]);
+        else setDiscardPile((current) => [attacker.id, ...current]);
       }
-      const counterMessage = counter?.resolved ? ` ${targetEntry.card.name} triggered Bite Back: ${counter.attack.total} vs ${counter.defense.total}.${counterSucceeded ? ` ${attacker.name} was discarded.` : ` ${attacker.name} defended successfully.`}` : "";
+      const counterMessage = counter?.resolved ? ` ${targetEntry.card.name} triggered Bite Back: ${counter.attack.total} vs ${counter.defense.total}.${counterSucceeded ? destroyedCardGoesToLostZone(attacker) ? ` ${attacker.name} was destroyed and placed in your Lost Zone.` : ` ${attacker.name} was discarded.` : ` ${attacker.name} defended successfully.`}` : "";
       const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "defended", biteBack: counterSucceeded }, { attackerSurvives: !counterSucceeded });
       const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The defender won.${counterMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
@@ -3083,6 +3099,7 @@ export default function Simulator() {
       if (has("orphanCreatureInstances")) setPlayerOrphanCreatureInstances(next.orphanCreatureInstances);
       if (has("hand")) setHand(next.hand);
       if (has("discardPile")) setDiscardPile(next.discardPile);
+      if (has("lostZone")) setLostZone(next.lostZone);
       if (has("foundationDeck")) setFoundationDeck(next.foundationDeck);
       if (has("palsDeck")) setPalsDeck(next.palsDeck);
       if (has("rp")) setRp(next.rp);
@@ -5924,6 +5941,7 @@ export default function Simulator() {
         opponentReefCreatureInstances,
         opponentOrphanCreatures,
         opponentDiscardedCardId: counterSucceeded ? attackerEntry.card.id : null,
+        opponentDiscardedCardWasDestroyed: counterSucceeded,
         attackerCardId: attackerEntry.card.id,
         defenderCardId: targetEntry.card.id,
         targetInstanceId: targetEntry.instanceId,
@@ -5933,7 +5951,7 @@ export default function Simulator() {
         actionCost: attackerEntry.attack.actionCost,
         opponentCooldownKey,
         opponentAttackActionKey,
-        summary: `Opponent's ${attackerEntry.card.name}${onPlayAttack ? ` used ${attackerEntry.attack.actionName} on` : " attacked"} ${targetEntry.card.name}: ${rolls.join(", ")}. Your defender won.${counter?.resolved ? ` ${targetEntry.card.name} used ${biteBack.actionName} (${counter.attack.total} vs ${counter.defense.total}) and ${counterSucceeded ? `discarded ${attackerEntry.card.name}` : "the counterattack failed"}.` : ""}${attackerEntry.attack.unsupportedDetails ? ` ${attackerEntry.attack.unsupportedDetails}` : ""}`,
+        summary: `Opponent's ${attackerEntry.card.name}${onPlayAttack ? ` used ${attackerEntry.attack.actionName} on` : " attacked"} ${targetEntry.card.name}: ${rolls.join(", ")}. Your defender won.${counter?.resolved ? ` ${targetEntry.card.name} used ${biteBack.actionName} (${counter.attack.total} vs ${counter.defense.total}) and ${counterSucceeded ? destroyedCardGoesToLostZone(attackerEntry.card) ? `destroyed ${attackerEntry.card.name}, placing it in the opponent's Lost Zone` : `discarded ${attackerEntry.card.name}` : "the counterattack failed"}.` : ""}${attackerEntry.attack.unsupportedDetails ? ` ${attackerEntry.attack.unsupportedDetails}` : ""}`,
       };
     }
     const defeatedCorals = targetEntry.reefIndex >= 0 || targetEntry.orphanIndex >= 0 ? currentPlayerCorals : currentPlayerCorals.map((coral) => coral.id === targetEntry.coral.id ? {
@@ -6008,6 +6026,7 @@ export default function Simulator() {
       opponentReefCreatureInstances: opponentReefInstancesAfterToxic,
       opponentOrphanCreatures: attackerDiscardedAfterConsume && attackerEntry.orphanIndex >= 0 ? [...(opponentState.orphanCreatures ?? []).filter((entry) => entry.instanceId !== attackerEntry.instanceId), ...(opponentState.orphanCreatures?.[attackerEntry.orphanIndex]?.hostedCardIds ?? []).filter(Boolean).map((cardId) => createCreatureInstance(cardId, createStableInstanceId(`opponent-orphan-${cardId}`)))] : opponentState.orphanCreatures ?? [],
       opponentDiscardedCardId: attackerDiscardedAfterConsume ? attackerEntry.card.id : null,
+      opponentDiscardedCardWasDestroyed: false,
       attackerCardId: attackerEntry.card.id,
       defenderCardId: targetEntry.card.id,
       targetInstanceId: targetEntry.instanceId,
@@ -6015,7 +6034,7 @@ export default function Simulator() {
       actionCost: attackerEntry.attack.actionCost,
       opponentCooldownKey,
       opponentAttackActionKey,
-      summary: `Opponent's ${attackerEntry.card.name}${onPlayAttack ? ` used ${attackerEntry.attack.actionName} on` : " attacked"} ${targetEntry.card.name}: ${rolls.join(", ")}. ${targetEntry.card.name} was discarded.${toxicResult.triggered ? toxicResult.protected ? ` ${toxicResult.protectionSource === "poisonHeal" ? "Poison Heal" : `${attackerEntry.card.name}'s Toxic Immunity`} prevented Toxic.` : toxicDiscardedAttacker ? " Toxic coin flip: tails, so the opponent's consuming attacker was also discarded." : " Toxic coin flip: heads, so the opponent's attacker survived." : ""}${selfDiscardedAttacker ? toxicDiscardedAttacker ? ` ${attackerEntry.card.name}'s consume rule also required it to be discarded; it left play only once.` : ` ${attackerEntry.card.name}'s consume rule discarded it after eating an Apex or Predator.` : ""}${attackerEntry.attack.unsupportedDetails ? ` ${attackerEntry.attack.unsupportedDetails}` : ""}`,
+      summary: `Opponent's ${attackerEntry.card.name}${onPlayAttack ? ` used ${attackerEntry.attack.actionName} on` : " attacked"} ${targetEntry.card.name}: ${rolls.join(", ")}. ${destroyedCardGoesToLostZone(targetEntry.card) ? `${targetEntry.card.name} was destroyed and sent to your Lost Zone.` : `${targetEntry.card.name} was discarded.`}${toxicResult.triggered ? toxicResult.protected ? ` ${toxicResult.protectionSource === "poisonHeal" ? "Poison Heal" : `${attackerEntry.card.name}'s Toxic Immunity`} prevented Toxic.` : toxicDiscardedAttacker ? " Toxic coin flip: tails, so the opponent's consuming attacker was also discarded." : " Toxic coin flip: heads, so the opponent's attacker survived." : ""}${selfDiscardedAttacker ? toxicDiscardedAttacker ? ` ${attackerEntry.card.name}'s consume rule also required it to be discarded; it left play only once.` : ` ${attackerEntry.card.name}'s consume rule discarded it after eating an Apex or Predator.` : ""}${attackerEntry.attack.unsupportedDetails ? ` ${attackerEntry.attack.unsupportedDetails}` : ""}`,
     };
   }
 
@@ -6177,12 +6196,19 @@ export default function Simulator() {
         ? reconcileCreatureZone(nextPlayer.orphanCreatureInstances, step.orphanCreatures, "player-orphan")
         : nextPlayer.orphanCreatureInstances;
       let nextDiscardPile = nextPlayer.discardPile;
+      let nextLostZone = nextPlayer.lostZone ?? [];
       let nextFoundationDeck = nextPlayer.foundationDeck;
       const stepExtras = [];
       const discardedIds = step.discardedCardIds ?? (step.discardedCardId ? [step.discardedCardId] : []);
       if (discardedIds.length) {
-        nextDiscardPile = [...discardedIds, ...nextDiscardPile];
         const primaryDefeatedCard = cardsById[step.discardedCardId];
+        if (step.discardedCardId && destroyedCardGoesToLostZone(primaryDefeatedCard)) {
+          nextLostZone = [step.discardedCardId, ...nextLostZone];
+          nextDiscardPile = [...removeOneCard(discardedIds, step.discardedCardId), ...nextDiscardPile];
+          stepExtras.push(`${primaryDefeatedCard.name} was placed in your Lost Zone.`);
+        } else {
+          nextDiscardPile = [...discardedIds, ...nextDiscardPile];
+        }
         if (cardHasPlenteous(primaryDefeatedCard) && nextDiscardPile.includes("krill-bloom-base")) {
           nextDiscardPile = removeOneCard(nextDiscardPile, "krill-bloom-base");
           nextFoundationDeck = shuffle([...nextFoundationDeck, "krill-bloom-base"]);
@@ -6208,6 +6234,7 @@ export default function Simulator() {
         reefCreatureInstances: nextReefInstances,
         orphanCreatureInstances: nextOrphanInstances,
         discardPile: nextDiscardPile,
+        lostZone: nextLostZone,
         foundationDeck: nextFoundationDeck,
         rp: step.playerRpAfter ?? nextPlayer.rp,
         blueCrabRecycleUsedTurn: step.playerBlueCrabRecycleUsedTurnAfter ?? nextPlayer.blueCrabRecycleUsedTurn,
@@ -6238,7 +6265,10 @@ export default function Simulator() {
         orphanCreatures: step.opponentOrphanCreatures ?? nextOpponent.orphanCreatures,
       });
       if (step.opponentDiscardedCardId) {
-        nextOpponent = { ...nextOpponent, discardPile: [step.opponentDiscardedCardId, ...nextOpponent.discardPile] };
+        const destroyedOpponentCard = cardsById[step.opponentDiscardedCardId];
+        nextOpponent = step.opponentDiscardedCardWasDestroyed && destroyedCardGoesToLostZone(destroyedOpponentCard)
+          ? { ...nextOpponent, lostZone: [step.opponentDiscardedCardId, ...(nextOpponent.lostZone ?? [])] }
+          : { ...nextOpponent, discardPile: [step.opponentDiscardedCardId, ...nextOpponent.discardPile] };
       }
       if (stepIndex === 0 && !actionCostAlreadyPaid) {
         nextOpponent = {
@@ -6323,6 +6353,7 @@ export default function Simulator() {
     let nextPlayerOrphans = playerOrphanCreatures;
     let nextPlayerHand = hand;
     let nextPlayerDiscardPile = discardPile;
+    let nextPlayerLostZone = lostZone;
     let nextPlayerFoundationDeck = foundationDeck;
     let nextPlayerRp = Math.max(0, rp - (resolution.keepDefender ? resolution.rpCost : 0));
     let nextBlueCrabRecycleUsedTurn = blueCrabRecycleUsedTurn;
@@ -6364,7 +6395,13 @@ export default function Simulator() {
               ...(removedEntry?.hostedCardIds ?? []).filter(Boolean).map((cardId) => createCreatureInstance(cardId, createStableInstanceId(`player-orphan-${cardId}`))),
             ];
       }
-      nextPlayerDiscardPile = [...(pending.discardedCardIds ?? []).filter(Boolean), ...nextPlayerDiscardPile];
+      const defeatedIds = (pending.discardedCardIds ?? []).filter(Boolean);
+      if (destroyedCardGoesToLostZone(defender)) {
+        nextPlayerLostZone = [defender.id, ...nextPlayerLostZone];
+        nextPlayerDiscardPile = [...removeOneCard(defeatedIds, defender.id), ...nextPlayerDiscardPile];
+      } else {
+        nextPlayerDiscardPile = [...defeatedIds, ...nextPlayerDiscardPile];
+      }
       toxicResult = resolveToxicConsumption({ attackerCard: attacker, toxicSourceCard: defender, consumed: true, poisonHealActive: pending.opponentPoisonHealActive });
       const selfDiscardedAttacker = shouldSelfDiscardAfterConsume({ attackerCard: attacker, defenderCard: defender, consumed: true });
       attackerDiscardedAfterConsume = toxicResult.discardAttacker || selfDiscardedAttacker;
@@ -6403,6 +6440,7 @@ export default function Simulator() {
         orphanCreatureInstances: nextPlayerOrphans,
         hand: nextPlayerHand,
         discardPile: nextPlayerDiscardPile,
+        lostZone: nextPlayerLostZone,
         foundationDeck: nextPlayerFoundationDeck,
         palsDeck,
         rp: nextPlayerRp,
@@ -6419,6 +6457,7 @@ export default function Simulator() {
       nextPlayerOrphans = stateBeforeBlueCrab.orphanCreatureInstances;
       nextPlayerHand = stateBeforeBlueCrab.hand;
       nextPlayerDiscardPile = stateBeforeBlueCrab.discardPile;
+      nextPlayerLostZone = stateBeforeBlueCrab.lostZone ?? nextPlayerLostZone;
       nextPlayerFoundationDeck = stateBeforeBlueCrab.foundationDeck;
       nextPlayerRp = stateBeforeBlueCrab.rp;
       if (overflowLost) recycleMessage += ` Your RP bank cap fell and ${overflowLost} excess RP was returned before Blue Crab resolved.`;
@@ -6450,6 +6489,7 @@ export default function Simulator() {
       orphanCreatureInstances: nextPlayerOrphans,
       hand: nextPlayerHand,
       discardPile: nextPlayerDiscardPile,
+      lostZone: nextPlayerLostZone,
       foundationDeck: nextPlayerFoundationDeck,
       palsDeck,
       rp: nextPlayerRp,
@@ -6508,7 +6548,7 @@ export default function Simulator() {
 
     const message = resolution.keepDefender
       ? `You chose Regenerate and paid ${resolution.rpCost} RP. ${defender.name} remains in play.`
-      : `You declined Regenerate. ${defender.name} was discarded.${toxicMessage}${selfDiscardMessage}${recycleMessage}`;
+      : `You declined Regenerate. ${destroyedCardGoesToLostZone(defender) ? `${defender.name} was destroyed and placed in your Lost Zone.` : `${defender.name} was discarded.`}${toxicMessage}${selfDiscardMessage}${recycleMessage}`;
     const regenerateCollapseEvents = [
       buildContinuousHealthCollapseEvent(regeneratePlayerCollateral, {
         sourceCardId: attacker?.id,
@@ -6613,6 +6653,7 @@ export default function Simulator() {
       orphanCreatureInstances: playerOrphanCreatureInstances,
       hand,
       discardPile,
+      lostZone,
       foundationDeck,
       palsDeck,
       rp,

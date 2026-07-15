@@ -263,6 +263,15 @@ export const STRUCTURED_RULE_FACTS = [
     text: "To play an Oceanic Apex that uses this additional cost, sacrifice either 1 Oceanic Predator or 2 distinct physical Oceanic Fish, in addition to its other requirements and RP cost.",
   },
   {
+    id: "lost-zone",
+    augmentExisting: true,
+    sourceTitle: "Lost Zone",
+    concepts: ["lost zone", "lost pile", "destroyed apex", "destroyed filter feeder"],
+    intents: ["where", "go", "destroy", "discard", "removed"],
+    answerTypes: ["location", "procedure", "boolean"],
+    text: "When an Apex or Filter Feeder is destroyed, place that physical card in its owner's Lost Zone instead of discard. A card that is discarded without being destroyed still goes to discard unless the resolving effect explicitly says otherwise.",
+  },
+  {
     id: "school-density",
     augmentExisting: true,
     sourceTitle: "School Density requirements",
