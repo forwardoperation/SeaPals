@@ -23,6 +23,27 @@ const heroCards = [
   },
 ];
 
+const heroCardStreams = [
+  {
+    src: "/images/promo/hero-card-stream-reef.jpg",
+    width: 3400,
+    height: 150,
+    className: "seapals-hero-card-stream--reef",
+  },
+  {
+    src: "/images/promo/hero-card-stream-oceanic.jpg",
+    width: 5750,
+    height: 150,
+    className: "seapals-hero-card-stream--oceanic",
+  },
+  {
+    src: "/images/promo/hero-card-stream-deep.jpg",
+    width: 4246,
+    height: 150,
+    className: "seapals-hero-card-stream--deep",
+  },
+];
+
 const familyBenefits = [
   {
     number: "01",
@@ -118,7 +139,7 @@ export default function HomePage() {
               Coming soon · Creation-focused family play
             </p>
             <h1 className="mt-6 max-w-3xl font-serif text-4xl font-bold leading-[1.04] tracking-tight text-white sm:text-5xl md:text-6xl">
-              A marine-life card game your kids will love—and you’ll feel good bringing home.
+              A card game your kids will love, and you will too.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-cyan-50/90 md:text-xl">
               SeaPals turns the wonder of God’s creation into fast, face-to-face fun. Kids build living reefs, discover real ocean creatures, and make strategic choices with siblings and friends.
@@ -158,34 +179,63 @@ export default function HomePage() {
             </dl>
           </div>
 
-          <div className="relative mx-auto w-full max-w-xl px-3 pb-8 pt-2 sm:px-8 lg:px-2">
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-12 bottom-1 h-24 rounded-full bg-cyan-300/20 blur-2xl"
-            />
-            <div className="relative grid grid-cols-3 items-center gap-2 sm:gap-4">
-              {heroCards.map((card) => (
+          <div className="seapals-hero-card-stage relative mx-auto min-h-[410px] w-full max-w-2xl overflow-hidden rounded-[1.75rem] border border-cyan-200/15 bg-[#062f46] shadow-inner sm:min-h-[460px] lg:-mr-8 lg:min-h-[500px]">
+            <div aria-hidden="true" className="absolute inset-0">
+              {heroCardStreams.map((stream) => (
                 <div
-                  key={card.src}
-                  className={`overflow-hidden rounded-xl bg-white p-1.5 shadow-2xl shadow-black/30 ring-1 ring-white/50 transition duration-300 hover:z-20 hover:-translate-y-2 sm:rounded-2xl sm:p-2 ${card.className}`}
+                  key={stream.src}
+                  className={`seapals-hero-card-stream ${stream.className}`}
                 >
-                  <Image
-                    src={card.src}
-                    alt={card.alt}
-                    width={375}
-                    height={525}
-                    priority
-                    sizes="(max-width: 640px) 28vw, (max-width: 1024px) 180px, 160px"
-                    className="h-auto w-full rounded-lg sm:rounded-xl"
-                  />
+                  <div className="seapals-hero-card-stream-track">
+                    <Image
+                      src={stream.src}
+                      alt=""
+                      width={stream.width}
+                      height={stream.height}
+                      sizes="1800px"
+                      className="seapals-hero-card-stream-image"
+                    />
+                    <Image
+                      src={stream.src}
+                      alt=""
+                      width={stream.width}
+                      height={stream.height}
+                      sizes="1800px"
+                      className="seapals-hero-card-stream-image"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="relative z-20 mx-auto mt-7 max-w-sm rounded-2xl border border-white/20 bg-[#0b4058]/90 px-5 py-4 text-center shadow-xl backdrop-blur">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">What kids are building</p>
-              <p className="mt-1 text-sm font-semibold leading-6 text-white">
-                A thriving reef—one coral, creature, and smart decision at a time.
-              </p>
+
+            <div aria-hidden="true" className="seapals-hero-card-vignette absolute inset-0" />
+
+            <div className="relative z-10 flex min-h-[410px] flex-col items-center justify-center px-5 py-9 sm:min-h-[460px] sm:px-8 lg:min-h-[500px]">
+              <div className="grid w-full max-w-sm grid-cols-3 items-center gap-2 sm:max-w-md sm:gap-4">
+                {heroCards.map((card) => (
+                  <div
+                    key={card.src}
+                    className={`overflow-hidden rounded-xl bg-white p-1.5 shadow-2xl shadow-black/45 ring-1 ring-white/70 transition duration-300 hover:z-20 hover:-translate-y-2 sm:rounded-2xl sm:p-2 ${card.className}`}
+                  >
+                    <Image
+                      src={card.src}
+                      alt={card.alt}
+                      width={375}
+                      height={525}
+                      priority
+                      sizes="(max-width: 640px) 26vw, (max-width: 1024px) 150px, 140px"
+                      className="h-auto w-full rounded-lg sm:rounded-xl"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-7 max-w-sm rounded-2xl border border-cyan-200/30 bg-[#082f49]/90 px-5 py-4 text-center shadow-xl backdrop-blur-md">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">What kids are building</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-white">
+                  A thriving reef—one coral, creature, and smart decision at a time.
+                </p>
+              </div>
             </div>
           </div>
         </div>
