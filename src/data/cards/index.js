@@ -23,13 +23,36 @@ const creatureClassByCategory = {
   [CardCategory.PREDATOR]: CreatureClass.PREDATOR,
 };
 
+export const DESTROYED_TO_LOST_ZONE_RULE =
+  "If destroyed, place this card in your Lost Zone.";
+
+const lostZoneOnDestructionCategories = new Set([
+  CardCategory.APEX,
+  CardCategory.FILTER_FEEDER,
+]);
+
 function normalizeCreatureCard(card) {
   if (card.kind !== CardKind.CREATURE) return card;
+
+  const goesToLostZoneWhenDestroyed = lostZoneOnDestructionCategories.has(
+    card.category
+  );
+  const specialRules = card.specialRules ?? [];
 
   return {
     ...card,
     zone: card.zone ?? CreatureZone.REEF,
     class: card.class ?? creatureClassByCategory[card.category],
+    destroyedDestination: goesToLostZoneWhenDestroyed ? "lost-zone" : "discard",
+    specialRules:
+      goesToLostZoneWhenDestroyed &&
+      !specialRules.some((rule) =>
+        /if destroyed,? place (?:this card|it) in (?:your|the) lost zone/i.test(
+          typeof rule === "string" ? rule : rule?.text ?? ""
+        )
+      )
+        ? [...specialRules, DESTROYED_TO_LOST_ZONE_RULE]
+        : specialRules,
   };
 }
 

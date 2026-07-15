@@ -90,7 +90,7 @@ export const PLAYER_INTERROGATION = [
   answer(57, "medium", "Does a Habitat stay on the table after I play it?", ["glossary:habitat", "knowledge:habitats"], [["persistent", "remain"]], "boolean"),
   answer(58, "medium", "Do I play a Condition from my hand like a Support?", ["glossary:condition", "knowledge:what-conditions-cards-are-used-for"], [["not played"], ["shared conditions deck"]], "boolean"),
   answer(59, "medium", "Are the cards in my hand already part of my ecosystem?", ["glossary:ecosystem"], [["not"], ["in play"]], "boolean"),
-  answer(60, "medium", "Should destroyed cards automatically go to the Lost Zone?", ["glossary:lost-zone", "knowledge:lost-zone-boundary"], [["only"], ["explicit", "says"]], "boolean"),
+  answer(60, "medium", "Which destroyed cards automatically go to the Lost Zone?", ["glossary:lost-zone", "knowledge:lost-zone"], [["apex"], ["filter feeder"]], "definition"),
   answer(61, "medium", "Which deck should ordinary Support cards be shuffled into?", ["glossary:support", "glossary:pals-deck", "knowledge:foundation-and-pals-deck-routing"], [["pals deck"]], "location"),
   answer(62, "medium", "Do Coral cards belong in my Pals Deck?", ["glossary:foundation-deck", "knowledge:foundation-and-pals-deck-routing"], [["foundation deck"]], "boolean"),
   answer(63, "medium", "Is a Creature School a creature from the Pals Deck or a Foundation?", ["glossary:creature-school", "knowledge:foundation-and-pals-deck-routing"], [["foundation"]], "boolean"),

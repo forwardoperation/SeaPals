@@ -124,8 +124,8 @@ const INTENT_ROUTES = [
     title: /^Action timing and cooldowns$/i,
   },
   {
-    question: /(?=.*\blost zone\b)(?=.*\b(?:when|may|move|moved)\b)/i,
-    title: /^Lost Zone boundary$/i,
+    question: /(?=.*\blost zone\b)(?=.*\b(?:when|may|move|moved|send|sent|go|goes|enter|destroy|destroyed|discard|discarding|apex|filter feeder)\b)/i,
+    title: /^Lost Zone$/i,
   },
   {
     question: /(?=.*\b(?:four steps|turn order)\b)(?=.*\b(?:list|explain|what|steps?)\b)/i,

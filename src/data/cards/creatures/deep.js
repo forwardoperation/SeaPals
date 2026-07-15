@@ -250,6 +250,20 @@ const deepCreatureData = [
     ],
   },
   {
+    id: "megamouth-shark",
+    name: "Megamouth Shark",
+    class: CreatureClass.FILTER_FEEDER,
+    image: "/images/cards/filter-feeders/Deep/megamouth-shark.png",
+    rp: 9,
+    vp: 11,
+    schoolDensityRequirement: 150,
+    defense: "D10",
+    playRequirements: [
+      "Requires 150 School Density.",
+      "Can only be played if Open Ocean Habitat is in your ecosystem.",
+    ],
+  },
+  {
     id: "deep-cucumber",
     name: "Deep Cucumber",
     class: CreatureClass.INVERTEBRATE,

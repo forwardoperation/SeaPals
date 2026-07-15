@@ -162,8 +162,8 @@ export const SIMULATOR_RULES = [
     text: "A colored circle containing a star is a family target icon. It means any subtype in that pictured family can satisfy or be targeted by the ability. For example, the Any Apex star can refer to a Reef, Oceanic, or Deep Apex, while Any Creature can refer to any creature family allowed by the effect. The surrounding On Play text explains what happens when the card enters play; read the star icons as the legal families for that effect.",
   },
   {
-    title: "Lost Zone boundary",
-    text: "The current rules repository shows a Lost Zone, but no complete source-of-truth effect currently sends cards there. Do not move a card to the Lost Zone unless its printed rule or a future official rule explicitly says to do so.",
+    title: "Lost Zone",
+    text: "If an Apex or Filter Feeder is destroyed, its printed Special Rules send that physical card to its owner's Lost Zone instead of the discard pile. It leaves play and its VP stops counting. Cards of other classes go to discard when destroyed unless their own printed text explicitly names another destination. Discarding an Apex or Filter Feeder for a cost or effect is not the same as destroying it, so it goes to discard unless that effect says otherwise.",
   },
   {
     title: "Stunned boundary",
