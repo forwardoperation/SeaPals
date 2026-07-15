@@ -13,6 +13,7 @@ import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstanc
 import { attackCanTargetCard, attackerHasDisadvantageFromMassive, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getRemainingAttackTargets, getRovLightsAttackBonus, hasDefenseAdvantage, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume } from "./combatRules.mjs";
 import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
+import { OPPONENT_DIFFICULTY_OPTIONS, OpponentDifficulty, chooseOpponentPreferredDeck, getOpponentDifficultyProfile, limitOpponentOptionalActions, normalizeOpponentDifficulty, orderOpponentChoices, scaleOpponentThinkingDelay, selectOpponentChoice } from "./opponentDifficultyRules.mjs";
 import foundationDeckImg from "./images/foundation-deck.png";
 import palsDeckImg from "./images/pals-deck.png";
 
@@ -1241,6 +1242,8 @@ export default function Simulator() {
   const [initialGame] = useState(() => createInitialGameState(defaultDeckId, defaultDeckId, createSeededRandom(0x5ea9a15)));
   const [selectedDeckId, setSelectedDeckId] = useState(defaultDeckId);
   const [selectedOpponentDeckId, setSelectedOpponentDeckId] = useState(defaultDeckId);
+  const [opponentDifficulty, setOpponentDifficulty] = useState(OpponentDifficulty.MEDIUM);
+  const [pendingOpponentDifficulty, setPendingOpponentDifficulty] = useState(OpponentDifficulty.MEDIUM);
   const [victoryTarget, setVictoryTarget] = useState(30);
   const [pendingVictoryTarget, setPendingVictoryTarget] = useState(30);
   const [foundationDeck, setFoundationDeck] = useState(initialGame.foundationDeck);
@@ -1326,6 +1329,7 @@ export default function Simulator() {
   const [faceoffPreview, setFaceoffPreview] = useState(null);
   const [log, setLog] = useState(["New Coral Garden game started. Setup: play a base Coral or Creature School using your 3 RP."]);
   const [turnLog, setTurnLog] = useState(["Setup began with 3 RP and an eight-card hand."]);
+  const opponentDifficultyProfile = getOpponentDifficultyProfile(opponentDifficulty);
 
   const playerHabitats = playerHabitatInstances.map((instance) => instance.cardId);
   const playerReefCreatures = playerReefCreatureInstances.map((instance) => instance.cardId);
@@ -3114,7 +3118,7 @@ export default function Simulator() {
       opponentThinkingTimerRef.current = setTimeout(() => {
         opponentThinkingTimerRef.current = null;
         resolveOpponentTurnRef.current?.();
-      }, Number(eventOverlay.thinkingDelay ?? 1200));
+      }, scaleOpponentThinkingDelay(Number(eventOverlay.thinkingDelay ?? 1200), opponentDifficulty));
       return;
     }
     if (eventOverlay?.advanceRoundAfterClose) {
@@ -3128,7 +3132,7 @@ export default function Simulator() {
     setPendingEvents(remaining);
     if (nextEvent?.opponentSequence) {
       const isComplexDecision = ["faceoff-result", "opponent-impact", "turn-transition"].includes(nextEvent.type) || playerVp >= victoryTarget - 8 || opponentVp >= victoryTarget - 8;
-      const delay = isComplexDecision ? 1500 : 900;
+      const delay = scaleOpponentThinkingDelay(isComplexDecision ? 1500 : 900, opponentDifficulty);
       setEventOverlay(null);
       setOpponentThinking(true);
       opponentThinkingTimerRef.current = setTimeout(() => {
@@ -4713,7 +4717,8 @@ export default function Simulator() {
     // A non-locking search can find another Support, which is also legal to play
     // this turn. Use the finite cards in the opponent's zones as a safety bound
     // instead of freezing the count to Supports that began in hand.
-    const supportPlaySafetyLimit = Math.max(1, opponentState.hand.length + opponentState.palsDeck.length + opponentState.foundationDeck.length + opponentState.discardPile.length);
+    const availableSupportPlays = Math.max(1, opponentState.hand.length + opponentState.palsDeck.length + opponentState.foundationDeck.length + opponentState.discardPile.length);
+    const supportPlaySafetyLimit = limitOpponentOptionalActions(availableSupportPlays, opponentDifficulty, "support");
     for (let playCount = 0; playCount < supportPlaySafetyLimit; playCount += 1) {
       let chosen = null;
       const scoreSupport = (cardId) => {
@@ -4732,7 +4737,7 @@ export default function Simulator() {
         if (card.id === "spearfishing") return 25;
         return 45;
       };
-      for (const cardId of [...next.hand].sort((leftId, rightId) => scoreSupport(rightId) - scoreSupport(leftId))) {
+      for (const cardId of orderOpponentChoices(next.hand, opponentDifficulty, scoreSupport)) {
         const card = cardsById[cardId];
         if (card?.kind !== CardKind.SUPPORT || getConditionPlayRestriction(card, activeCondition)) continue;
         const cost = getCardPlayCost(card, activeCondition);
@@ -4897,7 +4902,14 @@ export default function Simulator() {
       capped: cappedIncome,
       requestedDraws,
     };
-    const preferredDeck = round % 2 === 1 ? "palsDeck" : "foundationDeck";
+    const preferredDeck = chooseOpponentPreferredDeck({
+      difficulty: opponentDifficulty,
+      round,
+      coralCount: next.corals.length,
+      emptySlotCount: next.corals.reduce((total, coral) => total + coral.slots.filter((slot) => !slot.cardId).length, 0),
+      foundationCardsInHand: next.hand.filter((cardId) => isFoundationCard(cardsById[cardId])).length,
+      creaturesInHand: next.hand.filter((cardId) => cardsById[cardId]?.kind === CardKind.CREATURE && !isCreatureSchool(cardsById[cardId])).length,
+    });
     if (!next.foundationDeck.length && !next.palsDeck.length) {
       const summary = `${collectionSummary} Opponent could not draw because both personal decks were empty and loses by deck depletion.`;
       return { state: next, startOfTurnState: reconcileOpponentInstances(current, next), startOfTurnSummary: summary, startOfTurnDetails: { ...startOfTurnCollection, drawn: 0, foundationDrawn: 0, palsDrawn: 0, drawShortfall: requestedDraws, handLimitDiscarded: 0 }, lost: true, summary };
@@ -4995,7 +5007,25 @@ export default function Simulator() {
       }
       return 25 + printedVp * 7 + income * 8 + actionable * 6 - cost;
     };
-    const playable = playableCards.sort((leftId, rightId) => scoreOpponentPlay(rightId) - scoreOpponentPlay(leftId))[0];
+    const scoreHardOpponentPlay = (cardId) => {
+      const card = cardsById[cardId];
+      const printedVp = Number(card?.victoryPoints?.value ?? card?.victoryPoints ?? card?.vp ?? 0);
+      const income = getCardStartTurnRp(card);
+      const cost = getOpponentPlayCost(card);
+      const reachesVictory = opponentVp + printedVp >= victoryTarget;
+      const createsAttack = Boolean(getBasicAttackEffect(card) || getOnPlayAttackEffect(card));
+      const hasPlayerTarget = Boolean(playerCorals.length || playerReefCreatures.length || playerOrphanCreatures.length);
+      return scoreOpponentPlay(cardId)
+        + (reachesVictory ? 1000 : 0)
+        + printedVp * 8
+        + income * (round <= 3 ? 7 : 3)
+        + (createsAttack && hasPlayerTarget ? 12 : 0)
+        - cost;
+    };
+    const playable = selectOpponentChoice(playableCards, opponentDifficulty, {
+      mediumScore: scoreOpponentPlay,
+      hardScore: scoreHardOpponentPlay,
+    });
 
     if (!playable) {
       return {
@@ -5618,7 +5648,8 @@ export default function Simulator() {
       ...(opponentState.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
     ].filter(Boolean).reduce((total, cardId) => total + (cardsById[cardId]?.actions?.length ?? 0), 0);
     const foundationActionCount = opponentState.corals.reduce((total, foundation) => total + (cardsById[foundation.cardId]?.passives ?? []).filter((passive) => getPassiveCoralHeal(passive) || getDamageCounterMove(passive)).length, 0);
-    const safetyLimit = Math.max(1, creatureActionCount + foundationActionCount);
+    const availableActionCount = Math.max(1, creatureActionCount + foundationActionCount);
+    const safetyLimit = limitOpponentOptionalActions(availableActionCount, opponentDifficulty, "utility");
     for (let index = 0; index < safetyLimit; index += 1) {
       const result = runOpponentUtilityAction(nextOpponent, nextPlayer);
       if (!result) break;
@@ -5679,7 +5710,15 @@ export default function Simulator() {
       const actionUseKey = attack ? getOpponentActionUseKey(stableSlotId, attack) : null;
       if (attack && (actionCostAlreadyPaid || attack.actionCost <= opponentState.rp) && (onPlayAttack || turn >= Number(opponentState.actionCooldowns?.[stableSlotId] ?? 0)) && (onPlayAttack || actionCostAlreadyPaid || !wasOpponentActionUsedThisTurn(opponentState.actionUses, actionUseKey, turn))) attackerEntries.push({ coral: null, slot: null, reefIndex: -1, orphanIndex, instanceId: entry.instanceId, locationKey: stableSlotId, card, attack });
     });
-    const attackerEntry = attackerEntries[0];
+    const scoreAttacker = (entry) => {
+      const diceSides = Number(String(entry.attack?.attackDice ?? "").match(/D(\d+)/i)?.[1] ?? 0);
+      const repeatAttacks = Math.max(1, Number(entry.attack?.repeatAttacks ?? 1));
+      const printedVp = Number(entry.card?.victoryPoints?.value ?? entry.card?.victoryPoints ?? entry.card?.vp ?? 0);
+      return diceSides * repeatAttacks + printedVp * 2 - Number(entry.attack?.actionCost ?? 0);
+    };
+    const attackerEntry = opponentDifficulty === OpponentDifficulty.HARD
+      ? selectOpponentChoice(attackerEntries, opponentDifficulty, { mediumScore: scoreAttacker, hardScore: scoreAttacker })
+      : attackerEntries[0];
     if (!attackerEntry) return null;
     const opponentAttackActionKey = onPlayAttack ? null : getOpponentActionUseKey(attackerEntry.locationKey, attackerEntry.attack);
     const opponentCooldownKey = !onPlayAttack && attackerEntry.attack.skipNextTurn ? (attackerEntry.slot ? getSlotActionKey(attackerEntry.slot) : attackerEntry.orphanIndex >= 0 ? `orphan-${attackerEntry.instanceId ?? attackerEntry.orphanIndex}` : `reef-${attackerEntry.instanceId ?? attackerEntry.reefIndex}`) : null;
@@ -5717,7 +5756,18 @@ export default function Simulator() {
       const card = cardsById[foundation.cardId];
       if (isCreatureSchool(card) && cardMatchesAttackTarget(card, attackerEntry.attack)) targetEntries.push({ coral: foundation, slot: null, school: true, card, instanceId: `foundation:${foundation.id}` });
     });
-    const targetEntry = targetEntries.find((entry) => entry.instanceId && !excludedTargets.has(entry.instanceId));
+    const availableTargetEntries = targetEntries.filter((entry) => entry.instanceId && !excludedTargets.has(entry.instanceId));
+    const scoreTarget = (entry) => {
+      const printedVp = Number(entry.card?.victoryPoints?.value ?? entry.card?.victoryPoints ?? entry.card?.vp ?? 0);
+      const income = getCardStartTurnRp(entry.card);
+      const defenseSides = Number(String(entry.card?.defense?.dice ?? entry.card?.defense ?? "").match(/D(\d+)/i)?.[1] ?? 0);
+      const actionValue = Number(entry.card?.actions?.length ?? 0) * 5;
+      const damagedSchoolValue = entry.school ? Math.max(0, Number(entry.coral?.maxHealth ?? 0) - Number(entry.coral?.health ?? entry.coral?.maxHealth ?? 0)) / 5 : 0;
+      return printedVp * 15 + income * 10 + Number(entry.card?.cost?.rp ?? 0) * 2 + actionValue + (entry.school ? 18 : 0) + damagedSchoolValue - defenseSides;
+    };
+    const targetEntry = opponentDifficulty === OpponentDifficulty.HARD
+      ? selectOpponentChoice(availableTargetEntries, opponentDifficulty, { mediumScore: scoreTarget, hardScore: scoreTarget })
+      : availableTargetEntries[0];
     if (!targetEntry) {
       if (!onPlayAttack) return null;
       return {
@@ -6820,12 +6870,16 @@ export default function Simulator() {
     queueEvents(turnEvents.map((event) => ({ ...event, opponentSequence: true })));
   }
 
-  function restartGame(deckId = selectedDeckId, opponentDeckId = selectedOpponentDeckId, nextVictoryTarget = pendingVictoryTarget) {
+  function restartGame(deckId = selectedDeckId, opponentDeckId = selectedOpponentDeckId, nextVictoryTarget = pendingVictoryTarget, nextOpponentDifficulty = pendingOpponentDifficulty) {
     const nextGame = createInitialGameState(deckId, opponentDeckId);
     const deckName = prebuiltDecks.find((deck) => deck.id === deckId)?.name ?? deckId;
     const opponentDeckName = prebuiltDecks.find((deck) => deck.id === opponentDeckId)?.name ?? opponentDeckId;
+    const normalizedDifficulty = normalizeOpponentDifficulty(nextOpponentDifficulty);
+    const difficultyLabel = getOpponentDifficultyProfile(normalizedDifficulty).label;
     setSelectedDeckId(deckId);
     setSelectedOpponentDeckId(opponentDeckId);
+    setOpponentDifficulty(normalizedDifficulty);
+    setPendingOpponentDifficulty(normalizedDifficulty);
     setVictoryTarget(nextVictoryTarget);
     setPendingVictoryTarget(nextVictoryTarget);
     setFoundationDeck(nextGame.foundationDeck);
@@ -6897,11 +6951,12 @@ export default function Simulator() {
       unavailablePlayerCards.length ? `Deck data warning: ${unavailablePlayerCards.map((entry) => `${entry.unavailableName ?? entry.cardId} ×${entry.quantity}`).join(", ")} ${unavailablePlayerCards.length === 1 ? "is" : "are"} listed in your deck but have no card rules in the repository, so those copies are excluded.` : null,
       unavailableOpponentCards.length ? `Opponent deck data warning: ${unavailableOpponentCards.map((entry) => `${entry.unavailableName ?? entry.cardId} ×${entry.quantity}`).join(", ")} ${unavailableOpponentCards.length === 1 ? "is" : "are"} missing repository card rules and excluded.` : null,
     ].filter(Boolean);
-    setLog([...unavailableWarnings, `New game started: your ${deckName} versus the opponent's ${opponentDeckName}. Setup: play a base Coral or Creature School using your 3 RP.`]);
+    setLog([...unavailableWarnings, `New ${difficultyLabel} game started: your ${deckName} versus the opponent's ${opponentDeckName}. Setup: play a base Coral or Creature School using your 3 RP.`]);
   }
 
   function openNewGameSetup() {
     setPendingVictoryTarget(victoryTarget);
+    setPendingOpponentDifficulty(opponentDifficulty);
     setEventOverlay({
       type: "new-game-setup",
       title: "Start a New SeaPals Game",
@@ -6984,7 +7039,7 @@ export default function Simulator() {
                   <div className="text-[9px] font-semibold text-cyan-300/70">{playerSchoolDensity} school density</div>
                 </div>
                 <div className="px-4 py-1.5 text-center">
-                  <div className="text-[9px] font-black uppercase tracking-[0.18em] text-rose-300">Rival Reef</div>
+                  <div className="text-[9px] font-black uppercase tracking-[0.18em] text-rose-300">Rival Reef · {opponentDifficultyProfile.label}</div>
                   <div className="text-xl font-black tabular-nums text-white">{opponentVp}<span className="text-xs text-rose-300">/{victoryTarget} VP</span></div>
                   <div className="text-[9px] font-semibold text-rose-300/80">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div>
                 </div>
@@ -7479,7 +7534,7 @@ export default function Simulator() {
         <div className="seapals-hud-panel hidden min-h-0 overflow-y-auto rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-1 xl:flex xl:flex-col">
           <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950/45">
             <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{playerVp}<span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensity} school density</div></div>
-            <div className="p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">Rival Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{opponentVp}<span className="text-sm text-rose-300">/{victoryTarget} VP</span></div><div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div></div>
+            <div className="p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">Rival Reef · {opponentDifficultyProfile.label}</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{opponentVp}<span className="text-sm text-rose-300">/{victoryTarget} VP</span></div><div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div></div>
           </div>
 
           <button type="button" disabled={!activeCondition} onClick={() => activeCondition && setEventOverlay({ type: "condition-detail", sourceCardId: activeCondition.id, title: activeCondition.name, message: activeCondition.text, success: true })} className="mt-2 w-full rounded-xl border border-violet-300/20 bg-violet-400/10 p-3 text-left transition hover:border-violet-300/40 disabled:cursor-default">
@@ -7743,9 +7798,23 @@ export default function Simulator() {
                       <label className="rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-4"><span className="block text-xs font-black uppercase tracking-wider text-emerald-300">Your Deck</span><select value={selectedDeckId} onChange={(event) => setSelectedDeckId(event.target.value)} className="mt-2 w-full rounded-xl bg-slate-950 px-3 py-3 font-bold text-white">{prebuiltDecks.map((deck) => <option key={deck.id} value={deck.id}>{deck.name}</option>)}</select></label>
                       <label className="rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-4"><span className="block text-xs font-black uppercase tracking-wider text-rose-300">Opponent Deck</span><select value={selectedOpponentDeckId} onChange={(event) => setSelectedOpponentDeckId(event.target.value)} className="mt-2 w-full rounded-xl bg-slate-950 px-3 py-3 font-bold text-white">{prebuiltDecks.map((deck) => <option key={deck.id} value={deck.id}>{deck.name}</option>)}</select></label>
                     </div>
+                    <fieldset className="mt-4 rounded-2xl border border-amber-300/30 bg-amber-400/10 p-4">
+                      <legend className="px-1 text-xs font-black uppercase tracking-wider text-amber-200">Opponent Difficulty</legend>
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        {OPPONENT_DIFFICULTY_OPTIONS.map((option) => {
+                          const selected = pendingOpponentDifficulty === option.id;
+                          return (
+                            <button key={option.id} type="button" aria-pressed={selected} onClick={() => setPendingOpponentDifficulty(option.id)} className={`rounded-xl border-2 p-3 text-left transition ${selected ? "border-amber-300 bg-amber-300/20 shadow-[0_0_22px_rgba(252,211,77,0.2)]" : "border-white/10 bg-slate-950/35 hover:border-amber-300/45 hover:bg-amber-300/10"}`}>
+                              <strong className={`block text-base ${selected ? "text-amber-100" : "text-white"}`}>{option.label}</strong>
+                              <span className="mt-1 block text-xs leading-relaxed text-slate-300">{option.description}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </fieldset>
                     <label className="mt-4 block rounded-2xl border border-cyan-400 bg-cyan-400/10 p-4"><span className="text-xs font-black uppercase tracking-wider text-cyan-300">Victory Target</span><select value={pendingVictoryTarget} onChange={(event) => setPendingVictoryTarget(Number(event.target.value))} className="ml-4 rounded-xl bg-slate-950 px-3 py-2 font-bold text-white"><option value={10}>10 VP — Teaching Game</option><option value={30}>30 VP — Full Game</option></select></label>
                     <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn. Every illegal play explains what is missing before you commit.</div>
-                    <div className="mt-5 flex flex-wrap justify-end gap-3">{!eventOverlay.initial ? <button type="button" onClick={closeEventOverlay} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Keep Current Game</button> : null}<button type="button" onClick={() => restartGame(selectedDeckId, selectedOpponentDeckId, pendingVictoryTarget)} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{eventOverlay.initial ? "Let's Begin!" : "Start New Game"}</button></div>
+                    <div className="mt-5 flex flex-wrap justify-end gap-3">{!eventOverlay.initial ? <button type="button" onClick={closeEventOverlay} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Keep Current Game</button> : null}<button type="button" onClick={() => restartGame(selectedDeckId, selectedOpponentDeckId, pendingVictoryTarget, pendingOpponentDifficulty)} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{eventOverlay.initial ? "Let's Begin!" : "Start New Game"}</button></div>
                   </div>
                 ) : eventOverlay.type === "opponent-thinking" ? (
                   <div className="mt-8 flex flex-col items-center">
@@ -7753,7 +7822,7 @@ export default function Simulator() {
                       {[0, 1, 2].map((index) => <span key={index} className="h-4 w-4 animate-pulse rounded-full bg-cyan-400" style={{ animationDelay: `${index * 180}ms` }} />)}
                     </div>
                     <div className="mt-5 w-full max-w-md overflow-hidden rounded-full bg-white/10"><div className="h-2 w-2/3 animate-pulse rounded-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-cyan-500" /></div>
-                    <p className="mt-4 text-sm text-slate-400">Evaluating cards, available RP, targets, and victory points…</p>
+                    <p className="mt-4 text-sm text-slate-400">{opponentDifficultyProfile.label} opponent is evaluating cards, available RP, targets, and victory points…</p>
                   </div>
                 ) : eventOverlay.type === "turn-transition" ? (
                   <div className="mt-6">
