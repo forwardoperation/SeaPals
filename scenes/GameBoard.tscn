@@ -1,0 +1,88 @@
+[gd_scene load_steps=2 format=3 uid="uid://seapals_game_board"]
+
+[ext_resource type="Script" path="res://scenes/GameBoard.gd" uid="uid://seapals_board_script"]
+
+[node name="GameBoard" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("res://scenes/GameBoard.gd")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.15, 0.25, 1.0)
+
+[node name="OpponentArea" type="PanelContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 0.3
+
+[node name="OpponentBoard" type="VBoxContainer" parent="OpponentArea"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="OpponentHand" type="HBoxContainer" parent="OpponentArea/OpponentBoard"]
+size_flags_vertical = 3
+
+[node name="OpponentEcosystem" type="HBoxContainer" parent="OpponentArea/OpponentBoard"]
+size_flags_vertical = 3
+
+[node name="CenterArea" type="Control" parent="."]
+anchor_top = 0.3
+anchor_right = 1.0
+anchor_bottom = 0.7
+
+[node name="CenterPanel" type="PanelContainer" parent="CenterArea"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Conditions" type="Label" parent="CenterPanel"]
+text = "Current Condition: None"
+alignment = 1
+
+[node name="PlayerArea" type="PanelContainer" parent="."]
+anchor_top = 0.7
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PlayerBoard" type="VBoxContainer" parent="PlayerArea"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PlayerEcosystem" type="HBoxContainer" parent="PlayerArea/PlayerBoard"]
+size_flags_vertical = 3
+
+[node name="PlayerHand" type="HBoxContainer" parent="PlayerArea/PlayerBoard"]
+size_flags_vertical = 3
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="TopBar" type="PanelContainer" parent="UILayer"]
+anchor_right = 1.0
+offset_bottom = 60.0
+
+[node name="TopBarContent" type="HBoxContainer" parent="UILayer/TopBar"]
+size_flags_horizontal = 3
+
+[node name="RoundLabel" type="Label" parent="UILayer/TopBar/TopBarContent"]
+text = "Round: 1"
+
+[node name="PlayerStatsLabel" type="Label" parent="UILayer/TopBar/TopBarContent"]
+text = "You: 0 VP | 0/8 RP"
+size_flags_horizontal = 3
+alignment = 2
+
+[node name="OpponentStatsLabel" type="Label" parent="UILayer/TopBar/TopBarContent"]
+text = "Opponent: 0 VP | 0/8 RP"
+size_flags_horizontal = 3
+alignment = 2
+
+[node name="ActionButtons" type="HBoxContainer" parent="UILayer"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -50.0
+offset_right = 1.0
+alignment = 2
+
+[node name="EndTurnButton" type="Button" parent="UILayer/ActionButtons"]
+text = "End Turn"
+size_flags_horizontal = 3
