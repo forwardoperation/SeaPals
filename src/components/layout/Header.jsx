@@ -21,8 +21,12 @@ export default function Header() {
   };
 
   return (
-    <header className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
-      <div className="flex items-center gap-3">
+    <header className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
+      <Link
+        href="/"
+        aria-label="SeaPals home"
+        className="rounded-xl focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+      >
         <Image
           src="/images/brand/sea-pals-tcg-logo.png"
           alt="SeaPals Logo"
@@ -30,36 +34,39 @@ export default function Header() {
           height={120}
           className="h-12 w-auto"
         />
-      </div>
+      </Link>
 
-      <nav className="grid w-full grid-cols-2 gap-3 rounded-3xl border border-cyan-200 bg-white/90 p-4 shadow-sm backdrop-blur md:flex md:w-auto md:flex-wrap md:items-center md:gap-2 md:rounded-full md:px-2 md:py-2">
-        <Link href="/" className={linkClass("/")}>
+      <nav
+        aria-label="Primary navigation"
+        className="grid w-full grid-cols-2 gap-2 rounded-3xl border border-cyan-200 bg-white/90 p-2.5 shadow-sm backdrop-blur md:flex md:w-auto md:flex-wrap md:items-center md:rounded-full"
+      >
+        <Link href="/" aria-current={pathname === "/" ? "page" : undefined} className={linkClass("/")}>
           Home
         </Link>
 
-        <Link href="/instructions" className={linkClass("/instructions")}>
+        <Link href="/instructions" aria-current={pathname.startsWith("/instructions") ? "page" : undefined} className={linkClass("/instructions")}>
           Instructions
         </Link>
 
-        <Link href="/gallery" className={linkClass("/gallery")}>
+        <Link href="/gallery" aria-current={pathname.startsWith("/gallery") ? "page" : undefined} className={linkClass("/gallery")}>
           Gallery
         </Link>
 
-        <Link href="/decks" className={linkClass("/decks")}>
+        <Link href="/decks" aria-current={pathname.startsWith("/decks") ? "page" : undefined} className={linkClass("/decks")}>
           Decks
         </Link>
 
-        <Link href="/tournaments" className={linkClass("/tournaments")}>
+        <Link href="/tournaments" aria-current={pathname.startsWith("/tournaments") ? "page" : undefined} className={linkClass("/tournaments")}>
           Tournaments
         </Link>
 
-        <Link href="/surveys" className={linkClass("/surveys")}>
+        <Link href="/surveys" aria-current={pathname.startsWith("/surveys") ? "page" : undefined} className={linkClass("/surveys")}>
           Survey
         </Link>
 
         <a
           href="/#signup"
-          className="flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold text-center text-slate-700 transition-all duration-200 hover:bg-sky-50 hover:text-sky-700"
+          className="flex items-center justify-center rounded-full bg-[#f7c948] px-4 py-2.5 text-center text-sm font-bold text-[#073d58] transition-all duration-200 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
         >
           Join the Crew
         </a>
