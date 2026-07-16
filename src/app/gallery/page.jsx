@@ -221,7 +221,7 @@ function CardMetadata({ image }) {
         .filter(Boolean)
         .join(" ")
     : null;
-  const encyclopediaSlug = encyclopediaSlugByCardId[card.id];
+  const encyclopediaSlug = encyclopediaSlugByCardId[image.cardId];
 
   return (
     <div className="mt-3 rounded-2xl border border-cyan-100 bg-white/95 p-4 text-sm shadow-sm">
