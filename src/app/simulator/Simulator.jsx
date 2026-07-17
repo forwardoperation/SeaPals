@@ -1785,6 +1785,8 @@ export default function Simulator({ storyMode = null } = {}) {
     ),
     attackContext: Boolean(attackContext),
     drawSelected: Number(turnDrawSelection?.foundation ?? 0) + Number(turnDrawSelection?.pals ?? 0),
+    drawFoundationSelected: Number(turnDrawSelection?.foundation ?? 0),
+    drawPalsSelected: Number(turnDrawSelection?.pals ?? 0),
     drawTarget: Number(turnDrawSelection?.target ?? 0),
   }) : null;
   const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelp.id);
@@ -8750,13 +8752,33 @@ export default function Simulator({ storyMode = null } = {}) {
                 {turnDrawSelection?.shortfall > 0 ? <div role="alert" className="rounded-2xl border border-rose-300/40 bg-rose-400/10 p-4 text-sm font-bold text-rose-100">Your personal decks contain only {turnDrawSelection.target} of the {turnDrawSelection.requested} required cards. Choose the remaining card{turnDrawSelection.target === 1 ? "" : "s"} to reveal it; the game will then end by deck depletion.</div> : null}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {[
-                    { id: "foundation", label: "Foundation", count: foundationDeck.length, selected: turnDrawSelection?.foundation ?? 0, image: foundationDeckImg },
-                    { id: "pals", label: "Pals", count: palsDeck.length, selected: turnDrawSelection?.pals ?? 0, image: palsDeckImg },
+                    {
+                      id: "foundation",
+                      label: "Foundation",
+                      count: foundationDeck.length,
+                      selected: turnDrawSelection?.foundation ?? 0,
+                      image: foundationDeckImg,
+                      purpose: "Economy & play spaces",
+                      guidance: "Corals and Creature Schools. Usually the strongest early-game draw.",
+                    },
+                    {
+                      id: "pals",
+                      label: "Pals",
+                      count: palsDeck.length,
+                      selected: turnDrawSelection?.pals ?? 0,
+                      image: palsDeckImg,
+                      purpose: "Creatures & tactical tools",
+                      guidance: "Creatures, Habitats, and Support. Stronger once your economy is established.",
+                    },
                   ].map((deck) => (
                     <div key={deck.id} className="rounded-3xl border border-cyan-300/20 bg-white/5 p-5 text-center shadow-inner">
                       <div className="mx-auto flex h-32 w-28 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/45"><Image src={deck.image} alt={`${deck.label} Deck`} width={112} height={112} className="object-contain" /></div>
                       <div className="mt-3 text-lg font-black text-white">{deck.label} Deck</div>
                       <div className="text-sm text-cyan-100/60">{deck.count} remaining</div>
+                      <div className="mt-3 min-h-20 rounded-2xl border border-cyan-300/15 bg-slate-950/35 px-3 py-2 text-left">
+                        <strong className="block text-xs font-black uppercase tracking-wide text-emerald-300">{deck.purpose}</strong>
+                        <span className="mt-1 block text-xs font-semibold leading-relaxed text-cyan-50/70">{deck.guidance}</span>
+                      </div>
                       <div className="mt-4 flex items-center justify-center gap-4">
                         <button type="button" disabled={!deck.selected} onClick={() => adjustTurnDraw(deck.id, -1)} className="h-10 w-10 rounded-full border border-white/15 bg-white/5 text-xl font-black text-white transition hover:bg-white/10 disabled:opacity-25">−</button>
                         <span className="min-w-10 text-3xl font-black text-cyan-200">{deck.selected}</span>

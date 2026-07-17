@@ -23,8 +23,9 @@ const HELP_BY_CHECKPOINT = Object.freeze({
     action: "Press Begin Round 1 and watch your RP bank increase.",
   }),
   "tutorial-draw-card": Object.freeze({
-    message: "Your Foundation deck holds Corals and Creature Schools. Your Pals deck holds creatures, habitats, and support cards.",
-    action: "Choose the requested number of cards, then confirm your draw.",
+    title: "Choose a deck with a plan",
+    message: "The Foundation Deck grows your economy with Corals and Creature Schools, so it is usually the best early-game draw. Choose the Pals Deck when you need creatures, habitats, support effects, or more ways to earn VP.",
+    action: "For this early draw, start with the Foundation Deck, then confirm your choice.",
   }),
   "tutorial-build-card": Object.freeze({
     title: "Add to your ecosystem",
@@ -92,6 +93,8 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
     }, "turn-button");
   }
 
+  let title = authored.title ?? checkpoint.title;
+  let message = authored.message;
   let target = null;
   let action = authored.action;
 
@@ -114,8 +117,15 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
     const drawReady = Number(uiState.drawSelected ?? 0) === Number(uiState.drawTarget ?? -1)
       && Number(uiState.drawTarget ?? 0) > 0;
     target = drawReady ? "confirm-draw" : "draw-controls";
+    if (drawReady && Number(uiState.drawFoundationSelected ?? 0) > 0) {
+      action = "Good early-game choice. Press Draw Selected Cards to add the Foundation card to your hand.";
+    } else if (drawReady && Number(uiState.drawPalsSelected ?? 0) > 0) {
+      action = "A Pals card can add useful options, but Foundation is usually stronger this early. Keep it if that is your plan, or switch before confirming.";
+    }
   } else if (checkpointId === "tutorial-build-card") {
     if (uiState.modal === "draw-result") {
+      title = "Choose future draws with a plan";
+      message = "Foundation cards establish RP income and places for other cards, so favor that deck early. Shift toward the Pals Deck when your economy is ready and you need creatures, habitats, support effects, or VP.";
       target = "continue-actions";
       action = "Review the cards you drew, then press Continue to Actions.";
     } else if (uiState.playingCardId) {
@@ -145,8 +155,8 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
 
   return withTarget({
     id: checkpointId,
-    title: authored.title ?? checkpoint.title,
-    message: authored.message,
+    title,
+    message,
     action,
   }, target);
 }

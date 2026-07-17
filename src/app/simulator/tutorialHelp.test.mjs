@@ -61,12 +61,36 @@ test("live setup state overrides a resumed later checkpoint once the foundation 
 
 test("draw and build help adapt to their live modal state", () => {
   const draw = CHECKPOINTS["tutorial-draw-card"];
-  assert.equal(getSimulatorTutorialHelp(draw, { drawSelected: 0, drawTarget: 1 }).target, "draw-controls");
-  assert.equal(getSimulatorTutorialHelp(draw, { drawSelected: 1, drawTarget: 1 }).target, "confirm-draw");
+  const drawChoice = getSimulatorTutorialHelp(draw, { drawSelected: 0, drawTarget: 1 });
+  assert.equal(drawChoice.title, "Choose a deck with a plan");
+  assert.equal(drawChoice.target, "draw-controls");
+  assert.match(drawChoice.message, /Foundation Deck.*economy.*best early-game draw/i);
+  assert.match(drawChoice.message, /Pals Deck.*creatures.*habitats.*support.*VP/i);
+
+  const foundationChoice = getSimulatorTutorialHelp(draw, {
+    drawSelected: 1,
+    drawFoundationSelected: 1,
+    drawPalsSelected: 0,
+    drawTarget: 1,
+  });
+  assert.equal(foundationChoice.target, "confirm-draw");
+  assert.match(foundationChoice.action, /Good early-game choice/i);
+
+  const palsChoice = getSimulatorTutorialHelp(draw, {
+    drawSelected: 1,
+    drawFoundationSelected: 0,
+    drawPalsSelected: 1,
+    drawTarget: 1,
+  });
+  assert.match(palsChoice.action, /Foundation is usually stronger this early/i);
 
   const build = CHECKPOINTS["tutorial-build-card"];
   assert.equal(getSimulatorTutorialHelp(build).title, "Add to your ecosystem");
-  assert.equal(getSimulatorTutorialHelp(build, { modal: "draw-result" }).target, "continue-actions");
+  const drawResult = getSimulatorTutorialHelp(build, { modal: "draw-result" });
+  assert.equal(drawResult.title, "Choose future draws with a plan");
+  assert.equal(drawResult.target, "continue-actions");
+  assert.match(drawResult.message, /Foundation cards establish RP income.*favor that deck early/i);
+  assert.match(drawResult.message, /Pals Deck.*economy is ready/i);
   assert.equal(getSimulatorTutorialHelp(build, { modal: "hand", selectedHandCard: "fish" }).target, "play-card");
   assert.equal(getSimulatorTutorialHelp(build, { playingCardId: "fish" }).target, "placement");
 });
