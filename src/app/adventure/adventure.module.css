@@ -288,360 +288,6 @@
     inset 0 0 40px rgba(6, 78, 59, 0.2);
 }
 
-.townMap {
-  background-color: #67bd75;
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.18) 0 2px, transparent 3px),
-    radial-gradient(circle at 75% 70%, rgba(18, 92, 56, 0.2) 0 2px, transparent 3px),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.04) 25%, transparent 25% 75%, rgba(17, 94, 58, 0.07) 75%);
-  background-size: 52px 52px, 68px 68px, 22px 22px;
-}
-
-.homeMap {
-  background: #c99561;
-}
-
-.waterStrip {
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
-  border-right: 4px solid #f8dc9b;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 14px, rgba(255, 255, 255, 0.13) 15px 17px, transparent 18px 32px),
-    linear-gradient(90deg, #0891b2, #22b8c7);
-}
-
-.wave {
-  position: absolute;
-  left: 18%;
-  width: 62%;
-  height: 7%;
-  border-top: 2px solid rgba(224, 242, 254, 0.75);
-  border-radius: 50%;
-  animation: waveDrift 2.8s ease-in-out infinite alternate;
-}
-
-.wave:nth-child(1) { top: 10%; }
-.wave:nth-child(2) { top: 30%; animation-delay: -0.7s; }
-.wave:nth-child(3) { top: 50%; animation-delay: -1.4s; }
-.wave:nth-child(4) { top: 70%; animation-delay: -2.1s; }
-.wave:nth-child(5) { top: 90%; animation-delay: -2.8s; }
-
-@keyframes waveDrift {
-  from { transform: translateX(-10%); }
-  to { transform: translateX(12%); }
-}
-
-.pathTile {
-  position: relative;
-  z-index: 1;
-  margin: -1px;
-  background:
-    radial-gradient(circle at 25% 32%, rgba(101, 64, 30, 0.2) 0 2px, transparent 3px),
-    radial-gradient(circle at 76% 72%, rgba(255, 255, 255, 0.22) 0 2px, transparent 3px),
-    #d8b56d;
-  box-shadow: inset 0 0 9px rgba(109, 76, 33, 0.12);
-}
-
-.house {
-  --roof: #e05a73;
-  --roof-dark: #a92f54;
-  --wall: #ffe2b8;
-  position: relative;
-  z-index: 4;
-  align-self: end;
-  height: 88%;
-  filter: drop-shadow(0 9px 3px rgba(49, 68, 45, 0.28));
-}
-
-.houseDeep {
-  --roof: #6470ba;
-  --roof-dark: #373b79;
-  --wall: #c9d1e5;
-}
-
-.houseRoof {
-  position: absolute;
-  z-index: 3;
-  top: 0;
-  left: 2%;
-  width: 96%;
-  height: 48%;
-  border: 3px solid var(--roof-dark);
-  border-radius: 18px 18px 7px 7px;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 12px, rgba(255, 255, 255, 0.14) 13px 15px),
-    linear-gradient(135deg, var(--roof), var(--roof-dark));
-  transform: perspective(120px) rotateX(3deg);
-  box-shadow: inset 0 4px rgba(255, 255, 255, 0.18);
-}
-
-.houseRoof::before {
-  content: "";
-  position: absolute;
-  top: -14%;
-  left: 42%;
-  width: 16%;
-  height: 34%;
-  border: 2px solid var(--roof-dark);
-  border-radius: 4px 4px 0 0;
-  background: #f8fafc;
-}
-
-.houseFront {
-  position: absolute;
-  inset: 36% 8% 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  border: 3px solid #8a5f3c;
-  border-radius: 4px 4px 8px 8px;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 34px, rgba(119, 78, 42, 0.08) 35px 37px),
-    var(--wall);
-  box-shadow: inset 0 -6px rgba(99, 57, 35, 0.11);
-}
-
-.window {
-  width: 18%;
-  height: 34%;
-  border: 3px solid #704a38;
-  border-radius: 5px;
-  background:
-    linear-gradient(90deg, transparent 44%, rgba(255, 255, 255, 0.65) 45% 55%, transparent 56%),
-    linear-gradient(0deg, transparent 44%, rgba(255, 255, 255, 0.65) 45% 55%, transparent 56%),
-    #4ab4c6;
-  box-shadow: inset 0 0 10px rgba(14, 116, 144, 0.45);
-}
-
-.houseSign {
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  width: max-content;
-  max-width: 58%;
-  padding: 3px 7px;
-  border: 2px solid #74462f;
-  border-radius: 5px;
-  color: #4a2a1a;
-  font-size: clamp(6px, 0.75vw, 10px);
-  font-weight: 900;
-  text-align: center;
-  background: #f7d888;
-  transform: translateX(-50%);
-}
-
-.houseDoor {
-  position: absolute;
-  z-index: 5;
-  bottom: -4%;
-  left: 50%;
-  width: 20%;
-  height: 43%;
-  border: 3px solid #563525;
-  border-radius: 5px 5px 0 0;
-  background: linear-gradient(90deg, #71432f, #9b6342 48%, #68402d 49%);
-  transform: translateX(-50%);
-  box-shadow: inset 4px 0 rgba(255, 255, 255, 0.08);
-}
-
-.doorKnob {
-  position: absolute;
-  top: 52%;
-  right: 13%;
-  width: 8%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: #fde68a;
-  box-shadow: 0 0 0 1px #78350f;
-}
-
-.crestOnDoor {
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  color: #fbbf24;
-  font-size: clamp(8px, 1.2vw, 16px);
-  text-shadow: 0 1px #78350f, 0 0 7px #fbbf24;
-  transform: translateX(-50%);
-}
-
-.tree {
-  position: relative;
-  z-index: 3;
-  align-self: end;
-  justify-self: center;
-  width: 80%;
-  height: 80%;
-  border: 2px solid #185c38;
-  border-radius: 48% 48% 42% 42%;
-  background:
-    radial-gradient(circle at 32% 28%, #8ce18a 0 18%, transparent 19%),
-    radial-gradient(circle at 67% 32%, #63c979 0 22%, transparent 23%),
-    radial-gradient(circle at 50% 66%, #3ca866 0 38%, transparent 39%),
-    #4dbb69;
-  box-shadow: inset -5px -5px rgba(18, 102, 59, 0.25), 0 5px 0 -2px #704a30;
-}
-
-.signpost {
-  position: relative;
-  z-index: 3;
-  align-self: center;
-  justify-self: center;
-  width: 80%;
-  padding: 4px;
-  border: 2px solid #6b3d24;
-  border-radius: 4px;
-  color: #51301e;
-  font-size: clamp(5px, 0.7vw, 9px);
-  font-weight: 900;
-  text-align: center;
-  background: #eac477;
-  box-shadow: 0 5px 0 -2px #6b3d24;
-}
-
-.shellPatch {
-  z-index: 2;
-  align-self: center;
-  color: rgba(254, 249, 195, 0.85);
-  font-size: clamp(7px, 1.1vw, 14px);
-  text-align: center;
-  text-shadow: 0 1px #5f8e58;
-}
-
-.roomBackdrop {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background:
-    linear-gradient(rgba(97, 59, 34, 0.08) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(97, 59, 34, 0.08) 2px, transparent 2px),
-    #dcb278;
-  background-size: 7.5% 12.5%;
-}
-
-.deepRoom {
-  background:
-    linear-gradient(rgba(44, 48, 94, 0.12) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(44, 48, 94, 0.12) 2px, transparent 2px),
-    #9b9cbd;
-  background-size: 7.5% 12.5%;
-}
-
-.backWall {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4%;
-  border-bottom: 4px solid #674834;
-  color: #503725;
-  background: #f2d4aa;
-  box-shadow: 0 7px rgba(66, 42, 27, 0.12);
-}
-
-.deepRoom + .backWall {
-  border-color: #37365d;
-  color: #27244e;
-  background: #cbcce2;
-}
-
-.wallPicture {
-  display: grid;
-  width: 6%;
-  aspect-ratio: 1;
-  place-items: center;
-  border: 2px solid currentColor;
-  border-radius: 4px;
-  color: #0e7490;
-  background: #e0f2fe;
-}
-
-.wallTitle {
-  font-size: clamp(6px, 0.85vw, 12px);
-  font-weight: 900;
-  letter-spacing: 0.18em;
-}
-
-.aquarium {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 4px solid #5b3d2c;
-  border-radius: 8px;
-  color: #e0f2fe;
-  font-size: clamp(6px, 0.9vw, 12px);
-  background:
-    radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.55) 0 2px, transparent 3px),
-    linear-gradient(#3bc3d4, #137f99);
-  box-shadow: inset 0 -10px rgba(9, 83, 72, 0.32), 0 4px rgba(74, 45, 28, 0.25);
-}
-
-.bookshelf {
-  z-index: 3;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4%;
-  padding: 9%;
-  border: 4px solid #573421;
-  border-radius: 5px;
-  background: #845237;
-  box-shadow: inset 0 0 0 4px rgba(59, 35, 21, 0.24), 0 4px rgba(74, 45, 28, 0.25);
-}
-
-.bookshelf span {
-  border-radius: 2px 2px 0 0;
-  background: #f59e0b;
-}
-
-.bookshelf span:nth-child(3n + 1) { background: #22c55e; }
-.bookshelf span:nth-child(3n + 2) { background: #ef4444; }
-
-.rug {
-  z-index: 1;
-  margin: 7%;
-  border: 4px solid rgba(120, 53, 15, 0.38);
-  border-radius: 42%;
-  background: radial-gradient(ellipse, #fef3c7 0 20%, #fb7185 21% 48%, #be123c 49% 70%, #831843 71%);
-  opacity: 0.88;
-}
-
-.deepRug {
-  border-color: rgba(30, 27, 75, 0.44);
-  background: radial-gradient(ellipse, #c4b5fd 0 20%, #6366f1 21% 48%, #3730a3 49% 70%, #1e1b4b 71%);
-}
-
-.sideTable {
-  z-index: 3;
-  display: grid;
-  margin: 10%;
-  place-items: center;
-  border: 3px solid #593823;
-  border-radius: 50%;
-  color: #164e63;
-  font-size: clamp(9px, 1.3vw, 18px);
-  background: #e3b76f;
-  box-shadow: 0 6px 0 -2px #654026;
-}
-
-.exitMat {
-  z-index: 2;
-  align-self: end;
-  padding: 4% 0;
-  border: 2px solid rgba(58, 37, 23, 0.42);
-  border-radius: 8px 8px 0 0;
-  color: rgba(73, 42, 24, 0.72);
-  font-size: clamp(5px, 0.7vw, 9px);
-  font-weight: 900;
-  text-align: center;
-  background: #e7c78d;
-}
-
 .characterCell {
   position: relative;
   z-index: 12;
@@ -666,110 +312,6 @@
   background: rgba(8, 47, 38, 0.3);
   filter: blur(1px);
   transform: translateX(-50%);
-}
-
-.pixelPerson {
-  --sprite-shirt: #06b6d4;
-  position: absolute;
-  z-index: 2;
-  top: 5%;
-  left: 18%;
-  width: 64%;
-  height: 88%;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 2px rgba(15, 23, 42, 0.32));
-  transform-origin: center bottom;
-  animation: spriteIdle 950ms steps(2, end) infinite;
-}
-
-@keyframes spriteIdle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3%); }
-}
-
-.facingLeft { transform: scaleX(-1); }
-.facingLeft .spriteHead,
-.facingLeft .spriteHair,
-.facingLeft .spriteBody,
-.facingLeft .spriteLegs { }
-.facingUp .spriteHead { background: #814c32; }
-.facingUp .spriteHair { height: 27%; }
-
-.spriteHead {
-  position: absolute;
-  z-index: 3;
-  top: 14%;
-  left: 23%;
-  width: 54%;
-  height: 32%;
-  border: 2px solid #27364a;
-  border-radius: 35% 35% 28% 28%;
-  background:
-    radial-gradient(circle at 30% 60%, #263343 0 4%, transparent 5%),
-    radial-gradient(circle at 70% 60%, #263343 0 4%, transparent 5%),
-    #e8a875;
-  box-shadow: inset 0 -4px rgba(155, 82, 51, 0.13);
-}
-
-.spriteHair {
-  position: absolute;
-  z-index: 4;
-  top: 5%;
-  left: 18%;
-  width: 64%;
-  height: 25%;
-  border: 2px solid #27364a;
-  border-radius: 48% 48% 16% 16%;
-  background: #213f55;
-  box-shadow: inset 0 4px rgba(255, 255, 255, 0.1);
-}
-
-.spriteHair::after {
-  content: "";
-  position: absolute;
-  right: -24%;
-  bottom: -8%;
-  width: 48%;
-  height: 30%;
-  border: 2px solid #27364a;
-  border-radius: 0 60% 60% 0;
-  background: var(--sprite-shirt);
-}
-
-.spriteBody {
-  position: absolute;
-  z-index: 2;
-  top: 43%;
-  left: 14%;
-  width: 72%;
-  height: 34%;
-  border: 2px solid #27364a;
-  border-radius: 25% 25% 10% 10%;
-  background:
-    linear-gradient(90deg, rgba(255,255,255,.18) 0 18%, transparent 19% 80%, rgba(0,0,0,.1) 81%),
-    var(--sprite-shirt);
-}
-
-.spriteLegs {
-  position: absolute;
-  z-index: 1;
-  top: 73%;
-  left: 21%;
-  width: 58%;
-  height: 22%;
-  border: 2px solid #27364a;
-  border-top: 0;
-  border-radius: 0 0 20% 20%;
-  background:
-    linear-gradient(90deg, #26364d 0 42%, transparent 43% 57%, #26364d 58%);
-}
-
-.trainerPerson .spriteHair {
-  background: #543728;
-}
-
-.trainerPerson .spriteHair::after {
-  display: none;
 }
 
 .trainerMarker {
@@ -802,6 +344,11 @@
   50% { transform: translate(-50%, -16%); }
 }
 
+@keyframes actionCueBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16%); }
+}
+
 .actionCue {
   position: relative;
   z-index: 30;
@@ -819,6 +366,200 @@
   background: #fef3c7;
   box-shadow: 0 2px 0 rgba(120, 53, 15, 0.3);
   transform: translate(14%, -18%);
+}
+
+/* Generated scene art and continuous character actors. */
+.townMap,
+.coralHomeMap,
+.deepHomeMap {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
+
+.townMap {
+  background-color: #7bcf85;
+  background-image: url("/images/adventure/shellshore-village.png");
+}
+
+.coralHomeMap {
+  background-color: #d9a165;
+  background-image: url("/images/adventure/coral-cottage.png");
+}
+
+.deepHomeMap {
+  background-color: #102553;
+  background-image: url("/images/adventure/deepwater-den.png");
+}
+
+.townMap::before,
+.coralHomeMap::before,
+.deepHomeMap::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+}
+
+.townMap::before {
+  left: 0;
+  right: 83%;
+  background: repeating-linear-gradient(
+    165deg,
+    transparent 0 11%,
+    rgba(224, 251, 255, 0.2) 12% 13%,
+    transparent 14% 25%
+  );
+  mix-blend-mode: screen;
+  animation: waterGlint 3.6s linear infinite;
+}
+
+.coralHomeMap::before {
+  inset: 31% 68% 37% 7%;
+  border-radius: 18%;
+  background: linear-gradient(110deg, transparent 20%, rgba(221, 255, 255, 0.22) 45%, transparent 70%);
+  mix-blend-mode: screen;
+  animation: aquariumGlint 3.2s ease-in-out infinite alternate;
+}
+
+.deepHomeMap::before {
+  background:
+    radial-gradient(circle at 23% 47%, rgba(34, 211, 238, 0.16), transparent 13%),
+    radial-gradient(circle at 71% 24%, rgba(99, 102, 241, 0.12), transparent 11%);
+  animation: deepPulse 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes waterGlint {
+  from { background-position: 0 -40px; }
+  to { background-position: 0 80px; }
+}
+
+@keyframes aquariumGlint {
+  from { opacity: 0.35; transform: translateX(-10%); }
+  to { opacity: 0.9; transform: translateX(12%); }
+}
+
+@keyframes deepPulse {
+  from { opacity: 0.35; }
+  to { opacity: 0.9; }
+}
+
+.characterCell {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.playerCell {
+  transition: none;
+  will-change: left, top;
+}
+
+.characterShadow {
+  z-index: 1;
+  bottom: 40%;
+  width: 62%;
+  height: 17%;
+  background: rgba(5, 20, 26, 0.36);
+  filter: blur(1px);
+}
+
+.spriteArtwork {
+  --sprite-row: var(--row-down);
+  position: absolute;
+  z-index: 2;
+  bottom: 41%;
+  left: -13%;
+  width: 126%;
+  height: 180%;
+  background-position: 50% var(--sprite-row);
+  background-repeat: no-repeat;
+  background-size: 457.142857% 480%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 1px rgba(4, 15, 25, 0.34));
+  animation: spriteBreathe 1.5s steps(2, end) infinite;
+  will-change: background-position, transform;
+}
+
+.playerSpriteArtwork {
+  --row-down: 5.345395%;
+  --row-left: 33.717105%;
+  --row-right: 63.569079%;
+  --row-up: 93.421053%;
+  background-image: url("/images/adventure/player-sprites.png");
+}
+
+.marinaSpriteArtwork {
+  --row-down: 5.345395%;
+  --row-left: 33.470395%;
+  --row-right: 63.815789%;
+  --row-up: 93.832237%;
+  background-image: url("/images/adventure/marina-sprites.png");
+}
+
+.dorianSpriteArtwork {
+  --row-down: 4.276316%;
+  --row-left: 31.743421%;
+  --row-right: 60.690789%;
+  --row-up: 90.131579%;
+  background-image: url("/images/adventure/dorian-sprites.png");
+}
+
+.spriteFacingDown { --sprite-row: var(--row-down); }
+.spriteFacingLeft { --sprite-row: var(--row-left); }
+.spriteFacingRight { --sprite-row: var(--row-right); }
+.spriteFacingUp { --sprite-row: var(--row-up); }
+
+.spriteWalking {
+  animation: spriteWalk 440ms steps(1, end) infinite;
+}
+
+@keyframes spriteWalk {
+  0% { background-position: 12% var(--sprite-row); transform: translateY(0); }
+  25% { background-position: 50% var(--sprite-row); transform: translateY(-1.5%); }
+  50% { background-position: 88% var(--sprite-row); transform: translateY(0); }
+  75% { background-position: 50% var(--sprite-row); transform: translateY(-1.5%); }
+  100% { background-position: 12% var(--sprite-row); transform: translateY(0); }
+}
+
+@keyframes spriteBreathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5%); }
+}
+
+.trainerMarker {
+  top: -115%;
+  width: 44%;
+}
+
+.actionCue {
+  position: absolute;
+  z-index: 8;
+  top: -108%;
+  right: -24%;
+  width: 39%;
+  transform: none;
+  animation: actionCueBounce 900ms ease-in-out infinite;
+}
+
+.spritePortrait {
+  top: -5%;
+  bottom: auto;
+  left: -30%;
+  width: 160%;
+  height: 228.571%;
+  animation: spriteBreathe 1.8s steps(2, end) infinite;
+}
+
+.miniPortrait .spritePortrait {
+  top: -10%;
+  bottom: auto;
+  left: -24%;
+  width: 148%;
+  height: 211.429%;
 }
 
 .controlDock {
@@ -845,6 +586,8 @@
 .directionButton {
   cursor: pointer;
   font-size: 11px;
+  touch-action: none;
+  user-select: none;
   transition: color 100ms ease, background 100ms ease, transform 100ms ease;
 }
 
@@ -940,13 +683,6 @@
   background: #b9ebdf;
 }
 
-.miniPortrait .pixelPerson {
-  top: 6%;
-  left: 18%;
-  width: 64%;
-  height: 90%;
-}
-
 .trainerCard > span:nth-child(2) {
   min-width: 0;
 }
@@ -1022,13 +758,6 @@
 
 .portraitdeep { background-color: #c4b5fd; }
 .portraitcoral { background-color: #fecdd3; }
-
-.portrait .pixelPerson {
-  top: 4%;
-  left: 25%;
-  width: 50%;
-  height: 96%;
-}
 
 .dialogueCopy {
   display: flex;
@@ -1243,8 +972,8 @@
   .sidePanel { display: none; }
 
   .map {
-    max-height: calc(100dvh - 190px);
-    width: auto;
+    width: min(100%, 900px);
+    max-height: none;
     max-width: 100%;
   }
 }
@@ -1294,9 +1023,6 @@
   .controlDock { margin-top: 10px; }
   .dpad { grid-template: repeat(3, 44px) / repeat(3, 44px); }
   .actionButton { min-width: 118px; min-height: 48px; }
-  .houseSign { display: none; }
-  .wallTitle { letter-spacing: 0.08em; }
-
   .dialogueLayer {
     padding: 10px;
   }
@@ -1335,7 +1061,11 @@
   .brandLockup img { width: 88px; }
   .gameLayout { margin-top: 5px; }
   .interactionBar { margin-bottom: 4px; }
-  .map { max-height: calc(100dvh - 120px); width: auto; }
+  .map {
+    width: min(100%, calc(150dvh - 210px));
+    max-height: calc(100dvh - 140px);
+  }
+  .townMap { width: min(100%, calc(160dvh - 224px)); }
   .controlDock { position: fixed; right: 13px; bottom: 10px; z-index: 25; margin: 0; padding: 6px 8px; border-radius: 16px; background: rgba(3, 19, 31, 0.82); }
   .dpad { grid-template: repeat(3, 44px) / repeat(3, 44px); }
   .actionButton { min-width: 46px; width: 46px; height: 46px; padding: 6px; }
@@ -1344,11 +1074,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wave,
-  .pixelPerson,
+  .spriteArtwork,
   .trainerMarker,
+  .actionCue,
   .dialogueBox,
-  .introCard {
+  .introCard,
+  .townMap::before,
+  .coralHomeMap::before,
+  .deepHomeMap::before {
     animation: none;
   }
 
