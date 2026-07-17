@@ -321,8 +321,8 @@ const shellshoreRuntimeScenes = {
     tiles: [
       "wwwwwwwwwwwwww",
       "wwwwwwwwwwwwww",
+      "waaffffaffffaw",
       "waaffffnffffaw",
-      "waafffffffffaw",
       "wfffrrrrrrfffw",
       "wfffrrrrrrfffw",
       "wfffaaffaafffw",
@@ -334,7 +334,7 @@ const shellshoreRuntimeScenes = {
       {
         id: "interaction-academy-mentor",
         type: "trainer",
-        at: { x: 7, y: 2 },
+        at: { x: 7, y: 3 },
         trainerId: "academy-mentor",
         npcId: "academy-mentor",
         conversationId: "conversation-shellshore-academy-mentor",
