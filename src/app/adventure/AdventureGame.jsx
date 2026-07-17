@@ -581,6 +581,8 @@ export default function AdventureGame() {
       <Simulator
         key={`reefbound-${trainer.id}`}
         storyMode={{
+          encounterId: `shellshore:${trainer.id}`,
+          opponentId: trainer.id,
           playerDeckId: "coral-garden",
           opponentDeckId: trainer.deckId,
           victoryTarget: trainer.victoryTarget,
