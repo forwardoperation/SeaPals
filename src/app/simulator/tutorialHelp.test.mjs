@@ -92,6 +92,22 @@ test("draw and build help adapt to their live modal state", () => {
   assert.match(drawResult.message, /Foundation cards establish RP income.*favor that deck early/i);
   assert.match(drawResult.message, /Pals Deck.*economy is ready/i);
   assert.equal(getSimulatorTutorialHelp(build, { modal: "hand", selectedHandCard: "fish" }).target, "play-card");
+
+  const supportHelp = getSimulatorTutorialHelp(build, {
+    modal: "hand",
+    selectedHandCard: "coral-gardener",
+    selectedCardIsSupport: true,
+    selectedCardName: "Coral Gardener",
+    selectedCardCost: 0,
+    selectedSupportLocksFurtherSupports: true,
+  });
+  assert.equal(supportHelp.title, "Use a one-time Support");
+  assert.equal(supportHelp.target, "play-card");
+  assert.match(supportHelp.message, /tactical actions.*resolves its effect immediately/i);
+  assert.match(supportHelp.message, /discard pile.*costs 0 RP/i);
+  assert.match(supportHelp.message, /last Support card this turn/i);
+  assert.match(supportHelp.action, /No ecosystem placement is needed/i);
+
   assert.equal(getSimulatorTutorialHelp(build, { playingCardId: "fish" }).target, "placement");
 });
 
