@@ -158,6 +158,9 @@ export function attackCanTargetCard(targetCard, attack) {
   const targetZone = attack?.targetZone ?? attack?.target?.zone ?? null;
   if (categories.length && !categories.includes(targetCard.category)) return false;
   if (targetTags.length && !targetTags.some((tag) => targetCard.tags?.includes(tag))) return false;
+  // The caller selects which player's board is searched. Card definitions use
+  // these values to describe board ownership, not a creature's ecological zone.
+  if (targetZone === "yourReef" || targetZone === "opponentReef") return true;
   return !targetZone || targetCard.zone === targetZone;
 }
 

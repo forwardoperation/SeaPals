@@ -537,8 +537,10 @@
   width: auto;
   aspect-ratio: 4 / 3;
   translate: -50% 0;
+  scale: 1.12 1;
+  transform-origin: center bottom;
   background-image: url("/images/adventure/academy-mentor-sprites.png");
-  background-size: 300% 400%;
+  background-size: auto 400%;
 }
 
 .spriteFacingDown { --sprite-row: var(--row-down); }
@@ -610,6 +612,12 @@
 .academy-mentorSpriteArtwork.spritePortrait {
   left: 50%;
   width: auto;
+  height: 205%;
+}
+
+.miniPortrait .academy-mentorSpriteArtwork.spritePortrait {
+  top: -4%;
+  height: 185%;
 }
 
 .controlDock {

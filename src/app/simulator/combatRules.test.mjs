@@ -60,6 +60,25 @@ test("Deep attacks match the card zone without requiring a synthetic tag", () =>
   assert.equal(attackCanTargetCard({ category: "fish", zone: "deep", tags: [] }, deepAttack), false);
 });
 
+test("reef ownership targets do not replace a creature's ecological zone", () => {
+  const opponentReefAttack = {
+    attackDice: "D6",
+    target: { categories: ["fish", "invertebrate"], zone: "opponentReef" },
+  };
+
+  assert.equal(attackCanTargetCard({ category: "invertebrate", zone: "reef", tags: [] }, opponentReefAttack), true);
+  assert.equal(attackCanTargetCard({ category: "fish", zone: "deep", tags: [] }, opponentReefAttack), true);
+  assert.equal(attackCanTargetCard({ category: "predator", zone: "reef", tags: [] }, opponentReefAttack), false);
+  assert.equal(attackCanTargetCard(
+    { category: "invertebrate", zone: "reef", tags: [] },
+    { ...opponentReefAttack, targetZone: "deep" },
+  ), false);
+  assert.equal(attackCanTargetCard(
+    { category: "invertebrate", zone: "deep", tags: [] },
+    { ...opponentReefAttack, targetZone: "deep" },
+  ), true);
+});
+
 test("repeated attacks resolve separately against distinct target instances", () => {
   const first = recordAttackResolution(createAttackSequence(3), {
     targetInstanceId: "fish-instance-1",

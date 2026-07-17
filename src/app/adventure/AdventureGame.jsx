@@ -1506,6 +1506,11 @@ export default function AdventureGame() {
           returnLabel: isAcademyPractice ? "Academy" : "Town",
           ...(isAcademyPractice ? {
             tutorial: {
+              guide: {
+                name: trainer.name,
+                role: trainer.title,
+                portraitSrc: "/images/adventure/academy-mentor-sprites.png",
+              },
               contract: {
                 id: SHELLSHORE_TUTORIAL.id,
                 title: "Professor Current's Live Lesson",
