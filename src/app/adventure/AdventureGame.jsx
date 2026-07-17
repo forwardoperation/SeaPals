@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Simulator from "@/app/simulator/Simulator";
 import {
   SCENES,
   START_STATE,
-  getInteraction,
-  movePlayer,
+  getContinuousInteraction,
+  movePlayerContinuous,
 } from "./adventureWorld.mjs";
 import styles from "./adventure.module.css";
 
@@ -82,138 +82,42 @@ const DIRECTIONS = {
   D: "right",
 };
 
-function townTilesWithSymbol(symbol) {
-  return SCENES.town.tiles.flatMap((row, y) =>
-    [...row].flatMap((tile, x) => tile === symbol ? [{ x, y }] : []),
-  );
-}
+const MOVEMENT_VECTORS = Object.freeze({
+  up: Object.freeze({ x: 0, y: -1 }),
+  down: Object.freeze({ x: 0, y: 1 }),
+  left: Object.freeze({ x: -1, y: 0 }),
+  right: Object.freeze({ x: 1, y: 0 }),
+});
 
-const TOWN_PATH = townTilesWithSymbol("p");
-const TOWN_TREES = townTilesWithSymbol("t");
-
-function gridPosition(x, y, width = 1, height = 1) {
+function actorPosition(position, scene) {
   return {
-    gridColumn: `${x + 1} / span ${width}`,
-    gridRow: `${y + 1} / span ${height}`,
+    left: `${((position.x + 0.5) / scene.width) * 100}%`,
+    top: `${((position.y + 0.5) / scene.height) * 100}%`,
+    width: `${100 / scene.width}%`,
+    height: `${100 / scene.height}%`,
+    zIndex: 20 + Math.round(position.y * 10),
   };
 }
 
-function House({ x, name, variant, defeated }) {
-  return (
-    <div
-      className={`${styles.house} ${styles[`house${variant}`]}`}
-      style={gridPosition(x, 1, 5, 4)}
-      aria-label={name}
-    >
-      <div className={styles.houseRoof} />
-      <div className={styles.houseFront}>
-        <span className={styles.window} />
-        <span className={styles.houseSign}>{name}</span>
-        <span className={styles.window} />
-      </div>
-      <div className={styles.houseDoor}>
-        <span className={styles.doorKnob} />
-        {defeated ? <span className={styles.crestOnDoor}>★</span> : null}
-      </div>
-    </div>
-  );
-}
-
-function TownScene({ defeated }) {
-  return (
-    <>
-      <div className={styles.waterStrip} style={gridPosition(0, 0, 1, 10)}>
-        {Array.from({ length: 5 }, (_, index) => (
-          <span key={index} className={styles.wave} />
-        ))}
-      </div>
-      {TOWN_PATH.map((tile, index) => (
-        <span
-          key={`${tile.x}-${tile.y}-${index}`}
-          className={styles.pathTile}
-          style={gridPosition(tile.x, tile.y)}
-        />
-      ))}
-      <House
-        x={1}
-        name="Coral Cottage"
-        variant="Coral"
-        defeated={defeated.has("marina")}
-      />
-      <House
-        x={10}
-        name="Deepwater House"
-        variant="Deep"
-        defeated={defeated.has("dorian")}
-      />
-      {TOWN_TREES.map((tree) => (
-        <span
-          key={`${tree.x}-${tree.y}`}
-          className={styles.tree}
-          style={gridPosition(tree.x, tree.y)}
-          aria-hidden="true"
-        />
-      ))}
-      <div className={styles.signpost} style={gridPosition(7, 5, 2, 1)}>
-        <span>REEFKEEPERS</span>
-      </div>
-      <span className={styles.shellPatch} style={gridPosition(1, 8, 2, 1)}>
-        ◇　·　◇
-      </span>
-    </>
-  );
-}
-
-function HomeScene({ sceneId, defeated }) {
-  const isCoral = sceneId === "coral-home";
-  const trainerId = isCoral ? "marina" : "dorian";
-  return (
-    <>
-      <div className={`${styles.roomBackdrop} ${isCoral ? styles.coralRoom : styles.deepRoom}`} />
-      <div className={styles.backWall} style={gridPosition(0, 0, 12, 1)}>
-        <span className={styles.wallPicture}>{isCoral ? "♒" : "✦"}</span>
-        <span className={styles.wallTitle}>{isCoral ? "GROW WITH THE REEF" : "EXPLORE THE UNKNOWN"}</span>
-      </div>
-      <div className={styles.aquarium} style={gridPosition(3, 4, 2, 1)}>
-        <span>◌</span><span>‹°)))&gt;&lt;</span>
-      </div>
-      <div className={styles.bookshelf} style={gridPosition(9, 4, 2, 1)}>
-        {Array.from({ length: 9 }, (_, index) => <span key={index} />)}
-      </div>
-      <div className={`${styles.rug} ${isCoral ? styles.coralRug : styles.deepRug}`} style={gridPosition(4, 3, 4, 3)} />
-      <div className={styles.exitMat} style={gridPosition(5, 7, 2, 1)}>
-        EXIT
-      </div>
-      <TrainerSprite trainer={TRAINERS[trainerId]} defeated={defeated.has(trainerId)} />
-    </>
-  );
-}
-
-function PixelPerson({ color = "#2dd4bf", facing = "down", trainer = false }) {
+function SpriteArtwork({ character = "player", facing = "down", moving = false, portrait = false }) {
+  const facingName = `${facing[0].toUpperCase()}${facing.slice(1)}`;
   return (
     <span
-      className={`${styles.pixelPerson} ${styles[`facing${facing[0].toUpperCase()}${facing.slice(1)}`]} ${trainer ? styles.trainerPerson : ""}`}
-      style={{ "--sprite-shirt": color }}
+      className={`${styles.spriteArtwork} ${styles[`${character}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""}`}
       aria-hidden="true"
-    >
-      <span className={styles.spriteHair} />
-      <span className={styles.spriteHead} />
-      <span className={styles.spriteBody} />
-      <span className={styles.spriteLegs} />
-    </span>
+    />
   );
 }
 
-function TrainerSprite({ trainer, defeated }) {
-  const color = trainer.color === "coral" ? "#fb7185" : "#818cf8";
+function AdventureTrainerSprite({ trainer, defeated, scene }) {
   return (
     <div
       className={styles.characterCell}
-      style={gridPosition(5, 2)}
+      style={actorPosition({ x: 5, y: 2 }, scene)}
       aria-label={`${trainer.name}, ${trainer.title}`}
     >
       <span className={styles.characterShadow} />
-      <PixelPerson color={color} trainer />
+      <SpriteArtwork character={trainer.id} facing="down" />
       <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""}`}>
         {defeated ? "★" : "!"}
       </span>
@@ -221,17 +125,42 @@ function TrainerSprite({ trainer, defeated }) {
   );
 }
 
-function PlayerSprite({ position, facing }) {
+function AdventurePlayerSprite({ position, facing, moving, interaction, scene }) {
   return (
     <div
       className={`${styles.characterCell} ${styles.playerCell}`}
-      style={gridPosition(position.x, position.y)}
+      style={actorPosition(position, scene)}
       aria-label="You"
     >
       <span className={styles.characterShadow} />
-      <PixelPerson color="#06b6d4" facing={facing} />
+      <SpriteArtwork facing={facing} moving={moving} />
+      {interaction ? <span className={styles.actionCue} aria-hidden="true">A</span> : null}
     </div>
   );
+}
+
+function movementVector(keyDirections, touchDirections) {
+  const vector = { x: 0, y: 0 };
+  for (const direction of [...keyDirections.values(), ...touchDirections]) {
+    const delta = MOVEMENT_VECTORS[direction];
+    if (delta) {
+      vector.x += delta.x;
+      vector.y += delta.y;
+    }
+  }
+  return vector;
+}
+
+function movementFacing(keyDirections, touchDirections, vector) {
+  const activeDirections = [...keyDirections.values(), ...touchDirections];
+  for (let index = activeDirections.length - 1; index >= 0; index -= 1) {
+    const direction = activeDirections[index];
+    const delta = MOVEMENT_VECTORS[direction];
+    if (delta && delta.x * vector.x + delta.y * vector.y > 0) return direction;
+  }
+  return Math.abs(vector.x) >= Math.abs(vector.y)
+    ? vector.x > 0 ? "right" : "left"
+    : vector.y > 0 ? "down" : "up";
 }
 
 function Conversation({ conversation, trainer, defeated, onAdvance, onChallenge, onClose }) {
@@ -247,7 +176,7 @@ function Conversation({ conversation, trainer, defeated, onAdvance, onChallenge,
     <div className={styles.dialogueLayer} role="dialog" aria-modal="true" aria-labelledby="dialogue-speaker">
       <div className={styles.dialogueBox}>
         <div className={`${styles.portrait} ${styles[`portrait${trainer.color}`]}`}>
-          <PixelPerson color={trainer.color === "coral" ? "#fb7185" : "#818cf8"} trainer />
+          <SpriteArtwork character={trainer.id} facing="down" portrait />
         </div>
         <div className={styles.dialogueCopy}>
           <div className={styles.dialogueMeta}>
@@ -275,13 +204,83 @@ function Conversation({ conversation, trainer, defeated, onAdvance, onChallenge,
   );
 }
 
-function DirectionButton({ direction, label, onMove }) {
+function DirectionButton({ direction, label, onStart, onStop }) {
+  const suppressClickRef = useRef(false);
+  const clickStopTimerRef = useRef(null);
+
+  useEffect(() => () => {
+    if (clickStopTimerRef.current) window.clearTimeout(clickStopTimerRef.current);
+  }, []);
+
+  function releaseClickSuppression() {
+    window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 0);
+  }
+
+  function cancelClickStopTimer() {
+    if (!clickStopTimerRef.current) return;
+    window.clearTimeout(clickStopTimerRef.current);
+    clickStopTimerRef.current = null;
+  }
+
+  function startPointer(event) {
+    event.preventDefault();
+    cancelClickStopTimer();
+    suppressClickRef.current = true;
+    try {
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    } catch {
+      // Pointer capture is an enhancement; movement still stops on pointer-up.
+    }
+    onStart(direction);
+  }
+
+  function stopPointer(event) {
+    event.preventDefault();
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    onStop(direction);
+    releaseClickSuppression();
+  }
+
+  function nudgeFromClick() {
+    if (suppressClickRef.current) return;
+    onStart(direction);
+    cancelClickStopTimer();
+    clickStopTimerRef.current = window.setTimeout(() => {
+      clickStopTimerRef.current = null;
+      onStop(direction);
+    }, 140);
+  }
+
   return (
     <button
       type="button"
       className={`${styles.directionButton} ${styles[`direction${direction}`]}`}
       aria-label={`Walk ${direction}`}
-      onClick={() => onMove(direction)}
+      onPointerDown={startPointer}
+      onPointerUp={stopPointer}
+      onPointerCancel={stopPointer}
+      onClick={nudgeFromClick}
+      onBlur={() => {
+        onStop(direction);
+        releaseClickSuppression();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          cancelClickStopTimer();
+          suppressClickRef.current = true;
+          onStart(direction);
+        }
+      }}
+      onKeyUp={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          onStop(direction);
+          releaseClickSuppression();
+        }
+      }}
     >
       {label}
     </button>
@@ -349,12 +348,39 @@ export default function AdventureGame() {
   const [defeated, setDefeated] = useState(() => new Set());
   const [progressReady, setProgressReady] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
+  const keyboardDirectionsRef = useRef(new Map());
+  const touchDirectionsRef = useRef(new Set());
+  const movementActiveRef = useRef(false);
+  const movementPausedRef = useRef(true);
+  const interactRef = useRef(null);
 
   const scene = SCENES[sceneId];
+  const movementPaused = !started || Boolean(conversation) || Boolean(activeTrainerId) || showCompletion;
+  movementPausedRef.current = movementPaused;
   const interaction = useMemo(
-    () => getInteraction(sceneId, position, facing),
+    () => getContinuousInteraction(sceneId, position, facing),
     [sceneId, position, facing],
   );
+
+  const setMovementActive = useCallback((nextActive) => {
+    if (movementActiveRef.current === nextActive) return;
+    movementActiveRef.current = nextActive;
+    setIsMoving(nextActive);
+  }, []);
+
+  const clearMovement = useCallback(() => {
+    keyboardDirectionsRef.current.clear();
+    touchDirectionsRef.current.clear();
+    setMovementActive(false);
+  }, [setMovementActive]);
+
+  const syncMovementActive = useCallback(() => {
+    const vector = movementVector(keyboardDirectionsRef.current, touchDirectionsRef.current);
+    setMovementActive(
+      !movementPausedRef.current && (vector.x !== 0 || vector.y !== 0),
+    );
+  }, [setMovementActive]);
 
   useEffect(() => {
     try {
@@ -386,14 +412,70 @@ export default function AdventureGame() {
     setPostDuelTrainerId(null);
   }, [activeTrainerId, postDuelTrainerId]);
 
-  function walk(direction) {
-    if (!started || conversation || activeTrainerId || showCompletion) return;
+  useEffect(() => {
+    if (movementPaused || !isMoving) return undefined;
+
+    let animationFrame = 0;
+    let previousTime = null;
+
+    function updateMovement(timestamp) {
+      const elapsedMs = previousTime === null ? 0 : Math.min(timestamp - previousTime, 50);
+      previousTime = timestamp;
+      const vector = movementVector(keyboardDirectionsRef.current, touchDirectionsRef.current);
+      if (vector.x === 0 && vector.y === 0) {
+        setMovementActive(false);
+        return;
+      }
+
+      if (elapsedMs > 0) {
+        const nextFacing = movementFacing(
+          keyboardDirectionsRef.current,
+          touchDirectionsRef.current,
+          vector,
+        );
+        setFacing((current) => current === nextFacing ? current : nextFacing);
+        setPosition((current) => {
+          const next = movePlayerContinuous(
+            sceneId,
+            current,
+            vector,
+            elapsedMs,
+            { speed: 3.6, radius: 0.22, maxStepDistance: 0.08 },
+          );
+          return next.x === current.x && next.y === current.y ? current : next;
+        });
+      }
+
+      animationFrame = window.requestAnimationFrame(updateMovement);
+    }
+
+    animationFrame = window.requestAnimationFrame(updateMovement);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [isMoving, movementPaused, sceneId, setMovementActive]);
+
+  useEffect(() => {
+    if (movementPaused) {
+      setMovementActive(false);
+      return;
+    }
+    syncMovementActive();
+  }, [movementPaused, setMovementActive, syncMovementActive]);
+
+  function beginTouchDirection(direction) {
+    if (movementPaused) return;
+    touchDirectionsRef.current.add(direction);
     setFacing(direction);
-    setPosition((current) => movePlayer(sceneId, current, direction));
+    syncMovementActive();
+  }
+
+  function endTouchDirection(direction) {
+    touchDirectionsRef.current.delete(direction);
+    syncMovementActive();
   }
 
   function interact() {
     if (!started || conversation || activeTrainerId || showCompletion || !interaction) return;
+    clearMovement();
     if (interaction.type === "trainer") {
       setConversation({ trainerId: interaction.trainerId, index: 0, mode: "challenge" });
       return;
@@ -404,6 +486,8 @@ export default function AdventureGame() {
       setFacing(interaction.facing ?? "up");
     }
   }
+
+  interactRef.current = interact;
 
   function advanceConversation() {
     if (!conversation) return;
@@ -429,6 +513,7 @@ export default function AdventureGame() {
 
   function startDuel() {
     if (!conversation) return;
+    clearMovement();
     setActiveTrainerId(conversation.trainerId);
     setConversation(null);
   }
@@ -443,6 +528,7 @@ export default function AdventureGame() {
   }
 
   function resetProgress() {
+    clearMovement();
     setDefeated(new Set());
     setSceneId(START_STATE.sceneId);
     setPosition(START_STATE.position);
@@ -453,22 +539,41 @@ export default function AdventureGame() {
 
   useEffect(() => {
     function onKeyDown(event) {
-      if (activeTrainerId) return;
-      if (event.target?.closest?.("button, a, input, select, textarea, summary")) return;
       const direction = DIRECTIONS[event.key];
       if (direction) {
+        if (event.target?.closest?.("input, select, textarea, [contenteditable='true']")) return;
+        if (movementPausedRef.current) return;
         event.preventDefault();
-        walk(direction);
+        keyboardDirectionsRef.current.set(event.code || event.key, direction);
+        setFacing(direction);
+        syncMovementActive();
         return;
       }
-      if ((event.key === "Enter" || event.key === " ") && !conversation) {
+      if (
+        (event.key === "Enter" || event.key === " ")
+        && !event.target?.closest?.("button, a, input, select, textarea, summary")
+      ) {
         event.preventDefault();
-        interact();
+        interactRef.current?.();
       }
     }
+
+    function onKeyUp(event) {
+      const direction = DIRECTIONS[event.key];
+      if (!direction) return;
+      keyboardDirectionsRef.current.delete(event.code || event.key);
+      syncMovementActive();
+    }
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  });
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", clearMovement);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", clearMovement);
+    };
+  }, [clearMovement, syncMovementActive]);
 
   if (activeTrainerId) {
     const trainer = TRAINERS[activeTrainerId];
@@ -490,6 +595,11 @@ export default function AdventureGame() {
 
   const activeConversationTrainer = conversation ? TRAINERS[conversation.trainerId] : null;
   const progress = defeated.size;
+  const mapThemeClass = sceneId === "town"
+    ? styles.townMap
+    : sceneId === "coral-home"
+      ? styles.coralHomeMap
+      : styles.deepHomeMap;
 
   return (
     <main className={styles.gameShell}>
@@ -532,7 +642,7 @@ export default function AdventureGame() {
             {interaction ? <kbd>ENTER</kbd> : null}
           </div>
           <div
-            className={`${styles.map} ${sceneId === "town" ? styles.townMap : styles.homeMap}`}
+            className={`${styles.map} ${mapThemeClass}`}
             style={{
               gridTemplateColumns: `repeat(${scene.width}, minmax(0, 1fr))`,
               gridTemplateRows: `repeat(${scene.height}, minmax(0, 1fr))`,
@@ -541,24 +651,29 @@ export default function AdventureGame() {
             role="application"
             aria-label={`Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk.`}
           >
-            {sceneId === "town" ? (
-              <TownScene defeated={defeated} />
-            ) : (
-              <HomeScene sceneId={sceneId} defeated={defeated} />
-            )}
-            <PlayerSprite position={position} facing={facing} />
-            {interaction ? (
-              <span className={styles.actionCue} style={gridPosition(position.x, position.y)} aria-hidden="true">A</span>
+            {sceneId !== "town" ? (
+              <AdventureTrainerSprite
+                trainer={TRAINERS[sceneId === "coral-home" ? "marina" : "dorian"]}
+                defeated={defeated.has(sceneId === "coral-home" ? "marina" : "dorian")}
+                scene={scene}
+              />
             ) : null}
+            <AdventurePlayerSprite
+              position={position}
+              facing={facing}
+              moving={isMoving}
+              interaction={interaction}
+              scene={scene}
+            />
           </div>
 
           <div className={styles.controlDock}>
             <div className={styles.dpad} aria-label="Movement controls">
-              <DirectionButton direction="up" label="▲" onMove={walk} />
-              <DirectionButton direction="left" label="◀" onMove={walk} />
+              <DirectionButton direction="up" label="▲" onStart={beginTouchDirection} onStop={endTouchDirection} />
+              <DirectionButton direction="left" label="◀" onStart={beginTouchDirection} onStop={endTouchDirection} />
               <span className={styles.dpadCenter} />
-              <DirectionButton direction="right" label="▶" onMove={walk} />
-              <DirectionButton direction="down" label="▼" onMove={walk} />
+              <DirectionButton direction="right" label="▶" onStart={beginTouchDirection} onStop={endTouchDirection} />
+              <DirectionButton direction="down" label="▼" onStart={beginTouchDirection} onStop={endTouchDirection} />
             </div>
             <button type="button" className={styles.actionButton} disabled={!interaction} onClick={interact}>
               <span>A</span>
@@ -574,7 +689,7 @@ export default function AdventureGame() {
             return (
               <div key={trainer.id} className={`${styles.trainerCard} ${won ? styles.trainerCardWon : ""}`}>
                 <span className={`${styles.miniPortrait} ${styles[`portrait${trainer.color}`]}`}>
-                  <PixelPerson color={trainer.color === "coral" ? "#fb7185" : "#818cf8"} trainer />
+                  <SpriteArtwork character={trainer.id} facing="down" portrait />
                 </span>
                 <span>
                   <strong>{trainer.name}</strong>
