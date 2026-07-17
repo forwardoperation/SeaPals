@@ -15,13 +15,15 @@ import {
 } from "./adventureWorld.mjs";
 
 test("world exposes the requested town and interior dimensions", () => {
-  assert.deepEqual(Object.keys(SCENES), ["town", "coral-home", "deep-home"]);
+  assert.deepEqual(Object.keys(SCENES), ["town", "coral-home", "deep-home", "academy-lab"]);
   assert.equal(SCENES.town.width, 16);
   assert.equal(SCENES.town.height, 10);
   assert.equal(SCENES["coral-home"].width, 12);
   assert.equal(SCENES["coral-home"].height, 8);
   assert.equal(SCENES["deep-home"].width, 12);
   assert.equal(SCENES["deep-home"].height, 8);
+  assert.equal(SCENES["academy-lab"].width, 14);
+  assert.equal(SCENES["academy-lab"].height, 9);
   assert.ok(Object.values(SCENES).every((scene) => scene.tiles.every((row) => row.length === scene.width)));
 });
 
@@ -52,7 +54,13 @@ test("movement cannot cross buildings, doors, furniture, exits, or trainers", ()
   assert.equal(isWalkable("deep-home", { x: 6, y: 1 }), false);
 });
 
-test("town doors enter the two homes only when the player faces them", () => {
+test("town doors enter the academy and two homes only when the player faces them", () => {
+  assert.deepEqual(getInteraction("town", { x: 8, y: 2 }, "up"), {
+    type: "enter",
+    interactionId: "interaction-town-enter-academy",
+    targetScene: "academy-lab",
+    spawn: { x: 6, y: 7 },
+  });
   assert.deepEqual(getInteraction("town", { x: 5, y: 4 }, "up"), {
     type: "enter",
     interactionId: "interaction-town-enter-coral-home",
@@ -70,6 +78,12 @@ test("town doors enter the two homes only when the player faces them", () => {
 });
 
 test("interior exits return the player outside the matching town door", () => {
+  assert.deepEqual(getInteraction("academy-lab", { x: 6, y: 7 }, "down"), {
+    type: "exit",
+    interactionId: "interaction-academy-exit",
+    targetScene: "town",
+    spawn: { x: 8, y: 2 },
+  });
   assert.deepEqual(getInteraction("coral-home", { x: 5, y: 6 }, "down"), {
     type: "exit",
     interactionId: "interaction-coral-home-exit",
@@ -85,6 +99,14 @@ test("interior exits return the player outside the matching town door", () => {
 });
 
 test("facing an adjacent trainer yields the matching trainer interaction", () => {
+  assert.deepEqual(getInteraction("academy-lab", { x: 7, y: 3 }, "up"), {
+    type: "trainer",
+    interactionId: "interaction-academy-mentor",
+    trainerId: "academy-mentor",
+    npcId: "academy-mentor",
+    conversationId: "conversation-shellshore-academy-mentor",
+    encounterId: "encounter-shellshore-mentor-practice",
+  });
   assert.deepEqual(getInteraction("coral-home", { x: 5, y: 3 }, "up"), {
     type: "trainer",
     interactionId: "interaction-coral-home-marina",
@@ -143,6 +165,14 @@ test("axis-separated collision slides along furniture instead of stopping both a
 });
 
 test("continuous interactions allow small offsets but enforce facing and range", () => {
+  assert.deepEqual(getContinuousInteraction("academy-lab", { x: 7.25, y: 3.1 }, "up"), {
+    type: "trainer",
+    interactionId: "interaction-academy-mentor",
+    trainerId: "academy-mentor",
+    npcId: "academy-mentor",
+    conversationId: "conversation-shellshore-academy-mentor",
+    encounterId: "encounter-shellshore-mentor-practice",
+  });
   assert.deepEqual(getContinuousInteraction("town", { x: 5.3, y: 4.15 }, "up"), {
     type: "enter",
     interactionId: "interaction-town-enter-coral-home",

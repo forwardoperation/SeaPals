@@ -15,6 +15,16 @@ import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequire
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
 import { OPPONENT_DIFFICULTY_OPTIONS, OpponentDifficulty, chooseOpponentPreferredDeck, getOpponentDifficultyProfile, limitOpponentOptionalActions, normalizeOpponentDifficulty, orderOpponentChoices, scaleOpponentThinkingDelay, selectOpponentChoice } from "./opponentDifficultyRules.mjs";
 import { createStoryDuelResult } from "./storyModeContract.mjs";
+import {
+  SIMULATOR_TUTORIAL_ACTION_TYPES,
+  SIMULATOR_TUTORIAL_LIFECYCLE_TYPES,
+  createSimulatorTutorialContract,
+  createSimulatorTutorialEvent,
+  createSimulatorTutorialProgress,
+  getSimulatorTutorialCurrentCheckpoint,
+  observeSimulatorTutorialEvent,
+  restartSimulatorTutorialProgress,
+} from "./tutorialContract.mjs";
 import foundationDeckImg from "./images/foundation-deck.png";
 import palsDeckImg from "./images/pals-deck.png";
 
@@ -1246,16 +1256,29 @@ function getSlotConnectorStyle(position) {
 
 export default function Simulator({ storyMode = null } = {}) {
   const isStoryMode = Boolean(storyMode);
+  const tutorialRuntime = storyMode?.tutorial ?? null;
   const storyPlayerDeckId = storyMode?.playerDeckId ?? defaultDeckId;
   const storyOpponentDeckId = storyMode?.opponentDeckId ?? defaultDeckId;
   const storyVictoryTarget = Math.max(1, Number(storyMode?.victoryTarget) || 10);
   const storyDifficulty = normalizeOpponentDifficulty(storyMode?.difficulty ?? OpponentDifficulty.MEDIUM);
   const storyOpponentName = String(storyMode?.opponentName ?? "Rival").trim() || "Rival";
+  const storyReturnLabel = String(storyMode?.returnLabel ?? "Town").trim() || "Town";
   const initialPlayerDeckId = isStoryMode ? storyPlayerDeckId : defaultDeckId;
   const initialOpponentDeckId = isStoryMode ? storyOpponentDeckId : defaultDeckId;
   const initialVictoryTarget = isStoryMode ? storyVictoryTarget : 30;
   const initialOpponentDifficulty = isStoryMode ? storyDifficulty : OpponentDifficulty.MEDIUM;
   const opponentHudLabel = isStoryMode ? storyOpponentName : "Rival Reef";
+  const [tutorialContract] = useState(() => tutorialRuntime
+    ? createSimulatorTutorialContract(tutorialRuntime.contract ?? tutorialRuntime)
+    : null);
+  const [tutorialProgress, setTutorialProgress] = useState(() => tutorialContract
+    ? createSimulatorTutorialProgress(tutorialContract, tutorialRuntime?.initialProgress ?? {})
+    : null);
+  const tutorialProgressRef = useRef(tutorialProgress);
+  const tutorialEventIdRef = useRef(0);
+  const tutorialCallbacksRef = useRef(tutorialRuntime);
+  const tutorialVpRef = useRef({ player: 0, opponent: 0 });
+  tutorialCallbacksRef.current = tutorialRuntime;
   const [initialGame] = useState(() => createInitialGameState(initialPlayerDeckId, initialOpponentDeckId, createSeededRandom(0x5ea9a15)));
   const [selectedDeckId, setSelectedDeckId] = useState(initialPlayerDeckId);
   const [selectedOpponentDeckId, setSelectedOpponentDeckId] = useState(initialOpponentDeckId);
@@ -1623,6 +1646,54 @@ export default function Simulator({ storyMode = null } = {}) {
     ...(opponent.orphanCreatures ?? []).map((instance) => `orphan:${instance.instanceId}:${(instance.hostedCardIds ?? []).filter(Boolean).join(",")}`),
   ].join("|");
   const opponentVp = getEcosystemVictoryPoints(opponentCorals, opponent.habitats, [...opponent.reefCreatures, ...(opponent.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])]);
+  const tutorialCurrentCheckpoint = tutorialContract && tutorialProgress
+    ? getSimulatorTutorialCurrentCheckpoint(tutorialContract, tutorialProgress)
+    : null;
+  const tutorialStepNumber = tutorialProgress ? tutorialProgress.completedCheckpointIds.length + 1 : 0;
+
+  function notifyTutorialCallback(name, ...args) {
+    const callback = tutorialCallbacksRef.current?.[name];
+    if (typeof callback !== "function") return;
+    try {
+      callback(...args);
+    } catch (error) {
+      console.error(`SeaPals tutorial callback ${name} failed.`, error);
+    }
+  }
+
+  function emitTutorialEvent(actionType, details = {}, context = {}) {
+    if (!tutorialContract || !tutorialProgressRef.current) return null;
+    const event = createSimulatorTutorialEvent({
+      eventId: `${tutorialContract.id}:${tutorialProgressRef.current.attempt}:${++tutorialEventIdRef.current}`,
+      tutorialId: tutorialContract.id,
+      actionType,
+      actor: context.actor ?? "player",
+      phase: context.phase ?? gamePhase,
+      round: context.round ?? round,
+      turn: context.turn ?? turn,
+      details,
+    });
+    const observation = observeSimulatorTutorialEvent(tutorialContract, tutorialProgressRef.current, event);
+    tutorialProgressRef.current = observation.progress;
+    setTutorialProgress(observation.progress);
+    notifyTutorialCallback("onEvent", event, observation.progress);
+    observation.checkpointEvents.forEach((checkpointEvent) => {
+      notifyTutorialCallback("onCheckpoint", checkpointEvent, observation.progress);
+    });
+    notifyTutorialCallback("onProgress", observation.progress, event);
+    return { event, observation };
+  }
+
+  function emitPlayerBuild(card, cost, placement) {
+    return emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.CARD_BUILT, {
+      cardId: card.id,
+      cardName: card.name,
+      cardKind: card.kind,
+      placement,
+      cost: Number(cost ?? 0),
+      accepted: true,
+    });
+  }
   const playerSchoolDensity = getSchoolDensity(playerCorals);
   const opponentSchoolDensity = getSchoolDensity(opponentCorals);
   const schoolDensityConditionIds = [...new Set([activeConditionId, ...persistentConditionIds].filter(Boolean))];
@@ -1654,6 +1725,26 @@ export default function Simulator({ storyMode = null } = {}) {
   useEffect(() => {
     setHasDrawnThisTurn(false);
   }, [turn]);
+
+  useEffect(() => {
+    if (!tutorialContract) return;
+    const previous = tutorialVpRef.current;
+    if (playerVp > previous.player) {
+      emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.VP_EARNED, {
+        from: previous.player,
+        to: playerVp,
+        delta: playerVp - previous.player,
+      });
+    }
+    if (opponentVp > previous.opponent) {
+      emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.VP_EARNED, {
+        from: previous.opponent,
+        to: opponentVp,
+        delta: opponentVp - previous.opponent,
+      }, { actor: "opponent" });
+    }
+    tutorialVpRef.current = { player: playerVp, opponent: opponentVp };
+  }, [playerVp, opponentVp, tutorialContract]);
 
   useEffect(() => {
     setRp((current) => Math.min(current, playerRpCap));
@@ -1729,6 +1820,11 @@ export default function Simulator({ storyMode = null } = {}) {
       message: gameResult,
     });
     storyResultRecordedRef.current = true;
+    emitTutorialEvent(SIMULATOR_TUTORIAL_LIFECYCLE_TYPES.DUEL_FINISHED, {
+      outcome: result.outcome,
+      completionReason: result.completionReason,
+      scores: result.scores,
+    }, { actor: "system", phase: "result" });
     storyMode?.onResult?.(result);
     if (result.outcome === "victory") storyMode?.onVictory?.(result);
     else storyMode?.onDefeat?.(result);
@@ -2085,6 +2181,15 @@ export default function Simulator({ storyMode = null } = {}) {
     const targetPool = nextTargets ?? attackContext?.allTargets ?? attackContext?.targets ?? [];
     const remainingTargets = getRemainingAttackTargets(recorded.sequence, targetPool).filter((target) => !invalidTargets.has(target.instanceId));
     const continues = attackerSurvives && !recorded.sequence.complete && remainingTargets.length > 0;
+    emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.ATTACK_RESOLVED, {
+      accepted: true,
+      attackerCardId: attackContext?.attackerCardId ?? null,
+      targetInstanceId,
+      resolution,
+      resolvedCount: recorded.sequence.resolutions.length,
+      requiredCount: recorded.sequence.requiredAttacks,
+      onPlay: Boolean(attackContext?.onPlay),
+    }, { phase: "main" });
     if (continues) {
       setAttackContext({ ...attackContext, sequence: recorded.sequence, targets: remainingTargets, allTargets: targetPool, costCommitted: true });
     } else {
@@ -2660,6 +2765,7 @@ export default function Simulator({ storyMode = null } = {}) {
     pushLog(isHostedPlacement
       ? `Hosted ${card.name} inside ${cardsById[slot.cardId]?.name} for ${playCost} RP.${onPlayResourceGain ? ` Its On Play ability gained ${actualOnPlayGain} RP${actualOnPlayGain < onPlayResourceGain ? ` (limited by the ${playerCapAfterPlacement} RP bank cap)` : ""}.` : ""}`
       : `Placed ${card.name} into a coral slot for ${playCost} RP.${onPlayResourceGain ? ` Its On Play ability gained ${actualOnPlayGain} RP${actualOnPlayGain < onPlayResourceGain ? ` (limited by the ${playerCapAfterPlacement} RP bank cap)` : ""}.` : ""}`);
+    emitPlayerBuild(card, playCost, isHostedPlacement ? "hosted-creature" : "coral-slot");
     const onPlayDamage = getOnPlayFoundationDamage(card, [...playerHabitats, ...playerCorals.map((foundation) => foundation.cardId)]);
     const hasOnPlayAttack = Boolean(getOnPlayAttackEffect(card));
     const deckDiscardAbility = getOnPlayOpponentDeckDiscard(card);
@@ -2767,6 +2873,7 @@ export default function Simulator({ storyMode = null } = {}) {
     setSelectedHandCard(null);
     setPlayError("");
     pushLog(`Played ${card.name} into your ecosystem for ${playCost} RP.${playerOrphanCreatures.length !== redistributed.orphans.length ? ` ${playerOrphanCreatures.length - redistributed.orphans.length} orphaned creature group(s) automatically occupied compatible slots.` : ""}`);
+    emitPlayerBuild(card, playCost, "foundation");
   }
 
   function upgradeCoral(coralId) {
@@ -2807,6 +2914,7 @@ export default function Simulator({ storyMode = null } = {}) {
     setSelectedHandCard(null);
     setPlayError("");
     pushLog(`Upgraded ${currentCard.name} to ${nextCard.stageLabel} for ${upgradeCost} RP.${playerOrphanCreatures.length !== redistributed.orphans.length ? ` ${playerOrphanCreatures.length - redistributed.orphans.length} orphaned creature group(s) occupied the new compatible slots.` : ""}`);
+    emitPlayerBuild(nextCard, upgradeCost, "foundation-upgrade");
     if (cardHasSchoolMomentum(nextCard)) {
       const candidates = [...new Set([...foundationDeck, ...palsDeck].filter((cardId) => isCreatureSchool(cardsById[cardId]) && cardsById[cardId]?.name !== nextCard.name))];
       if (candidates.length) {
@@ -3239,6 +3347,14 @@ export default function Simulator({ storyMode = null } = {}) {
     const rpAfterCollection = addResourceWithinCap(rpBeforeCollection, collectedRp, roundRpCap);
     const actualCollectedRp = Math.max(0, rpAfterCollection - Math.min(rpBeforeCollection, roundRpCap));
     const cappedRp = Math.max(0, rpBeforeCollection + collectedRp - rpAfterCollection);
+    emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.RP_COLLECTED, {
+      collected: actualCollectedRp,
+      available: collectedRp,
+      bankBefore: rpBeforeCollection,
+      bankAfter: rpAfterCollection,
+      cap: roundRpCap,
+      capped: cappedRp,
+    }, { phase: "draw", round: nextRound, turn: advanceTurn ? turn + 1 : turn });
     setRp(rpAfterCollection);
     setPlayerCorals((current) => current.map(({ rpPenaltyNextTurn, ...coral }) => coral));
     if (parasiteRequestedRp) {
@@ -3324,6 +3440,12 @@ export default function Simulator({ storyMode = null } = {}) {
       setModal("hand");
       return;
     }
+    emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.MATCH_READY, {
+      foundationCount: playerCorals.length,
+      handCount: hand.length,
+      rp,
+      accepted: true,
+    }, { phase: "setup", round: 0 });
     startRound(1);
   }
 
@@ -3345,6 +3467,16 @@ export default function Simulator({ storyMode = null } = {}) {
     const drawnCards = [...foundationCards, ...palsCards];
     const handLimitEffect = (activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
     const drawResult = drawWithHandLimit(drawnCards, hand.length, drawnCards.length, handLimitEffect ? Number(handLimitEffect.amount) : Infinity);
+    emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.CARD_DRAWN, {
+      count: drawnCards.length,
+      foundationCount: foundationCards.length,
+      palsCount: palsCards.length,
+      toHandCount: drawResult.cardsToHand.length,
+      discardedCount: drawResult.cardsToDiscard.length,
+      requested: turnDrawSelection.requested,
+      shortfall: turnDrawSelection.shortfall,
+      accepted: true,
+    }, { phase: "draw" });
     setFoundationDeck((current) => current.slice(foundationCards.length));
     setPalsDeck((current) => current.slice(palsCards.length));
     setHand((current) => [...current, ...drawResult.cardsToHand]);
@@ -3444,6 +3576,7 @@ export default function Simulator({ storyMode = null } = {}) {
       : "";
     const message = `${card.name} entered your open-water ecosystem for ${playCost} RP at ${playerSchoolDensity} School Density.${sacrificeMessage}${territorialMessage}${resourceMessage}`;
     pushLog(message);
+    emitPlayerBuild(card, playCost, "open-water");
     const playedSlotId = `reef-${playedInstance.instanceId}`;
     const onPlayDamage = getOnPlayFoundationDamage(card, [...playerHabitats, ...nextPlayerCorals.map((foundation) => foundation.cardId)]);
     const onPlayDamageTargets = onPlayDamage?.targetType === "creature-school"
@@ -3541,6 +3674,7 @@ export default function Simulator({ storyMode = null } = {}) {
       setSelectedHandCard(null);
       setPlayError("");
       pushLog(`Played ${card.name} as a habitat for ${playCost} RP.`);
+      emitPlayerBuild(card, playCost, "habitat");
       return;
     }
     if (card.kind === CardKind.SUPPORT) {
@@ -3721,6 +3855,7 @@ export default function Simulator({ storyMode = null } = {}) {
     setSelectedHandCard(null);
     const message = `${card.name} invaded an empty slot on the opponent's ${cardsById[targetCoral.cardId]?.name} for ${cost} RP. It remains your creature; the opponent may remove it with a legal attack or specialized Support card.`;
     pushLog(message);
+    emitPlayerBuild(card, cost, "opponent-reef");
     setEventOverlay({ type: "impact-result", sourceCardId: card.id, defenderCardId: targetCoral.cardId, title: `Player placed ${card.name} on the Rival Reef`, message, success: true });
   }
 
@@ -6670,6 +6805,12 @@ export default function Simulator({ storyMode = null } = {}) {
     const thinkingDelay = Math.min(5200, 1100 + boardComplexity * 140 + (endgameDecision ? 1400 : 0));
     const habitatMaintenance = resolvePlayerEndOfTurnHabitats();
     const actions = [...turnLog, ...(habitatMaintenance.messages ?? [])].filter(Boolean);
+    emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.TURN_ENDED, {
+      actionCount: actions.length,
+      playerVp,
+      rp,
+      accepted: true,
+    }, { phase: "main" });
     setGamePhase("transition");
     setModal(null);
     setEventOverlay({
@@ -7006,6 +7147,7 @@ export default function Simulator({ storyMode = null } = {}) {
     setAttackContext(null);
     setSearchContext(null);
     setGameResult(null);
+    tutorialVpRef.current = { player: 0, opponent: 0 };
     setInspectedCard(null);
     setEventOverlay({
       type: "round-transition",
@@ -7034,22 +7176,57 @@ export default function Simulator({ storyMode = null } = {}) {
     setLog([...unavailableWarnings, `New ${difficultyLabel} game started: your ${deckName} versus the opponent's ${opponentDeckName}. Setup: play a base Coral or Creature School using your 3 RP.`]);
   }
 
-  function restartStoryGame() {
+  function restartStoryGame(reason = eventOverlay?.initial ? "begin" : "retry") {
     storyResultRecordedRef.current = false;
+    if (tutorialContract) {
+      if (reason === "begin") {
+        emitTutorialEvent(SIMULATOR_TUTORIAL_LIFECYCLE_TYPES.DUEL_STARTED, {
+          reason,
+          playerDeckId: storyPlayerDeckId,
+          opponentDeckId: storyOpponentDeckId,
+          victoryTarget: storyVictoryTarget,
+        }, { actor: "system", phase: "setup", round: 0, turn: 1 });
+      } else {
+        const restartedProgress = restartSimulatorTutorialProgress(tutorialContract, tutorialProgressRef.current);
+        tutorialProgressRef.current = restartedProgress;
+        tutorialEventIdRef.current = 0;
+        setTutorialProgress(restartedProgress);
+        const restartEvent = emitTutorialEvent(SIMULATOR_TUTORIAL_LIFECYCLE_TYPES.DUEL_RESTARTED, {
+          reason,
+          playerDeckId: storyPlayerDeckId,
+          opponentDeckId: storyOpponentDeckId,
+          victoryTarget: storyVictoryTarget,
+        }, { actor: "system", phase: "setup", round: 0, turn: 1 });
+        notifyTutorialCallback("onRetry", restartEvent?.event ?? null, tutorialProgressRef.current);
+      }
+    }
     restartGame(storyPlayerDeckId, storyOpponentDeckId, storyVictoryTarget, storyDifficulty);
   }
 
-  function returnToStoryTown() {
+  function returnToStoryTown(reason = gameResult ? "duel-complete" : "player-exit") {
     if (!isStoryMode) return;
-    storyMode?.onExit?.();
+    if (!tutorialContract) {
+      storyMode?.onExit?.();
+      return;
+    }
+    const exitEvent = emitTutorialEvent(SIMULATOR_TUTORIAL_LIFECYCLE_TYPES.DUEL_EXITED, {
+      reason,
+      duelOutcome: tutorialProgressRef.current?.lastDuelOutcome ?? null,
+    }, { actor: "system", phase: gameResult ? "result" : gamePhase });
+    notifyTutorialCallback("onExit", exitEvent?.event ?? null, tutorialProgressRef.current);
+    storyMode?.onExit?.({
+      reason,
+      tutorialEvent: exitEvent?.event ?? null,
+      tutorialProgress: tutorialProgressRef.current,
+    });
   }
 
   function exitStoryMode() {
     if (gameResult) {
-      returnToStoryTown();
+      returnToStoryTown("duel-complete");
       return;
     }
-    storyMode?.onExit?.();
+    returnToStoryTown("player-exit");
   }
 
   function openNewGameSetup() {
@@ -7126,7 +7303,7 @@ export default function Simulator({ storyMode = null } = {}) {
               <div className="flex items-center gap-3">
                 {isStoryMode ? (
                   <button type="button" onClick={exitStoryMode} aria-label="Exit duel and return to town" className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
-                    <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">Town</span>
+                    <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">{storyReturnLabel}</span>
                   </button>
                 ) : (
                   <Link href="/" aria-label="Exit simulator and return home" className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
@@ -7160,7 +7337,7 @@ export default function Simulator({ storyMode = null } = {}) {
                 <div className="absolute right-0 top-11 z-[70] w-48 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-xl">
                   <button type="button" onClick={openNewGameSetup} className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">{isStoryMode ? "Restart Duel" : "Start New Game"}</button>
                   {isStoryMode ? (
-                    <button type="button" onClick={exitStoryMode} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to Town</button>
+                    <button type="button" onClick={exitStoryMode} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to {storyReturnLabel}</button>
                   ) : (
                     <>
                       <Link href="/adventure" className="mt-1 block rounded-lg bg-cyan-400/10 px-3 py-2 text-sm font-bold text-cyan-100 hover:bg-cyan-300/20">Play Reefbound Story</Link>
@@ -7227,13 +7404,41 @@ export default function Simulator({ storyMode = null } = {}) {
             </div>
           </div>
 
+          {tutorialContract ? (
+            <section className="mb-4 rounded-2xl border border-cyan-300/35 bg-cyan-400/10 px-5 py-4 text-cyan-50 shadow-[0_12px_36px_rgba(8,145,178,.12)]" role="status" aria-live="polite">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <strong className="text-sm font-black uppercase tracking-[0.16em] text-cyan-200">{tutorialContract.title}</strong>
+                <span className="rounded-full bg-slate-950/45 px-3 py-1 text-xs font-bold text-cyan-100">
+                  {tutorialProgress?.status === "complete"
+                    ? `${tutorialContract.checkpoints.length}/${tutorialContract.checkpoints.length} complete`
+                    : `Step ${Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} of ${tutorialContract.checkpoints.length}`}
+                </span>
+              </div>
+              {tutorialCurrentCheckpoint ? (
+                <div className="mt-2">
+                  <strong className="block text-base text-white">{tutorialCurrentCheckpoint.title}</strong>
+                  <p className="mt-1 text-sm leading-relaxed text-cyan-50/80">{tutorialCurrentCheckpoint.instruction}</p>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm font-semibold text-emerald-200">All tutorial actions are complete. Finish the friendly duel when you are ready.</p>
+              )}
+            </section>
+          ) : null}
+
           {gameResult ? (
             <div className="mb-4 rounded-2xl border-2 border-amber-400 bg-amber-100 px-6 py-4 text-center text-lg font-black text-amber-950" role="alert">
               <div>{gameResult}</div>
               {isStoryMode ? (
-                <button type="button" onClick={returnToStoryTown} className="mt-3 rounded-full bg-amber-950 px-6 py-2.5 text-sm font-black text-amber-50 shadow-lg transition hover:bg-slate-900">
-                  Return to Town
-                </button>
+                <div className="mt-3 flex flex-wrap justify-center gap-3">
+                  {tutorialContract ? (
+                    <button type="button" onClick={() => restartStoryGame("result-retry")} className="rounded-full border-2 border-amber-950 px-6 py-2.5 text-sm font-black text-amber-950 transition hover:bg-amber-200">
+                      Retry Practice Duel
+                    </button>
+                  ) : null}
+                  <button type="button" onClick={() => returnToStoryTown("duel-complete")} className="rounded-full bg-amber-950 px-6 py-2.5 text-sm font-black text-amber-50 shadow-lg transition hover:bg-slate-900">
+                    Return to {storyReturnLabel}
+                  </button>
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -7931,8 +8136,8 @@ export default function Simulator({ storyMode = null } = {}) {
                       </div>
                       <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn.</div>
                       <div className="mt-5 flex flex-wrap justify-end gap-3">
-                        <button type="button" onClick={exitStoryMode} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Return to Town</button>
-                        <button type="button" onClick={restartStoryGame} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">Begin Duel</button>
+                        <button type="button" onClick={exitStoryMode} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Return to {storyReturnLabel}</button>
+                        <button type="button" onClick={() => restartStoryGame("begin")} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">Begin Duel</button>
                       </div>
                     </div>
                   ) : (

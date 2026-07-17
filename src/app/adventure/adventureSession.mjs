@@ -103,11 +103,14 @@ function recoverToSafeDockOrStart(save, reason) {
 }
 
 export function createNewAdventureSession(profileId) {
-  return transitionQuest(
+  const save = transitionQuest(
     createInitialAdventureSave(profileId),
     SHELLSHORE_QUEST_ID,
     "active",
   );
+  const academy = SCENES["academy-lab"];
+  if (!academy || !canOccupyContinuousPosition(academy.id, academy.spawn)) return save;
+  return withWorld(save, academy.id, academy.spawn, "up");
 }
 
 /**

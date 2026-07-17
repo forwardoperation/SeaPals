@@ -10,8 +10,18 @@ import {
 } from "./adventureWorld.mjs";
 import {
   ADVENTURE_CONTENT,
+  getAdventureStarterDeck,
   resolveAdventureNpc,
+  resolveAdventureTutorial,
 } from "./adventureContent.mjs";
+import {
+  commitStarterSelection,
+  getOnboardingProgress,
+  recordBoatSafetyReview,
+  recordPracticeDuelResult,
+  recordTutorialCheckpoint,
+  recoverOnboardingResume,
+} from "./adventureOnboarding.mjs";
 import {
   ADVENTURE_PROFILE_IDS,
   createAdventureStorageAdapter,
@@ -35,12 +45,25 @@ const TRAINERS = Object.freeze(Object.fromEntries(
         deckId: resolved.encounter.opponentDeckId,
         difficulty: resolved.encounter.difficulty,
         victoryTarget: resolved.encounter.victoryTarget,
+        dialogue: resolved.conversation.lines,
         intro: resolved.conversation.lines.intro,
         rematch: resolved.conversation.lines.rematch,
         victory: resolved.conversation.lines.victory,
       })];
     }),
 ));
+
+const ACADEMY_MENTOR_ID = "academy-mentor";
+const SHELLSHORE_TUTORIAL = resolveAdventureTutorial("tutorial-shellshore-live-basics");
+const SHELLSHORE_FIELD_NOTE = SHELLSHORE_TUTORIAL.fieldNote;
+const STARTER_DECKS = Object.freeze(SHELLSHORE_TUTORIAL.starterDecks);
+const STARTER_METRICS = Object.freeze([
+  ["offense", "Offense"],
+  ["defense", "Defense"],
+  ["economy", "RP economy"],
+  ["consistency", "Consistency"],
+  ["tempo", "Tempo"],
+]);
 
 const SHELLSHORE_ENCOUNTER_IDS = SHELLSHORE_RESIDENT_ENCOUNTER_IDS;
 const SHELLSHORE_RESIDENT_TRAINERS = Object.freeze(
@@ -149,15 +172,27 @@ function movementFacing(keyDirections, touchDirections, vector) {
     : vector.y > 0 ? "down" : "up";
 }
 
-function Conversation({ conversation, trainer, defeated, blocked = false, onAdvance, onChallenge, onClose }) {
+function conversationLines(conversation, trainer, defeated) {
+  if (Array.isArray(conversation?.lines) && conversation.lines.length) return conversation.lines;
+  const authored = trainer.dialogue?.[conversation?.mode];
+  if (Array.isArray(authored) && authored.length) return authored;
+  return defeated ? trainer.rematch : trainer.intro;
+}
+
+function Conversation({
+  conversation,
+  trainer,
+  defeated,
+  blocked = false,
+  primaryLabel,
+  secondaryLabel = "Not yet",
+  onAdvance,
+  onPrimary,
+  onSecondary,
+}) {
   const dialogRef = useDialogFocusTrap(!blocked);
-  const lines = conversation.mode === "victory"
-    ? trainer.victory
-    : defeated
-      ? trainer.rematch
-      : trainer.intro;
+  const lines = conversationLines(conversation, trainer, defeated);
   const finalLine = conversation.index === lines.length - 1;
-  const isVictory = conversation.mode === "victory";
 
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.dialogueLayer} role="dialog" aria-modal="true" aria-labelledby="dialogue-speaker">
@@ -174,14 +209,14 @@ function Conversation({ conversation, trainer, defeated, blocked = false, onAdva
           <div className={styles.dialogueActions}>
             {!finalLine ? (
               <button type="button" autoFocus onClick={onAdvance}>Next</button>
-            ) : isVictory ? (
-              <button type="button" autoFocus onClick={onClose}>Continue exploring</button>
             ) : (
               <>
-                <button type="button" autoFocus className={styles.challengeButton} onClick={onChallenge}>
-                  {defeated ? "Rematch" : "Start duel"}
+                <button type="button" autoFocus className={styles.challengeButton} onClick={onPrimary}>
+                  {primaryLabel}
                 </button>
-                <button type="button" className={styles.quietButton} onClick={onClose}>Not yet</button>
+                {onSecondary ? (
+                  <button type="button" className={styles.quietButton} onClick={onSecondary}>{secondaryLabel}</button>
+                ) : null}
               </>
             )}
           </div>
@@ -363,6 +398,7 @@ function TitleScreen({ profiles, notice, blocked = false, onContinue, onNewGame,
                 <>
                   <strong>{LOCATION_NAMES[profile.sceneId] ?? "Recovered location"}</strong>
                   <span>{profile.completedEncounterCount} encounters complete</span>
+                  {profile.starterDeckId ? <em>{getAdventureStarterDeck(profile.starterDeckId)?.name ?? "SeaPals"} starter</em> : null}
                   <small>{formatPlaytime(profile.playtimeSeconds)} · {formatSavedAt(profile.savedAt)}</small>
                   {profile.status === "recovered" ? <em>Backup recovery available</em> : null}
                   <div className={styles.profileActions}>
@@ -402,7 +438,17 @@ function TitleScreen({ profiles, notice, blocked = false, onContinue, onNewGame,
   );
 }
 
-function PauseMenu({ profileId, notice, blocked = false, onResume, onSave, onReturnTitle, onRestart }) {
+function PauseMenu({
+  profileId,
+  notice,
+  blocked = false,
+  fieldNoteAvailable = false,
+  onResume,
+  onSave,
+  onFieldNote,
+  onReturnTitle,
+  onRestart,
+}) {
   const dialogRef = useDialogFocusTrap(!blocked);
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.pauseLayer} role="dialog" aria-modal="true" aria-labelledby="pause-title">
@@ -418,10 +464,11 @@ function PauseMenu({ profileId, notice, blocked = false, onResume, onSave, onRet
         <div className={styles.pauseActions}>
           <button type="button" autoFocus onClick={onResume}>Resume</button>
           <button type="button" onClick={onSave}>Save game</button>
+          {fieldNoteAvailable ? <button type="button" onClick={onFieldNote}>Open Harbor Field Note</button> : null}
           <button type="button" className={styles.secondaryButton} onClick={onReturnTitle}>Save and return to title</button>
           <button type="button" className={styles.dangerButton} onClick={onRestart}>Restart this voyage</button>
         </div>
-        <small>Mid-duel saving is not included. Duel results save when you return to town.</small>
+        <small>Tutorial checkpoints save as you complete them. Mid-duel board state is not saved.</small>
       </div>
     </div>
   );
@@ -439,6 +486,94 @@ function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel }) {
           <button type="button" autoFocus className={styles.secondaryButton} onClick={onCancel}>Cancel</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StarterSelectionModal({ starters, selectedId, blocked = false, onSelect, onConfirm, onClose }) {
+  const dialogRef = useDialogFocusTrap(!blocked);
+  const selectedStarter = starters.find((starter) => starter.id === selectedId) ?? null;
+  return (
+    <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.starterLayer} role="dialog" aria-modal="true" aria-labelledby="starter-title">
+      <div className={styles.starterCard}>
+        <div className={styles.introEyebrow}>Professor Current&apos;s three partners</div>
+        <h2 id="starter-title">Choose your starter deck</h2>
+        <p>Each is a complete 60-card deck and can finish the voyage. Compare how they play, then choose once for this save.</p>
+        <div className={styles.starterGrid}>
+          {starters.map((starter) => (
+            <button
+              key={starter.id}
+              type="button"
+              className={`${styles.starterOption} ${styles[`starter${starter.color}`]} ${selectedId === starter.id ? styles.starterSelected : ""}`}
+              aria-pressed={selectedId === starter.id}
+              onClick={() => onSelect(starter.id)}
+            >
+              <span className={styles.starterHabitat}>{starter.habitat}</span>
+              <strong>{starter.name}</strong>
+              <em>{starter.tagline}</em>
+              <span className={styles.starterSummary}>{starter.summary}</span>
+              <span className={styles.starterPlayStyle}>{starter.playStyle}</span>
+              <span className={styles.metricList}>
+                {STARTER_METRICS.map(([metricId, label]) => (
+                  <span key={metricId} className={styles.metricRow}>
+                    <span>{label}</span>
+                    <span aria-label={`${starter.metrics[metricId]} out of 5`}>
+                      {Array.from({ length: 5 }, (_, index) => (
+                        <i key={index} className={index < starter.metrics[metricId] ? styles.metricFilled : ""} />
+                      ))}
+                    </span>
+                  </span>
+                ))}
+              </span>
+              <span className={styles.starterStrengths}>{starter.strengths.join(" / ")}</span>
+              <small><b>Professor&apos;s tip:</b> {starter.watchFor}</small>
+            </button>
+          ))}
+        </div>
+        <div className={styles.starterActions}>
+          <button type="button" className={styles.secondaryButton} onClick={onClose}>Choose later</button>
+          <button type="button" disabled={!selectedStarter} onClick={() => onConfirm(selectedStarter.id)}>
+            {selectedStarter ? `Choose ${selectedStarter.name}` : "Select a deck"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FieldNoteModal({ note, blocked = false, reviewRequired = false, onAcknowledge, onDismiss }) {
+  const dialogRef = useDialogFocusTrap(!blocked);
+  return (
+    <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.fieldNoteLayer} role="dialog" aria-modal="true" aria-labelledby="field-note-title">
+      <article className={styles.fieldNoteCard}>
+        <header>
+          <div>
+            <div className={styles.fieldNoteEyebrow}>Field Note 01 / Shellshore Harbor</div>
+            <h2 id="field-note-title">{note.title}</h2>
+          </div>
+          <button type="button" className={styles.noteCloseIcon} aria-label="Close Field Note" onClick={onDismiss}>×</button>
+        </header>
+        <p className={styles.fieldNoteSummary}>{note.summary}</p>
+        <section>
+          <h3>What we observed</h3>
+          <ul>{note.observations.map((observation) => <li key={observation}>{observation}</li>)}</ul>
+        </section>
+        <section className={styles.safetyPanel}>
+          <h3>Boat safety check</h3>
+          <ul>{note.safetyChecklist.map((item) => <li key={item}>{item}</li>)}</ul>
+        </section>
+        <section>
+          <h3>Ocean words</h3>
+          <dl>
+            {note.glossary.map((entry) => (
+              <div key={entry.term}><dt>{entry.term}</dt><dd>{entry.definition}</dd></div>
+            ))}
+          </dl>
+        </section>
+        <button type="button" onClick={reviewRequired ? onAcknowledge : onDismiss}>
+          {reviewRequired ? "I reviewed the safety check" : "Close Field Note"}
+        </button>
+      </article>
     </div>
   );
 }
@@ -464,10 +599,10 @@ function Completion({ blocked = false, onContinue, onReset }) {
   );
 }
 
-function interactionLabel(interaction) {
+function interactionLabel(interaction, sceneId) {
   if (!interaction) return "Walk closer to a door or Reefkeeper";
   if (interaction.type === "trainer") return `Talk to ${TRAINERS[interaction.trainerId]?.name ?? "Reefkeeper"}`;
-  if (interaction.type === "exit") return "Leave this home";
+  if (interaction.type === "exit") return sceneId === "academy-lab" ? "Leave the academy" : "Leave this home";
   if (interaction.targetScene) return `Enter ${LOCATION_NAMES[interaction.targetScene] ?? "building"}`;
   return "Interact";
 }
@@ -488,7 +623,10 @@ export default function AdventureGame() {
   const [gameSave, setGameSave] = useState(null);
   const [conversation, setConversation] = useState(null);
   const [activeTrainerId, setActiveTrainerId] = useState(null);
-  const [postDuelTrainerId, setPostDuelTrainerId] = useState(null);
+  const [postDuelConversation, setPostDuelConversation] = useState(null);
+  const [starterSelectionOpen, setStarterSelectionOpen] = useState(false);
+  const [selectedStarterId, setSelectedStarterId] = useState(null);
+  const [fieldNoteOpen, setFieldNoteOpen] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [pauseOpen, setPauseOpen] = useState(false);
   const [saveNotice, setSaveNotice] = useState(null);
@@ -506,6 +644,7 @@ export default function AdventureGame() {
   const dirtyRef = useRef(false);
   const profileWriteAuthorizedRef = useRef(false);
   const pageVisibleRef = useRef(true);
+  const duelResultRef = useRef(null);
 
   const setDirty = useCallback((value) => {
     dirtyRef.current = Boolean(value);
@@ -518,12 +657,21 @@ export default function AdventureGame() {
     () => new Set(gameSave?.progression.completedEncounterIds ?? []),
     [gameSave],
   );
+  const onboardingProgress = useMemo(
+    () => gameSave ? getOnboardingProgress(gameSave) : null,
+    [gameSave],
+  );
+  const fieldNoteAvailable = Boolean(
+    gameSave?.fieldNotes.entryIds.includes(SHELLSHORE_FIELD_NOTE.id),
+  );
   const scene = SCENES[sceneId];
   const movementPaused = screen !== "playing"
     || pauseOpen
     || Boolean(confirmation)
     || Boolean(conversation)
     || Boolean(activeTrainerId)
+    || starterSelectionOpen
+    || fieldNoteOpen
     || showCompletion;
   movementPausedRef.current = movementPaused;
   const interaction = useMemo(
@@ -626,7 +774,10 @@ export default function AdventureGame() {
     setGameSave(nextSave);
     setConversation(null);
     setActiveTrainerId(null);
-    setPostDuelTrainerId(null);
+    setPostDuelConversation(null);
+    setStarterSelectionOpen(false);
+    setSelectedStarterId(null);
+    setFieldNoteOpen(false);
     setShowCompletion(false);
     setPauseOpen(false);
     setConfirmation(null);
@@ -693,11 +844,13 @@ export default function AdventureGame() {
       return;
     }
 
-    const resumed = recoverAdventureResume(loaded.save);
-    installSession(resumed.save, { storageAuthorized: true });
-    setDirty(Boolean(loaded.recovery || resumed.recovered));
-    if (loaded.recovery || resumed.recovered) {
-      const repaired = persistSave(resumed.save, { checkpointId: "recovered-profile" });
+    const worldResume = recoverAdventureResume(loaded.save);
+    const onboardingResume = recoverOnboardingResume(worldResume.save);
+    installSession(onboardingResume.save, { storageAuthorized: true });
+    const wasRecovered = Boolean(loaded.recovery || worldResume.recovered || onboardingResume.recovered);
+    setDirty(wasRecovered);
+    if (wasRecovered) {
+      const repaired = persistSave(onboardingResume.save, { checkpointId: "recovered-profile" });
       setSaveNotice({
         kind: repaired.ok ? "info" : "error",
         message: repaired.ok
@@ -724,10 +877,10 @@ export default function AdventureGame() {
   }
 
   useEffect(() => {
-    if (activeTrainerId || !postDuelTrainerId) return;
-    setConversation({ trainerId: postDuelTrainerId, index: 0, mode: "victory" });
-    setPostDuelTrainerId(null);
-  }, [activeTrainerId, postDuelTrainerId]);
+    if (activeTrainerId || !postDuelConversation) return;
+    setConversation(postDuelConversation);
+    setPostDuelConversation(null);
+  }, [activeTrainerId, postDuelConversation]);
 
   useEffect(() => {
     if (movementPaused || !isMoving) return undefined;
@@ -811,10 +964,68 @@ export default function AdventureGame() {
     syncMovementActive();
   }
 
+  function openStarterSelection() {
+    setSelectedStarterId(null);
+    setStarterSelectionOpen(true);
+  }
+
+  function requestStarterCommit(starterDeckId) {
+    const starter = getAdventureStarterDeck(starterDeckId);
+    if (!starter) return;
+    setConfirmation({
+      title: `Choose ${starter.name}?`,
+      message: `${starter.name} will become this voyage's permanent starter and active deck. This choice cannot be changed in this save.`,
+      confirmLabel: "Choose this starter",
+      onConfirm: () => {
+        const current = saveRef.current ?? gameSave;
+        if (!current) return;
+        try {
+          const committed = commitStarterSelection(current, starter.id);
+          saveRef.current = committed.save;
+          setGameSave(committed.save);
+          setDirty(true);
+          persistSave(committed.save, { checkpointId: `starter-selected:${starter.id}` });
+          setStarterSelectionOpen(false);
+          setSelectedStarterId(null);
+          setConversation({ trainerId: ACADEMY_MENTOR_ID, index: 0, mode: "starterConfirmed" });
+        } catch (error) {
+          setSaveNotice({ kind: "error", message: error?.message ?? "That starter could not be selected." });
+        }
+      },
+    });
+  }
+
   function interact() {
-    if (screen !== "playing" || pauseOpen || conversation || activeTrainerId || showCompletion || !interaction || !gameSave) return;
+    if (screen !== "playing" || pauseOpen || conversation || activeTrainerId || starterSelectionOpen || fieldNoteOpen || showCompletion || !interaction || !gameSave) return;
     clearMovement();
     if (interaction.type === "trainer") {
+      if (interaction.trainerId === ACADEMY_MENTOR_ID) {
+        const progress = getOnboardingProgress(saveRef.current ?? gameSave);
+        setConversation({
+          trainerId: interaction.trainerId,
+          index: 0,
+          mode: progress.needsStarterSelection
+            ? "intro"
+            : progress.needsBoatSafetyReview
+              ? "boatSafety"
+              : progress.tutorialComplete
+                ? "rematch"
+                : "tutorialIntro",
+        });
+        return;
+      }
+      if (!onboardingProgress?.tutorialComplete) {
+        setConversation({
+          trainerId: interaction.trainerId,
+          index: 0,
+          mode: "onboardingGate",
+          lines: [
+            "Professor Current asked me to wait until your academy lesson is complete.",
+            "Choose your starter and finish the friendly 10 VP practice duel, then come challenge me!",
+          ],
+        });
+        return;
+      }
       setConversation({ trainerId: interaction.trainerId, index: 0, mode: "challenge" });
       return;
     }
@@ -836,11 +1047,7 @@ export default function AdventureGame() {
   function advanceConversation() {
     if (!conversation) return;
     const trainer = TRAINERS[conversation.trainerId];
-    const lines = conversation.mode === "victory"
-      ? trainer.victory
-      : defeated.has(trainer.encounterId)
-        ? trainer.rematch
-        : trainer.intro;
+    const lines = conversationLines(conversation, trainer, defeated.has(trainer.encounterId));
     setConversation((current) => ({
       ...current,
       index: Math.min(current.index + 1, lines.length - 1),
@@ -848,14 +1055,19 @@ export default function AdventureGame() {
   }
 
   function closeConversation() {
-    const wasVictory = conversation?.mode === "victory";
+    const trainer = conversation ? TRAINERS[conversation.trainerId] : null;
+    const wasResidentVictory = conversation?.mode === "victory"
+      && trainer
+      && SHELLSHORE_ENCOUNTER_IDS.includes(trainer.encounterId);
     setConversation(null);
-    if (wasVictory && SHELLSHORE_ENCOUNTER_IDS.every((encounterId) => defeated.has(encounterId))) {
+    if (wasResidentVictory && SHELLSHORE_ENCOUNTER_IDS.every((encounterId) => defeated.has(encounterId))) {
       setShowCompletion(true);
     }
   }
 
   function launchDuel(trainerId) {
+    duelResultRef.current = null;
+    setPostDuelConversation(null);
     setActiveTrainerId(trainerId);
     setConversation(null);
   }
@@ -865,6 +1077,16 @@ export default function AdventureGame() {
     if (!conversation || !current) return;
     clearMovement();
     const trainer = TRAINERS[conversation.trainerId];
+    const progress = getOnboardingProgress(current);
+    if (trainer.id === ACADEMY_MENTOR_ID && progress.needsStarterSelection) {
+      openStarterSelection();
+      return;
+    }
+    if (trainer.id !== ACADEMY_MENTOR_ID && !progress.tutorialComplete) {
+      setSaveNotice({ kind: "info", message: "Finish Professor Current's academy lesson before challenging village Reefkeepers." });
+      closeConversation();
+      return;
+    }
     const checkpoint = persistSave(current, {
       checkpointId: `before-duel:${trainer.encounterId}`,
     });
@@ -881,10 +1103,30 @@ export default function AdventureGame() {
   }
 
   function recordDuelResult(trainerId, result) {
-    if (result.outcome !== "victory") return;
+    duelResultRef.current = result;
     const trainer = TRAINERS[trainerId];
     const current = saveRef.current ?? gameSave;
     if (!trainer || !current) return;
+    if (trainer.id === ACADEMY_MENTOR_ID) {
+      const outcome = result.outcome === "victory" ? "won" : "lost";
+      try {
+        const resolved = recordPracticeDuelResult(current, outcome);
+        if (outcome === "won") {
+          saveRef.current = resolved.save;
+          setGameSave(resolved.save);
+          setDirty(true);
+          persistSave(resolved.save, { checkpointId: `duel-result:${trainer.encounterId}` });
+          setPostDuelConversation({ trainerId, index: 0, mode: "victory" });
+        } else {
+          setPostDuelConversation({ trainerId, index: 0, mode: "practiceLoss" });
+        }
+      } catch (error) {
+        setSaveNotice({ kind: "error", message: error?.message ?? "The practice result could not be recorded." });
+        setPostDuelConversation({ trainerId, index: 0, mode: "practiceRetry" });
+      }
+      return;
+    }
+    if (result.outcome !== "victory") return;
     const next = completeAdventureEncounter(current, {
       encounterId: trainer.encounterId,
       opponentId: trainer.id,
@@ -894,7 +1136,105 @@ export default function AdventureGame() {
     setGameSave(next);
     setDirty(true);
     persistSave(next, { checkpointId: `duel-result:${trainer.encounterId}` });
-    setPostDuelTrainerId(trainerId);
+    setPostDuelConversation({ trainerId, index: 0, mode: "victory" });
+  }
+
+  function recordSimulatorTutorialCheckpoint(event) {
+    const current = saveRef.current ?? gameSave;
+    if (!current || !event?.checkpointId) return;
+    try {
+      const recorded = recordTutorialCheckpoint(current, event.checkpointId);
+      if (!recorded.advanced) return;
+      saveRef.current = recorded.save;
+      setGameSave(recorded.save);
+      setDirty(true);
+      persistSave(recorded.save, { checkpointId: `tutorial:${event.checkpointId}` });
+    } catch (error) {
+      setSaveNotice({ kind: "error", message: error?.message ?? "That tutorial step could not be saved." });
+    }
+  }
+
+  function exitDuel(trainerId) {
+    const trainer = TRAINERS[trainerId];
+    if (trainer?.id === ACADEMY_MENTOR_ID && !duelResultRef.current) {
+      const current = saveRef.current ?? gameSave;
+      if (current) {
+        try {
+          recordPracticeDuelResult(current, "exited");
+        } catch {
+          // Exiting is always safe; malformed recovery is handled on the next load.
+        }
+      }
+      setPostDuelConversation({ trainerId, index: 0, mode: "practiceExit" });
+    }
+    setActiveTrainerId(null);
+  }
+
+  function acknowledgeFieldNote() {
+    const current = saveRef.current ?? gameSave;
+    if (!current) {
+      setFieldNoteOpen(false);
+      return;
+    }
+    try {
+      const reviewed = recordBoatSafetyReview(current);
+      if (reviewed.applied) {
+        saveRef.current = reviewed.save;
+        setGameSave(reviewed.save);
+        setDirty(true);
+        persistSave(reviewed.save, { checkpointId: "boat-safety-reviewed" });
+      }
+      setFieldNoteOpen(false);
+    } catch (error) {
+      setSaveNotice({
+        kind: "error",
+        message: error?.message ?? "The safety review could not be saved.",
+      });
+    }
+  }
+
+  function handleConversationPrimary() {
+    if (!conversation) return;
+    const trainer = TRAINERS[conversation.trainerId];
+    if (!trainer) return;
+    if (trainer.id !== ACADEMY_MENTOR_ID) {
+      if (conversation.mode === "victory" || conversation.mode === "onboardingGate") closeConversation();
+      else startDuel();
+      return;
+    }
+
+    if (conversation.mode === "intro") {
+      setConversation({ trainerId: trainer.id, index: 0, mode: "starterPresentation" });
+      return;
+    }
+    if (conversation.mode === "starterPresentation") {
+      openStarterSelection();
+      return;
+    }
+    if (conversation.mode === "victory" || conversation.mode === "boatSafety") {
+      setConversation(null);
+      setFieldNoteOpen(true);
+      return;
+    }
+    startDuel();
+  }
+
+  function conversationPrimaryLabel() {
+    if (!conversation) return "Continue";
+    const trainer = TRAINERS[conversation.trainerId];
+    if (trainer?.id !== ACADEMY_MENTOR_ID) {
+      if (conversation.mode === "victory") return "Continue exploring";
+      if (conversation.mode === "onboardingGate") return "Return to the academy";
+      return defeated.has(trainer?.encounterId) ? "Rematch" : "Start duel";
+    }
+    if (conversation.mode === "intro") return "Meet the starter decks";
+    if (conversation.mode === "starterPresentation") return "Choose your starter";
+    if (conversation.mode === "victory") return "Read your Field Note";
+    if (conversation.mode === "boatSafety") return "Open the safety Field Note";
+    if (conversation.mode === "practiceLoss" || conversation.mode === "practiceRetry") return "Try again";
+    if (conversation.mode === "practiceExit") return "Resume the lesson";
+    if (conversation.mode === "rematch") return "Practice again";
+    return "Begin live tutorial";
   }
 
   function claimSaveSlotAndSave(current, overwriteConfirmed = false) {
@@ -955,7 +1295,10 @@ export default function AdventureGame() {
     saveRef.current = null;
     setConversation(null);
     setActiveTrainerId(null);
-    setPostDuelTrainerId(null);
+    setPostDuelConversation(null);
+    setStarterSelectionOpen(false);
+    setSelectedStarterId(null);
+    setFieldNoteOpen(false);
     setShowCompletion(false);
     setPauseOpen(false);
     setConfirmation(null);
@@ -996,6 +1339,11 @@ export default function AdventureGame() {
     clearMovement();
     if (confirmation) {
       setConfirmation(null);
+    } else if (starterSelectionOpen) {
+      setStarterSelectionOpen(false);
+      setSelectedStarterId(null);
+    } else if (fieldNoteOpen) {
+      setFieldNoteOpen(false);
     } else if (conversation) {
       closeConversation();
     } else if (showCompletion) {
@@ -1067,7 +1415,7 @@ export default function AdventureGame() {
   }, []);
 
   useEffect(() => {
-    if (screen !== "playing" || pauseOpen || confirmation || !pageVisible) return undefined;
+    if (screen !== "playing" || pauseOpen || confirmation || starterSelectionOpen || fieldNoteOpen || !pageVisible) return undefined;
     const timer = window.setInterval(() => {
       if (!pageVisibleRef.current) return;
       setGameSave((current) => {
@@ -1082,7 +1430,7 @@ export default function AdventureGame() {
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [confirmation, pageVisible, pauseOpen, screen, setDirty]);
+  }, [confirmation, fieldNoteOpen, pageVisible, pauseOpen, screen, setDirty, starterSelectionOpen]);
 
   useEffect(() => {
     function saveWhenHidden() {
@@ -1143,18 +1491,36 @@ export default function AdventureGame() {
 
   if (activeTrainerId) {
     const trainer = TRAINERS[activeTrainerId];
+    const isAcademyPractice = trainer.id === ACADEMY_MENTOR_ID;
     return (
       <Simulator
         key={`reefbound-${trainer.id}`}
         storyMode={{
           encounterId: trainer.encounterId,
           opponentId: trainer.id,
-          playerDeckId: "coral-garden",
+          playerDeckId: gameSave?.player.activeDeckId ?? gameSave?.player.starterDeckId ?? "coral-garden",
           opponentDeckId: trainer.deckId,
           victoryTarget: trainer.victoryTarget,
           difficulty: trainer.difficulty,
           opponentName: trainer.name,
-          onExit: () => setActiveTrainerId(null),
+          returnLabel: isAcademyPractice ? "Academy" : "Town",
+          ...(isAcademyPractice ? {
+            tutorial: {
+              contract: {
+                id: SHELLSHORE_TUTORIAL.id,
+                title: "Professor Current's Live Lesson",
+                ordered: SHELLSHORE_TUTORIAL.ordered,
+                checkpoints: SHELLSHORE_TUTORIAL.checkpoints,
+              },
+              initialProgress: gameSave?.tutorial,
+              onCheckpoint: recordSimulatorTutorialCheckpoint,
+              onRetry: () => {
+                duelResultRef.current = null;
+                setPostDuelConversation(null);
+              },
+            },
+          } : {}),
+          onExit: () => exitDuel(trainer.id),
           onResult: (result) => recordDuelResult(trainer.id, result),
         }}
       />
@@ -1171,11 +1537,49 @@ export default function AdventureGame() {
     : null;
   const mapThemeClass = sceneId === "town"
     ? styles.townMap
+    : sceneId === "academy-lab"
+      ? styles.academyLabMap
     : sceneId === "coral-home"
       ? styles.coralHomeMap
       : styles.deepHomeMap;
+  const questView = onboardingProgress.needsStarterSelection
+    ? {
+        title: "Choose your first SeaPals",
+        description: "Meet Professor Current in the academy lab and compare all three starter decks.",
+        value: 0,
+        total: 1,
+        label: "Starter choice waiting",
+      }
+    : !onboardingProgress.tutorialComplete
+      ? {
+          title: "Professor's live lesson",
+          description: onboardingProgress.readyForPracticeDuel
+            ? "All seven lesson actions are complete. Finish the friendly 10 VP practice duel."
+            : "Follow each real simulator action. Completed steps save automatically, even if you take a break.",
+          value: onboardingProgress.completedCheckpointCount,
+          total: onboardingProgress.checkpointCount,
+          label: `${onboardingProgress.completedCheckpointCount} / ${onboardingProgress.checkpointCount} lesson steps`,
+        }
+      : onboardingProgress.needsBoatSafetyReview
+        ? {
+            title: "Review your Harbor Field Note",
+            description: "Read Professor Current's boat-safety checklist before leaving the harbor.",
+            value: 0,
+            total: 1,
+            label: "Safety review waiting",
+          }
+        : {
+            title: "Meet the Reefkeepers",
+            description: "Enter both homes and win each resident's 10 VP duel.",
+            value: progress,
+            total: SHELLSHORE_ENCOUNTER_IDS.length,
+            label: `${progress} / ${SHELLSHORE_ENCOUNTER_IDS.length} crests earned`,
+          };
+  const activeStarter = onboardingProgress.starterDeckId
+    ? getAdventureStarterDeck(onboardingProgress.starterDeckId)
+    : null;
   const explorationBlocked = Boolean(
-    pauseOpen || confirmation || activeConversationTrainer || showCompletion,
+    pauseOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || showCompletion,
   );
 
   return (
@@ -1213,12 +1617,12 @@ export default function AdventureGame() {
       <div className={styles.gameLayout} inert={explorationBlocked} aria-hidden={explorationBlocked || undefined}>
         <aside className={styles.sidePanel}>
           <div className={styles.panelEyebrow}>Current quest</div>
-          <h2>Meet the Reefkeepers</h2>
-          <p>Enter both homes and win each resident&apos;s 10 VP duel.</p>
+          <h2>{questView.title}</h2>
+          <p>{questView.description}</p>
           <div className={styles.questProgress}>
-            <span style={{ width: `${(progress / 2) * 100}%` }} />
+            <span style={{ width: `${(questView.value / questView.total) * 100}%` }} />
           </div>
-          <strong>{progress} / 2 crests earned</strong>
+          <strong>{questView.label}</strong>
           <div className={styles.controlLegend}>
             <div><kbd>WASD</kbd><span>Walk</span></div>
             <div><kbd>↵</kbd><span>Interact</span></div>
@@ -1228,7 +1632,7 @@ export default function AdventureGame() {
         <section className={styles.stageColumn} aria-label={`${LOCATION_NAMES[sceneId]} game area`}>
           <div className={styles.interactionBar} aria-live="polite">
             <span className={interaction ? styles.readyDot : ""} />
-            {interactionLabel(interaction)}
+            {interactionLabel(interaction, sceneId)}
             {interaction ? <kbd>ENTER</kbd> : null}
           </div>
           <div
@@ -1274,6 +1678,25 @@ export default function AdventureGame() {
         </section>
 
         <aside className={`${styles.sidePanel} ${styles.trainerPanel}`}>
+          <div className={styles.panelEyebrow}>Academy record</div>
+          <div className={`${styles.trainerCard} ${onboardingProgress.tutorialComplete ? styles.trainerCardWon : ""}`}>
+            <span className={`${styles.miniPortrait} ${styles.portraitteal}`}>
+              <SpriteArtwork character={ACADEMY_MENTOR_ID} facing="down" portrait />
+            </span>
+            <span>
+              <strong>{activeStarter?.name ?? "Starter waiting"}</strong>
+              <small>{onboardingProgress.tutorialComplete ? "Academy lesson complete" : "Professor Current's lesson"}</small>
+              <em>{onboardingProgress.needsBoatSafetyReview
+                ? "Safety review waiting"
+                : onboardingProgress.tutorialComplete
+                  ? "Field Note reviewed"
+                  : `${onboardingProgress.completedCheckpointCount} / ${onboardingProgress.checkpointCount} steps`}</em>
+            </span>
+            <b>{onboardingProgress.tutorialComplete ? "\u2605" : "?"}</b>
+          </div>
+          {fieldNoteAvailable ? (
+            <button type="button" className={styles.fieldNoteButton} onClick={() => setFieldNoteOpen(true)}>Open Harbor Field Note</button>
+          ) : null}
           <div className={styles.panelEyebrow}>Village challengers</div>
           {SHELLSHORE_RESIDENT_TRAINERS.map((trainer) => {
             const won = defeated.has(trainer.encounterId);
@@ -1302,10 +1725,34 @@ export default function AdventureGame() {
           conversation={conversation}
           trainer={activeConversationTrainer}
           defeated={defeated.has(activeConversationTrainer.encounterId)}
-          blocked={Boolean(confirmation)}
+          blocked={Boolean(confirmation || starterSelectionOpen || fieldNoteOpen)}
+          primaryLabel={conversationPrimaryLabel()}
+          secondaryLabel={conversation.mode === "practiceLoss" || conversation.mode === "practiceExit" ? "Take a break" : "Not yet"}
           onAdvance={advanceConversation}
-          onChallenge={startDuel}
-          onClose={closeConversation}
+          onPrimary={handleConversationPrimary}
+          onSecondary={conversation.mode === "victory" || conversation.mode === "onboardingGate" ? null : closeConversation}
+        />
+      ) : null}
+      {starterSelectionOpen ? (
+        <StarterSelectionModal
+          starters={STARTER_DECKS}
+          selectedId={selectedStarterId}
+          blocked={Boolean(confirmation)}
+          onSelect={setSelectedStarterId}
+          onConfirm={requestStarterCommit}
+          onClose={() => {
+            setStarterSelectionOpen(false);
+            setSelectedStarterId(null);
+          }}
+        />
+      ) : null}
+      {fieldNoteOpen ? (
+        <FieldNoteModal
+          note={SHELLSHORE_FIELD_NOTE}
+          blocked={Boolean(confirmation)}
+          reviewRequired={onboardingProgress.needsBoatSafetyReview}
+          onAcknowledge={acknowledgeFieldNote}
+          onDismiss={() => setFieldNoteOpen(false)}
         />
       ) : null}
       {showCompletion ? (
@@ -1316,8 +1763,13 @@ export default function AdventureGame() {
           profileId={gameSave.profileId}
           notice={saveNotice}
           blocked={Boolean(confirmation)}
+          fieldNoteAvailable={fieldNoteAvailable}
           onResume={() => setPauseOpen(false)}
           onSave={manualSave}
+          onFieldNote={() => {
+            setPauseOpen(false);
+            setFieldNoteOpen(true);
+          }}
           onReturnTitle={returnToTitle}
           onRestart={requestRestart}
         />

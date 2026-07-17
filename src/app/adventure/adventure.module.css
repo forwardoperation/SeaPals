@@ -372,6 +372,7 @@
 
 /* Generated scene art and continuous character actors. */
 .townMap,
+.academyLabMap,
 .coralHomeMap,
 .deepHomeMap {
   background-position: center;
@@ -385,6 +386,11 @@
   background-image: url("/images/adventure/shellshore-village.png");
 }
 
+.academyLabMap {
+  background-color: #d7a362;
+  background-image: url("/images/adventure/shellshore-academy.png");
+}
+
 .coralHomeMap {
   background-color: #d9a165;
   background-image: url("/images/adventure/coral-cottage.png");
@@ -396,6 +402,7 @@
 }
 
 .townMap::before,
+.academyLabMap::before,
 .coralHomeMap::before,
 .deepHomeMap::before {
   content: "";
@@ -416,6 +423,17 @@
   );
   mix-blend-mode: screen;
   animation: waterGlint 3.6s linear infinite;
+}
+
+.academyLabMap::before {
+  inset: 13% 18% 33%;
+  border-radius: 18%;
+  background:
+    radial-gradient(circle at 18% 68%, rgba(125, 249, 255, 0.24), transparent 13%),
+    radial-gradient(circle at 82% 68%, rgba(125, 249, 255, 0.24), transparent 13%),
+    linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.16) 48%, transparent 70%);
+  mix-blend-mode: screen;
+  animation: aquariumGlint 3.8s ease-in-out infinite alternate;
 }
 
 .coralHomeMap::before {
@@ -510,6 +528,19 @@
   background-image: url("/images/adventure/dorian-sprites.png");
 }
 
+.academy-mentorSpriteArtwork {
+  --row-down: 0%;
+  --row-left: 33.333%;
+  --row-right: 66.667%;
+  --row-up: 100%;
+  left: 50%;
+  width: auto;
+  aspect-ratio: 4 / 3;
+  translate: -50% 0;
+  background-image: url("/images/adventure/academy-mentor-sprites.png");
+  background-size: 300% 400%;
+}
+
 .spriteFacingDown { --sprite-row: var(--row-down); }
 .spriteFacingLeft { --sprite-row: var(--row-left); }
 .spriteFacingRight { --sprite-row: var(--row-right); }
@@ -519,12 +550,24 @@
   animation: spriteWalk 440ms steps(1, end) infinite;
 }
 
+.academy-mentorSpriteArtwork.spriteWalking {
+  animation-name: professorSpriteWalk;
+}
+
 @keyframes spriteWalk {
   0% { background-position: 12% var(--sprite-row); transform: translateY(0); }
   25% { background-position: 50% var(--sprite-row); transform: translateY(-1.5%); }
   50% { background-position: 88% var(--sprite-row); transform: translateY(0); }
   75% { background-position: 50% var(--sprite-row); transform: translateY(-1.5%); }
   100% { background-position: 12% var(--sprite-row); transform: translateY(0); }
+}
+
+@keyframes professorSpriteWalk {
+  0% { background-position: 0% var(--sprite-row); transform: translateY(0); }
+  25% { background-position: 50% var(--sprite-row); transform: translateY(-1.5%); }
+  50% { background-position: 100% var(--sprite-row); transform: translateY(0); }
+  75% { background-position: 50% var(--sprite-row); transform: translateY(-1.5%); }
+  100% { background-position: 0% var(--sprite-row); transform: translateY(0); }
 }
 
 @keyframes spriteBreathe {
@@ -562,6 +605,11 @@
   left: -24%;
   width: 148%;
   height: 211.429%;
+}
+
+.academy-mentorSpriteArtwork.spritePortrait {
+  left: 50%;
+  width: auto;
 }
 
 .controlDock {
@@ -715,6 +763,27 @@
   cursor: pointer;
 }
 
+.fieldNoteButton {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  border-radius: 12px;
+  color: #422006;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 1000;
+  background: linear-gradient(135deg, #fef3c7, #fbbf24);
+  box-shadow: 0 3px 0 #a16207;
+  cursor: pointer;
+}
+
+.fieldNoteButton:hover,
+.fieldNoteButton:focus-visible {
+  filter: brightness(1.08);
+  outline: 3px solid #fde68a;
+  outline-offset: 2px;
+}
+
 .dialogueLayer,
 .introLayer {
   position: fixed;
@@ -760,6 +829,7 @@
 
 .portraitdeep { background-color: #c4b5fd; }
 .portraitcoral { background-color: #fecdd3; }
+.portraitteal { background-color: #a5f3fc; }
 
 .dialogueCopy {
   display: flex;
@@ -1182,6 +1252,317 @@
   margin-top: 20px;
 }
 
+.starterLayer,
+.fieldNoteLayer {
+  position: fixed;
+  z-index: 95;
+  inset: 0;
+  display: grid;
+  overflow-y: auto;
+  place-items: center;
+  padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  background: rgba(1, 10, 18, 0.84);
+  backdrop-filter: blur(12px);
+}
+
+.starterCard {
+  width: min(1180px, 100%);
+  margin: auto;
+  padding: 28px;
+  border: 2px solid rgba(103, 232, 249, 0.48);
+  border-radius: 26px;
+  color: #dff8ff;
+  background:
+    radial-gradient(circle at 50% 0, rgba(34, 211, 238, 0.18), transparent 38%),
+    linear-gradient(150deg, #0d3449, #071d2c);
+  box-shadow: 0 34px 110px rgba(0, 0, 0, 0.62);
+  animation: introIn 260ms ease-out;
+}
+
+.starterCard > h2 {
+  margin: 7px 0;
+  color: #fff;
+  font-size: clamp(27px, 4vw, 42px);
+}
+
+.starterCard > p {
+  max-width: 740px;
+  margin: 0;
+  color: #a8cad5;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.starterGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.starterOption {
+  display: flex;
+  min-width: 0;
+  min-height: 390px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 18px;
+  border: 2px solid rgba(148, 163, 184, 0.34);
+  border-radius: 20px;
+  color: #e6fbff;
+  font: inherit;
+  text-align: left;
+  background: rgba(2, 17, 28, 0.78);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.starterOption:hover,
+.starterOption:focus-visible,
+.starterSelected {
+  border-color: #67e8f9;
+  outline: 0;
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.18), 0 18px 44px rgba(0, 0, 0, 0.32);
+}
+
+.startercoral { background: linear-gradient(155deg, rgba(190, 24, 93, 0.28), rgba(2, 17, 28, 0.88) 52%); }
+.startermangrove { background: linear-gradient(155deg, rgba(22, 101, 52, 0.34), rgba(2, 17, 28, 0.88) 52%); }
+.starterblue { background: linear-gradient(155deg, rgba(29, 78, 216, 0.34), rgba(2, 17, 28, 0.88) 52%); }
+
+.starterHabitat {
+  color: #a5f3fc;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.starterOption > strong {
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.starterOption > em {
+  color: #fde68a;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.starterSummary {
+  min-height: 60px;
+  color: #bdd6df;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.starterPlayStyle {
+  padding: 7px 9px;
+  border-radius: 9px;
+  color: #cffafe;
+  font-size: 9px;
+  font-weight: 900;
+  text-align: center;
+  background: rgba(8, 145, 178, 0.18);
+}
+
+.metricList {
+  display: grid;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.metricRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #b7d5df;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.metricRow > span:last-child {
+  display: flex;
+  gap: 3px;
+}
+
+.metricRow i {
+  display: block;
+  width: 13px;
+  height: 6px;
+  border-radius: 99px;
+  background: #334155;
+}
+
+.metricRow i.metricFilled {
+  background: linear-gradient(90deg, #22d3ee, #5eead4);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+
+.starterStrengths {
+  color: #86efac;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.starterOption small {
+  margin-top: auto;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  color: #9fc3cf;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.starterOption small b { color: #fef3c7; }
+
+.starterActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.starterActions button,
+.fieldNoteCard > button {
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 2px solid #0f766e;
+  border-radius: 10px;
+  color: #042f2e;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 1000;
+  background: linear-gradient(135deg, #5eead4, #22d3ee);
+  box-shadow: 0 3px 0 #0f766e;
+  cursor: pointer;
+}
+
+.starterActions button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.starterActions button:hover:not(:disabled),
+.starterActions button:focus-visible:not(:disabled),
+.fieldNoteCard > button:hover,
+.fieldNoteCard > button:focus-visible {
+  filter: brightness(1.1);
+  outline: 3px solid #67e8f9;
+  outline-offset: 2px;
+}
+
+.fieldNoteCard {
+  width: min(760px, 100%);
+  margin: auto;
+  padding: clamp(22px, 4vw, 38px);
+  border: 8px double #0e7490;
+  border-radius: 18px;
+  color: #25313c;
+  background:
+    linear-gradient(rgba(8, 145, 178, 0.065) 1px, transparent 1px) 0 58px / 100% 28px,
+    #fffdf1;
+  box-shadow: 0 34px 110px rgba(0, 0, 0, 0.62);
+  animation: introIn 260ms ease-out;
+}
+
+.fieldNoteCard header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #99d6d9;
+}
+
+.noteCloseIcon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 2px solid #0e7490;
+  border-radius: 50%;
+  color: #0e7490;
+  font: inherit;
+  font-size: 25px;
+  font-weight: 900;
+  background: #ecfeff;
+  cursor: pointer;
+}
+
+.noteCloseIcon:hover,
+.noteCloseIcon:focus-visible {
+  outline: 3px solid #67e8f9;
+  outline-offset: 2px;
+  background: #cffafe;
+}
+
+.fieldNoteEyebrow {
+  color: #0e7490;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.fieldNoteCard h2 {
+  margin: 5px 0 0;
+  color: #164e63;
+  font-size: clamp(25px, 5vw, 40px);
+  line-height: 1.08;
+}
+
+.fieldNoteSummary {
+  margin: 18px 0;
+  padding: 14px;
+  border-left: 5px solid #0e7490;
+  color: #164e63;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.55;
+  background: rgba(207, 250, 254, 0.68);
+}
+
+.fieldNoteCard section { margin-top: 18px; }
+.fieldNoteCard h3 { margin: 0 0 8px; color: #0f766e; font-size: 17px; }
+.fieldNoteCard ul { display: grid; gap: 7px; margin: 0; padding-left: 21px; }
+.fieldNoteCard li { padding-left: 4px; font-size: 12px; line-height: 1.5; }
+
+.safetyPanel {
+  padding: 15px;
+  border: 2px solid #f59e0b;
+  border-radius: 13px;
+  background: rgba(254, 243, 199, 0.84);
+}
+
+.safetyPanel h3 { color: #92400e; }
+
+.fieldNoteCard dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.fieldNoteCard dl > div {
+  padding: 10px;
+  border: 1px solid #99d6d9;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.fieldNoteCard dt { color: #0e7490; font-size: 11px; font-weight: 1000; }
+.fieldNoteCard dd { margin: 4px 0 0; font-size: 10px; line-height: 1.45; }
+.fieldNoteCard > button { display: block; margin: 24px 0 0 auto; }
+
 .saveToast {
   position: relative;
   z-index: 6;
@@ -1300,6 +1681,25 @@
   .confirmCard { padding: 22px 18px; }
   .confirmActions { flex-direction: column; }
 
+  .starterLayer,
+  .fieldNoteLayer {
+    padding:
+      calc(9px + env(safe-area-inset-top))
+      calc(9px + env(safe-area-inset-right))
+      calc(9px + env(safe-area-inset-bottom))
+      calc(9px + env(safe-area-inset-left));
+  }
+  .starterCard { padding: 20px 13px; border-radius: 18px; }
+  .starterGrid { grid-template-columns: minmax(0, 1fr); }
+  .starterOption { min-height: 0; }
+  .starterSummary { min-height: 0; }
+  .starterActions { flex-direction: column-reverse; }
+  .starterActions button { width: 100%; }
+  .fieldNoteCard { padding: 20px 15px; border-width: 5px; }
+  .noteCloseIcon { width: 44px; height: 44px; }
+  .fieldNoteCard dl { grid-template-columns: minmax(0, 1fr); }
+  .fieldNoteCard > button { width: 100%; }
+
   .introControls {
     flex-direction: column;
     align-items: center;
@@ -1338,7 +1738,10 @@
   .actionCue,
   .dialogueBox,
   .introCard,
+  .starterCard,
+  .fieldNoteCard,
   .townMap::before,
+  .academyLabMap::before,
   .coralHomeMap::before,
   .deepHomeMap::before {
     animation: none;

@@ -14,6 +14,9 @@ test("new sessions begin the Shellshore quest in one of three explicit profiles"
   const save = createNewAdventureSession("profile-2");
   assert.equal(save.profileId, "profile-2");
   assert.equal(save.progression.quests[SHELLSHORE_QUEST_ID].status, "active");
+  assert.equal(save.world.sceneId, "academy-lab");
+  assert.deepEqual(save.world.position, { x: 6, y: 7 });
+  assert.equal(save.world.facing, "up");
 });
 
 test("scene transitions persist a safe position and a meaningful quest flag", () => {

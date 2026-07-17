@@ -20,6 +20,32 @@ export const REQUIRED_DIALOGUE_BEATS = Object.freeze([
   "callback",
 ]);
 
+export const ADVENTURE_STARTER_DECK_IDS = Object.freeze([
+  "coral-garden",
+  "murky-water",
+  "blue-water",
+]);
+
+export const REQUIRED_TUTORIAL_ACTION_TYPES = Object.freeze([
+  "match-ready",
+  "rp-collected",
+  "card-drawn",
+  "card-built",
+  "attack-resolved",
+  "turn-ended",
+  "vp-earned",
+]);
+
+export const REQUIRED_TUTORIAL_CHECKPOINT_IDS = Object.freeze([
+  "tutorial-setup",
+  "tutorial-collect-rp",
+  "tutorial-draw-card",
+  "tutorial-build-card",
+  "tutorial-attack",
+  "tutorial-end-turn",
+  "tutorial-earn-vp",
+]);
+
 const npcRoleDefinitions = [
   { id: "mentor", purpose: "Introduces SeaPals, starter choice, and safe field practice." },
   { id: "local-guide", purpose: "Frames what has changed without supplying the answer." },
@@ -39,6 +65,10 @@ const towns = [
     habitatId: "harbor-lagoon",
     startSceneId: "town",
     dockId: "shellshore-dock",
+    academySceneId: "academy-lab",
+    mentorNpcId: "academy-mentor",
+    tutorialId: "tutorial-shellshore-live-basics",
+    starterDeckIds: [...ADVENTURE_STARTER_DECK_IDS],
     questIds: ["quest-shellshore-first-voyage"],
     encounterIds: [
       "encounter-shellshore-mentor-practice",
@@ -180,7 +210,7 @@ const shellshoreRuntimeScenes = {
     theme: "sunlit-reef",
     tiles: [
       "tttttttttttttttt",
-      "ttttttttpttttttt",
+      "ttttssssSssstttt",
       "ttttttttpttttttt",
       "tttccCccpddDdddt",
       "ttttgpgtptgpgttt",
@@ -193,6 +223,13 @@ const shellshoreRuntimeScenes = {
     spawn: { x: 7, y: 8 },
     startFacing: "up",
     interactions: [
+      {
+        id: "interaction-town-enter-academy",
+        type: "enter",
+        at: { x: 8, y: 1 },
+        targetScene: "academy-lab",
+        spawn: { x: 6, y: 7 },
+      },
       {
         id: "interaction-town-enter-coral-home",
         type: "enter",
@@ -277,13 +314,48 @@ const shellshoreRuntimeScenes = {
       },
     ],
   },
+  "academy-lab": {
+    name: "Shellshore Academy Lab",
+    worldKind: "interior",
+    theme: "academy-lab",
+    tiles: [
+      "wwwwwwwwwwwwww",
+      "wwwwwwwwwwwwww",
+      "waaffffnffffaw",
+      "waafffffffffaw",
+      "wfffrrrrrrfffw",
+      "wfffrrrrrrfffw",
+      "wfffaaffaafffw",
+      "wffffffffffffw",
+      "wwwwwwEwwwwwww",
+    ],
+    spawn: { x: 6, y: 7 },
+    interactions: [
+      {
+        id: "interaction-academy-mentor",
+        type: "trainer",
+        at: { x: 7, y: 2 },
+        trainerId: "academy-mentor",
+        npcId: "academy-mentor",
+        conversationId: "conversation-shellshore-academy-mentor",
+        encounterId: "encounter-shellshore-mentor-practice",
+      },
+      {
+        id: "interaction-academy-exit",
+        type: "exit",
+        at: { x: 6, y: 8 },
+        targetScene: "town",
+        spawn: { x: 8, y: 2 },
+      },
+    ],
+  },
 };
 
 const scenes = [
   { id: "town", townId: "shellshore-village", kind: "exterior", status: "prototype", world: shellshoreRuntimeScenes.town },
   { id: "coral-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["coral-home"] },
   { id: "deep-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["deep-home"] },
-  { id: "academy-lab", townId: "shellshore-village", kind: "interior", status: "planned" },
+  { id: "academy-lab", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["academy-lab"] },
   { id: "sunpatch-cay-town", townId: "sunpatch-cay", kind: "exterior", status: "planned" },
   { id: "brackwater-landing-town", townId: "brackwater-landing", kind: "exterior", status: "planned" },
   { id: "current-commons-town", townId: "current-commons", kind: "exterior", status: "planned" },
@@ -304,6 +376,50 @@ const docks = [
 ];
 
 const conversations = [
+  {
+    id: "conversation-shellshore-academy-mentor",
+    townId: "shellshore-village",
+    npcId: "academy-mentor",
+    lines: {
+      intro: [
+        "Welcome to Shellshore Academy! I'm Professor Marlow Current, and I study how ocean neighbors share their homes.",
+        "First, choose a starter deck that fits how you like to play. Then we'll learn SeaPals together, one move at a time.",
+      ],
+      rematch: [
+        "A good field scientist practices, checks their notes, and tries again.",
+        "We can replay the lesson or have another friendly 10 VP practice duel whenever you like.",
+      ],
+      victory: [
+        "You did it! You built an ecosystem, made careful choices, and reached 10 VP.",
+        "Your first Field Note is ready. Before we visit another island, let's review how to keep you, your boat, and wildlife safe.",
+      ],
+      starterPresentation: [
+        "Coral Garden grows a busy reef, Murky Water adapts to a changing estuary, and Blue Water follows life across the open ocean.",
+        "Every starter is a complete 60-card deck and can finish the whole voyage. Pick the strategy that sounds most fun to you.",
+      ],
+      starterConfirmed: [
+        "Excellent choice. This deck is yours for the voyage, so let's learn what its cards can do.",
+      ],
+      tutorialIntro: [
+        "I'll stay beside you while the live match begins. Follow each highlighted step: set up, collect RP, draw, build, attack, end your turn, and earn VP.",
+        "Nothing bad happens if you make a different move. The current step stays visible so you can try it when you're ready.",
+      ],
+      practiceLoss: [
+        "That match taught us something useful. Your deck is still safe, and losing never takes away progress.",
+        "Review the lesson steps, try the practice duel again, or step outside for a break.",
+      ],
+      practiceExit: [
+        "A smart explorer knows when to pause. Your completed lesson steps are saved, and we can continue when you're ready.",
+      ],
+      practiceRetry: [
+        "Let's try again. Watch your RP, build a few helpful relationships, and look for a safe path to 10 VP.",
+      ],
+      boatSafety: [
+        "Before leaving the harbor, wear your life jacket, check the weather, and tell the dock team your route.",
+        "Slow down near animals and shallow habitats. Give wildlife space, follow marked channels, and bring every piece of gear home.",
+      ],
+    },
+  },
   {
     id: "conversation-shellshore-marina",
     townId: "shellshore-village",
@@ -346,6 +462,18 @@ const conversations = [
 
 const npcs = [
   {
+    id: "academy-mentor",
+    townId: "shellshore-village",
+    sceneId: "academy-lab",
+    roleId: "mentor",
+    name: "Professor Marlow Current",
+    title: "Harbor Ecologist",
+    color: "teal",
+    crest: "Harbor Star",
+    conversationId: "conversation-shellshore-academy-mentor",
+    encounterId: "encounter-shellshore-mentor-practice",
+  },
+  {
     id: "marina",
     townId: "shellshore-village",
     sceneId: "coral-home",
@@ -369,6 +497,110 @@ const npcs = [
     conversationId: "conversation-shellshore-dorian",
     encounterId: "encounter-shellshore-dorian",
   },
+];
+
+const starterDecks = [
+  {
+    id: "coral-garden",
+    deckId: "coral-garden",
+    name: "Coral Garden",
+    habitat: "Coral Reef",
+    color: "coral",
+    tagline: "Grow a lively reef together.",
+    summary: "Build sturdy coral homes, connect reef neighbors, and turn a thriving community into VP.",
+    playStyle: "Patient building and creature teamwork",
+    difficulty: "beginner",
+    strengths: ["Reliable habitats", "Connected creature bonuses", "Steady VP growth"],
+    watchFor: "Plan where each reef creature will live before spending RP.",
+    metrics: { offense: 3, defense: 4, economy: 4, consistency: 5, tempo: 3 },
+  },
+  {
+    id: "murky-water",
+    deckId: "murky-water",
+    name: "Murky Water",
+    habitat: "Estuary & Mangrove",
+    color: "mangrove",
+    tagline: "Adapt as the water changes.",
+    summary: "Use flexible estuary species, clever card movement, and changing conditions to stay one step ahead.",
+    playStyle: "Flexible choices and resource control",
+    difficulty: "beginner",
+    strengths: ["Flexible responses", "Efficient RP use", "Strong recovery"],
+    watchFor: "Keep options in hand so you can answer the next change.",
+    metrics: { offense: 3, defense: 3, economy: 5, consistency: 4, tempo: 4 },
+  },
+  {
+    id: "blue-water",
+    deckId: "blue-water",
+    name: "Blue Water",
+    habitat: "Open Ocean",
+    color: "blue",
+    tagline: "Move quickly with the current.",
+    summary: "Gather open-ocean travelers, draw into new opportunities, and press the advantage with fast attacks.",
+    playStyle: "Quick draws and active attacking",
+    difficulty: "beginner",
+    strengths: ["Fast starts", "Extra card access", "Direct pressure"],
+    watchFor: "Balance quick attacks with enough RP to rebuild.",
+    metrics: { offense: 5, defense: 3, economy: 3, consistency: 4, tempo: 5 },
+  },
+];
+
+const tutorials = [
+  {
+    id: "tutorial-shellshore-live-basics",
+    townId: "shellshore-village",
+    sceneId: "academy-lab",
+    questId: "quest-shellshore-first-voyage",
+    mentorNpcId: "academy-mentor",
+    practiceEncounterId: "encounter-shellshore-mentor-practice",
+    completionRewardId: "reward-shellshore-tutorial",
+    fieldNoteId: "field-note-harbor-basics",
+    starterDeckIds: starterDecks.map((starter) => starter.id),
+    victoryTarget: 10,
+    ordered: true,
+    allowRetry: true,
+    allowExit: true,
+    resumePolicy: "last-completed-checkpoint",
+    checkpoints: [
+      { id: "tutorial-setup", actionType: "match-ready", title: "Ready your ecosystem", instruction: "Set out your deck, hand, RP bank, and play areas." },
+      { id: "tutorial-collect-rp", actionType: "rp-collected", title: "Collect RP", instruction: "Collect Resource Points (RP), the energy used to play cards." },
+      { id: "tutorial-draw-card", actionType: "card-drawn", title: "Draw a card", instruction: "Draw a card so you have a new option for this turn." },
+      { id: "tutorial-build-card", actionType: "card-built", title: "Build a card", instruction: "Spend RP to build a habitat, foundation, or creature." },
+      { id: "tutorial-attack", actionType: "attack-resolved", title: "Make an attack", instruction: "Choose a legal attacker and resolve one attack." },
+      { id: "tutorial-end-turn", actionType: "turn-ended", title: "End your turn", instruction: "End your turn after checking your hand, board, and RP." },
+      { id: "tutorial-earn-vp", actionType: "vp-earned", title: "Earn VP", instruction: "Earn Victory Points (VP) by growing a successful ecosystem." },
+    ],
+  },
+];
+
+const fieldNotes = [
+  {
+    id: "field-note-harbor-basics",
+    title: "Harbor Habitats & Safe Boating",
+    habitatId: "harbor-lagoon",
+    status: "prototype",
+    summary: "A habitat is an organism's home. An ecosystem includes living things, nonliving conditions, and the relationships among them.",
+    observations: [
+      "Shellshore Harbor contains several connected habitats, including rocky shore, dock pilings, shallow sand, and sheltered lagoon water.",
+      "Light, temperature, water movement, shelter, food, and other organisms can all shape where a species lives.",
+      "One observation is a clue, not a complete conclusion. Compare places and conditions before deciding what a pattern means.",
+    ],
+    safetyChecklist: [
+      "Wear a life jacket and check weather and route conditions before leaving the dock.",
+      "Tell the dock team your route and stay inside marked channels.",
+      "Slow down near wildlife and shallow habitat, keep a respectful distance, and bring all gear home.",
+    ],
+    glossary: [
+      { term: "Habitat", definition: "The place where an organism lives and finds what it needs." },
+      { term: "Ecosystem", definition: "Living things, nonliving conditions, and their relationships in a place." },
+      { term: "Observation", definition: "Information noticed or measured without guessing what caused it." },
+    ],
+  },
+  { id: "field-note-coral-observations", title: "Reading a Reef", habitatId: "coral-reef", status: "planned" },
+  { id: "field-note-estuary-conditions", title: "Changing Estuary Water", habitatId: "estuary-mangrove", status: "planned" },
+  { id: "field-note-current-connections", title: "Connected by Currents", habitatId: "open-ocean", status: "planned" },
+  { id: "field-note-kelp-food-web", title: "A Kelp Forest Food Web", habitatId: "kelp-forest", status: "planned" },
+  { id: "field-note-deep-adaptations", title: "Life in the Deep", habitatId: "deep-ocean-trench", status: "planned" },
+  { id: "field-note-archipelago-reflection", title: "Archipelago Reflections", habitatId: "archipelago-synthesis", status: "planned" },
 ];
 
 const learningPlans = {
@@ -481,7 +713,7 @@ const dialogues = [
 ];
 
 const encounters = [
-  { id: "encounter-shellshore-mentor-practice", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "practice", opponentId: "academy-mentor", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: "reward-shellshore-tutorial" },
+  { id: "encounter-shellshore-mentor-practice", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", tutorialId: "tutorial-shellshore-live-basics", role: "practice", opponentId: "academy-mentor", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: "reward-shellshore-tutorial" },
   { id: "encounter-shellshore-marina", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "marina", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: null },
   { id: "encounter-shellshore-dorian", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "dorian", opponentDeckId: "darkness-shroud", victoryTarget: 10, difficulty: "medium", rewardId: null },
   { id: "encounter-sunpatch-resident-gardener", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "resident", opponentId: "sunpatch-gardener", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: null },
@@ -567,6 +799,9 @@ export const ADVENTURE_CONTENT = Object.freeze({
   scenes,
   docks,
   conversations,
+  starterDecks,
+  tutorials,
+  fieldNotes,
   dialogues,
   quests,
   encounters,
@@ -604,6 +839,18 @@ export function getAdventureEncounter(encounterId, content = ADVENTURE_CONTENT) 
   return findContentById(content.encounters, encounterId);
 }
 
+export function getAdventureStarterDeck(starterDeckId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.starterDecks, starterDeckId);
+}
+
+export function getAdventureTutorial(tutorialId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.tutorials, tutorialId);
+}
+
+export function getAdventureFieldNote(fieldNoteId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.fieldNotes, fieldNoteId);
+}
+
 export function getRuntimeAdventureScenes(content = ADVENTURE_CONTENT) {
   return content.scenes.filter((scene) => scene.status === "prototype" && scene.world);
 }
@@ -634,6 +881,20 @@ export function resolveAdventureNpc(npcId, content = ADVENTURE_CONTENT) {
     ...npc,
     conversation: getAdventureConversation(npc.conversationId, content),
     encounter: getAdventureEncounter(npc.encounterId, content),
+  };
+}
+
+export function resolveAdventureTutorial(tutorialId, content = ADVENTURE_CONTENT) {
+  const tutorial = getAdventureTutorial(tutorialId, content);
+  if (!tutorial) return null;
+  return {
+    ...tutorial,
+    mentor: resolveAdventureNpc(tutorial.mentorNpcId, content),
+    practiceEncounter: getAdventureEncounter(tutorial.practiceEncounterId, content),
+    starterDecks: tutorial.starterDeckIds
+      .map((starterDeckId) => getAdventureStarterDeck(starterDeckId, content))
+      .filter(Boolean),
+    fieldNote: getAdventureFieldNote(tutorial.fieldNoteId, content),
   };
 }
 
