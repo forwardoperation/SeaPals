@@ -1766,42 +1766,227 @@ export default function Simulator({ storyMode = null } = {}) {
   const playingCard = playingCardId ? cardsById[playingCardId] : null;
   const inspectedCardData = inspectedCard ? cardsById[inspectedCard.cardId] : null;
   const selectedTutorialCard = selectedHandCard ? cardsById[selectedHandCard] : null;
-  const hasAffordableSetupFoundation = hand.some((cardId) => {
+  const inspectedCreatureSlot = inspectedCard?.owner === "player" && inspectedCard.coralId
+    ? playerCorals.find((coral) => coral.id === inspectedCard.coralId)?.slots.find((slot) => slot.id === inspectedCard.slotId)
+    : null;
+  const inspectedActionKey = inspectedCreatureSlot ? getSlotActionKey(inspectedCreatureSlot) : inspectedCard?.slotId;
+  const playerAttackOptions = tutorialContract ? [
+    ...playerCorals.flatMap((coral) => coral.slots.flatMap((slot) => slot.cardId ? [{
+      cardId: slot.cardId,
+      coralId: coral.id,
+      slotId: slot.id,
+      actionKey: getSlotActionKey(slot),
+    }] : [])),
+    ...playerReefCreatureInstances.map((instance, index) => ({
+      cardId: instance.cardId,
+      coralId: null,
+      slotId: getPlayerReefSlotId(index),
+      actionKey: getPlayerReefSlotId(index),
+    })),
+    ...playerOrphanCreatureInstances.map((instance, index) => ({
+      cardId: instance.cardId,
+      coralId: null,
+      slotId: getPlayerOrphanSlotId(index),
+      actionKey: getPlayerOrphanSlotId(index),
+    })),
+  ].flatMap((entry) => {
+    const card = cardsById[entry.cardId];
+    const attack = getBasicAttackEffect(card);
+    if (!card || !attack) return [];
+    const targetCount = getPlayerAttackTargets(card, attack).length;
+    let blockReason = "";
+    let blockType = null;
+    if (gameResult) {
+      blockType = "game-over";
+      blockReason = "The duel has already ended.";
+    } else if (playingCardId || searchContext || pendingCreatureAction) {
+      blockType = "interaction";
+      blockReason = "Finish the current card action first.";
+    } else if (usedAttackers.includes(entry.actionKey)) {
+      blockType = "used";
+      blockReason = `${card.name} has already used its action this turn.`;
+    } else if (turn < Number(actionCooldowns[entry.actionKey] ?? 0)) {
+      blockType = "cooldown";
+      blockReason = `${card.name} is unavailable this turn.`;
+    } else if (rp < Number(attack.actionCost ?? 0)) {
+      blockType = "rp";
+      blockReason = `${card.name}'s ${attack.actionName} costs ${Number(attack.actionCost ?? 0)} RP, but you have ${rp} RP.`;
+    } else if (!targetCount) {
+      blockType = "targets";
+      blockReason = `${card.name}'s ${attack.actionName} has no compatible target on Professor Current's board.`;
+    } else if (gamePhase !== "main") {
+      blockType = "phase";
+      blockReason = `${card.name} can only attack during your action phase.`;
+    }
+    return [{
+      ...entry,
+      cardName: card.name,
+      attackName: attack.actionName,
+      attackCost: Number(attack.actionCost ?? 0),
+      attackDice: attack.attackDice ?? null,
+      targetCount,
+      blockType,
+      blockReason,
+      ready: !blockReason,
+      readyAfterDraw: blockType === "phase",
+    }];
+  }) : [];
+  const readyAttack = playerAttackOptions.find((entry) => entry.ready) ?? null;
+  const plannedAttack = playerAttackOptions.find((entry) => entry.ready || entry.readyAfterDraw) ?? null;
+  const inspectedAttack = inspectedCard?.owner === "player"
+    ? playerAttackOptions.find((entry) => entry.actionKey === inspectedActionKey) ?? null
+    : null;
+  const attackSetupCards = tutorialContract ? hand.flatMap((cardId) => {
     const card = cardsById[cardId];
-    return isFoundationCard(card)
-      && Number(card.stage ?? 0) === 0
-      && getPlayerCardPlayCost(card) <= rp;
-  });
+    const attack = getBasicAttackEffect(card);
+    if (!card || !attack) return [];
+    const planningForMainPhase = gamePhase === "draw";
+    const playErrorMessage = getPlayError(card, { allowUpcomingMain: planningForMainPhase });
+    const targetCount = getPlayerAttackTargets(card, attack).length;
+    const playCost = getPlayerCardPlayCost(card);
+    const totalCost = playCost + Number(attack.actionCost ?? 0);
+    let blockType = null;
+    let blockReason = "";
+    if (playErrorMessage) {
+      blockType = "play";
+      blockReason = playErrorMessage;
+    } else if (!targetCount) {
+      blockType = "targets";
+      blockReason = `${attack.actionName} has no compatible target on Professor Current's board.`;
+    } else if (totalCost > rp) {
+      blockType = "rp";
+      blockReason = `Playing ${card.name} and using ${attack.actionName} requires ${totalCost} RP, but you have ${rp} RP.`;
+    }
+    return [{
+      cardId,
+      cardName: card.name,
+      kindLabel: getCardClassLabel(card),
+      cost: playCost,
+      victoryPoints: Number(card.victoryPoints ?? 0),
+      attackName: attack.actionName,
+      attackCost: Number(attack.actionCost ?? 0),
+      targetCount,
+      playError: playErrorMessage,
+      ready: gamePhase === "main" && !playErrorMessage && targetCount > 0 && totalCost <= rp,
+      readyAfterDraw: planningForMainPhase && !playErrorMessage && targetCount > 0 && totalCost <= rp,
+      blockType,
+      blockReason,
+    }];
+  }) : [];
+  const attackSetupCard = attackSetupCards.find((entry) => entry.ready) ?? null;
+  const plannedAttackSetupCard = attackSetupCards.find((entry) => entry.ready || entry.readyAfterDraw) ?? null;
+  const drawnCardIds = (turnDrawResult ?? []).filter((entry) => !entry.discarded).map((entry) => entry.cardId);
+  const playableBuildCards = tutorialContract ? hand.flatMap((cardId) => {
+    const card = cardsById[cardId];
+    if (!card || card.kind === CardKind.SUPPORT) return [];
+    const playErrorMessage = getPlayError(card);
+    if (playErrorMessage) return [];
+    return [{
+      cardId,
+      cardName: card.name,
+      kindLabel: getCardClassLabel(card),
+      cost: getPlayerCardPlayCost(card),
+      victoryPoints: Number(card.victoryPoints ?? 0),
+    }];
+  }) : [];
+  const recommendedBuildCard = playableBuildCards.find((entry) => drawnCardIds.includes(entry.cardId))
+    ?? playableBuildCards[0]
+    ?? null;
+  const firstBlockedBuildCard = tutorialContract
+    ? hand.map((cardId) => cardsById[cardId]).find((card) => card && card.kind !== CardKind.SUPPORT && getPlayError(card))
+    : null;
+  const buildBlockReason = firstBlockedBuildCard
+    ? `${firstBlockedBuildCard.name}: ${getPlayError(firstBlockedBuildCard)}`
+    : "";
+  const drawnCards = tutorialContract ? (turnDrawResult ?? []).map((entry) => {
+    const card = cardsById[entry.cardId];
+    const attack = getBasicAttackEffect(card);
+    const inHand = !entry.discarded && hand.includes(entry.cardId);
+    return {
+      cardId: entry.cardId,
+      name: card?.name ?? entry.cardId,
+      source: entry.source,
+      discarded: Boolean(entry.discarded),
+      inHand,
+      kindLabel: card ? getCardClassLabel(card) : "Card",
+      cost: card ? getPlayerCardPlayCost(card) : null,
+      victoryPoints: Number(card?.victoryPoints ?? 0),
+      playError: entry.discarded
+        ? "Discarded by the hand limit."
+        : !inHand
+          ? "It is no longer in your hand."
+          : getPlayError(card),
+      attack: attack ? {
+        name: attack.actionName,
+        cost: Number(attack.actionCost ?? 0),
+        dice: attack.attackDice ?? null,
+        targetCount: getPlayerAttackTargets(card, attack).length,
+      } : null,
+    };
+  }) : [];
+  const recentAttackSetupCard = attackSetupCards.find((entry) => drawnCardIds.includes(entry.cardId));
+  const attackBlock = playerAttackOptions.find((entry) => entry.blockReason)
+    ?? (recentAttackSetupCard?.blockReason ? recentAttackSetupCard : null)
+      ?? attackSetupCards.find((entry) => entry.blockReason)
+      ?? { blockType: "missing", blockReason: "No creature in your ecosystem or hand can make a legal attack yet." };
+  const attackBlockReason = attackBlock.blockReason;
+  const activeAttack = attackContext ? (() => {
+    const card = cardsById[attackContext.attackerCardId];
+    const attack = attackContext.attackOverride ?? getBasicAttackEffect(card);
+    return card && attack ? { cardId: card.id, cardName: card.name, attackName: attack.actionName } : null;
+  })() : null;
   const tutorialHelp = tutorialContract ? getSimulatorTutorialHelp(tutorialCurrentCheckpoint, {
     complete: tutorialProgress?.status === "complete",
     gamePhase,
     hasCoralInPlay,
-    hasAffordableSetupFoundation,
     playingCardId,
+    playingCardName: playingCard?.name,
     modal,
     selectedHandCard,
     selectedCardIsSupport: selectedTutorialCard?.kind === CardKind.SUPPORT,
+    selectedCardPlayError: selectedTutorialCard ? getPlayError(selectedTutorialCard) : "",
+    selectedCardIsSetupFoundation: Boolean(
+      selectedTutorialCard
+      && isFoundationCard(selectedTutorialCard)
+      && Number(selectedTutorialCard.stage ?? 0) === 0
+      && !getPlayError(selectedTutorialCard)
+    ),
     selectedCardName: selectedTutorialCard?.name,
     selectedCardCost: selectedTutorialCard ? getPlayerCardPlayCost(selectedTutorialCard) : null,
     selectedSupportLocksFurtherSupports: supportExplicitlyLocksFurtherSupports(selectedTutorialCard),
     handPopoverOpen: Boolean(handPopoverCardId),
-    inspectedPlayerCardHasAttack: Boolean(
-      inspectedCard?.owner === "player" && inspectedCardData && getBasicAttackEffect(inspectedCardData),
-    ),
+    inspectedAttack,
+    inspectedCardOpen: Boolean(inspectedCardData),
+    inspectedPlayerCard: inspectedCard?.owner === "player",
+    inspectedCardName: inspectedCardData?.name,
     attackContext: Boolean(attackContext),
+    activeAttack,
+    readyAttack,
+    plannedAttack,
+    attackSetupCard,
+    plannedAttackSetupCard,
+    attackBlock,
+    attackBlockReason,
+    recommendedBuildCard,
+    buildBlockReason,
+    drawnCards,
+    round,
     drawSelected: Number(turnDrawSelection?.foundation ?? 0) + Number(turnDrawSelection?.pals ?? 0),
     drawFoundationSelected: Number(turnDrawSelection?.foundation ?? 0),
     drawPalsSelected: Number(turnDrawSelection?.pals ?? 0),
     drawTarget: Number(turnDrawSelection?.target ?? 0),
+    foundationDeckCount: foundationDeck.length,
+    palsDeckCount: palsDeck.length,
   }) : null;
-  const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelp.id);
+  const tutorialHelpDismissalKey = tutorialHelp?.cueId ?? tutorialHelp?.id ?? null;
+  const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelpDismissalKey);
   const tutorialHelpInline = Boolean(
     tutorialHelpOpen
     && !eventOverlay
     && (
       ["turn-draw", "draw-result", "hand"].includes(modal)
-      || (inspectedCardData && tutorialHelp.target === "attack-button")
-      || (handPopoverCardId && ["play-card", "turn-button"].includes(tutorialHelp.target))
+      || (inspectedCardData && ["attack-button", "close-modal"].includes(tutorialHelp.target))
+      || (handPopoverCardId && ["play-card", "turn-button", "close-modal"].includes(tutorialHelp.target))
     ),
   );
   const tutorialHelpFloating = Boolean(
@@ -1817,12 +2002,18 @@ export default function Simulator({ storyMode = null } = {}) {
     && !gameResult,
   );
   const tutorialTargetClass = (target) => (
-    tutorialHelpOpen && tutorialHelp?.target === target ? " seapals-tutorial-target" : ""
+    tutorialHelpOpen
+      && tutorialHelp?.target === target
+      && !(target === "player-board" && tutorialHelp.targetActionKey)
+      ? " seapals-tutorial-target"
+      : ""
   );
-  const inspectedCreatureSlot = inspectedCard?.owner === "player" && inspectedCard.coralId
-    ? playerCorals.find((coral) => coral.id === inspectedCard.coralId)?.slots.find((slot) => slot.id === inspectedCard.slotId)
-    : null;
-  const inspectedActionKey = inspectedCreatureSlot ? getSlotActionKey(inspectedCreatureSlot) : inspectedCard?.slotId;
+  const tutorialCardTargetClass = (cardId) => (
+    tutorialHelpOpen && tutorialHelp?.targetCardId === cardId ? " seapals-tutorial-target" : ""
+  );
+  const tutorialActionTargetClass = (actionKey) => (
+    tutorialHelpOpen && tutorialHelp?.targetActionKey === actionKey ? " seapals-tutorial-target" : ""
+  );
   const isPlacingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) === 0);
   const isUpgradingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) > 0);
   const upgradeableCoralIds = new Set(
@@ -1841,6 +2032,24 @@ export default function Simulator({ storyMode = null } = {}) {
           .map((coral) => coral.id)
       : [],
   );
+
+  useEffect(() => {
+    if (!tutorialHelpOpen) return undefined;
+    if (tutorialHelp.target === "opponent-board") setMobileBoardView("opponent");
+    else if (tutorialHelp.target === "player-board" || tutorialHelp.targetActionKey) setMobileBoardView("player");
+
+    if (!tutorialHelp.targetCardId && !tutorialHelp.targetActionKey) return undefined;
+    const frame = requestAnimationFrame(() => {
+      const attribute = tutorialHelp.targetCardId ? "data-tutorial-hand-card-id" : "data-tutorial-action-key";
+      const value = tutorialHelp.targetCardId ?? tutorialHelp.targetActionKey;
+      const candidates = [...document.querySelectorAll(`[${attribute}]`)];
+      if (modal === "hand") candidates.reverse();
+      const target = candidates
+        .find((element) => element.getAttribute(attribute) === value && element.getClientRects().length > 0);
+      target?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [tutorialHelpDismissalKey, tutorialHelpOpen, tutorialHelp?.target, tutorialHelp?.targetCardId, tutorialHelp?.targetActionKey, modal, handPopoverCardId, mobileBoardView]);
 
   useEffect(() => {
     setHasDrawnThisTurn(false);
@@ -2013,11 +2222,11 @@ export default function Simulator({ storyMode = null } = {}) {
     return result.discount;
   }
 
-  function getPlayError(card) {
+  function getPlayError(card, { allowUpcomingMain = false } = {}) {
     if (!card) return "Select a card first.";
     if (gameResult) return "This game has ended. Start a new game to continue playing.";
     if (attackContext) return "Finish or cancel the current attack before playing another card.";
-    if (!isSetup && gamePhase !== "main") return "Cards can only be played during your action phase.";
+    if (!isSetup && gamePhase !== "main" && !allowUpcomingMain) return "Cards can only be played during your action phase.";
     if (isSetup && !(isFoundationCard(card) && Number(card.stage ?? 0) === 0)) {
       return "During setup, play a base Coral or Creature School before the first round begins.";
     }
@@ -3595,6 +3804,12 @@ export default function Simulator({ storyMode = null } = {}) {
       discardedCount: drawResult.cardsToDiscard.length,
       requested: turnDrawSelection.requested,
       shortfall: turnDrawSelection.shortfall,
+      cards: drawnCards.map((cardId, index) => ({
+        cardId,
+        cardName: cardsById[cardId]?.name ?? cardId,
+        source: index < foundationCards.length ? "Foundation" : "Pals",
+        discarded: index >= drawResult.cardsToHand.length,
+      })),
       accepted: true,
     }, { phase: "draw" });
     setFoundationDeck((current) => current.slice(foundationCards.length));
@@ -7670,7 +7885,7 @@ export default function Simulator({ storyMode = null } = {}) {
                 help={tutorialHelp}
                 step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
                 total={tutorialContract.checkpoints.length}
-                onDismiss={() => setTutorialHelpDismissedId(tutorialHelp.id)}
+                onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)}
               />
             </div>
           ) : null}
@@ -7919,14 +8134,14 @@ export default function Simulator({ storyMode = null } = {}) {
                             const targetSlotId = getPlayerReefSlotId(index);
                             const key = `player-${targetSlotId}`;
                             const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
-                            return <button key={playerReefCreatureInstances[index]?.instanceId ?? `${cardId}-${index}`} type="button" onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: targetSlotId })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card relative w-[120px] cursor-grab text-center active:cursor-grabbing"><InPlayHoverLabel card={card} zoom={ecosystemZoom} /><img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-xl bg-white object-contain" /><span className="mt-1 block truncate text-[10px] font-bold text-violet-950">{card?.name}</span></button>;
+                            return <button key={playerReefCreatureInstances[index]?.instanceId ?? `${cardId}-${index}`} type="button" data-tutorial-action-key={targetSlotId} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: targetSlotId })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card relative w-[120px] cursor-grab text-center active:cursor-grabbing${tutorialActionTargetClass(targetSlotId)}`}><InPlayHoverLabel card={card} zoom={ecosystemZoom} /><img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-xl bg-white object-contain" /><span className="mt-1 block truncate text-[10px] font-bold text-violet-950">{card?.name}</span></button>;
                           })}
                         </div>
                       ) : null}
                       {playerOrphanCreatures.length ? (
                         <div className="absolute right-6 top-48 z-30 flex max-w-[48%] flex-wrap gap-2 rounded-2xl border-2 border-dashed border-orange-400 bg-orange-50/95 p-3 shadow-lg">
                           <div className="absolute -top-3 right-3 rounded-full bg-orange-600 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-white">Orphaned — waiting for slots</div>
-                          {playerOrphanCreatures.map((entry, index) => { const card = cardsById[entry.cardId]; const hostedCount = (entry.hostedCardIds ?? []).filter(Boolean).length; return <button key={entry.instanceId ?? `${entry.cardId}-${index}`} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => setInspectedCard({ owner: "player", cardId: entry.cardId, coralId: null, slotId: getPlayerOrphanSlotId(index), orphanIndex: index })} className="seapals-in-play-card relative w-20 text-center"><InPlayHoverLabel card={card} zoom={ecosystemZoom} /><img src={card?.image} alt={card?.name} className="h-24 w-20 rounded-xl object-contain" /><span className="mt-1 block truncate text-[9px] font-bold text-orange-950">{card?.name}</span>{hostedCount ? <span className="absolute right-0 top-0 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[8px] font-black text-white">+{hostedCount}</span> : null}</button>; })}
+                          {playerOrphanCreatures.map((entry, index) => { const card = cardsById[entry.cardId]; const hostedCount = (entry.hostedCardIds ?? []).filter(Boolean).length; const targetSlotId = getPlayerOrphanSlotId(index); return <button key={entry.instanceId ?? `${entry.cardId}-${index}`} type="button" data-tutorial-action-key={targetSlotId} onPointerDown={(event) => event.stopPropagation()} onClick={() => setInspectedCard({ owner: "player", cardId: entry.cardId, coralId: null, slotId: targetSlotId, orphanIndex: index })} className={`seapals-in-play-card relative w-20 text-center${tutorialActionTargetClass(targetSlotId)}`}><InPlayHoverLabel card={card} zoom={ecosystemZoom} /><img src={card?.image} alt={card?.name} className="h-24 w-20 rounded-xl object-contain" /><span className="mt-1 block truncate text-[9px] font-bold text-orange-950">{card?.name}</span>{hostedCount ? <span className="absolute right-0 top-0 rounded-full bg-fuchsia-600 px-1.5 py-0.5 text-[8px] font-black text-white">+{hostedCount}</span> : null}</button>; })}
                         </div>
                       ) : null}
                       {playerCorals.map((coral) => {
@@ -8020,6 +8235,7 @@ export default function Simulator({ storyMode = null } = {}) {
                                       {slotFilled ? (
                                         <button
                                           type="button"
+                                          data-tutorial-action-key={getSlotActionKey(slot)}
                                           onPointerDown={(event) => validHostTarget ? event.stopPropagation() : handleSlotPointerDown(coral.id, slot.id, event)}
                                           onClick={(event) => {
                                             event.stopPropagation();
@@ -8033,7 +8249,7 @@ export default function Simulator({ storyMode = null } = {}) {
                                             }
                                             setInspectedCard({ owner: "player", cardId: slot.cardId, coralId: coral.id, slotId: slot.id });
                                           }}
-                                          className={`seapals-in-play-card relative h-full w-full rounded-[1.5rem] transition ${validHostTarget ? "cursor-pointer ring-4 ring-emerald-400" : "cursor-grab ring-cyan-400 hover:ring-4 active:cursor-grabbing"}`}
+                                          className={`seapals-in-play-card relative h-full w-full rounded-[1.5rem] transition ${validHostTarget ? "cursor-pointer ring-4 ring-emerald-400" : "cursor-grab ring-cyan-400 hover:ring-4 active:cursor-grabbing"}${tutorialActionTargetClass(getSlotActionKey(slot))}`}
                                           style={{ touchAction: "none" }}
                                         >
                                           <InPlayHoverLabel card={slotCard} zoom={ecosystemZoom} />
@@ -8138,7 +8354,7 @@ export default function Simulator({ storyMode = null } = {}) {
             <div className="flex items-center justify-between px-1 pb-2"><div><h3 className="text-sm font-black uppercase tracking-[0.16em] text-cyan-200">Your hand</h3><p className="text-xs text-slate-400">Click a card for details</p></div><span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-cyan-400/10 px-2 text-sm font-black text-cyan-200" aria-label={`${hand.length} cards in hand`}>{hand.length}</span></div>
             <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
               {hand.length ? hand.map((cardId, cardIndex) => { const card = cardsById[cardId]; const error = getPlayError(card); return (
-                <button key={`${cardId}-${cardIndex}`} type="button" onClick={() => { setSelectedHandCard(cardId); setHandPopoverCardId(cardId); setPlayError(""); }} className={`group grid w-full grid-cols-[3.6rem_minmax(0,1fr)_auto] items-center gap-2 rounded-xl border p-1.5 text-left transition hover:border-cyan-300/45 hover:bg-cyan-300/10 ${isSetup && !error ? "seapals-setup-playable-card border-emerald-300/60 bg-emerald-400/15" : "border-white/10 bg-white/5"}`}>
+                <button key={`${cardId}-${cardIndex}`} type="button" data-card-id={cardId} data-tutorial-hand-card-id={cardId} onClick={() => { setSelectedHandCard(cardId); setHandPopoverCardId(cardId); setPlayError(""); }} className={`group grid w-full grid-cols-[3.6rem_minmax(0,1fr)_auto] items-center gap-2 rounded-xl border p-1.5 text-left transition hover:border-cyan-300/45 hover:bg-cyan-300/10 ${isSetup && !error ? "seapals-setup-playable-card border-emerald-300/60 bg-emerald-400/15" : "border-white/10 bg-white/5"}${tutorialCardTargetClass(cardId)}`}>
                   <span className="seapals-card-art-well relative h-20 overflow-hidden rounded-md shadow"><img src={card?.image} alt={card?.name} className="h-full w-full object-contain" /></span>
                   <span className="min-w-0"><strong className="block truncate text-sm text-white">{card?.name}</strong><span className="mt-1 block truncate text-xs font-semibold text-slate-300">{getCardClassLabel(card)}</span><span className={`mt-1 block text-xs font-bold ${error ? "text-rose-300" : "text-emerald-300"}`}>{error ? "Unavailable" : "Ready to play"}</span></span>
                   <span className="rounded-full bg-emerald-400/10 px-2 py-1 text-xs font-black text-emerald-200">{getPlayerCardPlayCost(card)} RP</span>
@@ -8152,13 +8368,16 @@ export default function Simulator({ storyMode = null } = {}) {
           <>
             <button type="button" aria-label="Close hand card details" onClick={() => setHandPopoverCardId(null)} className="fixed inset-0 z-40 hidden bg-slate-950/25 xl:block" />
             <aside className="seapals-hud-panel fixed right-[21.5rem] top-1/2 z-50 hidden w-[24rem] max-w-[calc(100vw-23rem)] -translate-y-1/2 rounded-2xl border border-cyan-300/30 p-4 shadow-[0_28px_90px_rgba(0,0,0,.65)] xl:block" aria-label={`${handPopoverCard.name} details`}>
-              <div className="mb-3 flex items-start justify-between gap-3"><div><div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300">Card details</div><h3 className="text-lg font-black text-white">{handPopoverCard.name}</h3></div><button type="button" onClick={() => setHandPopoverCardId(null)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10">Close</button></div>
+              <div className="mb-3 flex items-start justify-between gap-3"><div><div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300">Card details</div><h3 className="text-lg font-black text-white">{handPopoverCard.name}</h3></div><button type="button" onClick={() => setHandPopoverCardId(null)} className={`rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal">Close</button></div>
+              {tutorialHelpInline && tutorialHelp.target === "close-modal" ? (
+                <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
+              ) : null}
               <div className="seapals-card-art-well rounded-xl border border-cyan-200/15 p-3 shadow-inner"><img src={handPopoverCard.image} alt={handPopoverCard.name} className="h-[46dvh] max-h-[420px] min-h-[250px] w-full object-contain" /></div>
               <div className="mt-3 flex flex-wrap gap-1.5 text-xs font-bold"><span className="rounded-full bg-cyan-400/15 px-2 py-1 text-cyan-200">{getCardClassLabel(handPopoverCard)}</span><span className="rounded-full bg-emerald-400/15 px-2 py-1 text-emerald-200">{getPlayerCardPlayCost(handPopoverCard)} RP</span>{Number(handPopoverCard.victoryPoints ?? 0) > 0 ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-amber-200">{handPopoverCard.victoryPoints} VP</span> : null}</div>
               {handPopoverCard.text ? <p className="mt-3 max-h-20 overflow-y-auto rounded-xl bg-slate-950/45 p-3 text-[11px] leading-relaxed text-slate-300">{handPopoverCard.text}</p> : null}
               {handPopoverPlayError ? <div className="mt-3 rounded-xl border border-rose-300/20 bg-rose-400/10 px-3 py-2 text-xs leading-relaxed text-rose-200">{handPopoverPlayError}</div> : null}
               {tutorialHelpInline && ["play-card", "turn-button"].includes(tutorialHelp.target) ? (
-                <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelp.id)} />
+                <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
               ) : null}
               <button type="button" disabled={Boolean(handPopoverPlayError)} onClick={() => { const cardId = handPopoverCardId; setHandPopoverCardId(null); playCardFromHand(cardId); }} className={`mt-3 w-full rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-950 shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:text-slate-300${tutorialTargetClass("play-card")}`} data-tutorial-target="play-card">Play card</button>
             </aside>
@@ -8196,8 +8415,13 @@ export default function Simulator({ storyMode = null } = {}) {
                 <div className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">{inspectedCard.foundation ? inspectedCard.owner === "player" ? "Your Foundation" : "Opponent Foundation" : inspectedCard.owner === "player" ? "Your Creature" : "Opponent Creature"}</div>
                 <h2 className="mt-1 text-2xl font-black text-white">{inspectedCardData.name}</h2>
               </div>
-              <button type="button" onClick={() => setInspectedCard(null)} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10">Close</button>
+              <button type="button" onClick={() => setInspectedCard(null)} className={`rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal">Close</button>
             </div>
+            {tutorialHelpInline && tutorialHelp.target === "close-modal" ? (
+              <div className="mt-4">
+                <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
+              </div>
+            ) : null}
             <img src={inspectedCardData.image} alt={inspectedCardData.name} className="mt-5 h-96 w-full rounded-3xl border border-white/10 bg-slate-950/45 object-contain" />
             <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold">
               <span className="rounded-full bg-cyan-400/15 px-3 py-1 text-cyan-200">{inspectedCardData.category}</span>
@@ -8291,7 +8515,7 @@ export default function Simulator({ storyMode = null } = {}) {
               </section>
             ) : null}
             {tutorialHelpInline && tutorialHelp.target === "attack-button" ? (
-              <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelp.id)} />
+              <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
             ) : null}
             {inspectedCard.owner === "player" && getBasicAttackEffect(inspectedCardData) ? (
               <button
@@ -8736,12 +8960,12 @@ export default function Simulator({ storyMode = null } = {}) {
                     else {
                       if (modal === "recover") setSearchContext(null);
                       if (modal === "draw-result") {
-                        setTurnDrawResult(null);
                         setModal(null);
                       } else setModal(null);
                     }
                   }}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold ${isDarkZoneModal ? "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-300 bg-slate-100 text-slate-700"}`}
+                  className={`rounded-full border px-4 py-2 text-sm font-semibold ${isDarkZoneModal ? "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-300 bg-slate-100 text-slate-700"}${tutorialTargetClass("close-modal")}`}
+                  data-tutorial-target="close-modal"
                 >
                   Close
                 </button> : null}
@@ -8749,7 +8973,7 @@ export default function Simulator({ storyMode = null } = {}) {
             </div>
 
             {tutorialHelpInline && modal ? (
-              <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelp.id)} />
+              <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
             ) : null}
 
             {modal === "turn-draw" ? (
@@ -8802,7 +9026,7 @@ export default function Simulator({ storyMode = null } = {}) {
                     return <div key={`${entry.cardId}-${index}`} className={`rounded-3xl border-2 p-3 text-center ${entry.discarded ? "border-rose-300/50 bg-rose-400/10" : "border-cyan-300/50 bg-cyan-400/10"}`}><img src={card?.image} alt={card?.name} className="h-72 w-full rounded-2xl bg-slate-950/45 object-contain" /><div className="mt-2 font-black text-white">{card?.name}</div><div className="text-xs font-bold uppercase tracking-wider text-cyan-100/60">{entry.source} Deck</div>{entry.discarded ? <div className="mt-1 text-xs font-bold text-rose-200">Discarded by hand limit</div> : null}</div>;
                   })}
                 </div>
-                <button type="button" onClick={() => { setTurnDrawResult(null); setModal(null); }} className={`mt-5 w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950${tutorialTargetClass("continue-actions")}`} data-tutorial-target="continue-actions">Continue to Actions</button>
+                <button type="button" onClick={() => setModal(null)} className={`mt-5 w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950${tutorialTargetClass("continue-actions")}`} data-tutorial-target="continue-actions">Continue to Actions</button>
               </div>
             ) : modal === "support-draw" ? (
               <div>
@@ -8835,13 +9059,14 @@ export default function Simulator({ storyMode = null } = {}) {
                             key={`${cardId}-${cardIndex}`}
                             type="button"
                             data-card-id={cardId}
+                            data-tutorial-hand-card-id={cardId}
                             onClick={() => {
                               setSelectedHandCard(cardId);
                               setPlayError("");
                             }}
                             className={`w-24 shrink-0 rounded-2xl border p-1.5 text-left transition lg:w-full lg:rounded-3xl lg:p-2 ${
                               isSetup && !getPlayError(card) ? "seapals-setup-playable-card border-emerald-300/60 bg-emerald-400/15" : selected ? "border-cyan-400 bg-cyan-400/15" : "border-white/10 bg-white/5 hover:border-cyan-300/40"
-                            }`}
+                            }${tutorialCardTargetClass(cardId)}`}
                           >
                             <img
                               src={card.image}
