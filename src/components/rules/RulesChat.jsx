@@ -125,9 +125,8 @@ export default function RulesChat() {
     ask(question);
   }
 
-  // The simulator owns the full viewport and supplies its own contextual game
-  // feedback. Keeping the global launcher here covers critical mobile actions.
-  if (pathname === "/simulator") return null;
+  // Full-screen game routes supply their own contextual controls and feedback.
+  if (pathname === "/simulator" || pathname.startsWith("/adventure")) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6">
