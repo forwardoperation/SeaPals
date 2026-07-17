@@ -73,11 +73,11 @@ limitation instead of inventing a rule.
   automatic gameplay consequence.
 - Complex companion effects on an otherwise supported attack resolve the documented
   attack portion and explicitly identify the remainder as unsupported.
-- Several original card-art files and the White Grunt rules are absent from the
-  repository. Every absent art reference now points directly to a bundled SeaPals
-  placeholder, avoiding failed requests and browser-console noise. Missing deck rules
-  are reported in the event feed and those copies are excluded instead of failing
-  silently.
+- Several original card-art files remain absent from the repository. Every absent art
+  reference points directly to a bundled SeaPals placeholder, avoiding failed requests
+  and browser-console noise. White Grunt now has supplied art and structured Creature
+  School rules; its printed three-school-stack maximum is not yet generically enforced,
+  though the starter decks contain only two copies and cannot exceed it.
 - Several advanced legacy Deep-card companion effects remain visible but explicitly
   marked as unsupported when their complete consequence cannot be derived without
   inventing rules.

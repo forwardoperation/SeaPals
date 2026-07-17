@@ -6,6 +6,7 @@
 | Genesis | Cleaner Wrasse | Fish |  |  | 2 | 2 |  |  | D4 |
 | Genesis | Picasso Triggerfish | Fish |  |  | 2 | 2 |  |  | D6 |
 | Genesis | Bluestriped Grunt | Fish |  |  | 1 | 1 |  |  | D4 |
+| Genesis | White Grunt | Fish | Creature School | Base | 2 |  | 30 | 30 |  |
 | Genesis | Frogfish | Fish |  |  | 2 | 2 |  |  | D6 |
 | Genesis | Clownfish | Fish |  |  | 2 | 2 |  |  | D4 |
 | Genesis | Boxfish | Fish |  |  | 2 | 2 |  |  | D4 |

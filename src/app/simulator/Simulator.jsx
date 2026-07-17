@@ -14,6 +14,7 @@ import { attackCanTargetCard, attackerHasDisadvantageFromMassive, canTargetInAtt
 import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
 import { OPPONENT_DIFFICULTY_OPTIONS, OpponentDifficulty, chooseOpponentPreferredDeck, getOpponentDifficultyProfile, limitOpponentOptionalActions, normalizeOpponentDifficulty, orderOpponentChoices, scaleOpponentThinkingDelay, selectOpponentChoice } from "./opponentDifficultyRules.mjs";
+import { createStoryDuelResult } from "./storyModeContract.mjs";
 import foundationDeckImg from "./images/foundation-deck.png";
 import palsDeckImg from "./images/pals-deck.png";
 
@@ -1333,7 +1334,7 @@ export default function Simulator({ storyMode = null } = {}) {
   const [attackContext, setAttackContext] = useState(null);
   const [searchContext, setSearchContext] = useState(null);
   const [gameResult, setGameResult] = useState(null);
-  const storyVictoryRecordedRef = useRef(false);
+  const storyResultRecordedRef = useRef(false);
   const [inspectedCard, setInspectedCard] = useState(null);
   const [eventOverlay, setEventOverlay] = useState(() => ({
     type: "new-game-setup",
@@ -1712,10 +1713,26 @@ export default function Simulator({ storyMode = null } = {}) {
   }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling]);
 
   useEffect(() => {
-    if (!isStoryMode || storyVictoryRecordedRef.current || !/^Victory:/i.test(String(gameResult ?? ""))) return;
-    storyVictoryRecordedRef.current = true;
-    storyMode?.onVictory?.();
-  }, [gameResult, isStoryMode, storyMode]);
+    if (!isStoryMode || storyResultRecordedRef.current || !gameResult) return;
+    const result = createStoryDuelResult({
+      encounterId: storyMode?.encounterId ?? `story:${storyOpponentDeckId}`,
+      opponentId: storyMode?.opponentId ?? storyMode?.encounterId ?? storyOpponentDeckId,
+      opponentName: storyOpponentName,
+      playerDeckId: storyPlayerDeckId,
+      opponentDeckId: storyOpponentDeckId,
+      victoryTarget: storyVictoryTarget,
+      difficulty: storyDifficulty,
+      playerVp,
+      opponentVp,
+      round,
+      turn,
+      message: gameResult,
+    });
+    storyResultRecordedRef.current = true;
+    storyMode?.onResult?.(result);
+    if (result.outcome === "victory") storyMode?.onVictory?.(result);
+    else storyMode?.onDefeat?.(result);
+  }, [gameResult, isStoryMode, opponentVp, playerVp, round, storyDifficulty, storyMode, storyOpponentDeckId, storyOpponentName, storyPlayerDeckId, storyVictoryTarget, turn]);
 
   useEffect(() => {
     if (!faceoffRolling || !["faceoff-ready", "school-attack-ready"].includes(eventOverlay?.type)) return;
@@ -7018,7 +7035,7 @@ export default function Simulator({ storyMode = null } = {}) {
   }
 
   function restartStoryGame() {
-    storyVictoryRecordedRef.current = false;
+    storyResultRecordedRef.current = false;
     restartGame(storyPlayerDeckId, storyOpponentDeckId, storyVictoryTarget, storyDifficulty);
   }
 

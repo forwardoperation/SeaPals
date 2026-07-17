@@ -1,4 +1,11 @@
-import { CardKind, CardCategory, EffectType, Timing, Zone } from "../types";
+import {
+  CardKind,
+  CardCategory,
+  CreatureSubtype,
+  EffectType,
+  Timing,
+  Zone,
+} from "../types";
 
 const requiresCoralReef = {
   id: "requires-coral-reef",
@@ -266,6 +273,61 @@ export const fishCards = [
     flavorText:
       "Grunts school tightly by day and roam seagrass beds to feed at night.",
     set: { id: "genesis", name: "Genesis", collectorNumber: null, totalInSet: null },
+  },
+
+  {
+    id: "white-grunt",
+    name: "White Grunt",
+    kind: CardKind.CREATURE,
+    category: CardCategory.FISH,
+    subtype: CreatureSubtype.BAITBALL,
+    image: "/images/cards/fish/Reef/white-grunt.png",
+    sortOrder: 203.5,
+
+    cost: { rp: 2 },
+    health: 30,
+    schoolDensity: 30,
+    stage: 0,
+    stageLabel: "Base",
+    prerelease: true,
+    tags: ["creature", "fish", "creature-school", "reef", "grunt", "base"],
+
+    bio: {
+      commonName: "White Grunt",
+      scientificName: "",
+      role: "Creature School",
+      region: "Caribbean",
+      length: "12\u2033",
+      weight: "3 lbs",
+    },
+
+    playRequirements: [],
+    specialRules: [
+      "You may only have three fish school stacks in your Ecosystem.",
+      "Fish schools may be targeted by any attack that can target fish. The attack does damage to HP by taking the attack dice result * 10.",
+    ],
+    passives: [
+      {
+        id: "eco-foundation",
+        name: "Eco Foundation",
+        text: "Collect 1 RP at the start of your turn.",
+        timing: Timing.START_OF_TURN,
+        effect: {
+          type: EffectType.GAIN_RESOURCE,
+          resource: "rp",
+          amount: 1,
+        },
+      },
+    ],
+    onPlay: [],
+    actions: [],
+    upgrade: {
+      canUpgrade: false,
+      nextCardId: null,
+    },
+    flavorText:
+      "They produce low, grunt sounds especially when disturbed or communicating in groups.",
+    set: { id: "genesis", name: "Genesis", collectorNumber: 96, totalInSet: 102 },
   },
 
   {

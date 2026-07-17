@@ -1,12 +1,6 @@
 export const CUSTOM_DECK_OPTION = "custom";
 export const DEFAULT_PREBUILT_DECK_ID = "blue-water";
 
-const unavailableCard = (cardId, unavailableName, quantity) => ({
-  cardId,
-  unavailableName,
-  quantity,
-});
-
 export const prebuiltDecks = [
   {
     id: "blue-water",
@@ -40,11 +34,11 @@ export const prebuiltDecks = [
       { cardId: "porcupine-fish", quantity: 1 },
       { cardId: "flounder", quantity: 2 },
       { cardId: "spanish-hogfish", quantity: 1 },
-      unavailableCard("white-grunt", "White Grunt", 2),
-      { cardId: "boulder-star-coral-base", quantity: 6 },
-      { cardId: "boulder-star-coral-stage-1", quantity: 5 },
-      { cardId: "boulder-star-coral-stage-2", quantity: 3 },
-      { cardId: "mustard-hill-coral-base", quantity: 2 },
+      { cardId: "white-grunt", quantity: 2 },
+      { cardId: "boulder-star-coral-base", quantity: 4 },
+      { cardId: "boulder-star-coral-stage-1", quantity: 4 },
+      { cardId: "boulder-star-coral-stage-2", quantity: 4 },
+      { cardId: "mustard-hill-coral-base", quantity: 4 },
       { cardId: "coral-reef", quantity: 1 },
     ],
   },
@@ -75,9 +69,9 @@ export const prebuiltDecks = [
       { cardId: "french-angelfish", quantity: 2 },
       { cardId: "spanish-hogfish", quantity: 2 },
       { cardId: "spectacled-parrotfish", quantity: 3 },
-      { cardId: "elkhorn-coral-base", quantity: 5 },
+      { cardId: "elkhorn-coral-base", quantity: 4 },
       { cardId: "elkhorn-coral-stage-1", quantity: 4 },
-      { cardId: "elkhorn-coral-stage-2", quantity: 3 },
+      { cardId: "elkhorn-coral-stage-2", quantity: 4 },
       { cardId: "lettuce-coral-base", quantity: 3 },
       { cardId: "lettuce-coral-stage-1", quantity: 2 },
       { cardId: "mustard-hill-coral-base", quantity: 1 },
@@ -247,7 +241,7 @@ export const prebuiltDecks = [
       { cardId: "reef-shark", quantity: 2 },
       { cardId: "great-barracuda", quantity: 2 },
       { cardId: "fairy-parrotfish", quantity: 1 },
-      unavailableCard("white-grunt", "White Grunt", 2),
+      { cardId: "white-grunt", quantity: 2 },
       { cardId: "spanish-hogfish", quantity: 1 },
       { cardId: "pillar-coral-base", quantity: 3 },
       { cardId: "brain-coral-base", quantity: 4 },
@@ -270,12 +264,12 @@ export const prebuiltDecks = [
       { cardId: "crab-trap", quantity: 2 },
       { cardId: "recovery", quantity: 2 },
       { cardId: "ocean-sunfish", quantity: 1 },
-      { cardId: "anemone", quantity: 3 },
+      { cardId: "anemone", quantity: 4 },
       { cardId: "mantis-shrimp", quantity: 2 },
       { cardId: "crown-of-thorns", quantity: 2 },
-      { cardId: "lionfish", quantity: 3 },
+      { cardId: "lionfish", quantity: 4 },
       { cardId: "frogfish", quantity: 2 },
-      { cardId: "clownfish", quantity: 6 },
+      { cardId: "clownfish", quantity: 4 },
       { cardId: "boxfish", quantity: 1 },
       { cardId: "porcupine-fish", quantity: 2 },
       { cardId: "flounder", quantity: 3 },

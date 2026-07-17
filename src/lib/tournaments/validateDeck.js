@@ -6,8 +6,8 @@ import {
   isFoundation,
 } from "./deckRules";
 
-export function validateDeck(deck, tournament) {
-  const rules = getTournamentDeckRules(tournament);
+export function validateGameDeck(deck, rulesProfile) {
+  const rules = getTournamentDeckRules(rulesProfile);
   const errors = [];
   const warnings = [];
 
@@ -17,14 +17,6 @@ export function validateDeck(deck, tournament) {
       errors: ["Deck is missing."],
       warnings,
     };
-  }
-
-  if (!deck.name && !deck.deckName) {
-    errors.push("Deck name is required.");
-  }
-
-  if (!deck.playerName) {
-    errors.push("Player name is required.");
   }
 
   if (!Array.isArray(deck.cards)) {
@@ -101,5 +93,28 @@ export function validateDeck(deck, tournament) {
     isValid: errors.length === 0,
     errors,
     warnings,
+  };
+}
+
+export function validateDeck(deck, tournament) {
+  const gameValidation = validateGameDeck(deck, tournament);
+  if (!deck) return gameValidation;
+
+  const submissionErrors = [];
+
+  if (!deck.name && !deck.deckName) {
+    submissionErrors.push("Deck name is required.");
+  }
+
+  if (!deck.playerName) {
+    submissionErrors.push("Player name is required.");
+  }
+
+  const errors = [...submissionErrors, ...gameValidation.errors];
+
+  return {
+    ...gameValidation,
+    isValid: errors.length === 0,
+    errors,
   };
 }

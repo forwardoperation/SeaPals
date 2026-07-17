@@ -1,0 +1,598 @@
+export const ADVENTURE_SAVE_SCHEMA_VERSION = 1;
+
+export const QUEST_STATUSES = Object.freeze([
+  "notStarted",
+  "active",
+  "readyToTurnIn",
+  "complete",
+]);
+
+export const QUEST_TRANSITIONS = Object.freeze({
+  notStarted: Object.freeze(["active"]),
+  active: Object.freeze(["readyToTurnIn"]),
+  readyToTurnIn: Object.freeze(["complete"]),
+  complete: Object.freeze([]),
+});
+
+export const TOURNAMENT_STATUSES = Object.freeze([
+  "locked",
+  "available",
+  "active",
+  "complete",
+]);
+
+export const ADVENTURE_START_LOCATION = Object.freeze({
+  townId: "shellshore-village",
+  sceneId: "town",
+  position: Object.freeze({ x: 7, y: 8 }),
+  facing: "up",
+  lastSafeDockId: "shellshore-dock",
+});
+
+const FACING_DIRECTIONS = new Set(["up", "down", "left", "right"]);
+const QUEST_STATUS_SET = new Set(QUEST_STATUSES);
+const TOURNAMENT_STATUS_SET = new Set(TOURNAMENT_STATUSES);
+const TEXT_SPEEDS = new Set(["slow", "normal", "fast", "instant"]);
+const IDENTIFIER_PATTERN = /^[a-z0-9]+(?:[._:-][a-z0-9]+)*$/;
+const MAX_IDENTIFIER_LENGTH = 128;
+const MAX_LABEL_LENGTH = 80;
+
+const LEGACY_TRAINER_IDS = Object.freeze(["marina", "dorian"]);
+
+export class AdventureSaveValidationError extends TypeError {
+  constructor(message) {
+    super(message);
+    this.name = "AdventureSaveValidationError";
+  }
+}
+
+function fail(path, message) {
+  throw new AdventureSaveValidationError(`${path} ${message}`);
+}
+
+function isRecord(value) {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function requireRecord(value, path, fallback) {
+  if (value === undefined && fallback !== undefined) return fallback;
+  if (!isRecord(value)) fail(path, "must be a plain object.");
+  return value;
+}
+
+function normalizeIdentifier(value, path, { nullable = false } = {}) {
+  if (nullable && value === null) return null;
+  if (typeof value !== "string") fail(path, `must be ${nullable ? "null or " : ""}a string identifier.`);
+
+  const normalized = value.trim();
+  if (!normalized) fail(path, "must not be empty.");
+  if (normalized.length > MAX_IDENTIFIER_LENGTH) {
+    fail(path, `must be at most ${MAX_IDENTIFIER_LENGTH} characters.`);
+  }
+  if (!IDENTIFIER_PATTERN.test(normalized)) {
+    fail(path, "must contain only lowercase letters, numbers, and single separators (., _, :, or -).");
+  }
+  return normalized;
+}
+
+function normalizeLabel(value, path) {
+  if (typeof value !== "string") fail(path, "must be a string.");
+  const normalized = value.trim();
+  if (!normalized) fail(path, "must not be empty.");
+  if (normalized.length > MAX_LABEL_LENGTH) fail(path, `must be at most ${MAX_LABEL_LENGTH} characters.`);
+  return normalized;
+}
+
+function normalizeNullableIdentifier(value, path, fallback = null) {
+  const candidate = value === undefined ? fallback : value;
+  return normalizeIdentifier(candidate, path, { nullable: true });
+}
+
+function normalizeBoolean(value, path, fallback) {
+  const candidate = value === undefined ? fallback : value;
+  if (typeof candidate !== "boolean") fail(path, "must be a boolean.");
+  return candidate;
+}
+
+function normalizeNonNegativeInteger(value, path, fallback = 0) {
+  const candidate = value === undefined ? fallback : value;
+  if (!Number.isSafeInteger(candidate) || candidate < 0) {
+    fail(path, "must be a non-negative safe integer.");
+  }
+  return candidate;
+}
+
+function normalizePosition(value, path, fallback) {
+  const record = requireRecord(value, path, fallback);
+  if (!Number.isFinite(record.x) || !Number.isFinite(record.y)) {
+    fail(path, "must contain finite x and y coordinates.");
+  }
+  return { x: record.x, y: record.y };
+}
+
+function normalizeIdentifierList(value, path, fallback = []) {
+  const candidate = value === undefined ? fallback : value;
+  if (!Array.isArray(candidate)) fail(path, "must be an array of identifiers.");
+
+  const seen = new Set();
+  const normalized = [];
+  for (let index = 0; index < candidate.length; index += 1) {
+    const identifier = normalizeIdentifier(candidate[index], `${path}[${index}]`);
+    if (!seen.has(identifier)) {
+      seen.add(identifier);
+      normalized.push(identifier);
+    }
+  }
+  return normalized;
+}
+
+function normalizeQuantityRecord(value, path, fallback = {}) {
+  const record = requireRecord(value, path, fallback);
+  const entries = [];
+
+  for (const [rawIdentifier, quantity] of Object.entries(record)) {
+    const identifier = normalizeIdentifier(rawIdentifier, `${path} key`);
+    if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+      fail(`${path}.${identifier}`, "must be a positive safe integer.");
+    }
+    entries.push([identifier, quantity]);
+  }
+
+  entries.sort(([left], [right]) => left.localeCompare(right));
+  return Object.fromEntries(entries);
+}
+
+function normalizeQuestFlag(value, path) {
+  if (value === null || typeof value === "boolean") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.length <= 256) return value;
+  fail(path, "must be a JSON scalar (null, boolean, finite number, or a string of at most 256 characters).");
+}
+
+function normalizeQuestFlags(value, path, fallback = {}) {
+  const record = requireRecord(value, path, fallback);
+  const entries = Object.entries(record).map(([rawIdentifier, flagValue]) => {
+    const identifier = normalizeIdentifier(rawIdentifier, `${path} key`);
+    return [identifier, normalizeQuestFlag(flagValue, `${path}.${identifier}`)];
+  });
+  entries.sort(([left], [right]) => left.localeCompare(right));
+  return Object.fromEntries(entries);
+}
+
+function normalizeQuestState(value, path) {
+  const record = requireRecord(value, path);
+  const status = record.status ?? "notStarted";
+  if (!QUEST_STATUS_SET.has(status)) fail(`${path}.status`, "is not a supported quest status.");
+
+  return {
+    status,
+    flags: normalizeQuestFlags(record.flags, `${path}.flags`),
+  };
+}
+
+function normalizeQuests(value, path, fallback = {}) {
+  const record = requireRecord(value, path, fallback);
+  const entries = Object.entries(record).map(([rawIdentifier, questState]) => {
+    const identifier = normalizeIdentifier(rawIdentifier, `${path} key`);
+    return [identifier, normalizeQuestState(questState, `${path}.${identifier}`)];
+  });
+  entries.sort(([left], [right]) => left.localeCompare(right));
+  return Object.fromEntries(entries);
+}
+
+function normalizeNpcStates(value, path, fallback = {}) {
+  const record = requireRecord(value, path, fallback);
+  const entries = Object.entries(record).map(([rawNpcId, rawStateId]) => {
+    const npcId = normalizeIdentifier(rawNpcId, `${path} key`);
+    const stateId = normalizeIdentifier(rawStateId, `${path}.${npcId}`);
+    return [npcId, stateId];
+  });
+  entries.sort(([left], [right]) => left.localeCompare(right));
+  return Object.fromEntries(entries);
+}
+
+function normalizeSavedDecks(value, path, fallback = {}) {
+  const record = requireRecord(value, path, fallback);
+  const entries = Object.entries(record).map(([rawDeckId, rawDeck]) => {
+    const deckId = normalizeIdentifier(rawDeckId, `${path} key`);
+    const deck = requireRecord(rawDeck, `${path}.${deckId}`);
+    return [deckId, {
+      name: normalizeLabel(deck.name, `${path}.${deckId}.name`),
+      cards: normalizeQuantityRecord(deck.cards, `${path}.${deckId}.cards`),
+    }];
+  });
+  entries.sort(([left], [right]) => left.localeCompare(right));
+  return Object.fromEntries(entries);
+}
+
+function createInitialState(profileId) {
+  return {
+    schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
+    profileId,
+    player: {
+      starterDeckId: null,
+      activeDeckId: null,
+    },
+    world: {
+      townId: ADVENTURE_START_LOCATION.townId,
+      sceneId: ADVENTURE_START_LOCATION.sceneId,
+      position: { ...ADVENTURE_START_LOCATION.position },
+      facing: ADVENTURE_START_LOCATION.facing,
+      lastSafeDockId: ADVENTURE_START_LOCATION.lastSafeDockId,
+      unlockedRouteIds: [],
+    },
+    progression: {
+      quests: {},
+      npcStates: {},
+      completedEncounterIds: [],
+      tideMarkIds: [],
+      tournament: {
+        status: "locked",
+        activeRoundId: null,
+        completedRoundIds: [],
+      },
+    },
+    inventory: {
+      cards: {},
+      unopenedPacks: {},
+      storyItems: {},
+      boatItems: {},
+    },
+    savedDecks: {},
+    tutorial: {
+      status: "notStarted",
+      completedStepIds: [],
+    },
+    fieldNotes: {
+      entryIds: [],
+    },
+    settings: {
+      textSpeed: "normal",
+      reducedMotion: false,
+      highContrast: false,
+      boatAutoSteer: false,
+    },
+    playtimeSeconds: 0,
+    rewardLedger: [],
+  };
+}
+
+/** Creates a new canonical schema-v1 save without reading time, storage, or random state. */
+export function createInitialAdventureSave(profileId) {
+  return createInitialState(normalizeIdentifier(profileId, "profileId"));
+}
+
+/**
+ * Converts a schema-v1 value into its canonical JSON shape. Missing v1 fields
+ * receive their launch defaults; malformed supplied fields are rejected.
+ */
+export function normalizeAdventureSave(value) {
+  const save = requireRecord(value, "save");
+  if (save.schemaVersion !== ADVENTURE_SAVE_SCHEMA_VERSION) {
+    fail("save.schemaVersion", `must equal ${ADVENTURE_SAVE_SCHEMA_VERSION}; migrate older saves first.`);
+  }
+
+  const profileId = normalizeIdentifier(save.profileId, "save.profileId");
+  const defaults = createInitialState(profileId);
+  const player = requireRecord(save.player, "save.player", defaults.player);
+  const world = requireRecord(save.world, "save.world", defaults.world);
+  const progression = requireRecord(save.progression, "save.progression", defaults.progression);
+  const tournament = requireRecord(
+    progression.tournament,
+    "save.progression.tournament",
+    defaults.progression.tournament,
+  );
+  const inventory = requireRecord(save.inventory, "save.inventory", defaults.inventory);
+  const tutorial = requireRecord(save.tutorial, "save.tutorial", defaults.tutorial);
+  const fieldNotes = requireRecord(save.fieldNotes, "save.fieldNotes", defaults.fieldNotes);
+  const settings = requireRecord(save.settings, "save.settings", defaults.settings);
+
+  const facing = world.facing ?? defaults.world.facing;
+  if (!FACING_DIRECTIONS.has(facing)) fail("save.world.facing", "must be up, down, left, or right.");
+
+  const tournamentStatus = tournament.status ?? defaults.progression.tournament.status;
+  if (!TOURNAMENT_STATUS_SET.has(tournamentStatus)) {
+    fail("save.progression.tournament.status", "is not a supported tournament status.");
+  }
+
+  const tutorialStatus = tutorial.status ?? defaults.tutorial.status;
+  if (!QUEST_STATUS_SET.has(tutorialStatus)) {
+    fail("save.tutorial.status", "is not a supported tutorial status.");
+  }
+
+  const textSpeed = settings.textSpeed ?? defaults.settings.textSpeed;
+  if (!TEXT_SPEEDS.has(textSpeed)) {
+    fail("save.settings.textSpeed", "must be slow, normal, fast, or instant.");
+  }
+
+  return {
+    schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
+    profileId,
+    player: {
+      starterDeckId: normalizeNullableIdentifier(
+        player.starterDeckId,
+        "save.player.starterDeckId",
+        defaults.player.starterDeckId,
+      ),
+      activeDeckId: normalizeNullableIdentifier(
+        player.activeDeckId,
+        "save.player.activeDeckId",
+        defaults.player.activeDeckId,
+      ),
+    },
+    world: {
+      townId: normalizeIdentifier(world.townId ?? defaults.world.townId, "save.world.townId"),
+      sceneId: normalizeIdentifier(world.sceneId ?? defaults.world.sceneId, "save.world.sceneId"),
+      position: normalizePosition(world.position, "save.world.position", defaults.world.position),
+      facing,
+      lastSafeDockId: normalizeIdentifier(
+        world.lastSafeDockId ?? defaults.world.lastSafeDockId,
+        "save.world.lastSafeDockId",
+      ),
+      unlockedRouteIds: normalizeIdentifierList(
+        world.unlockedRouteIds,
+        "save.world.unlockedRouteIds",
+        defaults.world.unlockedRouteIds,
+      ),
+    },
+    progression: {
+      quests: normalizeQuests(progression.quests, "save.progression.quests"),
+      npcStates: normalizeNpcStates(progression.npcStates, "save.progression.npcStates"),
+      completedEncounterIds: normalizeIdentifierList(
+        progression.completedEncounterIds,
+        "save.progression.completedEncounterIds",
+      ),
+      tideMarkIds: normalizeIdentifierList(progression.tideMarkIds, "save.progression.tideMarkIds"),
+      tournament: {
+        status: tournamentStatus,
+        activeRoundId: normalizeNullableIdentifier(
+          tournament.activeRoundId,
+          "save.progression.tournament.activeRoundId",
+          defaults.progression.tournament.activeRoundId,
+        ),
+        completedRoundIds: normalizeIdentifierList(
+          tournament.completedRoundIds,
+          "save.progression.tournament.completedRoundIds",
+        ),
+      },
+    },
+    inventory: {
+      cards: normalizeQuantityRecord(inventory.cards, "save.inventory.cards"),
+      unopenedPacks: normalizeQuantityRecord(
+        inventory.unopenedPacks,
+        "save.inventory.unopenedPacks",
+      ),
+      storyItems: normalizeQuantityRecord(inventory.storyItems, "save.inventory.storyItems"),
+      boatItems: normalizeQuantityRecord(inventory.boatItems, "save.inventory.boatItems"),
+    },
+    savedDecks: normalizeSavedDecks(save.savedDecks, "save.savedDecks"),
+    tutorial: {
+      status: tutorialStatus,
+      completedStepIds: normalizeIdentifierList(
+        tutorial.completedStepIds,
+        "save.tutorial.completedStepIds",
+      ),
+    },
+    fieldNotes: {
+      entryIds: normalizeIdentifierList(fieldNotes.entryIds, "save.fieldNotes.entryIds"),
+    },
+    settings: {
+      textSpeed,
+      reducedMotion: normalizeBoolean(
+        settings.reducedMotion,
+        "save.settings.reducedMotion",
+        defaults.settings.reducedMotion,
+      ),
+      highContrast: normalizeBoolean(
+        settings.highContrast,
+        "save.settings.highContrast",
+        defaults.settings.highContrast,
+      ),
+      boatAutoSteer: normalizeBoolean(
+        settings.boatAutoSteer,
+        "save.settings.boatAutoSteer",
+        defaults.settings.boatAutoSteer,
+      ),
+    },
+    playtimeSeconds: normalizeNonNegativeInteger(save.playtimeSeconds, "save.playtimeSeconds"),
+    rewardLedger: normalizeIdentifierList(save.rewardLedger, "save.rewardLedger"),
+  };
+}
+
+/** Returns a serializable validation result and, when valid, the canonical value. */
+export function validateAdventureSave(value) {
+  try {
+    return { valid: true, errors: [], value: normalizeAdventureSave(value) };
+  } catch (error) {
+    if (error instanceof AdventureSaveValidationError) {
+      return { valid: false, errors: [error.message], value: null };
+    }
+    throw error;
+  }
+}
+
+export function legacyEncounterId(trainerId) {
+  return `encounter-shellshore-${normalizeIdentifier(trainerId, "trainerId")}`;
+}
+
+function migrateV0(value, options) {
+  const profileId = value.profileId ?? options.profileId;
+  const migrated = createInitialAdventureSave(profileId);
+  const legacyLocation = isRecord(value.location) ? value.location : value;
+
+  migrated.world.sceneId = normalizeIdentifier(
+    legacyLocation.sceneId ?? migrated.world.sceneId,
+    "saveV0.sceneId",
+  );
+  migrated.world.position = normalizePosition(
+    legacyLocation.position,
+    "saveV0.position",
+    migrated.world.position,
+  );
+  const facing = legacyLocation.facing ?? migrated.world.facing;
+  if (!FACING_DIRECTIONS.has(facing)) fail("saveV0.facing", "must be up, down, left, or right.");
+  migrated.world.facing = facing;
+
+  const defeated = value.defeated === undefined ? [] : value.defeated;
+  if (!Array.isArray(defeated)) fail("saveV0.defeated", "must be an array of trainer identifiers.");
+  // The prototype silently ignored stale or malformed trainer entries. Keep
+  // that recovery behavior while still canonicalizing the known IDs.
+  const knownDefeated = [...new Set(defeated.filter(
+    (trainerId) => typeof trainerId === "string" && LEGACY_TRAINER_IDS.includes(trainerId),
+  ))];
+
+  migrated.progression.completedEncounterIds = knownDefeated.map(legacyEncounterId);
+  return normalizeAdventureSave(migrated);
+}
+
+/** Migrates the unversioned prototype shape (v0) or normalizes a v1 save. */
+export function migrateAdventureSave(value, options = {}) {
+  const save = requireRecord(value, "save");
+  const version = save.schemaVersion ?? 0;
+
+  if (version === ADVENTURE_SAVE_SCHEMA_VERSION) return normalizeAdventureSave(save);
+  if (version === 0) return migrateV0(save, requireRecord(options, "options", {}));
+  if (!Number.isSafeInteger(version) || version < 0) {
+    fail("save.schemaVersion", "must be a non-negative safe integer.");
+  }
+  fail(
+    "save.schemaVersion",
+    version > ADVENTURE_SAVE_SCHEMA_VERSION
+      ? `is newer than supported version ${ADVENTURE_SAVE_SCHEMA_VERSION}.`
+      : `has no migration path to version ${ADVENTURE_SAVE_SCHEMA_VERSION}.`,
+  );
+}
+
+export function transitionQuest(saveValue, questIdValue, nextStatus) {
+  const save = normalizeAdventureSave(saveValue);
+  const questId = normalizeIdentifier(questIdValue, "questId");
+  if (!QUEST_STATUS_SET.has(nextStatus)) fail("nextStatus", "is not a supported quest status.");
+
+  const current = save.progression.quests[questId] ?? { status: "notStarted", flags: {} };
+  if (current.status === nextStatus) return save;
+  if (!QUEST_TRANSITIONS[current.status].includes(nextStatus)) {
+    throw new RangeError(`Quest ${questId} cannot transition from ${current.status} to ${nextStatus}.`);
+  }
+
+  return {
+    ...save,
+    progression: {
+      ...save.progression,
+      quests: {
+        ...save.progression.quests,
+        [questId]: { ...current, status: nextStatus },
+      },
+    },
+  };
+}
+
+export function setQuestFlag(saveValue, questIdValue, flagIdValue, flagValue) {
+  const save = normalizeAdventureSave(saveValue);
+  const questId = normalizeIdentifier(questIdValue, "questId");
+  const flagId = normalizeIdentifier(flagIdValue, "flagId");
+  const value = normalizeQuestFlag(flagValue, "flagValue");
+  const current = save.progression.quests[questId] ?? { status: "notStarted", flags: {} };
+
+  return {
+    ...save,
+    progression: {
+      ...save.progression,
+      quests: {
+        ...save.progression.quests,
+        [questId]: {
+          ...current,
+          flags: { ...current.flags, [flagId]: value },
+        },
+      },
+    },
+  };
+}
+
+export function normalizeRewardGrant(value) {
+  const grant = requireRecord(value, "grant");
+  return {
+    grantId: normalizeIdentifier(grant.grantId, "grant.grantId"),
+    cards: normalizeQuantityRecord(grant.cards, "grant.cards"),
+    packs: normalizeQuantityRecord(grant.packs, "grant.packs"),
+    storyItems: normalizeQuantityRecord(grant.storyItems, "grant.storyItems"),
+    boatItems: normalizeQuantityRecord(grant.boatItems, "grant.boatItems"),
+    tideMarkIds: normalizeIdentifierList(grant.tideMarkIds, "grant.tideMarkIds"),
+    routeIds: normalizeIdentifierList(grant.routeIds, "grant.routeIds"),
+    fieldNoteIds: normalizeIdentifierList(grant.fieldNoteIds, "grant.fieldNoteIds"),
+  };
+}
+
+/** Returns the same serializable validation shape used by save validation. */
+export function validateRewardGrant(value) {
+  try {
+    return { valid: true, errors: [], value: normalizeRewardGrant(value) };
+  } catch (error) {
+    if (error instanceof AdventureSaveValidationError) {
+      return { valid: false, errors: [error.message], value: null };
+    }
+    throw error;
+  }
+}
+
+function addQuantities(current, additions, path) {
+  const result = { ...current };
+  for (const [identifier, quantity] of Object.entries(additions)) {
+    const nextQuantity = (result[identifier] ?? 0) + quantity;
+    if (!Number.isSafeInteger(nextQuantity)) fail(path, `would overflow quantity for ${identifier}.`);
+    result[identifier] = nextQuantity;
+  }
+  return result;
+}
+
+function appendUnique(current, additions) {
+  const seen = new Set(current);
+  const result = [...current];
+  for (const identifier of additions) {
+    if (!seen.has(identifier)) {
+      seen.add(identifier);
+      result.push(identifier);
+    }
+  }
+  return result;
+}
+
+/**
+ * Applies a reward once. If grantId already exists, the ledger wins and the
+ * payload is intentionally ignored so content edits cannot replay old grants.
+ */
+export function grantReward(saveValue, grantValue) {
+  const save = normalizeAdventureSave(saveValue);
+  const grantRecord = requireRecord(grantValue, "grant");
+  const grantId = normalizeIdentifier(grantRecord.grantId, "grant.grantId");
+
+  if (save.rewardLedger.includes(grantId)) return { save, applied: false };
+
+  const grant = normalizeRewardGrant(grantRecord);
+  return {
+    applied: true,
+    save: {
+      ...save,
+      world: {
+        ...save.world,
+        unlockedRouteIds: appendUnique(save.world.unlockedRouteIds, grant.routeIds),
+      },
+      progression: {
+        ...save.progression,
+        tideMarkIds: appendUnique(save.progression.tideMarkIds, grant.tideMarkIds),
+      },
+      inventory: {
+        cards: addQuantities(save.inventory.cards, grant.cards, "grant.cards"),
+        unopenedPacks: addQuantities(save.inventory.unopenedPacks, grant.packs, "grant.packs"),
+        storyItems: addQuantities(save.inventory.storyItems, grant.storyItems, "grant.storyItems"),
+        boatItems: addQuantities(save.inventory.boatItems, grant.boatItems, "grant.boatItems"),
+      },
+      fieldNotes: {
+        ...save.fieldNotes,
+        entryIds: appendUnique(save.fieldNotes.entryIds, grant.fieldNoteIds),
+      },
+      rewardLedger: [...save.rewardLedger, grant.grantId],
+    },
+  };
+}
