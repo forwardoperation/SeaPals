@@ -52,6 +52,9 @@ test("movement cannot cross buildings, doors, furniture, exits, or trainers", ()
   assert.deepEqual(movePlayer("coral-home", { x: 5, y: 3 }, "up"), { x: 5, y: 3 });
   assert.equal(isWalkable("coral-home", { x: 6, y: 1 }), false);
   assert.equal(isWalkable("deep-home", { x: 6, y: 1 }), false);
+  assert.equal(getTile("academy-lab", { x: 7, y: 2 }).id, "furniture");
+  assert.equal(getTile("academy-lab", { x: 7, y: 3 }).id, "trainer");
+  assert.equal(isWalkable("academy-lab", { x: 7, y: 3 }), false);
 });
 
 test("town doors enter the academy and two homes only when the player faces them", () => {
@@ -99,7 +102,7 @@ test("interior exits return the player outside the matching town door", () => {
 });
 
 test("facing an adjacent trainer yields the matching trainer interaction", () => {
-  assert.deepEqual(getInteraction("academy-lab", { x: 7, y: 3 }, "up"), {
+  assert.deepEqual(getInteraction("academy-lab", { x: 7, y: 4 }, "up"), {
     type: "trainer",
     interactionId: "interaction-academy-mentor",
     trainerId: "academy-mentor",
@@ -165,7 +168,7 @@ test("axis-separated collision slides along furniture instead of stopping both a
 });
 
 test("continuous interactions allow small offsets but enforce facing and range", () => {
-  assert.deepEqual(getContinuousInteraction("academy-lab", { x: 7.25, y: 3.1 }, "up"), {
+  assert.deepEqual(getContinuousInteraction("academy-lab", { x: 7.25, y: 4.1 }, "up"), {
     type: "trainer",
     interactionId: "interaction-academy-mentor",
     trainerId: "academy-mentor",
