@@ -248,6 +248,8 @@ Account-based cloud saves may be added later using player-owned rows and restric
 
 **Goal:** Turn the current prototype into a reusable, persistent game shell.
 
+**Implementation status:** Complete on `codex/seapals-adventure`; see `docs/seapals-adventure-phase-1.md`.
+
 **Deliverables**
 
 - Content-driven scenes, transitions, NPCs, conversations, encounters, and basic quest states.

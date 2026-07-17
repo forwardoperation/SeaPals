@@ -4,6 +4,11 @@ import {
   ADVENTURE_CONTENT,
   REQUIRED_DIALOGUE_BEATS,
   REQUIRED_ECOSYSTEM_NPC_ROLES,
+  getAdventureDock,
+  getAdventureStartLocation,
+  getRuntimeAdventureScenes,
+  resolveAdventureInteraction,
+  resolveAdventureNpc,
 } from "./adventureContent.mjs";
 import { assertValidAdventureContent, validateAdventureContent } from "./adventureContentValidation.mjs";
 import { createInitialAdventureSave, grantReward, validateAdventureSave } from "./adventureProgression.mjs";
@@ -92,6 +97,45 @@ test("the initial save location references launch content", () => {
   assert.ok(ADVENTURE_CONTENT.scenes.some((scene) => scene.id === save.world.sceneId && scene.townId === save.world.townId));
 });
 
+test("the three live Shellshore scenes and start location resolve from content", () => {
+  const runtimeScenes = getRuntimeAdventureScenes();
+  assert.deepEqual(runtimeScenes.map((scene) => scene.id), ["town", "coral-home", "deep-home"]);
+  assert.ok(runtimeScenes.every((scene) => scene.world.tiles.length > 0));
+  assert.deepEqual(getAdventureStartLocation(), {
+    townId: "shellshore-village",
+    dockId: "shellshore-dock",
+    sceneId: "town",
+    position: { x: 7, y: 8 },
+    facing: "up",
+  });
+  assert.deepEqual(getAdventureDock("shellshore-dock"), {
+    id: "shellshore-dock",
+    townId: "shellshore-village",
+    sceneId: "town",
+    status: "prototype",
+    position: { x: 7, y: 8 },
+    facing: "up",
+  });
+});
+
+test("Shellshore doors, trainers, conversations, and encounters cross-resolve", () => {
+  const door = resolveAdventureInteraction("town", "interaction-town-enter-coral-home");
+  assert.equal(door.targetSceneContent.id, "coral-home");
+  assert.deepEqual(door.spawn, { x: 5, y: 6 });
+
+  const marinaInteraction = resolveAdventureInteraction("coral-home", "interaction-coral-home-marina");
+  assert.equal(marinaInteraction.npc.name, "Marina");
+  assert.equal(marinaInteraction.npc.conversation.lines.intro.length, 2);
+  assert.equal(marinaInteraction.npc.encounter.opponentDeckId, "coral-garden");
+  assert.equal(marinaInteraction.npc.encounter.victoryTarget, 10);
+
+  const dorian = resolveAdventureNpc("dorian");
+  assert.equal(dorian.sceneId, "deep-home");
+  assert.equal(dorian.conversation.lines.rematch.length, 2);
+  assert.equal(dorian.encounter.opponentDeckId, "darkness-shroud");
+  assert.equal(dorian.encounter.difficulty, "medium");
+});
+
 test("validation reports duplicate, broken-reference, and missing-learning failures", () => {
   const invalid = clone(ADVENTURE_CONTENT);
   invalid.towns.push({ ...invalid.towns[0] });
@@ -143,4 +187,21 @@ test("malformed top-level collections return validation errors instead of throwi
   });
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => /towns must be an array/.test(error)));
+});
+
+test("content validation rejects broken Shellshore runtime cross-references", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  invalid.scenes.find((scene) => scene.id === "town").world.interactions[0].targetScene = "missing-home";
+  invalid.scenes.find((scene) => scene.id === "coral-home").world.interactions[0].conversationId = "missing-conversation";
+  invalid.docks.find((dock) => dock.id === "shellshore-dock").sceneId = "sunpatch-cay-town";
+  invalid.npcs.find((npc) => npc.id === "dorian").encounterId = "encounter-shellshore-marina";
+  invalid.conversations.find((conversation) => conversation.npcId === "marina").lines.victory = [];
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /targetScene references unknown id missing-home/.test(error)));
+  assert.ok(result.errors.some((error) => /conversationId references unknown id missing-conversation/.test(error)));
+  assert.ok(result.errors.some((error) => /shellshore-dock.*sceneId must belong to the dock town/.test(error)));
+  assert.ok(result.errors.some((error) => /dorian.*encounterId must resolve to an encounter/.test(error)));
+  assert.ok(result.errors.some((error) => /lines\.victory must contain/.test(error)));
 });
