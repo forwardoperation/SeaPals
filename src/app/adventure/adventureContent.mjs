@@ -40,12 +40,16 @@ const towns = [
     startSceneId: "town",
     dockId: "shellshore-dock",
     questIds: ["quest-shellshore-first-voyage"],
-    encounterIds: ["encounter-shellshore-mentor-practice"],
+    encounterIds: [
+      "encounter-shellshore-mentor-practice",
+      "encounter-shellshore-marina",
+      "encounter-shellshore-dorian",
+    ],
     plannedNpcRoleIds: ["mentor", "field-partner", "town-challenger", "reflection-character"],
     packPoolId: null,
     unlockRuleId: "unlock-shellshore-start",
     arrivalRouteId: null,
-    encounterPlan: { practice: 1, resident: 0, qualifier: 0 },
+    encounterPlan: { practice: 1, resident: 2, qualifier: 0 },
   },
   {
     id: "sunpatch-cay",
@@ -169,10 +173,116 @@ const towns = [
   },
 ];
 
+const shellshoreRuntimeScenes = {
+  town: {
+    name: "Tidepool Town",
+    worldKind: "town",
+    theme: "sunlit-reef",
+    tiles: [
+      "tttttttttttttttt",
+      "ttttttttpttttttt",
+      "ttttttttpttttttt",
+      "tttccCccpddDdddt",
+      "ttttgpgtptgpgttt",
+      "ttttgpggtggpgtgt",
+      "ttttgpgggggpgtgt",
+      "ttpppppppppppppt",
+      "tttppppppppppptt",
+      "tttttttttttttttt",
+    ],
+    spawn: { x: 7, y: 8 },
+    startFacing: "up",
+    interactions: [
+      {
+        id: "interaction-town-enter-coral-home",
+        type: "enter",
+        at: { x: 5, y: 3 },
+        targetScene: "coral-home",
+        spawn: { x: 5, y: 6 },
+      },
+      {
+        id: "interaction-town-enter-deep-home",
+        type: "enter",
+        at: { x: 11, y: 3 },
+        targetScene: "deep-home",
+        spawn: { x: 5, y: 6 },
+      },
+    ],
+  },
+  "coral-home": {
+    name: "Marina's Coral Cottage",
+    worldKind: "interior",
+    theme: "coral-cottage",
+    tiles: [
+      "wwwwwwwwwwww",
+      "wwwwwwwwwwww",
+      "waaafnffaaaw",
+      "waaarrrraaaw",
+      "waaarrrraaaw",
+      "waaarrrrfffw",
+      "waaaffffaaaw",
+      "wwwwwEwwwwww",
+    ],
+    spawn: { x: 5, y: 6 },
+    interactions: [
+      {
+        id: "interaction-coral-home-marina",
+        type: "trainer",
+        at: { x: 5, y: 2 },
+        trainerId: "marina",
+        npcId: "marina",
+        conversationId: "conversation-shellshore-marina",
+        encounterId: "encounter-shellshore-marina",
+      },
+      {
+        id: "interaction-coral-home-exit",
+        type: "exit",
+        at: { x: 5, y: 7 },
+        targetScene: "town",
+        spawn: { x: 5, y: 4 },
+      },
+    ],
+  },
+  "deep-home": {
+    name: "Dorian's Deep-Sea Den",
+    worldKind: "interior",
+    theme: "deep-sea-den",
+    tiles: [
+      "wwwwwwwwwwww",
+      "wwwwwwwwwwww",
+      "waaafnffaaaw",
+      "waaarrrraaaw",
+      "waaarrrraaaw",
+      "waaarrrraaaw",
+      "waaaffffaaaw",
+      "wwwwwEwwwwww",
+    ],
+    spawn: { x: 5, y: 6 },
+    interactions: [
+      {
+        id: "interaction-deep-home-dorian",
+        type: "trainer",
+        at: { x: 5, y: 2 },
+        trainerId: "dorian",
+        npcId: "dorian",
+        conversationId: "conversation-shellshore-dorian",
+        encounterId: "encounter-shellshore-dorian",
+      },
+      {
+        id: "interaction-deep-home-exit",
+        type: "exit",
+        at: { x: 5, y: 7 },
+        targetScene: "town",
+        spawn: { x: 11, y: 4 },
+      },
+    ],
+  },
+};
+
 const scenes = [
-  { id: "town", townId: "shellshore-village", kind: "exterior", status: "prototype" },
-  { id: "coral-home", townId: "shellshore-village", kind: "interior", status: "prototype" },
-  { id: "deep-home", townId: "shellshore-village", kind: "interior", status: "prototype" },
+  { id: "town", townId: "shellshore-village", kind: "exterior", status: "prototype", world: shellshoreRuntimeScenes.town },
+  { id: "coral-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["coral-home"] },
+  { id: "deep-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["deep-home"] },
   { id: "academy-lab", townId: "shellshore-village", kind: "interior", status: "planned" },
   { id: "sunpatch-cay-town", townId: "sunpatch-cay", kind: "exterior", status: "planned" },
   { id: "brackwater-landing-town", townId: "brackwater-landing", kind: "exterior", status: "planned" },
@@ -181,6 +291,84 @@ const scenes = [
   { id: "trenchlight-station-town", townId: "trenchlight-station", kind: "exterior", status: "planned" },
   { id: "trenchlight-sub-descent", townId: "trenchlight-station", kind: "vehicle", status: "planned" },
   { id: "champions-wake-town", townId: "champions-wake", kind: "exterior", status: "planned" },
+];
+
+const docks = [
+  { id: "shellshore-dock", townId: "shellshore-village", sceneId: "town", status: "prototype", position: { x: 7, y: 8 }, facing: "up" },
+  { id: "sunpatch-dock", townId: "sunpatch-cay", sceneId: "sunpatch-cay-town", status: "planned" },
+  { id: "brackwater-dock", townId: "brackwater-landing", sceneId: "brackwater-landing-town", status: "planned" },
+  { id: "current-commons-dock", townId: "current-commons", sceneId: "current-commons-town", status: "planned" },
+  { id: "kelpwatch-dock", townId: "kelpwatch-island", sceneId: "kelpwatch-island-town", status: "planned" },
+  { id: "trenchlight-dock", townId: "trenchlight-station", sceneId: "trenchlight-station-town", status: "planned" },
+  { id: "champions-wake-dock", townId: "champions-wake", sceneId: "champions-wake-town", status: "planned" },
+];
+
+const conversations = [
+  {
+    id: "conversation-shellshore-marina",
+    townId: "shellshore-village",
+    npcId: "marina",
+    lines: {
+      intro: [
+        "Welcome to Coral Cottage! Every strong ecosystem starts with a patient gardener.",
+        "I use clever reef friendships to build Victory Points fast. Want to test your SeaPals deck against mine?",
+      ],
+      rematch: [
+        "Your Coral Crest still shines! A good Reefkeeper never turns down more practice.",
+        "Would you like another 10 VP duel with my Coral Garden deck?",
+      ],
+      victory: [
+        "That was a beautiful ecosystem! You read the current and reached 10 VP first.",
+        "Take the Coral Crest. Dorian across the village studies the creatures of the deep\u2014he will be a tougher challenge.",
+      ],
+    },
+  },
+  {
+    id: "conversation-shellshore-dorian",
+    townId: "shellshore-village",
+    npcId: "dorian",
+    lines: {
+      intro: [
+        "You made it to Deepwater House. Down here, patience matters more than sunlight.",
+        "My Darkness Shroud deck hides powerful creatures in the abyss. Show me how your reef handles the pressure.",
+      ],
+      rematch: [
+        "The Abyss Crest belongs to you, but the deep is never the same twice.",
+        "Ready to face my Darkness Shroud deck again?",
+      ],
+      victory: [
+        "Impressive. You kept building even when the deep pushed back.",
+        "The Abyss Crest is yours. Shellshore Village now recognizes you as a Tidebound Champion!",
+      ],
+    },
+  },
+];
+
+const npcs = [
+  {
+    id: "marina",
+    townId: "shellshore-village",
+    sceneId: "coral-home",
+    roleId: "town-challenger",
+    name: "Marina",
+    title: "Coral Gardener",
+    color: "coral",
+    crest: "Coral Crest",
+    conversationId: "conversation-shellshore-marina",
+    encounterId: "encounter-shellshore-marina",
+  },
+  {
+    id: "dorian",
+    townId: "shellshore-village",
+    sceneId: "deep-home",
+    roleId: "town-challenger",
+    name: "Dorian",
+    title: "Deep Sea Researcher",
+    color: "deep",
+    crest: "Abyss Crest",
+    conversationId: "conversation-shellshore-dorian",
+    encounterId: "encounter-shellshore-dorian",
+  },
 ];
 
 const learningPlans = {
@@ -294,6 +482,8 @@ const dialogues = [
 
 const encounters = [
   { id: "encounter-shellshore-mentor-practice", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "practice", opponentId: "academy-mentor", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: "reward-shellshore-tutorial" },
+  { id: "encounter-shellshore-marina", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "marina", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: null },
+  { id: "encounter-shellshore-dorian", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "dorian", opponentDeckId: "darkness-shroud", victoryTarget: 10, difficulty: "medium", rewardId: null },
   { id: "encounter-sunpatch-resident-gardener", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "resident", opponentId: "sunpatch-gardener", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: null },
   { id: "encounter-sunpatch-resident-surveyor", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "resident", opponentId: "sunpatch-surveyor", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: null },
   { id: "encounter-sunpatch-qualifier", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "qualifier", opponentId: "sunpatch-leader", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: "reward-sunpatch-qualifier", prerequisites: [{ type: "questStatus", questId: "quest-sunpatch-reef-response", status: "complete" }] },
@@ -372,8 +562,11 @@ const unlockRules = [
 export const ADVENTURE_CONTENT = Object.freeze({
   schemaVersion: ADVENTURE_CONTENT_SCHEMA_VERSION,
   npcRoleDefinitions,
+  npcs,
   towns,
   scenes,
+  docks,
+  conversations,
   dialogues,
   quests,
   encounters,
@@ -382,3 +575,79 @@ export const ADVENTURE_CONTENT = Object.freeze({
   routes,
   unlockRules,
 });
+
+function findContentById(collection, id) {
+  return collection.find((item) => item.id === id) ?? null;
+}
+
+export function getAdventureTown(townId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.towns, townId);
+}
+
+export function getAdventureScene(sceneId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.scenes, sceneId);
+}
+
+export function getAdventureDock(dockId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.docks, dockId);
+}
+
+export function getAdventureNpc(npcId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.npcs, npcId);
+}
+
+export function getAdventureConversation(conversationId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.conversations, conversationId);
+}
+
+export function getAdventureEncounter(encounterId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.encounters, encounterId);
+}
+
+export function getRuntimeAdventureScenes(content = ADVENTURE_CONTENT) {
+  return content.scenes.filter((scene) => scene.status === "prototype" && scene.world);
+}
+
+export function getAdventureStartLocation(content = ADVENTURE_CONTENT) {
+  const town = content.towns.find((candidate) => candidate.chapterType === "starter" && candidate.arrivalRouteId === null);
+  const scene = town ? getAdventureScene(town.startSceneId, content) : null;
+  const dock = town ? getAdventureDock(town.dockId, content) : null;
+  if (!town || !scene?.world) return null;
+  return {
+    townId: town.id,
+    dockId: town.dockId,
+    sceneId: scene.id,
+    position: { ...(dock?.position ?? scene.world.spawn) },
+    facing: dock?.facing ?? scene.world.startFacing ?? "down",
+  };
+}
+
+export function getAdventureSceneInteraction(sceneId, interactionId, content = ADVENTURE_CONTENT) {
+  const scene = getAdventureScene(sceneId, content);
+  return scene?.world?.interactions.find((interaction) => interaction.id === interactionId) ?? null;
+}
+
+export function resolveAdventureNpc(npcId, content = ADVENTURE_CONTENT) {
+  const npc = getAdventureNpc(npcId, content);
+  if (!npc) return null;
+  return {
+    ...npc,
+    conversation: getAdventureConversation(npc.conversationId, content),
+    encounter: getAdventureEncounter(npc.encounterId, content),
+  };
+}
+
+export function resolveAdventureInteraction(sceneId, interactionId, content = ADVENTURE_CONTENT) {
+  const interaction = getAdventureSceneInteraction(sceneId, interactionId, content);
+  if (!interaction) return null;
+  if (interaction.type === "trainer") {
+    return {
+      ...interaction,
+      npc: resolveAdventureNpc(interaction.npcId, content),
+    };
+  }
+  return {
+    ...interaction,
+    targetSceneContent: getAdventureScene(interaction.targetScene, content),
+  };
+}

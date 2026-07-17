@@ -55,11 +55,13 @@ test("movement cannot cross buildings, doors, furniture, exits, or trainers", ()
 test("town doors enter the two homes only when the player faces them", () => {
   assert.deepEqual(getInteraction("town", { x: 5, y: 4 }, "up"), {
     type: "enter",
+    interactionId: "interaction-town-enter-coral-home",
     targetScene: "coral-home",
     spawn: { x: 5, y: 6 },
   });
   assert.deepEqual(getInteraction("town", { x: 11, y: 4 }, "up"), {
     type: "enter",
+    interactionId: "interaction-town-enter-deep-home",
     targetScene: "deep-home",
     spawn: { x: 5, y: 6 },
   });
@@ -70,11 +72,13 @@ test("town doors enter the two homes only when the player faces them", () => {
 test("interior exits return the player outside the matching town door", () => {
   assert.deepEqual(getInteraction("coral-home", { x: 5, y: 6 }, "down"), {
     type: "exit",
+    interactionId: "interaction-coral-home-exit",
     targetScene: "town",
     spawn: { x: 5, y: 4 },
   });
   assert.deepEqual(getInteraction("deep-home", { x: 5, y: 6 }, "down"), {
     type: "exit",
+    interactionId: "interaction-deep-home-exit",
     targetScene: "town",
     spawn: { x: 11, y: 4 },
   });
@@ -83,11 +87,19 @@ test("interior exits return the player outside the matching town door", () => {
 test("facing an adjacent trainer yields the matching trainer interaction", () => {
   assert.deepEqual(getInteraction("coral-home", { x: 5, y: 3 }, "up"), {
     type: "trainer",
+    interactionId: "interaction-coral-home-marina",
     trainerId: "marina",
+    npcId: "marina",
+    conversationId: "conversation-shellshore-marina",
+    encounterId: "encounter-shellshore-marina",
   });
   assert.deepEqual(getInteraction("deep-home", { x: 4, y: 2 }, "right"), {
     type: "trainer",
+    interactionId: "interaction-deep-home-dorian",
     trainerId: "dorian",
+    npcId: "dorian",
+    conversationId: "conversation-shellshore-dorian",
+    encounterId: "encounter-shellshore-dorian",
   });
   assert.equal(getInteraction("deep-home", { x: 5, y: 4 }, "up"), null);
 });
@@ -133,6 +145,7 @@ test("axis-separated collision slides along furniture instead of stopping both a
 test("continuous interactions allow small offsets but enforce facing and range", () => {
   assert.deepEqual(getContinuousInteraction("town", { x: 5.3, y: 4.15 }, "up"), {
     type: "enter",
+    interactionId: "interaction-town-enter-coral-home",
     targetScene: "coral-home",
     spawn: { x: 5, y: 6 },
   });
@@ -140,7 +153,11 @@ test("continuous interactions allow small offsets but enforce facing and range",
   assert.equal(getContinuousInteraction("town", { x: 5, y: 4.5 }, "up"), null);
   assert.deepEqual(getContinuousInteraction("deep-home", { x: 5.4, y: 3.1 }, "up"), {
     type: "trainer",
+    interactionId: "interaction-deep-home-dorian",
     trainerId: "dorian",
+    npcId: "dorian",
+    conversationId: "conversation-shellshore-dorian",
+    encounterId: "encounter-shellshore-dorian",
   });
 });
 

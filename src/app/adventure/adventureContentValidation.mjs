@@ -7,6 +7,9 @@ import { QUEST_STATUSES, validateRewardGrant } from "./adventureProgression.mjs"
 
 const SETTLEMENT_TYPES = new Set(["island", "floating"]);
 const LEARNING_FIELDS = ["concept", "misconception", "decision", "consequence", "debrief", "callback"];
+const CONVERSATION_MODES = ["intro", "rematch", "victory"];
+const RUNTIME_INTERACTION_TYPES = new Set(["enter", "exit", "trainer"]);
+const FACING_DIRECTIONS = new Set(["up", "down", "left", "right"]);
 
 function isObject(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -50,8 +53,11 @@ export function validateAdventureContent(content) {
   }
 
   const roleIds = collectIds(content.npcRoleDefinitions, "npcRoleDefinitions", errors);
+  const npcIds = collectIds(content.npcs, "npcs", errors);
   const townIds = collectIds(content.towns, "towns", errors);
   const sceneIds = collectIds(content.scenes, "scenes", errors);
+  const dockIds = collectIds(content.docks, "docks", errors);
+  const conversationIds = collectIds(content.conversations, "conversations", errors);
   const dialogueIds = collectIds(content.dialogues, "dialogues", errors);
   const questIds = collectIds(content.quests, "quests", errors);
   const encounterIds = collectIds(content.encounters, "encounters", errors);
@@ -60,7 +66,10 @@ export function validateAdventureContent(content) {
   const routeIds = collectIds(content.routes, "routes", errors);
   const unlockRuleIds = collectIds(content.unlockRules, "unlockRules", errors);
   const towns = objectItems(content.towns);
+  const npcs = objectItems(content.npcs);
   const scenes = objectItems(content.scenes);
+  const docks = objectItems(content.docks);
+  const conversations = objectItems(content.conversations);
   const dialogues = objectItems(content.dialogues);
   const quests = objectItems(content.quests);
   const encounters = objectItems(content.encounters);
@@ -69,6 +78,9 @@ export function validateAdventureContent(content) {
   const routes = objectItems(content.routes);
   const unlockRules = objectItems(content.unlockRules);
   const scenesById = new Map(scenes.map((scene) => [scene.id, scene]));
+  const docksById = new Map(docks.map((dock) => [dock.id, dock]));
+  const npcsById = new Map(npcs.map((npc) => [npc.id, npc]));
+  const conversationsById = new Map(conversations.map((conversation) => [conversation.id, conversation]));
   const questsById = new Map(quests.map((quest) => [quest.id, quest]));
   const encountersById = new Map(encounters.map((encounter) => [encounter.id, encounter]));
   const routesById = new Map(routes.map((route) => [route.id, route]));
@@ -82,7 +94,7 @@ export function validateAdventureContent(content) {
     if (!SETTLEMENT_TYPES.has(town.settlementType)) {
       errors.push(`towns.${town.id}.settlementType must be island or floating.`);
     }
-    if (typeof town.dockId !== "string" || !town.dockId) errors.push(`towns.${town.id}.dockId is required.`);
+    requireReference(town.dockId, dockIds, `towns.${town.id}.dockId`, errors);
     requireReference(town.startSceneId, sceneIds, `towns.${town.id}.startSceneId`, errors);
     requireReference(town.unlockRuleId, unlockRuleIds, `towns.${town.id}.unlockRuleId`, errors);
     requireReference(town.arrivalRouteId, routeIds, `towns.${town.id}.arrivalRouteId`, errors, { nullable: true });
@@ -95,6 +107,9 @@ export function validateAdventureContent(content) {
     }
     if (town.arrivalRouteId && routesById.has(town.arrivalRouteId) && routesById.get(town.arrivalRouteId).toTownId !== town.id) {
       errors.push(`towns.${town.id}.arrivalRouteId must arrive at the town.`);
+    }
+    if (docksById.has(town.dockId) && docksById.get(town.dockId).townId !== town.id) {
+      errors.push(`towns.${town.id}.dockId must belong to the same town.`);
     }
     for (const questId of asArray(town.questIds)) {
       requireReference(questId, questIds, `towns.${town.id}.questIds`, errors);
@@ -128,7 +143,122 @@ export function validateAdventureContent(content) {
     }
   }
 
-  for (const scene of scenes) requireReference(scene.townId, townIds, `scenes.${scene.id}.townId`, errors);
+  for (const dock of docks) {
+    requireReference(dock.townId, townIds, `docks.${dock.id}.townId`, errors);
+    requireReference(dock.sceneId, sceneIds, `docks.${dock.id}.sceneId`, errors);
+    const scene = scenesById.get(dock.sceneId);
+    if (scene && scene.townId !== dock.townId) {
+      errors.push(`docks.${dock.id}.sceneId must belong to the dock town.`);
+    }
+    if (dock.status === "prototype") {
+      if (!scene?.world) errors.push(`docks.${dock.id} prototype dock requires a runtime scene.`);
+      if (!Number.isFinite(dock.position?.x) || !Number.isFinite(dock.position?.y)) {
+        errors.push(`docks.${dock.id}.position requires finite x and y coordinates.`);
+      }
+      if (!FACING_DIRECTIONS.has(dock.facing)) {
+        errors.push(`docks.${dock.id}.facing must be up, down, left, or right.`);
+      }
+    }
+  }
+
+  const runtimeInteractionIds = new Set();
+  for (const scene of scenes) {
+    requireReference(scene.townId, townIds, `scenes.${scene.id}.townId`, errors);
+    if (scene.status !== "prototype") continue;
+    if (!isObject(scene.world)) {
+      errors.push(`scenes.${scene.id}.world is required for prototype scenes.`);
+      continue;
+    }
+
+    const rows = asArray(scene.world.tiles);
+    const width = typeof rows[0] === "string" ? rows[0].length : 0;
+    if (!width || rows.some((row) => typeof row !== "string" || row.length !== width)) {
+      errors.push(`scenes.${scene.id}.world.tiles must be a non-empty rectangular string map.`);
+    }
+    for (const field of ["name", "worldKind", "theme"]) {
+      if (typeof scene.world[field] !== "string" || !scene.world[field].trim()) {
+        errors.push(`scenes.${scene.id}.world.${field} is required.`);
+      }
+    }
+    if (!Number.isInteger(scene.world.spawn?.x) || !Number.isInteger(scene.world.spawn?.y)) {
+      errors.push(`scenes.${scene.id}.world.spawn requires integer x and y coordinates.`);
+    }
+
+    for (const [index, interaction] of objectItems(scene.world.interactions).entries()) {
+      const path = `scenes.${scene.id}.world.interactions[${index}]`;
+      if (typeof interaction.id !== "string" || !interaction.id.trim()) {
+        errors.push(`${path}.id is required.`);
+      } else if (runtimeInteractionIds.has(interaction.id)) {
+        errors.push(`runtime scene interactions contain duplicate id ${interaction.id}.`);
+      } else {
+        runtimeInteractionIds.add(interaction.id);
+      }
+      if (!RUNTIME_INTERACTION_TYPES.has(interaction.type)) {
+        errors.push(`${path}.type must be enter, exit, or trainer.`);
+      }
+      if (!Number.isInteger(interaction.at?.x) || !Number.isInteger(interaction.at?.y)) {
+        errors.push(`${path}.at requires integer x and y coordinates.`);
+      }
+
+      if (interaction.type === "trainer") {
+        requireReference(interaction.trainerId, npcIds, `${path}.trainerId`, errors);
+        requireReference(interaction.npcId, npcIds, `${path}.npcId`, errors);
+        requireReference(interaction.conversationId, conversationIds, `${path}.conversationId`, errors);
+        requireReference(interaction.encounterId, encounterIds, `${path}.encounterId`, errors);
+        if (interaction.trainerId !== interaction.npcId) {
+          errors.push(`${path}.trainerId must match npcId while the prototype trainer API is supported.`);
+        }
+        const npc = npcsById.get(interaction.npcId);
+        if (npc && npc.sceneId !== scene.id) errors.push(`${path}.npcId must belong to the interaction scene.`);
+        if (npc && npc.conversationId !== interaction.conversationId) errors.push(`${path}.conversationId must match the NPC conversation.`);
+        if (npc && npc.encounterId !== interaction.encounterId) errors.push(`${path}.encounterId must match the NPC encounter.`);
+      } else if (interaction.type === "enter" || interaction.type === "exit") {
+        requireReference(interaction.targetScene, sceneIds, `${path}.targetScene`, errors);
+        if (!Number.isInteger(interaction.spawn?.x) || !Number.isInteger(interaction.spawn?.y)) {
+          errors.push(`${path}.spawn requires integer x and y coordinates.`);
+        }
+      }
+    }
+    if (!Array.isArray(scene.world.interactions)) {
+      errors.push(`scenes.${scene.id}.world.interactions must be an array.`);
+    }
+  }
+
+  for (const npc of npcs) {
+    requireReference(npc.townId, townIds, `npcs.${npc.id}.townId`, errors);
+    requireReference(npc.sceneId, sceneIds, `npcs.${npc.id}.sceneId`, errors);
+    requireReference(npc.roleId, roleIds, `npcs.${npc.id}.roleId`, errors);
+    requireReference(npc.conversationId, conversationIds, `npcs.${npc.id}.conversationId`, errors);
+    requireReference(npc.encounterId, encounterIds, `npcs.${npc.id}.encounterId`, errors);
+    for (const field of ["name", "title", "color", "crest"]) {
+      if (typeof npc[field] !== "string" || !npc[field].trim()) errors.push(`npcs.${npc.id}.${field} is required.`);
+    }
+    const scene = scenesById.get(npc.sceneId);
+    const conversation = conversationsById.get(npc.conversationId);
+    const encounter = encountersById.get(npc.encounterId);
+    if (scene && scene.townId !== npc.townId) errors.push(`npcs.${npc.id}.sceneId must belong to the NPC town.`);
+    if (conversation && (conversation.townId !== npc.townId || conversation.npcId !== npc.id)) {
+      errors.push(`npcs.${npc.id}.conversationId must resolve to a conversation for the same NPC and town.`);
+    }
+    if (encounter && (encounter.townId !== npc.townId || encounter.opponentId !== npc.id)) {
+      errors.push(`npcs.${npc.id}.encounterId must resolve to an encounter for the same NPC and town.`);
+    }
+  }
+
+  for (const conversation of conversations) {
+    requireReference(conversation.townId, townIds, `conversations.${conversation.id}.townId`, errors);
+    requireReference(conversation.npcId, npcIds, `conversations.${conversation.id}.npcId`, errors);
+    const npc = npcsById.get(conversation.npcId);
+    if (npc && (npc.townId !== conversation.townId || npc.conversationId !== conversation.id)) {
+      errors.push(`conversations.${conversation.id} must belong to its NPC and town.`);
+    }
+    for (const mode of CONVERSATION_MODES) {
+      const lines = conversation.lines?.[mode];
+      if (!Array.isArray(lines) || !lines.length || lines.some((line) => typeof line !== "string" || !line.trim())) {
+        errors.push(`conversations.${conversation.id}.lines.${mode} must contain at least one non-empty line.`);
+      }
+    }
+  }
 
   for (const quest of quests) {
     requireReference(quest.townId, townIds, `quests.${quest.id}.townId`, errors);

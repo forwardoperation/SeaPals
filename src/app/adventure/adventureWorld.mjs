@@ -1,3 +1,8 @@
+import {
+  getAdventureStartLocation,
+  getRuntimeAdventureScenes,
+} from "./adventureContent.mjs";
+
 const DIRECTION_DELTAS = Object.freeze({
   up: Object.freeze({ x: 0, y: -1 }),
   down: Object.freeze({ x: 0, y: 1 }),
@@ -69,112 +74,27 @@ function defineScene({ id, name, kind, theme, tiles, spawn, interactions }) {
   });
 }
 
-const TOWN_TILES = [
-  "tttttttttttttttt",
-  "ttttttttpttttttt",
-  "ttttttttpttttttt",
-  "tttccCccpddDdddt",
-  "ttttgpgtptgpgttt",
-  "ttttgpggtggpgtgt",
-  "ttttgpgggggpgtgt",
-  "ttpppppppppppppt",
-  "tttppppppppppptt",
-  "tttttttttttttttt",
-];
+export const SCENES = Object.freeze(Object.fromEntries(
+  getRuntimeAdventureScenes().map((scene) => [
+    scene.id,
+    defineScene({
+      id: scene.id,
+      name: scene.world.name,
+      kind: scene.world.worldKind,
+      theme: scene.world.theme,
+      tiles: scene.world.tiles,
+      spawn: scene.world.spawn,
+      interactions: scene.world.interactions,
+    }),
+  ]),
+));
 
-const CORAL_HOME_TILES = [
-  "wwwwwwwwwwww",
-  "wwwwwwwwwwww",
-  "waaafnffaaaw",
-  "waaarrrraaaw",
-  "waaarrrraaaw",
-  "waaarrrrfffw",
-  "waaaffffaaaw",
-  "wwwwwEwwwwww",
-];
-
-const DEEP_HOME_TILES = [
-  "wwwwwwwwwwww",
-  "wwwwwwwwwwww",
-  "waaafnffaaaw",
-  "waaarrrraaaw",
-  "waaarrrraaaw",
-  "waaarrrraaaw",
-  "waaaffffaaaw",
-  "wwwwwEwwwwww",
-];
-
-export const SCENES = Object.freeze({
-  town: defineScene({
-    id: "town",
-    name: "Tidepool Town",
-    kind: "town",
-    theme: "sunlit-reef",
-    tiles: TOWN_TILES,
-    spawn: { x: 7, y: 8 },
-    interactions: [
-      {
-        type: "enter",
-        at: { x: 5, y: 3 },
-        targetScene: "coral-home",
-        spawn: { x: 5, y: 6 },
-      },
-      {
-        type: "enter",
-        at: { x: 11, y: 3 },
-        targetScene: "deep-home",
-        spawn: { x: 5, y: 6 },
-      },
-    ],
-  }),
-  "coral-home": defineScene({
-    id: "coral-home",
-    name: "Marina's Coral Cottage",
-    kind: "interior",
-    theme: "coral-cottage",
-    tiles: CORAL_HOME_TILES,
-    spawn: { x: 5, y: 6 },
-    interactions: [
-      {
-        type: "trainer",
-        at: { x: 5, y: 2 },
-        trainerId: "marina",
-      },
-      {
-        type: "exit",
-        at: { x: 5, y: 7 },
-        targetScene: "town",
-        spawn: { x: 5, y: 4 },
-      },
-    ],
-  }),
-  "deep-home": defineScene({
-    id: "deep-home",
-    name: "Dorian's Deep-Sea Den",
-    kind: "interior",
-    theme: "deep-sea-den",
-    tiles: DEEP_HOME_TILES,
-    spawn: { x: 5, y: 6 },
-    interactions: [
-      {
-        type: "trainer",
-        at: { x: 5, y: 2 },
-        trainerId: "dorian",
-      },
-      {
-        type: "exit",
-        at: { x: 5, y: 7 },
-        targetScene: "town",
-        spawn: { x: 11, y: 4 },
-      },
-    ],
-  }),
-});
+const START_LOCATION = getAdventureStartLocation();
 
 export const START_STATE = Object.freeze({
-  sceneId: "town",
-  position: freezePosition(SCENES.town.spawn),
-  facing: "up",
+  sceneId: START_LOCATION.sceneId,
+  position: freezePosition(START_LOCATION.position),
+  facing: START_LOCATION.facing,
 });
 
 function requireScene(sceneId) {
@@ -206,10 +126,18 @@ function requirePositiveNumber(value, label, { allowZero = false } = {}) {
 
 function publicInteraction(interaction) {
   if (interaction.type === "trainer") {
-    return { type: "trainer", trainerId: interaction.trainerId };
+    return {
+      type: "trainer",
+      interactionId: interaction.id,
+      trainerId: interaction.trainerId,
+      npcId: interaction.npcId,
+      conversationId: interaction.conversationId,
+      encounterId: interaction.encounterId,
+    };
   }
   return {
     type: interaction.type,
+    interactionId: interaction.id,
     targetScene: interaction.targetScene,
     spawn: { x: interaction.spawn.x, y: interaction.spawn.y },
   };
