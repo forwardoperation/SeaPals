@@ -59,7 +59,7 @@ export const DEFAULT_SIMULATOR_TUTORIAL_CHECKPOINTS = Object.freeze([
   { id: "tutorial-setup", actionType: "match-ready", instruction: "Set out your deck, hand, RP bank, and play areas." },
   { id: "tutorial-collect-rp", actionType: "rp-collected", instruction: "Collect Resource Points (RP), the energy used to play cards." },
   { id: "tutorial-draw-card", actionType: "card-drawn", instruction: "Draw a card so you have a new option for this turn." },
-  { id: "tutorial-build-card", actionType: "card-built", instruction: "Spend RP to build a habitat, foundation, or creature." },
+  { id: "tutorial-build-card", actionType: "card-built", instruction: "Spend RP to play a habitat, foundation, or creature." },
   { id: "tutorial-attack", actionType: "attack-resolved", instruction: "Choose a legal attacker and resolve one attack." },
   { id: "tutorial-end-turn", actionType: "turn-ended", instruction: "End your turn after checking your hand, board, and RP." },
   { id: "tutorial-earn-vp", actionType: "vp-earned", instruction: "Earn Victory Points (VP) by growing a successful ecosystem." },

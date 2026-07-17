@@ -564,7 +564,7 @@ const tutorials = [
       { id: "tutorial-setup", actionType: "match-ready", title: "Ready your ecosystem", instruction: "Set out your deck, hand, RP bank, and play areas." },
       { id: "tutorial-collect-rp", actionType: "rp-collected", title: "Collect RP", instruction: "Collect Resource Points (RP), the energy used to play cards." },
       { id: "tutorial-draw-card", actionType: "card-drawn", title: "Draw a card", instruction: "Draw a card so you have a new option for this turn." },
-      { id: "tutorial-build-card", actionType: "card-built", title: "Build a card", instruction: "Spend RP to build a habitat, foundation, or creature." },
+      { id: "tutorial-build-card", actionType: "card-built", title: "Add to your ecosystem", instruction: "Spend RP to play a habitat, foundation, or creature." },
       { id: "tutorial-attack", actionType: "attack-resolved", title: "Make an attack", instruction: "Choose a legal attacker and resolve one attack." },
       { id: "tutorial-end-turn", actionType: "turn-ended", title: "End your turn", instruction: "End your turn after checking your hand, board, and RP." },
       { id: "tutorial-earn-vp", actionType: "vp-earned", title: "Earn VP", instruction: "Earn Victory Points (VP) by growing a successful ecosystem." },

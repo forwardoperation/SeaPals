@@ -25,6 +25,7 @@ import {
   observeSimulatorTutorialEvent,
   restartSimulatorTutorialProgress,
 } from "./tutorialContract.mjs";
+import { getSimulatorTutorialHelp } from "./tutorialHelp.mjs";
 import foundationDeckImg from "./images/foundation-deck.png";
 import palsDeckImg from "./images/pals-deck.png";
 
@@ -39,6 +40,65 @@ function shuffle(arr, random = Math.random) {
 
 const defaultDeckId = "coral-garden";
 const CARD_ART_FALLBACK = "/images/brand/SeaPalsTCGLogoWhite.svg";
+
+function ProfessorGuidePortrait({ guide, compact = false }) {
+  return (
+    <span className={`seapals-professor-portrait${compact ? " seapals-professor-portrait-compact" : ""}`} aria-hidden="true">
+      <span
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "-20%",
+          display: "block",
+          height: "150%",
+          aspectRatio: "4 / 3",
+          transform: "translateX(-50%) scaleX(1.12)",
+          backgroundImage: `url(${guide.portraitSrc})`,
+          backgroundPosition: "50% 0%",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "300% 400%",
+          imageRendering: "pixelated",
+        }}
+      />
+    </span>
+  );
+}
+
+function ProfessorGuideCard({ guide, help, step, total, inline = false, onDismiss }) {
+  return (
+    <aside
+      className={`seapals-professor-card${inline ? " seapals-professor-card-inline" : ""}`}
+      role="note"
+      aria-label={`${guide.name} tutorial help`}
+    >
+      <ProfessorGuidePortrait guide={guide} compact={inline} />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pr-9">
+          <strong className="text-sm font-black text-cyan-800">{guide.name}</strong>
+          <span className="rounded-full bg-cyan-900 px-2 py-0.5 text-[9px] font-black text-cyan-50">
+            {help.id === "tutorial-complete" ? `${total}/${total} complete` : `Step ${step} of ${total}`}
+          </span>
+        </div>
+        <span className="mt-0.5 block text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">{guide.role}</span>
+        <strong className="mt-1 block text-sm font-black text-slate-900 sm:text-base">{help.title}</strong>
+        <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-700 sm:text-sm">{help.message}</p>
+        <p className="mt-2 rounded-xl border border-amber-300/70 bg-amber-100 px-3 py-2 text-xs font-black leading-snug text-amber-950">
+          Next: {help.action}
+        </p>
+        <span className="mt-1.5 block text-[10px] font-bold uppercase tracking-wide text-cyan-800">Look for {help.targetLabel}</span>
+      </div>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="seapals-professor-hide"
+        aria-label={`Hide ${guide.name}'s tip for this step`}
+        title="Hide this tip"
+      >
+        Hide
+      </button>
+    </aside>
+  );
+}
 
 function destroyedCardGoesToLostZone(card) {
   return card?.destroyedDestination === "lost-zone";
@@ -1274,6 +1334,12 @@ export default function Simulator({ storyMode = null } = {}) {
   const [tutorialProgress, setTutorialProgress] = useState(() => tutorialContract
     ? createSimulatorTutorialProgress(tutorialContract, tutorialRuntime?.initialProgress ?? {})
     : null);
+  const tutorialGuide = {
+    name: String(tutorialRuntime?.guide?.name ?? storyOpponentName ?? "Professor Current"),
+    role: String(tutorialRuntime?.guide?.role ?? "SeaPals Mentor"),
+    portraitSrc: String(tutorialRuntime?.guide?.portraitSrc ?? "/images/adventure/academy-mentor-sprites.png"),
+  };
+  const [tutorialHelpDismissedId, setTutorialHelpDismissedId] = useState(null);
   const tutorialProgressRef = useRef(tutorialProgress);
   const tutorialEventIdRef = useRef(0);
   const tutorialCallbacksRef = useRef(tutorialRuntime);
@@ -1699,6 +1765,53 @@ export default function Simulator({ storyMode = null } = {}) {
   const schoolDensityConditionIds = [...new Set([activeConditionId, ...persistentConditionIds].filter(Boolean))];
   const playingCard = playingCardId ? cardsById[playingCardId] : null;
   const inspectedCardData = inspectedCard ? cardsById[inspectedCard.cardId] : null;
+  const hasAffordableSetupFoundation = hand.some((cardId) => {
+    const card = cardsById[cardId];
+    return isFoundationCard(card)
+      && Number(card.stage ?? 0) === 0
+      && getPlayerCardPlayCost(card) <= rp;
+  });
+  const tutorialHelp = tutorialContract ? getSimulatorTutorialHelp(tutorialCurrentCheckpoint, {
+    complete: tutorialProgress?.status === "complete",
+    gamePhase,
+    hasCoralInPlay,
+    hasAffordableSetupFoundation,
+    playingCardId,
+    modal,
+    selectedHandCard,
+    handPopoverOpen: Boolean(handPopoverCardId),
+    inspectedPlayerCardHasAttack: Boolean(
+      inspectedCard?.owner === "player" && inspectedCardData && getBasicAttackEffect(inspectedCardData),
+    ),
+    attackContext: Boolean(attackContext),
+    drawSelected: Number(turnDrawSelection?.foundation ?? 0) + Number(turnDrawSelection?.pals ?? 0),
+    drawTarget: Number(turnDrawSelection?.target ?? 0),
+  }) : null;
+  const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelp.id);
+  const tutorialHelpInline = Boolean(
+    tutorialHelpOpen
+    && !eventOverlay
+    && (
+      ["turn-draw", "draw-result", "hand"].includes(modal)
+      || (inspectedCardData && tutorialHelp.target === "attack-button")
+      || (handPopoverCardId && ["play-card", "turn-button"].includes(tutorialHelp.target))
+    ),
+  );
+  const tutorialHelpFloating = Boolean(
+    tutorialHelpOpen
+    && !tutorialHelpInline
+    && !eventOverlay
+    && !modal
+    && !roundFlash
+    && !opponentThinking
+    && !mobileHudPanel
+    && !inspectedCardData
+    && !handPopoverCardId
+    && !gameResult,
+  );
+  const tutorialTargetClass = (target) => (
+    tutorialHelpOpen && tutorialHelp?.target === target ? " seapals-tutorial-target" : ""
+  );
   const inspectedCreatureSlot = inspectedCard?.owner === "player" && inspectedCard.coralId
     ? playerCorals.find((coral) => coral.id === inspectedCard.coralId)?.slots.find((slot) => slot.id === inspectedCard.slotId)
     : null;
@@ -1897,7 +2010,7 @@ export default function Simulator({ storyMode = null } = {}) {
     if (!card) return "Select a card first.";
     if (gameResult) return "This game has ended. Start a new game to continue playing.";
     if (attackContext) return "Finish or cancel the current attack before playing another card.";
-    if (!isSetup && gamePhase !== "main") return "Cards can only be played during your Build phase.";
+    if (!isSetup && gamePhase !== "main") return "Cards can only be played during your action phase.";
     if (isSetup && !(isFoundationCard(card) && Number(card.stage ?? 0) === 0)) {
       return "During setup, play a base Coral or Creature School before the first round begins.";
     }
@@ -7267,6 +7380,7 @@ export default function Simulator({ storyMode = null } = {}) {
         @keyframes seapalsHudGlow { 0%, 100% { box-shadow: 0 0 0 rgba(34,211,238,0); } 50% { box-shadow: 0 0 26px rgba(34,211,238,.16); } }
         @keyframes seapalsPlayableCard { 0%, 49% { background-color: rgba(52,211,153,.26); box-shadow: inset 0 0 24px rgba(110,231,183,.12), 0 0 18px rgba(52,211,153,.18); } 50%, 100% { background-color: rgba(34,211,238,.08); box-shadow: none; } }
         @keyframes seapalsSlotBeacon { 0%, 49% { background-color: rgba(110,231,183,.28); box-shadow: 0 0 0 10px rgba(52,211,153,.12), 0 0 42px rgba(52,211,153,.65); filter: brightness(1.25); } 50%, 100% { background-color: rgba(16,185,129,.07); box-shadow: 0 0 0 4px rgba(52,211,153,.05); filter: brightness(.92); } }
+        @keyframes seapalsTutorialFocus { 0%, 100% { outline-color: rgba(251,191,36,.7); box-shadow: 0 0 0 4px rgba(251,191,36,.16), 0 0 24px rgba(251,191,36,.34); } 50% { outline-color: rgba(254,240,138,1); box-shadow: 0 0 0 7px rgba(251,191,36,.25), 0 0 42px rgba(251,191,36,.58); } }
         .seapals-game-shell {
           background-image:
             radial-gradient(circle at 12% 8%, rgba(14,165,233,.18), transparent 30%),
@@ -7276,6 +7390,107 @@ export default function Simulator({ storyMode = null } = {}) {
         .seapals-hud-panel { background: linear-gradient(145deg, rgba(15,35,52,.96), rgba(8,24,39,.96)); }
         .seapals-arena-frame { box-shadow: 0 24px 80px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.06); }
         .seapals-turn-button:not(:disabled) { animation: seapalsHudGlow 2.4s ease-in-out infinite; }
+        .seapals-tutorial-target {
+          outline: 3px solid #fbbf24 !important;
+          outline-offset: 3px;
+          animation: seapalsTutorialFocus 1.15s ease-in-out infinite !important;
+        }
+        .seapals-professor-coach-wrap {
+          position: absolute;
+          z-index: 65;
+          top: 5.25rem;
+          left: 1rem;
+          width: min(32rem, calc(100% - 2rem));
+          pointer-events: none;
+        }
+        .seapals-professor-coach-wrap-low {
+          top: auto;
+          bottom: 1rem;
+        }
+        .seapals-professor-card {
+          position: relative;
+          display: flex;
+          gap: .75rem;
+          overflow: hidden;
+          padding: 1rem 3.5rem 1rem 1rem;
+          border: 2px solid rgba(14, 116, 144, .42);
+          border-radius: 1.5rem;
+          color: #0f172a;
+          background: linear-gradient(135deg, #fffdf4 0%, #f2fbfa 55%, #dff8fb 100%);
+          box-shadow: 0 20px 56px rgba(2, 8, 23, .42), 0 0 0 5px rgba(103, 232, 249, .08);
+          pointer-events: auto;
+        }
+        .seapals-professor-card-inline {
+          margin: 1rem 0;
+          padding: .75rem 3.25rem .75rem .75rem;
+          border-radius: 1.125rem;
+          box-shadow: 0 12px 32px rgba(2, 8, 23, .28);
+        }
+        .seapals-professor-portrait {
+          position: relative;
+          display: block;
+          flex: 0 0 auto;
+          width: 6rem;
+          height: 6rem;
+          overflow: hidden;
+          border: 2px solid rgba(8, 145, 178, .4);
+          border-radius: 1rem;
+          background: linear-gradient(145deg, #cffafe, #a7f3d0);
+          box-shadow: inset 0 0 18px rgba(255, 255, 255, .52);
+        }
+        .seapals-professor-portrait-compact {
+          width: 3.5rem;
+          height: 3.5rem;
+          border-radius: .875rem;
+        }
+        .seapals-professor-hide {
+          position: absolute;
+          top: .5rem;
+          right: .5rem;
+          display: inline-flex;
+          min-width: 2.75rem;
+          min-height: 2.75rem;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(14, 116, 144, .24);
+          border-radius: .75rem;
+          color: #155e75;
+          background: rgba(255, 255, 255, .72);
+          font-size: .625rem;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: .06em;
+          cursor: pointer;
+        }
+        .seapals-professor-hide:hover,
+        .seapals-professor-hide:focus-visible {
+          border-color: rgba(8, 145, 178, .62);
+          background: #ffffff;
+          outline: 2px solid rgba(34, 211, 238, .45);
+          outline-offset: 2px;
+        }
+        .seapals-professor-show {
+          position: absolute;
+          z-index: 65;
+          left: 1rem;
+          bottom: 1rem;
+          min-height: 2.75rem;
+          padding: .65rem 1rem;
+          border: 1px solid rgba(103, 232, 249, .55);
+          border-radius: 999px;
+          color: #ecfeff;
+          background: rgba(8, 47, 73, .96);
+          box-shadow: 0 12px 30px rgba(2, 8, 23, .4);
+          font-size: .75rem;
+          font-weight: 900;
+          cursor: pointer;
+        }
+        .seapals-professor-show:hover,
+        .seapals-professor-show:focus-visible {
+          background: #0e7490;
+          outline: 2px solid rgba(103, 232, 249, .65);
+          outline-offset: 2px;
+        }
         .seapals-setup-playable-card { animation: seapalsPlayableCard 1s step-end infinite; }
         .seapals-slot-target { animation: seapalsSlotBeacon 1s step-end infinite; }
         .seapals-card-art-well,
@@ -7289,12 +7504,41 @@ export default function Simulator({ storyMode = null } = {}) {
         .seapals-game-shell img[data-card-art-fallback="true"],
         .seapals-game-shell img[src*="SeaPalsTCGLogoWhite.svg"] { padding: 12%; object-fit: contain !important; }
         @media (prefers-reduced-motion: reduce) {
-          .seapals-setup-playable-card, .seapals-slot-target { animation: none; }
+          .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target { animation: none !important; }
           .seapals-setup-playable-card { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); }
           .seapals-slot-target { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); box-shadow: 0 0 30px rgba(52,211,153,.45); }
+          .seapals-tutorial-target { outline-color: #fbbf24 !important; box-shadow: 0 0 0 5px rgba(251,191,36,.25) !important; }
         }
         .seapals-card-drawer { animation: seapalsDrawerIn 260ms ease-out; }
         .seapals-event-card { animation: seapalsEventPop 320ms ease-out; }
+        @media (max-width: 767px) {
+          .seapals-professor-coach-wrap,
+          .seapals-professor-coach-wrap-low {
+            position: fixed;
+            top: auto;
+            right: .5rem;
+            bottom: 4.75rem;
+            left: .5rem;
+            width: auto;
+          }
+          .seapals-professor-card {
+            max-height: 32dvh;
+            overflow-y: auto;
+            gap: .625rem;
+            padding: .75rem 3.125rem .75rem .75rem;
+            border-radius: 1.125rem;
+          }
+          .seapals-professor-portrait {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: .875rem;
+          }
+          .seapals-professor-show {
+            position: fixed;
+            left: .5rem;
+            bottom: 4.75rem;
+          }
+        }
       `}</style>
       <section className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)_9rem_auto]">
         <div className="seapals-hud-panel seapals-arena-frame relative flex h-full min-h-0 flex-col rounded-2xl border border-cyan-400/25 p-3 shadow-2xl xl:col-start-1 xl:row-span-3 xl:row-start-1">
@@ -7318,7 +7562,7 @@ export default function Simulator({ storyMode = null } = {}) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 shadow-lg xl:hidden" aria-label="Victory points in play">
-                <div className="border-r border-white/10 px-4 py-1.5 text-center">
+                <div className={`border-r border-white/10 px-4 py-1.5 text-center${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score">
                   <div className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300">Your Reef</div>
                   <div className="text-xl font-black tabular-nums text-white">{playerVp}<span className="text-xs text-emerald-300">/{victoryTarget} VP</span></div>
                   <div className="text-[9px] font-semibold text-cyan-300/70">{playerSchoolDensity} school density</div>
@@ -7355,7 +7599,7 @@ export default function Simulator({ storyMode = null } = {}) {
                 <button type="button" onClick={() => setModal("discard")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Discard</button>
                 <button type="button" onClick={() => setModal("lost")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Lost</button>
                 <button type="button" onClick={openNewGameSetup} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 xl:block">{isStoryMode ? "Restart Duel" : "New Game"}</button>
-                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className="seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40">
+                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
                   {opponentThinking ? "Thinking…" : isSetup ? "Round 1" : "End Turn"}
                 </button>
               </div>
@@ -7405,24 +7649,33 @@ export default function Simulator({ storyMode = null } = {}) {
           </div>
 
           {tutorialContract ? (
-            <section className="mb-4 rounded-2xl border border-cyan-300/35 bg-cyan-400/10 px-5 py-4 text-cyan-50 shadow-[0_12px_36px_rgba(8,145,178,.12)]" role="status" aria-live="polite">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <strong className="text-sm font-black uppercase tracking-[0.16em] text-cyan-200">{tutorialContract.title}</strong>
-                <span className="rounded-full bg-slate-950/45 px-3 py-1 text-xs font-bold text-cyan-100">
-                  {tutorialProgress?.status === "complete"
-                    ? `${tutorialContract.checkpoints.length}/${tutorialContract.checkpoints.length} complete`
-                    : `Step ${Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} of ${tutorialContract.checkpoints.length}`}
-                </span>
-              </div>
-              {tutorialCurrentCheckpoint ? (
-                <div className="mt-2">
-                  <strong className="block text-base text-white">{tutorialCurrentCheckpoint.title}</strong>
-                  <p className="mt-1 text-sm leading-relaxed text-cyan-50/80">{tutorialCurrentCheckpoint.instruction}</p>
-                </div>
-              ) : (
-                <p className="mt-2 text-sm font-semibold text-emerald-200">All tutorial actions are complete. Finish the friendly duel when you are ready.</p>
-              )}
-            </section>
+            <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+              {tutorialCurrentCheckpoint
+                ? `${tutorialGuide.name}. Step ${Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} of ${tutorialContract.checkpoints.length}: ${tutorialCurrentCheckpoint.title}. ${tutorialCurrentCheckpoint.instruction}`
+                : `${tutorialGuide.name}. All ${tutorialContract.checkpoints.length} tutorial actions are complete. Finish the friendly duel.`}
+            </p>
+          ) : null}
+
+          {tutorialHelpFloating ? (
+            <div className={`seapals-professor-coach-wrap${tutorialHelp.target === "opponent-board" ? " seapals-professor-coach-wrap-low" : ""}`}>
+              <ProfessorGuideCard
+                guide={tutorialGuide}
+                help={tutorialHelp}
+                step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                total={tutorialContract.checkpoints.length}
+                onDismiss={() => setTutorialHelpDismissedId(tutorialHelp.id)}
+              />
+            </div>
+          ) : null}
+
+          {tutorialHelp && !tutorialHelpOpen && !eventOverlay && !modal && !roundFlash && !gameResult ? (
+            <button
+              type="button"
+              onClick={() => setTutorialHelpDismissedId(null)}
+              className="seapals-professor-show"
+            >
+              Show {tutorialGuide.name}&apos;s tip
+            </button>
           ) : null}
 
           {gameResult ? (
@@ -7462,7 +7715,8 @@ export default function Simulator({ storyMode = null } = {}) {
                 </div>
                 <div
                   ref={opponentEcosystemRef}
-                  className="seapals-ecosystem-ocean relative h-[calc(100%-40px)] w-full overflow-hidden"
+                  className={`seapals-ecosystem-ocean relative h-[calc(100%-40px)] w-full overflow-hidden${tutorialTargetClass("opponent-board")}`}
+                  data-tutorial-target="opponent-board"
                   onPointerDown={handleOpponentPointerDown}
                   onPointerMove={handleOpponentPointerMove}
                   onPointerUp={handleOpponentPointerUp}
@@ -7606,7 +7860,8 @@ export default function Simulator({ storyMode = null } = {}) {
                 </div>
                 <div
                   ref={ecosystemRef}
-                  className={`seapals-ecosystem-ocean relative h-[calc(100%-40px)] w-full ${isPlacingCoral ? "cursor-crosshair" : ""}`}
+                  className={`seapals-ecosystem-ocean relative h-[calc(100%-40px)] w-full ${isPlacingCoral ? "cursor-crosshair" : ""}${tutorialTargetClass("player-board")}`}
+                  data-tutorial-target="player-board"
                   onPointerDown={handleEcosystemPointerDown}
                   onPointerMove={handleEcosystemPointerMove}
                   onPointerUp={handleEcosystemPointerUp}
@@ -7824,7 +8079,8 @@ export default function Simulator({ storyMode = null } = {}) {
                       type="button"
                       aria-label={`Click to place your ${isCreatureSchool(playingCard) ? "Creature School" : "Coral"}`}
                       onClick={handleEcosystemClick}
-                      className="absolute inset-0 z-50 cursor-crosshair bg-transparent"
+                      className={`absolute inset-0 z-50 cursor-crosshair bg-transparent${tutorialTargetClass("placement")}`}
+                      data-tutorial-target="placement"
                     >
                       <span
                         aria-hidden="true"
@@ -7851,14 +8107,14 @@ export default function Simulator({ storyMode = null } = {}) {
           <div className="mt-2 grid h-14 shrink-0 grid-cols-[64px_64px_minmax(0,1fr)_92px] gap-1.5 xl:hidden" aria-label="Mobile game command dock">
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className="rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className="rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200">Guide<br /><span className="text-violet-300">Feed</span></button>
-            <button type="button" onClick={() => setModal("hand")} className="rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg">Open Hand <span className="text-cyan-300">({hand.length})</span><span className="block text-[10px] font-semibold text-emerald-300">{rp} RP ready</span></button>
-            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className="seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40">{opponentThinking ? "Thinking…" : isSetup ? "Round 1" : "End Turn"}</button>
+            <button type="button" onClick={() => setModal("hand")} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className="block text-[10px] font-semibold text-emerald-300">{rp} RP ready</span></button>
+            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Thinking…" : isSetup ? "Round 1" : "End Turn"}</button>
           </div>
         </div>
 
         <div className="seapals-hud-panel hidden min-h-0 overflow-y-auto rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-1 xl:flex xl:flex-col">
           <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950/45">
-            <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{playerVp}<span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensity} school density</div></div>
+            <div className={`border-r border-white/10 p-3 text-center${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{playerVp}<span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensity} school density</div></div>
             <div className="p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{opponentVp}<span className="text-sm text-rose-300">/{victoryTarget} VP</span></div><div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div></div>
           </div>
 
@@ -7867,11 +8123,11 @@ export default function Simulator({ storyMode = null } = {}) {
           </button>
           {persistentConditions.length ? <div className="mt-2 flex flex-wrap gap-1">{persistentConditions.map((condition) => <button key={condition.id} type="button" onClick={() => setEventOverlay({ type: "condition-detail", sourceCardId: condition.id, title: condition.name, message: `${condition.text} Your reduction is ${conditionDensityUses[condition.id] ? "used" : "available"}; the opponent's reduction is ${opponent.conditionDensityUses?.[condition.id] ? "used" : "available"}.`, success: true })} className="rounded-full border border-violet-300/20 bg-violet-400/10 px-2 py-1 text-[9px] font-bold text-violet-200">{condition.name} · {conditionDensityUses[condition.id] ? "Used" : "Ready"}</button>)}</div> : null}
 
-          <div className="mt-2 flex items-center justify-between rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-3 py-2"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300/40 bg-slate-950/40 text-xl font-black text-emerald-200">{rp}</div><div><div className="text-[10px] font-black uppercase tracking-wider text-emerald-300">RP Bank</div><div className="text-sm font-bold text-white">{rp}/{playerRpCap} available</div></div></div><div className="text-right text-xs leading-tight text-emerald-100/60">Next collection<br />+1{startTurnRp > 0 ? ` + ${startTurnRp}` : ""} RP</div></div>
+          <div className={`mt-2 flex items-center justify-between rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-3 py-2${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300/40 bg-slate-950/40 text-xl font-black text-emerald-200">{rp}</div><div><div className="text-[10px] font-black uppercase tracking-wider text-emerald-300">RP Bank</div><div className="text-sm font-bold text-white">{rp}/{playerRpCap} available</div></div></div><div className="text-right text-xs leading-tight text-emerald-100/60">Next collection<br />+1{startTurnRp > 0 ? ` + ${startTurnRp}` : ""} RP</div></div>
           <div className="mt-2 grid grid-cols-2 gap-2"><button type="button" onClick={() => setModal("discard")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-cyan-300/35 hover:bg-cyan-300/10"><span><span className="mr-2 text-cyan-300">↺</span>Discard</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-cyan-200">{discardPile.length}</strong></button><button type="button" onClick={() => setModal("lost")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-violet-300/35 hover:bg-violet-300/10"><span><span className="mr-2 text-violet-300">◇</span>Lost</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-violet-200">{lostZone.length}</strong></button></div>
           {poisonImmunityNextPredatorAttack || rovLightsActive || nextOnPlayAttackBonus || (round > 0 && round <= supportBlockedUntilRound) ? <div className="mt-2 flex flex-wrap gap-1">{poisonImmunityNextPredatorAttack ? <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[9px] font-bold text-emerald-200">Poison immune</span> : null}{rovLightsActive ? <span className="rounded-full bg-cyan-400/15 px-2 py-1 text-[9px] font-bold text-cyan-200">ROV lights</span> : null}{nextOnPlayAttackBonus ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-[9px] font-bold text-amber-200">+{nextOnPlayAttackBonus.amount} next attack</span> : null}{round > 0 && round <= supportBlockedUntilRound ? <span className="rounded-full bg-rose-400/15 px-2 py-1 text-[9px] font-bold text-rose-200">Support locked</span> : null}</div> : null}
 
-          <section className="mt-3 flex min-h-48 flex-1 flex-col overflow-hidden rounded-xl border border-cyan-300/20 bg-slate-950/35 p-2" aria-label="Your hand card list">
+          <section className={`mt-3 flex min-h-48 flex-1 flex-col overflow-hidden rounded-xl border border-cyan-300/20 bg-slate-950/35 p-2${tutorialTargetClass("hand")}`} aria-label="Your hand card list" data-tutorial-target="hand">
             <div className="flex items-center justify-between px-1 pb-2"><div><h3 className="text-sm font-black uppercase tracking-[0.16em] text-cyan-200">Your hand</h3><p className="text-xs text-slate-400">Click a card for details</p></div><span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-cyan-400/10 px-2 text-sm font-black text-cyan-200" aria-label={`${hand.length} cards in hand`}>{hand.length}</span></div>
             <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
               {hand.length ? hand.map((cardId, cardIndex) => { const card = cardsById[cardId]; const error = getPlayError(card); return (
@@ -7894,7 +8150,10 @@ export default function Simulator({ storyMode = null } = {}) {
               <div className="mt-3 flex flex-wrap gap-1.5 text-xs font-bold"><span className="rounded-full bg-cyan-400/15 px-2 py-1 text-cyan-200">{getCardClassLabel(handPopoverCard)}</span><span className="rounded-full bg-emerald-400/15 px-2 py-1 text-emerald-200">{getPlayerCardPlayCost(handPopoverCard)} RP</span>{Number(handPopoverCard.victoryPoints ?? 0) > 0 ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-amber-200">{handPopoverCard.victoryPoints} VP</span> : null}</div>
               {handPopoverCard.text ? <p className="mt-3 max-h-20 overflow-y-auto rounded-xl bg-slate-950/45 p-3 text-[11px] leading-relaxed text-slate-300">{handPopoverCard.text}</p> : null}
               {handPopoverPlayError ? <div className="mt-3 rounded-xl border border-rose-300/20 bg-rose-400/10 px-3 py-2 text-xs leading-relaxed text-rose-200">{handPopoverPlayError}</div> : null}
-              <button type="button" disabled={Boolean(handPopoverPlayError)} onClick={() => { const cardId = handPopoverCardId; setHandPopoverCardId(null); playCardFromHand(cardId); }} className="mt-3 w-full rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-950 shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:text-slate-300">Play card</button>
+              {tutorialHelpInline && ["play-card", "turn-button"].includes(tutorialHelp.target) ? (
+                <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelp.id)} />
+              ) : null}
+              <button type="button" disabled={Boolean(handPopoverPlayError)} onClick={() => { const cardId = handPopoverCardId; setHandPopoverCardId(null); playCardFromHand(cardId); }} className={`mt-3 w-full rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-950 shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:text-slate-300${tutorialTargetClass("play-card")}`} data-tutorial-target="play-card">Play card</button>
             </aside>
           </>
         ) : null}
@@ -7917,7 +8176,7 @@ export default function Simulator({ storyMode = null } = {}) {
         </div>
 
         <div className="hidden xl:col-start-2 xl:row-start-3 xl:block">
-          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className="seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40">{opponentThinking ? "Opponent Thinking…" : isSetup ? "Begin Round 1" : "End Turn"}</button>
+          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Opponent Thinking…" : isSetup ? "Begin Round 1" : "End Turn"}</button>
         </div>
       </section>
 
@@ -8024,6 +8283,9 @@ export default function Simulator({ storyMode = null } = {}) {
                 })}</div>
               </section>
             ) : null}
+            {tutorialHelpInline && tutorialHelp.target === "attack-button" ? (
+              <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelp.id)} />
+            ) : null}
             {inspectedCard.owner === "player" && getBasicAttackEffect(inspectedCardData) ? (
               <button
                 type="button"
@@ -8032,7 +8294,8 @@ export default function Simulator({ storyMode = null } = {}) {
                   attackWithCreature(inspectedCard.coralId, inspectedCard.slotId);
                   setInspectedCard(null);
                 }}
-                className="mt-6 w-full rounded-full bg-rose-600 px-6 py-3 font-black text-white disabled:bg-slate-400"
+                className={`mt-6 w-full rounded-full bg-rose-600 px-6 py-3 font-black text-white disabled:bg-slate-400${tutorialTargetClass("attack-button")}`}
+                data-tutorial-target="attack-button"
               >
                 {turn < Number(actionCooldowns[inspectedActionKey] ?? 0) ? "Unavailable This Turn" : usedAttackers.includes(inspectedActionKey) ? "Action Already Used" : `Use ${getBasicAttackEffect(inspectedCardData).actionName} (${getBasicAttackEffect(inspectedCardData).actionCost} RP)`}
               </button>
@@ -8478,8 +8741,12 @@ export default function Simulator({ storyMode = null } = {}) {
               </div>
             </div>
 
+            {tutorialHelpInline && modal ? (
+              <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelp.id)} />
+            ) : null}
+
             {modal === "turn-draw" ? (
-              <div className="space-y-5">
+              <div className={`space-y-5${tutorialTargetClass("draw-controls")}`} data-tutorial-target="draw-controls">
                 {turnDrawSelection?.shortfall > 0 ? <div role="alert" className="rounded-2xl border border-rose-300/40 bg-rose-400/10 p-4 text-sm font-bold text-rose-100">Your personal decks contain only {turnDrawSelection.target} of the {turnDrawSelection.requested} required cards. Choose the remaining card{turnDrawSelection.target === 1 ? "" : "s"} to reveal it; the game will then end by deck depletion.</div> : null}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {[
@@ -8498,7 +8765,7 @@ export default function Simulator({ storyMode = null } = {}) {
                     </div>
                   ))}
                 </div>
-                <button type="button" disabled={!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target} onClick={confirmTurnDraw} className="w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400">Draw Selected Cards</button>
+                <button type="button" disabled={!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target} onClick={confirmTurnDraw} className={`w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400${tutorialTargetClass("confirm-draw")}`} data-tutorial-target="confirm-draw">Draw Selected Cards</button>
               </div>
             ) : modal === "draw-result" ? (
               <div>
@@ -8508,7 +8775,7 @@ export default function Simulator({ storyMode = null } = {}) {
                     return <div key={`${entry.cardId}-${index}`} className={`rounded-3xl border-2 p-3 text-center ${entry.discarded ? "border-rose-300/50 bg-rose-400/10" : "border-cyan-300/50 bg-cyan-400/10"}`}><img src={card?.image} alt={card?.name} className="h-72 w-full rounded-2xl bg-slate-950/45 object-contain" /><div className="mt-2 font-black text-white">{card?.name}</div><div className="text-xs font-bold uppercase tracking-wider text-cyan-100/60">{entry.source} Deck</div>{entry.discarded ? <div className="mt-1 text-xs font-bold text-rose-200">Discarded by hand limit</div> : null}</div>;
                   })}
                 </div>
-                <button type="button" onClick={() => { setTurnDrawResult(null); setModal(null); }} className="mt-5 w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950">Continue to Actions</button>
+                <button type="button" onClick={() => { setTurnDrawResult(null); setModal(null); }} className={`mt-5 w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950${tutorialTargetClass("continue-actions")}`} data-tutorial-target="continue-actions">Continue to Actions</button>
               </div>
             ) : modal === "support-draw" ? (
               <div>
@@ -8530,7 +8797,7 @@ export default function Simulator({ storyMode = null } = {}) {
               </div>
             ) : modal === "hand" ? (
               <div className="flex min-h-0 flex-col gap-3 lg:grid lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-4">
-                <div className="order-2 overflow-x-auto overflow-y-hidden rounded-3xl border border-cyan-300/20 bg-slate-950/35 p-3 overscroll-contain lg:order-1 lg:max-h-[560px] lg:overflow-x-hidden lg:overflow-y-auto lg:p-4" style={{ minWidth: 180 }}>
+                <div className={`order-2 overflow-x-auto overflow-y-hidden rounded-3xl border border-cyan-300/20 bg-slate-950/35 p-3 overscroll-contain lg:order-1 lg:max-h-[560px] lg:overflow-x-hidden lg:overflow-y-auto lg:p-4${tutorialTargetClass("hand")}`} style={{ minWidth: 180 }} data-tutorial-target="hand">
                   {modalCards.length ? (
                     <div className="flex w-max gap-2 lg:block lg:w-auto lg:space-y-3">
                       {modalCards.map((cardId, cardIndex) => {
@@ -8588,7 +8855,8 @@ export default function Simulator({ storyMode = null } = {}) {
                           type="button"
                           disabled={Boolean(selectedHandPlayError)}
                           onClick={() => playCardFromHand(selectedHandCard)}
-                          className="mx-auto w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-8 py-3 text-sm font-black text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 lg:w-auto"
+                          className={`mx-auto w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-8 py-3 text-sm font-black text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 lg:w-auto${tutorialTargetClass("play-card")}`}
+                          data-tutorial-target="play-card"
                         >
                           Play Card
                         </button>
