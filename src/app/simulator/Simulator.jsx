@@ -1765,6 +1765,7 @@ export default function Simulator({ storyMode = null } = {}) {
   const schoolDensityConditionIds = [...new Set([activeConditionId, ...persistentConditionIds].filter(Boolean))];
   const playingCard = playingCardId ? cardsById[playingCardId] : null;
   const inspectedCardData = inspectedCard ? cardsById[inspectedCard.cardId] : null;
+  const selectedTutorialCard = selectedHandCard ? cardsById[selectedHandCard] : null;
   const hasAffordableSetupFoundation = hand.some((cardId) => {
     const card = cardsById[cardId];
     return isFoundationCard(card)
@@ -1779,6 +1780,10 @@ export default function Simulator({ storyMode = null } = {}) {
     playingCardId,
     modal,
     selectedHandCard,
+    selectedCardIsSupport: selectedTutorialCard?.kind === CardKind.SUPPORT,
+    selectedCardName: selectedTutorialCard?.name,
+    selectedCardCost: selectedTutorialCard ? getPlayerCardPlayCost(selectedTutorialCard) : null,
+    selectedSupportLocksFurtherSupports: supportExplicitlyLocksFurtherSupports(selectedTutorialCard),
     handPopoverOpen: Boolean(handPopoverCardId),
     inspectedPlayerCardHasAttack: Boolean(
       inspectedCard?.owner === "player" && inspectedCardData && getBasicAttackEffect(inspectedCardData),

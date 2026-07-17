@@ -133,7 +133,18 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       action = "Finish building by choosing the highlighted legal placement.";
     } else if ((uiState.modal === "hand" || uiState.handPopoverOpen) && uiState.selectedHandCard) {
       target = "play-card";
-      action = "Press Play Card, then choose a highlighted legal placement.";
+      if (uiState.selectedCardIsSupport) {
+        const supportName = String(uiState.selectedCardName ?? "This Support card");
+        const supportCost = Math.max(0, Number(uiState.selectedCardCost ?? 0));
+        const supportLimit = uiState.selectedSupportLocksFurtherSupports
+          ? " Its text also makes it your last Support card this turn."
+          : "";
+        title = "Use a one-time Support";
+        message = `Support cards are tactical actions for searching, drawing, healing, or disrupting. ${supportName} resolves its effect immediately instead of staying in your ecosystem, then goes to your discard pile. It costs ${supportCost} RP.${supportLimit}`;
+        action = `Press Play Card to resolve ${supportName}, then follow any choice prompt that appears. No ecosystem placement is needed.`;
+      } else {
+        action = "Press Play Card, then choose a highlighted legal placement.";
+      }
     } else {
       target = "hand";
     }
