@@ -1,13 +1,26 @@
 import {
+  ADVENTURE_STARTER_DECK_IDS,
   ADVENTURE_CONTENT_SCHEMA_VERSION,
   REQUIRED_DIALOGUE_BEATS,
   REQUIRED_ECOSYSTEM_NPC_ROLES,
+  REQUIRED_TUTORIAL_ACTION_TYPES,
+  REQUIRED_TUTORIAL_CHECKPOINT_IDS,
 } from "./adventureContent.mjs";
 import { QUEST_STATUSES, validateRewardGrant } from "./adventureProgression.mjs";
 
 const SETTLEMENT_TYPES = new Set(["island", "floating"]);
 const LEARNING_FIELDS = ["concept", "misconception", "decision", "consequence", "debrief", "callback"];
 const CONVERSATION_MODES = ["intro", "rematch", "victory"];
+const MENTOR_CONVERSATION_MODES = [
+  "starterPresentation",
+  "starterConfirmed",
+  "tutorialIntro",
+  "practiceLoss",
+  "practiceExit",
+  "practiceRetry",
+  "boatSafety",
+];
+const STARTER_METRICS = ["offense", "defense", "economy", "consistency", "tempo"];
 const RUNTIME_INTERACTION_TYPES = new Set(["enter", "exit", "trainer"]);
 const FACING_DIRECTIONS = new Set(["up", "down", "left", "right"]);
 
@@ -58,6 +71,9 @@ export function validateAdventureContent(content) {
   const sceneIds = collectIds(content.scenes, "scenes", errors);
   const dockIds = collectIds(content.docks, "docks", errors);
   const conversationIds = collectIds(content.conversations, "conversations", errors);
+  const starterDeckIds = collectIds(content.starterDecks, "starterDecks", errors);
+  const tutorialIds = collectIds(content.tutorials, "tutorials", errors);
+  const fieldNoteIds = collectIds(content.fieldNotes, "fieldNotes", errors);
   const dialogueIds = collectIds(content.dialogues, "dialogues", errors);
   const questIds = collectIds(content.quests, "quests", errors);
   const encounterIds = collectIds(content.encounters, "encounters", errors);
@@ -70,6 +86,9 @@ export function validateAdventureContent(content) {
   const scenes = objectItems(content.scenes);
   const docks = objectItems(content.docks);
   const conversations = objectItems(content.conversations);
+  const starterDecks = objectItems(content.starterDecks);
+  const tutorials = objectItems(content.tutorials);
+  const fieldNotes = objectItems(content.fieldNotes);
   const dialogues = objectItems(content.dialogues);
   const quests = objectItems(content.quests);
   const encounters = objectItems(content.encounters);
@@ -81,6 +100,9 @@ export function validateAdventureContent(content) {
   const docksById = new Map(docks.map((dock) => [dock.id, dock]));
   const npcsById = new Map(npcs.map((npc) => [npc.id, npc]));
   const conversationsById = new Map(conversations.map((conversation) => [conversation.id, conversation]));
+  const starterDecksById = new Map(starterDecks.map((starterDeck) => [starterDeck.id, starterDeck]));
+  const tutorialsById = new Map(tutorials.map((tutorial) => [tutorial.id, tutorial]));
+  const fieldNotesById = new Map(fieldNotes.map((fieldNote) => [fieldNote.id, fieldNote]));
   const questsById = new Map(quests.map((quest) => [quest.id, quest]));
   const encountersById = new Map(encounters.map((encounter) => [encounter.id, encounter]));
   const routesById = new Map(routes.map((route) => [route.id, route]));
@@ -124,6 +146,33 @@ export function validateAdventureContent(content) {
       }
     }
     for (const roleId of asArray(town.plannedNpcRoleIds)) requireReference(roleId, roleIds, `towns.${town.id}.plannedNpcRoleIds`, errors);
+
+    if (town.chapterType === "starter") {
+      requireReference(town.academySceneId, sceneIds, `towns.${town.id}.academySceneId`, errors);
+      requireReference(town.mentorNpcId, npcIds, `towns.${town.id}.mentorNpcId`, errors);
+      requireReference(town.tutorialId, tutorialIds, `towns.${town.id}.tutorialId`, errors);
+      for (const starterDeckId of asArray(town.starterDeckIds)) {
+        requireReference(starterDeckId, starterDeckIds, `towns.${town.id}.starterDeckIds`, errors);
+      }
+      if (
+        asArray(town.starterDeckIds).length !== ADVENTURE_STARTER_DECK_IDS.length
+        || ADVENTURE_STARTER_DECK_IDS.some((starterDeckId) => !asArray(town.starterDeckIds).includes(starterDeckId))
+      ) {
+        errors.push(`towns.${town.id}.starterDeckIds must include all three canonical starter decks.`);
+      }
+      if (scenesById.has(town.academySceneId) && scenesById.get(town.academySceneId).townId !== town.id) {
+        errors.push(`towns.${town.id}.academySceneId must belong to the starter town.`);
+      }
+      if (npcsById.has(town.mentorNpcId) && npcsById.get(town.mentorNpcId).townId !== town.id) {
+        errors.push(`towns.${town.id}.mentorNpcId must belong to the starter town.`);
+      }
+      if (tutorialsById.has(town.tutorialId) && tutorialsById.get(town.tutorialId).townId !== town.id) {
+        errors.push(`towns.${town.id}.tutorialId must belong to the starter town.`);
+      }
+      if (Number(town.encounterPlan?.practice) !== 1) {
+        errors.push(`towns.${town.id}.encounterPlan must include exactly one mentor practice duel.`);
+      }
+    }
 
     if (town.chapterType === "ecosystem") {
       for (const roleId of REQUIRED_ECOSYSTEM_NPC_ROLES) {
@@ -258,6 +307,170 @@ export function validateAdventureContent(content) {
         errors.push(`conversations.${conversation.id}.lines.${mode} must contain at least one non-empty line.`);
       }
     }
+    if (npc?.roleId === "mentor") {
+      for (const mode of MENTOR_CONVERSATION_MODES) {
+        const lines = conversation.lines?.[mode];
+        if (!Array.isArray(lines) || !lines.length || lines.some((line) => typeof line !== "string" || !line.trim())) {
+          errors.push(`conversations.${conversation.id}.lines.${mode} must contain at least one non-empty line.`);
+        }
+      }
+    }
+  }
+
+  if (
+    starterDecks.length !== ADVENTURE_STARTER_DECK_IDS.length
+    || ADVENTURE_STARTER_DECK_IDS.some((starterDeckId) => !starterDecksById.has(starterDeckId))
+  ) {
+    errors.push("starterDecks must contain exactly Coral Garden, Murky Water, and Blue Water.");
+  }
+  const claimedStarterDeckIds = new Set();
+  for (const starterDeck of starterDecks) {
+    for (const field of ["deckId", "name", "habitat", "color", "tagline", "summary", "playStyle", "difficulty", "watchFor"]) {
+      if (typeof starterDeck[field] !== "string" || !starterDeck[field].trim()) {
+        errors.push(`starterDecks.${starterDeck.id}.${field} is required.`);
+      }
+    }
+    if (starterDeck.deckId !== starterDeck.id) {
+      errors.push(`starterDecks.${starterDeck.id}.deckId must match its canonical starter id.`);
+    }
+    if (claimedStarterDeckIds.has(starterDeck.deckId)) {
+      errors.push(`starterDecks contains duplicate deckId ${starterDeck.deckId}.`);
+    }
+    claimedStarterDeckIds.add(starterDeck.deckId);
+    if (
+      !Array.isArray(starterDeck.strengths)
+      || starterDeck.strengths.length < 2
+      || starterDeck.strengths.some((strength) => typeof strength !== "string" || !strength.trim())
+    ) {
+      errors.push(`starterDecks.${starterDeck.id}.strengths must contain at least two non-empty strengths.`);
+    }
+    if (!isObject(starterDeck.metrics)) {
+      errors.push(`starterDecks.${starterDeck.id}.metrics must be an object.`);
+    } else {
+      for (const metric of STARTER_METRICS) {
+        if (!Number.isInteger(starterDeck.metrics[metric]) || starterDeck.metrics[metric] < 1 || starterDeck.metrics[metric] > 5) {
+          errors.push(`starterDecks.${starterDeck.id}.metrics.${metric} must be an integer from 1 to 5.`);
+        }
+      }
+    }
+  }
+
+  for (const tutorial of tutorials) {
+    requireReference(tutorial.townId, townIds, `tutorials.${tutorial.id}.townId`, errors);
+    requireReference(tutorial.sceneId, sceneIds, `tutorials.${tutorial.id}.sceneId`, errors);
+    requireReference(tutorial.questId, questIds, `tutorials.${tutorial.id}.questId`, errors);
+    requireReference(tutorial.mentorNpcId, npcIds, `tutorials.${tutorial.id}.mentorNpcId`, errors);
+    requireReference(tutorial.practiceEncounterId, encounterIds, `tutorials.${tutorial.id}.practiceEncounterId`, errors);
+    requireReference(tutorial.completionRewardId, rewardIds, `tutorials.${tutorial.id}.completionRewardId`, errors);
+    requireReference(tutorial.fieldNoteId, fieldNoteIds, `tutorials.${tutorial.id}.fieldNoteId`, errors);
+    for (const starterDeckId of asArray(tutorial.starterDeckIds)) {
+      requireReference(starterDeckId, starterDeckIds, `tutorials.${tutorial.id}.starterDeckIds`, errors);
+    }
+    if (
+      asArray(tutorial.starterDeckIds).length !== ADVENTURE_STARTER_DECK_IDS.length
+      || ADVENTURE_STARTER_DECK_IDS.some((starterDeckId) => !asArray(tutorial.starterDeckIds).includes(starterDeckId))
+    ) {
+      errors.push(`tutorials.${tutorial.id}.starterDeckIds must include all three canonical starter decks.`);
+    }
+    if (tutorial.victoryTarget !== 10) errors.push(`tutorials.${tutorial.id}.victoryTarget must be 10.`);
+    if (tutorial.ordered !== true || tutorial.allowRetry !== true || tutorial.allowExit !== true) {
+      errors.push(`tutorials.${tutorial.id} must be ordered and allow retry and exit.`);
+    }
+    if (tutorial.resumePolicy !== "last-completed-checkpoint") {
+      errors.push(`tutorials.${tutorial.id}.resumePolicy must be last-completed-checkpoint.`);
+    }
+
+    const checkpointIds = new Set();
+    const checkpoints = objectItems(tutorial.checkpoints);
+    const actionTypes = checkpoints.map((checkpoint) => checkpoint.actionType);
+    const authoredCheckpointIds = checkpoints.map((checkpoint) => checkpoint.id);
+    if (
+      actionTypes.length !== REQUIRED_TUTORIAL_ACTION_TYPES.length
+      || actionTypes.some((actionType, index) => actionType !== REQUIRED_TUTORIAL_ACTION_TYPES[index])
+    ) {
+      errors.push(`tutorials.${tutorial.id}.checkpoints must exactly follow ${REQUIRED_TUTORIAL_ACTION_TYPES.join(" -> ")}.`);
+    }
+    if (
+      authoredCheckpointIds.length !== REQUIRED_TUTORIAL_CHECKPOINT_IDS.length
+      || authoredCheckpointIds.some((checkpointId, index) => checkpointId !== REQUIRED_TUTORIAL_CHECKPOINT_IDS[index])
+    ) {
+      errors.push(`tutorials.${tutorial.id}.checkpoint ids must exactly follow ${REQUIRED_TUTORIAL_CHECKPOINT_IDS.join(" -> ")}.`);
+    }
+    for (const [index, checkpoint] of checkpoints.entries()) {
+      if (typeof checkpoint.id !== "string" || !checkpoint.id.trim()) {
+        errors.push(`tutorials.${tutorial.id}.checkpoints[${index}].id is required.`);
+      } else if (checkpointIds.has(checkpoint.id)) {
+        errors.push(`tutorials.${tutorial.id}.checkpoints contains duplicate id ${checkpoint.id}.`);
+      } else {
+        checkpointIds.add(checkpoint.id);
+      }
+      if (typeof checkpoint.instruction !== "string" || !checkpoint.instruction.trim()) {
+        errors.push(`tutorials.${tutorial.id}.checkpoints[${index}].instruction is required.`);
+      }
+    }
+    if (!Array.isArray(tutorial.checkpoints)) {
+      errors.push(`tutorials.${tutorial.id}.checkpoints must be an array.`);
+    }
+
+    const scene = scenesById.get(tutorial.sceneId);
+    const mentor = npcsById.get(tutorial.mentorNpcId);
+    const encounter = encountersById.get(tutorial.practiceEncounterId);
+    const fieldNote = fieldNotesById.get(tutorial.fieldNoteId);
+    if (scene && scene.townId !== tutorial.townId) errors.push(`tutorials.${tutorial.id}.sceneId must belong to the tutorial town.`);
+    if (mentor && (mentor.townId !== tutorial.townId || mentor.sceneId !== tutorial.sceneId || mentor.roleId !== "mentor")) {
+      errors.push(`tutorials.${tutorial.id}.mentorNpcId must resolve to the mentor in the tutorial scene.`);
+    }
+    if (encounter && (
+      encounter.townId !== tutorial.townId
+      || encounter.questId !== tutorial.questId
+      || encounter.opponentId !== tutorial.mentorNpcId
+      || encounter.role !== "practice"
+      || encounter.victoryTarget !== tutorial.victoryTarget
+      || encounter.rewardId !== tutorial.completionRewardId
+      || encounter.tutorialId !== tutorial.id
+    )) {
+      errors.push(`tutorials.${tutorial.id}.practiceEncounterId must resolve to its 10 VP mentor practice encounter and reward.`);
+    }
+    if (fieldNote && fieldNote.status !== "prototype") {
+      errors.push(`tutorials.${tutorial.id}.fieldNoteId must resolve to playable Field Note content.`);
+    }
+  }
+
+  for (const fieldNote of fieldNotes) {
+    for (const field of ["title", "habitatId", "status"]) {
+      if (typeof fieldNote[field] !== "string" || !fieldNote[field].trim()) {
+        errors.push(`fieldNotes.${fieldNote.id}.${field} is required.`);
+      }
+    }
+    if (!["planned", "prototype"].includes(fieldNote.status)) {
+      errors.push(`fieldNotes.${fieldNote.id}.status must be planned or prototype.`);
+    }
+    if (fieldNote.status === "prototype") {
+      if (typeof fieldNote.summary !== "string" || !fieldNote.summary.trim()) {
+        errors.push(`fieldNotes.${fieldNote.id}.summary is required for playable Field Notes.`);
+      }
+      if (
+        !Array.isArray(fieldNote.observations)
+        || fieldNote.observations.length < 2
+        || fieldNote.observations.some((observation) => typeof observation !== "string" || !observation.trim())
+      ) {
+        errors.push(`fieldNotes.${fieldNote.id}.observations must contain at least two observations.`);
+      }
+      if (
+        !Array.isArray(fieldNote.safetyChecklist)
+        || fieldNote.safetyChecklist.length < 3
+        || fieldNote.safetyChecklist.some((step) => typeof step !== "string" || !step.trim())
+      ) {
+        errors.push(`fieldNotes.${fieldNote.id}.safetyChecklist must contain at least three safety steps.`);
+      }
+      if (
+        !Array.isArray(fieldNote.glossary)
+        || !fieldNote.glossary.length
+        || fieldNote.glossary.some((entry) => !isObject(entry) || typeof entry.term !== "string" || !entry.term.trim() || typeof entry.definition !== "string" || !entry.definition.trim())
+      ) {
+        errors.push(`fieldNotes.${fieldNote.id}.glossary must contain defined terms.`);
+      }
+    }
   }
 
   for (const quest of quests) {
@@ -305,6 +518,13 @@ export function validateAdventureContent(content) {
     requireReference(encounter.townId, townIds, `encounters.${encounter.id}.townId`, errors);
     requireReference(encounter.questId, questIds, `encounters.${encounter.id}.questId`, errors);
     requireReference(encounter.rewardId, rewardIds, `encounters.${encounter.id}.rewardId`, errors, { nullable: true });
+    if (encounter.tutorialId !== undefined) {
+      requireReference(encounter.tutorialId, tutorialIds, `encounters.${encounter.id}.tutorialId`, errors);
+      const tutorial = tutorialsById.get(encounter.tutorialId);
+      if (tutorial && tutorial.practiceEncounterId !== encounter.id) {
+        errors.push(`encounters.${encounter.id}.tutorialId must reference a tutorial that uses this practice encounter.`);
+      }
+    }
     if (![10, 30].includes(encounter.victoryTarget)) errors.push(`encounters.${encounter.id}.victoryTarget must be 10 or 30.`);
     if (encounter.role === "tournament" && encounter.victoryTarget !== 30) {
       errors.push(`encounters.${encounter.id} tournament matches must use 30 VP.`);
@@ -349,6 +569,7 @@ export function validateAdventureContent(content) {
     else rewardGrantIds.add(grant.grantId);
     for (const routeId of grant.routeIds) requireReference(routeId, routeIds, `rewards.${reward.id}.routeIds`, errors);
     for (const packPoolId of Object.keys(grant.packs)) requireReference(packPoolId, packPoolIds, `rewards.${reward.id}.packs`, errors);
+    for (const fieldNoteId of grant.fieldNoteIds) requireReference(fieldNoteId, fieldNoteIds, `rewards.${reward.id}.fieldNoteIds`, errors);
   }
 
   for (const pool of packPools) {

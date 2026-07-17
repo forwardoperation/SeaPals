@@ -268,19 +268,27 @@ Account-based cloud saves may be added later using player-owned rows and restric
 
 **Goal:** Deliver a complete, understandable new-player introduction.
 
+**Implementation status:** Implementation complete on `codex/seapals-adventure`; full interactive 10 VP victory with each starter, target-age comprehension playtesting, and named marine-science approval remain open gates. See `docs/seapals-adventure-phase-2.md`.
+
 **Deliverables**
 
 - An original marine mentor, academy interior, starter presentation, and starter preview metrics.
 - One-time choice of Coral Garden, Murky Water, or Blue Water, with confirmation before committing.
-- A tutorial layer that drives and validates real simulator actions: setup, drawing, collecting RP, building, attacking, ending a turn, and earning VP.
+- A tutorial layer that drives and validates real simulator actions: setup, collecting RP, drawing, building, attacking, ending a turn, and earning VP.
 - A friendly 10 VP practice duel with retry, exit, and loss dialogue.
-- First Field Notes and boat-safety introduction.
+- First Field Notes and boat-safety introduction, with the boat-safety-reviewed flag recorded only after the player explicitly acknowledges the Field Note.
 
 **Exit criteria**
 
 - A new player can choose any starter, finish the live tutorial without prior rules knowledge, win or retry the practice duel, save, and resume.
 - Replaying the tutorial cannot grant a second starter or duplicate one-time reward.
 - Target-age playtesting identifies no critical rule-comprehension blocker.
+
+**Open validation gates**
+
+- [ ] Manually complete a full interactive 10 VP practice victory with Coral Garden, Murky Water, and Blue Water, including reward, Field Note acknowledgment, save, and resume for each starter.
+- [ ] Complete target-age comprehension playtesting with no critical rule-comprehension blocker.
+- [ ] Obtain named marine-science approval for the final academy and Field Note educational copy.
 
 ### Phase 3 - Collection, rewards, inventory, and deck building
 

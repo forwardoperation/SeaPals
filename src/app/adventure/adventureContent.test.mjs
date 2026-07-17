@@ -2,13 +2,19 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ADVENTURE_CONTENT,
+  ADVENTURE_STARTER_DECK_IDS,
   REQUIRED_DIALOGUE_BEATS,
   REQUIRED_ECOSYSTEM_NPC_ROLES,
+  REQUIRED_TUTORIAL_ACTION_TYPES,
+  REQUIRED_TUTORIAL_CHECKPOINT_IDS,
   getAdventureDock,
+  getAdventureFieldNote,
   getAdventureStartLocation,
+  getAdventureStarterDeck,
   getRuntimeAdventureScenes,
   resolveAdventureInteraction,
   resolveAdventureNpc,
+  resolveAdventureTutorial,
 } from "./adventureContent.mjs";
 import { assertValidAdventureContent, validateAdventureContent } from "./adventureContentValidation.mjs";
 import { createInitialAdventureSave, grantReward, validateAdventureSave } from "./adventureProgression.mjs";
@@ -97,9 +103,9 @@ test("the initial save location references launch content", () => {
   assert.ok(ADVENTURE_CONTENT.scenes.some((scene) => scene.id === save.world.sceneId && scene.townId === save.world.townId));
 });
 
-test("the three live Shellshore scenes and start location resolve from content", () => {
+test("the four live Shellshore scenes and Phase 1 dock start resolve from content", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
-  assert.deepEqual(runtimeScenes.map((scene) => scene.id), ["town", "coral-home", "deep-home"]);
+  assert.deepEqual(runtimeScenes.map((scene) => scene.id), ["town", "coral-home", "deep-home", "academy-lab"]);
   assert.ok(runtimeScenes.every((scene) => scene.world.tiles.length > 0));
   assert.deepEqual(getAdventureStartLocation(), {
     townId: "shellshore-village",
@@ -134,6 +140,44 @@ test("Shellshore doors, trainers, conversations, and encounters cross-resolve", 
   assert.equal(dorian.conversation.lines.rematch.length, 2);
   assert.equal(dorian.encounter.opponentDeckId, "darkness-shroud");
   assert.equal(dorian.encounter.difficulty, "medium");
+
+  const academyDoor = resolveAdventureInteraction("town", "interaction-town-enter-academy");
+  assert.equal(academyDoor.targetSceneContent.id, "academy-lab");
+  assert.deepEqual(academyDoor.spawn, { x: 6, y: 7 });
+
+  const mentorInteraction = resolveAdventureInteraction("academy-lab", "interaction-academy-mentor");
+  assert.equal(mentorInteraction.npc.name, "Professor Marlow Current");
+  assert.equal(mentorInteraction.npc.roleId, "mentor");
+  assert.equal(mentorInteraction.npc.conversation.lines.boatSafety.length, 2);
+  assert.equal(mentorInteraction.npc.encounter.id, "encounter-shellshore-mentor-practice");
+  assert.equal(mentorInteraction.npc.encounter.victoryTarget, 10);
+});
+
+test("starter previews, the live tutorial, and first Field Note form one canonical introduction", () => {
+  assert.deepEqual(ADVENTURE_CONTENT.starterDecks.map((starter) => starter.id), ADVENTURE_STARTER_DECK_IDS);
+  for (const starterDeckId of ADVENTURE_STARTER_DECK_IDS) {
+    const starter = getAdventureStarterDeck(starterDeckId);
+    assert.equal(starter.deckId, starterDeckId);
+    assert.equal(starter.strengths.length, 3);
+    assert.deepEqual(Object.keys(starter.metrics), ["offense", "defense", "economy", "consistency", "tempo"]);
+    assert.ok(Object.values(starter.metrics).every((metric) => metric >= 1 && metric <= 5));
+  }
+
+  const tutorial = resolveAdventureTutorial("tutorial-shellshore-live-basics");
+  assert.equal(tutorial.sceneId, "academy-lab");
+  assert.equal(tutorial.mentor.name, "Professor Marlow Current");
+  assert.equal(tutorial.practiceEncounter.id, "encounter-shellshore-mentor-practice");
+  assert.equal(tutorial.practiceEncounter.victoryTarget, 10);
+  assert.deepEqual(tutorial.starterDecks.map((starter) => starter.id), ADVENTURE_STARTER_DECK_IDS);
+  assert.deepEqual(tutorial.checkpoints.map((checkpoint) => checkpoint.actionType), REQUIRED_TUTORIAL_ACTION_TYPES);
+  assert.deepEqual(tutorial.checkpoints.map((checkpoint) => checkpoint.id), REQUIRED_TUTORIAL_CHECKPOINT_IDS);
+  assert.equal(tutorial.fieldNote.id, "field-note-harbor-basics");
+
+  const fieldNote = getAdventureFieldNote("field-note-harbor-basics");
+  assert.equal(fieldNote.status, "prototype");
+  assert.equal(fieldNote.observations.length, 3);
+  assert.equal(fieldNote.safetyChecklist.length, 3);
+  assert.ok(fieldNote.glossary.some((entry) => entry.term === "Ecosystem"));
 });
 
 test("validation reports duplicate, broken-reference, and missing-learning failures", () => {
@@ -204,4 +248,19 @@ test("content validation rejects broken Shellshore runtime cross-references", ()
   assert.ok(result.errors.some((error) => /shellshore-dock.*sceneId must belong to the dock town/.test(error)));
   assert.ok(result.errors.some((error) => /dorian.*encounterId must resolve to an encounter/.test(error)));
   assert.ok(result.errors.some((error) => /lines\.victory must contain/.test(error)));
+});
+
+test("content validation protects Phase 2 starter, tutorial, mentor, and Field Note contracts", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  invalid.starterDecks.find((starter) => starter.id === "blue-water").metrics.tempo = 8;
+  invalid.tutorials[0].checkpoints[1].actionType = "attack-resolved";
+  invalid.conversations.find((conversation) => conversation.npcId === "academy-mentor").lines.boatSafety = [];
+  invalid.rewards.find((reward) => reward.id === "reward-shellshore-tutorial").fieldNoteIds = ["missing-note"];
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /blue-water\.metrics\.tempo must be an integer from 1 to 5/.test(error)));
+  assert.ok(result.errors.some((error) => /checkpoints must exactly follow/.test(error)));
+  assert.ok(result.errors.some((error) => /lines\.boatSafety must contain/.test(error)));
+  assert.ok(result.errors.some((error) => /fieldNoteIds references unknown id missing-note/.test(error)));
 });

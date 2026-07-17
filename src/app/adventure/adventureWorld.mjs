@@ -28,6 +28,8 @@ export const TILE_LEGEND = Object.freeze({
   C: Object.freeze({ id: "coral-home-door", walkable: false }),
   d: Object.freeze({ id: "deep-home-wall", walkable: false }),
   D: Object.freeze({ id: "deep-home-door", walkable: false }),
+  s: Object.freeze({ id: "academy-wall", walkable: false }),
+  S: Object.freeze({ id: "academy-door", walkable: false }),
   w: Object.freeze({ id: "interior-wall", walkable: false }),
   f: Object.freeze({ id: "interior-floor", walkable: true }),
   r: Object.freeze({ id: "rug", walkable: true }),
