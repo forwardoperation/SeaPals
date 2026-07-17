@@ -1243,14 +1243,25 @@ function getSlotConnectorStyle(position) {
   };
 }
 
-export default function Simulator() {
-  const [initialGame] = useState(() => createInitialGameState(defaultDeckId, defaultDeckId, createSeededRandom(0x5ea9a15)));
-  const [selectedDeckId, setSelectedDeckId] = useState(defaultDeckId);
-  const [selectedOpponentDeckId, setSelectedOpponentDeckId] = useState(defaultDeckId);
-  const [opponentDifficulty, setOpponentDifficulty] = useState(OpponentDifficulty.MEDIUM);
-  const [pendingOpponentDifficulty, setPendingOpponentDifficulty] = useState(OpponentDifficulty.MEDIUM);
-  const [victoryTarget, setVictoryTarget] = useState(30);
-  const [pendingVictoryTarget, setPendingVictoryTarget] = useState(30);
+export default function Simulator({ storyMode = null } = {}) {
+  const isStoryMode = Boolean(storyMode);
+  const storyPlayerDeckId = storyMode?.playerDeckId ?? defaultDeckId;
+  const storyOpponentDeckId = storyMode?.opponentDeckId ?? defaultDeckId;
+  const storyVictoryTarget = Math.max(1, Number(storyMode?.victoryTarget) || 10);
+  const storyDifficulty = normalizeOpponentDifficulty(storyMode?.difficulty ?? OpponentDifficulty.MEDIUM);
+  const storyOpponentName = String(storyMode?.opponentName ?? "Rival").trim() || "Rival";
+  const initialPlayerDeckId = isStoryMode ? storyPlayerDeckId : defaultDeckId;
+  const initialOpponentDeckId = isStoryMode ? storyOpponentDeckId : defaultDeckId;
+  const initialVictoryTarget = isStoryMode ? storyVictoryTarget : 30;
+  const initialOpponentDifficulty = isStoryMode ? storyDifficulty : OpponentDifficulty.MEDIUM;
+  const opponentHudLabel = isStoryMode ? storyOpponentName : "Rival Reef";
+  const [initialGame] = useState(() => createInitialGameState(initialPlayerDeckId, initialOpponentDeckId, createSeededRandom(0x5ea9a15)));
+  const [selectedDeckId, setSelectedDeckId] = useState(initialPlayerDeckId);
+  const [selectedOpponentDeckId, setSelectedOpponentDeckId] = useState(initialOpponentDeckId);
+  const [opponentDifficulty, setOpponentDifficulty] = useState(initialOpponentDifficulty);
+  const [pendingOpponentDifficulty, setPendingOpponentDifficulty] = useState(initialOpponentDifficulty);
+  const [victoryTarget, setVictoryTarget] = useState(initialVictoryTarget);
+  const [pendingVictoryTarget, setPendingVictoryTarget] = useState(initialVictoryTarget);
   const [foundationDeck, setFoundationDeck] = useState(initialGame.foundationDeck);
   const [palsDeck, setPalsDeck] = useState(initialGame.palsDeck);
   const [hand, setHand] = useState(initialGame.hand);
@@ -1322,12 +1333,15 @@ export default function Simulator() {
   const [attackContext, setAttackContext] = useState(null);
   const [searchContext, setSearchContext] = useState(null);
   const [gameResult, setGameResult] = useState(null);
+  const storyVictoryRecordedRef = useRef(false);
   const [inspectedCard, setInspectedCard] = useState(null);
   const [eventOverlay, setEventOverlay] = useState(() => ({
     type: "new-game-setup",
     initial: true,
-    title: "Welcome to the SeaPals Simulator",
-    message: "Learn SeaPals by building an ecosystem one legal action at a time. Choose a deck for each side and a victory target, then begin the setup round with four Foundation and four Pals cards.",
+    title: isStoryMode ? `${storyOpponentName} challenges you!` : "Welcome to the SeaPals Simulator",
+    message: isStoryMode
+      ? `${storyOpponentName} is ready for a SeaPals duel. Build your ecosystem and be the first to reach ${storyVictoryTarget} VP.`
+      : "Learn SeaPals by building an ecosystem one legal action at a time. Choose a deck for each side and a victory target, then begin the setup round with four Foundation and four Pals cards.",
   }));
   const [pendingEvents, setPendingEvents] = useState([]);
   const [faceoffRolling, setFaceoffRolling] = useState(false);
@@ -1335,6 +1349,8 @@ export default function Simulator() {
   const [log, setLog] = useState(["New Coral Garden game started. Setup: play a base Coral or Creature School using your 3 RP."]);
   const [turnLog, setTurnLog] = useState(["Setup began with 3 RP and an eight-card hand."]);
   const opponentDifficultyProfile = getOpponentDifficultyProfile(opponentDifficulty);
+  const storyPlayerDeckName = prebuiltDecks.find((deck) => deck.id === storyPlayerDeckId)?.name ?? storyPlayerDeckId;
+  const storyOpponentDeckName = prebuiltDecks.find((deck) => deck.id === storyOpponentDeckId)?.name ?? storyOpponentDeckId;
 
   const playerHabitats = playerHabitatInstances.map((instance) => instance.cardId);
   const playerReefCreatures = playerReefCreatureInstances.map((instance) => instance.cardId);
@@ -1694,6 +1710,12 @@ export default function Simulator() {
       return result.message;
     });
   }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling]);
+
+  useEffect(() => {
+    if (!isStoryMode || storyVictoryRecordedRef.current || !/^Victory:/i.test(String(gameResult ?? ""))) return;
+    storyVictoryRecordedRef.current = true;
+    storyMode?.onVictory?.();
+  }, [gameResult, isStoryMode, storyMode]);
 
   useEffect(() => {
     if (!faceoffRolling || !["faceoff-ready", "school-attack-ready"].includes(eventOverlay?.type)) return;
@@ -6995,7 +7017,29 @@ export default function Simulator() {
     setLog([...unavailableWarnings, `New ${difficultyLabel} game started: your ${deckName} versus the opponent's ${opponentDeckName}. Setup: play a base Coral or Creature School using your 3 RP.`]);
   }
 
+  function restartStoryGame() {
+    storyVictoryRecordedRef.current = false;
+    restartGame(storyPlayerDeckId, storyOpponentDeckId, storyVictoryTarget, storyDifficulty);
+  }
+
+  function returnToStoryTown() {
+    if (!isStoryMode) return;
+    storyMode?.onExit?.();
+  }
+
+  function exitStoryMode() {
+    if (gameResult) {
+      returnToStoryTown();
+      return;
+    }
+    storyMode?.onExit?.();
+  }
+
   function openNewGameSetup() {
+    if (isStoryMode) {
+      restartStoryGame();
+      return;
+    }
     setPendingVictoryTarget(victoryTarget);
     setPendingOpponentDifficulty(opponentDifficulty);
     setEventOverlay({
@@ -7063,9 +7107,15 @@ export default function Simulator() {
           <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <Link href="/" aria-label="Exit simulator and return home" className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
-                  <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">Home</span>
-                </Link>
+                {isStoryMode ? (
+                  <button type="button" onClick={exitStoryMode} aria-label="Exit duel and return to town" className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
+                    <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">Town</span>
+                  </button>
+                ) : (
+                  <Link href="/" aria-label="Exit simulator and return home" className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
+                    <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">Home</span>
+                  </Link>
+                )}
                 <div>
                   <h1 className="text-lg font-black tracking-tight text-white">SeaPals Simulator</h1>
                   <p className="hidden text-xs text-cyan-100/60 sm:block">Build your reef. Outsmart the opposing ecosystem.</p>
@@ -7080,7 +7130,7 @@ export default function Simulator() {
                   <div className="text-[9px] font-semibold text-cyan-300/70">{playerSchoolDensity} school density</div>
                 </div>
                 <div className="px-4 py-1.5 text-center">
-                  <div className="text-[9px] font-black uppercase tracking-[0.18em] text-rose-300">Rival Reef · {opponentDifficultyProfile.label}</div>
+                  <div className="text-[9px] font-black uppercase tracking-[0.18em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div>
                   <div className="text-xl font-black tabular-nums text-white">{opponentVp}<span className="text-xs text-rose-300">/{victoryTarget} VP</span></div>
                   <div className="text-[9px] font-semibold text-rose-300/80">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div>
                 </div>
@@ -7091,8 +7141,15 @@ export default function Simulator() {
               <details className="relative">
                 <summary className="cursor-pointer list-none rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden">Menu</summary>
                 <div className="absolute right-0 top-11 z-[70] w-48 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-xl">
-                  <button type="button" onClick={openNewGameSetup} className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Start New Game</button>
-                  <Link href="/" className="mt-1 block rounded-lg px-3 py-2 text-sm font-bold text-slate-200 hover:bg-white/10">Exit to Home</Link>
+                  <button type="button" onClick={openNewGameSetup} className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">{isStoryMode ? "Restart Duel" : "Start New Game"}</button>
+                  {isStoryMode ? (
+                    <button type="button" onClick={exitStoryMode} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to Town</button>
+                  ) : (
+                    <>
+                      <Link href="/adventure" className="mt-1 block rounded-lg bg-cyan-400/10 px-3 py-2 text-sm font-bold text-cyan-100 hover:bg-cyan-300/20">Play Reefbound Story</Link>
+                      <Link href="/" className="mt-1 block rounded-lg px-3 py-2 text-sm font-bold text-slate-200 hover:bg-white/10">Exit to Home</Link>
+                    </>
+                  )}
                 </div>
               </details>
               <div className="hidden items-center gap-1 rounded-xl border border-white/10 bg-slate-950/45 p-1 shadow-sm" aria-label="Game controls">
@@ -7103,7 +7160,7 @@ export default function Simulator() {
                 <button type="button" onClick={() => setModal("hand")} className="rounded-lg px-3 py-2 text-xs font-bold text-cyan-100 hover:bg-white/10">Hand ({hand.length})</button>
                 <button type="button" onClick={() => setModal("discard")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Discard</button>
                 <button type="button" onClick={() => setModal("lost")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Lost</button>
-                <button type="button" onClick={openNewGameSetup} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 xl:block">New Game</button>
+                <button type="button" onClick={openNewGameSetup} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 xl:block">{isStoryMode ? "Restart Duel" : "New Game"}</button>
                 <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className="seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40">
                   {opponentThinking ? "Thinking…" : isSetup ? "Round 1" : "End Turn"}
                 </button>
@@ -7155,20 +7212,25 @@ export default function Simulator() {
 
           {gameResult ? (
             <div className="mb-4 rounded-2xl border-2 border-amber-400 bg-amber-100 px-6 py-4 text-center text-lg font-black text-amber-950" role="alert">
-              {gameResult}
+              <div>{gameResult}</div>
+              {isStoryMode ? (
+                <button type="button" onClick={returnToStoryTown} className="mt-3 rounded-full bg-amber-950 px-6 py-2.5 text-sm font-black text-amber-50 shadow-lg transition hover:bg-slate-900">
+                  Return to Town
+                </button>
+              ) : null}
             </div>
           ) : null}
 
           <div className="mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label="Choose ecosystem to view">
             <button type="button" onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
-            <button type="button" onClick={() => setMobileBoardView("opponent")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Rival Reef{opponentThinking ? " • Thinking" : ""}</button>
+            <button type="button" onClick={() => setMobileBoardView("opponent")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
           </div>
 
           <div className="min-h-0 w-full flex-1 rounded-2xl border border-cyan-300/20 bg-[#06111d] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
             <div className="h-full min-h-0 overflow-hidden rounded-2xl bg-[#071724]">
               <div className={`${mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`}>
                 <div className="flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-rose-500/10 via-slate-900 to-slate-900 px-4">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-200"><span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,.8)]" /> Rival Ecosystem</div>
+                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-200"><span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,.8)]" /> {isStoryMode ? `${storyOpponentName}'s Ecosystem` : "Rival Ecosystem"}</div>
                   {attackContext ? (
                     <div className="flex items-center gap-2" role="status">
                       <div className="rounded-full bg-emerald-400 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-950 shadow-lg">Choose a highlighted target</div>
@@ -7575,7 +7637,7 @@ export default function Simulator() {
         <div className="seapals-hud-panel hidden min-h-0 overflow-y-auto rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-1 xl:flex xl:flex-col">
           <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950/45">
             <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{playerVp}<span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensity} school density</div></div>
-            <div className="p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">Rival Reef · {opponentDifficultyProfile.label}</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{opponentVp}<span className="text-sm text-rose-300">/{victoryTarget} VP</span></div><div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div></div>
+            <div className="p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{opponentVp}<span className="text-sm text-rose-300">/{victoryTarget} VP</span></div><div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div></div>
           </div>
 
           <button type="button" disabled={!activeCondition} onClick={() => activeCondition && setEventOverlay({ type: "condition-detail", sourceCardId: activeCondition.id, title: activeCondition.name, message: activeCondition.text, success: true })} className="mt-2 w-full rounded-xl border border-violet-300/20 bg-violet-400/10 p-3 text-left transition hover:border-violet-300/40 disabled:cursor-default">
@@ -7834,6 +7896,29 @@ export default function Simulator() {
                     <button type="button" onClick={closeEventOverlay} className="mt-5 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 px-7 py-3 font-black text-slate-950 shadow-lg">Continue</button>
                   </div>
                 ) : eventOverlay.type === "new-game-setup" ? (
+                  isStoryMode ? (
+                    <div className="mt-6 text-left">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-4">
+                          <span className="block text-xs font-black uppercase tracking-wider text-emerald-300">Your Deck</span>
+                          <strong className="mt-2 block text-xl text-white">{storyPlayerDeckName}</strong>
+                        </div>
+                        <div className="rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-4">
+                          <span className="block text-xs font-black uppercase tracking-wider text-rose-300">{storyOpponentName}</span>
+                          <strong className="mt-2 block text-xl text-white">{storyOpponentDeckName}</strong>
+                        </div>
+                      </div>
+                      <div className="mt-4 rounded-2xl border border-amber-300/30 bg-amber-400/10 p-4 text-sm text-amber-100">
+                        <strong className="block text-base text-white">Story Duel</strong>
+                        <span className="mt-1 block">{opponentDifficultyProfile.label} difficulty · First to {storyVictoryTarget} VP wins.</span>
+                      </div>
+                      <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn.</div>
+                      <div className="mt-5 flex flex-wrap justify-end gap-3">
+                        <button type="button" onClick={exitStoryMode} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Return to Town</button>
+                        <button type="button" onClick={restartStoryGame} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">Begin Duel</button>
+                      </div>
+                    </div>
+                  ) : (
                   <div className="mt-6 text-left">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <label className="rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-4"><span className="block text-xs font-black uppercase tracking-wider text-emerald-300">Your Deck</span><select value={selectedDeckId} onChange={(event) => setSelectedDeckId(event.target.value)} className="mt-2 w-full rounded-xl bg-slate-950 px-3 py-3 font-bold text-white">{prebuiltDecks.map((deck) => <option key={deck.id} value={deck.id}>{deck.name}</option>)}</select></label>
@@ -7857,13 +7942,14 @@ export default function Simulator() {
                     <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn. Every illegal play explains what is missing before you commit.</div>
                     <div className="mt-5 flex flex-wrap justify-end gap-3">{!eventOverlay.initial ? <button type="button" onClick={closeEventOverlay} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Keep Current Game</button> : null}<button type="button" onClick={() => restartGame(selectedDeckId, selectedOpponentDeckId, pendingVictoryTarget, pendingOpponentDifficulty)} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{eventOverlay.initial ? "Let's Begin!" : "Start New Game"}</button></div>
                   </div>
+                  )
                 ) : eventOverlay.type === "opponent-thinking" ? (
                   <div className="mt-8 flex flex-col items-center">
                     <div className="flex items-center gap-2" aria-label="Opponent is thinking">
                       {[0, 1, 2].map((index) => <span key={index} className="h-4 w-4 animate-pulse rounded-full bg-cyan-400" style={{ animationDelay: `${index * 180}ms` }} />)}
                     </div>
                     <div className="mt-5 w-full max-w-md overflow-hidden rounded-full bg-white/10"><div className="h-2 w-2/3 animate-pulse rounded-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-cyan-500" /></div>
-                    <p className="mt-4 text-sm text-slate-400">{opponentDifficultyProfile.label} opponent is evaluating cards, available RP, targets, and victory points…</p>
+                    <p className="mt-4 text-sm text-slate-400">{isStoryMode ? storyOpponentName : `${opponentDifficultyProfile.label} opponent`} is evaluating cards, available RP, targets, and victory points…</p>
                   </div>
                 ) : eventOverlay.type === "turn-transition" ? (
                   <div className="mt-6">
