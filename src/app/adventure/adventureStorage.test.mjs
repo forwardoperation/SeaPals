@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createInitialAdventureSave } from "./adventureProgression.mjs";
+import {
+  ADVENTURE_SAVE_SCHEMA_VERSION,
+  createInitialAdventureSave,
+} from "./adventureProgression.mjs";
 import {
   ADVENTURE_PROFILE_COUNT,
   ADVENTURE_PROFILE_IDS,
@@ -105,7 +108,7 @@ test("manual saves validate, canonicalize, verify, and expose title-screen metad
   const keys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-1"];
   const stored = decode(backend, keys.primary);
   assert.equal(stored.storageVersion, ADVENTURE_STORAGE_FORMAT_VERSION);
-  assert.equal(stored.save.schemaVersion, 1);
+  assert.equal(stored.save.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
   assert.deepEqual(stored.save.progression.completedEncounterIds, ["encounter-b", "encounter-a"]);
   assert.equal(backend.getItem(keys.backup), null);
   assert.equal(backend.getItem(keys.staging), null);
@@ -218,7 +221,10 @@ test("an incomplete current-schema envelope cannot outrank a complete backup", (
 
   const keys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-1"];
   const incomplete = decode(backend, keys.primary);
-  incomplete.save = { schemaVersion: 1, profileId: "profile-1" };
+  incomplete.save = {
+    schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
+    profileId: "profile-1",
+  };
   backend.setItem(keys.primary, JSON.stringify(incomplete));
 
   const loaded = adapter.loadProfile("profile-1");
@@ -227,6 +233,42 @@ test("an incomplete current-schema envelope cannot outrank a complete backup", (
   assert.equal(loaded.source, "backup");
   assert.equal(loaded.save.playtimeSeconds, 14);
   assert.equal(loaded.issues[0].error.code, "INCOMPLETE_SAVE_DATA");
+});
+
+test("complete v1 envelopes migrate while v2 route and encounter fields are integrity-required", () => {
+  const legacy = createAdapter();
+  const legacyKeys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-1"];
+  assert.equal(legacy.adapter.manualSave("profile-1", createInitialAdventureSave("profile-1")).ok, true);
+  const v1Record = decode(legacy.backend, legacyKeys.primary);
+  v1Record.save.schemaVersion = 1;
+  delete v1Record.save.world.completedRouteIds;
+  delete v1Record.save.progression.encounterResults;
+  legacy.backend.setItem(legacyKeys.primary, JSON.stringify(v1Record));
+
+  const migrated = legacy.adapter.loadProfile("profile-1");
+  assert.equal(migrated.ok, true);
+  assert.equal(migrated.save.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
+  assert.deepEqual(migrated.save.world.completedRouteIds, []);
+  assert.deepEqual(migrated.save.progression.encounterResults, {});
+
+  for (const missingField of ["completedRouteIds", "encounterResults"]) {
+    const { adapter, backend } = createAdapter();
+    adapter.manualSave("profile-2", saveWith("profile-2", { playtimeSeconds: 11 }));
+    adapter.autosave("profile-2", saveWith("profile-2", { playtimeSeconds: 22 }), "phase-4-progress");
+    const keys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-2"];
+    const incomplete = decode(backend, keys.primary);
+    if (missingField === "completedRouteIds") delete incomplete.save.world.completedRouteIds;
+    else delete incomplete.save.progression.encounterResults;
+    backend.setItem(keys.primary, JSON.stringify(incomplete));
+
+    const recovered = adapter.loadProfile("profile-2");
+    assert.equal(recovered.ok, true);
+    assert.equal(recovered.status, "recovered");
+    assert.equal(recovered.source, "backup");
+    assert.equal(recovered.save.playtimeSeconds, 11);
+    assert.equal(recovered.issues[0].error.code, "INCOMPLETE_SAVE_DATA");
+    assert.match(recovered.issues[0].error.message, new RegExp(missingField));
+  }
 });
 
 test("malformed copies return an actionable unrecoverable result instead of a blank", () => {

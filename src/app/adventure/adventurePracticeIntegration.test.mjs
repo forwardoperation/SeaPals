@@ -20,7 +20,10 @@ import {
   resolveOpposedRoll,
 } from "../simulator/gameRules.mjs";
 import { attackCanTargetCard } from "../simulator/combatRules.mjs";
-import { createStoryDuelResult } from "../simulator/storyModeContract.mjs";
+import {
+  createStoryDuelResult,
+  isStoryDuelVpTargetVictory,
+} from "../simulator/storyModeContract.mjs";
 import {
   SIMULATOR_TUTORIAL_ACTION_TYPES,
   createSimulatorTutorialContract,
@@ -42,7 +45,7 @@ const { cardsById } = jiti(path.join(projectRoot, "src/data/cards/index.js"));
 const { canCardOccupySlot } = jiti(path.join(projectRoot, "src/data/cards/types.js"));
 const { prebuiltDecks } = jiti(path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js"));
 
-const VICTORY_TARGET = 10;
+const VICTORY_TARGET = 26;
 const PROFESSOR_DECK = prebuiltDecks.find((candidate) => candidate.id === "coral-garden");
 const OPPONENT_TARGET = cardsById["arrow-crab"];
 
@@ -55,29 +58,45 @@ const STARTER_BUILD_PLANS = Object.freeze({
     foundations: Object.freeze([
       "boulder-star-coral-base",
       "boulder-star-coral-base",
+      "boulder-star-coral-base",
+      "elkhorn-coral-base",
     ]),
     creatures: Object.freeze([
       "frogfish",
       "french-angelfish",
+      "spectacled-parrotfish",
+      "mantis-shrimp",
+      "blue-crab",
       "french-angelfish",
       "french-angelfish",
+      "cleaner-shrimp",
+      "bottlenose-dolphin",
     ]),
-    habitats: Object.freeze([]),
+    habitats: Object.freeze(["coral-reef"]),
+    apexCardId: "bottlenose-dolphin",
     attackCardId: "frogfish",
     playOrder: Object.freeze([
       "boulder-star-coral-base",
       "boulder-star-coral-base",
+      "boulder-star-coral-base",
+      "elkhorn-coral-base",
       "frogfish",
       "french-angelfish",
+      "spectacled-parrotfish",
+      "mantis-shrimp",
+      "blue-crab",
       "french-angelfish",
       "french-angelfish",
+      "cleaner-shrimp",
+      "coral-reef",
+      "bottlenose-dolphin",
     ]),
   }),
   "murky-water": Object.freeze({
     foundations: Object.freeze([
-      "brain-coral-base",
-      "brain-coral-base",
-      "brain-coral-base",
+      "pillar-coral-base",
+      "pillar-coral-base",
+      "pillar-coral-base",
       "brain-coral-base",
     ]),
     creatures: Object.freeze([
@@ -86,20 +105,27 @@ const STARTER_BUILD_PLANS = Object.freeze({
       "sea-urchin",
       "emerald-crab",
       "octopus",
+      "reef-shark",
+      "reef-shark",
+      "hammerhead",
     ]),
     habitats: Object.freeze(["coral-reef"]),
+    apexCardId: "hammerhead",
     attackCardId: "spanish-hogfish",
     playOrder: Object.freeze([
-      "brain-coral-base",
-      "brain-coral-base",
-      "brain-coral-base",
+      "pillar-coral-base",
+      "pillar-coral-base",
+      "pillar-coral-base",
       "brain-coral-base",
       "spanish-hogfish",
       "fairy-parrotfish",
       "sea-urchin",
       "emerald-crab",
+      "reef-shark",
+      "reef-shark",
       "coral-reef",
       "octopus",
+      "hammerhead",
     ]),
   }),
   "blue-water": Object.freeze({
@@ -107,25 +133,41 @@ const STARTER_BUILD_PLANS = Object.freeze({
       "boulder-star-coral-base",
       "boulder-star-coral-base",
       "boulder-star-coral-base",
+      "boulder-star-coral-base",
     ]),
     creatures: Object.freeze([
       "frogfish",
-      "fairy-parrotfish",
+      "flounder",
+      "blue-crab",
+      "arrow-crab",
+      "blue-crab",
       "fairy-parrotfish",
       "picasso-triggerfish",
-      "picasso-triggerfish",
+      "porcupine-fish",
+      "flounder",
+      "giant-triton",
+      "great-white",
     ]),
-    habitats: Object.freeze([]),
+    habitats: Object.freeze(["coral-reef"]),
+    apexCardId: "great-white",
     attackCardId: "frogfish",
     playOrder: Object.freeze([
       "boulder-star-coral-base",
       "boulder-star-coral-base",
       "boulder-star-coral-base",
+      "boulder-star-coral-base",
       "frogfish",
-      "fairy-parrotfish",
+      "flounder",
+      "blue-crab",
+      "arrow-crab",
+      "blue-crab",
       "fairy-parrotfish",
       "picasso-triggerfish",
-      "picasso-triggerfish",
+      "porcupine-fish",
+      "flounder",
+      "giant-triton",
+      "coral-reef",
+      "great-white",
     ]),
   }),
 });
@@ -164,6 +206,7 @@ function placeCreatures(plan) {
   const slots = createFoundationSlots(plan);
   for (const cardId of plan.creatures) {
     const card = cardsById[cardId];
+    if (card.category === "apex") continue;
     const slot = slots.find((candidate) => (
       candidate.occupiedBy === null && canCardOccupySlot(card, candidate)
     ));
@@ -189,6 +232,10 @@ function getAttack(card) {
 function assertPlanRequirements(plan) {
   const expectedCards = [...plan.foundations, ...plan.creatures, ...plan.habitats].sort();
   assert.deepEqual([...plan.playOrder].sort(), expectedCards, "play order must include every planned card exactly once");
+  assert.deepEqual(plan.habitats, ["coral-reef"], "the Academy plan must establish Coral Reef");
+  assert.equal(cardsById[plan.apexCardId]?.category, "apex", "the Academy plan must name an Apex finisher");
+  assert.equal(plan.playOrder.at(-1), plan.apexCardId, "the Apex predator must finish the Academy build plan");
+  assert.ok(plan.playOrder.indexOf("coral-reef") < plan.playOrder.indexOf(plan.apexCardId), "Coral Reef must be established before the Apex predator");
 
   const cardsInPlay = [];
   for (const cardId of plan.playOrder) {
@@ -394,12 +441,15 @@ function runStarterTableauContractSmoke(starterDeckId) {
   assert.equal(storyResult.outcome, "victory");
   assert.equal(storyResult.completionReason, "vp-target");
 
-  const adventureOutcome = storyResult.outcome === "victory" ? "won" : "lost";
+  const adventureOutcome = isStoryDuelVpTargetVictory(storyResult, {
+    encounterId: "encounter-shellshore-mentor-practice",
+    victoryTarget: VICTORY_TARGET,
+  }) ? "won" : "lost";
   const completion = recordPracticeDuelResult(save, adventureOutcome);
-  return { completion, playerVp, storyResult };
+  return { completion, playerVp, readySave: save, storyResult };
 }
 
-test("all starter tableaux can reach 10 VP and satisfy tutorial and reward contracts", () => {
+test("all starter tableaux can reach 26 VP and satisfy tutorial and reward contracts", () => {
   assert.deepEqual(Object.keys(STARTER_BUILD_PLANS), STARTER_DECK_IDS);
 
   for (const starterDeckId of STARTER_DECK_IDS) {
@@ -412,5 +462,44 @@ test("all starter tableaux can reach 10 VP and satisfy tutorial and reward contr
     assert.deepEqual(completion.save.rewardLedger, ["reward-shellshore-tutorial"]);
     assert.deepEqual(completion.save.fieldNotes.entryIds, ["field-note-harbor-basics"]);
     assert.deepEqual(completion.save.world.unlockedRouteIds, ["route-shellshore-sunpatch"]);
+  }
+});
+
+test("academy progression stays incomplete for non-target match endings", () => {
+  const { readySave } = runStarterTableauContractSmoke("coral-garden");
+  const baseResult = {
+    encounterId: "encounter-shellshore-mentor-practice",
+    opponentId: "academy-mentor",
+    opponentName: "Professor Marlow Current",
+    playerDeckId: "coral-garden",
+    opponentDeckId: "coral-garden",
+    victoryTarget: VICTORY_TARGET,
+    difficulty: "easy",
+    playerVp: VICTORY_TARGET,
+    opponentVp: 4,
+    round: 4,
+    turn: 4,
+  };
+  const alternateVictory = createStoryDuelResult({
+    ...baseResult,
+    message: "Victory: the opponent could not complete a required draw from its empty personal decks.",
+  });
+  const simultaneousDefeat = createStoryDuelResult({
+    ...baseResult,
+    opponentVp: VICTORY_TARGET + 1,
+    message: `Defeat: the opponent reached ${VICTORY_TARGET + 1} VP against your ${VICTORY_TARGET} VP.`,
+  });
+
+  for (const result of [alternateVictory, simultaneousDefeat]) {
+    const qualifies = isStoryDuelVpTargetVictory(result, {
+      encounterId: baseResult.encounterId,
+      victoryTarget: VICTORY_TARGET,
+    });
+    assert.equal(qualifies, false);
+    const resolution = recordPracticeDuelResult(readySave, qualifies ? "won" : "lost");
+    assert.equal(resolution.completed, false);
+    assert.equal(resolution.rewardApplied, false);
+    assert.deepEqual(resolution.save, readySave);
+    assert.deepEqual(resolution.save.rewardLedger, []);
   }
 });

@@ -1,4 +1,4 @@
-export const ADVENTURE_SAVE_SCHEMA_VERSION = 1;
+export const ADVENTURE_SAVE_SCHEMA_VERSION = 2;
 
 export const QUEST_STATUSES = Object.freeze([
   "notStarted",
@@ -193,6 +193,65 @@ function normalizeNpcStates(value, path, fallback = {}) {
   return Object.fromEntries(entries);
 }
 
+const DUEL_RESULT_OUTCOMES = new Set(["victory", "defeat"]);
+const DUEL_COMPLETION_REASONS = new Set(["vp-target", "deck-depletion", "resolved-effect"]);
+const DECK_FINGERPRINT_PATTERN = /^deck-v1-[0-9a-f]{16}$/;
+
+function normalizeEncounterResultSummary(value, path) {
+  const summary = requireRecord(value, path);
+  const outcome = normalizeIdentifier(summary.outcome, `${path}.outcome`);
+  if (!DUEL_RESULT_OUTCOMES.has(outcome)) fail(`${path}.outcome`, "must be victory or defeat.");
+  const completionReason = normalizeIdentifier(summary.completionReason, `${path}.completionReason`);
+  if (!DUEL_COMPLETION_REASONS.has(completionReason)) {
+    fail(`${path}.completionReason`, "is not a supported duel completion reason.");
+  }
+  const playerDeckFingerprint = String(summary.playerDeckFingerprint ?? "").trim();
+  if (!DECK_FINGERPRINT_PATTERN.test(playerDeckFingerprint)) {
+    fail(`${path}.playerDeckFingerprint`, "must use the deck-v1-<16 lowercase hex> format.");
+  }
+  return {
+    outcome,
+    completionReason,
+    playerDeckId: normalizeIdentifier(summary.playerDeckId, `${path}.playerDeckId`),
+    playerDeckFingerprint,
+    opponentId: normalizeIdentifier(summary.opponentId, `${path}.opponentId`),
+    playerVp: normalizeNonNegativeInteger(summary.playerVp, `${path}.playerVp`),
+    opponentVp: normalizeNonNegativeInteger(summary.opponentVp, `${path}.opponentVp`),
+    targetVp: normalizeNonNegativeInteger(summary.targetVp, `${path}.targetVp`),
+    round: normalizeNonNegativeInteger(summary.round, `${path}.round`),
+    turn: normalizeNonNegativeInteger(summary.turn, `${path}.turn`),
+  };
+}
+
+function normalizeEncounterResults(value, path, fallback = {}) {
+  const record = requireRecord(value, path, fallback);
+  const entries = Object.entries(record).map(([rawEncounterId, rawRecord]) => {
+    const encounterId = normalizeIdentifier(rawEncounterId, `${path} key`);
+    const resultRecord = requireRecord(rawRecord, `${path}.${encounterId}`);
+    const attempts = normalizeNonNegativeInteger(
+      resultRecord.attempts,
+      `${path}.${encounterId}.attempts`,
+    );
+    if (attempts < 1) fail(`${path}.${encounterId}.attempts`, "must be at least 1.");
+    const latest = normalizeEncounterResultSummary(
+      resultRecord.latest,
+      `${path}.${encounterId}.latest`,
+    );
+    const firstVictory = resultRecord.firstVictory == null
+      ? null
+      : normalizeEncounterResultSummary(
+        resultRecord.firstVictory,
+        `${path}.${encounterId}.firstVictory`,
+      );
+    if (firstVictory && firstVictory.outcome !== "victory") {
+      fail(`${path}.${encounterId}.firstVictory.outcome`, "must be victory.");
+    }
+    return [encounterId, { attempts, latest, firstVictory }];
+  });
+  entries.sort(([left], [right]) => left.localeCompare(right));
+  return Object.fromEntries(entries);
+}
+
 function normalizeSavedDecks(value, path, fallback = {}) {
   const record = requireRecord(value, path, fallback);
   const entries = Object.entries(record).map(([rawDeckId, rawDeck]) => {
@@ -222,11 +281,13 @@ function createInitialState(profileId) {
       facing: ADVENTURE_START_LOCATION.facing,
       lastSafeDockId: ADVENTURE_START_LOCATION.lastSafeDockId,
       unlockedRouteIds: [],
+      completedRouteIds: [],
     },
     progression: {
       quests: {},
       npcStates: {},
       completedEncounterIds: [],
+      encounterResults: {},
       tideMarkIds: [],
       tournament: {
         status: "locked",
@@ -259,13 +320,13 @@ function createInitialState(profileId) {
   };
 }
 
-/** Creates a new canonical schema-v1 save without reading time, storage, or random state. */
+/** Creates a new canonical schema-v2 save without reading time, storage, or random state. */
 export function createInitialAdventureSave(profileId) {
   return createInitialState(normalizeIdentifier(profileId, "profileId"));
 }
 
 /**
- * Converts a schema-v1 value into its canonical JSON shape. Missing v1 fields
+ * Converts a schema-v2 value into its canonical JSON shape. Missing fields
  * receive their launch defaults; malformed supplied fields are rejected.
  */
 export function normalizeAdventureSave(value) {
@@ -336,6 +397,11 @@ export function normalizeAdventureSave(value) {
         "save.world.unlockedRouteIds",
         defaults.world.unlockedRouteIds,
       ),
+      completedRouteIds: normalizeIdentifierList(
+        world.completedRouteIds,
+        "save.world.completedRouteIds",
+        defaults.world.completedRouteIds,
+      ),
     },
     progression: {
       quests: normalizeQuests(progression.quests, "save.progression.quests"),
@@ -343,6 +409,11 @@ export function normalizeAdventureSave(value) {
       completedEncounterIds: normalizeIdentifierList(
         progression.completedEncounterIds,
         "save.progression.completedEncounterIds",
+      ),
+      encounterResults: normalizeEncounterResults(
+        progression.encounterResults,
+        "save.progression.encounterResults",
+        defaults.progression.encounterResults,
       ),
       tideMarkIds: normalizeIdentifierList(progression.tideMarkIds, "save.progression.tideMarkIds"),
       tournament: {
@@ -447,13 +518,24 @@ function migrateV0(value, options) {
   return normalizeAdventureSave(migrated);
 }
 
-/** Migrates the unversioned prototype shape (v0) or normalizes a v1 save. */
+function migrateV1(value) {
+  // Phase 4 added route-completion and encounter-result provenance. They did
+  // not exist in original v1 records, so migration supplies their empty
+  // defaults while preserving either field when a later v1 writer included it.
+  return normalizeAdventureSave({
+    ...value,
+    schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
+  });
+}
+
+/** Migrates the unversioned prototype/v1 shapes or normalizes a v2 save. */
 export function migrateAdventureSave(value, options = {}) {
   const save = requireRecord(value, "save");
   const version = save.schemaVersion ?? 0;
 
   if (version === ADVENTURE_SAVE_SCHEMA_VERSION) return normalizeAdventureSave(save);
   if (version === 0) return migrateV0(save, requireRecord(options, "options", {}));
+  if (version === 1) return migrateV1(save);
   if (!Number.isSafeInteger(version) || version < 0) {
     fail("save.schemaVersion", "must be a non-negative safe integer.");
   }

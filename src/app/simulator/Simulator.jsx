@@ -14,7 +14,9 @@ import { attackCanTargetCard, attackerHasDisadvantageFromMassive, canTargetInAtt
 import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
 import { OPPONENT_DIFFICULTY_OPTIONS, OpponentDifficulty, chooseOpponentPreferredDeck, getOpponentDifficultyProfile, limitOpponentOptionalActions, normalizeOpponentDifficulty, orderOpponentChoices, scaleOpponentThinkingDelay, selectOpponentChoice } from "./opponentDifficultyRules.mjs";
+import { OpeningPlayer, chooseOpeningPlayer, resolveOpeningCoinFlip } from "./openingCoinFlip.mjs";
 import { createStoryDuelResult } from "./storyModeContract.mjs";
+import { expandResolvedStoryDeckCards, resolveStoryPlayerDeckSnapshot } from "./storyDeckRuntime.mjs";
 import {
   SIMULATOR_TUTORIAL_ACTION_TYPES,
   SIMULATOR_TUTORIAL_LIFECYCLE_TYPES,
@@ -25,7 +27,23 @@ import {
   observeSimulatorTutorialEvent,
   restartSimulatorTutorialProgress,
 } from "./tutorialContract.mjs";
-import { getSimulatorTutorialHelp } from "./tutorialHelp.mjs";
+import { getSimulatorTutorialConditionHelp, getSimulatorTutorialHelp } from "./tutorialHelp.mjs";
+import {
+  createScriptedTutorialScenario,
+  getScriptedTutorialDiscardEntries,
+  getScriptedTutorialFoundationDrawCardId,
+  getScriptedTutorialSearchTargetCardId,
+  getScriptedTutorialTurnDraw,
+} from "./tutorialScenario.mjs";
+import { getGuidedAcademyBoardTourStep, getNextGuidedAcademyBoardTourStep } from "./tutorialBoardTour.mjs";
+import { createProfessorAnnouncement, createProfessorSpeechKey, createProfessorSpokenMessage, getProfessorSpeechDuration, getProfessorVisibleGraphemeCount, segmentProfessorMessage } from "./tutorialDialogue.mjs";
+import {
+  getAcademyActionBlock,
+  getAcademyCardPlayBlock,
+  getAcademyEndTurnBlock,
+  getAcademyPlacementBlock,
+  isAcademyPlacementAllowed,
+} from "./tutorialInteractionGate.mjs";
 import foundationDeckImg from "./images/foundation-deck.png";
 import palsDeckImg from "./images/pals-deck.png";
 
@@ -64,7 +82,116 @@ function ProfessorGuidePortrait({ guide, compact = false }) {
   );
 }
 
-function ProfessorGuideCard({ guide, help, step, total, inline = false, onDismiss }) {
+function ProfessorTypewriter({ guide, message }) {
+  const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
+  const duration = useMemo(() => getProfessorSpeechDuration(graphemes.length), [graphemes.length]);
+  const [visibleCount, setVisibleCount] = useState(0);
+  const animationRef = useRef({ frameId: null, generation: 0 });
+  const isComplete = visibleCount >= graphemes.length;
+  const visibleMessage = graphemes.slice(0, visibleCount).join("");
+
+  const showFullMessage = () => {
+    const animation = animationRef.current;
+    animation.generation += 1;
+    if (animation.frameId != null) window.cancelAnimationFrame(animation.frameId);
+    animation.frameId = null;
+    setVisibleCount(graphemes.length);
+  };
+
+  useEffect(() => {
+    const animation = animationRef.current;
+    const generation = animation.generation + 1;
+    animation.generation = generation;
+    if (animation.frameId != null) window.cancelAnimationFrame(animation.frameId);
+    animation.frameId = null;
+
+    const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)") ?? null;
+    const finish = () => {
+      if (animationRef.current.generation !== generation) return;
+      if (animationRef.current.frameId != null) window.cancelAnimationFrame(animationRef.current.frameId);
+      animationRef.current.frameId = null;
+      setVisibleCount(graphemes.length);
+    };
+    const handleMotionPreference = (event) => {
+      if (event.matches) finish();
+    };
+
+    if (!graphemes.length || motionPreference?.matches) {
+      setVisibleCount(graphemes.length);
+    } else {
+      setVisibleCount(0);
+      const startsAt = window.performance.now() + 120;
+      const tick = (now) => {
+        if (animationRef.current.generation !== generation) return;
+        const nextCount = getProfessorVisibleGraphemeCount({
+          graphemeCount: graphemes.length,
+          elapsedMs: Math.max(0, now - startsAt),
+          durationMs: duration,
+        });
+        setVisibleCount(nextCount);
+        if (nextCount >= graphemes.length) {
+          animationRef.current.frameId = null;
+          return;
+        }
+        animationRef.current.frameId = window.requestAnimationFrame(tick);
+      };
+      animation.frameId = window.requestAnimationFrame(tick);
+    }
+
+    if (motionPreference?.addEventListener) motionPreference.addEventListener("change", handleMotionPreference);
+    else motionPreference?.addListener?.(handleMotionPreference);
+    return () => {
+      if (animationRef.current.generation === generation) animationRef.current.generation += 1;
+      if (animationRef.current.frameId != null) window.cancelAnimationFrame(animationRef.current.frameId);
+      animationRef.current.frameId = null;
+      if (motionPreference?.removeEventListener) motionPreference.removeEventListener("change", handleMotionPreference);
+      else motionPreference?.removeListener?.(handleMotionPreference);
+    };
+  }, [duration, graphemes.length, message]);
+
+  return (
+    <div className="seapals-professor-dialogue mt-2" aria-label="Professor guidance">
+      <div className="seapals-professor-turn seapals-professor-turn-left">
+        <div className="seapals-professor-turn-header">
+          <span className="seapals-professor-speaker">{guide.name}</span>
+          {!isComplete ? (
+            <button
+              type="button"
+              onClick={showFullMessage}
+              className="seapals-professor-show-all"
+              aria-label={`Show all of ${guide.name}'s message`}
+            >
+              Show all
+            </button>
+          ) : null}
+        </div>
+        <p className="seapals-professor-typewriter">
+          <span className="seapals-professor-message-measure" aria-hidden="true">{message}</span>
+          <span className="seapals-professor-message-visible" aria-hidden="true">
+            {visibleMessage}
+            {!isComplete ? <span className="seapals-professor-type-cursor" /> : null}
+          </span>
+          <span className="sr-only">{message}</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ProfessorGuideCard({
+  guide,
+  help,
+  step,
+  total,
+  inline = false,
+  onDismiss,
+  dismissLabel = "Hide",
+  onAdvance = null,
+  advanceLabel = "Next",
+  onBack = null,
+}) {
+  const professorMessage = createProfessorSpokenMessage(help);
+  const speechKey = createProfessorSpeechKey(help.cueId ?? help.id, professorMessage);
   return (
     <aside
       className={`seapals-professor-card${inline ? " seapals-professor-card-inline" : ""}`}
@@ -76,27 +203,198 @@ function ProfessorGuideCard({ guide, help, step, total, inline = false, onDismis
         <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pr-9">
           <strong className="text-sm font-black text-cyan-800">{guide.name}</strong>
           <span className="rounded-full bg-cyan-900 px-2 py-0.5 text-[9px] font-black text-cyan-50">
-            {help.id === "tutorial-complete" ? `${total}/${total} complete` : `Step ${step} of ${total}`}
+            {help.progressLabel ?? `Step ${step} of ${total}`}
           </span>
         </div>
         <span className="mt-0.5 block text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">{guide.role}</span>
         <strong className="mt-1 block text-sm font-black text-slate-900 sm:text-base">{help.title}</strong>
-        <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-700 sm:text-sm">{help.message}</p>
-        <p className="mt-2 rounded-xl border border-amber-300/70 bg-amber-100 px-3 py-2 text-xs font-black leading-snug text-amber-950">
+        <ProfessorTypewriter key={speechKey} guide={guide} message={professorMessage} />
+        <p className="seapals-professor-next mt-2 rounded-xl border border-amber-300/70 bg-amber-100 px-3 py-2 text-xs font-black leading-snug text-amber-950" style={{ animationDelay: "180ms" }}>
           Next: {help.action}
         </p>
-        <span className="mt-1.5 block text-[10px] font-bold uppercase tracking-wide text-cyan-800">Look for {help.targetLabel}</span>
+        <span className="seapals-professor-next mt-1.5 block text-[10px] font-bold uppercase tracking-wide text-cyan-800" style={{ animationDelay: "260ms" }}>Look for {help.targetLabel}</span>
+        {onAdvance ? (
+          <div className="seapals-professor-next mt-3 flex flex-wrap justify-end gap-2" style={{ animationDelay: "320ms" }} data-tutorial-board-tour-control>
+            {onBack ? <button type="button" onClick={onBack} className="rounded-full border border-cyan-700/30 bg-white/70 px-4 py-2 text-xs font-black text-cyan-900 hover:bg-white">Back</button> : null}
+            <button type="button" onClick={onAdvance} className="rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 px-5 py-2 text-xs font-black text-slate-950 shadow-lg hover:brightness-105">{advanceLabel}</button>
+          </div>
+        ) : null}
       </div>
-      <button
-        type="button"
-        onClick={onDismiss}
-        className="seapals-professor-hide"
-        aria-label={`Hide ${guide.name}'s tip for this step`}
-        title="Hide this tip"
-      >
-        Hide
-      </button>
+      {onDismiss ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="seapals-professor-hide"
+          aria-label={`${dismissLabel} ${guide.name}'s guidance`}
+          title={`${dismissLabel} this guidance`}
+          data-tutorial-board-tour-control={onAdvance ? "true" : undefined}
+        >
+          {dismissLabel}
+        </button>
+      ) : null}
     </aside>
+  );
+}
+
+const TUTORIAL_POINTER_TARGETS = new Set([
+  "hand",
+  "play-card",
+  "placement",
+  "turn-button",
+  "draw-controls",
+  "confirm-draw",
+  "continue-actions",
+  "close-modal",
+  "player-board",
+  "opponent-board",
+  "attack-button",
+  "utility-action-button",
+  "condition-continue",
+  "script-discard-cards",
+  "script-discard-confirm",
+  "script-search-card",
+  "search-card",
+  "coin-coral-target",
+  "impact-target",
+  "faceoff-action",
+  "vp-score",
+  "condition-panel",
+  "rp-bank",
+  "zones",
+  "event-feed",
+]);
+
+function getTutorialPointerPrompt(help) {
+  const pointerPrompt = String(help?.pointerPrompt ?? "").trim();
+  if (pointerPrompt) return pointerPrompt;
+  const action = String(help?.action ?? "").trim();
+  if (action) return action;
+  return `Click ${String(help?.targetLabel ?? "the highlighted control").trim()}.`;
+}
+
+function ProfessorTargetBeacon({ guide, help, active }) {
+  const [anchor, setAnchor] = useState(null);
+
+  useEffect(() => {
+    if (!active || !help?.target || !TUTORIAL_POINTER_TARGETS.has(help.target)) {
+      setAnchor(null);
+      return undefined;
+    }
+
+    let animationFrame = null;
+    let delayedUpdate = null;
+    let resizeObserver = null;
+    let observedElement = null;
+    const escapeSelectorValue = (value) => {
+      const normalized = String(value ?? "");
+      return window.CSS?.escape
+        ? window.CSS.escape(normalized)
+        : normalized.replace(/["\\]/g, "\\$&");
+    };
+    const visibleElements = (selector) => [...document.querySelectorAll(selector)]
+      .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+      .filter(({ element, rect }) => {
+        if (rect.width < 4 || rect.height < 4) return false;
+        if (rect.bottom <= 0 || rect.right <= 0 || rect.top >= window.innerHeight || rect.left >= window.innerWidth) return false;
+        const style = window.getComputedStyle(element);
+        return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity || 1) > 0;
+      });
+    const chooseElement = (entries) => {
+      if (!entries.length) return null;
+      if (help.target === "turn-button") {
+        return [...entries].sort((left, right) => right.rect.bottom - left.rect.bottom)[0];
+      }
+      return [...entries].sort((left, right) => (
+        (left.rect.width * left.rect.height) - (right.rect.width * right.rect.height)
+      ))[0];
+    };
+    const findTarget = () => {
+      const selectors = [];
+      if (help.targetCardId) {
+        selectors.push(`[data-tutorial-hand-card-id="${escapeSelectorValue(help.targetCardId)}"]`);
+      }
+      if (help.targetSearchCardId) {
+        selectors.push(`[data-tutorial-search-card-id="${escapeSelectorValue(help.targetSearchCardId)}"]`);
+      }
+      if (help.target === "draw-controls" && help.targetDeck) {
+        const drawAction = help.targetDrawAction === "remove" ? "remove" : "add";
+        selectors.push(`[data-tutorial-draw-${drawAction}="${escapeSelectorValue(help.targetDeck)}"]:not(:disabled)`);
+        if (drawAction === "add") {
+          selectors.push("[data-tutorial-draw-remove]:not(:disabled)");
+        }
+        selectors.push(`[data-tutorial-draw-deck="${escapeSelectorValue(help.targetDeck)}"]`);
+      }
+      if (["player-board", "opponent-board"].includes(help.target) && help.targetActionKey) {
+        selectors.push(`[data-tutorial-action-key="${escapeSelectorValue(help.targetActionKey)}"]`);
+      }
+      selectors.push(`[data-tutorial-target="${escapeSelectorValue(help.target)}"]`);
+      if (help.targetActionKey) {
+        selectors.push(`[data-tutorial-action-key="${escapeSelectorValue(help.targetActionKey)}"]`);
+      }
+      for (const selector of selectors) {
+        const target = chooseElement(visibleElements(selector));
+        if (target) return target;
+      }
+      return null;
+    };
+    const updateAnchor = () => {
+      const target = findTarget();
+      if (!target) {
+        setAnchor(null);
+        return;
+      }
+      const { rect } = target;
+      const broadPlacementTarget = help.target === "placement" && rect.width > 360 && rect.height > 240;
+      const targetX = rect.left + rect.width / 2;
+      const targetY = broadPlacementTarget ? rect.top + rect.height * 0.58 : rect.top;
+      const direction = targetY > 190 ? "above" : "below";
+      const horizontalPadding = Math.min(152, Math.max(104, window.innerWidth / 2 - 8));
+      const left = Math.min(window.innerWidth - horizontalPadding, Math.max(horizontalPadding, targetX));
+      const top = direction === "above"
+        ? Math.max(96, targetY - 18)
+        : Math.min(window.innerHeight - 96, rect.bottom + 18);
+      setAnchor({ direction, left, top });
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObserver ??= new ResizeObserver(requestUpdate);
+        if (observedElement !== target.element) {
+          resizeObserver.disconnect();
+          resizeObserver.observe(target.element);
+          observedElement = target.element;
+        }
+      }
+    };
+    const requestUpdate = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(updateAnchor);
+    };
+
+    requestUpdate();
+    delayedUpdate = window.setTimeout(requestUpdate, 240);
+    window.addEventListener("resize", requestUpdate);
+    window.addEventListener("scroll", requestUpdate, true);
+    return () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      if (delayedUpdate) window.clearTimeout(delayedUpdate);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", requestUpdate);
+      window.removeEventListener("scroll", requestUpdate, true);
+    };
+  }, [active, help?.cueId, help?.target, help?.targetActionKey, help?.targetCardId, help?.targetSearchCardId, help?.targetDeck, help?.targetDrawAction]);
+
+  if (!active || !anchor || !help) return null;
+  return (
+    <div
+      className={`seapals-target-beacon seapals-target-beacon-${anchor.direction}`}
+      style={{ left: `${anchor.left}px`, top: `${anchor.top}px` }}
+      aria-hidden="true"
+    >
+      <ProfessorGuidePortrait guide={guide} compact />
+      <div className="min-w-0 flex-1">
+        <strong>{guide.name}</strong>
+        <span>{getTutorialPointerPrompt(help)}</span>
+      </div>
+      <span className="seapals-target-beacon-arrow" aria-hidden="true">{anchor.direction === "above" ? "↓" : "↑"}</span>
+    </div>
   );
 }
 
@@ -104,7 +402,13 @@ function destroyedCardGoesToLostZone(card) {
   return card?.destroyedDestination === "lost-zone";
 }
 
-function createDeck(deckType, deckId = defaultDeckId, random = Math.random) {
+function createDeck(deckType, deckId = defaultDeckId, random = Math.random, playerDeckSnapshot = null) {
+  if (playerDeckSnapshot) {
+    return shuffle(
+      expandResolvedStoryDeckCards(playerDeckSnapshot, deckType, cardsById, isFoundationCard),
+      random,
+    );
+  }
   const selectedDeck = prebuiltDecks.find((deck) => deck.id === deckId) ?? prebuiltDecks[0];
   const ids = (selectedDeck?.cards ?? []).flatMap((entry) => {
     const card = cardsById[entry.cardId];
@@ -115,7 +419,8 @@ function createDeck(deckType, deckId = defaultDeckId, random = Math.random) {
   return shuffle(ids, random);
 }
 
-function getUnavailableDeckEntries(deckId) {
+function getUnavailableDeckEntries(deckId, playerDeckSnapshot = null) {
+  if (playerDeckSnapshot) return [];
   const selectedDeck = prebuiltDecks.find((deck) => deck.id === deckId);
   return (selectedDeck?.cards ?? []).filter((entry) => !cardsById[entry.cardId]);
 }
@@ -138,8 +443,8 @@ function hasBaseCoral(cardIds) {
   });
 }
 
-function createFoundationOpening(deckId, random = Math.random) {
-  let foundationCards = createDeck("foundation", deckId, random);
+function createFoundationOpening(deckId, random = Math.random, playerDeckSnapshot = null) {
+  let foundationCards = createDeck("foundation", deckId, random, playerDeckSnapshot);
   let attempts = 0;
 
   while (!hasBaseCoral(foundationCards.slice(0, 4)) && attempts < 100) {
@@ -157,20 +462,37 @@ function createFoundationOpening(deckId, random = Math.random) {
   return foundationCards;
 }
 
-function createInitialGameState(deckId = defaultDeckId, opponentDeckId = deckId, random = Math.random) {
-  const foundationCards = createFoundationOpening(deckId, random);
-  const palsCards = createDeck("pals", deckId, random);
+function createInitialGameState(deckId = defaultDeckId, opponentDeckId = deckId, random = Math.random, { scriptedTutorial = false, playerDeckSnapshot = null } = {}) {
+  let foundationCards = createFoundationOpening(deckId, random, playerDeckSnapshot);
+  let palsCards = createDeck("pals", deckId, random, playerDeckSnapshot);
   const opponentFoundationCards = createFoundationOpening(opponentDeckId, random);
   const opponentPalsCards = createDeck("pals", opponentDeckId, random);
+  let conditionCardIds = shuffle(conditionCards.map((card) => card.id), random);
+  const scriptedScenario = scriptedTutorial
+    ? createScriptedTutorialScenario({
+        playerDeckId: deckId,
+        foundationCards,
+        palsCards,
+        conditionCards: conditionCardIds,
+      })
+    : null;
+  if (scriptedScenario) {
+    foundationCards = [...scriptedScenario.foundationCards];
+    palsCards = [...scriptedScenario.palsCards];
+    conditionCardIds = [...scriptedScenario.conditionCards];
+  }
   const opponentOpeningHand = shuffle([...opponentFoundationCards.slice(0, 4), ...opponentPalsCards.slice(0, 4)], random);
   const opponentBaseCoralId = opponentOpeningHand.find((cardId) => isFoundationCard(cardsById[cardId]) && Number(cardsById[cardId]?.stage ?? 0) === 0);
-  const opponentCorals = createOpponentStartingCorals(opponentBaseCoralId);
+  const opponentCorals = scriptedScenario?.opponentStartingTableau
+    ? createScriptedTutorialOpponentCorals(scriptedScenario.opponentStartingTableau)
+    : createOpponentStartingCorals(opponentBaseCoralId);
   const opponentSetupCost = Number(cardsById[opponentBaseCoralId]?.cost?.rp ?? 0);
   return {
+    scriptedTutorialScenario: scriptedScenario,
     foundationDeck: foundationCards.slice(4),
     palsDeck: palsCards.slice(4),
     hand: shuffle([...foundationCards.slice(0, 4), ...palsCards.slice(0, 4)], random),
-    conditionDeck: shuffle(conditionCards.map((card) => card.id), random),
+    conditionDeck: conditionCardIds,
     opponent: {
       foundationDeck: opponentFoundationCards.slice(4),
       palsDeck: opponentPalsCards.slice(4),
@@ -208,6 +530,44 @@ function createOpponentStartingCorals(baseCoralId) {
     playedTurn: 1,
     stageEnteredTurn: 1,
   }];
+}
+
+function createScriptedTutorialOpponentCorals(tableau = []) {
+  return tableau.map((definition, foundationIndex) => {
+    const foundationCardId = String(definition?.foundationCardId ?? "").trim();
+    const foundation = cardsById[foundationCardId];
+    if (!foundation || !isFoundationCard(foundation)) {
+      throw new RangeError(`Unknown Academy opponent foundation: ${foundationCardId || "missing"}.`);
+    }
+    const instanceId = `tutorial-opponent-foundation-${foundationIndex + 1}-${foundationCardId}`;
+    const slots = createCoralSlots(foundation, instanceId);
+    for (const [placementIndex, placement] of (definition.placements ?? []).entries()) {
+      const cardId = String(placement?.cardId ?? "").trim();
+      const creature = cardsById[cardId];
+      const slotIndex = slots.findIndex((slot) => (
+        !slot.cardId
+        && slot.slotClass === placement?.slotClass
+        && canCardOccupySlot(creature, slot)
+      ));
+      if (slotIndex < 0) {
+        throw new RangeError(`Academy opponent cannot place ${cardId || "a missing card"} in ${foundationCardId}'s ${placement?.slotClass ?? "requested"} slot.`);
+      }
+      slots[slotIndex] = {
+        ...slots[slotIndex],
+        cardId,
+        cardInstanceId: `tutorial-opponent-${cardId}-${foundationIndex + 1}-${placementIndex + 1}`,
+      };
+    }
+    return {
+      id: instanceId,
+      cardId: foundationCardId,
+      health: Number(foundation.health ?? 0),
+      maxHealth: Number(foundation.health ?? 0),
+      slots,
+      playedTurn: 0,
+      stageEnteredTurn: 0,
+    };
+  });
 }
 
 function getOnPlayCoralDamage(card, controllerCardIds = []) {
@@ -1317,7 +1677,16 @@ function getSlotConnectorStyle(position) {
 export default function Simulator({ storyMode = null } = {}) {
   const isStoryMode = Boolean(storyMode);
   const tutorialRuntime = storyMode?.tutorial ?? null;
-  const storyPlayerDeckId = storyMode?.playerDeckId ?? defaultDeckId;
+  const [storyPlayerDeckSnapshot] = useState(() => (
+    storyMode?.playerDeckSnapshot
+      ? resolveStoryPlayerDeckSnapshot(
+          storyMode.playerDeckSnapshot,
+          cardsById,
+          storyMode.playerDeckId,
+        )
+      : null
+  ));
+  const storyPlayerDeckId = storyPlayerDeckSnapshot?.id ?? storyMode?.playerDeckId ?? defaultDeckId;
   const storyOpponentDeckId = storyMode?.opponentDeckId ?? defaultDeckId;
   const storyVictoryTarget = Math.max(1, Number(storyMode?.victoryTarget) || 10);
   const storyDifficulty = normalizeOpponentDifficulty(storyMode?.difficulty ?? OpponentDifficulty.MEDIUM);
@@ -1331,6 +1700,10 @@ export default function Simulator({ storyMode = null } = {}) {
   const [tutorialContract] = useState(() => tutorialRuntime
     ? createSimulatorTutorialContract(tutorialRuntime.contract ?? tutorialRuntime)
     : null);
+  const tutorialUsesScriptedScenario = Boolean(tutorialRuntime && tutorialRuntime.scriptedDecks !== false);
+  const scriptedFoundationLessonCardId = tutorialUsesScriptedScenario
+    ? getScriptedTutorialFoundationDrawCardId(storyPlayerDeckId)
+    : null;
   const [tutorialProgress, setTutorialProgress] = useState(() => tutorialContract
     ? createSimulatorTutorialProgress(tutorialContract, tutorialRuntime?.initialProgress ?? {})
     : null);
@@ -1340,12 +1713,37 @@ export default function Simulator({ storyMode = null } = {}) {
     portraitSrc: String(tutorialRuntime?.guide?.portraitSrc ?? "/images/adventure/academy-mentor-sprites.png"),
   };
   const [tutorialHelpDismissedId, setTutorialHelpDismissedId] = useState(null);
+  const [tutorialBoardTourStep, setTutorialBoardTourStep] = useState(null);
   const tutorialProgressRef = useRef(tutorialProgress);
   const tutorialEventIdRef = useRef(0);
   const tutorialCallbacksRef = useRef(tutorialRuntime);
-  const tutorialVpRef = useRef({ player: 0, opponent: 0 });
   tutorialCallbacksRef.current = tutorialRuntime;
-  const [initialGame] = useState(() => createInitialGameState(initialPlayerDeckId, initialOpponentDeckId, createSeededRandom(0x5ea9a15)));
+  const [initialGame] = useState(() => createInitialGameState(
+    initialPlayerDeckId,
+    initialOpponentDeckId,
+    createSeededRandom(0x5ea9a15),
+    {
+      scriptedTutorial: tutorialUsesScriptedScenario,
+      playerDeckSnapshot: isStoryMode ? storyPlayerDeckSnapshot : null,
+    },
+  ));
+  const [scriptedTutorialScenario, setScriptedTutorialScenario] = useState(
+    initialGame.scriptedTutorialScenario,
+  );
+  const tutorialVpRef = useRef({
+    player: 0,
+    opponent: getEcosystemVictoryPoints(
+      initialGame.opponent.corals,
+      initialGame.opponent.habitats,
+      [
+        ...initialGame.opponent.reefCreatures,
+        ...(initialGame.opponent.orphanCreatures ?? []).flatMap((entry) => [
+          entry.cardId,
+          ...(entry.hostedCardIds ?? []),
+        ]),
+      ],
+    ),
+  });
   const [selectedDeckId, setSelectedDeckId] = useState(initialPlayerDeckId);
   const [selectedOpponentDeckId, setSelectedOpponentDeckId] = useState(initialOpponentDeckId);
   const [opponentDifficulty, setOpponentDifficulty] = useState(initialOpponentDifficulty);
@@ -1398,6 +1796,8 @@ export default function Simulator({ storyMode = null } = {}) {
   const [resilienceUsedCardIds, setResilienceUsedCardIds] = useState([]);
   const [round, setRound] = useState(0);
   const [gamePhase, setGamePhase] = useState("setup");
+  const [startingPlayer, setStartingPlayer] = useState(null);
+  const [openingOpponentTurn, setOpeningOpponentTurn] = useState(false);
   const [roundFlash, setRoundFlash] = useState(false);
   const [turn, setTurn] = useState(1);
   const [rp, setRp] = useState(3);
@@ -1439,7 +1839,9 @@ export default function Simulator({ storyMode = null } = {}) {
   const [log, setLog] = useState(["New Coral Garden game started. Setup: play a base Coral or Creature School using your 3 RP."]);
   const [turnLog, setTurnLog] = useState(["Setup began with 3 RP and an eight-card hand."]);
   const opponentDifficultyProfile = getOpponentDifficultyProfile(opponentDifficulty);
-  const storyPlayerDeckName = prebuiltDecks.find((deck) => deck.id === storyPlayerDeckId)?.name ?? storyPlayerDeckId;
+  const storyPlayerDeckName = storyPlayerDeckSnapshot?.name
+    ?? prebuiltDecks.find((deck) => deck.id === storyPlayerDeckId)?.name
+    ?? storyPlayerDeckId;
   const storyOpponentDeckName = prebuiltDecks.find((deck) => deck.id === storyOpponentDeckId)?.name ?? storyOpponentDeckId;
 
   const playerHabitats = playerHabitatInstances.map((instance) => instance.cardId);
@@ -1716,6 +2118,17 @@ export default function Simulator({ storyMode = null } = {}) {
     ? getSimulatorTutorialCurrentCheckpoint(tutorialContract, tutorialProgress)
     : null;
   const tutorialStepNumber = tutorialProgress ? tutorialProgress.completedCheckpointIds.length + 1 : 0;
+  const tutorialVictoryPending = Boolean(
+    tutorialContract
+    && tutorialProgress
+    && tutorialCurrentCheckpoint === null
+    && !gameResult
+    && playerVp < victoryTarget
+  );
+  const tutorialBoardTourHelp = tutorialContract && tutorialUsesScriptedScenario
+    ? getGuidedAcademyBoardTourStep(tutorialBoardTourStep)
+    : null;
+  const tutorialBoardTourOpen = Boolean(tutorialBoardTourHelp && !eventOverlay && !gameResult);
 
   function notifyTutorialCallback(name, ...args) {
     const callback = tutorialCallbacksRef.current?.[name];
@@ -1770,7 +2183,7 @@ export default function Simulator({ storyMode = null } = {}) {
     ? playerCorals.find((coral) => coral.id === inspectedCard.coralId)?.slots.find((slot) => slot.id === inspectedCard.slotId)
     : null;
   const inspectedActionKey = inspectedCreatureSlot ? getSlotActionKey(inspectedCreatureSlot) : inspectedCard?.slotId;
-  const playerAttackOptions = tutorialContract ? [
+  const playerTutorialActionCards = tutorialContract ? [
     ...playerCorals.flatMap((coral) => coral.slots.flatMap((slot) => slot.cardId ? [{
       cardId: slot.cardId,
       coralId: coral.id,
@@ -1789,7 +2202,8 @@ export default function Simulator({ storyMode = null } = {}) {
       slotId: getPlayerOrphanSlotId(index),
       actionKey: getPlayerOrphanSlotId(index),
     })),
-  ].flatMap((entry) => {
+  ] : [];
+  const playerAttackOptions = playerTutorialActionCards.flatMap((entry) => {
     const card = cardsById[entry.cardId];
     const attack = getBasicAttackEffect(card);
     if (!card || !attack) return [];
@@ -1830,11 +2244,97 @@ export default function Simulator({ storyMode = null } = {}) {
       ready: !blockReason,
       readyAfterDraw: blockType === "phase",
     }];
-  }) : [];
+  });
   const readyAttack = playerAttackOptions.find((entry) => entry.ready) ?? null;
   const plannedAttack = playerAttackOptions.find((entry) => entry.ready || entry.readyAfterDraw) ?? null;
   const inspectedAttack = inspectedCard?.owner === "player"
     ? playerAttackOptions.find((entry) => entry.actionKey === inspectedActionKey) ?? null
+    : null;
+  const playerUtilityActionOptions = playerTutorialActionCards.flatMap((entry) => {
+    const card = cardsById[entry.cardId];
+    if (!card) return [];
+    return (card.actions ?? []).flatMap((action) => {
+      const effect = getSupportedUtilityEffect(action);
+      if (!effect) return [];
+      const actionName = getActionName(action);
+      const actionCost = getActionCost(action);
+      const utilityActionKey = `${entry.actionKey}:${action.id ?? actionName}`;
+      let blockType = null;
+      let blockReason = "";
+      if (gameResult) {
+        blockType = "game-over";
+        blockReason = "The duel has already ended.";
+      } else if (playingCardId || attackContext || searchContext || pendingCreatureAction) {
+        blockType = "interaction";
+        blockReason = "Finish the current card action first.";
+      } else if (gamePhase !== "main") {
+        blockType = "phase";
+        blockReason = `${actionName} can only be used during your action phase.`;
+      } else if (rp < actionCost) {
+        blockType = "rp";
+        blockReason = `${card.name}'s ${actionName} costs ${actionCost} RP, but you have ${rp} RP.`;
+      } else if (actionIsOncePerTurn(action) && usedCreatureActions.includes(utilityActionKey)) {
+        blockType = "used";
+        blockReason = `${card.name} has already used ${actionName} this turn.`;
+      } else if ((effect.type === EffectType.STUN_CORAL || effect.type === EffectType.FLIP_COIN) && !opponentCoralCards.length) {
+        blockType = "targets";
+        blockReason = `${actionName} has no opponent coral to target.`;
+      } else if (effect.type === "reorderTopDeck" && !foundationDeck.length && !palsDeck.length) {
+        blockType = "cards";
+        blockReason = `${actionName} needs at least one card in a personal deck.`;
+      } else if (effect.type === EffectType.DRAW_CARDS && !foundationDeck.length && !palsDeck.length) {
+        blockType = "cards";
+        blockReason = `${actionName} cannot draw from empty personal decks.`;
+      } else if (effect.type === EffectType.SEARCH_DECK) {
+        const hasMatchingCard = [...foundationDeck, ...palsDeck].some((cardId) => {
+          const candidate = cardsById[cardId];
+          if (!candidate || candidate.kind !== effect.targetKind) return false;
+          if (effect.targetCardId && candidate.id !== effect.targetCardId) return false;
+          if (effect.targetCategories?.length && !effect.targetCategories.includes(candidate.category)) return false;
+          if (effect.targetNameIncludes && !candidate.name?.toLowerCase().includes(effect.targetNameIncludes.toLowerCase())) return false;
+          return !effect.targetZone || candidate.zone === effect.targetZone;
+        });
+        if (!hasMatchingCard) {
+          blockType = "cards";
+          blockReason = `${actionName} has no matching card remaining in your personal decks.`;
+        }
+      } else if ((effect.type === EffectType.RECOVER_CARD_FROM_DISCARD || effect.type === "recoverCardFromDiscard") && !discardPile.length) {
+        blockType = "cards";
+        blockReason = `${actionName} needs at least one card in your discard pile.`;
+      } else if (effect.type === "discardThenSearchDeck" || effect.type === "discardThenDraw") {
+        const discardCount = Math.max(0, Number(effect.discard?.amount ?? effect.discard?.min ?? 0));
+        if (hand.length < discardCount || (!foundationDeck.length && !palsDeck.length)) {
+          blockType = "cards";
+          blockReason = `${actionName} needs ${discardCount} card(s) in your hand and at least one card in a personal deck.`;
+        }
+      } else if (effect.type === "modifyDefenseRoll" || effect.type === EffectType.GRANT_DEFENSE_ADVANTAGE) {
+        const categories = action.target?.categories ?? [];
+        const matchesTarget = (cardId) => cardId && (!categories.length || categories.includes(cardsById[cardId]?.category));
+        const hasFriendlyTarget = playerCorals.some((coral) => coral.slots.some((slot) => (
+          matchesTarget(slot.cardId) || (slot.hostedCardIds ?? []).some(matchesTarget)
+        ))) || playerReefCreatures.some(matchesTarget) || playerOrphanCreatures.some((candidate) => matchesTarget(candidate.cardId));
+        if (!hasFriendlyTarget) {
+          blockType = "targets";
+          blockReason = `${actionName} has no legal friendly target.`;
+        }
+      }
+      return [{
+        ...entry,
+        cardName: card.name,
+        actionName,
+        actionText: typeof action === "string" ? action.slice(action.indexOf(":") + 1).trim() : action.text ?? "",
+        actionCost,
+        utilityActionKey,
+        effectType: effect.type,
+        blockType,
+        blockReason,
+        ready: !blockReason,
+      }];
+    });
+  });
+  const readyUtilityAction = playerUtilityActionOptions.find((entry) => entry.ready) ?? null;
+  const inspectedUtilityAction = inspectedCard?.owner === "player"
+    ? playerUtilityActionOptions.find((entry) => entry.actionKey === inspectedActionKey && entry.ready) ?? null
     : null;
   const attackSetupCards = tutorialContract ? hand.flatMap((cardId) => {
     const card = cardsById[cardId];
@@ -1892,6 +2392,13 @@ export default function Simulator({ storyMode = null } = {}) {
   const recommendedBuildCard = playableBuildCards.find((entry) => drawnCardIds.includes(entry.cardId))
     ?? playableBuildCards[0]
     ?? null;
+  const recommendedVpBuildCard = [...playableBuildCards]
+    .filter((entry) => entry.victoryPoints > 0)
+    .sort((left, right) => (
+      right.victoryPoints - left.victoryPoints
+      || left.cost - right.cost
+      || left.cardName.localeCompare(right.cardName)
+    ))[0] ?? null;
   const firstBlockedBuildCard = tutorialContract
     ? hand.map((cardId) => cardsById[cardId]).find((card) => card && card.kind !== CardKind.SUPPORT && getPlayError(card))
     : null;
@@ -1935,10 +2442,116 @@ export default function Simulator({ storyMode = null } = {}) {
     const attack = attackContext.attackOverride ?? getBasicAttackEffect(card);
     return card && attack ? { cardId: card.id, cardName: card.name, attackName: attack.actionName } : null;
   })() : null;
+  const scriptedFinishPlan = scriptedTutorialScenario?.finishPlan ?? null;
+  const scriptedPlayerCardIdsInPlay = [
+    ...playerCorals.map((coral) => coral.cardId),
+    ...playerHabitats,
+    ...playerTutorialActionCards.map((entry) => entry.cardId),
+  ];
+  const scriptedOpponentCardIdsInPlay = [
+    ...opponentCorals.map((coral) => coral.cardId),
+    ...opponentCorals.flatMap((coral) => coral.slots.flatMap((slot) => getSlotCardIds(slot))),
+    ...opponent.reefCreatures,
+    ...(opponent.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
+  ];
+  const getScriptedCardState = (cardId) => {
+    if (!cardId) return null;
+    const card = cardsById[cardId];
+    if (!card) return null;
+    const inHand = hand.includes(cardId);
+    const playErrorMessage = inHand
+      ? getPlayError(card, { allowUpcomingMain: gamePhase === "draw" })
+      : "";
+    return {
+      cardId,
+      cardName: card.name,
+      printedCost: Math.max(0, Number(card.cost?.rp ?? 0)),
+      cost: getPlayerCardPlayCost(card),
+      victoryPoints: Math.max(0, Number(card.victoryPoints ?? 0)),
+      inHand,
+      inPlay: scriptedPlayerCardIdsInPlay.includes(cardId),
+      inFoundationDeck: foundationDeck.includes(cardId),
+      inPalsDeck: palsDeck.includes(cardId),
+      inDiscard: discardPile.includes(cardId),
+      isPlaying: playingCardId === cardId,
+      playError: playErrorMessage,
+      ready: inHand && !playErrorMessage,
+    };
+  };
+  const scriptedFinishCards = scriptedFinishPlan ? {
+    setup: getScriptedCardState(scriptedFinishPlan.setupCardId),
+    economy: getScriptedCardState(scriptedFinishPlan.economyCardId),
+    coralSupport: getScriptedCardState(scriptedFinishPlan.coralSearchSupportCardId),
+    searchedCoral: getScriptedCardState(scriptedFinishPlan.searchedCoralCardId),
+    coralBase: getScriptedCardState(scriptedFinishPlan.reefBuilderCardId),
+    coralStageOne: getScriptedCardState(scriptedFinishPlan.reefBuilderStageOneCardId),
+    coralStageTwo: getScriptedCardState(scriptedFinishPlan.reefBuilderStageTwoCardId),
+    bankBoost: getScriptedCardState(scriptedFinishPlan.bankBoostCardId),
+    utility: getScriptedCardState(scriptedFinishPlan.utilityCardId),
+    firstFish: getScriptedCardState(scriptedFinishPlan.attackCardId),
+    secondFish: getScriptedCardState(scriptedFinishPlan.reefFishCardId),
+    habitat: getScriptedCardState(scriptedFinishPlan.habitatCardId),
+    predator: getScriptedCardState(scriptedFinishPlan.predatorCardId),
+    creatureSchool: getScriptedCardState(scriptedFinishPlan.creatureSchoolCardId),
+    filterFeeder: getScriptedCardState(scriptedFinishPlan.filterFeederCardId),
+    apexSupport: getScriptedCardState(scriptedFinishPlan.apexSearchSupportCardId),
+    apex: getScriptedCardState(scriptedFinishPlan.apexCardId),
+    // Legacy aliases keep restored tutorial fixtures and old free-practice
+    // help compatible while the Academy uses the curriculum fields above.
+    attack: getScriptedCardState(scriptedFinishPlan.attackCardId),
+    heldFinish: getScriptedCardState(scriptedFinishPlan.heldFinishCardId),
+    finishSearch: getScriptedCardState(scriptedFinishPlan.finishSearchCardId),
+  } : null;
+  const scriptedFinishRoute = scriptedFinishPlan && scriptedFinishCards ? (() => {
+    const cardIsAvailable = (card) => Boolean(
+      card && (
+        card.inHand
+        || card.inPlay
+        || card.inFoundationDeck
+        || card.inPalsDeck
+        || card.isPlaying
+      )
+    );
+    return {
+      active: Number(scriptedFinishPlan.curriculumVersion ?? 0) >= 2
+        ? Object.entries(scriptedFinishCards)
+            .filter(([key]) => !["attack", "heldFinish", "finishSearch"].includes(key))
+            .every(([, card]) => Boolean(card))
+        : Object.values(scriptedFinishCards).every(cardIsAvailable),
+      plan: scriptedFinishPlan,
+      cards: scriptedFinishCards,
+      activeConditionId,
+      expectedDraw: getScriptedTutorialTurnDraw({ round }),
+      nextFoundationCardId: foundationDeck[0] ?? null,
+      nextPalsCardId: palsDeck[0] ?? null,
+      utilityAction: playerUtilityActionOptions.find((entry) => (
+        entry.cardId === scriptedFinishPlan.utilityCardId
+      )) ?? null,
+      attackAction: playerAttackOptions.find((entry) => (
+        entry.cardId === scriptedFinishPlan.attackCardId
+      )) ?? null,
+      searchTargetCardId: searchContext?.mode === "deck"
+        ? getScriptedTutorialSearchTargetCardId({
+            cardsInPlay: scriptedPlayerCardIdsInPlay,
+            cardsInHand: hand,
+            searchCandidates: searchContext.candidates ?? [],
+          })
+        : null,
+      attackTargetInPlay: scriptedOpponentCardIdsInPlay.includes(scriptedFinishPlan.attackTargetCardId),
+      finishAttackTargetInPlay: scriptedOpponentCardIdsInPlay.includes(scriptedFinishPlan.finishAttackTargetCardId),
+    };
+  })() : null;
   const tutorialHelp = tutorialContract ? getSimulatorTutorialHelp(tutorialCurrentCheckpoint, {
-    complete: tutorialProgress?.status === "complete",
+    victoryPending: tutorialVictoryPending,
+    playerVp,
+    opponentVp,
+    victoryTarget,
     gamePhase,
     hasCoralInPlay,
+    scriptedSetupCardId: tutorialUsesScriptedScenario ? "mustard-hill-coral-base" : null,
+    scriptedSetupCardName: tutorialUsesScriptedScenario ? cardsById["mustard-hill-coral-base"]?.name : null,
+    scriptedBuildCardId: scriptedFoundationLessonCardId,
+    scriptedBuildCardName: scriptedFoundationLessonCardId ? cardsById[scriptedFoundationLessonCardId]?.name : null,
     playingCardId,
     playingCardName: playingCard?.name,
     modal,
@@ -1953,24 +2566,36 @@ export default function Simulator({ storyMode = null } = {}) {
     ),
     selectedCardName: selectedTutorialCard?.name,
     selectedCardCost: selectedTutorialCard ? getPlayerCardPlayCost(selectedTutorialCard) : null,
+    selectedCardVictoryPoints: Number(selectedTutorialCard?.victoryPoints ?? 0),
     selectedSupportLocksFurtherSupports: supportExplicitlyLocksFurtherSupports(selectedTutorialCard),
     handPopoverOpen: Boolean(handPopoverCardId),
     inspectedAttack,
     inspectedCardOpen: Boolean(inspectedCardData),
     inspectedPlayerCard: inspectedCard?.owner === "player",
     inspectedCardName: inspectedCardData?.name,
+    inspectedUtilityAction,
     attackContext: Boolean(attackContext),
     activeAttack,
     readyAttack,
+    readyUtilityAction,
     plannedAttack,
     attackSetupCard,
     plannedAttackSetupCard,
     attackBlock,
     attackBlockReason,
     recommendedBuildCard,
+    recommendedVpBuildCard,
     buildBlockReason,
     drawnCards,
     round,
+    turn,
+    scriptedLesson: tutorialUsesScriptedScenario,
+    scriptedFinishRoute,
+    scriptedAttackCardInHand: tutorialUsesScriptedScenario && hand.includes("spanish-hogfish"),
+    scriptedAttackCardCost: getPlayerCardPlayCost(cardsById["spanish-hogfish"]),
+    scriptedAttackActionCost: Number(getBasicAttackEffect(cardsById["spanish-hogfish"])?.actionCost ?? 0),
+    availableRp: rp,
+    nextPalsCardName: cardsById[palsDeck[0]]?.name ?? null,
     drawSelected: Number(turnDrawSelection?.foundation ?? 0) + Number(turnDrawSelection?.pals ?? 0),
     drawFoundationSelected: Number(turnDrawSelection?.foundation ?? 0),
     drawPalsSelected: Number(turnDrawSelection?.pals ?? 0),
@@ -1978,19 +2603,178 @@ export default function Simulator({ storyMode = null } = {}) {
     foundationDeckCount: foundationDeck.length,
     palsDeckCount: palsDeck.length,
   }) : null;
+  const tutorialFinalProgressLabel = tutorialCurrentCheckpoint === null && tutorialContract
+    ? `Final goal • ${playerVp}/${victoryTarget} VP`
+    : null;
+  const tutorialConditionHelp = tutorialContract && eventOverlay?.type === "condition-reveal"
+    ? {
+        ...getSimulatorTutorialConditionHelp(cardsById[eventOverlay.sourceCardId], eventOverlay.round ?? round),
+        ...(tutorialFinalProgressLabel ? { progressLabel: tutorialFinalProgressLabel } : {}),
+      }
+    : null;
+  const tutorialFaceoffHelp = tutorialContract && ["faceoff-ready", "school-attack-ready"].includes(eventOverlay?.type)
+      ? {
+        id: "tutorial-faceoff",
+        cueId: `tutorial-faceoff:${faceoffRolling ? "resolve" : "roll"}`,
+        ...(tutorialFinalProgressLabel ? { progressLabel: tutorialFinalProgressLabel } : {}),
+        title: faceoffRolling ? "Resolve the faceoff" : "Roll the faceoff dice",
+        lead: faceoffRolling ? "" : "The faceoff control is ready. ",
+        message: faceoffRolling
+          ? "There we are! The changing numbers preview the attack and defense rolls. Stop them when you are ready; the simulator will compare the final results and explain the outcome."
+          : eventOverlay.type === "faceoff-ready"
+            ? "Now both creatures roll. Your attack total must beat the defender's total for the attack to succeed. Start the dice, then stop them to lock in one result for each creature."
+            : "This Creature School attack uses its die roll to determine damage. Start the die, then stop it to lock in the result.",
+        action: faceoffRolling ? "Press Stop & Resolve to lock in the rolls." : "Press Start Rolling to begin the faceoff.",
+        target: "faceoff-action",
+        targetLabel: faceoffRolling ? "the Stop & Resolve button" : "the Start Rolling button",
+      }
+    : null;
+  const scriptedScavengeInteraction = tutorialUsesScriptedScenario
+    && pendingCreatureAction?.sourceCardId === scriptedFinishPlan?.utilityCardId
+    && ["choose-action-hand-discard", "choose-action-search-card"].includes(eventOverlay?.type);
+  const scriptedSearchCandidates = eventOverlay?.type === "choose-action-search-card"
+    ? pendingCreatureAction?.searchCandidates ?? []
+    : [...foundationDeck, ...palsDeck];
+  const scriptedSearchTargetCardId = scriptedScavengeInteraction
+    ? getScriptedTutorialSearchTargetCardId({
+        cardsInPlay: scriptedPlayerCardIdsInPlay,
+        cardsInHand: hand,
+        searchCandidates: scriptedSearchCandidates,
+      })
+    : null;
+  const scriptedDiscardCandidates = scriptedScavengeInteraction
+    && eventOverlay?.type === "choose-action-hand-discard"
+    && scriptedSearchTargetCardId
+    ? (() => {
+        const required = Math.max(0, Number(pendingCreatureAction.minDiscard ?? 2));
+        const candidates = getScriptedTutorialDiscardEntries(
+          pendingCreatureAction.handEntries ?? [],
+          { searchTargetCardId: scriptedSearchTargetCardId, amount: required },
+        );
+        return candidates.length === required ? candidates : [];
+      })()
+    : [];
+  const scriptedSelectedDiscardIndexes = new Set(pendingCreatureAction?.selectedIndices ?? []);
+  const scriptedDiscardReady = scriptedDiscardCandidates.length > 0
+    && scriptedDiscardCandidates.every((entry) => scriptedSelectedDiscardIndexes.has(entry.index))
+    && (pendingCreatureAction?.selectedIndices?.length ?? 0) >= (pendingCreatureAction?.minDiscard ?? 0)
+    && (pendingCreatureAction?.selectedIndices?.length ?? 0) <= (pendingCreatureAction?.maxDiscard ?? Number.POSITIVE_INFINITY);
+  const scriptedSearchTargetCard = scriptedSearchTargetCardId
+    ? cardsById[scriptedSearchTargetCardId]
+    : null;
+  const scriptedSearchIsFinishCard = scriptedSearchTargetCardId === scriptedFinishPlan?.finishSearchCardId;
+  const scriptedImpactTargetHelp = tutorialUsesScriptedScenario
+    && Number(scriptedFinishPlan?.curriculumVersion ?? 0) >= 2
+    && eventOverlay?.type === "choose-impact-target"
+    && [scriptedFinishPlan.reefFishCardId, scriptedFinishPlan.apexCardId].includes(eventOverlay.sourceCardId)
+    ? {
+        id: "tutorial-script-impact-target",
+        cueId: `tutorial-script-impact-target:${eventOverlay.sourceCardId}`,
+        progressLabel: `Academy reef • ${playerVp}/${victoryTarget} VP`,
+        title: eventOverlay.sourceCardId === scriptedFinishPlan.apexCardId
+          ? "Begin Hammerhead's Ravage"
+          : "Resolve Parrotfish's Eat ability",
+        lead: "",
+        message: eventOverlay.sourceCardId === scriptedFinishPlan.apexCardId
+          ? "Ravage is an On Play sequence. First choose a Coral for the damage roll; after that resolves, Hammerhead must make its two attacks against the remaining compatible creatures."
+          : "Eat is an On Play ability, so it resolves immediately after Parrotfish enters the reef. Choose one of Professor Current's durable practice Corals; the damage teaches the timing without removing the final Ravage lesson.",
+        action: "Choose one of the highlighted opposing Corals to resolve the On Play damage.",
+        target: "impact-target",
+        targetLabel: "a highlighted opposing Coral",
+      }
+    : null;
+  const scriptedCoinActionHelp = tutorialUsesScriptedScenario
+    && Number(scriptedFinishPlan?.curriculumVersion ?? 0) >= 2
+    && eventOverlay?.type === "choose-coin-coral-target"
+    && pendingCreatureAction?.sourceCardId === scriptedFinishPlan.utilityCardId
+    ? {
+        id: "tutorial-script-utility-target",
+        cueId: `tutorial-script-utility-target:${pendingCreatureAction.sourceCardId}`,
+        progressLabel: `Academy reef • ${playerVp}/${victoryTarget} VP`,
+        title: "Munch flipped heads",
+        lead: "",
+        message: "The coin succeeded, so Nudibranch's non-attack action can reduce one Coral's next RP production. This changes the opponent's economy; it does not roll attack and defense dice or remove a creature.",
+        action: "Choose Professor Current's highlighted Coral to finish Munch.",
+        target: "coin-coral-target",
+        targetLabel: "the highlighted opposing Coral",
+      }
+    : null;
+  const scriptedTutorialOverlayHelp = scriptedImpactTargetHelp ?? scriptedCoinActionHelp ?? (scriptedDiscardCandidates.length ? {
+    id: "tutorial-script-scavenge-discard",
+    cueId: `tutorial-script-scavenge-discard:${scriptedSearchTargetCardId}:${scriptedDiscardReady ? "confirm" : "choose"}:${scriptedDiscardCandidates.map((entry) => entry.index).join(",")}`,
+    ...(tutorialFinalProgressLabel ? { progressLabel: tutorialFinalProgressLabel } : {}),
+    title: scriptedDiscardReady ? "Commit the Scavenge trade" : "Choose what Arrow Crab will trade",
+    lead: "",
+    message: `Wonderful—Scavenge is a card action, not an attack. It trades exactly two cards from your hand for one card you deliberately choose from either personal deck. For this exercise, I have highlighted ${scriptedDiscardCandidates.map((entry) => cardsById[entry.cardId]?.name ?? entry.cardId).join(" and ")} as safe practice discards.`,
+    playerThought: "The two discarded cards are the cost of improving my hand. I should choose cards that matter less to my current plan, not simply the first two I see.",
+    encouragement: "Precisely. Card advantage is not only about quantity; choosing the right card at the right moment can be worth more than keeping several unfocused options.",
+    action: scriptedDiscardReady
+      ? "Press Discard & Continue to pay the card cost and choose what Arrow Crab finds."
+      : "Select the two highlighted cards. I will point to the confirmation button when the choice is ready.",
+    target: scriptedDiscardReady ? "script-discard-confirm" : "script-discard-cards",
+    targetLabel: scriptedDiscardReady ? "the Discard & Continue button" : "the highlighted practice discards",
+  } : scriptedSearchTargetCardId ? {
+    id: "tutorial-script-scavenge-search",
+    cueId: `tutorial-script-scavenge-search:${scriptedSearchTargetCardId}`,
+    ...(tutorialFinalProgressLabel ? { progressLabel: tutorialFinalProgressLabel } : {}),
+    title: scriptedSearchIsFinishCard ? "Search for the final-turn Predator" : "Search for a planned attacker",
+    lead: "",
+    message: scriptedSearchIsFinishCard
+      ? `The discard and 2 RP cost are committed. Choose ${scriptedSearchTargetCard?.name ?? "Spinner Dolphins"} now, but keep it in your hand this round. Murky Water will reduce its Predator play cost next round, letting the RP you bank fund both final creatures.`
+      : `The discard and 2 RP cost are committed, so Scavenge lets you choose any remaining card. ${scriptedSearchTargetCard?.name ?? "Spanish Hogfish"} is our lesson target because its Crunch action can attack the Sea Urchin I placed on my reef.`,
+    playerThought: scriptedSearchIsFinishCard
+      ? "This search is planning an entire future turn: find the discounted Predator now, preserve Giant Clam, and carry the remaining RP forward."
+      : "Instead of hoping my next draw solves the problem, I can use Scavenge to choose Spanish Hogfish because I already know it has a legal target.",
+    encouragement: scriptedSearchIsFinishCard
+      ? "That is careful sequencing. The strongest search target is the one your board, hand, condition, and RP can use together."
+      : "Exactly! That is the difference between searching with a plan and searching for a card that merely looks strong. We began with the board, identified a need, and selected the answer.",
+    action: scriptedSearchIsFinishCard
+      ? `Choose the highlighted ${scriptedSearchTargetCard?.name ?? "Spinner Dolphins"}, then end the turn with it and Giant Clam protected for Round ${scriptedFinishPlan?.finishRound ?? 4}.`
+      : rp >= getPlayerCardPlayCost(scriptedSearchTargetCard) + Number(getBasicAttackEffect(scriptedSearchTargetCard)?.actionCost ?? 0)
+        ? `Choose the highlighted ${scriptedSearchTargetCard?.name ?? "Spanish Hogfish"}, play it now, and keep 1 RP to use Crunch on Sea Urchin.`
+        : `Choose the highlighted ${scriptedSearchTargetCard?.name ?? "Spanish Hogfish"}. Keep it in hand, end the turn, and bank enough RP to play it and use Crunch next round.`,
+    target: "script-search-card",
+    targetLabel: `the highlighted ${scriptedSearchTargetCard?.name ?? "search card"}`,
+  } : null);
+  const tutorialConditionHelpKey = tutorialConditionHelp?.cueId ?? tutorialConditionHelp?.id ?? null;
+  const tutorialConditionHelpOpen = Boolean(
+    tutorialConditionHelp && tutorialHelpDismissedId !== tutorialConditionHelpKey,
+  );
+  const scriptedTutorialOverlayHelpKey = scriptedTutorialOverlayHelp?.cueId ?? scriptedTutorialOverlayHelp?.id ?? null;
+  const scriptedTutorialOverlayHelpOpen = Boolean(
+    scriptedTutorialOverlayHelp && tutorialHelpDismissedId !== scriptedTutorialOverlayHelpKey,
+  );
+  const tutorialFaceoffHelpKey = tutorialFaceoffHelp?.cueId ?? tutorialFaceoffHelp?.id ?? null;
+  const tutorialFaceoffHelpOpen = Boolean(
+    tutorialFaceoffHelp && tutorialHelpDismissedId !== tutorialFaceoffHelpKey,
+  );
   const tutorialHelpDismissalKey = tutorialHelp?.cueId ?? tutorialHelp?.id ?? null;
   const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelpDismissalKey);
+  const keepAcademyPointer = Boolean(tutorialUsesScriptedScenario && scriptedFinishRoute?.active);
+  const tutorialHelpTargetActive = Boolean(tutorialHelp && (tutorialHelpOpen || keepAcademyPointer));
+  const tutorialConditionTargetActive = Boolean(
+    tutorialConditionHelp && (tutorialConditionHelpOpen || keepAcademyPointer),
+  );
+  const tutorialFaceoffTargetActive = Boolean(
+    tutorialFaceoffHelp && (tutorialFaceoffHelpOpen || keepAcademyPointer),
+  );
+  const scriptedOverlayTargetActive = Boolean(
+    scriptedTutorialOverlayHelp && (scriptedTutorialOverlayHelpOpen || keepAcademyPointer),
+  );
   const tutorialHelpInline = Boolean(
     tutorialHelpOpen
     && !eventOverlay
     && (
       ["turn-draw", "draw-result", "hand"].includes(modal)
-      || (inspectedCardData && ["attack-button", "close-modal"].includes(tutorialHelp.target))
+      || (modal === "search" && tutorialHelp.target === "search-card")
+      || (Boolean(modal) && tutorialHelp.target === "close-modal")
+      || (inspectedCardData && ["attack-button", "utility-action-button", "close-modal"].includes(tutorialHelp.target))
       || (handPopoverCardId && ["play-card", "turn-button", "close-modal"].includes(tutorialHelp.target))
     ),
   );
   const tutorialHelpFloating = Boolean(
     tutorialHelpOpen
+    && !tutorialBoardTourOpen
     && !tutorialHelpInline
     && !eventOverlay
     && !modal
@@ -2001,18 +2785,51 @@ export default function Simulator({ storyMode = null } = {}) {
     && !handPopoverCardId
     && !gameResult,
   );
+  const tutorialTargetBeaconHelp = tutorialBoardTourOpen
+    ? tutorialBoardTourHelp
+    : eventOverlay
+    ? tutorialConditionTargetActive
+      ? tutorialConditionHelp
+      : tutorialFaceoffTargetActive
+        ? tutorialFaceoffHelp
+        : scriptedOverlayTargetActive
+          ? scriptedTutorialOverlayHelp
+          : null
+    : tutorialHelpTargetActive
+      ? tutorialHelp
+      : null;
+  const tutorialTargetBeaconOpen = Boolean(
+    tutorialTargetBeaconHelp
+    && !roundFlash
+    && !gameResult
+    && !opponentThinking,
+  );
+  const tutorialAnnouncement = tutorialTargetBeaconHelp
+    ? createProfessorAnnouncement({
+        guideName: tutorialGuide.name,
+        help: tutorialTargetBeaconHelp,
+        step: Math.min(tutorialStepNumber, tutorialContract?.checkpoints.length ?? 1),
+        total: tutorialContract?.checkpoints.length ?? 1,
+        message: createProfessorSpokenMessage(tutorialTargetBeaconHelp),
+      })
+    : "";
+  const tutorialVisualHelp = tutorialBoardTourOpen
+    ? tutorialBoardTourHelp
+    : tutorialHelpTargetActive
+      ? tutorialHelp
+      : null;
   const tutorialTargetClass = (target) => (
-    tutorialHelpOpen
-      && tutorialHelp?.target === target
-      && !(target === "player-board" && tutorialHelp.targetActionKey)
+    tutorialVisualHelp
+      && tutorialVisualHelp.target === target
+      && !(target === "player-board" && tutorialVisualHelp.targetActionKey)
       ? " seapals-tutorial-target"
       : ""
   );
   const tutorialCardTargetClass = (cardId) => (
-    tutorialHelpOpen && tutorialHelp?.targetCardId === cardId ? " seapals-tutorial-target" : ""
+    tutorialHelpTargetActive && tutorialHelp?.targetCardId === cardId ? " seapals-tutorial-target" : ""
   );
   const tutorialActionTargetClass = (actionKey) => (
-    tutorialHelpOpen && tutorialHelp?.targetActionKey === actionKey ? " seapals-tutorial-target" : ""
+    tutorialHelpTargetActive && tutorialHelp?.targetActionKey === actionKey ? " seapals-tutorial-target" : ""
   );
   const isPlacingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) === 0);
   const isUpgradingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) > 0);
@@ -2034,7 +2851,7 @@ export default function Simulator({ storyMode = null } = {}) {
   );
 
   useEffect(() => {
-    if (!tutorialHelpOpen) return undefined;
+    if (!tutorialHelpTargetActive) return undefined;
     if (tutorialHelp.target === "opponent-board") setMobileBoardView("opponent");
     else if (tutorialHelp.target === "player-board" || tutorialHelp.targetActionKey) setMobileBoardView("player");
 
@@ -2049,7 +2866,13 @@ export default function Simulator({ storyMode = null } = {}) {
       target?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     });
     return () => cancelAnimationFrame(frame);
-  }, [tutorialHelpDismissalKey, tutorialHelpOpen, tutorialHelp?.target, tutorialHelp?.targetCardId, tutorialHelp?.targetActionKey, modal, handPopoverCardId, mobileBoardView]);
+  }, [tutorialHelpDismissalKey, tutorialHelpTargetActive, tutorialHelp?.target, tutorialHelp?.targetCardId, tutorialHelp?.targetActionKey, modal, handPopoverCardId, mobileBoardView]);
+
+  useEffect(() => {
+    if (!tutorialBoardTourOpen) return;
+    if (tutorialBoardTourHelp.target === "opponent-board") setMobileBoardView("opponent");
+    else if (tutorialBoardTourHelp.target === "player-board") setMobileBoardView("player");
+  }, [tutorialBoardTourHelp?.cueId, tutorialBoardTourHelp?.target, tutorialBoardTourOpen]);
 
   useEffect(() => {
     setHasDrawnThisTurn(false);
@@ -2139,6 +2962,7 @@ export default function Simulator({ storyMode = null } = {}) {
       opponentId: storyMode?.opponentId ?? storyMode?.encounterId ?? storyOpponentDeckId,
       opponentName: storyOpponentName,
       playerDeckId: storyPlayerDeckId,
+      playerDeckSnapshot: storyPlayerDeckSnapshot,
       opponentDeckId: storyOpponentDeckId,
       victoryTarget: storyVictoryTarget,
       difficulty: storyDifficulty,
@@ -2157,7 +2981,7 @@ export default function Simulator({ storyMode = null } = {}) {
     storyMode?.onResult?.(result);
     if (result.outcome === "victory") storyMode?.onVictory?.(result);
     else storyMode?.onDefeat?.(result);
-  }, [gameResult, isStoryMode, opponentVp, playerVp, round, storyDifficulty, storyMode, storyOpponentDeckId, storyOpponentName, storyPlayerDeckId, storyVictoryTarget, turn]);
+  }, [gameResult, isStoryMode, opponentVp, playerVp, round, storyDifficulty, storyMode, storyOpponentDeckId, storyOpponentName, storyPlayerDeckId, storyPlayerDeckSnapshot, storyVictoryTarget, turn]);
 
   useEffect(() => {
     if (!faceoffRolling || !["faceoff-ready", "school-attack-ready"].includes(eventOverlay?.type)) return;
@@ -2229,6 +3053,17 @@ export default function Simulator({ storyMode = null } = {}) {
     if (!isSetup && gamePhase !== "main" && !allowUpcomingMain) return "Cards can only be played during your action phase.";
     if (isSetup && !(isFoundationCard(card) && Number(card.stage ?? 0) === 0)) {
       return "During setup, play a base Coral or Creature School before the first round begins.";
+    }
+    if (tutorialUsesScriptedScenario && isSetup && card.id !== "mustard-hill-coral-base") {
+      return "Professor Current has prepared Mustard Hill Coral for this guided setup. Use it so the later RP lesson stays on course.";
+    }
+    if (
+      tutorialUsesScriptedScenario
+      && !isSetup
+      && tutorialCurrentCheckpoint?.id === "tutorial-build-card"
+      && card.id !== scriptedFoundationLessonCardId
+    ) {
+      return `Professor Current has prepared ${cardsById[scriptedFoundationLessonCardId]?.name ?? "the highlighted Foundation card"} for this economy lesson.`;
     }
     const conditionRestriction = getConditionPlayRestriction(card, activeCondition);
     if (conditionRestriction) return conditionRestriction;
@@ -2594,6 +3429,18 @@ export default function Simulator({ storyMode = null } = {}) {
     const attackerOrphanIndex = coralId == null && String(slotId).startsWith("orphan-") ? findZoneIndexBySlotId(playerOrphanCreatures, slotId, "orphan-") : -1;
     const attackerCardId = attackerReefIndex >= 0 ? playerReefCreatures[attackerReefIndex] : attackerOrphanIndex >= 0 ? playerOrphanCreatures[attackerOrphanIndex]?.cardId : attackerSlot?.cardId;
     const attacker = cardsById[attackerCardId];
+    const academyBlock = getAcademyActionBlock({
+      route: scriptedFinishRoute,
+      help: tutorialHelp,
+      actionKey: attackerActionKey,
+      target: "attack-button",
+    });
+    if (academyBlock) {
+      setTutorialHelpDismissedId(null);
+      setPlayError(academyBlock);
+      pushLog(academyBlock);
+      return;
+    }
     const attack = getBasicAttackEffect(attacker);
     if (!attack) {
       pushLog(`${attacker?.name ?? "This creature"} has no supported basic attack action.`);
@@ -3048,6 +3895,18 @@ export default function Simulator({ storyMode = null } = {}) {
     if (!coral) return;
     const slot = coral.slots.find((s) => s.id === slotId);
     if (!slot) return;
+    const academyPlacementBlock = getAcademyPlacementBlock({
+      route: scriptedFinishRoute,
+      cardId: playingCardId,
+      foundationCardId: coral.cardId,
+      slotClass: slot.slotClass ?? slot.slotType ?? slot.class,
+    });
+    if (academyPlacementBlock) {
+      setTutorialHelpDismissedId(null);
+      setPlayError(academyPlacementBlock);
+      pushLog(academyPlacementBlock);
+      return;
+    }
     const error = getPlayError(card);
     if (error) {
       setPlayError(error);
@@ -3621,6 +4480,18 @@ export default function Simulator({ storyMode = null } = {}) {
       startRound(round + 1, { advanceTurn: true });
       return;
     }
+    if (eventOverlay?.startOpeningPlayerTurnAfterClose) {
+      setEventOverlay(null);
+      setPendingEvents([]);
+      setOpeningOpponentTurn(false);
+      if (gameResult || eventOverlay.gameResultAfter) return;
+      startRound(round, {
+        reuseConditionId: activeConditionId,
+        skipOpponentHandLimit: true,
+        conditionTitle: `Round ${round} · Your First Turn`,
+      });
+      return;
+    }
     const [nextEvent, ...remaining] = pendingEvents;
     setPendingEvents(remaining);
     if (nextEvent?.opponentSequence) {
@@ -3652,8 +4523,13 @@ export default function Simulator({ storyMode = null } = {}) {
     return condition;
   }
 
-  function startRound(nextRound, { advanceTurn = false } = {}) {
-    const condition = drawNextCondition();
+  function startRound(nextRound, {
+    advanceTurn = false,
+    reuseConditionId = null,
+    skipOpponentHandLimit = false,
+    conditionTitle = null,
+  } = {}) {
+    const condition = reuseConditionId ? cardsById[reuseConditionId] : drawNextCondition();
     const ecosystemRp = getEcosystemStartTurnRp(playerCorals, condition);
     const collectedRp = 1 + ecosystemRp;
     const roundRpCap = getEcosystemRpCap(playerCorals, [...playerHabitats, ...playerReefCreatures, ...playerOrphanCreatures.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], condition);
@@ -3692,7 +4568,7 @@ export default function Simulator({ storyMode = null } = {}) {
     const handLimitEffect = (condition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
     const handLimit = Number(handLimitEffect?.amount ?? Infinity);
     const excessCards = Number.isFinite(handLimit) && hand.length > handLimit ? hand.slice(handLimit) : [];
-    const opponentExcessCards = Number.isFinite(handLimit) && opponent.hand.length > handLimit ? opponent.hand.slice(handLimit) : [];
+    const opponentExcessCards = !skipOpponentHandLimit && Number.isFinite(handLimit) && opponent.hand.length > handLimit ? opponent.hand.slice(handLimit) : [];
     if (excessCards.length) {
       setHand((current) => current.slice(0, handLimit));
       setDiscardPile((current) => [...excessCards, ...current]);
@@ -3736,8 +4612,9 @@ export default function Simulator({ storyMode = null } = {}) {
       ].filter(Boolean);
       setEventOverlay({
         type: "condition-reveal",
+        round: nextRound,
         sourceCardId: condition.id,
-        title: `Round ${nextRound}`,
+        title: conditionTitle ?? `Round ${nextRound}`,
         message: condition.text,
         conditionName: condition.name,
         conditionText: condition.text,
@@ -3763,6 +4640,38 @@ export default function Simulator({ storyMode = null } = {}) {
     );
   }
 
+  function beginOpeningOpponentTurn() {
+    const condition = drawNextCondition();
+    const requestedDraws = 1 + getConditionExtraDraws(condition);
+    const handLimitEffect = (condition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
+    const handLimit = Number(handLimitEffect?.amount ?? Infinity);
+    const roundNotes = [
+      requestedDraws > 1 ? `This round, each player draws ${requestedDraws} cards during their draw phase.` : null,
+      Number.isFinite(handLimit) ? `The hand limit this round is ${handLimit}.` : null,
+      condition?.tags?.includes("persistent") ? "This condition remains in play after the round ends." : "This condition applies for the current round.",
+    ].filter(Boolean);
+
+    setRound(1);
+    setGamePhase("transition");
+    setOpeningOpponentTurn(true);
+    setModal(null);
+    setPendingEvents([]);
+    setEventOverlay({
+      type: "condition-reveal",
+      round: 1,
+      sourceCardId: condition?.id ?? null,
+      title: "Round 1 · Opponent Goes First",
+      message: condition?.text ?? "No condition was revealed.",
+      conditionName: condition?.name ?? "No active condition",
+      conditionText: condition?.text ?? "",
+      openingOpponentTurn: true,
+      beginOpponentAfterClose: true,
+      thinkingDelay: 900,
+      roundNotes,
+    });
+    pushLog(`The opponent won the opening choice and takes the first turn. Round 1 revealed ${condition?.name ?? "no condition"}.`);
+  }
+
   function beginFirstRound() {
     if (!hasCoralInPlay) {
       setPlayError("Play a base Coral or Creature School before beginning round 1.");
@@ -3775,12 +4684,20 @@ export default function Simulator({ storyMode = null } = {}) {
       rp,
       accepted: true,
     }, { phase: "setup", round: 0 });
+    if (startingPlayer === OpeningPlayer.OPPONENT) {
+      beginOpeningOpponentTurn();
+      return;
+    }
     startRound(1);
   }
 
   function adjustTurnDraw(deckType, delta) {
     setTurnDrawSelection((current) => {
       if (!current) return current;
+      const authoredDraw = tutorialUsesScriptedScenario && !current.mode
+        ? getScriptedTutorialTurnDraw({ round })
+        : null;
+      if (authoredDraw && delta > 0 && deckType !== authoredDraw.deckType) return current;
       const nextAmount = current[deckType] + delta;
       const available = deckType === "foundation" ? foundationDeck.length : palsDeck.length;
       const nextTotal = current.foundation + current.pals + delta;
@@ -3791,8 +4708,18 @@ export default function Simulator({ storyMode = null } = {}) {
 
   function confirmTurnDraw() {
     if (!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target) return;
-    const foundationCards = foundationDeck.slice(0, turnDrawSelection.foundation);
-    const palsCards = palsDeck.slice(0, turnDrawSelection.pals);
+    const authoredDraw = tutorialUsesScriptedScenario && !turnDrawSelection.mode
+      ? getScriptedTutorialTurnDraw({ round })
+      : null;
+    const chooseCards = (deck, deckType, amount) => {
+      if (!amount) return [];
+      if (!authoredDraw || authoredDraw.deckType !== deckType || !deck.includes(authoredDraw.cardId)) {
+        return deck.slice(0, amount);
+      }
+      return [authoredDraw.cardId, ...removeOneCard(deck, authoredDraw.cardId)].slice(0, amount);
+    };
+    const foundationCards = chooseCards(foundationDeck, "foundation", turnDrawSelection.foundation);
+    const palsCards = chooseCards(palsDeck, "pals", turnDrawSelection.pals);
     const drawnCards = [...foundationCards, ...palsCards];
     const handLimitEffect = (activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
     const drawResult = drawWithHandLimit(drawnCards, hand.length, drawnCards.length, handLimitEffect ? Number(handLimitEffect.amount) : Infinity);
@@ -3812,8 +4739,8 @@ export default function Simulator({ storyMode = null } = {}) {
       })),
       accepted: true,
     }, { phase: "draw" });
-    setFoundationDeck((current) => current.slice(foundationCards.length));
-    setPalsDeck((current) => current.slice(palsCards.length));
+    setFoundationDeck((current) => foundationCards.reduce((deck, cardId) => removeOneCard(deck, cardId), current));
+    setPalsDeck((current) => palsCards.reduce((deck, cardId) => removeOneCard(deck, cardId), current));
     setHand((current) => [...current, ...drawResult.cardsToHand]);
     if (drawResult.cardsToDiscard.length) setDiscardPile((current) => [...drawResult.cardsToDiscard, ...current]);
     const revealed = drawnCards.map((cardId, index) => ({
@@ -3963,6 +4890,17 @@ export default function Simulator({ storyMode = null } = {}) {
     const card = cardsById[cardId];
     if (!card) {
       setPlayError("Select a card first.");
+      return;
+    }
+    const academyBlock = getAcademyCardPlayBlock({
+      route: scriptedFinishRoute,
+      help: tutorialHelp,
+      cardId,
+    });
+    if (academyBlock) {
+      setTutorialHelpDismissedId(null);
+      setPlayError(academyBlock);
+      pushLog(academyBlock);
       return;
     }
     const error = getPlayError(card);
@@ -4361,6 +5299,14 @@ export default function Simulator({ storyMode = null } = {}) {
 
   function completeSupportSearch(cardId) {
     if (!searchContext?.candidates.includes(cardId)) return;
+    const authoredSearchTarget = tutorialUsesScriptedScenario
+      ? getScriptedTutorialSearchTargetCardId({
+          cardsInPlay: scriptedPlayerCardIdsInPlay,
+          cardsInHand: hand,
+          searchCandidates: searchContext.candidates,
+        })
+      : null;
+    if (authoredSearchTarget && cardId !== authoredSearchTarget) return;
     const supportCard = cardsById[searchContext.supportCardId];
     if (!supportCard || !hand.includes(supportCard.id)) return;
     let nextFoundation = removeOneCard(foundationDeck, cardId);
@@ -4814,6 +5760,18 @@ export default function Simulator({ storyMode = null } = {}) {
     const cost = getActionCost(action);
     if (!effect || gameResult || gamePhase !== "main" || attackContext || playingCardId || rp < cost || (actionIsOncePerTurn(action) && usedCreatureActions.includes(actionKey))) return;
     const sourceCard = cardsById[inspectedCard.cardId];
+    const academyBlock = getAcademyActionBlock({
+      route: scriptedFinishRoute,
+      help: tutorialHelp,
+      actionKey,
+      target: "utility-action-button",
+    });
+    if (academyBlock) {
+      setTutorialHelpDismissedId(null);
+      setPlayError(academyBlock);
+      pushLog(academyBlock);
+      return;
+    }
     if (effect.type === EffectType.STUN_CORAL) {
       if (!opponentCoralCards.length) {
         pushLog(`${sourceCard.name}'s ${actionName} has no opponent coral to target.`);
@@ -7135,9 +8093,21 @@ export default function Simulator({ storyMode = null } = {}) {
       pushLog("Finish or cancel your current placement, attack, or card effect before ending your turn.");
       return;
     }
+    const academyBlock = getAcademyEndTurnBlock({
+      route: scriptedFinishRoute,
+      help: tutorialHelp,
+    });
+    if (academyBlock) {
+      setTutorialHelpDismissedId(null);
+      setPlayError(academyBlock);
+      pushLog(academyBlock);
+      return;
+    }
     const boardComplexity = playerCorals.length + opponentCorals.length + playerReefCreatures.length + opponent.reefCreatures.length + playerOrphanCreatures.length + (opponent.orphanCreatures?.length ?? 0);
     const endgameDecision = playerVp >= victoryTarget - 8 || opponentVp >= victoryTarget - 8;
-    const thinkingDelay = Math.min(5200, 1100 + boardComplexity * 140 + (endgameDecision ? 1400 : 0));
+    const thinkingDelay = scriptedTutorialScenario?.opponentTurnMode === "observe"
+      ? 350
+      : Math.min(5200, 1100 + boardComplexity * 140 + (endgameDecision ? 1400 : 0));
     const habitatMaintenance = resolvePlayerEndOfTurnHabitats();
     const actions = [...turnLog, ...(habitatMaintenance.messages ?? [])].filter(Boolean);
     emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.TURN_ENDED, {
@@ -7161,6 +8131,21 @@ export default function Simulator({ storyMode = null } = {}) {
   function resolveOpponentTurn() {
     setOpponentThinking(false);
     setEventOverlay(null);
+    if (scriptedTutorialScenario?.opponentTurnMode === "observe") {
+      const observerState = normalizeProjectedOpponentState(reconcileOpponentInstances(opponent, opponent));
+      const message = `${tutorialGuide.name} keeps the academy reef unchanged and watches how you apply the lesson.`;
+      queueEvents([{
+        type: "turn-transition",
+        title: "Your Turn",
+        message: `${tutorialGuide.name}'s observation turn is complete.`,
+        actions: [message],
+        advanceRoundAfterClose: true,
+        opponentStateAfter: observerState,
+        gameResultAfter: null,
+        opponentSequence: true,
+      }]);
+      return;
+    }
     const turnEvents = [];
     let stagedPlayerState = normalizeProjectedPlayerState({
       corals: playerCorals,
@@ -7419,16 +8404,90 @@ export default function Simulator({ storyMode = null } = {}) {
       title: "Your Turn",
       message: "The opponent's turn is complete.",
       actions: splitTurnActionLines(opponentSummary),
-      advanceRoundAfterClose: true,
+      advanceRoundAfterClose: !openingOpponentTurn,
+      startOpeningPlayerTurnAfterClose: openingOpponentTurn,
       opponentStateAfter: finalOpponentState,
       gameResultAfter: opponentLostAfterUtility ? "Victory: the opponent could not complete a required draw from its personal decks." : opponentVictoryLocked ? `Defeat: the opponent was first to reach ${victoryTarget} VP.` : stagedVictoryResult?.message ?? null,
     });
     queueEvents(turnEvents.map((event) => ({ ...event, opponentSequence: true })));
   }
 
+  function flipForOpeningTurn(call) {
+    const result = resolveOpeningCoinFlip({
+      call,
+      random: Math.random,
+      forcedWinner: tutorialUsesScriptedScenario ? OpeningPlayer.PLAYER : null,
+    });
+    const winnerName = result.winner === OpeningPlayer.PLAYER
+      ? "You won the flip!"
+      : `${isStoryMode ? storyOpponentName : "The opponent"} won the flip.`;
+    setEventOverlay({
+      type: "opening-coin-result",
+      title: winnerName,
+      message: `You called ${result.call}. The coin landed ${result.landed}.`,
+      coinCall: result.call,
+      coinLanded: result.landed,
+      coinWinner: result.winner,
+    });
+  }
+
+  function chooseOpeningTurn(playerChoice = OpeningPlayer.PLAYER) {
+    const chosenStarter = chooseOpeningPlayer({
+      winner: eventOverlay?.coinWinner,
+      playerChoice,
+      tutorial: tutorialUsesScriptedScenario,
+    });
+    setStartingPlayer(chosenStarter);
+    setOpeningOpponentTurn(false);
+    setEventOverlay({
+      type: "round-transition",
+      title: "Setup Round",
+      message: `Build the foundation of your ecosystem. You have 3 RP and eight opening cards: play a valid base Coral or Creature School, then ${chosenStarter === OpeningPlayer.PLAYER ? "you will take" : "the opponent will take"} the first turn.`,
+      success: true,
+    });
+    pushLog(chosenStarter === OpeningPlayer.PLAYER
+      ? "You will take the first turn after setup."
+      : "The opponent will take the first turn after setup.");
+  }
+
+  function openOpeningCoinFlip() {
+    setEventOverlay({
+      type: "opening-coin-call",
+      title: "Call the Opening Coin Flip",
+      message: tutorialUsesScriptedScenario
+        ? `${tutorialGuide.name} hands you the academy coin. Call heads or tails to decide who takes the first turn.`
+        : "Call heads or tails. The winner chooses who takes the first turn after setup.",
+    });
+    setTurnLog(["The opening coin flip will decide who takes the first turn."]);
+  }
+
+  function finishTutorialBoardTour() {
+    setTutorialBoardTourStep(null);
+    openOpeningCoinFlip();
+  }
+
+  function advanceTutorialBoardTour() {
+    const nextStep = getNextGuidedAcademyBoardTourStep(tutorialBoardTourStep);
+    if (nextStep === null) {
+      finishTutorialBoardTour();
+      return;
+    }
+    setTutorialBoardTourStep(nextStep);
+  }
+
   function restartGame(deckId = selectedDeckId, opponentDeckId = selectedOpponentDeckId, nextVictoryTarget = pendingVictoryTarget, nextOpponentDifficulty = pendingOpponentDifficulty) {
-    const nextGame = createInitialGameState(deckId, opponentDeckId);
-    const deckName = prebuiltDecks.find((deck) => deck.id === deckId)?.name ?? deckId;
+    const nextGame = createInitialGameState(
+      deckId,
+      opponentDeckId,
+      tutorialUsesScriptedScenario ? createSeededRandom(0x5ea9a15) : Math.random,
+      {
+        scriptedTutorial: tutorialUsesScriptedScenario,
+        playerDeckSnapshot: isStoryMode ? storyPlayerDeckSnapshot : null,
+      },
+    );
+    const deckName = isStoryMode && storyPlayerDeckSnapshot
+      ? storyPlayerDeckSnapshot.name
+      : prebuiltDecks.find((deck) => deck.id === deckId)?.name ?? deckId;
     const opponentDeckName = prebuiltDecks.find((deck) => deck.id === opponentDeckId)?.name ?? opponentDeckId;
     const normalizedDifficulty = normalizeOpponentDifficulty(nextOpponentDifficulty);
     const difficultyLabel = getOpponentDifficultyProfile(normalizedDifficulty).label;
@@ -7438,6 +8497,7 @@ export default function Simulator({ storyMode = null } = {}) {
     setPendingOpponentDifficulty(normalizedDifficulty);
     setVictoryTarget(nextVictoryTarget);
     setPendingVictoryTarget(nextVictoryTarget);
+    setScriptedTutorialScenario(nextGame.scriptedTutorialScenario);
     setFoundationDeck(nextGame.foundationDeck);
     setPalsDeck(nextGame.palsDeck);
     setHand(nextGame.hand);
@@ -7460,6 +8520,8 @@ export default function Simulator({ storyMode = null } = {}) {
     setResilienceUsedCardIds([]);
     setRound(0);
     setGamePhase("setup");
+    setStartingPlayer(null);
+    setOpeningOpponentTurn(false);
     setTurn(1);
     setRp(3);
     setHasDrawnThisTurn(false);
@@ -7482,18 +8544,32 @@ export default function Simulator({ storyMode = null } = {}) {
     setAttackContext(null);
     setSearchContext(null);
     setGameResult(null);
-    tutorialVpRef.current = { player: 0, opponent: 0 };
+    tutorialVpRef.current = {
+      player: 0,
+      opponent: getEcosystemVictoryPoints(
+        nextGame.opponent.corals,
+        nextGame.opponent.habitats,
+        [
+          ...nextGame.opponent.reefCreatures,
+          ...(nextGame.opponent.orphanCreatures ?? []).flatMap((entry) => [
+            entry.cardId,
+            ...(entry.hostedCardIds ?? []),
+          ]),
+        ],
+      ),
+    };
     setInspectedCard(null);
-    setEventOverlay({
-      type: "round-transition",
-      title: "Setup Round",
-      message: "Build the foundation of your ecosystem. You have 3 RP and eight opening cards: play a valid base Coral or Creature School, then begin Round 1 when your foundation is ready.",
-      success: true,
+    setEventOverlay(tutorialUsesScriptedScenario ? null : {
+      type: "opening-coin-call",
+      title: "Call the Opening Coin Flip",
+      message: "Call heads or tails. The winner chooses who takes the first turn after setup.",
     });
     setPendingEvents([]);
     setFaceoffRolling(false);
     setFaceoffPreview(null);
-    setTurnLog(["Setup began with 3 RP and an eight-card hand."]);
+    setTurnLog(tutorialUsesScriptedScenario
+      ? [`${tutorialGuide.name} is walking you around the match board before the opening coin flip.`]
+      : ["The opening coin flip will decide who takes the first turn."]);
     setPlayError("");
     setEcosystemZoom(1);
     setEcosystemOffset({ x: 0, y: 0 });
@@ -7502,17 +8578,24 @@ export default function Simulator({ storyMode = null } = {}) {
     setOpponentViewportTouched(false);
     setFloatingCardOffsets({});
     setFloatingCardDrag(null);
-    const unavailablePlayerCards = getUnavailableDeckEntries(deckId);
+    const unavailablePlayerCards = getUnavailableDeckEntries(
+      deckId,
+      isStoryMode ? storyPlayerDeckSnapshot : null,
+    );
     const unavailableOpponentCards = getUnavailableDeckEntries(opponentDeckId);
     const unavailableWarnings = [
       unavailablePlayerCards.length ? `Deck data warning: ${unavailablePlayerCards.map((entry) => `${entry.unavailableName ?? entry.cardId} ×${entry.quantity}`).join(", ")} ${unavailablePlayerCards.length === 1 ? "is" : "are"} listed in your deck but have no card rules in the repository, so those copies are excluded.` : null,
       unavailableOpponentCards.length ? `Opponent deck data warning: ${unavailableOpponentCards.map((entry) => `${entry.unavailableName ?? entry.cardId} ×${entry.quantity}`).join(", ")} ${unavailableOpponentCards.length === 1 ? "is" : "are"} missing repository card rules and excluded.` : null,
     ].filter(Boolean);
-    setLog([...unavailableWarnings, `New ${difficultyLabel} game started: your ${deckName} versus the opponent's ${opponentDeckName}. Setup: play a base Coral or Creature School using your 3 RP.`]);
+    setLog([...unavailableWarnings, tutorialUsesScriptedScenario
+      ? `New guided Academy game started: your ${deckName} versus ${tutorialGuide.name}'s prepared practice reef. Tour the board before calling the opening coin flip.`
+      : `New ${difficultyLabel} game started: your ${deckName} versus the opponent's ${opponentDeckName}. Call the opening coin flip to decide who takes the first turn.`]);
   }
 
   function restartStoryGame(reason = eventOverlay?.initial ? "begin" : "retry") {
     storyResultRecordedRef.current = false;
+    setTutorialHelpDismissedId(null);
+    setTutorialBoardTourStep(tutorialContract && tutorialUsesScriptedScenario ? 0 : null);
     if (tutorialContract) {
       if (reason === "begin") {
         emitTutorialEvent(SIMULATOR_TUTORIAL_LIFECYCLE_TYPES.DUEL_STARTED, {
@@ -7603,6 +8686,10 @@ export default function Simulator({ storyMode = null } = {}) {
         @keyframes seapalsPlayableCard { 0%, 49% { background-color: rgba(52,211,153,.26); box-shadow: inset 0 0 24px rgba(110,231,183,.12), 0 0 18px rgba(52,211,153,.18); } 50%, 100% { background-color: rgba(34,211,238,.08); box-shadow: none; } }
         @keyframes seapalsSlotBeacon { 0%, 49% { background-color: rgba(110,231,183,.28); box-shadow: 0 0 0 10px rgba(52,211,153,.12), 0 0 42px rgba(52,211,153,.65); filter: brightness(1.25); } 50%, 100% { background-color: rgba(16,185,129,.07); box-shadow: 0 0 0 4px rgba(52,211,153,.05); filter: brightness(.92); } }
         @keyframes seapalsTutorialFocus { 0%, 100% { outline-color: rgba(251,191,36,.7); box-shadow: 0 0 0 4px rgba(251,191,36,.16), 0 0 24px rgba(251,191,36,.34); } 50% { outline-color: rgba(254,240,138,1); box-shadow: 0 0 0 7px rgba(251,191,36,.25), 0 0 42px rgba(251,191,36,.58); } }
+        @keyframes seapalsDialogueTurnIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes seapalsTypeCursorBlink { 0%, 45% { opacity: 1; } 46%, 100% { opacity: .12; } }
+        @keyframes seapalsTargetBeaconIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes seapalsTargetArrowBob { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(7px); } }
         .seapals-game-shell {
           background-image:
             radial-gradient(circle at 12% 8%, rgba(14,165,233,.18), transparent 30%),
@@ -7647,6 +8734,152 @@ export default function Simulator({ storyMode = null } = {}) {
           padding: .75rem 3.25rem .75rem .75rem;
           border-radius: 1.125rem;
           box-shadow: 0 12px 32px rgba(2, 8, 23, .28);
+        }
+        .seapals-professor-dialogue {
+          display: flex;
+          flex-direction: column;
+          gap: .5rem;
+          max-height: min(10rem, 24dvh);
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          padding-right: .25rem;
+          scrollbar-gutter: stable;
+        }
+        .seapals-professor-turn {
+          width: fit-content;
+          max-width: 92%;
+          padding: .55rem .7rem;
+          border: 1px solid rgba(14, 116, 144, .16);
+          border-radius: 1rem;
+          font-size: .75rem;
+          font-weight: 650;
+          line-height: 1.5;
+          opacity: 0;
+          animation: seapalsDialogueTurnIn 300ms ease-out forwards;
+        }
+        .seapals-professor-turn-left {
+          align-self: flex-start;
+          border-bottom-left-radius: .3rem;
+          color: #334155;
+          background: rgba(255, 255, 255, .86);
+        }
+        .seapals-professor-turn-header {
+          display: flex;
+          min-height: 2rem;
+          align-items: center;
+          justify-content: space-between;
+          gap: .75rem;
+          margin-bottom: .15rem;
+        }
+        .seapals-professor-speaker {
+          display: block;
+          color: #0e7490;
+          font-size: .55rem;
+          font-weight: 950;
+          letter-spacing: .1em;
+          text-transform: uppercase;
+        }
+        .seapals-professor-show-all {
+          flex: 0 0 auto;
+          min-height: 2rem;
+          padding: .3rem .6rem;
+          border: 1px solid rgba(14, 116, 144, .24);
+          border-radius: 999px;
+          color: #155e75;
+          background: rgba(207, 250, 254, .72);
+          font-size: .6rem;
+          font-weight: 950;
+          letter-spacing: .05em;
+          text-transform: uppercase;
+          cursor: pointer;
+        }
+        .seapals-professor-show-all:hover,
+        .seapals-professor-show-all:focus-visible {
+          border-color: #0891b2;
+          background: #cffafe;
+          outline: 2px solid rgba(8, 145, 178, .28);
+          outline-offset: 2px;
+        }
+        .seapals-professor-typewriter {
+          display: grid;
+          min-width: 0;
+          margin: 0;
+        }
+        .seapals-professor-message-measure,
+        .seapals-professor-message-visible {
+          grid-area: 1 / 1;
+          min-width: 0;
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+        }
+        .seapals-professor-message-measure { visibility: hidden; }
+        .seapals-professor-message-visible { align-self: start; }
+        .seapals-professor-type-cursor {
+          display: inline-block;
+          width: .12rem;
+          height: 1em;
+          margin-left: .08rem;
+          border-radius: 999px;
+          vertical-align: -.12em;
+          background: #0891b2;
+          animation: seapalsTypeCursorBlink .7s step-end infinite;
+        }
+        .seapals-professor-next {
+          opacity: 0;
+          animation: seapalsDialogueTurnIn 300ms ease-out forwards;
+        }
+        .seapals-target-beacon {
+          position: fixed;
+          z-index: 120;
+          display: flex;
+          width: min(19rem, calc(100vw - 1rem));
+          align-items: center;
+          gap: .6rem;
+          padding: .65rem 2.4rem .65rem .7rem;
+          border: 2px solid rgba(14, 116, 144, .58);
+          border-radius: 1rem;
+          color: #0f172a;
+          background: linear-gradient(135deg, #fffdf4 0%, #ecfeff 100%);
+          box-shadow: 0 16px 44px rgba(2, 8, 23, .48), 0 0 0 5px rgba(251, 191, 36, .16);
+          pointer-events: none;
+          animation: seapalsTargetBeaconIn 220ms ease-out;
+        }
+        .seapals-target-beacon-above { transform: translate(-50%, -100%); }
+        .seapals-target-beacon-below { transform: translate(-50%, 0); }
+        .seapals-target-beacon .seapals-professor-portrait {
+          width: 2.75rem;
+          height: 2.75rem;
+          border-radius: .75rem;
+        }
+        .seapals-target-beacon strong {
+          display: block;
+          color: #0e7490;
+          font-size: .62rem;
+          font-weight: 950;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+        }
+        .seapals-target-beacon span:not(.seapals-professor-portrait):not(.seapals-target-beacon-arrow) {
+          display: block;
+          margin-top: .12rem;
+          font-size: .75rem;
+          font-weight: 800;
+          line-height: 1.35;
+        }
+        .seapals-target-beacon-arrow {
+          position: absolute;
+          left: 50%;
+          color: #fbbf24;
+          font-size: 2.6rem;
+          font-weight: 950;
+          line-height: 1;
+          filter: drop-shadow(0 3px 2px rgba(2, 8, 23, .7));
+          animation: seapalsTargetArrowBob .8s ease-in-out infinite;
+        }
+        .seapals-target-beacon-above .seapals-target-beacon-arrow { top: calc(100% - .1rem); }
+        .seapals-target-beacon-below .seapals-target-beacon-arrow {
+          bottom: calc(100% - .1rem);
+          animation-direction: reverse;
         }
         .seapals-professor-portrait {
           position: relative;
@@ -7726,7 +8959,8 @@ export default function Simulator({ storyMode = null } = {}) {
         .seapals-game-shell img[data-card-art-fallback="true"],
         .seapals-game-shell img[src*="SeaPalsTCGLogoWhite.svg"] { padding: 12%; object-fit: contain !important; }
         @media (prefers-reduced-motion: reduce) {
-          .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target { animation: none !important; }
+          .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor { animation: none !important; opacity: 1 !important; }
+          .seapals-professor-type-cursor { display: none; }
           .seapals-setup-playable-card { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); }
           .seapals-slot-target { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); box-shadow: 0 0 30px rgba(52,211,153,.45); }
           .seapals-tutorial-target { outline-color: #fbbf24 !important; box-shadow: 0 0 0 5px rgba(251,191,36,.25) !important; }
@@ -7749,6 +8983,10 @@ export default function Simulator({ storyMode = null } = {}) {
             gap: .625rem;
             padding: .75rem 3.125rem .75rem .75rem;
             border-radius: 1.125rem;
+          }
+          .seapals-professor-card-inline {
+            max-height: none;
+            overflow: visible;
           }
           .seapals-professor-portrait {
             width: 3.5rem;
@@ -7783,8 +9021,8 @@ export default function Simulator({ storyMode = null } = {}) {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 shadow-lg xl:hidden" aria-label="Victory points in play">
-                <div className={`border-r border-white/10 px-4 py-1.5 text-center${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score">
+              <div className={`flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 shadow-lg xl:hidden${tutorialTargetClass("vp-score")}`} aria-label="Victory points in play" data-tutorial-target="vp-score">
+                <div className="border-r border-white/10 px-4 py-1.5 text-center">
                   <div className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300">Your Reef</div>
                   <div className="text-xl font-black tabular-nums text-white">{playerVp}<span className="text-xs text-emerald-300">/{victoryTarget} VP</span></div>
                   <div className="text-[9px] font-semibold text-cyan-300/70">{playerSchoolDensity} school density</div>
@@ -7796,7 +9034,8 @@ export default function Simulator({ storyMode = null } = {}) {
                 </div>
               </div>
               <div className="rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-violet-100 shadow-sm">
-                {isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}
+                <span className={`xl:hidden${tutorialTargetClass("condition-panel")}`} data-tutorial-target="condition-panel">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
+                <span className="hidden xl:inline">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
               </div>
               <details className="relative">
                 <summary className="cursor-pointer list-none rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden">Menu</summary>
@@ -7822,7 +9061,7 @@ export default function Simulator({ storyMode = null } = {}) {
                 <button type="button" onClick={() => setModal("lost")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Lost</button>
                 <button type="button" onClick={openNewGameSetup} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 xl:block">{isStoryMode ? "Restart Duel" : "New Game"}</button>
                 <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
-                  {opponentThinking ? "Thinking…" : isSetup ? "Round 1" : "End Turn"}
+                  {opponentThinking ? "Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Opponent First" : "Round 1" : "End Turn"}
                 </button>
               </div>
             </div>
@@ -7872,10 +9111,26 @@ export default function Simulator({ storyMode = null } = {}) {
 
           {tutorialContract ? (
             <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-              {tutorialCurrentCheckpoint
-                ? `${tutorialGuide.name}. Step ${Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} of ${tutorialContract.checkpoints.length}: ${tutorialCurrentCheckpoint.title}. ${tutorialCurrentCheckpoint.instruction}`
-                : `${tutorialGuide.name}. All ${tutorialContract.checkpoints.length} tutorial actions are complete. Finish the friendly duel.`}
+              {tutorialAnnouncement}
             </p>
+          ) : null}
+
+          {tutorialBoardTourOpen ? <div className="fixed inset-0 z-[64]" aria-hidden="true" /> : null}
+
+          {tutorialBoardTourOpen ? (
+            <div className={`seapals-professor-coach-wrap${tutorialBoardTourHelp.target === "opponent-board" ? " seapals-professor-coach-wrap-low" : ""}`}>
+              <ProfessorGuideCard
+                guide={tutorialGuide}
+                help={tutorialBoardTourHelp}
+                step={tutorialBoardTourHelp.index + 1}
+                total={tutorialBoardTourHelp.totalSteps}
+                dismissLabel="Skip tour"
+                onDismiss={finishTutorialBoardTour}
+                onBack={tutorialBoardTourHelp.index > 0 ? () => setTutorialBoardTourStep((current) => Math.max(0, Number(current) - 1)) : null}
+                onAdvance={advanceTutorialBoardTour}
+                advanceLabel={tutorialBoardTourHelp.advanceLabel}
+              />
+            </div>
           ) : null}
 
           {tutorialHelpFloating ? (
@@ -7889,6 +9144,12 @@ export default function Simulator({ storyMode = null } = {}) {
               />
             </div>
           ) : null}
+
+          <ProfessorTargetBeacon
+            guide={tutorialGuide}
+            help={tutorialTargetBeaconHelp}
+            active={tutorialTargetBeaconOpen}
+          />
 
           {tutorialHelp && !tutorialHelpOpen && !eventOverlay && !modal && !roundFlash && !gameResult ? (
             <button
@@ -7971,7 +9232,7 @@ export default function Simulator({ storyMode = null } = {}) {
                           })}
                         </div>
                       ) : null}
-                      {(opponent.reefCreatures ?? []).length ? <div className="absolute left-1/2 top-4 z-30 flex max-w-[34%] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50/95 p-2 shadow-lg">{opponent.reefCreatures.map((cardId, index) => { const card = cardsById[cardId]; const targetSlotId = getOpponentReefSlotId(index); const isTarget = attackContext?.targets.some((target) => target.coralId === "__reef__" && target.slotId === targetSlotId); const key = `opponent-${targetSlotId}`; const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 }; return <button key={opponent.reefCreatureInstances?.[index]?.instanceId ?? `${cardId}-${index}`} type="button" onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => isTarget ? resolvePlayerAttack("__reef__", targetSlotId) : inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card relative w-[120px] cursor-grab rounded-lg text-center active:cursor-grabbing ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}><InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} /><img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-lg bg-white object-contain" /><span className="block truncate text-[9px] font-bold text-violet-950">{card?.name}</span></button>; })}</div> : null}
+                      {(opponent.reefCreatures ?? []).length ? <div className="absolute left-1/2 top-4 z-30 flex max-w-[34%] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50/95 p-2 shadow-lg">{opponent.reefCreatures.map((cardId, index) => { const card = cardsById[cardId]; const targetSlotId = getOpponentReefSlotId(index); const isTarget = attackContext?.targets.some((target) => target.coralId === "__reef__" && target.slotId === targetSlotId); const key = `opponent-${targetSlotId}`; const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 }; return <button key={opponent.reefCreatureInstances?.[index]?.instanceId ?? `${cardId}-${index}`} type="button" data-tutorial-target={isTarget ? "opponent-board" : undefined} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => isTarget ? resolvePlayerAttack("__reef__", targetSlotId) : inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card relative w-[120px] cursor-grab rounded-lg text-center active:cursor-grabbing ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}><InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} /><img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-lg bg-white object-contain" /><span className="block truncate text-[9px] font-bold text-violet-950">{card?.name}</span></button>; })}</div> : null}
                       {(opponent.orphanCreatures ?? []).length ? (
                         <div className="absolute right-4 top-4 z-30 flex max-w-[34%] flex-wrap justify-end gap-2 rounded-xl border-2 border-dashed border-orange-400 bg-orange-50/95 p-2 shadow-lg">
                           <div className="absolute -top-3 right-2 rounded-full bg-orange-600 px-2 py-1 text-[8px] font-black uppercase text-white">Orphaned</div>
@@ -7981,7 +9242,7 @@ export default function Simulator({ storyMode = null } = {}) {
                             const isTarget = attackContext?.targets.some((target) => target.coralId === "__orphan__" && target.slotId === targetSlotId);
                             return (
                               <div key={entry.instanceId ?? `${entry.cardId}-${index}`} className="rounded-lg bg-orange-100/90 p-1 text-center">
-                                <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => isTarget ? resolvePlayerAttack("__orphan__", targetSlotId) : setInspectedCard({ owner: "opponent", cardId: entry.cardId, coralId: null, slotId: `opponent-${targetSlotId}`, orphanIndex: index })} className={`seapals-in-play-card relative w-14 rounded-lg text-center ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}>
+                                <button type="button" data-tutorial-target={isTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isTarget ? resolvePlayerAttack("__orphan__", targetSlotId) : setInspectedCard({ owner: "opponent", cardId: entry.cardId, coralId: null, slotId: `opponent-${targetSlotId}`, orphanIndex: index })} className={`seapals-in-play-card relative w-14 rounded-lg text-center ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}>
                                   <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
                                   <img src={card?.image} alt={card?.name} className="h-20 w-14 rounded-lg object-contain" />
                                   <span className="block truncate text-[8px] font-bold text-orange-950">{card?.name}</span>
@@ -7994,7 +9255,7 @@ export default function Simulator({ storyMode = null } = {}) {
                                       const hostedSlotId = getOrphanHostedTargetSlotId(entry.instanceId ?? `legacy-${index}`, hostedIndex);
                                       const hostedIsTarget = attackContext?.targets.some((target) => target.coralId === "__orphan__" && target.slotId === hostedSlotId);
                                       return (
-                                        <button key={`${hostedCardId}-${hostedIndex}`} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack("__orphan__", hostedSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: null, slotId: `opponent-${hostedSlotId}`, orphanIndex: index, hostedIndex })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded ring-4 ring-emerald-400" : "rounded"}`} title={`Hosted by ${card?.name}`}>
+                                        <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack("__orphan__", hostedSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: null, slotId: `opponent-${hostedSlotId}`, orphanIndex: index, hostedIndex })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded ring-4 ring-emerald-400" : "rounded"}`} title={`Hosted by ${card?.name}`}>
                                           <InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} />
                                           <img src={hostedCard?.image} alt={hostedCard?.name} className="h-12 w-9 rounded bg-white object-contain" />
                                         </button>
@@ -8014,7 +9275,7 @@ export default function Simulator({ storyMode = null } = {}) {
                         const gridOffset = getOpponentCoralGridOffset(coralIndex, opponentCorals.length);
                         return (
                           <div key={coral.id} className="absolute h-[210px] w-[180px] -translate-x-1/2 -translate-y-1/2" style={{ left: `calc(50% + ${gridOffset.x}px)`, top: `calc(50% + ${gridOffset.y + (opponent.habitats.length || opponent.reefCreatures.length || (opponent.orphanCreatures?.length ?? 0) ? 360 : 0)}px)` }}>
-                            <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
+                            <button type="button" data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
                               <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
                               <img src={card?.image} alt={card?.name} className="h-[160px] w-full rounded-xl object-contain" />
                               <div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full bg-rose-500" style={{ width: `${coral.maxHealth ? (coral.health / coral.maxHealth) * 100 : 0}%` }} /></div>
@@ -8032,6 +9293,7 @@ export default function Simulator({ storyMode = null } = {}) {
                                   <button
                                     type="button"
                                     disabled={!slotCard}
+                                    data-tutorial-target={isTarget ? "opponent-board" : undefined}
                                     onPointerDown={(event) => event.stopPropagation()}
                                     onClick={() => {
                                       if (isTarget) resolvePlayerAttack(coral.id, slot.id);
@@ -8046,7 +9308,7 @@ export default function Simulator({ storyMode = null } = {}) {
                                   >
                                     {slotCard ? <><InPlayHoverLabel card={slotCard} zoom={opponentEcosystemZoom} /><img src={slotCard.image} alt={slotCard.name} className="h-full w-full rounded-[1.15rem] object-contain" /></> : <><EmptySlotHoverLabel slot={slot} zoom={opponentEcosystemZoom} position={position} /><img src={getSlotIconPath(slot)} alt={`${getCreatureSlotLabel(slot)} empty slot`} className="h-28 w-28 max-w-none object-contain opacity-90" /></>}
                                   </button>
-                                  {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute z-30 flex gap-1 rounded-lg border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg" style={{ left: `calc(${position.left} + 48px)`, top: `calc(${position.top} - 68px)` }}>{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); const hostedIsTarget = attackContext?.targets.some((target) => target.coralId === coral.id && target.slotId === hostedTargetSlotId); return <button key={`${hostedCardId}-${hostedIndex}`} type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack(coral.id, hostedTargetSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: coral.id, slotId: hostedTargetSlotId, hostedBySlotId: slot.id })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded-md ring-4 ring-emerald-400" : "rounded-md"}`} title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-16 w-11 rounded-md bg-white object-contain" /></button>; })}</div> : null}
+                                  {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute z-30 flex gap-1 rounded-lg border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg" style={{ left: `calc(${position.left} + 48px)`, top: `calc(${position.top} - 68px)` }}>{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); const hostedIsTarget = attackContext?.targets.some((target) => target.coralId === coral.id && target.slotId === hostedTargetSlotId); return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack(coral.id, hostedTargetSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: coral.id, slotId: hostedTargetSlotId, hostedBySlotId: slot.id })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded-md ring-4 ring-emerald-400" : "rounded-md"}`} title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-16 w-11 rounded-md bg-white object-contain" /></button>; })}</div> : null}
                                 </div>
                               );
                             })}
@@ -8158,6 +9420,7 @@ export default function Simulator({ storyMode = null } = {}) {
                             <div className="relative h-full w-full">
                                <div
                                  data-upgrade-target={canUpgradeThisCoral ? "true" : undefined}
+                                 data-tutorial-target={canUpgradeThisCoral ? "placement" : undefined}
                                  role="button"
                                  tabIndex={0}
                                  aria-label={`Inspect ${coral.name}`}
@@ -8165,7 +9428,7 @@ export default function Simulator({ storyMode = null } = {}) {
                                    draggingCoralId === coral.id ? "ring-2 ring-emerald-300" : ""
                                  } ${
                                    canUpgradeThisCoral ? "cursor-pointer" : ""
-                                 }`}
+                                 }${canUpgradeThisCoral ? tutorialTargetClass("placement") : ""}`}
                                  onPointerDown={(event) => handleCoralPointerDown(coral.id, event)}
                                  onClick={(event) => handleCoralClick(coral.id, event)}
                                  onKeyDown={(event) => {
@@ -8198,7 +9461,17 @@ export default function Simulator({ storyMode = null } = {}) {
                                 const slotFilled = Boolean(slot.cardId);
                                 const slotCard = slotFilled ? cardsById[slot.cardId] : null;
                                 const validHostTarget = Boolean(slotFilled && playingCardId && canHostCardInSlot(slot, playingCardId));
-                                const validTarget = Boolean(playingCardId && (canUseSlotWithCard(slot, playingCardId) || validHostTarget));
+                                const academyPlacementAllowed = !playingCardId || isAcademyPlacementAllowed({
+                                  route: scriptedFinishRoute,
+                                  cardId: playingCardId,
+                                  foundationCardId: coral.cardId,
+                                  slotClass: slot.slotClass ?? slot.slotType ?? slot.class,
+                                });
+                                const validTarget = Boolean(
+                                  playingCardId
+                                  && academyPlacementAllowed
+                                  && (canUseSlotWithCard(slot, playingCardId) || validHostTarget)
+                                );
                                 const emptyPlacementMode = Boolean(!slotFilled && playingCardId && !isUpgradingCoral);
                                 return (
                                   <div key={slot.id} className="absolute top-0 left-0 h-full w-full">
@@ -8209,6 +9482,7 @@ export default function Simulator({ storyMode = null } = {}) {
                                      <div
                                        data-slot-drag-handle
                                        data-slot-id={slot.id}
+                                       data-tutorial-target={validTarget ? "placement" : undefined}
                                       onPointerDown={(event) => {
                                         if (validHostTarget || validTarget) {
                                           event.stopPropagation();
@@ -8328,26 +9602,26 @@ export default function Simulator({ storyMode = null } = {}) {
             </div>
           ) : null}
           <div className="mt-2 grid h-14 shrink-0 grid-cols-[64px_64px_minmax(0,1fr)_92px] gap-1.5 xl:hidden" aria-label="Mobile game command dock">
-            <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className="rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
-            <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className="rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200">Guide<br /><span className="text-violet-300">Feed</span></button>
-            <button type="button" onClick={() => setModal("hand")} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className="block text-[10px] font-semibold text-emerald-300">{rp} RP ready</span></button>
-            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Thinking…" : isSetup ? "Round 1" : "End Turn"}</button>
+            <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("zones")}`} data-tutorial-target="zones">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
+            <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">Guide<br /><span className="text-violet-300">Feed</span></button>
+            <button type="button" onClick={() => setModal("hand")} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{rp} RP ready</span></button>
+            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Opponent First" : "Round 1" : "End Turn"}</button>
           </div>
         </div>
 
         <div className="seapals-hud-panel hidden min-h-0 overflow-y-auto rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-1 xl:flex xl:flex-col">
-          <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950/45">
-            <div className={`border-r border-white/10 p-3 text-center${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{playerVp}<span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensity} school density</div></div>
+          <div className={`grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950/45${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score">
+            <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{playerVp}<span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensity} school density</div></div>
             <div className="p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{opponentVp}<span className="text-sm text-rose-300">/{victoryTarget} VP</span></div><div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div></div>
           </div>
 
-          <button type="button" disabled={!activeCondition} onClick={() => activeCondition && setEventOverlay({ type: "condition-detail", sourceCardId: activeCondition.id, title: activeCondition.name, message: activeCondition.text, success: true })} className="mt-2 w-full rounded-xl border border-violet-300/20 bg-violet-400/10 p-3 text-left transition hover:border-violet-300/40 disabled:cursor-default">
+          <button type="button" disabled={!activeCondition} onClick={() => activeCondition && setEventOverlay({ type: "condition-detail", sourceCardId: activeCondition.id, title: activeCondition.name, message: activeCondition.text, success: true })} className={`mt-2 w-full rounded-xl border border-violet-300/20 bg-violet-400/10 p-3 text-left transition hover:border-violet-300/40 disabled:cursor-default${tutorialTargetClass("condition-panel")}`} data-tutorial-target="condition-panel">
             <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-violet-300">Active condition</span><strong className="mt-0.5 block text-base text-violet-50">{activeCondition?.name ?? "Reveals when Round 1 begins"}</strong>{activeCondition?.text ? <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-violet-100/70">{activeCondition.text}</span> : null}
           </button>
           {persistentConditions.length ? <div className="mt-2 flex flex-wrap gap-1">{persistentConditions.map((condition) => <button key={condition.id} type="button" onClick={() => setEventOverlay({ type: "condition-detail", sourceCardId: condition.id, title: condition.name, message: `${condition.text} Your reduction is ${conditionDensityUses[condition.id] ? "used" : "available"}; the opponent's reduction is ${opponent.conditionDensityUses?.[condition.id] ? "used" : "available"}.`, success: true })} className="rounded-full border border-violet-300/20 bg-violet-400/10 px-2 py-1 text-[9px] font-bold text-violet-200">{condition.name} · {conditionDensityUses[condition.id] ? "Used" : "Ready"}</button>)}</div> : null}
 
           <div className={`mt-2 flex items-center justify-between rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-3 py-2${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300/40 bg-slate-950/40 text-xl font-black text-emerald-200">{rp}</div><div><div className="text-[10px] font-black uppercase tracking-wider text-emerald-300">RP Bank</div><div className="text-sm font-bold text-white">{rp}/{playerRpCap} available</div></div></div><div className="text-right text-xs leading-tight text-emerald-100/60">Next collection<br />+1{startTurnRp > 0 ? ` + ${startTurnRp}` : ""} RP</div></div>
-          <div className="mt-2 grid grid-cols-2 gap-2"><button type="button" onClick={() => setModal("discard")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-cyan-300/35 hover:bg-cyan-300/10"><span><span className="mr-2 text-cyan-300">↺</span>Discard</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-cyan-200">{discardPile.length}</strong></button><button type="button" onClick={() => setModal("lost")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-violet-300/35 hover:bg-violet-300/10"><span><span className="mr-2 text-violet-300">◇</span>Lost</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-violet-200">{lostZone.length}</strong></button></div>
+          <div className={`mt-2 grid grid-cols-2 gap-2${tutorialTargetClass("zones")}`} data-tutorial-target="zones"><button type="button" onClick={() => setModal("discard")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-cyan-300/35 hover:bg-cyan-300/10"><span><span className="mr-2 text-cyan-300">↺</span>Discard</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-cyan-200">{discardPile.length}</strong></button><button type="button" onClick={() => setModal("lost")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-violet-300/35 hover:bg-violet-300/10"><span><span className="mr-2 text-violet-300">◇</span>Lost</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-violet-200">{lostZone.length}</strong></button></div>
           {poisonImmunityNextPredatorAttack || rovLightsActive || nextOnPlayAttackBonus || (round > 0 && round <= supportBlockedUntilRound) ? <div className="mt-2 flex flex-wrap gap-1">{poisonImmunityNextPredatorAttack ? <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[9px] font-bold text-emerald-200">Poison immune</span> : null}{rovLightsActive ? <span className="rounded-full bg-cyan-400/15 px-2 py-1 text-[9px] font-bold text-cyan-200">ROV lights</span> : null}{nextOnPlayAttackBonus ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-[9px] font-bold text-amber-200">+{nextOnPlayAttackBonus.amount} next attack</span> : null}{round > 0 && round <= supportBlockedUntilRound ? <span className="rounded-full bg-rose-400/15 px-2 py-1 text-[9px] font-bold text-rose-200">Support locked</span> : null}</div> : null}
 
           <section className={`mt-3 flex min-h-48 flex-1 flex-col overflow-hidden rounded-xl border border-cyan-300/20 bg-slate-950/35 p-2${tutorialTargetClass("hand")}`} aria-label="Your hand card list" data-tutorial-target="hand">
@@ -8367,24 +9641,26 @@ export default function Simulator({ storyMode = null } = {}) {
         {handPopoverCard ? (
           <>
             <button type="button" aria-label="Close hand card details" onClick={() => setHandPopoverCardId(null)} className="fixed inset-0 z-40 hidden bg-slate-950/25 xl:block" />
-            <aside className="seapals-hud-panel fixed right-[21.5rem] top-1/2 z-50 hidden w-[24rem] max-w-[calc(100vw-23rem)] -translate-y-1/2 rounded-2xl border border-cyan-300/30 p-4 shadow-[0_28px_90px_rgba(0,0,0,.65)] xl:block" aria-label={`${handPopoverCard.name} details`}>
-              <div className="mb-3 flex items-start justify-between gap-3"><div><div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300">Card details</div><h3 className="text-lg font-black text-white">{handPopoverCard.name}</h3></div><button type="button" onClick={() => setHandPopoverCardId(null)} className={`rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal">Close</button></div>
-              {tutorialHelpInline && tutorialHelp.target === "close-modal" ? (
-                <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
-              ) : null}
-              <div className="seapals-card-art-well rounded-xl border border-cyan-200/15 p-3 shadow-inner"><img src={handPopoverCard.image} alt={handPopoverCard.name} className="h-[46dvh] max-h-[420px] min-h-[250px] w-full object-contain" /></div>
-              <div className="mt-3 flex flex-wrap gap-1.5 text-xs font-bold"><span className="rounded-full bg-cyan-400/15 px-2 py-1 text-cyan-200">{getCardClassLabel(handPopoverCard)}</span><span className="rounded-full bg-emerald-400/15 px-2 py-1 text-emerald-200">{getPlayerCardPlayCost(handPopoverCard)} RP</span>{Number(handPopoverCard.victoryPoints ?? 0) > 0 ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-amber-200">{handPopoverCard.victoryPoints} VP</span> : null}</div>
-              {handPopoverCard.text ? <p className="mt-3 max-h-20 overflow-y-auto rounded-xl bg-slate-950/45 p-3 text-[11px] leading-relaxed text-slate-300">{handPopoverCard.text}</p> : null}
-              {handPopoverPlayError ? <div className="mt-3 rounded-xl border border-rose-300/20 bg-rose-400/10 px-3 py-2 text-xs leading-relaxed text-rose-200">{handPopoverPlayError}</div> : null}
-              {tutorialHelpInline && ["play-card", "turn-button"].includes(tutorialHelp.target) ? (
-                <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
-              ) : null}
-              <button type="button" disabled={Boolean(handPopoverPlayError)} onClick={() => { const cardId = handPopoverCardId; setHandPopoverCardId(null); playCardFromHand(cardId); }} className={`mt-3 w-full rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-950 shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:text-slate-300${tutorialTargetClass("play-card")}`} data-tutorial-target="play-card">Play card</button>
+            <aside className="seapals-hud-panel fixed right-[21.5rem] top-1/2 z-50 hidden max-h-[calc(100dvh-1rem)] w-[24rem] max-w-[calc(100vw-23rem)] -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-cyan-300/30 p-4 shadow-[0_28px_90px_rgba(0,0,0,.65)] xl:flex" aria-label={`${handPopoverCard.name} details`}>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+                <div className="mb-3 flex items-start justify-between gap-3"><div><div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300">Card details</div><h3 className="text-lg font-black text-white">{handPopoverCard.name}</h3></div><button type="button" onClick={() => setHandPopoverCardId(null)} className={`rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal">Close</button></div>
+                {tutorialHelpInline && tutorialHelp.target === "close-modal" ? (
+                  <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
+                ) : null}
+                <div className="seapals-card-art-well rounded-xl border border-cyan-200/15 p-3 shadow-inner"><img src={handPopoverCard.image} alt={handPopoverCard.name} className="h-[46dvh] max-h-[420px] min-h-[250px] w-full object-contain" /></div>
+                <div className="mt-3 flex flex-wrap gap-1.5 text-xs font-bold"><span className="rounded-full bg-cyan-400/15 px-2 py-1 text-cyan-200">{getCardClassLabel(handPopoverCard)}</span><span className="rounded-full bg-emerald-400/15 px-2 py-1 text-emerald-200">{getPlayerCardPlayCost(handPopoverCard)} RP</span>{Number(handPopoverCard.victoryPoints ?? 0) > 0 ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-amber-200">{handPopoverCard.victoryPoints} VP</span> : null}</div>
+                {handPopoverCard.text ? <p className="mt-3 max-h-20 overflow-y-auto rounded-xl bg-slate-950/45 p-3 text-[11px] leading-relaxed text-slate-300">{handPopoverCard.text}</p> : null}
+                {handPopoverPlayError ? <div className="mt-3 rounded-xl border border-rose-300/20 bg-rose-400/10 px-3 py-2 text-xs leading-relaxed text-rose-200">{handPopoverPlayError}</div> : null}
+                {tutorialHelpInline && ["play-card", "turn-button"].includes(tutorialHelp.target) ? (
+                  <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
+                ) : null}
+              </div>
+              <button type="button" disabled={Boolean(handPopoverPlayError)} onClick={() => { const cardId = handPopoverCardId; setHandPopoverCardId(null); playCardFromHand(cardId); }} className={`mt-3 w-full shrink-0 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-950 shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:text-slate-300${tutorialTargetClass("play-card")}`} data-tutorial-target="play-card">Play card</button>
             </aside>
           </>
         ) : null}
 
-        <div className="seapals-hud-panel hidden rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-2 xl:flex xl:min-h-0 xl:flex-col">
+        <div className={`seapals-hud-panel hidden rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-2 xl:flex xl:min-h-0 xl:flex-col${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-black text-white">Recent events</h2>
@@ -8402,7 +9678,7 @@ export default function Simulator({ storyMode = null } = {}) {
         </div>
 
         <div className="hidden xl:col-start-2 xl:row-start-3 xl:block">
-          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Opponent Thinking…" : isSetup ? "Begin Round 1" : "End Turn"}</button>
+          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Opponent Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Begin Opponent Turn" : "Begin Round 1" : "End Turn"}</button>
         </div>
       </section>
 
@@ -8504,8 +9780,15 @@ export default function Simulator({ storyMode = null } = {}) {
                     <div key={action.id ?? index} className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-slate-300">
                       <strong>{actionName}: </strong>{actionText}
                       {inspectedCard.owner === "player" && utilityEffect ? (
-                        <button type="button" disabled={gamePhase !== "main" || rp < cost || alreadyUsed} onClick={() => beginCreatureUtilityAction(action)} className="mt-3 w-full rounded-full bg-cyan-600 px-4 py-2 font-bold text-white disabled:bg-slate-400">
-                          {alreadyUsed ? "Used This Turn" : `Use Action (${cost} RP)`}
+                        <button
+                          type="button"
+                          disabled={gamePhase !== "main" || rp < cost || alreadyUsed}
+                          onClick={() => beginCreatureUtilityAction(action)}
+                          className={`mt-3 w-full rounded-full bg-cyan-600 px-4 py-2 font-bold text-white disabled:bg-slate-400${tutorialActionTargetClass(actionKey)}`}
+                          data-tutorial-target="utility-action-button"
+                          data-tutorial-action-key={actionKey}
+                        >
+                          {alreadyUsed ? `${actionName} Used This Turn` : `Use ${actionName} (${cost} RP)`}
                         </button>
                       ) : null}
                       {inspectedCard.owner === "player" && !utilityEffect && !parseLegacyAttackAction(action) && !getActionEffects(action).some((effect) => effect.type === EffectType.ATTACK) ? <div className="mt-2 rounded-xl bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-200">This action is not implemented yet.</div> : null}
@@ -8514,7 +9797,7 @@ export default function Simulator({ storyMode = null } = {}) {
                 })}</div>
               </section>
             ) : null}
-            {tutorialHelpInline && tutorialHelp.target === "attack-button" ? (
+            {tutorialHelpInline && ["attack-button", "utility-action-button"].includes(tutorialHelp.target) ? (
               <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
             ) : null}
             {inspectedCard.owner === "player" && getBasicAttackEffect(inspectedCardData) ? (
@@ -8557,23 +9840,79 @@ export default function Simulator({ storyMode = null } = {}) {
                 <div className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">Game Event</div>
                 <h2 className="mt-2 text-3xl font-black md:text-4xl">{eventOverlay.title}</h2>
                 {!["condition-reveal", "opponent-status"].includes(eventOverlay.type) && eventOverlay.message ? <p className="mt-4 text-lg text-slate-200">{eventOverlay.message}</p> : null}
-                {eventOverlay.type === "condition-reveal" ? (
+                {eventOverlay.type === "opening-coin-call" ? (
+                  <div className="mt-7">
+                    <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full border-4 border-amber-200 bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 text-5xl font-black text-amber-950 shadow-[0_0_45px_rgba(251,191,36,0.35)]" aria-hidden="true">?</div>
+                    <p className="mt-5 text-sm text-slate-300">Choose your call before the coin is flipped.</p>
+                    <div className="mt-5 flex flex-wrap justify-center gap-3">
+                      <button type="button" onClick={() => flipForOpeningTurn("heads")} className="rounded-full bg-cyan-400 px-8 py-3 font-black text-slate-950 shadow-lg transition hover:brightness-110">Call Heads</button>
+                      <button type="button" onClick={() => flipForOpeningTurn("tails")} className="rounded-full bg-emerald-400 px-8 py-3 font-black text-slate-950 shadow-lg transition hover:brightness-110">Call Tails</button>
+                    </div>
+                  </div>
+                ) : eventOverlay.type === "opening-coin-result" ? (
+                  <div className="mt-7">
+                    <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full border-4 border-amber-100 bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 text-5xl font-black uppercase text-amber-950 shadow-[0_0_45px_rgba(251,191,36,0.35)]" aria-label={`Coin landed ${eventOverlay.coinLanded}`}>
+                      {eventOverlay.coinLanded === "tails" ? "T" : "H"}
+                    </div>
+                    {eventOverlay.coinWinner === OpeningPlayer.PLAYER ? (
+                      <div className="mt-6">
+                        <p className="text-sm text-slate-300">{tutorialUsesScriptedScenario ? `${tutorialGuide.name} has prepared the lesson with you taking the first turn.` : "You won, so choose who takes the first turn."}</p>
+                        <div className="mt-5 flex flex-wrap justify-center gap-3">
+                          <button type="button" onClick={() => chooseOpeningTurn(OpeningPlayer.PLAYER)} className="rounded-full bg-emerald-400 px-8 py-3 font-black text-slate-950 shadow-lg transition hover:brightness-110">Go First</button>
+                          {!tutorialUsesScriptedScenario ? <button type="button" onClick={() => chooseOpeningTurn(OpeningPlayer.OPPONENT)} className="rounded-full border border-cyan-300 px-8 py-3 font-black text-cyan-100 transition hover:bg-cyan-300/10">Let Opponent Go First</button> : null}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-6">
+                        <p className="text-sm text-slate-300">The opponent chooses to take the first turn.</p>
+                        <button type="button" onClick={() => chooseOpeningTurn(OpeningPlayer.OPPONENT)} className="mt-5 rounded-full bg-rose-400 px-8 py-3 font-black text-slate-950 shadow-lg transition hover:brightness-110">Continue to Setup</button>
+                      </div>
+                    )}
+                  </div>
+                ) : eventOverlay.type === "condition-reveal" ? (
                   <div className="mt-6 text-left">
                     <section className="rounded-2xl border border-violet-300/30 bg-violet-400/10 p-4">
                       <div className="text-[10px] font-black uppercase tracking-[0.22em] text-violet-300">Round condition</div>
                       <h3 className="mt-1 text-xl font-black text-white">{eventOverlay.conditionName}</h3>
                       <p className="mt-2 text-sm leading-relaxed text-violet-100/85">{eventOverlay.conditionText}</p>
                     </section>
-                    <section className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 p-4">
-                      <div className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">Start of your turn</div>
-                      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        <div className="rounded-xl bg-slate-950/45 px-3 py-3 text-center"><strong className="block text-3xl font-black tabular-nums text-emerald-200">+{eventOverlay.turnCollection?.collected ?? 0}</strong><span className="text-[10px] font-black uppercase tracking-wider text-emerald-100/60">RP</span></div>
-                        <div className="rounded-xl bg-slate-950/45 px-3 py-3 text-center"><strong className="block text-3xl font-black tabular-nums text-cyan-100">{eventOverlay.turnCollection?.bank ?? 0}/{eventOverlay.turnCollection?.cap ?? playerRpCap}</strong><span className="text-[10px] font-black uppercase tracking-wider text-cyan-100/60">Bank</span></div>
-                        <div className={`col-span-2 rounded-xl px-3 py-3 text-center sm:col-span-1 ${eventOverlay.turnCollection?.capped ? "bg-amber-400/15" : "bg-slate-950/45"}`}><strong className={`block text-3xl font-black tabular-nums ${eventOverlay.turnCollection?.capped ? "text-amber-200" : "text-slate-300"}`}>{eventOverlay.turnCollection?.capped ?? 0}</strong><span className="text-[10px] font-black uppercase tracking-wider text-slate-300/60">Capped</span></div>
-                      </div>
-                    </section>
+                    {eventOverlay.openingOpponentTurn ? (
+                      <section className="mt-4 rounded-2xl border border-rose-300/25 bg-rose-400/10 p-4">
+                        <div className="text-[10px] font-black uppercase tracking-[0.22em] text-rose-300">Opening player</div>
+                        <strong className="mt-1 block text-base text-white">The opponent takes the first turn.</strong>
+                        <p className="mt-1 text-sm leading-relaxed text-rose-100/75">You will collect your RP and choose your draw when its opening turn is complete.</p>
+                      </section>
+                    ) : (
+                      <section className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 p-4">
+                        <div className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">Start of your turn</div>
+                        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                          <div className="rounded-xl bg-slate-950/45 px-3 py-3 text-center"><strong className="block text-3xl font-black tabular-nums text-emerald-200">+{eventOverlay.turnCollection?.collected ?? 0}</strong><span className="text-[10px] font-black uppercase tracking-wider text-emerald-100/60">RP</span></div>
+                          <div className="rounded-xl bg-slate-950/45 px-3 py-3 text-center"><strong className="block text-3xl font-black tabular-nums text-cyan-100">{eventOverlay.turnCollection?.bank ?? 0}/{eventOverlay.turnCollection?.cap ?? playerRpCap}</strong><span className="text-[10px] font-black uppercase tracking-wider text-cyan-100/60">Bank</span></div>
+                          <div className={`col-span-2 rounded-xl px-3 py-3 text-center sm:col-span-1 ${eventOverlay.turnCollection?.capped ? "bg-amber-400/15" : "bg-slate-950/45"}`}><strong className={`block text-3xl font-black tabular-nums ${eventOverlay.turnCollection?.capped ? "text-amber-200" : "text-slate-300"}`}>{eventOverlay.turnCollection?.capped ?? 0}</strong><span className="text-[10px] font-black uppercase tracking-wider text-slate-300/60">Capped</span></div>
+                        </div>
+                      </section>
+                    )}
                     {eventOverlay.roundNotes?.length ? <ul className="mt-4 space-y-1 text-xs leading-relaxed text-slate-400">{eventOverlay.roundNotes.map((note) => <li key={note}>• {note}</li>)}</ul> : null}
-                    <button type="button" onClick={closeEventOverlay} className="mt-5 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 px-7 py-3 font-black text-slate-950 shadow-lg">Continue</button>
+                    {tutorialConditionHelpOpen ? (
+                      <div className="mt-4">
+                        <ProfessorGuideCard
+                          guide={tutorialGuide}
+                          help={tutorialConditionHelp}
+                          step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                          total={tutorialContract.checkpoints.length}
+                          inline
+                          onDismiss={() => setTutorialHelpDismissedId(tutorialConditionHelpKey)}
+                        />
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={closeEventOverlay}
+                      className={`mt-5 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 px-7 py-3 font-black text-slate-950 shadow-lg${tutorialConditionHelpOpen ? " seapals-tutorial-target" : ""}`}
+                      data-tutorial-target="condition-continue"
+                    >
+                      {eventOverlay.openingOpponentTurn ? "Continue to Opponent's Turn" : "Continue"}
+                    </button>
                   </div>
                 ) : eventOverlay.type === "opponent-status" ? (
                   <div className="mt-6 text-left">
@@ -8628,10 +9967,16 @@ export default function Simulator({ storyMode = null } = {}) {
                         <strong className="block text-base text-white">Story Duel</strong>
                         <span className="mt-1 block">{opponentDifficultyProfile.label} difficulty · First to {storyVictoryTarget} VP wins.</span>
                       </div>
+                      {tutorialUsesScriptedScenario ? (
+                        <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-cyan-400/10 p-4 text-sm leading-relaxed text-cyan-50">
+                          <strong className="block text-base text-white">Guided Academy Lesson</strong>
+                          <span className="mt-1 block">Professor Current has arranged the opening draws, round conditions, and enough compatible practice targets to teach economy, Support cards, card actions, attacks, Coral Reef, Predators, and an Apex finish in a deliberate order. The academy may temporarily prepare lesson cards missing from your selected starter, but your saved deck never changes.</span>
+                        </div>
+                      ) : null}
                       <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn.</div>
                       <div className="mt-5 flex flex-wrap justify-end gap-3">
                         <button type="button" onClick={exitStoryMode} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Return to {storyReturnLabel}</button>
-                        <button type="button" onClick={() => restartStoryGame("begin")} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">Begin Duel</button>
+                        <button type="button" onClick={() => restartStoryGame("begin")} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{tutorialUsesScriptedScenario ? "Begin Academy Lesson" : "Begin Duel"}</button>
                       </div>
                     </div>
                   ) : (
@@ -8654,7 +9999,7 @@ export default function Simulator({ storyMode = null } = {}) {
                         })}
                       </div>
                     </fieldset>
-                    <label className="mt-4 block rounded-2xl border border-cyan-400 bg-cyan-400/10 p-4"><span className="text-xs font-black uppercase tracking-wider text-cyan-300">Victory Target</span><select value={pendingVictoryTarget} onChange={(event) => setPendingVictoryTarget(Number(event.target.value))} className="ml-4 rounded-xl bg-slate-950 px-3 py-2 font-bold text-white"><option value={10}>10 VP — Teaching Game</option><option value={30}>30 VP — Full Game</option></select></label>
+                    <label className="mt-4 block rounded-2xl border border-cyan-400 bg-cyan-400/10 p-4"><span className="text-xs font-black uppercase tracking-wider text-cyan-300">Victory Target</span><select value={pendingVictoryTarget} onChange={(event) => setPendingVictoryTarget(Number(event.target.value))} className="ml-4 rounded-xl bg-slate-950 px-3 py-2 font-bold text-white"><option value={10}>10 VP — Quick Game</option><option value={26}>26 VP — Academy Strategy</option><option value={30}>30 VP — Full Game</option></select></label>
                     <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn. Every illegal play explains what is missing before you commit.</div>
                     <div className="mt-5 flex flex-wrap justify-end gap-3">{!eventOverlay.initial ? <button type="button" onClick={closeEventOverlay} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Keep Current Game</button> : null}<button type="button" onClick={() => restartGame(selectedDeckId, selectedOpponentDeckId, pendingVictoryTarget, pendingOpponentDifficulty)} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{eventOverlay.initial ? "Let's Begin!" : "Start New Game"}</button></div>
                   </div>
@@ -8724,16 +10069,30 @@ export default function Simulator({ storyMode = null } = {}) {
                     <button type="button" onClick={() => chooseScientistJes("cancel")} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">Cancel — Spend Nothing</button>
                   </div>
                 ) : eventOverlay.type === "choose-impact-target" ? (
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <div className="mt-6">
+                    {scriptedTutorialOverlayHelpOpen && scriptedImpactTargetHelp ? (
+                      <div className="mb-4">
+                        <ProfessorGuideCard
+                          guide={tutorialGuide}
+                          help={scriptedTutorialOverlayHelp}
+                          step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                          total={tutorialContract.checkpoints.length}
+                          inline
+                          onDismiss={() => setTutorialHelpDismissedId(scriptedTutorialOverlayHelpKey)}
+                        />
+                      </div>
+                    ) : null}
+                    <div className="grid gap-3 sm:grid-cols-2">
                     {opponentCorals.filter((coral) => eventOverlay.targetCoralIds.includes(coral.id)).map((coral) => {
                       const card = cardsById[coral.cardId];
                       return (
-                        <button key={coral.id} type="button" onClick={() => damageOpponentFoundation(coral.id, eventOverlay.amount, cardsById[eventOverlay.sourceCardId])} className="flex items-center gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-3 text-left transition hover:bg-emerald-400/25">
+                        <button key={coral.id} type="button" data-tutorial-target={scriptedImpactTargetHelp ? "impact-target" : undefined} onClick={() => damageOpponentFoundation(coral.id, eventOverlay.amount, cardsById[eventOverlay.sourceCardId])} className={`flex items-center gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-3 text-left transition hover:bg-emerald-400/25${scriptedImpactTargetHelp ? " seapals-tutorial-target" : ""}`}>
                           <img src={card?.image} alt={card?.name} className="h-28 w-20 rounded-xl bg-white object-contain" />
                           <span><strong className="block">{card?.name}</strong><span className="text-sm text-emerald-200">{coral.health}/{coral.maxHealth} HP</span></span>
                         </button>
                       );
                     })}
+                    </div>
                   </div>
                 ) : eventOverlay.type === "choose-territorial-target" ? (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -8804,9 +10163,21 @@ export default function Simulator({ storyMode = null } = {}) {
                     <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setModal("hand"); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">Cancel Support</button>
                   </div>
                 ) : ["choose-coin-coral-target", "choose-coral-effect-target"].includes(eventOverlay.type) ? (
-                  <div className="mt-6 grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
-                    {opponentCorals.filter((coral) => pendingCreatureAction?.candidates.includes(coral.id)).map((coral) => { const card = cardsById[coral.cardId]; return <button key={coral.id} type="button" onClick={() => completeCoinCoralEffect(coral.id)} className="flex items-center gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-3 text-left hover:bg-emerald-400/25"><img src={card?.image} alt={card?.name} className="h-28 w-20 rounded-xl bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-sm text-emerald-200">{coral.health}/{coral.maxHealth} HP</span></span></button>; })}
-                    <button type="button" onClick={() => { const wasCommitted = pendingCreatureAction?.costCommitted; setPendingCreatureAction(null); setEventOverlay({ type: "utility-result", sourceCardId: pendingCreatureAction?.sourceCardId, title: wasCommitted ? "Effect Skipped" : "Action Canceled", message: wasCommitted ? "The effect was ready, but no coral was chosen. The already-paid action cost remains spent." : "No coral was chosen. No RP was spent and the action remains available.", success: false }); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">{pendingCreatureAction?.costCommitted ? "Skip Target" : "Cancel Action"}</button>
+                  <div className="mt-6">
+                    {scriptedTutorialOverlayHelpOpen && scriptedCoinActionHelp ? (
+                      <ProfessorGuideCard
+                        guide={tutorialGuide}
+                        help={scriptedTutorialOverlayHelp}
+                        step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                        total={tutorialContract.checkpoints.length}
+                        inline
+                        onDismiss={() => setTutorialHelpDismissedId(scriptedTutorialOverlayHelpKey)}
+                      />
+                    ) : null}
+                    <div className="mt-4 grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
+                      {opponentCorals.filter((coral) => pendingCreatureAction?.candidates.includes(coral.id)).map((coral) => { const card = cardsById[coral.cardId]; return <button key={coral.id} type="button" data-tutorial-target={scriptedCoinActionHelp ? "coin-coral-target" : undefined} onClick={() => completeCoinCoralEffect(coral.id)} className={`flex items-center gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-3 text-left hover:bg-emerald-400/25${scriptedCoinActionHelp ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-28 w-20 rounded-xl bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-sm text-emerald-200">{coral.health}/{coral.maxHealth} HP</span></span></button>; })}
+                      <button type="button" onClick={() => { const wasCommitted = pendingCreatureAction?.costCommitted; setPendingCreatureAction(null); setEventOverlay({ type: "utility-result", sourceCardId: pendingCreatureAction?.sourceCardId, title: wasCommitted ? "Effect Skipped" : "Action Canceled", message: wasCommitted ? "The effect was ready, but no coral was chosen. The already-paid action cost remains spent." : "No coral was chosen. No RP was spent and the action remains available.", success: false }); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">{pendingCreatureAction?.costCommitted ? "Skip Target" : "Cancel Action"}</button>
+                    </div>
                   </div>
                 ) : eventOverlay.type === "choose-onplay-heal-target" ? (
                   <div className="mt-6 grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
@@ -8840,13 +10211,47 @@ export default function Simulator({ storyMode = null } = {}) {
                     <button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button>
                   </div>
                 ) : eventOverlay.type === "choose-action-hand-discard" ? (
-                  <div className="mt-6 max-h-[30rem] space-y-2 overflow-y-auto">
-                    {(pendingCreatureAction?.handEntries ?? []).map((entry) => { const card = cardsById[entry.cardId]; const selected = pendingCreatureAction.selectedIndices.includes(entry.index); return <button key={`${entry.cardId}-${entry.index}`} type="button" onClick={() => toggleActionHandDiscard(entry.index)} className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left ${selected ? "border-rose-400 bg-rose-400/25" : "border-slate-500 bg-white/5"}`}><img src={card?.image} alt={card?.name} className="h-20 w-14 rounded-lg bg-white object-contain" /><strong className="flex-1">{card?.name}</strong><span className="text-sm">{selected ? "Selected" : "Keep"}</span></button>; })}
-                    <div className="flex flex-wrap gap-3 pt-3"><button type="button" disabled={(pendingCreatureAction?.selectedIndices.length ?? 0) < (pendingCreatureAction?.minDiscard ?? Number(pendingCreatureAction?.effect.discard?.amount ?? 0)) || (pendingCreatureAction?.selectedIndices.length ?? 0) > (pendingCreatureAction?.maxDiscard ?? Number(pendingCreatureAction?.effect.discard?.amount ?? 0))} onClick={confirmActionHandDiscard} className="rounded-full bg-rose-500 px-6 py-3 font-black disabled:opacity-40">Discard & Continue</button><button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button></div>
+                  <div className="mt-6">
+                    {scriptedTutorialOverlayHelpOpen ? (
+                      <ProfessorGuideCard
+                        guide={tutorialGuide}
+                        help={scriptedTutorialOverlayHelp}
+                        step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                        total={tutorialContract.checkpoints.length}
+                        inline
+                        onDismiss={() => setTutorialHelpDismissedId(scriptedTutorialOverlayHelpKey)}
+                      />
+                    ) : null}
+                    <div className="mt-4 max-h-[30rem] space-y-2 overflow-y-auto p-1">
+                      {(pendingCreatureAction?.handEntries ?? []).map((entry) => {
+                        const card = cardsById[entry.cardId];
+                        const selected = pendingCreatureAction.selectedIndices.includes(entry.index);
+                        const scriptedChoice = scriptedTutorialOverlayHelpOpen && scriptedDiscardCandidates.some((candidate) => candidate.index === entry.index);
+                        const scriptedChoiceNeedsSelection = scriptedChoice && !selected && !scriptedDiscardReady;
+                        return <button key={`${entry.cardId}-${entry.index}`} type="button" onClick={() => toggleActionHandDiscard(entry.index)} data-tutorial-target={scriptedChoiceNeedsSelection ? "script-discard-cards" : undefined} className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left ${selected ? "border-rose-400 bg-rose-400/25" : "border-slate-500 bg-white/5"}${scriptedChoice ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-20 w-14 rounded-lg bg-white object-contain" /><strong className="flex-1">{card?.name}</strong><span className="text-sm">{selected ? "Selected" : scriptedChoice ? "Professor's pick" : "Keep"}</span></button>;
+                      })}
+                    </div>
+                    <div className="flex flex-wrap gap-3 pt-3"><button type="button" disabled={(pendingCreatureAction?.selectedIndices.length ?? 0) < (pendingCreatureAction?.minDiscard ?? Number(pendingCreatureAction?.effect.discard?.amount ?? 0)) || (pendingCreatureAction?.selectedIndices.length ?? 0) > (pendingCreatureAction?.maxDiscard ?? Number(pendingCreatureAction?.effect.discard?.amount ?? 0))} onClick={confirmActionHandDiscard} data-tutorial-target="script-discard-confirm" className={`rounded-full bg-rose-500 px-6 py-3 font-black disabled:opacity-40${scriptedDiscardReady && scriptedTutorialOverlayHelpOpen ? " seapals-tutorial-target" : ""}`}>Discard &amp; Continue</button><button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-action-search-card" ? (
-                  <div className="mt-6 grid max-h-[30rem] gap-3 overflow-y-auto sm:grid-cols-2">
-                    {(pendingCreatureAction?.searchCandidates ?? []).map((cardId) => { const card = cardsById[cardId]; return <button key={cardId} type="button" onClick={() => completeActionDeckSearch(cardId)} className="flex items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/25"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-xs text-cyan-200">{foundationDeck.includes(cardId) ? "Foundation" : "Pals"}</span></span></button>; })}
+                  <div className="mt-6">
+                    {scriptedTutorialOverlayHelpOpen ? (
+                      <ProfessorGuideCard
+                        guide={tutorialGuide}
+                        help={scriptedTutorialOverlayHelp}
+                        step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                        total={tutorialContract.checkpoints.length}
+                        inline
+                        onDismiss={() => setTutorialHelpDismissedId(scriptedTutorialOverlayHelpKey)}
+                      />
+                    ) : null}
+                    <div className="mt-4 grid max-h-[30rem] gap-3 overflow-y-auto p-1 sm:grid-cols-2">
+                      {(pendingCreatureAction?.searchCandidates ?? []).map((cardId) => {
+                        const card = cardsById[cardId];
+                        const scriptedChoice = scriptedTutorialOverlayHelpOpen && cardId === scriptedSearchTargetCardId;
+                        return <button key={cardId} type="button" onClick={() => completeActionDeckSearch(cardId)} data-tutorial-target={scriptedChoice ? "script-search-card" : undefined} className={`flex items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/25${scriptedChoice ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-xs text-cyan-200">{foundationDeck.includes(cardId) ? "Foundation" : "Pals"}</span>{scriptedChoice ? <span className="mt-1 block text-[10px] font-black uppercase tracking-wider text-amber-200">Professor's lesson target</span> : null}</span></button>;
+                      })}
+                    </div>
                   </div>
                 ) : eventOverlay.type === "choose-creature-action-search" ? (
                   <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
@@ -8880,15 +10285,25 @@ export default function Simulator({ storyMode = null } = {}) {
                   </div>
                 ) : eventOverlay.type === "faceoff-ready" || eventOverlay.type === "school-attack-ready" ? (
                   <div className="mt-7">
+                    {tutorialFaceoffHelpOpen ? (
+                      <ProfessorGuideCard
+                        guide={tutorialGuide}
+                        help={tutorialFaceoffHelp}
+                        step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                        total={tutorialContract.checkpoints.length}
+                        inline
+                        onDismiss={() => setTutorialHelpDismissedId(tutorialFaceoffHelpKey)}
+                      />
+                    ) : null}
                     <div className={`mb-5 grid max-w-md gap-4 ${eventOverlay.type === "faceoff-ready" ? "grid-cols-2" : "grid-cols-1"}`}>
                       <div className="rounded-2xl border border-rose-400 bg-rose-500/10 p-4 text-center"><div className="text-xs font-black uppercase tracking-widest text-rose-300">Attack {eventOverlay.attackDice}</div><div className={`mt-2 text-5xl font-black ${faceoffRolling ? "animate-pulse" : ""}`}>{faceoffPreview?.attack ?? "—"}</div></div>
                       {eventOverlay.type === "faceoff-ready" ? <div className="rounded-2xl border border-cyan-400 bg-cyan-500/10 p-4 text-center"><div className="text-xs font-black uppercase tracking-widest text-cyan-300">Defense {eventOverlay.defenseDice}</div><div className={`mt-2 text-5xl font-black ${faceoffRolling ? "animate-pulse" : ""}`}>{faceoffPreview?.defense ?? "—"}</div></div> : <div className="rounded-2xl border border-amber-400 bg-amber-500/10 p-4 text-center font-bold text-amber-200">Damage = stopped roll × 10</div>}
                     </div>
                     <div className="flex flex-wrap gap-3">
                       {!faceoffRolling ? (
-                        <button type="button" onClick={() => setFaceoffRolling(true)} className="rounded-full bg-rose-600 px-8 py-3 text-lg font-black text-white shadow-[0_0_30px_rgba(244,63,94,0.45)]">Start Rolling</button>
+                        <button type="button" onClick={() => setFaceoffRolling(true)} data-tutorial-target="faceoff-action" className={`rounded-full bg-rose-600 px-8 py-3 text-lg font-black text-white shadow-[0_0_30px_rgba(244,63,94,0.45)]${tutorialFaceoffHelpOpen ? " seapals-tutorial-target" : ""}`}>Start Rolling</button>
                       ) : (
-                        <button type="button" disabled={!faceoffPreview} onClick={() => resolvePlayerAttack(eventOverlay.targetCoralId, eventOverlay.targetSlotId, true, faceoffPreview)} className="rounded-full bg-emerald-500 px-8 py-3 text-lg font-black text-white shadow-[0_0_30px_rgba(16,185,129,0.45)]">Stop & Resolve</button>
+                        <button type="button" disabled={!faceoffPreview} onClick={() => resolvePlayerAttack(eventOverlay.targetCoralId, eventOverlay.targetSlotId, true, faceoffPreview)} data-tutorial-target="faceoff-action" className={`rounded-full bg-emerald-500 px-8 py-3 text-lg font-black text-white shadow-[0_0_30px_rgba(16,185,129,0.45)]${tutorialFaceoffHelpOpen ? " seapals-tutorial-target" : ""}`}>Stop & Resolve</button>
                       )}
                       {!faceoffRolling && !attackContext?.costCommitted ? <button type="button" onClick={() => { setFaceoffPreview(null); setEventOverlay(null); setAttackContext(null); }} className="rounded-full border border-slate-500 px-5 py-3 text-sm font-bold">Cancel Faceoff</button> : null}
                     </div>
@@ -9000,7 +10415,7 @@ export default function Simulator({ storyMode = null } = {}) {
                       guidance: "Creatures, Habitats, and Support. Stronger once your economy is established.",
                     },
                   ].map((deck) => (
-                    <div key={deck.id} className="rounded-3xl border border-cyan-300/20 bg-white/5 p-5 text-center shadow-inner">
+                    <div key={deck.id} data-tutorial-draw-deck={deck.id} className="rounded-3xl border border-cyan-300/20 bg-white/5 p-5 text-center shadow-inner">
                       <div className="mx-auto flex h-32 w-28 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/45"><Image src={deck.image} alt={`${deck.label} Deck`} width={112} height={112} className="object-contain" /></div>
                       <div className="mt-3 text-lg font-black text-white">{deck.label} Deck</div>
                       <div className="text-sm text-cyan-100/60">{deck.count} remaining</div>
@@ -9009,9 +10424,9 @@ export default function Simulator({ storyMode = null } = {}) {
                         <span className="mt-1 block text-xs font-semibold leading-relaxed text-cyan-50/70">{deck.guidance}</span>
                       </div>
                       <div className="mt-4 flex items-center justify-center gap-4">
-                        <button type="button" disabled={!deck.selected} onClick={() => adjustTurnDraw(deck.id, -1)} className="h-10 w-10 rounded-full border border-white/15 bg-white/5 text-xl font-black text-white transition hover:bg-white/10 disabled:opacity-25">−</button>
+                        <button type="button" disabled={!deck.selected} onClick={() => adjustTurnDraw(deck.id, -1)} data-tutorial-draw-remove={deck.id} className="h-10 w-10 rounded-full border border-white/15 bg-white/5 text-xl font-black text-white transition hover:bg-white/10 disabled:opacity-25">−</button>
                         <span className="min-w-10 text-3xl font-black text-cyan-200">{deck.selected}</span>
-                        <button type="button" disabled={deck.selected >= deck.count || (turnDrawSelection?.foundation ?? 0) + (turnDrawSelection?.pals ?? 0) >= (turnDrawSelection?.target ?? 0)} onClick={() => adjustTurnDraw(deck.id, 1)} className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-emerald-400 text-xl font-black text-slate-950 disabled:opacity-30">+</button>
+                        <button type="button" disabled={deck.selected >= deck.count || (turnDrawSelection?.foundation ?? 0) + (turnDrawSelection?.pals ?? 0) >= (turnDrawSelection?.target ?? 0) || Boolean(tutorialUsesScriptedScenario && !turnDrawSelection?.mode && getScriptedTutorialTurnDraw({ round })?.deckType !== deck.id)} onClick={() => adjustTurnDraw(deck.id, 1)} data-tutorial-draw-add={deck.id} className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-emerald-400 text-xl font-black text-slate-950 disabled:opacity-30">+</button>
                       </div>
                     </div>
                   ))}
@@ -9133,7 +10548,7 @@ export default function Simulator({ storyMode = null } = {}) {
                     const coralTarget = modal === "coral-target" ? playerCorals.find((coral) => coral.id === cardId) : null;
                     const card = cardsById[coralTarget?.cardId ?? cardId] || { name: cardId };
                     return (
-                      <div key={`${cardId}-${cardIndex}`} className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${isDarkZoneModal ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}`}>
+                      <div key={`${cardId}-${cardIndex}`} data-tutorial-search-card-id={modal === "search" ? cardId : undefined} data-tutorial-target={modal === "search" && tutorialHelpTargetActive && tutorialHelp?.targetSearchCardId === cardId ? "search-card" : undefined} className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${isDarkZoneModal ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}${modal === "search" && tutorialHelpTargetActive && tutorialHelp?.targetSearchCardId === cardId ? " seapals-tutorial-target" : ""}`}>
                         <div className="flex items-center gap-4">
                           {["discard", "lost", "search", "recover", "coral-target", "restock"].includes(modal) ? <img src={card.image} alt={card.name} className="h-28 w-20 rounded-xl bg-white object-contain" /> : null}
                           <div>
@@ -9143,7 +10558,7 @@ export default function Simulator({ storyMode = null } = {}) {
                           </div>
                         </div>
                         {modal === "search" || modal === "recover" || modal === "coral-target" || modal === "restock" ? (
-                          <button type="button" onClick={() => modal === "recover" ? completeRecovery(cardId) : modal === "coral-target" ? completeCoralHeal(cardId) : modal === "restock" ? toggleRestockCard(cardIndex) : searchContext?.maxSelect > 1 ? toggleSupportSearchCard(cardId) : completeSupportSearch(cardId)} className={`rounded-full px-5 py-2 text-sm font-bold text-white ${(modal === "restock" ? searchContext?.selectedIndices?.includes(cardIndex) : modal === "search" && searchContext?.maxSelect > 1 && searchContext?.selected.includes(cardId)) ? "bg-emerald-600" : "bg-cyan-600 hover:bg-cyan-500"}`}>
+                          <button type="button" disabled={Boolean(modal === "search" && tutorialUsesScriptedScenario && scriptedFinishRoute?.searchTargetCardId && scriptedFinishRoute.searchTargetCardId !== cardId)} onClick={() => modal === "recover" ? completeRecovery(cardId) : modal === "coral-target" ? completeCoralHeal(cardId) : modal === "restock" ? toggleRestockCard(cardIndex) : searchContext?.maxSelect > 1 ? toggleSupportSearchCard(cardId) : completeSupportSearch(cardId)} className={`rounded-full px-5 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${(modal === "restock" ? searchContext?.selectedIndices?.includes(cardIndex) : modal === "search" && searchContext?.maxSelect > 1 && searchContext?.selected.includes(cardId)) ? "bg-emerald-600" : "bg-cyan-600 hover:bg-cyan-500"}`}>
                             {modal === "recover" ? "Recover Card" : modal === "coral-target" ? "Heal 20 HP" : modal === "restock" ? (searchContext?.selectedIndices?.includes(cardIndex) ? "Selected" : "Select") : modal === "search" && searchContext?.maxSelect > 1 ? (searchContext?.selected.includes(cardId) ? `Selected ×${searchContext.selected.filter((selectedId) => selectedId === cardId).length}` : "Select") : "Add to Hand"}
                           </button>
                         ) : null}

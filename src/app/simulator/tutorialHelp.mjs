@@ -10,6 +10,10 @@ const TARGET_LABELS = Object.freeze({
   "player-board": "a glowing creature in your ecosystem",
   "opponent-board": "a highlighted creature in my ecosystem",
   "attack-button": "the creature's attack button",
+  "utility-action-button": "the highlighted card action button",
+  "condition-continue": "the Continue button beneath the condition lesson",
+  "script-search-card": "the highlighted Spanish Hogfish",
+  "search-card": "the highlighted lesson card in the search results",
   "vp-score": "your Victory Point counter",
   "rp-bank": "your RP bank",
 });
@@ -17,33 +21,92 @@ const TARGET_LABELS = Object.freeze({
 const HELP_BY_CHECKPOINT = Object.freeze({
   "tutorial-setup": Object.freeze({
     message: "Every ecosystem needs a foundation. Start with a green-glowing Base Coral or Creature School from your hand.",
+    playerThought: "So I am not racing to play the flashiest creature first. I need a home that gives the rest of my ecosystem somewhere legal to grow.",
+    encouragement: "Exactly. A patient first placement makes every later choice easier, and there is no hurry while we learn the board together.",
     action: "Choose a ready foundation card, press Play Card, and place it in your ecosystem.",
   }),
   "tutorial-collect-rp": Object.freeze({
     message: "Resource Points, or RP, are the energy you spend to play cards. Your ecosystem collects them at the start of each round.",
+    playerThought: "I should compare what I collect with the size of my bank, then decide how much to spend and how much to keep for actions.",
+    encouragement: "Well reasoned. RP is a budget, not a command to spend everything immediately. Saving one or two points can keep an important ability available.",
     action: "Press Begin Round 1 and watch your RP bank increase.",
   }),
   "tutorial-draw-card": Object.freeze({
     title: "Choose a deck with a plan",
     message: "The Foundation Deck grows your economy with Corals and Creature Schools, so it is usually the best early-game draw. Choose the Pals Deck when you need creatures, habitats, support effects, or more ways to earn VP.",
+    playerThought: "Early on I want the economy to support several future turns. Later I can choose Pals when I know which creature or tactic my board needs.",
+    encouragement: "Precisely. Drawing is a decision about your next problem, not merely taking the most exciting card on top.",
     action: "For this early draw, start with the Foundation Deck, then confirm your choice.",
   }),
   "tutorial-build-card": Object.freeze({
     title: "Add to your ecosystem",
     message: "Use RP to add another card to your ecosystem. Cards marked Ready to play are legal and affordable right now.",
+    playerThought: "Before I play a card, I should check its cost, its legal home, and whether I still want RP left for an action afterward.",
+    encouragement: "That is the habit of a thoughtful Reefkeeper. A legal play is only the beginning; the best play also supports what you hope to do next.",
     action: "Choose a card marked Ready to play, press Play Card, and follow its placement or effect prompt.",
   }),
   "tutorial-attack": Object.freeze({
     message: "Creatures with attacks can challenge compatible creatures in my ecosystem. The simulator only highlights legal targets.",
+    playerThought: "I should inspect the whole card. Some creatures attack, while others use actions such as Scavenge to improve my hand or prepare a later move.",
+    encouragement: "Ah, now you are reading like a scientist—observe every option before drawing a conclusion. An action that causes no damage can still shape the entire turn.",
     action: "Choose a ready attacker, use its attack, then resolve the dice roll.",
   }),
   "tutorial-end-turn": Object.freeze({
     message: "A careful Reefkeeper checks the board, hand, and remaining RP before passing play.",
+    playerThought: "Before I pass, I will check for affordable card actions, legal attacks, useful Support cards, and RP I meant to save.",
+    encouragement: "Wonderful. That small pause prevents many missed opportunities. When the board says you are finished—not merely the first idea in your head—then end the turn.",
     action: "When you are satisfied with your choices, press End Turn.",
   }),
   "tutorial-earn-vp": Object.freeze({
     message: "Victory Points measure the ecosystem you have built. Cards in play add VP automatically, including some relationship bonuses.",
+    playerThought: "So attacking can disrupt an opponent, but my main race is still to build a healthy ecosystem that produces enough VP.",
+    encouragement: "Exactly right. SeaPals rewards relationships and planning as much as combat. Keep asking what each card contributes to the ecosystem as a whole.",
     action: "Watch your VP counter grow. Reach 10 VP before I do to win our practice duel.",
+  }),
+});
+
+const CONDITION_HELP_BY_ID = Object.freeze({
+  "abundant-sunlight": Object.freeze({
+    title: "Begin by reading the water",
+    message: "Every round opens with a condition, because an ecosystem never stays perfectly still. Abundant Sunlight raises both players' RP bank caps by 2. It creates more room in the bank, but it does not place those extra RP there by itself.",
+    playerThought: "My bank can hold more this round, but I still collect only the amount shown below. I should plan from what I actually collected, not treat the empty space as though it were already RP.",
+    encouragement: "Exactly so. Conditions change the rules around your plan; they do not replace careful counting. Notice the larger cap, then compare it with what you actually collected.",
+  }),
+  "clear-water": Object.freeze({
+    title: "Ask exactly who is affected",
+    message: "Clear Water makes Predator and Apex cards cost 1 more RP to play this round. The wording is wonderfully specific: Corals, Fish, and Invertebrates keep their normal costs, and actions on cards already in play are not made more expensive.",
+    playerThought: "Then I should not treat this as a tax on every card. Arrow Crab and Spanish Hogfish follow their printed costs because neither is a Predator or Apex.",
+    encouragement: "Beautifully read. Conditions often look broad at first glance. Check the named card types, players, and duration before changing your plan.",
+  }),
+  "algae-bloom": Object.freeze({
+    title: "A full hand has a limit",
+    message: "Algae Bloom limits each hand to seven cards for the round. Any additional draw still happens, but excess cards are sent to the discard pile instead of remaining in hand.",
+    playerThought: "If my hand is already crowded, I should play or intentionally discard before drawing several cards so the hand limit does not choose for me.",
+    encouragement: "A sound observation. Even a harmful condition can be managed when you read it before committing to a draw effect.",
+  }),
+  "murky-water": Object.freeze({
+    title: "Conditions can create opportunities",
+    message: "Murky Water reduces the play cost of Predator and Apex cards by 1 RP this round. A condition can help one plan while doing very little for another.",
+    playerThought: "I should look at my actual hand before deciding whether this condition is good for me. A discount matters only if I can use the affected cards.",
+    encouragement: "Precisely. Good strategy begins with evidence from this board, this hand, and this round—not a rule of thumb applied blindly.",
+  }),
+  "severe-coral-bleaching": Object.freeze({
+    title: "Bleaching can weaken reef productivity",
+    message: "Severe Coral Bleaching stops Corals with a high-temperature weakness from generating RP this round. Heat stress can drive corals to expel the algae that help feed them; in this match, the rule models that lost productivity without destroying the Coral outright.",
+    playerThought: "The affected Coral still provides its slots, but I must count this round's smaller collection before deciding what the reef can afford.",
+    encouragement: "Exactly. Environmental stress can change what an ecosystem can support even when its structure is still visible. Our earlier economy gives us enough resilience to establish a Creature School this round.",
+  }),
+  "krill-ball": Object.freeze({
+    title: "A bloom can open a brief opportunity",
+    message: "Krill Bloom lowers the School Density requirement of the next Filter Feeder each player plays by 150. The reduction is used once, so this is a timing opportunity rather than a permanent shortcut.",
+    playerThought: "Whale Shark normally needs 180 School Density. After the 150-point reduction, White Grunt's 30 School Density is exactly enough.",
+    encouragement: "That is the calculation. Conditions can change whether a play is legal, so compare the printed requirement with the active reduction before spending RP.",
+  }),
+  "bleak-overcast": Object.freeze({
+    title: "A smaller bank changes the final budget",
+    message: "Bleak Overcast lowers both players' RP bank caps by 2 this round and immediately removes RP above the new cap. It does not make cards cheaper; it limits how much RP you can hold at once.",
+    playerThought: "I should check the reduced cap before planning the turn. The reef was built ahead of time, so its remaining 6 RP can still support Hammerhead.",
+    encouragement: "Precisely. A resilient plan leaves room for changing conditions. We can use a zero-cost Support to find the Apex, then spend the bank on the card that ends the lesson.",
   }),
 });
 
@@ -53,7 +116,9 @@ function requireCheckpointId(checkpoint) {
 }
 
 function withTarget(help, target, cue = target) {
+  const authoredConversation = HELP_BY_CHECKPOINT[help.id] ?? {};
   return Object.freeze({
+    ...authoredConversation,
     ...help,
     cueId: `${help.id}:${cue ?? "status"}`,
     target,
@@ -111,6 +176,14 @@ function getAttackRecovery(uiState) {
   };
 }
 
+function describeUtilityAction(action) {
+  const cardName = String(action?.cardName ?? "This card");
+  const actionName = String(action?.actionName ?? "card action");
+  const cost = Math.max(0, Number(action?.actionCost ?? 0));
+  const detail = String(action?.actionText ?? "").trim();
+  return `${cardName}'s ${actionName} is a legal card action right now and costs ${cost} RP.${detail ? ` ${detail}` : ""} It can improve your position, but it is not an attack, so the attack lesson will still be waiting afterward.`;
+}
+
 function getDrawResultHelp(checkpointId, uiState) {
   const drawnCards = Array.isArray(uiState.drawnCards) ? uiState.drawnCards : [];
   const names = drawnCards.map((card) => card?.name).filter(Boolean);
@@ -130,6 +203,9 @@ function getDrawResultHelp(checkpointId, uiState) {
       nextAction = `Press Continue to Actions, then select ${uiState.readyAttack.cardName} and use ${uiState.readyAttack.attackName}.`;
     } else if (uiState.attackSetupCard) {
       nextAction = `Press Continue to Actions, then play ${uiState.attackSetupCard.cardName}; it can attack a legal target with ${uiState.attackSetupCard.attackName}.`;
+    } else if (uiState.readyUtilityAction) {
+      const utility = uiState.readyUtilityAction;
+      nextAction = `Press Continue to Actions, then select ${utility.cardName} and use ${utility.actionName} for ${utility.actionCost} RP. This useful card action will not complete the attack lesson, so I will reassess your legal attack options afterward.`;
     } else if (uiState.recommendedBuildCard) {
       nextAction = `Press Continue to Actions. You cannot make a legal attack yet, so play ${uiState.recommendedBuildCard.cardName} if it helps your plan. ${recovery.action}`;
     } else {
@@ -163,6 +239,7 @@ function getTurnDrawHelp(checkpointId, uiState, authored, checkpoint) {
       action: drawReady
         ? `Press Draw Selected Cards. After reviewing the result, select ${attack.cardName} and use ${attack.attackName}.`
         : `Complete the required draw first${foundationAvailable ? "; Foundation is a strong choice while your attacker is already in place" : ""}.`,
+      targetDeck: !drawReady ? (foundationAvailable ? "foundation" : palsAvailable ? "pals" : null) : null,
     }, target, `turn-draw:planned:${attack.actionKey ?? attack.cardId}:${drawReady ? "ready" : "choose"}`);
   }
 
@@ -175,7 +252,27 @@ function getTurnDrawHelp(checkpointId, uiState, authored, checkpoint) {
       action: drawReady
         ? `Press Draw Selected Cards. After reviewing the result, play ${card.cardName} and follow its placement or effect prompt.`
         : `Complete the required draw first${foundationAvailable ? "; Foundation can strengthen the economy behind this planned play" : ""}.`,
+      targetDeck: !drawReady ? (foundationAvailable ? "foundation" : palsAvailable ? "pals" : null) : null,
     }, target, `turn-draw:planned-card:${card.cardId}:${drawReady ? "ready" : "choose"}`);
+  }
+
+  if (checkpointId === "tutorial-attack" && uiState.scriptedLesson && uiState.nextPalsCardName === "Arrow Crab") {
+    const palsSelected = Number(uiState.drawPalsSelected ?? 0) > 0;
+    const scriptedTarget = drawReady && palsSelected ? "confirm-draw" : "draw-controls";
+    return withTarget({
+      id: checkpointId,
+      title: "Draw the prepared Arrow Crab",
+      lead: "",
+      message: "Welcome back. Our first turn built the economy; this turn will show why a card action, not an attack, can be the useful move. I placed Arrow Crab next in your Pals Deck so we can practice its Scavenge action deliberately.",
+      playerThought: "I know the lesson card I need and which personal deck holds it, so this is a planned Pals draw rather than a guess.",
+      encouragement: "Exactly. After the draw, we will play Arrow Crab, inspect the whole card, and use Scavenge to search for a legal attacker.",
+      action: drawReady
+        ? palsSelected
+          ? "Press Draw Selected Cards, review Arrow Crab, then continue to the action phase."
+          : "Your draw is complete, but switch it to the Pals Deck to follow the prepared lesson."
+        : "Choose one card from the Pals Deck, then confirm the draw.",
+      targetDeck: scriptedTarget === "draw-controls" ? "pals" : null,
+    }, scriptedTarget, `turn-draw:scripted-arrow-crab:${drawReady ? palsSelected ? "ready" : "switch" : "choose"}`);
   }
 
   if (checkpointId === "tutorial-attack" && !uiState.readyAttack && !uiState.attackSetupCard) {
@@ -187,6 +284,7 @@ function getTurnDrawHelp(checkpointId, uiState, authored, checkpoint) {
     const selectedPreferred = recovery.preferredDeck === "Foundation"
       ? Number(uiState.drawFoundationSelected ?? 0) > 0
       : Number(uiState.drawPalsSelected ?? 0) > 0;
+    const recoveryTarget = drawReady && (selectedPreferred || !preferredAvailable) ? "confirm-draw" : "draw-controls";
     const action = drawReady
       ? selectedPreferred || !preferredAvailable
         ? `Press Draw Selected Cards. After the draw, I will check the actual card and your board for a legal path to an attack.`
@@ -201,14 +299,20 @@ function getTurnDrawHelp(checkpointId, uiState, authored, checkpoint) {
         ? "You cannot attack during the draw step. Your current blocker calls for more economy or another round, so Foundation is the more useful draw; I will still evaluate the revealed card before your next action."
         : "You cannot attack during the draw step. The Pals Deck holds creatures and tactical cards; after the cards are revealed, I will compare them with your RP, open spaces, and my legal targets.",
       action,
-    }, target, `turn-draw:attack:${drawReady ? "ready" : "choose"}`);
+      targetDeck: recoveryTarget === "draw-controls" ? recommendedDeck?.toLowerCase() ?? null : null,
+    }, recoveryTarget, `turn-draw:attack:${drawReady ? selectedPreferred ? "ready" : "switch" : "choose"}`);
   }
 
   let action = authored.action;
+  const foundationSelected = Number(uiState.drawFoundationSelected ?? 0) > 0;
+  const palsSelected = Number(uiState.drawPalsSelected ?? 0) > 0;
+  const guidedTarget = drawReady && (foundationSelected || !foundationAvailable) ? "confirm-draw" : "draw-controls";
   if (drawReady && Number(uiState.drawFoundationSelected ?? 0) > 0) {
     action = "Good early-game choice. Press Draw Selected Cards to reveal the Foundation card and see whether you can play it now.";
   } else if (drawReady && Number(uiState.drawPalsSelected ?? 0) > 0) {
-    action = "A Pals card can add useful options, but Foundation is usually stronger early. Keep it if that is your plan, or switch before confirming.";
+    action = foundationAvailable
+      ? "For this guided first draw, remove the Pals choice and add one Foundation card so we can build your economy."
+      : "Foundation is empty, so keep the Pals choice and confirm the draw.";
   } else if (checkpointId !== "tutorial-draw-card") {
     action = "Finish choosing this round's required draw. I will evaluate the revealed card before suggesting your next action.";
   }
@@ -220,20 +324,943 @@ function getTurnDrawHelp(checkpointId, uiState, authored, checkpoint) {
       ? authored.message
       : "Foundation cards build RP income and play spaces. Pals cards provide creatures, habitats, Support effects, and more ways to earn VP.",
     action,
-  }, target, `turn-draw:${drawReady ? "ready" : "choose"}`);
+    targetDeck: guidedTarget === "draw-controls" ? (foundationAvailable ? "foundation" : palsAvailable ? "pals" : null) : null,
+  }, guidedTarget, `turn-draw:${drawReady ? palsSelected && foundationAvailable ? "switch" : "ready" : "choose"}`);
+}
+
+const FINISH_DUEL_HELP_ID = "tutorial-finish-duel";
+
+function finishDuelContext(uiState) {
+  const targetVp = Math.max(1, Number(uiState.victoryTarget) || 10);
+  const playerVp = Math.max(0, Number(uiState.playerVp) || 0);
+  const opponentVp = Math.max(0, Number(uiState.opponentVp) || 0);
+  const remainingVp = Math.max(0, targetVp - playerVp);
+  const round = Math.max(0, Number(uiState.round) || 0);
+  const turn = Math.max(1, Number(uiState.turn) || 1);
+  return {
+    targetVp,
+    playerVp,
+    opponentVp,
+    remainingVp,
+    progressLabel: `Final goal • ${playerVp}/${targetVp} VP`,
+    cuePrefix: `${FINISH_DUEL_HELP_ID}:r${round}:t${turn}:vp${playerVp}-${targetVp}`,
+  };
+}
+
+function decorateFinishDuelHelp(help, uiState, cue) {
+  const context = finishDuelContext(uiState);
+  return Object.freeze({
+    ...help,
+    id: FINISH_DUEL_HELP_ID,
+    cueId: `${context.cuePrefix}:${cue}`,
+    progressLabel: context.progressLabel,
+  });
+}
+
+function getFinishDuelDrawHelp(uiState) {
+  const context = finishDuelContext(uiState);
+  const drawSelected = Math.max(0, Number(uiState.drawSelected) || 0);
+  const drawTarget = Math.max(0, Number(uiState.drawTarget) || 0);
+  const foundationAvailable = Number(uiState.foundationDeckCount ?? 0) > 0;
+  const palsAvailable = Number(uiState.palsDeckCount ?? 0) > 0;
+  const palsSelected = Number(uiState.drawPalsSelected ?? 0) > 0;
+  const drawReady = drawTarget > 0 && drawSelected === drawTarget;
+  const preferredDeck = palsAvailable ? "Pals" : foundationAvailable ? "Foundation" : null;
+  const preferredSelected = preferredDeck === "Pals"
+    ? palsSelected
+    : Number(uiState.drawFoundationSelected ?? 0) > 0;
+  const target = drawReady && (preferredSelected || !preferredDeck) ? "confirm-draw" : "draw-controls";
+  const action = drawReady
+    ? preferredSelected || !preferredDeck
+      ? "Press Draw Selected Cards, review what you drew, then continue to your actions."
+      : `Your draw is valid, but switch it to the ${preferredDeck} Deck for the guided route toward more VP options.`
+    : preferredDeck
+      ? `Choose ${drawTarget || 1} card${drawTarget === 1 ? "" : "s"} from the ${preferredDeck} Deck, then confirm the draw.`
+      : "Both personal decks are empty, so no draw can be selected.";
+
+  return withTarget({
+    id: FINISH_DUEL_HELP_ID,
+    title: `Build the next ${context.remainingVp} VP`,
+    lead: "",
+    message: palsAvailable
+      ? `You have completed the lesson steps and reached ${context.playerVp}/${context.targetVp} VP. The Pals Deck is the strongest guided draw now because it contains more creatures, habitats, and effects that can grow or protect your score.`
+      : `You have completed the lesson steps and reached ${context.playerVp}/${context.targetVp} VP. The Foundation Deck is the remaining draw source, so use it to expand your economy and legal play spaces.`,
+    action,
+    targetDeck: target === "draw-controls" ? preferredDeck?.toLowerCase() ?? null : null,
+    progressLabel: context.progressLabel,
+  }, target, `${context.cuePrefix}:draw:${drawReady ? preferredSelected ? "confirm" : "switch" : preferredDeck?.toLowerCase() ?? "empty"}`);
+}
+
+const FINISH_BLOCKING_MODAL_COPY = Object.freeze({
+  "support-draw": Object.freeze({
+    title: "Finish the replacement draw",
+    message: "Dr. Evans is waiting for you to choose how many replacement cards come from each personal deck. This choice must be completed or canceled before the VP plan can continue.",
+    action: "Choose the replacement cards and confirm, or press Close to cancel this Support effect and return to the guided plan.",
+  }),
+  search: Object.freeze({
+    title: "Finish choosing the searched card",
+    message: "A deck-search effect is still open. Choose one of its legal cards, or cancel the search before returning to the VP plan.",
+    action: "Choose a listed card to complete the search, or press Close to cancel it.",
+  }),
+  recover: Object.freeze({
+    title: "Finish the recovery choice",
+    message: "Recovery is waiting for a card from the discard pile. Complete or cancel that choice before taking another action.",
+    action: "Choose a listed card to recover, or press Close to leave the recovery effect.",
+  }),
+  "coral-target": Object.freeze({
+    title: "Finish choosing a Coral",
+    message: "This effect needs a legal Coral target before the main VP plan can resume.",
+    action: "Choose a listed Coral to complete the effect, or press Close to cancel it.",
+  }),
+  restock: Object.freeze({
+    title: "Finish the Restocking choice",
+    message: "Restocking is waiting for up to three Fish selections. Resolve or cancel it before returning to the planned finish.",
+    action: "Select the Fish you want and confirm Restocking, or press Close to cancel it.",
+  }),
+  discard: Object.freeze({
+    title: "Return from the discard pile",
+    message: "The discard pile is only an inspection view; it is covering the next guided action.",
+    action: "Press Close to return to the practice reef.",
+  }),
+  lost: Object.freeze({
+    title: "Return from the lost zone",
+    message: "The lost zone is only an inspection view; it is covering the next guided action.",
+    action: "Press Close to return to the practice reef.",
+  }),
+});
+
+function getFinishBlockingModalHelp(uiState) {
+  const modalCopy = FINISH_BLOCKING_MODAL_COPY[uiState.modal];
+  if (!modalCopy) return null;
+  return decorateFinishDuelHelp(withTarget({
+    id: FINISH_DUEL_HELP_ID,
+    ...modalCopy,
+  }, "close-modal", `blocking-modal:${uiState.modal}`), uiState, `blocking-modal:${uiState.modal}`);
+}
+
+function getScriptedFinishDrawHelp(uiState, preferredDeck, reason) {
+  const context = finishDuelContext(uiState);
+  const drawSelected = Math.max(0, Number(uiState.drawSelected) || 0);
+  const drawTarget = Math.max(0, Number(uiState.drawTarget) || 0);
+  const foundationSelected = Math.max(0, Number(uiState.drawFoundationSelected) || 0);
+  const palsSelected = Math.max(0, Number(uiState.drawPalsSelected) || 0);
+  const preferredSelected = preferredDeck === "Foundation" ? foundationSelected : palsSelected;
+  const preferredCount = preferredDeck === "Foundation"
+    ? Math.max(0, Number(uiState.foundationDeckCount) || 0)
+    : Math.max(0, Number(uiState.palsDeckCount) || 0);
+  if (!preferredCount) return null;
+  const requiredFromPreferred = Math.min(drawTarget, preferredCount);
+  const drawReady = drawTarget > 0 && drawSelected === drawTarget;
+  const routeSelected = preferredSelected === requiredFromPreferred;
+  const target = drawReady && routeSelected ? "confirm-draw" : "draw-controls";
+  const preferredDeckKey = preferredDeck.toLowerCase();
+  const otherDeckKey = preferredDeck === "Foundation" ? "pals" : "foundation";
+  const otherDeckLabel = preferredDeck === "Foundation" ? "Pals" : "Foundation";
+  const correctingWrongDeck = drawReady && !routeSelected;
+  return decorateFinishDuelHelp(withTarget({
+    id: FINISH_DUEL_HELP_ID,
+    title: `Choose the ${preferredDeck} Deck for this step`,
+    lead: "",
+    message: `${reason} This is a prepared draw, so use the ${preferredDeck} Deck instead of adding a random branch to the lesson.`,
+    action: drawReady
+      ? routeSelected
+        ? "Press Draw Selected Cards, review the reveal, then continue to the prepared action."
+        : `Press minus on the ${otherDeckLabel} Deck, then add that draw to the ${preferredDeck} Deck and confirm it.`
+      : `Choose ${drawTarget || 1} card${drawTarget === 1 ? "" : "s"} from the ${preferredDeck} Deck, then confirm the draw.`,
+    targetDeck: target === "draw-controls"
+      ? correctingWrongDeck ? otherDeckKey : preferredDeckKey
+      : null,
+    targetDrawAction: target === "draw-controls"
+      ? correctingWrongDeck ? "remove" : "add"
+      : null,
+    progressLabel: context.progressLabel,
+  }, target, `scripted-draw:${preferredDeckKey}:${drawReady ? routeSelected ? "confirm" : "switch" : "choose"}`), uiState, `scripted-draw:${preferredDeckKey}:${drawReady ? routeSelected ? "confirm" : "switch" : "choose"}`);
+}
+
+function getScriptedCardPlayHelp(uiState, card, {
+  title,
+  message,
+  action,
+  placementMessage = null,
+} = {}) {
+  if (!card) return null;
+  if (card.isPlaying || uiState.playingCardId === card.cardId) {
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Place ${card.cardName}`,
+      message: placementMessage ?? `${card.cardName} has left your hand. Its ${card.victoryPoints} VP only counts after a legal placement is complete.`,
+      action: "Choose the highlighted legal placement in your ecosystem.",
+    }, "placement", `scripted-place:${card.cardId}`), uiState, `scripted-place:${card.cardId}`);
+  }
+
+  const selectedCardOpen = Boolean(
+    uiState.selectedHandCard && (uiState.modal === "hand" || uiState.handPopoverOpen)
+  );
+  if (selectedCardOpen && uiState.selectedHandCard === card.cardId) {
+    if (card.playError) return null;
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: title ?? `Play ${card.cardName}`,
+      message,
+      action: action ?? `Press Play Card, then place ${card.cardName} in a highlighted legal space.`,
+      targetCardId: card.cardId,
+    }, "play-card", `scripted-play:${card.cardId}`), uiState, `scripted-play:${card.cardId}`);
+  }
+  if (uiState.handPopoverOpen) {
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Return to ${card.cardName}`,
+      message: `These card details are covering ${card.cardName}, the next card in the prepared route.`,
+      action: `Press Close, then choose ${card.cardName}.`,
+      targetCardId: card.cardId,
+    }, "close-modal", `scripted-close-for:${card.cardId}`), uiState, `scripted-close-for:${card.cardId}`);
+  }
+  if (!card.inHand || card.playError) return null;
+  return decorateFinishDuelHelp(withTarget({
+    id: FINISH_DUEL_HELP_ID,
+    title: title ?? `Choose ${card.cardName}`,
+    message,
+    action: action ?? `Choose ${card.cardName}, press Play Card, then finish its legal placement.`,
+    targetCardId: card.cardId,
+    targetLabel: `${card.cardName} in your hand`,
+  }, "hand", `scripted-card:${card.cardId}`), uiState, `scripted-card:${card.cardId}`);
+}
+
+function getAcademyCurriculumHelp(uiState) {
+  const route = uiState.scriptedFinishRoute;
+  if (Number(route?.plan?.curriculumVersion ?? 0) < 2 || !route?.active || !route.cards) return null;
+
+  const { plan, cards } = route;
+  const round = Math.max(0, Number(uiState.round) || 0);
+  const targetVp = Math.max(1, Number(plan.victoryTarget) || Number(uiState.victoryTarget) || 15);
+  const playerVp = Math.max(0, Number(uiState.playerVp) || 0);
+  const progressLabel = `Academy reef • ${playerVp}/${targetVp} VP`;
+  const help = (details, target, cue) => decorateFinishDuelHelp(withTarget({
+    id: FINISH_DUEL_HELP_ID,
+    progressLabel,
+    ...details,
+  }, target, cue), uiState, `academy:${cue}`);
+  const play = (card, details = {}) => {
+    const result = getScriptedCardPlayHelp(uiState, card, details);
+    return result ? Object.freeze({ ...result, progressLabel }) : null;
+  };
+  const usedUtility = (action) => Boolean(action && ["used", "cooldown"].includes(action.blockType));
+
+  if (playerVp >= targetVp || uiState.gameResult) return null;
+
+  if (uiState.gamePhase === "setup") {
+    if (uiState.playingCardId === cards.setup?.cardId) {
+      return help({
+        title: `Place ${cards.setup.cardName}`,
+        message: `${cards.setup.cardName} is a Base Coral: a foundation that produces RP and supplies legal creature slots. Its Photosynthesis income is why we begin with a reef rather than a flashy creature.`,
+        action: `Place ${cards.setup.cardName} in the highlighted foundation area.`,
+      }, "placement", "setup-place");
+    }
+    if (!cards.setup?.inPlay) {
+      return play(cards.setup, {
+        title: `Welcome—let's begin with ${cards.setup?.cardName ?? "a Base Coral"}`,
+        message: `Good to have you here, Reefkeeper. We will build this reef patiently, learn every core card type, and finish with an Apex predator. ${cards.setup?.cardName ?? "This Base Coral"} costs 2 RP and creates the steady economy that makes those later plays possible.`,
+        action: `Choose ${cards.setup?.cardName ?? "the highlighted Base Coral"}, press Play Card, then place it in the glowing foundation area.`,
+      });
+    }
+    return help({
+      title: "Begin the first tide",
+      message: "Your first Coral is established. At the start of a round, the Condition changes the rules, your foundations collect RP up to the bank cap, and then you choose which personal deck solves the next part of your plan.",
+      action: "Press Begin Round 1 to reveal the Condition and collect RP.",
+    }, "turn-button", "setup-begin");
+  }
+
+  if (uiState.modal === "turn-draw") {
+    const expected = route.expectedDraw;
+    const preferredDeck = expected?.deckType === "foundation" ? "Foundation" : "Pals";
+    const reasons = {
+      1: `${cards.economy?.cardName ?? "Pillar Coral"} is our second foundation. Early Foundation draws improve income and add the spaces future creatures need.`,
+      2: `${cards.firstFish?.cardName ?? "Spanish Hogfish"} will wait in hand while we use a Support card and establish the remaining Corals.`,
+      3: `${cards.secondFish?.cardName ?? "Parrotfish"} is the second Fish required by Coral Reef; first we will practice an Invertebrate action and a Fish attack.`,
+      4: `${cards.predator?.cardName ?? "Great Barracuda"} is prepared now—not earlier—because Professor Current has compatible creatures and your Coral Reef plan is nearly online.`,
+      5: `${cards.creatureSchool?.cardName ?? "White Grunt"} comes from the Foundation Deck because Creature Schools build long-term School Density and can add RP income. Severe Coral Bleaching makes that resilient foundation more useful than rushing the finisher.`,
+      6: `${cards.filterFeeder?.cardName ?? "Whale Shark"} is in the Pals Deck. Krill Bloom makes its 180 School Density requirement reachable this round, so this draw turns White Grunt's 30 School Density into a planned 11 VP play.`,
+      7: `${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} is a Support card that will deliberately find the Apex finisher instead of leaving the last lesson to chance.`,
+    };
+    return getScriptedFinishDrawHelp(
+      { ...uiState, victoryTarget: targetVp },
+      preferredDeck,
+      reasons[round] ?? "Follow the highlighted authored draw so the Academy lesson can demonstrate the next mechanic on a known board.",
+    );
+  }
+
+  if (uiState.modal === "draw-result") {
+    const drawn = (uiState.drawnCards ?? []).map((card) => card.name).filter(Boolean).join(" and ") || "the prepared card";
+    return help({
+      title: `Review ${drawn}`,
+      message: `Notice which personal deck produced this card and read its type, cost, and abilities. A prepared draw is still a strategic draw: it answers the need we identified before opening the deck.`,
+      action: "Press Continue to Actions. I will point to the exact card or board action that comes next.",
+    }, "continue-actions", `draw-result-${round}-${drawn}`);
+  }
+
+  if (uiState.modal === "search" && route.searchTargetCardId) {
+    const searched = cardsByIdFallback(cards, route.searchTargetCardId);
+    const isApexSearch = route.searchTargetCardId === cards.apex?.cardId;
+    return help({
+      title: `Search for ${searched?.cardName ?? "the highlighted card"}`,
+      message: isApexSearch
+        ? `${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} can search a Predator or Apex. We already built the Coral Reef and an Apex slot, so ${searched?.cardName ?? "Hammerhead"} is useful immediately rather than merely impressive in hand.`
+        : `${cards.coralSupport?.cardName ?? "Coral Gardener"} searches for a Coral. Choose ${searched?.cardName ?? "Lettuce Coral"}: it becomes our fourth true Coral, improves RP income, and supplies another creature slot for the Coral Reef requirement.`,
+      action: `Choose the highlighted ${searched?.cardName ?? "lesson card"} to add it to your hand.`,
+      targetSearchCardId: route.searchTargetCardId,
+    }, "search-card", `search-${route.searchTargetCardId}`);
+  }
+
+  if (uiState.attackContext) {
+    const sourceId = uiState.activeAttack?.cardId;
+    const isApex = sourceId === cards.apex?.cardId;
+    const isPredator = sourceId === cards.predator?.cardId;
+    return help({
+      title: `Resolve ${uiState.activeAttack?.attackName ?? "the attack"}`,
+      message: isApex
+        ? `${cards.apex?.cardName ?? "The Apex"} is demonstrating an on-play sequence: coral damage followed by two attacks. On-play abilities resolve when the card enters, before you choose another main-phase action.`
+        : isPredator
+          ? `${cards.predator?.cardName ?? "Great Barracuda"} has a worthwhile target now. Coral Reef grants its second Bite, which is why playing this predator after building the habitat is stronger than leading with it on an empty opposing reef.`
+          : `${cards.firstFish?.cardName ?? "Spanish Hogfish"}'s Crunch is a paid attack action. Choose the highlighted compatible Invertebrate; the simulator will compare your attack die with its defense die.`,
+      action: "Choose a glowing legal creature on Professor Current's reef, then resolve the faceoff dice.",
+    }, "opponent-board", `attack-${sourceId ?? "active"}`);
+  }
+
+  if (round === 1) {
+    if (!cards.economy?.inPlay) {
+      return play(cards.economy, {
+        title: `Grow first with ${cards.economy?.cardName ?? "Pillar Coral"}`,
+        message: `This is the early-game habit I want you to keep: strengthen RP income and legal play spaces before chasing VP. ${cards.economy?.cardName ?? "Pillar Coral"} also provides the Predator slot we will use only after the opposing reef offers a meaningful target.`,
+      });
+    }
+    return help({
+      title: "Let the foundations collect",
+      message: "That is a complete opening turn. Two foundations will create a larger budget next round; spending the remaining RP on an unrelated card would make the later sequence weaker, not stronger.",
+      action: "Press End Turn. Round 2 will introduce Support cards and finish the four-Coral economy.",
+    }, "turn-button", "end-round-1");
+  }
+
+  if (round === 2) {
+    if (!cards.coralSupport?.inDiscard) {
+      return play(cards.coralSupport, {
+        title: `Use your first Support: ${cards.coralSupport?.cardName ?? "Coral Gardener"}`,
+        message: `Support cards are one-shot tactical effects. They do not occupy a reef slot or add VP; after resolving, they go to the discard pile. ${cards.coralSupport?.cardName ?? "Coral Gardener"} searches for the exact Coral our long-term plan needs, and its text prevents another Support this turn.`,
+        action: `Choose ${cards.coralSupport?.cardName ?? "Coral Gardener"}, press Play Card, then select the highlighted Coral in the search results.`,
+      });
+    }
+    if (!cards.coralBase?.inPlay) {
+      return play(cards.coralBase, {
+        title: `Establish ${cards.coralBase?.cardName ?? "Brain Coral"}`,
+        message: `This Base Coral is more than income. Its upgrade line eventually creates the Apex slot. We are placing the base early because a Coral must survive a full turn before it can advance to its next stage.`,
+      });
+    }
+    if (!cards.searchedCoral?.inPlay) {
+      return play(cards.searchedCoral, {
+        title: `Complete the four-Coral base with ${cards.searchedCoral?.cardName ?? "Lettuce Coral"}`,
+        message: `This is your fourth true Coral. Together the four foundations supply enough RP and enough Fish and Invertebrate spaces to build a Coral Reef without forcing creatures into illegal homes.`,
+      });
+    }
+    return help({
+      title: "The reef has room to grow",
+      message: `You deliberately used a Support card and built four Corals. ${cards.firstFish?.cardName ?? "Spanish Hogfish"} stays in hand until the next collection can pay for the creatures, a card action, an attack, and a Coral upgrade in one coherent turn.`,
+      action: "Press End Turn to collect the larger RP budget for Round 3.",
+    }, "turn-button", "end-round-2");
+  }
+
+  if (round === 3) {
+    if (!cards.bankBoost?.inPlay) {
+      return play(cards.bankBoost, {
+        title: `Learn a passive with ${cards.bankBoost?.cardName ?? "Arrow Crab"}`,
+        message: `This Invertebrate's Eco Boost is passive: it works continuously while the card remains in play and raises your RP bank cap. Passive abilities do not need an action button or an extra payment.`,
+      });
+    }
+    if (!cards.utility?.inPlay) {
+      return play(cards.utility, {
+        title: `Add ${cards.utility?.cardName ?? "Nudibranch"}`,
+        message: `This is your second Invertebrate for Coral Reef. Unlike a passive, its Munch text is an action you choose during the action phase. We will use it once so you can see that card actions and attacks are different systems.`,
+      });
+    }
+    if (!cards.firstFish?.inPlay) {
+      return play(cards.firstFish, {
+        title: `Add your first Fish: ${cards.firstFish?.cardName ?? "Spanish Hogfish"}`,
+        message: `Fish occupy Fish slots and contribute to habitat requirements. ${cards.firstFish?.cardName ?? "Spanish Hogfish"} also has Crunch, a paid attack action, and Professor Current has placed a compatible Sea Urchin so the lesson is not asking you to waste it.`,
+      });
+    }
+    if (!usedUtility(route.utilityAction)) {
+      if (uiState.inspectedUtilityAction?.cardId === cards.utility?.cardId) {
+        return help({
+          title: "Use Munch as a card action",
+          message: "Munch costs 0 RP and flips a coin. On heads you choose an opposing Coral to reduce its next RP production; on tails the action simply has no effect. Either result teaches that an action can be useful without being an attack.",
+          action: "Press Use Munch (0 RP), then follow the coin result.",
+          targetActionKey: route.utilityAction?.utilityActionKey,
+        }, "utility-action-button", "munch-button");
+      }
+      return help({
+        title: `Inspect ${cards.utility?.cardName ?? "Nudibranch"}'s action`,
+        message: "Select the Invertebrate in your ecosystem. Its detail panel separates passive abilities, on-play abilities, actions, and attacks so you can tell when and how each kind of text is used.",
+        action: `Select ${cards.utility?.cardName ?? "Nudibranch"}, then press Use Munch.`,
+        targetActionKey: route.utilityAction?.actionKey,
+      }, "player-board", "munch-card");
+    }
+    if (!usedUtility(route.attackAction)) {
+      if (uiState.inspectedAttack?.cardId === cards.firstFish?.cardId) {
+        return help({
+          title: "Use Crunch as an attack",
+          message: "Crunch costs 1 RP, targets an opposing Invertebrate, and starts an attack-versus-defense faceoff. The dice create uncertainty, but choosing a legal target and preserving the action cost are decisions you control.",
+          action: "Press Use Crunch, choose Sea Urchin, then resolve the faceoff.",
+          targetActionKey: route.attackAction?.actionKey,
+        }, "attack-button", "crunch-button");
+      }
+      return help({
+        title: `Attack with ${cards.firstFish?.cardName ?? "Spanish Hogfish"}`,
+        message: "Now compare the earlier card action with combat. Select Spanish Hogfish; the simulator will only glow targets that Crunch is allowed to challenge.",
+        action: `Select ${cards.firstFish?.cardName ?? "Spanish Hogfish"}, then use Crunch on Sea Urchin.`,
+        targetActionKey: route.attackAction?.actionKey,
+      }, "player-board", "crunch-card");
+    }
+    if (!cards.coralStageOne?.inPlay) {
+      return play(cards.coralStageOne, {
+        title: `Upgrade to ${cards.coralStageOne?.cardName ?? "Brain Coral Stage 1"}`,
+        message: "Coral upgrades replace the earlier stage while preserving its position and surviving attached creatures. Brain Coral has now been in play for a full turn, so its first upgrade is legal and increases both income and future slot quality.",
+        placementMessage: `Choose the highlighted ${cards.coralBase?.cardName ?? "Brain Coral"} to advance it to Stage 1.`,
+      });
+    }
+    return help({
+      title: "A complete action-phase lesson",
+      message: "This turn added both creature classes required by the habitat plan, demonstrated a passive, resolved a non-attack action, made a legal attack, and advanced a Coral. The remaining RP is intentionally banked.",
+      action: "Press End Turn. Round 4 will assemble Coral Reef before using a Predator.",
+    }, "turn-button", "end-round-3");
+  }
+
+  if (round === 4) {
+    if (!cards.secondFish?.inPlay) {
+      return play(cards.secondFish, {
+        title: `Add the second Fish: ${cards.secondFish?.cardName ?? "Parrotfish"}`,
+        message: "Parrotfish completes Coral Reef's creature composition: four Corals, two Fish, and two Invertebrates. Its Eat ability is an on-play effect, so it resolves immediately after legal placement rather than waiting for an action button.",
+      });
+    }
+    if (!cards.habitat?.inPlay) {
+      return play(cards.habitat, {
+        title: `Create the ${cards.habitat?.cardName ?? "Coral Reef"} Habitat`,
+        message: "Habitats sit in their own reef zone and can unlock relationships or card requirements. Coral Reef costs 0 RP, but only because your board has earned it with four Corals, two Fish, and two Invertebrates; if that composition later breaks, maintenance damage begins.",
+      });
+    }
+    if (!cards.coralStageTwo?.inPlay) {
+      return play(cards.coralStageTwo, {
+        title: `Open an Apex slot with ${cards.coralStageTwo?.cardName ?? "Brain Coral Stage 2"}`,
+        message: "This expensive upgrade is the structural payoff of the early economy. Stage 2 creates the Apex slot Hammerhead will require in the final round, so the play advances a specific plan instead of spending RP merely because it is available.",
+        placementMessage: `Choose the highlighted ${cards.coralStageOne?.cardName ?? "Brain Coral Stage 1"} to advance it to Stage 2.`,
+      });
+    }
+    if (!cards.predator?.inPlay) {
+      return play(cards.predator, {
+        title: `Now ${cards.predator?.cardName ?? "Great Barracuda"} has a job`,
+        message: `This is the right time for the Predator. Professor Current has compatible Fish and Predators, Coral Reef grants a second Bite, and Murky Water reduces the printed 3 RP cost to 2. Earlier, the same play would have wasted its on-play ability and delayed the reef economy.`,
+        action: `Play ${cards.predator?.cardName ?? "Great Barracuda"} in Pillar Coral's Predator slot, then resolve both legal Bites.`,
+      });
+    }
+    return help({
+      title: "The food web is ready for an Apex",
+      message: `Your reef is now worth ${playerVp} VP, but more importantly it has an economy, a balanced community, a Habitat, and an Apex slot. Before the finisher, we will learn how Creature Schools support the largest animals in the food web.`,
+      action: "Press End Turn. Round 5 will add your first Creature School.",
+    }, "turn-button", "end-round-4");
+  }
+
+  if (round === 5) {
+    if (!cards.creatureSchool?.inPlay) {
+      return play(cards.creatureSchool, {
+        title: `Establish a Creature School with ${cards.creatureSchool?.cardName ?? "White Grunt"}`,
+        message: `Welcome to a new kind of foundation. Creature Schools are creatures that begin in the foundation area: they have HP and can be attacked, but they also produce School Density for larger ocean animals. ${cards.creatureSchool?.cardName ?? "White Grunt"} supplies 30 School Density, and its Eco Foundation adds 1 RP on future turns.`,
+        action: `Choose ${cards.creatureSchool?.cardName ?? "White Grunt"}, press Play Card, then place it in the highlighted foundation area.`,
+        placementMessage: `Place ${cards.creatureSchool?.cardName ?? "White Grunt"} in the highlighted foundation area. Its 30 School Density will make next round's Filter Feeder legal, and its Eco Foundation can collect 1 RP on later turns.`,
+      });
+    }
+    return help({
+      title: "School Density is now part of the plan",
+      message: `${cards.creatureSchool?.cardName ?? "White Grunt"} shows why foundations are not limited to Corals. Its 30 School Density represents a food base that can support a much larger animal, while its RP passive helps the reef recover from a stressful condition.`,
+      action: "Press End Turn. Round 6 will reveal a condition that makes a Filter Feeder possible.",
+    }, "turn-button", "end-round-5");
+  }
+
+  if (round === 6) {
+    if (!cards.filterFeeder?.inPlay) {
+      return play(cards.filterFeeder, {
+        title: `Use School Density to welcome ${cards.filterFeeder?.cardName ?? "Whale Shark"}`,
+        message: `Filter Feeders are high-value creatures supported by the abundance of small schooling animals in the ecosystem. ${cards.filterFeeder?.cardName ?? "Whale Shark"} normally requires 180 School Density, but Krill Bloom reduces the next Filter Feeder requirement by 150. ${cards.creatureSchool?.cardName ?? "White Grunt"}'s 30 Density exactly covers the remaining requirement, and Coral Reef satisfies the Habitat requirement.`,
+        action: `Choose ${cards.filterFeeder?.cardName ?? "Whale Shark"} and press Play Card. As an Ocean creature, it enters open water automatically; then review the confirmation.`,
+      });
+    }
+    return help({
+      title: "The reef can support a giant",
+      message: `${cards.filterFeeder?.cardName ?? "Whale Shark"} demonstrates the full chain: a Creature School supplies School Density, a Habitat satisfies the ecological requirement, and a well-timed Condition makes the play legal. The reef now has the 20 VP base needed for an Apex finish.`,
+      action: "Press End Turn. Round 7 will use a Support search to find and play the Apex.",
+    }, "turn-button", "end-round-6");
+  }
+
+  if (round >= 7) {
+    if (!cards.apexSupport?.inDiscard && !cards.apex?.inHand && !cards.apex?.inPlay) {
+      return play(cards.apexSupport, {
+        title: `Search with ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}`,
+        message: `One final current to read, Reefkeeper. ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} is a zero-cost, one-shot Support that searches for a Predator or Apex and then goes to the discard pile. Strong search play starts by checking the board: Coral Reef satisfies Hammerhead's requirement, Brain Coral provides the Apex slot, and even Bleak Overcast leaves exactly the 6 RP we need.`,
+        action: `Play ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}, then choose the highlighted Hammerhead.`,
+      });
+    }
+    if (!cards.apex?.inPlay) {
+      return play(cards.apex, {
+        title: `Cap the ecosystem with ${cards.apex?.cardName ?? "Hammerhead"}`,
+        message: "Apex creatures are powerful finishers with demanding prerequisites, so they belong at the end of a plan rather than the beginning. Hammerhead is good here because the reef already supports it: Coral Reef is active, an Apex slot is open, there is enough RP, and Professor Current has legal targets for Ravage.",
+        action: `Play ${cards.apex?.cardName ?? "Hammerhead"} in the highlighted Apex slot, then resolve its coral damage and two attacks to complete the ${targetVp} VP Academy reef.`,
+      });
+    }
+  }
+
+  return help({
+    title: "Return to the authored lesson step",
+    message: "The prepared card is still available, but another panel or unresolved effect is covering it. Finish the open interaction and I will point to the next exact move.",
+    action: "Close the current panel or resolve the highlighted effect to continue.",
+  }, "close-modal", `recover-${round}`);
+}
+
+function cardsByIdFallback(cards, cardId) {
+  return Object.values(cards ?? {}).find((card) => card?.cardId === cardId) ?? null;
+}
+
+function getLegacyScriptedFinishDuelHelp(uiState) {
+  const route = uiState.scriptedFinishRoute;
+  if (!route?.active || !route.plan || !route.cards) return null;
+  const { plan, cards } = route;
+  const round = Math.max(0, Number(uiState.round) || 0);
+
+  if (uiState.modal === "turn-draw") {
+    if (!cards.economy.inPlay) {
+      return getScriptedFinishDrawHelp(
+        uiState,
+        "Foundation",
+        `${cards.economy.cardName} is the economy card that makes every later RP total work.`,
+      );
+    }
+    if (!cards.utility.inPlay) {
+      return getScriptedFinishDrawHelp(
+        uiState,
+        "Pals",
+        `${cards.utility.cardName} is prepared on top so we can learn its Scavenge action.`,
+      );
+    }
+    return getScriptedFinishDrawHelp(
+      uiState,
+      "Foundation",
+      round === 3
+        ? `Keep ${cards.finishSearch.cardName} inside the Pals Deck so ${cards.utility.cardName} can search for it deliberately this round.`
+        : `${cards.finishSearch.cardName} and ${cards.heldFinish.cardName} are already reserved for the finish, so draw Foundation without disturbing that pair.`,
+    );
+  }
+
+  if (uiState.modal === "draw-result") {
+    const nextAction = !cards.economy.inPlay
+      ? `play ${cards.economy.cardName}`
+      : !cards.utility.inPlay
+        ? `play ${cards.utility.cardName}`
+        : round === 3 && !cards.finishSearch.inHand && !cards.finishSearch.inPlay
+          ? `use ${cards.utility.cardName}'s Scavenge to find ${cards.finishSearch.cardName}`
+          : `continue to the final build with ${cards.finishSearch.cardName}`;
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: "Review the prepared draw",
+      message: "Read the revealed card, then return to the reef. The draw is information; the planned action still comes next.",
+      action: `Press Continue to Actions, then ${nextAction}.`,
+    }, "continue-actions", `scripted-draw-result:${round}:${nextAction}`), uiState, `scripted-draw-result:${round}:${nextAction}`);
+  }
+
+  if (uiState.attackContext) {
+    const isFinishAttack = uiState.activeAttack?.cardId === plan.finishSearchCardId;
+    const targetName = isFinishAttack ? "Frogfish" : "Sea Urchin";
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Finish ${uiState.activeAttack?.attackName ?? "the attack"}`,
+      message: isFinishAttack
+        ? `${cards.finishSearch.cardName}'s on-play attack is part of the final lesson. I kept Frogfish available as its compatible target.`
+        : `${cards.attack.cardName} is attacking the Sea Urchin prepared for the Crunch lesson.`,
+      action: `Choose the glowing ${targetName}, then resolve the faceoff.`,
+    }, "opponent-board", `scripted-attack-target:${uiState.activeAttack?.cardId ?? "card"}`), uiState, `scripted-attack-target:${uiState.activeAttack?.cardId ?? "card"}`);
+  }
+
+  if (!cards.economy.inPlay) {
+    return getScriptedCardPlayHelp(uiState, cards.economy, {
+      title: `Build the economy with ${cards.economy.cardName}`,
+      message: `${cards.economy.cardName} is legal for ${cards.economy.cost} RP and adds the income and Predator slot required by the prepared finish.`,
+    });
+  }
+
+  if (round <= 1 && !cards.utility.inPlay) {
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: "Let the economy collect once",
+      message: `${cards.economy.cardName} is in place. End this turn so both foundations can collect before the Scavenge lesson.`,
+      action: `Press End Turn. On Round 2, draw one Pals card to reveal ${cards.utility.cardName}.`,
+    }, "turn-button", "scripted-end-round-one"), uiState, "scripted-end-round-one");
+  }
+
+  if (!cards.utility.inPlay) {
+    return getScriptedCardPlayHelp(uiState, cards.utility, {
+      title: `Play ${cards.utility.cardName}`,
+      message: `${cards.utility.cardName} costs ${cards.utility.cost} RP. Its Scavenge action will turn two expendable cards into the exact attacker this board needs.`,
+    });
+  }
+
+  if (!cards.attack.inPlay) {
+    if (cards.attack.inHand || cards.attack.isPlaying) {
+      return getScriptedCardPlayHelp(uiState, cards.attack, {
+        title: `Play ${cards.attack.cardName}`,
+        message: `${cards.attack.cardName} costs ${cards.attack.cost} RP, and its Crunch action needs ${Math.max(0, Number(route.attackAction?.attackCost ?? 0))} more RP. The prepared Sea Urchin is a legal target.`,
+        action: `Press Play Card, place ${cards.attack.cardName}, then use Crunch on Sea Urchin.`,
+      });
+    }
+    if (route.utilityAction?.ready) {
+      if (uiState.inspectedUtilityAction?.ready && uiState.inspectedUtilityAction.cardId === plan.utilityCardId) {
+        return decorateFinishDuelHelp(withTarget({
+          id: FINISH_DUEL_HELP_ID,
+          title: "Use Scavenge for a planned attacker",
+          message: `${cards.utility.cardName}'s Scavenge is ready for ${route.utilityAction.actionCost} RP. The next prompts will highlight two safe discards and ${cards.attack.cardName}.`,
+          action: `Press Use Scavenge (${route.utilityAction.actionCost} RP), then follow the highlighted discard and search choices.`,
+          targetActionKey: route.utilityAction.utilityActionKey,
+          targetLabel: `Scavenge on ${cards.utility.cardName}`,
+        }, "utility-action-button", "scripted-first-scavenge-button"), uiState, "scripted-first-scavenge-button");
+      }
+      if (uiState.inspectedCardOpen || uiState.handPopoverOpen || uiState.modal === "hand") {
+        return decorateFinishDuelHelp(withTarget({
+          id: FINISH_DUEL_HELP_ID,
+          title: `Return to ${cards.utility.cardName}`,
+          message: `${cards.utility.cardName} is already in play and ready to Scavenge. Another card is not required first.`,
+          action: `Close this view, select ${cards.utility.cardName}, then use Scavenge.`,
+        }, "close-modal", "scripted-first-scavenge-close"), uiState, "scripted-first-scavenge-close");
+      }
+      return decorateFinishDuelHelp(withTarget({
+        id: FINISH_DUEL_HELP_ID,
+        title: `Use ${cards.utility.cardName}'s Scavenge`,
+        message: `Scavenge costs ${route.utilityAction.actionCost} RP and searches either personal deck after two safe discards. We will use it to choose ${cards.attack.cardName}, not rely on a random draw.`,
+        action: `Select ${cards.utility.cardName}, then press Use Scavenge (${route.utilityAction.actionCost} RP).`,
+        targetActionKey: route.utilityAction.actionKey,
+        targetLabel: `${cards.utility.cardName} in your ecosystem`,
+      }, "player-board", "scripted-first-scavenge"), uiState, "scripted-first-scavenge");
+    }
+    return null;
+  }
+
+  if (route.attackAction?.ready && route.attackTargetInPlay) {
+    if (uiState.inspectedAttack?.ready && uiState.inspectedAttack.cardId === plan.attackCardId) {
+      return decorateFinishDuelHelp(withTarget({
+        id: FINISH_DUEL_HELP_ID,
+        title: "Use Crunch on Sea Urchin",
+        message: `${cards.attack.cardName}'s Crunch is ready and Sea Urchin is the compatible target prepared for this lesson.`,
+        action: "Press Use Crunch, choose Sea Urchin, then resolve the faceoff.",
+        targetActionKey: route.attackAction.actionKey,
+        targetLabel: `Crunch on ${cards.attack.cardName}`,
+      }, "attack-button", "scripted-crunch-button"), uiState, "scripted-crunch-button");
+    }
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Attack with ${cards.attack.cardName}`,
+      message: `${cards.attack.cardName} is in place with enough RP for Crunch. Complete the attack before banking for the final cards.`,
+      action: `Select ${cards.attack.cardName}, then use Crunch on Sea Urchin.`,
+      targetActionKey: route.attackAction.actionKey,
+      targetLabel: `${cards.attack.cardName} in your ecosystem`,
+    }, "player-board", "scripted-crunch"), uiState, "scripted-crunch");
+  }
+
+  if (round <= 2) {
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: "Bank the next collection for the finish",
+      message: `The attack lesson is complete at ${Math.max(0, Number(uiState.playerVp) || 0)} VP. End the turn so Round 3 can use Scavenge once more without sacrificing ${cards.heldFinish.cardName}.`,
+      action: "Press End Turn. On Round 3, draw Foundation before using Scavenge again.",
+    }, "turn-button", "scripted-end-round-two"), uiState, "scripted-end-round-two");
+  }
+
+  if (round === 3 && !cards.finishSearch.inHand && !cards.finishSearch.inPlay) {
+    if (route.utilityAction?.ready) {
+      if (uiState.inspectedUtilityAction?.ready && uiState.inspectedUtilityAction.cardId === plan.utilityCardId) {
+        return decorateFinishDuelHelp(withTarget({
+          id: FINISH_DUEL_HELP_ID,
+          title: `Scavenge for ${cards.finishSearch.cardName}`,
+          message: `This second Scavenge spends ${route.utilityAction.actionCost} RP now so the final Predator is guaranteed in hand. The discard prompt will protect ${cards.heldFinish.cardName}.`,
+          action: `Press Use Scavenge (${route.utilityAction.actionCost} RP), choose the highlighted safe discards, then select ${cards.finishSearch.cardName}.`,
+          targetActionKey: route.utilityAction.utilityActionKey,
+          targetLabel: `Scavenge on ${cards.utility.cardName}`,
+        }, "utility-action-button", "scripted-second-scavenge-button"), uiState, "scripted-second-scavenge-button");
+      }
+      if (uiState.inspectedCardOpen || uiState.handPopoverOpen || uiState.modal === "hand") {
+        return decorateFinishDuelHelp(withTarget({
+          id: FINISH_DUEL_HELP_ID,
+          title: `Return to ${cards.utility.cardName}`,
+          message: `The Round 3 action is already on the board: ${cards.utility.cardName} can Scavenge for ${cards.finishSearch.cardName}.`,
+          action: `Close this view, select ${cards.utility.cardName}, and use Scavenge.`,
+        }, "close-modal", "scripted-second-scavenge-close"), uiState, "scripted-second-scavenge-close");
+      }
+      return decorateFinishDuelHelp(withTarget({
+        id: FINISH_DUEL_HELP_ID,
+        title: `Search for ${cards.finishSearch.cardName}`,
+        message: `You have ${Math.max(0, Number(uiState.availableRp) || 0)} RP. Spend ${route.utilityAction.actionCost} on a second Scavenge, preserve ${cards.heldFinish.cardName}, and bank what remains for Murky Water.`,
+        action: `Select ${cards.utility.cardName}, press Use Scavenge (${route.utilityAction.actionCost} RP), then follow the highlighted choices.`,
+        targetActionKey: route.utilityAction.actionKey,
+        targetLabel: `${cards.utility.cardName} in your ecosystem`,
+      }, "player-board", "scripted-second-scavenge"), uiState, "scripted-second-scavenge");
+    }
+    return null;
+  }
+
+  if (round === 3 && cards.finishSearch.inHand) {
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: "Protect the two-card finish",
+      message: `${cards.finishSearch.cardName} and ${cards.heldFinish.cardName} are now together in your hand. Keep the remaining ${Math.max(0, Number(uiState.availableRp) || 0)} RP; Murky Water will discount the Predator next round.`,
+      action: `Press End Turn. In Round ${plan.finishRound}, draw Foundation, then play ${cards.finishSearch.cardName} before ${cards.heldFinish.cardName}.`,
+    }, "turn-button", "scripted-bank-finish"), uiState, "scripted-bank-finish");
+  }
+
+  if (round === Number(plan.finishRound) && route.activeConditionId === "murky-water") {
+    if (!cards.finishSearch.inPlay) {
+      return getScriptedCardPlayHelp(uiState, cards.finishSearch, {
+        title: `Use Murky Water: play ${cards.finishSearch.cardName}`,
+        message: `Murky Water reduces this Predator from ${cards.finishSearch.printedCost} RP to ${cards.finishSearch.cost} RP. Its ${cards.finishSearch.victoryPoints} VP and on-play attack come first, leaving exactly enough RP for ${cards.heldFinish.cardName}.`,
+        action: `Press Play Card, place ${cards.finishSearch.cardName} in the open Predator slot, then resolve its attack against Frogfish.`,
+        placementMessage: `Place ${cards.finishSearch.cardName} in the highlighted Predator slot on ${cards.economy.cardName}. Its on-play attack will begin immediately afterward.`,
+      });
+    }
+    if (!cards.heldFinish.inPlay) {
+      return getScriptedCardPlayHelp(uiState, cards.heldFinish, {
+        title: `Finish with ${cards.heldFinish.cardName}`,
+        message: `${cards.finishSearch.cardName} has raised the reef to ${Math.max(0, Number(uiState.playerVp) || 0)} VP. ${cards.heldFinish.cardName} costs the remaining ${cards.heldFinish.cost} RP and contributes the final ${cards.heldFinish.victoryPoints} VP.`,
+        action: `Press Play Card and place ${cards.heldFinish.cardName} in the open Invertebrate slot to reach ${plan.victoryTarget} VP.`,
+        placementMessage: `Place ${cards.heldFinish.cardName} in the highlighted Invertebrate slot. This final legal placement completes the ${plan.victoryTarget} VP reef.`,
+      });
+    }
+  }
+
+  return null;
+}
+
+function getScriptedFinishDuelHelp(uiState) {
+  return getAcademyCurriculumHelp(uiState) ?? getLegacyScriptedFinishDuelHelp(uiState);
+}
+
+function getFinishDuelHelp(uiState) {
+  if (uiState.victoryPending !== true) return null;
+  const context = finishDuelContext(uiState);
+  if (context.playerVp >= context.targetVp) return null;
+
+  if (uiState.gamePhase === "setup") {
+    if (uiState.playingCardId) {
+      return decorateFinishDuelHelp(withTarget({
+        id: FINISH_DUEL_HELP_ID,
+        title: `Place ${uiState.playingCardName ?? "your foundation"}`,
+        message: "A new practice board still needs its first legal foundation before we can continue the race to 10 VP.",
+        action: "Choose one of the glowing legal placement areas in your ecosystem.",
+      }, "placement", "setup:placement"), uiState, `setup:placement:${uiState.playingCardId}`);
+    }
+    if (!uiState.hasCoralInPlay) {
+      const setupCardId = String(uiState.scriptedSetupCardId ?? "").trim();
+      const setupCardName = String(uiState.scriptedSetupCardName ?? "a Base Coral or Creature School");
+      const selected = Boolean(
+        uiState.selectedHandCard
+        && (!setupCardId || uiState.selectedHandCard === setupCardId)
+        && (uiState.modal === "hand" || uiState.handPopoverOpen)
+      );
+      return decorateFinishDuelHelp(withTarget({
+        id: FINISH_DUEL_HELP_ID,
+        title: `Rebuild with ${setupCardName}`,
+        message: "Your saved lesson evidence is safe. This fresh practice board only needs a foundation before Professor Current can guide the remaining duel.",
+        action: selected
+          ? `Press Play Card, then place ${setupCardName} in the highlighted area.`
+          : `Choose the glowing ${setupCardName} in your hand, then press Play Card.`,
+        targetCardId: setupCardId || null,
+        targetLabel: setupCardId ? `${setupCardName} in your hand` : null,
+      }, selected ? "play-card" : "hand", selected ? "setup:play" : "setup:hand"), uiState, selected ? "setup:play" : "setup:hand");
+    }
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: "Begin the practice round",
+      message: "Your new foundation is ready. Begin the round to collect RP and resume the guided race to the VP target.",
+      action: uiState.modal === "hand" || uiState.handPopoverOpen
+        ? "Close your hand, then press Begin Round 1."
+        : "Press Begin Round 1 to collect RP and draw.",
+    }, "turn-button", "setup:begin"), uiState, "setup:begin");
+  }
+
+  const blockingModalHelp = getFinishBlockingModalHelp(uiState);
+  if (blockingModalHelp) return blockingModalHelp;
+
+  const scriptedFinishHelp = getScriptedFinishDuelHelp(uiState);
+  if (scriptedFinishHelp) return scriptedFinishHelp;
+
+  if (uiState.modal === "turn-draw") return getFinishDuelDrawHelp(uiState);
+  if (uiState.modal === "draw-result") {
+    const resultHelp = getDrawResultHelp(FINISH_DUEL_HELP_ID, uiState);
+    return decorateFinishDuelHelp(resultHelp, uiState, `draw-result:${(uiState.drawnCards ?? []).map((card) => card.cardId).join(",") || "empty"}`);
+  }
+  if (uiState.playingCardId) {
+    const cardName = uiState.playingCardName ?? "the selected card";
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Place ${cardName}`,
+      message: `${cardName} has left your hand, but its VP will not count until you finish a legal placement.`,
+      action: "Choose one of the glowing legal placement areas in your ecosystem.",
+    }, "placement", `placement:${uiState.playingCardId}`), uiState, `placement:${uiState.playingCardId}`);
+  }
+
+  const vpBuild = uiState.recommendedVpBuildCard ?? null;
+  const fallbackBuild = uiState.recommendedBuildCard ?? null;
+  const selectedCardOpen = Boolean(
+    uiState.selectedHandCard && (uiState.modal === "hand" || uiState.handPopoverOpen)
+  );
+  if (selectedCardOpen) {
+    const selectedName = uiState.selectedCardName ?? "This card";
+    const selectedIsVpBuild = vpBuild?.cardId === uiState.selectedHandCard;
+    const selectedIsFallbackBuild = !vpBuild && fallbackBuild?.cardId === uiState.selectedHandCard;
+    if (uiState.selectedCardPlayError) {
+      const recommendation = vpBuild ?? fallbackBuild;
+      return decorateFinishDuelHelp(withTarget({
+        id: FINISH_DUEL_HELP_ID,
+        title: `${selectedName} is not playable yet`,
+        message: `${uiState.selectedCardPlayError} ${recommendation ? `${recommendation.cardName} is legal right now.` : "We need another collection or draw before building again."}`,
+        action: uiState.handPopoverOpen
+          ? recommendation
+            ? `Close these details, then choose ${recommendation.cardName}.`
+            : "Close these details, check any remaining actions, then end the turn."
+          : recommendation
+            ? `Choose the glowing ${recommendation.cardName} instead.`
+            : "Close your hand, check any remaining actions, then end the turn.",
+        targetCardId: !uiState.handPopoverOpen ? recommendation?.cardId ?? null : null,
+        targetLabel: !uiState.handPopoverOpen && recommendation ? `${recommendation.cardName} in your hand` : null,
+      }, uiState.handPopoverOpen ? "close-modal" : recommendation ? "hand" : "close-modal", `selected-blocked:${uiState.selectedHandCard}:${recommendation?.cardId ?? "none"}`), uiState, `selected-blocked:${uiState.selectedHandCard}:${recommendation?.cardId ?? "none"}`);
+    }
+    if (selectedIsVpBuild || selectedIsFallbackBuild || (!vpBuild && !fallbackBuild)) {
+      const cardVp = Math.max(0, Number(uiState.selectedCardVictoryPoints) || 0);
+      return decorateFinishDuelHelp(withTarget({
+        id: FINISH_DUEL_HELP_ID,
+        title: cardVp > 0 ? `Play ${selectedName} for ${cardVp} VP` : `Play ${selectedName}`,
+        message: cardVp > 0
+          ? `${selectedName} is legal now and moves your ecosystem from ${context.playerVp} VP toward the ${context.targetVp} VP goal.`
+          : `${selectedName} is legal now and can strengthen the ecosystem supporting your remaining ${context.remainingVp} VP.`,
+        action: "Press Play Card, then follow the highlighted placement or effect prompt.",
+      }, "play-card", `selected:${uiState.selectedHandCard}`), uiState, `selected:${uiState.selectedHandCard}`);
+    }
+    const recommendation = vpBuild ?? fallbackBuild;
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Choose ${recommendation.cardName}`,
+      message: `${recommendation.cardName} is the stronger guided build because it is legal now${Number(recommendation.victoryPoints ?? 0) > 0 ? ` and adds ${Number(recommendation.victoryPoints)} VP` : " and improves your ecosystem"}.`,
+      action: uiState.handPopoverOpen
+        ? `Close these details, then choose ${recommendation.cardName}.`
+        : `Choose the glowing ${recommendation.cardName}, then press Play Card.`,
+      targetCardId: uiState.handPopoverOpen ? null : recommendation.cardId,
+      targetLabel: uiState.handPopoverOpen ? null : `${recommendation.cardName} in your hand`,
+    }, uiState.handPopoverOpen ? "close-modal" : "hand", `switch:${uiState.selectedHandCard}:${recommendation.cardId}`), uiState, `switch:${uiState.selectedHandCard}:${recommendation.cardId}`);
+  }
+
+  if (uiState.attackContext) {
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: uiState.activeAttack ? `${uiState.activeAttack.cardName} is attacking` : "Choose a legal target",
+      message: "The attack is already active. Finish it before choosing the next build toward 10 VP.",
+      action: "Choose one of the glowing legal targets in Professor Current's ecosystem.",
+    }, "opponent-board", `active-attack:${uiState.activeAttack?.cardId ?? "card"}`), uiState, `active-attack:${uiState.activeAttack?.cardId ?? "card"}`);
+  }
+
+  if (vpBuild) {
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Add ${vpBuild.victoryPoints} VP with ${vpBuild.cardName}`,
+      message: `You are at ${context.playerVp}/${context.targetVp} VP. ${vpBuild.cardName} is legal and affordable now, so it is the clearest next step toward the remaining ${context.remainingVp} VP.`,
+      action: `Choose ${vpBuild.cardName}, press Play Card, and finish its legal placement.`,
+      targetCardId: vpBuild.cardId,
+      targetLabel: `${vpBuild.cardName} in your hand`,
+    }, "hand", `vp-build:${vpBuild.cardId}`), uiState, `vp-build:${vpBuild.cardId}`);
+  }
+
+  if (uiState.inspectedUtilityAction?.ready) {
+    const utility = uiState.inspectedUtilityAction;
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Use ${utility.actionName}`,
+      message: `${describeUtilityAction(utility)} With no immediate VP build available, use it to improve the choices behind your final ${context.remainingVp} VP.`,
+      action: `Press Use ${utility.actionName} (${utility.actionCost} RP) and follow its prompts.`,
+      targetActionKey: utility.utilityActionKey,
+      targetLabel: `${utility.actionName} on ${utility.cardName}`,
+    }, "utility-action-button", `utility-button:${utility.utilityActionKey}`), uiState, `utility-button:${utility.utilityActionKey}`);
+  }
+
+  if (uiState.inspectedAttack?.ready) {
+    const attack = uiState.inspectedAttack;
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Use ${attack.attackName}`,
+      message: `${attack.cardName} can attack now. It will not directly add VP, but disrupting Professor Current can protect your race to ${context.targetVp}.`,
+      action: `Press Use ${attack.attackName}, then choose a glowing legal target.`,
+      targetActionKey: attack.actionKey,
+      targetLabel: `${attack.attackName} on ${attack.cardName}`,
+    }, "attack-button", `attack-button:${attack.actionKey ?? attack.cardId}`), uiState, `attack-button:${attack.actionKey ?? attack.cardId}`);
+  }
+
+  if (uiState.inspectedCardOpen) {
+    const next = uiState.readyUtilityAction ?? uiState.readyAttack ?? fallbackBuild;
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: "Return to the next useful move",
+      message: "These card details are covering the next guided action in the race to 10 VP.",
+      action: next
+        ? `Close these details, then ${next.actionName ? `use ${next.actionName} on ${next.cardName}` : next.attackName ? `use ${next.attackName} on ${next.cardName}` : `choose ${next.cardName}`}.`
+        : "Close these details, then end the turn to collect RP and draw again.",
+    }, "close-modal", `close-inspector:${next?.utilityActionKey ?? next?.actionKey ?? next?.cardId ?? "end"}`), uiState, `close-inspector:${next?.utilityActionKey ?? next?.actionKey ?? next?.cardId ?? "end"}`);
+  }
+
+  if (uiState.readyUtilityAction) {
+    const utility = uiState.readyUtilityAction;
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Use ${utility.cardName}'s ${utility.actionName}`,
+      message: `${describeUtilityAction(utility)} There is no immediate VP build in hand, so this action can improve the plan behind your remaining ${context.remainingVp} VP.`,
+      action: `Select ${utility.cardName}, then use ${utility.actionName} (${utility.actionCost} RP).`,
+      targetActionKey: utility.actionKey,
+      targetLabel: `${utility.cardName} in your ecosystem`,
+    }, "player-board", `utility:${utility.utilityActionKey}`), uiState, `utility:${utility.utilityActionKey}`);
+  }
+
+  if (uiState.readyAttack) {
+    const attack = uiState.readyAttack;
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Attack with ${attack.cardName}`,
+      message: `${attack.attackName} is legal now. It does not directly add VP, but removing one of Professor Current's cards can slow the opposing score while you prepare your next build.`,
+      action: `Select ${attack.cardName}, then use ${attack.attackName}.`,
+      targetActionKey: attack.actionKey,
+      targetLabel: `${attack.cardName} in your ecosystem`,
+    }, "player-board", `attack:${attack.actionKey ?? attack.cardId}`), uiState, `attack:${attack.actionKey ?? attack.cardId}`);
+  }
+
+  if (fallbackBuild) {
+    return decorateFinishDuelHelp(withTarget({
+      id: FINISH_DUEL_HELP_ID,
+      title: `Strengthen the reef with ${fallbackBuild.cardName}`,
+      message: `${fallbackBuild.cardName} is legal now. It may not add printed VP immediately, but it can expand the economy or relationships needed for the final ${context.remainingVp} VP.`,
+      action: `Choose ${fallbackBuild.cardName}, press Play Card, and follow its placement prompt.`,
+      targetCardId: fallbackBuild.cardId,
+      targetLabel: `${fallbackBuild.cardName} in your hand`,
+    }, "hand", `build:${fallbackBuild.cardId}`), uiState, `build:${fallbackBuild.cardId}`);
+  }
+
+  return decorateFinishDuelHelp(withTarget({
+    id: FINISH_DUEL_HELP_ID,
+    title: `Prepare the final ${context.remainingVp} VP`,
+    message: `You are at ${context.playerVp}/${context.targetVp} VP and Professor Current is at ${context.opponentVp}. No legal build or useful card action is ready, so another collection and draw will create the next decision.`,
+    action: "End the turn. On the next round, collect RP and draw toward another legal ecosystem card.",
+  }, "turn-button", "end-turn"), uiState, "end-turn");
 }
 
 export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
   const checkpointId = requireCheckpointId(checkpoint);
-  if (!checkpointId) {
-    if (uiState.complete !== true) return null;
-    return withTarget({
-      id: "tutorial-complete",
-      title: "Finish the friendly duel",
-      message: "Excellent work! You have practiced every part of a turn. I will stay nearby while you finish the match.",
-      action: "Keep building your ecosystem until your VP counter reaches the practice target.",
-    }, "vp-score", "finish-duel");
-  }
+  const academyHelp = getAcademyCurriculumHelp(uiState);
+  if (academyHelp) return academyHelp;
+  if (!checkpointId) return getFinishDuelHelp(uiState);
 
   const authored = HELP_BY_CHECKPOINT[checkpointId] ?? {
     message: checkpoint.instruction,
@@ -252,6 +1279,25 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       }, "placement", "setup:placement");
     }
     if (!uiState.hasCoralInPlay) {
+      const scriptedSetupCardId = String(uiState.scriptedSetupCardId ?? "").trim();
+      if (scriptedSetupCardId) {
+        const scriptedSetupCardName = String(uiState.scriptedSetupCardName ?? "Mustard Hill Coral");
+        const selectedScriptedCard = uiState.selectedHandCard === scriptedSetupCardId
+          && (uiState.modal === "hand" || uiState.handPopoverOpen);
+        return withTarget({
+          id: checkpointId,
+          title: `Begin with ${scriptedSetupCardName}`,
+          lead: "",
+          message: `Welcome to our practice reef. I placed ${scriptedSetupCardName} in your opening hand because its steady Photosynthesis income will fund the card-action and attack lessons ahead. The other foundations can wait for a free-practice duel.`,
+          playerThought: "This setup choice is part of the experiment: a known foundation gives the later turns a reliable RP budget, so I can focus on learning each action.",
+          encouragement: "Precisely. Once the lesson is complete, I hope you will test every opening you like. For now, a controlled starting point lets us see why each result occurs.",
+          action: selectedScriptedCard
+            ? `Press Play Card, then place ${scriptedSetupCardName} in the highlighted area.`
+            : `Choose the glowing ${scriptedSetupCardName} in your hand, then press Play Card.`,
+          targetCardId: scriptedSetupCardId,
+          targetLabel: `${scriptedSetupCardName} in your hand`,
+        }, selectedScriptedCard ? "play-card" : "hand", selectedScriptedCard ? "scripted-setup:play" : "scripted-setup:hand");
+      }
       const selected = Boolean(
         uiState.selectedHandCard
         && uiState.selectedCardIsSetupFoundation !== false
@@ -302,6 +1348,9 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
   let targetCardId = null;
   let targetActionKey = null;
   let targetLabel = null;
+  let playerThought = authored.playerThought;
+  let encouragement = authored.encouragement;
+  let lead = authored.lead;
 
   if (checkpointId === "tutorial-setup") {
     target = "hand";
@@ -355,13 +1404,20 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       }
     } else if (uiState.recommendedBuildCard) {
       const card = uiState.recommendedBuildCard;
-      title = `Play ${card.cardName}`;
-      message = `${card.cardName} is a legal ${card.kindLabel ?? "ecosystem card"} in your hand. It costs ${card.cost} RP${Number(card.victoryPoints ?? 0) > 0 ? ` and adds ${Number(card.victoryPoints)} VP in play` : ""}.`;
+      const isScriptedEconomyCard = uiState.scriptedLesson && card.cardId === uiState.scriptedBuildCardId;
+      title = isScriptedEconomyCard ? `Grow the economy with ${card.cardName}` : `Play ${card.cardName}`;
+      message = isScriptedEconomyCard
+        ? `There is our prepared Foundation draw: ${card.cardName}. It costs ${card.cost} RP now, then becomes another source of RP on later turns. Building it completes the economy half of our plan before we ask Arrow Crab to turn cards into a specific attacker.`
+        : `${card.cardName} is a legal ${card.kindLabel ?? "ecosystem card"} in your hand. It costs ${card.cost} RP${Number(card.victoryPoints ?? 0) > 0 ? ` and adds ${Number(card.victoryPoints)} VP in play` : ""}.`;
       action = `Choose ${card.cardName}, press Play Card, and follow its placement or effect prompt.`;
       target = "hand";
       targetCardId = card.cardId;
       targetLabel = `${card.cardName} in your hand`;
       cue = `recommend:${card.cardId}`;
+      if (isScriptedEconomyCard) {
+        playerThought = "Spending my first collection on another foundation means I have fewer options this turn, but a larger and more reliable budget on every turn that follows.";
+        encouragement = "Well said. Economy cards often feel quiet when played; their value appears in the choices they make affordable later. We are building tomorrow's turn now.";
+      }
     } else {
       title = "Build on a later turn";
       message = uiState.buildBlockReason
@@ -373,13 +1429,24 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
     }
   } else if (checkpointId === "tutorial-attack") {
     const recovery = getAttackRecovery(uiState);
+    const scriptedAttackRequiredRp = Math.max(0, Number(uiState.scriptedAttackCardCost ?? 0))
+      + Math.max(0, Number(uiState.scriptedAttackActionCost ?? 0));
+    const scriptedWaitingForAttackRp = Boolean(
+      uiState.scriptedLesson
+      && uiState.scriptedAttackCardInHand
+      && Number(uiState.availableRp ?? 0) < scriptedAttackRequiredRp,
+    );
     const isLookingAtHand = uiState.modal === "hand" || uiState.handPopoverOpen;
-    const selectedAttackSetup = isLookingAtHand
-      && uiState.attackSetupCard?.cardId === uiState.selectedHandCard;
-    const selectedBuildFallback = isLookingAtHand
+    const selectedAttackSetup = Boolean(isLookingAtHand
+      && uiState.selectedHandCard
+      && uiState.attackSetupCard
+      && uiState.attackSetupCard.cardId === uiState.selectedHandCard);
+    const selectedBuildFallback = Boolean(isLookingAtHand
+      && uiState.selectedHandCard
       && !uiState.readyAttack
       && !uiState.attackSetupCard
-      && uiState.recommendedBuildCard?.cardId === uiState.selectedHandCard;
+      && uiState.recommendedBuildCard
+      && uiState.recommendedBuildCard.cardId === uiState.selectedHandCard);
     if (uiState.attackContext && uiState.inspectedCardOpen) {
       title = "Return to the active attack";
       message = "These card details are covering the legal targets for the attack already in progress.";
@@ -409,6 +1476,24 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       target = "play-card";
       action = `Press Play Card and follow its placement or effect prompt. ${recovery.action}`;
       cue = `attack-blocked:play:${card.cardId}`;
+    } else if (uiState.inspectedUtilityAction?.ready && !uiState.inspectedAttack?.ready) {
+      const utility = uiState.inspectedUtilityAction;
+      if (uiState.readyAttack) {
+        const attack = uiState.readyAttack;
+        title = `${utility.actionName} is usable, but an attack is ready`;
+        message = `${describeUtilityAction(utility)} ${attack.cardName}'s ${attack.attackName} can complete this lesson now.`;
+        target = "close-modal";
+        action = `Close these details, select ${attack.cardName}, and use ${attack.attackName}. You can return to ${utility.actionName} on another turn.`;
+        cue = `utility-defer:${utility.utilityActionKey}:${attack.actionKey ?? attack.cardId}`;
+      } else {
+        title = `Use ${utility.actionName}`;
+        message = describeUtilityAction(utility);
+        target = "utility-action-button";
+        targetActionKey = utility.utilityActionKey;
+        targetLabel = `${utility.actionName} on ${utility.cardName}`;
+        action = `Press Use ${utility.actionName} (${utility.actionCost} RP), follow its prompts, and I will reassess your attack options afterward.`;
+        cue = `utility-button:${utility.utilityActionKey}`;
+      }
     } else if (uiState.inspectedPlayerCard && !uiState.inspectedAttack?.ready) {
       const inspectedName = uiState.inspectedCardName ?? "This card";
       const next = uiState.readyAttack;
@@ -420,7 +1505,9 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
         ? `Close these details, select ${next.cardName}, and use ${next.attackName}.`
         : uiState.attackSetupCard
           ? `Close these details, then play ${uiState.attackSetupCard.cardName} from your hand.`
-          : "Close these details, check your hand, then end the turn if no legal attack becomes available.";
+          : uiState.readyUtilityAction
+            ? `Close these details, select ${uiState.readyUtilityAction.cardName}, and use ${uiState.readyUtilityAction.actionName}.`
+            : "Close these details, check your hand, then end the turn if no legal attack becomes available.";
       cue = `inspected-blocked:${uiState.inspectedAttack?.actionKey ?? uiState.inspectedCardName ?? "card"}`;
     } else if (uiState.inspectedCardOpen && !uiState.inspectedPlayerCard) {
       const next = uiState.readyAttack;
@@ -429,8 +1516,18 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       target = "close-modal";
       action = next
         ? `Close these details, select ${next.cardName}, and use ${next.attackName}.`
-        : "Close these details, then follow the highlighted card or turn control.";
+        : uiState.readyUtilityAction
+          ? `Close these details, select ${uiState.readyUtilityAction.cardName}, and use ${uiState.readyUtilityAction.actionName}.`
+          : "Close these details, then follow the highlighted card or turn control.";
       cue = `opponent-inspector:${uiState.inspectedCardName ?? "card"}`;
+    } else if (scriptedWaitingForAttackRp && isLookingAtHand) {
+      title = "Save Spanish Hogfish for the next tide";
+      message = `Spanish Hogfish is the attacker we searched for, but playing it and using Crunch requires ${scriptedAttackRequiredRp} RP together. You currently have ${Math.max(0, Number(uiState.availableRp ?? 0))} RP, so forcing the play now would leave the lesson unfinished.`;
+      target = "close-modal";
+      action = "Close your hand, then end the turn. The next collection will fund both Spanish Hogfish and Crunch.";
+      playerThought = "Searching found the right answer, but timing still matters. I should keep Spanish Hogfish in hand until I can pay for both the creature and its attack.";
+      encouragement = "Exactly. A plan includes the card, its action, and the RP for both. Waiting one tide here is preparation, not lost momentum.";
+      cue = `scripted:bank-for-hogfish:close:${Math.max(0, Number(uiState.availableRp ?? 0))}`;
     } else if (uiState.handPopoverOpen) {
       const next = uiState.readyAttack;
       title = next ? `${next.cardName} is already ready` : "Return to the guided action";
@@ -442,10 +1539,12 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
         ? `Close these card details, select ${next.cardName} in your ecosystem, and use ${next.attackName}.`
         : uiState.attackSetupCard
           ? `Close these details, then choose ${uiState.attackSetupCard.cardName} from your hand.`
-          : uiState.recommendedBuildCard
-            ? `Close these details, then choose ${uiState.recommendedBuildCard.cardName}.`
-            : "Close these details, then end the turn and draw toward another legal attack.";
-      cue = `close-hand:${next?.actionKey ?? uiState.attackSetupCard?.cardId ?? uiState.recommendedBuildCard?.cardId ?? "end"}`;
+          : uiState.readyUtilityAction
+            ? `Close these details, select ${uiState.readyUtilityAction.cardName}, and use ${uiState.readyUtilityAction.actionName}.`
+            : uiState.recommendedBuildCard
+              ? `Close these details, then choose ${uiState.recommendedBuildCard.cardName}.`
+              : "Close these details, then end the turn and draw toward another legal attack.";
+      cue = `close-hand:${next?.actionKey ?? uiState.attackSetupCard?.cardId ?? uiState.readyUtilityAction?.utilityActionKey ?? uiState.recommendedBuildCard?.cardId ?? "end"}`;
     } else if (uiState.modal === "hand" && uiState.readyAttack) {
       const attack = uiState.readyAttack;
       title = `${attack.cardName} is already ready`;
@@ -453,6 +1552,13 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       target = "close-modal";
       action = `Close your hand, select ${attack.cardName}, and use ${attack.attackName}.`;
       cue = `close-hand:ready:${attack.actionKey ?? attack.cardId}`;
+    } else if (uiState.modal === "hand" && uiState.readyUtilityAction && !uiState.attackSetupCard) {
+      const utility = uiState.readyUtilityAction;
+      title = `${utility.actionName} is already available`;
+      message = `${describeUtilityAction(utility)} You do not need to play another card before using it.`;
+      target = "close-modal";
+      action = `Close your hand, select ${utility.cardName}, and use ${utility.actionName}.`;
+      cue = `close-hand:utility:${utility.utilityActionKey}`;
     } else if (uiState.modal === "hand" && !uiState.attackSetupCard && !uiState.recommendedBuildCard) {
       title = "No legal attack is hiding in your hand";
       message = uiState.attackBlockReason ?? "No card in your hand can create a legal attack this turn.";
@@ -485,6 +1591,37 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       targetLabel = `${card.cardName} in your hand`;
       action = `Choose ${card.cardName}, press Play Card, follow its placement or effect prompt, then select it and use ${card.attackName}.`;
       cue = `setup-attack:${card.cardId}`;
+    } else if (scriptedWaitingForAttackRp) {
+      title = "Bank RP for Spanish Hogfish";
+      lead = "";
+      message = `Splendid work—Scavenge found the exact attacker we wanted. Spanish Hogfish costs ${Math.max(0, Number(uiState.scriptedAttackCardCost ?? 0))} RP to play, and Crunch needs another ${Math.max(0, Number(uiState.scriptedAttackActionCost ?? 0))} RP. You have ${Math.max(0, Number(uiState.availableRp ?? 0))} RP left, so we will keep the card safe in hand and fund the complete move next round.`;
+      target = "turn-button";
+      action = "End your turn. After the next condition and collection, make the required draw, then play Spanish Hogfish and use Crunch on Sea Urchin.";
+      playerThought = "I found the correct attacker, but I need enough RP for the entire sequence. Ending now preserves Spanish Hogfish and turns next round into a prepared attack.";
+      encouragement = "Precisely! Good strategy is not only choosing the right card; it is arranging the resources and timing that let the card do its job.";
+      cue = `scripted:bank-for-hogfish:${Math.max(0, Number(uiState.availableRp ?? 0))}`;
+    } else if (uiState.readyUtilityAction) {
+      const utility = uiState.readyUtilityAction;
+      title = `Use ${utility.cardName}'s ${utility.actionName}`;
+      message = describeUtilityAction(utility);
+      target = "player-board";
+      targetActionKey = utility.actionKey;
+      targetLabel = `${utility.cardName} in your ecosystem`;
+      action = `Select ${utility.cardName}, press Use ${utility.actionName} (${utility.actionCost} RP), and follow its prompts. I will reassess the attack lesson afterward.`;
+      cue = `utility:${utility.utilityActionKey}`;
+    } else if (
+      uiState.scriptedLesson
+      && Number(uiState.round ?? 0) === 1
+      && uiState.nextPalsCardName === "Arrow Crab"
+    ) {
+      title = "Let the first reef settle";
+      lead = "";
+      message = "That is a fine first turn: you established a foundation and grew the economy that will pay for our next lesson. I arranged Arrow Crab as the next card in your Pals Deck, so there is no need to spend RP on an unrelated play now.";
+      target = "turn-button";
+      action = "End your turn. When Round 2 begins, choose one card from the Pals Deck to draw Arrow Crab.";
+      playerThought = "My first turn already achieved its purpose: two foundations will collect enough RP to support a more interesting card action next round.";
+      encouragement = "Exactly. There is a quiet skill in recognizing when a turn has done its job. We will let this reef collect, then use that economy with intention.";
+      cue = "scripted:end-round-one";
     } else if (uiState.recommendedBuildCard) {
       const card = uiState.recommendedBuildCard;
       title = "No legal attack yet";
@@ -515,12 +1652,34 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
   return withTarget({
     id: checkpointId,
     title,
+    ...(lead !== undefined ? { lead } : {}),
     message,
     action,
     targetCardId,
     targetActionKey,
     targetLabel,
+    playerThought,
+    encouragement,
   }, target, cue);
+}
+
+export function getSimulatorTutorialConditionHelp(condition, round = 1) {
+  const conditionId = String(condition?.id ?? "").trim();
+  if (!conditionId) return null;
+  const authored = CONDITION_HELP_BY_ID[conditionId];
+  const conditionName = String(condition?.name ?? "Round condition");
+  const conditionText = String(condition?.text ?? "").trim();
+  return withTarget({
+    id: "tutorial-condition",
+    title: authored?.title ?? `Read ${conditionName} carefully`,
+    message: authored?.message
+      ?? `This round's condition is ${conditionName}. ${conditionText || "Compare its effect with your hand, board, and available RP before choosing a move."}`,
+    playerThought: authored?.playerThought
+      ?? "I should identify exactly what changes, who it affects, and how long it lasts before I alter my plan.",
+    encouragement: authored?.encouragement
+      ?? "That is the right habit. Conditions are evidence about the current round, so let the exact wording guide your next decision.",
+    action: "Review the condition and your RP collection, then continue to this round's draw.",
+  }, "condition-continue", `condition:r${Number(round) || 1}:${conditionId}`);
 }
 
 export function hasSimulatorTutorialHelp(checkpointId) {

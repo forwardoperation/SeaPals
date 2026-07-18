@@ -76,7 +76,7 @@ const towns = [
       "encounter-shellshore-dorian",
     ],
     plannedNpcRoleIds: ["mentor", "field-partner", "town-challenger", "reflection-character"],
-    packPoolId: null,
+    packPoolId: "pack-pool-shellshore-discovery",
     unlockRuleId: "unlock-shellshore-start",
     arrivalRouteId: null,
     encounterPlan: { practice: 1, resident: 2, qualifier: 0 },
@@ -94,12 +94,13 @@ const towns = [
       "encounter-sunpatch-resident-gardener",
       "encounter-sunpatch-resident-surveyor",
       "encounter-sunpatch-qualifier",
+      "encounter-sunpatch-exhibition",
     ],
     plannedNpcRoleIds: [...REQUIRED_ECOSYSTEM_NPC_ROLES],
     packPoolId: "pack-pool-sunpatch-coral",
     unlockRuleId: "unlock-sunpatch",
     arrivalRouteId: "route-shellshore-sunpatch",
-    encounterPlan: { practice: 0, resident: 2, qualifier: 1 },
+    encounterPlan: { practice: 0, resident: 2, qualifier: 1, exhibition: 1 },
   },
   {
     id: "brackwater-landing",
@@ -213,8 +214,8 @@ const shellshoreRuntimeScenes = {
       "ttttssssSssstttt",
       "ttttttttpttttttt",
       "tttccCccpddDdddt",
-      "ttttgpgtptgpgttt",
-      "ttttgpggtggpgtgt",
+      "ttttgpggpggpgttt",
+      "ttttgpggpggpgtgt",
       "ttttgpgggggpgtgt",
       "ttpppppppppppppt",
       "tttppppppppppptt",
@@ -222,6 +223,9 @@ const shellshoreRuntimeScenes = {
     ],
     spawn: { x: 7, y: 8 },
     startFacing: "up",
+    collisionRects: [
+      { id: "town-center-sign-post", left: 8.45, top: 3.95, right: 9.15, bottom: 4.7 },
+    ],
     interactions: [
       {
         id: "interaction-town-enter-academy",
@@ -229,6 +233,7 @@ const shellshoreRuntimeScenes = {
         at: { x: 8, y: 1 },
         targetScene: "academy-lab",
         spawn: { x: 6, y: 7 },
+        facing: "up",
       },
       {
         id: "interaction-town-enter-coral-home",
@@ -236,6 +241,7 @@ const shellshoreRuntimeScenes = {
         at: { x: 5, y: 3 },
         targetScene: "coral-home",
         spawn: { x: 5, y: 6 },
+        facing: "up",
       },
       {
         id: "interaction-town-enter-deep-home",
@@ -243,6 +249,17 @@ const shellshoreRuntimeScenes = {
         at: { x: 11, y: 3 },
         targetScene: "deep-home",
         spawn: { x: 5, y: 6 },
+        facing: "up",
+      },
+      {
+        id: "interaction-shellshore-board-boat",
+        type: "board",
+        at: { x: 7, y: 9 },
+        routeId: "route-shellshore-sunpatch",
+        dockId: "shellshore-dock",
+        targetScene: "shellshore-sunpatch-sea",
+        spawn: { x: 1, y: 5 },
+        facing: "right",
       },
     ],
   },
@@ -261,6 +278,13 @@ const shellshoreRuntimeScenes = {
       "wwwwwEwwwwww",
     ],
     spawn: { x: 5, y: 6 },
+    collisionRects: [
+      { id: "coral-upper-left-table", left: 0.45, top: 1.45, right: 2.75, bottom: 1.98 },
+      { id: "coral-left-aquarium", left: 0.35, top: 2.1, right: 3.3, bottom: 4.65 },
+      { id: "coral-upper-right-bookcase", left: 7.75, top: 1.55, right: 10.45, bottom: 4.25 },
+      { id: "coral-lower-left-display", left: -0.1, top: 4.6, right: 3.1, bottom: 6.35 },
+      { id: "coral-lower-right-display", left: 7.75, top: 4.55, right: 10.95, bottom: 6.35 },
+    ],
     interactions: [
       {
         id: "interaction-coral-home-marina",
@@ -277,6 +301,7 @@ const shellshoreRuntimeScenes = {
         at: { x: 5, y: 7 },
         targetScene: "town",
         spawn: { x: 5, y: 4 },
+        facing: "down",
       },
     ],
   },
@@ -295,6 +320,12 @@ const shellshoreRuntimeScenes = {
       "wwwwwEwwwwww",
     ],
     spawn: { x: 5, y: 6 },
+    collisionRects: [
+      { id: "deep-left-habitat-tank", left: 0.25, top: 1.65, right: 3.1, bottom: 4.65 },
+      { id: "deep-right-research-console", left: 7.6, top: 1.85, right: 10.25, bottom: 4.8 },
+      { id: "deep-lower-left-equipment", left: -0.05, top: 5.45, right: 3.3, bottom: 6.95 },
+      { id: "deep-lower-right-equipment", left: 7.2, top: 5.45, right: 10.7, bottom: 6.95 },
+    ],
     interactions: [
       {
         id: "interaction-deep-home-dorian",
@@ -311,6 +342,7 @@ const shellshoreRuntimeScenes = {
         at: { x: 5, y: 7 },
         targetScene: "town",
         spawn: { x: 11, y: 4 },
+        facing: "down",
       },
     ],
   },
@@ -330,6 +362,16 @@ const shellshoreRuntimeScenes = {
       "wwwwwwEwwwwwww",
     ],
     spawn: { x: 6, y: 7 },
+    collisionRects: [
+      { id: "academy-top-left-cabinetry", left: 0.5, top: 1.45, right: 3.75, bottom: 3.2 },
+      { id: "academy-rear-bench", left: 4.95, top: 1.45, right: 7.95, bottom: 2.65 },
+      { id: "academy-helm-wheel", left: 7.95, top: 1.7, right: 8.8, bottom: 2.8 },
+      { id: "academy-top-right-cabinetry", left: 9.3, top: 1.45, right: 12.2, bottom: 3.2 },
+      { id: "academy-left-aquarium-workstation", left: 2.45, top: 4.25, right: 5.1, bottom: 7.1 },
+      { id: "academy-right-aquarium-workstation", left: 7.85, top: 4.25, right: 10.55, bottom: 7.1 },
+      { id: "academy-lower-left-storage", left: 0.05, top: 6.15, right: 1.75, bottom: 7.15 },
+      { id: "academy-right-gear-cabinet", left: 11.05, top: 4.5, right: 12.85, bottom: 7.15 },
+    ],
     interactions: [
       {
         id: "interaction-academy-mentor",
@@ -346,6 +388,297 @@ const shellshoreRuntimeScenes = {
         at: { x: 6, y: 8 },
         targetScene: "town",
         spawn: { x: 8, y: 2 },
+        facing: "down",
+      },
+    ],
+  },
+};
+
+const shellshoreSunpatchRouteWorld = {
+  name: "Shellshore–Sunpatch Sea Lane",
+  worldKind: "route",
+  theme: "shellshore-sunpatch-route",
+  movement: {
+    mode: "boat",
+    speed: 3.2,
+    radius: 0.28,
+    maxStepDistance: 0.08,
+  },
+  tiles: [
+    "kkkkkkkkkkkkkkkk",
+    "kooooooooooooook",
+    "kooobooooookoook",
+    "kooooooooooooook",
+    "kookoooooboooook",
+    "HooooooooooooooH",
+    "koooookooooooook",
+    "kooooobooooooook",
+    "kooooooooooooook",
+    "kkkkkkkkkkkkkkkk",
+  ],
+  spawn: { x: 1, y: 5 },
+  startFacing: "right",
+  interactions: [
+    {
+      id: "interaction-route-dock-shellshore",
+      type: "dock",
+      endpoint: "from",
+      at: { x: 0, y: 5 },
+      routeId: "route-shellshore-sunpatch",
+      dockId: "shellshore-dock",
+      targetScene: "town",
+      spawn: { x: 7, y: 8 },
+      facing: "up",
+    },
+    {
+      id: "interaction-route-dock-sunpatch",
+      type: "dock",
+      endpoint: "to",
+      at: { x: 15, y: 5 },
+      routeId: "route-shellshore-sunpatch",
+      dockId: "sunpatch-dock",
+      targetScene: "sunpatch-cay-town",
+      spawn: { x: 7, y: 8 },
+      facing: "up",
+    },
+  ],
+};
+
+const sunpatchRuntimeScenes = {
+  "sunpatch-cay-town": {
+    name: "Sunpatch Cay",
+    worldKind: "town",
+    theme: "sunpatch-cay",
+    tiles: [
+      "tttttttttttttttt",
+      "tccCctssSstddDdt",
+      "tcccctsssstddddt",
+      "ttgppppppppppgtt",
+      "ttgagppppppgagtt",
+      "ttgggppppppnggtt",
+      "ttgggppnpppgggtt",
+      "ttgagppppppgagtt",
+      "ttgggggppgggggtt",
+      "tttttttHHttttttt",
+    ],
+    spawn: { x: 7, y: 8 },
+    startFacing: "up",
+    collisionRects: [
+      { id: "sunpatch-station-healthy", left: 2.62, top: 3.62, right: 3.38, bottom: 4.38 },
+      { id: "sunpatch-station-bleached", left: 11.62, top: 3.62, right: 12.38, bottom: 4.38 },
+      { id: "sunpatch-station-lesion", left: 2.62, top: 6.62, right: 3.38, bottom: 7.38 },
+      { id: "sunpatch-station-algae", left: 11.62, top: 6.62, right: 12.38, bottom: 7.38 },
+    ],
+    interactions: [
+      {
+        id: "interaction-sunpatch-enter-garden-home",
+        type: "enter",
+        at: { x: 3, y: 1 },
+        targetScene: "sunpatch-garden-home",
+        spawn: { x: 5, y: 6 },
+        facing: "up",
+      },
+      {
+        id: "interaction-sunpatch-enter-field-station",
+        type: "enter",
+        at: { x: 8, y: 1 },
+        targetScene: "sunpatch-field-station",
+        spawn: { x: 5, y: 6 },
+        facing: "up",
+      },
+      {
+        id: "interaction-sunpatch-enter-tide-hall",
+        type: "enter",
+        at: { x: 13, y: 1 },
+        targetScene: "sunpatch-tide-hall",
+        spawn: { x: 5, y: 6 },
+        facing: "up",
+      },
+      {
+        id: "interaction-sunpatch-tavi",
+        type: "npc",
+        at: { x: 7, y: 6 },
+        npcId: "sunpatch-tavi",
+        conversationId: "conversation-sunpatch-tavi",
+      },
+      {
+        id: "interaction-sunpatch-bo",
+        type: "trainer",
+        at: { x: 11, y: 5 },
+        trainerId: "sunpatch-surveyor",
+        npcId: "sunpatch-surveyor",
+        conversationId: "conversation-sunpatch-bo",
+        encounterId: "encounter-sunpatch-resident-surveyor",
+      },
+      {
+        id: "interaction-sunpatch-observe-healthy",
+        type: "observation",
+        at: { x: 3, y: 4 },
+        questId: "quest-sunpatch-reef-response",
+        observationId: "healthy-comparison",
+      },
+      {
+        id: "interaction-sunpatch-observe-bleached",
+        type: "observation",
+        at: { x: 12, y: 4 },
+        questId: "quest-sunpatch-reef-response",
+        observationId: "bleached-tissue",
+      },
+      {
+        id: "interaction-sunpatch-observe-lesion",
+        type: "observation",
+        at: { x: 3, y: 7 },
+        questId: "quest-sunpatch-reef-response",
+        observationId: "described-lesion",
+      },
+      {
+        id: "interaction-sunpatch-observe-algae",
+        type: "observation",
+        at: { x: 12, y: 7 },
+        questId: "quest-sunpatch-reef-response",
+        observationId: "algae-covered-skeleton",
+      },
+      {
+        id: "interaction-sunpatch-board-shellshore-route",
+        type: "board",
+        at: { x: 7, y: 9 },
+        routeId: "route-shellshore-sunpatch",
+        dockId: "sunpatch-dock",
+        targetScene: "shellshore-sunpatch-sea",
+        spawn: { x: 14, y: 5 },
+        facing: "left",
+      },
+    ],
+  },
+  "sunpatch-field-station": {
+    name: "Sunpatch Reef Field Station",
+    worldKind: "interior",
+    theme: "sunpatch-field-station",
+    tiles: [
+      "wwwwwwwwwwww",
+      "wwwwwwwwwwww",
+      "waaafnffaaaw",
+      "wfffrrrrfffw",
+      "wfffrrrrfffw",
+      "wffffffffffw",
+      "wffffffffffw",
+      "wwwwwEwwwwww",
+    ],
+    spawn: { x: 5, y: 6 },
+    collisionRects: [
+      { id: "sunpatch-field-left-console", left: 0.5, top: 1.45, right: 3.55, bottom: 2.45 },
+      { id: "sunpatch-field-right-console", left: 7.45, top: 1.45, right: 10.5, bottom: 2.45 },
+    ],
+    interactions: [
+      {
+        id: "interaction-sunpatch-mira",
+        type: "npc",
+        at: { x: 5, y: 2 },
+        npcId: "sunpatch-mira",
+        conversationId: "conversation-sunpatch-mira",
+      },
+      {
+        id: "interaction-sunpatch-interpret-evidence",
+        type: "interpretation",
+        at: { x: 3, y: 2 },
+        questId: "quest-sunpatch-reef-response",
+        choiceSetId: "sunpatch-reef-interpretation",
+      },
+      {
+        id: "interaction-sunpatch-choose-response",
+        type: "response",
+        at: { x: 8, y: 2 },
+        questId: "quest-sunpatch-reef-response",
+        choiceSetId: "sunpatch-reef-response",
+      },
+      {
+        id: "interaction-sunpatch-field-exit",
+        type: "exit",
+        at: { x: 5, y: 7 },
+        targetScene: "sunpatch-cay-town",
+        spawn: { x: 8, y: 3 },
+        facing: "down",
+      },
+    ],
+  },
+  "sunpatch-garden-home": {
+    name: "Inez's Reef Garden",
+    worldKind: "interior",
+    theme: "coral-cottage",
+    tiles: [
+      "wwwwwwwwwwww",
+      "wwwwwwwwwwww",
+      "waaafnffaaaw",
+      "waaarrrraaaw",
+      "waaarrrraaaw",
+      "waaarrrrfffw",
+      "waaaffffaaaw",
+      "wwwwwEwwwwww",
+    ],
+    spawn: { x: 5, y: 6 },
+    collisionRects: [
+      { id: "sunpatch-garden-upper-left-table", left: 0.45, top: 1.45, right: 2.75, bottom: 1.98 },
+      { id: "sunpatch-garden-left-aquarium", left: 0.35, top: 2.1, right: 3.3, bottom: 4.65 },
+      { id: "sunpatch-garden-upper-right-bookcase", left: 7.75, top: 1.55, right: 10.45, bottom: 4.25 },
+      { id: "sunpatch-garden-lower-left-display", left: -0.1, top: 4.6, right: 3.1, bottom: 6.35 },
+      { id: "sunpatch-garden-lower-right-display", left: 7.75, top: 4.55, right: 10.95, bottom: 6.35 },
+    ],
+    interactions: [
+      {
+        id: "interaction-sunpatch-inez",
+        type: "trainer",
+        at: { x: 5, y: 2 },
+        trainerId: "sunpatch-gardener",
+        npcId: "sunpatch-gardener",
+        conversationId: "conversation-sunpatch-inez",
+        encounterId: "encounter-sunpatch-resident-gardener",
+      },
+      {
+        id: "interaction-sunpatch-garden-exit",
+        type: "exit",
+        at: { x: 5, y: 7 },
+        targetScene: "sunpatch-cay-town",
+        spawn: { x: 3, y: 3 },
+        facing: "down",
+      },
+    ],
+  },
+  "sunpatch-tide-hall": {
+    name: "Sunpatch Tide Hall",
+    worldKind: "interior",
+    theme: "sunpatch-tide-hall",
+    tiles: [
+      "wwwwwwwwwwww",
+      "wwwwwwwwwwww",
+      "waaafnffaaaw",
+      "wfffrrrrfffw",
+      "wfffrrrrfffw",
+      "wffffffffffw",
+      "wffffffffffw",
+      "wwwwwEwwwwww",
+    ],
+    spawn: { x: 5, y: 6 },
+    collisionRects: [
+      { id: "sunpatch-hall-left-display", left: 0.5, top: 1.45, right: 3.55, bottom: 2.45 },
+      { id: "sunpatch-hall-right-display", left: 7.45, top: 1.45, right: 10.5, bottom: 2.45 },
+    ],
+    interactions: [
+      {
+        id: "interaction-sunpatch-nia",
+        type: "trainer",
+        at: { x: 5, y: 2 },
+        trainerId: "sunpatch-leader",
+        npcId: "sunpatch-leader",
+        conversationId: "conversation-sunpatch-nia",
+        encounterId: "encounter-sunpatch-qualifier",
+      },
+      {
+        id: "interaction-sunpatch-hall-exit",
+        type: "exit",
+        at: { x: 5, y: 7 },
+        targetScene: "sunpatch-cay-town",
+        spawn: { x: 13, y: 3 },
+        facing: "down",
       },
     ],
   },
@@ -356,7 +689,11 @@ const scenes = [
   { id: "coral-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["coral-home"] },
   { id: "deep-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["deep-home"] },
   { id: "academy-lab", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["academy-lab"] },
-  { id: "sunpatch-cay-town", townId: "sunpatch-cay", kind: "exterior", status: "planned" },
+  { id: "shellshore-sunpatch-sea", townId: "shellshore-village", routeId: "route-shellshore-sunpatch", kind: "route", status: "prototype", world: shellshoreSunpatchRouteWorld },
+  { id: "sunpatch-cay-town", townId: "sunpatch-cay", kind: "exterior", status: "prototype", world: sunpatchRuntimeScenes["sunpatch-cay-town"] },
+  { id: "sunpatch-field-station", townId: "sunpatch-cay", kind: "interior", status: "prototype", world: sunpatchRuntimeScenes["sunpatch-field-station"] },
+  { id: "sunpatch-garden-home", townId: "sunpatch-cay", kind: "interior", status: "prototype", world: sunpatchRuntimeScenes["sunpatch-garden-home"] },
+  { id: "sunpatch-tide-hall", townId: "sunpatch-cay", kind: "interior", status: "prototype", world: sunpatchRuntimeScenes["sunpatch-tide-hall"] },
   { id: "brackwater-landing-town", townId: "brackwater-landing", kind: "exterior", status: "planned" },
   { id: "current-commons-town", townId: "current-commons", kind: "exterior", status: "planned" },
   { id: "kelpwatch-island-town", townId: "kelpwatch-island", kind: "exterior", status: "planned" },
@@ -367,7 +704,7 @@ const scenes = [
 
 const docks = [
   { id: "shellshore-dock", townId: "shellshore-village", sceneId: "town", status: "prototype", position: { x: 7, y: 8 }, facing: "up" },
-  { id: "sunpatch-dock", townId: "sunpatch-cay", sceneId: "sunpatch-cay-town", status: "planned" },
+  { id: "sunpatch-dock", townId: "sunpatch-cay", sceneId: "sunpatch-cay-town", status: "prototype", position: { x: 7, y: 8 }, facing: "up" },
   { id: "brackwater-dock", townId: "brackwater-landing", sceneId: "brackwater-landing-town", status: "planned" },
   { id: "current-commons-dock", townId: "current-commons", sceneId: "current-commons-town", status: "planned" },
   { id: "kelpwatch-dock", townId: "kelpwatch-island", sceneId: "kelpwatch-island-town", status: "planned" },
@@ -387,10 +724,10 @@ const conversations = [
       ],
       rematch: [
         "A good field scientist practices, checks their notes, and tries again.",
-        "We can replay the lesson or have another friendly 10 VP practice duel whenever you like.",
+        "We can replay the strategy lesson or have another friendly 26 VP academy duel whenever you like.",
       ],
       victory: [
-        "You did it! You built an ecosystem, made careful choices, and reached 10 VP.",
+        "You did it! You built a reliable economy, established a Coral Reef habitat, used School Density to welcome a Filter Feeder, brought out an Apex predator, and reached 26 VP.",
         "Your first Field Note is ready. Before we visit another island, let's review how to keep you, your boat, and wildlife safe.",
       ],
       starterPresentation: [
@@ -401,8 +738,9 @@ const conversations = [
         "Excellent choice. This deck is yours for the voyage, so let's learn what its cards can do.",
       ],
       tutorialIntro: [
-        "I'll stay beside you while the live match begins. Follow each highlighted step: set up, collect RP, draw, build, attack, end your turn, and earn VP.",
-        "Nothing bad happens if you make a different move. The current step stays visible so you can try it when you're ready.",
+        "Welcome to our live lesson, Reefkeeper! I'm glad we get to explore this match together.",
+        "I'll stay beside you as we read the board, build a dependable RP economy, use cards only when they improve our position, and save attacks for targets that make them worthwhile.",
+        "We'll play to 26 VP and finish the core lesson by establishing a Coral Reef habitat, building School Density for a Filter Feeder, and supporting an Apex predator. The next strategic choice will stay highlighted, so you'll always know what we are building toward.",
       ],
       practiceLoss: [
         "That match taught us something useful. Your deck is still safe, and losing never takes away progress.",
@@ -412,7 +750,8 @@ const conversations = [
         "A smart explorer knows when to pause. Your completed lesson steps are saved, and we can continue when you're ready.",
       ],
       practiceRetry: [
-        "Let's try again. Watch your RP, build a few helpful relationships, and look for a safe path to 10 VP.",
+        "Nice work reaching the end of that match. This academy lesson is about building a sound plan, not merely checking off controls.",
+        "Your progress is safe. Let's rebuild our economy, establish the Coral Reef habitat, learn Creature Schools and Filter Feeders, and time an Apex predator carefully on the way to 26 VP.",
       ],
       boatSafety: [
         "Before leaving the harbor, wear your life jacket, check the weather, and tell the dock team your route.",
@@ -435,6 +774,7 @@ const conversations = [
       ],
       victory: [
         "That was a beautiful ecosystem! You read the current and reached 10 VP first.",
+        "You earned a Shellshore Discovery Pack, too. Open your Inventory from the pause menu when you are ready to add four new cards to your collection.",
         "Take the Coral Crest. Dorian across the village studies the creatures of the deep\u2014he will be a tougher challenge.",
       ],
     },
@@ -455,6 +795,116 @@ const conversations = [
       victory: [
         "Impressive. You kept building even when the deep pushed back.",
         "The Abyss Crest is yours. Shellshore Village now recognizes you as a Tidebound Champion!",
+      ],
+    },
+  },
+  {
+    id: "conversation-sunpatch-tavi",
+    townId: "sunpatch-cay",
+    npcId: "sunpatch-tavi",
+    lines: {
+      intro: [
+        "Welcome to Sunpatch Cay, Reefkeeper! I'm Tavi. Some reef patches have gone pale, and one has lost tissue along its edge.",
+        "We know the reef has changed, but color alone cannot tell us one cause. Dr. Mira has four monitoring stations ready for careful observations.",
+      ],
+      guidance: [
+        "Visit all four shoreline stations. Record the comparison patch, pale living tissue, the tissue-loss lesion, and algae-covered exposed skeleton.",
+        "Then bring the evidence to the field station. Describe first and diagnose later.",
+      ],
+      return: [
+        "Welcome back! The repeat-photo stations are running, and the new mooring markers are keeping more anchors away from the monitored reef.",
+        "Some coral is still pale, so the town is continuing to measure and report changes instead of declaring the reef cured.",
+      ],
+    },
+  },
+  {
+    id: "conversation-sunpatch-mira",
+    townId: "sunpatch-cay",
+    npcId: "sunpatch-mira",
+    lines: {
+      intro: [
+        "Hello, I'm Dr. Mira Sol. Thank you for helping us read the reef carefully.",
+        "We will compare tissue, color, lesion shape, repeat photographs, local temperature trends, and water clarity. A single image or reading is evidence, not a diagnosis.",
+      ],
+      guidance: [
+        "Pale tissue may still be alive and bleached. Record visible tissue loss as a lesion, then let trained specialists assess possible causes.",
+        "At the two consoles, interpret the observations and choose a response that is useful without promising an instant cure.",
+      ],
+      debrief: [
+        "Your notes separate three ideas: bleaching can leave living tissue pale, a lesion describes visible change without naming its cause, and algae-covered skeleton shows older tissue loss in that area.",
+        "I'll add Reading a Reef to your Field Notes so you can use this evidence pattern again.",
+      ],
+      return: [
+        "Good to see you again. Our repeat images make the trend clearer, but recovery remains gradual and uncertain.",
+      ],
+    },
+  },
+  {
+    id: "conversation-sunpatch-inez",
+    townId: "sunpatch-cay",
+    npcId: "sunpatch-gardener",
+    lines: {
+      intro: [
+        "Welcome to my reef garden! I'm Inez. I help trained nursery teams care for corals selected through monitoring, not guesswork.",
+        "A nursery can support restoration work, but it cannot cool the ocean or make every damaged colony recover. Shall we compare Coral Garden strategies in a 10 VP duel?",
+      ],
+      rematch: [
+        "Welcome back! My nursery deck has grown a little differently today.",
+        "Would you like another 10 VP Coral Garden duel?",
+      ],
+      victory: [
+        "Beautifully planned! You built the support your reef needed before reaching for the finish.",
+        "Bring that same patience to the investigation: monitor first, then let evidence guide any nursery work.",
+      ],
+      return: [
+        "The nursery team is reviewing the monitoring record. We are caring for selected corals, not claiming the whole reef has been repaired.",
+      ],
+    },
+  },
+  {
+    id: "conversation-sunpatch-bo",
+    townId: "sunpatch-cay",
+    npcId: "sunpatch-surveyor",
+    lines: {
+      intro: [
+        "Hello there! I'm Bo, the cay's mooring steward and reef surveyor.",
+        "Heat stress reaches far beyond our harbor, while anchors and sediment are local pressures we can reduce here. Want to test your reef against my Stinging Fortress deck?",
+      ],
+      rematch: [
+        "The marked moorings are holding, and my reef strategy is ready for another survey.",
+        "How about another 10 VP duel?",
+      ],
+      victory: [
+        "Strong work! You found a safe route through a crowded reef board.",
+        "I'll help the town strengthen the no-anchor markers. That can prevent avoidable damage, but it does not remove the warming threat.",
+      ],
+      return: [
+        "Fewer boats crossed the monitored patch this week. That is useful progress, even while the reef still needs long-term observation.",
+      ],
+    },
+  },
+  {
+    id: "conversation-sunpatch-nia",
+    townId: "sunpatch-cay",
+    npcId: "sunpatch-leader",
+    lines: {
+      intro: [
+        "Welcome to Tide Hall. I'm Nia, Sunpatch's Tide Steward.",
+        "Complete the reef investigation and speak with our residents first. Then your evidence—and a 10 VP qualification duel—can earn Sunpatch's Tide Mark.",
+      ],
+      rematch: [
+        "Welcome back, Tidekeeper. Your Sunpatch Tide Mark is secure.",
+        "We can replay the 10 VP qualifier, or you can try our optional 30 VP full-game exhibition.",
+      ],
+      victory: [
+        "Congratulations! You supported your conclusions with evidence and built a winning reef.",
+        "The Sunpatch Tide Mark is yours, along with a Coral Pack. Our community will keep monitoring; no single duel or field day solves an ecosystem challenge.",
+      ],
+      exhibition: [
+        "A 30 VP exhibition asks your deck to sustain its plan over a full match. It is optional, carries no story reward, and a loss never removes progress.",
+      ],
+      return: [
+        "Welcome back to Sunpatch. Monitoring has improved and anchor crossings are down, but some patches remain pale and recovery is uncertain.",
       ],
     },
   },
@@ -496,6 +946,67 @@ const npcs = [
     crest: "Abyss Crest",
     conversationId: "conversation-shellshore-dorian",
     encounterId: "encounter-shellshore-dorian",
+  },
+  {
+    id: "sunpatch-tavi",
+    townId: "sunpatch-cay",
+    sceneId: "sunpatch-cay-town",
+    roleId: "local-guide",
+    name: "Tavi",
+    title: "Cay Guide",
+    color: "teal",
+    crest: null,
+    conversationId: "conversation-sunpatch-tavi",
+    encounterId: null,
+  },
+  {
+    id: "sunpatch-mira",
+    townId: "sunpatch-cay",
+    sceneId: "sunpatch-field-station",
+    roleId: "field-partner",
+    name: "Dr. Mira Sol",
+    title: "Reef Monitor",
+    color: "teal",
+    crest: null,
+    conversationId: "conversation-sunpatch-mira",
+    encounterId: null,
+  },
+  {
+    id: "sunpatch-gardener",
+    townId: "sunpatch-cay",
+    sceneId: "sunpatch-garden-home",
+    roleId: "resident",
+    name: "Inez",
+    title: "Nursery Gardener",
+    color: "coral",
+    crest: "Nursery Ribbon",
+    conversationId: "conversation-sunpatch-inez",
+    encounterId: "encounter-sunpatch-resident-gardener",
+  },
+  {
+    id: "sunpatch-surveyor",
+    townId: "sunpatch-cay",
+    sceneId: "sunpatch-cay-town",
+    roleId: "town-challenger",
+    name: "Bo",
+    title: "Mooring Steward",
+    color: "blue",
+    crest: "Mooring Ribbon",
+    conversationId: "conversation-sunpatch-bo",
+    encounterId: "encounter-sunpatch-resident-surveyor",
+  },
+  {
+    id: "sunpatch-leader",
+    townId: "sunpatch-cay",
+    sceneId: "sunpatch-tide-hall",
+    roleId: "reflection-character",
+    name: "Nia",
+    title: "Tide Steward",
+    color: "gold",
+    crest: "Sunpatch Tide Mark",
+    conversationId: "conversation-sunpatch-nia",
+    encounterId: "encounter-sunpatch-qualifier",
+    exhibitionEncounterId: "encounter-sunpatch-exhibition",
   },
 ];
 
@@ -555,7 +1066,7 @@ const tutorials = [
     completionRewardId: "reward-shellshore-tutorial",
     fieldNoteId: "field-note-harbor-basics",
     starterDeckIds: starterDecks.map((starter) => starter.id),
-    victoryTarget: 10,
+    victoryTarget: 26,
     ordered: true,
     allowRetry: true,
     allowExit: true,
@@ -595,7 +1106,39 @@ const fieldNotes = [
       { term: "Observation", definition: "Information noticed or measured without guessing what caused it." },
     ],
   },
-  { id: "field-note-coral-observations", title: "Reading a Reef", habitatId: "coral-reef", status: "planned" },
+  {
+    id: "field-note-coral-observations",
+    title: "Reading a Reef",
+    habitatId: "coral-reef",
+    status: "prototype",
+    summary: "Bleaching, a tissue-loss lesion, and algae-covered exposed skeleton are different observations. Record evidence before naming a cause, and choose responses that are useful without promising an instant cure.",
+    observations: [
+      "Pigmented living tissue provides a comparison, but one healthy-looking image does not prove that no stress exists.",
+      "Pale or translucent tissue may still be alive. Bleaching is a stress response, not another word for dead coral.",
+      "A lesion describes a visible change such as tissue loss. Its shape, edge, location, and repeat appearance can be recorded without diagnosing a disease from sight alone.",
+      "Algae on exposed skeleton shows that tissue was lost in that area earlier. It does not establish the cause or prove that the entire colony is dead.",
+      "Repeat photographs, local temperature trends, water clarity, time, location, and resident observations provide stronger evidence together than any single clue.",
+    ],
+    checklistTitle: "Reef field practice",
+    checklist: [
+      "Use an established mooring or marked no-anchor area; never anchor on coral habitat.",
+      "Observe without touching coral or stirring sediment, and give wildlife space.",
+      "Take repeat photographs from the same marked position and record the time and local conditions.",
+      "Report what is visible and measured. Leave disease assessment and nursery decisions to trained teams.",
+    ],
+    glossary: [
+      { term: "Bleaching", definition: "A stress response in which coral loses much of the symbiotic algae that normally supplies color and energy; bleached tissue may still be alive." },
+      { term: "Lesion", definition: "A visible area of changed, damaged, or missing tissue described without assuming its cause." },
+      { term: "Substrate", definition: "The surface on which an organism lives or grows, such as exposed coral skeleton." },
+      { term: "Resilience", definition: "The ability of an ecosystem to resist or recover from stress while its community continues monitoring change." },
+    ],
+    sourceUrls: [
+      "https://oceanservice.noaa.gov/facts/coral_bleach.html",
+      "https://cdhc.noaa.gov/coral-disease/lesion-terminology/",
+      "https://oceanservice.noaa.gov/facts/reef-resilience.html",
+      "https://www.fisheries.noaa.gov/national/habitat-conservation/shallow-coral-reef-habitat",
+    ],
+  },
   { id: "field-note-estuary-conditions", title: "Changing Estuary Water", habitatId: "estuary-mangrove", status: "planned" },
   { id: "field-note-current-connections", title: "Connected by Currents", habitatId: "open-ocean", status: "planned" },
   { id: "field-note-kelp-food-web", title: "A Kelp Forest Food Web", habitatId: "kelp-forest", status: "planned" },
@@ -704,7 +1247,67 @@ function dialoguePlan(id, townId, questId, roles) {
 
 const dialogues = [
   dialoguePlan("dialogue-shellshore-first-voyage", "shellshore-village", "quest-shellshore-first-voyage", ["mentor", "field-partner", "mentor", "reflection-character", "reflection-character"]),
-  dialoguePlan("dialogue-sunpatch-reef-response", "sunpatch-cay", "quest-sunpatch-reef-response", REQUIRED_ECOSYSTEM_NPC_ROLES),
+  {
+    id: "dialogue-sunpatch-reef-response",
+    townId: "sunpatch-cay",
+    questId: "quest-sunpatch-reef-response",
+    beats: [
+      {
+        id: "hook",
+        speakerRoleId: "local-guide",
+        speakerNpcId: "sunpatch-tavi",
+        lines: ["Some reef patches have gone pale, and another has visible tissue loss. Let us gather evidence before deciding why."],
+      },
+      {
+        id: "observation",
+        speakerRoleId: "field-partner",
+        speakerNpcId: "sunpatch-mira",
+        lines: ["Compare living tissue, color, lesion shape, algae-covered skeleton, repeat images, and local condition trends at all four stations."],
+      },
+      {
+        id: "interpretation",
+        speakerRoleId: "field-partner",
+        speakerNpcId: "sunpatch-mira",
+        lines: ["Bleaching may leave living tissue pale. A lesion describes visible change, while algae-covered exposed skeleton records older tissue loss in that area."],
+      },
+      {
+        id: "decision",
+        speakerRoleId: "field-partner",
+        speakerNpcId: "sunpatch-mira",
+        lines: ["Choose a response tied to the evidence and honest about what local action can and cannot change."],
+      },
+      {
+        id: "community-action",
+        speakerRoleId: "local-guide",
+        speakerNpcId: "sunpatch-tavi",
+        lines: ["The town will maintain repeat-photo stations, strengthen mooring protection, and reduce supported local sources of sediment or excess nutrients."],
+      },
+      {
+        id: "duel",
+        speakerRoleId: "town-challenger",
+        speakerNpcId: "sunpatch-surveyor",
+        lines: ["Our resident duels test whether your deck can build a resilient plan; they do not mean the reef challenge has been defeated."],
+      },
+      {
+        id: "debrief",
+        speakerRoleId: "field-partner",
+        speakerNpcId: "sunpatch-mira",
+        lines: ["Reducing avoidable local stress can support resilience, but it does not replace action on ocean warming or guarantee recovery."],
+      },
+      {
+        id: "reflection",
+        speakerRoleId: "reflection-character",
+        speakerNpcId: "sunpatch-leader",
+        lines: ["Explain what the observations support, what remains uncertain, and why the community will keep monitoring."],
+      },
+      {
+        id: "callback",
+        speakerRoleId: "reflection-character",
+        speakerNpcId: "sunpatch-leader",
+        lines: ["At Kelpwatch, remember that heat and food-web changes can interact, just as local and global pressures interact here."],
+      },
+    ],
+  },
   dialoguePlan("dialogue-brackwater-water-clues", "brackwater-landing", "quest-brackwater-water-clues", REQUIRED_ECOSYSTEM_NPC_ROLES),
   dialoguePlan("dialogue-current-ghost-gear", "current-commons", "quest-current-ghost-gear", REQUIRED_ECOSYSTEM_NPC_ROLES),
   dialoguePlan("dialogue-kelpwatch-balance", "kelpwatch-island", "quest-kelpwatch-balance", REQUIRED_ECOSYSTEM_NPC_ROLES),
@@ -713,12 +1316,13 @@ const dialogues = [
 ];
 
 const encounters = [
-  { id: "encounter-shellshore-mentor-practice", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", tutorialId: "tutorial-shellshore-live-basics", role: "practice", opponentId: "academy-mentor", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: "reward-shellshore-tutorial" },
-  { id: "encounter-shellshore-marina", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "marina", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: null },
+  { id: "encounter-shellshore-mentor-practice", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", tutorialId: "tutorial-shellshore-live-basics", role: "practice", opponentId: "academy-mentor", opponentDeckId: "coral-garden", victoryTarget: 26, difficulty: "easy", rewardId: "reward-shellshore-tutorial" },
+  { id: "encounter-shellshore-marina", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "marina", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: "reward-shellshore-marina-first-win" },
   { id: "encounter-shellshore-dorian", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "dorian", opponentDeckId: "darkness-shroud", victoryTarget: 10, difficulty: "medium", rewardId: null },
   { id: "encounter-sunpatch-resident-gardener", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "resident", opponentId: "sunpatch-gardener", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: null },
-  { id: "encounter-sunpatch-resident-surveyor", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "resident", opponentId: "sunpatch-surveyor", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: null },
-  { id: "encounter-sunpatch-qualifier", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "qualifier", opponentId: "sunpatch-leader", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: "reward-sunpatch-qualifier", prerequisites: [{ type: "questStatus", questId: "quest-sunpatch-reef-response", status: "complete" }] },
+  { id: "encounter-sunpatch-resident-surveyor", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "resident", opponentId: "sunpatch-surveyor", opponentDeckId: "stinging-fortress", victoryTarget: 10, difficulty: "easy-medium", rewardId: null },
+  { id: "encounter-sunpatch-qualifier", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "qualifier", opponentId: "sunpatch-leader", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "medium", rewardId: "reward-sunpatch-qualifier", prerequisites: [{ type: "questStatus", questId: "quest-sunpatch-reef-response", status: "complete" }] },
+  { id: "encounter-sunpatch-exhibition", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "exhibition", opponentId: "sunpatch-leader", opponentDeckId: "coral-garden", victoryTarget: 30, difficulty: "medium", rewardId: null, prerequisites: [{ type: "encounterComplete", encounterId: "encounter-sunpatch-qualifier" }] },
   { id: "encounter-brackwater-resident-naturalist", townId: "brackwater-landing", questId: "quest-brackwater-water-clues", role: "resident", opponentId: "brackwater-naturalist", opponentDeckId: "murky-water", victoryTarget: 10, difficulty: "easy", rewardId: null },
   { id: "encounter-brackwater-resident-harbormaster", townId: "brackwater-landing", questId: "quest-brackwater-water-clues", role: "resident", opponentId: "brackwater-harbormaster", opponentDeckId: "disruption", victoryTarget: 10, difficulty: "medium", rewardId: null },
   { id: "encounter-brackwater-qualifier", townId: "brackwater-landing", questId: "quest-brackwater-water-clues", role: "qualifier", opponentId: "brackwater-leader", opponentDeckId: "murky-water", victoryTarget: 10, difficulty: "medium", rewardId: "reward-brackwater-qualifier", prerequisites: [{ type: "questStatus", questId: "quest-brackwater-water-clues", status: "complete" }] },
@@ -738,6 +1342,7 @@ const encounters = [
 
 const rewards = [
   { id: "reward-shellshore-tutorial", grantId: "reward-shellshore-tutorial", routeIds: ["route-shellshore-sunpatch"], fieldNoteIds: ["field-note-harbor-basics"] },
+  { id: "reward-shellshore-marina-first-win", grantId: "reward-shellshore-marina-first-win", packs: { "pack-pool-shellshore-discovery": 1 } },
   { id: "reward-sunpatch-fieldwork", grantId: "reward-sunpatch-fieldwork", fieldNoteIds: ["field-note-coral-observations"] },
   { id: "reward-sunpatch-qualifier", grantId: "reward-sunpatch-qualifier", packs: { "pack-pool-sunpatch-coral": 1 }, tideMarkIds: ["tide-mark-sunpatch"], routeIds: ["route-sunpatch-brackwater"] },
   { id: "reward-brackwater-fieldwork", grantId: "reward-brackwater-fieldwork", fieldNoteIds: ["field-note-estuary-conditions"] },
@@ -752,34 +1357,96 @@ const rewards = [
 ];
 
 const packPools = [
-  ["pack-pool-sunpatch-coral", "Coral reef relationships"],
-  ["pack-pool-brackwater-murky", "Estuary and mangrove relationships"],
-  ["pack-pool-current-bluewater", "Open-ocean food webs"],
-  ["pack-pool-kelpwatch", "Kelp-forest food webs"],
-  ["pack-pool-trenchlight-deep", "Deep-ocean adaptations"],
-].map(([id, theme]) => ({
-  id,
-  theme,
+  {
+    id: "pack-pool-shellshore-discovery",
+    name: "Shellshore Discovery Pack",
+    version: 1,
+    theme: "Harbor lagoon relationships",
+    status: "playable",
+    purchaseMode: "earned-only",
+    cardsPerPack: 4,
+    progressionGuarantee: "at-least-one-unowned-card-when-eligible",
+    cardIds: [
+      "nudibranch",
+      "sea-urchin",
+      "cleaner-shrimp",
+      "emerald-crab",
+      "pillar-coral-base",
+      "lettuce-coral-base",
+      "fairy-parrotfish",
+      "picasso-triggerfish",
+      "spanish-hogfish",
+      "great-barracuda",
+      "coral-gardener",
+    ],
+  },
+  {
+    id: "pack-pool-sunpatch-coral",
+    name: "Sunpatch Coral Pack",
+    version: 1,
+    theme: "Coral reef relationships",
+    status: "playable",
+    purchaseMode: "earned-only",
+    cardsPerPack: 4,
+    progressionGuarantee: "at-least-one-unowned-card-when-eligible",
+    cardIds: [
+      "boulder-star-coral-base",
+      "elkhorn-coral-base",
+      "clubfinger-coral-base",
+      "lettuce-coral-base",
+      "mustard-hill-coral-base",
+      "coral-reef",
+      "coral-gardener",
+      "coral-heal",
+      "coral-cement",
+      "cleaner-shrimp",
+      "emerald-crab",
+      "spectacled-parrotfish",
+    ],
+  },
+  ["pack-pool-brackwater-murky", "Brackwater Discovery Pack", "Estuary and mangrove relationships"],
+  ["pack-pool-current-bluewater", "Current Commons Pack", "Open-ocean food webs"],
+  ["pack-pool-kelpwatch", "Kelpwatch Discovery Pack", "Kelp-forest food webs"],
+  ["pack-pool-trenchlight-deep", "Trenchlight Discovery Pack", "Deep-ocean adaptations"],
+].map((definition) => (Array.isArray(definition) ? {
+  id: definition[0],
+  name: definition[1],
+  version: 1,
+  theme: definition[2],
   status: "planned",
   purchaseMode: "earned-only",
-  progressionGuarantee: "fixed-story-cards-plus-new-eligible-card",
+  cardsPerPack: 4,
+  progressionGuarantee: "at-least-one-unowned-card-when-eligible",
   cardIds: [],
-}));
+} : definition));
 
 const routes = [
-  ["route-shellshore-sunpatch", "shellshore-village", "sunpatch-cay"],
-  ["route-sunpatch-brackwater", "sunpatch-cay", "brackwater-landing"],
-  ["route-brackwater-current", "brackwater-landing", "current-commons"],
-  ["route-current-kelpwatch", "current-commons", "kelpwatch-island"],
-  ["route-kelpwatch-trenchlight", "kelpwatch-island", "trenchlight-station"],
-  ["route-trenchlight-champions-wake", "trenchlight-station", "champions-wake"],
-].map(([id, fromTownId, toTownId]) => ({
-  id,
-  fromTownId,
-  toTownId,
-  manualPilotRequiredFirstTime: true,
-  autoSteerAfterFirstCompletion: true,
-}));
+  {
+    id: "route-shellshore-sunpatch",
+    fromTownId: "shellshore-village",
+    toTownId: "sunpatch-cay",
+    sceneId: "shellshore-sunpatch-sea",
+    fromDockId: "shellshore-dock",
+    toDockId: "sunpatch-dock",
+    fromSpawn: { x: 1, y: 5, facing: "right" },
+    toSpawn: { x: 14, y: 5, facing: "left" },
+    manualPilotRequiredFirstTime: true,
+    autoSteerAfterFirstCompletion: true,
+  },
+  ...[
+    ["route-sunpatch-brackwater", "sunpatch-cay", "brackwater-landing"],
+    ["route-brackwater-current", "brackwater-landing", "current-commons"],
+    ["route-current-kelpwatch", "current-commons", "kelpwatch-island"],
+    ["route-kelpwatch-trenchlight", "kelpwatch-island", "trenchlight-station"],
+    ["route-trenchlight-champions-wake", "trenchlight-station", "champions-wake"],
+  ].map(([id, fromTownId, toTownId]) => ({
+    id,
+    fromTownId,
+    toTownId,
+    manualPilotRequiredFirstTime: true,
+    autoSteerAfterFirstCompletion: true,
+  })),
+];
 
 const unlockRules = [
   { id: "unlock-shellshore-start", townId: "shellshore-village", questIds: [], tideMarkIds: [], routeIds: [] },
@@ -825,6 +1492,10 @@ export function getAdventureScene(sceneId, content = ADVENTURE_CONTENT) {
 
 export function getAdventureDock(dockId, content = ADVENTURE_CONTENT) {
   return findContentById(content.docks, dockId);
+}
+
+export function getAdventureRoute(routeId, content = ADVENTURE_CONTENT) {
+  return findContentById(content.routes, routeId);
 }
 
 export function getAdventureNpc(npcId, content = ADVENTURE_CONTENT) {
@@ -901,7 +1572,7 @@ export function resolveAdventureTutorial(tutorialId, content = ADVENTURE_CONTENT
 export function resolveAdventureInteraction(sceneId, interactionId, content = ADVENTURE_CONTENT) {
   const interaction = getAdventureSceneInteraction(sceneId, interactionId, content);
   if (!interaction) return null;
-  if (interaction.type === "trainer") {
+  if (interaction.type === "trainer" || interaction.type === "npc") {
     return {
       ...interaction,
       npc: resolveAdventureNpc(interaction.npcId, content),

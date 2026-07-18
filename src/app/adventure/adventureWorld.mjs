@@ -18,12 +18,18 @@ export const CONTINUOUS_MOVEMENT_DEFAULTS = Object.freeze({
   maxStepDistance: 0.1,
   interactionRange: 1.35,
   interactionLateralTolerance: 0.65,
+  doorwayRange: 0.9,
+  doorwayLateralTolerance: 0.65,
 });
 
 export const TILE_LEGEND = Object.freeze({
   t: Object.freeze({ id: "tree", walkable: false }),
   g: Object.freeze({ id: "grass", walkable: true }),
   p: Object.freeze({ id: "path", walkable: true }),
+  o: Object.freeze({ id: "water", walkable: true }),
+  k: Object.freeze({ id: "rock-shoal", walkable: false }),
+  b: Object.freeze({ id: "buoy", walkable: false }),
+  H: Object.freeze({ id: "dock-portal", walkable: false }),
   c: Object.freeze({ id: "coral-home-wall", walkable: false }),
   C: Object.freeze({ id: "coral-home-door", walkable: false }),
   d: Object.freeze({ id: "deep-home-wall", walkable: false }),
@@ -42,15 +48,82 @@ function freezePosition(position) {
   return Object.freeze({ x: position.x, y: position.y });
 }
 
+function freezePublicValue(value) {
+  if (Array.isArray(value)) return Object.freeze(value.map(freezePublicValue));
+  if (value && typeof value === "object") {
+    return Object.freeze(Object.fromEntries(
+      Object.entries(value)
+        .filter(([, entryValue]) => entryValue !== undefined)
+        .map(([key, entryValue]) => [key, freezePublicValue(entryValue)]),
+    ));
+  }
+  return value;
+}
+
 function freezeInteraction(interaction) {
+  const frozen = Object.fromEntries(
+    Object.entries(interaction)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => {
+        if (key === "at" || key === "spawn") return [key, freezePosition(value)];
+        return [key, freezePublicValue(value)];
+      }),
+  );
+  return Object.freeze(frozen);
+}
+
+function freezeCollisionRect(rectangle, scene, seenIds) {
+  if (typeof rectangle?.id !== "string" || !rectangle.id.trim()) {
+    throw new TypeError(`Scene ${scene.id} collision rectangles require a non-empty string id.`);
+  }
+  if (seenIds.has(rectangle.id)) {
+    throw new Error(`Scene ${scene.id} uses duplicate collision rectangle id ${rectangle.id}.`);
+  }
+
+  const bounds = [rectangle.left, rectangle.top, rectangle.right, rectangle.bottom];
+  if (bounds.some((value) => !Number.isFinite(value))) {
+    throw new TypeError(`Scene ${scene.id} collision rectangle ${rectangle.id} requires finite bounds.`);
+  }
+  if (rectangle.left >= rectangle.right || rectangle.top >= rectangle.bottom) {
+    throw new RangeError(`Scene ${scene.id} collision rectangle ${rectangle.id} must have positive area.`);
+  }
+  if (
+    rectangle.left < -0.5
+    || rectangle.top < -0.5
+    || rectangle.right > scene.width - 0.5
+    || rectangle.bottom > scene.height - 0.5
+  ) {
+    throw new RangeError(`Scene ${scene.id} collision rectangle ${rectangle.id} extends outside the scene.`);
+  }
+
+  seenIds.add(rectangle.id);
   return Object.freeze({
-    ...interaction,
-    at: freezePosition(interaction.at),
-    ...(interaction.spawn ? { spawn: freezePosition(interaction.spawn) } : {}),
+    id: rectangle.id,
+    left: rectangle.left,
+    top: rectangle.top,
+    right: rectangle.right,
+    bottom: rectangle.bottom,
   });
 }
 
-function defineScene({ id, name, kind, theme, tiles, spawn, interactions }) {
+function defineMovementProfile(movement = {}) {
+  if (!movement || typeof movement !== "object" || Array.isArray(movement)) {
+    throw new TypeError("Scene movement profile must be an object.");
+  }
+  const profile = {
+    ...CONTINUOUS_MOVEMENT_DEFAULTS,
+    ...movement,
+  };
+  for (const field of ["radius", "speed", "maxStepDistance", "interactionRange", "doorwayRange"]) {
+    requirePositiveNumber(profile[field], `Scene movement ${field}`);
+  }
+  for (const field of ["interactionLateralTolerance", "doorwayLateralTolerance"]) {
+    requirePositiveNumber(profile[field], `Scene movement ${field}`, { allowZero: true });
+  }
+  return Object.freeze(profile);
+}
+
+function defineScene({ id, name, kind, theme, routeId = null, movement, tiles, spawn, interactions, collisionRects = [] }) {
   const height = tiles.length;
   const width = tiles[0]?.length ?? 0;
 
@@ -63,16 +136,34 @@ function defineScene({ id, name, kind, theme, tiles, spawn, interactions }) {
     }
   }
 
+  if (!Array.isArray(collisionRects)) {
+    throw new TypeError(`Scene ${id} collisionRects must be an array.`);
+  }
+  const sceneBounds = { id, width, height };
+  const collisionRectIds = new Set();
+  const frozenCollisionRects = collisionRects.map((rectangle) => (
+    freezeCollisionRect(rectangle, sceneBounds, collisionRectIds)
+  ));
+
+  for (const interaction of interactions) {
+    if (interaction.facing !== undefined && !DIRECTION_DELTAS[interaction.facing]) {
+      throw new RangeError(`Scene ${id} interaction ${interaction.id} uses unknown facing ${interaction.facing}.`);
+    }
+  }
+
   return Object.freeze({
     id,
     name,
     kind,
     theme,
+    routeId,
+    movement: defineMovementProfile(movement),
     width,
     height,
     tiles: Object.freeze([...tiles]),
     spawn: freezePosition(spawn),
     interactions: Object.freeze(interactions.map(freezeInteraction)),
+    collisionRects: Object.freeze(frozenCollisionRects),
   });
 }
 
@@ -84,9 +175,12 @@ export const SCENES = Object.freeze(Object.fromEntries(
       name: scene.world.name,
       kind: scene.world.worldKind,
       theme: scene.world.theme,
+      routeId: scene.routeId ?? scene.world.routeId ?? null,
+      movement: scene.world.movement,
       tiles: scene.world.tiles,
       spawn: scene.world.spawn,
       interactions: scene.world.interactions,
+      collisionRects: scene.world.collisionRects ?? [],
     }),
   ]),
 ));
@@ -103,6 +197,14 @@ function requireScene(sceneId) {
   const scene = SCENES[sceneId];
   if (!scene) throw new RangeError(`Unknown adventure scene: ${sceneId}`);
   return scene;
+}
+
+export function getSceneMovementProfile(sceneId) {
+  return requireScene(sceneId).movement;
+}
+
+export function getSceneInteractions(sceneId) {
+  return Object.freeze(requireScene(sceneId).interactions.map(publicInteraction));
 }
 
 function requirePosition(position) {
@@ -127,22 +229,23 @@ function requirePositiveNumber(value, label, { allowZero = false } = {}) {
 }
 
 function publicInteraction(interaction) {
-  if (interaction.type === "trainer") {
-    return {
-      type: "trainer",
-      interactionId: interaction.id,
-      trainerId: interaction.trainerId,
-      npcId: interaction.npcId,
-      conversationId: interaction.conversationId,
-      encounterId: interaction.encounterId,
-    };
-  }
-  return {
+  const result = {
     type: interaction.type,
     interactionId: interaction.id,
-    targetScene: interaction.targetScene,
-    spawn: { x: interaction.spawn.x, y: interaction.spawn.y },
   };
+  for (const [key, value] of Object.entries(interaction)) {
+    if (key === "id" || key === "type" || key === "at" || value === undefined) continue;
+    result[key] = freezePublicValue(value);
+  }
+  return Object.freeze(result);
+}
+
+function circleIntersectsRectangle(position, radiusSquared, rectangle) {
+  const nearestX = Math.max(rectangle.left, Math.min(position.x, rectangle.right));
+  const nearestY = Math.max(rectangle.top, Math.min(position.y, rectangle.bottom));
+  const distanceX = position.x - nearestX;
+  const distanceY = position.y - nearestY;
+  return distanceX * distanceX + distanceY * distanceY < radiusSquared - Number.EPSILON;
 }
 
 export function isInBounds(sceneId, position) {
@@ -200,17 +303,33 @@ export function canOccupyContinuousPosition(
       const tileSymbol = scene.tiles[tileY][tileX];
       if (TILE_LEGEND[tileSymbol].walkable) continue;
 
-      const nearestX = Math.max(tileX - 0.5, Math.min(position.x, tileX + 0.5));
-      const nearestY = Math.max(tileY - 0.5, Math.min(position.y, tileY + 0.5));
-      const distanceX = position.x - nearestX;
-      const distanceY = position.y - nearestY;
-      if (distanceX * distanceX + distanceY * distanceY < radiusSquared - Number.EPSILON) {
+      // Authored rectangles replace the deliberately coarse furniture tiles,
+      // while walls, doors, trainers, and other structural tiles stay solid.
+      if (tileSymbol === "a" && scene.collisionRects.length) continue;
+
+      if (circleIntersectsRectangle(position, radiusSquared, {
+        left: tileX - 0.5,
+        top: tileY - 0.5,
+        right: tileX + 0.5,
+        bottom: tileY + 0.5,
+      })) {
         return false;
       }
     }
   }
 
+  if (scene.collisionRects.some((rectangle) => (
+    circleIntersectsRectangle(position, radiusSquared, rectangle)
+  ))) {
+    return false;
+  }
+
   return true;
+}
+
+/** Uses the scene-authored collision radius while preserving the legacy helper's default. */
+export function canOccupyScenePosition(sceneId, position) {
+  return canOccupyContinuousPosition(sceneId, position, getSceneMovementProfile(sceneId).radius);
 }
 
 export function movePlayer(sceneId, position, direction) {
@@ -240,15 +359,15 @@ export function movePlayerContinuous(
   position,
   movement,
   elapsedMs,
-  {
-    radius = CONTINUOUS_MOVEMENT_DEFAULTS.radius,
-    speed = CONTINUOUS_MOVEMENT_DEFAULTS.speed,
-    maxStepDistance = CONTINUOUS_MOVEMENT_DEFAULTS.maxStepDistance,
-  } = {},
+  options = {},
 ) {
   requireScene(sceneId);
   requireContinuousPosition(position);
   requireContinuousPosition(movement);
+  const profile = getSceneMovementProfile(sceneId);
+  const radius = options.radius ?? profile.radius;
+  const speed = options.speed ?? profile.speed;
+  const maxStepDistance = options.maxStepDistance ?? profile.maxStepDistance;
   requirePositiveNumber(elapsedMs, "Elapsed time", { allowZero: true });
   requirePositiveNumber(radius, "Collision radius");
   requirePositiveNumber(speed, "Movement speed", { allowZero: true });
@@ -302,15 +421,14 @@ export function getContinuousInteraction(
   sceneId,
   position,
   facing,
-  {
-    range = CONTINUOUS_MOVEMENT_DEFAULTS.interactionRange,
-    lateralTolerance = CONTINUOUS_MOVEMENT_DEFAULTS.interactionLateralTolerance,
-  } = {},
+  options = {},
 ) {
   const scene = requireScene(sceneId);
   requireContinuousPosition(position);
   const facingVector = DIRECTION_DELTAS[facing];
   if (!facingVector) throw new RangeError(`Unknown facing direction: ${facing}`);
+  const range = options.range ?? scene.movement.interactionRange;
+  const lateralTolerance = options.lateralTolerance ?? scene.movement.interactionLateralTolerance;
   requirePositiveNumber(range, "Interaction range");
   requirePositiveNumber(lateralTolerance, "Interaction lateral tolerance", { allowZero: true });
 
@@ -326,6 +444,42 @@ export function getContinuousInteraction(
     .filter((candidate) => (
       candidate.forwardDistance > 0
       && candidate.distance <= range
+      && candidate.lateralDistance <= lateralTolerance
+    ))
+    .sort((left, right) => left.distance - right.distance);
+
+  return candidates.length ? publicInteraction(candidates[0].interaction) : null;
+}
+
+/** Finds the closest automatic enter/exit portal in a tight forward corridor. */
+export function getDoorwayTransition(
+  sceneId,
+  position,
+  facing,
+  options = {},
+) {
+  const scene = requireScene(sceneId);
+  requireContinuousPosition(position);
+  const facingVector = DIRECTION_DELTAS[facing];
+  if (!facingVector) throw new RangeError(`Unknown facing direction: ${facing}`);
+  const range = options.range ?? scene.movement.doorwayRange;
+  const lateralTolerance = options.lateralTolerance ?? scene.movement.doorwayLateralTolerance;
+  requirePositiveNumber(range, "Doorway range");
+  requirePositiveNumber(lateralTolerance, "Doorway lateral tolerance", { allowZero: true });
+
+  const candidates = scene.interactions
+    .filter((interaction) => interaction.type === "enter" || interaction.type === "exit")
+    .map((interaction) => {
+      const offsetX = interaction.at.x - position.x;
+      const offsetY = interaction.at.y - position.y;
+      const forwardDistance = offsetX * facingVector.x + offsetY * facingVector.y;
+      const lateralDistance = Math.abs(offsetX * facingVector.y - offsetY * facingVector.x);
+      const distance = Math.hypot(offsetX, offsetY);
+      return { interaction, distance, forwardDistance, lateralDistance };
+    })
+    .filter((candidate) => (
+      candidate.forwardDistance > 0
+      && candidate.forwardDistance <= range
       && candidate.lateralDistance <= lateralTolerance
     ))
     .sort((left, right) => left.distance - right.distance);
