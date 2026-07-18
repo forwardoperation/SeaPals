@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="dice-title dice-desc">
+  <title id="dice-title">SeaPals Dice Pack</title>
+  <desc id="dice-desc">Three colorful game dice arranged over a soft underwater background.</desc>
+  <defs>
+    <linearGradient id="dice-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ebfbff"/>
+      <stop offset=".55" stop-color="#d2f1f7"/>
+      <stop offset="1" stop-color="#e8fae7"/>
+    </linearGradient>
+    <linearGradient id="dice-blue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#42c5e0"/>
+      <stop offset="1" stop-color="#0b7fa3"/>
+    </linearGradient>
+    <linearGradient id="dice-coral" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffad8e"/>
+      <stop offset="1" stop-color="#f26c61"/>
+    </linearGradient>
+    <filter id="dice-shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="18" stdDeviation="14" flood-color="#062f46" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#dice-bg)"/>
+  <path d="M0 441c113-50 215-42 311 4 99 47 219 48 330-7 60-30 113-36 159-26v188H0Z" fill="#fff" opacity=".65"/>
+  <g fill="none" stroke="#2ea7d0" opacity=".24">
+    <circle cx="117" cy="128" r="17" stroke-width="5"/>
+    <circle cx="157" cy="84" r="8" stroke-width="4"/>
+    <circle cx="686" cy="143" r="23" stroke-width="6"/>
+  </g>
+  <g filter="url(#dice-shadow)">
+    <ellipse cx="398" cy="459" rx="244" ry="48" fill="#062f46" opacity=".14"/>
+    <g transform="translate(194 260) rotate(-9 105 105)">
+      <rect width="210" height="210" rx="38" fill="url(#dice-blue)" stroke="#062f46" stroke-width="10"/>
+      <circle cx="55" cy="55" r="16" fill="#e9ffff"/>
+      <circle cx="155" cy="55" r="16" fill="#e9ffff"/>
+      <circle cx="105" cy="105" r="16" fill="#e9ffff"/>
+      <circle cx="55" cy="155" r="16" fill="#e9ffff"/>
+      <circle cx="155" cy="155" r="16" fill="#e9ffff"/>
+      <path d="M38 20h92" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".34"/>
+    </g>
+    <g transform="translate(409 223) rotate(8 94 94)">
+      <rect width="188" height="188" rx="35" fill="url(#dice-coral)" stroke="#062f46" stroke-width="10"/>
+      <circle cx="50" cy="50" r="15" fill="#fff6dd"/>
+      <circle cx="138" cy="50" r="15" fill="#fff6dd"/>
+      <circle cx="50" cy="138" r="15" fill="#fff6dd"/>
+      <circle cx="138" cy="138" r="15" fill="#fff6dd"/>
+      <path d="M37 18h83" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".32"/>
+    </g>
+    <g transform="translate(363 118) rotate(-4 76 76)">
+      <rect width="152" height="152" rx="31" fill="#f7c948" stroke="#062f46" stroke-width="10"/>
+      <circle cx="76" cy="76" r="17" fill="#073d58"/>
+      <path d="M31 18h70" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".38"/>
+    </g>
+    <path d="M602 377c35-2 59 12 75 42-34 7-60-7-75-42Z" fill="#58cdb8"/>
+    <path d="M615 383c17 10 32 19 47 29" fill="none" stroke="#e8fff9" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(253 519)">
+    <rect width="294" height="54" rx="27" fill="#062f46"/>
+    <text x="147" y="35" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="2.5">DICE PACK</text>
+  </g>
+</svg>

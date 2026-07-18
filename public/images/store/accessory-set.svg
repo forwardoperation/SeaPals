@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="accessory-title accessory-desc">
+  <title id="accessory-title">SeaPals Accessory Set</title>
+  <desc id="accessory-desc">A coordinated set of condition cards, reef point tokens, and ocean dice.</desc>
+  <defs>
+    <linearGradient id="accessory-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eefcff"/>
+      <stop offset=".55" stop-color="#d8f4f8"/>
+      <stop offset="1" stop-color="#dff8ef"/>
+    </linearGradient>
+    <linearGradient id="accessory-tray" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a789b"/>
+      <stop offset="1" stop-color="#06415f"/>
+    </linearGradient>
+    <filter id="accessory-shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="13" flood-color="#062f46" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#accessory-bg)"/>
+  <path d="M0 447c122-43 222-36 310 4 100 46 219 47 326-6 66-33 120-38 164-28v183H0Z" fill="#fff" opacity=".68"/>
+  <g fill="none" stroke="#2ea7d0" opacity=".24">
+    <circle cx="105" cy="123" r="19" stroke-width="6"/>
+    <circle cx="146" cy="76" r="8" stroke-width="4"/>
+    <circle cx="693" cy="135" r="14" stroke-width="5"/>
+  </g>
+  <g filter="url(#accessory-shadow)">
+    <path d="M181 312 402 201l220 111-219 116Z" fill="#0c7092" stroke="#062f46" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M181 312 403 428v102L181 410Z" fill="url(#accessory-tray)" stroke="#062f46" stroke-width="9" stroke-linejoin="round"/>
+    <path d="m403 428 219-116v101L403 530Z" fill="#075b7d" stroke="#062f46" stroke-width="9" stroke-linejoin="round"/>
+    <g transform="rotate(-11 317 249)">
+      <rect x="259" y="137" width="116" height="166" rx="14" fill="#fff" stroke="#062f46" stroke-width="8"/>
+      <rect x="273" y="151" width="88" height="106" rx="10" fill="#ddd9ff"/>
+      <path d="M317 168v53m0 0-19 25m19-25 20 25" fill="none" stroke="#7655c7" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="278" y="273" width="78" height="10" rx="5" fill="#2ea7d0"/>
+    </g>
+    <g transform="translate(414 163) rotate(8)">
+      <rect width="76" height="76" rx="16" fill="#f7c948" stroke="#062f46" stroke-width="8"/>
+      <circle cx="21" cy="21" r="6" fill="#073d58"/>
+      <circle cx="55" cy="21" r="6" fill="#073d58"/>
+      <circle cx="38" cy="38" r="6" fill="#073d58"/>
+      <circle cx="21" cy="55" r="6" fill="#073d58"/>
+      <circle cx="55" cy="55" r="6" fill="#073d58"/>
+    </g>
+    <g transform="translate(486 246)">
+      <ellipse cx="51" cy="117" rx="62" ry="20" fill="#062f46" opacity=".18"/>
+      <ellipse cx="50" cy="91" rx="54" ry="25" fill="#ff8d73" stroke="#062f46" stroke-width="8"/>
+      <rect x="-4" y="52" width="108" height="39" fill="#ff8d73" stroke="#062f46" stroke-width="8"/>
+      <ellipse cx="50" cy="52" rx="54" ry="25" fill="#ffad8d" stroke="#062f46" stroke-width="8"/>
+      <rect x="6" y="16" width="88" height="36" fill="#f7c948" stroke="#062f46" stroke-width="8"/>
+      <ellipse cx="50" cy="16" rx="44" ry="21" fill="#ffe58a" stroke="#062f46" stroke-width="8"/>
+      <path d="M40 32c3-17 12-27 26-30-2 17-11 27-26 30Z" fill="#0a789b"/>
+    </g>
+    <path d="M223 359c42 10 71 34 87 72-42-7-71-31-87-72Z" fill="#72dbc5"/>
+    <path d="M235 367c22 18 41 37 58 56" fill="none" stroke="#e7fff9" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(224 519)">
+    <rect width="352" height="54" rx="27" fill="#062f46"/>
+    <text x="176" y="35" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="2.5">ACCESSORY SET</text>
+  </g>
+</svg>

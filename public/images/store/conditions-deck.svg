@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="conditions-title conditions-desc">
+  <title id="conditions-title">SeaPals Conditions Deck</title>
+  <desc id="conditions-desc">A fan of violet, coral, and blue condition cards with clear symbolic marks.</desc>
+  <defs>
+    <linearGradient id="conditions-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2fbff"/>
+      <stop offset=".55" stop-color="#d7eef8"/>
+      <stop offset="1" stop-color="#f0e9ff"/>
+    </linearGradient>
+    <linearGradient id="conditions-card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8369d7"/>
+      <stop offset="1" stop-color="#524198"/>
+    </linearGradient>
+    <filter id="conditions-shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="17" stdDeviation="14" flood-color="#062f46" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#conditions-bg)"/>
+  <path d="M0 452c103-44 203-38 297 3 108 47 225 47 341-8 61-29 115-34 162-24v177H0Z" fill="#fff" opacity=".68"/>
+  <g fill="none" stroke="#2ea7d0" opacity=".22">
+    <circle cx="108" cy="133" r="18" stroke-width="6"/>
+    <circle cx="148" cy="88" r="8" stroke-width="4"/>
+    <circle cx="697" cy="134" r="20" stroke-width="6"/>
+  </g>
+  <g filter="url(#conditions-shadow)">
+    <ellipse cx="402" cy="466" rx="219" ry="42" fill="#062f46" opacity=".14"/>
+    <g transform="rotate(-18 302 310)">
+      <rect x="217" y="134" width="170" height="310" rx="22" fill="#fff" stroke="#062f46" stroke-width="10"/>
+      <rect x="234" y="151" width="136" height="230" rx="15" fill="#ff8d73"/>
+      <path d="M271 294c9-52 30-85 62-101-1 49-20 84-62 101Z" fill="#fff3de"/>
+      <path d="M277 282c19-16 35-38 47-66" fill="none" stroke="#e85f5a" stroke-width="10" stroke-linecap="round"/>
+      <rect x="246" y="402" width="112" height="11" rx="5.5" fill="#f7c948"/>
+    </g>
+    <g transform="rotate(17 502 310)">
+      <rect x="417" y="134" width="170" height="310" rx="22" fill="#fff" stroke="#062f46" stroke-width="10"/>
+      <rect x="434" y="151" width="136" height="230" rx="15" fill="#2ea7d0"/>
+      <path d="M455 279c23-35 47-35 70 0s47 35 70 0" fill="none" stroke="#e9ffff" stroke-width="12" stroke-linecap="round"/>
+      <path d="M458 311c20-25 40-25 60 0s40 25 60 0" fill="none" stroke="#e9ffff" stroke-width="9" stroke-linecap="round" opacity=".75"/>
+      <rect x="446" y="402" width="112" height="11" rx="5.5" fill="#14b8a6"/>
+    </g>
+    <g>
+      <rect x="315" y="103" width="174" height="336" rx="23" fill="#fff" stroke="#062f46" stroke-width="11"/>
+      <rect x="333" y="121" width="138" height="249" rx="15" fill="url(#conditions-card)"/>
+      <circle cx="402" cy="245" r="56" fill="#fff" opacity=".18"/>
+      <path d="M402 170v96m0 0-35 48m35-48 35 48" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="402" cy="326" r="9" fill="#f7c948"/>
+      <rect x="347" y="393" width="110" height="12" rx="6" fill="#7655c7"/>
+    </g>
+  </g>
+  <g transform="translate(205 519)">
+    <rect width="390" height="54" rx="27" fill="#062f46"/>
+    <text x="195" y="35" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="21" font-weight="800" letter-spacing="2.3">CONDITIONS DECK</text>
+  </g>
+</svg>

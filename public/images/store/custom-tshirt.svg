@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="shirt-title shirt-desc">
+  <title id="shirt-title">SeaPals Custom T-Shirt</title>
+  <desc id="shirt-desc">A clean ocean-blue T-shirt with a simple reef-and-wave emblem.</desc>
+  <defs>
+    <linearGradient id="shirt-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#edfbff"/>
+      <stop offset=".58" stop-color="#d3f3f7"/>
+      <stop offset="1" stop-color="#fff1c8"/>
+    </linearGradient>
+    <linearGradient id="shirt-fabric" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#32b8d7"/>
+      <stop offset=".52" stop-color="#138caf"/>
+      <stop offset="1" stop-color="#075b7d"/>
+    </linearGradient>
+    <filter id="shirt-shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="17" stdDeviation="14" flood-color="#062f46" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#shirt-bg)"/>
+  <path d="M0 448c104-48 205-42 300 1 106 48 226 49 338-7 62-31 116-37 162-27v185H0Z" fill="#fff" opacity=".66"/>
+  <g fill="none" stroke="#2ea7d0" opacity=".24">
+    <circle cx="107" cy="127" r="18" stroke-width="6"/>
+    <circle cx="152" cy="82" r="8" stroke-width="4"/>
+    <circle cx="692" cy="136" r="21" stroke-width="6"/>
+  </g>
+  <g filter="url(#shirt-shadow)">
+    <ellipse cx="400" cy="466" rx="220" ry="42" fill="#062f46" opacity=".14"/>
+    <path d="M295 142c27 28 62 43 105 43s78-15 105-43l108 58-59 111-62-27 17 177c-68 29-150 29-218 0l17-177-62 27-59-111Z" fill="url(#shirt-fabric)" stroke="#062f46" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M343 146c8 41 28 61 57 61s49-20 57-61" fill="#073d58" stroke="#062f46" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M352 153c11 21 27 32 48 32s37-11 48-32" fill="none" stroke="#7de4ef" stroke-width="9" stroke-linecap="round"/>
+    <path d="m246 311 62-27-49-78m295 105-62-27 49-78" fill="none" stroke="#7de4ef" stroke-width="8" opacity=".7"/>
+    <circle cx="400" cy="321" r="78" fill="#e9ffff" opacity=".93"/>
+    <path d="M335 330c24-31 50-36 78-15 27 20 51 17 72-10-10 48-42 74-88 74-30 0-51-16-62-49Z" fill="#2ea7d0"/>
+    <path d="M372 332v-43m0 20-24-21m24 11 19-30m-19 30 31 3" fill="none" stroke="#ff8d73" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M307 426c56 14 129 14 186 0" fill="none" stroke="#7de4ef" stroke-width="8" stroke-linecap="round" opacity=".7"/>
+  </g>
+  <g transform="translate(205 519)">
+    <rect width="390" height="54" rx="27" fill="#062f46"/>
+    <text x="195" y="35" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="21" font-weight="800" letter-spacing="2.3">CUSTOM T-SHIRTS</text>
+  </g>
+</svg>

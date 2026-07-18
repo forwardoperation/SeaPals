@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="plush-title plush-desc">
+  <title id="plush-title">SeaPals Plush Toys</title>
+  <desc id="plush-desc">A friendly original teal octopus plush with stitched details and soft rounded arms.</desc>
+  <defs>
+    <linearGradient id="plush-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#effcff"/>
+      <stop offset=".55" stop-color="#d4f3f8"/>
+      <stop offset="1" stop-color="#f2eaff"/>
+    </linearGradient>
+    <radialGradient id="plush-body" cx="36%" cy="25%" r="78%">
+      <stop offset="0" stop-color="#7ce1d1"/>
+      <stop offset=".58" stop-color="#2eb8ac"/>
+      <stop offset="1" stop-color="#138378"/>
+    </radialGradient>
+    <filter id="plush-shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="18" stdDeviation="14" flood-color="#062f46" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#plush-bg)"/>
+  <path d="M0 446c110-46 211-40 307 2 107 47 223 46 331-7 63-31 117-37 162-27v186H0Z" fill="#fff" opacity=".69"/>
+  <g fill="none" stroke="#2ea7d0" opacity=".23">
+    <circle cx="109" cy="130" r="19" stroke-width="6"/>
+    <circle cx="153" cy="85" r="8" stroke-width="4"/>
+    <circle cx="690" cy="133" r="22" stroke-width="6"/>
+    <circle cx="713" cy="86" r="7" stroke-width="4"/>
+  </g>
+  <g filter="url(#plush-shadow)">
+    <ellipse cx="400" cy="471" rx="232" ry="44" fill="#062f46" opacity=".14"/>
+    <path d="M345 373c-52 16-101 51-129 90-10 15-5 35 10 43 15 8 32 3 42-9 21-25 46-43 74-51" fill="url(#plush-body)" stroke="#075b74" stroke-width="10" stroke-linecap="round"/>
+    <path d="M368 395c-23 35-37 69-40 102-2 18 11 33 28 34 17 1 30-11 32-27 3-24 12-47 26-67" fill="url(#plush-body)" stroke="#075b74" stroke-width="10" stroke-linecap="round"/>
+    <path d="M432 395c23 35 37 69 40 102 2 18-11 33-28 34-17 1-30-11-32-27-3-24-12-47-26-67" fill="url(#plush-body)" stroke="#075b74" stroke-width="10" stroke-linecap="round"/>
+    <path d="M455 373c52 16 101 51 129 90 10 15 5 35-10 43-15 8-32 3-42-9-21-25-46-43-74-51" fill="url(#plush-body)" stroke="#075b74" stroke-width="10" stroke-linecap="round"/>
+    <path d="M326 232c8-76 61-126 126-116 70 11 111 85 86 169-9 31-24 52-42 68 16 38 5 76-25 94-37 22-105 22-142 0-30-18-41-56-25-94-18-16-33-42-42-74-16-59 7-104 64-47Z" fill="url(#plush-body)" stroke="#075b74" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M326 232c8-76 61-126 126-116" fill="none" stroke="#a6f0e4" stroke-width="13" stroke-linecap="round" opacity=".7"/>
+    <ellipse cx="354" cy="274" rx="30" ry="35" fill="#eafffb"/>
+    <ellipse cx="449" cy="274" rx="30" ry="35" fill="#eafffb"/>
+    <circle cx="360" cy="280" r="12" fill="#062f46"/>
+    <circle cx="443" cy="280" r="12" fill="#062f46"/>
+    <circle cx="356" cy="276" r="4" fill="#fff"/>
+    <circle cx="439" cy="276" r="4" fill="#fff"/>
+    <path d="M377 325c16 14 32 14 48 0" fill="none" stroke="#075b74" stroke-width="9" stroke-linecap="round"/>
+    <path d="M400 337v9" stroke="#075b74" stroke-width="7" stroke-linecap="round"/>
+    <g fill="none" stroke="#c8fff5" stroke-width="5" stroke-linecap="round" opacity=".8">
+      <path d="m285 397 10 9m-3-16 10 9m-2-17 10 9"/>
+      <path d="m490 391 10-9m-3 17 10-9m-3 16 10-9"/>
+      <path d="m361 457 12 4m-10 8 12 4"/>
+      <path d="m439 457-12 4m10 8-12 4"/>
+    </g>
+    <circle cx="314" cy="302" r="12" fill="#ff9b83" opacity=".7"/>
+    <circle cx="487" cy="302" r="12" fill="#ff9b83" opacity=".7"/>
+  </g>
+  <g transform="translate(250 519)">
+    <rect width="300" height="54" rx="27" fill="#062f46"/>
+    <text x="150" y="35" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="2.5">PLUSH TOYS</text>
+  </g>
+</svg>
