@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { ADVENTURE_CONTENT } from "./adventureContent.mjs";
 import {
   createInitialAdventureSave,
   normalizeAdventureSave,
@@ -518,6 +519,68 @@ test("auto-steer honors route policy and does not relocate within the current en
     }, TEST_CONTENT),
     /opposite the current endpoint/,
   );
+});
+
+test("the canonical Sunpatch-Brackwater route boards, pilots, docks, and then auto-steers both ways", () => {
+  const routeId = "route-sunpatch-brackwater";
+  const fromDockId = "sunpatch-brackwater-dock";
+  const toDockId = "brackwater-dock";
+  const initial = createInitialAdventureSave("profile-brackwater-route");
+  const atSunpatchDeparture = normalizeAdventureSave({
+    ...initial,
+    world: {
+      ...initial.world,
+      townId: "sunpatch-cay",
+      sceneId: "sunpatch-cay-town",
+      position: { x: 8, y: 8 },
+      facing: "up",
+      lastSafeDockId: fromDockId,
+      unlockedRouteIds: [routeId],
+    },
+  });
+
+  const travelState = getRouteTravelState(atSunpatchDeparture, routeId, ADVENTURE_CONTENT);
+  assert.equal(travelState.runtimeReady, true);
+  assert.equal(travelState.canBoardManual, true);
+  assert.equal(travelState.canAutoSteer, false);
+
+  const boarded = boardAdventureRoute(atSunpatchDeparture, {
+    routeId,
+    originDockId: fromDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(boarded.world.sceneId, "sunpatch-brackwater-sea");
+  assert.deepEqual(boarded.world.position, { x: 1, y: 5 });
+
+  const atBrackwaterSide = normalizeAdventureSave({
+    ...boarded,
+    world: {
+      ...boarded.world,
+      position: { x: 14, y: 5 },
+      facing: "right",
+    },
+  });
+  const arrived = dockAdventureRoute(atBrackwaterSide, {
+    routeId,
+    destinationDockId: toDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(arrived.world.townId, "brackwater-landing");
+  assert.equal(arrived.world.sceneId, "brackwater-landing-town");
+  assert.deepEqual(arrived.world.position, { x: 7, y: 8 });
+  assert.deepEqual(arrived.world.completedRouteIds, [routeId]);
+
+  const returned = autoSteerAdventureRoute(arrived, {
+    routeId,
+    destinationDockId: fromDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(returned.world.townId, "sunpatch-cay");
+  assert.equal(returned.world.lastSafeDockId, fromDockId);
+
+  const revisited = autoSteerAdventureRoute(returned, {
+    routeId,
+    destinationDockId: toDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(revisited.world.townId, "brackwater-landing");
+  assert.deepEqual(revisited.world.completedRouteIds, [routeId]);
 });
 
 test("world map conceals locked towns and derives available, active, completed, and Tide Mark states", () => {

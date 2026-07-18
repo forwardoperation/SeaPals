@@ -104,7 +104,7 @@ test("the initial save location references launch content", () => {
   assert.ok(ADVENTURE_CONTENT.scenes.some((scene) => scene.id === save.world.sceneId && scene.townId === save.world.townId));
 });
 
-test("Shellshore and Sunpatch prototype scenes plus the Phase 1 dock start resolve from content", () => {
+test("Shellshore, Sunpatch, and Brackwater runtime scenes plus the Phase 1 dock start resolve from content", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   assert.deepEqual(runtimeScenes.map((scene) => scene.id), [
     "town",
@@ -116,6 +116,11 @@ test("Shellshore and Sunpatch prototype scenes plus the Phase 1 dock start resol
     "sunpatch-field-station",
     "sunpatch-garden-home",
     "sunpatch-tide-hall",
+    "sunpatch-brackwater-sea",
+    "brackwater-landing-town",
+    "brackwater-water-lab",
+    "brackwater-mangrove-home",
+    "brackwater-tide-hall",
   ]);
   assert.ok(runtimeScenes.every((scene) => scene.world.tiles.length > 0));
   assert.deepEqual(getAdventureStartLocation(), {
@@ -222,6 +227,70 @@ test("the Shellshore-Sunpatch route has an exact 16 by 10 boat lane and two dock
   assert.ok(sunpatchBoard.targetSceneContent === routeScene);
 });
 
+test("the Sunpatch-Brackwater route uses a separate Sunpatch dock and an exact live boat lane", () => {
+  const route = getAdventureRoute("route-sunpatch-brackwater");
+  const routeScene = getRuntimeAdventureScenes().find((scene) => scene.id === route.sceneId);
+
+  assert.deepEqual(route, {
+    id: "route-sunpatch-brackwater",
+    fromTownId: "sunpatch-cay",
+    toTownId: "brackwater-landing",
+    sceneId: "sunpatch-brackwater-sea",
+    fromDockId: "sunpatch-brackwater-dock",
+    toDockId: "brackwater-dock",
+    fromSpawn: { x: 1, y: 5, facing: "right" },
+    toSpawn: { x: 14, y: 5, facing: "left" },
+    manualPilotRequiredFirstTime: true,
+    autoSteerAfterFirstCompletion: true,
+  });
+  assert.equal(routeScene.world.theme, "sunpatch-brackwater-route");
+  assert.equal(routeScene.world.artPath, "/images/adventure/sunpatch-brackwater-route.png");
+  assert.equal(routeScene.world.tiles.length, 10);
+  assert.ok(routeScene.world.tiles.every((row) => row.length === 16));
+  assert.deepEqual(routeScene.world.spawn, { x: 1, y: 5 });
+  assert.deepEqual(
+    routeScene.world.interactions.map(({ id, endpoint, at, dockId, targetScene, spawn, facing }) => ({ id, endpoint, at, dockId, targetScene, spawn, facing })),
+    [
+      {
+        id: "interaction-route-dock-sunpatch-brackwater",
+        endpoint: "from",
+        at: { x: 0, y: 5 },
+        dockId: "sunpatch-brackwater-dock",
+        targetScene: "sunpatch-cay-town",
+        spawn: { x: 8, y: 8 },
+        facing: "up",
+      },
+      {
+        id: "interaction-route-dock-brackwater",
+        endpoint: "to",
+        at: { x: 15, y: 5 },
+        dockId: "brackwater-dock",
+        targetScene: "brackwater-landing-town",
+        spawn: { x: 7, y: 8 },
+        facing: "up",
+      },
+    ],
+  );
+
+  assert.deepEqual(getAdventureDock("sunpatch-brackwater-dock"), {
+    id: "sunpatch-brackwater-dock",
+    townId: "sunpatch-cay",
+    sceneId: "sunpatch-cay-town",
+    status: "prototype",
+    position: { x: 8, y: 8 },
+    facing: "up",
+  });
+  assert.notEqual(route.fromDockId, getAdventureDock("sunpatch-dock").id);
+  assert.equal(
+    resolveAdventureInteraction("sunpatch-cay-town", "interaction-sunpatch-board-brackwater-route").targetSceneContent.id,
+    route.sceneId,
+  );
+  assert.equal(
+    resolveAdventureInteraction("brackwater-landing-town", "interaction-brackwater-board-sunpatch-route").targetSceneContent.id,
+    route.sceneId,
+  );
+});
+
 test("Sunpatch Cay exposes its dock, three interiors, and four reef observation stations", () => {
   const scenes = getRuntimeAdventureScenes();
   const town = scenes.find((scene) => scene.id === "sunpatch-cay-town");
@@ -242,9 +311,9 @@ test("Sunpatch Cay exposes its dock, three interiors, and four reef observation 
       .filter((interaction) => interaction.type === "enter")
       .map(({ id, at, targetScene, spawn, facing }) => ({ id, at, targetScene, spawn, facing })),
     [
-      { id: "interaction-sunpatch-enter-garden-home", at: { x: 3, y: 1 }, targetScene: "sunpatch-garden-home", spawn: { x: 5, y: 6 }, facing: "up" },
-      { id: "interaction-sunpatch-enter-field-station", at: { x: 8, y: 1 }, targetScene: "sunpatch-field-station", spawn: { x: 5, y: 6 }, facing: "up" },
-      { id: "interaction-sunpatch-enter-tide-hall", at: { x: 13, y: 1 }, targetScene: "sunpatch-tide-hall", spawn: { x: 5, y: 6 }, facing: "up" },
+      { id: "interaction-sunpatch-enter-garden-home", at: { x: 3, y: 2 }, targetScene: "sunpatch-garden-home", spawn: { x: 5, y: 6 }, facing: "up" },
+      { id: "interaction-sunpatch-enter-field-station", at: { x: 8, y: 2 }, targetScene: "sunpatch-field-station", spawn: { x: 5, y: 6 }, facing: "up" },
+      { id: "interaction-sunpatch-enter-tide-hall", at: { x: 13, y: 2 }, targetScene: "sunpatch-tide-hall", spawn: { x: 5, y: 6 }, facing: "up" },
     ],
   );
   assert.deepEqual(
@@ -329,6 +398,115 @@ test("five Sunpatch NPCs provide role-specific conversations and correctly scope
     rewardId: null,
     prerequisites: [{ type: "encounterComplete", encounterId: "encounter-sunpatch-qualifier" }],
   });
+});
+
+test("Brackwater Landing exposes a floating town, three interiors, and four exact water stations", () => {
+  const runtimeScenes = getRuntimeAdventureScenes();
+  const town = runtimeScenes.find((scene) => scene.id === "brackwater-landing-town");
+  const expectedArt = new Map([
+    ["brackwater-landing-town", "/images/adventure/brackwater-landing.png"],
+    ["brackwater-water-lab", "/images/adventure/brackwater-water-lab.png"],
+    ["brackwater-mangrove-home", "/images/adventure/brackwater-mangrove-home.png"],
+    ["brackwater-tide-hall", "/images/adventure/brackwater-tide-hall.png"],
+  ]);
+
+  assert.equal(town.world.tiles.length, 10);
+  assert.ok(town.world.tiles.every((row) => row.length === 16));
+  assert.deepEqual(getAdventureDock("brackwater-dock"), {
+    id: "brackwater-dock",
+    townId: "brackwater-landing",
+    sceneId: "brackwater-landing-town",
+    status: "prototype",
+    position: { x: 7, y: 8 },
+    facing: "up",
+  });
+  assert.deepEqual(
+    town.world.interactions
+      .filter((interaction) => interaction.type === "enter")
+      .map(({ at, targetScene }) => ({ at, targetScene })),
+    [
+      { at: { x: 3, y: 2 }, targetScene: "brackwater-mangrove-home" },
+      { at: { x: 8, y: 2 }, targetScene: "brackwater-water-lab" },
+      { at: { x: 13, y: 2 }, targetScene: "brackwater-tide-hall" },
+    ],
+  );
+  assert.deepEqual(
+    town.world.interactions
+      .filter((interaction) => interaction.type === "observation")
+      .map(({ at, observationId }) => ({ at, observationId })),
+    [
+      { at: { x: 3, y: 4 }, observationId: "incoming-tide-channel" },
+      { at: { x: 12, y: 4 }, observationId: "rain-fed-creek-mouth" },
+      { at: { x: 3, y: 7 }, observationId: "mangrove-low-tide" },
+      { at: { x: 12, y: 7 }, observationId: "repeat-runoff-low-oxygen" },
+    ],
+  );
+
+  for (const [sceneId, artPath] of expectedArt) {
+    const scene = runtimeScenes.find((candidate) => candidate.id === sceneId);
+    assert.equal(scene.world.artPath, artPath);
+    if (sceneId === town.id) continue;
+    assert.equal(scene.world.tiles.length, 8);
+    assert.ok(scene.world.tiles.every((row) => row.length === 12));
+    const exit = scene.world.interactions.find((interaction) => interaction.type === "exit");
+    assert.equal(exit.targetScene, town.id);
+    assert.equal(exit.facing, "down");
+  }
+
+  const lab = runtimeScenes.find((scene) => scene.id === "brackwater-water-lab");
+  assert.deepEqual(
+    lab.world.interactions
+      .filter((interaction) => ["interpretation", "response"].includes(interaction.type))
+      .map(({ type, at, choiceSetId }) => ({ type, at, choiceSetId })),
+    [
+      { type: "interpretation", at: { x: 3, y: 2 }, choiceSetId: "brackwater-water-interpretation" },
+      { type: "response", at: { x: 8, y: 2 }, choiceSetId: "brackwater-runoff-response" },
+    ],
+  );
+});
+
+test("five Brackwater NPCs cover every ecosystem role with scoped conversations and duels", () => {
+  const npcs = ADVENTURE_CONTENT.npcs.filter((npc) => npc.townId === "brackwater-landing");
+  assert.deepEqual(npcs.map((npc) => npc.id), [
+    "brackwater-rhea",
+    "brackwater-scientist",
+    "brackwater-naturalist",
+    "brackwater-harbormaster",
+    "brackwater-leader",
+  ]);
+  assert.deepEqual(npcs.map((npc) => npc.roleId), REQUIRED_ECOSYSTEM_NPC_ROLES);
+
+  for (const npc of npcs) {
+    const resolved = resolveAdventureNpc(npc.id);
+    assert.ok(resolved.conversation.lines.intro.length >= 2);
+    assert.match(resolved.conversation.lines.intro[0], /welcome|hello|thank you/i);
+  }
+  assert.equal(resolveAdventureNpc("brackwater-rhea").encounter, null);
+  assert.equal(resolveAdventureNpc("brackwater-scientist").encounter, null);
+  assert.equal(resolveAdventureNpc("brackwater-naturalist").encounter.id, "encounter-brackwater-resident-naturalist");
+  assert.equal(resolveAdventureNpc("brackwater-harbormaster").encounter.id, "encounter-brackwater-resident-harbormaster");
+  assert.equal(resolveAdventureNpc("brackwater-leader").encounter.id, "encounter-brackwater-qualifier");
+  assert.match(
+    resolveAdventureNpc("brackwater-scientist").conversation.lines.debrief.join(" "),
+    /expected estuary variation.*high-turbidity.*low-oxygen.*drainage outlet/i,
+  );
+});
+
+test("Changing Estuary Water is a complete sourced evidence-comparison Field Note", () => {
+  const fieldNote = getAdventureFieldNote("field-note-estuary-conditions");
+  assert.equal(fieldNote.status, "prototype");
+  assert.equal(fieldNote.observations.length, 5);
+  assert.equal(fieldNote.checklist.length, 4);
+  assert.deepEqual(fieldNote.glossary.map((entry) => entry.term), [
+    "Estuary",
+    "Salinity",
+    "Turbidity",
+    "Dissolved oxygen",
+    "Runoff",
+  ]);
+  assert.equal(fieldNote.sourceUrls.length, 3);
+  assert.ok(fieldNote.sourceUrls.every((sourceUrl) => sourceUrl.startsWith("https://")));
+  assert.match(fieldNote.summary, /place, tide, rainfall, time, and bottom type.*expected variation.*source tracing/i);
 });
 
 test("Reading a Reef is a complete evidence-first Field Note with science sources", () => {
@@ -576,6 +754,25 @@ test("content validation protects Phase 4 route, fieldwork, NPC, and exhibition 
   assert.ok(result.errors.some((error) => /sourceUrls must contain at least three HTTPS science sources/.test(error)));
   assert.ok(result.errors.some((error) => /exhibition must use 30 VP/.test(error)));
   assert.ok(result.errors.some((error) => /exhibition must require the town qualifier/.test(error)));
+});
+
+test("content validation protects Brackwater art, evidence, science-source, and NPC-role contracts", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  invalid.scenes.find((scene) => scene.id === "sunpatch-brackwater-sea").world.artPath = "https://example.invalid/route.jpg";
+  invalid.scenes
+    .find((scene) => scene.id === "brackwater-landing-town")
+    .world.interactions
+    .find((interaction) => interaction.type === "observation")
+    .observationId = "";
+  invalid.fieldNotes.find((fieldNote) => fieldNote.id === "field-note-estuary-conditions").sourceUrls = [];
+  invalid.npcs.find((npc) => npc.id === "brackwater-scientist").roleId = "resident";
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /sunpatch-brackwater-sea.*artPath must reference a PNG/.test(error)));
+  assert.ok(result.errors.some((error) => /brackwater-landing-town.*observationId is required/.test(error)));
+  assert.ok(result.errors.some((error) => /field-note-estuary-conditions.*sourceUrls must contain at least three HTTPS science sources/.test(error)));
+  assert.ok(result.errors.some((error) => /brackwater-landing.*no NPC for role field-partner/.test(error)));
 });
 
 test("content validation protects Phase 2 starter, tutorial, mentor, and Field Note contracts", () => {

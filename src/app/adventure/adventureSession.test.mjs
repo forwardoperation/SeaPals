@@ -3,7 +3,20 @@ import test from "node:test";
 import {
   createInitialAdventureSave,
   normalizeAdventureSave,
+  validateAdventureSave,
 } from "./adventureProgression.mjs";
+import {
+  BRACKWATER_QUEST_ID,
+  BRACKWATER_RESIDENT_ENCOUNTER_IDS,
+  getBrackwaterProgress,
+} from "./adventureBrackwater.mjs";
+import {
+  ADVENTURE_ECOSYSTEM_CHAPTERS,
+} from "./adventureEcosystemChapters.mjs";
+import {
+  SUNPATCH_QUEST_ID,
+  SUNPATCH_RESIDENT_ENCOUNTER_IDS,
+} from "./adventureSunpatch.mjs";
 import {
   SCENES,
   canOccupyContinuousPosition,
@@ -13,6 +26,7 @@ import {
   completeAdventureEncounter,
   createNewAdventureSession,
   enterAdventureScene,
+  isAdventureEncounterAvailable,
   moveAdventureSession,
   recordAdventureDuelResult,
   recoverAdventureResume,
@@ -41,6 +55,214 @@ test("scene transitions persist a safe position and a meaningful quest flag", ()
     entered.progression.quests[SHELLSHORE_QUEST_ID].flags["visited-coral-home"],
     true,
   );
+});
+
+test("entering any registered ecosystem town begins its chapter", () => {
+  for (const { sceneId, questId } of [
+    { sceneId: "sunpatch-cay-town", questId: SUNPATCH_QUEST_ID },
+    { sceneId: "brackwater-landing-town", questId: BRACKWATER_QUEST_ID },
+  ]) {
+    const scene = SCENES[sceneId];
+    const entered = enterAdventureScene(createNewAdventureSession("profile-1"), {
+      sceneId,
+      position: scene.spawn,
+      facing: "up",
+    });
+    assert.equal(entered.progression.quests[questId].status, "active");
+  }
+});
+
+test("resuming in any registered ecosystem town begins its missing chapter after JSON reload", () => {
+  for (const chapter of ADVENTURE_ECOSYSTEM_CHAPTERS) {
+    const sceneId = chapter.townId === "sunpatch-cay"
+      ? "sunpatch-cay-town"
+      : "brackwater-landing-town";
+    const scene = SCENES[sceneId];
+    const initial = createInitialAdventureSave("profile-2");
+    const loaded = JSON.parse(JSON.stringify({
+      ...initial,
+      world: {
+        ...initial.world,
+        townId: chapter.townId,
+        sceneId,
+        position: scene.spawn,
+        lastSafeDockId: chapter.townId === "sunpatch-cay"
+          ? "sunpatch-dock"
+          : "brackwater-dock",
+      },
+    }));
+
+    const recovered = recoverAdventureResume(loaded);
+    assert.equal(recovered.recovered, true);
+    assert.equal(recovered.reason, "quest-state-reconciled");
+    assert.equal(
+      recovered.save.progression.quests[chapter.questId].status,
+      "active",
+    );
+  }
+});
+
+test("resident wins alone never bypass registered ecosystem fieldwork", () => {
+  for (const { sceneId, questId, encounterIds } of [
+    {
+      sceneId: "sunpatch-cay-town",
+      questId: SUNPATCH_QUEST_ID,
+      encounterIds: SUNPATCH_RESIDENT_ENCOUNTER_IDS,
+    },
+    {
+      sceneId: "brackwater-landing-town",
+      questId: BRACKWATER_QUEST_ID,
+      encounterIds: BRACKWATER_RESIDENT_ENCOUNTER_IDS,
+    },
+  ]) {
+    let save = enterAdventureScene(createNewAdventureSession("profile-3"), {
+      sceneId,
+      position: SCENES[sceneId].spawn,
+      facing: "up",
+    });
+    for (const encounterId of encounterIds) {
+      save = completeAdventureEncounter(save, { encounterId });
+    }
+    assert.equal(save.progression.quests[questId].status, "active");
+  }
+});
+
+test("inconsistent terminal ecosystem saves cannot unlock qualifier encounters", () => {
+  for (const { questId, qualifierId } of [
+    {
+      questId: SUNPATCH_QUEST_ID,
+      qualifierId: "encounter-sunpatch-qualifier",
+    },
+    {
+      questId: BRACKWATER_QUEST_ID,
+      qualifierId: "encounter-brackwater-qualifier",
+    },
+  ]) {
+    const initial = createInitialAdventureSave(`corrupt-${questId}`);
+    const inconsistent = normalizeAdventureSave({
+      ...initial,
+      progression: {
+        ...initial.progression,
+        quests: {
+          ...initial.progression.quests,
+          [questId]: { status: "complete", flags: {} },
+        },
+      },
+    });
+
+    const recovered = recoverAdventureResume(JSON.parse(JSON.stringify(inconsistent))).save;
+    const availability = isAdventureEncounterAvailable(recovered, qualifierId);
+    assert.equal(availability.available, false);
+    assert.match(availability.reason, /incomplete or inconsistent/i);
+  }
+});
+
+test("resume reconciliation loops every ecosystem adapter after storage reload", () => {
+  for (const chapter of ADVENTURE_ECOSYSTEM_CHAPTERS) {
+    const sceneId = chapter.townId === "sunpatch-cay"
+      ? "sunpatch-cay-town"
+      : "brackwater-landing-town";
+    let result = chapter.begin(createInitialAdventureSave("profile-1"));
+    for (const observationId of result.progress.requiredObservationIds) {
+      result = chapter.recordObservation(result.save, observationId);
+    }
+    result = chapter.submitInterpretation(
+      result.save,
+      result.progress.interpretation.correctChoiceId,
+    );
+    result = chapter.submitResponse(
+      result.save,
+      result.progress.response.correctChoiceId,
+    );
+    let save = normalizeAdventureSave({
+      ...result.save,
+      world: {
+        ...result.save.world,
+        townId: chapter.townId,
+        sceneId,
+        position: SCENES[sceneId].spawn,
+        lastSafeDockId: chapter.townId === "sunpatch-cay"
+          ? "sunpatch-dock"
+          : "brackwater-dock",
+      },
+      progression: {
+        ...result.save.progression,
+        completedEncounterIds: [
+          ...result.save.progression.completedEncounterIds,
+          ...result.progress.residentEncounterIds,
+        ],
+      },
+    });
+    assert.equal(save.progression.quests[chapter.questId].status, "active");
+
+    const recovered = recoverAdventureResume(JSON.parse(JSON.stringify(save)));
+    assert.equal(
+      recovered.save.progression.quests[chapter.questId].status,
+      "readyToTurnIn",
+    );
+    assert.equal(recovered.reason, "quest-state-reconciled");
+  }
+});
+
+test("resume discards malformed persisted Brackwater flags without losing unrelated progress", () => {
+  const save = createNewAdventureSession("brackwater-flag-recovery");
+  save.progression.quests[BRACKWATER_QUEST_ID] = {
+    status: "active",
+    flags: {
+      "future-chapter-marker": "keep-me",
+      "interpretation-corrective-attempts": 1.5,
+      "interpretation-last-choice": 7,
+      "observed-incoming-tide-channel": "yes",
+      "observed-rain-fed-creek-mouth": true,
+    },
+  };
+  save.progression.quests["quest-side-story"] = {
+    status: "active",
+    flags: { "story-progress": 7 },
+  };
+  save.inventory.storyItems["keepsake-shell"] = 2;
+  save.playtimeSeconds = 42;
+
+  const loaded = JSON.parse(JSON.stringify(save));
+  assert.equal(validateAdventureSave(loaded).valid, true);
+
+  const recovered = recoverAdventureResume(loaded);
+  assert.equal(recovered.recovered, true);
+  assert.equal(recovered.reason, "chapter-quest-flags-recovered");
+  assert.equal(recovered.fallback, null);
+  assert.deepEqual(recovered.recoveryMetadata, {
+    chapterQuestRepairs: [{
+      questId: BRACKWATER_QUEST_ID,
+      discardedFlagIds: [
+        "interpretation-corrective-attempts",
+        "interpretation-last-choice",
+        "observed-incoming-tide-channel",
+      ],
+    }],
+  });
+  assert.deepEqual(
+    recovered.save.progression.quests[BRACKWATER_QUEST_ID].flags,
+    {
+      "future-chapter-marker": "keep-me",
+      "observed-rain-fed-creek-mouth": true,
+    },
+  );
+  assert.deepEqual(recovered.save.progression.quests["quest-side-story"], {
+    status: "active",
+    flags: { "story-progress": 7 },
+  });
+  assert.equal(recovered.save.inventory.storyItems["keepsake-shell"], 2);
+  assert.equal(recovered.save.playtimeSeconds, 42);
+  assert.deepEqual(
+    getBrackwaterProgress(recovered.save).observedObservationIds,
+    ["rain-fed-creek-mouth"],
+  );
+
+  const stable = recoverAdventureResume(JSON.parse(JSON.stringify(recovered.save)));
+  assert.equal(stable.recovered, false);
+  assert.equal(stable.reason, null);
+  assert.equal(stable.recoveryMetadata, undefined);
+  assert.deepEqual(stable.save, recovered.save);
 });
 
 test("unsafe writes are rejected and unsafe loaded positions recover to the scene spawn", () => {
@@ -132,7 +354,11 @@ test("all live portals use safe spawns and preserve their authored arrival facin
     }
   }
 
-  assert.equal(portalCount, 12, "all Shellshore and Sunpatch entrances and exits should be covered");
+  assert.equal(
+    portalCount,
+    18,
+    "all live Shellshore, Sunpatch, and Brackwater entrances and exits should be covered",
+  );
 });
 
 test("stale scene IDs recover to the authored adventure start", () => {

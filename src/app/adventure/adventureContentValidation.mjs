@@ -256,6 +256,12 @@ export function validateAdventureContent(content) {
         errors.push(`scenes.${scene.id}.world.${field} is required.`);
       }
     }
+    if (
+      scene.world.artPath !== undefined
+      && (typeof scene.world.artPath !== "string" || !/^\/images\/adventure\/[a-z0-9-]+\.png$/.test(scene.world.artPath))
+    ) {
+      errors.push(`scenes.${scene.id}.world.artPath must reference a PNG in /images/adventure/.`);
+    }
     if (!Number.isInteger(scene.world.spawn?.x) || !Number.isInteger(scene.world.spawn?.y)) {
       errors.push(`scenes.${scene.id}.world.spawn requires integer x and y coordinates.`);
     }
@@ -631,7 +637,7 @@ export function validateAdventureContent(content) {
       ) {
         errors.push(`fieldNotes.${fieldNote.id}.glossary must contain defined terms.`);
       }
-      if (fieldNote.habitatId === "coral-reef" && (
+      if (["coral-reef", "estuary-mangrove"].includes(fieldNote.habitatId) && (
         !Array.isArray(fieldNote.sourceUrls)
         || fieldNote.sourceUrls.length < 3
         || fieldNote.sourceUrls.some((sourceUrl) => typeof sourceUrl !== "string" || !/^https:\/\//.test(sourceUrl))

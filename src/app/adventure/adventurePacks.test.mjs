@@ -66,6 +66,11 @@ test("every playable pack is versioned and every permanent card id resolves", ()
       [],
       `${playablePool.id} contains unresolved permanent card ids`,
     );
+    assert.deepEqual(
+      playablePool.cardIds.filter((cardId) => cardsById[cardId]?.kind === "condition"),
+      [],
+      `${playablePool.id} must not award condition cards that custom decks cannot use`,
+    );
   }
   assert.equal(marina.rewardId, MARINA_REWARD_ID);
   assert.deepEqual(reward.packs, { [PACK_ID]: 1 });
@@ -146,7 +151,7 @@ test("opening rejects unavailable and planned packs without changing the save", 
   );
   assert.deepEqual(noPackSave, noPackBefore);
 
-  const plannedPackId = "pack-pool-brackwater-murky";
+  const plannedPackId = "pack-pool-current-bluewater";
   const plannedSave = grantReward(noPackSave, {
     grantId: "test-planned-pack",
     packs: { [plannedPackId]: 1 },
@@ -177,6 +182,28 @@ test("the playable Sunpatch Coral Pack contains the intended twelve-card reef po
     "cleaner-shrimp",
     "emerald-crab",
     "spectacled-parrotfish",
+  ]);
+  assert.deepEqual(pool.cardIds.filter((cardId) => !cardsById[cardId]), []);
+});
+
+test("the playable Brackwater Discovery Pack contains twelve permanent estuary-strategy cards", () => {
+  const pool = getAdventurePackPool("pack-pool-brackwater-murky");
+
+  assert.equal(pool.status, "playable");
+  assert.equal(pool.cardsPerPack, 4);
+  assert.deepEqual(pool.cardIds, [
+    "leather-starfish",
+    "oysters",
+    "blue-crab",
+    "white-grunt",
+    "bull-shark",
+    "octopus",
+    "arrow-crab",
+    "emerald-crab",
+    "robotic-survey",
+    "scientist-jes",
+    "recovery",
+    "remote-search",
   ]);
   assert.deepEqual(pool.cardIds.filter((cardId) => !cardsById[cardId]), []);
 });
