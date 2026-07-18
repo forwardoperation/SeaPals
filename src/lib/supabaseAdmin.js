@@ -6,7 +6,7 @@ export function createSupabaseAdmin() {
 
   if (!url || !serviceRoleKey) {
     throw new Error(
-      "Survey storage is not configured. Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY."
+      "Server storage is not configured. Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY."
     );
   }
 
@@ -17,4 +17,3 @@ export function createSupabaseAdmin() {
     },
   });
 }
-

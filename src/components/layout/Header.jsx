@@ -56,6 +56,10 @@ export default function Header() {
           Decks
         </Link>
 
+        <Link href="/store" aria-current={pathname.startsWith("/store") ? "page" : undefined} className={linkClass("/store")}>
+          Store
+        </Link>
+
         <Link href="/tournaments" aria-current={pathname.startsWith("/tournaments") ? "page" : undefined} className={linkClass("/tournaments")}>
           Tournaments
         </Link>

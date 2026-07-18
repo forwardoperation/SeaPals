@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="starter-title starter-desc">
+  <title id="starter-title">SeaPals Starter Kit</title>
+  <desc id="starter-desc">An open ocean-blue game box holding cards, dice, and reef point tokens.</desc>
+  <defs>
+    <linearGradient id="starter-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f8fc"/>
+      <stop offset="0.58" stop-color="#c9eff6"/>
+      <stop offset="1" stop-color="#fff2bf"/>
+    </linearGradient>
+    <linearGradient id="starter-box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1597c1"/>
+      <stop offset="1" stop-color="#075b7d"/>
+    </linearGradient>
+    <filter id="starter-shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="16" stdDeviation="13" flood-color="#062f46" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#starter-bg)"/>
+  <circle cx="92" cy="95" r="12" fill="none" stroke="#2ea7d0" stroke-width="5" opacity=".35"/>
+  <circle cx="705" cy="142" r="21" fill="none" stroke="#2ea7d0" stroke-width="6" opacity=".25"/>
+  <circle cx="662" cy="86" r="8" fill="#ffffff" opacity=".75"/>
+  <path d="M0 428c111-51 201-35 299 4 128 51 236 48 339-6 61-32 115-36 162-25v199H0Z" fill="#ffffff" opacity=".6"/>
+  <g filter="url(#starter-shadow)">
+    <path d="M226 245 402 151l181 93-177 94Z" fill="#0c769b" stroke="#062f46" stroke-width="9" stroke-linejoin="round"/>
+    <path d="m402 151 181 93-39 22-180-95Z" fill="#2ea7d0"/>
+    <g transform="rotate(-9 379 252)">
+      <rect x="319" y="142" width="122" height="172" rx="13" fill="#fff" stroke="#073d58" stroke-width="8"/>
+      <rect x="335" y="158" width="90" height="107" rx="10" fill="#d7f3f8"/>
+      <path d="M348 241c17-45 46-72 69-70-4 37-28 67-69 70Z" fill="#18a999"/>
+      <path d="M355 235c24-10 42-27 54-51" fill="none" stroke="#075b7d" stroke-width="7" stroke-linecap="round"/>
+      <rect x="340" y="280" width="80" height="9" rx="4.5" fill="#f7c948"/>
+    </g>
+    <g transform="rotate(8 473 252)">
+      <rect x="414" y="149" width="118" height="166" rx="13" fill="#fff9e2" stroke="#073d58" stroke-width="8"/>
+      <circle cx="473" cy="214" r="35" fill="#ff8d73"/>
+      <path d="M453 221c11-25 32-36 45-31-3 23-17 36-45 31Z" fill="#fff" opacity=".8"/>
+      <rect x="435" y="274" width="76" height="9" rx="4.5" fill="#2ea7d0"/>
+    </g>
+    <path d="M226 245 406 338v177L226 420Z" fill="url(#starter-box)" stroke="#062f46" stroke-width="9" stroke-linejoin="round"/>
+    <path d="m406 338 177-94v176l-177 95Z" fill="#0b7094" stroke="#062f46" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M228 419 406 515l177-95" fill="none" stroke="#062f46" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M275 353c39 13 69 39 83 77-39-8-69-34-83-77Z" fill="#82e6d4" opacity=".9"/>
+    <path d="M284 361c19 18 37 38 54 60" fill="none" stroke="#e8fff9" stroke-width="7" stroke-linecap="round"/>
+    <g transform="translate(464 337)">
+      <rect width="58" height="58" rx="12" fill="#f7c948" stroke="#062f46" stroke-width="7"/>
+      <circle cx="17" cy="17" r="5" fill="#073d58"/>
+      <circle cx="41" cy="41" r="5" fill="#073d58"/>
+    </g>
+    <g transform="translate(453 415)">
+      <ellipse cx="31" cy="31" rx="35" ry="17" fill="#073d58" opacity=".23"/>
+      <circle cx="31" cy="23" r="29" fill="#ff8d73" stroke="#062f46" stroke-width="7"/>
+      <path d="M20 30c3-15 10-23 21-25-1 15-8 23-21 25Z" fill="#fff4da"/>
+    </g>
+  </g>
+  <g transform="translate(256 519)">
+    <rect width="288" height="54" rx="27" fill="#062f46"/>
+    <text x="144" y="35" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="23" font-weight="800" letter-spacing="3">STARTER KIT</text>
+  </g>
+</svg>
