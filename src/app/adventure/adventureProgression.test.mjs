@@ -22,7 +22,7 @@ function jsonRoundTrip(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-test("initial save is canonical schema v1 and contains every launch save domain", () => {
+test("initial save is canonical schema v2 and contains every launch save domain", () => {
   const save = createInitialAdventureSave("profile-1");
 
   assert.equal(save.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
@@ -31,10 +31,12 @@ test("initial save is canonical schema v1 and contains every launch save domain"
     ...ADVENTURE_START_LOCATION,
     position: { ...ADVENTURE_START_LOCATION.position },
     unlockedRouteIds: [],
+    completedRouteIds: [],
   });
   assert.deepEqual(save.player, { starterDeckId: null, activeDeckId: null });
   assert.deepEqual(save.progression.quests, {});
   assert.deepEqual(save.progression.completedEncounterIds, []);
+  assert.deepEqual(save.progression.encounterResults, {});
   assert.deepEqual(save.progression.tideMarkIds, []);
   assert.deepEqual(save.inventory, {
     cards: {},
@@ -53,21 +55,24 @@ test("initial saves do not share mutable arrays or objects", () => {
   const second = createInitialAdventureSave("profile-1");
 
   first.world.position.x = 99;
+  first.world.completedRouteIds.push("route-shellshore-sunpatch");
   first.rewardLedger.push("reward-test");
   first.inventory.cards["white-grunt"] = 4;
 
   assert.deepEqual(second.world.position, { x: 7, y: 8 });
+  assert.deepEqual(second.world.completedRouteIds, []);
   assert.deepEqual(second.rewardLedger, []);
   assert.deepEqual(second.inventory.cards, {});
 });
 
-test("normalization fills omitted v1 fields and canonicalizes IDs, arrays, and records", () => {
+test("normalization fills omitted v2 fields and canonicalizes IDs, arrays, and records", () => {
   const normalized = normalizeAdventureSave({
-    schemaVersion: 1,
+    schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
     profileId: " profile-2 ",
     player: { starterDeckId: " coral-garden " },
     world: {
       unlockedRouteIds: ["route-sunpatch", "route-shellshore", "route-sunpatch"],
+      completedRouteIds: ["route-shellshore", "route-shellshore"],
     },
     progression: {
       quests: {
@@ -91,11 +96,24 @@ test("normalization fills omitted v1 fields and canonicalizes IDs, arrays, and r
   assert.equal(normalized.profileId, "profile-2");
   assert.deepEqual(normalized.player, { starterDeckId: "coral-garden", activeDeckId: null });
   assert.deepEqual(normalized.world.unlockedRouteIds, ["route-sunpatch", "route-shellshore"]);
+  assert.deepEqual(normalized.world.completedRouteIds, ["route-shellshore"]);
   assert.deepEqual(Object.keys(normalized.inventory.cards), ["blue-crab", "white-grunt"]);
   assert.equal(normalized.savedDecks["deck-starter"].name, "Reef Team");
   assert.deepEqual(normalized.rewardLedger, ["reward-first", "reward-second"]);
   assert.equal("ignoredSameVersionField" in normalized, false);
   assert.equal(validateAdventureSave(normalized).valid, true);
+});
+
+test("schema-v1 saves migrate travel and encounter provenance with backward-compatible defaults", () => {
+  const legacyV1 = createInitialAdventureSave("profile-3");
+  legacyV1.schemaVersion = 1;
+  delete legacyV1.world.completedRouteIds;
+  delete legacyV1.progression.encounterResults;
+
+  const normalized = migrateAdventureSave(legacyV1);
+  assert.deepEqual(normalized.world.completedRouteIds, []);
+  assert.deepEqual(normalized.progression.encounterResults, {});
+  assert.equal(normalized.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
 });
 
 test("validation returns a recovery-friendly result for malformed saves", () => {
@@ -112,7 +130,7 @@ test("validation returns a recovery-friendly result for malformed saves", () => 
 
 test("normalization rejects unsupported versions and non-JSON progression values", () => {
   assert.throws(
-    () => normalizeAdventureSave({ schemaVersion: 2, profileId: "profile-1" }),
+    () => normalizeAdventureSave({ schemaVersion: 1, profileId: "profile-1" }),
     /migrate older saves first/,
   );
 
@@ -144,7 +162,7 @@ test("v0 fixture migrates known wins without inventing rewards the prototype nev
   const before = jsonRoundTrip(ADVENTURE_SAVE_V0_FIXTURE);
   const migrated = migrateAdventureSave(ADVENTURE_SAVE_V0_FIXTURE);
 
-  assert.equal(migrated.schemaVersion, 1);
+  assert.equal(migrated.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
   assert.equal(migrated.profileId, "profile-legacy-1");
   assert.equal(migrated.world.sceneId, "coral-home");
   assert.deepEqual(migrated.world.position, { x: 5.25, y: 4.5 });
@@ -199,13 +217,16 @@ test("reward grant validation exposes the canonical contract without applying it
   assert.match(invalid.errors[0], /positive safe integer/);
 });
 
-test("migration normalizes v1 and refuses unknown future versions", () => {
+test("migration upgrades v1 and refuses unknown future versions", () => {
   const v1 = createInitialAdventureSave("profile-1");
+  v1.schemaVersion = 1;
   v1.rewardLedger = ["reward-one", "reward-one"];
-  assert.deepEqual(migrateAdventureSave(v1).rewardLedger, ["reward-one"]);
+  const migrated = migrateAdventureSave(v1);
+  assert.equal(migrated.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
+  assert.deepEqual(migrated.rewardLedger, ["reward-one"]);
   assert.throws(
     () => migrateAdventureSave({ schemaVersion: 99, profileId: "profile-1" }),
-    /newer than supported version 1/,
+    /newer than supported version 2/,
   );
   assert.throws(
     () => migrateAdventureSave({ schemaVersion: -1, profileId: "profile-1" }),

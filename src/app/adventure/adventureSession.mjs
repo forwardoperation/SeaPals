@@ -1,5 +1,6 @@
 import {
   createInitialAdventureSave,
+  grantReward,
   normalizeAdventureSave,
   setQuestFlag,
   transitionQuest,
@@ -7,14 +8,21 @@ import {
 import {
   SCENES,
   START_STATE,
-  canOccupyContinuousPosition,
+  canOccupyScenePosition,
 } from "./adventureWorld.mjs";
 import {
   ADVENTURE_CONTENT,
   getAdventureDock,
+  getAdventureEncounter,
+  getAdventureRoute,
   getAdventureScene,
   getAdventureStartLocation,
 } from "./adventureContent.mjs";
+import {
+  SUNPATCH_QUEST_ID,
+  beginSunpatchInvestigation,
+  reconcileSunpatchQuest,
+} from "./adventureSunpatch.mjs";
 
 export const SHELLSHORE_QUEST_ID = "quest-shellshore-first-voyage";
 export const SHELLSHORE_RESIDENT_ENCOUNTER_IDS = Object.freeze(
@@ -68,8 +76,36 @@ function reconcileShellshoreQuest(saveValue) {
     ));
   if (residentsComplete && quest.status === "active") {
     save = transitionQuest(save, SHELLSHORE_QUEST_ID, "readyToTurnIn");
+    quest = save.progression.quests[SHELLSHORE_QUEST_ID];
+  }
+  const safetyReviewed = quest.flags?.["boat-safety-reviewed"] === true;
+  if (safetyReviewed && quest.status === "readyToTurnIn") {
+    save = transitionQuest(save, SHELLSHORE_QUEST_ID, "complete");
   }
   return save;
+}
+
+/** Reconciles chapter gates whose requirements may be completed in any order. */
+export function reconcileAdventureProgression(saveValue) {
+  let save = reconcileShellshoreQuest(saveValue);
+  save = reconcileSunpatchQuest(save).save;
+  return save;
+}
+
+function reconcileCompletedEncounterRewards(saveValue) {
+  let save = normalizeAdventureSave(saveValue);
+  let recovered = false;
+  for (const encounterId of save.progression.completedEncounterIds) {
+    const encounter = ADVENTURE_CONTENT.encounters.find((item) => item.id === encounterId);
+    const reward = encounter?.rewardId
+      ? ADVENTURE_CONTENT.rewards.find((item) => item.id === encounter.rewardId)
+      : null;
+    if (!reward) continue;
+    const granted = grantReward(save, reward);
+    save = granted.save;
+    recovered ||= granted.applied;
+  }
+  return { save, recovered };
 }
 
 function recoverToSafeDockOrStart(save, reason) {
@@ -77,7 +113,7 @@ function recoverToSafeDockOrStart(save, reason) {
   if (
     dock?.status === "prototype"
     && SCENES[dock.sceneId]
-    && canOccupyContinuousPosition(dock.sceneId, dock.position)
+    && canOccupyScenePosition(dock.sceneId, dock.position)
   ) {
     return {
       save: withWorld(save, dock.sceneId, dock.position, dock.facing, {
@@ -109,7 +145,7 @@ export function createNewAdventureSession(profileId) {
     "active",
   );
   const academy = SCENES["academy-lab"];
-  if (!academy || !canOccupyContinuousPosition(academy.id, academy.spawn)) return save;
+  if (!academy || !canOccupyScenePosition(academy.id, academy.spawn)) return save;
   return withWorld(save, academy.id, academy.spawn, "up");
 }
 
@@ -120,9 +156,18 @@ export function createNewAdventureSession(profileId) {
  */
 export function recoverAdventureResume(saveValue) {
   const normalized = normalizeAdventureSave(saveValue);
-  const priorQuestStatus = normalized.progression.quests[SHELLSHORE_QUEST_ID]?.status ?? "notStarted";
-  const save = reconcileShellshoreQuest(normalized);
-  const questReconciled = save.progression.quests[SHELLSHORE_QUEST_ID]?.status !== priorQuestStatus;
+  const priorQuestStatuses = Object.fromEntries(
+    [SHELLSHORE_QUEST_ID, SUNPATCH_QUEST_ID].map((questId) => [
+      questId,
+      normalized.progression.quests[questId]?.status ?? "notStarted",
+    ]),
+  );
+  const questSave = reconcileAdventureProgression(normalized);
+  const questReconciled = Object.entries(priorQuestStatuses).some(([questId, status]) => (
+    (questSave.progression.quests[questId]?.status ?? "notStarted") !== status
+  ));
+  const rewardResume = reconcileCompletedEncounterRewards(questSave);
+  const save = rewardResume.save;
   const scene = SCENES[save.world.sceneId];
   const sceneContent = getAdventureScene(save.world.sceneId);
 
@@ -130,12 +175,41 @@ export function recoverAdventureResume(saveValue) {
     return recoverToSafeDockOrStart(save, "unknown-scene");
   }
 
-  if (!sceneContent || sceneContent.townId !== save.world.townId) {
+  const route = scene.routeId ? getAdventureRoute(scene.routeId) : null;
+  if (scene.routeId && (
+    !route
+    || !save.world.unlockedRouteIds.includes(route.id)
+    || ![route.fromTownId, route.toTownId].includes(save.world.townId)
+  )) {
+    return recoverToSafeDockOrStart(save, "invalid-route-state");
+  }
+  if (route) {
+    const originSide = save.world.townId === route.fromTownId
+      ? "from"
+      : save.world.townId === route.toTownId
+        ? "to"
+        : null;
+    const expectedOriginDockId = originSide === "from" ? route.fromDockId : route.toDockId;
+    const completed = save.world.completedRouteIds.includes(route.id);
+    if (
+      !originSide
+      || save.world.lastSafeDockId !== expectedOriginDockId
+      || (!completed && originSide !== "from")
+    ) {
+      const fallbackDockId = !completed ? route.fromDockId : expectedOriginDockId;
+      return recoverToSafeDockOrStart({
+        ...save,
+        world: { ...save.world, lastSafeDockId: fallbackDockId },
+      }, "invalid-route-origin");
+    }
+  }
+
+  if (!scene.routeId && (!sceneContent || sceneContent.townId !== save.world.townId)) {
     return recoverToSafeDockOrStart(save, "scene-town-mismatch");
   }
 
-  if (!canOccupyContinuousPosition(scene.id, save.world.position)) {
-    if (canOccupyContinuousPosition(scene.id, scene.spawn)) {
+  if (!canOccupyScenePosition(scene.id, save.world.position)) {
+    if (canOccupyScenePosition(scene.id, scene.spawn)) {
       return {
         save: withWorld(save, scene.id, scene.spawn, save.world.facing),
         recovered: true,
@@ -148,8 +222,12 @@ export function recoverAdventureResume(saveValue) {
 
   return {
     save,
-    recovered: questReconciled,
-    reason: questReconciled ? "quest-state-reconciled" : null,
+    recovered: questReconciled || rewardResume.recovered,
+    reason: questReconciled
+      ? "quest-state-reconciled"
+      : rewardResume.recovered
+        ? "encounter-reward-reconciled"
+        : null,
     fallback: null,
   };
 }
@@ -159,11 +237,11 @@ export function moveAdventureSession(saveValue, { sceneId, position, facing }) {
   const scene = SCENES[sceneId];
   const sceneContent = getAdventureScene(sceneId);
   if (!scene) throw new RangeError(`Unknown adventure scene: ${sceneId}`);
-  if (!canOccupyContinuousPosition(sceneId, position)) {
+  if (!canOccupyScenePosition(sceneId, position)) {
     throw new RangeError(`Adventure position is not safe in scene ${sceneId}.`);
   }
   return normalizeAdventureSave(withWorld(save, sceneId, position, facing, {
-    townId: sceneContent?.townId ?? save.world.townId,
+    townId: scene.routeId ? save.world.townId : (sceneContent?.townId ?? save.world.townId),
   }));
 }
 
@@ -171,15 +249,47 @@ export function enterAdventureScene(saveValue, { sceneId, position, facing }) {
   let save = moveAdventureSession(saveValue, { sceneId, position, facing });
   const visitFlag = SCENE_VISIT_FLAGS[sceneId];
   if (visitFlag) save = setQuestFlag(save, SHELLSHORE_QUEST_ID, visitFlag, true);
+  const sceneContent = getAdventureScene(sceneId);
+  if (sceneContent?.townId === "sunpatch-cay" && !SCENES[sceneId]?.routeId) {
+    save = beginSunpatchInvestigation(save).save;
+  }
   return save;
+}
+
+export function isAdventureEncounterAvailable(saveValue, encounterId) {
+  const save = reconcileAdventureProgression(saveValue);
+  const encounter = getAdventureEncounter(encounterId);
+  if (!encounter) return { available: false, reason: "Unknown encounter." };
+  const quest = encounter.questId
+    ? save.progression.quests[encounter.questId] ?? { status: "notStarted", flags: {} }
+    : null;
+  if (quest?.status === "notStarted") {
+    return { available: false, reason: "Begin this town's investigation first." };
+  }
+  for (const prerequisite of encounter.prerequisites ?? []) {
+    if (prerequisite.type === "questStatus") {
+      const status = save.progression.quests[prerequisite.questId]?.status ?? "notStarted";
+      if (status !== prerequisite.status) {
+        return { available: false, reason: "Finish the town fieldwork before this challenge." };
+      }
+    }
+    if (prerequisite.type === "encounterComplete"
+      && !save.progression.completedEncounterIds.includes(prerequisite.encounterId)) {
+      return { available: false, reason: "Win the required earlier challenge first." };
+    }
+  }
+  return { available: true, reason: null };
 }
 
 export function completeAdventureEncounter(
   saveValue,
   { encounterId, opponentId = null, chapterEncounterIds = [] },
 ) {
-  let save = reconcileShellshoreQuest(saveValue);
-  if (!save.progression.completedEncounterIds.includes(encounterId)) {
+  let save = reconcileAdventureProgression(saveValue);
+  const encounter = getAdventureEncounter(encounterId);
+  if (!encounter) throw new RangeError(`Unknown adventure encounter: ${encounterId}.`);
+  const firstVictory = !save.progression.completedEncounterIds.includes(encounterId);
+  if (firstVictory) {
     save = {
       ...save,
       progression: {
@@ -195,20 +305,84 @@ export function completeAdventureEncounter(
   if (opponentId) {
     save = setQuestFlag(
       save,
-      SHELLSHORE_QUEST_ID,
+      encounter.questId ?? SHELLSHORE_QUEST_ID,
       `defeated-${opponentId}`,
       true,
     );
   }
 
-  const quest = save.progression.quests[SHELLSHORE_QUEST_ID];
-  const chapterComplete = chapterEncounterIds.length > 0
-    && chapterEncounterIds.every((id) => save.progression.completedEncounterIds.includes(id));
-  if (chapterComplete && quest?.status === "active") {
-    save = transitionQuest(save, SHELLSHORE_QUEST_ID, "readyToTurnIn");
+  const requiredEncounterIds = chapterEncounterIds.length
+    ? chapterEncounterIds
+    : ADVENTURE_CONTENT.encounters
+      .filter((candidate) => candidate.questId === encounter.questId && candidate.role === "resident")
+      .map((candidate) => candidate.id);
+  const chapterComplete = requiredEncounterIds.length > 0
+    && requiredEncounterIds.every((id) => save.progression.completedEncounterIds.includes(id));
+  if (chapterComplete && encounter.questId !== SUNPATCH_QUEST_ID) {
+    const quest = save.progression.quests[encounter.questId];
+    if (quest?.status === "active") save = transitionQuest(save, encounter.questId, "readyToTurnIn");
   }
 
-  return save;
+  // Encounter rewards are authored in content and the reward ledger is the
+  // source of truth for first-win delivery. Calling this on every confirmed
+  // victory also repairs an older save that recorded the win before its reward
+  // existed; duplicate callbacks and later rematches remain no-ops.
+  const reward = encounter?.rewardId
+    ? ADVENTURE_CONTENT.rewards.find((item) => item.id === encounter.rewardId)
+    : null;
+  if (reward) save = grantReward(save, reward).save;
+
+  return reconcileAdventureProgression(save);
+}
+
+/**
+ * Persists the canonical, serializable evidence for a completed duel attempt.
+ * The latest attempt may change on a rematch, while firstVictory remains the
+ * immutable deck/result provenance for the encounter's one-time clear.
+ */
+export function recordAdventureDuelResult(saveValue, resultValue) {
+  const save = normalizeAdventureSave(saveValue);
+  if (!resultValue || typeof resultValue !== "object" || Array.isArray(resultValue)) {
+    throw new TypeError("Adventure duel result must be an object.");
+  }
+
+  const encounterId = String(resultValue.encounterId ?? "").trim();
+  const summary = {
+    outcome: resultValue.outcome,
+    completionReason: resultValue.completionReason,
+    playerDeckId: resultValue.playerDeckId,
+    playerDeckFingerprint: resultValue.playerDeckFingerprint,
+    opponentId: resultValue.opponent?.id,
+    playerVp: resultValue.scores?.playerVp,
+    opponentVp: resultValue.scores?.opponentVp,
+    targetVp: resultValue.scores?.targetVp,
+    round: resultValue.round,
+    turn: resultValue.turn,
+  };
+  const previous = save.progression.encounterResults[encounterId] ?? null;
+  const firstVictory = previous?.firstVictory
+    ?? (summary.outcome === "victory" ? summary : null);
+  const nextSave = normalizeAdventureSave({
+    ...save,
+    progression: {
+      ...save.progression,
+      encounterResults: {
+        ...save.progression.encounterResults,
+        [encounterId]: {
+          attempts: (previous?.attempts ?? 0) + 1,
+          latest: summary,
+          firstVictory,
+        },
+      },
+    },
+  });
+
+  return {
+    save: nextSave,
+    encounterId,
+    attempts: nextSave.progression.encounterResults[encounterId].attempts,
+    firstVictory: !previous?.firstVictory && summary.outcome === "victory",
+  };
 }
 
 export function getCompletedEncounterIds(saveValue) {

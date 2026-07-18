@@ -20,7 +20,7 @@ const PROFILE_ID_SET = new Set(ADVENTURE_PROFILE_IDS);
 const SAVE_KINDS = new Set(["manual", "autosave", "migration", "new-game"]);
 const RECORD_FORMAT = "seapals-adventure-profile";
 const RECOVERY_SOURCE_PRIORITY = Object.freeze({ staging: 3, backup: 2, primary: 1 });
-const CANONICAL_SAVE_REQUIRED_PATHS = Object.freeze([
+const CANONICAL_SAVE_V1_REQUIRED_PATHS = Object.freeze([
   ["schemaVersion"],
   ["profileId"],
   ["player"],
@@ -62,6 +62,11 @@ const CANONICAL_SAVE_REQUIRED_PATHS = Object.freeze([
   ["settings", "boatAutoSteer"],
   ["playtimeSeconds"],
   ["rewardLedger"],
+]);
+const CANONICAL_SAVE_REQUIRED_PATHS = Object.freeze([
+  ...CANONICAL_SAVE_V1_REQUIRED_PATHS,
+  ["world", "completedRouteIds"],
+  ["progression", "encounterResults"],
 ]);
 
 function firstMissingOwnPath(value, paths) {
@@ -244,8 +249,13 @@ function decodeRecord(raw, expectedProfileId) {
         ),
       };
     }
-    if (parsed.save.schemaVersion === ADVENTURE_SAVE_SCHEMA_VERSION) {
-      const missingPath = firstMissingOwnPath(parsed.save, CANONICAL_SAVE_REQUIRED_PATHS);
+    const canonicalPaths = parsed.save.schemaVersion === ADVENTURE_SAVE_SCHEMA_VERSION
+      ? CANONICAL_SAVE_REQUIRED_PATHS
+      : parsed.save.schemaVersion === 1
+        ? CANONICAL_SAVE_V1_REQUIRED_PATHS
+        : null;
+    if (canonicalPaths) {
+      const missingPath = firstMissingOwnPath(parsed.save, canonicalPaths);
       if (missingPath) {
         return {
           valid: false,

@@ -53,7 +53,7 @@ The project already contains useful pieces. The plan should extend these rather 
 | SeaPals simulator | Story mode accepts player/opponent prebuilt deck IDs, opponent name and difficulty, a victory target, exit handling, and a victory callback. The simulator supports 10 and 30 VP games. | It needs structured win/loss results, arbitrary saved deck lists, story reward hooks, stronger loss handling, and a stable adapter between adventure and match state. Mid-duel saving is not planned for version 1.0. |
 | Starter decks and cards | Coral Garden, Murky Water, and Blue Water exist as resolved, legal 60-card prebuilt decks. White Grunt now has bundled artwork and card data; reef/open-ocean/deep mechanics, Coral Disease, and Severe Coral Bleaching already exist. | White Grunt's printed three-school-stack cap still needs generic simulator enforcement before a required deck can exceed it. Card conditions are not substitutes for educational quests. |
 | Deck editing and metrics | The tournament entry page already edits decks. Shared logic provides deck validation, card counts, VP, average RP, composition, VP share, and Offense/Defense/Economy/Consistency/Tempo metrics. | The editor must be extracted from tournament submission, limited to owned cards, given deck-library controls, and connected to the simulator. A game-facing rules profile must validate 60 cards, copy limits, Foundation requirements, and at least 30 total VP without requiring tournament submission fields. |
-| Tutorial material | A scripted 10 VP tutorial and explanatory interaction patterns already exist. | The tutorial uses staged snapshots rather than the live simulator. It needs a mentor, starter choice, real action validation, retry/resume behavior, and an adventure result. |
+| Tutorial material | A scripted seven-round, 26 VP live tutorial, board tour, and explanatory interaction patterns now exist. | Target-age playtesting and named marine-science approval remain release gates. |
 | Persistence | The adventure stores defeated trainer IDs locally; tutorial progress and storefront cart data also demonstrate local browser storage. Supabase is already present for other site features. | Player profiles, collection, packs, decks, inventory, quests, world position, boat, settings, and tournament state are new. There is no player authentication or private cloud-save model. |
 
 Recommended reuse boundaries:
@@ -87,7 +87,7 @@ Names are working names and may change. Every settlement is either located on an
 
 | Location | Settlement | Habitat focus | Main challenge and learning | Card-game role |
 | --- | --- | --- | --- | --- |
-| **Shellshore Academy** | Island harbor; expand or repurpose the current Shellshore Village | Harbor, lagoon, and introductory habitat mosaic | Conduct a simple harbor survey, learn boat safety, understand the difference between a habitat and an ecosystem, and choose a starter deck. | Mentor-led live tutorial and friendly 10 VP practice duel. |
+| **Shellshore Academy** | Island harbor; expand or repurpose the current Shellshore Village | Harbor, lagoon, and introductory habitat mosaic | Conduct a simple harbor survey, learn boat safety, understand the difference between a habitat and an ecosystem, and choose a starter deck. | Mentor-led board tour and scripted seven-round, 26 VP practice duel. |
 | **Sunpatch Cay** | Reef island town | Coral reef and neighboring seagrass | Investigate pale and damaged reef patches. Learn that bleaching is a stress response and does not automatically mean a coral is dead; visible damage may be suspected disease and should not be diagnosed from appearance alone. | Coral Garden opponents, coral rewards, and the first Tide Mark. |
 | **Brackwater Landing** | Floating and stilt town beside an estuary | Estuary, mangrove, salt marsh, and seagrass nursery | Trace cloudy water and low oxygen. Distinguish natural turbidity from harmful runoff or excess nutrients; learn about salinity gradients and nursery habitat. | Murky Water specialists and water-quality-themed rewards. |
 | **Current Commons** | Open-ocean flotilla | Pelagic/open-water ecosystem | Use simple current maps to locate lost fishing gear and plan prevention as well as cleanup. Learn how currents connect places, how food webs begin, and how bycatch or ghost gear affects wildlife. | Blue Water navigators and open-ocean rewards. |
@@ -163,7 +163,7 @@ These outcomes are assessed through player decisions, route planning, later call
 
 - Introduce an adventure-to-simulator contract that accepts a player deck snapshot, opponent deck, opponent profile, target VP, tutorial configuration, and a unique encounter ID.
 - Return a structured result containing win/loss, scores, encounter ID, first-win status, and completion reason.
-- Use 10 VP for the guided tutorial and selected early teaching matches.
+- Use the scripted 26 VP curriculum for the guided Academy tutorial and 10 VP for selected early resident teaching matches.
 - Use 30 VP for the final three tournament games and any explicitly designated full exhibition match.
 - Validate the active player deck before required full matches and provide a direct path to fix an invalid deck.
 - Save immediately before and after a duel. Mid-duel save/resume is excluded from version 1.0.
@@ -268,14 +268,14 @@ Account-based cloud saves may be added later using player-owned rows and restric
 
 **Goal:** Deliver a complete, understandable new-player introduction.
 
-**Implementation status:** Implementation complete on `codex/seapals-adventure`; full interactive 10 VP victory with each starter, target-age comprehension playtesting, and named marine-science approval remain open gates. See `docs/seapals-adventure-phase-2.md`.
+**Implementation status:** Implementation complete on `codex/seapals-adventure`; full interactive 26 VP completion with each starter, target-age comprehension playtesting, and named marine-science approval remain open gates. See `docs/seapals-adventure-phase-2.md`.
 
 **Deliverables**
 
 - An original marine mentor, academy interior, starter presentation, and starter preview metrics.
 - One-time choice of Coral Garden, Murky Water, or Blue Water, with confirmation before committing.
 - A tutorial layer that drives and validates real simulator actions: setup, collecting RP, drawing, building, attacking, ending a turn, and earning VP.
-- A friendly 10 VP practice duel with retry, exit, and loss dialogue.
+- A scripted seven-round, 26 VP practice duel with a board tour, guaranteed tutorial coin flip, retry, exit, and loss dialogue.
 - First Field Notes and boat-safety introduction, with the boat-safety-reviewed flag recorded only after the player explicitly acknowledges the Field Note.
 
 **Exit criteria**
@@ -286,13 +286,15 @@ Account-based cloud saves may be added later using player-owned rows and restric
 
 **Open validation gates**
 
-- [ ] Manually complete a full interactive 10 VP practice victory with Coral Garden, Murky Water, and Blue Water, including reward, Field Note acknowledgment, save, and resume for each starter.
+- [ ] Manually complete the full interactive 26 VP curriculum with Coral Garden, Murky Water, and Blue Water, including reward, Field Note acknowledgment, save, and resume for each starter.
 - [ ] Complete target-age comprehension playtesting with no critical rule-comprehension blocker.
 - [ ] Obtain named marine-science approval for the final academy and Field Note educational copy.
 
 ### Phase 3 - Collection, rewards, inventory, and deck building
 
 **Goal:** Complete the card-progression loop before producing more towns.
+
+**Implementation status:** Feature-complete in the Shellshore slice, with desktop/tablet manual QA still open. Starter ownership, recovery, first-win rewards, deterministic pack opening, four-category Inventory, owned-card deck editing, live metrics/validation, active-deck selection, immutable simulator snapshots, and persisted first-win deck provenance are implemented. See `docs/seapals-adventure-phase-3.md`.
 
 **Deliverables**
 
@@ -312,6 +314,8 @@ Account-based cloud saves may be added later using player-owned rows and restric
 
 **Goal:** Prove the complete travel, education, duel, reward, and progression loop.
 
+**Implementation status:** The core Sunpatch vertical slice is implemented on `codex/seapals-adventure`: the Shellshore-Sunpatch route and world map, Sunpatch investigation, resident/qualifier/exhibition duels, Field Note, Tide Mark, reward pack, return-state dialogue, and save/recovery contracts are in place. Full new-profile desktop/tablet QA, target-age comprehension playtesting, and named marine-science review remain open release gates. Explicit current zones and enforceable wildlife-distance navigation remain an implementation/defer decision. See `docs/seapals-adventure-phase-4.md`.
+
 **Deliverables**
 
 - Personal boat boarding, steering, docking, route completion, auto-steer, and world map.
@@ -327,6 +331,14 @@ Account-based cloud saves may be added later using player-owned rows and restric
 - A marine-science reviewer approves the mission's distinction among bleaching, suspected disease, and dead/algae-covered substrate.
 - Target-age players can identify at least one stressor, one observation, and one helpful response after play.
 - The vertical slice passes desktop and tablet keyboard/touch testing.
+
+**Open validation gates**
+
+- [ ] Complete a clean-profile browser playthrough through travel, fieldwork, qualifier, reward opening, deck editing, save, reload, and return voyage.
+- [ ] Complete desktop keyboard and tablet touch/safe-area QA, including visible notices, modal focus, and reduced-motion behavior.
+- [ ] Confirm target-age players can identify a stressor, an observation, and a supported helpful response.
+- [ ] Obtain named marine-science approval for the bleaching, lesion/suspected-disease, and dead/algae-covered-substrate distinctions.
+- [ ] Implement explicit currents and wildlife-distance zones in the prototype route, or record their intentional deferral to a later regional route.
 
 This phase is the production gate. Do not build all remaining towns until its playtest, art pipeline, content cost, save reliability, and simulator integration have been reviewed.
 

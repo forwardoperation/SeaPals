@@ -1,15 +1,26 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Simulator from "@/app/simulator/Simulator";
+import { cardsById } from "@/data/cards";
+import { prebuiltDecks } from "@/data/tournaments/prebuiltDecks";
+import { isStoryDuelVpTargetVictory } from "@/app/simulator/storyModeContract.mjs";
+import {
+  getProfessorSpeechDuration,
+  getProfessorVisibleGraphemeCount,
+  segmentProfessorMessage,
+} from "@/app/simulator/tutorialDialogue.mjs";
 import {
   SCENES,
   START_STATE,
   getContinuousInteraction,
+  getDoorwayTransition,
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
 import {
   ADVENTURE_CONTENT,
+  getAdventureFieldNote,
   getAdventureStarterDeck,
   resolveAdventureNpc,
   resolveAdventureTutorial,
@@ -26,37 +37,95 @@ import {
   ADVENTURE_PROFILE_IDS,
   createAdventureStorageAdapter,
 } from "./adventureStorage.mjs";
+import { reconcileStarterCollection } from "./adventureCollection.mjs";
+import { createActiveDuelDeckSnapshot } from "./adventureDecks.mjs";
+import { assertAdventureDuelResultMatchesLaunch } from "./adventureDuel.mjs";
+import { openAdventurePack } from "./adventurePacks.mjs";
+import { setQuestFlag } from "./adventureProgression.mjs";
+import AdventureDecksModal from "./AdventureDecksModal";
+import {
+  AdventureWorldMapModal,
+  SunpatchFieldworkModal,
+} from "./AdventurePhase4Modals";
+import {
+  beginSunpatchInvestigation,
+  getSunpatchProgress,
+  recordSunpatchObservation,
+  submitSunpatchInterpretation,
+  submitSunpatchResponse,
+  turnInSunpatchFieldwork,
+} from "./adventureSunpatch.mjs";
+import {
+  autoSteerAdventureRoute,
+  boardAdventureRoute,
+  buildAdventureWorldMapModel,
+  dockAdventureRoute,
+} from "./adventureTravel.mjs";
 import {
   SHELLSHORE_RESIDENT_ENCOUNTER_IDS,
   completeAdventureEncounter,
   createNewAdventureSession,
   enterAdventureScene,
+  isAdventureEncounterAvailable,
+  reconcileAdventureProgression,
+  recordAdventureDuelResult,
   recoverAdventureResume,
 } from "./adventureSession.mjs";
 import styles from "./adventure.module.css";
 
-const TRAINERS = Object.freeze(Object.fromEntries(
+const BASE_TRAINERS = Object.freeze(Object.fromEntries(
   ADVENTURE_CONTENT.npcs
-    .filter((npc) => npc.townId === "shellshore-village" && npc.encounterId)
+    .filter((npc) => npc.conversationId)
     .map((npc) => {
       const resolved = resolveAdventureNpc(npc.id);
       return [npc.id, Object.freeze({
         ...npc,
-        deckId: resolved.encounter.opponentDeckId,
-        difficulty: resolved.encounter.difficulty,
-        victoryTarget: resolved.encounter.victoryTarget,
-        dialogue: resolved.conversation.lines,
-        intro: resolved.conversation.lines.intro,
-        rematch: resolved.conversation.lines.rematch,
-        victory: resolved.conversation.lines.victory,
+        deckId: resolved.encounter?.opponentDeckId ?? null,
+        difficulty: resolved.encounter?.difficulty ?? null,
+        victoryTarget: resolved.encounter?.victoryTarget ?? null,
+        dialogue: resolved.conversation?.lines ?? {},
+        intro: resolved.conversation?.lines?.intro ?? [],
+        rematch: resolved.conversation?.lines?.rematch ?? [],
+        victory: resolved.conversation?.lines?.victory ?? [],
       })];
     }),
 ));
+
+const SUNPATCH_EXHIBITION_TRAINER_ID = "sunpatch-leader-exhibition";
+const SUNPATCH_EXHIBITION_ENCOUNTER = ADVENTURE_CONTENT.encounters.find(
+  (encounter) => encounter.id === "encounter-sunpatch-exhibition",
+);
+const TRAINERS = Object.freeze({
+  ...BASE_TRAINERS,
+  [SUNPATCH_EXHIBITION_TRAINER_ID]: Object.freeze({
+    ...BASE_TRAINERS["sunpatch-leader"],
+    encounterId: SUNPATCH_EXHIBITION_ENCOUNTER.id,
+    deckId: SUNPATCH_EXHIBITION_ENCOUNTER.opponentDeckId,
+    difficulty: SUNPATCH_EXHIBITION_ENCOUNTER.difficulty,
+    victoryTarget: SUNPATCH_EXHIBITION_ENCOUNTER.victoryTarget,
+    crest: null,
+    virtual: true,
+    dialogue: Object.freeze({
+      ...BASE_TRAINERS["sunpatch-leader"].dialogue,
+      exhibitionOffer: BASE_TRAINERS["sunpatch-leader"].dialogue.exhibition,
+      exhibitionVictory: Object.freeze([
+        "That was a strong full-match reef. The exhibition is complete, and your Tide Mark and story progress remain exactly as they were.",
+        "Optional exhibitions carry no extra story reward, but they are a good way to test whether a deck can sustain its plan all the way to 30 VP.",
+      ]),
+    }),
+  }),
+});
 
 const ACADEMY_MENTOR_ID = "academy-mentor";
 const SHELLSHORE_TUTORIAL = resolveAdventureTutorial("tutorial-shellshore-live-basics");
 const SHELLSHORE_FIELD_NOTE = SHELLSHORE_TUTORIAL.fieldNote;
 const STARTER_DECKS = Object.freeze(SHELLSHORE_TUTORIAL.starterDecks);
+const PREBUILT_DECKS_BY_ID = Object.freeze(Object.fromEntries(
+  prebuiltDecks.map((deck) => [deck.id, deck]),
+));
+const PACK_POOLS_BY_ID = Object.freeze(Object.fromEntries(
+  ADVENTURE_CONTENT.packPools.map((pool) => [pool.id, pool]),
+));
 const STARTER_METRICS = Object.freeze([
   ["offense", "Offense"],
   ["defense", "Defense"],
@@ -71,6 +140,14 @@ const SHELLSHORE_RESIDENT_TRAINERS = Object.freeze(
     SHELLSHORE_ENCOUNTER_IDS.includes(trainer.encounterId)
   )),
 );
+
+const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
+  "sunpatch-tavi": "marina",
+  "sunpatch-mira": "academy-mentor",
+  "sunpatch-gardener": "marina",
+  "sunpatch-surveyor": "dorian",
+  "sunpatch-leader": "academy-mentor",
+});
 
 const LOCATION_NAMES = Object.freeze(Object.fromEntries(
   Object.values(SCENES).map((scene) => [scene.id, scene.name]),
@@ -110,9 +187,10 @@ function actorPosition(position, scene) {
 
 function SpriteArtwork({ character = "player", facing = "down", moving = false, portrait = false }) {
   const facingName = `${facing[0].toUpperCase()}${facing.slice(1)}`;
+  const artworkCharacter = SPRITE_SOURCE_BY_CHARACTER[character] ?? character;
   return (
     <span
-      className={`${styles.spriteArtwork} ${styles[`${character}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""}`}
+      className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""}`}
       aria-hidden="true"
     />
   );
@@ -143,6 +221,20 @@ function AdventurePlayerSprite({ position, facing, moving, interaction, scene })
     >
       <span className={styles.characterShadow} />
       <SpriteArtwork facing={facing} moving={moving} />
+      {interaction && !["enter", "exit"].includes(interaction.type) ? <span className={styles.actionCue} aria-hidden="true">A</span> : null}
+    </div>
+  );
+}
+
+function AdventureBoatSprite({ position, facing, moving, interaction, scene }) {
+  return (
+    <div
+      className={`${styles.characterCell} ${styles.playerCell} ${styles.boatCell} ${styles[`boatFacing${facing}`]} ${moving ? styles.boatMoving : ""}`}
+      style={actorPosition(position, scene)}
+      aria-label="Your personal boat"
+    >
+      <span className={styles.boatWake} />
+      <span className={styles.boatHull}><i /></span>
       {interaction ? <span className={styles.actionCue} aria-hidden="true">A</span> : null}
     </div>
   );
@@ -179,6 +271,124 @@ function conversationLines(conversation, trainer, defeated) {
   return defeated ? trainer.rematch : trainer.intro;
 }
 
+function ProgressiveDialogueLine({ message, speaker, children }) {
+  const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
+  const duration = useMemo(
+    () => getProfessorSpeechDuration(graphemes.length),
+    [graphemes.length],
+  );
+  // Keep the server and first client render identical. Reduced-motion is
+  // applied immediately after mount by the effect below.
+  const [visibleCount, setVisibleCount] = useState(0);
+  const animationRef = useRef({ frameId: null, generation: 0 });
+  const isComplete = visibleCount >= graphemes.length;
+  const visibleMessage = graphemes.slice(0, visibleCount).join("");
+
+  function showFullMessage() {
+    const animation = animationRef.current;
+    animation.generation += 1;
+    if (animation.frameId !== null) window.cancelAnimationFrame(animation.frameId);
+    animation.frameId = null;
+    setVisibleCount(graphemes.length);
+  }
+
+  useEffect(() => {
+    const animation = animationRef.current;
+    const generation = animation.generation + 1;
+    animation.generation = generation;
+    if (animation.frameId !== null) window.cancelAnimationFrame(animation.frameId);
+    animation.frameId = null;
+
+    const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)") ?? null;
+    const finish = () => {
+      if (animationRef.current.generation !== generation) return;
+      if (animationRef.current.frameId !== null) {
+        window.cancelAnimationFrame(animationRef.current.frameId);
+      }
+      animationRef.current.frameId = null;
+      setVisibleCount(graphemes.length);
+    };
+    const handleMotionPreference = (event) => {
+      if (event.matches) finish();
+    };
+
+    if (!graphemes.length || motionPreference?.matches) {
+      setVisibleCount(graphemes.length);
+    } else {
+      setVisibleCount(0);
+      const startsAt = window.performance.now() + 120;
+      const tick = (now) => {
+        if (animationRef.current.generation !== generation) return;
+        const nextCount = getProfessorVisibleGraphemeCount({
+          graphemeCount: graphemes.length,
+          elapsedMs: Math.max(0, now - startsAt),
+          durationMs: duration,
+        });
+        setVisibleCount(nextCount);
+        if (nextCount >= graphemes.length) {
+          animationRef.current.frameId = null;
+          return;
+        }
+        animationRef.current.frameId = window.requestAnimationFrame(tick);
+      };
+      animation.frameId = window.requestAnimationFrame(tick);
+    }
+
+    if (motionPreference?.addEventListener) {
+      motionPreference.addEventListener("change", handleMotionPreference);
+    } else {
+      motionPreference?.addListener?.(handleMotionPreference);
+    }
+    return () => {
+      if (animationRef.current.generation === generation) {
+        animationRef.current.generation += 1;
+      }
+      if (animationRef.current.frameId !== null) {
+        window.cancelAnimationFrame(animationRef.current.frameId);
+      }
+      animationRef.current.frameId = null;
+      if (motionPreference?.removeEventListener) {
+        motionPreference.removeEventListener("change", handleMotionPreference);
+      } else {
+        motionPreference?.removeListener?.(handleMotionPreference);
+      }
+    };
+  }, [duration, graphemes.length, message]);
+
+  return (
+    <>
+      <p className={styles.dialogueTypewriter}>
+        <span className={styles.dialogueMessageMeasure} aria-hidden="true">{message}</span>
+        <span className={styles.dialogueMessageVisible} aria-hidden="true">
+          {visibleMessage}
+          {!isComplete ? <span className={styles.dialogueTypeCursor} /> : null}
+        </span>
+        <span
+          className={styles.dialogueScreenReader}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {message}
+        </span>
+      </p>
+      <div className={styles.dialogueActions}>
+        {!isComplete ? (
+          <button
+            type="button"
+            autoFocus
+            className={styles.dialogueShowAll}
+            aria-label={`Show all of ${speaker}'s message`}
+            onClick={showFullMessage}
+          >
+            Show all
+          </button>
+        ) : children}
+      </div>
+    </>
+  );
+}
+
 function Conversation({
   conversation,
   trainer,
@@ -193,6 +403,7 @@ function Conversation({
   const dialogRef = useDialogFocusTrap(!blocked);
   const lines = conversationLines(conversation, trainer, defeated);
   const finalLine = conversation.index === lines.length - 1;
+  const line = lines[conversation.index] ?? "";
 
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.dialogueLayer} role="dialog" aria-modal="true" aria-labelledby="dialogue-speaker">
@@ -205,8 +416,11 @@ function Conversation({
             <strong id="dialogue-speaker">{trainer.name}</strong>
             <span>{trainer.title}</span>
           </div>
-          <p>{lines[conversation.index]}</p>
-          <div className={styles.dialogueActions}>
+          <ProgressiveDialogueLine
+            key={`${trainer.id}:${conversation.mode}:${conversation.index}:${line}`}
+            message={line}
+            speaker={trainer.name}
+          >
             {!finalLine ? (
               <button type="button" autoFocus onClick={onAdvance}>Next</button>
             ) : (
@@ -219,7 +433,7 @@ function Conversation({
                 ) : null}
               </>
             )}
-          </div>
+          </ProgressiveDialogueLine>
         </div>
       </div>
     </div>
@@ -443,9 +657,14 @@ function PauseMenu({
   notice,
   blocked = false,
   fieldNoteAvailable = false,
+  activeDeckName = "No active deck",
+  unopenedPackCount = 0,
   onResume,
   onSave,
+  onDecks,
+  onInventory,
   onFieldNote,
+  onWorldMap,
   onReturnTitle,
   onRestart,
 }) {
@@ -456,6 +675,10 @@ function PauseMenu({
         <div className={styles.introEyebrow}>Voyage {ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1}</div>
         <h2 id="pause-title">Adventure paused</h2>
         <p>Your current safe position and quest progress can be saved to this device.</p>
+        <div className={styles.pauseLoadout} aria-label="Current card loadout">
+          <span><small>Active deck</small><strong>{activeDeckName}</strong></span>
+          <span><small>Booster packs</small><strong>{unopenedPackCount} unopened</strong></span>
+        </div>
         {notice ? (
           <div className={`${styles.saveNotice} ${notice.kind === "error" ? styles.saveNoticeError : styles.saveNoticeInfo}`} role={notice.kind === "error" ? "alert" : "status"}>
             {notice.message}
@@ -464,7 +687,10 @@ function PauseMenu({
         <div className={styles.pauseActions}>
           <button type="button" autoFocus onClick={onResume}>Resume</button>
           <button type="button" onClick={onSave}>Save game</button>
-          {fieldNoteAvailable ? <button type="button" onClick={onFieldNote}>Open Harbor Field Note</button> : null}
+          <button type="button" onClick={onDecks}>Open Deck Workshop</button>
+          <button type="button" onClick={onInventory}>Open Inventory</button>
+          <button type="button" onClick={onWorldMap}>Open World Map</button>
+          {fieldNoteAvailable ? <button type="button" onClick={onFieldNote}>Open latest Field Note</button> : null}
           <button type="button" className={styles.secondaryButton} onClick={onReturnTitle}>Save and return to title</button>
           <button type="button" className={styles.dangerButton} onClick={onRestart}>Restart this voyage</button>
         </div>
@@ -543,12 +769,14 @@ function StarterSelectionModal({ starters, selectedId, blocked = false, onSelect
 
 function FieldNoteModal({ note, blocked = false, reviewRequired = false, onAcknowledge, onDismiss }) {
   const dialogRef = useDialogFocusTrap(!blocked);
+  const checklist = note.checklist ?? note.safetyChecklist ?? [];
+  const checklistTitle = note.checklistTitle ?? "Boat safety check";
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.fieldNoteLayer} role="dialog" aria-modal="true" aria-labelledby="field-note-title">
       <article className={styles.fieldNoteCard}>
         <header>
           <div>
-            <div className={styles.fieldNoteEyebrow}>Field Note 01 / Shellshore Harbor</div>
+            <div className={styles.fieldNoteEyebrow}>{note.habitatId === "coral-reef" ? "Field Note 02 / Sunpatch Cay" : "Field Note 01 / Shellshore Harbor"}</div>
             <h2 id="field-note-title">{note.title}</h2>
           </div>
           <button type="button" className={styles.noteCloseIcon} aria-label="Close Field Note" onClick={onDismiss}>×</button>
@@ -559,8 +787,8 @@ function FieldNoteModal({ note, blocked = false, reviewRequired = false, onAckno
           <ul>{note.observations.map((observation) => <li key={observation}>{observation}</li>)}</ul>
         </section>
         <section className={styles.safetyPanel}>
-          <h3>Boat safety check</h3>
-          <ul>{note.safetyChecklist.map((item) => <li key={item}>{item}</li>)}</ul>
+          <h3>{checklistTitle}</h3>
+          <ul>{checklist.map((item) => <li key={item}>{item}</li>)}</ul>
         </section>
         <section>
           <h3>Ocean words</h3>
@@ -574,6 +802,186 @@ function FieldNoteModal({ note, blocked = false, reviewRequired = false, onAckno
           {reviewRequired ? "I reviewed the safety check" : "Close Field Note"}
         </button>
       </article>
+    </div>
+  );
+}
+
+function inventoryItemLabel(identifier) {
+  return String(identifier)
+    .split("-")
+    .filter(Boolean)
+    .map((word) => `${word[0]?.toUpperCase() ?? ""}${word.slice(1)}`)
+    .join(" ");
+}
+
+function InventoryItemList({ items, emptyMessage }) {
+  const entries = Object.entries(items).sort(([left], [right]) => left.localeCompare(right));
+  if (!entries.length) return <p className={styles.inventoryEmpty}>{emptyMessage}</p>;
+  return (
+    <ul className={styles.inventoryItemList}>
+      {entries.map(([itemId, quantity]) => (
+        <li key={itemId}>
+          <span>{inventoryItemLabel(itemId)}</span>
+          <b aria-label={`${quantity} owned`}>x{quantity}</b>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function InventoryModal({
+  inventory,
+  reveal = null,
+  notice = null,
+  blocked = false,
+  onOpenPack,
+  onBuildDeck,
+  onClose,
+}) {
+  const dialogRef = useDialogFocusTrap(!blocked);
+  const ownedCards = Object.entries(inventory.cards)
+    .map(([cardId, quantity]) => ({ cardId, quantity, card: cardsById[cardId] ?? null }))
+    .sort((left, right) => (
+      (left.card?.name ?? left.cardId).localeCompare(right.card?.name ?? right.cardId)
+    ));
+  const totalCards = ownedCards.reduce((total, entry) => total + entry.quantity, 0);
+  const unopenedPacks = Object.entries(inventory.unopenedPacks)
+    .map(([packId, quantity]) => ({ packId, quantity, pool: PACK_POOLS_BY_ID[packId] ?? null }))
+    .sort((left, right) => (
+      (left.pool?.name ?? left.packId).localeCompare(right.pool?.name ?? right.packId)
+    ));
+
+  return (
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      inert={blocked}
+      aria-hidden={blocked || undefined}
+      data-adventure-modal="true"
+      className={styles.inventoryLayer}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="inventory-title"
+    >
+      <section className={styles.inventoryCard}>
+        <header className={styles.inventoryHeader}>
+          <div>
+            <div className={styles.introEyebrow}>Voyage inventory</div>
+            <h2 id="inventory-title">Your SeaPals collection</h2>
+            <p>Cards stay in your collection. Booster packs are earned through adventure challenges and opened here.</p>
+          </div>
+          <button type="button" className={styles.inventoryClose} aria-label="Close inventory" onClick={onClose}>
+            Close
+          </button>
+        </header>
+
+        {notice ? (
+          <div
+            className={`${styles.saveNotice} ${notice.kind === "error" ? styles.saveNoticeError : styles.saveNoticeInfo}`}
+            role={notice.kind === "error" ? "alert" : "status"}
+          >
+            {notice.message}
+          </div>
+        ) : null}
+
+        {reveal ? (
+          <section className={styles.packReveal} aria-labelledby="pack-reveal-title" aria-live="polite">
+            <div>
+              <span>Pack opened</span>
+              <h3 id="pack-reveal-title">{PACK_POOLS_BY_ID[reveal.packId]?.name ?? "Discovery Pack"}</h3>
+              <p>These four cards are now part of your permanent collection.</p>
+            </div>
+            <div className={styles.packRevealGrid}>
+              {reveal.cards.map((cardId) => {
+                const card = cardsById[cardId];
+                const isNew = reveal.guaranteedNewCardId === cardId;
+                return (
+                  <article key={cardId} className={styles.revealedCard}>
+                    {card?.image ? (
+                      <Image src={card.image} alt="" width={90} height={126} />
+                    ) : <span className={styles.inventoryCardPlaceholder} aria-hidden="true">?</span>}
+                    <strong>{card?.name ?? inventoryItemLabel(cardId)}</strong>
+                    <small>{isNew ? "New discovery" : "Added to collection"}</small>
+                  </article>
+                );
+              })}
+            </div>
+            <button type="button" className={styles.packBuildButton} onClick={onBuildDeck}>
+              Build with these cards
+            </button>
+          </section>
+        ) : null}
+
+        <div className={styles.inventorySectionGrid}>
+          <section className={`${styles.inventorySection} ${styles.inventoryCollectionSection}`} aria-labelledby="collection-heading">
+            <div className={styles.inventorySectionHeading}>
+              <div>
+                <span>01</span>
+                <h3 id="collection-heading">Card Collection</h3>
+              </div>
+              <b>{totalCards} cards / {ownedCards.length} kinds</b>
+            </div>
+            {ownedCards.length ? (
+              <div className={styles.inventoryCardGrid}>
+                {ownedCards.map(({ cardId, quantity, card }) => (
+                  <article key={cardId} className={styles.inventoryOwnedCard}>
+                    {card?.image ? (
+                      <Image src={card.image} alt="" width={64} height={90} />
+                    ) : <span className={styles.inventoryCardPlaceholder} aria-hidden="true">?</span>}
+                    <span>
+                      <strong>{card?.name ?? inventoryItemLabel(cardId)}</strong>
+                      <small>{[card?.category, card?.kind].filter(Boolean).join(" / ") || "SeaPals card"}</small>
+                    </span>
+                    <b aria-label={`${quantity} owned`}>x{quantity}</b>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className={styles.inventoryEmpty}>Choose a starter deck to receive your first 60 cards.</p>
+            )}
+          </section>
+
+          <section className={styles.inventorySection} aria-labelledby="packs-heading">
+            <div className={styles.inventorySectionHeading}>
+              <div><span>02</span><h3 id="packs-heading">Booster Packs</h3></div>
+              <b>{unopenedPacks.reduce((total, entry) => total + entry.quantity, 0)} unopened</b>
+            </div>
+            {unopenedPacks.length ? unopenedPacks.map(({ packId, quantity, pool }) => (
+              <article key={packId} className={styles.inventoryPack}>
+                <span className={styles.packIcon} aria-hidden="true">SP</span>
+                <div>
+                  <strong>{pool?.name ?? inventoryItemLabel(packId)}</strong>
+                  <small>{pool?.theme ?? "Adventure discovery cards"} / {pool?.cardsPerPack ?? 4} cards</small>
+                </div>
+                <b>x{quantity}</b>
+                <button
+                  type="button"
+                  disabled={pool?.status !== "playable"}
+                  onClick={() => onOpenPack(packId)}
+                >
+                  {pool?.status === "playable" ? "Open pack" : "Coming later"}
+                </button>
+              </article>
+            )) : (
+              <p className={styles.inventoryEmpty}>Win your first duel with Marina to earn a Shellshore Discovery Pack.</p>
+            )}
+          </section>
+
+          <section className={styles.inventorySection} aria-labelledby="story-items-heading">
+            <div className={styles.inventorySectionHeading}>
+              <div><span>03</span><h3 id="story-items-heading">Story Items</h3></div>
+            </div>
+            <InventoryItemList items={inventory.storyItems} emptyMessage="Important discoveries and tournament prizes will appear here." />
+          </section>
+
+          <section className={styles.inventorySection} aria-labelledby="boat-items-heading">
+            <div className={styles.inventorySectionHeading}>
+              <div><span>04</span><h3 id="boat-items-heading">Boat Items</h3></div>
+            </div>
+            <InventoryItemList items={inventory.boatItems} emptyMessage="Boat tools and travel upgrades will appear when new routes open." />
+          </section>
+        </div>
+      </section>
     </div>
   );
 }
@@ -600,11 +1008,45 @@ function Completion({ blocked = false, onContinue, onReset }) {
 }
 
 function interactionLabel(interaction, sceneId) {
-  if (!interaction) return "Walk closer to a door or Reefkeeper";
-  if (interaction.type === "trainer") return `Talk to ${TRAINERS[interaction.trainerId]?.name ?? "Reefkeeper"}`;
-  if (interaction.type === "exit") return sceneId === "academy-lab" ? "Leave the academy" : "Leave this home";
-  if (interaction.targetScene) return `Enter ${LOCATION_NAMES[interaction.targetScene] ?? "building"}`;
+  if (!interaction) return SCENES[sceneId]?.routeId
+    ? "Steer through the marked channel and approach a dock"
+    : "Walk into a doorway, or face someone or a field station to interact";
+  if (interaction.type === "trainer" || interaction.type === "npc") {
+    return `Talk to ${TRAINERS[interaction.trainerId ?? interaction.npcId]?.name ?? "Reefkeeper"}`;
+  }
+  if (interaction.type === "board") return interaction.label ?? "Board your personal boat";
+  if (interaction.type === "dock") return interaction.label ?? "Dock your boat";
+  if (interaction.type === "observation") return interaction.label ?? "Record this reef observation";
+  if (interaction.type === "interpretation") return "Compare and interpret the reef evidence";
+  if (interaction.type === "response") return "Choose an evidence-supported reef response";
+  if (interaction.type === "exit") return sceneId === "academy-lab"
+    ? "Keep walking into the doorway to leave the academy"
+    : "Keep walking into the doorway to leave this home";
+  if (interaction.targetScene) return `Keep walking into the doorway to enter ${LOCATION_NAMES[interaction.targetScene] ?? "the building"}`;
   return "Interact";
+}
+
+function mapThemeClassForScene(scene) {
+  const themeClasses = {
+    "sunlit-reef": styles.townMap,
+    "academy-lab": styles.academyLabMap,
+    "coral-cottage": styles.coralHomeMap,
+    "deep-sea-den": styles.deepHomeMap,
+    "shellshore-sunpatch-route": styles.seaRouteMap,
+    "sunpatch-cay": styles.sunpatchMap,
+    "sunpatch-field-station": styles.sunpatchFieldStationMap,
+    "sunpatch-tide-hall": styles.sunpatchTideHallMap,
+  };
+  return themeClasses[scene.theme] ?? styles.townMap;
+}
+
+function actionLabel(interaction) {
+  if (!interaction) return "Interact";
+  if (interaction.type === "board") return "Board";
+  if (interaction.type === "dock") return "Dock";
+  if (interaction.type === "observation") return "Observe";
+  if (["interpretation", "response"].includes(interaction.type)) return "Review";
+  return "Talk";
 }
 
 export default function AdventureGame() {
@@ -627,10 +1069,18 @@ export default function AdventureGame() {
   const [starterSelectionOpen, setStarterSelectionOpen] = useState(false);
   const [selectedStarterId, setSelectedStarterId] = useState(null);
   const [fieldNoteOpen, setFieldNoteOpen] = useState(false);
+  const [activeFieldNoteId, setActiveFieldNoteId] = useState(SHELLSHORE_FIELD_NOTE.id);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [decksOpen, setDecksOpen] = useState(false);
+  const [worldMapOpen, setWorldMapOpen] = useState(false);
+  const [fieldworkActivity, setFieldworkActivity] = useState(null);
+  const [fieldworkFeedback, setFieldworkFeedback] = useState(null);
+  const [packReveal, setPackReveal] = useState(null);
   const [showCompletion, setShowCompletion] = useState(false);
   const [pauseOpen, setPauseOpen] = useState(false);
   const [saveNotice, setSaveNotice] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
+  const [activeDuelDeckSnapshot, setActiveDuelDeckSnapshot] = useState(null);
   const [isMoving, setIsMoving] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const keyboardDirectionsRef = useRef(new Map());
@@ -645,6 +1095,7 @@ export default function AdventureGame() {
   const profileWriteAuthorizedRef = useRef(false);
   const pageVisibleRef = useRef(true);
   const duelResultRef = useRef(null);
+  const doorwayTransitionRef = useRef(null);
 
   const setDirty = useCallback((value) => {
     dirtyRef.current = Boolean(value);
@@ -661,10 +1112,18 @@ export default function AdventureGame() {
     () => gameSave ? getOnboardingProgress(gameSave) : null,
     [gameSave],
   );
-  const fieldNoteAvailable = Boolean(
-    gameSave?.fieldNotes.entryIds.includes(SHELLSHORE_FIELD_NOTE.id),
+  const fieldNoteAvailable = Boolean(gameSave?.fieldNotes.entryIds.length);
+  const activeFieldNote = getAdventureFieldNote(activeFieldNoteId) ?? SHELLSHORE_FIELD_NOTE;
+  const sunpatchProgress = useMemo(
+    () => gameSave ? getSunpatchProgress(gameSave) : null,
+    [gameSave],
+  );
+  const worldMapModel = useMemo(
+    () => gameSave ? buildAdventureWorldMapModel(gameSave) : null,
+    [gameSave],
   );
   const scene = SCENES[sceneId];
+  const boatMode = Boolean(scene?.routeId || scene?.kind === "route");
   const movementPaused = screen !== "playing"
     || pauseOpen
     || Boolean(confirmation)
@@ -672,6 +1131,10 @@ export default function AdventureGame() {
     || Boolean(activeTrainerId)
     || starterSelectionOpen
     || fieldNoteOpen
+    || inventoryOpen
+    || decksOpen
+    || worldMapOpen
+    || Boolean(fieldworkActivity)
     || showCompletion;
   movementPausedRef.current = movementPaused;
   const interaction = useMemo(
@@ -680,6 +1143,10 @@ export default function AdventureGame() {
       : null,
     [facing, gameSave, position, sceneId, screen],
   );
+  const trainerInteraction = ["trainer", "npc"].includes(interaction?.type) ? interaction : null;
+  const actionInteraction = interaction && !["enter", "exit"].includes(interaction.type)
+    ? interaction
+    : null;
 
   const setMovementActive = useCallback((nextActive) => {
     if (movementActiveRef.current === nextActive) return;
@@ -746,6 +1213,31 @@ export default function AdventureGame() {
     return result;
   }, [refreshProfiles, setDirty]);
 
+  const commitSceneTransition = useCallback((candidate, sourceSave = saveRef.current) => {
+    if (!candidate?.targetScene || !candidate.spawn || !sourceSave) return false;
+    const transitionKey = `${sourceSave.world.sceneId}:${candidate.interactionId ?? candidate.targetScene}`;
+    if (doorwayTransitionRef.current === transitionKey) return false;
+
+    doorwayTransitionRef.current = transitionKey;
+    clearMovement();
+    const next = enterAdventureScene(sourceSave, {
+      sceneId: candidate.targetScene,
+      position: candidate.spawn,
+      facing: candidate.facing ?? (candidate.type === "exit" ? "down" : "up"),
+    });
+    saveRef.current = next;
+    setGameSave(next);
+    setDirty(true);
+    persistSave(next, {
+      checkpointId: `scene-transition:${candidate.interactionId ?? candidate.targetScene}`,
+    });
+    return true;
+  }, [clearMovement, persistSave, setDirty]);
+
+  useEffect(() => {
+    doorwayTransitionRef.current = null;
+  }, [sceneId]);
+
   useEffect(() => {
     try {
       const adapter = createAdventureStorageAdapter({ backend: window.localStorage });
@@ -778,6 +1270,14 @@ export default function AdventureGame() {
     setStarterSelectionOpen(false);
     setSelectedStarterId(null);
     setFieldNoteOpen(false);
+    setActiveFieldNoteId(SHELLSHORE_FIELD_NOTE.id);
+    setInventoryOpen(false);
+    setDecksOpen(false);
+    setWorldMapOpen(false);
+    setFieldworkActivity(null);
+    setFieldworkFeedback(null);
+    setPackReveal(null);
+    setActiveDuelDeckSnapshot(null);
     setShowCompletion(false);
     setPauseOpen(false);
     setConfirmation(null);
@@ -846,15 +1346,44 @@ export default function AdventureGame() {
 
     const worldResume = recoverAdventureResume(loaded.save);
     const onboardingResume = recoverOnboardingResume(worldResume.save);
-    installSession(onboardingResume.save, { storageAuthorized: true });
-    const wasRecovered = Boolean(loaded.recovery || worldResume.recovered || onboardingResume.recovered);
+    let resumedSave = onboardingResume.save;
+    let collectionRecovered = false;
+    let collectionRecoveryError = null;
+    const starterDeckId = resumedSave.player.starterDeckId;
+    if (starterDeckId && PREBUILT_DECKS_BY_ID[starterDeckId]) {
+      try {
+        const collection = reconcileStarterCollection(
+          resumedSave,
+          PREBUILT_DECKS_BY_ID[starterDeckId],
+        );
+        resumedSave = collection.save;
+        collectionRecovered = collection.applied;
+      } catch (error) {
+        collectionRecoveryError = error;
+      }
+    }
+    installSession(resumedSave, { storageAuthorized: true });
+    if (collectionRecoveryError) {
+      setDirty(true);
+      setSaveNotice({
+        kind: "error",
+        message: `Your voyage loaded, but its starter collection needs attention: ${collectionRecoveryError?.message ?? "collection repair failed"}.`,
+      });
+      return;
+    }
+    const wasRecovered = Boolean(
+      loaded.recovery
+      || worldResume.recovered
+      || onboardingResume.recovered
+      || collectionRecovered,
+    );
     setDirty(wasRecovered);
     if (wasRecovered) {
-      const repaired = persistSave(onboardingResume.save, { checkpointId: "recovered-profile" });
+      const repaired = persistSave(resumedSave, { checkpointId: "recovered-profile" });
       setSaveNotice({
         kind: repaired.ok ? "info" : "error",
         message: repaired.ok
-          ? "Your voyage was recovered from a safe copy and repaired."
+          ? "Your voyage was recovered and its starter collection is ready."
           : "Your voyage was recovered for this session, but the repaired save could not be written.",
       });
     } else {
@@ -903,32 +1432,39 @@ export default function AdventureGame() {
           touchDirectionsRef.current,
           vector,
         );
-        setGameSave((current) => {
-          if (!current) return current;
-          const next = movePlayerContinuous(
-            sceneId,
-            current.world.position,
-            vector,
-            elapsedMs,
-            { speed: 3.6, radius: 0.22, maxStepDistance: 0.08 },
-          );
-          if (
-            next.x === current.world.position.x
-            && next.y === current.world.position.y
-            && nextFacing === current.world.facing
-          ) return current;
-          const updated = {
-            ...current,
-            world: {
-              ...current.world,
-              position: next,
-              facing: nextFacing,
-            },
-          };
+        const current = saveRef.current;
+        if (current?.world.sceneId !== sceneId) return;
+        const next = movePlayerContinuous(
+          sceneId,
+          current.world.position,
+          vector,
+          elapsedMs,
+          {
+            speed: scene.movement?.speed ?? (boatMode ? 4.15 : 3.6),
+            radius: scene.movement?.radius ?? (boatMode ? 0.3 : 0.22),
+            maxStepDistance: scene.movement?.maxStepDistance ?? 0.08,
+          },
+        );
+        const updated = {
+          ...current,
+          world: {
+            ...current.world,
+            position: next,
+            facing: nextFacing,
+          },
+        };
+        const doorway = getDoorwayTransition(sceneId, next, nextFacing);
+        if (doorway && commitSceneTransition(doorway, updated)) return;
+
+        if (
+          next.x !== current.world.position.x
+          || next.y !== current.world.position.y
+          || nextFacing !== current.world.facing
+        ) {
           saveRef.current = updated;
-          return updated;
-        });
-        setDirty(true);
+          setGameSave(updated);
+          setDirty(true);
+        }
       }
 
       animationFrame = window.requestAnimationFrame(updateMovement);
@@ -936,7 +1472,7 @@ export default function AdventureGame() {
 
     animationFrame = window.requestAnimationFrame(updateMovement);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [isMoving, movementPaused, sceneId, setMovementActive]);
+  }, [boatMode, commitSceneTransition, isMoving, movementPaused, scene, sceneId, setDirty, setMovementActive]);
 
   useEffect(() => {
     if (movementPaused) {
@@ -981,10 +1517,13 @@ export default function AdventureGame() {
         if (!current) return;
         try {
           const committed = commitStarterSelection(current, starter.id);
-          saveRef.current = committed.save;
-          setGameSave(committed.save);
+          const manifest = PREBUILT_DECKS_BY_ID[starter.id];
+          if (!manifest) throw new Error(`The ${starter.name} deck list is unavailable.`);
+          const collection = reconcileStarterCollection(committed.save, manifest);
+          saveRef.current = collection.save;
+          setGameSave(collection.save);
           setDirty(true);
-          persistSave(committed.save, { checkpointId: `starter-selected:${starter.id}` });
+          persistSave(collection.save, { checkpointId: `starter-selected:${starter.id}` });
           setStarterSelectionOpen(false);
           setSelectedStarterId(null);
           setConversation({ trainerId: ACADEMY_MENTOR_ID, index: 0, mode: "starterConfirmed" });
@@ -995,14 +1534,136 @@ export default function AdventureGame() {
     });
   }
 
+  function commitAdventureMutation(nextSave, checkpointId, message = null) {
+    saveRef.current = nextSave;
+    setGameSave(nextSave);
+    setDirty(true);
+    const saved = persistSave(nextSave, { checkpointId });
+    if (message) {
+      setSaveNotice({
+        kind: saved.ok ? "info" : "error",
+        message: saved.ok ? message : `${message} The new progress is playable but has not saved yet.`,
+      });
+    }
+    return saved;
+  }
+
+  function boardRoute(interactionValue) {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    try {
+      const next = boardAdventureRoute(current, {
+        routeId: interactionValue.routeId,
+        originDockId: interactionValue.originDockId ?? interactionValue.dockId,
+        mode: "manual",
+      });
+      commitAdventureMutation(next, `board:${interactionValue.routeId}`, "You cast off into the marked channel. Steer between the buoys and approach the opposite dock.");
+    } catch (error) {
+      const message = String(error?.message ?? "This voyage is not ready yet.");
+      setSaveNotice({
+        kind: "info",
+        message: /first-voyage-quest-incomplete|prerequisite|quest/i.test(message)
+          ? "Before casting off, finish the Shellshore resident challenges and review Professor Current's boat-safety Field Note."
+          : message,
+      });
+    }
+  }
+
+  function dockRoute(interactionValue) {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    try {
+      let next = dockAdventureRoute(current, {
+        routeId: interactionValue.routeId,
+        destinationDockId: interactionValue.destinationDockId ?? interactionValue.dockId,
+        mode: "manual",
+      });
+      if (next.world.townId === "sunpatch-cay") next = beginSunpatchInvestigation(next).save;
+      commitAdventureMutation(
+        next,
+        `dock:${interactionValue.routeId}:${next.world.lastSafeDockId}`,
+        next.world.townId === "sunpatch-cay"
+          ? "Welcome to Sunpatch Cay. Your first manual route is complete, and the reef survey is ready."
+          : "Docking complete. Your last safe dock has been updated.",
+      );
+    } catch (error) {
+      setSaveNotice({ kind: "error", message: error?.message ?? "The boat could not dock safely." });
+    }
+  }
+
+  function autoSteerRoute(routeId, destinationDockId) {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    try {
+      let next = autoSteerAdventureRoute(current, { routeId, destinationDockId });
+      if (next.world.townId === "sunpatch-cay") next = beginSunpatchInvestigation(next).save;
+      setWorldMapOpen(false);
+      commitAdventureMutation(next, `auto-steer:${routeId}:${destinationDockId}`, "Auto-steer followed your previously completed route and docked safely.");
+    } catch (error) {
+      setSaveNotice({ kind: "error", message: error?.message ?? "Auto-steer could not start from this location." });
+    }
+  }
+
+  function openFieldwork(interactionValue) {
+    setFieldworkFeedback(null);
+    setFieldworkActivity({
+      type: interactionValue.type,
+      observationId: interactionValue.observationId ?? null,
+      interactionId: interactionValue.interactionId,
+    });
+  }
+
+  function submitFieldworkChoice(choiceId) {
+    const current = saveRef.current ?? gameSave;
+    if (!current || !fieldworkActivity) return;
+    try {
+      const result = fieldworkActivity.type === "observation"
+        ? recordSunpatchObservation(current, choiceId)
+        : fieldworkActivity.type === "interpretation"
+          ? submitSunpatchInterpretation(current, choiceId)
+          : submitSunpatchResponse(current, choiceId);
+      commitAdventureMutation(result.save, `sunpatch-fieldwork:${fieldworkActivity.type}:${choiceId}`);
+      setFieldworkFeedback({
+        correct: result.correct ?? true,
+        message: result.feedback,
+      });
+    } catch (error) {
+      setFieldworkFeedback({ correct: false, message: error?.message ?? "That field observation could not be recorded." });
+    }
+  }
+
   function interact() {
-    if (screen !== "playing" || pauseOpen || conversation || activeTrainerId || starterSelectionOpen || fieldNoteOpen || showCompletion || !interaction || !gameSave) return;
+    if (screen !== "playing" || pauseOpen || conversation || activeTrainerId || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || !interaction || !gameSave) return;
     clearMovement();
-    if (interaction.type === "trainer") {
-      if (interaction.trainerId === ACADEMY_MENTOR_ID) {
+    if (interaction.type === "board") {
+      boardRoute(interaction);
+      return;
+    }
+    if (interaction.type === "dock") {
+      dockRoute(interaction);
+      return;
+    }
+    if (["observation", "interpretation", "response"].includes(interaction.type)) {
+      const progress = getSunpatchProgress(saveRef.current ?? gameSave);
+      if (interaction.type === "interpretation" && progress.missingObservationIds.length) {
+        setSaveNotice({ kind: "info", message: `Record all four shoreline observations first. ${progress.missingObservationIds.length} station${progress.missingObservationIds.length === 1 ? " remains" : "s remain"}.` });
+        return;
+      }
+      if (interaction.type === "response" && !progress.interpretation.correct) {
+        setSaveNotice({ kind: "info", message: "Interpret the four reef observations at the other field-station console before choosing a response." });
+        return;
+      }
+      openFieldwork(interaction);
+      return;
+    }
+    if (interaction.type === "trainer" || interaction.type === "npc") {
+      const trainerId = interaction.trainerId ?? interaction.npcId;
+      const trainer = TRAINERS[trainerId];
+      if (!trainer) return;
+      if (trainerId === ACADEMY_MENTOR_ID) {
         const progress = getOnboardingProgress(saveRef.current ?? gameSave);
         setConversation({
-          trainerId: interaction.trainerId,
+          trainerId,
           index: 0,
           mode: progress.needsStarterSelection
             ? "intro"
@@ -1014,31 +1675,46 @@ export default function AdventureGame() {
         });
         return;
       }
-      if (!onboardingProgress?.tutorialComplete) {
+      if (trainer.townId === "shellshore-village" && !onboardingProgress?.tutorialComplete) {
         setConversation({
-          trainerId: interaction.trainerId,
+          trainerId,
           index: 0,
           mode: "onboardingGate",
           lines: [
             "Professor Current asked me to wait until your academy lesson is complete.",
-            "Choose your starter and finish the friendly 10 VP practice duel, then come challenge me!",
+            "Choose your starter and finish Professor Current's 26 VP strategy lesson, then come challenge me!",
           ],
         });
         return;
       }
-      setConversation({ trainerId: interaction.trainerId, index: 0, mode: "challenge" });
+      if (!trainer.encounterId) {
+        const progress = getSunpatchProgress(saveRef.current ?? gameSave);
+        const questFlags = (saveRef.current ?? gameSave).progression.quests[progress.questId]?.flags ?? {};
+        const mode = trainer.roleId === "local-guide" && questFlags["met-sunpatch-tavi"] !== true
+          ? "intro"
+          : trainer.roleId === "field-partner" && progress.readyToTurnIn
+            ? "debrief"
+            : progress.complete
+              ? "return"
+              : "guidance";
+        setConversation({ trainerId, index: 0, mode });
+        return;
+      }
+      const availability = isAdventureEncounterAvailable(saveRef.current ?? gameSave, trainer.encounterId);
+      if (!availability.available) {
+        setConversation({
+          trainerId,
+          index: 0,
+          mode: "locked",
+          lines: [...(trainer.intro ?? []), availability.reason],
+        });
+        return;
+      }
+      setConversation({ trainerId, index: 0, mode: "challenge" });
       return;
     }
     if (interaction.targetScene && interaction.spawn) {
-      const next = enterAdventureScene(gameSave, {
-        sceneId: interaction.targetScene,
-        position: interaction.spawn,
-        facing: interaction.facing ?? "up",
-      });
-      saveRef.current = next;
-      setGameSave(next);
-      setDirty(true);
-      persistSave(next, { checkpointId: `scene-transition:${interaction.interactionId ?? interaction.targetScene}` });
+      commitSceneTransition(interaction, saveRef.current ?? gameSave);
     }
   }
 
@@ -1065,18 +1741,20 @@ export default function AdventureGame() {
     }
   }
 
-  function launchDuel(trainerId) {
+  function launchDuel(trainerId, playerDeckSnapshot) {
     duelResultRef.current = null;
     setPostDuelConversation(null);
+    setActiveDuelDeckSnapshot(playerDeckSnapshot);
     setActiveTrainerId(trainerId);
     setConversation(null);
   }
 
-  function startDuel() {
+  function startDuel(trainerKeyOverride = null) {
     const current = saveRef.current ?? gameSave;
     if (!conversation || !current) return;
     clearMovement();
-    const trainer = TRAINERS[conversation.trainerId];
+    const trainerKey = trainerKeyOverride ?? conversation.trainerId;
+    const trainer = TRAINERS[trainerKey];
     const progress = getOnboardingProgress(current);
     if (trainer.id === ACADEMY_MENTOR_ID && progress.needsStarterSelection) {
       openStarterSelection();
@@ -1087,6 +1765,27 @@ export default function AdventureGame() {
       closeConversation();
       return;
     }
+    if (trainer.id !== ACADEMY_MENTOR_ID) {
+      const availability = isAdventureEncounterAvailable(current, trainer.encounterId);
+      if (!availability.available) {
+        setSaveNotice({ kind: "info", message: availability.reason });
+        closeConversation();
+        return;
+      }
+    }
+    let playerDeckSnapshot;
+    try {
+      playerDeckSnapshot = createActiveDuelDeckSnapshot(current, cardsById);
+    } catch (error) {
+      setSaveNotice({
+        kind: "error",
+        message: `${error?.message ?? "Your active deck is not ready for a duel."} Open the Deck Workshop and choose a legal 60-card deck.`,
+      });
+      setConversation(null);
+      setPauseOpen(false);
+      setDecksOpen(true);
+      return;
+    }
     const checkpoint = persistSave(current, {
       checkpointId: `before-duel:${trainer.encounterId}`,
     });
@@ -1095,30 +1794,69 @@ export default function AdventureGame() {
         title: "Start without a duel checkpoint?",
         message: "The game could not save immediately before this duel. You may retry from the pause menu or continue knowing the latest checkpoint is unchanged.",
         confirmLabel: "Start duel",
-        onConfirm: () => launchDuel(trainer.id),
+        onConfirm: () => launchDuel(trainerKey, playerDeckSnapshot),
       });
       return;
     }
-    launchDuel(trainer.id);
+    launchDuel(trainerKey, playerDeckSnapshot);
   }
 
   function recordDuelResult(trainerId, result) {
-    duelResultRef.current = result;
     const trainer = TRAINERS[trainerId];
     const current = saveRef.current ?? gameSave;
     if (!trainer || !current) return;
+    try {
+      assertAdventureDuelResultMatchesLaunch(result, {
+        encounterId: trainer.encounterId,
+        opponentId: trainer.id,
+        opponentDeckId: trainer.deckId,
+        victoryTarget: trainer.victoryTarget,
+        playerDeckSnapshot: activeDuelDeckSnapshot,
+      });
+    } catch {
+      setSaveNotice({
+        kind: "error",
+        message: "The duel result did not match the locked deck snapshot, so no story progress or rewards were changed.",
+      });
+      return;
+    }
+    let recordedAttempt;
+    const wasEncounterCompleted = current.progression.completedEncounterIds.includes(
+      trainer.encounterId,
+    );
+    try {
+      recordedAttempt = recordAdventureDuelResult(current, result);
+    } catch (error) {
+      setSaveNotice({
+        kind: "error",
+        message: `${error?.message ?? "The duel result could not be recorded."} No story progress or rewards were changed.`,
+      });
+      return;
+    }
+    const resultSave = recordedAttempt.save;
+    duelResultRef.current = result;
     if (trainer.id === ACADEMY_MENTOR_ID) {
-      const outcome = result.outcome === "victory" ? "won" : "lost";
+      const practicedEverySkill = ["readyToTurnIn", "complete"].includes(resultSave.tutorial?.status);
+      const reachedPracticeTarget = practicedEverySkill
+        && isStoryDuelVpTargetVictory(result, {
+          encounterId: trainer.encounterId,
+          victoryTarget: trainer.victoryTarget,
+        });
+      const outcome = reachedPracticeTarget ? "won" : "lost";
       try {
-        const resolved = recordPracticeDuelResult(current, outcome);
+        const resolved = recordPracticeDuelResult(resultSave, outcome);
+        saveRef.current = resolved.save;
+        setGameSave(resolved.save);
+        setDirty(true);
+        persistSave(resolved.save, { checkpointId: `duel-result:${trainer.encounterId}` });
         if (outcome === "won") {
-          saveRef.current = resolved.save;
-          setGameSave(resolved.save);
-          setDirty(true);
-          persistSave(resolved.save, { checkpointId: `duel-result:${trainer.encounterId}` });
           setPostDuelConversation({ trainerId, index: 0, mode: "victory" });
         } else {
-          setPostDuelConversation({ trainerId, index: 0, mode: "practiceLoss" });
+          setPostDuelConversation({
+            trainerId,
+            index: 0,
+            mode: result.outcome === "victory" ? "practiceRetry" : "practiceLoss",
+          });
         }
       } catch (error) {
         setSaveNotice({ kind: "error", message: error?.message ?? "The practice result could not be recorded." });
@@ -1126,17 +1864,48 @@ export default function AdventureGame() {
       }
       return;
     }
-    if (result.outcome !== "victory") return;
-    const next = completeAdventureEncounter(current, {
+    if (result.outcome !== "victory") {
+      saveRef.current = resultSave;
+      setGameSave(resultSave);
+      setDirty(true);
+      persistSave(resultSave, { checkpointId: `duel-result:${trainer.encounterId}` });
+      return;
+    }
+    const next = completeAdventureEncounter(resultSave, {
       encounterId: trainer.encounterId,
       opponentId: trainer.id,
-      chapterEncounterIds: SHELLSHORE_ENCOUNTER_IDS,
+      chapterEncounterIds: trainer.townId === "shellshore-village" ? SHELLSHORE_ENCOUNTER_IDS : [],
     });
+    const awardedPacks = Object.entries(next.inventory.unopenedPacks)
+      .filter(([packId, quantity]) => quantity > (resultSave.inventory.unopenedPacks[packId] ?? 0))
+      .map(([packId, quantity]) => ({
+        packId,
+        quantity: quantity - (resultSave.inventory.unopenedPacks[packId] ?? 0),
+      }));
     saveRef.current = next;
     setGameSave(next);
     setDirty(true);
-    persistSave(next, { checkpointId: `duel-result:${trainer.encounterId}` });
-    setPostDuelConversation({ trainerId, index: 0, mode: "victory" });
+    const saved = persistSave(next, { checkpointId: `duel-result:${trainer.encounterId}` });
+    if (awardedPacks.length) {
+      const packNames = awardedPacks
+        .map(({ packId, quantity }) => `${quantity} ${PACK_POOLS_BY_ID[packId]?.name ?? "booster pack"}`)
+        .join(" and ");
+      setSaveNotice({
+        kind: saved.ok ? "info" : "error",
+        message: saved.ok
+          ? `${trainer.name} awarded you ${packNames}. Open it from the pause menu's Inventory.`
+          : `${trainer.name} awarded you ${packNames}, but the reward has not saved yet. Retry Save game from the pause menu.`,
+      });
+    }
+    setPostDuelConversation({
+      trainerId,
+      index: 0,
+      mode: trainer.encounterId === "encounter-sunpatch-exhibition"
+        ? "exhibitionVictory"
+        : !wasEncounterCompleted
+          ? "victory"
+          : "rematch",
+    });
   }
 
   function recordSimulatorTutorialCheckpoint(event) {
@@ -1168,6 +1937,7 @@ export default function AdventureGame() {
       setPostDuelConversation({ trainerId, index: 0, mode: "practiceExit" });
     }
     setActiveTrainerId(null);
+    setActiveDuelDeckSnapshot(null);
   }
 
   function acknowledgeFieldNote() {
@@ -1179,10 +1949,8 @@ export default function AdventureGame() {
     try {
       const reviewed = recordBoatSafetyReview(current);
       if (reviewed.applied) {
-        saveRef.current = reviewed.save;
-        setGameSave(reviewed.save);
-        setDirty(true);
-        persistSave(reviewed.save, { checkpointId: "boat-safety-reviewed" });
+        const reconciled = reconcileAdventureProgression(reviewed.save);
+        commitAdventureMutation(reconciled, "boat-safety-reviewed");
       }
       setFieldNoteOpen(false);
     } catch (error) {
@@ -1198,7 +1966,32 @@ export default function AdventureGame() {
     const trainer = TRAINERS[conversation.trainerId];
     if (!trainer) return;
     if (trainer.id !== ACADEMY_MENTOR_ID) {
-      if (conversation.mode === "victory" || conversation.mode === "onboardingGate") closeConversation();
+      if (!trainer.encounterId) {
+        const current = saveRef.current ?? gameSave;
+        if (!current) return;
+        if (trainer.roleId === "local-guide" && conversation.mode === "intro") {
+          const started = beginSunpatchInvestigation(current);
+          const greeted = setQuestFlag(started.save, started.progress.questId, "met-sunpatch-tavi", true);
+          commitAdventureMutation(greeted, "sunpatch-guide-met", "The Sunpatch reef survey is active. Visit all four shoreline monitoring stations.");
+          closeConversation();
+          return;
+        }
+        if (trainer.roleId === "field-partner" && conversation.mode === "debrief") {
+          try {
+            const turnedIn = turnInSunpatchFieldwork(current);
+            commitAdventureMutation(turnedIn.save, "sunpatch-fieldwork-complete", "Your Reading a Reef Field Note is complete. Nia's Tide Hall qualifier is now open.");
+            setConversation(null);
+            setActiveFieldNoteId("field-note-coral-observations");
+            setFieldNoteOpen(true);
+          } catch (error) {
+            setSaveNotice({ kind: "error", message: error?.message ?? "The field report is not ready yet." });
+          }
+          return;
+        }
+        closeConversation();
+        return;
+      }
+      if (["victory", "exhibitionVictory", "onboardingGate", "locked"].includes(conversation.mode)) closeConversation();
       else startDuel();
       return;
     }
@@ -1211,8 +2004,13 @@ export default function AdventureGame() {
       openStarterSelection();
       return;
     }
+    if (conversation.mode === "starterConfirmed") {
+      setConversation({ trainerId: trainer.id, index: 0, mode: "tutorialIntro" });
+      return;
+    }
     if (conversation.mode === "victory" || conversation.mode === "boatSafety") {
       setConversation(null);
+      setActiveFieldNoteId(SHELLSHORE_FIELD_NOTE.id);
       setFieldNoteOpen(true);
       return;
     }
@@ -1223,12 +2021,20 @@ export default function AdventureGame() {
     if (!conversation) return "Continue";
     const trainer = TRAINERS[conversation.trainerId];
     if (trainer?.id !== ACADEMY_MENTOR_ID) {
-      if (conversation.mode === "victory") return "Continue exploring";
+      if (["victory", "exhibitionVictory"].includes(conversation.mode)) return "Continue exploring";
+      if (conversation.mode === "exhibitionOffer") return "Start 30 VP exhibition";
       if (conversation.mode === "onboardingGate") return "Return to the academy";
+      if (conversation.mode === "locked") return "Continue fieldwork";
+      if (!trainer?.encounterId) {
+        if (trainer?.roleId === "local-guide" && conversation.mode === "intro") return "Begin the reef survey";
+        if (trainer?.roleId === "field-partner" && conversation.mode === "debrief") return "Complete the field report";
+        return "Continue exploring";
+      }
       return defeated.has(trainer?.encounterId) ? "Rematch" : "Start duel";
     }
     if (conversation.mode === "intro") return "Meet the starter decks";
     if (conversation.mode === "starterPresentation") return "Choose your starter";
+    if (conversation.mode === "starterConfirmed") return "Continue";
     if (conversation.mode === "victory") return "Read your Field Note";
     if (conversation.mode === "boatSafety") return "Open the safety Field Note";
     if (conversation.mode === "practiceLoss" || conversation.mode === "practiceRetry") return "Try again";
@@ -1288,6 +2094,43 @@ export default function AdventureGame() {
     persistSave(current, { kind: "manual" });
   }
 
+  function openInventoryPack(packId) {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    try {
+      const opened = openAdventurePack(current, packId);
+      saveRef.current = opened.save;
+      setGameSave(opened.save);
+      setPackReveal(opened);
+      setDirty(true);
+      const saved = persistSave(opened.save, { checkpointId: `pack-opened:${packId}:v${opened.poolVersion}` });
+      if (saved.ok) {
+        setSaveNotice({
+          kind: "info",
+          message: `${PACK_POOLS_BY_ID[packId]?.name ?? "Booster pack"} opened and saved to your collection.`,
+        });
+      }
+    } catch (error) {
+      setSaveNotice({
+        kind: "error",
+        message: error?.message ?? "That booster pack could not be opened.",
+      });
+    }
+  }
+
+  function commitDeckWorkshopSave(nextSave, {
+    checkpointId = "deck-workshop",
+    message = "Deck changes saved to this voyage.",
+  } = {}) {
+    saveRef.current = nextSave;
+    setGameSave(nextSave);
+    setDirty(true);
+    const saved = persistSave(nextSave, { checkpointId });
+    if (saved.ok) {
+      setSaveNotice({ kind: "info", message });
+    }
+  }
+
   function finishReturnToTitle() {
     clearMovement();
     setScreen("title");
@@ -1299,6 +2142,14 @@ export default function AdventureGame() {
     setStarterSelectionOpen(false);
     setSelectedStarterId(null);
     setFieldNoteOpen(false);
+    setActiveFieldNoteId(SHELLSHORE_FIELD_NOTE.id);
+    setInventoryOpen(false);
+    setDecksOpen(false);
+    setWorldMapOpen(false);
+    setFieldworkActivity(null);
+    setFieldworkFeedback(null);
+    setPackReveal(null);
+    setActiveDuelDeckSnapshot(null);
     setShowCompletion(false);
     setPauseOpen(false);
     setConfirmation(null);
@@ -1339,11 +2190,21 @@ export default function AdventureGame() {
     clearMovement();
     if (confirmation) {
       setConfirmation(null);
+    } else if (fieldworkActivity) {
+      setFieldworkActivity(null);
+      setFieldworkFeedback(null);
+    } else if (worldMapOpen) {
+      setWorldMapOpen(false);
     } else if (starterSelectionOpen) {
       setStarterSelectionOpen(false);
       setSelectedStarterId(null);
     } else if (fieldNoteOpen) {
       setFieldNoteOpen(false);
+    } else if (inventoryOpen) {
+      setInventoryOpen(false);
+      setPackReveal(null);
+    } else if (decksOpen) {
+      setDecksOpen(false);
     } else if (conversation) {
       closeConversation();
     } else if (showCompletion) {
@@ -1415,7 +2276,7 @@ export default function AdventureGame() {
   }, []);
 
   useEffect(() => {
-    if (screen !== "playing" || pauseOpen || confirmation || starterSelectionOpen || fieldNoteOpen || !pageVisible) return undefined;
+    if (screen !== "playing" || pauseOpen || confirmation || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || !pageVisible) return undefined;
     const timer = window.setInterval(() => {
       if (!pageVisibleRef.current) return;
       setGameSave((current) => {
@@ -1430,7 +2291,7 @@ export default function AdventureGame() {
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [confirmation, fieldNoteOpen, pageVisible, pauseOpen, screen, setDirty, starterSelectionOpen]);
+  }, [confirmation, decksOpen, fieldNoteOpen, inventoryOpen, pageVisible, pauseOpen, screen, setDirty, starterSelectionOpen]);
 
   useEffect(() => {
     function saveWhenHidden() {
@@ -1492,13 +2353,28 @@ export default function AdventureGame() {
   if (activeTrainerId) {
     const trainer = TRAINERS[activeTrainerId];
     const isAcademyPractice = trainer.id === ACADEMY_MENTOR_ID;
+    if (!activeDuelDeckSnapshot) {
+      return (
+        <main className={styles.gameShell}>
+          <div className={styles.oceanGlow} aria-hidden="true" />
+          <div className={styles.introLayer} role="status">
+            <div className={styles.introCard}>
+              <div className={styles.introEyebrow}>Preparing your deck</div>
+              <h1>REEFBOUND</h1>
+              <p>Locking your active deck for this duel…</p>
+            </div>
+          </div>
+        </main>
+      );
+    }
     return (
       <Simulator
-        key={`reefbound-${trainer.id}`}
+        key={`reefbound-${trainer.encounterId}-${activeDuelDeckSnapshot.fingerprint}`}
         storyMode={{
           encounterId: trainer.encounterId,
           opponentId: trainer.id,
-          playerDeckId: gameSave?.player.activeDeckId ?? gameSave?.player.starterDeckId ?? "coral-garden",
+          playerDeckId: activeDuelDeckSnapshot.id,
+          playerDeckSnapshot: activeDuelDeckSnapshot,
           opponentDeckId: trainer.deckId,
           victoryTarget: trainer.victoryTarget,
           difficulty: trainer.difficulty,
@@ -1506,6 +2382,7 @@ export default function AdventureGame() {
           returnLabel: isAcademyPractice ? "Academy" : "Town",
           ...(isAcademyPractice ? {
             tutorial: {
+              scriptedDecks: gameSave?.tutorial?.status !== "complete",
               guide: {
                 name: trainer.name,
                 role: trainer.title,
@@ -1525,29 +2402,28 @@ export default function AdventureGame() {
               },
             },
           } : {}),
-          onExit: () => exitDuel(trainer.id),
-          onResult: (result) => recordDuelResult(trainer.id, result),
+          onExit: () => exitDuel(activeTrainerId),
+          onResult: (result) => recordDuelResult(activeTrainerId, result),
         }}
       />
     );
   }
 
   const activeConversationTrainer = conversation ? TRAINERS[conversation.trainerId] : null;
-  const progress = SHELLSHORE_ENCOUNTER_IDS.filter((encounterId) => defeated.has(encounterId)).length;
-  const sceneTrainerInteraction = scene.interactions.find((candidate) => (
-    candidate.type === "trainer" && TRAINERS[candidate.trainerId]
+  const canOfferSunpatchExhibition = conversation?.trainerId === "sunpatch-leader"
+    && defeated.has("encounter-sunpatch-qualifier");
+  const currentTownId = gameSave.world.townId;
+  const townChallengeTrainers = Object.values(TRAINERS).filter((trainer) => (
+    trainer.townId === currentTownId && trainer.encounterId && trainer.roleId !== "mentor" && !trainer.virtual
   ));
-  const sceneTrainer = sceneTrainerInteraction
-    ? TRAINERS[sceneTrainerInteraction.trainerId]
-    : null;
-  const mapThemeClass = sceneId === "town"
-    ? styles.townMap
-    : sceneId === "academy-lab"
-      ? styles.academyLabMap
-    : sceneId === "coral-home"
-      ? styles.coralHomeMap
-      : styles.deepHomeMap;
-  const questView = onboardingProgress.needsStarterSelection
+  const townEncounterIds = townChallengeTrainers.map((trainer) => trainer.encounterId);
+  const progress = townEncounterIds.filter((encounterId) => defeated.has(encounterId)).length;
+  const sceneCharacterInteractions = scene.interactions.filter((candidate) => (
+    ["trainer", "npc"].includes(candidate.type)
+    && TRAINERS[candidate.trainerId ?? candidate.npcId]
+  ));
+  const mapThemeClass = mapThemeClassForScene(scene);
+  const shellshoreQuestView = onboardingProgress.needsStarterSelection
     ? {
         title: "Choose your first SeaPals",
         description: "Meet Professor Current in the academy lab and compare all three starter decks.",
@@ -1559,8 +2435,8 @@ export default function AdventureGame() {
       ? {
           title: "Professor's live lesson",
           description: onboardingProgress.readyForPracticeDuel
-            ? "All seven lesson actions are complete. Finish the friendly 10 VP practice duel."
-            : "Follow each real simulator action. Completed steps save automatically, even if you take a break.",
+            ? "The core controls are covered. Keep building your economy, establish a Coral Reef habitat, use School Density to welcome a Filter Feeder, and finish with an Apex predator at 26 VP."
+            : "Follow Professor Current's strategy plan in the real simulator. Completed progress saves automatically, even if you take a break.",
           value: onboardingProgress.completedCheckpointCount,
           total: onboardingProgress.checkpointCount,
           label: `${onboardingProgress.completedCheckpointCount} / ${onboardingProgress.checkpointCount} lesson steps`,
@@ -1580,11 +2456,58 @@ export default function AdventureGame() {
             total: SHELLSHORE_ENCOUNTER_IDS.length,
             label: `${progress} / ${SHELLSHORE_ENCOUNTER_IDS.length} crests earned`,
           };
+  const sunpatchCompletedSteps = (sunpatchProgress?.observedObservationIds.length ?? 0)
+    + (sunpatchProgress?.completedResidentEncounterIds.length ?? 0)
+    + (sunpatchProgress?.interpretation.correct ? 1 : 0)
+    + (sunpatchProgress?.response.correct ? 1 : 0);
+  const voyageQuestView = {
+    title: "Pilot the marked channel",
+    description: "Steer between rocks and buoys. Slow near shallow habitat, then approach the opposite dock and choose Dock.",
+    value: 0,
+    total: 1,
+    label: "Manual voyage in progress",
+  };
+  const questView = boatMode
+    ? voyageQuestView
+    : currentTownId === "sunpatch-cay"
+      ? sunpatchProgress.complete
+      ? {
+          title: gameSave.progression.tideMarkIds.includes("tide-mark-sunpatch") ? "Sunpatch Tide Mark earned" : "Qualify at Tide Hall",
+          description: gameSave.progression.tideMarkIds.includes("tide-mark-sunpatch")
+            ? "The mooring team is tracking fewer anchor crossings while the reef remains under observation. Recovery is gradual, not guaranteed."
+            : "Your field report is complete. Visit Nia in Tide Hall for the 10 VP qualification duel.",
+          value: gameSave.progression.tideMarkIds.includes("tide-mark-sunpatch") ? 1 : 0,
+          total: 1,
+          label: gameSave.progression.tideMarkIds.includes("tide-mark-sunpatch") ? "First Tide Mark secured" : "Qualifier waiting",
+        }
+      : sunpatchProgress.readyToTurnIn
+        ? {
+            title: "Present your reef field report",
+            description: "Return to Dr. Mira in the field station. She will review your observations, decisions, and resident perspectives without turning them into an unsupported diagnosis.",
+            value: 8,
+            total: 8,
+            label: "Fieldwork ready to submit",
+          }
+        : {
+            title: "Read the Sunpatch reef",
+            description: sunpatchProgress.nextStep?.label
+              ? `Next: ${sunpatchProgress.nextStep.label}. Compare the evidence before deciding what caused the changes.`
+              : "Visit the four shoreline stations, meet both residents, interpret the evidence, and choose a supported local response.",
+            value: sunpatchCompletedSteps,
+            total: 8,
+            label: `${sunpatchCompletedSteps} / 8 investigation steps`,
+          }
+      : shellshoreQuestView;
   const activeStarter = onboardingProgress.starterDeckId
     ? getAdventureStarterDeck(onboardingProgress.starterDeckId)
     : null;
+  const activeDeckName = gameSave.savedDecks[gameSave.player.activeDeckId]?.name
+    ?? activeStarter?.name
+    ?? "Choose a starter first";
+  const unopenedPackCount = Object.values(gameSave.inventory.unopenedPacks)
+    .reduce((total, quantity) => total + quantity, 0);
   const explorationBlocked = Boolean(
-    pauseOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || showCompletion,
+    pauseOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion,
   );
 
   return (
@@ -1608,15 +2531,18 @@ export default function AdventureGame() {
           <span>NOW EXPLORING</span>
           <strong>{LOCATION_NAMES[sceneId]}</strong>
         </div>
-        <div className={styles.compactProgress} aria-label={`${progress} of ${SHELLSHORE_ENCOUNTER_IDS.length} crests earned`}>
-          {SHELLSHORE_RESIDENT_TRAINERS.map((trainer) => (
+        <div className={styles.compactProgress} aria-label={`${progress} of ${townEncounterIds.length} local challenges won`}>
+          {townChallengeTrainers.map((trainer) => (
             <span key={trainer.id} className={defeated.has(trainer.encounterId) ? styles.earned : ""}>★</span>
           ))}
         </div>
       </header>
 
-      {saveNotice?.kind === "error" ? (
-        <div className={styles.saveToast} role="alert">{saveNotice.message}</div>
+      {saveNotice ? (
+        <div
+          className={`${styles.saveToast} ${saveNotice.kind === "error" ? styles.saveToastError : styles.saveToastInfo}`}
+          role={saveNotice.kind === "error" ? "alert" : "status"}
+        >{saveNotice.message}</div>
       ) : null}
 
       <div className={styles.gameLayout} inert={explorationBlocked} aria-hidden={explorationBlocked || undefined}>
@@ -1629,16 +2555,23 @@ export default function AdventureGame() {
           </div>
           <strong>{questView.label}</strong>
           <div className={styles.controlLegend}>
-            <div><kbd>WASD</kbd><span>Walk</span></div>
+            <div><kbd>WASD</kbd><span>{boatMode ? "Steer" : "Walk"}</span></div>
             <div><kbd>↵</kbd><span>Interact</span></div>
           </div>
         </aside>
 
         <section className={styles.stageColumn} aria-label={`${LOCATION_NAMES[sceneId]} game area`}>
+          <div className={styles.mobileQuestSummary} aria-label="Current quest progress">
+            <span>{questView.title}</span>
+            <strong>{questView.label}</strong>
+            <div className={styles.questProgress} aria-hidden="true">
+              <span style={{ width: `${(questView.value / questView.total) * 100}%` }} />
+            </div>
+          </div>
           <div className={styles.interactionBar} aria-live="polite">
             <span className={interaction ? styles.readyDot : ""} />
             {interactionLabel(interaction, sceneId)}
-            {interaction ? <kbd>ENTER</kbd> : null}
+            {actionInteraction ? <kbd>ENTER</kbd> : null}
           </div>
           <div
             className={`${styles.map} ${mapThemeClass}`}
@@ -1648,23 +2581,39 @@ export default function AdventureGame() {
               aspectRatio: `${scene.width} / ${scene.height}`,
             }}
             role="application"
-            aria-label={`Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk.`}
+            aria-label={boatMode
+              ? `Top-down sea route at ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to steer. Press Enter or A at a dock to finish the voyage.`
+              : `Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk. Walk into doorways to enter or leave, and press Enter or A to interact.`}
           >
-            {sceneTrainer ? (
-              <AdventureTrainerSprite
-                trainer={sceneTrainer}
-                position={sceneTrainerInteraction.at}
-                defeated={defeated.has(sceneTrainer.encounterId)}
+            {sceneCharacterInteractions.map((characterInteraction) => {
+              const trainer = TRAINERS[characterInteraction.trainerId ?? characterInteraction.npcId];
+              return (
+                <AdventureTrainerSprite
+                  key={characterInteraction.id ?? characterInteraction.interactionId}
+                  trainer={trainer}
+                  position={characterInteraction.at}
+                  defeated={Boolean(trainer.encounterId && defeated.has(trainer.encounterId))}
+                  scene={scene}
+                />
+              );
+            })}
+            {boatMode ? (
+              <AdventureBoatSprite
+                position={position}
+                facing={facing}
+                moving={isMoving}
+                interaction={actionInteraction}
                 scene={scene}
               />
-            ) : null}
-            <AdventurePlayerSprite
-              position={position}
-              facing={facing}
-              moving={isMoving}
-              interaction={interaction}
-              scene={scene}
-            />
+            ) : (
+              <AdventurePlayerSprite
+                position={position}
+                facing={facing}
+                moving={isMoving}
+                interaction={actionInteraction}
+                scene={scene}
+              />
+            )}
           </div>
 
           <div className={styles.controlDock}>
@@ -1675,15 +2624,15 @@ export default function AdventureGame() {
               <DirectionButton direction="right" label="▶" onStart={beginTouchDirection} onStop={endTouchDirection} />
               <DirectionButton direction="down" label="▼" onStart={beginTouchDirection} onStop={endTouchDirection} />
             </div>
-            <button type="button" className={styles.actionButton} disabled={!interaction} onClick={interact}>
+            <button type="button" className={styles.actionButton} disabled={!actionInteraction} onClick={interact}>
               <span>A</span>
-              Interact
+              {actionLabel(actionInteraction)}
             </button>
           </div>
         </section>
 
         <aside className={`${styles.sidePanel} ${styles.trainerPanel}`}>
-          <div className={styles.panelEyebrow}>Academy record</div>
+          <div className={styles.panelEyebrow}>{currentTownId === "sunpatch-cay" ? "Voyage record" : "Academy record"}</div>
           <div className={`${styles.trainerCard} ${onboardingProgress.tutorialComplete ? styles.trainerCardWon : ""}`}>
             <span className={`${styles.miniPortrait} ${styles.portraitteal}`}>
               <SpriteArtwork character={ACADEMY_MENTOR_ID} facing="down" portrait />
@@ -1700,10 +2649,21 @@ export default function AdventureGame() {
             <b>{onboardingProgress.tutorialComplete ? "\u2605" : "?"}</b>
           </div>
           {fieldNoteAvailable ? (
-            <button type="button" className={styles.fieldNoteButton} onClick={() => setFieldNoteOpen(true)}>Open Harbor Field Note</button>
+            <button type="button" className={styles.fieldNoteButton} onClick={() => {
+              setActiveFieldNoteId(gameSave.fieldNotes.entryIds.at(-1) ?? SHELLSHORE_FIELD_NOTE.id);
+              setFieldNoteOpen(true);
+            }}>Open latest Field Note</button>
           ) : null}
-          <div className={styles.panelEyebrow}>Village challengers</div>
-          {SHELLSHORE_RESIDENT_TRAINERS.map((trainer) => {
+          {currentTownId === "sunpatch-cay" ? (
+            <div className={styles.sunpatchSurveySummary}>
+              <strong>{sunpatchProgress.observedObservationIds.length} / 4 reef observations</strong>
+              <span>{sunpatchProgress.interpretation.correct ? "Evidence interpreted" : "Interpretation waiting"}</span>
+              <span>{sunpatchProgress.response.correct ? "Response selected" : "Response waiting"}</span>
+              <span>{sunpatchProgress.completedResidentEncounterIds.length} / 2 resident perspectives</span>
+            </div>
+          ) : null}
+          <div className={styles.panelEyebrow}>{currentTownId === "sunpatch-cay" ? "Sunpatch challengers" : "Village challengers"}</div>
+          {townChallengeTrainers.map((trainer) => {
             const won = defeated.has(trainer.encounterId);
             return (
               <div key={trainer.id} className={`${styles.trainerCard} ${won ? styles.trainerCardWon : ""}`}>
@@ -1713,7 +2673,7 @@ export default function AdventureGame() {
                 <span>
                   <strong>{trainer.name}</strong>
                   <small>{trainer.title}</small>
-                  <em>{won ? `${trainer.crest} earned` : `${trainer.difficulty} · 10 VP`}</em>
+                  <em>{won ? `${trainer.crest ?? "Challenge"} earned` : `${trainer.difficulty} · ${trainer.victoryTarget} VP`}</em>
                 </span>
                 <b>{won ? "★" : "?"}</b>
               </div>
@@ -1730,12 +2690,24 @@ export default function AdventureGame() {
           conversation={conversation}
           trainer={activeConversationTrainer}
           defeated={defeated.has(activeConversationTrainer.encounterId)}
-          blocked={Boolean(confirmation || starterSelectionOpen || fieldNoteOpen)}
+          blocked={Boolean(confirmation || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity)}
           primaryLabel={conversationPrimaryLabel()}
-          secondaryLabel={conversation.mode === "practiceLoss" || conversation.mode === "practiceExit" ? "Take a break" : "Not yet"}
+          secondaryLabel={canOfferSunpatchExhibition
+            ? "Play optional 30 VP exhibition"
+            : conversation.mode === "practiceLoss" || conversation.mode === "practiceExit"
+              ? "Take a break"
+              : "Not yet"}
           onAdvance={advanceConversation}
           onPrimary={handleConversationPrimary}
-          onSecondary={conversation.mode === "victory" || conversation.mode === "onboardingGate" ? null : closeConversation}
+          onSecondary={canOfferSunpatchExhibition
+            ? () => setConversation({
+                trainerId: SUNPATCH_EXHIBITION_TRAINER_ID,
+                index: 0,
+                mode: "exhibitionOffer",
+              })
+            : ["victory", "exhibitionVictory", "onboardingGate"].includes(conversation.mode)
+              ? null
+              : closeConversation}
         />
       ) : null}
       {starterSelectionOpen ? (
@@ -1753,11 +2725,63 @@ export default function AdventureGame() {
       ) : null}
       {fieldNoteOpen ? (
         <FieldNoteModal
-          note={SHELLSHORE_FIELD_NOTE}
+          note={activeFieldNote}
           blocked={Boolean(confirmation)}
-          reviewRequired={onboardingProgress.needsBoatSafetyReview}
+          reviewRequired={activeFieldNote.id === SHELLSHORE_FIELD_NOTE.id && onboardingProgress.needsBoatSafetyReview}
           onAcknowledge={acknowledgeFieldNote}
           onDismiss={() => setFieldNoteOpen(false)}
+        />
+      ) : null}
+      {inventoryOpen ? (
+        <InventoryModal
+          inventory={gameSave.inventory}
+          reveal={packReveal}
+          notice={saveNotice}
+          blocked={Boolean(confirmation)}
+          onOpenPack={openInventoryPack}
+          onBuildDeck={() => {
+            setInventoryOpen(false);
+            setDecksOpen(true);
+          }}
+          onClose={() => {
+            setInventoryOpen(false);
+            setPackReveal(null);
+          }}
+        />
+      ) : null}
+      {decksOpen ? (
+        <AdventureDecksModal
+          save={gameSave}
+          notice={saveNotice}
+          blocked={Boolean(confirmation)}
+          featuredCardIds={packReveal?.cards ?? []}
+          onCommit={commitDeckWorkshopSave}
+          onClose={() => {
+            setDecksOpen(false);
+            setPackReveal(null);
+          }}
+        />
+      ) : null}
+      {worldMapOpen ? (
+        <AdventureWorldMapModal
+          model={worldMapModel}
+          notice={saveNotice}
+          blocked={Boolean(confirmation)}
+          onAutoSteer={autoSteerRoute}
+          onClose={() => setWorldMapOpen(false)}
+        />
+      ) : null}
+      {fieldworkActivity ? (
+        <SunpatchFieldworkModal
+          activity={fieldworkActivity}
+          progress={sunpatchProgress}
+          feedback={fieldworkFeedback}
+          blocked={Boolean(confirmation)}
+          onChoose={submitFieldworkChoice}
+          onClose={() => {
+            setFieldworkActivity(null);
+            setFieldworkFeedback(null);
+          }}
         />
       ) : null}
       {showCompletion ? (
@@ -1769,10 +2793,26 @@ export default function AdventureGame() {
           notice={saveNotice}
           blocked={Boolean(confirmation)}
           fieldNoteAvailable={fieldNoteAvailable}
+          activeDeckName={activeDeckName}
+          unopenedPackCount={unopenedPackCount}
           onResume={() => setPauseOpen(false)}
           onSave={manualSave}
+          onDecks={() => {
+            setPauseOpen(false);
+            setDecksOpen(true);
+          }}
+          onInventory={() => {
+            setPauseOpen(false);
+            setPackReveal(null);
+            setInventoryOpen(true);
+          }}
+          onWorldMap={() => {
+            setPauseOpen(false);
+            setWorldMapOpen(true);
+          }}
           onFieldNote={() => {
             setPauseOpen(false);
+            setActiveFieldNoteId(gameSave.fieldNotes.entryIds.at(-1) ?? SHELLSHORE_FIELD_NOTE.id);
             setFieldNoteOpen(true);
           }}
           onReturnTitle={returnToTitle}
