@@ -123,7 +123,7 @@ function defineMovementProfile(movement = {}) {
   return Object.freeze(profile);
 }
 
-function defineScene({ id, name, kind, theme, routeId = null, movement, tiles, spawn, interactions, collisionRects = [] }) {
+function defineScene({ id, name, kind, theme, artPath = null, routeId = null, movement, tiles, spawn, interactions, collisionRects = [] }) {
   const height = tiles.length;
   const width = tiles[0]?.length ?? 0;
 
@@ -156,6 +156,7 @@ function defineScene({ id, name, kind, theme, routeId = null, movement, tiles, s
     name,
     kind,
     theme,
+    artPath,
     routeId,
     movement: defineMovementProfile(movement),
     width,
@@ -175,6 +176,7 @@ export const SCENES = Object.freeze(Object.fromEntries(
       name: scene.world.name,
       kind: scene.world.worldKind,
       theme: scene.world.theme,
+      artPath: scene.world.artPath,
       routeId: scene.routeId ?? scene.world.routeId ?? null,
       movement: scene.world.movement,
       tiles: scene.world.tiles,

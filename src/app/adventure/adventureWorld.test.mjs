@@ -67,7 +67,7 @@ test("scene interaction snapshots are public, frozen, and omit authored coordina
   assert.equal(Object.isFrozen(interactions), true);
 });
 
-test("the first sea route and Sunpatch scenes are live world-engine scenes", () => {
+test("the first two sea routes plus Sunpatch and Brackwater scenes are live world-engine scenes", () => {
   const route = SCENES["shellshore-sunpatch-sea"];
   assert.ok(route);
   assert.equal(route.routeId, "route-shellshore-sunpatch");
@@ -82,10 +82,24 @@ test("the first sea route and Sunpatch scenes are live world-engine scenes", () 
     "sunpatch-field-station",
     "sunpatch-garden-home",
     "sunpatch-tide-hall",
+    "sunpatch-brackwater-sea",
+    "brackwater-landing-town",
+    "brackwater-water-lab",
+    "brackwater-mangrove-home",
+    "brackwater-tide-hall",
   ]) {
     assert.ok(SCENES[sceneId], `${sceneId} should be available to the world engine`);
     assert.equal(canOccupyScenePosition(sceneId, SCENES[sceneId].spawn), true, `${sceneId} requires a safe spawn`);
   }
+
+  const brackwaterRoute = SCENES["sunpatch-brackwater-sea"];
+  assert.equal(brackwaterRoute.routeId, "route-sunpatch-brackwater");
+  assert.equal(brackwaterRoute.kind, "route");
+  assert.equal(brackwaterRoute.theme, "sunpatch-brackwater-route");
+  assert.equal(brackwaterRoute.artPath, "/images/adventure/sunpatch-brackwater-route.png");
+  assert.equal(brackwaterRoute.width, 16);
+  assert.equal(brackwaterRoute.height, 10);
+  assert.equal(SCENES["brackwater-landing-town"].artPath, "/images/adventure/brackwater-landing.png");
 });
 
 test("route movement uses its authored profile and navigation obstacles stay solid", () => {
@@ -184,6 +198,29 @@ test("board and dock interactions expose safe metadata but never auto-transition
   }
 });
 
+test("Sunpatch exposes two distinct departure docks and the Brackwater route docks safely", () => {
+  const shellshoreBoard = getInteraction("sunpatch-cay-town", { x: 7, y: 8 }, "down");
+  const brackwaterBoard = getInteraction("sunpatch-cay-town", { x: 8, y: 8 }, "down");
+  assert.equal(shellshoreBoard.routeId, "route-shellshore-sunpatch");
+  assert.equal(shellshoreBoard.dockId, "sunpatch-dock");
+  assert.equal(brackwaterBoard.routeId, "route-sunpatch-brackwater");
+  assert.equal(brackwaterBoard.dockId, "sunpatch-brackwater-dock");
+  assert.equal(brackwaterBoard.targetScene, "sunpatch-brackwater-sea");
+  assert.deepEqual(brackwaterBoard.spawn, { x: 1, y: 5 });
+
+  const fromDock = getInteraction("sunpatch-brackwater-sea", { x: 1, y: 5 }, "left");
+  const toDock = getInteraction("sunpatch-brackwater-sea", { x: 14, y: 5 }, "right");
+  assert.equal(fromDock.endpoint, "from");
+  assert.equal(fromDock.targetScene, "sunpatch-cay-town");
+  assert.equal(toDock.endpoint, "to");
+  assert.equal(toDock.targetScene, "brackwater-landing-town");
+  assert.equal(getDoorwayTransition("sunpatch-brackwater-sea", { x: 14, y: 5 }, "right"), null);
+
+  for (const interaction of [shellshoreBoard, brackwaterBoard, fromDock, toDock]) {
+    assert.equal(canOccupyScenePosition(interaction.targetScene, interaction.spawn), true);
+  }
+});
+
 test("Sunpatch generic interactions expose only their authored public metadata", () => {
   const interactions = [
     ...getSceneInteractions("sunpatch-cay-town"),
@@ -217,6 +254,34 @@ test("Sunpatch generic interactions expose only their authored public metadata",
   }
 });
 
+test("Brackwater exposes NPC, water-evidence, interpretation, and response interactions", () => {
+  const interactions = [
+    ...getSceneInteractions("brackwater-landing-town"),
+    ...getSceneInteractions("brackwater-water-lab"),
+    ...getSceneInteractions("brackwater-mangrove-home"),
+    ...getSceneInteractions("brackwater-tide-hall"),
+  ];
+  for (const type of ["npc", "trainer", "observation", "interpretation", "response"]) {
+    assert.ok(interactions.some((interaction) => interaction.type === type), `Brackwater requires ${type}`);
+  }
+  assert.deepEqual(
+    interactions
+      .filter((interaction) => interaction.type === "observation")
+      .map((interaction) => interaction.observationId),
+    [
+      "incoming-tide-channel",
+      "rain-fed-creek-mouth",
+      "mangrove-low-tide",
+      "repeat-runoff-low-oxygen",
+    ],
+  );
+  const interpretation = interactions.find((interaction) => interaction.type === "interpretation");
+  const response = interactions.find((interaction) => interaction.type === "response");
+  assert.equal(interpretation.questId, "quest-brackwater-water-clues");
+  assert.equal(interpretation.choiceSetId, "brackwater-water-interpretation");
+  assert.equal(response.choiceSetId, "brackwater-runoff-response");
+});
+
 test("evidence, interpretation, and response stations remain manual interactions", () => {
   const cases = [
     ["sunpatch-cay-town", { x: 4, y: 4 }, "left", "observation"],
@@ -238,6 +303,11 @@ test("every authored route, dock, and Sunpatch portal points to a safe arrival c
     "sunpatch-field-station",
     "sunpatch-garden-home",
     "sunpatch-tide-hall",
+    "sunpatch-brackwater-sea",
+    "brackwater-landing-town",
+    "brackwater-water-lab",
+    "brackwater-mangrove-home",
+    "brackwater-tide-hall",
   ];
   const transitionTypes = new Set(["enter", "exit", "board", "dock"]);
 
@@ -250,6 +320,27 @@ test("every authored route, dock, and Sunpatch portal points to a safe arrival c
         canOccupyScenePosition(interaction.targetScene, interaction.spawn),
         true,
         `${interaction.interactionId} must arrive on an open corridor`,
+      );
+    }
+  }
+});
+
+test("every Sunpatch and Brackwater exterior doorway auto-triggers from a safe approach", () => {
+  for (const sceneId of ["sunpatch-cay-town", "brackwater-landing-town"]) {
+    const entrances = SCENES[sceneId].interactions.filter(({ type }) => type === "enter");
+    assert.equal(entrances.length, 3, `${sceneId} should expose all three building entrances`);
+
+    for (const entrance of entrances) {
+      const approach = { x: entrance.at.x, y: entrance.at.y + 0.73 };
+      assert.equal(
+        canOccupyScenePosition(sceneId, approach),
+        true,
+        `${entrance.id} needs a safe exterior approach`,
+      );
+      assert.equal(
+        getDoorwayTransition(sceneId, approach, "up")?.interactionId,
+        entrance.id,
+        `${entrance.id} should auto-trigger while walking into its facade`,
       );
     }
   }

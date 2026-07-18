@@ -131,6 +131,9 @@ export function getSunpatchProgress(saveValue) {
     && missingResidentEncounterIds.length === 0
     && interpretationCorrect
     && responseCorrect;
+  const terminalStatusConsistent = (
+    quest.status !== "readyToTurnIn" && quest.status !== "complete"
+  ) || requirementsMet;
 
   const missingSteps = [
     ...missingObservationIds.map((observationId) => missingStep(
@@ -158,8 +161,9 @@ export function getSunpatchProgress(saveValue) {
     questId: SUNPATCH_QUEST_ID,
     status: quest.status,
     started: quest.status !== "notStarted",
-    complete: quest.status === "complete",
-    readyToTurnIn: quest.status === "readyToTurnIn",
+    complete: quest.status === "complete" && requirementsMet,
+    readyToTurnIn: quest.status === "readyToTurnIn" && requirementsMet,
+    stateConsistent: terminalStatusConsistent,
     requirementsMet,
     requiredObservationIds: SUNPATCH_REQUIRED_OBSERVATION_IDS,
     observedObservationIds: Object.freeze(observedObservationIds),

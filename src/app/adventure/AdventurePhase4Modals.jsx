@@ -1,11 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import {
-  SUNPATCH_CORRECT_INTERPRETATION_ID,
-  SUNPATCH_CORRECT_RESPONSE_ID,
-  SUNPATCH_OBSERVATION_COPY,
-} from "./adventureSunpatch.mjs";
 import styles from "./adventure.module.css";
 
 function useDialogFocusTrap(active = true) {
@@ -80,7 +75,7 @@ export function AdventureWorldMapModal({ model, notice = null, blocked = false, 
             {notice.message}
           </div>
         ) : null}
-        <div className={styles.worldMapRoute} aria-label="Shellshore to Sunpatch route">
+        <div className={styles.worldMapRoute} aria-label="Reefbound travel routes">
           {(model?.towns ?? []).map((town, index) => (
             <div key={town.townId} className={`${styles.worldMapTown} ${town.current ? styles.worldMapTownCurrent : ""} ${!town.discovered ? styles.worldMapTownHidden : ""}`}>
               <span>{town.current ? "You are here" : town.visited ? "Visited" : town.available ? "Charted" : "Uncharted"}</span>
@@ -127,45 +122,16 @@ export function AdventureWorldMapModal({ model, notice = null, blocked = false, 
   );
 }
 
-const INTERPRETATION_CHOICES = Object.freeze([
-  {
-    id: SUNPATCH_CORRECT_INTERPRETATION_ID,
-    label: "Describe stress and lesions, then gather more evidence",
-    detail: "Pale living tissue may be bleached; visible tissue loss is a lesion, not a diagnosis.",
-  },
-  {
-    id: "all-white-coral-is-dead",
-    label: "Mark every pale or white coral as dead",
-    detail: "Color by itself tells us whether the whole colony is alive.",
-  },
-  {
-    id: "visible-damage-proves-disease",
-    label: "Diagnose coral disease from the photographs",
-    detail: "Any visible tissue loss proves which disease caused it.",
-  },
-]);
+function formatMeasurementLabel(value) {
+  return String(value)
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/^./, (letter) => letter.toUpperCase());
+}
 
-const RESPONSE_CHOICES = Object.freeze([
-  {
-    id: SUNPATCH_CORRECT_RESPONSE_ID,
-    label: "Monitor, protect the site, and reduce supported local stress",
-    detail: "Report repeat images and trends, use moorings, and address demonstrated sediment or nutrient sources.",
-  },
-  {
-    id: "replace-every-pale-coral",
-    label: "Replace every pale coral immediately",
-    detail: "Nursery coral can instantly cure the reef before more evidence is collected.",
-  },
-  {
-    id: "wait-without-reporting",
-    label: "Wait and do not report the change",
-    detail: "The reef will recover on its own, so monitoring and local protection are unnecessary.",
-  },
-]);
-
-export function SunpatchFieldworkModal({
+export function AdventureFieldworkModal({
   activity,
   progress,
+  definition,
   feedback = null,
   blocked = false,
   onChoose,
@@ -173,12 +139,12 @@ export function SunpatchFieldworkModal({
 }) {
   const dialogRef = useDialogFocusTrap(!blocked);
   const observation = activity?.type === "observation"
-    ? SUNPATCH_OBSERVATION_COPY[activity.observationId]
+    ? definition?.observationCopy?.[activity.observationId]
     : null;
   const choices = activity?.type === "interpretation"
-    ? INTERPRETATION_CHOICES
+    ? definition?.interpretationChoices ?? []
     : activity?.type === "response"
-      ? RESPONSE_CHOICES
+      ? definition?.responseChoices ?? []
       : [];
   const decision = activity?.type === "interpretation"
     ? progress?.interpretation
@@ -186,7 +152,16 @@ export function SunpatchFieldworkModal({
       ? progress?.response
       : null;
   const title = observation?.title
-    ?? (activity?.type === "interpretation" ? "Interpret the reef evidence" : "Choose a reef response");
+    ?? (activity?.type === "interpretation"
+      ? definition?.interpretationTitle ?? "Interpret the evidence"
+      : definition?.responseTitle ?? "Choose a response");
+  const previewClass = styles[`observation${activity?.observationId?.split("-")[0]}`] ?? "";
+  const contextualMeasurements = observation?.measurements
+    ? Object.entries(observation.measurements).map(([label, detail]) => ({
+        label: formatMeasurementLabel(label),
+        detail,
+      }))
+    : definition?.measurementItems ?? [];
 
   return (
     <div
@@ -203,7 +178,7 @@ export function SunpatchFieldworkModal({
       <section className={styles.fieldworkCard}>
         <header className={styles.phase4ModalHeader}>
           <div>
-            <span className={styles.panelEyebrow}>Sunpatch reef survey</span>
+            <span className={styles.panelEyebrow}>{definition?.surveyEyebrow ?? "Ecosystem field survey"}</span>
             <h2 id="fieldwork-title">{title}</h2>
           </div>
           <button type="button" onClick={onClose}>Close</button>
@@ -211,14 +186,21 @@ export function SunpatchFieldworkModal({
 
         {observation ? (
           <>
-            <div className={`${styles.observationPreview} ${styles[`observation${activity.observationId.split("-")[0]}`]}`} aria-hidden="true">
+            <div className={`${styles.observationPreview} ${previewClass}`} aria-hidden="true">
               <span />
             </div>
             <p>{observation.feedback}</p>
+            {observation.context ? (
+              <div className={styles.measurementStrip} aria-label="Observation context">
+                <span><b>Site</b><small>{observation.context.site}</small></span>
+                <span><b>Tide</b><small>{observation.context.tide}</small></span>
+                <span><b>Recent rainfall</b><small>{observation.context.rainfall}</small></span>
+              </div>
+            ) : null}
             <div className={styles.measurementStrip}>
-              <span><b>Repeat photo</b><small>Same marked position</small></span>
-              <span><b>Temperature trend</b><small>Compare with local seasonal baseline</small></span>
-              <span><b>Water clarity</b><small>Record, but do not diagnose from one reading</small></span>
+              {contextualMeasurements.map((measurement) => (
+                <span key={measurement.label}><b>{measurement.label}</b><small>{measurement.detail}</small></span>
+              ))}
             </div>
             {feedback ? <p className={styles.fieldworkFeedback} role="status">{feedback.message}</p> : null}
             <button
@@ -232,8 +214,8 @@ export function SunpatchFieldworkModal({
         ) : (
           <>
             <p>{activity?.type === "interpretation"
-              ? "Compare all four monitoring stations. Choose the statement that separates observation from diagnosis."
-              : "Choose a response supported by the evidence and honest about what local action can and cannot change."}</p>
+              ? definition?.interpretationPrompt
+              : definition?.responsePrompt}</p>
             <div className={styles.fieldworkChoices}>
               {choices.map((choice) => (
                 <button
@@ -258,7 +240,7 @@ export function SunpatchFieldworkModal({
         )}
 
         <footer className={styles.fieldworkProgress}>
-          <span>{progress?.observedObservationIds?.length ?? 0} / 4 observations</span>
+          <span>{progress?.observedObservationIds?.length ?? 0} / {progress?.requiredObservationIds?.length ?? 4} {definition?.observationNoun ?? "observations"}</span>
           <span>{progress?.completedResidentEncounterIds?.length ?? 0} / 2 resident duels</span>
           <span>{progress?.interpretation?.correct ? "Interpretation complete" : "Interpretation waiting"}</span>
           <span>{progress?.response?.correct ? "Response complete" : "Response waiting"}</span>
@@ -267,3 +249,5 @@ export function SunpatchFieldworkModal({
     </div>
   );
 }
+
+export const SunpatchFieldworkModal = AdventureFieldworkModal;

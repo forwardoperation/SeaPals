@@ -130,7 +130,9 @@ test("the authored Phase 4 loop survives travel, retries, rewards, pack opening,
   const worldMap = buildAdventureWorldMapModel(save);
   const nextRoute = worldMap.routes.find((route) => route.routeId === "route-sunpatch-brackwater");
   assert.equal(nextRoute.unlocked, true);
-  assert.equal(nextRoute.runtimeReady, false);
+  assert.equal(nextRoute.runtimeReady, true);
+  // Sunpatch uses a separate departure dock for Brackwater, so the player
+  // must walk from the Shellshore arrival dock before boarding this route.
   assert.equal(nextRoute.canBoardManualNow, false);
 
   const opened = openAdventurePack(save, PACK_ID, { random: () => 0 });

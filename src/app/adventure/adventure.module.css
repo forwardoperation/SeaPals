@@ -947,6 +947,9 @@
 .portraitdeep { background-color: #c4b5fd; }
 .portraitcoral { background-color: #fecdd3; }
 .portraitteal { background-color: #a5f3fc; }
+.portraitblue { background-color: #bfdbfe; }
+.portraitgold { background-color: #fde68a; }
+.portraitmangrove { background-color: #bbf7d0; }
 
 .dialogueCopy {
   display: flex;
@@ -2948,6 +2951,27 @@
 .observationbleached { --coral-color: #f4eed8; }
 .observationdescribed { --coral-color: #e2c9b6; }
 .observationalgae { --coral-color: #748d46; }
+.observationincoming,
+.observationrain,
+.observationmangrove,
+.observationrepeat {
+  background:
+    radial-gradient(circle at 22% 32%, rgba(255, 255, 255, 0.28) 0 2%, transparent 2.5%),
+    radial-gradient(circle at 68% 66%, rgba(255, 255, 255, 0.2) 0 2%, transparent 2.5%),
+    linear-gradient(135deg, var(--water-start), var(--water-end));
+}
+.observationincoming { --water-start: #38d5d4; --water-end: #147c8b; }
+.observationrain { --water-start: #83b99b; --water-end: #6f7d48; }
+.observationmangrove { --water-start: #8b9a55; --water-end: #5a663a; }
+.observationrepeat { --water-start: #8a8b4d; --water-end: #69512f; }
+.observationincoming::after,
+.observationrain::after,
+.observationmangrove::after,
+.observationrepeat::after {
+  inset: 20% 34%;
+  border: 5px dashed rgba(236, 254, 255, 0.8);
+  border-radius: 999px;
+}
 
 .measurementStrip,
 .fieldworkProgress {
