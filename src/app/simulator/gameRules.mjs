@@ -152,6 +152,40 @@ export function applyDamage(currentHealth, damage) {
   return { appliedDamage, remainingHealth, destroyed: remainingHealth === 0 };
 }
 
+/**
+ * Resolves a mandatory heal for an automated controller. Only actual Coral
+ * cards are legal targets (Creature Schools are Foundations, but not Corals),
+ * and the most damaged Coral is chosen so the effect never wastes healing when
+ * a better legal target is available.
+ */
+export function healMostDamagedCoral(foundations = [], amount = 0, cardLookup = {}) {
+  const requestedHealing = Math.max(0, Number(amount) || 0);
+  const missingHealth = (foundation) => {
+    const card = cardLookup[foundation?.cardId];
+    return Number(foundation?.maxHealth ?? card?.health ?? 0)
+      - Number(foundation?.health ?? foundation?.maxHealth ?? card?.health ?? 0);
+  };
+  const target = foundations
+    .filter((foundation) => cardLookup[foundation?.cardId]?.kind === "coral" && missingHealth(foundation) > 0)
+    .sort((left, right) => missingHealth(right) - missingHealth(left))[0];
+
+  if (!target || requestedHealing <= 0) {
+    return { foundations, targetFoundationId: null, appliedHealing: 0 };
+  }
+
+  const targetCard = cardLookup[target.cardId];
+  const currentHealth = Number(target.health ?? target.maxHealth ?? targetCard?.health ?? 0);
+  const maxHealth = Number(target.maxHealth ?? targetCard?.health ?? 0);
+  const nextHealth = Math.min(maxHealth, currentHealth + requestedHealing);
+  return {
+    foundations: foundations.map((foundation) => foundation.id === target.id
+      ? { ...foundation, health: nextHealth }
+      : foundation),
+    targetFoundationId: target.id,
+    appliedHealing: nextHealth - currentHealth,
+  };
+}
+
 export const DAMAGE_COUNTER_HP = 10;
 
 /**

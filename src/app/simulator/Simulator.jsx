@@ -7,10 +7,10 @@ import { cardsById } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
 import { conditionCards } from "@/data/cards/conditions";
 import { prebuiltDecks } from "@/data/tournaments/prebuiltDecks";
-import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveConditionalDiceDamage, resolveOpposedRoll, resolveResourceTransfer, rollDie } from "./gameRules.mjs";
+import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveConditionalDiceDamage, resolveOpposedRoll, resolveResourceTransfer, rollDie } from "./gameRules.mjs";
 import { createHabitatInstance, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
 import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstance, getOceanicApexSacrificeChoices, getPersonalDeckType, getSpecialPlacementHostTags, moveSlottedCreatureBetweenFoundations, placeCardInSpecialHost, removeCreatureInstances, resolveDestructionRecoveryWaves } from "./zoneRules.mjs";
-import { attackCanTargetCard, attackerHasDisadvantageFromMassive, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getRemainingAttackTargets, getRovLightsAttackBonus, hasDefenseAdvantage, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume } from "./combatRules.mjs";
+import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingAlarmTurn, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, endFlashingAlarmTurn, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getFlashingAlarmAttackBonus, getRemainingAttackTargets, getRovLightsAttackBonus, hasDefenseAdvantage, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume, triggerFlashingAlarm } from "./combatRules.mjs";
 import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
 import { OPPONENT_DIFFICULTY_OPTIONS, OpponentDifficulty, chooseOpponentPreferredDeck, getOpponentDifficultyProfile, limitOpponentOptionalActions, normalizeOpponentDifficulty, orderOpponentChoices, scaleOpponentThinkingDelay, selectOpponentChoice } from "./opponentDifficultyRules.mjs";
@@ -522,6 +522,7 @@ function createInitialGameState(deckId = defaultDeckId, opponentDeckId = deckId,
       actionCooldowns: {},
       actionUses: {},
       creatureStatuses: {},
+      flashingAlarmAttackBonus: null,
       conditionDensityUses: {},
       rp: Math.max(0, 3 - opponentSetupCost),
     },
@@ -1840,6 +1841,7 @@ export default function Simulator({
   const [poisonImmunityNextPredatorAttack, setPoisonImmunityNextPredatorAttack] = useState(false);
   const [rovLightsActive, setRovLightsActive] = useState(false);
   const [nextOnPlayAttackBonus, setNextOnPlayAttackBonus] = useState(null);
+  const [flashingAlarmAttackBonus, setFlashingAlarmAttackBonus] = useState(null);
   const [supportLockSourceId, setSupportLockSourceId] = useState(null);
   const [supportBlockedUntilRound, setSupportBlockedUntilRound] = useState(0);
   const [attackContext, setAttackContext] = useState(null);
@@ -3557,15 +3559,29 @@ export default function Simulator({
       pushLog("The selected attack target is no longer valid.");
       return;
     }
+    const flashingAlarmBonus = getFlashingAlarmAttackBonus(flashingAlarmAttackBonus);
+    const opponentFlashingAlarmAfterAttack = rollNow
+      ? triggerFlashingAlarm(opponent.flashingAlarmAttackBonus, targetEntry.card)
+      : opponent.flashingAlarmAttackBonus;
+    const flashingAlarmTriggered = opponentFlashingAlarmAfterAttack !== opponent.flashingAlarmAttackBonus;
+    const flashingAlarmTriggerMessage = flashingAlarmTriggered
+      ? ` ${targetEntry.card.name}'s Flashing Alarm will give the opponent +${opponentFlashingAlarmAfterAttack.amount} on every attack roll during its next turn.`
+      : "";
     const targetAvoidance = getTargetAvoidance(targetEntry.card);
     if (rollNow && targetAvoidance) {
       const coinResult = Math.random() < 0.5 ? "heads" : "tails";
       if (coinResult === targetAvoidance.failureResult) {
         commitPlayerAttackCost(attackContext, attacker, attack);
+        if (flashingAlarmTriggered) {
+          setOpponent((current) => ({
+            ...current,
+            flashingAlarmAttackBonus: triggerFlashingAlarm(current.flashingAlarmAttackBonus, targetEntry.card),
+          }));
+        }
         const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "avoided", abilityName: targetAvoidance.abilityName });
         setFaceoffRolling(false);
         setFaceoffPreview(null);
-        const message = `${targetEntry.card.name} used ${targetAvoidance.abilityName} and flipped ${coinResult}, so ${attacker.name}'s ${attack.actionName} failed before dice were rolled.${getAttackSequenceContinuationMessage(sequenceResult)}`;
+        const message = `${targetEntry.card.name} used ${targetAvoidance.abilityName} and flipped ${coinResult}, so ${attacker.name}'s ${attack.actionName} failed before dice were rolled.${flashingAlarmTriggerMessage}${getAttackSequenceContinuationMessage(sequenceResult)}`;
         pushLog(message);
         setEventOverlay({ type: "faceoff-result", sourceCardId: targetEntry.card.id, defenderCardId: attacker.id, title: `${targetAvoidance.abilityName} Evaded the Attack`, message, success: false, continueAttackSequence: sequenceResult.continues });
         return;
@@ -3588,7 +3604,7 @@ export default function Simulator({
         const baseTotal = second ? (useAdvantage ? Math.max(first.total, second.total) : Math.min(first.total, second.total)) : first?.total;
         const rolledBonus = getRolledAttackBonus(attack, baseTotal, playerHabitats);
         const rovLightsBonus = getRovLightsAttackBonus(rovLightsActive, targetEntry.card);
-        return first ? { total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus, detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null].filter(Boolean).join(", ")}]` : ""}` } : null;
+        return first ? { total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus, detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}` } : null;
       })()].filter(Boolean);
       const rolledDamage = attackRolls.reduce((total, roll) => total + roll.total * 10, 0);
       const result = applyDamage(targetCoral.health ?? targetCoral.maxHealth, rolledDamage);
@@ -3605,6 +3621,7 @@ export default function Simulator({
         : { corals: opponent.corals.map((coral) => coral.id === targetCoral.id ? { ...coral, health: result.remainingHealth } : coral), orphans: opponent.orphanCreatures ?? [] };
       const nextOpponentProjection = projectNormalizedOpponentState(reconcileOpponentInstances(opponent, {
         ...opponent,
+        flashingAlarmAttackBonus: opponentFlashingAlarmAfterAttack,
         corals: redistributed.corals,
         orphanCreatures: redistributed.orphans,
         discardPile: recycleId ? removeOneCard(nextDiscard, recycleId) : nextDiscard,
@@ -3614,7 +3631,7 @@ export default function Simulator({
       setOpponent(nextOpponentState);
       const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: result.destroyed ? "destroyed" : "damaged", damage: result.appliedDamage }, { nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
       const collapseMessage = getContinuousHealthCollapseMessage(nextOpponentProjection.collateral);
-      const message = `${attacker.name} rolled ${attackRolls.map((roll) => roll.detail).join(", ")} and dealt ${result.appliedDamage} damage to ${targetEntry.card.name}.${result.destroyed ? " The Creature School was discarded and its creatures redistributed." : ` ${result.remainingHealth}/${targetCoral.maxHealth} HP remains.`}${recyclesKrill ? " Plenteous recycled a base Krill Bloom into the opponent's Foundation deck when available." : ""}${collapseMessage ? ` ${collapseMessage}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
+      const message = `${attacker.name} rolled ${attackRolls.map((roll) => roll.detail).join(", ")} and dealt ${result.appliedDamage} damage to ${targetEntry.card.name}.${result.destroyed ? " The Creature School was discarded and its creatures redistributed." : ` ${result.remainingHealth}/${targetCoral.maxHealth} HP remains.`}${recyclesKrill ? " Plenteous recycled a base Krill Bloom into the opponent's Foundation deck when available." : ""}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
       setEventOverlay({ type: "faceoff-result", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: result.destroyed ? "Creature School Destroyed" : "Creature School Damaged", message, success: result.destroyed, continueAttackSequence: sequenceResult.continues });
       return;
@@ -3656,7 +3673,7 @@ export default function Simulator({
         sourceCardId: attacker.id,
         defenderCardId: targetEntry.card.id,
         title: `${attacker.name} vs ${targetEntry.card.name}`,
-        message: `${attacker.name} attacks with ${attack.attackDice}${useAttackAdvantage ? " and has advantage" : useAttackDisadvantage ? " and has disadvantage from Massive" : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage cancel)" : ""}${rovLightsBonus ? " +2 from ROV Lights" : ""}. ${targetEntry.card.name} defends with ${defenseDice}${defenseAdvantage ? " and has defense advantage" : ""}${activeOpponentDefenseStatuses.some((status) => status.type === "defenseBonusDice") ? " plus its active defensive bonus die" : ""}${cloakDefenseBonus ? ` +${cloakDefenseBonus} Cloak` : ""}${darknessShroudDefenseBonus ? ` +${darknessShroudDefenseBonus} Darkness Shroud` : ""}${attachedDefenseBonus ? ` +${attachedDefenseBonus} Shelter` : ""}${hostedDefenseBonusDice ? ` +${hostedDefenseBonusDice} Stinging Fortress` : ""}.`,
+        message: `${attacker.name} attacks with ${attack.attackDice}${useAttackAdvantage ? " and has advantage" : useAttackDisadvantage ? " and has disadvantage from Massive" : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage cancel)" : ""}${rovLightsBonus ? " +2 from ROV Lights" : ""}${flashingAlarmBonus ? ` +${flashingAlarmBonus} from Flashing Alarm` : ""}. ${targetEntry.card.name} defends with ${defenseDice}${defenseAdvantage ? " and has defense advantage" : ""}${activeOpponentDefenseStatuses.some((status) => status.type === "defenseBonusDice") ? " plus its active defensive bonus die" : ""}${cloakDefenseBonus ? ` +${cloakDefenseBonus} Cloak` : ""}${darknessShroudDefenseBonus ? ` +${darknessShroudDefenseBonus} Darkness Shroud` : ""}${attachedDefenseBonus ? ` +${attachedDefenseBonus} Shelter` : ""}${hostedDefenseBonusDice ? ` +${hostedDefenseBonusDice} Stinging Fortress` : ""}.`,
         targetCoralId,
         targetSlotId,
         attackDice: attack.attackDice,
@@ -3678,7 +3695,7 @@ export default function Simulator({
       : result.attack.total;
     const modifier = getAttackConditionalModifier(attacker, targetEntry.card, playerHabitats, playerCorals, playerReefCreatures, attack, playerOrphanCreatures);
     const rolledBonus = getRolledAttackBonus(attack, chosenAttackRoll, playerHabitats);
-    let attackTotal = chosenAttackRoll + modifier.flat + rolledBonus.flat + rovLightsBonus;
+    let attackTotal = chosenAttackRoll + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
     const secondDefenseRoll = defenseAdvantage ? rollDie(defenseDice) : null;
     const chosenDefenseRoll = secondDefenseRoll ? Math.max(result.defense.total, secondDefenseRoll.total) : result.defense.total;
     const hostedDefenseRoll = hostedDefenseBonusDice ? rollDie(hostedDefenseBonusDice) : null;
@@ -3692,11 +3709,11 @@ export default function Simulator({
       const scatterBase = scatterSecond ? (useAttackAdvantage ? Math.max(scatterFirst.total, scatterSecond.total) : Math.min(scatterFirst.total, scatterSecond.total)) : scatterFirst?.total ?? 0;
       const scatterModifier = getAttackConditionalModifier(attacker, targetEntry.card, playerHabitats, playerCorals, playerReefCreatures, attack, playerOrphanCreatures);
       const scatterRolledBonus = getRolledAttackBonus(attack, scatterBase, playerHabitats);
-      attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + rovLightsBonus;
+      attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
       scatterDetail = `; Scatter reroll ${attackTotal}`;
     }
     const attackerWins = attackTotal > defenseTotal;
-    const rolls = [`${attackTotal}${secondAttackRoll ? ` (${result.attack.total}/${secondAttackRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || rovLightsBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${secondDefenseRoll ? ` (${result.defense.total}/${secondDefenseRoll.total} defense advantage)` : ""}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${cloakDefenseBonus ? ` (+${cloakDefenseBonus} Cloak)` : ""}${darknessShroudDefenseBonus ? ` (+${darknessShroudDefenseBonus} Darkness Shroud)` : ""}${attachedDefenseBonus ? ` (+${attachedDefenseBonus} Shelter)` : ""}${hostedDefenseRoll ? ` (+${hostedDefenseRoll.total} Stinging Fortress)` : ""}${statusDefenseRolls.length ? ` (${statusDefenseRolls.map((entry) => `+${entry.roll.total} ${entry.status.dice}`).join(", ")} action defense)` : ""}${scatterDetail}`];
+    const rolls = [`${attackTotal}${secondAttackRoll ? ` (${result.attack.total}/${secondAttackRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${secondDefenseRoll ? ` (${result.defense.total}/${secondDefenseRoll.total} defense advantage)` : ""}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${cloakDefenseBonus ? ` (+${cloakDefenseBonus} Cloak)` : ""}${darknessShroudDefenseBonus ? ` (+${darknessShroudDefenseBonus} Darkness Shroud)` : ""}${attachedDefenseBonus ? ` (+${attachedDefenseBonus} Shelter)` : ""}${hostedDefenseRoll ? ` (+${hostedDefenseRoll.total} Stinging Fortress)` : ""}${statusDefenseRolls.length ? ` (${statusDefenseRolls.map((entry) => `+${entry.roll.total} ${entry.status.dice}`).join(", ")} action defense)` : ""}${scatterDetail}`];
     commitPlayerAttackCost(attackContext, attacker, attack);
     setFaceoffRolling(false);
     setFaceoffPreview(null);
@@ -3729,6 +3746,7 @@ export default function Simulator({
             ];
       const nextOpponentProjection = projectNormalizedOpponentState(reconcileOpponentInstances(opponent, {
         ...opponent,
+        flashingAlarmAttackBonus: opponentFlashingAlarmAfterAttack,
         corals: defenderKept || targetEntry.reefIndex >= 0 || targetEntry.orphanIndex >= 0 ? opponent.corals : opponent.corals.map((coral) => coral.id === targetEntry.coral.id ? {
           ...coral,
           slots: coral.slots.map((slot) => slot.id === targetEntry.slot.id ? targetEntry.hostedIndex >= 0 ? { ...slot, hostedCardIds: removeHostedCardAtIndex(slot.hostedCardIds, targetEntry.hostedIndex) } : { ...slot, cardId: null, cardInstanceId: null, hostedCardIds: [] } : slot),
@@ -3789,10 +3807,16 @@ export default function Simulator({
       const survivalMessage = resilienceTriggered ? ` Ancient Resilience kept ${targetEntry.card.name} in play and is now used for this game.` : regenerateTriggered ? ` The opponent automatically paid 1 RP for Regenerate to keep ${targetEntry.card.name} in play.` : destroyedCardGoesToLostZone(targetEntry.card) ? ` The destroyed defender was placed in the opponent's Lost Zone.` : ` The defender was discarded.`;
       const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: defenderKept ? "survived" : "discarded" }, { attackerSurvives: !attackerDiscardedAfterConsume, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
       const collapseMessage = getContinuousHealthCollapseMessage(nextOpponentProjection.collateral);
-      const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The attack succeeded.${survivalMessage}${toxicMessage}${selfDiscardMessage}${recycleMessage}${collapseMessage ? ` ${collapseMessage}` : ""}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
+      const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The attack succeeded.${survivalMessage}${toxicMessage}${selfDiscardMessage}${recycleMessage}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
       setEventOverlay({ type: "faceoff-result", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: defenderKept ? "Attack Landed — Defender Survived" : "Successful Attack!", message, success: true, continueAttackSequence: sequenceResult.continues });
     } else {
+      if (flashingAlarmTriggered) {
+        setOpponent((current) => ({
+          ...current,
+          flashingAlarmAttackBonus: triggerFlashingAlarm(current.flashingAlarmAttackBonus, targetEntry.card),
+        }));
+      }
       const biteBack = getBiteBackAttack(targetEntry.card);
       const attackerDefense = attacker.defense?.dice ?? attacker.defense;
       const counter = biteBack && attackerDefense ? resolveOpposedRoll(biteBack.attackDice, attackerDefense) : null;
@@ -3814,7 +3838,7 @@ export default function Simulator({
       }
       const counterMessage = counter?.resolved ? ` ${targetEntry.card.name} triggered Bite Back: ${counter.attack.total} vs ${counter.defense.total}.${counterSucceeded ? destroyedCardGoesToLostZone(attacker) ? ` ${attacker.name} was destroyed and placed in your Lost Zone.` : ` ${attacker.name} was discarded.` : ` ${attacker.name} defended successfully.`}` : "";
       const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "defended", biteBack: counterSucceeded }, { attackerSurvives: !counterSucceeded });
-      const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The defender won.${counterMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
+      const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The defender won.${counterMessage}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
       setEventOverlay({ type: "faceoff-result", sourceCardId: counter?.resolved ? targetEntry.card.id : attacker.id, defenderCardId: counter?.resolved ? attacker.id : targetEntry.card.id, title: counterSucceeded ? "Bite Back Counterattack!" : "Successful Defense!", message, success: false, continueAttackSequence: sequenceResult.continues });
     }
@@ -4464,6 +4488,7 @@ export default function Simulator({
       if (has("resilienceUsedCardIds")) setResilienceUsedCardIds(next.resilienceUsedCardIds);
       if (has("creatureStatuses")) setCreatureStatuses(next.creatureStatuses);
       if (has("blueCrabRecycleUsedTurn")) setBlueCrabRecycleUsedTurn(next.blueCrabRecycleUsedTurn);
+      if (has("flashingAlarmAttackBonus")) setFlashingAlarmAttackBonus(next.flashingAlarmAttackBonus);
     }
     const eventLogMessages = [
       ...(event?.logMessages ?? []),
@@ -4616,6 +4641,7 @@ export default function Simulator({
     setUsedAttackers([]);
     setUsedCreatureActions([]);
     setPendingCreatureAction(null);
+    setFlashingAlarmAttackBonus((current) => beginFlashingAlarmTurn(current));
     if (advanceTurn) {
       const nextPlayerTurn = turn + 1;
       setCreatureStatuses((current) => Object.fromEntries(Object.entries(current).map(([slotId, statuses]) => [slotId, statuses.filter((status) => status.expiresTurn > nextPlayerTurn)]).filter(([, statuses]) => statuses.length)));
@@ -6387,6 +6413,7 @@ export default function Simulator({
     let next = {
       ...current,
       creatureStatuses: Object.fromEntries(Object.entries(current.creatureStatuses ?? {}).map(([statusKey, statuses]) => [statusKey, statuses.filter((status) => Number(status.expiresTurn ?? Infinity) > turn)]).filter(([, statuses]) => statuses.length)),
+      flashingAlarmAttackBonus: beginFlashingAlarmTurn(current.flashingAlarmAttackBonus),
     };
     const collectionCap = getEcosystemRpCap(next.corals, [...next.habitats, ...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
     const rpBeforeCollection = next.rp;
@@ -6680,6 +6707,18 @@ export default function Simulator({
       next = { ...next, rp: rpAfterGain };
       onPlayResourceSummary = ` Its On Play ability gained ${actualGain} RP${actualGain < onPlayResourceGain ? ` (limited by the ${cap} RP bank cap)` : ""}.`;
     }
+    let onPlayHealSummary = "";
+    const onPlayHeal = getOnPlayCoralHeal(card);
+    if (onPlayHeal) {
+      const healResult = healMostDamagedCoral(next.corals, onPlayHeal.amount, cardsById);
+      next = { ...next, corals: healResult.foundations };
+      const target = healResult.targetFoundationId
+        ? next.corals.find((foundation) => foundation.id === healResult.targetFoundationId)
+        : null;
+      onPlayHealSummary = target
+        ? ` ${onPlayHeal.actionName} restored ${healResult.appliedHealing} HP to ${cardsById[target.cardId]?.name}${onPlayHeal.roll != null ? ` after rolling ${onPlayHeal.roll}` : ""}.`
+        : ` ${onPlayHeal.actionName} found no damaged Coral to heal.`;
+    }
     let momentumSummary = "";
     if (cardHasSchoolMomentum(card)) {
       const momentumCardId = [...next.foundationDeck, ...next.palsDeck].find((cardId) => isCreatureSchool(cardsById[cardId]) && cardsById[cardId]?.name !== card.name);
@@ -6775,7 +6814,7 @@ export default function Simulator({
       lost: Boolean(onPlayDrawLossSummary),
       playedCardId: card.id,
       onPlayRevealedCardIds,
-      playSummary: `Opponent played ${card.name} for ${cost} RP.${placementSummary}${densityDiscountSummary}${sacrificeSummary}${symbiosisSummary}${onPlayResourceSummary}${momentumSummary}${onPlayDrawSummary}${onPlayDrawLossSummary}${onPlayReorderSummary}${onPlaySearchSummary}${onPlayAttackBonusSummary}${ensnareSummary}`,
+      playSummary: `Opponent played ${card.name} for ${cost} RP.${placementSummary}${densityDiscountSummary}${sacrificeSummary}${symbiosisSummary}${onPlayResourceSummary}${onPlayHealSummary}${momentumSummary}${onPlayDrawSummary}${onPlayDrawLossSummary}${onPlayReorderSummary}${onPlaySearchSummary}${onPlayAttackBonusSummary}${ensnareSummary}`,
       foundationDamage: card.kind === CardKind.CREATURE ? getOnPlayFoundationDamage(card, [...next.habitats, ...next.corals.map((foundation) => foundation.cardId)]) : null,
       randomDiscard: card.kind === CardKind.CREATURE ? getOnPlayRandomDiscard(card) : null,
       deckDiscard: card.kind === CardKind.CREATURE ? getOnPlayOpponentDeckDiscard(card) : null,
@@ -6787,7 +6826,7 @@ export default function Simulator({
       } : null,
       damageSourceName: card.name,
       damageSourceCardId: card.id,
-      summary: `${collectionSummary} Opponent drew ${drawSummaryText}.${supportSummary} It played ${card.name} for ${cost} RP.${placementSummary}${densityDiscountSummary}${sacrificeSummary}${symbiosisSummary}${onPlayResourceSummary}${momentumSummary}${onPlayDrawSummary}${onPlayDrawLossSummary}${onPlayReorderSummary}${onPlaySearchSummary}${onPlayAttackBonusSummary}${ensnareSummary}${handLimitSummary}`,
+      summary: `${collectionSummary} Opponent drew ${drawSummaryText}.${supportSummary} It played ${card.name} for ${cost} RP.${placementSummary}${densityDiscountSummary}${sacrificeSummary}${symbiosisSummary}${onPlayResourceSummary}${onPlayHealSummary}${momentumSummary}${onPlayDrawSummary}${onPlayDrawLossSummary}${onPlayReorderSummary}${onPlaySearchSummary}${onPlayAttackBonusSummary}${ensnareSummary}${handLimitSummary}`,
     };
   }
 
@@ -7226,6 +7265,7 @@ export default function Simulator({
       ? selectOpponentChoice(attackerEntries, opponentDifficulty, { mediumScore: scoreAttacker, hardScore: scoreAttacker })
       : attackerEntries[0];
     if (!attackerEntry) return null;
+    const flashingAlarmBonus = getFlashingAlarmAttackBonus(opponentState.flashingAlarmAttackBonus);
     const opponentAttackActionKey = onPlayAttack ? null : getOpponentActionUseKey(attackerEntry.locationKey, attackerEntry.attack);
     const opponentCooldownKey = !onPlayAttack && attackerEntry.attack.skipNextTurn ? (attackerEntry.slot ? getSlotActionKey(attackerEntry.slot) : attackerEntry.orphanIndex >= 0 ? `orphan-${attackerEntry.instanceId ?? attackerEntry.orphanIndex}` : `reef-${attackerEntry.instanceId ?? attackerEntry.reefIndex}`) : null;
     const targetEntries = currentPlayerCorals.flatMap((coral) => coral.slots.flatMap((slot) => [{ cardId: slot.cardId, hostedIndex: -1, instanceId: getSlotTargetInstanceId(slot) }, ...(slot.hostedCardIds ?? []).map((cardId, hostedIndex) => ({ cardId, hostedIndex, instanceId: `hosted:${getHostedTargetSlotId(slot.id, hostedIndex)}` }))].filter((entry) => {
@@ -7321,7 +7361,7 @@ export default function Simulator({
         const baseTotal = second ? (useAdvantage ? Math.max(first.total, second.total) : Math.min(first.total, second.total)) : first?.total;
         const rolledBonus = getRolledAttackBonus(attackerEntry.attack, baseTotal, opponentState.habitats);
         const rovLightsBonus = getRovLightsAttackBonus(opponentState.rovLightsActive, targetEntry.card);
-        return first ? { total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus, detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null].filter(Boolean).join(", ")}]` : ""}` } : null;
+        return first ? { total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus, detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}` } : null;
       }).filter(Boolean);
       if (!rolls.length) return null;
       const result = applyDamage(targetEntry.coral.health ?? targetEntry.coral.maxHealth, rolls.reduce((total, roll) => total + roll.total * 10, 0));
@@ -7391,7 +7431,7 @@ export default function Simulator({
       const modifier = getAttackConditionalModifier(attackerEntry.card, targetEntry.card, opponentState.habitats, opponentState.corals, opponentState.reefCreatures, attackerEntry.attack, opponentState.orphanCreatures);
       const chosenAttackRoll = advantageRoll ? (useAttackAdvantage ? Math.max(result.attack.total, advantageRoll.total) : Math.min(result.attack.total, advantageRoll.total)) : result.attack.total;
       const rolledBonus = getRolledAttackBonus(attackerEntry.attack, chosenAttackRoll, opponentState.habitats);
-      let attackTotal = chosenAttackRoll + modifier.flat + rolledBonus.flat + rovLightsBonus;
+      let attackTotal = chosenAttackRoll + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
       let scatterDetail = "";
       if (attackTotal > defenseTotal && cardHasScatter(targetEntry.card)) {
         const scatterFirst = rollDie(attackerEntry.attack.attackDice);
@@ -7399,10 +7439,10 @@ export default function Simulator({
         const scatterBase = scatterSecond ? (useAttackAdvantage ? Math.max(scatterFirst.total, scatterSecond.total) : Math.min(scatterFirst.total, scatterSecond.total)) : scatterFirst?.total ?? 0;
         const scatterModifier = getAttackConditionalModifier(attackerEntry.card, targetEntry.card, opponentState.habitats, opponentState.corals, opponentState.reefCreatures, attackerEntry.attack, opponentState.orphanCreatures);
         const scatterRolledBonus = getRolledAttackBonus(attackerEntry.attack, scatterBase, opponentState.habitats);
-        attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + rovLightsBonus;
+        attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
         scatterDetail = `; Scatter reroll ${attackTotal}`;
       }
-      rolls.push(`${attackTotal}${advantageRoll ? ` (${result.attack.total}/${advantageRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || rovLightsBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${defenseAdjustment.ignoresBonuses ? " (defensive bonuses ignored)" : rollDetails.length ? ` (${rollDetails.join(", ")})` : ""}${scatterDetail}`);
+      rolls.push(`${attackTotal}${advantageRoll ? ` (${result.attack.total}/${advantageRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${defenseAdjustment.ignoresBonuses ? " (defensive bonuses ignored)" : rollDetails.length ? ` (${rollDetails.join(", ")})` : ""}${scatterDetail}`);
       attackerWins = attackTotal > defenseTotal;
     }
     if (!attackerWins) {
@@ -7717,6 +7757,12 @@ export default function Simulator({
         ...nextReefInstances.map((instance) => `reef-${instance.instanceId}`),
         ...nextOrphanInstances.map((instance) => `orphan-${instance.instanceId}`),
       ]);
+      const nextFlashingAlarmAttackBonus = step.targetInstanceId && !step.resolutionUnsupported
+        ? triggerFlashingAlarm(nextPlayer.flashingAlarmAttackBonus, cardsById[step.defenderCardId])
+        : nextPlayer.flashingAlarmAttackBonus;
+      if (nextFlashingAlarmAttackBonus !== nextPlayer.flashingAlarmAttackBonus) {
+        stepExtras.push(`${cardsById[step.defenderCardId]?.name}'s Flashing Alarm will give you +${nextFlashingAlarmAttackBonus.amount} on every attack roll during your next turn.`);
+      }
       nextPlayer = {
         ...nextPlayer,
         corals: nextCorals,
@@ -7727,6 +7773,7 @@ export default function Simulator({
         foundationDeck: nextFoundationDeck,
         rp: step.playerRpAfter ?? nextPlayer.rp,
         blueCrabRecycleUsedTurn: step.playerBlueCrabRecycleUsedTurnAfter ?? nextPlayer.blueCrabRecycleUsedTurn,
+        flashingAlarmAttackBonus: nextFlashingAlarmAttackBonus,
         resilienceUsedCardIds: step.playerResilienceUsedCardId
           ? [...new Set([...nextPlayer.resilienceUsedCardIds, step.playerResilienceUsedCardId])]
           : nextPlayer.resilienceUsedCardIds,
@@ -7986,6 +8033,7 @@ export default function Simulator({
       resilienceUsedCardIds,
       creatureStatuses: Object.fromEntries(Object.entries(creatureStatuses).filter(([slotId]) => occupiedSlotIds.has(slotId))),
       blueCrabRecycleUsedTurn: nextBlueCrabRecycleUsedTurn,
+      flashingAlarmAttackBonus,
     });
     const choiceOpponentProjection = projectNormalizedOpponentState(reconcileOpponentInstances(opponent, nextOpponent));
     const choiceOpponentState = choiceOpponentProjection.state;
@@ -8013,6 +8061,10 @@ export default function Simulator({
     const maintenanceEvents = [];
     let finalOpponentState = normalizeProjectedOpponentState(continuationResolution.opponentState);
     if (!remainingRegenerate) {
+      finalOpponentState = {
+        ...finalOpponentState,
+        flashingAlarmAttackBonus: endFlashingAlarmTurn(finalOpponentState.flashingAlarmAttackBonus),
+      };
       const maintenance = resolveEndOfTurnHabitatMaintenance(finalOpponentState.habitatInstances, {
         cardsInPlay: getCardsInPlayForComposition(finalOpponentState.corals, finalOpponentState.reefCreatures, finalOpponentState.orphanCreatures),
         cardLookup: cardsById,
@@ -8138,6 +8190,7 @@ export default function Simulator({
       rp,
       accepted: true,
     }, { phase: "main" });
+    setFlashingAlarmAttackBonus((current) => endFlashingAlarmTurn(current));
     setGamePhase("transition");
     setModal(null);
     setEventOverlay({
@@ -8183,6 +8236,7 @@ export default function Simulator({
       resilienceUsedCardIds,
       creatureStatuses,
       blueCrabRecycleUsedTurn,
+      flashingAlarmAttackBonus: endFlashingAlarmTurn(flashingAlarmAttackBonus),
     });
     const stagePlayerState = (updates) => {
       stagedPlayerState = normalizeProjectedPlayerState({ ...stagedPlayerState, ...updates });
@@ -8331,7 +8385,12 @@ export default function Simulator({
       cardLookup: cardsById,
       habitatLookup: cardsById,
     });
-    let finalOpponentState = opponentStateWithInstances;
+    let finalOpponentState = hasPendingRegenerate
+      ? opponentStateWithInstances
+      : {
+          ...opponentStateWithInstances,
+          flashingAlarmAttackBonus: endFlashingAlarmTurn(opponentStateWithInstances.flashingAlarmAttackBonus),
+        };
     const habitatTurnEvents = [];
     opponentHabitatMaintenance.events.forEach((event) => {
       const message = event.destroyed
@@ -8563,6 +8622,7 @@ export default function Simulator({
     setPoisonImmunityNextPredatorAttack(false);
     setRovLightsActive(false);
     setNextOnPlayAttackBonus(null);
+    setFlashingAlarmAttackBonus(null);
     setAttackContext(null);
     setSearchContext(null);
     setGameResult(null);
@@ -9155,6 +9215,7 @@ export default function Simulator({
               {poisonImmunityNextPredatorAttack ? <div className="mt-2 inline-flex rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-900">Poison Heal: next attack ignores Toxic</div> : null}
               {rovLightsActive ? <div className="ml-2 mt-2 inline-flex rounded-full border border-cyan-300 bg-cyan-100 px-3 py-1 text-xs font-black text-cyan-900">ROV Lights: +2 attack against Deep creatures</div> : null}
               {nextOnPlayAttackBonus ? <div className="ml-2 mt-2 inline-flex rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{cardsById[nextOnPlayAttackBonus.sourceCardId]?.name}: +{nextOnPlayAttackBonus.amount} next On Play attack</div> : null}
+              {flashingAlarmAttackBonus ? <div className="ml-2 mt-2 inline-flex rounded-full border border-fuchsia-300 bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-900">Flashing Alarm: +{flashingAlarmAttackBonus.amount} {flashingAlarmAttackBonus.phase === "active" ? "all attacks this turn" : "all attacks next turn"}</div> : null}
               {round > 0 && round <= supportBlockedUntilRound ? <div className="ml-2 mt-2 inline-flex rounded-full border border-rose-300 bg-rose-100 px-3 py-1 text-xs font-black text-rose-900">Echo Disruption: Support cards unavailable this turn</div> : null}
             </div>
             <div className="rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-violet-50 shadow-inner">
@@ -9697,7 +9758,7 @@ export default function Simulator({
 
           <div className={`mt-2 flex items-center justify-between rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-3 py-2${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300/40 bg-slate-950/40 text-xl font-black text-emerald-200">{rp}</div><div><div className="text-[10px] font-black uppercase tracking-wider text-emerald-300">RP Bank</div><div className="text-sm font-bold text-white">{rp}/{playerRpCap} available</div></div></div><div className="text-right text-xs leading-tight text-emerald-100/60">Next collection<br />+1{startTurnRp > 0 ? ` + ${startTurnRp}` : ""} RP</div></div>
           <div className={`mt-2 grid grid-cols-2 gap-2${tutorialTargetClass("zones")}`} data-tutorial-target="zones"><button type="button" onClick={() => setModal("discard")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-cyan-300/35 hover:bg-cyan-300/10"><span><span className="mr-2 text-cyan-300">↺</span>Discard</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-cyan-200">{discardPile.length}</strong></button><button type="button" onClick={() => setModal("lost")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-violet-300/35 hover:bg-violet-300/10"><span><span className="mr-2 text-violet-300">◇</span>Lost</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-violet-200">{lostZone.length}</strong></button></div>
-          {poisonImmunityNextPredatorAttack || rovLightsActive || nextOnPlayAttackBonus || (round > 0 && round <= supportBlockedUntilRound) ? <div className="mt-2 flex flex-wrap gap-1">{poisonImmunityNextPredatorAttack ? <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[9px] font-bold text-emerald-200">Poison immune</span> : null}{rovLightsActive ? <span className="rounded-full bg-cyan-400/15 px-2 py-1 text-[9px] font-bold text-cyan-200">ROV lights</span> : null}{nextOnPlayAttackBonus ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-[9px] font-bold text-amber-200">+{nextOnPlayAttackBonus.amount} next attack</span> : null}{round > 0 && round <= supportBlockedUntilRound ? <span className="rounded-full bg-rose-400/15 px-2 py-1 text-[9px] font-bold text-rose-200">Support locked</span> : null}</div> : null}
+          {poisonImmunityNextPredatorAttack || rovLightsActive || nextOnPlayAttackBonus || flashingAlarmAttackBonus || (round > 0 && round <= supportBlockedUntilRound) ? <div className="mt-2 flex flex-wrap gap-1">{poisonImmunityNextPredatorAttack ? <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[9px] font-bold text-emerald-200">Poison immune</span> : null}{rovLightsActive ? <span className="rounded-full bg-cyan-400/15 px-2 py-1 text-[9px] font-bold text-cyan-200">ROV lights</span> : null}{nextOnPlayAttackBonus ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-[9px] font-bold text-amber-200">+{nextOnPlayAttackBonus.amount} next attack</span> : null}{flashingAlarmAttackBonus ? <span className="rounded-full bg-fuchsia-400/15 px-2 py-1 text-[9px] font-bold text-fuchsia-200">Flashing Alarm +{flashingAlarmAttackBonus.amount} {flashingAlarmAttackBonus.phase === "active" ? "this turn" : "next turn"}</span> : null}{round > 0 && round <= supportBlockedUntilRound ? <span className="rounded-full bg-rose-400/15 px-2 py-1 text-[9px] font-bold text-rose-200">Support locked</span> : null}</div> : null}
 
           <section className={`mt-3 flex min-h-48 flex-1 flex-col overflow-hidden rounded-xl border border-cyan-300/20 bg-slate-950/35 p-2${tutorialTargetClass("hand")}`} aria-label="Your hand card list" data-tutorial-target="hand">
             <div className="flex items-center justify-between px-1 pb-2"><div><h3 className="text-sm font-black uppercase tracking-[0.16em] text-cyan-200">Your hand</h3><p className="text-xs text-slate-400">Click a card for details</p></div><span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-cyan-400/10 px-2 text-sm font-black text-cyan-200" aria-label={`${hand.length} cards in hand`}>{hand.length}</span></div>

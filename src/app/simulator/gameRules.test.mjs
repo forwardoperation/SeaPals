@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DAMAGE_COUNTER_HP, DEFAULT_RP_BANK_CAP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getCardRpBankCapModifier, getConditionRpBankCapModifier, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, isEcosystemConditionMet, moveFoundationDamageCounter, parseDieExpression, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveConditionalDiceDamage, resolveOpposedRoll, resolveResourceTransfer, rollDie } from "./gameRules.mjs";
+import { DAMAGE_COUNTER_HP, DEFAULT_RP_BANK_CAP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getCardRpBankCapModifier, getConditionRpBankCapModifier, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseDieExpression, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveConditionalDiceDamage, resolveOpposedRoll, resolveResourceTransfer, rollDie } from "./gameRules.mjs";
 
 test("parses dice and modifiers", () => {
   assert.deepEqual(parseDieExpression("D6"), { sides: 6, modifier: 0 });
@@ -27,6 +27,33 @@ test("defender wins opposed-roll ties", () => {
 test("damage never creates negative health", () => {
   assert.deepEqual(applyDamage(30, 40), { appliedDamage: 40, remainingHealth: 0, destroyed: true });
   assert.deepEqual(applyDamage(30, -5), { appliedDamage: 0, remainingHealth: 30, destroyed: false });
+});
+
+test("automatic Coral Heal targets the most damaged legal Coral and caps at max HP", () => {
+  const foundations = [
+    { id: "school", cardId: "school-card", health: 10, maxHealth: 50 },
+    { id: "light-damage", cardId: "coral-a", health: 25, maxHealth: 30 },
+    { id: "heavy-damage", cardId: "coral-b", health: 5, maxHealth: 40 },
+  ];
+  const result = healMostDamagedCoral(foundations, 60, {
+    "school-card": { kind: "foundation" },
+    "coral-a": { kind: "coral" },
+    "coral-b": { kind: "coral" },
+  });
+
+  assert.equal(result.targetFoundationId, "heavy-damage");
+  assert.equal(result.appliedHealing, 35);
+  assert.equal(result.foundations[2].health, 40);
+  assert.equal(result.foundations[0].health, 10, "Creature Schools are not legal Coral Heal targets");
+  assert.equal(foundations[2].health, 5, "the input remains immutable");
+});
+
+test("automatic Coral Heal is a no-op when no Coral is damaged", () => {
+  const foundations = [{ id: "healthy", cardId: "coral", health: 30, maxHealth: 30 }];
+  const result = healMostDamagedCoral(foundations, 20, { coral: { kind: "coral" } });
+  assert.equal(result.targetFoundationId, null);
+  assert.equal(result.appliedHealing, 0);
+  assert.equal(result.foundations, foundations);
 });
 
 test("Neural Network moves one damage counter between foundations without changing total damage", () => {

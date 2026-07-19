@@ -1922,6 +1922,10 @@
   animation: introIn 260ms ease-out;
 }
 
+.fieldNoteJournalCard {
+  width: min(960px, 100%);
+}
+
 .fieldNoteCard header {
   display: flex;
   align-items: flex-start;
@@ -1978,6 +1982,70 @@
   font-weight: 900;
   line-height: 1.55;
   background: rgba(207, 250, 254, 0.68);
+}
+
+.fieldNoteJournal {
+  margin-top: 18px;
+  padding: 14px;
+  border: 2px solid #99d6d9;
+  border-radius: 14px;
+  background: rgba(236, 254, 255, 0.78);
+}
+
+.fieldNoteJournalHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: #164e63;
+}
+
+.fieldNoteJournalHeading strong { font-size: 14px; }
+.fieldNoteJournalHeading span { font-size: 10px; font-weight: 900; text-transform: uppercase; }
+
+.fieldNoteCard .fieldNoteJournal ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fieldNoteCard .fieldNoteJournal li { padding: 0; }
+
+.fieldNoteJournal button {
+  width: 100%;
+  min-height: 66px;
+  padding: 9px 10px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  color: #164e63;
+  font: inherit;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 1px 0 rgba(14, 116, 144, 0.14);
+  cursor: pointer;
+}
+
+.fieldNoteJournal button small,
+.fieldNoteJournal button strong { display: block; }
+.fieldNoteJournal button small { color: #0e7490; font-size: 8px; font-weight: 1000; letter-spacing: 0.08em; text-transform: uppercase; }
+.fieldNoteJournal button strong { margin-top: 4px; font-size: 11px; line-height: 1.25; }
+
+.fieldNoteJournal button:hover,
+.fieldNoteJournal button:focus-visible {
+  border-color: #22d3ee;
+  outline: 3px solid rgba(34, 211, 238, 0.35);
+  outline-offset: 1px;
+}
+
+.fieldNoteJournal button[aria-current="page"] {
+  border-color: #0e7490;
+  color: #042f2e;
+  background: #ccfbf1;
+  box-shadow: inset 4px 0 0 #f59e0b;
 }
 
 .fieldNoteCard section { margin-top: 18px; }
@@ -5032,6 +5100,7 @@
 }
 
 @media (max-width: 900px) {
+  .fieldNoteCard .fieldNoteJournal ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .decksLayer { overflow-y: auto; }
   .decksCard {
     max-height: none;
@@ -5182,6 +5251,12 @@
   .starterActions { flex-direction: column-reverse; }
   .starterActions button { width: 100%; }
   .fieldNoteCard { padding: 20px 15px; border-width: 5px; }
+  .fieldNoteJournal { padding: 10px; }
+  .fieldNoteCard .fieldNoteJournal ul {
+    max-height: 230px;
+    overflow-y: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
   .noteCloseIcon { width: 44px; height: 44px; }
   .fieldNoteCard dl { grid-template-columns: minmax(0, 1fr); }
   .fieldNoteCard > button { width: 100%; }

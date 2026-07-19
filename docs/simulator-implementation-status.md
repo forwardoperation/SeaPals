@@ -57,11 +57,14 @@ limitation instead of inventing a rule.
   Recovery, Restocking, Dr. Evans, Scientist Jes, Remote Search, Fishing, Arrow Crab,
   Cleaner Shrimp, conditional Parrotfish damage, and Dolphin attack advantages.
   Dr. Evans can split its seven draws, duplicate Restocking targets remain distinct,
-  and recovered Foundation cards return to the Foundation deck.
+  and recovered Foundation cards return to the Foundation deck. Green Sea Turtle's
+  mandatory On Play Coral Heal also resolves for the automated opponent, targets the
+  most damaged legal Coral, and never treats a Creature School as a Coral.
 - Open Ocean and Deep teaching paths include interactive Oceanic Apex sacrifices,
   School Density checks and one-use condition discounts, On Play deck discard/search/
   draw/reorder effects, Tripod Fish Vantage Point, Ocean Triggerfish Territorial target
-  selection, Crevalle RP gain, and deterministic opponent equivalents.
+  selection, Crevalle RP gain, Deep Sea Jelly's next-turn Flashing Alarm for both
+  controllers, and deterministic opponent equivalents.
 
 ## Known rule/data boundaries
 
@@ -71,6 +74,13 @@ limitation instead of inventing a rule.
   card still use the discard pile unless their text explicitly says otherwise.
 - `Stunned` is stored and shown, but current card/rules data does not define its
   automatic gameplay consequence.
+- Lionfish can be placed on the rival reef by the player, but automated-opponent
+  placement and attack/specialized-Support removal of a controller-owned invader do
+  not yet have complete parity.
+- Cookie Cutter's Parasite transfers available opposing RP, but its printed
+  "collect from the board" fallback remains undefined and unimplemented.
+- Giant and Colossal Squid Ensnare currently resolve one coin flip across a repeated
+  attack sequence instead of the printed once-per-attack timing.
 - Complex companion effects on an otherwise supported attack resolve the documented
   attack portion and explicitly identify the remainder as unsupported.
 - Several original card-art files remain absent from the repository. Every absent art
@@ -87,11 +97,10 @@ limitation instead of inventing a rule.
 
 ## Verification checkpoint
 
-- Pure rule tests: `npm.cmd test` (71 tests, including stable creature identity,
-  condition discounts, Habitat maintenance, deck routing, Regenerate, Massive, and
-  Toxic, Brain Coral damage-counter movement, Transparency, mandatory-draw shortfalls,
-  plus centralized default/condition/EcoBoost RP bank caps; passing as of 2026-07-13).
-- Production build: `npm.cmd run build` (passing as of 2026-07-13).
+- Simulator suite: `npm.cmd run test:simulator` (**176/176 passed** on 2026-07-19),
+  including Flashing Alarm lifecycle and automatic legal Coral Heal targeting.
+- Full repository suite: `npm.cmd test` (**602/602 passed** on 2026-07-19).
+- Production build: `npm.cmd run build` (**26/26 routes generated** on 2026-07-19).
 - Diff whitespace and duplicate named-function audits pass.
 - Rendered browser verification covers every prebuilt deck's opening setup, an Open
   Ocean setup-to-opponent-turn sequence, correct opponent summary/draw ordering,
