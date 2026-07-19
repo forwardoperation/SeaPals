@@ -7824,6 +7824,9 @@ export default function Simulator({
       };
     }
     if (targetEntry.onOpponentBoard) {
+      const defeatedInvaderDestination = destroyedCardGoesToLostZone(targetEntry.card)
+        ? "Lost Zone"
+        : "discard pile";
       const invasiveRemoval = targetEntry.onOpponentOrphan
         ? { foundations: opponentState.corals, removedCardId: null }
         : removeInvasiveCreature(opponentState.corals, {
@@ -7877,7 +7880,7 @@ export default function Simulator({
         actionCost: attackerEntry.attack.actionCost,
         opponentCooldownKey,
         opponentAttackActionKey,
-        summary: `Opponent's ${attackerEntry.card.name} attacked your invading ${targetEntry.card.name}: ${rolls.join(", ")}. The attack succeeded, so the invader left the opponent's reef and went to your discard pile.${toxicResult.triggered ? toxicResult.protected ? " Poison Heal or Toxic Immunity prevented Toxic." : toxicResult.discardAttacker ? " Toxic also discarded the opponent's attacker." : " The opponent's attacker survived Toxic." : ""}`,
+        summary: `Opponent's ${attackerEntry.card.name} attacked your invading ${targetEntry.card.name}: ${rolls.join(", ")}. The attack succeeded, so the invader left the opponent's reef and went to your ${defeatedInvaderDestination}.${toxicResult.triggered ? toxicResult.protected ? " Poison Heal or Toxic Immunity prevented Toxic." : toxicResult.discardAttacker ? " Toxic also discarded the opponent's attacker." : " The opponent's attacker survived Toxic." : ""}`,
       };
     }
     const defeatedCorals = targetEntry.reefIndex >= 0 || targetEntry.orphanIndex >= 0 ? currentPlayerCorals : currentPlayerCorals.map((coral) => coral.id === targetEntry.coral.id ? {

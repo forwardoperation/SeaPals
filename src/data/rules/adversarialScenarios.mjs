@@ -85,7 +85,7 @@ export const ADVERSARIAL_SCENARIOS = [
   { id: "rule-081", question: "What happens when a continuous health bonus leaves play?", expectedSourceIds: ["knowledge:continuous-health-bonuses"], textIncludes: ["reduce maximum and current health"], tags: ["rule"] },
   { id: "rule-082", question: "Does moving a creature reset a once-per-turn action cooldown?", expectedSourceIds: ["knowledge:action-timing-and-cooldowns"], textIncludes: ["does not reset"], tags: ["rule"] },
   { id: "rule-083", question: "What do star icons inside colored circles under On Play mean?", expectedSourceIds: ["knowledge:star-icons-and-colored-circles-under-on-play-abilities"], textIncludes: ["family target icon"], tags: ["rule"] },
-  { id: "rule-084", question: "When does a card move to the Lost Zone?", expectedSourceIds: ["knowledge:lost-zone"], textIncludes: ["Apex or Filter Feeder"], tags: ["rule"] },
+  { id: "rule-084", question: "When does a card move to the Lost Zone?", expectedSourceIds: ["knowledge:lost-zone"], textIncludes: ["Apex", "Filter Feeder", "Lionfish"], tags: ["rule"] },
   { id: "rule-085", question: "What automatic consequence does Stunned currently have?", expectedSourceIds: ["knowledge:stunned-boundary"], textIncludes: ["produces no RP", "cannot use"], tags: ["rule"] },
   { id: "rule-086", question: "How should an incomplete card effect be resolved?", expectedSourceIds: ["knowledge:unknown-or-incomplete-card-effects"], textIncludes: ["do not invent"], tags: ["rule"] },
   { id: "rule-087", question: "How do I win a normal or quick SeaPals game?", expectedSourceIds: ["knowledge:how-to-win"], textIncludes: ["Victory Point"], tags: ["rule"] },

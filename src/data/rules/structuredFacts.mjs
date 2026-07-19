@@ -266,10 +266,10 @@ export const STRUCTURED_RULE_FACTS = [
     id: "lost-zone",
     augmentExisting: true,
     sourceTitle: "Lost Zone",
-    concepts: ["lost zone", "lost pile", "destroyed apex", "destroyed filter feeder"],
+    concepts: ["lost zone", "lost pile", "destroyed apex", "destroyed filter feeder", "destroyed lionfish", "spearfishing lionfish"],
     intents: ["where", "go", "destroy", "discard", "removed"],
     answerTypes: ["location", "procedure", "boolean"],
-    text: "When an Apex or Filter Feeder is destroyed, place that physical card in its owner's Lost Zone instead of discard. A card that is discarded without being destroyed still goes to discard unless the resolving effect explicitly says otherwise.",
+    text: "When an Apex, Filter Feeder, or Lionfish is destroyed, place that physical card in its owner's Lost Zone instead of discard. A card that is discarded without being destroyed still goes to discard unless the resolving effect explicitly says otherwise; Spearfishing therefore returns Lionfish to its original owner's discard pile.",
   },
   {
     id: "school-density",

@@ -29,7 +29,7 @@ export const CORE_RULES = [
   },
   {
     title: "How attacking works",
-    text: "Read the attack indicator for the attack die, legal target icons, and attack count. Choose a legal target, then roll the attack die while the target rolls its defense die. The attacker must roll higher; ties go to the defender. A successful attack destroys the defender: a destroyed Apex or Filter Feeder goes to its owner's Lost Zone, while other destroyed cards go to discard unless their text says otherwise.",
+    text: "Read the attack indicator for the attack die, legal target icons, and attack count. Choose a legal target, then roll the attack die while the target rolls its defense die. The attacker must roll higher; ties go to the defender. A successful attack destroys the defender: a destroyed Apex, Filter Feeder, or Lionfish goes to its owner's Lost Zone, while other destroyed cards go to discard unless their text says otherwise.",
   },
   {
     title: "Defense rolls",
@@ -61,7 +61,7 @@ export const CORE_RULES = [
   },
   {
     title: "Lost Zone",
-    text: "When an Apex or Filter Feeder is destroyed, place that card in its owner's Lost Zone instead of the discard pile. Cards sent to the Lost Zone are no longer in play. Other cards go to discard when destroyed unless their printed text says otherwise.",
+    text: "When an Apex, Filter Feeder, or Lionfish is destroyed, place that card in its owner's Lost Zone instead of the discard pile. Cards sent to the Lost Zone are no longer in play. Spearfishing discards Lionfish rather than destroying it, so Spearfishing returns Lionfish to its owner's discard pile. Other cards go to discard when destroyed unless their printed text says otherwise.",
   },
 ];
 
