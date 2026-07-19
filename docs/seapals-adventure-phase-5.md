@@ -1,6 +1,6 @@
-# SeaPals Adventure Phase 5 - Brackwater Landing and Current Commons
+# SeaPals Adventure Phase 5 - Regional Ecosystem Chapters
 
-**Status:** Brackwater Landing and Current Commons vertical slices implemented and passing automated, production-build, and seeded browser checkpoint checks; full clean-profile playthroughs, target-age comprehension testing, and named marine-science reviews remain open
+**Status:** Brackwater Landing, Current Commons, and Kelpwatch Island vertical slices verified at their implementation checkpoints; clean-profile playthroughs, full accessibility/device QA, target-age comprehension testing, starter-balance checks, and named marine-science reviews remain open
 
 **Branch:** `codex/seapals-adventure`
 
@@ -8,13 +8,13 @@
 
 ## Phase 5 release boundary
 
-Phase 5 is organized as independently testable regional releases. This document records the overall boundary plus the Brackwater and Current Commons releases; Current Commons has its detailed release record in [seapals-adventure-phase-5-current-commons.md](./seapals-adventure-phase-5-current-commons.md).
+Phase 5 is organized as independently testable regional releases. This document records the overall boundary plus the Brackwater release. Current Commons has its detailed release record in [seapals-adventure-phase-5-current-commons.md](./seapals-adventure-phase-5-current-commons.md), and Kelpwatch Island has its implementation-checkpoint record in [seapals-adventure-phase-5-kelpwatch.md](./seapals-adventure-phase-5-kelpwatch.md).
 
 | Regional release | Runtime status | Boundary |
 | --- | --- | --- |
 | **Brackwater Landing** | Implemented vertical slice | Travel route, floating town and interiors, field investigation, five NPC roles, two resident duels, qualifier, Field Note, earned pack, Tide Mark, return state, and save-backed progression are authored and connected to the live adventure UI. |
 | **Current Commons** | Implemented vertical slice | Brackwater route, floating flotilla and interiors, current/ghost-gear investigation, five NPC roles, two resident duels, qualifier, Field Note, Blue Water pack, Tide Mark, return state, and save-backed progression are live. |
-| **Kelpwatch Island** | Planned | Its town, route, kelp food-web investigation, opponents, Field Note, and pack are not playable. |
+| **Kelpwatch Island** | Implemented vertical slice | Current route, rocky island town and three interiors, matched kelp food-web investigation, five NPC roles, two resident duels, qualifier, Field Note, Food-Web Pack, Tide Mark, return state, and save-backed progression are connected to the live adventure systems. |
 
 Trenchlight Station and the sub expedition belong to Phase 6. Champion's Wake and the 30 VP tournament belong to Phase 7; neither is part of this Phase 5 release.
 
@@ -28,6 +28,7 @@ Trenchlight Station and the sub expedition belong to Phase 6. Champion's Wake an
 - Corrective feedback is retryable. Repeating an identical incorrect choice does not inflate progress, and an accepted correct decision cannot be replaced by a later unsupported choice.
 - Completing the report grants **Changing Estuary Water**. Winning the qualifier grants a Brackwater Discovery Pack, the Brackwater Tide Mark, and charts the planned route toward Current Commons exactly once.
 - Return dialogue preserves scientific uncertainty: the town continues monitoring normal variation while tracing the supported runoff pathway.
+- Kelpwatch extends the same regional loop with a manually piloted Current-to-Kelpwatch route, a rocky island town and three interiors, four matched kelp/grazer/predator observations, a three-link food-web interpretation, a bounded monitoring/restoration decision, two resident duels, a qualifier, Field Note, Food-Web Pack, and Tide Mark. Its automated and seeded-browser checkpoint is recorded in the detailed release record.
 
 ## Science and learning contract
 
@@ -150,10 +151,11 @@ Before merge or deployment, also run the repository-wide suite:
 npm.cmd test
 ```
 
-At this implementation checkpoint, `npm.cmd run test:adventure` passes 256 tests, the repository-wide suite passes 487 tests, and `npm.cmd run build` succeeds. Those checks verify domain and integration contracts; they do not close the full browser, child-comprehension, starter-balance, or science-review gates above.
+At the Kelpwatch checkpoint, `npm.cmd run test:adventure` passed 289 tests, the repository-wide suite passed 520 tests, `npm.cmd run build` generated all 26 pages, `git diff --check` passed, and seeded browser verification covered the regional loop through reward, reload, return travel, and revisit dialogue without page exceptions or application 4xx responses. Automated and seeded checks do not close the clean-profile, full accessibility/device, child-comprehension, starter-balance, or science-review gates.
 
 ## Remaining Phase 5 work
 
 1. Close the open Brackwater and Current Commons browser, accessibility, save/reload, comprehension, balance, and science-review gates.
-2. Build Kelpwatch Island as the third independent Phase 5 content release: a live route, island town, kelp food-web investigation, two resident duels, qualifier, pack, Field Note, Tide Mark, and return state.
-3. Re-run the Phase 5 regression matrix after each release to ensure the new content reuses, rather than duplicates, adventure movement, save, inventory, deck, Simulator, quest, and reward systems.
+2. Complete Kelpwatch's remaining clean-profile, full accessibility/device, comprehension, starter-balance, and science-review gates.
+3. Keep the complete Phase 5 regression matrix green as later phases extend the shared adventure movement, save, inventory, deck, Simulator, quest, and reward systems.
+4. Keep Trenchlight Station and the sub expedition in Phase 6, and Champion's Wake plus the three 30 VP tournament games in Phase 7.

@@ -49,6 +49,27 @@ test("every playable scene artwork is a structurally complete map-sized PNG", as
   }
 });
 
+test("Kelpwatch ships the exact five map-sized PNG assets used by its live scenes", async () => {
+  const expectedAssets = new Map([
+    ["current-kelpwatch-sea", "/images/adventure/current-kelpwatch-route.png"],
+    ["kelpwatch-island-town", "/images/adventure/kelpwatch-island.png"],
+    ["kelpwatch-ecology-lab", "/images/adventure/kelpwatch-ecology-lab.png"],
+    ["kelpwatch-diver-home", "/images/adventure/kelpwatch-diver-home.png"],
+    ["kelpwatch-tide-hall", "/images/adventure/kelpwatch-tide-hall.png"],
+  ]);
+
+  for (const [sceneId, artPath] of expectedAssets) {
+    const scene = ADVENTURE_CONTENT.scenes.find((candidate) => candidate.id === sceneId);
+    assert.equal(scene?.status, "prototype", `${sceneId} must be playable`);
+    assert.equal(scene.world.artPath, artPath);
+
+    const png = await readFile(publicAssetPath(artPath));
+    assert.equal(png.subarray(0, 8).toString("hex"), PNG_SIGNATURE);
+    assert.equal(png.readUInt32BE(16), 1536, `${artPath} width`);
+    assert.equal(png.readUInt32BE(20), 1024, `${artPath} height`);
+  }
+});
+
 test("playable science notes use unique authoritative government sources", () => {
   const sourcedNotes = ADVENTURE_CONTENT.fieldNotes.filter((fieldNote) => (
     fieldNote.status === "prototype" && fieldNote.sourceUrls?.length
@@ -64,8 +85,13 @@ test("playable science notes use unique authoritative government sources", () =>
     for (const sourceUrl of fieldNote.sourceUrls) {
       const hostname = new URL(sourceUrl).hostname;
       assert.ok(
-        hostname === "epa.gov" || hostname.endsWith(".epa.gov") || hostname === "noaa.gov" || hostname.endsWith(".noaa.gov"),
-        `${fieldNote.id} source ${hostname} must be an authoritative NOAA or EPA page`,
+        hostname === "epa.gov"
+        || hostname.endsWith(".epa.gov")
+        || hostname === "noaa.gov"
+        || hostname.endsWith(".noaa.gov")
+        || hostname === "nps.gov"
+        || hostname.endsWith(".nps.gov"),
+        `${fieldNote.id} source ${hostname} must be an authoritative NOAA, EPA, or NPS page`,
       );
     }
   }

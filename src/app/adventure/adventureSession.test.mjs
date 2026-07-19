@@ -16,6 +16,11 @@ import {
   getCurrentProgress,
 } from "./adventureCurrent.mjs";
 import {
+  KELPWATCH_QUEST_ID,
+  KELPWATCH_RESIDENT_ENCOUNTER_IDS,
+  getKelpwatchProgress,
+} from "./adventureKelpwatch.mjs";
+import {
   ADVENTURE_ECOSYSTEM_CHAPTERS,
 } from "./adventureEcosystemChapters.mjs";
 import {
@@ -41,12 +46,14 @@ const CHAPTER_WORLD_BY_TOWN_ID = Object.freeze({
   "sunpatch-cay": Object.freeze({ sceneId: "sunpatch-cay-town", dockId: "sunpatch-dock" }),
   "brackwater-landing": Object.freeze({ sceneId: "brackwater-landing-town", dockId: "brackwater-dock" }),
   "current-commons": Object.freeze({ sceneId: "current-commons-town", dockId: "current-commons-dock" }),
+  "kelpwatch-island": Object.freeze({ sceneId: "kelpwatch-island-town", dockId: "kelpwatch-dock" }),
 });
 
 const CHAPTER_REWARD_ID_BY_QUEST_ID = Object.freeze({
   [SUNPATCH_QUEST_ID]: "reward-sunpatch-fieldwork",
   [BRACKWATER_QUEST_ID]: "reward-brackwater-fieldwork",
   [CURRENT_QUEST_ID]: "reward-current-fieldwork",
+  [KELPWATCH_QUEST_ID]: "reward-kelpwatch-fieldwork",
 });
 
 function completeChapterForRecovery(chapter, profileId) {
@@ -125,6 +132,7 @@ test("entering any registered ecosystem town begins its chapter", () => {
     { sceneId: "sunpatch-cay-town", questId: SUNPATCH_QUEST_ID },
     { sceneId: "brackwater-landing-town", questId: BRACKWATER_QUEST_ID },
     { sceneId: "current-commons-town", questId: CURRENT_QUEST_ID },
+    { sceneId: "kelpwatch-island-town", questId: KELPWATCH_QUEST_ID },
   ]) {
     const scene = SCENES[sceneId];
     const entered = enterAdventureScene(createNewAdventureSession("profile-1"), {
@@ -179,6 +187,11 @@ test("resident wins alone never bypass registered ecosystem fieldwork", () => {
       questId: CURRENT_QUEST_ID,
       encounterIds: CURRENT_RESIDENT_ENCOUNTER_IDS,
     },
+    {
+      sceneId: "kelpwatch-island-town",
+      questId: KELPWATCH_QUEST_ID,
+      encounterIds: KELPWATCH_RESIDENT_ENCOUNTER_IDS,
+    },
   ]) {
     let save = enterAdventureScene(createNewAdventureSession("profile-3"), {
       sceneId,
@@ -205,6 +218,10 @@ test("inconsistent terminal ecosystem saves cannot unlock qualifier encounters",
     {
       questId: CURRENT_QUEST_ID,
       qualifierId: "encounter-current-qualifier",
+    },
+    {
+      questId: KELPWATCH_QUEST_ID,
+      qualifierId: "encounter-kelpwatch-qualifier",
     },
   ]) {
     const initial = createInitialAdventureSave(`corrupt-${questId}`);
@@ -391,8 +408,69 @@ test("resume discards malformed persisted Current Commons flags without losing u
   assert.deepEqual(stable.save, recovered.save);
 });
 
+test("resume discards malformed persisted Kelpwatch flags without losing unrelated progress", () => {
+  const save = createNewAdventureSession("kelpwatch-flag-recovery");
+  save.progression.quests[KELPWATCH_QUEST_ID] = {
+    status: "active",
+    flags: {
+      "future-kelpwatch-marker": "keep-me",
+      "interpretation-corrective-attempts": 1.5,
+      "interpretation-last-choice": 7,
+      "observed-predator-evidence-survey": "yes",
+      "observed-kelp-cover-transect": true,
+    },
+  };
+  save.progression.quests["quest-side-story"] = {
+    status: "active",
+    flags: { "story-progress": 9 },
+  };
+  save.inventory.storyItems["kelpwatch-keepsake"] = 1;
+  save.playtimeSeconds = 126;
+
+  const loaded = JSON.parse(JSON.stringify(save));
+  assert.equal(validateAdventureSave(loaded).valid, true);
+
+  const recovered = recoverAdventureResume(loaded);
+  assert.equal(recovered.recovered, true);
+  assert.equal(recovered.reason, "chapter-quest-flags-recovered");
+  assert.equal(recovered.fallback, null);
+  assert.deepEqual(recovered.recoveryMetadata, {
+    chapterQuestRepairs: [{
+      questId: KELPWATCH_QUEST_ID,
+      discardedFlagIds: [
+        "interpretation-corrective-attempts",
+        "interpretation-last-choice",
+        "observed-predator-evidence-survey",
+      ],
+    }],
+  });
+  assert.deepEqual(
+    recovered.save.progression.quests[KELPWATCH_QUEST_ID].flags,
+    {
+      "future-kelpwatch-marker": "keep-me",
+      "observed-kelp-cover-transect": true,
+    },
+  );
+  assert.deepEqual(recovered.save.progression.quests["quest-side-story"], {
+    status: "active",
+    flags: { "story-progress": 9 },
+  });
+  assert.equal(recovered.save.inventory.storyItems["kelpwatch-keepsake"], 1);
+  assert.equal(recovered.save.playtimeSeconds, 126);
+  assert.deepEqual(
+    getKelpwatchProgress(recovered.save).observedObservationIds,
+    ["kelp-cover-transect"],
+  );
+
+  const stable = recoverAdventureResume(JSON.parse(JSON.stringify(recovered.save)));
+  assert.equal(stable.recovered, false);
+  assert.equal(stable.reason, null);
+  assert.equal(stable.recoveryMetadata, undefined);
+  assert.deepEqual(stable.save, recovered.save);
+});
+
 test("resume reopens terminal chapters when recovery discards a required typed flag", () => {
-  for (const questId of [BRACKWATER_QUEST_ID, CURRENT_QUEST_ID]) {
+  for (const questId of [BRACKWATER_QUEST_ID, CURRENT_QUEST_ID, KELPWATCH_QUEST_ID]) {
     const chapter = ADVENTURE_ECOSYSTEM_CHAPTERS.find(
       (candidate) => candidate.questId === questId,
     );
@@ -590,8 +668,8 @@ test("all live portals use safe spawns and preserve their authored arrival facin
 
   assert.equal(
     portalCount,
-    24,
-    "all live Shellshore, Sunpatch, Brackwater, and Current Commons entrances and exits should be covered",
+    30,
+    "all live Shellshore, Sunpatch, Brackwater, Current Commons, and Kelpwatch entrances and exits should be covered",
   );
 });
 

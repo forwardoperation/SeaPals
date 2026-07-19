@@ -346,6 +346,8 @@ This phase is the production gate. Do not build all remaining towns until its pl
 
 **Goal:** Expand the proven town template without adding another core engine.
 
+**Implementation status:** Brackwater Landing, Current Commons, and Kelpwatch Island have verified implementation checkpoints. Kelpwatch's remaining release gates are clean-profile playthrough, full accessibility/device QA, target-age comprehension, starter-balance, and named marine-science verification. Trenchlight Station remains Phase 6, and Champion's Wake plus the three 30 VP tournament games remain Phase 7.
+
 Build these as independently testable content releases:
 
 1. **Brackwater Landing:** estuary/mangrove challenge, Murky Water opponents, themed packs, and Tide Mark.

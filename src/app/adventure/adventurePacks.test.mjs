@@ -151,7 +151,7 @@ test("opening rejects unavailable and planned packs without changing the save", 
   );
   assert.deepEqual(noPackSave, noPackBefore);
 
-  const plannedPackId = "pack-pool-kelpwatch";
+  const plannedPackId = "pack-pool-trenchlight-deep";
   const plannedSave = grantReward(noPackSave, {
     grantId: "test-planned-pack",
     packs: { [plannedPackId]: 1 },
@@ -228,6 +228,60 @@ test("the playable Current Commons Blue Water Pack contains twelve permanent ope
     "open-ocean",
   ]);
   assert.deepEqual(pool.cardIds.filter((cardId) => !cardsById[cardId]), []);
+});
+
+test("the playable Kelpwatch Food-Web Pack contains twelve permanent food-web cards", () => {
+  const packId = "pack-pool-kelpwatch";
+  const pool = getAdventurePackPool(packId);
+
+  assert.deepEqual({
+    name: pool.name,
+    version: pool.version,
+    status: pool.status,
+    purchaseMode: pool.purchaseMode,
+    cardsPerPack: pool.cardsPerPack,
+    progressionGuarantee: pool.progressionGuarantee,
+  }, {
+    name: "Kelpwatch Food-Web Pack",
+    version: 1,
+    status: "playable",
+    purchaseMode: "earned-only",
+    cardsPerPack: 4,
+    progressionGuarantee: ADVENTURE_PACK_GUARANTEE,
+  });
+  assert.deepEqual(pool.cardIds, [
+    "sea-urchin",
+    "anemone",
+    "clownfish",
+    "giant-triton",
+    "crown-of-thorns",
+    "cleaner-shrimp",
+    "cleaner-wrasse",
+    "octopus",
+    "fairy-parrotfish",
+    "goliath-grouper",
+    "reef-shark",
+    "marine-sanctuary",
+  ]);
+  assert.equal(new Set(pool.cardIds).size, 12);
+  assert.deepEqual(pool.cardIds.filter((cardId) => !cardsById[cardId]), []);
+  assert.deepEqual(
+    pool.cardIds.filter((cardId) => cardsById[cardId].kind === "condition"),
+    [],
+  );
+  assert.equal(pool.cardIds.filter((cardId) => cardsById[cardId].kind === "creature").length, 11);
+  assert.equal(pool.cardIds.filter((cardId) => cardsById[cardId].kind === "habitat").length, 1);
+
+  const awarded = grantReward(createInitialAdventureSave("kelpwatch-pack"), {
+    grantId: "test-kelpwatch-pack",
+    packs: { [packId]: 1 },
+  }).save;
+  const opened = openAdventurePack(awarded, packId, { random: () => 0 });
+  assert.equal(opened.cards.length, 4);
+  assert.equal(new Set(opened.cards).size, 4);
+  assert.ok(opened.guaranteedNewCardId);
+  assert.equal(opened.save.inventory.unopenedPacks[packId], undefined);
+  assert.equal(validateAdventureSave(opened.save).valid, true);
 });
 
 test("an invalid injected random value fails atomically", () => {

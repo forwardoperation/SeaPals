@@ -703,6 +703,57 @@
   filter: hue-rotate(205deg) saturate(0.78) brightness(1.12) drop-shadow(0 2px 1px rgba(4, 15, 25, 0.34));
 }
 
+/*
+ * Temporary Kelpwatch Island treatments. Reusing the existing sheets keeps
+ * every facing and walk frame intact, while the separate palettes and strong
+ * edge shadows keep all five roles readable over detailed kelp-forest maps.
+ */
+.kelpwatch-guideSpriteArtwork,
+.kelpwatch-rangerSpriteArtwork {
+  --row-down: 5.345395%;
+  --row-left: 33.717105%;
+  --row-right: 63.569079%;
+  --row-up: 93.421053%;
+  background-image: url("/images/adventure/player-sprites.png");
+}
+
+.kelpwatch-ecologistSpriteArtwork,
+.kelpwatch-leaderSpriteArtwork {
+  --row-down: 5.345395%;
+  --row-left: 33.470395%;
+  --row-right: 63.815789%;
+  --row-up: 93.832237%;
+  background-image: url("/images/adventure/marina-sprites.png");
+}
+
+.kelpwatch-diverSpriteArtwork {
+  --row-down: 4.276316%;
+  --row-left: 31.743421%;
+  --row-right: 60.690789%;
+  --row-up: 90.131579%;
+  background-image: url("/images/adventure/dorian-sprites.png");
+}
+
+.kelpwatch-guideSpriteArtwork {
+  filter: hue-rotate(82deg) saturate(1.22) brightness(1.04) drop-shadow(0 2px 1px rgba(1, 10, 15, 0.72));
+}
+
+.kelpwatch-ecologistSpriteArtwork {
+  filter: hue-rotate(248deg) saturate(0.96) brightness(1.08) drop-shadow(0 2px 1px rgba(1, 10, 15, 0.72));
+}
+
+.kelpwatch-diverSpriteArtwork {
+  filter: hue-rotate(164deg) saturate(1.12) brightness(1.03) drop-shadow(0 2px 1px rgba(1, 10, 15, 0.72));
+}
+
+.kelpwatch-rangerSpriteArtwork {
+  filter: hue-rotate(18deg) saturate(1.3) brightness(1.08) drop-shadow(0 2px 1px rgba(1, 10, 15, 0.72));
+}
+
+.kelpwatch-leaderSpriteArtwork {
+  filter: hue-rotate(312deg) saturate(1.08) brightness(1.09) drop-shadow(0 2px 1px rgba(1, 10, 15, 0.72));
+}
+
 .spriteFacingDown { --sprite-row: var(--row-down); }
 .spriteFacingLeft { --sprite-row: var(--row-left); }
 .spriteFacingRight { --sprite-row: var(--row-right); }
@@ -3098,6 +3149,180 @@
   transform: rotate(-7deg);
 }
 
+.observationkelpCanopy,
+.observationkelpGrazers,
+.observationkelpPredators,
+.observationkelpRepeat {
+  border-color: #bef264;
+  box-shadow: inset 0 0 0 1px rgba(236, 252, 203, 0.38), 0 8px 20px rgba(3, 35, 33, 0.28);
+}
+
+.observationkelpCanopy {
+  background:
+    radial-gradient(circle at 15% 22%, rgba(236, 254, 255, 0.68) 0 1.1%, transparent 1.8%),
+    radial-gradient(circle at 74% 30%, rgba(236, 254, 255, 0.5) 0 1.3%, transparent 2%),
+    repeating-linear-gradient(78deg, transparent 0 8%, rgba(63, 98, 18, 0.92) 8.5% 11%, rgba(132, 204, 22, 0.84) 11.5% 13%, transparent 13.5% 19%),
+    linear-gradient(180deg, #0891b2 0 38%, #0f766e 39% 69%, #365314 70%);
+}
+.observationkelpCanopy::before {
+  content: "";
+  position: absolute;
+  inset: 8% 5% 34%;
+  background:
+    radial-gradient(ellipse at 12% 72%, rgba(190, 242, 100, 0.88) 0 9%, transparent 10%),
+    radial-gradient(ellipse at 35% 38%, rgba(132, 204, 22, 0.92) 0 10%, transparent 11%),
+    radial-gradient(ellipse at 62% 58%, rgba(163, 230, 53, 0.9) 0 11%, transparent 12%),
+    radial-gradient(ellipse at 86% 29%, rgba(217, 249, 157, 0.8) 0 8%, transparent 9%);
+  filter: drop-shadow(0 3px 2px rgba(20, 83, 45, 0.48));
+}
+.observationkelpCanopy::after {
+  inset: 14% 18%;
+  border: 4px solid rgba(255, 247, 214, 0.94);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, transparent 49%, rgba(255, 247, 214, 0.5) 49% 51%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, rgba(255, 247, 214, 0.5) 49% 51%, transparent 51%);
+  box-shadow: 0 0 0 3px rgba(8, 47, 73, 0.46);
+}
+.observationkelpCanopy > span {
+  position: absolute;
+  z-index: 2;
+  right: 10%;
+  bottom: 12%;
+  left: 10%;
+  height: 5px;
+  border-radius: 999px;
+  background: #fef3c7;
+  box-shadow: 0 0 0 3px rgba(8, 47, 73, 0.54);
+}
+
+.observationkelpGrazers {
+  background:
+    radial-gradient(ellipse at 18% 78%, #a3a374 0 9%, transparent 9.5%),
+    radial-gradient(ellipse at 48% 70%, #8b8c64 0 12%, transparent 12.5%),
+    radial-gradient(ellipse at 79% 82%, #b4a66c 0 10%, transparent 10.5%),
+    linear-gradient(165deg, #22b8c7 0 45%, #0f766e 46% 62%, #6b6f48 63%);
+}
+.observationkelpGrazers::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 52%;
+  left: 24%;
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(254, 243, 199, 0.88);
+  border-radius: 50%;
+  background: repeating-conic-gradient(#172554 0 9deg, #94a3b8 10deg 16deg);
+  box-shadow: 92px -16px 0 -3px #334155, 176px 15px 0 -6px #64748b;
+  filter: drop-shadow(0 3px 2px rgba(3, 19, 31, 0.58));
+}
+.observationkelpGrazers::after {
+  inset: 18% 10%;
+  border: 4px dashed rgba(255, 247, 214, 0.94);
+  border-radius: 9px;
+  background: repeating-linear-gradient(90deg, transparent 0 12%, rgba(254, 243, 199, 0.24) 12% 13%, transparent 13% 25%);
+  box-shadow: inset 0 0 20px rgba(8, 47, 73, 0.28);
+}
+.observationkelpGrazers > span {
+  position: absolute;
+  z-index: 2;
+  top: 25%;
+  left: 17%;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #082f49;
+  border-radius: 50%;
+  background: #fde047;
+  box-shadow: 55px 19px 0 #fde047, 126px -5px 0 #fde047, 205px 29px 0 #fde047;
+}
+
+.observationkelpPredators {
+  background:
+    radial-gradient(ellipse at 18% 25%, rgba(165, 243, 252, 0.32) 0 8%, transparent 8.5%),
+    repeating-linear-gradient(-10deg, transparent 0 34px, rgba(103, 232, 249, 0.15) 35px 38px, transparent 39px 68px),
+    linear-gradient(145deg, #06b6d4, #087d87 48%, #164e63);
+}
+.observationkelpPredators::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 34%;
+  left: 30%;
+  width: 42%;
+  height: 30%;
+  background: #fef3c7;
+  clip-path: polygon(0 50%, 18% 12%, 73% 18%, 100% 0, 90% 50%, 100% 100%, 73% 82%, 18% 88%);
+  filter: drop-shadow(0 5px 2px rgba(3, 19, 31, 0.58));
+}
+.observationkelpPredators::after {
+  inset: 12% 14%;
+  border: 4px solid rgba(236, 254, 255, 0.92);
+  border-radius: 11px;
+  background: linear-gradient(90deg, rgba(236, 254, 255, 0.7) 0 6%, transparent 6% 94%, rgba(236, 254, 255, 0.7) 94%);
+  box-shadow: inset 0 0 24px rgba(8, 47, 73, 0.34);
+}
+.observationkelpPredators > span {
+  position: absolute;
+  z-index: 2;
+  top: 23%;
+  left: 13%;
+  width: 20%;
+  height: 15%;
+  background: #a7f3d0;
+  clip-path: polygon(0 50%, 22% 10%, 72% 18%, 100% 0, 89% 50%, 100% 100%, 72% 82%, 22% 90%);
+  filter: drop-shadow(0 3px 1px rgba(3, 19, 31, 0.5));
+}
+
+.observationkelpRepeat {
+  background:
+    radial-gradient(circle at 18% 68%, rgba(253, 224, 71, 0.8) 0 2%, transparent 2.5%),
+    radial-gradient(circle at 35% 42%, rgba(253, 224, 71, 0.64) 0 1.8%, transparent 2.3%),
+    radial-gradient(circle at 67% 54%, rgba(217, 249, 157, 0.78) 0 2%, transparent 2.5%),
+    radial-gradient(circle at 84% 30%, rgba(217, 249, 157, 0.7) 0 1.8%, transparent 2.3%),
+    linear-gradient(90deg, #64744c 0 49%, #fef3c7 49% 51%, #15806f 51% 100%);
+}
+.observationkelpRepeat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(78deg, transparent 0 12%, rgba(63, 98, 18, 0.54) 12.5% 14%, transparent 14.5% 23%),
+    linear-gradient(180deg, rgba(34, 211, 238, 0.24), rgba(15, 118, 110, 0.18));
+}
+.observationkelpRepeat::after {
+  inset: 16% 7%;
+  border: 4px solid rgba(255, 247, 214, 0.94);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, transparent 49%, rgba(255, 247, 214, 0.9) 49% 51%, transparent 51%),
+    repeating-linear-gradient(0deg, transparent 0 31%, rgba(255, 247, 214, 0.34) 31% 33%, transparent 33% 65%);
+  box-shadow: 0 0 0 3px rgba(8, 47, 73, 0.46);
+}
+.observationkelpRepeat > span {
+  position: absolute;
+  z-index: 2;
+  top: 39%;
+  left: calc(50% - 13px);
+  width: 26px;
+  height: 26px;
+  border: 5px solid #fef3c7;
+  border-right-color: transparent;
+  border-radius: 50%;
+  background: rgba(15, 118, 110, 0.88);
+  box-shadow: 0 0 0 3px rgba(8, 47, 73, 0.54);
+  transform: rotate(-24deg);
+}
+.observationkelpRepeat > span::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  border: 5px solid transparent;
+  border-left-color: #fef3c7;
+  transform: rotate(16deg);
+}
+
 .measurementStrip,
 .fieldworkProgress {
   display: grid;
@@ -3127,6 +3352,16 @@
 .fieldworkFeedbackRetry { border-color: #fbbf24; background: rgba(245, 158, 11, 0.14); }
 .fieldworkProgress { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 20px; }
 .fieldworkProgress span { color: #a7f3d0; font-size: 9px; font-weight: 900; text-align: center; }
+
+@media (prefers-contrast: more) {
+  .observationkelpCanopy,
+  .observationkelpGrazers,
+  .observationkelpPredators,
+  .observationkelpRepeat {
+    border-color: #fff;
+    box-shadow: inset 0 0 0 2px #020617, 0 0 0 2px #fff;
+  }
+}
 
 @media (max-width: 1120px) {
   .gameLayout {
@@ -3202,6 +3437,10 @@
   .worldMapRouteCard button { width: 100%; }
   .measurementStrip { grid-template-columns: minmax(0, 1fr); }
   .fieldworkProgress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .observationkelpCanopy,
+  .observationkelpGrazers,
+  .observationkelpPredators,
+  .observationkelpRepeat { height: clamp(144px, 42vw, 180px); }
 
   .gameHeader {
     grid-template-columns: auto minmax(0, 1fr) auto;

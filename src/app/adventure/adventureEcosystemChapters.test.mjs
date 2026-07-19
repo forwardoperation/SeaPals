@@ -12,6 +12,12 @@ import {
   CURRENT_QUEST_ID,
 } from "./adventureCurrent.mjs";
 import {
+  KELPWATCH_CORRECT_INTERPRETATION_ID,
+  KELPWATCH_CORRECT_RESPONSE_ID,
+  KELPWATCH_QUEST_ID,
+  KELPWATCH_REQUIRED_OBSERVATION_IDS,
+} from "./adventureKelpwatch.mjs";
+import {
   ADVENTURE_ECOSYSTEM_CHAPTERS,
   getAdventureEcosystemConversationMode,
   getAdventureEcosystemChapterByQuestId,
@@ -39,10 +45,10 @@ const ADAPTER_KEYS = [
 ];
 
 test("the ecosystem registry exposes complete, immutable adapters with unique canonical IDs", () => {
-  assert.equal(ADVENTURE_ECOSYSTEM_CHAPTERS.length, 3);
+  assert.equal(ADVENTURE_ECOSYSTEM_CHAPTERS.length, 4);
   assert.deepEqual(
     ADVENTURE_ECOSYSTEM_CHAPTERS.map(({ townId }) => townId),
-    ["sunpatch-cay", "brackwater-landing", "current-commons"],
+    ["sunpatch-cay", "brackwater-landing", "current-commons", "kelpwatch-island"],
   );
   assert.equal(
     new Set(ADVENTURE_ECOSYSTEM_CHAPTERS.map(({ townId }) => townId)).size,
@@ -99,11 +105,49 @@ test("chapters resolve by town or quest without exposing mutable registry state"
   assert.equal(current.fieldNoteId, "field-note-current-connections");
   assert.equal(current.guideMetFlagId, "met-current-guide");
 
+  const kelpwatch = getAdventureEcosystemChapterByQuestId(KELPWATCH_QUEST_ID);
+  assert.equal(kelpwatch, getAdventureEcosystemChapterByTownId("kelpwatch-island"));
+  assert.equal(kelpwatch.fieldNoteId, "field-note-kelp-food-web");
+  assert.equal(kelpwatch.guideMetFlagId, "met-kelpwatch-guide");
+
   assert.equal(getAdventureEcosystemChapterByTownId("shellshore-village"), null);
   assert.equal(getAdventureEcosystemChapterByQuestId("quest-shellshore-first-voyage"), null);
   assert.equal(isAdventureEcosystemChapterQuest(BRACKWATER_QUEST_ID), true);
   assert.equal(isAdventureEcosystemChapterQuest(CURRENT_QUEST_ID), true);
+  assert.equal(isAdventureEcosystemChapterQuest(KELPWATCH_QUEST_ID), true);
   assert.equal(isAdventureEcosystemChapterQuest("quest-shellshore-first-voyage"), false);
+});
+
+test("every Kelpwatch observation has a distinct authored preview and its adapter survives storage", () => {
+  const adapter = getAdventureEcosystemChapterByQuestId(KELPWATCH_QUEST_ID);
+  const variants = KELPWATCH_REQUIRED_OBSERVATION_IDS.map((observationId) => (
+    getAdventureObservationPreviewVariant(adapter.ui, observationId)
+  ));
+  assert.equal(new Set(variants).size, KELPWATCH_REQUIRED_OBSERVATION_IDS.length);
+  assert.equal(Object.isFrozen(adapter.ui.observationPreviewVariants), true);
+  const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), "utf8");
+  for (const variant of variants) {
+    assert.match(styles, new RegExp(`\\.observation${variant}\\b`));
+  }
+
+  let result = adapter.begin(createInitialAdventureSave("kelpwatch-adapter-json"));
+  for (const observationId of KELPWATCH_REQUIRED_OBSERVATION_IDS) {
+    result = adapter.recordObservation(
+      JSON.parse(JSON.stringify(result.save)),
+      observationId,
+    );
+  }
+  result = adapter.submitInterpretation(
+    JSON.parse(JSON.stringify(result.save)),
+    KELPWATCH_CORRECT_INTERPRETATION_ID,
+  );
+  assert.equal(result.correct, true);
+  result = adapter.submitResponse(
+    JSON.parse(JSON.stringify(result.save)),
+    KELPWATCH_CORRECT_RESPONSE_ID,
+  );
+  assert.equal(result.correct, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.save)), result.save);
 });
 
 test("every Current observation resolves to a distinct authored non-coral preview", () => {
