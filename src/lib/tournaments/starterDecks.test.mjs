@@ -132,3 +132,28 @@ test("every planned story encounter references a legal prebuilt opponent deck", 
     );
   }
 });
+
+test("Kelpwatch assigns its three encounters to the intended legal prebuilt decks", () => {
+  const expectedDeckByEncounterId = new Map([
+    ["encounter-kelpwatch-resident-diver", "murky-water"],
+    ["encounter-kelpwatch-resident-ranger", "coral-garden"],
+    ["encounter-kelpwatch-qualifier", "stinging-fortress"],
+  ]);
+  const decksById = new Map(prebuiltDecks.map((deck) => [deck.id, deck]));
+
+  for (const [encounterId, deckId] of expectedDeckByEncounterId) {
+    const encounter = ADVENTURE_CONTENT.encounters.find(({ id }) => id === encounterId);
+    assert.equal(encounter?.opponentDeckId, deckId);
+    const deck = decksById.get(deckId);
+    assert.ok(deck, `Missing Kelpwatch deck ${deckId}`);
+    assert.equal(
+      deck.cards.reduce((total, entry) => total + entry.quantity, 0),
+      defaultDeckRules.deckSize,
+    );
+    assert.deepEqual(deck.cards.filter((entry) => !cardsById[entry.cardId]), []);
+    assert.deepEqual(
+      validateGameDeck({ cards: deck.cards }),
+      { isValid: true, errors: [], warnings: [] },
+    );
+  }
+});

@@ -645,6 +645,76 @@ test("the canonical Brackwater-Current route boards from its separate dock and s
   assert.deepEqual(revisited.world.completedRouteIds, [routeId]);
 });
 
+test("the canonical Current-Kelpwatch route boards from its separate dock and supports repeat auto-steer", () => {
+  const routeId = "route-current-kelpwatch";
+  const fromDockId = "current-kelpwatch-dock";
+  const toDockId = "kelpwatch-dock";
+  const initial = createInitialAdventureSave("profile-kelpwatch-route");
+  const atCurrentDeparture = normalizeAdventureSave({
+    ...initial,
+    world: {
+      ...initial.world,
+      townId: "current-commons",
+      sceneId: "current-commons-town",
+      position: { x: 8, y: 8 },
+      facing: "up",
+      lastSafeDockId: fromDockId,
+      unlockedRouteIds: [routeId],
+    },
+  });
+
+  const travelState = getRouteTravelState(atCurrentDeparture, routeId, ADVENTURE_CONTENT);
+  assert.equal(travelState.runtimeReady, true);
+  assert.equal(travelState.endpointSide, "from");
+  assert.equal(travelState.originDockId, fromDockId);
+  assert.equal(travelState.destinationDockId, toDockId);
+  assert.equal(travelState.canBoardManual, true);
+  assert.equal(travelState.canAutoSteer, false);
+
+  const boarded = boardAdventureRoute(atCurrentDeparture, {
+    routeId,
+    originDockId: fromDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(boarded.world.sceneId, "current-kelpwatch-sea");
+  assert.deepEqual(boarded.world.position, { x: 1, y: 5 });
+  assert.equal(boarded.world.facing, "right");
+
+  const atKelpwatchSide = normalizeAdventureSave({
+    ...boarded,
+    world: {
+      ...boarded.world,
+      position: { x: 14, y: 5 },
+      facing: "right",
+    },
+  });
+  const arrived = dockAdventureRoute(atKelpwatchSide, {
+    routeId,
+    destinationDockId: toDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(arrived.world.townId, "kelpwatch-island");
+  assert.equal(arrived.world.sceneId, "kelpwatch-island-town");
+  assert.deepEqual(arrived.world.position, { x: 7, y: 8 });
+  assert.equal(arrived.world.lastSafeDockId, toDockId);
+  assert.deepEqual(arrived.world.completedRouteIds, [routeId]);
+
+  const returned = autoSteerAdventureRoute(arrived, {
+    routeId,
+    destinationDockId: fromDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(returned.world.townId, "current-commons");
+  assert.equal(returned.world.sceneId, "current-commons-town");
+  assert.deepEqual(returned.world.position, { x: 8, y: 8 });
+  assert.equal(returned.world.lastSafeDockId, fromDockId);
+
+  const revisited = autoSteerAdventureRoute(returned, {
+    routeId,
+    destinationDockId: toDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(revisited.world.townId, "kelpwatch-island");
+  assert.equal(revisited.world.sceneId, "kelpwatch-island-town");
+  assert.deepEqual(revisited.world.completedRouteIds, [routeId]);
+});
+
 test("world map conceals locked towns and derives available, active, completed, and Tide Mark states", () => {
   const initial = createInitialAdventureSave("profile-1");
   let model = buildAdventureWorldMapModel(initial, TEST_CONTENT);

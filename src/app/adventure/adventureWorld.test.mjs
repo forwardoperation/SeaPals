@@ -88,7 +88,7 @@ test("scene interaction snapshots are public, frozen, and omit authored coordina
   assert.equal(Object.isFrozen(interactions), true);
 });
 
-test("the first three sea routes plus Sunpatch, Brackwater, and Current scenes are live world-engine scenes", () => {
+test("the first four sea routes plus Sunpatch, Brackwater, Current, and Kelpwatch scenes are live world-engine scenes", () => {
   const route = SCENES["shellshore-sunpatch-sea"];
   assert.ok(route);
   assert.equal(route.routeId, "route-shellshore-sunpatch");
@@ -113,6 +113,11 @@ test("the first three sea routes plus Sunpatch, Brackwater, and Current scenes a
     "current-navigation-lab",
     "current-navigator-home",
     "current-tide-hall",
+    "current-kelpwatch-sea",
+    "kelpwatch-island-town",
+    "kelpwatch-ecology-lab",
+    "kelpwatch-diver-home",
+    "kelpwatch-tide-hall",
   ]) {
     assert.ok(SCENES[sceneId], `${sceneId} should be available to the world engine`);
     assert.equal(canOccupyScenePosition(sceneId, SCENES[sceneId].spawn), true, `${sceneId} requires a safe spawn`);
@@ -135,6 +140,15 @@ test("the first three sea routes plus Sunpatch, Brackwater, and Current scenes a
   assert.equal(currentRoute.width, 16);
   assert.equal(currentRoute.height, 10);
   assert.equal(SCENES["current-commons-town"].artPath, "/images/adventure/current-commons.png");
+
+  const kelpwatchRoute = SCENES["current-kelpwatch-sea"];
+  assert.equal(kelpwatchRoute.routeId, "route-current-kelpwatch");
+  assert.equal(kelpwatchRoute.kind, "route");
+  assert.equal(kelpwatchRoute.theme, "current-kelpwatch-route");
+  assert.equal(kelpwatchRoute.artPath, "/images/adventure/current-kelpwatch-route.png");
+  assert.equal(kelpwatchRoute.width, 16);
+  assert.equal(kelpwatchRoute.height, 10);
+  assert.equal(SCENES["kelpwatch-island-town"].artPath, "/images/adventure/kelpwatch-island.png");
 });
 
 test("route movement uses its authored profile and navigation obstacles stay solid", () => {
@@ -279,6 +293,36 @@ test("Brackwater exposes two distinct docks and the Current Commons route docks 
   }
 });
 
+test("Current Commons exposes a separate Kelpwatch dock and the Kelpwatch route docks safely", () => {
+  const brackwaterBoard = getInteraction("current-commons-town", { x: 7, y: 8 }, "down");
+  const kelpwatchBoard = getInteraction("current-commons-town", { x: 8, y: 8 }, "down");
+  assert.equal(brackwaterBoard.routeId, "route-brackwater-current");
+  assert.equal(brackwaterBoard.dockId, "current-commons-dock");
+  assert.equal(kelpwatchBoard.routeId, "route-current-kelpwatch");
+  assert.equal(kelpwatchBoard.dockId, "current-kelpwatch-dock");
+  assert.equal(kelpwatchBoard.targetScene, "current-kelpwatch-sea");
+  assert.deepEqual(kelpwatchBoard.spawn, { x: 1, y: 5 });
+
+  const fromDock = getInteraction("current-kelpwatch-sea", { x: 1, y: 5 }, "left");
+  const toDock = getInteraction("current-kelpwatch-sea", { x: 14, y: 5 }, "right");
+  assert.equal(fromDock.endpoint, "from");
+  assert.equal(fromDock.targetScene, "current-commons-town");
+  assert.equal(toDock.endpoint, "to");
+  assert.equal(toDock.targetScene, "kelpwatch-island-town");
+  assert.equal(getDoorwayTransition("current-kelpwatch-sea", { x: 14, y: 5 }, "right"), null);
+
+  const returnBoard = getInteraction("kelpwatch-island-town", { x: 7, y: 8 }, "down");
+  assert.equal(returnBoard.routeId, "route-current-kelpwatch");
+  assert.equal(returnBoard.dockId, "kelpwatch-dock");
+  assert.equal(returnBoard.targetScene, "current-kelpwatch-sea");
+  assert.deepEqual(returnBoard.spawn, { x: 14, y: 5 });
+  assert.equal(returnBoard.facing, "left");
+
+  for (const interaction of [brackwaterBoard, kelpwatchBoard, fromDock, toDock, returnBoard]) {
+    assert.equal(canOccupyScenePosition(interaction.targetScene, interaction.spawn), true);
+  }
+});
+
 test("Sunpatch generic interactions expose only their authored public metadata", () => {
   const interactions = [
     ...getSceneInteractions("sunpatch-cay-town"),
@@ -368,6 +412,35 @@ test("Current Commons exposes NPC, current-evidence, interpretation, and respons
   assert.equal(response.choiceSetId, "current-gear-response");
 });
 
+test("Kelpwatch exposes NPC, food-web evidence, interpretation, and response interactions", () => {
+  const interactions = [
+    ...getSceneInteractions("kelpwatch-island-town"),
+    ...getSceneInteractions("kelpwatch-ecology-lab"),
+    ...getSceneInteractions("kelpwatch-diver-home"),
+    ...getSceneInteractions("kelpwatch-tide-hall"),
+  ];
+  for (const type of ["npc", "trainer", "observation", "interpretation", "response"]) {
+    assert.ok(interactions.some((interaction) => interaction.type === type), `Kelpwatch requires ${type}`);
+  }
+  assert.deepEqual(
+    interactions
+      .filter((interaction) => interaction.type === "observation")
+      .map((interaction) => interaction.observationId),
+    [
+      "kelp-cover-transect",
+      "grazer-abundance-count",
+      "predator-evidence-survey",
+      "repeat-comparison-site",
+    ],
+  );
+  const interpretation = interactions.find((interaction) => interaction.type === "interpretation");
+  const response = interactions.find((interaction) => interaction.type === "response");
+  assert.equal(interpretation.questId, "quest-kelpwatch-balance");
+  assert.equal(interpretation.choiceSetId, "kelpwatch-food-web-interpretation");
+  assert.equal(response.questId, "quest-kelpwatch-balance");
+  assert.equal(response.choiceSetId, "kelpwatch-restoration-response");
+});
+
 test("evidence, interpretation, and response stations remain manual interactions", () => {
   const cases = [
     ["sunpatch-cay-town", { x: 4, y: 4 }, "left", "observation"],
@@ -376,6 +449,9 @@ test("evidence, interpretation, and response stations remain manual interactions
     ["current-commons-town", { x: 4, y: 3 }, "down", "observation"],
     ["current-navigation-lab", { x: 3.4, y: 3 }, "up", "interpretation"],
     ["current-navigation-lab", { x: 7.5, y: 3 }, "up", "response"],
+    ["kelpwatch-island-town", { x: 4, y: 4.68 }, "up", "observation"],
+    ["kelpwatch-ecology-lab", { x: 3.5, y: 4 }, "left", "interpretation"],
+    ["kelpwatch-ecology-lab", { x: 7, y: 4 }, "right", "response"],
   ];
   for (const [sceneId, position, facing, type] of cases) {
     assert.equal(canOccupyScenePosition(sceneId, position), true);
@@ -402,6 +478,11 @@ test("every authored route, dock, and live town portal points to a safe arrival 
     "current-navigation-lab",
     "current-navigator-home",
     "current-tide-hall",
+    "current-kelpwatch-sea",
+    "kelpwatch-island-town",
+    "kelpwatch-ecology-lab",
+    "kelpwatch-diver-home",
+    "kelpwatch-tide-hall",
   ];
   const transitionTypes = new Set(["enter", "exit", "board", "dock"]);
 
@@ -419,8 +500,8 @@ test("every authored route, dock, and live town portal points to a safe arrival 
   }
 });
 
-test("every Sunpatch, Brackwater, and Current exterior doorway auto-triggers from a safe approach", () => {
-  for (const sceneId of ["sunpatch-cay-town", "brackwater-landing-town", "current-commons-town"]) {
+test("every Sunpatch, Brackwater, Current, and Kelpwatch exterior doorway auto-triggers from a safe approach", () => {
+  for (const sceneId of ["sunpatch-cay-town", "brackwater-landing-town", "current-commons-town", "kelpwatch-island-town"]) {
     const entrances = SCENES[sceneId].interactions.filter(({ type }) => type === "enter");
     assert.equal(entrances.length, 3, `${sceneId} should expose all three building entrances`);
 
@@ -635,6 +716,85 @@ test("the Current sea lane follows visible shoals while preserving an open dock-
     [{ x: 1, y: 5 }, { x: 14, y: 5 }],
     "Brackwater-to-Current center channel",
   );
+});
+
+test("the Kelpwatch sea lane keeps every visible hazard solid and its center channel continuous", () => {
+  const sceneId = "current-kelpwatch-sea";
+  assert.deepEqual(getSceneMovementProfile(sceneId), {
+    ...CONTINUOUS_MOVEMENT_DEFAULTS,
+    mode: "boat",
+    speed: 3.2,
+    radius: 0.28,
+    maxStepDistance: 0.08,
+  });
+  for (const symbol of ["k", "b"]) {
+    const blockedPositions = [];
+    SCENES[sceneId].tiles.forEach((row, y) => {
+      [...row].forEach((candidate, x) => {
+        if (candidate === symbol) blockedPositions.push({ x, y });
+      });
+    });
+    assert.ok(blockedPositions.length > 0, `Kelpwatch route requires ${symbol} hazards`);
+    for (const position of blockedPositions) {
+      assert.equal(
+        canOccupyContinuousPosition(sceneId, position),
+        false,
+        `${symbol} at ${position.x},${position.y} must stay solid`,
+      );
+    }
+  }
+  assertWalkablePolyline(
+    sceneId,
+    [{ x: 1, y: 5 }, { x: 14, y: 5 }],
+    "Current-to-Kelpwatch center channel",
+  );
+});
+
+test("Kelpwatch furniture stays solid while every required interaction retains an open path", () => {
+  const blockedArtPoints = [
+    ["kelpwatch-island-town", "kelpwatch-canopy-station", { x: 4.5, y: 3.5 }],
+    ["kelpwatch-island-town", "kelpwatch-grazer-station", { x: 10, y: 3.5 }],
+    ["kelpwatch-island-town", "kelpwatch-predator-station", { x: 4, y: 5.5 }],
+    ["kelpwatch-island-town", "kelpwatch-repeat-station", { x: 10, y: 5.5 }],
+    ["kelpwatch-ecology-lab", "kelpwatch-lab-upper-left", { x: 2, y: 2 }],
+    ["kelpwatch-ecology-lab", "kelpwatch-lab-rear-stage", { x: 5, y: 2 }],
+    ["kelpwatch-ecology-lab", "kelpwatch-lab-upper-right", { x: 9, y: 2 }],
+    ["kelpwatch-ecology-lab", "kelpwatch-lab-lower-left", { x: 2, y: 4 }],
+    ["kelpwatch-ecology-lab", "kelpwatch-lab-lower-right", { x: 9, y: 4 }],
+    ["kelpwatch-diver-home", "kelpwatch-home-rear-seating", { x: 5, y: 2 }],
+    ["kelpwatch-diver-home", "kelpwatch-home-lower-left-desk", { x: 2, y: 5 }],
+    ["kelpwatch-diver-home", "kelpwatch-home-lower-right-table", { x: 9, y: 5 }],
+    ["kelpwatch-tide-hall", "kelpwatch-hall-rear-stage", { x: 5, y: 2 }],
+    ["kelpwatch-tide-hall", "kelpwatch-hall-lower-left", { x: 2, y: 6 }],
+    ["kelpwatch-tide-hall", "kelpwatch-hall-lower-right", { x: 9, y: 6 }],
+  ];
+  for (const [sceneId, rectangleId, position] of blockedArtPoints) {
+    assert.ok(SCENES[sceneId].collisionRects.some(({ id }) => id === rectangleId));
+    assert.equal(canOccupyContinuousPosition(sceneId, position), false, `${rectangleId} must stay solid`);
+  }
+
+  const interactionApproaches = [
+    ["kelpwatch-ecology-lab", [{ x: 5, y: 6 }, { x: 5, y: 3.33 }], "up", "interaction-kelpwatch-ecologist"],
+    ["kelpwatch-ecology-lab", [{ x: 5, y: 6 }, { x: 5, y: 4 }, { x: 3.5, y: 4 }], "left", "interaction-kelpwatch-interpret-evidence"],
+    ["kelpwatch-ecology-lab", [{ x: 5, y: 6 }, { x: 5, y: 4 }, { x: 7, y: 4 }], "right", "interaction-kelpwatch-choose-response"],
+    ["kelpwatch-diver-home", [{ x: 5, y: 6 }, { x: 5, y: 4.73 }], "up", "interaction-kelpwatch-diver"],
+    ["kelpwatch-tide-hall", [{ x: 5, y: 6 }, { x: 5, y: 3.3 }], "up", "interaction-kelpwatch-leader"],
+  ];
+  for (const [sceneId, points, facing, interactionId] of interactionApproaches) {
+    assertWalkablePolyline(sceneId, points, interactionId);
+    const position = points.at(-1);
+    assert.equal(getContinuousInteraction(sceneId, position, facing)?.interactionId, interactionId);
+  }
+
+  for (const [sceneId, exitId] of [
+    ["kelpwatch-ecology-lab", "interaction-kelpwatch-lab-exit"],
+    ["kelpwatch-diver-home", "interaction-kelpwatch-home-exit"],
+    ["kelpwatch-tide-hall", "interaction-kelpwatch-hall-exit"],
+  ]) {
+    const doorwayApproach = { x: 5, y: 6.27 };
+    assertWalkablePolyline(sceneId, [SCENES[sceneId].spawn, doorwayApproach], `${sceneId} exit corridor`);
+    assert.equal(getDoorwayTransition(sceneId, doorwayApproach, "down")?.interactionId, exitId);
+  }
 });
 
 test("Current interiors match visible furniture without cutting off required interactions", () => {

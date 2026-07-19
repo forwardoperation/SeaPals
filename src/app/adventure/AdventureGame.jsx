@@ -157,6 +157,13 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
   "current-navigator": "current-navigator",
   "current-deckhand": "current-deckhand",
   "current-leader": "current-leader",
+  // Kelpwatch Island uses temporary role-specific treatments until its final
+  // authored character sheets are available.
+  "kelpwatch-guide": "kelpwatch-guide",
+  "kelpwatch-ecologist": "kelpwatch-ecologist",
+  "kelpwatch-diver": "kelpwatch-diver",
+  "kelpwatch-ranger": "kelpwatch-ranger",
+  "kelpwatch-leader": "kelpwatch-leader",
 });
 
 const LOCATION_NAMES = Object.freeze(Object.fromEntries(
@@ -786,6 +793,7 @@ function FieldNoteModal({ note, blocked = false, reviewRequired = false, onAckno
     "field-note-coral-observations": "Field Note 02 / Sunpatch Cay",
     "field-note-estuary-conditions": "Field Note 03 / Brackwater Landing",
     "field-note-current-connections": "Field Note 04 / Current Commons",
+    "field-note-kelp-food-web": "Field Note 05 / Kelpwatch Island",
   }[note.id] ?? "Reefbound Field Note";
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.fieldNoteLayer} role="dialog" aria-modal="true" aria-labelledby="field-note-title">
@@ -1062,6 +1070,11 @@ function mapThemeClassForScene(scene) {
     "current-navigation-lab": styles.sunpatchFieldStationMap,
     "current-navigator-home": styles.sunpatchFieldStationMap,
     "current-tide-hall": styles.sunpatchTideHallMap,
+    "current-kelpwatch-route": styles.seaRouteMap,
+    "kelpwatch-island": styles.sunpatchMap,
+    "kelpwatch-ecology-lab": styles.sunpatchFieldStationMap,
+    "kelpwatch-diver-home": styles.sunpatchFieldStationMap,
+    "kelpwatch-tide-hall": styles.sunpatchTideHallMap,
   };
   return themeClasses[scene.theme] ?? styles.townMap;
 }

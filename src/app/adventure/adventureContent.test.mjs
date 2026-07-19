@@ -104,7 +104,7 @@ test("the initial save location references launch content", () => {
   assert.ok(ADVENTURE_CONTENT.scenes.some((scene) => scene.id === save.world.sceneId && scene.townId === save.world.townId));
 });
 
-test("Shellshore through Current Commons runtime scenes plus the Phase 1 dock start resolve from content", () => {
+test("Shellshore through Kelpwatch runtime scenes plus the Phase 1 dock start resolve from content", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   assert.deepEqual(runtimeScenes.map((scene) => scene.id), [
     "town",
@@ -126,6 +126,11 @@ test("Shellshore through Current Commons runtime scenes plus the Phase 1 dock st
     "current-navigation-lab",
     "current-navigator-home",
     "current-tide-hall",
+    "current-kelpwatch-sea",
+    "kelpwatch-island-town",
+    "kelpwatch-ecology-lab",
+    "kelpwatch-diver-home",
+    "kelpwatch-tide-hall",
   ]);
   assert.ok(runtimeScenes.every((scene) => scene.world.tiles.length > 0));
   assert.deepEqual(getAdventureStartLocation(), {
@@ -655,6 +660,236 @@ test("Current Commons exposes a floating flotilla, three interiors, and four exa
   }
 });
 
+test("the Current-Kelpwatch route uses a separate Current dock and an open exact boat corridor", () => {
+  const route = getAdventureRoute("route-current-kelpwatch");
+  const routeScene = getRuntimeAdventureScenes().find((scene) => scene.id === route.sceneId);
+
+  assert.deepEqual(route, {
+    id: "route-current-kelpwatch",
+    fromTownId: "current-commons",
+    toTownId: "kelpwatch-island",
+    sceneId: "current-kelpwatch-sea",
+    fromDockId: "current-kelpwatch-dock",
+    toDockId: "kelpwatch-dock",
+    fromSpawn: { x: 1, y: 5, facing: "right" },
+    toSpawn: { x: 14, y: 5, facing: "left" },
+    manualPilotRequiredFirstTime: true,
+    autoSteerAfterFirstCompletion: true,
+  });
+  assert.notEqual(route.fromDockId, "current-commons-dock");
+  assert.deepEqual(getAdventureDock("current-kelpwatch-dock"), {
+    id: "current-kelpwatch-dock",
+    townId: "current-commons",
+    sceneId: "current-commons-town",
+    status: "prototype",
+    position: { x: 8, y: 8 },
+    facing: "up",
+  });
+  assert.deepEqual(getAdventureDock("kelpwatch-dock"), {
+    id: "kelpwatch-dock",
+    townId: "kelpwatch-island",
+    sceneId: "kelpwatch-island-town",
+    status: "prototype",
+    position: { x: 7, y: 8 },
+    facing: "up",
+  });
+  assert.equal(routeScene.world.theme, "current-kelpwatch-route");
+  assert.equal(routeScene.world.artPath, "/images/adventure/current-kelpwatch-route.png");
+  assert.deepEqual(routeScene.world.movement, {
+    mode: "boat",
+    speed: 3.2,
+    radius: 0.28,
+    maxStepDistance: 0.08,
+  });
+  assert.equal(routeScene.world.tiles.length, 10);
+  assert.ok(routeScene.world.tiles.every((row) => row.length === 16));
+  assert.equal(routeScene.world.tiles[5], "HooooooooooooooH");
+  assert.deepEqual(routeScene.world.spawn, { x: 1, y: 5 });
+  assert.deepEqual(
+    routeScene.world.interactions.map(({ endpoint, at, dockId, targetScene, spawn, facing }) => ({
+      endpoint,
+      at,
+      dockId,
+      targetScene,
+      spawn,
+      facing,
+    })),
+    [
+      {
+        endpoint: "from",
+        at: { x: 0, y: 5 },
+        dockId: "current-kelpwatch-dock",
+        targetScene: "current-commons-town",
+        spawn: { x: 8, y: 8 },
+        facing: "up",
+      },
+      {
+        endpoint: "to",
+        at: { x: 15, y: 5 },
+        dockId: "kelpwatch-dock",
+        targetScene: "kelpwatch-island-town",
+        spawn: { x: 7, y: 8 },
+        facing: "up",
+      },
+    ],
+  );
+  const board = resolveAdventureInteraction(
+    "current-commons-town",
+    "interaction-current-board-kelpwatch-route",
+  );
+  assert.deepEqual(
+    (({ id, type, at, routeId, dockId, targetScene, spawn, facing, label }) => ({
+      id,
+      type,
+      at,
+      routeId,
+      dockId,
+      targetScene,
+      spawn,
+      facing,
+      label,
+    }))(board),
+    {
+      id: "interaction-current-board-kelpwatch-route",
+      type: "board",
+      at: { x: 8, y: 9 },
+      routeId: "route-current-kelpwatch",
+      dockId: "current-kelpwatch-dock",
+      targetScene: "current-kelpwatch-sea",
+      spawn: { x: 1, y: 5 },
+      facing: "right",
+      label: "Pilot to Kelpwatch Island",
+    },
+  );
+  assert.equal(board.targetSceneContent.id, "current-kelpwatch-sea");
+});
+
+test("Kelpwatch exposes three buildings, four survey stations, and art-aligned corridors", () => {
+  const runtimeScenes = getRuntimeAdventureScenes();
+  const town = runtimeScenes.find((scene) => scene.id === "kelpwatch-island-town");
+  const expectedArt = new Map([
+    ["kelpwatch-island-town", "/images/adventure/kelpwatch-island.png"],
+    ["kelpwatch-ecology-lab", "/images/adventure/kelpwatch-ecology-lab.png"],
+    ["kelpwatch-diver-home", "/images/adventure/kelpwatch-diver-home.png"],
+    ["kelpwatch-tide-hall", "/images/adventure/kelpwatch-tide-hall.png"],
+  ]);
+
+  assert.equal(town.world.tiles.length, 10);
+  assert.ok(town.world.tiles.every((row) => row.length === 16));
+  assert.deepEqual(town.world.spawn, { x: 7, y: 8 });
+  assert.deepEqual(
+    town.world.interactions
+      .filter(({ type }) => type === "enter")
+      .map(({ at, targetScene, spawn, facing }) => ({ at, targetScene, spawn, facing })),
+    [
+      { at: { x: 3, y: 2 }, targetScene: "kelpwatch-diver-home", spawn: { x: 5, y: 6 }, facing: "up" },
+      { at: { x: 8, y: 2 }, targetScene: "kelpwatch-ecology-lab", spawn: { x: 5, y: 6 }, facing: "up" },
+      { at: { x: 12, y: 2 }, targetScene: "kelpwatch-tide-hall", spawn: { x: 5, y: 6 }, facing: "up" },
+    ],
+  );
+  assert.deepEqual(
+    town.world.interactions
+      .filter(({ type }) => type === "observation")
+      .map(({ at, questId, observationId }) => ({ at, questId, observationId })),
+    [
+      { at: { x: 4, y: 4 }, questId: "quest-kelpwatch-balance", observationId: "kelp-cover-transect" },
+      { at: { x: 10, y: 4 }, questId: "quest-kelpwatch-balance", observationId: "grazer-abundance-count" },
+      { at: { x: 4, y: 6 }, questId: "quest-kelpwatch-balance", observationId: "predator-evidence-survey" },
+      { at: { x: 10, y: 6 }, questId: "quest-kelpwatch-balance", observationId: "repeat-comparison-site" },
+    ],
+  );
+  assert.deepEqual(town.world.collisionRects, [
+    { id: "kelpwatch-canopy-station", left: 3.4, top: 2.8, right: 5.75, bottom: 4.35 },
+    { id: "kelpwatch-grazer-station", left: 8.7, top: 2.85, right: 11.35, bottom: 4.4 },
+    { id: "kelpwatch-predator-station", left: 3, top: 4.9, right: 5.75, bottom: 6.9 },
+    { id: "kelpwatch-repeat-station", left: 9.55, top: 4.95, right: 12.4, bottom: 6.9 },
+  ]);
+
+  for (const [sceneId, artPath] of expectedArt) {
+    const scene = runtimeScenes.find((candidate) => candidate.id === sceneId);
+    assert.equal(scene.world.artPath, artPath);
+    if (sceneId === town.id) continue;
+    assert.equal(scene.world.tiles.length, 8);
+    assert.ok(scene.world.tiles.every((row) => row.length === 12));
+    assert.deepEqual(scene.world.spawn, { x: 5, y: 6 });
+    const exit = scene.world.interactions.find(({ type }) => type === "exit");
+    assert.equal(exit.targetScene, town.id);
+    assert.equal(exit.at.x, 5);
+    assert.equal(exit.at.y, 7);
+    assert.equal(exit.facing, "down");
+  }
+
+  const lab = runtimeScenes.find((scene) => scene.id === "kelpwatch-ecology-lab");
+  assert.deepEqual(
+    lab.world.interactions
+      .filter(({ type }) => ["interpretation", "response"].includes(type))
+      .map(({ type, at, questId, choiceSetId }) => ({ type, at, questId, choiceSetId })),
+    [
+      { type: "interpretation", at: { x: 3, y: 4 }, questId: "quest-kelpwatch-balance", choiceSetId: "kelpwatch-food-web-interpretation" },
+      { type: "response", at: { x: 8, y: 4 }, questId: "quest-kelpwatch-balance", choiceSetId: "kelpwatch-restoration-response" },
+    ],
+  );
+  assert.deepEqual(lab.world.collisionRects, [
+    { id: "kelpwatch-lab-upper-left", left: 0.5, top: 0.9, right: 3.15, bottom: 3.25 },
+    { id: "kelpwatch-lab-rear-stage", left: 3.55, top: 1, right: 7.45, bottom: 3.1 },
+    { id: "kelpwatch-lab-upper-right", left: 7.75, top: 0.9, right: 10.5, bottom: 3.25 },
+    { id: "kelpwatch-lab-lower-left", left: 0.5, top: 3.35, right: 3.25, bottom: 5.35 },
+    { id: "kelpwatch-lab-lower-right", left: 7.3, top: 3.3, right: 10.5, bottom: 5.45 },
+    { id: "kelpwatch-lab-bottom-left", left: 0.5, top: 5.65, right: 4.15, bottom: 7 },
+    { id: "kelpwatch-lab-bottom-right", left: 7, top: 5.65, right: 10.5, bottom: 7 },
+  ]);
+  assert.deepEqual(
+    runtimeScenes
+      .find((scene) => scene.id === "kelpwatch-diver-home")
+      .world.interactions.find(({ id }) => id === "interaction-kelpwatch-diver").at,
+    { x: 5, y: 4 },
+  );
+});
+
+test("five Kelpwatch NPCs cover every ecosystem role with scoped conversations and duels", () => {
+  const npcs = ADVENTURE_CONTENT.npcs.filter((npc) => npc.townId === "kelpwatch-island");
+  assert.deepEqual(npcs.map(({ id, name, roleId }) => ({ id, name, roleId })), [
+    { id: "kelpwatch-guide", name: "Ari", roleId: "local-guide" },
+    { id: "kelpwatch-ecologist", name: "Dr. Mina Park", roleId: "field-partner" },
+    { id: "kelpwatch-diver", name: "Niko", roleId: "resident" },
+    { id: "kelpwatch-ranger", name: "Rosa", roleId: "town-challenger" },
+    { id: "kelpwatch-leader", name: "Tala", roleId: "reflection-character" },
+  ]);
+  assert.deepEqual(npcs.map((npc) => npc.roleId), REQUIRED_ECOSYSTEM_NPC_ROLES);
+  for (const npc of npcs) {
+    const resolved = resolveAdventureNpc(npc.id);
+    assert.ok(resolved.conversation.lines.intro.length >= 2);
+    assert.match(resolved.conversation.lines.intro[0], /welcome|hello|thank you/i);
+  }
+  assert.equal(resolveAdventureNpc("kelpwatch-guide").encounter, null);
+  assert.equal(resolveAdventureNpc("kelpwatch-ecologist").encounter, null);
+  assert.equal(resolveAdventureNpc("kelpwatch-diver").encounter.id, "encounter-kelpwatch-resident-diver");
+  assert.equal(resolveAdventureNpc("kelpwatch-ranger").encounter.id, "encounter-kelpwatch-resident-ranger");
+  assert.equal(resolveAdventureNpc("kelpwatch-leader").encounter.id, "encounter-kelpwatch-qualifier");
+});
+
+test("Kelpwatch rewards bind the completed Field Note, permanent pack, Tide Mark, and next route once", () => {
+  const fieldNote = getAdventureFieldNote("field-note-kelp-food-web");
+  assert.equal(fieldNote.status, "prototype");
+  assert.ok(fieldNote.observations.length >= 4);
+  assert.ok(fieldNote.checklist.length >= 4);
+  assert.ok(fieldNote.sourceUrls.length >= 3);
+  assert.ok(fieldNote.sourceUrls.every((sourceUrl) => sourceUrl.startsWith("https://")));
+
+  const fieldwork = ADVENTURE_CONTENT.rewards.find(({ id }) => id === "reward-kelpwatch-fieldwork");
+  const qualifier = ADVENTURE_CONTENT.rewards.find(({ id }) => id === "reward-kelpwatch-qualifier");
+  assert.deepEqual(fieldwork.fieldNoteIds, ["field-note-kelp-food-web"]);
+  assert.deepEqual(qualifier.packs, { "pack-pool-kelpwatch": 1 });
+  assert.deepEqual(qualifier.tideMarkIds, ["tide-mark-kelpwatch"]);
+  assert.deepEqual(qualifier.routeIds, ["route-kelpwatch-trenchlight"]);
+
+  const first = grantReward(createInitialAdventureSave("kelpwatch-reward"), qualifier);
+  const repeated = grantReward(first.save, qualifier);
+  assert.equal(first.applied, true);
+  assert.equal(repeated.applied, false);
+  assert.deepEqual(repeated.save, first.save);
+});
+
 test("five Brackwater NPCs cover every ecosystem role with scoped conversations and duels", () => {
   const npcs = ADVENTURE_CONTENT.npcs.filter((npc) => npc.townId === "brackwater-landing");
   assert.deepEqual(npcs.map((npc) => npc.id), [
@@ -1032,6 +1267,25 @@ test("content validation protects Current route, evidence, science-source, and N
   assert.ok(result.errors.some((error) => /current-commons-town.*observationId is required/.test(error)));
   assert.ok(result.errors.some((error) => /field-note-current-connections.*sourceUrls must contain at least three HTTPS science sources/.test(error)));
   assert.ok(result.errors.some((error) => /current-commons.*no NPC for role field-partner/.test(error)));
+});
+
+test("content validation protects Kelpwatch route, evidence, science-source, and NPC-role contracts", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  invalid.scenes.find((scene) => scene.id === "current-kelpwatch-sea").world.artPath = "https://example.invalid/route.jpg";
+  invalid.scenes
+    .find((scene) => scene.id === "kelpwatch-island-town")
+    .world.interactions
+    .find((interaction) => interaction.type === "observation")
+    .observationId = "";
+  invalid.fieldNotes.find((fieldNote) => fieldNote.id === "field-note-kelp-food-web").sourceUrls = [];
+  invalid.npcs.find((npc) => npc.id === "kelpwatch-ecologist").roleId = "resident";
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /current-kelpwatch-sea.*artPath must reference a PNG/.test(error)));
+  assert.ok(result.errors.some((error) => /kelpwatch-island-town.*observationId is required/.test(error)));
+  assert.ok(result.errors.some((error) => /field-note-kelp-food-web.*sourceUrls must contain at least three HTTPS science sources/.test(error)));
+  assert.ok(result.errors.some((error) => /kelpwatch-island.*no NPC for role field-partner/.test(error)));
 });
 
 test("content validation protects Phase 2 starter, tutorial, mentor, and Field Note contracts", () => {

@@ -39,6 +39,20 @@ import {
   turnInCurrentFieldwork,
   recoverCurrentQuestFlags,
 } from "./adventureCurrent.mjs";
+import {
+  KELPWATCH_QUEST_ID,
+  KELPWATCH_INTERPRETATION_CHOICES,
+  KELPWATCH_OBSERVATION_COPY,
+  KELPWATCH_RESPONSE_CHOICES,
+  beginKelpwatchInvestigation,
+  getKelpwatchProgress,
+  reconcileKelpwatchQuest,
+  recordKelpwatchObservation,
+  submitKelpwatchInterpretation,
+  submitKelpwatchResponse,
+  turnInKelpwatchFieldwork,
+  recoverKelpwatchQuestFlags,
+} from "./adventureKelpwatch.mjs";
 
 const SUNPATCH_INTERPRETATION_CHOICES = Object.freeze([
   Object.freeze({
@@ -87,6 +101,13 @@ const CURRENT_OBSERVATION_PREVIEW_VARIANTS = Object.freeze({
   "surface-drifter-track": "currentDrifter",
   "wildlife-overlap-zone": "currentWildlife",
   "downstream-gear-accumulation": "currentGear",
+});
+
+const KELPWATCH_OBSERVATION_PREVIEW_VARIANTS = Object.freeze({
+  "kelp-cover-transect": "kelpCanopy",
+  "grazer-abundance-count": "kelpGrazers",
+  "predator-evidence-survey": "kelpPredators",
+  "repeat-comparison-site": "kelpRepeat",
 });
 
 const OBSERVATION_PREVIEW_VARIANT_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
@@ -274,6 +295,60 @@ const CURRENT_CHAPTER = createChapterAdapter({
   },
 });
 
+const KELPWATCH_CHAPTER = createChapterAdapter({
+  townId: "kelpwatch-island",
+  questId: KELPWATCH_QUEST_ID,
+  fieldNoteId: "field-note-kelp-food-web",
+  guideMetFlagId: "met-kelpwatch-guide",
+  getProgress: getKelpwatchProgress,
+  begin: beginKelpwatchInvestigation,
+  reconcile: reconcileKelpwatchQuest,
+  recordObservation: recordKelpwatchObservation,
+  submitInterpretation: submitKelpwatchInterpretation,
+  submitResponse: submitKelpwatchResponse,
+  turnIn: turnInKelpwatchFieldwork,
+  ui: {
+    chapterName: "Kelpwatch Island",
+    guideName: "Ari",
+    guideQuestTitle: "Meet Ari at Kelpwatch Island",
+    guideQuestDescription: "Talk with Ari before using the four matched survey stations or Ecology Lab consoles. They will introduce the kelp-forest question and the island's no-touch evidence plan.",
+    guideGateNotice: "Meet Ari in the island plaza before using the survey stations or Ecology Lab consoles.",
+    recordLabel: "Kelpwatch record",
+    challengerLabel: "Kelpwatch challengers",
+    surveyEyebrow: "Kelpwatch matched-cove survey",
+    observationNoun: "kelp-forest observations",
+    observationCopy: KELPWATCH_OBSERVATION_COPY,
+    observationPreviewVariants: KELPWATCH_OBSERVATION_PREVIEW_VARIANTS,
+    measurementItems: Object.freeze([]),
+    interpretationChoices: KELPWATCH_INTERPRETATION_CHOICES,
+    responseChoices: KELPWATCH_RESPONSE_CHOICES,
+    interpretationTitle: "Build a kelp food-web hypothesis",
+    responseTitle: "Plan a bounded restoration test",
+    interpretationPrompt: "Compare kelp cover, grazer abundance, predator evidence, and the repeat site. Choose the explanation supported as a local hypothesis without treating it as one universal cause.",
+    responsePrompt: "Choose a safe, site-specific response that protects remnant habitat, measures several drivers, and lets permitted experts test a small reversible action beside a reference site.",
+    questTitle: "Read Kelpwatch's food web",
+    questDescription: "Compare four matched surveys, hear both resident perspectives, build a cautious three-link hypothesis, and choose a monitored response that acknowledges several possible drivers.",
+    fieldReportTitle: "Present your kelp-forest report",
+    fieldReportDescription: "Return to Dr. Mina Park in the Ecology Lab. She will review which observations support the food-web hypothesis, which alternatives remain, and why permitted teams alone handle restoration.",
+    qualifierTitle: "Qualify at Kelpwatch Tide Hall",
+    qualifierDescription: "Your field report is complete. Visit Tala in Tide Hall for the 10 VP qualification duel.",
+    tideMarkId: "tide-mark-kelpwatch",
+    tideMarkTitle: "Kelpwatch Tide Mark earned",
+    tideMarkDescription: "The island is protecting remnant kelp and comparing a small permitted test with its reference site while monitoring food-web and ocean conditions.",
+    activityLabel: "kelp-forest survey",
+    guideStartCheckpointId: "kelpwatch-guide-met",
+    guideStartNotice: "The Kelpwatch matched-cove survey is active. Compare all four marked observation stations.",
+    fieldPartnerMetFlagId: "met-kelpwatch-ecologist",
+    fieldPartnerIntroCheckpointId: "kelpwatch-field-partner-met",
+    fieldPartnerIntroNotice: "Dr. Mina has explained how the four matched observations and Ecology Lab decisions fit together.",
+    fieldworkCheckpointPrefix: "kelpwatch-fieldwork",
+    turnInCheckpointId: "kelpwatch-fieldwork-complete",
+    turnInNotice: "Your A Kelp Forest Food Web Field Note is complete. The Tide Hall qualifier is now open.",
+    interpretationGateNotice: "Record all four matched-cove observations before interpreting the local food-web pattern.",
+    responseGateNotice: "Reach an evidence-supported interpretation before choosing a monitored response.",
+  },
+});
+
 /**
  * Runtime-only adapters for ecosystem chapters. Functions stay outside the
  * serialized save contract; only their canonical IDs and resulting save data
@@ -283,11 +358,13 @@ export const ADVENTURE_ECOSYSTEM_CHAPTERS = Object.freeze([
   SUNPATCH_CHAPTER,
   BRACKWATER_CHAPTER,
   CURRENT_CHAPTER,
+  KELPWATCH_CHAPTER,
 ]);
 
 const CHAPTER_FLAG_RECOVERERS = Object.freeze([
   Object.freeze({ questId: BRACKWATER_QUEST_ID, recover: recoverBrackwaterQuestFlags }),
   Object.freeze({ questId: CURRENT_QUEST_ID, recover: recoverCurrentQuestFlags }),
+  Object.freeze({ questId: KELPWATCH_QUEST_ID, recover: recoverKelpwatchQuestFlags }),
 ]);
 
 const CHAPTER_BY_TOWN_ID = new Map(
