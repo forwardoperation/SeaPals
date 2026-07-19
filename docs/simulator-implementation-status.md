@@ -72,9 +72,10 @@ limitation instead of inventing a rule.
   Heal clears it early.
 - Lionfish now invades the rival physical reef for either controller while its
   controller identity remains on the card instance. The invaded controller can
-  target and remove it with a successful legal attack; removal sends it to its
-  owner's discard pile. Ordinary ownership-based effects such as Spearfishing
-  cannot select an opponent-owned invader.
+  target and remove it with a successful legal attack or Spearfishing. Because
+  Spearfishing targets a Fish or Predator physically on the acting player's reef,
+  an opponent-owned Lionfish is eligible; either removal route sends Lionfish to
+  its owner's discard pile while Spearfishing enters the acting player's discard pile.
 - Cookie Cutter Parasite now transfers opposing RP first, collects any shortfall
   from the shared board supply up to the recipient's live bank cap, and reports
   both sources separately. Giant and Colossal Squid resolve a fresh Ensnare coin
@@ -86,10 +87,6 @@ limitation instead of inventing a rule.
   when one of those creatures is destroyed in combat, the simulator moves it to its
   owner's Lost Zone instead of discard. Effects that merely discard or sacrifice a
   card still use the discard pile unless their text explicitly says otherwise.
-- Lionfish still names a "specialized Support card" without identifying that card
-  anywhere in the repository card data. Attack removal is implemented for both
-  controllers; specialized-Support removal remains intentionally unavailable
-  rather than assigning that power to an unrelated Support card.
 - Complex companion effects on an otherwise supported attack resolve the documented
   attack portion and explicitly identify the remainder as unsupported.
 - Several original card-art files remain absent from the repository. Every absent art
@@ -106,11 +103,11 @@ limitation instead of inventing a rule.
 
 ## Verification checkpoint
 
-- Simulator suite: `npm.cmd run test:simulator` (**190/190 passed** on 2026-07-19),
+- Simulator suite: `npm.cmd run test:simulator` (**194/194 passed** on 2026-07-19),
   including Stunned lifecycle, Parasite supply fallback, per-attack Ensnare,
-  Lionfish controller identity, Flashing Alarm lifecycle, and automatic legal
-  Coral Heal targeting.
-- Full repository suite: `npm.cmd test` (**645/645 passed** on 2026-07-19).
+  Lionfish controller identity and Spearfishing removal, Flashing Alarm lifecycle,
+  and automatic legal Coral Heal targeting.
+- Full repository suite: `npm.cmd test` (**649/649 passed** on 2026-07-19).
 - Production build: `npm.cmd run build` (**26/26 routes generated** on 2026-07-19).
 - Diff whitespace and duplicate named-function audits pass.
 - Rendered browser verification covers every prebuilt deck's opening setup, an Open

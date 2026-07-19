@@ -526,7 +526,7 @@ export const fishCards = [
 
     playRequirements: [],
     specialRules: [
-      "You may play this creature onto one of your opponent’s reefs. It may possess any coral slot type. Your opponent may remove it with a specialized Support card or a successful attack.",
+      "You may play this creature onto one of your opponent’s reefs. It may possess any coral slot type. Your opponent may remove it with Spearfishing or a successful attack.",
     ],
     specialPlacement: {
       controller: "opponent",
@@ -536,6 +536,7 @@ export const fishCards = [
     removalRules: {
       controller: "opponent",
       methods: ["specializedSupport", "successfulAttack"],
+      specializedSupportCardIds: ["spearfishing"],
     },
     passives: [
       {

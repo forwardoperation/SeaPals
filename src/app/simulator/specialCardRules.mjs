@@ -105,6 +105,24 @@ export function isInvasiveSlotOwnedBy(slot, controller) {
   return Boolean(slot?.cardId && slot?.invasiveOwner === controller && slot?.controller === controller);
 }
 
+/**
+ * Cards are affected by effects for the reef they physically occupy, but an
+ * invasive card still returns to its controller's zones when it leaves play.
+ */
+export function getReefCardOwner(entry, hostController) {
+  return entry?.invasiveOwner ?? entry?.controller ?? hostController;
+}
+
+export function canSpearfishReefCard(entry, hostController, foreignTargetCardIds = []) {
+  if (!entry?.cardId) return false;
+  const owner = getReefCardOwner(entry, hostController);
+  return owner === hostController || (
+    entry.invasiveOwner === owner
+    && entry.controller === owner
+    && foreignTargetCardIds.includes(entry.cardId)
+  );
+}
+
 export function getInvasiveCreatureTargets(foundations = [], controller) {
   return foundations.flatMap((foundation) => (foundation.slots ?? [])
     .filter((slot) => isInvasiveSlotOwnedBy(slot, controller))
@@ -197,4 +215,60 @@ export function removeInvasiveCreature(foundations = [], { coralId, slotId, cont
     };
   });
   return { foundations: nextFoundations, removedCardId };
+}
+
+/**
+ * Resolve the complete specialized-Support removal of a foreign invader. The
+ * acting player owns the physical reef, while `invaderController` owns the card.
+ */
+export function resolveSpearfishingInvaderRemoval({
+  foundations = [],
+  orphanEntries = [],
+  target,
+  invaderController,
+  eligibleCardIds = [],
+  supportCardId = "spearfishing",
+  actorDiscardPile = [],
+  invaderDiscardPile = [],
+  actorRp = 0,
+  actorRpCap = Infinity,
+  supportCost = 0,
+  recoveredRp = 0,
+} = {}) {
+  const unchanged = {
+    success: false,
+    foundations,
+    orphanEntries,
+    actorDiscardPile,
+    invaderDiscardPile,
+    actorRp,
+    removedCardId: null,
+  };
+  if (!target?.cardId || !eligibleCardIds.includes(target.cardId) || !invaderController) return unchanged;
+
+  const removal = target.location === "slot"
+    ? removeInvasiveCreature(foundations, {
+        coralId: target.coralId,
+        slotId: target.slotId,
+        controller: invaderController,
+      })
+    : target.location === "orphan"
+      ? removeInvasiveOrphan(orphanEntries, {
+          instanceId: target.instanceId,
+          controller: invaderController,
+        })
+      : null;
+  const removedCardId = removal?.removedCardId ?? null;
+  if (removedCardId !== target.cardId) return unchanged;
+
+  const normalizedCap = Number.isFinite(actorRpCap) ? Math.max(0, actorRpCap) : Infinity;
+  return {
+    success: true,
+    foundations: target.location === "slot" ? removal.foundations : foundations,
+    orphanEntries: target.location === "orphan" ? removal.orphans : orphanEntries,
+    actorDiscardPile: [...(supportCardId ? [supportCardId] : []), ...actorDiscardPile],
+    invaderDiscardPile: [removedCardId, ...invaderDiscardPile],
+    actorRp: Math.min(normalizedCap, Math.max(0, actorRp - supportCost) + recoveredRp),
+    removedCardId,
+  };
 }

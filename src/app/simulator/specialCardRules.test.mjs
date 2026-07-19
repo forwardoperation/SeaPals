@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  canSpearfishReefCard,
   clearStunnedFromFoundationsAtControllerTurnEnd,
   coralCanUseOwnAbilities,
   coralIsStunned,
@@ -8,13 +9,76 @@ import {
   getInvasiveCreatureTargets,
   getInvasiveOrphanTargets,
   getLocallyControlledOrphans,
+  getReefCardOwner,
   placeInvasiveCreature,
   removeInvasiveCreature,
   removeInvasiveOrphan,
   resolveEnsnareForAttack,
   resolveParasiteCollection,
+  resolveSpearfishingInvaderRemoval,
   resolveStunnedAtControllerTurnBoundary,
 } from "./specialCardRules.mjs";
+
+test("reef location controls Spearfishing eligibility while invasive ownership controls discard routing", () => {
+  assert.equal(getReefCardOwner({ cardId: "blue-crab" }, "player"), "player");
+  assert.equal(getReefCardOwner({ cardId: "lionfish", controller: "opponent", invasiveOwner: "opponent" }, "player"), "opponent");
+  assert.equal(getReefCardOwner({ cardId: "lionfish", controller: "player", invasiveOwner: "player" }, "opponent"), "player");
+  assert.equal(canSpearfishReefCard({ cardId: "lionfish", controller: "opponent", invasiveOwner: "opponent" }, "player", ["lionfish"]), true);
+  assert.equal(canSpearfishReefCard({ cardId: "blue-crab", controller: "opponent", invasiveOwner: "opponent" }, "player", ["lionfish"]), false);
+});
+
+test("Spearfishing removes slotted and orphaned Lionfish in both ownership directions", () => {
+  for (const actor of ["player", "opponent"]) {
+    const invader = actor === "player" ? "opponent" : "player";
+    const placed = placeInvasiveCreature([{
+      id: `${actor}-coral`,
+      slots: [{ id: `${actor}-slot`, cardId: null }],
+    }], {
+      coralId: `${actor}-coral`,
+      slotId: `${actor}-slot`,
+      cardId: "lionfish",
+      cardInstanceId: `${invader}-lionfish-slot`,
+      controller: invader,
+    }).foundations;
+
+    const slotted = resolveSpearfishingInvaderRemoval({
+      foundations: placed,
+      orphanEntries: [],
+      target: { location: "slot", coralId: `${actor}-coral`, slotId: `${actor}-slot`, cardId: "lionfish" },
+      invaderController: invader,
+      eligibleCardIds: ["lionfish"],
+      actorDiscardPile: ["actor-old"],
+      invaderDiscardPile: ["owner-old"],
+      actorRp: 2,
+      actorRpCap: 5,
+      supportCost: 1,
+      recoveredRp: 4,
+    });
+    assert.equal(slotted.success, true);
+    assert.equal(slotted.foundations[0].slots[0].cardId, null);
+    assert.deepEqual(slotted.actorDiscardPile, ["spearfishing", "actor-old"]);
+    assert.deepEqual(slotted.invaderDiscardPile, ["lionfish", "owner-old"]);
+    assert.equal(slotted.actorRp, 5, "RP recovery respects the acting player's bank cap");
+
+    const orphaned = resolveSpearfishingInvaderRemoval({
+      foundations: [{ id: `${actor}-coral`, slots: [] }],
+      orphanEntries: [{ cardId: "lionfish", instanceId: `${invader}-lionfish-orphan`, controller: invader, invasiveOwner: invader, hostedCardIds: [] }],
+      target: { location: "orphan", instanceId: `${invader}-lionfish-orphan`, cardId: "lionfish" },
+      invaderController: invader,
+      eligibleCardIds: ["lionfish"],
+      actorDiscardPile: [],
+      invaderDiscardPile: [],
+      actorRp: 0,
+      actorRpCap: 8,
+      recoveredRp: 4,
+    });
+    assert.equal(orphaned.success, true);
+    assert.deepEqual(orphaned.orphanEntries, []);
+    assert.deepEqual(orphaned.actorDiscardPile, ["spearfishing"]);
+    assert.deepEqual(orphaned.invaderDiscardPile, ["lionfish"]);
+    assert.equal(orphaned.actorRp, 4);
+  }
+});
 
 test("Stunned remains visible until the affected controller ends their next turn", () => {
   const coral = {

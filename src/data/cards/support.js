@@ -42,6 +42,7 @@ export const supportCards = [
           controller: "you",
           kind: CardKind.CREATURE,
           categories: [CardCategory.FISH, CardCategory.PREDATOR],
+          includesOpponentOwnedInvasiveCardIds: ["lionfish"],
         },
         then: {
           type: EffectType.GAIN_RESOURCE,

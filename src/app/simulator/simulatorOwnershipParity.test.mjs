@@ -68,3 +68,40 @@ test("own-reef invader removal shares Blue Crab math without bypassing Toxic or 
   );
   assert.ok((playerAttack.match(/resolveBlueCrabRecycle\(/g) ?? []).length >= 2, "ordinary and invasive defender paths should share the resolver");
 });
+
+test("Spearfishing removes a foreign Lionfish from either physical reef and returns it to its owner", () => {
+  const playerTargeting = sourceBetween(
+    "function playCardFromHand",
+    "function completeInvasivePlacement",
+  );
+  assert.match(playerTargeting, /owner: getReefCardOwner\(slot, "player"\)/);
+  assert.match(playerTargeting, /playerOrphanCreatures\.forEach/);
+  assert.match(playerTargeting, /An invading Lionfish is a valid target/);
+
+  const playerResolution = sourceBetween(
+    "function completeSpearfishing",
+    "function completeWhirlpool",
+  );
+  assert.match(playerResolution, /resolveSpearfishingInvaderRemoval\([\s\S]*invaderController: "opponent"/);
+  assert.match(playerResolution, /setPlayerCorals\(invaderRemoval\.foundations\)/);
+  assert.match(playerResolution, /setPlayerOrphanCreatureInstances\(invaderRemoval\.orphanEntries\)/);
+  assert.match(playerResolution, /setDiscardPile\(invaderRemoval\.actorDiscardPile\)/);
+  assert.match(playerResolution, /discardPile: invaderRemoval\.invaderDiscardPile/);
+
+  const opponentResolution = sourceBetween(
+    "function runOpponentSupports",
+    "function runOpponentTurn",
+  );
+  assert.match(opponentResolution, /owner: getReefCardOwner\(slot, "opponent"\)/);
+  assert.match(opponentResolution, /find\(\(candidate\) => candidate\.owner === "player"\)/);
+  assert.match(opponentResolution, /resolveSpearfishingInvaderRemoval\([\s\S]*invaderController: "player"/);
+  assert.match(opponentResolution, /discardPile: removesPlayerInvader \? invaderRemoval\.actorDiscardPile/);
+  assert.match(opponentResolution, /type: "spearfishing-owner-discard"/);
+
+  const opponentStaging = sourceBetween(
+    "function resolveOpponentTurn",
+    "function flipForOpeningTurn",
+  );
+  assert.match(opponentStaging, /impact\.type === "spearfishing-owner-discard"[\s\S]*stagePlayerState\(\{ discardPile: \[impact\.cardId/);
+  assert.match(opponentStaging, /returned to your discard pile/);
+});
