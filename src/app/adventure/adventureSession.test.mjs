@@ -924,8 +924,8 @@ test("all live portals use safe spawns and preserve their authored arrival facin
 
   assert.equal(
     portalCount,
-    37,
-    "all live Shellshore, Sunpatch, Brackwater, Current Commons, Kelpwatch, and Trenchlight entrances and exits should be covered",
+    43,
+    "all live Shellshore, Sunpatch, Brackwater, Current Commons, Kelpwatch, Trenchlight, and Champion's Wake entrances and exits should be covered",
   );
 });
 
@@ -1173,4 +1173,79 @@ test("duel attempts persist latest and immutable first-win deck provenance", () 
   assert.equal(record.latest.playerDeckId, "later-deck");
   assert.equal(record.firstVictory.playerDeckId, "harbor-custom");
   assert.equal(record.firstVictory.playerDeckFingerprint, "deck-v1-0123456789abcdef");
+});
+
+test("entering Champion's Wake activates the final quest exactly once", () => {
+  const initial = createNewAdventureSession("profile-1");
+  const scene = SCENES["champions-wake-town"];
+  const entered = enterAdventureScene(initial, {
+    sceneId: scene.id,
+    position: scene.spawn,
+    facing: "up",
+  });
+
+  assert.equal(entered.world.townId, "champions-wake");
+  assert.equal(entered.progression.quests["quest-champions-wake"].status, "active");
+  assert.deepEqual(
+    enterAdventureScene(entered, {
+      sceneId: scene.id,
+      position: scene.spawn,
+      facing: "up",
+    }).progression.quests["quest-champions-wake"],
+    entered.progression.quests["quest-champions-wake"],
+  );
+});
+
+test("a completed bracket keeps rematches closed until the ending unlocks postgame practice", () => {
+  const initial = createNewAdventureSession("profile-2");
+  const beforeCredits = normalizeAdventureSave({
+    ...initial,
+    progression: {
+      ...initial.progression,
+      quests: {
+        ...initial.progression.quests,
+        "quest-champions-wake": {
+          status: "complete",
+          flags: {},
+        },
+      },
+      tournament: {
+        ...initial.progression.tournament,
+        status: "complete",
+        activeRoundId: null,
+        completedRoundIds: [
+          "encounter-tournament-quarterfinal",
+          "encounter-tournament-semifinal",
+          "encounter-tournament-final",
+        ],
+      },
+    },
+  });
+
+  for (const encounterId of beforeCredits.progression.tournament.completedRoundIds) {
+    const availability = isAdventureEncounterAvailable(beforeCredits, encounterId);
+    assert.equal(availability.available, false);
+    assert.match(availability.reason, /ceremony.*reflection.*practice/i);
+  }
+
+  const completed = normalizeAdventureSave({
+    ...beforeCredits,
+    progression: {
+      ...beforeCredits.progression,
+      quests: {
+        ...beforeCredits.progression.quests,
+        "quest-champions-wake": {
+          ...beforeCredits.progression.quests["quest-champions-wake"],
+          flags: { "postgame-unlocked": true },
+        },
+      },
+    },
+  });
+  for (const encounterId of completed.progression.tournament.completedRoundIds) {
+    assert.deepEqual(isAdventureEncounterAvailable(completed, encounterId), {
+      available: true,
+      reason: null,
+      practiceOnly: true,
+    });
+  }
 });

@@ -18,6 +18,7 @@ import {
   getDoorwayTransition,
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
+import { getContinuousBoatHeading } from "./adventureBoatMotion.mjs";
 import {
   ADVENTURE_CONTENT,
   getAdventureFieldNote,
@@ -43,6 +44,7 @@ import { assertAdventureDuelResultMatchesLaunch } from "./adventureDuel.mjs";
 import { openAdventurePack } from "./adventurePacks.mjs";
 import { setQuestFlag } from "./adventureProgression.mjs";
 import AdventureDecksModal from "./AdventureDecksModal";
+import AdventureSettingsModal from "./AdventureSettingsModal";
 import {
   AdventureWorldMapModal,
   AdventureFieldworkModal,
@@ -71,6 +73,7 @@ import {
 } from "./adventureTravel.mjs";
 import {
   SHELLSHORE_RESIDENT_ENCOUNTER_IDS,
+  beginChampionsWakeQuestAtCurrentScene,
   completeAdventureEncounter,
   createNewAdventureSession,
   enterAdventureScene,
@@ -79,6 +82,18 @@ import {
   recordAdventureDuelResult,
   recoverAdventureResume,
 } from "./adventureSession.mjs";
+import {
+  CHAMPIONS_WAKE_QUEST_ID,
+  CHAMPIONS_WAKE_REQUIRED_FIELD_NOTE_IDS,
+  CHAMPIONS_WAKE_REQUIRED_TIDE_MARK_IDS,
+  CHAMPIONS_WAKE_TOURNAMENT_ROUND_IDS,
+  getChampionsWakeTournamentAvailability,
+  getChampionsWakeTournamentLaunch,
+  getChampionsWakeTournamentProgress,
+  recordChampionsWakeTournamentResult,
+  recoverChampionsWakeTournamentState,
+  registerChampionsWakeTournament,
+} from "./adventureTournament.mjs";
 import styles from "./adventure.module.css";
 
 const BASE_TRAINERS = Object.freeze(Object.fromEntries(
@@ -181,6 +196,65 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
   "trenchlight-engineer": "trenchlight-engineer",
   "trenchlight-observer": "trenchlight-observer",
   "trenchlight-leader": "trenchlight-leader",
+  // Champion's Wake uses tournament-specific palettes over the existing
+  // animated sheets until final cast sprite sheets are authored.
+  "champions-wake-director": "champions-wake-director",
+  "tournament-quarterfinalist": "tournament-quarterfinalist",
+  "tournament-semifinalist": "tournament-semifinalist",
+  "tournament-champion": "tournament-champion",
+  "champions-wake-reflector": "champions-wake-reflector",
+  "champions-wake-spectator": "champions-wake-spectator",
+});
+
+const CHAMPIONSHIP_ENDING_FLAGS = Object.freeze({
+  ceremony: "championship-ceremony-complete",
+  epilogue: "championship-epilogue-complete",
+  credits: "championship-credits-complete",
+  postgame: "postgame-unlocked",
+});
+
+const DIALOGUE_SPEED_MULTIPLIERS = Object.freeze({
+  slow: 1.5,
+  normal: 1,
+  fast: 0.55,
+  instant: 0,
+});
+
+const CHAMPIONS_WAKE_ROUNDS = Object.freeze([
+  Object.freeze({
+    id: "encounter-tournament-quarterfinal",
+    label: "Quarterfinal",
+    opponent: "Miri Fen",
+    trainerId: "tournament-quarterfinalist",
+  }),
+  Object.freeze({
+    id: "encounter-tournament-semifinal",
+    label: "Semifinal",
+    opponent: "Oren Vale",
+    trainerId: "tournament-semifinalist",
+  }),
+  Object.freeze({
+    id: "encounter-tournament-final",
+    label: "Championship final",
+    opponent: "Sabine Rook",
+    trainerId: "tournament-champion",
+  }),
+]);
+
+const TIDE_MARK_LABELS = Object.freeze({
+  "tide-mark-sunpatch": "Sunpatch Tide Mark",
+  "tide-mark-brackwater": "Brackwater Tide Mark",
+  "tide-mark-current": "Current Commons Tide Mark",
+  "tide-mark-kelpwatch": "Kelpwatch Tide Mark",
+  "tide-mark-trenchlight": "Trenchlight Tide Mark",
+});
+
+const FIELD_NOTE_LABELS = Object.freeze({
+  "field-note-coral-observations": "Coral observations",
+  "field-note-estuary-conditions": "Estuary conditions",
+  "field-note-current-connections": "Current connections",
+  "field-note-kelp-food-web": "Kelp food web",
+  "field-note-deep-adaptations": "Deep adaptations",
 });
 
 const LOCATION_NAMES = Object.freeze(Object.fromEntries(
@@ -230,17 +304,18 @@ function SpriteArtwork({ character = "player", facing = "down", moving = false, 
   );
 }
 
-function AdventureTrainerSprite({ trainer, position, defeated, scene }) {
+function AdventureTrainerSprite({ trainer, position, defeated, status = null, scene }) {
+  const resolvedStatus = defeated ? "Won" : status;
   return (
     <div
       className={styles.characterCell}
       style={actorPosition(position, scene)}
-      aria-label={`${trainer.name}, ${trainer.title}`}
+      aria-label={`${trainer.name}, ${trainer.title}${resolvedStatus ? ` — ${resolvedStatus}` : ""}`}
     >
       <span className={styles.characterShadow} />
       <SpriteArtwork character={trainer.id} facing="down" />
-      <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""}`}>
-        {defeated ? "★" : "!"}
+      <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""} ${status === "Locked" ? styles.trainerLocked : ""}`}>
+        {defeated ? "★" : status === "Locked" ? "•" : "!"}
       </span>
     </div>
   );
@@ -261,10 +336,16 @@ function AdventurePlayerSprite({ position, facing, moving, interaction, scene })
 }
 
 function AdventureBoatSprite({ position, facing, moving, interaction, scene }) {
+  const [heading, setHeading] = useState(() => getContinuousBoatHeading(null, facing));
+
+  useEffect(() => {
+    setHeading((currentHeading) => getContinuousBoatHeading(currentHeading, facing));
+  }, [facing]);
+
   return (
     <div
       className={`${styles.characterCell} ${styles.playerCell} ${styles.boatCell} ${styles[`boatFacing${facing}`]} ${moving ? styles.boatMoving : ""}`}
-      style={actorPosition(position, scene)}
+      style={{ ...actorPosition(position, scene), "--boat-heading": `${heading}deg` }}
       aria-label="Your personal boat"
     >
       <span className={styles.boatActor} aria-hidden="true">
@@ -492,11 +573,18 @@ function conversationLines(conversation, trainer, defeated) {
   return defeated ? trainer.rematch : trainer.intro;
 }
 
-function ProgressiveDialogueLine({ message, speaker, children }) {
+function ProgressiveDialogueLine({
+  message,
+  speaker,
+  textSpeed = "normal",
+  reducedMotion = false,
+  children,
+}) {
   const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
   const duration = useMemo(
-    () => getProfessorSpeechDuration(graphemes.length),
-    [graphemes.length],
+    () => getProfessorSpeechDuration(graphemes.length)
+      * (DIALOGUE_SPEED_MULTIPLIERS[textSpeed] ?? DIALOGUE_SPEED_MULTIPLIERS.normal),
+    [graphemes.length, textSpeed],
   );
   // Keep the server and first client render identical. Reduced-motion is
   // applied immediately after mount by the effect below.
@@ -533,7 +621,7 @@ function ProgressiveDialogueLine({ message, speaker, children }) {
       if (event.matches) finish();
     };
 
-    if (!graphemes.length || motionPreference?.matches) {
+    if (!graphemes.length || reducedMotion || textSpeed === "instant" || motionPreference?.matches) {
       setVisibleCount(graphemes.length);
     } else {
       setVisibleCount(0);
@@ -574,7 +662,7 @@ function ProgressiveDialogueLine({ message, speaker, children }) {
         motionPreference?.removeListener?.(handleMotionPreference);
       }
     };
-  }, [duration, graphemes.length, message]);
+  }, [duration, graphemes.length, message, reducedMotion, textSpeed]);
 
   return (
     <>
@@ -617,6 +705,8 @@ function Conversation({
   blocked = false,
   primaryLabel,
   secondaryLabel = "Not yet",
+  textSpeed = "normal",
+  reducedMotion = false,
   onAdvance,
   onPrimary,
   onSecondary,
@@ -641,6 +731,8 @@ function Conversation({
             key={`${trainer.id}:${conversation.mode}:${conversation.index}:${line}`}
             message={line}
             speaker={trainer.name}
+            textSpeed={textSpeed}
+            reducedMotion={reducedMotion}
           >
             {!finalLine ? (
               <button type="button" autoFocus onClick={onAdvance}>Next</button>
@@ -817,8 +909,8 @@ function TitleScreen({ profiles, notice, blocked = false, onContinue, onNewGame,
         <h1 id="adventure-title">REEFBOUND</h1>
         <div className={styles.introDivider}><span>◆</span></div>
         <p>
-          Choose one of three local voyage slots. Explore Shellshore, meet its Reefkeepers,
-          and save your progress whenever you pause.
+          Choose one of three local voyage slots. Learn from five ocean habitats, build your
+          SeaPals collection, and voyage toward the three-round tournament at Champion&apos;s Wake.
         </p>
         {notice ? (
           <div className={`${styles.saveNotice} ${notice.kind === "error" ? styles.saveNoticeError : styles.saveNoticeInfo}`} role={notice.kind === "error" ? "alert" : "status"}>
@@ -886,6 +978,7 @@ function PauseMenu({
   onInventory,
   onFieldNote,
   onWorldMap,
+  onSettings,
   onReturnTitle,
   onRestart,
 }) {
@@ -911,6 +1004,7 @@ function PauseMenu({
           <button type="button" onClick={onDecks}>Open Deck Workshop</button>
           <button type="button" onClick={onInventory}>Open Inventory</button>
           <button type="button" onClick={onWorldMap}>Open World Map</button>
+          <button type="button" onClick={onSettings}>Settings</button>
           {fieldNoteAvailable ? <button type="button" onClick={onFieldNote}>Open latest Field Note</button> : null}
           <button type="button" className={styles.secondaryButton} onClick={onReturnTitle}>Save and return to title</button>
           <button type="button" className={styles.dangerButton} onClick={onRestart}>Restart this voyage</button>
@@ -1215,23 +1309,293 @@ function InventoryModal({
   );
 }
 
-function Completion({ blocked = false, onContinue, onReset }) {
+function ShellshoreMilestone({ blocked = false, onContinue, onReset }) {
   const dialogRef = useDialogFocusTrap(!blocked);
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.introLayer} role="dialog" aria-modal="true" aria-labelledby="completion-title">
       <div className={`${styles.introCard} ${styles.completionCard}`}>
         <div className={styles.crestPair}><span>★</span><span>★</span></div>
-        <div className={styles.introEyebrow}>Both crests earned</div>
-        <h2 id="completion-title">TIDEBOUND CHAMPION</h2>
+        <div className={styles.introEyebrow}>Shellshore complete</div>
+        <h2 id="completion-title">FIRST VOYAGE READY</h2>
         <p>
-          Marina and Dorian recognize your skill. You explored both homes and conquered two
-          different SeaPals strategies.
+          Marina and Dorian recognize your skill. Both homes remain open for rematches, and
+          Professor Current&apos;s Harbor Field Note will prepare you for the wider archipelago.
         </p>
         <div className={styles.completionActions}>
           <button type="button" autoFocus onClick={onContinue}>Keep exploring</button>
           <button type="button" className={styles.quietButton} onClick={onReset}>Start over</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function tournamentRoundStatus(progress, roundId, save) {
+  const postgameUnlocked = progress.save.progression.quests[CHAMPIONS_WAKE_QUEST_ID]
+    ?.flags?.[CHAMPIONSHIP_ENDING_FLAGS.postgame] === true;
+  if (progress.completedRoundIds.includes(roundId)) {
+    return progress.complete
+      ? postgameUnlocked ? "Won · Practice open" : "Won · Ceremony next"
+      : "Won";
+  }
+  if (progress.activeRoundId === roundId) {
+    const recoveredSave = progress.save ?? save;
+    const result = recoveredSave.progression.encounterResults[roundId];
+    const baseline = recoveredSave.progression.tournament.roundAttemptBaselines[roundId] ?? 0;
+    const attemptedInThisBracket = (result?.attempts ?? 0) > baseline;
+    return attemptedInThisBracket && result?.latest?.outcome !== "victory"
+      ? "Retry available"
+      : "Up next";
+  }
+  return progress.complete ? "Practice open" : "Locked";
+}
+
+function TournamentBracketPanel({ progress, save, compact = false }) {
+  const lockedDeck = progress.lockedDeckSnapshot;
+  return (
+    <section
+      className={`${styles.tournamentBracket} ${compact ? styles.tournamentBracketCompact : ""}`}
+      aria-labelledby={compact ? "mobile-tournament-bracket-title" : "tournament-bracket-title"}
+    >
+      <header>
+        <span>30 VP · three rounds</span>
+        <h2 id={compact ? "mobile-tournament-bracket-title" : "tournament-bracket-title"}>
+          Championship bracket
+        </h2>
+        <p>
+          {lockedDeck
+            ? <>Registered deck: <strong>{lockedDeck.name}</strong></>
+            : progress.complete
+              ? "Bracket completion verified; the archived deck list is unavailable."
+              : "Register one legal 60-card deck in the Registration Hall."}
+        </p>
+      </header>
+      <ol>
+        {CHAMPIONS_WAKE_ROUNDS.map((round, index) => {
+          const status = tournamentRoundStatus(progress, round.id, save);
+          const active = progress.activeRoundId === round.id;
+          return (
+            <li
+              key={round.id}
+              className={`${status.startsWith("Won") ? styles.tournamentRoundWon : ""} ${active ? styles.tournamentRoundActive : ""}`}
+              aria-current={active ? "step" : undefined}
+            >
+              <span aria-hidden="true">{status.startsWith("Won") ? "✓" : index + 1}</span>
+              <div>
+                <strong>{round.label}</strong>
+                <small>{round.opponent} · 30 VP</small>
+              </div>
+              <b>{status}</b>
+            </li>
+          );
+        })}
+      </ol>
+      {lockedDeck ? (
+        <small className={styles.tournamentDeckFingerprint}>
+          Deck record {lockedDeck.fingerprint.slice(0, 10)} · fixed until this bracket ends
+        </small>
+      ) : null}
+    </section>
+  );
+}
+
+function TournamentRegistrationModal({
+  availability,
+  progress,
+  activeDeckName,
+  deckReadiness,
+  notice,
+  blocked = false,
+  onRegister,
+  onSaveRegistration,
+  onDecks,
+  onClose,
+}) {
+  const dialogRef = useDialogFocusTrap(!blocked);
+  const tideMarks = new Set(availability.save.progression.tideMarkIds);
+  const fieldNotes = new Set(availability.save.fieldNotes.entryIds);
+  const registered = progress.status === "active";
+  const complete = progress.complete;
+  const canRegister = availability.available && deckReadiness.ready;
+
+  return (
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      inert={blocked}
+      aria-hidden={blocked || undefined}
+      data-adventure-modal="true"
+      className={styles.tournamentModalLayer}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tournament-registration-title"
+    >
+      <section className={styles.tournamentRegistrationCard}>
+        <header className={styles.tournamentRegistrationHeader}>
+          <div>
+            <span>Director Vela · Registration Hall</span>
+            <h2 id="tournament-registration-title">Register for the SeaPals Tournament</h2>
+            <p>Three ordered rounds. Every match is a complete 30 VP game.</p>
+          </div>
+          <button type="button" onClick={onClose}>Close</button>
+        </header>
+
+        {notice ? (
+          <div className={`${styles.tournamentNotice} ${notice.kind === "error" ? styles.tournamentNoticeError : ""}`} role={notice.kind === "error" ? "alert" : "status"}>
+            {notice.message}
+          </div>
+        ) : null}
+
+        <div className={styles.tournamentRegistrationGrid}>
+          <section aria-labelledby="tournament-voyage-record-title">
+            <h3 id="tournament-voyage-record-title">Voyage record</h3>
+            <p>All five communities must be represented by both a Tide Mark and its ecosystem Field Note.</p>
+            <ul className={styles.tournamentRequirementList}>
+              {CHAMPIONS_WAKE_REQUIRED_TIDE_MARK_IDS.map((id) => (
+                <li key={id} className={tideMarks.has(id) ? styles.tournamentRequirementMet : ""}>
+                  <span aria-hidden="true">{tideMarks.has(id) ? "✓" : "○"}</span>{TIDE_MARK_LABELS[id]}
+                </li>
+              ))}
+            </ul>
+            <ul className={styles.tournamentRequirementList}>
+              {CHAMPIONS_WAKE_REQUIRED_FIELD_NOTE_IDS.map((id) => (
+                <li key={id} className={fieldNotes.has(id) ? styles.tournamentRequirementMet : ""}>
+                  <span aria-hidden="true">{fieldNotes.has(id) ? "✓" : "○"}</span>{FIELD_NOTE_LABELS[id]}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className={styles.tournamentDeckRegistration} aria-labelledby="tournament-deck-title">
+            <span>Active deck</span>
+            <h3 id="tournament-deck-title">
+              {progress.lockedDeckSnapshot?.name
+                ?? (complete ? "Championship deck archive unavailable" : activeDeckName)}
+            </h3>
+            <p className={progress.lockedDeckSnapshot || complete || deckReadiness.ready ? styles.tournamentDeckReady : styles.tournamentDeckInvalid}>
+              {progress.lockedDeckSnapshot
+                ? `The archived ${progress.lockedDeckSnapshot.cards.reduce((total, entry) => total + entry.quantity, 0)}-card snapshot is verified.`
+                : complete
+                  ? "The three ordered wins and championship reward are verified, but this save no longer contains the registered card list."
+                  : deckReadiness.message}
+            </p>
+            <div className={styles.tournamentLockRule}>
+              <strong>One deck for the full bracket</strong>
+              <p>
+                Registration saves an exact snapshot of this deck. That list remains fixed for the
+                quarterfinal, semifinal, and final—even if you edit or activate another deck later.
+                A loss safely retries the same round with the same registered list.
+              </p>
+            </div>
+            {registered ? (
+              <p><strong>Round {progress.activeRoundNumber} is ready.</strong> Your deck is already registered; head to the Arena.</p>
+            ) : complete ? (
+              <p><strong>Bracket complete.</strong> Your championship deck remains archived while postgame practice uses your current active deck.</p>
+            ) : null}
+          </section>
+        </div>
+
+        <div className={styles.tournamentRegistrationActions}>
+          {!registered && !complete ? <button type="button" className={styles.secondaryButton} onClick={onDecks}>Open Deck Workshop</button> : null}
+          {registered && notice?.kind === "error" ? (
+            <button type="button" className={styles.secondaryButton} onClick={onSaveRegistration}>Save registration now</button>
+          ) : null}
+          {!registered && !complete ? (
+            <button type="button" disabled={!canRegister} onClick={onRegister}>Register and lock deck</button>
+          ) : (
+            <button type="button" onClick={onClose}>{complete ? "Return to Champion's Wake" : "Head to the Arena"}</button>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+const CHAMPIONSHIP_ENDING_COPY = Object.freeze({
+  ceremony: Object.freeze({
+    speaker: "Director Amara Vela",
+    role: "SeaPals Tournament Director",
+    character: "champions-wake-director",
+    title: "The Championship Ceremony",
+    message: "Welcome, SeaPals Champion! Across three complete 30 VP games, you protected your economy, adapted your ecosystem, and kept every conclusion proportional to the evidence. The five communities now present the SeaPals Championship Cup to you.",
+    button: "Visit the Reflection Pavilion",
+  }),
+  epilogue: Object.freeze({
+    speaker: "Dr. Ivo Kestrel",
+    role: "Archipelago Learning Steward",
+    character: "champions-wake-reflector",
+    title: "What the habitats taught us",
+    message: "Your Tide Marks do not say that any habitat is fixed forever. Sunpatch keeps comparing coral records, Brackwater repeats estuary measurements, Current Commons tracks connected paths, Kelpwatch compares food-web changes, and Trenchlight continues passive surveys. Careful ocean science observes again and changes course when better evidence arrives.",
+    button: "Continue to the study club",
+  }),
+  credits: Object.freeze({
+    speaker: "Tali",
+    role: "Junior Reefkeeper",
+    character: "champions-wake-spectator",
+    title: "A bracket ends. Curiosity continues.",
+    message: "We made a new chart called Questions We Still Have. You can revisit every town, reread Field Notes, rebuild decks, and challenge the tournament players to practice matches. A champion keeps learning—and leaves room to change their mind.",
+    button: "Continue exploring",
+  }),
+});
+
+function ChampionshipEnding({
+  stage,
+  replay = false,
+  blocked = false,
+  textSpeed = "normal",
+  reducedMotion = false,
+  onAdvance,
+}) {
+  const dialogRef = useDialogFocusTrap(!blocked);
+  const copy = CHAMPIONSHIP_ENDING_COPY[stage];
+  if (!copy) return null;
+  return (
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      inert={blocked}
+      aria-hidden={blocked || undefined}
+      data-adventure-modal="true"
+      className={styles.championshipEndingLayer}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="championship-ending-title"
+    >
+      <article className={styles.championshipEndingCard} data-stage={stage}>
+        <span className={styles.championshipGlow} aria-hidden="true" />
+        <div className={`${styles.championshipPortrait} ${styles[`portrait${TRAINERS[copy.character]?.color ?? "teal"}`]}`}>
+          <SpriteArtwork character={copy.character} facing="down" portrait />
+        </div>
+        <section>
+          <span className={styles.championshipStep}>{replay ? "Pavilion reflection" : `Championship ending · ${stage}`}</span>
+          <h2 id="championship-ending-title">{copy.title}</h2>
+          <div className={styles.championshipSpeaker}><strong>{copy.speaker}</strong><span>{copy.role}</span></div>
+          <ProgressiveDialogueLine
+            key={`${stage}:${replay}`}
+            message={copy.message}
+            speaker={copy.speaker}
+            textSpeed={textSpeed}
+            reducedMotion={reducedMotion}
+          >
+            <button type="button" autoFocus className={styles.challengeButton} onClick={onAdvance}>
+              {replay ? "Return to the Pavilion" : copy.button}
+            </button>
+          </ProgressiveDialogueLine>
+          {stage === "ceremony" ? (
+            <ul className={styles.championshipMarks} aria-label="Five earned Tide Marks">
+              {Object.values(TIDE_MARK_LABELS).map((label) => <li key={label}>★ <span>{label}</span></li>)}
+            </ul>
+          ) : null}
+          {stage === "credits" ? (
+            <div className={styles.championshipCredits} aria-label="Game credits">
+              <strong>SeaPals: Reefbound</strong>
+              <span>Created for young ocean learners and card-game explorers</span>
+              <span>Ocean habitats · evidence-based choices · deck strategy</span>
+              <small>Thank you for caring for every place you visit.</small>
+            </div>
+          ) : null}
+        </section>
+      </article>
     </div>
   );
 }
@@ -1261,6 +1625,9 @@ function interactionLabel(
     ? "Steer through the marked channel and approach a dock"
     : "Walk into a doorway, or face someone or a field station to interact";
   if (interaction.type === "trainer" || interaction.type === "npc") {
+    if (interaction.tournamentAction === "registration") return "Review tournament registration with Director Vela";
+    if (interaction.tournamentAction === "round") return `Meet ${TRAINERS[interaction.trainerId]?.name ?? "your tournament opponent"} for a 30 VP round`;
+    if (interaction.tournamentAction === "epilogue") return "Visit the Archipelago Reflection Pavilion";
     return `Talk to ${TRAINERS[interaction.trainerId ?? interaction.npcId]?.name ?? "Reefkeeper"}`;
   }
   if (interaction.type === "board") return interaction.label ?? "Board your personal boat";
@@ -1309,6 +1676,11 @@ function mapThemeClassForScene(scene) {
     "trenchlight-engineer-workshop": styles.trenchlightWorkshopMap,
     "trenchlight-tide-hall": styles.trenchlightTideHallMap,
     "trenchlight-sub-descent": styles.trenchlightSubMap,
+    "trenchlight-champions-wake-route": styles.championsWakeRouteMap,
+    "champions-wake-town": styles.championsWakeTownMap,
+    "champions-wake-registration-hall": styles.championsWakeRegistrationMap,
+    "champions-wake-arena": styles.championsWakeArenaMap,
+    "champions-wake-reflection-pavilion": styles.championsWakePavilionMap,
   };
   return themeClasses[scene.theme] ?? styles.townMap;
 }
@@ -1333,6 +1705,9 @@ function actionLabel(
   }
   if (interaction.type === "observation") return "Observe";
   if (["interpretation", "response"].includes(interaction.type)) return "Review";
+  if (interaction.tournamentAction === "registration") return "Register";
+  if (interaction.tournamentAction === "round") return "Challenge";
+  if (interaction.tournamentAction === "epilogue") return "Reflect";
   return "Talk";
 }
 
@@ -1364,7 +1739,13 @@ export default function AdventureGame() {
   const [fieldworkFeedback, setFieldworkFeedback] = useState(null);
   const [packReveal, setPackReveal] = useState(null);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [tournamentRegistrationOpen, setTournamentRegistrationOpen] = useState(false);
+  const [tournamentRegistrationError, setTournamentRegistrationError] = useState(null);
+  const [decksReturnContext, setDecksReturnContext] = useState(null);
+  const [championshipEndingStage, setChampionshipEndingStage] = useState(null);
+  const [championshipEndingReplay, setChampionshipEndingReplay] = useState(false);
   const [pauseOpen, setPauseOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [saveNotice, setSaveNotice] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const [activeDuelDeckSnapshot, setActiveDuelDeckSnapshot] = useState(null);
@@ -1411,6 +1792,32 @@ export default function AdventureGame() {
     () => gameSave && ecosystemChapter ? ecosystemChapter.getProgress(gameSave) : null,
     [ecosystemChapter, gameSave],
   );
+  const tournamentProgress = useMemo(
+    () => gameSave ? getChampionsWakeTournamentProgress(gameSave) : null,
+    [gameSave],
+  );
+  const tournamentAvailability = useMemo(
+    () => gameSave ? getChampionsWakeTournamentAvailability(gameSave) : null,
+    [gameSave],
+  );
+  const tournamentDeckReadiness = useMemo(() => {
+    if (!gameSave) return { ready: false, message: "Choose an active deck first.", snapshot: null };
+    try {
+      const snapshot = createActiveDuelDeckSnapshot(gameSave, cardsById);
+      const count = snapshot.cards.reduce((total, entry) => total + entry.quantity, 0);
+      return {
+        ready: true,
+        message: `${count} cards · legal, owned, and ready to register.`,
+        snapshot,
+      };
+    } catch (error) {
+      return {
+        ready: false,
+        message: `${error?.message ?? "This deck is not tournament legal."} Open the Deck Workshop to repair it.`,
+        snapshot: null,
+      };
+    }
+  }, [gameSave]);
   const trenchlightGuideComplete = Boolean(
     gameSave
     && ecosystemChapter?.townId === "trenchlight-station"
@@ -1442,6 +1849,7 @@ export default function AdventureGame() {
   const movementPaused = screen !== "playing"
     || vehicleMode
     || pauseOpen
+    || settingsOpen
     || Boolean(confirmation)
     || Boolean(conversation)
     || Boolean(activeTrainerId)
@@ -1451,7 +1859,9 @@ export default function AdventureGame() {
     || decksOpen
     || worldMapOpen
     || Boolean(fieldworkActivity)
-    || showCompletion;
+    || showCompletion
+    || tournamentRegistrationOpen
+    || Boolean(championshipEndingStage);
   movementPausedRef.current = movementPaused;
   const interaction = useMemo(
     () => screen === "playing" && gameSave && !vehicleMode
@@ -1536,11 +1946,12 @@ export default function AdventureGame() {
 
     doorwayTransitionRef.current = transitionKey;
     clearMovement();
-    const next = enterAdventureScene(sourceSave, {
+    let next = enterAdventureScene(sourceSave, {
       sceneId: candidate.targetScene,
       position: candidate.spawn,
       facing: candidate.facing ?? (candidate.type === "exit" ? "down" : "up"),
     });
+    next = beginChampionsWakeQuestAtCurrentScene(next).save;
     saveRef.current = next;
     setGameSave(next);
     setDirty(true);
@@ -1597,7 +2008,13 @@ export default function AdventureGame() {
     setSubAssistedMode(false);
     setSubFeedback(null);
     setShowCompletion(false);
+    setTournamentRegistrationOpen(false);
+    setTournamentRegistrationError(null);
+    setDecksReturnContext(null);
+    setChampionshipEndingStage(null);
+    setChampionshipEndingReplay(false);
     setPauseOpen(false);
+    setSettingsOpen(false);
     setConfirmation(null);
     setScreen("playing");
   }
@@ -1680,6 +2097,8 @@ export default function AdventureGame() {
         collectionRecoveryError = error;
       }
     }
+    const tournamentResume = recoverChampionsWakeTournamentState(resumedSave);
+    resumedSave = tournamentResume.save;
     installSession(resumedSave, { storageAuthorized: true });
     if (collectionRecoveryError) {
       setDirty(true);
@@ -1693,7 +2112,8 @@ export default function AdventureGame() {
       loaded.recovery
       || worldResume.recovered
       || onboardingResume.recovered
-      || collectionRecovered,
+      || collectionRecovered
+      || tournamentResume.recovered,
     );
     setDirty(wasRecovered);
     if (wasRecovered) {
@@ -1728,6 +2148,49 @@ export default function AdventureGame() {
     setConversation(postDuelConversation);
     setPostDuelConversation(null);
   }, [activeTrainerId, postDuelConversation]);
+
+  useEffect(() => {
+    if (
+      screen !== "playing"
+      || !tournamentProgress?.complete
+      || activeTrainerId
+      || conversation
+      || postDuelConversation
+      || championshipEndingStage
+      || championshipEndingReplay
+      || pauseOpen
+      || tournamentRegistrationOpen
+      || decksOpen
+      || inventoryOpen
+      || fieldNoteOpen
+      || worldMapOpen
+      || fieldworkActivity
+    ) return;
+    const flags = tournamentProgress.save.progression.quests[CHAMPIONS_WAKE_QUEST_ID]?.flags ?? {};
+    if (flags[CHAMPIONSHIP_ENDING_FLAGS.postgame] === true) return;
+    const nextStage = ["ceremony", "epilogue", "credits"]
+      .find((stage) => flags[CHAMPIONSHIP_ENDING_FLAGS[stage]] !== true)
+      ?? "credits";
+    clearMovement();
+    setChampionshipEndingReplay(false);
+    setChampionshipEndingStage(nextStage);
+  }, [
+    activeTrainerId,
+    championshipEndingReplay,
+    championshipEndingStage,
+    clearMovement,
+    conversation,
+    decksOpen,
+    fieldNoteOpen,
+    fieldworkActivity,
+    inventoryOpen,
+    pauseOpen,
+    postDuelConversation,
+    screen,
+    tournamentProgress,
+    tournamentRegistrationOpen,
+    worldMapOpen,
+  ]);
 
   useEffect(() => {
     if (movementPaused || !isMoving) return undefined;
@@ -1867,6 +2330,95 @@ export default function AdventureGame() {
     return saved;
   }
 
+  function registerForChampionsWake() {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    setTournamentRegistrationError(null);
+    try {
+      const registration = registerChampionsWakeTournament(current, cardsById);
+      saveRef.current = registration.save;
+      setGameSave(registration.save);
+      setDirty(true);
+      const saved = persistSave(registration.save, {
+        checkpointId: `tournament-registered:${registration.lockedDeckSnapshot.fingerprint}`,
+      });
+      if (!saved.ok) {
+        setTournamentRegistrationError({
+          kind: "error",
+          message: "Registration is active in this session, but its deck lock did not save. Keep this window open and retry Save game before entering the Arena.",
+        });
+        return;
+      }
+      setTournamentRegistrationOpen(false);
+      setSaveNotice({
+        kind: "info",
+        message: `${registration.lockedDeckSnapshot.name} is registered for all three 30 VP rounds. The quarterfinal table is ready in the Arena.`,
+      });
+    } catch (error) {
+      setTournamentRegistrationError({
+        kind: "error",
+        message: `${error?.message ?? "Registration could not be completed."} Your bracket and rewards are unchanged.`,
+      });
+    }
+  }
+
+  function saveChampionsWakeRegistration() {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    const saved = persistSave(current, {
+      kind: "manual",
+      checkpointId: "tournament-registration-retry",
+    });
+    if (saved.ok) {
+      setTournamentRegistrationError(null);
+      setSaveNotice({
+        kind: "info",
+        message: "The registered deck and current bracket round are safely saved.",
+      });
+    }
+  }
+
+  function advanceChampionshipEnding() {
+    if (!championshipEndingStage) return;
+    if (championshipEndingReplay) {
+      setChampionshipEndingStage(null);
+      setChampionshipEndingReplay(false);
+      return;
+    }
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    const flagId = CHAMPIONSHIP_ENDING_FLAGS[championshipEndingStage];
+    let next = setQuestFlag(current, CHAMPIONS_WAKE_QUEST_ID, flagId, true);
+    let nextStage = null;
+    if (championshipEndingStage === "ceremony") {
+      const pavilion = SCENES["champions-wake-reflection-pavilion"];
+      next = enterAdventureScene(next, {
+        sceneId: pavilion.id,
+        position: pavilion.spawn,
+        facing: "up",
+      });
+      nextStage = "epilogue";
+    } else if (championshipEndingStage === "epilogue") {
+      nextStage = "credits";
+    } else {
+      next = setQuestFlag(next, CHAMPIONS_WAKE_QUEST_ID, CHAMPIONSHIP_ENDING_FLAGS.postgame, true);
+    }
+    const saved = commitAdventureMutation(
+      next,
+      `championship-ending:${championshipEndingStage}`,
+      championshipEndingStage === "credits"
+        ? "Postgame free travel and tournament practice rematches are now open."
+        : null,
+    );
+    if (!saved.ok) {
+      setSaveNotice({
+        kind: "error",
+        message: "This ending step is complete in your current session, but it did not save. Use Save game before leaving the page.",
+      });
+    }
+    setChampionshipEndingStage(nextStage);
+  }
+
   function beginEcosystemChapter(saveValue) {
     const chapter = getAdventureEcosystemChapterByTownId(saveValue.world.townId);
     return chapter ? chapter.begin(saveValue).save : saveValue;
@@ -1902,6 +2454,7 @@ export default function AdventureGame() {
         destinationDockId: interactionValue.destinationDockId ?? interactionValue.dockId,
         mode: "manual",
       });
+      next = beginChampionsWakeQuestAtCurrentScene(next).save;
       next = beginEcosystemChapter(next);
       const arrivedChapter = getAdventureEcosystemChapterByTownId(next.world.townId);
       commitAdventureMutation(
@@ -1921,6 +2474,7 @@ export default function AdventureGame() {
     if (!current) return;
     try {
       let next = autoSteerAdventureRoute(current, { routeId, destinationDockId });
+      next = beginChampionsWakeQuestAtCurrentScene(next).save;
       next = beginEcosystemChapter(next);
       setWorldMapOpen(false);
       commitAdventureMutation(next, `auto-steer:${routeId}:${destinationDockId}`, "Auto-steer followed your previously completed route and docked safely.");
@@ -2065,7 +2619,7 @@ export default function AdventureGame() {
   }
 
   function interact() {
-    if (screen !== "playing" || pauseOpen || conversation || activeTrainerId || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || !interaction || !gameSave) return;
+    if (screen !== "playing" || pauseOpen || settingsOpen || conversation || activeTrainerId || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage || !interaction || !gameSave) return;
     clearMovement();
     if (interaction.type === "sub-launch") {
       launchTrenchlightSub();
@@ -2106,6 +2660,47 @@ export default function AdventureGame() {
       openFieldwork(interaction);
       return;
     }
+    if (interaction.tournamentAction === "registration") {
+      const current = saveRef.current ?? gameSave;
+      const begun = beginChampionsWakeQuestAtCurrentScene(current);
+      if (begun.applied) {
+        commitAdventureMutation(
+          begun.save,
+          "champions-wake-arrival",
+          "Champion's Wake has entered your voyage record. Director Vela is ready to review registration.",
+        );
+      }
+      const progressState = getChampionsWakeTournamentProgress(begun.save);
+      setConversation({
+        trainerId: interaction.npcId,
+        index: 0,
+        mode: progressState.complete
+          ? "postgame"
+          : progressState.status === "active"
+            ? "roundReady"
+            : getChampionsWakeTournamentAvailability(begun.save).requirementsMet
+              ? "registration"
+              : "guidance",
+      });
+      return;
+    }
+    if (interaction.tournamentAction === "epilogue") {
+      const progressState = getChampionsWakeTournamentProgress(saveRef.current ?? gameSave);
+      if (progressState.complete) {
+        const flags = progressState.save.progression.quests[CHAMPIONS_WAKE_QUEST_ID]?.flags ?? {};
+        const unfinishedStage = ["ceremony", "epilogue", "credits"]
+          .find((stage) => flags[CHAMPIONSHIP_ENDING_FLAGS[stage]] !== true);
+        setChampionshipEndingReplay(!unfinishedStage);
+        setChampionshipEndingStage(unfinishedStage ?? "epilogue");
+      } else {
+        setConversation({
+          trainerId: interaction.npcId,
+          index: 0,
+          mode: progressState.status === "active" ? "guidance" : "intro",
+        });
+      }
+      return;
+    }
     if (interaction.type === "trainer" || interaction.type === "npc") {
       const trainerId = interaction.trainerId ?? interaction.npcId;
       const trainer = TRAINERS[trainerId];
@@ -2139,6 +2734,15 @@ export default function AdventureGame() {
       }
       if (!trainer.encounterId) {
         const current = saveRef.current ?? gameSave;
+        if (trainer.townId === "champions-wake") {
+          const progressState = getChampionsWakeTournamentProgress(current);
+          setConversation({
+            trainerId,
+            index: 0,
+            mode: progressState.complete ? "postgame" : progressState.status === "active" ? "guidance" : "intro",
+          });
+          return;
+        }
         const chapter = getAdventureEcosystemChapterByTownId(trainer.townId);
         const progress = chapter?.getProgress(current) ?? null;
         const mode = chapter
@@ -2157,7 +2761,13 @@ export default function AdventureGame() {
         });
         return;
       }
-      setConversation({ trainerId, index: 0, mode: "challenge" });
+      setConversation({
+        trainerId,
+        index: 0,
+        mode: trainer.townId === "champions-wake"
+          ? availability.practiceOnly ? "postgame" : "roundReady"
+          : "challenge",
+      });
       return;
     }
     if (interaction.targetScene && interaction.spawn) {
@@ -2220,6 +2830,43 @@ export default function AdventureGame() {
         return;
       }
     }
+    const tournamentRound = trainer.townId === "champions-wake"
+      && CHAMPIONS_WAKE_TOURNAMENT_ROUND_IDS.includes(trainer.encounterId);
+    const progressState = tournamentRound
+      ? getChampionsWakeTournamentProgress(current)
+      : null;
+    if (tournamentRound && progressState?.status === "active") {
+      try {
+        const launch = getChampionsWakeTournamentLaunch(current);
+        if (launch.encounterId !== trainer.encounterId || launch.opponentId !== trainer.id) {
+          setSaveNotice({
+            kind: "info",
+            message: "The bracket steward is holding this table. Meet the highlighted opponent for your next round.",
+          });
+          closeConversation();
+          return;
+        }
+        const checkpoint = persistSave(progressState.save, {
+          checkpointId: `before-tournament-round:${launch.encounterId}`,
+        });
+        if (!checkpoint.ok) {
+          setSaveNotice({
+            kind: "error",
+            message: "The required pre-round checkpoint could not be saved. Your bracket is unchanged; retry Save game before starting this round.",
+          });
+          setConversation(null);
+          return;
+        }
+        launchDuel(trainerKey, launch.playerDeckSnapshot);
+      } catch (error) {
+        setSaveNotice({
+          kind: "error",
+          message: error?.message ?? "The registered tournament round could not be prepared safely.",
+        });
+        setConversation(null);
+      }
+      return;
+    }
     let playerDeckSnapshot;
     try {
       playerDeckSnapshot = createActiveDuelDeckSnapshot(current, cardsById);
@@ -2249,9 +2896,85 @@ export default function AdventureGame() {
   }
 
   function recordDuelResult(trainerId, result) {
+    if (duelResultRef.current) return;
     const trainer = TRAINERS[trainerId];
     const current = saveRef.current ?? gameSave;
     if (!trainer || !current) return;
+    const tournamentRound = trainer.townId === "champions-wake"
+      && CHAMPIONS_WAKE_TOURNAMENT_ROUND_IDS.includes(trainer.encounterId);
+    const tournamentState = tournamentRound
+      ? getChampionsWakeTournamentProgress(current)
+      : null;
+    if (tournamentRound && tournamentState?.status === "active") {
+      try {
+        const recorded = recordChampionsWakeTournamentResult(current, result);
+        duelResultRef.current = result;
+        saveRef.current = recorded.save;
+        setGameSave(recorded.save);
+        setDirty(true);
+        const saved = persistSave(recorded.save, {
+          checkpointId: `tournament-result:${recorded.roundId}:${recorded.outcome}`,
+        });
+        const loss = result.outcome !== "victory";
+        setSaveNotice({
+          kind: saved.ok ? "info" : "error",
+          message: saved.ok
+            ? loss
+              ? "The attempt is recorded. Your round, registered deck, cards, and rewards are unchanged; retry whenever you are ready."
+              : recorded.tournamentComplete
+                ? "All three 30 VP wins are recorded. The Championship Ceremony is ready."
+                : "Round victory saved. The same registered deck is ready for the next 30 VP match."
+            : "The result is safe in this session but did not reach storage. Save from the pause menu before continuing.",
+        });
+        setPostDuelConversation({
+          trainerId,
+          index: 0,
+          mode: loss ? "defeat" : "roundVictory",
+        });
+      } catch (error) {
+        setSaveNotice({
+          kind: "error",
+          message: `${error?.message ?? "The tournament result could not be recorded."} No bracket progress or rewards were changed.`,
+        });
+      }
+      return;
+    }
+    if (tournamentRound && tournamentState?.complete) {
+      try {
+        assertAdventureDuelResultMatchesLaunch(result, {
+          encounterId: trainer.encounterId,
+          opponentId: trainer.id,
+          opponentDeckId: trainer.deckId,
+          victoryTarget: trainer.victoryTarget,
+          playerDeckSnapshot: activeDuelDeckSnapshot,
+        });
+        const recorded = recordAdventureDuelResult(current, result);
+        duelResultRef.current = result;
+        saveRef.current = recorded.save;
+        setGameSave(recorded.save);
+        setDirty(true);
+        const saved = persistSave(recorded.save, {
+          checkpointId: `postgame-practice:${trainer.encounterId}:${result.outcome}`,
+        });
+        setSaveNotice({
+          kind: saved.ok ? "info" : "error",
+          message: saved.ok
+            ? "Practice result saved. The completed bracket, archived deck, Cup, and rewards were not changed."
+            : "The practice result did not save, but your completed bracket and rewards remain safe.",
+        });
+        setPostDuelConversation({
+          trainerId,
+          index: 0,
+          mode: result.outcome === "victory" ? "postgame" : "defeat",
+        });
+      } catch (error) {
+        setSaveNotice({
+          kind: "error",
+          message: `${error?.message ?? "The practice result could not be recorded."} The championship bracket was not changed.`,
+        });
+      }
+      return;
+    }
     try {
       assertAdventureDuelResultMatchesLaunch(result, {
         encounterId: trainer.encounterId,
@@ -2416,6 +3139,16 @@ export default function AdventureGame() {
       if (!trainer.encounterId) {
         const current = saveRef.current ?? gameSave;
         if (!current) return;
+        if (trainer.roleId === "tournament-director") {
+          setConversation(null);
+          setTournamentRegistrationError(null);
+          setTournamentRegistrationOpen(true);
+          return;
+        }
+        if (trainer.townId === "champions-wake") {
+          closeConversation();
+          return;
+        }
         const chapter = getAdventureEcosystemChapterByTownId(trainer.townId);
         if (trainer.roleId === "local-guide" && conversation.mode === "intro") {
           if (!chapter) {
@@ -2466,7 +3199,7 @@ export default function AdventureGame() {
         closeConversation();
         return;
       }
-      if (["victory", "exhibitionVictory", "onboardingGate", "locked"].includes(conversation.mode)) closeConversation();
+      if (["victory", "roundVictory", "exhibitionVictory", "onboardingGate", "locked"].includes(conversation.mode)) closeConversation();
       else startDuel();
       return;
     }
@@ -2497,10 +3230,20 @@ export default function AdventureGame() {
     const trainer = TRAINERS[conversation.trainerId];
     if (trainer?.id !== ACADEMY_MENTOR_ID) {
       if (["victory", "exhibitionVictory"].includes(conversation.mode)) return "Continue exploring";
+      if (conversation.mode === "roundVictory") {
+        return tournamentProgress?.complete
+          ? "Join the Championship Ceremony"
+          : "Continue to the next round";
+      }
+      if (conversation.mode === "defeat") return "Retry this 30 VP round";
+      if (conversation.mode === "postgame" && trainer?.encounterId) return "Start a 30 VP practice rematch";
       if (conversation.mode === "exhibitionOffer") return "Start 30 VP exhibition";
       if (conversation.mode === "onboardingGate") return "Return to the academy";
       if (conversation.mode === "locked") return "Continue fieldwork";
       if (!trainer?.encounterId) {
+        if (trainer?.roleId === "tournament-director") {
+          return tournamentProgress?.complete ? "View championship record" : tournamentProgress?.status === "active" ? "Review registered deck" : "Review registration";
+        }
         if (trainer?.roleId === "local-guide" && conversation.mode === "intro") {
           const chapter = getAdventureEcosystemChapterByTownId(trainer.townId);
           return `Begin the ${chapter?.ui.activityLabel ?? "field survey"}`;
@@ -2631,7 +3374,13 @@ export default function AdventureGame() {
     setSubAssistedMode(false);
     setSubFeedback(null);
     setShowCompletion(false);
+    setTournamentRegistrationOpen(false);
+    setTournamentRegistrationError(null);
+    setDecksReturnContext(null);
+    setChampionshipEndingStage(null);
+    setChampionshipEndingReplay(false);
     setPauseOpen(false);
+    setSettingsOpen(false);
     setConfirmation(null);
     setDirty(false);
     profileWriteAuthorizedRef.current = false;
@@ -2670,6 +3419,17 @@ export default function AdventureGame() {
     clearMovement();
     if (confirmation) {
       setConfirmation(null);
+    } else if (championshipEndingStage) {
+      if (championshipEndingReplay) {
+        setChampionshipEndingStage(null);
+        setChampionshipEndingReplay(false);
+      }
+    } else if (tournamentRegistrationOpen) {
+      setTournamentRegistrationOpen(false);
+      setTournamentRegistrationError(null);
+    } else if (settingsOpen) {
+      setSettingsOpen(false);
+      setPauseOpen(true);
     } else if (fieldworkActivity) {
       setFieldworkActivity(null);
       setFieldworkFeedback(null);
@@ -2685,6 +3445,10 @@ export default function AdventureGame() {
       setPackReveal(null);
     } else if (decksOpen) {
       setDecksOpen(false);
+      if (decksReturnContext === "tournament-registration") {
+        setDecksReturnContext(null);
+        setTournamentRegistrationOpen(true);
+      }
     } else if (conversation) {
       closeConversation();
     } else if (showCompletion) {
@@ -2756,7 +3520,7 @@ export default function AdventureGame() {
   }, []);
 
   useEffect(() => {
-    if (screen !== "playing" || pauseOpen || confirmation || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || !pageVisible) return undefined;
+    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || tournamentRegistrationOpen || championshipEndingStage || !pageVisible) return undefined;
     const timer = window.setInterval(() => {
       if (!pageVisibleRef.current) return;
       setGameSave((current) => {
@@ -2771,7 +3535,7 @@ export default function AdventureGame() {
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [confirmation, decksOpen, fieldNoteOpen, inventoryOpen, pageVisible, pauseOpen, screen, setDirty, starterSelectionOpen]);
+  }, [championshipEndingStage, confirmation, decksOpen, fieldNoteOpen, fieldworkActivity, inventoryOpen, pageVisible, pauseOpen, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
 
   useEffect(() => {
     function saveWhenHidden() {
@@ -2833,6 +3597,8 @@ export default function AdventureGame() {
   if (activeTrainerId) {
     const trainer = TRAINERS[activeTrainerId];
     const isAcademyPractice = trainer.id === ACADEMY_MENTOR_ID;
+    const isTournamentMatch = trainer.townId === "champions-wake"
+      && CHAMPIONS_WAKE_TOURNAMENT_ROUND_IDS.includes(trainer.encounterId);
     if (!activeDuelDeckSnapshot) {
       return (
         <main className={styles.gameShell}>
@@ -2848,8 +3614,15 @@ export default function AdventureGame() {
       );
     }
     return (
-      <Simulator
+      <div className={[
+        gameSave.settings.highContrast ? styles.highContrastMode : "",
+        gameSave.settings.reducedMotion ? styles.reducedMotionMode : "",
+      ].filter(Boolean).join(" ")}>
+      <div inert={settingsOpen || undefined} aria-hidden={settingsOpen || undefined}>
+        <Simulator
         key={`reefbound-${trainer.encounterId}-${activeDuelDeckSnapshot.fingerprint}`}
+        accessibilitySettings={gameSave?.settings}
+        onOpenAccessibilitySettings={() => setSettingsOpen(true)}
         storyMode={{
           encounterId: trainer.encounterId,
           opponentId: trainer.id,
@@ -2859,7 +3632,7 @@ export default function AdventureGame() {
           victoryTarget: trainer.victoryTarget,
           difficulty: trainer.difficulty,
           opponentName: trainer.name,
-          returnLabel: isAcademyPractice ? "Academy" : "Town",
+          returnLabel: isAcademyPractice ? "Academy" : isTournamentMatch ? "Arena" : "Town",
           ...(isAcademyPractice ? {
             tutorial: {
               scriptedDecks: gameSave?.tutorial?.status !== "complete",
@@ -2885,7 +3658,22 @@ export default function AdventureGame() {
           onExit: () => exitDuel(activeTrainerId),
           onResult: (result) => recordDuelResult(activeTrainerId, result),
         }}
-      />
+        />
+      </div>
+      {settingsOpen ? (
+        <AdventureSettingsModal
+          save={gameSave}
+          notice={saveNotice}
+          onCommit={(nextSave, meta) => {
+            const saved = commitAdventureMutation(nextSave, meta.checkpointId, meta.message);
+            if (!saved.ok) {
+              throw new Error("Settings changed for this session, but the save could not be written. Retry Save game after returning to the adventure.");
+            }
+          }}
+          onClose={() => setSettingsOpen(false)}
+        />
+      ) : null}
+      </div>
     );
   }
 
@@ -2893,6 +3681,7 @@ export default function AdventureGame() {
   const canOfferSunpatchExhibition = conversation?.trainerId === "sunpatch-leader"
     && defeated.has("encounter-sunpatch-qualifier");
   const currentTownId = gameSave.world.townId;
+  const isChampionsWake = currentTownId === "champions-wake";
   const activeFieldworkChapter = fieldworkActivity
     ? getAdventureEcosystemChapterByQuestId(fieldworkActivity.questId)
     : ecosystemChapter;
@@ -3002,9 +3791,50 @@ export default function AdventureGame() {
             label: `${ecosystemCompletedSteps} / ${ecosystemRequiredSteps} investigation steps`,
           }
     : null;
+  const tournamentCompletedCount = tournamentProgress?.completedRoundIds.length ?? 0;
+  const tournamentPostgameUnlocked = gameSave.progression.quests[CHAMPIONS_WAKE_QUEST_ID]
+    ?.flags?.[CHAMPIONSHIP_ENDING_FLAGS.postgame] === true;
+  const tournamentActiveRound = CHAMPIONS_WAKE_ROUNDS.find(
+    (round) => round.id === tournamentProgress?.activeRoundId,
+  );
+  const tournamentQuestView = isChampionsWake && tournamentProgress
+    ? tournamentProgress.complete
+      ? tournamentPostgameUnlocked
+        ? {
+            title: "Champion's free voyage",
+            description: "Revisit every habitat, refine your decks, or challenge any tournament opponent to a 30 VP practice rematch.",
+            value: 3,
+            total: 3,
+            label: "Championship complete · postgame open",
+          }
+        : {
+            title: "Join the Championship Ceremony",
+            description: "Director Vela and the archipelago learning team are ready to present the Cup and reflect on all five habitats.",
+            value: 3,
+            total: 3,
+            label: "Three tournament wins recorded",
+          }
+      : tournamentProgress.status === "active"
+        ? {
+            title: tournamentActiveRound ? `Play the ${tournamentActiveRound.label}` : "Continue the tournament",
+            description: tournamentActiveRound
+              ? `Meet ${tournamentActiveRound.opponent} in the Arena. Your registered deck remains fixed for this complete 30 VP round.`
+              : "Return to the Arena for the next ordered 30 VP round.",
+            value: tournamentCompletedCount,
+            total: 3,
+            label: `${tournamentCompletedCount} / 3 rounds won`,
+          }
+        : {
+            title: "Register for the SeaPals Tournament",
+            description: "Meet Director Vela in the Registration Hall. Review all five Tide Marks and Field Notes, then lock one legal 60-card deck for the bracket.",
+            value: 0,
+            total: 3,
+            label: tournamentAvailability?.requirementsMet ? "Registration ready" : "Voyage record incomplete",
+          }
+    : null;
   const questView = boatMode
     ? voyageQuestView
-    : ecosystemQuestView ?? shellshoreQuestView;
+    : tournamentQuestView ?? ecosystemQuestView ?? shellshoreQuestView;
   const activeStarter = onboardingProgress.starterDeckId
     ? getAdventureStarterDeck(onboardingProgress.starterDeckId)
     : null;
@@ -3014,11 +3844,16 @@ export default function AdventureGame() {
   const unopenedPackCount = Object.values(gameSave.inventory.unopenedPacks)
     .reduce((total, quantity) => total + quantity, 0);
   const explorationBlocked = Boolean(
-    pauseOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion,
+    pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage,
   );
+  const gameShellClassName = [
+    styles.gameShell,
+    gameSave.settings.highContrast ? styles.highContrastMode : "",
+    gameSave.settings.reducedMotion ? styles.reducedMotionMode : "",
+  ].filter(Boolean).join(" ");
 
   return (
-    <main className={styles.gameShell}>
+    <main className={gameShellClassName}>
       <div className={styles.oceanGlow} aria-hidden="true" />
       <header className={styles.gameHeader} inert={explorationBlocked} aria-hidden={explorationBlocked || undefined}>
         <button
@@ -3075,6 +3910,9 @@ export default function AdventureGame() {
               <span style={{ width: `${(questView.value / questView.total) * 100}%` }} />
             </div>
           </div>
+          {isChampionsWake && tournamentProgress ? (
+            <TournamentBracketPanel progress={tournamentProgress} save={gameSave} compact />
+          ) : null}
           <div className={styles.interactionBar} aria-live="polite">
             <span className={interaction || vehicleMode ? styles.readyDot : ""} />
             {vehicleMode
@@ -3115,12 +3953,25 @@ export default function AdventureGame() {
           >
             {sceneCharacterInteractions.map((characterInteraction) => {
               const trainer = TRAINERS[characterInteraction.trainerId ?? characterInteraction.npcId];
+              const tournamentActor = Boolean(
+                trainer.encounterId
+                && CHAMPIONS_WAKE_TOURNAMENT_ROUND_IDS.includes(trainer.encounterId),
+              );
+              const tournamentStatus = tournamentActor && isChampionsWake
+                ? tournamentRoundStatus(tournamentProgress, trainer.encounterId, gameSave)
+                : null;
+              const trainerDefeated = Boolean(trainer.encounterId && (
+                tournamentActor
+                  ? tournamentProgress.completedRoundIds.includes(trainer.encounterId)
+                  : defeated.has(trainer.encounterId)
+              ));
               return (
                 <AdventureTrainerSprite
                   key={characterInteraction.id ?? characterInteraction.interactionId}
                   trainer={trainer}
                   position={characterInteraction.at}
-                  defeated={Boolean(trainer.encounterId && defeated.has(trainer.encounterId))}
+                  defeated={trainerDefeated}
+                  status={tournamentStatus?.startsWith("Won") ? "Won" : tournamentStatus}
                   scene={scene}
                 />
               );
@@ -3179,6 +4030,26 @@ export default function AdventureGame() {
         </section>
 
         <aside className={`${styles.sidePanel} ${styles.trainerPanel}`}>
+          {isChampionsWake && tournamentProgress ? (
+            <>
+              <TournamentBracketPanel progress={tournamentProgress} save={gameSave} />
+              <button
+                type="button"
+                className={styles.fieldNoteButton}
+                onClick={() => {
+                  setTournamentRegistrationError(null);
+                  setTournamentRegistrationOpen(true);
+                }}
+              >{tournamentProgress.status === "active" ? "Review registered deck" : tournamentProgress.complete ? "View championship record" : "Open registration record"}</button>
+              {fieldNoteAvailable ? (
+                <button type="button" className={styles.tournamentQuietAction} onClick={() => {
+                  setActiveFieldNoteId(gameSave.fieldNotes.entryIds.at(-1) ?? SHELLSHORE_FIELD_NOTE.id);
+                  setFieldNoteOpen(true);
+                }}>Open latest Field Note</button>
+              ) : null}
+            </>
+          ) : (
+            <>
           <div className={styles.panelEyebrow}>{ecosystemChapter?.ui.recordLabel ?? "Academy record"}</div>
           <div className={`${styles.trainerCard} ${onboardingProgress.tutorialComplete ? styles.trainerCardWon : ""}`}>
             <span className={`${styles.miniPortrait} ${styles.portraitteal}`}>
@@ -3229,6 +4100,8 @@ export default function AdventureGame() {
           {progress ? (
             <button type="button" className={styles.resetButton} onClick={requestRestart}>Restart voyage</button>
           ) : null}
+            </>
+          )}
         </aside>
       </div>
 
@@ -3243,7 +4116,11 @@ export default function AdventureGame() {
             ? "Play optional 30 VP exhibition"
             : conversation.mode === "practiceLoss" || conversation.mode === "practiceExit"
               ? "Take a break"
+              : conversation.mode === "defeat"
+                ? "Return to the Arena"
               : "Not yet"}
+          textSpeed={gameSave.settings.textSpeed}
+          reducedMotion={gameSave.settings.reducedMotion}
           onAdvance={advanceConversation}
           onPrimary={handleConversationPrimary}
           onSecondary={canOfferSunpatchExhibition
@@ -3252,7 +4129,7 @@ export default function AdventureGame() {
                 index: 0,
                 mode: "exhibitionOffer",
               })
-            : ["victory", "exhibitionVictory", "onboardingGate"].includes(conversation.mode)
+            : ["victory", "roundVictory", "exhibitionVictory", "onboardingGate"].includes(conversation.mode)
               ? null
               : closeConversation}
         />
@@ -3296,6 +4173,28 @@ export default function AdventureGame() {
           }}
         />
       ) : null}
+      {tournamentRegistrationOpen && tournamentAvailability && tournamentProgress ? (
+        <TournamentRegistrationModal
+          availability={tournamentAvailability}
+          progress={tournamentProgress}
+          activeDeckName={activeDeckName}
+          deckReadiness={tournamentDeckReadiness}
+          notice={tournamentRegistrationError ?? saveNotice}
+          blocked={Boolean(confirmation)}
+          onRegister={registerForChampionsWake}
+          onSaveRegistration={saveChampionsWakeRegistration}
+          onDecks={() => {
+            setTournamentRegistrationOpen(false);
+            setTournamentRegistrationError(null);
+            setDecksReturnContext("tournament-registration");
+            setDecksOpen(true);
+          }}
+          onClose={() => {
+            setTournamentRegistrationOpen(false);
+            setTournamentRegistrationError(null);
+          }}
+        />
+      ) : null}
       {decksOpen ? (
         <AdventureDecksModal
           save={gameSave}
@@ -3306,6 +4205,10 @@ export default function AdventureGame() {
           onClose={() => {
             setDecksOpen(false);
             setPackReveal(null);
+            if (decksReturnContext === "tournament-registration") {
+              setDecksReturnContext(null);
+              setTournamentRegistrationOpen(true);
+            }
           }}
         />
       ) : null}
@@ -3315,6 +4218,7 @@ export default function AdventureGame() {
           notice={saveNotice}
           blocked={Boolean(confirmation)}
           onAutoSteer={autoSteerRoute}
+          autoSteerEnabled={gameSave.settings.boatAutoSteer}
           onClose={() => setWorldMapOpen(false)}
         />
       ) : null}
@@ -3333,7 +4237,34 @@ export default function AdventureGame() {
         />
       ) : null}
       {showCompletion ? (
-        <Completion blocked={Boolean(confirmation)} onContinue={() => setShowCompletion(false)} onReset={requestRestart} />
+        <ShellshoreMilestone blocked={Boolean(confirmation)} onContinue={() => setShowCompletion(false)} onReset={requestRestart} />
+      ) : null}
+      {championshipEndingStage ? (
+        <ChampionshipEnding
+          stage={championshipEndingStage}
+          replay={championshipEndingReplay}
+          blocked={Boolean(confirmation)}
+          textSpeed={gameSave.settings.textSpeed}
+          reducedMotion={gameSave.settings.reducedMotion}
+          onAdvance={advanceChampionshipEnding}
+        />
+      ) : null}
+      {settingsOpen ? (
+        <AdventureSettingsModal
+          save={gameSave}
+          notice={saveNotice}
+          blocked={Boolean(confirmation)}
+          onCommit={(nextSave, meta) => {
+            const saved = commitAdventureMutation(nextSave, meta.checkpointId, meta.message);
+            if (!saved.ok) {
+              throw new Error("Settings changed for this session, but the save could not be written. Retry Save game before leaving.");
+            }
+          }}
+          onClose={() => {
+            setSettingsOpen(false);
+            setPauseOpen(true);
+          }}
+        />
       ) : null}
       {pauseOpen ? (
         <PauseMenu
@@ -3357,6 +4288,10 @@ export default function AdventureGame() {
           onWorldMap={() => {
             setPauseOpen(false);
             setWorldMapOpen(true);
+          }}
+          onSettings={() => {
+            setPauseOpen(false);
+            setSettingsOpen(true);
           }}
           onFieldNote={() => {
             setPauseOpen(false);

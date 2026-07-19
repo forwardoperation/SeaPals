@@ -1,6 +1,7 @@
 import {
   ADVENTURE_STARTER_DECK_IDS,
   ADVENTURE_CONTENT_SCHEMA_VERSION,
+  CHAMPIONS_WAKE_ACTION_IDS,
   REQUIRED_DIALOGUE_BEATS,
   REQUIRED_ECOSYSTEM_NPC_ROLES,
   REQUIRED_TUTORIAL_ACTION_TYPES,
@@ -34,6 +35,10 @@ const RUNTIME_INTERACTION_TYPES = new Set([
   "board",
   "dock",
 ]);
+const TOURNAMENT_ACTION_TYPES = new Set(["registration", "round", "epilogue"]);
+const TOURNAMENT_DIRECTOR_CONVERSATION_MODES = ["registration", "roundReady", "champion", "postgame"];
+const TOURNAMENT_OPPONENT_CONVERSATION_MODES = ["roundReady", "defeat", "roundVictory", "postgame"];
+const TOURNAMENT_REFLECTION_CONVERSATION_MODES = ["epilogue", "postgame"];
 const FACING_DIRECTIONS = new Set(["up", "down", "left", "right"]);
 const PACK_POOL_STATUSES = new Set(["planned", "playable"]);
 const PLAYABLE_PACK_GUARANTEE = "at-least-one-unowned-card-when-eligible";
@@ -215,6 +220,69 @@ export function validateAdventureContent(content) {
         }
       }
     }
+
+    if (town.chapterType === "tournament") {
+      const requiredRoles = ["tournament-director", "town-challenger", "reflection-character", "spectator"];
+      for (const roleId of requiredRoles) {
+        if (!asArray(town.plannedNpcRoleIds).includes(roleId)) {
+          errors.push(`towns.${town.id} is missing required tournament NPC role ${roleId}.`);
+        }
+      }
+      if (Number(town.encounterPlan?.tournament) !== 3) {
+        errors.push(`towns.${town.id}.encounterPlan must include exactly three tournament rounds.`);
+      }
+
+      const listedEncounters = asArray(town.encounterIds)
+        .map((encounterId) => encountersById.get(encounterId))
+        .filter(Boolean);
+      if (
+        listedEncounters.length !== 3
+        || listedEncounters.some((encounter) => encounter.role !== "tournament" || encounter.victoryTarget !== 30)
+      ) {
+        errors.push(`towns.${town.id}.encounterIds must resolve to exactly three 30 VP tournament rounds.`);
+      }
+
+      listedEncounters.forEach((encounter, index) => {
+        const expectedRoundIndex = index + 1;
+        if (encounter.roundIndex !== expectedRoundIndex) {
+          errors.push(`encounters.${encounter.id}.roundIndex must be ${expectedRoundIndex} in the authored bracket order.`);
+        }
+        const prerequisites = asArray(encounter.prerequisites);
+        if (index === 0) {
+          const requiresActiveQuest = prerequisites.some((prerequisite) => (
+            isObject(prerequisite)
+            && prerequisite.type === "questStatus"
+            && prerequisite.questId === encounter.questId
+            && prerequisite.status === "active"
+          ));
+          if (!requiresActiveQuest) {
+            errors.push(`encounters.${encounter.id} quarterfinal must require its tournament quest to be active.`);
+          }
+        } else {
+          const previousEncounter = listedEncounters[index - 1];
+          const requiresPreviousRound = prerequisites.some((prerequisite) => (
+            isObject(prerequisite)
+            && prerequisite.type === "encounterComplete"
+            && prerequisite.encounterId === previousEncounter?.id
+          ));
+          if (!requiresPreviousRound) {
+            errors.push(`encounters.${encounter.id} must require completion of ${previousEncounter?.id}.`);
+          }
+        }
+      });
+
+      if (scenesById.get(town.startSceneId)?.status === "prototype") {
+        const runtimeNpcs = npcs.filter((npc) => npc.townId === town.id);
+        if (runtimeNpcs.length !== 6) {
+          errors.push(`towns.${town.id} prototype tournament chapter must author its director, three opponents, reflection guide, and spectator.`);
+        }
+        for (const roleId of requiredRoles) {
+          if (!runtimeNpcs.some((npc) => npc.roleId === roleId)) {
+            errors.push(`towns.${town.id} prototype tournament chapter has no NPC for role ${roleId}.`);
+          }
+        }
+      }
+    }
   }
 
   for (const dock of docks) {
@@ -236,6 +304,7 @@ export function validateAdventureContent(content) {
   }
 
   const runtimeInteractionIds = new Set();
+  const runtimeTournamentActions = [];
   for (const scene of scenes) {
     requireReference(scene.townId, townIds, `scenes.${scene.id}.townId`, errors);
     if (scene.routeId !== undefined) {
@@ -351,6 +420,50 @@ export function validateAdventureContent(content) {
         errors.push(`${path}.at requires integer x and y coordinates.`);
       }
 
+      if (interaction.tournamentAction !== undefined) {
+        runtimeTournamentActions.push({ sceneId: scene.id, interaction });
+        if (!TOURNAMENT_ACTION_TYPES.has(interaction.tournamentAction)) {
+          errors.push(`${path}.tournamentAction must be registration, round, or epilogue.`);
+        }
+        requireReference(interaction.questId, questIds, `${path}.questId`, errors);
+        if (townsById.get(scene.townId)?.chapterType !== "tournament") {
+          errors.push(`${path}.tournamentAction may only be authored in a tournament town.`);
+        }
+
+        if (interaction.tournamentAction === "registration") {
+          if (interaction.type !== "npc") {
+            errors.push(`${path} registration must use an NPC interaction.`);
+          }
+          if (npcsById.get(interaction.npcId)?.roleId !== "tournament-director") {
+            errors.push(`${path} registration must resolve to the tournament director.`);
+          }
+          const requiredTideMarkIds = asArray(interaction.requiredTideMarkIds);
+          if (
+            requiredTideMarkIds.length !== 5
+            || requiredTideMarkIds.some((tideMarkId) => !tideMarkIds.has(tideMarkId))
+          ) {
+            errors.push(`${path}.requiredTideMarkIds must contain the five earned ecosystem Tide Marks.`);
+          }
+        } else if (interaction.tournamentAction === "round") {
+          const encounter = encountersById.get(interaction.encounterId);
+          if (interaction.type !== "trainer" || encounter?.role !== "tournament") {
+            errors.push(`${path} round must resolve to a tournament trainer encounter.`);
+          }
+          if (interaction.roundIndex !== encounter?.roundIndex) {
+            errors.push(`${path}.roundIndex must match its tournament encounter.`);
+          }
+        } else if (interaction.tournamentAction === "epilogue") {
+          if (interaction.type !== "npc" || npcsById.get(interaction.npcId)?.roleId !== "reflection-character") {
+            errors.push(`${path} epilogue must resolve to the tournament reflection character.`);
+          }
+        }
+      } else if (
+        interaction.type === "trainer"
+        && encountersById.get(interaction.encounterId)?.role === "tournament"
+      ) {
+        errors.push(`${path} tournament trainer must declare tournamentAction round.`);
+      }
+
       if (interaction.type === "trainer") {
         requireReference(interaction.trainerId, npcIds, `${path}.trainerId`, errors);
         requireReference(interaction.npcId, npcIds, `${path}.npcId`, errors);
@@ -424,6 +537,43 @@ export function validateAdventureContent(content) {
     }
   }
 
+  if (scenesById.get("champions-wake-town")?.status === "prototype") {
+    const authoredTournamentActionIds = runtimeTournamentActions.map(({ interaction }) => interaction.id);
+    const expectedTournamentActionIds = [
+      CHAMPIONS_WAKE_ACTION_IDS.registration,
+      ...CHAMPIONS_WAKE_ACTION_IDS.rounds,
+      CHAMPIONS_WAKE_ACTION_IDS.epilogue,
+    ];
+    if (
+      authoredTournamentActionIds.length !== expectedTournamentActionIds.length
+      || expectedTournamentActionIds.some((interactionId) => !authoredTournamentActionIds.includes(interactionId))
+    ) {
+      errors.push(`Champion's Wake runtime actions must exactly include ${expectedTournamentActionIds.join(", ")}.`);
+    }
+
+    const registrationActions = runtimeTournamentActions.filter(({ interaction }) => interaction.tournamentAction === "registration");
+    const roundActions = runtimeTournamentActions
+      .filter(({ interaction }) => interaction.tournamentAction === "round")
+      .sort((left, right) => left.interaction.roundIndex - right.interaction.roundIndex);
+    const epilogueActions = runtimeTournamentActions.filter(({ interaction }) => interaction.tournamentAction === "epilogue");
+    if (registrationActions.length !== 1 || registrationActions[0]?.sceneId !== "champions-wake-registration-hall") {
+      errors.push("Champion's Wake must expose one validated registration action in the Registration Hall.");
+    }
+    if (
+      roundActions.length !== 3
+      || roundActions.some(({ sceneId, interaction }, index) => (
+        sceneId !== "champions-wake-arena"
+        || interaction.roundIndex !== index + 1
+        || interaction.id !== CHAMPIONS_WAKE_ACTION_IDS.rounds[index]
+      ))
+    ) {
+      errors.push("Champion's Wake must expose its three ordered tournament round actions in the Arena.");
+    }
+    if (epilogueActions.length !== 1 || epilogueActions[0]?.sceneId !== "champions-wake-reflection-pavilion") {
+      errors.push("Champion's Wake must expose one validated epilogue action in the Reflection Pavilion.");
+    }
+  }
+
   for (const npc of npcs) {
     requireReference(npc.townId, townIds, `npcs.${npc.id}.townId`, errors);
     requireReference(npc.sceneId, sceneIds, `npcs.${npc.id}.sceneId`, errors);
@@ -471,6 +621,20 @@ export function validateAdventureContent(content) {
       const lines = conversation.lines?.[mode];
       if (!Array.isArray(lines) || !lines.length || lines.some((line) => typeof line !== "string" || !line.trim())) {
         errors.push(`conversations.${conversation.id}.lines.${mode} must contain at least one non-empty line.`);
+      }
+    }
+    if (conversation.townId === "champions-wake") {
+      let tournamentModes = [];
+      if (npc?.roleId === "tournament-director") tournamentModes = TOURNAMENT_DIRECTOR_CONVERSATION_MODES;
+      else if (npc?.encounterId) tournamentModes = TOURNAMENT_OPPONENT_CONVERSATION_MODES;
+      else if (npc?.roleId === "reflection-character") tournamentModes = TOURNAMENT_REFLECTION_CONVERSATION_MODES;
+      else if (npc?.roleId === "spectator") tournamentModes = ["champion", "postgame"];
+
+      for (const mode of tournamentModes) {
+        const lines = conversation.lines?.[mode];
+        if (!Array.isArray(lines) || !lines.length || lines.some((line) => typeof line !== "string" || !line.trim())) {
+          errors.push(`conversations.${conversation.id}.lines.${mode} must contain authored tournament story copy.`);
+        }
       }
     }
     if (conversation.townId === "sunpatch-cay" && npc?.encounterId) {

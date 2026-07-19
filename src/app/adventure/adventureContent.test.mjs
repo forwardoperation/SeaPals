@@ -104,7 +104,7 @@ test("the initial save location references launch content", () => {
   assert.ok(ADVENTURE_CONTENT.scenes.some((scene) => scene.id === save.world.sceneId && scene.townId === save.world.townId));
 });
 
-test("Shellshore through Trenchlight runtime scenes plus the Phase 1 dock start resolve from content", () => {
+test("Shellshore through Champion's Wake runtime scenes plus the Phase 1 dock start resolve from content", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   assert.deepEqual(runtimeScenes.map((scene) => scene.id), [
     "town",
@@ -137,6 +137,11 @@ test("Shellshore through Trenchlight runtime scenes plus the Phase 1 dock start 
     "trenchlight-engineer-workshop",
     "trenchlight-tide-hall",
     "trenchlight-sub-descent",
+    "trenchlight-champions-wake-sea",
+    "champions-wake-town",
+    "champions-wake-registration-hall",
+    "champions-wake-arena",
+    "champions-wake-reflection-pavilion",
   ]);
   assert.ok(runtimeScenes.every((scene) => scene.world.tiles.length > 0));
   assert.deepEqual(getAdventureStartLocation(), {

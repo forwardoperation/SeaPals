@@ -144,6 +144,22 @@ function normalizeQuantityRecord(value, path, fallback = {}) {
   return Object.fromEntries(entries);
 }
 
+function normalizeNonNegativeIntegerRecord(value, path, fallback = {}) {
+  const record = requireRecord(value, path, fallback);
+  const entries = [];
+
+  for (const [rawIdentifier, rawValue] of Object.entries(record)) {
+    const identifier = normalizeIdentifier(rawIdentifier, `${path} key`);
+    entries.push([
+      identifier,
+      normalizeNonNegativeInteger(rawValue, `${path}.${identifier}`),
+    ]);
+  }
+
+  entries.sort(([left], [right]) => left.localeCompare(right));
+  return Object.fromEntries(entries);
+}
+
 function normalizeQuestFlag(value, path) {
   if (value === null || typeof value === "boolean") return value;
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -252,6 +268,42 @@ function normalizeEncounterResults(value, path, fallback = {}) {
   return Object.fromEntries(entries);
 }
 
+function normalizeTournamentDeckSnapshot(value, path, fallback = null) {
+  const candidate = value === undefined ? fallback : value;
+  if (candidate === null) return null;
+
+  const snapshot = requireRecord(candidate, path);
+  if (!Array.isArray(snapshot.cards) || snapshot.cards.length === 0) {
+    fail(`${path}.cards`, "must be a non-empty array of card quantities.");
+  }
+
+  const seen = new Set();
+  const cards = snapshot.cards.map((rawEntry, index) => {
+    const entryPath = `${path}.cards[${index}]`;
+    const entry = requireRecord(rawEntry, entryPath);
+    const cardId = normalizeIdentifier(entry.cardId, `${entryPath}.cardId`);
+    if (seen.has(cardId)) fail(`${entryPath}.cardId`, `duplicates card identifier ${cardId}.`);
+    seen.add(cardId);
+    if (!Number.isSafeInteger(entry.quantity) || entry.quantity <= 0) {
+      fail(`${entryPath}.quantity`, "must be a positive safe integer.");
+    }
+    return { cardId, quantity: entry.quantity };
+  });
+  cards.sort((left, right) => left.cardId.localeCompare(right.cardId));
+
+  const fingerprint = String(snapshot.fingerprint ?? "").trim();
+  if (!DECK_FINGERPRINT_PATTERN.test(fingerprint)) {
+    fail(`${path}.fingerprint`, "must use the deck-v1-<16 lowercase hex> format.");
+  }
+
+  return {
+    id: normalizeIdentifier(snapshot.id, `${path}.id`),
+    name: normalizeLabel(snapshot.name, `${path}.name`),
+    cards,
+    fingerprint,
+  };
+}
+
 function normalizeSavedDecks(value, path, fallback = {}) {
   const record = requireRecord(value, path, fallback);
   const entries = Object.entries(record).map(([rawDeckId, rawDeck]) => {
@@ -293,6 +345,9 @@ function createInitialState(profileId) {
         status: "locked",
         activeRoundId: null,
         completedRoundIds: [],
+        lockedDeckSnapshot: null,
+        roundAttemptBaselines: {},
+        roundVictoryAttemptCounts: {},
       },
     },
     inventory: {
@@ -426,6 +481,21 @@ export function normalizeAdventureSave(value) {
         completedRoundIds: normalizeIdentifierList(
           tournament.completedRoundIds,
           "save.progression.tournament.completedRoundIds",
+        ),
+        lockedDeckSnapshot: normalizeTournamentDeckSnapshot(
+          tournament.lockedDeckSnapshot,
+          "save.progression.tournament.lockedDeckSnapshot",
+          defaults.progression.tournament.lockedDeckSnapshot,
+        ),
+        roundAttemptBaselines: normalizeNonNegativeIntegerRecord(
+          tournament.roundAttemptBaselines,
+          "save.progression.tournament.roundAttemptBaselines",
+          defaults.progression.tournament.roundAttemptBaselines,
+        ),
+        roundVictoryAttemptCounts: normalizeNonNegativeIntegerRecord(
+          tournament.roundVictoryAttemptCounts,
+          "save.progression.tournament.roundVictoryAttemptCounts",
+          defaults.progression.tournament.roundVictoryAttemptCounts,
         ),
       },
     },
