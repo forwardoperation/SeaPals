@@ -250,6 +250,43 @@ function circleIntersectsRectangle(position, radiusSquared, rectangle) {
   return distanceX * distanceX + distanceY * distanceY < radiusSquared - Number.EPSILON;
 }
 
+function requireDynamicBlockers(dynamicBlockers) {
+  if (!Array.isArray(dynamicBlockers)) {
+    throw new TypeError("Dynamic adventure blockers must be an array.");
+  }
+
+  return dynamicBlockers.map((blocker, index) => {
+    requireContinuousPosition(blocker?.position);
+    requirePositiveNumber(blocker?.radius, `Dynamic adventure blocker ${index} radius`);
+    return blocker;
+  });
+}
+
+function circlesIntersect(position, radius, blocker) {
+  const distanceX = position.x - blocker.position.x;
+  const distanceY = position.y - blocker.position.y;
+  const combinedRadius = radius + blocker.radius;
+  return distanceX * distanceX + distanceY * distanceY
+    < combinedRadius * combinedRadius - Number.EPSILON;
+}
+
+function resolveInteractionPosition(interaction, positionOverrides) {
+  if (positionOverrides === undefined || positionOverrides === null) return interaction.at;
+  if (
+    !(positionOverrides instanceof Map)
+    && (typeof positionOverrides !== "object" || Array.isArray(positionOverrides))
+  ) {
+    throw new TypeError("Adventure interaction positionOverrides must be an object or Map.");
+  }
+
+  const override = positionOverrides instanceof Map
+    ? positionOverrides.get(interaction.id)
+    : Object.hasOwn(positionOverrides, interaction.id)
+      ? positionOverrides[interaction.id]
+      : undefined;
+  return override === undefined ? interaction.at : requireContinuousPosition(override);
+}
+
 export function isInBounds(sceneId, position) {
   const scene = requireScene(sceneId);
   requirePosition(position);
@@ -276,10 +313,16 @@ export function canOccupyContinuousPosition(
   sceneId,
   position,
   radius = CONTINUOUS_MOVEMENT_DEFAULTS.radius,
+  options = {},
 ) {
   const scene = requireScene(sceneId);
   requireContinuousPosition(position);
   requirePositiveNumber(radius, "Collision radius");
+  const dynamicBlockers = requireDynamicBlockers(options?.dynamicBlockers ?? []);
+  const ignoreActorTiles = options?.ignoreActorTiles ?? false;
+  if (typeof ignoreActorTiles !== "boolean") {
+    throw new TypeError("Adventure ignoreActorTiles must be a boolean.");
+  }
 
   const worldLeft = -0.5;
   const worldTop = -0.5;
@@ -305,6 +348,10 @@ export function canOccupyContinuousPosition(
       const tileSymbol = scene.tiles[tileY][tileX];
       if (TILE_LEGEND[tileSymbol].walkable) continue;
 
+      // Once an actor is driven by runtime patrol state, its authored anchor
+      // stops being geometry and the caller supplies its live circular blocker.
+      if (ignoreActorTiles && tileSymbol === "n") continue;
+
       // Authored rectangles replace the deliberately coarse furniture tiles,
       // while walls, doors, trainers, and other structural tiles stay solid.
       if (tileSymbol === "a" && scene.collisionRects.length) continue;
@@ -326,12 +373,21 @@ export function canOccupyContinuousPosition(
     return false;
   }
 
+  if (dynamicBlockers.some((blocker) => circlesIntersect(position, radius, blocker))) {
+    return false;
+  }
+
   return true;
 }
 
 /** Uses the scene-authored collision radius while preserving the legacy helper's default. */
-export function canOccupyScenePosition(sceneId, position) {
-  return canOccupyContinuousPosition(sceneId, position, getSceneMovementProfile(sceneId).radius);
+export function canOccupyScenePosition(sceneId, position, options = {}) {
+  return canOccupyContinuousPosition(
+    sceneId,
+    position,
+    getSceneMovementProfile(sceneId).radius,
+    options,
+  );
 }
 
 export function movePlayer(sceneId, position, direction) {
@@ -370,6 +426,8 @@ export function movePlayerContinuous(
   const radius = options.radius ?? profile.radius;
   const speed = options.speed ?? profile.speed;
   const maxStepDistance = options.maxStepDistance ?? profile.maxStepDistance;
+  const dynamicBlockers = options.dynamicBlockers ?? [];
+  const ignoreActorTiles = options.ignoreActorTiles ?? false;
   requirePositiveNumber(elapsedMs, "Elapsed time", { allowZero: true });
   requirePositiveNumber(radius, "Collision radius");
   requirePositiveNumber(speed, "Movement speed", { allowZero: true });
@@ -393,14 +451,17 @@ export function movePlayerContinuous(
       const amount = axis === "x" ? stepX : stepY;
       if (!amount) continue;
       const candidate = { ...next, [axis]: next[axis] + amount };
-      if (canOccupyContinuousPosition(sceneId, candidate, radius)) next = candidate;
+      if (canOccupyContinuousPosition(sceneId, candidate, radius, {
+        dynamicBlockers,
+        ignoreActorTiles,
+      })) next = candidate;
     }
   }
 
   return next;
 }
 
-export function getInteraction(sceneId, position, facing) {
+export function getInteraction(sceneId, position, facing, options = {}) {
   const scene = requireScene(sceneId);
   requirePosition(position);
   const delta = DIRECTION_DELTAS[facing];
@@ -410,9 +471,10 @@ export function getInteraction(sceneId, position, facing) {
     x: position.x + delta.x,
     y: position.y + delta.y,
   };
-  const interaction = scene.interactions.find(
-    (candidate) => candidate.at.x === target.x && candidate.at.y === target.y,
-  );
+  const interaction = scene.interactions.find((candidate) => {
+    const candidatePosition = resolveInteractionPosition(candidate, options?.positionOverrides);
+    return candidatePosition.x === target.x && candidatePosition.y === target.y;
+  });
 
   if (!interaction) return null;
   return publicInteraction(interaction);
@@ -431,13 +493,15 @@ export function getContinuousInteraction(
   if (!facingVector) throw new RangeError(`Unknown facing direction: ${facing}`);
   const range = options.range ?? scene.movement.interactionRange;
   const lateralTolerance = options.lateralTolerance ?? scene.movement.interactionLateralTolerance;
+  const positionOverrides = options.positionOverrides;
   requirePositiveNumber(range, "Interaction range");
   requirePositiveNumber(lateralTolerance, "Interaction lateral tolerance", { allowZero: true });
 
   const candidates = scene.interactions
     .map((interaction) => {
-      const offsetX = interaction.at.x - position.x;
-      const offsetY = interaction.at.y - position.y;
+      const interactionPosition = resolveInteractionPosition(interaction, positionOverrides);
+      const offsetX = interactionPosition.x - position.x;
+      const offsetY = interactionPosition.y - position.y;
       const forwardDistance = offsetX * facingVector.x + offsetY * facingVector.y;
       const lateralDistance = Math.abs(offsetX * facingVector.y - offsetY * facingVector.x);
       const distance = Math.hypot(offsetX, offsetY);

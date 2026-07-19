@@ -275,6 +275,18 @@
   font-size: 8px;
 }
 
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .map {
   position: relative;
   display: grid;
@@ -288,6 +300,120 @@
     0 0 0 7px rgba(103, 232, 249, 0.3),
     0 26px 80px rgba(0, 0, 0, 0.45),
     inset 0 0 40px rgba(6, 78, 59, 0.2);
+}
+
+.worldCue {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.4;
+  transform: translate(-50%, -50%);
+  transition: opacity 140ms ease, filter 140ms ease;
+}
+
+.worldCueBadge {
+  position: absolute;
+  bottom: 72%;
+  left: 50%;
+  display: flex;
+  min-height: 23px;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border: 1px solid rgba(165, 243, 252, 0.72);
+  border-radius: 8px;
+  color: #e6fbff;
+  font-size: clamp(7px, 0.72vw, 10px);
+  font-weight: 1000;
+  line-height: 1;
+  white-space: nowrap;
+  background: rgba(3, 31, 44, 0.88);
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.38);
+  transform: translateX(-50%);
+}
+
+.worldCueBadge b {
+  color: #67e8f9;
+  font-size: 1.18em;
+}
+
+.worldCueArrow {
+  position: absolute;
+  bottom: 40%;
+  left: 50%;
+  color: #fef3c7;
+  font-size: clamp(10px, 1vw, 15px);
+  line-height: 1;
+  opacity: 0;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.75));
+  transform: translateX(-50%);
+}
+
+.worldCueboard .worldCueBadge,
+.worldCuedock .worldCueBadge {
+  border-color: rgba(253, 230, 138, 0.82);
+  color: #fff7d6;
+  background: rgba(92, 49, 8, 0.9);
+}
+
+.worldCueboard .worldCueBadge b,
+.worldCuedock .worldCueBadge b {
+  color: #fbbf24;
+}
+
+.worldCueinterpretation .worldCueBadge {
+  border-color: rgba(196, 181, 253, 0.82);
+  background: rgba(57, 36, 103, 0.9);
+}
+
+.worldCueresponse .worldCueBadge {
+  border-color: rgba(110, 231, 183, 0.82);
+  background: rgba(6, 78, 59, 0.9);
+}
+
+.worldCueRecommended {
+  opacity: 0.82;
+}
+
+.worldCueRecommended .worldCueArrow,
+.worldCueActive .worldCueArrow {
+  opacity: 1;
+  animation: worldCueGuide 760ms ease-in-out infinite alternate;
+}
+
+.worldCueActive {
+  opacity: 1;
+  filter: drop-shadow(0 0 7px rgba(251, 191, 36, 0.74));
+}
+
+.worldCueActive .worldCueBadge {
+  border-color: #fbbf24;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.24), 0 4px 12px rgba(0, 0, 0, 0.48);
+}
+
+.worldCueComplete:not(.worldCueActive) {
+  opacity: 0.25;
+  filter: saturate(0.35);
+}
+
+.worldCueComplete:not(.worldCueActive) .worldCueArrow {
+  display: none;
+}
+
+.worldCueLeftEdge .worldCueBadge {
+  left: 14%;
+  transform: none;
+}
+
+.worldCueRightEdge .worldCueBadge {
+  right: 14%;
+  left: auto;
+  transform: none;
+}
+
+@keyframes worldCueGuide {
+  from { transform: translate(-50%, -1px); }
+  to { transform: translate(-50%, 4px); }
 }
 
 .characterCell {
@@ -595,6 +721,11 @@
   will-change: left, top;
 }
 
+.npcCell {
+  transition: left 72ms linear, top 72ms linear;
+  will-change: left, top;
+}
+
 .boatCell {
   --boat-heading: 0deg;
   z-index: 18;
@@ -607,7 +738,7 @@
   inset: 0;
   transform: rotate(var(--boat-heading));
   transform-origin: center;
-  transition: transform 140ms cubic-bezier(0.2, 0.75, 0.3, 1);
+  transition: transform 80ms linear;
   will-change: transform;
 }
 
@@ -625,7 +756,7 @@
   border: 3px solid rgba(224, 251, 255, 0.76);
   border-top: 0;
   border-radius: 10% 10% 60% 60%;
-  opacity: 0.55;
+  opacity: calc(var(--boat-wake-strength, 0) * 0.8);
 }
 
 .boatHull {
@@ -658,8 +789,8 @@
 .boatMoving .boatWake { animation: boatWakePulse 520ms ease-in-out infinite alternate; }
 
 @keyframes boatWakePulse {
-  from { scale: 0.82 0.72; opacity: 0.35; }
-  to { scale: 1.08 1.12; opacity: 0.8; }
+  from { scale: 0.82 0.72; }
+  to { scale: 1.08 1.12; }
 }
 
 .characterShadow {
@@ -1006,6 +1137,75 @@
   justify-content: center;
   gap: 20px;
   margin-top: 12px;
+}
+
+.boatControlDock {
+  margin-top: 8px;
+}
+
+.boatHelmReadout {
+  display: grid;
+  grid-template-columns: minmax(105px, 0.7fr) minmax(120px, 0.8fr) minmax(230px, 2fr);
+  width: min(100%, 900px);
+  min-height: 48px;
+  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(103, 232, 249, 0.32);
+  border-radius: 13px;
+  color: #dff9ff;
+  background: linear-gradient(90deg, rgba(7, 37, 51, 0.96), rgba(8, 51, 65, 0.9));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+}
+
+.boatHelmReadout > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 7px 13px;
+  border-right: 1px solid rgba(103, 232, 249, 0.16);
+}
+
+.boatHelmReadout > span:last-child {
+  border-right: 0;
+}
+
+.boatHelmReadout small {
+  color: #79cfe0;
+  font-size: 8px;
+  font-weight: 1000;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.boatHelmReadout strong {
+  overflow: hidden;
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boatHelmDockReady {
+  border-color: #fbbf24;
+  background: linear-gradient(90deg, rgba(7, 37, 51, 0.98), rgba(113, 63, 18, 0.72));
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.14), 0 8px 22px rgba(0, 0, 0, 0.2);
+}
+
+.boatHelmDockReady .boatHelmDestination small,
+.boatHelmDockReady .boatHelmDestination strong {
+  color: #fde68a;
+}
+
+.boatHelmCollision {
+  border-color: #fb923c;
+}
+
+.boatHelmCollision .boatHelmDestination small,
+.boatHelmCollision .boatHelmDestination strong {
+  color: #fed7aa;
 }
 
 .dpad {
@@ -4750,6 +4950,12 @@
   outline-offset: 1px;
 }
 
+.highContrastMode .worldCueBadge {
+  border: 2px solid #fff;
+  color: #fff;
+  background: #00151f;
+}
+
 .reducedMotionMode *,
 .reducedMotionMode *::before,
 .reducedMotionMode *::after {
@@ -5299,6 +5505,21 @@
   .completionActions { flex-direction: column; }
 }
 
+@media (max-width: 700px) {
+  .boatHelmReadout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .boatHelmDestination {
+    grid-column: 1 / -1;
+    border-top: 1px solid rgba(103, 232, 249, 0.16);
+  }
+
+  .boatHelmReadout strong {
+    font-size: 10px;
+  }
+}
+
 @media (max-height: 620px) and (orientation: landscape) {
   .gameHeader { min-height: 52px; margin-top: 5px; }
   .brandLockup img { width: 88px; }
@@ -5309,6 +5530,13 @@
     max-height: calc(100dvh - 140px);
   }
   .townMap { width: min(100%, calc(160dvh - 224px)); }
+  .boatHelmReadout {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 34px;
+    margin-top: 4px;
+  }
+  .boatHelmReadout > span:not(.boatHelmDestination) { display: none; }
+  .boatHelmDestination { grid-column: 1; padding: 4px 10px !important; border-top: 0; }
   .controlDock { position: fixed; right: max(13px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom)); z-index: 25; margin: 0; padding: 6px 8px; border-radius: 16px; background: rgba(3, 19, 31, 0.82); }
   .dpad { grid-template: repeat(3, 44px) / repeat(3, 44px); }
   .actionButton { min-width: 46px; width: 46px; height: 46px; padding: 6px; }
@@ -5369,6 +5597,7 @@
   .sunpatchTideHallMap::before,
   .championsWakeRouteMap::before,
   .championsWakeTownMap::before,
+  .worldCueArrow,
   .boatWake,
   .tournamentRegistrationCard,
   .championshipEndingCard,
@@ -5383,6 +5612,7 @@
   }
 
   .playerCell,
+  .npcCell,
   .boatActor,
   .questProgress span,
   .exitLink,

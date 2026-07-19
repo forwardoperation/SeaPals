@@ -55,7 +55,7 @@ test("sub-launch validation requires a same-town vehicle target", () => {
 test("the live vehicle scene replaces walking controls with the accessible guided console", () => {
   assert.match(component, /const vehicleMode = scene\?\.kind === "vehicle"/);
   assert.match(component, /const movementPaused = screen !== "playing"[\s\S]*\|\| vehicleMode/);
-  assert.match(component, /\{vehicleMode \? \([\s\S]*<TrenchlightSubExpedition[\s\S]*\) : \([\s\S]*className=\{styles\.controlDock\}/);
+  assert.match(component, /\{vehicleMode \? \([\s\S]*<TrenchlightSubExpedition[\s\S]*\) : \([\s\S]*className=\{`\$\{styles\.controlDock\}/);
   assert.match(component, /TRENCHLIGHT_RESPONSE_CHOICES\.map/);
   assert.match(component, /aria-pressed=\{assistedMode\}/);
   assert.match(component, /aria-live="polite"/);

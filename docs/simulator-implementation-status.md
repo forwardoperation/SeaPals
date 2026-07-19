@@ -65,6 +65,20 @@ limitation instead of inventing a rule.
   draw/reorder effects, Tripod Fish Vantage Point, Ocean Triggerfish Territorial target
   selection, Crevalle RP gain, Deep Sea Jelly's next-turn Flashing Alarm for both
   controllers, and deterministic opponent equivalents.
+- Stunned now has a complete controller-parity lifecycle: an affected Coral
+  produces no RP, contributes none of its own passives, cannot use its own
+  actions, and cannot upgrade through the end of its controller's next turn.
+  The board keeps the status visible, end-turn logs announce recovery, and Coral
+  Heal clears it early.
+- Lionfish now invades the rival physical reef for either controller while its
+  controller identity remains on the card instance. The invaded controller can
+  target and remove it with a successful legal attack; removal sends it to its
+  owner's discard pile. Ordinary ownership-based effects such as Spearfishing
+  cannot select an opponent-owned invader.
+- Cookie Cutter Parasite now transfers opposing RP first, collects any shortfall
+  from the shared board supply up to the recipient's live bank cap, and reports
+  both sources separately. Giant and Colossal Squid resolve a fresh Ensnare coin
+  flip before every attack in a repeated On Play sequence for both controllers.
 
 ## Known rule/data boundaries
 
@@ -72,15 +86,10 @@ limitation instead of inventing a rule.
   when one of those creatures is destroyed in combat, the simulator moves it to its
   owner's Lost Zone instead of discard. Effects that merely discard or sacrifice a
   card still use the discard pile unless their text explicitly says otherwise.
-- `Stunned` is stored and shown, but current card/rules data does not define its
-  automatic gameplay consequence.
-- Lionfish can be placed on the rival reef by the player, but automated-opponent
-  placement and attack/specialized-Support removal of a controller-owned invader do
-  not yet have complete parity.
-- Cookie Cutter's Parasite transfers available opposing RP, but its printed
-  "collect from the board" fallback remains undefined and unimplemented.
-- Giant and Colossal Squid Ensnare currently resolve one coin flip across a repeated
-  attack sequence instead of the printed once-per-attack timing.
+- Lionfish still names a "specialized Support card" without identifying that card
+  anywhere in the repository card data. Attack removal is implemented for both
+  controllers; specialized-Support removal remains intentionally unavailable
+  rather than assigning that power to an unrelated Support card.
 - Complex companion effects on an otherwise supported attack resolve the documented
   attack portion and explicitly identify the remainder as unsupported.
 - Several original card-art files remain absent from the repository. Every absent art
@@ -97,9 +106,11 @@ limitation instead of inventing a rule.
 
 ## Verification checkpoint
 
-- Simulator suite: `npm.cmd run test:simulator` (**176/176 passed** on 2026-07-19),
-  including Flashing Alarm lifecycle and automatic legal Coral Heal targeting.
-- Full repository suite: `npm.cmd test` (**602/602 passed** on 2026-07-19).
+- Simulator suite: `npm.cmd run test:simulator` (**190/190 passed** on 2026-07-19),
+  including Stunned lifecycle, Parasite supply fallback, per-attack Ensnare,
+  Lionfish controller identity, Flashing Alarm lifecycle, and automatic legal
+  Coral Heal targeting.
+- Full repository suite: `npm.cmd test` (**645/645 passed** on 2026-07-19).
 - Production build: `npm.cmd run build` (**26/26 routes generated** on 2026-07-19).
 - Diff whitespace and duplicate named-function audits pass.
 - Rendered browser verification covers every prebuilt deck's opening setup, an Open

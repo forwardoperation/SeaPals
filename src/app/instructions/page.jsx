@@ -986,11 +986,11 @@ export default function InstructionsPage() {
                   method before play or check the latest official ruling.
                 </p>
                 <p className="mt-3">
-                  Stunned can be applied by printed effects, but it has no universal
-                  extra penalty or automatic expiration in the current rules. Do not
-                  add that behavior unless a printed or official rule explicitly
-                  supplies it. The Lost Zone is defined above for destroyed Apex and
-                  Filter Feeder cards.
+                  A Stunned Coral produces no RP, cannot use its own actions or
+                  passives, and cannot be upgraded through the end of its controller's
+                  next turn. Coral Heal removes Stunned early because it removes all
+                  effects from the chosen Coral. The Lost Zone is defined above for
+                  destroyed Apex and Filter Feeder cards.
                 </p>
               </RuleDetails>
             </div>
