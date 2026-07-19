@@ -70,6 +70,31 @@ test("Kelpwatch ships the exact five map-sized PNG assets used by its live scene
   }
 });
 
+test("Elverson ships distinct transparent GBA-style resident walk sheets", async () => {
+  const spriteAssets = [
+    "/images/adventure/fisherman-wyeth-sprites.png",
+    "/images/adventure/teacher-caroline-sprites.png",
+    "/images/adventure/ivy-sprites.png",
+    "/images/adventure/explorer-jordan-sprites.png",
+    "/images/adventure/marine-biologist-jonah-sprites.png",
+    "/images/adventure/programmer-harlan-sprites.png",
+    "/images/adventure/town-elder-sprites.png",
+    "/images/adventure/town-adult-sprites.png",
+  ];
+
+  for (const spritePath of spriteAssets) {
+    const png = await readFile(publicAssetPath(spritePath));
+    assert.equal(png.subarray(0, 8).toString("hex"), PNG_SIGNATURE, spritePath);
+    assert.equal(png.readUInt32BE(16), 1024, `${spritePath} width`);
+    assert.equal(png.readUInt32BE(20), 1536, `${spritePath} height`);
+    assert.ok([3, 6].includes(png[25]), `${spritePath} must use indexed-alpha or RGBA color`);
+    if (png[25] === 3) {
+      assert.ok(png.includes(Buffer.from("tRNS")), `${spritePath} must retain indexed transparency`);
+    }
+    assert.equal(png.subarray(-8, -4).toString("ascii"), "IEND", `${spritePath} must be complete`);
+  }
+});
+
 test("playable science notes use unique authoritative government sources", () => {
   const sourcedNotes = ADVENTURE_CONTENT.fieldNotes.filter((fieldNote) => (
     fieldNote.status === "prototype" && fieldNote.sourceUrls?.length
