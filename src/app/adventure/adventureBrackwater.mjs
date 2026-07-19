@@ -86,12 +86,16 @@ const FLAGS = Object.freeze({
   responseCorrectiveAttempts: "response-corrective-attempts",
 });
 
-const BRACKWATER_BOOLEAN_FLAG_IDS = Object.freeze([
+const BRACKWATER_REQUIREMENT_FLAG_IDS = Object.freeze([
   ...BRACKWATER_REQUIRED_OBSERVATION_IDS.map(observationFlag),
-  FLAGS.interpretationAttempted,
   FLAGS.interpretationCorrect,
-  FLAGS.responseAttempted,
   FLAGS.responseCorrect,
+]);
+
+const BRACKWATER_BOOLEAN_FLAG_IDS = Object.freeze([
+  ...BRACKWATER_REQUIREMENT_FLAG_IDS,
+  FLAGS.interpretationAttempted,
+  FLAGS.responseAttempted,
 ]);
 
 const BRACKWATER_COUNTER_FLAG_IDS = Object.freeze([
@@ -267,6 +271,9 @@ export function recoverBrackwaterQuestFlags(saveValue) {
 
   const flags = { ...quest.flags };
   for (const flagId of discardedFlagIds) delete flags[flagId];
+  const terminalRequirementWasDiscarded = (
+    quest.status === "readyToTurnIn" || quest.status === "complete"
+  ) && discardedFlagIds.some((flagId) => BRACKWATER_REQUIREMENT_FLAG_IDS.includes(flagId));
 
   return {
     save: normalizeAdventureSave({
@@ -275,7 +282,11 @@ export function recoverBrackwaterQuestFlags(saveValue) {
         ...save.progression,
         quests: {
           ...save.progression.quests,
-          [BRACKWATER_QUEST_ID]: { ...quest, flags },
+          [BRACKWATER_QUEST_ID]: {
+            ...quest,
+            status: terminalRequirementWasDiscarded ? "active" : quest.status,
+            flags,
+          },
         },
       },
     }),

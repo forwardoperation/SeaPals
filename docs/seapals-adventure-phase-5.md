@@ -1,6 +1,6 @@
-# SeaPals Adventure Phase 5 - Brackwater Landing
+# SeaPals Adventure Phase 5 - Brackwater Landing and Current Commons
 
-**Status:** Brackwater Landing vertical slice implemented and passing automated, production-build, and seeded browser checkpoint checks; full clean-profile playthrough, target-age comprehension testing, and named marine-science review remain open
+**Status:** Brackwater Landing and Current Commons vertical slices implemented and passing automated, production-build, and seeded browser checkpoint checks; full clean-profile playthroughs, target-age comprehension testing, and named marine-science reviews remain open
 
 **Branch:** `codex/seapals-adventure`
 
@@ -8,12 +8,12 @@
 
 ## Phase 5 release boundary
 
-Phase 5 is organized as independently testable regional releases. This document records the first of those releases.
+Phase 5 is organized as independently testable regional releases. This document records the overall boundary plus the Brackwater and Current Commons releases; Current Commons has its detailed release record in [seapals-adventure-phase-5-current-commons.md](./seapals-adventure-phase-5-current-commons.md).
 
 | Regional release | Runtime status | Boundary |
 | --- | --- | --- |
 | **Brackwater Landing** | Implemented vertical slice | Travel route, floating town and interiors, field investigation, five NPC roles, two resident duels, qualifier, Field Note, earned pack, Tide Mark, return state, and save-backed progression are authored and connected to the live adventure UI. |
-| **Current Commons** | Planned | Its town, travel scene, open-ocean/current investigation, opponents, Field Note, and pack are not playable. Brackwater can chart/unlock its route identifier, but that is not a navigable Current Commons release. |
+| **Current Commons** | Implemented vertical slice | Brackwater route, floating flotilla and interiors, current/ghost-gear investigation, five NPC roles, two resident duels, qualifier, Field Note, Blue Water pack, Tide Mark, return state, and save-backed progression are live. |
 | **Kelpwatch Island** | Planned | Its town, route, kelp food-web investigation, opponents, Field Note, and pack are not playable. |
 
 Trenchlight Station and the sub expedition belong to Phase 6. Champion's Wake and the 30 VP tournament belong to Phase 7; neither is part of this Phase 5 release.
@@ -76,7 +76,7 @@ These sources establish the planning boundary and do not replace review of the f
 7. **Turn in the report.** Dr. Sola's authored introduction appears on the first conversation and is recorded once; later conversations select guidance, debrief, or return copy from save-backed chapter state. Only all four observations, the correct interpretation, the correct response, and both resident victories can move the quest to `readyToTurnIn`. Dr. Sola completes the turn-in and grants `field-note-estuary-conditions` once.
 8. **Qualify.** Amina's 10 VP qualifier is gated by the completed fieldwork quest. A first qualifier win grants the chapter reward ledger entry once; rematches do not duplicate it.
 9. **Open or keep the pack.** The earned-only Brackwater Discovery Pack contains four distinct cards drawn from its 12-card pool and guarantees an unowned card when an eligible card remains. Opening consumes the unopened pack atomically.
-10. **Revisit or depart.** Return dialogue reflects continued monitoring. The player may pilot or auto-steer back to Sunpatch. `route-brackwater-current` is added to progression as the next charted route, but Current Commons is still planned content.
+10. **Revisit or depart.** Return dialogue reflects continued monitoring. The player may pilot or auto-steer back to Sunpatch or use the now-live `route-brackwater-current` crossing to continue to Current Commons.
 
 The Brackwater quest reconciler derives readiness from actual observations, accepted decisions, and resident encounter records. A malformed or manually edited terminal quest status cannot bypass those requirements. Quest flags are JSON-safe, repeat observations and turn-ins are idempotent, and rewards use the existing one-time grant ledger.
 
@@ -150,11 +150,10 @@ Before merge or deployment, also run the repository-wide suite:
 npm.cmd test
 ```
 
-At this implementation checkpoint, `npm.cmd run test:adventure` passes 222 tests, the repository-wide suite passes 453 tests, and `npm.cmd run build` succeeds. Those checks verify domain and integration contracts; they do not close the full browser, child-comprehension, starter-balance, or science-review gates above.
+At this implementation checkpoint, `npm.cmd run test:adventure` passes 256 tests, the repository-wide suite passes 487 tests, and `npm.cmd run build` succeeds. Those checks verify domain and integration contracts; they do not close the full browser, child-comprehension, starter-balance, or science-review gates above.
 
 ## Remaining Phase 5 work
 
-1. Close the open Brackwater browser, accessibility, save/reload, comprehension, balance, and science-review gates.
-2. Build Current Commons as the second independent Phase 5 content release: a live Brackwater-to-Current route, floating town, current/ghost-gear investigation, two resident duels, qualifier, Blue Water pack, Field Note, Tide Mark, and return state.
-3. Build Kelpwatch Island as the third independent Phase 5 content release: a live route, island town, kelp food-web investigation, two resident duels, qualifier, pack, Field Note, Tide Mark, and return state.
-4. Re-run the Phase 5 regression matrix after each release to ensure the new content reuses, rather than duplicates, adventure movement, save, inventory, deck, Simulator, quest, and reward systems.
+1. Close the open Brackwater and Current Commons browser, accessibility, save/reload, comprehension, balance, and science-review gates.
+2. Build Kelpwatch Island as the third independent Phase 5 content release: a live route, island town, kelp food-web investigation, two resident duels, qualifier, pack, Field Note, Tide Mark, and return state.
+3. Re-run the Phase 5 regression matrix after each release to ensure the new content reuses, rather than duplicates, adventure movement, save, inventory, deck, Simulator, quest, and reward systems.

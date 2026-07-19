@@ -583,6 +583,68 @@ test("the canonical Sunpatch-Brackwater route boards, pilots, docks, and then au
   assert.deepEqual(revisited.world.completedRouteIds, [routeId]);
 });
 
+test("the canonical Brackwater-Current route boards from its separate dock and supports repeat auto-steer", () => {
+  const routeId = "route-brackwater-current";
+  const fromDockId = "brackwater-current-dock";
+  const toDockId = "current-commons-dock";
+  const initial = createInitialAdventureSave("profile-current-route");
+  const atBrackwaterDeparture = normalizeAdventureSave({
+    ...initial,
+    world: {
+      ...initial.world,
+      townId: "brackwater-landing",
+      sceneId: "brackwater-landing-town",
+      position: { x: 8, y: 8 },
+      facing: "up",
+      lastSafeDockId: fromDockId,
+      unlockedRouteIds: [routeId],
+    },
+  });
+
+  const travelState = getRouteTravelState(atBrackwaterDeparture, routeId, ADVENTURE_CONTENT);
+  assert.equal(travelState.runtimeReady, true);
+  assert.equal(travelState.canBoardManual, true);
+  assert.equal(travelState.canAutoSteer, false);
+
+  const boarded = boardAdventureRoute(atBrackwaterDeparture, {
+    routeId,
+    originDockId: fromDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(boarded.world.sceneId, "brackwater-current-sea");
+  assert.deepEqual(boarded.world.position, { x: 1, y: 5 });
+
+  const atCurrentSide = normalizeAdventureSave({
+    ...boarded,
+    world: {
+      ...boarded.world,
+      position: { x: 14, y: 5 },
+      facing: "right",
+    },
+  });
+  const arrived = dockAdventureRoute(atCurrentSide, {
+    routeId,
+    destinationDockId: toDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(arrived.world.townId, "current-commons");
+  assert.equal(arrived.world.sceneId, "current-commons-town");
+  assert.deepEqual(arrived.world.position, { x: 7, y: 8 });
+  assert.deepEqual(arrived.world.completedRouteIds, [routeId]);
+
+  const returned = autoSteerAdventureRoute(arrived, {
+    routeId,
+    destinationDockId: fromDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(returned.world.townId, "brackwater-landing");
+  assert.equal(returned.world.lastSafeDockId, fromDockId);
+
+  const revisited = autoSteerAdventureRoute(returned, {
+    routeId,
+    destinationDockId: toDockId,
+  }, ADVENTURE_CONTENT);
+  assert.equal(revisited.world.townId, "current-commons");
+  assert.deepEqual(revisited.world.completedRouteIds, [routeId]);
+});
+
 test("world map conceals locked towns and derives available, active, completed, and Tide Mark states", () => {
   const initial = createInitialAdventureSave("profile-1");
   let model = buildAdventureWorldMapModel(initial, TEST_CONTENT);
