@@ -640,7 +640,7 @@ test("interior exits return the player outside the matching town door", () => {
     type: "exit",
     interactionId: "interaction-academy-exit",
     targetScene: "town",
-    spawn: { x: 16, y: 17 },
+    spawn: { x: 14, y: 17 },
     facing: "down",
   });
   assert.deepEqual(getInteraction("coral-home", { x: 5, y: 6 }, "down"), {
@@ -1112,7 +1112,7 @@ test("automatic doorway transitions recognize all six Elverson portals only at c
       type: "exit",
       interactionId: "interaction-academy-exit",
       targetScene: "town",
-      spawn: { x: 16, y: 17 },
+      spawn: { x: 14, y: 17 },
       facing: "down",
     }],
     ["coral-home", { x: 5, y: 6.27 }, "down", {

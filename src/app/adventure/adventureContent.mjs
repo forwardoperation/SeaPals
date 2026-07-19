@@ -736,7 +736,7 @@ const shellshoreRuntimeScenes = {
         type: "exit",
         at: { x: 6, y: 8 },
         targetScene: "town",
-        spawn: { x: 16, y: 17 },
+        spawn: { x: 14, y: 17 },
         facing: "down",
       },
     ],
