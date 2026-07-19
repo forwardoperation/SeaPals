@@ -115,6 +115,10 @@ function requireCheckpointId(checkpoint) {
   return id || null;
 }
 
+function tutorialGuideName(uiState) {
+  return String(uiState?.guideName ?? "Mr. Easterling").trim() || "Mr. Easterling";
+}
+
 function withTarget(help, target, cue = target) {
   const authoredConversation = HELP_BY_CHECKPOINT[help.id] ?? {};
   return Object.freeze({
@@ -531,10 +535,11 @@ function getAcademyCurriculumHelp(uiState) {
   if (Number(route?.plan?.curriculumVersion ?? 0) < 2 || !route?.active || !route.cards) return null;
 
   const { plan, cards } = route;
+  const guideName = tutorialGuideName(uiState);
   const round = Math.max(0, Number(uiState.round) || 0);
   const targetVp = Math.max(1, Number(plan.victoryTarget) || Number(uiState.victoryTarget) || 15);
   const playerVp = Math.max(0, Number(uiState.playerVp) || 0);
-  const progressLabel = `Academy reef • ${playerVp}/${targetVp} VP`;
+  const progressLabel = `Aquarium reef • ${playerVp}/${targetVp} VP`;
   const help = (details, target, cue) => decorateFinishDuelHelp(withTarget({
     id: FINISH_DUEL_HELP_ID,
     progressLabel,
@@ -577,7 +582,7 @@ function getAcademyCurriculumHelp(uiState) {
       1: `${cards.economy?.cardName ?? "Pillar Coral"} is our second foundation. Early Foundation draws improve income and add the spaces future creatures need.`,
       2: `${cards.firstFish?.cardName ?? "Spanish Hogfish"} will wait in hand while we use a Support card and establish the remaining Corals.`,
       3: `${cards.secondFish?.cardName ?? "Parrotfish"} is the second Fish required by Coral Reef; first we will practice an Invertebrate action and a Fish attack.`,
-      4: `${cards.predator?.cardName ?? "Great Barracuda"} is prepared now—not earlier—because Professor Current has compatible creatures and your Coral Reef plan is nearly online.`,
+      4: `${cards.predator?.cardName ?? "Great Barracuda"} is prepared now—not earlier—because ${guideName} has compatible creatures and your Coral Reef plan is nearly online.`,
       5: `${cards.creatureSchool?.cardName ?? "White Grunt"} comes from the Foundation Deck because Creature Schools build long-term School Density and can add RP income. Severe Coral Bleaching makes that resilient foundation more useful than rushing the finisher.`,
       6: `${cards.filterFeeder?.cardName ?? "Whale Shark"} is in the Pals Deck. Krill Bloom makes its 180 School Density requirement reachable this round, so this draw turns White Grunt's 30 School Density into a planned 11 VP play.`,
       7: `${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} is a Support card that will deliberately find the Apex finisher instead of leaving the last lesson to chance.`,
@@ -585,7 +590,7 @@ function getAcademyCurriculumHelp(uiState) {
     return getScriptedFinishDrawHelp(
       { ...uiState, victoryTarget: targetVp },
       preferredDeck,
-      reasons[round] ?? "Follow the highlighted authored draw so the Academy lesson can demonstrate the next mechanic on a known board.",
+      reasons[round] ?? "Follow the highlighted authored draw so the aquarium lesson can demonstrate the next mechanic on a known board.",
     );
   }
 
@@ -622,7 +627,7 @@ function getAcademyCurriculumHelp(uiState) {
         : isPredator
           ? `${cards.predator?.cardName ?? "Great Barracuda"} has a worthwhile target now. Coral Reef grants its second Bite, which is why playing this predator after building the habitat is stronger than leading with it on an empty opposing reef.`
           : `${cards.firstFish?.cardName ?? "Spanish Hogfish"}'s Crunch is a paid attack action. Choose the highlighted compatible Invertebrate; the simulator will compare your attack die with its defense die.`,
-      action: "Choose a glowing legal creature on Professor Current's reef, then resolve the faceoff dice.",
+      action: `Choose a glowing legal creature on ${guideName}'s reef, then resolve the faceoff dice.`,
     }, "opponent-board", `attack-${sourceId ?? "active"}`);
   }
 
@@ -683,7 +688,7 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.firstFish?.inPlay) {
       return play(cards.firstFish, {
         title: `Add your first Fish: ${cards.firstFish?.cardName ?? "Spanish Hogfish"}`,
-        message: `Fish occupy Fish slots and contribute to habitat requirements. ${cards.firstFish?.cardName ?? "Spanish Hogfish"} also has Crunch, a paid attack action, and Professor Current has placed a compatible Sea Urchin so the lesson is not asking you to waste it.`,
+        message: `Fish occupy Fish slots and contribute to habitat requirements. ${cards.firstFish?.cardName ?? "Spanish Hogfish"} also has Crunch, a paid attack action, and ${guideName} has placed a compatible Sea Urchin so the lesson is not asking you to waste it.`,
       });
     }
     if (!usedUtility(route.utilityAction)) {
@@ -755,7 +760,7 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.predator?.inPlay) {
       return play(cards.predator, {
         title: `Now ${cards.predator?.cardName ?? "Great Barracuda"} has a job`,
-        message: `This is the right time for the Predator. Professor Current has compatible Fish and Predators, Coral Reef grants a second Bite, and Murky Water reduces the printed 3 RP cost to 2. Earlier, the same play would have wasted its on-play ability and delayed the reef economy.`,
+        message: `This is the right time for the Predator. ${guideName} has compatible Fish and Predators, Coral Reef grants a second Bite, and Murky Water reduces the printed 3 RP cost to 2. Earlier, the same play would have wasted its on-play ability and delayed the reef economy.`,
         action: `Play ${cards.predator?.cardName ?? "Great Barracuda"} in Pillar Coral's Predator slot, then resolve both legal Bites.`,
       });
     }
@@ -808,8 +813,8 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.apex?.inPlay) {
       return play(cards.apex, {
         title: `Cap the ecosystem with ${cards.apex?.cardName ?? "Hammerhead"}`,
-        message: "Apex creatures are powerful finishers with demanding prerequisites, so they belong at the end of a plan rather than the beginning. Hammerhead is good here because the reef already supports it: Coral Reef is active, an Apex slot is open, there is enough RP, and Professor Current has legal targets for Ravage.",
-        action: `Play ${cards.apex?.cardName ?? "Hammerhead"} in the highlighted Apex slot, then resolve its coral damage and two attacks to complete the ${targetVp} VP Academy reef.`,
+        message: `Apex creatures are powerful finishers with demanding prerequisites, so they belong at the end of a plan rather than the beginning. Hammerhead is good here because the reef already supports it: Coral Reef is active, an Apex slot is open, there is enough RP, and ${guideName} has legal targets for Ravage.`,
+        action: `Play ${cards.apex?.cardName ?? "Hammerhead"} in the highlighted Apex slot, then resolve its coral damage and two attacks to complete the ${targetVp} VP aquarium reef.`,
       });
     }
   }
@@ -1044,6 +1049,7 @@ function getScriptedFinishDuelHelp(uiState) {
 }
 
 function getFinishDuelHelp(uiState) {
+  const guideName = tutorialGuideName(uiState);
   if (uiState.victoryPending !== true) return null;
   const context = finishDuelContext(uiState);
   if (context.playerVp >= context.targetVp) return null;
@@ -1068,7 +1074,7 @@ function getFinishDuelHelp(uiState) {
       return decorateFinishDuelHelp(withTarget({
         id: FINISH_DUEL_HELP_ID,
         title: `Rebuild with ${setupCardName}`,
-        message: "Your saved lesson evidence is safe. This fresh practice board only needs a foundation before Professor Current can guide the remaining duel.",
+        message: `Your saved lesson evidence is safe. This fresh practice board only needs a foundation before ${guideName} can guide the remaining duel.`,
         action: selected
           ? `Press Play Card, then place ${setupCardName} in the highlighted area.`
           : `Choose the glowing ${setupCardName} in your hand, then press Play Card.`,
@@ -1162,7 +1168,7 @@ function getFinishDuelHelp(uiState) {
       id: FINISH_DUEL_HELP_ID,
       title: uiState.activeAttack ? `${uiState.activeAttack.cardName} is attacking` : "Choose a legal target",
       message: "The attack is already active. Finish it before choosing the next build toward 10 VP.",
-      action: "Choose one of the glowing legal targets in Professor Current's ecosystem.",
+      action: `Choose one of the glowing legal targets in ${guideName}'s ecosystem.`,
     }, "opponent-board", `active-attack:${uiState.activeAttack?.cardId ?? "card"}`), uiState, `active-attack:${uiState.activeAttack?.cardId ?? "card"}`);
   }
 
@@ -1194,7 +1200,7 @@ function getFinishDuelHelp(uiState) {
     return decorateFinishDuelHelp(withTarget({
       id: FINISH_DUEL_HELP_ID,
       title: `Use ${attack.attackName}`,
-      message: `${attack.cardName} can attack now. It will not directly add VP, but disrupting Professor Current can protect your race to ${context.targetVp}.`,
+      message: `${attack.cardName} can attack now. It will not directly add VP, but disrupting ${guideName} can protect your race to ${context.targetVp}.`,
       action: `Press Use ${attack.attackName}, then choose a glowing legal target.`,
       targetActionKey: attack.actionKey,
       targetLabel: `${attack.attackName} on ${attack.cardName}`,
@@ -1230,7 +1236,7 @@ function getFinishDuelHelp(uiState) {
     return decorateFinishDuelHelp(withTarget({
       id: FINISH_DUEL_HELP_ID,
       title: `Attack with ${attack.cardName}`,
-      message: `${attack.attackName} is legal now. It does not directly add VP, but removing one of Professor Current's cards can slow the opposing score while you prepare your next build.`,
+      message: `${attack.attackName} is legal now. It does not directly add VP, but removing one of ${guideName}'s cards can slow the opposing score while you prepare your next build.`,
       action: `Select ${attack.cardName}, then use ${attack.attackName}.`,
       targetActionKey: attack.actionKey,
       targetLabel: `${attack.cardName} in your ecosystem`,
@@ -1251,12 +1257,13 @@ function getFinishDuelHelp(uiState) {
   return decorateFinishDuelHelp(withTarget({
     id: FINISH_DUEL_HELP_ID,
     title: `Prepare the final ${context.remainingVp} VP`,
-    message: `You are at ${context.playerVp}/${context.targetVp} VP and Professor Current is at ${context.opponentVp}. No legal build or useful card action is ready, so another collection and draw will create the next decision.`,
+    message: `You are at ${context.playerVp}/${context.targetVp} VP and ${guideName} is at ${context.opponentVp}. No legal build or useful card action is ready, so another collection and draw will create the next decision.`,
     action: "End the turn. On the next round, collect RP and draw toward another legal ecosystem card.",
   }, "turn-button", "end-turn"), uiState, "end-turn");
 }
 
 export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
+  const guideName = tutorialGuideName(uiState);
   const checkpointId = requireCheckpointId(checkpoint);
   const academyHelp = getAcademyCurriculumHelp(uiState);
   if (academyHelp) return academyHelp;
@@ -1512,7 +1519,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
     } else if (uiState.inspectedCardOpen && !uiState.inspectedPlayerCard) {
       const next = uiState.readyAttack;
       title = "Return to your ecosystem";
-      message = "You are reviewing one of Professor Current's cards, but the next guided action starts from your side of the board.";
+      message = `You are reviewing one of ${guideName}'s cards, but the next guided action starts from your side of the board.`;
       target = "close-modal";
       action = next
         ? `Close these details, select ${next.cardName}, and use ${next.attackName}.`
@@ -1533,7 +1540,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       title = next ? `${next.cardName} is already ready` : "Return to the guided action";
       message = next
         ? `You do not need another card before attacking. ${next.cardName}'s ${next.attackName} has ${next.targetCount} legal ${next.targetCount === 1 ? "target" : "targets"}.`
-        : "These card details are covering the action Professor Current needs you to take next.";
+        : `These card details are covering the action ${guideName} needs you to take next.`;
       target = "close-modal";
       action = next
         ? `Close these card details, select ${next.cardName} in your ecosystem, and use ${next.attackName}.`

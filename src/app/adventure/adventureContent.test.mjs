@@ -24,6 +24,35 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+const ELVERSON_REQUESTED_RESIDENT_NAMES = Object.freeze([
+  "Fisherman Wyeth",
+  "Teacher Caroline",
+  "Ivy",
+  "Rosie",
+  "George",
+  "Henry",
+  "Explorer Jordan",
+  "Sam",
+  "Marine Biologist Jonah",
+  "Finn",
+  "Jack",
+  "Oliver",
+  "Eloise",
+  "Edith",
+  "Ellis",
+  "Luke",
+  "Micah",
+  "Karah",
+  "Calvin",
+  "Landon",
+  "Henderson",
+  "Charlotte",
+  "Eli",
+  "William",
+  "Emilio",
+  "Programmer Harlan",
+]);
+
 test("launch adventure content is internally valid and JSON serializable", () => {
   assert.equal(validateAdventureContent(ADVENTURE_CONTENT).valid, true);
   assert.doesNotThrow(() => assertValidAdventureContent(ADVENTURE_CONTENT));
@@ -104,7 +133,7 @@ test("the initial save location references launch content", () => {
   assert.ok(ADVENTURE_CONTENT.scenes.some((scene) => scene.id === save.world.sceneId && scene.townId === save.world.townId));
 });
 
-test("Shellshore through Champion's Wake runtime scenes plus the Phase 1 dock start resolve from content", () => {
+test("Elverson launches from its authored town while dormant later-world scenes remain valid content", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   assert.deepEqual(runtimeScenes.map((scene) => scene.id), [
     "town",
@@ -148,20 +177,20 @@ test("Shellshore through Champion's Wake runtime scenes plus the Phase 1 dock st
     townId: "shellshore-village",
     dockId: "shellshore-dock",
     sceneId: "town",
-    position: { x: 7, y: 8 },
-    facing: "up",
+    position: { x: 14, y: 10 },
+    facing: "down",
   });
   assert.deepEqual(getAdventureDock("shellshore-dock"), {
     id: "shellshore-dock",
     townId: "shellshore-village",
     sceneId: "town",
     status: "prototype",
-    position: { x: 7, y: 8 },
-    facing: "up",
+    position: { x: 14, y: 10 },
+    facing: "down",
   });
 });
 
-test("the Shellshore-Sunpatch route has an exact 16 by 10 boat lane and two dock endpoints", () => {
+test("the dormant first outbound route remains valid without an active Elverson boarding interaction", () => {
   const route = getAdventureRoute("route-shellshore-sunpatch");
   const routeScene = getRuntimeAdventureScenes().find((scene) => scene.id === route.sceneId);
 
@@ -201,8 +230,8 @@ test("the Shellshore-Sunpatch route has an exact 16 by 10 boat lane and two dock
       routeId: route.id,
       dockId: "shellshore-dock",
       targetScene: "town",
-      spawn: { x: 7, y: 8 },
-      facing: "up",
+      spawn: { x: 14, y: 10 },
+      facing: "down",
     },
     {
       id: "interaction-route-dock-sunpatch",
@@ -217,34 +246,21 @@ test("the Shellshore-Sunpatch route has an exact 16 by 10 boat lane and two dock
     },
   ]);
 
-  const shellshoreBoard = resolveAdventureInteraction("town", "interaction-shellshore-board-boat");
   const sunpatchBoard = resolveAdventureInteraction("sunpatch-cay-town", "interaction-sunpatch-board-shellshore-route");
+  assert.equal(resolveAdventureInteraction("town", "interaction-shellshore-board-boat"), null);
   assert.deepEqual(
-    [shellshoreBoard, sunpatchBoard].map(({ targetSceneContent, ...interaction }) => interaction),
-    [
-      {
-        id: "interaction-shellshore-board-boat",
-        type: "board",
-        at: { x: 7, y: 9 },
-        routeId: route.id,
-        dockId: "shellshore-dock",
-        targetScene: route.sceneId,
-        spawn: { x: 1, y: 5 },
-        facing: "right",
-      },
-      {
-        id: "interaction-sunpatch-board-shellshore-route",
-        type: "board",
-        at: { x: 7, y: 9 },
-        routeId: route.id,
-        dockId: "sunpatch-dock",
-        targetScene: route.sceneId,
-        spawn: { x: 14, y: 5 },
-        facing: "left",
-      },
-    ],
+    (({ targetSceneContent, ...interaction }) => interaction)(sunpatchBoard),
+    {
+      id: "interaction-sunpatch-board-shellshore-route",
+      type: "board",
+      at: { x: 7, y: 9 },
+      routeId: route.id,
+      dockId: "sunpatch-dock",
+      targetScene: route.sceneId,
+      spawn: { x: 14, y: 5 },
+      facing: "left",
+    },
   );
-  assert.ok(shellshoreBoard.targetSceneContent === routeScene);
   assert.ok(sunpatchBoard.targetSceneContent === routeScene);
 });
 
@@ -1012,7 +1028,7 @@ test("Reading a Reef is a complete evidence-first Field Note with science source
   assert.match(fieldNote.summary, /different observations.*evidence before naming a cause.*instant cure/i);
 });
 
-test("Shellshore interiors define validated art-aligned furniture collision rectangles", () => {
+test("Elverson's three active interiors define validated art-aligned furniture collision rectangles", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   const expectedRectangleCounts = new Map([
     ["coral-home", 5],
@@ -1035,43 +1051,120 @@ test("Shellshore interiors define validated art-aligned furniture collision rect
   }
 });
 
-test("all live Shellshore portals define a valid destination facing", () => {
-  const validFacings = new Set(["up", "down", "left", "right"]);
-  const portals = getRuntimeAdventureScenes().flatMap((scene) => (
-    scene.world.interactions.filter((interaction) => ["enter", "exit"].includes(interaction.type))
-  ));
+test("Elverson town geometry blocks park furniture and water outside the public piers", () => {
+  const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
+  const collisionIds = new Set(town.world.collisionRects.map(({ id }) => id));
+  for (const collisionId of [
+    "elverson-park-fountain",
+    "elverson-park-north-bench",
+    "elverson-park-east-bench",
+    "elverson-park-west-bench",
+    "elverson-park-south-bench",
+    "elverson-park-west-planter",
+    "elverson-park-east-hedge",
+    "elverson-park-lamppost",
+    "elverson-aquarium-south-water",
+    "elverson-fishing-dock-south-water",
+  ]) {
+    assert.equal(collisionIds.has(collisionId), true, `${collisionId} must be solid`);
+  }
+  const aquariumExit = getRuntimeAdventureScenes()
+    .find((scene) => scene.id === "academy-lab")
+    .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
+  assert.deepEqual(aquariumExit.spawn, { x: 16, y: 17 });
+});
 
-  assert.ok(portals.length > 0);
+test("Elverson exposes exactly its aquarium workshop and two homes through valid portals", () => {
+  const validFacings = new Set(["up", "down", "left", "right"]);
+  const elversonSceneIds = new Set(["town", "coral-home", "deep-home", "academy-lab"]);
+  const portals = getRuntimeAdventureScenes()
+    .filter((scene) => elversonSceneIds.has(scene.id))
+    .flatMap((scene) => (
+    scene.world.interactions.filter((interaction) => ["enter", "exit"].includes(interaction.type))
+    ));
+  const townEntries = portals.filter((portal) => portal.type === "enter");
+
+  assert.deepEqual(
+    townEntries.map((portal) => portal.targetScene).sort(),
+    ["academy-lab", "coral-home", "deep-home"],
+  );
   assert.ok(portals.every((portal) => validFacings.has(portal.facing)));
 });
 
-test("Shellshore doors, trainers, conversations, and encounters cross-resolve", () => {
-  const door = resolveAdventureInteraction("town", "interaction-town-enter-coral-home");
+test("Elverson contains the exact requested resident roster once plus Mr. Easterling", () => {
+  const elversonNpcs = ADVENTURE_CONTENT.npcs.filter((npc) => npc.townId === "shellshore-village");
+  const mentor = elversonNpcs.find((npc) => npc.id === "academy-mentor");
+  const residents = elversonNpcs.filter((npc) => npc.id !== "academy-mentor");
+
+  assert.equal(mentor.name, "Mr. Easterling");
+  assert.equal(mentor.title, "Aquarium Project Lead");
+  assert.equal(elversonNpcs.length, ELVERSON_REQUESTED_RESIDENT_NAMES.length + 1);
+  assert.deepEqual(
+    residents.map((npc) => npc.name).sort(),
+    [...ELVERSON_REQUESTED_RESIDENT_NAMES].sort(),
+  );
+  assert.equal(residents.filter((npc) => npc.name === "Henry").length, 1);
+  assert.equal(new Set(elversonNpcs.map((npc) => npc.id)).size, elversonNpcs.length);
+});
+
+test("every Elverson resident cross-resolves through one conversation and one scene interaction", () => {
+  const elversonNpcs = ADVENTURE_CONTENT.npcs.filter((npc) => npc.townId === "shellshore-village");
+
+  for (const npc of elversonNpcs) {
+    const resolved = resolveAdventureNpc(npc.id);
+    const scene = ADVENTURE_CONTENT.scenes.find((candidate) => candidate.id === npc.sceneId);
+    const matchingInteractions = scene.world.interactions.filter((interaction) => interaction.npcId === npc.id);
+    assert.ok(resolved.conversation, `${npc.name} must resolve an authored conversation.`);
+    assert.equal(resolved.conversation.npcId, npc.id);
+    assert.equal(matchingInteractions.length, 1, `${npc.name} must appear exactly once in ${npc.sceneId}.`);
+    assert.equal(matchingInteractions[0].conversationId, npc.conversationId);
+    assert.equal(matchingInteractions[0].type, npc.encounterId ? "trainer" : "npc");
+    if (npc.encounterId) assert.equal(resolved.encounter.opponentId, npc.id);
+  }
+});
+
+test("Elverson doors, challengers, mentor, conversations, and encounters cross-resolve", () => {
+  const door = resolveAdventureInteraction("town", "interaction-elverson-enter-park-home");
   assert.equal(door.targetSceneContent.id, "coral-home");
   assert.deepEqual(door.spawn, { x: 5, y: 6 });
 
-  const marinaInteraction = resolveAdventureInteraction("coral-home", "interaction-coral-home-marina");
-  assert.equal(marinaInteraction.npc.name, "Marina");
-  assert.equal(marinaInteraction.npc.conversation.lines.intro.length, 2);
-  assert.equal(marinaInteraction.npc.encounter.opponentDeckId, "coral-garden");
-  assert.equal(marinaInteraction.npc.encounter.victoryTarget, 10);
+  const rosieInteraction = resolveAdventureInteraction("coral-home", "interaction-coral-home-marina");
+  assert.equal(rosieInteraction.npc.name, "Rosie");
+  assert.equal(rosieInteraction.npc.conversation.lines.intro.length, 2);
+  assert.equal(rosieInteraction.npc.encounter.opponentDeckId, "coral-garden");
+  assert.equal(rosieInteraction.npc.encounter.victoryTarget, 10);
 
-  const dorian = resolveAdventureNpc("dorian");
-  assert.equal(dorian.sceneId, "deep-home");
-  assert.equal(dorian.conversation.lines.rematch.length, 2);
-  assert.equal(dorian.encounter.opponentDeckId, "darkness-shroud");
-  assert.equal(dorian.encounter.difficulty, "medium");
+  const george = ADVENTURE_CONTENT.npcs.find((npc) => (
+    npc.townId === "shellshore-village" && npc.name === "George"
+  ));
+  const resolvedGeorge = resolveAdventureNpc(george.id);
+  assert.equal(resolvedGeorge.sceneId, "deep-home");
+  assert.equal(resolvedGeorge.conversation.lines.rematch.length, 2);
+  assert.equal(resolvedGeorge.encounter.opponentDeckId, "darkness-shroud");
+  assert.equal(resolvedGeorge.encounter.difficulty, "medium");
 
-  const academyDoor = resolveAdventureInteraction("town", "interaction-town-enter-academy");
-  assert.equal(academyDoor.targetSceneContent.id, "academy-lab");
-  assert.deepEqual(academyDoor.spawn, { x: 6, y: 7 });
+  const aquariumDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-aquarium");
+  assert.deepEqual(aquariumDoor.at, { x: 16, y: 17 });
+  assert.equal(aquariumDoor.targetSceneContent.id, "academy-lab");
+  assert.deepEqual(aquariumDoor.spawn, { x: 6, y: 7 });
+  const chestnutDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-chestnut-home");
+  assert.deepEqual(chestnutDoor.at, { x: 18, y: 3 });
 
   const mentorInteraction = resolveAdventureInteraction("academy-lab", "interaction-academy-mentor");
-  assert.equal(mentorInteraction.npc.name, "Professor Marlow Current");
+  assert.equal(mentorInteraction.npc.name, "Mr. Easterling");
   assert.equal(mentorInteraction.npc.roleId, "mentor");
   assert.equal(mentorInteraction.npc.conversation.lines.boatSafety.length, 2);
   assert.equal(mentorInteraction.npc.conversation.lines.tutorialIntro.length, 3);
-  assert.match(mentorInteraction.npc.conversation.lines.tutorialIntro[0], /Reefkeeper/i);
+  assert.match(mentorInteraction.npc.conversation.lines.intro.join(" "), /Elverson.*aquarium.*exhibit/i);
+  assert.match(mentorInteraction.npc.conversation.lines.starterPresentation.join(" "), /aquarium lesson/i);
+  assert.match(mentorInteraction.npc.conversation.lines.starterConfirmed.join(" "), /aquarium project/i);
+  assert.doesNotMatch(
+    [
+      ...mentorInteraction.npc.conversation.lines.starterPresentation,
+      ...mentorInteraction.npc.conversation.lines.starterConfirmed,
+    ].join(" "),
+    /voyage/i,
+  );
   assert.match(mentorInteraction.npc.conversation.lines.tutorialIntro.join(" "), /RP economy.*26 VP.*Coral Reef.*School Density.*Filter Feeder.*Apex predator/i);
   assert.match(mentorInteraction.npc.conversation.lines.practiceRetry.join(" "), /sound plan.*Coral Reef.*Creature Schools.*Filter Feeders.*Apex predator.*26 VP/i);
   assert.match(mentorInteraction.npc.conversation.lines.victory.join(" "), /Coral Reef habitat.*School Density.*Filter Feeder.*Apex predator.*26 VP/i);
@@ -1091,7 +1184,7 @@ test("starter previews, the live tutorial, and first Field Note form one canonic
 
   const tutorial = resolveAdventureTutorial("tutorial-shellshore-live-basics");
   assert.equal(tutorial.sceneId, "academy-lab");
-  assert.equal(tutorial.mentor.name, "Professor Marlow Current");
+  assert.equal(tutorial.mentor.name, "Mr. Easterling");
   assert.equal(tutorial.practiceEncounter.id, "encounter-shellshore-mentor-practice");
   assert.equal(tutorial.victoryTarget, 26);
   assert.equal(tutorial.practiceEncounter.victoryTarget, 26);
@@ -1101,6 +1194,13 @@ test("starter previews, the live tutorial, and first Field Note form one canonic
   assert.equal(tutorial.fieldNote.id, "field-note-harbor-basics");
 
   const fieldNote = getAdventureFieldNote("field-note-harbor-basics");
+  const starterTown = ADVENTURE_CONTENT.towns.find((town) => town.id === "shellshore-village");
+  const starterQuest = ADVENTURE_CONTENT.quests.find((quest) => quest.id === "quest-shellshore-first-voyage");
+  const discoveryPack = ADVENTURE_CONTENT.packPools.find((pack) => pack.id === "pack-pool-shellshore-discovery");
+  assert.equal(starterTown.name, "Elverson");
+  assert.equal(starterQuest.title, "Elverson's First Exhibit");
+  assert.equal(discoveryPack.name, "Elverson Discovery Pack");
+  assert.equal(fieldNote.title, "Elverson Shore & Aquarium Planning");
   assert.equal(fieldNote.status, "prototype");
   assert.equal(fieldNote.observations.length, 3);
   assert.equal(fieldNote.safetyChecklist.length, 3);
@@ -1160,20 +1260,22 @@ test("malformed top-level collections return validation errors instead of throwi
   assert.ok(result.errors.some((error) => /towns must be an array/.test(error)));
 });
 
-test("content validation rejects broken Shellshore runtime cross-references", () => {
+test("content validation rejects broken Elverson runtime cross-references", () => {
   const invalid = clone(ADVENTURE_CONTENT);
   invalid.scenes.find((scene) => scene.id === "town").world.interactions[0].targetScene = "missing-home";
   invalid.scenes.find((scene) => scene.id === "coral-home").world.interactions[0].conversationId = "missing-conversation";
   invalid.docks.find((dock) => dock.id === "shellshore-dock").sceneId = "sunpatch-cay-town";
-  invalid.npcs.find((npc) => npc.id === "dorian").encounterId = "encounter-shellshore-marina";
-  invalid.conversations.find((conversation) => conversation.npcId === "marina").lines.victory = [];
+  const george = invalid.npcs.find((npc) => npc.name === "George");
+  const rosie = invalid.npcs.find((npc) => npc.name === "Rosie");
+  george.encounterId = rosie.encounterId;
+  invalid.conversations.find((conversation) => conversation.npcId === rosie.id).lines.victory = [];
 
   const result = validateAdventureContent(invalid);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => /targetScene references unknown id missing-home/.test(error)));
   assert.ok(result.errors.some((error) => /conversationId references unknown id missing-conversation/.test(error)));
   assert.ok(result.errors.some((error) => /shellshore-dock.*sceneId must belong to the dock town/.test(error)));
-  assert.ok(result.errors.some((error) => /dorian.*encounterId must resolve to an encounter/.test(error)));
+  assert.ok(result.errors.some((error) => new RegExp(`${george.id}.*encounterId must resolve to an encounter`).test(error)));
   assert.ok(result.errors.some((error) => /lines\.victory must contain/.test(error)));
 });
 

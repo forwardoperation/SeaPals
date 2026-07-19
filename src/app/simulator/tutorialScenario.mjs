@@ -72,7 +72,7 @@ export const SCRIPTED_TUTORIAL_PLACEMENT_PLAN = Object.freeze({
 });
 
 /**
- * Professor Current begins with a legal mid-game practice reef. Pillar Coral
+ * The tutorial guide begins with a legal mid-game practice reef. Pillar Coral
  * supplies the Invertebrate, Fish, and Predator targets; upgraded Clubfinger
  * Coral supplies two more Fish. Both Corals survive Parrotfish's 10 damage so
  * Hammerhead can still demonstrate Ravage in the final lesson.

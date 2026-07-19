@@ -497,6 +497,7 @@
 }
 
 /* Generated scene art and continuous character actors. */
+.elversonTownMap,
 .townMap,
 .academyLabMap,
 .coralHomeMap,
@@ -525,6 +526,10 @@
 .townMap {
   background-color: #7bcf85;
   background-image: url("/images/adventure/shellshore-village.png");
+}
+
+.elversonTownMap {
+  background-color: #16899a;
 }
 
 .academyLabMap {
@@ -5529,6 +5534,7 @@
     width: min(100%, calc(150dvh - 210px));
     max-height: calc(100dvh - 140px);
   }
+  .elversonTownMap,
   .townMap { width: min(100%, calc(160dvh - 224px)); }
   .boatHelmReadout {
     grid-template-columns: minmax(0, 1fr);

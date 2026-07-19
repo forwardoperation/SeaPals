@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  createAdventureActorStates,
+  getAdventureActorBlockers,
+} from "./adventureActors.mjs";
+import {
+  SCENES,
   START_STATE,
   canOccupyContinuousPosition,
+  getContinuousInteraction,
   getDoorwayTransition,
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
@@ -30,19 +36,74 @@ function walkAxisRoute(points) {
   }, points[0]);
 }
 
-test("continuous town routes connect the bottom spawn to all three doorways", () => {
+function reachableQuarterTilePositions(sceneId, {
+  dynamicBlockers = [],
+  ignoreActorTiles = true,
+} = {}) {
+  const scene = SCENES[sceneId];
+  const scale = 4;
+  const start = {
+    x: Math.round(scene.spawn.x * scale),
+    y: Math.round(scene.spawn.y * scale),
+  };
+  const queue = [start];
+  const visited = new Set([`${start.x}:${start.y}`]);
+  const reachable = [];
+
+  for (let cursor = 0; cursor < queue.length; cursor += 1) {
+    const point = queue[cursor];
+    reachable.push({ x: point.x / scale, y: point.y / scale });
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const next = { x: point.x + dx, y: point.y + dy };
+      const position = { x: next.x / scale, y: next.y / scale };
+      const key = `${next.x}:${next.y}`;
+      if (
+        visited.has(key)
+        || position.x < 0
+        || position.y < 0
+        || position.x > scene.width - 1
+        || position.y > scene.height - 1
+        || !canOccupyContinuousPosition(sceneId, position, undefined, {
+          dynamicBlockers,
+          ignoreActorTiles,
+        })
+      ) continue;
+      visited.add(key);
+      queue.push(next);
+    }
+  }
+  return reachable;
+}
+
+test("continuous Elverson routes connect the crossroads start to all three doorways", () => {
   const routes = [
     {
-      waypoints: [START_STATE.position, { x: 8, y: 8 }, { x: 8, y: 1.8 }],
-      interactionId: "interaction-town-enter-academy",
+      waypoints: [
+        START_STATE.position,
+        { x: 14, y: 7 },
+        { x: 7, y: 7 },
+        { x: 7, y: 6.8 },
+      ],
+      interactionId: "interaction-elverson-enter-park-home",
     },
     {
-      waypoints: [START_STATE.position, { x: 5, y: 8 }, { x: 5, y: 3.8 }],
-      interactionId: "interaction-town-enter-coral-home",
+      waypoints: [
+        START_STATE.position,
+        { x: 14, y: 7 },
+        { x: 19.75, y: 7 },
+        { x: 19.75, y: 4 },
+        { x: 18, y: 4 },
+        { x: 18, y: 3.8 },
+      ],
+      interactionId: "interaction-elverson-enter-chestnut-home",
     },
     {
-      waypoints: [START_STATE.position, { x: 11, y: 8 }, { x: 11, y: 3.8 }],
-      interactionId: "interaction-town-enter-deep-home",
+      waypoints: [
+        START_STATE.position,
+        { x: 14, y: 17.4 },
+        { x: 16, y: 17.4 },
+      ],
+      interactionId: "interaction-elverson-enter-aquarium",
     },
   ];
 
@@ -52,48 +113,81 @@ test("continuous town routes connect the bottom spawn to all three doorways", ()
   }
 });
 
-test("the town paths connect around the central sign and between both homes", () => {
-  const blockedBySign = movePlayerContinuous("town", { x: 8, y: 4 }, { x: 1, y: 0 }, 500);
-  assert.ok(blockedBySign.x < 8.5, `expected the sign to remain solid, received x=${blockedBySign.x}`);
+test("Main Street and Chestnut Street retain clear walking lanes", () => {
+  const parallelLanes = [
+    [{ x: 1, y: 7 }, { x: 28, y: 7 }],
+    [{ x: 13.8, y: 1 }, { x: 13.8, y: 18 }],
+    [{ x: 14.2, y: 1 }, { x: 14.2, y: 18 }],
+  ];
 
-  // The lower edge of the sign is visible sand. It connects the left home,
-  // central academy path, and right home without forcing a trip to the dock.
-  walkAxisRoute([
-    { x: 5, y: 3.8 },
-    { x: 5, y: 5 },
-    { x: 8, y: 5 },
-    { x: 11, y: 5 },
-    { x: 11, y: 3.8 },
-  ]);
-
-  // Both visible sides of the sign remain reachable by walking around its
-  // bottom edge, even though walking straight through the artwork is blocked.
-  walkAxisRoute([
-    { x: 8, y: 4 },
-    { x: 8, y: 5 },
-    { x: 10, y: 5 },
-    { x: 10, y: 4 },
-  ]);
-
-  // Returning from the academy can leave the sprite slightly left of the
-  // path center. That offset must still fit beside the sign's tight collider.
-  walkAxisRoute([
-    { x: 7.7, y: 4 },
-    { x: 7.7, y: 5 },
-  ]);
+  for (const lane of parallelLanes) walkAxisRoute(lane);
 });
 
-test("town traversal still treats building footprints and border foliage as solid", () => {
+test("Elverson traversal treats buildings and shoreline water as solid", () => {
   const solidArtwork = [
-    ["coral-home building", { x: 5, y: 2 }],
-    ["deep-home building", { x: 11, y: 2 }],
-    ["central sign", { x: 9, y: 4 }],
-    ["left foliage", { x: 1, y: 5 }],
-    ["right foliage", { x: 15, y: 7 }],
-    ["bottom foliage", { x: 7, y: 9 }],
+    ["west residence", { x: 3, y: 3 }],
+    ["park school", { x: 8, y: 5 }],
+    ["Chestnut residence", { x: 16, y: 2 }],
+    ["town hall", { x: 23, y: 5 }],
+    ["Main Street shop", { x: 6, y: 9 }],
+    ["west shallow water", { x: 3, y: 13 }],
+    ["west deep water", { x: 8, y: 18 }],
+    ["east shallow water", { x: 25, y: 13 }],
+    ["east deep water", { x: 27, y: 18 }],
+    ["fishing boat", { x: 11, y: 17 }],
+    ["aquarium", { x: 19, y: 15 }],
+    ["water south of the aquarium deck", { x: 17, y: 18 }],
+    ["park fountain", { x: 16.6, y: 5.2 }],
+    ["park north bench", { x: 16, y: 3.9 }],
+    ["park west bench", { x: 13, y: 6.2 }],
+    ["northwest tree canopy", { x: 1, y: 1 }],
+    ["northeast tree canopy", { x: 27, y: 1 }],
+    ["west wooded hillside", { x: 1, y: 5.8 }],
+    ["east wooded hillside", { x: 27.5, y: 4.5 }],
+    ["east promenade bench", { x: 17.1, y: 11.1 }],
+    ["east seawall rail", { x: 18, y: 11.7 }],
+    ["Main Street west lamppost", { x: 11.6, y: 7.8 }],
+    ["far-east promenade lamppost", { x: 26.4, y: 10.6 }],
   ];
 
   for (const [label, position] of solidArtwork) {
     assert.equal(canOccupyContinuousPosition("town", position), false, `${label} should be solid`);
+  }
+
+  walkAxisRoute([{ x: 14, y: 12 }, { x: 14, y: 17.4 }, { x: 16, y: 17.4 }]);
+  walkAxisRoute([{ x: 14, y: 17.7 }, { x: 11.5, y: 17.7 }]);
+});
+
+test("every active Elverson character remains reachable from its scene spawn", () => {
+  for (const sceneId of ["town", "academy-lab", "coral-home", "deep-home"]) {
+    const reachable = reachableQuarterTilePositions(sceneId);
+    const characters = SCENES[sceneId].interactions.filter(({ type }) => type === "npc" || type === "trainer");
+    for (const character of characters) {
+      const canTalk = reachable.some((position) => (
+        ["up", "down", "left", "right"].some((facing) => (
+          getContinuousInteraction(sceneId, position, facing)?.interactionId === character.id
+        ))
+      ));
+      assert.equal(canTalk, true, `${character.id} must have a reachable conversation approach`);
+    }
+  }
+});
+
+test("Elverson residents never form an impassable crowd on the town paths", () => {
+  const interactions = SCENES.town.interactions;
+  const actorStates = createAdventureActorStates(interactions);
+  const reachable = reachableQuarterTilePositions("town", {
+    dynamicBlockers: getAdventureActorBlockers(actorStates),
+    ignoreActorTiles: true,
+  });
+
+  const characters = interactions.filter(({ type }) => type === "npc" || type === "trainer");
+  for (const character of characters) {
+    const canTalk = reachable.some((position) => (
+      ["up", "down", "left", "right"].some((facing) => (
+        getContinuousInteraction("town", position, facing)?.interactionId === character.id
+      ))
+    ));
+    assert.equal(canTalk, true, `${character.id} must stay reachable around the other residents`);
   }
 });

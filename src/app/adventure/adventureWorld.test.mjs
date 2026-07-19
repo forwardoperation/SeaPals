@@ -18,6 +18,7 @@ import {
   movePlayer,
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
+import { ELVERSON_RELEASE_SCOPE } from "./adventureReleaseScope.mjs";
 
 function assertWalkablePolyline(sceneId, points, label) {
   for (let pointIndex = 1; pointIndex < points.length; pointIndex += 1) {
@@ -40,12 +41,14 @@ function assertWalkablePolyline(sceneId, points, label) {
   }
 }
 
-test("world exposes the requested town and interior dimensions", () => {
+test("world exposes the 30-by-20 Elverson town and retained interior dimensions", () => {
   for (const sceneId of ["town", "coral-home", "deep-home", "academy-lab"]) {
     assert.ok(SCENES[sceneId], `${sceneId} should remain available`);
   }
-  assert.equal(SCENES.town.width, 16);
-  assert.equal(SCENES.town.height, 10);
+  assert.equal(SCENES.town.name, "Elverson");
+  assert.equal(SCENES.town.width, 30);
+  assert.equal(SCENES.town.height, 20);
+  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-town.png");
   assert.equal(SCENES["coral-home"].width, 12);
   assert.equal(SCENES["coral-home"].height, 8);
   assert.equal(SCENES["deep-home"].width, 12);
@@ -55,13 +58,13 @@ test("world exposes the requested town and interior dimensions", () => {
   assert.ok(Object.values(SCENES).every((scene) => scene.tiles.every((row) => row.length === scene.width)));
 });
 
-test("legacy scenes inherit a frozen default movement profile", () => {
+test("Elverson inherits a frozen continuous walking profile", () => {
   const profile = getSceneMovementProfile("town");
   assert.deepEqual(profile, CONTINUOUS_MOVEMENT_DEFAULTS);
   assert.equal(Object.isFrozen(profile), true);
   assert.equal(SCENES.town.routeId, null);
   assert.equal(canOccupyScenePosition("town", START_STATE.position), true);
-  assert.equal(canOccupyScenePosition("town", { x: 5, y: 3 }), false);
+  assert.equal(canOccupyScenePosition("town", { x: 3, y: 3 }), false);
   assert.throws(() => getSceneMovementProfile("missing"), /Unknown adventure scene/);
 });
 
@@ -93,7 +96,30 @@ test("town shorelines keep walkers on the visible central piers", () => {
   }
 });
 
-test("every static character anchor owns a non-walkable tile", () => {
+test("Elverson's authored shoreline is solid outside the public pier corridor", () => {
+  const water = [
+    { x: 2, y: 13 },
+    { x: 8, y: 18 },
+    { x: 25, y: 13 },
+    { x: 27, y: 18 },
+  ];
+  for (const position of water) {
+    assert.equal(
+      canOccupyContinuousPosition("town", position),
+      false,
+      `shore water at ${position.x},${position.y} must block walkers`,
+    );
+  }
+
+  assertWalkablePolyline(
+    "town",
+    [{ x: 14, y: 12 }, { x: 14, y: 17.4 }, { x: 16, y: 17.4 }],
+    "Elverson public pier and aquarium approach",
+  );
+  assert.equal(canOccupyContinuousPosition("town", { x: 17, y: 18 }), false);
+});
+
+test("every authored character anchor stays inside its scene grid", () => {
   const characterInteractions = Object.values(SCENES).flatMap((scene) => (
     scene.interactions
       .filter(({ type }) => type === "npc" || type === "trainer")
@@ -102,16 +128,8 @@ test("every static character anchor owns a non-walkable tile", () => {
 
   assert.ok(characterInteractions.length > 30);
   for (const { scene, interaction } of characterInteractions) {
-    assert.equal(
-      isWalkable(scene.id, interaction.at),
-      false,
-      `${interaction.id} in ${scene.id} must not stand on walkable floor`,
-    );
-    assert.equal(
-      canOccupyScenePosition(scene.id, interaction.at),
-      false,
-      `${interaction.id} in ${scene.id} must block the player`,
-    );
+    assert.equal(isInBounds(scene.id, interaction.at), true, `${interaction.id} must stay in bounds`);
+    assert.ok(Number.isFinite(interaction.at.x) && Number.isFinite(interaction.at.y));
   }
 });
 
@@ -138,7 +156,7 @@ test("scene interaction snapshots are public, frozen, and omit authored coordina
   assert.equal(Object.isFrozen(interactions), true);
 });
 
-test("the first four sea routes plus Sunpatch, Brackwater, Current, and Kelpwatch scenes are live world-engine scenes", () => {
+test("dormant sea routes and archived towns remain structurally available to the world engine", () => {
   const route = SCENES["shellshore-sunpatch-sea"];
   assert.ok(route);
   assert.equal(route.routeId, "route-shellshore-sunpatch");
@@ -259,18 +277,13 @@ test("route movement uses its authored profile and navigation obstacles stay sol
   );
 });
 
-test("board and dock interactions expose safe metadata but never auto-transition", () => {
-  const shellshoreBoard = getInteraction("town", { x: 7, y: 8 }, "down");
-  assert.deepEqual(shellshoreBoard, {
-    type: "board",
-    interactionId: "interaction-shellshore-board-boat",
-    routeId: "route-shellshore-sunpatch",
-    dockId: "shellshore-dock",
-    targetScene: "shellshore-sunpatch-sea",
-    spawn: { x: 1, y: 5 },
-    facing: "right",
-  });
-  assert.equal(getDoorwayTransition("town", { x: 7, y: 8 }, "down"), null);
+test("Elverson offers no board prompt while dormant route docks retain their metadata", () => {
+  const townTransitions = SCENES.town.interactions.filter(({ type }) => (
+    ["board", "dock"].includes(type)
+  ));
+  assert.deepEqual(townTransitions, []);
+  assert.equal(getInteraction("town", { x: 14, y: 18 }, "down"), null);
+  assert.equal(getDoorwayTransition("town", { x: 14, y: 18 }, "down"), null);
 
   const fromDock = getInteraction("shellshore-sunpatch-sea", { x: 1, y: 5 }, "left");
   assert.deepEqual(fromDock, {
@@ -280,8 +293,8 @@ test("board and dock interactions expose safe metadata but never auto-transition
     dockId: "shellshore-dock",
     endpoint: "from",
     targetScene: "town",
-    spawn: { x: 7, y: 8 },
-    facing: "up",
+    spawn: { x: 14, y: 10 },
+    facing: "down",
   });
   assert.equal(getDoorwayTransition("shellshore-sunpatch-sea", { x: 1, y: 5 }, "left"), null);
 
@@ -292,9 +305,8 @@ test("board and dock interactions expose safe metadata but never auto-transition
   assert.equal(toDock.targetScene, "sunpatch-cay-town");
   assert.equal(getDoorwayTransition("shellshore-sunpatch-sea", { x: 14, y: 5 }, "right"), null);
 
-  for (const interaction of [shellshoreBoard, fromDock, toDock]) {
-    assert.equal(canOccupyScenePosition(interaction.targetScene, interaction.spawn), true);
-  }
+  assert.equal(canOccupyScenePosition("shellshore-sunpatch-sea", SCENES["shellshore-sunpatch-sea"].spawn), true);
+  assert.deepEqual(ELVERSON_RELEASE_SCOPE.routeIds, []);
 });
 
 test("Sunpatch exposes two distinct departure docks and the Brackwater route docks safely", () => {
@@ -510,36 +522,17 @@ test("evidence, interpretation, and response stations remain manual interactions
   }
 });
 
-test("every authored route, dock, and live town portal points to a safe arrival corridor", () => {
-  const liveSceneIds = [
-    "town",
-    "shellshore-sunpatch-sea",
-    "sunpatch-cay-town",
-    "sunpatch-field-station",
-    "sunpatch-garden-home",
-    "sunpatch-tide-hall",
-    "sunpatch-brackwater-sea",
-    "brackwater-landing-town",
-    "brackwater-water-lab",
-    "brackwater-mangrove-home",
-    "brackwater-tide-hall",
-    "brackwater-current-sea",
-    "current-commons-town",
-    "current-navigation-lab",
-    "current-navigator-home",
-    "current-tide-hall",
-    "current-kelpwatch-sea",
-    "kelpwatch-island-town",
-    "kelpwatch-ecology-lab",
-    "kelpwatch-diver-home",
-    "kelpwatch-tide-hall",
-  ];
-  const transitionTypes = new Set(["enter", "exit", "board", "dock"]);
+test("every active Elverson portal stays inside the release and arrives on a safe corridor", () => {
+  const transitionTypes = new Set(["enter", "exit"]);
 
-  for (const sceneId of liveSceneIds) {
+  for (const sceneId of ELVERSON_RELEASE_SCOPE.sceneIds) {
     assert.equal(canOccupyScenePosition(sceneId, SCENES[sceneId].spawn), true, `${sceneId} spawn must stay safe`);
     for (const interaction of getSceneInteractions(sceneId)) {
       if (!transitionTypes.has(interaction.type)) continue;
+      assert.ok(
+        ELVERSON_RELEASE_SCOPE.sceneIds.includes(interaction.targetScene),
+        `${interaction.interactionId} must not leave the active Elverson release`,
+      );
       assert.ok(SCENES[interaction.targetScene], `${interaction.interactionId} target scene must be live`);
       assert.equal(
         canOccupyScenePosition(interaction.targetScene, interaction.spawn),
@@ -548,6 +541,11 @@ test("every authored route, dock, and live town portal points to a safe arrival 
       );
     }
   }
+
+  assert.equal(
+    ELVERSON_RELEASE_SCOPE.sceneIds.some((sceneId) => SCENES[sceneId].kind === "route"),
+    false,
+  );
 });
 
 test("every Sunpatch, Brackwater, Current, and Kelpwatch exterior doorway auto-triggers from a safe approach", () => {
@@ -571,26 +569,36 @@ test("every Sunpatch, Brackwater, Current, and Kelpwatch exterior doorway auto-t
   }
 });
 
-test("start state places the player near the bottom-center town path", () => {
+test("start state places the player at the Elverson Main Street crossroads", () => {
   assert.deepEqual(START_STATE, {
     sceneId: "town",
-    position: { x: 7, y: 8 },
-    facing: "up",
+    position: { x: 14, y: 10 },
+    facing: "down",
   });
   assert.equal(isWalkable(START_STATE.sceneId, START_STATE.position), true);
+  assert.equal(canOccupyScenePosition(START_STATE.sceneId, START_STATE.position), true);
 });
 
 test("movement advances over walkable tiles and respects map bounds", () => {
-  assert.deepEqual(movePlayer("town", { x: 7, y: 8 }, "up"), { x: 7, y: 7 });
-  assert.deepEqual(movePlayer("town", { x: 7, y: 8 }, "down"), { x: 7, y: 8 });
-  assert.equal(isInBounds("town", { x: 15, y: 9 }), true);
-  assert.equal(isInBounds("town", { x: 16, y: 9 }), false);
+  assert.deepEqual(movePlayer("town", START_STATE.position, "up"), { x: 14, y: 9 });
+  assert.deepEqual(movePlayer("town", START_STATE.position, "down"), { x: 14, y: 11 });
+  assert.equal(isInBounds("town", { x: 29, y: 19 }), true);
+  assert.equal(isInBounds("town", { x: 30, y: 19 }), false);
   assert.equal(getTile("town", { x: -1, y: 0 }), null);
 });
 
-test("movement cannot cross buildings, doors, furniture, exits, or trainers", () => {
-  assert.deepEqual(movePlayer("town", { x: 5, y: 4 }, "up"), { x: 5, y: 4 });
-  assert.deepEqual(movePlayer("town", { x: 6, y: 4 }, "up"), { x: 6, y: 4 });
+test("continuous movement cannot cross Elverson buildings, water, furniture, exits, or trainers", () => {
+  for (const position of [
+    { x: 3, y: 3 },
+    { x: 8, y: 5 },
+    { x: 23, y: 5 },
+    { x: 6, y: 9 },
+    { x: 19, y: 9 },
+    { x: 3, y: 13 },
+    { x: 27, y: 17 },
+  ]) {
+    assert.equal(canOccupyContinuousPosition("town", position), false);
+  }
   assert.deepEqual(movePlayer("coral-home", { x: 4, y: 5 }, "left"), { x: 4, y: 5 });
   assert.deepEqual(movePlayer("coral-home", { x: 5, y: 6 }, "down"), { x: 5, y: 6 });
   assert.deepEqual(movePlayer("coral-home", { x: 5, y: 3 }, "up"), { x: 5, y: 3 });
@@ -601,30 +609,30 @@ test("movement cannot cross buildings, doors, furniture, exits, or trainers", ()
   assert.equal(isWalkable("academy-lab", { x: 7, y: 3 }), false);
 });
 
-test("town doors enter the academy and two homes only when the player faces them", () => {
-  assert.deepEqual(getInteraction("town", { x: 8, y: 2 }, "up"), {
+test("Elverson doors enter the aquarium and two homes only when the player faces them", () => {
+  assert.deepEqual(getInteraction("town", { x: 16, y: 18 }, "up"), {
     type: "enter",
-    interactionId: "interaction-town-enter-academy",
+    interactionId: "interaction-elverson-enter-aquarium",
     targetScene: "academy-lab",
     spawn: { x: 6, y: 7 },
     facing: "up",
   });
-  assert.deepEqual(getInteraction("town", { x: 5, y: 4 }, "up"), {
+  assert.deepEqual(getInteraction("town", { x: 7, y: 7 }, "up"), {
     type: "enter",
-    interactionId: "interaction-town-enter-coral-home",
+    interactionId: "interaction-elverson-enter-park-home",
     targetScene: "coral-home",
     spawn: { x: 5, y: 6 },
     facing: "up",
   });
-  assert.deepEqual(getInteraction("town", { x: 11, y: 4 }, "up"), {
+  assert.deepEqual(getInteraction("town", { x: 18, y: 4 }, "up"), {
     type: "enter",
-    interactionId: "interaction-town-enter-deep-home",
+    interactionId: "interaction-elverson-enter-chestnut-home",
     targetScene: "deep-home",
     spawn: { x: 5, y: 6 },
     facing: "up",
   });
-  assert.equal(getInteraction("town", { x: 5, y: 4 }, "left"), null);
-  assert.equal(getInteraction("town", { x: 5, y: 5 }, "up"), null);
+  assert.equal(getInteraction("town", { x: 7, y: 7 }, "left"), null);
+  assert.equal(getInteraction("town", { x: 7, y: 8 }, "up"), null);
 });
 
 test("interior exits return the player outside the matching town door", () => {
@@ -632,21 +640,21 @@ test("interior exits return the player outside the matching town door", () => {
     type: "exit",
     interactionId: "interaction-academy-exit",
     targetScene: "town",
-    spawn: { x: 8, y: 2 },
+    spawn: { x: 16, y: 17 },
     facing: "down",
   });
   assert.deepEqual(getInteraction("coral-home", { x: 5, y: 6 }, "down"), {
     type: "exit",
     interactionId: "interaction-coral-home-exit",
     targetScene: "town",
-    spawn: { x: 5, y: 4 },
+    spawn: { x: 7, y: 7 },
     facing: "down",
   });
   assert.deepEqual(getInteraction("deep-home", { x: 5, y: 6 }, "down"), {
     type: "exit",
     interactionId: "interaction-deep-home-exit",
     targetScene: "town",
-    spawn: { x: 11, y: 4 },
+    spawn: { x: 18, y: 4 },
     facing: "down",
   });
 });
@@ -682,15 +690,15 @@ test("facing an adjacent trainer yields the matching trainer interaction", () =>
 test("invalid scene, position, and direction inputs fail clearly", () => {
   assert.throws(() => movePlayer("missing", { x: 0, y: 0 }, "up"), /Unknown adventure scene/);
   assert.throws(() => movePlayer("town", { x: 1.5, y: 2 }, "up"), /integer x and y/);
-  assert.throws(() => movePlayer("town", { x: 7, y: 8 }, "north"), /Unknown movement direction/);
+  assert.throws(() => movePlayer("town", START_STATE.position, "north"), /Unknown movement direction/);
 });
 
 test("fractional player positions use a circular collision radius", () => {
-  assert.equal(canOccupyContinuousPosition("town", { x: 7.35, y: 7.6 }), true);
-  assert.equal(canOccupyContinuousPosition("town", { x: 5, y: 3 }), false);
-  assert.equal(canOccupyContinuousPosition("town", { x: 5, y: 3.7 }), false);
-  assert.equal(canOccupyContinuousPosition("town", { x: 5, y: 3.73 }), true);
-  assert.equal(canOccupyContinuousPosition("town", { x: -0.4, y: 5 }), false);
+  assert.equal(canOccupyContinuousPosition("town", { x: 14.35, y: 7.6 }), true);
+  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 3 }), false);
+  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 5.65 }), false);
+  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 5.7 }), true);
+  assert.equal(canOccupyContinuousPosition("town", { x: -0.4, y: 7 }), false);
   assert.equal(CONTINUOUS_MOVEMENT_DEFAULTS.radius, 0.22);
 });
 
@@ -897,9 +905,9 @@ test("Current interiors match visible furniture without cutting off required int
 });
 
 test("continuous movement scales with elapsed milliseconds and normalizes diagonals", () => {
-  const straight = movePlayerContinuous("town", { x: 7, y: 8 }, { x: 0, y: -1 }, 125);
-  assert.equal(straight.x, 7);
-  assert.ok(Math.abs(straight.y - 7.5) < 1e-9);
+  const straight = movePlayerContinuous("town", START_STATE.position, { x: 0, y: -1 }, 125);
+  assert.equal(straight.x, 14);
+  assert.ok(Math.abs(straight.y - 9.5) < 1e-9);
 
   const start = { x: 6, y: 6 };
   const diagonal = movePlayerContinuous("coral-home", start, { x: 1, y: -1 }, 100);
@@ -927,40 +935,40 @@ test("axis-separated collision slides along authored furniture without tunneling
 test("dynamic circular blockers participate in occupancy and continuous movement", () => {
   const dynamicBlockers = [{
     id: "moving-reefkeeper",
-    position: { x: 8, y: 8 },
+    position: { x: 14, y: 10 },
     radius: 0.3,
   }];
 
-  assert.equal(canOccupyContinuousPosition("town", { x: 7.5, y: 8 }), true);
+  assert.equal(canOccupyContinuousPosition("town", { x: 13.5, y: 10 }), true);
   assert.equal(
-    canOccupyContinuousPosition("town", { x: 7.5, y: 8 }, 0.22, { dynamicBlockers }),
+    canOccupyContinuousPosition("town", { x: 13.5, y: 10 }, 0.22, { dynamicBlockers }),
     false,
   );
   assert.equal(
-    canOccupyScenePosition("town", { x: 8, y: 8 }, { dynamicBlockers }),
+    canOccupyScenePosition("town", { x: 14, y: 10 }, { dynamicBlockers }),
     false,
   );
 
   const moved = movePlayerContinuous(
     "town",
-    { x: 7, y: 8 },
+    { x: 13, y: 10 },
     { x: 1, y: 0 },
     250,
     { dynamicBlockers },
   );
-  assert.ok(moved.x >= 7.3 && moved.x < 7.5, `expected actor blocker to stop movement, received ${moved.x}`);
+  assert.ok(moved.x >= 13.3 && moved.x < 13.5, `expected actor blocker to stop movement, received ${moved.x}`);
   assert.equal(
     canOccupyContinuousPosition("town", moved, 0.22, { dynamicBlockers }),
     true,
   );
 
   assert.throws(
-    () => canOccupyContinuousPosition("town", { x: 7, y: 8 }, 0.22, { dynamicBlockers: {} }),
+    () => canOccupyContinuousPosition("town", { x: 13, y: 10 }, 0.22, { dynamicBlockers: {} }),
     /blockers must be an array/,
   );
   assert.throws(
-    () => canOccupyContinuousPosition("town", { x: 7, y: 8 }, 0.22, {
-      dynamicBlockers: [{ position: { x: 8, y: 8 }, radius: 0 }],
+    () => canOccupyContinuousPosition("town", { x: 13, y: 10 }, 0.22, {
+      dynamicBlockers: [{ position: { x: 14, y: 10 }, radius: 0 }],
     }),
     /blocker 0 radius must be a positive finite number/,
   );
@@ -1024,15 +1032,15 @@ test("continuous interactions allow small offsets but enforce facing and range",
     conversationId: "conversation-shellshore-academy-mentor",
     encounterId: "encounter-shellshore-mentor-practice",
   });
-  assert.deepEqual(getContinuousInteraction("town", { x: 5.3, y: 4.15 }, "up"), {
+  assert.deepEqual(getContinuousInteraction("town", { x: 7.3, y: 7.15 }, "up"), {
     type: "enter",
-    interactionId: "interaction-town-enter-coral-home",
+    interactionId: "interaction-elverson-enter-park-home",
     targetScene: "coral-home",
     spawn: { x: 5, y: 6 },
     facing: "up",
   });
-  assert.equal(getContinuousInteraction("town", { x: 5.3, y: 4.15 }, "right"), null);
-  assert.equal(getContinuousInteraction("town", { x: 5, y: 4.5 }, "up"), null);
+  assert.equal(getContinuousInteraction("town", { x: 7.3, y: 7.15 }, "right"), null);
+  assert.equal(getContinuousInteraction("town", { x: 7, y: 7.5 }, "up"), null);
   assert.deepEqual(getContinuousInteraction("deep-home", { x: 5.4, y: 3.1 }, "up"), {
     type: "trainer",
     interactionId: "interaction-deep-home-dorian",
@@ -1077,25 +1085,25 @@ test("interaction position overrides keep moving characters targetable", () => {
   );
 });
 
-test("automatic doorway transitions recognize all six portals only at contact", () => {
+test("automatic doorway transitions recognize all six Elverson portals only at contact", () => {
   const doorwayCases = [
-    ["town", { x: 8, y: 1.73 }, "up", {
+    ["town", { x: 16, y: 17.73 }, "up", {
       type: "enter",
-      interactionId: "interaction-town-enter-academy",
+      interactionId: "interaction-elverson-enter-aquarium",
       targetScene: "academy-lab",
       spawn: { x: 6, y: 7 },
       facing: "up",
     }],
-    ["town", { x: 5, y: 3.73 }, "up", {
+    ["town", { x: 7, y: 6.8 }, "up", {
       type: "enter",
-      interactionId: "interaction-town-enter-coral-home",
+      interactionId: "interaction-elverson-enter-park-home",
       targetScene: "coral-home",
       spawn: { x: 5, y: 6 },
       facing: "up",
     }],
-    ["town", { x: 11, y: 3.73 }, "up", {
+    ["town", { x: 18, y: 3.8 }, "up", {
       type: "enter",
-      interactionId: "interaction-town-enter-deep-home",
+      interactionId: "interaction-elverson-enter-chestnut-home",
       targetScene: "deep-home",
       spawn: { x: 5, y: 6 },
       facing: "up",
@@ -1104,21 +1112,21 @@ test("automatic doorway transitions recognize all six portals only at contact", 
       type: "exit",
       interactionId: "interaction-academy-exit",
       targetScene: "town",
-      spawn: { x: 8, y: 2 },
+      spawn: { x: 16, y: 17 },
       facing: "down",
     }],
     ["coral-home", { x: 5, y: 6.27 }, "down", {
       type: "exit",
       interactionId: "interaction-coral-home-exit",
       targetScene: "town",
-      spawn: { x: 5, y: 4 },
+      spawn: { x: 7, y: 7 },
       facing: "down",
     }],
     ["deep-home", { x: 5, y: 6.27 }, "down", {
       type: "exit",
       interactionId: "interaction-deep-home-exit",
       targetScene: "town",
-      spawn: { x: 11, y: 4 },
+      spawn: { x: 18, y: 4 },
       facing: "down",
     }],
   ];
@@ -1129,21 +1137,21 @@ test("automatic doorway transitions recognize all six portals only at contact", 
 });
 
 test("automatic doorway transitions stay tight, directional, and portal-only", () => {
-  assert.equal(getDoorwayTransition("town", { x: 5, y: 3.91 }, "up"), null);
+  assert.equal(getDoorwayTransition("town", { x: 7, y: 6.91 }, "up"), null);
   assert.equal(
-    getDoorwayTransition("town", { x: 5.55, y: 3.73 }, "up")?.interactionId,
-    "interaction-town-enter-coral-home",
+    getDoorwayTransition("town", { x: 7.55, y: 6.8 }, "up")?.interactionId,
+    "interaction-elverson-enter-park-home",
   );
-  assert.equal(getDoorwayTransition("town", { x: 5.66, y: 3.73 }, "up"), null);
-  assert.equal(getDoorwayTransition("town", { x: 5, y: 3.73 }, "down"), null);
+  assert.equal(getDoorwayTransition("town", { x: 7.66, y: 6.8 }, "up"), null);
+  assert.equal(getDoorwayTransition("town", { x: 7, y: 6.8 }, "down"), null);
 
   const nearest = getDoorwayTransition(
     "town",
-    { x: 8, y: 4 },
-    "up",
-    { range: 4, lateralTolerance: 4 },
+    { x: 16, y: 14 },
+    "down",
+    { range: 4, lateralTolerance: 1 },
   );
-  assert.equal(nearest?.interactionId, "interaction-town-enter-academy");
+  assert.equal(nearest?.interactionId, "interaction-elverson-enter-aquarium");
 
   // Marina is within the same contact distance, but trainers remain manual interactions.
   assert.equal(getDoorwayTransition("coral-home", { x: 5, y: 2.73 }, "up"), null);
@@ -1151,22 +1159,22 @@ test("automatic doorway transitions stay tight, directional, and portal-only", (
 });
 
 test("continuous helpers reject invalid numeric inputs without changing grid APIs", () => {
-  assert.deepEqual(movePlayer("town", { x: 7, y: 8 }, "up"), { x: 7, y: 7 });
-  assert.deepEqual(movePlayerContinuous("town", { x: 7.25, y: 8 }, { x: 0, y: 0 }, 16), { x: 7.25, y: 8 });
+  assert.deepEqual(movePlayer("town", { x: 14, y: 10 }, "up"), { x: 14, y: 9 });
+  assert.deepEqual(movePlayerContinuous("town", { x: 14.25, y: 10 }, { x: 0, y: 0 }, 16), { x: 14.25, y: 10 });
   assert.throws(
-    () => movePlayerContinuous("town", { x: 7, y: 8 }, { x: 0, y: -1 }, -1),
+    () => movePlayerContinuous("town", { x: 14, y: 10 }, { x: 0, y: -1 }, -1),
     /Elapsed time must be a non-negative finite number/,
   );
   assert.throws(
-    () => canOccupyContinuousPosition("town", { x: Number.NaN, y: 8 }),
+    () => canOccupyContinuousPosition("town", { x: Number.NaN, y: 10 }),
     /finite x and y/,
   );
   assert.throws(
-    () => getDoorwayTransition("town", { x: 5, y: 3.73 }, "north"),
+    () => getDoorwayTransition("town", { x: 7, y: 6.8 }, "north"),
     /Unknown facing direction/,
   );
   assert.throws(
-    () => getDoorwayTransition("town", { x: 5, y: 3.73 }, "up", { range: 0 }),
+    () => getDoorwayTransition("town", { x: 7, y: 6.8 }, "up", { range: 0 }),
     /Doorway range must be a positive finite number/,
   );
 });

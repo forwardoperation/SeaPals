@@ -694,7 +694,14 @@ test("post-checklist help remains active only while the 10 VP victory is pending
   assert.equal(help.id, "tutorial-finish-duel");
   assert.equal(help.progressLabel, "Final goal • 4/10 VP");
   assert.equal(help.target, "turn-button");
-  assert.match(help.message, /4\/10 VP.*Professor Current.*2/i);
+  assert.match(help.message, /4\/10 VP.*Mr\. Easterling.*2/i);
+
+  const customGuide = getSimulatorTutorialHelp(null, {
+    ...FINISH_DUEL_STATE,
+    guideName: "Marine Biologist Jonah",
+  });
+  assert.match(customGuide.message, /Marine Biologist Jonah.*2/i);
+  assert.doesNotMatch(customGuide.message, /Mr\. Easterling|Professor Current/i);
 });
 
 test("post-checklist help preserves draw, result, and placement prerequisites", () => {

@@ -189,7 +189,7 @@ function ProfessorTypewriter({ guide, message }) {
   }, [duration, graphemes.length, message, reducedMotion, textSpeed]);
 
   return (
-    <div className="seapals-professor-dialogue mt-2" aria-label="Professor guidance">
+    <div className="seapals-professor-dialogue mt-2" aria-label={`${guide.name} guidance`}>
       <div className="seapals-professor-turn seapals-professor-turn-left">
         <div className="seapals-professor-turn-header">
           <span className="seapals-professor-speaker">{guide.name}</span>
@@ -1787,9 +1787,9 @@ export default function Simulator({
     ? createSimulatorTutorialProgress(tutorialContract, tutorialRuntime?.initialProgress ?? {})
     : null);
   const tutorialGuide = {
-    name: String(tutorialRuntime?.guide?.name ?? storyOpponentName ?? "Professor Current"),
-    role: String(tutorialRuntime?.guide?.role ?? "SeaPals Mentor"),
-    portraitSrc: String(tutorialRuntime?.guide?.portraitSrc ?? "/images/adventure/academy-mentor-sprites.png"),
+    name: String(tutorialRuntime?.guide?.name ?? "").trim() || "Mr. Easterling",
+    role: String(tutorialRuntime?.guide?.role ?? "").trim() || "Aquarium Project Lead",
+    portraitSrc: String(tutorialRuntime?.guide?.portraitSrc ?? "").trim() || "/images/adventure/academy-mentor-sprites.png",
     textSpeed: accessibilityTextSpeed,
     reducedMotion: accessibilityReducedMotion,
   };
@@ -2218,7 +2218,7 @@ export default function Simulator({
     && playerVp < victoryTarget
   );
   const tutorialBoardTourHelp = tutorialContract && tutorialUsesScriptedScenario
-    ? getGuidedAcademyBoardTourStep(tutorialBoardTourStep)
+    ? getGuidedAcademyBoardTourStep(tutorialBoardTourStep, { guideName: tutorialGuide.name })
     : null;
   const tutorialBoardTourOpen = Boolean(tutorialBoardTourHelp && !eventOverlay && !gameResult);
 
@@ -2323,7 +2323,7 @@ export default function Simulator({
       blockReason = `${card.name}'s ${attack.actionName} costs ${Number(attack.actionCost ?? 0)} RP, but you have ${rp} RP.`;
     } else if (!targetCount) {
       blockType = "targets";
-      blockReason = `${card.name}'s ${attack.actionName} has no compatible target on Professor Current's board.`;
+      blockReason = `${card.name}'s ${attack.actionName} has no compatible target on ${tutorialGuide.name}'s board.`;
     } else if (gamePhase !== "main") {
       blockType = "phase";
       blockReason = `${card.name} can only attack during your action phase.`;
@@ -2448,7 +2448,7 @@ export default function Simulator({
       blockReason = playErrorMessage;
     } else if (!targetCount) {
       blockType = "targets";
-      blockReason = `${attack.actionName} has no compatible target on Professor Current's board.`;
+      blockReason = `${attack.actionName} has no compatible target on ${tutorialGuide.name}'s board.`;
     } else if (totalCost > rp) {
       blockType = "rp";
       blockReason = `Playing ${card.name} and using ${attack.actionName} requires ${totalCost} RP, but you have ${rp} RP.`;
@@ -2638,6 +2638,7 @@ export default function Simulator({
     };
   })() : null;
   const tutorialHelp = tutorialContract ? getSimulatorTutorialHelp(tutorialCurrentCheckpoint, {
+    guideName: tutorialGuide.name,
     victoryPending: tutorialVictoryPending,
     playerVp,
     opponentVp,
@@ -2766,14 +2767,14 @@ export default function Simulator({
     ? {
         id: "tutorial-script-impact-target",
         cueId: `tutorial-script-impact-target:${eventOverlay.sourceCardId}`,
-        progressLabel: `Academy reef • ${playerVp}/${victoryTarget} VP`,
+        progressLabel: `Aquarium reef • ${playerVp}/${victoryTarget} VP`,
         title: eventOverlay.sourceCardId === scriptedFinishPlan.apexCardId
           ? "Begin Hammerhead's Ravage"
           : "Resolve Parrotfish's Eat ability",
         lead: "",
         message: eventOverlay.sourceCardId === scriptedFinishPlan.apexCardId
           ? "Ravage is an On Play sequence. First choose a Coral for the damage roll; after that resolves, Hammerhead must make its two attacks against the remaining compatible creatures."
-          : "Eat is an On Play ability, so it resolves immediately after Parrotfish enters the reef. Choose one of Professor Current's durable practice Corals; the damage teaches the timing without removing the final Ravage lesson.",
+          : `Eat is an On Play ability, so it resolves immediately after Parrotfish enters the reef. Choose one of ${tutorialGuide.name}'s durable practice Corals; the damage teaches the timing without removing the final Ravage lesson.`,
         action: "Choose one of the highlighted opposing Corals to resolve the On Play damage.",
         target: "impact-target",
         targetLabel: "a highlighted opposing Coral",
@@ -2786,11 +2787,11 @@ export default function Simulator({
     ? {
         id: "tutorial-script-utility-target",
         cueId: `tutorial-script-utility-target:${pendingCreatureAction.sourceCardId}`,
-        progressLabel: `Academy reef • ${playerVp}/${victoryTarget} VP`,
+        progressLabel: `Aquarium reef • ${playerVp}/${victoryTarget} VP`,
         title: "Munch flipped heads",
         lead: "",
         message: "The coin succeeded, so Nudibranch's non-attack action can reduce one Coral's next RP production. This changes the opponent's economy; it does not roll attack and defense dice or remove a creature.",
-        action: "Choose Professor Current's highlighted Coral to finish Munch.",
+        action: `Choose ${tutorialGuide.name}'s highlighted Coral to finish Munch.`,
         target: "coin-coral-target",
         targetLabel: "the highlighted opposing Coral",
       }
@@ -3152,7 +3153,7 @@ export default function Simulator({
       return "During setup, play a base Coral or Creature School before the first round begins.";
     }
     if (tutorialUsesScriptedScenario && isSetup && card.id !== "mustard-hill-coral-base") {
-      return "Professor Current has prepared Mustard Hill Coral for this guided setup. Use it so the later RP lesson stays on course.";
+      return `${tutorialGuide.name} has prepared Mustard Hill Coral for this guided setup. Use it so the later RP lesson stays on course.`;
     }
     if (
       tutorialUsesScriptedScenario
@@ -3160,7 +3161,7 @@ export default function Simulator({
       && tutorialCurrentCheckpoint?.id === "tutorial-build-card"
       && card.id !== scriptedFoundationLessonCardId
     ) {
-      return `Professor Current has prepared ${cardsById[scriptedFoundationLessonCardId]?.name ?? "the highlighted Foundation card"} for this economy lesson.`;
+      return `${tutorialGuide.name} has prepared ${cardsById[scriptedFoundationLessonCardId]?.name ?? "the highlighted Foundation card"} for this economy lesson.`;
     }
     const conditionRestriction = getConditionPlayRestriction(card, activeCondition);
     if (conditionRestriction) return conditionRestriction;
@@ -3567,6 +3568,7 @@ export default function Simulator({
       help: tutorialHelp,
       actionKey: attackerActionKey,
       target: "attack-button",
+      guideName: tutorialGuide.name,
     });
     if (academyBlock) {
       setTutorialHelpDismissedId(null);
@@ -5166,6 +5168,7 @@ export default function Simulator({
       route: scriptedFinishRoute,
       help: tutorialHelp,
       cardId,
+      guideName: tutorialGuide.name,
     });
     if (academyBlock) {
       setTutorialHelpDismissedId(null);
@@ -6079,6 +6082,7 @@ export default function Simulator({
       help: tutorialHelp,
       actionKey,
       target: "utility-action-button",
+      guideName: tutorialGuide.name,
     });
     if (academyBlock) {
       setTutorialHelpDismissedId(null);
@@ -8596,6 +8600,7 @@ export default function Simulator({
     const academyBlock = getAcademyEndTurnBlock({
       route: scriptedFinishRoute,
       help: tutorialHelp,
+      guideName: tutorialGuide.name,
     });
     if (academyBlock) {
       setTutorialHelpDismissedId(null);
@@ -8641,7 +8646,7 @@ export default function Simulator({
     setEventOverlay(null);
     if (scriptedTutorialScenario?.opponentTurnMode === "observe") {
       const observerState = normalizeProjectedOpponentState(reconcileOpponentInstances(opponent, opponent));
-      const message = `${tutorialGuide.name} keeps the academy reef unchanged and watches how you apply the lesson.`;
+      const message = `${tutorialGuide.name} keeps the practice reef unchanged and watches how you apply the lesson.`;
       queueEvents([{
         type: "turn-transition",
         title: "Your Turn",
@@ -9023,7 +9028,7 @@ export default function Simulator({
       type: "opening-coin-call",
       title: "Call the Opening Coin Flip",
       message: tutorialUsesScriptedScenario
-        ? `${tutorialGuide.name} hands you the academy coin. Call heads or tails to decide who takes the first turn.`
+        ? `${tutorialGuide.name} hands you the aquarium workshop coin. Call heads or tails to decide who takes the first turn.`
         : "Call heads or tails. The winner chooses who takes the first turn after setup.",
     });
     setTurnLog(["The opening coin flip will decide who takes the first turn."]);
@@ -9157,7 +9162,7 @@ export default function Simulator({
       unavailableOpponentCards.length ? `Opponent deck data warning: ${unavailableOpponentCards.map((entry) => `${entry.unavailableName ?? entry.cardId} ×${entry.quantity}`).join(", ")} ${unavailableOpponentCards.length === 1 ? "is" : "are"} missing repository card rules and excluded.` : null,
     ].filter(Boolean);
     setLog([...unavailableWarnings, tutorialUsesScriptedScenario
-      ? `New guided Academy game started: your ${deckName} versus ${tutorialGuide.name}'s prepared practice reef. Tour the board before calling the opening coin flip.`
+      ? `New guided aquarium lesson started: your ${deckName} versus ${tutorialGuide.name}'s prepared practice reef. Tour the board before calling the opening coin flip.`
       : `New ${difficultyLabel} game started: your ${deckName} versus the opponent's ${opponentDeckName}. Call the opening coin flip to decide who takes the first turn.`]);
   }
 
@@ -10624,14 +10629,14 @@ export default function Simulator({
                       </div>
                       {tutorialUsesScriptedScenario ? (
                         <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-cyan-400/10 p-4 text-sm leading-relaxed text-cyan-50">
-                          <strong className="block text-base text-white">Guided Academy Lesson</strong>
-                          <span className="mt-1 block">Professor Current has arranged the opening draws, round conditions, and enough compatible practice targets to teach economy, Support cards, card actions, attacks, Coral Reef, Predators, and an Apex finish in a deliberate order. The academy may temporarily prepare lesson cards missing from your selected starter, but your saved deck never changes.</span>
+                          <strong className="block text-base text-white">Guided Aquarium Lesson</strong>
+                          <span className="mt-1 block">{tutorialGuide.name} has arranged the opening draws, round conditions, and enough compatible practice targets to teach economy, Support cards, card actions, attacks, Coral Reef, Predators, and an Apex finish in a deliberate order. The guided lesson may temporarily prepare cards missing from your selected starter, but your saved deck never changes.</span>
                         </div>
                       ) : null}
                       <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn.</div>
                       <div className="mt-5 flex flex-wrap justify-end gap-3">
                         <button type="button" onClick={exitStoryMode} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Return to {storyReturnLabel}</button>
-                        <button type="button" onClick={() => restartStoryGame("begin")} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{tutorialUsesScriptedScenario ? "Begin Academy Lesson" : "Begin Duel"}</button>
+                        <button type="button" onClick={() => restartStoryGame("begin")} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{tutorialUsesScriptedScenario ? "Begin Aquarium Lesson" : "Begin Duel"}</button>
                       </div>
                     </div>
                   ) : (
@@ -10654,7 +10659,7 @@ export default function Simulator({
                         })}
                       </div>
                     </fieldset>
-                    <label className="mt-4 block rounded-2xl border border-cyan-400 bg-cyan-400/10 p-4"><span className="text-xs font-black uppercase tracking-wider text-cyan-300">Victory Target</span><select value={pendingVictoryTarget} onChange={(event) => setPendingVictoryTarget(Number(event.target.value))} className="ml-4 rounded-xl bg-slate-950 px-3 py-2 font-bold text-white"><option value={10}>10 VP — Quick Game</option><option value={26}>26 VP — Academy Strategy</option><option value={30}>30 VP — Full Game</option></select></label>
+                    <label className="mt-4 block rounded-2xl border border-cyan-400 bg-cyan-400/10 p-4"><span className="text-xs font-black uppercase tracking-wider text-cyan-300">Victory Target</span><select value={pendingVictoryTarget} onChange={(event) => setPendingVictoryTarget(Number(event.target.value))} className="ml-4 rounded-xl bg-slate-950 px-3 py-2 font-bold text-white"><option value={10}>10 VP — Quick Game</option><option value={26}>26 VP — Guided Strategy</option><option value={30}>30 VP — Full Game</option></select></label>
                     <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn. Every illegal play explains what is missing before you commit.</div>
                     <div className="mt-5 flex flex-wrap justify-end gap-3">{!eventOverlay.initial ? <button type="button" onClick={closeEventOverlay} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Keep Current Game</button> : null}<button type="button" onClick={() => restartGame(selectedDeckId, selectedOpponentDeckId, pendingVictoryTarget, pendingOpponentDifficulty)} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{eventOverlay.initial ? "Let's Begin!" : "Start New Game"}</button></div>
                   </div>
@@ -10884,7 +10889,7 @@ export default function Simulator({
                         const selected = pendingCreatureAction.selectedIndices.includes(entry.index);
                         const scriptedChoice = scriptedTutorialOverlayHelpOpen && scriptedDiscardCandidates.some((candidate) => candidate.index === entry.index);
                         const scriptedChoiceNeedsSelection = scriptedChoice && !selected && !scriptedDiscardReady;
-                        return <button key={`${entry.cardId}-${entry.index}`} type="button" onClick={() => toggleActionHandDiscard(entry.index)} data-tutorial-target={scriptedChoiceNeedsSelection ? "script-discard-cards" : undefined} className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left ${selected ? "border-rose-400 bg-rose-400/25" : "border-slate-500 bg-white/5"}${scriptedChoice ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-20 w-14 rounded-lg bg-white object-contain" /><strong className="flex-1">{card?.name}</strong><span className="text-sm">{selected ? "Selected" : scriptedChoice ? "Professor's pick" : "Keep"}</span></button>;
+                        return <button key={`${entry.cardId}-${entry.index}`} type="button" onClick={() => toggleActionHandDiscard(entry.index)} data-tutorial-target={scriptedChoiceNeedsSelection ? "script-discard-cards" : undefined} className={`flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left ${selected ? "border-rose-400 bg-rose-400/25" : "border-slate-500 bg-white/5"}${scriptedChoice ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-20 w-14 rounded-lg bg-white object-contain" /><strong className="flex-1">{card?.name}</strong><span className="text-sm">{selected ? "Selected" : scriptedChoice ? `${tutorialGuide.name}'s pick` : "Keep"}</span></button>;
                       })}
                     </div>
                     <div className="flex flex-wrap gap-3 pt-3"><button type="button" disabled={(pendingCreatureAction?.selectedIndices.length ?? 0) < (pendingCreatureAction?.minDiscard ?? Number(pendingCreatureAction?.effect.discard?.amount ?? 0)) || (pendingCreatureAction?.selectedIndices.length ?? 0) > (pendingCreatureAction?.maxDiscard ?? Number(pendingCreatureAction?.effect.discard?.amount ?? 0))} onClick={confirmActionHandDiscard} data-tutorial-target="script-discard-confirm" className={`rounded-full bg-rose-500 px-6 py-3 font-black disabled:opacity-40${scriptedDiscardReady && scriptedTutorialOverlayHelpOpen ? " seapals-tutorial-target" : ""}`}>Discard &amp; Continue</button><button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button></div>
@@ -10905,7 +10910,7 @@ export default function Simulator({
                       {(pendingCreatureAction?.searchCandidates ?? []).map((cardId) => {
                         const card = cardsById[cardId];
                         const scriptedChoice = scriptedTutorialOverlayHelpOpen && cardId === scriptedSearchTargetCardId;
-                        return <button key={cardId} type="button" onClick={() => completeActionDeckSearch(cardId)} data-tutorial-target={scriptedChoice ? "script-search-card" : undefined} className={`flex items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/25${scriptedChoice ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-xs text-cyan-200">{foundationDeck.includes(cardId) ? "Foundation" : "Pals"}</span>{scriptedChoice ? <span className="mt-1 block text-[10px] font-black uppercase tracking-wider text-amber-200">Professor's lesson target</span> : null}</span></button>;
+                        return <button key={cardId} type="button" onClick={() => completeActionDeckSearch(cardId)} data-tutorial-target={scriptedChoice ? "script-search-card" : undefined} className={`flex items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/25${scriptedChoice ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-xs text-cyan-200">{foundationDeck.includes(cardId) ? "Foundation" : "Pals"}</span>{scriptedChoice ? <span className="mt-1 block text-[10px] font-black uppercase tracking-wider text-amber-200">{tutorialGuide.name}'s lesson target</span> : null}</span></button>;
                       })}
                     </div>
                   </div>

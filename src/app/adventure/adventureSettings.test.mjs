@@ -130,7 +130,7 @@ test("settings modal includes a focus-trapped labelled dialog and generous contr
   assert.match(component, /event\.key === "Escape"/);
   assert.match(component, /event\.key !== "Tab"/);
   assert.match(component, /Dialogue reading pace/);
-  assert.match(component, /First voyages still require steering/);
+  assert.doesNotMatch(component, /Boat auto-steer|First voyages still require steering/);
   assert.match(css, /min-height: 44px/);
   assert.match(css, /:focus-visible/);
   assert.match(css, /prefers-reduced-motion: reduce/);

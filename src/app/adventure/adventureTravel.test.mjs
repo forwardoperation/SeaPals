@@ -21,7 +21,7 @@ const TEST_CONTENT = Object.freeze({
   towns: Object.freeze([
     Object.freeze({
       id: "shellshore-village",
-      name: "Shellshore Academy",
+      name: "Elverson",
       settlementType: "island",
       habitatId: "harbor-lagoon",
       dockId: SHELLSHORE_DOCK_ID,
@@ -50,7 +50,7 @@ const TEST_CONTENT = Object.freeze({
       id: "town",
       townId: "shellshore-village",
       status: "prototype",
-      world: Object.freeze({ spawn: Object.freeze({ x: 7, y: 8 }), startFacing: "up" }),
+      world: Object.freeze({ spawn: Object.freeze({ x: 14, y: 10 }), startFacing: "down" }),
     }),
     Object.freeze({
       id: "shellshore-sunpatch-sea",
@@ -77,8 +77,8 @@ const TEST_CONTENT = Object.freeze({
       townId: "shellshore-village",
       sceneId: "town",
       status: "prototype",
-      position: Object.freeze({ x: 7, y: 8 }),
-      facing: "up",
+      position: Object.freeze({ x: 14, y: 10 }),
+      facing: "down",
     }),
     Object.freeze({
       id: SUNPATCH_DOCK_ID,
@@ -236,7 +236,7 @@ test("boarding preserves the safe origin while entering the authored route spawn
   assert.equal(boarded.world.facing, "right");
   assert.equal(boarded.world.lastSafeDockId, SHELLSHORE_DOCK_ID);
   assert.deepEqual(boarded.world.completedRouteIds, []);
-  assert.deepEqual(initial.world.position, { x: 7, y: 8 });
+  assert.deepEqual(initial.world.position, { x: 14, y: 10 });
 });
 
 test("route scene spawn is a safe metadata fallback when endpoint spawn is omitted", () => {

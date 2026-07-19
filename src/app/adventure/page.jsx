@@ -3,7 +3,7 @@ import AdventureGame from "./AdventureGame";
 export const metadata = {
   title: "Reefbound Adventure | SeaPals TCG",
   description:
-    "Explore Shellshore Village, meet its Reefkeepers, and challenge them to SeaPals duels.",
+    "Explore coastal Elverson and help Mr. Easterling create a new community aquarium exhibit.",
 };
 
 export default function AdventurePage() {
