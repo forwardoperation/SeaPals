@@ -52,6 +52,17 @@ const SCENE_VISIT_FLAGS = Object.freeze({
   "deep-home": "visited-deep-home",
 });
 
+const LEGACY_ELVERSON_AQUARIUM_EXIT_POSITION = Object.freeze({ x: 16, y: 17 });
+const ELVERSON_AQUARIUM_EXIT = SCENES["academy-lab"]?.interactions.find(
+  ({ id }) => id === "interaction-academy-exit",
+);
+
+function isLegacyElversonAquariumExit(world) {
+  return world.sceneId === "town"
+    && world.position.x === LEGACY_ELVERSON_AQUARIUM_EXIT_POSITION.x
+    && world.position.y === LEGACY_ELVERSON_AQUARIUM_EXIT_POSITION.y;
+}
+
 function withWorld(
   save,
   sceneId,
@@ -268,6 +279,20 @@ export function recoverElversonAdventureResume(saveValue) {
       recovered: true,
       reason: "outside-active-release",
       fallback: "elverson-start",
+    };
+  }
+  if (isLegacyElversonAquariumExit(normalized.world)) {
+    const repaired = recoverAdventureResume(withWorld(
+      normalized,
+      "town",
+      ELVERSON_AQUARIUM_EXIT.spawn,
+      normalized.world.facing,
+    ));
+    return {
+      ...repaired,
+      recovered: true,
+      reason: "legacy-aquarium-exit",
+      fallback: "central-pier",
     };
   }
   return recoverAdventureResume(normalized);
