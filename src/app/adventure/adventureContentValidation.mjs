@@ -637,7 +637,13 @@ export function validateAdventureContent(content) {
       ) {
         errors.push(`fieldNotes.${fieldNote.id}.glossary must contain defined terms.`);
       }
-      if (["coral-reef", "estuary-mangrove", "open-ocean", "kelp-forest"].includes(fieldNote.habitatId) && (
+      if ([
+        "coral-reef",
+        "estuary-mangrove",
+        "open-ocean",
+        "kelp-forest",
+        "deep-ocean-trench",
+      ].includes(fieldNote.habitatId) && (
         !Array.isArray(fieldNote.sourceUrls)
         || fieldNote.sourceUrls.length < 3
         || fieldNote.sourceUrls.some((sourceUrl) => typeof sourceUrl !== "string" || !/^https:\/\//.test(sourceUrl))

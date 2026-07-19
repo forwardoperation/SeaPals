@@ -21,6 +21,10 @@ import {
   getKelpwatchProgress,
 } from "./adventureKelpwatch.mjs";
 import {
+  TRENCHLIGHT_QUEST_ID,
+  TRENCHLIGHT_RESIDENT_ENCOUNTER_IDS,
+} from "./adventureTrenchlight.mjs";
+import {
   ADVENTURE_ECOSYSTEM_CHAPTERS,
 } from "./adventureEcosystemChapters.mjs";
 import {
@@ -47,6 +51,7 @@ const CHAPTER_WORLD_BY_TOWN_ID = Object.freeze({
   "brackwater-landing": Object.freeze({ sceneId: "brackwater-landing-town", dockId: "brackwater-dock" }),
   "current-commons": Object.freeze({ sceneId: "current-commons-town", dockId: "current-commons-dock" }),
   "kelpwatch-island": Object.freeze({ sceneId: "kelpwatch-island-town", dockId: "kelpwatch-dock" }),
+  "trenchlight-station": Object.freeze({ sceneId: "trenchlight-station-town", dockId: "trenchlight-dock" }),
 });
 
 const CHAPTER_REWARD_ID_BY_QUEST_ID = Object.freeze({
@@ -54,6 +59,7 @@ const CHAPTER_REWARD_ID_BY_QUEST_ID = Object.freeze({
   [BRACKWATER_QUEST_ID]: "reward-brackwater-fieldwork",
   [CURRENT_QUEST_ID]: "reward-current-fieldwork",
   [KELPWATCH_QUEST_ID]: "reward-kelpwatch-fieldwork",
+  [TRENCHLIGHT_QUEST_ID]: "reward-trenchlight-fieldwork",
 });
 
 function completeChapterForRecovery(chapter, profileId) {
@@ -133,6 +139,7 @@ test("entering any registered ecosystem town begins its chapter", () => {
     { sceneId: "brackwater-landing-town", questId: BRACKWATER_QUEST_ID },
     { sceneId: "current-commons-town", questId: CURRENT_QUEST_ID },
     { sceneId: "kelpwatch-island-town", questId: KELPWATCH_QUEST_ID },
+    { sceneId: "trenchlight-station-town", questId: TRENCHLIGHT_QUEST_ID },
   ]) {
     const scene = SCENES[sceneId];
     const entered = enterAdventureScene(createNewAdventureSession("profile-1"), {
@@ -192,6 +199,11 @@ test("resident wins alone never bypass registered ecosystem fieldwork", () => {
       questId: KELPWATCH_QUEST_ID,
       encounterIds: KELPWATCH_RESIDENT_ENCOUNTER_IDS,
     },
+    {
+      sceneId: "trenchlight-station-town",
+      questId: TRENCHLIGHT_QUEST_ID,
+      encounterIds: TRENCHLIGHT_RESIDENT_ENCOUNTER_IDS,
+    },
   ]) {
     let save = enterAdventureScene(createNewAdventureSession("profile-3"), {
       sceneId,
@@ -222,6 +234,10 @@ test("inconsistent terminal ecosystem saves cannot unlock qualifier encounters",
     {
       questId: KELPWATCH_QUEST_ID,
       qualifierId: "encounter-kelpwatch-qualifier",
+    },
+    {
+      questId: TRENCHLIGHT_QUEST_ID,
+      qualifierId: "encounter-trenchlight-qualifier",
     },
   ]) {
     const initial = createInitialAdventureSave(`corrupt-${questId}`);
@@ -668,8 +684,8 @@ test("all live portals use safe spawns and preserve their authored arrival facin
 
   assert.equal(
     portalCount,
-    30,
-    "all live Shellshore, Sunpatch, Brackwater, Current Commons, and Kelpwatch entrances and exits should be covered",
+    37,
+    "all live Shellshore, Sunpatch, Brackwater, Current Commons, Kelpwatch, and Trenchlight entrances and exits should be covered",
   );
 });
 
