@@ -167,11 +167,11 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Stunned boundary",
-    text: "The current rules data can mark a Coral as Stunned, but it does not yet define an automatic gameplay consequence or expiration. Follow the printed card and latest official rules rather than inventing an additional penalty.",
+    text: "A Stunned Coral produces no RP, cannot use its own actions or passives, and cannot be upgraded through the end of its controller's next turn. Coral Heal can remove Stunned early because it removes all effects from the chosen Coral.",
   },
   {
     title: "How a Coral becomes Stunned",
-    text: "A Coral becomes Stunned only when a printed card effect says that it does. Pay that effect's cost, choose a legal opposing Coral, and resolve any required coin flip. Coral Heal removes all effects from one of your Corals, including Stunned. The current rules do not define an extra universal Stunned penalty or automatic expiration beyond the printed effects.",
+    text: "A Coral becomes Stunned only when a printed card effect says that it does. Pay that effect's cost, choose a legal opposing Coral, and resolve any required coin flip. The affected Coral produces no RP, cannot use its own actions or passives, and cannot be upgraded through the end of its controller's next turn. Coral Heal removes all effects from one of your Corals, including Stunned, and therefore clears it early.",
   },
   {
     title: "Protecting Coral from attacks",

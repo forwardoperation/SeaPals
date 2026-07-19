@@ -40,6 +40,7 @@ const TOURNAMENT_DIRECTOR_CONVERSATION_MODES = ["registration", "roundReady", "c
 const TOURNAMENT_OPPONENT_CONVERSATION_MODES = ["roundReady", "defeat", "roundVictory", "postgame"];
 const TOURNAMENT_REFLECTION_CONVERSATION_MODES = ["epilogue", "postgame"];
 const FACING_DIRECTIONS = new Set(["up", "down", "left", "right"]);
+const PATROL_MODES = new Set(["loop", "ping-pong"]);
 const PACK_POOL_STATUSES = new Set(["planned", "playable"]);
 const PLAYABLE_PACK_GUARANTEE = "at-least-one-unowned-card-when-eligible";
 
@@ -75,6 +76,67 @@ function collectIds(items, label, errors) {
 function requireReference(value, ids, path, errors, { nullable = false } = {}) {
   if (nullable && value === null) return;
   if (!ids.has(value)) errors.push(`${path} references unknown id ${String(value)}.`);
+}
+
+function validateInteractionPatrol(interaction, { path, width, height, errors }) {
+  if (interaction.patrol === undefined) return;
+
+  if (interaction.type !== "npc" && interaction.type !== "trainer") {
+    errors.push(`${path}.patrol may only be supplied for npc or trainer interactions.`);
+  }
+  if (!isObject(interaction.patrol)) {
+    errors.push(`${path}.patrol must be an object.`);
+    return;
+  }
+
+  const patrolPath = `${path}.patrol`;
+  const { patrol } = interaction;
+  if (!PATROL_MODES.has(patrol.mode)) {
+    errors.push(`${patrolPath}.mode must be loop or ping-pong.`);
+  }
+  if (!Number.isFinite(patrol.speed) || patrol.speed <= 0) {
+    errors.push(`${patrolPath}.speed must be a positive finite number.`);
+  }
+  if (!Number.isFinite(patrol.pauseMs) || patrol.pauseMs < 0) {
+    errors.push(`${patrolPath}.pauseMs must be a nonnegative finite number.`);
+  }
+  if (
+    patrol.playerPauseDistance !== undefined
+    && (!Number.isFinite(patrol.playerPauseDistance) || patrol.playerPauseDistance < 0)
+  ) {
+    errors.push(`${patrolPath}.playerPauseDistance must be a nonnegative finite number when supplied.`);
+  }
+  if (!Array.isArray(patrol.waypoints) || patrol.waypoints.length < 2) {
+    errors.push(`${patrolPath}.waypoints must be an array with at least two entries.`);
+    return;
+  }
+
+  for (const [waypointIndex, waypoint] of patrol.waypoints.entries()) {
+    const waypointPath = `${patrolPath}.waypoints[${waypointIndex}]`;
+    if (!isObject(waypoint) || !Number.isFinite(waypoint.x) || !Number.isFinite(waypoint.y)) {
+      errors.push(`${waypointPath} requires finite x and y coordinates.`);
+      continue;
+    }
+    if (
+      width > 0
+      && height > 0
+      && (waypoint.x < 0 || waypoint.y < 0 || waypoint.x > width - 1 || waypoint.y > height - 1)
+    ) {
+      errors.push(`${waypointPath} must stay inside the scene bounds.`);
+    }
+  }
+
+  const firstWaypoint = patrol.waypoints[0];
+  if (
+    isObject(firstWaypoint)
+    && Number.isFinite(firstWaypoint.x)
+    && Number.isFinite(firstWaypoint.y)
+    && Number.isFinite(interaction.at?.x)
+    && Number.isFinite(interaction.at?.y)
+    && (firstWaypoint.x !== interaction.at.x || firstWaypoint.y !== interaction.at.y)
+  ) {
+    errors.push(`${patrolPath}.waypoints[0] must match the interaction at position.`);
+  }
 }
 
 export function validateAdventureContent(content) {
@@ -419,6 +481,12 @@ export function validateAdventureContent(content) {
       if (!Number.isInteger(interaction.at?.x) || !Number.isInteger(interaction.at?.y)) {
         errors.push(`${path}.at requires integer x and y coordinates.`);
       }
+      validateInteractionPatrol(interaction, {
+        path,
+        width,
+        height: rows.length,
+        errors,
+      });
 
       if (interaction.tournamentAction !== undefined) {
         runtimeTournamentActions.push({ sceneId: scene.id, interaction });

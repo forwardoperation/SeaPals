@@ -1200,6 +1200,56 @@ test("content validation rejects malformed, duplicate, and out-of-bounds collisi
   assert.ok(result.errors.some((error) => /collisionRects\[\d+\].*inside the scene bounds/.test(error)));
 });
 
+test("content validation rejects malformed and out-of-bounds NPC patrol metadata", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  const shellshoreTown = invalid.scenes.find((scene) => scene.id === "town");
+  const shellshoreDoor = shellshoreTown.world.interactions.find((interaction) => interaction.type === "enter");
+  shellshoreDoor.patrol = {
+    mode: "loop",
+    speed: 1,
+    pauseMs: 0,
+    waypoints: [shellshoreDoor.at, { x: shellshoreDoor.at.x, y: shellshoreDoor.at.y + 1 }],
+  };
+
+  const sunpatchTavi = invalid.scenes
+    .find((scene) => scene.id === "sunpatch-cay-town")
+    .world.interactions.find((interaction) => interaction.id === "interaction-sunpatch-tavi");
+  sunpatchTavi.patrol = [];
+
+  const brackwaterRhea = invalid.scenes
+    .find((scene) => scene.id === "brackwater-landing-town")
+    .world.interactions.find((interaction) => interaction.id === "interaction-brackwater-rhea");
+  brackwaterRhea.patrol.waypoints = [brackwaterRhea.at];
+
+  const currentGuide = invalid.scenes
+    .find((scene) => scene.id === "current-commons-town")
+    .world.interactions.find((interaction) => interaction.id === "interaction-current-guide");
+  currentGuide.patrol.waypoints[1].x = Number.POSITIVE_INFINITY;
+  currentGuide.patrol.waypoints[2].y = 999;
+
+  const kelpwatchGuide = invalid.scenes
+    .find((scene) => scene.id === "kelpwatch-island-town")
+    .world.interactions.find((interaction) => interaction.id === "interaction-kelpwatch-guide");
+  kelpwatchGuide.patrol.mode = "wander";
+  kelpwatchGuide.patrol.speed = 0;
+  kelpwatchGuide.patrol.pauseMs = -1;
+  kelpwatchGuide.patrol.playerPauseDistance = -0.5;
+  kelpwatchGuide.patrol.waypoints[0] = { x: kelpwatchGuide.at.x + 1, y: kelpwatchGuide.at.y };
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /patrol may only be supplied for npc or trainer interactions/.test(error)));
+  assert.ok(result.errors.some((error) => /patrol must be an object/.test(error)));
+  assert.ok(result.errors.some((error) => /waypoints must be an array with at least two entries/.test(error)));
+  assert.ok(result.errors.some((error) => /waypoints\[1\] requires finite x and y coordinates/.test(error)));
+  assert.ok(result.errors.some((error) => /waypoints\[2\] must stay inside the scene bounds/.test(error)));
+  assert.ok(result.errors.some((error) => /mode must be loop or ping-pong/.test(error)));
+  assert.ok(result.errors.some((error) => /speed must be a positive finite number/.test(error)));
+  assert.ok(result.errors.some((error) => /pauseMs must be a nonnegative finite number/.test(error)));
+  assert.ok(result.errors.some((error) => /playerPauseDistance must be a nonnegative finite number/.test(error)));
+  assert.ok(result.errors.some((error) => /waypoints\[0\] must match the interaction at position/.test(error)));
+});
+
 test("content validation rejects invalid portal destination facing", () => {
   const invalid = clone(ADVENTURE_CONTENT);
   invalid.scenes.find((scene) => scene.id === "town").world.interactions[0].facing = "diagonal";

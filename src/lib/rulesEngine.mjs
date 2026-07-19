@@ -1063,7 +1063,7 @@ function stunCoralStrategyAnswer(strategyRule, rules) {
   return {
     kind: "answer",
     title: strategyRule.title,
-    text: `A Coral becomes Stunned only when a printed card effect says it does; Stunned is not caused by ordinary attack damage.${exampleText}${clearingText} The current rules do not define an extra universal Stunned penalty or automatic expiration beyond those printed instructions.`,
+    text: `A Coral becomes Stunned only when a printed card effect says it does; Stunned is not caused by ordinary attack damage.${exampleText} While Stunned, that Coral produces no RP, cannot use its own actions or passives, and cannot be upgraded through the end of its controller's next turn.${clearingText}`,
     sources: uniqueSources([strategyRule, ...stunners.slice(0, 5), coralHeal, boundary].filter(Boolean).map(sourceFor)),
   };
 }

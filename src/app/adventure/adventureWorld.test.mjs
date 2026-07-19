@@ -65,6 +65,56 @@ test("legacy scenes inherit a frozen default movement profile", () => {
   assert.throws(() => getSceneMovementProfile("missing"), /Unknown adventure scene/);
 });
 
+test("town shorelines keep walkers on the visible central piers", () => {
+  const shorelineCases = [
+    "sunpatch-cay-town",
+    "brackwater-landing-town",
+    "current-commons-town",
+    "kelpwatch-island-town",
+    "trenchlight-station-town",
+    "champions-wake-town",
+  ];
+
+  for (const sceneId of shorelineCases) {
+    const scene = SCENES[sceneId];
+    for (const position of [{ x: 3, y: 8 }, { x: 12, y: 8 }]) {
+      assert.equal(
+        canOccupyContinuousPosition(sceneId, position),
+        false,
+        `${sceneId} water at ${position.x},${position.y} must stay solid`,
+      );
+    }
+    assert.equal(canOccupyScenePosition(sceneId, scene.spawn), true, `${sceneId} spawn must stay safe`);
+    assertWalkablePolyline(
+      sceneId,
+      [scene.spawn, { x: 7, y: 7 }],
+      `${sceneId} central pier approach`,
+    );
+  }
+});
+
+test("every static character anchor owns a non-walkable tile", () => {
+  const characterInteractions = Object.values(SCENES).flatMap((scene) => (
+    scene.interactions
+      .filter(({ type }) => type === "npc" || type === "trainer")
+      .map((interaction) => ({ scene, interaction }))
+  ));
+
+  assert.ok(characterInteractions.length > 30);
+  for (const { scene, interaction } of characterInteractions) {
+    assert.equal(
+      isWalkable(scene.id, interaction.at),
+      false,
+      `${interaction.id} in ${scene.id} must not stand on walkable floor`,
+    );
+    assert.equal(
+      canOccupyScenePosition(scene.id, interaction.at),
+      false,
+      `${interaction.id} in ${scene.id} must block the player`,
+    );
+  }
+});
+
 test("route tile symbols distinguish open water from navigation obstacles", () => {
   assert.deepEqual(TILE_LEGEND.o, { id: "water", walkable: true });
   assert.deepEqual(TILE_LEGEND.k, { id: "rock-shoal", walkable: false });
@@ -874,6 +924,97 @@ test("axis-separated collision slides along authored furniture without tunneling
   assert.equal(canOccupyContinuousPosition("deep-home", longStep), true);
 });
 
+test("dynamic circular blockers participate in occupancy and continuous movement", () => {
+  const dynamicBlockers = [{
+    id: "moving-reefkeeper",
+    position: { x: 8, y: 8 },
+    radius: 0.3,
+  }];
+
+  assert.equal(canOccupyContinuousPosition("town", { x: 7.5, y: 8 }), true);
+  assert.equal(
+    canOccupyContinuousPosition("town", { x: 7.5, y: 8 }, 0.22, { dynamicBlockers }),
+    false,
+  );
+  assert.equal(
+    canOccupyScenePosition("town", { x: 8, y: 8 }, { dynamicBlockers }),
+    false,
+  );
+
+  const moved = movePlayerContinuous(
+    "town",
+    { x: 7, y: 8 },
+    { x: 1, y: 0 },
+    250,
+    { dynamicBlockers },
+  );
+  assert.ok(moved.x >= 7.3 && moved.x < 7.5, `expected actor blocker to stop movement, received ${moved.x}`);
+  assert.equal(
+    canOccupyContinuousPosition("town", moved, 0.22, { dynamicBlockers }),
+    true,
+  );
+
+  assert.throws(
+    () => canOccupyContinuousPosition("town", { x: 7, y: 8 }, 0.22, { dynamicBlockers: {} }),
+    /blockers must be an array/,
+  );
+  assert.throws(
+    () => canOccupyContinuousPosition("town", { x: 7, y: 8 }, 0.22, {
+      dynamicBlockers: [{ position: { x: 8, y: 8 }, radius: 0 }],
+    }),
+    /blocker 0 radius must be a positive finite number/,
+  );
+});
+
+test("runtime actors replace their authored n tiles without weakening other geometry", () => {
+  const sceneId = "sunpatch-cay-town";
+  const authoredAnchor = { x: 11, y: 5 };
+  const movedActor = {
+    id: "interaction-sunpatch-bo",
+    position: { x: 8, y: 5 },
+    radius: 0.3,
+  };
+
+  assert.equal(getTile(sceneId, authoredAnchor).symbol, "n");
+  assert.equal(canOccupyContinuousPosition(sceneId, authoredAnchor), false);
+  assert.equal(
+    canOccupyContinuousPosition(sceneId, authoredAnchor, 0.22, {
+      dynamicBlockers: [movedActor],
+      ignoreActorTiles: true,
+    }),
+    true,
+  );
+  assert.equal(
+    canOccupyContinuousPosition(sceneId, movedActor.position, 0.22, {
+      dynamicBlockers: [movedActor],
+      ignoreActorTiles: true,
+    }),
+    false,
+  );
+
+  const blockedByAuthoredAnchor = movePlayerContinuous(
+    sceneId,
+    { x: 10, y: 5 },
+    { x: 1, y: 0 },
+    500,
+    { dynamicBlockers: [movedActor] },
+  );
+  const passedAuthoredAnchor = movePlayerContinuous(
+    sceneId,
+    { x: 10, y: 5 },
+    { x: 1, y: 0 },
+    500,
+    { dynamicBlockers: [movedActor], ignoreActorTiles: true },
+  );
+  assert.ok(blockedByAuthoredAnchor.x < 10.5);
+  assert.ok(passedAuthoredAnchor.x > 11.5);
+
+  assert.throws(
+    () => canOccupyContinuousPosition(sceneId, authoredAnchor, 0.22, { ignoreActorTiles: "yes" }),
+    /ignoreActorTiles must be a boolean/,
+  );
+});
+
 test("continuous interactions allow small offsets but enforce facing and range", () => {
   assert.deepEqual(getContinuousInteraction("academy-lab", { x: 7.25, y: 4.1 }, "up"), {
     type: "trainer",
@@ -900,6 +1041,40 @@ test("continuous interactions allow small offsets but enforce facing and range",
     conversationId: "conversation-shellshore-dorian",
     encounterId: "encounter-shellshore-dorian",
   });
+});
+
+test("interaction position overrides keep moving characters targetable", () => {
+  const interactionId = "interaction-sunpatch-bo";
+  const movedPosition = { x: 8, y: 5 };
+  const objectOverrides = { [interactionId]: movedPosition };
+  const mapOverrides = new Map([[interactionId, movedPosition]]);
+
+  assert.equal(getContinuousInteraction("sunpatch-cay-town", { x: 7, y: 5 }, "right"), null);
+  assert.equal(
+    getContinuousInteraction("sunpatch-cay-town", { x: 7, y: 5 }, "right", {
+      positionOverrides: objectOverrides,
+    })?.interactionId,
+    interactionId,
+  );
+  assert.equal(
+    getInteraction("sunpatch-cay-town", { x: 7, y: 5 }, "right", {
+      positionOverrides: mapOverrides,
+    })?.interactionId,
+    interactionId,
+  );
+
+  assert.throws(
+    () => getContinuousInteraction("sunpatch-cay-town", { x: 7, y: 5 }, "right", {
+      positionOverrides: [],
+    }),
+    /positionOverrides must be an object or Map/,
+  );
+  assert.throws(
+    () => getContinuousInteraction("sunpatch-cay-town", { x: 7, y: 5 }, "right", {
+      positionOverrides: { [interactionId]: { x: Number.NaN, y: 5 } },
+    }),
+    /finite x and y/,
+  );
 });
 
 test("automatic doorway transitions recognize all six portals only at contact", () => {

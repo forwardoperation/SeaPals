@@ -14,11 +14,24 @@ import {
 import {
   SCENES,
   START_STATE,
+  canOccupyContinuousPosition,
   getContinuousInteraction,
   getDoorwayTransition,
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
-import { getContinuousBoatHeading } from "./adventureBoatMotion.mjs";
+import {
+  BOAT_MOTION_DEFAULTS,
+  createBoatMotionState,
+  getBoatFacingFromHeading,
+  getContinuousBoatHeading,
+  stepBoatMotion,
+} from "./adventureBoatMotion.mjs";
+import {
+  advanceAdventureActorStates,
+  createAdventureActorStates,
+  getAdventureActorBlockers,
+  getAdventureActorPositionOverrides,
+} from "./adventureActors.mjs";
 import {
   ADVENTURE_CONTENT,
   getAdventureFieldNote,
@@ -308,16 +321,24 @@ function SpriteArtwork({ character = "player", facing = "down", moving = false, 
   );
 }
 
-function AdventureTrainerSprite({ trainer, position, defeated, status = null, scene }) {
+function AdventureTrainerSprite({
+  trainer,
+  position,
+  facing = "down",
+  moving = false,
+  defeated,
+  status = null,
+  scene,
+}) {
   const resolvedStatus = defeated ? "Won" : status;
   return (
     <div
-      className={styles.characterCell}
+      className={`${styles.characterCell} ${styles.npcCell}`}
       style={actorPosition(position, scene)}
       aria-label={`${trainer.name}, ${trainer.title}${resolvedStatus ? ` — ${resolvedStatus}` : ""}`}
     >
       <span className={styles.characterShadow} />
-      <SpriteArtwork character={trainer.id} facing="down" />
+      <SpriteArtwork character={trainer.id} facing={facing} moving={moving} />
       <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""} ${status === "Locked" ? styles.trainerLocked : ""}`}>
         {defeated ? "★" : status === "Locked" ? "•" : "!"}
       </span>
@@ -339,17 +360,16 @@ function AdventurePlayerSprite({ position, facing, moving, interaction, scene })
   );
 }
 
-function AdventureBoatSprite({ position, facing, moving, interaction, scene }) {
-  const [heading, setHeading] = useState(() => getContinuousBoatHeading(null, facing));
-
-  useEffect(() => {
-    setHeading((currentHeading) => getContinuousBoatHeading(currentHeading, facing));
-  }, [facing]);
-
+function AdventureBoatSprite({ position, facing, heading, speed, moving, interaction, scene }) {
+  const speedRatio = Math.min(1, Math.abs(speed) / (scene.movement?.speed ?? BOAT_MOTION_DEFAULTS.maxForwardSpeed));
   return (
     <div
       className={`${styles.characterCell} ${styles.playerCell} ${styles.boatCell} ${styles[`boatFacing${facing}`]} ${moving ? styles.boatMoving : ""}`}
-      style={{ ...actorPosition(position, scene), "--boat-heading": `${heading}deg` }}
+      style={{
+        ...actorPosition(position, scene),
+        "--boat-heading": `${heading}deg`,
+        "--boat-wake-strength": speedRatio,
+      }}
       aria-label="Your personal boat"
     >
       <span className={styles.boatActor} aria-hidden="true">
@@ -359,6 +379,62 @@ function AdventureBoatSprite({ position, facing, moving, interaction, scene }) {
       {interaction ? <span className={styles.actionCue} aria-hidden="true">A</span> : null}
     </div>
   );
+}
+
+const WORLD_CUE_COPY = Object.freeze({
+  board: Object.freeze({ icon: "⚓", label: "Board" }),
+  dock: Object.freeze({ icon: "⚓", label: "Dock" }),
+  observation: Object.freeze({ icon: "⌕", label: "Inspect" }),
+  interpretation: Object.freeze({ icon: "⇄", label: "Compare" }),
+  response: Object.freeze({ icon: "✓", label: "Respond" }),
+});
+
+function AdventureWorldCue({ interaction, scene, active = false, recommended = false, complete = false }) {
+  const copy = WORLD_CUE_COPY[interaction.type];
+  if (!copy) return null;
+  const className = [
+    styles.worldCue,
+    styles[`worldCue${interaction.type}`],
+    active ? styles.worldCueActive : "",
+    recommended ? styles.worldCueRecommended : "",
+    complete ? styles.worldCueComplete : "",
+    interaction.at.x <= 0 ? styles.worldCueLeftEdge : "",
+    interaction.at.x >= scene.width - 1 ? styles.worldCueRightEdge : "",
+  ].filter(Boolean).join(" ");
+
+  return (
+    <div
+      className={className}
+      style={{ ...actorPosition(interaction.at, scene), zIndex: 80 + Math.round(interaction.at.y) }}
+      aria-hidden="true"
+    >
+      <span className={styles.worldCueArrow}>▼</span>
+      <span className={styles.worldCueBadge}>
+        <b>{complete ? "✓" : copy.icon}</b>
+        {complete ? "Done" : copy.label}
+      </span>
+    </div>
+  );
+}
+
+function worldCueIsComplete(interaction, ecosystemProgress) {
+  if (interaction.type === "observation") {
+    return ecosystemProgress?.observedObservationIds?.includes(interaction.observationId) === true;
+  }
+  if (interaction.type === "interpretation") return ecosystemProgress?.interpretation?.correct === true;
+  if (interaction.type === "response") return ecosystemProgress?.response?.correct === true;
+  return false;
+}
+
+function worldCueIsRecommended(interaction, ecosystemProgress, guideMet, destinationDock) {
+  if (interaction.type === "dock") return destinationDock?.id === interaction.id;
+  if (!["observation", "interpretation", "response"].includes(interaction.type) || !guideMet) return false;
+  const nextStep = ecosystemProgress?.nextStep;
+  if (!nextStep) return false;
+  if (interaction.type === "observation") {
+    return nextStep.kind === "observation" && nextStep.id === interaction.observationId;
+  }
+  return nextStep.id === interaction.type;
 }
 
 const TRENCHLIGHT_TOOL_LABELS = Object.freeze({
@@ -570,6 +646,91 @@ function movementFacing(keyDirections, touchDirections, vector) {
     : vector.y > 0 ? "down" : "up";
 }
 
+function boatControlInput(keyDirections, touchDirections) {
+  const directions = [...keyDirections.values(), ...touchDirections];
+  return {
+    throttle: Math.sign(
+      Number(directions.includes("up")) - Number(directions.includes("down")),
+    ),
+    rudder: Math.sign(
+      Number(directions.includes("right")) - Number(directions.includes("left")),
+    ),
+  };
+}
+
+function boatSpeedLabel(speed, maximumForwardSpeed) {
+  if (Math.abs(speed) < 0.04) return "Stopped";
+  const maximum = speed >= 0 ? maximumForwardSpeed : BOAT_MOTION_DEFAULTS.maxReverseSpeed;
+  const percentage = Math.min(100, Math.round((Math.abs(speed) / maximum) * 100));
+  return `${speed >= 0 ? "Ahead" : "Reverse"} ${percentage}%`;
+}
+
+function boatRudderLabel(rudder) {
+  if (rudder < 0) return "Port / left";
+  if (rudder > 0) return "Starboard / right";
+  return "Centered";
+}
+
+function relativeBoatBearing(position, heading, target) {
+  if (!target) return null;
+  const deltaX = target.x - position.x;
+  const deltaY = target.y - position.y;
+  const targetHeading = Math.atan2(deltaX, deltaY) * (180 / Math.PI);
+  const relative = ((((targetHeading - heading) % 360) + 540) % 360) - 180;
+  const direction = Math.abs(relative) <= 18
+    ? "straight ahead"
+    : Math.abs(relative) >= 162
+      ? "behind you"
+      : relative > 0
+        ? "to starboard / right"
+        : "to port / left";
+  return { distance: Math.hypot(deltaX, deltaY), direction };
+}
+
+function actorVisualStateChanged(previousActors, nextActors) {
+  const interactionIds = new Set([
+    ...Object.keys(previousActors ?? {}),
+    ...Object.keys(nextActors ?? {}),
+  ]);
+  return [...interactionIds].some((interactionId) => {
+    const previous = previousActors?.[interactionId];
+    const next = nextActors?.[interactionId];
+    return !previous
+      || !next
+      || previous.position.x !== next.position.x
+      || previous.position.y !== next.position.y
+      || previous.facing !== next.facing
+      || previous.moving !== next.moving;
+  });
+}
+
+function BoatHelmReadout({ motion, maximumForwardSpeed, destinationDock, dockReady }) {
+  const bearing = relativeBoatBearing(motion.position, motion.heading, destinationDock?.at);
+  const destinationLabel = destinationDock?.label ?? "destination dock";
+  return (
+    <div
+      className={`${styles.boatHelmReadout} ${dockReady ? styles.boatHelmDockReady : ""} ${motion.collided ? styles.boatHelmCollision : ""}`}
+      role="group"
+      aria-label={`Boat helm. Speed ${boatSpeedLabel(motion.speed, maximumForwardSpeed)}. Rudder ${boatRudderLabel(motion.rudder)}.`}
+    >
+      <span><small>Speed</small><strong>{boatSpeedLabel(motion.speed, maximumForwardSpeed)}</strong></span>
+      <span><small>Rudder</small><strong>{boatRudderLabel(motion.rudder)}</strong></span>
+      <span className={styles.boatHelmDestination}>
+        <small>{dockReady ? "Dock in reach" : "Destination"}</small>
+        <strong>
+          {dockReady
+            ? "Ease off, then press Enter or the on-screen A button"
+            : motion.collided
+              ? "Hull stopped safely — reverse and steer clear"
+              : bearing
+                ? `${destinationLabel} · ${bearing.distance.toFixed(1)} · ${bearing.direction}`
+                : "Follow the marked channel"}
+        </strong>
+      </span>
+    </div>
+  );
+}
+
 function conversationLines(conversation, trainer, defeated) {
   if (Array.isArray(conversation?.lines) && conversation.lines.length) return conversation.lines;
   const authored = trainer.dialogue?.[conversation?.mode];
@@ -757,7 +918,7 @@ function Conversation({
   );
 }
 
-function DirectionButton({ direction, label, onStart, onStop }) {
+function DirectionButton({ direction, label, ariaLabel = `Walk ${direction}`, onStart, onStop }) {
   const suppressClickRef = useRef(false);
   const clickStopTimerRef = useRef(null);
 
@@ -812,7 +973,8 @@ function DirectionButton({ direction, label, onStart, onStop }) {
     <button
       type="button"
       className={`${styles.directionButton} ${styles[`direction${direction}`]}`}
-      aria-label={`Walk ${direction}`}
+      aria-label={ariaLabel}
+      title={ariaLabel}
       onPointerDown={startPointer}
       onPointerUp={stopPointer}
       onPointerCancel={stopPointer}
@@ -1782,9 +1944,22 @@ export default function AdventureGame() {
   const [subAssistedMode, setSubAssistedMode] = useState(false);
   const [subFeedback, setSubFeedback] = useState(null);
   const [isMoving, setIsMoving] = useState(false);
+  const [boatTelemetry, setBoatTelemetry] = useState(() => ({
+    sceneId: null,
+    ...createBoatMotionState({ position: START_STATE.position, heading: 0 }),
+    throttle: 0,
+    rudder: 0,
+  }));
+  const [actorRuntime, setActorRuntime] = useState(() => ({
+    sceneId: START_STATE.sceneId,
+    actors: createAdventureActorStates(SCENES[START_STATE.sceneId].interactions),
+  }));
+  const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const keyboardDirectionsRef = useRef(new Map());
   const touchDirectionsRef = useRef(new Set());
+  const boatMotionRef = useRef(null);
+  const actorRuntimeRef = useRef(actorRuntime);
   const movementActiveRef = useRef(false);
   const movementPausedRef = useRef(true);
   const interactRef = useRef(null);
@@ -1871,6 +2046,33 @@ export default function AdventureGame() {
   const scene = SCENES[sceneId];
   const boatMode = Boolean(scene?.routeId || scene?.kind === "route");
   const vehicleMode = scene?.kind === "vehicle";
+  const sceneCharacterInteractions = useMemo(() => scene.interactions.filter((candidate) => (
+    ["trainer", "npc"].includes(candidate.type)
+    && TRAINERS[candidate.trainerId ?? candidate.npcId]
+  )), [scene.interactions]);
+  const anchoredActorStates = useMemo(
+    () => createAdventureActorStates(sceneCharacterInteractions),
+    [sceneCharacterInteractions],
+  );
+  const actorStates = actorRuntime.sceneId === sceneId
+    ? actorRuntime.actors
+    : anchoredActorStates;
+  const actorPositionOverrides = useMemo(
+    () => getAdventureActorPositionOverrides(actorStates),
+    [actorStates],
+  );
+  const effectiveReducedMotion = gameSave?.settings?.reducedMotion === true || systemReducedMotion;
+  const activeRoute = useMemo(
+    () => boatMode ? ADVENTURE_CONTENT.routes.find((route) => route.id === scene.routeId) ?? null : null,
+    [boatMode, scene.routeId],
+  );
+  const destinationDock = useMemo(() => {
+    if (!activeRoute || !gameSave) return null;
+    const destinationEndpoint = gameSave.world.townId === activeRoute.fromTownId ? "to" : "from";
+    return scene.interactions.find((candidate) => (
+      candidate.type === "dock" && candidate.endpoint === destinationEndpoint
+    )) ?? null;
+  }, [activeRoute, gameSave, scene.interactions]);
   const trenchlightExpeditionState = useMemo(
     () => gameSave && (
       sceneId === TRENCHLIGHT_SUB_SCENE_ID
@@ -1899,9 +2101,11 @@ export default function AdventureGame() {
   movementPausedRef.current = movementPaused;
   const interaction = useMemo(
     () => screen === "playing" && gameSave && !vehicleMode
-      ? getContinuousInteraction(sceneId, position, facing)
+      ? getContinuousInteraction(sceneId, position, facing, {
+          positionOverrides: actorPositionOverrides,
+        })
       : null,
-    [facing, gameSave, position, sceneId, screen, vehicleMode],
+    [actorPositionOverrides, facing, gameSave, position, sceneId, screen, vehicleMode],
   );
   const trainerInteraction = ["trainer", "npc"].includes(interaction?.type) ? interaction : null;
   const actionInteraction = interaction && !["enter", "exit"].includes(interaction.type)
@@ -1917,10 +2121,36 @@ export default function AdventureGame() {
   const clearMovement = useCallback(() => {
     keyboardDirectionsRef.current.clear();
     touchDirectionsRef.current.clear();
+    if (boatMotionRef.current) {
+      boatMotionRef.current = {
+        ...boatMotionRef.current,
+        speed: 0,
+        collided: false,
+        throttle: 0,
+        rudder: 0,
+      };
+      setBoatTelemetry((current) => ({
+        ...current,
+        speed: 0,
+        collided: false,
+        throttle: 0,
+        rudder: 0,
+      }));
+    }
     setMovementActive(false);
   }, [setMovementActive]);
 
   const syncMovementActive = useCallback(() => {
+    const currentScene = SCENES[saveRef.current?.world?.sceneId];
+    if (currentScene?.routeId || currentScene?.kind === "route") {
+      const controls = boatControlInput(keyboardDirectionsRef.current, touchDirectionsRef.current);
+      const coasting = Math.abs(boatMotionRef.current?.speed ?? 0) > BOAT_MOTION_DEFAULTS.stoppedSpeed;
+      setMovementActive(
+        !movementPausedRef.current
+        && (controls.throttle !== 0 || controls.rudder !== 0 || coasting),
+      );
+      return;
+    }
     const vector = movementVector(keyboardDirectionsRef.current, touchDirectionsRef.current);
     setMovementActive(
       !movementPausedRef.current && (vector.x !== 0 || vector.y !== 0),
@@ -2227,6 +2457,116 @@ export default function AdventureGame() {
   ]);
 
   useEffect(() => {
+    const runtime = {
+      sceneId,
+      actors: anchoredActorStates,
+    };
+    actorRuntimeRef.current = runtime;
+    setActorRuntime(runtime);
+  }, [anchoredActorStates, gameSave?.profileId, sceneId]);
+
+  useEffect(() => {
+    if (effectiveReducedMotion) {
+      const runtime = { sceneId, actors: anchoredActorStates };
+      actorRuntimeRef.current = runtime;
+      setActorRuntime((current) => actorVisualStateChanged(current.actors, runtime.actors)
+        || current.sceneId !== runtime.sceneId
+        ? runtime
+        : current);
+      return undefined;
+    }
+    if (!sceneCharacterInteractions.some((candidate) => candidate.patrol)) return undefined;
+    if (screen !== "playing" || movementPaused || !pageVisible) {
+      const currentRuntime = actorRuntimeRef.current?.sceneId === sceneId
+        ? actorRuntimeRef.current
+        : { sceneId, actors: anchoredActorStates };
+      const pausedRuntime = {
+        sceneId,
+        actors: Object.fromEntries(Object.entries(currentRuntime.actors).map(([interactionId, actor]) => [
+          interactionId,
+          actor.moving ? { ...actor, moving: false } : actor,
+        ])),
+      };
+      actorRuntimeRef.current = pausedRuntime;
+      if (actorVisualStateChanged(currentRuntime.actors, pausedRuntime.actors)) {
+        setActorRuntime(pausedRuntime);
+      }
+      return undefined;
+    }
+
+    let animationFrame = 0;
+    let previousTime = null;
+
+    function updateActors(timestamp) {
+      const elapsedMs = previousTime === null ? 0 : Math.min(timestamp - previousTime, 80);
+      if (previousTime === null || elapsedMs >= 32) {
+        previousTime = timestamp;
+        const currentSave = saveRef.current;
+        const currentRuntime = actorRuntimeRef.current?.sceneId === sceneId
+          ? actorRuntimeRef.current
+          : { sceneId, actors: anchoredActorStates };
+        if (
+          elapsedMs > 0
+          && currentSave?.world.sceneId === sceneId
+          && !movementPausedRef.current
+          && pageVisibleRef.current
+        ) {
+          const nextRuntime = {
+            sceneId,
+            actors: advanceAdventureActorStates(
+              sceneId,
+              sceneCharacterInteractions,
+              currentRuntime.actors,
+              elapsedMs,
+              {
+                playerPosition: currentSave.world.position,
+                reducedMotion: false,
+              },
+            ),
+          };
+          actorRuntimeRef.current = nextRuntime;
+          if (actorVisualStateChanged(currentRuntime.actors, nextRuntime.actors)) {
+            setActorRuntime(nextRuntime);
+          }
+        }
+      }
+      animationFrame = window.requestAnimationFrame(updateActors);
+    }
+
+    animationFrame = window.requestAnimationFrame(updateActors);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [
+    anchoredActorStates,
+    effectiveReducedMotion,
+    movementPaused,
+    pageVisible,
+    sceneCharacterInteractions,
+    sceneId,
+    screen,
+  ]);
+
+  useEffect(() => {
+    if (!boatMode) {
+      boatMotionRef.current = null;
+      return;
+    }
+    const current = saveRef.current;
+    if (!current || current.world.sceneId !== sceneId) return;
+    const initial = {
+      sceneId,
+      ...createBoatMotionState({
+        position: current.world.position,
+        heading: getContinuousBoatHeading(null, current.world.facing),
+      }),
+      throttle: 0,
+      rudder: 0,
+    };
+    boatMotionRef.current = initial;
+    setBoatTelemetry(initial);
+    setMovementActive(false);
+  }, [boatMode, gameSave?.profileId, sceneId, setMovementActive]);
+
+  useEffect(() => {
     if (movementPaused || !isMoving) return undefined;
 
     let animationFrame = 0;
@@ -2235,31 +2575,93 @@ export default function AdventureGame() {
     function updateMovement(timestamp) {
       const elapsedMs = previousTime === null ? 0 : Math.min(timestamp - previousTime, 50);
       previousTime = timestamp;
-      const vector = movementVector(keyboardDirectionsRef.current, touchDirectionsRef.current);
-      if (vector.x === 0 && vector.y === 0) {
-        setMovementActive(false);
-        return;
-      }
-
       if (elapsedMs > 0) {
-        const nextFacing = movementFacing(
-          keyboardDirectionsRef.current,
-          touchDirectionsRef.current,
-          vector,
-        );
         const current = saveRef.current;
         if (current?.world.sceneId !== sceneId) return;
-        const next = movePlayerContinuous(
-          sceneId,
-          current.world.position,
-          vector,
-          elapsedMs,
-          {
-            speed: scene.movement?.speed ?? (boatMode ? 4.15 : 3.6),
-            radius: scene.movement?.radius ?? (boatMode ? 0.3 : 0.22),
-            maxStepDistance: scene.movement?.maxStepDistance ?? 0.08,
-          },
-        );
+        let next;
+        let nextFacing;
+
+        if (boatMode) {
+          const controls = boatControlInput(
+            keyboardDirectionsRef.current,
+            touchDirectionsRef.current,
+          );
+          const existing = boatMotionRef.current?.sceneId === sceneId
+            ? boatMotionRef.current
+            : {
+                sceneId,
+                ...createBoatMotionState({
+                  position: current.world.position,
+                  heading: getContinuousBoatHeading(null, current.world.facing),
+                }),
+                throttle: 0,
+                rudder: 0,
+              };
+          const motion = stepBoatMotion(
+            { ...existing, position: current.world.position },
+            controls,
+            elapsedMs,
+            {
+              maxForwardSpeed: scene.movement?.speed ?? BOAT_MOTION_DEFAULTS.maxForwardSpeed,
+              maxStepDistance: scene.movement?.maxStepDistance ?? BOAT_MOTION_DEFAULTS.maxStepDistance,
+              canOccupy: (candidate) => canOccupyContinuousPosition(
+                sceneId,
+                candidate,
+                scene.movement?.radius ?? 0.28,
+              ),
+            },
+          );
+          next = motion.position;
+          nextFacing = getBoatFacingFromHeading(motion.heading);
+          boatMotionRef.current = { sceneId, ...motion };
+          const traveled = Math.hypot(
+            next.x - current.world.position.x,
+            next.y - current.world.position.y,
+          );
+          setBoatTelemetry((previous) => ({
+            sceneId,
+            ...motion,
+            collided: motion.collided || (
+              previous.sceneId === sceneId
+              && previous.collided
+              && controls.throttle >= 0
+              && traveled < 0.01
+            ),
+          }));
+          setMovementActive(
+            controls.throttle !== 0
+            || controls.rudder !== 0
+            || Math.abs(motion.speed) > BOAT_MOTION_DEFAULTS.stoppedSpeed,
+          );
+        } else {
+          const vector = movementVector(keyboardDirectionsRef.current, touchDirectionsRef.current);
+          if (vector.x === 0 && vector.y === 0) {
+            setMovementActive(false);
+            return;
+          }
+          nextFacing = movementFacing(
+            keyboardDirectionsRef.current,
+            touchDirectionsRef.current,
+            vector,
+          );
+          next = movePlayerContinuous(
+            sceneId,
+            current.world.position,
+            vector,
+            elapsedMs,
+            {
+              speed: scene.movement?.speed ?? 3.6,
+              radius: scene.movement?.radius ?? 0.22,
+              maxStepDistance: scene.movement?.maxStepDistance ?? 0.08,
+              dynamicBlockers: getAdventureActorBlockers(
+                actorRuntimeRef.current?.sceneId === sceneId
+                  ? actorRuntimeRef.current.actors
+                  : anchoredActorStates,
+              ),
+              ignoreActorTiles: true,
+            },
+          );
+        }
         const updated = {
           ...current,
           world: {
@@ -2287,21 +2689,23 @@ export default function AdventureGame() {
 
     animationFrame = window.requestAnimationFrame(updateMovement);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [boatMode, commitSceneTransition, isMoving, movementPaused, scene, sceneId, setDirty, setMovementActive]);
+  }, [anchoredActorStates, boatMode, commitSceneTransition, isMoving, movementPaused, scene, sceneId, setDirty, setMovementActive]);
 
   useEffect(() => {
     if (movementPaused) {
-      if (vehicleMode) clearMovement();
+      if (vehicleMode || boatMode) clearMovement();
       else setMovementActive(false);
       return;
     }
     syncMovementActive();
-  }, [clearMovement, movementPaused, setMovementActive, syncMovementActive, vehicleMode]);
+  }, [boatMode, clearMovement, movementPaused, setMovementActive, syncMovementActive, vehicleMode]);
 
   function beginTouchDirection(direction) {
     if (movementPaused) return;
     touchDirectionsRef.current.add(direction);
     setGameSave((current) => {
+      const currentScene = SCENES[current?.world?.sceneId];
+      if (currentScene?.routeId || currentScene?.kind === "route") return current;
       if (!current || current.world.facing === direction) return current;
       const updated = { ...current, world: { ...current.world, facing: direction } };
       saveRef.current = updated;
@@ -3506,6 +3910,8 @@ export default function AdventureGame() {
         event.preventDefault();
         keyboardDirectionsRef.current.set(event.code || event.key, direction);
         setGameSave((current) => {
+          const currentScene = SCENES[current?.world?.sceneId];
+          if (currentScene?.routeId || currentScene?.kind === "route") return current;
           if (!current || current.world.facing === direction) return current;
           const updated = { ...current, world: { ...current.world, facing: direction } };
           saveRef.current = updated;
@@ -3540,6 +3946,19 @@ export default function AdventureGame() {
       window.removeEventListener("blur", clearMovement);
     };
   }, [clearMovement, syncMovementActive]);
+
+  useEffect(() => {
+    const preference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!preference) return undefined;
+    const syncPreference = () => setSystemReducedMotion(preference.matches);
+    syncPreference();
+    if (preference.addEventListener) preference.addEventListener("change", syncPreference);
+    else preference.addListener?.(syncPreference);
+    return () => {
+      if (preference.removeEventListener) preference.removeEventListener("change", syncPreference);
+      else preference.removeListener?.(syncPreference);
+    };
+  }, []);
 
   useEffect(() => {
     function syncVisibility() {
@@ -3727,9 +4146,13 @@ export default function AdventureGame() {
   ));
   const townEncounterIds = townChallengeTrainers.map((trainer) => trainer.encounterId);
   const progress = townEncounterIds.filter((encounterId) => defeated.has(encounterId)).length;
-  const sceneCharacterInteractions = scene.interactions.filter((candidate) => (
-    ["trainer", "npc"].includes(candidate.type)
-    && TRAINERS[candidate.trainerId ?? candidate.npcId]
+  const worldCueInteractions = scene.interactions.filter((candidate) => (
+    candidate.type === "board"
+    || candidate.type === "dock"
+    || (
+      ["observation", "interpretation", "response"].includes(candidate.type)
+      && ecosystemChapter?.questId === candidate.questId
+    )
   ));
   const mapThemeClass = mapThemeClassForScene(scene);
   const shellshoreQuestView = onboardingProgress.needsStarterSelection
@@ -3885,6 +4308,39 @@ export default function AdventureGame() {
     gameSave.settings.highContrast ? styles.highContrastMode : "",
     gameSave.settings.reducedMotion ? styles.reducedMotionMode : "",
   ].filter(Boolean).join(" ");
+  const maximumBoatSpeed = scene.movement?.speed ?? BOAT_MOTION_DEFAULTS.maxForwardSpeed;
+  const displayedBoatMotion = boatTelemetry.sceneId === sceneId
+    ? boatTelemetry
+    : {
+        sceneId,
+        ...createBoatMotionState({
+          position,
+          heading: getContinuousBoatHeading(null, facing),
+        }),
+        throttle: 0,
+        rudder: 0,
+      };
+  const dockReady = boatMode && actionInteraction?.type === "dock";
+  const destinationDockView = destinationDock ? {
+    ...destinationDock,
+    label: destinationDock.label
+      ?? `Dock at ${LOCATION_NAMES[destinationDock.targetScene] ?? "the destination"}`,
+  } : null;
+  const destinationBearing = boatMode
+    ? relativeBoatBearing(position, displayedBoatMotion.heading, destinationDock?.at)
+    : null;
+  const boatGuidance = dockReady
+    ? `${actionInteraction.label ?? "Dock in reach"}. Ease off the throttle, then press Enter or the on-screen A button.`
+    : displayedBoatMotion.collided
+      ? "The hull stopped safely at an obstacle. Reverse, turn the rudder, and ease forward when clear."
+      : destinationBearing
+        ? `Destination dock is ${destinationBearing.distance.toFixed(1)} away, ${destinationBearing.direction}.`
+        : "Use W/S for throttle and brake; use A/D for the rudder.";
+  const boatAnnouncement = dockReady
+    ? "Destination dock in reach. Ease off the throttle, then press Enter or the on-screen A button."
+    : displayedBoatMotion.collided
+      ? "The hull stopped safely at an obstacle. Reverse and steer clear."
+      : "";
 
   return (
     <main className={gameShellClassName}>
@@ -3931,8 +4387,18 @@ export default function AdventureGame() {
           </div>
           <strong>{questView.label}</strong>
           <div className={styles.controlLegend}>
-            <div><kbd>{vehicleMode ? "TAB" : "WASD"}</kbd><span>{vehicleMode ? "Choose an instrument" : boatMode ? "Steer" : "Walk"}</span></div>
-            <div><kbd>↵</kbd><span>{vehicleMode ? "Confirm the selected control" : "Interact"}</span></div>
+            {boatMode ? (
+              <>
+                <div><kbd>W / S</kbd><span>Throttle / brake + reverse</span></div>
+                <div><kbd>A / D</kbd><span>Rudder left / right</span></div>
+                <div><kbd>↵</kbd><span>Dock when in reach</span></div>
+              </>
+            ) : (
+              <>
+                <div><kbd>{vehicleMode ? "TAB" : "WASD"}</kbd><span>{vehicleMode ? "Choose an instrument" : "Walk"}</span></div>
+                <div><kbd>↵</kbd><span>{vehicleMode ? "Confirm the selected control" : "Interact"}</span></div>
+              </>
+            )}
           </div>
         </aside>
 
@@ -3947,19 +4413,26 @@ export default function AdventureGame() {
           {isChampionsWake && tournamentProgress ? (
             <TournamentBracketPanel progress={tournamentProgress} save={gameSave} compact />
           ) : null}
-          <div className={styles.interactionBar} aria-live="polite">
+          <div className={styles.interactionBar} aria-live={boatMode ? undefined : "polite"}>
             <span className={interaction || vehicleMode ? styles.readyDot : ""} />
             {vehicleMode
               ? trenchlightExpeditionState?.currentStep?.title ?? "Return to Mission Control for the next expedition decision"
-              : interactionLabel(
-                interaction,
-                sceneId,
-                trenchlightExpeditionState,
-                trenchlightBriefingComplete,
-                trenchlightGuideComplete,
-              )}
+              : boatMode
+                ? boatGuidance
+                : interactionLabel(
+                  interaction,
+                  sceneId,
+                  trenchlightExpeditionState,
+                  trenchlightBriefingComplete,
+                  trenchlightGuideComplete,
+                )}
             {actionInteraction && !vehicleMode ? <kbd>ENTER</kbd> : null}
           </div>
+          {boatMode ? (
+            <span className={styles.srOnly} aria-live="polite" aria-atomic="true">
+              {boatAnnouncement}
+            </span>
+          ) : null}
           {vehicleMode ? (
             <TrenchlightSubExpedition
               scene={scene}
@@ -3982,11 +4455,27 @@ export default function AdventureGame() {
             }}
             role="application"
             aria-label={boatMode
-              ? `Top-down sea route at ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to steer. Press Enter or A at a dock to finish the voyage.`
-              : `Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk. Walk into doorways to enter or leave, and press Enter or A to interact.`}
+              ? `Top-down sea route at ${LOCATION_NAMES[sceneId]}. Up or W increases throttle. Down or S brakes and reverses. Left and right or A and D move the rudder. Coast toward a dock and press Enter, Space, or the on-screen A button when it is in reach.`
+              : `Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk. Walk into doorways to enter or leave, and press Enter, Space, or the on-screen A button to interact.`}
           >
+            {worldCueInteractions.map((candidate) => (
+              <AdventureWorldCue
+                key={`world-cue:${candidate.id}`}
+                interaction={candidate}
+                scene={scene}
+                active={interaction?.interactionId === candidate.id}
+                recommended={worldCueIsRecommended(
+                  candidate,
+                  ecosystemProgress,
+                  ecosystemGuideMet,
+                  destinationDock,
+                )}
+                complete={worldCueIsComplete(candidate, ecosystemProgress)}
+              />
+            ))}
             {sceneCharacterInteractions.map((characterInteraction) => {
               const trainer = TRAINERS[characterInteraction.trainerId ?? characterInteraction.npcId];
+              const runtimeActor = actorStates[characterInteraction.id];
               const tournamentActor = Boolean(
                 trainer.encounterId
                 && CHAMPIONS_WAKE_TOURNAMENT_ROUND_IDS.includes(trainer.encounterId),
@@ -4003,7 +4492,9 @@ export default function AdventureGame() {
                 <AdventureTrainerSprite
                   key={characterInteraction.id ?? characterInteraction.interactionId}
                   trainer={trainer}
-                  position={characterInteraction.at}
+                  position={runtimeActor?.position ?? characterInteraction.at}
+                  facing={runtimeActor?.facing ?? "down"}
+                  moving={runtimeActor?.moving === true}
                   defeated={trainerDefeated}
                   status={tournamentStatus?.startsWith("Won") ? "Won" : tournamentStatus}
                   scene={scene}
@@ -4014,7 +4505,9 @@ export default function AdventureGame() {
               <AdventureBoatSprite
                 position={position}
                 facing={facing}
-                moving={isMoving}
+                heading={displayedBoatMotion.heading}
+                speed={displayedBoatMotion.speed}
+                moving={Math.abs(displayedBoatMotion.speed) > BOAT_MOTION_DEFAULTS.stoppedSpeed}
                 interaction={actionInteraction}
                 scene={scene}
               />
@@ -4029,13 +4522,22 @@ export default function AdventureGame() {
             )}
           </div>
 
-          <div className={styles.controlDock}>
-            <div className={styles.dpad} aria-label="Movement controls">
-              <DirectionButton direction="up" label="▲" onStart={beginTouchDirection} onStop={endTouchDirection} />
-              <DirectionButton direction="left" label="◀" onStart={beginTouchDirection} onStop={endTouchDirection} />
+          {boatMode ? (
+            <BoatHelmReadout
+              motion={{ ...displayedBoatMotion, position }}
+              maximumForwardSpeed={maximumBoatSpeed}
+              destinationDock={destinationDockView}
+              dockReady={dockReady}
+            />
+          ) : null}
+
+          <div className={`${styles.controlDock} ${boatMode ? styles.boatControlDock : ""}`}>
+            <div className={styles.dpad} aria-label={boatMode ? "Boat helm controls" : "Movement controls"}>
+              <DirectionButton direction="up" label="▲" ariaLabel={boatMode ? "Increase boat throttle" : "Walk up"} onStart={beginTouchDirection} onStop={endTouchDirection} />
+              <DirectionButton direction="left" label="◀" ariaLabel={boatMode ? "Turn rudder port, left" : "Walk left"} onStart={beginTouchDirection} onStop={endTouchDirection} />
               <span className={styles.dpadCenter} />
-              <DirectionButton direction="right" label="▶" onStart={beginTouchDirection} onStop={endTouchDirection} />
-              <DirectionButton direction="down" label="▼" onStart={beginTouchDirection} onStop={endTouchDirection} />
+              <DirectionButton direction="right" label="▶" ariaLabel={boatMode ? "Turn rudder starboard, right" : "Walk right"} onStart={beginTouchDirection} onStop={endTouchDirection} />
+              <DirectionButton direction="down" label="▼" ariaLabel={boatMode ? "Brake or reverse boat" : "Walk down"} onStart={beginTouchDirection} onStop={endTouchDirection} />
             </div>
             <button
               type="button"

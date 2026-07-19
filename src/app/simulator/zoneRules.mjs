@@ -284,13 +284,23 @@ export function moveSlottedCreatureBetweenFoundations(
     cardId: sourceSlot.cardId,
     cardInstanceId: sourceSlot.cardInstanceId,
     hostedCardIds: [...(sourceSlot.hostedCardIds ?? [])],
+    ...(Object.prototype.hasOwnProperty.call(sourceSlot, "controller") ? { controller: sourceSlot.controller } : {}),
+    ...(Object.prototype.hasOwnProperty.call(sourceSlot, "invasiveOwner") ? { invasiveOwner: sourceSlot.invasiveOwner } : {}),
+  };
+  const withoutOccupantOwnership = (slot) => {
+    const {
+      controller: _controller,
+      invasiveOwner: _invasiveOwner,
+      ...unownedSlot
+    } = slot;
+    return unownedSlot;
   };
   const nextFoundations = foundations.map((foundation) => {
     if (foundation.id === sourceFoundationId) {
       return {
         ...foundation,
         slots: foundation.slots.map((slot) => slot.id === sourceSlotId
-          ? { ...slot, cardId: null, cardInstanceId: null, hostedCardIds: [] }
+          ? { ...withoutOccupantOwnership(slot), cardId: null, cardInstanceId: null, hostedCardIds: [] }
           : slot),
       };
     }
@@ -298,7 +308,7 @@ export function moveSlottedCreatureBetweenFoundations(
       return {
         ...foundation,
         slots: foundation.slots.map((slot) => slot.id === destinationSlotId
-          ? { ...slot, ...movedCard }
+          ? { ...withoutOccupantOwnership(slot), ...movedCard }
           : slot),
       };
     }

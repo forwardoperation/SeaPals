@@ -82,7 +82,7 @@ test("Jointed Structure moves stable creature state between compatible coral slo
   const foundations = [
     {
       id: "black-coral",
-      slots: [{ id: "source-slot", cardId: "anemone", cardInstanceId: "anemone-7", hostedCardIds: ["clownfish"], position: { left: "10%" } }],
+      slots: [{ id: "source-slot", cardId: "anemone", cardInstanceId: "anemone-7", hostedCardIds: ["clownfish"], controller: "opponent", invasiveOwner: "opponent", position: { left: "10%" } }],
     },
     {
       id: "bamboo-coral",
@@ -108,6 +108,8 @@ test("Jointed Structure moves stable creature state between compatible coral slo
     cardId: "anemone",
     cardInstanceId: "anemone-7",
     hostedCardIds: ["clownfish"],
+    controller: "opponent",
+    invasiveOwner: "opponent",
     position: { left: "80%" },
     accepts: ["invertebrate"],
   });

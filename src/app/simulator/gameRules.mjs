@@ -365,6 +365,41 @@ export function halfCostRoundedUp(cost) {
   return Math.ceil(Math.max(0, Number(cost) || 0) / 2);
 }
 
+/**
+ * Resolves Blue Crab's once-per-turn recovery for one defeated Fish. Keeping
+ * the eligibility and bank-cap math together prevents special board zones
+ * (such as an opponent-owned invasive creature) from drifting from ordinary
+ * combat resolution.
+ */
+export function resolveBlueCrabRecycle({
+  defeatedCardIsFish = false,
+  defeatedCardIsCreatureSchool = false,
+  defeatedCardRpCost = 0,
+  controllerHasBlueCrab = false,
+  recycleUsedTurn = null,
+  currentTurn = null,
+  currentRp = 0,
+  rpCap = Infinity,
+} = {}) {
+  const triggered = Boolean(
+    defeatedCardIsFish
+      && !defeatedCardIsCreatureSchool
+      && controllerHasBlueCrab
+      && recycleUsedTurn !== currentTurn
+  );
+  const nominalRecoveredRp = triggered ? halfCostRoundedUp(defeatedCardRpCost) : 0;
+  const rpAfter = triggered
+    ? addResourceWithinCap(currentRp, nominalRecoveredRp, rpCap)
+    : Math.max(0, Number(currentRp) || 0);
+  return {
+    triggered,
+    nominalRecoveredRp,
+    recoveredRp: rpAfter - Math.max(0, Number(currentRp) || 0),
+    rpAfter,
+    recycleUsedTurnAfter: triggered ? currentTurn : recycleUsedTurn,
+  };
+}
+
 export function reconcileContinuousHealth(currentHealth, currentMaxHealth, printedMaxHealth, bonus) {
   const currentMax = Math.max(0, Number(currentMaxHealth) || 0);
   const desiredMax = Math.max(0, (Number(printedMaxHealth) || 0) + (Number(bonus) || 0));
@@ -416,10 +451,22 @@ export function redistributeOrphans(foundations = [], orphanEntries = [], canOcc
     ...foundation,
     slots: (foundation.slots ?? []).map((slot) => {
       if (slot.cardId) return slot;
-      const orphanIndex = remaining.findIndex((entry) => canOccupy(entry.cardId, slot));
+      const orphanIndex = remaining.findIndex((entry) => canOccupy(entry.cardId, slot, entry));
       if (orphanIndex < 0) return slot;
       const [orphan] = remaining.splice(orphanIndex, 1);
-      return { ...slot, cardId: orphan.cardId, cardInstanceId: orphan.instanceId ?? orphan.cardInstanceId ?? slot.cardInstanceId ?? null, hostedCardIds: orphan.hostedCardIds };
+      const {
+        controller: _previousController,
+        invasiveOwner: _previousInvasiveOwner,
+        ...emptySlot
+      } = slot;
+      return {
+        ...emptySlot,
+        cardId: orphan.cardId,
+        cardInstanceId: orphan.instanceId ?? orphan.cardInstanceId ?? slot.cardInstanceId ?? null,
+        hostedCardIds: orphan.hostedCardIds,
+        ...(Object.prototype.hasOwnProperty.call(orphan, "controller") ? { controller: orphan.controller } : {}),
+        ...(Object.prototype.hasOwnProperty.call(orphan, "invasiveOwner") ? { invasiveOwner: orphan.invasiveOwner } : {}),
+      };
     }),
   }));
   return { corals, orphans: remaining };

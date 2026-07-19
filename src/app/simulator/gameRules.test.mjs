@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DAMAGE_COUNTER_HP, DEFAULT_RP_BANK_CAP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getCardRpBankCapModifier, getConditionRpBankCapModifier, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseDieExpression, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveConditionalDiceDamage, resolveOpposedRoll, resolveResourceTransfer, rollDie } from "./gameRules.mjs";
+import { DAMAGE_COUNTER_HP, DEFAULT_RP_BANK_CAP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getCardRpBankCapModifier, getConditionRpBankCapModifier, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseDieExpression, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveBlueCrabRecycle, resolveConditionalDiceDamage, resolveOpposedRoll, resolveResourceTransfer, rollDie } from "./gameRules.mjs";
 
 test("parses dice and modifiers", () => {
   assert.deepEqual(parseDieExpression("D6"), { sides: 6, modifier: 0 });
@@ -258,6 +258,26 @@ test("half-cost recycling rounds up", () => {
   assert.equal(halfCostRoundedUp(5), 3);
 });
 
+test("Blue Crab recycle uses one shared eligibility and bank-cap result", () => {
+  assert.deepEqual(resolveBlueCrabRecycle({
+    defeatedCardIsFish: true,
+    defeatedCardRpCost: 5,
+    controllerHasBlueCrab: true,
+    recycleUsedTurn: 2,
+    currentTurn: 3,
+    currentRp: 6,
+    rpCap: 8,
+  }), {
+    triggered: true,
+    nominalRecoveredRp: 3,
+    recoveredRp: 2,
+    rpAfter: 8,
+    recycleUsedTurnAfter: 3,
+  });
+  assert.equal(resolveBlueCrabRecycle({ defeatedCardIsFish: true, controllerHasBlueCrab: true, recycleUsedTurn: 3, currentTurn: 3, currentRp: 4, rpCap: 8 }).triggered, false);
+  assert.equal(resolveBlueCrabRecycle({ defeatedCardIsFish: false, controllerHasBlueCrab: true, currentTurn: 3, currentRp: 4, rpCap: 8 }).triggered, false);
+});
+
 test("structured in-play conditions recognize habitats and named cards", () => {
   const cards = [{ id: "blue-crab", kind: "creature" }];
   assert.equal(isEcosystemConditionMet({ type: "kindInPlay", requiredKind: "habitat" }, ["coral-reef"], cards), true);
@@ -276,13 +296,15 @@ test("foundation shelter text grants attached creatures a flat defense bonus", (
   assert.equal(calculateAttachedCreatureDefenseBonus({ passives: [] }), 0);
 });
 
-test("orphan creatures fill compatible empty slots and preserve hosted cards", () => {
+test("orphan creatures fill compatible empty slots and preserve hosted cards and invasive ownership", () => {
   const foundations = [{ id: "coral-a", slots: [{ id: "fish-slot", accepts: "fish", cardId: null }, { id: "occupied", accepts: "fish", cardId: "resident" }, { id: "predator-slot", accepts: "predator", cardId: null }] }];
-  const orphans = [{ cardId: "fish-a", instanceId: "fish-a-instance", hostedCardIds: ["clownfish"] }, { cardId: "fish-b" }, { cardId: "predator-a", instanceId: "predator-instance" }];
+  const orphans = [{ cardId: "fish-a", instanceId: "fish-a-instance", hostedCardIds: ["clownfish"], controller: "opponent", invasiveOwner: "opponent" }, { cardId: "fish-b" }, { cardId: "predator-a", instanceId: "predator-instance" }];
   const result = redistributeOrphans(foundations, orphans, (cardId, slot) => cardId.startsWith(slot.accepts));
   assert.equal(result.corals[0].slots[0].cardId, "fish-a");
   assert.equal(result.corals[0].slots[0].cardInstanceId, "fish-a-instance");
   assert.deepEqual(result.corals[0].slots[0].hostedCardIds, ["clownfish"]);
+  assert.equal(result.corals[0].slots[0].controller, "opponent");
+  assert.equal(result.corals[0].slots[0].invasiveOwner, "opponent");
   assert.equal(result.corals[0].slots[1].cardId, "resident");
   assert.equal(result.corals[0].slots[2].cardId, "predator-a");
   assert.equal(result.corals[0].slots[2].cardInstanceId, "predator-instance");
