@@ -113,6 +113,25 @@ test("continuous Elverson routes connect the crossroads start to all three doorw
   }
 });
 
+test("the aquarium exit returns to the central pier with a clear route into town", () => {
+  const aquariumExit = SCENES["academy-lab"].interactions.find(
+    ({ id }) => id === "interaction-academy-exit",
+  );
+
+  assert.deepEqual(aquariumExit.spawn, { x: 14, y: 17 });
+  assert.equal(canOccupyContinuousPosition("town", aquariumExit.spawn), true);
+  assert.equal(getDoorwayTransition("town", aquariumExit.spawn, "up"), null);
+  const mainStreet = walkAxisRoute([
+    aquariumExit.spawn,
+    { x: 14, y: 12 },
+    { x: 14, y: 10 },
+  ]);
+  assert.ok(
+    Math.hypot(mainStreet.x - 14, mainStreet.y - 10) < POSITION_EPSILON,
+    "the aquarium return route should reach Main Street",
+  );
+});
+
 test("Main Street and Chestnut Street retain clear walking lanes", () => {
   const parallelLanes = [
     [{ x: 1, y: 7 }, { x: 28, y: 7 }],

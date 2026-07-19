@@ -1071,7 +1071,7 @@ test("Elverson town geometry blocks park furniture and water outside the public 
   const aquariumExit = getRuntimeAdventureScenes()
     .find((scene) => scene.id === "academy-lab")
     .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
-  assert.deepEqual(aquariumExit.spawn, { x: 16, y: 17 });
+  assert.deepEqual(aquariumExit.spawn, { x: 14, y: 17 });
 });
 
 test("Elverson exposes exactly its aquarium workshop and two homes through valid portals", () => {
