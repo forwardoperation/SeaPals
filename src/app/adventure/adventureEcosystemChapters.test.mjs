@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   BRACKWATER_CORRECT_INTERPRETATION_ID,
@@ -7,10 +8,15 @@ import {
   BRACKWATER_REQUIRED_OBSERVATION_IDS,
 } from "./adventureBrackwater.mjs";
 import {
+  CURRENT_REQUIRED_OBSERVATION_IDS,
+  CURRENT_QUEST_ID,
+} from "./adventureCurrent.mjs";
+import {
   ADVENTURE_ECOSYSTEM_CHAPTERS,
   getAdventureEcosystemConversationMode,
   getAdventureEcosystemChapterByQuestId,
   getAdventureEcosystemChapterByTownId,
+  getAdventureObservationPreviewVariant,
   hasMetAdventureEcosystemGuide,
   isAdventureEcosystemChapterQuest,
 } from "./adventureEcosystemChapters.mjs";
@@ -33,10 +39,10 @@ const ADAPTER_KEYS = [
 ];
 
 test("the ecosystem registry exposes complete, immutable adapters with unique canonical IDs", () => {
-  assert.equal(ADVENTURE_ECOSYSTEM_CHAPTERS.length, 2);
+  assert.equal(ADVENTURE_ECOSYSTEM_CHAPTERS.length, 3);
   assert.deepEqual(
     ADVENTURE_ECOSYSTEM_CHAPTERS.map(({ townId }) => townId),
-    ["sunpatch-cay", "brackwater-landing"],
+    ["sunpatch-cay", "brackwater-landing", "current-commons"],
   );
   assert.equal(
     new Set(ADVENTURE_ECOSYSTEM_CHAPTERS.map(({ townId }) => townId)).size,
@@ -88,10 +94,41 @@ test("chapters resolve by town or quest without exposing mutable registry state"
   assert.equal(brackwater.fieldNoteId, "field-note-estuary-conditions");
   assert.equal(brackwater.guideMetFlagId, "met-brackwater-guide");
 
+  const current = getAdventureEcosystemChapterByQuestId(CURRENT_QUEST_ID);
+  assert.equal(current, getAdventureEcosystemChapterByTownId("current-commons"));
+  assert.equal(current.fieldNoteId, "field-note-current-connections");
+  assert.equal(current.guideMetFlagId, "met-current-guide");
+
   assert.equal(getAdventureEcosystemChapterByTownId("shellshore-village"), null);
   assert.equal(getAdventureEcosystemChapterByQuestId("quest-shellshore-first-voyage"), null);
   assert.equal(isAdventureEcosystemChapterQuest(BRACKWATER_QUEST_ID), true);
+  assert.equal(isAdventureEcosystemChapterQuest(CURRENT_QUEST_ID), true);
   assert.equal(isAdventureEcosystemChapterQuest("quest-shellshore-first-voyage"), false);
+});
+
+test("every Current observation resolves to a distinct authored non-coral preview", () => {
+  const current = getAdventureEcosystemChapterByQuestId(CURRENT_QUEST_ID);
+  const variants = CURRENT_REQUIRED_OBSERVATION_IDS.map((observationId) => (
+    getAdventureObservationPreviewVariant(current.ui, observationId)
+  ));
+
+  assert.deepEqual(variants, [
+    "currentReport",
+    "currentDrifter",
+    "currentWildlife",
+    "currentGear",
+  ]);
+  assert.equal(new Set(variants).size, CURRENT_REQUIRED_OBSERVATION_IDS.length);
+  assert.equal(Object.isFrozen(current.ui.observationPreviewVariants), true);
+  const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), "utf8");
+  for (const variant of variants) {
+    assert.match(styles, new RegExp(`\\.observation${variant}\\b`));
+  }
+  assert.equal(getAdventureObservationPreviewVariant(current.ui, null), null);
+  assert.equal(
+    getAdventureObservationPreviewVariant({}, "bleached-reference-colony"),
+    "bleached",
+  );
 });
 
 test("adapter methods operate on canonical saves across JSON storage boundaries", () => {

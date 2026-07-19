@@ -23,11 +23,8 @@ import {
   getAdventureEcosystemChapterByQuestId,
   getAdventureEcosystemChapterByTownId,
   isAdventureEcosystemChapterQuest,
+  recoverAdventureEcosystemChapterFlags,
 } from "./adventureEcosystemChapters.mjs";
-import {
-  BRACKWATER_QUEST_ID,
-  recoverBrackwaterQuestFlags,
-} from "./adventureBrackwater.mjs";
 
 export const SHELLSHORE_QUEST_ID = "quest-shellshore-first-voyage";
 export const SHELLSHORE_RESIDENT_ENCOUNTER_IDS = Object.freeze(
@@ -149,6 +146,36 @@ function reconcileCompletedEncounterRewards(saveValue) {
   return { save, recovered };
 }
 
+function reconcileCompletedChapterRewards(saveValue) {
+  let save = normalizeAdventureSave(saveValue);
+  let recovered = false;
+
+  for (const chapter of ADVENTURE_ECOSYSTEM_CHAPTERS) {
+    const progress = chapter.getProgress(save);
+    if (!progress.complete || progress.stateConsistent !== true) continue;
+
+    const turnIn = chapter.turnIn(save);
+    save = turnIn.save;
+    recovered ||= turnIn.applied;
+
+    // A verified reward-ledger write can survive while its non-consumable Field
+    // Note is missing. The completed chapter is authoritative evidence that the
+    // note was earned, so restore that fact without replaying consumable grants.
+    if (!save.fieldNotes.entryIds.includes(chapter.fieldNoteId)) {
+      save = normalizeAdventureSave({
+        ...save,
+        fieldNotes: {
+          ...save.fieldNotes,
+          entryIds: [...save.fieldNotes.entryIds, chapter.fieldNoteId],
+        },
+      });
+      recovered = true;
+    }
+  }
+
+  return { save, recovered };
+}
+
 function recoverToSafeDockOrStart(save, reason) {
   const dock = getAdventureDock(save.world.lastSafeDockId);
   if (
@@ -197,15 +224,10 @@ export function createNewAdventureSession(profileId) {
  */
 export function recoverAdventureResume(saveValue) {
   const normalized = normalizeAdventureSave(saveValue);
-  const chapterFlagRecovery = recoverBrackwaterQuestFlags(normalized);
+  const chapterFlagRecovery = recoverAdventureEcosystemChapterFlags(normalized);
   const recoveryMetadata = chapterFlagRecovery.applied
     ? Object.freeze({
-      chapterQuestRepairs: Object.freeze([
-        Object.freeze({
-          questId: BRACKWATER_QUEST_ID,
-          discardedFlagIds: chapterFlagRecovery.discardedFlagIds,
-        }),
-      ]),
+      chapterQuestRepairs: chapterFlagRecovery.repairs,
     })
     : null;
   const finalize = (result) => finalizeAdventureResume({
@@ -230,7 +252,8 @@ export function recoverAdventureResume(saveValue) {
   const questReconciled = Object.entries(priorQuestStatuses).some(([questId, status]) => (
     (questSave.progression.quests[questId]?.status ?? "notStarted") !== status
   ));
-  const rewardResume = reconcileCompletedEncounterRewards(questSave);
+  const chapterRewardResume = reconcileCompletedChapterRewards(questSave);
+  const rewardResume = reconcileCompletedEncounterRewards(chapterRewardResume.save);
   const save = rewardResume.save;
   const scene = SCENES[save.world.sceneId];
   const sceneContent = getAdventureScene(save.world.sceneId);
@@ -286,12 +309,14 @@ export function recoverAdventureResume(saveValue) {
 
   return finalize({
     save,
-    recovered: questReconciled || rewardResume.recovered,
+    recovered: questReconciled || chapterRewardResume.recovered || rewardResume.recovered,
     reason: questReconciled
       ? "quest-state-reconciled"
-      : rewardResume.recovered
-        ? "encounter-reward-reconciled"
-        : null,
+      : chapterRewardResume.recovered
+        ? "chapter-reward-reconciled"
+        : rewardResume.recovered
+          ? "encounter-reward-reconciled"
+          : null,
     fallback: null,
   });
 }

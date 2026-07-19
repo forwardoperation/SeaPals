@@ -150,6 +150,13 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
   "brackwater-naturalist": "marina",
   "brackwater-harbormaster": "dorian",
   "brackwater-leader": "marina",
+  // Current Commons uses chapter-specific treatments so its cast remains
+  // visually distinct even while the final authored sprite sheets are pending.
+  "current-guide": "current-guide",
+  "current-analyst": "current-analyst",
+  "current-navigator": "current-navigator",
+  "current-deckhand": "current-deckhand",
+  "current-leader": "current-leader",
 });
 
 const LOCATION_NAMES = Object.freeze(Object.fromEntries(
@@ -778,6 +785,7 @@ function FieldNoteModal({ note, blocked = false, reviewRequired = false, onAckno
     "field-note-harbor-basics": "Field Note 01 / Shellshore Harbor",
     "field-note-coral-observations": "Field Note 02 / Sunpatch Cay",
     "field-note-estuary-conditions": "Field Note 03 / Brackwater Landing",
+    "field-note-current-connections": "Field Note 04 / Current Commons",
   }[note.id] ?? "Reefbound Field Note";
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.fieldNoteLayer} role="dialog" aria-modal="true" aria-labelledby="field-note-title">
@@ -1049,6 +1057,11 @@ function mapThemeClassForScene(scene) {
     "brackwater-water-lab": styles.sunpatchFieldStationMap,
     "brackwater-mangrove-home": styles.sunpatchFieldStationMap,
     "brackwater-tide-hall": styles.sunpatchTideHallMap,
+    "brackwater-current-route": styles.seaRouteMap,
+    "current-commons": styles.sunpatchMap,
+    "current-navigation-lab": styles.sunpatchFieldStationMap,
+    "current-navigator-home": styles.sunpatchFieldStationMap,
+    "current-tide-hall": styles.sunpatchTideHallMap,
   };
   return themeClasses[scene.theme] ?? styles.townMap;
 }

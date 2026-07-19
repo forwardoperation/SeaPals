@@ -11,6 +11,11 @@ import {
   getBrackwaterProgress,
 } from "./adventureBrackwater.mjs";
 import {
+  CURRENT_QUEST_ID,
+  CURRENT_RESIDENT_ENCOUNTER_IDS,
+  getCurrentProgress,
+} from "./adventureCurrent.mjs";
+import {
   ADVENTURE_ECOSYSTEM_CHAPTERS,
 } from "./adventureEcosystemChapters.mjs";
 import {
@@ -31,6 +36,64 @@ import {
   recordAdventureDuelResult,
   recoverAdventureResume,
 } from "./adventureSession.mjs";
+
+const CHAPTER_WORLD_BY_TOWN_ID = Object.freeze({
+  "sunpatch-cay": Object.freeze({ sceneId: "sunpatch-cay-town", dockId: "sunpatch-dock" }),
+  "brackwater-landing": Object.freeze({ sceneId: "brackwater-landing-town", dockId: "brackwater-dock" }),
+  "current-commons": Object.freeze({ sceneId: "current-commons-town", dockId: "current-commons-dock" }),
+});
+
+const CHAPTER_REWARD_ID_BY_QUEST_ID = Object.freeze({
+  [SUNPATCH_QUEST_ID]: "reward-sunpatch-fieldwork",
+  [BRACKWATER_QUEST_ID]: "reward-brackwater-fieldwork",
+  [CURRENT_QUEST_ID]: "reward-current-fieldwork",
+});
+
+function completeChapterForRecovery(chapter, profileId) {
+  let result = chapter.begin(createInitialAdventureSave(profileId));
+  for (const observationId of result.progress.requiredObservationIds) {
+    result = chapter.recordObservation(result.save, observationId);
+  }
+  result = chapter.submitInterpretation(
+    result.save,
+    result.progress.interpretation.correctChoiceId,
+  );
+  result = chapter.submitResponse(
+    result.save,
+    result.progress.response.correctChoiceId,
+  );
+
+  const { sceneId, dockId } = CHAPTER_WORLD_BY_TOWN_ID[chapter.townId];
+  let save = normalizeAdventureSave({
+    ...result.save,
+    world: {
+      ...result.save.world,
+      townId: chapter.townId,
+      sceneId,
+      position: SCENES[sceneId].spawn,
+      lastSafeDockId: dockId,
+    },
+    progression: {
+      ...result.save.progression,
+      quests: {
+        ...result.save.progression.quests,
+        [SHELLSHORE_QUEST_ID]: {
+          status: "complete",
+          flags: { "boat-safety-reviewed": true },
+        },
+      },
+      completedEncounterIds: [
+        ...new Set([
+          ...result.save.progression.completedEncounterIds,
+          ...result.progress.residentEncounterIds,
+        ]),
+      ],
+    },
+  });
+  save = chapter.reconcile(save).save;
+  assert.equal(chapter.getProgress(save).readyToTurnIn, true);
+  return chapter.turnIn(save).save;
+}
 
 test("new sessions begin the Shellshore quest in one of three explicit profiles", () => {
   const save = createNewAdventureSession("profile-2");
@@ -61,6 +124,7 @@ test("entering any registered ecosystem town begins its chapter", () => {
   for (const { sceneId, questId } of [
     { sceneId: "sunpatch-cay-town", questId: SUNPATCH_QUEST_ID },
     { sceneId: "brackwater-landing-town", questId: BRACKWATER_QUEST_ID },
+    { sceneId: "current-commons-town", questId: CURRENT_QUEST_ID },
   ]) {
     const scene = SCENES[sceneId];
     const entered = enterAdventureScene(createNewAdventureSession("profile-1"), {
@@ -74,9 +138,7 @@ test("entering any registered ecosystem town begins its chapter", () => {
 
 test("resuming in any registered ecosystem town begins its missing chapter after JSON reload", () => {
   for (const chapter of ADVENTURE_ECOSYSTEM_CHAPTERS) {
-    const sceneId = chapter.townId === "sunpatch-cay"
-      ? "sunpatch-cay-town"
-      : "brackwater-landing-town";
+    const { sceneId, dockId } = CHAPTER_WORLD_BY_TOWN_ID[chapter.townId];
     const scene = SCENES[sceneId];
     const initial = createInitialAdventureSave("profile-2");
     const loaded = JSON.parse(JSON.stringify({
@@ -86,9 +148,7 @@ test("resuming in any registered ecosystem town begins its missing chapter after
         townId: chapter.townId,
         sceneId,
         position: scene.spawn,
-        lastSafeDockId: chapter.townId === "sunpatch-cay"
-          ? "sunpatch-dock"
-          : "brackwater-dock",
+        lastSafeDockId: dockId,
       },
     }));
 
@@ -114,6 +174,11 @@ test("resident wins alone never bypass registered ecosystem fieldwork", () => {
       questId: BRACKWATER_QUEST_ID,
       encounterIds: BRACKWATER_RESIDENT_ENCOUNTER_IDS,
     },
+    {
+      sceneId: "current-commons-town",
+      questId: CURRENT_QUEST_ID,
+      encounterIds: CURRENT_RESIDENT_ENCOUNTER_IDS,
+    },
   ]) {
     let save = enterAdventureScene(createNewAdventureSession("profile-3"), {
       sceneId,
@@ -137,6 +202,10 @@ test("inconsistent terminal ecosystem saves cannot unlock qualifier encounters",
       questId: BRACKWATER_QUEST_ID,
       qualifierId: "encounter-brackwater-qualifier",
     },
+    {
+      questId: CURRENT_QUEST_ID,
+      qualifierId: "encounter-current-qualifier",
+    },
   ]) {
     const initial = createInitialAdventureSave(`corrupt-${questId}`);
     const inconsistent = normalizeAdventureSave({
@@ -159,9 +228,7 @@ test("inconsistent terminal ecosystem saves cannot unlock qualifier encounters",
 
 test("resume reconciliation loops every ecosystem adapter after storage reload", () => {
   for (const chapter of ADVENTURE_ECOSYSTEM_CHAPTERS) {
-    const sceneId = chapter.townId === "sunpatch-cay"
-      ? "sunpatch-cay-town"
-      : "brackwater-landing-town";
+    const { sceneId, dockId } = CHAPTER_WORLD_BY_TOWN_ID[chapter.townId];
     let result = chapter.begin(createInitialAdventureSave("profile-1"));
     for (const observationId of result.progress.requiredObservationIds) {
       result = chapter.recordObservation(result.save, observationId);
@@ -181,9 +248,7 @@ test("resume reconciliation loops every ecosystem adapter after storage reload",
         townId: chapter.townId,
         sceneId,
         position: SCENES[sceneId].spawn,
-        lastSafeDockId: chapter.townId === "sunpatch-cay"
-          ? "sunpatch-dock"
-          : "brackwater-dock",
+        lastSafeDockId: dockId,
       },
       progression: {
         ...result.save.progression,
@@ -263,6 +328,175 @@ test("resume discards malformed persisted Brackwater flags without losing unrela
   assert.equal(stable.reason, null);
   assert.equal(stable.recoveryMetadata, undefined);
   assert.deepEqual(stable.save, recovered.save);
+});
+
+test("resume discards malformed persisted Current Commons flags without losing unrelated progress", () => {
+  const save = createNewAdventureSession("current-flag-recovery");
+  save.progression.quests[CURRENT_QUEST_ID] = {
+    status: "active",
+    flags: {
+      "future-current-marker": "keep-me",
+      "response-corrective-attempts": -1,
+      "response-last-choice": 7,
+      "observed-surface-drifter-track": "yes",
+      "observed-source-port-loss-report": true,
+    },
+  };
+  save.progression.quests["quest-side-story"] = {
+    status: "active",
+    flags: { "story-progress": 8 },
+  };
+  save.inventory.storyItems["current-keepsake"] = 1;
+  save.playtimeSeconds = 84;
+
+  const loaded = JSON.parse(JSON.stringify(save));
+  assert.equal(validateAdventureSave(loaded).valid, true);
+
+  const recovered = recoverAdventureResume(loaded);
+  assert.equal(recovered.recovered, true);
+  assert.equal(recovered.reason, "chapter-quest-flags-recovered");
+  assert.equal(recovered.fallback, null);
+  assert.deepEqual(recovered.recoveryMetadata, {
+    chapterQuestRepairs: [{
+      questId: CURRENT_QUEST_ID,
+      discardedFlagIds: [
+        "observed-surface-drifter-track",
+        "response-corrective-attempts",
+        "response-last-choice",
+      ],
+    }],
+  });
+  assert.deepEqual(
+    recovered.save.progression.quests[CURRENT_QUEST_ID].flags,
+    {
+      "future-current-marker": "keep-me",
+      "observed-source-port-loss-report": true,
+    },
+  );
+  assert.deepEqual(recovered.save.progression.quests["quest-side-story"], {
+    status: "active",
+    flags: { "story-progress": 8 },
+  });
+  assert.equal(recovered.save.inventory.storyItems["current-keepsake"], 1);
+  assert.equal(recovered.save.playtimeSeconds, 84);
+  assert.deepEqual(
+    getCurrentProgress(recovered.save).observedObservationIds,
+    ["source-port-loss-report"],
+  );
+
+  const stable = recoverAdventureResume(JSON.parse(JSON.stringify(recovered.save)));
+  assert.equal(stable.recovered, false);
+  assert.equal(stable.reason, null);
+  assert.equal(stable.recoveryMetadata, undefined);
+  assert.deepEqual(stable.save, recovered.save);
+});
+
+test("resume reopens terminal chapters when recovery discards a required typed flag", () => {
+  for (const questId of [BRACKWATER_QUEST_ID, CURRENT_QUEST_ID]) {
+    const chapter = ADVENTURE_ECOSYSTEM_CHAPTERS.find(
+      (candidate) => candidate.questId === questId,
+    );
+    for (const terminalStatus of ["readyToTurnIn", "complete"]) {
+      const completed = completeChapterForRecovery(
+        chapter,
+        `terminal-reopen-${questId}-${terminalStatus.toLowerCase()}`,
+      );
+      const quest = completed.progression.quests[questId];
+      const terminalSave = terminalStatus === "readyToTurnIn"
+        ? { ...completed, fieldNotes: { entryIds: [] }, rewardLedger: [] }
+        : completed;
+      const malformed = normalizeAdventureSave({
+        ...terminalSave,
+        progression: {
+          ...terminalSave.progression,
+          quests: {
+            ...terminalSave.progression.quests,
+            [questId]: {
+              ...quest,
+              status: terminalStatus,
+              flags: { ...quest.flags, "response-correct": "yes" },
+            },
+          },
+        },
+      });
+
+      const recovered = recoverAdventureResume(JSON.parse(JSON.stringify(malformed)));
+      const progress = chapter.getProgress(recovered.save);
+      assert.equal(recovered.recovered, true);
+      assert.equal(recovered.reason, "chapter-quest-flags-recovered");
+      assert.deepEqual(recovered.recoveryMetadata, {
+        chapterQuestRepairs: [{
+          questId,
+          discardedFlagIds: ["response-correct"],
+        }],
+      });
+      assert.equal(progress.status, "active");
+      assert.equal(progress.stateConsistent, true);
+      assert.equal(progress.response.correct, false);
+      assert.equal(progress.response.available, true);
+
+      const corrected = chapter.submitResponse(
+        recovered.save,
+        progress.response.correctChoiceId,
+      );
+      assert.equal(corrected.correct, true);
+      assert.equal(corrected.progress.readyToTurnIn, true);
+      const turnedIn = chapter.turnIn(corrected.save);
+      assert.equal(turnedIn.progress.complete, true);
+      assert.equal(turnedIn.rewardApplied, terminalStatus === "readyToTurnIn");
+      assert.deepEqual(turnedIn.save.fieldNotes.entryIds, [chapter.fieldNoteId]);
+      assert.deepEqual(turnedIn.save.rewardLedger, [
+        CHAPTER_REWARD_ID_BY_QUEST_ID[questId],
+      ]);
+    }
+  }
+});
+
+test("resume restores missing completed-chapter rewards and Field Notes exactly once", () => {
+  for (const chapter of ADVENTURE_ECOSYSTEM_CHAPTERS) {
+    const completed = completeChapterForRecovery(
+      chapter,
+      `chapter-reward-recovery-${chapter.questId}`,
+    );
+    const interrupted = normalizeAdventureSave({
+      ...completed,
+      fieldNotes: { entryIds: [] },
+      rewardLedger: [],
+    });
+
+    const recovered = recoverAdventureResume(JSON.parse(JSON.stringify(interrupted)));
+    assert.equal(recovered.recovered, true);
+    assert.equal(recovered.reason, "chapter-reward-reconciled");
+    assert.equal(chapter.getProgress(recovered.save).complete, true);
+    assert.deepEqual(recovered.save.fieldNotes.entryIds, [chapter.fieldNoteId]);
+    assert.deepEqual(recovered.save.rewardLedger, [
+      CHAPTER_REWARD_ID_BY_QUEST_ID[chapter.questId],
+    ]);
+
+    const stable = recoverAdventureResume(JSON.parse(JSON.stringify(recovered.save)));
+    assert.equal(stable.recovered, false);
+    assert.equal(stable.reason, null);
+    assert.deepEqual(stable.save, recovered.save);
+  }
+
+  const currentChapter = ADVENTURE_ECOSYSTEM_CHAPTERS.find(
+    (chapter) => chapter.questId === CURRENT_QUEST_ID,
+  );
+  const completedCurrent = completeChapterForRecovery(
+    currentChapter,
+    "chapter-note-recovery-ledger-survived",
+  );
+  const ledgerSurvived = normalizeAdventureSave({
+    ...completedCurrent,
+    fieldNotes: { entryIds: [] },
+  });
+  const noteRecovered = recoverAdventureResume(ledgerSurvived);
+  assert.equal(noteRecovered.recovered, true);
+  assert.equal(noteRecovered.reason, "chapter-reward-reconciled");
+  assert.deepEqual(noteRecovered.save.fieldNotes.entryIds, [currentChapter.fieldNoteId]);
+  assert.deepEqual(noteRecovered.save.rewardLedger, [
+    CHAPTER_REWARD_ID_BY_QUEST_ID[CURRENT_QUEST_ID],
+  ]);
 });
 
 test("unsafe writes are rejected and unsafe loaded positions recover to the scene spawn", () => {
@@ -356,8 +590,8 @@ test("all live portals use safe spawns and preserve their authored arrival facin
 
   assert.equal(
     portalCount,
-    18,
-    "all live Shellshore, Sunpatch, and Brackwater entrances and exits should be covered",
+    24,
+    "all live Shellshore, Sunpatch, Brackwater, and Current Commons entrances and exits should be covered",
   );
 });
 

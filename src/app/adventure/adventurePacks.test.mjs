@@ -151,7 +151,7 @@ test("opening rejects unavailable and planned packs without changing the save", 
   );
   assert.deepEqual(noPackSave, noPackBefore);
 
-  const plannedPackId = "pack-pool-current-bluewater";
+  const plannedPackId = "pack-pool-kelpwatch";
   const plannedSave = grantReward(noPackSave, {
     grantId: "test-planned-pack",
     packs: { [plannedPackId]: 1 },
@@ -204,6 +204,28 @@ test("the playable Brackwater Discovery Pack contains twelve permanent estuary-s
     "scientist-jes",
     "recovery",
     "remote-search",
+  ]);
+  assert.deepEqual(pool.cardIds.filter((cardId) => !cardsById[cardId]), []);
+});
+
+test("the playable Current Commons Blue Water Pack contains twelve permanent open-ocean cards", () => {
+  const pool = getAdventurePackPool("pack-pool-current-bluewater");
+
+  assert.equal(pool.status, "playable");
+  assert.equal(pool.cardsPerPack, 4);
+  assert.deepEqual(pool.cardIds, [
+    "blue-sea-dragon",
+    "krill-bloom-base",
+    "anchovy-ball-base",
+    "herring-ball-base",
+    "bluefin-tuna-juvenile",
+    "frigate-tuna",
+    "flying-fish",
+    "market-squid",
+    "mahi-mahi",
+    "wahoo",
+    "sailfish",
+    "open-ocean",
   ]);
   assert.deepEqual(pool.cardIds.filter((cardId) => !cardsById[cardId]), []);
 });

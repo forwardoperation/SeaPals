@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import styles from "./adventure.module.css";
+import { getAdventureObservationPreviewVariant } from "./adventureEcosystemChapters.mjs";
 
 function useDialogFocusTrap(active = true) {
   const ref = useRef(null);
@@ -155,13 +156,23 @@ export function AdventureFieldworkModal({
     ?? (activity?.type === "interpretation"
       ? definition?.interpretationTitle ?? "Interpret the evidence"
       : definition?.responseTitle ?? "Choose a response");
-  const previewClass = styles[`observation${activity?.observationId?.split("-")[0]}`] ?? "";
+  const previewVariant = getAdventureObservationPreviewVariant(
+    definition,
+    activity?.observationId,
+  );
+  const previewClass = previewVariant ? styles[`observation${previewVariant}`] ?? "" : "";
   const contextualMeasurements = observation?.measurements
     ? Object.entries(observation.measurements).map(([label, detail]) => ({
         label: formatMeasurementLabel(label),
         detail,
       }))
     : definition?.measurementItems ?? [];
+  const observationContext = observation?.context
+    ? Object.entries(observation.context).map(([label, detail]) => ({
+        label: label === "rainfall" ? "Recent rainfall" : formatMeasurementLabel(label),
+        detail,
+      }))
+    : [];
 
   return (
     <div
@@ -190,11 +201,11 @@ export function AdventureFieldworkModal({
               <span />
             </div>
             <p>{observation.feedback}</p>
-            {observation.context ? (
+            {observationContext.length ? (
               <div className={styles.measurementStrip} aria-label="Observation context">
-                <span><b>Site</b><small>{observation.context.site}</small></span>
-                <span><b>Tide</b><small>{observation.context.tide}</small></span>
-                <span><b>Recent rainfall</b><small>{observation.context.rainfall}</small></span>
+                {observationContext.map((item) => (
+                  <span key={item.label}><b>{item.label}</b><small>{item.detail}</small></span>
+                ))}
               </div>
             ) : null}
             <div className={styles.measurementStrip}>

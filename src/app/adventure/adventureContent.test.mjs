@@ -104,7 +104,7 @@ test("the initial save location references launch content", () => {
   assert.ok(ADVENTURE_CONTENT.scenes.some((scene) => scene.id === save.world.sceneId && scene.townId === save.world.townId));
 });
 
-test("Shellshore, Sunpatch, and Brackwater runtime scenes plus the Phase 1 dock start resolve from content", () => {
+test("Shellshore through Current Commons runtime scenes plus the Phase 1 dock start resolve from content", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   assert.deepEqual(runtimeScenes.map((scene) => scene.id), [
     "town",
@@ -121,6 +121,11 @@ test("Shellshore, Sunpatch, and Brackwater runtime scenes plus the Phase 1 dock 
     "brackwater-water-lab",
     "brackwater-mangrove-home",
     "brackwater-tide-hall",
+    "brackwater-current-sea",
+    "current-commons-town",
+    "current-navigation-lab",
+    "current-navigator-home",
+    "current-tide-hall",
   ]);
   assert.ok(runtimeScenes.every((scene) => scene.world.tiles.length > 0));
   assert.deepEqual(getAdventureStartLocation(), {
@@ -287,6 +292,83 @@ test("the Sunpatch-Brackwater route uses a separate Sunpatch dock and an exact l
   );
   assert.equal(
     resolveAdventureInteraction("brackwater-landing-town", "interaction-brackwater-board-sunpatch-route").targetSceneContent.id,
+    route.sceneId,
+  );
+});
+
+test("the Brackwater-Current route uses a separate Brackwater dock and an exact live boat lane", () => {
+  const route = getAdventureRoute("route-brackwater-current");
+  const routeScene = getRuntimeAdventureScenes().find((scene) => scene.id === route.sceneId);
+
+  assert.deepEqual(route, {
+    id: "route-brackwater-current",
+    fromTownId: "brackwater-landing",
+    toTownId: "current-commons",
+    sceneId: "brackwater-current-sea",
+    fromDockId: "brackwater-current-dock",
+    toDockId: "current-commons-dock",
+    fromSpawn: { x: 1, y: 5, facing: "right" },
+    toSpawn: { x: 14, y: 5, facing: "left" },
+    manualPilotRequiredFirstTime: true,
+    autoSteerAfterFirstCompletion: true,
+  });
+  assert.equal(routeScene.world.theme, "brackwater-current-route");
+  assert.equal(routeScene.world.artPath, "/images/adventure/brackwater-current-route.png");
+  assert.equal(routeScene.world.tiles.length, 10);
+  assert.ok(routeScene.world.tiles.every((row) => row.length === 16));
+  assert.deepEqual(routeScene.world.tiles, [
+    "kkkkkkkkkkkkkkkk",
+    "kkkokokooobooook",
+    "kkkobooooooooook",
+    "kkooooooobooookk",
+    "kkooooooooooookk",
+    "HooooooooooooooH",
+    "kkokooooooooookk",
+    "kkoooboooooobook",
+    "kkkokookooooookk",
+    "kkkkkkkkkkkkkkkk",
+  ]);
+  assert.deepEqual([...new Set(routeScene.world.tiles.join(""))].sort(), ["H", "b", "k", "o"]);
+  assert.deepEqual(routeScene.world.spawn, { x: 1, y: 5 });
+  assert.deepEqual(
+    routeScene.world.interactions.map(({ id, endpoint, at, dockId, targetScene, spawn, facing }) => ({ id, endpoint, at, dockId, targetScene, spawn, facing })),
+    [
+      {
+        id: "interaction-route-dock-brackwater-current",
+        endpoint: "from",
+        at: { x: 0, y: 5 },
+        dockId: "brackwater-current-dock",
+        targetScene: "brackwater-landing-town",
+        spawn: { x: 8, y: 8 },
+        facing: "up",
+      },
+      {
+        id: "interaction-route-dock-current-commons",
+        endpoint: "to",
+        at: { x: 15, y: 5 },
+        dockId: "current-commons-dock",
+        targetScene: "current-commons-town",
+        spawn: { x: 7, y: 8 },
+        facing: "up",
+      },
+    ],
+  );
+
+  assert.deepEqual(getAdventureDock("brackwater-current-dock"), {
+    id: "brackwater-current-dock",
+    townId: "brackwater-landing",
+    sceneId: "brackwater-landing-town",
+    status: "prototype",
+    position: { x: 8, y: 8 },
+    facing: "up",
+  });
+  assert.notEqual(route.fromDockId, getAdventureDock("brackwater-dock").id);
+  assert.equal(
+    resolveAdventureInteraction("brackwater-landing-town", "interaction-brackwater-board-current-route").targetSceneContent.id,
+    route.sceneId,
+  );
+  assert.equal(
+    resolveAdventureInteraction("current-commons-town", "interaction-current-board-brackwater-route").targetSceneContent.id,
     route.sceneId,
   );
 });
@@ -465,6 +547,114 @@ test("Brackwater Landing exposes a floating town, three interiors, and four exac
   );
 });
 
+test("Current Commons exposes a floating flotilla, three interiors, and four exact current-and-gear stations", () => {
+  const runtimeScenes = getRuntimeAdventureScenes();
+  const town = runtimeScenes.find((scene) => scene.id === "current-commons-town");
+  const expectedArt = new Map([
+    ["current-commons-town", "/images/adventure/current-commons.png"],
+    ["current-navigation-lab", "/images/adventure/current-navigation-lab.png"],
+    ["current-navigator-home", "/images/adventure/current-navigator-home.png"],
+    ["current-tide-hall", "/images/adventure/current-tide-hall.png"],
+  ]);
+
+  assert.equal(town.world.tiles.length, 10);
+  assert.ok(town.world.tiles.every((row) => row.length === 16));
+  assert.deepEqual(getAdventureDock("current-commons-dock"), {
+    id: "current-commons-dock",
+    townId: "current-commons",
+    sceneId: "current-commons-town",
+    status: "prototype",
+    position: { x: 7, y: 8 },
+    facing: "up",
+  });
+  assert.deepEqual(
+    town.world.interactions
+      .filter((interaction) => interaction.type === "enter")
+      .map(({ at, targetScene }) => ({ at, targetScene })),
+    [
+      { at: { x: 3, y: 2 }, targetScene: "current-navigator-home" },
+      { at: { x: 8, y: 2 }, targetScene: "current-navigation-lab" },
+      { at: { x: 12, y: 2 }, targetScene: "current-tide-hall" },
+    ],
+  );
+  assert.deepEqual(
+    town.world.interactions
+      .filter((interaction) => interaction.type === "observation")
+      .map(({ at, questId, observationId }) => ({ at, questId, observationId })),
+    [
+      { at: { x: 4, y: 4 }, questId: "quest-current-ghost-gear", observationId: "source-port-loss-report" },
+      { at: { x: 11, y: 4 }, questId: "quest-current-ghost-gear", observationId: "surface-drifter-track" },
+      { at: { x: 4, y: 6 }, questId: "quest-current-ghost-gear", observationId: "wildlife-overlap-zone" },
+      { at: { x: 11, y: 6 }, questId: "quest-current-ghost-gear", observationId: "downstream-gear-accumulation" },
+    ],
+  );
+  assert.deepEqual(town.world.collisionRects, [
+    { id: "current-report-station", left: 3.1, top: 3.55, right: 5.45, bottom: 5.05 },
+    { id: "current-drifter-station", left: 9.65, top: 3.55, right: 12.15, bottom: 5.1 },
+    { id: "current-wildlife-station", left: 3.25, top: 5.25, right: 5.7, bottom: 6.65 },
+    { id: "current-accumulation-station", left: 9.55, top: 5.25, right: 12.15, bottom: 6.85 },
+  ]);
+  assert.deepEqual(
+    town.world.interactions.find(({ id }) => id === "interaction-current-deckhand").at,
+    { x: 13, y: 5 },
+  );
+
+  for (const [sceneId, artPath] of expectedArt) {
+    const scene = runtimeScenes.find((candidate) => candidate.id === sceneId);
+    assert.equal(scene.world.artPath, artPath);
+    if (sceneId === town.id) continue;
+    assert.equal(scene.world.tiles.length, 8);
+    assert.ok(scene.world.tiles.every((row) => row.length === 12));
+    const exit = scene.world.interactions.find((interaction) => interaction.type === "exit");
+    assert.equal(exit.targetScene, town.id);
+    assert.equal(exit.facing, "down");
+  }
+
+  const lab = runtimeScenes.find((scene) => scene.id === "current-navigation-lab");
+  assert.deepEqual(
+    lab.world.interactions
+      .filter((interaction) => ["interpretation", "response"].includes(interaction.type))
+      .map(({ type, at, questId, choiceSetId }) => ({ type, at, questId, choiceSetId })),
+    [
+      { type: "interpretation", at: { x: 3, y: 2 }, questId: "quest-current-ghost-gear", choiceSetId: "current-connection-interpretation" },
+      { type: "response", at: { x: 8, y: 2 }, questId: "quest-current-ghost-gear", choiceSetId: "current-gear-response" },
+    ],
+  );
+
+  const expectedInteriorCollisions = new Map([
+    ["current-navigation-lab", [
+      { id: "current-lab-left-console", left: 0.5, top: 1.7, right: 3.18, bottom: 5.45 },
+      { id: "current-lab-rear-stage", left: 3.6, top: 1.6, right: 7.4, bottom: 2.72 },
+      { id: "current-lab-right-console", left: 7.75, top: 1.7, right: 10.5, bottom: 5.45 },
+    ]],
+    ["current-navigator-home", [
+      { id: "current-home-left-chart-table", left: 0.5, top: 1.5, right: 3.18, bottom: 4 },
+      { id: "current-home-upper-right-plant", left: 7.1, top: 2.15, right: 7.72, bottom: 3.1 },
+      { id: "current-home-upper-right-gear", left: 8, top: 1.5, right: 10.5, bottom: 3.7 },
+      { id: "current-home-lower-left-berth", left: 0.5, top: 3.95, right: 2.2, bottom: 6.05 },
+      { id: "current-home-lower-right-crate", left: 9.88, top: 3.85, right: 10.5, bottom: 5.32 },
+    ]],
+    ["current-tide-hall", [
+      { id: "current-hall-left-display", left: 0.5, top: 1.5, right: 3.68, bottom: 2.75 },
+      { id: "current-hall-rear-stage", left: 3.92, top: 1.5, right: 7.16, bottom: 2.86 },
+      { id: "current-hall-right-display", left: 7.45, top: 1.5, right: 10.5, bottom: 2.75 },
+      { id: "current-hall-left-bench", left: 0.5, top: 2.73, right: 1.35, bottom: 4.32 },
+      { id: "current-hall-right-bench", left: 9.82, top: 2.73, right: 10.5, bottom: 4.32 },
+      { id: "current-hall-lower-left-cabinet", left: 0.5, top: 4.88, right: 2.95, bottom: 6.28 },
+      { id: "current-hall-lower-left-planter", left: 2.75, top: 5.86, right: 4.36, bottom: 6.34 },
+      { id: "current-hall-lower-right-planter", left: 6.6, top: 5.88, right: 8.35, bottom: 6.34 },
+      { id: "current-hall-lower-right-cabinet", left: 8.2, top: 4.88, right: 10.5, bottom: 6.26 },
+    ]],
+  ]);
+  for (const [sceneId, rectangles] of expectedInteriorCollisions) {
+    assert.deepEqual(
+      runtimeScenes.find((scene) => scene.id === sceneId).world.collisionRects,
+      rectangles,
+      `${sceneId} collision geometry should remain aligned with its final raster`,
+    );
+  }
+});
+
 test("five Brackwater NPCs cover every ecosystem role with scoped conversations and duels", () => {
   const npcs = ADVENTURE_CONTENT.npcs.filter((npc) => npc.townId === "brackwater-landing");
   assert.deepEqual(npcs.map((npc) => npc.id), [
@@ -492,6 +682,38 @@ test("five Brackwater NPCs cover every ecosystem role with scoped conversations 
   );
 });
 
+test("five Current Commons NPCs cover every ecosystem role with cautious dialogue and scoped duels", () => {
+  const npcs = ADVENTURE_CONTENT.npcs.filter((npc) => npc.townId === "current-commons");
+  assert.deepEqual(npcs.map((npc) => npc.id), [
+    "current-guide",
+    "current-analyst",
+    "current-navigator",
+    "current-deckhand",
+    "current-leader",
+  ]);
+  assert.deepEqual(npcs.map((npc) => npc.roleId), REQUIRED_ECOSYSTEM_NPC_ROLES);
+
+  for (const npc of npcs) {
+    const resolved = resolveAdventureNpc(npc.id);
+    assert.ok(resolved.conversation.lines.intro.length >= 2);
+    assert.match(resolved.conversation.lines.intro[0], /welcome|hello|thank you/i);
+    assert.ok(resolved.conversation.lines.return.length >= 1);
+  }
+  assert.equal(resolveAdventureNpc("current-guide").encounter, null);
+  assert.equal(resolveAdventureNpc("current-analyst").encounter, null);
+  assert.equal(resolveAdventureNpc("current-navigator").encounter.id, "encounter-current-resident-navigator");
+  assert.equal(resolveAdventureNpc("current-deckhand").encounter.id, "encounter-current-resident-deckhand");
+  assert.equal(resolveAdventureNpc("current-leader").encounter.id, "encounter-current-qualifier");
+  assert.match(
+    resolveAdventureNpc("current-analyst").conversation.lines.debrief.join(" "),
+    /risk corridor.*does not prove ownership/i,
+  );
+  assert.match(
+    resolveAdventureNpc("current-deckhand").conversation.lines.victory.join(" "),
+    /trained and authorized crews.*report it rather than pull/i,
+  );
+});
+
 test("Changing Estuary Water is a complete sourced evidence-comparison Field Note", () => {
   const fieldNote = getAdventureFieldNote("field-note-estuary-conditions");
   assert.equal(fieldNote.status, "prototype");
@@ -507,6 +729,24 @@ test("Changing Estuary Water is a complete sourced evidence-comparison Field Not
   assert.equal(fieldNote.sourceUrls.length, 3);
   assert.ok(fieldNote.sourceUrls.every((sourceUrl) => sourceUrl.startsWith("https://")));
   assert.match(fieldNote.summary, /place, tide, rainfall, time, and bottom type.*expected variation.*source tracing/i);
+});
+
+test("Connected by Currents is a complete sourced, uncertainty-aware ghost-gear Field Note", () => {
+  const fieldNote = getAdventureFieldNote("field-note-current-connections");
+  assert.equal(fieldNote.status, "prototype");
+  assert.equal(fieldNote.observations.length, 5);
+  assert.equal(fieldNote.checklist.length, 5);
+  assert.deepEqual(fieldNote.glossary.map((entry) => entry.term), [
+    "Surface current",
+    "Drifter",
+    "Ghost gear",
+    "Accumulation",
+    "Search corridor",
+  ]);
+  assert.equal(fieldNote.sourceUrls.length, 5);
+  assert.ok(fieldNote.sourceUrls.every((sourceUrl) => sourceUrl.startsWith("https://")));
+  assert.match(fieldNote.summary, /likely short-term paths.*do not prove.*owned.*exact destination/i);
+  assert.match(fieldNote.checklist.join(" "), /stay aboard.*trained and authorized responders.*prevention/i);
 });
 
 test("Reading a Reef is a complete evidence-first Field Note with science sources", () => {
@@ -773,6 +1013,25 @@ test("content validation protects Brackwater art, evidence, science-source, and 
   assert.ok(result.errors.some((error) => /brackwater-landing-town.*observationId is required/.test(error)));
   assert.ok(result.errors.some((error) => /field-note-estuary-conditions.*sourceUrls must contain at least three HTTPS science sources/.test(error)));
   assert.ok(result.errors.some((error) => /brackwater-landing.*no NPC for role field-partner/.test(error)));
+});
+
+test("content validation protects Current route, evidence, science-source, and NPC-role contracts", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  invalid.scenes.find((scene) => scene.id === "brackwater-current-sea").world.artPath = "https://example.invalid/route.jpg";
+  invalid.scenes
+    .find((scene) => scene.id === "current-commons-town")
+    .world.interactions
+    .find((interaction) => interaction.type === "observation")
+    .observationId = "";
+  invalid.fieldNotes.find((fieldNote) => fieldNote.id === "field-note-current-connections").sourceUrls = [];
+  invalid.npcs.find((npc) => npc.id === "current-analyst").roleId = "resident";
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /brackwater-current-sea.*artPath must reference a PNG/.test(error)));
+  assert.ok(result.errors.some((error) => /current-commons-town.*observationId is required/.test(error)));
+  assert.ok(result.errors.some((error) => /field-note-current-connections.*sourceUrls must contain at least three HTTPS science sources/.test(error)));
+  assert.ok(result.errors.some((error) => /current-commons.*no NPC for role field-partner/.test(error)));
 });
 
 test("content validation protects Phase 2 starter, tutorial, mentor, and Field Note contracts", () => {

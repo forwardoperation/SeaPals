@@ -23,7 +23,22 @@ import {
   submitBrackwaterInterpretation,
   submitBrackwaterResponse,
   turnInBrackwaterFieldwork,
+  recoverBrackwaterQuestFlags,
 } from "./adventureBrackwater.mjs";
+import {
+  CURRENT_QUEST_ID,
+  CURRENT_INTERPRETATION_CHOICES,
+  CURRENT_OBSERVATION_COPY,
+  CURRENT_RESPONSE_CHOICES,
+  beginCurrentInvestigation,
+  getCurrentProgress,
+  reconcileCurrentQuest,
+  recordCurrentObservation,
+  submitCurrentInterpretation,
+  submitCurrentResponse,
+  turnInCurrentFieldwork,
+  recoverCurrentQuestFlags,
+} from "./adventureCurrent.mjs";
 
 const SUNPATCH_INTERPRETATION_CHOICES = Object.freeze([
   Object.freeze({
@@ -66,6 +81,27 @@ const SUNPATCH_MEASUREMENTS = Object.freeze([
   Object.freeze({ label: "Temperature trend", detail: "Compare with the local seasonal baseline" }),
   Object.freeze({ label: "Water clarity", detail: "Record it, but do not diagnose from one reading" }),
 ]);
+
+const CURRENT_OBSERVATION_PREVIEW_VARIANTS = Object.freeze({
+  "source-port-loss-report": "currentReport",
+  "surface-drifter-track": "currentDrifter",
+  "wildlife-overlap-zone": "currentWildlife",
+  "downstream-gear-accumulation": "currentGear",
+});
+
+const OBSERVATION_PREVIEW_VARIANT_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
+
+export function getAdventureObservationPreviewVariant(definition, observationId) {
+  if (typeof observationId !== "string" || !observationId.trim()) return null;
+  const authoredVariant = definition?.observationPreviewVariants?.[observationId];
+  if (
+    typeof authoredVariant === "string"
+    && OBSERVATION_PREVIEW_VARIANT_PATTERN.test(authoredVariant)
+  ) {
+    return authoredVariant;
+  }
+  return observationId.split("-")[0] || null;
+}
 
 function freezeUi(ui) {
   return Object.freeze({ ...ui });
@@ -184,6 +220,60 @@ const BRACKWATER_CHAPTER = createChapterAdapter({
   },
 });
 
+const CURRENT_CHAPTER = createChapterAdapter({
+  townId: "current-commons",
+  questId: CURRENT_QUEST_ID,
+  fieldNoteId: "field-note-current-connections",
+  guideMetFlagId: "met-current-guide",
+  getProgress: getCurrentProgress,
+  begin: beginCurrentInvestigation,
+  reconcile: reconcileCurrentQuest,
+  recordObservation: recordCurrentObservation,
+  submitInterpretation: submitCurrentInterpretation,
+  submitResponse: submitCurrentResponse,
+  turnIn: turnInCurrentFieldwork,
+  ui: {
+    chapterName: "Current Commons",
+    guideName: "Suri",
+    guideQuestTitle: "Meet Suri at Current Commons",
+    guideQuestDescription: "Talk with Suri before using the flotilla stations or Navigation Lab consoles. She will introduce the lost-gear question and the town's safe evidence plan.",
+    guideGateNotice: "Meet Suri in the central plaza before using the observation stations or Navigation Lab consoles.",
+    recordLabel: "Flotilla record",
+    challengerLabel: "Current Commons challengers",
+    surveyEyebrow: "Current Commons drift survey",
+    observationNoun: "current and gear observations",
+    observationCopy: CURRENT_OBSERVATION_COPY,
+    observationPreviewVariants: CURRENT_OBSERVATION_PREVIEW_VARIANTS,
+    measurementItems: Object.freeze([]),
+    interpretationChoices: CURRENT_INTERPRETATION_CHOICES,
+    responseChoices: CURRENT_RESPONSE_CHOICES,
+    interpretationTitle: "Connect the current evidence",
+    responseTitle: "Choose a safe ghost-gear response",
+    interpretationPrompt: "Compare the dated loss report, short-term drifter path, wildlife overlap, and repeated accumulation. Choose the conclusion the combined evidence supports without claiming certainty or ownership.",
+    responsePrompt: "Choose a response that protects people and wildlife now while also reducing the chance and duration of another gear loss.",
+    questTitle: "Trace Current Commons' ghost gear",
+    questDescription: "Record four current-and-gear observations, hear both resident perspectives, identify the supported risk corridor, and plan safe response plus prevention.",
+    fieldReportTitle: "Present your current-and-gear report",
+    fieldReportDescription: "Return to Dr. Amara Nwosu in the Navigation Lab. She will review what the current evidence supports, where uncertainty remains, and why trained responders handle removal.",
+    qualifierTitle: "Qualify at Current Commons Tide Hall",
+    qualifierDescription: "Your field report is complete. Visit Orla in Tide Hall for the 10 VP qualification duel.",
+    tideMarkId: "tide-mark-current",
+    tideMarkTitle: "Current Commons Tide Mark earned",
+    tideMarkDescription: "Authorized responders are using the reported corridor while the flotilla strengthens gear checks, storm planning, and prompt loss reporting.",
+    activityLabel: "current-and-gear survey",
+    guideStartCheckpointId: "current-guide-met",
+    guideStartNotice: "The Current Commons survey is active. Compare all four current-and-gear observation stations.",
+    fieldPartnerMetFlagId: "met-current-analyst",
+    fieldPartnerIntroCheckpointId: "current-field-partner-met",
+    fieldPartnerIntroNotice: "Dr. Amara has explained how the four observations and Navigation Lab decisions fit together.",
+    fieldworkCheckpointPrefix: "current-fieldwork",
+    turnInCheckpointId: "current-fieldwork-complete",
+    turnInNotice: "Your Connected by Currents Field Note is complete. The Tide Hall qualifier is now open.",
+    interpretationGateNotice: "Record all four current-and-gear observations before interpreting the likely drift corridor.",
+    responseGateNotice: "Reach an evidence-supported interpretation before choosing a response.",
+  },
+});
+
 /**
  * Runtime-only adapters for ecosystem chapters. Functions stay outside the
  * serialized save contract; only their canonical IDs and resulting save data
@@ -192,6 +282,12 @@ const BRACKWATER_CHAPTER = createChapterAdapter({
 export const ADVENTURE_ECOSYSTEM_CHAPTERS = Object.freeze([
   SUNPATCH_CHAPTER,
   BRACKWATER_CHAPTER,
+  CURRENT_CHAPTER,
+]);
+
+const CHAPTER_FLAG_RECOVERERS = Object.freeze([
+  Object.freeze({ questId: BRACKWATER_QUEST_ID, recover: recoverBrackwaterQuestFlags }),
+  Object.freeze({ questId: CURRENT_QUEST_ID, recover: recoverCurrentQuestFlags }),
 ]);
 
 const CHAPTER_BY_TOWN_ID = new Map(
@@ -211,6 +307,29 @@ export function getAdventureEcosystemChapterByQuestId(questId) {
 
 export function isAdventureEcosystemChapterQuest(questId) {
   return CHAPTER_BY_QUEST_ID.has(questId);
+}
+
+/**
+ * Repairs chapter-specific persisted flag types at the storage boundary while
+ * preserving unrelated and forward-compatible quest flags.
+ */
+export function recoverAdventureEcosystemChapterFlags(saveValue) {
+  let save = saveValue;
+  const repairs = [];
+  for (const { questId, recover } of CHAPTER_FLAG_RECOVERERS) {
+    const result = recover(save);
+    save = result.save;
+    if (!result.applied) continue;
+    repairs.push(Object.freeze({
+      questId,
+      discardedFlagIds: result.discardedFlagIds,
+    }));
+  }
+  return {
+    save,
+    applied: repairs.length > 0,
+    repairs: Object.freeze(repairs),
+  };
 }
 
 function getChapterQuestFlags(chapter, saveValue) {

@@ -19,6 +19,27 @@ import {
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
 
+function assertWalkablePolyline(sceneId, points, label) {
+  for (let pointIndex = 1; pointIndex < points.length; pointIndex += 1) {
+    const start = points[pointIndex - 1];
+    const end = points[pointIndex];
+    const distance = Math.hypot(end.x - start.x, end.y - start.y);
+    const steps = Math.max(1, Math.ceil(distance / 0.05));
+    for (let step = 0; step <= steps; step += 1) {
+      const ratio = step / steps;
+      const position = {
+        x: start.x + ((end.x - start.x) * ratio),
+        y: start.y + ((end.y - start.y) * ratio),
+      };
+      assert.equal(
+        canOccupyContinuousPosition(sceneId, position),
+        true,
+        `${label} must remain open near ${position.x.toFixed(2)},${position.y.toFixed(2)}`,
+      );
+    }
+  }
+}
+
 test("world exposes the requested town and interior dimensions", () => {
   for (const sceneId of ["town", "coral-home", "deep-home", "academy-lab"]) {
     assert.ok(SCENES[sceneId], `${sceneId} should remain available`);
@@ -67,7 +88,7 @@ test("scene interaction snapshots are public, frozen, and omit authored coordina
   assert.equal(Object.isFrozen(interactions), true);
 });
 
-test("the first two sea routes plus Sunpatch and Brackwater scenes are live world-engine scenes", () => {
+test("the first three sea routes plus Sunpatch, Brackwater, and Current scenes are live world-engine scenes", () => {
   const route = SCENES["shellshore-sunpatch-sea"];
   assert.ok(route);
   assert.equal(route.routeId, "route-shellshore-sunpatch");
@@ -87,6 +108,11 @@ test("the first two sea routes plus Sunpatch and Brackwater scenes are live worl
     "brackwater-water-lab",
     "brackwater-mangrove-home",
     "brackwater-tide-hall",
+    "brackwater-current-sea",
+    "current-commons-town",
+    "current-navigation-lab",
+    "current-navigator-home",
+    "current-tide-hall",
   ]) {
     assert.ok(SCENES[sceneId], `${sceneId} should be available to the world engine`);
     assert.equal(canOccupyScenePosition(sceneId, SCENES[sceneId].spawn), true, `${sceneId} requires a safe spawn`);
@@ -100,6 +126,15 @@ test("the first two sea routes plus Sunpatch and Brackwater scenes are live worl
   assert.equal(brackwaterRoute.width, 16);
   assert.equal(brackwaterRoute.height, 10);
   assert.equal(SCENES["brackwater-landing-town"].artPath, "/images/adventure/brackwater-landing.png");
+
+  const currentRoute = SCENES["brackwater-current-sea"];
+  assert.equal(currentRoute.routeId, "route-brackwater-current");
+  assert.equal(currentRoute.kind, "route");
+  assert.equal(currentRoute.theme, "brackwater-current-route");
+  assert.equal(currentRoute.artPath, "/images/adventure/brackwater-current-route.png");
+  assert.equal(currentRoute.width, 16);
+  assert.equal(currentRoute.height, 10);
+  assert.equal(SCENES["current-commons-town"].artPath, "/images/adventure/current-commons.png");
 });
 
 test("route movement uses its authored profile and navigation obstacles stay solid", () => {
@@ -221,6 +256,29 @@ test("Sunpatch exposes two distinct departure docks and the Brackwater route doc
   }
 });
 
+test("Brackwater exposes two distinct docks and the Current Commons route docks safely", () => {
+  const sunpatchBoard = getInteraction("brackwater-landing-town", { x: 7, y: 8 }, "down");
+  const currentBoard = getInteraction("brackwater-landing-town", { x: 8, y: 8 }, "down");
+  assert.equal(sunpatchBoard.routeId, "route-sunpatch-brackwater");
+  assert.equal(sunpatchBoard.dockId, "brackwater-dock");
+  assert.equal(currentBoard.routeId, "route-brackwater-current");
+  assert.equal(currentBoard.dockId, "brackwater-current-dock");
+  assert.equal(currentBoard.targetScene, "brackwater-current-sea");
+  assert.deepEqual(currentBoard.spawn, { x: 1, y: 5 });
+
+  const fromDock = getInteraction("brackwater-current-sea", { x: 1, y: 5 }, "left");
+  const toDock = getInteraction("brackwater-current-sea", { x: 14, y: 5 }, "right");
+  assert.equal(fromDock.endpoint, "from");
+  assert.equal(fromDock.targetScene, "brackwater-landing-town");
+  assert.equal(toDock.endpoint, "to");
+  assert.equal(toDock.targetScene, "current-commons-town");
+  assert.equal(getDoorwayTransition("brackwater-current-sea", { x: 14, y: 5 }, "right"), null);
+
+  for (const interaction of [sunpatchBoard, currentBoard, fromDock, toDock]) {
+    assert.equal(canOccupyScenePosition(interaction.targetScene, interaction.spawn), true);
+  }
+});
+
 test("Sunpatch generic interactions expose only their authored public metadata", () => {
   const interactions = [
     ...getSceneInteractions("sunpatch-cay-town"),
@@ -282,11 +340,42 @@ test("Brackwater exposes NPC, water-evidence, interpretation, and response inter
   assert.equal(response.choiceSetId, "brackwater-runoff-response");
 });
 
+test("Current Commons exposes NPC, current-evidence, interpretation, and response interactions", () => {
+  const interactions = [
+    ...getSceneInteractions("current-commons-town"),
+    ...getSceneInteractions("current-navigation-lab"),
+    ...getSceneInteractions("current-navigator-home"),
+    ...getSceneInteractions("current-tide-hall"),
+  ];
+  for (const type of ["npc", "trainer", "observation", "interpretation", "response"]) {
+    assert.ok(interactions.some((interaction) => interaction.type === type), `Current Commons requires ${type}`);
+  }
+  assert.deepEqual(
+    interactions
+      .filter((interaction) => interaction.type === "observation")
+      .map((interaction) => interaction.observationId),
+    [
+      "source-port-loss-report",
+      "surface-drifter-track",
+      "wildlife-overlap-zone",
+      "downstream-gear-accumulation",
+    ],
+  );
+  const interpretation = interactions.find((interaction) => interaction.type === "interpretation");
+  const response = interactions.find((interaction) => interaction.type === "response");
+  assert.equal(interpretation.questId, "quest-current-ghost-gear");
+  assert.equal(interpretation.choiceSetId, "current-connection-interpretation");
+  assert.equal(response.choiceSetId, "current-gear-response");
+});
+
 test("evidence, interpretation, and response stations remain manual interactions", () => {
   const cases = [
     ["sunpatch-cay-town", { x: 4, y: 4 }, "left", "observation"],
     ["sunpatch-field-station", { x: 3, y: 3 }, "up", "interpretation"],
     ["sunpatch-field-station", { x: 8, y: 3 }, "up", "response"],
+    ["current-commons-town", { x: 4, y: 3 }, "down", "observation"],
+    ["current-navigation-lab", { x: 3.4, y: 3 }, "up", "interpretation"],
+    ["current-navigation-lab", { x: 7.5, y: 3 }, "up", "response"],
   ];
   for (const [sceneId, position, facing, type] of cases) {
     assert.equal(canOccupyScenePosition(sceneId, position), true);
@@ -295,8 +384,8 @@ test("evidence, interpretation, and response stations remain manual interactions
   }
 });
 
-test("every authored route, dock, and Sunpatch portal points to a safe arrival corridor", () => {
-  const phaseFourSceneIds = [
+test("every authored route, dock, and live town portal points to a safe arrival corridor", () => {
+  const liveSceneIds = [
     "town",
     "shellshore-sunpatch-sea",
     "sunpatch-cay-town",
@@ -308,10 +397,15 @@ test("every authored route, dock, and Sunpatch portal points to a safe arrival c
     "brackwater-water-lab",
     "brackwater-mangrove-home",
     "brackwater-tide-hall",
+    "brackwater-current-sea",
+    "current-commons-town",
+    "current-navigation-lab",
+    "current-navigator-home",
+    "current-tide-hall",
   ];
   const transitionTypes = new Set(["enter", "exit", "board", "dock"]);
 
-  for (const sceneId of phaseFourSceneIds) {
+  for (const sceneId of liveSceneIds) {
     assert.equal(canOccupyScenePosition(sceneId, SCENES[sceneId].spawn), true, `${sceneId} spawn must stay safe`);
     for (const interaction of getSceneInteractions(sceneId)) {
       if (!transitionTypes.has(interaction.type)) continue;
@@ -325,8 +419,8 @@ test("every authored route, dock, and Sunpatch portal points to a safe arrival c
   }
 });
 
-test("every Sunpatch and Brackwater exterior doorway auto-triggers from a safe approach", () => {
-  for (const sceneId of ["sunpatch-cay-town", "brackwater-landing-town"]) {
+test("every Sunpatch, Brackwater, and Current exterior doorway auto-triggers from a safe approach", () => {
+  for (const sceneId of ["sunpatch-cay-town", "brackwater-landing-town", "current-commons-town"]) {
     const entrances = SCENES[sceneId].interactions.filter(({ type }) => type === "enter");
     assert.equal(entrances.length, 3, `${sceneId} should expose all three building entrances`);
 
@@ -505,6 +599,90 @@ test("authored furniture rectangles block artwork while preserving real floor sp
   ];
   for (const [sceneId, position] of safeFloorAndSpawnPoints) {
     assert.equal(canOccupyContinuousPosition(sceneId, position), true, `${sceneId} floor should stay open`);
+  }
+});
+
+test("the Current sea lane follows visible shoals while preserving an open dock-to-dock channel", () => {
+  const blockedArtPoints = [
+    { x: 1, y: 1 },
+    { x: 4, y: 1 },
+    { x: 10, y: 1 },
+    { x: 4, y: 2 },
+    { x: 9, y: 3 },
+    { x: 14, y: 4 },
+    { x: 3, y: 6 },
+    { x: 5, y: 7 },
+    { x: 12, y: 7 },
+    { x: 7, y: 8 },
+  ];
+  for (const position of blockedArtPoints) {
+    assert.equal(
+      canOccupyContinuousPosition("brackwater-current-sea", position),
+      false,
+      `visible route obstacle at ${position.x},${position.y} must stay solid`,
+    );
+  }
+
+  for (const position of [{ x: 3, y: 3 }, { x: 8, y: 3 }, { x: 8, y: 5 }, { x: 10, y: 6 }]) {
+    assert.equal(
+      canOccupyContinuousPosition("brackwater-current-sea", position),
+      true,
+      `open route water at ${position.x},${position.y} must stay navigable`,
+    );
+  }
+  assertWalkablePolyline(
+    "brackwater-current-sea",
+    [{ x: 1, y: 5 }, { x: 14, y: 5 }],
+    "Brackwater-to-Current center channel",
+  );
+});
+
+test("Current interiors match visible furniture without cutting off required interactions", () => {
+  const blockedArtPoints = [
+    ["current-navigation-lab", "current-lab-left-console", { x: 2, y: 4 }],
+    ["current-navigation-lab", "current-lab-rear-stage", { x: 5, y: 2.4 }],
+    ["current-navigation-lab", "current-lab-right-console", { x: 9, y: 4 }],
+    ["current-navigator-home", "current-home-left-chart-table", { x: 2, y: 3 }],
+    ["current-navigator-home", "current-home-upper-right-plant", { x: 7.4, y: 2.5 }],
+    ["current-navigator-home", "current-home-upper-right-gear", { x: 9, y: 3 }],
+    ["current-navigator-home", "current-home-lower-left-berth", { x: 1.5, y: 5 }],
+    ["current-navigator-home", "current-home-lower-right-crate", { x: 10.1, y: 4.5 }],
+    ["current-tide-hall", "current-hall-left-display", { x: 2, y: 2.4 }],
+    ["current-tide-hall", "current-hall-rear-stage", { x: 5, y: 2.5 }],
+    ["current-tide-hall", "current-hall-right-display", { x: 9, y: 2.4 }],
+    ["current-tide-hall", "current-hall-left-bench", { x: 1, y: 3.5 }],
+    ["current-tide-hall", "current-hall-right-bench", { x: 10.1, y: 3.5 }],
+    ["current-tide-hall", "current-hall-lower-left-cabinet", { x: 1.5, y: 5.5 }],
+    ["current-tide-hall", "current-hall-lower-left-planter", { x: 3.5, y: 6.1 }],
+    ["current-tide-hall", "current-hall-lower-right-planter", { x: 7.5, y: 6.1 }],
+    ["current-tide-hall", "current-hall-lower-right-cabinet", { x: 9.5, y: 5.5 }],
+  ];
+  for (const [sceneId, rectangleId, position] of blockedArtPoints) {
+    assert.ok(SCENES[sceneId].collisionRects.some(({ id }) => id === rectangleId));
+    assert.equal(canOccupyContinuousPosition(sceneId, position), false, `${rectangleId} must stay solid`);
+  }
+
+  const interactionApproaches = [
+    ["current-navigation-lab", { x: 5, y: 3 }, "up", "interaction-current-analyst"],
+    ["current-navigation-lab", { x: 3.4, y: 3 }, "up", "interaction-current-interpret-evidence"],
+    ["current-navigation-lab", { x: 7.5, y: 3 }, "up", "interaction-current-choose-response"],
+    ["current-navigator-home", { x: 5, y: 3 }, "up", "interaction-current-navigator"],
+    ["current-tide-hall", { x: 5, y: 3.1 }, "up", "interaction-current-leader"],
+  ];
+  for (const [sceneId, position, facing, interactionId] of interactionApproaches) {
+    assert.equal(canOccupyContinuousPosition(sceneId, position), true, `${interactionId} needs an open approach`);
+    assert.equal(getContinuousInteraction(sceneId, position, facing)?.interactionId, interactionId);
+    assertWalkablePolyline(sceneId, [SCENES[sceneId].spawn, position], interactionId);
+  }
+
+  for (const [sceneId, exitId] of [
+    ["current-navigation-lab", "interaction-current-lab-exit"],
+    ["current-navigator-home", "interaction-current-home-exit"],
+    ["current-tide-hall", "interaction-current-hall-exit"],
+  ]) {
+    const doorwayApproach = { x: 5, y: 6.27 };
+    assertWalkablePolyline(sceneId, [SCENES[sceneId].spawn, doorwayApproach], `${sceneId} exit corridor`);
+    assert.equal(getDoorwayTransition(sceneId, doorwayApproach, "down")?.interactionId, exitId);
   }
 });
 
