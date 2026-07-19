@@ -11,6 +11,10 @@ function requiredCardName(route, cardId) {
     ?? "the highlighted card";
 }
 
+function tutorialGuideName(guideName) {
+  return String(guideName ?? "Mr. Easterling").trim() || "Mr. Easterling";
+}
+
 function academyPlacementRequirement(route, cardId) {
   if (!academyRouteIsActive(route)) return null;
   return route?.plan?.placementPlan?.[String(cardId ?? "").trim()] ?? null;
@@ -51,19 +55,19 @@ export function getAcademyPlacementBlock(details = {}) {
 /**
  * The Academy is an authored lesson rather than a free-practice match. These
  * guards keep an accidental extra click from spending RP or skipping a card
- * type before Professor Current has taught it.
+ * type before the current tutorial guide has taught it.
  */
-export function getAcademyCardPlayBlock({ route, help, cardId } = {}) {
+export function getAcademyCardPlayBlock({ route, help, cardId, guideName } = {}) {
   if (!academyRouteIsActive(route)) return "";
   const requiredCardId = String(help?.targetCardId ?? "").trim();
   if (requiredCardId && requiredCardId === String(cardId ?? "").trim()) return "";
   if (requiredCardId) {
-    return `Professor Current has prepared ${requiredCardName(route, requiredCardId)} for this step. Follow the highlighted card so the lesson stays on course.`;
+    return `${tutorialGuideName(guideName)} has prepared ${requiredCardName(route, requiredCardId)} for this step. Follow the highlighted card so the lesson stays on course.`;
   }
-  return "Professor Current has prepared a board action or the end of the turn next. Complete the highlighted Academy step before playing another card.";
+  return `${tutorialGuideName(guideName)} has prepared a board action or the end of the turn next. Complete the highlighted lesson step before playing another card.`;
 }
 
-export function getAcademyActionBlock({ route, help, actionKey, target } = {}) {
+export function getAcademyActionBlock({ route, help, actionKey, target, guideName } = {}) {
   if (!academyRouteIsActive(route)) return "";
   const requiredActionKey = String(help?.targetActionKey ?? "").trim();
   if (
@@ -71,10 +75,10 @@ export function getAcademyActionBlock({ route, help, actionKey, target } = {}) {
     && requiredActionKey === String(actionKey ?? "").trim()
     && help?.target === target
   ) return "";
-  return "Professor Current has prepared a different action for this lesson step. Follow the highlighted card and action button first.";
+  return `${tutorialGuideName(guideName)} has prepared a different action for this lesson step. Follow the highlighted card and action button first.`;
 }
 
-export function getAcademyEndTurnBlock({ route, help } = {}) {
+export function getAcademyEndTurnBlock({ route, help, guideName } = {}) {
   if (!academyRouteIsActive(route) || help?.target === "turn-button") return "";
-  return "Finish Professor Current's highlighted Academy step before ending the turn.";
+  return `Finish ${tutorialGuideName(guideName)}'s highlighted lesson step before ending the turn.`;
 }

@@ -1,7 +1,7 @@
 import { ADVENTURE_CONTENT } from "./adventureContent.mjs";
 
 const FIELD_NOTE_LOCATION_BY_ID = Object.freeze({
-  "field-note-harbor-basics": "Shellshore Harbor",
+  "field-note-harbor-basics": "Elverson Shore",
   "field-note-coral-observations": "Sunpatch Cay",
   "field-note-estuary-conditions": "Brackwater Landing",
   "field-note-current-connections": "Current Commons",

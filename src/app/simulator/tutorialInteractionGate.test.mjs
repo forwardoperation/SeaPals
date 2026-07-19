@@ -29,8 +29,8 @@ test("Academy card play accepts only the card named by the live Professor cue", 
   const help = { target: "play-card", targetCardId: "pillar-coral-base" };
   assert.equal(getAcademyCardPlayBlock({ route, help, cardId: "pillar-coral-base" }), "");
   assert.match(
-    getAcademyCardPlayBlock({ route, help, cardId: "great-barracuda" }),
-    /Pillar Coral.*highlighted card/i,
+    getAcademyCardPlayBlock({ route, help, cardId: "great-barracuda", guideName: "Mr. Easterling" }),
+    /Mr\. Easterling.*Pillar Coral.*highlighted card/i,
   );
   assert.match(
     getAcademyCardPlayBlock({ route, help: { target: "turn-button" }, cardId: "arrow-crab" }),
@@ -46,7 +46,7 @@ test("Academy actions must match both the highlighted control and instance key",
 
 test("Academy turns end only when the Professor cue reaches the turn control", () => {
   assert.equal(getAcademyEndTurnBlock({ route, help: { target: "turn-button" } }), "");
-  assert.match(getAcademyEndTurnBlock({ route, help: { target: "hand" } }), /highlighted Academy step/i);
+  assert.match(getAcademyEndTurnBlock({ route, help: { target: "hand" } }), /Mr\. Easterling's highlighted lesson step/i);
   assert.equal(getAcademyEndTurnBlock({ route: null, help: null }), "");
 });
 

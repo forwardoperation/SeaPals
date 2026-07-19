@@ -32,6 +32,10 @@ import {
   CHAMPIONS_WAKE_QUEST_ID,
   getChampionsWakeTournamentRoundAvailability,
 } from "./adventureTournamentGate.mjs";
+import {
+  isElversonReleaseLocation,
+  relocateResumeToElversonStart,
+} from "./adventureReleaseScope.mjs";
 
 export const SHELLSHORE_QUEST_ID = "quest-shellshore-first-voyage";
 export const SHELLSHORE_RESIDENT_ENCOUNTER_IDS = Object.freeze(
@@ -247,8 +251,31 @@ export function createNewAdventureSession(profileId) {
 }
 
 /**
- * Converts a loaded save into a world state that the current scene renderer can
- * safely resume. Schema-valid but stale scene IDs fall back to the academy
+ * Applies the active Elverson release boundary, then delegates in-scope saves
+ * to the general world recovery pipeline. Keeping the policy at this boundary
+ * lets dormant authored-world tooling continue to exercise its domain logic.
+ */
+export function recoverElversonAdventureResume(saveValue) {
+  const normalized = normalizeAdventureSave(saveValue);
+  // Later chapters remain authored and old progression remains intact. Relocate
+  // every location outside the complete release tuple before generic recovery;
+  // otherwise an archived safe dock could pull a stale save back into the cut
+  // world even when its scene ID looked local or was no longer recognized.
+  if (!isElversonReleaseLocation(normalized.world)) {
+    const relocated = relocateResumeToElversonStart(normalized, START_STATE);
+    return {
+      save: relocated.save,
+      recovered: true,
+      reason: "outside-active-release",
+      fallback: "elverson-start",
+    };
+  }
+  return recoverAdventureResume(normalized);
+}
+
+/**
+ * Converts a loaded save into a world state that the authored world renderer
+ * can safely resume. Schema-valid but stale scene IDs fall back to the town
  * start; blocked positions fall back to that scene's authored spawn.
  */
 export function recoverAdventureResume(saveValue) {

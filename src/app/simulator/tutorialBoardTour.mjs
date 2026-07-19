@@ -1,3 +1,5 @@
+const GUIDE_NAME_TOKEN = "{{guideName}}";
+
 export const GUIDED_ACADEMY_BOARD_TOUR_STEPS = Object.freeze([
   Object.freeze({
     id: "score",
@@ -19,7 +21,7 @@ export const GUIDED_ACADEMY_BOARD_TOUR_STEPS = Object.freeze([
     id: "opponent-ecosystem",
     target: "opponent-board",
     title: "Read the opposing reef",
-    message: "The upper ocean belongs to your opponent. For this lesson, Professor Current has prepared a legal mid-game reef with durable Corals and compatible practice targets. Check it before choosing attacks or On Play abilities: a powerful effect can be wasted when the opposing reef has no compatible target.",
+    message: `The upper ocean belongs to your opponent. For this lesson, ${GUIDE_NAME_TOKEN} has prepared a legal mid-game reef with durable Corals and compatible practice targets. Check it before choosing attacks or On Play abilities: a powerful effect can be wasted when the opposing reef has no compatible target.`,
     targetLabel: "the opposing ecosystem",
     pointerPrompt: "Read the opposing reef before committing an attack or effect.",
   }),
@@ -73,7 +75,7 @@ export const GUIDED_ACADEMY_BOARD_TOUR_STEPS = Object.freeze([
   }),
 ]);
 
-export function getGuidedAcademyBoardTourStep(stepIndex) {
+export function getGuidedAcademyBoardTourStep(stepIndex, { guideName = "Mr. Easterling" } = {}) {
   if (stepIndex === null || stepIndex === undefined || stepIndex === "") return null;
   const index = Number(stepIndex);
   if (!Number.isSafeInteger(index) || index < 0 || index >= GUIDED_ACADEMY_BOARD_TOUR_STEPS.length) return null;
@@ -81,6 +83,7 @@ export function getGuidedAcademyBoardTourStep(stepIndex) {
   const finalStep = index === GUIDED_ACADEMY_BOARD_TOUR_STEPS.length - 1;
   return Object.freeze({
     ...step,
+    message: step.message.replaceAll(GUIDE_NAME_TOKEN, String(guideName).trim() || "Mr. Easterling"),
     cueId: `academy-board-tour:${step.id}`,
     progressLabel: `Board tour • ${index + 1}/${GUIDED_ACADEMY_BOARD_TOUR_STEPS.length}`,
     lead: "",

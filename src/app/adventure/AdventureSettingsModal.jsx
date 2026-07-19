@@ -240,13 +240,6 @@ export default function AdventureSettingsModal({
             disabled={disabled}
             onChange={(value) => setSetting("highContrast", value)}
           />
-          <BooleanSetting
-            label="Boat auto-steer"
-            description="Allow auto-steer on routes you have already sailed manually. First voyages still require steering."
-            checked={draft.boatAutoSteer}
-            disabled={disabled}
-            onChange={(value) => setSetting("boatAutoSteer", value)}
-          />
         </fieldset>
 
         <footer className={styles.footer}>

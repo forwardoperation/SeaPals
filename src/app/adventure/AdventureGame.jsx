@@ -97,7 +97,7 @@ import {
   isAdventureEncounterAvailable,
   reconcileAdventureProgression,
   recordAdventureDuelResult,
-  recoverAdventureResume,
+  recoverElversonAdventureResume,
 } from "./adventureSession.mjs";
 import {
   CHAMPIONS_WAKE_QUEST_ID,
@@ -223,6 +223,25 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
   "champions-wake-spectator": "champions-wake-spectator",
 });
 
+const RESIDENT_SPRITE_ARCHETYPES = Object.freeze([
+  "marina",
+  "dorian",
+  "current-guide",
+  "current-analyst",
+  "current-navigator",
+  "current-deckhand",
+  "current-leader",
+]);
+
+function residentSpriteSource(character) {
+  if (["player", "marina", "dorian", ACADEMY_MENTOR_ID].includes(character)) return character;
+  let hash = 0;
+  for (const characterCode of character) {
+    hash = ((hash * 31) + characterCode.codePointAt(0)) >>> 0;
+  }
+  return RESIDENT_SPRITE_ARCHETYPES[hash % RESIDENT_SPRITE_ARCHETYPES.length];
+}
+
 const CHAMPIONSHIP_ENDING_FLAGS = Object.freeze({
   ceremony: "championship-ceremony-complete",
   epilogue: "championship-epilogue-complete",
@@ -312,7 +331,7 @@ function actorPosition(position, scene) {
 
 function SpriteArtwork({ character = "player", facing = "down", moving = false, portrait = false }) {
   const facingName = `${facing[0].toUpperCase()}${facing.slice(1)}`;
-  const artworkCharacter = SPRITE_SOURCE_BY_CHARACTER[character] ?? character;
+  const artworkCharacter = SPRITE_SOURCE_BY_CHARACTER[character] ?? residentSpriteSource(character);
   return (
     <span
       className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""}`}
@@ -331,6 +350,7 @@ function AdventureTrainerSprite({
   scene,
 }) {
   const resolvedStatus = defeated ? "Won" : status;
+  const showMarker = Boolean(trainer.encounterId || status);
   return (
     <div
       className={`${styles.characterCell} ${styles.npcCell}`}
@@ -339,9 +359,11 @@ function AdventureTrainerSprite({
     >
       <span className={styles.characterShadow} />
       <SpriteArtwork character={trainer.id} facing={facing} moving={moving} />
-      <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""} ${status === "Locked" ? styles.trainerLocked : ""}`}>
-        {defeated ? "★" : status === "Locked" ? "•" : "!"}
-      </span>
+      {showMarker ? (
+        <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""} ${status === "Locked" ? styles.trainerLocked : ""}`}>
+          {defeated ? "★" : status === "Locked" ? "•" : "!"}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -1012,7 +1034,7 @@ function formatSavedAt(savedAt) {
       minute: "2-digit",
     }).format(new Date(savedAt));
   } catch {
-    return "Saved voyage";
+    return "Saved adventure";
   }
 }
 
@@ -1075,8 +1097,8 @@ function TitleScreen({ profiles, notice, blocked = false, onContinue, onNewGame,
         <h1 id="adventure-title">REEFBOUND</h1>
         <div className={styles.introDivider}><span>◆</span></div>
         <p>
-          Choose one of three local voyage slots. Learn from five ocean habitats, build your
-          SeaPals collection, and voyage toward the three-round tournament at Champion&apos;s Wake.
+          Begin in coastal Elverson, where Mr. Easterling is creating a new aquarium exhibit.
+          Meet your neighbors, learn about local waters, and help bring the first tanks to life.
         </p>
         {notice ? (
           <div className={`${styles.saveNotice} ${notice.kind === "error" ? styles.saveNoticeError : styles.saveNoticeInfo}`} role={notice.kind === "error" ? "alert" : "status"}>
@@ -1086,10 +1108,10 @@ function TitleScreen({ profiles, notice, blocked = false, onContinue, onNewGame,
         <div className={styles.profileGrid} aria-label="Adventure save profiles">
           {profiles.map((profile) => (
             <section key={profile.profileId} className={`${styles.profileCard} ${profile.canContinue ? styles.profileCardUsed : ""}`}>
-              <div className={styles.profileSlot}>Voyage {profile.slot}</div>
+              <div className={styles.profileSlot}>Save {profile.slot}</div>
               {profile.canContinue ? (
                 <>
-                  <strong>{LOCATION_NAMES[profile.sceneId] ?? "Recovered location"}</strong>
+                  <strong>Elverson</strong>
                   <span>{profile.completedEncounterCount} encounters complete</span>
                   {profile.starterDeckId ? <em>{getAdventureStarterDeck(profile.starterDeckId)?.name ?? "SeaPals"} starter</em> : null}
                   <small>{formatPlaytime(profile.playtimeSeconds)} · {formatSavedAt(profile.savedAt)}</small>
@@ -1110,8 +1132,8 @@ function TitleScreen({ profiles, notice, blocked = false, onContinue, onNewGame,
                 </>
               ) : (
                 <>
-                  <strong>{profile.occupied ? "Save needs recovery" : "Empty voyage"}</strong>
-                  <span>{profile.occupied ? "No valid copy could be loaded." : "Begin at Shellshore Academy."}</span>
+                  <strong>{profile.occupied ? "Save needs recovery" : "Empty save"}</strong>
+                  <span>{profile.occupied ? "No valid copy could be loaded." : "Begin at the Elverson Aquarium."}</span>
                   <button type="button" onClick={() => onNewGame(profile.profileId, profile.occupied)}>
                     {profile.occupied ? "Recover with new game" : "New Game"}
                   </button>
@@ -1143,7 +1165,6 @@ function PauseMenu({
   onDecks,
   onInventory,
   onFieldNote,
-  onWorldMap,
   onSettings,
   onReturnTitle,
   onRestart,
@@ -1152,7 +1173,7 @@ function PauseMenu({
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.pauseLayer} role="dialog" aria-modal="true" aria-labelledby="pause-title">
       <div className={styles.pauseCard}>
-        <div className={styles.introEyebrow}>Voyage {ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1}</div>
+        <div className={styles.introEyebrow}>Elverson save {ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1}</div>
         <h2 id="pause-title">Adventure paused</h2>
         <p>Your current safe position and quest progress can be saved to this device.</p>
         <div className={styles.pauseLoadout} aria-label="Current card loadout">
@@ -1169,13 +1190,12 @@ function PauseMenu({
           <button type="button" onClick={onSave}>Save game</button>
           <button type="button" onClick={onDecks}>Open Deck Workshop</button>
           <button type="button" onClick={onInventory}>Open Inventory</button>
-          <button type="button" onClick={onWorldMap}>Open World Map</button>
           <button type="button" onClick={onSettings}>Settings</button>
           {fieldNoteCount > 0 ? (
             <button type="button" onClick={onFieldNote}>Open Field Notes ({fieldNoteCount})</button>
           ) : null}
           <button type="button" className={styles.secondaryButton} onClick={onReturnTitle}>Save and return to title</button>
-          <button type="button" className={styles.dangerButton} onClick={onRestart}>Restart this voyage</button>
+          <button type="button" className={styles.dangerButton} onClick={onRestart}>Restart this adventure</button>
         </div>
         <small>Tutorial checkpoints save as you complete them. Mid-duel board state is not saved.</small>
       </div>
@@ -1205,9 +1225,9 @@ function StarterSelectionModal({ starters, selectedId, blocked = false, onSelect
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.starterLayer} role="dialog" aria-modal="true" aria-labelledby="starter-title">
       <div className={styles.starterCard}>
-        <div className={styles.introEyebrow}>Professor Current&apos;s three partners</div>
+        <div className={styles.introEyebrow}>Mr. Easterling&apos;s three starter reefs</div>
         <h2 id="starter-title">Choose your starter deck</h2>
-        <p>Each is a complete 60-card deck and can finish the voyage. Compare how they play, then choose once for this save.</p>
+        <p>Each is a complete 60-card deck for the aquarium project. Compare how they play, then choose once for this save.</p>
         <div className={styles.starterGrid}>
           {starters.map((starter) => (
             <button
@@ -1235,7 +1255,7 @@ function StarterSelectionModal({ starters, selectedId, blocked = false, onSelect
                 ))}
               </span>
               <span className={styles.starterStrengths}>{starter.strengths.join(" / ")}</span>
-              <small><b>Professor&apos;s tip:</b> {starter.watchFor}</small>
+              <small><b>Mr. Easterling&apos;s tip:</b> {starter.watchFor}</small>
             </button>
           ))}
         </div>
@@ -1381,7 +1401,7 @@ function InventoryModal({
       <section className={styles.inventoryCard}>
         <header className={styles.inventoryHeader}>
           <div>
-            <div className={styles.introEyebrow}>Voyage inventory</div>
+            <div className={styles.introEyebrow}>Elverson inventory</div>
             <h2 id="inventory-title">Your SeaPals collection</h2>
             <p>Cards stay in your collection. Booster packs are earned through adventure challenges and opened here.</p>
           </div>
@@ -1478,7 +1498,7 @@ function InventoryModal({
                 </button>
               </article>
             )) : (
-              <p className={styles.inventoryEmpty}>Win your first duel with Marina to earn a Shellshore Discovery Pack.</p>
+              <p className={styles.inventoryEmpty}>Help an Elverson neighbor to earn your first local discovery pack.</p>
             )}
           </section>
 
@@ -1486,14 +1506,14 @@ function InventoryModal({
             <div className={styles.inventorySectionHeading}>
               <div><span>03</span><h3 id="story-items-heading">Story Items</h3></div>
             </div>
-            <InventoryItemList items={inventory.storyItems} emptyMessage="Important discoveries and tournament prizes will appear here." />
+            <InventoryItemList items={inventory.storyItems} emptyMessage="Aquarium discoveries and keepsakes will appear here." />
           </section>
 
           <section className={styles.inventorySection} aria-labelledby="boat-items-heading">
             <div className={styles.inventorySectionHeading}>
-              <div><span>04</span><h3 id="boat-items-heading">Boat Items</h3></div>
+              <div><span>04</span><h3 id="boat-items-heading">Project Gear</h3></div>
             </div>
-            <InventoryItemList items={inventory.boatItems} emptyMessage="Boat tools and travel upgrades will appear when new routes open." />
+            <InventoryItemList items={inventory.boatItems} emptyMessage="Fishing tools and aquarium equipment will appear as the exhibit grows." />
           </section>
         </div>
       </section>
@@ -1501,17 +1521,17 @@ function InventoryModal({
   );
 }
 
-function ShellshoreMilestone({ blocked = false, onContinue, onReset }) {
+function ElversonAquariumMilestone({ blocked = false, onContinue, onReset }) {
   const dialogRef = useDialogFocusTrap(!blocked);
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.introLayer} role="dialog" aria-modal="true" aria-labelledby="completion-title">
       <div className={`${styles.introCard} ${styles.completionCard}`}>
         <div className={styles.crestPair}><span>★</span><span>★</span></div>
-        <div className={styles.introEyebrow}>Shellshore complete</div>
-        <h2 id="completion-title">FIRST VOYAGE READY</h2>
+        <div className={styles.introEyebrow}>Elverson aquarium project</div>
+        <h2 id="completion-title">THE FIRST TANKS ARE READY</h2>
         <p>
-          Marina and Dorian recognize your skill. Both homes remain open for rematches, and
-          Professor Current&apos;s Harbor Field Note will prepare you for the wider archipelago.
+          Your first lessons and neighborhood challenges have given Mr. Easterling a strong
+          foundation for Elverson&apos;s new exhibit. Keep exploring town and meeting the people who will help it grow.
         </p>
         <div className={styles.completionActions}>
           <button type="button" autoFocus onClick={onContinue}>Keep exploring</button>
@@ -1831,7 +1851,7 @@ function interactionLabel(
   if (interaction.type === "interpretation") return interaction.label ?? "Compare and interpret the evidence";
   if (interaction.type === "response") return interaction.label ?? "Choose an evidence-supported response";
   if (interaction.type === "exit") return sceneId === "academy-lab"
-    ? "Keep walking into the doorway to leave the academy"
+    ? "Keep walking into the doorway to leave the aquarium workshop"
     : "Keep walking into the doorway to leave this home";
   if (interaction.targetScene) return `Keep walking into the doorway to enter ${LOCATION_NAMES[interaction.targetScene] ?? "the building"}`;
   return "Interact";
@@ -1839,6 +1859,7 @@ function interactionLabel(
 
 function mapThemeClassForScene(scene) {
   const themeClasses = {
+    "coastal-elverson": styles.elversonTownMap,
     "sunlit-reef": styles.townMap,
     "academy-lab": styles.academyLabMap,
     "coral-cottage": styles.coralHomeMap,
@@ -1971,6 +1992,7 @@ export default function AdventureGame() {
   const pageVisibleRef = useRef(true);
   const duelResultRef = useRef(null);
   const doorwayTransitionRef = useRef(null);
+  const residentConversationSeenRef = useRef(new Set());
 
   const setDirty = useCallback((value) => {
     dirtyRef.current = Boolean(value);
@@ -1987,12 +2009,14 @@ export default function AdventureGame() {
     () => gameSave ? getOnboardingProgress(gameSave) : null,
     [gameSave],
   );
-  const fieldNoteAvailable = Boolean(gameSave?.fieldNotes.entryIds.length);
   const unlockedFieldNotes = useMemo(
-    () => buildUnlockedAdventureFieldNotes(gameSave?.fieldNotes.entryIds ?? []),
+    () => buildUnlockedAdventureFieldNotes(gameSave?.fieldNotes.entryIds ?? [])
+      .filter((note) => note.id === SHELLSHORE_FIELD_NOTE.id),
     [gameSave?.fieldNotes.entryIds],
   );
-  const activeFieldNote = getAdventureFieldNote(activeFieldNoteId) ?? SHELLSHORE_FIELD_NOTE;
+  const fieldNoteAvailable = unlockedFieldNotes.length > 0;
+  const activeFieldNote = unlockedFieldNotes.find((note) => note.id === activeFieldNoteId)
+    ?? SHELLSHORE_FIELD_NOTE;
   const ecosystemChapter = useMemo(
     () => gameSave ? getAdventureEcosystemChapterByTownId(gameSave.world.townId) : null,
     [gameSave],
@@ -2176,7 +2200,7 @@ export default function AdventureGame() {
       setDirty(true);
       setSaveNotice({
         kind: "error",
-        message: "This voyage is not connected to a writable save slot yet. Open the pause menu and choose Save game to claim the slot safely.",
+        message: "This adventure is not connected to a writable save slot yet. Open the pause menu and choose Save game to claim the slot safely.",
       });
       return { ok: false, error: { code: "SAVE_AUTHORIZATION_REQUIRED" } };
     }
@@ -2237,10 +2261,10 @@ export default function AdventureGame() {
       if (listed.profiles.every((profile) => !profile.occupied)) {
         const migration = adapter.migrateLegacyProfile("profile-1");
         if (migration.ok && migration.migrated) {
-          setSaveNotice({ kind: "info", message: "Your earlier Shellshore progress was recovered into Voyage 1." });
+          setSaveNotice({ kind: "info", message: "Your earlier Elverson progress was recovered into Save 1." });
           listed = adapter.listProfileSummaries();
         } else if (!migration.ok && migration.error?.code !== "OVERWRITE_CONFIRMATION_REQUIRED") {
-          setSaveNotice({ kind: "error", message: `${migration.error?.message ?? "Earlier progress could not be imported."} You can still begin a new voyage.` });
+          setSaveNotice({ kind: "error", message: `${migration.error?.message ?? "Earlier progress could not be imported."} You can still begin a new Elverson adventure.` });
         }
       }
       setProfiles(listed.profiles);
@@ -2280,6 +2304,7 @@ export default function AdventureGame() {
     setPauseOpen(false);
     setSettingsOpen(false);
     setConfirmation(null);
+    residentConversationSeenRef.current = new Set();
     setScreen("playing");
   }
 
@@ -2294,7 +2319,7 @@ export default function AdventureGame() {
       });
       if (!storageResult.ok && storageResult.error?.code === "OVERWRITE_CONFIRMATION_REQUIRED") {
         setConfirmation({
-          title: "Start this voyage over?",
+          title: "Start this Elverson adventure over?",
           message: "The existing save in this slot will be replaced. This cannot be undone.",
           confirmLabel: "Start over",
           onConfirm: () => beginNewGame(profileId, true),
@@ -2309,8 +2334,8 @@ export default function AdventureGame() {
       setSaveNotice({
         kind: "error",
         message: storageResult?.error?.message
-          ? `${storageResult.error.message} This voyage is running without a confirmed save.`
-          : "This voyage is running without local saving.",
+          ? `${storageResult.error.message} This adventure is running without a confirmed save.`
+          : "This adventure is running without local saving.",
       });
       return;
     }
@@ -2323,9 +2348,9 @@ export default function AdventureGame() {
       return;
     }
     setConfirmation({
-      title: "Replace this voyage?",
+      title: "Replace this Elverson adventure?",
       message: "Starting a new game will replace this slot's current progress and backup.",
-      confirmLabel: "Replace voyage",
+      confirmLabel: "Replace adventure",
       onConfirm: () => beginNewGame(profileId, true),
     });
   }
@@ -2333,17 +2358,17 @@ export default function AdventureGame() {
   function continueProfile(profileId) {
     const adapter = storageRef.current;
     if (!adapter) {
-      setSaveNotice({ kind: "error", message: "Local storage is unavailable. Retry before continuing a saved voyage." });
+      setSaveNotice({ kind: "error", message: "Local storage is unavailable. Retry before continuing a saved adventure." });
       return;
     }
     const loaded = adapter.loadProfile(profileId);
     if (!loaded.ok || !loaded.save) {
-      setSaveNotice({ kind: "error", message: loaded.error?.message ?? "This voyage could not be loaded." });
+      setSaveNotice({ kind: "error", message: loaded.error?.message ?? "This adventure could not be loaded." });
       refreshProfiles();
       return;
     }
 
-    const worldResume = recoverAdventureResume(loaded.save);
+    const worldResume = recoverElversonAdventureResume(loaded.save);
     const onboardingResume = recoverOnboardingResume(worldResume.save);
     let resumedSave = onboardingResume.save;
     let collectionRecovered = false;
@@ -2368,7 +2393,7 @@ export default function AdventureGame() {
       setDirty(true);
       setSaveNotice({
         kind: "error",
-        message: `Your voyage loaded, but its starter collection needs attention: ${collectionRecoveryError?.message ?? "collection repair failed"}.`,
+        message: `Your adventure loaded, but its starter collection needs attention: ${collectionRecoveryError?.message ?? "collection repair failed"}.`,
       });
       return;
     }
@@ -2385,8 +2410,8 @@ export default function AdventureGame() {
       setSaveNotice({
         kind: repaired.ok ? "info" : "error",
         message: repaired.ok
-          ? "Your voyage was recovered and its starter collection is ready."
-          : "Your voyage was recovered for this session, but the repaired save could not be written.",
+          ? "Your Elverson adventure was recovered and its starter collection is ready."
+          : "Your Elverson adventure was recovered for this session, but the repaired save could not be written.",
       });
     } else {
       setSaveNotice(null);
@@ -2401,7 +2426,7 @@ export default function AdventureGame() {
       const listed = refreshProfiles();
       setSaveNotice(listed?.ok
         ? { kind: "info", message: "Save storage is available again." }
-        : { kind: "error", message: "Some voyage slots still cannot be read." });
+        : { kind: "error", message: "Some adventure slots still cannot be read." });
     } catch (error) {
       setSaveNotice({ kind: "error", message: `Storage is still unavailable: ${error?.message ?? "access failed"}.` });
     }
@@ -2730,7 +2755,7 @@ export default function AdventureGame() {
     if (!starter) return;
     setConfirmation({
       title: `Choose ${starter.name}?`,
-      message: `${starter.name} will become this voyage's permanent starter and active deck. This choice cannot be changed in this save.`,
+      message: `${starter.name} will become this adventure's permanent starter and active deck. This choice cannot be changed in this save.`,
       confirmLabel: "Choose this starter",
       onConfirm: () => {
         const current = saveRef.current ?? gameSave;
@@ -2877,7 +2902,7 @@ export default function AdventureGame() {
       setSaveNotice({
         kind: "info",
         message: /first-voyage-quest-incomplete|prerequisite|quest/i.test(message)
-          ? "Before casting off, finish the Shellshore resident challenges and review Professor Current's boat-safety Field Note."
+          ? "The waters beyond Elverson are closed while we focus on getting the aquarium exhibit started."
           : message,
       });
     }
@@ -3158,20 +3183,36 @@ export default function AdventureGame() {
         });
         return;
       }
-      if (trainer.townId === "shellshore-village" && !onboardingProgress?.tutorialComplete) {
+      if (trainer.encounterId && trainer.townId === "shellshore-village" && !onboardingProgress?.tutorialComplete) {
         setConversation({
           trainerId,
           index: 0,
           mode: "onboardingGate",
           lines: [
-            "Professor Current asked me to wait until your academy lesson is complete.",
-            "Choose your starter and finish Professor Current's 26 VP strategy lesson, then come challenge me!",
+            "Mr. Easterling asked me to wait until your aquarium lesson is complete.",
+            "Choose your starter and finish Mr. Easterling's guided strategy lesson, then come challenge me!",
           ],
         });
         return;
       }
       if (!trainer.encounterId) {
         const current = saveRef.current ?? gameSave;
+        if (trainer.townId === "shellshore-village") {
+          const returning = residentConversationSeenRef.current.has(trainerId);
+          residentConversationSeenRef.current.add(trainerId);
+          setConversation({
+            trainerId,
+            index: 0,
+            mode: returning ? "return" : "intro",
+            lines: returning
+              ? [...(trainer.dialogue?.return ?? trainer.dialogue?.guidance ?? [])]
+              : [
+                  ...(trainer.dialogue?.intro ?? []),
+                  ...(trainer.dialogue?.guidance ?? []),
+                ],
+          });
+          return;
+        }
         if (trainer.townId === "champions-wake") {
           const progressState = getChampionsWakeTournamentProgress(current);
           setConversation({
@@ -3256,7 +3297,7 @@ export default function AdventureGame() {
       return;
     }
     if (trainer.id !== ACADEMY_MENTOR_ID && !progress.tutorialComplete) {
-      setSaveNotice({ kind: "info", message: "Finish Professor Current's academy lesson before challenging village Reefkeepers." });
+      setSaveNotice({ kind: "info", message: "Finish Mr. Easterling's aquarium lesson before challenging Elverson residents." });
       closeConversation();
       return;
     }
@@ -3577,6 +3618,10 @@ export default function AdventureGame() {
       if (!trainer.encounterId) {
         const current = saveRef.current ?? gameSave;
         if (!current) return;
+        if (trainer.townId === "shellshore-village") {
+          closeConversation();
+          return;
+        }
         if (trainer.roleId === "tournament-director") {
           setConversation(null);
           setTournamentRegistrationError(null);
@@ -3676,9 +3721,10 @@ export default function AdventureGame() {
       if (conversation.mode === "defeat") return "Retry this 30 VP round";
       if (conversation.mode === "postgame" && trainer?.encounterId) return "Start a 30 VP practice rematch";
       if (conversation.mode === "exhibitionOffer") return "Start 30 VP exhibition";
-      if (conversation.mode === "onboardingGate") return "Return to the academy";
+      if (conversation.mode === "onboardingGate") return "Return to the aquarium";
       if (conversation.mode === "locked") return "Continue fieldwork";
       if (!trainer?.encounterId) {
+        if (trainer?.townId === "shellshore-village") return "Continue exploring";
         if (trainer?.roleId === "tournament-director") {
           return tournamentProgress?.complete ? "View championship record" : tournamentProgress?.status === "active" ? "Review registered deck" : "Review registration";
         }
@@ -3723,7 +3769,7 @@ export default function AdventureGame() {
     });
     if (!claimed.ok && claimed.error?.code === "OVERWRITE_CONFIRMATION_REQUIRED") {
       setConfirmation({
-        title: "Replace the recovered voyage?",
+        title: "Replace the recovered adventure?",
         message: "This slot became readable again and already contains progress. Saving this offline session will replace it.",
         confirmLabel: "Replace and save",
         onConfirm: () => claimSaveSlotAndSave(current, true),
@@ -3779,7 +3825,7 @@ export default function AdventureGame() {
 
   function commitDeckWorkshopSave(nextSave, {
     checkpointId = "deck-workshop",
-    message = "Deck changes saved to this voyage.",
+    message = "Deck changes saved to this adventure.",
   } = {}) {
     saveRef.current = nextSave;
     setGameSave(nextSave);
@@ -3845,9 +3891,9 @@ export default function AdventureGame() {
   function requestRestart() {
     if (!gameSave) return;
     setConfirmation({
-      title: "Restart this voyage?",
-      message: "All progress in this voyage slot will be replaced with a new Shellshore start.",
-      confirmLabel: "Restart voyage",
+      title: "Restart this Elverson adventure?",
+      message: "All progress in this save will be replaced with a new Elverson start.",
+      confirmLabel: "Restart adventure",
       onConfirm: () => beginNewGame(gameSave.profileId, true),
     });
   }
@@ -4013,7 +4059,7 @@ export default function AdventureGame() {
           <div className={styles.introCard}>
             <div className={styles.introEyebrow}>A SeaPals Story</div>
             <h1>REEFBOUND</h1>
-            <p>Checking your local voyages…</p>
+            <p>Checking your Elverson saves…</p>
           </div>
         </div>
       </main>
@@ -4085,7 +4131,7 @@ export default function AdventureGame() {
           victoryTarget: trainer.victoryTarget,
           difficulty: trainer.difficulty,
           opponentName: trainer.name,
-          returnLabel: isAcademyPractice ? "Academy" : isTournamentMatch ? "Arena" : "Town",
+          returnLabel: isAcademyPractice ? "Aquarium" : isTournamentMatch ? "Arena" : "Town",
           ...(isAcademyPractice ? {
             tutorial: {
               scriptedDecks: gameSave?.tutorial?.status !== "complete",
@@ -4096,7 +4142,7 @@ export default function AdventureGame() {
               },
               contract: {
                 id: SHELLSHORE_TUTORIAL.id,
-                title: "Professor Current's Live Lesson",
+                title: "Mr. Easterling's Live Lesson",
                 ordered: SHELLSHORE_TUTORIAL.ordered,
                 checkpoints: SHELLSHORE_TUTORIAL.checkpoints,
               },
@@ -4157,36 +4203,36 @@ export default function AdventureGame() {
   const mapThemeClass = mapThemeClassForScene(scene);
   const shellshoreQuestView = onboardingProgress.needsStarterSelection
     ? {
-        title: "Choose your first SeaPals",
-        description: "Meet Professor Current in the academy lab and compare all three starter decks.",
+        title: "Meet Mr. Easterling",
+        description: "Visit the aquarium workshop and choose a starter reef for Elverson's first exhibit.",
         value: 0,
         total: 1,
         label: "Starter choice waiting",
       }
     : !onboardingProgress.tutorialComplete
       ? {
-          title: "Professor's live lesson",
+          title: "Build the first exhibit reef",
           description: onboardingProgress.readyForPracticeDuel
-            ? "The core controls are covered. Keep building your economy, establish a Coral Reef habitat, use School Density to welcome a Filter Feeder, and finish with an Apex predator at 26 VP."
-            : "Follow Professor Current's strategy plan in the real simulator. Completed progress saves automatically, even if you take a break.",
+            ? "Keep building your economy, establish a Coral Reef habitat, welcome a Filter Feeder, and finish with an Apex predator at 26 VP."
+            : "Follow Mr. Easterling's guided plan in the simulator. Each completed lesson step saves automatically.",
           value: onboardingProgress.completedCheckpointCount,
           total: onboardingProgress.checkpointCount,
           label: `${onboardingProgress.completedCheckpointCount} / ${onboardingProgress.checkpointCount} lesson steps`,
         }
       : onboardingProgress.needsBoatSafetyReview
         ? {
-            title: "Review your Harbor Field Note",
-            description: "Read Professor Current's boat-safety checklist before leaving the harbor.",
+            title: "Review the aquarium field plan",
+            description: "Read Mr. Easterling's checklist for gathering observations safely along Elverson's shore.",
             value: 0,
             total: 1,
-            label: "Safety review waiting",
+            label: "Field-plan review waiting",
           }
         : {
-            title: "Meet the Reefkeepers",
-            description: "Enter both homes and win each resident's 10 VP duel.",
+            title: "Meet your Elverson neighbors",
+            description: "Explore town, talk with residents, and complete the available local SeaPals challenges.",
             value: progress,
             total: SHELLSHORE_ENCOUNTER_IDS.length,
-            label: `${progress} / ${SHELLSHORE_ENCOUNTER_IDS.length} crests earned`,
+            label: `${progress} / ${SHELLSHORE_ENCOUNTER_IDS.length} local challenges complete`,
           };
   const ecosystemCompletedSteps = (ecosystemProgress?.observedObservationIds.length ?? 0)
     + (ecosystemProgress?.completedResidentEncounterIds.length ?? 0)
@@ -4579,32 +4625,32 @@ export default function AdventureGame() {
               >{tournamentProgress.status === "active" ? "Review registered deck" : tournamentProgress.complete ? "View championship record" : "Open registration record"}</button>
               {fieldNoteAvailable ? (
                 <button type="button" className={styles.tournamentQuietAction} onClick={() => {
-                  setActiveFieldNoteId(gameSave.fieldNotes.entryIds.at(-1) ?? SHELLSHORE_FIELD_NOTE.id);
+                  setActiveFieldNoteId(unlockedFieldNotes.at(-1)?.id ?? SHELLSHORE_FIELD_NOTE.id);
                   setFieldNoteOpen(true);
                 }}>Open latest Field Note</button>
               ) : null}
             </>
           ) : (
             <>
-          <div className={styles.panelEyebrow}>{ecosystemChapter?.ui.recordLabel ?? "Academy record"}</div>
+          <div className={styles.panelEyebrow}>{currentTownId === "shellshore-village" ? "Aquarium project" : ecosystemChapter?.ui.recordLabel ?? "Town record"}</div>
           <div className={`${styles.trainerCard} ${onboardingProgress.tutorialComplete ? styles.trainerCardWon : ""}`}>
             <span className={`${styles.miniPortrait} ${styles.portraitteal}`}>
               <SpriteArtwork character={ACADEMY_MENTOR_ID} facing="down" portrait />
             </span>
             <span>
               <strong>{activeStarter?.name ?? "Starter waiting"}</strong>
-              <small>{onboardingProgress.tutorialComplete ? "Academy lesson complete" : "Professor Current's lesson"}</small>
+              <small>{onboardingProgress.tutorialComplete ? "Aquarium lesson complete" : "Mr. Easterling's lesson"}</small>
               <em>{onboardingProgress.needsBoatSafetyReview
-                ? "Safety review waiting"
+                ? "Field plan waiting"
                 : onboardingProgress.tutorialComplete
-                  ? "Field Note reviewed"
+                  ? "Field plan reviewed"
                   : `${onboardingProgress.completedCheckpointCount} / ${onboardingProgress.checkpointCount} steps`}</em>
             </span>
             <b>{onboardingProgress.tutorialComplete ? "\u2605" : "?"}</b>
           </div>
           {fieldNoteAvailable ? (
             <button type="button" className={styles.fieldNoteButton} onClick={() => {
-              setActiveFieldNoteId(gameSave.fieldNotes.entryIds.at(-1) ?? SHELLSHORE_FIELD_NOTE.id);
+              setActiveFieldNoteId(unlockedFieldNotes.at(-1)?.id ?? SHELLSHORE_FIELD_NOTE.id);
               setFieldNoteOpen(true);
             }}>Open latest Field Note</button>
           ) : null}
@@ -4634,7 +4680,7 @@ export default function AdventureGame() {
             );
           })}
           {progress ? (
-            <button type="button" className={styles.resetButton} onClick={requestRestart}>Restart voyage</button>
+            <button type="button" className={styles.resetButton} onClick={requestRestart}>Restart adventure</button>
           ) : null}
             </>
           )}
@@ -4775,7 +4821,7 @@ export default function AdventureGame() {
         />
       ) : null}
       {showCompletion ? (
-        <ShellshoreMilestone blocked={Boolean(confirmation)} onContinue={() => setShowCompletion(false)} onReset={requestRestart} />
+        <ElversonAquariumMilestone blocked={Boolean(confirmation)} onContinue={() => setShowCompletion(false)} onReset={requestRestart} />
       ) : null}
       {championshipEndingStage ? (
         <ChampionshipEnding
@@ -4823,17 +4869,13 @@ export default function AdventureGame() {
             setPackReveal(null);
             setInventoryOpen(true);
           }}
-          onWorldMap={() => {
-            setPauseOpen(false);
-            setWorldMapOpen(true);
-          }}
           onSettings={() => {
             setPauseOpen(false);
             setSettingsOpen(true);
           }}
           onFieldNote={() => {
             setPauseOpen(false);
-            setActiveFieldNoteId(gameSave.fieldNotes.entryIds.at(-1) ?? SHELLSHORE_FIELD_NOTE.id);
+            setActiveFieldNoteId(unlockedFieldNotes.at(-1)?.id ?? SHELLSHORE_FIELD_NOTE.id);
             setFieldNoteOpen(true);
           }}
           onReturnTitle={returnToTitle}

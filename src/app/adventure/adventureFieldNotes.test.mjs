@@ -35,7 +35,7 @@ test("the Field Note library contains every known unlocked note in acquisition o
 test("Field Note display labels cover the whole authored journal", () => {
   const labels = ADVENTURE_CONTENT.fieldNotes.map(({ id }) => getAdventureFieldNoteEyebrow(id));
 
-  assert.equal(labels[0], "Field Note 01 / Shellshore Harbor");
+  assert.equal(labels[0], "Field Note 01 / Elverson Shore");
   assert.equal(labels.at(-1), "Field Note 07 / Champion's Wake");
   assert.equal(new Set(labels).size, ADVENTURE_CONTENT.fieldNotes.length);
   assert.equal(getAdventureFieldNoteEyebrow("missing-note"), "Reefbound Field Note");
@@ -43,10 +43,11 @@ test("Field Note display labels cover the whole authored journal", () => {
 
 test("the pause menu opens an accessible selectable journal on the latest unlocked note", () => {
   assert.match(component, /fieldNoteCount > 0[\s\S]*Open Field Notes \(\{fieldNoteCount\}\)/);
-  assert.match(component, /buildUnlockedAdventureFieldNotes\(gameSave\?\.fieldNotes\.entryIds \?\? \[\]\)/);
+  assert.match(component, /buildUnlockedAdventureFieldNotes\(gameSave\?\.fieldNotes\.entryIds \?\? \[\]\)[\s\S]*?\.filter\(\(note\) => note\.id === SHELLSHORE_FIELD_NOTE\.id\)/);
   assert.match(component, /<nav className=\{styles\.fieldNoteJournal\} aria-label="Unlocked Field Notes">/);
   assert.match(component, /journalNotes\.map\(\(entry\) =>[\s\S]*aria-current=\{entry\.id === note\.id \? "page" : undefined\}[\s\S]*onClick=\{\(\) => onSelect\(entry\.id\)\}/);
-  assert.match(component, /setActiveFieldNoteId\(gameSave\.fieldNotes\.entryIds\.at\(-1\) \?\? SHELLSHORE_FIELD_NOTE\.id\)/);
+  assert.match(component, /setActiveFieldNoteId\(unlockedFieldNotes\.at\(-1\)\?\.id \?\? SHELLSHORE_FIELD_NOTE\.id\)/);
+  assert.doesNotMatch(component, /setActiveFieldNoteId\(gameSave\.fieldNotes\.entryIds\.at\(-1\)/);
   assert.match(component, /note\.glossary\.map\(\(entry\) =>/);
   assert.match(component, /reviewRequired \? \[note\] : notes/);
 });

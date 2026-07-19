@@ -31,6 +31,10 @@ test("guided Academy board tour exposes paced Professor cues and hands off to th
   assert.equal(first.finalStep, false);
   assert.equal(getNextGuidedAcademyBoardTourStep(0), 1);
 
+  const opposingReef = getGuidedAcademyBoardTourStep(2, { guideName: "Mr. Easterling" });
+  assert.match(opposingReef.message, /Mr\. Easterling has prepared/i);
+  assert.doesNotMatch(opposingReef.message, /Professor Current/i);
+
   const lastIndex = GUIDED_ACADEMY_BOARD_TOUR_STEPS.length - 1;
   const last = getGuidedAcademyBoardTourStep(lastIndex);
   assert.equal(last.target, "turn-button");

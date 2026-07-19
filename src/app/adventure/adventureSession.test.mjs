@@ -47,6 +47,7 @@ import {
 } from "./adventureSunpatch.mjs";
 import {
   SCENES,
+  START_STATE,
   canOccupyContinuousPosition,
 } from "./adventureWorld.mjs";
 import {
@@ -940,7 +941,7 @@ test("stale scene IDs recover to the authored adventure start", () => {
   assert.equal(recovered.reason, "unknown-scene");
   assert.equal(recovered.fallback, "safe-dock");
   assert.equal(recovered.save.world.sceneId, "town");
-  assert.deepEqual(recovered.save.world.position, { x: 7, y: 8 });
+  assert.deepEqual(recovered.save.world.position, START_STATE.position);
 });
 
 test("cross-town scenes use the last safe dock and stale docks use the global start", () => {
@@ -995,11 +996,12 @@ test("an impossible reverse first voyage recovers to the authored Shellshore ori
   assert.equal(recovered.save.world.townId, "shellshore-village");
   assert.equal(recovered.save.world.sceneId, "town");
   assert.equal(recovered.save.world.lastSafeDockId, "shellshore-dock");
-  assert.deepEqual(recovered.save.world.position, { x: 7, y: 8 });
+  assert.deepEqual(recovered.save.world.position, START_STATE.position);
 });
 
 test("resume reconciles legacy encounter progress with the Shellshore quest", () => {
   const oneWin = createInitialAdventureSave("profile-1");
+  oneWin.world.position = { ...START_STATE.position };
   oneWin.progression.completedEncounterIds = ["encounter-shellshore-marina"];
   const active = recoverAdventureResume(oneWin);
   assert.equal(active.recovered, true);
@@ -1007,6 +1009,7 @@ test("resume reconciles legacy encounter progress with the Shellshore quest", ()
   assert.equal(active.save.progression.quests[SHELLSHORE_QUEST_ID].status, "active");
 
   const bothWins = createInitialAdventureSave("profile-2");
+  bothWins.world.position = { ...START_STATE.position };
   bothWins.progression.completedEncounterIds = [
     "encounter-shellshore-marina",
     "encounter-shellshore-dorian",

@@ -24,8 +24,8 @@ export const TOURNAMENT_STATUSES = Object.freeze([
 export const ADVENTURE_START_LOCATION = Object.freeze({
   townId: "shellshore-village",
   sceneId: "town",
-  position: Object.freeze({ x: 7, y: 8 }),
-  facing: "up",
+  position: Object.freeze({ x: 14, y: 10 }),
+  facing: "down",
   lastSafeDockId: "shellshore-dock",
 });
 

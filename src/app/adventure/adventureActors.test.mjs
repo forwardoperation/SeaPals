@@ -14,6 +14,14 @@ import {
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
 
+const ELVERSON_PATROL_IDS = Object.freeze([
+  "interaction-elverson-charlotte",
+  "interaction-elverson-emilio",
+  "interaction-elverson-explorer-jordan",
+  "interaction-elverson-finn",
+  "interaction-elverson-fisherman-wyeth",
+]);
+
 function sunpatchGuide(overrides = {}) {
   const authored = SCENES["sunpatch-cay-town"].interactions.find(
     (interaction) => interaction.id === "interaction-sunpatch-tavi",
@@ -159,6 +167,7 @@ test("all authored patrol waypoints and straight legs stay on real walkable grou
     [
       "interaction-brackwater-rhea",
       "interaction-current-guide",
+      ...ELVERSON_PATROL_IDS,
       "interaction-kelpwatch-guide",
       "interaction-sunpatch-tavi",
       "interaction-trenchlight-guide",
@@ -193,6 +202,55 @@ test("all authored patrol waypoints and straight legs stay on real walkable grou
       );
     }
   }
+});
+
+test("Elverson exposes the intended five ambient patrols on clear walking routes", () => {
+  const patrols = SCENES.town.interactions.filter((interaction) => interaction.patrol);
+  assert.deepEqual(patrols.map(({ id }) => id).sort(), [...ELVERSON_PATROL_IDS]);
+
+  for (const interaction of patrols) {
+    assert.equal(interaction.type, "npc");
+    assert.ok(interaction.patrol.waypoints.length >= 2);
+    assert.ok(interaction.patrol.playerPauseDistance >= 1);
+    for (const waypoint of interaction.patrol.waypoints) {
+      assert.equal(
+        canOccupyContinuousPosition(
+          "town",
+          waypoint,
+          ADVENTURE_ACTOR_DEFAULTS.radius,
+          { ignoreActorTiles: true },
+        ),
+        true,
+        `${interaction.id} waypoint ${waypoint.x},${waypoint.y} must stay clear`,
+      );
+    }
+  }
+});
+
+test("Elverson patrols keep moving without colliding with residents or each other", () => {
+  const interactions = SCENES.town.interactions;
+  let actors = createAdventureActorStates(interactions);
+  let closestDistance = Number.POSITIVE_INFINITY;
+  let greatestBlockedMs = 0;
+
+  for (let step = 0; step < 1200; step += 1) {
+    actors = advanceAdventureActorStates("town", interactions, actors, 100, {
+      playerPosition: { x: 14, y: 10 },
+    });
+    const jordan = actors["interaction-elverson-explorer-jordan"];
+    const emilio = actors["interaction-elverson-emilio"];
+    closestDistance = Math.min(
+      closestDistance,
+      Math.hypot(jordan.position.x - emilio.position.x, jordan.position.y - emilio.position.y),
+    );
+    greatestBlockedMs = Math.max(
+      greatestBlockedMs,
+      ...ELVERSON_PATROL_IDS.map((id) => actors[id]?.blockedMs ?? 0),
+    );
+  }
+
+  assert.ok(closestDistance > ADVENTURE_ACTOR_DEFAULTS.radius * 2);
+  assert.equal(greatestBlockedMs, 0);
 });
 
 test("malformed patrols and blocker radii fail before animation starts", () => {

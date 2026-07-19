@@ -59,7 +59,7 @@ test("initial saves do not share mutable arrays or objects", () => {
   first.rewardLedger.push("reward-test");
   first.inventory.cards["white-grunt"] = 4;
 
-  assert.deepEqual(second.world.position, { x: 7, y: 8 });
+  assert.deepEqual(second.world.position, { x: 14, y: 10 });
   assert.deepEqual(second.world.completedRouteIds, []);
   assert.deepEqual(second.rewardLedger, []);
   assert.deepEqual(second.inventory.cards, {});
