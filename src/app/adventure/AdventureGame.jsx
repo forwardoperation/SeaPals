@@ -53,6 +53,16 @@ import {
   getAdventureEcosystemChapterByTownId,
   hasMetAdventureEcosystemGuide,
 } from "./adventureEcosystemChapters.mjs";
+import { TRENCHLIGHT_RESPONSE_CHOICES } from "./adventureTrenchlight.mjs";
+import {
+  TRENCHLIGHT_EXPEDITION_STEPS,
+  TRENCHLIGHT_MISSION_CONTROL_SCENE_ID,
+  TRENCHLIGHT_SUB_SCENE_ID,
+  advanceTrenchlightExpedition,
+  getTrenchlightExpeditionState,
+  launchTrenchlightExpedition,
+  returnTrenchlightExpeditionToStation,
+} from "./adventureTrenchlightExpedition.mjs";
 import {
   autoSteerAdventureRoute,
   boardAdventureRoute,
@@ -164,6 +174,13 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
   "kelpwatch-diver": "kelpwatch-diver",
   "kelpwatch-ranger": "kelpwatch-ranger",
   "kelpwatch-leader": "kelpwatch-leader",
+  // Trenchlight Station uses temporary high-contrast role treatments while
+  // its final deep-ocean character sheets are being authored.
+  "trenchlight-guide": "trenchlight-guide",
+  "trenchlight-scientist": "trenchlight-scientist",
+  "trenchlight-engineer": "trenchlight-engineer",
+  "trenchlight-observer": "trenchlight-observer",
+  "trenchlight-leader": "trenchlight-leader",
 });
 
 const LOCATION_NAMES = Object.freeze(Object.fromEntries(
@@ -256,6 +273,191 @@ function AdventureBoatSprite({ position, facing, moving, interaction, scene }) {
       </span>
       {interaction ? <span className={styles.actionCue} aria-hidden="true">A</span> : null}
     </div>
+  );
+}
+
+const TRENCHLIGHT_TOOL_LABELS = Object.freeze({
+  "trenchlight-use-light-meter": "Use calibrated light meter",
+  "trenchlight-read-pressure-sensor": "Read external pressure sensor",
+  "trenchlight-record-marine-snow-camera": "Record the fixed-camera transect",
+  "trenchlight-use-passive-low-light-camera": "Switch to the passive low-light camera",
+});
+
+const TRENCHLIGHT_STEP_CONTEXT = Object.freeze({
+  "trenchlight-fading-light-profile": "Descent marks / surface to 1,050 m",
+  "trenchlight-pressure-profile": "Matched depth marks / pressure-rated cabin",
+  "trenchlight-marine-snow-camera": "Midwater transect / 700 to 1,050 m",
+  "trenchlight-bioluminescence-camera": "Dark-water stop / passive observation",
+  "trenchlight-sensor-recovery": "Sensor site / camera-and-sonar clearance",
+});
+
+function trenchlightPreviewClass(stepId) {
+  return {
+    "trenchlight-fading-light-profile": styles.subPreviewLight,
+    "trenchlight-pressure-profile": styles.subPreviewPressure,
+    "trenchlight-marine-snow-camera": styles.subPreviewSnow,
+    "trenchlight-bioluminescence-camera": styles.subPreviewBioluminescence,
+    "trenchlight-sensor-recovery": styles.subPreviewRecovery,
+  }[stepId] ?? styles.subPreviewStandby;
+}
+
+function TrenchlightSubExpedition({
+  scene,
+  expeditionState,
+  assistedMode,
+  feedback,
+  onToggleAssistance,
+  onAction,
+  onReturn,
+}) {
+  const currentStep = expeditionState?.currentStep ?? null;
+  const leg = expeditionState?.leg ?? "survey";
+  const legSteps = TRENCHLIGHT_EXPEDITION_STEPS.filter((step) => step.leg === leg);
+  const completedStepIds = new Set(expeditionState?.completedStepIds ?? []);
+  const completedCount = legSteps.filter((step) => completedStepIds.has(step.id)).length;
+  const activeIndex = currentStep
+    ? TRENCHLIGHT_EXPEDITION_STEPS.findIndex((step) => step.id === currentStep.id)
+    : TRENCHLIGHT_EXPEDITION_STEPS.length;
+  const requiresReturn = Boolean(expeditionState?.requiresStationReturn || !currentStep);
+  const previewClass = trenchlightPreviewClass(currentStep?.id);
+  const heading = requiresReturn
+    ? expeditionState?.phase === "analysis-required"
+      ? "Survey records ready for interpretation"
+      : "The guided expedition is safely complete"
+    : currentStep.title;
+  const instruction = requiresReturn
+    ? expeditionState?.phase === "analysis-required"
+      ? "Dr. Hana is holding the sub at a safe stop. Return to Mission Control and compare all four records before planning any recovery."
+      : "The trained crew has secured the deployed sensor without collecting wildlife or contacting habitat. Return to Mission Control for the expedition debrief."
+    : currentStep.instruction;
+
+  return (
+    <section
+      className={styles.subExpeditionPanel}
+      aria-labelledby="trenchlight-expedition-title"
+      data-expedition-leg={leg}
+    >
+      <div className={styles.subSafetyBar}>
+        <span><b>Expert pilot in control</b> · You operate observation instruments only.</span>
+        <button type="button" onClick={onReturn}>Return to Station</button>
+      </div>
+
+      <div
+        className={`${styles.subViewport} ${previewClass}`}
+        style={{ backgroundImage: scene.artPath ? `url("${scene.artPath}")` : undefined }}
+        aria-hidden="true"
+      >
+        <span className={styles.subViewportShade} />
+        <span className={styles.subDepthRail} />
+        <span className={styles.subMarineSnow} />
+        <span className={styles.subLivingLight}><i /><i /><i /></span>
+      </div>
+
+      <div className={styles.subConsole}>
+        <header className={styles.subConsoleHeader}>
+          <div>
+            <span className={styles.subEyebrow}>
+              {leg === "survey" ? "Survey leg" : "Recovery leg"} · Step {Math.min(activeIndex + 1, TRENCHLIGHT_EXPEDITION_STEPS.length)} of {TRENCHLIGHT_EXPEDITION_STEPS.length}
+            </span>
+            <h2 id="trenchlight-expedition-title">{heading}</h2>
+            <p>{instruction}</p>
+            <small>{TRENCHLIGHT_STEP_CONTEXT[currentStep?.id] ?? "Safe holding position / Mission Control return available"}</small>
+          </div>
+          <button
+            type="button"
+            className={`${styles.subAssistToggle} ${assistedMode ? styles.subAssistToggleOn : ""}`}
+            aria-pressed={assistedMode}
+            onClick={onToggleAssistance}
+          >
+            <span aria-hidden="true">{assistedMode ? "✓" : "?"}</span>
+            Assisted Guidance {assistedMode ? "On" : "Off"}
+          </button>
+        </header>
+
+        <div
+          className={styles.subProgressTrack}
+          role="progressbar"
+          aria-label={`${leg} expedition progress`}
+          aria-valuemin={0}
+          aria-valuemax={legSteps.length}
+          aria-valuenow={completedCount}
+        >
+          <span style={{ width: `${legSteps.length ? (completedCount / legSteps.length) * 100 : 0}%` }} />
+        </div>
+
+        <ol className={styles.subStepList} aria-label={`${leg} expedition sequence`}>
+          {legSteps.map((step, index) => {
+            const complete = completedStepIds.has(step.id);
+            const current = step.id === currentStep?.id;
+            return (
+              <li
+                key={step.id}
+                className={`${complete ? styles.subStepComplete : ""} ${current ? styles.subStepCurrent : ""}`}
+                aria-current={current ? "step" : undefined}
+              >
+                <span>{complete ? "✓" : index + 1}</span>
+                <div><strong>{step.title}</strong><small>{complete ? "Recorded" : current ? "Current station" : "Follows the current station"}</small></div>
+              </li>
+            );
+          })}
+        </ol>
+
+        <div className={styles.subActionRegion} aria-label="Expedition instrument controls">
+          {leg === "survey" ? legSteps.map((step) => {
+            const complete = completedStepIds.has(step.id);
+            const current = step.id === currentStep?.id;
+            const highlighted = assistedMode
+              && expeditionState?.assistance?.highlightedActionId === step.requiredActionId;
+            return (
+              <button
+                key={step.requiredActionId}
+                type="button"
+                disabled={!current}
+                className={`${styles.subInstrumentButton} ${highlighted ? styles.subActionAssisted : ""}`}
+                onClick={() => onAction(step.requiredActionId)}
+              >
+                <span>{complete ? "Recorded" : current ? "Instrument ready" : "Locked in sequence"}</span>
+                <strong>{TRENCHLIGHT_TOOL_LABELS[step.requiredActionId]}</strong>
+              </button>
+            );
+          }) : (
+            <div className={styles.subRecoveryChoices}>
+              <p>Choose the crew instruction that protects the habitat. An unsafe choice gives corrective feedback and can be retried.</p>
+              {TRENCHLIGHT_RESPONSE_CHOICES.map((choice) => {
+                const highlighted = assistedMode
+                  && expeditionState?.assistance?.highlightedActionId === choice.id;
+                return (
+                  <button
+                    key={choice.id}
+                    type="button"
+                    disabled={!currentStep}
+                    className={`${styles.subRecoveryChoice} ${highlighted ? styles.subActionAssisted : ""}`}
+                    onClick={() => onAction(choice.id)}
+                  >
+                    <strong>{choice.label}</strong>
+                    <span>{choice.detail}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {assistedMode && currentStep ? (
+          <p className={styles.subAssistanceNote}>
+            <b>Guidance:</b> {expeditionState.assistance.instruction} The highlighted control still requires your confirmation.
+          </p>
+        ) : null}
+        <div
+          className={`${styles.subFeedback} ${feedback?.correct === false ? styles.subFeedbackCorrective : ""}`}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {feedback?.message ?? "Mission Control is monitoring the route. You can return to the station at any time with no penalty."}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -796,6 +998,7 @@ function FieldNoteModal({ note, blocked = false, reviewRequired = false, onAckno
     "field-note-estuary-conditions": "Field Note 03 / Brackwater Landing",
     "field-note-current-connections": "Field Note 04 / Current Commons",
     "field-note-kelp-food-web": "Field Note 05 / Kelpwatch Island",
+    "field-note-deep-adaptations": "Field Note 06 / Trenchlight Station",
   }[note.id] ?? "Reefbound Field Note";
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.fieldNoteLayer} role="dialog" aria-modal="true" aria-labelledby="field-note-title">
@@ -1033,7 +1236,27 @@ function Completion({ blocked = false, onContinue, onReset }) {
   );
 }
 
-function interactionLabel(interaction, sceneId) {
+function trenchlightLaunchLabel(
+  expeditionState,
+  briefingComplete = false,
+  guideComplete = false,
+) {
+  if (expeditionState?.phase === "survey" && !guideComplete) return "Meet Luz before launching the guided survey";
+  if (expeditionState?.phase === "survey" && !briefingComplete) return "Talk with Dr. Hana before launching the guided survey";
+  if (expeditionState?.phase === "survey") return "Launch the guided survey leg with Dr. Hana";
+  if (expeditionState?.phase === "analysis-required") return "Interpret the four survey records before relaunching";
+  if (expeditionState?.phase === "recovery") return "Relaunch the guided sub for sensor recovery";
+  if (expeditionState?.phase === "expedition-complete") return "Expedition complete — report to Dr. Hana";
+  return "Complete the Trenchlight expedition briefing before launch";
+}
+
+function interactionLabel(
+  interaction,
+  sceneId,
+  expeditionState = null,
+  briefingComplete = false,
+  guideComplete = false,
+) {
   if (!interaction) return SCENES[sceneId]?.routeId
     ? "Steer through the marked channel and approach a dock"
     : "Walk into a doorway, or face someone or a field station to interact";
@@ -1042,6 +1265,9 @@ function interactionLabel(interaction, sceneId) {
   }
   if (interaction.type === "board") return interaction.label ?? "Board your personal boat";
   if (interaction.type === "dock") return interaction.label ?? "Dock your boat";
+  if (interaction.type === "sub-launch") {
+    return trenchlightLaunchLabel(expeditionState, briefingComplete, guideComplete);
+  }
   if (interaction.type === "observation") return interaction.label ?? "Record this ecosystem observation";
   if (interaction.type === "interpretation") return interaction.label ?? "Compare and interpret the evidence";
   if (interaction.type === "response") return interaction.label ?? "Choose an evidence-supported response";
@@ -1077,14 +1303,34 @@ function mapThemeClassForScene(scene) {
     "kelpwatch-ecology-lab": styles.sunpatchFieldStationMap,
     "kelpwatch-diver-home": styles.sunpatchFieldStationMap,
     "kelpwatch-tide-hall": styles.sunpatchTideHallMap,
+    "kelpwatch-trenchlight-route": styles.trenchlightRouteMap,
+    "trenchlight-station": styles.trenchlightStationMap,
+    "trenchlight-mission-control": styles.trenchlightMissionControlMap,
+    "trenchlight-engineer-workshop": styles.trenchlightWorkshopMap,
+    "trenchlight-tide-hall": styles.trenchlightTideHallMap,
+    "trenchlight-sub-descent": styles.trenchlightSubMap,
   };
   return themeClasses[scene.theme] ?? styles.townMap;
 }
 
-function actionLabel(interaction) {
+function actionLabel(
+  interaction,
+  expeditionState = null,
+  briefingComplete = false,
+  guideComplete = false,
+) {
   if (!interaction) return "Interact";
   if (interaction.type === "board") return "Board";
   if (interaction.type === "dock") return "Dock";
+  if (interaction.type === "sub-launch") {
+    if (expeditionState?.phase === "survey" && !guideComplete) return "Meet Luz";
+    if (expeditionState?.phase === "survey" && !briefingComplete) return "Briefing first";
+    if (expeditionState?.phase === "recovery") return "Relaunch";
+    if (expeditionState?.phase === "analysis-required") return "Analyze first";
+    if (expeditionState?.phase === "expedition-complete") return "Complete";
+    if (expeditionState?.phase === "not-started") return "Briefing first";
+    return "Launch";
+  }
   if (interaction.type === "observation") return "Observe";
   if (["interpretation", "response"].includes(interaction.type)) return "Review";
   return "Talk";
@@ -1122,6 +1368,8 @@ export default function AdventureGame() {
   const [saveNotice, setSaveNotice] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const [activeDuelDeckSnapshot, setActiveDuelDeckSnapshot] = useState(null);
+  const [subAssistedMode, setSubAssistedMode] = useState(false);
+  const [subFeedback, setSubFeedback] = useState(null);
   const [isMoving, setIsMoving] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const keyboardDirectionsRef = useRef(new Map());
@@ -1163,13 +1411,36 @@ export default function AdventureGame() {
     () => gameSave && ecosystemChapter ? ecosystemChapter.getProgress(gameSave) : null,
     [ecosystemChapter, gameSave],
   );
+  const trenchlightGuideComplete = Boolean(
+    gameSave
+    && ecosystemChapter?.townId === "trenchlight-station"
+    && hasMetAdventureEcosystemGuide(ecosystemChapter, gameSave)
+  );
+  const trenchlightBriefingComplete = Boolean(
+    gameSave
+    && ecosystemChapter?.townId === "trenchlight-station"
+    && gameSave.progression.quests[ecosystemChapter.questId]?.flags?.[
+      ecosystemChapter.ui.fieldPartnerMetFlagId
+    ] === true
+  );
   const worldMapModel = useMemo(
     () => gameSave ? buildAdventureWorldMapModel(gameSave) : null,
     [gameSave],
   );
   const scene = SCENES[sceneId];
   const boatMode = Boolean(scene?.routeId || scene?.kind === "route");
+  const vehicleMode = scene?.kind === "vehicle";
+  const trenchlightExpeditionState = useMemo(
+    () => gameSave && (
+      sceneId === TRENCHLIGHT_SUB_SCENE_ID
+      || sceneId === TRENCHLIGHT_MISSION_CONTROL_SCENE_ID
+    )
+      ? getTrenchlightExpeditionState(gameSave, { assistedMode: subAssistedMode })
+      : null,
+    [gameSave, sceneId, subAssistedMode],
+  );
   const movementPaused = screen !== "playing"
+    || vehicleMode
     || pauseOpen
     || Boolean(confirmation)
     || Boolean(conversation)
@@ -1183,10 +1454,10 @@ export default function AdventureGame() {
     || showCompletion;
   movementPausedRef.current = movementPaused;
   const interaction = useMemo(
-    () => screen === "playing" && gameSave
+    () => screen === "playing" && gameSave && !vehicleMode
       ? getContinuousInteraction(sceneId, position, facing)
       : null,
-    [facing, gameSave, position, sceneId, screen],
+    [facing, gameSave, position, sceneId, screen, vehicleMode],
   );
   const trainerInteraction = ["trainer", "npc"].includes(interaction?.type) ? interaction : null;
   const actionInteraction = interaction && !["enter", "exit"].includes(interaction.type)
@@ -1323,6 +1594,8 @@ export default function AdventureGame() {
     setFieldworkFeedback(null);
     setPackReveal(null);
     setActiveDuelDeckSnapshot(null);
+    setSubAssistedMode(false);
+    setSubFeedback(null);
     setShowCompletion(false);
     setPauseOpen(false);
     setConfirmation(null);
@@ -1521,11 +1794,12 @@ export default function AdventureGame() {
 
   useEffect(() => {
     if (movementPaused) {
-      setMovementActive(false);
+      if (vehicleMode) clearMovement();
+      else setMovementActive(false);
       return;
     }
     syncMovementActive();
-  }, [movementPaused, setMovementActive, syncMovementActive]);
+  }, [clearMovement, movementPaused, setMovementActive, syncMovementActive, vehicleMode]);
 
   function beginTouchDirection(direction) {
     if (movementPaused) return;
@@ -1692,9 +1966,111 @@ export default function AdventureGame() {
     }
   }
 
+  function launchTrenchlightSub() {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    const chapter = getAdventureEcosystemChapterByTownId("trenchlight-station");
+    const questFlags = current.progression.quests[chapter?.questId]?.flags ?? {};
+    if (!chapter || !hasMetAdventureEcosystemGuide(chapter, current)) {
+      setSaveNotice({
+        kind: "info",
+        message: chapter?.ui.guideGateNotice ?? "Meet Luz before beginning the Trenchlight expedition.",
+      });
+      return;
+    }
+    if (questFlags[chapter.ui.fieldPartnerMetFlagId] !== true) {
+      setSaveNotice({
+        kind: "info",
+        message: "Talk with Dr. Hana Okoye before launch. She will review the ordered instrument stops, expert-pilot controls, abort criteria, and safe return plan.",
+      });
+      return;
+    }
+    try {
+      const launched = launchTrenchlightExpedition(current);
+      setSubFeedback({
+        correct: true,
+        message: launched.leg === "survey"
+          ? "Dr. Hana has begun the guided descent. Start with the calibrated light meter; each station unlocks in evidence order."
+          : "Dr. Hana has returned to the marked sensor site. Compare every recovery instruction before confirming the crew's approach.",
+      });
+      commitAdventureMutation(
+        launched.save,
+        `trenchlight-expedition-launch:${launched.leg}`,
+        launched.leg === "survey"
+          ? "The expert-piloted survey leg has launched."
+          : "The expert-piloted recovery leg has launched.",
+      );
+    } catch (error) {
+      setSaveNotice({ kind: "info", message: error?.message ?? "The guided sub is not ready to launch yet." });
+    }
+  }
+
+  function operateTrenchlightInstrument(actionId) {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    try {
+      const result = advanceTrenchlightExpedition(current, actionId, {
+        assistedMode: subAssistedMode,
+      });
+      setSubFeedback({
+        correct: result.correct,
+        message: result.feedback ?? (result.applied
+          ? "The expedition record has been updated."
+          : "That instrument is not the next step in the ordered survey."),
+      });
+
+      if (!result.applied) return;
+      if (result.shouldReturnToStation) {
+        const returned = returnTrenchlightExpeditionToStation(result.save);
+        const needsAnalysis = result.state.phase === "analysis-required";
+        commitAdventureMutation(
+          returned.save,
+          needsAnalysis
+            ? "trenchlight-survey-returned-for-analysis"
+            : "trenchlight-sensor-recovery-returned",
+          needsAnalysis
+            ? "All four survey records are secure. The sub returned safely; compare them at the Mission Control interpretation console."
+            : "The sensor is secure and the observed habitat remains undisturbed. The sub returned safely for debrief.",
+        );
+        setSubFeedback(null);
+        return;
+      }
+      commitAdventureMutation(
+        result.save,
+        `trenchlight-expedition-action:${actionId}`,
+      );
+    } catch (error) {
+      setSubFeedback({
+        correct: false,
+        message: error?.message ?? "That expedition control could not be used at this station.",
+      });
+    }
+  }
+
+  function returnTrenchlightSubToStation() {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return;
+    try {
+      const returned = returnTrenchlightExpeditionToStation(current);
+      if (!returned.applied) return;
+      setSubFeedback(null);
+      commitAdventureMutation(
+        returned.save,
+        "trenchlight-voluntary-safe-return",
+        "The expert pilot returned to Mission Control safely. No progress or reward was lost; relaunch when you are ready.",
+      );
+    } catch (error) {
+      setSubFeedback({ correct: false, message: error?.message ?? "Mission Control could not complete the safe return." });
+    }
+  }
+
   function interact() {
     if (screen !== "playing" || pauseOpen || conversation || activeTrainerId || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || !interaction || !gameSave) return;
     clearMovement();
+    if (interaction.type === "sub-launch") {
+      launchTrenchlightSub();
+      return;
+    }
     if (interaction.type === "board") {
       boardRoute(interaction);
       return;
@@ -2252,6 +2628,8 @@ export default function AdventureGame() {
     setFieldworkFeedback(null);
     setPackReveal(null);
     setActiveDuelDeckSnapshot(null);
+    setSubAssistedMode(false);
+    setSubFeedback(null);
     setShowCompletion(false);
     setPauseOpen(false);
     setConfirmation(null);
@@ -2684,8 +3062,8 @@ export default function AdventureGame() {
           </div>
           <strong>{questView.label}</strong>
           <div className={styles.controlLegend}>
-            <div><kbd>WASD</kbd><span>{boatMode ? "Steer" : "Walk"}</span></div>
-            <div><kbd>↵</kbd><span>Interact</span></div>
+            <div><kbd>{vehicleMode ? "TAB" : "WASD"}</kbd><span>{vehicleMode ? "Choose an instrument" : boatMode ? "Steer" : "Walk"}</span></div>
+            <div><kbd>↵</kbd><span>{vehicleMode ? "Confirm the selected control" : "Interact"}</span></div>
           </div>
         </aside>
 
@@ -2698,10 +3076,30 @@ export default function AdventureGame() {
             </div>
           </div>
           <div className={styles.interactionBar} aria-live="polite">
-            <span className={interaction ? styles.readyDot : ""} />
-            {interactionLabel(interaction, sceneId)}
-            {actionInteraction ? <kbd>ENTER</kbd> : null}
+            <span className={interaction || vehicleMode ? styles.readyDot : ""} />
+            {vehicleMode
+              ? trenchlightExpeditionState?.currentStep?.title ?? "Return to Mission Control for the next expedition decision"
+              : interactionLabel(
+                interaction,
+                sceneId,
+                trenchlightExpeditionState,
+                trenchlightBriefingComplete,
+                trenchlightGuideComplete,
+              )}
+            {actionInteraction && !vehicleMode ? <kbd>ENTER</kbd> : null}
           </div>
+          {vehicleMode ? (
+            <TrenchlightSubExpedition
+              scene={scene}
+              expeditionState={trenchlightExpeditionState}
+              assistedMode={subAssistedMode}
+              feedback={subFeedback}
+              onToggleAssistance={() => setSubAssistedMode((enabled) => !enabled)}
+              onAction={operateTrenchlightInstrument}
+              onReturn={returnTrenchlightSubToStation}
+            />
+          ) : (
+            <>
           <div
             className={`${styles.map} ${mapThemeClass}`}
             style={{
@@ -2754,11 +3152,30 @@ export default function AdventureGame() {
               <DirectionButton direction="right" label="▶" onStart={beginTouchDirection} onStop={endTouchDirection} />
               <DirectionButton direction="down" label="▼" onStart={beginTouchDirection} onStop={endTouchDirection} />
             </div>
-            <button type="button" className={styles.actionButton} disabled={!actionInteraction} onClick={interact}>
+            <button
+              type="button"
+              className={styles.actionButton}
+              disabled={!actionInteraction || (
+                actionInteraction.type === "sub-launch"
+                && (
+                  !trenchlightExpeditionState?.canLaunch
+                  || !trenchlightGuideComplete
+                  || !trenchlightBriefingComplete
+                )
+              )}
+              onClick={interact}
+            >
               <span>A</span>
-              {actionLabel(actionInteraction)}
+              {actionLabel(
+                actionInteraction,
+                trenchlightExpeditionState,
+                trenchlightBriefingComplete,
+                trenchlightGuideComplete,
+              )}
             </button>
           </div>
+            </>
+          )}
         </section>
 
         <aside className={`${styles.sidePanel} ${styles.trainerPanel}`}>

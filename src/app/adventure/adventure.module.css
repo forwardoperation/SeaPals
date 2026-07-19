@@ -378,7 +378,13 @@
 .seaRouteMap,
 .sunpatchMap,
 .sunpatchFieldStationMap,
-.sunpatchTideHallMap {
+.sunpatchTideHallMap,
+.trenchlightRouteMap,
+.trenchlightStationMap,
+.trenchlightMissionControlMap,
+.trenchlightWorkshopMap,
+.trenchlightTideHallMap,
+.trenchlightSubMap {
   background-position: center;
   background-repeat: no-repeat;
   background-size: 100% 100%;
@@ -423,6 +429,36 @@
 .sunpatchTideHallMap {
   background-color: #d7a664;
   background-image: url("/images/adventure/sunpatch-tide-hall.png");
+}
+
+.trenchlightRouteMap {
+  background-color: #087f9b;
+  background-image: url("/images/adventure/kelpwatch-trenchlight-route.png");
+}
+
+.trenchlightStationMap {
+  background-color: #24566c;
+  background-image: url("/images/adventure/trenchlight-station.png");
+}
+
+.trenchlightMissionControlMap {
+  background-color: #173849;
+  background-image: url("/images/adventure/trenchlight-mission-control.png");
+}
+
+.trenchlightWorkshopMap {
+  background-color: #6a584d;
+  background-image: url("/images/adventure/trenchlight-engineer-workshop.png");
+}
+
+.trenchlightTideHallMap {
+  background-color: #17465d;
+  background-image: url("/images/adventure/trenchlight-tide-hall.png");
+}
+
+.trenchlightSubMap {
+  background-color: #03172a;
+  background-image: url("/images/adventure/trenchlight-sub-descent.png");
 }
 
 .townMap::before,
@@ -760,6 +796,53 @@
 
 .kelpwatch-leaderSpriteArtwork {
   filter: hue-rotate(312deg) saturate(1.08) brightness(1.09) drop-shadow(0 2px 1px rgba(1, 10, 15, 0.72));
+}
+
+/* Temporary Trenchlight role treatments with readable deep-water contrast. */
+.trenchlight-guideSpriteArtwork,
+.trenchlight-engineerSpriteArtwork {
+  --row-down: 5.345395%;
+  --row-left: 33.717105%;
+  --row-right: 63.569079%;
+  --row-up: 93.421053%;
+  background-image: url("/images/adventure/player-sprites.png");
+}
+
+.trenchlight-scientistSpriteArtwork,
+.trenchlight-leaderSpriteArtwork {
+  --row-down: 5.345395%;
+  --row-left: 33.470395%;
+  --row-right: 63.815789%;
+  --row-up: 93.832237%;
+  background-image: url("/images/adventure/marina-sprites.png");
+}
+
+.trenchlight-observerSpriteArtwork {
+  --row-down: 4.276316%;
+  --row-left: 31.743421%;
+  --row-right: 60.690789%;
+  --row-up: 90.131579%;
+  background-image: url("/images/adventure/dorian-sprites.png");
+}
+
+.trenchlight-guideSpriteArtwork {
+  filter: hue-rotate(178deg) saturate(1.28) brightness(1.14) drop-shadow(0 2px 1px rgba(1, 7, 18, 0.82));
+}
+
+.trenchlight-scientistSpriteArtwork {
+  filter: hue-rotate(214deg) saturate(0.88) brightness(1.18) drop-shadow(0 2px 1px rgba(1, 7, 18, 0.82));
+}
+
+.trenchlight-engineerSpriteArtwork {
+  filter: hue-rotate(42deg) saturate(1.24) brightness(1.08) drop-shadow(0 2px 1px rgba(1, 7, 18, 0.82));
+}
+
+.trenchlight-observerSpriteArtwork {
+  filter: hue-rotate(278deg) saturate(1.16) brightness(1.18) drop-shadow(0 2px 1px rgba(1, 7, 18, 0.82));
+}
+
+.trenchlight-leaderSpriteArtwork {
+  filter: hue-rotate(155deg) saturate(0.98) brightness(1.12) drop-shadow(0 2px 1px rgba(1, 7, 18, 0.82));
 }
 
 .spriteFacingDown { --sprite-row: var(--row-down); }
@@ -3361,6 +3444,364 @@
 .fieldworkProgress { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 20px; }
 .fieldworkProgress span { color: #a7f3d0; font-size: 9px; font-weight: 900; text-align: center; }
 
+/* Trenchlight's sub is an instrument lesson, never a free-driving map. */
+.subExpeditionPanel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(230px, 0.78fr) minmax(0, 1.22fr);
+  width: min(100%, 900px);
+  min-height: 560px;
+  overflow: hidden;
+  border: 4px solid #bcebf1;
+  border-radius: 18px;
+  color: #e6fbff;
+  background: #041a2a;
+  box-shadow:
+    0 0 0 5px #164e63,
+    0 0 0 7px rgba(103, 232, 249, 0.3),
+    0 26px 80px rgba(0, 0, 0, 0.45);
+}
+
+.subSafetyBar {
+  position: relative;
+  z-index: 20;
+  grid-column: 1 / -1;
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 10px 8px 16px;
+  border-bottom: 1px solid rgba(103, 232, 249, 0.36);
+  color: #c8f6fb;
+  font-size: 11px;
+  line-height: 1.35;
+  background: #072c3e;
+}
+
+.subSafetyBar b { color: #6ee7b7; }
+.subSafetyBar button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 2px solid #67e8f9;
+  color: #ecfeff;
+  background: #12465b;
+}
+
+.subViewport {
+  position: relative;
+  min-width: 0;
+  min-height: 506px;
+  overflow: hidden;
+  border-right: 1px solid rgba(103, 232, 249, 0.2);
+  background-color: #031425;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  image-rendering: pixelated;
+}
+
+.subViewportShade,
+.subDepthRail,
+.subMarineSnow,
+.subLivingLight {
+  position: absolute;
+  pointer-events: none;
+}
+
+.subViewportShade {
+  inset: 0;
+  background: linear-gradient(180deg, rgba(3, 20, 37, 0.08), rgba(0, 7, 22, 0.72));
+  transition: background 480ms ease, opacity 480ms ease;
+}
+
+.subDepthRail {
+  top: 7%;
+  right: 9%;
+  bottom: 7%;
+  width: 5px;
+  border: 1px solid rgba(207, 250, 254, 0.66);
+  border-radius: 99px;
+  background: linear-gradient(180deg, #fef3c7, #22d3ee 35%, #1e3a8a 72%, #020617);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.42);
+}
+
+.subDepthRail::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #082f49;
+  border-radius: 50%;
+  background: #fde047;
+  transition: top 480ms ease;
+}
+
+.subPreviewLight .subDepthRail::after { top: 14%; }
+.subPreviewPressure .subDepthRail::after { top: 36%; }
+.subPreviewSnow .subDepthRail::after { top: 58%; }
+.subPreviewBioluminescence .subDepthRail::after,
+.subPreviewRecovery .subDepthRail::after { top: 82%; }
+
+.subPreviewPressure .subViewportShade { background: linear-gradient(180deg, rgba(8, 47, 73, 0.25), rgba(1, 10, 30, 0.8)); }
+.subPreviewSnow .subViewportShade { background: linear-gradient(180deg, rgba(3, 29, 52, 0.38), rgba(0, 8, 26, 0.86)); }
+.subPreviewBioluminescence .subViewportShade,
+.subPreviewRecovery .subViewportShade,
+.subPreviewStandby .subViewportShade { background: rgba(0, 7, 22, 0.76); }
+
+.subMarineSnow {
+  inset: -30% 8% 0;
+  opacity: 0;
+  background-image:
+    radial-gradient(circle, rgba(236, 254, 255, 0.9) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(165, 243, 252, 0.72) 0 1px, transparent 1.5px);
+  background-position: 0 0, 17px 23px;
+  background-size: 31px 37px, 43px 49px;
+}
+
+.subPreviewSnow .subMarineSnow,
+.subPreviewBioluminescence .subMarineSnow,
+.subPreviewRecovery .subMarineSnow {
+  opacity: 0.72;
+  animation: subMarineSnowFall 7s linear infinite;
+}
+
+.subLivingLight {
+  inset: 0;
+  opacity: 0;
+}
+
+.subLivingLight i {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #67e8f9;
+  box-shadow: 0 0 9px 3px #22d3ee;
+}
+
+.subLivingLight i:nth-child(1) { top: 24%; left: 19%; }
+.subLivingLight i:nth-child(2) { top: 48%; left: 63%; animation-delay: 420ms; }
+.subLivingLight i:nth-child(3) { top: 72%; left: 36%; animation-delay: 830ms; }
+.subPreviewBioluminescence .subLivingLight,
+.subPreviewRecovery .subLivingLight { opacity: 1; }
+.subPreviewBioluminescence .subLivingLight i,
+.subPreviewRecovery .subLivingLight i { animation: subLivingLightPulse 1.6s ease-in-out infinite alternate; }
+
+.subConsole {
+  min-width: 0;
+  max-height: 506px;
+  overflow-y: auto;
+  padding: 18px;
+  scrollbar-color: #2b7184 #061d2c;
+}
+
+.subConsoleHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.subEyebrow {
+  color: #67e8f9;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.subConsoleHeader h2 {
+  margin: 6px 0;
+  color: #fff7d6;
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.08;
+}
+
+.subConsoleHeader p {
+  margin: 0;
+  color: #c1dce4;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.subConsoleHeader small {
+  display: block;
+  margin-top: 7px;
+  color: #6ee7b7;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.subAssistToggle {
+  display: grid;
+  min-width: 112px;
+  min-height: 48px;
+  grid-template-columns: 25px 1fr;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid #3b7182;
+  color: #b8d5dc;
+  font-size: 9px;
+  line-height: 1.25;
+  background: #0b2d3d;
+}
+
+.subAssistToggle > span {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  color: #083344;
+  font-weight: 1000;
+  background: #a5f3fc;
+}
+
+.subAssistToggleOn {
+  border-color: #fbbf24;
+  color: #fef3c7;
+  background: #4a3511;
+}
+
+.subProgressTrack {
+  height: 7px;
+  margin: 14px 0 12px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #071827;
+}
+
+.subProgressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22d3ee, #34d399);
+  transition: width 420ms ease;
+}
+
+.subStepList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.subStepList li {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  padding: 7px;
+  border: 1px solid rgba(103, 232, 249, 0.14);
+  border-radius: 10px;
+  color: #7899a7;
+  background: rgba(8, 35, 49, 0.62);
+}
+
+.subStepList li > span {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  color: #a5c4cd;
+  font-size: 10px;
+  font-weight: 1000;
+  background: #102d3e;
+}
+
+.subStepList strong,
+.subStepList small { display: block; }
+.subStepList strong { overflow: hidden; font-size: 9px; line-height: 1.2; text-overflow: ellipsis; }
+.subStepList small { margin-top: 2px; font-size: 8px; }
+.subStepList li.subStepCurrent { border-color: #67e8f9; color: #ecfeff; background: rgba(8, 145, 178, 0.18); }
+.subStepList li.subStepComplete { border-color: rgba(52, 211, 153, 0.45); color: #a7f3d0; }
+.subStepList li.subStepComplete > span { color: #052e2b; background: #6ee7b7; }
+
+.subActionRegion { display: grid; gap: 8px; }
+.subInstrumentButton,
+.subRecoveryChoice {
+  min-height: 50px;
+  border: 2px solid #2b7184;
+  color: #dff7f8;
+  text-align: left;
+  background: #0e3c4e;
+}
+
+.subInstrumentButton {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(100px, 0.45fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.subInstrumentButton > span { color: #8eb4bf; font-size: 8px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+.subInstrumentButton > strong { color: #e6fbff; font-size: 10px; }
+.subInstrumentButton:disabled { cursor: not-allowed; border-color: rgba(71, 85, 105, 0.55); opacity: 0.48; }
+
+.subRecoveryChoices { display: grid; gap: 8px; }
+.subRecoveryChoices > p { margin: 0 0 2px; color: #b8d5dc; font-size: 10px; line-height: 1.45; }
+.subRecoveryChoice { display: grid; width: 100%; gap: 4px; padding: 10px 12px; }
+.subRecoveryChoice strong { color: #fff7d6; font-size: 10px; }
+.subRecoveryChoice span { color: #b8d5dc; font-size: 9px; font-weight: 600; line-height: 1.4; }
+
+.subActionAssisted {
+  border-color: #fbbf24;
+  outline: 3px solid rgba(251, 191, 36, 0.34);
+  box-shadow: 0 0 22px rgba(251, 191, 36, 0.22);
+  animation: subAssistPulse 1.25s ease-in-out infinite alternate;
+}
+
+.subAssistanceNote,
+.subFeedback {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 11px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.subAssistanceNote {
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  color: #fef3c7;
+  background: rgba(120, 53, 15, 0.24);
+}
+
+.subFeedback {
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  color: #d1fae5;
+  background: rgba(6, 78, 59, 0.3);
+}
+
+.subFeedbackCorrective {
+  border-color: rgba(251, 191, 36, 0.7);
+  color: #fef3c7;
+  background: rgba(120, 53, 15, 0.3);
+}
+
+@keyframes subMarineSnowFall {
+  from { transform: translateY(-8%); }
+  to { transform: translateY(34%); }
+}
+
+@keyframes subLivingLightPulse {
+  from { opacity: 0.22; scale: 0.72; }
+  to { opacity: 1; scale: 1.18; }
+}
+
+@keyframes subAssistPulse {
+  from { outline-color: rgba(251, 191, 36, 0.2); }
+  to { outline-color: rgba(251, 191, 36, 0.62); }
+}
+
 @media (prefers-contrast: more) {
   .observationkelpCanopy,
   .observationkelpGrazers,
@@ -3369,6 +3810,10 @@
     border-color: #fff;
     box-shadow: inset 0 0 0 2px #020617, 0 0 0 2px #fff;
   }
+  .subInstrumentButton,
+  .subRecoveryChoice,
+  .subAssistToggle,
+  .subSafetyBar button { border-color: #fff; }
 }
 
 @media (max-width: 1120px) {
@@ -3449,6 +3894,20 @@
   .observationkelpGrazers,
   .observationkelpPredators,
   .observationkelpRepeat { height: clamp(144px, 42vw, 180px); }
+
+  .subExpeditionPanel {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  .subSafetyBar { position: sticky; top: 0; flex-wrap: wrap; padding-left: 11px; }
+  .subSafetyBar span { flex: 1 1 180px; }
+  .subSafetyBar button { flex: 1 0 auto; }
+  .subViewport { min-height: 190px; border-right: 0; border-bottom: 1px solid rgba(103, 232, 249, 0.2); }
+  .subConsole { max-height: none; padding: 13px; }
+  .subConsoleHeader { grid-template-columns: minmax(0, 1fr); }
+  .subAssistToggle { width: 100%; }
+  .subStepList { grid-template-columns: minmax(0, 1fr); }
+  .subInstrumentButton { grid-template-columns: minmax(0, 1fr); gap: 4px; }
 
   .gameHeader {
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -3601,6 +4060,32 @@
   .actionButton { min-width: 46px; width: 46px; height: 46px; padding: 6px; }
   .actionButton > span { width: 30px; }
   .actionButton { font-size: 0; }
+  .subExpeditionPanel {
+    min-height: 0;
+    max-height: calc(100dvh - 126px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .subViewport { min-height: calc(100dvh - 180px); }
+  .subConsole { max-height: calc(100dvh - 180px); }
+}
+
+@media (max-width: 700px) and (max-height: 620px) and (orientation: landscape) {
+  .mobileQuestSummary { display: none; }
+  .subExpeditionPanel {
+    grid-template-rows: auto minmax(0, 1fr);
+    height: calc(100dvh - 145px);
+    min-height: 200px;
+    max-height: calc(100dvh - 145px);
+    overflow: hidden;
+  }
+  .subViewport { display: none; }
+  .subConsole {
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+  }
 }
 
 @media (pointer: coarse) {
@@ -3632,11 +4117,20 @@
     animation: none;
   }
 
+  .subMarineSnow,
+  .subLivingLight i,
+  .subActionAssisted {
+    animation: none !important;
+  }
+
   .playerCell,
   .questProgress span,
   .exitLink,
-  .directionButton {
-    transition: none;
+  .directionButton,
+  .subViewportShade,
+  .subDepthRail::after,
+  .subProgressTrack span {
+    transition: none !important;
   }
 
   .dialogueTypeCursor {

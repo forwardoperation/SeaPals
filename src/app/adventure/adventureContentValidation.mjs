@@ -30,6 +30,7 @@ const RUNTIME_INTERACTION_TYPES = new Set([
   "observation",
   "interpretation",
   "response",
+  "sub-launch",
   "board",
   "dock",
 ]);
@@ -378,6 +379,22 @@ export function validateAdventureContent(content) {
         requireReference(interaction.questId, questIds, `${path}.questId`, errors);
         if (typeof interaction.choiceSetId !== "string" || !interaction.choiceSetId.trim()) {
           errors.push(`${path}.choiceSetId is required.`);
+        }
+      } else if (interaction.type === "sub-launch") {
+        requireReference(interaction.questId, questIds, `${path}.questId`, errors);
+        requireReference(interaction.targetScene, sceneIds, `${path}.targetScene`, errors);
+        if (!Number.isInteger(interaction.spawn?.x) || !Number.isInteger(interaction.spawn?.y)) {
+          errors.push(`${path}.spawn requires integer x and y coordinates.`);
+        }
+        if (!FACING_DIRECTIONS.has(interaction.facing)) {
+          errors.push(`${path}.facing must be up, down, left, or right.`);
+        }
+        const targetScene = scenesById.get(interaction.targetScene);
+        if (targetScene && targetScene.townId !== scene.townId) {
+          errors.push(`${path}.targetScene must belong to the same town.`);
+        }
+        if (targetScene && targetScene.world?.worldKind !== "vehicle") {
+          errors.push(`${path}.targetScene must be a vehicle scene.`);
         }
       } else if (interaction.type === "board" || interaction.type === "dock") {
         requireReference(interaction.routeId, routeIds, `${path}.routeId`, errors);

@@ -21,9 +21,23 @@ import {
   getKelpwatchProgress,
 } from "./adventureKelpwatch.mjs";
 import {
+  TRENCHLIGHT_CORRECT_INTERPRETATION_ID,
+  TRENCHLIGHT_CORRECT_RESPONSE_ID,
   TRENCHLIGHT_QUEST_ID,
   TRENCHLIGHT_RESIDENT_ENCOUNTER_IDS,
+  beginTrenchlightExpedition,
+  submitTrenchlightInterpretation,
 } from "./adventureTrenchlight.mjs";
+import {
+  TRENCHLIGHT_EXPEDITION_TOOL_IDS,
+  TRENCHLIGHT_MISSION_CONTROL_SCENE_ID,
+  TRENCHLIGHT_SUB_RETURN_LOCATION,
+  TRENCHLIGHT_SUB_SCENE_ID,
+  advanceTrenchlightExpedition,
+  getTrenchlightExpeditionState,
+  launchTrenchlightExpedition,
+  returnTrenchlightExpeditionToStation,
+} from "./adventureTrenchlightExpedition.mjs";
 import {
   ADVENTURE_ECOSYSTEM_CHAPTERS,
 } from "./adventureEcosystemChapters.mjs";
@@ -106,6 +120,64 @@ function completeChapterForRecovery(chapter, profileId) {
   save = chapter.reconcile(save).save;
   assert.equal(chapter.getProgress(save).readyToTurnIn, true);
   return chapter.turnIn(save).save;
+}
+
+function atTrenchlightMissionControl(saveValue) {
+  const save = normalizeAdventureSave(saveValue);
+  return normalizeAdventureSave({
+    ...save,
+    world: {
+      ...save.world,
+      townId: "trenchlight-station",
+      sceneId: TRENCHLIGHT_MISSION_CONTROL_SCENE_ID,
+      position: { ...TRENCHLIGHT_SUB_RETURN_LOCATION.position },
+      facing: TRENCHLIGHT_SUB_RETURN_LOCATION.facing,
+      lastSafeDockId: "trenchlight-dock",
+    },
+  });
+}
+
+function startedTrenchlightSession(profileId) {
+  const session = atTrenchlightMissionControl(createNewAdventureSession(profileId));
+  return beginTrenchlightExpedition(session).save;
+}
+
+function finishTrenchlightSurvey(saveValue) {
+  let save = saveValue;
+  for (const actionId of [
+    TRENCHLIGHT_EXPEDITION_TOOL_IDS.lightMeter,
+    TRENCHLIGHT_EXPEDITION_TOOL_IDS.pressureSensor,
+    TRENCHLIGHT_EXPEDITION_TOOL_IDS.marineSnowCamera,
+    TRENCHLIGHT_EXPEDITION_TOOL_IDS.passiveLowLightCamera,
+  ]) {
+    save = advanceTrenchlightExpedition(save, actionId).save;
+  }
+  return save;
+}
+
+function withTrenchlightResumeSentinels(saveValue, suffix) {
+  const save = normalizeAdventureSave(saveValue);
+  return normalizeAdventureSave({
+    ...save,
+    playtimeSeconds: 240 + suffix.length,
+    inventory: {
+      ...save.inventory,
+      storyItems: {
+        ...save.inventory.storyItems,
+        [`trenchlight-resume-keepsake-${suffix}`]: 2,
+      },
+    },
+    progression: {
+      ...save.progression,
+      quests: {
+        ...save.progression.quests,
+        [`quest-trenchlight-resume-side-story-${suffix}`]: {
+          status: "active",
+          flags: { checkpoint: suffix },
+        },
+      },
+    },
+  });
 }
 
 test("new sessions begin the Shellshore quest in one of three explicit profiles", () => {
@@ -299,6 +371,174 @@ test("resume reconciliation loops every ecosystem adapter after storage reload",
       "readyToTurnIn",
     );
     assert.equal(recovered.reason, "quest-state-reconciled");
+  }
+});
+
+test("JSON reload resumes active Trenchlight survey and recovery legs in the submersible", () => {
+  let survey = launchTrenchlightExpedition(
+    startedTrenchlightSession("trenchlight-session-survey-resume"),
+  ).save;
+  survey = advanceTrenchlightExpedition(
+    survey,
+    TRENCHLIGHT_EXPEDITION_TOOL_IDS.lightMeter,
+  ).save;
+
+  let recovery = launchTrenchlightExpedition(
+    startedTrenchlightSession("trenchlight-session-recovery-resume"),
+  ).save;
+  recovery = finishTrenchlightSurvey(recovery);
+  recovery = returnTrenchlightExpeditionToStation(recovery).save;
+  recovery = submitTrenchlightInterpretation(
+    recovery,
+    TRENCHLIGHT_CORRECT_INTERPRETATION_ID,
+  ).save;
+  recovery = launchTrenchlightExpedition(recovery).save;
+  recovery = advanceTrenchlightExpedition(
+    recovery,
+    "trenchlight-grab-sensor-immediately",
+  ).save;
+
+  for (const { phase, source } of [
+    { phase: "survey", source: survey },
+    { phase: "recovery", source: recovery },
+  ]) {
+    const loaded = JSON.parse(JSON.stringify(
+      withTrenchlightResumeSentinels(source, phase),
+    ));
+    const resumed = recoverAdventureResume(loaded);
+
+    assert.equal(resumed.recovered, false, `${phase} should not be relocated`);
+    assert.equal(resumed.reason, null);
+    assert.equal(resumed.fallback, null);
+    assert.deepEqual(resumed.save, loaded, `${phase} reload should preserve the full save`);
+    assert.equal(resumed.save.world.sceneId, TRENCHLIGHT_SUB_SCENE_ID);
+    assert.equal(getTrenchlightExpeditionState(resumed.save).phase, phase);
+    assert.equal(getTrenchlightExpeditionState(resumed.save).inSub, true);
+
+    const stable = recoverAdventureResume(JSON.parse(JSON.stringify(resumed.save)));
+    assert.equal(stable.recovered, false);
+    assert.deepEqual(stable.save, resumed.save);
+  }
+});
+
+test("JSON reload returns terminal and impossible Trenchlight sub states to Mission Control", () => {
+  const baseNotStarted = createNewAdventureSession(
+    "trenchlight-session-not-started-resume",
+  );
+  const notStarted = normalizeAdventureSave({
+    ...baseNotStarted,
+    world: {
+      ...baseNotStarted.world,
+      townId: "trenchlight-station",
+      sceneId: TRENCHLIGHT_SUB_SCENE_ID,
+      position: { x: 7, y: 8 },
+      facing: "up",
+      lastSafeDockId: "trenchlight-dock",
+    },
+  });
+
+  let analysisRequired = launchTrenchlightExpedition(
+    startedTrenchlightSession("trenchlight-session-analysis-resume"),
+  ).save;
+  analysisRequired = finishTrenchlightSurvey(analysisRequired);
+
+  let expeditionComplete = returnTrenchlightExpeditionToStation(
+    analysisRequired,
+  ).save;
+  expeditionComplete = submitTrenchlightInterpretation(
+    expeditionComplete,
+    TRENCHLIGHT_CORRECT_INTERPRETATION_ID,
+  ).save;
+  expeditionComplete = launchTrenchlightExpedition(expeditionComplete).save;
+  expeditionComplete = advanceTrenchlightExpedition(
+    expeditionComplete,
+    TRENCHLIGHT_CORRECT_RESPONSE_ID,
+  ).save;
+
+  for (const {
+    phase,
+    source,
+    canonicalReason,
+    resumedPhase,
+  } of [
+    {
+      phase: "not-started",
+      source: notStarted,
+      canonicalReason: "quest-state-reconciled",
+      resumedPhase: "survey",
+    },
+    {
+      phase: "analysis-required",
+      source: analysisRequired,
+      canonicalReason: "analysis-required-at-mission-control",
+      resumedPhase: "analysis-required",
+    },
+    {
+      phase: "expedition-complete",
+      source: expeditionComplete,
+      canonicalReason: "expedition-complete",
+      resumedPhase: "expedition-complete",
+    },
+  ]) {
+    const suffix = phase.replaceAll("-", "_");
+    const loaded = JSON.parse(JSON.stringify(
+      withTrenchlightResumeSentinels(source, suffix),
+    ));
+    const resumed = recoverAdventureResume(loaded);
+    const expectedAtMissionControl = normalizeAdventureSave({
+      ...loaded,
+      world: {
+        ...loaded.world,
+        townId: TRENCHLIGHT_SUB_RETURN_LOCATION.townId,
+        sceneId: TRENCHLIGHT_SUB_RETURN_LOCATION.sceneId,
+        position: { ...TRENCHLIGHT_SUB_RETURN_LOCATION.position },
+        facing: TRENCHLIGHT_SUB_RETURN_LOCATION.facing,
+      },
+    });
+    const expectedSave = phase === "not-started"
+      ? beginTrenchlightExpedition(expectedAtMissionControl).save
+      : expectedAtMissionControl;
+
+    assert.equal(resumed.recovered, true);
+    assert.equal(resumed.reason, canonicalReason);
+    assert.equal(resumed.fallback, null);
+    assert.equal(resumed.save.world.townId, TRENCHLIGHT_SUB_RETURN_LOCATION.townId);
+    assert.equal(resumed.save.world.sceneId, TRENCHLIGHT_SUB_RETURN_LOCATION.sceneId);
+    assert.deepEqual(
+      resumed.save.world.position,
+      TRENCHLIGHT_SUB_RETURN_LOCATION.position,
+    );
+    assert.equal(resumed.save.world.facing, TRENCHLIGHT_SUB_RETURN_LOCATION.facing);
+    assert.equal(
+      canOccupyContinuousPosition(
+        TRENCHLIGHT_MISSION_CONTROL_SCENE_ID,
+        resumed.save.world.position,
+      ),
+      true,
+      `${phase} should recover to a traversable Mission Control position`,
+    );
+    assert.equal(getTrenchlightExpeditionState(resumed.save).inSub, false);
+    assert.equal(getTrenchlightExpeditionState(resumed.save).phase, resumedPhase);
+    assert.deepEqual(
+      resumed.save.progression.quests[`quest-trenchlight-resume-side-story-${suffix}`],
+      { status: "active", flags: { checkpoint: suffix } },
+    );
+    assert.equal(
+      resumed.save.inventory.storyItems[`trenchlight-resume-keepsake-${suffix}`],
+      2,
+    );
+    assert.equal(resumed.save.playtimeSeconds, 240 + suffix.length);
+    assert.deepEqual(
+      resumed.save,
+      expectedSave,
+      `${phase} recovery should change only the expedition location and required chapter start`,
+    );
+
+    const stable = recoverAdventureResume(JSON.parse(JSON.stringify(resumed.save)));
+    assert.equal(stable.recovered, false, `${phase} recovery should be idempotent`);
+    assert.equal(stable.reason, null);
+    assert.equal(stable.fallback, null);
+    assert.deepEqual(stable.save, resumed.save);
   }
 });
 

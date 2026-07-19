@@ -346,7 +346,7 @@ This phase is the production gate. Do not build all remaining towns until its pl
 
 **Goal:** Expand the proven town template without adding another core engine.
 
-**Implementation status:** Brackwater Landing, Current Commons, and Kelpwatch Island have verified implementation checkpoints. Kelpwatch's remaining release gates are clean-profile playthrough, full accessibility/device QA, target-age comprehension, starter-balance, and named marine-science verification. Trenchlight Station remains Phase 6, and Champion's Wake plus the three 30 VP tournament games remain Phase 7.
+**Implementation status:** Brackwater Landing, Current Commons, and Kelpwatch Island have verified implementation checkpoints. Their remaining release gates include clean-profile playthrough, full accessibility/device QA, target-age comprehension, starter-balance, and named marine-science verification. Trenchlight Station now has verified domain, content, guided-expedition-controller, live guided UI, resume, and end-to-end content-loop checkpoints; its remaining release gates stay in Phase 6. Champion's Wake plus the three 30 VP tournament games remain Phase 7.
 
 Build these as independently testable content releases:
 
@@ -367,6 +367,8 @@ Each chapter includes one town, one travel route, one primary field challenge, f
 ### Phase 6 - Trenchlight Station and sub expedition
 
 **Goal:** Deliver the final ecosystem chapter while keeping its unique vehicle content bounded.
+
+**Implementation status:** The Trenchlight route, platform, interiors, cast, deep-ocean evidence model, two-leg NPC-piloted expedition controller, resident and qualifier encounters, playable reward pack, final Tide Mark, future-route unlock, save recovery, and end-to-end content-loop proof are authored. The live guided-sub interface is connected and browser-verified for launch, ordered controls, optional assistance, partial-leg reload, safe return, corrective recovery, responsive layout, and reduced-motion styling. Clean-profile, complete accessibility/device, collision, target-age, starter-balance, and named science-review gates remain in `docs/seapals-adventure-phase-6-trenchlight.md`.
 
 **Deliverables**
 
