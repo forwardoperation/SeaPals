@@ -26,6 +26,12 @@ test("the Elverson vertical slice does not offer outward world navigation", () =
 
 test("ambient residents render with stable sprite fallbacks and no duel marker", () => {
   assert.match(component, /function residentSpriteSource\(character\)/);
+  assert.match(component, /const RESIDENT_SPRITE_ARCHETYPES = Object\.freeze\(\[\s*"player",\s*"marina",\s*"dorian",\s*\]\)/);
+  assert.match(component, /"fisherman-wyeth": "fisherman-wyeth"/);
+  assert.match(component, /"teacher-caroline": "teacher-caroline"/);
+  assert.match(component, /"explorer-jordan": "explorer-jordan"/);
+  assert.match(component, /"marine-biologist-jonah": "marine-biologist-jonah"/);
+  assert.match(component, /"programmer-harlan": "programmer-harlan"/);
   assert.match(component, /SPRITE_SOURCE_BY_CHARACTER\[character\] \?\? residentSpriteSource\(character\)/);
   assert.match(component, /const showMarker = Boolean\(trainer\.encounterId \|\| status\)/);
   assert.match(component, /\{showMarker \? \(/);
@@ -35,6 +41,19 @@ test("ambient residents render with stable sprite fallbacks and no duel marker",
   assert.match(component, /residentConversationSeenRef\.current\.has\(trainerId\)/);
   assert.match(component, /trainer\.dialogue\?\.return \?\? trainer\.dialogue\?\.guidance/);
   assert.match(component, /trainer\.townId === "shellshore-village"\) \{\s*closeConversation\(\);\s*return;/);
+});
+
+test("Elverson uses a close-follow camera and compact human-toned overworld sprites", () => {
+  assert.match(component, /getAdventureCameraLayout\(\{/);
+  assert.match(component, /className=\{styles\.map\}/);
+  assert.match(component, /className=\{`\$\{styles\.mapWorld\} \$\{mapThemeClass\}`\}/);
+  assert.match(component, /width: `\$\{cameraLayout\.worldWidthPercent\}%`/);
+  assert.match(component, /left: `\$\{cameraLayout\.leftPercent\}%`/);
+  assert.match(styles, /\.map\s*\{[\s\S]*?aspect-ratio:\s*16\s*\/\s*9/);
+  assert.match(styles, /\.mapWorld\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?display:\s*grid/);
+  assert.match(styles, /\.spriteArtwork\s*\{[\s\S]*?width:\s*72%;[\s\S]*?height:\s*103%/);
+  assert.match(styles, /\.town-elderSpriteArtwork\s*\{\s*background-image:\s*url\("\/images\/adventure\/town-elder-sprites\.png"\);\s*\}/);
+  assert.doesNotMatch(styles, /hue-rotate\(/);
 });
 
 test("the tutorial interface consistently identifies Mr. Easterling as the guide", () => {

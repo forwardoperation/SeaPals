@@ -19,6 +19,7 @@ import {
   getDoorwayTransition,
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
+import { getAdventureCameraLayout } from "./adventureCamera.mjs";
 import {
   BOAT_MOTION_DEFAULTS,
   createBoatMotionState,
@@ -182,6 +183,32 @@ const SHELLSHORE_RESIDENT_TRAINERS = Object.freeze(
 );
 
 const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
+  // Elverson residents use explicit age- and role-appropriate human designs.
+  // This avoids clone-heavy hashing and never recolors an entire human sprite.
+  "fisherman-wyeth": "fisherman-wyeth",
+  landon: "fisherman-wyeth",
+  william: "fisherman-wyeth",
+  "teacher-caroline": "teacher-caroline",
+  eloise: "teacher-caroline",
+  ivy: "ivy",
+  karah: "marina",
+  charlotte: "marina",
+  "explorer-jordan": "explorer-jordan",
+  finn: "dorian",
+  "marine-biologist-jonah": "marine-biologist-jonah",
+  ellis: "marine-biologist-jonah",
+  "programmer-harlan": "programmer-harlan",
+  edith: "town-elder",
+  henderson: "town-elder",
+  emilio: "town-adult",
+  eli: "town-adult",
+  calvin: "town-adult",
+  henry: "player",
+  jack: "player",
+  oliver: "player",
+  luke: "player",
+  micah: "player",
+  sam: "player",
   "sunpatch-tavi": "marina",
   "sunpatch-mira": "academy-mentor",
   "sunpatch-gardener": "marina",
@@ -192,29 +219,29 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
   "brackwater-naturalist": "marina",
   "brackwater-harbormaster": "dorian",
   "brackwater-leader": "marina",
-  // Current Commons uses chapter-specific treatments so its cast remains
-  // visually distinct even while the final authored sprite sheets are pending.
+  // Later chapters retain role hooks for final authored sprite sheets while
+  // falling back to the original human-toned animated cast.
   "current-guide": "current-guide",
   "current-analyst": "current-analyst",
   "current-navigator": "current-navigator",
   "current-deckhand": "current-deckhand",
   "current-leader": "current-leader",
-  // Kelpwatch Island uses temporary role-specific treatments until its final
+  // Kelpwatch Island uses temporary role-specific source hooks until its final
   // authored character sheets are available.
   "kelpwatch-guide": "kelpwatch-guide",
   "kelpwatch-ecologist": "kelpwatch-ecologist",
   "kelpwatch-diver": "kelpwatch-diver",
   "kelpwatch-ranger": "kelpwatch-ranger",
   "kelpwatch-leader": "kelpwatch-leader",
-  // Trenchlight Station uses temporary high-contrast role treatments while
-  // its final deep-ocean character sheets are being authored.
+  // Trenchlight Station uses temporary shadow treatments while its final
+  // deep-ocean character sheets are being authored.
   "trenchlight-guide": "trenchlight-guide",
   "trenchlight-scientist": "trenchlight-scientist",
   "trenchlight-engineer": "trenchlight-engineer",
   "trenchlight-observer": "trenchlight-observer",
   "trenchlight-leader": "trenchlight-leader",
-  // Champion's Wake uses tournament-specific palettes over the existing
-  // animated sheets until final cast sprite sheets are authored.
+  // Champion's Wake reuses the human-toned animated sheets with stronger
+  // edge shadows until final cast sprite sheets are authored.
   "champions-wake-director": "champions-wake-director",
   "tournament-quarterfinalist": "tournament-quarterfinalist",
   "tournament-semifinalist": "tournament-semifinalist",
@@ -224,13 +251,9 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
 });
 
 const RESIDENT_SPRITE_ARCHETYPES = Object.freeze([
+  "player",
   "marina",
   "dorian",
-  "current-guide",
-  "current-analyst",
-  "current-navigator",
-  "current-deckhand",
-  "current-leader",
 ]);
 
 function residentSpriteSource(character) {
@@ -4201,6 +4224,12 @@ export default function AdventureGame() {
     )
   ));
   const mapThemeClass = mapThemeClassForScene(scene);
+  const cameraLayout = getAdventureCameraLayout({
+    worldWidth: scene.width,
+    worldHeight: scene.height,
+    playerX: position.x + 0.5,
+    playerY: position.y + 0.5,
+  });
   const shellshoreQuestView = onboardingProgress.needsStarterSelection
     ? {
         title: "Meet Mr. Easterling",
@@ -4492,18 +4521,24 @@ export default function AdventureGame() {
           ) : (
             <>
           <div
-            className={`${styles.map} ${mapThemeClass}`}
-            style={{
-              gridTemplateColumns: `repeat(${scene.width}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${scene.height}, minmax(0, 1fr))`,
-              aspectRatio: `${scene.width} / ${scene.height}`,
-              backgroundImage: scene.artPath ? `url("${scene.artPath}")` : undefined,
-            }}
+            className={styles.map}
             role="application"
             aria-label={boatMode
               ? `Top-down sea route at ${LOCATION_NAMES[sceneId]}. Up or W increases throttle. Down or S brakes and reverses. Left and right or A and D move the rudder. Coast toward a dock and press Enter, Space, or the on-screen A button when it is in reach.`
               : `Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk. Walk into doorways to enter or leave, and press Enter, Space, or the on-screen A button to interact.`}
           >
+            <div
+              className={`${styles.mapWorld} ${mapThemeClass}`}
+              style={{
+                width: `${cameraLayout.worldWidthPercent}%`,
+                height: `${cameraLayout.worldHeightPercent}%`,
+                left: `${cameraLayout.leftPercent}%`,
+                top: `${cameraLayout.topPercent}%`,
+                gridTemplateColumns: `repeat(${scene.width}, minmax(0, 1fr))`,
+                gridTemplateRows: `repeat(${scene.height}, minmax(0, 1fr))`,
+                backgroundImage: scene.artPath ? `url("${scene.artPath}")` : undefined,
+              }}
+            >
             {worldCueInteractions.map((candidate) => (
               <AdventureWorldCue
                 key={`world-cue:${candidate.id}`}
@@ -4566,6 +4601,7 @@ export default function AdventureGame() {
                 scene={scene}
               />
             )}
+            </div>
           </div>
 
           {boatMode ? (
