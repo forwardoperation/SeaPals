@@ -530,10 +530,18 @@
 }
 
 .boatCell {
+  --boat-heading: 0deg;
   z-index: 18;
   width: 8.5% !important;
   height: 15% !important;
+}
+
+.boatActor {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--boat-heading));
   transform-origin: center;
+  will-change: transform;
 }
 
 .boatHull,
@@ -576,10 +584,10 @@
   transform: translateX(-50%);
 }
 
-.boatFacingleft { rotate: -90deg; }
-.boatFacingright { rotate: 90deg; }
-.boatFacingup { rotate: 180deg; }
-.boatFacingdown { rotate: 0deg; }
+.boatFacingleft { --boat-heading: -90deg; }
+.boatFacingright { --boat-heading: 90deg; }
+.boatFacingup { --boat-heading: 180deg; }
+.boatFacingdown { --boat-heading: 0deg; }
 .boatMoving .boatWake { animation: boatWakePulse 520ms ease-in-out infinite alternate; }
 
 @keyframes boatWakePulse {

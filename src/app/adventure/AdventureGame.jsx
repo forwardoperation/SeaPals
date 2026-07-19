@@ -250,8 +250,10 @@ function AdventureBoatSprite({ position, facing, moving, interaction, scene }) {
       style={actorPosition(position, scene)}
       aria-label="Your personal boat"
     >
-      <span className={styles.boatWake} />
-      <span className={styles.boatHull}><i /></span>
+      <span className={styles.boatActor} aria-hidden="true">
+        <span className={styles.boatWake} />
+        <span className={styles.boatHull}><i /></span>
+      </span>
       {interaction ? <span className={styles.actionCue} aria-hidden="true">A</span> : null}
     </div>
   );

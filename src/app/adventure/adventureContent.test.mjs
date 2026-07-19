@@ -104,7 +104,7 @@ test("the initial save location references launch content", () => {
   assert.ok(ADVENTURE_CONTENT.scenes.some((scene) => scene.id === save.world.sceneId && scene.townId === save.world.townId));
 });
 
-test("Shellshore through Kelpwatch runtime scenes plus the Phase 1 dock start resolve from content", () => {
+test("Shellshore through Trenchlight runtime scenes plus the Phase 1 dock start resolve from content", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   assert.deepEqual(runtimeScenes.map((scene) => scene.id), [
     "town",
@@ -131,6 +131,12 @@ test("Shellshore through Kelpwatch runtime scenes plus the Phase 1 dock start re
     "kelpwatch-ecology-lab",
     "kelpwatch-diver-home",
     "kelpwatch-tide-hall",
+    "kelpwatch-trenchlight-sea",
+    "trenchlight-station-town",
+    "trenchlight-mission-control",
+    "trenchlight-engineer-workshop",
+    "trenchlight-tide-hall",
+    "trenchlight-sub-descent",
   ]);
   assert.ok(runtimeScenes.every((scene) => scene.world.tiles.length > 0));
   assert.deepEqual(getAdventureStartLocation(), {
@@ -1286,6 +1292,34 @@ test("content validation protects Kelpwatch route, evidence, science-source, and
   assert.ok(result.errors.some((error) => /kelpwatch-island-town.*observationId is required/.test(error)));
   assert.ok(result.errors.some((error) => /field-note-kelp-food-web.*sourceUrls must contain at least three HTTPS science sources/.test(error)));
   assert.ok(result.errors.some((error) => /kelpwatch-island.*no NPC for role field-partner/.test(error)));
+});
+
+test("playable deep-ocean Field Notes require authoritative HTTPS science sources", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  const fieldNote = invalid.fieldNotes.find(
+    ({ id }) => id === "field-note-deep-adaptations",
+  );
+  fieldNote.status = "prototype";
+  fieldNote.summary ||= "Deep-ocean observations require locally supported explanations.";
+  fieldNote.observations ||= [
+    "Light dwindles during descent.",
+    "Pressure rises as depth increases.",
+  ];
+  fieldNote.safetyChecklist ||= [
+    "Travel with the trained expedition crew.",
+    "Observe without collecting wildlife.",
+    "Abort rather than contacting habitat.",
+  ];
+  fieldNote.glossary ||= [
+    { term: "Marine snow", definition: "Sinking material derived mostly from upper waters." },
+  ];
+  fieldNote.sourceUrls = [];
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => (
+    /field-note-deep-adaptations.*sourceUrls must contain at least three HTTPS science sources/.test(error)
+  )));
 });
 
 test("content validation protects Phase 2 starter, tutorial, mentor, and Field Note contracts", () => {

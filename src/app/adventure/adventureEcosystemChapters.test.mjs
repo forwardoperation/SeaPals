@@ -18,6 +18,12 @@ import {
   KELPWATCH_REQUIRED_OBSERVATION_IDS,
 } from "./adventureKelpwatch.mjs";
 import {
+  TRENCHLIGHT_CORRECT_INTERPRETATION_ID,
+  TRENCHLIGHT_CORRECT_RESPONSE_ID,
+  TRENCHLIGHT_QUEST_ID,
+  TRENCHLIGHT_REQUIRED_OBSERVATION_IDS,
+} from "./adventureTrenchlight.mjs";
+import {
   ADVENTURE_ECOSYSTEM_CHAPTERS,
   getAdventureEcosystemConversationMode,
   getAdventureEcosystemChapterByQuestId,
@@ -25,8 +31,13 @@ import {
   getAdventureObservationPreviewVariant,
   hasMetAdventureEcosystemGuide,
   isAdventureEcosystemChapterQuest,
+  recoverAdventureEcosystemChapterFlags,
 } from "./adventureEcosystemChapters.mjs";
-import { createInitialAdventureSave, setQuestFlag } from "./adventureProgression.mjs";
+import {
+  createInitialAdventureSave,
+  normalizeAdventureSave,
+  setQuestFlag,
+} from "./adventureProgression.mjs";
 import { SUNPATCH_QUEST_ID } from "./adventureSunpatch.mjs";
 
 const ADAPTER_KEYS = [
@@ -45,10 +56,16 @@ const ADAPTER_KEYS = [
 ];
 
 test("the ecosystem registry exposes complete, immutable adapters with unique canonical IDs", () => {
-  assert.equal(ADVENTURE_ECOSYSTEM_CHAPTERS.length, 4);
+  assert.equal(ADVENTURE_ECOSYSTEM_CHAPTERS.length, 5);
   assert.deepEqual(
     ADVENTURE_ECOSYSTEM_CHAPTERS.map(({ townId }) => townId),
-    ["sunpatch-cay", "brackwater-landing", "current-commons", "kelpwatch-island"],
+    [
+      "sunpatch-cay",
+      "brackwater-landing",
+      "current-commons",
+      "kelpwatch-island",
+      "trenchlight-station",
+    ],
   );
   assert.equal(
     new Set(ADVENTURE_ECOSYSTEM_CHAPTERS.map(({ townId }) => townId)).size,
@@ -110,11 +127,22 @@ test("chapters resolve by town or quest without exposing mutable registry state"
   assert.equal(kelpwatch.fieldNoteId, "field-note-kelp-food-web");
   assert.equal(kelpwatch.guideMetFlagId, "met-kelpwatch-guide");
 
+  const trenchlight = getAdventureEcosystemChapterByQuestId(TRENCHLIGHT_QUEST_ID);
+  assert.equal(
+    trenchlight,
+    getAdventureEcosystemChapterByTownId("trenchlight-station"),
+  );
+  assert.equal(trenchlight.fieldNoteId, "field-note-deep-adaptations");
+  assert.equal(trenchlight.guideMetFlagId, "met-trenchlight-guide");
+  assert.equal(trenchlight.ui.guideName, "Luz");
+  assert.equal(trenchlight.ui.fieldPartnerMetFlagId, "met-trenchlight-scientist");
+
   assert.equal(getAdventureEcosystemChapterByTownId("shellshore-village"), null);
   assert.equal(getAdventureEcosystemChapterByQuestId("quest-shellshore-first-voyage"), null);
   assert.equal(isAdventureEcosystemChapterQuest(BRACKWATER_QUEST_ID), true);
   assert.equal(isAdventureEcosystemChapterQuest(CURRENT_QUEST_ID), true);
   assert.equal(isAdventureEcosystemChapterQuest(KELPWATCH_QUEST_ID), true);
+  assert.equal(isAdventureEcosystemChapterQuest(TRENCHLIGHT_QUEST_ID), true);
   assert.equal(isAdventureEcosystemChapterQuest("quest-shellshore-first-voyage"), false);
 });
 
@@ -175,6 +203,48 @@ test("every Current observation resolves to a distinct authored non-coral previe
   );
 });
 
+test("Trenchlight exposes four distinct deep-ocean previews and storage-safe methods", () => {
+  const trenchlight = getAdventureEcosystemChapterByQuestId(TRENCHLIGHT_QUEST_ID);
+  const variants = TRENCHLIGHT_REQUIRED_OBSERVATION_IDS.map((observationId) => (
+    getAdventureObservationPreviewVariant(trenchlight.ui, observationId)
+  ));
+
+  assert.deepEqual(variants, [
+    "trenchLight",
+    "trenchPressure",
+    "trenchSnow",
+    "trenchGlow",
+  ]);
+  assert.equal(new Set(variants).size, TRENCHLIGHT_REQUIRED_OBSERVATION_IDS.length);
+  assert.equal(Object.isFrozen(trenchlight.ui.observationPreviewVariants), true);
+  assert.match(trenchlight.ui.questDescription, /NPC-piloted descent/i);
+  assert.match(trenchlight.ui.responsePrompt, /clear sensor lift point/i);
+  assert.match(trenchlight.ui.fieldPartnerIntroNotice, /assisted controls/i);
+
+  let result = trenchlight.begin(
+    createInitialAdventureSave("trenchlight-adapter-json"),
+  );
+  for (const observationId of TRENCHLIGHT_REQUIRED_OBSERVATION_IDS) {
+    result = trenchlight.recordObservation(
+      JSON.parse(JSON.stringify(result.save)),
+      observationId,
+    );
+  }
+  result = trenchlight.submitInterpretation(
+    JSON.parse(JSON.stringify(result.save)),
+    TRENCHLIGHT_CORRECT_INTERPRETATION_ID,
+  );
+  assert.equal(result.correct, true);
+  result = trenchlight.submitResponse(
+    JSON.parse(JSON.stringify(result.save)),
+    TRENCHLIGHT_CORRECT_RESPONSE_ID,
+  );
+  assert.equal(result.correct, true);
+  assert.equal(result.progress.sensorRecovered, true);
+  assert.equal(result.progress.habitatDisturbed, false);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.save)), result.save);
+});
+
 test("adapter methods operate on canonical saves across JSON storage boundaries", () => {
   const adapter = getAdventureEcosystemChapterByTownId("brackwater-landing");
   const stored = JSON.stringify(createInitialAdventureSave("chapter-json"));
@@ -210,6 +280,45 @@ test("adapter methods operate on canonical saves across JSON storage boundaries"
   const reconciled = adapter.reconcile(JSON.parse(JSON.stringify(result.save)));
   assert.equal(reconciled.progress.status, "active");
   assert.deepEqual(JSON.parse(JSON.stringify(reconciled.save)), reconciled.save);
+});
+
+test("registry recovery repairs Trenchlight typed flags without losing future data", () => {
+  const trenchlight = getAdventureEcosystemChapterByQuestId(TRENCHLIGHT_QUEST_ID);
+  const begun = trenchlight.begin(
+    createInitialAdventureSave("trenchlight-registry-recovery"),
+  ).save;
+  const malformed = normalizeAdventureSave({
+    ...begun,
+    progression: {
+      ...begun.progression,
+      quests: {
+        ...begun.progression.quests,
+        [TRENCHLIGHT_QUEST_ID]: {
+          ...begun.progression.quests[TRENCHLIGHT_QUEST_ID],
+          flags: {
+            "observed-trenchlight-pressure-profile": "yes",
+            "interpretation-corrective-attempts": -1,
+            "future-trenchlight-flag": "kept",
+          },
+        },
+      },
+    },
+  });
+
+  const recovered = recoverAdventureEcosystemChapterFlags(malformed);
+  assert.equal(recovered.applied, true);
+  assert.deepEqual(recovered.repairs, [{
+    questId: TRENCHLIGHT_QUEST_ID,
+    discardedFlagIds: [
+      "interpretation-corrective-attempts",
+      "observed-trenchlight-pressure-profile",
+    ],
+  }]);
+  assert.deepEqual(
+    recovered.save.progression.quests[TRENCHLIGHT_QUEST_ID].flags,
+    { "future-trenchlight-flag": "kept" },
+  );
+  assert.equal(trenchlight.getProgress(recovered.save).status, "active");
 });
 
 test("guide gating and field-partner dialogue advance through authored first meetings", () => {

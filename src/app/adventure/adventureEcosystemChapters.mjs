@@ -53,6 +53,20 @@ import {
   turnInKelpwatchFieldwork,
   recoverKelpwatchQuestFlags,
 } from "./adventureKelpwatch.mjs";
+import {
+  TRENCHLIGHT_QUEST_ID,
+  TRENCHLIGHT_INTERPRETATION_CHOICES,
+  TRENCHLIGHT_OBSERVATION_COPY,
+  TRENCHLIGHT_RESPONSE_CHOICES,
+  beginTrenchlightExpedition,
+  getTrenchlightProgress,
+  reconcileTrenchlightQuest,
+  recordTrenchlightObservation,
+  submitTrenchlightInterpretation,
+  submitTrenchlightResponse,
+  turnInTrenchlightFieldwork,
+  recoverTrenchlightQuestFlags,
+} from "./adventureTrenchlight.mjs";
 
 const SUNPATCH_INTERPRETATION_CHOICES = Object.freeze([
   Object.freeze({
@@ -108,6 +122,13 @@ const KELPWATCH_OBSERVATION_PREVIEW_VARIANTS = Object.freeze({
   "grazer-abundance-count": "kelpGrazers",
   "predator-evidence-survey": "kelpPredators",
   "repeat-comparison-site": "kelpRepeat",
+});
+
+const TRENCHLIGHT_OBSERVATION_PREVIEW_VARIANTS = Object.freeze({
+  "trenchlight-fading-light-profile": "trenchLight",
+  "trenchlight-pressure-profile": "trenchPressure",
+  "trenchlight-marine-snow-camera": "trenchSnow",
+  "trenchlight-bioluminescence-camera": "trenchGlow",
 });
 
 const OBSERVATION_PREVIEW_VARIANT_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
@@ -349,6 +370,60 @@ const KELPWATCH_CHAPTER = createChapterAdapter({
   },
 });
 
+const TRENCHLIGHT_CHAPTER = createChapterAdapter({
+  townId: "trenchlight-station",
+  questId: TRENCHLIGHT_QUEST_ID,
+  fieldNoteId: "field-note-deep-adaptations",
+  guideMetFlagId: "met-trenchlight-guide",
+  getProgress: getTrenchlightProgress,
+  begin: beginTrenchlightExpedition,
+  reconcile: reconcileTrenchlightQuest,
+  recordObservation: recordTrenchlightObservation,
+  submitInterpretation: submitTrenchlightInterpretation,
+  submitResponse: submitTrenchlightResponse,
+  turnIn: turnInTrenchlightFieldwork,
+  ui: {
+    chapterName: "Trenchlight Station",
+    guideName: "Luz",
+    guideQuestTitle: "Meet Luz at Trenchlight Station",
+    guideQuestDescription: "Talk with Luz before boarding the research sub. She will introduce the lost sensor, the expedition team, and why a trained pilot keeps control throughout the descent.",
+    guideGateNotice: "Meet Luz on the station platform before boarding the guided sub expedition.",
+    recordLabel: "Trenchlight record",
+    challengerLabel: "Trenchlight challengers",
+    surveyEyebrow: "NPC-piloted deep-ocean expedition",
+    observationNoun: "deep-ocean instrument observations",
+    observationCopy: TRENCHLIGHT_OBSERVATION_COPY,
+    observationPreviewVariants: TRENCHLIGHT_OBSERVATION_PREVIEW_VARIANTS,
+    measurementItems: Object.freeze([]),
+    interpretationChoices: TRENCHLIGHT_INTERPRETATION_CHOICES,
+    responseChoices: TRENCHLIGHT_RESPONSE_CHOICES,
+    interpretationTitle: "Interpret the descent evidence",
+    responseTitle: "Choose a safe sensor recovery",
+    interpretationPrompt: "Compare the fading-light, rising-pressure, marine-snow, and low-light camera records. Choose only the local conclusion those observations support without assuming a vent or one universal deep-ocean food pathway.",
+    responsePrompt: "Choose a recovery that confirms a clear sensor lift point and habitat-free approach, keeps the expedition lead in control, and stops whenever clearance is uncertain.",
+    questTitle: "Recover Trenchlight's research sensor",
+    questDescription: "Join the NPC-piloted descent, record four instrument observations in order, hear both resident perspectives, interpret the local evidence, and recover only the deployed sensor without collecting wildlife or contacting habitat.",
+    fieldReportTitle: "Present your deep-ocean expedition report",
+    fieldReportDescription: "After the sub returns safely, report to Dr. Hana Okoye. She will review the four records, what they do and do not show about deep food pathways, and why the crew used clearance and abort criteria.",
+    qualifierTitle: "Qualify at Trenchlight Tide Hall",
+    qualifierDescription: "Your expedition report is complete. Visit Captain Elian in Tide Hall for the 10 VP qualification duel.",
+    tideMarkId: "tide-mark-trenchlight",
+    tideMarkTitle: "Trenchlight Tide Mark earned",
+    tideMarkDescription: "The sensor is back aboard with its record intact, the observed habitat remains undisturbed, and the station will compare future readings rather than treating one descent as the whole trench.",
+    activityLabel: "guided deep-ocean expedition",
+    guideStartCheckpointId: "trenchlight-guide-met",
+    guideStartNotice: "Luz has introduced the expedition. Meet Dr. Hana Okoye for the instrument and safety briefing before descent.",
+    fieldPartnerMetFlagId: "met-trenchlight-scientist",
+    fieldPartnerIntroCheckpointId: "trenchlight-expedition-lead-met",
+    fieldPartnerIntroNotice: "Dr. Hana has reviewed the ordered descent stops, assisted controls, habitat-clearance rule, and safe return plan.",
+    fieldworkCheckpointPrefix: "trenchlight-fieldwork",
+    turnInCheckpointId: "trenchlight-fieldwork-complete",
+    turnInNotice: "Your Life in the Deep Field Note is complete. Captain Elian's Tide Hall qualifier is now open.",
+    interpretationGateNotice: "Complete all four ordered descent observations before interpreting this route's deep-ocean evidence.",
+    responseGateNotice: "Reach an evidence-supported interpretation before choosing the sensor recovery approach.",
+  },
+});
+
 /**
  * Runtime-only adapters for ecosystem chapters. Functions stay outside the
  * serialized save contract; only their canonical IDs and resulting save data
@@ -359,12 +434,14 @@ export const ADVENTURE_ECOSYSTEM_CHAPTERS = Object.freeze([
   BRACKWATER_CHAPTER,
   CURRENT_CHAPTER,
   KELPWATCH_CHAPTER,
+  TRENCHLIGHT_CHAPTER,
 ]);
 
 const CHAPTER_FLAG_RECOVERERS = Object.freeze([
   Object.freeze({ questId: BRACKWATER_QUEST_ID, recover: recoverBrackwaterQuestFlags }),
   Object.freeze({ questId: CURRENT_QUEST_ID, recover: recoverCurrentQuestFlags }),
   Object.freeze({ questId: KELPWATCH_QUEST_ID, recover: recoverKelpwatchQuestFlags }),
+  Object.freeze({ questId: TRENCHLIGHT_QUEST_ID, recover: recoverTrenchlightQuestFlags }),
 ]);
 
 const CHAPTER_BY_TOWN_ID = new Map(

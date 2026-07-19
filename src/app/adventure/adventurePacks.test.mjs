@@ -142,7 +142,7 @@ test("the new-card guarantee becomes optional only after the whole pool is owned
   assert.equal(new Set(opened.cards).size, pool.cardsPerPack);
 });
 
-test("opening rejects unavailable and planned packs without changing the save", () => {
+test("opening rejects unavailable packs without changing the save", () => {
   const noPackSave = createInitialAdventureSave("profile-no-pack");
   const noPackBefore = clone(noPackSave);
   assert.throws(
@@ -150,18 +150,6 @@ test("opening rejects unavailable and planned packs without changing the save", 
     (error) => error instanceof AdventurePackOpeningError && error.code === "pack-unavailable",
   );
   assert.deepEqual(noPackSave, noPackBefore);
-
-  const plannedPackId = "pack-pool-trenchlight-deep";
-  const plannedSave = grantReward(noPackSave, {
-    grantId: "test-planned-pack",
-    packs: { [plannedPackId]: 1 },
-  }).save;
-  const plannedBefore = clone(plannedSave);
-  assert.throws(
-    () => openAdventurePack(plannedSave, plannedPackId, { random: () => 0 }),
-    (error) => error instanceof AdventurePackOpeningError && error.code === "pack-not-playable",
-  );
-  assert.deepEqual(plannedSave, plannedBefore);
 });
 
 test("the playable Sunpatch Coral Pack contains the intended twelve-card reef pool", () => {
