@@ -25,6 +25,9 @@ import {
   isAdventureEcosystemChapterQuest,
   recoverAdventureEcosystemChapterFlags,
 } from "./adventureEcosystemChapters.mjs";
+import {
+  recoverTrenchlightExpeditionResume,
+} from "./adventureTrenchlightExpedition.mjs";
 
 export const SHELLSHORE_QUEST_ID = "quest-shellshore-first-voyage";
 export const SHELLSHORE_RESIDENT_ENCOUNTER_IDS = Object.freeze(
@@ -254,7 +257,12 @@ export function recoverAdventureResume(saveValue) {
   ));
   const chapterRewardResume = reconcileCompletedChapterRewards(questSave);
   const rewardResume = reconcileCompletedEncounterRewards(chapterRewardResume.save);
-  const save = rewardResume.save;
+  // A submersible save is meaningful only while its scripted survey or
+  // recovery leg is active. Let that domain recover terminal or impossible
+  // expedition phases to Mission Control before applying generic scene and
+  // collision recovery. Valid active legs remain byte-for-byte resumable.
+  const expeditionResume = recoverTrenchlightExpeditionResume(rewardResume.save);
+  const save = expeditionResume.save;
   const scene = SCENES[save.world.sceneId];
   const sceneContent = getAdventureScene(save.world.sceneId);
 
@@ -309,14 +317,17 @@ export function recoverAdventureResume(saveValue) {
 
   return finalize({
     save,
-    recovered: questReconciled || chapterRewardResume.recovered || rewardResume.recovered,
+    recovered: questReconciled
+      || chapterRewardResume.recovered
+      || rewardResume.recovered
+      || expeditionResume.recovered,
     reason: questReconciled
       ? "quest-state-reconciled"
       : chapterRewardResume.recovered
         ? "chapter-reward-reconciled"
         : rewardResume.recovered
           ? "encounter-reward-reconciled"
-          : null,
+          : expeditionResume.reason,
     fallback: null,
   });
 }

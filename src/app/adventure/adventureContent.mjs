@@ -1813,6 +1813,16 @@ const trenchlightRuntimeScenes = {
         conversationId: "conversation-trenchlight-scientist",
       },
       {
+        id: "interaction-trenchlight-launch-sub",
+        type: "sub-launch",
+        at: { x: 6, y: 5 },
+        questId: "quest-trenchlight-sensor",
+        targetScene: "trenchlight-sub-descent",
+        spawn: { x: 7, y: 8 },
+        facing: "up",
+        label: "Launch the guided research sub",
+      },
+      {
         id: "interaction-trenchlight-interpret-evidence",
         type: "interpretation",
         at: { x: 3, y: 4 },
