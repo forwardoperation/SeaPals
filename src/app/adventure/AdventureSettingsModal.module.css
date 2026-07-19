@@ -1,0 +1,299 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: clamp(16px, 4vw, 40px);
+  background: rgb(2 22 35 / 88%);
+  backdrop-filter: blur(8px);
+}
+
+.card {
+  width: min(100%, 680px);
+  overflow: hidden;
+  border: 2px solid #67d7e9;
+  border-radius: 24px;
+  color: #12253b;
+  background: #f7fbf5;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 48%), 0 0 0 5px rgb(103 215 233 / 18%);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #bddde0;
+  background: linear-gradient(135deg, #e9fbf8, #eef7fb);
+}
+
+.header span {
+  display: block;
+  margin-bottom: 4px;
+  color: #00657c;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.header h2 {
+  margin: 0;
+  color: #092c42;
+  font-size: clamp(1.55rem, 4vw, 2rem);
+  line-height: 1;
+}
+
+.header button,
+.footer button {
+  min-height: 44px;
+  border: 2px solid #12637b;
+  border-radius: 14px;
+  padding: 10px 16px;
+  color: #123047;
+  background: #fff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.intro {
+  margin: 0;
+  padding: 20px 24px 8px;
+  color: #3c5262;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.notice,
+.error {
+  margin: 12px 24px 0;
+  border: 1px solid #6ebdc8;
+  border-radius: 12px;
+  padding: 11px 13px;
+  color: #16495b;
+  background: #e9fbfc;
+  font-weight: 750;
+}
+
+.error {
+  border-color: #d4666c;
+  color: #76232a;
+  background: #fff0f0;
+}
+
+.settingsList {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  border: 0;
+  padding: 18px 24px 24px;
+}
+
+.selectRow,
+.toggleRow {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid #c7dfe1;
+  border-radius: 16px;
+  padding: 13px 14px 13px 16px;
+  background: #fff;
+}
+
+.selectRow > span,
+.toggleCopy {
+  display: grid;
+  gap: 4px;
+}
+
+.selectRow strong,
+.toggleCopy strong {
+  color: #123047;
+  font-size: 1rem;
+}
+
+.selectRow small,
+.toggleCopy small {
+  max-width: 430px;
+  color: #526b79;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.selectRow select {
+  min-width: 132px;
+  min-height: 44px;
+  border: 2px solid #247b8d;
+  border-radius: 12px;
+  padding: 8px 36px 8px 12px;
+  color: #102d42;
+  background: #f3feff;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.toggleRow {
+  cursor: pointer;
+}
+
+.switchControl {
+  position: relative;
+  flex: 0 0 auto;
+  width: 58px;
+  height: 44px;
+}
+
+.switchControl input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.switchControl > span {
+  position: absolute;
+  top: 7px;
+  right: 0;
+  left: 0;
+  height: 30px;
+  border: 2px solid #54717c;
+  border-radius: 999px;
+  background: #dce8e9;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.switchControl > span::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgb(0 0 0 / 28%);
+  content: "";
+  transition: transform 150ms ease;
+}
+
+.switchControl input:checked + span {
+  border-color: #006b75;
+  background: #05b8a6;
+}
+
+.switchControl input:checked + span::after {
+  transform: translateX(26px);
+}
+
+.switchControl input:focus-visible + span,
+.selectRow select:focus-visible,
+.header button:focus-visible,
+.footer button:focus-visible {
+  outline: 4px solid #ffbd32;
+  outline-offset: 3px;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #bddde0;
+  padding: 18px 24px 22px;
+  background: #e9f4f4;
+}
+
+.footer .secondaryButton {
+  border-color: #57727d;
+  color: #294753;
+  background: #fff;
+}
+
+.footer .primaryButton {
+  min-width: 154px;
+  border-color: #006e7d;
+  color: #032d35;
+  background: linear-gradient(100deg, #16c9e2, #08d69d);
+}
+
+.header button:disabled,
+.footer button:disabled,
+.settingsList:disabled .selectRow,
+.settingsList:disabled .toggleRow {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .layer {
+    align-items: start;
+    padding: 10px;
+  }
+
+  .card {
+    border-radius: 18px;
+  }
+
+  .header,
+  .intro,
+  .settingsList,
+  .footer {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .selectRow,
+  .toggleRow {
+    align-items: flex-start;
+  }
+
+  .selectRow {
+    flex-direction: column;
+  }
+
+  .selectRow select {
+    width: 100%;
+  }
+
+  .footer {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .footer button {
+    width: 100%;
+  }
+}
+
+@media (max-height: 620px) and (orientation: landscape) {
+  .layer {
+    place-items: start center;
+    padding: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switchControl > span,
+  .switchControl > span::after {
+    transition: none;
+  }
+}

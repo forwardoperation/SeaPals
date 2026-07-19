@@ -28,6 +28,10 @@ import {
 import {
   recoverTrenchlightExpeditionResume,
 } from "./adventureTrenchlightExpedition.mjs";
+import {
+  CHAMPIONS_WAKE_QUEST_ID,
+  getChampionsWakeTournamentRoundAvailability,
+} from "./adventureTournamentGate.mjs";
 
 export const SHELLSHORE_QUEST_ID = "quest-shellshore-first-voyage";
 export const SHELLSHORE_RESIDENT_ENCOUNTER_IDS = Object.freeze(
@@ -122,12 +126,34 @@ function beginEcosystemChapterAtCurrentScene(saveValue) {
   };
 }
 
+/** Starts the final chapter as soon as a safe non-route Champion's Wake scene is entered. */
+export function beginChampionsWakeQuestAtCurrentScene(saveValue) {
+  let save = normalizeAdventureSave(saveValue);
+  const scene = SCENES[save.world.sceneId];
+  const sceneContent = getAdventureScene(save.world.sceneId);
+  if (
+    !scene
+    || scene.routeId
+    || sceneContent?.townId !== "champions-wake"
+    || save.world.townId !== "champions-wake"
+  ) {
+    return { save, applied: false };
+  }
+
+  const quest = save.progression.quests[CHAMPIONS_WAKE_QUEST_ID]
+    ?? { status: "notStarted", flags: {} };
+  if (quest.status !== "notStarted") return { save, applied: false };
+  save = transitionQuest(save, CHAMPIONS_WAKE_QUEST_ID, "active");
+  return { save, applied: true };
+}
+
 function finalizeAdventureResume(result) {
   const chapter = beginEcosystemChapterAtCurrentScene(result.save);
-  if (!chapter.applied) return result;
+  const championsWake = beginChampionsWakeQuestAtCurrentScene(chapter.save);
+  if (!chapter.applied && !championsWake.applied) return result;
   return {
     ...result,
-    save: chapter.save,
+    save: championsWake.save,
     recovered: true,
     reason: result.fallback ? result.reason : "quest-state-reconciled",
   };
@@ -349,13 +375,42 @@ export function enterAdventureScene(saveValue, { sceneId, position, facing }) {
   let save = moveAdventureSession(saveValue, { sceneId, position, facing });
   const visitFlag = SCENE_VISIT_FLAGS[sceneId];
   if (visitFlag) save = setQuestFlag(save, SHELLSHORE_QUEST_ID, visitFlag, true);
-  return beginEcosystemChapterAtCurrentScene(save).save;
+  save = beginEcosystemChapterAtCurrentScene(save).save;
+  return beginChampionsWakeQuestAtCurrentScene(save).save;
 }
 
 export function isAdventureEncounterAvailable(saveValue, encounterId) {
   const save = reconcileAdventureProgression(saveValue);
   const encounter = getAdventureEncounter(encounterId);
   if (!encounter) return { available: false, reason: "Unknown encounter." };
+  if (encounter.role === "tournament") {
+    if (save.progression.tournament.status === "complete") {
+      const postgameUnlocked = save.progression.quests[CHAMPIONS_WAKE_QUEST_ID]
+        ?.flags?.["postgame-unlocked"] === true;
+      if (!postgameUnlocked) {
+        return {
+          available: false,
+          reason: "Complete the Championship Ceremony and reflection before opening practice rematches.",
+        };
+      }
+      return {
+        available: true,
+        reason: null,
+        practiceOnly: true,
+      };
+    }
+    const tournamentRound = getChampionsWakeTournamentRoundAvailability(save, encounterId);
+    if (!tournamentRound.available) {
+      const reason = tournamentRound.reason === "registration-required"
+        ? "Register a legal deck for the tournament before entering this round."
+        : tournamentRound.reason === "round-not-active"
+          ? "Complete the current tournament round first."
+          : tournamentRound.reason === "invalid-locked-deck"
+            ? "The registered deck snapshot could not be verified. Register again."
+            : "The active Champion's Wake tournament quest is required.";
+      return { available: false, reason };
+    }
+  }
   const quest = encounter.questId
     ? save.progression.quests[encounter.questId] ?? { status: "notStarted", flags: {} }
     : null;

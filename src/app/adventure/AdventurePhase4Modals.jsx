@@ -46,7 +46,14 @@ function useDialogFocusTrap(active = true) {
   return ref;
 }
 
-export function AdventureWorldMapModal({ model, notice = null, blocked = false, onAutoSteer, onClose }) {
+export function AdventureWorldMapModal({
+  model,
+  notice = null,
+  blocked = false,
+  autoSteerEnabled = true,
+  onAutoSteer,
+  onClose,
+}) {
   const dialogRef = useDialogFocusTrap(!blocked);
   return (
     <div
@@ -106,11 +113,17 @@ export function AdventureWorldMapModal({ model, notice = null, blocked = false, 
                 <p>{!route.runtimeReady
                   ? "This destination is on your chart, but its navigable route and dock are not open yet."
                   : route.completed
-                  ? "You have piloted this route safely. Auto-steer is now available at either dock."
+                  ? autoSteerEnabled
+                    ? "You have piloted this route safely. Auto-steer is available at either dock."
+                    : "You have piloted this route safely. Turn on Boat auto-steer in Settings to use assisted return travel."
                   : "The first crossing must be steered manually between the marked buoys."}</p>
               </div>
               {route.canAutoSteerNow ? (
-                <button type="button" onClick={() => onAutoSteer(route.routeId, route.destinationDockId)}>
+                <button
+                  type="button"
+                  disabled={!autoSteerEnabled}
+                  onClick={() => onAutoSteer(route.routeId, route.destinationDockId)}
+                >
                   Auto-steer to {destinationName ?? "the opposite dock"}
                 </button>
               ) : null}

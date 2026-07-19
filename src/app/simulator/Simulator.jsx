@@ -84,7 +84,18 @@ function ProfessorGuidePortrait({ guide, compact = false }) {
 
 function ProfessorTypewriter({ guide, message }) {
   const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
-  const duration = useMemo(() => getProfessorSpeechDuration(graphemes.length), [graphemes.length]);
+  const textSpeed = guide.textSpeed ?? "normal";
+  const reducedMotion = guide.reducedMotion === true;
+  const speedMultiplier = {
+    slow: 1.5,
+    normal: 1,
+    fast: 0.55,
+    instant: 0,
+  }[textSpeed] ?? 1;
+  const duration = useMemo(
+    () => getProfessorSpeechDuration(graphemes.length) * speedMultiplier,
+    [graphemes.length, speedMultiplier],
+  );
   const [visibleCount, setVisibleCount] = useState(0);
   const animationRef = useRef({ frameId: null, generation: 0 });
   const isComplete = visibleCount >= graphemes.length;
@@ -116,7 +127,7 @@ function ProfessorTypewriter({ guide, message }) {
       if (event.matches) finish();
     };
 
-    if (!graphemes.length || motionPreference?.matches) {
+    if (!graphemes.length || reducedMotion || textSpeed === "instant" || motionPreference?.matches) {
       setVisibleCount(graphemes.length);
     } else {
       setVisibleCount(0);
@@ -147,7 +158,7 @@ function ProfessorTypewriter({ guide, message }) {
       if (motionPreference?.removeEventListener) motionPreference.removeEventListener("change", handleMotionPreference);
       else motionPreference?.removeListener?.(handleMotionPreference);
     };
-  }, [duration, graphemes.length, message]);
+  }, [duration, graphemes.length, message, reducedMotion, textSpeed]);
 
   return (
     <div className="seapals-professor-dialogue mt-2" aria-label="Professor guidance">
@@ -1674,9 +1685,18 @@ function getSlotConnectorStyle(position) {
   };
 }
 
-export default function Simulator({ storyMode = null } = {}) {
+export default function Simulator({
+  storyMode = null,
+  accessibilitySettings = null,
+  onOpenAccessibilitySettings = null,
+} = {}) {
   const isStoryMode = Boolean(storyMode);
   const tutorialRuntime = storyMode?.tutorial ?? null;
+  const accessibilityTextSpeed = ["slow", "normal", "fast", "instant"].includes(accessibilitySettings?.textSpeed)
+    ? accessibilitySettings.textSpeed
+    : "normal";
+  const accessibilityReducedMotion = accessibilitySettings?.reducedMotion === true;
+  const accessibilityHighContrast = accessibilitySettings?.highContrast === true;
   const [storyPlayerDeckSnapshot] = useState(() => (
     storyMode?.playerDeckSnapshot
       ? resolveStoryPlayerDeckSnapshot(
@@ -1711,6 +1731,8 @@ export default function Simulator({ storyMode = null } = {}) {
     name: String(tutorialRuntime?.guide?.name ?? storyOpponentName ?? "Professor Current"),
     role: String(tutorialRuntime?.guide?.role ?? "SeaPals Mentor"),
     portraitSrc: String(tutorialRuntime?.guide?.portraitSrc ?? "/images/adventure/academy-mentor-sprites.png"),
+    textSpeed: accessibilityTextSpeed,
+    reducedMotion: accessibilityReducedMotion,
   };
   const [tutorialHelpDismissedId, setTutorialHelpDismissedId] = useState(null);
   const [tutorialBoardTourStep, setTutorialBoardTourStep] = useState(null);
@@ -8676,9 +8698,16 @@ export default function Simulator({ storyMode = null } = {}) {
   const handPopoverCard = handPopoverCardId && hand.includes(handPopoverCardId) ? cardsById[handPopoverCardId] : null;
   const handPopoverPlayError = handPopoverCard ? getPlayError(handPopoverCard) : "";
   const visiblePlayError = playError || selectedHandPlayError;
+  const accessibilitySettingsAvailable = typeof onOpenAccessibilitySettings === "function";
+  const canOpenAccessibilitySettings = accessibilitySettingsAvailable
+    && gamePhase === "main"
+    && !opponentThinking
+    && !eventOverlay
+    && !modal
+    && !faceoffRolling;
 
   return (
-    <main className="seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3">
+    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
         @keyframes seapalsDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
@@ -8958,7 +8987,42 @@ export default function Simulator({ storyMode = null } = {}) {
         }
         .seapals-game-shell img[data-card-art-fallback="true"],
         .seapals-game-shell img[src*="SeaPalsTCGLogoWhite.svg"] { padding: 12%; object-fit: contain !important; }
+        .seapals-high-contrast {
+          color: #fff;
+          background: #000 !important;
+          background-image: none !important;
+        }
+        .seapals-high-contrast :is(button, a[href], [role="button"]):focus-visible {
+          outline: 4px solid #ffea00 !important;
+          outline-offset: 3px !important;
+          box-shadow: 0 0 0 2px #000 !important;
+        }
+        .seapals-high-contrast :is(.seapals-hud-panel, .seapals-arena-frame, .seapals-professor-card) {
+          border-color: #fff !important;
+          box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff !important;
+        }
+        .seapals-reduced-motion :is(.seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-card-drawer, .seapals-event-card, .seapals-turn-button) {
+          animation: none !important;
+          transition: none !important;
+        }
+        .seapals-reduced-motion .seapals-professor-turn,
+        .seapals-reduced-motion .seapals-professor-next { opacity: 1 !important; }
+        .seapals-reduced-motion .seapals-professor-type-cursor { display: none; }
+        .seapals-reduced-motion *,
+        .seapals-reduced-motion *::before,
+        .seapals-reduced-motion *::after {
+          scroll-behavior: auto !important;
+          animation: none !important;
+          transition: none !important;
+        }
         @media (prefers-reduced-motion: reduce) {
+          .seapals-game-shell *,
+          .seapals-game-shell *::before,
+          .seapals-game-shell *::after {
+            scroll-behavior: auto !important;
+            animation: none !important;
+            transition: none !important;
+          }
           .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor { animation: none !important; opacity: 1 !important; }
           .seapals-professor-type-cursor { display: none; }
           .seapals-setup-playable-card { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); }
@@ -9038,9 +9102,20 @@ export default function Simulator({ storyMode = null } = {}) {
                 <span className="hidden xl:inline">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
               </div>
               <details className="relative">
-                <summary className="cursor-pointer list-none rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden">Menu</summary>
+                <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden">Menu</summary>
                 <div className="absolute right-0 top-11 z-[70] w-48 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-xl">
                   <button type="button" onClick={openNewGameSetup} className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">{isStoryMode ? "Restart Duel" : "Start New Game"}</button>
+                  {accessibilitySettingsAvailable ? (
+                    <button
+                      type="button"
+                      disabled={!canOpenAccessibilitySettings}
+                      title={canOpenAccessibilitySettings ? "Adjust adventure accessibility settings" : "Finish the current animation or decision first"}
+                      onClick={canOpenAccessibilitySettings ? onOpenAccessibilitySettings : undefined}
+                      className="mt-1 min-h-11 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Accessibility Settings
+                    </button>
+                  ) : null}
                   {isStoryMode ? (
                     <button type="button" onClick={exitStoryMode} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to {storyReturnLabel}</button>
                   ) : (

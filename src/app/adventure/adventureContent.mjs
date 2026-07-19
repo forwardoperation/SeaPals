@@ -46,6 +46,16 @@ export const REQUIRED_TUTORIAL_CHECKPOINT_IDS = Object.freeze([
   "tutorial-earn-vp",
 ]);
 
+export const CHAMPIONS_WAKE_ACTION_IDS = Object.freeze({
+  registration: "interaction-champions-wake-director",
+  rounds: Object.freeze([
+    "interaction-tournament-quarterfinal",
+    "interaction-tournament-semifinal",
+    "interaction-tournament-final",
+  ]),
+  epilogue: "interaction-champions-wake-epilogue",
+});
+
 const npcRoleDefinitions = [
   { id: "mentor", purpose: "Introduces SeaPals, starter choice, and safe field practice." },
   { id: "local-guide", purpose: "Frames what has changed without supplying the answer." },
@@ -54,6 +64,7 @@ const npcRoleDefinitions = [
   { id: "town-challenger", purpose: "Connects the local habitat to a SeaPals deck strategy." },
   { id: "reflection-character", purpose: "Prompts an evidence-based explanation and later callback." },
   { id: "tournament-director", purpose: "Registers legal decks and explains the 30 VP bracket." },
+  { id: "spectator", purpose: "Connects tournament play to the archipelago communities watching and learning together." },
 ];
 
 const towns = [
@@ -196,7 +207,7 @@ const towns = [
       "encounter-tournament-semifinal",
       "encounter-tournament-final",
     ],
-    plannedNpcRoleIds: ["tournament-director", "town-challenger", "reflection-character"],
+    plannedNpcRoleIds: ["tournament-director", "town-challenger", "reflection-character", "spectator"],
     packPoolId: null,
     unlockRuleId: "unlock-champions-wake",
     arrivalRouteId: "route-trenchlight-champions-wake",
@@ -1781,6 +1792,17 @@ const trenchlightRuntimeScenes = {
         facing: "left",
         label: "Pilot back to Kelpwatch Island",
       },
+      {
+        id: "interaction-trenchlight-board-champions-wake-route",
+        type: "board",
+        at: { x: 8, y: 9 },
+        routeId: "route-trenchlight-champions-wake",
+        dockId: "trenchlight-champions-wake-dock",
+        targetScene: "trenchlight-champions-wake-sea",
+        spawn: { x: 1, y: 5 },
+        facing: "right",
+        label: "Pilot to Champion's Wake",
+      },
     ],
   },
   "trenchlight-mission-control": {
@@ -2002,6 +2024,294 @@ const trenchlightRuntimeScenes = {
   },
 };
 
+const trenchlightChampionsWakeRouteWorld = {
+  name: "Trenchlight Station - Champion's Wake Sea Lane",
+  worldKind: "route",
+  theme: "trenchlight-champions-wake-route",
+  artPath: "/images/adventure/trenchlight-champions-wake-route.png",
+  movement: {
+    mode: "boat",
+    speed: 3.2,
+    radius: 0.28,
+    maxStepDistance: 0.08,
+  },
+  tiles: [
+    "kkkkkkkkkkkkkkkk",
+    "kbooooooooooookk",
+    "kooooooooooookkk",
+    "koooooooooooookk",
+    "kooooooooooooook",
+    "HooooooooooooooH",
+    "kooooooooooooook",
+    "koooooooooooookk",
+    "kooooooooooookkk",
+    "kkkkkkkkkkkkkkkk",
+  ],
+  spawn: { x: 1, y: 5 },
+  startFacing: "right",
+  interactions: [
+    {
+      id: "interaction-route-dock-trenchlight-champions-wake",
+      type: "dock",
+      endpoint: "from",
+      at: { x: 0, y: 5 },
+      routeId: "route-trenchlight-champions-wake",
+      dockId: "trenchlight-champions-wake-dock",
+      targetScene: "trenchlight-station-town",
+      spawn: { x: 8, y: 8 },
+      facing: "up",
+      label: "Dock at Trenchlight Station",
+    },
+    {
+      id: "interaction-route-dock-champions-wake",
+      type: "dock",
+      endpoint: "to",
+      at: { x: 15, y: 5 },
+      routeId: "route-trenchlight-champions-wake",
+      dockId: "champions-wake-dock",
+      targetScene: "champions-wake-town",
+      spawn: { x: 7, y: 8 },
+      facing: "up",
+      label: "Dock at Champion's Wake",
+    },
+  ],
+};
+
+const championsWakeRuntimeScenes = {
+  "champions-wake-town": {
+    name: "Champion's Wake",
+    worldKind: "town",
+    theme: "champions-wake-town",
+    artPath: "/images/adventure/champions-wake-town.png",
+    tiles: [
+      "tttttttttttttttt",
+      "tccCctssSstddDdt",
+      "tcccctsssstddddt",
+      "ttgppppppppppgtt",
+      "ttgagppppppgagtt",
+      "ttgggppppppggggt",
+      "ttgagppppppgagtt",
+      "ttgagppppppgagtt",
+      "ttgggggppgggggtt",
+      "tttttttHtttttttt",
+    ],
+    spawn: { x: 7, y: 8 },
+    startFacing: "up",
+    collisionRects: [
+      { id: "champions-wake-left-banner-garden", left: 2.15, top: 4.1, right: 4.6, bottom: 4.9 },
+      { id: "champions-wake-medal-plinth", left: 7.25, top: 5.25, right: 8.75, bottom: 6.05 },
+      { id: "champions-wake-right-banner-garden", left: 11.35, top: 4.1, right: 13.8, bottom: 4.9 },
+    ],
+    interactions: [
+      {
+        id: "interaction-champions-wake-enter-registration",
+        type: "enter",
+        at: { x: 3, y: 2 },
+        targetScene: "champions-wake-registration-hall",
+        spawn: { x: 5, y: 6 },
+        facing: "up",
+      },
+      {
+        id: "interaction-champions-wake-enter-arena",
+        type: "enter",
+        at: { x: 8, y: 2 },
+        targetScene: "champions-wake-arena",
+        spawn: { x: 5, y: 6 },
+        facing: "up",
+      },
+      {
+        id: "interaction-champions-wake-enter-reflection-pavilion",
+        type: "enter",
+        at: { x: 12, y: 2 },
+        targetScene: "champions-wake-reflection-pavilion",
+        spawn: { x: 5, y: 6 },
+        facing: "up",
+      },
+      {
+        id: "interaction-champions-wake-board-trenchlight-route",
+        type: "board",
+        at: { x: 7, y: 9 },
+        routeId: "route-trenchlight-champions-wake",
+        dockId: "champions-wake-dock",
+        targetScene: "trenchlight-champions-wake-sea",
+        spawn: { x: 14, y: 5 },
+        facing: "left",
+        label: "Pilot back to Trenchlight Station",
+      },
+    ],
+  },
+  "champions-wake-registration-hall": {
+    name: "Champion's Wake Registration Hall",
+    worldKind: "interior",
+    theme: "champions-wake-registration-hall",
+    artPath: "/images/adventure/champions-wake-registration-hall.png",
+    tiles: [
+      "wwwwwwwwwwww",
+      "wwwwwwwwwwww",
+      "waaaffffaaaw",
+      "wffffnfffffw",
+      "waaffffffaaw",
+      "wffffffffffw",
+      "wffffffffffw",
+      "wwwwwEwwwwww",
+    ],
+    spawn: { x: 5, y: 6 },
+    collisionRects: [
+      { id: "champions-registration-left-desk", left: 0.5, top: 0.9, right: 3.2, bottom: 3.15 },
+      { id: "champions-registration-rear-display", left: 3.5, top: 0.9, right: 7.5, bottom: 2.4 },
+      { id: "champions-registration-right-desk", left: 7.8, top: 0.9, right: 10.5, bottom: 3.15 },
+      { id: "champions-registration-left-seating", left: 0.5, top: 4.75, right: 3.2, bottom: 6.5 },
+      { id: "champions-registration-right-seating", left: 7.8, top: 4.75, right: 10.5, bottom: 6.5 },
+    ],
+    interactions: [
+      {
+        id: "interaction-champions-wake-director",
+        type: "npc",
+        at: { x: 5, y: 3 },
+        npcId: "champions-wake-director",
+        conversationId: "conversation-champions-wake-director",
+        questId: "quest-champions-wake",
+        tournamentAction: "registration",
+        requiredTideMarkIds: [
+          "tide-mark-sunpatch",
+          "tide-mark-brackwater",
+          "tide-mark-current",
+          "tide-mark-kelpwatch",
+          "tide-mark-trenchlight",
+        ],
+        label: "Review your Tide Marks and register a deck",
+      },
+      {
+        id: "interaction-champions-wake-registration-exit",
+        type: "exit",
+        at: { x: 5, y: 7 },
+        targetScene: "champions-wake-town",
+        spawn: { x: 3, y: 3 },
+        facing: "down",
+      },
+    ],
+  },
+  "champions-wake-arena": {
+    name: "Champion's Wake Tournament Arena",
+    worldKind: "interior",
+    theme: "champions-wake-arena",
+    artPath: "/images/adventure/champions-wake-arena.png",
+    tiles: [
+      "wwwwwwwwwwww",
+      "wwwwwwwwwwww",
+      "waaffffffaaw",
+      "wfnffnffnffw",
+      "wffffffffffw",
+      "waaffffffaaw",
+      "wffffffffffw",
+      "wwwwwEwwwwww",
+    ],
+    spawn: { x: 5, y: 6 },
+    collisionRects: [
+      { id: "champions-arena-left-stands", left: 0.5, top: 0.9, right: 1.55, bottom: 6.45 },
+      { id: "champions-arena-rear-stage", left: 3.35, top: 0.9, right: 7.65, bottom: 2.35 },
+      { id: "champions-arena-right-stands", left: 9.45, top: 0.9, right: 10.5, bottom: 6.45 },
+    ],
+    interactions: [
+      {
+        id: "interaction-tournament-quarterfinal",
+        type: "trainer",
+        at: { x: 2, y: 3 },
+        trainerId: "tournament-quarterfinalist",
+        npcId: "tournament-quarterfinalist",
+        conversationId: "conversation-tournament-quarterfinalist",
+        encounterId: "encounter-tournament-quarterfinal",
+        questId: "quest-champions-wake",
+        tournamentAction: "round",
+        roundIndex: 1,
+      },
+      {
+        id: "interaction-tournament-semifinal",
+        type: "trainer",
+        at: { x: 5, y: 3 },
+        trainerId: "tournament-semifinalist",
+        npcId: "tournament-semifinalist",
+        conversationId: "conversation-tournament-semifinalist",
+        encounterId: "encounter-tournament-semifinal",
+        questId: "quest-champions-wake",
+        tournamentAction: "round",
+        roundIndex: 2,
+      },
+      {
+        id: "interaction-tournament-final",
+        type: "trainer",
+        at: { x: 8, y: 3 },
+        trainerId: "tournament-champion",
+        npcId: "tournament-champion",
+        conversationId: "conversation-tournament-champion",
+        encounterId: "encounter-tournament-final",
+        questId: "quest-champions-wake",
+        tournamentAction: "round",
+        roundIndex: 3,
+      },
+      {
+        id: "interaction-champions-wake-arena-exit",
+        type: "exit",
+        at: { x: 5, y: 7 },
+        targetScene: "champions-wake-town",
+        spawn: { x: 8, y: 3 },
+        facing: "down",
+      },
+    ],
+  },
+  "champions-wake-reflection-pavilion": {
+    name: "Champion's Wake Reflection Pavilion",
+    worldKind: "interior",
+    theme: "champions-wake-reflection-pavilion",
+    artPath: "/images/adventure/champions-wake-reflection-pavilion.png",
+    tiles: [
+      "wwwwwwwwwwww",
+      "wwwwwwwwwwww",
+      "waaaffffaaaw",
+      "wfffnffnfffw",
+      "wffffffffffw",
+      "waaffffffaaw",
+      "wffffffffffw",
+      "wwwwwEwwwwww",
+    ],
+    spawn: { x: 5, y: 6 },
+    collisionRects: [
+      { id: "champions-pavilion-left-exhibit", left: 0.5, top: 0.9, right: 3.15, bottom: 2.95 },
+      { id: "champions-pavilion-tide-mark-display", left: 3.45, top: 0.9, right: 7.55, bottom: 2.35 },
+      { id: "champions-pavilion-right-exhibit", left: 7.85, top: 0.9, right: 10.5, bottom: 2.95 },
+      { id: "champions-pavilion-left-table", left: 0.5, top: 4.9, right: 3.2, bottom: 6.45 },
+      { id: "champions-pavilion-right-table", left: 7.8, top: 4.9, right: 10.5, bottom: 6.45 },
+    ],
+    interactions: [
+      {
+        id: "interaction-champions-wake-epilogue",
+        type: "npc",
+        at: { x: 4, y: 3 },
+        npcId: "champions-wake-reflector",
+        conversationId: "conversation-champions-wake-reflector",
+        questId: "quest-champions-wake",
+        tournamentAction: "epilogue",
+        label: "Reflect on the archipelago's evidence",
+      },
+      {
+        id: "interaction-champions-wake-spectator",
+        type: "npc",
+        at: { x: 7, y: 3 },
+        npcId: "champions-wake-spectator",
+        conversationId: "conversation-champions-wake-spectator",
+      },
+      {
+        id: "interaction-champions-wake-pavilion-exit",
+        type: "exit",
+        at: { x: 5, y: 7 },
+        targetScene: "champions-wake-town",
+        spawn: { x: 12, y: 3 },
+        facing: "down",
+      },
+    ],
+  },
+};
+
 const scenes = [
   { id: "town", townId: "shellshore-village", kind: "exterior", status: "prototype", world: shellshoreRuntimeScenes.town },
   { id: "coral-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["coral-home"] },
@@ -2033,7 +2343,11 @@ const scenes = [
   { id: "trenchlight-engineer-workshop", townId: "trenchlight-station", kind: "interior", status: "prototype", world: trenchlightRuntimeScenes["trenchlight-engineer-workshop"] },
   { id: "trenchlight-tide-hall", townId: "trenchlight-station", kind: "interior", status: "prototype", world: trenchlightRuntimeScenes["trenchlight-tide-hall"] },
   { id: "trenchlight-sub-descent", townId: "trenchlight-station", kind: "vehicle", status: "prototype", world: trenchlightRuntimeScenes["trenchlight-sub-descent"] },
-  { id: "champions-wake-town", townId: "champions-wake", kind: "exterior", status: "planned" },
+  { id: "trenchlight-champions-wake-sea", townId: "trenchlight-station", routeId: "route-trenchlight-champions-wake", kind: "route", status: "prototype", world: trenchlightChampionsWakeRouteWorld },
+  { id: "champions-wake-town", townId: "champions-wake", kind: "exterior", status: "prototype", world: championsWakeRuntimeScenes["champions-wake-town"] },
+  { id: "champions-wake-registration-hall", townId: "champions-wake", kind: "interior", status: "prototype", world: championsWakeRuntimeScenes["champions-wake-registration-hall"] },
+  { id: "champions-wake-arena", townId: "champions-wake", kind: "interior", status: "prototype", world: championsWakeRuntimeScenes["champions-wake-arena"] },
+  { id: "champions-wake-reflection-pavilion", townId: "champions-wake", kind: "interior", status: "prototype", world: championsWakeRuntimeScenes["champions-wake-reflection-pavilion"] },
 ];
 
 const docks = [
@@ -2047,7 +2361,8 @@ const docks = [
   { id: "kelpwatch-dock", townId: "kelpwatch-island", sceneId: "kelpwatch-island-town", status: "prototype", position: { x: 7, y: 8 }, facing: "up" },
   { id: "kelpwatch-trenchlight-dock", townId: "kelpwatch-island", sceneId: "kelpwatch-island-town", status: "prototype", position: { x: 8, y: 8 }, facing: "up" },
   { id: "trenchlight-dock", townId: "trenchlight-station", sceneId: "trenchlight-station-town", status: "prototype", position: { x: 7, y: 8 }, facing: "up" },
-  { id: "champions-wake-dock", townId: "champions-wake", sceneId: "champions-wake-town", status: "planned" },
+  { id: "trenchlight-champions-wake-dock", townId: "trenchlight-station", sceneId: "trenchlight-station-town", status: "prototype", position: { x: 8, y: 8 }, facing: "up" },
+  { id: "champions-wake-dock", townId: "champions-wake", sceneId: "champions-wake-town", status: "prototype", position: { x: 7, y: 8 }, facing: "up" },
 ];
 
 const conversations = [
@@ -2683,6 +2998,175 @@ const conversations = [
       ],
     },
   },
+  {
+    id: "conversation-champions-wake-director",
+    townId: "champions-wake",
+    npcId: "champions-wake-director",
+    lines: {
+      intro: [
+        "Welcome to Champion's Wake, Reefkeeper! I'm Director Amara Vela. Every community whose Tide Mark you earned helped raise this floating arena, and today they are cheering for you.",
+        "This is a three-round SeaPals bracket. Each duel is a complete 30 VP game, so your registered deck must be legal, owned, and ready to adapt across a long match.",
+      ],
+      guidance: [
+        "Before registration, visit the Tide Mark display and review what each Field Note actually supports. The strongest answer is not one remedy for every habitat; it is a habit of matching evidence, relationships, uncertainty, and tradeoffs to the place in front of you.",
+        "When your active deck passes the tournament rules, register it here. That list stays fixed through the quarterfinal, semifinal, and final bracket attempt.",
+      ],
+      registration: [
+        "Welcome to Champion's Wake, Reefkeeper! I'm Director Amara Vela, and all five of your Tide Marks are verified. Take one last look at your deck metrics, then register only when this is the sixty-card ecosystem you want beside you for all three 30 VP rounds.",
+      ],
+      roundReady: [
+        "Your registered deck is secure. The arena stewards will open only the next unfinished round, so each victory is recorded once and the bracket stays in order.",
+      ],
+      champion: [
+        "Champion! You built more than a winning board. You kept asking what the evidence supported, what it could not prove, and what a careful next step would protect.",
+        "The SeaPals Championship Cup is yours. Join Dr. Ivo Kestrel in the Reflection Pavilion; the voyage has an ending, but every habitat's observation story continues.",
+      ],
+      postgame: [
+        "Welcome back, Champion. Your bracket is complete, your registered list is archived, and the open sea lanes are yours to revisit for Field Notes, conversations, and rematches.",
+      ],
+      return: [
+        "Good to see you again. Registration, the next bracket round, and the Reflection Pavilion each remain available from this plaza as your progress allows.",
+      ],
+    },
+  },
+  {
+    id: "conversation-tournament-quarterfinalist",
+    townId: "champions-wake",
+    npcId: "tournament-quarterfinalist",
+    lines: {
+      intro: [
+        "Hi, Reefkeeper! I'm Miri Fen, your quarterfinal opponent. I grew up where tidal creeks change color and salinity from one hour to the next.",
+        "My Disruption deck tests whether you can keep useful options when the board gets cloudy. This is a full 30 VP duel, so a quick lead is only the beginning.",
+      ],
+      roundReady: [
+        "Hello, Reefkeeper—Miri Fen here. Our scenario board shows a cloudy inlet after rain. Color alone cannot name a cause; repeated dissolved-oxygen, turbidity, salinity, tide, rainfall, and source records make the next investigation stronger. Ready to play?",
+      ],
+      defeat: [
+        "That round turned before the evidence—or your hand—was settled. Review what changed, adjust your plan without inventing certainty, and challenge me again when you're ready.",
+      ],
+      rematch: [
+        "Welcome back. My tidal-creek puzzle and Disruption deck are ready for another complete 30 VP game.",
+      ],
+      victory: [
+        "Well read! You kept adapting without treating one murky moment as the whole story. The semifinal berth is yours.",
+      ],
+      roundVictory: [
+        "You separated observation from explanation, then built a flexible SeaPals answer. Director Vela has recorded the quarterfinal exactly once.",
+      ],
+      postgame: [
+        "Champion or challenger, a changing estuary always rewards another careful comparison. I'd be glad to rematch when the postgame arena is open.",
+      ],
+    },
+  },
+  {
+    id: "conversation-tournament-semifinalist",
+    townId: "champions-wake",
+    npcId: "tournament-semifinalist",
+    lines: {
+      intro: [
+        "Welcome to the semifinal! I'm Oren Vale, a blue-water navigator. Open ocean can look empty from the deck while currents are moving heat, nutrients, food, organisms, and drifting hazards through a much larger system.",
+        "My Open Ocean Hunt deck follows those connections into a long 30 VP game. Protect your RP economy before you chase the horizon.",
+      ],
+      roundReady: [
+        "Welcome to the semifinal—I'm Oren Vale. Our scenario joins a dated gear-loss report, a drifter track, repeated sightings, and wildlife overlap. Together they support a bounded search corridor—not one proven owner or exact destination. Shall we begin?",
+      ],
+      defeat: [
+        "A current can carry a plan away if every resource is committed at once. Recheck your economy, the evidence limits, and the next safe move before we play again.",
+      ],
+      rematch: [
+        "The chart is updated and my Open Ocean Hunt deck is ready. Want another full 30 VP crossing?",
+      ],
+      victory: [
+        "Fine navigation! You paired decisive play with honest uncertainty. The championship final is waiting.",
+      ],
+      roundVictory: [
+        "You followed several connected clues without claiming the map knew more than it did. The semifinal result is safely in the bracket log.",
+      ],
+      postgame: [
+        "Routes change and so do decks. Come back whenever you want another 30 VP navigation test.",
+      ],
+    },
+  },
+  {
+    id: "conversation-tournament-champion",
+    townId: "champions-wake",
+    npcId: "tournament-champion",
+    lines: {
+      intro: [
+        "At last, the final. I'm Sabine Rook, the defending Champion. Your Tide Marks tell me you did not hurry past the hard questions on the way here.",
+        "My Darkness Shroud deck is built for pressure and scarce resources. To reach 30 VP, both of us will need foundations, relationships, timing, and the patience to revise a plan.",
+      ],
+      roundReady: [
+        "You've reached my championship table—I'm Sabine Rook. The final scenario compares a sunlit reef, a current-linked food path, and a dark trench record. Similar organisms can face different conditions, and darkness alone does not prove a vent. Show me a strategy as careful as your conclusion.",
+      ],
+      defeat: [
+        "You reached the final because your reasoning can change. Keep that strength: study the board, protect the engine of your ecosystem, and return with a revised plan.",
+      ],
+      rematch: [
+        "Welcome back to the championship table. My Darkness Shroud deck and the full 30 VP final are ready when you are.",
+      ],
+      victory: [
+        "Congratulations, Champion! You adapted without pretending that one strategy—or one ecosystem response—belongs everywhere.",
+        "Take the Cup with pride, then keep the Tidekeeper's promise: observe again, compare fairly, and change course when new evidence asks you to.",
+      ],
+      roundVictory: [
+        "The final is decided. Your 30 VP victory completes the bracket, and the communities of the archipelago are waiting for the ceremony.",
+      ],
+      postgame: [
+        "A title records one excellent run, not the end of learning. I will be here for a postgame rematch whenever you want a new test.",
+      ],
+    },
+  },
+  {
+    id: "conversation-champions-wake-reflector",
+    townId: "champions-wake",
+    npcId: "champions-wake-reflector",
+    lines: {
+      intro: [
+        "Welcome to the Reflection Pavilion. I'm Dr. Ivo Kestrel, and I help the archipelago compare what its separate monitoring programs can—and cannot—say together.",
+        "Your five Tide Marks are not trophies for fixing nature. They mark five times you observed carefully, named uncertainty, and chose a bounded response with a way to check what happened next.",
+      ],
+      guidance: [
+        "Look across the notes: reef color needs tissue and condition context; estuary cloudiness needs repeated site-specific measurements; current maps estimate paths; kelp food webs have several drivers; and deep observations remain local to the measured route.",
+        "Carry that pattern into the bracket. Different decks and habitats reward different strategies, but good decisions keep claims proportional to evidence and preserve room to revise.",
+      ],
+      epilogue: [
+        "Sunpatch still repeats photographs and protects moorings. Brackwater traced a supported drainage concern while preserving its naturally muddy nursery. Current Commons paired authorized retrieval with prevention.",
+        "Kelpwatch is comparing a small permitted test with its reference cove, and Trenchlight is reviewing another passive survey. Those are modest follow-up outcomes—not declarations that any ecosystem is permanently fixed.",
+        "Your Archipelago Reflections Field Note gathers the shared reasoning tools. Return visits and rematches keep the observation cycle open after the credits.",
+      ],
+      postgame: [
+        "Welcome back. New measurements can strengthen, narrow, or overturn an earlier explanation. That is not failure; it is how careful ecosystem learning grows.",
+      ],
+      return: [
+        "Every Tide Mark still points home. Revisit a community to hear its latest observations rather than expecting the habitat to stand still.",
+      ],
+    },
+  },
+  {
+    id: "conversation-champions-wake-spectator",
+    townId: "champions-wake",
+    npcId: "champions-wake-spectator",
+    lines: {
+      intro: [
+        "You made it! I'm Tali, a junior Reefkeeper from the inter-island study club. We followed your route on the classroom chart and argued—in a friendly way—about every Field Note.",
+        "My favorite part was learning that changing your mind after better evidence is a strength. I used to think every white coral was dead and every murky creek was polluted.",
+      ],
+      guidance: [
+        "During each 30 VP round, I watch how players build foundations before big creatures, save RP for useful actions, and change plans when the opposing ecosystem changes.",
+        "The science feels similar: start with what you observed, connect relationships, test alternatives, and do not spend certainty you have not earned.",
+      ],
+      champion: [
+        "You won! Our club is making a new chart called Questions We Still Have. A championship can finish a bracket while curiosity keeps going.",
+      ],
+      postgame: [
+        "We added updates from every town to the chart. None says 'problem solved forever,' which leaves us plenty to study on the next voyage.",
+      ],
+      return: [
+        "I'm glad you're back. The pavilion display changes as communities add repeat observations, so there is always something new to compare.",
+      ],
+    },
+  },
 ];
 
 const npcs = [
@@ -3023,6 +3507,78 @@ const npcs = [
     conversationId: "conversation-trenchlight-leader",
     encounterId: "encounter-trenchlight-qualifier",
   },
+  {
+    id: "champions-wake-director",
+    townId: "champions-wake",
+    sceneId: "champions-wake-registration-hall",
+    roleId: "tournament-director",
+    name: "Director Amara Vela",
+    title: "SeaPals Tournament Director",
+    color: "gold",
+    crest: null,
+    conversationId: "conversation-champions-wake-director",
+    encounterId: null,
+  },
+  {
+    id: "tournament-quarterfinalist",
+    townId: "champions-wake",
+    sceneId: "champions-wake-arena",
+    roleId: "town-challenger",
+    name: "Miri Fen",
+    title: "Tidal-Creek Tactician",
+    color: "mangrove",
+    crest: "Tidal Lens",
+    conversationId: "conversation-tournament-quarterfinalist",
+    encounterId: "encounter-tournament-quarterfinal",
+  },
+  {
+    id: "tournament-semifinalist",
+    townId: "champions-wake",
+    sceneId: "champions-wake-arena",
+    roleId: "town-challenger",
+    name: "Oren Vale",
+    title: "Blue-Water Navigator",
+    color: "blue",
+    crest: "Current Compass",
+    conversationId: "conversation-tournament-semifinalist",
+    encounterId: "encounter-tournament-semifinal",
+  },
+  {
+    id: "tournament-champion",
+    townId: "champions-wake",
+    sceneId: "champions-wake-arena",
+    roleId: "town-challenger",
+    name: "Sabine Rook",
+    title: "Defending SeaPals Champion",
+    color: "deep",
+    crest: "Champion's Wake Crest",
+    conversationId: "conversation-tournament-champion",
+    encounterId: "encounter-tournament-final",
+  },
+  {
+    id: "champions-wake-reflector",
+    townId: "champions-wake",
+    sceneId: "champions-wake-reflection-pavilion",
+    roleId: "reflection-character",
+    name: "Dr. Ivo Kestrel",
+    title: "Archipelago Learning Steward",
+    color: "teal",
+    crest: null,
+    conversationId: "conversation-champions-wake-reflector",
+    encounterId: null,
+  },
+  {
+    id: "champions-wake-spectator",
+    townId: "champions-wake",
+    sceneId: "champions-wake-reflection-pavilion",
+    roleId: "spectator",
+    name: "Tali",
+    title: "Junior Reefkeeper",
+    color: "coral",
+    crest: null,
+    conversationId: "conversation-champions-wake-spectator",
+    encounterId: null,
+  },
 ];
 
 const starterDecks = [
@@ -3297,7 +3853,36 @@ const fieldNotes = [
       "https://oceanexplorer.noaa.gov/ocean-fact/seeps-vents/",
     ],
   },
-  { id: "field-note-archipelago-reflection", title: "Archipelago Reflections", habitatId: "archipelago-synthesis", status: "planned" },
+  {
+    id: "field-note-archipelago-reflection",
+    title: "Archipelago Reflections",
+    habitatId: "archipelago-synthesis",
+    status: "prototype",
+    summary: "Across ocean habitats, useful decisions begin with place-specific observations, relationships, alternatives, uncertainty, and tradeoffs. A successful response includes a way to monitor what happens next; no Tide Mark means an ecosystem has been permanently fixed.",
+    observations: [
+      "Coral color, visible tissue, repeat photographs, and local conditions answer different questions. A pale colony may still be alive, and a visible lesion does not identify its cause by appearance alone.",
+      "Estuary salinity, turbidity, and dissolved oxygen vary with location, tide, rainfall, time, and bottom type. Repeated site-specific comparisons separate expected variation from a supported concern.",
+      "Drifter tracks and aligned reports can estimate a bounded search corridor for floating material, while wind, waves, buoyancy, and changing currents limit exact prediction and ownership claims.",
+      "A predator-to-grazer-to-kelp pathway may fit one repeated local pattern without becoming the only driver of every kelp forest. Reference sites and physical conditions remain part of the test.",
+      "Darkness, pressure, marine snow, and bioluminescence describe a measured deep route. They do not prove a vent, one food source, or one purpose for every light-producing organism.",
+      "The same SeaPals deck does not answer every board state. In both gameplay and ecosystem decisions, foundations, relationships, resources, timing, and revisable plans matter.",
+    ],
+    checklistTitle: "Evidence-to-action reflection",
+    checklist: [
+      "State what was directly observed or measured, including place, time, method, and comparison conditions.",
+      "Describe the relationship or explanation the observations support without stretching it beyond the local evidence.",
+      "Name at least one alternative explanation, uncertainty, or tradeoff that still matters.",
+      "Choose a bounded, habitat-appropriate next step that protects people and wildlife and can stop if conditions change.",
+      "Define what the community will monitor next and be willing to revise the explanation or response when new evidence arrives.",
+    ],
+    glossary: [
+      { term: "Synthesis", definition: "Combining related evidence from several sources while preserving important differences among places and methods." },
+      { term: "Tradeoff", definition: "A choice in which improving one goal may create a cost, limit, or risk for another goal." },
+      { term: "Uncertainty", definition: "A clearly stated limit on what available evidence can establish." },
+      { term: "Adaptive decision", definition: "A bounded choice paired with monitoring and a plan to continue, change, or stop as evidence develops." },
+      { term: "Transfer", definition: "Using a reasoning skill in a new situation without assuming the new habitat has the same conditions or answer." },
+    ],
+  },
 ];
 
 const learningPlans = {
@@ -3706,7 +4291,67 @@ const dialogues = [
       },
     ],
   },
-  dialoguePlan("dialogue-champions-wake", "champions-wake", "quest-champions-wake", ["tournament-director", "reflection-character", "tournament-director", "reflection-character", "reflection-character"]),
+  {
+    id: "dialogue-champions-wake",
+    townId: "champions-wake",
+    questId: "quest-champions-wake",
+    beats: [
+      {
+        id: "hook",
+        speakerRoleId: "tournament-director",
+        speakerNpcId: "champions-wake-director",
+        lines: ["Welcome to Champion's Wake. Five Tide Marks qualify you to review the archipelago's evidence, register one legal deck, and enter three complete 30 VP tournament rounds."],
+      },
+      {
+        id: "observation",
+        speakerRoleId: "reflection-character",
+        speakerNpcId: "champions-wake-reflector",
+        lines: ["Compare the five Field Notes: identify what each method observed, which relationships it supports, and where local conditions or missing evidence limit transfer to a new place."],
+      },
+      {
+        id: "interpretation",
+        speakerRoleId: "reflection-character",
+        speakerNpcId: "champions-wake-reflector",
+        lines: ["The shared pattern is a reasoning habit, not one universal intervention: keep claims proportional to evidence, compare alternatives, protect habitat, and preserve a way to revise."],
+      },
+      {
+        id: "decision",
+        speakerRoleId: "tournament-director",
+        speakerNpcId: "champions-wake-director",
+        lines: ["Choose a legal owned-card deck whose economy and relationships can sustain a 30 VP game, then register that fixed list for the ordered bracket."],
+      },
+      {
+        id: "community-action",
+        speakerRoleId: "spectator",
+        speakerNpcId: "champions-wake-spectator",
+        lines: ["The island and floating-town teams share modest follow-up observations here. Their projects continue monitoring instead of declaring any habitat permanently solved."],
+      },
+      {
+        id: "duel",
+        speakerRoleId: "town-challenger",
+        speakerNpcId: "tournament-quarterfinalist",
+        lines: ["Miri, Oren, and Sabine present increasingly demanding 30 VP ecosystems. Win the quarterfinal before the semifinal, and the semifinal before the championship final."],
+      },
+      {
+        id: "debrief",
+        speakerRoleId: "reflection-character",
+        speakerNpcId: "champions-wake-reflector",
+        lines: ["After each round, separate the result from the reasoning: note which foundations, resources, relationships, and revisions helped, and which conclusions still need more evidence."],
+      },
+      {
+        id: "reflection",
+        speakerRoleId: "tournament-director",
+        speakerNpcId: "champions-wake-director",
+        lines: ["A championship recognizes one complete journey. It does not end the player's obligation to observe again, learn from losses, and adapt to new conditions."],
+      },
+      {
+        id: "callback",
+        speakerRoleId: "spectator",
+        speakerNpcId: "champions-wake-spectator",
+        lines: ["Postgame routes, resident rematches, repeat conversations, and changing Field Notes keep every earlier habitat connected to the next question."],
+      },
+    ],
+  },
 ];
 
 const encounters = [
@@ -3729,9 +4374,9 @@ const encounters = [
   { id: "encounter-trenchlight-resident-engineer", townId: "trenchlight-station", questId: "quest-trenchlight-sensor", role: "resident", opponentId: "trenchlight-engineer", opponentDeckId: "darkness-shroud", victoryTarget: 10, difficulty: "hard", rewardId: null },
   { id: "encounter-trenchlight-resident-observer", townId: "trenchlight-station", questId: "quest-trenchlight-sensor", role: "resident", opponentId: "trenchlight-observer", opponentDeckId: "disruption", victoryTarget: 10, difficulty: "hard", rewardId: null },
   { id: "encounter-trenchlight-qualifier", townId: "trenchlight-station", questId: "quest-trenchlight-sensor", role: "qualifier", opponentId: "trenchlight-leader", opponentDeckId: "darkness-shroud", victoryTarget: 10, difficulty: "hard", rewardId: "reward-trenchlight-qualifier", prerequisites: [{ type: "questStatus", questId: "quest-trenchlight-sensor", status: "complete" }] },
-  { id: "encounter-tournament-quarterfinal", townId: "champions-wake", questId: "quest-champions-wake", role: "tournament", opponentId: "tournament-quarterfinalist", opponentDeckId: "disruption", victoryTarget: 30, difficulty: "medium", rewardId: null },
-  { id: "encounter-tournament-semifinal", townId: "champions-wake", questId: "quest-champions-wake", role: "tournament", opponentId: "tournament-semifinalist", opponentDeckId: "open-ocean-hunt", victoryTarget: 30, difficulty: "hard", rewardId: null },
-  { id: "encounter-tournament-final", townId: "champions-wake", questId: "quest-champions-wake", role: "tournament", opponentId: "tournament-champion", opponentDeckId: "darkness-shroud", victoryTarget: 30, difficulty: "hard", rewardId: "reward-tournament-champion" },
+  { id: "encounter-tournament-quarterfinal", townId: "champions-wake", questId: "quest-champions-wake", role: "tournament", roundIndex: 1, opponentId: "tournament-quarterfinalist", opponentDeckId: "disruption", victoryTarget: 30, difficulty: "medium", rewardId: null, prerequisites: [{ type: "questStatus", questId: "quest-champions-wake", status: "active" }] },
+  { id: "encounter-tournament-semifinal", townId: "champions-wake", questId: "quest-champions-wake", role: "tournament", roundIndex: 2, opponentId: "tournament-semifinalist", opponentDeckId: "open-ocean-hunt", victoryTarget: 30, difficulty: "hard", rewardId: null, prerequisites: [{ type: "encounterComplete", encounterId: "encounter-tournament-quarterfinal" }] },
+  { id: "encounter-tournament-final", townId: "champions-wake", questId: "quest-champions-wake", role: "tournament", roundIndex: 3, opponentId: "tournament-champion", opponentDeckId: "darkness-shroud", victoryTarget: 30, difficulty: "hard", rewardId: "reward-tournament-champion", prerequisites: [{ type: "encounterComplete", encounterId: "encounter-tournament-semifinal" }] },
 ];
 
 const rewards = [
@@ -3967,15 +4612,18 @@ const routes = [
     manualPilotRequiredFirstTime: true,
     autoSteerAfterFirstCompletion: true,
   },
-  ...[
-    ["route-trenchlight-champions-wake", "trenchlight-station", "champions-wake"],
-  ].map(([id, fromTownId, toTownId]) => ({
-    id,
-    fromTownId,
-    toTownId,
+  {
+    id: "route-trenchlight-champions-wake",
+    fromTownId: "trenchlight-station",
+    toTownId: "champions-wake",
+    sceneId: "trenchlight-champions-wake-sea",
+    fromDockId: "trenchlight-champions-wake-dock",
+    toDockId: "champions-wake-dock",
+    fromSpawn: { x: 1, y: 5, facing: "right" },
+    toSpawn: { x: 14, y: 5, facing: "left" },
     manualPilotRequiredFirstTime: true,
     autoSteerAfterFirstCompletion: true,
-  })),
+  },
 ];
 
 const unlockRules = [
