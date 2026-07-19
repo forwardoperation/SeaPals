@@ -27,6 +27,10 @@ import {
   resolveAdventureTutorial,
 } from "./adventureContent.mjs";
 import {
+  buildUnlockedAdventureFieldNotes,
+  getAdventureFieldNoteEyebrow,
+} from "./adventureFieldNotes.mjs";
+import {
   commitStarterSelection,
   getOnboardingProgress,
   recordBoatSafetyReview,
@@ -969,7 +973,7 @@ function PauseMenu({
   profileId,
   notice,
   blocked = false,
-  fieldNoteAvailable = false,
+  fieldNoteCount = 0,
   activeDeckName = "No active deck",
   unopenedPackCount = 0,
   onResume,
@@ -1005,7 +1009,9 @@ function PauseMenu({
           <button type="button" onClick={onInventory}>Open Inventory</button>
           <button type="button" onClick={onWorldMap}>Open World Map</button>
           <button type="button" onClick={onSettings}>Settings</button>
-          {fieldNoteAvailable ? <button type="button" onClick={onFieldNote}>Open latest Field Note</button> : null}
+          {fieldNoteCount > 0 ? (
+            <button type="button" onClick={onFieldNote}>Open Field Notes ({fieldNoteCount})</button>
+          ) : null}
           <button type="button" className={styles.secondaryButton} onClick={onReturnTitle}>Save and return to title</button>
           <button type="button" className={styles.dangerButton} onClick={onRestart}>Restart this voyage</button>
         </div>
@@ -1082,28 +1088,52 @@ function StarterSelectionModal({ starters, selectedId, blocked = false, onSelect
   );
 }
 
-function FieldNoteModal({ note, blocked = false, reviewRequired = false, onAcknowledge, onDismiss }) {
+function FieldNoteModal({
+  note,
+  notes = [],
+  blocked = false,
+  reviewRequired = false,
+  onSelect,
+  onAcknowledge,
+  onDismiss,
+}) {
   const dialogRef = useDialogFocusTrap(!blocked);
   const checklist = note.checklist ?? note.safetyChecklist ?? [];
   const checklistTitle = note.checklistTitle ?? "Boat safety check";
-  const noteEyebrow = {
-    "field-note-harbor-basics": "Field Note 01 / Shellshore Harbor",
-    "field-note-coral-observations": "Field Note 02 / Sunpatch Cay",
-    "field-note-estuary-conditions": "Field Note 03 / Brackwater Landing",
-    "field-note-current-connections": "Field Note 04 / Current Commons",
-    "field-note-kelp-food-web": "Field Note 05 / Kelpwatch Island",
-    "field-note-deep-adaptations": "Field Note 06 / Trenchlight Station",
-  }[note.id] ?? "Reefbound Field Note";
+  const noteEyebrow = getAdventureFieldNoteEyebrow(note.id);
+  const journalNotes = reviewRequired ? [note] : notes;
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.fieldNoteLayer} role="dialog" aria-modal="true" aria-labelledby="field-note-title">
-      <article className={styles.fieldNoteCard}>
+      <article className={`${styles.fieldNoteCard} ${journalNotes.length > 1 ? styles.fieldNoteJournalCard : ""}`}>
         <header>
           <div>
             <div className={styles.fieldNoteEyebrow}>{noteEyebrow}</div>
-            <h2 id="field-note-title">{note.title}</h2>
+            <h2 id="field-note-title" aria-live="polite" aria-atomic="true">{note.title}</h2>
           </div>
           <button type="button" className={styles.noteCloseIcon} aria-label="Close Field Note" onClick={onDismiss}>×</button>
         </header>
+        {journalNotes.length > 1 ? (
+          <nav className={styles.fieldNoteJournal} aria-label="Unlocked Field Notes">
+            <div className={styles.fieldNoteJournalHeading}>
+              <strong>Field Note library</strong>
+              <span>{journalNotes.length} unlocked</span>
+            </div>
+            <ul>
+              {journalNotes.map((entry) => (
+                <li key={entry.id}>
+                  <button
+                    type="button"
+                    aria-current={entry.id === note.id ? "page" : undefined}
+                    onClick={() => onSelect(entry.id)}
+                  >
+                    <small>{getAdventureFieldNoteEyebrow(entry.id)}</small>
+                    <strong>{entry.title}</strong>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ) : null}
         <p className={styles.fieldNoteSummary}>{note.summary}</p>
         <section>
           <h3>What we observed</h3>
@@ -1783,6 +1813,10 @@ export default function AdventureGame() {
     [gameSave],
   );
   const fieldNoteAvailable = Boolean(gameSave?.fieldNotes.entryIds.length);
+  const unlockedFieldNotes = useMemo(
+    () => buildUnlockedAdventureFieldNotes(gameSave?.fieldNotes.entryIds ?? []),
+    [gameSave?.fieldNotes.entryIds],
+  );
   const activeFieldNote = getAdventureFieldNote(activeFieldNoteId) ?? SHELLSHORE_FIELD_NOTE;
   const ecosystemChapter = useMemo(
     () => gameSave ? getAdventureEcosystemChapterByTownId(gameSave.world.townId) : null,
@@ -4150,8 +4184,10 @@ export default function AdventureGame() {
       {fieldNoteOpen ? (
         <FieldNoteModal
           note={activeFieldNote}
+          notes={unlockedFieldNotes}
           blocked={Boolean(confirmation)}
           reviewRequired={activeFieldNote.id === SHELLSHORE_FIELD_NOTE.id && onboardingProgress.needsBoatSafetyReview}
+          onSelect={setActiveFieldNoteId}
           onAcknowledge={acknowledgeFieldNote}
           onDismiss={() => setFieldNoteOpen(false)}
         />
@@ -4271,7 +4307,7 @@ export default function AdventureGame() {
           profileId={gameSave.profileId}
           notice={saveNotice}
           blocked={Boolean(confirmation)}
-          fieldNoteAvailable={fieldNoteAvailable}
+          fieldNoteCount={unlockedFieldNotes.length}
           activeDeckName={activeDeckName}
           unopenedPackCount={unopenedPackCount}
           onResume={() => setPauseOpen(false)}

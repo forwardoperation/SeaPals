@@ -126,7 +126,8 @@ The locked snapshot is an additive schema-v2 field normalized by `src/app/advent
 | Tournament domain | `adventureTournament.test.mjs` | Requirements, legal registration, immutable snapshot, ordered gates, loss/retry, strict result identity, reload, recovery, and exact-once final reward. | Browser wiring, comprehensibility, or real-match balance. |
 | Authored content and world | `adventureChampionsWakeContent.test.mjs` | Route, docks, four runtime scenes, reachable doors/interactions, original cast/conversations, three authored 30 VP encounters, and content-validator failures. | Art-aligned feel on every screen size or full user navigation. |
 | Route-to-reward integration | `adventureChampionsWakeContentLoop.test.mjs` | Manual arrival, safe-scene quest activation, Director registration boundary, local persistence after every bracket milestone, three ordered wins, exact-once Cup/Field Note, and practice-only postgame encounter gates. | Ceremony/credits focus flow, a defeat in the live Simulator, or postgame rematch presentation. |
-| Shared regression | Adventure content, progression, session, travel, storage, world, deck, and Simulator tests | Existing save/travel/encounter systems remain compatible with the new chapter. | A clean-profile end-to-end campaign or external review. |
+| Fresh-profile campaign acceptance | `adventureCampaignLoop.test.mjs` | Each real starter crosses tutorial, six first voyages, five chapters, packs, repeated save/recovery boundaries, a persisted quarterfinal defeat/retry, three 30 VP results, ending, postgame, and return travel without seeded progression. | Real rules-engine victories, continuous browser navigation, balance, child comprehension, or device/accessibility QA. |
+| Shared regression | Adventure content, progression, session, travel, storage, world, deck, Field Note journal, and Simulator tests | Existing save/travel/encounter systems remain compatible with the complete campaign; Green Sea Turtle opponent healing and Deep Sea Jelly Flashing Alarm have controller parity. | Remaining unsupported mandatory effects, external review, or human playability. |
 | Live UI/browser checkpoint | Dedicated Champion's Wake UI tests and browser evidence | Registration and bracket controls, 30 VP Simulator launches, retry, ending resume, postgame, focus, responsive layout, and errors in the running application. | Named science review, legal privacy determination, or target-age learning outcomes. |
 
 Run the focused Phase 7 contracts:
@@ -144,10 +145,10 @@ npm.cmd run build
 git diff --check
 ```
 
-Final integrated checkpoint results:
+Latest integrated checkpoint results:
 
-- `npm.cmd run test:adventure`: **360/360 passed**.
-- `npm.cmd test`: **591/591 passed**.
+- `npm.cmd run test:adventure`: **367/367 passed**.
+- `npm.cmd test`: **602/602 passed**.
 - `npm.cmd run build`: **26/26 routes generated successfully**.
 - `git diff --check`: **passed** (line-ending notices only).
 
@@ -172,10 +173,12 @@ No adventure audio files or audio runtime were found at this checkpoint. Therefo
 - [x] Author the Champion's Wake route, floating town, three interiors, original cast, conversations, and ordered 30 VP encounters.
 - [x] Implement legal registration, an exact persisted deck lock, strict ordered launches/results, loss-safe retry state, reload recovery, and exact-once final reward behavior.
 - [x] Add a cross-boundary route-to-registration-to-three-wins-to-reload automated acceptance test.
+- [x] Add fresh-profile domain/storage acceptance for Coral Garden, Murky Water, and Blue Water through the complete campaign, including a persisted tournament defeat/retry.
 - [ ] Verify the complete live registration and bracket UI, including invalid-deck recovery through the Deck Workshop.
 - [ ] Verify a real Simulator defeat/retry and all three real 30 VP victories with the same locked deck snapshot.
 - [x] Verify ceremony, epilogue, credits, interrupted-step resume, one-time presentation, postgame free travel, and practice-only rematches in controlled seeded browser scenarios.
-- [ ] Complete a fresh, unseeded profile playthrough from starter choice through all five ecosystem chapters and the final tournament.
+- [ ] Complete a fresh, unseeded live browser playthrough from starter choice through all five ecosystem chapters and the final tournament.
+- [ ] Resolve or remove every remaining mandatory-deck unsupported effect: Stunned, Lionfish invasion/removal parity, Cookie Cutter's board fallback, and per-attack Ensnare.
 - [ ] Complete desktop keyboard, tablet/touch, narrow-phone, safe-area, focus, screen-reader, text-scaling, contrast, reduced-motion, modal-scroll, and 44-pixel-target QA.
 - [ ] Optimize and measure the five generated images and complete route/town/Simulator performance checks on representative low-powered devices.
 - [ ] Complete final opponent tuning and confirm through playtesting that no starter or reasonable legal deck suffers a material progression disadvantage.

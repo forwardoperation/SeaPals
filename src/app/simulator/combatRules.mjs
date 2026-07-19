@@ -41,6 +41,39 @@ export function getRovLightsAttackBonus(isActive, targetCard) {
   return isActive && targetCard?.zone === "deep" ? 2 : 0;
 }
 
+export function getFlashingAlarmAmount(card) {
+  const rule = (card?.passives ?? [])
+    .map(passiveText)
+    .find((text) => /flashing alarm:.*if attacked.*attack rolls?.*next turn.*\+(\d+)/i.test(text));
+  return Math.max(0, Number(rule?.match(/\+(\d+)/)?.[1] ?? 0));
+}
+
+/** Marks a Flashing Alarm bonus as waiting for its controller's next turn. */
+export function triggerFlashingAlarm(currentBonus, defenderCard) {
+  const amount = getFlashingAlarmAmount(defenderCard);
+  if (!amount) return currentBonus ?? null;
+  return {
+    amount: Math.max(amount, Number(currentBonus?.amount ?? 0)),
+    phase: "pending",
+    sourceCardId: defenderCard.id ?? currentBonus?.sourceCardId ?? null,
+  };
+}
+
+/** Activates a pending bonus precisely when that controller's next turn begins. */
+export function beginFlashingAlarmTurn(currentBonus) {
+  if (currentBonus?.phase !== "pending") return currentBonus ?? null;
+  return { ...currentBonus, phase: "active" };
+}
+
+export function getFlashingAlarmAttackBonus(currentBonus) {
+  return currentBonus?.phase === "active" ? Math.max(0, Number(currentBonus.amount) || 0) : 0;
+}
+
+/** Active bonuses expire after that controller finishes the benefited turn. */
+export function endFlashingAlarmTurn(currentBonus) {
+  return currentBonus?.phase === "active" ? null : currentBonus ?? null;
+}
+
 /**
  * Creates serializable state for an interactive repeated-attack sequence.
  * Each recorded entry represents exactly one resolved attack. A target instance

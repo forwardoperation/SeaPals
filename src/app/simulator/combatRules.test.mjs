@@ -4,11 +4,15 @@ import {
   attackCanTargetCard,
   attackDieCanTargetCard,
   attackerHasDisadvantageFromMassive,
+  beginFlashingAlarmTurn,
   canTargetInAttackSequence,
   createAttackSequence,
   createRegenerateDecision,
+  endFlashingAlarmTurn,
   getCloakDefenseBonus,
   getDarknessShroudDefenseBonus,
+  getFlashingAlarmAttackBonus,
+  getFlashingAlarmAmount,
   getMassiveDefenseMode,
   getRemainingAttackTargets,
   getRovLightsAttackBonus,
@@ -18,6 +22,7 @@ import {
   resolveRegenerateDecision,
   resolveToxicConsumption,
   shouldSelfDiscardAfterConsume,
+  triggerFlashingAlarm,
 } from "./combatRules.mjs";
 
 test("Darkness Shroud grants its printed defense bonus only while Abyss is in play", () => {
@@ -40,6 +45,30 @@ test("ROV Lights adds two only when an attack targets a Deep creature", () => {
   assert.equal(getRovLightsAttackBonus(true, { zone: "deep" }), 2);
   assert.equal(getRovLightsAttackBonus(true, { zone: "reef" }), 0);
   assert.equal(getRovLightsAttackBonus(false, { zone: "deep" }), 0);
+});
+
+test("Flashing Alarm applies to every attack roll on the controller's next turn only", () => {
+  const jelly = {
+    id: "deep-sea-jelly",
+    passives: ["Flashing Alarm: If attacked, any attack rolls you perform on your next turn have +2."],
+  };
+  assert.equal(getFlashingAlarmAmount(jelly), 2);
+
+  const pending = triggerFlashingAlarm(null, jelly);
+  assert.equal(getFlashingAlarmAttackBonus(pending), 0);
+
+  const active = beginFlashingAlarmTurn(pending);
+  assert.equal(getFlashingAlarmAttackBonus(active), 2);
+  assert.equal(getFlashingAlarmAttackBonus(active), 2);
+  assert.equal(endFlashingAlarmTurn(active), null);
+});
+
+test("non-Flashing defenders do not create or replace a pending attack bonus", () => {
+  const pending = { amount: 2, phase: "pending", sourceCardId: "deep-sea-jelly" };
+  assert.equal(getFlashingAlarmAmount({ passives: ["Charm: Attacks have -2."] }), 0);
+  assert.equal(triggerFlashingAlarm(null, { id: "other", passives: [] }), null);
+  assert.equal(triggerFlashingAlarm(pending, { id: "other", passives: [] }), pending);
+  assert.equal(endFlashingAlarmTurn(pending), pending);
 });
 
 test("Transparency rejects attacks with a printed die larger than its limit", () => {

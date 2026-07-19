@@ -223,6 +223,8 @@ Account-based cloud saves may be added later using player-owned rows and restric
 - Required interactions work with keyboard and touch and do not rely on color alone.
 - Boat auto-steer, reduced motion, generous timing, high-contrast focus, readable text sizing, and non-punitive retries are launch requirements.
 
+**Implementation checkpoint:** The pause menu now opens a selectable journal containing every unlocked Field Note in acquisition order, including each note's observations, checklist, and glossary. The initial Harbor safety acknowledgment remains a focused single-note gate; later journal reading is optional and replayable.
+
 ## 9. Phased roadmap
 
 ### Phase 0 - Scope lock and architecture
@@ -346,7 +348,7 @@ This phase is the production gate. Do not build all remaining towns until its pl
 
 **Goal:** Expand the proven town template without adding another core engine.
 
-**Implementation status:** Brackwater Landing, Current Commons, and Kelpwatch Island have verified implementation checkpoints. Their remaining release gates include clean-profile playthrough, full accessibility/device QA, target-age comprehension, starter-balance, and named marine-science verification. Trenchlight Station now has verified domain, content, guided-expedition-controller, live guided UI, resume, and end-to-end content-loop checkpoints; its remaining release gates stay in Phase 6. Champion's Wake plus the three 30 VP tournament games remain Phase 7.
+**Implementation status:** Brackwater Landing, Current Commons, and Kelpwatch Island have verified implementation checkpoints. Trenchlight Station has verified domain, content, guided-expedition-controller, live guided UI, resume, and end-to-end content-loop checkpoints. A fresh-profile automated campaign contract now carries each real starter through these chapters in order without seeded Tide Marks or Field Notes. Full browser/device QA, target-age comprehension, starter balance in real matches, and named marine-science verification remain open.
 
 Build these as independently testable content releases:
 
@@ -368,7 +370,7 @@ Each chapter includes one town, one travel route, one primary field challenge, f
 
 **Goal:** Deliver the final ecosystem chapter while keeping its unique vehicle content bounded.
 
-**Implementation status:** The Trenchlight route, platform, interiors, cast, deep-ocean evidence model, two-leg NPC-piloted expedition controller, resident and qualifier encounters, playable reward pack, final Tide Mark, future-route unlock, save recovery, and end-to-end content-loop proof are authored. The live guided-sub interface is connected and browser-verified for launch, ordered controls, optional assistance, partial-leg reload, safe return, corrective recovery, responsive layout, and reduced-motion styling. Clean-profile, complete accessibility/device, collision, target-age, starter-balance, and named science-review gates remain in `docs/seapals-adventure-phase-6-trenchlight.md`.
+**Implementation status:** The Trenchlight route, platform, interiors, cast, deep-ocean evidence model, two-leg NPC-piloted expedition controller, resident and qualifier encounters, playable reward pack, final Tide Mark, future-route unlock, save recovery, and end-to-end content-loop proof are authored. The live guided-sub interface is connected and browser-verified for launch, ordered controls, optional assistance, partial-leg reload, safe return, corrective recovery, responsive layout, and reduced-motion styling. Fresh-profile domain/storage continuity is now covered for all three starters; complete live browser accessibility/device, collision, target-age, real-match starter-balance, and named science-review gates remain in `docs/seapals-adventure-phase-6-trenchlight.md`.
 
 **Deliverables**
 
@@ -386,6 +388,8 @@ Each chapter includes one town, one travel route, one primary field challenge, f
 ### Phase 7 - Champion's Wake tournament and release readiness
 
 **Goal:** Complete the main objective and prepare version 1.0 for release.
+
+**Implementation status:** Champion's Wake, its ordered three-round 30 VP bracket, ending, postgame, and save/recovery contracts are implemented. `adventureCampaignLoop.test.mjs` now starts a real fresh profile for Coral Garden, Murky Water, and Blue Water; completes the tutorial, six manual voyages, five ecosystem chapters, earned packs, persisted tournament defeat/retry, three victories, ending, and postgame; and reloads at campaign boundaries. This is domain/storage evidence, not a live rules-engine or child-playability result. The mandatory-deck audit still identifies unresolved required effects, including the undefined consequence of Stunned, Lionfish controller/removal parity, Cookie Cutter's board-collection fallback, and per-attack Ensnare handling. Green Sea Turtle opponent healing and Deep Sea Jelly's Flashing Alarm now have controller-parity implementations.
 
 **Deliverables**
 
