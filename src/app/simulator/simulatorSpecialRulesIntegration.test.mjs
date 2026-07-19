@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
+const fishCardSource = await readFile(new URL("../../data/cards/creatures/fish.js", import.meta.url), "utf8");
+const supportCardSource = await readFile(new URL("../../data/cards/support.js", import.meta.url), "utf8");
 
 function sourceBetween(startMarker, endMarker) {
   const start = simulatorSource.indexOf(startMarker);
@@ -64,4 +66,18 @@ test("Cookie Cutter uses the shared board-supply fallback for both controllers",
   assert.match(opponentTurn, /resolveParasiteCollection\(/);
   assert.match(opponentTurn, /recipientRp: opponent\.rp/);
   assert.match(opponentTurn, /opponentParasiteTransfer\.recipientAfter/);
+});
+
+test("authored Lionfish and Spearfishing data identify the specialized removal route", () => {
+  const lionfishStart = fishCardSource.indexOf('id: "lionfish"');
+  const lionfishEnd = fishCardSource.indexOf('id: "flounder"', lionfishStart);
+  const lionfish = fishCardSource.slice(lionfishStart, lionfishEnd);
+  assert.match(lionfish, /remove it with Spearfishing or a successful attack/);
+  assert.match(lionfish, /specializedSupportCardIds: \["spearfishing"\]/);
+
+  const spearfishingStart = supportCardSource.indexOf('id: "spearfishing"');
+  const spearfishingEnd = supportCardSource.indexOf("\n  {", spearfishingStart + 1);
+  const spearfishing = supportCardSource.slice(spearfishingStart, spearfishingEnd);
+  assert.match(spearfishing, /from: Zone\.YOUR_REEF/);
+  assert.match(spearfishing, /includesOpponentOwnedInvasiveCardIds: \["lionfish"\]/);
 });

@@ -46,17 +46,20 @@ import {
 } from "./tutorialInteractionGate.mjs";
 import {
   clearStunnedFromFoundationsAtControllerTurnEnd,
+  canSpearfishReefCard,
   coralCanUseOwnAbilities,
   coralIsStunned,
   createStunnedStatus,
   getInvasiveCreatureTargets,
   getInvasiveOrphanTargets,
   getLocallyControlledOrphans,
+  getReefCardOwner,
   placeInvasiveCreature,
   removeInvasiveCreature,
   removeInvasiveOrphan,
   resolveEnsnareForAttack,
   resolveParasiteCollection,
+  resolveSpearfishingInvaderRemoval,
   resolveStunnedAtControllerTurnBoundary,
 } from "./specialCardRules.mjs";
 import foundationDeckImg from "./images/foundation-deck.png";
@@ -73,6 +76,16 @@ function shuffle(arr, random = Math.random) {
 
 const defaultDeckId = "coral-garden";
 const CARD_ART_FALLBACK = "/images/brand/SeaPalsTCGLogoWhite.svg";
+const SPEARFISHING_FOREIGN_TARGET_CARD_IDS = (cardsById.spearfishing?.effects ?? [])
+  .flatMap((effect) => effect.target?.includesOpponentOwnedInvasiveCardIds ?? []);
+
+function cardCanBeSpearfished(card, reefEntry, hostController) {
+  return Boolean(
+    card
+    && [CardCategory.FISH, CardCategory.PREDATOR].includes(card.category)
+    && canSpearfishReefCard(reefEntry, hostController, SPEARFISHING_FOREIGN_TARGET_CARD_IDS),
+  );
+}
 
 function ProfessorGuidePortrait({ guide, compact = false }) {
   return (
@@ -3230,10 +3243,10 @@ export default function Simulator({
       if (card.id === "spearfishing") {
         const hasTarget = playerCorals.some((coral) => coral.slots.some((slot) => {
           const target = cardsById[slot.cardId];
-          return slot.invasiveOwner !== "opponent" && target && [CardCategory.FISH, CardCategory.PREDATOR].includes(target.category);
+          return cardCanBeSpearfished(target, slot, "player");
         })) || playerReefCreatures.some((cardId) => [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[cardId]?.category))
-          || getLocallyControlledOrphans(playerOrphanCreatures, "player").some((entry) => [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[entry.cardId]?.category));
-        return hasTarget ? "" : "Spearfishing needs one of your Fish or Predators in play to discard.";
+          || playerOrphanCreatures.some((entry) => cardCanBeSpearfished(cardsById[entry.cardId], entry, "player"));
+        return hasTarget ? "" : "Spearfishing needs a Fish or Predator on your reef to discard.";
       }
       if (card.id === "whirlpool" || card.id === "super-whirlpool") return opponentCoralCards.length ? "" : `${card.name} needs an opponent coral to target.`;
       if (card.id === "coral-heal") return playerCoralCards.some((coral) => (coral.statuses ?? []).length || Number(coral.rpPenaltyNextTurn ?? 0) > 0) ? "" : "Coral Heal needs one of your corals to have a removable status effect.";
@@ -5211,19 +5224,19 @@ export default function Simulator({
       if (card.id === "spearfishing") {
         const candidates = playerCorals.flatMap((coral) => coral.slots.filter((slot) => {
           const target = cardsById[slot.cardId];
-          return slot.invasiveOwner !== "opponent" && target && [CardCategory.FISH, CardCategory.PREDATOR].includes(target.category);
-        }).map((slot) => ({ coralId: coral.id, slotId: slot.id, cardId: slot.cardId, hostedCardIds: [...(slot.hostedCardIds ?? [])] })));
+          return cardCanBeSpearfished(target, slot, "player");
+        }).map((slot) => ({ coralId: coral.id, slotId: slot.id, cardId: slot.cardId, hostedCardIds: [...(slot.hostedCardIds ?? [])], owner: getReefCardOwner(slot, "player") })));
         playerReefCreatures.forEach((candidateId, reefIndex) => {
-          if ([CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[candidateId]?.category)) candidates.push({ coralId: "__reef__", slotId: getPlayerReefSlotId(reefIndex), cardId: candidateId, reefIndex, instanceId: playerReefCreatureInstances[reefIndex]?.instanceId });
+          if ([CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[candidateId]?.category)) candidates.push({ coralId: "__reef__", slotId: getPlayerReefSlotId(reefIndex), cardId: candidateId, reefIndex, instanceId: playerReefCreatureInstances[reefIndex]?.instanceId, owner: "player" });
         });
-        getLocallyControlledOrphans(playerOrphanCreatures, "player").forEach((entry) => {
+        playerOrphanCreatures.forEach((entry) => {
           const orphanIndex = playerOrphanCreatures.findIndex((candidate) => candidate.instanceId === entry.instanceId);
-          if ([CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[entry.cardId]?.category)) candidates.push({ coralId: "__orphan__", slotId: getPlayerOrphanSlotId(orphanIndex), cardId: entry.cardId, orphanIndex, instanceId: entry.instanceId });
+          if (cardCanBeSpearfished(cardsById[entry.cardId], entry, "player")) candidates.push({ coralId: "__orphan__", slotId: getPlayerOrphanSlotId(orphanIndex), cardId: entry.cardId, orphanIndex, instanceId: entry.instanceId, owner: getReefCardOwner(entry, "player") });
         });
         setSearchContext({ mode: "spearfishing", supportCardId: card.id, candidates });
         setSelectedHandCard(null);
         setModal(null);
-        setEventOverlay({ type: "choose-spearfishing-target", sourceCardId: card.id, title: "Player used Spearfishing", message: "Choose one of your Fish or Predators to discard and recover its printed RP cost. You may cancel without spending the Support card." });
+        setEventOverlay({ type: "choose-spearfishing-target", sourceCardId: card.id, title: "Player used Spearfishing", message: "Choose a Fish or Predator on your reef to discard and recover its printed RP cost. An invading Lionfish is a valid target and returns to its owner's discard pile. You may cancel without spending the Support card." });
         return;
       }
       if (card.id === "whirlpool" || card.id === "super-whirlpool") {
@@ -5380,7 +5393,7 @@ export default function Simulator({
     consumePlayerSchoolDensityDiscount(card);
     setSearchContext(null);
     setSelectedHandCard(null);
-    const message = `${card.name} invaded an empty slot on the opponent's ${cardsById[targetCoral.cardId]?.name} for ${cost} RP. It remains your creature; the opponent may remove it with a legal attack or specialized Support card.`;
+    const message = `${card.name} invaded an empty slot on the opponent's ${cardsById[targetCoral.cardId]?.name} for ${cost} RP. It remains your creature; the opponent may remove it with Spearfishing or a legal attack.`;
     pushLog(message);
     emitPlayerBuild(card, cost, "opponent-reef");
     setEventOverlay({ type: "impact-result", sourceCardId: card.id, defenderCardId: targetCoral.cardId, title: `Player placed ${card.name} on the Rival Reef`, message, success: true });
@@ -5432,7 +5445,37 @@ export default function Simulator({
     const supportCard = cardsById[searchContext.supportCardId];
     const targetCard = cardsById[target.cardId];
     if (!supportCard || !targetCard || !hand.includes(supportCard.id)) return;
-    if (target.coralId === "__reef__") {
+    const targetOwner = target.owner ?? "player";
+    const removesOpposingInvader = targetOwner === "opponent";
+    const supportCost = getPlayerCardPlayCost(supportCard);
+    const recoveredRp = Number(targetCard.cost?.rp ?? 0);
+    if (removesOpposingInvader) {
+      const invaderRemoval = resolveSpearfishingInvaderRemoval({
+        foundations: playerCorals,
+        orphanEntries: playerOrphanCreatures,
+        target: { ...target, location: target.coralId === "__orphan__" ? "orphan" : "slot" },
+        invaderController: "opponent",
+        eligibleCardIds: SPEARFISHING_FOREIGN_TARGET_CARD_IDS,
+        supportCardId: supportCard.id,
+        actorDiscardPile: discardPile,
+        invaderDiscardPile: opponent.discardPile,
+        actorRp: rp,
+        actorRpCap: playerRpCap,
+        supportCost,
+        recoveredRp,
+      });
+      if (!invaderRemoval.success) {
+        setSearchContext(null);
+        setEventOverlay({ type: "utility-result", sourceCardId: supportCard.id, title: "Spearfishing Canceled", message: "That invading Lionfish is no longer a legal target. No card or RP was spent.", success: false });
+        return;
+      }
+      setPlayerCorals(invaderRemoval.foundations);
+      setPlayerOrphanCreatureInstances(invaderRemoval.orphanEntries);
+      setDiscardPile(invaderRemoval.actorDiscardPile);
+      setOpponent((current) => ({ ...current, discardPile: invaderRemoval.invaderDiscardPile }));
+      setRp(invaderRemoval.actorRp);
+      setCreatureStatuses((current) => Object.fromEntries(Object.entries(current).filter(([slotId]) => slotId !== target.slotId)));
+    } else if (target.coralId === "__reef__") {
       setPlayerReefCreatureInstances((current) => removeCreatureInstances(current, [target.instanceId]).instances);
     } else if (target.coralId === "__orphan__") {
       setPlayerOrphanCreatureInstances((current) => {
@@ -5444,15 +5487,18 @@ export default function Simulator({
       if (target.hostedCardIds?.some(Boolean)) setPlayerOrphanCreatures((current) => [...current, ...target.hostedCardIds.filter(Boolean).map((cardId) => ({ cardId, hostedCardIds: [] }))]);
       setCreatureStatuses((current) => Object.fromEntries(Object.entries(current).filter(([slotId]) => slotId !== target.slotId)));
     }
-    const supportCost = getPlayerCardPlayCost(supportCard);
-    const recoveredRp = Number(targetCard.cost?.rp ?? 0);
     setHand((current) => removeOneCard(current, supportCard.id));
-    setDiscardPile((current) => [supportCard.id, targetCard.id, ...current]);
-    setRp((current) => addResourceWithinCap(Math.max(0, current - supportCost), recoveredRp, playerRpCap));
+    if (!removesOpposingInvader) {
+      setDiscardPile((current) => [supportCard.id, targetCard.id, ...current]);
+      setRp((current) => addResourceWithinCap(Math.max(0, current - supportCost), recoveredRp, playerRpCap));
+    }
     applyExplicitSupportLock(supportCard);
     setSearchContext(null);
-    setEventOverlay({ type: "impact-result", sourceCardId: supportCard.id, defenderCardId: targetCard.id, title: "Player used Spearfishing", message: `${targetCard.name} and Spearfishing were discarded. You recovered ${recoveredRp} RP, up to your ${playerRpCap} RP bank cap.`, success: true });
-    pushLog(`Spearfishing discarded ${targetCard.name} and recovered ${recoveredRp} RP, capped at ${playerRpCap}.`);
+    const destinationMessage = removesOpposingInvader
+      ? `${targetCard.name} was removed from your reef and returned to the opponent's discard pile. Spearfishing was discarded.`
+      : `${targetCard.name} and Spearfishing were discarded.`;
+    setEventOverlay({ type: "impact-result", sourceCardId: supportCard.id, defenderCardId: targetCard.id, title: "Player used Spearfishing", message: `${destinationMessage} You recovered ${recoveredRp} RP, up to your ${playerRpCap} RP bank cap.`, success: true });
+    pushLog(`Spearfishing discarded ${targetCard.name}${removesOpposingInvader ? " to its owner's discard pile" : ""} and recovered ${recoveredRp} RP, capped at ${playerRpCap}.`);
   }
 
   function completeWhirlpool(coralId) {
@@ -6502,11 +6548,11 @@ export default function Simulator({
         const chooseTopEffect = effects.find((effect) => effect.type === "chooseFromTopDeck");
         const reorderEffect = effects.find((effect) => effect.type === "peekAndReorderDeck");
         const hasSearchTarget = searchEffect && [...next.palsDeck, ...next.foundationDeck].some((candidateId) => cardMatchesSearchCriteria(cardsById[candidateId], searchEffect));
-        const hasSpearfishingTarget = card.id === "spearfishing" && ([
-          ...(next.reefCreatures ?? []),
-          ...(next.orphanCreatures ?? []).map((entry) => entry.cardId),
-          ...next.corals.flatMap((coral) => coral.slots.filter((slot) => slot.invasiveOwner !== "player").map((slot) => slot.cardId)),
-        ].some((candidateId) => [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[candidateId]?.category)));
+        const hasSpearfishingTarget = card.id === "spearfishing" && (
+          (next.reefCreatures ?? []).some((candidateId) => [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[candidateId]?.category))
+          || (next.orphanCreatures ?? []).some((entry) => cardCanBeSpearfished(cardsById[entry.cardId], entry, "opponent"))
+          || next.corals.some((coral) => coral.slots.some((slot) => cardCanBeSpearfished(cardsById[slot.cardId], slot, "opponent")))
+        );
         const canUseScientistJesDraw = card.id === "scientist-jes" && Boolean(next.palsDeck.length || next.foundationDeck.length);
         const hasTopDeckCards = Boolean(next.palsDeck.length || next.foundationDeck.length);
         const usable = hasSearchTarget || (chooseTopEffect && hasTopDeckCards) || (reorderEffect && hasTopDeckCards) || canUseScientistJesDraw || (card.id === "dr-evans" && next.hand.length <= 3) || (card.id === "coral-cement" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && coral.health < coral.maxHealth)) || (card.id === "coral-heal" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && (coral.statuses?.length || Number(coral.rpPenaltyNextTurn ?? 0) > 0))) || (card.id === "recovery" && next.discardPile.length) || (card.id === "restocking" && next.discardPile.some((candidateId) => cardsById[candidateId]?.category === CardCategory.FISH)) || card.id === "poison-heal" || card.id === "rov-lights" || hasSpearfishingTarget || (["whirlpool", "super-whirlpool"].includes(card.id) && playerCoralCards.length);
@@ -6607,19 +6653,43 @@ export default function Simulator({
         next = { ...next, discardPile: recoveredIds.reduce((pile, cardId) => removeOneCard(pile, cardId), next.discardPile), foundationDeck: shuffle([...next.foundationDeck, ...recoveredFoundationIds]), palsDeck: shuffle([...next.palsDeck, ...recoveredPalsIds]) };
         details.push(`restocked ${recoveredIds.length} Fish`);
       } else if (card.id === "spearfishing") {
-        const slottedTarget = next.corals.flatMap((coral) => coral.slots.filter((slot) => slot.invasiveOwner !== "player" && [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[slot.cardId]?.category)).map((slot) => ({ coralId: coral.id, slotId: slot.id, cardId: slot.cardId, hostedCardIds: [...(slot.hostedCardIds ?? [])] }))).at(0);
-        const orphanIndex = slottedTarget ? -1 : (next.orphanCreatures ?? []).findIndex((entry) => [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[entry.cardId]?.category));
-        const reefIndex = slottedTarget || orphanIndex >= 0 ? -1 : (next.reefCreatureInstances ?? []).findIndex((entry) => [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[entry.cardId]?.category));
-        const orphanTarget = orphanIndex >= 0 ? next.orphanCreatures[orphanIndex] : null;
-        const reefTarget = reefIndex >= 0 ? next.reefCreatureInstances[reefIndex] : null;
-        const targetId = slottedTarget?.cardId ?? orphanTarget?.cardId ?? reefTarget?.cardId;
+        const spearfishingTargets = [
+          ...next.corals.flatMap((coral) => coral.slots.filter((slot) => cardCanBeSpearfished(cardsById[slot.cardId], slot, "opponent")).map((slot) => ({ location: "slot", coralId: coral.id, slotId: slot.id, cardId: slot.cardId, hostedCardIds: [...(slot.hostedCardIds ?? [])], owner: getReefCardOwner(slot, "opponent") }))),
+          ...(next.orphanCreatures ?? []).flatMap((entry, orphanIndex) => cardCanBeSpearfished(cardsById[entry.cardId], entry, "opponent") ? [{ location: "orphan", orphanIndex, instanceId: entry.instanceId, cardId: entry.cardId, hostedCardIds: [...(entry.hostedCardIds ?? [])], owner: getReefCardOwner(entry, "opponent") }] : []),
+          ...(next.reefCreatureInstances ?? []).flatMap((entry, reefIndex) => [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[entry.cardId]?.category) ? [{ location: "reef", reefIndex, instanceId: entry.instanceId, cardId: entry.cardId, hostedCardIds: [], owner: "opponent" }] : []),
+        ];
+        const target = spearfishingTargets.find((candidate) => candidate.owner === "player") ?? spearfishingTargets[0];
+        const targetId = target?.cardId;
         const recoveredRp = Number(cardsById[targetId]?.cost?.rp ?? 0);
-        const nextOrphans = orphanIndex >= 0
-          ? [...next.orphanCreatures.filter((entry) => entry.instanceId !== orphanTarget.instanceId), ...(orphanTarget.hostedCardIds ?? []).filter(Boolean).map((cardId) => createCreatureInstance(cardId, createStableInstanceId(`opponent-orphan-${cardId}`)))]
-          : [...(next.orphanCreatures ?? []), ...(slottedTarget?.hostedCardIds ?? []).filter(Boolean).map((cardId) => createCreatureInstance(cardId, createStableInstanceId(`opponent-orphan-${cardId}`)))];
-        const nextReefInstances = reefTarget ? removeCreatureInstances(next.reefCreatureInstances, [reefTarget.instanceId]).instances : next.reefCreatureInstances;
-        next = { ...next, corals: slottedTarget ? next.corals.map((coral) => coral.id === slottedTarget.coralId ? { ...coral, slots: coral.slots.map((slot) => slot.id === slottedTarget.slotId ? { ...slot, cardId: null, cardInstanceId: null, hostedCardIds: [] } : slot) } : coral) : next.corals, orphanCreatures: nextOrphans, reefCreatureInstances: nextReefInstances, reefCreatures: nextReefInstances.map((entry) => entry.cardId), discardPile: [targetId, ...next.discardPile], rp: addResourceWithinCap(next.rp, recoveredRp, getEcosystemRpCap(next.corals, [...next.habitats, ...nextReefInstances.map((entry) => entry.cardId), ...(nextOrphans ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition)) };
-        details.push(`discarded ${cardsById[targetId]?.name} and recovered ${recoveredRp} RP`);
+        const removesPlayerInvader = target?.owner === "player";
+        const currentRpCap = getEcosystemRpCap(next.corals, [...next.habitats, ...next.reefCreatureInstances.map((entry) => entry.cardId), ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
+        const invaderRemoval = removesPlayerInvader ? resolveSpearfishingInvaderRemoval({
+          foundations: next.corals,
+          orphanEntries: next.orphanCreatures,
+          target,
+          invaderController: "player",
+          eligibleCardIds: SPEARFISHING_FOREIGN_TARGET_CARD_IDS,
+          supportCardId: null,
+          actorDiscardPile: next.discardPile,
+          invaderDiscardPile: discardPile,
+          actorRp: next.rp,
+          actorRpCap: currentRpCap,
+          recoveredRp,
+        }) : null;
+        const nextCorals = removesPlayerInvader
+          ? invaderRemoval.foundations
+          : target?.location === "slot"
+            ? next.corals.map((coral) => coral.id === target.coralId ? { ...coral, slots: coral.slots.map((slot) => slot.id === target.slotId ? { ...slot, cardId: null, cardInstanceId: null, hostedCardIds: [] } : slot) } : coral)
+          : next.corals;
+        const nextOrphans = removesPlayerInvader
+          ? invaderRemoval.orphanEntries
+          : target?.location === "orphan"
+            ? [...next.orphanCreatures.filter((entry) => entry.instanceId !== target.instanceId), ...(target.hostedCardIds ?? []).filter(Boolean).map((cardId) => createCreatureInstance(cardId, createStableInstanceId(`opponent-orphan-${cardId}`)))]
+          : [...(next.orphanCreatures ?? []), ...(target?.location === "slot" && !removesPlayerInvader ? target.hostedCardIds : []).filter(Boolean).map((cardId) => createCreatureInstance(cardId, createStableInstanceId(`opponent-orphan-${cardId}`)))];
+        const nextReefInstances = target?.location === "reef" ? removeCreatureInstances(next.reefCreatureInstances, [target.instanceId]).instances : next.reefCreatureInstances;
+        next = { ...next, corals: nextCorals, orphanCreatures: nextOrphans, reefCreatureInstances: nextReefInstances, reefCreatures: nextReefInstances.map((entry) => entry.cardId), discardPile: removesPlayerInvader ? invaderRemoval.actorDiscardPile : [targetId, ...next.discardPile], rp: removesPlayerInvader ? invaderRemoval.actorRp : addResourceWithinCap(next.rp, recoveredRp, getEcosystemRpCap(nextCorals, [...next.habitats, ...nextReefInstances.map((entry) => entry.cardId), ...(nextOrphans ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition)) };
+        if (removesPlayerInvader && invaderRemoval.success) impacts.push({ type: "spearfishing-owner-discard", sourceCardId: card.id, actionName: card.name, cardId: targetId });
+        details.push(`discarded ${cardsById[targetId]?.name}${removesPlayerInvader ? " to its owner's discard pile" : ""} and recovered ${recoveredRp} RP`);
       } else if (card.id === "whirlpool" || card.id === "super-whirlpool") {
         const amount = card.id === "super-whirlpool" ? 2 : 1;
         impacts.push({ sourceCardId: card.id, actionName: card.name, rpPenalty: amount });
@@ -6855,7 +6925,7 @@ export default function Simulator({
           controller: "opponent",
         };
         playedCreatureLocation = { coralId: targetCoral.id, slotId: targetSlot.id, invasive: true };
-        placementSummary = ` ${card.name} invaded an empty slot on your ${cardsById[targetCoral.cardId]?.name}; it remains the opponent's creature and you may remove it with a legal attack.`;
+        placementSummary = ` ${card.name} invaded an empty slot on your ${cardsById[targetCoral.cardId]?.name}; it remains the opponent's creature and you may remove it with Spearfishing or a legal attack.`;
       }
     } else if (card.zone === CreatureZone.OCEAN) {
       const sacrifices = getOceanicPlaySacrifices(card, next.corals, next.reefCreatures, next.orphanCreatures);
@@ -8671,6 +8741,13 @@ export default function Simulator({
     const supportImpactStages = [];
     let playerCoralsAfterSupports = stagedPlayerState.corals;
     (opponentResult.supportImpacts ?? []).forEach((impact) => {
+      if (impact.type === "spearfishing-owner-discard") {
+        supportImpactStages.push({
+          impact,
+          playerStateAfter: stagePlayerState({ discardPile: [impact.cardId, ...stagedPlayerState.discardPile] }),
+        });
+        return;
+      }
       if (!supportTargetCoral) return;
       playerCoralsAfterSupports = playerCoralsAfterSupports.map((coral) => coral.id === supportTargetCoral.id ? {
         ...coral,
@@ -8811,6 +8888,11 @@ export default function Simulator({
     finalOpponentState = { ...finalOpponentState, corals: opponentStunRecovery.foundations };
 
     const supportImpactEvents = supportImpactStages.map(({ impact, playerStateAfter }) => {
+      if (impact.type === "spearfishing-owner-discard") {
+        const targetName = cardsById[impact.cardId]?.name ?? "Your invading creature";
+        const message = `Opponent used Spearfishing to remove ${targetName} from its reef. ${targetName} returned to your discard pile.`;
+        return { type: "opponent-impact", sourceCardId: impact.sourceCardId, defenderCardId: impact.cardId, title: "Your Invader Was Removed", message, success: true, playerStateAfter, logMessage: message };
+      }
       const message = `Opponent played ${cardsById[impact.sourceCardId]?.name}; your ${cardsById[supportTargetCoral.cardId]?.name} will produce ${impact.rpPenalty} less RP during its next collection.`;
       return { type: "opponent-impact", sourceCardId: impact.sourceCardId, defenderCardId: supportTargetCoral.cardId, title: `Opponent's ${cardsById[impact.sourceCardId]?.name} used ${impact.actionName}`, message, success: true, playerStateAfter, logMessage: message };
     });
@@ -10763,7 +10845,8 @@ export default function Simulator({
                   <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
                     {(searchContext?.candidates ?? []).map((candidate) => {
                       const card = cardsById[candidate.cardId];
-                      return <button key={`${candidate.coralId}-${candidate.slotId}`} type="button" onClick={() => completeSpearfishing(candidate)} className="flex w-full items-center gap-3 rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-3 text-left transition hover:bg-rose-400/25"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-sm text-rose-200">Discard to recover {Number(card?.cost?.rp ?? 0)} RP</span></span></button>;
+                      const foreignInvader = candidate.owner && candidate.owner !== "player";
+                      return <button key={`${candidate.coralId}-${candidate.slotId}`} type="button" onClick={() => completeSpearfishing(candidate)} className="flex w-full items-center gap-3 rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-3 text-left transition hover:bg-rose-400/25"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}{foreignInvader ? " — opponent's invader" : ""}</strong><span className="text-sm text-rose-200">Discard to recover {Number(card?.cost?.rp ?? 0)} RP{foreignInvader ? "; card returns to opponent" : ""}</span></span></button>;
                     })}
                     <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setModal("hand"); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Spearfishing</button>
                   </div>
