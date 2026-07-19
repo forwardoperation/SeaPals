@@ -97,6 +97,18 @@ test("every proposed question has a useful built-in answer", () => {
     assert.ok(answer.text.length > 50, `Expected a useful answer for: ${question}`);
   }
 });
+
+test("distinguishes destroying Lionfish from discarding it with Spearfishing", () => {
+  const answer = findRulesAnswer(
+    "Where does Lionfish go when destroyed, and where does Spearfishing send it?",
+    CORE_RULES,
+  );
+
+  assert.equal(answer?.title, "Lost Zone");
+  assert.match(answer?.text ?? "", /Lionfish is destroyed.*owner's Lost Zone/i);
+  assert.match(answer?.text ?? "", /Spearfishing discards Lionfish.*owner's discard pile/i);
+});
+
 test("defense questions cannot be hijacked by the generic word game", () => {
   const rules = [
     {

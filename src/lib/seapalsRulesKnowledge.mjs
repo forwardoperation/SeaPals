@@ -63,7 +63,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "How normal attacks resolve",
-    text: "During your Attack step, choose a legal target allowed by the attack's target icons, habitat, and printed restrictions. Roll the printed attack die and the target's defense die, including valid modifiers. The attack succeeds only when the attack total is higher; ties go to the defender. Finish resolving that attack before starting another. A successful normal creature attack discards the defending creature unless another effect saves it.",
+    text: "During your Attack step, choose a legal target allowed by the attack's target icons, habitat, and printed restrictions. Roll the printed attack die and the target's defense die, including valid modifiers. The attack succeeds only when the attack total is higher; ties go to the defender. Finish resolving that attack before starting another. A successful normal creature attack destroys the defending creature unless another effect saves it; its printed destruction destination determines whether it goes to discard or the Lost Zone.",
   },
   {
     title: "Reading targets on attacks and abilities",
@@ -163,7 +163,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Lost Zone",
-    text: "If an Apex or Filter Feeder is destroyed, its printed Special Rules send that physical card to its owner's Lost Zone instead of the discard pile. It leaves play and its VP stops counting. Cards of other classes go to discard when destroyed unless their own printed text explicitly names another destination. Discarding an Apex or Filter Feeder for a cost or effect is not the same as destroying it, so it goes to discard unless that effect says otherwise.",
+    text: "If an Apex, Filter Feeder, or Lionfish is destroyed, its printed Special Rules send that physical card to its owner's Lost Zone instead of the discard pile. It leaves play and its VP stops counting. Cards of other classes go to discard when destroyed unless their own printed text explicitly names another destination. Destroying and discarding are different instructions: Spearfishing discards Lionfish, so it returns the invading Lionfish to its original owner's discard pile instead of the Lost Zone.",
   },
   {
     title: "Stunned boundary",

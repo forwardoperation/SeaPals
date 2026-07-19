@@ -513,6 +513,7 @@ export const fishCards = [
 
     cost: { rp: 4 },
     victoryPoints: 0,
+    destroyedDestination: "lost-zone",
     tags: ["creature", "fish", "lionfish", "toxic", "invasive"],
 
     bio: {
@@ -526,7 +527,7 @@ export const fishCards = [
 
     playRequirements: [],
     specialRules: [
-      "You may play this creature onto one of your opponent’s reefs. It may possess any coral slot type. Your opponent may remove it with Spearfishing or a successful attack.",
+      "You may play this creature onto one of your opponent’s reefs. It may possess any coral slot type. Your opponent may discard it with Spearfishing or destroy it with a successful attack.",
     ],
     specialPlacement: {
       controller: "opponent",

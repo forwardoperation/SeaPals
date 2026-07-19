@@ -34,16 +34,16 @@ const lostZoneOnDestructionCategories = new Set([
 function normalizeCreatureCard(card) {
   if (card.kind !== CardKind.CREATURE) return card;
 
-  const goesToLostZoneWhenDestroyed = lostZoneOnDestructionCategories.has(
-    card.category
-  );
+  const destroyedDestination = card.destroyedDestination
+    ?? (lostZoneOnDestructionCategories.has(card.category) ? "lost-zone" : "discard");
+  const goesToLostZoneWhenDestroyed = destroyedDestination === "lost-zone";
   const specialRules = card.specialRules ?? [];
 
   return {
     ...card,
     zone: card.zone ?? CreatureZone.REEF,
     class: card.class ?? creatureClassByCategory[card.category],
-    destroyedDestination: goesToLostZoneWhenDestroyed ? "lost-zone" : "discard",
+    destroyedDestination,
     specialRules:
       goesToLostZoneWhenDestroyed &&
       !specialRules.some((rule) =>

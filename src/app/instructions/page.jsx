@@ -67,7 +67,7 @@ const glossary = [
   ["Defense", "The target's roll against a normal attack. A tied total means the defender stays in play."],
   ["School Density", "An Oceanic value supplied by Creature Schools. It is checked for requirements, not spent like RP."],
   ["Discard", "Cards that are spent, discarded, or destroyed unless another rule gives them a different destination."],
-  ["Lost Zone", "Where destroyed Apex and Filter Feeder cards go instead of the discard pile."],
+  ["Lost Zone", "Where destroyed Apex, Filter Feeder, and Lionfish cards go instead of the discard pile."],
 ];
 
 const faqQuestions = [
@@ -129,7 +129,7 @@ const faqQuestions = [
   {
     question: "Which cards go to the Lost Zone when destroyed?",
     answer:
-      "Destroyed Apex and Filter Feeder cards go to their owner's Lost Zone instead of the discard pile. This applies only when the card is destroyed. If one is discarded as a cost or by another effect, it goes to discard unless that effect explicitly names the Lost Zone.",
+      "Destroyed Apex, Filter Feeder, and Lionfish cards go to their owner's Lost Zone instead of the discard pile. This applies only when the card is destroyed. Spearfishing discards Lionfish rather than destroying it, so Spearfishing returns Lionfish to its original owner's discard pile. Other discard effects still use discard unless they explicitly name the Lost Zone.",
   },
   {
     question: "Do Support cards stay in play?",
@@ -806,7 +806,7 @@ export default function InstructionsPage() {
                     "Roll the printed attack die. The target rolls its Defense die.",
                     "Apply valid + or − modifiers. A modified total cannot go below 0.",
                     "The attacker succeeds only if its final total is higher. A tie goes to the defender.",
-                    "A successful normal attack destroys the defending creature unless an effect saves it. Put a destroyed Apex or Filter Feeder in its owner's Lost Zone; put other destroyed creatures in discard unless their text says otherwise.",
+                    "A successful normal attack destroys the defending creature unless an effect saves it. Put a destroyed Apex, Filter Feeder, or Lionfish in its owner's Lost Zone; put other destroyed creatures in discard unless their text says otherwise.",
                   ].map((step, index) => (
                     <li key={step} className="flex gap-3">
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cyan-400 text-xs font-black text-slate-950">{index + 1}</span>
@@ -922,12 +922,13 @@ export default function InstructionsPage() {
 
               <RuleDetails
                 title="Lost Zone"
-                summary="Destroyed Apex and Filter Feeder cards do not enter the discard pile"
+                summary="Destroyed Apex, Filter Feeder, and Lionfish cards do not enter the discard pile"
               >
                 <ul className="space-y-2">
-                  <li>• When an <strong>Apex</strong> or <strong>Filter Feeder</strong> is destroyed, place that physical card in its owner's Lost Zone instead of the discard pile.</li>
+                  <li>• When an <strong>Apex</strong>, <strong>Filter Feeder</strong>, or <strong>Lionfish</strong> is destroyed, place that physical card in its owner's Lost Zone instead of the discard pile.</li>
                   <li>• A card in the Lost Zone is no longer in play, so its VP and in-play abilities stop applying immediately.</li>
-                  <li>• Destroying and discarding are different instructions. An Apex or Filter Feeder discarded as a cost, sacrifice, hand-limit overflow, or card effect goes to discard unless that instruction explicitly names the Lost Zone.</li>
+                  <li>• Destroying and discarding are different instructions. Spearfishing discards Lionfish, so it returns the Lionfish to its original owner's discard pile instead of the Lost Zone.</li>
+                  <li>• An Apex or Filter Feeder discarded as a cost, sacrifice, hand-limit overflow, or card effect goes to discard unless that instruction explicitly names the Lost Zone.</li>
                   <li>• Other destroyed cards go to discard unless their own printed text gives them another destination.</li>
                 </ul>
               </RuleDetails>
@@ -990,7 +991,7 @@ export default function InstructionsPage() {
                   passives, and cannot be upgraded through the end of its controller's
                   next turn. Coral Heal removes Stunned early because it removes all
                   effects from the chosen Coral. The Lost Zone is defined above for
-                  destroyed Apex and Filter Feeder cards.
+                  destroyed Apex, Filter Feeder, and Lionfish cards.
                 </p>
               </RuleDetails>
             </div>

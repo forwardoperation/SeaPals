@@ -59,6 +59,9 @@ test("own-reef invader removal shares Blue Crab math without bypassing Toxic or 
   assert.match(invaderRemoval, /resolveToxicConsumption/);
   assert.match(invaderRemoval, /shouldSelfDiscardAfterConsume/);
   assert.match(invaderRemoval, /resolveBlueCrabRecycle/);
+  assert.match(invaderRemoval, /discardPile: destroyedCardGoesToLostZone\(targetEntry\.card\)/);
+  assert.match(invaderRemoval, /lostZone: destroyedCardGoesToLostZone\(targetEntry\.card\)/);
+  assert.match(invaderRemoval, /went to its owner's \$\{destroyedCardGoesToLostZone\(targetEntry\.card\) \? "Lost Zone" : "discard pile"\}/);
   assert.match(invaderRemoval, /blueCrabRecycleUsedTurn:\s*blueCrabRecycle\.recycleUsedTurnAfter/);
   assert.match(invaderRemoval, /Opponent's Blue Crab recycled/);
 
@@ -67,6 +70,30 @@ test("own-reef invader removal shares Blue Crab math without bypassing Toxic or 
     "function applyPlayerOnPlayDeckDiscard",
   );
   assert.ok((playerAttack.match(/resolveBlueCrabRecycle\(/g) ?? []).length >= 2, "ordinary and invasive defender paths should share the resolver");
+});
+
+test("successful attacks send an invasive Lionfish to its original owner's Lost Zone in either direction", () => {
+  const opponentOwnedInvader = sourceBetween(
+    "if (targetEntry.targetsOwnInvader)",
+    "const resilienceTriggered",
+  );
+  assert.match(opponentOwnedInvader, /discardPile: destroyedCardGoesToLostZone\(targetEntry\.card\) \? opponent\.discardPile/);
+  assert.match(opponentOwnedInvader, /lostZone: destroyedCardGoesToLostZone\(targetEntry\.card\) \? \[targetEntry\.card\.id/);
+
+  const playerOwnedInvader = sourceBetween(
+    "if (targetEntry.onOpponentBoard)",
+    "const defeatedCorals",
+  );
+  assert.match(playerOwnedInvader, /const defeatedInvaderDestination = destroyedCardGoesToLostZone\(targetEntry\.card\)/);
+  assert.match(playerOwnedInvader, /went to your \$\{defeatedInvaderDestination\}/);
+
+  const opponentAttackProjection = sourceBetween(
+    "function buildOpponentAttackEventSequence",
+    "function resolvePlayerRegenerateChoice",
+  );
+  assert.match(opponentAttackProjection, /destroyedCardGoesToLostZone\(primaryDefeatedCard\)/);
+  assert.match(opponentAttackProjection, /nextLostZone = \[step\.discardedCardId, \.\.\.nextLostZone\]/);
+  assert.match(opponentAttackProjection, /nextDiscardPile = \[\.\.\.removeOneCard\(discardedIds, step\.discardedCardId\), \.\.\.nextDiscardPile\]/);
 });
 
 test("Spearfishing removes a foreign Lionfish from either physical reef and returns it to its owner", () => {
