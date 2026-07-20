@@ -292,7 +292,7 @@ export function recoverElversonAdventureResume(saveValue) {
       ...repaired,
       recovered: true,
       reason: "legacy-aquarium-exit",
-      fallback: "central-pier",
+      fallback: "aquarium-deck",
     };
   }
   return recoverAdventureResume(normalized);

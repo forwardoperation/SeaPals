@@ -244,10 +244,10 @@ test("release recovery moves a blocked legacy Elverson position to a safe spawn 
   assert.deepEqual(stable.save, recovered.save);
 });
 
-test("release recovery moves the retired aquarium exit autosave onto the central pier", () => {
+test("release recovery moves the retired aquarium exit autosave onto the aquarium deck", () => {
   const initial = createNewAdventureSession("release-aquarium-exit-resume");
   const legacyExit = { x: 16, y: 17 };
-  assert.equal(canOccupyContinuousPosition("town", legacyExit), true);
+  assert.equal(canOccupyContinuousPosition("town", legacyExit), false);
 
   const stranded = {
     ...initial,
@@ -265,8 +265,8 @@ test("release recovery moves the retired aquarium exit autosave onto the central
   const recovered = recoverElversonAdventureResume(stranded);
   assert.equal(recovered.recovered, true);
   assert.equal(recovered.reason, "legacy-aquarium-exit");
-  assert.equal(recovered.fallback, "central-pier");
-  assert.deepEqual(recovered.save.world.position, { x: 14, y: 17 });
+  assert.equal(recovered.fallback, "aquarium-deck");
+  assert.deepEqual(recovered.save.world.position, { x: 16, y: 15.85 });
   assert.equal(canOccupyContinuousPosition("town", recovered.save.world.position), true);
   assert.equal(recovered.save.world.facing, "down");
   assert.equal(recovered.save.playtimeSeconds, 321);

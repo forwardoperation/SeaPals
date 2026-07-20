@@ -26,3 +26,18 @@ test("patrol animation pauses with gameplay and honors reduced motion", () => {
   assert.match(styles, /\.npcCell\s*\{[\s\S]*transition:\s*left \d+ms linear, top \d+ms linear/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.npcCell,[\s\S]*transition:\s*none\s*!important/);
 });
+
+test("player and patrol walk cycles derive their cadence from world speed", () => {
+  assert.match(component, /getAdventureWalkCycleDurationMs\(walkSpeed\)/);
+  assert.match(component, /"--sprite-walk-cycle-duration": `\$\{getAdventureWalkCycleDurationMs\(walkSpeed\)\}ms`/);
+  assert.match(component, /walkSpeed=\{characterInteraction\.patrol\?\.speed \?\? ADVENTURE_ACTOR_DEFAULTS\.speed\}/);
+  assert.match(component, /walkSpeed=\{scene\.movement\?\.speed\}/);
+  assert.match(styles, /animation:\s*spriteWalk var\(--sprite-walk-cycle-duration, 250ms\) steps\(1, end\) infinite/);
+});
+
+test("the player only animates when continuous movement covers real ground", () => {
+  assert.match(component, /const \[playerWalking, setPlayerWalking\] = useState\(false\)/);
+  assert.match(component, /setPlayerWalking\(hasAdventureWalkDisplacement\(current\.world\.position, next\)\)/);
+  assert.match(component, /moving=\{playerWalking\}/);
+  assert.match(component, /if \(boatMode \|\| movementPaused \|\| !isMoving\) setPlayerWalking\(false\)/);
+});
