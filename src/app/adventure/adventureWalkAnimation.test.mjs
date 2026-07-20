@@ -17,7 +17,7 @@ test("one complete walk cycle covers one world tile", () => {
   assert.equal(getAdventureWalkCycleDurationMs(0.5), 2000);
 });
 
-test("walk artwork stops on the first blocked frame even while input remains held", () => {
+test("walk displacement helper distinguishes blocked frames from real travel", () => {
   const start = { x: 4, y: 5 };
   const moved = { x: 4.08, y: 5 };
   assert.equal(hasAdventureWalkDisplacement(start, moved), true);

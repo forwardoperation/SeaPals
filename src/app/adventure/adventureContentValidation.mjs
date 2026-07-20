@@ -41,6 +41,9 @@ const TOURNAMENT_OPPONENT_CONVERSATION_MODES = ["roundReady", "defeat", "roundVi
 const TOURNAMENT_REFLECTION_CONVERSATION_MODES = ["epilogue", "postgame"];
 const FACING_DIRECTIONS = new Set(["up", "down", "left", "right"]);
 const PATROL_MODES = new Set(["loop", "ping-pong"]);
+const LAYERED_OBJECT_LAYERS = new Set(["ground", "depth", "overhead"]);
+const ADVENTURE_SPRITE_PATH = /^\/images\/adventure\/(?:[a-z0-9-]+\/)*[a-z0-9-]+\.png$/;
+const SCENE_GEOMETRY_EPSILON = 1e-9;
 const PACK_POOL_STATUSES = new Set(["planned", "playable"]);
 const PLAYABLE_PACK_GUARANTEE = "at-least-one-unowned-card-when-eligible";
 
@@ -76,6 +79,259 @@ function collectIds(items, label, errors) {
 function requireReference(value, ids, path, errors, { nullable = false } = {}) {
   if (nullable && value === null) return;
   if (!ids.has(value)) errors.push(`${path} references unknown id ${String(value)}.`);
+}
+
+function validateFiniteBounds(value, {
+  path,
+  width,
+  height,
+  errors,
+  requireInsideScene = true,
+}) {
+  if (!isObject(value)) {
+    errors.push(`${path} must be an object.`);
+    return false;
+  }
+
+  let finite = true;
+  for (const bound of ["left", "top", "right", "bottom"]) {
+    if (!Number.isFinite(value[bound])) {
+      errors.push(`${path}.${bound} must be finite.`);
+      finite = false;
+    }
+  }
+  if (!finite) return false;
+
+  let positiveArea = true;
+  if (value.left >= value.right) {
+    errors.push(`${path} must have left less than right.`);
+    positiveArea = false;
+  }
+  if (value.top >= value.bottom) {
+    errors.push(`${path} must have top less than bottom.`);
+    positiveArea = false;
+  }
+  if (!positiveArea) return false;
+
+  if (
+    requireInsideScene
+    && width > 0
+    && height > 0
+    && (
+      value.left < -0.5 - SCENE_GEOMETRY_EPSILON
+      || value.top < -0.5 - SCENE_GEOMETRY_EPSILON
+      || value.right > width - 0.5 + SCENE_GEOMETRY_EPSILON
+      || value.bottom > height - 0.5 + SCENE_GEOMETRY_EPSILON
+    )
+  ) {
+    errors.push(`${path} must stay inside the scene bounds.`);
+    return false;
+  }
+
+  return true;
+}
+
+function sameFiniteBounds(left, right) {
+  return ["left", "top", "right", "bottom"].every((bound) => (
+    Number.isFinite(left?.[bound])
+    && Number.isFinite(right?.[bound])
+    && Math.abs(left[bound] - right[bound]) <= SCENE_GEOMETRY_EPSILON
+  ));
+}
+
+function validateSceneWalkableRegions(world, { sceneId, width, height, errors }) {
+  if (world.walkableRegions === undefined) return;
+  const path = `scenes.${sceneId}.world.walkableRegions`;
+  if (!Array.isArray(world.walkableRegions) || world.walkableRegions.length === 0) {
+    errors.push(`${path} must be a non-empty array when supplied.`);
+    return;
+  }
+
+  const regionIds = new Set();
+  for (const [index, region] of world.walkableRegions.entries()) {
+    const regionPath = `${path}[${index}]`;
+    if (!isObject(region)) {
+      errors.push(`${regionPath} must be an object.`);
+      continue;
+    }
+    if (typeof region.id !== "string" || !region.id.trim()) {
+      errors.push(`${regionPath}.id must be non-empty.`);
+    } else if (regionIds.has(region.id)) {
+      errors.push(`${path} contains duplicate id ${region.id}.`);
+    } else {
+      regionIds.add(region.id);
+    }
+    validateFiniteBounds(region, {
+      path: regionPath,
+      width,
+      height,
+      errors,
+    });
+  }
+}
+
+function validateSceneLayeredObjects(world, {
+  sceneId,
+  width,
+  height,
+  interactionIds,
+  errors,
+}) {
+  if (world.layeredObjects === undefined) return;
+  const path = `scenes.${sceneId}.world.layeredObjects`;
+  if (!Array.isArray(world.layeredObjects)) {
+    errors.push(`${path} must be an array when supplied.`);
+    return;
+  }
+
+  const worldColliders = new Map(objectItems(world.collisionRects).map((rectangle) => [
+    rectangle.id,
+    rectangle,
+  ]));
+  const objectIds = new Set();
+  const renderIds = new Set();
+  const colliderIds = new Set();
+  const linkedInteractionIds = new Set();
+
+  for (const [index, object] of world.layeredObjects.entries()) {
+    const objectPath = `${path}[${index}]`;
+    if (!isObject(object)) {
+      errors.push(`${objectPath} must be an object.`);
+      continue;
+    }
+
+    const validId = typeof object.id === "string" && Boolean(object.id.trim());
+    if (!validId) {
+      errors.push(`${objectPath}.id must be non-empty.`);
+    } else if (objectIds.has(object.id)) {
+      errors.push(`${path} contains duplicate id ${object.id}.`);
+    } else {
+      objectIds.add(object.id);
+    }
+
+    if (typeof object.renderId !== "string" || !object.renderId.trim()) {
+      errors.push(`${objectPath}.renderId must be non-empty.`);
+    } else {
+      if (renderIds.has(object.renderId)) {
+        errors.push(`${path} contains duplicate renderId ${object.renderId}.`);
+      }
+      renderIds.add(object.renderId);
+      if (validId && object.renderId !== `object:${object.id}`) {
+        errors.push(`${objectPath}.renderId must equal object:${object.id}.`);
+      }
+    }
+    if (object.kind !== "object") {
+      errors.push(`${objectPath}.kind must equal object.`);
+    }
+    if (typeof object.archetype !== "string" || !object.archetype.trim()) {
+      errors.push(`${objectPath}.archetype must be non-empty.`);
+    }
+
+    if (!isObject(object.at) || !Number.isFinite(object.at.x) || !Number.isFinite(object.at.y)) {
+      errors.push(`${objectPath}.at requires finite x and y coordinates.`);
+    } else if (
+      width > 0
+      && height > 0
+      && (
+        object.at.x < -0.5
+        || object.at.y < -0.5
+        || object.at.x > width - 0.5
+        || object.at.y > height - 0.5
+      )
+    ) {
+      errors.push(`${objectPath}.at must stay inside the scene bounds.`);
+    }
+
+    if (!isObject(object.sprite)) {
+      errors.push(`${objectPath}.sprite must be an object.`);
+    } else {
+      const { sprite } = object;
+      if (typeof sprite.src !== "string" || !ADVENTURE_SPRITE_PATH.test(sprite.src)) {
+        errors.push(`${objectPath}.sprite.src must reference a PNG in /images/adventure/.`);
+      }
+      for (const dimension of ["width", "height"]) {
+        if (!Number.isFinite(sprite[dimension]) || sprite[dimension] <= 0) {
+          errors.push(`${objectPath}.sprite.${dimension} must be a positive finite number.`);
+        }
+      }
+      for (const anchor of ["anchorX", "anchorY"]) {
+        if (!Number.isFinite(sprite[anchor]) || sprite[anchor] < 0 || sprite[anchor] > 1) {
+          errors.push(`${objectPath}.sprite.${anchor} must stay between 0 and 1.`);
+        }
+      }
+    }
+
+    if (!Number.isFinite(object.scale) || object.scale <= 0) {
+      errors.push(`${objectPath}.scale must be a positive finite number.`);
+    }
+    if (!LAYERED_OBJECT_LAYERS.has(object.layer)) {
+      errors.push(`${objectPath}.layer must be ground, depth, or overhead.`);
+    }
+    if (!Number.isFinite(object.depthY)) {
+      errors.push(`${objectPath}.depthY must be finite.`);
+    }
+    if (!Number.isInteger(object.depthBias)) {
+      errors.push(`${objectPath}.depthBias must be an integer.`);
+    }
+    validateFiniteBounds(object.visualBounds, {
+      path: `${objectPath}.visualBounds`,
+      width,
+      height,
+      errors,
+      // Tall sprites and edge foliage may intentionally extend beyond the
+      // navigable world. Their base colliders may not.
+      requireInsideScene: false,
+    });
+
+    if (!Array.isArray(object.collisionRects)) {
+      errors.push(`${objectPath}.collisionRects must be an array.`);
+    } else {
+      for (const [colliderIndex, collider] of object.collisionRects.entries()) {
+        const colliderPath = `${objectPath}.collisionRects[${colliderIndex}]`;
+        if (!isObject(collider)) {
+          errors.push(`${colliderPath} must be an object.`);
+          continue;
+        }
+        if (typeof collider.id !== "string" || !collider.id.trim()) {
+          errors.push(`${colliderPath}.id must be non-empty.`);
+        } else {
+          if (colliderIds.has(collider.id)) {
+            errors.push(`${path} contains duplicate collider id ${collider.id}.`);
+          }
+          colliderIds.add(collider.id);
+          if (validId && !collider.id.startsWith(`${object.id}:`)) {
+            errors.push(`${colliderPath}.id must begin with ${object.id}:.`);
+          }
+          const worldCollider = worldColliders.get(collider.id);
+          if (!worldCollider) {
+            errors.push(`${colliderPath} must also appear in world.collisionRects.`);
+          } else if (!sameFiniteBounds(collider, worldCollider)) {
+            errors.push(`${colliderPath} must match its world.collisionRects geometry.`);
+          }
+        }
+        validateFiniteBounds(collider, {
+          path: colliderPath,
+          width,
+          height,
+          errors,
+        });
+      }
+    }
+
+    if (object.interactionId !== null) {
+      if (typeof object.interactionId !== "string" || !object.interactionId.trim()) {
+        errors.push(`${objectPath}.interactionId must be null or a non-empty string.`);
+      } else {
+        if (!interactionIds.has(object.interactionId)) {
+          errors.push(`${objectPath}.interactionId references unknown scene interaction ${object.interactionId}.`);
+        }
+        if (linkedInteractionIds.has(object.interactionId)) {
+          errors.push(`${path} links interaction ${object.interactionId} more than once.`);
+        }
+        linkedInteractionIds.add(object.interactionId);
+      }
+    }
+  }
 }
 
 function validateInteractionPatrol(interaction, { path, width, height, errors }) {
@@ -410,6 +666,23 @@ export function validateAdventureContent(content) {
         }
       }
     }
+
+    const sceneInteractionIds = new Set(objectItems(scene.world.interactions)
+      .filter((interaction) => typeof interaction.id === "string" && interaction.id.trim())
+      .map((interaction) => interaction.id));
+    validateSceneWalkableRegions(scene.world, {
+      sceneId: scene.id,
+      width,
+      height: rows.length,
+      errors,
+    });
+    validateSceneLayeredObjects(scene.world, {
+      sceneId: scene.id,
+      width,
+      height: rows.length,
+      interactionIds: sceneInteractionIds,
+      errors,
+    });
 
     if (scene.world.collisionRects !== undefined && !Array.isArray(scene.world.collisionRects)) {
       errors.push(`scenes.${scene.id}.world.collisionRects must be an array when supplied.`);

@@ -70,6 +70,38 @@ test("Kelpwatch ships the exact five map-sized PNG assets used by its live scene
   }
 });
 
+test("Elverson ships its layered ground and every referenced transparent object sprite", async () => {
+  const town = ADVENTURE_CONTENT.scenes.find((scene) => scene.id === "town");
+  assert.equal(town?.status, "prototype");
+  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v2.png");
+  assert.notEqual(town.world.artPath, "/images/adventure/elverson-town.png");
+
+  const ground = await readFile(publicAssetPath(town.world.artPath));
+  assert.equal(ground.subarray(0, 8).toString("hex"), PNG_SIGNATURE);
+  assert.equal(ground.readUInt32BE(16), 1536, "layered Elverson ground width");
+  assert.equal(ground.readUInt32BE(20), 1024, "layered Elverson ground height");
+
+  const objects = town.world.layeredObjects;
+  assert.ok(objects.length >= 40, "Elverson should be assembled from reusable placed objects");
+  const spritePaths = [...new Set(objects.map((object) => object.sprite.src))];
+  assert.ok(spritePaths.length >= 15, "Elverson should reference the complete object family");
+  assert.ok(spritePaths.every((spritePath) => (
+    spritePath.startsWith("/images/adventure/elverson-objects-v2/")
+  )));
+
+  for (const spritePath of spritePaths) {
+    const png = await readFile(publicAssetPath(spritePath));
+    assert.equal(png.subarray(0, 8).toString("hex"), PNG_SIGNATURE, spritePath);
+    assert.equal(png.subarray(12, 16).toString("ascii"), "IHDR", `${spritePath} header`);
+    assert.ok(png.readUInt32BE(16) > 0 && png.readUInt32BE(20) > 0, `${spritePath} dimensions`);
+    assert.ok([3, 6].includes(png[25]), `${spritePath} must use indexed-alpha or RGBA color`);
+    if (png[25] === 3) {
+      assert.ok(png.includes(Buffer.from("tRNS")), `${spritePath} must retain indexed transparency`);
+    }
+    assert.equal(png.subarray(-8, -4).toString("ascii"), "IEND", `${spritePath} must be complete`);
+  }
+});
+
 test("Elverson ships distinct transparent GBA-style resident walk sheets", async () => {
   const spriteAssets = [
     "/images/adventure/fisherman-wyeth-sprites.png",

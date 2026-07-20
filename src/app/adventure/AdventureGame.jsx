@@ -21,6 +21,11 @@ import {
 } from "./adventureWorld.mjs";
 import { getAdventureCameraLayout } from "./adventureCamera.mjs";
 import {
+  createLayeredActorRenderable,
+  getLayeredSceneObjectStyle,
+  getLayeredSceneZIndex,
+} from "./adventureLayeredScene.mjs";
+import {
   BOAT_MOTION_DEFAULTS,
   createBoatMotionState,
   getBoatFacingFromHeading,
@@ -31,12 +36,20 @@ import {
   ADVENTURE_ACTOR_DEFAULTS,
   advanceAdventureActorStates,
   createAdventureActorStates,
+  focusAdventureActor,
   getAdventureActorBlockers,
+  getAdventureFacingToward,
   getAdventureActorPositionOverrides,
 } from "./adventureActors.mjs";
+import { resolveAdventureMovementInput } from "./adventureMovementInput.mjs";
+import {
+  advanceAdventureSceneTransition,
+  createAdventureSceneTransition,
+  getAdventureDoorStepVector,
+  getAdventureSceneTransitionDurationMs,
+} from "./adventureSceneTransition.mjs";
 import {
   getAdventureWalkCycleDurationMs,
-  hasAdventureWalkDisplacement,
 } from "./adventureWalkAnimation.mjs";
 import {
   ADVENTURE_CONTENT,
@@ -270,6 +283,60 @@ function residentSpriteSource(character) {
   return RESIDENT_SPRITE_ARCHETYPES[hash % RESIDENT_SPRITE_ARCHETYPES.length];
 }
 
+// Idle-frame alpha bounds differ substantially across the authored sheets and
+// even between facing rows. These percentages place each ground shadow on the
+// visible sole line inside the shared one-tile actor cell instead of assuming
+// every sheet ends at the same point in its transparent crop.
+const SPRITE_FEET_Y_BY_PROFILE = Object.freeze({
+  player: Object.freeze({ down: 53.5, left: 52.9, right: 53.5, up: 53.9 }),
+  marina: Object.freeze({ down: 53.9, left: 53.9, right: 53.9, up: 53.9 }),
+  dorian: Object.freeze({ down: 53.2, left: 54.2, right: 53.9, up: 53.9 }),
+  "fisherman-wyeth": Object.freeze({ down: 50.6, left: 47.1, right: 42.6, up: 40 }),
+  "teacher-caroline": Object.freeze({ down: 42.3, left: 41.3, right: 37.8, up: 37.8 }),
+  ivy: Object.freeze({ down: 55.8, left: 59, right: 59, up: 53.2 }),
+  "explorer-jordan": Object.freeze({ down: 49.7, left: 46.5, right: 43.6, up: 41.3 }),
+  "marine-biologist-jonah": Object.freeze({ down: 48.1, left: 45.2, right: 40, up: 36.2 }),
+  "programmer-harlan": Object.freeze({ down: 52.6, left: 46.8, right: 42.3, up: 42.6 }),
+  "town-adult": Object.freeze({ down: 45.5, left: 48.7, right: 45.8, up: 48.4 }),
+  "town-elder": Object.freeze({ down: 55.8, left: 56.4, right: 52.6, up: 52.9 }),
+  "academy-mentor": Object.freeze({ down: 53.3, left: 58.8, right: 58.8, up: 35.5 }),
+});
+
+const SPRITE_FOOT_PROFILE_BY_ARTWORK = Object.freeze({
+  "current-guide": "player",
+  "current-deckhand": "player",
+  "kelpwatch-guide": "player",
+  "kelpwatch-ranger": "player",
+  "trenchlight-guide": "player",
+  "trenchlight-engineer": "player",
+  "tournament-quarterfinalist": "player",
+  "champions-wake-spectator": "player",
+  "current-analyst": "marina",
+  "current-leader": "marina",
+  "kelpwatch-ecologist": "marina",
+  "kelpwatch-leader": "marina",
+  "trenchlight-scientist": "marina",
+  "trenchlight-leader": "marina",
+  "champions-wake-director": "marina",
+  "tournament-champion": "marina",
+  "current-navigator": "dorian",
+  "kelpwatch-diver": "dorian",
+  "trenchlight-observer": "dorian",
+  "tournament-semifinalist": "dorian",
+  "champions-wake-reflector": "dorian",
+});
+
+function spriteArtworkCharacter(character) {
+  return SPRITE_SOURCE_BY_CHARACTER[character] ?? residentSpriteSource(character);
+}
+
+function spriteFeetY(character, facing) {
+  const artworkCharacter = spriteArtworkCharacter(character);
+  const profileId = SPRITE_FOOT_PROFILE_BY_ARTWORK[artworkCharacter] ?? artworkCharacter;
+  const profile = SPRITE_FEET_Y_BY_PROFILE[profileId] ?? SPRITE_FEET_Y_BY_PROFILE.player;
+  return `${profile[facing] ?? profile.down}%`;
+}
+
 const CHAMPIONSHIP_ENDING_FLAGS = Object.freeze({
   ceremony: "championship-ceremony-complete",
   epilogue: "championship-epilogue-complete",
@@ -340,21 +407,36 @@ const DIRECTIONS = {
   D: "right",
 };
 
-const MOVEMENT_VECTORS = Object.freeze({
-  up: Object.freeze({ x: 0, y: -1 }),
-  down: Object.freeze({ x: 0, y: 1 }),
-  left: Object.freeze({ x: -1, y: 0 }),
-  right: Object.freeze({ x: 1, y: 0 }),
-});
+const MIN_MOVEMENT_INTENT_MS = 34;
 
-function actorPosition(position, scene) {
+function actorPosition(position, scene, actorId = null) {
+  const layeredZIndex = actorId && scene.layeredObjects?.length
+    ? getLayeredSceneZIndex(createLayeredActorRenderable({ id: actorId, position }))
+    : null;
   return {
     left: `${((position.x + 0.5) / scene.width) * 100}%`,
     top: `${((position.y + 0.5) / scene.height) * 100}%`,
     width: `${100 / scene.width}%`,
     height: `${100 / scene.height}%`,
-    zIndex: 20 + Math.round(position.y * 10),
+    zIndex: layeredZIndex ?? 20 + Math.round(position.y * 10),
   };
+}
+
+function AdventureLayeredMapObject({ object, scene }) {
+  return (
+    <Image
+      className={styles.layeredMapObject}
+      src={object.sprite.src}
+      alt=""
+      aria-hidden="true"
+      width={Math.max(1, Math.round(object.sprite.width * 64))}
+      height={Math.max(1, Math.round(object.sprite.height * 64))}
+      sizes="100vw"
+      draggable={false}
+      unoptimized
+      style={getLayeredSceneObjectStyle(object, scene)}
+    />
+  );
 }
 
 function SpriteArtwork({
@@ -365,7 +447,7 @@ function SpriteArtwork({
   walkSpeed = null,
 }) {
   const facingName = `${facing[0].toUpperCase()}${facing.slice(1)}`;
-  const artworkCharacter = SPRITE_SOURCE_BY_CHARACTER[character] ?? residentSpriteSource(character);
+  const artworkCharacter = spriteArtworkCharacter(character);
   const walkStyle = moving && Number.isFinite(walkSpeed) && walkSpeed > 0
     ? { "--sprite-walk-cycle-duration": `${getAdventureWalkCycleDurationMs(walkSpeed)}ms` }
     : undefined;
@@ -378,11 +460,22 @@ function SpriteArtwork({
   );
 }
 
+function CharacterGroundShadow({ character = "player", facing = "down" }) {
+  return (
+    <span
+      className={styles.characterShadow}
+      style={{ "--character-feet-y": spriteFeetY(character, facing) }}
+      aria-hidden="true"
+    />
+  );
+}
+
 function AdventureTrainerSprite({
   trainer,
   position,
   facing = "down",
   moving = false,
+  engaged = false,
   defeated,
   status = null,
   scene,
@@ -392,11 +485,11 @@ function AdventureTrainerSprite({
   const showMarker = Boolean(trainer.encounterId || status);
   return (
     <div
-      className={`${styles.characterCell} ${styles.npcCell}`}
-      style={actorPosition(position, scene)}
+      className={`${styles.characterCell} ${styles.npcCell} ${engaged ? styles.npcEngaged : ""}`}
+      style={actorPosition(position, scene, trainer.id)}
       aria-label={`${trainer.name}, ${trainer.title}${resolvedStatus ? ` — ${resolvedStatus}` : ""}`}
     >
-      <span className={styles.characterShadow} />
+      <CharacterGroundShadow character={trainer.id} facing={facing} />
       <SpriteArtwork character={trainer.id} facing={facing} moving={moving} walkSpeed={walkSpeed} />
       {showMarker ? (
         <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""} ${status === "Locked" ? styles.trainerLocked : ""}`}>
@@ -407,14 +500,29 @@ function AdventureTrainerSprite({
   );
 }
 
-function AdventurePlayerSprite({ position, facing, moving, interaction, scene, walkSpeed }) {
+function AdventurePlayerSprite({
+  position,
+  facing,
+  moving,
+  interaction,
+  scene,
+  walkSpeed,
+  transitionPhase = null,
+  transitionVector = null,
+}) {
+  const transitionStyle = transitionVector ? {
+    "--door-step-x": `${transitionVector.x * 28}%`,
+    "--door-step-y": `${transitionVector.y * 28}%`,
+    "--door-arrival-x": `${transitionVector.x * -28}%`,
+    "--door-arrival-y": `${transitionVector.y * -28}%`,
+  } : undefined;
   return (
     <div
-      className={`${styles.characterCell} ${styles.playerCell}`}
-      style={actorPosition(position, scene)}
+      className={`${styles.characterCell} ${styles.playerCell} ${transitionPhase ? styles[`playerScene${transitionPhase === "departing" ? "Departing" : "Arriving"}`] : ""}`}
+      style={{ ...actorPosition(position, scene, "player"), ...transitionStyle }}
       aria-label="You"
     >
-      <span className={styles.characterShadow} />
+      <CharacterGroundShadow facing={facing} />
       <SpriteArtwork facing={facing} moving={moving} walkSpeed={walkSpeed} />
       {interaction && !["enter", "exit"].includes(interaction.type) ? <span className={styles.actionCue} aria-hidden="true">A</span> : null}
     </div>
@@ -427,7 +535,7 @@ function AdventureBoatSprite({ position, facing, heading, speed, moving, interac
     <div
       className={`${styles.characterCell} ${styles.playerCell} ${styles.boatCell} ${styles[`boatFacing${facing}`]} ${moving ? styles.boatMoving : ""}`}
       style={{
-        ...actorPosition(position, scene),
+        ...actorPosition(position, scene, "player-boat"),
         "--boat-heading": `${heading}deg`,
         "--boat-wake-strength": speedRatio,
       }}
@@ -681,30 +789,6 @@ function TrenchlightSubExpedition({
       </div>
     </section>
   );
-}
-
-function movementVector(keyDirections, touchDirections) {
-  const vector = { x: 0, y: 0 };
-  for (const direction of [...keyDirections.values(), ...touchDirections]) {
-    const delta = MOVEMENT_VECTORS[direction];
-    if (delta) {
-      vector.x += delta.x;
-      vector.y += delta.y;
-    }
-  }
-  return vector;
-}
-
-function movementFacing(keyDirections, touchDirections, vector) {
-  const activeDirections = [...keyDirections.values(), ...touchDirections];
-  for (let index = activeDirections.length - 1; index >= 0; index -= 1) {
-    const direction = activeDirections[index];
-    const delta = MOVEMENT_VECTORS[direction];
-    if (delta && delta.x * vector.x + delta.y * vector.y > 0) return direction;
-  }
-  return Math.abs(vector.x) >= Math.abs(vector.y)
-    ? vector.x > 0 ? "right" : "left"
-    : vector.y > 0 ? "down" : "up";
 }
 
 function boatControlInput(keyDirections, touchDirections) {
@@ -1039,6 +1123,11 @@ function DirectionButton({ direction, label, ariaLabel = `Walk ${direction}`, on
       onPointerDown={startPointer}
       onPointerUp={stopPointer}
       onPointerCancel={stopPointer}
+      onLostPointerCapture={(event) => {
+        event.preventDefault();
+        onStop(direction);
+        releaseClickSuppression();
+      }}
       onClick={nudgeFromClick}
       onBlur={() => {
         onStop(direction);
@@ -1978,6 +2067,7 @@ export default function AdventureGame() {
   })));
   const [gameSave, setGameSave] = useState(null);
   const [conversation, setConversation] = useState(null);
+  const [conversationLeadIn, setConversationLeadIn] = useState(null);
   const [activeTrainerId, setActiveTrainerId] = useState(null);
   const [postDuelConversation, setPostDuelConversation] = useState(null);
   const [starterSelectionOpen, setStarterSelectionOpen] = useState(false);
@@ -2017,8 +2107,12 @@ export default function AdventureGame() {
   }));
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
+  const [sceneTransition, setSceneTransition] = useState(null);
   const keyboardDirectionsRef = useRef(new Map());
   const touchDirectionsRef = useRef(new Set());
+  const overworldDirectionsRef = useRef(new Map());
+  const movementIntentStartedAtRef = useRef(new Map());
+  const movementIntentReleaseTimersRef = useRef(new Map());
   const boatMotionRef = useRef(null);
   const actorRuntimeRef = useRef(actorRuntime);
   const movementActiveRef = useRef(false);
@@ -2031,7 +2125,9 @@ export default function AdventureGame() {
   const profileWriteAuthorizedRef = useRef(false);
   const pageVisibleRef = useRef(true);
   const duelResultRef = useRef(null);
+  const activeDuelConversationOriginRef = useRef(null);
   const doorwayTransitionRef = useRef(null);
+  const pendingSceneTransitionRef = useRef(null);
   const residentConversationSeenRef = useRef(new Set());
 
   const setDirty = useCallback((value) => {
@@ -2152,7 +2248,9 @@ export default function AdventureGame() {
     || settingsOpen
     || Boolean(confirmation)
     || Boolean(conversation)
+    || Boolean(conversationLeadIn)
     || Boolean(activeTrainerId)
+    || Boolean(sceneTransition)
     || starterSelectionOpen
     || fieldNoteOpen
     || inventoryOpen
@@ -2185,6 +2283,12 @@ export default function AdventureGame() {
   const clearMovement = useCallback(() => {
     keyboardDirectionsRef.current.clear();
     touchDirectionsRef.current.clear();
+    overworldDirectionsRef.current.clear();
+    movementIntentStartedAtRef.current.clear();
+    for (const timer of movementIntentReleaseTimersRef.current.values()) {
+      window.clearTimeout(timer);
+    }
+    movementIntentReleaseTimersRef.current.clear();
     if (boatMotionRef.current) {
       boatMotionRef.current = {
         ...boatMotionRef.current,
@@ -2216,11 +2320,44 @@ export default function AdventureGame() {
       );
       return;
     }
-    const vector = movementVector(keyboardDirectionsRef.current, touchDirectionsRef.current);
+    const { vector } = resolveAdventureMovementInput(overworldDirectionsRef.current);
     setMovementActive(
       !movementPausedRef.current && (vector.x !== 0 || vector.y !== 0),
     );
   }, [setMovementActive]);
+
+  const activateMovementIntent = useCallback((inputId, direction) => {
+    const pendingRelease = movementIntentReleaseTimersRef.current.get(inputId);
+    if (pendingRelease) window.clearTimeout(pendingRelease);
+    movementIntentReleaseTimersRef.current.delete(inputId);
+    if (!overworldDirectionsRef.current.has(inputId)) {
+      movementIntentStartedAtRef.current.set(inputId, performance.now());
+    }
+    overworldDirectionsRef.current.delete(inputId);
+    overworldDirectionsRef.current.set(inputId, direction);
+  }, []);
+
+  const releaseMovementIntent = useCallback((inputId, releaseSource) => {
+    const finishRelease = () => {
+      releaseSource();
+      overworldDirectionsRef.current.delete(inputId);
+      movementIntentStartedAtRef.current.delete(inputId);
+      movementIntentReleaseTimersRef.current.delete(inputId);
+      syncMovementActive();
+    };
+    const startedAt = movementIntentStartedAtRef.current.get(inputId) ?? performance.now();
+    const remainingMs = Math.max(0, MIN_MOVEMENT_INTENT_MS - (performance.now() - startedAt));
+    if (remainingMs === 0) {
+      finishRelease();
+      return;
+    }
+    const previousTimer = movementIntentReleaseTimersRef.current.get(inputId);
+    if (previousTimer) window.clearTimeout(previousTimer);
+    movementIntentReleaseTimersRef.current.set(
+      inputId,
+      window.setTimeout(finishRelease, remainingMs),
+    );
+  }, [syncMovementActive]);
 
   const refreshProfiles = useCallback(() => {
     const adapter = storageRef.current;
@@ -2268,13 +2405,8 @@ export default function AdventureGame() {
     return result;
   }, [refreshProfiles, setDirty]);
 
-  const commitSceneTransition = useCallback((candidate, sourceSave = saveRef.current) => {
-    if (!candidate?.targetScene || !candidate.spawn || !sourceSave) return false;
-    const transitionKey = `${sourceSave.world.sceneId}:${candidate.interactionId ?? candidate.targetScene}`;
-    if (doorwayTransitionRef.current === transitionKey) return false;
-
-    doorwayTransitionRef.current = transitionKey;
-    clearMovement();
+  const applySceneTransition = useCallback((candidate, sourceSave) => {
+    if (!candidate?.targetScene || !candidate.spawn || !sourceSave) return null;
     let next = enterAdventureScene(sourceSave, {
       sceneId: candidate.targetScene,
       position: candidate.spawn,
@@ -2287,12 +2419,103 @@ export default function AdventureGame() {
     persistSave(next, {
       checkpointId: `scene-transition:${candidate.interactionId ?? candidate.targetScene}`,
     });
+    return next;
+  }, [persistSave, setDirty]);
+
+  const requestSceneTransition = useCallback((candidate, sourceSave = saveRef.current) => {
+    if (!candidate?.targetScene || !candidate.spawn || !sourceSave || sceneTransition) return false;
+    const interactionId = candidate.interactionId ?? candidate.targetScene;
+    const transitionKey = `${sourceSave.world.sceneId}:${interactionId}`;
+    if (doorwayTransitionRef.current === transitionKey) return false;
+
+    const arrivalDirection = candidate.facing ?? (candidate.type === "exit" ? "down" : "up");
+    const transition = createAdventureSceneTransition({
+      sourceSceneId: sourceSave.world.sceneId,
+      targetSceneId: candidate.targetScene,
+      interactionId,
+      type: candidate.type ?? "enter",
+      departureDirection: sourceSave.world.facing,
+      arrivalDirection,
+    });
+    const destinationArtPath = SCENES[candidate.targetScene]?.artPath;
+    let artworkReady = Promise.resolve();
+    if (destinationArtPath && typeof window !== "undefined") {
+      artworkReady = new Promise((resolve) => {
+        const artwork = new window.Image();
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+        artwork.onload = finish;
+        artwork.onerror = finish;
+        artwork.src = destinationArtPath;
+        if (artwork.complete) finish();
+        artwork.decode?.().then(finish, finish);
+      });
+    }
+
+    doorwayTransitionRef.current = transitionKey;
+    pendingSceneTransitionRef.current = { candidate, sourceSave, artworkReady };
+    saveRef.current = sourceSave;
+    setGameSave(sourceSave);
+    setDirty(true);
+    clearMovement();
+    setSceneTransition(transition);
     return true;
-  }, [clearMovement, persistSave, setDirty]);
+  }, [clearMovement, sceneTransition, setDirty]);
 
   useEffect(() => {
-    doorwayTransitionRef.current = null;
-  }, [sceneId]);
+    if (!sceneTransition) return undefined;
+    let cancelled = false;
+    const duration = getAdventureSceneTransitionDurationMs(sceneTransition.phase, {
+      reducedMotion: effectiveReducedMotion,
+    });
+    const timer = window.setTimeout(async () => {
+      if (sceneTransition.phase === "departing") {
+        const pending = pendingSceneTransitionRef.current;
+        if (!pending) {
+          doorwayTransitionRef.current = null;
+          setSceneTransition(null);
+          return;
+        }
+        await Promise.race([
+          pending.artworkReady,
+          new Promise((resolve) => window.setTimeout(resolve, 600)),
+        ]);
+        if (cancelled) return;
+        const next = applySceneTransition(pending.candidate, pending.sourceSave);
+        if (!next) {
+          pendingSceneTransitionRef.current = null;
+          doorwayTransitionRef.current = null;
+          setSceneTransition(null);
+          return;
+        }
+        setSceneTransition(advanceAdventureSceneTransition(sceneTransition, {
+          arrivalDirection: next.world.facing,
+        }));
+        return;
+      }
+
+      pendingSceneTransitionRef.current = null;
+      doorwayTransitionRef.current = null;
+      setSceneTransition(null);
+    }, duration);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [applySceneTransition, effectiveReducedMotion, sceneTransition]);
+
+  useEffect(() => {
+    if (!conversationLeadIn) return undefined;
+    const timer = window.setTimeout(() => {
+      setConversation(conversationLeadIn);
+      setConversationLeadIn(null);
+    }, effectiveReducedMotion ? 0 : 110);
+    return () => window.clearTimeout(timer);
+  }, [conversationLeadIn, effectiveReducedMotion]);
 
   useEffect(() => {
     try {
@@ -2321,8 +2544,10 @@ export default function AdventureGame() {
     profileWriteAuthorizedRef.current = storageAuthorized;
     setGameSave(nextSave);
     setConversation(null);
+    setConversationLeadIn(null);
     setActiveTrainerId(null);
     setPostDuelConversation(null);
+    activeDuelConversationOriginRef.current = null;
     setStarterSelectionOpen(false);
     setSelectedStarterId(null);
     setFieldNoteOpen(false);
@@ -2345,6 +2570,9 @@ export default function AdventureGame() {
     setPauseOpen(false);
     setSettingsOpen(false);
     setConfirmation(null);
+    pendingSceneTransitionRef.current = null;
+    doorwayTransitionRef.current = null;
+    setSceneTransition(null);
     residentConversationSeenRef.current = new Set();
     setScreen("playing");
   }
@@ -2475,7 +2703,11 @@ export default function AdventureGame() {
 
   useEffect(() => {
     if (activeTrainerId || !postDuelConversation) return;
-    setConversation(postDuelConversation);
+    setConversation({
+      ...postDuelConversation,
+      ...(activeDuelConversationOriginRef.current ?? {}),
+    });
+    activeDuelConversationOriginRef.current = null;
     setPostDuelConversation(null);
   }, [activeTrainerId, postDuelConversation]);
 
@@ -2565,35 +2797,33 @@ export default function AdventureGame() {
 
     function updateActors(timestamp) {
       const elapsedMs = previousTime === null ? 0 : Math.min(timestamp - previousTime, 80);
-      if (previousTime === null || elapsedMs >= 32) {
-        previousTime = timestamp;
-        const currentSave = saveRef.current;
-        const currentRuntime = actorRuntimeRef.current?.sceneId === sceneId
-          ? actorRuntimeRef.current
-          : { sceneId, actors: anchoredActorStates };
-        if (
-          elapsedMs > 0
-          && currentSave?.world.sceneId === sceneId
-          && !movementPausedRef.current
-          && pageVisibleRef.current
-        ) {
-          const nextRuntime = {
+      previousTime = timestamp;
+      const currentSave = saveRef.current;
+      const currentRuntime = actorRuntimeRef.current?.sceneId === sceneId
+        ? actorRuntimeRef.current
+        : { sceneId, actors: anchoredActorStates };
+      if (
+        elapsedMs > 0
+        && currentSave?.world.sceneId === sceneId
+        && !movementPausedRef.current
+        && pageVisibleRef.current
+      ) {
+        const nextRuntime = {
+          sceneId,
+          actors: advanceAdventureActorStates(
             sceneId,
-            actors: advanceAdventureActorStates(
-              sceneId,
-              sceneCharacterInteractions,
-              currentRuntime.actors,
-              elapsedMs,
-              {
-                playerPosition: currentSave.world.position,
-                reducedMotion: false,
-              },
-            ),
-          };
-          actorRuntimeRef.current = nextRuntime;
-          if (actorVisualStateChanged(currentRuntime.actors, nextRuntime.actors)) {
-            setActorRuntime(nextRuntime);
-          }
+            sceneCharacterInteractions,
+            currentRuntime.actors,
+            elapsedMs,
+            {
+              playerPosition: currentSave.world.position,
+              reducedMotion: false,
+            },
+          ),
+        };
+        actorRuntimeRef.current = nextRuntime;
+        if (actorVisualStateChanged(currentRuntime.actors, nextRuntime.actors)) {
+          setActorRuntime(nextRuntime);
         }
       }
       animationFrame = window.requestAnimationFrame(updateActors);
@@ -2700,17 +2930,15 @@ export default function AdventureGame() {
             || Math.abs(motion.speed) > BOAT_MOTION_DEFAULTS.stoppedSpeed,
           );
         } else {
-          const vector = movementVector(keyboardDirectionsRef.current, touchDirectionsRef.current);
+          const movementInput = resolveAdventureMovementInput(overworldDirectionsRef.current);
+          const { vector } = movementInput;
           if (vector.x === 0 && vector.y === 0) {
             setPlayerWalking(false);
             setMovementActive(false);
             return;
           }
-          nextFacing = movementFacing(
-            keyboardDirectionsRef.current,
-            touchDirectionsRef.current,
-            vector,
-          );
+          setPlayerWalking(true);
+          nextFacing = movementInput.direction;
           next = movePlayerContinuous(
             sceneId,
             current.world.position,
@@ -2728,7 +2956,6 @@ export default function AdventureGame() {
               ignoreActorTiles: true,
             },
           );
-          setPlayerWalking(hasAdventureWalkDisplacement(current.world.position, next));
         }
         const updated = {
           ...current,
@@ -2739,7 +2966,7 @@ export default function AdventureGame() {
           },
         };
         const doorway = getDoorwayTransition(sceneId, next, nextFacing);
-        if (doorway && commitSceneTransition(doorway, updated)) return;
+        if (doorway && requestSceneTransition(doorway, updated)) return;
 
         if (
           next.x !== current.world.position.x
@@ -2757,7 +2984,7 @@ export default function AdventureGame() {
 
     animationFrame = window.requestAnimationFrame(updateMovement);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [anchoredActorStates, boatMode, commitSceneTransition, isMoving, movementPaused, scene, sceneId, setDirty, setMovementActive]);
+  }, [anchoredActorStates, boatMode, isMoving, movementPaused, requestSceneTransition, scene, sceneId, setDirty, setMovementActive]);
 
   useEffect(() => {
     if (boatMode || movementPaused || !isMoving) setPlayerWalking(false);
@@ -2775,6 +3002,7 @@ export default function AdventureGame() {
   function beginTouchDirection(direction) {
     if (movementPaused) return;
     touchDirectionsRef.current.add(direction);
+    activateMovementIntent(`touch:${direction}`, direction);
     setGameSave((current) => {
       const currentScene = SCENES[current?.world?.sceneId];
       if (currentScene?.routeId || currentScene?.kind === "route") return current;
@@ -2788,8 +3016,10 @@ export default function AdventureGame() {
   }
 
   function endTouchDirection(direction) {
-    touchDirectionsRef.current.delete(direction);
-    syncMovementActive();
+    releaseMovementIntent(
+      `touch:${direction}`,
+      () => touchDirectionsRef.current.delete(direction),
+    );
   }
 
   function openStarterSelection() {
@@ -2818,7 +3048,12 @@ export default function AdventureGame() {
           persistSave(collection.save, { checkpointId: `starter-selected:${starter.id}` });
           setStarterSelectionOpen(false);
           setSelectedStarterId(null);
-          setConversation({ trainerId: ACADEMY_MENTOR_ID, index: 0, mode: "starterConfirmed" });
+          setConversation((currentConversation) => ({
+            ...currentConversation,
+            trainerId: ACADEMY_MENTOR_ID,
+            index: 0,
+            mode: "starterConfirmed",
+          }));
         } catch (error) {
           setSaveNotice({ kind: "error", message: error?.message ?? "That starter could not be selected." });
         }
@@ -3129,8 +3364,29 @@ export default function AdventureGame() {
   }
 
   function interact() {
-    if (screen !== "playing" || pauseOpen || settingsOpen || conversation || activeTrainerId || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage || !interaction || !gameSave) return;
+    if (screen !== "playing" || pauseOpen || settingsOpen || conversation || conversationLeadIn || activeTrainerId || sceneTransition || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage || !interaction || !gameSave) return;
     clearMovement();
+    const worldConversationOrigin = ["trainer", "npc"].includes(interaction.type)
+      ? { sceneId, interactionId: interaction.interactionId }
+      : null;
+    const beginWorldConversation = (nextConversation) => {
+      if (worldConversationOrigin) {
+        const currentRuntime = actorRuntimeRef.current?.sceneId === sceneId
+          ? actorRuntimeRef.current
+          : { sceneId, actors: anchoredActorStates };
+        const focusedRuntime = {
+          sceneId,
+          actors: focusAdventureActor(
+            currentRuntime.actors,
+            worldConversationOrigin.interactionId,
+            position,
+          ),
+        };
+        actorRuntimeRef.current = focusedRuntime;
+        setActorRuntime(focusedRuntime);
+      }
+      setConversationLeadIn({ ...nextConversation, ...worldConversationOrigin });
+    };
     if (interaction.type === "sub-launch") {
       launchTrenchlightSub();
       return;
@@ -3181,7 +3437,7 @@ export default function AdventureGame() {
         );
       }
       const progressState = getChampionsWakeTournamentProgress(begun.save);
-      setConversation({
+      beginWorldConversation({
         trainerId: interaction.npcId,
         index: 0,
         mode: progressState.complete
@@ -3203,7 +3459,7 @@ export default function AdventureGame() {
         setChampionshipEndingReplay(!unfinishedStage);
         setChampionshipEndingStage(unfinishedStage ?? "epilogue");
       } else {
-        setConversation({
+        beginWorldConversation({
           trainerId: interaction.npcId,
           index: 0,
           mode: progressState.status === "active" ? "guidance" : "intro",
@@ -3217,7 +3473,7 @@ export default function AdventureGame() {
       if (!trainer) return;
       if (trainerId === ACADEMY_MENTOR_ID) {
         const progress = getOnboardingProgress(saveRef.current ?? gameSave);
-        setConversation({
+        beginWorldConversation({
           trainerId,
           index: 0,
           mode: progress.needsStarterSelection
@@ -3231,7 +3487,7 @@ export default function AdventureGame() {
         return;
       }
       if (trainer.encounterId && trainer.townId === "shellshore-village" && !onboardingProgress?.tutorialComplete) {
-        setConversation({
+        beginWorldConversation({
           trainerId,
           index: 0,
           mode: "onboardingGate",
@@ -3247,7 +3503,7 @@ export default function AdventureGame() {
         if (trainer.townId === "shellshore-village") {
           const returning = residentConversationSeenRef.current.has(trainerId);
           residentConversationSeenRef.current.add(trainerId);
-          setConversation({
+          beginWorldConversation({
             trainerId,
             index: 0,
             mode: returning ? "return" : "intro",
@@ -3262,7 +3518,7 @@ export default function AdventureGame() {
         }
         if (trainer.townId === "champions-wake") {
           const progressState = getChampionsWakeTournamentProgress(current);
-          setConversation({
+          beginWorldConversation({
             trainerId,
             index: 0,
             mode: progressState.complete ? "postgame" : progressState.status === "active" ? "guidance" : "intro",
@@ -3274,12 +3530,12 @@ export default function AdventureGame() {
         const mode = chapter
           ? getAdventureEcosystemConversationMode(chapter, trainer.roleId, current, progress)
           : "guidance";
-        setConversation({ trainerId, index: 0, mode });
+        beginWorldConversation({ trainerId, index: 0, mode });
         return;
       }
       const availability = isAdventureEncounterAvailable(saveRef.current ?? gameSave, trainer.encounterId);
       if (!availability.available) {
-        setConversation({
+        beginWorldConversation({
           trainerId,
           index: 0,
           mode: "locked",
@@ -3287,7 +3543,7 @@ export default function AdventureGame() {
         });
         return;
       }
-      setConversation({
+      beginWorldConversation({
         trainerId,
         index: 0,
         mode: trainer.townId === "champions-wake"
@@ -3295,9 +3551,6 @@ export default function AdventureGame() {
           : "challenge",
       });
       return;
-    }
-    if (interaction.targetScene && interaction.spawn) {
-      commitSceneTransition(interaction, saveRef.current ?? gameSave);
     }
   }
 
@@ -3326,6 +3579,9 @@ export default function AdventureGame() {
 
   function launchDuel(trainerId, playerDeckSnapshot) {
     duelResultRef.current = null;
+    activeDuelConversationOriginRef.current = conversation?.sceneId && conversation?.interactionId
+      ? { sceneId: conversation.sceneId, interactionId: conversation.interactionId }
+      : null;
     setPostDuelConversation(null);
     setActiveDuelDeckSnapshot(playerDeckSnapshot);
     setActiveTrainerId(trainerId);
@@ -3735,7 +3991,12 @@ export default function AdventureGame() {
     }
 
     if (conversation.mode === "intro") {
-      setConversation({ trainerId: trainer.id, index: 0, mode: "starterPresentation" });
+      setConversation((currentConversation) => ({
+        ...currentConversation,
+        trainerId: trainer.id,
+        index: 0,
+        mode: "starterPresentation",
+      }));
       return;
     }
     if (conversation.mode === "starterPresentation") {
@@ -3743,7 +4004,12 @@ export default function AdventureGame() {
       return;
     }
     if (conversation.mode === "starterConfirmed") {
-      setConversation({ trainerId: trainer.id, index: 0, mode: "tutorialIntro" });
+      setConversation((currentConversation) => ({
+        ...currentConversation,
+        trainerId: trainer.id,
+        index: 0,
+        mode: "tutorialIntro",
+      }));
       return;
     }
     if (conversation.mode === "victory" || conversation.mode === "boatSafety") {
@@ -3889,8 +4155,10 @@ export default function AdventureGame() {
     setGameSave(null);
     saveRef.current = null;
     setConversation(null);
+    setConversationLeadIn(null);
     setActiveTrainerId(null);
     setPostDuelConversation(null);
+    activeDuelConversationOriginRef.current = null;
     setStarterSelectionOpen(false);
     setSelectedStarterId(null);
     setFieldNoteOpen(false);
@@ -3913,6 +4181,9 @@ export default function AdventureGame() {
     setPauseOpen(false);
     setSettingsOpen(false);
     setConfirmation(null);
+    pendingSceneTransitionRef.current = null;
+    doorwayTransitionRef.current = null;
+    setSceneTransition(null);
     setDirty(false);
     profileWriteAuthorizedRef.current = false;
     refreshProfiles();
@@ -3946,7 +4217,7 @@ export default function AdventureGame() {
   }
 
   escapeRef.current = () => {
-    if (screen !== "playing" || activeTrainerId) return;
+    if (screen !== "playing" || activeTrainerId || sceneTransition || conversationLeadIn) return;
     clearMovement();
     if (confirmation) {
       setConfirmation(null);
@@ -4001,7 +4272,11 @@ export default function AdventureGame() {
         if (event.target?.closest?.("input, select, textarea, [contenteditable='true']")) return;
         if (movementPausedRef.current) return;
         event.preventDefault();
-        keyboardDirectionsRef.current.set(event.code || event.key, direction);
+        const inputCode = event.code || event.key;
+        if (!keyboardDirectionsRef.current.has(inputCode)) {
+          keyboardDirectionsRef.current.set(inputCode, direction);
+          activateMovementIntent(`keyboard:${inputCode}`, direction);
+        }
         setGameSave((current) => {
           const currentScene = SCENES[current?.world?.sceneId];
           if (currentScene?.routeId || currentScene?.kind === "route") return current;
@@ -4026,8 +4301,11 @@ export default function AdventureGame() {
     function onKeyUp(event) {
       const direction = DIRECTIONS[event.key];
       if (!direction) return;
-      keyboardDirectionsRef.current.delete(event.code || event.key);
-      syncMovementActive();
+      const inputCode = event.code || event.key;
+      releaseMovementIntent(
+        `keyboard:${inputCode}`,
+        () => keyboardDirectionsRef.current.delete(inputCode),
+      );
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -4038,7 +4316,7 @@ export default function AdventureGame() {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", clearMovement);
     };
-  }, [clearMovement, syncMovementActive]);
+  }, [activateMovementIntent, clearMovement, releaseMovementIntent, syncMovementActive]);
 
   useEffect(() => {
     const preference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -4058,15 +4336,16 @@ export default function AdventureGame() {
       const visible = document.visibilityState === "visible";
       pageVisibleRef.current = visible;
       setPageVisible(visible);
+      if (!visible) clearMovement();
     }
 
     syncVisibility();
     document.addEventListener("visibilitychange", syncVisibility);
     return () => document.removeEventListener("visibilitychange", syncVisibility);
-  }, []);
+  }, [clearMovement]);
 
   useEffect(() => {
-    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || tournamentRegistrationOpen || championshipEndingStage || !pageVisible) return undefined;
+    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || sceneTransition || conversationLeadIn || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || tournamentRegistrationOpen || championshipEndingStage || !pageVisible) return undefined;
     const timer = window.setInterval(() => {
       if (!pageVisibleRef.current) return;
       setGameSave((current) => {
@@ -4081,7 +4360,7 @@ export default function AdventureGame() {
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [championshipEndingStage, confirmation, decksOpen, fieldNoteOpen, fieldworkActivity, inventoryOpen, pageVisible, pauseOpen, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
+  }, [championshipEndingStage, confirmation, conversationLeadIn, decksOpen, fieldNoteOpen, fieldworkActivity, inventoryOpen, pageVisible, pauseOpen, sceneTransition, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
 
   useEffect(() => {
     function saveWhenHidden() {
@@ -4224,6 +4503,13 @@ export default function AdventureGame() {
   }
 
   const activeConversationTrainer = conversation ? TRAINERS[conversation.trainerId] : null;
+  const activeWorldConversation = conversationLeadIn ?? conversation;
+  const activeConversationInteractionId = activeWorldConversation?.sceneId === sceneId
+    ? activeWorldConversation.interactionId ?? null
+    : null;
+  const conversationLeadInLabel = conversationLeadIn
+    ? `${TRAINERS[conversationLeadIn.trainerId]?.name ?? "Your neighbor"} turns to greet you...`
+    : null;
   const canOfferSunpatchExhibition = conversation?.trainerId === "sunpatch-leader"
     && defeated.has("encounter-sunpatch-qualifier");
   const currentTownId = gameSave.world.townId;
@@ -4402,12 +4688,23 @@ export default function AdventureGame() {
   const explorationBlocked = Boolean(
     pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage,
   );
+  const gameplaySurfaceLocked = Boolean(
+    explorationBlocked || sceneTransition || conversationLeadIn,
+  );
   const gameShellClassName = [
     styles.gameShell,
     gameSave.settings.highContrast ? styles.highContrastMode : "",
     gameSave.settings.reducedMotion ? styles.reducedMotionMode : "",
   ].filter(Boolean).join(" ");
   const maximumBoatSpeed = scene.movement?.speed ?? BOAT_MOTION_DEFAULTS.maxForwardSpeed;
+  const sceneTransitionVector = sceneTransition
+    ? getAdventureDoorStepVector(sceneTransition.direction)
+    : null;
+  const sceneTransitionLabel = sceneTransition
+    ? sceneTransition.phase === "departing"
+      ? `Entering ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
+      : `Arriving in ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
+    : null;
   const displayedBoatMotion = boatTelemetry.sceneId === sceneId
     ? boatTelemetry
     : {
@@ -4449,6 +4746,7 @@ export default function AdventureGame() {
           type="button"
           className={styles.exitLink}
           aria-label="Open pause menu"
+          disabled={Boolean(sceneTransition || conversationLeadIn)}
           onClick={() => {
             clearMovement();
             setPauseOpen(true);
@@ -4460,7 +4758,7 @@ export default function AdventureGame() {
         </div>
         <div className={styles.locationPill}>
           <span>NOW EXPLORING</span>
-          <strong>{LOCATION_NAMES[sceneId]}</strong>
+          <strong key={sceneId} className={styles.locationName}>{LOCATION_NAMES[sceneId]}</strong>
         </div>
         <div className={styles.compactProgress} aria-label={`${progress} of ${townEncounterIds.length} local challenges won`}>
           {townChallengeTrainers.map((trainer) => (
@@ -4471,12 +4769,19 @@ export default function AdventureGame() {
 
       {saveNotice ? (
         <div
+          key={saveNotice.message}
           className={`${styles.saveToast} ${saveNotice.kind === "error" ? styles.saveToastError : styles.saveToastInfo}`}
           role={saveNotice.kind === "error" ? "alert" : "status"}
         >{saveNotice.message}</div>
       ) : null}
 
-      <div className={styles.gameLayout} inert={explorationBlocked} aria-hidden={explorationBlocked || undefined}>
+      {sceneTransitionLabel || conversationLeadInLabel ? (
+        <span className={styles.srOnly} role="status" aria-live="polite" aria-atomic="true">
+          {sceneTransitionLabel ?? conversationLeadInLabel}
+        </span>
+      ) : null}
+
+      <div className={styles.gameLayout} inert={gameplaySurfaceLocked} aria-hidden={gameplaySurfaceLocked || undefined}>
         <aside className={styles.sidePanel}>
           <div className={styles.panelEyebrow}>Current quest</div>
           <h2>{questView.title}</h2>
@@ -4513,19 +4818,28 @@ export default function AdventureGame() {
             <TournamentBracketPanel progress={tournamentProgress} save={gameSave} compact />
           ) : null}
           <div className={styles.interactionBar} aria-live={boatMode ? undefined : "polite"}>
-            <span className={interaction || vehicleMode ? styles.readyDot : ""} />
-            {vehicleMode
-              ? trenchlightExpeditionState?.currentStep?.title ?? "Return to Mission Control for the next expedition decision"
-              : boatMode
-                ? boatGuidance
-                : interactionLabel(
-                  interaction,
-                  sceneId,
-                  trenchlightExpeditionState,
-                  trenchlightBriefingComplete,
-                  trenchlightGuideComplete,
-                )}
-            {actionInteraction && !vehicleMode ? <kbd>ENTER</kbd> : null}
+            <span className={interaction || vehicleMode || sceneTransition ? styles.readyDot : ""} />
+            <span
+              key={sceneTransition
+                ? `${sceneTransition.targetSceneId}:${sceneTransition.phase}`
+                : conversationLeadIn
+                  ? `greeting:${conversationLeadIn.interactionId}`
+                  : "steady-guidance"}
+              className={sceneTransition || conversationLeadIn ? styles.sceneTransitionStatus : undefined}
+            >
+              {sceneTransitionLabel ?? conversationLeadInLabel ?? (vehicleMode
+                ? trenchlightExpeditionState?.currentStep?.title ?? "Return to Mission Control for the next expedition decision"
+                : boatMode
+                  ? boatGuidance
+                  : interactionLabel(
+                    interaction,
+                    sceneId,
+                    trenchlightExpeditionState,
+                    trenchlightBriefingComplete,
+                    trenchlightGuideComplete,
+                  ))}
+            </span>
+            {actionInteraction && !vehicleMode && !sceneTransition ? <kbd>ENTER</kbd> : null}
           </div>
           {boatMode ? (
             <span className={styles.srOnly} aria-live="polite" aria-atomic="true">
@@ -4545,14 +4859,15 @@ export default function AdventureGame() {
           ) : (
             <>
           <div
-            className={styles.map}
+            className={`${styles.map} ${sceneTransition ? styles[`mapScene${sceneTransition.phase === "departing" ? "Departing" : "Arriving"}`] : ""}`}
             role="application"
+            aria-busy={Boolean(sceneTransition)}
             aria-label={boatMode
               ? `Top-down sea route at ${LOCATION_NAMES[sceneId]}. Up or W increases throttle. Down or S brakes and reverses. Left and right or A and D move the rudder. Coast toward a dock and press Enter, Space, or the on-screen A button when it is in reach.`
               : `Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk. Walk into doorways to enter or leave, and press Enter, Space, or the on-screen A button to interact.`}
           >
             <div
-              className={`${styles.mapWorld} ${mapThemeClass}`}
+              className={`${styles.mapWorld} ${mapThemeClass} ${sceneTransition ? styles[`mapWorldScene${sceneTransition.phase === "departing" ? "Departing" : "Arriving"}`] : ""}`}
               style={{
                 width: `${cameraLayout.worldWidthPercent}%`,
                 height: `${cameraLayout.worldHeightPercent}%`,
@@ -4563,6 +4878,13 @@ export default function AdventureGame() {
                 backgroundImage: scene.artPath ? `url("${scene.artPath}")` : undefined,
               }}
             >
+            {scene.layeredObjects.map((object) => (
+              <AdventureLayeredMapObject
+                key={object.renderId ?? object.id}
+                object={object}
+                scene={scene}
+              />
+            ))}
             {worldCueInteractions.map((candidate) => (
               <AdventureWorldCue
                 key={`world-cue:${candidate.id}`}
@@ -4581,6 +4903,14 @@ export default function AdventureGame() {
             {sceneCharacterInteractions.map((characterInteraction) => {
               const trainer = TRAINERS[characterInteraction.trainerId ?? characterInteraction.npcId];
               const runtimeActor = actorStates[characterInteraction.id];
+              const actorIsEngaged = activeConversationInteractionId === characterInteraction.id;
+              const actorFacing = actorIsEngaged
+                ? getAdventureFacingToward(
+                    runtimeActor?.position ?? characterInteraction.at,
+                    position,
+                    runtimeActor?.facing ?? characterInteraction.facing ?? "down",
+                  )
+                : runtimeActor?.facing ?? "down";
               const tournamentActor = Boolean(
                 trainer.encounterId
                 && CHAMPIONS_WAKE_TOURNAMENT_ROUND_IDS.includes(trainer.encounterId),
@@ -4598,8 +4928,9 @@ export default function AdventureGame() {
                   key={characterInteraction.id ?? characterInteraction.interactionId}
                   trainer={trainer}
                   position={runtimeActor?.position ?? characterInteraction.at}
-                  facing={runtimeActor?.facing ?? "down"}
-                  moving={runtimeActor?.moving === true}
+                  facing={actorFacing}
+                  moving={!actorIsEngaged && runtimeActor?.moving === true}
+                  engaged={actorIsEngaged}
                   walkSpeed={characterInteraction.patrol?.speed ?? ADVENTURE_ACTOR_DEFAULTS.speed}
                   defeated={trainerDefeated}
                   status={tournamentStatus?.startsWith("Won") ? "Won" : tournamentStatus}
@@ -4625,9 +4956,21 @@ export default function AdventureGame() {
                 walkSpeed={scene.movement?.speed}
                 interaction={actionInteraction}
                 scene={scene}
+                transitionPhase={sceneTransition?.phase ?? null}
+                transitionVector={sceneTransitionVector}
               />
             )}
             </div>
+            {sceneTransition ? (
+              <div
+                className={`${styles.sceneTransitionCurtain} ${styles[`sceneTransition${sceneTransition.phase === "departing" ? "Departing" : "Arriving"}`]}`}
+                aria-hidden="true"
+              >
+                <span className={styles.sceneTransitionLeft} />
+                <span className={styles.sceneTransitionRight} />
+                <i className={styles.sceneTransitionSeam} />
+              </div>
+            ) : null}
           </div>
 
           {boatMode ? (
@@ -4650,7 +4993,7 @@ export default function AdventureGame() {
             <button
               type="button"
               className={styles.actionButton}
-              disabled={!actionInteraction || (
+              disabled={Boolean(sceneTransition || conversationLeadIn) || !actionInteraction || (
                 actionInteraction.type === "sub-launch"
                 && (
                   !trenchlightExpeditionState?.canLaunch
@@ -4772,6 +5115,8 @@ export default function AdventureGame() {
                 trainerId: SUNPATCH_EXHIBITION_TRAINER_ID,
                 index: 0,
                 mode: "exhibitionOffer",
+                sceneId: conversation.sceneId,
+                interactionId: conversation.interactionId,
               })
             : ["victory", "roundVictory", "exhibitionVictory", "onboardingGate"].includes(conversation.mode)
               ? null

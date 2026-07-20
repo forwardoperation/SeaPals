@@ -9,9 +9,12 @@ const FACING_DELTAS = Object.freeze({
 });
 
 export const ADVENTURE_ACTOR_DEFAULTS = Object.freeze({
-  radius: 0.33,
+  // Keep collisions at a person's feet. A larger shoulder-sized circle made
+  // one NPC behave like a wall across Elverson's compact streets.
+  radius: 0.24,
   speed: 0.62,
   pauseMs: 1100,
+  focusDwellMs: 200,
   playerPauseDistance: 1.05,
   arrivalDistance: 0.035,
   blockedRetargetMs: 900,
@@ -79,6 +82,20 @@ function facingToward(delta, fallback = "down") {
   if (Math.abs(delta.x) > Math.abs(delta.y)) return delta.x < 0 ? "left" : "right";
   if (Math.abs(delta.y) > 0) return delta.y < 0 ? "up" : "down";
   return FACING_DELTAS[fallback] ? fallback : "down";
+}
+
+/**
+ * Returns the cardinal direction an actor at `origin` should face to look at
+ * `target`. Exact diagonal ties favor the vertical direction so conversations
+ * never leave a sprite between animation rows.
+ */
+export function getAdventureFacingToward(origin, target, fallback = "down") {
+  requireFinitePosition(origin, "Adventure actor facing origin");
+  requireFinitePosition(target, "Adventure actor facing target");
+  return facingToward(
+    { x: target.x - origin.x, y: target.y - origin.y },
+    fallback,
+  );
 }
 
 function distanceBetween(left, right) {
@@ -151,6 +168,39 @@ export function getAdventureActorBlockers(actorStates = {}, {
 }
 
 /**
+ * Gives one live actor its conversational focus without disturbing any patrol
+ * route state. Unknown interaction ids deliberately return the original state
+ * object so callers can safely pass optional conversation metadata.
+ */
+export function focusAdventureActor(
+  actorStates,
+  interactionId,
+  playerPosition,
+  { dwellMs = ADVENTURE_ACTOR_DEFAULTS.focusDwellMs } = {},
+) {
+  if (!actorStates || typeof actorStates !== "object" || Array.isArray(actorStates)) {
+    throw new TypeError("Adventure actor focus requires an actor state object.");
+  }
+  const actor = actorStates[interactionId];
+  if (!actor) return actorStates;
+
+  requireFinitePosition(actor.position, `Adventure actor ${interactionId}`);
+  requireFinitePosition(playerPosition, "Adventure player position");
+  requireNonNegativeNumber(dwellMs, "Adventure actor focus dwellMs");
+
+  return {
+    ...actorStates,
+    [interactionId]: {
+      ...actor,
+      facing: getAdventureFacingToward(actor.position, playerPosition, actor.facing),
+      moving: false,
+      dwellRemainingMs: dwellMs,
+      blockedMs: 0,
+    },
+  };
+}
+
+/**
  * Advances local-only actor patrols. The caller owns persistence; these small
  * ambient movements deliberately reset at the authored anchor on scene entry.
  */
@@ -195,12 +245,8 @@ export function advanceAdventureActorStates(
 
     const playerDistance = playerPosition ? distanceBetween(current.position, playerPosition) : Infinity;
     if (playerDistance <= patrol.playerPauseDistance) {
-      const playerDelta = playerPosition
-        ? { x: playerPosition.x - current.position.x, y: playerPosition.y - current.position.y }
-        : { x: 0, y: 0 };
       next[interaction.id] = {
         ...current,
-        facing: facingToward(playerDelta, current.facing),
         moving: false,
         blockedMs: 0,
       };

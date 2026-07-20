@@ -112,6 +112,15 @@
   font-size: 14px;
 }
 
+.locationName {
+  animation: locationNameSettle 180ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes locationNameSettle {
+  from { transform: translateY(-5px); }
+  to { transform: translateY(0); }
+}
+
 .compactProgress {
   display: flex;
   gap: 5px;
@@ -275,6 +284,16 @@
   font-size: 8px;
 }
 
+.sceneTransitionStatus {
+  color: #fef3c7;
+  animation: transitionStatusSettle 160ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes transitionStatusSettle {
+  from { transform: translateY(4px); }
+  to { transform: translateY(0); }
+}
+
 .srOnly {
   position: absolute;
   width: 1px;
@@ -301,6 +320,7 @@
     0 0 0 7px rgba(103, 232, 249, 0.3),
     0 26px 80px rgba(0, 0, 0, 0.45),
     inset 0 0 40px rgba(6, 78, 59, 0.2);
+  transition: border-color 140ms ease;
 }
 
 .mapWorld {
@@ -309,6 +329,118 @@
   overflow: visible;
   isolation: isolate;
   will-change: left, top;
+}
+
+.mapSceneDeparting,
+.mapSceneArriving {
+  border-color: #fef3c7;
+}
+
+.mapWorldSceneDeparting {
+  animation: sceneWorldDepart 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.mapWorldSceneArriving {
+  animation: sceneWorldArrive 280ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+.sceneTransitionCurtain {
+  position: absolute;
+  z-index: 80;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: all;
+}
+
+.sceneTransitionLeft,
+.sceneTransitionRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 51%;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 30px, rgba(255, 255, 255, 0.04) 31px 32px),
+    linear-gradient(155deg, #0e7490, #083b55 58%, #062538);
+  box-shadow: inset 0 0 0 2px rgba(165, 243, 252, 0.22);
+  will-change: transform;
+}
+
+.sceneTransitionLeft { left: 0; }
+.sceneTransitionRight { right: 0; }
+
+.sceneTransitionDeparting .sceneTransitionLeft {
+  animation: sceneCurtainLeftClose 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.sceneTransitionDeparting .sceneTransitionRight {
+  animation: sceneCurtainRightClose 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.sceneTransitionArriving .sceneTransitionLeft {
+  animation: sceneCurtainLeftOpen 280ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+.sceneTransitionArriving .sceneTransitionRight {
+  animation: sceneCurtainRightOpen 280ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+.sceneTransitionSeam {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 2px);
+  width: 4px;
+  background: linear-gradient(#fef3c7, #fbbf24, #fef3c7);
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.72);
+}
+
+.sceneTransitionDeparting .sceneTransitionSeam {
+  animation: sceneSeamClose 220ms steps(1, end) both;
+}
+
+.sceneTransitionArriving .sceneTransitionSeam {
+  animation: sceneSeamOpen 280ms steps(1, end) both;
+}
+
+@keyframes sceneCurtainLeftClose {
+  from { transform: translateX(-101%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes sceneCurtainRightClose {
+  from { transform: translateX(101%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes sceneCurtainLeftOpen {
+  from { transform: translateX(0); }
+  to { transform: translateX(-101%); }
+}
+
+@keyframes sceneCurtainRightOpen {
+  from { transform: translateX(0); }
+  to { transform: translateX(101%); }
+}
+
+@keyframes sceneSeamClose {
+  from { visibility: hidden; }
+  to { visibility: visible; }
+}
+
+@keyframes sceneSeamOpen {
+  from { visibility: visible; }
+  to { visibility: hidden; }
+}
+
+@keyframes sceneWorldDepart {
+  from { transform: scale(1); }
+  to { transform: scale(1.012); }
+}
+
+@keyframes sceneWorldArrive {
+  from { transform: scale(1.012); }
+  to { transform: scale(1); }
 }
 
 .worldCue {
@@ -541,6 +673,17 @@
   background-color: #16899a;
 }
 
+.layeredMapObject {
+  position: absolute;
+  display: block;
+  max-width: none;
+  object-fit: fill;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 .academyLabMap {
   background-color: #d7a362;
   background-image: url("/images/adventure/shellshore-academy.png");
@@ -736,8 +879,40 @@
 }
 
 .npcCell {
-  transition: left 72ms linear, top 72ms linear;
+  transition: none;
   will-change: left, top;
+}
+
+.npcEngaged {
+  animation: npcAttention 140ms steps(2, end);
+}
+
+.playerSceneDeparting {
+  animation: playerDoorDepart 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.playerSceneArriving {
+  animation: playerDoorArrive 280ms cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+@keyframes playerDoorDepart {
+  from { transform: translate(-50%, -50%) scale(1); }
+  to {
+    transform: translate(
+      calc(-50% + var(--door-step-x, 0%)),
+      calc(-50% + var(--door-step-y, 0%))
+    ) scale(0.94);
+  }
+}
+
+@keyframes playerDoorArrive {
+  from {
+    transform: translate(
+      calc(-50% + var(--door-arrival-x, 0%)),
+      calc(-50% + var(--door-arrival-y, 0%))
+    ) scale(0.94);
+  }
+  to { transform: translate(-50%, -50%) scale(1); }
 }
 
 .boatCell {
@@ -809,11 +984,13 @@
 
 .characterShadow {
   z-index: 1;
-  bottom: 40%;
+  top: var(--character-feet-y, 53.5%);
+  bottom: auto;
   width: 36%;
   height: 10%;
   background: rgba(5, 20, 26, 0.36);
   filter: blur(1px);
+  transform: translate(-50%, -50%);
 }
 
 .spriteArtwork {
@@ -829,7 +1006,7 @@
   background-size: 457.142857% 480%;
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 1px rgba(4, 15, 25, 0.34));
-  animation: spriteBreathe 1.5s steps(2, end) infinite;
+  animation: none;
   will-change: background-position, transform;
 }
 
@@ -1125,6 +1302,11 @@
   50% { transform: translateY(-1.5%); }
 }
 
+@keyframes npcAttention {
+  from { transform: translate(-50%, -50%) scaleY(0.96); }
+  to { transform: translate(-50%, -50%) scaleY(1); }
+}
+
 .trainerMarker {
   top: -62%;
   width: 44%;
@@ -1418,6 +1600,14 @@
   align-items: flex-end;
   justify-content: center;
   padding: 28px;
+}
+
+.dialogueLayer {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.introLayer {
   background: rgba(2, 10, 18, 0.48);
   backdrop-filter: blur(3px);
 }
@@ -1564,6 +1754,7 @@
   background: #0e7490;
   box-shadow: 0 3px 0 #164e63;
   cursor: pointer;
+  transition: filter 100ms ease, transform 100ms ease;
 }
 
 .dialogueActions button:hover,
@@ -1598,6 +1789,10 @@
   color: #155e75;
   background: #cffafe;
   box-shadow: 0 3px 0 #0e7490;
+}
+
+.dialogueActions button:active {
+  transform: translateY(2px);
 }
 
 .introLayer {
@@ -1798,6 +1993,12 @@
   background: linear-gradient(135deg, #5eead4, #22d3ee);
   box-shadow: 0 3px 0 #0f766e;
   cursor: pointer;
+  transition: filter 100ms ease, transform 100ms ease;
+}
+
+.pauseActions button:active,
+.confirmActions button:active {
+  transform: translateY(2px);
 }
 
 .profileCard > button {
@@ -1899,6 +2100,12 @@
   color: #dff8ff;
   background: linear-gradient(150deg, #0d3449, #071d2c);
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.58);
+  animation: menuPanelIn 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes menuPanelIn {
+  from { transform: translateY(12px) scale(0.985); }
+  to { transform: translateY(0) scale(1); }
 }
 
 .pauseCard h2,
@@ -3334,6 +3541,12 @@
   font-weight: 800;
   text-align: center;
   background: rgba(5, 68, 82, 0.9);
+  animation: saveToastSettle 180ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes saveToastSettle {
+  from { transform: translateY(-8px); }
+  to { transform: translateY(0); }
 }
 
 .saveToastError {
@@ -3396,6 +3609,7 @@
     radial-gradient(circle at 15% 0, rgba(20, 184, 166, 0.2), transparent 34%),
     linear-gradient(150deg, #0b3143, #071d2d 70%);
   box-shadow: 0 0 0 7px rgba(8, 47, 73, 0.9), 0 36px 110px rgba(0, 0, 0, 0.65);
+  animation: menuPanelIn 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .phase4ModalHeader {
@@ -5618,6 +5832,21 @@
   .trainerMarker,
   .actionCue,
   .dialogueBox,
+  .locationName,
+  .sceneTransitionStatus,
+  .saveToast,
+  .npcEngaged,
+  .playerSceneDeparting,
+  .playerSceneArriving,
+  .mapWorldSceneDeparting,
+  .mapWorldSceneArriving,
+  .sceneTransitionLeft,
+  .sceneTransitionRight,
+  .sceneTransitionSeam,
+  .pauseCard,
+  .confirmCard,
+  .worldMapCard,
+  .fieldworkCard,
   .introCard,
   .starterCard,
   .fieldNoteCard,
@@ -5649,6 +5878,7 @@
 
   .playerCell,
   .npcCell,
+  .map,
   .boatActor,
   .questProgress span,
   .exitLink,
@@ -5656,6 +5886,9 @@
   .subViewportShade,
   .subDepthRail::after,
   .subProgressTrack span,
+  .dialogueActions button,
+  .pauseActions button,
+  .confirmActions button,
   .tournamentRegistrationHeader button,
   .tournamentRegistrationActions button,
   .tournamentQuietAction {

@@ -48,7 +48,9 @@ test("world exposes the 30-by-20 Elverson town and retained interior dimensions"
   assert.equal(SCENES.town.name, "Elverson");
   assert.equal(SCENES.town.width, 30);
   assert.equal(SCENES.town.height, 20);
-  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-town.png");
+  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v2.png");
+  assert.ok(SCENES.town.layeredObjects.length > 20);
+  assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "central-pier"));
   assert.equal(SCENES["coral-home"].width, 12);
   assert.equal(SCENES["coral-home"].height, 8);
   assert.equal(SCENES["deep-home"].width, 12);
@@ -64,7 +66,10 @@ test("Elverson inherits a frozen continuous walking profile", () => {
   assert.equal(Object.isFrozen(profile), true);
   assert.equal(SCENES.town.routeId, null);
   assert.equal(canOccupyScenePosition("town", START_STATE.position), true);
-  assert.equal(canOccupyScenePosition("town", { x: 3, y: 3 }), false);
+  // The visual roof is now depth-sorted above this position; only the
+  // building's foundation at its base participates in collision.
+  assert.equal(canOccupyScenePosition("town", { x: 3, y: 3 }), true);
+  assert.equal(canOccupyScenePosition("town", { x: 3, y: 5.2 }), false);
   assert.throws(() => getSceneMovementProfile("missing"), /Unknown adventure scene/);
 });
 
@@ -596,13 +601,13 @@ test("movement advances over walkable tiles and respects map bounds", () => {
   assert.equal(getTile("town", { x: -1, y: 0 }), null);
 });
 
-test("continuous movement cannot cross Elverson buildings, water, furniture, exits, or trainers", () => {
+test("continuous movement cannot cross Elverson object bases, water, furniture, exits, or trainers", () => {
   for (const position of [
-    { x: 3, y: 3 },
-    { x: 8, y: 5 },
-    { x: 23, y: 5 },
-    { x: 6, y: 9 },
-    { x: 19, y: 9 },
+    { x: 3, y: 5.2 },
+    { x: 8, y: 6.4 },
+    { x: 23, y: 6.5 },
+    { x: 6, y: 10.1 },
+    { x: 18, y: 10.1 },
     { x: 3, y: 13 },
     { x: 27, y: 17 },
   ]) {
@@ -702,10 +707,10 @@ test("facing an adjacent trainer yields the matching trainer interaction", () =>
 
 test("the legacy grid API resolves art-aligned fractional resident anchors", () => {
   assert.equal(
-    getInteraction("town", { x: 21, y: 12 }, "up")?.interactionId,
+    getInteraction("town", { x: 20, y: 10 }, "right")?.interactionId,
     "interaction-elverson-explorer-jordan",
   );
-  assert.equal(getInteraction("town", { x: 21, y: 12 }, "down"), null);
+  assert.equal(getInteraction("town", { x: 20, y: 10 }, "up"), null);
 });
 
 test("invalid scene, position, and direction inputs fail clearly", () => {
@@ -716,9 +721,9 @@ test("invalid scene, position, and direction inputs fail clearly", () => {
 
 test("fractional player positions use a circular collision radius", () => {
   assert.equal(canOccupyContinuousPosition("town", { x: 14.35, y: 7.6 }), true);
-  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 3 }), false);
+  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 3 }), true);
   assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 5.65 }), false);
-  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 5.7 }), true);
+  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 5.8 }), true);
   assert.equal(canOccupyContinuousPosition("town", { x: -0.4, y: 7 }), false);
   assert.equal(CONTINUOUS_MOVEMENT_DEFAULTS.radius, 0.22);
 });
@@ -1078,12 +1083,12 @@ test("continuous interactions require immediate, forward-facing alignment", () =
 test("an open-floor town resident only prompts from directly in front", () => {
   const interactionId = "interaction-elverson-explorer-jordan";
   assert.equal(
-    getContinuousInteraction("town", { x: 20.2, y: 10.65 }, "right")?.interactionId,
+    getContinuousInteraction("town", { x: 20.2, y: 10.35 }, "right")?.interactionId,
     interactionId,
   );
-  assert.equal(getContinuousInteraction("town", { x: 20, y: 10.65 }, "right"), null);
-  assert.equal(getContinuousInteraction("town", { x: 20.2, y: 10.91 }, "right"), null);
-  assert.equal(getContinuousInteraction("town", { x: 20.2, y: 10.65 }, "down"), null);
+  assert.equal(getContinuousInteraction("town", { x: 20, y: 10.35 }, "right"), null);
+  assert.equal(getContinuousInteraction("town", { x: 20.2, y: 10.61 }, "right"), null);
+  assert.equal(getContinuousInteraction("town", { x: 20.2, y: 10.35 }, "down"), null);
 });
 
 test("full-tile stations stay reachable only across their visible front edge", () => {

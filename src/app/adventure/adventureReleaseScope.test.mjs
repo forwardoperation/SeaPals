@@ -189,7 +189,9 @@ test("release recovery cannot follow stale or mismatched saves to an archived sa
 
 test("release recovery moves a blocked legacy Elverson position to a safe spawn without losing progress", () => {
   const initial = createNewAdventureSession("release-blocked-elverson-resume");
-  const legacyPosition = { x: 7, y: 8 };
+  // Old flat-map builds could persist the player beyond the end of the public
+  // pier. The layered map must recover that now-water position safely.
+  const legacyPosition = { x: 14, y: 18.6 };
   assert.equal(canOccupyContinuousPosition("town", legacyPosition), false);
 
   const legacy = JSON.parse(JSON.stringify({

@@ -5,7 +5,9 @@ import {
   ADVENTURE_ACTOR_DEFAULTS,
   advanceAdventureActorStates,
   createAdventureActorStates,
+  focusAdventureActor,
   getAdventureActorBlockers,
+  getAdventureFacingToward,
   getAdventureActorPositionOverrides,
 } from "./adventureActors.mjs";
 import {
@@ -98,9 +100,10 @@ test("patrol speed stays constant near a waypoint and the first dwell happens on
   assert.ok(Math.abs(nearTravel - farTravel) < 1e-9, "short remaining legs should not ease below patrol speed");
 });
 
-test("nearby players pause a guide and the guide turns to greet them", () => {
+test("nearby players pause a guide without making the guide turn psychically", () => {
   const interaction = sunpatchGuide();
   const actors = createAdventureActorStates([interaction]);
+  actors[interaction.id] = { ...actors[interaction.id], facing: "left" };
   const paused = advanceAdventureActorStates(
     "sunpatch-cay-town",
     [interaction],
@@ -111,7 +114,71 @@ test("nearby players pause a guide and the guide turns to greet them", () => {
 
   assert.deepEqual(paused[interaction.id].position, interaction.at);
   assert.equal(paused[interaction.id].moving, false);
-  assert.equal(paused[interaction.id].facing, "down");
+  assert.equal(paused[interaction.id].facing, "left");
+});
+
+test("conversation focus cardinal-faces only the selected live actor", () => {
+  const interaction = sunpatchGuide();
+  const bystander = {
+    ...interaction,
+    id: "interaction-sunpatch-bystander",
+    at: { x: 10, y: 7 },
+  };
+  const actors = createAdventureActorStates([interaction, bystander]);
+  actors[interaction.id] = {
+    ...actors[interaction.id],
+    position: { x: 7.4, y: 6.25 },
+    facing: "left",
+    moving: true,
+    waypointIndex: 1,
+    patrolDirection: -1,
+    dwellRemainingMs: 0,
+    blockedMs: 640,
+  };
+
+  const focused = focusAdventureActor(
+    actors,
+    interaction.id,
+    { x: 7.45, y: 7.1 },
+  );
+
+  assert.notEqual(focused, actors);
+  assert.notEqual(focused[interaction.id], actors[interaction.id]);
+  assert.equal(focused[interaction.id].facing, "down");
+  assert.equal(focused[interaction.id].moving, false);
+  assert.equal(focused[interaction.id].dwellRemainingMs, 200);
+  assert.equal(focused[interaction.id].blockedMs, 0);
+  assert.deepEqual(focused[interaction.id].position, { x: 7.4, y: 6.25 });
+  assert.equal(focused[interaction.id].waypointIndex, 1);
+  assert.equal(focused[interaction.id].patrolDirection, -1);
+  assert.strictEqual(focused[bystander.id], actors[bystander.id]);
+  assert.equal(actors[interaction.id].moving, true, "focus must not mutate the prior state");
+});
+
+test("conversation facing resolves every approach to a stable cardinal row", () => {
+  const origin = { x: 5, y: 5 };
+  assert.equal(getAdventureFacingToward(origin, { x: 5, y: 3 }), "up");
+  assert.equal(getAdventureFacingToward(origin, { x: 5, y: 7 }), "down");
+  assert.equal(getAdventureFacingToward(origin, { x: 2, y: 5 }), "left");
+  assert.equal(getAdventureFacingToward(origin, { x: 8, y: 5 }), "right");
+  assert.equal(
+    getAdventureFacingToward(origin, { x: 6, y: 4 }),
+    "up",
+    "exact diagonal ties should use one deterministic animation row",
+  );
+  assert.equal(
+    getAdventureFacingToward(origin, origin, "left"),
+    "left",
+    "overlapping positions should retain the actor's last valid facing",
+  );
+});
+
+test("conversation focus is a no-op when no live actor matches", () => {
+  const actors = createAdventureActorStates([sunpatchGuide()]);
+  assert.strictEqual(
+    focusAdventureActor(actors, "interaction-missing", { x: 1, y: 1 }),
+    actors,
+  );
 });
 
 test("reduced motion keeps patrolling residents at stable authored anchors", () => {
