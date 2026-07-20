@@ -10,16 +10,29 @@ const DIRECTION_DELTAS = Object.freeze({
   right: Object.freeze({ x: 1, y: 0 }),
 });
 
+const CHARACTER_INTERACTION_TYPES = new Set(["npc", "trainer"]);
+const PORTAL_INTERACTION_TYPES = new Set(["enter", "exit"]);
+const INTERACTION_GEOMETRY_EPSILON = 1e-9;
+const CHARACTER_INTERACTION_RANGE = 0.88;
+const PROP_INTERACTION_HALF_WIDTH = 0.5;
+const STRUCTURAL_INTERACTION_FIXTURES = new WeakMap();
+
 export const DIRECTIONS = Object.freeze(Object.keys(DIRECTION_DELTAS));
 
 export const CONTINUOUS_MOVEMENT_DEFAULTS = Object.freeze({
   radius: 0.22,
   speed: 4,
   maxStepDistance: 0.1,
+  // The broad range supports full-tile fixtures and characters positioned
+  // behind their own counter. Target-type rules below make open-floor
+  // character conversations substantially tighter.
   interactionRange: 1.35,
-  interactionLateralTolerance: 0.65,
-  doorwayRange: 0.9,
-  doorwayLateralTolerance: 0.65,
+  interactionLateralTolerance: 0.25,
+  // Portals sit in solid doorway tiles. A player with the default radius can
+  // approach to roughly 0.72 tiles from their centre, making 0.82 threshold
+  // contact rather than an extra tile of reach.
+  doorwayRange: 0.82,
+  doorwayLateralTolerance: 0.25,
 });
 
 export const TILE_LEGEND = Object.freeze({
@@ -287,6 +300,143 @@ function resolveInteractionPosition(interaction, positionOverrides) {
   return override === undefined ? interaction.at : requireContinuousPosition(override);
 }
 
+function rectangleContainsPosition(rectangle, position) {
+  return position.x >= rectangle.left - INTERACTION_GEOMETRY_EPSILON
+    && position.x <= rectangle.right + INTERACTION_GEOMETRY_EPSILON
+    && position.y >= rectangle.top - INTERACTION_GEOMETRY_EPSILON
+    && position.y <= rectangle.bottom + INTERACTION_GEOMETRY_EPSILON;
+}
+
+function getStructuralInteractionFixtures(scene) {
+  const cached = STRUCTURAL_INTERACTION_FIXTURES.get(scene);
+  if (cached) return cached;
+  const fixtures = [...scene.collisionRects];
+  for (let tileY = 0; tileY < scene.height; tileY += 1) {
+    for (let tileX = 0; tileX < scene.width; tileX += 1) {
+      const symbol = scene.tiles[tileY][tileX];
+      if (TILE_LEGEND[symbol].walkable || symbol === "n") continue;
+      // Detailed rectangles replace coarse furniture tiles in these scenes.
+      if (symbol === "a" && scene.collisionRects.length) continue;
+      fixtures.push({
+        left: tileX - 0.5,
+        top: tileY - 0.5,
+        right: tileX + 0.5,
+        bottom: tileY + 0.5,
+      });
+    }
+  }
+  const frozen = Object.freeze(fixtures);
+  STRUCTURAL_INTERACTION_FIXTURES.set(scene, frozen);
+  return frozen;
+}
+
+function segmentIntersectsRectangle(start, end, rectangle) {
+  const delta = { x: end.x - start.x, y: end.y - start.y };
+  let entry = 0;
+  let exit = 1;
+
+  for (const axis of ["x", "y"]) {
+    const minimum = axis === "x" ? rectangle.left : rectangle.top;
+    const maximum = axis === "x" ? rectangle.right : rectangle.bottom;
+    if (Math.abs(delta[axis]) <= INTERACTION_GEOMETRY_EPSILON) {
+      if (start[axis] < minimum || start[axis] > maximum) return false;
+      continue;
+    }
+    const first = (minimum - start[axis]) / delta[axis];
+    const second = (maximum - start[axis]) / delta[axis];
+    entry = Math.max(entry, Math.min(first, second));
+    exit = Math.min(exit, Math.max(first, second));
+    if (entry > exit) return false;
+  }
+
+  return exit > INTERACTION_GEOMETRY_EPSILON
+    && entry < 1 - INTERACTION_GEOMETRY_EPSILON;
+}
+
+function characterBlocksInteractionPath(
+  scene,
+  start,
+  target,
+  targetInteraction,
+  positionOverrides,
+) {
+  const segment = { x: target.x - start.x, y: target.y - start.y };
+  const lengthSquared = segment.x * segment.x + segment.y * segment.y;
+  if (lengthSquared <= INTERACTION_GEOMETRY_EPSILON) return false;
+
+  return scene.interactions.some((interaction) => {
+    if (interaction.id === targetInteraction.id || !CHARACTER_INTERACTION_TYPES.has(interaction.type)) {
+      return false;
+    }
+    const position = resolveInteractionPosition(interaction, positionOverrides);
+    const projection = (
+      (position.x - start.x) * segment.x
+      + (position.y - start.y) * segment.y
+    ) / lengthSquared;
+    if (projection <= 0 || projection >= 1) return false;
+    const closest = {
+      x: start.x + segment.x * projection,
+      y: start.y + segment.y * projection,
+    };
+    return Math.hypot(position.x - closest.x, position.y - closest.y) <= 0.33;
+  });
+}
+
+function hasClearInteractionPath(
+  scene,
+  start,
+  target,
+  targetInteraction,
+  positionOverrides,
+) {
+  if (!hasClearStructuralInteractionPath(scene, start, target)) return false;
+  return !characterBlocksInteractionPath(
+    scene,
+    start,
+    target,
+    targetInteraction,
+    positionOverrides,
+  );
+}
+
+function hasClearStructuralInteractionPath(scene, start, target) {
+  const fixtures = getStructuralInteractionFixtures(scene);
+  return !fixtures.some((fixture) => (
+    !rectangleContainsPosition(fixture, target)
+    && segmentIntersectsRectangle(start, target, fixture)
+  ));
+}
+
+function interactionUsesOwnFixture(scene, position) {
+  return getStructuralInteractionFixtures(scene).some((fixture) => (
+    rectangleContainsPosition(fixture, position)
+  ));
+}
+
+function getManualInteractionRange(scene, interaction, position, explicitRange) {
+  if (explicitRange !== undefined) return explicitRange;
+  if (PORTAL_INTERACTION_TYPES.has(interaction.type)) {
+    return Math.min(scene.movement.interactionRange, scene.movement.doorwayRange);
+  }
+  if (
+    CHARACTER_INTERACTION_TYPES.has(interaction.type)
+    && !interactionUsesOwnFixture(scene, position)
+  ) {
+    return Math.min(scene.movement.interactionRange, CHARACTER_INTERACTION_RANGE);
+  }
+  return scene.movement.interactionRange;
+}
+
+function getManualInteractionLateralTolerance(scene, interaction, explicitTolerance) {
+  if (explicitTolerance !== undefined) return explicitTolerance;
+  if (CHARACTER_INTERACTION_TYPES.has(interaction.type) || PORTAL_INTERACTION_TYPES.has(interaction.type)) {
+    return scene.movement.interactionLateralTolerance;
+  }
+  // Stations, signs, and other props occupy a full tile. Measure alignment
+  // against that visible footprint rather than requiring its exact centre.
+  return Math.max(scene.movement.interactionLateralTolerance, PROP_INTERACTION_HALF_WIDTH);
+}
+
 export function isInBounds(sceneId, position) {
   const scene = requireScene(sceneId);
   requirePosition(position);
@@ -473,7 +623,11 @@ export function getInteraction(sceneId, position, facing, options = {}) {
   };
   const interaction = scene.interactions.find((candidate) => {
     const candidatePosition = resolveInteractionPosition(candidate, options?.positionOverrides);
-    return candidatePosition.x === target.x && candidatePosition.y === target.y;
+    // The legacy grid API treats every authored point as occupying its nearest
+    // tile. Runtime movement uses getContinuousInteraction instead, but this
+    // keeps grid callers compatible with art-aligned fractional anchors.
+    return Math.round(candidatePosition.x) === target.x
+      && Math.round(candidatePosition.y) === target.y;
   });
 
   if (!interaction) return null;
@@ -491,11 +645,16 @@ export function getContinuousInteraction(
   requireContinuousPosition(position);
   const facingVector = DIRECTION_DELTAS[facing];
   if (!facingVector) throw new RangeError(`Unknown facing direction: ${facing}`);
-  const range = options.range ?? scene.movement.interactionRange;
-  const lateralTolerance = options.lateralTolerance ?? scene.movement.interactionLateralTolerance;
+  const explicitRange = options.range;
+  const explicitLateralTolerance = options.lateralTolerance;
   const positionOverrides = options.positionOverrides;
-  requirePositiveNumber(range, "Interaction range");
-  requirePositiveNumber(lateralTolerance, "Interaction lateral tolerance", { allowZero: true });
+  if (explicitRange !== undefined) requirePositiveNumber(explicitRange, "Interaction range");
+  if (explicitLateralTolerance !== undefined) {
+    requirePositiveNumber(explicitLateralTolerance, "Interaction lateral tolerance", { allowZero: true });
+  }
+  const broadRange = explicitRange ?? scene.movement.interactionRange;
+  const broadLateralTolerance = explicitLateralTolerance
+    ?? Math.max(scene.movement.interactionLateralTolerance, PROP_INTERACTION_HALF_WIDTH);
 
   const candidates = scene.interactions
     .map((interaction) => {
@@ -505,12 +664,44 @@ export function getContinuousInteraction(
       const forwardDistance = offsetX * facingVector.x + offsetY * facingVector.y;
       const lateralDistance = Math.abs(offsetX * facingVector.y - offsetY * facingVector.x);
       const distance = Math.hypot(offsetX, offsetY);
-      return { interaction, distance, forwardDistance, lateralDistance };
+      return {
+        interaction,
+        interactionPosition,
+        distance,
+        forwardDistance,
+        lateralDistance,
+      };
     })
     .filter((candidate) => (
-      candidate.forwardDistance > 0
-      && candidate.distance <= range
-      && candidate.lateralDistance <= lateralTolerance
+      candidate.forwardDistance > INTERACTION_GEOMETRY_EPSILON
+      && candidate.forwardDistance <= broadRange + INTERACTION_GEOMETRY_EPSILON
+      && candidate.lateralDistance <= broadLateralTolerance + INTERACTION_GEOMETRY_EPSILON
+      && candidate.lateralDistance <= candidate.forwardDistance * 0.5 + INTERACTION_GEOMETRY_EPSILON
+    ))
+    .map((candidate) => ({
+      ...candidate,
+      range: getManualInteractionRange(
+        scene,
+        candidate.interaction,
+        candidate.interactionPosition,
+        explicitRange,
+      ),
+      lateralTolerance: getManualInteractionLateralTolerance(
+        scene,
+        candidate.interaction,
+        explicitLateralTolerance,
+      ),
+    }))
+    .filter((candidate) => (
+      candidate.forwardDistance <= candidate.range + INTERACTION_GEOMETRY_EPSILON
+      && candidate.lateralDistance <= candidate.lateralTolerance + INTERACTION_GEOMETRY_EPSILON
+      && hasClearInteractionPath(
+        scene,
+        position,
+        candidate.interactionPosition,
+        candidate.interaction,
+        positionOverrides,
+      )
     ))
     .sort((left, right) => left.distance - right.distance);
 
@@ -544,9 +735,11 @@ export function getDoorwayTransition(
       return { interaction, distance, forwardDistance, lateralDistance };
     })
     .filter((candidate) => (
-      candidate.forwardDistance > 0
-      && candidate.forwardDistance <= range
-      && candidate.lateralDistance <= lateralTolerance
+      candidate.forwardDistance > INTERACTION_GEOMETRY_EPSILON
+      && candidate.forwardDistance <= range + INTERACTION_GEOMETRY_EPSILON
+      && candidate.lateralDistance <= lateralTolerance + INTERACTION_GEOMETRY_EPSILON
+      && candidate.lateralDistance <= candidate.forwardDistance * 0.5 + INTERACTION_GEOMETRY_EPSILON
+      && hasClearStructuralInteractionPath(scene, position, candidate.interaction.at)
     ))
     .sort((left, right) => left.distance - right.distance);
 

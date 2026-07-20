@@ -1097,7 +1097,7 @@
 .spriteFacingUp { --sprite-row: var(--row-up); }
 
 .spriteWalking {
-  animation: spriteWalk 440ms steps(1, end) infinite;
+  animation: spriteWalk var(--sprite-walk-cycle-duration, 250ms) steps(1, end) infinite;
 }
 
 .academy-mentorSpriteArtwork.spriteWalking {

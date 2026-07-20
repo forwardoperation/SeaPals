@@ -1058,11 +1058,13 @@ test("Elverson town geometry blocks park furniture and water outside the public 
     "elverson-park-fountain",
     "elverson-park-north-bench",
     "elverson-park-east-bench",
-    "elverson-park-west-bench",
+    "elverson-park-west-garden-bed",
     "elverson-park-south-bench",
-    "elverson-park-west-planter",
-    "elverson-park-east-hedge",
+    "elverson-park-east-tree-bed",
     "elverson-park-lamppost",
+    "elverson-main-street-west-planter",
+    "elverson-main-street-east-planter",
+    "elverson-aquarium-west-water",
     "elverson-aquarium-south-water",
     "elverson-fishing-dock-south-water",
   ]) {
@@ -1071,7 +1073,7 @@ test("Elverson town geometry blocks park furniture and water outside the public 
   const aquariumExit = getRuntimeAdventureScenes()
     .find((scene) => scene.id === "academy-lab")
     .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
-  assert.deepEqual(aquariumExit.spawn, { x: 14, y: 17 });
+  assert.deepEqual(aquariumExit.spawn, { x: 16, y: 15.85 });
 });
 
 test("Elverson exposes exactly its aquarium workshop and two homes through valid portals", () => {
@@ -1144,7 +1146,7 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   assert.equal(resolvedGeorge.encounter.difficulty, "medium");
 
   const aquariumDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-aquarium");
-  assert.deepEqual(aquariumDoor.at, { x: 16, y: 17 });
+  assert.deepEqual(aquariumDoor.at, { x: 16, y: 15.1 });
   assert.equal(aquariumDoor.targetSceneContent.id, "academy-lab");
   assert.deepEqual(aquariumDoor.spawn, { x: 6, y: 7 });
   const chestnutDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-chestnut-home");

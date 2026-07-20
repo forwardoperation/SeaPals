@@ -162,16 +162,17 @@ test("every Champion's Wake story, registration, bracket, epilogue, and route ac
     ["trenchlight-champions-wake-sea", { x: 1, y: 5 }, "left", "interaction-route-dock-trenchlight-champions-wake"],
     ["trenchlight-champions-wake-sea", { x: 14, y: 5 }, "right", "interaction-route-dock-champions-wake"],
     ["champions-wake-town", { x: 7, y: 8 }, "down", "interaction-champions-wake-board-trenchlight-route"],
-    ["champions-wake-registration-hall", { x: 5, y: 4 }, "up", CHAMPIONS_WAKE_ACTION_IDS.registration],
-    ["champions-wake-arena", { x: 2, y: 4 }, "up", CHAMPIONS_WAKE_ACTION_IDS.rounds[0]],
-    ["champions-wake-arena", { x: 5, y: 4 }, "up", CHAMPIONS_WAKE_ACTION_IDS.rounds[1]],
-    ["champions-wake-arena", { x: 8, y: 4 }, "up", CHAMPIONS_WAKE_ACTION_IDS.rounds[2]],
-    ["champions-wake-reflection-pavilion", { x: 4, y: 4 }, "up", CHAMPIONS_WAKE_ACTION_IDS.epilogue],
-    ["champions-wake-reflection-pavilion", { x: 7, y: 4 }, "up", "interaction-champions-wake-spectator"],
+    ["champions-wake-registration-hall", { x: 5, y: 3.8 }, "up", CHAMPIONS_WAKE_ACTION_IDS.registration],
+    ["champions-wake-arena", { x: 2, y: 3.8 }, "up", CHAMPIONS_WAKE_ACTION_IDS.rounds[0]],
+    ["champions-wake-arena", { x: 5, y: 3.8 }, "up", CHAMPIONS_WAKE_ACTION_IDS.rounds[1]],
+    ["champions-wake-arena", { x: 8, y: 3.8 }, "up", CHAMPIONS_WAKE_ACTION_IDS.rounds[2]],
+    ["champions-wake-reflection-pavilion", { x: 4, y: 3.8 }, "up", CHAMPIONS_WAKE_ACTION_IDS.epilogue],
+    ["champions-wake-reflection-pavilion", { x: 7, y: 3.8 }, "up", "interaction-champions-wake-spectator"],
   ];
 
   for (const [sceneId, position, facing, interactionId] of cases) {
-    assert.ok(integerReachablePositions(sceneId).has(`${position.x},${position.y}`), `${interactionId} approach should connect to the scene spawn`);
+    const reachableTile = { x: Math.round(position.x), y: Math.ceil(position.y) };
+    assert.ok(integerReachablePositions(sceneId).has(`${reachableTile.x},${reachableTile.y}`), `${interactionId} approach should connect to the scene spawn`);
     assert.equal(canOccupyContinuousPosition(sceneId, position), true);
     assert.equal(getContinuousInteraction(sceneId, position, facing)?.interactionId, interactionId);
   }

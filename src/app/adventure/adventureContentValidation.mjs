@@ -478,8 +478,8 @@ export function validateAdventureContent(content) {
       if (!RUNTIME_INTERACTION_TYPES.has(interaction.type)) {
         errors.push(`${path}.type is not a supported runtime interaction type.`);
       }
-      if (!Number.isInteger(interaction.at?.x) || !Number.isInteger(interaction.at?.y)) {
-        errors.push(`${path}.at requires integer x and y coordinates.`);
+      if (!Number.isFinite(interaction.at?.x) || !Number.isFinite(interaction.at?.y)) {
+        errors.push(`${path}.at requires finite x and y coordinates.`);
       }
       validateInteractionPatrol(interaction, {
         path,
@@ -592,8 +592,8 @@ export function validateAdventureContent(content) {
         }
       } else if (interaction.type === "enter" || interaction.type === "exit") {
         requireReference(interaction.targetScene, sceneIds, `${path}.targetScene`, errors);
-        if (!Number.isInteger(interaction.spawn?.x) || !Number.isInteger(interaction.spawn?.y)) {
-          errors.push(`${path}.spawn requires integer x and y coordinates.`);
+        if (!Number.isFinite(interaction.spawn?.x) || !Number.isFinite(interaction.spawn?.y)) {
+          errors.push(`${path}.spawn requires finite x and y coordinates.`);
         }
         if (interaction.facing !== undefined && !FACING_DIRECTIONS.has(interaction.facing)) {
           errors.push(`${path}.facing must be up, down, left, or right when supplied.`);

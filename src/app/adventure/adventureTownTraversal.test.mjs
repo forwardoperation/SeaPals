@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  ADVENTURE_ACTOR_DEFAULTS,
   createAdventureActorStates,
   getAdventureActorBlockers,
 } from "./adventureActors.mjs";
@@ -100,8 +101,8 @@ test("continuous Elverson routes connect the crossroads start to all three doorw
     {
       waypoints: [
         START_STATE.position,
-        { x: 14, y: 17.4 },
-        { x: 16, y: 17.4 },
+        { x: 14, y: 15.85 },
+        { x: 16, y: 15.85 },
       ],
       interactionId: "interaction-elverson-enter-aquarium",
     },
@@ -113,17 +114,17 @@ test("continuous Elverson routes connect the crossroads start to all three doorw
   }
 });
 
-test("the aquarium exit returns to the central pier with a clear route into town", () => {
+test("the aquarium exit returns to the visible deck with a clear route into town", () => {
   const aquariumExit = SCENES["academy-lab"].interactions.find(
     ({ id }) => id === "interaction-academy-exit",
   );
 
-  assert.deepEqual(aquariumExit.spawn, { x: 14, y: 17 });
+  assert.deepEqual(aquariumExit.spawn, { x: 16, y: 15.85 });
   assert.equal(canOccupyContinuousPosition("town", aquariumExit.spawn), true);
-  assert.equal(getDoorwayTransition("town", aquariumExit.spawn, "up"), null);
+  assert.equal(getDoorwayTransition("town", aquariumExit.spawn, "down"), null);
   const mainStreet = walkAxisRoute([
     aquariumExit.spawn,
-    { x: 14, y: 12 },
+    { x: 14, y: 15.85 },
     { x: 14, y: 10 },
   ]);
   assert.ok(
@@ -153,7 +154,8 @@ test("Elverson traversal treats buildings and shoreline water as solid", () => {
     ["west deep water", { x: 8, y: 18 }],
     ["east shallow water", { x: 25, y: 13 }],
     ["east deep water", { x: 27, y: 18 }],
-    ["fishing boat", { x: 11, y: 17 }],
+    ["fishing boat", { x: 11, y: 14.2 }],
+    ["water south of the fishing platform", { x: 11, y: 17.7 }],
     ["aquarium", { x: 19, y: 15 }],
     ["water south of the aquarium deck", { x: 17, y: 18 }],
     ["park fountain", { x: 16.6, y: 5.2 }],
@@ -165,16 +167,56 @@ test("Elverson traversal treats buildings and shoreline water as solid", () => {
     ["east wooded hillside", { x: 27.5, y: 4.5 }],
     ["east promenade bench", { x: 17.1, y: 11.1 }],
     ["east seawall rail", { x: 18, y: 11.7 }],
-    ["Main Street west lamppost", { x: 11.6, y: 7.8 }],
-    ["far-east promenade lamppost", { x: 26.4, y: 10.6 }],
+    ["Main Street west lamppost base", { x: 11.6, y: 8.05 }],
+    ["far-east promenade lamppost base", { x: 26.4, y: 10.85 }],
+    ["west park garden bed", { x: 12, y: 5 }],
+    ["east park tree bed", { x: 18, y: 5.5 }],
+    ["west Main Street planter", { x: 12, y: 9 }],
+    ["east Main Street planter", { x: 15.5, y: 9 }],
+    ["water west of the aquarium deck", { x: 15.15, y: 14.8 }],
+    ["water east of the aquarium", { x: 21.5, y: 16 }],
+    ["water behind the aquarium deck", { x: 15.2, y: 17 }],
   ];
 
   for (const [label, position] of solidArtwork) {
     assert.equal(canOccupyContinuousPosition("town", position), false, `${label} should be solid`);
   }
 
-  walkAxisRoute([{ x: 14, y: 12 }, { x: 14, y: 17.4 }, { x: 16, y: 17.4 }]);
-  walkAxisRoute([{ x: 14, y: 17.7 }, { x: 11.5, y: 17.7 }]);
+  walkAxisRoute([{ x: 14, y: 12 }, { x: 14, y: 15.85 }, { x: 16, y: 15.85 }]);
+  walkAxisRoute([{ x: 14, y: 17.7 }, { x: 13.5, y: 17.7 }]);
+});
+
+test("Elverson landmarks leave intentional footpaths around their precise hitboxes", () => {
+  const openArtwork = [
+    ["Main and Chestnut crossroads", { x: 14, y: 10 }],
+    ["Main Street lane", { x: 14, y: 7 }],
+    ["west park passage", { x: 10.6, y: 5 }],
+    ["east park passage", { x: 20, y: 4 }],
+    ["promenade beside the west planter", { x: 12, y: 10.65 }],
+    ["paved pocket beside the gold shop", { x: 19.75, y: 10.5 }],
+    ["aquarium doorway deck", { x: 16, y: 15.85 }],
+    ["central pier", { x: 14, y: 17.7 }],
+  ];
+
+  for (const [label, position] of openArtwork) {
+    assert.equal(canOccupyContinuousPosition("town", position), true, `${label} should stay open`);
+  }
+});
+
+test("every Elverson resident anchor fits on visible walkable ground", () => {
+  const characters = SCENES.town.interactions.filter(({ type }) => type === "npc" || type === "trainer");
+  for (const character of characters) {
+    assert.equal(
+      canOccupyContinuousPosition(
+        "town",
+        character.at,
+        ADVENTURE_ACTOR_DEFAULTS.radius,
+        { ignoreActorTiles: true },
+      ),
+      true,
+      `${character.id} must stand clear of scenery`,
+    );
+  }
 });
 
 test("every active Elverson character remains reachable from its scene spawn", () => {

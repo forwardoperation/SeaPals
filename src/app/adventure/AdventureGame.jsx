@@ -28,11 +28,16 @@ import {
   stepBoatMotion,
 } from "./adventureBoatMotion.mjs";
 import {
+  ADVENTURE_ACTOR_DEFAULTS,
   advanceAdventureActorStates,
   createAdventureActorStates,
   getAdventureActorBlockers,
   getAdventureActorPositionOverrides,
 } from "./adventureActors.mjs";
+import {
+  getAdventureWalkCycleDurationMs,
+  hasAdventureWalkDisplacement,
+} from "./adventureWalkAnimation.mjs";
 import {
   ADVENTURE_CONTENT,
   getAdventureFieldNote,
@@ -352,12 +357,22 @@ function actorPosition(position, scene) {
   };
 }
 
-function SpriteArtwork({ character = "player", facing = "down", moving = false, portrait = false }) {
+function SpriteArtwork({
+  character = "player",
+  facing = "down",
+  moving = false,
+  portrait = false,
+  walkSpeed = null,
+}) {
   const facingName = `${facing[0].toUpperCase()}${facing.slice(1)}`;
   const artworkCharacter = SPRITE_SOURCE_BY_CHARACTER[character] ?? residentSpriteSource(character);
+  const walkStyle = moving && Number.isFinite(walkSpeed) && walkSpeed > 0
+    ? { "--sprite-walk-cycle-duration": `${getAdventureWalkCycleDurationMs(walkSpeed)}ms` }
+    : undefined;
   return (
     <span
       className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""}`}
+      style={walkStyle}
       aria-hidden="true"
     />
   );
@@ -371,6 +386,7 @@ function AdventureTrainerSprite({
   defeated,
   status = null,
   scene,
+  walkSpeed = ADVENTURE_ACTOR_DEFAULTS.speed,
 }) {
   const resolvedStatus = defeated ? "Won" : status;
   const showMarker = Boolean(trainer.encounterId || status);
@@ -381,7 +397,7 @@ function AdventureTrainerSprite({
       aria-label={`${trainer.name}, ${trainer.title}${resolvedStatus ? ` — ${resolvedStatus}` : ""}`}
     >
       <span className={styles.characterShadow} />
-      <SpriteArtwork character={trainer.id} facing={facing} moving={moving} />
+      <SpriteArtwork character={trainer.id} facing={facing} moving={moving} walkSpeed={walkSpeed} />
       {showMarker ? (
         <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""} ${status === "Locked" ? styles.trainerLocked : ""}`}>
           {defeated ? "★" : status === "Locked" ? "•" : "!"}
@@ -391,7 +407,7 @@ function AdventureTrainerSprite({
   );
 }
 
-function AdventurePlayerSprite({ position, facing, moving, interaction, scene }) {
+function AdventurePlayerSprite({ position, facing, moving, interaction, scene, walkSpeed }) {
   return (
     <div
       className={`${styles.characterCell} ${styles.playerCell}`}
@@ -399,7 +415,7 @@ function AdventurePlayerSprite({ position, facing, moving, interaction, scene })
       aria-label="You"
     >
       <span className={styles.characterShadow} />
-      <SpriteArtwork facing={facing} moving={moving} />
+      <SpriteArtwork facing={facing} moving={moving} walkSpeed={walkSpeed} />
       {interaction && !["enter", "exit"].includes(interaction.type) ? <span className={styles.actionCue} aria-hidden="true">A</span> : null}
     </div>
   );
@@ -1988,6 +2004,7 @@ export default function AdventureGame() {
   const [subAssistedMode, setSubAssistedMode] = useState(false);
   const [subFeedback, setSubFeedback] = useState(null);
   const [isMoving, setIsMoving] = useState(false);
+  const [playerWalking, setPlayerWalking] = useState(false);
   const [boatTelemetry, setBoatTelemetry] = useState(() => ({
     sceneId: null,
     ...createBoatMotionState({ position: START_STATE.position, heading: 0 }),
@@ -2184,6 +2201,7 @@ export default function AdventureGame() {
         rudder: 0,
       }));
     }
+    setPlayerWalking(false);
     setMovementActive(false);
   }, [setMovementActive]);
 
@@ -2684,6 +2702,7 @@ export default function AdventureGame() {
         } else {
           const vector = movementVector(keyboardDirectionsRef.current, touchDirectionsRef.current);
           if (vector.x === 0 && vector.y === 0) {
+            setPlayerWalking(false);
             setMovementActive(false);
             return;
           }
@@ -2709,6 +2728,7 @@ export default function AdventureGame() {
               ignoreActorTiles: true,
             },
           );
+          setPlayerWalking(hasAdventureWalkDisplacement(current.world.position, next));
         }
         const updated = {
           ...current,
@@ -2738,6 +2758,10 @@ export default function AdventureGame() {
     animationFrame = window.requestAnimationFrame(updateMovement);
     return () => window.cancelAnimationFrame(animationFrame);
   }, [anchoredActorStates, boatMode, commitSceneTransition, isMoving, movementPaused, scene, sceneId, setDirty, setMovementActive]);
+
+  useEffect(() => {
+    if (boatMode || movementPaused || !isMoving) setPlayerWalking(false);
+  }, [boatMode, isMoving, movementPaused]);
 
   useEffect(() => {
     if (movementPaused) {
@@ -4576,6 +4600,7 @@ export default function AdventureGame() {
                   position={runtimeActor?.position ?? characterInteraction.at}
                   facing={runtimeActor?.facing ?? "down"}
                   moving={runtimeActor?.moving === true}
+                  walkSpeed={characterInteraction.patrol?.speed ?? ADVENTURE_ACTOR_DEFAULTS.speed}
                   defeated={trainerDefeated}
                   status={tournamentStatus?.startsWith("Won") ? "Won" : tournamentStatus}
                   scene={scene}
@@ -4596,7 +4621,8 @@ export default function AdventureGame() {
               <AdventurePlayerSprite
                 position={position}
                 facing={facing}
-                moving={isMoving}
+                moving={playerWalking}
+                walkSpeed={scene.movement?.speed}
                 interaction={actionInteraction}
                 scene={scene}
               />
