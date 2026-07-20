@@ -45,8 +45,8 @@ test("ambient residents render with stable sprite fallbacks and no duel marker",
 
 test("Elverson uses a close-follow camera and compact human-toned overworld sprites", () => {
   assert.match(component, /getAdventureCameraLayout\(\{/);
-  assert.match(component, /className=\{styles\.map\}/);
-  assert.match(component, /className=\{`\$\{styles\.mapWorld\} \$\{mapThemeClass\}`\}/);
+  assert.match(component, /className=\{`\$\{styles\.map\} \$\{sceneTransition/);
+  assert.match(component, /className=\{`\$\{styles\.mapWorld\} \$\{mapThemeClass\} \$\{sceneTransition/);
   assert.match(component, /width: `\$\{cameraLayout\.worldWidthPercent\}%`/);
   assert.match(component, /left: `\$\{cameraLayout\.leftPercent\}%`/);
   assert.match(styles, /\.map\s*\{[\s\S]*?aspect-ratio:\s*16\s*\/\s*9/);

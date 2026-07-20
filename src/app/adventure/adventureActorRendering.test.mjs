@@ -11,8 +11,8 @@ test("live actor state drives rendering, interaction targeting, and player colli
   assert.match(component, /dynamicBlockers:\s*getAdventureActorBlockers\(/);
   assert.match(component, /ignoreActorTiles:\s*true/);
   assert.match(component, /position=\{runtimeActor\?\.position \?\? characterInteraction\.at\}/);
-  assert.match(component, /facing=\{runtimeActor\?\.facing \?\? "down"\}/);
-  assert.match(component, /moving=\{runtimeActor\?\.moving === true\}/);
+  assert.match(component, /facing=\{actorFacing\}/);
+  assert.match(component, /moving=\{!actorIsEngaged && runtimeActor\?\.moving === true\}/);
 });
 
 test("patrol animation pauses with gameplay and honors reduced motion", () => {
@@ -23,7 +23,8 @@ test("patrol animation pauses with gameplay and honors reduced motion", () => {
   assert.match(component, /if \(effectiveReducedMotion\) \{[\s\S]*return undefined;/);
   assert.match(component, /if \(screen !== "playing" \|\| movementPaused \|\| !pageVisible\) \{[\s\S]*return undefined;/);
   assert.match(component, /actorVisualStateChanged\(currentRuntime\.actors, nextRuntime\.actors\)/);
-  assert.match(styles, /\.npcCell\s*\{[\s\S]*transition:\s*left \d+ms linear, top \d+ms linear/);
+  assert.doesNotMatch(component, /elapsedMs >= 32/);
+  assert.match(styles, /\.npcCell\s*\{[\s\S]*?transition:\s*none/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.npcCell,[\s\S]*transition:\s*none\s*!important/);
 });
 
@@ -35,9 +36,28 @@ test("player and patrol walk cycles derive their cadence from world speed", () =
   assert.match(styles, /animation:\s*spriteWalk var\(--sprite-walk-cycle-duration, 250ms\) steps\(1, end\) infinite/);
 });
 
-test("the player only animates when continuous movement covers real ground", () => {
+test("the player walk cycle follows active walking intent even when collision stops displacement", () => {
   assert.match(component, /const \[playerWalking, setPlayerWalking\] = useState\(false\)/);
-  assert.match(component, /setPlayerWalking\(hasAdventureWalkDisplacement\(current\.world\.position, next\)\)/);
+  assert.match(component, /if \(vector\.x === 0 && vector\.y === 0\) \{[\s\S]*?setPlayerWalking\(false\);[\s\S]*?return;[\s\S]*?\}\s*setPlayerWalking\(true\);/);
+  assert.doesNotMatch(component, /setPlayerWalking\(hasAdventureWalkDisplacement/);
   assert.match(component, /moving=\{playerWalking\}/);
   assert.match(component, /if \(boatMode \|\| movementPaused \|\| !isMoving\) setPlayerWalking\(false\)/);
+});
+
+test("world conversations explicitly turn the selected live actor toward the player", () => {
+  assert.match(component, /worldConversationOrigin = \["trainer", "npc"\]\.includes\(interaction\.type\)/);
+  assert.match(component, /interactionId:\s*interaction\.interactionId/);
+  assert.match(component, /focusAdventureActor\([\s\S]*?worldConversationOrigin\.interactionId,[\s\S]*?position/);
+  assert.match(component, /activeConversationInteractionId === characterInteraction\.id/);
+  assert.match(component, /getAdventureFacingToward\(/);
+  assert.match(component, /engaged=\{actorIsEngaged\}/);
+  assert.match(styles, /\.npcEngaged\s*\{[\s\S]*?animation:\s*npcAttention/);
+});
+
+test("multi-step mentor dialogue preserves its world actor origin", () => {
+  const functionalConversationUpdates = component.match(/setConversation\(\(currentConversation\) => \(\{[\s\S]*?\.\.\.currentConversation,[\s\S]*?mode: "(?:starterConfirmed|starterPresentation|tutorialIntro)",[\s\S]*?\}\)\);/g) ?? [];
+
+  assert.equal(functionalConversationUpdates.length, 3);
+  assert.match(component, /const activeWorldConversation = conversationLeadIn \?\? conversation/);
+  assert.match(component, /activeWorldConversation\?\.sceneId === sceneId/);
 });

@@ -15,6 +15,7 @@ const PORTAL_INTERACTION_TYPES = new Set(["enter", "exit"]);
 const INTERACTION_GEOMETRY_EPSILON = 1e-9;
 const CHARACTER_INTERACTION_RANGE = 0.88;
 const PROP_INTERACTION_HALF_WIDTH = 0.5;
+const WALKABLE_REGION_EDGE_SAMPLES = 16;
 const STRUCTURAL_INTERACTION_FIXTURES = new WeakMap();
 
 export const DIRECTIONS = Object.freeze(Object.keys(DIRECTION_DELTAS));
@@ -136,7 +137,21 @@ function defineMovementProfile(movement = {}) {
   return Object.freeze(profile);
 }
 
-function defineScene({ id, name, kind, theme, artPath = null, routeId = null, movement, tiles, spawn, interactions, collisionRects = [] }) {
+function defineScene({
+  id,
+  name,
+  kind,
+  theme,
+  artPath = null,
+  routeId = null,
+  movement,
+  tiles,
+  spawn,
+  interactions,
+  collisionRects = [],
+  walkableRegions = [],
+  layeredObjects = [],
+}) {
   const height = tiles.length;
   const width = tiles[0]?.length ?? 0;
 
@@ -157,6 +172,17 @@ function defineScene({ id, name, kind, theme, artPath = null, routeId = null, mo
   const frozenCollisionRects = collisionRects.map((rectangle) => (
     freezeCollisionRect(rectangle, sceneBounds, collisionRectIds)
   ));
+  if (!Array.isArray(walkableRegions)) {
+    throw new TypeError(`Scene ${id} walkableRegions must be an array.`);
+  }
+  if (!Array.isArray(layeredObjects)) {
+    throw new TypeError(`Scene ${id} layeredObjects must be an array.`);
+  }
+  const walkableRegionIds = new Set();
+  const frozenWalkableRegions = walkableRegions.map((rectangle) => (
+    freezeCollisionRect(rectangle, sceneBounds, walkableRegionIds)
+  ));
+  const frozenLayeredObjects = Object.freeze(layeredObjects.map(freezePublicValue));
 
   for (const interaction of interactions) {
     if (interaction.facing !== undefined && !DIRECTION_DELTAS[interaction.facing]) {
@@ -178,6 +204,8 @@ function defineScene({ id, name, kind, theme, artPath = null, routeId = null, mo
     spawn: freezePosition(spawn),
     interactions: Object.freeze(interactions.map(freezeInteraction)),
     collisionRects: Object.freeze(frozenCollisionRects),
+    walkableRegions: Object.freeze(frozenWalkableRegions),
+    layeredObjects: frozenLayeredObjects,
   });
 }
 
@@ -196,6 +224,8 @@ export const SCENES = Object.freeze(Object.fromEntries(
       spawn: scene.world.spawn,
       interactions: scene.world.interactions,
       collisionRects: scene.world.collisionRects ?? [],
+      walkableRegions: scene.world.walkableRegions ?? [],
+      layeredObjects: scene.world.layeredObjects ?? [],
     }),
   ]),
 ));
@@ -281,6 +311,78 @@ function circlesIntersect(position, radius, blocker) {
   const combinedRadius = radius + blocker.radius;
   return distanceX * distanceX + distanceY * distanceY
     < combinedRadius * combinedRadius - Number.EPSILON;
+}
+
+function squaredDistanceToBlocker(position, blocker) {
+  const distanceX = position.x - blocker.position.x;
+  const distanceY = position.y - blocker.position.y;
+  return distanceX * distanceX + distanceY * distanceY;
+}
+
+function movementSegmentIntersectsBlocker(start, end, radius, blocker) {
+  const movementX = end.x - start.x;
+  const movementY = end.y - start.y;
+  const movementLengthSquared = movementX * movementX + movementY * movementY;
+  if (movementLengthSquared <= Number.EPSILON) return circlesIntersect(end, radius, blocker);
+
+  const startX = start.x - blocker.position.x;
+  const startY = start.y - blocker.position.y;
+  const closestProgress = Math.max(0, Math.min(1, -(
+    startX * movementX + startY * movementY
+  ) / movementLengthSquared));
+  const closest = {
+    x: start.x + movementX * closestProgress,
+    y: start.y + movementY * closestProgress,
+  };
+  return circlesIntersect(closest, radius, blocker);
+}
+
+/**
+ * Dynamic actors normally behave as swept circles. If an actor begins a step
+ * already overlapping one or more blockers, however, continuing to reject all
+ * overlap would permanently pin it in place. Recovery steps are allowed only
+ * when their entire segment moves monotonically away from every blocker that
+ * currently overlaps the actor. Once separation is restored, ordinary swept
+ * collision immediately applies again.
+ */
+function dynamicBlockersAllowStep(start, end, radius, dynamicBlockers) {
+  const movementX = end.x - start.x;
+  const movementY = end.y - start.y;
+
+  return dynamicBlockers.every((blocker) => {
+    if (!circlesIntersect(start, radius, blocker)) {
+      return !movementSegmentIntersectsBlocker(start, end, radius, blocker);
+    }
+
+    const startDistanceSquared = squaredDistanceToBlocker(start, blocker);
+    const endDistanceSquared = squaredDistanceToBlocker(end, blocker);
+    if (endDistanceSquared <= startDistanceSquared + Number.EPSILON) return false;
+
+    // A non-negative initial derivative makes squared separation monotonic for
+    // this straight segment. This rejects a large step that crosses through a
+    // blocker and merely happens to finish farther away on its opposite side.
+    const startOffsetX = start.x - blocker.position.x;
+    const startOffsetY = start.y - blocker.position.y;
+    return startOffsetX * movementX + startOffsetY * movementY >= -Number.EPSILON;
+  });
+}
+
+function circleFitsWalkableRegionUnion(position, radius, regions) {
+  if (!regions.length) return true;
+  const points = [{ x: position.x, y: position.y }];
+  for (let index = 0; index < WALKABLE_REGION_EDGE_SAMPLES; index += 1) {
+    const angle = (index / WALKABLE_REGION_EDGE_SAMPLES) * Math.PI * 2;
+    points.push({
+      x: position.x + Math.cos(angle) * radius,
+      y: position.y + Math.sin(angle) * radius,
+    });
+  }
+  return points.every((point) => regions.some((region) => (
+    point.x >= region.left - INTERACTION_GEOMETRY_EPSILON
+    && point.x <= region.right + INTERACTION_GEOMETRY_EPSILON
+    && point.y >= region.top - INTERACTION_GEOMETRY_EPSILON
+    && point.y <= region.bottom + INTERACTION_GEOMETRY_EPSILON
+  )));
 }
 
 function resolveInteractionPosition(interaction, positionOverrides) {
@@ -487,6 +589,8 @@ export function canOccupyContinuousPosition(
     return false;
   }
 
+  if (!circleFitsWalkableRegionUnion(position, radius, scene.walkableRegions)) return false;
+
   const minTileX = Math.max(0, Math.floor(position.x - radius + 0.5));
   const maxTileX = Math.min(scene.width - 1, Math.floor(position.x + radius + 0.5));
   const minTileY = Math.max(0, Math.floor(position.y - radius + 0.5));
@@ -585,6 +689,7 @@ export function movePlayerContinuous(
 
   const inputMagnitude = Math.hypot(movement.x, movement.y);
   if (!inputMagnitude || !elapsedMs || !speed) return { x: position.x, y: position.y };
+  const resolvedDynamicBlockers = requireDynamicBlockers(dynamicBlockers);
 
   const inputScale = inputMagnitude > 1 ? 1 / inputMagnitude : 1;
   const travelScale = speed * (elapsedMs / 1000) * inputScale;
@@ -601,10 +706,13 @@ export function movePlayerContinuous(
       const amount = axis === "x" ? stepX : stepY;
       if (!amount) continue;
       const candidate = { ...next, [axis]: next[axis] + amount };
-      if (canOccupyContinuousPosition(sceneId, candidate, radius, {
-        dynamicBlockers,
+      const clearsStaticGeometry = canOccupyContinuousPosition(sceneId, candidate, radius, {
         ignoreActorTiles,
-      })) next = candidate;
+      });
+      if (
+        clearsStaticGeometry
+        && dynamicBlockersAllowStep(next, candidate, radius, resolvedDynamicBlockers)
+      ) next = candidate;
     }
   }
 

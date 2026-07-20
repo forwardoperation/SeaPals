@@ -1051,25 +1051,59 @@ test("Elverson's three active interiors define validated art-aligned furniture c
   }
 });
 
-test("Elverson town geometry blocks park furniture and water outside the public piers", () => {
+test("Elverson town uses layered object bases and an explicit dry-land allowlist", () => {
   const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
+  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v2.png");
+  assert.deepEqual(
+    town.world.walkableRegions.map(({ id }) => id),
+    ["mainland", "central-pier", "fishing-connector", "fishing-platform", "aquarium-apron"],
+  );
+
+  const objectIds = new Set(town.world.layeredObjects.map(({ id }) => id));
+  for (const objectId of [
+    "park-fountain",
+    "park-bench-north",
+    "park-bench-south",
+    "main-planter-west",
+    "main-planter-east",
+    "tree-park-east",
+    "lamp-park-south",
+    "aquarium-workshop",
+  ]) {
+    assert.equal(objectIds.has(objectId), true, `${objectId} must be a layered object`);
+  }
+
   const collisionIds = new Set(town.world.collisionRects.map(({ id }) => id));
   for (const collisionId of [
-    "elverson-park-fountain",
-    "elverson-park-north-bench",
-    "elverson-park-east-bench",
-    "elverson-park-west-garden-bed",
-    "elverson-park-south-bench",
-    "elverson-park-east-tree-bed",
-    "elverson-park-lamppost",
-    "elverson-main-street-west-planter",
-    "elverson-main-street-east-planter",
-    "elverson-aquarium-west-water",
-    "elverson-aquarium-south-water",
-    "elverson-fishing-dock-south-water",
+    "park-fountain:basin",
+    "park-bench-north:feet",
+    "park-bench-south:feet",
+    "tree-park-east:trunk",
+    "lamp-park-south:base",
+    "main-planter-west:box",
+    "main-planter-east:box",
+    "aquarium-workshop:foundation-left",
+    "aquarium-workshop:foundation-right",
   ]) {
     assert.equal(collisionIds.has(collisionId), true, `${collisionId} must be solid`);
   }
+  assert.deepEqual(
+    town.world.layeredObjects.flatMap(({ collisionRects }) => collisionRects),
+    town.world.collisionRects,
+    "world collision must be derived from the reusable objects' base hitboxes",
+  );
+
+  const regionContains = (position) => town.world.walkableRegions.some((region) => (
+    position.x >= region.left
+    && position.x <= region.right
+    && position.y >= region.top
+    && position.y <= region.bottom
+  ));
+  assert.equal(regionContains({ x: 14, y: 17.7 }), true, "central pier stays walkable");
+  assert.equal(regionContains({ x: 11, y: 16.5 }), true, "fishing platform stays walkable");
+  assert.equal(regionContains({ x: 8, y: 16.5 }), false, "open water is outside the allowlist");
+  assert.equal(regionContains({ x: 14, y: 18.35 }), false, "water past the pier is outside the allowlist");
+
   const aquariumExit = getRuntimeAdventureScenes()
     .find((scene) => scene.id === "academy-lab")
     .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
@@ -1302,6 +1336,80 @@ test("content validation rejects malformed, duplicate, and out-of-bounds collisi
   assert.ok(result.errors.some((error) => /collisionRects\[\d+\].*left less than right/.test(error)));
   assert.ok(result.errors.some((error) => /collisionRects\[\d+\]\.top must be finite/.test(error)));
   assert.ok(result.errors.some((error) => /collisionRects\[\d+\].*inside the scene bounds/.test(error)));
+});
+
+test("content validation rejects malformed layered-world collections", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  const town = invalid.scenes.find((scene) => scene.id === "town");
+  town.world.walkableRegions = { unexpected: true };
+  town.world.layeredObjects = { unexpected: true };
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /town.*walkableRegions must be a non-empty array/.test(error)));
+  assert.ok(result.errors.some((error) => /town.*layeredObjects must be an array/.test(error)));
+});
+
+test("content validation protects layered object identity, sprite, base, and depth contracts", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  const town = invalid.scenes.find((scene) => scene.id === "town");
+  const { walkableRegions, layeredObjects } = town.world;
+
+  walkableRegions.push({ ...walkableRegions[0] });
+  walkableRegions.push({ id: "", left: 1, top: 1, right: 2, bottom: 2 });
+  walkableRegions.push({ id: "empty-region", left: 3, top: 3, right: 3, bottom: 4 });
+  walkableRegions.push({ id: "off-map-region", left: -1, top: 1, right: 1, bottom: 2 });
+
+  layeredObjects.push({ ...layeredObjects[0] });
+  layeredObjects[0].renderId = "wrong-render-id";
+  layeredObjects[1].kind = "building";
+  layeredObjects[2].archetype = "";
+  layeredObjects[3].at.x = Number.NaN;
+  layeredObjects[4].sprite.src = "https://example.invalid/tree.jpg";
+  layeredObjects[5].sprite.width = 0;
+  layeredObjects[6].sprite.anchorX = 2;
+  layeredObjects[7].scale = 0;
+  layeredObjects[8].layer = "foreground";
+  layeredObjects[9].depthY = Number.NaN;
+  layeredObjects[10].depthBias = 0.5;
+  layeredObjects[11].visualBounds.right = layeredObjects[11].visualBounds.left;
+  layeredObjects[12].collisionRects = { unexpected: true };
+  layeredObjects[13].collisionRects[0].left += 0.1;
+  layeredObjects[14].collisionRects[0].id = "wrong-owner:foundation";
+  layeredObjects[15].interactionId = "missing-interaction";
+  layeredObjects[16].interactionId = "interaction-elverson-enter-chestnut-home";
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  for (const expected of [
+    /walkableRegions contains duplicate id mainland/,
+    /walkableRegions\[\d+\]\.id must be non-empty/,
+    /walkableRegions\[\d+\].*left less than right/,
+    /walkableRegions\[\d+\].*inside the scene bounds/,
+    /layeredObjects contains duplicate id west-blue-home/,
+    /renderId must equal object:west-blue-home/,
+    /\.kind must equal object/,
+    /\.archetype must be non-empty/,
+    /\.at requires finite x and y coordinates/,
+    /sprite\.src must reference a PNG/,
+    /sprite\.width must be a positive finite number/,
+    /sprite\.anchorX must stay between 0 and 1/,
+    /\.scale must be a positive finite number/,
+    /\.layer must be ground, depth, or overhead/,
+    /\.depthY must be finite/,
+    /\.depthBias must be an integer/,
+    /visualBounds.*left less than right/,
+    /collisionRects must be an array/,
+    /must match its world\.collisionRects geometry/,
+    /\.id must begin with tree-north-midwest:/,
+    /interactionId references unknown scene interaction missing-interaction/,
+    /links interaction interaction-elverson-enter-chestnut-home more than once/,
+  ]) {
+    assert.ok(
+      result.errors.some((error) => expected.test(error)),
+      `expected layered-world validation error ${expected}`,
+    );
+  }
 });
 
 test("content validation rejects malformed and out-of-bounds NPC patrol metadata", () => {
