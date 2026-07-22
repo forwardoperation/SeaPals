@@ -21,6 +21,7 @@ import {
   getScriptedTutorialSearchTargetCardId,
   getScriptedTutorialTurnDraw,
   isScriptedTutorialSearchTarget,
+  shouldForceScriptedTutorialToxicSurvival,
 } from "./tutorialScenario.mjs";
 
 const require = createRequire(import.meta.url);
@@ -457,6 +458,25 @@ test("Professor Current starts with enough legal targets for every authored atta
     4,
   );
   assert.ok(targets.every(Boolean));
+});
+
+test("the authored Porcupine Fish lesson cannot randomly discard required finishers", () => {
+  assert.equal(shouldForceScriptedTutorialToxicSurvival({
+    attackerCardId: "hammerhead",
+    toxicSourceCardId: "porcupine-fish",
+  }), true);
+  assert.equal(shouldForceScriptedTutorialToxicSurvival({
+    attackerCardId: "great-barracuda",
+    toxicSourceCardId: "porcupine-fish",
+  }), true);
+  assert.equal(shouldForceScriptedTutorialToxicSurvival({
+    attackerCardId: "reef-shark",
+    toxicSourceCardId: "porcupine-fish",
+  }), false);
+  assert.equal(shouldForceScriptedTutorialToxicSurvival({
+    attackerCardId: "great-barracuda",
+    toxicSourceCardId: "frogfish",
+  }), false);
 });
 
 test("Professor Current's practice targets occupy legal slots and preserve Ravage", () => {

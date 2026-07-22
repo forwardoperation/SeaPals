@@ -5,6 +5,7 @@ import {
   ADVENTURE_WALK_ANIMATION_DEFAULTS,
   getAdventureWalkCycleDurationMs,
   hasAdventureWalkDisplacement,
+  isAdventurePlayerWalking,
 } from "./adventureWalkAnimation.mjs";
 
 test("one complete walk cycle covers one world tile", () => {
@@ -15,6 +16,13 @@ test("one complete walk cycle covers one world tile", () => {
   assert.equal(Object.isFrozen(ADVENTURE_WALK_ANIMATION_DEFAULTS), true);
   assert.equal(getAdventureWalkCycleDurationMs(4), 250);
   assert.equal(getAdventureWalkCycleDurationMs(0.5), 2000);
+});
+
+test("player walking follows intent immediately and stops in inactive modes", () => {
+  assert.equal(isAdventurePlayerWalking({ isMoving: true }), true);
+  assert.equal(isAdventurePlayerWalking({ isMoving: true, movementPaused: true }), false);
+  assert.equal(isAdventurePlayerWalking({ isMoving: true, boatMode: true }), false);
+  assert.equal(isAdventurePlayerWalking({ isMoving: false }), false);
 });
 
 test("walk displacement helper distinguishes blocked frames from real travel", () => {

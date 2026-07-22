@@ -148,6 +148,7 @@ const TOWN_PORTALS = Object.freeze([
 const BUILDING_ARCHETYPES = new Set([
   "blue-home",
   "tan-home",
+  "green-home",
   "green-home-door",
   "brick-school-door",
   "brick-civic-hall",
@@ -356,6 +357,32 @@ test("Elverson landmarks leave intentional footpaths around their precise hitbox
   }
 });
 
+test("decorative homes have solid foundations instead of unlinked door gaps", () => {
+  const eastGreenHome = SCENES.town.layeredObjects.find(
+    ({ id }) => id === "east-green-home",
+  );
+  assert.equal(eastGreenHome.archetype, "green-home");
+  assert.equal(eastGreenHome.interactionId, null);
+
+  const blocked = movePlayerContinuous(
+    "town",
+    { x: 21.7, y: 10.5 },
+    { x: 0, y: -1 },
+    1000,
+    { ignoreActorTiles: true },
+  );
+  assert.ok(
+    blocked.y >= 10.16,
+    `the decorative home foundation must stop a northbound player, received y=${blocked.y}`,
+  );
+
+  for (const object of SCENES.town.layeredObjects.filter(({ archetype }) => (
+    archetype.endsWith("-door")
+  ))) {
+    assert.ok(object.interactionId, `${object.id} must link its visible doorway to a portal`);
+  }
+});
+
 test("every Elverson resident anchor fits on visible walkable ground", () => {
   const characters = SCENES.town.interactions.filter(({ type }) => type === "npc" || type === "trainer");
   for (const character of characters) {
@@ -420,6 +447,83 @@ test("Elverson residents never form an impassable crowd on the town paths", () =
     ));
     assert.equal(canTalk, true, `${character.id} must stay reachable around the other residents`);
   }
+});
+
+test("the player can walk south beside Sam without walking through his feet", () => {
+  const sam = SCENES.town.interactions.find(
+    ({ id }) => id === "interaction-elverson-sam",
+  );
+  const actorStates = createAdventureActorStates([sam]);
+  const dynamicBlockers = getAdventureActorBlockers(actorStates);
+  const movementOptions = {
+    dynamicBlockers,
+    ignoreActorTiles: true,
+    radius: 0.22,
+    speed: 4,
+    maxStepDistance: 0.04,
+  };
+
+  // This is the west-storefront position from the reported pinch. The shop
+  // foundation prevents moving farther north, while Sam stands just southeast.
+  const besideSam = movePlayerContinuous(
+    "town",
+    { x: 2.65, y: 10.17 },
+    { x: 0, y: 1 },
+    250,
+    movementOptions,
+  );
+  assert.ok(Math.abs(besideSam.x - 2.65) < POSITION_EPSILON);
+  assert.ok(
+    besideSam.y >= 11.16,
+    `the visible sidewalk lane beside Sam stopped at y=${besideSam.y}`,
+  );
+
+  const headOn = movePlayerContinuous(
+    "town",
+    { x: 3, y: 11.17 },
+    { x: 0, y: -1 },
+    250,
+    movementOptions,
+  );
+  assert.ok(
+    headOn.y >= sam.at.y + ADVENTURE_ACTOR_DEFAULTS.collisionRadiusY - POSITION_EPSILON,
+    `a head-on approach crossed Sam's planted feet at y=${headOn.y}`,
+  );
+  assert.equal(
+    getContinuousInteraction("town", headOn, "up", {
+      positionOverrides: getAdventureActorPositionOverrides(actorStates),
+    })?.interactionId,
+    sam.id,
+  );
+
+  const offsetHeadOn = movePlayerContinuous(
+    "town",
+    { x: 3.16, y: 10.8 },
+    { x: 0, y: -1 },
+    250,
+    movementOptions,
+  );
+  assert.equal(
+    getContinuousInteraction("town", offsetHeadOn, "up", {
+      positionOverrides: getAdventureActorPositionOverrides(actorStates),
+    })?.interactionId,
+    sam.id,
+    "Talk must remain available when a close approach stops slightly off center",
+  );
+  assert.equal(
+    getContinuousInteraction("town", { x: 3.26, y: offsetHeadOn.y }, "up", {
+      positionOverrides: getAdventureActorPositionOverrides(actorStates),
+    }),
+    null,
+    "the fixed character interaction lane must stay narrow",
+  );
+  assert.equal(
+    getContinuousInteraction("town", { x: 3.16, y: 10.1 }, "up", {
+      positionOverrides: getAdventureActorPositionOverrides(actorStates),
+    }),
+    null,
+    "a resident behind the player must not remain targetable",
+  );
 });
 
 test("all Elverson portals and street branches stay reachable at resident anchors and patrol ends", () => {

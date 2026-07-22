@@ -69,6 +69,32 @@ test("Ensnare resolves inside each real player and opponent attack step", () => 
   assert.match(opponentSequence, /resolveEnsnareForAttack\(onPlayAttack\.attack, Math\.random\)/);
 });
 
+test("an On Play attack targets the reconciled reef after its foundation damage", () => {
+  const impact = sourceBetween(
+    "function damageOpponentFoundation",
+    "function attackWithCreature",
+  );
+  assert.match(impact, /let opponentStateAfterDamage = opponent/);
+  assert.match(impact, /beginOnPlayAttack\([\s\S]*opponentStateAfterDamage\)/);
+
+  const onPlayAttack = sourceBetween(
+    "function beginOnPlayAttack",
+    "function resolvePlayerAttack",
+  );
+  assert.match(onPlayAttack, /opponentState = opponent/);
+  assert.match(onPlayAttack, /getPlayerAttackTargets\(card, attack, opponentState\)/);
+});
+
+test("mandatory On Play attacks cannot be canceled before they resolve", () => {
+  const onPlayAttack = sourceBetween(
+    "function beginOnPlayAttack",
+    "function resolvePlayerAttack",
+  );
+  assert.match(onPlayAttack, /mandatory On Play sequence must finish/);
+  assert.match(simulatorSource, /!attackContext\.costCommitted && !attackContext\.onPlay \? <button[\s\S]*?>Cancel<\/button>/);
+  assert.match(simulatorSource, /!faceoffRolling && !attackContext\?\.costCommitted && !attackContext\?\.onPlay \? <button[\s\S]*?>Cancel Faceoff<\/button>/);
+});
+
 test("Cookie Cutter uses the shared board-supply fallback for both controllers", () => {
   const playerRound = sourceBetween("function startRound", "function beginOpeningOpponentTurn");
   assert.match(playerRound, /resolveParasiteCollection\(/);

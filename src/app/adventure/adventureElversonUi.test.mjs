@@ -63,3 +63,13 @@ test("the tutorial interface consistently identifies Mr. Easterling as the guide
   assert.match(simulator, /\{tutorialGuide\.name\}'s lesson target/);
   assert.doesNotMatch(simulator, /Professor guidance|Professor's pick|Professor's lesson target/);
 });
+
+test("Mr. Easterling uses his identity-based overworld sheet and dedicated portrait", () => {
+  assert.match(styles, /\.academy-mentorSpriteArtwork[\s\S]*?mr-easterling-sprites-v2\.png/);
+  assert.match(styles, /\.mrEasterlingPortraitArtwork[\s\S]*?mr-easterling-portrait-v2\.png/);
+  assert.match(component, /function CharacterPortrait[\s\S]*?character === ACADEMY_MENTOR_ID[\s\S]*?mrEasterlingPortraitArtwork/);
+  assert.match(component, /portraitSrc: "\/images\/adventure\/mr-easterling-portrait-v2\.png"/);
+  assert.match(simulator, /backgroundSize: "contain"/);
+  assert.match(simulator, /mr-easterling-portrait-v2\.png/);
+  assert.doesNotMatch(styles, /academy-mentor-sprites\.png/);
+});

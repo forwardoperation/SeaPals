@@ -161,6 +161,20 @@ export const SCRIPTED_TUTORIAL_OPPONENT_TARGET_CARD_IDS = Object.freeze([
   "reef-shark",
 ]);
 
+/**
+ * The Academy still demonstrates Porcupine Fish's Toxic coin flip, but the
+ * authored finish cannot lose either required finisher to that random result.
+ */
+export function shouldForceScriptedTutorialToxicSurvival({
+  attackerCardId = null,
+  toxicSourceCardId = null,
+} = {}) {
+  return [
+    SCRIPTED_TUTORIAL_FINISH_PLAN.predatorCardId,
+    SCRIPTED_TUTORIAL_FINISH_PLAN.apexCardId,
+  ].includes(attackerCardId) && toxicSourceCardId === "porcupine-fish";
+}
+
 const FOUNDATION_PINS = Object.freeze([
   ...SCRIPTED_TUTORIAL_FOUNDATION_OPENING_ORDER.map((cardId, index) => Object.freeze({ index, cardId })),
   Object.freeze({ index: 4, cardId: "pillar-coral-base" }),

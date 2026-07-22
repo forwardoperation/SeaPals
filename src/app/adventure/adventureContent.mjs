@@ -682,6 +682,10 @@ const shellshoreRuntimeScenes = {
         id: "interaction-academy-exit",
         type: "exit",
         at: { x: 6, y: 8 },
+        // The artwork's open threshold spans the full exit tile. Let players
+        // keep walking out from either side of that visible opening instead of
+        // requiring them to line up on its exact centre pixel.
+        doorwayHalfWidth: 0.5,
         targetScene: "town",
         spawn: { x: 16, y: 15.85 },
         facing: "down",

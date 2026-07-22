@@ -9,9 +9,12 @@ const FACING_DELTAS = Object.freeze({
 });
 
 export const ADVENTURE_ACTOR_DEFAULTS = Object.freeze({
-  // Keep collisions at a person's feet. A larger shoulder-sized circle made
-  // one NPC behave like a wall across Elverson's compact streets.
-  radius: 0.24,
+  // Keep the scenery radius separate from person-to-person collision. People
+  // use the narrow ellipse below at their planted feet, allowing shoulders and
+  // upper-body sprites to overlap naturally as they pass in a top-down scene.
+  radius: 0.18,
+  collisionRadiusX: 0.28,
+  collisionRadiusY: 0.24,
   speed: 0.62,
   pauseMs: 1100,
   focusDwellMs: 200,
@@ -154,9 +157,17 @@ export function getAdventureActorPositionOverrides(actorStates = {}) {
 export function getAdventureActorBlockers(actorStates = {}, {
   excludeInteractionId = null,
   radius = ADVENTURE_ACTOR_DEFAULTS.radius,
+  collisionRadiusX = ADVENTURE_ACTOR_DEFAULTS.collisionRadiusX,
+  collisionRadiusY = ADVENTURE_ACTOR_DEFAULTS.collisionRadiusY,
 } = {}) {
   if (!Number.isFinite(radius) || radius <= 0) {
     throw new RangeError("Adventure actor blocker radius must be positive.");
+  }
+  if (!Number.isFinite(collisionRadiusX) || collisionRadiusX <= 0) {
+    throw new RangeError("Adventure actor blocker collisionRadiusX must be positive.");
+  }
+  if (!Number.isFinite(collisionRadiusY) || collisionRadiusY <= 0) {
+    throw new RangeError("Adventure actor blocker collisionRadiusY must be positive.");
   }
   return Object.entries(actorStates)
     .filter(([interactionId]) => interactionId !== excludeInteractionId)
@@ -164,6 +175,8 @@ export function getAdventureActorBlockers(actorStates = {}, {
       id: interactionId,
       position: copyPosition(requireFinitePosition(actor?.position, `Adventure actor ${interactionId}`)),
       radius,
+      collisionRadiusX,
+      collisionRadiusY,
     }));
 }
 
@@ -284,7 +297,13 @@ export function advanceAdventureActorStates(
     ));
     const dynamicBlockers = getAdventureActorBlockers(otherActors, { radius });
     if (playerPosition) {
-      dynamicBlockers.push({ id: "player", position: copyPosition(playerPosition), radius: 0.3 });
+      dynamicBlockers.push({
+        id: "player",
+        position: copyPosition(playerPosition),
+        radius: 0.3,
+        collisionRadiusX: ADVENTURE_ACTOR_DEFAULTS.collisionRadiusX,
+        collisionRadiusY: ADVENTURE_ACTOR_DEFAULTS.collisionRadiusY,
+      });
     }
     const movementElapsed = Math.min(elapsed, (distance / patrol.speed) * 1000);
     const moved = movePlayerContinuous(

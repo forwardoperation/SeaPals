@@ -5,9 +5,9 @@
   "scripts": {
     "audit:rules": "node scripts/audit-rules-chat.cjs --seed=0x5ea5a1 --enforce && node scripts/audit-rules-chat.cjs --seed=0xc0a1be --enforce && node scripts/audit-rules-chat.cjs --seed=0x0cea11 --enforce",
     "build": "next build",
-    "test": "node --test src/app/adventure/*.test.mjs src/app/simulator/*.test.mjs src/lib/tournaments/*.test.mjs src/lib/store/*.test.mjs src/lib/rulesAssistant.test.mjs src/lib/rulesEngine.test.mjs src/lib/rulesExam.test.mjs src/lib/rulesAdversarial.test.mjs src/lib/rulesComprehension.test.mjs src/lib/rulesPlayerInterrogation.test.mjs src/lib/rulesSemanticRedTeam.test.mjs",
+    "test": "node --test src/app/adventure/*.test.mjs src/app/simulator/*.test.mjs src/components/rules/*.test.mjs src/lib/tournaments/*.test.mjs src/lib/store/*.test.mjs src/lib/rulesAssistant.test.mjs src/lib/rulesEngine.test.mjs src/lib/rulesExam.test.mjs src/lib/rulesAdversarial.test.mjs src/lib/rulesComprehension.test.mjs src/lib/rulesPlayerInterrogation.test.mjs src/lib/rulesSemanticRedTeam.test.mjs",
     "test:adventure": "node --test src/app/adventure/*.test.mjs src/lib/tournaments/*.test.mjs",
-    "test:simulator": "node --test src/app/simulator/*.test.mjs",
+    "test:simulator": "node --test src/app/simulator/*.test.mjs src/components/rules/*.test.mjs",
     "test:rules": "node --test src/lib/rulesAssistant.test.mjs src/lib/rulesEngine.test.mjs src/lib/rulesExam.test.mjs src/lib/rulesAdversarial.test.mjs src/lib/rulesComprehension.test.mjs src/lib/rulesPlayerInterrogation.test.mjs src/lib/rulesSemanticRedTeam.test.mjs",
     "dev": "next dev",
     "start": "next start",

@@ -62,6 +62,7 @@ const TERRAIN_ROWS = Object.freeze([
 const ARCHETYPES = {
   "blue-home": building("blue-home", 4.1, 3.95),
   "tan-home": building("tan-home", 3.5, 3.98),
+  "green-home": building("green-home", 3.4, 4.27),
   "green-home-door": building("green-home", 3.4, 4.27, { doorWidth: 0.82, doorCenter: 0 }),
   "brick-school-door": building("brick-school", 4, 4.82, { doorWidth: 0.86, doorCenter: 0 }),
   "brick-civic-hall": building("brick-civic-hall", 4.8, 4.65),
@@ -139,7 +140,7 @@ const OBJECTS = [
   { id: "main-yellow-shop", archetype: "yellow-storefront", at: { x: 5.9, y: 9.9 } },
   { id: "main-green-shop", archetype: "green-awning-shop", at: { x: 9, y: 9.9 } },
   { id: "east-yellow-shop", archetype: "yellow-storefront", at: { x: 18, y: 9.9 } },
-  { id: "east-green-home", archetype: "green-home-door", at: { x: 21.7, y: 9.9 } },
+  { id: "east-green-home", archetype: "green-home", at: { x: 21.7, y: 9.9 } },
   { id: "far-east-tan-home", archetype: "tan-home", at: { x: 25, y: 9.9 } },
   {
     id: "aquarium-workshop",

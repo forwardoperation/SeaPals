@@ -24,6 +24,34 @@ function requireInstanceId(instanceId) {
 }
 
 /**
+ * Evaluates printed Habitat prerequisites that are still authored as text.
+ * Alternative requirements must be resolved before strict single-Habitat
+ * rules so "Open Ocean or Coral Reef" is not mistaken for Open Ocean only.
+ */
+export function getHabitatRequirementError(card, habitatIds = []) {
+  const rules = [...(card?.playRequirements ?? []), ...(card?.specialRules ?? [])]
+    .map((rule) => typeof rule === "string" ? rule : rule?.text ?? "");
+  const habitats = new Set(habitatIds);
+  const hasOpenOcean = habitats.has("open-ocean");
+  const hasAbyss = habitats.has("abyss");
+  const hasCoralReef = habitats.has("coral-reef");
+
+  if (rules.some((rule) => /open ocean or coral reef/i.test(rule)) && !hasOpenOcean && !hasCoralReef) {
+    return `${card.name} requires Open Ocean or Coral Reef in your ecosystem.`;
+  }
+  if (rules.some((rule) => /open ocean or abyss/i.test(rule)) && !hasOpenOcean && !hasAbyss) {
+    return `${card.name} requires Open Ocean or Abyss in your ecosystem.`;
+  }
+  if (rules.some((rule) => /requires? open ocean(?!\s+or\b)|only be played if open ocean(?!\s+or\b)/i.test(rule)) && !hasOpenOcean) {
+    return `${card.name} requires Open Ocean in your ecosystem.`;
+  }
+  if (rules.some((rule) => /requires? abyss(?!\s+or\b)|only be played if abyss(?!\s+or\b)/i.test(rule)) && !hasAbyss) {
+    return `${card.name} requires Abyss in your ecosystem.`;
+  }
+  return "";
+}
+
+/**
  * Creates one physical Habitat card in play. Callers own instance ID generation;
  * requiring the ID here prevents duplicate card IDs from becoming identity.
  */

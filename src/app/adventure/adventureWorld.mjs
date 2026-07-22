@@ -279,7 +279,13 @@ function publicInteraction(interaction) {
     interactionId: interaction.id,
   };
   for (const [key, value] of Object.entries(interaction)) {
-    if (key === "id" || key === "type" || key === "at" || value === undefined) continue;
+    if (
+      key === "id"
+      || key === "type"
+      || key === "at"
+      || key === "doorwayHalfWidth"
+      || value === undefined
+    ) continue;
     result[key] = freezePublicValue(value);
   }
   return Object.freeze(result);
@@ -301,40 +307,71 @@ function requireDynamicBlockers(dynamicBlockers) {
   return dynamicBlockers.map((blocker, index) => {
     requireContinuousPosition(blocker?.position);
     requirePositiveNumber(blocker?.radius, `Dynamic adventure blocker ${index} radius`);
+    const hasCollisionRadiusX = blocker?.collisionRadiusX !== undefined;
+    const hasCollisionRadiusY = blocker?.collisionRadiusY !== undefined;
+    if (hasCollisionRadiusX !== hasCollisionRadiusY) {
+      throw new TypeError(
+        `Dynamic adventure blocker ${index} must define both collisionRadiusX and collisionRadiusY.`,
+      );
+    }
+    if (hasCollisionRadiusX) {
+      requirePositiveNumber(
+        blocker.collisionRadiusX,
+        `Dynamic adventure blocker ${index} collisionRadiusX`,
+      );
+      requirePositiveNumber(
+        blocker.collisionRadiusY,
+        `Dynamic adventure blocker ${index} collisionRadiusY`,
+      );
+    }
     return blocker;
   });
 }
 
-function circlesIntersect(position, radius, blocker) {
-  const distanceX = position.x - blocker.position.x;
-  const distanceY = position.y - blocker.position.y;
+function dynamicBlockerCollisionRadii(radius, blocker) {
+  if (blocker.collisionRadiusX !== undefined) {
+    return {
+      x: blocker.collisionRadiusX,
+      y: blocker.collisionRadiusY,
+    };
+  }
   const combinedRadius = radius + blocker.radius;
-  return distanceX * distanceX + distanceY * distanceY
-    < combinedRadius * combinedRadius - Number.EPSILON;
+  return { x: combinedRadius, y: combinedRadius };
 }
 
-function squaredDistanceToBlocker(position, blocker) {
+function dynamicBlockerDistanceSquared(position, radius, blocker) {
   const distanceX = position.x - blocker.position.x;
   const distanceY = position.y - blocker.position.y;
-  return distanceX * distanceX + distanceY * distanceY;
+  const collisionRadii = dynamicBlockerCollisionRadii(radius, blocker);
+  const normalizedX = distanceX / collisionRadii.x;
+  const normalizedY = distanceY / collisionRadii.y;
+  return normalizedX * normalizedX + normalizedY * normalizedY;
+}
+
+function dynamicBlockerIntersects(position, radius, blocker) {
+  return dynamicBlockerDistanceSquared(position, radius, blocker)
+    < 1 - Number.EPSILON;
 }
 
 function movementSegmentIntersectsBlocker(start, end, radius, blocker) {
-  const movementX = end.x - start.x;
-  const movementY = end.y - start.y;
+  const collisionRadii = dynamicBlockerCollisionRadii(radius, blocker);
+  const movementX = (end.x - start.x) / collisionRadii.x;
+  const movementY = (end.y - start.y) / collisionRadii.y;
   const movementLengthSquared = movementX * movementX + movementY * movementY;
-  if (movementLengthSquared <= Number.EPSILON) return circlesIntersect(end, radius, blocker);
+  if (movementLengthSquared <= Number.EPSILON) {
+    return dynamicBlockerIntersects(end, radius, blocker);
+  }
 
-  const startX = start.x - blocker.position.x;
-  const startY = start.y - blocker.position.y;
+  const startX = (start.x - blocker.position.x) / collisionRadii.x;
+  const startY = (start.y - blocker.position.y) / collisionRadii.y;
   const closestProgress = Math.max(0, Math.min(1, -(
     startX * movementX + startY * movementY
   ) / movementLengthSquared));
   const closest = {
-    x: start.x + movementX * closestProgress,
-    y: start.y + movementY * closestProgress,
+    x: startX + movementX * closestProgress,
+    y: startY + movementY * closestProgress,
   };
-  return circlesIntersect(closest, radius, blocker);
+  return closest.x * closest.x + closest.y * closest.y < 1 - Number.EPSILON;
 }
 
 /**
@@ -350,20 +387,24 @@ function dynamicBlockersAllowStep(start, end, radius, dynamicBlockers) {
   const movementY = end.y - start.y;
 
   return dynamicBlockers.every((blocker) => {
-    if (!circlesIntersect(start, radius, blocker)) {
+    if (!dynamicBlockerIntersects(start, radius, blocker)) {
       return !movementSegmentIntersectsBlocker(start, end, radius, blocker);
     }
 
-    const startDistanceSquared = squaredDistanceToBlocker(start, blocker);
-    const endDistanceSquared = squaredDistanceToBlocker(end, blocker);
+    const startDistanceSquared = dynamicBlockerDistanceSquared(start, radius, blocker);
+    const endDistanceSquared = dynamicBlockerDistanceSquared(end, radius, blocker);
     if (endDistanceSquared <= startDistanceSquared + Number.EPSILON) return false;
 
     // A non-negative initial derivative makes squared separation monotonic for
     // this straight segment. This rejects a large step that crosses through a
     // blocker and merely happens to finish farther away on its opposite side.
+    const collisionRadii = dynamicBlockerCollisionRadii(radius, blocker);
     const startOffsetX = start.x - blocker.position.x;
     const startOffsetY = start.y - blocker.position.y;
-    return startOffsetX * movementX + startOffsetY * movementY >= -Number.EPSILON;
+    return (
+      (startOffsetX * movementX) / (collisionRadii.x * collisionRadii.x)
+      + (startOffsetY * movementY) / (collisionRadii.y * collisionRadii.y)
+    ) >= -Number.EPSILON;
   });
 }
 
@@ -627,7 +668,9 @@ export function canOccupyContinuousPosition(
     return false;
   }
 
-  if (dynamicBlockers.some((blocker) => circlesIntersect(position, radius, blocker))) {
+  if (dynamicBlockers.some((blocker) => (
+    dynamicBlockerIntersects(position, radius, blocker)
+  ))) {
     return false;
   }
 
@@ -784,7 +827,10 @@ export function getContinuousInteraction(
       candidate.forwardDistance > INTERACTION_GEOMETRY_EPSILON
       && candidate.forwardDistance <= broadRange + INTERACTION_GEOMETRY_EPSILON
       && candidate.lateralDistance <= broadLateralTolerance + INTERACTION_GEOMETRY_EPSILON
-      && candidate.lateralDistance <= candidate.forwardDistance * 0.5 + INTERACTION_GEOMETRY_EPSILON
+      && (
+        CHARACTER_INTERACTION_TYPES.has(candidate.interaction.type)
+        || candidate.lateralDistance <= candidate.forwardDistance * 0.5 + INTERACTION_GEOMETRY_EPSILON
+      )
     ))
     .map((candidate) => ({
       ...candidate,
@@ -835,19 +881,38 @@ export function getDoorwayTransition(
   const candidates = scene.interactions
     .filter((interaction) => interaction.type === "enter" || interaction.type === "exit")
     .map((interaction) => {
+      const doorwayHalfWidth = interaction.doorwayHalfWidth ?? 0;
+      requirePositiveNumber(
+        doorwayHalfWidth,
+        `Adventure doorway ${interaction.id} half-width`,
+        { allowZero: true },
+      );
       const offsetX = interaction.at.x - position.x;
       const offsetY = interaction.at.y - position.y;
       const forwardDistance = offsetX * facingVector.x + offsetY * facingVector.y;
-      const lateralDistance = Math.abs(offsetX * facingVector.y - offsetY * facingVector.x);
+      const signedLateralDistance = offsetX * facingVector.y - offsetY * facingVector.x;
+      const lateralDistance = Math.max(0, Math.abs(signedLateralDistance) - doorwayHalfWidth);
       const distance = Math.hypot(offsetX, offsetY);
-      return { interaction, distance, forwardDistance, lateralDistance };
+      const lateralDirection = {
+        x: facingVector.y,
+        y: -facingVector.x,
+      };
+      const clampedLateralDistance = Math.max(
+        -doorwayHalfWidth,
+        Math.min(signedLateralDistance, doorwayHalfWidth),
+      );
+      const pathTarget = {
+        x: interaction.at.x - lateralDirection.x * clampedLateralDistance,
+        y: interaction.at.y - lateralDirection.y * clampedLateralDistance,
+      };
+      return { interaction, distance, forwardDistance, lateralDistance, pathTarget };
     })
     .filter((candidate) => (
       candidate.forwardDistance > INTERACTION_GEOMETRY_EPSILON
       && candidate.forwardDistance <= range + INTERACTION_GEOMETRY_EPSILON
       && candidate.lateralDistance <= lateralTolerance + INTERACTION_GEOMETRY_EPSILON
       && candidate.lateralDistance <= candidate.forwardDistance * 0.5 + INTERACTION_GEOMETRY_EPSILON
-      && hasClearStructuralInteractionPath(scene, position, candidate.interaction.at)
+      && hasClearStructuralInteractionPath(scene, position, candidate.pathTarget)
     ))
     .sort((left, right) => left.distance - right.distance);
 

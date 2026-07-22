@@ -37,11 +37,10 @@ test("player and patrol walk cycles derive their cadence from world speed", () =
 });
 
 test("the player walk cycle follows active walking intent even when collision stops displacement", () => {
-  assert.match(component, /const \[playerWalking, setPlayerWalking\] = useState\(false\)/);
-  assert.match(component, /if \(vector\.x === 0 && vector\.y === 0\) \{[\s\S]*?setPlayerWalking\(false\);[\s\S]*?return;[\s\S]*?\}\s*setPlayerWalking\(true\);/);
-  assert.doesNotMatch(component, /setPlayerWalking\(hasAdventureWalkDisplacement/);
+  assert.match(component, /const playerWalking = isAdventurePlayerWalking\(\{ isMoving, boatMode, movementPaused \}\)/);
+  assert.doesNotMatch(component, /\[playerWalking, setPlayerWalking\]/);
+  assert.doesNotMatch(component, /setPlayerWalking\(/);
   assert.match(component, /moving=\{playerWalking\}/);
-  assert.match(component, /if \(boatMode \|\| movementPaused \|\| !isMoving\) setPlayerWalking\(false\)/);
 });
 
 test("world conversations explicitly turn the selected live actor toward the player", () => {

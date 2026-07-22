@@ -5,6 +5,7 @@ import {
   createHabitatInstance,
   damageHabitatInstance,
   evaluateCoralReefComposition,
+  getHabitatRequirementError,
   removeHabitatInstance,
   resolveEndOfTurnHabitatMaintenance,
 } from "./habitatRules.mjs";
@@ -60,6 +61,46 @@ test("damage targets one Habitat instance rather than every copy of a card", () 
   assert.equal(result.habitats[0].currentHealth, 40);
   assert.equal(result.habitats[1].currentHealth, 28);
   assert.equal(result.result.appliedDamage, 12);
+});
+
+test("alternative Habitat requirements accept either printed option without becoming Open Ocean only", () => {
+  const openOceanOrCoralReef = [
+    "Manta Ray",
+    "Whale Shark",
+    "Ocean Sunfish",
+  ].map((name) => ({
+    name,
+    playRequirements: ["Requires Open Ocean or Coral Reef Habitat in your ecosystem."],
+  }));
+  openOceanOrCoralReef.forEach((card) => {
+    assert.equal(getHabitatRequirementError(card, ["open-ocean"]), "", `${card.name} with Open Ocean`);
+    assert.equal(getHabitatRequirementError(card, ["coral-reef"]), "", `${card.name} with Coral Reef`);
+    assert.match(getHabitatRequirementError(card, []), /requires Open Ocean or Coral Reef/i, `${card.name} with no Habitat`);
+    assert.match(getHabitatRequirementError(card, ["abyss"]), /requires Open Ocean or Coral Reef/i, `${card.name} with Abyss`);
+  });
+
+  const openOceanOrAbyss = ["Bluefin Tuna", "Swordfish"].map((name) => ({
+    name,
+    playRequirements: ["Requires Open Ocean or Abyss Habitat in your ecosystem."],
+  }));
+  openOceanOrAbyss.forEach((card) => {
+    assert.equal(getHabitatRequirementError(card, ["open-ocean"]), "", `${card.name} with Open Ocean`);
+    assert.equal(getHabitatRequirementError(card, ["abyss"]), "", `${card.name} with Abyss`);
+    assert.match(getHabitatRequirementError(card, []), /requires Open Ocean or Abyss/i, `${card.name} with no Habitat`);
+    assert.match(getHabitatRequirementError(card, ["coral-reef"]), /requires Open Ocean or Abyss/i, `${card.name} with Coral Reef`);
+  });
+});
+
+test("strict Open Ocean requirements still reject other Habitats", () => {
+  for (const name of ["Basking Shark", "Blue Whale"]) {
+    const card = {
+      name,
+      playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],
+    };
+    assert.equal(getHabitatRequirementError(card, ["open-ocean"]), "");
+    assert.match(getHabitatRequirementError(card, ["coral-reef"]), /requires Open Ocean/i);
+    assert.match(getHabitatRequirementError(card, ["abyss"]), /requires Open Ocean/i);
+  }
 });
 
 test("Coral Reef requires four true Corals, two Fish, and two Invertebrates", () => {

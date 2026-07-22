@@ -39,7 +39,8 @@ test("condition lessons explain the exact effect as a short conversation", () =>
   }, 1);
   assert.equal(sunlight.title, "Begin by reading the water");
   assert.equal(sunlight.target, "condition-continue");
-  assert.match(sunlight.message, /bank caps by 2.*does not place.*RP/i);
+  assert.match(sunlight.message, /In the ocean.*photosynthesis.*depth.*water clarity.*weather.*season.*In SeaPals/i);
+  assert.match(sunlight.message, /bank caps by 2.*does not add RP/i);
   assert.match(sunlight.playerThought, /hold more.*actually collected/i);
   assert.match(sunlight.cueId, /condition:r1:abundant-sunlight/);
 
@@ -49,15 +50,41 @@ test("condition lessons explain the exact effect as a short conversation", () =>
     text: "Predator and Apex cost 1 more RP to play.",
   }, 2);
   assert.match(clearWater.message, /Predator and Apex.*1 more RP/i);
-  assert.match(clearWater.message, /Fish.*Invertebrates.*normal costs/i);
+  assert.match(clearWater.message, /clear water.*suspended particles.*predators and prey.*In SeaPals.*visibility shift/i);
+  assert.match(clearWater.message, /other Fish and Invertebrates.*normal costs/i);
   assert.match(clearWater.playerThought, /Arrow Crab.*Spanish Hogfish/i);
+
+  const algaeBloom = getSimulatorTutorialConditionHelp({
+    id: "algae-bloom",
+    name: "Algae Bloom",
+    text: "Players cannot have more than 7 cards in their hands.",
+  }, 3);
+  assert.match(algaeBloom.message, /In the ocean.*rapid increases.*not all blooms are harmful.*block light.*lower oxygen/i);
+  assert.match(algaeBloom.message, /In SeaPals.*seven-card hand limit.*excess cards.*discard/i);
+
+  const murkyWater = getSimulatorTutorialConditionHelp({
+    id: "murky-water",
+    name: "Murky Water",
+    text: "Predator and Apex cost 1 less RP to play.",
+  }, 4);
+  assert.match(murkyWater.message, /suspended sediment.*plankton.*reduce visibility.*not automatically mean polluted/i);
+  assert.match(murkyWater.message, /In SeaPals.*possible advantage.*Predator and Apex.*1 RP/i);
+
+  const bleaching = getSimulatorTutorialConditionHelp({
+    id: "severe-coral-bleaching",
+    name: "Severe Coral Bleaching",
+    text: "Heat-sensitive Corals do not generate RP this round.",
+  }, 5);
+  assert.match(bleaching.message, /heat stress.*symbiotic algae.*stressed, not necessarily dead/i);
+  assert.match(bleaching.message, /In SeaPals.*remain in play.*keep their slots.*no RP/i);
 
   const krillBloom = getSimulatorTutorialConditionHelp({
     id: "krill-ball",
     name: "Krill Bloom",
     text: "The next Filter Feeder each player plays costs 150 less School Density.",
   }, 6);
-  assert.match(krillBloom.message, /next Filter Feeder.*150.*used once/i);
+  assert.match(krillBloom.message, /currents.*dense swarms.*temporary food pulse.*filter feeders/i);
+  assert.match(krillBloom.message, /next Filter Feeder.*150.*only once/i);
   assert.match(krillBloom.playerThought, /180.*150.*White Grunt.*30.*exactly enough/i);
 
   const bleakOvercast = getSimulatorTutorialConditionHelp({
@@ -65,8 +92,17 @@ test("condition lessons explain the exact effect as a short conversation", () =>
     name: "Bleak Overcast",
     text: "All players' RP bank cap is decreased by 2.",
   }, 7);
-  assert.match(bleakOvercast.message, /bank caps by 2.*removes RP above.*does not make cards cheaper/i);
+  assert.match(bleakOvercast.message, /cloud cover.*sunlight.*photosynthesis.*In SeaPals/i);
+  assert.match(bleakOvercast.message, /bank caps by 2.*discarding RP above.*not card costs/i);
   assert.match(bleakOvercast.encouragement, /zero-cost Support.*Apex/i);
+
+  const unfamiliarCondition = getSimulatorTutorialConditionHelp({
+    id: "undertow",
+    name: "Undertow",
+    text: "All creatures must move one slot.",
+  }, 8);
+  assert.match(unfamiliarCondition.message, /weather.*seasons.*currents.*living processes.*human activity/i);
+  assert.match(unfamiliarCondition.message, /simplified model.*Its game rule says.*move one slot/i);
 });
 
 test("setup help follows the live board even when saved progress is later", () => {
@@ -694,14 +730,15 @@ test("post-checklist help remains active only while the 10 VP victory is pending
   assert.equal(help.id, "tutorial-finish-duel");
   assert.equal(help.progressLabel, "Final goal • 4/10 VP");
   assert.equal(help.target, "turn-button");
-  assert.match(help.message, /4\/10 VP.*Mr\. Easterling.*2/i);
+  assert.match(help.message, /4\/10 VP.*I am at 2/i);
+  assert.doesNotMatch(help.message, /Mr\. Easterling/i);
 
   const customGuide = getSimulatorTutorialHelp(null, {
     ...FINISH_DUEL_STATE,
     guideName: "Marine Biologist Jonah",
   });
-  assert.match(customGuide.message, /Marine Biologist Jonah.*2/i);
-  assert.doesNotMatch(customGuide.message, /Mr\. Easterling|Professor Current/i);
+  assert.match(customGuide.message, /4\/10 VP.*I am at 2/i);
+  assert.doesNotMatch(customGuide.message, /Marine Biologist Jonah|Mr\. Easterling|Professor Current/i);
 });
 
 test("post-checklist help preserves draw, result, and placement prerequisites", () => {
@@ -1093,6 +1130,59 @@ const ACADEMY_STATE = Object.freeze({
   gamePhase: "main",
 });
 
+test("the setup lesson requires real zoom, arrangement, and Fit actions before Round 1", () => {
+  const checkpoint = { id: "tutorial-collect-rp", title: "Collect RP", instruction: "Collect." };
+  const route = academyCurriculumRoute({ round: 0 });
+  const baseState = {
+    ...ACADEMY_STATE,
+    round: 0,
+    gamePhase: "setup",
+    scriptedFinishRoute: route,
+  };
+  const progress = {};
+  const expected = [
+    ["zoom-in", "player-zoom-in"],
+    ["zoom-out", "player-zoom-out"],
+    ["move-foundation", "foundation-drag"],
+    ["move-slot", "slot-drag"],
+    ["fit", "player-zoom-fit"],
+  ];
+
+  for (const [actionId, target] of expected) {
+    const help = getSimulatorTutorialHelp(checkpoint, {
+      ...baseState,
+      layoutLessonProgress: progress,
+    });
+    assert.equal(help.actionId, actionId);
+    assert.equal(help.target, target);
+    progress[actionId] = true;
+  }
+
+  const ready = getSimulatorTutorialHelp(checkpoint, {
+    ...baseState,
+    layoutLessonProgress: progress,
+  });
+  assert.equal(ready.target, "turn-button");
+  assert.match(ready.title, /Begin the first tide/i);
+});
+
+test("the second Coral placement explicitly uses a separate authored marker", () => {
+  const route = academyCurriculumRoute({
+    cards: {
+      economy: { inHand: false, isPlaying: true },
+    },
+  });
+  const help = getSimulatorTutorialHelp({ id: "tutorial-build-card" }, {
+    ...ACADEMY_STATE,
+    playingCardId: "pillar-coral-base",
+    scriptedFinishRoute: route,
+  });
+  assert.equal(help.target, "placement");
+  assert.match(help.message, /second foundation, not an upgrade/i);
+  assert.match(help.message, /separate glowing.*beside Mustard Hill/i);
+  assert.match(help.message, /rather than covering/i);
+});
+
 test("the strategy curriculum overrides generic VP rushing even while checkpoints remain", () => {
   const checkpoint = { id: "tutorial-build-card", title: "Build a card", instruction: "Build." };
   const help = getSimulatorTutorialHelp(checkpoint, {
@@ -1101,7 +1191,7 @@ test("the strategy curriculum overrides generic VP rushing even while checkpoint
     scriptedFinishRoute: academyCurriculumRoute(),
   });
   assert.equal(help.targetCardId, "pillar-coral-base");
-  assert.match(help.title, /Grow first.*Pillar Coral/i);
+  assert.match(help.title, /Build the economy.*Pillar Coral/i);
   assert.match(help.message, /income.*play spaces.*before.*VP/i);
   assert.doesNotMatch(help.title, /Great Barracuda/i);
   assert.match(help.progressLabel, /0\/26 VP/i);
@@ -1129,19 +1219,144 @@ test("the authored draw explains the purpose of each deck and cannot jump to a p
   assert.doesNotMatch(help.message, /Barracuda.*clearest next step/i);
 });
 
+test("every authored draw result explains the actual card and its concrete next use", () => {
+  const cases = [
+    {
+      round: 1,
+      cardId: "pillar-coral-base",
+      name: "Pillar Coral",
+      source: "Foundation",
+      message: /Foundation Deck.*Photosynthesis.*Predator slot.*separate foundation/i,
+      action: /Continue to Actions.*Pillar Coral.*separate highlighted foundation/i,
+    },
+    {
+      round: 2,
+      cardId: "spanish-hogfish",
+      name: "Spanish Hogfish",
+      source: "Pals",
+      message: /Pals Deck.*any two regular Fish.*one of those spots.*Crunch.*Keep it in hand.*Coral Gardener.*Lettuce Coral/i,
+      action: /Continue to Actions.*Coral Gardener.*Round 3/i,
+    },
+    {
+      round: 3,
+      cardId: "fairy-parrotfish",
+      name: "Parrotfish",
+      source: "Pals",
+      message: /Pals Deck.*any two regular Fish.*Spanish Hogfish.*one spot.*fill the other.*wait in hand.*Arrow Crab.*Nudibranch.*Munch/i,
+      action: /Continue to Actions.*Arrow Crab.*Round 4/i,
+    },
+    {
+      round: 4,
+      cardId: "great-barracuda",
+      name: "Great Barracuda",
+      source: "Pals",
+      message: /Pals Deck.*Predator.*my reef.*legal targets.*Coral Reef.*second Bite.*First play Parrotfish/i,
+      action: /Continue to Actions.*Parrotfish.*Coral Reef.*Great Barracuda/i,
+    },
+    {
+      round: 5,
+      cardId: "white-grunt",
+      name: "White Grunt",
+      source: "Foundation",
+      message: /Foundation Deck.*Creature School.*foundation area.*30 School Density.*Eco Foundation.*Bleaching/i,
+      action: /Continue to Actions.*White Grunt.*foundation area/i,
+    },
+    {
+      round: 6,
+      cardId: "whale-shark",
+      name: "Whale Shark",
+      source: "Pals",
+      message: /Pals Deck.*Filter Feeder.*180.*Krill Bloom.*150.*White Grunt.*30.*Coral Reef.*Habitat.*legal now/i,
+      action: /Continue to Actions.*Whale Shark.*open water/i,
+    },
+    {
+      round: 7,
+      cardId: "deep-sea-fishing",
+      name: "Deep Sea Fishing",
+      source: "Pals",
+      message: /Pals Deck.*zero-cost.*one-shot Support.*Predator or Apex.*discard pile.*Hammerhead/i,
+      action: /Continue to Actions.*Deep Sea Fishing.*Hammerhead.*search results/i,
+    },
+  ];
+
+  cases.forEach(({ round, cardId, name, source, message, action }) => {
+    const help = getSimulatorTutorialHelp({ id: "tutorial-draw-card" }, {
+      ...ACADEMY_STATE,
+      round,
+      gamePhase: "draw",
+      modal: "draw-result",
+      drawnCards: [{ cardId, name, source, inHand: true }],
+      scriptedFinishRoute: academyCurriculumRoute({
+        round,
+        expectedDraw: { deckType: source.toLowerCase(), cardId },
+      }),
+    });
+
+    assert.equal(help.title, `Review ${name}`, `round ${round} title`);
+    assert.equal(help.target, "continue-actions", `round ${round} target`);
+    assert.match(help.message, message, `round ${round} message`);
+    assert.match(help.action, action, `round ${round} action`);
+    assert.doesNotMatch(help.message, /tutorial fixes the card order|prepared draw|read its type, cost/i, `round ${round} filler`);
+  });
+});
+
+test("the Parrotfish draw explains that Coral Reef accepts any regular Fish species", () => {
+  const help = getSimulatorTutorialHelp({ id: "tutorial-draw-card" }, {
+    ...ACADEMY_STATE,
+    round: 3,
+    gamePhase: "draw",
+    modal: "turn-draw",
+    drawSelected: 0,
+    drawTarget: 1,
+    foundationDeckCount: 10,
+    palsDeckCount: 10,
+    scriptedFinishRoute: academyCurriculumRoute({
+      round: 3,
+      expectedDraw: { deckType: "pals", cardId: "fairy-parrotfish" },
+    }),
+  });
+
+  assert.match(help.message, /Coral Reef requires two regular, non-school Fish/i);
+  assert.match(help.message, /does not require Parrotfish specifically/i);
+  assert.match(help.message, /Spanish Hogfish and Parrotfish/i);
+  assert.match(help.message, /Invertebrate action and a Fish attack/i);
+  assert.doesNotMatch(help.message, /Parrotfish is the second Fish required/i);
+});
+
+test("Mr. Easterling refers to himself in first person during the guided duel", () => {
+  const help = getSimulatorTutorialHelp({ id: "tutorial-draw-card" }, {
+    ...ACADEMY_STATE,
+    guideName: "Mr. Easterling",
+    round: 4,
+    gamePhase: "draw",
+    modal: "turn-draw",
+    drawSelected: 0,
+    drawTarget: 1,
+    foundationDeckCount: 10,
+    palsDeckCount: 10,
+    scriptedFinishRoute: academyCurriculumRoute({
+      round: 4,
+      expectedDraw: { deckType: "pals", cardId: "great-barracuda" },
+    }),
+  });
+
+  assert.match(help.message, /until I had compatible creatures for it to target/i);
+  assert.doesNotMatch(help.message, /Mr\. Easterling|the guide/i);
+});
+
 test("late authored draws explain the School Density chain before the Apex search", () => {
   const cases = [
     {
       round: 5,
       expectedDraw: { deckType: "foundation", cardId: "white-grunt" },
       targetDeck: "foundation",
-      pattern: /White Grunt.*Foundation Deck.*Creature Schools.*School Density.*RP income.*Bleaching/i,
+      pattern: /White Grunt.*Foundation Deck.*Creature School.*30 School Density.*Bleaching.*Eco Foundation.*1 RP/i,
     },
     {
       round: 6,
       expectedDraw: { deckType: "pals", cardId: "whale-shark" },
       targetDeck: "pals",
-      pattern: /Whale Shark.*Pals Deck.*Krill Bloom.*180.*White Grunt.*30.*11 VP/i,
+      pattern: /Whale Shark.*180.*Krill Bloom.*150.*White Grunt.*30.*11 VP.*Pals Deck/i,
     },
     {
       round: 7,
@@ -1191,7 +1406,8 @@ test("Support searches and first-time card classes receive contextual explanatio
   });
   assert.equal(search.target, "search-card");
   assert.equal(search.targetSearchCardId, "lettuce-coral-base");
-  assert.match(search.message, /fourth true Coral.*RP income.*creature slot/i);
+  assert.match(search.message, /fourth true Coral.*RP income.*legal home/i);
+  assert.match(search.message, /empty slots do not count/i);
 });
 
 test("Round 3 teaches a non-attack card action before a paid attack", () => {
@@ -1226,6 +1442,140 @@ test("Round 3 teaches a non-attack card action before a paid attack", () => {
   });
   assert.equal(crunch.targetActionKey, "slot-hogfish");
   assert.match(crunch.message, /combat.*only glow targets.*allowed/i);
+
+  const endRound = getSimulatorTutorialHelp({ id: "tutorial-attack" }, {
+    ...ACADEMY_STATE,
+    round: 3,
+    scriptedFinishRoute: academyCurriculumRoute({
+      round: 3,
+      cards: {
+        ...established,
+        coralStageOne: { inHand: false, inPlay: true },
+      },
+      utilityAction: { ...utilityAction, ready: false, blockType: "used", usedThisTurn: true },
+      attackAction: { ...attackAction, ready: false, blockType: "used", usedThisTurn: true },
+    }),
+  });
+  assert.equal(endRound.target, "turn-button");
+  assert.equal(endRound.action, "Press End Turn. In Round 4, build the Coral Reef Habitat, then play a Predator.");
+  assert.doesNotMatch(endRound.action, /Round 4 will assemble/i);
+});
+
+test("starting the Brain Coral upgrade cannot send Round 3 guidance back to Munch", () => {
+  const established = {
+    economy: { inHand: false, inPlay: true },
+    coralSupport: { inHand: false, inDiscard: true },
+    coralBase: { inHand: false, inPlay: true },
+    searchedCoral: { inFoundationDeck: false, inPlay: true },
+    bankBoost: { inHand: false, inPlay: true },
+    utility: { inHand: false, inPlay: true },
+    firstFish: { inPalsDeck: false, inPlay: true },
+    coralStageOne: { inHand: true, inPlay: false, isPlaying: true },
+  };
+  const help = getSimulatorTutorialHelp({ id: "tutorial-attack" }, {
+    ...ACADEMY_STATE,
+    round: 3,
+    playingCardId: "brain-coral-stage-1",
+    playingCardName: "Brain Coral Stage 1",
+    scriptedFinishRoute: academyCurriculumRoute({
+      round: 3,
+      cards: established,
+      utilityAction: {
+        cardId: "nudibranch",
+        actionKey: "slot-nudi",
+        utilityActionKey: "slot-nudi:munch",
+        actionName: "Munch",
+        blockType: "interaction",
+        blockReason: "Finish the current card action first.",
+        usedThisTurn: true,
+        ready: false,
+      },
+      attackAction: {
+        cardId: "spanish-hogfish",
+        actionKey: "slot-hogfish",
+        attackName: "Crunch",
+        blockType: "interaction",
+        blockReason: "Finish the current card action first.",
+        usedThisTurn: true,
+        ready: false,
+      },
+    }),
+  });
+
+  assert.equal(help.target, "placement");
+  assert.equal(help.title, "Place Brain Coral Stage 1");
+  assert.match(help.message, /highlighted Brain Coral.*advance it to Stage 1/i);
+  assert.match(help.cueId, /scripted-place:brain-coral-stage-1$/);
+  assert.doesNotMatch(`${help.title} ${help.message} ${help.action}`, /Nudibranch|Munch|Crunch/i);
+});
+
+test("an active placement cannot be preempted by a stale earlier curriculum card", () => {
+  const help = getSimulatorTutorialHelp({ id: "tutorial-build-card" }, {
+    ...ACADEMY_STATE,
+    round: 4,
+    playingCardId: "brain-coral-stage-2",
+    playingCardName: "Brain Coral Stage 2",
+    scriptedFinishRoute: academyCurriculumRoute({
+      round: 4,
+      cards: {
+        secondFish: { inHand: true, inPlay: false },
+        coralStageTwo: { inHand: true, inPlay: false, isPlaying: true },
+      },
+    }),
+  });
+
+  assert.equal(help.target, "placement");
+  assert.equal(help.title, "Place Brain Coral Stage 2");
+  assert.doesNotMatch(`${help.title} ${help.message} ${help.action}`, /Parrotfish/i);
+});
+
+test("Round 4 separates the chosen Fish species from Coral Reef's actual requirement", () => {
+  const priorCards = {
+    economy: { inHand: false, inPlay: true },
+    coralSupport: { inHand: false, inDiscard: true },
+    coralBase: { inHand: false, inPlay: false },
+    searchedCoral: { inFoundationDeck: false, inPlay: true },
+    bankBoost: { inHand: false, inPlay: true },
+    utility: { inHand: false, inPlay: true },
+    firstFish: { inPalsDeck: false, inPlay: true },
+    coralStageOne: { inHand: false, inPlay: true },
+  };
+  const fish = getSimulatorTutorialHelp(null, {
+    ...ACADEMY_STATE,
+    round: 4,
+    scriptedFinishRoute: academyCurriculumRoute({
+      round: 4,
+      cards: {
+        ...priorCards,
+        secondFish: { inPalsDeck: false, inHand: true, ready: true },
+      },
+    }),
+  });
+
+  assert.equal(fish.targetCardId, "fairy-parrotfish");
+  assert.match(fish.title, /Complete the Fish count/i);
+  assert.match(fish.message, /does not require a particular Fish species/i);
+  assert.match(fish.message, /any two non-school Fish/i);
+  assert.match(fish.message, /four true Corals.*two non-school Invertebrates/i);
+  assert.match(fish.message, /Eat.*On Play.*immediately/i);
+
+  const habitat = getSimulatorTutorialHelp(null, {
+    ...ACADEMY_STATE,
+    round: 4,
+    scriptedFinishRoute: academyCurriculumRoute({
+      round: 4,
+      cards: {
+        ...priorCards,
+        secondFish: { inPalsDeck: false, inHand: false, inPlay: true },
+        habitat: { inHand: true, ready: true, cost: 0 },
+      },
+    }),
+  });
+
+  assert.equal(habitat.targetCardId, "coral-reef");
+  assert.match(habitat.message, /costs 0 RP.*may play it only while/i);
+  assert.match(habitat.message, /four true Corals.*two non-school Fish.*two non-school Invertebrates/i);
+  assert.match(habitat.message, /10 damage.*end of each of your turns/i);
 });
 
 test("Great Barracuda waits for Coral Reef and valid targets", () => {
@@ -1250,7 +1600,7 @@ test("Great Barracuda waits for Coral Reef and valid targets", () => {
     scriptedFinishRoute: academyCurriculumRoute({ round: 4, activeConditionId: "murky-water", cards: built }),
   });
   assert.equal(predator.targetCardId, "great-barracuda");
-  assert.match(predator.message, /right time.*compatible.*second Bite.*Earlier.*wasted/i);
+  assert.match(predator.message, /right time.*legal Fish and Predator targets.*second Bite.*Playing it earlier.*wasted/i);
 });
 
 test("Rounds 5 and 6 teach Creature Schools, School Density, and Filter Feeders", () => {
@@ -1283,7 +1633,8 @@ test("Rounds 5 and 6 teach Creature Schools, School Density, and Filter Feeders"
     }),
   });
   assert.equal(school.targetCardId, "white-grunt");
-  assert.match(school.message, /new kind of foundation.*HP.*attacked.*School Density.*30.*Eco Foundation.*1 RP/i);
+  assert.match(school.message, /Creature Schools.*foundation area.*HP.*attacked.*School Density.*30.*Eco Foundation.*1 RP/i);
+  assert.match(school.message, /do not count.*Coral Reef.*two-Fish requirement/i);
   assert.match(school.action, /White Grunt.*Play Card.*foundation area/i);
 
   const filterFeeder = getSimulatorTutorialHelp(null, {
@@ -1301,7 +1652,7 @@ test("Rounds 5 and 6 teach Creature Schools, School Density, and Filter Feeders"
     }),
   });
   assert.equal(filterFeeder.targetCardId, "whale-shark");
-  assert.match(filterFeeder.message, /Filter Feeders.*180.*Krill Bloom.*150.*White Grunt.*30.*Coral Reef.*Habitat/i);
+  assert.match(filterFeeder.message, /Whale Shark.*180.*Krill Bloom.*150.*White Grunt.*30.*Coral Reef.*Habitat/i);
   assert.match(filterFeeder.action, /Whale Shark.*Play Card.*Ocean creature.*open water automatically/i);
 });
 
@@ -1356,4 +1707,76 @@ test("Round 7 uses a Support search and finishes the 26 VP curriculum with an Ap
   assert.equal(apex.targetCardId, "hammerhead");
   assert.match(apex.message, /Apex.*prerequisites.*end of a plan.*Coral Reef.*Apex slot.*enough RP/i);
   assert.match(apex.action, /26 VP/i);
+});
+
+test("a saved lesson that skipped Whale Shark recovers after Hammerhead's attacks", () => {
+  const completedExceptWhaleShark = {
+    economy: { inHand: false, inPlay: true },
+    coralSupport: { inHand: false, inDiscard: true },
+    coralBase: { inHand: false, inPlay: false },
+    searchedCoral: { inFoundationDeck: false, inPlay: true },
+    bankBoost: { inHand: false, inPlay: true },
+    utility: { inHand: false, inPlay: true },
+    firstFish: { inPalsDeck: false, inPlay: true },
+    secondFish: { inPalsDeck: false, inPlay: true },
+    habitat: { inHand: false, inPlay: true },
+    coralStageOne: { inHand: false, inPlay: false },
+    coralStageTwo: { inHand: false, inPlay: true },
+    predator: { inPalsDeck: false, inHand: false, inPlay: true },
+    creatureSchool: { inFoundationDeck: false, inHand: false, inPlay: true },
+    filterFeeder: {
+      inPalsDeck: false,
+      inHand: true,
+      inPlay: false,
+      ready: false,
+      playError: "Not enough RP - need 9 RP.",
+      cost: 9,
+      victoryPoints: 11,
+    },
+    apexSupport: { inPalsDeck: false, inDiscard: true },
+    apex: { inPalsDeck: false, inHand: false, inPlay: true },
+  };
+  const route = academyCurriculumRoute({
+    round: 7,
+    activeConditionId: "bleak-overcast",
+    cards: completedExceptWhaleShark,
+  });
+
+  const bank = getSimulatorTutorialHelp(null, {
+    ...ACADEMY_STATE,
+    round: 7,
+    playerVp: 15,
+    availableRp: 1,
+    scriptedFinishRoute: route,
+  });
+  assert.equal(bank.target, "turn-button");
+  assert.match(bank.title, /Bank RP for Whale Shark/i);
+  assert.match(bank.message, /Ravage is complete.*11 VP.*costs 9 RP.*have 1.*Coral Reef.*Krill Bloom/i);
+  assert.match(bank.action, /End Turn.*return to Whale Shark/i);
+  assert.doesNotMatch(bank.title, /Return to the authored lesson step/i);
+
+  const ready = getSimulatorTutorialHelp(null, {
+    ...ACADEMY_STATE,
+    round: 8,
+    playerVp: 15,
+    availableRp: 9,
+    scriptedFinishRoute: academyCurriculumRoute({
+      round: 8,
+      cards: {
+        ...completedExceptWhaleShark,
+        filterFeeder: {
+          inPalsDeck: false,
+          inHand: true,
+          inPlay: false,
+          ready: true,
+          playError: "",
+          cost: 9,
+          victoryPoints: 11,
+        },
+      },
+    }),
+  });
+  assert.equal(ready.targetCardId, "whale-shark");
+  assert.equal(ready.target, "hand");
+  assert.match(ready.message, /missing 11 VP.*Coral Reef.*White Grunt.*Krill Bloom/i);
 });

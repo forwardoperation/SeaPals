@@ -1199,6 +1199,28 @@ test("automatic doorway transitions recognize all six Elverson portals only at c
   }
 });
 
+test("the aquarium's full visible exit opening lets an off-centre player walk out", () => {
+  for (const x of [5.5, 6, 6.5]) {
+    let position = { x, y: 7 };
+    for (let frame = 0; frame < 30; frame += 1) {
+      position = movePlayerContinuous("academy-lab", position, { x: 0, y: 1 }, 16);
+    }
+
+    assert.ok(position.y > 7.2, `the player at x=${x} should reach the exit threshold`);
+    assert.equal(
+      getDoorwayTransition("academy-lab", position, "down")?.interactionId,
+      "interaction-academy-exit",
+      `the player at x=${x} should leave through the visible aquarium doorway`,
+    );
+  }
+
+  assert.equal(
+    getDoorwayTransition("academy-lab", { x: 6.76, y: 7.27 }, "down"),
+    null,
+    "the wider trigger must not extend past the doorway's contact tolerance",
+  );
+});
+
 test("automatic doorway transitions stay tight, directional, and portal-only", () => {
   assert.equal(getDoorwayTransition("town", { x: 7, y: 6.83 }, "up"), null);
   assert.equal(
