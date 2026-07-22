@@ -1,6 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 import { getGalleryData } from "@/lib/gallery";
 import { formatCreatureType } from "@/data/cards/types";
+import { encyclopediaSlugByCardId } from "@/data/encyclopedia";
 
 export const metadata = {
   title: "Gallery | SeaPals TCG",
@@ -219,6 +221,7 @@ function CardMetadata({ image }) {
         .filter(Boolean)
         .join(" ")
     : null;
+  const encyclopediaSlug = encyclopediaSlugByCardId[image.cardId];
 
   return (
     <div className="mt-3 rounded-2xl border border-cyan-100 bg-white/95 p-4 text-sm shadow-sm">
@@ -284,6 +287,15 @@ function CardMetadata({ image }) {
         <RuleList title="Actions" items={card.actions} />
         <RuleList title="Special Rules" items={card.specialRules} />
       </div>
+
+      {encyclopediaSlug && (
+        <Link
+          href={`/encyclopedia/${encyclopediaSlug}`}
+          className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-cyan-700 px-4 py-3 font-bold text-white transition hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+        >
+          Meet the real creature →
+        </Link>
+      )}
     </div>
   );
 }
