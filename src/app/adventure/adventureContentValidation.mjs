@@ -14,6 +14,7 @@ const LEARNING_FIELDS = ["concept", "misconception", "decision", "consequence", 
 const CONVERSATION_MODES = ["intro", "rematch", "victory"];
 const NON_DUEL_CONVERSATION_MODES = ["intro", "guidance", "return"];
 const MENTOR_CONVERSATION_MODES = [
+  "worldIntroduction",
   "starterPresentation",
   "starterConfirmed",
   "tutorialIntro",

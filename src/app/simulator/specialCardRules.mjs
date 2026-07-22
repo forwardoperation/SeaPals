@@ -101,6 +101,35 @@ export function resolveEnsnareForAttack(attack, random = Math.random) {
   };
 }
 
+/**
+ * Resolves a coin only after a legal target has been chosen. Keeping target
+ * validation here prevents a canceled or stale target picker from consuming
+ * randomness or committing a targeted coin action.
+ */
+export function resolveTargetedCoinFlip({
+  candidateIds = [],
+  targetId = null,
+  successResult = "heads",
+  random = Math.random,
+} = {}) {
+  if (!Array.isArray(candidateIds) || !candidateIds.includes(targetId)) {
+    return {
+      resolved: false,
+      targetId: null,
+      coinResult: null,
+      success: false,
+    };
+  }
+
+  const coinResult = random() < 0.5 ? "heads" : "tails";
+  return {
+    resolved: true,
+    targetId,
+    coinResult,
+    success: coinResult === successResult,
+  };
+}
+
 export function isInvasiveSlotOwnedBy(slot, controller) {
   return Boolean(slot?.cardId && slot?.invasiveOwner === controller && slot?.controller === controller);
 }

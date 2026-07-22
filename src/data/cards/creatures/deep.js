@@ -140,7 +140,7 @@ const deepCreatureData = [
     rp: 3,
     vp: 3,
     defense: "D6",
-    onPlay: ["Bite: D6 attack targeting Deep Fish or Deep Predator. If Abyss is in your play area, add +2 to your roll."],
+    onPlay: ["Bite: D6 attack targeting Fish or Predator. If Abyss is in your play area, add +2 to your roll."],
   },
   {
     id: "gulper-eel",
@@ -151,7 +151,7 @@ const deepCreatureData = [
     vp: 3,
     defense: "D4-2",
     passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
-    onPlay: ["Swallow Up: D6 attack targeting Deep Fish or Deep Predator."],
+    onPlay: ["Swallow Up: D6 attack targeting Fish or Predator."],
   },
   {
     id: "deep-sea-skate",
@@ -161,7 +161,7 @@ const deepCreatureData = [
     rp: 4,
     vp: 4,
     defense: "D8",
-    onPlay: ["Crunch: Two D6 attacks targeting Deep Invertebrates. If Abyss is in your play area, gain advantage."],
+    onPlay: ["Crunch: Two D6 attacks targeting Invertebrates. If Abyss is in your play area, gain advantage."],
   },
   {
     id: "goblin-shark",
@@ -171,7 +171,7 @@ const deepCreatureData = [
     rp: 5,
     vp: 5,
     defense: "D6",
-    onPlay: ["Terror Strike: D6 attack targeting Deep Fish, Deep Predator, or Deep Invertebrate. If Abyss is in your play area, add +2 to your roll."],
+    onPlay: ["Terror Strike: D6 attack targeting Fish, Predator, or Invertebrate. If Abyss is in your play area, add +2 to your roll."],
   },
   {
     id: "frilled-shark",
@@ -183,7 +183,7 @@ const deepCreatureData = [
     defense: "D6",
     onPlay: [
       "Ancient Presence: Discard 2 cards from the top of your opponent's deck.",
-      "Ancient Strike: D6 attack targeting Deep Fish or Deep Predator.",
+      "Ancient Strike: D6 attack targeting Fish or Predator.",
     ],
   },
   {

@@ -51,6 +51,10 @@ import {
   canOccupyContinuousPosition,
 } from "./adventureWorld.mjs";
 import {
+  ONBOARDING_QUEST_FLAGS,
+  getOnboardingProgress,
+} from "./adventureOnboarding.mjs";
+import {
   SHELLSHORE_QUEST_ID,
   completeAdventureEncounter,
   createNewAdventureSession,
@@ -185,9 +189,17 @@ test("new sessions begin the Shellshore quest in one of three explicit profiles"
   const save = createNewAdventureSession("profile-2");
   assert.equal(save.profileId, "profile-2");
   assert.equal(save.progression.quests[SHELLSHORE_QUEST_ID].status, "active");
-  assert.equal(save.world.sceneId, "academy-lab");
-  assert.deepEqual(save.world.position, { x: 6, y: 7 });
+  assert.equal(save.world.townId, "shellshore-village");
+  assert.equal(save.world.sceneId, "town");
+  assert.deepEqual(save.world.position, { x: 16, y: 15.85 });
   assert.equal(save.world.facing, "up");
+  assert.equal(save.world.lastSafeDockId, "shellshore-dock");
+  assert.equal(
+    save.progression.quests[SHELLSHORE_QUEST_ID]
+      .flags[ONBOARDING_QUEST_FLAGS.worldIntroductionComplete],
+    false,
+  );
+  assert.equal(getOnboardingProgress(save).needsWorldIntroduction, true);
 });
 
 test("scene transitions persist a safe position and a meaningful quest flag", () => {

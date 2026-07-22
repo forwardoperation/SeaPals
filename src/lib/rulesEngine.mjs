@@ -176,6 +176,10 @@ const INTENT_ROUTES = [
     title: /^Action timing and cooldowns$/i,
   },
   {
+    question: /(?=.*\b(?:play|played|playing|enters?)\b)(?=.*\b(?:action|activated ability)\b)(?=.*\b(?:same turn|that turn|right away|immediately)\b)/i,
+    title: /^Action timing and cooldowns$/i,
+  },
+  {
     question: /(?=.*\breef fish\b)(?=.*\b(?:predator|deep) slots?\b)/i,
     title: /^Habitat and class matching for Reef Fish and Deep slots$/i,
   },

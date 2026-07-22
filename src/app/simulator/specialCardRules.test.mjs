@@ -17,6 +17,7 @@ import {
   resolveParasiteCollection,
   resolveSpearfishingInvaderRemoval,
   resolveStunnedAtControllerTurnBoundary,
+  resolveTargetedCoinFlip,
 } from "./specialCardRules.mjs";
 
 test("reef location controls Spearfishing eligibility while invasive ownership controls discard routing", () => {
@@ -142,6 +143,52 @@ test("Ensnare performs an independent flip for each repeated attack", () => {
   assert.deepEqual(resolutions.map((result) => result.coinResult), ["heads", "tails", "heads"]);
   assert.deepEqual(resolutions.map((result) => result.attack.ensnarePenalty ?? 0), [3, 0, 3]);
   assert.equal(attack.ensnarePenalty, undefined, "one attack's result does not leak into the next attack");
+});
+
+test("targeted coin actions validate the chosen target before consuming the flip", () => {
+  let randomCalls = 0;
+  const random = () => {
+    randomCalls += 1;
+    return 0.25;
+  };
+
+  assert.deepEqual(resolveTargetedCoinFlip({
+    candidateIds: ["opponent-coral-a"],
+    targetId: "creature-school-a",
+    random,
+  }), {
+    resolved: false,
+    targetId: null,
+    coinResult: null,
+    success: false,
+  });
+  assert.equal(randomCalls, 0, "an invalid or canceled target must not consume the coin flip");
+
+  assert.deepEqual(resolveTargetedCoinFlip({
+    candidateIds: ["opponent-coral-a", "opponent-coral-b"],
+    targetId: "opponent-coral-b",
+    random,
+  }), {
+    resolved: true,
+    targetId: "opponent-coral-b",
+    coinResult: "heads",
+    success: true,
+  });
+  assert.equal(randomCalls, 1);
+});
+
+test("targeted coin actions preserve the selected Coral on an unsuccessful flip", () => {
+  assert.deepEqual(resolveTargetedCoinFlip({
+    candidateIds: ["opponent-coral-a", "opponent-coral-b"],
+    targetId: "opponent-coral-a",
+    successResult: "heads",
+    random: () => 0.5,
+  }), {
+    resolved: true,
+    targetId: "opponent-coral-a",
+    coinResult: "tails",
+    success: false,
+  });
 });
 
 test("Lionfish invasion placement and attack removal preserve controller identity", () => {

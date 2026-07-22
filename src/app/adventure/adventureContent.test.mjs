@@ -1192,6 +1192,17 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   assert.equal(mentorInteraction.npc.roleId, "mentor");
   assert.equal(mentorInteraction.npc.conversation.lines.boatSafety.length, 2);
   assert.equal(mentorInteraction.npc.conversation.lines.tutorialIntro.length, 3);
+  const worldIntroduction = mentorInteraction.npc.conversation.lines.worldIntroduction;
+  assert.equal(worldIntroduction.length, 6);
+  assert.match(worldIntroduction.join(" "), /aquarium here has been my lifelong dream/i);
+  assert.match(
+    worldIntroduction.join(" "),
+    /catch certain fish and creatures responsibly.*bring the creatures you catch back to me.*right care.*aquarium exhibits.*their habitats/i,
+  );
+  assert.match(
+    worldIntroduction.join(" "),
+    /SeaPals matches let us model those real relationships.*playable ecosystem.*food, shelter, water conditions/i,
+  );
   assert.match(mentorInteraction.npc.conversation.lines.intro.join(" "), /Elverson.*aquarium.*exhibit/i);
   assert.match(mentorInteraction.npc.conversation.lines.starterPresentation.join(" "), /aquarium lesson/i);
   assert.match(mentorInteraction.npc.conversation.lines.starterConfirmed.join(" "), /aquarium project/i);

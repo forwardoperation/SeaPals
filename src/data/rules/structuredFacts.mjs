@@ -376,7 +376,7 @@ export const STRUCTURED_RULE_FACTS = [
     concepts: ["action", "card action", "paid action", "activated ability"],
     intents: ["what is", "how", "use", "activate", "order"],
     answerTypes: ["definition", "procedure"],
-    text: "An Action is an ability you choose to use at its printed timing. Pay its cost, choose legal targets, and resolve its instructions in order; once-per-turn use belongs to that physical card.",
+    text: "An Action is an ability you choose to use at its printed timing. A card may use its Actions on the same turn it enters your ecosystem unless its own text or another effect says otherwise. Pay its cost, choose legal targets, and resolve its instructions in order; once-per-turn use belongs to that physical card.",
   },
   {
     id: "target-icons",

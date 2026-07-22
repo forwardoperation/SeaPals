@@ -135,7 +135,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Deep creatures and Abyss",
-    text: "Deep creatures use Deep slots and Deep-targeting restrictions. Abyss enables Deep ecosystem interactions. Darkness Shroud grants its defense bonus only while Abyss is in play. An attack restricted to Deep targets cannot target a Reef creature merely because that creature has a similarly named tag.",
+    text: "Deep creatures use Deep slots, but their attacks follow the target-family icons printed on each card. Fish, Predator, and Invertebrate target icons can reach those families in Reef, Oceanic, or Deep ecosystems unless the attack explicitly says its targets must be Deep. Abyss enables Deep ecosystem interactions, and Darkness Shroud grants its defense bonus only while Abyss is in play.",
   },
   {
     title: "Habitats",
@@ -155,7 +155,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Action timing and cooldowns",
-    text: "Resolve actions at their printed timing, pay their costs, choose legal targets, and apply their effects in order. Once-per-turn actions remain used for that physical card until its controller's next turn. Moving a creature does not reset its identity or action cooldown.",
+    text: "Resolve actions at their printed timing, pay their costs, choose legal targets, and apply their effects in order. A card may use its Actions on the same turn it enters its controller's ecosystem unless its own text or another effect says otherwise. Once-per-turn actions remain used for that physical card until its controller's next turn. Moving a creature does not reset its identity or action cooldown.",
   },
   {
     title: "Star icons and colored circles under On Play abilities",

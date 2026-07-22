@@ -36,6 +36,7 @@ export const PRACTICE_DUEL_OUTCOMES = Object.freeze([
 ]);
 
 export const ONBOARDING_QUEST_FLAGS = Object.freeze({
+  worldIntroductionComplete: "world-introduction-complete",
   tutorialComplete: "live-tutorial-complete",
   boatSafetyReviewed: "boat-safety-reviewed",
 });
@@ -232,6 +233,15 @@ export function getOnboardingProgress(saveValue) {
   const starterLocked = STARTER_DECK_ID_SET.has(save.player.starterDeckId);
   const completedCheckpointIds = orderedCheckpointPrefix(save.tutorial.completedStepIds);
   const questFlags = save.progression.quests[SHELLSHORE_ONBOARDING_QUEST_ID]?.flags ?? {};
+  // Only newly created profiles carry an explicit false marker. Treating a
+  // missing marker as complete prevents this new opening from replaying over
+  // older saves that already began their aquarium lesson.
+  const worldIntroductionTracked = Object.prototype.hasOwnProperty.call(
+    questFlags,
+    ONBOARDING_QUEST_FLAGS.worldIntroductionComplete,
+  );
+  const worldIntroductionComplete = !worldIntroductionTracked
+    || questFlags[ONBOARDING_QUEST_FLAGS.worldIntroductionComplete] === true;
   const tutorialComplete = save.tutorial.status === "complete";
   const boatSafetyReviewed = questFlags[ONBOARDING_QUEST_FLAGS.boatSafetyReviewed] === true;
   const nextCheckpointId = starterLocked
@@ -240,6 +250,8 @@ export function getOnboardingProgress(saveValue) {
     : null;
 
   return {
+    worldIntroductionComplete,
+    needsWorldIntroduction: !worldIntroductionComplete,
     starterDeckId: starterLocked
       ? save.player.starterDeckId
       : null,
@@ -256,6 +268,32 @@ export function getOnboardingProgress(saveValue) {
     tutorialComplete,
     boatSafetyReviewed,
     needsBoatSafetyReview: tutorialComplete && !boatSafetyReviewed,
+  };
+}
+
+/**
+ * Completes the authored opening for a newly created profile. Legacy profiles
+ * intentionally have no marker and are already considered introduced.
+ */
+export function recordWorldIntroduction(saveValue) {
+  const save = normalizeAdventureSave(saveValue);
+  const questFlags = save.progression.quests[SHELLSHORE_ONBOARDING_QUEST_ID]?.flags ?? {};
+  const flagId = ONBOARDING_QUEST_FLAGS.worldIntroductionComplete;
+  if (
+    !Object.prototype.hasOwnProperty.call(questFlags, flagId)
+    || questFlags[flagId] === true
+  ) {
+    return { save, applied: false };
+  }
+
+  return {
+    save: setQuestFlag(
+      save,
+      SHELLSHORE_ONBOARDING_QUEST_ID,
+      flagId,
+      true,
+    ),
+    applied: true,
   };
 }
 
