@@ -280,7 +280,7 @@ test("Finn survives a broad semantic red-team interrogation", (t) => {
   ];
   for (const question of schoolProtectionPhrasings) {
     add(question, {
-      includes: ["Ocean Triggerfish", "+10 HP", "does not roll defense"],
+      includes: ["Ocean Triggerfish", "+30 HP", "does not roll defense"],
       sourceIds: ["card:ocean-triggerfish", "knowledge:creature-schools-and-bait-balls"],
     });
   }

@@ -9,7 +9,7 @@ import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } f
 import { conditionCards } from "@/data/cards/conditions";
 import { prebuiltDecks } from "@/data/tournaments/prebuiltDecks";
 import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveBlueCrabRecycle, resolveConditionalDiceDamage, resolveOpposedRoll, rollDie } from "./gameRules.mjs";
-import { createHabitatInstance, getHabitatRequirementError, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
+import { createHabitatInstance, evaluateHabitatComposition, getHabitatRequirementError, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
 import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstance, getOceanicApexSacrificeChoices, getPersonalDeckType, getSpecialPlacementHostTags, moveSlottedCreatureBetweenFoundations, placeCardInSpecialHost, removeCreatureInstances, resolveDestructionRecoveryWaves } from "./zoneRules.mjs";
 import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingAlarmTurn, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, endFlashingAlarmTurn, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getFlashingAlarmAttackBonus, getRemainingAttackTargets, getRovLightsAttackBonus, hasDefenseAdvantage, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume, triggerFlashingAlarm } from "./combatRules.mjs";
 import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
@@ -912,9 +912,15 @@ function getDefenseAdjustment(attack, targetCard, habitats = []) {
 }
 
 function getRolledAttackBonus(attack, rawRoll, habitats = []) {
-  const match = (attack?.text ?? "").match(/if you roll a?\s*(\d+)\s*or higher and open ocean[^.]*add\s*\+?(\d+)/i);
-  if (!match || !habitats.includes("open-ocean") || Number(rawRoll) < Number(match[1])) return { flat: 0, detail: "" };
-  return { flat: Number(match[2]), detail: `+${match[2]} Open Ocean roll bonus` };
+  const text = attack?.text ?? "";
+  const conditionalMatch = text.match(/if you roll a?\s*(\d+)\s*or higher(?:\s+and\s+open ocean[^.]*)?[^.]*add\s*\+?(\d+)/i);
+  if (!conditionalMatch || Number(rawRoll) < Number(conditionalMatch[1])) return { flat: 0, detail: "" };
+  const requiresOpenOcean = /and\s+open ocean/i.test(conditionalMatch[0]);
+  if (requiresOpenOcean && !habitats.includes("open-ocean")) return { flat: 0, detail: "" };
+  return {
+    flat: Number(conditionalMatch[2]),
+    detail: `+${conditionalMatch[2]} ${requiresOpenOcean ? "Open Ocean " : ""}roll bonus`,
+  };
 }
 
 function parseLegacyAttackAction(action) {
@@ -1096,6 +1102,10 @@ function getSupportedUtilityEffect(action) {
 
 function supportExplicitlyLocksFurtherSupports(card) {
   return supportLocksFurtherPlays(card);
+}
+
+function cardIsBlockedFromPlayThisTurn(state, cardId) {
+  return (state?.cardsBlockedFromPlayThisTurn ?? []).includes(cardId);
 }
 
 function isCreatureSchool(card) {
@@ -1459,7 +1469,7 @@ function reconcileGlobalCoralHealth(foundations, ecosystemCreatures = []) {
     const target = hasPersistedTarget
       ? creatureSchools.find((foundation) => foundation.id === source.territorialTargetFoundationId)
       : creatureSchools[0];
-    if (target) bonuses.set(target.id, Number(bonuses.get(target.id) ?? 0) + 10);
+    if (target) bonuses.set(target.id, Number(bonuses.get(target.id) ?? 0) + 30);
     return bonuses;
   }, new Map());
   let changed = false;
@@ -1548,20 +1558,28 @@ function getSchoolDensity(foundations) {
 
 function getCompositionRequirementError(card, corals, reefCreatures = []) {
   const rules = [...(card?.playRequirements ?? []), ...(card?.specialRules ?? [])].map((rule) => typeof rule === "string" ? rule : rule?.text ?? "");
+  const ecosystemCardIds = [
+    ...(corals ?? []).flatMap((foundation) => [
+      foundation.cardId,
+      ...(foundation.slots ?? []).flatMap((slot) => getSlotCardIds(slot)),
+    ]),
+    ...(reefCreatures ?? []),
+  ].filter(Boolean);
   const ecosystemCards = [
     ...(corals ?? []).flatMap((foundation) => (foundation.slots ?? []).flatMap((slot) => getSlotCardIds(slot).map((cardId) => cardsById[cardId]))),
     ...(reefCreatures ?? []).map((cardId) => cardsById[cardId]),
   ].filter(Boolean);
-  const coralCount = (corals ?? []).filter((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL).length;
-  const fishCount = ecosystemCards.filter((candidate) => candidate.category === CardCategory.FISH && !isCreatureSchool(candidate)).length;
-  const invertebrateCount = ecosystemCards.filter((candidate) => candidate.category === CardCategory.INVERTEBRATE && !isCreatureSchool(candidate)).length;
   const compositionRequirement = (card?.playRequirements ?? []).find((requirement) => requirement?.type === "ecosystemComposition");
   if (compositionRequirement) {
-    const missing = [
-      coralCount < Number(compositionRequirement.minimumCorals ?? 0) ? `${compositionRequirement.minimumCorals} Corals (you have ${coralCount})` : null,
-      fishCount < Number(compositionRequirement.minimumFish ?? 0) ? `${compositionRequirement.minimumFish} Fish (you have ${fishCount})` : null,
-      invertebrateCount < Number(compositionRequirement.minimumInvertebrates ?? 0) ? `${compositionRequirement.minimumInvertebrates} Invertebrates (you have ${invertebrateCount})` : null,
-    ].filter(Boolean);
+    const composition = evaluateHabitatComposition(card, ecosystemCardIds, cardsById);
+    const labels = card.id === "open-ocean"
+      ? { creatureSchools: "Creature Schools", fish: "Oceanic Fish", invertebrates: "Oceanic Invertebrates" }
+      : card.id === "abyss"
+        ? { corals: "Deep Corals", fish: "Deep Fish", invertebrates: "Deep Invertebrates" }
+        : { corals: "Reef Corals", fish: "Reef Fish", invertebrates: "Reef Invertebrates" };
+    const missing = Object.entries(composition.required)
+      .filter(([key, required]) => Number(composition.counts[key] ?? 0) < Number(required))
+      .map(([key, required]) => `${required} ${labels[key] ?? key} (you have ${composition.counts[key] ?? 0})`);
     if (missing.length) return `${card.name} requires ${missing.join(", ")}.`;
   }
   const oceanicFishCount = ecosystemCards.filter((candidate) => candidate.category === CardCategory.FISH && candidate.tags?.includes("oceanic")).length;
@@ -1988,6 +2006,7 @@ export default function Simulator({
   const [flashingAlarmAttackBonus, setFlashingAlarmAttackBonus] = useState(null);
   const [supportLockSourceId, setSupportLockSourceId] = useState(null);
   const [supportBlockedUntilRound, setSupportBlockedUntilRound] = useState(0);
+  const [cardsBlockedFromPlayThisTurn, setCardsBlockedFromPlayThisTurn] = useState([]);
   const [attackContext, setAttackContext] = useState(null);
   const [searchContext, setSearchContext] = useState(null);
   const [gameResult, setGameResult] = useState(null);
@@ -3285,6 +3304,11 @@ export default function Simulator({
     if (gameResult) return "This game has ended. Start a new game to continue playing.";
     if (attackContext) return "Finish or cancel the current attack before playing another card.";
     if (!isSetup && gamePhase !== "main" && !allowUpcomingMain) return "Cards can only be played during your action phase.";
+    const blockedCopies = cardsBlockedFromPlayThisTurn.filter((cardId) => cardId === card.id).length;
+    const copiesInHand = hand.filter((cardId) => cardId === card.id).length;
+    if (blockedCopies && blockedCopies >= copiesInHand) {
+      return `${card.name} was recovered by Ocean Jake and cannot be played until your next turn.`;
+    }
     if (isSetup && !(isFoundationCard(card) && Number(card.stage ?? 0) === 0)) {
       return "During setup, play a base Coral or Creature School before the first round begins.";
     }
@@ -3561,6 +3585,7 @@ export default function Simulator({
           instanceId: target.instanceId,
         });
       }
+      if (card.id === "ocean-jake") return lostZone.length ? "" : "Ocean Jake needs a card in your Lost Zone to recover.";
     });
     getInvasiveOrphanTargets(ownOrphans, "opponent").forEach((target) => {
       const targetCard = cardsById[target.cardId];
@@ -5053,6 +5078,7 @@ export default function Simulator({
       setCreatureStatuses((current) => Object.fromEntries(Object.entries(current).map(([slotId, statuses]) => [slotId, statuses.filter((status) => status.expiresTurn > nextPlayerTurn)]).filter(([, statuses]) => statuses.length)));
     }
     setSupportLockSourceId(null);
+    setCardsBlockedFromPlayThisTurn([]);
     setRovLightsActive(false);
     setAttackContext(null);
     setSearchContext(null);
@@ -5332,7 +5358,7 @@ export default function Simulator({
       beganTerritorialChoice = true;
       if (territorialCandidates.length) {
         setSearchContext({ mode: "territorial-target", sourceCardId: card.id, sourceInstanceId: playedInstance.instanceId, candidates: territorialCandidates.map((foundation) => foundation.id) });
-        setEventOverlay({ type: "choose-territorial-target", sourceCardId: card.id, title: `Player's ${card.name} used Territorial`, message: "Choose one of your Creature Schools. It gets +10 HP while this Ocean Triggerfish remains in play." });
+        setEventOverlay({ type: "choose-territorial-target", sourceCardId: card.id, title: `Player's ${card.name} used Territorial`, message: "Choose one of your Creature Schools. It gets +30 HP while this Ocean Triggerfish remains in play." });
       } else {
         setEventOverlay({ type: "utility-result", sourceCardId: card.id, title: `Player's ${card.name} used Territorial`, message: `${card.name}'s Territorial had no Creature School to target.`, success: false });
       }
@@ -5406,6 +5432,14 @@ export default function Simulator({
       return;
     }
     if (card.kind === CardKind.SUPPORT) {
+      if (card.id === "ocean-jake") {
+        const candidates = [...new Set(lostZone)];
+        setSearchContext({ mode: "ocean-jake", supportCardId: card.id, candidates });
+        setSelectedHandCard(null);
+        setModal("lost-recover");
+        setPlayError("");
+        return;
+      }
       if (card.id === "spearfishing") {
         const candidates = playerCorals.flatMap((coral) => coral.slots.filter((slot) => {
           const target = cardsById[slot.cardId];
@@ -5873,6 +5907,33 @@ export default function Simulator({
     setPlayError("Support search cancelled. No RP or card was spent.");
   }
 
+  function completeOceanJakeRecovery(cardId) {
+    if (searchContext?.mode !== "ocean-jake" || !searchContext.candidates.includes(cardId) || !lostZone.includes(cardId)) return;
+    const supportCard = cardsById[searchContext.supportCardId];
+    if (!supportCard || !hand.includes(supportCard.id)) return;
+    const cost = getPlayerCardPlayCost(supportCard);
+    if (rp < cost) return;
+    const handResult = applyCurrentHandLimit([cardId]);
+    setHand((current) => [
+      ...removeOneCard(current, supportCard.id),
+      ...handResult.cardsToHand,
+    ]);
+    setLostZone((current) => [supportCard.id, ...removeOneCard(current, cardId)]);
+    if (handResult.cardsToDiscard.length) setDiscardPile((current) => [...handResult.cardsToDiscard, ...current]);
+    if (handResult.cardsToHand.length) setCardsBlockedFromPlayThisTurn((current) => [...current, cardId]);
+    setRp((current) => Math.max(0, current - cost));
+    applyExplicitSupportLock(supportCard);
+    setSearchContext(null);
+    setModal(null);
+    setSelectedHandCard(null);
+    const recoveredName = cardsById[cardId]?.name ?? cardId;
+    const message = handResult.cardsToHand.length
+      ? `${supportCard.name} recovered ${recoveredName} from your Lost Zone. That recovered card cannot be played until your next turn, and ${supportCard.name} moved to the Lost Zone.`
+      : `${supportCard.name} recovered ${recoveredName}, but the active hand limit sent it to your discard pile. ${supportCard.name} moved to the Lost Zone.`;
+    pushLog(message);
+    setEventOverlay({ type: "utility-result", sourceCardId: supportCard.id, defenderCardId: cardId, title: `Player used ${supportCard.name}`, message, success: true });
+  }
+
   function completeRecovery(cardId) {
     if (searchContext?.mode !== "recover" || !searchContext.candidates.includes(cardId) || !discardPile.includes(cardId)) return;
     const handResult = applyCurrentHandLimit([cardId]);
@@ -6317,6 +6378,9 @@ export default function Simulator({
         if (!candidate || candidate.kind !== effect.targetKind) return false;
         if (effect.targetCardId && candidate.id !== effect.targetCardId) return false;
         if (effect.targetCategories?.length && !effect.targetCategories.includes(candidate.category)) return false;
+        if (effect.targetTags?.some((tag) => !candidate.tags?.includes(tag))) return false;
+        if (effect.targetStages?.length && !effect.targetStages.map(Number).includes(Number(candidate.stage ?? 0))) return false;
+        if (effect.requiredStage !== undefined && Number(candidate.stage ?? 0) !== Number(effect.requiredStage)) return false;
         if (effect.targetNameIncludes && !candidate.name?.toLowerCase().includes(effect.targetNameIncludes.toLowerCase())) return false;
         return !effect.targetZone || candidate.zone === effect.targetZone;
       }))];
@@ -6681,7 +6745,7 @@ export default function Simulator({
       ? { ...instance, territorialTargetFoundationId: target.id }
       : instance));
     const sourceCard = cardsById[searchContext.sourceCardId];
-    const message = `${sourceCard?.name ?? "Ocean Triggerfish"}'s Territorial gives ${cardsById[target.cardId]?.name} +10 HP while that Triggerfish remains in play.`;
+    const message = `${sourceCard?.name ?? "Ocean Triggerfish"}'s Territorial gives ${cardsById[target.cardId]?.name} +30 HP while that Triggerfish remains in play.`;
     pushLog(message);
     setSearchContext(null);
     setEventOverlay({ type: "utility-result", sourceCardId: sourceCard?.id, defenderCardId: target.cardId, title: `Player's ${sourceCard?.name ?? "Ocean Triggerfish"} used Territorial`, message, success: true });
@@ -6738,6 +6802,7 @@ export default function Simulator({
         if (card.id === "whirlpool") return 100;
         if (card.id === "coral-cement" || card.id === "coral-heal") return 90;
         if (card.id === "restocking" || card.id === "recovery") return 78;
+        if (card.id === "ocean-jake") return 82;
         if (card.id === "scientist-jes") return 72;
         if (card.id === "dr-evans") return next.hand.length <= 3 ? 70 : 15;
         if (card.id === "explorer-jordan") return 68;
@@ -6749,7 +6814,7 @@ export default function Simulator({
       };
       for (const cardId of orderOpponentChoices(next.hand, opponentDifficulty, scoreSupport)) {
         const card = cardsById[cardId];
-        if (card?.kind !== CardKind.SUPPORT || getConditionPlayRestriction(card, activeCondition)) continue;
+        if (card?.kind !== CardKind.SUPPORT || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition)) continue;
         const cost = getCardPlayCost(card, activeCondition);
         if (cost > next.rp) continue;
         const effects = card.effects ?? [];
@@ -6764,12 +6829,17 @@ export default function Simulator({
         );
         const canUseScientistJesDraw = card.id === "scientist-jes" && Boolean(next.palsDeck.length || next.foundationDeck.length);
         const hasTopDeckCards = Boolean(next.palsDeck.length || next.foundationDeck.length);
-        const usable = hasSearchTarget || (chooseTopEffect && hasTopDeckCards) || (reorderEffect && hasTopDeckCards) || canUseScientistJesDraw || (card.id === "dr-evans" && next.hand.length <= 3) || (card.id === "coral-cement" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && coral.health < coral.maxHealth)) || (card.id === "coral-heal" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && (coral.statuses?.length || Number(coral.rpPenaltyNextTurn ?? 0) > 0))) || (card.id === "recovery" && next.discardPile.length) || (card.id === "restocking" && next.discardPile.some((candidateId) => cardsById[candidateId]?.category === CardCategory.FISH)) || card.id === "poison-heal" || card.id === "rov-lights" || hasSpearfishingTarget || (["whirlpool", "super-whirlpool"].includes(card.id) && playerCoralCards.length);
+        const usable = hasSearchTarget || (chooseTopEffect && hasTopDeckCards) || (reorderEffect && hasTopDeckCards) || canUseScientistJesDraw || (card.id === "dr-evans" && next.hand.length <= 3) || (card.id === "coral-cement" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && coral.health < coral.maxHealth)) || (card.id === "coral-heal" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && (coral.statuses?.length || Number(coral.rpPenaltyNextTurn ?? 0) > 0))) || (card.id === "recovery" && next.discardPile.length) || (card.id === "ocean-jake" && (next.lostZone ?? []).length) || (card.id === "restocking" && next.discardPile.some((candidateId) => cardsById[candidateId]?.category === CardCategory.FISH)) || card.id === "poison-heal" || card.id === "rov-lights" || hasSpearfishingTarget || (["whirlpool", "super-whirlpool"].includes(card.id) && playerCoralCards.length);
         if (usable) { chosen = { card, cost, effects, searchEffect, chooseTopEffect, reorderEffect }; break; }
       }
       if (!chosen) break;
       const { card, cost, effects, searchEffect, chooseTopEffect, reorderEffect } = chosen;
-      next = { ...next, hand: removeOneCard(next.hand, card.id), discardPile: [card.id, ...next.discardPile], rp: Math.max(0, next.rp - cost) };
+      next = {
+        ...next,
+        hand: removeOneCard(next.hand, card.id),
+        discardPile: card.id === "ocean-jake" ? next.discardPile : [card.id, ...next.discardPile],
+        rp: Math.max(0, next.rp - cost),
+      };
       const details = [];
       let revealedCardIds = [];
       const scientistJesChoosesSearch = card.id === "scientist-jes"
@@ -6855,6 +6925,25 @@ export default function Simulator({
           if (recoveredId) next = { ...next, hand: [...next.hand, recoveredId], discardPile: [playedRecoveryId, ...removeOneCard(recoverableDiscard, recoveredId)] };
           details.push(recoveredId ? `flipped heads and recovered ${cardsById[recoveredId]?.name}` : "flipped heads but had no other card to recover");
         } else details.push("flipped tails and recovered nothing");
+      } else if (card.id === "ocean-jake") {
+        const recoveredId = (next.lostZone ?? [])[0];
+        const lostAfterRecovery = recoveredId ? removeOneCard(next.lostZone, recoveredId) : [...(next.lostZone ?? [])];
+        const currentHandLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
+        const handResult = recoveredId
+          ? addCardsToHandWithLimit(next.hand, [recoveredId], next.discardPile, currentHandLimit)
+          : { hand: next.hand, discardPile: next.discardPile, cardsToHand: [], cardsToDiscard: [] };
+        next = {
+          ...next,
+          hand: handResult.hand,
+          discardPile: handResult.discardPile,
+          lostZone: [card.id, ...lostAfterRecovery],
+          cardsBlockedFromPlayThisTurn: handResult.cardsToHand.length
+            ? [...(next.cardsBlockedFromPlayThisTurn ?? []), recoveredId]
+            : next.cardsBlockedFromPlayThisTurn ?? [],
+        };
+        details.push(handResult.cardsToHand.length
+          ? `recovered ${cardsById[recoveredId]?.name} from its Lost Zone; that card cannot be played this turn, and Ocean Jake moved to the Lost Zone`
+          : `moved Ocean Jake to the Lost Zone${recoveredId ? `; ${cardsById[recoveredId]?.name} exceeded the hand limit and was discarded` : ""}`);
       } else if (card.id === "restocking") {
         const recoveredIds = next.discardPile.filter((cardId) => cardsById[cardId]?.category === CardCategory.FISH).slice(0, 3);
         const recoveredFoundationIds = recoveredIds.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "foundation");
@@ -6918,6 +7007,7 @@ export default function Simulator({
     const income = 1 + getEcosystemStartTurnRp(current.corals, activeCondition);
     let next = {
       ...current,
+      cardsBlockedFromPlayThisTurn: [],
       creatureStatuses: Object.fromEntries(Object.entries(current.creatureStatuses ?? {}).map(([statusKey, statuses]) => [statusKey, statuses.filter((status) => Number(status.expiresTurn ?? Infinity) > turn)]).filter(([, statuses]) => statuses.length)),
       flashingAlarmAttackBonus: beginFlashingAlarmTurn(current.flashingAlarmAttackBonus),
     };
@@ -7010,7 +7100,7 @@ export default function Simulator({
     };
     const playableCards = next.hand.filter((cardId) => {
       const card = cardsById[cardId];
-      if (!card || getConditionPlayRestriction(card, activeCondition) || getOpponentPlayCost(card) > next.rp) return false;
+      if (!card || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition) || getOpponentPlayCost(card) > next.rp) return false;
       if (card.kind === CardKind.HABITAT) {
         if (getHabitatRequirementError(card, next.habitats)) return false;
         return !getCompositionRequirementError(card, next.corals, [...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])]);
@@ -7159,7 +7249,7 @@ export default function Simulator({
         discardPile: sacrifices.length ? [...sacrifices.map((entry) => entry.cardId), ...next.discardPile] : next.discardPile,
       };
       if (sacrifices.length) sacrificeSummary = ` As its additional play cost, ${sacrifices.map((entry) => entry.card.name).join(" and ")} ${sacrifices.length === 1 ? "was" : "were"} discarded.`;
-      if (territorialTarget) sacrificeSummary += ` Territorial gives ${cardsById[territorialTarget.cardId]?.name} +10 HP while Ocean Triggerfish remains in play.`;
+      if (territorialTarget) sacrificeSummary += ` Territorial gives ${cardsById[territorialTarget.cardId]?.name} +30 HP while Ocean Triggerfish remains in play.`;
       playedCreatureLocation = { reefIndex: next.reefCreatures.length - 1, instanceId: playedInstance.instanceId };
     } else {
       const specialHostTarget = next.corals.flatMap((coral) => coral.slots.map((slot) => ({ coral, slot })))
@@ -7627,6 +7717,9 @@ export default function Simulator({
             const candidate = cardsById[cardId];
             if (!candidate || candidate.kind !== effect.targetKind) return false;
             if (effect.targetCategories?.length && !effect.targetCategories.includes(candidate.category)) return false;
+            if (effect.targetTags?.some((tag) => !candidate.tags?.includes(tag))) return false;
+            if (effect.targetStages?.length && !effect.targetStages.map(Number).includes(Number(candidate.stage ?? 0))) return false;
+            if (effect.requiredStage !== undefined && Number(candidate.stage ?? 0) !== Number(effect.requiredStage)) return false;
             if (effect.targetZone && candidate.zone !== effect.targetZone) return false;
             return !effect.targetNameIncludes || candidate.name?.toLowerCase().includes(effect.targetNameIncludes.toLowerCase());
           });
@@ -9468,6 +9561,7 @@ export default function Simulator({
     setActionCooldowns({});
     setSupportLockSourceId(null);
     setSupportBlockedUntilRound(0);
+    setCardsBlockedFromPlayThisTurn([]);
     setUsedCreatureActions([]);
     setPendingCreatureAction(null);
     setCreatureStatuses({});
@@ -9596,11 +9690,11 @@ export default function Simulator({
     if (modal === "hand") return hand;
     if (modal === "discard") return discardPile;
     if (modal === "lost") return lostZone;
-    if (modal === "search" || modal === "recover" || modal === "coral-target" || modal === "restock") return searchContext?.candidates ?? [];
+    if (modal === "search" || modal === "recover" || modal === "lost-recover" || modal === "coral-target" || modal === "restock") return searchContext?.candidates ?? [];
     return [];
   }, [modal, hand, discardPile, lostZone, searchContext]);
 
-  const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Fish" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
+  const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "lost-recover" ? "Recover from the Lost Zone" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Fish" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
   const isDarkZoneModal = Boolean(modal);
   const selectedHandPlayError =
     modal === "hand" && selectedHandCard ? getPlayError(cardsById[selectedHandCard]) : "";
@@ -11651,6 +11745,8 @@ export default function Simulator({
                     ? `Select a card's artwork or name to read its full details. Use Add to Hand only after you have chosen a card for ${cardsById[searchContext?.supportCardId]?.name}. You may cancel without spending the card or RP.`
                     : modal === "recover"
                     ? "Heads! Choose one card that was in your discard pile before Recovery resolved."
+                    : modal === "lost-recover"
+                    ? "Choose a Lost card to return to your hand. You can inspect each card before choosing; the recovered card cannot be played this turn, and Ocean Jake moves to the Lost Zone after use."
                     : modal === "coral-target"
                     ? "Choose a damaged coral to heal. You may cancel without spending the Support card."
                     : modal === "restock"
@@ -11673,7 +11769,7 @@ export default function Simulator({
                 {modal !== "turn-draw" ? <button
                   type="button"
                   onClick={() => {
-                    if (modal === "search" || modal === "coral-target" || modal === "restock" || modal === "support-draw") cancelSupportSearch();
+                    if (modal === "search" || modal === "lost-recover" || modal === "coral-target" || modal === "restock" || modal === "support-draw") cancelSupportSearch();
                     else {
                       if (modal === "recover") setSearchContext(null);
                       if (modal === "draw-result") {
@@ -11851,7 +11947,7 @@ export default function Simulator({
                     const card = cardsById[coralTarget?.cardId ?? cardId] || { name: cardId };
                     return (
                       <div key={`${cardId}-${cardIndex}`} data-tutorial-search-card-id={modal === "search" ? cardId : undefined} data-tutorial-target={modal === "search" && tutorialHelpTargetActive && tutorialHelp?.targetSearchCardId === cardId ? "search-card" : undefined} className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${isDarkZoneModal ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}${modal === "search" && tutorialHelpTargetActive && tutorialHelp?.targetSearchCardId === cardId ? " seapals-tutorial-target" : ""}`}>
-                        {modal === "search" ? (
+                        {modal === "search" || modal === "lost-recover" ? (
                           <button type="button" aria-haspopup="dialog" aria-label={`Inspect ${card.name} details`} onClick={() => inspectSearchResult(cardId)} className="group flex min-w-0 flex-1 items-center gap-4 rounded-xl p-1 text-left outline-none transition hover:bg-cyan-300/10 focus-visible:ring-2 focus-visible:ring-cyan-300">
                             <img src={card.image} alt="" className="h-28 w-20 rounded-xl bg-white object-contain" />
                             <span className="min-w-0">
@@ -11870,9 +11966,9 @@ export default function Simulator({
                             </div>
                           </div>
                         )}
-                        {modal === "search" || modal === "recover" || modal === "coral-target" || modal === "restock" ? (
-                          <button type="button" disabled={Boolean(modal === "search" && tutorialUsesScriptedScenario && scriptedFinishRoute?.searchTargetCardId && scriptedFinishRoute.searchTargetCardId !== cardId)} aria-pressed={modal === "search" && searchContext?.maxSelect > 1 ? searchContext?.selected.includes(cardId) : undefined} aria-label={modal === "search" ? `${searchContext?.maxSelect > 1 ? "Select" : "Add to hand"} ${card.name}` : undefined} onClick={() => modal === "recover" ? completeRecovery(cardId) : modal === "coral-target" ? completeCoralHeal(cardId) : modal === "restock" ? toggleRestockCard(cardIndex) : searchContext?.maxSelect > 1 ? toggleSupportSearchCard(cardId) : completeSupportSearch(cardId)} className={`rounded-full px-5 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${(modal === "restock" ? searchContext?.selectedIndices?.includes(cardIndex) : modal === "search" && searchContext?.maxSelect > 1 && searchContext?.selected.includes(cardId)) ? "bg-emerald-600" : "bg-cyan-600 hover:bg-cyan-500"}`}>
-                            {modal === "recover" ? "Recover Card" : modal === "coral-target" ? "Heal 20 HP" : modal === "restock" ? (searchContext?.selectedIndices?.includes(cardIndex) ? "Selected" : "Select") : modal === "search" && searchContext?.maxSelect > 1 ? (searchContext?.selected.includes(cardId) ? `Selected ×${searchContext.selected.filter((selectedId) => selectedId === cardId).length}` : "Select") : "Add to Hand"}
+                        {modal === "search" || modal === "recover" || modal === "lost-recover" || modal === "coral-target" || modal === "restock" ? (
+                          <button type="button" disabled={Boolean(modal === "search" && tutorialUsesScriptedScenario && scriptedFinishRoute?.searchTargetCardId && scriptedFinishRoute.searchTargetCardId !== cardId)} aria-pressed={modal === "search" && searchContext?.maxSelect > 1 ? searchContext?.selected.includes(cardId) : undefined} aria-label={modal === "search" ? `${searchContext?.maxSelect > 1 ? "Select" : "Add to hand"} ${card.name}` : undefined} onClick={() => modal === "recover" ? completeRecovery(cardId) : modal === "lost-recover" ? completeOceanJakeRecovery(cardId) : modal === "coral-target" ? completeCoralHeal(cardId) : modal === "restock" ? toggleRestockCard(cardIndex) : searchContext?.maxSelect > 1 ? toggleSupportSearchCard(cardId) : completeSupportSearch(cardId)} className={`rounded-full px-5 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${(modal === "restock" ? searchContext?.selectedIndices?.includes(cardIndex) : modal === "search" && searchContext?.maxSelect > 1 && searchContext?.selected.includes(cardId)) ? "bg-emerald-600" : "bg-cyan-600 hover:bg-cyan-500"}`}>
+                            {modal === "recover" ? "Recover Card" : modal === "lost-recover" ? "Return to Hand" : modal === "coral-target" ? "Heal 20 HP" : modal === "restock" ? (searchContext?.selectedIndices?.includes(cardIndex) ? "Selected" : "Select") : modal === "search" && searchContext?.maxSelect > 1 ? (searchContext?.selected.includes(cardId) ? `Selected ×${searchContext.selected.filter((selectedId) => selectedId === cardId).length}` : "Select") : "Add to Hand"}
                           </button>
                         ) : null}
                       </div>

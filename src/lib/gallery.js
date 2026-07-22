@@ -90,12 +90,18 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/invertebrates/Reef/blue-crab.png",
   "/images/cards/invertebrates/Reef/anemone.png",
   "/images/cards/invertebrates/Reef/emerald-crab.png",
+  "/images/cards/invertebrates/Reef/Sea Urchin.png",
   "/images/cards/invertebrates/Oceanic/blue-sea-dragon.png",
   "/images/cards/invertebrates/Oceanic/market-squid.png",
   "/images/cards/invertebrates/Oceanic/portugese-man-o-war.png",
   "/images/cards/coral/Reef/brain-coral-base.png",
   "/images/cards/coral/Reef/brain-coral-stage-1.png",
   "/images/cards/coral/Reef/brain-coral-stage-2.png",
+  "/images/cards/coral/Reef/clubfinger-base.png",
+  "/images/cards/coral/Reef/clubfinger-stage-1.png",
+  "/images/cards/coral/Reef/elkhorn-base.png",
+  "/images/cards/coral/Reef/elkhorn-stage-1.png",
+  "/images/cards/coral/Reef/elkhorn-stage-2.png",
   "/images/cards/coral/Reef/staghorn-coral.png",
   "/images/cards/coral/Reef/boulderstar-base.png",
   "/images/cards/coral/Reef/boulderstar-stage-1.png",
@@ -108,6 +114,7 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/predator/reef/spinner-dolphins.png",
   "/images/cards/predator/oceanic/blue-shark.png",
   "/images/cards/predator/oceanic/galapagos-shark.png",
+  "/images/cards/predator/oceanic/loggerhead-sea-turtle.png",
   "/images/cards/predator/oceanic/oceanic-whitetip.png",
   "/images/cards/predator/oceanic/Sailfish.png",
   "/images/cards/predator/oceanic/silky-shark.png",
@@ -162,6 +169,9 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/predator/Deep/frilled-shark.png",
   "/images/cards/predator/Deep/goblin-shark.png",
   "/images/cards/predator/Deep/gulper-eel.png",
+  "/images/cards/habitats/abyss.png",
+  "/images/cards/habitats/coral-reef.png",
+  "/images/cards/habitats/open-ocean.png",
 ]);
 
 const IMAGE_PATH_OVERRIDES = {
@@ -201,10 +211,13 @@ function compactCard(card) {
     health: card.health,
     kind: card.kind,
     name: card.name,
+    actions: compactRuleList(card.actions),
+    maintenance: compactRuleList(card.maintenance ? [card.maintenance] : []),
+    onPlay: compactRuleList(card.onPlay),
     passives: compactRuleList(card.passives),
     playRequirements: compactRuleList(card.playRequirements),
     prerelease: card.prerelease,
-    schoolDensity: card.schoolDensity,
+    schoolDensity: card.schoolDensity ?? card.schoolDensityRequirement,
     set: card.set,
     specialRules: compactRuleList(card.specialRules),
     stageLabel: card.stageLabel,
@@ -234,7 +247,7 @@ function galleryCard(card) {
 export async function getGalleryData() {
   return ZONE_CONFIG.map((zone) => {
     const zoneCards = allCards.filter(
-      (card) => !card.galleryHidden && cardZone(card) === zone.zone
+      (card) => !card.galleryHidden && !card.hideFromGallery && cardZone(card) === zone.zone
     );
     const groups = TYPE_CONFIG.map((type) => ({
       slug: `${zone.slug}-${type.slug}`,

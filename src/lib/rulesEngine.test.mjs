@@ -538,3 +538,75 @@ test("generalizes the five reported strategy and notation gaps across player phr
     }
   }
 });
+
+test("answers every Habitat's zone-specific setup and end-turn maintenance", () => {
+  const habitatRules = buildRulesKnowledgeBank({ cards: [], simulatorRules: SIMULATOR_RULES });
+  const cases = [
+    {
+      question: "What does Coral Reef need, and when does it take maintenance damage?",
+      title: "Coral Reef Habitat maintenance",
+      includes: [/4 Reef Corals/i, /2 Reef Fish/i, /2 Reef Invertebrates/i, /end of .*controller's turn/i, /10 HP/i],
+    },
+    {
+      question: "Why is my Open Ocean taking damage?",
+      title: "Open Ocean Habitat maintenance",
+      includes: [/4 Creature Schools/i, /2 Oceanic Fish/i, /2 Oceanic Invertebrates/i, /10 HP/i],
+    },
+    {
+      question: "What does Abyss need to stay healthy?",
+      title: "Abyss Habitat maintenance",
+      includes: [/4 Deep Corals/i, /2 Deep Fish/i, /2 Deep Invertebrates/i, /10 HP/i],
+    },
+  ];
+
+  for (const { question, title, includes } of cases) {
+    const answer = answerRulesQuestion(question, habitatRules);
+    assert.equal(answer.kind, "answer", question);
+    assert.equal(answer.title, title, question);
+    assert.ok(answer.sources.length > 0, `${question} must cite its rules`);
+    for (const pattern of includes) assert.match(answer.text, pattern, question);
+  }
+
+  const comparison = answerRulesQuestion("How do maintenance requirements differ across all Habitats?", habitatRules);
+  assert.equal(comparison.kind, "answer");
+  assert.equal(comparison.title, "Habitats");
+  assert.match(comparison.text, /Coral Reef.*4 Reef Corals.*2 Reef Fish.*2 Reef Invertebrates/i);
+  assert.match(comparison.text, /Open Ocean.*4 Creature Schools.*2 Oceanic Fish.*2 Oceanic Invertebrates/i);
+  assert.match(comparison.text, /Abyss.*4 Deep Corals.*2 Deep Fish.*2 Deep Invertebrates/i);
+  assert.match(comparison.text, /end of .*controller's turn/i);
+  assert.match(comparison.text, /10 HP/i);
+});
+
+test("answers the reconciled Oceanic requirements and printed bonuses", () => {
+  const oceanicRules = buildRulesKnowledgeBank({ cards: [], simulatorRules: SIMULATOR_RULES });
+  const cases = [
+    {
+      question: "Do Oceanic Apex cards always sacrifice fish, or what requirements do they use?",
+      title: "Oceanic Apex additional cost",
+      includes: [/card-specific/i, /Killer Whale/i, /Shortfin Mako/i, /2 Oceanic Predators/i, /not sacrificed|stay in play/i, /Bluefin Tuna.*Open Ocean/i, /Swordfish.*Open Ocean or Abyss/i],
+    },
+    {
+      question: "How much HP does Territorial give a Creature School, and can I transfer it?",
+      title: "Ocean Triggerfish Territorial",
+      includes: [/\+30 HP/i, /one|1/i, /not transferable/i],
+    },
+    {
+      question: "Does Thresher Shark's Stun Strike need Open Ocean for its +2 bonus?",
+      title: "Thresher Shark requirements and Stun Strike",
+      includes: [/3 Oceanic Fish/i, /roll is 4 or higher/i, /\+2/i, /does not require Open Ocean/i],
+    },
+  ];
+
+  for (const { question, title, includes } of cases) {
+    const answer = answerRulesQuestion(question, oceanicRules);
+    assert.equal(answer.kind, "answer", question);
+    assert.equal(answer.title, title, question);
+    assert.ok(answer.sources.length > 0, `${question} must cite its rules`);
+    for (const pattern of includes) assert.match(answer.text, pattern, question);
+  }
+
+  const protection = answerRulesQuestion("How can I protect a Creature School from attacks?", oceanicRules);
+  assert.equal(protection.kind, "answer");
+  assert.match(protection.text, /Territorial.*\+30 HP/i);
+  assert.doesNotMatch(protection.text, /\+10 HP/i);
+});

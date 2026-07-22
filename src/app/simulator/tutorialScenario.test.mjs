@@ -311,7 +311,7 @@ test("the seven-round curriculum is legal, teaches Coral Reef, School Density, F
   const habitat = cardsById[plan.habitatCardId];
   const requirement = habitat.playRequirements.find((entry) => entry.type === "ecosystemComposition");
   assert.deepEqual(
-    [requirement.minimumCorals, requirement.minimumFish, requirement.minimumInvertebrates],
+    [requirement.minimumReefCorals, requirement.minimumReefFish, requirement.minimumReefInvertebrates],
     [4, 2, 2],
   );
   rp -= playCost(plan.habitatCardId, "murky-water");

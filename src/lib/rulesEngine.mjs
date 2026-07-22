@@ -100,8 +100,16 @@ const INTENT_ROUTES = [
     title: /^School Density requirements$/i,
   },
   {
-    question: /(?=.*\boceanic apex\b)(?=.*\b(?:sacrifice|sacrificed|additional cost|qualify|two (?:copies|fish)|same card name)\b)/i,
+    question: /(?=.*\boceanic apex\b)(?=.*\b(?:sacrifice|sacrificed|additional cost|qualify|requirements?|need|open ocean|abyss|two (?:copies|fish)|same card name)\b)/i,
     title: /^Oceanic Apex additional cost$/i,
+  },
+  {
+    question: /(?=.*\b(?:ocean triggerfish|territorial)\b)(?=.*\b(?:creature schools?|hp|health|bonus|protect|transfer|move|choose|work)\b)/i,
+    title: /^Ocean Triggerfish Territorial$/i,
+  },
+  {
+    question: /(?=.*\b(?:thresher shark|stun strike)\b)(?=.*\b(?:require|need|roll|bonus|\+2|plus two|open ocean|target|work)\b)/i,
+    title: /^Thresher Shark requirements and Stun Strike$/i,
   },
   {
     question: /(?=.*\bsupport cards?\b)(?=.*\b(?:after|resolves?|where|go)\b)/i,
@@ -184,8 +192,20 @@ const INTENT_ROUTES = [
     title: /^Habitat and class matching for Reef Fish and Deep slots$/i,
   },
   {
-    question: /(?=.*\bcoral reef\b)(?=.*\b(?:taking damage|maintenance|composition)\b)/i,
+    question: /(?=.*\bcoral reef\b)(?=.*\b(?:taking damage|maintenance|composition|requirements?|end of (?:my |the )?turn|need|needs|healthy|10 hp)\b)/i,
     title: /^Coral Reef Habitat maintenance$/i,
+  },
+  {
+    question: /(?=.*\bopen ocean\b)(?=.*\b(?:taking damage|maintenance|composition|requirements?|end of (?:my |the )?turn|need|needs|healthy|10 hp)\b)/i,
+    title: /^Open Ocean Habitat maintenance$/i,
+  },
+  {
+    question: /(?=.*\babyss\b)(?=.*\b(?:taking damage|maintenance|composition|requirements?|end of (?:my |the )?turn|need|needs|healthy|10 hp)\b)/i,
+    title: /^Abyss Habitat maintenance$/i,
+  },
+  {
+    question: /(?=.*\bhabitats?\b)(?=.*\b(?:all|each|every|three|maintenance|composition|requirements?)\b)(?=.*\b(?:damage|end of (?:my |the )?turn|need|needs|work|compare|differ|different)\b)/i,
+    title: /^Habitats$/i,
   },
   {
     question: /(?=.*\bcondition(?:s)?\s+cards?\b)(?=.*\b(?:for|mean|used|work)\b)/i,
@@ -1121,11 +1141,11 @@ function creatureSchoolProtectionStrategyAnswer(strategyRule, rules) {
   const oceanTriggerfish = cardRuleById(rules, "ocean-triggerfish");
   const schoolRule = rules.find((rule) => /^Creature Schools and bait balls$/i.test(rule.title));
   const targetRule = rules.find((rule) => /^Reading targets on attacks and abilities$/i.test(rule.title));
-  const territorial = firstPrintedRule(oceanTriggerfish, /\bTerritorial\b|Creature Schools?.*\+10 HP/i);
+  const territorial = firstPrintedRule(oceanTriggerfish, /\bTerritorial\b|Creature Schools?.*\+30 HP/i);
   return {
     kind: "answer",
     title: strategyRule.title,
-    text: `A Creature School does not roll defense, so protect it by increasing HP and limiting the attacks it faces. In the current card data, Ocean Triggerfish is the direct protection card: ${territorial || "Territorial gives one of your Creature Schools +10 HP while Ocean Triggerfish is in play."} Creature Schools can be targeted by attacks that can target Fish, and each attack deals its roll multiplied by 10 as damage. That makes repeated attacks especially dangerous, so pressure or remove repeat attackers before they can attack again and avoid relying on one fragile School. Coral-only healing and Coral-only HP bonuses do not apply unless their text explicitly includes Foundations or Creature Schools.`,
+    text: `A Creature School does not roll defense, so protect it by increasing HP and limiting the attacks it faces. Ocean Triggerfish is the direct protection card: ${territorial || "Territorial gives one chosen Creature School +30 HP while Ocean Triggerfish is in play; the choice is not transferable."} Creature Schools can be targeted by attacks that can target Fish, and each attack deals its roll multiplied by 10 as damage. That makes repeated attacks especially dangerous, so pressure or remove repeat attackers before they can attack again and avoid relying on one fragile School. Coral-only healing and Coral-only HP bonuses do not apply unless their text explicitly includes Foundations or Creature Schools.`,
     sources: uniqueSources([strategyRule, oceanTriggerfish, schoolRule, targetRule].filter(Boolean).map(sourceFor)),
   };
 }
@@ -1730,7 +1750,11 @@ function scenarioSupportingRules(question, cardRules, rules) {
   if (/\bdiscard rules?\b/i.test(question)) addTitle(/^Searching and recovering cards$/i);
   if (/\bsupport resolution\b/i.test(question)) addTitle(/^Support cards$/i);
   if (/\bschool density\b/i.test(question)) addTitle(/^School Density requirements$/i);
-  if (/\bmaintenance\b/i.test(question)) addTitle(/^Coral Reef Habitat maintenance$/i);
+  if (/\b(?:maintenance|habitat composition|end-of-turn deterioration)\b/i.test(question)) {
+    addTitle(/^Coral Reef Habitat maintenance$/i);
+    addTitle(/^Open Ocean Habitat maintenance$/i);
+    addTitle(/^Abyss Habitat maintenance$/i);
+  }
   if (/\bdeep combat\b/i.test(question)) addTitle(/^Deep creatures and Abyss$/i);
 
   return uniqueRules(supporting);
@@ -2076,7 +2100,7 @@ export function answerRulesQuestion(question, rules, context = {}) {
   const shouldUseStructuredQuantity = sufficiency.type === "quantity"
     && structuredMatch
     && (structuredMatch.intentMatches.length > 0 || structuredMatch.typeMatches.includes("quantity"))
-    && (!sufficiency.valid || !resultContainsStructuredNumbers);
+    && (!sufficiency.valid || (structuredNumbers.length > 0 && !resultContainsStructuredNumbers));
   if (shouldUseStructuredQuantity) {
     const structuredResult = {
       kind: "answer",

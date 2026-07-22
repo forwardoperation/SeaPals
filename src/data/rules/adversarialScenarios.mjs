@@ -68,7 +68,7 @@ export const ADVERSARIAL_SCENARIOS = [
   { id: "rule-064", question: "How are repeated attacks resolved?", expectedSourceIds: ["knowledge:repeated-attacks"], textIncludes: ["separately"], tags: ["rule"] },
   { id: "rule-065", question: "How do Creature Schools and bait balls take attack damage?", expectedSourceIds: ["knowledge:creature-schools-and-bait-balls"], textIncludes: ["multiplied by 10"], tags: ["rule"] },
   { id: "rule-066", question: "How do School Density requirements and reductions work?", expectedSourceIds: ["knowledge:school-density-requirements"], textIncludes: ["School Density"], tags: ["rule"] },
-  { id: "rule-067", question: "What additional sacrifice cost applies to an Oceanic Apex?", expectedSourceIds: ["knowledge:oceanic-apex-additional-cost"], textIncludes: ["two distinct Oceanic Fish"], tags: ["rule"] },
+  { id: "rule-067", question: "Do all Oceanic Apex cards share one additional sacrifice cost?", expectedSourceIds: ["knowledge:oceanic-apex-additional-cost"], textIncludes: ["card-specific"], tags: ["rule"] },
   { id: "rule-068", question: "What are Conditions cards used for?", expectedSourceIds: ["knowledge:what-conditions-cards-are-used-for"], textIncludes: ["shared"], tags: ["rule"] },
   { id: "rule-069", question: "When do Victory Points count toward winning?", expectedSourceIds: ["knowledge:victory-points-in-play"], textIncludes: ["currently in your ecosystem"], tags: ["rule"] },
   { id: "rule-070", question: "What happens when a draw exceeds my hand limit?", expectedSourceIds: ["knowledge:hand-limits-and-overflow"], textIncludes: ["overflow"], tags: ["rule"] },
