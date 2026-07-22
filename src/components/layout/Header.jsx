@@ -52,6 +52,10 @@ export default function Header() {
           Gallery
         </Link>
 
+        <Link href="/encyclopedia" aria-current={pathname.startsWith("/encyclopedia") ? "page" : undefined} className={linkClass("/encyclopedia")}>
+          Learn
+        </Link>
+
         <Link href="/decks" aria-current={pathname.startsWith("/decks") ? "page" : undefined} className={linkClass("/decks")}>
           Decks
         </Link>
