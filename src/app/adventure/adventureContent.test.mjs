@@ -1108,6 +1108,7 @@ test("Elverson town uses layered object bases and an explicit dry-land allowlist
     .find((scene) => scene.id === "academy-lab")
     .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
   assert.deepEqual(aquariumExit.spawn, { x: 16, y: 15.85 });
+  assert.equal(aquariumExit.doorwayHalfWidth, 0.5);
 });
 
 test("Elverson exposes exactly its aquarium workshop and two homes through valid portals", () => {

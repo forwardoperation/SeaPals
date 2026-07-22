@@ -32,14 +32,21 @@ test("guided Academy board tour exposes paced Professor cues and hands off to th
   assert.equal(getNextGuidedAcademyBoardTourStep(0), 1);
 
   const opposingReef = getGuidedAcademyBoardTourStep(2, { guideName: "Mr. Easterling" });
-  assert.match(opposingReef.message, /Mr\. Easterling has prepared/i);
+  assert.match(opposingReef.message, /I prepared durable Corals.*compatible practice targets/i);
+  assert.doesNotMatch(opposingReef.message, /Mr\. Easterling has prepared/i);
   assert.doesNotMatch(opposingReef.message, /Professor Current/i);
+
+  const condition = getGuidedAcademyBoardTourStep(3);
+  assert.equal(condition.title, "Conditions model a changing ocean");
+  assert.match(condition.message, /sunlight.*temperature.*visibility.*nutrients.*currents.*food availability/i);
+  assert.match(condition.message, /simplified model.*real ecological question.*ecosystem can support/i);
+  assert.match(condition.pointerPrompt, /environment changes the game/i);
 
   const lastIndex = GUIDED_ACADEMY_BOARD_TOUR_STEPS.length - 1;
   const last = getGuidedAcademyBoardTourStep(lastIndex);
   assert.equal(last.target, "turn-button");
-  assert.equal(last.advanceLabel, "Flip Coin");
-  assert.match(last.action, /opening call.*guided setup/i);
+  assert.equal(last.advanceLabel, "Call the Coin");
+  assert.match(last.action, /choose heads or tails.*toss it yourself/i);
   assert.equal(last.finalStep, true);
   assert.equal(getNextGuidedAcademyBoardTourStep(lastIndex), null);
 });

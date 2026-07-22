@@ -34,6 +34,19 @@ export function getAdventureWalkCycleDurationMs(
 }
 
 /**
+ * Starts the walk cycle from input intent rather than waiting for the movement
+ * RAF to displace the player. This keeps short taps visible and lets a held
+ * direction continue animating naturally while the player's feet meet a wall.
+ */
+export function isAdventurePlayerWalking({
+  isMoving,
+  boatMode = false,
+  movementPaused = false,
+} = {}) {
+  return Boolean(isMoving && !boatMode && !movementPaused);
+}
+
+/**
  * Walking artwork follows actual world displacement, not held input. This
  * makes a blocked player settle immediately instead of marching into a wall.
  */

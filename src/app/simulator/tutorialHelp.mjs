@@ -1,3 +1,5 @@
+import { getGuidedAcademyLayoutLessonStep } from "./tutorialLayoutLesson.mjs";
+
 const TARGET_LABELS = Object.freeze({
   hand: "a glowing card in your hand",
   placement: "the highlighted placement area",
@@ -61,50 +63,50 @@ const HELP_BY_CHECKPOINT = Object.freeze({
     message: "Victory Points measure the ecosystem you have built. Cards in play add VP automatically, including some relationship bonuses.",
     playerThought: "So attacking can disrupt an opponent, but my main race is still to build a healthy ecosystem that produces enough VP.",
     encouragement: "Exactly right. SeaPals rewards relationships and planning as much as combat. Keep asking what each card contributes to the ecosystem as a whole.",
-    action: "Watch your VP counter grow. Reach 10 VP before I do to win our practice duel.",
+    action: "Watch your VP counter grow until you reach the tutorial goal shown on the scoreboard.",
   }),
 });
 
 const CONDITION_HELP_BY_ID = Object.freeze({
   "abundant-sunlight": Object.freeze({
     title: "Begin by reading the water",
-    message: "Every round opens with a condition, because an ecosystem never stays perfectly still. Abundant Sunlight raises both players' RP bank caps by 2. It creates more room in the bank, but it does not place those extra RP there by itself.",
+    message: "In the ocean, sunlight powers photosynthesis in algae, seagrasses, and the symbiotic algae that help feed corals. How much light reaches a reef changes with depth, water clarity, weather, and season. In SeaPals, Abundant Sunlight simplifies that energy opportunity by raising both players' RP bank caps by 2 this round. The larger cap gives you more storage, but it does not add RP by itself.",
     playerThought: "My bank can hold more this round, but I still collect only the amount shown below. I should plan from what I actually collected, not treat the empty space as though it were already RP.",
     encouragement: "Exactly so. Conditions change the rules around your plan; they do not replace careful counting. Notice the larger cap, then compare it with what you actually collected.",
   }),
   "clear-water": Object.freeze({
     title: "Ask exactly who is affected",
-    message: "Clear Water makes Predator and Apex cards cost 1 more RP to play this round. The wording is wonderfully specific: Corals, Fish, and Invertebrates keep their normal costs, and actions on cards already in play are not made more expensive.",
+    message: "In the ocean, clear water has fewer suspended particles, so light travels farther and animals can see one another more easily. That can change how predators and prey hunt or hide. In SeaPals, Clear Water simplifies that visibility shift by making Predator and Apex cards cost 1 more RP this round. Corals, other Fish and Invertebrates, and actions already in play keep their normal costs.",
     playerThought: "Then I should not treat this as a tax on every card. Arrow Crab and Spanish Hogfish follow their printed costs because neither is a Predator or Apex.",
     encouragement: "Beautifully read. Conditions often look broad at first glance. Check the named card types, players, and duration before changing your plan.",
   }),
   "algae-bloom": Object.freeze({
     title: "A full hand has a limit",
-    message: "Algae Bloom limits each hand to seven cards for the round. Any additional draw still happens, but excess cards are sent to the discard pile instead of remaining in hand.",
+    message: "In the ocean, algae blooms are rapid increases in algae or phytoplankton. Not all blooms are harmful, but dense blooms can block light, and their decay can lower oxygen. In SeaPals, Algae Bloom models that crowded, stressed system with a seven-card hand limit this round. Additional draws still happen, but excess cards go to the discard pile.",
     playerThought: "If my hand is already crowded, I should play or intentionally discard before drawing several cards so the hand limit does not choose for me.",
     encouragement: "A sound observation. Even a harmful condition can be managed when you read it before committing to a draw effect.",
   }),
   "murky-water": Object.freeze({
     title: "Conditions can create opportunities",
-    message: "Murky Water reduces the play cost of Predator and Apex cards by 1 RP this round. A condition can help one plan while doing very little for another.",
+    message: "In the ocean, murky water can contain suspended sediment, plankton, or other particles that reduce visibility; murky does not automatically mean polluted. Different species respond differently. In SeaPals, Murky Water models one possible advantage—predators approaching unseen—by reducing Predator and Apex play costs by 1 RP this round.",
     playerThought: "I should look at my actual hand before deciding whether this condition is good for me. A discount matters only if I can use the affected cards.",
     encouragement: "Precisely. Good strategy begins with evidence from this board, this hand, and this round—not a rule of thumb applied blindly.",
   }),
   "severe-coral-bleaching": Object.freeze({
     title: "Bleaching can weaken reef productivity",
-    message: "Severe Coral Bleaching stops Corals with a high-temperature weakness from generating RP this round. Heat stress can drive corals to expel the algae that help feed them; in this match, the rule models that lost productivity without destroying the Coral outright.",
+    message: "In the ocean, prolonged heat stress can cause reef-building corals to expel the symbiotic algae that supply much of their food and color. A bleached coral is stressed, not necessarily dead. In SeaPals, Severe Coral Bleaching models that lost productivity: heat-sensitive Corals remain in play and keep their slots, but they generate no RP this round.",
     playerThought: "The affected Coral still provides its slots, but I must count this round's smaller collection before deciding what the reef can afford.",
     encouragement: "Exactly. Environmental stress can change what an ecosystem can support even when its structure is still visible. Our earlier economy gives us enough resilience to establish a Creature School this round.",
   }),
   "krill-ball": Object.freeze({
     title: "A bloom can open a brief opportunity",
-    message: "Krill Bloom lowers the School Density requirement of the next Filter Feeder each player plays by 150. The reduction is used once, so this is a timing opportunity rather than a permanent shortcut.",
+    message: "In the ocean, currents and seasonal productivity can concentrate krill into dense swarms, creating a temporary food pulse for whales and other filter feeders. In SeaPals, Krill Bloom models that brief opportunity by lowering each player's next Filter Feeder School Density requirement by 150. The reduction can be used only once per player.",
     playerThought: "Whale Shark normally needs 180 School Density. After the 150-point reduction, White Grunt's 30 School Density is exactly enough.",
     encouragement: "That is the calculation. Conditions can change whether a play is legal, so compare the printed requirement with the active reduction before spending RP.",
   }),
   "bleak-overcast": Object.freeze({
     title: "A smaller bank changes the final budget",
-    message: "Bleak Overcast lowers both players' RP bank caps by 2 this round and immediately removes RP above the new cap. It does not make cards cheaper; it limits how much RP you can hold at once.",
+    message: "In the ocean, cloud cover reduces incoming sunlight and can temporarily limit photosynthesis near the surface, although the effect depends on duration and habitat. In SeaPals, Bleak Overcast models a smaller energy window by lowering both players' RP bank caps by 2 this round and discarding RP above the new cap. It changes storage, not card costs.",
     playerThought: "I should check the reduced cap before planning the turn. The reef was built ahead of time, so its remaining 6 RP can still support Hammerhead.",
     encouragement: "Precisely. A resilient plan leaves room for changing conditions. We can use a zero-cost Support to find the Apex, then spend the bank on the card that ends the lesson.",
   }),
@@ -113,10 +115,6 @@ const CONDITION_HELP_BY_ID = Object.freeze({
 function requireCheckpointId(checkpoint) {
   const id = String(checkpoint?.id ?? "").trim();
   return id || null;
-}
-
-function tutorialGuideName(uiState) {
-  return String(uiState?.guideName ?? "Mr. Easterling").trim() || "Mr. Easterling";
 }
 
 function withTarget(help, target, cue = target) {
@@ -465,7 +463,7 @@ function getScriptedFinishDrawHelp(uiState, preferredDeck, reason) {
     id: FINISH_DUEL_HELP_ID,
     title: `Choose the ${preferredDeck} Deck for this step`,
     lead: "",
-    message: `${reason} This is a prepared draw, so use the ${preferredDeck} Deck instead of adding a random branch to the lesson.`,
+    message: `${reason} This tutorial uses a prepared card order, so choose the ${preferredDeck} Deck to reveal the next lesson card.`,
     action: drawReady
       ? routeSelected
         ? "Press Draw Selected Cards, review the reveal, then continue to the prepared action."
@@ -488,6 +486,7 @@ function getScriptedCardPlayHelp(uiState, card, {
   placementMessage = null,
 } = {}) {
   if (!card) return null;
+  if (uiState.playingCardId && uiState.playingCardId !== card.cardId) return null;
   if (card.isPlaying || uiState.playingCardId === card.cardId) {
     return decorateFinishDuelHelp(withTarget({
       id: FINISH_DUEL_HELP_ID,
@@ -530,12 +529,68 @@ function getScriptedCardPlayHelp(uiState, card, {
   }, "hand", `scripted-card:${card.cardId}`), uiState, `scripted-card:${card.cardId}`);
 }
 
+function getAcademyDrawResultLesson(round, cards, drawnCards) {
+  const revealedCards = Array.isArray(drawnCards) ? drawnCards : [];
+  const primaryCard = revealedCards.find((card) => !card?.discarded) ?? revealedCards[0] ?? null;
+  if (!primaryCard || primaryCard.discarded) {
+    return {
+      message: primaryCard
+        ? describeDrawnCard(primaryCard)
+        : "No card was revealed. Continue so I can reassess the live board without pretending the planned card reached your hand.",
+      action: "Press Continue to Actions. I will adjust the next step to the cards actually available.",
+    };
+  }
+
+  const lessons = {
+    1: {
+      cardId: cards.economy?.cardId,
+      message: `${cards.economy?.cardName ?? primaryCard.name} came from the Foundation Deck, where Corals and Creature Schools build your economy. Its Photosynthesis income and Predator slot support the later plan. Place it beside your first Coral as a separate foundation, not on top of it.`,
+      action: `Press Continue to Actions, then choose ${cards.economy?.cardName ?? primaryCard.name} and place it in the separate highlighted foundation area.`,
+    },
+    2: {
+      cardId: cards.firstFish?.cardId,
+      message: `${cards.firstFish?.cardName ?? primaryCard.name} came from the Pals Deck. Coral Reef needs any two regular Fish; this card can fill one of those spots and later teach its Crunch attack. Keep it in hand for now; first use ${cards.coralSupport?.cardName ?? "Coral Gardener"} to find ${cards.searchedCoral?.cardName ?? "Lettuce Coral"} and complete the four-Coral economy.`,
+      action: `Press Continue to Actions, then choose ${cards.coralSupport?.cardName ?? "Coral Gardener"}. Keep ${cards.firstFish?.cardName ?? primaryCard.name} in hand for Round 3.`,
+    },
+    3: {
+      cardId: cards.secondFish?.cardId,
+      message: `${cards.secondFish?.cardName ?? primaryCard.name} came from the Pals Deck. Coral Reef accepts any two regular Fish; ${cards.firstFish?.cardName ?? "Spanish Hogfish"} can fill one spot and this card can fill the other. It can wait in hand until the Habitat turn. First establish ${cards.bankBoost?.cardName ?? "Arrow Crab"} and ${cards.utility?.cardName ?? "Nudibranch"}, use Munch, and attack with ${cards.firstFish?.cardName ?? "Spanish Hogfish"}.`,
+      action: `Press Continue to Actions, then choose ${cards.bankBoost?.cardName ?? "Arrow Crab"}. Keep ${cards.secondFish?.cardName ?? primaryCard.name} in hand for Round 4.`,
+    },
+    4: {
+      cardId: cards.predator?.cardId,
+      message: `${cards.predator?.cardName ?? primaryCard.name} came from the Pals Deck. This Predator is useful now because my reef has legal targets and your ${cards.habitat?.cardName ?? "Coral Reef"} Habitat can grant its second Bite. First play ${cards.secondFish?.cardName ?? "Parrotfish"} and establish ${cards.habitat?.cardName ?? "Coral Reef"}; then play the Predator.`,
+      action: `Press Continue to Actions, then play ${cards.secondFish?.cardName ?? "Parrotfish"}. We will establish ${cards.habitat?.cardName ?? "Coral Reef"} before using ${cards.predator?.cardName ?? primaryCard.name}.`,
+    },
+    5: {
+      cardId: cards.creatureSchool?.cardId,
+      message: `${cards.creatureSchool?.cardName ?? primaryCard.name} came from the Foundation Deck because it is a Creature School. It belongs in the foundation area, supplies 30 School Density for a larger animal, and its Eco Foundation can still produce 1 RP while Severe Coral Bleaching stops heat-sensitive Corals.`,
+      action: `Press Continue to Actions, then play ${cards.creatureSchool?.cardName ?? primaryCard.name} in the highlighted foundation area.`,
+    },
+    6: {
+      cardId: cards.filterFeeder?.cardId,
+      message: `${cards.filterFeeder?.cardName ?? primaryCard.name} came from the Pals Deck. This Filter Feeder normally needs 180 School Density, but Krill Bloom lowers the requirement by 150. ${cards.creatureSchool?.cardName ?? "White Grunt"} supplies the remaining 30, and ${cards.habitat?.cardName ?? "Coral Reef"} meets its separate Habitat requirement, so it is legal now.`,
+      action: `Press Continue to Actions, then play ${cards.filterFeeder?.cardName ?? primaryCard.name} in open water.`,
+    },
+    7: {
+      cardId: cards.apexSupport?.cardId,
+      message: `${cards.apexSupport?.cardName ?? primaryCard.name} came from the Pals Deck. It is a zero-cost, one-shot Support that searches for a Predator or Apex and then goes to the discard pile. Your ${cards.habitat?.cardName ?? "Coral Reef"} and Apex slot are ready, so use it to find ${cards.apex?.cardName ?? "Hammerhead"} and finish the lesson.`,
+      action: `Press Continue to Actions, then play ${cards.apexSupport?.cardName ?? primaryCard.name} and choose ${cards.apex?.cardName ?? "Hammerhead"} from the search results.`,
+    },
+  };
+  const lesson = lessons[round];
+  if (lesson?.cardId === primaryCard.cardId) return lesson;
+  return {
+    message: revealedCards.map(describeDrawnCard).join(" "),
+    action: "Press Continue to Actions. I will base the next highlighted move on the card you actually drew.",
+  };
+}
+
 function getAcademyCurriculumHelp(uiState) {
   const route = uiState.scriptedFinishRoute;
   if (Number(route?.plan?.curriculumVersion ?? 0) < 2 || !route?.active || !route.cards) return null;
 
   const { plan, cards } = route;
-  const guideName = tutorialGuideName(uiState);
   const round = Math.max(0, Number(uiState.round) || 0);
   const targetVp = Math.max(1, Number(plan.victoryTarget) || Number(uiState.victoryTarget) || 15);
   const playerVp = Math.max(0, Number(uiState.playerVp) || 0);
@@ -549,7 +604,9 @@ function getAcademyCurriculumHelp(uiState) {
     const result = getScriptedCardPlayHelp(uiState, card, details);
     return result ? Object.freeze({ ...result, progressLabel }) : null;
   };
-  const usedUtility = (action) => Boolean(action && ["used", "cooldown"].includes(action.blockType));
+  const completedAction = (action) => Boolean(
+    action && (action.usedThisTurn || ["used", "cooldown"].includes(action.blockType))
+  );
 
   if (playerVp >= targetVp || uiState.gameResult) return null;
 
@@ -568,6 +625,13 @@ function getAcademyCurriculumHelp(uiState) {
         action: `Choose ${cards.setup?.cardName ?? "the highlighted Base Coral"}, press Play Card, then place it in the glowing foundation area.`,
       });
     }
+    const layoutLesson = getGuidedAcademyLayoutLessonStep(
+      uiState.layoutLessonProgress,
+      { foundationName: cards.setup?.cardName ?? "your Base Coral" },
+    );
+    if (layoutLesson) {
+      return withTarget(layoutLesson, layoutLesson.target, layoutLesson.actionId);
+    }
     return help({
       title: "Begin the first tide",
       message: "Your first Coral is established. At the start of a round, the Condition changes the rules, your foundations collect RP up to the bank cap, and then you choose which personal deck solves the next part of your plan.",
@@ -581,10 +645,10 @@ function getAcademyCurriculumHelp(uiState) {
     const reasons = {
       1: `${cards.economy?.cardName ?? "Pillar Coral"} is our second foundation. Early Foundation draws improve income and add the spaces future creatures need.`,
       2: `${cards.firstFish?.cardName ?? "Spanish Hogfish"} will wait in hand while we use a Support card and establish the remaining Corals.`,
-      3: `${cards.secondFish?.cardName ?? "Parrotfish"} is the second Fish required by Coral Reef; first we will practice an Invertebrate action and a Fish attack.`,
-      4: `${cards.predator?.cardName ?? "Great Barracuda"} is prepared now—not earlier—because ${guideName} has compatible creatures and your Coral Reef plan is nearly online.`,
-      5: `${cards.creatureSchool?.cardName ?? "White Grunt"} comes from the Foundation Deck because Creature Schools build long-term School Density and can add RP income. Severe Coral Bleaching makes that resilient foundation more useful than rushing the finisher.`,
-      6: `${cards.filterFeeder?.cardName ?? "Whale Shark"} is in the Pals Deck. Krill Bloom makes its 180 School Density requirement reachable this round, so this draw turns White Grunt's 30 School Density into a planned 11 VP play.`,
+      3: `Coral Reef requires two regular, non-school Fish cards in your ecosystem; it does not require ${cards.secondFish?.cardName ?? "Parrotfish"} specifically. This lesson uses ${cards.firstFish?.cardName ?? "Spanish Hogfish"} and ${cards.secondFish?.cardName ?? "Parrotfish"}. Before playing the second Fish, we will practice an Invertebrate action and a Fish attack.`,
+      4: `We waited to draw ${cards.predator?.cardName ?? "Great Barracuda"} until I had compatible creatures for it to target and your Coral Reef plan was nearly complete. Now its On Play ability can matter instead of being wasted.`,
+      5: `${cards.creatureSchool?.cardName ?? "White Grunt"} comes from the Foundation Deck. Its Creature School supplies 30 School Density, and Severe Coral Bleaching does not stop Eco Foundation from producing 1 RP.`,
+      6: `${cards.filterFeeder?.cardName ?? "Whale Shark"} normally needs 180 School Density. Krill Bloom lowers that requirement by 150, so ${cards.creatureSchool?.cardName ?? "White Grunt"}'s 30 meets the remainder and makes this planned 11 VP play legal.`,
       7: `${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} is a Support card that will deliberately find the Apex finisher instead of leaving the last lesson to chance.`,
     };
     return getScriptedFinishDrawHelp(
@@ -596,10 +660,11 @@ function getAcademyCurriculumHelp(uiState) {
 
   if (uiState.modal === "draw-result") {
     const drawn = (uiState.drawnCards ?? []).map((card) => card.name).filter(Boolean).join(" and ") || "the prepared card";
+    const lesson = getAcademyDrawResultLesson(round, cards, uiState.drawnCards);
     return help({
       title: `Review ${drawn}`,
-      message: `Notice which personal deck produced this card and read its type, cost, and abilities. A prepared draw is still a strategic draw: it answers the need we identified before opening the deck.`,
-      action: "Press Continue to Actions. I will point to the exact card or board action that comes next.",
+      message: lesson.message,
+      action: lesson.action,
     }, "continue-actions", `draw-result-${round}-${drawn}`);
   }
 
@@ -610,7 +675,7 @@ function getAcademyCurriculumHelp(uiState) {
       title: `Search for ${searched?.cardName ?? "the highlighted card"}`,
       message: isApexSearch
         ? `${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} can search a Predator or Apex. We already built the Coral Reef and an Apex slot, so ${searched?.cardName ?? "Hammerhead"} is useful immediately rather than merely impressive in hand.`
-        : `${cards.coralSupport?.cardName ?? "Coral Gardener"} searches for a Coral. Choose ${searched?.cardName ?? "Lettuce Coral"}: it becomes our fourth true Coral, improves RP income, and supplies another creature slot for the Coral Reef requirement.`,
+        : `${cards.coralSupport?.cardName ?? "Coral Gardener"} searches for a Coral. Choose ${searched?.cardName ?? "Lettuce Coral"}: it becomes our fourth true Coral, improves RP income, and provides another legal home for a creature. Open slots help us build the required community, but empty slots do not count toward Coral Reef's requirement.`,
       action: `Choose the highlighted ${searched?.cardName ?? "lesson card"} to add it to your hand.`,
       targetSearchCardId: route.searchTargetCardId,
     }, "search-card", `search-${route.searchTargetCardId}`);
@@ -627,21 +692,52 @@ function getAcademyCurriculumHelp(uiState) {
         : isPredator
           ? `${cards.predator?.cardName ?? "Great Barracuda"} has a worthwhile target now. Coral Reef grants its second Bite, which is why playing this predator after building the habitat is stronger than leading with it on an empty opposing reef.`
           : `${cards.firstFish?.cardName ?? "Spanish Hogfish"}'s Crunch is a paid attack action. Choose the highlighted compatible Invertebrate; the simulator will compare your attack die with its defense die.`,
-      action: `Choose a glowing legal creature on ${guideName}'s reef, then resolve the faceoff dice.`,
+      action: "Choose a glowing legal creature in my reef, then resolve the faceoff dice.",
     }, "opponent-board", `attack-${sourceId ?? "active"}`);
+  }
+
+  // Older saved lessons may have advanced past Round 6 while Whale Shark was
+  // incorrectly blocked by its alternative Habitat requirement. Recover that
+  // missing 11 VP before allowing the authored Apex finish to dead-end.
+  if (round > 6 && !cards.filterFeeder?.inPlay && (cards.filterFeeder?.inHand || cards.filterFeeder?.inPalsDeck)) {
+    const delayedFilterFeederHelp = play(cards.filterFeeder, {
+      title: `Complete the delayed ${cards.filterFeeder.cardName} lesson`,
+      message: `${cards.filterFeeder.cardName} is the missing ${cards.filterFeeder.victoryPoints} VP step. Coral Reef satisfies its Habitat rule, White Grunt supplies 30 School Density, and Krill Bloom's unused reduction supplies the remaining 150.`,
+      action: `Choose ${cards.filterFeeder.cardName}, press Play Card, and let it enter open water automatically.`,
+    });
+    if (delayedFilterFeederHelp) return delayedFilterFeederHelp;
+
+    const availableRp = Math.max(0, Number(uiState.availableRp) || 0);
+    const requiredRp = Math.max(0, Number(cards.filterFeeder.cost) || 0);
+    if (cards.filterFeeder.inHand && /not enough rp/i.test(cards.filterFeeder.playError ?? "")) {
+      return help({
+        title: `Bank RP for ${cards.filterFeeder.cardName}`,
+        message: `Hammerhead's Ravage is complete, but ${cards.filterFeeder.cardName} is still in your hand, so its ${cards.filterFeeder.victoryPoints} VP have not joined the reef. It costs ${requiredRp} RP and you have ${availableRp}. Coral Reef and the unused Krill Bloom reduction already satisfy its other requirements.`,
+        action: `Press End Turn to refill your RP bank. I will return to ${cards.filterFeeder.cardName} before the lesson can finish.`,
+      }, "turn-button", "recover-filter-feeder-rp");
+    }
+
+    if (cards.filterFeeder.inPalsDeck) {
+      return help({
+        title: `Return to the ${cards.filterFeeder.cardName} lesson`,
+        message: `${cards.filterFeeder.cardName} is still in the Pals Deck, so the reef is missing its planned ${cards.filterFeeder.victoryPoints} VP Filter Feeder step.`,
+        action: `Press End Turn, then draw from the Pals Deck next round so we can play ${cards.filterFeeder.cardName}.`,
+      }, "turn-button", "recover-filter-feeder-draw");
+    }
   }
 
   if (round === 1) {
     if (!cards.economy?.inPlay) {
       return play(cards.economy, {
-        title: `Grow first with ${cards.economy?.cardName ?? "Pillar Coral"}`,
+        title: `Build the economy with ${cards.economy?.cardName ?? "Pillar Coral"}`,
         message: `This is the early-game habit I want you to keep: strengthen RP income and legal play spaces before chasing VP. ${cards.economy?.cardName ?? "Pillar Coral"} also provides the Predator slot we will use only after the opposing reef offers a meaningful target.`,
+        placementMessage: `${cards.economy?.cardName ?? "Pillar Coral"} is a second foundation, not an upgrade to the first one. Put it in the separate glowing open-water marker beside ${cards.setup?.cardName ?? "your first Coral"}, rather than covering that card or its slots.`,
       });
     }
     return help({
-      title: "Let the foundations collect",
-      message: "That is a complete opening turn. Two foundations will create a larger budget next round; spending the remaining RP on an unrelated card would make the later sequence weaker, not stronger.",
-      action: "Press End Turn. Round 2 will introduce Support cards and finish the four-Coral economy.",
+      title: "End the turn to grow your RP budget",
+      message: "Your opening turn is complete. Both Corals can produce RP next round. Save the RP that remains instead of spending it on a card that does not support the plan.",
+      action: "Press End Turn. In Round 2, play a Support card and establish two more Corals.",
     }, "turn-button", "end-round-1");
   }
 
@@ -662,12 +758,12 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.searchedCoral?.inPlay) {
       return play(cards.searchedCoral, {
         title: `Complete the four-Coral base with ${cards.searchedCoral?.cardName ?? "Lettuce Coral"}`,
-        message: `This is your fourth true Coral. Together the four foundations supply enough RP and enough Fish and Invertebrate spaces to build a Coral Reef without forcing creatures into illegal homes.`,
+        message: `This is your fourth true Coral, completing the Coral portion of Coral Reef's requirement. The four Corals also provide RP and legal homes for the two Fish and two Invertebrates we still need. Remember: available slots make those placements possible, but the creatures themselves satisfy the requirement.`,
       });
     }
     return help({
       title: "The reef has room to grow",
-      message: `You deliberately used a Support card and built four Corals. ${cards.firstFish?.cardName ?? "Spanish Hogfish"} stays in hand until the next collection can pay for the creatures, a card action, an attack, and a Coral upgrade in one coherent turn.`,
+      message: `You used a Support card and built four Corals. Keep ${cards.firstFish?.cardName ?? "Spanish Hogfish"} in hand until the next RP collection can pay for the creatures, an action, an attack, and a Coral upgrade during the same planned turn.`,
       action: "Press End Turn to collect the larger RP budget for Round 3.",
     }, "turn-button", "end-round-2");
   }
@@ -688,10 +784,10 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.firstFish?.inPlay) {
       return play(cards.firstFish, {
         title: `Add your first Fish: ${cards.firstFish?.cardName ?? "Spanish Hogfish"}`,
-        message: `Fish occupy Fish slots and contribute to habitat requirements. ${cards.firstFish?.cardName ?? "Spanish Hogfish"} also has Crunch, a paid attack action, and ${guideName} has placed a compatible Sea Urchin so the lesson is not asking you to waste it.`,
+        message: `Fish occupy Fish slots and can contribute to Habitat requirements. ${cards.firstFish?.cardName ?? "Spanish Hogfish"} also has Crunch, a paid attack action. A Sea Urchin is waiting in my reef, so Crunch will have a legal target when you are ready to attack.`,
       });
     }
-    if (!usedUtility(route.utilityAction)) {
+    if (!completedAction(route.utilityAction)) {
       if (uiState.inspectedUtilityAction?.cardId === cards.utility?.cardId) {
         return help({
           title: "Use Munch as a card action",
@@ -707,7 +803,7 @@ function getAcademyCurriculumHelp(uiState) {
         targetActionKey: route.utilityAction?.actionKey,
       }, "player-board", "munch-card");
     }
-    if (!usedUtility(route.attackAction)) {
+    if (!completedAction(route.attackAction)) {
       if (uiState.inspectedAttack?.cardId === cards.firstFish?.cardId) {
         return help({
           title: "Use Crunch as an attack",
@@ -732,22 +828,22 @@ function getAcademyCurriculumHelp(uiState) {
     }
     return help({
       title: "A complete action-phase lesson",
-      message: "This turn added both creature classes required by the habitat plan, demonstrated a passive, resolved a non-attack action, made a legal attack, and advanced a Coral. The remaining RP is intentionally banked.",
-      action: "Press End Turn. Round 4 will assemble Coral Reef before using a Predator.",
+      message: "This turn added both creature counts required by the Habitat plan, demonstrated a passive, resolved a non-attack action, made a legal attack, and advanced a Coral. Save the remaining RP for the next part of the plan.",
+      action: "Press End Turn. In Round 4, build the Coral Reef Habitat, then play a Predator.",
     }, "turn-button", "end-round-3");
   }
 
   if (round === 4) {
     if (!cards.secondFish?.inPlay) {
       return play(cards.secondFish, {
-        title: `Add the second Fish: ${cards.secondFish?.cardName ?? "Parrotfish"}`,
-        message: "Parrotfish completes Coral Reef's creature composition: four Corals, two Fish, and two Invertebrates. Its Eat ability is an on-play effect, so it resolves immediately after legal placement rather than waiting for an action button.",
+        title: `Complete the Fish count with ${cards.secondFish?.cardName ?? "Parrotfish"}`,
+        message: `Playing ${cards.secondFish?.cardName ?? "Parrotfish"} gives this reef its second Fish. Coral Reef does not require a particular Fish species: any two non-school Fish count, alongside four true Corals and two non-school Invertebrates. Eat is an On Play ability, so it resolves immediately after legal placement.`,
       });
     }
     if (!cards.habitat?.inPlay) {
       return play(cards.habitat, {
         title: `Create the ${cards.habitat?.cardName ?? "Coral Reef"} Habitat`,
-        message: "Habitats sit in their own reef zone and can unlock relationships or card requirements. Coral Reef costs 0 RP, but only because your board has earned it with four Corals, two Fish, and two Invertebrates; if that composition later breaks, maintenance damage begins.",
+        message: "Habitats sit in their own reef zone and can unlock relationships or other card requirements. Coral Reef costs 0 RP, but you may play it only while you have four true Corals, two non-school Fish, and two non-school Invertebrates. If that composition later breaks, Coral Reef takes 10 damage at the end of each of your turns until the requirement is restored.",
       });
     }
     if (!cards.coralStageTwo?.inPlay) {
@@ -759,15 +855,15 @@ function getAcademyCurriculumHelp(uiState) {
     }
     if (!cards.predator?.inPlay) {
       return play(cards.predator, {
-        title: `Now ${cards.predator?.cardName ?? "Great Barracuda"} has a job`,
-        message: `This is the right time for the Predator. ${guideName} has compatible Fish and Predators, Coral Reef grants a second Bite, and Murky Water reduces the printed 3 RP cost to 2. Earlier, the same play would have wasted its on-play ability and delayed the reef economy.`,
+        title: `Play ${cards.predator?.cardName ?? "Great Barracuda"} when its ability matters`,
+        message: `This is the right time for the Predator. My reef now has legal Fish and Predator targets, Coral Reef grants Quick Strike a second Bite, and Murky Water lowers the printed cost from 3 RP to 2. Playing it earlier—before the targets and Habitat were ready—would have wasted much of its On Play ability and slowed your economy.`,
         action: `Play ${cards.predator?.cardName ?? "Great Barracuda"} in Pillar Coral's Predator slot, then resolve both legal Bites.`,
       });
     }
     return help({
       title: "The food web is ready for an Apex",
       message: `Your reef is now worth ${playerVp} VP, but more importantly it has an economy, a balanced community, a Habitat, and an Apex slot. Before the finisher, we will learn how Creature Schools support the largest animals in the food web.`,
-      action: "Press End Turn. Round 5 will add your first Creature School.",
+      action: "Press End Turn. In Round 5, build your first Creature School.",
     }, "turn-button", "end-round-4");
   }
 
@@ -775,7 +871,7 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.creatureSchool?.inPlay) {
       return play(cards.creatureSchool, {
         title: `Establish a Creature School with ${cards.creatureSchool?.cardName ?? "White Grunt"}`,
-        message: `Welcome to a new kind of foundation. Creature Schools are creatures that begin in the foundation area: they have HP and can be attacked, but they also produce School Density for larger ocean animals. ${cards.creatureSchool?.cardName ?? "White Grunt"} supplies 30 School Density, and its Eco Foundation adds 1 RP on future turns.`,
+        message: `Creature Schools are played in the foundation area. They have HP and can be attacked, but they also produce School Density for larger ocean animals. ${cards.creatureSchool?.cardName ?? "White Grunt"} supplies 30 School Density, and Eco Foundation adds 1 RP on future turns. Although White Grunt represents a school of fish, Creature Schools do not count toward Coral Reef's two-Fish requirement.`,
         action: `Choose ${cards.creatureSchool?.cardName ?? "White Grunt"}, press Play Card, then place it in the highlighted foundation area.`,
         placementMessage: `Place ${cards.creatureSchool?.cardName ?? "White Grunt"} in the highlighted foundation area. Its 30 School Density will make next round's Filter Feeder legal, and its Eco Foundation can collect 1 RP on later turns.`,
       });
@@ -783,7 +879,7 @@ function getAcademyCurriculumHelp(uiState) {
     return help({
       title: "School Density is now part of the plan",
       message: `${cards.creatureSchool?.cardName ?? "White Grunt"} shows why foundations are not limited to Corals. Its 30 School Density represents a food base that can support a much larger animal, while its RP passive helps the reef recover from a stressful condition.`,
-      action: "Press End Turn. Round 6 will reveal a condition that makes a Filter Feeder possible.",
+      action: "Press End Turn. In Round 6, Krill Bloom lowers the requirement so you can play a Filter Feeder.",
     }, "turn-button", "end-round-5");
   }
 
@@ -791,14 +887,14 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.filterFeeder?.inPlay) {
       return play(cards.filterFeeder, {
         title: `Use School Density to welcome ${cards.filterFeeder?.cardName ?? "Whale Shark"}`,
-        message: `Filter Feeders are high-value creatures supported by the abundance of small schooling animals in the ecosystem. ${cards.filterFeeder?.cardName ?? "Whale Shark"} normally requires 180 School Density, but Krill Bloom reduces the next Filter Feeder requirement by 150. ${cards.creatureSchool?.cardName ?? "White Grunt"}'s 30 Density exactly covers the remaining requirement, and Coral Reef satisfies the Habitat requirement.`,
+        message: `${cards.filterFeeder?.cardName ?? "Whale Shark"} normally requires 180 School Density. Krill Bloom lowers the next Filter Feeder requirement by 150, so ${cards.creatureSchool?.cardName ?? "White Grunt"}'s 30 School Density meets the remainder. Coral Reef meets the separate Habitat requirement.`,
         action: `Choose ${cards.filterFeeder?.cardName ?? "Whale Shark"} and press Play Card. As an Ocean creature, it enters open water automatically; then review the confirmation.`,
       });
     }
     return help({
       title: "The reef can support a giant",
-      message: `${cards.filterFeeder?.cardName ?? "Whale Shark"} demonstrates the full chain: a Creature School supplies School Density, a Habitat satisfies the ecological requirement, and a well-timed Condition makes the play legal. The reef now has the 20 VP base needed for an Apex finish.`,
-      action: "Press End Turn. Round 7 will use a Support search to find and play the Apex.",
+      message: `${cards.filterFeeder?.cardName ?? "Whale Shark"} demonstrates the full chain: a Creature School supplies School Density, a Habitat satisfies the ecological requirement, and a well-timed Condition makes the play legal. Your reef is now at ${playerVp}/${targetVp} VP. ${cards.apex?.cardName ?? "Hammerhead"} is worth ${Math.max(0, Number(cards.apex?.victoryPoints) || 6)} VP, so the planned Apex play can complete this tutorial.`,
+      action: "Press End Turn. In Round 7, use Deep Sea Fishing to find Hammerhead, then play it in the Apex slot.",
     }, "turn-button", "end-round-6");
   }
 
@@ -806,14 +902,14 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.apexSupport?.inDiscard && !cards.apex?.inHand && !cards.apex?.inPlay) {
       return play(cards.apexSupport, {
         title: `Search with ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}`,
-        message: `One final current to read, Reefkeeper. ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} is a zero-cost, one-shot Support that searches for a Predator or Apex and then goes to the discard pile. Strong search play starts by checking the board: Coral Reef satisfies Hammerhead's requirement, Brain Coral provides the Apex slot, and even Bleak Overcast leaves exactly the 6 RP we need.`,
+        message: `You are almost there. ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} is a zero-cost, one-shot Support that searches for a Predator or Apex and then goes to the discard pile. Before searching, check that the result will be playable: Coral Reef satisfies Hammerhead's Habitat requirement, Brain Coral provides the Apex slot, and even Bleak Overcast leaves exactly the 6 RP we need.`,
         action: `Play ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}, then choose the highlighted Hammerhead.`,
       });
     }
     if (!cards.apex?.inPlay) {
       return play(cards.apex, {
-        title: `Cap the ecosystem with ${cards.apex?.cardName ?? "Hammerhead"}`,
-        message: `Apex creatures are powerful finishers with demanding prerequisites, so they belong at the end of a plan rather than the beginning. Hammerhead is good here because the reef already supports it: Coral Reef is active, an Apex slot is open, there is enough RP, and ${guideName} has legal targets for Ravage.`,
+        title: `Finish the lesson with ${cards.apex?.cardName ?? "Hammerhead"}`,
+        message: "Apex creatures are powerful finishers with demanding prerequisites, so they belong at the end of a plan rather than the beginning. Hammerhead is good here because the reef already supports it: Coral Reef is active, an Apex slot is open, there is enough RP, and I have legal targets for Ravage.",
         action: `Play ${cards.apex?.cardName ?? "Hammerhead"} in the highlighted Apex slot, then resolve its coral damage and two attacks to complete the ${targetVp} VP aquarium reef.`,
       });
     }
@@ -856,7 +952,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
       "Foundation",
       round === 3
         ? `Keep ${cards.finishSearch.cardName} inside the Pals Deck so ${cards.utility.cardName} can search for it deliberately this round.`
-        : `${cards.finishSearch.cardName} and ${cards.heldFinish.cardName} are already reserved for the finish, so draw Foundation without disturbing that pair.`,
+        : `${cards.finishSearch.cardName} and ${cards.heldFinish.cardName} are already reserved for the finish, so draw from the Foundation Deck without disturbing that pair.`,
     );
   }
 
@@ -901,7 +997,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
       id: FINISH_DUEL_HELP_ID,
       title: "Let the economy collect once",
       message: `${cards.economy.cardName} is in place. End this turn so both foundations can collect before the Scavenge lesson.`,
-      action: `Press End Turn. On Round 2, draw one Pals card to reveal ${cards.utility.cardName}.`,
+      action: `Press End Turn. In Round 2, draw one card from the Pals Deck to reveal ${cards.utility.cardName}.`,
     }, "turn-button", "scripted-end-round-one"), uiState, "scripted-end-round-one");
   }
 
@@ -977,7 +1073,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
       id: FINISH_DUEL_HELP_ID,
       title: "Bank the next collection for the finish",
       message: `The attack lesson is complete at ${Math.max(0, Number(uiState.playerVp) || 0)} VP. End the turn so Round 3 can use Scavenge once more without sacrificing ${cards.heldFinish.cardName}.`,
-      action: "Press End Turn. On Round 3, draw Foundation before using Scavenge again.",
+      action: "Press End Turn. In Round 3, draw one card from the Foundation Deck before using Scavenge again.",
     }, "turn-button", "scripted-end-round-two"), uiState, "scripted-end-round-two");
   }
 
@@ -1018,7 +1114,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
       id: FINISH_DUEL_HELP_ID,
       title: "Protect the two-card finish",
       message: `${cards.finishSearch.cardName} and ${cards.heldFinish.cardName} are now together in your hand. Keep the remaining ${Math.max(0, Number(uiState.availableRp) || 0)} RP; Murky Water will discount the Predator next round.`,
-      action: `Press End Turn. In Round ${plan.finishRound}, draw Foundation, then play ${cards.finishSearch.cardName} before ${cards.heldFinish.cardName}.`,
+      action: `Press End Turn. In Round ${plan.finishRound}, draw one card from the Foundation Deck, then play ${cards.finishSearch.cardName} before ${cards.heldFinish.cardName}.`,
     }, "turn-button", "scripted-bank-finish"), uiState, "scripted-bank-finish");
   }
 
@@ -1028,7 +1124,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
         title: `Use Murky Water: play ${cards.finishSearch.cardName}`,
         message: `Murky Water reduces this Predator from ${cards.finishSearch.printedCost} RP to ${cards.finishSearch.cost} RP. Its ${cards.finishSearch.victoryPoints} VP and on-play attack come first, leaving exactly enough RP for ${cards.heldFinish.cardName}.`,
         action: `Press Play Card, place ${cards.finishSearch.cardName} in the open Predator slot, then resolve its attack against Frogfish.`,
-        placementMessage: `Place ${cards.finishSearch.cardName} in the highlighted Predator slot on ${cards.economy.cardName}. Its on-play attack will begin immediately afterward.`,
+        placementMessage: `Place ${cards.finishSearch.cardName} in the highlighted Predator slot on ${cards.economy.cardName}. Its On Play attack resolves immediately afterward.`,
       });
     }
     if (!cards.heldFinish.inPlay) {
@@ -1049,7 +1145,6 @@ function getScriptedFinishDuelHelp(uiState) {
 }
 
 function getFinishDuelHelp(uiState) {
-  const guideName = tutorialGuideName(uiState);
   if (uiState.victoryPending !== true) return null;
   const context = finishDuelContext(uiState);
   if (context.playerVp >= context.targetVp) return null;
@@ -1059,7 +1154,7 @@ function getFinishDuelHelp(uiState) {
       return decorateFinishDuelHelp(withTarget({
         id: FINISH_DUEL_HELP_ID,
         title: `Place ${uiState.playingCardName ?? "your foundation"}`,
-        message: "A new practice board still needs its first legal foundation before we can continue the race to 10 VP.",
+        message: `A new practice board still needs its first legal foundation before we can continue toward the ${context.targetVp} VP goal.`,
         action: "Choose one of the glowing legal placement areas in your ecosystem.",
       }, "placement", "setup:placement"), uiState, `setup:placement:${uiState.playingCardId}`);
     }
@@ -1074,7 +1169,7 @@ function getFinishDuelHelp(uiState) {
       return decorateFinishDuelHelp(withTarget({
         id: FINISH_DUEL_HELP_ID,
         title: `Rebuild with ${setupCardName}`,
-        message: `Your saved lesson evidence is safe. This fresh practice board only needs a foundation before ${guideName} can guide the remaining duel.`,
+        message: "Your saved lesson evidence is safe. This fresh practice board only needs a foundation before I can guide you through the rest of the duel.",
         action: selected
           ? `Press Play Card, then place ${setupCardName} in the highlighted area.`
           : `Choose the glowing ${setupCardName} in your hand, then press Play Card.`,
@@ -1167,8 +1262,8 @@ function getFinishDuelHelp(uiState) {
     return decorateFinishDuelHelp(withTarget({
       id: FINISH_DUEL_HELP_ID,
       title: uiState.activeAttack ? `${uiState.activeAttack.cardName} is attacking` : "Choose a legal target",
-      message: "The attack is already active. Finish it before choosing the next build toward 10 VP.",
-      action: `Choose one of the glowing legal targets in ${guideName}'s ecosystem.`,
+      message: `The attack is already active. Finish it before choosing the next build toward ${context.targetVp} VP.`,
+      action: "Choose one of the glowing legal targets in my ecosystem.",
     }, "opponent-board", `active-attack:${uiState.activeAttack?.cardId ?? "card"}`), uiState, `active-attack:${uiState.activeAttack?.cardId ?? "card"}`);
   }
 
@@ -1200,7 +1295,7 @@ function getFinishDuelHelp(uiState) {
     return decorateFinishDuelHelp(withTarget({
       id: FINISH_DUEL_HELP_ID,
       title: `Use ${attack.attackName}`,
-      message: `${attack.cardName} can attack now. It will not directly add VP, but disrupting ${guideName} can protect your race to ${context.targetVp}.`,
+      message: `${attack.cardName} can attack now. It will not directly add VP, but disrupting my reef can protect your race to ${context.targetVp}.`,
       action: `Press Use ${attack.attackName}, then choose a glowing legal target.`,
       targetActionKey: attack.actionKey,
       targetLabel: `${attack.attackName} on ${attack.cardName}`,
@@ -1212,7 +1307,7 @@ function getFinishDuelHelp(uiState) {
     return decorateFinishDuelHelp(withTarget({
       id: FINISH_DUEL_HELP_ID,
       title: "Return to the next useful move",
-      message: "These card details are covering the next guided action in the race to 10 VP.",
+      message: `These card details are covering the next guided action in the race to ${context.targetVp} VP.`,
       action: next
         ? `Close these details, then ${next.actionName ? `use ${next.actionName} on ${next.cardName}` : next.attackName ? `use ${next.attackName} on ${next.cardName}` : `choose ${next.cardName}`}.`
         : "Close these details, then end the turn to collect RP and draw again.",
@@ -1236,7 +1331,7 @@ function getFinishDuelHelp(uiState) {
     return decorateFinishDuelHelp(withTarget({
       id: FINISH_DUEL_HELP_ID,
       title: `Attack with ${attack.cardName}`,
-      message: `${attack.attackName} is legal now. It does not directly add VP, but removing one of ${guideName}'s cards can slow the opposing score while you prepare your next build.`,
+      message: `${attack.attackName} is legal now. It does not directly add VP, but removing one of my cards can slow the opposing score while you prepare your next build.`,
       action: `Select ${attack.cardName}, then use ${attack.attackName}.`,
       targetActionKey: attack.actionKey,
       targetLabel: `${attack.cardName} in your ecosystem`,
@@ -1257,13 +1352,12 @@ function getFinishDuelHelp(uiState) {
   return decorateFinishDuelHelp(withTarget({
     id: FINISH_DUEL_HELP_ID,
     title: `Prepare the final ${context.remainingVp} VP`,
-    message: `You are at ${context.playerVp}/${context.targetVp} VP and ${guideName} is at ${context.opponentVp}. No legal build or useful card action is ready, so another collection and draw will create the next decision.`,
+    message: `You are at ${context.playerVp}/${context.targetVp} VP, and I am at ${context.opponentVp}. No legal build or useful card action is ready, so another collection and draw will create the next decision.`,
     action: "End the turn. On the next round, collect RP and draw toward another legal ecosystem card.",
   }, "turn-button", "end-turn"), uiState, "end-turn");
 }
 
 export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
-  const guideName = tutorialGuideName(uiState);
   const checkpointId = requireCheckpointId(checkpoint);
   const academyHelp = getAcademyCurriculumHelp(uiState);
   if (academyHelp) return academyHelp;
@@ -1322,7 +1416,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
     return withTarget({
       id: checkpointId,
       title: "Begin Round 1",
-      message: "Your starting foundation is in place. Begin the first round to collect RP and reach your next executable tutorial action.",
+      message: "Your starting foundation is in place. Begin Round 1 to collect RP and continue the lesson.",
       action: uiState.modal === "hand" || uiState.handPopoverOpen
         ? "Close your hand, then press Begin Round 1."
         : "Press Begin Round 1 to collect RP and draw.",
@@ -1506,7 +1600,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       const next = uiState.readyAttack;
       title = `${inspectedName} cannot attack right now`;
       message = uiState.inspectedAttack?.blockReason
-        ?? `${inspectedName} does not have a supported basic attack action.`;
+        ?? `${inspectedName} does not have an attack it can use right now.`;
       target = "close-modal";
       action = next
         ? `Close these details, select ${next.cardName}, and use ${next.attackName}.`
@@ -1519,7 +1613,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
     } else if (uiState.inspectedCardOpen && !uiState.inspectedPlayerCard) {
       const next = uiState.readyAttack;
       title = "Return to your ecosystem";
-      message = `You are reviewing one of ${guideName}'s cards, but the next guided action starts from your side of the board.`;
+      message = "You are reviewing one of my cards, but the next guided action is on your side of the board.";
       target = "close-modal";
       action = next
         ? `Close these details, select ${next.cardName}, and use ${next.attackName}.`
@@ -1540,7 +1634,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       title = next ? `${next.cardName} is already ready` : "Return to the guided action";
       message = next
         ? `You do not need another card before attacking. ${next.cardName}'s ${next.attackName} has ${next.targetCount} legal ${next.targetCount === 1 ? "target" : "targets"}.`
-        : `These card details are covering the action ${guideName} needs you to take next.`;
+        : "These card details are covering the next highlighted action.";
       target = "close-modal";
       action = next
         ? `Close these card details, select ${next.cardName} in your ecosystem, and use ${next.attackName}.`
@@ -1625,7 +1719,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       lead = "";
       message = "That is a fine first turn: you established a foundation and grew the economy that will pay for our next lesson. I arranged Arrow Crab as the next card in your Pals Deck, so there is no need to spend RP on an unrelated play now.";
       target = "turn-button";
-      action = "End your turn. When Round 2 begins, choose one card from the Pals Deck to draw Arrow Crab.";
+      action = "End your turn. At the start of Round 2, draw one card from the Pals Deck to reveal Arrow Crab.";
       playerThought = "My first turn already achieved its purpose: two foundations will collect enough RP to support a more interesting card action next round.";
       encouragement = "Exactly. There is a quiet skill in recognizing when a turn has done its job. We will let this reef collect, then use that economy with intention.";
       cue = "scripted:end-round-one";
@@ -1680,7 +1774,7 @@ export function getSimulatorTutorialConditionHelp(condition, round = 1) {
     id: "tutorial-condition",
     title: authored?.title ?? `Read ${conditionName} carefully`,
     message: authored?.message
-      ?? `This round's condition is ${conditionName}. ${conditionText || "Compare its effect with your hand, board, and available RP before choosing a move."}`,
+      ?? `The ocean changes through weather, seasons, currents, living processes, and human activity. ${conditionName} is a simplified model of one circumstance this round. Its game rule says: ${conditionText || "compare its effect with your hand, board, and available RP before choosing a move."}`,
     playerThought: authored?.playerThought
       ?? "I should identify exactly what changes, who it affects, and how long it lasts before I alter my plan.",
     encouragement: authored?.encouragement

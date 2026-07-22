@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { allCards } from "@/data/cards";
 import { OFFICIAL_RULINGS } from "@/data/rules/officialRulings.mjs";
@@ -10,12 +10,13 @@ import { CORE_RULES, extractRulesChunksFromHtml } from "@/lib/rulesAssistant.mjs
 import { answerRulesQuestion } from "@/lib/rulesEngine.mjs";
 import { buildRulesKnowledgeBank } from "@/lib/rulesKnowledgeBank.mjs";
 import { SIMULATOR_RULES } from "@/lib/seapalsRulesKnowledge.mjs";
-
-const suggestions = [
-  "How do I start a game?",
-  "How does attacking work?",
-  "What does Parrotfish do?",
-];
+import { resolveSimulatorFinnQuestion } from "@/app/simulator/simulatorFinnHelp.mjs";
+import {
+  RULES_CHAT_PLACEMENTS,
+  getRulesChatGreeting,
+  getRulesChatSuggestions,
+  shouldRenderRulesChat,
+} from "./rulesChatPresentation.mjs";
 
 const knowledgeSources = {
   cards: allCards,
@@ -47,10 +48,23 @@ async function loadRules() {
   return rulesPromise;
 }
 
-function BotMark() {
+function BotMark({ compact = false }) {
   return (
-    <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cyan-100 text-xl">
-      🐠
+    <span aria-hidden="true" className={`relative block shrink-0 overflow-hidden rounded-full border border-cyan-200 bg-cyan-50 ${compact ? "h-7 w-7" : "h-9 w-9"}`}>
+      <span
+        className="absolute"
+        style={{
+          top: "-5%",
+          left: "-30%",
+          width: "160%",
+          height: "228.571%",
+          backgroundImage: "url(/images/adventure/dorian-sprites.png)",
+          backgroundPosition: "50% 4.276316%",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "457.142857% 480%",
+          imageRendering: "pixelated",
+        }}
+      />
     </span>
   );
 }
@@ -59,8 +73,19 @@ function formatMessageText(text) {
   return String(text ?? "").replace(/\s+(?=\d+\.\s)/g, "\n");
 }
 
-export default function RulesChat() {
+export default function RulesChat({
+  placement = RULES_CHAT_PLACEMENTS.SITE,
+  gamePhase = null,
+  activeConditionName = null,
+  gameContext = null,
+}) {
   const pathname = usePathname();
+  const simulatorPlacement = placement === RULES_CHAT_PLACEMENTS.SIMULATOR;
+  const suggestions = useMemo(() => getRulesChatSuggestions({
+    placement,
+    gamePhase,
+    activeConditionName,
+  }), [activeConditionName, gamePhase, placement]);
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [rules, setRules] = useState(BUILT_IN_RULES);
@@ -68,7 +93,7 @@ export default function RulesChat() {
   const [messages, setMessages] = useState([
     {
       role: "bot",
-      text: "Ahoy! I’m Finn, your SeaPals rules buddy. What would you like to know?",
+      text: getRulesChatGreeting(placement),
     },
   ]);
   const conversationContextRef = useRef({});
@@ -109,9 +134,13 @@ export default function RulesChat() {
     const nextQuestion = rawQuestion.trim();
     if (!nextQuestion) return;
 
-    const answer = answerRulesQuestion(nextQuestion, rules, conversationContextRef.current);
+    const simulatorResolution = simulatorPlacement
+      ? resolveSimulatorFinnQuestion(nextQuestion, gameContext ?? {})
+      : null;
+    const answer = simulatorResolution?.answer
+      ?? answerRulesQuestion(simulatorResolution?.delegatedQuestion ?? nextQuestion, rules, conversationContextRef.current);
     if (!answer) return;
-    conversationContextRef.current = answer.context;
+    if (answer.context) conversationContextRef.current = answer.context;
     setMessages((current) => [
       ...current,
       { role: "user", text: nextQuestion },
@@ -125,15 +154,24 @@ export default function RulesChat() {
     ask(question);
   }
 
-  // Full-screen game routes supply their own contextual controls and feedback.
-  if (pathname === "/simulator" || pathname.startsWith("/adventure")) return null;
+  // Game routes embed their own instance so Finn can sit beside match controls
+  // without covering the action dock or duplicating the global launcher.
+  if (!shouldRenderRulesChat(pathname, placement)) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6">
+    <div
+      className={simulatorPlacement ? "relative" : "fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6"}
+      style={simulatorPlacement ? { zIndex: 140 } : undefined}
+    >
       {open ? (
         <section
           aria-label="SeaPals rules chat"
-          className="mb-3 flex h-[min(620px,calc(100vh-7rem))] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl border border-cyan-200 bg-white shadow-2xl shadow-cyan-950/20"
+          className={`${simulatorPlacement ? "absolute right-0" : "mb-3"} flex flex-col overflow-hidden rounded-3xl border border-cyan-200 bg-white shadow-2xl shadow-cyan-950/20`}
+          style={{
+            ...(simulatorPlacement ? { top: "calc(100% + 0.75rem)", zIndex: 150 } : null),
+            height: "min(620px, calc(100dvh - 7rem))",
+            width: "min(390px, calc(100vw - 2rem))",
+          }}
           role="dialog"
         >
           <header className="flex items-center gap-3 bg-gradient-to-r from-cyan-700 to-teal-600 px-4 py-3 text-white">
@@ -191,7 +229,12 @@ export default function RulesChat() {
                       {message.sources.map((source, sourceIndex) => (
                         <span key={`${source.id ?? source.label}-${sourceIndex}`}>
                           {sourceIndex ? " · " : ""}
-                          <Link className="underline decoration-slate-300 underline-offset-2" href={source.href ?? "/instructions"}>
+                          <Link
+                            className="underline decoration-slate-300 underline-offset-2"
+                            href={source.href ?? "/instructions"}
+                            target={simulatorPlacement ? "_blank" : undefined}
+                            rel={simulatorPlacement ? "noreferrer" : undefined}
+                          >
                             {source.label}
                           </Link>
                         </span>
@@ -199,7 +242,12 @@ export default function RulesChat() {
                     </div>
                   ) : null}
                   {message.showRulesLink ? (
-                    <Link className="mt-2 inline-block font-bold text-cyan-700 underline" href="/instructions">
+                    <Link
+                      className="mt-2 inline-block font-bold text-cyan-700 underline"
+                      href="/instructions"
+                      target={simulatorPlacement ? "_blank" : undefined}
+                      rel={simulatorPlacement ? "noreferrer" : undefined}
+                    >
                       Open How to Play
                     </Link>
                   ) : null}
@@ -256,11 +304,13 @@ export default function RulesChat() {
       <button
         aria-expanded={open}
         aria-label={open ? "Close SeaPals rules chat" : "Open SeaPals rules chat"}
-        className="ml-auto flex items-center gap-2 rounded-full bg-cyan-700 p-2.5 pr-4 font-bold text-white shadow-xl shadow-cyan-950/25 transition hover:-translate-y-0.5 hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-200"
+        className={simulatorPlacement
+          ? "flex min-h-11 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 py-2 text-xs font-black uppercase tracking-wider text-cyan-100 shadow-lg transition hover:border-cyan-200/50 hover:bg-cyan-300/15 focus:outline-none focus:ring-2 focus:ring-cyan-300"
+          : "ml-auto flex items-center gap-2 rounded-full bg-cyan-700 p-2.5 pr-4 font-bold text-white shadow-xl shadow-cyan-950/25 transition hover:-translate-y-0.5 hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-200"}
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
-        <BotMark />
+        <BotMark compact={simulatorPlacement} />
         <span>Ask Finn</span>
       </button>
     </div>

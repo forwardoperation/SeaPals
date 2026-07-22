@@ -42,6 +42,7 @@ import {
   getAdventureActorPositionOverrides,
 } from "./adventureActors.mjs";
 import { resolveAdventureMovementInput } from "./adventureMovementInput.mjs";
+import { getAdventureConversationSecondaryAction } from "./adventureConversationActions.mjs";
 import {
   advanceAdventureSceneTransition,
   createAdventureSceneTransition,
@@ -50,6 +51,7 @@ import {
 } from "./adventureSceneTransition.mjs";
 import {
   getAdventureWalkCycleDurationMs,
+  isAdventurePlayerWalking,
 } from "./adventureWalkAnimation.mjs";
 import {
   ADVENTURE_CONTENT,
@@ -299,7 +301,7 @@ const SPRITE_FEET_Y_BY_PROFILE = Object.freeze({
   "programmer-harlan": Object.freeze({ down: 52.6, left: 46.8, right: 42.3, up: 42.6 }),
   "town-adult": Object.freeze({ down: 45.5, left: 48.7, right: 45.8, up: 48.4 }),
   "town-elder": Object.freeze({ down: 55.8, left: 56.4, right: 52.6, up: 52.9 }),
-  "academy-mentor": Object.freeze({ down: 53.3, left: 58.8, right: 58.8, up: 35.5 }),
+  "academy-mentor": Object.freeze({ down: 53.7, left: 47.8, right: 58.8, up: 38.3 }),
 });
 
 const SPRITE_FOOT_PROFILE_BY_ARTWORK = Object.freeze({
@@ -458,6 +460,13 @@ function SpriteArtwork({
       aria-hidden="true"
     />
   );
+}
+
+function CharacterPortrait({ character = "player", facing = "down" }) {
+  if (character === ACADEMY_MENTOR_ID) {
+    return <span className={styles.mrEasterlingPortraitArtwork} aria-hidden="true" />;
+  }
+  return <SpriteArtwork character={character} facing={facing} portrait />;
 }
 
 function CharacterGroundShadow({ character = "player", facing = "down" }) {
@@ -1030,7 +1039,7 @@ function Conversation({
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={styles.dialogueLayer} role="dialog" aria-modal="true" aria-labelledby="dialogue-speaker">
       <div className={styles.dialogueBox}>
         <div className={`${styles.portrait} ${styles[`portrait${trainer.color}`]}`}>
-          <SpriteArtwork character={trainer.id} facing="down" portrait />
+          <CharacterPortrait character={trainer.id} facing="down" />
         </div>
         <div className={styles.dialogueCopy}>
           <div className={styles.dialogueMeta}>
@@ -1904,7 +1913,7 @@ function ChampionshipEnding({
       <article className={styles.championshipEndingCard} data-stage={stage}>
         <span className={styles.championshipGlow} aria-hidden="true" />
         <div className={`${styles.championshipPortrait} ${styles[`portrait${TRAINERS[copy.character]?.color ?? "teal"}`]}`}>
-          <SpriteArtwork character={copy.character} facing="down" portrait />
+          <CharacterPortrait character={copy.character} facing="down" />
         </div>
         <section>
           <span className={styles.championshipStep}>{replay ? "Pavilion reflection" : `Championship ending · ${stage}`}</span>
@@ -2094,7 +2103,6 @@ export default function AdventureGame() {
   const [subAssistedMode, setSubAssistedMode] = useState(false);
   const [subFeedback, setSubFeedback] = useState(null);
   const [isMoving, setIsMoving] = useState(false);
-  const [playerWalking, setPlayerWalking] = useState(false);
   const [boatTelemetry, setBoatTelemetry] = useState(() => ({
     sceneId: null,
     ...createBoatMotionState({ position: START_STATE.position, heading: 0 }),
@@ -2261,6 +2269,7 @@ export default function AdventureGame() {
     || tournamentRegistrationOpen
     || Boolean(championshipEndingStage);
   movementPausedRef.current = movementPaused;
+  const playerWalking = isAdventurePlayerWalking({ isMoving, boatMode, movementPaused });
   const interaction = useMemo(
     () => screen === "playing" && gameSave && !vehicleMode
       ? getContinuousInteraction(sceneId, position, facing, {
@@ -2305,7 +2314,6 @@ export default function AdventureGame() {
         rudder: 0,
       }));
     }
-    setPlayerWalking(false);
     setMovementActive(false);
   }, [setMovementActive]);
 
@@ -2933,11 +2941,9 @@ export default function AdventureGame() {
           const movementInput = resolveAdventureMovementInput(overworldDirectionsRef.current);
           const { vector } = movementInput;
           if (vector.x === 0 && vector.y === 0) {
-            setPlayerWalking(false);
             setMovementActive(false);
             return;
           }
-          setPlayerWalking(true);
           nextFacing = movementInput.direction;
           next = movePlayerContinuous(
             sceneId,
@@ -2985,10 +2991,6 @@ export default function AdventureGame() {
     animationFrame = window.requestAnimationFrame(updateMovement);
     return () => window.cancelAnimationFrame(animationFrame);
   }, [anchoredActorStates, boatMode, isMoving, movementPaused, requestSceneTransition, scene, sceneId, setDirty, setMovementActive]);
-
-  useEffect(() => {
-    if (boatMode || movementPaused || !isMoving) setPlayerWalking(false);
-  }, [boatMode, isMoving, movementPaused]);
 
   useEffect(() => {
     if (movementPaused) {
@@ -4464,7 +4466,7 @@ export default function AdventureGame() {
               guide: {
                 name: trainer.name,
                 role: trainer.title,
-                portraitSrc: "/images/adventure/academy-mentor-sprites.png",
+                portraitSrc: "/images/adventure/mr-easterling-portrait-v2.png",
               },
               contract: {
                 id: SHELLSHORE_TUTORIAL.id,
@@ -4512,6 +4514,13 @@ export default function AdventureGame() {
     : null;
   const canOfferSunpatchExhibition = conversation?.trainerId === "sunpatch-leader"
     && defeated.has("encounter-sunpatch-qualifier");
+  const conversationSecondaryAction = activeConversationTrainer
+    ? getAdventureConversationSecondaryAction({
+        trainer: activeConversationTrainer,
+        mode: conversation.mode,
+        canOfferSunpatchExhibition,
+      })
+    : null;
   const currentTownId = gameSave.world.townId;
   const isChampionsWake = currentTownId === "champions-wake";
   const activeFieldworkChapter = fieldworkActivity
@@ -5040,7 +5049,7 @@ export default function AdventureGame() {
           <div className={styles.panelEyebrow}>{currentTownId === "shellshore-village" ? "Aquarium project" : ecosystemChapter?.ui.recordLabel ?? "Town record"}</div>
           <div className={`${styles.trainerCard} ${onboardingProgress.tutorialComplete ? styles.trainerCardWon : ""}`}>
             <span className={`${styles.miniPortrait} ${styles.portraitteal}`}>
-              <SpriteArtwork character={ACADEMY_MENTOR_ID} facing="down" portrait />
+              <CharacterPortrait character={ACADEMY_MENTOR_ID} facing="down" />
             </span>
             <span>
               <strong>{activeStarter?.name ?? "Starter waiting"}</strong>
@@ -5073,7 +5082,7 @@ export default function AdventureGame() {
             return (
               <div key={trainer.id} className={`${styles.trainerCard} ${won ? styles.trainerCardWon : ""}`}>
                 <span className={`${styles.miniPortrait} ${styles[`portrait${trainer.color}`]}`}>
-                  <SpriteArtwork character={trainer.id} facing="down" portrait />
+                  <CharacterPortrait character={trainer.id} facing="down" />
                 </span>
                 <span>
                   <strong>{trainer.name}</strong>
@@ -5099,18 +5108,12 @@ export default function AdventureGame() {
           defeated={defeated.has(activeConversationTrainer.encounterId)}
           blocked={Boolean(confirmation || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity)}
           primaryLabel={conversationPrimaryLabel()}
-          secondaryLabel={canOfferSunpatchExhibition
-            ? "Play optional 30 VP exhibition"
-            : conversation.mode === "practiceLoss" || conversation.mode === "practiceExit"
-              ? "Take a break"
-              : conversation.mode === "defeat"
-                ? "Return to the Arena"
-              : "Not yet"}
+          secondaryLabel={conversationSecondaryAction?.label}
           textSpeed={gameSave.settings.textSpeed}
           reducedMotion={gameSave.settings.reducedMotion}
           onAdvance={advanceConversation}
           onPrimary={handleConversationPrimary}
-          onSecondary={canOfferSunpatchExhibition
+          onSecondary={conversationSecondaryAction?.kind === "exhibition"
             ? () => setConversation({
                 trainerId: SUNPATCH_EXHIBITION_TRAINER_ID,
                 index: 0,
@@ -5118,9 +5121,9 @@ export default function AdventureGame() {
                 sceneId: conversation.sceneId,
                 interactionId: conversation.interactionId,
               })
-            : ["victory", "roundVictory", "exhibitionVictory", "onboardingGate"].includes(conversation.mode)
-              ? null
-              : closeConversation}
+            : conversationSecondaryAction?.kind === "close"
+              ? closeConversation
+              : null}
         />
       ) : null}
       {starterSelectionOpen ? (

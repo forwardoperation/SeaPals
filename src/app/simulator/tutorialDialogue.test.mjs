@@ -107,7 +107,7 @@ test("authored greetings can explicitly opt out of structural lead-ins", () => {
 
 test("Professor target lead-ins stay contextual and neutral", () => {
   const cases = [
-    ["hand", "Let's begin with your hand."],
+    ["hand", "Let's check your hand."],
     ["placement", "Now choose a legal place."],
     ["continue-actions", "The draw is complete."],
     ["opponent-board", "Now look across at my ecosystem."],
@@ -116,4 +116,17 @@ test("Professor target lead-ins stay contextual and neutral", () => {
   cases.forEach(([target, expected]) => {
     assert.equal(getProfessorConversationLead({ target, message: "Review the current game state." }), `${expected} `);
   });
+});
+
+test("mid-round hand guidance does not sound like the lesson is restarting", () => {
+  const upgrade = createProfessorSpokenMessage({
+    title: "Upgrade to Brain Coral",
+    message: "Coral upgrades replace the earlier stage while preserving its position.",
+    target: "hand",
+  });
+  assert.equal(
+    upgrade,
+    "Let's check your hand. Coral upgrades replace the earlier stage while preserving its position.",
+  );
+  assert.doesNotMatch(upgrade, /begin|start/i);
 });

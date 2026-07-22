@@ -216,6 +216,8 @@ test("actor helpers share one live position for rendering, targeting, and collis
     id: interaction.id,
     position: { x: 8, y: 6 },
     radius: ADVENTURE_ACTOR_DEFAULTS.radius,
+    collisionRadiusX: ADVENTURE_ACTOR_DEFAULTS.collisionRadiusX,
+    collisionRadiusY: ADVENTURE_ACTOR_DEFAULTS.collisionRadiusY,
   }]);
   assert.equal(canOccupyContinuousPosition(
     "sunpatch-cay-town",
@@ -223,6 +225,47 @@ test("actor helpers share one live position for rendering, targeting, and collis
     0.22,
     { dynamicBlockers: blockers, ignoreActorTiles: true },
   ), false);
+});
+
+test("actor blockers protect planted feet without catching a close visual pass", () => {
+  const blockers = [{
+    id: "resident",
+    position: { x: 14, y: 7 },
+    radius: ADVENTURE_ACTOR_DEFAULTS.radius,
+    collisionRadiusX: ADVENTURE_ACTOR_DEFAULTS.collisionRadiusX,
+    collisionRadiusY: ADVENTURE_ACTOR_DEFAULTS.collisionRadiusY,
+  }];
+  const movementOptions = {
+    dynamicBlockers: blockers,
+    ignoreActorTiles: true,
+    radius: 0.22,
+    speed: 4,
+    maxStepDistance: 0.04,
+  };
+
+  const directApproach = movePlayerContinuous(
+    "town",
+    { x: 13, y: 7 },
+    { x: 1, y: 0 },
+    500,
+    movementOptions,
+  );
+  const closePass = movePlayerContinuous(
+    "town",
+    { x: 13, y: 7.41 },
+    { x: 1, y: 0 },
+    500,
+    movementOptions,
+  );
+
+  assert.ok(
+    directApproach.x <= 14 - ADVENTURE_ACTOR_DEFAULTS.collisionRadiusX + 1e-9,
+    `a direct approach must stop at the resident's feet, received x=${directApproach.x}`,
+  );
+  assert.ok(
+    closePass.x >= 14.99,
+    `a visibly clear shoulder-to-shoulder pass should remain open, received x=${closePass.x}`,
+  );
 });
 
 test("all authored patrol waypoints and straight legs stay on real walkable ground", () => {

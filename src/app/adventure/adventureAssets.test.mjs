@@ -127,6 +127,20 @@ test("Elverson ships distinct transparent GBA-style resident walk sheets", async
   }
 });
 
+test("Mr. Easterling ships a transparent identity-based walk sheet and portrait", async () => {
+  for (const spritePath of [
+    "/images/adventure/mr-easterling-sprites-v2.png",
+    "/images/adventure/mr-easterling-portrait-v2.png",
+  ]) {
+    const png = await readFile(publicAssetPath(spritePath));
+    assert.equal(png.subarray(0, 8).toString("hex"), PNG_SIGNATURE, spritePath);
+    assert.equal(png.readUInt32BE(16), 1254, `${spritePath} width`);
+    assert.equal(png.readUInt32BE(20), 1254, `${spritePath} height`);
+    assert.equal(png[25], 6, `${spritePath} must retain RGBA transparency`);
+    assert.equal(png.subarray(-8, -4).toString("ascii"), "IEND", `${spritePath} must be complete`);
+  }
+});
+
 test("playable science notes use unique authoritative government sources", () => {
   const sourcedNotes = ADVENTURE_CONTENT.fieldNotes.filter((fieldNote) => (
     fieldNote.status === "prototype" && fieldNote.sourceUrls?.length

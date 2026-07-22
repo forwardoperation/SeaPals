@@ -3,7 +3,7 @@ const MAX_SPEECH_DURATION_MS = 3800;
 const MS_PER_GRAPHEME = 16;
 
 const PROFESSOR_LEAD_BY_TARGET = Object.freeze({
-  hand: "Let's begin with your hand. ",
+  hand: "Let's check your hand. ",
   "play-card": "This card is ready. ",
   placement: "Now choose a legal place. ",
   "turn-button": "The turn control is next. ",
