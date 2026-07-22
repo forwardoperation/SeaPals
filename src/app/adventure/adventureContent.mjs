@@ -2725,10 +2725,18 @@ const conversations = [
     townId: "shellshore-village",
     npcId: "academy-mentor",
     lines: {
+      worldIntroduction: [
+        "Hello there! I'm Mr. Easterling. Welcome to Elverson, a small town where our streets, streams, and harbor all meet the sea.",
+        "I have been fascinated by the ocean for as long as I can remember. Every tide pool and reef is a neighborhood: animals depend on the water, their habitat, and one another in ways we are still learning to understand.",
+        "Building an aquarium here has been my lifelong dream. I don't want it to be only a room full of tanks; I want it to be a place where people discover how ocean habitats work and how our choices can help or harm them.",
+        "As we explore, we'll meet people who know this coast, learn how to catch certain fish and creatures responsibly, and record what the water and animals show us. Bring the creatures you catch back to me, and together we'll give them the right care and build aquarium exhibits that teach Elverson about their habitats.",
+        "SeaPals matches let us model those real relationships with cards. Building a playable ecosystem helps us think about food, shelter, water conditions, and the connections that keep a habitat healthy.",
+        "Right now, the aquarium is an empty workshop and a hopeful plan. I can't build it alone. I need your curiosity, your careful observations, and your help. Come with me, and I'll show you where our work begins.",
+      ],
       intro: [
-        "Welcome to Elverson! I'm Mr. Easterling. I have an empty room at the waterfront aquarium and a big goal: build our town's first habitat exhibit the right way.",
-        "I need your help to study the shoreline, learn what living things need, and turn careful observations into an exhibit Elverson can be proud of.",
-        "First, choose a starter deck that fits how you like to think. Our guided SeaPals match will teach us how habitats, resources, and relationships fit together.",
+        "Here we are: the Elverson Aquarium workshop. For years, I imagined these empty benches becoming an exhibit that could make our whole town curious about the ocean.",
+        "Before any real animal could live here, we would need to understand its water, food, shelter, space, and neighbors. So we'll begin safely with a SeaPals model ecosystem and practice making those connections.",
+        "I'll stay beside you through the entire lesson. First, let me introduce three starter reefs; each one teaches a different way to build a healthy, working ecosystem.",
       ],
       rematch: [
         "Building an aquarium exhibit takes practice, good notes, and the willingness to revise a plan.",

@@ -37,7 +37,7 @@ const turnSteps = [
     name: "Build",
     prompt: "What can I add to my ocean?",
     description:
-      "Spend RP to play legal cards, upgrade Foundations, and use paid Actions. Meet every requirement before paying the cost.",
+      "Spend RP to play legal cards, upgrade Foundations, and use paid Actions. A card's Actions are available the turn it enters your ecosystem unless its text says otherwise. Meet every requirement before paying the cost.",
     color: "border-emerald-200 bg-emerald-50 text-emerald-950",
   },
   {

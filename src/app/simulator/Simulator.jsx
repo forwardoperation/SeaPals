@@ -80,6 +80,7 @@ import {
   resolveParasiteCollection,
   resolveSpearfishingInvaderRemoval,
   resolveStunnedAtControllerTurnBoundary,
+  resolveTargetedCoinFlip,
 } from "./specialCardRules.mjs";
 import foundationDeckImg from "./images/foundation-deck.png";
 import palsDeckImg from "./images/pals-deck.png";
@@ -731,7 +732,7 @@ function getOnPlayReorder(card) {
 }
 
 function cardHasSchoolMomentum(card) {
-  return (card?.onPlay ?? []).some((ability) => /momentum:.*creature school.*different name/i.test(typeof ability === "string" ? ability : ability?.text ?? ""));
+  return (card?.onPlay ?? []).some((ability) => /momentum:.*creature school/i.test(typeof ability === "string" ? ability : ability?.text ?? ""));
 }
 
 function cardHasPlenteous(card) {
@@ -1115,6 +1116,57 @@ function getCardClassLabel(card) {
   if (card.kind === CardKind.HABITAT) return `${zoneLabel} Habitat`;
   if (card.kind === CardKind.SUPPORT) return "Support Action";
   return classLabel;
+}
+
+function DeckSearchChoice({
+  card,
+  onInspect,
+  onChoose,
+  chooseLabel = "Add to Hand",
+  chooseDisabled = false,
+  chosen,
+  meta = null,
+  tutorialTarget,
+  tutorialSearchCardId,
+  className = "",
+}) {
+  if (!card) return null;
+  const selectionState = chosen === true
+    ? "border-emerald-400 bg-emerald-400/20"
+    : "border-cyan-300/25 bg-white/5";
+
+  return (
+    <div
+      data-tutorial-search-card-id={tutorialSearchCardId}
+      data-tutorial-target={tutorialTarget}
+      className={`flex flex-col gap-3 rounded-2xl border p-3 transition sm:flex-row sm:items-center sm:justify-between ${selectionState} ${className}`}
+    >
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-label={`Inspect ${card.name} details`}
+        onClick={(event) => onInspect(card.id, event)}
+        className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 text-left outline-none transition hover:bg-cyan-300/10 focus-visible:ring-2 focus-visible:ring-cyan-300"
+      >
+        <img src={card.image} alt="" className="h-24 w-16 shrink-0 rounded-lg bg-white object-contain" />
+        <span className="min-w-0">
+          <strong className="block truncate text-white">{card.name}</strong>
+          {meta ? <span className="mt-1 block text-sm text-cyan-100/70">{meta}</span> : null}
+          <span className="mt-1 block text-[10px] font-black uppercase tracking-wider text-cyan-300 group-hover:text-cyan-200">View card details</span>
+        </span>
+      </button>
+      <button
+        type="button"
+        disabled={chooseDisabled}
+        aria-pressed={typeof chosen === "boolean" ? chosen : undefined}
+        aria-label={`${chooseLabel} ${card.name}`}
+        onClick={onChoose}
+        className={`shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${chosen ? "bg-emerald-600 hover:bg-emerald-500" : "bg-cyan-600 hover:bg-cyan-500"}`}
+      >
+        {chooseLabel}
+      </button>
+    </div>
+  );
 }
 
 function isFoundationCard(card) {
@@ -1942,6 +1994,7 @@ export default function Simulator({
   const storyResultRecordedRef = useRef(false);
   const openingCoinFlipIdRef = useRef(0);
   const openingCoinFlipActiveRef = useRef(false);
+  const inspectorReturnFocusRef = useRef(null);
   const [inspectedCard, setInspectedCard] = useState(null);
   const [eventOverlay, setEventOverlay] = useState(() => ({
     type: "new-game-setup",
@@ -2340,6 +2393,18 @@ export default function Simulator({
     : null;
   const inspectedFoundationIsStunned = Boolean(inspectedFoundation && !coralCanUseOwnAbilities(inspectedFoundation));
   const inspectedActionKey = inspectedCreatureSlot ? getSlotActionKey(inspectedCreatureSlot) : inspectedCard?.slotId;
+
+  useEffect(() => {
+    if (!inspectedCardData) return undefined;
+    const handleInspectorKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      closeCardInspector();
+    };
+    window.addEventListener("keydown", handleInspectorKeyDown);
+    return () => window.removeEventListener("keydown", handleInspectorKeyDown);
+  }, [inspectedCardData]);
+
   const playerTutorialActionCards = tutorialContract ? [
     ...playerCorals.flatMap((coral) => coral.slots.flatMap((slot) => slot.cardId && slot.invasiveOwner !== "opponent" ? [{
       cardId: slot.cardId,
@@ -2854,10 +2919,10 @@ export default function Simulator({
         id: "tutorial-script-utility-target",
         cueId: `tutorial-script-utility-target:${pendingCreatureAction.sourceCardId}`,
         progressLabel: `Aquarium reef • ${playerVp}/${victoryTarget} VP`,
-        title: "Munch flipped heads",
+        title: "Choose Munch's target",
         lead: "",
-        message: "The coin succeeded, so Nudibranch's non-attack action can reduce one Coral's next RP production. This changes the opponent's economy; it does not roll attack and defense dice or remove a creature.",
-        action: `Choose ${tutorialGuide.name}'s highlighted Coral to finish Munch.`,
+        message: "Munch is a non-attack action that can reduce one Coral's next RP production. Choose the intended Coral first; then the coin flip decides whether the effect succeeds. This changes the opponent's economy without rolling attack and defense dice or removing a creature.",
+        action: `Choose ${tutorialGuide.name}'s highlighted Coral, then resolve Munch's coin flip.`,
         target: "coin-coral-target",
         targetLabel: "the highlighted opposing Coral",
       }
@@ -4452,12 +4517,12 @@ export default function Simulator({
     pushLog(`Upgraded ${currentCard.name} to ${nextCard.stageLabel} for ${upgradeCost} RP.${playerOrphanCreatures.length !== redistributed.orphans.length ? ` ${playerOrphanCreatures.length - redistributed.orphans.length} orphaned creature group(s) occupied the new compatible slots.` : ""}`);
     emitPlayerBuild(nextCard, upgradeCost, "foundation-upgrade");
     if (cardHasSchoolMomentum(nextCard)) {
-      const candidates = [...new Set([...foundationDeck, ...palsDeck].filter((cardId) => isCreatureSchool(cardsById[cardId]) && cardsById[cardId]?.name !== nextCard.name))];
+      const candidates = [...new Set([...foundationDeck, ...palsDeck].filter((cardId) => isCreatureSchool(cardsById[cardId])))];
       if (candidates.length) {
         setSearchContext({ mode: "school-momentum", sourceCardId: nextCard.id, candidates });
-        setEventOverlay({ type: "choose-school-momentum", sourceCardId: nextCard.id, title: `Player's ${nextCard.name} used Momentum`, message: "Choose a differently named Creature School from your decks to add to your hand. Both decks will be shuffled afterward." });
+        setEventOverlay({ type: "choose-school-momentum", sourceCardId: nextCard.id, title: `Player's ${nextCard.name} used Momentum`, message: "Choose a Creature School from your decks to add to your hand. Both decks will be shuffled afterward." });
       } else {
-        pushLog(`${nextCard.name}'s Momentum found no differently named Creature School.`);
+        pushLog(`${nextCard.name}'s Momentum found no Creature School.`);
       }
     }
   }
@@ -4696,6 +4761,23 @@ export default function Simulator({
 
   function handleFloatingCardPointerUp() {
     setFloatingCardDrag(null);
+  }
+
+  function inspectSearchResult(cardId) {
+    if (!cardsById[cardId]) return;
+    if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+      inspectorReturnFocusRef.current = document.activeElement;
+    }
+    setInspectedCard({ owner: "reference", cardId, reference: true });
+  }
+
+  function closeCardInspector() {
+    const returnTarget = inspectorReturnFocusRef.current;
+    inspectorReturnFocusRef.current = null;
+    setInspectedCard(null);
+    if (returnTarget?.isConnected) {
+      window.requestAnimationFrame(() => returnTarget.focus());
+    }
   }
 
   function inspectFloatingCard(details) {
@@ -6295,18 +6377,9 @@ export default function Simulator({
         pushLog(`${sourceCard.name}'s ${actionName} has no legal opponent coral target.`);
         return;
       }
-      const heads = Math.random() < 0.5;
-      setRp((current) => Math.max(0, current - cost));
-      if (actionIsOncePerTurn(action)) setUsedCreatureActions((current) => [...current, actionKey]);
+      setPendingCreatureAction({ action, effect, actionKey, sourceCardId: sourceCard.id, actionName, cost, costCommitted: false, candidates: opponentCoralCards.map((coral) => coral.id) });
       setInspectedCard(null);
-      if (!heads) {
-        const message = `${sourceCard.name} flipped tails for ${actionName}. The ${cost} RP action had no effect.`;
-        pushLog(message);
-        setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${actionName}`, message, success: false });
-        return;
-      }
-      setPendingCreatureAction({ action, effect, actionKey, sourceCardId: sourceCard.id, actionName, cost, costCommitted: true, candidates: opponentCoralCards.map((coral) => coral.id) });
-      setEventOverlay({ type: "choose-coin-coral-target", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${actionName}`, message: "Heads! Choose an opponent coral for the effect. The action cost has already been paid." });
+      setEventOverlay({ type: "choose-coin-coral-target", sourceCardId: sourceCard.id, title: `Choose a target for ${actionName}`, message: `Choose an opponent Coral before flipping. Once chosen, the ${cost} RP action is committed; ${effect.successResult ?? "heads"} applies the effect and the other result does nothing. Cancel now to spend no RP.` });
       return;
     }
     if (effect.type === "rollDiceForResource") {
@@ -6489,10 +6562,41 @@ export default function Simulator({
 
   function completeCoinCoralEffect(coralId) {
     if (!pendingCreatureAction?.candidates?.includes(coralId)) return;
+    const pendingAction = pendingCreatureAction;
     const target = opponentCorals.find((coral) => coral.id === coralId);
-    const sourceCard = cardsById[pendingCreatureAction.sourceCardId];
-    const effect = pendingCreatureAction.effect.onSuccess ?? pendingCreatureAction.effect;
-    if (!target || !sourceCard || !effect) return;
+    const sourceCard = cardsById[pendingAction.sourceCardId];
+    if (!target || !sourceCard) return;
+    const isTargetedCoinAction = pendingAction.effect.type === EffectType.FLIP_COIN;
+    const coinResolution = isTargetedCoinAction
+      ? resolveTargetedCoinFlip({
+          candidateIds: pendingAction.candidates,
+          targetId: coralId,
+          successResult: pendingAction.effect.successResult ?? "heads",
+        })
+      : null;
+    if (isTargetedCoinAction && !coinResolution?.resolved) return;
+    const effect = pendingAction.effect.onSuccess ?? pendingAction.effect;
+    if (!effect) return;
+    const actionName = pendingAction.actionName ?? getActionName(pendingAction.action);
+    const commitCostAndActionUse = () => {
+      const cost = pendingAction.cost ?? getActionCost(pendingAction.action);
+      if (!pendingAction.costCommitted) {
+        setRp((current) => Math.max(0, current - cost));
+        if (actionIsOncePerTurn(pendingAction.action)) {
+          setUsedCreatureActions((current) => current.includes(pendingAction.actionKey) ? current : [...current, pendingAction.actionKey]);
+        }
+      }
+      return cost;
+    };
+    if (coinResolution && !coinResolution.success) {
+      const cost = commitCostAndActionUse();
+      const targetName = cardsById[target.cardId]?.name ?? "Coral";
+      const message = `${sourceCard.name} targeted the opponent's ${targetName} with ${actionName}, paid ${cost} RP, and flipped ${coinResolution.coinResult}. The effect did not succeed.`;
+      pushLog(message);
+      setPendingCreatureAction(null);
+      setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: target.cardId, title: `Player's ${sourceCard.name} used ${actionName}`, message, success: false });
+      return;
+    }
     let message = "";
     if (effect.type === EffectType.DAMAGE) {
       const amount = Number(effect.amount?.value ?? effect.amount ?? 0);
@@ -6528,14 +6632,15 @@ export default function Simulator({
       setOpponent((current) => ({ ...current, corals: current.corals.map((coral) => coral.id === coralId ? { ...coral, statuses: [...(coral.statuses ?? []).filter((status) => status.type !== "stunned"), createStunnedStatus(sourceCard.id)] } : coral) }));
       message = `${sourceCard.name} Stunned the opponent's ${cardsById[target.cardId]?.name}. It produces no RP, cannot use its own actions or passives, and cannot be upgraded through the end of the opponent's next turn. Coral Heal can clear Stunned early.`;
     }
-    if (!pendingCreatureAction.costCommitted) {
-      const cost = pendingCreatureAction.cost ?? getActionCost(pendingCreatureAction.action);
-      setRp((current) => Math.max(0, current - cost));
-      if (actionIsOncePerTurn(pendingCreatureAction.action)) setUsedCreatureActions((current) => current.includes(pendingCreatureAction.actionKey) ? current : [...current, pendingCreatureAction.actionKey]);
+    if (coinResolution?.success) {
+      const sourcePrefix = `${sourceCard.name} `;
+      const effectSummary = message.startsWith(sourcePrefix) ? message.slice(sourcePrefix.length) : message;
+      message = `${sourceCard.name}'s ${actionName} landed ${coinResolution.coinResult} and ${effectSummary.charAt(0).toLowerCase()}${effectSummary.slice(1)}`;
     }
+    commitCostAndActionUse();
     pushLog(message);
     setPendingCreatureAction(null);
-    setEventOverlay({ type: "impact-result", sourceCardId: sourceCard.id, defenderCardId: target.cardId, title: `Player's ${sourceCard.name} used ${pendingCreatureAction.actionName ?? getActionName(pendingCreatureAction.action)}`, message, success: true });
+    setEventOverlay({ type: "impact-result", sourceCardId: sourceCard.id, defenderCardId: target.cardId, title: `Player's ${sourceCard.name} used ${actionName}`, message, success: true });
   }
 
   function completeSymbiosis(cardId = null) {
@@ -7140,11 +7245,11 @@ export default function Simulator({
     }
     let momentumSummary = "";
     if (cardHasSchoolMomentum(card)) {
-      const momentumCardId = [...next.foundationDeck, ...next.palsDeck].find((cardId) => isCreatureSchool(cardsById[cardId]) && cardsById[cardId]?.name !== card.name);
+      const momentumCardId = [...next.foundationDeck, ...next.palsDeck].find((cardId) => isCreatureSchool(cardsById[cardId]));
       if (momentumCardId) {
         next = { ...next, foundationDeck: shuffle(removeOneCard(next.foundationDeck, momentumCardId)), palsDeck: shuffle(removeOneCard(next.palsDeck, momentumCardId)), hand: [...next.hand, momentumCardId] };
         momentumSummary = ` Momentum found ${cardsById[momentumCardId]?.name} and added it to the opponent's hand.`;
-      } else momentumSummary = " Momentum found no differently named Creature School.";
+      } else momentumSummary = " Momentum found no Creature School.";
     }
     let onPlayDrawSummary = "";
     let onPlayDrawLossSummary = "";
@@ -7470,11 +7575,15 @@ export default function Simulator({
         if (effect.type === EffectType.FLIP_COIN) {
           const target = currentPlayerFoundations.find((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL);
           if (!target) continue;
-          const heads = Math.random() < 0.5;
+          const coinResolution = resolveTargetedCoinFlip({
+            candidateIds: [target.id],
+            targetId: target.id,
+            successResult: effect.successResult ?? "heads",
+          });
           const committedState = commitAction(opponentState, actionKey, cost, oncePerTurn);
-          if (!heads) return { state: committedState, playerState: currentPlayerState, sourceCardId: entry.card.id, defenderCardId: target.cardId, actionName: getActionName(action), success: false, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and flipped tails, so it had no effect.` };
+          if (!coinResolution.success) return { state: committedState, playerState: currentPlayerState, sourceCardId: entry.card.id, defenderCardId: target.cardId, actionName: getActionName(action), success: false, summary: `Opponent's ${entry.card.name} targeted your ${cardsById[target.cardId]?.name ?? "Coral"} with ${getActionName(action)} for ${cost} RP and flipped ${coinResolution.coinResult}, so it had no effect.` };
           const playerEffect = applyPlayerCoralEffect(effect.onSuccess, target, entry.card.id);
-          return { state: committedState, playerState: playerEffect.state, sourceCardId: entry.card.id, defenderCardId: target.cardId, actionName: getActionName(action), success: playerEffect.success, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP, flipped heads, and ${playerEffect.summary}.` };
+          return { state: committedState, playerState: playerEffect.state, sourceCardId: entry.card.id, defenderCardId: target.cardId, actionName: getActionName(action), success: playerEffect.success, summary: `Opponent's ${entry.card.name} targeted your ${cardsById[target.cardId]?.name ?? "Coral"} with ${getActionName(action)} for ${cost} RP, flipped ${coinResolution.coinResult}, and ${playerEffect.summary}.` };
         }
         if (effect.type === "grantNextOnPlayAttackBonus") {
           if (opponentState.nextOnPlayAttackBonus) continue;
@@ -8390,6 +8499,79 @@ export default function Simulator({
     return { events, playerState: nextPlayer, opponentState: nextOpponent, summary: summaryParts.join(" ") };
   }
 
+  function preserveOpponentNormalActionsAfterOnPlay(attackResult) {
+    if (!attackResult) return attackResult;
+    const preserve = (pendingRegenerate) => pendingRegenerate
+      ? { ...pendingRegenerate, resumeNormalActionsAfterOnPlay: true }
+      : pendingRegenerate;
+    return {
+      ...attackResult,
+      pendingRegenerate: preserve(attackResult.pendingRegenerate),
+      steps: (attackResult.steps ?? []).map((step) => ({
+        ...step,
+        pendingRegenerate: preserve(step.pendingRegenerate),
+      })),
+    };
+  }
+
+  function buildOpponentUtilityEvents(utilities) {
+    return (utilities?.actions ?? []).map((opponentUtility) => {
+      const message = `${opponentUtility.summary}${opponentUtility.revealedCards?.length ? " The searched card is revealed below." : ""}`;
+      return {
+        type: "utility-result",
+        sourceCardId: opponentUtility.sourceCardId,
+        defenderCardId: opponentUtility.defenderCardId,
+        title: `Opponent's ${cardsById[opponentUtility.sourceCardId]?.name} used ${opponentUtility.actionName}`,
+        message,
+        revealedCards: opponentUtility.revealedCards ?? [],
+        success: opponentUtility.success !== false,
+        opponentStateAfter: opponentUtility.state,
+        playerStateAfter: opponentUtility.playerState,
+        logMessage: message,
+        opponentSequence: true,
+      };
+    });
+  }
+
+  function runOpponentNormalActions(opponentState, currentPlayerState) {
+    const utilities = runOpponentUtilityActions(opponentState, currentPlayerState);
+    const opponentStateAfterUtility = utilities.state;
+    const playerStateAfterUtility = utilities.playerState;
+    const attack = utilities.lost ? null : runOpponentAttack(
+      opponentStateAfterUtility,
+      playerStateAfterUtility.corals,
+      playerStateAfterUtility.reefCreatureInstances,
+      playerStateAfterUtility.orphanCreatureInstances,
+      null,
+      null,
+      {
+        rp: playerStateAfterUtility.rp,
+        blueCrabRecycleUsedTurn: playerStateAfterUtility.blueCrabRecycleUsedTurn,
+        creatureStatuses: playerStateAfterUtility.creatureStatuses,
+        resilienceUsedCardIds: playerStateAfterUtility.resilienceUsedCardIds,
+      },
+    );
+    const attackResolution = attack
+      ? buildOpponentAttackEventSequence(attack, playerStateAfterUtility, opponentStateAfterUtility)
+      : {
+          events: [],
+          playerState: playerStateAfterUtility,
+          opponentState: { ...opponentStateAfterUtility, rovLightsActive: false },
+          summary: "",
+        };
+    return {
+      utilities,
+      attack,
+      attackResolution,
+      events: [...buildOpponentUtilityEvents(utilities), ...attackResolution.events],
+      playerState: attackResolution.playerState,
+      opponentState: attackResolution.opponentState,
+      summary: [utilities.summary, attackResolution.summary].filter(Boolean).join(" "),
+      lost: Boolean(utilities.lost),
+      hasPendingRegenerate: attackResolution.events.some((event) => event.type === "choose-regenerate"),
+    };
+  }
+
   function resolvePlayerRegenerateChoice(choice) {
     const pending = eventOverlay?.regenerate;
     if (eventOverlay?.type !== "choose-regenerate" || !pending) return;
@@ -8554,7 +8736,7 @@ export default function Simulator({
     regenerateOpponentCollateral = choiceOpponentProjection.collateral;
 
     const continuation = !attackerDiscardedAfterConsume ? pending.continuation : null;
-    const continuationResult = continuation ? runOpponentAttack(
+    let continuationResult = continuation ? runOpponentAttack(
       choiceOpponentState,
       choicePlayerState.corals,
       choicePlayerState.reefCreatureInstances,
@@ -8568,10 +8750,37 @@ export default function Simulator({
         resilienceUsedCardIds: choicePlayerState.resilienceUsedCardIds,
       },
     ) : null;
-    const continuationResolution = continuationResult
+    if (pending.resumeNormalActionsAfterOnPlay) {
+      continuationResult = preserveOpponentNormalActionsAfterOnPlay(continuationResult);
+    }
+    const onPlayContinuationResolution = continuationResult
       ? buildOpponentAttackEventSequence(continuationResult, choicePlayerState, choiceOpponentState, { actionCostAlreadyPaid: true })
       : { events: [], playerState: choicePlayerState, opponentState: choiceOpponentState, summary: "" };
+    const onPlayContinuationHasPendingRegenerate = onPlayContinuationResolution.events.some((event) => event.type === "choose-regenerate");
+    const opponentVpAfterOnPlayContinuation = getEcosystemVictoryPoints(
+      onPlayContinuationResolution.opponentState.corals,
+      onPlayContinuationResolution.opponentState.habitats,
+      onPlayContinuationResolution.opponentState.reefCreatures,
+      {
+        controller: "opponent",
+        localOrphans: onPlayContinuationResolution.opponentState.orphanCreatures,
+        rivalCorals: onPlayContinuationResolution.playerState.corals,
+        rivalOrphans: onPlayContinuationResolution.playerState.orphanCreatureInstances,
+      },
+    );
+    const normalActionsAfterOnPlay = pending.resumeNormalActionsAfterOnPlay
+      && !onPlayContinuationHasPendingRegenerate
+      && opponentVpAfterOnPlayContinuation < victoryTarget
+        ? runOpponentNormalActions(onPlayContinuationResolution.opponentState, onPlayContinuationResolution.playerState)
+        : null;
+    const continuationResolution = {
+      events: [...onPlayContinuationResolution.events, ...(normalActionsAfterOnPlay?.events ?? [])],
+      playerState: normalActionsAfterOnPlay?.playerState ?? onPlayContinuationResolution.playerState,
+      opponentState: normalActionsAfterOnPlay?.opponentState ?? onPlayContinuationResolution.opponentState,
+      summary: [onPlayContinuationResolution.summary, normalActionsAfterOnPlay?.summary].filter(Boolean).join(" "),
+    };
     const remainingRegenerate = continuationResolution.events.some((event) => event.type === "choose-regenerate");
+    const opponentLostAfterFollowup = Boolean(normalActionsAfterOnPlay?.lost);
     const maintenanceEvents = [];
     let finalOpponentState = normalizeProjectedOpponentState(continuationResolution.opponentState);
     if (!remainingRegenerate) {
@@ -8579,26 +8788,28 @@ export default function Simulator({
         ...finalOpponentState,
         flashingAlarmAttackBonus: endFlashingAlarmTurn(finalOpponentState.flashingAlarmAttackBonus),
       };
-      const maintenance = resolveEndOfTurnHabitatMaintenance(finalOpponentState.habitatInstances, {
-        cardsInPlay: getCardsInPlayForComposition(finalOpponentState.corals, finalOpponentState.reefCreatures, finalOpponentState.orphanCreatures),
-        cardLookup: cardsById,
-        habitatLookup: cardsById,
-      });
-      maintenance.events.forEach((event) => {
-        const maintenanceMessage = event.destroyed
-          ? `Opponent's ${cardsById[event.cardId]?.name} took ${event.appliedDamage} end-of-turn damage and was destroyed.`
-          : `Opponent's ${cardsById[event.cardId]?.name} took ${event.appliedDamage} end-of-turn damage. ${event.currentHealth} HP remains.`;
-        const nextHabitats = event.destroyed
-          ? finalOpponentState.habitatInstances.filter((habitat) => habitat.instanceId !== event.instanceId)
-          : finalOpponentState.habitatInstances.map((habitat) => habitat.instanceId === event.instanceId ? { ...habitat, currentHealth: event.currentHealth } : habitat);
-        finalOpponentState = {
-          ...finalOpponentState,
-          habitats: nextHabitats.map((habitat) => habitat.cardId),
-          habitatInstances: nextHabitats,
-          discardPile: event.destroyed ? [event.cardId, ...finalOpponentState.discardPile] : finalOpponentState.discardPile,
-        };
-        maintenanceEvents.push({ type: "opponent-impact", sourceCardId: event.cardId, title: event.destroyed ? "Opponent Habitat Destroyed" : "Opponent Habitat Deteriorated", message: maintenanceMessage, success: event.destroyed, opponentStateAfter: finalOpponentState, logMessage: maintenanceMessage, opponentSequence: true });
-      });
+      if (!opponentLostAfterFollowup) {
+        const maintenance = resolveEndOfTurnHabitatMaintenance(finalOpponentState.habitatInstances, {
+          cardsInPlay: getCardsInPlayForComposition(finalOpponentState.corals, finalOpponentState.reefCreatures, finalOpponentState.orphanCreatures),
+          cardLookup: cardsById,
+          habitatLookup: cardsById,
+        });
+        maintenance.events.forEach((event) => {
+          const maintenanceMessage = event.destroyed
+            ? `Opponent's ${cardsById[event.cardId]?.name} took ${event.appliedDamage} end-of-turn damage and was destroyed.`
+            : `Opponent's ${cardsById[event.cardId]?.name} took ${event.appliedDamage} end-of-turn damage. ${event.currentHealth} HP remains.`;
+          const nextHabitats = event.destroyed
+            ? finalOpponentState.habitatInstances.filter((habitat) => habitat.instanceId !== event.instanceId)
+            : finalOpponentState.habitatInstances.map((habitat) => habitat.instanceId === event.instanceId ? { ...habitat, currentHealth: event.currentHealth } : habitat);
+          finalOpponentState = {
+            ...finalOpponentState,
+            habitats: nextHabitats.map((habitat) => habitat.cardId),
+            habitatInstances: nextHabitats,
+            discardPile: event.destroyed ? [event.cardId, ...finalOpponentState.discardPile] : finalOpponentState.discardPile,
+          };
+          maintenanceEvents.push({ type: "opponent-impact", sourceCardId: event.cardId, title: event.destroyed ? "Opponent Habitat Destroyed" : "Opponent Habitat Deteriorated", message: maintenanceMessage, success: event.destroyed, opponentStateAfter: finalOpponentState, logMessage: maintenanceMessage, opponentSequence: true });
+        });
+      }
     }
     const opponentStunRecovery = resolveStunnedAtControllerTurnBoundary(finalOpponentState.corals, {
       turnComplete: !remainingRegenerate,
@@ -8644,6 +8855,9 @@ export default function Simulator({
       rivalOrphans: postChoicePlayerState.orphanCreatureInstances,
     });
     const postChoiceVictoryResult = remainingRegenerate ? null : determineVictoryResult(postChoicePlayerVp, postChoiceOpponentVp, victoryTarget);
+    const postChoiceGameResult = opponentLostAfterFollowup
+      ? "Victory: the opponent could not complete a required draw from its personal decks."
+      : postChoiceVictoryResult?.message ?? null;
     setPendingEvents((current) => {
       const extraSummaryActions = [
         message,
@@ -8657,7 +8871,7 @@ export default function Simulator({
             ...event,
             actions: extraSummaryActions.length ? [...(event.actions ?? []), ...extraSummaryActions] : event.actions,
             opponentStateAfter: finalOpponentState,
-            gameResultAfter: event.gameResultAfter ?? postChoiceVictoryResult?.message ?? null,
+            gameResultAfter: event.gameResultAfter ?? postChoiceGameResult,
           }
         : event);
       const transitionIndex = updatedEvents.findIndex((event) => event.type === "turn-transition");
@@ -8921,43 +9135,56 @@ export default function Simulator({
       coralDamageSummary = coralDamageResult.summary;
     }
     const playerCoralsAfterDamage = playerStateAfterCoralDamage.corals ?? playerCoralsAfterSupports;
-    const opponentUtilities = opponentResult.lost || opponentReachedVictoryOnPlay || opponentResult.onPlayAttack?.attack ? null : runOpponentUtilityActions(opponentStateAfterPlay, playerStateAfterCoralDamage);
-    const opponentStateAfterUtility = opponentUtilities?.state ?? opponentStateAfterPlay;
-    const playerStateAfterUtility = opponentUtilities?.actions.length ? stagePlayerState(opponentUtilities.playerState) : stagedPlayerState;
-    const playerCoralsBeforeAttack = playerStateAfterUtility.corals ?? playerCoralsAfterDamage;
-    const opponentLostAfterUtility = opponentResult.lost || Boolean(opponentUtilities?.lost);
-    const opponentAttack = opponentLostAfterUtility || (opponentReachedVictoryOnPlay && !opponentResult.onPlayAttack?.attack) ? null : runOpponentAttack(
-      opponentStateAfterUtility,
-      playerCoralsBeforeAttack,
-      playerStateAfterUtility.reefCreatureInstances,
-      playerStateAfterUtility.orphanCreatureInstances,
-      opponentResult.onPlayAttack?.attack ? opponentResult.onPlayAttack : null,
+    const opponentOnPlayAttack = opponentResult.lost || !opponentResult.onPlayAttack?.attack ? null : runOpponentAttack(
+      opponentStateAfterPlay,
+      playerCoralsAfterDamage,
+      playerStateAfterCoralDamage.reefCreatureInstances,
+      playerStateAfterCoralDamage.orphanCreatureInstances,
+      opponentResult.onPlayAttack,
       null,
       {
-        rp: playerStateAfterUtility.rp,
-        blueCrabRecycleUsedTurn: playerStateAfterUtility.blueCrabRecycleUsedTurn,
-        creatureStatuses: playerStateAfterUtility.creatureStatuses,
-        resilienceUsedCardIds: playerStateAfterUtility.resilienceUsedCardIds,
+        rp: playerStateAfterCoralDamage.rp,
+        blueCrabRecycleUsedTurn: playerStateAfterCoralDamage.blueCrabRecycleUsedTurn,
+        creatureStatuses: playerStateAfterCoralDamage.creatureStatuses,
+        resilienceUsedCardIds: playerStateAfterCoralDamage.resilienceUsedCardIds,
       },
     );
-    const opponentAttackResolution = opponentAttack
-      ? buildOpponentAttackEventSequence(opponentAttack, stagedPlayerState, opponentStateAfterUtility)
-      : { events: [], playerState: stagedPlayerState, opponentState: { ...opponentStateAfterUtility, rovLightsActive: false }, summary: "" };
-    if (opponentAttack) stagePlayerState(opponentAttackResolution.playerState);
-    const opponentStateAfterAttack = opponentAttackResolution.opponentState;
-    const opponentStateWithInstances = normalizeProjectedOpponentState(reconcileOpponentInstances(opponent, opponentStateAfterAttack));
+    const preservedOnPlayAttack = preserveOpponentNormalActionsAfterOnPlay(opponentOnPlayAttack);
+    const opponentOnPlayAttackResolution = preservedOnPlayAttack
+      ? buildOpponentAttackEventSequence(preservedOnPlayAttack, stagedPlayerState, opponentStateAfterPlay)
+      : { events: [], playerState: stagedPlayerState, opponentState: opponentStateAfterPlay, summary: "" };
+    if (opponentOnPlayAttack) stagePlayerState(opponentOnPlayAttackResolution.playerState);
+    const opponentStateAfterOnPlayAttack = opponentOnPlayAttackResolution.opponentState;
+    const playerStateAfterOnPlayAttack = opponentOnPlayAttackResolution.playerState;
+    const onPlayHasPendingRegenerate = opponentOnPlayAttackResolution.events.some((event) => event.type === "choose-regenerate");
     const opponentVpAfterMandatoryResolution = getEcosystemVictoryPoints(
-      opponentStateWithInstances.corals,
-      opponentStateWithInstances.habitats,
-      opponentStateWithInstances.reefCreatures,
+      opponentStateAfterOnPlayAttack.corals,
+      opponentStateAfterOnPlayAttack.habitats,
+      opponentStateAfterOnPlayAttack.reefCreatures,
       {
         controller: "opponent",
-        localOrphans: opponentStateWithInstances.orphanCreatures,
-        rivalCorals: stagedPlayerState.corals,
-        rivalOrphans: stagedPlayerState.orphanCreatureInstances,
+        localOrphans: opponentStateAfterOnPlayAttack.orphanCreatures,
+        rivalCorals: playerStateAfterOnPlayAttack.corals,
+        rivalOrphans: playerStateAfterOnPlayAttack.orphanCreatureInstances,
       },
     );
-    const opponentVictoryLocked = !opponentLostAfterUtility && opponentReachedVictoryOnPlay && opponentVpAfterMandatoryResolution >= victoryTarget;
+    const opponentVictoryAfterMandatoryResolution = !onPlayHasPendingRegenerate
+      && opponentReachedVictoryOnPlay
+      && opponentVpAfterMandatoryResolution >= victoryTarget;
+    const opponentNormalActions = opponentResult.lost || onPlayHasPendingRegenerate || opponentVictoryAfterMandatoryResolution
+      ? null
+      : runOpponentNormalActions(opponentStateAfterOnPlayAttack, playerStateAfterOnPlayAttack);
+    if (opponentNormalActions) stagePlayerState(opponentNormalActions.playerState);
+    const opponentLostAfterUtility = opponentResult.lost || Boolean(opponentNormalActions?.lost);
+    const opponentAttackResolution = {
+      events: [...opponentOnPlayAttackResolution.events, ...(opponentNormalActions?.events ?? [])],
+      playerState: opponentNormalActions?.playerState ?? opponentOnPlayAttackResolution.playerState,
+      opponentState: opponentNormalActions?.opponentState ?? opponentOnPlayAttackResolution.opponentState,
+      summary: [opponentOnPlayAttackResolution.summary, opponentNormalActions?.summary].filter(Boolean).join(" "),
+    };
+    const opponentStateAfterAttack = opponentAttackResolution.opponentState;
+    const opponentStateWithInstances = normalizeProjectedOpponentState(reconcileOpponentInstances(opponent, opponentStateAfterAttack));
+    const opponentVictoryLocked = !opponentLostAfterUtility && opponentVictoryAfterMandatoryResolution;
     const hasPendingRegenerate = opponentAttackResolution.events.some((event) => event.type === "choose-regenerate");
     const opponentHabitatMaintenance = hasPendingRegenerate || opponentLostAfterUtility || opponentVictoryLocked ? {
       habitats: opponentStateWithInstances.habitatInstances,
@@ -9057,12 +9284,8 @@ export default function Simulator({
       });
       if (collapseEvent) turnEvents.push(collapseEvent);
     }
-    (opponentUtilities?.actions ?? []).forEach((opponentUtility) => {
-      const message = `${opponentUtility.summary}${opponentUtility.revealedCards?.length ? " The searched card is revealed below." : ""}`;
-      turnEvents.push({ type: "utility-result", sourceCardId: opponentUtility.sourceCardId, defenderCardId: opponentUtility.defenderCardId, title: `Opponent's ${cardsById[opponentUtility.sourceCardId]?.name} used ${opponentUtility.actionName}`, message, revealedCards: opponentUtility.revealedCards ?? [], success: opponentUtility.success !== false, opponentStateAfter: opponentUtility.state, playerStateAfter: opponentUtility.playerState, logMessage: message });
-    });
     turnEvents.push(...opponentAttackResolution.events);
-    const opponentSummary = [opponentParasiteMessage, opponentResult.summary, coralDamageResult?.summary, getContinuousHealthCollapseMessage(coralDamageCollateral), opponentUtilities?.summary, opponentAttackResolution.summary, ...habitatTurnEvents.map((event) => event.message), opponentStunRecoverySummary].filter(Boolean).join(" ");
+    const opponentSummary = [opponentParasiteMessage, opponentResult.summary, coralDamageResult?.summary, getContinuousHealthCollapseMessage(coralDamageCollateral), opponentAttackResolution.summary, ...habitatTurnEvents.map((event) => event.message), opponentStunRecoverySummary].filter(Boolean).join(" ");
     turnEvents.push(...habitatTurnEvents);
     const normalizedFinalPlayerState = normalizeProjectedPlayerState(stagedPlayerState);
     const finalPlayerVp = getEcosystemVictoryPoints(
@@ -10680,14 +10903,19 @@ export default function Simulator({
 
       {inspectedCardData ? (
         <>
-          <button type="button" aria-label="Close card inspector" onClick={() => setInspectedCard(null)} className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm" />
-          <aside className="seapals-card-drawer seapals-hud-panel fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-cyan-300/30 p-6 text-slate-100 shadow-2xl" aria-label={`${inspectedCardData.name} card inspector`}>
+          <button type="button" aria-label="Close card inspector" onClick={closeCardInspector} className="fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-sm" />
+          <aside
+            className="seapals-card-drawer seapals-hud-panel fixed inset-y-0 right-0 z-[110] w-full max-w-md overflow-y-auto border-l border-cyan-300/30 p-6 text-slate-100 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="seapals-card-inspector-title"
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">{inspectedCard.foundation ? inspectedCard.owner === "player" ? "Your Foundation" : "Opponent Foundation" : inspectedCard.owner === "player" ? "Your Creature" : "Opponent Creature"}</div>
-                <h2 className="mt-1 text-2xl font-black text-white">{inspectedCardData.name}</h2>
+                <div className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">{inspectedCard.reference ? "Deck search preview" : inspectedCard.foundation ? inspectedCard.owner === "player" ? "Your Foundation" : "Opponent Foundation" : inspectedCard.owner === "player" ? "Your Creature" : "Opponent Creature"}</div>
+                <h2 id="seapals-card-inspector-title" className="mt-1 text-2xl font-black text-white">{inspectedCardData.name}</h2>
               </div>
-              <button type="button" onClick={() => setInspectedCard(null)} className={`rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal">Close</button>
+              <button type="button" autoFocus onClick={closeCardInspector} className={`rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal">Close</button>
             </div>
             {tutorialHelpInline && tutorialHelp.target === "close-modal" ? (
               <div className="mt-4">
@@ -10696,7 +10924,8 @@ export default function Simulator({
             ) : null}
             <img src={inspectedCardData.image} alt={inspectedCardData.name} className="mt-5 h-96 w-full rounded-3xl border border-white/10 bg-slate-950/45 object-contain" />
             <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold">
-              <span className="rounded-full bg-cyan-400/15 px-3 py-1 text-cyan-200">{inspectedCardData.category}</span>
+              <span className="rounded-full bg-cyan-400/15 px-3 py-1 text-cyan-200">{getCardClassLabel(inspectedCardData)}</span>
+              <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-200">{getPlayerCardPlayCost(inspectedCardData)} RP</span>
               {inspectedCardData.defense ? <span className="rounded-full bg-indigo-400/15 px-3 py-1 text-indigo-200">Defense {inspectedCardData.defense?.dice ?? inspectedCardData.defense}</span> : null}
               {Number(inspectedCardData.victoryPoints ?? 0) > 0 ? <span className="rounded-full bg-amber-400/15 px-3 py-1 text-amber-200">{inspectedCardData.victoryPoints} VP</span> : null}
             </div>
@@ -10829,6 +11058,8 @@ export default function Simulator({
           className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5"
           role="dialog"
           aria-modal="true"
+          aria-hidden={inspectedCardData ? "true" : undefined}
+          inert={inspectedCardData || undefined}
           aria-labelledby="seapals-event-title"
           aria-describedby={eventOverlay.message && !["condition-reveal", "opponent-status"].includes(eventOverlay.type) ? "seapals-event-message" : undefined}
         >
@@ -11163,12 +11394,32 @@ export default function Simulator({
                   </div>
                 ) : eventOverlay.type === "choose-onplay-multi-search" ? (
                   <div className="mt-6">
-                    <div className="grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">{(searchContext?.candidates ?? []).map((cardId) => { const card = cardsById[cardId]; const selectedCopies = searchContext.selected.filter((selectedId) => selectedId === cardId).length; const availableCopies = [...foundationDeck, ...palsDeck].filter((candidateId) => candidateId === cardId).length; return <button key={cardId} type="button" onClick={() => toggleOnPlaySearchCard(cardId)} className={`flex items-center gap-3 rounded-2xl border-2 p-3 text-left ${selectedCopies ? "border-emerald-400 bg-emerald-400/25" : "border-slate-500 bg-white/5"}`}><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-sm text-cyan-200">{selectedCopies ? `Selected ${selectedCopies}/${Math.min(availableCopies, searchContext.max)}` : availableCopies > 1 ? `${availableCopies} copies available` : "Select"}</span></span></button>; })}</div>
+                    <div className="grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
+                      {(searchContext?.candidates ?? []).map((cardId) => {
+                        const card = cardsById[cardId];
+                        const selectedCopies = searchContext.selected.filter((selectedId) => selectedId === cardId).length;
+                        const availableCopies = [...foundationDeck, ...palsDeck].filter((candidateId) => candidateId === cardId).length;
+                        return (
+                          <DeckSearchChoice
+                            key={cardId}
+                            card={card}
+                            onInspect={() => inspectSearchResult(cardId)}
+                            onChoose={() => toggleOnPlaySearchCard(cardId)}
+                            chooseLabel={selectedCopies ? `Selected ${selectedCopies}/${Math.min(availableCopies, searchContext.max)}` : "Select"}
+                            chosen={selectedCopies > 0}
+                            meta={availableCopies > 1 ? `${availableCopies} copies available` : getCardClassLabel(card)}
+                          />
+                        );
+                      })}
+                    </div>
                     <div className="mt-4 flex gap-3"><button type="button" onClick={() => completeOnPlayMultiSearch()} className="rounded-full bg-emerald-500 px-6 py-3 font-black">Confirm {searchContext?.selected.length ?? 0}/{searchContext?.max ?? 0}</button><button type="button" onClick={() => completeOnPlayMultiSearch([])} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Choose No Cards</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-school-momentum" ? (
                   <div className="mt-6 grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
-                    {(searchContext?.candidates ?? []).map((cardId) => { const card = cardsById[cardId]; return <button key={cardId} type="button" onClick={() => completeSchoolMomentum(cardId)} className="flex items-center gap-3 rounded-2xl border-2 border-amber-400 bg-amber-400/10 p-3 text-left hover:bg-amber-400/25"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-sm text-amber-200">{card?.stageLabel}</span></span></button>; })}
+                    {(searchContext?.candidates ?? []).map((cardId) => {
+                      const card = cardsById[cardId];
+                      return <DeckSearchChoice key={cardId} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => completeSchoolMomentum(cardId)} meta={card?.stageLabel ?? getCardClassLabel(card)} />;
+                    })}
                   </div>
                 ) : eventOverlay.type === "choose-inspection-deck" ? (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -11182,7 +11433,12 @@ export default function Simulator({
                   </div>
                 ) : eventOverlay.type === "choose-explorer-card" ? (
                   <div className="mt-6">
-                    <div className="grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">{(searchContext?.candidates ?? []).map((cardId, index) => { const card = cardsById[cardId]; return <button key={`${cardId}-${index}`} type="button" onClick={() => commitDeckInspection(cardId)} className="flex items-center gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-3 text-left hover:bg-emerald-400/25"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><strong>{card?.name}</strong></button>; })}</div>
+                    <div className="grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
+                      {(searchContext?.candidates ?? []).map((cardId, index) => {
+                        const card = cardsById[cardId];
+                        return <DeckSearchChoice key={`${cardId}-${index}`} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => commitDeckInspection(cardId)} meta={getCardClassLabel(card)} />;
+                      })}
+                    </div>
                     <div className="mt-4 flex gap-3"><button type="button" onClick={() => commitDeckInspection()} className="rounded-full bg-cyan-600 px-6 py-3 font-black">Choose No Card</button><button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setModal("hand"); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-clear-status-target" ? (
@@ -11278,13 +11534,26 @@ export default function Simulator({
                       {(pendingCreatureAction?.searchCandidates ?? []).map((cardId) => {
                         const card = cardsById[cardId];
                         const scriptedChoice = scriptedTutorialOverlayHelpOpen && cardId === scriptedSearchTargetCardId;
-                        return <button key={cardId} type="button" onClick={() => completeActionDeckSearch(cardId)} data-tutorial-target={scriptedChoice ? "script-search-card" : undefined} className={`flex items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/25${scriptedChoice ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-xs text-cyan-200">{foundationDeck.includes(cardId) ? "Foundation" : "Pals"}</span>{scriptedChoice ? <span className="mt-1 block text-[10px] font-black uppercase tracking-wider text-amber-200">{tutorialGuide.name}'s lesson target</span> : null}</span></button>;
+                        return (
+                          <DeckSearchChoice
+                            key={cardId}
+                            card={card}
+                            onInspect={() => inspectSearchResult(cardId)}
+                            onChoose={() => completeActionDeckSearch(cardId)}
+                            meta={`${foundationDeck.includes(cardId) ? "Foundation" : "Pals"} Deck${scriptedChoice ? ` · ${tutorialGuide.name}'s lesson target` : ""}`}
+                            tutorialTarget={scriptedChoice ? "script-search-card" : undefined}
+                            className={scriptedChoice ? "seapals-tutorial-target" : ""}
+                          />
+                        );
                       })}
                     </div>
                   </div>
                 ) : eventOverlay.type === "choose-creature-action-search" ? (
                   <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
-                    {(pendingCreatureAction?.candidates ?? []).map((cardId) => { const card = cardsById[cardId]; return <button key={cardId} type="button" onClick={() => completeCreatureActionSearch(cardId)} className="flex w-full items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/20"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-sm text-cyan-200">Add to hand</span></span></button>; })}
+                    {(pendingCreatureAction?.candidates ?? []).map((cardId) => {
+                      const card = cardsById[cardId];
+                      return <DeckSearchChoice key={cardId} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => completeCreatureActionSearch(cardId)} meta={getCardClassLabel(card)} />;
+                    })}
                     <button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button>
                   </div>
                 ) : eventOverlay.type === "choose-action-discard" ? (
@@ -11364,7 +11633,11 @@ export default function Simulator({
       ) : null}
 
       {modal ? (
-        <div className={`fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-2 backdrop-blur-sm sm:p-4 ${modal === "hand" ? "xl:hidden" : ""}`}>
+        <div
+          className={`fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-2 backdrop-blur-sm sm:p-4 ${modal === "hand" ? "xl:hidden" : ""}`}
+          aria-hidden={inspectedCardData ? "true" : undefined}
+          inert={inspectedCardData || undefined}
+        >
           <div className={`max-h-[calc(100dvh-1rem)] max-w-[56rem] w-full overflow-y-auto rounded-[2rem] border p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-6 ${isDarkZoneModal ? "seapals-hud-panel border-cyan-300/25 text-slate-100" : "border-transparent bg-white text-slate-900"}`}>
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -11375,7 +11648,7 @@ export default function Simulator({
                     : modal === "discard"
                     ? "Cards sent to the discard pile are shown here."
                     : modal === "search"
-                    ? `Choose a card for ${cardsById[searchContext?.supportCardId]?.name}. You may cancel without spending the card or RP.`
+                    ? `Select a card's artwork or name to read its full details. Use Add to Hand only after you have chosen a card for ${cardsById[searchContext?.supportCardId]?.name}. You may cancel without spending the card or RP.`
                     : modal === "recover"
                     ? "Heads! Choose one card that was in your discard pile before Recovery resolved."
                     : modal === "coral-target"
@@ -11578,16 +11851,27 @@ export default function Simulator({
                     const card = cardsById[coralTarget?.cardId ?? cardId] || { name: cardId };
                     return (
                       <div key={`${cardId}-${cardIndex}`} data-tutorial-search-card-id={modal === "search" ? cardId : undefined} data-tutorial-target={modal === "search" && tutorialHelpTargetActive && tutorialHelp?.targetSearchCardId === cardId ? "search-card" : undefined} className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${isDarkZoneModal ? "border-white/10 bg-white/5" : "border-slate-200 bg-slate-50"}${modal === "search" && tutorialHelpTargetActive && tutorialHelp?.targetSearchCardId === cardId ? " seapals-tutorial-target" : ""}`}>
-                        <div className="flex items-center gap-4">
-                          {["discard", "lost", "search", "recover", "coral-target", "restock"].includes(modal) ? <img src={card.image} alt={card.name} className="h-28 w-20 rounded-xl bg-white object-contain" /> : null}
-                          <div>
-                          <p className="font-semibold">{card.name}</p>
-                          <p className={`text-sm ${isDarkZoneModal ? "text-slate-400" : "text-slate-600"}`}>{getCardClassLabel(card)}</p>
-                          {coralTarget ? <p className="text-sm font-bold text-emerald-300">{coralTarget.health}/{coralTarget.maxHealth} HP</p> : null}
+                        {modal === "search" ? (
+                          <button type="button" aria-haspopup="dialog" aria-label={`Inspect ${card.name} details`} onClick={() => inspectSearchResult(cardId)} className="group flex min-w-0 flex-1 items-center gap-4 rounded-xl p-1 text-left outline-none transition hover:bg-cyan-300/10 focus-visible:ring-2 focus-visible:ring-cyan-300">
+                            <img src={card.image} alt="" className="h-28 w-20 rounded-xl bg-white object-contain" />
+                            <span className="min-w-0">
+                              <strong className="block font-semibold">{card.name}</strong>
+                              <span className={`block text-sm ${isDarkZoneModal ? "text-slate-400" : "text-slate-600"}`}>{getCardClassLabel(card)}</span>
+                              <span className="mt-1 block text-[10px] font-black uppercase tracking-wider text-cyan-300 group-hover:text-cyan-200">View card details</span>
+                            </span>
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-4">
+                            {["discard", "lost", "recover", "coral-target", "restock"].includes(modal) ? <img src={card.image} alt={card.name} className="h-28 w-20 rounded-xl bg-white object-contain" /> : null}
+                            <div>
+                              <p className="font-semibold">{card.name}</p>
+                              <p className={`text-sm ${isDarkZoneModal ? "text-slate-400" : "text-slate-600"}`}>{getCardClassLabel(card)}</p>
+                              {coralTarget ? <p className="text-sm font-bold text-emerald-300">{coralTarget.health}/{coralTarget.maxHealth} HP</p> : null}
+                            </div>
                           </div>
-                        </div>
+                        )}
                         {modal === "search" || modal === "recover" || modal === "coral-target" || modal === "restock" ? (
-                          <button type="button" disabled={Boolean(modal === "search" && tutorialUsesScriptedScenario && scriptedFinishRoute?.searchTargetCardId && scriptedFinishRoute.searchTargetCardId !== cardId)} onClick={() => modal === "recover" ? completeRecovery(cardId) : modal === "coral-target" ? completeCoralHeal(cardId) : modal === "restock" ? toggleRestockCard(cardIndex) : searchContext?.maxSelect > 1 ? toggleSupportSearchCard(cardId) : completeSupportSearch(cardId)} className={`rounded-full px-5 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${(modal === "restock" ? searchContext?.selectedIndices?.includes(cardIndex) : modal === "search" && searchContext?.maxSelect > 1 && searchContext?.selected.includes(cardId)) ? "bg-emerald-600" : "bg-cyan-600 hover:bg-cyan-500"}`}>
+                          <button type="button" disabled={Boolean(modal === "search" && tutorialUsesScriptedScenario && scriptedFinishRoute?.searchTargetCardId && scriptedFinishRoute.searchTargetCardId !== cardId)} aria-pressed={modal === "search" && searchContext?.maxSelect > 1 ? searchContext?.selected.includes(cardId) : undefined} aria-label={modal === "search" ? `${searchContext?.maxSelect > 1 ? "Select" : "Add to hand"} ${card.name}` : undefined} onClick={() => modal === "recover" ? completeRecovery(cardId) : modal === "coral-target" ? completeCoralHeal(cardId) : modal === "restock" ? toggleRestockCard(cardIndex) : searchContext?.maxSelect > 1 ? toggleSupportSearchCard(cardId) : completeSupportSearch(cardId)} className={`rounded-full px-5 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${(modal === "restock" ? searchContext?.selectedIndices?.includes(cardIndex) : modal === "search" && searchContext?.maxSelect > 1 && searchContext?.selected.includes(cardId)) ? "bg-emerald-600" : "bg-cyan-600 hover:bg-cyan-500"}`}>
                             {modal === "recover" ? "Recover Card" : modal === "coral-target" ? "Heal 20 HP" : modal === "restock" ? (searchContext?.selectedIndices?.includes(cardIndex) ? "Selected" : "Select") : modal === "search" && searchContext?.maxSelect > 1 ? (searchContext?.selected.includes(cardId) ? `Selected ×${searchContext.selected.filter((selectedId) => selectedId === cardId).length}` : "Select") : "Add to Hand"}
                           </button>
                         ) : null}

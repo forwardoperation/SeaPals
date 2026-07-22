@@ -18,7 +18,7 @@ const creatureSchoolRule =
   "Creature Schools may be targeted by any attack that can target fish. The attack does damage to HP by taking the attack dice roll * 10.";
 
 const creatureSchoolMomentum =
-  "Momentum: Search your deck for a Creature School card with a different name. Show it to your opponent, place it into your hand, then shuffle your deck.";
+  "Momentum: Search your deck for a Creature School card. Show it to your opponent, place it into your hand, then shuffle your deck.";
 
 const plenteous =
   "Plenteous: If attacked and destroyed, search your discard pile for a base Krill Bloom and shuffle it into your deck.";

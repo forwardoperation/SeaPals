@@ -36,6 +36,7 @@ import {
   isElversonReleaseLocation,
   relocateResumeToElversonStart,
 } from "./adventureReleaseScope.mjs";
+import { ONBOARDING_QUEST_FLAGS } from "./adventureOnboarding.mjs";
 
 export const SHELLSHORE_QUEST_ID = "quest-shellshore-first-voyage";
 export const SHELLSHORE_RESIDENT_ENCOUNTER_IDS = Object.freeze(
@@ -256,9 +257,17 @@ export function createNewAdventureSession(profileId) {
     SHELLSHORE_QUEST_ID,
     "active",
   );
-  const academy = SCENES["academy-lab"];
-  if (!academy || !canOccupyScenePosition(academy.id, academy.spawn)) return save;
-  return withWorld(save, academy.id, academy.spawn, "up");
+  const introductionPending = setQuestFlag(
+    save,
+    SHELLSHORE_QUEST_ID,
+    ONBOARDING_QUEST_FLAGS.worldIntroductionComplete,
+    false,
+  );
+  const aquariumApproach = ELVERSON_AQUARIUM_EXIT?.spawn;
+  if (!aquariumApproach || !canOccupyScenePosition("town", aquariumApproach)) {
+    return introductionPending;
+  }
+  return withWorld(introductionPending, "town", aquariumApproach, "up");
 }
 
 /**

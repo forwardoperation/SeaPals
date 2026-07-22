@@ -660,7 +660,9 @@ for (const [starterIndex, starterDeckId] of STARTER_DECK_IDS.entries()) {
     const openedPackIds = [];
 
     let save = createNewAdventureSession(profileId);
-    assert.equal(save.world.sceneId, "academy-lab");
+    assert.equal(save.world.sceneId, "town");
+    assert.deepEqual(save.world.position, { x: 16, y: 15.85 });
+    assert.equal(save.world.facing, "up");
     const created = adapter.startNewProfile(profileId, { saveValue: save });
     assert.equal(created.ok, true, created.error?.message);
     save = recoverStoredCampaignSave(adapter.loadProfile(profileId).save, manifest);

@@ -1,4 +1,5 @@
 const NO_SECONDARY_MODES = new Set([
+  "worldIntroduction",
   "victory",
   "roundVictory",
   "exhibitionVictory",

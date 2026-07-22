@@ -38,6 +38,13 @@ test("completed and locked conversations do not render duplicate close actions",
   }
 });
 
+test("the required one-time world introduction cannot be dismissed and reopened", () => {
+  assert.equal(getAdventureConversationSecondaryAction({
+    trainer: { id: "academy-mentor", encounterId: "encounter-shellshore-mentor-practice" },
+    mode: "worldIntroduction",
+  }), null);
+});
+
 test("the optional exhibition remains a distinct secondary action", () => {
   assert.deepEqual(getAdventureConversationSecondaryAction({
     trainer: { id: "sunpatch-leader", encounterId: "encounter-sunpatch-qualifier" },

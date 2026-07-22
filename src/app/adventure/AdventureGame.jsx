@@ -70,6 +70,7 @@ import {
   recordBoatSafetyReview,
   recordPracticeDuelResult,
   recordTutorialCheckpoint,
+  recordWorldIntroduction,
   recoverOnboardingResume,
 } from "./adventureOnboarding.mjs";
 import {
@@ -178,6 +179,37 @@ const TRAINERS = Object.freeze({
 });
 
 const ACADEMY_MENTOR_ID = "academy-mentor";
+const ACADEMY_MENTOR_INTERACTION_ID = "interaction-academy-mentor";
+const ELVERSON_OPENING_MENTOR_INTERACTION_ID = "interaction-elverson-opening-mentor";
+const ELVERSON_AQUARIUM_GUIDED_TRANSITION = (() => {
+  const entrance = SCENES.town.interactions.find(
+    ({ id }) => id === "interaction-elverson-enter-aquarium",
+  );
+  if (!entrance) throw new Error("Elverson is missing its aquarium entrance.");
+  return Object.freeze({
+    type: "guided",
+    interactionId: "guided-introduction-enter-aquarium",
+    targetScene: entrance.targetScene,
+    spawn: entrance.spawn,
+    facing: entrance.facing,
+  });
+})();
+const ELVERSON_OPENING_MENTOR_INTERACTION = (() => {
+  const aquariumExit = SCENES["academy-lab"].interactions.find(
+    ({ id }) => id === "interaction-academy-exit",
+  );
+  if (!aquariumExit) throw new Error("Elverson is missing its aquarium exit.");
+  return Object.freeze({
+    id: ELVERSON_OPENING_MENTOR_INTERACTION_ID,
+    type: "npc",
+    npcId: ACADEMY_MENTOR_ID,
+    at: Object.freeze({
+      x: aquariumExit.spawn.x + 1,
+      y: aquariumExit.spawn.y,
+    }),
+    facing: "left",
+  });
+})();
 const SHELLSHORE_TUTORIAL = resolveAdventureTutorial("tutorial-shellshore-live-basics");
 const SHELLSHORE_FIELD_NOTE = SHELLSHORE_TUTORIAL.fieldNote;
 const STARTER_DECKS = Object.freeze(SHELLSHORE_TUTORIAL.starterDecks);
@@ -2214,10 +2246,25 @@ export default function AdventureGame() {
   const scene = SCENES[sceneId];
   const boatMode = Boolean(scene?.routeId || scene?.kind === "route");
   const vehicleMode = scene?.kind === "vehicle";
-  const sceneCharacterInteractions = useMemo(() => scene.interactions.filter((candidate) => (
-    ["trainer", "npc"].includes(candidate.type)
-    && TRAINERS[candidate.trainerId ?? candidate.npcId]
-  )), [scene.interactions]);
+  const worldIntroductionConversationActive = conversation?.mode === "worldIntroduction"
+    || conversationLeadIn?.mode === "worldIntroduction";
+  const stageOpeningMentor = sceneId === "town" && (
+    onboardingProgress?.needsWorldIntroduction
+    || worldIntroductionConversationActive
+    || (
+      sceneTransition?.type === "guided"
+      && sceneTransition.interactionId === ELVERSON_AQUARIUM_GUIDED_TRANSITION.interactionId
+    )
+  );
+  const sceneCharacterInteractions = useMemo(() => {
+    const authoredInteractions = scene.interactions.filter((candidate) => (
+      ["trainer", "npc"].includes(candidate.type)
+      && TRAINERS[candidate.trainerId ?? candidate.npcId]
+    ));
+    return stageOpeningMentor
+      ? [...authoredInteractions, ELVERSON_OPENING_MENTOR_INTERACTION]
+      : authoredInteractions;
+  }, [scene.interactions, stageOpeningMentor]);
   const anchoredActorStates = useMemo(
     () => createAdventureActorStates(sceneCharacterInteractions),
     [sceneCharacterInteractions],
@@ -2430,7 +2477,11 @@ export default function AdventureGame() {
     return next;
   }, [persistSave, setDirty]);
 
-  const requestSceneTransition = useCallback((candidate, sourceSave = saveRef.current) => {
+  const requestSceneTransition = useCallback((
+    candidate,
+    sourceSave = saveRef.current,
+    { afterArrivalConversation = null } = {},
+  ) => {
     if (!candidate?.targetScene || !candidate.spawn || !sourceSave || sceneTransition) return false;
     const interactionId = candidate.interactionId ?? candidate.targetScene;
     const transitionKey = `${sourceSave.world.sceneId}:${interactionId}`;
@@ -2465,7 +2516,12 @@ export default function AdventureGame() {
     }
 
     doorwayTransitionRef.current = transitionKey;
-    pendingSceneTransitionRef.current = { candidate, sourceSave, artworkReady };
+    pendingSceneTransitionRef.current = {
+      candidate,
+      sourceSave,
+      artworkReady,
+      afterArrivalConversation,
+    };
     saveRef.current = sourceSave;
     setGameSave(sourceSave);
     setDirty(true);
@@ -2506,9 +2562,38 @@ export default function AdventureGame() {
         return;
       }
 
+      const pending = pendingSceneTransitionRef.current;
       pendingSceneTransitionRef.current = null;
       doorwayTransitionRef.current = null;
       setSceneTransition(null);
+      if (pending?.afterArrivalConversation) {
+        const arrivedSave = saveRef.current;
+        const origin = {
+          sceneId: arrivedSave?.world.sceneId ?? sceneTransition.targetSceneId,
+          interactionId: pending.afterArrivalConversation.interactionId,
+        };
+        const currentRuntime = actorRuntimeRef.current;
+        if (
+          arrivedSave
+          && currentRuntime.sceneId === origin.sceneId
+          && currentRuntime.actors[origin.interactionId]
+        ) {
+          const focusedRuntime = {
+            sceneId: currentRuntime.sceneId,
+            actors: focusAdventureActor(
+              currentRuntime.actors,
+              origin.interactionId,
+              arrivedSave.world.position,
+            ),
+          };
+          actorRuntimeRef.current = focusedRuntime;
+          setActorRuntime(focusedRuntime);
+        }
+        setConversationLeadIn({
+          ...pending.afterArrivalConversation,
+          ...origin,
+        });
+      }
     }, duration);
     return () => {
       cancelled = true;
@@ -2584,6 +2669,54 @@ export default function AdventureGame() {
     residentConversationSeenRef.current = new Set();
     setScreen("playing");
   }
+
+  useEffect(() => {
+    if (
+      screen !== "playing"
+      || !gameSave
+      || !onboardingProgress?.needsWorldIntroduction
+      || conversation
+      || conversationLeadIn
+      || activeTrainerId
+      || sceneTransition
+      || pauseOpen
+      || settingsOpen
+      || confirmation
+      || starterSelectionOpen
+      || fieldNoteOpen
+      || inventoryOpen
+      || decksOpen
+      || worldMapOpen
+      || fieldworkActivity
+    ) return;
+
+    clearMovement();
+    setConversation({
+      trainerId: ACADEMY_MENTOR_ID,
+      sceneId: "town",
+      interactionId: ELVERSON_OPENING_MENTOR_INTERACTION_ID,
+      index: 0,
+      mode: "worldIntroduction",
+    });
+  }, [
+    activeTrainerId,
+    clearMovement,
+    confirmation,
+    conversation,
+    conversationLeadIn,
+    decksOpen,
+    fieldNoteOpen,
+    fieldworkActivity,
+    gameSave,
+    inventoryOpen,
+    onboardingProgress?.needsWorldIntroduction,
+    pauseOpen,
+    sceneTransition,
+    screen,
+    settingsOpen,
+    starterSelectionOpen,
+    worldMapOpen,
+  ]);
 
   function beginNewGame(profileId, overwriteConfirmed = false) {
     const adapter = storageRef.current;
@@ -3992,6 +4125,37 @@ export default function AdventureGame() {
       return;
     }
 
+    if (conversation.mode === "worldIntroduction") {
+      const current = saveRef.current ?? gameSave;
+      if (!current) return;
+      const introduced = recordWorldIntroduction(current);
+      if (introduced.applied) {
+        commitAdventureMutation(
+          introduced.save,
+          "world-introduction-complete",
+        );
+      }
+      setConversation(null);
+      const transitionStarted = requestSceneTransition(
+        ELVERSON_AQUARIUM_GUIDED_TRANSITION,
+        introduced.save,
+        {
+          afterArrivalConversation: {
+            trainerId: trainer.id,
+            interactionId: ACADEMY_MENTOR_INTERACTION_ID,
+            index: 0,
+            mode: "intro",
+          },
+        },
+      );
+      if (!transitionStarted) {
+        setSaveNotice({
+          kind: "error",
+          message: "The walk to the aquarium could not begin. Enter the waterfront aquarium to continue Mr. Easterling's lesson.",
+        });
+      }
+      return;
+    }
     if (conversation.mode === "intro") {
       setConversation((currentConversation) => ({
         ...currentConversation,
@@ -4052,6 +4216,7 @@ export default function AdventureGame() {
       }
       return defeated.has(trainer?.encounterId) ? "Rematch" : "Start duel";
     }
+    if (conversation.mode === "worldIntroduction") return "Follow me to the aquarium";
     if (conversation.mode === "intro") return "Meet the starter decks";
     if (conversation.mode === "starterPresentation") return "Choose your starter";
     if (conversation.mode === "starterConfirmed") return "Continue";
@@ -4253,6 +4418,8 @@ export default function AdventureGame() {
         setDecksReturnContext(null);
         setTournamentRegistrationOpen(true);
       }
+    } else if (conversation?.mode === "worldIntroduction") {
+      return;
     } else if (conversation) {
       closeConversation();
     } else if (showCompletion) {
@@ -4549,7 +4716,15 @@ export default function AdventureGame() {
     playerX: position.x + 0.5,
     playerY: position.y + 0.5,
   });
-  const shellshoreQuestView = onboardingProgress.needsStarterSelection
+  const shellshoreQuestView = onboardingProgress.needsWorldIntroduction
+    ? {
+        title: "Welcome to Elverson",
+        description: "Listen to Mr. Easterling's aquarium dream and learn how this adventure approaches ocean wildlife.",
+        value: 0,
+        total: 1,
+        label: "A new project is beginning",
+      }
+    : onboardingProgress.needsStarterSelection
     ? {
         title: "Meet Mr. Easterling",
         description: "Visit the aquarium workshop and choose a starter reef for Elverson's first exhibit.",
@@ -4710,9 +4885,13 @@ export default function AdventureGame() {
     ? getAdventureDoorStepVector(sceneTransition.direction)
     : null;
   const sceneTransitionLabel = sceneTransition
-    ? sceneTransition.phase === "departing"
-      ? `Entering ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
-      : `Arriving in ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
+    ? sceneTransition.type === "guided"
+      ? sceneTransition.phase === "departing"
+        ? "Walking with Mr. Easterling to the waterfront aquarium..."
+        : "Arriving at the Elverson Aquarium workshop..."
+      : sceneTransition.phase === "departing"
+        ? `Entering ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
+        : `Arriving in ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
     : null;
   const displayedBoatMotion = boatTelemetry.sceneId === sceneId
     ? boatTelemetry

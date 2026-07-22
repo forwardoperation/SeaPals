@@ -14,13 +14,16 @@ import {
   recordBoatSafetyReview,
   recordPracticeDuelResult,
   recordTutorialCheckpoint,
+  recordWorldIntroduction,
   recoverOnboardingResume,
 } from "./adventureOnboarding.mjs";
 import {
   createInitialAdventureSave,
+  normalizeAdventureSave,
   validateAdventureSave,
 } from "./adventureProgression.mjs";
 import { ADVENTURE_CONTENT } from "./adventureContent.mjs";
+import { createNewAdventureSession } from "./adventureSession.mjs";
 
 function chooseStarter(starterDeckId = "coral-garden") {
   return commitStarterSelection(
@@ -62,6 +65,74 @@ test("the live tutorial follows the simulator's real turn order", () => {
   assert.deepEqual(tutorial.starterDeckIds, STARTER_DECK_IDS);
   assert.equal(tutorial.practiceEncounterId, SHELLSHORE_PRACTICE_ENCOUNTER_ID);
   assert.equal(tutorial.completionRewardId, SHELLSHORE_TUTORIAL_REWARD_ID);
+});
+
+test("the world introduction is durable, applies once, and remains pending across reload", () => {
+  const pending = createNewAdventureSession("profile-3");
+  const flagId = ONBOARDING_QUEST_FLAGS.worldIntroductionComplete;
+
+  assert.equal(
+    pending.progression.quests[SHELLSHORE_ONBOARDING_QUEST_ID].flags[flagId],
+    false,
+  );
+  assert.equal(getOnboardingProgress(pending).worldIntroductionComplete, false);
+  assert.equal(getOnboardingProgress(pending).needsWorldIntroduction, true);
+
+  const pendingReload = recoverOnboardingResume(normalizeAdventureSave(
+    JSON.parse(JSON.stringify(pending)),
+  ));
+  assert.equal(pendingReload.recovered, false);
+  assert.equal(pendingReload.progress.needsWorldIntroduction, true);
+  assert.equal(
+    pendingReload.save.progression.quests[SHELLSHORE_ONBOARDING_QUEST_ID].flags[flagId],
+    false,
+  );
+
+  const introduced = recordWorldIntroduction(pendingReload.save);
+  assert.equal(introduced.applied, true);
+  assert.equal(
+    introduced.save.progression.quests[SHELLSHORE_ONBOARDING_QUEST_ID].flags[flagId],
+    true,
+  );
+  assert.equal(getOnboardingProgress(introduced.save).needsWorldIntroduction, false);
+  assert.equal(
+    pendingReload.save.progression.quests[SHELLSHORE_ONBOARDING_QUEST_ID].flags[flagId],
+    false,
+    "recording the introduction must not mutate the prior save",
+  );
+
+  const completedReload = recoverOnboardingResume(normalizeAdventureSave(
+    JSON.parse(JSON.stringify(introduced.save)),
+  ));
+  assert.equal(completedReload.recovered, false);
+  assert.equal(completedReload.progress.worldIntroductionComplete, true);
+  assert.equal(completedReload.progress.needsWorldIntroduction, false);
+
+  const repeated = recordWorldIntroduction(completedReload.save);
+  assert.equal(repeated.applied, false);
+  assert.deepEqual(repeated.save, completedReload.save);
+});
+
+test("legacy saves without the world-introduction marker never replay the opening", () => {
+  const legacy = createInitialAdventureSave("legacy-profile");
+  const flags = legacy.progression.quests[SHELLSHORE_ONBOARDING_QUEST_ID]?.flags ?? {};
+  const flagId = ONBOARDING_QUEST_FLAGS.worldIntroductionComplete;
+
+  assert.equal(Object.hasOwn(flags, flagId), false);
+  assert.equal(getOnboardingProgress(legacy).worldIntroductionComplete, true);
+  assert.equal(getOnboardingProgress(legacy).needsWorldIntroduction, false);
+
+  const recovered = recoverOnboardingResume(JSON.parse(JSON.stringify(legacy)));
+  assert.equal(recovered.progress.needsWorldIntroduction, false);
+  const recorded = recordWorldIntroduction(recovered.save);
+  assert.equal(recorded.applied, false);
+  assert.equal(
+    Object.hasOwn(
+      recorded.save.progression.quests[SHELLSHORE_ONBOARDING_QUEST_ID]?.flags ?? {},
+      flagId,
+    ),
+    false,
+  );
 });
 
 test("starter preview supports confirmation without changing the save", () => {
@@ -143,6 +214,8 @@ test("checkpoints advance one step at a time and duplicate action events are saf
   assert.equal(ready.tutorial.status, "readyToTurnIn");
   assert.deepEqual(ready.tutorial.completedStepIds, TUTORIAL_CHECKPOINT_IDS);
   assert.deepEqual(getOnboardingProgress(ready), {
+    worldIntroductionComplete: true,
+    needsWorldIntroduction: false,
     starterDeckId: "coral-garden",
     starterLocked: true,
     needsStarterSelection: false,

@@ -348,6 +348,17 @@ test("surfaces conflicting maintained sources instead of silently choosing one",
   assert.equal(answer.sources.length, 2);
 });
 
+test("explains that a card may use Actions on the turn it is played", () => {
+  const answer = answerRulesQuestion(
+    "Can I use a card's Action on the same turn I play it?",
+    buildRulesKnowledgeBank({ cards, simulatorRules: SIMULATOR_RULES }),
+  );
+
+  assert.equal(answer.kind, "answer");
+  assert.match(answer.text, /same turn it enters/i);
+  assert.doesNotMatch(answer.text, /wait until (?:your )?next turn/i);
+});
+
 test("answers the seven reported targeting, deck-building, modifier, and attack-count questions directly", () => {
   const screenshotRules = buildWeakPointRules();
   const cases = [

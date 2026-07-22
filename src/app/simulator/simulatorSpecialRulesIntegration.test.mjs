@@ -4,6 +4,8 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { attackCanTargetCard } from "./combatRules.mjs";
+import { parseLegacyAttackText, parseLegacyUtilityText } from "./gameRules.mjs";
 
 const require = createRequire(import.meta.url);
 const { createJiti } = require("jiti");
@@ -26,6 +28,165 @@ function sourceBetween(startMarker, endMarker) {
   assert.notEqual(end, -1, `missing source marker: ${endMarker}`);
   return simulatorSource.slice(start, end);
 }
+
+function getLegacyOnPlayAttack(cardId) {
+  const card = cardsById[cardId];
+  const attack = (card?.onPlay ?? [])
+    .map((ability) => parseLegacyAttackText(ability))
+    .find(Boolean);
+  assert.ok(attack, `${cardId} should have a parsed On Play attack`);
+  return attack;
+}
+
+test("Goblin Shark can target schools and eligible creature families in every ecosystem", () => {
+  const terrorStrike = getLegacyOnPlayAttack("goblin-shark");
+  assert.equal(terrorStrike.targetZone, null);
+  assert.deepEqual(terrorStrike.target.categories, ["predator", "fish", "invertebrate"]);
+
+  for (const targetId of [
+    "sardine-ball-base",
+    "white-grunt",
+    "flying-fish",
+    "wahoo",
+    "market-squid",
+    "bristlemouth",
+    "chimera",
+    "deep-cucumber",
+  ]) {
+    assert.equal(
+      attackCanTargetCard(cardsById[targetId], terrorStrike),
+      true,
+      `Terror Strike should target ${targetId}`,
+    );
+  }
+
+  for (const targetId of ["bluefin-tuna", "basking-shark", "elkhorn-coral-base", "open-ocean"]) {
+    assert.equal(
+      attackCanTargetCard(cardsById[targetId], terrorStrike),
+      false,
+      `Terror Strike should not target ${targetId}`,
+    );
+  }
+});
+
+test("other Deep Predators retain their printed target families across ecosystems", () => {
+  const oceanicTargets = {
+    school: cardsById["sardine-ball-base"],
+    fish: cardsById["flying-fish"],
+    predator: cardsById.wahoo,
+    invertebrate: cardsById["market-squid"],
+  };
+  const cases = [
+    { cardId: "chimera", accepted: ["school", "fish", "predator"] },
+    { cardId: "gulper-eel", accepted: ["school", "fish", "predator"] },
+    { cardId: "frilled-shark", accepted: ["school", "fish", "predator"] },
+    { cardId: "deep-sea-skate", accepted: ["invertebrate"] },
+  ];
+
+  for (const { cardId, accepted } of cases) {
+    const attack = getLegacyOnPlayAttack(cardId);
+    assert.equal(attack.targetZone, null, `${cardId} should use its family icons across ecosystems`);
+    for (const [family, targetCard] of Object.entries(oceanicTargets)) {
+      assert.equal(
+        attackCanTargetCard(targetCard, attack),
+        accepted.includes(family),
+        `${cardId} ${accepted.includes(family) ? "should" : "should not"} target ${family}`,
+      );
+    }
+    assert.equal(attackCanTargetCard(cardsById["bluefin-tuna"], attack), false);
+    assert.equal(attackCanTargetCard(cardsById["basking-shark"], attack), false);
+  }
+});
+
+test("both controllers enumerate Creature Schools as attack targets", () => {
+  const playerTargets = sourceBetween(
+    "function getPlayerAttackTargets",
+    "function createPlayerAttackContext",
+  );
+  assert.match(
+    playerTargets,
+    /isCreatureSchool\(targetCard\) && cardMatchesAttackTarget\(targetCard, attack\)/,
+  );
+
+  const opponentTargets = sourceBetween(
+    "function runOpponentAttackStep",
+    "function runOpponentAttack(",
+  );
+  assert.match(
+    opponentTargets,
+    /isCreatureSchool\(card\) && cardMatchesAttackTarget\(card, attackerEntry\.attack\)/,
+  );
+});
+
+test("Nerve Agent chooses a legal Coral before committing and flipping", () => {
+  const nerveAgent = cardsById["man-o-war"].actions.find((action) => /Nerve Agent:/i.test(action));
+  const effect = parseLegacyUtilityText(nerveAgent);
+  assert.deepEqual(effect, {
+    type: "flipCoin",
+    successResult: "heads",
+    onSuccess: { type: "stunCoral" },
+  });
+
+  const beginAction = sourceBetween(
+    "function beginCreatureUtilityAction",
+    "function completeCreatureDrawAction",
+  );
+  const coinBranchStart = beginAction.indexOf("if (effect.type === EffectType.FLIP_COIN)");
+  const coinBranchEnd = beginAction.indexOf('if (effect.type === "rollDiceForResource")', coinBranchStart);
+  assert.ok(coinBranchStart >= 0 && coinBranchEnd > coinBranchStart, "missing targeted coin-action branch");
+  const coinBranch = beginAction.slice(coinBranchStart, coinBranchEnd);
+  assert.match(coinBranch, /costCommitted: false, candidates: opponentCoralCards\.map/);
+  assert.match(coinBranch, /type: "choose-coin-coral-target"/);
+  assert.doesNotMatch(coinBranch, /Math\.random|resolveTargetedCoinFlip/, "the coin must wait until after target selection");
+
+  const completeAction = sourceBetween(
+    "function completeCoinCoralEffect",
+    "function completeSymbiosis",
+  );
+  const targetValidation = completeAction.indexOf("pendingCreatureAction?.candidates?.includes(coralId)");
+  const coinFlip = completeAction.indexOf("resolveTargetedCoinFlip({");
+  const costCommit = completeAction.indexOf("commitCostAndActionUse");
+  assert.ok(targetValidation >= 0 && coinFlip > targetValidation, "the selected Coral must be validated before the flip");
+  assert.ok(costCommit > coinFlip, "RP and once-per-turn use must be committed only after a target is selected");
+  assert.match(completeAction, /coinResolution && !coinResolution\.success[\s\S]*commitCostAndActionUse\(\)/);
+  assert.match(completeAction, /effect\.type === EffectType\.STUN_CORAL[\s\S]*createStunnedStatus\(sourceCard\.id\)/);
+
+  assert.equal(
+    simulatorSource.match(/resolveTargetedCoinFlip\(\{/g)?.length,
+    2,
+    "player and opponent targeted coin actions should share one resolver",
+  );
+});
+
+test("Momentum may find another Creature School with the same name", () => {
+  const herringMomentum = cardsById["herring-ball-stage1"].onPlay.join(" ");
+  assert.match(herringMomentum, /Momentum: Search your deck for a Creature School card\./i);
+  assert.doesNotMatch(herringMomentum, /different(?:ly)? name/i);
+
+  const playerMomentum = sourceBetween("function upgradeCoral", "function cancelCardPlay");
+  assert.match(
+    playerMomentum,
+    /filter\(\(cardId\) => isCreatureSchool\(cardsById\[cardId\]\)\)/,
+  );
+  assert.doesNotMatch(
+    playerMomentum,
+    /cardsById\[cardId\]\?\.name\s*!==\s*nextCard\.name|differently named/i,
+  );
+  assert.match(playerMomentum, /Choose a Creature School from your decks to add to your hand/);
+
+  const opponentMomentum = sourceBetween(
+    "function runOpponentTurn",
+    "function applyOpponentFoundationDamage",
+  );
+  assert.match(
+    opponentMomentum,
+    /find\(\(cardId\) => isCreatureSchool\(cardsById\[cardId\]\)\)/,
+  );
+  assert.doesNotMatch(
+    opponentMomentum,
+    /cardsById\[cardId\]\?\.name\s*!==\s*card\.name|differently named/i,
+  );
+});
 
 test("Stunned is enforced by live income, action, destruction, and turn-boundary paths", () => {
   const income = sourceBetween("function getEcosystemStartTurnRp", "function getParasiteRequestedRp");
@@ -93,6 +254,43 @@ test("mandatory On Play attacks cannot be canceled before they resolve", () => {
   assert.match(onPlayAttack, /mandatory On Play sequence must finish/);
   assert.match(simulatorSource, /!attackContext\.costCommitted && !attackContext\.onPlay \? <button[\s\S]*?>Cancel<\/button>/);
   assert.match(simulatorSource, /!faceoffRolling && !attackContext\?\.costCommitted && !attackContext\?\.onPlay \? <button[\s\S]*?>Cancel Faceoff<\/button>/);
+});
+
+test("opponent On Play attacks resolve before same-turn normal actions", () => {
+  const silkyShark = cardsById["silky-shark"];
+  assert.match(silkyShark.onPlay.join(" "), /Bite: Perform a D6 attack/i);
+  assert.match(silkyShark.actions.join(" "), /Smooth Operator: Look at the top 3 cards/i);
+
+  const normalActions = sourceBetween(
+    "function runOpponentNormalActions",
+    "function resolvePlayerRegenerateChoice",
+  );
+  assert.match(normalActions, /runOpponentUtilityActions\(opponentState, currentPlayerState\)/);
+  assert.match(normalActions, /runOpponentAttack\([\s\S]*?opponentStateAfterUtility[\s\S]*?null,[\s\S]*?null,/);
+  assert.match(normalActions, /events: \[\.\.\.buildOpponentUtilityEvents\(utilities\), \.\.\.attackResolution\.events\]/);
+
+  const opponentTurn = sourceBetween("function resolveOpponentTurn", "function flipForOpeningTurn");
+  const mandatoryResolution = opponentTurn.indexOf("buildOpponentAttackEventSequence(preservedOnPlayAttack");
+  const normalResolution = opponentTurn.indexOf("runOpponentNormalActions(opponentStateAfterOnPlayAttack");
+  assert.ok(mandatoryResolution >= 0, "the mandatory On Play attack should be resolved");
+  assert.ok(normalResolution > mandatoryResolution, "normal actions should run only after the On Play attack");
+  assert.match(opponentTurn, /events: \[\.\.\.opponentOnPlayAttackResolution\.events, \.\.\.\(opponentNormalActions\?\.events \?\? \[\]\)\]/);
+});
+
+test("a Regenerate choice resumes deferred normal actions without replaying On Play", () => {
+  const preserve = sourceBetween(
+    "function preserveOpponentNormalActionsAfterOnPlay",
+    "function buildOpponentUtilityEvents",
+  );
+  assert.match(preserve, /resumeNormalActionsAfterOnPlay: true/);
+
+  const regenerateChoice = sourceBetween(
+    "function resolvePlayerRegenerateChoice",
+    "function endTurn",
+  );
+  assert.match(regenerateChoice, /pending\.resumeNormalActionsAfterOnPlay[\s\S]*preserveOpponentNormalActionsAfterOnPlay\(continuationResult\)/);
+  assert.match(regenerateChoice, /pending\.resumeNormalActionsAfterOnPlay[\s\S]*runOpponentNormalActions\(onPlayContinuationResolution\.opponentState, onPlayContinuationResolution\.playerState\)/);
+  assert.doesNotMatch(regenerateChoice, /runOpponentAttack\([\s\S]*?opponentResult\.onPlayAttack/);
 });
 
 test("Cookie Cutter uses the shared board-supply fallback for both controllers", () => {
