@@ -500,4 +500,27 @@ export const supportCards = [
       },
     ],
   },
+
+  {
+    id: "ocean-jake",
+    name: "Ocean Jake",
+    kind: CardKind.SUPPORT,
+    ...standardSupportRules,
+    hideFromGallery: true,
+    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
+    sortOrder: 520,
+    cost: { rp: 0 },
+
+    text: "Search your lost zone for one card and place it into your hand. You may not play that card this turn. Place this card into your lost zone after use.",
+    destinationAfterUse: "lost",
+
+    effects: [
+      {
+        type: "recoverCardFromLostZone",
+        amount: 1,
+        destination: Zone.HAND,
+        cannotPlayThisTurn: true,
+      },
+    ],
+  },
 ];

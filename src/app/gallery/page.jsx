@@ -282,6 +282,7 @@ function CardMetadata({ image }) {
 
       <div className="mt-4 space-y-4">
         <RuleList title="Play Requirements" items={card.playRequirements} />
+        <RuleList title="Maintenance" items={card.maintenance} />
         <RuleList title="Passives" items={card.passives} />
         <RuleList title="On Play" items={card.onPlay} />
         <RuleList title="Actions" items={card.actions} />

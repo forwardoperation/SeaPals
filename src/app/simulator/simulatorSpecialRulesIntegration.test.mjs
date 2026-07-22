@@ -246,6 +246,34 @@ test("an On Play attack targets the reconciled reef after its foundation damage"
   assert.match(onPlayAttack, /getPlayerAttackTargets\(card, attack, opponentState\)/);
 });
 
+test("Loggerhead resolves its printed coral damage before its invertebrate attack", () => {
+  const loggerhead = cardsById["loggerhead-sea-turtle"];
+  assert.ok(loggerhead, "Loggerhead should be present in the canonical card catalog");
+
+  const ram = loggerhead.onPlay.find((ability) => ability?.id === "ram");
+  const attack = ram?.effects?.find((effect) => effect.type === "attack");
+  const coralDamage = ram?.effects?.find((effect) => effect.type === "damage");
+
+  assert.equal(attack?.attackDice, "D4");
+  assert.deepEqual(attack?.target?.categories, ["invertebrate"]);
+  assert.equal(coralDamage?.target?.kind, "coral");
+  assert.deepEqual(coralDamage?.amount, { type: "fixed", value: 20 });
+  assert.equal(attackCanTargetCard(cardsById["market-squid"], attack), true);
+  assert.equal(attackCanTargetCard(cardsById["flying-fish"], attack), false);
+
+  const damageParser = sourceBetween(
+    "function getOnPlayCoralDamage",
+    "function getOnPlayFoundationDamage",
+  );
+  assert.match(damageParser, /Number\(effect\.amount\?\.value \?\? 0\)/);
+
+  const openWaterPlacement = sourceBetween(
+    "function completePlayerOceanicPlay",
+    "function playCardFromHand",
+  );
+  assert.match(openWaterPlacement, /followupOnPlayAttack: hasOnPlayAttack/);
+});
+
 test("mandatory On Play attacks cannot be canceled before they resolve", () => {
   const onPlayAttack = sourceBetween(
     "function beginOnPlayAttack",
@@ -259,7 +287,7 @@ test("mandatory On Play attacks cannot be canceled before they resolve", () => {
 test("opponent On Play attacks resolve before same-turn normal actions", () => {
   const silkyShark = cardsById["silky-shark"];
   assert.match(silkyShark.onPlay.join(" "), /Bite: Perform a D6 attack/i);
-  assert.match(silkyShark.actions.join(" "), /Smooth Operator: Look at the top 3 cards/i);
+  assert.match(silkyShark.actions.join(" "), /Smooth Operator: Look at the top 5 cards/i);
 
   const normalActions = sourceBetween(
     "function runOpponentNormalActions",

@@ -1,4 +1,31 @@
 const CORAL_REEF_CARD_ID = "coral-reef";
+const ABYSS_CARD_ID = "abyss";
+const OPEN_OCEAN_CARD_ID = "open-ocean";
+
+/**
+ * Printed minimum ecosystem composition for the three persistent Habitats.
+ * The matcher names are intentionally data-only so callers can surface the
+ * same counts and deficits that the maintenance resolver uses.
+ */
+export const HABITAT_COMPOSITION_REQUIREMENTS = Object.freeze({
+  [CORAL_REEF_CARD_ID]: Object.freeze({
+    corals: 4,
+    fish: 2,
+    invertebrates: 2,
+  }),
+  [ABYSS_CARD_ID]: Object.freeze({
+    corals: 4,
+    fish: 2,
+    invertebrates: 2,
+  }),
+  [OPEN_OCEAN_CARD_ID]: Object.freeze({
+    creatureSchools: 4,
+    fish: 2,
+    invertebrates: 2,
+  }),
+});
+
+const DEFAULT_HABITAT_MAINTENANCE_DAMAGE = 10;
 
 function normalizeLookup(lookup) {
   if (typeof lookup === "function") return lookup;
@@ -21,6 +48,57 @@ function requireInstanceId(instanceId) {
   const normalized = String(instanceId ?? "").trim();
   if (!normalized) throw new TypeError("A stable Habitat instanceId is required.");
   return normalized;
+}
+
+function cardZone(card) {
+  const zone = String(card?.zone ?? card?.creatureZone ?? card?.habitatZone ?? "").toLowerCase();
+  if (zone) return zone;
+
+  // Reef cards predate the explicit zone field and are normalized to Reef in
+  // the aggregate card registry. Preserve that convention for raw card data
+  // and focused rules tests passed directly to this module.
+  if (card?.kind === "coral" || card?.kind === "creature") return "reef";
+  return "";
+}
+
+function isCreatureSchool(card) {
+  return card?.kind === "creature" && card.tags?.includes("creature-school");
+}
+
+function isCreatureClass(card, category) {
+  return card?.kind === "creature"
+    && (card.category === category || card.class === category);
+}
+
+function emptyCompositionCounts(habitatId) {
+  return Object.fromEntries(
+    Object.keys(HABITAT_COMPOSITION_REQUIREMENTS[habitatId] ?? {})
+      .map((key) => [key, 0]),
+  );
+}
+
+function countCardForHabitat(counts, habitatId, card) {
+  if (!card) return counts;
+  const zone = cardZone(card);
+  const creatureSchool = isCreatureSchool(card);
+
+  if (habitatId === CORAL_REEF_CARD_ID || habitatId === ABYSS_CARD_ID) {
+    const requiredZone = habitatId === CORAL_REEF_CARD_ID ? "reef" : "deep";
+    if (zone !== requiredZone) return counts;
+    if (card.kind === "coral") counts.corals += 1;
+    if (!creatureSchool && isCreatureClass(card, "fish")) counts.fish += 1;
+    if (!creatureSchool && isCreatureClass(card, "invertebrate")) counts.invertebrates += 1;
+    return counts;
+  }
+
+  if (habitatId === OPEN_OCEAN_CARD_ID) {
+    if (creatureSchool) counts.creatureSchools += 1;
+    if (zone !== "ocean" || creatureSchool) return counts;
+    if (isCreatureClass(card, "fish")) counts.fish += 1;
+    if (isCreatureClass(card, "invertebrate")) counts.invertebrates += 1;
+  }
+
+  return counts;
 }
 
 /**
@@ -116,30 +194,51 @@ export function damageHabitatInstance(habitats = [], instanceId, damage) {
 }
 
 /**
- * Evaluates Coral Reef's composition using physical cards currently in play.
- * Creature Schools do not satisfy Coral Reef's Coral or creature counts.
+ * Evaluates one Habitat's printed minimum ecosystem composition. Cards from a
+ * different habitat zone do not count, and Creature Schools are only counted
+ * by Open Ocean's dedicated Creature School requirement rather than as Fish.
+ * Unknown Habitats have no composition rule and therefore remain valid.
  */
-export function evaluateCoralReefComposition(cardsInPlay = [], cardLookup) {
-  const cards = cardsInPlay.map((cardRef) => resolveCard(cardRef, cardLookup)).filter(Boolean);
-  const counts = cards.reduce((result, card) => {
-    const creatureSchool = card.tags?.includes("creature-school");
-    if (card.kind === "coral") result.corals += 1;
-    if (!creatureSchool && (card.category === "fish" || card.class === "fish")) result.fish += 1;
-    if (!creatureSchool && (card.category === "invertebrate" || card.class === "invertebrate")) result.invertebrates += 1;
-    return result;
-  }, { corals: 0, fish: 0, invertebrates: 0 });
-  const required = { corals: 4, fish: 2, invertebrates: 2 };
-  const missing = {
-    corals: Math.max(0, required.corals - counts.corals),
-    fish: Math.max(0, required.fish - counts.fish),
-    invertebrates: Math.max(0, required.invertebrates - counts.invertebrates),
-  };
+export function evaluateHabitatComposition(
+  habitatRef,
+  cardsInPlay = [],
+  cardLookup,
+) {
+  const habitatId = typeof habitatRef === "string"
+    ? habitatRef
+    : habitatRef?.cardId ?? habitatRef?.id ?? "";
+  const required = HABITAT_COMPOSITION_REQUIREMENTS[habitatId] ?? {};
+  const counts = cardsInPlay
+    .map((cardRef) => resolveCard(cardRef, cardLookup))
+    .filter(Boolean)
+    .reduce(
+      (result, card) => countCardForHabitat(result, habitatId, card),
+      emptyCompositionCounts(habitatId),
+    );
+  const missing = Object.fromEntries(
+    Object.entries(required).map(([key, amount]) => [
+      key,
+      Math.max(0, Number(amount) - Number(counts[key] ?? 0)),
+    ]),
+  );
+
   return {
-    valid: missing.corals === 0 && missing.fish === 0 && missing.invertebrates === 0,
+    habitatId,
+    valid: Object.values(missing).every((amount) => amount === 0),
     counts,
-    required,
+    required: { ...required },
     missing,
   };
+}
+
+/** Backward-compatible Coral Reef-specific evaluator. */
+export function evaluateCoralReefComposition(cardsInPlay = [], cardLookup) {
+  const { habitatId: _habitatId, ...composition } = evaluateHabitatComposition(
+    CORAL_REEF_CARD_ID,
+    cardsInPlay,
+    cardLookup,
+  );
+  return composition;
 }
 
 /**
@@ -151,18 +250,30 @@ export function resolveEndOfTurnHabitatMaintenance(
   habitats = [],
   { cardsInPlay = [], cardLookup, habitatLookup = cardLookup } = {},
 ) {
-  const composition = evaluateCoralReefComposition(cardsInPlay, cardLookup);
+  const compositions = {};
+  const getComposition = (habitatId) => {
+    if (!compositions[habitatId]) {
+      compositions[habitatId] = evaluateHabitatComposition(
+        habitatId,
+        cardsInPlay,
+        cardLookup,
+      );
+    }
+    return compositions[habitatId];
+  };
   const events = [];
   const survivingHabitats = [];
   const destroyedHabitats = [];
 
   habitats.forEach((habitat) => {
     const card = resolveCard(habitat.cardId, habitatLookup);
-    const maintenance = card?.maintenance;
-    const shouldDeteriorate = habitat.cardId === CORAL_REEF_CARD_ID
-      && maintenance?.timing === "endOfTurn"
-      && maintenance.whileRequirementUnmet
-      && !composition.valid;
+    const hasCompositionRequirement = Boolean(
+      HABITAT_COMPOSITION_REQUIREMENTS[habitat.cardId],
+    );
+    const composition = hasCompositionRequirement
+      ? getComposition(habitat.cardId)
+      : null;
+    const shouldDeteriorate = hasCompositionRequirement && !composition.valid;
 
     if (!shouldDeteriorate) {
       survivingHabitats.push(habitat);
@@ -170,7 +281,10 @@ export function resolveEndOfTurnHabitatMaintenance(
     }
 
     const previousHealth = Math.max(0, Number(habitat.currentHealth) || 0);
-    const requestedDamage = Math.max(0, Number(maintenance.damage) || 10);
+    const requestedDamage = Math.max(
+      0,
+      Number(card?.maintenance?.damage) || DEFAULT_HABITAT_MAINTENANCE_DAMAGE,
+    );
     const appliedDamage = Math.min(previousHealth, requestedDamage);
     const currentHealth = previousHealth - appliedDamage;
     const updated = { ...habitat, currentHealth };
@@ -182,6 +296,7 @@ export function resolveEndOfTurnHabitatMaintenance(
       appliedDamage,
       destroyed: currentHealth === 0,
       reason: "composition-requirement-unmet",
+      composition,
     };
     events.push(event);
 
@@ -193,6 +308,10 @@ export function resolveEndOfTurnHabitatMaintenance(
     habitats: survivingHabitats,
     events,
     destroyedHabitats,
-    composition,
+    compositions,
+    // Preserve the original Coral Reef-only return field for callers that
+    // predate the generic per-Habitat composition map.
+    composition: compositions[CORAL_REEF_CARD_ID]
+      ?? evaluateCoralReefComposition(cardsInPlay, cardLookup),
   };
 }

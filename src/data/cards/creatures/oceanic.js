@@ -4,6 +4,9 @@ import {
   CreatureClass,
   CreatureSubtype,
   CreatureZone,
+  EffectType,
+  Timing,
+  Zone,
 } from "../types";
 
 const categoryByClass = {
@@ -433,6 +436,25 @@ const oceanicCreatureData = [
       "Take to the Skies: If being targeted, flip a coin. If heads, the attack fails.",
       "EcoBoost: +1 RP to your bank cap.",
     ],
+    actions: [
+      {
+        id: "call-for-family",
+        name: "Call for Family",
+        text: "Search your deck for a base Creature School and place it into your hand.",
+        cost: { rp: 1 },
+        timing: Timing.ACTION_PHASE,
+        effect: {
+          type: EffectType.SEARCH_DECK,
+          targetKind: CardKind.CREATURE,
+          targetCategories: [CardCategory.FISH],
+          targetTags: ["creature-school"],
+          targetStages: [0],
+          amount: 1,
+          destination: Zone.HAND,
+          shuffleAfterwards: true,
+        },
+      },
+    ],
     defense: "D4-2",
     image: "/images/cards/fish/Oceanic/halfbeak.png",
   },
@@ -563,7 +585,9 @@ const oceanicCreatureData = [
     rp: 3,
     vp: 3,
     schoolDensityRequirement: 30,
-    passives: ["Fierce Fighter: Opponent rerolls successful attacks."],
+    passives: [
+      "Fierce Fighter: Opponent re-rolls their first successful attack.",
+    ],
     defense: "D6",
     image: "/images/cards/fish/Oceanic/african pompano.png",
   },
@@ -585,7 +609,7 @@ const oceanicCreatureData = [
     rp: 2,
     vp: 2,
     schoolDensityRequirement: 20,
-    passives: ["Scatter: Opponent rerolls successful attacks."],
+    passives: ["Scatter: Opponent re-rolls their first successful attack."],
     actions: [
       "Vantage Point: Look at the top three cards of either of your decks and rearrange them. Cost: 1 RP.",
     ],
@@ -599,7 +623,7 @@ const oceanicCreatureData = [
     rp: 2,
     vp: 1,
     schoolDensityRequirement: 20,
-    passives: ["Scatter: Opponent rerolls successful attacks."],
+    passives: ["Scatter: Opponent re-rolls their first successful attack."],
     actions: [
       "Sift: Discard two cards from your hand. If you do, search your deck for a card, show it to your opponent, and place it into your hand. Cost: 2 RP.",
     ],
@@ -614,7 +638,7 @@ const oceanicCreatureData = [
     vp: 2,
     schoolDensityRequirement: 20,
     passives: [
-      "Territorial: Choose one of your Creature Schools in your ecosystem. That Creature School has +10 HP while this card is in play.",
+      "Territorial: Choose one of your Creature Schools in your ecosystem. That school has +30 HP while this card is in play (can only perform for one school, not transferable).",
     ],
     defense: "D6",
     image: "/images/cards/fish/Oceanic/ocean-triggerfish.png",
@@ -627,7 +651,9 @@ const oceanicCreatureData = [
     vp: 4,
     schoolDensityRequirement: 40,
     onPlay: ["Sneak Attack: 1D4 attack targeting fish."],
-    passives: ["Camouflage: Opponent rerolls successful attacks."],
+    passives: [
+      "Camouflage: Opponent re-rolls their first successful attack.",
+    ],
     defense: "D6",
     image: "/images/cards/fish/Oceanic/tripletail.png",
   },
@@ -671,9 +697,9 @@ const oceanicCreatureData = [
     rp: 2,
     vp: 1,
     schoolDensityRequirement: 20,
-    passives: ["EcoBoost: +1 RP to your bank cap."],
+    passives: ["EcoBoost: +2 RP to your bank cap."],
     actions: [
-      "Scavenge: Search your discard pile for a card and place it into your hand. Cost: 2 RP.",
+      "Scavenge: Search your discard pile for a card, show it to your opponent, and place it into your hand. Cost: 2 RP.",
     ],
     defense: "D4",
     image: "/images/cards/invertebrates/Oceanic/market-squid.png",
@@ -729,7 +755,7 @@ const oceanicCreatureData = [
     class: CreatureClass.PREDATOR,
     rp: 5,
     vp: 5,
-    specialRules: ["Requires 2 Oceanic Fish in your ecosystem."],
+    specialRules: ["Requires 3 Oceanic Fish in your ecosystem."],
     onPlay: [
       "Tireless Pursuit: 1D6 attack targeting predator or fish. If Open Ocean is in your ecosystem, add 1D4 to your attack.",
     ],
@@ -752,11 +778,11 @@ const oceanicCreatureData = [
   },
   {
     id: "oceanic-whitetip-shark",
-    name: "Oceanic Whitetip Shark",
+    name: "Oceanic Whitetip",
     class: CreatureClass.PREDATOR,
     rp: 5,
     vp: 5,
-    specialRules: ["Requires 2 Oceanic Fish in your ecosystem."],
+    specialRules: ["Requires 3 Oceanic Fish in your ecosystem."],
     onPlay: ["Shred: Opponent discards the next three cards on top of their deck."],
     passives: [
       "Bite Back: If targeted unsuccessfully, immediately perform a D6 attack targeting whatever creature attacked you.",
@@ -770,10 +796,10 @@ const oceanicCreatureData = [
     class: CreatureClass.PREDATOR,
     rp: 4,
     vp: 4,
-    specialRules: ["Requires 2 Oceanic Fish in your ecosystem."],
+    specialRules: ["Requires 3 Oceanic Fish in your ecosystem."],
     onPlay: ["Bite: Perform a D6 attack targeting predator or fish."],
     actions: [
-      "Smooth Operator: Look at the top 3 cards in your deck and rearrange them however you see fit. Cost: 2 RP.",
+      "Smooth Operator: Look at the top 5 cards in your deck and rearrange them however you see fit. Cost: 2 RP.",
     ],
     defense: "D6",
     image: "/images/cards/predator/oceanic/silky-shark.png",
@@ -785,12 +811,51 @@ const oceanicCreatureData = [
     rp: 6,
     vp: 6,
     specialRules: ["Requires 3 Oceanic Fish in your ecosystem."],
-    prerelease: false,
     onPlay: [
-      "Stun Strike: Perform a D6 attack targeting apex, predator, or fish. If you roll a 4 or higher and Open Ocean is in your play area, add +2 to your attack.",
+      "Stun Strike: Perform a D6 attack targeting apex, predator, or fish. If you roll a 4 or higher, add +2 to your attack.",
     ],
     defense: "D10",
     image: "/images/cards/predator/oceanic/thresher-shark.png",
+  },
+  {
+    id: "loggerhead-sea-turtle",
+    name: "Loggerhead",
+    class: CreatureClass.PREDATOR,
+    rp: 4,
+    vp: 4,
+    specialRules: ["Requires 3 Oceanic Fish in your ecosystem."],
+    onPlay: [
+      {
+        id: "ram",
+        name: "Ram",
+        text: "Perform a D4 attack targeting an invertebrate. Also inflict 20 HP of damage on an opponent's coral.",
+        effects: [
+          {
+            type: EffectType.ATTACK,
+            attackName: "Ram",
+            attackDice: "D4",
+            repeat: 1,
+            target: {
+              controller: "opponent",
+              kind: CardKind.CREATURE,
+              categories: [CardCategory.INVERTEBRATE],
+              zone: Zone.OPPONENT_REEF,
+            },
+          },
+          {
+            type: EffectType.DAMAGE,
+            target: {
+              controller: "opponent",
+              kind: CardKind.CORAL,
+              zone: Zone.OPPONENT_REEF,
+            },
+            amount: { type: "fixed", value: 20 },
+          },
+        ],
+      },
+    ],
+    defense: "D10",
+    image: "/images/cards/predator/oceanic/loggerhead-sea-turtle.png",
   },
 ];
 

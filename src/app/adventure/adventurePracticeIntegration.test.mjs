@@ -250,9 +250,9 @@ function assertPlanRequirements(plan) {
       if (requirement.type === "cardInPlay") {
         assert.equal(cardIdsInPlay.has(requirement.cardId), true, `${cardId} requires ${requirement.cardId}`);
       } else if (requirement.type === "ecosystemComposition") {
-        assert.ok(coralCount >= Number(requirement.minimumCorals ?? 0), `${cardId} needs enough Corals`);
-        assert.ok(fishCount >= Number(requirement.minimumFish ?? 0), `${cardId} needs enough Fish`);
-        assert.ok(invertebrateCount >= Number(requirement.minimumInvertebrates ?? 0), `${cardId} needs enough Invertebrates`);
+        assert.ok(coralCount >= Number(requirement.minimumReefCorals ?? requirement.minimumCorals ?? 0), `${cardId} needs enough Reef Corals`);
+        assert.ok(fishCount >= Number(requirement.minimumReefFish ?? requirement.minimumFish ?? 0), `${cardId} needs enough Reef Fish`);
+        assert.ok(invertebrateCount >= Number(requirement.minimumReefInvertebrates ?? requirement.minimumInvertebrates ?? 0), `${cardId} needs enough Reef Invertebrates`);
       } else {
         assert.fail(`${cardId} has an unsupported smoke-plan requirement: ${requirement.type}`);
       }

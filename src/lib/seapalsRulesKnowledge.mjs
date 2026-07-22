@@ -91,7 +91,15 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Oceanic Apex additional cost",
-    text: "Playing an Oceanic Apex can require sacrificing either one Oceanic Predator or two distinct Oceanic Fish. The sacrificed physical cards leave play as the additional cost; duplicate card names still represent separate physical choices.",
+    text: "Oceanic Apex requirements are card-specific; these cards do not share one universal additional cost. Killer Whale and Shortfin Mako each require Open Ocean plus 2 Oceanic Predators already in your ecosystem, and those Predators are not sacrificed. Bluefin Tuna requires Open Ocean. Swordfish requires either Open Ocean or Abyss. If another Oceanic Apex explicitly instructs you to sacrifice cards, only that card uses the printed sacrifice cost.",
+  },
+  {
+    title: "Ocean Triggerfish Territorial",
+    text: "Ocean Triggerfish's Territorial chooses one Creature School in your ecosystem. That School has +30 HP while that Ocean Triggerfish remains in play. Territorial applies to only that chosen School and is not transferable to another School.",
+  },
+  {
+    title: "Thresher Shark requirements and Stun Strike",
+    text: "Thresher Shark requires 3 Oceanic Fish in your ecosystem to play. Its On Play Stun Strike is a D6 attack against a legal Fish, Predator, or Apex target. If the attack roll is 4 or higher, add +2 to that attack. This +2 roll bonus does not require Open Ocean.",
   },
   {
     title: "What Conditions cards are used for",
@@ -139,11 +147,19 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Habitats",
-    text: "Habitat cards are played from the Pals Deck and remain as independent cards in the ecosystem. Each physical copy tracks its own health and effects. Open Ocean and Abyss enable their related creature strategies; damage or destruction affects only the targeted Habitat copy.",
+    text: "Habitat cards are played from the Pals Deck and remain as independent cards with 40 HP in the ecosystem. Each physical copy tracks its own health and effects. Coral Reef requires 4 Reef Corals, 2 Reef Fish, and 2 Reef Invertebrates. Open Ocean requires 4 Creature Schools, 2 Oceanic Fish, and 2 Oceanic Invertebrates. Abyss requires 4 Deep Corals, 2 Deep Fish, and 2 Deep Invertebrates. Check the appropriate composition at the end of that Habitat's controller's turn; each copy whose requirement is unmet takes 10 damage and loses 10 HP. Destroy a Habitat at 0 HP.",
   },
   {
     title: "Coral Reef Habitat maintenance",
-    text: "Coral Reef has 40 HP and requires 4 true Corals, 2 non-school Fish, and 2 non-school Invertebrates in play. At end of turn, if that composition is not met, each Coral Reef takes 10 damage. Destroy it when its health reaches zero.",
+    text: "Coral Reef has 40 HP and requires 4 Reef Corals, 2 Reef Fish, and 2 Reef Invertebrates in its controller's ecosystem. At the end of that controller's turn, each Coral Reef copy whose full composition is not met takes 10 damage and loses 10 HP. Destroy a copy when its health reaches zero.",
+  },
+  {
+    title: "Open Ocean Habitat maintenance",
+    text: "Open Ocean has 40 HP and requires 4 Creature Schools, 2 Oceanic Fish, and 2 Oceanic Invertebrates in its controller's ecosystem. At the end of that controller's turn, each Open Ocean copy whose full composition is not met takes 10 damage and loses 10 HP. Destroy a copy when its health reaches zero.",
+  },
+  {
+    title: "Abyss Habitat maintenance",
+    text: "Abyss has 40 HP and requires 4 Deep Corals, 2 Deep Fish, and 2 Deep Invertebrates in its controller's ecosystem. At the end of that controller's turn, each Abyss copy whose full composition is not met takes 10 damage and loses 10 HP. Destroy a copy when its health reaches zero.",
   },
   {
     title: "Attachments and special hosts",
@@ -179,7 +195,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Protecting Creature Schools from attacks",
-    text: "Creature Schools do not roll defense, so protection focuses on HP and limiting repeat attacks. In the current card data, Ocean Triggerfish's Territorial gives one of your Creature Schools +10 HP while Ocean Triggerfish remains in play. Creature Schools can be targeted by attacks that can target Fish and take the attack roll multiplied by 10 as damage. Coral-only healing and Coral-only HP bonuses do not protect a Creature School unless the effect explicitly includes Foundations or Creature Schools.",
+    text: "Creature Schools do not roll defense, so protection focuses on HP and limiting repeat attacks. Ocean Triggerfish's Territorial gives one chosen Creature School +30 HP while that Ocean Triggerfish remains in play; the bonus is not transferable. Creature Schools can be targeted by attacks that can target Fish and take the attack roll multiplied by 10 as damage. Coral-only healing and Coral-only HP bonuses do not protect a Creature School unless the effect explicitly includes Foundations or Creature Schools.",
   },
   {
     title: "Unknown or incomplete card effects",

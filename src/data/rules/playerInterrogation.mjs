@@ -63,7 +63,7 @@ export const PLAYER_INTERROGATION = [
   answer(31, "basic", "Can an Apex normally sit in a Predator slot?", ["glossary:apex", ...SLOTS], [["apex slot"], ["matching"]], "boolean"),
   answer(32, "basic", "How do I upgrade one of my Coral cards?", UPGRADE, [["next"], ["requirement"], ["cost"]], "procedure"),
   answer(33, "basic", "Does damage disappear when I upgrade a Coral?", UPGRADE, [["damage remains", "existing damage"]], "boolean"),
-  answer(34, "basic", "What extra sacrifice does an Oceanic Apex need?", ["knowledge:oceanic-apex-additional-cost"], [["1 oceanic predator", "one oceanic predator"], ["2", "two"], ["fish"]], "definition"),
+  answer(34, "basic", "Do all Oceanic Apex cards require the same sacrifice?", ["knowledge:oceanic-apex-additional-cost"], [["card-specific", "no universal"], ["2", "two"], ["stay in play", "not sacrificed"]], "boolean"),
   answer(35, "basic", "Do I spend School Density like RP when I play something?", ["glossary:school-density", "knowledge:school-density-requirements"], [["not spent", "checked"], ["rp"]], "boolean"),
   answer(36, "basic", "When exactly does Toxic When Eaten happen?", ["knowledge:toxic-creatures", "ability:toxic"], [["successfully", "successful"], ["eat", "consume"]], "timing"),
   answer(37, "basic", "Is Regenerate optional, and what do I pay for it?", ["knowledge:regenerate", "ability:regenerate"], [["optional", "may"], ["rp"]], "boolean"),

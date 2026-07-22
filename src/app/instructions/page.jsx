@@ -900,7 +900,9 @@ export default function InstructionsPage() {
                   <li>• School Density is a current ecosystem value. A play requirement checks it; the value is not spent like RP.</li>
                   <li>• Non-school Oceanic creatures live in open water rather than Reef or Deep Coral slots. Obey any printed School Density and Habitat requirements.</li>
                   <li>• Creature Schools do not roll Defense. An attack deals the attack roll ×10 as damage, and the School is discarded at 0 HP.</li>
-                  <li>• When an Oceanic Apex uses the printed additional sacrifice cost, discard either 1 Oceanic Predator or 2 distinct physical Oceanic Fish, in addition to RP and other requirements.</li>
+                  <li>• Oceanic Apex requirements are card-specific. Killer Whale and Shortfin Mako require Open Ocean and 2 Oceanic Predators already in your ecosystem; those Predators stay in play. Bluefin Tuna requires Open Ocean, while Swordfish allows Open Ocean or Abyss.</li>
+                  <li>• Ocean Triggerfish&apos;s Territorial gives 1 chosen Creature School +30 HP while that Triggerfish remains in play. The choice is not transferable.</li>
+                  <li>• Thresher Shark requires 3 Oceanic Fish. Its Stun Strike adds +2 when the attack roll is 4 or higher; that bonus does not require Open Ocean.</li>
                   <li>• Sardine Run and Krill Bloom can reduce the next qualifying School Density requirement once per player as printed.</li>
                 </ul>
               </RuleDetails>
@@ -954,8 +956,11 @@ export default function InstructionsPage() {
               >
                 <ul className="space-y-2">
                   <li>• Habitat cards are played from the Pals Deck and remain as independent cards in the ecosystem. Each physical copy tracks its own HP and effects.</li>
+                  <li>• Every current Habitat has 40 HP. Check each copy at the end of its controller&apos;s turn; a copy whose full composition is not met takes 10 HP of damage and is destroyed at 0 HP.</li>
+                  <li>• Coral Reef requires 4 Reef Corals, 2 Reef Fish, and 2 Reef Invertebrates.</li>
+                  <li>• Open Ocean requires 4 Creature Schools, 2 Oceanic Fish, and 2 Oceanic Invertebrates.</li>
+                  <li>• Abyss requires 4 Deep Corals, 2 Deep Fish, and 2 Deep Invertebrates.</li>
                   <li>• Open Ocean and Abyss enable their related strategies. Deep-targeting restrictions still apply; a similar tag does not make a Reef creature Deep.</li>
-                  <li>• Coral Reef has 40 HP and requires 4 true Corals, 2 non-school Fish, and 2 non-school Invertebrates. At end of turn, each copy takes 10 damage while that composition is not met.</li>
                   <li>• Hosted or attached cards are legal only when printed text permits the host, tag, and capacity. The hosted card keeps its own physical identity.</li>
                   <li>• A hosted card moves with its primary host only when the applicable rule says it does.</li>
                   <li>• Continuous HP bonuses raise current and maximum HP while active without erasing damage. Removing the bonus reduces both; a card at 0 HP is destroyed.</li>
