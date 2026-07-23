@@ -83,11 +83,11 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Creature Schools and bait balls",
-    text: "Creature Schools are Foundation cards that use School Density and health. They do not make defense rolls. When attacked, they take damage equal to the attack roll multiplied by 10 and are discarded at 0 HP. Creature Schools do not count as ordinary Fish for requirements that explicitly exclude schools.",
+    text: "Creature Schools are Foundation cards that supply School Density capacity and have HP. They do not make defense rolls. When attacked, they take damage equal to the attack roll multiplied by 10 and are discarded at 0 HP. Creature Schools do not count as ordinary Fish for requirements that explicitly exclude schools.",
   },
   {
     title: "School Density requirements",
-    text: "Some Oceanic cards require a minimum School Density before they can be played. Check the current density and any active reductions before paying costs. Sardine Run reduces the next qualifying Oceanic Predator requirement by 30 once per player; Krill Bloom reduces the next qualifying Filter Feeder requirement by 150 once per player.",
+    text: "Creature Schools supply School Density capacity. Before playing a density-using creature, apply any valid requirement reduction and compare its effective requirement with your available capacity. The creature commits that amount while it remains in play, so commitments from multiple creatures add together; the capacity becomes available again when a committed creature leaves. This is not a permanent RP-style payment because the School Density remains printed on your Foundations. If destroying, replacing, or upgrading a Creature School leaves you over capacity, existing creatures stay in play, but you cannot play another creature with a positive School Density requirement until you restore enough capacity. Sardine Run reduces the next qualifying Oceanic Predator requirement by 30 once per player; Krill Bloom reduces the next qualifying Filter Feeder requirement by 150 once per player.",
   },
   {
     title: "Oceanic Apex additional cost",
@@ -111,7 +111,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Hand limits and overflow",
-    text: "There is no fixed hand limit by default, so a player may normally hold more than 7 cards. A Condition can set a temporary hand limit. When a draw, search, or recovery would exceed the current limit, keep cards only up to that limit and place the overflow into the discard pile in resolution order. Cards are still considered drawn even when hand-limit overflow discards them. A hand limit governs cards, not RP.",
+    text: "There is no fixed hand limit by default, so a player may normally hold more than 7 cards. A Condition can set a temporary hand limit. When a draw, search, or recovery takes your hand above the current limit, first add the cards to your hand, then choose and discard enough cards from your entire hand to return to the limit. The added cards still count as drawn, searched, or recovered. A hand limit governs cards, not RP.",
   },
   {
     title: "Support cards",
@@ -119,7 +119,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Searching and recovering cards",
-    text: "A search looks through the named deck or zone for a card matching the printed restrictions. Reveal or select the card as instructed, move it to the stated destination, then shuffle when required. Recovery moves an eligible card from discard to hand or deck; hand-limit overflow can return it to discard.",
+    text: "A search looks through the named deck or zone for a card matching the printed restrictions. Reveal or select the card as instructed, move it to the stated destination, then shuffle when required. Recovery moves an eligible card from discard to hand or deck. If that addition takes your hand above a temporary hand limit, choose enough cards from your entire hand to discard until you meet the limit.",
   },
   {
     title: "Toxic creatures",

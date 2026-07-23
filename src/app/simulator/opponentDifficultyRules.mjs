@@ -80,10 +80,20 @@ export function scaleOpponentThinkingDelay(delay, difficulty) {
   return Math.max(250, Math.round((Math.max(0, Number(delay)) || 0) * multiplier));
 }
 
-export function chooseOpponentPreferredDeck({ difficulty, round, coralCount = 0, emptySlotCount = 0, foundationCardsInHand = 0, creaturesInHand = 0 }) {
+export function chooseOpponentPreferredDeck({
+  difficulty,
+  round,
+  coralCount = 0,
+  emptySlotCount = 0,
+  foundationCardsInHand = 0,
+  creaturesInHand = 0,
+  threatLevel = "setup",
+} = {}) {
   const fallback = Number(round) % 2 === 1 ? "palsDeck" : "foundationDeck";
   if (normalizeOpponentDifficulty(difficulty) !== OpponentDifficulty.HARD) return fallback;
   if (coralCount < 2 && foundationCardsInHand === 0) return "foundationDeck";
+  if (emptySlotCount === 0 && foundationCardsInHand === 0) return "foundationDeck";
+  if (["pressure", "critical"].includes(threatLevel) && creaturesInHand < 2 && coralCount > 0) return "palsDeck";
   if (emptySlotCount <= 1 && foundationCardsInHand === 0) return "foundationDeck";
   if (emptySlotCount > 0 && creaturesInHand === 0) return "palsDeck";
   return fallback;

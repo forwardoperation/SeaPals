@@ -215,7 +215,7 @@ export const COMPREHENSION_BENCHMARK = [
 
   basic("137", "What is my hand?", "glossary:hand", ["drawn"]),
   basic("138", "Are cards in my hand already in play?", "glossary:hand", ["not played"]),
-  basic("139", "What happens if I draw over my hand limit?", ["glossary:hand", "knowledge:hand-limits-and-overflow"], ["overflow"]),
+  basic("139", "What happens if I draw over my hand limit?", ["glossary:hand", "knowledge:hand-limits-and-overflow"], ["choose", "entire hand", "discard"]),
   basic("140", "Does my opponent normally get to see my hand?", "glossary:hand", ["private"]),
 
   basic("141", "What is the discard pile?", "glossary:discard", ["spent"]),
@@ -255,7 +255,7 @@ export const COMPREHENSION_BENCHMARK = [
 
   basic("169", "What does School Density mean?", "glossary:school-density", ["Oceanic"]),
   basic("170", "Where does my prey density value come from?", "glossary:school-density", ["Creature Schools"]),
-  basic("171", "Do some Oceanic cards need a minimum density before play?", "glossary:school-density", ["minimum"]),
+  basic("171", "Do some Oceanic cards need enough available density before play?", "glossary:school-density", ["available"]),
   basic("172", "When do I apply a School Density requirement reduction?", ["glossary:school-density", "knowledge:school-density-requirements"], ["before"]),
 
   basic("173", "What is a round?", "glossary:round", ["Condition"]),
@@ -459,7 +459,7 @@ export const COMPREHENSION_BENCHMARK = [
   distractor("032", "When a card is destroyed, is it merely carrying some damage counters in play?", "glossary:destroyed", ["leaves play"]),
   distractor("033", "Is my RP bank cap the same limit as my number of cards in hand?", "glossary:rp-bank", ["RP"]),
   distractor("034", "When my hand is full, does that mean I cannot collect more RP?", ["glossary:hand", "knowledge:hand-limits-and-overflow"], ["cards"]),
-  distractor("035", "Can I spend School Density like Resource Points?", "glossary:school-density", ["value"]),
+  distractor("035", "Can I spend School Density like Resource Points?", "glossary:school-density", ["capacity"]),
   distractor("036", "Is RP the Oceanic value supplied by Creature Schools?", "glossary:rp", ["pay"]),
   distractor("037", "Does advantage add a fixed +2 modifier to my roll?", "glossary:advantage", ["roll twice"]),
   distractor("038", "Is a +2 die modifier the same as rolling with advantage?", "glossary:dice-notation", ["after rolling"]),

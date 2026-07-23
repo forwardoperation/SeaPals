@@ -82,9 +82,9 @@ const CONDITION_HELP_BY_ID = Object.freeze({
   }),
   "algae-bloom": Object.freeze({
     title: "A full hand has a limit",
-    message: "In the ocean, algae blooms are rapid increases in algae or phytoplankton. Not all blooms are harmful, but dense blooms can block light, and their decay can lower oxygen. In SeaPals, Algae Bloom models that crowded, stressed system with a seven-card hand limit this round. Additional draws still happen, but excess cards go to the discard pile.",
-    playerThought: "If my hand is already crowded, I should play or intentionally discard before drawing several cards so the hand limit does not choose for me.",
-    encouragement: "A sound observation. Even a harmful condition can be managed when you read it before committing to a draw effect.",
+    message: "In the ocean, algae blooms are rapid increases in algae or phytoplankton. Not all blooms are harmful, but dense blooms can block light, and their decay can lower oxygen. In SeaPals, Algae Bloom models that crowded, stressed system with a seven-card hand limit this round. Complete each required draw, search, or recovery first. If your hand then has more than seven cards, choose cards from your entire hand to discard until seven remain.",
+    playerThought: "If a draw takes me over seven cards, I can keep the cards that best support my plan and choose the rest to discard.",
+    encouragement: "Exactly. The hand limit forces a difficult choice, but it does not make that choice for you. Compare your whole hand before deciding what to discard.",
   }),
   "murky-water": Object.freeze({
     title: "Conditions can create opportunities",
@@ -101,7 +101,7 @@ const CONDITION_HELP_BY_ID = Object.freeze({
   "krill-ball": Object.freeze({
     title: "A bloom can open a brief opportunity",
     message: "In the ocean, currents and seasonal productivity can concentrate krill into dense swarms, creating a temporary food pulse for whales and other filter feeders. In SeaPals, Krill Bloom models that brief opportunity by lowering each player's next Filter Feeder School Density requirement by 150. The reduction can be used only once per player.",
-    playerThought: "Whale Shark normally needs 180 School Density. After the 150-point reduction, White Grunt's 30 School Density is exactly enough.",
+    playerThought: "Whale Shark normally needs 180 School Density. After the 150-point reduction, White Grunt's 30 is exactly enough; Whale Shark commits all of that capacity, filling the School's bucket until Whale Shark leaves or another School adds capacity.",
     encouragement: "That is the calculation. Conditions can change whether a play is legal, so compare the printed requirement with the active reduction before spending RP.",
   }),
   "bleak-overcast": Object.freeze({
@@ -131,7 +131,7 @@ function withTarget(help, target, cue = target) {
 function describeDrawnCard(card) {
   const name = String(card?.name ?? "This card");
   if (card?.discarded) {
-    return `${name} came from the ${card.source ?? "personal"} Deck, but the hand limit sent it to your discard pile.`;
+    return `${name} came from the ${card.source ?? "personal"} Deck. This draw put your hand over the limit, so choose which card or cards from your entire hand to discard until you meet it.`;
   }
 
   const hasCost = card?.cost != null && Number.isFinite(Number(card.cost));
@@ -564,12 +564,12 @@ function getAcademyDrawResultLesson(round, cards, drawnCards) {
     },
     5: {
       cardId: cards.creatureSchool?.cardId,
-      message: `${cards.creatureSchool?.cardName ?? primaryCard.name} came from the Foundation Deck because it is a Creature School. It belongs in the foundation area, supplies 30 School Density for a larger animal, and its Eco Foundation can still produce 1 RP while Severe Coral Bleaching stops heat-sensitive Corals.`,
+      message: `${cards.creatureSchool?.cardName ?? primaryCard.name} came from the Foundation Deck because it is a Creature School. It belongs in the foundation area and adds 30 School Density of bucket capacity for larger animals. Creatures commit space in that bucket while they remain in play. Its Eco Foundation can still produce 1 RP while Severe Coral Bleaching stops heat-sensitive Corals.`,
       action: `Press Continue to Actions, then play ${cards.creatureSchool?.cardName ?? primaryCard.name} in the highlighted foundation area.`,
     },
     6: {
       cardId: cards.filterFeeder?.cardId,
-      message: `${cards.filterFeeder?.cardName ?? primaryCard.name} came from the Pals Deck. This Filter Feeder normally needs 180 School Density, but Krill Bloom lowers the requirement by 150. ${cards.creatureSchool?.cardName ?? "White Grunt"} supplies the remaining 30, and ${cards.habitat?.cardName ?? "Coral Reef"} meets its separate Habitat requirement, so it is legal now.`,
+      message: `${cards.filterFeeder?.cardName ?? primaryCard.name} came from the Pals Deck. This Filter Feeder normally needs 180 School Density, but Krill Bloom lowers the requirement by 150. ${cards.creatureSchool?.cardName ?? "White Grunt"} has 30 open points, and this play will commit all of them. ${cards.habitat?.cardName ?? "Coral Reef"} meets its separate Habitat requirement, so the play is legal now.`,
       action: `Press Continue to Actions, then play ${cards.filterFeeder?.cardName ?? primaryCard.name} in open water.`,
     },
     7: {
@@ -871,14 +871,14 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.creatureSchool?.inPlay) {
       return play(cards.creatureSchool, {
         title: `Establish a Creature School with ${cards.creatureSchool?.cardName ?? "White Grunt"}`,
-        message: `Creature Schools are played in the foundation area. They have HP and can be attacked, but they also produce School Density for larger ocean animals. ${cards.creatureSchool?.cardName ?? "White Grunt"} supplies 30 School Density, and Eco Foundation adds 1 RP on future turns. Although White Grunt represents a school of fish, Creature Schools do not count toward Coral Reef's two-Fish requirement.`,
+        message: `Creature Schools are played in the foundation area. They have HP and can be attacked, and each one adds a School Density bucket for larger ocean animals. ${cards.creatureSchool?.cardName ?? "White Grunt"} adds 30 capacity. A creature commits its requirement while it remains in play, and that space opens again when it leaves. Eco Foundation also adds 1 RP on future turns. Although White Grunt represents a school of fish, Creature Schools do not count toward Coral Reef's two-Fish requirement.`,
         action: `Choose ${cards.creatureSchool?.cardName ?? "White Grunt"}, press Play Card, then place it in the highlighted foundation area.`,
         placementMessage: `Place ${cards.creatureSchool?.cardName ?? "White Grunt"} in the highlighted foundation area. Its 30 School Density will make next round's Filter Feeder legal, and its Eco Foundation can collect 1 RP on later turns.`,
       });
     }
     return help({
       title: "School Density is now part of the plan",
-      message: `${cards.creatureSchool?.cardName ?? "White Grunt"} shows why foundations are not limited to Corals. Its 30 School Density represents a food base that can support a much larger animal, while its RP passive helps the reef recover from a stressful condition.`,
+      message: `${cards.creatureSchool?.cardName ?? "White Grunt"} shows why foundations are not limited to Corals. Its meter now has 30 open School Density. Playing a qualifying animal fills that capacity like a bucket; adding or upgrading Schools makes the bucket larger.`,
       action: "Press End Turn. In Round 6, Krill Bloom lowers the requirement so you can play a Filter Feeder.",
     }, "turn-button", "end-round-5");
   }
@@ -887,7 +887,7 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.filterFeeder?.inPlay) {
       return play(cards.filterFeeder, {
         title: `Use School Density to welcome ${cards.filterFeeder?.cardName ?? "Whale Shark"}`,
-        message: `${cards.filterFeeder?.cardName ?? "Whale Shark"} normally requires 180 School Density. Krill Bloom lowers the next Filter Feeder requirement by 150, so ${cards.creatureSchool?.cardName ?? "White Grunt"}'s 30 School Density meets the remainder. Coral Reef meets the separate Habitat requirement.`,
+        message: `${cards.filterFeeder?.cardName ?? "Whale Shark"} normally requires 180 School Density. Krill Bloom lowers the next Filter Feeder requirement by 150, so ${cards.creatureSchool?.cardName ?? "White Grunt"}'s 30 open points are committed. That fills the current Density bucket. Coral Reef meets the separate Habitat requirement.`,
         action: `Choose ${cards.filterFeeder?.cardName ?? "Whale Shark"} and press Play Card. As an Ocean creature, it enters open water automatically; then review the confirmation.`,
       });
     }

@@ -59,13 +59,13 @@ const glossary = [
   ["Condition", "A shared card revealed at the start of a round that affects every player."],
   ["Habitat", "A persistent card, such as Open Ocean or Abyss, that enables or changes an ecosystem."],
   ["Slot", "A space supplied by Coral or another rule that accepts specific habitats and creature classes."],
-  ["Requirement", "Something that must already be true to play a card. Checking it does not spend it."],
+  ["Requirement", "Something that must already be true to play a card. It is separate from paying RP or another printed cost; School Density specifically commits capacity while its creature stays in play."],
   ["Cost", "What you pay to play a card or use an Action, usually RP or a printed additional cost."],
   ["Passive", "An ability that stays active while its card is in play and its printed condition is true."],
   ["On Play", "An ability that resolves once when the card is successfully played."],
   ["Action", "An ability you choose to use at its printed timing after paying its cost and choosing legal targets."],
   ["Defense", "The target's roll against a normal attack. A tied total means the defender stays in play."],
-  ["School Density", "An Oceanic value supplied by Creature Schools. It is checked for requirements, not spent like RP."],
+  ["School Density", "Oceanic capacity supplied by Creature Schools. Density requirements add together and stay committed while those creatures remain in play."],
   ["Discard", "Cards that are spent, discarded, or destroyed unless another rule gives them a different destination."],
   ["Lost Zone", "Where destroyed Apex, Filter Feeder, and Lionfish cards go instead of the discard pile."],
 ];
@@ -107,6 +107,11 @@ const faqQuestions = [
       "Oceanic creatures live in open water rather than on Reef or Deep Coral slots. Creature Schools are Oceanic Foundations and supply School Density; other Oceanic cards often require enough School Density or an enabling Habitat such as Open Ocean.",
   },
   {
+    question: "How does School Density capacity work?",
+    answer:
+      "Each Creature School adds School Density capacity. After any valid reduction, a creature with a School Density requirement commits that much available capacity while it remains in play, so multiple requirements add together. The capacity becomes available again when that creature leaves. If losing or changing a Creature School puts you over capacity, your existing creatures stay, but you cannot play another creature with a positive School Density requirement until you restore enough capacity.",
+  },
+  {
     question: "Who wins when an attack and defense tie?",
     answer:
       "The defender wins a tie and stays in play. A normal attack succeeds only when the final attack total is higher than the final defense total.",
@@ -139,7 +144,7 @@ const faqQuestions = [
   {
     question: "Is there a hand limit?",
     answer:
-      "There is no fixed hand limit by default. A Condition can set a temporary limit. If a draw, search, or recovery exceeds that limit, keep cards only up to the limit and put the overflow into discard in resolution order.",
+      "There is no fixed hand limit by default. A Condition can set a temporary limit. If a draw, search, or recovery takes your hand above that limit, add the cards to your hand first, then choose and discard enough cards from your entire hand to return to the limit.",
   },
   {
     question: "Does upgrading a Coral heal its damage?",
@@ -893,11 +898,13 @@ export default function InstructionsPage() {
 
               <RuleDetails
                 title="Oceanic ecosystems and School Density"
-                summary="Creature Schools are Foundations; density is checked, not spent"
+                summary="Creature Schools supply capacity; creatures commit it while in play"
               >
                 <ul className="space-y-2">
                   <li>• Creature Schools are Oceanic Foundations with School Density and HP.</li>
-                  <li>• School Density is a current ecosystem value. A play requirement checks it; the value is not spent like RP.</li>
+                  <li>• Add the School Density on your Creature Schools to find your total capacity. After reductions, each density-using creature commits its effective requirement while it remains in play, so those requirements add together.</li>
+                  <li>• Committed capacity becomes available again when that creature leaves. School Density is not permanently spent like RP: the capacity remains on the Creature School instead of leaving a bank.</li>
+                  <li>• If a Creature School leaves or changes and your commitments exceed the new capacity, keep the creatures already in play. You cannot play another creature with a positive School Density requirement until enough capacity is restored.</li>
                   <li>• Non-school Oceanic creatures live in open water rather than Reef or Deep Coral slots. Obey any printed School Density and Habitat requirements.</li>
                   <li>• Creature Schools do not roll Defense. An attack deals the attack roll ×10 as damage, and the School is discarded at 0 HP.</li>
                   <li>• Oceanic Apex requirements are card-specific. Killer Whale and Shortfin Mako require Open Ocean and 2 Oceanic Predators already in your ecosystem; those Predators stay in play. Bluefin Tuna requires Open Ocean, while Swordfish allows Open Ocean or Abyss.</li>
@@ -975,7 +982,7 @@ export default function InstructionsPage() {
                   <li>• Reveal and apply a shared Condition at the start of each round. Read its printed duration; some effects last for the round and some are persistent until used.</li>
                   <li>• Conditions can prevent card types from being played, change RP costs or bank caps, add draws, set a hand limit, suppress Coral RP, or reduce School Density requirements.</li>
                   <li>• The default RP bank cap is 8. When the active cap becomes lower, discard RP above it as instructed.</li>
-                  <li>• There is no default hand limit. If a Condition sets one, draw, search, or recovery overflow goes to discard in resolution order.</li>
+                  <li>• There is no default hand limit. If a Condition sets one, complete the draw, search, or recovery first; then, if your hand is over the limit, choose and discard enough cards from your entire hand to meet it.</li>
                   <li>• A required draw causes a loss when both personal decks are depleted.</li>
                   <li>• VP counts only while its card is in the ecosystem and any printed VP condition remains true.</li>
                 </ul>

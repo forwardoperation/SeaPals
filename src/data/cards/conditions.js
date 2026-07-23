@@ -193,7 +193,7 @@ export const conditionCards = [
       },
     ],
 
-    text: "Players cannot have more than 7 cards in their hands. Additional cards must be discarded.",
+    text: "Each player may have no more than 7 cards in hand. Whenever a player has more than 7 cards, that player chooses cards from their entire hand and discards them until 7 remain.",
   },
 
   {

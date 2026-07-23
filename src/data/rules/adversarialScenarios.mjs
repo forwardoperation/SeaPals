@@ -71,7 +71,7 @@ export const ADVERSARIAL_SCENARIOS = [
   { id: "rule-067", question: "Do all Oceanic Apex cards share one additional sacrifice cost?", expectedSourceIds: ["knowledge:oceanic-apex-additional-cost"], textIncludes: ["card-specific"], tags: ["rule"] },
   { id: "rule-068", question: "What are Conditions cards used for?", expectedSourceIds: ["knowledge:what-conditions-cards-are-used-for"], textIncludes: ["shared"], tags: ["rule"] },
   { id: "rule-069", question: "When do Victory Points count toward winning?", expectedSourceIds: ["knowledge:victory-points-in-play"], textIncludes: ["currently in your ecosystem"], tags: ["rule"] },
-  { id: "rule-070", question: "What happens when a draw exceeds my hand limit?", expectedSourceIds: ["knowledge:hand-limits-and-overflow"], textIncludes: ["overflow"], tags: ["rule"] },
+  { id: "rule-070", question: "What happens when a draw exceeds my hand limit?", expectedSourceIds: ["knowledge:hand-limits-and-overflow"], textIncludes: ["choose", "entire hand", "discard"], tags: ["rule"] },
   { id: "rule-071", question: "After a Support card resolves, where does it go?", expectedSourceIds: ["knowledge:support-cards"], textIncludes: ["discard"], tags: ["rule"] },
   { id: "rule-072", question: "How are searching and recovering cards different?", expectedSourceIds: ["knowledge:searching-and-recovering-cards"], textIncludes: ["Recovery"], tags: ["rule"] },
   { id: "rule-073", question: "When does Toxic When Eaten trigger?", expectedSourceIds: ["knowledge:toxic-creatures"], textIncludes: ["successfully consumes"], tags: ["rule"] },

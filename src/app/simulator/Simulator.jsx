@@ -10,11 +10,22 @@ import { conditionCards } from "@/data/cards/conditions";
 import { prebuiltDecks } from "@/data/tournaments/prebuiltDecks";
 import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveBlueCrabRecycle, resolveConditionalDiceDamage, resolveOpposedRoll, rollDie } from "./gameRules.mjs";
 import { createHabitatInstance, evaluateHabitatComposition, getHabitatRequirementError, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
+import { createHandLimitChoice, resolveHandLimitChoice, selectAutomatedHandLimitDiscards } from "./handLimitRules.mjs";
 import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstance, getOceanicApexSacrificeChoices, getPersonalDeckType, getSpecialPlacementHostTags, moveSlottedCreatureBetweenFoundations, placeCardInSpecialHost, removeCreatureInstances, resolveDestructionRecoveryWaves } from "./zoneRules.mjs";
 import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingAlarmTurn, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, endFlashingAlarmTurn, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getFlashingAlarmAttackBonus, getRemainingAttackTargets, getRovLightsAttackBonus, hasDefenseAdvantage, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume, triggerFlashingAlarm } from "./combatRules.mjs";
 import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
+import { createSchoolDensityBucketState, getEcosystemSchoolDensityCommitted } from "./schoolDensityRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
 import { OPPONENT_DIFFICULTY_OPTIONS, OpponentDifficulty, chooseOpponentPreferredDeck, getOpponentDifficultyProfile, limitOpponentOptionalActions, normalizeOpponentDifficulty, orderOpponentChoices, scaleOpponentThinkingDelay, selectOpponentChoice } from "./opponentDifficultyRules.mjs";
+import {
+  OpponentThreatLevel,
+  filterOpponentAttackersWithLegalTargets,
+  getOpponentNormalAttackLimit,
+  getOpponentThreatProfile,
+  preferOpponentPlaysWithResolvableOnPlayAttacks,
+  scoreHardOpponentPermanentPlay,
+  shouldOpponentAttackBeforeUtility,
+} from "./opponentPlayRules.mjs";
 import {
   OpeningCoinPhase,
   OpeningPlayer,
@@ -573,6 +584,7 @@ function createInitialGameState(deckId = defaultDeckId, opponentDeckId = deckId,
       creatureStatuses: {},
       flashingAlarmAttackBonus: null,
       conditionDensityUses: {},
+      schoolDensityCommitmentsByInstanceId: {},
       rp: Math.max(0, 3 - opponentSetupCost),
     },
   };
@@ -787,6 +799,7 @@ function getOrphanEntriesFromFoundation(foundation) {
     cardId: slot.cardId,
     instanceId: slot.cardInstanceId ?? createStableInstanceId(`orphan-${slot.cardId}`),
     hostedCardIds: (slot.hostedCardIds ?? []).filter(Boolean),
+    hostedSchoolDensityRequirements: (slot.hostedSchoolDensityRequirements ?? []).filter((_, index) => Boolean(slot.hostedCardIds?.[index])),
     ...(Object.prototype.hasOwnProperty.call(slot, "controller") ? { controller: slot.controller } : {}),
     ...(Object.prototype.hasOwnProperty.call(slot, "invasiveOwner") ? { invasiveOwner: slot.invasiveOwner } : {}),
   }));
@@ -989,6 +1002,21 @@ function actionIsOncePerTurn(action) {
 
 function cardMatchesAttackTarget(card, attack) {
   return attackCanTargetCard(card, attack);
+}
+
+function formatAttackTargetFamilies(attack) {
+  const labels = {
+    [CardCategory.APEX]: "an Apex creature",
+    [CardCategory.PREDATOR]: "a Predator",
+    [CardCategory.FISH]: "a Fish",
+    [CardCategory.INVERTEBRATE]: "an Invertebrate",
+    [CardCategory.FILTER_FEEDER]: "a Filter Feeder",
+  };
+  const targetLabels = [...new Set((attack?.targetCategories ?? []).map((category) => labels[category]).filter(Boolean))];
+  if (!targetLabels.length) return "";
+  if (targetLabels.length === 1) return targetLabels[0];
+  if (targetLabels.length === 2) return `${targetLabels[0]} or ${targetLabels[1]}`;
+  return `${targetLabels.slice(0, -1).join(", ")}, or ${targetLabels.at(-1)}`;
 }
 
 function cardMatchesSearchCriteria(card, effect) {
@@ -1210,6 +1238,57 @@ function InPlayHoverLabel({ card, zoom = 1 }) {
   );
 }
 
+function FoundationVitals({ foundation, densityBucket = null, owner = "player", compact = false }) {
+  const health = Number(foundation?.health ?? foundation?.maxHealth ?? 0);
+  const maxHealth = Number(foundation?.maxHealth ?? 0);
+  const healthPercent = maxHealth ? Math.min(100, Math.max(0, (health / maxHealth) * 100)) : 0;
+  const densityUsed = Number(densityBucket?.used ?? 0);
+  const densityCapacity = Number(densityBucket?.capacity ?? 0);
+  const densityPercent = densityCapacity
+    ? Math.min(100, Math.max(0, (densityUsed / densityCapacity) * 100))
+    : 0;
+  const healthFillClass = owner === "opponent" ? "bg-rose-500" : "bg-emerald-500";
+  const densityFillClass = densityUsed >= densityCapacity && densityCapacity
+    ? "bg-amber-400"
+    : "bg-cyan-400";
+  const labelSize = compact ? "text-[8px]" : "text-[10px]";
+  const barHeight = compact ? "h-1.5" : "h-2";
+
+  return (
+    <span className={`block rounded-lg bg-slate-950/90 ${compact ? "px-2 py-1" : "px-3 py-2"} text-white shadow-lg backdrop-blur-sm`}>
+      <span
+        className={`block ${barHeight} overflow-hidden rounded-full bg-slate-500/45`}
+        role="progressbar"
+        aria-label={`${health} of ${maxHealth} health`}
+        aria-valuemin={0}
+        aria-valuemax={maxHealth}
+        aria-valuenow={health}
+      >
+        <span className={`block h-full ${healthFillClass} transition-all`} style={{ width: `${healthPercent}%` }} />
+      </span>
+      <span className={`mt-0.5 block text-center ${labelSize} font-black leading-none`}>{health}/{maxHealth} HP</span>
+      {densityBucket ? (
+        <>
+          <span
+            className={`mt-1 block ${barHeight} overflow-hidden rounded-full bg-slate-500/45`}
+            role="progressbar"
+            aria-label={`${densityUsed} of ${densityCapacity} School Density committed`}
+            aria-valuemin={0}
+            aria-valuemax={densityCapacity}
+            aria-valuenow={Math.min(densityUsed, densityCapacity)}
+            aria-valuetext={`${densityUsed} of ${densityCapacity} School Density used; ${Math.max(0, densityCapacity - densityUsed)} available`}
+          >
+            <span className={`block h-full ${densityFillClass} transition-all`} style={{ width: `${densityPercent}%` }} />
+          </span>
+          <span className={`mt-0.5 block text-center ${labelSize} font-black leading-none ${densityUsed >= densityCapacity ? "text-amber-200" : "text-cyan-100"}`}>
+            {densityUsed}/{densityCapacity} SD used
+          </span>
+        </>
+      ) : null}
+    </span>
+  );
+}
+
 function getCreatureSlotLabel(slot) {
   if (!slot) return "Creature";
   const rawZone = String(slot.zone ?? "reef")
@@ -1371,6 +1450,38 @@ function getCardPlayCost(card, activeCondition = null) {
       : total;
   }, 0);
   return Math.max(0, baseCost + modifier);
+}
+
+function getAutomatedHandKeepScore(cardId, { rp = 0, round = 0 } = {}) {
+  const card = cardsById[cardId];
+  if (!card) return -100;
+  const victoryPoints = Number(card.victoryPoints?.value ?? card.victoryPoints ?? card.vp ?? 0);
+  const playCost = Number(card.cost?.rp ?? 0);
+  const economyValue = getCardStartTurnRp(card);
+  const isBaseFoundation = isFoundationCard(card) && Number(card.stage ?? 0) === 0;
+  return victoryPoints * 8
+    + economyValue * 12
+    + Number(card.actions?.length ?? 0) * 4
+    + Number(card.passives?.length ?? 0) * 2
+    + (playCost <= Number(rp) ? 9 : 0)
+    + (isBaseFoundation ? (Number(round) <= 3 ? 30 : 14) : 0)
+    - playCost * 0.5;
+}
+
+function applyAutomatedHandLimitToState(state, handLimit, context = {}, incomingCards = []) {
+  const choice = createHandLimitChoice({ hand: state.hand, incomingCards, handLimit });
+  const selectedKeys = selectAutomatedHandLimitDiscards(
+    choice,
+    (cardId) => getAutomatedHandKeepScore(cardId, { ...context, rp: state.rp }),
+  );
+  const result = resolveHandLimitChoice(choice, selectedKeys, state.discardPile);
+  return {
+    state: { ...state, hand: result.hand, discardPile: result.discardPile },
+    cardsToDiscard: result.cardsToDiscard,
+    incomingCardsToHand: result.incomingCardsToHand,
+    incomingCardsToDiscard: result.incomingCardsToDiscard,
+    choice,
+  };
 }
 
 function getOpposingPlayCostModifier(card, opposingCorals = [], opposingReefCreatures = [], opposingOrphans = []) {
@@ -1977,6 +2088,7 @@ export default function Simulator({
   const [activeConditionId, setActiveConditionId] = useState(null);
   const [persistentConditionIds, setPersistentConditionIds] = useState([]);
   const [conditionDensityUses, setConditionDensityUses] = useState({});
+  const [schoolDensityCommitmentsByInstanceId, setSchoolDensityCommitmentsByInstanceId] = useState({});
   const [blueCrabRecycleUsedTurn, setBlueCrabRecycleUsedTurn] = useState(null);
   const [resilienceUsedCardIds, setResilienceUsedCardIds] = useState([]);
   const [round, setRound] = useState(0);
@@ -2015,6 +2127,8 @@ export default function Simulator({
   const openingCoinFlipActiveRef = useRef(false);
   const inspectorReturnFocusRef = useRef(null);
   const [inspectedCard, setInspectedCard] = useState(null);
+  const handLimitChoiceIdRef = useRef(0);
+  const [handLimitDiscardSelection, setHandLimitDiscardSelection] = useState([]);
   const [eventOverlay, setEventOverlay] = useState(() => ({
     type: "new-game-setup",
     initial: true,
@@ -2161,8 +2275,7 @@ export default function Simulator({
     if (!healthResult.changed && nextRp === projectedRp) return { state: projectedState, collateral: null };
     if (!healthResult.destroyed.length) return { state: { ...projectedState, corals: healthResult.corals, rp: nextRp }, collateral: null };
     const projectedHand = projectedState.hand ?? hand;
-    const handLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
-    const triggerResult = resolveFoundationDestructionTriggers(healthResult.destructionWaves, projectedHand, projectedState.discardPile ?? discardPile, handLimit);
+    const triggerResult = resolveFoundationDestructionTriggers(healthResult.destructionWaves, projectedHand, projectedState.discardPile ?? discardPile, Infinity);
     return {
       state: {
         ...projectedState,
@@ -2310,6 +2423,7 @@ export default function Simulator({
   });
 
   const activeCondition = activeConditionId ? cardsById[activeConditionId] : null;
+  const activeHandLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
   const persistentConditions = persistentConditionIds.map((conditionId) => cardsById[conditionId]).filter(Boolean);
   const unsupportedConditionEffects = getUnsupportedConditionEffects(activeCondition);
   const isSetup = gamePhase === "setup";
@@ -2355,6 +2469,31 @@ export default function Simulator({
     : null;
   const tutorialBoardTourOpen = Boolean(tutorialBoardTourHelp && !eventOverlay && !gameResult);
 
+  useEffect(() => {
+    if (!["draw", "main"].includes(gamePhase) || !Number.isFinite(activeHandLimit)) return;
+    const choice = createHandLimitChoice({ hand, handLimit: activeHandLimit });
+    if (!choice.requiredDiscardCount) return;
+    if (eventOverlay?.type === "choose-hand-limit-discard" || pendingEvents.some((event) => event.type === "choose-hand-limit-discard")) return;
+
+    const choiceId = `hand-limit-${++handLimitChoiceIdRef.current}`;
+    const choiceEvent = {
+      type: "choose-hand-limit-discard",
+      choiceId,
+      sourceCardId: activeCondition?.id ?? null,
+      title: `Choose ${choice.requiredDiscardCount} Card${choice.requiredDiscardCount === 1 ? "" : "s"} to Discard`,
+      message: `${activeCondition?.name ?? "The active Condition"} limits each hand to ${choice.handLimit} cards. Choose from your entire hand; the simulator will not choose for you.`,
+      handLimitChoice: choice,
+    };
+    setHandLimitDiscardSelection([]);
+    if (eventOverlay) {
+      setPendingEvents((current) => current.some((event) => event.type === "choose-hand-limit-discard")
+        ? current
+        : [...current, choiceEvent]);
+    } else {
+      setEventOverlay(choiceEvent);
+    }
+  }, [activeCondition?.id, activeHandLimit, eventOverlay, gamePhase, hand, pendingEvents]);
+
   function notifyTutorialCallback(name, ...args) {
     const callback = tutorialCallbacksRef.current?.[name];
     if (typeof callback !== "function") return;
@@ -2398,8 +2537,34 @@ export default function Simulator({
       accepted: true,
     });
   }
-  const playerSchoolDensity = getSchoolDensity(playerCorals);
-  const opponentSchoolDensity = getSchoolDensity(opponentCorals);
+  const playerSchoolDensityCommitted = getEcosystemSchoolDensityCommitted({
+    foundations: playerCorals,
+    invasiveFoundations: opponentCorals,
+    reefCreatureInstances: playerReefCreatureInstances,
+    orphanCreatureInstances: playerOrphanCreatureInstances,
+    invasiveOrphanCreatureInstances: opponent.orphanCreatures,
+    commitmentsByInstanceId: schoolDensityCommitmentsByInstanceId,
+  }, cardsById, "player");
+  const opponentSchoolDensityCommitted = getEcosystemSchoolDensityCommitted({
+    foundations: opponentCorals,
+    invasiveFoundations: playerCorals,
+    reefCreatureInstances: opponent.reefCreatureInstances,
+    orphanCreatureInstances: opponent.orphanCreatures,
+    invasiveOrphanCreatureInstances: playerOrphanCreatureInstances,
+    commitmentsByInstanceId: opponent.schoolDensityCommitmentsByInstanceId ?? {},
+  }, cardsById, "opponent");
+  const playerSchoolDensityState = createSchoolDensityBucketState(
+    playerCorals,
+    playerSchoolDensityCommitted,
+    cardsById,
+  );
+  const opponentSchoolDensityState = createSchoolDensityBucketState(
+    opponentCorals,
+    opponentSchoolDensityCommitted,
+    cardsById,
+  );
+  const playerSchoolDensity = playerSchoolDensityState.capacity;
+  const opponentSchoolDensity = opponentSchoolDensityState.capacity;
   const schoolDensityConditionIds = [...new Set([activeConditionId, ...persistentConditionIds].filter(Boolean))];
   const playingCard = playingCardId ? cardsById[playingCardId] : null;
   const inspectedCardData = inspectedCard ? cardsById[inspectedCard.cardId] : null;
@@ -2407,8 +2572,14 @@ export default function Simulator({
   const inspectedCreatureSlot = inspectedCard?.owner === "player" && inspectedCard.coralId
     ? playerCorals.find((coral) => coral.id === inspectedCard.coralId)?.slots.find((slot) => slot.id === inspectedCard.slotId)
     : null;
-  const inspectedFoundation = inspectedCard?.owner === "player" && inspectedCard?.foundation
-    ? playerCoralCards.find((coral) => coral.id === inspectedCard.coralId)
+  const inspectedFoundation = inspectedCard?.foundation
+    ? (inspectedCard.owner === "player" ? playerCorals : opponentCorals)
+        .find((foundation) => foundation.id === inspectedCard.coralId)
+    : null;
+  const inspectedFoundationDensityBucket = inspectedFoundation
+    ? (inspectedCard.owner === "player"
+        ? playerSchoolDensityState.byFoundationId[inspectedFoundation.id]
+        : opponentSchoolDensityState.byFoundationId[inspectedFoundation.id]) ?? null
     : null;
   const inspectedFoundationIsStunned = Boolean(inspectedFoundation && !coralCanUseOwnAbilities(inspectedFoundation));
   const inspectedActionKey = inspectedCreatureSlot ? getSlotActionKey(inspectedCreatureSlot) : inspectedCard?.slotId;
@@ -3171,12 +3342,11 @@ export default function Simulator({
     setPlayerCorals(result.corals);
     if (result.destroyed.length) setPlayerOrphanCreatures(result.orphans);
     if (result.destroyed.length) {
-      const handLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
-      const triggerResult = resolveFoundationDestructionTriggers(result.destructionWaves, hand, discardPile, handLimit);
+      const triggerResult = resolveFoundationDestructionTriggers(result.destructionWaves, hand, discardPile, Infinity);
       setDiscardPile(triggerResult.discardPile);
       if (triggerResult.hand !== hand) setHand(triggerResult.hand);
       const fragmentMessage = triggerResult.triggers.map((trigger) => trigger.cardsToHand.length + trigger.cardsToDiscard.length
-        ? ` Fragment found ${[...trigger.cardsToHand, ...trigger.cardsToDiscard].map((cardId) => cardsById[cardId]?.name).join(" and ")}.${trigger.cardsToHand.length ? ` ${trigger.cardsToHand.length} moved to your hand.` : ""}${trigger.cardsToDiscard.length ? ` ${trigger.cardsToDiscard.length} remained in discard because of the hand limit.` : ""}`
+        ? ` Fragment found ${[...trigger.cardsToHand, ...trigger.cardsToDiscard].map((cardId) => cardsById[cardId]?.name).join(" and ")}.${trigger.cardsToHand.length ? ` ${trigger.cardsToHand.length} moved to your hand.` : ""}${trigger.cardsToDiscard.length ? ` Your hand is over its limit, so you will choose what to discard.` : ""}`
         : ` Fragment triggered but found no ${cardsById[trigger.targetCardId]?.name ?? "matching card"} to recover.`).join("");
       pushLog(`${result.destroyed.map((foundation) => cardsById[foundation.cardId]?.name).join(", ")} was destroyed when a continuous coral-health bonus ended. Its creatures filled compatible open slots; ${result.orphans.length} remain orphaned on your reef.${fragmentMessage}`);
     }
@@ -3299,6 +3469,43 @@ export default function Simulator({
     return result.discount;
   }
 
+  function commitPlayerSchoolDensity(instanceId, effectiveRequirement) {
+    if (!instanceId) return;
+    setSchoolDensityCommitmentsByInstanceId((current) => ({
+      ...current,
+      [instanceId]: Math.max(0, Number(effectiveRequirement ?? 0)),
+    }));
+  }
+
+  function getDensityFreedBySacrificeChoice(choice) {
+    return (choice?.candidates ?? []).reduce((total, entry) => {
+      const densityInstanceId = entry.densityInstanceId ?? entry.instanceId;
+      return total + Number(
+        schoolDensityCommitmentsByInstanceId[densityInstanceId]
+        ?? entry.schoolDensityRequirementAtPlay
+        ?? entry.card?.schoolDensityRequirement
+        ?? 0,
+      );
+    }, 0);
+  }
+
+  function getPlayerSchoolDensityAvailableForPlay(card) {
+    const requiresSacrifice = (card?.specialRules ?? []).some((rule) => (
+      /discard one oceanic predator or two oceanic fish/i.test(
+        typeof rule === "string" ? rule : rule?.text ?? "",
+      )
+    ));
+    if (!requiresSacrifice) return playerSchoolDensityState.available;
+    const mostFreed = getPlayerOceanicSacrificeChoices(card).reduce(
+      (maximum, choice) => Math.max(maximum, getDensityFreedBySacrificeChoice(choice)),
+      0,
+    );
+    return Math.max(
+      0,
+      playerSchoolDensityState.capacity - playerSchoolDensityState.committed + mostFreed,
+    );
+  }
+
   function getPlayError(card, { allowUpcomingMain = false } = {}) {
     if (!card) return "Select a card first.";
     if (gameResult) return "This game has ended. Start a new game to continue playing.";
@@ -3341,9 +3548,13 @@ export default function Simulator({
     const compositionRequirementError = getCompositionRequirementError(card, playerCorals, [...playerReefCreatures, ...playerOrphanCreatures.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])]);
     if (compositionRequirementError) return compositionRequirementError;
     const densityRequirement = getPlayerSchoolDensityRequirement(card);
-    if (densityRequirement.effectiveRequirement > playerSchoolDensity) {
+    const densityAvailableForPlay = getPlayerSchoolDensityAvailableForPlay(card);
+    if (densityRequirement.effectiveRequirement > densityAvailableForPlay) {
       const discountMessage = densityRequirement.discount ? ` ${densityRequirement.discount.label} reduces its printed ${densityRequirement.printedRequirement} requirement to ${densityRequirement.effectiveRequirement}.` : "";
-      return `${card.name} requires ${densityRequirement.effectiveRequirement} School Density, but your ecosystem has ${playerSchoolDensity}.${discountMessage}`;
+      const overflowMessage = playerSchoolDensityState.overCapacity
+        ? ` Your ecosystem is already ${playerSchoolDensityState.overCapacity} over capacity.`
+        : "";
+      return `${card.name} needs ${densityRequirement.effectiveRequirement} available School Density, but only ${densityAvailableForPlay} of ${playerSchoolDensity} can be open for this play (${playerSchoolDensityState.committed} currently committed).${overflowMessage}${discountMessage}`;
     }
     if (cardUsesOpponentReef(card)) {
       const opponentCoralSlots = opponentCoralCards.flatMap((coral) => coral.slots ?? []);
@@ -4358,19 +4569,33 @@ export default function Simulator({
       setPlayError("This creature cannot be placed in that slot.");
       return;
     }
+    const densityRequirementAtPlay = getPlayerSchoolDensityRequirement(card).effectiveRequirement;
+    const cardInstanceId = isHostedPlacement
+      ? null
+      : createStableInstanceId(`player-slot-${playingCardId}`);
+    const hostedIndex = isHostedPlacement
+      ? hostedCardIds.findIndex((hostedCardId, index) => (
+          hostedCardId === playingCardId && slot.hostedCardIds?.[index] !== hostedCardId
+        ))
+      : -1;
+    const hostedSchoolDensityRequirements = isHostedPlacement
+      ? [...(slot.hostedSchoolDensityRequirements ?? [])]
+      : null;
+    if (hostedIndex >= 0) hostedSchoolDensityRequirements[hostedIndex] = densityRequirementAtPlay;
     const nextPlayerCorals = playerCorals.map((c) =>
         c.id === coral.id
           ? {
               ...c,
               slots: c.slots.map((s) => (s.id === slotId
                 ? isHostedPlacement
-                  ? { ...s, hostedCardIds }
-                  : { ...s, cardId: playingCardId, cardInstanceId: createStableInstanceId(`player-slot-${playingCardId}`) }
+                  ? { ...s, hostedCardIds, hostedSchoolDensityRequirements }
+                  : { ...s, cardId: playingCardId, cardInstanceId }
                 : s)),
             }
           : c,
       );
     setPlayerCorals(nextPlayerCorals);
+    if (cardInstanceId) commitPlayerSchoolDensity(cardInstanceId, densityRequirementAtPlay);
     queueBubbleBurstForSlot(slotId);
     const playCost = getPlayerCardPlayCost(card);
     const onPlayResourceGain = getResourceGainFromActions(card.onPlay, "rp");
@@ -4852,9 +5077,7 @@ export default function Simulator({
   }
 
   function applyCurrentHandLimit(cardIds, currentHandSize = hand.length) {
-    const handLimitEffect = (activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
-    const handLimit = handLimitEffect ? Number(handLimitEffect.amount) : Infinity;
-    return drawWithHandLimit(cardIds, currentHandSize, cardIds.length, handLimit);
+    return drawWithHandLimit(cardIds, currentHandSize, cardIds.length, Infinity);
   }
 
   function getCardsInPlayForComposition(corals, reefCreatureIds, orphanEntries) {
@@ -5046,18 +5269,11 @@ export default function Simulator({
     const handLimitEffect = (condition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
     const handLimit = Number(handLimitEffect?.amount ?? Infinity);
     const excessCards = Number.isFinite(handLimit) && hand.length > handLimit ? hand.slice(handLimit) : [];
-    const opponentExcessCards = !skipOpponentHandLimit && Number.isFinite(handLimit) && opponent.hand.length > handLimit ? opponent.hand.slice(handLimit) : [];
-    if (excessCards.length) {
-      setHand((current) => current.slice(0, handLimit));
-      setDiscardPile((current) => [...excessCards, ...current]);
-    }
-    if (opponentExcessCards.length) {
-      setOpponent((current) => ({
-        ...current,
-        hand: current.hand.slice(0, handLimit),
-        discardPile: [...current.hand.slice(handLimit), ...current.discardPile],
-      }));
-    }
+    const opponentHandLimitResult = skipOpponentHandLimit
+      ? { state: opponent, cardsToDiscard: [] }
+      : applyAutomatedHandLimitToState(opponent, handLimit, { round: nextRound });
+    const opponentExcessCards = opponentHandLimitResult.cardsToDiscard;
+    if (opponentExcessCards.length) setOpponent(opponentHandLimitResult.state);
     setRound(nextRound);
     setTurnLog([]);
     setGamePhase("draw");
@@ -5116,7 +5332,7 @@ export default function Simulator({
       success: parasiteTransfer.collected > 0,
     }] : []);
     pushLog(
-      `Round ${nextRound}: revealed ${condition?.name ?? "no condition"}. Collected ${actualCollectedRp} RP from ${collectedRp} available; bank ${rpAfterCollection}/${roundRpCap}.${cappedRp ? ` ${cappedRp} RP was discarded at the cap.` : ""} Now choose your card draw.${parasiteMessage ? ` ${parasiteMessage}` : ""}${excessCards.length ? ` Your hand limit discarded ${excessCards.length} excess card(s).` : ""}${opponentExcessCards.length ? ` The opponent's hand limit discarded ${opponentExcessCards.length} excess card(s).` : ""}`,
+      `Round ${nextRound}: revealed ${condition?.name ?? "no condition"}. Collected ${actualCollectedRp} RP from ${collectedRp} available; bank ${rpAfterCollection}/${roundRpCap}.${cappedRp ? ` ${cappedRp} RP was discarded at the cap.` : ""} Now choose your card draw.${parasiteMessage ? ` ${parasiteMessage}` : ""}${excessCards.length ? ` Your hand is ${excessCards.length} card${excessCards.length === 1 ? "" : "s"} over the limit; choose what to discard.` : ""}${opponentExcessCards.length ? ` The opponent chose ${opponentExcessCards.length} excess card(s) to discard.` : ""}`,
     );
   }
 
@@ -5201,8 +5417,7 @@ export default function Simulator({
     const foundationCards = chooseCards(foundationDeck, "foundation", turnDrawSelection.foundation);
     const palsCards = chooseCards(palsDeck, "pals", turnDrawSelection.pals);
     const drawnCards = [...foundationCards, ...palsCards];
-    const handLimitEffect = (activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
-    const drawResult = drawWithHandLimit(drawnCards, hand.length, drawnCards.length, handLimitEffect ? Number(handLimitEffect.amount) : Infinity);
+    const drawResult = drawWithHandLimit(drawnCards, hand.length, drawnCards.length, Infinity);
     emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.CARD_DRAWN, {
       count: drawnCards.length,
       foundationCount: foundationCards.length,
@@ -5232,7 +5447,7 @@ export default function Simulator({
     setHasDrawnThisTurn(true);
     setGamePhase("main");
     setModal("draw-result");
-    pushLog(`Drew ${foundationCards.length} from Foundation and ${palsCards.length} from Pals.${drawResult.cardsToDiscard.length ? ` Hand limit discarded ${drawResult.cardsToDiscard.length} card(s).` : ""}${turnDrawSelection.shortfall > 0 ? " The required draw could not be completed, so you lose by deck depletion." : ""}`);
+    pushLog(`Drew ${foundationCards.length} from Foundation and ${palsCards.length} from Pals.${turnDrawSelection.shortfall > 0 ? " The required draw could not be completed, so you lose by deck depletion." : ""}`);
     if (turnDrawSelection.shortfall > 0) {
       setGameResult((current) => current ?? `Defeat: you were required to draw ${turnDrawSelection.requested} cards, but your personal decks contained only ${turnDrawSelection.target}.`);
     }
@@ -5242,17 +5457,36 @@ export default function Simulator({
     const requiresSacrifice = (card?.specialRules ?? []).some((rule) => /discard one oceanic predator or two oceanic fish/i.test(typeof rule === "string" ? rule : rule?.text ?? ""));
     if (!requiresSacrifice) return [];
     const candidates = [
-      ...playerCorals.flatMap((coral) => coral.slots.filter((slot) => slot.cardId).map((slot) => ({
+      ...playerCorals.flatMap((coral) => coral.slots.filter((slot) => slot.cardId && !slot.invasiveOwner).map((slot) => ({
         instanceId: getSlotTargetInstanceId(slot),
+        densityInstanceId: getSlotCardInstanceId(slot),
         cardId: slot.cardId,
         card: cardsById[slot.cardId],
+        schoolDensityRequirementAtPlay: schoolDensityCommitmentsByInstanceId[getSlotCardInstanceId(slot)]
+          ?? Number(cardsById[slot.cardId]?.schoolDensityRequirement ?? 0),
         location: "slot",
         coralId: coral.id,
         slotId: slot.id,
         hostedCardIds: [...(slot.hostedCardIds ?? [])],
       }))),
-      ...playerReefCreatureInstances.map((instance) => ({ ...instance, card: cardsById[instance.cardId], location: "reef" })),
-      ...playerOrphanCreatureInstances.map((instance) => ({ ...instance, card: cardsById[instance.cardId], location: "orphan" })),
+      ...playerReefCreatureInstances.map((instance) => ({
+        ...instance,
+        densityInstanceId: instance.instanceId,
+        card: cardsById[instance.cardId],
+        schoolDensityRequirementAtPlay: schoolDensityCommitmentsByInstanceId[instance.instanceId]
+          ?? instance.schoolDensityRequirementAtPlay
+          ?? Number(cardsById[instance.cardId]?.schoolDensityRequirement ?? 0),
+        location: "reef",
+      })),
+      ...playerOrphanCreatureInstances.filter((instance) => !instance.invasiveOwner).map((instance) => ({
+        ...instance,
+        densityInstanceId: instance.instanceId,
+        card: cardsById[instance.cardId],
+        schoolDensityRequirementAtPlay: schoolDensityCommitmentsByInstanceId[instance.instanceId]
+          ?? instance.schoolDensityRequirementAtPlay
+          ?? Number(cardsById[instance.cardId]?.schoolDensityRequirement ?? 0),
+        location: "orphan",
+      })),
     ];
     return getOceanicApexSacrificeChoices(candidates, cardsById);
   }
@@ -5270,6 +5504,17 @@ export default function Simulator({
       return;
     }
     const sacrifices = choice.candidates ?? [];
+    const densityRequirementAtPlay = getPlayerSchoolDensityRequirement(card).effectiveRequirement;
+    const densityAvailableAfterSacrifice = Math.max(
+      0,
+      playerSchoolDensityState.capacity
+        - playerSchoolDensityState.committed
+        + getDensityFreedBySacrificeChoice(choice),
+    );
+    if (densityRequirementAtPlay > densityAvailableAfterSacrifice) {
+      setPlayError(`${card.name} still needs ${densityRequirementAtPlay} available School Density after that sacrifice, but the choice would open only ${densityAvailableAfterSacrifice}.`);
+      return;
+    }
     const sacrificedSlotIds = new Set(sacrifices.filter((entry) => entry.location === "slot").map((entry) => entry.slotId));
     const sacrificedReefIds = sacrifices.filter((entry) => entry.location === "reef").map((entry) => entry.instanceId);
     const sacrificedOrphanIds = sacrifices.filter((entry) => entry.location === "orphan").map((entry) => entry.instanceId);
@@ -5284,9 +5529,11 @@ export default function Simulator({
     const remainingReefInstances = removeCreatureInstances(playerReefCreatureInstances, sacrificedReefIds).instances;
     const playedInstance = createCreatureInstance(card.id, createStableInstanceId(`player-reef-${card.id}`), {
       territorialTargetFoundationId: null,
+      schoolDensityRequirementAtPlay: densityRequirementAtPlay,
     });
     const nextReefInstances = [...remainingReefInstances, playedInstance];
     setPlayerReefCreatureInstances(nextReefInstances);
+    commitPlayerSchoolDensity(playedInstance.instanceId, densityRequirementAtPlay);
     queueBubbleBurst(76, 24);
     const remainingOrphans = removeCreatureInstances(playerOrphanCreatureInstances, sacrificedOrphanIds).instances;
     const nextOrphanInstances = sacrificedOrphanIds.length || freedHostedCardIds.length
@@ -5316,7 +5563,13 @@ export default function Simulator({
     const resourceMessage = onPlayResourceGain
       ? ` ${getOnPlayAbilityName(card)} gained ${actualOnPlayGain} RP${actualOnPlayGain < onPlayResourceGain ? `; the ${playerCapAfterPlacement} RP bank cap prevented the rest` : ""}.`
       : "";
-    const message = `${card.name} entered your open-water ecosystem for ${playCost} RP at ${playerSchoolDensity} School Density.${sacrificeMessage}${territorialMessage}${resourceMessage}`;
+    const committedAfterPlay = Math.max(
+      0,
+      playerSchoolDensityState.committed
+        - getDensityFreedBySacrificeChoice(choice)
+        + densityRequirementAtPlay,
+    );
+    const message = `${card.name} entered your open-water ecosystem for ${playCost} RP and committed ${densityRequirementAtPlay} School Density (${committedAfterPlay}/${playerSchoolDensity} now used).${sacrificeMessage}${territorialMessage}${resourceMessage}`;
     pushLog(message);
     emitPlayerBuild(card, playCost, "open-water");
     const playedSlotId = `reef-${playedInstance.instanceId}`;
@@ -5596,6 +5849,7 @@ export default function Simulator({
       setEventOverlay({ type: "utility-result", sourceCardId: card.id, title: "Invasive Placement Canceled", message, success: false });
       return;
     }
+    const densityRequirementAtPlay = getPlayerSchoolDensityRequirement(card).effectiveRequirement;
     const cardInstanceId = createStableInstanceId(`player-invader-${card.id}`);
     setOpponent((current) => ({
       ...current,
@@ -5609,6 +5863,7 @@ export default function Simulator({
     }));
     setHand((current) => removeOneCard(current, card.id));
     setRp((current) => Math.max(0, current - cost));
+    commitPlayerSchoolDensity(cardInstanceId, densityRequirementAtPlay);
     consumePlayerSchoolDensityDiscount(card);
     setSearchContext(null);
     setSelectedHandCard(null);
@@ -5744,14 +5999,11 @@ export default function Simulator({
     if (!sourceCard || !foundCard) return;
     setFoundationDeck((current) => shuffle(removeOneCard(current, cardId)));
     setPalsDeck((current) => shuffle(removeOneCard(current, cardId)));
-    const handLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
-    const handResult = addCardsToHandWithLimit(hand, [cardId], discardPile, handLimit);
+    const handResult = addCardsToHandWithLimit(hand, [cardId], discardPile, Infinity);
     setHand(handResult.hand);
     setDiscardPile(handResult.discardPile);
     setSearchContext(null);
-    const message = handResult.cardsToHand.length
-      ? `${sourceCard.name}'s Momentum added ${foundCard.name} to your hand and shuffled your personal decks.`
-      : `${sourceCard.name}'s Momentum found and revealed ${foundCard.name}, but the active hand limit sent it to your discard pile. Your personal decks were shuffled.`;
+    const message = `${sourceCard.name}'s Momentum added ${foundCard.name} to your hand and shuffled your personal decks.`;
     pushLog(message);
     setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: foundCard.id, title: `Player's ${sourceCard.name} used Momentum`, message, success: true });
   }
@@ -5897,7 +6149,7 @@ export default function Simulator({
     setSearchContext(null);
     setModal("hand");
     setSelectedHandCard(searchContext.selected[0]);
-    pushLog(`${supportCard.name} found ${names}. The Support card was discarded and both personal decks were shuffled.${handResult.cardsToDiscard.length ? ` ${handResult.cardsToDiscard.length} searched card(s) exceeded the hand limit and were discarded.` : ""}`);
+    pushLog(`${supportCard.name} found ${names}. The Support card was discarded and both personal decks were shuffled.`);
   }
 
   function cancelSupportSearch() {
@@ -5927,9 +6179,7 @@ export default function Simulator({
     setModal(null);
     setSelectedHandCard(null);
     const recoveredName = cardsById[cardId]?.name ?? cardId;
-    const message = handResult.cardsToHand.length
-      ? `${supportCard.name} recovered ${recoveredName} from your Lost Zone. That recovered card cannot be played until your next turn, and ${supportCard.name} moved to the Lost Zone.`
-      : `${supportCard.name} recovered ${recoveredName}, but the active hand limit sent it to your discard pile. ${supportCard.name} moved to the Lost Zone.`;
+    const message = `${supportCard.name} recovered ${recoveredName} from your Lost Zone. That recovered card cannot be played until your next turn, and ${supportCard.name} moved to the Lost Zone.`;
     pushLog(message);
     setEventOverlay({ type: "utility-result", sourceCardId: supportCard.id, defenderCardId: cardId, title: `Player used ${supportCard.name}`, message, success: true });
   }
@@ -5944,7 +6194,7 @@ export default function Simulator({
     setSearchContext(null);
     setModal(null);
     setSelectedHandCard(handResult.cardsToHand.length ? cardId : null);
-    pushLog(handResult.cardsToHand.length ? `Recovery returned ${cardsById[cardId]?.name ?? cardId} from your discard pile to your hand.` : `Recovery found ${cardsById[cardId]?.name ?? cardId}, but it stayed in the discard pile because your hand is at its limit.`);
+    pushLog(`Recovery returned ${cardsById[cardId]?.name ?? cardId} from your discard pile to your hand.`);
   }
 
   function completeCoralHeal(coralId) {
@@ -6282,8 +6532,7 @@ export default function Simulator({
     const palsCards = palsDeck.slice(0, turnDrawSelection.pals);
     const drawnCards = [...foundationCards, ...palsCards];
     const discardedHand = removeOneCard(hand, supportCard.id);
-    const handLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
-    const drawResult = drawWithHandLimit(drawnCards, 0, drawnCards.length, handLimit);
+    const drawResult = drawWithHandLimit(drawnCards, 0, drawnCards.length, Infinity);
     const shortfall = Number(turnDrawSelection.shortfall ?? getRequiredDrawShortfall(turnDrawSelection.requested, drawnCards.length));
     setFoundationDeck((current) => current.slice(foundationCards.length));
     setPalsDeck((current) => current.slice(palsCards.length));
@@ -6295,7 +6544,7 @@ export default function Simulator({
     setTurnDrawSelection(null);
     setModal(null);
     setSelectedHandCard(drawResult.cardsToHand[0] ?? null);
-    const message = `Dr. Evans discarded ${discardedHand.length} card(s) from your hand and drew ${foundationCards.length} from Foundation plus ${palsCards.length} from Pals.${drawResult.cardsToDiscard.length ? ` ${drawResult.cardsToDiscard.length} exceeded the active hand limit and was discarded.` : ""}${shortfall ? ` The mandatory seven-card draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
+    const message = `Dr. Evans discarded ${discardedHand.length} card(s) from your hand and drew ${foundationCards.length} from Foundation plus ${palsCards.length} from Pals.${shortfall ? ` The mandatory seven-card draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
     pushLog(message);
     if (shortfall) setGameResult((current) => current ?? `Defeat: Dr. Evans required seven cards, but your personal decks contained only ${drawnCards.length}.`);
     setEventOverlay({
@@ -6467,8 +6716,7 @@ export default function Simulator({
     const foundationCards = foundationDeck.slice(0, turnDrawSelection.foundation);
     const palsCards = palsDeck.slice(0, turnDrawSelection.pals);
     const selectedCards = [...foundationCards, ...palsCards];
-    const handLimitEffect = (activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
-    const drawResult = drawWithHandLimit(selectedCards, hand.length, selectedCards.length, handLimitEffect ? Number(handLimitEffect.amount) : Infinity);
+    const drawResult = drawWithHandLimit(selectedCards, hand.length, selectedCards.length, Infinity);
     setFoundationDeck((current) => current.slice(foundationCards.length));
     setPalsDeck((current) => current.slice(palsCards.length));
     setHand((current) => [...current, ...drawResult.cardsToHand]);
@@ -6477,7 +6725,7 @@ export default function Simulator({
     if (actionIsOncePerTurn(pendingCreatureAction.action)) setUsedCreatureActions((current) => [...current, pendingCreatureAction.actionKey]);
     const sourceCard = cardsById[pendingCreatureAction.sourceCardId];
     const shortfall = Number(turnDrawSelection.shortfall ?? getRequiredDrawShortfall(turnDrawSelection.requested, selectedCards.length));
-    const message = `${sourceCard.name} drew ${foundationCards.length} from Foundation and ${palsCards.length} from Pals.${drawResult.cardsToDiscard.length ? ` ${drawResult.cardsToDiscard.length} exceeded the hand limit and were discarded.` : ""}${shortfall ? ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
+    const message = `${sourceCard.name} drew ${foundationCards.length} from Foundation and ${palsCards.length} from Pals.${shortfall ? ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
     const revealed = selectedCards.map((cardId, index) => ({ cardId, source: index < foundationCards.length ? "Foundation" : "Pals", discarded: index >= drawResult.cardsToHand.length }));
     pushLog(message);
     setPendingCreatureAction(null);
@@ -6503,7 +6751,7 @@ export default function Simulator({
     setRp((current) => Math.max(0, current - cost));
     if (actionIsOncePerTurn(pendingCreatureAction.action)) setUsedCreatureActions((current) => [...current, pendingCreatureAction.actionKey]);
     const destination = pendingCreatureAction.effect.destination === "deck" ? `your ${recoveredDeckType === "foundation" ? "Foundation" : "Pals"} deck` : "your hand";
-    const message = `${sourceCard.name} moved ${cardsById[cardId]?.name ?? cardId} from your discard pile to ${destination} for ${cost} RP.${handResult?.cardsToDiscard.length ? " The hand limit returned it to the discard pile." : ""}`;
+    const message = `${sourceCard.name} moved ${cardsById[cardId]?.name ?? cardId} from your discard pile to ${destination} for ${cost} RP.`;
     pushLog(message);
     setPendingCreatureAction(null);
     setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${pendingCreatureAction.actionName ?? getActionName(pendingCreatureAction.action)}`, message, success: true });
@@ -6521,7 +6769,7 @@ export default function Simulator({
     if (handResult.cardsToDiscard.length) setDiscardPile((current) => [cardId, ...current]);
     setRp((current) => Math.max(0, current - cost));
     if (actionIsOncePerTurn(pendingCreatureAction.action)) setUsedCreatureActions((current) => [...current, pendingCreatureAction.actionKey]);
-    const message = `${sourceCard.name}'s ${pendingCreatureAction.actionName ?? getActionName(pendingCreatureAction.action)} found ${cardsById[cardId]?.name ?? cardId} for ${cost} RP and shuffled both personal decks.${handResult.cardsToDiscard.length ? " The card exceeded the hand limit and was discarded." : " It was added to your hand."}`;
+    const message = `${sourceCard.name}'s ${pendingCreatureAction.actionName ?? getActionName(pendingCreatureAction.action)} found ${cardsById[cardId]?.name ?? cardId} for ${cost} RP, added it to your hand, and shuffled both personal decks.`;
     pushLog(message);
     setPendingCreatureAction(null);
     setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: cardId, title: `Player's ${sourceCard.name} searched`, message, success: true });
@@ -6563,6 +6811,37 @@ export default function Simulator({
     setPendingCreatureAction((current) => ({ ...current, selectedIndices: current.selectedIndices.includes(index) ? current.selectedIndices.filter((selectedIndex) => selectedIndex !== index) : current.selectedIndices.length < maxDiscard ? [...current.selectedIndices, index] : current.selectedIndices }));
   }
 
+  function toggleHandLimitDiscard(entryKey) {
+    const choice = eventOverlay?.type === "choose-hand-limit-discard" ? eventOverlay.handLimitChoice : null;
+    if (!choice?.entries.some((entry) => entry.key === entryKey)) return;
+    setHandLimitDiscardSelection((current) => {
+      if (current.includes(entryKey)) return current.filter((key) => key !== entryKey);
+      if (current.length >= choice.requiredDiscardCount) return current;
+      return [...current, entryKey];
+    });
+  }
+
+  function confirmHandLimitDiscard() {
+    if (eventOverlay?.type !== "choose-hand-limit-discard") return;
+    const choice = eventOverlay.handLimitChoice;
+    const result = resolveHandLimitChoice(choice, handLimitDiscardSelection, discardPile);
+
+    setHand(result.hand);
+    setDiscardPile(result.discardPile);
+    if (modal === "draw-result" && turnDrawResult?.length) {
+      const drawnStartIndex = Math.max(0, choice.entries.length - turnDrawResult.length);
+      const discardedIndexes = new Set(result.discardedEntries.map((entry) => entry.snapshotIndex));
+      setTurnDrawResult((current) => (current ?? []).map((entry, index) => ({
+        ...entry,
+        discarded: discardedIndexes.has(drawnStartIndex + index),
+      })));
+    }
+    const discardedNames = result.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId);
+    pushLog(`${activeCondition?.name ?? "Hand limit"}: you chose ${discardedNames.join(", ")} to discard and kept ${result.hand.length} cards.`);
+    setHandLimitDiscardSelection([]);
+    closeEventOverlay();
+  }
+
   function confirmActionHandDiscard() {
     if (!pendingCreatureAction?.handEntries) return;
     const required = pendingCreatureAction.minDiscard ?? Math.max(0, Number(pendingCreatureAction.effect.discard?.amount ?? 0));
@@ -6598,7 +6877,7 @@ export default function Simulator({
     if (handResult.cardsToHand.length) setHand((current) => [...current, cardId]);
     if (handResult.cardsToDiscard.length) setDiscardPile((current) => [cardId, ...current]);
     const discardedNames = (pendingCreatureAction.discardedCards ?? []).map((discardedId) => cardsById[discardedId]?.name ?? discardedId).join(", ");
-    const message = `${sourceCard.name} discarded ${discardedNames}, found ${cardsById[cardId]?.name}, revealed it, and shuffled both personal decks.${handResult.cardsToDiscard.length ? " The found card exceeded the hand limit and was discarded." : ""}`;
+    const message = `${sourceCard.name} discarded ${discardedNames}, found ${cardsById[cardId]?.name}, added it to your hand, revealed it, and shuffled both personal decks.`;
     pushLog(message);
     setPendingCreatureAction(null);
     setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: cardId, title: `Player's ${sourceCard.name} completed Scavenge`, message, success: true });
@@ -6766,24 +7045,103 @@ export default function Simulator({
   function completeOnPlayMultiSearch(selectedOverride = null) {
     if (searchContext?.mode !== "onplay-multi-search") return;
     const selected = selectedOverride ?? searchContext.selected;
-    const handLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
-    const availableSpace = Number.isFinite(handLimit) ? Math.max(0, handLimit - hand.length) : selected.length;
-    const toHand = selected.slice(0, availableSpace);
-    const toDiscard = selected.slice(availableSpace);
     setFoundationDeck((current) => shuffle(selected.reduce((deck, cardId) => removeOneCard(deck, cardId), current)));
     setPalsDeck((current) => shuffle(selected.reduce((deck, cardId) => removeOneCard(deck, cardId), current)));
-    if (toHand.length) setHand((current) => [...current, ...toHand]);
-    if (toDiscard.length) setDiscardPile((current) => [...toDiscard, ...current]);
+    if (selected.length) setHand((current) => [...current, ...selected]);
     const sourceCard = cardsById[searchContext.sourceCardId];
-    const message = selected.length ? `${sourceCard.name}'s ${searchContext.actionName} revealed ${selected.map((cardId) => cardsById[cardId]?.name).join(" and ")}.${toDiscard.length ? ` ${toDiscard.length} exceeded the hand limit and was discarded.` : ""}` : `${sourceCard.name}'s optional search selected no cards.`;
+    const message = selected.length ? `${sourceCard.name}'s ${searchContext.actionName} revealed ${selected.map((cardId) => cardsById[cardId]?.name).join(" and ")} and added ${selected.length === 1 ? "it" : "them"} to your hand.` : `${sourceCard.name}'s optional search selected no cards.`;
     pushLog(message);
     setSearchContext(null);
     setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: selected[0], title: `Player's ${sourceCard.name} used ${searchContext.actionName}`, message, success: selected.length > 0 });
   }
 
+  function getVisibleBoardCardCount(foundations = [], habitats = [], reefCreatures = [], orphans = []) {
+    return (foundations?.length ?? 0)
+      + (habitats?.length ?? 0)
+      + (reefCreatures?.length ?? 0)
+      + (orphans?.length ?? 0)
+      + (foundations ?? []).reduce((total, foundation) => total + (foundation.slots ?? []).reduce(
+        (slotTotal, slot) => slotTotal + (slot.cardId ? 1 : 0) + (slot.hostedCardIds ?? []).filter(Boolean).length,
+        0,
+      ), 0)
+      + (orphans ?? []).reduce((total, entry) => total + (entry.hostedCardIds ?? []).filter(Boolean).length, 0);
+  }
+
+  function assessCurrentOpponentThreat(opponentState = opponent) {
+    return getOpponentThreatProfile({
+      playerVp,
+      opponentVp,
+      victoryTarget,
+      playerIncome: 1 + getEcosystemStartTurnRp(playerCorals, activeCondition),
+      opponentIncome: 1 + getEcosystemStartTurnRp(opponentState.corals, activeCondition),
+      playerSchoolDensity: getSchoolDensity(playerCorals),
+      opponentSchoolDensity: getSchoolDensity(opponentState.corals),
+      playerBoardCards: getVisibleBoardCardCount(
+        playerCorals,
+        playerHabitats,
+        playerReefCreatures,
+        playerOrphanCreatures,
+      ),
+      opponentBoardCards: getVisibleBoardCardCount(
+        opponentState.corals,
+        opponentState.habitats,
+        opponentState.reefCreatures,
+        opponentState.orphanCreatures,
+      ),
+      round,
+    });
+  }
+
+  function opponentAttackHasVisibleTarget(attackerCard, attack, opponentState = opponent) {
+    if (!attackerCard || !attack) return false;
+    const canTargetHidden = cardCanTargetHiddenByAbyss(attackerCard, attack);
+    const canTargetPlayerCard = (targetCard) => cardMatchesAttackTarget(targetCard, attack)
+      && (!cardIsHiddenByAbyss(targetCard, playerHabitats) || canTargetHidden);
+    const visiblePlayerCards = [
+      ...playerCorals.flatMap((coral) => [
+        ...(isCreatureSchool(cardsById[coral.cardId]) ? [cardsById[coral.cardId]] : []),
+        ...coral.slots.flatMap((slot) => slot.invasiveOwner === "opponent"
+          ? []
+          : [slot.cardId, ...(slot.hostedCardIds ?? [])].map((cardId) => cardsById[cardId])),
+      ]),
+      ...playerReefCreatures.map((cardId) => cardsById[cardId]),
+      ...playerOrphanCreatures.flatMap((entry) => entry.invasiveOwner === "opponent"
+        ? []
+        : [entry.cardId, ...(entry.hostedCardIds ?? [])].map((cardId) => cardsById[cardId])),
+    ].filter(Boolean);
+    if (visiblePlayerCards.some(canTargetPlayerCard)) return true;
+    return [
+      ...getInvasiveCreatureTargets(opponentState.corals, "player"),
+      ...getInvasiveOrphanTargets(opponentState.orphanCreatures, "player"),
+    ].some((target) => cardMatchesAttackTarget(cardsById[target.cardId], attack));
+  }
+
   function runOpponentSupports(opponentState) {
     if (opponentState.supportBlockedUntilRound >= round) return { state: opponentState, summaries: [], impacts: [], events: [], lost: false, lossSummary: "" };
     let next = opponentState;
+    const threatProfile = assessCurrentOpponentThreat(opponentState);
+    const criticalHardTurn = opponentDifficulty === OpponentDifficulty.HARD
+      && threatProfile.level === OpponentThreatLevel.CRITICAL;
+    const urgentSupportIds = new Set(["whirlpool", "super-whirlpool", "spearfishing", "rov-lights", "poison-heal"]);
+    const getReservedPressureRp = (state) => {
+      const pressureCosts = (state.hand ?? []).flatMap((cardId) => {
+        const candidate = cardsById[cardId];
+        if (candidate?.kind !== CardKind.CREATURE) return [];
+        const onPlayAttack = getOnPlayAttackEffect(candidate);
+        const normalAttack = getBasicAttackEffect(candidate);
+        const attack = onPlayAttack ?? normalAttack;
+        if (!attack || !opponentAttackHasVisibleTarget(candidate, attack, state)) return [];
+        const playCost = Math.max(
+          0,
+          getCardPlayCost(candidate, activeCondition)
+            + getOpposingPlayCostModifier(candidate, playerCorals, playerReefCreatures, playerOrphanCreatures),
+        );
+        const attackCost = onPlayAttack ? 0 : Number(normalAttack?.actionCost ?? 0);
+        const totalCost = playCost + attackCost;
+        return totalCost <= state.rp ? [totalCost] : [];
+      });
+      return pressureCosts.length ? Math.min(...pressureCosts) : 0;
+    };
     const summaries = [];
     const impacts = [];
     const events = [];
@@ -6817,6 +7175,13 @@ export default function Simulator({
         if (card?.kind !== CardKind.SUPPORT || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition)) continue;
         const cost = getCardPlayCost(card, activeCondition);
         if (cost > next.rp) continue;
+        const reservedPressureRp = criticalHardTurn ? getReservedPressureRp(next) : 0;
+        if (
+          reservedPressureRp > 0
+          && cost > 0
+          && !urgentSupportIds.has(card.id)
+          && next.rp - cost < reservedPressureRp
+        ) continue;
         const effects = card.effects ?? [];
         const searchEffect = effects.find((effect) => effect.type === EffectType.SEARCH_DECK);
         const chooseTopEffect = effects.find((effect) => effect.type === "chooseFromTopDeck");
@@ -6930,20 +7295,18 @@ export default function Simulator({
         const lostAfterRecovery = recoveredId ? removeOneCard(next.lostZone, recoveredId) : [...(next.lostZone ?? [])];
         const currentHandLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
         const handResult = recoveredId
-          ? addCardsToHandWithLimit(next.hand, [recoveredId], next.discardPile, currentHandLimit)
-          : { hand: next.hand, discardPile: next.discardPile, cardsToHand: [], cardsToDiscard: [] };
+          ? applyAutomatedHandLimitToState(next, currentHandLimit, { round }, [recoveredId])
+          : { state: next, incomingCardsToHand: [], incomingCardsToDiscard: [], cardsToDiscard: [] };
         next = {
-          ...next,
-          hand: handResult.hand,
-          discardPile: handResult.discardPile,
+          ...handResult.state,
           lostZone: [card.id, ...lostAfterRecovery],
-          cardsBlockedFromPlayThisTurn: handResult.cardsToHand.length
+          cardsBlockedFromPlayThisTurn: handResult.incomingCardsToHand.length
             ? [...(next.cardsBlockedFromPlayThisTurn ?? []), recoveredId]
             : next.cardsBlockedFromPlayThisTurn ?? [],
         };
-        details.push(handResult.cardsToHand.length
+        details.push(handResult.incomingCardsToHand.length
           ? `recovered ${cardsById[recoveredId]?.name} from its Lost Zone; that card cannot be played this turn, and Ocean Jake moved to the Lost Zone`
-          : `moved Ocean Jake to the Lost Zone${recoveredId ? `; ${cardsById[recoveredId]?.name} exceeded the hand limit and was discarded` : ""}`);
+          : `moved Ocean Jake to the Lost Zone${recoveredId ? `; it chose ${handResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit` : ""}`);
       } else if (card.id === "restocking") {
         const recoveredIds = next.discardPile.filter((cardId) => cardsById[cardId]?.category === CardCategory.FISH).slice(0, 3);
         const recoveredFoundationIds = recoveredIds.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "foundation");
@@ -6995,7 +7358,9 @@ export default function Simulator({
       } else if (card.id === "poison-heal") next = { ...next, poisonImmunityNextPredatorAttack: true };
       else if (card.id === "rov-lights") next = { ...next, rovLightsActive: true };
       const handLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
-      if (Number.isFinite(handLimit) && next.hand.length > handLimit) next = { ...next, discardPile: [...next.hand.slice(handLimit), ...next.discardPile], hand: next.hand.slice(0, handLimit) };
+      const handLimitResult = applyAutomatedHandLimitToState(next, handLimit, { round });
+      next = handLimitResult.state;
+      if (handLimitResult.cardsToDiscard.length) details.push(`chose ${handLimitResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit`);
       summaries.push(`Opponent played ${card.name}${cost ? ` for ${cost} RP` : ""}${details.length ? ` and ${details.join(", ")}` : ""}.`);
       events.push({ type: "opponent-play", sourceCardId: card.id, title: revealedCardIds.length ? `Opponent played ${card.name} and revealed ${revealedCardIds.length === 1 ? cardsById[revealedCardIds[0]]?.name : `${revealedCardIds.length} cards`}` : `Opponent played ${card.name}`, message: `${card.name}${cost ? ` cost ${cost} RP` : " cost 0 RP"}.${details.length ? ` It ${details.join(", ")}.` : ""}${revealedCardIds.length ? " The searched card selection is revealed below." : ""}`, revealedCards: revealedCardIds, success: true, opponentStateAfter: reconcileOpponentInstances(opponentState, next) });
       if (lossSummary || supportExplicitlyLocksFurtherSupports(card)) break;
@@ -7031,6 +7396,7 @@ export default function Simulator({
       capped: cappedIncome,
       requestedDraws,
     };
+    const openingThreatProfile = assessCurrentOpponentThreat(next);
     const preferredDeck = chooseOpponentPreferredDeck({
       difficulty: opponentDifficulty,
       round,
@@ -7038,6 +7404,7 @@ export default function Simulator({
       emptySlotCount: next.corals.reduce((total, coral) => total + coral.slots.filter((slot) => !slot.cardId).length, 0),
       foundationCardsInHand: next.hand.filter((cardId) => isFoundationCard(cardsById[cardId])).length,
       creaturesInHand: next.hand.filter((cardId) => cardsById[cardId]?.kind === CardKind.CREATURE && !isCreatureSchool(cardsById[cardId])).length,
+      threatLevel: openingThreatProfile.level,
     });
     if (!next.foundationDeck.length && !next.palsDeck.length) {
       const summary = `${collectionSummary} Opponent could not draw because both personal decks were empty and loses by deck depletion.`;
@@ -7067,9 +7434,10 @@ export default function Simulator({
     }
     const handLimitEffect = (activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
     const opponentHandLimit = Number(handLimitEffect?.amount ?? Infinity);
-    const excessHandCards = Number.isFinite(opponentHandLimit) && next.hand.length > opponentHandLimit ? next.hand.slice(opponentHandLimit) : [];
-    if (excessHandCards.length) next = { ...next, hand: next.hand.slice(0, opponentHandLimit), discardPile: [...excessHandCards, ...next.discardPile] };
-    let handLimitSummary = excessHandCards.length ? ` ${excessHandCards.length} excess card(s) were discarded by the hand limit.` : "";
+    const opponentHandLimitResult = applyAutomatedHandLimitToState(next, opponentHandLimit, { round });
+    const excessHandCards = opponentHandLimitResult.cardsToDiscard;
+    next = opponentHandLimitResult.state;
+    let handLimitSummary = excessHandCards.length ? ` The opponent chose ${excessHandCards.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : "";
     const startOfTurnState = reconcileOpponentInstances(current, next);
     const startOfTurnSummary = `${collectionSummary} Opponent drew ${drawSummaryText || "no cards"}.${handLimitSummary}`;
     const startOfTurnDetails = { ...startOfTurnCollection, drawn: drawnFrom.length, foundationDrawn: Number(drawSummary.Foundation ?? 0), palsDrawn: Number(drawSummary.Pals ?? 0), drawShortfall: 0, handLimitDiscarded: excessHandCards.length };
@@ -7098,6 +7466,43 @@ export default function Simulator({
       const baseCost = upgradeTarget ? Number(cardsById[upgradeTarget.cardId]?.upgrade?.cost?.rp ?? card.cost?.rp ?? 0) : getCardPlayCost(card, activeCondition);
       return Math.max(0, baseCost + getOpposingPlayCostModifier(card, playerCorals, playerReefCreatures, playerOrphanCreatures));
     };
+    const getOpponentSchoolDensityState = (opponentState) => {
+      const committed = getEcosystemSchoolDensityCommitted({
+        foundations: opponentState.corals,
+        invasiveFoundations: playerCorals,
+        reefCreatureInstances: opponentState.reefCreatureInstances,
+        orphanCreatureInstances: opponentState.orphanCreatures,
+        invasiveOrphanCreatureInstances: playerOrphanCreatureInstances,
+        commitmentsByInstanceId: opponentState.schoolDensityCommitmentsByInstanceId ?? {},
+      }, cardsById, "opponent");
+      return createSchoolDensityBucketState(opponentState.corals, committed, cardsById);
+    };
+    const getOpponentDensityFreedByRequiredSacrifices = (card, opponentState) => (
+      getOceanicPlaySacrifices(
+        card,
+        opponentState.corals,
+        opponentState.reefCreatures,
+        opponentState.orphanCreatures,
+      ).reduce((total, entry) => {
+        const instanceId = entry.slotId
+          ? getSlotCardInstanceId(
+              opponentState.corals
+                .find((foundation) => foundation.id === entry.coralId)
+                ?.slots.find((slot) => slot.id === entry.slotId),
+            )
+          : entry.reefIndex >= 0
+            ? opponentState.reefCreatureInstances?.[entry.reefIndex]?.instanceId
+            : entry.orphanIndex >= 0
+              ? opponentState.orphanCreatures?.[entry.orphanIndex]?.instanceId
+              : null;
+        return total + Number(
+          opponentState.schoolDensityCommitmentsByInstanceId?.[instanceId]
+          ?? cardsById[entry.cardId]?.schoolDensityRequirement
+          ?? 0,
+        );
+      }, 0)
+    );
+    const opponentDensityBeforePlay = getOpponentSchoolDensityState(next);
     const playableCards = next.hand.filter((cardId) => {
       const card = cardsById[cardId];
       if (!card || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition) || getOpponentPlayCost(card) > next.rp) return false;
@@ -7108,7 +7513,14 @@ export default function Simulator({
       if (isFoundationCard(card)) return Number(card.stage ?? 0) === 0 || Boolean(findUpgradeTarget(card));
       if (card.kind !== CardKind.CREATURE) return false;
       const densityRequirement = getEffectiveSchoolDensityRequirement(card, schoolDensityConditionIds, next.conditionDensityUses ?? {});
-      if (densityRequirement.effectiveRequirement > getSchoolDensity(next.corals)) return false;
+      const densityFreedBySacrifice = getOpponentDensityFreedByRequiredSacrifices(card, next);
+      const densityAvailableForPlay = Math.max(
+        0,
+        opponentDensityBeforePlay.capacity
+          - opponentDensityBeforePlay.committed
+          + densityFreedBySacrifice,
+      );
+      if (densityRequirement.effectiveRequirement > densityAvailableForPlay) return false;
       if (getHabitatRequirementError(card, next.habitats)) return false;
       if (getCompositionRequirementError(card, next.corals, [...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])])) return false;
       if (cardUsesOpponentReef(card)) {
@@ -7125,6 +7537,9 @@ export default function Simulator({
         || (slot.cardId && canHostSpecialPlacement(cardsById[slot.cardId], card, slot.hostedCardIds))
       )));
     });
+    const opponentAttackHasLegalTarget = (attackerCard, attack) => {
+      return opponentAttackHasVisibleTarget(attackerCard, attack, next);
+    };
     const scoreOpponentPlay = (cardId) => {
       const card = cardsById[cardId];
       const cost = getOpponentPlayCost(card);
@@ -7139,22 +7554,43 @@ export default function Simulator({
       }
       return 25 + printedVp * 7 + income * 8 + actionable * 6 - cost;
     };
+    const threatProfile = assessCurrentOpponentThreat(next);
     const scoreHardOpponentPlay = (cardId) => {
       const card = cardsById[cardId];
       const printedVp = Number(card?.victoryPoints?.value ?? card?.victoryPoints ?? card?.vp ?? 0);
       const income = getCardStartTurnRp(card);
       const cost = getOpponentPlayCost(card);
       const reachesVictory = opponentVp + printedVp >= victoryTarget;
-      const createsAttack = Boolean(getBasicAttackEffect(card) || getOnPlayAttackEffect(card));
-      const hasPlayerTarget = Boolean(playerCorals.length || playerReefCreatures.length || playerOrphanCreatures.length);
-      return scoreOpponentPlay(cardId)
-        + (reachesVictory ? 1000 : 0)
-        + printedVp * 8
-        + income * (round <= 3 ? 7 : 3)
-        + (createsAttack && hasPlayerTarget ? 12 : 0)
-        - cost;
+      const onPlayAttack = getOnPlayAttackEffect(card);
+      const normalAttack = getBasicAttackEffect(card);
+      const immediateAttack = onPlayAttack ?? normalAttack;
+      const createsAttack = Boolean(immediateAttack);
+      const canAffordAttackAfterPlay = Boolean(onPlayAttack)
+        || cost + Number(normalAttack?.actionCost ?? 0) <= next.rp;
+      const hasPlayerTarget = canAffordAttackAfterPlay
+        && opponentAttackHasLegalTarget(card, immediateAttack);
+      return scoreHardOpponentPermanentPlay({
+        baseScore: scoreOpponentPlay(cardId),
+        threatLevel: threatProfile.level,
+        printedVp,
+        income,
+        cost,
+        hasLegalAttack: createsAttack && hasPlayerTarget,
+        hasAttack: createsAttack,
+        isFoundation: isFoundationCard(card),
+        isUpgrade: isFoundationCard(card) && Number(card.stage ?? 0) > 0,
+        reachesVictory,
+      });
     };
-    const playable = selectOpponentChoice(playableCards, opponentDifficulty, {
+    const preferredPlayableCards = preferOpponentPlaysWithResolvableOnPlayAttacks(playableCards, {
+      hasOnPlayAttack: (cardId) => Boolean(getOnPlayAttackEffect(cardsById[cardId])),
+      hasLegalTarget: (cardId) => {
+        const candidate = cardsById[cardId];
+        return opponentAttackHasLegalTarget(candidate, getOnPlayAttackEffect(candidate));
+      },
+      reachesVictory: (cardId) => opponentVp + Number(cardsById[cardId]?.victoryPoints?.value ?? cardsById[cardId]?.victoryPoints ?? cardsById[cardId]?.vp ?? 0) >= victoryTarget,
+    });
+    const playable = selectOpponentChoice(preferredPlayableCards, opponentDifficulty, {
       mediumScore: scoreOpponentPlay,
       hardScore: scoreHardOpponentPlay,
     });
@@ -7173,6 +7609,9 @@ export default function Simulator({
 
     const card = cardsById[playable];
     const cost = getOpponentPlayCost(card);
+    const densityRequirementAtPlay = card.kind === CardKind.CREATURE
+      ? getEffectiveSchoolDensityRequirement(card, schoolDensityConditionIds, next.conditionDensityUses ?? {}).effectiveRequirement
+      : 0;
     next = { ...next, hand: removeOneCard(next.hand, playable), rp: next.rp - cost };
     let playedCreatureLocation = null;
     let invasivePlacement = null;
@@ -7223,7 +7662,7 @@ export default function Simulator({
           cardInstanceId: createStableInstanceId(`opponent-invader-${card.id}`),
           controller: "opponent",
         };
-        playedCreatureLocation = { coralId: targetCoral.id, slotId: targetSlot.id, invasive: true };
+        playedCreatureLocation = { coralId: targetCoral.id, slotId: targetSlot.id, instanceId: invasivePlacement.cardInstanceId, invasive: true };
         placementSummary = ` ${card.name} invaded an empty slot on your ${cardsById[targetCoral.cardId]?.name}; it remains the opponent's creature and you may remove it with Spearfishing or a legal attack.`;
       }
     } else if (card.zone === CreatureZone.OCEAN) {
@@ -7238,6 +7677,7 @@ export default function Simulator({
       const territorialTarget = card.id === "ocean-triggerfish" ? next.corals.find((foundation) => isCreatureSchool(cardsById[foundation.cardId])) : null;
       const playedInstance = createCreatureInstance(card.id, createStableInstanceId(`opponent-reef-${card.id}`), {
         territorialTargetFoundationId: territorialTarget?.id ?? null,
+        schoolDensityRequirementAtPlay: densityRequirementAtPlay,
       });
       const nextReefInstances = [...remainingReefInstances, playedInstance];
       next = {
@@ -7258,11 +7698,13 @@ export default function Simulator({
         const previousHostedCardIds = specialHostTarget.slot.hostedCardIds ?? [];
         const nextHostedCardIds = placeCardInSpecialHost(cardsById[specialHostTarget.slot.cardId], card, previousHostedCardIds, card.id);
         const hostedIndex = nextHostedCardIds?.findIndex((cardId, index) => cardId === card.id && previousHostedCardIds[index] !== cardId) ?? -1;
+        const hostedSchoolDensityRequirements = [...(specialHostTarget.slot.hostedSchoolDensityRequirements ?? [])];
+        if (hostedIndex >= 0) hostedSchoolDensityRequirements[hostedIndex] = densityRequirementAtPlay;
         next = {
           ...next,
           corals: next.corals.map((coral) => coral.id === specialHostTarget.coral.id ? {
             ...coral,
-            slots: coral.slots.map((slot) => slot.id === specialHostTarget.slot.id ? { ...slot, hostedCardIds: nextHostedCardIds } : slot),
+            slots: coral.slots.map((slot) => slot.id === specialHostTarget.slot.id ? { ...slot, hostedCardIds: nextHostedCardIds, hostedSchoolDensityRequirements } : slot),
           } : coral),
         };
         playedCreatureLocation = { coralId: specialHostTarget.coral.id, slotId: specialHostTarget.slot.id, hostedIndex };
@@ -7276,8 +7718,9 @@ export default function Simulator({
             slots: coral.slots.map((slot) => {
               if (!placed && !slot.cardId && canCardOccupySlot(card, slot)) {
                 placed = true;
-                playedCreatureLocation = { coralId: coral.id, slotId: slot.id };
-                return { ...slot, cardId: card.id, cardInstanceId: createStableInstanceId(`opponent-slot-${card.id}`) };
+                const cardInstanceId = createStableInstanceId(`opponent-slot-${card.id}`);
+                playedCreatureLocation = { coralId: coral.id, slotId: slot.id, instanceId: cardInstanceId };
+                return { ...slot, cardId: card.id, cardInstanceId };
               }
               return slot;
             }),
@@ -7287,7 +7730,16 @@ export default function Simulator({
     }
     if (card.kind === CardKind.CREATURE && playedCreatureLocation) {
       const discountResult = consumeSchoolDensityConditionDiscount(card, schoolDensityConditionIds, next.conditionDensityUses ?? {});
-      next = { ...next, conditionDensityUses: discountResult.usedByCondition };
+      next = {
+        ...next,
+        conditionDensityUses: discountResult.usedByCondition,
+        schoolDensityCommitmentsByInstanceId: playedCreatureLocation.instanceId
+          ? {
+              ...(next.schoolDensityCommitmentsByInstanceId ?? {}),
+              [playedCreatureLocation.instanceId]: densityRequirementAtPlay,
+            }
+          : next.schoolDensityCommitmentsByInstanceId ?? {},
+      };
       if (discountResult.discount) densityDiscountSummary = ` ${discountResult.discount.label} reduced its School Density requirement by ${discountResult.discount.amount}; the opponent's one-time reduction is now used.`;
     }
     if (isFoundationCard(card) && (next.orphanCreatures ?? []).length) {
@@ -7355,10 +7807,11 @@ export default function Simulator({
         drawnSources.push(deckKey === "palsDeck" ? "Pals" : "Foundation");
         next = { ...next, [deckKey]: next[deckKey].slice(1), hand: [...next.hand, next[deckKey][0]] };
       }
-      const postDrawExcess = Number.isFinite(opponentHandLimit) && next.hand.length > opponentHandLimit ? next.hand.slice(opponentHandLimit) : [];
-      if (postDrawExcess.length) next = { ...next, hand: next.hand.slice(0, opponentHandLimit), discardPile: [...postDrawExcess, ...next.discardPile] };
+      const postDrawHandLimitResult = applyAutomatedHandLimitToState(next, opponentHandLimit, { round });
+      const postDrawExcess = postDrawHandLimitResult.cardsToDiscard;
+      next = postDrawHandLimitResult.state;
       const shortfall = getRequiredDrawShortfall(onPlayDrawCount, drawnIds.length);
-      onPlayDrawSummary = ` ${getOnPlayAbilityName(card)} drew ${drawnIds.length} card(s)${drawnSources.length ? ` (${drawnSources.join(", ")})` : ""}.${postDrawExcess.length ? ` ${postDrawExcess.length} exceeded the hand limit and was discarded.` : ""}`;
+      onPlayDrawSummary = ` ${getOnPlayAbilityName(card)} drew ${drawnIds.length} card(s)${drawnSources.length ? ` (${drawnSources.join(", ")})` : ""}.${postDrawExcess.length ? ` The opponent chose ${postDrawExcess.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : ""}`;
       if (shortfall) onPlayDrawLossSummary = ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so the opponent loses by deck depletion.`;
     }
     let onPlayReorderSummary = "";
@@ -7395,9 +7848,10 @@ export default function Simulator({
       } else onPlaySearchSummary = ` ${onPlaySearch.actionName} found no matching card.`;
     }
     if (Number.isFinite(opponentHandLimit) && next.hand.length > opponentHandLimit) {
-      const excess = next.hand.slice(opponentHandLimit);
-      next = { ...next, hand: next.hand.slice(0, opponentHandLimit), discardPile: [...excess, ...next.discardPile] };
-      handLimitSummary += ` ${excess.length} additional searched card(s) exceeded the hand limit and were discarded.`;
+      const searchHandLimitResult = applyAutomatedHandLimitToState(next, opponentHandLimit, { round });
+      const excess = searchHandLimitResult.cardsToDiscard;
+      next = searchHandLimitResult.state;
+      handLimitSummary += ` The opponent chose ${excess.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.`;
     }
     let opponentOnPlayAttack = card.kind === CardKind.CREATURE ? getOnPlayAttackEffect(card) : null;
     let onPlayAttackBonusSummary = "";
@@ -7417,6 +7871,157 @@ export default function Simulator({
       opponentOnPlayAttack = { ...opponentOnPlayAttack, ensnare: { actionName: ensnare.actionName, penalty: ensnare.penalty } };
       ensnareSummary = " Ensnare will flip independently before each attack in this sequence.";
     }
+    const firstPlaySummary = `Opponent played ${card.name} for ${cost} RP.${placementSummary}${densityDiscountSummary}${sacrificeSummary}${symbiosisSummary}${onPlayResourceSummary}${onPlayHealSummary}${momentumSummary}${onPlayDrawSummary}${onPlayDrawLossSummary}${onPlayReorderSummary}${onPlaySearchSummary}${onPlayAttackBonusSummary}${ensnareSummary}`;
+    const permanentPlays = [{
+      playedCardId: card.id,
+      onPlayRevealedCardIds,
+      playSummary: firstPlaySummary,
+    }];
+
+    // Players may spend RP on several permanent cards in one action phase.
+    // Hard opponents do the same with straightforward follow-up plays after
+    // their primary, fully-resolved play. Complex On Play effects remain the
+    // primary play so their event sequence is never silently skipped.
+    if (opponentDifficulty === OpponentDifficulty.HARD && !onPlayDrawLossSummary) {
+      const getAttackRpReserve = (state) => {
+        const attackEntries = [
+          ...state.corals.flatMap((foundation) => foundation.slots.flatMap((slot) => [
+            ...(slot.cardId && slot.invasiveOwner !== "player" ? [{ cardId: slot.cardId, locationKey: getSlotActionKey(slot) }] : []),
+            ...(slot.hostedCardIds ?? []).flatMap((hostedCardId, hostedIndex) => hostedCardId ? [{ cardId: hostedCardId, locationKey: getHostedTargetSlotId(slot.id, hostedIndex) }] : []),
+          ])),
+          ...(state.reefCreatureInstances ?? []).map((instance, reefIndex) => ({ cardId: instance.cardId, locationKey: `reef-${instance.instanceId ?? reefIndex}` })),
+          ...getLocallyControlledOrphans(state.orphanCreatures, "opponent").map((instance, orphanIndex) => ({ cardId: instance.cardId, locationKey: `orphan-${instance.instanceId ?? orphanIndex}` })),
+        ];
+        return attackEntries.reduce((total, entry) => {
+          const attacker = cardsById[entry.cardId];
+          const attack = getBasicAttackEffect(attacker);
+          if (!attack || !opponentAttackHasVisibleTarget(attacker, attack, state)) return total;
+          const actionKey = getOpponentActionUseKey(entry.locationKey, attack);
+          if (wasOpponentActionUsedThisTurn(state.actionUses, actionKey, turn)) return total;
+          if (turn < Number(state.actionCooldowns?.[entry.locationKey] ?? 0)) return total;
+          return total + Number(attack.actionCost ?? 0);
+        }, 0);
+      };
+      const isSafeFollowUp = (candidate) => (
+        candidate
+        && candidate.kind !== CardKind.SUPPORT
+        && !(candidate.onPlay ?? []).length
+        && !cardUsesOpponentReef(candidate)
+        && candidate.zone !== CreatureZone.OCEAN
+      );
+      const safetyLimit = next.hand.length;
+      for (let playIndex = 0; playIndex < safetyLimit; playIndex += 1) {
+        const densityState = getOpponentSchoolDensityState(next);
+        const reserveBeforePlay = threatProfile.level === OpponentThreatLevel.CRITICAL
+          ? getAttackRpReserve(next)
+          : 0;
+        const candidates = next.hand.filter((candidateId) => {
+          const candidate = cardsById[candidateId];
+          if (!isSafeFollowUp(candidate) || cardIsBlockedFromPlayThisTurn(next, candidateId) || getConditionPlayRestriction(candidate, activeCondition)) return false;
+          const candidateCost = getOpponentPlayCost(candidate);
+          const candidateAttack = getBasicAttackEffect(candidate);
+          const candidateAttackReserve = candidateAttack && opponentAttackHasVisibleTarget(candidate, candidateAttack, next)
+            ? Number(candidateAttack.actionCost ?? 0)
+            : 0;
+          if (candidateCost + reserveBeforePlay + candidateAttackReserve > next.rp) return false;
+          if (candidate.kind === CardKind.HABITAT) {
+            return !getHabitatRequirementError(candidate, next.habitats)
+              && !getCompositionRequirementError(candidate, next.corals, [...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])]);
+          }
+          if (isFoundationCard(candidate)) return Number(candidate.stage ?? 0) === 0 || Boolean(findUpgradeTarget(candidate));
+          if (candidate.kind !== CardKind.CREATURE) return false;
+          const densityRequirement = getEffectiveSchoolDensityRequirement(candidate, schoolDensityConditionIds, next.conditionDensityUses ?? {});
+          if (densityRequirement.effectiveRequirement > densityState.available) return false;
+          if (getHabitatRequirementError(candidate, next.habitats)) return false;
+          if (getCompositionRequirementError(candidate, next.corals, [...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])])) return false;
+          return next.corals.some((foundation) => foundation.slots.some((slot) => !slot.cardId && canCardOccupySlot(candidate, slot)));
+        });
+        const candidateId = selectOpponentChoice(candidates, opponentDifficulty, {
+          mediumScore: scoreOpponentPlay,
+          hardScore: scoreHardOpponentPlay,
+        });
+        if (!candidateId) break;
+        const candidate = cardsById[candidateId];
+        const candidateCost = getOpponentPlayCost(candidate);
+        next = { ...next, hand: removeOneCard(next.hand, candidateId), rp: Math.max(0, next.rp - candidateCost) };
+        let followUpPlacement = "";
+        if (candidate.kind === CardKind.HABITAT) {
+          next = { ...next, habitats: [...next.habitats, candidate.id] };
+        } else if (isFoundationCard(candidate)) {
+          const upgradeTarget = Number(candidate.stage ?? 0) > 0 ? findUpgradeTarget(candidate) : null;
+          if (upgradeTarget) {
+            next = {
+              ...next,
+              corals: next.corals.map((foundation) => {
+                if (foundation.id !== upgradeTarget.id) return foundation;
+                const nextMaxHealth = Number(candidate.health ?? foundation.maxHealth);
+                return {
+                  ...foundation,
+                  cardId: candidate.id,
+                  maxHealth: nextMaxHealth,
+                  health: preserveDamageOnUpgrade(foundation.health, foundation.maxHealth, nextMaxHealth),
+                  slots: mergeUpgradedCoralSlots(foundation.slots, candidate, foundation.id),
+                  stageEnteredTurn: turn,
+                };
+              }),
+            };
+          } else {
+            const foundationId = createCoralId(`opponent-${candidate.id}`);
+            next = {
+              ...next,
+              corals: [...next.corals, {
+                id: foundationId,
+                cardId: candidate.id,
+                health: Number(candidate.health ?? 0),
+                maxHealth: Number(candidate.health ?? 0),
+                slots: createCoralSlots(candidate, foundationId),
+                playedTurn: turn,
+                stageEnteredTurn: turn,
+              }],
+            };
+          }
+          if ((next.orphanCreatures ?? []).length) {
+            const redistributed = redistributeOrphanCreatures(next.corals, next.orphanCreatures);
+            next = { ...next, corals: redistributed.corals, orphanCreatures: redistributed.orphans };
+          }
+        } else {
+          let placedCreature = null;
+          next = {
+            ...next,
+            corals: next.corals.map((foundation) => ({
+              ...foundation,
+              slots: foundation.slots.map((slot) => {
+                if (placedCreature || slot.cardId || !canCardOccupySlot(candidate, slot)) return slot;
+                const cardInstanceId = createStableInstanceId(`opponent-slot-${candidate.id}`);
+                placedCreature = { cardInstanceId };
+                return { ...slot, cardId: candidate.id, cardInstanceId };
+              }),
+            })),
+          };
+          if (!placedCreature) break;
+          const densityRequirement = getEffectiveSchoolDensityRequirement(candidate, schoolDensityConditionIds, next.conditionDensityUses ?? {}).effectiveRequirement;
+          const discountResult = consumeSchoolDensityConditionDiscount(candidate, schoolDensityConditionIds, next.conditionDensityUses ?? {});
+          next = {
+            ...next,
+            conditionDensityUses: discountResult.usedByCondition,
+            schoolDensityCommitmentsByInstanceId: {
+              ...(next.schoolDensityCommitmentsByInstanceId ?? {}),
+              [placedCreature.cardInstanceId]: densityRequirement,
+            },
+          };
+          followUpPlacement = discountResult.discount
+            ? ` ${discountResult.discount.label} reduced its School Density requirement by ${discountResult.discount.amount}.`
+            : "";
+        }
+        const followUpSummary = `Opponent also played ${candidate.name} for ${candidateCost} RP.${followUpPlacement}`;
+        permanentPlays.push({
+          playedCardId: candidate.id,
+          onPlayRevealedCardIds: [],
+          playSummary: followUpSummary,
+        });
+      }
+    }
+    const combinedPlaySummary = permanentPlays.map((play) => play.playSummary).join(" ");
     return {
       state: next,
       startOfTurnState,
@@ -7426,9 +8031,10 @@ export default function Simulator({
       supportPlays: supportResult.events,
       lost: Boolean(onPlayDrawLossSummary),
       playedCardId: card.id,
+      permanentPlays,
       onPlayRevealedCardIds,
       invasivePlacement,
-      playSummary: `Opponent played ${card.name} for ${cost} RP.${placementSummary}${densityDiscountSummary}${sacrificeSummary}${symbiosisSummary}${onPlayResourceSummary}${onPlayHealSummary}${momentumSummary}${onPlayDrawSummary}${onPlayDrawLossSummary}${onPlayReorderSummary}${onPlaySearchSummary}${onPlayAttackBonusSummary}${ensnareSummary}`,
+      playSummary: combinedPlaySummary,
       foundationDamage: card.kind === CardKind.CREATURE ? getOnPlayFoundationDamage(card, [...next.habitats, ...next.corals.map((foundation) => foundation.cardId)]) : null,
       randomDiscard: card.kind === CardKind.CREATURE ? getOnPlayRandomDiscard(card) : null,
       deckDiscard: card.kind === CardKind.CREATURE ? getOnPlayOpponentDeckDiscard(card) : null,
@@ -7440,7 +8046,7 @@ export default function Simulator({
       } : null,
       damageSourceName: card.name,
       damageSourceCardId: card.id,
-      summary: `${collectionSummary} Opponent drew ${drawSummaryText}.${supportSummary} It played ${card.name} for ${cost} RP.${placementSummary}${densityDiscountSummary}${sacrificeSummary}${symbiosisSummary}${onPlayResourceSummary}${onPlayHealSummary}${momentumSummary}${onPlayDrawSummary}${onPlayDrawLossSummary}${onPlayReorderSummary}${onPlaySearchSummary}${onPlayAttackBonusSummary}${ensnareSummary}${handLimitSummary}`,
+      summary: `${collectionSummary} Opponent drew ${drawSummaryText}.${supportSummary} ${combinedPlaySummary}${handLimitSummary}`,
     };
   }
 
@@ -7461,7 +8067,7 @@ export default function Simulator({
       };
     }
     const redistributed = redistributeOrphanCreatures(currentPlayerCorals.filter((coral) => coral.id !== target.id), [...currentOrphans, ...getOrphanEntriesFromFoundation(target)]);
-    const triggerResult = resolveFoundationDestructionTriggers([[target]], currentHand, availableDiscard, handLimit);
+    const triggerResult = resolveFoundationDestructionTriggers([[target]], currentHand, availableDiscard, Infinity);
     const fragmentTrigger = triggerResult.triggers[0];
     const fragmentSummary = fragmentTrigger
       ? fragmentTrigger.cardsToHand.length
@@ -7562,7 +8168,7 @@ export default function Simulator({
           [[target]],
           currentPlayerState.hand ?? [],
           currentPlayerState.discardPile ?? [],
-          handLimit,
+          Infinity,
         );
         const projected = projectNormalizedPlayerState({
           ...currentPlayerState,
@@ -7700,8 +8306,9 @@ export default function Simulator({
             drawn.push({ cardId: next[deckKey][0], source: deckKey === "palsDeck" ? "Pals" : "Foundation" });
             next = { ...next, [deckKey]: next[deckKey].slice(1), hand: [...next.hand, next[deckKey][0]] };
           }
-          const excess = Number.isFinite(handLimit) && next.hand.length > handLimit ? next.hand.slice(handLimit) : [];
-          if (excess.length) next = { ...next, hand: next.hand.slice(0, handLimit), discardPile: [...excess, ...next.discardPile] };
+          const actionDrawHandLimitResult = applyAutomatedHandLimitToState(next, handLimit, { round });
+          const excess = actionDrawHandLimitResult.cardsToDiscard;
+          next = actionDrawHandLimitResult.state;
           const shortfall = getRequiredDrawShortfall(amount, drawn.length);
           return {
             state: next,
@@ -7709,7 +8316,7 @@ export default function Simulator({
             actionName: getActionName(action),
             success: shortfall === 0,
             lost: shortfall > 0,
-            summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and drew ${drawn.length} card(s)${drawn.length ? ` (${drawn.map((card) => card.source).join(", ")})` : ""}.${excess.length ? ` ${excess.length} exceeded the hand limit and was discarded.` : ""}${shortfall ? ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so the opponent loses by deck depletion.` : ""}`,
+            summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and drew ${drawn.length} card(s)${drawn.length ? ` (${drawn.map((card) => card.source).join(", ")})` : ""}.${excess.length ? ` The opponent chose ${excess.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : ""}${shortfall ? ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so the opponent loses by deck depletion.` : ""}`,
           };
         }
         if (effect.type === EffectType.SEARCH_DECK) {
@@ -7724,9 +8331,13 @@ export default function Simulator({
             return !effect.targetNameIncludes || candidate.name?.toLowerCase().includes(effect.targetNameIncludes.toLowerCase());
           });
           if (!targetId) continue;
-          const handResult = addCardsToHandWithLimit(opponentState.hand, [targetId], opponentState.discardPile, handLimit);
-          const next = commitAction({ ...opponentState, palsDeck: shuffle(removeOneCard(opponentState.palsDeck, targetId)), foundationDeck: shuffle(removeOneCard(opponentState.foundationDeck, targetId)), hand: handResult.hand, discardPile: handResult.discardPile }, actionKey, cost, oncePerTurn);
-          return { state: next, sourceCardId: entry.card.id, actionName: getActionName(action), revealedCards: [targetId], success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and found ${cardsById[targetId]?.name}.${handResult.cardsToDiscard.length ? " It was revealed, then exceeded the hand limit and was discarded." : " It was revealed and added to the opponent's hand."}` };
+          const handResult = applyAutomatedHandLimitToState({
+            ...opponentState,
+            palsDeck: shuffle(removeOneCard(opponentState.palsDeck, targetId)),
+            foundationDeck: shuffle(removeOneCard(opponentState.foundationDeck, targetId)),
+          }, handLimit, { round }, [targetId]);
+          const next = commitAction(handResult.state, actionKey, cost, oncePerTurn);
+          return { state: next, sourceCardId: entry.card.id, actionName: getActionName(action), revealedCards: [targetId], success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and found ${cardsById[targetId]?.name}.${handResult.cardsToDiscard.length ? ` It chose ${handResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : " It was revealed and added to the opponent's hand."}` };
         }
         if (effect.type === EffectType.RECOVER_CARD_FROM_DISCARD || effect.type === "recoverCardFromDiscard") {
           const targetId = opponentState.discardPile[0];
@@ -7734,7 +8345,7 @@ export default function Simulator({
           const recoveredDeckType = getPersonalDeckType(cardsById[targetId]);
           const destination = effect.destination === "deck" ? `${recoveredDeckType === "foundation" ? "Foundation" : "Pals"} deck` : "hand";
           const recoveredPile = removeOneCard(opponentState.discardPile, targetId);
-          const handResult = addCardsToHandWithLimit(opponentState.hand, [targetId], recoveredPile, handLimit);
+          const handResult = applyAutomatedHandLimitToState({ ...opponentState, discardPile: recoveredPile }, handLimit, { round }, [targetId]);
           const next = effect.destination === "deck"
             ? {
                 ...opponentState,
@@ -7742,9 +8353,9 @@ export default function Simulator({
                 foundationDeck: recoveredDeckType === "foundation" ? shuffle([...opponentState.foundationDeck, targetId]) : opponentState.foundationDeck,
                 palsDeck: recoveredDeckType === "pals" ? shuffle([...opponentState.palsDeck, targetId]) : opponentState.palsDeck,
               }
-            : { ...opponentState, discardPile: handResult.discardPile, hand: handResult.hand };
+            : handResult.state;
           const committed = commitAction(next, actionKey, cost, oncePerTurn);
-          return { state: committed, sourceCardId: entry.card.id, actionName: getActionName(action), success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and moved ${cardsById[targetId]?.name} from its discard pile to its ${destination}.${effect.destination !== "deck" && handResult.cardsToDiscard.length ? " The hand limit immediately returned it to the discard pile." : ""}` };
+          return { state: committed, sourceCardId: entry.card.id, actionName: getActionName(action), success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and moved ${cardsById[targetId]?.name} from its discard pile to its ${destination}.${effect.destination !== "deck" && handResult.cardsToDiscard.length ? ` It chose ${handResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : ""}` };
         }
         if (effect.type === "discardThenSearchDeck") {
           const discardCount = Math.max(0, Number(effect.discard?.amount ?? 0));
@@ -7754,9 +8365,15 @@ export default function Simulator({
           const targetId = [...deckCards].sort((leftId, rightId) => scoreCard(rightId) - scoreCard(leftId))[0];
           let remainingHand = opponentState.hand;
           discardedIds.forEach((cardId) => { remainingHand = removeOneCard(remainingHand, cardId); });
-          const handResult = addCardsToHandWithLimit(remainingHand, [targetId], [...discardedIds, ...opponentState.discardPile], handLimit);
-          const next = commitAction({ ...opponentState, hand: handResult.hand, discardPile: handResult.discardPile, palsDeck: shuffle(removeOneCard(opponentState.palsDeck, targetId)), foundationDeck: shuffle(removeOneCard(opponentState.foundationDeck, targetId)) }, actionKey, cost, oncePerTurn);
-          return { state: next, sourceCardId: entry.card.id, actionName: getActionName(action), revealedCards: [targetId], success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP, discarded ${discardedIds.map((cardId) => cardsById[cardId]?.name).join(" and ")}, and revealed ${cardsById[targetId]?.name}.${handResult.cardsToDiscard.includes(targetId) ? " The found card exceeded the hand limit and was discarded." : " It was added to the opponent's hand."}` };
+          const handResult = applyAutomatedHandLimitToState({
+            ...opponentState,
+            hand: remainingHand,
+            discardPile: [...discardedIds, ...opponentState.discardPile],
+            palsDeck: shuffle(removeOneCard(opponentState.palsDeck, targetId)),
+            foundationDeck: shuffle(removeOneCard(opponentState.foundationDeck, targetId)),
+          }, handLimit, { round }, [targetId]);
+          const next = commitAction(handResult.state, actionKey, cost, oncePerTurn);
+          return { state: next, sourceCardId: entry.card.id, actionName: getActionName(action), revealedCards: [targetId], success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP, discarded ${discardedIds.map((cardId) => cardsById[cardId]?.name).join(" and ")}, and revealed ${cardsById[targetId]?.name}.${handResult.cardsToDiscard.length ? ` It then chose ${handResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : " It was added to the opponent's hand."}` };
         }
         if (effect.type === "discardThenDraw") {
           const minimum = Math.max(0, Number(effect.discard?.min ?? effect.discard?.amount ?? 0));
@@ -7776,9 +8393,9 @@ export default function Simulator({
             drawnIds.push(cardId);
             next = { ...next, [deckKey]: next[deckKey].slice(1), hand: [...next.hand, cardId] };
           }
-          const handResult = addCardsToHandWithLimit([], next.hand, next.discardPile, handLimit);
-          next = commitAction({ ...next, hand: handResult.hand, discardPile: handResult.discardPile }, actionKey, cost, oncePerTurn);
-          return { state: next, sourceCardId: entry.card.id, actionName: getActionName(action), success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP, discarded ${discardCount} card(s), and drew ${drawnIds.length}.${handResult.cardsToDiscard.length ? ` ${handResult.cardsToDiscard.length} exceeded the hand limit and was discarded.` : ""}` };
+          const handResult = applyAutomatedHandLimitToState(next, handLimit, { round });
+          next = commitAction(handResult.state, actionKey, cost, oncePerTurn);
+          return { state: next, sourceCardId: entry.card.id, actionName: getActionName(action), success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP, discarded ${discardCount} card(s), and drew ${drawnIds.length}.${handResult.cardsToDiscard.length ? ` It chose ${handResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : ""}` };
         }
         if (effect.type === "modifyDefenseRoll" || effect.type === EffectType.GRANT_DEFENSE_ADVANTAGE) {
           const categories = action?.target?.categories ?? [];
@@ -7880,88 +8497,106 @@ export default function Simulator({
       const actionUseKey = attack ? getOpponentActionUseKey(stableSlotId, attack) : null;
       if (attack && (actionCostAlreadyPaid || attack.actionCost <= opponentState.rp) && (onPlayAttack || turn >= Number(opponentState.actionCooldowns?.[stableSlotId] ?? 0)) && (onPlayAttack || actionCostAlreadyPaid || !wasOpponentActionUsedThisTurn(opponentState.actionUses, actionUseKey, turn))) attackerEntries.push({ coral: null, slot: null, reefIndex: -1, orphanIndex, instanceId: entry.instanceId, locationKey: stableSlotId, card, attack });
     });
+    const collectAvailableTargets = (candidateAttacker) => {
+      const targetEntries = currentPlayerCorals.flatMap((coral) => coral.slots.flatMap((slot) => slot.invasiveOwner === "opponent" ? [] : [{ cardId: slot.cardId, hostedIndex: -1, instanceId: getSlotTargetInstanceId(slot) }, ...(slot.hostedCardIds ?? []).map((cardId, hostedIndex) => ({ cardId, hostedIndex, instanceId: `hosted:${getHostedTargetSlotId(slot.id, hostedIndex)}` }))].filter((entry) => {
+        const card = cardsById[entry.cardId];
+        return cardMatchesAttackTarget(card, candidateAttacker.attack) && (!cardIsHiddenByAbyss(card, playerHabitats) || cardCanTargetHiddenByAbyss(candidateAttacker.card, candidateAttacker.attack));
+      }).map((entry) => ({ coral, slot, hostedIndex: entry.hostedIndex, card: cardsById[entry.cardId], instanceId: entry.instanceId }))));
+      (currentPlayerReefCreatures ?? []).forEach((cardId, reefIndex) => {
+        const card = cardsById[cardId];
+        if (cardMatchesAttackTarget(card, candidateAttacker.attack) && (!cardIsHiddenByAbyss(card, playerHabitats) || cardCanTargetHiddenByAbyss(candidateAttacker.card, candidateAttacker.attack))) targetEntries.push({ coral: null, slot: null, reefIndex, instanceId: currentPlayerReefInstances[reefIndex]?.instanceId, card });
+      });
+      (currentPlayerOrphans ?? []).forEach((entry, orphanIndex) => {
+        if (entry.invasiveOwner === "opponent") return;
+        const canTargetCard = (card) => cardMatchesAttackTarget(card, candidateAttacker.attack)
+          && (!cardIsHiddenByAbyss(card, playerHabitats) || cardCanTargetHiddenByAbyss(candidateAttacker.card, candidateAttacker.attack));
+        const card = cardsById[entry.cardId];
+        if (canTargetCard(card)) targetEntries.push({ coral: null, slot: null, reefIndex: -1, orphanIndex, hostedIndex: -1, orphanInstanceId: entry.instanceId, instanceId: entry.instanceId, card });
+        (entry.hostedCardIds ?? []).forEach((hostedCardId, hostedIndex) => {
+          const hostedCard = cardsById[hostedCardId];
+          if (!hostedCardId || !canTargetCard(hostedCard)) return;
+          const hostedSlotId = getOrphanHostedTargetSlotId(entry.instanceId ?? `legacy-${orphanIndex}`, hostedIndex);
+          targetEntries.push({
+            coral: null,
+            slot: null,
+            reefIndex: -1,
+            orphanIndex,
+            hostedIndex,
+            orphanInstanceId: entry.instanceId,
+            hostCardId: entry.cardId,
+            instanceId: `hosted:${hostedSlotId}`,
+            card: hostedCard,
+          });
+        });
+      });
+      currentPlayerCorals.forEach((foundation) => {
+        const card = cardsById[foundation.cardId];
+        if (isCreatureSchool(card) && cardMatchesAttackTarget(card, candidateAttacker.attack)) targetEntries.push({ coral: foundation, slot: null, school: true, card, instanceId: `foundation:${foundation.id}` });
+      });
+      getInvasiveCreatureTargets(opponentState.corals, "player").forEach((target) => {
+        const card = cardsById[target.cardId];
+        if (!cardMatchesAttackTarget(card, candidateAttacker.attack)) return;
+        const coral = opponentState.corals.find((foundation) => foundation.id === target.coralId);
+        const slot = coral?.slots.find((candidate) => candidate.id === target.slotId);
+        if (coral && slot) targetEntries.push({ coral, slot, card, instanceId: target.instanceId, onOpponentBoard: true });
+      });
+      getInvasiveOrphanTargets(opponentState.orphanCreatures, "player").forEach((target) => {
+        const card = cardsById[target.cardId];
+        if (!cardMatchesAttackTarget(card, candidateAttacker.attack)) return;
+        targetEntries.push({
+          coral: null,
+          slot: null,
+          card,
+          instanceId: target.instanceId,
+          onOpponentBoard: true,
+          onOpponentOrphan: true,
+          opponentOrphanIndex: target.orphanIndex,
+        });
+      });
+      return targetEntries.filter((entry) => entry.instanceId && !excludedTargets.has(entry.instanceId));
+    };
     const scoreAttacker = (entry) => {
       const diceSides = Number(String(entry.attack?.attackDice ?? "").match(/D(\d+)/i)?.[1] ?? 0);
       const repeatAttacks = Math.max(1, Number(entry.attack?.repeatAttacks ?? 1));
       const printedVp = Number(entry.card?.victoryPoints?.value ?? entry.card?.victoryPoints ?? entry.card?.vp ?? 0);
       return diceSides * repeatAttacks + printedVp * 2 - Number(entry.attack?.actionCost ?? 0);
     };
+    const selectableAttackers = filterOpponentAttackersWithLegalTargets(
+      attackerEntries,
+      collectAvailableTargets,
+      { preserveMandatoryAttack: Boolean(onPlayAttack) },
+    );
     const attackerEntry = opponentDifficulty === OpponentDifficulty.HARD
-      ? selectOpponentChoice(attackerEntries, opponentDifficulty, { mediumScore: scoreAttacker, hardScore: scoreAttacker })
-      : attackerEntries[0];
+      ? selectOpponentChoice(selectableAttackers, opponentDifficulty, { mediumScore: scoreAttacker, hardScore: scoreAttacker })
+      : selectableAttackers[0];
     if (!attackerEntry) return null;
     const flashingAlarmBonus = getFlashingAlarmAttackBonus(opponentState.flashingAlarmAttackBonus);
     const opponentAttackActionKey = onPlayAttack ? null : getOpponentActionUseKey(attackerEntry.locationKey, attackerEntry.attack);
     const opponentCooldownKey = !onPlayAttack && attackerEntry.attack.skipNextTurn ? (attackerEntry.slot ? getSlotActionKey(attackerEntry.slot) : attackerEntry.orphanIndex >= 0 ? `orphan-${attackerEntry.instanceId ?? attackerEntry.orphanIndex}` : `reef-${attackerEntry.instanceId ?? attackerEntry.reefIndex}`) : null;
-    const targetEntries = currentPlayerCorals.flatMap((coral) => coral.slots.flatMap((slot) => slot.invasiveOwner === "opponent" ? [] : [{ cardId: slot.cardId, hostedIndex: -1, instanceId: getSlotTargetInstanceId(slot) }, ...(slot.hostedCardIds ?? []).map((cardId, hostedIndex) => ({ cardId, hostedIndex, instanceId: `hosted:${getHostedTargetSlotId(slot.id, hostedIndex)}` }))].filter((entry) => {
-      const card = cardsById[entry.cardId];
-      return cardMatchesAttackTarget(card, attackerEntry.attack) && (!cardIsHiddenByAbyss(card, playerHabitats) || cardCanTargetHiddenByAbyss(attackerEntry.card, attackerEntry.attack));
-    }).map((entry) => ({ coral, slot, hostedIndex: entry.hostedIndex, card: cardsById[entry.cardId], instanceId: entry.instanceId }))));
-    (currentPlayerReefCreatures ?? []).forEach((cardId, reefIndex) => {
-      const card = cardsById[cardId];
-      if (cardMatchesAttackTarget(card, attackerEntry.attack) && (!cardIsHiddenByAbyss(card, playerHabitats) || cardCanTargetHiddenByAbyss(attackerEntry.card, attackerEntry.attack))) targetEntries.push({ coral: null, slot: null, reefIndex, instanceId: currentPlayerReefInstances[reefIndex]?.instanceId, card });
-    });
-    (currentPlayerOrphans ?? []).forEach((entry, orphanIndex) => {
-      if (entry.invasiveOwner === "opponent") return;
-      const canTargetCard = (card) => cardMatchesAttackTarget(card, attackerEntry.attack)
-        && (!cardIsHiddenByAbyss(card, playerHabitats) || cardCanTargetHiddenByAbyss(attackerEntry.card, attackerEntry.attack));
-      const card = cardsById[entry.cardId];
-      if (canTargetCard(card)) targetEntries.push({ coral: null, slot: null, reefIndex: -1, orphanIndex, hostedIndex: -1, orphanInstanceId: entry.instanceId, instanceId: entry.instanceId, card });
-      (entry.hostedCardIds ?? []).forEach((hostedCardId, hostedIndex) => {
-        const hostedCard = cardsById[hostedCardId];
-        if (!hostedCardId || !canTargetCard(hostedCard)) return;
-        const hostedSlotId = getOrphanHostedTargetSlotId(entry.instanceId ?? `legacy-${orphanIndex}`, hostedIndex);
-        targetEntries.push({
-          coral: null,
-          slot: null,
-          reefIndex: -1,
-          orphanIndex,
-          hostedIndex,
-          orphanInstanceId: entry.instanceId,
-          hostCardId: entry.cardId,
-          instanceId: `hosted:${hostedSlotId}`,
-          card: hostedCard,
-        });
-      });
-    });
-    currentPlayerCorals.forEach((foundation) => {
-      const card = cardsById[foundation.cardId];
-      if (isCreatureSchool(card) && cardMatchesAttackTarget(card, attackerEntry.attack)) targetEntries.push({ coral: foundation, slot: null, school: true, card, instanceId: `foundation:${foundation.id}` });
-    });
-    getInvasiveCreatureTargets(opponentState.corals, "player").forEach((target) => {
-      const card = cardsById[target.cardId];
-      if (!cardMatchesAttackTarget(card, attackerEntry.attack)) return;
-      const coral = opponentState.corals.find((foundation) => foundation.id === target.coralId);
-      const slot = coral?.slots.find((candidate) => candidate.id === target.slotId);
-      if (coral && slot) targetEntries.push({ coral, slot, card, instanceId: target.instanceId, onOpponentBoard: true });
-    });
-    getInvasiveOrphanTargets(opponentState.orphanCreatures, "player").forEach((target) => {
-      const card = cardsById[target.cardId];
-      if (!cardMatchesAttackTarget(card, attackerEntry.attack)) return;
-      targetEntries.push({
-        coral: null,
-        slot: null,
-        card,
-        instanceId: target.instanceId,
-        onOpponentBoard: true,
-        onOpponentOrphan: true,
-        opponentOrphanIndex: target.orphanIndex,
-      });
-    });
-    const availableTargetEntries = targetEntries.filter((entry) => entry.instanceId && !excludedTargets.has(entry.instanceId));
+    const availableTargetEntries = collectAvailableTargets(attackerEntry);
+    const attackThreatProfile = assessCurrentOpponentThreat(opponentState);
     const scoreTarget = (entry) => {
       const printedVp = Number(entry.card?.victoryPoints?.value ?? entry.card?.victoryPoints ?? entry.card?.vp ?? 0);
       const income = getCardStartTurnRp(entry.card);
       const defenseSides = Number(String(entry.card?.defense?.dice ?? entry.card?.defense ?? "").match(/D(\d+)/i)?.[1] ?? 0);
       const actionValue = Number(entry.card?.actions?.length ?? 0) * 5;
       const damagedSchoolValue = entry.school ? Math.max(0, Number(entry.coral?.maxHealth ?? 0) - Number(entry.coral?.health ?? entry.coral?.maxHealth ?? 0)) / 5 : 0;
-      return printedVp * 15 + income * 10 + Number(entry.card?.cost?.rp ?? 0) * 2 + actionValue + (entry.school ? 18 : 0) + damagedSchoolValue - defenseSides;
+      const schoolDensityCapacity = entry.school ? Number(entry.card?.schoolDensity ?? 0) : 0;
+      const engineDisruption = schoolDensityCapacity * (
+        attackThreatProfile.level === OpponentThreatLevel.CRITICAL
+          ? 0.8
+          : attackThreatProfile.level === OpponentThreatLevel.PRESSURE
+            ? 0.45
+            : 0.2
+      );
+      return printedVp * 15 + income * 10 + Number(entry.card?.cost?.rp ?? 0) * 2 + actionValue + (entry.school ? 18 : 0) + damagedSchoolValue + engineDisruption - defenseSides;
     };
     const targetEntry = opponentDifficulty === OpponentDifficulty.HARD
       ? selectOpponentChoice(availableTargetEntries, opponentDifficulty, { mediumScore: scoreTarget, hardScore: scoreTarget })
       : availableTargetEntries[0];
     if (!targetEntry) {
       if (!onPlayAttack) return null;
+      const targetFamilies = formatAttackTargetFamilies(attackerEntry.attack);
       return {
         corals: currentPlayerCorals,
         reefCreatures: currentPlayerReefCreatures,
@@ -7971,7 +8606,9 @@ export default function Simulator({
         attackerWins: false,
         actionCost: 0,
         noLegalTarget: true,
-        summary: `Opponent's ${attackerEntry.card.name} used ${attackerEntry.attack.actionName}, but there was no legal target.`,
+        summary: targetFamilies
+          ? `${attackerEntry.attack.actionName} can only target ${targetFamilies}. None are currently in your ecosystem, so ${attackerEntry.card.name}'s On Play attack ended without a target.`
+          : `Opponent's ${attackerEntry.card.name} used ${attackerEntry.attack.actionName}, but there was no legal target.`,
       };
     }
     const targetAvoidance = getTargetAvoidance(targetEntry.card);
@@ -8559,18 +9196,20 @@ export default function Simulator({
         });
         return;
       }
-      events.push({
-        type: step.noLegalTarget ? "opponent-impact" : "faceoff-result",
-        sourceCardId: step.counterCardId ?? step.eventSourceCardId ?? step.attackerCardId,
-        defenderCardId: step.counterCardId ? step.attackerCardId : step.defenderCardId,
-        title: step.resolutionUnsupported ? "Opponent Attack Could Not Resolve" : step.noLegalTarget ? "Opponent On Play Had No Target" : step.defenderEvaded ? "Your Creature Evaded" : step.counterSucceeded ? "Bite Back Counterattack!" : step.defenderSurvived ? "Your Defender Survived" : step.attackerWins ? `Opponent Attack ${step.attackNumber ?? 1} Succeeded` : `Your Creature Defended Attack ${step.attackNumber ?? 1}`,
-        message,
-        success: step.noLegalTarget ? false : step.counterCardId ? step.counterSucceeded : !step.attackerWins,
-        playerStateAfter: nextPlayer,
-        opponentStateAfter: nextOpponent,
-        logMessage: message,
-        opponentSequence: true,
-      });
+      if (!step.noLegalTarget || step.resolutionUnsupported) {
+        events.push({
+          type: step.noLegalTarget ? "opponent-impact" : "faceoff-result",
+          sourceCardId: step.counterCardId ?? step.eventSourceCardId ?? step.attackerCardId,
+          defenderCardId: step.counterCardId ? step.attackerCardId : step.defenderCardId,
+          title: step.resolutionUnsupported ? "Opponent Attack Could Not Resolve" : step.noLegalTarget ? `${cardsById[step.attackerCardId]?.name ?? "On Play Attack"} Found No Valid Target` : step.defenderEvaded ? "Your Creature Evaded" : step.counterSucceeded ? "Bite Back Counterattack!" : step.defenderSurvived ? "Your Defender Survived" : step.attackerWins ? `Opponent Attack ${step.attackNumber ?? 1} Succeeded` : `Your Creature Defended Attack ${step.attackNumber ?? 1}`,
+          message,
+          success: step.noLegalTarget ? false : step.counterCardId ? step.counterSucceeded : !step.attackerWins,
+          playerStateAfter: nextPlayer,
+          opponentStateAfter: nextOpponent,
+          logMessage: message,
+          opponentSequence: true,
+        });
+      }
       const playerCollapseEvent = buildContinuousHealthCollapseEvent(playerCollateral, {
         sourceCardId: step.attackerCardId,
         playerStateAfter: nextPlayer,
@@ -8626,42 +9265,107 @@ export default function Simulator({
     });
   }
 
+  function runOpponentNormalAttackActions(opponentState, currentPlayerState) {
+    let nextOpponent = normalizeProjectedOpponentState(opponentState);
+    let nextPlayer = normalizeProjectedPlayerState(currentPlayerState);
+    const events = [];
+    const summaries = [];
+    let firstAttack = null;
+    const availableCreatureCount = [
+      ...nextOpponent.corals.flatMap((coral) => coral.slots.flatMap((slot) => [slot.cardId, ...(slot.hostedCardIds ?? [])])),
+      ...(nextOpponent.reefCreatures ?? []),
+      ...getLocallyControlledOrphans(nextOpponent.orphanCreatures, "opponent").flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
+    ].filter(Boolean).length;
+    const configuredLimit = getOpponentNormalAttackLimit(opponentDifficulty);
+    const safetyLimit = Number.isFinite(configuredLimit)
+      ? Math.min(availableCreatureCount, configuredLimit)
+      : availableCreatureCount;
+
+    for (let attackIndex = 0; attackIndex < safetyLimit; attackIndex += 1) {
+      const attack = runOpponentAttack(
+        nextOpponent,
+        nextPlayer.corals,
+        nextPlayer.reefCreatureInstances,
+        nextPlayer.orphanCreatureInstances,
+        null,
+        null,
+        {
+          rp: nextPlayer.rp,
+          blueCrabRecycleUsedTurn: nextPlayer.blueCrabRecycleUsedTurn,
+          creatureStatuses: nextPlayer.creatureStatuses,
+          resilienceUsedCardIds: nextPlayer.resilienceUsedCardIds,
+        },
+      );
+      if (!attack) break;
+      if (!firstAttack) firstAttack = attack;
+      const resolution = buildOpponentAttackEventSequence(attack, nextPlayer, nextOpponent);
+      events.push(...resolution.events);
+      if (resolution.summary) summaries.push(resolution.summary);
+      nextPlayer = resolution.playerState;
+      nextOpponent = resolution.opponentState;
+      if (resolution.events.some((event) => event.type === "choose-regenerate")) break;
+    }
+
+    return {
+      attack: firstAttack,
+      events,
+      playerState: nextPlayer,
+      opponentState: { ...nextOpponent, rovLightsActive: false },
+      summary: summaries.join(" "),
+      hasPendingRegenerate: events.some((event) => event.type === "choose-regenerate"),
+    };
+  }
+
   function runOpponentNormalActions(opponentState, currentPlayerState) {
+    const threatProfile = assessCurrentOpponentThreat(opponentState);
+    const attackFirst = shouldOpponentAttackBeforeUtility(opponentDifficulty, threatProfile.level);
+    const emptyUtilities = (state, playerState) => ({
+      state,
+      playerState,
+      actions: [],
+      lost: false,
+      summary: "",
+    });
+
+    if (attackFirst) {
+      const attacks = runOpponentNormalAttackActions(opponentState, currentPlayerState);
+      const utilities = attacks.hasPendingRegenerate
+        ? emptyUtilities(attacks.opponentState, attacks.playerState)
+        : runOpponentUtilityActions(attacks.opponentState, attacks.playerState);
+      return {
+        utilities,
+        attack: attacks.attack,
+        attackResolution: attacks,
+        events: [...attacks.events, ...buildOpponentUtilityEvents(utilities)],
+        playerState: utilities.playerState,
+        opponentState: utilities.state,
+        summary: [attacks.summary, utilities.summary].filter(Boolean).join(" "),
+        lost: Boolean(utilities.lost),
+        hasPendingRegenerate: attacks.hasPendingRegenerate,
+      };
+    }
+
     const utilities = runOpponentUtilityActions(opponentState, currentPlayerState);
-    const opponentStateAfterUtility = utilities.state;
-    const playerStateAfterUtility = utilities.playerState;
-    const attack = utilities.lost ? null : runOpponentAttack(
-      opponentStateAfterUtility,
-      playerStateAfterUtility.corals,
-      playerStateAfterUtility.reefCreatureInstances,
-      playerStateAfterUtility.orphanCreatureInstances,
-      null,
-      null,
-      {
-        rp: playerStateAfterUtility.rp,
-        blueCrabRecycleUsedTurn: playerStateAfterUtility.blueCrabRecycleUsedTurn,
-        creatureStatuses: playerStateAfterUtility.creatureStatuses,
-        resilienceUsedCardIds: playerStateAfterUtility.resilienceUsedCardIds,
-      },
-    );
-    const attackResolution = attack
-      ? buildOpponentAttackEventSequence(attack, playerStateAfterUtility, opponentStateAfterUtility)
-      : {
+    const attacks = utilities.lost
+      ? {
+          attack: null,
           events: [],
-          playerState: playerStateAfterUtility,
-          opponentState: { ...opponentStateAfterUtility, rovLightsActive: false },
+          playerState: utilities.playerState,
+          opponentState: { ...utilities.state, rovLightsActive: false },
           summary: "",
-        };
+          hasPendingRegenerate: false,
+        }
+      : runOpponentNormalAttackActions(utilities.state, utilities.playerState);
     return {
       utilities,
-      attack,
-      attackResolution,
-      events: [...buildOpponentUtilityEvents(utilities), ...attackResolution.events],
-      playerState: attackResolution.playerState,
-      opponentState: attackResolution.opponentState,
-      summary: [utilities.summary, attackResolution.summary].filter(Boolean).join(" "),
+      attack: attacks.attack,
+      attackResolution: attacks,
+      events: [...buildOpponentUtilityEvents(utilities), ...attacks.events],
+      playerState: attacks.playerState,
+      opponentState: attacks.opponentState,
+      summary: [utilities.summary, attacks.summary].filter(Boolean).join(" "),
       lost: Boolean(utilities.lost),
-      hasPendingRegenerate: attackResolution.events.some((event) => event.type === "choose-regenerate"),
+      hasPendingRegenerate: attacks.hasPendingRegenerate,
     };
   }
 
@@ -9342,10 +10046,20 @@ export default function Simulator({
       if (matchingImpactIndex >= 0) turnEvents.push(...remainingSupportImpacts.splice(matchingImpactIndex, 1));
     });
     turnEvents.push(...remainingSupportImpacts);
-    if (opponentResult.playedCardId) {
-      const message = `${opponentResult.playSummary}${opponentResult.onPlayRevealedCardIds?.length ? " Its searched card selection is revealed below." : ""}`;
-      turnEvents.push({ type: "opponent-play", sourceCardId: opponentResult.playedCardId, title: `Opponent played ${cardsById[opponentResult.playedCardId]?.name}`, message, revealedCards: opponentResult.onPlayRevealedCardIds ?? [], success: true, opponentStateAfter: opponentStateAfterPlay, playerStateAfter: playerStateAfterInvasion, logMessage: message });
-    }
+    const opponentPermanentPlays = opponentResult.permanentPlays
+      ?? (opponentResult.playedCardId ? [{
+        playedCardId: opponentResult.playedCardId,
+        playSummary: opponentResult.playSummary,
+        onPlayRevealedCardIds: opponentResult.onPlayRevealedCardIds ?? [],
+      }] : []);
+    opponentPermanentPlays.forEach((play, playIndex) => {
+      const noTargetOnPlaySummary = playIndex === 0 && opponentOnPlayAttack?.noLegalTarget && !opponentOnPlayAttack.resolutionUnsupported
+        ? ` ${opponentOnPlayAttackResolution.summary}`
+        : "";
+      const revealedCards = play.onPlayRevealedCardIds ?? [];
+      const message = `${play.playSummary}${noTargetOnPlaySummary}${revealedCards.length ? " Its searched card selection is revealed below." : ""}`;
+      turnEvents.push({ type: "opponent-play", sourceCardId: play.playedCardId, title: `Opponent played ${cardsById[play.playedCardId]?.name}`, message, revealedCards, success: true, opponentStateAfter: opponentStateAfterPlay, playerStateAfter: playerStateAfterInvasion, logMessage: message });
+    });
     if (opponentResult.supportBlock) {
       const message = `Opponent's ${opponentResult.damageSourceName} used ${opponentResult.supportBlock.actionName}. You cannot play Support cards during your next turn.`;
       turnEvents.push({ type: "opponent-impact", sourceCardId: opponentResult.damageSourceCardId, title: `Opponent's ${opponentResult.damageSourceName} used ${opponentResult.supportBlock.actionName}`, message, success: true, playerStateAfter: playerStateAfterSupportBlock, logMessage: message });
@@ -9542,6 +10256,7 @@ export default function Simulator({
     setActiveConditionId(null);
     setPersistentConditionIds([]);
     setConditionDensityUses({});
+    setSchoolDensityCommitmentsByInstanceId({});
     setBlueCrabRecycleUsedTurn(null);
     setResilienceUsedCardIds([]);
     setRound(0);
@@ -9587,6 +10302,7 @@ export default function Simulator({
       ),
     };
     setInspectedCard(null);
+    setHandLimitDiscardSelection([]);
     setEventOverlay(tutorialUsesScriptedScenario ? null : createOpeningCoinCallOverlay());
     setPendingEvents([]);
     setFaceoffRolling(false);
@@ -10212,12 +10928,12 @@ export default function Simulator({
                 <div className="border-r border-white/10 px-4 py-1.5 text-center">
                   <div className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300">Your Reef</div>
                   <div className="text-xl font-black tabular-nums text-white">{playerVp}<span className="text-xs text-emerald-300">/{victoryTarget} VP</span></div>
-                  <div className="text-[9px] font-semibold text-cyan-300/70">{playerSchoolDensity} school density</div>
+                  <div className="text-[9px] font-semibold text-cyan-300/70">{playerSchoolDensityState.committed}/{playerSchoolDensity} SD used{playerSchoolDensityState.overCapacity ? ` · ${playerSchoolDensityState.overCapacity} over` : ""}</div>
                 </div>
                 <div className="px-4 py-1.5 text-center">
                   <div className="text-[9px] font-black uppercase tracking-[0.18em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div>
                   <div className="text-xl font-black tabular-nums text-white">{opponentVp}<span className="text-xs text-rose-300">/{victoryTarget} VP</span></div>
-                  <div className="text-[9px] font-semibold text-rose-300/80">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div>
+                  <div className="text-[9px] font-semibold text-rose-300/80">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensityState.committed}/{opponentSchoolDensity} SD used{opponentSchoolDensityState.overCapacity ? ` · ${opponentSchoolDensityState.overCapacity} over` : ""}</div>
                 </div>
               </div>
               <div className="rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-violet-100 shadow-sm">
@@ -10489,16 +11205,18 @@ export default function Simulator({
                       ) : null}
                       {opponentCorals.length ? opponentCorals.map((coral, coralIndex) => {
                         const card = cardsById[coral.cardId];
+                        const densityBucket = opponentSchoolDensityState.byFoundationId[coral.id] ?? null;
                         const anchorPositions = getOpponentSlotPositions(coral.slots.length);
                         const isFoundationTarget = attackContext?.targets.some((target) => target.coralId === coral.id && target.slotId === "__foundation__");
                         const gridOffset = getOpponentCoralGridOffset(coralIndex, opponentCorals.length);
                         return (
                           <div key={coral.id} className="absolute h-[210px] w-[180px] -translate-x-1/2 -translate-y-1/2" style={{ left: `calc(50% + ${gridOffset.x}px)`, top: `calc(50% + ${gridOffset.y + (opponent.habitats.length || opponent.reefCreatures.length || (opponent.orphanCreatures?.length ?? 0) ? 360 : 0)}px)` }}>
-                            <button type="button" data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
+                            <button type="button" aria-label={`Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
                               <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
                               <img src={card?.image} alt={card?.name} className="h-[160px] w-full rounded-xl object-contain" />
-                              <div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full bg-rose-500" style={{ width: `${coral.maxHealth ? (coral.health / coral.maxHealth) * 100 : 0}%` }} /></div>
-                              <div className="mt-1 text-center text-[10px] font-black text-rose-700">{coral.health}/{coral.maxHealth} HP</div>
+                              <span className="absolute inset-x-2 bottom-1">
+                                <FoundationVitals foundation={coral} densityBucket={densityBucket} owner="opponent" compact />
+                              </span>
                               {(coral.statuses ?? []).length ? <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-1 text-[9px] font-black uppercase text-slate-950 shadow-lg">{coral.statuses.map((status) => status.type).join(", ")}</div> : null}
                               {coral.rpPenaltyNextTurn ? <div className="mt-1 rounded-full bg-cyan-100 px-2 py-0.5 text-center text-[9px] font-black text-cyan-800">−{coral.rpPenaltyNextTurn} RP next collection</div> : null}
                             </button>
@@ -10681,6 +11399,7 @@ export default function Simulator({
                         </div>
                       ) : null}
                       {playerCorals.map((coral) => {
+                        const densityBucket = playerSchoolDensityState.byFoundationId[coral.id] ?? null;
                         const anchorPositions = getBracketSlotPositions(coral.slots.length);
                         const canUpgradeThisCoral = upgradeableCoralIds.has(coral.id);
                         const isLayoutFoundationTarget = Boolean(
@@ -10706,7 +11425,7 @@ export default function Simulator({
                                      : undefined}
                                  role="button"
                                  tabIndex={0}
-                                 aria-label={`Inspect ${coral.name}`}
+                                 aria-label={`Inspect ${coral.name}. ${coral.health ?? coral.maxHealth} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`}
                                  className={`seapals-in-play-card relative z-20 mx-auto h-[260px] w-[220px] rounded-[1.5rem] bg-slate-100 shadow-xl ${
                                    draggingCoralId === coral.id ? "ring-2 ring-emerald-300" : ""
                                  } ${
@@ -10731,12 +11450,9 @@ export default function Simulator({
                                         : "cursor-grab"
                                   }`}
                                 />
-                                <div className="absolute inset-x-4 bottom-3 rounded-xl bg-white/95 px-3 py-2 shadow-sm">
-                                  <div className="h-2 overflow-hidden rounded-full bg-slate-200" aria-label={`${coral.health ?? coral.maxHealth} of ${coral.maxHealth} health`}>
-                                    <div className="h-full bg-emerald-500 transition-all" style={{ width: `${coral.maxHealth ? ((coral.health ?? coral.maxHealth) / coral.maxHealth) * 100 : 0}%` }} />
-                                  </div>
-                                  <div className="mt-1 text-center text-[10px] font-black text-emerald-800">{coral.health ?? coral.maxHealth}/{coral.maxHealth} HP</div>
-                                </div>
+                                <span className="absolute inset-x-4 bottom-3">
+                                  <FoundationVitals foundation={coral} densityBucket={densityBucket} />
+                                </span>
                                 {(coral.statuses ?? []).length ? <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-1 text-[9px] font-black uppercase text-slate-950 shadow-lg">{coral.statuses.map((status) => status.type).join(", ")}</div> : null}
                               </div>
                               {coral.slots.map((slot, index) => {
@@ -10924,8 +11640,8 @@ export default function Simulator({
 
         <div className="seapals-hud-panel hidden min-h-0 overflow-y-auto rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-1 xl:flex xl:flex-col">
           <div className={`grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950/45${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score">
-            <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{playerVp}<span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensity} school density</div></div>
-            <div className="p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{opponentVp}<span className="text-sm text-rose-300">/{victoryTarget} VP</span></div><div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensity} school density</div></div>
+            <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{playerVp}<span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensityState.committed}/{playerSchoolDensity} SD used{playerSchoolDensityState.overCapacity ? ` · ${playerSchoolDensityState.overCapacity} over capacity` : ` · ${playerSchoolDensityState.available} open`}</div></div>
+            <div className="p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{opponentVp}<span className="text-sm text-rose-300">/{victoryTarget} VP</span></div><div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensityState.committed}/{opponentSchoolDensity} SD used{opponentSchoolDensityState.overCapacity ? ` · ${opponentSchoolDensityState.overCapacity} over capacity` : ` · ${opponentSchoolDensityState.available} open`}</div></div>
           </div>
 
           <button type="button" disabled={!activeCondition} onClick={() => activeCondition && setEventOverlay({ type: "condition-detail", sourceCardId: activeCondition.id, title: activeCondition.name, message: activeCondition.text, success: true })} className={`mt-2 w-full rounded-xl border border-violet-300/20 bg-violet-400/10 p-3 text-left transition hover:border-violet-300/40 disabled:cursor-default${tutorialTargetClass("condition-panel")}`} data-tutorial-target="condition-panel">
@@ -11023,6 +11739,15 @@ export default function Simulator({
               {inspectedCardData.defense ? <span className="rounded-full bg-indigo-400/15 px-3 py-1 text-indigo-200">Defense {inspectedCardData.defense?.dice ?? inspectedCardData.defense}</span> : null}
               {Number(inspectedCardData.victoryPoints ?? 0) > 0 ? <span className="rounded-full bg-amber-400/15 px-3 py-1 text-amber-200">{inspectedCardData.victoryPoints} VP</span> : null}
             </div>
+            {inspectedFoundation ? (
+              <div className="mt-4">
+                <FoundationVitals
+                  foundation={inspectedFoundation}
+                  densityBucket={inspectedFoundationDensityBucket}
+                  owner={inspectedCard.owner}
+                />
+              </div>
+            ) : null}
             {inspectedCard.owner === "player" && (creatureStatuses[inspectedActionKey] ?? []).length ? (
               <div className="mt-4 rounded-2xl border border-emerald-300/30 bg-emerald-400/10 p-3 text-sm text-emerald-100">
                 <strong className="block">Active protection</strong>
@@ -11377,6 +12102,48 @@ export default function Simulator({
                     </div>
                     <button type="button" onClick={closeEventOverlay} className="mt-5 rounded-full bg-cyan-600 px-7 py-3 font-black text-white">Continue</button>
                   </div>
+                ) : eventOverlay.type === "choose-hand-limit-discard" ? (
+                  <div className="mt-6">
+                    <div className="rounded-2xl border border-amber-300/35 bg-amber-300/10 p-4 text-left text-sm leading-relaxed text-amber-50">
+                      <strong className="block text-base">You decide what your hand keeps.</strong>
+                      Select exactly {eventOverlay.handLimitChoice.requiredDiscardCount} card{eventOverlay.handLimitChoice.requiredDiscardCount === 1 ? "" : "s"}. Cards you do not select stay in your hand.
+                    </div>
+                    <div className="mt-4 grid max-h-[30rem] gap-3 overflow-y-auto p-1 sm:grid-cols-2">
+                      {eventOverlay.handLimitChoice.entries.map((entry) => {
+                        const card = cardsById[entry.cardId];
+                        const selected = handLimitDiscardSelection.includes(entry.key);
+                        return (
+                          <button
+                            key={entry.key}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => toggleHandLimitDiscard(entry.key)}
+                            className={`flex items-center gap-3 rounded-2xl border-2 p-3 text-left transition ${selected ? "border-rose-300 bg-rose-400/25 shadow-[0_0_20px_rgba(251,113,133,0.2)]" : "border-slate-600 bg-white/5 hover:border-cyan-300/70 hover:bg-cyan-300/10"}`}
+                          >
+                            <img src={card?.image} alt="" className="h-24 w-16 shrink-0 rounded-lg bg-white object-contain" />
+                            <span className="min-w-0 flex-1">
+                              <strong className="block truncate text-white">{card?.name ?? entry.cardId}</strong>
+                              <span className="mt-1 block text-xs text-slate-300">{getCardClassLabel(card)} · {Number(card?.cost?.rp ?? 0)} RP</span>
+                              <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wider ${selected ? "bg-rose-300 text-rose-950" : "bg-emerald-300/15 text-emerald-200"}`}>{selected ? "Will discard" : "Will keep"}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <span role="status" aria-live="polite" className="font-bold text-cyan-100">
+                        {handLimitDiscardSelection.length} of {eventOverlay.handLimitChoice.requiredDiscardCount} selected
+                      </span>
+                      <button
+                        type="button"
+                        disabled={handLimitDiscardSelection.length !== eventOverlay.handLimitChoice.requiredDiscardCount}
+                        onClick={confirmHandLimitDiscard}
+                        className="rounded-full bg-rose-500 px-7 py-3 font-black text-white shadow-lg transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        Discard Selected &amp; Continue
+                      </button>
+                    </div>
+                  </div>
                 ) : eventOverlay.type === "choose-regenerate" ? (
                   <div className="mt-6">
                     <div className="rounded-2xl border border-emerald-400/50 bg-emerald-400/10 p-4 text-left text-sm text-emerald-100">Regenerate is optional. Spending is applied only after you choose it; declining will discard the defeated creature and resolve any Toxic effect.</div>
@@ -11388,12 +12155,19 @@ export default function Simulator({
                 ) : eventOverlay.type === "choose-oceanic-sacrifice" ? (
                   <div className="mt-6">
                     <div className="grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
-                      {(searchContext?.choices ?? []).map((choice) => (
-                        <button key={choice.id} type="button" onClick={() => completePlayerOceanicPlay(searchContext.cardId, choice.id)} className="rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-4 text-left transition hover:bg-rose-400/25">
-                          <span className="mb-3 block text-xs font-black uppercase tracking-widest text-rose-200">{choice.kind === "predator" ? "Sacrifice one Predator" : "Sacrifice two Fish"}</span>
-                          <span className="flex gap-3">{choice.candidates.map((candidate) => <span key={candidate.instanceId} className="min-w-0 flex-1"><img src={candidate.card?.image} alt={candidate.card?.name} className="h-32 w-full rounded-xl bg-white object-contain" /><strong className="mt-2 block truncate text-sm">{candidate.card?.name}</strong></span>)}</span>
-                        </button>
-                      ))}
+                      {(searchContext?.choices ?? []).map((choice) => {
+                        const card = cardsById[searchContext.cardId];
+                        const required = getPlayerSchoolDensityRequirement(card).effectiveRequirement;
+                        const opened = Math.max(0, playerSchoolDensity - playerSchoolDensityState.committed + getDensityFreedBySacrificeChoice(choice));
+                        const densityLegal = required <= opened;
+                        return (
+                          <button key={choice.id} type="button" disabled={!densityLegal} onClick={() => completePlayerOceanicPlay(searchContext.cardId, choice.id)} className="rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-4 text-left transition hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:border-slate-600 disabled:opacity-45">
+                            <span className="mb-3 block text-xs font-black uppercase tracking-widest text-rose-200">{choice.kind === "predator" ? "Sacrifice one Predator" : "Sacrifice two Fish"}</span>
+                            <span className="flex gap-3">{choice.candidates.map((candidate) => <span key={candidate.instanceId} className="min-w-0 flex-1"><img src={candidate.card?.image} alt={candidate.card?.name} className="h-32 w-full rounded-xl bg-white object-contain" /><strong className="mt-2 block truncate text-sm">{candidate.card?.name}</strong></span>)}</span>
+                            <span className={`mt-3 block text-xs font-bold ${densityLegal ? "text-cyan-200" : "text-rose-200"}`}>{opened} School Density would be open; {required} needed.</span>
+                          </button>
+                        );
+                      })}
                     </div>
                     <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setPlayError("Oceanic sacrifice canceled. No card or RP was spent."); }} className="mt-4 rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel — Spend Nothing</button>
                   </div>
