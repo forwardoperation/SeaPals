@@ -172,7 +172,7 @@ export const STRUCTURED_RULE_FACTS = [
     concepts: ["hand limit", "hand size", "cards in hand", "maximum hand", "max hand", "hold cards"],
     intents: ["how many", "maximum", "default", "limit", "allowed", "more than seven"],
     answerTypes: ["quantity", "boolean"],
-    text: "There is no fixed hand limit by default, so you may normally hold more than 7 cards. If a Condition sets a hand limit, that temporary limit applies and overflow goes to discard.",
+    text: "There is no fixed hand limit by default, so you may normally hold more than 7 cards. If a Condition sets a temporary hand limit and your hand exceeds it, you choose and discard enough cards from your entire hand to return to that limit.",
   },
   {
     id: "hand-overflow",
@@ -180,7 +180,7 @@ export const STRUCTURED_RULE_FACTS = [
     concepts: ["hand limit", "full hand", "too many cards", "over my hand", "extra cards"],
     intents: ["what happens", "draw", "search", "recovery", "discard"],
     answerTypes: ["procedure"],
-    text: "If a draw, search, or recovery exceeds your hand limit, keep cards only up to the limit and put the overflow into discard in resolution order.",
+    text: "If a draw, search, or recovery takes your hand above its current limit, add those cards to your hand first. Then choose and discard enough cards from your entire hand to return to the limit.",
   },
   {
     id: "support-resolution",
@@ -293,10 +293,10 @@ export const STRUCTURED_RULE_FACTS = [
     id: "school-density",
     augmentExisting: true,
     sourceTitle: "School Density requirements",
-    concepts: ["school density", "density", "oceanic value", "creature schools"],
-    intents: ["what is", "used for", "need", "requirement", "spend", "reduce"],
+    concepts: ["school density", "density", "oceanic value", "creature schools", "density capacity", "committed density", "available density", "over capacity"],
+    intents: ["what is", "used for", "need", "requirement", "spend", "reduce", "commit", "available", "full", "destroy", "upgrade"],
     answerTypes: ["definition", "boolean", "procedure"],
-    text: "School Density is an Oceanic ecosystem value supplied by Creature Schools. Some Oceanic cards require a minimum current value; it is checked, not spent like RP.",
+    text: "School Density is Oceanic ecosystem capacity supplied by Creature Schools. After reductions, each density-using creature commits its effective requirement while it remains in play, and those commitments add together. The capacity becomes available again when that creature leaves; it is not permanently spent like RP. If a Creature School leaves play or a Foundation change lowers capacity below the committed total, existing creatures remain, but that ecosystem cannot play another creature with a positive School Density requirement until enough capacity is restored.",
   },
   {
     id: "toxic-when-eaten",

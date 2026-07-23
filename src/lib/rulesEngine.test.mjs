@@ -506,7 +506,7 @@ test("answers the five reported strategy and card-notation gaps directly", () =>
     {
       question: "If a cards has 170SD written on it, what does that mean?",
       title: "170 SD requirement",
-      includes: [/School Density/i, /at least 170/i, /checked, not spent/i, /Manta Ray/i],
+      includes: [/School Density/i, /170 of your available/i, /commits its effective requirement/i, /available again/i, /Manta Ray/i],
     },
   ];
 
@@ -594,6 +594,16 @@ test("answers the reconciled Oceanic requirements and printed bonuses", () => {
       question: "Does Thresher Shark's Stun Strike need Open Ocean for its +2 bonus?",
       title: "Thresher Shark requirements and Stun Strike",
       includes: [/3 Oceanic Fish/i, /roll is 4 or higher/i, /\+2/i, /does not require Open Ocean/i],
+    },
+    {
+      question: "Do School Density requirements add together, and when is that capacity available again?",
+      title: "School Density capacity and commitments",
+      includes: [/commitments from multiple creatures add together/i, /available again when .* creature leaves/i],
+    },
+    {
+      question: "What happens if a Creature School is destroyed and I am over School Density capacity?",
+      title: "School Density capacity and commitments",
+      includes: [/existing creatures stay in play/i, /cannot play another creature with a positive School Density requirement/i, /restore enough capacity/i],
     },
   ];
 

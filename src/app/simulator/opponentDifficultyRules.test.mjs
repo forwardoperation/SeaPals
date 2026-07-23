@@ -37,6 +37,7 @@ test("easy preserves hand order and limits optional action volume", () => {
 test("hard strategically chooses a deck without inspecting its top card", () => {
   assert.equal(chooseOpponentPreferredDeck({ difficulty: "hard", round: 1, coralCount: 1, emptySlotCount: 0, foundationCardsInHand: 0, creaturesInHand: 2 }), "foundationDeck");
   assert.equal(chooseOpponentPreferredDeck({ difficulty: "hard", round: 2, coralCount: 2, emptySlotCount: 4, foundationCardsInHand: 1, creaturesInHand: 0 }), "palsDeck");
+  assert.equal(chooseOpponentPreferredDeck({ difficulty: "hard", round: 8, coralCount: 3, emptySlotCount: 2, foundationCardsInHand: 3, creaturesInHand: 0, threatLevel: "critical" }), "palsDeck");
   assert.equal(chooseOpponentPreferredDeck({ difficulty: "medium", round: 1, coralCount: 1, emptySlotCount: 0, foundationCardsInHand: 0, creaturesInHand: 2 }), "palsDeck");
 });
 

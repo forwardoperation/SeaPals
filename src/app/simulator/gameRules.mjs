@@ -464,6 +464,7 @@ export function redistributeOrphans(foundations = [], orphanEntries = [], canOcc
         cardId: orphan.cardId,
         cardInstanceId: orphan.instanceId ?? orphan.cardInstanceId ?? slot.cardInstanceId ?? null,
         hostedCardIds: orphan.hostedCardIds,
+        hostedSchoolDensityRequirements: [...(orphan.hostedSchoolDensityRequirements ?? [])],
         ...(Object.prototype.hasOwnProperty.call(orphan, "controller") ? { controller: orphan.controller } : {}),
         ...(Object.prototype.hasOwnProperty.call(orphan, "invasiveOwner") ? { invasiveOwner: orphan.invasiveOwner } : {}),
       };

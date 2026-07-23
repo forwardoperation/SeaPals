@@ -60,7 +60,8 @@ test("condition lessons explain the exact effect as a short conversation", () =>
     text: "Players cannot have more than 7 cards in their hands.",
   }, 3);
   assert.match(algaeBloom.message, /In the ocean.*rapid increases.*not all blooms are harmful.*block light.*lower oxygen/i);
-  assert.match(algaeBloom.message, /In SeaPals.*seven-card hand limit.*excess cards.*discard/i);
+  assert.match(algaeBloom.message, /In SeaPals.*seven-card hand limit.*Complete.*draw.*choose cards from your entire hand.*discard.*seven remain/i);
+  assert.match(algaeBloom.playerThought, /keep the cards.*best support my plan.*choose the rest to discard/i);
 
   const murkyWater = getSimulatorTutorialConditionHelp({
     id: "murky-water",
@@ -404,7 +405,7 @@ test("draw-result cue names the actual card and bridges to the next legal action
   assert.match(help.cueId, /draw-result:r.*leather-starfish/);
 });
 
-test("draw-result cue reports cards discarded by the hand limit", () => {
+test("draw-result cue tells the player to choose hand-limit discards", () => {
   const help = getSimulatorTutorialHelp(CHECKPOINTS["tutorial-build-card"], {
     modal: "draw-result",
     drawnCards: [{
@@ -414,7 +415,7 @@ test("draw-result cue reports cards discarded by the hand limit", () => {
       discarded: true,
     }],
   });
-  assert.match(help.message, /hand limit.*discard pile/i);
+  assert.match(help.message, /hand over the limit.*choose.*entire hand.*discard/i);
   assert.doesNotMatch(help.action, /play Brain Coral/i);
 });
 

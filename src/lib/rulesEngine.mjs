@@ -776,7 +776,7 @@ function conceptComparisonAnswer(question, rules, context = {}) {
   const pair = [first.rule.id, second.rule.id].sort().join("|");
   const bridges = {
     "glossary:rp|glossary:victory-points": "The key difference is that RP is a spendable resource, while VP is your score toward winning. Spending RP does not spend VP, and gaining VP does not add RP.",
-    "glossary:rp|glossary:school-density": "RP is spent to pay costs. School Density is an ecosystem threshold that is checked, not spent, so meeting an SD requirement does not reduce your SD.",
+    "glossary:rp|glossary:school-density": "RP is spent and leaves your bank. School Density stays on your Creature Schools as ecosystem capacity, but a density-using creature commits its effective requirement while it remains in play. Those commitments add together and are released when their creatures leave.",
     "glossary:creature-class|glossary:creature-habitat": "Class says what kind of creature it is; habitat says which Reef, Oceanic, or Deep zone it belongs to. Placement and targeting may check either or both.",
     "glossary:cost|glossary:play-requirements": "A play requirement must already be satisfied, while a cost is paid. Meeting one does not satisfy the other.",
     "glossary:on-play-abilities|glossary:passive-abilities": "An On Play ability resolves when the card enters play; a Passive remains active while its condition and card remain in play.",
@@ -1172,8 +1172,22 @@ function schoolDensityNotationAnswer(question, rules) {
   return {
     kind: "answer",
     title: `${amount} SD requirement`,
-    text: `SD means School Density. ${amount} SD on a card's play requirement means your ecosystem must currently have at least ${amount} School Density before you can play that card. School Density is checked, not spent like RP, so it remains after the card is played; you must still pay the card's RP cost and meet its other printed requirements.${examples}`,
+    text: `SD means School Density. ${amount} SD on a card's play requirement means that, before reductions, the creature needs ${amount} of your available School Density capacity. After applying a valid reduction, the creature commits its effective requirement while it remains in play, and that commitment adds to the requirements of your other density-using creatures. The capacity becomes available again when the creature leaves. School Density is not permanently spent like RP; you must still pay the card's RP cost and meet its other printed requirements.${examples}`,
     sources: uniqueSources([densityRule, glossaryRule, ...matchingCards.slice(0, 3)].filter(Boolean).map(sourceFor)),
+  };
+}
+
+function schoolDensityCapacityAnswer(question, rules) {
+  if (!/\b(?:school density|density capacity|committed density|available density|over capacity)\b/i.test(question)) return null;
+  if (!/\b(?:add(?:ed|s|ing)? together|commit(?:s|ted|ment)?|available|capacity|full|overflow|over capacity|destroy(?:ed|ing)?|leaves?|left play|removed?|replace(?:d|ment)?|upgrad(?:e|ed|ing)|restore(?:d|s)?)\b/i.test(question)) return null;
+  const densityRule = rules.find((rule) => /^School Density requirements$/i.test(rule.title));
+  const glossaryRule = rules.find((rule) => rule.id === "glossary:school-density");
+  if (!densityRule && !glossaryRule) return null;
+  return {
+    kind: "answer",
+    title: "School Density capacity and commitments",
+    text: densityRule?.text ?? glossaryRule.text,
+    sources: uniqueSources([densityRule, glossaryRule].filter(Boolean).map(sourceFor)),
   };
 }
 
@@ -1200,7 +1214,7 @@ function coreQuantityAnswer(question, rules) {
     return {
       kind: "answer",
       title: "Default hand limit",
-      text: `${asksMoreThanSeven ? "Yes. " : ""}There is no fixed hand limit by default, so you may normally hold more than 7 cards. If a Condition sets a temporary hand limit, keep only up to that current limit and put overflow into discard.`,
+      text: `${asksMoreThanSeven ? "Yes. " : ""}There is no fixed hand limit by default, so you may normally hold more than 7 cards. If a Condition sets a temporary hand limit and your hand exceeds it, choose and discard enough cards from your entire hand to return to that limit.`,
       sources: uniqueSources([handRule, handGlossary].filter(Boolean).map(sourceFor)),
     };
   }
@@ -1433,8 +1447,8 @@ function contextualSchoolDensityAnswer(question, rules, context = {}) {
   const glossary = rules.find((rule) => rule.id === "glossary:school-density");
   return {
     kind: "answer",
-    title: "School Density is not spent",
-    text: `No. School Density${amount ? `, including that ${amount} SD threshold,` : ""} is checked when you play the card, not spent. Your School Density remains afterward unless another card or Condition changes it. You still pay the card's RP cost separately.`,
+    title: "School Density is committed capacity",
+    text: `No. You do not permanently lose or spend School Density like RP.${amount ? ` The printed ${amount} SD is the creature's requirement before reductions.` : ""} After valid reductions, that creature commits its effective School Density requirement while it remains in play, reducing the capacity available to later plays. The commitment becomes available again when the creature leaves. You still pay the card's RP cost separately.`,
     sources: uniqueSources([glossary, densityRule].filter(Boolean).map(sourceFor)),
   };
 }
@@ -1881,6 +1895,12 @@ function answerRulesQuestionInternal(question, rules, context = {}) {
   if (densityAnswer) {
     densityAnswer.context = nextContext(cleanQuestion, densityAnswer, context, mentionedCards, roles);
     return densityAnswer;
+  }
+
+  const densityCapacityAnswer = schoolDensityCapacityAnswer(cleanQuestion, rules);
+  if (densityCapacityAnswer) {
+    densityCapacityAnswer.context = nextContext(cleanQuestion, densityCapacityAnswer, context, mentionedCards, roles);
+    return densityCapacityAnswer;
   }
 
   const deckRoutingAnswer = compoundDeckRoutingAnswer(cleanQuestion, rules);

@@ -69,6 +69,32 @@ test("Goblin Shark can target schools and eligible creature families in every ec
   }
 });
 
+test("Black Swallower targets its printed families across ecosystems", () => {
+  const eyesBiggerThanStomach = getLegacyOnPlayAttack("black-swallower");
+  assert.equal(eyesBiggerThanStomach.targetZone, null);
+  assert.deepEqual(eyesBiggerThanStomach.target.categories, [
+    "apex",
+    "predator",
+    "filter-feeder",
+  ]);
+
+  for (const targetId of ["yellowfin-tuna", "bluefin-tuna", "blue-whale"]) {
+    assert.equal(
+      attackCanTargetCard(cardsById[targetId], eyesBiggerThanStomach),
+      true,
+      `Eyes Bigger Than Stomach should target ${targetId}`,
+    );
+  }
+
+  for (const targetId of ["flying-fish", "sardine-ball-base", "market-squid"]) {
+    assert.equal(
+      attackCanTargetCard(cardsById[targetId], eyesBiggerThanStomach),
+      false,
+      `Eyes Bigger Than Stomach should not target ${targetId}`,
+    );
+  }
+});
+
 test("other Deep Predators retain their printed target families across ecosystems", () => {
   const oceanicTargets = {
     school: cardsById["sardine-ball-base"],
@@ -114,7 +140,7 @@ test("both controllers enumerate Creature Schools as attack targets", () => {
   );
   assert.match(
     opponentTargets,
-    /isCreatureSchool\(card\) && cardMatchesAttackTarget\(card, attackerEntry\.attack\)/,
+    /isCreatureSchool\(card\) && cardMatchesAttackTarget\(card, candidateAttacker\.attack\)/,
   );
 });
 
@@ -293,9 +319,10 @@ test("opponent On Play attacks resolve before same-turn normal actions", () => {
     "function runOpponentNormalActions",
     "function resolvePlayerRegenerateChoice",
   );
-  assert.match(normalActions, /runOpponentUtilityActions\(opponentState, currentPlayerState\)/);
-  assert.match(normalActions, /runOpponentAttack\([\s\S]*?opponentStateAfterUtility[\s\S]*?null,[\s\S]*?null,/);
-  assert.match(normalActions, /events: \[\.\.\.buildOpponentUtilityEvents\(utilities\), \.\.\.attackResolution\.events\]/);
+  assert.match(normalActions, /runOpponentNormalAttackActions\(opponentState, currentPlayerState\)/);
+  assert.match(normalActions, /runOpponentUtilityActions\(attacks\.opponentState, attacks\.playerState\)/);
+  assert.match(normalActions, /runOpponentNormalAttackActions\(utilities\.state, utilities\.playerState\)/);
+  assert.match(normalActions, /events: \[\.\.\.buildOpponentUtilityEvents\(utilities\), \.\.\.attacks\.events\]/);
 
   const opponentTurn = sourceBetween("function resolveOpponentTurn", "function flipForOpeningTurn");
   const mandatoryResolution = opponentTurn.indexOf("buildOpponentAttackEventSequence(preservedOnPlayAttack");
@@ -303,6 +330,18 @@ test("opponent On Play attacks resolve before same-turn normal actions", () => {
   assert.ok(mandatoryResolution >= 0, "the mandatory On Play attack should be resolved");
   assert.ok(normalResolution > mandatoryResolution, "normal actions should run only after the On Play attack");
   assert.match(opponentTurn, /events: \[\.\.\.opponentOnPlayAttackResolution\.events, \.\.\.\(opponentNormalActions\?\.events \?\? \[\]\)\]/);
+});
+
+test("a legitimate no-target On Play attack is explained without a separate blocking event", () => {
+  const attackEvents = sourceBetween(
+    "function buildOpponentAttackEventSequence",
+    "function preserveOpponentNormalActionsAfterOnPlay",
+  );
+  assert.match(attackEvents, /if \(!step\.noLegalTarget \|\| step\.resolutionUnsupported\)/);
+
+  const opponentTurn = sourceBetween("function resolveOpponentTurn", "function flipForOpeningTurn");
+  assert.match(opponentTurn, /const noTargetOnPlaySummary = playIndex === 0 && opponentOnPlayAttack\?\.noLegalTarget/);
+  assert.match(opponentTurn, /const message = `\$\{play\.playSummary\}\$\{noTargetOnPlaySummary\}/);
 });
 
 test("a Regenerate choice resumes deferred normal actions without replaying On Play", () => {

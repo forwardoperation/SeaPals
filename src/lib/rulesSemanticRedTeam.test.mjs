@@ -48,13 +48,14 @@ test("Finn survives a broad semantic red-team interrogation", (t) => {
   const cases = [];
   const add = (question, expected) => cases.push({ question, expected });
 
-  add("what does sd mean?", { includes: ["School Density", "checked", "not spent"], sourceIds: ["glossary:school-density"] });
+  add("what does sd mean?", { includes: ["School Density", "capacity", "commits"], sourceIds: ["glossary:school-density"] });
+  add("What if destroying my Creature School leaves me over School Density capacity?", { includes: ["existing creatures stay in play", "cannot play another creature", "restore enough capacity"], sourceIds: ["knowledge:school-density-requirements"] });
   add("what is the difference between rp and vp?", { includes: ["spendable resource", "score toward winning"], sourceIds: ["glossary:rp", "glossary:victory-points"] });
   add("Is there a stage 2 clubfinger coral?", { starts: "No", includes: ["Base", "Stage 1", "Stage 2"], sourceIds: ["card:clubfinger-coral-base", "card:clubfinger-coral-stage-1"] });
   add("do creature schools and corals both go in the foundations deck?", { starts: "Yes", includes: ["Corals", "Creature Schools", "Foundation Deck"], sourceIds: ["knowledge:foundation-and-pals-deck-routing"] });
 
   const acronymSets = [
-    { acronym: "SD", expansion: "School Density", source: "glossary:school-density", extra: "checked" },
+    { acronym: "SD", expansion: "School Density", source: "glossary:school-density", extra: "capacity" },
     { acronym: "RP", expansion: "Resource Points", source: "glossary:rp", extra: "cost" },
     { acronym: "VP", expansion: "Victory Points", source: "glossary:victory-points", extra: "winning" },
     { acronym: "HP", expansion: "health", source: "glossary:health", extra: "damage" },
@@ -204,6 +205,7 @@ test("Finn survives a broad semantic red-team interrogation", (t) => {
     ["Is there a default hand limit?", ["no fixed hand limit", "Condition"]],
     ["Can I hold more than seven cards?", ["Yes", "no fixed hand limit"]],
     ["How many cards am I allowed to keep in hand?", ["no fixed hand limit", "Condition"]],
+    ["What happens if Algae Bloom puts me over seven cards?", ["choose", "entire hand", "discard"]],
     ["What is my max RP I can collect?", ["default RP bank cap is 8", "card or Condition"]],
     ["How much RP can I hold at once?", ["default RP bank cap is 8", "above"]],
     ["What is the normal RP cap?", ["default RP bank cap is 8"]],
@@ -358,7 +360,7 @@ test("Finn preserves meaning across adversarial follow-up conversations", (t) =>
     },
     {
       questions: ["Explain School Density.", "Is that the same as RP?"],
-      expected: { includes: ["RP is spent", "checked, not spent"], sourceIds: ["glossary:school-density", "glossary:rp"] },
+      expected: { includes: ["RP is spent", "commits", "released"], sourceIds: ["glossary:school-density", "glossary:rp"] },
     },
     {
       questions: ["What is a Passive ability?", "How is that different from On Play?"],
@@ -394,7 +396,7 @@ test("Finn preserves meaning across adversarial follow-up conversations", (t) =>
     },
     {
       questions: ["What does 170 SD on Manta Ray mean?", "Do I lose that 170 after I play it?"],
-      expected: { starts: "No", includes: ["checked", "not spent"], sourceIds: ["glossary:school-density"] },
+      expected: { starts: "No", includes: ["commits", "available again"], sourceIds: ["glossary:school-density"] },
     },
     {
       questions: ["Explain 1D4 × 10.", "So what is the highest possible result?"],
