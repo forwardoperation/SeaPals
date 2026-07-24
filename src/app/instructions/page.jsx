@@ -7,7 +7,7 @@ import InstructionsNav from "./InstructionsNav";
 export const metadata = {
   title: "How to Play SeaPals | Beginner Guide & Complete Rules",
   description:
-    "Learn SeaPals TCG with a quick first-game guide, clear examples, complete rules, a glossary, and answers to common questions.",
+    "Learn SeaPals TCG through a guided interactive lesson, then use the complete rules, examples, glossary, and FAQ as a reference.",
 };
 
 const fullRulesUrl =
@@ -243,30 +243,32 @@ function CardIcon({ src, alt, size = 46 }) {
 function SimulatorPromo() {
   return (
     <aside
+      id="learn-by-doing"
       data-rules-ignore
-      aria-label="SeaPals Simulator promotion"
-      className="relative mt-8 overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"
+      aria-label="SeaPals guided tutorial"
+      className="relative mt-8 scroll-mt-6 overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"
     >
       <div aria-hidden="true" className="absolute -left-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
       <div className="relative grid gap-6 p-6 md:p-8 lg:grid-cols-[1fr_auto] lg:items-end lg:p-10">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-300">
-            Learn by playing
+            Start here · Learn by doing
           </p>
           <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-tight md:text-5xl">
-            The fastest way to learn SeaPals is to play a game
+            Play the lesson before you read the rulebook
           </h2>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 md:text-lg md:leading-8">
-            The simulator handles setup, tracks RP, VP, and Conditions, and tells you
-            why a move is—or is not—legal. Play a complete match against a computer
-            rival without needing a deck or a second player.
+            Mr. Easterling stays beside you through a complete scripted aquarium
+            lesson. He introduces the board, highlights each exact control, explains
+            why a move matters, and helps you build from your first Foundation to a
+            26 VP Apex finish.
           </p>
           <ul className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-cyan-50 md:text-sm">
             {[
-              "Computer opponent",
-              "Instant move feedback",
-              "Full rules in action",
-              "Play at your own pace",
+              "Guided board tour",
+              "Prepared teaching draws",
+              "Supports, Actions, and attacks",
+              "Build through an Apex",
             ].map((benefit) => (
               <li key={benefit} className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2">
                 <span aria-hidden="true" className="text-emerald-300">✓</span>
@@ -277,20 +279,23 @@ function SimulatorPromo() {
         </div>
         <div className="flex flex-col items-start gap-3 lg:items-end">
           <Link
-            href="/simulator"
+            href="/instructions/tutorial"
             className="inline-flex items-center justify-center rounded-full bg-amber-300 px-7 py-3.5 text-sm font-black text-slate-950 shadow-lg transition hover:-translate-y-0.5 hover:bg-amber-200"
           >
-            Play in the simulator →
+            Start the guided tutorial →
           </Link>
-          <span className="text-xs font-semibold text-slate-400">
-            Plays right in your browser
-          </span>
+          <Link
+            href="/simulator"
+            className="text-xs font-bold text-cyan-200 underline decoration-cyan-400/50 underline-offset-4 transition hover:text-cyan-100"
+          >
+            Already know the basics? Open free play
+          </Link>
         </div>
       </div>
 
       <Link
-        href="/simulator"
-        aria-label="Open the SeaPals Simulator"
+        href="/instructions/tutorial"
+        aria-label="Start Mr. Easterling's guided SeaPals tutorial"
         className="group relative block border-t border-white/10 bg-gradient-to-br from-cyan-950 to-emerald-900 p-2 sm:p-3 md:p-5"
       >
         <Image
@@ -302,7 +307,7 @@ function SimulatorPromo() {
           className="h-auto w-full rounded-xl border border-cyan-300/30 shadow-2xl transition duration-300 group-hover:border-cyan-200/70 group-hover:brightness-105"
         />
         <span className="absolute bottom-5 right-5 hidden rounded-full bg-slate-950/90 px-4 py-2 text-xs font-black text-white shadow-xl backdrop-blur transition group-hover:bg-cyan-700 sm:block md:bottom-8 md:right-8">
-          Open simulator ↗
+          Begin lesson ↗
         </span>
       </Link>
     </aside>
@@ -324,24 +329,24 @@ export default function InstructionsPage() {
               How to get started with SeaPals
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 md:text-lg md:leading-8">
-              Set up the table, learn the four parts of a turn, and play your first
-              game. Start with the essentials, then use the full rules when a card
-              raises a question.
+              Begin with Mr. Easterling&apos;s hands-on aquarium lesson. Once you
+              have played through the turn flow yourself, use the written rules below
+              whenever a card or interaction raises a question.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <a
-                href="#start-here"
+              <Link
+                href="/instructions/tutorial"
                 className="inline-flex items-center justify-center rounded-full bg-amber-300 px-6 py-3 text-sm font-black text-slate-950 shadow-lg transition hover:bg-amber-200"
               >
-                Start with the basics ↓
-              </a>
-              <Link
-                href="/simulator"
+                Start guided tutorial →
+              </Link>
+              <a
+                href="#start-here"
                 className="inline-flex items-center justify-center rounded-full border border-cyan-300/60 bg-cyan-300/10 px-6 py-3 text-sm font-bold text-cyan-50 transition hover:bg-cyan-300/20"
               >
-                Practice in the simulator
-              </Link>
+                Read the written rules ↓
+              </a>
               <AskFinnButton className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">
                 Ask Finn a question
               </AskFinnButton>
@@ -353,8 +358,8 @@ export default function InstructionsPage() {
                 <dd className="font-black text-white">2–4</dd>
               </div>
               <div className="flex items-baseline gap-2">
-                <dt className="text-slate-400">Learning game</dt>
-                <dd className="font-black text-white">10 VP</dd>
+                <dt className="text-slate-400">Guided lesson</dt>
+                <dd className="font-black text-white">26 VP</dd>
               </div>
               <div className="flex items-baseline gap-2">
                 <dt className="text-slate-400">Full game</dt>

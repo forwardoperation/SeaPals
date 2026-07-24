@@ -10909,7 +10909,7 @@ export default function Simulator({
             <div>
               <div className="flex items-center gap-3">
                 {isStoryMode ? (
-                  <button type="button" onClick={exitStoryMode} aria-label="Exit duel and return to town" className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
+                  <button type="button" onClick={exitStoryMode} aria-label={`Exit duel and return to ${storyReturnLabel}`} className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
                     <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">{storyReturnLabel}</span>
                   </button>
                 ) : (
