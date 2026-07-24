@@ -15,7 +15,10 @@ test("the global Finn launcher stays hidden on game routes while the embedded on
   assert.equal(shouldRenderRulesChat("/simulator", RULES_CHAT_PLACEMENTS.SITE), false);
   assert.equal(shouldRenderRulesChat("/adventure", RULES_CHAT_PLACEMENTS.SITE), false);
   assert.equal(shouldRenderRulesChat("/adventure/elverson", RULES_CHAT_PLACEMENTS.SITE), false);
+  assert.equal(shouldRenderRulesChat("/instructions", RULES_CHAT_PLACEMENTS.SITE), true);
+  assert.equal(shouldRenderRulesChat("/instructions/tutorial", RULES_CHAT_PLACEMENTS.SITE), false);
   assert.equal(shouldRenderRulesChat("/simulator", RULES_CHAT_PLACEMENTS.SIMULATOR), true);
+  assert.equal(shouldRenderRulesChat("/instructions/tutorial", RULES_CHAT_PLACEMENTS.SIMULATOR), true);
   assert.equal(shouldRenderRulesChat("/adventure", RULES_CHAT_PLACEMENTS.SIMULATOR), true);
 });
 

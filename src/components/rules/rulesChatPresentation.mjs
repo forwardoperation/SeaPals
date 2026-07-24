@@ -19,7 +19,9 @@ function normalizedConditionName(value) {
 export function shouldRenderRulesChat(pathname, placement = RULES_CHAT_PLACEMENTS.SITE) {
   if (placement === RULES_CHAT_PLACEMENTS.SIMULATOR) return true;
   const route = String(pathname ?? "");
-  return route !== "/simulator" && !route.startsWith("/adventure");
+  return route !== "/simulator"
+    && route !== "/instructions/tutorial"
+    && !route.startsWith("/adventure");
 }
 
 export function getRulesChatGreeting(placement = RULES_CHAT_PLACEMENTS.SITE) {
