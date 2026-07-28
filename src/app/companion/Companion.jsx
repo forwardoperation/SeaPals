@@ -69,6 +69,15 @@ function PlayerTracker({ player, scores, vpTarget, onChange }) {
           step={10}
           onChange={(value) => onChange("density", value)}
         />
+        <MetricTracker
+          player={player}
+          label="Resource Points"
+          shortLabel="of 30"
+          value={scores.rp[player]}
+          max={30}
+          step={1}
+          onChange={(value) => onChange("rp", value)}
+        />
       </div>
     </article>
   );
@@ -97,6 +106,7 @@ export default function Companion() {
   const [scores, setScores] = useState({
     vp: [0, 0, 0, 0],
     density: [0, 0, 0, 0],
+    rp: [0, 0, 0, 0],
   });
   const [vpTarget, setVpTarget] = useState(30);
   const [results, setResults] = useState({});
@@ -129,7 +139,11 @@ export default function Companion() {
     }, 540);
   };
 
-  const resetAll = () => setScores({ vp: [0, 0, 0, 0], density: [0, 0, 0, 0] });
+  const resetAll = () => setScores({
+    vp: [0, 0, 0, 0],
+    density: [0, 0, 0, 0],
+    rp: [0, 0, 0, 0],
+  });
 
   return (
     <main className={styles.shell}>
@@ -176,7 +190,7 @@ export default function Companion() {
             />
           ))}
         </div>
-        <p className={styles.dragHint}>Victory Points move by 1. School Density moves by 10.</p>
+        <p className={styles.dragHint}>Victory and Resource Points move by 1. School Density moves by 10.</p>
       </section>
 
       <section className={`${styles.panel} ${styles.dicePanel}`} aria-labelledby="dice-title">
