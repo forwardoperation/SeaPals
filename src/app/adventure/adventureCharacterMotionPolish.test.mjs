@@ -37,7 +37,7 @@ test("every authored sprite-sheet profile calibrates its shadow for all four fac
 test("player and NPC shadows use the same character and facing as their visible sprite", () => {
   assert.match(component, /function CharacterGroundShadow\(\{ character = "player", facing = "down" \}\)/);
   assert.match(component, /"--character-feet-y": spriteFeetY\(character, facing\)/);
-  assert.match(component, /<CharacterGroundShadow character=\{trainer\.id\} facing=\{facing\} \/>[\s\S]*?<SpriteArtwork character=\{trainer\.id\} facing=\{facing\}/);
+  assert.match(component, /<CharacterGroundShadow character=\{trainer\.id\} facing=\{facing\} \/>[\s\S]*?<SpriteArtwork[\s\S]*?character=\{trainer\.id\}[\s\S]*?facing=\{facing\}/);
   assert.match(component, /<CharacterGroundShadow facing=\{facing\} \/>[\s\S]*?<SpriteArtwork facing=\{facing\}/);
 
   const finalShadowRule = styles.slice(styles.lastIndexOf(".characterShadow"));

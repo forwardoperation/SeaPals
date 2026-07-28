@@ -32,6 +32,9 @@ test("ambient residents render with stable sprite fallbacks and no duel marker",
   assert.match(component, /"explorer-jordan": "explorer-jordan"/);
   assert.match(component, /"marine-biologist-jonah": "marine-biologist-jonah"/);
   assert.match(component, /"programmer-harlan": "programmer-harlan"/);
+  assert.match(component, /\bhenderson:\s*"player"/);
+  assert.doesNotMatch(component, /\bhenderson:\s*"town-elder"/);
+  assert.match(component, /\bedith:\s*"town-elder"/);
   assert.match(component, /SPRITE_SOURCE_BY_CHARACTER\[character\] \?\? residentSpriteSource\(character\)/);
   assert.match(component, /const showMarker = Boolean\(trainer\.encounterId \|\| status\)/);
   assert.match(component, /\{showMarker \? \(/);

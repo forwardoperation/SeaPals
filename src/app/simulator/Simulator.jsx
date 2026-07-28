@@ -61,6 +61,10 @@ import {
 } from "./tutorialScenario.mjs";
 import { getGuidedAcademyBoardTourStep, getNextGuidedAcademyBoardTourStep } from "./tutorialBoardTour.mjs";
 import {
+  getTutorialBeaconAnchor,
+  getTutorialCoachPlacement,
+} from "./tutorialCoachPlacement.mjs";
+import {
   GUIDED_ACADEMY_LAYOUT_ACTIONS,
   completeGuidedAcademyLayoutAction,
   createGuidedAcademyLayoutProgress,
@@ -343,6 +347,64 @@ function getTutorialPointerPrompt(help) {
   return `Click ${String(help?.targetLabel ?? "the highlighted control").trim()}.`;
 }
 
+function escapeTutorialSelectorValue(value) {
+  const normalized = String(value ?? "");
+  return window.CSS?.escape
+    ? window.CSS.escape(normalized)
+    : normalized.replace(/["\\]/g, "\\$&");
+}
+
+function getVisibleTutorialTargets(selector) {
+  return [...document.querySelectorAll(selector)]
+    .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+    .filter(({ element, rect }) => {
+      if (rect.width < 4 || rect.height < 4) return false;
+      if (rect.bottom <= 0 || rect.right <= 0 || rect.top >= window.innerHeight || rect.left >= window.innerWidth) return false;
+      if (element.closest("[inert], [aria-hidden=\"true\"]")) return false;
+      const style = window.getComputedStyle(element);
+      return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity || 1) > 0;
+    });
+}
+
+function chooseTutorialTarget(entries, help) {
+  if (!entries.length) return null;
+  if (help.target === "turn-button") {
+    return [...entries].sort((left, right) => right.rect.bottom - left.rect.bottom)[0];
+  }
+  return [...entries].sort((left, right) => (
+    (left.rect.width * left.rect.height) - (right.rect.width * right.rect.height)
+  ))[0];
+}
+
+function findTutorialTarget(help) {
+  if (!help?.target) return null;
+  const selectors = [];
+  if (help.targetCardId) {
+    selectors.push(`[data-tutorial-hand-card-id="${escapeTutorialSelectorValue(help.targetCardId)}"]`);
+  }
+  if (help.targetSearchCardId) {
+    selectors.push(`[data-tutorial-search-card-id="${escapeTutorialSelectorValue(help.targetSearchCardId)}"]`);
+  }
+  if (help.target === "draw-controls" && help.targetDeck) {
+    const drawAction = help.targetDrawAction === "remove" ? "remove" : "add";
+    selectors.push(`[data-tutorial-draw-${drawAction}="${escapeTutorialSelectorValue(help.targetDeck)}"]:not(:disabled)`);
+    if (drawAction === "add") selectors.push("[data-tutorial-draw-remove]:not(:disabled)");
+    selectors.push(`[data-tutorial-draw-deck="${escapeTutorialSelectorValue(help.targetDeck)}"]`);
+  }
+  if (["player-board", "opponent-board"].includes(help.target) && help.targetActionKey) {
+    selectors.push(`[data-tutorial-action-key="${escapeTutorialSelectorValue(help.targetActionKey)}"]`);
+  }
+  selectors.push(`[data-tutorial-target="${escapeTutorialSelectorValue(help.target)}"]`);
+  if (help.targetActionKey) {
+    selectors.push(`[data-tutorial-action-key="${escapeTutorialSelectorValue(help.targetActionKey)}"]`);
+  }
+  for (const selector of selectors) {
+    const target = chooseTutorialTarget(getVisibleTutorialTargets(selector), help);
+    if (target) return target;
+  }
+  return null;
+}
+
 function ProfessorTargetBeacon({ guide, help, active }) {
   const [anchor, setAnchor] = useState(null);
 
@@ -356,75 +418,20 @@ function ProfessorTargetBeacon({ guide, help, active }) {
     let delayedUpdate = null;
     let resizeObserver = null;
     let observedElement = null;
-    const escapeSelectorValue = (value) => {
-      const normalized = String(value ?? "");
-      return window.CSS?.escape
-        ? window.CSS.escape(normalized)
-        : normalized.replace(/["\\]/g, "\\$&");
-    };
-    const visibleElements = (selector) => [...document.querySelectorAll(selector)]
-      .map((element) => ({ element, rect: element.getBoundingClientRect() }))
-      .filter(({ element, rect }) => {
-        if (rect.width < 4 || rect.height < 4) return false;
-        if (rect.bottom <= 0 || rect.right <= 0 || rect.top >= window.innerHeight || rect.left >= window.innerWidth) return false;
-        const style = window.getComputedStyle(element);
-        return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity || 1) > 0;
-      });
-    const chooseElement = (entries) => {
-      if (!entries.length) return null;
-      if (help.target === "turn-button") {
-        return [...entries].sort((left, right) => right.rect.bottom - left.rect.bottom)[0];
-      }
-      return [...entries].sort((left, right) => (
-        (left.rect.width * left.rect.height) - (right.rect.width * right.rect.height)
-      ))[0];
-    };
-    const findTarget = () => {
-      const selectors = [];
-      if (help.targetCardId) {
-        selectors.push(`[data-tutorial-hand-card-id="${escapeSelectorValue(help.targetCardId)}"]`);
-      }
-      if (help.targetSearchCardId) {
-        selectors.push(`[data-tutorial-search-card-id="${escapeSelectorValue(help.targetSearchCardId)}"]`);
-      }
-      if (help.target === "draw-controls" && help.targetDeck) {
-        const drawAction = help.targetDrawAction === "remove" ? "remove" : "add";
-        selectors.push(`[data-tutorial-draw-${drawAction}="${escapeSelectorValue(help.targetDeck)}"]:not(:disabled)`);
-        if (drawAction === "add") {
-          selectors.push("[data-tutorial-draw-remove]:not(:disabled)");
-        }
-        selectors.push(`[data-tutorial-draw-deck="${escapeSelectorValue(help.targetDeck)}"]`);
-      }
-      if (["player-board", "opponent-board"].includes(help.target) && help.targetActionKey) {
-        selectors.push(`[data-tutorial-action-key="${escapeSelectorValue(help.targetActionKey)}"]`);
-      }
-      selectors.push(`[data-tutorial-target="${escapeSelectorValue(help.target)}"]`);
-      if (help.targetActionKey) {
-        selectors.push(`[data-tutorial-action-key="${escapeSelectorValue(help.targetActionKey)}"]`);
-      }
-      for (const selector of selectors) {
-        const target = chooseElement(visibleElements(selector));
-        if (target) return target;
-      }
-      return null;
-    };
     const updateAnchor = () => {
-      const target = findTarget();
+      const target = findTutorialTarget(help);
       if (!target) {
         setAnchor(null);
         return;
       }
       const { rect } = target;
       const broadPlacementTarget = help.target === "placement" && rect.width > 360 && rect.height > 240;
-      const targetX = rect.left + rect.width / 2;
-      const targetY = broadPlacementTarget ? rect.top + rect.height * 0.58 : rect.top;
-      const direction = targetY > 190 ? "above" : "below";
-      const horizontalPadding = Math.min(152, Math.max(104, window.innerWidth / 2 - 8));
-      const left = Math.min(window.innerWidth - horizontalPadding, Math.max(horizontalPadding, targetX));
-      const top = direction === "above"
-        ? Math.max(96, targetY - 18)
-        : Math.min(window.innerHeight - 96, rect.bottom + 18);
-      setAnchor({ direction, left, top });
+      setAnchor(getTutorialBeaconAnchor({
+        targetRect: rect,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        broadPlacementTarget,
+      }));
       if (typeof ResizeObserver !== "undefined") {
         resizeObserver ??= new ResizeObserver(requestUpdate);
         if (observedElement !== target.element) {
@@ -456,7 +463,12 @@ function ProfessorTargetBeacon({ guide, help, active }) {
   return (
     <div
       className={`seapals-target-beacon seapals-target-beacon-${anchor.direction}`}
-      style={{ left: `${anchor.left}px`, top: `${anchor.top}px` }}
+      style={{
+        left: `${anchor.left}px`,
+        top: `${anchor.top}px`,
+        "--seapals-target-arrow-shift": `${anchor.arrowShift}px`,
+        "--seapals-target-arrow-length": `${anchor.arrowLength}px`,
+      }}
       aria-hidden="true"
     >
       <ProfessorGuidePortrait guide={guide} compact />
@@ -464,7 +476,137 @@ function ProfessorTargetBeacon({ guide, help, active }) {
         <strong>{guide.name}</strong>
         <span>{getTutorialPointerPrompt(help)}</span>
       </div>
-      <span className="seapals-target-beacon-arrow" aria-hidden="true">{anchor.direction === "above" ? "↓" : "↑"}</span>
+      <span className="seapals-target-beacon-arrow" aria-hidden="true" />
+    </div>
+  );
+}
+
+const PROFESSOR_COACH_ARROW = Object.freeze({
+  above: "↓",
+  below: "↑",
+  left: "→",
+  right: "←",
+});
+
+function sameProfessorCoachPlacement(left, right) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return left.side === right.side
+    && Math.abs(left.left - right.left) < 1
+    && Math.abs(left.top - right.top) < 1
+    && Math.abs(left.arrowOffset - right.arrowOffset) < 1
+    && left.constrained === right.constrained;
+}
+
+function ProfessorCoachOverlay({ help, children }) {
+  const coachRef = useRef(null);
+  const [placement, setPlacement] = useState(null);
+
+  useEffect(() => {
+    if (!help?.target || !TUTORIAL_POINTER_TARGETS.has(help.target)) {
+      setPlacement(null);
+      return undefined;
+    }
+
+    let animationFrame = null;
+    let delayedUpdate = null;
+    let resizeObserver = null;
+    let observedTarget = null;
+    const requestUpdate = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(updatePlacement);
+    };
+    const updatePlacement = () => {
+      animationFrame = null;
+      const target = findTutorialTarget(help);
+      const coachElement = coachRef.current;
+      if (!target || !coachElement) {
+        setPlacement((current) => current == null ? current : null);
+        return;
+      }
+      const coachRect = coachElement.getBoundingClientRect();
+      if (coachRect.width < 4 || coachRect.height < 4) {
+        setPlacement((current) => current == null ? current : null);
+        return;
+      }
+      const visualViewport = window.visualViewport;
+      const viewportLeft = visualViewport?.offsetLeft ?? 0;
+      const viewportTop = visualViewport?.offsetTop ?? 0;
+      const viewportWidth = visualViewport?.width ?? window.innerWidth;
+      const viewportHeight = visualViewport?.height ?? window.innerHeight;
+      const relativeTargetRect = {
+        left: target.rect.left - viewportLeft,
+        top: target.rect.top - viewportTop,
+        right: target.rect.right - viewportLeft,
+        bottom: target.rect.bottom - viewportTop,
+      };
+      const nextPlacement = getTutorialCoachPlacement({
+        targetRect: relativeTargetRect,
+        coachRect,
+        viewportWidth,
+        viewportHeight,
+      });
+      const viewportPlacement = nextPlacement
+        ? {
+            ...nextPlacement,
+            left: nextPlacement.left + viewportLeft,
+            top: nextPlacement.top + viewportTop,
+          }
+        : null;
+      setPlacement((current) => (
+        sameProfessorCoachPlacement(current, viewportPlacement) ? current : viewportPlacement
+      ));
+
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObserver ??= new ResizeObserver(requestUpdate);
+        if (observedTarget !== target.element) {
+          resizeObserver.disconnect();
+          resizeObserver.observe(coachElement);
+          resizeObserver.observe(target.element);
+          observedTarget = target.element;
+        }
+      }
+    };
+
+    requestUpdate();
+    delayedUpdate = window.setTimeout(requestUpdate, 240);
+    window.addEventListener("resize", requestUpdate);
+    window.visualViewport?.addEventListener("resize", requestUpdate);
+    return () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      if (delayedUpdate) window.clearTimeout(delayedUpdate);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", requestUpdate);
+      window.visualViewport?.removeEventListener("resize", requestUpdate);
+    };
+  }, [
+    help?.cueId,
+    help?.target,
+    help?.targetActionKey,
+    help?.targetCardId,
+    help?.targetSearchCardId,
+    help?.targetDeck,
+    help?.targetDrawAction,
+  ]);
+
+  return (
+    <div
+      ref={coachRef}
+      className={`seapals-professor-coach-wrap${placement ? ` seapals-professor-coach-wrap-anchored seapals-professor-coach-side-${placement.side}` : ""}`}
+      style={placement ? {
+        left: `${placement.left}px`,
+        top: `${placement.top}px`,
+        "--seapals-coach-arrow-offset": `${placement.arrowOffset}px`,
+      } : undefined}
+      data-tutorial-coach-side={placement?.side}
+      data-tutorial-coach-constrained={placement?.constrained ? "true" : undefined}
+    >
+      {children}
+      {placement ? (
+        <span className="seapals-professor-coach-arrow" aria-hidden="true">
+          {PROFESSOR_COACH_ARROW[placement.side]}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -10466,7 +10608,7 @@ export default function Simulator({
         @keyframes seapalsDialogueTurnIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes seapalsTypeCursorBlink { 0%, 45% { opacity: 1; } 46%, 100% { opacity: .12; } }
         @keyframes seapalsTargetBeaconIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes seapalsTargetArrowBob { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(7px); } }
+        @keyframes seapalsTargetArrowBob { 0%, 100% { opacity: 1; } 50% { opacity: .62; } }
         .seapals-game-shell {
           background-image:
             radial-gradient(circle at 12% 8%, rgba(14,165,233,.18), transparent 30%),
@@ -10570,7 +10712,7 @@ export default function Simulator({
         }
         .seapals-professor-coach-wrap {
           position: absolute;
-          z-index: 65;
+          z-index: 160;
           top: 5.25rem;
           left: 1rem;
           width: min(32rem, calc(100% - 2rem));
@@ -10579,6 +10721,51 @@ export default function Simulator({
         .seapals-professor-coach-wrap-low {
           top: auto;
           bottom: 1rem;
+        }
+        .seapals-professor-coach-wrap-anchored {
+          position: fixed;
+          top: auto;
+          right: auto;
+          bottom: auto;
+          left: auto;
+          width: min(32rem, calc(100vw - 1.5rem));
+          transition: left 240ms ease-out, top 240ms ease-out;
+        }
+        .seapals-professor-coach-arrow {
+          position: absolute;
+          z-index: 3;
+          display: grid;
+          width: 2.75rem;
+          height: 2.75rem;
+          place-items: center;
+          color: #fbbf24;
+          font-size: 2.6rem;
+          font-weight: 950;
+          line-height: 1;
+          pointer-events: none;
+          filter: drop-shadow(0 3px 2px rgba(2, 8, 23, .72));
+        }
+        .seapals-professor-coach-side-above .seapals-professor-coach-arrow,
+        .seapals-professor-coach-side-below .seapals-professor-coach-arrow {
+          left: var(--seapals-coach-arrow-offset);
+          transform: translateX(-50%);
+        }
+        .seapals-professor-coach-side-above .seapals-professor-coach-arrow {
+          top: calc(100% - .2rem);
+        }
+        .seapals-professor-coach-side-below .seapals-professor-coach-arrow {
+          bottom: calc(100% - .2rem);
+        }
+        .seapals-professor-coach-side-left .seapals-professor-coach-arrow,
+        .seapals-professor-coach-side-right .seapals-professor-coach-arrow {
+          top: var(--seapals-coach-arrow-offset);
+          transform: translateY(-50%);
+        }
+        .seapals-professor-coach-side-left .seapals-professor-coach-arrow {
+          left: calc(100% - .2rem);
+        }
+        .seapals-professor-coach-side-right .seapals-professor-coach-arrow {
+          right: calc(100% - .2rem);
         }
         .seapals-professor-card {
           position: relative;
@@ -10732,18 +10919,49 @@ export default function Simulator({
         }
         .seapals-target-beacon-arrow {
           position: absolute;
-          left: 50%;
+          left: calc(50% + var(--seapals-target-arrow-shift, 0px));
+          width: 1.125rem;
+          height: var(--seapals-target-arrow-length, 24px);
           color: #fbbf24;
-          font-size: 2.6rem;
-          font-weight: 950;
-          line-height: 1;
+          transform: translateX(-50%);
           filter: drop-shadow(0 3px 2px rgba(2, 8, 23, .7));
           animation: seapalsTargetArrowBob .8s ease-in-out infinite;
         }
-        .seapals-target-beacon-above .seapals-target-beacon-arrow { top: calc(100% - .1rem); }
+        .seapals-target-beacon-arrow::before,
+        .seapals-target-beacon-arrow::after {
+          position: absolute;
+          left: 50%;
+          content: "";
+          transform: translateX(-50%);
+        }
+        .seapals-target-beacon-arrow::before {
+          width: 3px;
+          border-radius: 999px;
+          background: currentColor;
+        }
+        .seapals-target-beacon-above .seapals-target-beacon-arrow { top: 100%; }
+        .seapals-target-beacon-above .seapals-target-beacon-arrow::before {
+          top: 0;
+          height: calc(100% - 7px);
+        }
+        .seapals-target-beacon-above .seapals-target-beacon-arrow::after {
+          bottom: 0;
+          border-top: 8px solid currentColor;
+          border-right: 6px solid transparent;
+          border-left: 6px solid transparent;
+        }
         .seapals-target-beacon-below .seapals-target-beacon-arrow {
-          bottom: calc(100% - .1rem);
-          animation-direction: reverse;
+          bottom: 100%;
+        }
+        .seapals-target-beacon-below .seapals-target-beacon-arrow::before {
+          top: 7px;
+          height: calc(100% - 7px);
+        }
+        .seapals-target-beacon-below .seapals-target-beacon-arrow::after {
+          top: 0;
+          border-right: 6px solid transparent;
+          border-bottom: 8px solid currentColor;
+          border-left: 6px solid transparent;
         }
         .seapals-professor-portrait {
           position: relative;
@@ -10840,7 +11058,7 @@ export default function Simulator({
           border-color: #fff !important;
           box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff !important;
         }
-        .seapals-reduced-motion :is(.seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-card-drawer, .seapals-event-card, .seapals-turn-button) {
+        .seapals-reduced-motion :is(.seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-professor-coach-wrap-anchored, .seapals-professor-coach-arrow, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-card-drawer, .seapals-event-card, .seapals-turn-button) {
           animation: none !important;
           transition: none !important;
         }
@@ -10862,7 +11080,7 @@ export default function Simulator({
             animation: none !important;
             transition: none !important;
           }
-          .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor { animation: none !important; opacity: 1 !important; }
+          .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-professor-coach-wrap-anchored, .seapals-professor-coach-arrow, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor { animation: none !important; opacity: 1 !important; transition: none !important; }
           .seapals-professor-type-cursor { display: none; }
           .seapals-setup-playable-card { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); }
           .seapals-slot-target { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); box-shadow: 0 0 30px rgba(52,211,153,.45); }
@@ -10879,6 +11097,11 @@ export default function Simulator({
             bottom: 4.75rem;
             left: .5rem;
             width: auto;
+          }
+          .seapals-professor-coach-wrap-anchored {
+            right: auto;
+            bottom: auto;
+            width: min(32rem, calc(100vw - 1.5rem));
           }
           .seapals-professor-card {
             max-height: 32dvh;
@@ -11050,10 +11273,10 @@ export default function Simulator({
             </p>
           ) : null}
 
-          {tutorialBoardTourOpen ? <div className="fixed inset-0 z-[64]" aria-hidden="true" /> : null}
+          {tutorialBoardTourOpen ? <div className="fixed inset-0 z-[159]" aria-hidden="true" /> : null}
 
           {tutorialBoardTourOpen ? (
-            <div className={`seapals-professor-coach-wrap${tutorialBoardTourHelp.target === "opponent-board" ? " seapals-professor-coach-wrap-low" : ""}`}>
+            <ProfessorCoachOverlay help={tutorialBoardTourHelp}>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={tutorialBoardTourHelp}
@@ -11065,7 +11288,7 @@ export default function Simulator({
                 onAdvance={advanceTutorialBoardTour}
                 advanceLabel={tutorialBoardTourHelp.advanceLabel}
               />
-            </div>
+            </ProfessorCoachOverlay>
           ) : null}
 
           {tutorialHelpFloating ? (
@@ -11083,7 +11306,7 @@ export default function Simulator({
           <ProfessorTargetBeacon
             guide={tutorialGuide}
             help={tutorialTargetBeaconHelp}
-            active={tutorialTargetBeaconOpen}
+            active={tutorialTargetBeaconOpen && !tutorialBoardTourOpen}
           />
 
           {tutorialHelp && !tutorialHelpOpen && !eventOverlay && !modal && !roundFlash && !gameResult ? (

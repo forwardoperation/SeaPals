@@ -1277,6 +1277,16 @@
   animation: spriteWalk var(--sprite-walk-cycle-duration, 250ms) steps(1, end) infinite;
 }
 
+.spriteSteppingInPlace {
+  /*
+   * Stationary residents use the complete alternating-leg gait, while
+   * per-sheet frame registration keeps their torso over one ground anchor.
+   */
+  background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row);
+  transform-origin: center bottom;
+  animation: spriteWalkInPlace var(--sprite-walk-cycle-duration, 1600ms) steps(1, end) infinite;
+}
+
 .academy-mentorSpriteArtwork.spriteWalking {
   animation-name: professorSpriteWalk;
 }
@@ -1295,6 +1305,14 @@
   50% { background-position: 100% var(--sprite-row); transform: translateY(0); }
   75% { background-position: 50% var(--sprite-row); transform: translateY(-1.5%); }
   100% { background-position: 0% var(--sprite-row); transform: translateY(0); }
+}
+
+@keyframes spriteWalkInPlace {
+  0% { background-position: var(--sprite-step-frame-a-x, 12%) var(--sprite-row); transform: translateY(0); }
+  25% { background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row); transform: translateY(-1.5%); }
+  50% { background-position: var(--sprite-step-frame-b-x, 88%) var(--sprite-row); transform: translateY(0); }
+  75% { background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row); transform: translateY(-1.5%); }
+  100% { background-position: var(--sprite-step-frame-a-x, 12%) var(--sprite-row); transform: translateY(0); }
 }
 
 @keyframes spriteBreathe {
