@@ -12,7 +12,15 @@ test("live actor state drives rendering, interaction targeting, and player colli
   assert.match(component, /ignoreActorTiles:\s*true/);
   assert.match(component, /position=\{runtimeActor\?\.position \?\? characterInteraction\.at\}/);
   assert.match(component, /facing=\{actorFacing\}/);
-  assert.match(component, /moving=\{!actorIsEngaged && runtimeActor\?\.moving === true\}/);
+  assert.match(component, /const actorAnimationMode = getAdventureActorAnimationMode\(\{/);
+  assert.match(component, /hasPatrol:\s*Boolean\(characterInteraction\.patrol\)/);
+  assert.match(component, /isMoving:\s*runtimeActor\?\.moving === true/);
+  assert.match(component, /isEngaged:\s*actorIsEngaged/);
+  assert.match(component, /movementPaused,/);
+  assert.match(component, /pageVisible,/);
+  assert.match(component, /reducedMotion:\s*effectiveReducedMotion/);
+  assert.match(component, /moving=\{actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.WALKING\}/);
+  assert.match(component, /steppingInPlace=\{actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.STEPPING_IN_PLACE\}/);
 });
 
 test("patrol animation pauses with gameplay and honors reduced motion", () => {
@@ -34,6 +42,23 @@ test("player and patrol walk cycles derive their cadence from world speed", () =
   assert.match(component, /walkSpeed=\{characterInteraction\.patrol\?\.speed \?\? ADVENTURE_ACTOR_DEFAULTS\.speed\}/);
   assert.match(component, /walkSpeed=\{scene\.movement\?\.speed\}/);
   assert.match(styles, /animation:\s*spriteWalk var\(--sprite-walk-cycle-duration, 250ms\) steps\(1, end\) infinite/);
+});
+
+test("stationary residents use a registered alternating-leg gait over one world anchor", () => {
+  assert.match(component, /const frameRegistration = getAdventureWalkFrameRegistration\(\{/);
+  assert.match(component, /"--sprite-step-frame-a-x": `\$\{frameRegistration\.frameA\}%`/);
+  assert.match(component, /"--sprite-step-neutral-x": `\$\{frameRegistration\.neutral\}%`/);
+  assert.match(component, /"--sprite-step-frame-b-x": `\$\{frameRegistration\.frameB\}%`/);
+  assert.match(component, /data-sprite-profile=\{animationProfile\}/);
+  assert.match(styles, /\.spriteSteppingInPlace\s*\{[\s\S]*?background-position:\s*var\(--sprite-step-neutral-x, 50%\) var\(--sprite-row\)/);
+  assert.match(styles, /\.spriteSteppingInPlace\s*\{[\s\S]*?transform-origin:\s*center bottom/);
+  assert.match(styles, /\.spriteSteppingInPlace\s*\{[\s\S]*?animation:\s*spriteWalkInPlace[\s\S]*?steps\(1, end\)/);
+  const idleCycle = styles.match(/@keyframes spriteWalkInPlace[\s\S]*?(?=@keyframes spriteBreathe)/)?.[0] ?? "";
+  assert.ok(idleCycle);
+  assert.match(idleCycle, /--sprite-step-frame-a-x/);
+  assert.match(idleCycle, /--sprite-step-neutral-x/);
+  assert.match(idleCycle, /--sprite-step-frame-b-x/);
+  assert.doesNotMatch(idleCycle, /translateX|scaleY/);
 });
 
 test("the player walk cycle follows active walking intent even when collision stops displacement", () => {

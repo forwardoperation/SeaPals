@@ -50,7 +50,10 @@ import {
   getAdventureSceneTransitionDurationMs,
 } from "./adventureSceneTransition.mjs";
 import {
+  ADVENTURE_ACTOR_ANIMATION_MODES,
+  getAdventureActorAnimationMode,
   getAdventureWalkCycleDurationMs,
+  getAdventureWalkFrameRegistration,
   isAdventurePlayerWalking,
 } from "./adventureWalkAnimation.mjs";
 import {
@@ -251,7 +254,7 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
   ellis: "marine-biologist-jonah",
   "programmer-harlan": "programmer-harlan",
   edith: "town-elder",
-  henderson: "town-elder",
+  henderson: "player",
   emilio: "town-adult",
   eli: "town-adult",
   calvin: "town-adult",
@@ -371,6 +374,11 @@ function spriteFeetY(character, facing) {
   return `${profile[facing] ?? profile.down}%`;
 }
 
+function spriteAnimationProfile(character) {
+  const artworkCharacter = spriteArtworkCharacter(character);
+  return SPRITE_FOOT_PROFILE_BY_ARTWORK[artworkCharacter] ?? artworkCharacter;
+}
+
 const CHAMPIONSHIP_ENDING_FLAGS = Object.freeze({
   ceremony: "championship-ceremony-complete",
   epilogue: "championship-epilogue-complete",
@@ -477,17 +485,31 @@ function SpriteArtwork({
   character = "player",
   facing = "down",
   moving = false,
+  steppingInPlace = false,
   portrait = false,
   walkSpeed = null,
 }) {
   const facingName = `${facing[0].toUpperCase()}${facing.slice(1)}`;
   const artworkCharacter = spriteArtworkCharacter(character);
-  const walkStyle = moving && Number.isFinite(walkSpeed) && walkSpeed > 0
-    ? { "--sprite-walk-cycle-duration": `${getAdventureWalkCycleDurationMs(walkSpeed)}ms` }
+  const animationProfile = spriteAnimationProfile(character);
+  const frameRegistration = getAdventureWalkFrameRegistration({
+    profile: animationProfile,
+    facing,
+  });
+  const walkStyle = (moving || steppingInPlace) && Number.isFinite(walkSpeed) && walkSpeed > 0
+    ? {
+        "--sprite-walk-cycle-duration": `${getAdventureWalkCycleDurationMs(walkSpeed)}ms`,
+        ...(steppingInPlace ? {
+          "--sprite-step-frame-a-x": `${frameRegistration.frameA}%`,
+          "--sprite-step-neutral-x": `${frameRegistration.neutral}%`,
+          "--sprite-step-frame-b-x": `${frameRegistration.frameB}%`,
+        } : {}),
+      }
     : undefined;
   return (
     <span
-      className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""}`}
+      className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${steppingInPlace ? styles.spriteSteppingInPlace : ""} ${portrait ? styles.spritePortrait : ""}`}
+      data-sprite-profile={animationProfile}
       style={walkStyle}
       aria-hidden="true"
     />
@@ -516,6 +538,7 @@ function AdventureTrainerSprite({
   position,
   facing = "down",
   moving = false,
+  steppingInPlace = false,
   engaged = false,
   defeated,
   status = null,
@@ -531,7 +554,13 @@ function AdventureTrainerSprite({
       aria-label={`${trainer.name}, ${trainer.title}${resolvedStatus ? ` — ${resolvedStatus}` : ""}`}
     >
       <CharacterGroundShadow character={trainer.id} facing={facing} />
-      <SpriteArtwork character={trainer.id} facing={facing} moving={moving} walkSpeed={walkSpeed} />
+      <SpriteArtwork
+        character={trainer.id}
+        facing={facing}
+        moving={moving}
+        steppingInPlace={steppingInPlace}
+        walkSpeed={walkSpeed}
+      />
       {showMarker ? (
         <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""} ${status === "Locked" ? styles.trainerLocked : ""}`}>
           {defeated ? "★" : status === "Locked" ? "•" : "!"}
@@ -5099,6 +5128,14 @@ export default function AdventureGame() {
                     runtimeActor?.facing ?? characterInteraction.facing ?? "down",
                   )
                 : runtimeActor?.facing ?? "down";
+              const actorAnimationMode = getAdventureActorAnimationMode({
+                hasPatrol: Boolean(characterInteraction.patrol),
+                isMoving: runtimeActor?.moving === true,
+                isEngaged: actorIsEngaged,
+                movementPaused,
+                pageVisible,
+                reducedMotion: effectiveReducedMotion,
+              });
               const tournamentActor = Boolean(
                 trainer.encounterId
                 && CHAMPIONS_WAKE_TOURNAMENT_ROUND_IDS.includes(trainer.encounterId),
@@ -5117,7 +5154,8 @@ export default function AdventureGame() {
                   trainer={trainer}
                   position={runtimeActor?.position ?? characterInteraction.at}
                   facing={actorFacing}
-                  moving={!actorIsEngaged && runtimeActor?.moving === true}
+                  moving={actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES.WALKING}
+                  steppingInPlace={actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES.STEPPING_IN_PLACE}
                   engaged={actorIsEngaged}
                   walkSpeed={characterInteraction.patrol?.speed ?? ADVENTURE_ACTOR_DEFAULTS.speed}
                   defeated={trainerDefeated}

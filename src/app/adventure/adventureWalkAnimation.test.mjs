@@ -2,8 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ADVENTURE_ACTOR_ANIMATION_MODES,
+  ADVENTURE_WALK_FRAME_REGISTRATIONS,
   ADVENTURE_WALK_ANIMATION_DEFAULTS,
+  getAdventureActorAnimationMode,
   getAdventureWalkCycleDurationMs,
+  getAdventureWalkFrameRegistration,
   hasAdventureWalkDisplacement,
   isAdventurePlayerWalking,
 } from "./adventureWalkAnimation.mjs";
@@ -23,6 +27,73 @@ test("player walking follows intent immediately and stops in inactive modes", ()
   assert.equal(isAdventurePlayerWalking({ isMoving: true, movementPaused: true }), false);
   assert.equal(isAdventurePlayerWalking({ isMoving: true, boatMode: true }), false);
   assert.equal(isAdventurePlayerWalking({ isMoving: false }), false);
+});
+
+test("stationary residents walk in place while patrols follow real movement", () => {
+  assert.equal(
+    getAdventureActorAnimationMode({ hasPatrol: false }),
+    ADVENTURE_ACTOR_ANIMATION_MODES.STEPPING_IN_PLACE,
+  );
+  assert.equal(
+    getAdventureActorAnimationMode({ hasPatrol: true, isMoving: true }),
+    ADVENTURE_ACTOR_ANIMATION_MODES.WALKING,
+  );
+  assert.equal(
+    getAdventureActorAnimationMode({ hasPatrol: false, isMoving: true }),
+    ADVENTURE_ACTOR_ANIMATION_MODES.WALKING,
+  );
+  assert.equal(
+    getAdventureActorAnimationMode({ hasPatrol: true, isMoving: false }),
+    ADVENTURE_ACTOR_ANIMATION_MODES.STILL,
+  );
+});
+
+test("resident animation stops during conversations, pauses, hidden tabs, and reduced motion", () => {
+  const stationaryResident = { hasPatrol: false };
+  for (const inactiveState of [
+    { isEngaged: true },
+    { movementPaused: true },
+    { pageVisible: false },
+    { reducedMotion: true },
+  ]) {
+    assert.equal(
+      getAdventureActorAnimationMode({ ...stationaryResident, ...inactiveState }),
+      ADVENTURE_ACTOR_ANIMATION_MODES.STILL,
+    );
+  }
+});
+
+test("every authored sprite profile registers all three walk frames for every facing", () => {
+  const facingNames = ["down", "left", "right", "up"];
+  assert.equal(Object.keys(ADVENTURE_WALK_FRAME_REGISTRATIONS).length, 12);
+
+  for (const [profile, facingRegistrations] of Object.entries(ADVENTURE_WALK_FRAME_REGISTRATIONS)) {
+    assert.deepEqual(Object.keys(facingRegistrations), facingNames, `${profile} should define every facing`);
+    for (const facing of facingNames) {
+      const { frameA, neutral, frameB } = facingRegistrations[facing];
+      assert.ok(frameA >= 0 && frameA < neutral, `${profile}/${facing} frame A should precede neutral`);
+      assert.ok(neutral < frameB && frameB <= 100, `${profile}/${facing} frame B should follow neutral`);
+    }
+  }
+});
+
+test("frame registration calibrates the most uneven sheets and safely falls back", () => {
+  assert.deepEqual(
+    getAdventureWalkFrameRegistration({ profile: "ivy", facing: "down" }),
+    { frameA: 13.4, neutral: 49.6, frameB: 83.4 },
+  );
+  assert.deepEqual(
+    getAdventureWalkFrameRegistration({ profile: "academy-mentor", facing: "right" }),
+    { frameA: 3.9, neutral: 48.2, frameB: 93.8 },
+  );
+  assert.equal(
+    getAdventureWalkFrameRegistration({ profile: "missing-sheet", facing: "left" }),
+    ADVENTURE_WALK_FRAME_REGISTRATIONS.player.left,
+  );
+  assert.equal(
+    getAdventureWalkFrameRegistration({ profile: "town-adult", facing: "diagonal" }),
+    ADVENTURE_WALK_FRAME_REGISTRATIONS["town-adult"].down,
+  );
 });
 
 test("walk displacement helper distinguishes blocked frames from real travel", () => {
