@@ -6,7 +6,7 @@ export const RULES_CHAT_PLACEMENTS = Object.freeze({
 const SITE_SUGGESTIONS = Object.freeze([
   "How do I start a game?",
   "How does attacking work?",
-  "What does Parrotfish do?",
+  "What does a Parrotfish do?",
 ]);
 
 function normalizedConditionName(value) {
