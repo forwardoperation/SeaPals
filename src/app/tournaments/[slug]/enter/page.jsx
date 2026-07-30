@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { allCards, cardsById } from "@/data/cards";
@@ -681,13 +682,43 @@ export default function EnterTournamentPage({ params, searchParams }) {
         </section>
       )}
 
+      <section className="rounded-3xl border-2 border-cyan-300 bg-cyan-50 p-5 text-slate-700 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">
+          Privacy notice for tournament entries
+        </h2>
+        <p className="mt-2 leading-7">
+          Sea Realm, LLC stores the display name, adult-managed contact email,
+          deck, review notes, and results in Supabase to run this event. The
+          display name, deck information, and results may appear publicly; the
+          contact email and private edit link are not intended for public
+          display. A parent or guardian should submit for a player under 13.
+        </p>
+        <p className="mt-2 leading-7">
+          Use a display name rather than a full legal name. Read the{" "}
+          <Link
+            href="/privacy#collection"
+            className="font-bold text-cyan-800 underline underline-offset-4"
+          >
+            Privacy Policy
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/terms#submissions"
+            className="font-bold text-cyan-800 underline underline-offset-4"
+          >
+            Terms of Use
+          </Link>
+          .
+        </p>
+      </section>
+
       <form
         onSubmit={submitDeck}
         className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
       >
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Player Name" value={playerName} setValue={setPlayerName} />
-          <Field label="Player Email" value={playerEmail} setValue={setPlayerEmail} />
+          <Field label="Player Display Name" value={playerName} setValue={setPlayerName} />
+          <Field label="Adult Contact Email" value={playerEmail} setValue={setPlayerEmail} />
           <Field label="Deck Name" value={deckName} setValue={setDeckName} />
           <div>
             <label className="block text-sm font-semibold text-slate-700">
@@ -846,7 +877,7 @@ function Field({ label, value, setValue, required = true }) {
         value={value}
         onChange={(event) => setValue(event.target.value)}
         required={required}
-        type={label === "Player Email" ? "email" : "text"}
+        type={label === "Adult Contact Email" ? "email" : "text"}
         className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3"
       />
     </div>

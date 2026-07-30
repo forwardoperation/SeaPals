@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
+import { PUBLIC_TOURNAMENT_DECK_COLUMNS } from "@/lib/tournaments/publicDecks.mjs";
 import TournamentLeaderboard from "./TournamentLeaderboard";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export default async function TournamentDetailPage({ params }) {
 
   const { data: decks } = await supabase
     .from("deck_submissions")
-    .select("*")
+    .select(PUBLIC_TOURNAMENT_DECK_COLUMNS)
     .eq("tournament_id", tournament.id)
     .eq("status", "approved");
   const matches = await getMatchResults(tournament.id);
