@@ -15,10 +15,15 @@ export const ADVENTURE_PROFILE_COUNT = ADVENTURE_PROFILE_IDS.length;
 export const ADVENTURE_STORAGE_FORMAT_VERSION = 1;
 export const ADVENTURE_STORAGE_KEY_PREFIX = "seapals-reefbound-saves-v1";
 export const LEGACY_ADVENTURE_PROGRESS_KEY = "seapals-reefbound-progress-v1";
+export const ADVENTURE_ACCOUNT_STORAGE_KEY_PREFIX = "seapals-reefbound-account-saves-v1";
+export const ADVENTURE_UNSCOPED_SAVE_CLAIM_KEY = "seapals-reefbound-unscoped-save-claim-v1";
 
 const PROFILE_ID_SET = new Set(ADVENTURE_PROFILE_IDS);
 const SAVE_KINDS = new Set(["manual", "autosave", "migration", "new-game"]);
 const RECORD_FORMAT = "seapals-adventure-profile";
+const UNSCOPED_CLAIM_FORMAT = "seapals-adventure-unscoped-save-claim";
+const UNSCOPED_CLAIM_FORMAT_VERSION = 1;
+const ADVENTURE_ACCOUNT_ID_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9._:@-]{0,126}[A-Za-z0-9])?$/;
 const RECOVERY_SOURCE_PRIORITY = Object.freeze({ staging: 3, backup: 2, primary: 1 });
 const CANONICAL_SAVE_V1_REQUIRED_PATHS = Object.freeze([
   ["schemaVersion"],
@@ -101,6 +106,68 @@ function profileKeys(profileId) {
 export const ADVENTURE_PROFILE_STORAGE_KEYS = Object.freeze(Object.fromEntries(
   ADVENTURE_PROFILE_IDS.map((profileId) => [profileId, profileKeys(profileId)]),
 ));
+
+function assertStorageBackend(backend, label = "Adventure storage") {
+  if (
+    !backend
+    || ["getItem", "setItem", "removeItem"].some((method) => typeof backend[method] !== "function")
+  ) {
+    throw new TypeError(`${label} requires a localStorage-like backend.`);
+  }
+}
+
+function normalizeAdventureAccountId(accountId) {
+  if (typeof accountId !== "string") {
+    throw new TypeError("Adventure account ID must be a string.");
+  }
+  if (accountId !== accountId.trim()) {
+    throw new TypeError("Adventure account ID must not contain surrounding whitespace.");
+  }
+  if (!ADVENTURE_ACCOUNT_ID_PATTERN.test(accountId)) {
+    throw new TypeError(
+      "Adventure account ID must be 1-128 characters using only letters, numbers, dots, underscores, colons, @, or hyphens.",
+    );
+  }
+  return accountId;
+}
+
+function normalizeStorageKey(key) {
+  if (typeof key !== "string" || !key || /[\u0000-\u001f\u007f]/.test(key)) {
+    throw new TypeError("Adventure storage key must be a non-empty string without control characters.");
+  }
+  return key;
+}
+
+/** Returns the physical local-storage key used for one authenticated account. */
+export function getAccountScopedAdventureStorageKey(accountId, key) {
+  const normalizedAccountId = normalizeAdventureAccountId(accountId);
+  const normalizedKey = normalizeStorageKey(key);
+  return `${ADVENTURE_ACCOUNT_STORAGE_KEY_PREFIX}:${encodeURIComponent(normalizedAccountId)}:${normalizedKey}`;
+}
+
+/**
+ * Wraps a synchronous localStorage-like backend so the existing adventure
+ * adapter can keep its fixed logical profile IDs without sharing them between
+ * authenticated accounts.
+ */
+export function createAccountScopedAdventureStorage({ backend, accountId } = {}) {
+  assertStorageBackend(backend, "Account-scoped adventure storage");
+  const normalizedAccountId = normalizeAdventureAccountId(accountId);
+  const keyFor = (key) => getAccountScopedAdventureStorageKey(normalizedAccountId, key);
+
+  return Object.freeze({
+    accountId: normalizedAccountId,
+    getItem(key) {
+      return backend.getItem(keyFor(key));
+    },
+    setItem(key, value) {
+      backend.setItem(keyFor(key), value);
+    },
+    removeItem(key) {
+      backend.removeItem(keyFor(key));
+    },
+  });
+}
 
 function errorDetail(code, message, options = {}) {
   return {
@@ -918,4 +985,445 @@ export function createAdventureStorageAdapter({ backend, now = () => new Date() 
     deleteProfile,
     migrateLegacyProfile,
   });
+}
+
+function readRootStorageKey(backend, key, operation) {
+  try {
+    const value = backend.getItem(key);
+    if (value !== null && typeof value !== "string") {
+      return {
+        ok: false,
+        error: errorDetail(
+          "STORAGE_READ_FAILED",
+          `${operation} received a non-string value from local storage.`,
+          { retryable: true },
+        ),
+      };
+    }
+    return { ok: true, value };
+  } catch (error) {
+    return {
+      ok: false,
+      error: errorDetail(
+        "STORAGE_READ_FAILED",
+        `${operation} could not read local storage.`,
+        { retryable: true, cause: error },
+      ),
+    };
+  }
+}
+
+function decodeUnscopedClaim(raw) {
+  if (raw === null) return { ok: true, claim: null };
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (
+      parsed?.format !== UNSCOPED_CLAIM_FORMAT
+      || parsed?.storageVersion !== UNSCOPED_CLAIM_FORMAT_VERSION
+    ) {
+      throw new TypeError("Unscoped save claim uses an unsupported format.");
+    }
+    const accountId = normalizeAdventureAccountId(parsed.accountId);
+    if (
+      typeof parsed.claimedAt !== "string"
+      || !Number.isFinite(Date.parse(parsed.claimedAt))
+    ) {
+      throw new TypeError("Unscoped save claim has an invalid timestamp.");
+    }
+    return {
+      ok: true,
+      claim: Object.freeze({
+        accountId,
+        claimedAt: new Date(parsed.claimedAt).toISOString(),
+      }),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: errorDetail(
+        "INVALID_UNSCOPED_SAVE_CLAIM",
+        "The unscoped save claim marker is malformed or unsupported.",
+        { cause: error },
+      ),
+    };
+  }
+}
+
+function decodeLegacyProgressForCopy(raw) {
+  if (raw === null) {
+    return { present: false, valid: false, save: null, error: null };
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    const save = parsed?.schemaVersion === ADVENTURE_SAVE_SCHEMA_VERSION
+      ? normalizeAdventureSave({ ...parsed, profileId: "profile-1" })
+      : migrateAdventureSave(parsed, { profileId: "profile-1" });
+    return { present: true, valid: true, save, error: null };
+  } catch (error) {
+    return {
+      present: true,
+      valid: false,
+      save: null,
+      error: errorDetail(
+        "INVALID_LEGACY_DATA",
+        "Legacy adventure progress could not be validated for copying.",
+        { cause: error },
+      ),
+    };
+  }
+}
+
+/**
+ * Inspects only the original root-level save keys. It never reads an
+ * account-scoped namespace and never mutates either source or destination.
+ */
+export function inspectUnscopedAdventureSaves({ backend, accountId = null } = {}) {
+  const operation = "inspect-unscoped-adventure-saves";
+  assertStorageBackend(backend, "Unscoped adventure save inspection");
+  const normalizedAccountId = accountId === null
+    ? null
+    : normalizeAdventureAccountId(accountId);
+  const adapter = createAdventureStorageAdapter({ backend });
+  const loads = ADVENTURE_PROFILE_IDS.map((profileId) => adapter.loadProfile(profileId));
+  const unavailable = loads.find((result) => result.status === "unavailable");
+
+  const legacyRead = readRootStorageKey(
+    backend,
+    LEGACY_ADVENTURE_PROGRESS_KEY,
+    operation,
+  );
+  const claimRead = readRootStorageKey(
+    backend,
+    ADVENTURE_UNSCOPED_SAVE_CLAIM_KEY,
+    operation,
+  );
+  if (!legacyRead.ok || !claimRead.ok || unavailable) {
+    return {
+      ok: false,
+      operation,
+      error: legacyRead.error
+        ?? claimRead.error
+        ?? unavailable.error
+        ?? errorDetail("STORAGE_READ_FAILED", "Unscoped saves could not be inspected.", {
+          retryable: true,
+        }),
+    };
+  }
+
+  const decodedClaim = decodeUnscopedClaim(claimRead.value);
+  if (!decodedClaim.ok) {
+    return { ok: false, operation, error: decodedClaim.error };
+  }
+
+  const legacy = decodeLegacyProgressForCopy(legacyRead.value);
+  const profiles = loads.map((result) => result.summary);
+  const importableProfileIds = loads
+    .filter((result) => result.ok && result.save)
+    .map((result) => result.profileId);
+  const claim = decodedClaim.claim
+    ? {
+        ...decodedClaim.claim,
+        matchesAccount: normalizedAccountId === null
+          ? null
+          : decodedClaim.claim.accountId === normalizedAccountId,
+      }
+    : null;
+
+  return {
+    ok: true,
+    operation,
+    hasUnscopedSaves: loads.some((result) => result.hasStoredData) || legacy.present,
+    hasImportableSaves: importableProfileIds.length > 0 || legacy.valid,
+    importableProfileIds,
+    profiles,
+    profileIssues: loads.flatMap((result) => result.issues ?? []),
+    legacy: {
+      present: legacy.present,
+      valid: legacy.valid,
+      error: legacy.error,
+    },
+    claim,
+  };
+}
+
+/**
+ * Places a root-level, write-once ownership marker before legacy data can be
+ * copied. Repeating the claim for the same account is idempotent; a different
+ * account is refused. Source save keys are never changed or removed.
+ */
+export function claimUnscopedAdventureSaves({
+  backend,
+  accountId,
+  now = () => new Date(),
+} = {}) {
+  const operation = "claim-unscoped-adventure-saves";
+  assertStorageBackend(backend, "Unscoped adventure save claim");
+  const normalizedAccountId = normalizeAdventureAccountId(accountId);
+  if (typeof now !== "function") {
+    throw new TypeError("Unscoped adventure save claim now must be a function.");
+  }
+
+  const inspection = inspectUnscopedAdventureSaves({
+    backend,
+    accountId: normalizedAccountId,
+  });
+  if (!inspection.ok) return { ...inspection, operation };
+  if (inspection.claim) {
+    if (inspection.claim.matchesAccount) {
+      return {
+        ok: true,
+        operation,
+        accountId: normalizedAccountId,
+        claimedAt: inspection.claim.claimedAt,
+        alreadyClaimed: true,
+      };
+    }
+    return {
+      ok: false,
+      operation,
+      accountId: normalizedAccountId,
+      error: errorDetail(
+        "UNSCOPED_SAVES_ALREADY_CLAIMED",
+        "These unscoped adventure saves were already claimed by another account.",
+      ),
+    };
+  }
+  if (!inspection.hasImportableSaves) {
+    return {
+      ok: false,
+      operation,
+      accountId: normalizedAccountId,
+      error: errorDetail(
+        "NO_IMPORTABLE_UNSCOPED_SAVES",
+        "No valid unscoped adventure saves are available to claim.",
+      ),
+    };
+  }
+
+  let claimedAt;
+  try {
+    claimedAt = timestampFrom(now);
+  } catch (error) {
+    return {
+      ok: false,
+      operation,
+      accountId: normalizedAccountId,
+      error: errorDetail(
+        "INVALID_CLAIM_TIMESTAMP",
+        "The unscoped save claim timestamp is invalid.",
+        { cause: error },
+      ),
+    };
+  }
+  const raw = JSON.stringify({
+    format: UNSCOPED_CLAIM_FORMAT,
+    storageVersion: UNSCOPED_CLAIM_FORMAT_VERSION,
+    accountId: normalizedAccountId,
+    claimedAt,
+  });
+
+  try {
+    backend.setItem(ADVENTURE_UNSCOPED_SAVE_CLAIM_KEY, raw);
+  } catch (error) {
+    return {
+      ok: false,
+      operation,
+      accountId: normalizedAccountId,
+      error: errorDetail(
+        "STORAGE_WRITE_FAILED",
+        "The unscoped save claim marker could not be written.",
+        { retryable: true, cause: error },
+      ),
+    };
+  }
+
+  const verification = readRootStorageKey(
+    backend,
+    ADVENTURE_UNSCOPED_SAVE_CLAIM_KEY,
+    operation,
+  );
+  if (!verification.ok || verification.value !== raw) {
+    return {
+      ok: false,
+      operation,
+      accountId: normalizedAccountId,
+      error: verification.error
+        ?? errorDetail(
+          "STORAGE_VERIFICATION_FAILED",
+          "The unscoped save claim marker could not be verified.",
+          { retryable: true },
+        ),
+    };
+  }
+
+  return {
+    ok: true,
+    operation,
+    accountId: normalizedAccountId,
+    claimedAt,
+    alreadyClaimed: false,
+  };
+}
+
+function savesMatch(left, right) {
+  return JSON.stringify(normalizeAdventureSave(left))
+    === JSON.stringify(normalizeAdventureSave(right));
+}
+
+/**
+ * Copies every recoverable root-level profile into an empty account namespace.
+ * A valid claim for that account is mandatory. Existing differing destination
+ * data aborts the whole preflight, and root-level source data is never changed.
+ */
+export function copyUnscopedAdventureSavesToAccount({ backend, accountId } = {}) {
+  const operation = "copy-unscoped-adventure-saves";
+  assertStorageBackend(backend, "Unscoped adventure save copy");
+  const normalizedAccountId = normalizeAdventureAccountId(accountId);
+  const inspection = inspectUnscopedAdventureSaves({
+    backend,
+    accountId: normalizedAccountId,
+  });
+  if (!inspection.ok) return { ...inspection, operation };
+  if (!inspection.claim) {
+    return {
+      ok: false,
+      operation,
+      accountId: normalizedAccountId,
+      error: errorDetail(
+        "UNSCOPED_SAVE_CLAIM_REQUIRED",
+        "Unscoped saves must be explicitly claimed before they can be copied.",
+      ),
+    };
+  }
+  if (!inspection.claim.matchesAccount) {
+    return {
+      ok: false,
+      operation,
+      accountId: normalizedAccountId,
+      error: errorDetail(
+        "UNSCOPED_SAVES_ALREADY_CLAIMED",
+        "These unscoped adventure saves belong to another account claim.",
+      ),
+    };
+  }
+
+  const sourceAdapter = createAdventureStorageAdapter({ backend });
+  const candidates = [];
+  for (const profileId of ADVENTURE_PROFILE_IDS) {
+    const loaded = sourceAdapter.loadProfile(profileId);
+    if (loaded.ok && loaded.save) {
+      candidates.push({ profileId, save: loaded.save, source: loaded.source });
+    }
+  }
+
+  if (!candidates.some((candidate) => candidate.profileId === "profile-1")) {
+    const legacyRead = readRootStorageKey(
+      backend,
+      LEGACY_ADVENTURE_PROGRESS_KEY,
+      operation,
+    );
+    if (!legacyRead.ok) {
+      return {
+        ok: false,
+        operation,
+        accountId: normalizedAccountId,
+        error: legacyRead.error,
+      };
+    }
+    const legacy = decodeLegacyProgressForCopy(legacyRead.value);
+    if (legacy.valid) {
+      candidates.push({
+        profileId: "profile-1",
+        save: legacy.save,
+        source: "legacy-progress",
+      });
+    }
+  }
+
+  if (candidates.length === 0) {
+    return {
+      ok: false,
+      operation,
+      accountId: normalizedAccountId,
+      error: errorDetail(
+        "NO_IMPORTABLE_UNSCOPED_SAVES",
+        "No valid unscoped adventure saves are available to copy.",
+      ),
+    };
+  }
+
+  const scopedBackend = createAccountScopedAdventureStorage({
+    backend,
+    accountId: normalizedAccountId,
+  });
+  const targetAdapter = createAdventureStorageAdapter({ backend: scopedBackend });
+  const alreadyPresentProfileIds = [];
+  const conflicts = [];
+  const pending = [];
+
+  for (const candidate of candidates) {
+    const target = targetAdapter.loadProfile(candidate.profileId);
+    if (target.ok && target.save && savesMatch(target.save, candidate.save)) {
+      alreadyPresentProfileIds.push(candidate.profileId);
+      continue;
+    }
+    if (target.hasStoredData) {
+      conflicts.push(candidate.profileId);
+      continue;
+    }
+    if (!target.ok) {
+      return {
+        ok: false,
+        operation,
+        accountId: normalizedAccountId,
+        error: target.error,
+      };
+    }
+    pending.push(candidate);
+  }
+
+  if (conflicts.length > 0) {
+    return {
+      ok: false,
+      operation,
+      accountId: normalizedAccountId,
+      copiedProfileIds: [],
+      alreadyPresentProfileIds,
+      conflictingProfileIds: conflicts,
+      error: errorDetail(
+        "ACCOUNT_SCOPED_SAVE_CONFLICT",
+        "Account-scoped adventure saves already occupy one or more legacy slots; no saves were copied.",
+      ),
+    };
+  }
+
+  const copiedProfileIds = [];
+  for (const candidate of pending) {
+    const copied = targetAdapter.manualSave(candidate.profileId, candidate.save);
+    if (!copied.ok) {
+      return {
+        ok: false,
+        operation,
+        accountId: normalizedAccountId,
+        copiedProfileIds,
+        alreadyPresentProfileIds,
+        error: copied.error,
+      };
+    }
+    copiedProfileIds.push(candidate.profileId);
+  }
+
+  return {
+    ok: true,
+    operation,
+    accountId: normalizedAccountId,
+    copiedProfileIds,
+    alreadyPresentProfileIds,
+    sources: Object.fromEntries(
+      candidates.map((candidate) => [candidate.profileId, candidate.source]),
+    ),
+    sourcePreserved: true,
+  };
 }

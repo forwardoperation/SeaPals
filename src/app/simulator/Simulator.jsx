@@ -11202,7 +11202,7 @@ export default function Simulator({
                     <button type="button" onClick={exitStoryMode} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to {storyReturnLabel}</button>
                   ) : (
                     <>
-                      <Link href="/adventure" className="mt-1 block rounded-lg bg-cyan-400/10 px-3 py-2 text-sm font-bold text-cyan-100 hover:bg-cyan-300/20">Play Reefbound Story</Link>
+                      <a href="/adventure" className="mt-1 block rounded-lg bg-cyan-400/10 px-3 py-2 text-sm font-bold text-cyan-100 hover:bg-cyan-300/20">Play Reefbound Story</a>
                       <Link href="/" className="mt-1 block rounded-lg px-3 py-2 text-sm font-bold text-slate-200 hover:bg-white/10">Exit to Home</Link>
                     </>
                   )}

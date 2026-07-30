@@ -29,7 +29,7 @@ The game may take inspiration from the approachable exploration and progression 
 4. **Every town has one clear lesson.** Each chapter has one main concept, one common misconception, observable evidence, a meaningful choice, a modest consequence, and a later callback.
 5. **Progress is never luck-gated.** Booster packs add excitement and options, but required cards, starter viability, and story progress cannot depend on random pulls.
 6. **Short sessions remain useful.** Exploration, a field activity, deck editing, or one teaching duel should each provide a satisfying stopping point.
-7. **Children can play without an account.** The first release is local-first, collects no unnecessary personal information, and does not sell randomized rewards.
+7. **Accounts are adult-owned and data-minimizing.** Reefbound access uses a parent/guardian-owned family account, children are told not to enter their own email, saves remain local and account-scoped on the device, marketing consent is separate and optional at account setup and in the post-play invitation, and randomized rewards are not sold. Public launch remains gated on the child-privacy review described in the Phase 7 release record.
 
 ## 3. Working audience and experience assumptions
 
@@ -40,7 +40,7 @@ These assumptions should be validated during Phase 0:
 - Inputs: keyboard and touch at launch. Auto-steer, reduced motion, remappable keys, and generous interaction targets are accessibility requirements.
 - Structure: a guided opening followed by a mostly linear campaign with optional rematches and limited side activities.
 - Match length: early practice and resident teaching duels may use 10 VP; the final tournament and any explicitly labeled full match use 30 VP.
-- Save model: three local player profiles, manual save from the pause menu, and autosave at safe checkpoints. Account-based cloud synchronization is a later option.
+- Save model: three local player profiles per verified family account, manual save from the pause menu, and autosave at safe checkpoints. Account-based cloud synchronization is a later option.
 - Monetization: booster packs are earned through play only. No paid packs, premium currency, or card trading are included in version 1.0.
 
 ## 4. Existing SeaPals foundation
@@ -213,7 +213,7 @@ The pause menu includes **Save**, **Decks**, **Inventory**, **Field Notes**, **W
 
 Writes must be atomic or recoverable, validated before loading, and migrated when the schema changes. If local storage is unavailable or full, the game must explain that saving failed instead of implying success. Deleting or overwriting a profile requires confirmation.
 
-Account-based cloud saves may be added later using player-owned rows and restrictive row-level security. Anonymous tournament RPC patterns must not be reused for private player data. A child should not need to provide a name, email address, or other personal information to play locally.
+Account-based cloud saves may be added later using player-owned rows and restrictive row-level security. Anonymous tournament RPC patterns must not be reused for private player data. The current account gate collects an adult account email through Supabase; children are instructed to ask a parent or guardian rather than provide their own personal information. The adult-attestation control is not a substitute for the formal privacy and consent review required before public launch.
 
 ### 8.7 Field Notes, map, and accessibility
 
@@ -469,7 +469,7 @@ Potential post-launch chapters include polar seas, intertidal pools and seagrass
 | Save changes can corrupt long campaigns. | Use a versioned canonical state, validated migrations, atomic/recoverable writes, reward IDs, backups, and load fixtures from every released version. |
 | Educational content becomes a quiz or oversimplifies science. | Require evidence-based play, modest outcomes, later callbacks, target-age playtests, and expert review before each chapter passes. |
 | Boat or sub features become separate games. | Limit boating to short routes plus fast travel and the sub to one guided expedition with assisted controls. |
-| Child accounts create privacy and moderation obligations. | Launch local-first with no account requirement, no chat, and no collection of unnecessary personal information. Review applicable child-privacy requirements before adding cloud accounts or analytics. |
+| Child-directed account access creates privacy and moderation obligations. | Require an adult-owned family account, keep saves local-first, collect no child profile or chat content, keep account-setup and post-play marketing choices explicit and optional, require Kit confirmation, exclude game-route analytics, and complete the documented child-privacy launch review before enabling the gate publicly. |
 | Originality becomes unclear because of the inspiration reference. | Use the inspiration only as internal design shorthand; maintain original SeaPals characters, world structure, terminology, art, and mechanics. |
 
 ## 14. Product decisions still to approve

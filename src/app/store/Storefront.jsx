@@ -836,6 +836,26 @@ export default function Storefront({
                   </p>
                 ) : null}
 
+                <p className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs leading-5 text-slate-600">
+                  Stripe will collect the adult purchaser&apos;s payment,
+                  contact, billing, and shipping details for checkout. By
+                  continuing, you agree to the{" "}
+                  <Link
+                    href="/terms#purchases"
+                    className="font-bold text-cyan-800 underline underline-offset-4"
+                  >
+                    Terms of Use
+                  </Link>{" "}
+                  and acknowledge the{" "}
+                  <Link
+                    href="/privacy#collection"
+                    className="font-bold text-cyan-800 underline underline-offset-4"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </p>
+
                 <button
                   type="button"
                   disabled={!checkoutEnabled || isCheckingOut}
