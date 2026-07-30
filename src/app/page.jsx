@@ -496,7 +496,27 @@ export default function HomePage() {
               >
                 Get SeaPals updates
               </button>
-              <p className="text-sm text-cyan-100/65">No spam. Unsubscribe at any time.</p>
+              <div className="rounded-xl border border-cyan-200/20 bg-cyan-950/35 px-4 py-3 text-sm leading-6 text-cyan-50/80">
+                <strong className="text-white">For grown-ups:</strong> Sea Realm,
+                LLC sends the email address and optional first name/referral to
+                Kit only for the updates requested here. Do not put a child&apos;s
+                name or personal details in the referral field. Unsubscribe at
+                any time. Read our{" "}
+                <Link
+                  href="/privacy"
+                  className="font-bold text-cyan-100 underline decoration-cyan-200/60 underline-offset-4 hover:text-white"
+                >
+                  Privacy Policy
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/terms"
+                  className="font-bold text-cyan-100 underline decoration-cyan-200/60 underline-offset-4 hover:text-white"
+                >
+                  Terms of Use
+                </Link>
+                .
+              </div>
             </form>
           </div>
         </div>

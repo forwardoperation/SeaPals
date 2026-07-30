@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Simulator from "@/app/simulator/Simulator";
 import { cardsById } from "@/data/cards";
 import { prebuiltDecks } from "@/data/tournaments/prebuiltDecks";
+import { ADVENTURE_MARKETING_CONSENT_VERSION } from "@/lib/adventureAccount.mjs";
 import { isStoryDuelVpTargetVictory } from "@/app/simulator/storyModeContract.mjs";
 import {
   getProfessorSpeechDuration,
@@ -78,7 +79,11 @@ import {
 } from "./adventureOnboarding.mjs";
 import {
   ADVENTURE_PROFILE_IDS,
+  claimUnscopedAdventureSaves,
+  copyUnscopedAdventureSavesToAccount,
+  createAccountScopedAdventureStorage,
   createAdventureStorageAdapter,
+  inspectUnscopedAdventureSaves,
 } from "./adventureStorage.mjs";
 import { reconcileStarterCollection } from "./adventureCollection.mjs";
 import { createActiveDuelDeckSnapshot } from "./adventureDecks.mjs";
@@ -137,6 +142,18 @@ import {
   registerChampionsWakeTournament,
 } from "./adventureTournament.mjs";
 import styles from "./adventure.module.css";
+
+const NEWSLETTER_INVITE_DISMISSAL_KEY_PREFIX =
+  "seapals-reefbound-newsletter-invite-dismissed-v1";
+const NEWSLETTER_INVITE_SUPPRESSED_STATUSES = new Set([
+  "processing",
+  "submitted",
+  "subscribed",
+]);
+
+function getNewsletterInviteDismissalKey(accountId) {
+  return `${NEWSLETTER_INVITE_DISMISSAL_KEY_PREFIX}:${accountId}`;
+}
 
 const BASE_TRAINERS = Object.freeze(Object.fromEntries(
   ADVENTURE_CONTENT.npcs
@@ -1286,7 +1303,16 @@ function useDialogFocusTrap(active = true) {
   return dialogRef;
 }
 
-function TitleScreen({ profiles, notice, blocked = false, onContinue, onNewGame, onRetry }) {
+function TitleScreen({
+  profiles,
+  notice,
+  account,
+  blocked = false,
+  onContinue,
+  onNewGame,
+  onRetry,
+  onSignOut,
+}) {
   const dialogRef = useDialogFocusTrap(!blocked);
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={`${styles.introLayer} ${styles.titleLayer}`} role="dialog" aria-modal="true" aria-labelledby="adventure-title">
@@ -1298,6 +1324,17 @@ function TitleScreen({ profiles, notice, blocked = false, onContinue, onNewGame,
           Begin in coastal Elverson, where Mr. Easterling is creating a new aquarium exhibit.
           Meet your neighbors, learn about local waters, and help bring the first tanks to life.
         </p>
+        <div className={styles.accountBar}>
+          <span>
+            <small>Family account</small>
+            <strong>{account.email}</strong>
+          </span>
+          <button type="button" onClick={onSignOut}>Sign out</button>
+          <p>
+            SeaPals keeps each account&apos;s save slots separate in this
+            browser profile.
+          </p>
+        </div>
         {notice ? (
           <div className={`${styles.saveNotice} ${notice.kind === "error" ? styles.saveNoticeError : styles.saveNoticeInfo}`} role={notice.kind === "error" ? "alert" : "status"}>
             {notice.message}
@@ -1347,6 +1384,150 @@ function TitleScreen({ profiles, notice, blocked = false, onContinue, onNewGame,
         </div>
         <a className={styles.titleExitLink} href="/">Return to SeaPals</a>
       </div>
+    </div>
+  );
+}
+
+function LegacySavePrompt({
+  accountEmail,
+  importableProfileCount,
+  onImport,
+  onStartFresh,
+}) {
+  const dialogRef = useDialogFocusTrap();
+  const saveLabel =
+    importableProfileCount === 1
+      ? "one earlier Reefbound save"
+      : `${importableProfileCount} earlier Reefbound saves`;
+
+  return (
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      data-adventure-modal="true"
+      className={styles.confirmLayer}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="legacy-save-title"
+      aria-describedby="legacy-save-description"
+    >
+      <div className={styles.confirmCard}>
+        <div className={styles.introEyebrow}>Shared-device privacy</div>
+        <h2 id="legacy-save-title">Use your earlier voyages?</h2>
+        <p id="legacy-save-description">
+          We found {saveLabel} from before family accounts. Choose whether to
+          copy them into {accountEmail}. The original device copies will be
+          preserved, and SeaPals will not offer them to another account in this
+          browser profile.
+        </p>
+        <div className={styles.confirmActions}>
+          <button type="button" onClick={onImport}>Use these saves</button>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={onStartFresh}
+          >
+            Start fresh
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NewsletterOptInModal({
+  error = null,
+  submitting = false,
+  onDismiss,
+  onSubmit,
+}) {
+  const dialogRef = useDialogFocusTrap();
+  const [adultAccountOwner, setAdultAccountOwner] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const canSubmit =
+    adultAccountOwner && marketingConsent && !submitting;
+
+  function submitConsent(event) {
+    event.preventDefault();
+    if (!canSubmit) return;
+    onSubmit();
+  }
+
+  return (
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      data-adventure-modal="true"
+      className={styles.confirmLayer}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="newsletter-opt-in-title"
+      aria-describedby="newsletter-opt-in-description newsletter-opt-in-disclosure"
+    >
+      <section className={`${styles.confirmCard} ${styles.newsletterOptInCard}`}>
+        <div className={styles.introEyebrow}>For a parent or grown-up</div>
+        <h2 id="newsletter-opt-in-title">Keep up with SeaPals?</h2>
+        <p id="newsletter-opt-in-description">
+          The adult who owns this family account can choose to receive
+          occasional SeaPals news and learning resources. This is optional:
+          playing Reefbound does not subscribe anyone, and choosing Not now
+          changes nothing about the game.
+        </p>
+        <form onSubmit={submitConsent}>
+          <fieldset className={styles.newsletterConsentGroup}>
+            <legend>Confirm both statements to request updates</legend>
+            <label>
+              <input
+                type="checkbox"
+                checked={adultAccountOwner}
+                disabled={submitting}
+                onChange={(event) => setAdultAccountOwner(event.target.checked)}
+              />
+              <span>
+                I am the adult account owner, parent, or legal guardian
+                responsible for this family account.
+              </span>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={marketingConsent}
+                disabled={submitting}
+                onChange={(event) => setMarketingConsent(event.target.checked)}
+              />
+              <span>
+                I want occasional SeaPals news and learning resources sent to
+                the email on this family account.
+              </span>
+            </label>
+          </fieldset>
+          <p
+            id="newsletter-opt-in-disclosure"
+            className={styles.newsletterOptInDisclosure}
+          >
+            Kit will send a confirmation email. Updates begin only after the
+            adult account owner confirms that email. Unsubscribe anytime.
+          </p>
+          {error ? (
+            <p className={styles.newsletterOptInError} role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className={`${styles.confirmActions} ${styles.newsletterOptInActions}`}>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              disabled={submitting}
+              onClick={onDismiss}
+            >
+              Not now
+            </button>
+            <button type="submit" disabled={!canSubmit}>
+              {submitting ? "Requesting updates…" : "Request SeaPals updates"}
+            </button>
+          </div>
+        </form>
+      </section>
     </div>
   );
 }
@@ -2122,7 +2303,11 @@ function actionLabel(
   return "Talk";
 }
 
-export default function AdventureGame() {
+export default function AdventureGame({
+  account,
+  accountNotice = null,
+  onSignOut,
+}) {
   const [screen, setScreen] = useState("boot");
   const [profiles, setProfiles] = useState(() => ADVENTURE_PROFILE_IDS.map((profileId, index) => ({
     profileId,
@@ -2156,6 +2341,15 @@ export default function AdventureGame() {
   const [decksReturnContext, setDecksReturnContext] = useState(null);
   const [championshipEndingStage, setChampionshipEndingStage] = useState(null);
   const [championshipEndingReplay, setChampionshipEndingReplay] = useState(false);
+  const [newsletterInviteEligible, setNewsletterInviteEligible] = useState(false);
+  const [newsletterInviteOpen, setNewsletterInviteOpen] = useState(false);
+  const [newsletterInviteDismissed, setNewsletterInviteDismissed] = useState(false);
+  const [newsletterInvitePreferenceReady, setNewsletterInvitePreferenceReady] = useState(false);
+  const [newsletterInviteSubmitting, setNewsletterInviteSubmitting] = useState(false);
+  const [newsletterInviteError, setNewsletterInviteError] = useState(null);
+  const [newsletterInviteStatus, setNewsletterInviteStatus] = useState(
+    account.newsletter?.status ?? "not_requested",
+  );
   const [pauseOpen, setPauseOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [saveNotice, setSaveNotice] = useState(null);
@@ -2177,6 +2371,7 @@ export default function AdventureGame() {
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const [sceneTransition, setSceneTransition] = useState(null);
+  const [legacySavePrompt, setLegacySavePrompt] = useState(null);
   const keyboardDirectionsRef = useRef(new Map());
   const touchDirectionsRef = useRef(new Set());
   const overworldDirectionsRef = useRef(new Map());
@@ -2198,6 +2393,92 @@ export default function AdventureGame() {
   const doorwayTransitionRef = useRef(null);
   const pendingSceneTransitionRef = useRef(null);
   const residentConversationSeenRef = useRef(new Set());
+
+  const createAccountStorageAdapter = useCallback(() => {
+    if (!account?.id) {
+      throw new Error("A signed-in family account is required for saving.");
+    }
+    const backend = createAccountScopedAdventureStorage({
+      backend: window.localStorage,
+      accountId: account.id,
+    });
+    return createAdventureStorageAdapter({ backend });
+  }, [account?.id]);
+
+  function rememberNewsletterInviteDismissal() {
+    try {
+      window.localStorage.setItem(
+        getNewsletterInviteDismissalKey(account.id),
+        ADVENTURE_MARKETING_CONSENT_VERSION,
+      );
+    } catch {
+      // A privacy setting may block local storage. Dismissing the optional
+      // invitation must always return the player to the game.
+    }
+    setNewsletterInviteDismissed(true);
+  }
+
+  function dismissNewsletterInvite() {
+    rememberNewsletterInviteDismissal();
+    setNewsletterInviteEligible(false);
+    setNewsletterInviteOpen(false);
+    setNewsletterInviteError(null);
+  }
+
+  async function submitNewsletterInvite() {
+    if (newsletterInviteSubmitting) return;
+    setNewsletterInviteSubmitting(true);
+    setNewsletterInviteError(null);
+    try {
+      const response = await fetch("/api/adventure/newsletter-opt-in", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          adultAccountOwner: true,
+          marketingConsent: true,
+          consentVersion: ADVENTURE_MARKETING_CONSENT_VERSION,
+        }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          typeof result?.error === "string"
+            ? result.error
+            : "The updates request was not accepted.",
+        );
+      }
+      const reportedStatus = result?.newsletterStatus ?? result?.status;
+      setNewsletterInviteStatus(
+        NEWSLETTER_INVITE_SUPPRESSED_STATUSES.has(reportedStatus)
+          ? reportedStatus
+          : "processing",
+      );
+      rememberNewsletterInviteDismissal();
+      setNewsletterInviteEligible(false);
+      setNewsletterInviteOpen(false);
+      setSaveNotice({
+        kind: "info",
+        message:
+          "SeaPals updates were requested. The adult account owner must confirm the email from Kit before updates begin.",
+      });
+    } catch (error) {
+      setNewsletterInviteError(
+        error?.message
+        ?? "The optional updates request did not finish. Please try again later.",
+      );
+      setSaveNotice({
+        kind: "error",
+        message:
+          "The optional updates request did not finish. Reefbound is still ready to play.",
+      });
+    } finally {
+      setNewsletterInviteSubmitting(false);
+    }
+  }
 
   const setDirty = useCallback((value) => {
     dirtyRef.current = Boolean(value);
@@ -2343,7 +2624,8 @@ export default function AdventureGame() {
     || Boolean(fieldworkActivity)
     || showCompletion
     || tournamentRegistrationOpen
-    || Boolean(championshipEndingStage);
+    || Boolean(championshipEndingStage)
+    || newsletterInviteOpen;
   movementPausedRef.current = movementPaused;
   const playerWalking = isAdventurePlayerWalking({ isMoving, boatMode, movementPaused });
   const interaction = useMemo(
@@ -2640,10 +2922,50 @@ export default function AdventureGame() {
   }, [conversationLeadIn, effectiveReducedMotion]);
 
   useEffect(() => {
+    setNewsletterInvitePreferenceReady(false);
+    setNewsletterInviteEligible(false);
+    setNewsletterInviteOpen(false);
+    setNewsletterInviteSubmitting(false);
+    setNewsletterInviteError(null);
+    setNewsletterInviteStatus(account.newsletter?.status ?? "not_requested");
+    let dismissed = false;
     try {
-      const adapter = createAdventureStorageAdapter({ backend: window.localStorage });
+      dismissed =
+        window.localStorage.getItem(
+          getNewsletterInviteDismissalKey(account.id),
+        ) === ADVENTURE_MARKETING_CONSENT_VERSION;
+    } catch {
+      // Continue without persistence when storage is unavailable.
+    }
+    setNewsletterInviteDismissed(dismissed);
+    setNewsletterInvitePreferenceReady(true);
+  }, [account.id, account.newsletter?.status]);
+
+  useEffect(() => {
+    try {
+      const adapter = createAccountStorageAdapter();
       storageRef.current = adapter;
       let listed = adapter.listProfileSummaries();
+      const unscoped = inspectUnscopedAdventureSaves({
+        backend: window.localStorage,
+        accountId: account.id,
+      });
+      if (
+        listed.profiles.every((profile) => !profile.occupied)
+        && unscoped.ok
+        && unscoped.hasImportableSaves
+        && !unscoped.claim
+      ) {
+        setProfiles(listed.profiles);
+        setLegacySavePrompt({
+          importableProfileCount: new Set([
+            ...unscoped.importableProfileIds,
+            ...(unscoped.legacy.valid ? ["profile-1"] : []),
+          ]).size,
+        });
+        setScreen("title");
+        return;
+      }
       if (listed.profiles.every((profile) => !profile.occupied)) {
         const migration = adapter.migrateLegacyProfile("profile-1");
         if (migration.ok && migration.migrated) {
@@ -2659,7 +2981,55 @@ export default function AdventureGame() {
       setSaveNotice({ kind: "error", message: `Local saves are unavailable: ${error?.message ?? "storage access failed"}.` });
     }
     setScreen("title");
-  }, []);
+  }, [account.id, createAccountStorageAdapter]);
+
+  function resolveLegacySaveChoice(importSaves) {
+    const claim = claimUnscopedAdventureSaves({
+      backend: window.localStorage,
+      accountId: account.id,
+    });
+    if (!claim.ok) {
+      setSaveNotice({
+        kind: "error",
+        message:
+          claim.error?.message ??
+          "The earlier device saves could not be assigned safely. Please retry.",
+      });
+      return;
+    }
+
+    if (importSaves) {
+      const copied = copyUnscopedAdventureSavesToAccount({
+        backend: window.localStorage,
+        accountId: account.id,
+      });
+      if (!copied.ok) {
+        setSaveNotice({
+          kind: "error",
+          message:
+            copied.error?.message ??
+            "The earlier device saves could not be copied safely. Please retry.",
+        });
+        return;
+      }
+      refreshProfiles();
+      setSaveNotice({
+        kind: "info",
+        message:
+          copied.copiedProfileIds.length > 0
+            ? "Your earlier Reefbound saves are now available in this family account."
+            : "Your earlier Reefbound saves were already available in this family account.",
+      });
+    } else {
+      setSaveNotice({
+        kind: "info",
+        message:
+          "This family account will start fresh. The earlier device copies were preserved.",
+      });
+    }
+
+    setLegacySavePrompt(null);
+  }
 
   function installSession(nextSave, { storageAuthorized = false } = {}) {
     saveRef.current = nextSave;
@@ -2689,6 +3059,9 @@ export default function AdventureGame() {
     setDecksReturnContext(null);
     setChampionshipEndingStage(null);
     setChampionshipEndingReplay(false);
+    setNewsletterInviteEligible(false);
+    setNewsletterInviteOpen(false);
+    setNewsletterInviteSubmitting(false);
     setPauseOpen(false);
     setSettingsOpen(false);
     setConfirmation(null);
@@ -2860,7 +3233,7 @@ export default function AdventureGame() {
   function retryStorage() {
     try {
       if (!storageRef.current) {
-        storageRef.current = createAdventureStorageAdapter({ backend: window.localStorage });
+        storageRef.current = createAccountStorageAdapter();
       }
       const listed = refreshProfiles();
       setSaveNotice(listed?.ok
@@ -2919,6 +3292,73 @@ export default function AdventureGame() {
     pauseOpen,
     postDuelConversation,
     screen,
+    tournamentProgress,
+    tournamentRegistrationOpen,
+    worldMapOpen,
+  ]);
+
+  useEffect(() => {
+    if (
+      !newsletterInviteEligible
+      || !newsletterInvitePreferenceReady
+      || newsletterInviteDismissed
+      || newsletterInviteOpen
+      || NEWSLETTER_INVITE_SUPPRESSED_STATUSES.has(newsletterInviteStatus)
+      || screen !== "playing"
+      || activeTrainerId
+      || postDuelConversation
+      || conversation
+      || conversationLeadIn
+      || sceneTransition
+      || pauseOpen
+      || settingsOpen
+      || confirmation
+      || starterSelectionOpen
+      || fieldNoteOpen
+      || inventoryOpen
+      || decksOpen
+      || worldMapOpen
+      || fieldworkActivity
+      || packReveal
+      || showCompletion
+      || tournamentRegistrationOpen
+      || championshipEndingStage
+    ) return;
+    const endingFlags =
+      tournamentProgress?.save.progression.quests[CHAMPIONS_WAKE_QUEST_ID]?.flags
+      ?? {};
+    if (
+      tournamentProgress?.complete
+      && endingFlags[CHAMPIONSHIP_ENDING_FLAGS.postgame] !== true
+    ) return;
+    clearMovement();
+    setNewsletterInviteEligible(false);
+    setNewsletterInviteError(null);
+    setNewsletterInviteOpen(true);
+  }, [
+    activeTrainerId,
+    championshipEndingStage,
+    clearMovement,
+    confirmation,
+    conversation,
+    conversationLeadIn,
+    decksOpen,
+    fieldNoteOpen,
+    fieldworkActivity,
+    inventoryOpen,
+    newsletterInviteDismissed,
+    newsletterInviteEligible,
+    newsletterInviteOpen,
+    newsletterInvitePreferenceReady,
+    newsletterInviteStatus,
+    packReveal,
+    pauseOpen,
+    postDuelConversation,
+    sceneTransition,
+    screen,
+    settingsOpen,
+    showCompletion,
+    starterSelectionOpen,
     tournamentProgress,
     tournamentRegistrationOpen,
     worldMapOpen,
@@ -3528,7 +3968,7 @@ export default function AdventureGame() {
   }
 
   function interact() {
-    if (screen !== "playing" || pauseOpen || settingsOpen || conversation || conversationLeadIn || activeTrainerId || sceneTransition || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage || !interaction || !gameSave) return;
+    if (screen !== "playing" || pauseOpen || settingsOpen || conversation || conversationLeadIn || activeTrainerId || sceneTransition || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !interaction || !gameSave) return;
     clearMovement();
     const worldConversationOrigin = ["trainer", "npc"].includes(interaction.type)
       ? { sceneId, interactionId: interaction.interactionId }
@@ -3841,6 +4281,11 @@ export default function AdventureGame() {
     launchDuel(trainerKey, playerDeckSnapshot);
   }
 
+  function acceptValidDuelResult(result) {
+    duelResultRef.current = result;
+    setNewsletterInviteEligible(true);
+  }
+
   function recordDuelResult(trainerId, result) {
     if (duelResultRef.current) return;
     const trainer = TRAINERS[trainerId];
@@ -3854,7 +4299,7 @@ export default function AdventureGame() {
     if (tournamentRound && tournamentState?.status === "active") {
       try {
         const recorded = recordChampionsWakeTournamentResult(current, result);
-        duelResultRef.current = result;
+        acceptValidDuelResult(result);
         saveRef.current = recorded.save;
         setGameSave(recorded.save);
         setDirty(true);
@@ -3895,7 +4340,7 @@ export default function AdventureGame() {
           playerDeckSnapshot: activeDuelDeckSnapshot,
         });
         const recorded = recordAdventureDuelResult(current, result);
-        duelResultRef.current = result;
+        acceptValidDuelResult(result);
         saveRef.current = recorded.save;
         setGameSave(recorded.save);
         setDirty(true);
@@ -3950,7 +4395,7 @@ export default function AdventureGame() {
       return;
     }
     const resultSave = recordedAttempt.save;
-    duelResultRef.current = result;
+    acceptValidDuelResult(result);
     if (trainer.id === ACADEMY_MENTOR_ID) {
       const practicedEverySkill = ["readyToTurnIn", "complete"].includes(resultSave.tutorial?.status);
       const reachedPracticeTarget = practicedEverySkill
@@ -4261,7 +4706,7 @@ export default function AdventureGame() {
     let adapter = storageRef.current;
     if (!adapter) {
       try {
-        adapter = createAdventureStorageAdapter({ backend: window.localStorage });
+        adapter = createAccountStorageAdapter();
         storageRef.current = adapter;
       } catch (error) {
         setSaveNotice({
@@ -4374,6 +4819,10 @@ export default function AdventureGame() {
     setDecksReturnContext(null);
     setChampionshipEndingStage(null);
     setChampionshipEndingReplay(false);
+    setNewsletterInviteEligible(false);
+    setNewsletterInviteOpen(false);
+    setNewsletterInviteSubmitting(false);
+    setNewsletterInviteError(null);
     setPauseOpen(false);
     setSettingsOpen(false);
     setConfirmation(null);
@@ -4417,6 +4866,8 @@ export default function AdventureGame() {
     clearMovement();
     if (confirmation) {
       setConfirmation(null);
+    } else if (newsletterInviteOpen) {
+      if (!newsletterInviteSubmitting) dismissNewsletterInvite();
     } else if (championshipEndingStage) {
       if (championshipEndingReplay) {
         setChampionshipEndingStage(null);
@@ -4543,7 +4994,7 @@ export default function AdventureGame() {
   }, [clearMovement]);
 
   useEffect(() => {
-    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || sceneTransition || conversationLeadIn || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || tournamentRegistrationOpen || championshipEndingStage || !pageVisible) return undefined;
+    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || sceneTransition || conversationLeadIn || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !pageVisible) return undefined;
     const timer = window.setInterval(() => {
       if (!pageVisibleRef.current) return;
       setGameSave((current) => {
@@ -4558,7 +5009,7 @@ export default function AdventureGame() {
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [championshipEndingStage, confirmation, conversationLeadIn, decksOpen, fieldNoteOpen, fieldworkActivity, inventoryOpen, pageVisible, pauseOpen, sceneTransition, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
+  }, [championshipEndingStage, confirmation, conversationLeadIn, decksOpen, fieldNoteOpen, fieldworkActivity, inventoryOpen, newsletterInviteOpen, pageVisible, pauseOpen, sceneTransition, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
 
   useEffect(() => {
     function saveWhenHidden() {
@@ -4596,12 +5047,22 @@ export default function AdventureGame() {
         <div className={styles.oceanGlow} aria-hidden="true" />
         <TitleScreen
           profiles={profiles}
-          notice={saveNotice}
-          blocked={Boolean(confirmation)}
+          notice={accountNotice ?? saveNotice}
+          account={account}
+          blocked={Boolean(confirmation || legacySavePrompt)}
           onContinue={continueProfile}
           onNewGame={requestNewGame}
           onRetry={retryStorage}
+          onSignOut={onSignOut}
         />
+        {legacySavePrompt ? (
+          <LegacySavePrompt
+            accountEmail={account.email}
+            importableProfileCount={legacySavePrompt.importableProfileCount}
+            onImport={() => resolveLegacySaveChoice(true)}
+            onStartFresh={() => resolveLegacySaveChoice(false)}
+          />
+        ) : null}
         {confirmation ? (
           <ConfirmDialog
             {...confirmation}
@@ -4899,7 +5360,7 @@ export default function AdventureGame() {
   const unopenedPackCount = Object.values(gameSave.inventory.unopenedPacks)
     .reduce((total, quantity) => total + quantity, 0);
   const explorationBlocked = Boolean(
-    pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage,
+    pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen,
   );
   const gameplaySurfaceLocked = Boolean(
     explorationBlocked || sceneTransition || conversationLeadIn,
@@ -5458,6 +5919,14 @@ export default function AdventureGame() {
           textSpeed={gameSave.settings.textSpeed}
           reducedMotion={gameSave.settings.reducedMotion}
           onAdvance={advanceChampionshipEnding}
+        />
+      ) : null}
+      {newsletterInviteOpen ? (
+        <NewsletterOptInModal
+          error={newsletterInviteError}
+          submitting={newsletterInviteSubmitting}
+          onDismiss={dismissNewsletterInvite}
+          onSubmit={submitNewsletterInvite}
         />
       ) : null}
       {settingsOpen ? (

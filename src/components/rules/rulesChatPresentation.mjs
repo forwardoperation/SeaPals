@@ -21,7 +21,10 @@ export function shouldRenderRulesChat(pathname, placement = RULES_CHAT_PLACEMENT
   const route = String(pathname ?? "");
   return route !== "/simulator"
     && route !== "/instructions/tutorial"
-    && !route.startsWith("/adventure");
+    && !route.startsWith("/adventure")
+    && !route.startsWith("/auth")
+    && !route.startsWith("/privacy")
+    && !route.startsWith("/terms");
 }
 
 export function getRulesChatGreeting(placement = RULES_CHAT_PLACEMENTS.SITE) {

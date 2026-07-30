@@ -9,7 +9,8 @@ export const SURVEY_SECTIONS = [
       {
         id: "respondent_name",
         number: null,
-        label: "Name",
+        label: "Player first name or nickname",
+        helper: "Do not enter a full legal name.",
         type: "text",
         required: true,
         systemField: true,
@@ -352,4 +353,3 @@ export const SURVEY_QUESTIONS = SURVEY_SECTIONS.flatMap((section) =>
 export const ANSWER_QUESTIONS = SURVEY_QUESTIONS.filter(
   (question) => !question.systemField
 );
-
