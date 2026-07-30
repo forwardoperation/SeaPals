@@ -284,6 +284,37 @@ export default function SurveyPage() {
         </Link>
       </section>
 
+      <section className="rounded-3xl border-2 border-cyan-300 bg-cyan-50 p-5 text-slate-700 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">
+          Privacy notice for players and parents
+        </h2>
+        <p className="mt-2 leading-7">
+          Sea Realm, LLC stores the player&apos;s first name or nickname, age,
+          and answers privately in Supabase so responses can be counted and
+          summarized. A parent or legal guardian should submit this survey for
+          a player under 13. Do not enter a full legal name, email, address,
+          school, phone number, or other contact details in an answer.
+        </p>
+        <p className="mt-2 leading-7">
+          Identifiable responses are scheduled for deletion or
+          de-identification within 12 months. Read the{" "}
+          <Link
+            href="/privacy#collection"
+            className="font-bold text-cyan-800 underline underline-offset-4"
+          >
+            Privacy Policy
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/terms#submissions"
+            className="font-bold text-cyan-800 underline underline-offset-4"
+          >
+            Terms of Use
+          </Link>
+          .
+        </p>
+      </section>
+
       <section className="rounded-3xl border border-cyan-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-4 text-sm font-bold text-slate-600">
           <span>

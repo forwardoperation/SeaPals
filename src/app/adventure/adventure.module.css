@@ -1960,6 +1960,74 @@
   padding: 32px;
 }
 
+.accountBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+  max-width: 620px;
+  margin: 22px auto 0;
+  padding: 13px 14px;
+  border: 1px solid rgba(103, 232, 249, 0.24);
+  border-radius: 14px;
+  text-align: left;
+  background: rgba(2, 17, 28, 0.62);
+}
+
+.accountBar span {
+  min-width: 0;
+}
+
+.accountBar small,
+.accountBar strong {
+  display: block;
+}
+
+.accountBar small {
+  color: #67e8f9;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.accountBar strong {
+  overflow: hidden;
+  margin-top: 3px;
+  color: #e6fbff;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountBar button {
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 1px solid rgba(103, 232, 249, 0.36);
+  border-radius: 10px;
+  color: #a5f3fc;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  background: rgba(8, 145, 178, 0.12);
+  cursor: pointer;
+}
+
+.accountBar button:hover,
+.accountBar button:focus-visible {
+  outline: 3px solid #67e8f9;
+  outline-offset: 2px;
+  background: rgba(8, 145, 178, 0.24);
+}
+
+.accountBar p {
+  grid-column: 1 / -1;
+  max-width: none;
+  color: #88aebb;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
 .profileGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2175,6 +2243,91 @@
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+}
+
+.confirmActions button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 2px solid #0f766e;
+  border-radius: 10px;
+  color: #042f2e;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 1000;
+  background: linear-gradient(135deg, #5eead4, #22d3ee);
+  box-shadow: 0 3px 0 #0f766e;
+  cursor: pointer;
+}
+
+.newsletterOptInCard {
+  width: min(640px, 100%);
+}
+
+.newsletterConsentGroup {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.newsletterConsentGroup legend {
+  margin-bottom: 8px;
+  color: #bae6fd;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.newsletterConsentGroup label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 11px;
+  min-height: 44px;
+  padding: 12px;
+  border: 1px solid rgba(103, 232, 249, 0.3);
+  border-radius: 12px;
+  color: #dff8ff;
+  font-size: 12px;
+  line-height: 1.5;
+  background: rgba(2, 17, 28, 0.48);
+  cursor: pointer;
+}
+
+.newsletterConsentGroup input {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: #22d3ee;
+}
+
+.newsletterConsentGroup input:focus-visible {
+  outline: 3px solid #67e8f9;
+  outline-offset: 3px;
+}
+
+.newsletterOptInDisclosure {
+  margin: 14px 0 0;
+}
+
+.confirmCard .newsletterOptInError {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(251, 113, 133, 0.58);
+  border-radius: 10px;
+  color: #ffe4e6;
+  background: rgba(159, 18, 57, 0.3);
+}
+
+.newsletterOptInActions button {
+  flex: 1 1 0;
+}
+
+.newsletterOptInActions button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.45);
+  opacity: 0.62;
+  transform: none;
 }
 
 .starterLayer,

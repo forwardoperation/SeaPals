@@ -1,7 +1,8 @@
 import "../styles/globals.css";
 import Header from "@/components/layout/Header";
+import SiteFooter from "@/components/layout/SiteFooter";
 import RulesChat from "@/components/rules/RulesChat";
-import Script from "next/script";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 
 export const metadata = {
   metadataBase: new URL("https://seapalstcg.com"),
@@ -31,8 +32,6 @@ export const metadata = {
   },
 };
 
-const GA_ID = "G-WT26D58KF0";
-
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
@@ -40,23 +39,12 @@ export default function RootLayout({ children }) {
         <div className="mx-auto max-w-6xl px-6 py-6 md:px-10">
           <Header />
           <div className="mt-8">{children}</div>
+          <SiteFooter />
         </div>
 
         <RulesChat />
 
-        {/* Google Analytics */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_ID}');
-          `}
-        </Script>
+        <GoogleAnalytics />
       </body>
     </html>
   );

@@ -6,6 +6,10 @@ import { usePathname } from "next/navigation";
 
 export default function Header() {
   const pathname = usePathname();
+  const isAccountGameRoute =
+    pathname.startsWith("/adventure") || pathname.startsWith("/auth");
+
+  if (isAccountGameRoute) return null;
 
   const linkClass = (href) => {
     const isActive =
