@@ -224,9 +224,23 @@ const ELVERSON_AMBIENT_RESIDENTS = [
     title: "Elverson Fisherman",
     sceneId: "town",
     at: { x: 10.8, y: 16.45 },
-    intro: "Morning! I'm Wyeth. When you're ready, I'll teach you how to fish without harming the habitat we came to study.",
-    guidance: "Fishing starts before the cast: read the weather, check your gear, choose a safe spot, and know how you'll release a catch gently.",
-    returnLine: "Meet me by the pier when you want another lesson. The water always has something new to notice.",
+    intro: "Morning! I'm Wyeth. Mr. Easterling said you might come by. I'll teach you how to fish without harming the habitat we came to study.",
+    guidance: "Fishing starts before the cast: read the weather, check your gear, choose a safe spot, and know how you'll move a catch gently into a water-safe carrier.",
+    returnLine: "Face the open water at the edge of the shore and press Enter when you want to fish. Watch the float, set the hook when it dips, then reel only while the line is in the calm-water zone.",
+    fishingLesson: [
+      "Mr. Easterling asked me to help you gather possible residents for the aquarium. First, we fish only from marked, stable shore edges and stop if the weather, wildlife, or gear makes the cast unsafe.",
+      "This is my habitat-safe fishing rod. It belongs in your Project Gear, and it cannot be discarded. The aquarium team will assess every catch for permits, health, space, and long-term care.",
+      "After you cast, watch the float. Set the hook as soon as it dips. Then reel when the moving line marker crosses the green calm-water zone; too much strain lets the creature slip free.",
+      "Rod in hand? Good. Follow me down to the practice rail. I'll stay beside you until you land one catch, and then you can fish from Elverson's other safe shore edges.",
+    ],
+    fishingPractice: [
+      "You have the rod, but we still need to make that first cast together. I won't send you off with instructions alone.",
+      "Follow me to the practice rail. We'll watch the float, set the hook, and make one careful reel before you fish on your own.",
+    ],
+    fishingGuidance: [
+      "Your rod is ready. Face open water at the shore, press Enter, and choose whether to cast. Bring successful catches to Mr. Easterling in the aquarium workshop.",
+      "A rare catch may need a narrower tension window. Patience keeps the line controlled; there is no penalty when a creature gets away.",
+    ],
     patrol: {
       mode: "ping-pong",
       speed: 0.42,
@@ -2718,6 +2732,9 @@ const conversations = [
       intro: [resident.intro],
       guidance: [resident.guidance],
       return: [resident.returnLine],
+      ...(resident.fishingLesson ? { fishingLesson: resident.fishingLesson } : {}),
+      ...(resident.fishingPractice ? { fishingPractice: resident.fishingPractice } : {}),
+      ...(resident.fishingGuidance ? { fishingGuidance: resident.fishingGuidance } : {}),
     },
   })),
   {
@@ -2729,7 +2746,7 @@ const conversations = [
         "Hello there! I'm Mr. Easterling. Welcome to Elverson, a small town where our streets, streams, and harbor all meet the sea.",
         "I have been fascinated by the ocean for as long as I can remember. Every tide pool and reef is a neighborhood: animals depend on the water, their habitat, and one another in ways we are still learning to understand.",
         "Building an aquarium here has been my lifelong dream. I don't want it to be only a room full of tanks; I want it to be a place where people discover how ocean habitats work and how our choices can help or harm them.",
-        "As we explore, we'll meet people who know this coast, learn how to catch certain fish and creatures responsibly, and record what the water and animals show us. Bring the creatures you catch back to me, and together we'll give them the right care and build aquarium exhibits that teach Elverson about their habitats.",
+        "As we explore, we'll meet people who know this coast, learn how to catch certain fish and creatures responsibly, and record what the water and animals show us. Find Fisherman Wyeth by the south pier to learn how to fish, then bring the creatures you catch back to me. Together we'll give them the right care and build aquarium exhibits that teach Elverson about their habitats.",
         "SeaPals matches let us model those real relationships with cards. Building a playable ecosystem helps us think about food, shelter, water conditions, and the connections that keep a habitat healthy.",
         "Right now, the aquarium is an empty workshop and a hopeful plan. I can't build it alone. I need your curiosity, your careful observations, and your help. Come with me, and I'll show you where our work begins.",
       ],
@@ -2772,6 +2789,18 @@ const conversations = [
       boatSafety: [
         "Before working near the pier, wear a life jacket, check the weather and tide, and make sure an adult knows the field plan.",
         "Give wildlife space, handle fishing gear carefully, release catches gently when instructed, and bring every piece of gear home.",
+      ],
+      fishingTurnIn: [
+        "You brought back a catch from Elverson's reef! Jonah and I will check its health, habitat needs, compatibility, and care plan before it enters a prepared tank.",
+        "Let's move your catch into the aquarium record. Every new species helps visitors see a different relationship on the reef.",
+      ],
+      fishingDelivered: [
+        "The catch is safely with the aquarium care team. Your Reef Log will show which creatures are still waiting to be discovered.",
+        "Keep fishing from marked shore edges, and bring any new catches back here when you are ready.",
+      ],
+      fishingCollectionComplete: [
+        "You found all ten Elverson reef creatures! The aquarium now represents fish, invertebrates, grazers, cleaners, shelter-seekers, and neighbors that depend on one another.",
+        "That complete Reef Log is worth celebrating. You can still fish for repeat observations, and every catch will receive the same careful assessment.",
       ],
     },
   },
