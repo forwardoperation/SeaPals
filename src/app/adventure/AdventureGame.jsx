@@ -26,6 +26,19 @@ import {
   getLayeredSceneObjectStyle,
   getLayeredSceneZIndex,
 } from "./adventureLayeredScene.mjs";
+import AdventureFishingModal from "./AdventureFishingModal";
+import {
+  ELVERSON_FISHING_ROD_ITEM_ID,
+  ELVERSON_REEF_CATCHES,
+  beginElversonFishingTutorial,
+  deliverElversonFishingCatches,
+  getElversonFishingConversationMode,
+  getElversonFishingInteraction,
+  getElversonFishingItemDefinition,
+  getElversonFishingProgress,
+  recordElversonFishingCatch,
+  recordElversonFishingTutorialCatch,
+} from "./adventureFishing.mjs";
 import {
   BOAT_MOTION_DEFAULTS,
   createBoatMotionState,
@@ -199,6 +212,7 @@ const TRAINERS = Object.freeze({
 });
 
 const ACADEMY_MENTOR_ID = "academy-mentor";
+const FISHERMAN_WYETH_ID = "fisherman-wyeth";
 const ACADEMY_MENTOR_INTERACTION_ID = "interaction-academy-mentor";
 const ELVERSON_OPENING_MENTOR_INTERACTION_ID = "interaction-elverson-opening-mentor";
 const ELVERSON_AQUARIUM_GUIDED_TRANSITION = (() => {
@@ -230,6 +244,19 @@ const ELVERSON_OPENING_MENTOR_INTERACTION = (() => {
     facing: "left",
   });
 })();
+const ELVERSON_FISHING_PRACTICE_POSITION = Object.freeze({ x: 10.05, y: 16.9 });
+const ELVERSON_FISHING_GUIDED_TRANSITION = Object.freeze({
+  type: "guided",
+  interactionId: "guided-fishing-lesson-to-practice-rail",
+  targetScene: "town",
+  spawn: ELVERSON_FISHING_PRACTICE_POSITION,
+  facing: "left",
+});
+const ELVERSON_FISHING_TUTORIAL_SESSION = Object.freeze({
+  tutorial: true,
+  required: true,
+  spotId: "fishing-platform-west",
+});
 const SHELLSHORE_TUTORIAL = resolveAdventureTutorial("tutorial-shellshore-live-basics");
 const SHELLSHORE_FIELD_NOTE = SHELLSHORE_TUTORIAL.fieldNote;
 const STARTER_DECKS = Object.freeze(SHELLSHORE_TUTORIAL.starterDecks);
@@ -1735,7 +1762,12 @@ function InventoryItemList({ items, emptyMessage }) {
     <ul className={styles.inventoryItemList}>
       {entries.map(([itemId, quantity]) => (
         <li key={itemId}>
-          <span>{inventoryItemLabel(itemId)}</span>
+          <span>
+            <strong>{getElversonFishingItemDefinition(itemId)?.name ?? inventoryItemLabel(itemId)}</strong>
+            {itemId === ELVERSON_FISHING_ROD_ITEM_ID ? (
+              <small>Permanent gear · cannot be discarded</small>
+            ) : null}
+          </span>
           <b aria-label={`${quantity} owned`}>x{quantity}</b>
         </li>
       ))}
@@ -1745,6 +1777,7 @@ function InventoryItemList({ items, emptyMessage }) {
 
 function InventoryModal({
   inventory,
+  fishingProgress,
   reveal = null,
   notice = null,
   blocked = false,
@@ -1764,6 +1797,10 @@ function InventoryModal({
     .sort((left, right) => (
       (left.pool?.name ?? left.packId).localeCompare(right.pool?.name ?? right.packId)
     ));
+  const nonFishingStoryItems = Object.fromEntries(
+    Object.entries(inventory.storyItems).filter(([itemId]) => !getElversonFishingItemDefinition(itemId)),
+  );
+  const aquariumLog = fishingProgress?.creatures ?? [];
 
   return (
     <div
@@ -1881,16 +1918,48 @@ function InventoryModal({
             )}
           </section>
 
+          <section className={`${styles.inventorySection} ${styles.fishingInventorySection}`} aria-labelledby="aquarium-log-heading">
+            <div className={styles.inventorySectionHeading}>
+              <div><span>03</span><h3 id="aquarium-log-heading">Aquarium Reef Log</h3></div>
+              <b>{fishingProgress?.discoveredCount ?? 0} / {ELVERSON_REEF_CATCHES.length} found</b>
+            </div>
+            <div className={styles.fishingInventoryGrid}>
+              {aquariumLog.map((creature) => {
+                const card = cardsById[creature.cardId];
+                return (
+                  <article
+                    key={creature.id}
+                    className={`${styles.fishingInventoryCreature} ${creature.discovered ? styles.fishingInventoryCreatureFound : ""}`}
+                  >
+                    <div>
+                      {creature.discovered && card?.image ? (
+                        <Image src={card.image} alt="" width={58} height={82} />
+                      ) : <span aria-hidden="true">?</span>}
+                    </div>
+                    <span>
+                      <strong>{creature.discovered ? card?.name ?? inventoryItemLabel(creature.id) : "Undiscovered"}</strong>
+                      <small>{creature.rarityLabel} · {creature.category}</small>
+                      <em>{[
+                        creature.aquarium > 0 ? `${creature.aquarium} in aquarium` : null,
+                        creature.held > 0 ? `${creature.held} ready to deliver` : null,
+                      ].filter(Boolean).join(" · ") || "Not yet caught"}</em>
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
           <section className={styles.inventorySection} aria-labelledby="story-items-heading">
             <div className={styles.inventorySectionHeading}>
-              <div><span>03</span><h3 id="story-items-heading">Story Items</h3></div>
+              <div><span>04</span><h3 id="story-items-heading">Story Items</h3></div>
             </div>
-            <InventoryItemList items={inventory.storyItems} emptyMessage="Aquarium discoveries and keepsakes will appear here." />
+            <InventoryItemList items={nonFishingStoryItems} emptyMessage="Adventure keepsakes will appear here." />
           </section>
 
           <section className={styles.inventorySection} aria-labelledby="boat-items-heading">
             <div className={styles.inventorySectionHeading}>
-              <div><span>04</span><h3 id="boat-items-heading">Project Gear</h3></div>
+              <div><span>05</span><h3 id="boat-items-heading">Project Gear</h3></div>
             </div>
             <InventoryItemList items={inventory.boatItems} emptyMessage="Fishing tools and aquarium equipment will appear as the exhibit grows." />
           </section>
@@ -2223,6 +2292,7 @@ function interactionLabel(
   }
   if (interaction.type === "board") return interaction.label ?? "Board your personal boat";
   if (interaction.type === "dock") return interaction.label ?? "Dock your boat";
+  if (interaction.type === "fishing") return interaction.label ?? "Face the water and cast a line";
   if (interaction.type === "sub-launch") {
     return trenchlightLaunchLabel(expeditionState, briefingComplete, guideComplete);
   }
@@ -2286,6 +2356,7 @@ function actionLabel(
   if (!interaction) return "Interact";
   if (interaction.type === "board") return "Board";
   if (interaction.type === "dock") return "Dock";
+  if (interaction.type === "fishing") return "Fish";
   if (interaction.type === "sub-launch") {
     if (expeditionState?.phase === "survey" && !guideComplete) return "Meet Luz";
     if (expeditionState?.phase === "survey" && !briefingComplete) return "Briefing first";
@@ -2334,6 +2405,7 @@ export default function AdventureGame({
   const [worldMapOpen, setWorldMapOpen] = useState(false);
   const [fieldworkActivity, setFieldworkActivity] = useState(null);
   const [fieldworkFeedback, setFieldworkFeedback] = useState(null);
+  const [fishingSession, setFishingSession] = useState(null);
   const [packReveal, setPackReveal] = useState(null);
   const [showCompletion, setShowCompletion] = useState(false);
   const [tournamentRegistrationOpen, setTournamentRegistrationOpen] = useState(false);
@@ -2495,6 +2567,10 @@ export default function AdventureGame({
     () => gameSave ? getOnboardingProgress(gameSave) : null,
     [gameSave],
   );
+  const fishingProgress = useMemo(
+    () => gameSave ? getElversonFishingProgress(gameSave) : null,
+    [gameSave],
+  );
   const unlockedFieldNotes = useMemo(
     () => buildUnlockedAdventureFieldNotes(gameSave?.fieldNotes.entryIds ?? [])
       .filter((note) => note.id === SHELLSHORE_FIELD_NOTE.id),
@@ -2622,13 +2698,14 @@ export default function AdventureGame({
     || decksOpen
     || worldMapOpen
     || Boolean(fieldworkActivity)
+    || Boolean(fishingSession)
     || showCompletion
     || tournamentRegistrationOpen
     || Boolean(championshipEndingStage)
     || newsletterInviteOpen;
   movementPausedRef.current = movementPaused;
   const playerWalking = isAdventurePlayerWalking({ isMoving, boatMode, movementPaused });
-  const interaction = useMemo(
+  const authoredInteraction = useMemo(
     () => screen === "playing" && gameSave && !vehicleMode
       ? getContinuousInteraction(sceneId, position, facing, {
           positionOverrides: actorPositionOverrides,
@@ -2636,6 +2713,15 @@ export default function AdventureGame({
       : null,
     [actorPositionOverrides, facing, gameSave, position, sceneId, screen, vehicleMode],
   );
+  const shorelineFishingInteraction = useMemo(
+    () => screen === "playing" && gameSave && !vehicleMode
+      ? getElversonFishingInteraction(sceneId, position, facing)
+      : null,
+    [facing, gameSave, position, sceneId, screen, vehicleMode],
+  );
+  // Authored characters, doors, and props always win when their interaction
+  // corridor overlaps a shoreline edge.
+  const interaction = authoredInteraction ?? shorelineFishingInteraction;
   const trainerInteraction = ["trainer", "npc"].includes(interaction?.type) ? interaction : null;
   const actionInteraction = interaction && !["enter", "exit"].includes(interaction.type)
     ? interaction
@@ -2791,7 +2877,10 @@ export default function AdventureGame({
   const requestSceneTransition = useCallback((
     candidate,
     sourceSave = saveRef.current,
-    { afterArrivalConversation = null } = {},
+    {
+      afterArrivalConversation = null,
+      afterArrivalFishingSession = null,
+    } = {},
   ) => {
     if (!candidate?.targetScene || !candidate.spawn || !sourceSave || sceneTransition) return false;
     const interactionId = candidate.interactionId ?? candidate.targetScene;
@@ -2832,6 +2921,7 @@ export default function AdventureGame({
       sourceSave,
       artworkReady,
       afterArrivalConversation,
+      afterArrivalFishingSession,
     };
     saveRef.current = sourceSave;
     setGameSave(sourceSave);
@@ -2877,7 +2967,9 @@ export default function AdventureGame({
       pendingSceneTransitionRef.current = null;
       doorwayTransitionRef.current = null;
       setSceneTransition(null);
-      if (pending?.afterArrivalConversation) {
+      if (pending?.afterArrivalFishingSession) {
+        setFishingSession({ ...pending.afterArrivalFishingSession });
+      } else if (pending?.afterArrivalConversation) {
         const arrivedSave = saveRef.current;
         const origin = {
           sceneId: arrivedSave?.world.sceneId ?? sceneTransition.targetSceneId,
@@ -2911,6 +3003,80 @@ export default function AdventureGame({
       window.clearTimeout(timer);
     };
   }, [applySceneTransition, effectiveReducedMotion, sceneTransition]);
+
+  useEffect(() => {
+    if (
+      screen !== "playing"
+      || !gameSave
+      || !fishingProgress?.tutorialStarted
+      || !fishingProgress.hasRod
+      || fishingProgress.tutorialComplete
+      || gameSave.world.sceneId !== "town"
+      || conversation
+      || conversationLeadIn
+      || activeTrainerId
+      || sceneTransition
+      || fishingSession
+      || pauseOpen
+      || settingsOpen
+      || confirmation
+      || starterSelectionOpen
+      || fieldNoteOpen
+      || inventoryOpen
+      || decksOpen
+      || worldMapOpen
+      || fieldworkActivity
+      || showCompletion
+      || tournamentRegistrationOpen
+      || championshipEndingStage
+      || newsletterInviteOpen
+    ) return;
+
+    const current = saveRef.current ?? gameSave;
+    const distanceToPracticeRail = Math.hypot(
+      current.world.position.x - ELVERSON_FISHING_PRACTICE_POSITION.x,
+      current.world.position.y - ELVERSON_FISHING_PRACTICE_POSITION.y,
+    );
+    clearMovement();
+    if (distanceToPracticeRail <= 0.45) {
+      setFishingSession({ ...ELVERSON_FISHING_TUTORIAL_SESSION });
+      return;
+    }
+    const transitionStarted = requestSceneTransition(
+      ELVERSON_FISHING_GUIDED_TRANSITION,
+      current,
+      { afterArrivalFishingSession: ELVERSON_FISHING_TUTORIAL_SESSION },
+    );
+    if (!transitionStarted) {
+      setFishingSession({ ...ELVERSON_FISHING_TUTORIAL_SESSION });
+    }
+  }, [
+    activeTrainerId,
+    championshipEndingStage,
+    clearMovement,
+    confirmation,
+    conversation,
+    conversationLeadIn,
+    decksOpen,
+    fieldNoteOpen,
+    fieldworkActivity,
+    fishingProgress?.tutorialComplete,
+    fishingProgress?.hasRod,
+    fishingProgress?.tutorialStarted,
+    fishingSession,
+    gameSave,
+    inventoryOpen,
+    newsletterInviteOpen,
+    pauseOpen,
+    requestSceneTransition,
+    sceneTransition,
+    screen,
+    settingsOpen,
+    showCompletion,
+    starterSelectionOpen,
+    tournamentRegistrationOpen,
+    worldMapOpen,
+  ]);
 
   useEffect(() => {
     if (!conversationLeadIn) return undefined;
@@ -3049,6 +3215,7 @@ export default function AdventureGame({
     setWorldMapOpen(false);
     setFieldworkActivity(null);
     setFieldworkFeedback(null);
+    setFishingSession(null);
     setPackReveal(null);
     setActiveDuelDeckSnapshot(null);
     setSubAssistedMode(false);
@@ -3679,6 +3846,39 @@ export default function AdventureGame({
     return saved;
   }
 
+  function saveFishingCatch(creatureId) {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return null;
+    try {
+      const tutorialCatch = fishingSession?.tutorial === true;
+      const result = tutorialCatch
+        ? recordElversonFishingTutorialCatch(current, creatureId)
+        : recordElversonFishingCatch(current, creatureId);
+      const creatureName = cardsById[result.creature.cardId]?.name ?? result.creature.id;
+      commitAdventureMutation(
+        result.save,
+        tutorialCatch
+          ? `elverson-fishing-tutorial-complete:${result.creature.id}`
+          : `elverson-fishing-catch:${result.progress.heldCount}`,
+        tutorialCatch
+          ? `${creatureName} completed Wyeth's practice lesson. Shoreline fishing is now unlocked.`
+          : `${creatureName} was added to your aquarium catches. Bring it to Mr. Easterling in the workshop.`,
+      );
+      if (tutorialCatch && result.progress.tutorialComplete) {
+        setFishingSession((currentSession) => currentSession
+          ? { ...currentSession, required: false }
+          : currentSession);
+      }
+      return result;
+    } catch (error) {
+      setSaveNotice({
+        kind: "error",
+        message: error?.message ?? "That catch could not be recorded.",
+      });
+      return null;
+    }
+  }
+
   function registerForChampionsWake() {
     const current = saveRef.current ?? gameSave;
     if (!current) return;
@@ -3968,7 +4168,7 @@ export default function AdventureGame({
   }
 
   function interact() {
-    if (screen !== "playing" || pauseOpen || settingsOpen || conversation || conversationLeadIn || activeTrainerId || sceneTransition || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !interaction || !gameSave) return;
+    if (screen !== "playing" || pauseOpen || settingsOpen || conversation || conversationLeadIn || activeTrainerId || sceneTransition || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !interaction || !gameSave) return;
     clearMovement();
     const worldConversationOrigin = ["trainer", "npc"].includes(interaction.type)
       ? { sceneId, interactionId: interaction.interactionId }
@@ -3991,6 +4191,23 @@ export default function AdventureGame({
       }
       setConversationLeadIn({ ...nextConversation, ...worldConversationOrigin });
     };
+    if (interaction.type === "fishing") {
+      const currentFishingProgress = getElversonFishingProgress(saveRef.current ?? gameSave);
+      if (!currentFishingProgress.canFish) {
+        setSaveNotice({
+          kind: "info",
+          message: currentFishingProgress.hasRod
+            ? "Return to Fisherman Wyeth on the south platform. He will stay with you until you land the required practice catch."
+            : "Find Fisherman Wyeth on the south fishing platform. He has a permanent rod and a hands-on lesson for you.",
+        });
+        return;
+      }
+      setFishingSession({
+        tutorial: false,
+        spotId: interaction.spotId,
+      });
+      return;
+    }
     if (interaction.type === "sub-launch") {
       launchTrenchlightSub();
       return;
@@ -4075,8 +4292,34 @@ export default function AdventureGame({
       const trainerId = interaction.trainerId ?? interaction.npcId;
       const trainer = TRAINERS[trainerId];
       if (!trainer) return;
+      if (trainerId === FISHERMAN_WYETH_ID) {
+        const current = saveRef.current ?? gameSave;
+        beginWorldConversation({
+          trainerId,
+          index: 0,
+          mode: getElversonFishingConversationMode(current),
+        });
+        return;
+      }
       if (trainerId === ACADEMY_MENTOR_ID) {
-        const progress = getOnboardingProgress(saveRef.current ?? gameSave);
+        const current = saveRef.current ?? gameSave;
+        const currentFishingProgress = getElversonFishingProgress(current);
+        if (currentFishingProgress.heldCount > 0) {
+          const catchNames = currentFishingProgress.creatures
+            .filter((creature) => creature.held > 0)
+            .map((creature) => cardsById[creature.cardId]?.name ?? creature.id);
+          beginWorldConversation({
+            trainerId,
+            index: 0,
+            mode: "fishingTurnIn",
+            lines: [
+              `You brought ${currentFishingProgress.heldCount} ${currentFishingProgress.heldCount === 1 ? "creature" : "creatures"} from the shore: ${catchNames.join(", ")}.`,
+              ...(trainer.dialogue?.fishingTurnIn ?? []),
+            ],
+          });
+          return;
+        }
+        const progress = getOnboardingProgress(current);
         beginWorldConversation({
           trainerId,
           index: 0,
@@ -4530,6 +4773,42 @@ export default function AdventureGame({
       if (!trainer.encounterId) {
         const current = saveRef.current ?? gameSave;
         if (!current) return;
+        if (trainer.id === FISHERMAN_WYETH_ID) {
+          if (["fishingLesson", "fishingPractice"].includes(conversation.mode)) {
+            try {
+              const lesson = beginElversonFishingTutorial(current);
+              const lessonProgress = getElversonFishingProgress(lesson.save);
+              commitAdventureMutation(
+                lesson.save,
+                "elverson-fishing-tutorial-started",
+                lesson.rodGranted
+                  ? "Wyeth's permanent fishing rod was added to Project Gear. Follow him to the practice rail."
+                  : "Wyeth is leading you to the practice rail for the required first catch.",
+              );
+              setConversation(null);
+              if (lessonProgress.tutorialComplete) {
+                setSaveNotice({ kind: "info", message: "Wyeth restored your permanent fishing rod. Your completed lesson remains recorded." });
+                return;
+              }
+              const transitionStarted = requestSceneTransition(
+                ELVERSON_FISHING_GUIDED_TRANSITION,
+                lesson.save,
+                { afterArrivalFishingSession: ELVERSON_FISHING_TUTORIAL_SESSION },
+              );
+              if (!transitionStarted) {
+                setFishingSession({ ...ELVERSON_FISHING_TUTORIAL_SESSION });
+              }
+            } catch (error) {
+              setSaveNotice({
+                kind: "error",
+                message: error?.message ?? "Wyeth could not finish the fishing lesson.",
+              });
+            }
+            return;
+          }
+          closeConversation();
+          return;
+        }
         if (trainer.townId === "shellshore-village") {
           closeConversation();
           return;
@@ -4599,6 +4878,42 @@ export default function AdventureGame({
       return;
     }
 
+    if (conversation.mode === "fishingTurnIn") {
+      const current = saveRef.current ?? gameSave;
+      if (!current) return;
+      try {
+        const delivered = deliverElversonFishingCatches(current);
+        if (!delivered.applied) {
+          closeConversation();
+          return;
+        }
+        commitAdventureMutation(
+          delivered.save,
+          `elverson-aquarium-delivery:${delivered.progress.aquariumCount}`,
+          `${delivered.deliveredCount} ${delivered.deliveredCount === 1 ? "catch is" : "catches are"} now with the aquarium care team.`,
+        );
+        setConversation((currentConversation) => ({
+          ...currentConversation,
+          index: 0,
+          mode: delivered.collectionCompletedNow
+            ? "fishingCollectionComplete"
+            : "fishingDelivered",
+          lines: delivered.collectionCompletedNow
+            ? [...(trainer.dialogue?.fishingCollectionComplete ?? [])]
+            : [...(trainer.dialogue?.fishingDelivered ?? [])],
+        }));
+      } catch (error) {
+        setSaveNotice({
+          kind: "error",
+          message: error?.message ?? "The aquarium team could not record that catch.",
+        });
+      }
+      return;
+    }
+    if (["fishingDelivered", "fishingCollectionComplete"].includes(conversation.mode)) {
+      closeConversation();
+      return;
+    }
     if (conversation.mode === "worldIntroduction") {
       const current = saveRef.current ?? gameSave;
       if (!current) return;
@@ -4677,6 +4992,12 @@ export default function AdventureGame({
       if (conversation.mode === "onboardingGate") return "Return to the aquarium";
       if (conversation.mode === "locked") return "Continue fieldwork";
       if (!trainer?.encounterId) {
+        if (
+          trainer?.id === FISHERMAN_WYETH_ID
+          && ["fishingLesson", "fishingPractice"].includes(conversation.mode)
+        ) {
+          return "Follow Wyeth to the practice rail";
+        }
         if (trainer?.townId === "shellshore-village") return "Continue exploring";
         if (trainer?.roleId === "tournament-director") {
           return tournamentProgress?.complete ? "View championship record" : tournamentProgress?.status === "active" ? "Review registered deck" : "Review registration";
@@ -4690,6 +5011,9 @@ export default function AdventureGame({
       }
       return defeated.has(trainer?.encounterId) ? "Rematch" : "Start duel";
     }
+    if (conversation.mode === "fishingTurnIn") return "Place catches with the care team";
+    if (conversation.mode === "fishingCollectionComplete") return "Celebrate the complete Reef Log";
+    if (conversation.mode === "fishingDelivered") return "Keep exploring";
     if (conversation.mode === "worldIntroduction") return "Follow me to the aquarium";
     if (conversation.mode === "intro") return "Meet the starter decks";
     if (conversation.mode === "starterPresentation") return "Choose your starter";
@@ -4882,6 +5206,15 @@ export default function AdventureGame({
     } else if (fieldworkActivity) {
       setFieldworkActivity(null);
       setFieldworkFeedback(null);
+    } else if (fishingSession) {
+      if (fishingSession.required) {
+        setSaveNotice({
+          kind: "info",
+          message: "Wyeth will stay with you until you land this first practice catch. Assisted reel is available if you want an untimed lesson.",
+        });
+      } else {
+        setFishingSession(null);
+      }
     } else if (worldMapOpen) {
       setWorldMapOpen(false);
     } else if (starterSelectionOpen) {
@@ -4898,6 +5231,11 @@ export default function AdventureGame({
         setDecksReturnContext(null);
         setTournamentRegistrationOpen(true);
       }
+    } else if (
+      conversation?.trainerId === FISHERMAN_WYETH_ID
+      && ["fishingLesson", "fishingPractice"].includes(conversation.mode)
+    ) {
+      return;
     } else if (conversation?.mode === "worldIntroduction") {
       return;
     } else if (conversation) {
@@ -4994,7 +5332,7 @@ export default function AdventureGame({
   }, [clearMovement]);
 
   useEffect(() => {
-    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || sceneTransition || conversationLeadIn || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !pageVisible) return undefined;
+    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || sceneTransition || conversationLeadIn || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !pageVisible) return undefined;
     const timer = window.setInterval(() => {
       if (!pageVisibleRef.current) return;
       setGameSave((current) => {
@@ -5009,7 +5347,7 @@ export default function AdventureGame({
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [championshipEndingStage, confirmation, conversationLeadIn, decksOpen, fieldNoteOpen, fieldworkActivity, inventoryOpen, newsletterInviteOpen, pageVisible, pauseOpen, sceneTransition, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
+  }, [championshipEndingStage, confirmation, conversationLeadIn, decksOpen, fieldNoteOpen, fieldworkActivity, fishingSession, inventoryOpen, newsletterInviteOpen, pageVisible, pauseOpen, sceneTransition, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
 
   useEffect(() => {
     function saveWhenHidden() {
@@ -5214,6 +5552,30 @@ export default function AdventureGame({
         total: 1,
         label: "A new project is beginning",
       }
+    : !fishingProgress.hasRod || !fishingProgress.tutorialStarted
+      ? {
+          title: "Find Fisherman Wyeth",
+          description: "Mr. Easterling asked you to learn how to fish. Find Wyeth on the south fishing platform beside the pier.",
+          value: 0,
+          total: 1,
+          label: "Fishing lesson waiting",
+        }
+    : !fishingProgress.tutorialComplete
+      ? {
+          title: "Land one practice catch with Wyeth",
+          description: "Follow Wyeth to the west practice rail. He will stay beside you while you watch the float, set the hook, and reel in your first catch.",
+          value: 0,
+          total: 1,
+          label: "Hands-on fishing tutorial required",
+        }
+    : fishingProgress.heldCount > 0
+      ? {
+          title: "Bring your catch to Mr. Easterling",
+          description: "Return to the aquarium workshop so the care team can assess your catch and prepare the right habitat.",
+          value: fishingProgress.heldCount,
+          total: fishingProgress.heldCount,
+          label: `${fishingProgress.heldCount} ${fishingProgress.heldCount === 1 ? "catch" : "catches"} ready for the aquarium`,
+        }
     : onboardingProgress.needsStarterSelection
     ? {
         title: "Meet Mr. Easterling",
@@ -5240,13 +5602,29 @@ export default function AdventureGame({
             total: 1,
             label: "Field-plan review waiting",
           }
-        : {
-            title: "Meet your Elverson neighbors",
-            description: "Explore town, talk with residents, and complete the available local SeaPals challenges.",
-            value: progress,
-            total: SHELLSHORE_ENCOUNTER_IDS.length,
-            label: `${progress} / ${SHELLSHORE_ENCOUNTER_IDS.length} local challenges complete`,
-          };
+        : progress < townEncounterIds.length
+          ? {
+              title: "Meet Elverson's reef keepers",
+              description: "Challenge Elverson's resident reef keepers and learn how each neighbor supports the aquarium project.",
+              value: progress,
+              total: townEncounterIds.length,
+              label: `${progress} / ${townEncounterIds.length} neighborhood challenges complete`,
+            }
+        : fishingProgress.aquariumSpeciesCount < ELVERSON_REEF_CATCHES.length
+          ? {
+              title: "Grow the Elverson aquarium",
+              description: "Face open water at a safe shore edge and press Enter to fish. Discover all ten reef creatures and bring them to Mr. Easterling.",
+              value: fishingProgress.aquariumSpeciesCount,
+              total: ELVERSON_REEF_CATCHES.length,
+              label: `${fishingProgress.aquariumSpeciesCount} / ${ELVERSON_REEF_CATCHES.length} reef species in the aquarium`,
+            }
+          : {
+              title: "Elverson Reef Log complete",
+              description: "All ten reef creatures are represented in the aquarium. Keep fishing for repeat observations or visit your Elverson neighbors.",
+              value: ELVERSON_REEF_CATCHES.length,
+              total: ELVERSON_REEF_CATCHES.length,
+              label: "Complete aquarium collection",
+            };
   const ecosystemCompletedSteps = (ecosystemProgress?.observedObservationIds.length ?? 0)
     + (ecosystemProgress?.completedResidentEncounterIds.length ?? 0)
     + (ecosystemProgress?.interpretation.correct ? 1 : 0)
@@ -5360,7 +5738,7 @@ export default function AdventureGame({
   const unopenedPackCount = Object.values(gameSave.inventory.unopenedPacks)
     .reduce((total, quantity) => total + quantity, 0);
   const explorationBlocked = Boolean(
-    pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen,
+    pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen,
   );
   const gameplaySurfaceLocked = Boolean(
     explorationBlocked || sceneTransition || conversationLeadIn,
@@ -5368,7 +5746,7 @@ export default function AdventureGame({
   const gameShellClassName = [
     styles.gameShell,
     gameSave.settings.highContrast ? styles.highContrastMode : "",
-    gameSave.settings.reducedMotion ? styles.reducedMotionMode : "",
+    gameSave.settings.reducedMotion || systemReducedMotion ? styles.reducedMotionMode : "",
   ].filter(Boolean).join(" ");
   const maximumBoatSpeed = scene.movement?.speed ?? BOAT_MOTION_DEFAULTS.maxForwardSpeed;
   const sceneTransitionVector = sceneTransition
@@ -5376,9 +5754,13 @@ export default function AdventureGame({
     : null;
   const sceneTransitionLabel = sceneTransition
     ? sceneTransition.type === "guided"
-      ? sceneTransition.phase === "departing"
-        ? "Walking with Mr. Easterling to the waterfront aquarium..."
-        : "Arriving at the Elverson Aquarium workshop..."
+      ? sceneTransition.interactionId === ELVERSON_FISHING_GUIDED_TRANSITION.interactionId
+        ? sceneTransition.phase === "departing"
+          ? "Following Fisherman Wyeth to the practice rail..."
+          : "Wyeth is ready beside the water for your first cast..."
+        : sceneTransition.phase === "departing"
+          ? "Walking with Mr. Easterling to the waterfront aquarium..."
+          : "Arriving at the Elverson Aquarium workshop..."
       : sceneTransition.phase === "departing"
         ? `Entering ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
         : `Arriving in ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
@@ -5831,6 +6213,7 @@ export default function AdventureGame({
       {inventoryOpen ? (
         <InventoryModal
           inventory={gameSave.inventory}
+          fishingProgress={fishingProgress}
           reveal={packReveal}
           notice={saveNotice}
           blocked={Boolean(confirmation)}
@@ -5905,6 +6288,25 @@ export default function AdventureGame({
           onClose={() => {
             setFieldworkActivity(null);
             setFieldworkFeedback(null);
+          }}
+        />
+      ) : null}
+      {fishingSession ? (
+        <AdventureFishingModal
+          tutorial={fishingSession.tutorial}
+          required={fishingSession.required}
+          reducedMotion={gameSave.settings.reducedMotion || systemReducedMotion}
+          progress={fishingProgress}
+          onCatch={saveFishingCatch}
+          onClose={() => {
+            if (fishingSession.required) {
+              setSaveNotice({
+                kind: "info",
+                message: "Complete Wyeth's practice catch before leaving the lesson.",
+              });
+              return;
+            }
+            setFishingSession(null);
           }}
         />
       ) : null}

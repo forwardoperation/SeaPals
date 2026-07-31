@@ -12,6 +12,699 @@
     linear-gradient(150deg, #03131f 0%, #06283b 48%, #041521 100%);
 }
 
+/* Elverson fishing ------------------------------------------------------- */
+.fishingLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 170;
+  display: grid;
+  place-items: center;
+  padding:
+    max(clamp(12px, 3vw, 32px), env(safe-area-inset-top))
+    max(clamp(12px, 3vw, 32px), env(safe-area-inset-right))
+    max(clamp(12px, 3vw, 32px), env(safe-area-inset-bottom))
+    max(clamp(12px, 3vw, 32px), env(safe-area-inset-left));
+  overflow: auto;
+  background:
+    radial-gradient(circle at 50% 20%, rgb(48 180 189 / 24%), transparent 38%),
+    rgb(3 18 29 / 88%);
+  backdrop-filter: blur(10px);
+}
+
+.fishingCard {
+  width: min(820px, 100%);
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: #123247;
+  border: 2px solid rgb(176 238 224 / 90%);
+  border-radius: 24px;
+  background: #f6f1df;
+  box-shadow: 0 26px 80px rgb(0 12 24 / 55%), inset 0 1px #fff;
+}
+
+.fishingHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid rgb(17 73 91 / 14%);
+  background: linear-gradient(135deg, #fffaf0, #e5f7ee);
+}
+
+.fishingHeader h2 {
+  margin: 3px 0 0;
+  color: #10384a;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  line-height: 1.05;
+}
+
+.fishingEyebrow {
+  color: #2a776f;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.fishingClose {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  color: #225766;
+  border: 1px solid rgb(26 90 101 / 28%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 75%);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fishingRequiredBadge {
+  flex: 0 0 auto;
+  max-width: 140px;
+  padding: 8px 11px;
+  color: #fff;
+  border: 1px solid #176b65;
+  border-radius: 999px;
+  background: #176b65;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.fishingWater {
+  position: relative;
+  height: clamp(150px, 25vh, 220px);
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, #9ce3df 0 22%, #2b9caa 22% 52%, #176c83 100%);
+}
+
+.fishingWater::before,
+.fishingWater::after {
+  position: absolute;
+  right: -10%;
+  bottom: -26px;
+  left: -10%;
+  height: 70px;
+  content: "";
+  border-radius: 50%;
+  background: rgb(160 234 221 / 20%);
+  animation: fishingSwell 4.8s ease-in-out infinite alternate;
+}
+
+.fishingWater::after {
+  bottom: -44px;
+  background: rgb(5 50 75 / 28%);
+  animation-delay: -2.1s;
+}
+
+.fishingHorizon {
+  position: absolute;
+  top: 21%;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 80%), transparent);
+  box-shadow: 0 8px 16px rgb(255 255 255 / 22%);
+}
+
+.fishingLine {
+  position: absolute;
+  top: -20%;
+  left: calc(50% + 1px);
+  width: 1px;
+  height: 65%;
+  background: rgb(242 251 240 / 82%);
+  transform: rotate(4deg);
+  transform-origin: top;
+}
+
+.fishingFloat {
+  position: absolute;
+  z-index: 3;
+  top: 49%;
+  left: 50%;
+  width: 18px;
+  height: 34px;
+  border: 3px solid #f9e8bb;
+  border-radius: 50% 50% 45% 45%;
+  background: linear-gradient(#ef5b48 0 42%, #fff0c7 43% 100%);
+  box-shadow: 0 4px 8px rgb(1 42 62 / 35%);
+  transform: translate(-50%, -50%);
+  animation: fishingBob 1.9s ease-in-out infinite;
+}
+
+.fishingFloat i {
+  position: absolute;
+  top: -13px;
+  left: 6px;
+  width: 2px;
+  height: 12px;
+  background: #fff0c7;
+}
+
+.fishingFloatBite {
+  animation: fishingBite 260ms ease-in-out infinite alternate;
+}
+
+.fishingFloatReeling {
+  transform: translate(-50%, -62%) rotate(-12deg);
+}
+
+.fishingFloatCaught {
+  top: 28%;
+  transition: top 420ms ease-out;
+}
+
+.fishingRipple {
+  position: absolute;
+  z-index: 2;
+  top: 58%;
+  left: 50%;
+  width: 150px;
+  height: 52px;
+  transform: translate(-50%, -50%);
+}
+
+.fishingRipple i {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgb(209 254 239 / 48%);
+  border-radius: 50%;
+  animation: fishingRipple 2.2s ease-out infinite;
+}
+
+.fishingRipple i:nth-child(2) { animation-delay: -0.75s; }
+.fishingRipple i:nth-child(3) { animation-delay: -1.5s; }
+
+.fishingShadow {
+  position: absolute;
+  bottom: 18%;
+  left: 43%;
+  width: 94px;
+  height: 26px;
+  opacity: 0.28;
+  border-radius: 52% 48% 48% 52%;
+  background: #022f4c;
+  filter: blur(5px);
+  animation: fishingShadowPass 5.4s ease-in-out infinite alternate;
+}
+
+.fishingStatus {
+  min-height: 48px;
+  margin: 0;
+  padding: 14px 22px 10px;
+  color: #244b56;
+  font-size: 0.96rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.fishingStatusBite {
+  color: #9d341f;
+  font-size: 1.12rem;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+}
+
+.fishingTensionPanel {
+  margin: 3px 22px 12px;
+  padding: 13px 16px;
+  border: 1px solid rgb(29 91 98 / 18%);
+  border-radius: 15px;
+  background: rgb(255 255 255 / 64%);
+}
+
+.fishingTensionLabels {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-bottom: 9px;
+  color: #56717a;
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fishingTensionLabels strong {
+  color: #155d5d;
+  text-align: center;
+}
+
+.fishingTensionLabels span:last-child { text-align: right; }
+
+.fishingTensionTrack {
+  position: relative;
+  height: 28px;
+  margin: 0 8px;
+  border: 2px solid #174f62;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #9ad1de, #f4e6b4 65%, #e9876f);
+  box-shadow: inset 0 2px 5px rgb(0 36 56 / 20%);
+}
+
+.fishingTensionTrack[data-assisted="true"] {
+  background: linear-gradient(90deg, #b7dde2, #d9f0dc, #b7dde2);
+}
+
+.fishingCatchZone {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 999px;
+  background: #46b979;
+  box-shadow: 0 0 0 2px rgb(236 255 226 / 75%), 0 0 14px rgb(46 185 121 / 58%);
+}
+
+.fishingMeterMarker {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  width: 12px;
+  height: 38px;
+  border: 3px solid #fff7d8;
+  border-radius: 8px;
+  background: #df503e;
+  box-shadow: 0 2px 7px rgb(0 28 43 / 40%);
+  transform: translate(-50%, -50%);
+}
+
+.fishingMeterMarkerReady { background: #0a7768; }
+
+.fishingAttempts {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.fishingAttempts i {
+  width: 26px;
+  height: 5px;
+  border-radius: 999px;
+  background: #9ec9bb;
+}
+
+.fishingAttempts .fishingAttemptMissed { background: #df624d; }
+
+.fishingAssistInline {
+  display: block;
+  min-height: 44px;
+  margin: 10px auto 0;
+  padding: 8px 13px;
+  color: #164d5b;
+  border: 1px solid #497d83;
+  border-radius: 999px;
+  background: #f9fff9;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.fishingCatchReveal {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: center;
+  margin: 0 22px 12px;
+  padding: 15px;
+  border: 1px solid rgb(35 113 103 / 22%);
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fffdf5, #dff5e9);
+}
+
+.fishingCatchArt {
+  overflow: hidden;
+  width: 116px;
+  aspect-ratio: 5 / 7;
+  border: 4px solid #fff6d8;
+  border-radius: 12px;
+  background: #174f62;
+  box-shadow: 0 8px 20px rgb(14 72 78 / 24%);
+}
+
+.fishingCatchArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fishingCatchReveal h3 {
+  margin: 5px 0 4px;
+  color: #103b4b;
+  font-size: 1.4rem;
+}
+
+.fishingCatchReveal p {
+  margin: 0 0 7px;
+  color: #345865;
+  line-height: 1.42;
+}
+
+.fishingCatchReveal strong,
+.fishingCatchReveal small { display: block; }
+.fishingCatchReveal strong { color: #14705f; }
+.fishingCatchReveal small { margin-top: 3px; color: #687c80; }
+
+.fishingRarity {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: #356b6a;
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fishingRarityuncommon { background: #277fa2; }
+.fishingRarityrare { background: #6d50a0; }
+.fishingRaritylegendary { color: #5a3b00; background: #eebf4b; }
+
+.fishingActions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 4px 22px 16px;
+}
+
+.fishingActions button {
+  min-width: 150px;
+  padding: 11px 16px;
+  color: #fff;
+  border: 0;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #1f8d86, #14686e);
+  box-shadow: 0 4px 0 #0c4a55;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.fishingActions button:hover,
+.fishingActions button:focus-visible,
+.fishingClose:hover,
+.fishingClose:focus-visible {
+  outline: 3px solid #f3bd48;
+  outline-offset: 2px;
+}
+
+.fishingActions button:disabled {
+  opacity: 0.68;
+  cursor: wait;
+}
+
+.fishingActions .secondaryButton {
+  color: #235361;
+  border: 1px solid rgb(21 89 101 / 25%);
+  background: #fffaf0;
+  box-shadow: 0 3px 0 #bfd1c9;
+}
+
+.fishingActions .fishingHookButton {
+  background: linear-gradient(180deg, #ee744e, #c44634);
+  box-shadow: 0 4px 0 #913429;
+  animation: fishingHookPulse 480ms ease-in-out infinite alternate;
+}
+
+.fishingAssistOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 22px 9px;
+  color: #496a73;
+  font-size: 0.76rem;
+  text-align: left;
+}
+
+.fishingAssistOption button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 8px 12px;
+  color: #164d5b;
+  border: 1px solid #497d83;
+  border-radius: 999px;
+  background: #f9fff9;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.fishingAssistOption button[aria-pressed="true"] {
+  color: #fff;
+  background: #176b65;
+}
+
+.fishingAssistOption button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.fishingAssistOption button:focus-visible,
+.fishingAssistInline:focus-visible {
+  outline: 3px solid #b86b00;
+  outline-offset: 2px;
+}
+
+.fishingLogStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 22px;
+  color: #d9f6ed;
+  background: #123e51;
+}
+
+.fishingLogStrip div,
+.fishingLogStrip strong,
+.fishingLogStrip span { display: block; }
+.fishingLogStrip strong { font-size: 0.82rem; }
+.fishingLogStrip span { margin-top: 1px; color: #c1e1df; font-size: 0.68rem; }
+
+.fishingLogStrip ol {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fishingLogStrip li {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  color: #b7d8de;
+  border: 1px solid #7ca6b3;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.fishingLogStrip .fishingLogFound {
+  color: #f4d16d;
+  border-color: #d2b450;
+  background: rgb(244 209 109 / 12%);
+}
+
+.fishingInventorySection {
+  grid-column: 1 / -1;
+}
+
+.fishingInventoryGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.fishingInventoryCreature {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 7px;
+  opacity: 0.62;
+  border: 1px solid rgb(125 211 252 / 13%);
+  border-radius: 10px;
+  background: rgb(4 30 44 / 62%);
+}
+
+.fishingInventoryCreatureFound {
+  opacity: 1;
+  border-color: rgb(94 234 212 / 28%);
+  background: linear-gradient(145deg, rgb(9 58 70 / 82%), rgb(11 48 66 / 82%));
+}
+
+.fishingInventoryCreature > div {
+  display: grid;
+  width: 42px;
+  height: 58px;
+  overflow: hidden;
+  place-items: center;
+  color: #5d8794;
+  border-radius: 6px;
+  background: #082a3a;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.fishingInventoryCreature img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fishingInventoryCreature > span,
+.fishingInventoryCreature strong,
+.fishingInventoryCreature small,
+.fishingInventoryCreature em {
+  display: block;
+  min-width: 0;
+}
+
+.fishingInventoryCreature strong {
+  overflow: hidden;
+  color: #e9fdff;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fishingInventoryCreature small {
+  margin-top: 3px;
+  color: #8ebec8;
+  font-size: 7px;
+  text-transform: capitalize;
+}
+
+.fishingInventoryCreature em {
+  margin-top: 4px;
+  color: #5eead4;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.inventoryItemList li > span strong,
+.inventoryItemList li > span small {
+  display: block;
+}
+
+.inventoryItemList li > span small {
+  margin-top: 2px;
+  color: #8eb9c4;
+  font-size: 7px;
+  font-weight: 700;
+}
+
+@keyframes fishingSwell {
+  from { transform: translateX(-2%) scaleY(0.85); }
+  to { transform: translateX(2%) scaleY(1.08); }
+}
+
+@keyframes fishingBob {
+  0%, 100% { transform: translate(-50%, -50%) rotate(-2deg); }
+  50% { transform: translate(-50%, -43%) rotate(2deg); }
+}
+
+@keyframes fishingBite {
+  from { transform: translate(-50%, -48%) rotate(-8deg); }
+  to { transform: translate(-50%, -16%) rotate(9deg); }
+}
+
+@keyframes fishingRipple {
+  from { opacity: 0.72; transform: scale(0.18); }
+  to { opacity: 0; transform: scale(1); }
+}
+
+@keyframes fishingShadowPass {
+  from { transform: translateX(-95px) scale(0.72); }
+  to { transform: translateX(105px) scale(1.08); }
+}
+
+@keyframes fishingHookPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.035); }
+}
+
+@media (max-width: 620px) {
+  .fishingLayer {
+    padding:
+      max(8px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+  }
+  .fishingCard { border-radius: 17px; }
+  .fishingHeader { padding: 15px; }
+  .fishingHeader h2 { max-width: 11ch; }
+  .fishingClose { max-width: 90px; }
+  .fishingWater { height: 142px; }
+  .fishingStatus { padding-inline: 15px; }
+  .fishingTensionPanel,
+  .fishingCatchReveal { margin-inline: 12px; }
+  .fishingCatchReveal { grid-template-columns: 78px 1fr; gap: 11px; }
+  .fishingCatchArt { width: 78px; }
+  .fishingCatchReveal h3 { font-size: 1.1rem; }
+  .fishingActions { flex-direction: column; padding-inline: 15px; }
+  .fishingActions button { width: 100%; }
+  .fishingAssistOption { align-items: stretch; flex-direction: column; margin-inline: 15px; text-align: center; }
+  .fishingAssistOption button { width: 100%; }
+  .fishingLogStrip { align-items: flex-start; padding: 10px 14px; }
+  .fishingLogStrip ol { max-width: 150px; }
+  .fishingInventoryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-height: 620px) {
+  .fishingLayer { place-items: start center; }
+  .fishingCard {
+    max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  .fishingHeader { padding-block: 12px 9px; }
+  .fishingWater { height: 100px; }
+  .fishingStatus { min-height: 0; padding-block: 9px 7px; }
+  .fishingLogStrip { padding-block: 8px; }
+}
+
+.highContrastMode .fishingCard {
+  color: #001d28;
+  border-color: #fff;
+  background: #fff;
+}
+
+.highContrastMode .fishingTensionTrack { border-color: #000; }
+.highContrastMode .fishingCatchZone { background: #00a34a; }
+
+.reducedMotionMode .fishingWater::before,
+.reducedMotionMode .fishingWater::after,
+.reducedMotionMode .fishingFloat,
+.reducedMotionMode .fishingRipple i,
+.reducedMotionMode .fishingShadow,
+.reducedMotionMode .fishingHookButton {
+  animation: none !important;
+}
+
+.reducedMotionMode .fishingFloatCaught,
+.reducedMotionMode .fishingMeterMarker {
+  transition: none !important;
+}
+
 .oceanGlow {
   position: fixed;
   inset: 0;
@@ -6053,7 +6746,13 @@
   .boatWake,
   .tournamentRegistrationCard,
   .championshipEndingCard,
-  .championshipGlow {
+  .championshipGlow,
+  .fishingWater::before,
+  .fishingWater::after,
+  .fishingFloat,
+  .fishingRipple i,
+  .fishingShadow,
+  .fishingHookButton {
     animation: none !important;
   }
 
@@ -6078,7 +6777,9 @@
   .confirmActions button,
   .tournamentRegistrationHeader button,
   .tournamentRegistrationActions button,
-  .tournamentQuietAction {
+  .tournamentQuietAction,
+  .fishingFloatCaught,
+  .fishingMeterMarker {
     transition: none !important;
   }
 

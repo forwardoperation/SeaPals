@@ -5,6 +5,11 @@ const NO_SECONDARY_MODES = new Set([
   "exhibitionVictory",
   "onboardingGate",
   "locked",
+  "fishingLesson",
+  "fishingPractice",
+  "fishingGuidance",
+  "fishingDelivered",
+  "fishingCollectionComplete",
 ]);
 
 function primaryOnlyClosesConversation(trainer, mode) {
