@@ -63,7 +63,7 @@ These sources define the implementation boundary but do not replace a named mari
 3. The four observations may be recorded in any order and are idempotent across revisits and reloads.
 4. The Navigation Lab interpretation remains unavailable until all four observations are recorded. The response remains unavailable until the interpretation is accepted.
 5. Dr. Amara's first greeting is stored separately from later guidance, debrief, and return dialogue.
-6. Kaiya's Blue Water duel and Tomas's Open Ocean Hunt duel are both required for report readiness.
+6. Kaiya's Blue Water duel and Tomas's Open Ocean duel are both required for report readiness.
 7. Only the four observations, accepted interpretation, accepted response, and both resident victories can move the quest to `readyToTurnIn`. Dr. Amara then grants **Connected by Currents** exactly once.
 8. Orla's qualifier remains locked until fieldwork is complete. Its first win grants the Current Commons Blue Water Pack, `tide-mark-current`, and `route-current-kelpwatch` through the existing reward ledger.
 9. Return conversations preserve uncertainty and ongoing monitoring. Completed routes may be piloted manually or auto-steered from their authored docks.

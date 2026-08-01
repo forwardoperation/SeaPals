@@ -17,7 +17,7 @@ Authored for this phase:
 - Six original story roles: Director Amara Vela, quarterfinalist Miri Fen, semifinalist Oren Vale, defending champion Sabine Rook, learning steward Dr. Ivo Kestrel, and junior Reefkeeper Tali.
 - Registration gated by all five ecosystem Tide Marks, all five ecosystem Field Notes, and one legal active owned-card deck.
 - One exact, persisted deck snapshot locked across an ordered three-round bracket attempt.
-- Three full 30 VP games: Disruption in the quarterfinal, Open Ocean Hunt in the semifinal, and Darkness Shroud in the final.
+- Three full 30 VP games: Disruption in the quarterfinal, Open Ocean in the semifinal, and Darkness Shroud in the final.
 - Defeat recording and same-round retry without losing the registered deck, cards, bracket wins, or one-time rewards.
 - Exactly-once completion of the bracket, Champion's Wake quest, SeaPals Championship Cup, and Archipelago Reflections Field Note.
 - Tournament conversations, spectator and reflection conversations, ceremony/epilogue material, and postgame conversation modes.
@@ -46,7 +46,7 @@ If an active tournament save has no snapshot or a fingerprint that cannot be ver
 | Round | Opponent | Simulator deck | Difficulty | Win result |
 | --- | --- | --- | --- | --- |
 | Quarterfinal | Miri Fen, Tidal-Creek Tactician | Disruption | Medium | Records `encounter-tournament-quarterfinal` once and opens the semifinal. |
-| Semifinal | Oren Vale, Blue-Water Navigator | Open Ocean Hunt | Hard | Records `encounter-tournament-semifinal` once and opens the final. |
+| Semifinal | Oren Vale, Blue-Water Navigator | Open Ocean | Hard | Records `encounter-tournament-semifinal` once and opens the final. |
 | Final | Sabine Rook, Defending SeaPals Champion | Darkness Shroud | Hard | Records `encounter-tournament-final`, completes the bracket and quest, and grants the championship reward once. |
 
 Every launch is bound to the authored opponent, opponent deck, registered player-deck fingerprint, and a 30 VP target. A result with a different encounter, opponent, deck fingerprint, or VP target is rejected instead of being adapted into progression.

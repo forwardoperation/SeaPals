@@ -1,23 +1,55 @@
 # SeaPals storefront setup
 
 The storefront is prepared through the payment-account handoff and is safe by
-default. Visitors can browse the complete catalog, but no item can enter the
+default. Visitors can browse the prelaunch catalog, but no item can enter the
 cart and no payment can start until its product ID is explicitly allowlisted,
 the private order ledger and Stripe webhook are ready, and the launch switch is
 turned on.
 
+## Twelve-product prelaunch catalog
+
+The first public catalog is deliberately limited to the `$44` Starter Kit,
+seven `$22` ready-to-play decks, the `$12` Accessories Kit, and three `$5`
+individual gameplay accessories: the Conditions Deck, Dice Pack, and Reef
+Point (RP) Token Set. Future apparel, storage, and plush products are hidden by
+default.
+
+All twelve draft prices are server-controlled. Exact packaged
+counts for the Conditions Deck, Dice Pack, and RP Token Set still need to be
+confirmed before publication. Production checkout and Stripe automatic tax
+stay off until Pennsylvania confirms the government sales tax registration.
+Adding a Pennsylvania registration inside Stripe Tax is not, by itself, that
+confirmation.
+
+The `$44` Starter Kit can remain the first local sandbox purchase. The payment
+flow is:
+
+1. SeaPals validates the cart and price on the server.
+2. Stripe-hosted Checkout collects payment and, for mailed orders, the delivery
+   address. Pickup orders do not request a shipping address.
+3. A signature-verified Stripe webhook updates the private Supabase order
+   ledger; the browser success page never authorizes fulfillment.
+4. Test payments remain in Stripe's sandbox and never reach Chase. After the
+   lifecycle passes, separate live credentials and a live webhook are used,
+   and Stripe pays the live balance to the Chase business checking account.
+
+Checkout uses Stripe's Dashboard-managed dynamic payment methods and tags each
+Session with `seapals_store_web_kvqzrmta` so this storefront flow can be
+measured separately in Stripe.
+
 ## What is included
 
-- `/store`: responsive catalog grouped into Starter Kits, Expansion Decks,
-  Game Accessories, Custom T-Shirts, Binders & Backpacks, and Plush Toys.
-- `/api/store/checkout`: server-priced cart validation and Stripe-hosted card
-  checkout. Card numbers and security codes never pass through SeaPals servers.
+- `/store`: responsive prelaunch catalog grouped into Starter Kits, Expansion
+  Decks, and Game Accessories. Future concepts require an explicit private
+  preview switch.
+- `/api/store/checkout`: server-priced cart validation and Stripe-hosted
+  Checkout. Payment credentials never pass through SeaPals servers.
 - `/api/store/webhook`: raw-body Stripe signature verification plus
-  duplicate-safe payment, failure, expiration, refund, receipt, and address
-  recording.
-- `/admin/orders`: a token-protected packing and shipping queue with immutable
-  product/price snapshots, receipt and Stripe references, tracking, private
-  notes, and paid-unshipped CSV export.
+  duplicate-safe payment, failure, expiration, refund, dispute hold, receipt,
+  and address recording.
+- `/admin/orders`: a token-protected shipping and Elverson pickup workspace with
+  immutable product, price, and fulfillment-method snapshots; receipt and
+  Stripe references; tracking; private notes; and a shipping-only CSV export.
 - `supabase/store-orders.sql`: private orders, items, payment-event idempotency,
   durable receipt references, and fulfillment state.
 - `npm run store:check` and `npm run store:check:online`: launch-readiness checks.
@@ -32,18 +64,20 @@ SeaPals Credits are intentionally excluded. The purchase sheet establishes:
 
 | Product | Cash price | Included |
 | --- | ---: | --- |
-| Starter Kit | $40 | Coral Garden 60 Card Deck, Blue Water 60 Card Deck, Conditions Deck, Dice Set, and Reef Point Tokens |
-| Each Expansion Deck | $20 | One 60-card ready-to-play deck |
-| Accessory Set | $10 | Dice Pack, Conditions Deck, and Reef Point Tokens |
+| Starter Kit | $44 | Coral Garden 60 Card Deck, Blue Water 60 Card Deck, Conditions Deck, Dice Set, and Reef Point Tokens |
+| Each Expansion Deck | $22 | One 60-card ready-to-play deck |
+| Accessories Kit | $12 | Conditions Deck, Dice Pack, and Reef Point Tokens |
+| Conditions Deck | $5 | Packaged card count must also be confirmed |
+| Dice Pack | $5 | Dice types and quantities must also be confirmed |
+| Reef Point (RP) Token Set | $5 | Tokens per set must also be confirmed |
 
 The seven Expansion Decks are Blue Water, Coral Garden, Murky Water,
-Disruption, Stinging Fortress, Darkness Shroud, and Open Ocean Hunt.
+Disruption, Stinging Fortress, Darkness Shroud, and Open Ocean.
 
-Individual Reef Point Tokens, Dice Pack, Conditions Deck, Custom T-Shirt, Card
-Binder, Backpack, and Plush Toy are visible as coming soon with `Price TBA`.
-They cannot be purchased until a price and explicit allowlist entry are added.
-Custom T-Shirts remain locked even if priced because checkout does not yet
-collect size, color, or customization choices.
+Future Custom T-Shirt, Card Binder, Backpack, and Plush Toy concepts are hidden
+unless `STORE_SHOW_FUTURE_PRODUCTS=true`. Custom T-Shirts remain locked even if
+priced because checkout does not yet collect size, color, or customization
+choices.
 
 ## 1. Create the private order ledger
 
@@ -100,17 +134,25 @@ Copy `.env.example` to the local/deployment secret store and set:
 - the existing Supabase URL and service-role key
 - a strong, unique `STORE_ADMIN_TOKEN` of at least 32 characters
 
-A standard `sk_test_...` key is simplest during development. A restricted key
-can be used after granting only the necessary Checkout Session write and
-Payment Intent read access; the online account-readiness check may also require
-account read access. Validate the final permissions with
-`npm run store:check:online`.
+Prefer a restricted sandbox key (`rk_test_...`) named `SeaPals storefront
+sandbox`. Start every permission at **None**, then grant:
+
+- **Checkout Sessions: Write** (create, retrieve, and expire Sessions)
+- **Payment Intents: Read** (retrieve the Stripe-hosted receipt reference)
+- **Charges: Read** (read the expanded charge and hosted receipt link)
+- **Account: Read** (used only by `npm run store:check:online`)
+
+If Stripe returns a permission error, use that key's request logs to identify
+the exact missing resource instead of granting broad access. Keep every other
+permission at **None**. Store the key only in `.env.local` or the deployment
+secret vault, never in source control or chat. Validate the final permissions
+with `npm run store:check:online`.
 
 Create a test webhook endpoint for:
 
 `https://YOUR_DOMAIN/api/store/webhook`
 
-Pin it to Stripe API version `2026-06-24.dahlia` and subscribe to:
+Pin it to Stripe API version `2026-07-29.dahlia` and subscribe to:
 
 - `checkout.session.completed`
 - `checkout.session.async_payment_succeeded`
@@ -118,6 +160,7 @@ Pin it to Stripe API version `2026-06-24.dahlia` and subscribe to:
 - `checkout.session.expired`
 - `payment_intent.payment_failed`
 - `charge.refunded`
+- `charge.dispute.created`
 
 Only a signature-verified webhook moves an order to paid. The success page is
 informational and never authorizes fulfillment. For local testing, use Stripe
@@ -127,55 +170,83 @@ webhook signing secrets are separate.
 
 ## 4. Configure products, inventory, and shipping
 
-Prices are integer cents. Established products have safe source defaults; every
-price can still be overridden with the matching `STORE_PRICE_*_CENTS` key in
-`.env.example`. Set unpriced merchandise only after its final SKU and retail
-price are known.
+Prices are positive integer cents. Established products have safe source
+defaults; every price can still be overridden with the matching
+`STORE_PRICE_*_CENTS` key in `.env.example`. Set unpriced merchandise only after
+its final SKU and retail price are known.
 
 Set `STORE_AVAILABLE_PRODUCT_IDS` to a comma-separated list of reviewed product
 IDs, for example:
 
-`starter-kit,coral-garden,accessory-set`
+`starter-kit,blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,accessory-set,conditions-deck,dice-pack,reef-point-tokens`
 
 There is deliberately no `all` wildcard. The server rejects unknown,
 unavailable, client-priced, over-quantity, or stale cart items. Add a product
 only after its inventory, packaging, contents, price, tax treatment, and
 fulfillment procedure are verified.
 
-`STORE_SHIPPING_CENTS` is one flat amount per order. Zero displays as free
-shipping. The optional minimum/maximum business-day values are sent to Stripe
-only when both are valid. Keep `STORE_ALLOWED_COUNTRIES=US` for the initial
-launch unless international tax, customs, pricing, and delivery are ready.
+Keep `STORE_SHOW_FUTURE_PRODUCTS=false` for the launch store. Run
+`npm.cmd run store:check:launch` to verify the exact twelve-product allowlist
+and server-controlled prices.
+
+The draft fulfillment choices are server-controlled:
+
+| Option | Draft price | Checkout behavior |
+| --- | ---: | --- |
+| Standard Shipping & Handling | $7.50 | Collects a US delivery address |
+| Priority Shipping & Handling | $12.50 | Collects a US delivery address |
+| Local pickup — Elverson, PA | Free | Does not request a shipping address; staff email when ready |
+
+Override the two mailed-order prices with
+`STORE_STANDARD_SHIPPING_CENTS` and `STORE_PRIORITY_SHIPPING_CENTS`.
+`STORE_SHIPPING_CENTS` remains only as a legacy Standard-rate fallback. Stripe
+Shipping Rates are fixed per whole order, not weight- or quantity-sensitive,
+so weigh the packed SKUs and test multi-item orders before setting
+`STORE_SHIPPING_RATES_CONFIRMED=true`. No delivery-day promise is configured
+yet. Keep `STORE_ALLOWED_COUNTRIES=US` for the initial launch unless
+international tax, customs, pricing, and delivery are ready.
 
 ## 5. Decide how tax will be handled
 
-`STRIPE_AUTOMATIC_TAX` is off by default. Before enabling it, determine where
-SeaPals is registered and required to collect tax. Use Stripe Tax codes that
-have been verified for the actual products:
+`STORE_TAX_REGISTRATION_CONFIRMED` and `STRIPE_AUTOMATIC_TAX` are both off by
+default. Only the owner should set the first value to `true`, and only after the
+government registration is active. Live checkout is code-gated on that manual
+confirmation. Then determine where SeaPals must collect and use Stripe Tax
+codes that have been verified for the actual products and shipping:
 
 - `STRIPE_GAME_PRODUCT_TAX_CODE`
+- `STRIPE_SHIPPING_TAX_CODE`
 - `STRIPE_APPAREL_TAX_CODE`
 - `STRIPE_STORAGE_TAX_CODE`
 - `STRIPE_PLUSH_TAX_CODE`
 
 `STRIPE_PRODUCT_TAX_CODE` is a supported global fallback, but category-specific
 codes are safer for a mixed catalog. Checkout stays closed when automatic tax
-is enabled and any available product lacks a valid code. Stripe Tax is an
-optional paid service; enabling calculation does not replace tax-registration
-advice.
+is requested without owner confirmation, or when any available product or
+shipping lacks a valid code. Stripe Tax is an optional paid service; enabling
+calculation does not create a government registration or replace
+tax-registration advice.
+
+Pickup tax sourcing must also be verified for the Elverson performance
+location before setting `STORE_PICKUP_TAX_CONFIRMED=true`. Automatic tax stays
+blocked while local pickup is enabled and that confirmation is false.
 
 ## 6. Test the complete lifecycle
 
 Keep `STORE_CHECKOUT_ENABLED=false` while preparing the store. Then:
 
 1. Run the SQL and add Stripe/Supabase test credentials.
-2. Allowlist only test-ready products and set a realistic shipping amount.
-3. Run `npm.cmd run store:check` and `npm.cmd run store:check:online`.
+2. Allowlist only test-ready products and set realistic Standard and Priority
+   shipping amounts.
+3. Run `npm.cmd run store:check`, `npm.cmd run store:check:launch`, and
+   `npm.cmd run store:check:online`.
 4. Set `STORE_CHECKOUT_ENABLED=true` locally.
 5. Complete a successful Stripe test Checkout and verify the signed webhook
    creates a paid order in `/admin/orders`.
-6. Test a decline, expired session, duplicate webhook, partial/full refund,
-   packing update, tracking entry, shipped update, and CSV export.
+6. Test Standard, Priority, and Elverson pickup orders, plus a decline, expired
+   session, duplicate webhook, partial/full refund, dispute hold, packing
+   update, tracking entry, shipped update, pickup-ready/picked-up updates, and
+   the shipping-only CSV export.
 7. Run the application checks:
 
 ```powershell
@@ -199,13 +270,17 @@ Stripe resend a receipt.
 
 One-time invoice PDFs remain disabled. Normal payment receipts are sufficient
 at launch, while post-payment Invoicing adds a fee. Staff use `/admin/orders`
-with `STORE_ADMIN_TOKEN` to move paid orders through Unfulfilled, Packing, and
-Shipped, add tracking and notes, and export paid-unshipped orders. The token is
-stored only in that browser tab's session storage.
+with `STORE_ADMIN_TOKEN` to move mailed orders through Unfulfilled, Packing,
+and Shipped, or pickup orders through Awaiting Preparation, Preparing Pickup,
+Ready for Pickup, and Picked Up. Tracking is unavailable for pickup. The token
+is stored only in that browser tab's session storage.
 
 For low-volume shipping, the CSV can feed a label workflow such as Pirate Ship.
 Its software has no monthly or per-label service fee, but postage still costs
-money. Refunds stay in Stripe so the signed webhook reconciles the local ledger.
+money. Refunds stay in Stripe so the signed webhook reconciles the local
+ledger. Partial refunds and disputes automatically move incomplete shipments or
+pickups to `on_hold`; full refunds cancel incomplete orders. Pickup orders and
+those states are excluded from the ready-to-ship CSV.
 
 ## 8. Bank and live-mode handoff
 
@@ -258,12 +333,19 @@ Current Stripe prices should be reconfirmed before launch:
 - Audit printed inventory and packaging for every enabled SKU. Blue Water and
   Murky Water currently reference White Grunt records unavailable in the card
   database, and some card art remains placeholder art.
-- Confirm the printed Starter Kit and Accessory Set exactly match their listed
+- Confirm the printed Starter Kit and Accessories Kit match their listed
   contents.
-- Finalize individual accessory prices and merchandise materials, dimensions,
-  character/design choices, inventory, and photography.
+- Confirm the Conditions Deck card count, Dice Pack die types and quantities,
+  RP Tokens per set, inventory, packaging, and product photography.
+- Weigh packed one- and multi-item orders, confirm the $7.50/$12.50 fixed rates,
+  and document handling and delivery expectations before setting
+  `STORE_SHIPPING_RATES_CONFIRMED=true`.
+- Confirm the Elverson pickup workflow and pickup tax sourcing before setting
+  `STORE_PICKUP_TAX_CONFIRMED=true`; publish only a pickup address approved for
+  customers.
 - Build T-shirt size/color/customization selection before ever allowlisting it.
-- Confirm tax registrations and product tax codes with appropriate professional
-  guidance.
+- Confirm the Pennsylvania government sales tax registration before setting
+  `STORE_TAX_REGISTRATION_CONFIRMED=true`, then validate product and shipping
+  tax codes with appropriate professional guidance.
 - Back up order records regularly and move from one shared admin token to staff
   accounts with MFA before multiple people handle fulfillment.

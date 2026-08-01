@@ -1,5 +1,7 @@
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
-const STRIPE_API_VERSION = "2026-06-24.dahlia";
+const STRIPE_API_VERSION = "2026-07-29.dahlia";
+const STRIPE_CHECKOUT_INTEGRATION_IDENTIFIER = "seapals_store_web_kvqzrmta";
+const STRIPE_REQUEST_TIMEOUT_MS = 15_000;
 const encoder = new TextEncoder();
 
 export class StripeApiError extends Error {
@@ -53,6 +55,7 @@ async function stripeRequest(
     headers,
     body: body?.toString(),
     cache: "no-store",
+    signal: AbortSignal.timeout(STRIPE_REQUEST_TIMEOUT_MS),
   });
 
   let payload;
@@ -120,29 +123,56 @@ function appendCheckoutLineItem(
 
 function appendShippingOption(
   form,
-  amountCents,
+  shippingOption,
   currency,
-  { automaticTaxEnabled }
+  { automaticTaxEnabled, shippingTaxCode }
 ) {
+  if (shippingOption.fulfillmentMethod !== "shipping") return;
+
   const prefix = "shipping_options[0][shipping_rate_data]";
   form.set(`${prefix}[type]`, "fixed_amount");
-  form.set(`${prefix}[display_name]`, "Standard shipping");
-  form.set(`${prefix}[fixed_amount][amount]`, String(amountCents));
+  form.set(`${prefix}[display_name]`, shippingOption.displayName);
+  form.set(
+    `${prefix}[metadata][fulfillment_option_id]`,
+    shippingOption.id
+  );
+  form.set(`${prefix}[metadata][fulfillment_method]`, "shipping");
+  form.set(
+    `${prefix}[fixed_amount][amount]`,
+    String(shippingOption.amountCents)
+  );
   form.set(`${prefix}[fixed_amount][currency]`, currency);
   if (automaticTaxEnabled) {
+    if (!/^txcd_[0-9]+$/.test(String(shippingTaxCode ?? ""))) {
+      throw new StripeApiError(
+        "A validated shipping tax code is required when automatic tax is enabled."
+      );
+    }
     form.set(`${prefix}[tax_behavior]`, "exclusive");
-    form.set(`${prefix}[tax_code]`, "txcd_92010001");
+    form.set(`${prefix}[tax_code]`, shippingTaxCode);
   }
 }
 
-function appendShippingEstimate(form, { shippingEstimateMinDays, shippingEstimateMaxDays }) {
-  if (!shippingEstimateMinDays || !shippingEstimateMaxDays) return;
+function appendShippingEstimate(form, shippingOption) {
+  if (
+    shippingOption.fulfillmentMethod !== "shipping" ||
+    !shippingOption.deliveryEstimateMinDays ||
+    !shippingOption.deliveryEstimateMaxDays
+  ) {
+    return;
+  }
 
   const prefix = "shipping_options[0][shipping_rate_data][delivery_estimate]";
   form.set(`${prefix}[minimum][unit]`, "business_day");
-  form.set(`${prefix}[minimum][value]`, String(shippingEstimateMinDays));
+  form.set(
+    `${prefix}[minimum][value]`,
+    String(shippingOption.deliveryEstimateMinDays)
+  );
   form.set(`${prefix}[maximum][unit]`, "business_day");
-  form.set(`${prefix}[maximum][value]`, String(shippingEstimateMaxDays));
+  form.set(
+    `${prefix}[maximum][value]`,
+    String(shippingOption.deliveryEstimateMaxDays)
+  );
 }
 
 export async function createStripeCheckoutSession({
@@ -153,13 +183,25 @@ export async function createStripeCheckoutSession({
 }) {
   const form = new URLSearchParams();
   const currency = String(configuration.currency || "usd").toLowerCase();
+  const fulfillmentOption = quote.fulfillmentOption ?? {
+    id: "standard",
+    displayName: "Standard Shipping & Handling",
+    fulfillmentMethod: "shipping",
+    pickupLocation: null,
+    amountCents: quote.shippingCents,
+    deliveryEstimateMinDays: configuration.shippingEstimateMinDays ?? null,
+    deliveryEstimateMaxDays: configuration.shippingEstimateMaxDays ?? null,
+  };
 
   form.set("mode", "payment");
+  form.set(
+    "integration_identifier",
+    STRIPE_CHECKOUT_INTEGRATION_IDENTIFIER
+  );
   form.set("client_reference_id", order.id);
   form.set("success_url", `${siteUrl}/store/success?session_id={CHECKOUT_SESSION_ID}`);
   form.set("cancel_url", `${siteUrl}/store/cancel`);
   form.set("customer_creation", "always");
-  form.set("payment_method_types[0]", "card");
   form.set("billing_address_collection", "auto");
   form.set("automatic_tax[enabled]", String(configuration.automaticTaxEnabled));
   form.set("allow_promotion_codes", String(configuration.allowPromotionCodes));
@@ -167,22 +209,56 @@ export async function createStripeCheckoutSession({
   form.set("invoice_creation[enabled]", "false");
   form.set("metadata[order_id]", order.id);
   form.set("metadata[order_number]", order.orderNumber);
+  form.set("metadata[fulfillment_option_id]", fulfillmentOption.id);
+  form.set(
+    "metadata[fulfillment_option_name]",
+    fulfillmentOption.displayName
+  );
+  form.set(
+    "metadata[fulfillment_method]",
+    fulfillmentOption.fulfillmentMethod
+  );
   form.set("payment_intent_data[metadata][order_id]", order.id);
   form.set("payment_intent_data[metadata][order_number]", order.orderNumber);
+  form.set(
+    "payment_intent_data[metadata][fulfillment_option_id]",
+    fulfillmentOption.id
+  );
+  form.set(
+    "payment_intent_data[metadata][fulfillment_option_name]",
+    fulfillmentOption.displayName
+  );
+  form.set(
+    "payment_intent_data[metadata][fulfillment_method]",
+    fulfillmentOption.fulfillmentMethod
+  );
   form.set("payment_intent_data[description]", `SeaPals order ${order.orderNumber}`);
+  if (fulfillmentOption.pickupLocation) {
+    form.set("metadata[pickup_location]", fulfillmentOption.pickupLocation);
+    form.set(
+      "payment_intent_data[metadata][pickup_location]",
+      fulfillmentOption.pickupLocation
+    );
+    form.set(
+      "custom_text[submit][message]",
+      `Local pickup in ${fulfillmentOption.pickupLocation}. We will email when your order is ready.`
+    );
+  }
 
   quote.items.forEach((item, index) =>
     appendCheckoutLineItem(form, item, index, currency, configuration)
   );
 
-  configuration.allowedCountries.forEach((country, index) => {
-    form.set(
-      `shipping_address_collection[allowed_countries][${index}]`,
-      country
-    );
-  });
-  appendShippingOption(form, quote.shippingCents, currency, configuration);
-  appendShippingEstimate(form, configuration);
+  if (fulfillmentOption.fulfillmentMethod === "shipping") {
+    configuration.allowedCountries.forEach((country, index) => {
+      form.set(
+        `shipping_address_collection[allowed_countries][${index}]`,
+        country
+      );
+    });
+  }
+  appendShippingOption(form, fulfillmentOption, currency, configuration);
+  appendShippingEstimate(form, fulfillmentOption);
 
   return stripeRequest("/checkout/sessions", {
     method: "POST",

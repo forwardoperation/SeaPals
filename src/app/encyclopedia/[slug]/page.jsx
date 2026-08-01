@@ -5,6 +5,10 @@ import {
   encyclopediaCreatureBySlug,
   encyclopediaCreatures,
 } from "@/data/encyclopedia";
+import {
+  getCreatureDeckDiscovery,
+  getCreatureDisplayGrammar,
+} from "@/data/encyclopedia/deckDiscovery";
 
 const ZONE_STYLES = {
   Reef: {
@@ -37,8 +41,8 @@ export async function generateMetadata({ params }) {
 
   if (!creature) return {};
 
-  const title = `${creature.name} Facts for Kids | SeaPals`;
-  const description = `${creature.tagline} Learn where the ${creature.name} lives, what it eats, its ocean superpower, and four kid-friendly facts.`;
+  const title = `${creature.name}: Facts for Kids | SeaPals`;
+  const description = `${creature.tagline} Explore this SeaPal's habitat, diet, ocean superpower, and four kid-friendly facts.`;
 
   return {
     title,
@@ -86,6 +90,166 @@ function FactCard({ label, children }) {
   );
 }
 
+function formatEnglishList(items) {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
+}
+
+function DeckDiscoverySection({ creature, discovery }) {
+  const hasDecks = discovery.decks.length > 0;
+  const { demonstrative, seaPalReference } =
+    getCreatureDisplayGrammar(creature);
+  const deckNameById = new Map(
+    discovery.decks.map((deck) => [deck.deckId, deck.productName])
+  );
+
+  return (
+    <section
+      aria-labelledby="deck-discovery-heading"
+      className="mt-10 overflow-hidden rounded-[2rem] border border-cyan-200 bg-gradient-to-br from-cyan-50 via-white to-amber-50 shadow-sm"
+    >
+      <div className="px-6 py-7 sm:px-8 md:py-8">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700">
+          From field guide to game table
+        </p>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2
+              id="deck-discovery-heading"
+              className="font-serif text-3xl font-bold text-slate-950 md:text-4xl"
+            >
+              Bring {demonstrative} {creature.name} home
+            </h2>
+            <p className="mt-2 max-w-2xl leading-7 text-slate-600">
+              See which ready-to-play decks feature {seaPalReference}. Try one
+              in the simulator before you buy, or explore each full deck list.
+            </p>
+          </div>
+          {hasDecks ? (
+            <span className="rounded-full bg-cyan-800 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-white">
+              {discovery.decks.length} deck
+              {discovery.decks.length === 1 ? "" : "s"}
+            </span>
+          ) : null}
+        </div>
+
+        {hasDecks ? (
+          <ul className="mt-6 grid gap-4 lg:grid-cols-2">
+            {discovery.decks.map((deck) => (
+              <li
+                key={deck.deckId}
+                className="rounded-2xl border border-cyan-100 bg-white p-5 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-700">
+                      Ready-to-play deck
+                    </p>
+                    <h3 className="mt-1 font-serif text-2xl font-bold text-slate-950">
+                      {deck.productName}
+                    </h3>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-[#f7c948] px-3 py-1.5 text-xs font-black text-[#073d58]">
+                    {deck.copies} {deck.copies === 1 ? "copy" : "copies"}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Includes {deck.copies} {deck.copies === 1 ? "card" : "cards"}{" "}
+                  featuring {creature.name}
+                  {deck.matchedCards.length > 1
+                    ? ` across ${deck.matchedCards.length} card versions`
+                    : ""}
+                  .
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Link
+                    href={deck.simulatorHref}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-800 px-4 py-2 text-sm font-bold text-white transition hover:bg-cyan-900 focus:outline-none focus:ring-4 focus:ring-cyan-200"
+                  >
+                    Try this deck
+                  </Link>
+                  <Link
+                    href={deck.storeHref}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-700 bg-white px-4 py-2 text-sm font-bold text-cyan-900 transition hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+                  >
+                    Shop this deck
+                  </Link>
+                  <Link
+                    href={deck.deckListHref}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full px-3 py-2 text-sm font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 transition hover:text-cyan-950 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+                  >
+                    See full deck list
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="mt-6 rounded-2xl border border-dashed border-cyan-300 bg-white/80 p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div>
+              <h3 className="font-serif text-xl font-bold text-slate-950">
+                Not currently in a ready-to-play deck
+              </h3>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                You can still find {seaPalReference} in the card gallery while
+                planning your own custom deck.
+              </p>
+            </div>
+            <div className="mt-4 flex shrink-0 flex-wrap gap-2 sm:mt-0">
+              <Link
+                href="/gallery"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-800 px-4 py-2 text-sm font-bold text-white transition hover:bg-cyan-900 focus:outline-none focus:ring-4 focus:ring-cyan-200"
+              >
+                Browse the gallery
+              </Link>
+              <Link
+                href="/decks"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-700 bg-white px-4 py-2 text-sm font-bold text-cyan-900 transition hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+              >
+                Explore all decks
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {discovery.bundles.map((bundle) => {
+          const matchingDeckNames = bundle.matchingDeckIds
+            .map((deckId) => deckNameById.get(deckId))
+            .filter(Boolean);
+
+          return (
+            <aside
+              key={bundle.productId}
+              className="mt-4 rounded-2xl bg-[#073d58] p-5 text-white sm:flex sm:items-center sm:justify-between sm:gap-6"
+            >
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#f7c948]">
+                  Also included in a bundle
+                </p>
+                <h3 className="mt-1 font-serif text-2xl font-bold">
+                  {bundle.productName}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-cyan-50/85">
+                  {bundle.productName} includes{" "}
+                  {formatEnglishList(matchingDeckNames)}, bringing{" "}
+                  {seaPalReference} to your table.
+                </p>
+              </div>
+              <Link
+                href={bundle.storeHref}
+                className="mt-4 inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-[#f7c948] px-5 py-2 text-sm font-black text-[#073d58] transition hover:bg-amber-300 focus:outline-none focus:ring-4 focus:ring-cyan-200 sm:mt-0"
+              >
+                Shop {bundle.productName}
+              </Link>
+            </aside>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default async function CreaturePage({ params }) {
   const { slug } = await params;
   const creature = encyclopediaCreatureBySlug[slug];
@@ -99,6 +263,7 @@ export default async function CreaturePage({ params }) {
     ];
   const next = encyclopediaCreatures[(index + 1) % encyclopediaCreatures.length];
   const styles = ZONE_STYLES[creature.zone];
+  const deckDiscovery = getCreatureDeckDiscovery(creature);
 
   return (
     <main className="pb-16 text-slate-900 md:pb-24">
@@ -160,7 +325,7 @@ export default async function CreaturePage({ params }) {
                 <div className="rotate-2 rounded-[1.6rem] bg-white p-2.5 shadow-2xl shadow-black/40 ring-1 ring-white/70">
                   <Image
                     src={creature.image}
-                    alt={`${creature.name} SeaPals card`}
+                    alt={`SeaPals card featuring ${creature.name}`}
                     width={450}
                     height={630}
                     priority
@@ -187,6 +352,11 @@ export default async function CreaturePage({ params }) {
             </div>
           </div>
         </header>
+
+        <DeckDiscoverySection
+          creature={creature}
+          discovery={deckDiscovery}
+        />
 
         <section aria-labelledby="passport-heading" className="mt-10">
           <div className="flex items-end justify-between gap-4">

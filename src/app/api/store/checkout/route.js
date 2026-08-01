@@ -93,8 +93,25 @@ export async function POST(request) {
 
   let quote;
   try {
+    const requestedFulfillmentOptionId = String(
+      payload?.fulfillmentOptionId ??
+        configuration.defaultShippingOptionId ??
+        ""
+    )
+      .trim()
+      .toLowerCase();
+    const fulfillmentOption = configuration.shippingOptions.find(
+      (option) => option.id === requestedFulfillmentOptionId
+    );
+    if (!fulfillmentOption) {
+      throw new CartValidationError(
+        "Choose an available shipping or pickup option.",
+        "invalid_shipping_option"
+      );
+    }
+
     quote = quoteCart(payload?.items, configuration.products, {
-      shippingCents: configuration.shippingCents,
+      fulfillmentOption,
     });
   } catch (error) {
     if (error instanceof CartValidationError) {
@@ -108,6 +125,7 @@ export async function POST(request) {
     order = await createPendingStoreOrder({
       quote,
       currency: configuration.currency,
+      paymentLivemode: configuration.paymentMode === "live",
     });
 
     const session = await createStripeCheckoutSession({

@@ -18,7 +18,11 @@ function createOrderNumber(now = new Date()) {
   return `SP-${date}-${suffix}`;
 }
 
-export async function createPendingStoreOrder({ quote, currency }) {
+export async function createPendingStoreOrder({
+  quote,
+  currency,
+  paymentLivemode,
+}) {
   const supabase = createSupabaseAdmin();
   const id = globalThis.crypto.randomUUID();
   const orderNumber = createOrderNumber();
@@ -26,7 +30,12 @@ export async function createPendingStoreOrder({ quote, currency }) {
     id,
     order_number: orderNumber,
     currency,
+    payment_livemode: Boolean(paymentLivemode),
     subtotal_cents: quote.subtotalCents,
+    fulfillment_method: quote.fulfillmentMethod,
+    fulfillment_option_id: quote.fulfillmentOptionId,
+    fulfillment_option_name: quote.fulfillmentOptionName,
+    pickup_location: quote.pickupLocation,
     shipping_cents: quote.shippingCents,
     tax_cents: 0,
     total_cents: quote.totalCents,
@@ -114,9 +123,15 @@ export async function processStorePaymentEvent(details) {
     p_shipping_cents: details.shippingCents,
     p_tax_cents: details.taxCents,
     p_total_cents: details.totalCents,
+    p_amount_refunded_cents: details.amountRefundedCents ?? null,
     p_receipt_url: details.receiptUrl,
     p_receipt_number: details.receiptNumber,
     p_payment_livemode: details.paymentLivemode,
+    p_fulfillment_method: details.fulfillmentMethod ?? null,
+    p_fulfillment_option_id: details.fulfillmentOptionId ?? null,
+    p_fulfillment_option_name: details.fulfillmentOptionName ?? null,
+    p_pickup_location: details.pickupLocation ?? null,
+    p_stripe_shipping_rate_id: details.stripeShippingRateId ?? null,
   });
 
   if (error) {
@@ -134,7 +149,7 @@ export async function listStoreOrders({ limit = 250 } = {}) {
   const { data, error } = await supabase
     .from("store_orders")
     .select(
-      "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, shipping_cents, tax_cents, total_cents, payment_status, fulfillment_status, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, tracking_number, tracking_url, internal_notes, store_order_items(id, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents)"
+      "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, stripe_shipping_rate_id, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, fulfillment_status, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, tracking_number, tracking_url, internal_notes, store_order_items(id, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents)"
     )
     .order("created_at", { ascending: false })
     .limit(Math.min(Math.max(Number(limit) || 250, 1), 500));
@@ -157,13 +172,47 @@ export async function updateStoreOrderFulfillment({
   internalNotes,
 }) {
   const supabase = createSupabaseAdmin();
+  const { data: existingOrder, error: existingOrderError } = await supabase
+    .from("store_orders")
+    .select("fulfillment_method, fulfillment_status, shipped_at")
+    .eq("id", id)
+    .single();
+
+  if (existingOrderError || !existingOrder) {
+    throw new OrderStoreError("The order could not be loaded.", {
+      code: "order_load_failed",
+      cause: existingOrderError,
+    });
+  }
+
+  const pickupOrder = existingOrder.fulfillment_method === "pickup";
+  if (
+    (pickupOrder && fulfillmentStatus === "shipped") ||
+    (!pickupOrder && ["ready_for_pickup", "picked_up"].includes(fulfillmentStatus))
+  ) {
+    throw new OrderStoreError("That fulfillment status does not match the order method.", {
+      code: "invalid_fulfillment_status",
+    });
+  }
+
+  if (pickupOrder && (trackingNumber || trackingUrl)) {
+    throw new OrderStoreError("Pickup orders cannot have shipping tracking.", {
+      code: "pickup_tracking_not_allowed",
+    });
+  }
+
   const update = {
     fulfillment_status: fulfillmentStatus,
     tracking_number: trackingNumber || null,
     tracking_url: trackingUrl || null,
     internal_notes: internalNotes || null,
     shipped_at:
-      fulfillmentStatus === "shipped" ? new Date().toISOString() : null,
+      ["shipped", "picked_up"].includes(fulfillmentStatus)
+        ? existingOrder.fulfillment_status === fulfillmentStatus &&
+          existingOrder.shipped_at
+          ? existingOrder.shipped_at
+          : new Date().toISOString()
+        : null,
   };
 
   let query = supabase
@@ -171,8 +220,16 @@ export async function updateStoreOrderFulfillment({
     .update(update)
     .eq("id", id);
 
-  if (fulfillmentStatus === "packing" || fulfillmentStatus === "shipped") {
-    query = query.in("payment_status", ["paid", "partially_refunded"]);
+  if (
+    ["packing", "ready_for_pickup", "picked_up", "shipped"].includes(
+      fulfillmentStatus
+    )
+  ) {
+    // Non-paid orders may retain an already-saved terminal status for staff
+    // notes, but they cannot transition into packing or shipped.
+    query = query.or(
+      `payment_status.eq.paid,fulfillment_status.eq.${fulfillmentStatus}`
+    );
   }
 
   const { data, error } = await query

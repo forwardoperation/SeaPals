@@ -34,7 +34,7 @@ const CATEGORY_META = {
     label: "Game Accessories",
     eyebrow: "Build the table",
     description:
-      "Dice, condition cards, and Reef Point tokens for expanding or refreshing your play setup.",
+      "Choose the complete Accessories Kit or individual condition cards, dice, and Reef Point tokens.",
   },
   apparel: {
     label: "Custom T-Shirts",
@@ -58,10 +58,10 @@ const CATEGORY_META = {
 
 function unavailableButtonLabel(product) {
   if (product.requiresConfiguration) return "Options coming soon";
-  if (product.priceCents === null || product.priceCents === undefined) {
-    return "Price coming soon";
+  if (!product.priceConfigured) {
+    return "Price to confirm";
   }
-  return "Not available yet";
+  return "Prelaunch";
 }
 
 function formatMoney(cents, currency) {
@@ -155,24 +155,34 @@ function CartGlyph() {
 
 export default function Storefront({
   checkoutEnabled,
+  paymentMode,
   currency,
   shippingCents,
+  shippingOptions,
+  defaultShippingOptionId,
   automaticTaxEnabled,
   products,
   highlightedProductId,
 }) {
+  const testCheckout = checkoutEnabled && paymentMode === "test";
   const catalogProducts = Array.isArray(products) ? products : [];
   const productById = useMemo(
     () => new Map(catalogProducts.map((product) => [product.id, product])),
     [catalogProducts]
   );
   const highlightedProduct = useMemo(
-    () =>
-      catalogProducts.find(
-        (product) =>
-          product.id === highlightedProductId ||
-          product.deckId === highlightedProductId
-      ) ?? null,
+    () => {
+      const requestedProductId = String(highlightedProductId ?? "").trim();
+      if (!requestedProductId) return null;
+
+      return (
+        catalogProducts.find(
+          (product) =>
+            product.id === requestedProductId ||
+            product.deckId === requestedProductId
+        ) ?? null
+      );
+    },
     [catalogProducts, highlightedProductId]
   );
   const categoryGroups = useMemo(() => {
@@ -210,10 +220,69 @@ export default function Storefront({
       .filter((group) => group.products.length > 0);
   }, [catalogProducts, highlightedProduct]);
 
+  const fulfillmentOptions = useMemo(() => {
+    const configuredOptions = (Array.isArray(shippingOptions)
+      ? shippingOptions
+      : []
+    ).filter(
+      (option) =>
+        option &&
+        typeof option.id === "string" &&
+        typeof option.displayName === "string" &&
+        Number.isSafeInteger(option.amountCents) &&
+        option.amountCents >= 0
+    );
+
+    if (configuredOptions.length) return configuredOptions;
+
+    return [
+      {
+        id: "standard",
+        displayName: "Standard Shipping & Handling",
+        description: "Ships to your address.",
+        fulfillmentMethod: "shipping",
+        pickupLocation: null,
+        amountCents: Math.max(
+          0,
+          Number.isFinite(Number(shippingCents)) ? Number(shippingCents) : 0
+        ),
+      },
+    ];
+  }, [shippingCents, shippingOptions]);
+
   const [cart, setCart] = useState({});
   const [cartReady, setCartReady] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [selectedFulfillmentOptionId, setSelectedFulfillmentOptionId] =
+    useState(() => {
+      const configuredDefault = String(defaultShippingOptionId ?? "").trim();
+      return fulfillmentOptions.some(
+        (option) => option.id === configuredDefault
+      )
+        ? configuredDefault
+        : fulfillmentOptions[0].id;
+    });
+
+  useEffect(() => {
+    if (
+      fulfillmentOptions.some(
+        (option) => option.id === selectedFulfillmentOptionId
+      )
+    ) {
+      return;
+    }
+
+    setSelectedFulfillmentOptionId(
+      fulfillmentOptions.find(
+        (option) => option.id === defaultShippingOptionId
+      )?.id ?? fulfillmentOptions[0].id
+    );
+  }, [
+    defaultShippingOptionId,
+    fulfillmentOptions,
+    selectedFulfillmentOptionId,
+  ]);
 
   useEffect(() => {
     setCart(readStoredCart(productById));
@@ -263,9 +332,13 @@ export default function Storefront({
       total + Number(product.priceCents ?? 0) * quantity,
     0
   );
+  const selectedFulfillmentOption =
+    fulfillmentOptions.find(
+      (option) => option.id === selectedFulfillmentOptionId
+    ) ?? fulfillmentOptions[0];
   const normalizedShippingCents = Math.max(
     0,
-    Number.isFinite(Number(shippingCents)) ? Number(shippingCents) : 0
+    Number(selectedFulfillmentOption.amountCents)
   );
   const totalCents = subtotalCents + normalizedShippingCents;
 
@@ -346,6 +419,7 @@ export default function Storefront({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          fulfillmentOptionId: selectedFulfillmentOption.id,
           items: cartItems.map(({ product, quantity }) => ({
             productId: product.id,
             quantity,
@@ -409,12 +483,16 @@ export default function Storefront({
               <span
                 className={
                   "inline-flex rounded-full px-3 py-2 text-xs font-black uppercase tracking-[0.14em] " +
-                  (checkoutEnabled
+                  (checkoutEnabled && !testCheckout
                     ? "bg-emerald-300 text-emerald-950"
                     : "bg-[#f7c948] text-[#082f49]")
                 }
               >
-                {checkoutEnabled ? "Checkout open" : "Store preview"}
+                {testCheckout
+                  ? "Test checkout"
+                  : checkoutEnabled
+                    ? "Checkout open"
+                    : "Store preview"}
               </span>
             </div>
 
@@ -422,8 +500,8 @@ export default function Storefront({
               Choose how your reef grows.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
-              Starter kits, expansion decks, game accessories, and SeaPals gear
-              for every kind of ocean crew.
+              The two-player Starter Kit, seven ready-to-play decks, and the
+              Accessories Kit or individual game accessories for your table.
             </p>
 
             {highlightedProduct ? (
@@ -447,14 +525,22 @@ export default function Storefront({
           </div>
         </div>
 
-        {!checkoutEnabled ? (
+        {testCheckout ? (
+          <div
+            role="status"
+            className="relative border-t border-amber-200/20 bg-amber-300/10 px-6 py-4 text-sm font-semibold leading-6 text-amber-50 sm:px-9 md:px-12 lg:px-14"
+          >
+            Stripe sandbox mode is on. Use test payment details only; no real
+            charge or Chase payout will occur.
+          </div>
+        ) : !checkoutEnabled ? (
           <div
             role="status"
             className="relative border-t border-white/10 bg-white/5 px-6 py-4 text-sm leading-6 text-cyan-50/80 sm:px-9 md:px-12 lg:px-14"
           >
-            Preview mode is on. You can browse established prices and upcoming
-            products, but cart and payment controls stay disabled until the
-            payment account, inventory, and launch settings are ready.
+            Prelaunch preview is on. Ordering stays disabled until the
+            Pennsylvania sales tax license is active and shipping-rate,
+            inventory, tax, and fulfillment checks pass.
           </div>
         ) : null}
       </section>
@@ -470,13 +556,12 @@ export default function Storefront({
                 id="store-products-heading"
                 className="mt-2 font-serif text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl"
               >
-                Shop the whole reef
+                Preview the launch collection
               </h2>
             </div>
             <p className="max-w-md text-sm leading-6 text-slate-500">
-              Cash prices from the purchase sheet are shown for the Starter Kit,
-              Expansion Decks, and Accessory Set. Products without a confirmed
-              price stay safely unavailable.
+              Draft launch prices are shown for all twelve launch products.
+              Ordering remains disabled until the launch checks are complete.
             </p>
           </div>
 
@@ -533,10 +618,9 @@ export default function Storefront({
                           !isCheckingOut;
                         const comingSoonLabel = product.requiresConfiguration
                           ? "Options coming soon"
-                          : product.priceCents === null ||
-                              product.priceCents === undefined
-                            ? "Price TBA"
-                            : "Preview";
+                          : !product.priceConfigured
+                            ? "Price to confirm"
+                            : "Prelaunch";
 
                         return (
                           <article
@@ -641,6 +725,25 @@ export default function Storefront({
                                   </Link>
                                 ) : null}
                               </div>
+
+                              {product.trialDecks?.length ? (
+                                <div
+                                  className="mt-4 flex flex-wrap gap-2"
+                                  aria-label={`Try ${product.name} decks in the simulator`}
+                                >
+                                  {product.trialDecks.map((deck) => (
+                                    <Link
+                                      key={deck.id}
+                                      href={deck.href}
+                                      className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border-2 border-cyan-700 bg-cyan-50 px-4 py-2 text-center text-sm font-black text-cyan-900 transition hover:-translate-y-0.5 hover:bg-cyan-100 focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+                                    >
+                                      {product.trialDecks.length > 1
+                                        ? `Try ${deck.name.replace(/\s+Deck$/i, "")}`
+                                        : "Try this deck"}
+                                    </Link>
+                                  ))}
+                                </div>
+                              ) : null}
 
                               {product.availabilityNote ? (
                                 <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">
@@ -795,6 +898,55 @@ export default function Storefront({
                   ))}
                 </ul>
 
+                <fieldset className="space-y-2 border-t border-slate-200 pt-4">
+                  <legend className="text-sm font-black text-slate-950">
+                    Shipping or pickup
+                  </legend>
+                  {fulfillmentOptions.map((option) => {
+                    const selected = option.id === selectedFulfillmentOption.id;
+                    return (
+                      <label
+                        key={option.id}
+                        className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition ${
+                          selected
+                            ? "border-cyan-500 bg-cyan-50"
+                            : "border-slate-200 bg-white hover:border-cyan-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="fulfillment-option"
+                          value={option.id}
+                          checked={selected}
+                          disabled={isCheckingOut}
+                          onChange={() => {
+                            setCheckoutError("");
+                            setSelectedFulfillmentOptionId(option.id);
+                          }}
+                          className="mt-1 h-4 w-4 accent-cyan-700"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-start justify-between gap-3">
+                            <span className="text-sm font-bold text-slate-900">
+                              {option.displayName}
+                            </span>
+                            <span className="shrink-0 text-sm font-black text-slate-900">
+                              {option.amountCents
+                                ? formatMoney(option.amountCents, currency)
+                                : "Free"}
+                            </span>
+                          </span>
+                          {option.description ? (
+                            <span className="mt-1 block text-xs leading-5 text-slate-500">
+                              {option.description}
+                            </span>
+                          ) : null}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </fieldset>
+
                 <dl className="space-y-2 border-t border-slate-200 pt-4 text-sm">
                   <div className="flex justify-between gap-4 text-slate-600">
                     <dt>Subtotal</dt>
@@ -803,7 +955,11 @@ export default function Storefront({
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 text-slate-600">
-                    <dt>Shipping</dt>
+                    <dt>
+                      {selectedFulfillmentOption.fulfillmentMethod === "pickup"
+                        ? selectedFulfillmentOption.displayName
+                        : "Shipping & handling"}
+                    </dt>
                     <dd className="font-bold text-slate-900">
                       {normalizedShippingCents
                         ? formatMoney(normalizedShippingCents, currency)
@@ -822,8 +978,7 @@ export default function Storefront({
 
                 {automaticTaxEnabled ? (
                   <p className="text-xs leading-5 text-slate-500">
-                    Applicable tax is calculated from the delivery address in
-                    secure checkout.
+                    Applicable tax is calculated in secure checkout.
                   </p>
                 ) : null}
 
@@ -838,7 +993,11 @@ export default function Storefront({
 
                 <p className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs leading-5 text-slate-600">
                   Stripe will collect the adult purchaser&apos;s payment,
-                  contact, billing, and shipping details for checkout. By
+                  contact, and billing details
+                  {selectedFulfillmentOption.fulfillmentMethod === "shipping"
+                    ? ", plus the delivery address"
+                    : "; no delivery address is required for local pickup"}
+                  . By
                   continuing, you agree to the{" "}
                   <Link
                     href="/terms#purchases"
@@ -865,8 +1024,10 @@ export default function Storefront({
                 >
                   {isCheckingOut
                     ? "Opening secure checkout..."
-                    : checkoutEnabled
-                      ? "Continue to payment"
+                    : testCheckout
+                      ? "Continue to test payment"
+                      : checkoutEnabled
+                        ? "Continue to payment"
                       : "Checkout preview only"}
                 </button>
               </div>

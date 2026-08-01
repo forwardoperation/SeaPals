@@ -7,13 +7,18 @@ const TOKEN_STORAGE_KEY = "seapals-store-admin-token";
 const FULFILLMENT_OPTIONS = [
   { value: "unfulfilled", label: "Unfulfilled" },
   { value: "packing", label: "Packing" },
+  { value: "ready_for_pickup", label: "Ready for pickup" },
+  { value: "picked_up", label: "Picked up" },
+  { value: "on_hold", label: "On hold" },
   { value: "shipped", label: "Shipped" },
   { value: "cancelled", label: "Cancelled" },
 ];
 
-const FINISHED_FULFILLMENT_STATUSES = new Set([
-  "shipped",
-  "cancelled",
+const READY_FULFILLMENT_STATUSES = new Set(["unfulfilled", "packing"]);
+const PAYMENT_HOLD_STATUSES = new Set([
+  "partially_refunded",
+  "refunded",
+  "disputed",
 ]);
 
 function cleanStatus(value, fallback = "unknown") {
@@ -65,15 +70,32 @@ function centsToDecimal(cents) {
 }
 
 function isPaid(order) {
-  return ["paid", "partially_refunded"].includes(
-    cleanStatus(order?.payment_status)
+  return cleanStatus(order?.payment_status) === "paid";
+}
+
+function isPickup(order) {
+  return cleanStatus(order?.fulfillment_method, "shipping") === "pickup";
+}
+
+function fulfillmentLabel(order) {
+  const status = cleanStatus(order?.fulfillment_status, "unfulfilled");
+  if (!isPickup(order)) return statusLabel(status);
+
+  return (
+    {
+      unfulfilled: "Awaiting preparation",
+      packing: "Preparing pickup",
+      ready_for_pickup: "Ready for pickup",
+      picked_up: "Picked up",
+    }[status] || statusLabel(status)
   );
 }
 
 function isPaidUnshipped(order) {
   return (
     isPaid(order) &&
-    !FINISHED_FULFILLMENT_STATUSES.has(
+    !isPickup(order) &&
+    READY_FULFILLMENT_STATUSES.has(
       cleanStatus(order?.fulfillment_status, "unfulfilled")
     )
   );
@@ -163,13 +185,16 @@ function statusClasses(status, type) {
 
   if (
     normalized === "paid" ||
-    normalized === "shipped"
+    normalized === "shipped" ||
+    normalized === "picked_up"
   ) {
     return "border-emerald-200 bg-emerald-50 text-emerald-800";
   }
 
   if (
     normalized === "packing" ||
+    normalized === "ready_for_pickup" ||
+    normalized === "on_hold" ||
     normalized === "pending" ||
     normalized === "partially_refunded"
   ) {
@@ -179,7 +204,8 @@ function statusClasses(status, type) {
   if (
     normalized === "failed" ||
     normalized === "cancelled" ||
-    normalized === "refunded"
+    normalized === "refunded" ||
+    normalized === "disputed"
   ) {
     return "border-rose-200 bg-rose-50 text-rose-800";
   }
@@ -191,7 +217,7 @@ function statusClasses(status, type) {
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
-function StatusBadge({ value, type }) {
+function StatusBadge({ value, type, label }) {
   return (
     <span
       className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${statusClasses(
@@ -199,7 +225,7 @@ function StatusBadge({ value, type }) {
         type
       )}`}
     >
-      {statusLabel(value)}
+      {label || statusLabel(value)}
     </span>
   );
 }
@@ -220,6 +246,8 @@ function buildShippingCsv(orders) {
     "Paid At",
     "Recipient Name",
     "Email",
+    "Fulfillment Method",
+    "Fulfillment Option",
     "Address Line 1",
     "Address Line 2",
     "City",
@@ -255,8 +283,10 @@ function buildShippingCsv(orders) {
       order.order_number,
       order.id,
       order.paid_at,
-      order.customer_name || address.name,
+      address.name || order.customer_name,
       order.customer_email,
+      order.fulfillment_method,
+      order.fulfillment_option_name,
       address.line1,
       address.line2,
       address.city,
@@ -306,7 +336,7 @@ function StatCard({ label, value, detail, tone = "slate" }) {
 function Totals({ order }) {
   const rows = [
     ["Subtotal", order.subtotal_cents],
-    ["Shipping", order.shipping_cents],
+    [isPickup(order) ? "Local pickup" : "Shipping & handling", order.shipping_cents],
     ["Tax", order.tax_cents],
   ];
 
@@ -320,6 +350,14 @@ function Totals({ order }) {
           </dd>
         </div>
       ))}
+      {Number(order.amount_refunded_cents ?? 0) > 0 ? (
+        <div className="flex items-center justify-between gap-4 text-rose-700">
+          <dt className="font-semibold">Refunded</dt>
+          <dd className="font-bold">
+            {formatMoney(order.amount_refunded_cents, order.currency)}
+          </dd>
+        </div>
+      ) : null}
       <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-3 text-base">
         <dt className="font-black text-slate-950">Total</dt>
         <dd className="font-black text-slate-950">
@@ -356,21 +394,44 @@ function OrderCard({ order, onSave, saving }) {
   }, [order]);
 
   const address = parseAddress(order.shipping_address);
+  const pickupOrder = isPickup(order);
   const receiptUrl = safeStripeUrl(order.receipt_url);
   const dashboardUrl = stripeDashboardUrl(order);
-  const savedTrackingUrl = safeHttpsUrl(order.tracking_url);
+  const savedTrackingUrl = pickupOrder ? "" : safeHttpsUrl(order.tracking_url);
   const currentStatus = cleanStatus(order.fulfillment_status, "unfulfilled");
+  const paymentStatus = cleanStatus(order.payment_status);
+  const fulfillmentOnHold = PAYMENT_HOLD_STATUSES.has(paymentStatus);
   const hasChanges =
     fulfillmentStatus !== currentStatus ||
     trackingNumber.trim() !== String(order.tracking_number ?? "").trim() ||
     trackingUrl.trim() !== String(order.tracking_url ?? "").trim() ||
     internalNotes.trim() !== String(order.internal_notes ?? "").trim();
-  const availableStatuses = FULFILLMENT_OPTIONS.some(
+  const methodFulfillmentOptions = FULFILLMENT_OPTIONS.filter((option) =>
+    pickupOrder
+      ? option.value !== "shipped"
+      : !["ready_for_pickup", "picked_up"].includes(option.value)
+  );
+  const permittedStatuses = !fulfillmentOnHold
+    ? methodFulfillmentOptions
+    : currentStatus === "shipped"
+      ? methodFulfillmentOptions.filter((option) => option.value === "shipped")
+      : currentStatus === "picked_up"
+        ? methodFulfillmentOptions.filter(
+            (option) => option.value === "picked_up"
+          )
+      : paymentStatus === "refunded"
+        ? methodFulfillmentOptions.filter(
+            (option) => option.value === "cancelled"
+          )
+        : methodFulfillmentOptions.filter((option) =>
+            ["on_hold", "cancelled"].includes(option.value)
+          );
+  const availableStatuses = permittedStatuses.some(
     (option) => option.value === fulfillmentStatus
   )
-    ? FULFILLMENT_OPTIONS
+    ? permittedStatuses
     : [
-        ...FULFILLMENT_OPTIONS,
+        ...permittedStatuses,
         { value: fulfillmentStatus, label: statusLabel(fulfillmentStatus) },
       ];
 
@@ -379,8 +440,21 @@ function OrderCard({ order, onSave, saving }) {
     setFormMessage("");
     setFormError("");
 
-    if (trackingUrl.trim() && !safeHttpsUrl(trackingUrl.trim())) {
+    if (
+      !pickupOrder &&
+      trackingUrl.trim() &&
+      !safeHttpsUrl(trackingUrl.trim())
+    ) {
       setFormError("Tracking links must be valid HTTPS URLs.");
+      return;
+    }
+
+    if (
+      fulfillmentOnHold &&
+      fulfillmentStatus !== currentStatus &&
+      !permittedStatuses.some((option) => option.value === fulfillmentStatus)
+    ) {
+      setFormError("Refunded or disputed orders must remain on hold.");
       return;
     }
 
@@ -388,8 +462,8 @@ function OrderCard({ order, onSave, saving }) {
       await onSave({
         id: order.id,
         fulfillmentStatus,
-        trackingNumber: trackingNumber.trim(),
-        trackingUrl: trackingUrl.trim(),
+        trackingNumber: pickupOrder ? "" : trackingNumber.trim(),
+        trackingUrl: pickupOrder ? "" : trackingUrl.trim(),
         internalNotes: internalNotes.trim(),
       });
       setFormMessage("Fulfillment details saved.");
@@ -428,6 +502,10 @@ function OrderCard({ order, onSave, saving }) {
           <span className="mt-1 block text-lg font-black text-slate-950">
             {formatMoney(order.total_cents, order.currency)}
           </span>
+          <span className="mt-1 block text-xs font-semibold text-slate-500">
+            {order.fulfillment_option_name ||
+              (pickupOrder ? "Local pickup" : "Shipping")}
+          </span>
         </span>
 
         <span className="flex md:justify-center">
@@ -438,6 +516,7 @@ function OrderCard({ order, onSave, saving }) {
           <StatusBadge
             value={order.fulfillment_status || "unfulfilled"}
             type="fulfillment"
+            label={fulfillmentLabel(order)}
           />
         </span>
 
@@ -532,17 +611,34 @@ function OrderCard({ order, onSave, saving }) {
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
               <section className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h3 className="text-lg font-black text-slate-950">Ship to</h3>
-                <address className="mt-3 space-y-1 text-sm not-italic leading-6 text-slate-700">
-                  <p className="font-bold text-slate-950">
-                    {order.customer_name || address.name || "Name unavailable"}
-                  </p>
-                  {address.line1 ? <p>{address.line1}</p> : null}
-                  {address.line2 ? <p>{address.line2}</p> : null}
-                  {cityLine(address) ? <p>{cityLine(address)}</p> : null}
-                  {address.country ? <p>{String(address.country).toUpperCase()}</p> : null}
-                </address>
-                {!address.line1 ? (
+                <h3 className="text-lg font-black text-slate-950">
+                  {pickupOrder ? "Local pickup" : "Ship to"}
+                </h3>
+                {pickupOrder ? (
+                  <div className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm leading-6 text-cyan-950">
+                    <p className="font-black">
+                      {order.fulfillment_option_name ||
+                        "Local pickup — Elverson, PA"}
+                    </p>
+                    <p className="mt-1">
+                      Prepare the order, mark it ready for pickup, and contact
+                      the customer before marking it picked up.
+                    </p>
+                  </div>
+                ) : (
+                  <address className="mt-3 space-y-1 text-sm not-italic leading-6 text-slate-700">
+                    <p className="font-bold text-slate-950">
+                      {address.name || order.customer_name || "Name unavailable"}
+                    </p>
+                    {address.line1 ? <p>{address.line1}</p> : null}
+                    {address.line2 ? <p>{address.line2}</p> : null}
+                    {cityLine(address) ? <p>{cityLine(address)}</p> : null}
+                    {address.country ? (
+                      <p>{String(address.country).toUpperCase()}</p>
+                    ) : null}
+                  </address>
+                )}
+                {!pickupOrder && !address.line1 ? (
                   <p className="mt-3 text-sm font-semibold text-rose-700">
                     Shipping address is missing.
                   </p>
@@ -567,6 +663,14 @@ function OrderCard({ order, onSave, saving }) {
                       {formatDate(order.paid_at)}
                     </dd>
                   </div>
+                  {order.refunded_at ? (
+                    <div className="flex justify-between gap-4">
+                      <dt className="font-semibold text-slate-500">Refund updated</dt>
+                      <dd className="text-right font-semibold text-slate-700">
+                        {formatDate(order.refunded_at)}
+                      </dd>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between gap-4">
                     <dt className="font-semibold text-slate-500">Mode</dt>
                     <dd className="font-bold text-slate-700">
@@ -604,6 +708,19 @@ function OrderCard({ order, onSave, saving }) {
             </div>
           </div>
 
+          {fulfillmentOnHold ? (
+            <div className="mt-5 rounded-2xl border border-rose-300 bg-rose-50 px-5 py-4 text-sm text-rose-900">
+              <p className="font-black">Fulfillment hold</p>
+              <p className="mt-1 leading-6">
+                {paymentStatus === "partially_refunded"
+                  ? "This order has a partial refund. Keep it on hold and resolve the order before shipping."
+                  : paymentStatus === "disputed"
+                    ? "This payment is disputed. Do not pack or ship the order while the dispute is open."
+                    : "This order was refunded and must not be fulfilled."}
+              </p>
+            </div>
+          ) : null}
+
           <form
             onSubmit={handleSubmit}
             className="mt-5 rounded-2xl border border-cyan-200 bg-white p-5 shadow-sm"
@@ -614,7 +731,9 @@ function OrderCard({ order, onSave, saving }) {
                   Fulfillment
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Update the packing status and add customer-facing tracking.
+                  {pickupOrder
+                    ? "Track preparation, customer notification, and pickup completion."
+                    : "Update the packing status and add customer-facing tracking."}
                 </p>
               </div>
               {savedTrackingUrl ? (
@@ -629,7 +748,11 @@ function OrderCard({ order, onSave, saving }) {
               ) : null}
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div
+              className={`mt-5 grid gap-4 ${
+                pickupOrder ? "md:grid-cols-1" : "md:grid-cols-3"
+              }`}
+            >
               <label className="text-sm font-bold text-slate-700">
                 Fulfillment status
                 <select
@@ -645,28 +768,32 @@ function OrderCard({ order, onSave, saving }) {
                 </select>
               </label>
 
-              <label className="text-sm font-bold text-slate-700">
-                Tracking number
-                <input
-                  type="text"
-                  value={trackingNumber}
-                  onChange={(event) => setTrackingNumber(event.target.value)}
-                  placeholder="e.g. 9400 1000 0000"
-                  className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-3 py-2 font-semibold text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-                />
-              </label>
+              {!pickupOrder ? (
+                <>
+                  <label className="text-sm font-bold text-slate-700">
+                    Tracking number
+                    <input
+                      type="text"
+                      value={trackingNumber}
+                      onChange={(event) => setTrackingNumber(event.target.value)}
+                      placeholder="e.g. 9400 1000 0000"
+                      className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-3 py-2 font-semibold text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
+                    />
+                  </label>
 
-              <label className="text-sm font-bold text-slate-700">
-                Tracking URL
-                <input
-                  type="url"
-                  inputMode="url"
-                  value={trackingUrl}
-                  onChange={(event) => setTrackingUrl(event.target.value)}
-                  placeholder="https://carrier.example/track/..."
-                  className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-3 py-2 font-semibold text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-                />
-              </label>
+                  <label className="text-sm font-bold text-slate-700">
+                    Tracking URL
+                    <input
+                      type="url"
+                      inputMode="url"
+                      value={trackingUrl}
+                      onChange={(event) => setTrackingUrl(event.target.value)}
+                      placeholder="https://carrier.example/track/..."
+                      className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-3 py-2 font-semibold text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
+                    />
+                  </label>
+                </>
+              ) : null}
             </div>
 
             <label className="mt-4 block text-sm font-bold text-slate-700">
@@ -764,8 +891,16 @@ export default function OrdersDashboard() {
         }
 
         if (
+          fulfillmentFilter === "pickup-orders" &&
+          !isPickup(order)
+        ) {
+          return false;
+        }
+
+        if (
           fulfillmentFilter !== "all" &&
           fulfillmentFilter !== "paid-unshipped" &&
+          fulfillmentFilter !== "pickup-orders" &&
           cleanStatus(order.fulfillment_status, "unfulfilled") !==
             fulfillmentFilter
         ) {
@@ -786,6 +921,9 @@ export default function OrdersDashboard() {
           order.receipt_number,
           order.payment_intent_id,
           order.charge_id,
+          order.fulfillment_method,
+          order.fulfillment_option_name,
+          order.pickup_location,
           itemText,
         ]
           .filter(Boolean)
@@ -808,13 +946,21 @@ export default function OrdersDashboard() {
     const shipped = orderList.filter((order) =>
       ["shipped"].includes(cleanStatus(order.fulfillment_status))
     ).length;
+    const pickup = orderList.filter(
+      (order) =>
+        isPickup(order) &&
+        isPaid(order) &&
+        !["picked_up", "cancelled"].includes(
+          cleanStatus(order.fulfillment_status)
+        )
+    ).length;
     const paidTotal = paidOrders.reduce(
       (sum, order) => sum + Number(order.total_cents ?? 0),
       0
     );
     const currency = paidOrders[0]?.currency || "usd";
 
-    return { packing, shipped, paidTotal, currency };
+    return { packing, pickup, shipped, paidTotal, currency };
   }, [orderList, paidOrders]);
 
   async function loadOrders(event) {
@@ -1036,7 +1182,7 @@ export default function OrdersDashboard() {
 
       {orders !== null ? (
         <>
-          <section aria-label="Order totals" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <section aria-label="Order totals" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <StatCard label="All orders" value={orderList.length} />
             <StatCard label="Paid" value={paidOrders.length} tone="cyan" />
             <StatCard
@@ -1044,6 +1190,12 @@ export default function OrdersDashboard() {
               value={paidUnshippedOrders.length}
               detail="Paid and not shipped"
               tone="amber"
+            />
+            <StatCard
+              label="Local pickup"
+              value={stats.pickup}
+              detail="Paid and awaiting pickup"
+              tone="cyan"
             />
             <StatCard label="Packing" value={stats.packing} tone="amber" />
             <StatCard
@@ -1092,7 +1244,8 @@ export default function OrdersDashboard() {
                     className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
                   >
                     <option value="all">All fulfillment statuses</option>
-                    <option value="paid-unshipped">Paid & unshipped</option>
+                    <option value="paid-unshipped">Paid & ready to ship</option>
+                    <option value="pickup-orders">Local pickup orders</option>
                     {fulfillmentStatuses.map((status) => (
                       <option key={status} value={status}>
                         {statusLabel(status)}

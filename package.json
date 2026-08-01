@@ -13,6 +13,7 @@
     "start": "next start",
     "cloudflare:build": "next build --webpack && opennextjs-cloudflare build --skipNextBuild",
     "store:check": "node scripts/check-store-readiness.mjs",
+    "store:check:launch": "node scripts/check-store-readiness.mjs --launch-catalog",
     "store:check:online": "node scripts/check-store-readiness.mjs --online",
     "preview": "npm run cloudflare:build && opennextjs-cloudflare preview",
     "deploy": "npm run cloudflare:build && opennextjs-cloudflare deploy",

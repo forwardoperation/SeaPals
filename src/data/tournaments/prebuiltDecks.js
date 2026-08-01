@@ -168,7 +168,7 @@ export const prebuiltDecks = [
   },
   {
     id: "open-ocean-hunt",
-    name: "Open Ocean Hunt",
+    name: "Open Ocean",
     cards: [
       { cardId: "cast-net", quantity: 2 },
       { cardId: "deep-sea-fishing", quantity: 2 },

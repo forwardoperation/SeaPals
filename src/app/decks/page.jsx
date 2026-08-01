@@ -275,12 +275,20 @@ function DeckSection({ deck }) {
           <p className="mt-2 max-w-3xl text-slate-600">
             {DECK_NOTES[deck.id] ?? "A SeaPals prebuilt deck."}
           </p>
-          <Link
-            href={`/store?deck=${deck.id}`}
-            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-[#f7c948] px-5 py-2.5 text-sm font-black text-[#073d58] transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
-          >
-            Shop this deck
-          </Link>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href={`/store?deck=${deck.id}`}
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#f7c948] px-5 py-2.5 text-sm font-black text-[#073d58] transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+            >
+              Shop this deck
+            </Link>
+            <Link
+              href={`/simulator?deck=${deck.id}`}
+              className="inline-flex min-h-11 items-center justify-center rounded-full border-2 border-cyan-700 bg-white px-5 py-2.5 text-sm font-black text-cyan-800 transition hover:-translate-y-0.5 hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+            >
+              Try this deck
+            </Link>
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">

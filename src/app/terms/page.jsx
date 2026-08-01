@@ -164,6 +164,12 @@ export default function TermsPage() {
           its own terms.
         </p>
         <p>
+          Mailed orders require a delivery address and the selected Shipping &amp;
+          Handling charge. A local-pickup order does not include shipping and
+          is not ready until Sea Realm emails the purchaser with pickup
+          instructions for Elverson, Pennsylvania.
+        </p>
+        <p>
           Do not complete a purchase unless an adult authorized to use the
           payment method reviews and approves it. We may cancel or refund an
           order affected by a pricing error, unavailable inventory, suspected

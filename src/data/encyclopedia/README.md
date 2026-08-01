@@ -7,6 +7,7 @@ This directory is the kid-facing fact library for every gallery-visible creature
 Each ecosystem file exports an array of entries with these fields:
 
 - `name`: canonical SeaPals display name
+- `grammaticalNumber`: optional `plural` marker for display names such as `Spinner Dolphins`; omitted names are singular
 - `scientificName`: species, genus, or family when the card represents a broad group
 - `aliases`: alternate names used for card matching and search
 - `zone`: `Reef`, `Oceanic`, or `Deep`
@@ -23,3 +24,16 @@ Each ecosystem file exports an array of entries with these fields:
 4. Run the production build. The encyclopedia index rejects duplicate slugs, malformed entries, cards without profiles, and profiles that cannot be matched back to a card.
 
 Card stages and juvenile/adult variants can share one profile when they represent the same real animal.
+
+## Exact card ownership
+
+`aliases` help search and identify possible card matches, but they are not used
+for deck discovery. The index gives every creature card ID exactly one profile
+owner and exposes those IDs as `cardIds` on the finished entry.
+
+When two profiles share a common name, add the ambiguous card IDs to
+`cardOwnership.js`. These overrides must point to a profile that still matches
+the card data. The index rejects unknown overrides, ambiguous cards without an
+override, duplicate ownership, and creature cards with no owner. Keep the
+override list limited to genuine name collisions; unambiguous cards are
+validated and assigned automatically.

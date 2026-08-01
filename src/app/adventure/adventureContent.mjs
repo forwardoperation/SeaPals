@@ -3134,7 +3134,7 @@ const conversations = [
     lines: {
       intro: [
         "Welcome to the working deck! I'm Tomas, the flotilla's gear steward.",
-        "Crews can inspect, mark, report, retrieve, and properly dispose of gear so fewer pieces are lost. My Open Ocean Hunt deck rewards that same preparation. Ready for a 10 VP duel?",
+        "Crews can inspect, mark, report, retrieve, and properly dispose of gear so fewer pieces are lost. My Open Ocean deck rewards that same preparation. Ready for a 10 VP duel?",
       ],
       rematch: [
         "Good to see you. The gear log is current, the deck is secured, and my cards are shuffled.",
@@ -3457,7 +3457,7 @@ const conversations = [
     lines: {
       intro: [
         "Welcome to the semifinal! I'm Oren Vale, a blue-water navigator. Open ocean can look empty from the deck while currents are moving heat, nutrients, food, organisms, and drifting hazards through a much larger system.",
-        "My Open Ocean Hunt deck follows those connections into a long 30 VP game. Protect your RP economy before you chase the horizon.",
+        "My Open Ocean deck follows those connections into a long 30 VP game. Protect your RP economy before you chase the horizon.",
       ],
       roundReady: [
         "Welcome to the semifinal—I'm Oren Vale. Our scenario joins a dated gear-loss report, a drifter track, repeated sightings, and wildlife overlap. Together they support a bounded search corridor—not one proven owner or exact destination. Shall we begin?",
@@ -3466,7 +3466,7 @@ const conversations = [
         "A current can carry a plan away if every resource is committed at once. Recheck your economy, the evidence limits, and the next safe move before we play again.",
       ],
       rematch: [
-        "The chart is updated and my Open Ocean Hunt deck is ready. Want another full 30 VP crossing?",
+        "The chart is updated and my Open Ocean deck is ready. Want another full 30 VP crossing?",
       ],
       victory: [
         "Fine navigation! You paired decisive play with honest uncertainty. The championship final is waiting.",
