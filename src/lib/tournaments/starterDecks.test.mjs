@@ -156,7 +156,7 @@ test("game deck validation omits tournament submission fields", () => {
   ]);
 });
 
-test("Open Ocean Hunt matches the revised 60-card physical deck", () => {
+test("Open Ocean matches the revised 60-card physical deck", () => {
   const deck = prebuiltDecks.find(
     (candidate) => candidate.id === "open-ocean-hunt"
   );

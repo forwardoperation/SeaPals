@@ -48,6 +48,18 @@ function getPaymentState(session) {
     : "Status unavailable";
 }
 
+function getFulfillmentDetails(session) {
+  const method = firstString(session?.metadata?.fulfillment_method);
+  const optionName = firstString(session?.metadata?.fulfillment_option_name);
+  const pickupLocation = firstString(session?.metadata?.pickup_location);
+
+  return {
+    method: method === "pickup" ? "pickup" : "shipping",
+    optionName,
+    pickupLocation,
+  };
+}
+
 function getReceiptUrl(session) {
   const candidate = firstString(
     session?.receiptUrl,
@@ -86,6 +98,8 @@ export default async function StoreSuccessPage({ searchParams }) {
   const orderNumber = getOrderNumber(session);
   const paymentState = getPaymentState(session);
   const receiptUrl = getReceiptUrl(session);
+  const fulfillment = getFulfillmentDetails(session);
+  const localPickup = fulfillment.method === "pickup";
   const paymentComplete =
     session?.payment_status === "paid" ||
     session?.paymentStatus === "paid" ||
@@ -119,7 +133,9 @@ export default async function StoreSuccessPage({ searchParams }) {
           <h1 className="mt-3 font-serif text-4xl font-bold tracking-tight sm:text-5xl">
             {session
               ? paymentComplete
-                ? "Your reef is on its way."
+                ? localPickup
+                  ? "Your pickup order is confirmed."
+                  : "Your order is confirmed."
                 : "Thanks for checking your order."
               : "We could not verify this checkout."}
           </h1>
@@ -145,6 +161,21 @@ export default async function StoreSuccessPage({ searchParams }) {
                 </dt>
                 <dd className="font-black text-white">{paymentState}</dd>
               </div>
+              {fulfillment.optionName ? (
+                <div className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <dt className="text-sm font-bold text-cyan-100/70">
+                    Fulfillment
+                  </dt>
+                  <dd className="text-right font-black text-white">
+                    {fulfillment.optionName}
+                    {localPickup && fulfillment.pickupLocation ? (
+                      <span className="mt-1 block text-xs font-semibold text-cyan-100/70">
+                        We will email when pickup in {fulfillment.pickupLocation} is ready.
+                      </span>
+                    ) : null}
+                  </dd>
+                </div>
+              ) : null}
               {receiptUrl ? (
                 <div className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                   <dt className="text-sm font-bold text-cyan-100/70">

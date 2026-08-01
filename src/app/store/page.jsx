@@ -4,7 +4,7 @@ import Storefront from "./Storefront";
 export const metadata = {
   title: "Store | SeaPals TCG",
   description:
-    "Shop SeaPals starter kits, expansion decks, game accessories, apparel, storage, and plush gear.",
+    "Preview SeaPals starter kits, ready-to-play decks, the Accessories Kit, Conditions Decks, dice, and Reef Point tokens.",
 };
 
 function getRequestedProduct(searchParams) {

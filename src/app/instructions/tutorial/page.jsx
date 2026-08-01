@@ -1,5 +1,9 @@
 import StandaloneTutorial from "./StandaloneTutorial";
 import {
+  createSimulatorDeckHref,
+  getValidSimulatorDeck,
+} from "@/app/simulator/simulatorDeckRoute.mjs";
+import {
   STANDALONE_TUTORIAL_RETURN_PATH,
   createStandaloneTutorialStoryModeData,
 } from "./standaloneTutorialConfig.mjs";
@@ -10,11 +14,21 @@ export const metadata = {
     "Learn SeaPals by playing Mr. Easterling's complete guided aquarium lesson.",
 };
 
-export default function InstructionsTutorialPage() {
+export default async function InstructionsTutorialPage({ searchParams }) {
+  const params = await searchParams;
+  const returnDeck = getValidSimulatorDeck(params?.returnDeck);
+  const returnPath =
+    createSimulatorDeckHref(returnDeck?.id) ?? STANDALONE_TUTORIAL_RETURN_PATH;
+  const returnDeckName = returnDeck?.name.replace(/\s+Deck$/i, "");
+  const storyModeData = {
+    ...createStandaloneTutorialStoryModeData(),
+    returnLabel: returnDeckName ? `${returnDeckName} Trial` : "Instructions",
+  };
+
   return (
     <StandaloneTutorial
-      storyModeData={createStandaloneTutorialStoryModeData()}
-      returnPath={STANDALONE_TUTORIAL_RETURN_PATH}
+      storyModeData={storyModeData}
+      returnPath={returnPath}
     />
   );
 }

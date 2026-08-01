@@ -504,6 +504,7 @@ export const reefEncyclopediaEntries = [
   },
   {
     name: "Spinner Dolphins",
+    grammaticalNumber: "plural",
     scientificName: "Stenella longirostris",
     aliases: ["Spinner Dolphin", "Long-snouted Spinner Dolphin"],
     zone: "Reef",
@@ -831,6 +832,7 @@ export const reefEncyclopediaEntries = [
   },
   {
     name: "Oysters",
+    grammaticalNumber: "plural",
     scientificName: "Ostreidae",
     aliases: ["Oyster", "True Oysters", "Oyster Reef"],
     zone: "Reef",

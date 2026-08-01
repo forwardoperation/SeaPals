@@ -115,8 +115,20 @@ const questions = [
   },
   {
     question: "When can I buy it?",
-    answer:
-      "SeaPals is coming soon. Join the crew below for launch news, early purchase updates, and new card reveals.",
+    answer: (
+      <>
+        You can preview the complete launch collection in the{" "}
+        <Link
+          href="/store"
+          className="font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950"
+        >
+          SeaPals Store
+        </Link>
+        . Checkout will open after the Pennsylvania sales tax license and final
+        launch checks are complete. Join the crew below to hear when ordering
+        begins.
+      </>
+    ),
   },
 ];
 
@@ -146,12 +158,12 @@ export default function HomePage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#signup"
+              <Link
+                href="/store"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#f7c948] px-6 py-3 text-base font-bold text-[#082f49] shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/50"
               >
-                Get launch updates
-              </a>
+                Explore the Store
+              </Link>
               <Link
                 href="/instructions"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-base font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
@@ -160,7 +172,13 @@ export default function HomePage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-cyan-100/75">
-              Join for launch news, card reveals, and early purchase updates.
+              Want launch news, card reveals, and early purchase updates?{" "}
+              <a
+                href="#signup"
+                className="font-bold text-white underline decoration-cyan-200/60 underline-offset-4 hover:text-[#f7c948]"
+              >
+                Join the crew.
+              </a>
             </p>
 
             <dl className="mt-9 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-white/15 pt-7 sm:grid-cols-3">
@@ -387,6 +405,93 @@ export default function HomePage() {
                 height={525}
                 sizes="(max-width: 640px) 38vw, 220px"
                 className="h-auto w-full translate-y-8 rotate-5 rounded-xl shadow-xl"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="try-seapals-heading"
+        className="mt-16 overflow-hidden rounded-[2rem] bg-[#062f46] text-white shadow-2xl shadow-cyan-950/15 md:mt-24 md:rounded-[2.75rem]"
+      >
+        <div className="grid lg:grid-cols-[1.05fr_.95fr] lg:items-stretch">
+          <div className="p-6 sm:p-9 md:p-12 lg:p-14">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#f7c948]">
+              Try before you buy
+            </p>
+            <h2
+              id="try-seapals-heading"
+              className="mt-4 max-w-2xl font-serif text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl"
+            >
+              Meet the decks. Learn a round. Choose your reef.
+            </h2>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/80">
+              Explore every ready-to-play deck and walk through a guided game
+              before deciding which Starter Kit, deck, or accessory belongs at
+              your table.
+            </p>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <Link
+                href="/decks"
+                className="group rounded-2xl border border-cyan-200/25 bg-white/10 p-5 transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
+              >
+                <span className="block text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
+                  Step 1
+                </span>
+                <span className="mt-2 block text-lg font-bold text-white">
+                  Compare the decks
+                </span>
+                <span className="mt-2 block text-sm leading-6 text-cyan-50/75">
+                  See every 60-card list and the strategy behind it.
+                </span>
+              </Link>
+              <Link
+                href="/instructions/tutorial"
+                className="group rounded-2xl border border-cyan-200/25 bg-white/10 p-5 transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
+              >
+                <span className="block text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
+                  Step 2
+                </span>
+                <span className="mt-2 block text-lg font-bold text-white">
+                  Try the guided tutorial
+                </span>
+                <span className="mt-2 block text-sm leading-6 text-cyan-50/75">
+                  Learn the turn flow with a hands-on practice game.
+                </span>
+              </Link>
+              <Link
+                href="/store"
+                className="group rounded-2xl bg-[#f7c948] p-5 text-[#082f49] shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/50 sm:col-span-2"
+              >
+                <span className="block text-xs font-black uppercase tracking-[0.16em] text-[#075b7d]">
+                  Step 3
+                </span>
+                <span className="mt-2 block text-xl font-black">
+                  Explore the Store
+                </span>
+                <span className="mt-2 block text-sm font-semibold leading-6 text-[#073d58]">
+                  Preview the Starter Kit, individual decks, and gameplay
+                  accessories in one place.
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative flex min-h-[280px] items-center overflow-hidden bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 p-6 sm:min-h-[340px] sm:p-9 lg:min-h-full lg:p-10">
+            <div
+              aria-hidden="true"
+              className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-300/35 blur-3xl"
+            />
+            <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-white p-3 shadow-2xl shadow-cyan-950/20 sm:p-4">
+              <Image
+                src="/images/promo/decks-promo.png"
+                alt="The seven SeaPals ready-to-play deck designs"
+                width={6596}
+                height={1202}
+                sizes="(max-width: 1024px) 90vw, 520px"
+                className="h-auto w-full rounded-xl"
               />
             </div>
           </div>

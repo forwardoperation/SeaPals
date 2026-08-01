@@ -32,10 +32,66 @@ export function normalizeCartItems(value) {
   }));
 }
 
+function normalizeShippingOption(value, fallbackShippingCents) {
+  const amountCents = Number(value?.amountCents ?? fallbackShippingCents);
+  if (!Number.isSafeInteger(amountCents) || amountCents < 0) {
+    throw new CartValidationError("Shipping is not configured correctly.");
+  }
+
+  const fulfillmentMethod =
+    value?.fulfillmentMethod === "pickup" ? "pickup" : "shipping";
+  const id = String(value?.id ?? "standard").trim().toLowerCase();
+  const displayName = String(
+    value?.displayName ?? "Standard Shipping & Handling"
+  )
+    .trim()
+    .slice(0, 100);
+  const pickupLocation =
+    fulfillmentMethod === "pickup"
+      ? String(value?.pickupLocation ?? "").trim().slice(0, 100)
+      : null;
+
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) || !displayName) {
+    throw new CartValidationError(
+      "That fulfillment option is not available.",
+      "invalid_shipping_option"
+    );
+  }
+
+  if (fulfillmentMethod === "pickup" && (amountCents !== 0 || !pickupLocation)) {
+    throw new CartValidationError("Local pickup is not configured correctly.");
+  }
+
+  return {
+    id,
+    displayName,
+    description: String(value?.description ?? "").trim().slice(0, 200),
+    fulfillmentMethod,
+    pickupLocation,
+    amountCents,
+    deliveryEstimateMinDays:
+      Number.isSafeInteger(value?.deliveryEstimateMinDays) &&
+      value.deliveryEstimateMinDays > 0
+        ? value.deliveryEstimateMinDays
+        : null,
+    deliveryEstimateMaxDays:
+      Number.isSafeInteger(value?.deliveryEstimateMaxDays) &&
+      value.deliveryEstimateMaxDays > 0
+        ? value.deliveryEstimateMaxDays
+        : null,
+  };
+}
+
 export function quoteCart(
   requestedItems,
   products,
-  { shippingCents = 0, maxPerProduct = 10, maxTotalQuantity = 20 } = {}
+  {
+    fulfillmentOption = null,
+    shippingOption = null,
+    shippingCents = 0,
+    maxPerProduct = 10,
+    maxTotalQuantity = 20,
+  } = {}
 ) {
   const items = normalizeCartItems(requestedItems);
 
@@ -103,10 +159,11 @@ export function quoteCart(
     );
   }
 
-  const normalizedShipping = Number(shippingCents);
-  if (!Number.isSafeInteger(normalizedShipping) || normalizedShipping < 0) {
-    throw new CartValidationError("Shipping is not configured correctly.");
-  }
+  const normalizedShippingOption = normalizeShippingOption(
+    fulfillmentOption ?? shippingOption,
+    shippingCents
+  );
+  const normalizedShipping = normalizedShippingOption.amountCents;
 
   const totalCents = subtotalCents + normalizedShipping;
   if (!Number.isSafeInteger(totalCents)) {
@@ -117,6 +174,11 @@ export function quoteCart(
     items: quotedItems,
     totalQuantity,
     subtotalCents,
+    fulfillmentOption: normalizedShippingOption,
+    fulfillmentOptionId: normalizedShippingOption.id,
+    fulfillmentOptionName: normalizedShippingOption.displayName,
+    fulfillmentMethod: normalizedShippingOption.fulfillmentMethod,
+    pickupLocation: normalizedShippingOption.pickupLocation,
     shippingCents: normalizedShipping,
     totalCents,
   };

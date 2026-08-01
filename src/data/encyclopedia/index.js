@@ -3,6 +3,7 @@ import { CardKind } from "@/data/cards/types";
 import { reefEncyclopediaEntries } from "./reef";
 import { deepEncyclopediaEntries } from "./deep";
 import { oceanicEncyclopediaEntries } from "./oceanic";
+import { encyclopediaCardOwnerOverrides } from "./cardOwnership";
 
 const ZONE_TO_CARD_ZONE = {
   Reef: "reef",
@@ -58,13 +59,13 @@ function hasArtwork(card) {
 
 const creatureCards = allCards.filter((card) => card.kind === CardKind.CREATURE);
 
-function findMatchingCards(entry) {
+function cardMatchesEntry(card, entry) {
   const entryNames = new Set(
     [entry.name, ...(entry.aliases ?? [])].map(normalizeName).filter(Boolean)
   );
 
-  return creatureCards.filter((card) =>
-    cardDisplayNames(card).some((name) => entryNames.has(normalizeName(name)))
+  return cardDisplayNames(card).some((name) =>
+    entryNames.has(normalizeName(name))
   );
 }
 
@@ -104,6 +105,7 @@ const REQUIRED_ENTRY_FIELDS = [
 ];
 const VALID_ZONES = new Set(Object.keys(ZONE_TO_CARD_ZONE));
 const VALID_GROUPS = new Set(Object.values(CATEGORY_LABELS));
+const VALID_GRAMMATICAL_NUMBERS = new Set(["singular", "plural"]);
 
 for (const entry of rawEntries) {
   const missingFields = REQUIRED_ENTRY_FIELDS.filter(
@@ -116,6 +118,14 @@ for (const entry of rawEntries) {
   }
   if (!VALID_ZONES.has(entry.zone) || !VALID_GROUPS.has(entry.group)) {
     throw new Error(`Encyclopedia entry “${entry.name}” has an invalid zone or group.`);
+  }
+  if (
+    entry.grammaticalNumber != null &&
+    !VALID_GRAMMATICAL_NUMBERS.has(entry.grammaticalNumber)
+  ) {
+    throw new Error(
+      `Encyclopedia entry ${entry.name} has an invalid grammatical number.`
+    );
   }
   if (!Array.isArray(entry.aliases)) {
     throw new Error(`Encyclopedia entry “${entry.name}” must provide an aliases array.`);
@@ -156,9 +166,62 @@ if (duplicateSlugs.length > 0) {
   );
 }
 
+const rawEntryBySlug = new Map(
+  rawEntries.map((entry) => [slugifyCreatureName(entry.name), entry])
+);
+const creatureCardIds = new Set(creatureCards.map((card) => card.id));
+
+for (const [cardId, ownerSlug] of Object.entries(
+  encyclopediaCardOwnerOverrides
+)) {
+  if (!creatureCardIds.has(cardId)) {
+    throw new Error(
+      `Encyclopedia card owner override references unknown creature card: ${cardId}`
+    );
+  }
+  if (!rawEntryBySlug.has(ownerSlug)) {
+    throw new Error(
+      `Encyclopedia card owner override for ${cardId} references unknown profile: ${ownerSlug}`
+    );
+  }
+}
+
+const encyclopediaOwnerSlugByCardId = new Map(
+  creatureCards.map((card) => {
+    const candidates = rawEntries.filter((entry) => cardMatchesEntry(card, entry));
+    const candidateSlugs = candidates.map((entry) =>
+      slugifyCreatureName(entry.name)
+    );
+    const explicitOwner = encyclopediaCardOwnerOverrides[card.id];
+
+    if (explicitOwner) {
+      if (!candidateSlugs.includes(explicitOwner)) {
+        throw new Error(
+          `Encyclopedia card owner override for ${card.id} no longer matches ${explicitOwner}.`
+        );
+      }
+      return [card.id, explicitOwner];
+    }
+
+    if (candidateSlugs.length !== 1) {
+      const detail = candidateSlugs.length
+        ? candidateSlugs.join(", ")
+        : "no profiles";
+      throw new Error(
+        `Creature card ${card.id} needs an explicit encyclopedia owner; matched ${detail}.`
+      );
+    }
+
+    return [card.id, candidateSlugs[0]];
+  })
+);
+
 export const encyclopediaCreatures = rawEntries
   .map((entry) => {
-    const cards = findMatchingCards(entry);
+    const slug = slugifyCreatureName(entry.name);
+    const cards = creatureCards.filter(
+      (card) => encyclopediaOwnerSlugByCardId.get(card.id) === slug
+    );
     const preferredCard = preferredCardFor(entry, cards);
 
     if (!preferredCard) {
@@ -169,10 +232,11 @@ export const encyclopediaCreatures = rawEntries
 
     return {
       ...entry,
-      slug: slugifyCreatureName(entry.name),
+      slug,
       image: preferredCard.image,
       hasArtwork: hasArtwork(preferredCard),
       cardId: preferredCard.id,
+      cardIds: cards.map((card) => card.id),
       cardName: cardDisplayName(preferredCard),
       cardCount: cards.length,
       searchText: [
@@ -197,8 +261,13 @@ export const encyclopediaCreatures = rawEntries
 
 const entriesByCardId = new Map();
 for (const creature of encyclopediaCreatures) {
-  for (const card of findMatchingCards(creature)) {
-    entriesByCardId.set(card.id, creature.slug);
+  for (const cardId of creature.cardIds) {
+    if (entriesByCardId.has(cardId)) {
+      throw new Error(
+        `Creature card ${cardId} is owned by multiple encyclopedia profiles.`
+      );
+    }
+    entriesByCardId.set(cardId, creature.slug);
   }
 }
 

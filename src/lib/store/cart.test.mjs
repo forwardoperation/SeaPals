@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { storeProductDefinitions } from "../../data/store/products.js";
+import {
+  storeLaunchProductIds,
+  storeProductDefinitions,
+} from "../../data/store/products.js";
 import { getStoreConfiguration } from "./catalog.js";
 import {
   CartValidationError,
@@ -19,7 +22,7 @@ const products = [
     checkoutDescription: "Coral Garden 60-card ready-to-play expansion deck.",
     image: "/coral.png",
     taxCode: "txcd_99999999",
-    priceCents: 2000,
+    priceCents: 2200,
     available: true,
   },
   {
@@ -32,7 +35,7 @@ const products = [
     checkoutDescription: "Darkness Shroud 60-card expansion deck.",
     image: "/deep.png",
     taxCode: "txcd_99999999",
-    priceCents: 2000,
+    priceCents: 2200,
     available: false,
   },
   {
@@ -46,7 +49,7 @@ const products = [
       "Includes two 60-card decks, conditions, dice, and Reef Point tokens.",
     image: "/starter-kit.svg",
     taxCode: "txcd_99999999",
-    priceCents: 4000,
+    priceCents: 4400,
     available: true,
   },
   {
@@ -54,13 +57,13 @@ const products = [
     sku: "SP-ACC-SET",
     deckId: null,
     category: "game-accessories",
-    name: "Accessory Set",
+    name: "Accessories Kit",
     description: "Shared gameplay accessories.",
     checkoutDescription:
-      "Includes Dice Pack, Conditions Deck, and Reef Point Tokens.",
+      "Includes Conditions Deck, Dice Pack, and Reef Point Token Set.",
     image: "/accessory-set.svg",
     taxCode: "txcd_99999999",
-    priceCents: 1000,
+    priceCents: 1200,
     available: true,
   },
 ];
@@ -110,15 +113,12 @@ test("the catalog definitions use the established cash prices", () => {
     (product) => product.category === "expansion-decks"
   );
 
-  assert.equal(definitionsById.get("starter-kit").defaultPriceCents, 4000);
-  assert.equal(definitionsById.get("accessory-set").defaultPriceCents, 1000);
+  assert.equal(definitionsById.get("starter-kit").defaultPriceCents, 4400);
+  assert.equal(definitionsById.get("accessory-set").defaultPriceCents, 1200);
   assert.equal(expansionDecks.length, 7);
-  assert.ok(expansionDecks.every((product) => product.defaultPriceCents === 2000));
+  assert.ok(expansionDecks.every((product) => product.defaultPriceCents === 2200));
 
   for (const productId of [
-    "reef-point-tokens",
-    "dice-pack",
-    "conditions-deck",
     "custom-t-shirt",
     "card-binder",
     "backpack",
@@ -126,12 +126,98 @@ test("the catalog definitions use the established cash prices", () => {
   ]) {
     assert.equal(definitionsById.get(productId).defaultPriceCents, null);
   }
+
+  for (const productId of [
+    "reef-point-tokens",
+    "dice-pack",
+    "conditions-deck",
+  ]) {
+    assert.equal(definitionsById.get(productId).defaultPriceCents, 500);
+  }
+});
+
+test("the default storefront is limited to the twelve prelaunch products", () => {
+  withStoreEnvironment({}, () => {
+    const configuration = getStoreConfiguration();
+
+    assert.deepEqual(
+      configuration.products.map((product) => product.id),
+      storeLaunchProductIds
+    );
+    assert.equal(configuration.products.length, 12);
+    assert.equal(
+      configuration.products.some((product) => product.id === "accessory-set"),
+      true
+    );
+    assert.equal(
+      configuration.products.some((product) => product.id === "custom-t-shirt"),
+      false
+    );
+  });
+});
+
+test("the catalog exposes server-controlled shipping and Elverson pickup options", () => {
+  withStoreEnvironment(
+    {
+      STORE_STANDARD_SHIPPING_CENTS: "800",
+      STORE_PRIORITY_SHIPPING_CENTS: "1350",
+      STORE_LOCAL_PICKUP_ENABLED: "true",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.defaultShippingOptionId, "standard");
+      assert.deepEqual(
+        configuration.shippingOptions.map((option) => ({
+          id: option.id,
+          amountCents: option.amountCents,
+          fulfillmentMethod: option.fulfillmentMethod,
+          pickupLocation: option.pickupLocation,
+        })),
+        [
+          {
+            id: "standard",
+            amountCents: 800,
+            fulfillmentMethod: "shipping",
+            pickupLocation: null,
+          },
+          {
+            id: "priority",
+            amountCents: 1350,
+            fulfillmentMethod: "shipping",
+            pickupLocation: null,
+          },
+          {
+            id: "pickup-elverson-pa",
+            amountCents: 0,
+            fulfillmentMethod: "pickup",
+            pickupLocation: "Elverson, PA",
+          },
+        ]
+      );
+    }
+  );
+});
+
+test("future catalog products require an explicit preview switch", () => {
+  withStoreEnvironment({ STORE_SHOW_FUTURE_PRODUCTS: "true" }, () => {
+    const configuration = getStoreConfiguration();
+
+    assert.equal(configuration.products.length, storeProductDefinitions.length);
+    assert.ok(
+      configuration.products.some((product) => product.id === "accessory-set")
+    );
+    assert.ok(
+      configuration.products.some((product) => product.id === "custom-t-shirt")
+    );
+  });
 });
 
 test("the server catalog requires explicit product allowlisting", () => {
   withStoreEnvironment(
     {
       ...infrastructureEnvironment,
+      STORE_SHOW_FUTURE_PRODUCTS: "true",
       STORE_AVAILABLE_PRODUCT_IDS:
         "starter-kit, accessory-set, reef-point-tokens, custom-t-shirt",
       STORE_AVAILABLE_DECK_IDS: "coral-garden",
@@ -143,13 +229,13 @@ test("the server catalog requires explicit product allowlisting", () => {
         configuration.products.map((product) => [product.id, product])
       );
 
-      assert.equal(productsById.get("starter-kit").priceCents, 4000);
+      assert.equal(productsById.get("starter-kit").priceCents, 4400);
       assert.equal(productsById.get("starter-kit").available, true);
-      assert.equal(productsById.get("accessory-set").priceCents, 1000);
+      assert.equal(productsById.get("accessory-set").priceCents, 1200);
       assert.equal(productsById.get("accessory-set").available, true);
-      assert.equal(productsById.get("reef-point-tokens").priceCents, null);
-      assert.equal(productsById.get("reef-point-tokens").available, false);
-      assert.equal(productsById.get("coral-garden").priceCents, 2000);
+      assert.equal(productsById.get("reef-point-tokens").priceCents, 500);
+      assert.equal(productsById.get("reef-point-tokens").available, true);
+      assert.equal(productsById.get("coral-garden").priceCents, 2200);
       assert.equal(productsById.get("coral-garden").available, false);
 
       const shirt = productsById.get("custom-t-shirt");
@@ -158,6 +244,148 @@ test("the server catalog requires explicit product allowlisting", () => {
       assert.match(shirt.availabilityNote, /size/i);
       assert.equal(shirt.available, false);
       assert.equal(configuration.checkoutEnabled, true);
+      assert.equal(configuration.paymentMode, "test");
+    }
+  );
+});
+
+test("approved launch accessories use their server-controlled source prices", () => {
+  const accessoryIds = [
+    "accessory-set",
+    "conditions-deck",
+    "dice-pack",
+    "reef-point-tokens",
+  ];
+
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STORE_AVAILABLE_PRODUCT_IDS: accessoryIds.join(","),
+    },
+    () => {
+      const accessories = getStoreConfiguration().products.filter((product) =>
+        accessoryIds.includes(product.id)
+      );
+
+      assert.equal(accessories.length, 4);
+      assert.ok(accessories.every((product) => product.priceConfigured));
+      assert.ok(accessories.every((product) => product.available));
+      assert.deepEqual(
+        Object.fromEntries(
+          accessories.map((product) => [product.id, product.priceCents])
+        ),
+        {
+          "accessory-set": 1200,
+          "conditions-deck": 500,
+          "dice-pack": 500,
+          "reef-point-tokens": 500,
+        }
+      );
+    }
+  );
+});
+
+test("the complete prelaunch catalog quotes all twelve products safely", () => {
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STORE_CHECKOUT_ENABLED: "false",
+      STORE_AVAILABLE_PRODUCT_IDS: storeLaunchProductIds.join(","),
+      STORE_SHIPPING_CENTS: "750",
+      STRIPE_AUTOMATIC_TAX: "false",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+      const ids = configuration.products.map((product) => product.id);
+      const skus = configuration.products.map((product) => product.sku);
+      const decks = configuration.products.filter((product) => product.deckId);
+
+      assert.deepEqual(ids, storeLaunchProductIds);
+      assert.equal(new Set(ids).size, 12);
+      assert.equal(new Set(skus).size, 12);
+      assert.equal(decks.length, 7);
+      assert.ok(
+        decks.every(
+          (product) =>
+            product.cardsIncluded === 60 && product.deckId === product.id
+        )
+      );
+      assert.ok(configuration.products.every((product) => product.available));
+      assert.equal(configuration.checkoutEnabled, false);
+      assert.equal(configuration.automaticTaxEnabled, false);
+
+      const quote = quoteCart(
+        storeLaunchProductIds.map((productId) => ({ productId, quantity: 1 })),
+        configuration.products,
+        { shippingCents: configuration.shippingCents }
+      );
+
+      assert.equal(quote.items.length, 12);
+      assert.equal(quote.totalQuantity, 12);
+      assert.equal(quote.subtotalCents, 22_500);
+      assert.equal(quote.shippingCents, 750);
+      assert.equal(quote.totalCents, 23_250);
+    }
+  );
+});
+
+test("the catalog exposes structured simulator trials for decks and the starter kit", () => {
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STORE_CHECKOUT_ENABLED: "false",
+      STORE_AVAILABLE_PRODUCT_IDS: storeLaunchProductIds.join(","),
+    },
+    () => {
+      const productsById = new Map(
+        getStoreConfiguration().products.map((product) => [product.id, product])
+      );
+      const starterKit = productsById.get("starter-kit");
+      const openOcean = productsById.get("open-ocean-hunt");
+      const accessories = productsById.get("accessory-set");
+
+      assert.deepEqual(starterKit.includedDeckIds, [
+        "coral-garden",
+        "blue-water",
+      ]);
+      assert.deepEqual(starterKit.trialDecks, [
+        {
+          id: "coral-garden",
+          name: "Coral Garden",
+          href: "/simulator?deck=coral-garden",
+        },
+        {
+          id: "blue-water",
+          name: "Blue Water Deck",
+          href: "/simulator?deck=blue-water",
+        },
+      ]);
+      assert.deepEqual(openOcean.includedDeckIds, ["open-ocean-hunt"]);
+      assert.deepEqual(openOcean.trialDecks, [
+        {
+          id: "open-ocean-hunt",
+          name: "Open Ocean",
+          href: "/simulator?deck=open-ocean-hunt",
+        },
+      ]);
+      assert.deepEqual(accessories.includedDeckIds, []);
+      assert.deepEqual(accessories.trialDecks, []);
+    }
+  );
+});
+
+test("checkout rejects unrecognized Stripe key formats", () => {
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STRIPE_SECRET_KEY: "replace-me",
+      STORE_AVAILABLE_PRODUCT_IDS: "starter-kit",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.paymentMode, null);
+      assert.equal(configuration.checkoutEnabled, false);
     }
   );
 });
@@ -192,7 +420,7 @@ test("legacy deck allowlisting and shared deck pricing remain supported", () => 
 
       assert.equal(coralGarden.priceCents, 2250);
       assert.equal(coralGarden.available, true);
-      assert.equal(starterKit.priceCents, 4000);
+      assert.equal(starterKit.priceCents, 4400);
       assert.equal(starterKit.available, false);
     }
   );
@@ -201,10 +429,14 @@ test("legacy deck allowlisting and shared deck pricing remain supported", () => 
 test("automatic tax requires a resolved code for every available product", () => {
   const baseEnvironment = {
     ...infrastructureEnvironment,
+    STORE_SHOW_FUTURE_PRODUCTS: "true",
     STORE_AVAILABLE_PRODUCT_IDS: "starter-kit,backpack",
     STORE_PRICE_BACKPACK_CENTS: "3500",
+    STORE_TAX_REGISTRATION_CONFIRMED: "true",
+    STORE_PICKUP_TAX_CONFIRMED: "true",
     STRIPE_AUTOMATIC_TAX: "true",
     STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_10000000",
+    STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
   };
 
   withStoreEnvironment(baseEnvironment, () => {
@@ -238,6 +470,59 @@ test("automatic tax requires a resolved code for every available product", () =>
   );
 });
 
+test("live checkout requires owner-confirmed registration and shipping rates", () => {
+  const liveEnvironment = {
+    ...infrastructureEnvironment,
+    STRIPE_SECRET_KEY: "rk_live_example",
+    STORE_AVAILABLE_PRODUCT_IDS: "starter-kit",
+  };
+
+  withStoreEnvironment(liveEnvironment, () => {
+    const configuration = getStoreConfiguration();
+
+    assert.equal(configuration.taxRegistrationConfirmed, false);
+    assert.equal(configuration.checkoutEnabled, false);
+  });
+
+  withStoreEnvironment(
+    {
+      ...liveEnvironment,
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
+    },
+    () => {
+      assert.equal(getStoreConfiguration().checkoutEnabled, false);
+    }
+  );
+
+  withStoreEnvironment(
+    {
+      ...liveEnvironment,
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
+      STORE_SHIPPING_RATES_CONFIRMED: "true",
+    },
+    () => {
+      assert.equal(getStoreConfiguration().checkoutEnabled, true);
+    }
+  );
+
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STORE_AVAILABLE_PRODUCT_IDS: "starter-kit",
+      STRIPE_AUTOMATIC_TAX: "true",
+      STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_10000000",
+      STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.automaticTaxRequested, true);
+      assert.equal(configuration.automaticTaxEnabled, false);
+      assert.equal(configuration.checkoutEnabled, false);
+    }
+  );
+});
+
 test("quoteCart resolves prices from the server catalog and totals shipping", () => {
   const quote = quoteCart(
     [
@@ -250,13 +535,13 @@ test("quoteCart resolves prices from the server catalog and totals shipping", ()
 
   assert.equal(quote.items.length, 1);
   assert.equal(quote.items[0].quantity, 3);
-  assert.equal(quote.items[0].unitAmountCents, 2000);
+  assert.equal(quote.items[0].unitAmountCents, 2200);
   assert.equal(quote.items[0].checkoutDescription, products[0].checkoutDescription);
   assert.equal(quote.items[0].taxCode, "txcd_99999999");
   assert.equal(quote.items[0].category, "expansion-decks");
-  assert.equal(quote.subtotalCents, 6000);
+  assert.equal(quote.subtotalCents, 6600);
   assert.equal(quote.shippingCents, 500);
-  assert.equal(quote.totalCents, 6500);
+  assert.equal(quote.totalCents, 7100);
 });
 
 test("quoteCart supports kits and accessories without deck ids", () => {
@@ -269,12 +554,67 @@ test("quoteCart supports kits and accessories without deck ids", () => {
   );
 
   assert.equal(quote.items[0].deckId, null);
-  assert.equal(quote.items[0].unitAmountCents, 4000);
+  assert.equal(quote.items[0].unitAmountCents, 4400);
   assert.match(quote.items[0].checkoutDescription, /two 60-card decks/i);
   assert.equal(quote.items[1].deckId, null);
-  assert.equal(quote.items[1].unitAmountCents, 1000);
+  assert.equal(quote.items[1].unitAmountCents, 1200);
   assert.equal(quote.totalQuantity, 3);
-  assert.equal(quote.subtotalCents, 6000);
+  assert.equal(quote.subtotalCents, 6800);
+});
+
+test("quoteCart snapshots the selected fulfillment option and its server price", () => {
+  const priorityQuote = quoteCart(
+    [{ productId: "starter-kit", quantity: 1 }],
+    products,
+    {
+      fulfillmentOption: {
+        id: "priority",
+        displayName: "Priority Shipping & Handling",
+        description: "Faster carrier service.",
+        fulfillmentMethod: "shipping",
+        pickupLocation: null,
+        amountCents: 1250,
+      },
+    }
+  );
+
+  assert.equal(priorityQuote.fulfillmentOptionId, "priority");
+  assert.equal(priorityQuote.fulfillmentMethod, "shipping");
+  assert.equal(priorityQuote.shippingCents, 1250);
+  assert.equal(priorityQuote.totalCents, 5650);
+
+  const pickupQuote = quoteCart(
+    [{ productId: "starter-kit", quantity: 1 }],
+    products,
+    {
+      fulfillmentOption: {
+        id: "pickup-elverson-pa",
+        displayName: "Local pickup — Elverson, PA",
+        fulfillmentMethod: "pickup",
+        pickupLocation: "Elverson, PA",
+        amountCents: 0,
+      },
+    }
+  );
+
+  assert.equal(pickupQuote.fulfillmentMethod, "pickup");
+  assert.equal(pickupQuote.pickupLocation, "Elverson, PA");
+  assert.equal(pickupQuote.shippingCents, 0);
+  assert.equal(pickupQuote.totalCents, 4400);
+
+  assert.throws(
+    () =>
+      quoteCart([{ productId: "starter-kit", quantity: 1 }], products, {
+        fulfillmentOption: {
+          id: "pickup-elverson-pa",
+          displayName: "Local pickup — Elverson, PA",
+          fulfillmentMethod: "pickup",
+          pickupLocation: "Elverson, PA",
+          amountCents: 100,
+        },
+      }),
+    CartValidationError
+  );
 });
 
 test("quoteCart rejects unknown and unavailable products", () => {
@@ -322,6 +662,6 @@ test("quoteCart rejects empty and malformed carts", () => {
 });
 
 test("formatMoney formats minor currency units", () => {
-  assert.equal(formatMoney(2000, "usd"), "$20.00");
+  assert.equal(formatMoney(2200, "usd"), "$22.00");
   assert.equal(formatMoney(null, "usd"), "Price pending");
 });

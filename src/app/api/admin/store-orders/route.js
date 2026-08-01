@@ -9,6 +9,9 @@ export const runtime = "nodejs";
 const FULFILLMENT_STATUSES = new Set([
   "unfulfilled",
   "packing",
+  "ready_for_pickup",
+  "picked_up",
+  "on_hold",
   "shipped",
   "cancelled",
 ]);

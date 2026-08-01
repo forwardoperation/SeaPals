@@ -1,10 +1,19 @@
 import { existsSync } from "node:fs";
+import {
+  storeLaunchProductIds,
+  storeProductDefinitions,
+} from "../src/data/store/products.js";
 
-if (existsSync(".env.local") && typeof process.loadEnvFile === "function") {
+if (
+  process.env.STORE_SKIP_LOCAL_ENV !== "true" &&
+  existsSync(".env.local") &&
+  typeof process.loadEnvFile === "function"
+) {
   process.loadEnvFile(".env.local");
 }
 
 const online = process.argv.includes("--online");
+const launchCatalog = process.argv.includes("--launch-catalog");
 const checks = [];
 
 function addCheck(label, passed, detail, required = true) {
@@ -19,6 +28,15 @@ function trueValue(name) {
   return ["1", "true", "yes", "on"].includes(
     String(process.env[name] ?? "").trim().toLowerCase()
   );
+}
+
+function centsValue(value) {
+  if (value === undefined || value === null || String(value).trim() === "") {
+    return null;
+  }
+
+  const cents = Number(value);
+  return Number.isSafeInteger(cents) && cents > 0 ? cents : null;
 }
 
 function validSiteUrl(value) {
@@ -46,27 +64,35 @@ const availableProducts = String(
   .map((value) => value.trim())
   .filter(Boolean);
 const stripeKeyPattern = /^(?:sk|rk)_(?:test|live)_/;
-const productTaxEnvironment = new Map([
-  ["starter-kit", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["blue-water", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["disruption", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["coral-garden", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["darkness-shroud", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["open-ocean-hunt", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["murky-water", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["stinging-fortress", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["accessory-set", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["reef-point-tokens", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["dice-pack", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["conditions-deck", "STRIPE_GAME_PRODUCT_TAX_CODE"],
-  ["custom-t-shirt", "STRIPE_APPAREL_TAX_CODE"],
-  ["card-binder", "STRIPE_STORAGE_TAX_CODE"],
-  ["backpack", "STRIPE_STORAGE_TAX_CODE"],
-  ["plush-toy", "STRIPE_PLUSH_TAX_CODE"],
-]);
+const productDefinitions = new Map(
+  storeProductDefinitions.map((product) => [product.id, product])
+);
+const productTaxEnvironment = new Map(
+  storeProductDefinitions.map((product) => [
+    product.id,
+    product.taxCodeEnvKey,
+  ])
+);
 const invalidProductIds = availableProducts.filter(
   (productId) => !productTaxEnvironment.has(productId)
 );
+const standardShippingCents =
+  centsValue(process.env.STORE_STANDARD_SHIPPING_CENTS) ??
+  centsValue(process.env.STORE_SHIPPING_CENTS) ??
+  750;
+const priorityShippingCents =
+  centsValue(process.env.STORE_PRIORITY_SHIPPING_CENTS) ?? 1250;
+
+function resolvedProductPrice(productId) {
+  const definition = productDefinitions.get(productId);
+  if (!definition || definition.requiresConfiguration) return null;
+
+  return centsValue(process.env[definition.priceEnvKey]) ??
+    (definition.deckId
+      ? centsValue(process.env.STORE_DEFAULT_PRICE_CENTS)
+      : null) ??
+    centsValue(definition.defaultPriceCents);
+}
 
 addCheck(
   "Public site URL",
@@ -78,6 +104,16 @@ if (stripeKey.includes("_live_")) {
     "Live HTTPS site URL",
     String(process.env.NEXT_PUBLIC_SITE_URL ?? "").startsWith("https://"),
     "Live checkout must use the public HTTPS domain."
+  );
+  addCheck(
+    "Owner-confirmed sales tax registration",
+    trueValue("STORE_TAX_REGISTRATION_CONFIRMED"),
+    "Keep false until Pennsylvania has issued or activated the sales tax license; a Stripe Tax registration entry alone is not enough."
+  );
+  addCheck(
+    "Owner-confirmed shipping rates",
+    trueValue("STORE_SHIPPING_RATES_CONFIRMED"),
+    "Confirm the fixed Standard and Priority rates against packaged weights before live checkout."
   );
 }
 addCheck(
@@ -113,7 +149,53 @@ addCheck(
     : "Every allowlisted ID exists in the server catalog."
 );
 
+const unpricedAvailableProducts = availableProducts.filter(
+  (productId) =>
+    productDefinitions.has(productId) && resolvedProductPrice(productId) === null
+);
+addCheck(
+  "Prices for allowlisted products",
+  unpricedAvailableProducts.length === 0,
+  unpricedAvailableProducts.length
+    ? `Set an integer-cent price for: ${unpricedAvailableProducts.join(", ")}.`
+    : "Every allowlisted product has a server-controlled price."
+);
+addCheck(
+  "Shipping and pickup options",
+  standardShippingCents > 0 && priorityShippingCents > 0,
+  `Standard is ${standardShippingCents} cents, Priority is ${priorityShippingCents} cents, and Elverson pickup is free.`
+);
+
+if (launchCatalog) {
+  const missingLaunchProducts = storeLaunchProductIds.filter(
+    (productId) => !availableProducts.includes(productId)
+  );
+  const unpricedLaunchProducts = storeLaunchProductIds.filter(
+    (productId) => resolvedProductPrice(productId) === null
+  );
+
+  addCheck(
+    "Complete twelve-product launch allowlist",
+    missingLaunchProducts.length === 0,
+    missingLaunchProducts.length
+      ? `Still missing: ${missingLaunchProducts.join(", ")}.`
+      : "The Starter Kit, seven decks, Accessories Kit, Conditions Deck, Dice Pack, and RP Tokens are all selected."
+  );
+  addCheck(
+    "Prices for the twelve-product launch catalog",
+    unpricedLaunchProducts.length === 0,
+    unpricedLaunchProducts.length
+      ? `Owner-confirmed prices are still needed for: ${unpricedLaunchProducts.join(", ")}.`
+      : "Every launch product has a server-controlled price."
+  );
+}
+
 if (trueValue("STRIPE_AUTOMATIC_TAX")) {
+  addCheck(
+    "Tax registration launch gate",
+    trueValue("STORE_TAX_REGISTRATION_CONFIRMED"),
+    "Automatic tax stays blocked until the owner confirms the government registration is active."
+  );
   const globalTaxCode = String(
     process.env.STRIPE_PRODUCT_TAX_CODE ?? ""
   ).trim();
@@ -132,6 +214,21 @@ if (trueValue("STRIPE_AUTOMATIC_TAX")) {
       ? `Missing a validated category tax code for: ${missingTaxCodes.join(", ")}.`
       : "Every available product has a configured Stripe Tax code."
   );
+  const shippingTaxCode = String(
+    process.env.STRIPE_SHIPPING_TAX_CODE ?? ""
+  ).trim();
+  addCheck(
+    "Shipping tax code",
+    /^txcd_[0-9]+$/.test(shippingTaxCode),
+    "Set a validated Stripe shipping tax code before automatic tax is enabled."
+  );
+  if (!present("STORE_LOCAL_PICKUP_ENABLED") || trueValue("STORE_LOCAL_PICKUP_ENABLED")) {
+    addCheck(
+      "Elverson pickup tax sourcing",
+      trueValue("STORE_PICKUP_TAX_CONFIRMED"),
+      "Verify the pickup performance location and tax sourcing before automatic tax is used with local pickup."
+    );
+  }
 }
 addCheck(
   "Checkout launch switch",
@@ -147,7 +244,7 @@ if (online && stripeKeyPattern.test(stripeKey)) {
     const response = await fetch("https://api.stripe.com/v1/account", {
       headers: {
         Authorization: `Bearer ${stripeKey}`,
-        "Stripe-Version": "2026-06-24.dahlia",
+        "Stripe-Version": "2026-07-29.dahlia",
       },
     });
     const payload = await response.json();
@@ -234,6 +331,12 @@ for (const check of checks) {
 if (!online) {
   console.log(
     "\nRun `npm run store:check:online` after adding Stripe test credentials to validate the provider account and Supabase schema."
+  );
+}
+
+if (!launchCatalog) {
+  console.log(
+    "Run `npm run store:check:launch` to verify the complete twelve-product launch catalog."
   );
 }
 

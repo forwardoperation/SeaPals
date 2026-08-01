@@ -99,6 +99,10 @@ import {
 } from "./specialCardRules.mjs";
 import foundationDeckImg from "./images/foundation-deck.png";
 import palsDeckImg from "./images/pals-deck.png";
+import {
+  DEFAULT_SIMULATOR_DECK_ID,
+  resolveSimulatorDeckId,
+} from "./simulatorDeckRoute.mjs";
 
 function shuffle(arr, random = Math.random) {
   const result = arr.slice();
@@ -109,7 +113,7 @@ function shuffle(arr, random = Math.random) {
   return result;
 }
 
-const defaultDeckId = "coral-garden";
+const defaultDeckId = DEFAULT_SIMULATOR_DECK_ID;
 const CARD_ART_FALLBACK = "/images/brand/SeaPalsTCGLogoWhite.svg";
 const SPEARFISHING_FOREIGN_TARGET_CARD_IDS = (cardsById.spearfishing?.effects ?? [])
   .flatMap((effect) => effect.target?.includesOpponentOwnedInvasiveCardIds ?? []);
@@ -2100,6 +2104,7 @@ function OpeningCoinVisual({ mode = "landed", side = "heads", onAnimationEnd = n
 
 export default function Simulator({
   storyMode = null,
+  initialDeckId = null,
   accessibilitySettings = null,
   onOpenAccessibilitySettings = null,
 } = {}) {
@@ -2125,8 +2130,12 @@ export default function Simulator({
   const storyDifficulty = normalizeOpponentDifficulty(storyMode?.difficulty ?? OpponentDifficulty.MEDIUM);
   const storyOpponentName = String(storyMode?.opponentName ?? "Rival").trim() || "Rival";
   const storyReturnLabel = String(storyMode?.returnLabel ?? "Town").trim() || "Town";
-  const initialPlayerDeckId = isStoryMode ? storyPlayerDeckId : defaultDeckId;
+  const normalInitialDeckId = resolveSimulatorDeckId(initialDeckId);
+  const initialPlayerDeckId = isStoryMode ? storyPlayerDeckId : normalInitialDeckId;
   const initialOpponentDeckId = isStoryMode ? storyOpponentDeckId : defaultDeckId;
+  const initialPlayerDeckName =
+    prebuiltDecks.find((deck) => deck.id === initialPlayerDeckId)?.name ??
+    initialPlayerDeckId;
   const initialVictoryTarget = isStoryMode ? storyVictoryTarget : 30;
   const initialOpponentDifficulty = isStoryMode ? storyDifficulty : OpponentDifficulty.MEDIUM;
   const opponentHudLabel = isStoryMode ? storyOpponentName : "Rival Reef";
@@ -2277,7 +2286,7 @@ export default function Simulator({
     title: isStoryMode ? `${storyOpponentName} challenges you!` : "Welcome to the SeaPals Simulator",
     message: isStoryMode
       ? `${storyOpponentName} is ready for a SeaPals duel. Build your ecosystem and be the first to reach ${storyVictoryTarget} VP.`
-      : "Learn SeaPals by building an ecosystem one legal action at a time. Choose a deck for each side and a victory target, then begin the setup round with four Foundation and four Pals cards.",
+      : `Your ${initialPlayerDeckName} is selected. Choose an opponent deck and victory target, then begin the setup round with four Foundation and four Pals cards.`,
   }));
   useEffect(() => {
     if (eventOverlay?.type !== OpeningCoinPhase.FLIPPING) return undefined;
@@ -2307,13 +2316,18 @@ export default function Simulator({
   const [pendingEvents, setPendingEvents] = useState([]);
   const [faceoffRolling, setFaceoffRolling] = useState(false);
   const [faceoffPreview, setFaceoffPreview] = useState(null);
-  const [log, setLog] = useState(["New Coral Garden game started. Setup: play a base Coral or Creature School using your 3 RP."]);
+  const [log, setLog] = useState([
+    `New ${initialPlayerDeckName} game started. Setup: play a base Coral or Creature School using your 3 RP.`,
+  ]);
   const [turnLog, setTurnLog] = useState(["Setup began with 3 RP and an eight-card hand."]);
   const opponentDifficultyProfile = getOpponentDifficultyProfile(opponentDifficulty);
   const storyPlayerDeckName = storyPlayerDeckSnapshot?.name
     ?? prebuiltDecks.find((deck) => deck.id === storyPlayerDeckId)?.name
     ?? storyPlayerDeckId;
   const storyOpponentDeckName = prebuiltDecks.find((deck) => deck.id === storyOpponentDeckId)?.name ?? storyOpponentDeckId;
+  const selectedPlayerDeck = prebuiltDecks.find(
+    (deck) => deck.id === selectedDeckId,
+  );
 
   const playerHabitats = playerHabitatInstances.map((instance) => instance.cardId);
   const playerReefCreatures = playerReefCreatureInstances.map((instance) => instance.cardId);
@@ -11333,6 +11347,18 @@ export default function Simulator({
                     Return to {storyReturnLabel}
                   </button>
                 </div>
+              ) : selectedPlayerDeck ? (
+                <div className="mt-3 flex flex-wrap justify-center gap-3">
+                  <Link
+                    href={{
+                      pathname: "/store",
+                      query: { deck: selectedPlayerDeck.id },
+                    }}
+                    className="rounded-full bg-amber-950 px-6 py-2.5 text-sm font-black text-amber-50 shadow-lg transition hover:bg-slate-900 focus:outline-none focus:ring-4 focus:ring-amber-300/70"
+                  >
+                    Shop {selectedPlayerDeck.name}
+                  </Link>
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -12302,6 +12328,19 @@ export default function Simulator({
                     </fieldset>
                     <label className="mt-4 block rounded-2xl border border-cyan-400 bg-cyan-400/10 p-4"><span className="text-xs font-black uppercase tracking-wider text-cyan-300">Victory Target</span><select value={pendingVictoryTarget} onChange={(event) => setPendingVictoryTarget(Number(event.target.value))} className="ml-4 rounded-xl bg-slate-950 px-3 py-2 font-bold text-white"><option value={10}>10 VP — Quick Game</option><option value={26}>26 VP — Guided Strategy</option><option value={30}>30 VP — Full Game</option></select></label>
                     <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn. Every illegal play explains what is missing before you commit.</div>
+                    <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-cyan-400/10 p-4 text-sm leading-relaxed text-cyan-50">
+                      <strong className="block text-base text-white">New to SeaPals?</strong>
+                      <span className="mt-1 block">Learn the board and each turn by playing Mr. Easterling&apos;s guided aquarium lesson. Your selected trial deck will still be waiting when you return.</span>
+                      <Link
+                        href={{
+                          pathname: "/instructions/tutorial",
+                          query: { returnDeck: selectedDeckId },
+                        }}
+                        className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-2.5 text-sm font-black text-slate-950 transition hover:bg-cyan-200 focus:outline-none focus:ring-4 focus:ring-cyan-100/70"
+                      >
+                        Start guided tutorial
+                      </Link>
+                    </div>
                     <div className="mt-5 flex flex-wrap justify-end gap-3">{!eventOverlay.initial ? <button type="button" onClick={closeEventOverlay} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Keep Current Game</button> : null}<button type="button" onClick={() => restartGame(selectedDeckId, selectedOpponentDeckId, pendingVictoryTarget, pendingOpponentDifficulty)} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{eventOverlay.initial ? "Let's Begin!" : "Start New Game"}</button></div>
                   </div>
                   )

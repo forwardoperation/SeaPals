@@ -159,7 +159,8 @@ export default function PrivacyPage() {
         <p>
           If checkout is enabled, Stripe may collect contact, payment, billing,
           shipping, tax, and fraud-prevention information. Sea Realm receives
-          order and fulfillment details such as name, email, shipping address,
+          order and fulfillment details such as name, email, selected shipping
+          or Elverson pickup method, shipping address when delivery is selected,
           purchased items, totals, payment state, and receipt references. Sea
           Realm does not receive or store a full payment-card number.
         </p>

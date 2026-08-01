@@ -6,6 +6,7 @@ import {
 } from "@/lib/store/stripe.mjs";
 
 export const runtime = "nodejs";
+const MAX_WEBHOOK_BODY_BYTES = 1_000_000;
 
 const CHECKOUT_EVENT_TYPES = new Set([
   "checkout.session.completed",
@@ -30,6 +31,16 @@ function nullableUuid(value) {
   )
     ? id
     : null;
+}
+
+function nullableText(value, maxLength = 100) {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text ? text.slice(0, maxLength) : null;
+}
+
+function nullableOptionId(value) {
+  const id = nullableText(value, 100);
+  return id && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) ? id : null;
 }
 
 function eventTimestamp(event) {
@@ -59,12 +70,14 @@ function normalizeCheckoutPaymentStatus(eventType, session) {
 }
 
 function normalizeShippingAddress(session) {
+  if (session?.metadata?.fulfillment_method === "pickup") return null;
+
   const customer = session?.customer_details ?? {};
   const shipping =
     session?.collected_information?.shipping_details ??
     session?.shipping_details ??
     {};
-  const address = shipping?.address ?? customer?.address ?? null;
+  const address = shipping?.address ?? null;
 
   if (!address) return null;
 
@@ -84,6 +97,11 @@ function normalizeShippingAddress(session) {
 
 async function normalizeCheckoutEvent(event) {
   const session = event.data.object;
+  const fulfillmentMethod = ["shipping", "pickup"].includes(
+    session?.metadata?.fulfillment_method
+  )
+    ? session.metadata.fulfillment_method
+    : null;
   const paymentStatus = normalizeCheckoutPaymentStatus(event.type, session);
   const paymentIntentId = nullableId(session.payment_intent, "pi_");
   let receipt = null;
@@ -117,9 +135,22 @@ async function normalizeCheckoutEvent(event) {
     shippingCents: nullableInteger(session?.total_details?.amount_shipping),
     taxCents: nullableInteger(session?.total_details?.amount_tax),
     totalCents: nullableInteger(session?.amount_total),
+    amountRefundedCents: null,
     receiptUrl: receipt?.receiptUrl ?? null,
     receiptNumber: receipt?.receiptNumber ?? null,
     paymentLivemode: Boolean(event?.livemode),
+    fulfillmentMethod,
+    fulfillmentOptionId: nullableOptionId(
+      session?.metadata?.fulfillment_option_id
+    ),
+    fulfillmentOptionName: nullableText(
+      session?.metadata?.fulfillment_option_name
+    ),
+    pickupLocation: nullableText(session?.metadata?.pickup_location),
+    stripeShippingRateId: nullableId(
+      session?.shipping_cost?.shipping_rate,
+      "shr_"
+    ),
   };
 }
 
@@ -147,8 +178,36 @@ function normalizeRefundEvent(event) {
     shippingCents: null,
     taxCents: null,
     totalCents: null,
+    amountRefundedCents: amountRefunded,
     receiptUrl: charge?.receipt_url ?? null,
     receiptNumber: charge?.receipt_number ?? null,
+    paymentLivemode: Boolean(event?.livemode),
+  };
+}
+
+function normalizeDisputeEvent(event) {
+  const dispute = event.data.object;
+
+  return {
+    providerEventId: event.id,
+    eventType: event.type,
+    eventCreatedAt: eventTimestamp(event),
+    orderId: nullableUuid(dispute?.metadata?.order_id),
+    checkoutSessionId: null,
+    paymentIntentId: nullableId(dispute?.payment_intent, "pi_"),
+    chargeId: nullableId(dispute?.charge, "ch_"),
+    paymentStatus: "disputed",
+    customerEmail: null,
+    customerName: null,
+    shippingAddress: null,
+    currency: dispute?.currency ?? null,
+    subtotalCents: null,
+    shippingCents: null,
+    taxCents: null,
+    totalCents: null,
+    amountRefundedCents: null,
+    receiptUrl: null,
+    receiptNumber: null,
     paymentLivemode: Boolean(event?.livemode),
   };
 }
@@ -172,6 +231,7 @@ function normalizeFailedPaymentIntentEvent(event) {
     shippingCents: null,
     taxCents: null,
     totalCents: null,
+    amountRefundedCents: null,
     receiptUrl: null,
     receiptNumber: null,
     paymentLivemode: Boolean(event?.livemode),
@@ -179,7 +239,16 @@ function normalizeFailedPaymentIntentEvent(event) {
 }
 
 export async function POST(request) {
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > MAX_WEBHOOK_BODY_BYTES) {
+    return NextResponse.json({ error: "Webhook payload too large." }, { status: 413 });
+  }
+
   const payload = await request.text();
+  if (new TextEncoder().encode(payload).byteLength > MAX_WEBHOOK_BODY_BYTES) {
+    return NextResponse.json({ error: "Webhook payload too large." }, { status: 413 });
+  }
+
   const signature = request.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -204,13 +273,20 @@ export async function POST(request) {
     details = await normalizeCheckoutEvent(event);
   } else if (event.type === "charge.refunded") {
     details = normalizeRefundEvent(event);
+  } else if (event.type === "charge.dispute.created") {
+    details = normalizeDisputeEvent(event);
   } else if (event.type === "payment_intent.payment_failed") {
     details = normalizeFailedPaymentIntentEvent(event);
   } else {
     return NextResponse.json({ received: true, ignored: true });
   }
 
-  if (!details.orderId && !details.checkoutSessionId && !details.paymentIntentId) {
+  if (
+    !details.orderId &&
+    !details.checkoutSessionId &&
+    !details.paymentIntentId &&
+    !details.chargeId
+  ) {
     return NextResponse.json({ received: true, ignored: true });
   }
 
