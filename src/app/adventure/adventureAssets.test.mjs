@@ -127,6 +127,54 @@ test("Elverson ships distinct transparent GBA-style resident walk sheets", async
   }
 });
 
+test("Elverson town ships compact versioned walk sheets without softening portraits", async () => {
+  const optimizedSpriteAssets = [
+    ["/images/adventure/player-sprites-512-v2.png", "/images/adventure/player-sprites.png"],
+    ["/images/adventure/marina-sprites-512-v2.png", "/images/adventure/marina-sprites.png"],
+    ["/images/adventure/dorian-sprites-512-v2.png", "/images/adventure/dorian-sprites.png"],
+    ["/images/adventure/fisherman-wyeth-sprites-512-v2.png", "/images/adventure/fisherman-wyeth-sprites.png"],
+    ["/images/adventure/teacher-caroline-sprites-512-v2.png", "/images/adventure/teacher-caroline-sprites.png"],
+    ["/images/adventure/ivy-sprites-512-v2.png", "/images/adventure/ivy-sprites.png"],
+    ["/images/adventure/explorer-jordan-sprites-512-v2.png", "/images/adventure/explorer-jordan-sprites.png"],
+    ["/images/adventure/marine-biologist-jonah-sprites-512-v2.png", "/images/adventure/marine-biologist-jonah-sprites.png"],
+    ["/images/adventure/town-adult-sprites-512-v2.png", "/images/adventure/town-adult-sprites.png"],
+  ];
+  let optimizedBytes = 0;
+  let sourceBytes = 0;
+
+  for (const [optimizedPath, sourcePath] of optimizedSpriteAssets) {
+    const optimized = await readFile(publicAssetPath(optimizedPath));
+    const source = await readFile(publicAssetPath(sourcePath));
+    assert.equal(optimized.subarray(0, 8).toString("hex"), PNG_SIGNATURE, optimizedPath);
+    assert.equal(optimized.readUInt32BE(16), 512, `${optimizedPath} width`);
+    assert.equal(optimized.readUInt32BE(20), 768, `${optimizedPath} height`);
+    assert.ok([3, 6].includes(optimized[25]), `${optimizedPath} must retain alpha transparency`);
+    if (optimized[25] === 3) {
+      assert.ok(optimized.includes(Buffer.from("tRNS")), `${optimizedPath} must retain indexed transparency`);
+    }
+    assert.equal(optimized.subarray(-8, -4).toString("ascii"), "IEND", `${optimizedPath} must be complete`);
+    optimizedBytes += optimized.byteLength;
+    sourceBytes += source.byteLength;
+  }
+
+  const mentorOptimizedPath = "/images/adventure/mr-easterling-sprites-627-v3.png";
+  const mentorSourcePath = "/images/adventure/mr-easterling-sprites-v2.png";
+  const mentorOptimized = await readFile(publicAssetPath(mentorOptimizedPath));
+  const mentorSource = await readFile(publicAssetPath(mentorSourcePath));
+  assert.equal(mentorOptimized.subarray(0, 8).toString("hex"), PNG_SIGNATURE, mentorOptimizedPath);
+  assert.equal(mentorOptimized.readUInt32BE(16), 627, `${mentorOptimizedPath} width`);
+  assert.equal(mentorOptimized.readUInt32BE(20), 627, `${mentorOptimizedPath} height`);
+  assert.ok([3, 6].includes(mentorOptimized[25]), `${mentorOptimizedPath} must retain alpha transparency`);
+  if (mentorOptimized[25] === 3) {
+    assert.ok(mentorOptimized.includes(Buffer.from("tRNS")), `${mentorOptimizedPath} must retain indexed transparency`);
+  }
+  assert.equal(mentorOptimized.subarray(-8, -4).toString("ascii"), "IEND", `${mentorOptimizedPath} must be complete`);
+  optimizedBytes += mentorOptimized.byteLength;
+  sourceBytes += mentorSource.byteLength;
+
+  assert.ok(optimizedBytes < sourceBytes, "compact Elverson walk sheets must reduce transfer size");
+});
+
 test("Mr. Easterling ships a transparent identity-based walk sheet and portrait", async () => {
   for (const spritePath of [
     "/images/adventure/mr-easterling-sprites-v2.png",

@@ -59,6 +59,29 @@ test("Elverson uses a close-follow camera and compact human-toned overworld spri
   assert.doesNotMatch(styles, /hue-rotate\(/);
 });
 
+test("Elverson overworld sprites use compact versioned sheets while portraits stay full resolution", () => {
+  for (const spriteName of [
+    "player",
+    "marina",
+    "dorian",
+    "fisherman-wyeth",
+    "teacher-caroline",
+    "ivy",
+    "explorer-jordan",
+    "marine-biologist-jonah",
+    "town-adult",
+  ]) {
+    assert.match(
+      styles,
+      new RegExp(`\\.${spriteName}SpriteArtwork[^}]*background-image:\\s*url\\("/images/adventure/${spriteName}-sprites-512-v2\\.png"\\)`),
+    );
+    assert.match(
+      styles,
+      new RegExp(`\\.${spriteName}SpriteArtwork\\.spritePortrait[^}]*background-image:\\s*url\\("/images/adventure/${spriteName}-sprites\\.png"\\)`),
+    );
+  }
+});
+
 test("the tutorial interface consistently identifies Mr. Easterling as the guide", () => {
   assert.match(simulator, /name: String\(tutorialRuntime\?\.guide\?\.name \?\? ""\)\.trim\(\) \|\| "Mr\. Easterling"/);
   assert.match(simulator, /aria-label=\{`\$\{guide\.name\} guidance`\}/);
@@ -68,7 +91,7 @@ test("the tutorial interface consistently identifies Mr. Easterling as the guide
 });
 
 test("Mr. Easterling uses his identity-based overworld sheet and dedicated portrait", () => {
-  assert.match(styles, /\.academy-mentorSpriteArtwork[\s\S]*?mr-easterling-sprites-v2\.png/);
+  assert.match(styles, /\.academy-mentorSpriteArtwork[\s\S]*?mr-easterling-sprites-627-v3\.png/);
   assert.match(styles, /\.mrEasterlingPortraitArtwork[\s\S]*?mr-easterling-portrait-v2\.png/);
   assert.match(component, /function CharacterPortrait[\s\S]*?character === ACADEMY_MENTOR_ID[\s\S]*?mrEasterlingPortraitArtwork/);
   assert.match(component, /portraitSrc: "\/images\/adventure\/mr-easterling-portrait-v2\.png"/);
