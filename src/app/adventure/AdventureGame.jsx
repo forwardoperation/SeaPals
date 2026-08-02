@@ -64,6 +64,15 @@ import {
   getAdventureSceneTransitionDurationMs,
 } from "./adventureSceneTransition.mjs";
 import {
+  createAdventureSceneAssetPreloader,
+  getAdventureInteriorDestinationSceneIds,
+} from "./adventureSceneAssets.mjs";
+import {
+  getAdventureCameraRenderBounds,
+  isAdventureActorInRenderBounds,
+  isAdventureLayeredObjectInRenderBounds,
+} from "./adventureRenderCulling.mjs";
+import {
   ADVENTURE_ACTOR_ANIMATION_MODES,
   getAdventureActorAnimationMode,
   getAdventureWalkCycleDurationMs,
@@ -409,6 +418,18 @@ const SPRITE_FOOT_PROFILE_BY_ARTWORK = Object.freeze({
 
 function spriteArtworkCharacter(character) {
   return SPRITE_SOURCE_BY_CHARACTER[character] ?? residentSpriteSource(character);
+}
+
+function sceneCharacterSpriteProfileIds(scene) {
+  const residentProfiles = scene?.interactions
+    ?.filter((interaction) => (
+      ["trainer", "npc"].includes(interaction.type)
+      && TRAINERS[interaction.trainerId ?? interaction.npcId]
+    ))
+    .map((interaction) => spriteArtworkCharacter(
+      interaction.trainerId ?? interaction.npcId,
+    )) ?? [];
+  return ["player", ...residentProfiles];
 }
 
 function spriteFeetY(character, facing) {
@@ -2356,7 +2377,7 @@ function actionLabel(
   if (!interaction) return "Interact";
   if (interaction.type === "board") return "Board";
   if (interaction.type === "dock") return "Dock";
-  if (interaction.type === "fishing") return "Fish";
+  if (interaction.type === "fishing") return interaction.actionLabel ?? "Fish";
   if (interaction.type === "sub-launch") {
     if (expeditionState?.phase === "survey" && !guideComplete) return "Meet Luz";
     if (expeditionState?.phase === "survey" && !briefingComplete) return "Briefing first";
@@ -2406,6 +2427,7 @@ export default function AdventureGame({
   const [fieldworkActivity, setFieldworkActivity] = useState(null);
   const [fieldworkFeedback, setFieldworkFeedback] = useState(null);
   const [fishingSession, setFishingSession] = useState(null);
+  const [fishingRecastCue, setFishingRecastCue] = useState(null);
   const [packReveal, setPackReveal] = useState(null);
   const [showCompletion, setShowCompletion] = useState(false);
   const [tournamentRegistrationOpen, setTournamentRegistrationOpen] = useState(false);
@@ -2465,6 +2487,8 @@ export default function AdventureGame({
   const doorwayTransitionRef = useRef(null);
   const pendingSceneTransitionRef = useRef(null);
   const residentConversationSeenRef = useRef(new Set());
+  const worldActionRef = useRef(null);
+  const sceneAssetPreloaderRef = useRef(null);
 
   const createAccountStorageAdapter = useCallback(() => {
     if (!account?.id) {
@@ -2556,6 +2580,18 @@ export default function AdventureGame({
     dirtyRef.current = Boolean(value);
   }, []);
 
+  const preloadAdventureSceneAssets = useCallback((destinationScene) => {
+    if (!destinationScene || typeof window === "undefined") return Promise.resolve();
+    if (!sceneAssetPreloaderRef.current) {
+      sceneAssetPreloaderRef.current = createAdventureSceneAssetPreloader({
+        createImage: () => new window.Image(),
+      });
+    }
+    return sceneAssetPreloaderRef.current.preloadScene(destinationScene, {
+      characterSpriteProfileIds: sceneCharacterSpriteProfileIds(destinationScene),
+    });
+  }, []);
+
   const sceneId = gameSave?.world.sceneId ?? START_STATE.sceneId;
   const position = gameSave?.world.position ?? START_STATE.position;
   const facing = gameSave?.world.facing ?? START_STATE.facing;
@@ -2630,6 +2666,12 @@ export default function AdventureGame({
     [gameSave],
   );
   const scene = SCENES[sceneId];
+  useEffect(() => {
+    if (screen !== "playing" || scene.kind !== "interior") return;
+    for (const destinationSceneId of getAdventureInteriorDestinationSceneIds(scene)) {
+      void preloadAdventureSceneAssets(SCENES[destinationSceneId]);
+    }
+  }, [preloadAdventureSceneAssets, scene, screen]);
   const boatMode = Boolean(scene?.routeId || scene?.kind === "route");
   const vehicleMode = scene?.kind === "vehicle";
   const worldIntroductionConversationActive = conversation?.mode === "worldIntroduction"
@@ -2719,13 +2761,50 @@ export default function AdventureGame({
       : null,
     [facing, gameSave, position, sceneId, screen, vehicleMode],
   );
+  const cuedShorelineFishingInteraction = useMemo(() => {
+    if (
+      !shorelineFishingInteraction
+      || !fishingRecastCue
+      || fishingRecastCue.profileId !== gameSave?.profileId
+      || fishingRecastCue.sceneId !== sceneId
+      || fishingRecastCue.spotId !== shorelineFishingInteraction.spotId
+    ) return shorelineFishingInteraction;
+    return {
+      ...shorelineFishingInteraction,
+      actionLabel: "Recast",
+      recastReady: true,
+      label: fishingRecastCue.outcome === "caught"
+        ? "Catch secured. Press Enter or tap Recast to cast again."
+        : "The creature slipped free. Press Enter or tap Recast to try again.",
+    };
+  }, [fishingRecastCue, gameSave?.profileId, sceneId, shorelineFishingInteraction]);
   // Authored characters, doors, and props always win when their interaction
   // corridor overlaps a shoreline edge.
-  const interaction = authoredInteraction ?? shorelineFishingInteraction;
+  const interaction = authoredInteraction ?? cuedShorelineFishingInteraction;
   const trainerInteraction = ["trainer", "npc"].includes(interaction?.type) ? interaction : null;
   const actionInteraction = interaction && !["enter", "exit"].includes(interaction.type)
     ? interaction
     : null;
+
+  useEffect(() => {
+    if (!fishingRecastCue) return;
+    if (
+      screen !== "playing"
+      || fishingRecastCue.profileId !== gameSave?.profileId
+      || fishingRecastCue.sceneId !== sceneId
+      || authoredInteraction
+      || shorelineFishingInteraction?.spotId !== fishingRecastCue.spotId
+    ) {
+      setFishingRecastCue(null);
+    }
+  }, [
+    authoredInteraction,
+    fishingRecastCue,
+    gameSave?.profileId,
+    sceneId,
+    screen,
+    shorelineFishingInteraction?.spotId,
+  ]);
 
   const setMovementActive = useCallback((nextActive) => {
     if (movementActiveRef.current === nextActive) return;
@@ -2896,24 +2975,7 @@ export default function AdventureGame({
       departureDirection: sourceSave.world.facing,
       arrivalDirection,
     });
-    const destinationArtPath = SCENES[candidate.targetScene]?.artPath;
-    let artworkReady = Promise.resolve();
-    if (destinationArtPath && typeof window !== "undefined") {
-      artworkReady = new Promise((resolve) => {
-        const artwork = new window.Image();
-        let settled = false;
-        const finish = () => {
-          if (settled) return;
-          settled = true;
-          resolve();
-        };
-        artwork.onload = finish;
-        artwork.onerror = finish;
-        artwork.src = destinationArtPath;
-        if (artwork.complete) finish();
-        artwork.decode?.().then(finish, finish);
-      });
-    }
+    const artworkReady = preloadAdventureSceneAssets(SCENES[candidate.targetScene]);
 
     doorwayTransitionRef.current = transitionKey;
     pendingSceneTransitionRef.current = {
@@ -2929,7 +2991,7 @@ export default function AdventureGame({
     clearMovement();
     setSceneTransition(transition);
     return true;
-  }, [clearMovement, sceneTransition, setDirty]);
+  }, [clearMovement, preloadAdventureSceneAssets, sceneTransition, setDirty]);
 
   useEffect(() => {
     if (!sceneTransition) return undefined;
@@ -3216,6 +3278,7 @@ export default function AdventureGame({
     setFieldworkActivity(null);
     setFieldworkFeedback(null);
     setFishingSession(null);
+    setFishingRecastCue(null);
     setPackReveal(null);
     setActiveDuelDeckSnapshot(null);
     setSubAssistedMode(false);
@@ -3879,6 +3942,54 @@ export default function AdventureGame({
     }
   }
 
+  function restoreFishingActionFocus() {
+    window.requestAnimationFrame(() => {
+      worldActionRef.current?.focus({ preventScroll: true });
+    });
+  }
+
+  function closeFishingSession() {
+    if (!fishingSession) return;
+    if (fishingSession.required) {
+      setSaveNotice({
+        kind: "info",
+        message: "Complete Wyeth's practice catch before leaving the lesson.",
+      });
+      return;
+    }
+    setFishingRecastCue(null);
+    setFishingSession(null);
+    restoreFishingActionFocus();
+  }
+
+  function returnFishingSessionToShore(outcome = null) {
+    if (!fishingSession) return;
+    if (fishingSession.required) {
+      setSaveNotice({
+        kind: "info",
+        message: "Complete Wyeth's practice catch before leaving the lesson.",
+      });
+      return;
+    }
+
+    if (
+      !fishingSession.tutorial
+      && ["caught", "escaped"].includes(outcome?.reason)
+    ) {
+      const current = saveRef.current ?? gameSave;
+      setFishingRecastCue({
+        profileId: current?.profileId ?? null,
+        sceneId: current?.world.sceneId ?? sceneId,
+        spotId: fishingSession.spotId,
+        outcome: outcome.reason,
+      });
+    } else {
+      setFishingRecastCue(null);
+    }
+    setFishingSession(null);
+    restoreFishingActionFocus();
+  }
+
   function registerForChampionsWake() {
     const current = saveRef.current ?? gameSave;
     if (!current) return;
@@ -4202,9 +4313,12 @@ export default function AdventureGame({
         });
         return;
       }
+      const startWithCast = interaction.recastReady === true;
+      setFishingRecastCue(null);
       setFishingSession({
         tutorial: false,
         spotId: interaction.spotId,
+        startWithCast,
       });
       return;
     }
@@ -5213,7 +5327,7 @@ export default function AdventureGame({
           message: "Wyeth will stay with you until you land this first practice catch. Assisted reel is available if you want an untimed lesson.",
         });
       } else {
-        setFishingSession(null);
+        closeFishingSession();
       }
     } else if (worldMapOpen) {
       setWorldMapOpen(false);
@@ -5544,6 +5658,26 @@ export default function AdventureGame({
     playerX: position.x + 0.5,
     playerY: position.y + 0.5,
   });
+  // Elverson is the first layered scene large enough for off-camera DOM to be
+  // meaningful. Runtime actors, collision, and interaction lists stay whole;
+  // only the mounted visual elements are filtered with a wide safety margin.
+  const renderBounds = scene.layeredObjects.length
+    ? getAdventureCameraRenderBounds(cameraLayout)
+    : null;
+  const renderedLayeredObjects = renderBounds
+    ? scene.layeredObjects.filter((object) => (
+        isAdventureLayeredObjectInRenderBounds(object, renderBounds)
+      ))
+    : scene.layeredObjects;
+  const renderedCharacterInteractions = renderBounds
+    ? sceneCharacterInteractions.filter((characterInteraction) => (
+        characterInteraction.id === activeConversationInteractionId
+        || isAdventureActorInRenderBounds(
+          actorStates[characterInteraction.id]?.position ?? characterInteraction.at,
+          renderBounds,
+        )
+      ))
+    : sceneCharacterInteractions;
   const shellshoreQuestView = onboardingProgress.needsWorldIntroduction
     ? {
         title: "Welcome to Elverson",
@@ -5938,7 +6072,7 @@ export default function AdventureGame({
                 backgroundImage: scene.artPath ? `url("${scene.artPath}")` : undefined,
               }}
             >
-            {scene.layeredObjects.map((object) => (
+            {renderedLayeredObjects.map((object) => (
               <AdventureLayeredMapObject
                 key={object.renderId ?? object.id}
                 object={object}
@@ -5960,7 +6094,7 @@ export default function AdventureGame({
                 complete={worldCueIsComplete(candidate, ecosystemProgress)}
               />
             ))}
-            {sceneCharacterInteractions.map((characterInteraction) => {
+            {renderedCharacterInteractions.map((characterInteraction) => {
               const trainer = TRAINERS[characterInteraction.trainerId ?? characterInteraction.npcId];
               const runtimeActor = actorStates[characterInteraction.id];
               const actorIsEngaged = activeConversationInteractionId === characterInteraction.id;
@@ -6060,6 +6194,7 @@ export default function AdventureGame({
               <DirectionButton direction="down" label="▼" ariaLabel={boatMode ? "Brake or reverse boat" : "Walk down"} onStart={beginTouchDirection} onStop={endTouchDirection} />
             </div>
             <button
+              ref={worldActionRef}
               type="button"
               className={styles.actionButton}
               disabled={Boolean(sceneTransition || conversationLeadIn) || !actionInteraction || (
@@ -6295,19 +6430,12 @@ export default function AdventureGame({
         <AdventureFishingModal
           tutorial={fishingSession.tutorial}
           required={fishingSession.required}
+          startWithCast={fishingSession.startWithCast}
           reducedMotion={gameSave.settings.reducedMotion || systemReducedMotion}
           progress={fishingProgress}
           onCatch={saveFishingCatch}
-          onClose={() => {
-            if (fishingSession.required) {
-              setSaveNotice({
-                kind: "info",
-                message: "Complete Wyeth's practice catch before leaving the lesson.",
-              });
-              return;
-            }
-            setFishingSession(null);
-          }}
+          onClose={closeFishingSession}
+          onReturnToShore={returnFishingSessionToShore}
         />
       ) : null}
       {showCompletion ? (

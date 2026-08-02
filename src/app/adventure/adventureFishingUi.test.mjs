@@ -9,7 +9,7 @@ const content = readFileSync(new URL("./adventureContent.mjs", import.meta.url),
 
 test("Elverson shore input, Wyeth's lesson, catch saving, and Easterling delivery are wired into play", () => {
   assert.match(game, /getElversonFishingInteraction\(sceneId, position, facing\)/);
-  assert.match(game, /authoredInteraction \?\? shorelineFishingInteraction/);
+  assert.match(game, /authoredInteraction \?\? cuedShorelineFishingInteraction/);
   assert.match(game, /if \(interaction\.type === "fishing"\)/);
   assert.match(game, /beginElversonFishingTutorial\(current\)/);
   assert.match(
@@ -35,7 +35,37 @@ test("Wyeth guides interrupted lessons to the practice rail and requires the fir
   assert.match(game, /fishingSession\.required[\s\S]*?Complete Wyeth's practice catch before leaving the lesson/);
   assert.match(modal, /required \? \([\s\S]*?Practice catch required/);
   assert.match(modal, /\{!required \? <button[\s\S]*?>Not now<\/button> : null\}/);
-  assert.match(modal, /Finish Wyeth&apos;s lesson/);
+  assert.match(modal, /Finish Wyeth's lesson/);
+});
+
+test("normal fishing returns to the world and the next Enter performs a one-press recast", () => {
+  assert.match(game, /const \[fishingRecastCue, setFishingRecastCue\] = useState\(null\)/);
+  assert.match(game, /actionLabel: "Recast"[\s\S]*?recastReady: true/);
+  assert.match(game, /Press Enter or tap Recast to try again/);
+  assert.match(game, /const startWithCast = interaction\.recastReady === true/);
+  assert.match(game, /startWithCast,\s*\}/);
+  assert.match(game, /onReturnToShore=\{returnFishingSessionToShore\}/);
+  assert.match(modal, /startWithCast = false/);
+  assert.match(modal, /initialCastStartedRef\.current = true;\s*castLine\(\)/);
+  assert.match(modal, /reason: tutorial \? "tutorial-complete" : "caught"/);
+  assert.match(modal, /reason: escapeReason === "record-failed" \? "error" : "escaped"/);
+  assert.match(modal, /function handleDialogKeyDown\(event\)[\s\S]*?phase === "caught"[\s\S]*?phase === "escaped" && !required/);
+  assert.match(modal, /onKeyDown=\{handleDialogKeyDown\}/);
+  assert.doesNotMatch(modal, />Cast again</);
+  assert.match(modal, /Return to shore/);
+  assert.match(modal, /Try again with Wyeth/);
+});
+
+test("fishing has a paced cast, legible stages, and tactile reel feedback", () => {
+  assert.match(modal, /const FISHING_STAGES = Object\.freeze\(\["Cast", "Watch", "Hook", "Reel"\]\)/);
+  assert.match(modal, /phase === "casting"/);
+  assert.match(modal, /className=\{styles\.fishingStageRail\}/);
+  assert.match(modal, /data-ready=\{assistedMode \|\| lineInZone \|\| undefined\}/);
+  assert.match(modal, /setReelFeedback\("success"\)/);
+  assert.match(modal, /setReelFeedback\("strain"\)/);
+  assert.match(styles, /@keyframes fishingCastFloat/);
+  assert.match(styles, /@keyframes fishingReelSuccess/);
+  assert.match(styles, /@keyframes fishingReelStrain/);
 });
 
 test("the fishing dialog traps and restores focus while announcing meaningful results", () => {
@@ -45,8 +75,10 @@ test("the fishing dialog traps and restores focus while announcing meaningful re
   assert.match(modal, /modalStack\.at\(-1\) !== dialog/);
   assert.match(modal, /!dialog\.contains\(document\.activeElement\)/);
   assert.match(modal, /previousFocus\?\.focus/);
+  assert.match(modal, /headingRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(modal, /aria-live=\{phase === "bite" \? "assertive" : "polite"\}/);
   assert.match(modal, /\$\{creatureName \?\? "Creature"\} caught!/);
+  assert.match(modal, /aria-keyshortcuts="Enter Space"/);
   assert.match(modal, /aria-label=\{entry\.discovered/);
 });
 
@@ -56,7 +88,11 @@ test("fishing offers a static assisted reel and honors effective reduced motion"
   assert.match(modal, /Use assisted reel/);
   assert.match(modal, /phase !== "reeling" \|\| assistedMode \|\| reducedMotion/);
   assert.match(modal, /aria-hidden="true"/);
-  assert.match(modal, /reducedMotion \|\| assistedMode \? 6500 : 3000/);
+  assert.match(modal, /phase !== "bite"[\s\S]*?!pageVisible[\s\S]*?reducedMotion[\s\S]*?assistedMode/);
+  assert.match(modal, /document\.addEventListener\("visibilitychange", handleVisibilityChange\)/);
+  assert.match(modal, /No rush—set the hook when you are ready/);
+  assert.match(modal, /Standard visual timing active/);
+  assert.doesNotMatch(modal, /`\$\{lineInZone \? "Reel now\." : "Hold\."\}/);
   assert.match(game, /gameSave\.settings\.reducedMotion \|\| systemReducedMotion \? styles\.reducedMotionMode/);
   assert.match(styles, /\.reducedMotionMode \.fishingWater::before,[\s\S]*?\.reducedMotionMode \.fishingHookButton[\s\S]*?animation:\s*none\s*!important/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.fishingWater::before,[\s\S]*?\.fishingHookButton/);
@@ -65,5 +101,8 @@ test("fishing offers a static assisted reel and honors effective reduced motion"
 test("the fishing dialog remains scrollable within safe areas and short viewports", () => {
   assert.match(styles, /\.fishingLayer[\s\S]*?env\(safe-area-inset-top\)[\s\S]*?env\(safe-area-inset-bottom\)/);
   assert.match(styles, /\.fishingCard[\s\S]*?max-height:\s*calc\(100dvh[\s\S]*?overflow-y:\s*auto/);
+  assert.match(styles, /\.fishingActions button[\s\S]*?min-height:\s*44px/);
+  assert.match(styles, /touch-action:\s*manipulation/);
+  assert.match(styles, /@media \(forced-colors: active\)/);
   assert.match(styles, /@media \(max-height: 620px\)[\s\S]*?\.fishingLayer \{ place-items: start center; \}/);
 });

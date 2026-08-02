@@ -61,6 +61,11 @@
   line-height: 1.05;
 }
 
+.fishingHeader h2:focus-visible {
+  outline: 3px solid #c47a05;
+  outline-offset: 4px;
+}
+
 .fishingEyebrow {
   color: #2a776f;
   font-size: 0.72rem;
@@ -71,6 +76,7 @@
 
 .fishingClose {
   flex: 0 0 auto;
+  min-height: 44px;
   padding: 9px 12px;
   color: #225766;
   border: 1px solid rgb(26 90 101 / 28%);
@@ -80,6 +86,64 @@
   font-size: 0.78rem;
   font-weight: 800;
   cursor: pointer;
+}
+
+.fishingStageRail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 10px 22px;
+  color: #6d858b;
+  background: #edf5ed;
+  list-style: none;
+}
+
+.fishingStageRail li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.fishingStageRail li:not(:last-child)::after {
+  position: absolute;
+  top: 50%;
+  right: -12%;
+  width: 24%;
+  height: 2px;
+  content: "";
+  background: #b8d1cb;
+}
+
+.fishingStageRail li > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 2px solid #9ab6b2;
+  border-radius: 50%;
+  background: #fffaf0;
+  font-weight: 950;
+}
+
+.fishingStageRail li[data-state="current"] { color: #105f62; }
+.fishingStageRail li[data-state="current"] > span {
+  color: #fff;
+  border-color: #16756f;
+  background: #16756f;
+  box-shadow: 0 0 0 4px rgb(22 117 111 / 15%);
+}
+.fishingStageRail li[data-state="complete"] { color: #2b7169; }
+.fishingStageRail li[data-state="complete"] > span {
+  color: #0b5e55;
+  border-color: #55a78e;
+  background: #d8f1df;
 }
 
 .fishingRequiredBadge {
@@ -173,6 +237,10 @@
   animation: fishingBite 260ms ease-in-out infinite alternate;
 }
 
+.fishingFloatCasting {
+  animation: fishingCastFloat 420ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
 .fishingFloatReeling {
   transform: translate(-50%, -62%) rotate(-12deg);
 }
@@ -241,6 +309,9 @@
   background: rgb(255 255 255 / 64%);
 }
 
+.fishingTensionPanel[data-feedback="success"] { border-color: #2e9b72; }
+.fishingTensionPanel[data-feedback="strain"] { border-color: #cf614d; }
+
 .fishingTensionLabels {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -274,6 +345,9 @@
   background: linear-gradient(90deg, #b7dde2, #d9f0dc, #b7dde2);
 }
 
+.fishingTensionTrack[data-feedback="success"] { animation: fishingReelSuccess 360ms ease-out; }
+.fishingTensionTrack[data-feedback="strain"] { animation: fishingReelStrain 300ms ease-out; }
+
 .fishingCatchZone {
   position: absolute;
   top: 3px;
@@ -297,6 +371,32 @@
 }
 
 .fishingMeterMarkerReady { background: #0a7768; }
+
+.fishingReelCue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 31px;
+  margin-top: 9px;
+  color: #8b4d3e;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.fishingReelCue strong {
+  min-width: 55px;
+  padding: 4px 8px;
+  color: #fff;
+  border-radius: 999px;
+  background: #b95443;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.fishingReelCue[data-ready="true"] { color: #176c5d; }
+.fishingReelCue[data-ready="true"] strong { background: #147863; }
 
 .fishingAttempts {
   display: flex;
@@ -400,6 +500,7 @@
 
 .fishingActions button {
   min-width: 150px;
+  min-height: 44px;
   padding: 11px 16px;
   color: #fff;
   border: 0;
@@ -475,6 +576,13 @@
 .fishingAssistInline:focus-visible {
   outline: 3px solid #b86b00;
   outline-offset: 2px;
+}
+
+.fishingClose,
+.fishingActions button,
+.fishingAssistOption button,
+.fishingAssistInline {
+  touch-action: manipulation;
 }
 
 .fishingLogStrip {
@@ -643,6 +751,23 @@
   to { transform: scale(1.035); }
 }
 
+@keyframes fishingCastFloat {
+  from { opacity: 0; transform: translate(-240%, -240%) scale(0.7); }
+  72% { opacity: 1; transform: translate(-45%, -35%) scale(1.08); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes fishingReelSuccess {
+  0%, 100% { box-shadow: inset 0 2px 5px rgb(0 36 56 / 20%); }
+  50% { box-shadow: 0 0 0 5px rgb(45 173 112 / 26%), inset 0 2px 5px rgb(0 36 56 / 20%); }
+}
+
+@keyframes fishingReelStrain {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-5px); }
+  65% { transform: translateX(5px); }
+}
+
 @media (max-width: 620px) {
   .fishingLayer {
     padding:
@@ -656,6 +781,9 @@
   .fishingHeader h2 { max-width: 11ch; }
   .fishingClose { max-width: 90px; }
   .fishingWater { height: 142px; }
+  .fishingStageRail { padding-inline: 10px; }
+  .fishingStageRail li { gap: 4px; font-size: 0.59rem; }
+  .fishingStageRail li > span { width: 21px; height: 21px; }
   .fishingStatus { padding-inline: 15px; }
   .fishingTensionPanel,
   .fishingCatchReveal { margin-inline: 12px; }
@@ -696,8 +824,30 @@
 .reducedMotionMode .fishingFloat,
 .reducedMotionMode .fishingRipple i,
 .reducedMotionMode .fishingShadow,
-.reducedMotionMode .fishingHookButton {
+.reducedMotionMode .fishingHookButton,
+.reducedMotionMode .fishingTensionTrack {
   animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fishingFloatCasting,
+  .fishingTensionTrack { animation: none !important; }
+}
+
+@media (forced-colors: active) {
+  .fishingClose,
+  .fishingActions button,
+  .fishingAssistOption button,
+  .fishingAssistInline,
+  .fishingStageRail li > span,
+  .fishingRequiredBadge,
+  .fishingReelCue strong,
+  .fishingTensionPanel { border: 2px solid ButtonText; }
+  .fishingStageRail li[data-state="current"] > span,
+  .fishingReelCue[data-ready="true"] strong { color: HighlightText; background: Highlight; }
+  .fishingTensionTrack,
+  .fishingCatchZone,
+  .fishingMeterMarker { forced-color-adjust: none; }
 }
 
 .reducedMotionMode .fishingFloatCaught,
@@ -1708,7 +1858,7 @@
   --row-left: 33.717105%;
   --row-right: 63.569079%;
   --row-up: 93.421053%;
-  background-image: url("/images/adventure/player-sprites.png");
+  background-image: url("/images/adventure/player-sprites-512-v2.png");
 }
 
 .marinaSpriteArtwork {
@@ -1716,7 +1866,7 @@
   --row-left: 33.470395%;
   --row-right: 63.815789%;
   --row-up: 93.832237%;
-  background-image: url("/images/adventure/marina-sprites.png");
+  background-image: url("/images/adventure/marina-sprites-512-v2.png");
 }
 
 .dorianSpriteArtwork {
@@ -1724,7 +1874,7 @@
   --row-left: 31.743421%;
   --row-right: 60.690789%;
   --row-up: 90.131579%;
-  background-image: url("/images/adventure/dorian-sprites.png");
+  background-image: url("/images/adventure/dorian-sprites-512-v2.png");
 }
 
 .fisherman-wyethSpriteArtwork,
@@ -1741,14 +1891,26 @@
   --row-up: 93.421053%;
 }
 
-.fisherman-wyethSpriteArtwork { background-image: url("/images/adventure/fisherman-wyeth-sprites.png"); }
-.teacher-carolineSpriteArtwork { background-image: url("/images/adventure/teacher-caroline-sprites.png"); }
-.ivySpriteArtwork { background-image: url("/images/adventure/ivy-sprites.png"); }
-.explorer-jordanSpriteArtwork { background-image: url("/images/adventure/explorer-jordan-sprites.png"); }
-.marine-biologist-jonahSpriteArtwork { background-image: url("/images/adventure/marine-biologist-jonah-sprites.png"); }
+.fisherman-wyethSpriteArtwork { background-image: url("/images/adventure/fisherman-wyeth-sprites-512-v2.png"); }
+.teacher-carolineSpriteArtwork { background-image: url("/images/adventure/teacher-caroline-sprites-512-v2.png"); }
+.ivySpriteArtwork { background-image: url("/images/adventure/ivy-sprites-512-v2.png"); }
+.explorer-jordanSpriteArtwork { background-image: url("/images/adventure/explorer-jordan-sprites-512-v2.png"); }
+.marine-biologist-jonahSpriteArtwork { background-image: url("/images/adventure/marine-biologist-jonah-sprites-512-v2.png"); }
 .programmer-harlanSpriteArtwork { background-image: url("/images/adventure/programmer-harlan-sprites.png"); }
 .town-elderSpriteArtwork { background-image: url("/images/adventure/town-elder-sprites.png"); }
-.town-adultSpriteArtwork { background-image: url("/images/adventure/town-adult-sprites.png"); }
+.town-adultSpriteArtwork { background-image: url("/images/adventure/town-adult-sprites-512-v2.png"); }
+
+/* Keep dialogue and mini portraits on the full-resolution sources. These
+ * overrides load only for the one resident portrait that is actually open. */
+.playerSpriteArtwork.spritePortrait { background-image: url("/images/adventure/player-sprites.png"); }
+.marinaSpriteArtwork.spritePortrait { background-image: url("/images/adventure/marina-sprites.png"); }
+.dorianSpriteArtwork.spritePortrait { background-image: url("/images/adventure/dorian-sprites.png"); }
+.fisherman-wyethSpriteArtwork.spritePortrait { background-image: url("/images/adventure/fisherman-wyeth-sprites.png"); }
+.teacher-carolineSpriteArtwork.spritePortrait { background-image: url("/images/adventure/teacher-caroline-sprites.png"); }
+.ivySpriteArtwork.spritePortrait { background-image: url("/images/adventure/ivy-sprites.png"); }
+.explorer-jordanSpriteArtwork.spritePortrait { background-image: url("/images/adventure/explorer-jordan-sprites.png"); }
+.marine-biologist-jonahSpriteArtwork.spritePortrait { background-image: url("/images/adventure/marine-biologist-jonah-sprites.png"); }
+.town-adultSpriteArtwork.spritePortrait { background-image: url("/images/adventure/town-adult-sprites.png"); }
 
 .academy-mentorSpriteArtwork {
   --row-down: 0%;
@@ -1761,7 +1923,7 @@
   translate: -50% 0;
   scale: 1;
   transform-origin: center bottom;
-  background-image: url("/images/adventure/mr-easterling-sprites-v2.png");
+  background-image: url("/images/adventure/mr-easterling-sprites-627-v3.png");
   background-size: auto 400%;
 }
 
