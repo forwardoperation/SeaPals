@@ -25,3 +25,15 @@ test("the D-pad suppresses iPhone long-press selection and touch callouts", () =
   assert.match(buttonRule, /-webkit-tap-highlight-color:\s*transparent/);
   assert.match(component, /onContextMenu=\{\(event\) => event\.preventDefault\(\)\}/);
 });
+
+test("the D-pad buttons contain no selectable direction glyphs", () => {
+  for (const direction of ["up", "left", "right", "down"]) {
+    assert.doesNotMatch(
+      component,
+      new RegExp(`<DirectionButton direction="${direction}"[^>]*\\slabel=`),
+    );
+  }
+
+  assert.doesNotMatch(component, /label="[▲◀▶▼]"/);
+  assert.doesNotMatch(component, /function DirectionButton\([^)]*\blabel\b/);
+});

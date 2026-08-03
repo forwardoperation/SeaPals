@@ -1198,7 +1198,7 @@ function Conversation({
   );
 }
 
-function DirectionButton({ direction, label, ariaLabel = `Walk ${direction}`, onStart, onStop }) {
+function DirectionButton({ direction, ariaLabel = `Walk ${direction}`, onStart, onStop }) {
   const suppressClickRef = useRef(false);
   const clickStopTimerRef = useRef(null);
 
@@ -1282,9 +1282,7 @@ function DirectionButton({ direction, label, ariaLabel = `Walk ${direction}`, on
           releaseClickSuppression();
         }
       }}
-    >
-      {label}
-    </button>
+    />
   );
 }
 
@@ -6188,11 +6186,11 @@ export default function AdventureGame({
 
           <div className={`${styles.controlDock} ${boatMode ? styles.boatControlDock : ""}`}>
             <div className={styles.dpad} aria-label={boatMode ? "Boat helm controls" : "Movement controls"}>
-              <DirectionButton direction="up" label="▲" ariaLabel={boatMode ? "Increase boat throttle" : "Walk up"} onStart={beginTouchDirection} onStop={endTouchDirection} />
-              <DirectionButton direction="left" label="◀" ariaLabel={boatMode ? "Turn rudder port, left" : "Walk left"} onStart={beginTouchDirection} onStop={endTouchDirection} />
+              <DirectionButton direction="up" ariaLabel={boatMode ? "Increase boat throttle" : "Walk up"} onStart={beginTouchDirection} onStop={endTouchDirection} />
+              <DirectionButton direction="left" ariaLabel={boatMode ? "Turn rudder port, left" : "Walk left"} onStart={beginTouchDirection} onStop={endTouchDirection} />
               <span className={styles.dpadCenter} />
-              <DirectionButton direction="right" label="▶" ariaLabel={boatMode ? "Turn rudder starboard, right" : "Walk right"} onStart={beginTouchDirection} onStop={endTouchDirection} />
-              <DirectionButton direction="down" label="▼" ariaLabel={boatMode ? "Brake or reverse boat" : "Walk down"} onStart={beginTouchDirection} onStop={endTouchDirection} />
+              <DirectionButton direction="right" ariaLabel={boatMode ? "Turn rudder starboard, right" : "Walk right"} onStart={beginTouchDirection} onStop={endTouchDirection} />
+              <DirectionButton direction="down" ariaLabel={boatMode ? "Brake or reverse boat" : "Walk down"} onStart={beginTouchDirection} onStop={endTouchDirection} />
             </div>
             <button
               ref={worldActionRef}
