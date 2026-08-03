@@ -1258,6 +1258,7 @@ function DirectionButton({ direction, label, ariaLabel = `Walk ${direction}`, on
       onPointerDown={startPointer}
       onPointerUp={stopPointer}
       onPointerCancel={stopPointer}
+      onContextMenu={(event) => event.preventDefault()}
       onLostPointerCapture={(event) => {
         event.preventDefault();
         onStop(direction);

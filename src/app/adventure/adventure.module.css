@@ -2320,6 +2320,10 @@
   display: grid;
   grid-template: repeat(3, 44px) / repeat(3, 44px);
   filter: drop-shadow(0 7px 8px rgba(0, 0, 0, 0.3));
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .directionButton,
@@ -2327,13 +2331,16 @@
   border: 0;
   color: #dff9ff;
   background: #173d50;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .directionButton {
   cursor: pointer;
   font-size: 11px;
   touch-action: none;
-  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   transition: color 100ms ease, background 100ms ease, transform 100ms ease;
 }
 
