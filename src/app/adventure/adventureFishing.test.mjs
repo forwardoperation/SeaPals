@@ -18,6 +18,7 @@ import {
   getElversonFishingItemDefinition,
   getElversonFishingProgress,
   hasElversonFishingRod,
+  reconcileElversonAquariumRewards,
   recordElversonFishingCatch,
   recordElversonFishingTutorialCatch,
   rollElversonReefCatch,
@@ -134,26 +135,26 @@ test("Elverson exposes ten immutable weighted reef catches with deterministic ra
   }
 });
 
-test("shoreline fishing interactions appear only at an authored Elverson water edge", () => {
-  const position = { x: 5, y: 11.2 };
+test("hand-net interactions appear only at an authored Elverson shallow-water edge", () => {
+  const position = { x: 5, y: 17.1 };
   const interaction = getElversonFishingInteraction("town", position, "down");
 
   assert.equal(interaction?.type, "fishing");
   assert.equal(interaction?.spotId, "west-promenade");
-  assert.match(interaction?.interactionId ?? "", /^interaction-elverson-fishing-/);
-  assert.match(interaction?.label ?? "", /Press Enter to cast/i);
+  assert.match(interaction?.interactionId ?? "", /^interaction-elverson-hand-net-/);
+  assert.match(interaction?.label ?? "", /Press Enter to ready the hand net/i);
   assert.equal(Object.isFrozen(interaction), true);
   assert.equal(Object.isFrozen(interaction.at), true);
-  assert.deepEqual(position, { x: 5, y: 11.2 });
+  assert.deepEqual(position, { x: 5, y: 17.1 });
 
   assert.equal(getElversonFishingInteraction("academy-lab", position, "down"), null);
   assert.equal(getElversonFishingInteraction("town", position, "up"), null);
-  assert.equal(getElversonFishingInteraction("town", { x: 5, y: 10.9 }, "down"), null);
-  assert.equal(getElversonFishingInteraction("town", { x: 13.5, y: 11.2 }, "down"), null);
-  assert.equal(getElversonFishingInteraction("town", { x: Number.NaN, y: 11.2 }, "down"), null);
+  assert.equal(getElversonFishingInteraction("town", { x: 5, y: 16.9 }, "down"), null);
+  assert.equal(getElversonFishingInteraction("town", { x: 20.4, y: 17.1 }, "down"), null);
+  assert.equal(getElversonFishingInteraction("town", { x: Number.NaN, y: 17.1 }, "down"), null);
 
-  const practicePosition = { x: 10.05, y: 16.9 };
-  for (const wyethPosition of [{ x: 10.8, y: 16.45 }, { x: 11.8, y: 16.45 }]) {
+  const practicePosition = { x: 14.55, y: 21.45 };
+  for (const wyethPosition of [{ x: 18.05, y: 20.85 }, { x: 15.65, y: 21.65 }]) {
     assert.equal(canOccupyContinuousPosition(
       "town",
       practicePosition,
@@ -373,7 +374,7 @@ test("the first successful tutorial catch completes the lesson atomically and on
   const introduced = introducedSave("tutorial-catch-profile");
   assert.throws(
     () => recordElversonFishingTutorialCatch(introduced, "white-grunt"),
-    /receive .* fishing rod/i,
+    /receive .* hand net/i,
   );
 
   const started = beginElversonFishingTutorial(introduced).save;
@@ -515,10 +516,19 @@ test("Easterling moves every held catch into the aquarium and repeated delivery 
   assert.equal(delivered.save.inventory.storyItems["caught-sea-urchin"], undefined);
   assert.equal(delivered.save.inventory.storyItems["aquarium-white-grunt"], 2);
   assert.equal(delivered.save.inventory.storyItems["aquarium-sea-urchin"], 1);
+  assert.equal(delivered.save.inventory.cards["white-grunt"], 2);
+  assert.equal(delivered.save.inventory.cards["sea-urchin"], 1);
+  assert.equal(delivered.awardedCardCount, 3);
+  assert.deepEqual(
+    delivered.awardedCards.map(({ cardId, quantity }) => [cardId, quantity]),
+    [["white-grunt", 2], ["sea-urchin", 1]],
+  );
   assert.equal(delivered.progress.heldCount, 0);
   assert.equal(delivered.progress.aquariumCount, 3);
   assert.equal(delivered.progress.discoveredCount, 2);
   assert.equal(delivered.progress.aquariumSpeciesCount, 2);
+  assert.equal(delivered.progress.matchingCardsAwarded, 3);
+  assert.equal(delivered.progress.matchingCardsPending, 0);
   assert.equal(
     delivered.save.progression.quests[ELVERSON_FISHING_QUEST_ID]
       .flags[ELVERSON_FISHING_FLAGS.totalDelivered],
@@ -530,6 +540,8 @@ test("Easterling moves every held catch into the aquarium and repeated delivery 
   assert.equal(repeated.applied, false);
   assert.equal(repeated.deliveredCount, 0);
   assert.equal(repeated.collectionCompletedNow, false);
+  assert.equal(repeated.awardedCardCount, 0);
+  assert.deepEqual(repeated.awardedCards, []);
   assert.deepEqual(repeated.deliveredSpecies, []);
   assert.deepEqual(repeated.save, delivered.save);
   assert.equal(repeated.save.inventory.boatItems[ELVERSON_FISHING_ROD_ITEM_ID], 1);
@@ -547,6 +559,14 @@ test("delivering all ten species marks the Elverson aquarium collection complete
   assert.equal(delivered.progress.collectionComplete, true);
   assert.equal(delivered.progress.aquariumSpeciesCount, ELVERSON_REEF_CATCHES.length);
   assert.equal(delivered.progress.aquariumCount, ELVERSON_REEF_CATCHES.length);
+  assert.equal(delivered.awardedCardCount, ELVERSON_REEF_CATCHES.length);
+  for (const creature of ELVERSON_REEF_CATCHES) {
+    assert.equal(delivered.save.inventory.cards[creature.cardId], 1);
+    assert.equal(
+      delivered.progress.creatures.find(({ id }) => id === creature.id)?.matchingCardsAwarded,
+      1,
+    );
+  }
   assert.equal(
     delivered.save.progression.quests[ELVERSON_FISHING_QUEST_ID]
       .flags[ELVERSON_FISHING_FLAGS.collectionComplete],
@@ -569,6 +589,145 @@ test("delivering all ten species marks the Elverson aquarium collection complete
   assert.equal(repeatDelivery.applied, true);
   assert.equal(repeatDelivery.collectionCompletedNow, false);
   assert.equal(repeatDelivery.progress.collectionComplete, true);
+  assert.equal(repeatDelivery.awardedCardCount, 1);
+});
+
+test("older aquarium deliveries reconcile matching cards without using existing card ownership", () => {
+  const base = lessonSave("legacy-aquarium-rewards");
+  const legacy = normalizeAdventureSave({
+    ...base,
+    inventory: {
+      ...base.inventory,
+      cards: { "white-grunt": 4 },
+      storyItems: {
+        ...base.inventory.storyItems,
+        "aquarium-white-grunt": 2,
+        "aquarium-sea-urchin": 1,
+      },
+    },
+  });
+  const before = jsonRoundTrip(legacy);
+
+  const recovered = reconcileElversonAquariumRewards(legacy);
+  assert.equal(recovered.applied, true);
+  assert.equal(recovered.awardedCardCount, 3);
+  assert.equal(recovered.save.inventory.cards["white-grunt"], 6);
+  assert.equal(recovered.save.inventory.cards["sea-urchin"], 1);
+  assert.equal(recovered.progress.matchingCardsAwarded, 3);
+  assert.equal(recovered.progress.matchingCardsPending, 0);
+  assert.deepEqual(legacy, before, "reward reconciliation must not mutate the older save");
+
+  const repeated = reconcileElversonAquariumRewards(recovered.save);
+  assert.equal(repeated.applied, false);
+  assert.equal(repeated.awardedCardCount, 0);
+  assert.deepEqual(repeated.awardedCards, []);
+  assert.deepEqual(repeated.save, recovered.save);
+});
+
+test("schema-valid malformed reward counters render safely and reconcile without ambiguous duplicate cards", () => {
+  const rewardFlagId = "aquarium-card-rewarded-white-grunt";
+  for (const [index, invalidValue] of [null, -1, 1.5, "unknown", 3].entries()) {
+    const base = lessonSave(`malformed-reward-${index}`);
+    let malformed = normalizeAdventureSave({
+      ...base,
+      inventory: {
+        ...base.inventory,
+        cards: { "white-grunt": 7 },
+        storyItems: {
+          ...base.inventory.storyItems,
+          "aquarium-white-grunt": 2,
+        },
+      },
+    });
+    malformed = setQuestFlag(
+      malformed,
+      ELVERSON_FISHING_QUEST_ID,
+      rewardFlagId,
+      invalidValue,
+    );
+
+    const readable = getElversonFishingProgress(malformed);
+    assert.equal(readable.matchingCardsPending, 0);
+    assert.equal(readable.matchingCardsAwarded, 2);
+
+    const recovered = reconcileElversonAquariumRewards(malformed);
+    assert.equal(recovered.applied, true);
+    assert.equal(recovered.awardedCardCount, 0);
+    assert.equal(recovered.repairedRewardFlags.length, 1);
+    assert.equal(recovered.save.inventory.cards["white-grunt"], 7);
+    assert.equal(
+      recovered.save.progression.quests[ELVERSON_FISHING_QUEST_ID].flags[rewardFlagId],
+      2,
+    );
+    assert.equal(getElversonFishingProgress(recovered.save).matchingCardsPending, 0);
+
+    const repeated = reconcileElversonAquariumRewards(recovered.save);
+    assert.equal(repeated.applied, false);
+    assert.equal(repeated.repairedRewardFlags.length, 0);
+    assert.deepEqual(repeated.save, recovered.save);
+  }
+});
+
+test("an ahead reward counter is repaired before delivery so the newly delivered creature still earns its card", () => {
+  const rewardFlagId = "aquarium-card-rewarded-white-grunt";
+  const base = lessonSave("ahead-counter-delivery");
+  let malformed = normalizeAdventureSave({
+    ...base,
+    inventory: {
+      ...base.inventory,
+      cards: { "white-grunt": 5 },
+      storyItems: {
+        ...base.inventory.storyItems,
+        "aquarium-white-grunt": 1,
+        "caught-white-grunt": 1,
+      },
+    },
+  });
+  malformed = setQuestFlag(
+    malformed,
+    ELVERSON_FISHING_QUEST_ID,
+    rewardFlagId,
+    2,
+  );
+
+  const delivered = deliverElversonFishingCatches(malformed);
+  assert.equal(delivered.deliveredCount, 1);
+  assert.equal(delivered.awardedCardCount, 1);
+  assert.deepEqual(
+    delivered.awardedCards.map(({ cardId, quantity }) => [cardId, quantity]),
+    [["white-grunt", 1]],
+  );
+  assert.equal(delivered.repairedRewardFlags.length, 1);
+  assert.equal(delivered.save.inventory.cards["white-grunt"], 6);
+  assert.equal(delivered.save.inventory.storyItems["aquarium-white-grunt"], 2);
+  assert.equal(delivered.save.inventory.storyItems["caught-white-grunt"], undefined);
+  assert.equal(
+    delivered.save.progression.quests[ELVERSON_FISHING_QUEST_ID].flags[rewardFlagId],
+    2,
+  );
+});
+
+test("a pre-reward complete Elverson aquarium receives every owed card without granting the campaign title", () => {
+  const base = lessonSave("legacy-complete-aquarium");
+  const storyItems = { ...base.inventory.storyItems };
+  for (const creature of ELVERSON_REEF_CATCHES) storyItems[creature.aquariumItemId] = 1;
+  const legacy = normalizeAdventureSave({
+    ...base,
+    inventory: { ...base.inventory, storyItems },
+  });
+
+  const recovered = reconcileElversonAquariumRewards(legacy);
+  assert.equal(recovered.awardedCardCount, ELVERSON_REEF_CATCHES.length);
+  assert.equal(recovered.progress.collectionComplete, true);
+  assert.equal(recovered.save.inventory.storyItems["master-of-the-sea"], undefined);
+  assert.equal(
+    recovered.save.rewardLedger.some((rewardId) => rewardId.includes("master-of-the-sea")),
+    false,
+  );
+
+  const repeated = reconcileElversonAquariumRewards(recovered.save);
+  assert.equal(repeated.applied, false);
+  assert.deepEqual(repeated.save, recovered.save);
 });
 
 test("pending and completed fishing tutorials survive reloads and preserve normal fishing gates", () => {
@@ -619,6 +778,7 @@ test("pending and completed fishing tutorials survive reloads and preserve norma
   assert.equal(hasElversonFishingRod(loaded.save), true);
   assert.equal(loaded.save.inventory.storyItems["aquarium-white-grunt"], 1);
   assert.equal(loaded.save.inventory.storyItems["caught-blue-crab"], 1);
+  assert.equal(loaded.save.inventory.cards["white-grunt"], 1);
   assert.equal(
     loaded.save.progression.quests[ELVERSON_FISHING_QUEST_ID]
       .flags[ELVERSON_FISHING_FLAGS.totalCaught],
@@ -640,6 +800,7 @@ test("pending and completed fishing tutorials survive reloads and preserve norma
   assert.equal(resumed.save.inventory.boatItems[ELVERSON_FISHING_ROD_ITEM_ID], 1);
   assert.equal(resumed.save.inventory.storyItems["aquarium-white-grunt"], 1);
   assert.equal(resumed.save.inventory.storyItems["caught-blue-crab"], 2);
+  assert.equal(resumed.save.inventory.cards["white-grunt"], 1);
   assert.equal(getElversonFishingProgress(resumed.save).heldCount, 2);
   assert.equal(getElversonFishingProgress(resumed.save).aquariumCount, 1);
   assert.equal(

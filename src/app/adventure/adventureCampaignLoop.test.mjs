@@ -28,8 +28,15 @@ import {
   recordBoatSafetyReview,
   recordPracticeDuelResult,
   recordTutorialCheckpoint,
+  recordWorldIntroduction,
   recoverOnboardingResume,
 } from "./adventureOnboarding.mjs";
+import {
+  ELVERSON_PROLOGUE_BEATS,
+  getElversonPrologueProgress,
+  recordElversonPrologueBeat,
+  recoverElversonPrologueResume,
+} from "./adventureElversonPrologue.mjs";
 import { openAdventurePack } from "./adventurePacks.mjs";
 import {
   setQuestFlag,
@@ -173,12 +180,38 @@ function recoverStoredCampaignSave(saveValue, manifest) {
   const world = recoverAdventureResume(saveValue);
   assert.equal(world.fallback, null);
   const onboarding = recoverOnboardingResume(world.save);
-  const collectionSave = onboarding.save.player.starterDeckId
-    ? reconcileStarterCollection(onboarding.save, manifest).save
-    : onboarding.save;
+  const prologue = recoverElversonPrologueResume(onboarding.save);
+  const collectionSave = prologue.save.player.starterDeckId
+    ? reconcileStarterCollection(prologue.save, manifest).save
+    : prologue.save;
   const tournament = recoverChampionsWakeTournamentState(collectionSave);
   assert.equal(validateAdventureSave(tournament.save).valid, true);
   return tournament.save;
+}
+
+function completeBirthdayAquariumIntroduction(saveValue) {
+  let save = saveValue;
+  for (const beatId of [
+    ELVERSON_PROLOGUE_BEATS.breakfast,
+    ELVERSON_PROLOGUE_BEATS.permission,
+    ELVERSON_PROLOGUE_BEATS.race,
+  ]) {
+    const recorded = recordElversonPrologueBeat(save, beatId);
+    assert.equal(recorded.applied, true);
+    save = recorded.save;
+  }
+  const introduced = recordWorldIntroduction(save);
+  assert.equal(introduced.applied, true);
+  const challenged = recordElversonPrologueBeat(
+    introduced.save,
+    ELVERSON_PROLOGUE_BEATS.challenge,
+  );
+  assert.equal(challenged.applied, true);
+  return enterAdventureScene(challenged.save, {
+    sceneId: "academy-lab",
+    position: { x: 6, y: 7 },
+    facing: "up",
+  });
 }
 
 function persistAndResume(adapter, saveValue, checkpointId, manifest) {
@@ -298,6 +331,8 @@ function completeAcademyAndShellshore(saveValue, openedPackIds) {
     save = checkpoint.save;
   }
   save = recordAcademyPracticeVictory(save);
+  save = recordElversonPrologueBeat(save, ELVERSON_PROLOGUE_BEATS.tutorial).save;
+  save = recordElversonPrologueBeat(save, ELVERSON_PROLOGUE_BEATS.rivalDeparture).save;
 
   // The production UI explicitly reconciles after this acknowledgement. Keep
   // that boundary visible so a later refactor cannot strand a ready quest.
@@ -660,15 +695,18 @@ for (const [starterIndex, starterDeckId] of STARTER_DECK_IDS.entries()) {
     const openedPackIds = [];
 
     let save = createNewAdventureSession(profileId);
-    assert.equal(save.world.sceneId, "town");
-    assert.deepEqual(save.world.position, { x: 16, y: 15.85 });
-    assert.equal(save.world.facing, "up");
+    assert.equal(save.world.sceneId, "player-home");
+    assert.deepEqual(save.world.position, { x: 7, y: 4 });
+    assert.equal(save.world.facing, "down");
     const created = adapter.startNewProfile(profileId, { saveValue: save });
     assert.equal(created.ok, true, created.error?.message);
     save = recoverStoredCampaignSave(adapter.loadProfile(profileId).save, manifest);
 
+    save = completeBirthdayAquariumIntroduction(save);
+
     save = commitStarterSelection(save, starterDeckId).save;
     save = reconcileStarterCollection(save, manifest).save;
+    save = recordElversonPrologueBeat(save, ELVERSON_PROLOGUE_BEATS.starter).save;
     save = persistAndResume(
       adapter,
       save,
@@ -678,6 +716,7 @@ for (const [starterIndex, starterDeckId] of STARTER_DECK_IDS.entries()) {
     assert.equal(quantityTotal(save.inventory.cards), 60);
 
     save = completeAcademyAndShellshore(save, openedPackIds);
+    assert.equal(getElversonPrologueProgress(save).complete, true);
     save = persistAndResume(
       adapter,
       save,

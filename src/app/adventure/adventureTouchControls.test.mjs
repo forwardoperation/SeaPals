@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const component = readFileSync(new URL("./AdventureGame.jsx", import.meta.url), "utf8");
-const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), "utf8");
+const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), "utf8")
+  .replaceAll("\r\n", "\n");
 
 function cssRule(selector) {
   const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

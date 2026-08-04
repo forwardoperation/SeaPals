@@ -185,15 +185,20 @@ function withTrenchlightResumeSentinels(saveValue, suffix) {
   });
 }
 
-test("new sessions begin the Shellshore quest in one of three explicit profiles", () => {
+test("new sessions begin the tenth-birthday opening at home in one of three explicit profiles", () => {
   const save = createNewAdventureSession("profile-2");
   assert.equal(save.profileId, "profile-2");
   assert.equal(save.progression.quests[SHELLSHORE_QUEST_ID].status, "active");
   assert.equal(save.world.townId, "shellshore-village");
-  assert.equal(save.world.sceneId, "town");
-  assert.deepEqual(save.world.position, { x: 16, y: 15.85 });
-  assert.equal(save.world.facing, "up");
+  assert.equal(save.world.sceneId, "player-home");
+  assert.deepEqual(save.world.position, { x: 7, y: 4 });
+  assert.equal(save.world.facing, "down");
   assert.equal(save.world.lastSafeDockId, "shellshore-dock");
+  assert.deepEqual(save.opening, {
+    contentVersion: 1,
+    status: "active",
+    completedBeatIds: [],
+  });
   assert.equal(
     save.progression.quests[SHELLSHORE_QUEST_ID]
       .flags[ONBOARDING_QUEST_FLAGS.worldIntroductionComplete],
@@ -937,8 +942,8 @@ test("all live portals use safe spawns and preserve their authored arrival facin
 
   assert.equal(
     portalCount,
-    43,
-    "all live Shellshore, Sunpatch, Brackwater, Current Commons, Kelpwatch, Trenchlight, and Champion's Wake entrances and exits should be covered",
+    55,
+    "the birthday home, all nine Elverson location pairs, and every later-town entrance and exit should be covered",
   );
 });
 

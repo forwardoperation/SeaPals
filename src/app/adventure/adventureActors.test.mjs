@@ -15,13 +15,55 @@ import {
   canOccupyContinuousPosition,
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
+import { ELVERSON_AMBIENT_RESIDENTS } from "./adventureElversonResidents.mjs";
 
-const ELVERSON_PATROL_IDS = Object.freeze([
-  "interaction-elverson-charlotte",
-  "interaction-elverson-emilio",
-  "interaction-elverson-explorer-jordan",
-  "interaction-elverson-finn",
-  "interaction-elverson-fisherman-wyeth",
+const AUTHORED_PATROL_IDS = Object.freeze([
+  "interaction-brackwater-rhea",
+  "interaction-current-guide",
+  "interaction-kelpwatch-guide",
+  "interaction-sunpatch-tavi",
+  "interaction-trenchlight-guide",
+]);
+
+const ELVERSON_TOWN_RESIDENTS = Object.freeze([
+  Object.freeze({
+    id: "interaction-elverson-fisherman-wyeth",
+    at: Object.freeze({ x: 18.05, y: 20.85 }),
+  }),
+  Object.freeze({
+    id: "interaction-elverson-town-theo",
+    at: Object.freeze({ x: 7, y: 8.35 }),
+  }),
+  Object.freeze({
+    id: "interaction-elverson-eli",
+    at: Object.freeze({ x: 16.8, y: 8.35 }),
+  }),
+  Object.freeze({
+    id: "interaction-elverson-micah",
+    at: Object.freeze({ x: 24.2, y: 8.35 }),
+  }),
+  Object.freeze({
+    id: "interaction-elverson-town-erik",
+    at: Object.freeze({ x: 34.5, y: 8.35 }),
+  }),
+]);
+
+const ELVERSON_RELOCATED_RESIDENTS = Object.freeze([
+  Object.freeze({
+    sceneId: "academy-lab",
+    id: "interaction-elverson-finn",
+    at: Object.freeze({ x: 4.25, y: 3.45 }),
+  }),
+  Object.freeze({
+    sceneId: "elverson-oceanic-home",
+    id: "interaction-elverson-charlotte",
+    at: Object.freeze({ x: 5, y: 2.5 }),
+  }),
+  Object.freeze({
+    sceneId: "elverson-marine-research-lab",
+    id: "interaction-elverson-explorer-jordan",
+    at: Object.freeze({ x: 10.5, y: 4.5 }),
+  }),
 ]);
 
 function sunpatchGuide(overrides = {}) {
@@ -275,13 +317,11 @@ test("all authored patrol waypoints and straight legs stay on real walkable grou
   assert.deepEqual(
     patrols.map(({ interaction }) => interaction.id).sort(),
     [
-      "interaction-brackwater-rhea",
-      "interaction-current-guide",
-      ...ELVERSON_PATROL_IDS,
-      "interaction-kelpwatch-guide",
-      "interaction-sunpatch-tavi",
-      "interaction-trenchlight-guide",
-    ],
+      ...AUTHORED_PATROL_IDS,
+      ...ELVERSON_AMBIENT_RESIDENTS
+        .filter((resident) => resident.patrol)
+        .map((resident) => `interaction-elverson-${resident.id}`),
+    ].sort(),
   );
 
   for (const { scene, interaction } of patrols) {
@@ -314,53 +354,93 @@ test("all authored patrol waypoints and straight legs stay on real walkable grou
   }
 });
 
-test("Elverson exposes the intended five ambient patrols on clear walking routes", () => {
-  const patrols = SCENES.town.interactions.filter((interaction) => interaction.patrol);
-  assert.deepEqual(patrols.map(({ id }) => id).sort(), [...ELVERSON_PATROL_IDS]);
+test("Elverson v3 keeps its five town residents at their authored stationary anchors", () => {
+  const residents = SCENES.town.interactions.filter(({ type }) => (
+    type === "npc" || type === "trainer"
+  ));
+  assert.deepEqual(
+    residents.map(({ id, at }) => ({ id, at })),
+    [...ELVERSON_TOWN_RESIDENTS],
+  );
 
-  for (const interaction of patrols) {
+  for (const interaction of residents) {
     assert.equal(interaction.type, "npc");
-    assert.ok(interaction.patrol.waypoints.length >= 2);
-    assert.ok(interaction.patrol.playerPauseDistance >= 1);
-    for (const waypoint of interaction.patrol.waypoints) {
-      assert.equal(
-        canOccupyContinuousPosition(
-          "town",
-          waypoint,
-          ADVENTURE_ACTOR_DEFAULTS.radius,
-          { ignoreActorTiles: true },
-        ),
-        true,
-        `${interaction.id} waypoint ${waypoint.x},${waypoint.y} must stay clear`,
-      );
+    assert.equal(Object.hasOwn(interaction, "patrol"), false);
+    assert.equal(
+      canOccupyContinuousPosition(
+        "town",
+        interaction.at,
+        ADVENTURE_ACTOR_DEFAULTS.radius,
+        { ignoreActorTiles: true },
+      ),
+      true,
+      `${interaction.id} anchor ${interaction.at.x},${interaction.at.y} must stay clear`,
+    );
+  }
+});
+
+test("relocated Elverson residents remain static in their currently authored rooms", () => {
+  for (const expected of ELVERSON_RELOCATED_RESIDENTS) {
+    const scene = SCENES[expected.sceneId];
+    const interaction = scene.interactions.find(({ id }) => id === expected.id);
+    assert.ok(interaction, `${expected.id} must remain authored in ${expected.sceneId}`);
+    assert.deepEqual(interaction.at, expected.at);
+    assert.equal(Object.hasOwn(interaction, "patrol"), false);
+
+    const initial = createAdventureActorStates([interaction]);
+    const advanced = advanceAdventureActorStates(
+      expected.sceneId,
+      [interaction],
+      initial,
+      120_000,
+    );
+    assert.deepEqual(advanced[interaction.id].position, expected.at);
+    assert.equal(advanced[interaction.id].moving, false);
+    assert.equal(advanced[interaction.id].blockedMs, 0);
+  }
+});
+
+test("Elverson only exposes patrol metadata explicitly authored by its resident registry", () => {
+  for (const resident of ELVERSON_AMBIENT_RESIDENTS) {
+    const interaction = SCENES[resident.sceneId].interactions.find(
+      ({ id }) => id === `interaction-elverson-${resident.id}`,
+    );
+    assert.ok(interaction, `${resident.id} must be authored in ${resident.sceneId}`);
+    assert.deepEqual(interaction.at, resident.at);
+    if (resident.patrol) {
+      assert.deepEqual(interaction.patrol, resident.patrol);
+    } else {
+      assert.equal(Object.hasOwn(interaction, "patrol"), false);
     }
   }
 });
 
-test("Elverson patrols keep moving without colliding with residents or each other", () => {
-  const interactions = SCENES.town.interactions;
-  let actors = createAdventureActorStates(interactions);
-  let closestDistance = Number.POSITIVE_INFINITY;
-  let greatestBlockedMs = 0;
+test("later-world authored patrols keep moving without becoming blocked", () => {
+  for (const interactionId of AUTHORED_PATROL_IDS) {
+    const scene = Object.values(SCENES).find((candidate) => (
+      candidate.interactions.some(({ id }) => id === interactionId)
+    ));
+    const interaction = scene?.interactions.find(({ id }) => id === interactionId);
+    assert.ok(scene && interaction, `${interactionId} must remain authored`);
 
-  for (let step = 0; step < 1200; step += 1) {
-    actors = advanceAdventureActorStates("town", interactions, actors, 100, {
-      playerPosition: { x: 14, y: 10 },
-    });
-    const jordan = actors["interaction-elverson-explorer-jordan"];
-    const emilio = actors["interaction-elverson-emilio"];
-    closestDistance = Math.min(
-      closestDistance,
-      Math.hypot(jordan.position.x - emilio.position.x, jordan.position.y - emilio.position.y),
-    );
-    greatestBlockedMs = Math.max(
-      greatestBlockedMs,
-      ...ELVERSON_PATROL_IDS.map((id) => actors[id]?.blockedMs ?? 0),
-    );
+    let actors = createAdventureActorStates(scene.interactions);
+    let greatestTravel = 0;
+    let greatestBlockedMs = 0;
+    for (let step = 0; step < 1200; step += 1) {
+      actors = advanceAdventureActorStates(scene.id, scene.interactions, actors, 100, {
+        playerPosition: { x: -100, y: -100 },
+      });
+      const actor = actors[interactionId];
+      greatestTravel = Math.max(
+        greatestTravel,
+        Math.hypot(actor.position.x - interaction.at.x, actor.position.y - interaction.at.y),
+      );
+      greatestBlockedMs = Math.max(greatestBlockedMs, actor.blockedMs);
+    }
+
+    assert.ok(greatestTravel > 0.25, `${interactionId} must leave its anchor`);
+    assert.equal(greatestBlockedMs, 0, `${interactionId} must have a collision-free patrol`);
   }
-
-  assert.ok(closestDistance > ADVENTURE_ACTOR_DEFAULTS.radius * 2);
-  assert.equal(greatestBlockedMs, 0);
 });
 
 test("malformed patrols and blocker radii fail before animation starts", () => {

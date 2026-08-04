@@ -10,9 +10,15 @@ export const ELVERSON_RELEASE_SCOPE = Object.freeze({
   startDockId: "shellshore-dock",
   sceneIds: Object.freeze([
     "town",
+    "player-home",
     "academy-lab",
     "coral-home",
     "deep-home",
+    "elverson-oceanic-home",
+    "elverson-hybrid-home",
+    "elverson-supply-company",
+    "elverson-red-schoolhouse",
+    "elverson-marine-research-lab",
   ]),
   routeIds: Object.freeze([]),
 });
@@ -68,6 +74,7 @@ export function relocateResumeToElversonStart(saveValue, startLocation) {
       ...saveValue,
       world: {
         ...saveValue.world,
+        layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION,
         townId: ELVERSON_RELEASE_SCOPE.townId,
         sceneId: ELVERSON_RELEASE_SCOPE.startSceneId,
         position: copyPosition(startLocation.position),
@@ -78,3 +85,4 @@ export function relocateResumeToElversonStart(saveValue, startLocation) {
     relocated: true,
   };
 }
+import { ELVERSON_TOWN_LAYOUT_VERSION } from "./adventureElversonTownLayout.mjs";

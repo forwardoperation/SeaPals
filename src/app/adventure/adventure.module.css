@@ -1484,6 +1484,7 @@
 .elversonTownMap,
 .townMap,
 .academyLabMap,
+.playerHomeMap,
 .coralHomeMap,
 .deepHomeMap,
 .seaRouteMap,
@@ -1530,6 +1531,130 @@
 .academyLabMap {
   background-color: #d7a362;
   background-image: url("/images/adventure/shellshore-academy.png");
+}
+
+.aquariumExhibitLayer {
+  position: absolute;
+  z-index: 12;
+  inset: 0;
+  pointer-events: none;
+}
+
+.aquariumExhibit {
+  position: absolute;
+  overflow: hidden;
+  border: max(1px, 0.12vw) solid rgba(207, 250, 254, 0.86);
+  border-radius: 7%;
+  background:
+    linear-gradient(180deg, rgba(236, 254, 255, 0.42), transparent 28%),
+    linear-gradient(180deg, rgba(8, 145, 178, 0.76), rgba(14, 116, 144, 0.84));
+  box-shadow:
+    inset 0 0 0 max(1px, 0.08vw) rgba(8, 47, 73, 0.42),
+    inset 0 -0.4vw 0 rgba(120, 80, 42, 0.44),
+    0 0.16vw 0.32vw rgba(8, 47, 73, 0.35);
+}
+
+.aquariumExhibitWater,
+.aquariumExhibitWater i {
+  position: absolute;
+  inset: 0;
+}
+
+.aquariumExhibitWater {
+  opacity: 0.7;
+  background:
+    radial-gradient(circle at 20% 76%, rgba(250, 204, 21, 0.52) 0 2%, transparent 2.5%),
+    radial-gradient(circle at 73% 81%, rgba(254, 240, 138, 0.44) 0 2.6%, transparent 3.1%);
+}
+
+.aquariumExhibitWater i:first-child {
+  background: repeating-linear-gradient(174deg, transparent 0 13%, rgba(207, 250, 254, 0.18) 14% 16%, transparent 17% 29%);
+  animation: aquariumWaterDrift 5.2s linear infinite alternate;
+}
+
+.aquariumExhibitWater i:last-child {
+  top: auto;
+  height: 28%;
+  background: linear-gradient(180deg, transparent, rgba(22, 101, 52, 0.38));
+}
+
+.aquariumCreature {
+  position: absolute;
+  z-index: 2;
+  left: -30%;
+  top: calc(8% + (var(--aquarium-lane) * 25%));
+  display: block;
+  width: 27%;
+  aspect-ratio: 1;
+  background-position: var(--aquarium-atlas-x) var(--aquarium-atlas-y);
+  background-repeat: no-repeat;
+  background-size: 500% 200%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0.08vw 0.08vw rgba(8, 47, 73, 0.4));
+  animation: aquariumCreatureSwim var(--aquarium-duration) linear var(--aquarium-delay) infinite;
+}
+
+.aquariumCreatureReverse {
+  animation-direction: reverse;
+}
+
+.aquariumCreatureInvertebrate {
+  top: calc(48% + (var(--aquarium-lane) * 11%));
+  width: 24%;
+  animation-duration: calc(var(--aquarium-duration) * 1.45);
+}
+
+.aquariumExhibitAwaiting {
+  position: absolute;
+  inset: 24% 8% auto;
+  color: rgba(236, 254, 255, 0.82);
+  font-size: clamp(2px, 0.42vw, 7px);
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 0 1px rgba(8, 47, 73, 0.7);
+}
+
+.aquariumExhibitLabel {
+  position: absolute;
+  z-index: 3;
+  right: 3%;
+  bottom: 4%;
+  left: 3%;
+  overflow: hidden;
+  color: #ecfeff;
+  font-size: clamp(2px, 0.34vw, 6px);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px #083344;
+  white-space: nowrap;
+}
+
+@keyframes aquariumCreatureSwim {
+  from { transform: translateX(0) scaleX(var(--aquarium-direction)); }
+  48% { transform: translateX(250%) translateY(-6%) scaleX(var(--aquarium-direction)); }
+  to { transform: translateX(480%) scaleX(var(--aquarium-direction)); }
+}
+
+@keyframes aquariumWaterDrift {
+  from { transform: translateX(-2%); }
+  to { transform: translateX(2%); }
+}
+
+.reducedMotionMode .aquariumCreature,
+.reducedMotionMode .aquariumExhibitWater i:first-child {
+  animation: none;
+}
+
+.reducedMotionMode .aquariumCreature {
+  left: calc(8% + (var(--aquarium-lane) * 25%));
+  transform: scaleX(var(--aquarium-direction));
+}
+
+.playerHomeMap {
+  background-color: #d7a56c;
 }
 
 .coralHomeMap {
@@ -6955,5 +7080,443 @@
   .dialogueTypeCursor {
     display: none;
     animation: none;
+  }
+}
+.handNetLayer {
+  position: fixed;
+  z-index: 112;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding:
+    max(18px, env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right))
+    max(18px, env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left));
+  background: rgba(3, 27, 46, 0.88);
+  backdrop-filter: blur(8px);
+}
+
+.handNetCard {
+  width: min(980px, 100%);
+  max-height: calc(100dvh - max(36px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+  overflow-y: auto;
+  border: 3px solid #a5f3fc;
+  border-radius: 22px;
+  padding: clamp(14px, 2.2vw, 24px);
+  color: #ecfeff;
+  background:
+    linear-gradient(145deg, rgba(14, 116, 144, 0.98), rgba(8, 47, 73, 0.99) 68%),
+    #083344;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.5), inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.handNetHeader {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.handNetHeader span:first-child {
+  display: block;
+  margin-bottom: 4px;
+  color: #a5f3fc;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.handNetHeader h2 {
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-heading, inherit);
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  line-height: 1.05;
+}
+
+.handNetCount {
+  flex: 0 0 auto;
+  border: 1px solid rgba(165, 243, 252, 0.55);
+  border-radius: 999px;
+  padding: 7px 11px;
+  color: #cffafe;
+  background: rgba(8, 47, 73, 0.5);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.handNetSteps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.handNetSteps li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 7px;
+  border: 1px solid rgba(165, 243, 252, 0.24);
+  border-radius: 10px;
+  padding: 7px 9px;
+  background: rgba(8, 47, 73, 0.35);
+}
+
+.handNetSteps li > span {
+  grid-row: 1 / 3;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  color: #083344;
+  background: #67e8f9;
+  font-size: 0.72rem;
+  font-weight: 1000;
+}
+
+.handNetSteps strong,
+.handNetSteps small {
+  line-height: 1.1;
+}
+
+.handNetSteps small {
+  color: #bae6fd;
+  font-size: 0.66rem;
+}
+
+.handNetShallows {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  min-height: 320px;
+  overflow: hidden;
+  border: 3px solid #164e63;
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 16% 72%, rgba(125, 211, 192, 0.7) 0 1.3%, transparent 1.8%),
+    radial-gradient(ellipse at 79% 63%, rgba(125, 211, 192, 0.58) 0 1.7%, transparent 2.2%),
+    radial-gradient(ellipse at 55% 82%, rgba(87, 166, 145, 0.52) 0 1.2%, transparent 1.8%),
+    linear-gradient(180deg, rgba(34, 211, 238, 0.84) 0 18%, rgba(45, 212, 191, 0.72) 30%, rgba(245, 214, 139, 0.94) 100%);
+  box-shadow: inset 0 0 55px rgba(8, 145, 178, 0.35);
+  touch-action: none;
+  user-select: none;
+}
+
+.handNetWave {
+  position: absolute;
+  z-index: 6;
+  top: -2%;
+  right: -4%;
+  left: -4%;
+  height: 21%;
+  overflow: hidden;
+  background:
+    repeating-radial-gradient(ellipse at 50% -36%, transparent 0 20px, rgba(236, 254, 255, 0.82) 21px 25px, transparent 26px 38px),
+    linear-gradient(180deg, rgba(14, 116, 144, 0.92), rgba(34, 211, 238, 0.35));
+  opacity: 0.83;
+}
+
+.handNetWave i {
+  position: absolute;
+  display: block;
+  width: 11%;
+  aspect-ratio: 3 / 1;
+  border-radius: 50%;
+  background: rgba(236, 254, 255, 0.55);
+  filter: blur(1px);
+}
+
+.handNetWave i:nth-child(1) { top: 62%; left: 16%; }
+.handNetWave i:nth-child(2) { top: 48%; left: 48%; }
+.handNetWave i:nth-child(3) { top: 68%; left: 78%; }
+
+.handNetShallowsMoving .handNetWave {
+  animation: handNetWaveDrift 4.6s ease-in-out infinite alternate;
+}
+
+.handNetSandRipples {
+  position: absolute;
+  z-index: 0;
+  inset: 20% 0 0;
+  opacity: 0.34;
+  background:
+    repeating-linear-gradient(173deg, transparent 0 8%, rgba(255, 251, 235, 0.7) 9% 10%, transparent 11% 18%),
+    radial-gradient(ellipse at 24% 55%, transparent 0 14%, rgba(20, 184, 166, 0.34) 15% 16%, transparent 17%);
+}
+
+.handNetCreature {
+  position: absolute;
+  z-index: 3;
+  display: block;
+  width: 10%;
+  aspect-ratio: 1;
+  background-position: var(--hand-net-atlas-x) var(--hand-net-atlas-y);
+  background-repeat: no-repeat;
+  background-size: 500% 200%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 2px rgba(8, 47, 73, 0.34));
+  transform: translate(-50%, -50%) scaleX(var(--hand-net-facing));
+  transition: left 70ms linear, top 70ms linear, filter 120ms ease;
+}
+
+.handNetCreatureInvertebrate {
+  width: 8.5%;
+}
+
+.handNetCreatureFleeing {
+  filter: drop-shadow(0 3px 2px rgba(8, 47, 73, 0.34)) saturate(1.3) brightness(1.1);
+}
+
+.handNetAlert {
+  position: absolute;
+  top: -15%;
+  left: 50%;
+  width: 76%;
+  height: 8%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(8, 47, 73, 0.48);
+  transform: translateX(-50%);
+}
+
+.handNetAlert::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--hand-net-alert) * 100%);
+  content: "";
+  background: linear-gradient(90deg, #fde047, #fb7185);
+}
+
+.handNetPlayer {
+  position: absolute;
+  z-index: 5;
+  display: block;
+  width: 7%;
+  aspect-ratio: 1;
+  border: 2px solid rgba(8, 47, 73, 0.65);
+  border-radius: 48% 48% 38% 38%;
+  background: linear-gradient(135deg, #f97316 0 48%, #0e7490 49% 100%);
+  box-shadow: 0 4px 8px rgba(8, 47, 73, 0.28);
+  transform: translate(-50%, -50%) rotate(var(--hand-net-player-angle));
+  transition: left 60ms linear, top 60ms linear;
+}
+
+.handNetPlayer i,
+.handNetPlayer b {
+  position: absolute;
+  display: block;
+  content: "";
+}
+
+.handNetPlayer i {
+  top: -72%;
+  left: 48%;
+  width: 8%;
+  height: 82%;
+  border-radius: 999px;
+  background: #7c4a24;
+  transform: translateX(-50%);
+}
+
+.handNetPlayer b {
+  top: -99%;
+  left: 50%;
+  width: 58%;
+  aspect-ratio: 1;
+  border: 3px solid #e0f2fe;
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+.handNetPlayerMoving {
+  box-shadow: 0 0 0 4px rgba(236, 254, 255, 0.22), 0 4px 8px rgba(8, 47, 73, 0.28);
+}
+
+.handNetScoop {
+  position: absolute;
+  z-index: 4;
+  display: block;
+  aspect-ratio: 1;
+  border: 2px dashed rgba(236, 254, 255, 0.28);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.handNetScoopActive {
+  border-style: solid;
+  border-color: #fef08a;
+  background: rgba(254, 240, 138, 0.2);
+  animation: handNetScoop 180ms ease-out both;
+}
+
+.handNetStatus {
+  min-height: 2.9em;
+  margin: 10px 0;
+  border-left: 4px solid #67e8f9;
+  border-radius: 7px;
+  padding: 9px 12px;
+  color: #ecfeff;
+  background: rgba(8, 47, 73, 0.46);
+  font-weight: 750;
+  line-height: 1.38;
+}
+
+.handNetControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 5vw, 54px);
+  margin: 8px 0;
+}
+
+.handNetDpad {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 38px);
+  gap: 4px;
+}
+
+.handNetDpad button,
+.handNetScoopButton,
+.handNetFooter button {
+  border: 1px solid #a5f3fc;
+  color: #ecfeff;
+  background: #155e75;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.handNetDpad button {
+  border-radius: 9px;
+  min-height: 38px;
+  font-size: 1.1rem;
+}
+
+.handNetDpad button:nth-child(1) { grid-column: 2; grid-row: 1; }
+.handNetDpad button:nth-child(2) { grid-column: 1; grid-row: 2; }
+.handNetDpad button:nth-child(3) { grid-column: 2; grid-row: 2; }
+.handNetDpad button:nth-child(4) { grid-column: 3; grid-row: 2; }
+.handNetDpad button:nth-child(5) { grid-column: 2; grid-row: 3; }
+
+.handNetScoopButton {
+  min-width: 190px;
+  min-height: 56px;
+  border-width: 2px;
+  border-radius: 999px;
+  padding: 12px 22px;
+  color: #083344;
+  background: linear-gradient(180deg, #fef08a, #facc15);
+  box-shadow: 0 6px 0 #a16207;
+  font-size: 1rem;
+}
+
+.handNetScoopButton:disabled {
+  cursor: wait;
+  filter: grayscale(0.6);
+  opacity: 0.64;
+}
+
+.handNetFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  color: #bae6fd;
+  font-size: 0.78rem;
+}
+
+.handNetFooter button {
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 8px 13px;
+}
+
+@keyframes handNetWaveDrift {
+  from { transform: translateX(-1.5%) translateY(0); }
+  to { transform: translateX(1.5%) translateY(2%); }
+}
+
+@keyframes handNetScoop {
+  from { opacity: 0.45; transform: translate(-50%, -50%) scale(0.78); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+}
+
+.reducedMotionMode .handNetWave,
+.reducedMotionMode .handNetScoop,
+.reducedMotionMode .handNetCreature,
+.reducedMotionMode .handNetPlayer {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (max-width: 720px) {
+  .handNetLayer {
+    place-items: start center;
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+  }
+
+  .handNetCard {
+    border-radius: 14px;
+    padding: 11px;
+  }
+
+  .handNetShallows {
+    min-height: 280px;
+  }
+
+  .handNetSteps small {
+    display: none;
+  }
+
+  .handNetControls {
+    gap: 14px;
+  }
+
+  .handNetFooter {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-height: 650px) and (min-width: 721px) {
+  .handNetLayer { place-items: start center; }
+  .handNetCard { max-height: none; }
+  .handNetShallows { width: min(72%, 690px); min-height: 270px; margin-inline: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handNetWave,
+  .handNetScoop,
+  .handNetCreature,
+  .handNetPlayer {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .handNetCard,
+  .handNetShallows,
+  .handNetDpad button,
+  .handNetScoopButton,
+  .handNetFooter button {
+    border-color: CanvasText;
+  }
+
+  .handNetCreature,
+  .handNetPlayer,
+  .handNetScoop {
+    forced-color-adjust: none;
   }
 }

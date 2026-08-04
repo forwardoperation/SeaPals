@@ -4,6 +4,7 @@ import {
   migrateAdventureSave,
   normalizeAdventureSave,
 } from "./adventureProgression.mjs";
+import { ELVERSON_TOWN_LAYOUT_VERSION } from "./adventureElversonTownLayout.mjs";
 
 export const ADVENTURE_PROFILE_IDS = Object.freeze([
   "profile-1",
@@ -68,11 +69,30 @@ const CANONICAL_SAVE_V1_REQUIRED_PATHS = Object.freeze([
   ["playtimeSeconds"],
   ["rewardLedger"],
 ]);
-const CANONICAL_SAVE_REQUIRED_PATHS = Object.freeze([
+const CANONICAL_SAVE_V2_REQUIRED_PATHS = Object.freeze([
   ...CANONICAL_SAVE_V1_REQUIRED_PATHS,
   ["world", "completedRouteIds"],
   ["progression", "encounterResults"],
 ]);
+const CANONICAL_SAVE_V3_REQUIRED_PATHS = Object.freeze([
+  ...CANONICAL_SAVE_V2_REQUIRED_PATHS,
+  ["opening"],
+  ["opening", "contentVersion"],
+  ["opening", "status"],
+  ["opening", "completedBeatIds"],
+]);
+const CANONICAL_SAVE_V4_REQUIRED_PATHS = Object.freeze([
+  ...CANONICAL_SAVE_V3_REQUIRED_PATHS,
+  ["world", "layoutVersion"],
+]);
+
+function canonicalRequiredPathsForVersion(schemaVersion) {
+  if (schemaVersion === 1) return CANONICAL_SAVE_V1_REQUIRED_PATHS;
+  if (schemaVersion === 2) return CANONICAL_SAVE_V2_REQUIRED_PATHS;
+  if (schemaVersion === 3) return CANONICAL_SAVE_V3_REQUIRED_PATHS;
+  if (schemaVersion === 4) return CANONICAL_SAVE_V4_REQUIRED_PATHS;
+  return null;
+}
 
 function firstMissingOwnPath(value, paths) {
   for (const path of paths) {
@@ -227,6 +247,7 @@ function decodeRecord(raw, expectedProfileId) {
     // Accept a bare adventure save as a recoverable import boundary. All new
     // writes use the storage envelope below.
     if (parsed?.format === undefined && parsed?.storageVersion === undefined) {
+      const sourceSchemaVersion = parsed?.schemaVersion ?? 0;
       const save = migrateAdventureSave(parsed, { profileId: expectedProfileId });
       if (save.profileId !== expectedProfileId) {
         return {
@@ -246,6 +267,11 @@ function decodeRecord(raw, expectedProfileId) {
           saveKind: "migration",
           checkpointId: null,
           bareSave: true,
+          sourceSchemaVersion,
+          migratedFromSchemaVersion: sourceSchemaVersion === ADVENTURE_SAVE_SCHEMA_VERSION
+            ? null
+            : sourceSchemaVersion,
+          needsRewrite: true,
         },
       };
     }
@@ -316,11 +342,8 @@ function decodeRecord(raw, expectedProfileId) {
         ),
       };
     }
-    const canonicalPaths = parsed.save.schemaVersion === ADVENTURE_SAVE_SCHEMA_VERSION
-      ? CANONICAL_SAVE_REQUIRED_PATHS
-      : parsed.save.schemaVersion === 1
-        ? CANONICAL_SAVE_V1_REQUIRED_PATHS
-        : null;
+    const sourceSchemaVersion = parsed.save.schemaVersion;
+    const canonicalPaths = canonicalRequiredPathsForVersion(sourceSchemaVersion);
     if (canonicalPaths) {
       const missingPath = firstMissingOwnPath(parsed.save, canonicalPaths);
       if (missingPath) {
@@ -353,6 +376,12 @@ function decodeRecord(raw, expectedProfileId) {
         saveKind: parsed.saveKind,
         checkpointId: parsed.checkpointId,
         bareSave: false,
+        sourceSchemaVersion,
+        migratedFromSchemaVersion: sourceSchemaVersion === ADVENTURE_SAVE_SCHEMA_VERSION
+          ? null
+          : sourceSchemaVersion,
+        needsRewrite: sourceSchemaVersion !== ADVENTURE_SAVE_SCHEMA_VERSION
+          || save.world.layoutVersion !== ELVERSON_TOWN_LAYOUT_VERSION,
       },
     };
   } catch (error) {
@@ -786,7 +815,16 @@ export function createAdventureStorageAdapter({ backend, now = () => new Date() 
       status: "ready",
       source: "primary",
       save,
-      metadata: { savedAt, revision, saveKind, checkpointId, bareSave: false },
+      metadata: {
+        savedAt,
+        revision,
+        saveKind,
+        checkpointId,
+        bareSave: false,
+        sourceSchemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
+        migratedFromSchemaVersion: null,
+        needsRewrite: false,
+      },
       hasStoredData: true,
       issues: [],
       recovery: null,

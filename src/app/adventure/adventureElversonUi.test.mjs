@@ -9,7 +9,9 @@ const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), 
 
 test("the active adventure presentation begins with Elverson's aquarium project", () => {
   assert.match(component, /Begin in coastal Elverson, where Mr\. Easterling is creating a new aquarium exhibit/);
-  assert.match(component, /Visit the aquarium workshop and choose a starter reef for Elverson's first exhibit/);
+  assert.match(component, /Your tenth-birthday morning/);
+  assert.match(component, /Share breakfast with Mom, ask Dad's permission, and meet your best friend downstairs/);
+  assert.match(component, /Race to the Sea Realm Aquarium/);
   assert.match(component, /Mr\. Easterling&apos;s three starter reefs/);
   assert.match(component, /Mr\. Easterling's Live Lesson/);
   assert.match(page, /Explore coastal Elverson and help Mr\. Easterling create a new community aquarium exhibit/);
@@ -32,9 +34,10 @@ test("ambient residents render with stable sprite fallbacks and no duel marker",
   assert.match(component, /"explorer-jordan": "explorer-jordan"/);
   assert.match(component, /"marine-biologist-jonah": "marine-biologist-jonah"/);
   assert.match(component, /"programmer-harlan": "programmer-harlan"/);
-  assert.match(component, /\bhenderson:\s*"player"/);
-  assert.doesNotMatch(component, /\bhenderson:\s*"town-elder"/);
-  assert.match(component, /\bedith:\s*"town-elder"/);
+  assert.match(component, /\bhenderson:\s*"town-adult"/);
+  assert.doesNotMatch(component, /\bhenderson:\s*"player"/);
+  assert.match(component, /\bedith:\s*"marina"/);
+  assert.doesNotMatch(component, /\bedith:\s*"town-elder"/);
   assert.match(component, /SPRITE_SOURCE_BY_CHARACTER\[character\] \?\? residentSpriteSource\(character\)/);
   assert.match(component, /const showMarker = Boolean\(trainer\.encounterId \|\| status\)/);
   assert.match(component, /\{showMarker \? \(/);

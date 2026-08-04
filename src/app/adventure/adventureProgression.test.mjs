@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  ADVENTURE_OPENING_CONTENT_VERSION,
+  ADVENTURE_OPENING_STATUS,
+  ADVENTURE_OPENING_STATUSES,
   ADVENTURE_SAVE_SCHEMA_VERSION,
   ADVENTURE_START_LOCATION,
   AdventureSaveValidationError,
@@ -17,18 +20,39 @@ import {
   validateRewardGrant,
 } from "./adventureProgression.mjs";
 import { ADVENTURE_SAVE_V0_FIXTURE } from "./fixtures/adventureSaveV0.mjs";
+import { ADVENTURE_SAVE_V1_FIXTURE } from "./fixtures/adventureSaveV1.mjs";
+import { ADVENTURE_SAVE_V2_FIXTURE } from "./fixtures/adventureSaveV2.mjs";
+import { ELVERSON_PROLOGUE_BEATS } from "./adventureOpeningContract.mjs";
+import {
+  ELVERSON_TOWN_LAYOUT_VERSION,
+  ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+  ELVERSON_TOWN_SAFE_POSITIONS,
+} from "./adventureElversonTownLayout.mjs";
 
 function jsonRoundTrip(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-test("initial save is canonical schema v2 and contains every launch save domain", () => {
+test("initial save is canonical schema v4 and starts the versioned birthday opening", () => {
   const save = createInitialAdventureSave("profile-1");
 
   assert.equal(save.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
   assert.equal(save.profileId, "profile-1");
+  assert.equal(ADVENTURE_OPENING_CONTENT_VERSION, 1);
+  assert.deepEqual(ADVENTURE_OPENING_STATUSES, [
+    "notStarted",
+    "active",
+    "complete",
+    "legacySkipped",
+  ]);
+  assert.deepEqual(save.opening, {
+    contentVersion: ADVENTURE_OPENING_CONTENT_VERSION,
+    status: ADVENTURE_OPENING_STATUS.NOT_STARTED,
+    completedBeatIds: [],
+  });
   assert.deepEqual(save.world, {
     ...ADVENTURE_START_LOCATION,
+    layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION,
     position: { ...ADVENTURE_START_LOCATION.position },
     unlockedRouteIds: [],
     completedRouteIds: [],
@@ -56,21 +80,29 @@ test("initial saves do not share mutable arrays or objects", () => {
 
   first.world.position.x = 99;
   first.world.completedRouteIds.push("route-shellshore-sunpatch");
+  first.opening.completedBeatIds.push(ELVERSON_PROLOGUE_BEATS.breakfast);
   first.rewardLedger.push("reward-test");
   first.inventory.cards["white-grunt"] = 4;
 
-  assert.deepEqual(second.world.position, { x: 14, y: 10 });
+  assert.deepEqual(second.world.position, ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock);
   assert.deepEqual(second.world.completedRouteIds, []);
+  assert.deepEqual(second.opening.completedBeatIds, []);
   assert.deepEqual(second.rewardLedger, []);
   assert.deepEqual(second.inventory.cards, {});
 });
 
-test("normalization fills omitted v2 fields and canonicalizes IDs, arrays, and records", () => {
+test("normalization fills omitted optional v4 fields and canonicalizes IDs, arrays, and records", () => {
   const normalized = normalizeAdventureSave({
     schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
     profileId: " profile-2 ",
+    opening: {
+      contentVersion: ADVENTURE_OPENING_CONTENT_VERSION,
+      status: ADVENTURE_OPENING_STATUS.ACTIVE,
+      completedBeatIds: [ELVERSON_PROLOGUE_BEATS.breakfast],
+    },
     player: { starterDeckId: " coral-garden " },
     world: {
+      layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION,
       unlockedRouteIds: ["route-sunpatch", "route-shellshore", "route-sunpatch"],
       completedRouteIds: ["route-shellshore", "route-shellshore"],
     },
@@ -94,9 +126,11 @@ test("normalization fills omitted v2 fields and canonicalizes IDs, arrays, and r
   });
 
   assert.equal(normalized.profileId, "profile-2");
+  assert.deepEqual(normalized.opening.completedBeatIds, [ELVERSON_PROLOGUE_BEATS.breakfast]);
   assert.deepEqual(normalized.player, { starterDeckId: "coral-garden", activeDeckId: null });
   assert.deepEqual(normalized.world.unlockedRouteIds, ["route-sunpatch", "route-shellshore"]);
   assert.deepEqual(normalized.world.completedRouteIds, ["route-shellshore"]);
+  assert.equal(normalized.world.layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION);
   assert.deepEqual(Object.keys(normalized.inventory.cards), ["blue-crab", "white-grunt"]);
   assert.equal(normalized.savedDecks["deck-starter"].name, "Reef Team");
   assert.deepEqual(normalized.rewardLedger, ["reward-first", "reward-second"]);
@@ -104,16 +138,152 @@ test("normalization fills omitted v2 fields and canonicalizes IDs, arrays, and r
   assert.equal(validateAdventureSave(normalized).valid, true);
 });
 
-test("schema-v1 saves migrate travel and encounter provenance with backward-compatible defaults", () => {
-  const legacyV1 = createInitialAdventureSave("profile-3");
-  legacyV1.schemaVersion = 1;
-  delete legacyV1.world.completedRouteIds;
-  delete legacyV1.progression.encounterResults;
+test("schema-v1 saves migrate stepwise with v2 provenance defaults and skip the birthday opening", () => {
+  const before = jsonRoundTrip(ADVENTURE_SAVE_V1_FIXTURE);
+  const normalized = migrateAdventureSave(ADVENTURE_SAVE_V1_FIXTURE);
 
-  const normalized = migrateAdventureSave(legacyV1);
   assert.deepEqual(normalized.world.completedRouteIds, []);
   assert.deepEqual(normalized.progression.encounterResults, {});
+  assert.deepEqual(normalized.opening, {
+    contentVersion: ADVENTURE_OPENING_CONTENT_VERSION,
+    status: ADVENTURE_OPENING_STATUS.LEGACY_SKIPPED,
+    completedBeatIds: [],
+  });
+  assert.equal(
+    normalized.progression.quests["quest-shellshore-first-voyage"].flags["world-introduction-complete"],
+    false,
+  );
+  assert.equal(normalized.playtimeSeconds, ADVENTURE_SAVE_V1_FIXTURE.playtimeSeconds);
   assert.equal(normalized.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
+  assert.equal(normalized.world.layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION_LEGACY);
+  assert.deepEqual(jsonRoundTrip(ADVENTURE_SAVE_V1_FIXTURE), before);
+  assert.deepEqual(migrateAdventureSave(normalized), normalized);
+});
+
+test("schema-v2 migration preserves every prior domain and cannot replay the birthday opening", () => {
+  const before = jsonRoundTrip(ADVENTURE_SAVE_V2_FIXTURE);
+  const migrated = migrateAdventureSave(ADVENTURE_SAVE_V2_FIXTURE);
+  const {
+    schemaVersion: _legacySchemaVersion,
+    ...legacyDomains
+  } = before;
+  const {
+    schemaVersion: _currentSchemaVersion,
+    opening,
+    ...migratedDomains
+  } = migrated;
+  const {
+    layoutVersion,
+    ...migratedWorld
+  } = migratedDomains.world;
+
+  assert.deepEqual(opening, {
+    contentVersion: ADVENTURE_OPENING_CONTENT_VERSION,
+    status: ADVENTURE_OPENING_STATUS.LEGACY_SKIPPED,
+    completedBeatIds: [],
+  });
+  assert.equal(layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION_LEGACY);
+  assert.deepEqual({ ...migratedDomains, world: migratedWorld }, legacyDomains);
+  assert.deepEqual(jsonRoundTrip(ADVENTURE_SAVE_V2_FIXTURE), before);
+  assert.deepEqual(migrateAdventureSave(migrated), migrated);
+});
+
+test("schema-v4 normalization requires complete supported opening and layout provenance", () => {
+  const malformedCases = [
+    ["missing opening", (save) => { delete save.opening; }, /save\.opening must be a plain object/],
+    ["null opening", (save) => { save.opening = null; }, /save\.opening must be a plain object/],
+    [
+      "missing content version",
+      (save) => { delete save.opening.contentVersion; },
+      /save\.opening\.contentVersion is required/,
+    ],
+    [
+      "future content version",
+      (save) => { save.opening.contentVersion = 2; },
+      /save\.opening\.contentVersion must equal 1/,
+    ],
+    [
+      "missing status",
+      (save) => { delete save.opening.status; },
+      /save\.opening\.status is not a supported opening status/,
+    ],
+    [
+      "unknown status",
+      (save) => { save.opening.status = "paused"; },
+      /save\.opening\.status is not a supported opening status/,
+    ],
+    [
+      "missing completed beats",
+      (save) => { delete save.opening.completedBeatIds; },
+      /save\.opening\.completedBeatIds is required/,
+    ],
+    [
+      "malformed completed beats",
+      (save) => { save.opening.completedBeatIds = "birthday-breakfast"; },
+      /save\.opening\.completedBeatIds must be an array/,
+    ],
+    [
+      "unknown completed beat",
+      (save) => {
+        save.opening.status = ADVENTURE_OPENING_STATUS.ACTIVE;
+        save.opening.completedBeatIds = ["birthday-breakfast"];
+      },
+      /must be an exact ordered prefix/,
+    ],
+    [
+      "duplicate completed beat",
+      (save) => {
+        save.opening.status = ADVENTURE_OPENING_STATUS.ACTIVE;
+        save.opening.completedBeatIds = [
+          ELVERSON_PROLOGUE_BEATS.breakfast,
+          ELVERSON_PROLOGUE_BEATS.breakfast,
+        ];
+      },
+      /must not contain duplicate beats/,
+    ],
+    [
+      "not-started opening with progress",
+      (save) => { save.opening.completedBeatIds = [ELVERSON_PROLOGUE_BEATS.breakfast]; },
+      /must describe one coherent opening checkpoint/,
+    ],
+  ];
+
+  for (const [label, mutate, expected] of malformedCases) {
+    const malformed = createInitialAdventureSave("profile-1");
+    mutate(malformed);
+    assert.throws(() => normalizeAdventureSave(malformed), expected, label);
+    assert.equal(validateAdventureSave(malformed).valid, false, label);
+  }
+
+  for (const [label, layoutVersion] of [
+    ["missing", undefined],
+    ["zero", 0],
+    ["future", ELVERSON_TOWN_LAYOUT_VERSION + 1],
+  ]) {
+    const malformed = createInitialAdventureSave("profile-1");
+    if (layoutVersion === undefined) delete malformed.world.layoutVersion;
+    else malformed.world.layoutVersion = layoutVersion;
+    assert.throws(
+      () => normalizeAdventureSave(malformed),
+      /save\.world\.layoutVersion/,
+      `${label} layout version`,
+    );
+  }
+});
+
+test("schema-v3 migration preserves opening state and marks legacy town coordinates", () => {
+  const v3 = createInitialAdventureSave("profile-1");
+  v3.schemaVersion = 3;
+  delete v3.world.layoutVersion;
+  v3.opening.status = ADVENTURE_OPENING_STATUS.ACTIVE;
+  v3.opening.completedBeatIds = [ELVERSON_PROLOGUE_BEATS.breakfast];
+  const beforeOpening = jsonRoundTrip(v3.opening);
+
+  const migrated = migrateAdventureSave(v3);
+  assert.equal(migrated.schemaVersion, 4);
+  assert.equal(migrated.world.layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION_LEGACY);
+  assert.deepEqual(migrated.opening, beforeOpening);
+  assert.deepEqual(migrateAdventureSave(migrated), migrated);
 });
 
 test("validation returns a recovery-friendly result for malformed saves", () => {
@@ -172,6 +342,7 @@ test("v0 fixture migrates known wins without inventing rewards the prototype nev
     "encounter-shellshore-dorian",
   ]);
   assert.deepEqual(migrated.rewardLedger, []);
+  assert.equal(migrated.opening.status, ADVENTURE_OPENING_STATUS.LEGACY_SKIPPED);
   assert.deepEqual(jsonRoundTrip(ADVENTURE_SAVE_V0_FIXTURE), before);
   assert.equal(validateAdventureSave(migrated).valid, true);
 
@@ -218,15 +389,14 @@ test("reward grant validation exposes the canonical contract without applying it
 });
 
 test("migration upgrades v1 and refuses unknown future versions", () => {
-  const v1 = createInitialAdventureSave("profile-1");
-  v1.schemaVersion = 1;
+  const v1 = jsonRoundTrip(ADVENTURE_SAVE_V1_FIXTURE);
   v1.rewardLedger = ["reward-one", "reward-one"];
   const migrated = migrateAdventureSave(v1);
   assert.equal(migrated.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
   assert.deepEqual(migrated.rewardLedger, ["reward-one"]);
   assert.throws(
     () => migrateAdventureSave({ schemaVersion: 99, profileId: "profile-1" }),
-    /newer than supported version 2/,
+    /newer than supported version 4/,
   );
   assert.throws(
     () => migrateAdventureSave({ schemaVersion: -1, profileId: "profile-1" }),

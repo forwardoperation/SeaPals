@@ -26,11 +26,18 @@ function clone(value) {
 
 const ELVERSON_REQUESTED_RESIDENT_NAMES = Object.freeze([
   "Fisherman Wyeth",
+  "Theo",
+  "Erik",
   "Teacher Caroline",
+  "Hudson",
+  "Harrison",
+  "Juliana",
   "Ivy",
   "Rosie",
   "George",
   "Henry",
+  "Charlie",
+  "Danny",
   "Explorer Jordan",
   "Sam",
   "Marine Biologist Jonah",
@@ -40,7 +47,6 @@ const ELVERSON_REQUESTED_RESIDENT_NAMES = Object.freeze([
   "Eloise",
   "Edith",
   "Ellis",
-  "Luke",
   "Micah",
   "Karah",
   "Calvin",
@@ -49,7 +55,9 @@ const ELVERSON_REQUESTED_RESIDENT_NAMES = Object.freeze([
   "Charlotte",
   "Eli",
   "William",
-  "Emilio",
+  "Olivia",
+  "Alyssa",
+  "Henry",
   "Programmer Harlan",
 ]);
 
@@ -137,8 +145,14 @@ test("Elverson launches from its authored town while dormant later-world scenes 
   const runtimeScenes = getRuntimeAdventureScenes();
   assert.deepEqual(runtimeScenes.map((scene) => scene.id), [
     "town",
+    "player-home",
     "coral-home",
     "deep-home",
+    "elverson-oceanic-home",
+    "elverson-hybrid-home",
+    "elverson-supply-company",
+    "elverson-red-schoolhouse",
+    "elverson-marine-research-lab",
     "academy-lab",
     "shellshore-sunpatch-sea",
     "sunpatch-cay-town",
@@ -177,7 +191,7 @@ test("Elverson launches from its authored town while dormant later-world scenes 
     townId: "shellshore-village",
     dockId: "shellshore-dock",
     sceneId: "town",
-    position: { x: 14, y: 10 },
+    position: { x: 20, y: 17 },
     facing: "down",
   });
   assert.deepEqual(getAdventureDock("shellshore-dock"), {
@@ -185,7 +199,7 @@ test("Elverson launches from its authored town while dormant later-world scenes 
     townId: "shellshore-village",
     sceneId: "town",
     status: "prototype",
-    position: { x: 14, y: 10 },
+    position: { x: 20, y: 17 },
     facing: "down",
   });
 });
@@ -230,7 +244,7 @@ test("the dormant first outbound route remains valid without an active Elverson 
       routeId: route.id,
       dockId: "shellshore-dock",
       targetScene: "town",
-      spawn: { x: 14, y: 10 },
+      spawn: { x: 20, y: 17 },
       facing: "down",
     },
     {
@@ -1028,11 +1042,17 @@ test("Reading a Reef is a complete evidence-first Field Note with science source
   assert.match(fieldNote.summary, /different observations.*evidence before naming a cause.*instant cure/i);
 });
 
-test("Elverson's three active interiors define validated art-aligned furniture collision rectangles", () => {
+test("Elverson's nine interiors define validated art-aligned furniture collision rectangles", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   const expectedRectangleCounts = new Map([
+    ["player-home", 6],
     ["coral-home", 5],
     ["deep-home", 4],
+    ["elverson-oceanic-home", 0],
+    ["elverson-hybrid-home", 0],
+    ["elverson-supply-company", 0],
+    ["elverson-red-schoolhouse", 0],
+    ["elverson-marine-research-lab", 0],
     ["academy-lab", 8],
   ]);
 
@@ -1051,42 +1071,44 @@ test("Elverson's three active interiors define validated art-aligned furniture c
   }
 });
 
-test("Elverson town uses layered object bases and an explicit dry-land allowlist", () => {
+test("Elverson v3 layers its portal buildings while streets and waterfront routes stay clear", () => {
   const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
-  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v2.png");
+  assert.equal(town.world.tiles.length, 28);
+  assert.ok(town.world.tiles.every((row) => row.length === 42));
+  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v3.png");
   assert.deepEqual(
     town.world.walkableRegions.map(({ id }) => id),
-    ["mainland", "central-pier", "fishing-connector", "fishing-platform", "aquarium-apron"],
+    [
+      "mainland",
+      "central-pier",
+      "wharf-platform",
+      "wharf-connector",
+      "aquarium-connector",
+      "aquarium-platform",
+    ],
   );
 
-  const objectIds = new Set(town.world.layeredObjects.map(({ id }) => id));
-  for (const objectId of [
-    "park-fountain",
-    "park-bench-north",
-    "park-bench-south",
-    "main-planter-west",
-    "main-planter-east",
-    "tree-park-east",
-    "lamp-park-south",
+  const expectedObjectIds = [
+    "player-home",
+    "reef-house",
+    "deep-house",
+    "oceanic-house",
+    "red-schoolhouse",
+    "hybrid-house",
+    "marine-research-lab",
+    "elverson-supply-company",
     "aquarium-workshop",
-  ]) {
-    assert.equal(objectIds.has(objectId), true, `${objectId} must be a layered object`);
-  }
-
-  const collisionIds = new Set(town.world.collisionRects.map(({ id }) => id));
-  for (const collisionId of [
-    "park-fountain:basin",
-    "park-bench-north:feet",
-    "park-bench-south:feet",
-    "tree-park-east:trunk",
-    "lamp-park-south:base",
-    "main-planter-west:box",
-    "main-planter-east:box",
-    "aquarium-workshop:foundation-left",
-    "aquarium-workshop:foundation-right",
-  ]) {
-    assert.equal(collisionIds.has(collisionId), true, `${collisionId} must be solid`);
-  }
+  ];
+  assert.deepEqual(town.world.layeredObjects.map(({ id }) => id), expectedObjectIds);
+  assert.deepEqual(
+    town.world.collisionRects.map(({ id }) => id),
+    expectedObjectIds.map((objectId) => `${objectId}:facade`),
+  );
+  assert.ok(town.world.layeredObjects.every((object) => (
+    object.interactionId
+    && object.collisionRects.length === 1
+    && object.collisionRects[0].id === `${object.id}:facade`
+  )));
   assert.deepEqual(
     town.world.layeredObjects.flatMap(({ collisionRects }) => collisionRects),
     town.world.collisionRects,
@@ -1099,48 +1121,142 @@ test("Elverson town uses layered object bases and an explicit dry-land allowlist
     && position.y >= region.top
     && position.y <= region.bottom
   ));
-  assert.equal(regionContains({ x: 14, y: 17.7 }), true, "central pier stays walkable");
-  assert.equal(regionContains({ x: 11, y: 16.5 }), true, "fishing platform stays walkable");
-  assert.equal(regionContains({ x: 8, y: 16.5 }), false, "open water is outside the allowlist");
-  assert.equal(regionContains({ x: 14, y: 18.35 }), false, "water past the pier is outside the allowlist");
+  assert.equal(regionContains({ x: 20.5, y: 24 }), true, "central pier stays walkable");
+  assert.equal(regionContains({ x: 15.2, y: 21 }), true, "fishing platform stays walkable");
+  assert.equal(regionContains({ x: 25, y: 22 }), true, "aquarium platform stays walkable");
+  assert.equal(regionContains({ x: 10, y: 21 }), false, "open water is outside the allowlist");
+  assert.equal(regionContains({ x: 20.5, y: 27.4 }), false, "water past the pier is outside the allowlist");
+
+  const colliderContains = (position) => town.world.collisionRects.some((rect) => (
+    position.x >= rect.left
+    && position.x <= rect.right
+    && position.y >= rect.top
+    && position.y <= rect.bottom
+  ));
+  for (const clearRoutePosition of [
+    { x: 3.55, y: 5.05 },
+    { x: 8, y: 5.8 },
+    { x: 20.5, y: 5.8 },
+    { x: 20.5, y: 10.5 },
+    { x: 20.5, y: 16.8 },
+    { x: 20.5, y: 21.75 },
+    { x: 24.22, y: 22.2 },
+  ]) {
+    assert.equal(colliderContains(clearRoutePosition), false, "the birthday route must stay clear");
+  }
 
   const aquariumExit = getRuntimeAdventureScenes()
     .find((scene) => scene.id === "academy-lab")
     .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
-  assert.deepEqual(aquariumExit.spawn, { x: 16, y: 15.85 });
+  assert.deepEqual(aquariumExit.spawn, { x: 24.22, y: 22.2 });
   assert.equal(aquariumExit.doorwayHalfWidth, 0.5);
 });
 
-test("Elverson exposes exactly its aquarium workshop and two homes through valid portals", () => {
-  const validFacings = new Set(["up", "down", "left", "right"]);
-  const elversonSceneIds = new Set(["town", "coral-home", "deep-home", "academy-lab"]);
-  const portals = getRuntimeAdventureScenes()
-    .filter((scene) => elversonSceneIds.has(scene.id))
-    .flatMap((scene) => (
-    scene.world.interactions.filter((interaction) => ["enter", "exit"].includes(interaction.type))
-    ));
-  const townEntries = portals.filter((portal) => portal.type === "enter");
+test("all nine Elverson town doors have matching two-way interior portals", () => {
+  const expectedRoundTrips = [
+    {
+      entryId: "interaction-elverson-enter-player-home",
+      targetScene: "player-home",
+      interiorSpawn: { x: 7, y: 4 },
+      exitId: "interaction-player-home-exit",
+      exteriorSpawn: { x: 3.55, y: 5.05 },
+    },
+    {
+      entryId: "interaction-elverson-enter-reef-house",
+      targetScene: "coral-home",
+      interiorSpawn: { x: 5, y: 6 },
+      exitId: "interaction-coral-home-exit",
+      exteriorSpawn: { x: 13.8, y: 5.05 },
+    },
+    {
+      entryId: "interaction-elverson-enter-deep-house",
+      targetScene: "deep-home",
+      interiorSpawn: { x: 5, y: 6 },
+      exitId: "interaction-deep-home-exit",
+      exteriorSpawn: { x: 28.2, y: 5.05 },
+    },
+    {
+      entryId: "interaction-elverson-enter-oceanic-house",
+      targetScene: "elverson-oceanic-home",
+      interiorSpawn: { x: 5, y: 6 },
+      exitId: "interaction-elverson-oceanic-home-exit",
+      exteriorSpawn: { x: 36.8, y: 5.05 },
+    },
+    {
+      entryId: "interaction-elverson-enter-schoolhouse",
+      targetScene: "elverson-red-schoolhouse",
+      interiorSpawn: { x: 6, y: 7 },
+      exitId: "interaction-elverson-red-schoolhouse-exit",
+      exteriorSpawn: { x: 4.3, y: 16.45 },
+    },
+    {
+      entryId: "interaction-elverson-enter-hybrid-house",
+      targetScene: "elverson-hybrid-home",
+      interiorSpawn: { x: 5, y: 6 },
+      exitId: "interaction-elverson-hybrid-home-exit",
+      exteriorSpawn: { x: 13.8, y: 16.45 },
+    },
+    {
+      entryId: "interaction-elverson-enter-research-lab",
+      targetScene: "elverson-marine-research-lab",
+      interiorSpawn: { x: 6, y: 7 },
+      exitId: "interaction-elverson-marine-research-lab-exit",
+      exteriorSpawn: { x: 30.7, y: 16.45 },
+    },
+    {
+      entryId: "interaction-elverson-enter-supply-company",
+      targetScene: "elverson-supply-company",
+      interiorSpawn: { x: 6, y: 7 },
+      exitId: "interaction-elverson-supply-company-exit",
+      exteriorSpawn: { x: 37.5, y: 16.45 },
+    },
+    {
+      entryId: "interaction-elverson-enter-aquarium",
+      targetScene: "academy-lab",
+      interiorSpawn: { x: 6, y: 7 },
+      exitId: "interaction-academy-exit",
+      exteriorSpawn: { x: 24.22, y: 22.2 },
+    },
+  ];
+  const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
+  assert.equal(town.world.interactions.filter((interaction) => interaction.type === "enter").length, 9);
 
-  assert.deepEqual(
-    townEntries.map((portal) => portal.targetScene).sort(),
-    ["academy-lab", "coral-home", "deep-home"],
-  );
-  assert.ok(portals.every((portal) => validFacings.has(portal.facing)));
+  for (const expected of expectedRoundTrips) {
+    const entry = resolveAdventureInteraction("town", expected.entryId);
+    assert.equal(entry.type, "enter");
+    assert.equal(entry.targetSceneContent.id, expected.targetScene);
+    assert.deepEqual(entry.spawn, expected.interiorSpawn);
+    assert.equal(entry.facing, "up");
+
+    const exit = resolveAdventureInteraction(expected.targetScene, expected.exitId);
+    assert.equal(exit.type, "exit");
+    assert.equal(exit.targetSceneContent.id, "town");
+    assert.deepEqual(exit.spawn, expected.exteriorSpawn);
+    assert.equal(exit.facing, "down");
+  }
 });
 
-test("Elverson contains the exact requested resident roster once plus Mr. Easterling", () => {
+test("Elverson contains the requested resident roster, birthday family, rival, and Mr. Easterling", () => {
   const elversonNpcs = ADVENTURE_CONTENT.npcs.filter((npc) => npc.townId === "shellshore-village");
   const mentor = elversonNpcs.find((npc) => npc.id === "academy-mentor");
-  const residents = elversonNpcs.filter((npc) => npc.id !== "academy-mentor");
+  const prologueCast = elversonNpcs.filter((npc) => [
+    "player-mom",
+    "player-dad",
+    "player-best-friend",
+  ].includes(npc.id));
+  const residents = elversonNpcs.filter((npc) => (
+    npc.id !== "academy-mentor" && !prologueCast.includes(npc)
+  ));
 
   assert.equal(mentor.name, "Mr. Easterling");
   assert.equal(mentor.title, "Aquarium Project Lead");
-  assert.equal(elversonNpcs.length, ELVERSON_REQUESTED_RESIDENT_NAMES.length + 1);
+  assert.equal(elversonNpcs.length, ELVERSON_REQUESTED_RESIDENT_NAMES.length + 4);
+  assert.deepEqual(prologueCast.map((npc) => npc.name), ["Mom", "Dad", "Best Friend"]);
   assert.deepEqual(
     residents.map((npc) => npc.name).sort(),
     [...ELVERSON_REQUESTED_RESIDENT_NAMES].sort(),
   );
-  assert.equal(residents.filter((npc) => npc.name === "Henry").length, 1);
+  assert.equal(residents.filter((npc) => npc.name === "Henry").length, 2);
   assert.equal(new Set(elversonNpcs.map((npc) => npc.id)).size, elversonNpcs.length);
 });
 
@@ -1161,31 +1277,67 @@ test("every Elverson resident cross-resolves through one conversation and one sc
 });
 
 test("Elverson doors, challengers, mentor, conversations, and encounters cross-resolve", () => {
-  const door = resolveAdventureInteraction("town", "interaction-elverson-enter-park-home");
-  assert.equal(door.targetSceneContent.id, "coral-home");
-  assert.deepEqual(door.spawn, { x: 5, y: 6 });
+  const reefDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-reef-house");
+  assert.deepEqual(reefDoor.at, { x: 13.8, y: 4.1 });
+  assert.equal(reefDoor.targetSceneContent.id, "coral-home");
+  assert.deepEqual(reefDoor.spawn, { x: 5, y: 6 });
 
-  const rosieInteraction = resolveAdventureInteraction("coral-home", "interaction-coral-home-marina");
-  assert.equal(rosieInteraction.npc.name, "Rosie");
-  assert.equal(rosieInteraction.npc.conversation.lines.intro.length, 2);
-  assert.equal(rosieInteraction.npc.encounter.opponentDeckId, "coral-garden");
-  assert.equal(rosieInteraction.npc.encounter.victoryTarget, 10);
+  const georgeInteraction = resolveAdventureInteraction("coral-home", "interaction-coral-home-marina");
+  assert.equal(georgeInteraction.npc.name, "George");
+  assert.equal(georgeInteraction.npc.conversation.lines.intro.length, 2);
+  assert.equal(georgeInteraction.npc.encounter.opponentDeckId, "coral-garden");
+  assert.equal(georgeInteraction.npc.encounter.victoryTarget, 10);
 
-  const george = ADVENTURE_CONTENT.npcs.find((npc) => (
-    npc.townId === "shellshore-village" && npc.name === "George"
+  const calvin = ADVENTURE_CONTENT.npcs.find((npc) => (
+    npc.townId === "shellshore-village" && npc.name === "Calvin"
   ));
-  const resolvedGeorge = resolveAdventureNpc(george.id);
-  assert.equal(resolvedGeorge.sceneId, "deep-home");
-  assert.equal(resolvedGeorge.conversation.lines.rematch.length, 2);
-  assert.equal(resolvedGeorge.encounter.opponentDeckId, "darkness-shroud");
-  assert.equal(resolvedGeorge.encounter.difficulty, "medium");
+  const resolvedCalvin = resolveAdventureNpc(calvin.id);
+  assert.equal(resolvedCalvin.sceneId, "deep-home");
+  assert.equal(resolvedCalvin.conversation.lines.rematch.length, 2);
+  assert.equal(resolvedCalvin.encounter.opponentDeckId, "darkness-shroud");
+  assert.equal(resolvedCalvin.encounter.difficulty, "medium");
+
+  const rosieInteraction = resolveAdventureInteraction(
+    "elverson-red-schoolhouse",
+    "interaction-elverson-red-schoolhouse-rosie",
+  );
+  assert.equal(rosieInteraction.npc.name, "Rosie");
+  assert.match(
+    [
+      ...rosieInteraction.npc.conversation.lines.intro,
+      ...rosieInteraction.npc.conversation.lines.guidance,
+    ].join(" "),
+    /Crevalle jacks.*schooling fishes.*open sea into salty rivers/i,
+  );
+
+  const expectedDeckResidents = new Map([
+    ["henry", ["coral-home", "Age 8 · Disruption Player"]],
+    ["reef-house-charlie", ["coral-home", "Age 10 · Stinging Fortress Player"]],
+    ["reef-house-danny", ["coral-home", "Age 12 · Blue Water Player"]],
+    ["jack", ["coral-home", "Murky Water Player"]],
+    ["landon", ["deep-home", "Age 10 · The Abyss Player"]],
+    ["oliver", ["deep-home", "Age 11 · Deep Waters Player"]],
+    ["charlotte", ["elverson-oceanic-home", "Age 13 · Open Ocean Player"]],
+    ["eloise", ["elverson-oceanic-home", "Age 7 · Pelagic Zone Player"]],
+    ["edith", ["elverson-oceanic-home", "Age 7 · Plankton Bloom Player"]],
+    ["william", ["elverson-hybrid-home", "Murky Water's Revenge Player"]],
+    ["hybrid-house-olivia", ["elverson-hybrid-home", "Whirlpool Player"]],
+    ["hybrid-house-alyssa", ["elverson-hybrid-home", "Coral Ledge Player"]],
+    ["hybrid-house-henry", ["elverson-hybrid-home", "Drop Off Player"]],
+  ]);
+  for (const [npcId, [sceneId, title]] of expectedDeckResidents) {
+    const resident = resolveAdventureNpc(npcId);
+    assert.equal(resident.sceneId, sceneId);
+    assert.equal(resident.title, title);
+  }
 
   const aquariumDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-aquarium");
-  assert.deepEqual(aquariumDoor.at, { x: 16, y: 15.1 });
+  assert.deepEqual(aquariumDoor.at, { x: 24.22, y: 21.35 });
   assert.equal(aquariumDoor.targetSceneContent.id, "academy-lab");
   assert.deepEqual(aquariumDoor.spawn, { x: 6, y: 7 });
-  const chestnutDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-chestnut-home");
-  assert.deepEqual(chestnutDoor.at, { x: 18, y: 3 });
+  const supplyDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-supply-company");
+  assert.deepEqual(supplyDoor.at, { x: 37.5, y: 15.5 });
+  assert.equal(supplyDoor.targetSceneContent.id, "elverson-supply-company");
 
   const mentorInteraction = resolveAdventureInteraction("academy-lab", "interaction-academy-mentor");
   assert.equal(mentorInteraction.npc.name, "Mr. Easterling");
@@ -1193,17 +1345,16 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   assert.equal(mentorInteraction.npc.conversation.lines.boatSafety.length, 2);
   assert.equal(mentorInteraction.npc.conversation.lines.tutorialIntro.length, 3);
   const worldIntroduction = mentorInteraction.npc.conversation.lines.worldIntroduction;
-  assert.equal(worldIntroduction.length, 6);
-  assert.match(worldIntroduction.join(" "), /aquarium here has been my lifelong dream/i);
+  assert.equal(worldIntroduction.length, 7);
   assert.match(
     worldIntroduction.join(" "),
-    /catch certain fish and creatures responsibly.*bring the creatures you catch back to me.*right care.*aquarium exhibits.*their habitats/i,
+    /requested set of fantastic sea creatures.*matching Sea Realm trading card.*title Master of the Sea/i,
   );
   assert.match(
     worldIntroduction.join(" "),
-    /SeaPals matches let us model those real relationships.*playable ecosystem.*food, shelter, water conditions/i,
+    /misplace my notes.*never forget a sea creature.*food, shelter, habitat, neighbors.*SeaRealm card game/i,
   );
-  assert.match(mentorInteraction.npc.conversation.lines.intro.join(" "), /Elverson.*aquarium.*exhibit/i);
+  assert.match(mentorInteraction.npc.conversation.lines.intro.join(" "), /Sea Realm Aquarium.*ecosystem room/i);
   assert.match(mentorInteraction.npc.conversation.lines.starterPresentation.join(" "), /aquarium lesson/i);
   assert.match(mentorInteraction.npc.conversation.lines.starterConfirmed.join(" "), /aquarium project/i);
   assert.doesNotMatch(
@@ -1310,13 +1461,21 @@ test("malformed top-level collections return validation errors instead of throwi
 
 test("content validation rejects broken Elverson runtime cross-references", () => {
   const invalid = clone(ADVENTURE_CONTENT);
-  invalid.scenes.find((scene) => scene.id === "town").world.interactions[0].targetScene = "missing-home";
-  invalid.scenes.find((scene) => scene.id === "coral-home").world.interactions[0].conversationId = "missing-conversation";
+  invalid.scenes
+    .find((scene) => scene.id === "town")
+    .world.interactions
+    .find((interaction) => interaction.id === "interaction-elverson-enter-player-home")
+    .targetScene = "missing-home";
+  invalid.scenes
+    .find((scene) => scene.id === "elverson-red-schoolhouse")
+    .world.interactions
+    .find((interaction) => interaction.id === "interaction-elverson-red-schoolhouse-rosie")
+    .conversationId = "missing-conversation";
   invalid.docks.find((dock) => dock.id === "shellshore-dock").sceneId = "sunpatch-cay-town";
-  const george = invalid.npcs.find((npc) => npc.name === "George");
-  const rosie = invalid.npcs.find((npc) => npc.name === "Rosie");
-  george.encounterId = rosie.encounterId;
-  invalid.conversations.find((conversation) => conversation.npcId === rosie.id).lines.victory = [];
+  const george = invalid.npcs.find((npc) => npc.id === "marina");
+  const calvin = invalid.npcs.find((npc) => npc.id === "dorian");
+  george.encounterId = calvin.encounterId;
+  invalid.conversations.find((conversation) => conversation.npcId === george.id).lines.victory = [];
 
   const result = validateAdventureContent(invalid);
   assert.equal(result.valid, false);
@@ -1366,15 +1525,18 @@ test("content validation protects layered object identity, sprite, base, and dep
   const invalid = clone(ADVENTURE_CONTENT);
   const town = invalid.scenes.find((scene) => scene.id === "town");
   const { walkableRegions, layeredObjects } = town.world;
+  const pristineObject = clone(layeredObjects[0]);
 
   walkableRegions.push({ ...walkableRegions[0] });
   walkableRegions.push({ id: "", left: 1, top: 1, right: 2, bottom: 2 });
   walkableRegions.push({ id: "empty-region", left: 3, top: 3, right: 3, bottom: 4 });
   walkableRegions.push({ id: "off-map-region", left: -1, top: 1, right: 1, bottom: 2 });
 
-  layeredObjects.push({ ...layeredObjects[0] });
+  layeredObjects.push(clone(pristineObject));
   layeredObjects[0].renderId = "wrong-render-id";
+  layeredObjects[0].collisionRects[0].left += 0.1;
   layeredObjects[1].kind = "building";
+  layeredObjects[1].collisionRects[0].id = "wrong-owner:facade";
   layeredObjects[2].archetype = "";
   layeredObjects[3].at.x = Number.NaN;
   layeredObjects[4].sprite.src = "https://example.invalid/tree.jpg";
@@ -1382,14 +1544,27 @@ test("content validation protects layered object identity, sprite, base, and dep
   layeredObjects[6].sprite.anchorX = 2;
   layeredObjects[7].scale = 0;
   layeredObjects[8].layer = "foreground";
-  layeredObjects[9].depthY = Number.NaN;
-  layeredObjects[10].depthBias = 0.5;
-  layeredObjects[11].visualBounds.right = layeredObjects[11].visualBounds.left;
-  layeredObjects[12].collisionRects = { unexpected: true };
-  layeredObjects[13].collisionRects[0].left += 0.1;
-  layeredObjects[14].collisionRects[0].id = "wrong-owner:foundation";
-  layeredObjects[15].interactionId = "missing-interaction";
-  layeredObjects[16].interactionId = "interaction-elverson-enter-chestnut-home";
+
+  const appendInvalidObject = (id, mutate) => {
+    const object = clone(pristineObject);
+    object.id = id;
+    object.renderId = `object:${id}`;
+    object.interactionId = null;
+    object.collisionRects = [];
+    mutate(object);
+    layeredObjects.push(object);
+  };
+  appendInvalidObject("invalid-depth-y", (object) => { object.depthY = Number.NaN; });
+  appendInvalidObject("invalid-depth-bias", (object) => { object.depthBias = 0.5; });
+  appendInvalidObject("invalid-visual-bounds", (object) => {
+    object.visualBounds.right = object.visualBounds.left;
+  });
+  appendInvalidObject("invalid-collider-collection", (object) => {
+    object.collisionRects = { unexpected: true };
+  });
+  appendInvalidObject("invalid-interaction", (object) => {
+    object.interactionId = "missing-interaction";
+  });
 
   const result = validateAdventureContent(invalid);
   assert.equal(result.valid, false);
@@ -1398,8 +1573,8 @@ test("content validation protects layered object identity, sprite, base, and dep
     /walkableRegions\[\d+\]\.id must be non-empty/,
     /walkableRegions\[\d+\].*left less than right/,
     /walkableRegions\[\d+\].*inside the scene bounds/,
-    /layeredObjects contains duplicate id west-blue-home/,
-    /renderId must equal object:west-blue-home/,
+    /layeredObjects contains duplicate id player-home/,
+    /renderId must equal object:player-home/,
     /\.kind must equal object/,
     /\.archetype must be non-empty/,
     /\.at requires finite x and y coordinates/,
@@ -1413,9 +1588,9 @@ test("content validation protects layered object identity, sprite, base, and dep
     /visualBounds.*left less than right/,
     /collisionRects must be an array/,
     /must match its world\.collisionRects geometry/,
-    /\.id must begin with tree-north-midwest:/,
+    /\.id must begin with reef-house:/,
     /interactionId references unknown scene interaction missing-interaction/,
-    /links interaction interaction-elverson-enter-chestnut-home more than once/,
+    /links interaction interaction-elverson-enter-player-home more than once/,
   ]) {
     assert.ok(
       result.errors.some((error) => expected.test(error)),

@@ -37,6 +37,12 @@ import {
   relocateResumeToElversonStart,
 } from "./adventureReleaseScope.mjs";
 import { ONBOARDING_QUEST_FLAGS } from "./adventureOnboarding.mjs";
+import {
+  ELVERSON_PROLOGUE_BEATS,
+  ELVERSON_PROLOGUE_HOME_SCENE_ID,
+  beginElversonPrologue,
+} from "./adventureElversonPrologue.mjs";
+import { migrateElversonLayout } from "./adventureElversonLayoutMigration.mjs";
 
 export const SHELLSHORE_QUEST_ID = "quest-shellshore-first-voyage";
 export const SHELLSHORE_RESIDENT_ENCOUNTER_IDS = Object.freeze(
@@ -53,15 +59,18 @@ const SCENE_VISIT_FLAGS = Object.freeze({
   "deep-home": "visited-deep-home",
 });
 
-const LEGACY_ELVERSON_AQUARIUM_EXIT_POSITION = Object.freeze({ x: 16, y: 17 });
-const ELVERSON_AQUARIUM_EXIT = SCENES["academy-lab"]?.interactions.find(
-  ({ id }) => id === "interaction-academy-exit",
-);
+const ELVERSON_PLAYER_HOME = SCENES[ELVERSON_PROLOGUE_HOME_SCENE_ID];
 
-function isLegacyElversonAquariumExit(world) {
-  return world.sceneId === "town"
-    && world.position.x === LEGACY_ELVERSON_AQUARIUM_EXIT_POSITION.x
-    && world.position.y === LEGACY_ELVERSON_AQUARIUM_EXIT_POSITION.y;
+function includeElversonLayoutRecovery(result, layoutMigration) {
+  if (!layoutMigration.migrated) return result;
+  return {
+    ...result,
+    recovered: true,
+    reason: result.recovered
+      ? result.reason
+      : `elverson-layout-${layoutMigration.reason}`,
+    layoutMigrationReason: layoutMigration.reason,
+  };
 }
 
 function withWorld(
@@ -263,11 +272,22 @@ export function createNewAdventureSession(profileId) {
     ONBOARDING_QUEST_FLAGS.worldIntroductionComplete,
     false,
   );
-  const aquariumApproach = ELVERSON_AQUARIUM_EXIT?.spawn;
-  if (!aquariumApproach || !canOccupyScenePosition("town", aquariumApproach)) {
-    return introductionPending;
+  const prologue = beginElversonPrologue(introductionPending);
+  if (
+    !ELVERSON_PLAYER_HOME
+    || !canOccupyScenePosition(
+      ELVERSON_PROLOGUE_HOME_SCENE_ID,
+      ELVERSON_PLAYER_HOME.spawn,
+    )
+  ) {
+    throw new Error("Elverson's player-home opening spawn is unavailable.");
   }
-  return withWorld(introductionPending, "town", aquariumApproach, "up");
+  return withWorld(
+    prologue.save,
+    ELVERSON_PROLOGUE_HOME_SCENE_ID,
+    ELVERSON_PLAYER_HOME.spawn,
+    "down",
+  );
 }
 
 /**
@@ -277,34 +297,39 @@ export function createNewAdventureSession(profileId) {
  */
 export function recoverElversonAdventureResume(saveValue) {
   const normalized = normalizeAdventureSave(saveValue);
+  const layoutMigration = migrateElversonLayout(normalized);
+  const current = layoutMigration.save;
+  const openingBeatIds = current.opening.status === "legacySkipped"
+    ? []
+    : current.opening.completedBeatIds;
+  const openingStillAtHome = !["legacySkipped", "complete"].includes(
+    current.opening.status,
+  ) && !openingBeatIds.includes(ELVERSON_PROLOGUE_BEATS.race);
+  if (openingStillAtHome && ELVERSON_PLAYER_HOME) {
+    const homeSave = current.world.sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID
+      ? current
+      : withWorld(
+          current,
+          ELVERSON_PROLOGUE_HOME_SCENE_ID,
+          ELVERSON_PLAYER_HOME.spawn,
+          "down",
+        );
+    return includeElversonLayoutRecovery(recoverAdventureResume(homeSave), layoutMigration);
+  }
   // Later chapters remain authored and old progression remains intact. Relocate
   // every location outside the complete release tuple before generic recovery;
   // otherwise an archived safe dock could pull a stale save back into the cut
   // world even when its scene ID looked local or was no longer recognized.
-  if (!isElversonReleaseLocation(normalized.world)) {
-    const relocated = relocateResumeToElversonStart(normalized, START_STATE);
-    return {
+  if (!isElversonReleaseLocation(current.world)) {
+    const relocated = relocateResumeToElversonStart(current, START_STATE);
+    return includeElversonLayoutRecovery({
       save: relocated.save,
       recovered: true,
       reason: "outside-active-release",
       fallback: "elverson-start",
-    };
+    }, layoutMigration);
   }
-  if (isLegacyElversonAquariumExit(normalized.world)) {
-    const repaired = recoverAdventureResume(withWorld(
-      normalized,
-      "town",
-      ELVERSON_AQUARIUM_EXIT.spawn,
-      normalized.world.facing,
-    ));
-    return {
-      ...repaired,
-      recovered: true,
-      reason: "legacy-aquarium-exit",
-      fallback: "aquarium-deck",
-    };
-  }
-  return recoverAdventureResume(normalized);
+  return includeElversonLayoutRecovery(recoverAdventureResume(current), layoutMigration);
 }
 
 /**
