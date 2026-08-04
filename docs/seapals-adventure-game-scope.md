@@ -1,5 +1,7 @@
 # SeaPals Adventure Game - Product Scope
 
+> **Historical scope — superseded August 3, 2026:** This document records the architecture and campaign assumptions used to build the existing prototype; it is no longer the active product scope or definition of done. Reefbound now begins in Elverson with a tenth-birthday home prologue, Mr. Easterling's Sea Realm Aquarium collection challenge, matching-card delivery rewards, a hand-net catching tutorial, living exhibits, and a campaign-wide Master of the Sea goal. [`reefbound-elverson-direction.md`](./reefbound-elverson-direction.md) is the source of truth for product vision, opening, core loop, content boundary, build order, and completion gates. The implemented save, travel, deck, accessibility, simulator, and ecosystem-learning systems below remain reusable technical foundations, but stale “does not exist,” academy-first, catching-exclusion, phase-plan, and definition-of-done statements must not direct new work.
+
 **Status:** Draft for product review
 
 **Working title:** Reefbound

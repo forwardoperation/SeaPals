@@ -15,13 +15,29 @@ import {
   START_STATE,
   canOccupyContinuousPosition,
 } from "./adventureWorld.mjs";
+import {
+  ELVERSON_TOWN_LAYOUT_VERSION,
+  ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+  ELVERSON_TOWN_SAFE_POSITIONS,
+} from "./adventureElversonTownLayout.mjs";
 
 test("Elverson release scope retains persisted IDs and exposes no active routes", () => {
   assert.deepEqual(ELVERSON_RELEASE_SCOPE, {
     townId: "shellshore-village",
     startSceneId: "town",
     startDockId: "shellshore-dock",
-    sceneIds: ["town", "academy-lab", "coral-home", "deep-home"],
+    sceneIds: [
+      "town",
+      "player-home",
+      "academy-lab",
+      "coral-home",
+      "deep-home",
+      "elverson-oceanic-home",
+      "elverson-hybrid-home",
+      "elverson-supply-company",
+      "elverson-red-schoolhouse",
+      "elverson-marine-research-lab",
+    ],
     routeIds: [],
   });
   assert.equal(Object.isFrozen(ELVERSON_RELEASE_SCOPE), true);
@@ -45,6 +61,17 @@ test("Elverson release scope retains persisted IDs and exposes no active routes"
   }), false);
 });
 
+function withLegacySkippedOpening(save) {
+  return {
+    ...save,
+    opening: {
+      ...save.opening,
+      status: "legacySkipped",
+      completedBeatIds: [],
+    },
+  };
+}
+
 test("pure release relocation changes only location fields and is idempotent", () => {
   const inventory = { storyItems: { keepsake: 2 } };
   const progression = { quests: { "quest-side-story": { status: "active" } } };
@@ -66,7 +93,7 @@ test("pure release relocation changes only location fields and is idempotent", (
   };
   const start = {
     sceneId: "town",
-    position: { x: 14, y: 17 },
+    position: ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock,
     facing: "up",
   };
 
@@ -79,9 +106,10 @@ test("pure release relocation changes only location fields and is idempotent", (
   assert.equal(relocated.save.world.unlockedRouteIds, unlockedRouteIds);
   assert.deepEqual(relocated.save.world, {
     ...source.world,
+    layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION,
     townId: "shellshore-village",
     sceneId: "town",
-    position: { x: 14, y: 17 },
+    position: ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock,
     facing: "up",
     lastSafeDockId: "shellshore-dock",
   });
@@ -92,7 +120,7 @@ test("pure release relocation changes only location fields and is idempotent", (
 });
 
 test("resume recovery relocates archived-world saves without rewriting their progress", () => {
-  const initial = createNewAdventureSession("release-resume");
+  const initial = withLegacySkippedOpening(createNewAdventureSession("release-resume"));
   const archived = JSON.parse(JSON.stringify({
     ...initial,
     playtimeSeconds: 777,
@@ -152,7 +180,7 @@ test("resume recovery relocates archived-world saves without rewriting their pro
 });
 
 test("release recovery cannot follow stale or mismatched saves to an archived safe dock", () => {
-  const initial = createNewAdventureSession("release-stale-dock");
+  const initial = withLegacySkippedOpening(createNewAdventureSession("release-stale-dock"));
   for (const worldPatch of [
     {
       townId: "sunpatch-cay",
@@ -188,7 +216,7 @@ test("release recovery cannot follow stale or mismatched saves to an archived sa
 });
 
 test("release recovery moves a blocked legacy Elverson position to a safe spawn without losing progress", () => {
-  const initial = createNewAdventureSession("release-blocked-elverson-resume");
+  const initial = withLegacySkippedOpening(createNewAdventureSession("release-blocked-elverson-resume"));
   // Old flat-map builds could persist the player beyond the end of the public
   // pier. The layered map must recover that now-water position safely.
   const legacyPosition = { x: 14, y: 18.6 };
@@ -246,16 +274,17 @@ test("release recovery moves a blocked legacy Elverson position to a safe spawn 
   assert.deepEqual(stable.save, recovered.save);
 });
 
-test("release recovery moves the retired aquarium exit autosave onto the aquarium deck", () => {
-  const initial = createNewAdventureSession("release-aquarium-exit-resume");
+test("release recovery migrates the retired aquarium exit onto the new aquarium platform", () => {
+  const initial = withLegacySkippedOpening(createNewAdventureSession("release-aquarium-exit-resume"));
   const legacyExit = { x: 16, y: 17 };
-  assert.equal(canOccupyContinuousPosition("town", legacyExit), false);
+  assert.equal(canOccupyContinuousPosition("town", legacyExit), true);
 
   const stranded = {
     ...initial,
     playtimeSeconds: 321,
     world: {
       ...initial.world,
+      layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
       townId: ELVERSON_RELEASE_SCOPE.townId,
       sceneId: "town",
       position: legacyExit,
@@ -266,9 +295,10 @@ test("release recovery moves the retired aquarium exit autosave onto the aquariu
 
   const recovered = recoverElversonAdventureResume(stranded);
   assert.equal(recovered.recovered, true);
-  assert.equal(recovered.reason, "legacy-aquarium-exit");
-  assert.equal(recovered.fallback, "aquarium-deck");
-  assert.deepEqual(recovered.save.world.position, { x: 16, y: 15.85 });
+  assert.equal(recovered.reason, "elverson-layout-aquarium-exterior");
+  assert.equal(recovered.layoutMigrationReason, "aquarium-exterior");
+  assert.deepEqual(recovered.save.world.position, ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior);
+  assert.equal(recovered.save.world.layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION);
   assert.equal(canOccupyContinuousPosition("town", recovered.save.world.position), true);
   assert.equal(recovered.save.world.facing, "down");
   assert.equal(recovered.save.playtimeSeconds, 321);

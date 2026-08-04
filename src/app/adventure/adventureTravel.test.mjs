@@ -50,7 +50,7 @@ const TEST_CONTENT = Object.freeze({
       id: "town",
       townId: "shellshore-village",
       status: "prototype",
-      world: Object.freeze({ spawn: Object.freeze({ x: 14, y: 10 }), startFacing: "down" }),
+      world: Object.freeze({ spawn: Object.freeze({ x: 20, y: 17 }), startFacing: "down" }),
     }),
     Object.freeze({
       id: "shellshore-sunpatch-sea",
@@ -77,7 +77,7 @@ const TEST_CONTENT = Object.freeze({
       townId: "shellshore-village",
       sceneId: "town",
       status: "prototype",
-      position: Object.freeze({ x: 14, y: 10 }),
+      position: Object.freeze({ x: 20, y: 17 }),
       facing: "down",
     }),
     Object.freeze({
@@ -236,7 +236,7 @@ test("boarding preserves the safe origin while entering the authored route spawn
   assert.equal(boarded.world.facing, "right");
   assert.equal(boarded.world.lastSafeDockId, SHELLSHORE_DOCK_ID);
   assert.deepEqual(boarded.world.completedRouteIds, []);
-  assert.deepEqual(initial.world.position, { x: 14, y: 10 });
+  assert.deepEqual(initial.world.position, { x: 20, y: 17 });
 });
 
 test("route scene spawn is a safe metadata fallback when endpoint spawn is omitted", () => {
@@ -325,6 +325,7 @@ test("manual destination docking atomically records first completion and safe Su
   }, TEST_CONTENT);
 
   assert.deepEqual(docked.world, {
+    layoutVersion: 2,
     townId: "sunpatch-cay",
     sceneId: "sunpatch-cay-town",
     position: { x: 2, y: 7 },

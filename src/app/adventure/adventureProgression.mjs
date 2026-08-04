@@ -1,4 +1,22 @@
-export const ADVENTURE_SAVE_SCHEMA_VERSION = 2;
+import {
+  ADVENTURE_OPENING_CONTENT_VERSION,
+  ADVENTURE_OPENING_STATUS,
+  ADVENTURE_OPENING_STATUSES,
+  ELVERSON_PROLOGUE_BEAT_IDS,
+} from "./adventureOpeningContract.mjs";
+import {
+  ELVERSON_TOWN_LAYOUT_VERSION,
+  ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+  ELVERSON_TOWN_SAFE_POSITIONS,
+} from "./adventureElversonTownLayout.mjs";
+
+export {
+  ADVENTURE_OPENING_CONTENT_VERSION,
+  ADVENTURE_OPENING_STATUS,
+  ADVENTURE_OPENING_STATUSES,
+} from "./adventureOpeningContract.mjs";
+
+export const ADVENTURE_SAVE_SCHEMA_VERSION = 4;
 
 export const QUEST_STATUSES = Object.freeze([
   "notStarted",
@@ -24,7 +42,7 @@ export const TOURNAMENT_STATUSES = Object.freeze([
 export const ADVENTURE_START_LOCATION = Object.freeze({
   townId: "shellshore-village",
   sceneId: "town",
-  position: Object.freeze({ x: 14, y: 10 }),
+  position: ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock,
   facing: "down",
   lastSafeDockId: "shellshore-dock",
 });
@@ -32,6 +50,7 @@ export const ADVENTURE_START_LOCATION = Object.freeze({
 const FACING_DIRECTIONS = new Set(["up", "down", "left", "right"]);
 const QUEST_STATUS_SET = new Set(QUEST_STATUSES);
 const TOURNAMENT_STATUS_SET = new Set(TOURNAMENT_STATUSES);
+const ADVENTURE_OPENING_STATUS_SET = new Set(ADVENTURE_OPENING_STATUSES);
 const TEXT_SPEEDS = new Set(["slow", "normal", "fast", "instant"]);
 const IDENTIFIER_PATTERN = /^[a-z0-9]+(?:[._:-][a-z0-9]+)*$/;
 const MAX_IDENTIFIER_LENGTH = 128;
@@ -322,11 +341,17 @@ function createInitialState(profileId) {
   return {
     schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
     profileId,
+    opening: {
+      contentVersion: ADVENTURE_OPENING_CONTENT_VERSION,
+      status: ADVENTURE_OPENING_STATUS.NOT_STARTED,
+      completedBeatIds: [],
+    },
     player: {
       starterDeckId: null,
       activeDeckId: null,
     },
     world: {
+      layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION,
       townId: ADVENTURE_START_LOCATION.townId,
       sceneId: ADVENTURE_START_LOCATION.sceneId,
       position: { ...ADVENTURE_START_LOCATION.position },
@@ -375,14 +400,15 @@ function createInitialState(profileId) {
   };
 }
 
-/** Creates a new canonical schema-v2 save without reading time, storage, or random state. */
+/** Creates a new canonical schema-v4 save without reading time, storage, or random state. */
 export function createInitialAdventureSave(profileId) {
   return createInitialState(normalizeIdentifier(profileId, "profileId"));
 }
 
 /**
- * Converts a schema-v2 value into its canonical JSON shape. Missing fields
- * receive their launch defaults; malformed supplied fields are rejected.
+ * Converts a schema-v4 value into its canonical JSON shape. Missing optional
+ * fields receive their launch defaults; opening provenance is integrity-
+ * required so a damaged current save can never be mistaken for a new game.
  */
 export function normalizeAdventureSave(value) {
   const save = requireRecord(value, "save");
@@ -392,6 +418,7 @@ export function normalizeAdventureSave(value) {
 
   const profileId = normalizeIdentifier(save.profileId, "save.profileId");
   const defaults = createInitialState(profileId);
+  const opening = requireRecord(save.opening, "save.opening");
   const player = requireRecord(save.player, "save.player", defaults.player);
   const world = requireRecord(save.world, "save.world", defaults.world);
   const progression = requireRecord(save.progression, "save.progression", defaults.progression);
@@ -405,8 +432,82 @@ export function normalizeAdventureSave(value) {
   const fieldNotes = requireRecord(save.fieldNotes, "save.fieldNotes", defaults.fieldNotes);
   const settings = requireRecord(save.settings, "save.settings", defaults.settings);
 
+  if (!Object.prototype.hasOwnProperty.call(opening, "contentVersion")) {
+    fail("save.opening.contentVersion", "is required for schema-v4 saves.");
+  }
+  const openingContentVersion = normalizeNonNegativeInteger(
+    opening.contentVersion,
+    "save.opening.contentVersion",
+  );
+  if (openingContentVersion !== ADVENTURE_OPENING_CONTENT_VERSION) {
+    fail(
+      "save.opening.contentVersion",
+      `must equal ${ADVENTURE_OPENING_CONTENT_VERSION}.`,
+    );
+  }
+  if (!ADVENTURE_OPENING_STATUS_SET.has(opening.status)) {
+    fail("save.opening.status", "is not a supported opening status.");
+  }
+  if (!Object.prototype.hasOwnProperty.call(opening, "completedBeatIds")) {
+    fail("save.opening.completedBeatIds", "is required for schema-v4 saves.");
+  }
+  const openingCompletedBeatIds = normalizeIdentifierList(
+    opening.completedBeatIds,
+    "save.opening.completedBeatIds",
+  );
+  if (openingCompletedBeatIds.length !== opening.completedBeatIds.length) {
+    fail("save.opening.completedBeatIds", "must not contain duplicate beats.");
+  }
+  if (
+    openingCompletedBeatIds.length > ELVERSON_PROLOGUE_BEAT_IDS.length
+    || openingCompletedBeatIds.some((beatId, index) => (
+      beatId !== ELVERSON_PROLOGUE_BEAT_IDS[index]
+    ))
+  ) {
+    fail(
+      "save.opening.completedBeatIds",
+      "must be an exact ordered prefix of the supported Elverson opening beats.",
+    );
+  }
+  const openingBeatCount = openingCompletedBeatIds.length;
+  const finalOpeningBeatCount = ELVERSON_PROLOGUE_BEAT_IDS.length;
+  const openingStatusCoherent = (
+    (opening.status === ADVENTURE_OPENING_STATUS.NOT_STARTED && openingBeatCount === 0)
+    || (
+      opening.status === ADVENTURE_OPENING_STATUS.ACTIVE
+      && openingBeatCount < finalOpeningBeatCount
+    )
+    || (
+      opening.status === ADVENTURE_OPENING_STATUS.COMPLETE
+      && openingBeatCount === finalOpeningBeatCount
+    )
+    || (
+      opening.status === ADVENTURE_OPENING_STATUS.LEGACY_SKIPPED
+      && openingBeatCount === 0
+    )
+  );
+  if (!openingStatusCoherent) {
+    fail(
+      "save.opening",
+      "status and completedBeatIds must describe one coherent opening checkpoint.",
+    );
+  }
+
   const facing = world.facing ?? defaults.world.facing;
   if (!FACING_DIRECTIONS.has(facing)) fail("save.world.facing", "must be up, down, left, or right.");
+  if (!Object.prototype.hasOwnProperty.call(world, "layoutVersion")) {
+    fail("save.world.layoutVersion", "is required for schema-v4 saves.");
+  }
+  const layoutVersion = normalizeNonNegativeInteger(
+    world.layoutVersion,
+    "save.world.layoutVersion",
+  );
+  if (![ELVERSON_TOWN_LAYOUT_VERSION_LEGACY, ELVERSON_TOWN_LAYOUT_VERSION].includes(layoutVersion)) {
+    fail(
+      "save.world.layoutVersion",
+      `must be ${ELVERSON_TOWN_LAYOUT_VERSION_LEGACY} or ${ELVERSON_TOWN_LAYOUT_VERSION}.`,
+    );
+  }
 
   const tournamentStatus = tournament.status ?? defaults.progression.tournament.status;
   if (!TOURNAMENT_STATUS_SET.has(tournamentStatus)) {
@@ -426,6 +527,11 @@ export function normalizeAdventureSave(value) {
   return {
     schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
     profileId,
+    opening: {
+      contentVersion: openingContentVersion,
+      status: opening.status,
+      completedBeatIds: openingCompletedBeatIds,
+    },
     player: {
       starterDeckId: normalizeNullableIdentifier(
         player.starterDeckId,
@@ -439,6 +545,7 @@ export function normalizeAdventureSave(value) {
       ),
     },
     world: {
+      layoutVersion,
       townId: normalizeIdentifier(world.townId ?? defaults.world.townId, "save.world.townId"),
       sceneId: normalizeIdentifier(world.sceneId ?? defaults.world.sceneId, "save.world.sceneId"),
       position: normalizePosition(world.position, "save.world.position", defaults.world.position),
@@ -560,7 +667,14 @@ export function legacyEncounterId(trainerId) {
 
 function migrateV0(value, options) {
   const profileId = value.profileId ?? options.profileId;
-  const migrated = createInitialAdventureSave(profileId);
+  const migrated = createInitialState(
+    normalizeIdentifier(profileId, "profileId"),
+  );
+  migrated.schemaVersion = 1;
+  delete migrated.opening;
+  delete migrated.world.layoutVersion;
+  delete migrated.world.completedRouteIds;
+  delete migrated.progression.encounterResults;
   const legacyLocation = isRecord(value.location) ? value.location : value;
 
   migrated.world.sceneId = normalizeIdentifier(
@@ -585,36 +699,96 @@ function migrateV0(value, options) {
   ))];
 
   migrated.progression.completedEncounterIds = knownDefeated.map(legacyEncounterId);
-  return normalizeAdventureSave(migrated);
+  return migrated;
 }
 
 function migrateV1(value) {
   // Phase 4 added route-completion and encounter-result provenance. They did
   // not exist in original v1 records, so migration supplies their empty
   // defaults while preserving either field when a later v1 writer included it.
-  return normalizeAdventureSave({
+  return {
     ...value,
-    schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
-  });
+    schemaVersion: 2,
+    ...(isRecord(value.world)
+      ? {
+          world: {
+            ...value.world,
+            completedRouteIds: value.world.completedRouteIds ?? [],
+          },
+        }
+      : {}),
+    ...(isRecord(value.progression)
+      ? {
+          progression: {
+            ...value.progression,
+            encounterResults: value.progression.encounterResults ?? {},
+          },
+        }
+      : {}),
+  };
 }
 
-/** Migrates the unversioned prototype/v1 shapes or normalizes a v2 save. */
+function migrateV2(value) {
+  return {
+    ...value,
+    schemaVersion: 3,
+    opening: {
+      contentVersion: ADVENTURE_OPENING_CONTENT_VERSION,
+      status: ADVENTURE_OPENING_STATUS.LEGACY_SKIPPED,
+      completedBeatIds: [],
+    },
+  };
+}
+
+function migrateV3(value) {
+  return {
+    ...value,
+    schemaVersion: 4,
+    ...(isRecord(value.world)
+      ? {
+          world: {
+            ...value.world,
+            layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+          },
+        }
+      : {}),
+  };
+}
+
+/** Migrates each historical shape one schema at a time or normalizes a v4 save. */
 export function migrateAdventureSave(value, options = {}) {
   const save = requireRecord(value, "save");
   const version = save.schemaVersion ?? 0;
 
   if (version === ADVENTURE_SAVE_SCHEMA_VERSION) return normalizeAdventureSave(save);
-  if (version === 0) return migrateV0(save, requireRecord(options, "options", {}));
-  if (version === 1) return migrateV1(save);
   if (!Number.isSafeInteger(version) || version < 0) {
     fail("save.schemaVersion", "must be a non-negative safe integer.");
   }
-  fail(
-    "save.schemaVersion",
-    version > ADVENTURE_SAVE_SCHEMA_VERSION
-      ? `is newer than supported version ${ADVENTURE_SAVE_SCHEMA_VERSION}.`
-      : `has no migration path to version ${ADVENTURE_SAVE_SCHEMA_VERSION}.`,
-  );
+  if (version > ADVENTURE_SAVE_SCHEMA_VERSION) {
+    fail(
+      "save.schemaVersion",
+      `is newer than supported version ${ADVENTURE_SAVE_SCHEMA_VERSION}.`,
+    );
+  }
+
+  let migrated = save;
+  let migratedVersion = version;
+  const migrationOptions = requireRecord(options, "options", {});
+  while (migratedVersion < ADVENTURE_SAVE_SCHEMA_VERSION) {
+    if (migratedVersion === 0) migrated = migrateV0(migrated, migrationOptions);
+    else if (migratedVersion === 1) migrated = migrateV1(migrated);
+    else if (migratedVersion === 2) migrated = migrateV2(migrated);
+    else if (migratedVersion === 3) migrated = migrateV3(migrated);
+    else {
+      fail(
+        "save.schemaVersion",
+        `has no migration path to version ${ADVENTURE_SAVE_SCHEMA_VERSION}.`,
+      );
+    }
+    migratedVersion = migrated.schemaVersion;
+  }
+
+  return normalizeAdventureSave(migrated);
 }
 
 export function transitionQuest(saveValue, questIdValue, nextStatus) {

@@ -86,10 +86,10 @@ test("intersection keeps edge-touching and rounding-adjacent visuals mounted", (
 test("layered objects are culled by full visual bounds rather than their anchor", () => {
   const aquarium = SCENES.town.layeredObjects.find(({ id }) => id === "aquarium-workshop");
   assert.ok(aquarium);
-  assert.ok(aquarium.at.x > 16, "the object's anchor should be outside this test crop");
+  assert.ok(aquarium.at.x > 24, "the object's anchor should be outside this test crop");
   assert.equal(isAdventureLayeredObjectInRenderBounds(
     aquarium,
-    { left: 14, top: 10, right: 16, bottom: 12 },
+    { left: 23, top: 16, right: 24, bottom: 18 },
   ), true, "the visible building overhang must keep the object mounted");
   assert.equal(isAdventureLayeredObjectInRenderBounds(
     aquarium,
@@ -126,8 +126,8 @@ test("every actually visible Elverson object and resident survives culling at ea
   ));
   for (const [playerX, playerY] of [
     [0.5, 0.5],
-    [15, 10],
-    [29.5, 19.5],
+    [SCENES.town.width / 2, SCENES.town.height / 2],
+    [SCENES.town.width - 0.5, SCENES.town.height - 0.5],
   ]) {
     const camera = getAdventureCameraLayout({
       worldWidth: SCENES.town.width,

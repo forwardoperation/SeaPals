@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  ADVENTURE_OPENING_STATUS,
   ADVENTURE_SAVE_SCHEMA_VERSION,
   createInitialAdventureSave,
 } from "./adventureProgression.mjs";
+import { ADVENTURE_SAVE_V1_FIXTURE } from "./fixtures/adventureSaveV1.mjs";
+import { ADVENTURE_SAVE_V2_FIXTURE } from "./fixtures/adventureSaveV2.mjs";
 import {
   ADVENTURE_PROFILE_COUNT,
   ADVENTURE_PROFILE_IDS,
@@ -62,6 +65,10 @@ function decode(backend, key) {
   return JSON.parse(backend.getItem(key));
 }
 
+function jsonClone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 test("the adapter exposes exactly three fixed local profile slots", () => {
   assert.equal(ADVENTURE_PROFILE_COUNT, 3);
   assert.deepEqual(ADVENTURE_PROFILE_IDS, ["profile-1", "profile-2", "profile-3"]);
@@ -118,6 +125,9 @@ test("manual saves validate, canonicalize, verify, and expose title-screen metad
   assert.equal(loaded.status, "ready");
   assert.equal(loaded.source, "primary");
   assert.equal(loaded.recovery, null);
+  assert.equal(loaded.metadata.sourceSchemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
+  assert.equal(loaded.metadata.migratedFromSchemaVersion, null);
+  assert.equal(loaded.metadata.needsRewrite, false);
   assert.deepEqual(loaded.save, result.save);
   assert.equal(loaded.summary.playtimeSeconds, 145);
 });
@@ -235,21 +245,26 @@ test("an incomplete current-schema envelope cannot outrank a complete backup", (
   assert.equal(loaded.issues[0].error.code, "INCOMPLETE_SAVE_DATA");
 });
 
-test("complete v1 envelopes migrate while v2 route and encounter fields are integrity-required", () => {
-  const legacy = createAdapter();
-  const legacyKeys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-1"];
-  assert.equal(legacy.adapter.manualSave("profile-1", createInitialAdventureSave("profile-1")).ok, true);
-  const v1Record = decode(legacy.backend, legacyKeys.primary);
-  v1Record.save.schemaVersion = 1;
-  delete v1Record.save.world.completedRouteIds;
-  delete v1Record.save.progression.encounterResults;
-  legacy.backend.setItem(legacyKeys.primary, JSON.stringify(v1Record));
+test("complete v1 and v2 envelopes migrate stepwise with rewrite metadata", () => {
+  for (const fixture of [ADVENTURE_SAVE_V1_FIXTURE, ADVENTURE_SAVE_V2_FIXTURE]) {
+    const { adapter, backend } = createAdapter();
+    const keys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-1"];
+    assert.equal(adapter.manualSave("profile-1", createInitialAdventureSave("profile-1")).ok, true);
+    const record = decode(backend, keys.primary);
+    record.save = jsonClone(fixture);
+    backend.setItem(keys.primary, JSON.stringify(record));
 
-  const migrated = legacy.adapter.loadProfile("profile-1");
-  assert.equal(migrated.ok, true);
-  assert.equal(migrated.save.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
-  assert.deepEqual(migrated.save.world.completedRouteIds, []);
-  assert.deepEqual(migrated.save.progression.encounterResults, {});
+    const migrated = adapter.loadProfile("profile-1");
+    assert.equal(migrated.ok, true);
+    assert.equal(migrated.save.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
+    assert.equal(migrated.save.opening.status, ADVENTURE_OPENING_STATUS.LEGACY_SKIPPED);
+    assert.equal(migrated.metadata.sourceSchemaVersion, fixture.schemaVersion);
+    assert.equal(migrated.metadata.migratedFromSchemaVersion, fixture.schemaVersion);
+    assert.equal(migrated.metadata.needsRewrite, true);
+  }
+});
+
+test("v2 route and encounter fields remain integrity-required", () => {
 
   for (const missingField of ["completedRouteIds", "encounterResults"]) {
     const { adapter, backend } = createAdapter();
@@ -257,6 +272,8 @@ test("complete v1 envelopes migrate while v2 route and encounter fields are inte
     adapter.autosave("profile-2", saveWith("profile-2", { playtimeSeconds: 22 }), "phase-4-progress");
     const keys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-2"];
     const incomplete = decode(backend, keys.primary);
+    incomplete.save.schemaVersion = 2;
+    delete incomplete.save.opening;
     if (missingField === "completedRouteIds") delete incomplete.save.world.completedRouteIds;
     else delete incomplete.save.progression.encounterResults;
     backend.setItem(keys.primary, JSON.stringify(incomplete));
@@ -268,6 +285,43 @@ test("complete v1 envelopes migrate while v2 route and encounter fields are inte
     assert.equal(recovered.save.playtimeSeconds, 11);
     assert.equal(recovered.issues[0].error.code, "INCOMPLETE_SAVE_DATA");
     assert.match(recovered.issues[0].error.message, new RegExp(missingField));
+  }
+});
+
+test("v3 opening provenance is integrity-required and malformed values recover from backup", () => {
+  const mutations = [
+    ["opening", (save) => { delete save.opening; }, "INCOMPLETE_SAVE_DATA"],
+    ["opening.contentVersion", (save) => { delete save.opening.contentVersion; }, "INCOMPLETE_SAVE_DATA"],
+    ["opening.status", (save) => { delete save.opening.status; }, "INCOMPLETE_SAVE_DATA"],
+    ["opening.completedBeatIds", (save) => { delete save.opening.completedBeatIds; }, "INCOMPLETE_SAVE_DATA"],
+    ["opening.status", (save) => { save.opening.status = "paused"; }, "INVALID_SAVE_DATA"],
+    [
+      "opening.completedBeatIds",
+      (save) => {
+        save.opening.status = "active";
+        save.opening.completedBeatIds = ["birthday-breakfast"];
+      },
+      "INVALID_SAVE_DATA",
+    ],
+    ["opening", (save) => { save.opening.status = "complete"; }, "INVALID_SAVE_DATA"],
+  ];
+
+  for (const [field, mutate, errorCode] of mutations) {
+    const { adapter, backend } = createAdapter();
+    adapter.manualSave("profile-1", saveWith("profile-1", { playtimeSeconds: 11 }));
+    adapter.autosave("profile-1", saveWith("profile-1", { playtimeSeconds: 22 }), "opening-progress");
+    const keys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-1"];
+    const damaged = decode(backend, keys.primary);
+    mutate(damaged.save);
+    backend.setItem(keys.primary, JSON.stringify(damaged));
+
+    const recovered = adapter.loadProfile("profile-1");
+    assert.equal(recovered.ok, true, field);
+    assert.equal(recovered.status, "recovered", field);
+    assert.equal(recovered.source, "backup", field);
+    assert.equal(recovered.save.playtimeSeconds, 11, field);
+    assert.equal(recovered.issues[0].error.code, errorCode, field);
+    assert.match(recovered.issues[0].error.message, new RegExp(field.replace(".", "\\.")), field);
   }
 });
 
@@ -580,8 +634,41 @@ test("a bare canonical save can be loaded as a recovery import and normalized", 
   assert.equal(result.status, "recovered");
   assert.equal(result.source, "primary");
   assert.equal(result.metadata.bareSave, true);
+  assert.equal(result.metadata.sourceSchemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
+  assert.equal(result.metadata.migratedFromSchemaVersion, null);
+  assert.equal(result.metadata.needsRewrite, true);
   assert.deepEqual(result.save.rewardLedger, ["reward-one"]);
   assert.equal(result.recovery.action, "save-profile-to-repair-primary");
+});
+
+test("bare v2 saves migrate as legacy and expose their source schema", () => {
+  const backend = new MemoryStorage();
+  const keys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-1"];
+  backend.setItem(keys.primary, JSON.stringify(ADVENTURE_SAVE_V2_FIXTURE));
+  const { adapter } = createAdapter(backend);
+
+  const result = adapter.loadProfile("profile-1");
+  assert.equal(result.ok, true);
+  assert.equal(result.status, "recovered");
+  assert.equal(result.save.opening.status, ADVENTURE_OPENING_STATUS.LEGACY_SKIPPED);
+  assert.equal(result.metadata.sourceSchemaVersion, 2);
+  assert.equal(result.metadata.migratedFromSchemaVersion, 2);
+  assert.equal(result.metadata.needsRewrite, true);
+});
+
+test("bare malformed v3 saves fail closed instead of receiving opening defaults", () => {
+  const backend = new MemoryStorage();
+  const keys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-1"];
+  const malformed = createInitialAdventureSave("profile-1");
+  delete malformed.opening;
+  backend.setItem(keys.primary, JSON.stringify(malformed));
+  const { adapter } = createAdapter(backend);
+
+  const result = adapter.loadProfile("profile-1");
+  assert.equal(result.ok, false);
+  assert.equal(result.status, "unrecoverable");
+  assert.equal(result.issues[0].error.code, "INVALID_SAVE_DATA");
+  assert.match(result.issues[0].error.message, /save\.opening/);
 });
 
 test("records written before monotonic revisions remain loadable", () => {

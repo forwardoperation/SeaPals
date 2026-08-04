@@ -144,19 +144,24 @@ test("Elverson's town manifest covers its ground, layered objects, and resident 
     characterSpriteProfileIds: [
       "player",
       "fisherman-wyeth",
-      "teacher-caroline",
-      "ivy",
-      "explorer-jordan",
-      "dorian",
-      "marine-biologist-jonah",
-      "marina",
       "town-adult",
+      "dorian",
     ],
   });
-  assert.equal(paths[0], "/images/adventure/elverson-ground-v2.png");
-  assert.ok(paths.includes("/images/adventure/elverson-objects-v2/aquarium-workshop.png"));
-  assert.ok(paths.includes("/images/adventure/fisherman-wyeth-sprites-512-v2.png"));
-  assert.ok(paths.includes("/images/adventure/player-sprites-512-v2.png"));
+  assert.equal(paths[0], "/images/adventure/elverson-ground-v3.png");
+  assert.equal(SCENES.town.layeredObjects.length, 9);
+  for (const { sprite } of SCENES.town.layeredObjects) {
+    assert.ok(paths.includes(sprite.src), `${sprite.src} must be preloaded`);
+  }
+  for (const residentPath of [
+    "/images/adventure/player-sprites-512-v2.png",
+    "/images/adventure/fisherman-wyeth-sprites-512-v2.png",
+    "/images/adventure/town-adult-sprites-512-v2.png",
+    "/images/adventure/dorian-sprites-512-v2.png",
+  ]) {
+    assert.ok(paths.includes(residentPath), `${residentPath} must be preloaded`);
+  }
+  assert.ok(!paths.includes("/images/adventure/explorer-jordan-sprites-512-v2.png"));
   assert.ok(
     paths.includes("/images/adventure/mr-easterling-sprites-627-v3.png"),
     "the progression-staged academy mentor should be preloaded even though he is not authored",

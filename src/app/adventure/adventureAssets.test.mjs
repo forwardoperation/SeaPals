@@ -5,6 +5,8 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { ADVENTURE_CONTENT } from "./adventureContent.mjs";
+import { ELVERSON_REEF_CREATURE_ATLAS_PATH } from "./adventureAquariumExhibits.mjs";
+import { ELVERSON_TOWN_PORTALS } from "./adventureElversonTownLayout.mjs";
 
 const TEST_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIRECTORY = path.resolve(TEST_DIRECTORY, "../../../public");
@@ -73,7 +75,7 @@ test("Kelpwatch ships the exact five map-sized PNG assets used by its live scene
 test("Elverson ships its layered ground and every referenced transparent object sprite", async () => {
   const town = ADVENTURE_CONTENT.scenes.find((scene) => scene.id === "town");
   assert.equal(town?.status, "prototype");
-  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v2.png");
+  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v3.png");
   assert.notEqual(town.world.artPath, "/images/adventure/elverson-town.png");
 
   const ground = await readFile(publicAssetPath(town.world.artPath));
@@ -82,9 +84,13 @@ test("Elverson ships its layered ground and every referenced transparent object 
   assert.equal(ground.readUInt32BE(20), 1024, "layered Elverson ground height");
 
   const objects = town.world.layeredObjects;
-  assert.ok(objects.length >= 40, "Elverson should be assembled from reusable placed objects");
+  assert.equal(objects.length, 9, "Elverson v3 should expose one facade for each town portal");
+  assert.deepEqual(
+    objects.map(({ id, interactionId }) => ({ id, interactionId })),
+    ELVERSON_TOWN_PORTALS.map(({ objectId, id }) => ({ id: objectId, interactionId: id })),
+  );
   const spritePaths = [...new Set(objects.map((object) => object.sprite.src))];
-  assert.ok(spritePaths.length >= 15, "Elverson should reference the complete object family");
+  assert.equal(spritePaths.length, 7, "the nine facades should reuse the seven authored buildings");
   assert.ok(spritePaths.every((spritePath) => (
     spritePath.startsWith("/images/adventure/elverson-objects-v2/")
   )));
@@ -100,6 +106,16 @@ test("Elverson ships its layered ground and every referenced transparent object 
     }
     assert.equal(png.subarray(-8, -4).toString("ascii"), "IEND", `${spritePath} must be complete`);
   }
+});
+
+test("Elverson ships one complete transparent atlas for hand-net and Aquarium creatures", async () => {
+  const png = await readFile(publicAssetPath(ELVERSON_REEF_CREATURE_ATLAS_PATH));
+  assert.equal(png.subarray(0, 8).toString("hex"), PNG_SIGNATURE);
+  assert.equal(png.subarray(12, 16).toString("ascii"), "IHDR");
+  assert.equal(png.readUInt32BE(16), 1983);
+  assert.equal(png.readUInt32BE(20), 793);
+  assert.equal(png[25], 6, "the ten-species atlas must retain true RGBA transparency");
+  assert.equal(png.subarray(-8, -4).toString("ascii"), "IEND");
 });
 
 test("Elverson ships distinct transparent GBA-style resident walk sheets", async () => {

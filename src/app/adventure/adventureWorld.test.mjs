@@ -18,7 +18,73 @@ import {
   movePlayer,
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
+import {
+  ELVERSON_TOWN_DIMENSIONS,
+  ELVERSON_TOWN_PORTALS,
+  ELVERSON_TOWN_SAFE_POSITIONS,
+} from "./adventureElversonTownLayout.mjs";
 import { ELVERSON_RELEASE_SCOPE } from "./adventureReleaseScope.mjs";
+
+const ELVERSON_PORTAL_EXPECTATIONS = Object.freeze([
+  Object.freeze({
+    id: "interaction-elverson-enter-player-home",
+    targetScene: "player-home",
+    interiorSpawn: Object.freeze({ x: 7, y: 4 }),
+    exitId: "interaction-player-home-exit",
+  }),
+  Object.freeze({
+    id: "interaction-elverson-enter-reef-house",
+    targetScene: "coral-home",
+    interiorSpawn: Object.freeze({ x: 5, y: 6 }),
+    exitId: "interaction-coral-home-exit",
+  }),
+  Object.freeze({
+    id: "interaction-elverson-enter-deep-house",
+    targetScene: "deep-home",
+    interiorSpawn: Object.freeze({ x: 5, y: 6 }),
+    exitId: "interaction-deep-home-exit",
+  }),
+  Object.freeze({
+    id: "interaction-elverson-enter-oceanic-house",
+    targetScene: "elverson-oceanic-home",
+    interiorSpawn: Object.freeze({ x: 5, y: 6 }),
+    exitId: "interaction-elverson-oceanic-home-exit",
+  }),
+  Object.freeze({
+    id: "interaction-elverson-enter-schoolhouse",
+    targetScene: "elverson-red-schoolhouse",
+    interiorSpawn: Object.freeze({ x: 6, y: 7 }),
+    exitId: "interaction-elverson-red-schoolhouse-exit",
+  }),
+  Object.freeze({
+    id: "interaction-elverson-enter-hybrid-house",
+    targetScene: "elverson-hybrid-home",
+    interiorSpawn: Object.freeze({ x: 5, y: 6 }),
+    exitId: "interaction-elverson-hybrid-home-exit",
+  }),
+  Object.freeze({
+    id: "interaction-elverson-enter-research-lab",
+    targetScene: "elverson-marine-research-lab",
+    interiorSpawn: Object.freeze({ x: 6, y: 7 }),
+    exitId: "interaction-elverson-marine-research-lab-exit",
+  }),
+  Object.freeze({
+    id: "interaction-elverson-enter-supply-company",
+    targetScene: "elverson-supply-company",
+    interiorSpawn: Object.freeze({ x: 6, y: 7 }),
+    exitId: "interaction-elverson-supply-company-exit",
+  }),
+  Object.freeze({
+    id: "interaction-elverson-enter-aquarium",
+    targetScene: "academy-lab",
+    interiorSpawn: Object.freeze({ x: 6, y: 7 }),
+    exitId: "interaction-academy-exit",
+  }),
+]);
+
+function getElversonPortal(portalId) {
+  return ELVERSON_TOWN_PORTALS.find(({ id }) => id === portalId);
+}
 
 function assertWalkablePolyline(sceneId, points, label) {
   for (let pointIndex = 1; pointIndex < points.length; pointIndex += 1) {
@@ -41,20 +107,37 @@ function assertWalkablePolyline(sceneId, points, label) {
   }
 }
 
-test("world exposes the 30-by-20 Elverson town and retained interior dimensions", () => {
-  for (const sceneId of ["town", "coral-home", "deep-home", "academy-lab"]) {
+test("world exposes the 42-by-28 Elverson v3 town and all nine semantic interiors", () => {
+  for (const sceneId of ELVERSON_RELEASE_SCOPE.sceneIds) {
     assert.ok(SCENES[sceneId], `${sceneId} should remain available`);
   }
   assert.equal(SCENES.town.name, "Elverson");
-  assert.equal(SCENES.town.width, 30);
-  assert.equal(SCENES.town.height, 20);
-  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v2.png");
-  assert.ok(SCENES.town.layeredObjects.length > 20);
+  assert.deepEqual(ELVERSON_TOWN_DIMENSIONS, { width: 42, height: 28 });
+  assert.equal(SCENES.town.width, ELVERSON_TOWN_DIMENSIONS.width);
+  assert.equal(SCENES.town.height, ELVERSON_TOWN_DIMENSIONS.height);
+  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v3.png");
+  assert.equal(SCENES.town.layeredObjects.length, 9);
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "central-pier"));
+  assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "wharf-platform"));
+  assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "aquarium-platform"));
+  assert.equal(SCENES["player-home"].width, 15);
+  assert.equal(SCENES["player-home"].height, 10);
   assert.equal(SCENES["coral-home"].width, 12);
   assert.equal(SCENES["coral-home"].height, 8);
   assert.equal(SCENES["deep-home"].width, 12);
   assert.equal(SCENES["deep-home"].height, 8);
+  assert.equal(SCENES["elverson-oceanic-home"].width, 12);
+  assert.equal(SCENES["elverson-oceanic-home"].height, 8);
+  assert.equal(SCENES["elverson-hybrid-home"].width, 12);
+  assert.equal(SCENES["elverson-hybrid-home"].height, 8);
+  for (const sceneId of [
+    "elverson-red-schoolhouse",
+    "elverson-marine-research-lab",
+    "elverson-supply-company",
+  ]) {
+    assert.equal(SCENES[sceneId].width, 14);
+    assert.equal(SCENES[sceneId].height, 9);
+  }
   assert.equal(SCENES["academy-lab"].width, 14);
   assert.equal(SCENES["academy-lab"].height, 9);
   assert.ok(Object.values(SCENES).every((scene) => scene.tiles.every((row) => row.length === scene.width)));
@@ -66,10 +149,8 @@ test("Elverson inherits a frozen continuous walking profile", () => {
   assert.equal(Object.isFrozen(profile), true);
   assert.equal(SCENES.town.routeId, null);
   assert.equal(canOccupyScenePosition("town", START_STATE.position), true);
-  // The visual roof is now depth-sorted above this position; only the
-  // building's foundation at its base participates in collision.
-  assert.equal(canOccupyScenePosition("town", { x: 3, y: 3 }), true);
-  assert.equal(canOccupyScenePosition("town", { x: 3, y: 5.2 }), false);
+  assert.equal(canOccupyScenePosition("town", { x: 4, y: 3 }), false);
+  assert.equal(canOccupyScenePosition("town", ELVERSON_TOWN_SAFE_POSITIONS.playerHomeExterior), true);
   assert.throws(() => getSceneMovementProfile("missing"), /Unknown adventure scene/);
 });
 
@@ -103,10 +184,10 @@ test("town shorelines keep walkers on the visible central piers", () => {
 
 test("Elverson's authored shoreline is solid outside the public pier corridor", () => {
   const water = [
-    { x: 2, y: 13 },
-    { x: 8, y: 18 },
-    { x: 25, y: 13 },
-    { x: 27, y: 18 },
+    { x: 2, y: 19 },
+    { x: 8, y: 23 },
+    { x: 34, y: 19 },
+    { x: 38, y: 23 },
   ];
   for (const position of water) {
     assert.equal(
@@ -118,10 +199,14 @@ test("Elverson's authored shoreline is solid outside the public pier corridor", 
 
   assertWalkablePolyline(
     "town",
-    [{ x: 14, y: 12 }, { x: 14, y: 15.85 }, { x: 16, y: 15.85 }],
+    [
+      ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock,
+      { x: 20, y: 22.2 },
+      ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
+    ],
     "Elverson public pier and aquarium approach",
   );
-  assert.equal(canOccupyContinuousPosition("town", { x: 17, y: 18 }), false);
+  assert.equal(canOccupyContinuousPosition("town", { x: 28, y: 22 }), false);
 });
 
 test("every authored character anchor stays inside its scene grid", () => {
@@ -296,8 +381,8 @@ test("Elverson offers no board prompt while dormant route docks retain their met
     ["board", "dock"].includes(type)
   ));
   assert.deepEqual(townTransitions, []);
-  assert.equal(getInteraction("town", { x: 14, y: 18 }, "down"), null);
-  assert.equal(getDoorwayTransition("town", { x: 14, y: 18 }, "down"), null);
+  assert.equal(getInteraction("town", { x: 20, y: 27 }, "down"), null);
+  assert.equal(getDoorwayTransition("town", { x: 20, y: 27 }, "down"), null);
 
   const fromDock = getInteraction("shellshore-sunpatch-sea", { x: 1, y: 5 }, "left");
   assert.deepEqual(fromDock, {
@@ -307,7 +392,7 @@ test("Elverson offers no board prompt while dormant route docks retain their met
     dockId: "shellshore-dock",
     endpoint: "from",
     targetScene: "town",
-    spawn: { x: 14, y: 10 },
+    spawn: { x: 20, y: 17 },
     facing: "down",
   });
   assert.equal(getDoorwayTransition("shellshore-sunpatch-sea", { x: 1, y: 5 }, "left"), null);
@@ -583,33 +668,62 @@ test("every Sunpatch, Brackwater, Current, and Kelpwatch exterior doorway auto-t
   }
 });
 
-test("start state places the player at the Elverson Main Street crossroads", () => {
+test("Elverson exposes the v3 town start, route dock, and every semantic safe position", () => {
+  assert.deepEqual(ELVERSON_TOWN_SAFE_POSITIONS, {
+    townStart: { x: 20, y: 6 },
+    legacyTownResume: { x: 20, y: 6 },
+    shellshoreDock: { x: 20, y: 17 },
+    playerHomeExterior: { x: 3.55, y: 5.05 },
+    reefHouseExterior: { x: 13.8, y: 5.05 },
+    deepHouseExterior: { x: 28.2, y: 5.05 },
+    oceanicHouseExterior: { x: 36.8, y: 5.05 },
+    schoolhouseExterior: { x: 4.3, y: 16.45 },
+    hybridHouseExterior: { x: 13.8, y: 16.45 },
+    researchLabExterior: { x: 30.7, y: 16.45 },
+    supplyCompanyExterior: { x: 37.5, y: 16.45 },
+    wharfApproach: { x: 14.55, y: 21.45 },
+    handNetCove: { x: 15.15, y: 21.65 },
+    aquariumExterior: { x: 24.22, y: 22.2 },
+  });
+  assert.deepEqual(SCENES.town.spawn, ELVERSON_TOWN_SAFE_POSITIONS.townStart);
   assert.deepEqual(START_STATE, {
     sceneId: "town",
-    position: { x: 14, y: 10 },
+    position: { x: 20, y: 17 },
     facing: "down",
   });
+  assert.deepEqual(START_STATE.position, ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock);
   assert.equal(isWalkable(START_STATE.sceneId, START_STATE.position), true);
   assert.equal(canOccupyScenePosition(START_STATE.sceneId, START_STATE.position), true);
+  for (const [label, position] of Object.entries(ELVERSON_TOWN_SAFE_POSITIONS)) {
+    assert.equal(
+      canOccupyContinuousPosition("town", position),
+      true,
+      `${label} must remain a safe v3 position`,
+    );
+  }
 });
 
 test("movement advances over walkable tiles and respects map bounds", () => {
-  assert.deepEqual(movePlayer("town", START_STATE.position, "up"), { x: 14, y: 9 });
-  assert.deepEqual(movePlayer("town", START_STATE.position, "down"), { x: 14, y: 11 });
-  assert.equal(isInBounds("town", { x: 29, y: 19 }), true);
-  assert.equal(isInBounds("town", { x: 30, y: 19 }), false);
+  assert.deepEqual(movePlayer("town", START_STATE.position, "up"), { x: 20, y: 16 });
+  assert.deepEqual(movePlayer("town", START_STATE.position, "down"), { x: 20, y: 18 });
+  assert.equal(isInBounds("town", { x: 41, y: 27 }), true);
+  assert.equal(isInBounds("town", { x: 42, y: 27 }), false);
   assert.equal(getTile("town", { x: -1, y: 0 }), null);
 });
 
-test("continuous movement cannot cross Elverson object bases, water, furniture, exits, or trainers", () => {
+test("continuous movement cannot cross Elverson v3 facades, water, furniture, exits, or trainers", () => {
   for (const position of [
-    { x: 3, y: 5.2 },
-    { x: 8, y: 6.4 },
-    { x: 23, y: 6.5 },
-    { x: 6, y: 10.1 },
-    { x: 18, y: 10.1 },
-    { x: 3, y: 13 },
-    { x: 27, y: 17 },
+    { x: 4.2, y: 3 },
+    { x: 13.8, y: 3 },
+    { x: 28.2, y: 3 },
+    { x: 36.8, y: 3 },
+    { x: 4.3, y: 14 },
+    { x: 13.8, y: 14 },
+    { x: 30.7, y: 14 },
+    { x: 37.5, y: 14 },
+    { x: 26, y: 20 },
+    { x: 2, y: 19 },
+    { x: 30, y: 20 },
   ]) {
     assert.equal(canOccupyContinuousPosition("town", position), false);
   }
@@ -623,58 +737,49 @@ test("continuous movement cannot cross Elverson object bases, water, furniture, 
   assert.equal(isWalkable("academy-lab", { x: 7, y: 3 }), false);
 });
 
-test("Elverson doors enter the aquarium and two homes only when the player faces them", () => {
-  assert.deepEqual(getContinuousInteraction("town", { x: 16, y: 15.85 }, "up"), {
-    type: "enter",
-    interactionId: "interaction-elverson-enter-aquarium",
-    targetScene: "academy-lab",
-    spawn: { x: 6, y: 7 },
-    facing: "up",
-  });
-  assert.deepEqual(getInteraction("town", { x: 7, y: 7 }, "up"), {
-    type: "enter",
-    interactionId: "interaction-elverson-enter-park-home",
-    targetScene: "coral-home",
-    spawn: { x: 5, y: 6 },
-    facing: "up",
-  });
-  assert.deepEqual(getInteraction("town", { x: 18, y: 4 }, "up"), {
-    type: "enter",
-    interactionId: "interaction-elverson-enter-chestnut-home",
-    targetScene: "deep-home",
-    spawn: { x: 5, y: 6 },
-    facing: "up",
-  });
-  assert.equal(getInteraction("town", { x: 7, y: 7 }, "left"), null);
-  assert.equal(getInteraction("town", { x: 7, y: 8 }, "up"), null);
-  assert.equal(
-    getInteraction("town", { x: 16, y: 16 }, "up")?.interactionId,
-    "interaction-elverson-enter-aquarium",
+test("Elverson exposes exactly nine semantic entrance portals with safe approaches", () => {
+  const entrances = SCENES.town.interactions.filter(({ type }) => type === "enter");
+  assert.equal(entrances.length, ELVERSON_PORTAL_EXPECTATIONS.length);
+  assert.deepEqual(
+    entrances.map(({ id }) => id),
+    ELVERSON_PORTAL_EXPECTATIONS.map(({ id }) => id),
   );
+
+  for (const expected of ELVERSON_PORTAL_EXPECTATIONS) {
+    const portal = getElversonPortal(expected.id);
+    assert.ok(portal, `${expected.id} must resolve through the semantic portal registry`);
+    assert.equal(portal.targetScene, expected.targetScene);
+    assert.deepEqual(portal.interiorSpawn, expected.interiorSpawn);
+
+    const approach = { x: portal.doorway.x, y: portal.doorway.y + 0.73 };
+    assert.equal(canOccupyContinuousPosition("town", approach), true, `${expected.id} approach must be safe`);
+    assert.deepEqual(getContinuousInteraction("town", approach, "up"), {
+      type: "enter",
+      interactionId: expected.id,
+      targetScene: expected.targetScene,
+      spawn: expected.interiorSpawn,
+      facing: "up",
+    });
+    assert.equal(getContinuousInteraction("town", approach, "down"), null);
+  }
 });
 
-test("interior exits return the player outside the matching town door", () => {
-  assert.deepEqual(getInteraction("academy-lab", { x: 6, y: 7 }, "down"), {
-    type: "exit",
-    interactionId: "interaction-academy-exit",
-    targetScene: "town",
-    spawn: { x: 16, y: 15.85 },
-    facing: "down",
-  });
-  assert.deepEqual(getInteraction("coral-home", { x: 5, y: 6 }, "down"), {
-    type: "exit",
-    interactionId: "interaction-coral-home-exit",
-    targetScene: "town",
-    spawn: { x: 7, y: 7 },
-    facing: "down",
-  });
-  assert.deepEqual(getInteraction("deep-home", { x: 5, y: 6 }, "down"), {
-    type: "exit",
-    interactionId: "interaction-deep-home-exit",
-    targetScene: "town",
-    spawn: { x: 18, y: 4 },
-    facing: "down",
-  });
+test("all nine semantic interiors return to their matching safe town positions", () => {
+  for (const expected of ELVERSON_PORTAL_EXPECTATIONS) {
+    const portal = getElversonPortal(expected.id);
+    const scene = SCENES[expected.targetScene];
+    const exit = scene.interactions.find(({ type }) => type === "exit");
+    assert.equal(exit?.id, expected.exitId);
+    const approach = { x: Math.round(exit.at.x), y: Math.round(exit.at.y - 1) };
+    assert.deepEqual(getInteraction(expected.targetScene, approach, "down"), {
+      type: "exit",
+      interactionId: expected.exitId,
+      targetScene: "town",
+      spawn: portal.exteriorSpawn,
+      facing: "down",
+    });
+    assert.equal(canOccupyContinuousPosition("town", portal.exteriorSpawn), true);
+  }
 });
 
 test("facing an adjacent trainer yields the matching trainer interaction", () => {
@@ -705,12 +810,16 @@ test("facing an adjacent trainer yields the matching trainer interaction", () =>
   assert.equal(getInteraction("deep-home", { x: 5, y: 4 }, "up"), null);
 });
 
-test("the legacy grid API resolves art-aligned fractional resident anchors", () => {
+test("the legacy grid API resolves residents at their relocated v3 scenes", () => {
   assert.equal(
-    getInteraction("town", { x: 20, y: 10 }, "right")?.interactionId,
+    getInteraction("elverson-marine-research-lab", { x: 10, y: 5 }, "right")?.interactionId,
     "interaction-elverson-explorer-jordan",
   );
-  assert.equal(getInteraction("town", { x: 20, y: 10 }, "up"), null);
+  assert.equal(getInteraction("town", { x: 20, y: 10 }, "right"), null);
+  assert.equal(
+    getInteraction("town", { x: 7, y: 9 }, "up")?.interactionId,
+    "interaction-elverson-town-theo",
+  );
 });
 
 test("invalid scene, position, and direction inputs fail clearly", () => {
@@ -720,10 +829,10 @@ test("invalid scene, position, and direction inputs fail clearly", () => {
 });
 
 test("fractional player positions use a circular collision radius", () => {
-  assert.equal(canOccupyContinuousPosition("town", { x: 14.35, y: 7.6 }), true);
-  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 3 }), true);
-  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 5.65 }), false);
-  assert.equal(canOccupyContinuousPosition("town", { x: 3, y: 5.8 }), true);
+  assert.equal(canOccupyContinuousPosition("town", { x: 20.35, y: 6.2 }), true);
+  assert.equal(canOccupyContinuousPosition("town", { x: 4.2, y: 3 }), false);
+  assert.equal(canOccupyContinuousPosition("town", { x: 4.2, y: 4.7 }), false);
+  assert.equal(canOccupyContinuousPosition("town", { x: 4.2, y: 4.73 }), true);
   assert.equal(canOccupyContinuousPosition("town", { x: -0.4, y: 7 }), false);
   assert.equal(CONTINUOUS_MOVEMENT_DEFAULTS.radius, 0.22);
 });
@@ -932,8 +1041,8 @@ test("Current interiors match visible furniture without cutting off required int
 
 test("continuous movement scales with elapsed milliseconds and normalizes diagonals", () => {
   const straight = movePlayerContinuous("town", START_STATE.position, { x: 0, y: -1 }, 125);
-  assert.equal(straight.x, 14);
-  assert.ok(Math.abs(straight.y - 9.5) < 1e-9);
+  assert.equal(straight.x, 20);
+  assert.ok(Math.abs(straight.y - 16.5) < 1e-9);
 
   const start = { x: 6, y: 6 };
   const diagonal = movePlayerContinuous("coral-home", start, { x: 1, y: -1 }, 100);
@@ -1058,18 +1167,18 @@ test("continuous interactions require immediate, forward-facing alignment", () =
     conversationId: "conversation-shellshore-academy-mentor",
     encounterId: "encounter-shellshore-mentor-practice",
   });
-  assert.deepEqual(getContinuousInteraction("town", { x: 7.2, y: 6.8 }, "up"), {
+  assert.deepEqual(getContinuousInteraction("town", { x: 13.8, y: 4.83 }, "up"), {
     type: "enter",
-    interactionId: "interaction-elverson-enter-park-home",
+    interactionId: "interaction-elverson-enter-reef-house",
     targetScene: "coral-home",
     spawn: { x: 5, y: 6 },
     facing: "up",
   });
-  assert.equal(getContinuousInteraction("town", { x: 7.2, y: 6.8 }, "right"), null);
+  assert.equal(getContinuousInteraction("town", { x: 13.8, y: 4.83 }, "right"), null);
   assert.equal(getContinuousInteraction("academy-lab", { x: 7, y: 3.9 }, "up"), null);
   assert.equal(getContinuousInteraction("academy-lab", { x: 7.26, y: 3.8 }, "up"), null);
   assert.equal(getContinuousInteraction("academy-lab", { x: 7.2, y: 3.8 }, "down"), null);
-  assert.equal(getContinuousInteraction("town", { x: 7, y: 7.5 }, "up"), null);
+  assert.equal(getContinuousInteraction("town", { x: 13.8, y: 5 }, "up"), null);
   assert.deepEqual(getContinuousInteraction("deep-home", { x: 5.2, y: 2.8 }, "up"), {
     type: "trainer",
     interactionId: "interaction-deep-home-dorian",
@@ -1081,14 +1190,14 @@ test("continuous interactions require immediate, forward-facing alignment", () =
 });
 
 test("an open-floor town resident only prompts from directly in front", () => {
-  const interactionId = "interaction-elverson-explorer-jordan";
+  const interactionId = "interaction-elverson-town-theo";
   assert.equal(
-    getContinuousInteraction("town", { x: 20.2, y: 10.35 }, "right")?.interactionId,
+    getContinuousInteraction("town", { x: 6.2, y: 8.35 }, "right")?.interactionId,
     interactionId,
   );
-  assert.equal(getContinuousInteraction("town", { x: 20, y: 10.35 }, "right"), null);
-  assert.equal(getContinuousInteraction("town", { x: 20.2, y: 10.61 }, "right"), null);
-  assert.equal(getContinuousInteraction("town", { x: 20.2, y: 10.35 }, "down"), null);
+  assert.equal(getContinuousInteraction("town", { x: 6, y: 8.35 }, "right"), null);
+  assert.equal(getContinuousInteraction("town", { x: 6.2, y: 8.61 }, "right"), null);
+  assert.equal(getContinuousInteraction("town", { x: 6.2, y: 8.35 }, "down"), null);
 });
 
 test("full-tile stations stay reachable only across their visible front edge", () => {
@@ -1148,54 +1257,27 @@ test("interaction position overrides keep moving characters targetable", () => {
   );
 });
 
-test("automatic doorway transitions recognize all six Elverson portals only at contact", () => {
-  const doorwayCases = [
-    ["town", { x: 16, y: 15.85 }, "up", {
+test("automatic doorway transitions recognize all nine semantic portal pairs only at contact", () => {
+  for (const expected of ELVERSON_PORTAL_EXPECTATIONS) {
+    const portal = getElversonPortal(expected.id);
+    const exteriorApproach = { x: portal.doorway.x, y: portal.doorway.y + 0.73 };
+    assert.deepEqual(getDoorwayTransition("town", exteriorApproach, "up"), {
       type: "enter",
-      interactionId: "interaction-elverson-enter-aquarium",
-      targetScene: "academy-lab",
-      spawn: { x: 6, y: 7 },
+      interactionId: expected.id,
+      targetScene: expected.targetScene,
+      spawn: expected.interiorSpawn,
       facing: "up",
-    }],
-    ["town", { x: 7, y: 6.8 }, "up", {
-      type: "enter",
-      interactionId: "interaction-elverson-enter-park-home",
-      targetScene: "coral-home",
-      spawn: { x: 5, y: 6 },
-      facing: "up",
-    }],
-    ["town", { x: 18, y: 3.8 }, "up", {
-      type: "enter",
-      interactionId: "interaction-elverson-enter-chestnut-home",
-      targetScene: "deep-home",
-      spawn: { x: 5, y: 6 },
-      facing: "up",
-    }],
-    ["academy-lab", { x: 6, y: 7.27 }, "down", {
-      type: "exit",
-      interactionId: "interaction-academy-exit",
-      targetScene: "town",
-      spawn: { x: 16, y: 15.85 },
-      facing: "down",
-    }],
-    ["coral-home", { x: 5, y: 6.27 }, "down", {
-      type: "exit",
-      interactionId: "interaction-coral-home-exit",
-      targetScene: "town",
-      spawn: { x: 7, y: 7 },
-      facing: "down",
-    }],
-    ["deep-home", { x: 5, y: 6.27 }, "down", {
-      type: "exit",
-      interactionId: "interaction-deep-home-exit",
-      targetScene: "town",
-      spawn: { x: 18, y: 4 },
-      facing: "down",
-    }],
-  ];
+    });
 
-  for (const [sceneId, position, facing, expected] of doorwayCases) {
-    assert.deepEqual(getDoorwayTransition(sceneId, position, facing), expected);
+    const exit = SCENES[expected.targetScene].interactions.find(({ id }) => id === expected.exitId);
+    const interiorApproach = { x: exit.at.x, y: exit.at.y - 0.73 };
+    assert.deepEqual(getDoorwayTransition(expected.targetScene, interiorApproach, "down"), {
+      type: "exit",
+      interactionId: expected.exitId,
+      targetScene: "town",
+      spawn: portal.exteriorSpawn,
+      facing: "down",
+    });
   }
 });
 
@@ -1222,17 +1304,17 @@ test("the aquarium's full visible exit opening lets an off-centre player walk ou
 });
 
 test("automatic doorway transitions stay tight, directional, and portal-only", () => {
-  assert.equal(getDoorwayTransition("town", { x: 7, y: 6.83 }, "up"), null);
+  assert.equal(getDoorwayTransition("town", { x: 13.8, y: 4.93 }, "up"), null);
   assert.equal(
-    getDoorwayTransition("town", { x: 7.24, y: 6.8 }, "up")?.interactionId,
-    "interaction-elverson-enter-park-home",
+    getDoorwayTransition("town", { x: 14.04, y: 4.83 }, "up")?.interactionId,
+    "interaction-elverson-enter-reef-house",
   );
-  assert.equal(getDoorwayTransition("town", { x: 7.26, y: 6.8 }, "up"), null);
-  assert.equal(getDoorwayTransition("town", { x: 7, y: 6.8 }, "down"), null);
+  assert.equal(getDoorwayTransition("town", { x: 14.06, y: 4.83 }, "up"), null);
+  assert.equal(getDoorwayTransition("town", { x: 13.8, y: 4.83 }, "down"), null);
 
   const nearest = getDoorwayTransition(
     "town",
-    { x: 16, y: 14 },
+    { x: 15.45, y: 19 },
     "down",
     { range: 4, lateralTolerance: 1 },
   );
@@ -1244,10 +1326,10 @@ test("automatic doorway transitions stay tight, directional, and portal-only", (
 });
 
 test("continuous helpers reject invalid numeric inputs without changing grid APIs", () => {
-  assert.deepEqual(movePlayer("town", { x: 14, y: 10 }, "up"), { x: 14, y: 9 });
-  assert.deepEqual(movePlayerContinuous("town", { x: 14.25, y: 10 }, { x: 0, y: 0 }, 16), { x: 14.25, y: 10 });
+  assert.deepEqual(movePlayer("town", { x: 20, y: 6 }, "up"), { x: 20, y: 5 });
+  assert.deepEqual(movePlayerContinuous("town", { x: 20.25, y: 6 }, { x: 0, y: 0 }, 16), { x: 20.25, y: 6 });
   assert.throws(
-    () => movePlayerContinuous("town", { x: 14, y: 10 }, { x: 0, y: -1 }, -1),
+    () => movePlayerContinuous("town", { x: 20, y: 6 }, { x: 0, y: -1 }, -1),
     /Elapsed time must be a non-negative finite number/,
   );
   assert.throws(
@@ -1255,7 +1337,7 @@ test("continuous helpers reject invalid numeric inputs without changing grid API
     /finite x and y/,
   );
   assert.throws(
-    () => getDoorwayTransition("town", { x: 7, y: 6.8 }, "north"),
+    () => getDoorwayTransition("town", { x: 13.8, y: 4.83 }, "north"),
     /Unknown facing direction/,
   );
   assert.throws(

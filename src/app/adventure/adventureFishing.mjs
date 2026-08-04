@@ -5,8 +5,15 @@ import {
 } from "./adventureProgression.mjs";
 
 export const ELVERSON_FISHING_QUEST_ID = "quest-shellshore-first-voyage";
+// These persisted identifiers shipped in the earlier prototype. Keep them so
+// existing saves retain their equipment and reward ledger, while presenting
+// the item and mechanic as Wyeth's hand net everywhere in the current game.
 export const ELVERSON_FISHING_ROD_ITEM_ID = "wyeths-fishing-rod";
 export const ELVERSON_FISHING_ROD_REWARD_ID = "reward-elverson-fishing-rod";
+export const ELVERSON_HAND_NET_ITEM_ID = ELVERSON_FISHING_ROD_ITEM_ID;
+export const ELVERSON_HAND_NET_REWARD_ID = ELVERSON_FISHING_ROD_REWARD_ID;
+
+const ELVERSON_CARD_REWARD_FLAG_PREFIX = "aquarium-card-rewarded";
 
 export const ELVERSON_FISHING_FLAGS = Object.freeze({
   // `lessonComplete` was written by the first fishing release as soon as the
@@ -19,13 +26,15 @@ export const ELVERSON_FISHING_FLAGS = Object.freeze({
   totalDelivered: "fishing-total-delivered",
   collectionComplete: "fishing-collection-complete",
 });
+export const ELVERSON_HAND_NET_FLAGS = ELVERSON_FISHING_FLAGS;
 
-export const ELVERSON_FISHING_ROD = Object.freeze({
-  id: ELVERSON_FISHING_ROD_ITEM_ID,
-  name: "Wyeth's Fishing Rod",
-  description: "A habitat-safe rod from Fisherman Wyeth for the Elverson aquarium survey.",
+export const ELVERSON_HAND_NET = Object.freeze({
+  id: ELVERSON_HAND_NET_ITEM_ID,
+  name: "Wyeth's Hand Net",
+  description: "A soft, shallow-water hand net from Fisherman Wyeth for small reef fish and invertebrates under twelve inches long.",
   discardable: false,
 });
+export const ELVERSON_FISHING_ROD = ELVERSON_HAND_NET;
 
 const RARITY_PROFILES = Object.freeze({
   common: Object.freeze({ label: "Common", requiredReels: 2, catchZoneWidth: 34 }),
@@ -163,49 +172,49 @@ const ELVERSON_FISHING_EDGES = Object.freeze([
     id: "west-promenade",
     facing: "down",
     axis: "y",
-    edge: 11.6,
+    edge: 17.55,
     start: 0,
-    end: 12.55,
+    end: 18.8,
   }),
   Object.freeze({
     id: "east-promenade",
     facing: "down",
     axis: "y",
-    edge: 11.6,
-    start: 15.45,
-    end: 29,
+    edge: 17.55,
+    start: 22.2,
+    end: 41,
   }),
   Object.freeze({
     id: "fishing-platform-west",
     facing: "left",
     axis: "x",
-    edge: 9.6,
-    start: 16,
-    end: 17.85,
+    edge: 14.05,
+    start: 18.9,
+    end: 22.1,
   }),
   Object.freeze({
     id: "fishing-platform-south",
     facing: "down",
     axis: "y",
-    edge: 17.9,
-    start: 9.65,
-    end: 13.25,
+    edge: 22.3,
+    start: 14.2,
+    end: 16.5,
   }),
   Object.freeze({
     id: "pier-end",
     facing: "down",
     axis: "y",
-    edge: 18.1,
-    start: 13.3,
-    end: 14.7,
+    edge: 27.25,
+    start: 19.2,
+    end: 21.8,
   }),
   Object.freeze({
     id: "aquarium-apron",
     facing: "down",
     axis: "y",
-    edge: 16.55,
-    start: 14.65,
-    end: 20.8,
+    edge: 22.3,
+    start: 24.4,
+    end: 27,
   }),
 ]);
 
@@ -226,7 +235,7 @@ function edgeDistance(edge, position) {
  * authored Elverson shoreline edge. It intentionally does not add collision or
  * a visible prop to the world map.
  */
-export function getElversonFishingInteraction(sceneId, position, facing) {
+export function getElversonHandNetInteraction(sceneId, position, facing) {
   if (sceneId !== "town" || !position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) {
     return null;
   }
@@ -242,12 +251,14 @@ export function getElversonFishingInteraction(sceneId, position, facing) {
     : { x: edge.edge + (edge.facing === "right" ? 0.35 : -0.35), y: position.y };
   return Object.freeze({
     type: "fishing",
-    interactionId: `interaction-elverson-fishing-${edge.id}`,
+    interactionId: `interaction-elverson-hand-net-${edge.id}`,
     spotId: edge.id,
     at: Object.freeze(at),
-    label: "The water looks fishable. Press Enter to cast a line.",
+    label: "Small creatures move through the shallows. Press Enter to ready the hand net.",
   });
 }
+
+export const getElversonFishingInteraction = getElversonHandNetInteraction;
 
 function fishingRodReward() {
   return {
@@ -267,7 +278,9 @@ export function hasElversonFishingRod(saveValue) {
   return (save.inventory.boatItems[ELVERSON_FISHING_ROD_ITEM_ID] ?? 0) > 0;
 }
 
-/** Grants/reconciles Wyeth's permanent rod and records that the tutorial began. */
+export const hasElversonHandNet = hasElversonFishingRod;
+
+/** Grants/reconciles Wyeth's permanent hand net and records that the tutorial began. */
 export function beginElversonFishingTutorial(saveValue) {
   const save = normalizeAdventureSave(saveValue);
   const quest = save.progression.quests[ELVERSON_FISHING_QUEST_ID];
@@ -275,7 +288,7 @@ export function beginElversonFishingTutorial(saveValue) {
   // Legacy profiles predate that marker and onboarding already treats them as
   // introduced, so only an explicit false value should block Wyeth's lesson.
   if (quest?.flags?.["world-introduction-complete"] === false) {
-    throw new RangeError("Mr. Easterling must introduce the aquarium project before Wyeth begins the fishing lesson.");
+    throw new RangeError("Mr. Easterling must introduce the aquarium project before Wyeth begins the hand-net lesson.");
   }
   const existingRodCount = save.inventory.boatItems[ELVERSON_FISHING_ROD_ITEM_ID] ?? 0;
   const rewardRecorded = save.rewardLedger.includes(ELVERSON_FISHING_ROD_REWARD_ID);
@@ -314,6 +327,7 @@ export function beginElversonFishingTutorial(saveValue) {
   return {
     save: tutorialSave,
     applied: existingRodCount !== 1 || !rewardRecorded || !tutorialWasStarted,
+    handNetGranted: rodGranted,
     rodGranted,
   };
 }
@@ -327,8 +341,38 @@ export function completeElversonFishingLesson(saveValue) {
   return beginElversonFishingTutorial(saveValue);
 }
 
+export const beginElversonHandNetTutorial = beginElversonFishingTutorial;
+export const completeElversonHandNetLesson = completeElversonFishingLesson;
+
 function quantityFor(items, itemId) {
   return Number.isSafeInteger(items[itemId]) ? items[itemId] : 0;
+}
+
+function matchingCardRewardFlagId(creatureId) {
+  return `${ELVERSON_CARD_REWARD_FLAG_PREFIX}-${creatureId}`;
+}
+
+function matchingCardRewardState(flags, creature, aquariumQuantity) {
+  const flagId = matchingCardRewardFlagId(creature.id);
+  const value = flags[flagId];
+  if (value === undefined) {
+    return { flagId, quantity: 0, valid: true, stored: false, value };
+  }
+  if (!Number.isSafeInteger(value) || value < 0 || value > aquariumQuantity) {
+    // Quest flags deliberately accept generic JSON scalars. Rendering must not
+    // crash when one reward counter is malformed, and save recovery must avoid
+    // duplicating cards whose prior grant can no longer be proven. Treat the
+    // delivered aquarium quantity as already settled, then persist that safe
+    // bound during reconciliation.
+    return {
+      flagId,
+      quantity: aquariumQuantity,
+      valid: false,
+      stored: true,
+      value,
+    };
+  }
+  return { flagId, quantity: value, valid: true, stored: true, value };
 }
 
 export function getElversonFishingProgress(saveValue) {
@@ -337,10 +381,13 @@ export function getElversonFishingProgress(saveValue) {
   const creatures = ELVERSON_REEF_CATCHES.map((creature) => {
     const held = quantityFor(save.inventory.storyItems, creature.inventoryItemId);
     const aquarium = quantityFor(save.inventory.storyItems, creature.aquariumItemId);
+    const matchingCardsAwarded = matchingCardRewardState(flags, creature, aquarium).quantity;
     return Object.freeze({
       ...creature,
       held,
       aquarium,
+      matchingCardsAwarded,
+      matchingCardsPending: Math.max(0, aquarium - matchingCardsAwarded),
       discovered: held + aquarium > 0,
     });
   });
@@ -353,12 +400,22 @@ export function getElversonFishingProgress(saveValue) {
   // Do not infer this from the legacy lesson flag or catch counters. The first
   // release allowed both to be written without finishing the guided lesson.
   const tutorialComplete = flags[ELVERSON_FISHING_FLAGS.tutorialComplete] === true;
+  const matchingCardsAwarded = creatures.reduce(
+    (total, creature) => total + creature.matchingCardsAwarded,
+    0,
+  );
+  const matchingCardsPending = creatures.reduce(
+    (total, creature) => total + creature.matchingCardsPending,
+    0,
+  );
   return Object.freeze({
+    hasHandNet: hasRod,
     hasRod,
     tutorialStarted,
     tutorialComplete,
     tutorialPending: hasRod && !tutorialComplete,
     canFish: hasRod && tutorialComplete,
+    canCatchWithHandNet: hasRod && tutorialComplete,
     // Transitional read alias for UI callers; unlike the legacy raw flag, this
     // represents genuine hands-on completion.
     lessonComplete: tutorialComplete,
@@ -367,9 +424,13 @@ export function getElversonFishingProgress(saveValue) {
     discoveredCount,
     aquariumSpeciesCount,
     collectionComplete: aquariumSpeciesCount === ELVERSON_REEF_CATCHES.length,
+    matchingCardsAwarded,
+    matchingCardsPending,
     creatures: Object.freeze(creatures),
   });
 }
+
+export const getElversonHandNetProgress = getElversonFishingProgress;
 
 /**
  * Resolves Wyeth's conversation independently from starter-deck onboarding.
@@ -386,6 +447,8 @@ export function getElversonFishingConversationMode(saveValue) {
   if (progress.hasRod || progress.tutorialStarted) return "fishingPractice";
   return "fishingLesson";
 }
+
+export const getElversonHandNetConversationMode = getElversonFishingConversationMode;
 
 function addElversonFishingCatch(save, creatureId) {
   const progress = getElversonFishingProgress(save);
@@ -437,10 +500,10 @@ export function recordElversonFishingTutorialCatch(saveValue, creatureId) {
   if (!creature) throw new RangeError(`Unknown Elverson fishing creature: ${String(creatureId)}.`);
   const progress = getElversonFishingProgress(save);
   if (!progress.hasRod) {
-    throw new RangeError("Receive Fisherman Wyeth's fishing rod before completing the fishing tutorial.");
+    throw new RangeError("Receive Fisherman Wyeth's hand net before completing the hand-net tutorial.");
   }
   if (!progress.tutorialStarted) {
-    throw new RangeError("Begin Fisherman Wyeth's hands-on fishing tutorial before recording its catch.");
+    throw new RangeError("Begin Fisherman Wyeth's hands-on hand-net tutorial before recording its catch.");
   }
   if (progress.tutorialComplete) {
     return {
@@ -483,23 +546,116 @@ export function recordElversonFishingCatch(saveValue, creatureId) {
   const save = normalizeAdventureSave(saveValue);
   const progress = getElversonFishingProgress(save);
   if (!progress.canFish) {
-    throw new RangeError("Complete Fisherman Wyeth's hands-on tutorial and receive the fishing rod before recording a catch.");
+    throw new RangeError("Complete Fisherman Wyeth's hands-on tutorial and receive the hand net before recording a catch.");
   }
   return addElversonFishingCatch(save, creatureId);
 }
 
+export const recordElversonHandNetTutorialCatch = recordElversonFishingTutorialCatch;
+export const recordElversonHandNetCatch = recordElversonFishingCatch;
+
+/**
+ * Grants every matching card owed for creatures already recorded in the
+ * aquarium. Per-species counters make this safe for duplicate deliveries and
+ * also repair saves created before aquarium card rewards existed.
+ */
+export function reconcileElversonAquariumRewards(saveValue) {
+  const save = normalizeAdventureSave(saveValue);
+  const quest = save.progression.quests[ELVERSON_FISHING_QUEST_ID]
+    ?? { status: "notStarted", flags: {} };
+  const nextCards = { ...save.inventory.cards };
+  const nextFlags = { ...quest.flags };
+  const awardedCards = [];
+  const repairedRewardFlags = [];
+
+  for (const creature of ELVERSON_REEF_CATCHES) {
+    const aquariumQuantity = quantityFor(save.inventory.storyItems, creature.aquariumItemId);
+    const rewardState = matchingCardRewardState(quest.flags, creature, aquariumQuantity);
+    const rewardedQuantity = rewardState.quantity;
+    if (!rewardState.valid) {
+      nextFlags[rewardState.flagId] = aquariumQuantity;
+      repairedRewardFlags.push(Object.freeze({
+        creature,
+        previousValue: rewardState.value,
+        quantity: aquariumQuantity,
+      }));
+    }
+    const quantity = aquariumQuantity - rewardedQuantity;
+    if (quantity === 0) continue;
+
+    const existingCards = quantityFor(nextCards, creature.cardId);
+    if (!Number.isSafeInteger(existingCards + quantity)) {
+      throw new RangeError(`The ${creature.cardId} matching-card reward would exceed the largest safe inventory count.`);
+    }
+    nextCards[creature.cardId] = existingCards + quantity;
+    nextFlags[matchingCardRewardFlagId(creature.id)] = aquariumQuantity;
+    awardedCards.push(Object.freeze({
+      creature,
+      cardId: creature.cardId,
+      quantity,
+    }));
+  }
+
+  const next = awardedCards.length > 0 || repairedRewardFlags.length > 0
+    ? {
+        ...save,
+        progression: {
+          ...save.progression,
+          quests: {
+            ...save.progression.quests,
+            [ELVERSON_FISHING_QUEST_ID]: { ...quest, flags: nextFlags },
+          },
+        },
+        inventory: { ...save.inventory, cards: nextCards },
+      }
+    : save;
+
+  return {
+    save: next,
+    applied: awardedCards.length > 0 || repairedRewardFlags.length > 0,
+    awardedCards: Object.freeze(awardedCards),
+    awardedCardCount: awardedCards.reduce((total, reward) => total + reward.quantity, 0),
+    repairedRewardFlags: Object.freeze(repairedRewardFlags),
+    progress: getElversonFishingProgress(next),
+  };
+}
+
+function mergeAwardedCardRewards(...rewardGroups) {
+  const quantities = new Map();
+  for (const rewards of rewardGroups) {
+    for (const reward of rewards) {
+      quantities.set(reward.cardId, (quantities.get(reward.cardId) ?? 0) + reward.quantity);
+    }
+  }
+  return Object.freeze(ELVERSON_REEF_CATCHES
+    .filter((creature) => quantities.has(creature.cardId))
+    .map((creature) => Object.freeze({
+      creature,
+      cardId: creature.cardId,
+      quantity: quantities.get(creature.cardId),
+    })));
+}
+
 /** Moves every current catch from the player inventory into Easterling's aquarium record. */
 export function deliverElversonFishingCatches(saveValue) {
-  const save = normalizeAdventureSave(saveValue);
+  const normalized = normalizeAdventureSave(saveValue);
+  // Settle or safely repair the pre-delivery ledger first. Otherwise an
+  // overlarge legacy counter can become numerically valid after aquarium
+  // inventory increases and silently swallow the newly earned card.
+  const priorRewards = reconcileElversonAquariumRewards(normalized);
+  const save = priorRewards.save;
   const progress = getElversonFishingProgress(save);
   if (progress.heldCount === 0) {
     return {
       save,
-      applied: false,
+      applied: priorRewards.applied,
       deliveredCount: 0,
       deliveredSpecies: [],
       collectionCompletedNow: false,
-      progress,
+      awardedCards: priorRewards.awardedCards,
+      awardedCardCount: priorRewards.awardedCardCount,
+      repairedRewardFlags: priorRewards.repairedRewardFlags,
+      progress: priorRewards.progress,
     };
   }
 
@@ -540,18 +696,33 @@ export function deliverElversonFishingCatches(saveValue) {
       true,
     );
   }
+  const deliveryRewards = reconcileElversonAquariumRewards(next);
+  next = deliveryRewards.save;
+  const awardedCards = mergeAwardedCardRewards(
+    priorRewards.awardedCards,
+    deliveryRewards.awardedCards,
+  );
+  const repairedRewardFlags = Object.freeze([
+    ...priorRewards.repairedRewardFlags,
+    ...deliveryRewards.repairedRewardFlags,
+  ]);
   return {
     save: next,
     applied: true,
     deliveredCount: progress.heldCount,
     deliveredSpecies: Object.freeze(deliveredSpecies),
     collectionCompletedNow,
+    awardedCards,
+    awardedCardCount: awardedCards.reduce((total, reward) => total + reward.quantity, 0),
+    repairedRewardFlags,
     progress: getElversonFishingProgress(next),
   };
 }
 
+export const deliverElversonHandNetCatches = deliverElversonFishingCatches;
+
 export function getElversonFishingItemDefinition(itemId) {
-  if (itemId === ELVERSON_FISHING_ROD_ITEM_ID) return ELVERSON_FISHING_ROD;
+  if (itemId === ELVERSON_HAND_NET_ITEM_ID) return ELVERSON_HAND_NET;
   const creature = ELVERSON_REEF_CATCHES.find((entry) => (
     entry.inventoryItemId === itemId || entry.aquariumItemId === itemId
   ));
@@ -567,3 +738,5 @@ export function getElversonFishingItemDefinition(itemId) {
     discardable: false,
   });
 }
+
+export const getElversonHandNetItemDefinition = getElversonFishingItemDefinition;

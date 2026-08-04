@@ -1,4 +1,10 @@
 import { ELVERSON_LAYERED_SCENE } from "./adventureElversonLayeredScene.mjs";
+import {
+  ELVERSON_TOWN_PORTALS,
+  ELVERSON_TOWN_PORTAL_BY_SCENE,
+  ELVERSON_TOWN_SAFE_POSITIONS,
+} from "./adventureElversonTownLayout.mjs";
+import { ELVERSON_AMBIENT_RESIDENTS } from "./adventureElversonResidents.mjs";
 
 export const ADVENTURE_CONTENT_SCHEMA_VERSION = 1;
 
@@ -217,7 +223,7 @@ const towns = [
   },
 ];
 
-const ELVERSON_AMBIENT_RESIDENTS = [
+export const ELVERSON_LEGACY_AMBIENT_RESIDENTS = [
   {
     id: "fisherman-wyeth",
     name: "Fisherman Wyeth",
@@ -522,6 +528,142 @@ function elversonResidentInteraction(resident) {
   };
 }
 
+const ELVERSON_PROLOGUE_CAST = Object.freeze([
+  Object.freeze({
+    id: "player-mom",
+    name: "Mom",
+    title: "Your Mom",
+    color: "coral",
+    roleId: "resident",
+    at: Object.freeze({ x: 4.75, y: 4.55 }),
+    facing: "right",
+    lines: Object.freeze({
+      intro: Object.freeze(["Happy tenth birthday! I made your favorite breakfast, and your best friend arrived before the toast was even ready."]),
+      guidance: Object.freeze(["Check with Dad, stay together, listen to the grown-ups, and treat every creature gently."]),
+      return: Object.freeze(["Your breakfast will be here when you need another bite. Have a wonderful first adventure!"]),
+      birthdayMorning: Object.freeze([
+        "Happy tenth birthday! I made your favorite breakfast, though your best friend arrived so early that the toast is barely ready.",
+        "The whole town is talking about Mr. Easterling's new Sea Realm Aquarium and the creature-collecting challenge. I can see why neither of you slept much.",
+        "Eat a little, check with Dad, and then you have our permission to go together. Listen to the grown-ups, treat every creature gently, and look out for one another.",
+      ]),
+    }),
+  }),
+  Object.freeze({
+    id: "player-dad",
+    name: "Dad",
+    title: "Your Dad",
+    color: "deep",
+    roleId: "resident",
+    at: Object.freeze({ x: 11.65, y: 4.45 }),
+    facing: "left",
+    lines: Object.freeze({
+      intro: Object.freeze(["This morning's Elverson Gazette is all about Mr. Easterling's new aquarium challenge."]),
+      guidance: Object.freeze(["You have my permission. Follow the aquarium team's safety rules and come home ready to tell us what you learned."]),
+      return: Object.freeze(["The Gazette will have to work hard to keep up with your adventure now."]),
+      birthdayMorning: Object.freeze([
+        "Listen to this headline: 'Elverson Adventurers Invited to Help Fill the New Sea Realm Aquarium!' It says the first gathering begins this morning.",
+        "Mr. Easterling wants explorers to learn about each animal's habitat and care, not simply race to collect it. That sounds like an adventure worth starting properly.",
+        "You have my permission. Stay with your friend, follow the aquarium team's safety rules, and come home ready to tell us everything you learned.",
+      ]),
+    }),
+  }),
+  Object.freeze({
+    id: "player-best-friend",
+    name: "Best Friend",
+    title: "Your Friendly Rival",
+    color: "teal",
+    roleId: "resident",
+    at: Object.freeze({ x: 7.55, y: 7.35 }),
+    facing: "up",
+    lines: Object.freeze({
+      intro: Object.freeze(["You're finally ten! I was so excited about the aquarium challenge that I barely slept."]),
+      guidance: Object.freeze(["Let's learn everything we can, build our best decks, and see who reaches Pelora City first."]),
+      return: Object.freeze(["I'll see you in Pelora City. Keep collecting, studying, and practicing!"]),
+      birthdayMorning: Object.freeze([
+        "You're finally ten! I was so excited about the aquarium challenge that I barely slept at all.",
+        "Mr. Easterling is letting new adventurers choose their first SeaRealm decks today. Imagine all the creatures waiting for us out there!",
+        "Your parents said yes, so let's race to the aquarium. Last one there is a sleepy sea cucumber!",
+      ]),
+      rivalDeparture: Object.freeze([
+        "That lesson was amazing. Now we both know that a real Master of the Sea has to understand an ecosystem, not just find its creatures.",
+        "I'm leaving Elverson to start my own collecting journey. Meet me in Pelora City, and bring your strongest deck!",
+        "May the best catcher win!",
+      ]),
+    }),
+  }),
+]);
+
+function elversonPrologueInteraction(character) {
+  return {
+    id: `interaction-elverson-prologue-${character.id}`,
+    type: "npc",
+    at: character.at,
+    facing: character.facing,
+    npcId: character.id,
+    conversationId: `conversation-elverson-prologue-${character.id}`,
+  };
+}
+
+const ELVERSON_OPEN_PUBLIC_ROOM_TILES = Object.freeze([
+  "wwwwwwwwwwwwww",
+  "wffffffffffffw",
+  "wffffffffffffw",
+  "wffffffnfffffw",
+  "wffffffffffffw",
+  "wffffffffffffw",
+  "wffffffffffffw",
+  "wffffffffffffw",
+  "wwwwwwEwwwwwww",
+]);
+
+const ELVERSON_OPEN_HOME_TILES = Object.freeze([
+  "wwwwwwwwwwww",
+  "wffffffffffw",
+  "wffffffffffw",
+  "wffffnfffffw",
+  "wffffffffffw",
+  "wffffffffffw",
+  "wffffffffffw",
+  "wwwwwEwwwwww",
+]);
+
+function elversonInteriorScene({
+  sceneId,
+  name,
+  theme,
+  tiles,
+  spawn,
+  exitAt,
+  artPath,
+}) {
+  const portal = ELVERSON_TOWN_PORTAL_BY_SCENE[sceneId];
+  if (!portal) throw new Error(`Elverson interior ${sceneId} is missing its exterior portal.`);
+  return {
+    name,
+    worldKind: "interior",
+    theme,
+    ...(artPath ? { artPath } : {}),
+    tiles,
+    spawn,
+    startFacing: "up",
+    collisionRects: [],
+    interactions: [
+      ...ELVERSON_AMBIENT_RESIDENTS
+        .filter((resident) => resident.sceneId === sceneId)
+        .map(elversonResidentInteraction),
+      {
+        id: `interaction-${sceneId}-exit`,
+        type: "exit",
+        at: exitAt,
+        doorwayHalfWidth: 0.5,
+        targetScene: "town",
+        spawn: portal.exteriorSpawn,
+        facing: "down",
+      },
+    ],
+  };
+}
+
 const shellshoreRuntimeScenes = {
   town: {
     name: "Elverson",
@@ -529,39 +671,63 @@ const shellshoreRuntimeScenes = {
     theme: "coastal-elverson",
     artPath: ELVERSON_LAYERED_SCENE.groundPath,
     tiles: ELVERSON_LAYERED_SCENE.terrain.rows,
-    spawn: { x: 14, y: 10 },
+    spawn: ELVERSON_TOWN_SAFE_POSITIONS.townStart,
     startFacing: "up",
     walkableRegions: ELVERSON_LAYERED_SCENE.walkableRegions,
     layeredObjects: ELVERSON_LAYERED_SCENE.objects,
     collisionRects: ELVERSON_LAYERED_SCENE.collisionRects,
     interactions: [
-      {
-        id: "interaction-elverson-enter-aquarium",
+      ...ELVERSON_TOWN_PORTALS.map((portal) => ({
+        id: portal.id,
         type: "enter",
-        at: { x: 16, y: 15.1 },
-        targetScene: "academy-lab",
-        spawn: { x: 6, y: 7 },
+        at: portal.doorway,
+        targetScene: portal.targetScene,
+        spawn: portal.interiorSpawn,
         facing: "up",
-      },
-      {
-        id: "interaction-elverson-enter-park-home",
-        type: "enter",
-        at: { x: 7, y: 6 },
-        targetScene: "coral-home",
-        spawn: { x: 5, y: 6 },
-        facing: "up",
-      },
-      {
-        id: "interaction-elverson-enter-chestnut-home",
-        type: "enter",
-        at: { x: 18, y: 3 },
-        targetScene: "deep-home",
-        spawn: { x: 5, y: 6 },
-        facing: "up",
-      },
+      })),
       ...ELVERSON_AMBIENT_RESIDENTS
         .filter((resident) => resident.sceneId === "town")
         .map(elversonResidentInteraction),
+    ],
+  },
+  "player-home": {
+    name: "Your Elverson Home",
+    worldKind: "interior",
+    theme: "player-home",
+    artPath: "/images/adventure/player-home-v1.png",
+    tiles: [
+      "wwwwwwwwwwwwwww",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wwwwwwwEwwwwwww",
+    ],
+    spawn: { x: 7, y: 4 },
+    startFacing: "down",
+    collisionRects: [
+      { id: "player-home-kitchen", left: 0.2, top: 0.45, right: 4.25, bottom: 4.4 },
+      { id: "player-home-staircase", left: 5.7, top: -0.1, right: 8.3, bottom: 2.85 },
+      { id: "player-home-upper-right-storage", left: 10.35, top: 0.45, right: 14.2, bottom: 2.65 },
+      { id: "player-home-breakfast-table", left: 0.75, top: 5.45, right: 5.75, bottom: 8.75 },
+      { id: "player-home-reading-nook", left: 10.55, top: 3.1, right: 14.2, bottom: 6.65 },
+      { id: "player-home-lower-right-console", left: 9.85, top: 7, right: 14.2, bottom: 8.85 },
+    ],
+    interactions: [
+      ...ELVERSON_PROLOGUE_CAST.map(elversonPrologueInteraction),
+      {
+        id: "interaction-player-home-exit",
+        type: "exit",
+        at: { x: 7, y: 9 },
+        doorwayHalfWidth: 0.45,
+        targetScene: "town",
+        spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["player-home"].exteriorSpawn,
+        facing: "down",
+      },
     ],
   },
   "coral-home": {
@@ -604,7 +770,7 @@ const shellshoreRuntimeScenes = {
         type: "exit",
         at: { x: 5, y: 7 },
         targetScene: "town",
-        spawn: { x: 7, y: 7 },
+        spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["coral-home"].exteriorSpawn,
         facing: "down",
       },
     ],
@@ -648,11 +814,56 @@ const shellshoreRuntimeScenes = {
         type: "exit",
         at: { x: 5, y: 7 },
         targetScene: "town",
-        spawn: { x: 18, y: 4 },
+        spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["deep-home"].exteriorSpawn,
         facing: "down",
       },
     ],
   },
+  "elverson-oceanic-home": elversonInteriorScene({
+    sceneId: "elverson-oceanic-home",
+    name: "Oceanic House",
+    theme: "deep-sea-den",
+    tiles: ELVERSON_OPEN_HOME_TILES,
+    spawn: { x: 5, y: 6 },
+    exitAt: { x: 5, y: 7 },
+    artPath: "/images/adventure/deepwater-den.png",
+  }),
+  "elverson-hybrid-home": elversonInteriorScene({
+    sceneId: "elverson-hybrid-home",
+    name: "Hybrid Deck House",
+    theme: "coral-cottage",
+    tiles: ELVERSON_OPEN_HOME_TILES,
+    spawn: { x: 5, y: 6 },
+    exitAt: { x: 5, y: 7 },
+    artPath: "/images/adventure/coral-cottage.png",
+  }),
+  "elverson-supply-company": elversonInteriorScene({
+    sceneId: "elverson-supply-company",
+    name: "Elverson Supply Company",
+    theme: "academy-lab",
+    tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
+    spawn: { x: 6, y: 7 },
+    exitAt: { x: 6, y: 8 },
+    artPath: "/images/adventure/shellshore-academy.png",
+  }),
+  "elverson-red-schoolhouse": elversonInteriorScene({
+    sceneId: "elverson-red-schoolhouse",
+    name: "Red Schoolhouse",
+    theme: "coral-cottage",
+    tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
+    spawn: { x: 6, y: 7 },
+    exitAt: { x: 6, y: 8 },
+    artPath: "/images/adventure/shellshore-academy.png",
+  }),
+  "elverson-marine-research-lab": elversonInteriorScene({
+    sceneId: "elverson-marine-research-lab",
+    name: "Marine Research Lab",
+    theme: "academy-lab",
+    tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
+    spawn: { x: 6, y: 7 },
+    exitAt: { x: 6, y: 8 },
+    artPath: "/images/adventure/shellshore-academy.png",
+  }),
   "academy-lab": {
     name: "Elverson Aquarium Workshop",
     worldKind: "interior",
@@ -701,7 +912,7 @@ const shellshoreRuntimeScenes = {
         // requiring them to line up on its exact centre pixel.
         doorwayHalfWidth: 0.5,
         targetScene: "town",
-        spawn: { x: 16, y: 15.85 },
+        spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["academy-lab"].exteriorSpawn,
         facing: "down",
       },
     ],
@@ -741,7 +952,7 @@ const shellshoreSunpatchRouteWorld = {
       routeId: "route-shellshore-sunpatch",
       dockId: "shellshore-dock",
       targetScene: "town",
-      spawn: { x: 14, y: 10 },
+      spawn: ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock,
       facing: "down",
     },
     {
@@ -2672,8 +2883,14 @@ const championsWakeRuntimeScenes = {
 
 const scenes = [
   { id: "town", townId: "shellshore-village", kind: "exterior", status: "prototype", world: shellshoreRuntimeScenes.town },
+  { id: "player-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["player-home"] },
   { id: "coral-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["coral-home"] },
   { id: "deep-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["deep-home"] },
+  { id: "elverson-oceanic-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["elverson-oceanic-home"] },
+  { id: "elverson-hybrid-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["elverson-hybrid-home"] },
+  { id: "elverson-supply-company", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["elverson-supply-company"] },
+  { id: "elverson-red-schoolhouse", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["elverson-red-schoolhouse"] },
+  { id: "elverson-marine-research-lab", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["elverson-marine-research-lab"] },
   { id: "academy-lab", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["academy-lab"] },
   { id: "shellshore-sunpatch-sea", townId: "shellshore-village", routeId: "route-shellshore-sunpatch", kind: "route", status: "prototype", world: shellshoreSunpatchRouteWorld },
   { id: "sunpatch-cay-town", townId: "sunpatch-cay", kind: "exterior", status: "prototype", world: sunpatchRuntimeScenes["sunpatch-cay-town"] },
@@ -2709,7 +2926,7 @@ const scenes = [
 ];
 
 const docks = [
-  { id: "shellshore-dock", townId: "shellshore-village", sceneId: "town", status: "prototype", position: { x: 14, y: 10 }, facing: "down" },
+  { id: "shellshore-dock", townId: "shellshore-village", sceneId: "town", status: "prototype", position: ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock, facing: "down" },
   { id: "sunpatch-dock", townId: "sunpatch-cay", sceneId: "sunpatch-cay-town", status: "prototype", position: { x: 7, y: 8 }, facing: "up" },
   { id: "sunpatch-brackwater-dock", townId: "sunpatch-cay", sceneId: "sunpatch-cay-town", status: "prototype", position: { x: 8, y: 8 }, facing: "up" },
   { id: "brackwater-dock", townId: "brackwater-landing", sceneId: "brackwater-landing-town", status: "prototype", position: { x: 7, y: 8 }, facing: "up" },
@@ -2724,6 +2941,12 @@ const docks = [
 ];
 
 const conversations = [
+  ...ELVERSON_PROLOGUE_CAST.map((character) => ({
+    id: `conversation-elverson-prologue-${character.id}`,
+    townId: "shellshore-village",
+    npcId: character.id,
+    lines: character.lines,
+  })),
   ...ELVERSON_AMBIENT_RESIDENTS.map((resident) => ({
     id: `conversation-elverson-${resident.id}`,
     townId: "shellshore-village",
@@ -2744,16 +2967,17 @@ const conversations = [
     lines: {
       worldIntroduction: [
         "Hello there! I'm Mr. Easterling. Welcome to Elverson, a small town where our streets, streams, and harbor all meet the sea.",
-        "I have been fascinated by the ocean for as long as I can remember. Every tide pool and reef is a neighborhood: animals depend on the water, their habitat, and one another in ways we are still learning to understand.",
-        "Building an aquarium here has been my lifelong dream. I don't want it to be only a room full of tanks; I want it to be a place where people discover how ocean habitats work and how our choices can help or harm them.",
-        "As we explore, we'll meet people who know this coast, learn how to catch certain fish and creatures responsibly, and record what the water and animals show us. Find Fisherman Wyeth by the south pier to learn how to fish, then bring the creatures you catch back to me. Together we'll give them the right care and build aquarium exhibits that teach Elverson about their habitats.",
-        "SeaPals matches let us model those real relationships with cards. Building a playable ecosystem helps us think about food, shelter, water conditions, and the connections that keep a habitat healthy.",
-        "Right now, the aquarium is an empty workshop and a hopeful plan. I can't build it alone. I need your curiosity, your careful observations, and your help. Come with me, and I'll show you where our work begins.",
+        "Our new Sea Realm Aquarium is nearly ready to open, and I have invited adventurers young and old to help us find its first requested set of fantastic sea creatures, great and small!",
+        "Every creature you deliver will be assessed by our care team and placed in the habitat that meets its needs. In return, I will award you the matching Sea Realm trading card. Complete the whole requested set and you will earn the title Master of the Sea!",
+        "Now, where did I put that requested-set clipboard? Ah, under the other clipboard. Of course. I may misplace my notes, but I never forget a sea creature... or a promising new adventurer.",
+        "Finding a creature is only the beginning. To catch every species I need, you must study its food, shelter, habitat, neighbors, and role in a healthy ocean ecosystem.",
+        "That is why I created the SeaRealm card game. A playable ecosystem helps us understand the same relationships we will care for in the aquarium.",
+        "Come with me. You may choose your first deck, and I will stay beside you while you learn how to play.",
       ],
       intro: [
-        "Here we are: the Elverson Aquarium workshop. For years, I imagined these empty benches becoming an exhibit that could make our whole town curious about the ocean.",
-        "Before any real animal could live here, we would need to understand its water, food, shelter, space, and neighbors. So we'll begin safely with a SeaPals model ecosystem and practice making those connections.",
-        "I'll stay beside you through the entire lesson. First, let me introduce three starter reefs; each one teaches a different way to build a healthy, working ecosystem.",
+        "Here we are: the Sea Realm Aquarium workshop. These tanks look empty today, but every careful delivery will help an ecosystem room come alive.",
+        "Before any animal enters a prepared habitat, we must understand its water, food, shelter, space, and neighbors. We will begin with a SeaRealm model ecosystem and practice making those connections.",
+        "First, choose a starter deck. Each is a complete ecosystem and a different way to begin your journey toward Master of the Sea.",
       ],
       rematch: [
         "Building an aquarium exhibit takes practice, good notes, and the willingness to revise a plan.",
@@ -2792,15 +3016,15 @@ const conversations = [
       ],
       fishingTurnIn: [
         "You brought back a catch from Elverson's reef! Jonah and I will check its health, habitat needs, compatibility, and care plan before it enters a prepared tank.",
-        "Let's move your catch into the aquarium record. Every new species helps visitors see a different relationship on the reef.",
+        "Let's add it to the aquarium record. For every creature delivered, the matching Sea Realm card goes into your collection.",
       ],
       fishingDelivered: [
-        "The catch is safely with the aquarium care team. Your Reef Log will show which creatures are still waiting to be discovered.",
-        "Keep fishing from marked shore edges, and bring any new catches back here when you are ready.",
+        "The catch is safely with the aquarium care team, and its matching card is yours. Your Reef Log shows which requested species are still waiting to be discovered.",
+        "Keep exploring from marked collection areas, and bring any new catches back here when you are ready.",
       ],
       fishingCollectionComplete: [
-        "You found all ten Elverson reef creatures! The aquarium now represents fish, invertebrates, grazers, cleaners, shelter-seekers, and neighbors that depend on one another.",
-        "That complete Reef Log is worth celebrating. You can still fish for repeat observations, and every catch will receive the same careful assessment.",
+        "You found all ten local Elverson reef creatures! The aquarium now represents fish, invertebrates, grazers, cleaners, shelter-seekers, and neighbors that depend on one another.",
+        "Every delivery awarded its matching card. This completes Elverson's reef list, but the wider Sea Realm requested set continues beyond town on the journey toward Master of the Sea.",
       ],
     },
   },
@@ -2810,17 +3034,17 @@ const conversations = [
     npcId: "marina",
     lines: {
       intro: [
-        "Hi, I'm Rosie. Welcome in! Mr. Easterling says you're helping with Elverson's aquarium exhibit.",
-        "My Coral Garden deck is built around patient growth and reef relationships. Want to practice with a friendly 10 VP duel?",
+        "Hi, I'm George. I'm ten, too, and my Coral Garden deck is built around patient growth and reef relationships.",
+        "Want to practice with a friendly 10 VP duel?",
       ],
       rematch: [
-        "Good to see you again! A careful Reefkeeper always has something new to practice.",
+        "Good to see you again! Coral Garden always has something new to practice.",
         "Would you like another 10 VP duel with my Coral Garden deck?",
       ],
       victory: [
         "That was a beautiful ecosystem! You read the current and reached 10 VP first.",
         "You earned an Elverson Discovery Pack, too. Open your Inventory from the pause menu when you are ready to add four new cards to your collection.",
-        "Take the Coral Crest. George over on Chestnut Street has a very different deck if you want another challenge.",
+        "Take the Coral Crest. Calvin in the Deep House has a very different deck if you want another challenge.",
       ],
     },
   },
@@ -2830,8 +3054,8 @@ const conversations = [
     npcId: "dorian",
     lines: {
       intro: [
-        "Hello! I'm George. Come in—I heard Rosie sent you my way after your first Elverson duel.",
-        "My Darkness Shroud deck hides powerful creatures in the abyss. Show me how your reef handles the pressure.",
+        "Hello! I'm Calvin. I'm thirteen, and my Darkness Shroud deck hides powerful creatures in the abyss.",
+        "George said you were ready for a different kind of Elverson challenge. Show me how your reef handles the pressure.",
       ],
       rematch: [
         "The Abyss Crest belongs to you, but the deep is never the same twice.",
@@ -3562,6 +3786,18 @@ const conversations = [
 ];
 
 const npcs = [
+  ...ELVERSON_PROLOGUE_CAST.map((character) => ({
+    id: character.id,
+    townId: "shellshore-village",
+    sceneId: "player-home",
+    roleId: character.roleId,
+    name: character.name,
+    title: character.title,
+    color: character.color,
+    crest: null,
+    conversationId: `conversation-elverson-prologue-${character.id}`,
+    encounterId: null,
+  })),
   ...ELVERSON_AMBIENT_RESIDENTS.map((resident, index) => ({
     id: resident.id,
     townId: "shellshore-village",
@@ -3595,8 +3831,8 @@ const npcs = [
     townId: "shellshore-village",
     sceneId: "coral-home",
     roleId: "town-challenger",
-    name: "Rosie",
-    title: "Elverson Reefkeeper",
+    name: "George",
+    title: "Age 10 · Coral Garden Player",
     color: "coral",
     crest: "Coral Crest",
     conversationId: "conversation-shellshore-marina",
@@ -3607,8 +3843,8 @@ const npcs = [
     townId: "shellshore-village",
     sceneId: "deep-home",
     roleId: "town-challenger",
-    name: "George",
-    title: "Elverson Challenger",
+    name: "Calvin",
+    title: "Age 13 · Darkness Shroud Player",
     color: "deep",
     crest: "Abyss Crest",
     conversationId: "conversation-shellshore-dorian",

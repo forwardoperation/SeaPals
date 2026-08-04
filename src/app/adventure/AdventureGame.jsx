@@ -26,18 +26,23 @@ import {
   getLayeredSceneObjectStyle,
   getLayeredSceneZIndex,
 } from "./adventureLayeredScene.mjs";
-import AdventureFishingModal from "./AdventureFishingModal";
+import AdventureHandNetModal from "./AdventureHandNetModal";
 import {
-  ELVERSON_FISHING_ROD_ITEM_ID,
+  ELVERSON_AQUARIUM_SCENE_ID,
+  getElversonAquariumExhibitModel,
+} from "./adventureAquariumExhibits.mjs";
+import {
+  ELVERSON_HAND_NET_ITEM_ID,
   ELVERSON_REEF_CATCHES,
-  beginElversonFishingTutorial,
-  deliverElversonFishingCatches,
-  getElversonFishingConversationMode,
-  getElversonFishingInteraction,
-  getElversonFishingItemDefinition,
-  getElversonFishingProgress,
-  recordElversonFishingCatch,
-  recordElversonFishingTutorialCatch,
+  beginElversonHandNetTutorial,
+  deliverElversonHandNetCatches,
+  getElversonHandNetConversationMode,
+  getElversonHandNetInteraction,
+  getElversonHandNetItemDefinition,
+  getElversonHandNetProgress,
+  reconcileElversonAquariumRewards,
+  recordElversonHandNetCatch,
+  recordElversonHandNetTutorialCatch,
 } from "./adventureFishing.mjs";
 import {
   BOAT_MOTION_DEFAULTS,
@@ -99,6 +104,24 @@ import {
   recordWorldIntroduction,
   recoverOnboardingResume,
 } from "./adventureOnboarding.mjs";
+import {
+  ELVERSON_PROLOGUE_AQUARIUM_SCENE_ID,
+  ELVERSON_PROLOGUE_BEATS,
+  ELVERSON_PROLOGUE_BEST_FRIEND_ID,
+  ELVERSON_PROLOGUE_HOME_SCENE_ID,
+  ELVERSON_RIVAL_DEPARTURE_CONVERSATION,
+  getElversonPrologueProgress,
+  recordElversonPrologueBeat,
+  recoverElversonPrologueResume,
+} from "./adventureElversonPrologue.mjs";
+import {
+  ELVERSON_TOWN_SAFE_POSITIONS,
+  ELVERSON_WYETH_HAND_NET_PATH,
+} from "./adventureElversonTownLayout.mjs";
+import {
+  createGuidedWalkPlan,
+  sampleGuidedWalk,
+} from "./adventureGuidedWalk.mjs";
 import {
   ADVENTURE_PROFILE_IDS,
   claimUnscopedAdventureSaves,
@@ -222,6 +245,7 @@ const TRAINERS = Object.freeze({
 
 const ACADEMY_MENTOR_ID = "academy-mentor";
 const FISHERMAN_WYETH_ID = "fisherman-wyeth";
+const FISHERMAN_WYETH_INTERACTION_ID = "interaction-elverson-fisherman-wyeth";
 const ACADEMY_MENTOR_INTERACTION_ID = "interaction-academy-mentor";
 const ELVERSON_OPENING_MENTOR_INTERACTION_ID = "interaction-elverson-opening-mentor";
 const ELVERSON_AQUARIUM_GUIDED_TRANSITION = (() => {
@@ -235,6 +259,15 @@ const ELVERSON_AQUARIUM_GUIDED_TRANSITION = (() => {
     targetScene: entrance.targetScene,
     spawn: entrance.spawn,
     facing: entrance.facing,
+  });
+})();
+const ELVERSON_HOME_GUIDED_TRANSITION = (() => {
+  return Object.freeze({
+    type: "guided",
+    interactionId: "guided-birthday-race-to-aquarium",
+    targetScene: "town",
+    spawn: ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
+    facing: "left",
   });
 })();
 const ELVERSON_OPENING_MENTOR_INTERACTION = (() => {
@@ -253,12 +286,11 @@ const ELVERSON_OPENING_MENTOR_INTERACTION = (() => {
     facing: "left",
   });
 })();
-const ELVERSON_FISHING_PRACTICE_POSITION = Object.freeze({ x: 10.05, y: 16.9 });
-const ELVERSON_FISHING_GUIDED_TRANSITION = Object.freeze({
-  type: "guided",
-  interactionId: "guided-fishing-lesson-to-practice-rail",
-  targetScene: "town",
-  spawn: ELVERSON_FISHING_PRACTICE_POSITION,
+const ELVERSON_RIVAL_AQUARIUM_INTERACTION = Object.freeze({
+  id: ELVERSON_RIVAL_DEPARTURE_CONVERSATION.interactionId,
+  type: "npc",
+  npcId: ELVERSON_PROLOGUE_BEST_FRIEND_ID,
+  at: Object.freeze({ x: 9, y: 3 }),
   facing: "left",
 });
 const ELVERSON_FISHING_TUTORIAL_SESSION = Object.freeze({
@@ -294,20 +326,23 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
   // Elverson residents use explicit age- and role-appropriate human designs.
   // This avoids clone-heavy hashing and never recolors an entire human sprite.
   "fisherman-wyeth": "fisherman-wyeth",
-  landon: "fisherman-wyeth",
-  william: "fisherman-wyeth",
+  landon: "player",
+  william: "player",
   "teacher-caroline": "teacher-caroline",
-  eloise: "teacher-caroline",
+  "player-mom": "teacher-caroline",
+  eloise: "player",
   ivy: "ivy",
   karah: "marina",
   charlotte: "marina",
   "explorer-jordan": "explorer-jordan",
   finn: "dorian",
   "marine-biologist-jonah": "marine-biologist-jonah",
-  ellis: "marine-biologist-jonah",
+  ellis: "player",
   "programmer-harlan": "programmer-harlan",
-  edith: "town-elder",
-  henderson: "player",
+  "player-dad": "town-adult",
+  "player-best-friend": "explorer-jordan",
+  edith: "marina",
+  henderson: "town-adult",
   emilio: "town-adult",
   eli: "town-adult",
   calvin: "town-adult",
@@ -317,6 +352,18 @@ const SPRITE_SOURCE_BY_CHARACTER = Object.freeze({
   luke: "player",
   micah: "player",
   sam: "player",
+  marina: "player",
+  "town-theo": "player",
+  "town-erik": "dorian",
+  "red-schoolhouse-hudson": "player",
+  "red-schoolhouse-harrison": "player",
+  "red-schoolhouse-rosie": "marina",
+  "red-schoolhouse-juliana": "marina",
+  "reef-house-charlie": "player",
+  "reef-house-danny": "dorian",
+  "hybrid-house-olivia": "marina",
+  "hybrid-house-alyssa": "marina",
+  "hybrid-house-henry": "player",
   "sunpatch-tavi": "marina",
   "sunpatch-mira": "academy-mentor",
   "sunpatch-gardener": "marina",
@@ -543,6 +590,56 @@ function AdventureLayeredMapObject({ object, scene }) {
       unoptimized
       style={getLayeredSceneObjectStyle(object, scene)}
     />
+  );
+}
+
+function AdventureAquariumExhibits({ model, reducedMotion = false }) {
+  if (!model) return null;
+  return (
+    <div
+      className={styles.aquariumExhibitLayer}
+      aria-label={`${model.representedSpeciesCount} of ${model.requestedSpeciesCount} Elverson species represented in the Aquarium`}
+    >
+      {model.exhibits.map((exhibit) => (
+        <section
+          key={exhibit.id}
+          className={`${styles.aquariumExhibit} ${exhibit.populated ? styles.aquariumExhibitPopulated : styles.aquariumExhibitEmpty}`}
+          style={{
+            left: `${exhibit.bounds.left}%`,
+            top: `${exhibit.bounds.top}%`,
+            width: `${exhibit.bounds.width}%`,
+            height: `${exhibit.bounds.height}%`,
+          }}
+          aria-label={`${exhibit.name}, ${exhibit.representedSpeciesCount} represented species`}
+        >
+          <span className={styles.aquariumExhibitWater} aria-hidden="true"><i /><i /></span>
+          {exhibit.populated ? exhibit.occupants.map((occupant) => {
+            const creatureName = cardsById[occupant.cardId]?.name ?? occupant.id;
+            return (
+              <span
+                key={occupant.id}
+                className={`${styles.aquariumCreature} ${occupant.animation.direction < 0 ? styles.aquariumCreatureReverse : ""} ${occupant.category === "invertebrate" ? styles.aquariumCreatureInvertebrate : ""}`}
+                title={`${creatureName}${occupant.quantity > 1 ? ` ×${occupant.quantity}` : ""}`}
+                aria-label={`${creatureName}, ${occupant.quantity} recorded`}
+                style={{
+                  "--aquarium-atlas-x": `${occupant.atlasPosition.x}%`,
+                  "--aquarium-atlas-y": `${occupant.atlasPosition.y}%`,
+                  "--aquarium-lane": occupant.animation.lane,
+                  "--aquarium-direction": occupant.animation.direction,
+                  "--aquarium-delay": `${reducedMotion ? 0 : occupant.animation.delaySeconds}s`,
+                  "--aquarium-duration": `${occupant.animation.durationSeconds}s`,
+                  animationPlayState: reducedMotion ? "paused" : undefined,
+                  backgroundImage: `url("${model.atlasPath}")`,
+                }}
+              />
+            );
+          }) : (
+            <span className={styles.aquariumExhibitAwaiting}>{exhibit.emptyMessage}</span>
+          )}
+          <span className={styles.aquariumExhibitLabel} aria-hidden="true">{exhibit.name}</span>
+        </section>
+      ))}
+    </div>
   );
 }
 
@@ -1783,8 +1880,8 @@ function InventoryItemList({ items, emptyMessage }) {
       {entries.map(([itemId, quantity]) => (
         <li key={itemId}>
           <span>
-            <strong>{getElversonFishingItemDefinition(itemId)?.name ?? inventoryItemLabel(itemId)}</strong>
-            {itemId === ELVERSON_FISHING_ROD_ITEM_ID ? (
+            <strong>{getElversonHandNetItemDefinition(itemId)?.name ?? inventoryItemLabel(itemId)}</strong>
+            {itemId === ELVERSON_HAND_NET_ITEM_ID ? (
               <small>Permanent gear · cannot be discarded</small>
             ) : null}
           </span>
@@ -1818,7 +1915,7 @@ function InventoryModal({
       (left.pool?.name ?? left.packId).localeCompare(right.pool?.name ?? right.packId)
     ));
   const nonFishingStoryItems = Object.fromEntries(
-    Object.entries(inventory.storyItems).filter(([itemId]) => !getElversonFishingItemDefinition(itemId)),
+    Object.entries(inventory.storyItems).filter(([itemId]) => !getElversonHandNetItemDefinition(itemId)),
   );
   const aquariumLog = fishingProgress?.creatures ?? [];
 
@@ -1941,7 +2038,7 @@ function InventoryModal({
           <section className={`${styles.inventorySection} ${styles.fishingInventorySection}`} aria-labelledby="aquarium-log-heading">
             <div className={styles.inventorySectionHeading}>
               <div><span>03</span><h3 id="aquarium-log-heading">Aquarium Reef Log</h3></div>
-              <b>{fishingProgress?.discoveredCount ?? 0} / {ELVERSON_REEF_CATCHES.length} found</b>
+              <b>{fishingProgress?.aquariumSpeciesCount ?? 0} / {ELVERSON_REEF_CATCHES.length} delivered</b>
             </div>
             <div className={styles.fishingInventoryGrid}>
               {aquariumLog.map((creature) => {
@@ -1962,6 +2059,9 @@ function InventoryModal({
                       <em>{[
                         creature.aquarium > 0 ? `${creature.aquarium} in aquarium` : null,
                         creature.held > 0 ? `${creature.held} ready to deliver` : null,
+                        creature.matchingCardsAwarded > 0
+                          ? `${creature.matchingCardsAwarded} matching ${creature.matchingCardsAwarded === 1 ? "card" : "cards"} earned`
+                          : null,
                       ].filter(Boolean).join(" · ") || "Not yet caught"}</em>
                     </span>
                   </article>
@@ -1981,7 +2081,7 @@ function InventoryModal({
             <div className={styles.inventorySectionHeading}>
               <div><span>05</span><h3 id="boat-items-heading">Project Gear</h3></div>
             </div>
-            <InventoryItemList items={inventory.boatItems} emptyMessage="Fishing tools and aquarium equipment will appear as the exhibit grows." />
+            <InventoryItemList items={inventory.boatItems} emptyMessage="Collection tools and aquarium equipment will appear as the exhibit grows." />
           </section>
         </div>
       </section>
@@ -2312,7 +2412,7 @@ function interactionLabel(
   }
   if (interaction.type === "board") return interaction.label ?? "Board your personal boat";
   if (interaction.type === "dock") return interaction.label ?? "Dock your boat";
-  if (interaction.type === "fishing") return interaction.label ?? "Face the water and cast a line";
+  if (interaction.type === "fishing") return interaction.label ?? "Face the shallows and ready the hand net";
   if (interaction.type === "sub-launch") {
     return trenchlightLaunchLabel(expeditionState, briefingComplete, guideComplete);
   }
@@ -2331,6 +2431,7 @@ function mapThemeClassForScene(scene) {
     "coastal-elverson": styles.elversonTownMap,
     "sunlit-reef": styles.townMap,
     "academy-lab": styles.academyLabMap,
+    "player-home": styles.playerHomeMap,
     "coral-cottage": styles.coralHomeMap,
     "deep-sea-den": styles.deepHomeMap,
     "shellshore-sunpatch-route": styles.seaRouteMap,
@@ -2376,7 +2477,7 @@ function actionLabel(
   if (!interaction) return "Interact";
   if (interaction.type === "board") return "Board";
   if (interaction.type === "dock") return "Dock";
-  if (interaction.type === "fishing") return interaction.actionLabel ?? "Fish";
+  if (interaction.type === "fishing") return interaction.actionLabel ?? "Use hand net";
   if (interaction.type === "sub-launch") {
     if (expeditionState?.phase === "survey" && !guideComplete) return "Meet Luz";
     if (expeditionState?.phase === "survey" && !briefingComplete) return "Briefing first";
@@ -2464,6 +2565,8 @@ export default function AdventureGame({
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const [sceneTransition, setSceneTransition] = useState(null);
+  const [guidedWalk, setGuidedWalk] = useState(null);
+  const [guidedWalkSample, setGuidedWalkSample] = useState(null);
   const [legacySavePrompt, setLegacySavePrompt] = useState(null);
   const keyboardDirectionsRef = useRef(new Map());
   const touchDirectionsRef = useRef(new Set());
@@ -2602,8 +2705,16 @@ export default function AdventureGame({
     () => gameSave ? getOnboardingProgress(gameSave) : null,
     [gameSave],
   );
+  const prologueProgress = useMemo(
+    () => gameSave ? getElversonPrologueProgress(gameSave) : null,
+    [gameSave],
+  );
   const fishingProgress = useMemo(
-    () => gameSave ? getElversonFishingProgress(gameSave) : null,
+    () => gameSave ? getElversonHandNetProgress(gameSave) : null,
+    [gameSave],
+  );
+  const aquariumExhibitModel = useMemo(
+    () => gameSave ? getElversonAquariumExhibitModel(gameSave) : null,
     [gameSave],
   );
   const unlockedFieldNotes = useMemo(
@@ -2675,8 +2786,11 @@ export default function AdventureGame({
   const vehicleMode = scene?.kind === "vehicle";
   const worldIntroductionConversationActive = conversation?.mode === "worldIntroduction"
     || conversationLeadIn?.mode === "worldIntroduction";
+  const openingMentorReady = prologueProgress?.legacySkipped
+    ? onboardingProgress?.needsWorldIntroduction
+    : prologueProgress?.readyForAquariumRace;
   const stageOpeningMentor = sceneId === "town" && (
-    onboardingProgress?.needsWorldIntroduction
+    openingMentorReady
     || worldIntroductionConversationActive
     || (
       sceneTransition?.type === "guided"
@@ -2688,10 +2802,16 @@ export default function AdventureGame({
       ["trainer", "npc"].includes(candidate.type)
       && TRAINERS[candidate.trainerId ?? candidate.npcId]
     ));
-    return stageOpeningMentor
-      ? [...authoredInteractions, ELVERSON_OPENING_MENTOR_INTERACTION]
-      : authoredInteractions;
-  }, [scene.interactions, stageOpeningMentor]);
+    const interactions = [...authoredInteractions];
+    if (stageOpeningMentor) interactions.push(ELVERSON_OPENING_MENTOR_INTERACTION);
+    if (
+      sceneId === ELVERSON_PROLOGUE_AQUARIUM_SCENE_ID
+      && prologueProgress?.friendVisibleInAquarium
+    ) {
+      interactions.push(ELVERSON_RIVAL_AQUARIUM_INTERACTION);
+    }
+    return interactions;
+  }, [prologueProgress?.friendVisibleInAquarium, scene.interactions, sceneId, stageOpeningMentor]);
   const anchoredActorStates = useMemo(
     () => createAdventureActorStates(sceneCharacterInteractions),
     [sceneCharacterInteractions],
@@ -2724,7 +2844,18 @@ export default function AdventureGame({
       : null,
     [gameSave, sceneId, subAssistedMode],
   );
+  const openingFreeRoamLocked = Boolean(
+    prologueProgress
+    && !prologueProgress.legacySkipped
+    && !prologueProgress.complete
+    && (
+      prologueProgress.needsHomeSequence
+      || prologueProgress.readyForAquariumRace
+      || prologueProgress.needsRivalDeparture
+    )
+  );
   const movementPaused = screen !== "playing"
+    || openingFreeRoamLocked
     || vehicleMode
     || pauseOpen
     || settingsOpen
@@ -2733,6 +2864,7 @@ export default function AdventureGame({
     || Boolean(conversationLeadIn)
     || Boolean(activeTrainerId)
     || Boolean(sceneTransition)
+    || Boolean(guidedWalk)
     || starterSelectionOpen
     || fieldNoteOpen
     || inventoryOpen
@@ -2745,7 +2877,8 @@ export default function AdventureGame({
     || Boolean(championshipEndingStage)
     || newsletterInviteOpen;
   movementPausedRef.current = movementPaused;
-  const playerWalking = isAdventurePlayerWalking({ isMoving, boatMode, movementPaused });
+  const playerWalking = guidedWalkSample?.follower.moving === true
+    || isAdventurePlayerWalking({ isMoving, boatMode, movementPaused });
   const authoredInteraction = useMemo(
     () => screen === "playing" && gameSave && !vehicleMode
       ? getContinuousInteraction(sceneId, position, facing, {
@@ -2756,7 +2889,7 @@ export default function AdventureGame({
   );
   const shorelineFishingInteraction = useMemo(
     () => screen === "playing" && gameSave && !vehicleMode
-      ? getElversonFishingInteraction(sceneId, position, facing)
+      ? getElversonHandNetInteraction(sceneId, position, facing)
       : null,
     [facing, gameSave, position, sceneId, screen, vehicleMode],
   );
@@ -2770,11 +2903,11 @@ export default function AdventureGame({
     ) return shorelineFishingInteraction;
     return {
       ...shorelineFishingInteraction,
-      actionLabel: "Recast",
+      actionLabel: "Try shallows again",
       recastReady: true,
       label: fishingRecastCue.outcome === "caught"
-        ? "Catch secured. Press Enter or tap Recast to cast again."
-        : "The creature slipped free. Press Enter or tap Recast to try again.",
+        ? "Catch secured. Press Enter or tap Try shallows again for another hand-net attempt."
+        : "The creatures found cover. Press Enter or tap Try shallows again when the cove settles.",
     };
   }, [fishingRecastCue, gameSave?.profileId, sceneId, shorelineFishingInteraction]);
   // Authored characters, doors, and props always win when their interaction
@@ -2935,6 +3068,108 @@ export default function AdventureGame({
     return result;
   }, [refreshProfiles, setDirty]);
 
+  const startElversonHandNetGuidedWalk = useCallback((sourceSave) => {
+    if (!sourceSave || sourceSave.world.sceneId !== "town") return false;
+    const plan = createGuidedWalkPlan({
+      path: ELVERSON_WYETH_HAND_NET_PATH.leader,
+      speed: 1.75,
+      followerDelayMs: 520,
+      reducedMotion: effectiveReducedMotion,
+      reducedMotionSpeed: 3.5,
+    });
+    const initialSample = sampleGuidedWalk(plan, 0);
+    clearMovement();
+    setGuidedWalkSample(initialSample);
+    setGuidedWalk({
+      id: "wyeth-hand-net-cove",
+      plan,
+      startedAt: performance.now(),
+      sourceProfileId: sourceSave.profileId,
+    });
+    return true;
+  }, [clearMovement, effectiveReducedMotion]);
+
+  useEffect(() => {
+    if (!guidedWalk || !pageVisible || screen !== "playing") return undefined;
+    let animationFrame = 0;
+    let finished = false;
+    const advance = (timestamp) => {
+      if (finished) return;
+      const sample = sampleGuidedWalk(
+        guidedWalk.plan,
+        Math.max(0, timestamp - guidedWalk.startedAt),
+      );
+      setGuidedWalkSample(sample);
+
+      const currentSave = saveRef.current;
+      if (
+        currentSave
+        && currentSave.profileId === guidedWalk.sourceProfileId
+        && currentSave.world.sceneId === "town"
+      ) {
+        const movedSave = {
+          ...currentSave,
+          world: {
+            ...currentSave.world,
+            position: { ...sample.follower.position },
+            facing: sample.follower.facing,
+          },
+        };
+        saveRef.current = movedSave;
+        setGameSave(movedSave);
+      }
+
+      const currentRuntime = actorRuntimeRef.current.sceneId === "town"
+        ? actorRuntimeRef.current
+        : { sceneId: "town", actors: anchoredActorStates };
+      const wyethActor = currentRuntime.actors[FISHERMAN_WYETH_INTERACTION_ID]
+        ?? anchoredActorStates[FISHERMAN_WYETH_INTERACTION_ID];
+      if (wyethActor) {
+        const nextRuntime = {
+          sceneId: "town",
+          actors: {
+            ...currentRuntime.actors,
+            [FISHERMAN_WYETH_INTERACTION_ID]: {
+              ...wyethActor,
+              position: { ...sample.leader.position },
+              facing: sample.leader.facing,
+              moving: sample.leader.moving,
+            },
+          },
+        };
+        actorRuntimeRef.current = nextRuntime;
+        setActorRuntime(nextRuntime);
+      }
+
+      if (!sample.complete) {
+        animationFrame = window.requestAnimationFrame(advance);
+        return;
+      }
+
+      finished = true;
+      const arrivedSave = saveRef.current;
+      if (arrivedSave) {
+        setDirty(true);
+        persistSave(arrivedSave, { checkpointId: "elverson-hand-net-guided-walk-complete" });
+      }
+      const resetRuntime = { sceneId: "town", actors: anchoredActorStates };
+      actorRuntimeRef.current = resetRuntime;
+      setActorRuntime(resetRuntime);
+      setGuidedWalk(null);
+      setGuidedWalkSample(null);
+      setFishingSession({ ...ELVERSON_FISHING_TUTORIAL_SESSION });
+      setSaveNotice({
+        kind: "info",
+        message: "You followed Wyeth to the sandy cove. Move gently and make one safe hand-net catch.",
+      });
+    };
+    animationFrame = window.requestAnimationFrame(advance);
+    return () => {
+      finished = true;
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [anchoredActorStates, guidedWalk, pageVisible, persistSave, screen, setDirty]);
+
   const applySceneTransition = useCallback((candidate, sourceSave) => {
     if (!candidate?.targetScene || !candidate.spawn || !sourceSave) return null;
     let next = enterAdventureScene(sourceSave, {
@@ -3070,13 +3305,14 @@ export default function AdventureGame({
       screen !== "playing"
       || !gameSave
       || !fishingProgress?.tutorialStarted
-      || !fishingProgress.hasRod
+      || !fishingProgress.hasHandNet
       || fishingProgress.tutorialComplete
       || gameSave.world.sceneId !== "town"
       || conversation
       || conversationLeadIn
       || activeTrainerId
       || sceneTransition
+      || guidedWalk
       || fishingSession
       || pauseOpen
       || settingsOpen
@@ -3094,21 +3330,17 @@ export default function AdventureGame({
     ) return;
 
     const current = saveRef.current ?? gameSave;
-    const distanceToPracticeRail = Math.hypot(
-      current.world.position.x - ELVERSON_FISHING_PRACTICE_POSITION.x,
-      current.world.position.y - ELVERSON_FISHING_PRACTICE_POSITION.y,
+    const distanceToPracticeCove = Math.hypot(
+      current.world.position.x - ELVERSON_TOWN_SAFE_POSITIONS.handNetCove.x,
+      current.world.position.y - ELVERSON_TOWN_SAFE_POSITIONS.handNetCove.y,
     );
     clearMovement();
-    if (distanceToPracticeRail <= 0.45) {
+    if (distanceToPracticeCove <= 0.45) {
       setFishingSession({ ...ELVERSON_FISHING_TUTORIAL_SESSION });
       return;
     }
-    const transitionStarted = requestSceneTransition(
-      ELVERSON_FISHING_GUIDED_TRANSITION,
-      current,
-      { afterArrivalFishingSession: ELVERSON_FISHING_TUTORIAL_SESSION },
-    );
-    if (!transitionStarted) {
+    const walkStarted = startElversonHandNetGuidedWalk(current);
+    if (!walkStarted) {
       setFishingSession({ ...ELVERSON_FISHING_TUTORIAL_SESSION });
     }
   }, [
@@ -3122,14 +3354,14 @@ export default function AdventureGame({
     fieldNoteOpen,
     fieldworkActivity,
     fishingProgress?.tutorialComplete,
-    fishingProgress?.hasRod,
+    fishingProgress?.hasHandNet,
     fishingProgress?.tutorialStarted,
     fishingSession,
     gameSave,
+    guidedWalk,
     inventoryOpen,
     newsletterInviteOpen,
     pauseOpen,
-    requestSceneTransition,
     sceneTransition,
     screen,
     settingsOpen,
@@ -3297,15 +3529,19 @@ export default function AdventureGame({
     pendingSceneTransitionRef.current = null;
     doorwayTransitionRef.current = null;
     setSceneTransition(null);
+    setGuidedWalk(null);
+    setGuidedWalkSample(null);
     residentConversationSeenRef.current = new Set();
     setScreen("playing");
   }
 
   useEffect(() => {
+    const homeConversation = prologueProgress?.homeConversation;
     if (
       screen !== "playing"
       || !gameSave
-      || !onboardingProgress?.needsWorldIntroduction
+      || sceneId !== ELVERSON_PROLOGUE_HOME_SCENE_ID
+      || !homeConversation
       || conversation
       || conversationLeadIn
       || activeTrainerId
@@ -3323,12 +3559,79 @@ export default function AdventureGame({
 
     clearMovement();
     setConversation({
+      ...homeConversation,
+      openingBeatId: prologueProgress.nextBeatId,
+      index: 0,
+    });
+  }, [
+    activeTrainerId,
+    clearMovement,
+    confirmation,
+    conversation,
+    conversationLeadIn,
+    decksOpen,
+    fieldNoteOpen,
+    fieldworkActivity,
+    gameSave,
+    inventoryOpen,
+    pauseOpen,
+    prologueProgress?.homeConversation,
+    prologueProgress?.nextBeatId,
+    sceneId,
+    sceneTransition,
+    screen,
+    settingsOpen,
+    starterSelectionOpen,
+    startElversonHandNetGuidedWalk,
+    worldMapOpen,
+  ]);
+
+  useEffect(() => {
+    const freshOpeningReady = prologueProgress?.readyForAquariumRace;
+    const legacyIntroductionReady = prologueProgress?.legacySkipped
+      && onboardingProgress?.needsWorldIntroduction;
+    if (
+      screen !== "playing"
+      || !gameSave
+      || (!freshOpeningReady && !legacyIntroductionReady)
+      || conversation
+      || conversationLeadIn
+      || activeTrainerId
+      || sceneTransition
+      || pauseOpen
+      || settingsOpen
+      || confirmation
+      || starterSelectionOpen
+      || fieldNoteOpen
+      || inventoryOpen
+      || decksOpen
+      || worldMapOpen
+      || fieldworkActivity
+    ) return;
+
+    clearMovement();
+    const worldIntroduction = {
       trainerId: ACADEMY_MENTOR_ID,
       sceneId: "town",
       interactionId: ELVERSON_OPENING_MENTOR_INTERACTION_ID,
       index: 0,
       mode: "worldIntroduction",
-    });
+    };
+    if (freshOpeningReady && sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID) {
+      const transitionStarted = requestSceneTransition(
+        ELVERSON_HOME_GUIDED_TRANSITION,
+        saveRef.current ?? gameSave,
+        { afterArrivalConversation: worldIntroduction },
+      );
+      if (!transitionStarted) {
+        setSaveNotice({
+          kind: "error",
+          message: "The birthday race could not begin. Your opening checkpoint is safe; continue to try the aquarium trip again.",
+        });
+      }
+      return;
+    }
+    if (sceneId === "town") setConversation(worldIntroduction);
   }, [
     activeTrainerId,
     clearMovement,
@@ -3342,11 +3645,56 @@ export default function AdventureGame({
     inventoryOpen,
     onboardingProgress?.needsWorldIntroduction,
     pauseOpen,
+    prologueProgress?.legacySkipped,
+    prologueProgress?.readyForAquariumRace,
+    requestSceneTransition,
+    sceneId,
     sceneTransition,
     screen,
     settingsOpen,
     starterSelectionOpen,
     worldMapOpen,
+  ]);
+
+  useEffect(() => {
+    if (
+      screen !== "playing"
+      || !gameSave
+      || sceneId !== ELVERSON_PROLOGUE_AQUARIUM_SCENE_ID
+      || !prologueProgress?.needsRivalDeparture
+      || conversation
+      || conversationLeadIn
+      || activeTrainerId
+      || postDuelConversation
+      || sceneTransition
+      || fieldNoteOpen
+      || starterSelectionOpen
+      || pauseOpen
+      || settingsOpen
+      || confirmation
+    ) return;
+    clearMovement();
+    setConversation({
+      ...ELVERSON_RIVAL_DEPARTURE_CONVERSATION,
+      openingBeatId: ELVERSON_PROLOGUE_BEATS.rivalDeparture,
+      index: 0,
+    });
+  }, [
+    activeTrainerId,
+    clearMovement,
+    confirmation,
+    conversation,
+    conversationLeadIn,
+    fieldNoteOpen,
+    gameSave,
+    pauseOpen,
+    postDuelConversation,
+    prologueProgress?.needsRivalDeparture,
+    sceneId,
+    sceneTransition,
+    screen,
+    settingsOpen,
+    starterSelectionOpen,
   ]);
 
   function beginNewGame(profileId, overwriteConfirmed = false) {
@@ -3411,9 +3759,14 @@ export default function AdventureGame({
 
     const worldResume = recoverElversonAdventureResume(loaded.save);
     const onboardingResume = recoverOnboardingResume(worldResume.save);
-    let resumedSave = onboardingResume.save;
+    const prologueResume = recoverElversonPrologueResume(onboardingResume.save);
+    let resumedSave = prologueResume.save;
     let collectionRecovered = false;
     let collectionRecoveryError = null;
+    let aquariumRewardsRecovered = false;
+    let aquariumRewardRecoveryError = null;
+    let aquariumCardsRecovered = 0;
+    let aquariumRewardRecordsRepaired = 0;
     const starterDeckId = resumedSave.player.starterDeckId;
     if (starterDeckId && PREBUILT_DECKS_BY_ID[starterDeckId]) {
       try {
@@ -3427,22 +3780,36 @@ export default function AdventureGame({
         collectionRecoveryError = error;
       }
     }
+    try {
+      const aquariumRewards = reconcileElversonAquariumRewards(resumedSave);
+      resumedSave = aquariumRewards.save;
+      aquariumRewardsRecovered = aquariumRewards.applied;
+      aquariumCardsRecovered = aquariumRewards.awardedCardCount;
+      aquariumRewardRecordsRepaired = aquariumRewards.repairedRewardFlags.length;
+    } catch (error) {
+      aquariumRewardRecoveryError = error;
+    }
     const tournamentResume = recoverChampionsWakeTournamentState(resumedSave);
     resumedSave = tournamentResume.save;
     installSession(resumedSave, { storageAuthorized: true });
-    if (collectionRecoveryError) {
+    if (collectionRecoveryError || aquariumRewardRecoveryError) {
       setDirty(true);
       setSaveNotice({
         kind: "error",
-        message: `Your adventure loaded, but its starter collection needs attention: ${collectionRecoveryError?.message ?? "collection repair failed"}.`,
+        message: collectionRecoveryError
+          ? `Your adventure loaded, but its starter collection needs attention: ${collectionRecoveryError?.message ?? "collection repair failed"}.`
+          : `Your adventure loaded, but its aquarium card rewards need attention: ${aquariumRewardRecoveryError?.message ?? "reward repair failed"}.`,
       });
       return;
     }
     const wasRecovered = Boolean(
       loaded.recovery
+      || loaded.metadata?.needsRewrite
       || worldResume.recovered
       || onboardingResume.recovered
+      || prologueResume.recovered
       || collectionRecovered
+      || aquariumRewardsRecovered
       || tournamentResume.recovered,
     );
     setDirty(wasRecovered);
@@ -3451,7 +3818,11 @@ export default function AdventureGame({
       setSaveNotice({
         kind: repaired.ok ? "info" : "error",
         message: repaired.ok
-          ? "Your Elverson adventure was recovered and its starter collection is ready."
+          ? aquariumCardsRecovered > 0
+            ? "Your Elverson adventure was recovered, including matching cards owed for earlier aquarium deliveries."
+            : aquariumRewardRecordsRepaired > 0
+              ? "Your Elverson adventure was recovered and its aquarium reward record was repaired safely."
+            : "Your Elverson adventure was recovered and its starter collection is ready."
           : "Your Elverson adventure was recovered for this session, but the repaired save could not be written.",
       });
     } else {
@@ -3539,6 +3910,7 @@ export default function AdventureGame({
       || conversation
       || conversationLeadIn
       || sceneTransition
+      || guidedWalk
       || pauseOpen
       || settingsOpen
       || confirmation
@@ -3574,6 +3946,7 @@ export default function AdventureGame({
     decksOpen,
     fieldNoteOpen,
     fieldworkActivity,
+    guidedWalk,
     inventoryOpen,
     newsletterInviteDismissed,
     newsletterInviteEligible,
@@ -3875,10 +4248,14 @@ export default function AdventureGame({
           const manifest = PREBUILT_DECKS_BY_ID[starter.id];
           if (!manifest) throw new Error(`The ${starter.name} deck list is unavailable.`);
           const collection = reconcileStarterCollection(committed.save, manifest);
-          saveRef.current = collection.save;
-          setGameSave(collection.save);
+          const opening = recordElversonPrologueBeat(
+            collection.save,
+            ELVERSON_PROLOGUE_BEATS.starter,
+          );
+          saveRef.current = opening.save;
+          setGameSave(opening.save);
           setDirty(true);
-          persistSave(collection.save, { checkpointId: `starter-selected:${starter.id}` });
+          persistSave(opening.save, { checkpointId: `starter-selected:${starter.id}` });
           setStarterSelectionOpen(false);
           setSelectedStarterId(null);
           setConversation((currentConversation) => ({
@@ -3914,8 +4291,8 @@ export default function AdventureGame({
     try {
       const tutorialCatch = fishingSession?.tutorial === true;
       const result = tutorialCatch
-        ? recordElversonFishingTutorialCatch(current, creatureId)
-        : recordElversonFishingCatch(current, creatureId);
+        ? recordElversonHandNetTutorialCatch(current, creatureId)
+        : recordElversonHandNetCatch(current, creatureId);
       const creatureName = cardsById[result.creature.cardId]?.name ?? result.creature.id;
       commitAdventureMutation(
         result.save,
@@ -3923,7 +4300,7 @@ export default function AdventureGame({
           ? `elverson-fishing-tutorial-complete:${result.creature.id}`
           : `elverson-fishing-catch:${result.progress.heldCount}`,
         tutorialCatch
-          ? `${creatureName} completed Wyeth's practice lesson. Shoreline fishing is now unlocked.`
+          ? `${creatureName} completed Wyeth's practice lesson. Shallow-water hand-net collecting is now unlocked.`
           : `${creatureName} was added to your aquarium catches. Bring it to Mr. Easterling in the workshop.`,
       );
       if (tutorialCatch && result.progress.tutorialComplete) {
@@ -4278,7 +4655,7 @@ export default function AdventureGame({
   }
 
   function interact() {
-    if (screen !== "playing" || pauseOpen || settingsOpen || conversation || conversationLeadIn || activeTrainerId || sceneTransition || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !interaction || !gameSave) return;
+    if (screen !== "playing" || openingFreeRoamLocked || pauseOpen || settingsOpen || conversation || conversationLeadIn || activeTrainerId || sceneTransition || guidedWalk || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !interaction || !gameSave) return;
     clearMovement();
     const worldConversationOrigin = ["trainer", "npc"].includes(interaction.type)
       ? { sceneId, interactionId: interaction.interactionId }
@@ -4302,13 +4679,13 @@ export default function AdventureGame({
       setConversationLeadIn({ ...nextConversation, ...worldConversationOrigin });
     };
     if (interaction.type === "fishing") {
-      const currentFishingProgress = getElversonFishingProgress(saveRef.current ?? gameSave);
-      if (!currentFishingProgress.canFish) {
+      const currentFishingProgress = getElversonHandNetProgress(saveRef.current ?? gameSave);
+      if (!currentFishingProgress.canCatchWithHandNet) {
         setSaveNotice({
           kind: "info",
-          message: currentFishingProgress.hasRod
-            ? "Return to Fisherman Wyeth on the south platform. He will stay with you until you land the required practice catch."
-            : "Find Fisherman Wyeth on the south fishing platform. He has a permanent rod and a hands-on lesson for you.",
+          message: currentFishingProgress.hasHandNet
+            ? "Return to Fisherman Wyeth at the sandy cove. He will stay with you until you make the required practice catch."
+            : "Find Fisherman Wyeth at the wharf. He has a hand net and a hands-on shallow-water lesson for you.",
         });
         return;
       }
@@ -4410,13 +4787,13 @@ export default function AdventureGame({
         beginWorldConversation({
           trainerId,
           index: 0,
-          mode: getElversonFishingConversationMode(current),
+          mode: getElversonHandNetConversationMode(current),
         });
         return;
       }
       if (trainerId === ACADEMY_MENTOR_ID) {
         const current = saveRef.current ?? gameSave;
-        const currentFishingProgress = getElversonFishingProgress(current);
+        const currentFishingProgress = getElversonHandNetProgress(current);
         if (currentFishingProgress.heldCount > 0) {
           const catchNames = currentFishingProgress.creatures
             .filter((creature) => creature.held > 0)
@@ -4762,10 +5139,16 @@ export default function AdventureGame({
       const outcome = reachedPracticeTarget ? "won" : "lost";
       try {
         const resolved = recordPracticeDuelResult(resultSave, outcome);
-        saveRef.current = resolved.save;
-        setGameSave(resolved.save);
+        const opening = outcome === "won"
+          ? recordElversonPrologueBeat(
+              resolved.save,
+              ELVERSON_PROLOGUE_BEATS.tutorial,
+            )
+          : { save: resolved.save };
+        saveRef.current = opening.save;
+        setGameSave(opening.save);
         setDirty(true);
-        persistSave(resolved.save, { checkpointId: `duel-result:${trainer.encounterId}` });
+        persistSave(opening.save, { checkpointId: `duel-result:${trainer.encounterId}` });
         if (outcome === "won") {
           setPostDuelConversation({ trainerId, index: 0, mode: "victory" });
         } else {
@@ -4882,6 +5265,49 @@ export default function AdventureGame({
     if (!conversation) return;
     const trainer = TRAINERS[conversation.trainerId];
     if (!trainer) return;
+    if (conversation.openingBeatId) {
+      const current = saveRef.current ?? gameSave;
+      if (!current) return;
+      try {
+        const recorded = recordElversonPrologueBeat(
+          current,
+          conversation.openingBeatId,
+        );
+        if (recorded.applied) {
+          commitAdventureMutation(
+            recorded.save,
+            `elverson-opening:${conversation.openingBeatId}`,
+            conversation.openingBeatId === ELVERSON_PROLOGUE_BEATS.rivalDeparture
+              ? "Your friendly rival has set out for Pelora City. The race to Master of the Sea is underway."
+              : null,
+          );
+        }
+
+        if (conversation.openingBeatId === ELVERSON_PROLOGUE_BEATS.rivalDeparture) {
+          setConversation(null);
+          setActiveFieldNoteId(SHELLSHORE_FIELD_NOTE.id);
+          setFieldNoteOpen(true);
+          return;
+        }
+
+        const nextHomeConversation = recorded.progress.homeConversation;
+        if (nextHomeConversation) {
+          setConversation({
+            ...nextHomeConversation,
+            openingBeatId: recorded.progress.nextBeatId,
+            index: 0,
+          });
+        } else {
+          setConversation(null);
+        }
+      } catch (error) {
+        setSaveNotice({
+          kind: "error",
+          message: error?.message ?? "The Elverson opening checkpoint could not be recorded.",
+        });
+      }
+      return;
+    }
     if (trainer.id !== ACADEMY_MENTOR_ID) {
       if (!trainer.encounterId) {
         const current = saveRef.current ?? gameSave;
@@ -4889,32 +5315,28 @@ export default function AdventureGame({
         if (trainer.id === FISHERMAN_WYETH_ID) {
           if (["fishingLesson", "fishingPractice"].includes(conversation.mode)) {
             try {
-              const lesson = beginElversonFishingTutorial(current);
-              const lessonProgress = getElversonFishingProgress(lesson.save);
+              const lesson = beginElversonHandNetTutorial(current);
+              const lessonProgress = getElversonHandNetProgress(lesson.save);
               commitAdventureMutation(
                 lesson.save,
                 "elverson-fishing-tutorial-started",
-                lesson.rodGranted
-                  ? "Wyeth's permanent fishing rod was added to Project Gear. Follow him to the practice rail."
-                  : "Wyeth is leading you to the practice rail for the required first catch.",
+                lesson.handNetGranted
+                  ? "Wyeth's hand net was added to Project Gear. Follow him to the sandy practice cove."
+                  : "Wyeth is leading you to the sandy practice cove for the required first catch.",
               );
               setConversation(null);
               if (lessonProgress.tutorialComplete) {
-                setSaveNotice({ kind: "info", message: "Wyeth restored your permanent fishing rod. Your completed lesson remains recorded." });
+                setSaveNotice({ kind: "info", message: "Wyeth restored your hand net. Your completed lesson remains recorded." });
                 return;
               }
-              const transitionStarted = requestSceneTransition(
-                ELVERSON_FISHING_GUIDED_TRANSITION,
-                lesson.save,
-                { afterArrivalFishingSession: ELVERSON_FISHING_TUTORIAL_SESSION },
-              );
-              if (!transitionStarted) {
+              const walkStarted = startElversonHandNetGuidedWalk(lesson.save);
+              if (!walkStarted) {
                 setFishingSession({ ...ELVERSON_FISHING_TUTORIAL_SESSION });
               }
             } catch (error) {
               setSaveNotice({
                 kind: "error",
-                message: error?.message ?? "Wyeth could not finish the fishing lesson.",
+                message: error?.message ?? "Wyeth could not begin the hand-net lesson.",
               });
             }
             return;
@@ -4995,25 +5417,39 @@ export default function AdventureGame({
       const current = saveRef.current ?? gameSave;
       if (!current) return;
       try {
-        const delivered = deliverElversonFishingCatches(current);
+        const delivered = deliverElversonHandNetCatches(current);
         if (!delivered.applied) {
           closeConversation();
           return;
         }
+        const matchingCardSummary = delivered.awardedCards
+          .map(({ cardId, quantity }) => {
+            const cardName = cardsById[cardId]?.name ?? inventoryItemLabel(cardId);
+            return quantity === 1 ? cardName : `${quantity}× ${cardName}`;
+          })
+          .join(", ");
         commitAdventureMutation(
           delivered.save,
           `elverson-aquarium-delivery:${delivered.progress.aquariumCount}`,
-          `${delivered.deliveredCount} ${delivered.deliveredCount === 1 ? "catch is" : "catches are"} now with the aquarium care team.`,
+          `${delivered.deliveredCount} ${delivered.deliveredCount === 1 ? "catch is" : "catches are"} now with the aquarium care team; ${delivered.awardedCardCount} matching ${delivered.awardedCardCount === 1 ? "card was" : "cards were"} added to your collection.`,
         );
+        const rewardLines = [
+          matchingCardSummary
+            ? `Your Sea Realm reward: ${matchingCardSummary}.`
+            : null,
+        ].filter(Boolean);
         setConversation((currentConversation) => ({
           ...currentConversation,
           index: 0,
           mode: delivered.collectionCompletedNow
             ? "fishingCollectionComplete"
             : "fishingDelivered",
-          lines: delivered.collectionCompletedNow
-            ? [...(trainer.dialogue?.fishingCollectionComplete ?? [])]
-            : [...(trainer.dialogue?.fishingDelivered ?? [])],
+          lines: [
+            ...(delivered.collectionCompletedNow
+              ? trainer.dialogue?.fishingCollectionComplete ?? []
+              : trainer.dialogue?.fishingDelivered ?? []),
+            ...rewardLines,
+          ],
         }));
       } catch (error) {
         setSaveNotice({
@@ -5031,16 +5467,20 @@ export default function AdventureGame({
       const current = saveRef.current ?? gameSave;
       if (!current) return;
       const introduced = recordWorldIntroduction(current);
-      if (introduced.applied) {
+      const opening = recordElversonPrologueBeat(
+        introduced.save,
+        ELVERSON_PROLOGUE_BEATS.challenge,
+      );
+      if (introduced.applied || opening.applied) {
         commitAdventureMutation(
-          introduced.save,
-          "world-introduction-complete",
+          opening.save,
+          "elverson-aquarium-challenge-accepted",
         );
       }
       setConversation(null);
       const transitionStarted = requestSceneTransition(
         ELVERSON_AQUARIUM_GUIDED_TRANSITION,
-        introduced.save,
+        opening.save,
         {
           afterArrivalConversation: {
             trainerId: trainer.id,
@@ -5080,7 +5520,23 @@ export default function AdventureGame({
       }));
       return;
     }
-    if (conversation.mode === "victory" || conversation.mode === "boatSafety") {
+    if (conversation.mode === "victory") {
+      const current = saveRef.current ?? gameSave;
+      const opening = current ? getElversonPrologueProgress(current) : null;
+      if (opening?.needsRivalDeparture) {
+        setConversation({
+          ...ELVERSON_RIVAL_DEPARTURE_CONVERSATION,
+          openingBeatId: ELVERSON_PROLOGUE_BEATS.rivalDeparture,
+          index: 0,
+        });
+        return;
+      }
+      setConversation(null);
+      setActiveFieldNoteId(SHELLSHORE_FIELD_NOTE.id);
+      setFieldNoteOpen(true);
+      return;
+    }
+    if (conversation.mode === "boatSafety") {
       setConversation(null);
       setActiveFieldNoteId(SHELLSHORE_FIELD_NOTE.id);
       setFieldNoteOpen(true);
@@ -5091,6 +5547,18 @@ export default function AdventureGame({
 
   function conversationPrimaryLabel() {
     if (!conversation) return "Continue";
+    if (conversation.openingBeatId === ELVERSON_PROLOGUE_BEATS.breakfast) {
+      return "Check with Dad";
+    }
+    if (conversation.openingBeatId === ELVERSON_PROLOGUE_BEATS.permission) {
+      return "Meet your best friend";
+    }
+    if (conversation.openingBeatId === ELVERSON_PROLOGUE_BEATS.race) {
+      return "Race to the aquarium";
+    }
+    if (conversation.openingBeatId === ELVERSON_PROLOGUE_BEATS.rivalDeparture) {
+      return "Begin the race to Pelora City";
+    }
     const trainer = TRAINERS[conversation.trainerId];
     if (trainer?.id !== ACADEMY_MENTOR_ID) {
       if (["victory", "exhibitionVictory"].includes(conversation.mode)) return "Continue exploring";
@@ -5109,7 +5577,7 @@ export default function AdventureGame({
           trainer?.id === FISHERMAN_WYETH_ID
           && ["fishingLesson", "fishingPractice"].includes(conversation.mode)
         ) {
-          return "Follow Wyeth to the practice rail";
+          return "Follow Wyeth to the sandy cove";
         }
         if (trainer?.townId === "shellshore-village") return "Continue exploring";
         if (trainer?.roleId === "tournament-director") {
@@ -5266,6 +5734,8 @@ export default function AdventureGame({
     pendingSceneTransitionRef.current = null;
     doorwayTransitionRef.current = null;
     setSceneTransition(null);
+    setGuidedWalk(null);
+    setGuidedWalkSample(null);
     setDirty(false);
     profileWriteAuthorizedRef.current = false;
     refreshProfiles();
@@ -5299,8 +5769,9 @@ export default function AdventureGame({
   }
 
   escapeRef.current = () => {
-    if (screen !== "playing" || activeTrainerId || sceneTransition || conversationLeadIn) return;
+    if (screen !== "playing" || activeTrainerId || sceneTransition || guidedWalk || conversationLeadIn) return;
     clearMovement();
+    if (openingFreeRoamLocked && !conversation) return;
     if (confirmation) {
       setConfirmation(null);
     } else if (newsletterInviteOpen) {
@@ -5323,7 +5794,7 @@ export default function AdventureGame({
       if (fishingSession.required) {
         setSaveNotice({
           kind: "info",
-          message: "Wyeth will stay with you until you land this first practice catch. Assisted reel is available if you want an untimed lesson.",
+          message: "Wyeth will stay with you until you make this first practice catch. Gentle guidance slows the animals and widens the scoop area.",
         });
       } else {
         closeFishingSession();
@@ -5349,7 +5820,10 @@ export default function AdventureGame({
       && ["fishingLesson", "fishingPractice"].includes(conversation.mode)
     ) {
       return;
-    } else if (conversation?.mode === "worldIntroduction") {
+    } else if (
+      conversation?.mode === "worldIntroduction"
+      || Boolean(conversation?.openingBeatId)
+    ) {
       return;
     } else if (conversation) {
       closeConversation();
@@ -5445,7 +5919,7 @@ export default function AdventureGame({
   }, [clearMovement]);
 
   useEffect(() => {
-    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || sceneTransition || conversationLeadIn || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !pageVisible) return undefined;
+    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || sceneTransition || guidedWalk || conversationLeadIn || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !pageVisible) return undefined;
     const timer = window.setInterval(() => {
       if (!pageVisibleRef.current) return;
       setGameSave((current) => {
@@ -5460,7 +5934,7 @@ export default function AdventureGame({
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [championshipEndingStage, confirmation, conversationLeadIn, decksOpen, fieldNoteOpen, fieldworkActivity, fishingSession, inventoryOpen, newsletterInviteOpen, pageVisible, pauseOpen, sceneTransition, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
+  }, [championshipEndingStage, confirmation, conversationLeadIn, decksOpen, fieldNoteOpen, fieldworkActivity, fishingSession, guidedWalk, inventoryOpen, newsletterInviteOpen, pageVisible, pauseOpen, sceneTransition, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
 
   useEffect(() => {
     function saveWhenHidden() {
@@ -5677,87 +6151,116 @@ export default function AdventureGame({
         )
       ))
     : sceneCharacterInteractions;
-  const shellshoreQuestView = onboardingProgress.needsWorldIntroduction
+  const completedHomeBeatCount = [
+    ELVERSON_PROLOGUE_BEATS.breakfast,
+    ELVERSON_PROLOGUE_BEATS.permission,
+    ELVERSON_PROLOGUE_BEATS.race,
+  ].filter((beatId) => prologueProgress.completedBeatIds.includes(beatId)).length;
+  const shellshoreQuestView = prologueProgress.needsHomeSequence
     ? {
-        title: "Welcome to Elverson",
-        description: "Listen to Mr. Easterling's aquarium dream and learn how this adventure approaches ocean wildlife.",
-        value: 0,
-        total: 1,
-        label: "A new project is beginning",
+        title: "Your tenth-birthday morning",
+        description: "Share breakfast with Mom, ask Dad's permission, and meet your best friend downstairs before beginning the aquarium adventure.",
+        value: completedHomeBeatCount,
+        total: 3,
+        label: `${completedHomeBeatCount} / 3 family opening beats complete`,
       }
-    : !fishingProgress.hasRod || !fishingProgress.tutorialStarted
+    : prologueProgress.readyForAquariumRace
       ? {
-          title: "Find Fisherman Wyeth",
-          description: "Mr. Easterling asked you to learn how to fish. Find Wyeth on the south fishing platform beside the pier.",
+          title: "Race to the Sea Realm Aquarium",
+          description: "You have permission and your best friend is ready. Head down to the shore to meet Mr. Easterling.",
           value: 0,
           total: 1,
-          label: "Fishing lesson waiting",
+          label: "The aquarium challenge is waiting",
         }
-    : !fishingProgress.tutorialComplete
-      ? {
-          title: "Land one practice catch with Wyeth",
-          description: "Follow Wyeth to the west practice rail. He will stay beside you while you watch the float, set the hook, and reel in your first catch.",
-          value: 0,
-          total: 1,
-          label: "Hands-on fishing tutorial required",
-        }
-    : fishingProgress.heldCount > 0
-      ? {
-          title: "Bring your catch to Mr. Easterling",
-          description: "Return to the aquarium workshop so the care team can assess your catch and prepare the right habitat.",
-          value: fishingProgress.heldCount,
-          total: fishingProgress.heldCount,
-          label: `${fishingProgress.heldCount} ${fishingProgress.heldCount === 1 ? "catch" : "catches"} ready for the aquarium`,
-        }
-    : onboardingProgress.needsStarterSelection
-    ? {
-        title: "Meet Mr. Easterling",
-        description: "Visit the aquarium workshop and choose a starter reef for Elverson's first exhibit.",
-        value: 0,
-        total: 1,
-        label: "Starter choice waiting",
-      }
-    : !onboardingProgress.tutorialComplete
-      ? {
-          title: "Build the first exhibit reef",
-          description: onboardingProgress.readyForPracticeDuel
-            ? "Keep building your economy, establish a Coral Reef habitat, welcome a Filter Feeder, and finish with an Apex predator at 26 VP."
-            : "Follow Mr. Easterling's guided plan in the simulator. Each completed lesson step saves automatically.",
-          value: onboardingProgress.completedCheckpointCount,
-          total: onboardingProgress.checkpointCount,
-          label: `${onboardingProgress.completedCheckpointCount} / ${onboardingProgress.checkpointCount} lesson steps`,
-        }
-      : onboardingProgress.needsBoatSafetyReview
+      : onboardingProgress.needsWorldIntroduction
         ? {
-            title: "Review the aquarium field plan",
-            description: "Read Mr. Easterling's checklist for gathering observations safely along Elverson's shore.",
+            title: "Meet Mr. Easterling",
+            description: "Hear about the new Sea Realm Aquarium, its requested creature set, and what it truly means to become Master of the Sea.",
             value: 0,
             total: 1,
-            label: "Field-plan review waiting",
+            label: "A new project is beginning",
           }
-        : progress < townEncounterIds.length
+        : onboardingProgress.needsStarterSelection
           ? {
-              title: "Meet Elverson's reef keepers",
-              description: "Challenge Elverson's resident reef keepers and learn how each neighbor supports the aquarium project.",
-              value: progress,
-              total: townEncounterIds.length,
-              label: `${progress} / ${townEncounterIds.length} neighborhood challenges complete`,
+              title: "Choose your first SeaRealm deck",
+              description: "Mr. Easterling has prepared three complete ecosystem decks. Choose the one that will begin your journey.",
+              value: 0,
+              total: 1,
+              label: "Starter choice waiting",
             }
-        : fishingProgress.aquariumSpeciesCount < ELVERSON_REEF_CATCHES.length
-          ? {
-              title: "Grow the Elverson aquarium",
-              description: "Face open water at a safe shore edge and press Enter to fish. Discover all ten reef creatures and bring them to Mr. Easterling.",
-              value: fishingProgress.aquariumSpeciesCount,
-              total: ELVERSON_REEF_CATCHES.length,
-              label: `${fishingProgress.aquariumSpeciesCount} / ${ELVERSON_REEF_CATCHES.length} reef species in the aquarium`,
-            }
-          : {
-              title: "Elverson Reef Log complete",
-              description: "All ten reef creatures are represented in the aquarium. Keep fishing for repeat observations or visit your Elverson neighbors.",
-              value: ELVERSON_REEF_CATCHES.length,
-              total: ELVERSON_REEF_CATCHES.length,
-              label: "Complete aquarium collection",
-            };
+          : !onboardingProgress.tutorialComplete
+            ? {
+                title: "Learn how healthy ecosystems work",
+                description: onboardingProgress.readyForPracticeDuel
+                  ? "Keep building your economy, establish a Coral Reef habitat, welcome a Filter Feeder, and finish with an Apex predator at 26 VP."
+                  : "Follow Mr. Easterling's guided SeaRealm lesson. Each completed lesson step saves automatically.",
+                value: onboardingProgress.completedCheckpointCount,
+                total: onboardingProgress.checkpointCount,
+                label: `${onboardingProgress.completedCheckpointCount} / ${onboardingProgress.checkpointCount} lesson steps`,
+              }
+            : prologueProgress.needsRivalDeparture
+              ? {
+                  title: "Begin the friendly race",
+                  description: "Your best friend has one last thing to say before setting out for Pelora City.",
+                  value: 0,
+                  total: 1,
+                  label: "Your rival is ready to depart",
+                }
+              : onboardingProgress.needsBoatSafetyReview
+                ? {
+                    title: "Review the aquarium field plan",
+                    description: "Read Mr. Easterling's checklist for gathering observations safely along Elverson's shore.",
+                    value: 0,
+                    total: 1,
+                    label: "Field-plan review waiting",
+                  }
+                : !fishingProgress.hasHandNet || !fishingProgress.tutorialStarted
+                  ? {
+                      title: "Find Fisherman Wyeth",
+                      description: "Mr. Easterling asked you to learn how to collect responsibly. Find Wyeth on the south platform beside the pier.",
+                      value: 0,
+                      total: 1,
+                      label: "First catching lesson waiting",
+                    }
+                  : !fishingProgress.tutorialComplete
+                    ? {
+                        title: "Land one practice catch with Wyeth",
+                        description: "Follow Wyeth to the sandy practice cove. He will stay beside you through your first required hand-net catch.",
+                        value: 0,
+                        total: 1,
+                        label: "Hands-on catching tutorial required",
+                      }
+                    : fishingProgress.heldCount > 0
+                      ? {
+                          title: "Bring your catch to Mr. Easterling",
+                          description: "Return to the aquarium workshop so the care team can assess your catch and prepare the right habitat.",
+                          value: fishingProgress.heldCount,
+                          total: fishingProgress.heldCount,
+                          label: `${fishingProgress.heldCount} ${fishingProgress.heldCount === 1 ? "catch" : "catches"} ready for the aquarium`,
+                        }
+                      : progress < townEncounterIds.length
+                        ? {
+                            title: "Meet Elverson's reef keepers",
+                            description: "Challenge Elverson's resident reef keepers and learn how each neighbor supports the aquarium project.",
+                            value: progress,
+                            total: townEncounterIds.length,
+                            label: `${progress} / ${townEncounterIds.length} neighborhood challenges complete`,
+                          }
+                        : fishingProgress.aquariumSpeciesCount < ELVERSON_REEF_CATCHES.length
+                          ? {
+                              title: "Grow the Elverson aquarium",
+                              description: "Explore marked shore collection areas, discover all ten local reef creatures, and bring them to Mr. Easterling.",
+                              value: fishingProgress.aquariumSpeciesCount,
+                              total: ELVERSON_REEF_CATCHES.length,
+                              label: `${fishingProgress.aquariumSpeciesCount} / ${ELVERSON_REEF_CATCHES.length} reef species in the aquarium`,
+                            }
+                          : {
+                              title: "Elverson Reef Log complete",
+                              description: "All ten local reef species are represented in the aquarium, and every delivery earned its matching Sea Realm card. The wider Sea Realm requested set continues beyond Elverson.",
+                              value: ELVERSON_REEF_CATCHES.length,
+                              total: ELVERSON_REEF_CATCHES.length,
+                              label: "Elverson reef collection complete",
+                            };
   const ecosystemCompletedSteps = (ecosystemProgress?.observedObservationIds.length ?? 0)
     + (ecosystemProgress?.completedResidentEncounterIds.length ?? 0)
     + (ecosystemProgress?.interpretation.correct ? 1 : 0)
@@ -5871,7 +6374,7 @@ export default function AdventureGame({
   const unopenedPackCount = Object.values(gameSave.inventory.unopenedPacks)
     .reduce((total, quantity) => total + quantity, 0);
   const explorationBlocked = Boolean(
-    pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen,
+    pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || guidedWalk || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen,
   );
   const gameplaySurfaceLocked = Boolean(
     explorationBlocked || sceneTransition || conversationLeadIn,
@@ -5885,19 +6388,17 @@ export default function AdventureGame({
   const sceneTransitionVector = sceneTransition
     ? getAdventureDoorStepVector(sceneTransition.direction)
     : null;
-  const sceneTransitionLabel = sceneTransition
-    ? sceneTransition.type === "guided"
-      ? sceneTransition.interactionId === ELVERSON_FISHING_GUIDED_TRANSITION.interactionId
+  const sceneTransitionLabel = guidedWalk
+    ? "Following Fisherman Wyeth to the sandy practice cove..."
+    : sceneTransition
+      ? sceneTransition.type === "guided"
         ? sceneTransition.phase === "departing"
-          ? "Following Fisherman Wyeth to the practice rail..."
-          : "Wyeth is ready beside the water for your first cast..."
-        : sceneTransition.phase === "departing"
           ? "Walking with Mr. Easterling to the waterfront aquarium..."
           : "Arriving at the Elverson Aquarium workshop..."
       : sceneTransition.phase === "departing"
         ? `Entering ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
         : `Arriving in ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
-    : null;
+      : null;
   const displayedBoatMotion = boatTelemetry.sceneId === sceneId
     ? boatTelemetry
     : {
@@ -5939,7 +6440,7 @@ export default function AdventureGame({
           type="button"
           className={styles.exitLink}
           aria-label="Open pause menu"
-          disabled={Boolean(sceneTransition || conversationLeadIn)}
+          disabled={Boolean(sceneTransition || guidedWalk || conversationLeadIn)}
           onClick={() => {
             clearMovement();
             setPauseOpen(true);
@@ -6018,7 +6519,7 @@ export default function AdventureGame({
                 : conversationLeadIn
                   ? `greeting:${conversationLeadIn.interactionId}`
                   : "steady-guidance"}
-              className={sceneTransition || conversationLeadIn ? styles.sceneTransitionStatus : undefined}
+              className={sceneTransition || guidedWalk || conversationLeadIn ? styles.sceneTransitionStatus : undefined}
             >
               {sceneTransitionLabel ?? conversationLeadInLabel ?? (vehicleMode
                 ? trenchlightExpeditionState?.currentStep?.title ?? "Return to Mission Control for the next expedition decision"
@@ -6078,6 +6579,12 @@ export default function AdventureGame({
                 scene={scene}
               />
             ))}
+            {sceneId === ELVERSON_AQUARIUM_SCENE_ID ? (
+              <AdventureAquariumExhibits
+                model={aquariumExhibitModel}
+                reducedMotion={effectiveReducedMotion}
+              />
+            ) : null}
             {worldCueInteractions.map((candidate) => (
               <AdventureWorldCue
                 key={`world-cue:${candidate.id}`}
@@ -6196,7 +6703,7 @@ export default function AdventureGame({
               ref={worldActionRef}
               type="button"
               className={styles.actionButton}
-              disabled={Boolean(sceneTransition || conversationLeadIn) || !actionInteraction || (
+              disabled={Boolean(sceneTransition || guidedWalk || conversationLeadIn) || !actionInteraction || (
                 actionInteraction.type === "sub-launch"
                 && (
                   !trenchlightExpeditionState?.canLaunch
@@ -6426,7 +6933,7 @@ export default function AdventureGame({
         />
       ) : null}
       {fishingSession ? (
-        <AdventureFishingModal
+        <AdventureHandNetModal
           tutorial={fishingSession.tutorial}
           required={fishingSession.required}
           startWithCast={fishingSession.startWithCast}
