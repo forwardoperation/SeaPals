@@ -8,7 +8,7 @@ const OBJECT_ROOT = "/images/adventure/elverson-objects-v2";
 
 function sprite(name, width, height, anchorX = 0.5, anchorY = 1) {
   return {
-    src: `${OBJECT_ROOT}/${name}.png`,
+    src: `${OBJECT_ROOT}/${name}.webp`,
     width,
     height,
     anchorX,
@@ -74,7 +74,7 @@ export const ELVERSON_LAYERED_SCENE = compileLayeredScene({
   id: "elverson-town-layered-v3",
   width: ELVERSON_TOWN_DIMENSIONS.width,
   height: ELVERSON_TOWN_DIMENSIONS.height,
-  groundPath: "/images/adventure/elverson-ground-v3.png",
+  groundPath: "/images/adventure/elverson-ground-v3.webp",
   terrainRows: TERRAIN_ROWS,
   terrainLegend: {
     g: { walkable: true },

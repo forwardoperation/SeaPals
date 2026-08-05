@@ -77,7 +77,7 @@ const ELVERSON_PORTAL_EXPECTATIONS = Object.freeze([
   Object.freeze({
     id: "interaction-elverson-enter-aquarium",
     targetScene: "academy-lab",
-    interiorSpawn: Object.freeze({ x: 6, y: 7 }),
+    interiorSpawn: Object.freeze({ x: 7, y: 7 }),
     exitId: "interaction-academy-exit",
   }),
 ]);
@@ -107,7 +107,7 @@ function assertWalkablePolyline(sceneId, points, label) {
   }
 }
 
-test("world exposes the 42-by-28 Elverson v3 town and all nine semantic interiors", () => {
+test("world exposes the 42-by-28 Elverson v3 town, nine public interiors, and the upstairs bedroom", () => {
   for (const sceneId of ELVERSON_RELEASE_SCOPE.sceneIds) {
     assert.ok(SCENES[sceneId], `${sceneId} should remain available`);
   }
@@ -115,11 +115,13 @@ test("world exposes the 42-by-28 Elverson v3 town and all nine semantic interior
   assert.deepEqual(ELVERSON_TOWN_DIMENSIONS, { width: 42, height: 28 });
   assert.equal(SCENES.town.width, ELVERSON_TOWN_DIMENSIONS.width);
   assert.equal(SCENES.town.height, ELVERSON_TOWN_DIMENSIONS.height);
-  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v3.png");
+  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v3.webp");
   assert.equal(SCENES.town.layeredObjects.length, 9);
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "central-pier"));
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "wharf-platform"));
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "aquarium-platform"));
+  assert.equal(SCENES["player-bedroom"].width, 15);
+  assert.equal(SCENES["player-bedroom"].height, 10);
   assert.equal(SCENES["player-home"].width, 15);
   assert.equal(SCENES["player-home"].height, 10);
   assert.equal(SCENES["coral-home"].width, 12);
@@ -683,7 +685,7 @@ test("Elverson exposes the v3 town start, route dock, and every semantic safe po
     supplyCompanyExterior: { x: 37.5, y: 16.45 },
     wharfApproach: { x: 14.55, y: 21.45 },
     handNetCove: { x: 15.15, y: 21.65 },
-    aquariumExterior: { x: 24.22, y: 22.2 },
+    aquariumExterior: { x: 25.55, y: 22.2 },
   });
   assert.deepEqual(SCENES.town.spawn, ELVERSON_TOWN_SAFE_POSITIONS.townStart);
   assert.deepEqual(START_STATE, {

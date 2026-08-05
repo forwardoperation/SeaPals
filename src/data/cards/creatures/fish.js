@@ -183,7 +183,7 @@ export const fishCards = [
     subtitle: "Picasso",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/cards/fish/Reef/picasso-triggerfish.png",
+    image: "/images/cards/fish/Reef/picasso-triggerfish.webp",
     sortOrder: 202,
 
     cost: { rp: 2 },

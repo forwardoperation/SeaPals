@@ -86,10 +86,10 @@ test("intersection keeps edge-touching and rounding-adjacent visuals mounted", (
 test("layered objects are culled by full visual bounds rather than their anchor", () => {
   const aquarium = SCENES.town.layeredObjects.find(({ id }) => id === "aquarium-workshop");
   assert.ok(aquarium);
-  assert.ok(aquarium.at.x > 24, "the object's anchor should be outside this test crop");
+  assert.ok(aquarium.at.x > 25, "the object's anchor should be outside this test crop");
   assert.equal(isAdventureLayeredObjectInRenderBounds(
     aquarium,
-    { left: 23, top: 16, right: 24, bottom: 18 },
+    { left: 24.5, top: 16, right: 25, bottom: 18 },
   ), true, "the visible building overhang must keep the object mounted");
   assert.equal(isAdventureLayeredObjectInRenderBounds(
     aquarium,

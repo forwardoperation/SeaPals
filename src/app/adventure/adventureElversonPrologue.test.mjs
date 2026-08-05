@@ -13,6 +13,7 @@ import {
 import {
   ELVERSON_PROLOGUE_BEATS,
   ELVERSON_PROLOGUE_BEAT_IDS,
+  ELVERSON_PROLOGUE_BEDROOM_SCENE_ID,
   ELVERSON_PROLOGUE_CONTENT_VERSION,
   ELVERSON_PROLOGUE_HOME_SCENE_ID,
   beginElversonPrologue,
@@ -42,6 +43,7 @@ test("fresh progress shares the schema contract and begins exactly once", () => 
   assert.equal(progress.complete, false);
   assert.equal(progress.nextBeatId, ELVERSON_PROLOGUE_BEATS.breakfast);
   assert.equal(progress.needsHomeSequence, true);
+  assert.equal(ELVERSON_PROLOGUE_BEDROOM_SCENE_ID, "player-bedroom");
   assert.equal(progress.homeConversation.sceneId, ELVERSON_PROLOGUE_HOME_SCENE_ID);
   assert.equal(progress.homeConversation.trainerId, "player-mom");
 
@@ -114,7 +116,7 @@ test("beats are forward-only and every duplicate callback is idempotent", () => 
   assert.equal(complete.friendVisibleInAquarium, false);
 });
 
-test("progress exposes the home race, aquarium handoff, and rival departure boundaries", () => {
+test("progress exposes the home sequence, dock speech, aquarium handoff, and rival departure boundaries", () => {
   let save = beginElversonPrologue(createInitialAdventureSave("profile-1")).save;
   save = recordElversonPrologueBeat(save, ELVERSON_PROLOGUE_BEATS.breakfast).save;
   assert.equal(getElversonPrologueProgress(save).homeConversation.trainerId, "player-dad");
@@ -124,11 +126,16 @@ test("progress exposes the home race, aquarium handoff, and rival departure boun
 
   const aquariumBound = getElversonPrologueProgress(save);
   assert.equal(aquariumBound.homeConversation, null);
+  assert.equal(aquariumBound.readyForDockSpeech, true);
   assert.equal(aquariumBound.readyForAquariumRace, true);
-  assert.equal(aquariumBound.friendVisibleInAquarium, true);
+  assert.equal(aquariumBound.friendVisibleInAquarium, false);
+
+  save = recordElversonPrologueBeat(save, ELVERSON_PROLOGUE_BEATS.challenge).save;
+  const registrationOpen = getElversonPrologueProgress(save);
+  assert.equal(registrationOpen.readyForDockSpeech, false);
+  assert.equal(registrationOpen.friendVisibleInAquarium, true);
 
   for (const beatId of [
-    ELVERSON_PROLOGUE_BEATS.challenge,
     ELVERSON_PROLOGUE_BEATS.starter,
     ELVERSON_PROLOGUE_BEATS.tutorial,
   ]) {

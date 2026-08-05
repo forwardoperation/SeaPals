@@ -83,22 +83,22 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/fish/Oceanic/silverside-ball-stage-2.png",
   "/images/cards/fish/Oceanic/tripletail.png",
   "/images/cards/fish/Oceanic/yellowtail-amberjack.png",
-  "/images/cards/fish/Reef/picasso-triggerfish.png",
+  "/images/cards/fish/Reef/picasso-triggerfish.webp",
   "/images/cards/fish/Reef/southern-flounder.png",
   "/images/cards/fish/Reef/spanish-hogfish.png",
   "/images/cards/fish/Reef/spectacled-parrotfish.png",
   "/images/cards/invertebrates/Reef/blue-crab.png",
   "/images/cards/invertebrates/Reef/anemone.png",
   "/images/cards/invertebrates/Reef/emerald-crab.png",
-  "/images/cards/invertebrates/Reef/Sea Urchin.png",
+  "/images/cards/invertebrates/Reef/Sea Urchin.webp",
   "/images/cards/invertebrates/Oceanic/blue-sea-dragon.png",
   "/images/cards/invertebrates/Oceanic/market-squid.png",
   "/images/cards/invertebrates/Oceanic/portugese-man-o-war.png",
-  "/images/cards/coral/Reef/brain-coral-base.png",
-  "/images/cards/coral/Reef/brain-coral-stage-1.png",
-  "/images/cards/coral/Reef/brain-coral-stage-2.png",
+  "/images/cards/coral/Reef/brain-coral-base.webp",
+  "/images/cards/coral/Reef/brain-coral-stage-1.webp",
+  "/images/cards/coral/Reef/brain-coral-stage-2.webp",
   "/images/cards/coral/Reef/clubfinger-base.png",
-  "/images/cards/coral/Reef/clubfinger-stage-1.png",
+  "/images/cards/coral/Reef/clubfinger-stage-1.webp",
   "/images/cards/coral/Reef/elkhorn-base.png",
   "/images/cards/coral/Reef/elkhorn-stage-1.png",
   "/images/cards/coral/Reef/elkhorn-stage-2.png",
@@ -106,11 +106,11 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/coral/Reef/boulderstar-base.png",
   "/images/cards/coral/Reef/boulderstar-stage-1.png",
   "/images/cards/coral/Reef/bouldersta-stage-2.png",
-  "/images/cards/coral/Reef/mustard-coral-base.png",
+  "/images/cards/coral/Reef/mustard-coral-base.webp",
   "/images/cards/predator/reef/great-barracuda.png",
   "/images/cards/predator/reef/goliath-grouper.png",
   "/images/cards/predator/reef/moray-eel.png",
-  "/images/cards/predator/reef/reef-shark.png",
+  "/images/cards/predator/reef/reef-shark.webp",
   "/images/cards/predator/reef/spinner-dolphins.png",
   "/images/cards/predator/oceanic/blue-shark.png",
   "/images/cards/predator/oceanic/galapagos-shark.png",
@@ -170,7 +170,7 @@ const AVAILABLE_IMAGE_PATHS = new Set([
   "/images/cards/predator/Deep/goblin-shark.png",
   "/images/cards/predator/Deep/gulper-eel.png",
   "/images/cards/habitats/abyss.png",
-  "/images/cards/habitats/coral-reef.png",
+  "/images/cards/habitats/coral-reef.webp",
   "/images/cards/habitats/open-ocean.png",
 ]);
 
@@ -231,15 +231,15 @@ function compactCard(card) {
 
 function galleryCard(card) {
   const src = IMAGE_PATH_OVERRIDES[card.id] ?? card.image ?? null;
-  const hasPngImage = Boolean(
-    src?.toLowerCase().endsWith(".png") && AVAILABLE_IMAGE_PATHS.has(src)
+  const hasSupportedImage = Boolean(
+    /\.(?:png|webp)$/i.test(src ?? "") && AVAILABLE_IMAGE_PATHS.has(src)
   );
 
   return {
     cardId: card.id,
     name: card.name,
     src,
-    hasImage: hasPngImage,
+    hasImage: hasSupportedImage,
     card: compactCard(card),
   };
 }

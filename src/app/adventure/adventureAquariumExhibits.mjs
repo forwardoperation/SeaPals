@@ -4,7 +4,7 @@ import {
 } from "./adventureFishing.mjs";
 
 export const ELVERSON_AQUARIUM_SCENE_ID = "academy-lab";
-export const ELVERSON_REEF_CREATURE_ATLAS_PATH = "/images/adventure/elverson-reef-creature-atlas-v1.png";
+export const ELVERSON_REEF_CREATURE_ATLAS_PATH = "/images/adventure/elverson-reef-creature-atlas-v1.webp";
 
 const ATLAS_COLUMNS = 5;
 const ATLAS_ROWS = 2;

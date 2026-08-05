@@ -6,7 +6,7 @@ const EMPTY_ASSET_PATHS = Object.freeze([]);
  * invisible to JavaScript preloading.
  */
 export const ADVENTURE_SCENE_THEME_GROUND_ASSETS = Object.freeze({
-  "academy-lab": "/images/adventure/shellshore-academy.png",
+  "academy-lab": "/images/adventure/shellshore-academy.webp",
   "coral-cottage": "/images/adventure/coral-cottage.png",
   "deep-sea-den": "/images/adventure/deepwater-den.png",
   "shellshore-sunpatch-route": "/images/adventure/shellshore-sunpatch-route.png",
@@ -17,18 +17,18 @@ export const ADVENTURE_SCENE_THEME_GROUND_ASSETS = Object.freeze({
 
 /** Maps rendered sprite-profile IDs to the bitmap actually used by CSS. */
 export const ADVENTURE_CHARACTER_SPRITE_ASSETS = Object.freeze({
-  player: "/images/adventure/player-sprites-512-v2.png",
-  marina: "/images/adventure/marina-sprites-512-v2.png",
-  dorian: "/images/adventure/dorian-sprites-512-v2.png",
-  "fisherman-wyeth": "/images/adventure/fisherman-wyeth-sprites-512-v2.png",
-  "teacher-caroline": "/images/adventure/teacher-caroline-sprites-512-v2.png",
-  ivy: "/images/adventure/ivy-sprites-512-v2.png",
-  "explorer-jordan": "/images/adventure/explorer-jordan-sprites-512-v2.png",
-  "marine-biologist-jonah": "/images/adventure/marine-biologist-jonah-sprites-512-v2.png",
-  "programmer-harlan": "/images/adventure/programmer-harlan-sprites.png",
-  "town-elder": "/images/adventure/town-elder-sprites.png",
-  "town-adult": "/images/adventure/town-adult-sprites-512-v2.png",
-  "academy-mentor": "/images/adventure/mr-easterling-sprites-627-v3.png",
+  player: "/images/adventure/player-sprites-512-v2.webp",
+  marina: "/images/adventure/marina-sprites-512-v2.webp",
+  dorian: "/images/adventure/dorian-sprites-512-v2.webp",
+  "fisherman-wyeth": "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
+  "teacher-caroline": "/images/adventure/teacher-caroline-sprites-512-v2.webp",
+  ivy: "/images/adventure/ivy-sprites-512-v2.webp",
+  "explorer-jordan": "/images/adventure/explorer-jordan-sprites-512-v2.webp",
+  "marine-biologist-jonah": "/images/adventure/marine-biologist-jonah-sprites-512-v2.webp",
+  "programmer-harlan": "/images/adventure/programmer-harlan-sprites.webp",
+  "town-elder": "/images/adventure/town-elder-sprites.webp",
+  "town-adult": "/images/adventure/town-adult-sprites-512-v2.webp",
+  "academy-mentor": "/images/adventure/mr-easterling-sprites-627-v3.webp",
   "current-guide": "/images/adventure/player-sprites.png",
   "current-deckhand": "/images/adventure/player-sprites.png",
   "current-analyst": "/images/adventure/marina-sprites.png",
@@ -54,7 +54,19 @@ export const ADVENTURE_CHARACTER_SPRITE_ASSETS = Object.freeze({
 
 /** Characters that can be staged by progression rather than scene authorship. */
 export const ADVENTURE_SCENE_TRANSIENT_CHARACTER_PROFILES = Object.freeze({
-  town: Object.freeze(["academy-mentor"]),
+  town: Object.freeze([
+    "academy-mentor",
+    "teacher-caroline",
+    "town-adult",
+    "explorer-jordan",
+    "marina",
+    "dorian",
+    "ivy",
+    "marine-biologist-jonah",
+    "programmer-harlan",
+    "fisherman-wyeth",
+    "player",
+  ]),
 });
 
 function isAssetPath(value) {

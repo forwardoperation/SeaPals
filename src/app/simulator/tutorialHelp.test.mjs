@@ -1655,6 +1655,25 @@ test("Rounds 5 and 6 teach Creature Schools, School Density, and Filter Feeders"
   assert.equal(filterFeeder.targetCardId, "whale-shark");
   assert.match(filterFeeder.message, /Whale Shark.*180.*Krill Bloom.*150.*White Grunt.*30.*Coral Reef.*Habitat/i);
   assert.match(filterFeeder.action, /Whale Shark.*Play Card.*Ocean creature.*open water automatically/i);
+
+  const finalRoundMilestone = getSimulatorTutorialHelp(null, {
+    ...ACADEMY_STATE,
+    round: 6,
+    playerVp: 20,
+    scriptedFinishRoute: academyCurriculumRoute({
+      round: 6,
+      activeConditionId: "krill-ball",
+      cards: {
+        ...established,
+        creatureSchool: { inFoundationDeck: false, inHand: false, inPlay: true },
+        filterFeeder: { inPalsDeck: false, inHand: false, inPlay: true },
+      },
+    }),
+  });
+  assert.equal(finalRoundMilestone.target, "turn-button");
+  assert.match(finalRoundMilestone.title, /20 \/ 26 VP.*One Final Round Remains/i);
+  assert.match(finalRoundMilestone.message, /Whale Shark.*20 VP milestone.*not the end.*one final round.*Deep Sea Fishing.*Hammerhead.*26 VP/i);
+  assert.match(finalRoundMilestone.action, /End Turn.*final round.*Deep Sea Fishing.*Hammerhead.*Apex slot/i);
 });
 
 test("Round 7 uses a Support search and finishes the 26 VP curriculum with an Apex", () => {

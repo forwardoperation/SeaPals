@@ -10,8 +10,9 @@ const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), 
 test("the active adventure presentation begins with Elverson's aquarium project", () => {
   assert.match(component, /Begin in coastal Elverson, where Mr\. Easterling is creating a new aquarium exhibit/);
   assert.match(component, /Your tenth-birthday morning/);
-  assert.match(component, /Share breakfast with Mom, ask Dad's permission, and meet your best friend downstairs/);
-  assert.match(component, /Race to the Sea Realm Aquarium/);
+  assert.match(component, /Head downstairs, greet Mom, check with Dad, and hear your best friend's news about the waterfront kickoff/);
+  assert.match(component, /Join the kickoff at the dock/);
+  assert.match(component, /approach the central dock to hear Mr\. Easterling open the Sea Creature Challenge/);
   assert.match(component, /Mr\. Easterling&apos;s three starter reefs/);
   assert.match(component, /Mr\. Easterling's Live Lesson/);
   assert.match(page, /Explore coastal Elverson and help Mr\. Easterling create a new community aquarium exhibit/);
@@ -58,30 +59,31 @@ test("Elverson uses a close-follow camera and compact human-toned overworld spri
   assert.match(styles, /\.map\s*\{[\s\S]*?aspect-ratio:\s*16\s*\/\s*9/);
   assert.match(styles, /\.mapWorld\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?display:\s*grid/);
   assert.match(styles, /\.spriteArtwork\s*\{[\s\S]*?width:\s*72%;[\s\S]*?height:\s*103%/);
-  assert.match(styles, /\.town-elderSpriteArtwork\s*\{\s*background-image:\s*url\("\/images\/adventure\/town-elder-sprites\.png"\);\s*\}/);
+  assert.match(styles, /\.town-elderSpriteArtwork\s*\{\s*background-image:\s*url\("\/images\/adventure\/town-elder-sprites\.webp"\);\s*\}/);
   assert.doesNotMatch(styles, /hue-rotate\(/);
 });
 
-test("Elverson overworld sprites use compact versioned sheets while portraits stay full resolution", () => {
-  for (const spriteName of [
-    "player",
-    "marina",
-    "dorian",
-    "fisherman-wyeth",
-    "teacher-caroline",
-    "ivy",
-    "explorer-jordan",
-    "marine-biologist-jonah",
-    "town-adult",
-  ]) {
+test("Elverson overworld sprites and dialogue portraits reuse compact WebP sheets", () => {
+  const spriteSheets = {
+    player: "player-sprites-512-v2.webp",
+    marina: "marina-sprites-512-v2.webp",
+    dorian: "dorian-sprites-512-v2.webp",
+    "fisherman-wyeth": "fisherman-wyeth-sprites-512-v2.webp",
+    "teacher-caroline": "teacher-caroline-sprites-512-v2.webp",
+    ivy: "ivy-sprites-512-v2.webp",
+    "explorer-jordan": "explorer-jordan-sprites-512-v2.webp",
+    "marine-biologist-jonah": "marine-biologist-jonah-sprites-512-v2.webp",
+    "programmer-harlan": "programmer-harlan-sprites.webp",
+    "town-elder": "town-elder-sprites.webp",
+    "town-adult": "town-adult-sprites-512-v2.webp",
+  };
+
+  for (const [spriteName, sheetName] of Object.entries(spriteSheets)) {
     assert.match(
       styles,
-      new RegExp(`\\.${spriteName}SpriteArtwork[^}]*background-image:\\s*url\\("/images/adventure/${spriteName}-sprites-512-v2\\.png"\\)`),
+      new RegExp(`\\.${spriteName}SpriteArtwork[^}]*background-image:\\s*url\\("/images/adventure/${sheetName.replace(".", "\\.")}"\\)`),
     );
-    assert.match(
-      styles,
-      new RegExp(`\\.${spriteName}SpriteArtwork\\.spritePortrait[^}]*background-image:\\s*url\\("/images/adventure/${spriteName}-sprites\\.png"\\)`),
-    );
+    assert.doesNotMatch(styles, new RegExp(`\\.${spriteName}SpriteArtwork\\.spritePortrait[^}]*background-image:`));
   }
 });
 
@@ -94,11 +96,11 @@ test("the tutorial interface consistently identifies Mr. Easterling as the guide
 });
 
 test("Mr. Easterling uses his identity-based overworld sheet and dedicated portrait", () => {
-  assert.match(styles, /\.academy-mentorSpriteArtwork[\s\S]*?mr-easterling-sprites-627-v3\.png/);
-  assert.match(styles, /\.mrEasterlingPortraitArtwork[\s\S]*?mr-easterling-portrait-v2\.png/);
+  assert.match(styles, /\.academy-mentorSpriteArtwork[\s\S]*?mr-easterling-sprites-627-v3\.webp/);
+  assert.match(styles, /\.mrEasterlingPortraitArtwork[\s\S]*?mr-easterling-portrait-v2\.webp/);
   assert.match(component, /function CharacterPortrait[\s\S]*?character === ACADEMY_MENTOR_ID[\s\S]*?mrEasterlingPortraitArtwork/);
-  assert.match(component, /portraitSrc: "\/images\/adventure\/mr-easterling-portrait-v2\.png"/);
+  assert.match(component, /portraitSrc: "\/images\/adventure\/mr-easterling-portrait-v2\.webp"/);
   assert.match(simulator, /backgroundSize: "contain"/);
-  assert.match(simulator, /mr-easterling-portrait-v2\.png/);
+  assert.match(simulator, /mr-easterling-portrait-v2\.webp/);
   assert.doesNotMatch(styles, /academy-mentor-sprites\.png/);
 });

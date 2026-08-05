@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   ELVERSON_PROLOGUE_BEATS,
+  ELVERSON_PROLOGUE_BEDROOM_SCENE_ID,
   ELVERSON_PROLOGUE_HOME_SCENE_ID,
   getElversonPrologueProgress,
   recordElversonPrologueBeat,
@@ -12,24 +13,16 @@ import {
   getOnboardingProgress,
   recordWorldIntroduction,
 } from "./adventureOnboarding.mjs";
+import {
+  getAdventureScene,
+  resolveAdventureNpc,
+} from "./adventureContent.mjs";
 import { createNewAdventureSession } from "./adventureSession.mjs";
 
 const component = readFileSync(
   new URL("./AdventureGame.jsx", import.meta.url),
   "utf8",
 ).replaceAll("\r\n", "\n");
-const content = readFileSync(
-  new URL("./adventureContent.mjs", import.meta.url),
-  "utf8",
-).replaceAll("\r\n", "\n");
-
-function sourceBetween(startMarker, endMarker) {
-  const start = component.indexOf(startMarker);
-  assert.notEqual(start, -1, `Missing source marker: ${startMarker}`);
-  const end = component.indexOf(endMarker, start + startMarker.length);
-  assert.notEqual(end, -1, `Missing source marker: ${endMarker}`);
-  return component.slice(start, end);
-}
 
 function persisted(save) {
   return JSON.parse(JSON.stringify(save));
@@ -41,9 +34,9 @@ function recordPersistedBeat(save, beatId) {
   return persisted(result.save);
 }
 
-test("a fresh profile persists the ordered birthday-home sequence before the aquarium challenge", () => {
+test("a fresh profile starts upstairs and persists the ordered home sequence before the dock kickoff", () => {
   let save = persisted(createNewAdventureSession("profile-1"));
-  assert.equal(save.world.sceneId, ELVERSON_PROLOGUE_HOME_SCENE_ID);
+  assert.equal(save.world.sceneId, ELVERSON_PROLOGUE_BEDROOM_SCENE_ID);
 
   const expectedHomeBeats = [
     [ELVERSON_PROLOGUE_BEATS.breakfast, "player-mom"],
@@ -59,10 +52,10 @@ test("a fresh profile persists the ordered birthday-home sequence before the aqu
     save = recordPersistedBeat(save, beatId);
   }
 
-  const raceReady = getElversonPrologueProgress(save);
-  assert.equal(raceReady.nextBeatId, ELVERSON_PROLOGUE_BEATS.challenge);
-  assert.equal(raceReady.readyForAquariumRace, true);
-  assert.equal(raceReady.friendVisibleInAquarium, true);
+  const kickoffReady = getElversonPrologueProgress(save);
+  assert.equal(kickoffReady.nextBeatId, ELVERSON_PROLOGUE_BEATS.challenge);
+  assert.equal(kickoffReady.readyForDockSpeech, true);
+  assert.equal(kickoffReady.friendVisibleInAquarium, false);
 
   const introduced = recordWorldIntroduction(save);
   assert.equal(introduced.applied, true);
@@ -75,138 +68,73 @@ test("a fresh profile persists the ordered birthday-home sequence before the aqu
   assert.equal(getOnboardingProgress(save).worldIntroductionComplete, true);
 });
 
-test("the persisted home beats automatically chain into the birthday race and exterior challenge", () => {
-  const homeOpening = sourceBetween(
-    "  useEffect(() => {\n    const homeConversation = prologueProgress?.homeConversation;",
-    "  useEffect(() => {\n    const freshOpeningReady = prologueProgress?.readyForAquariumRace;",
-  );
-  assert.match(homeOpening, /sceneId !== ELVERSON_PROLOGUE_HOME_SCENE_ID/);
-  assert.match(homeOpening, /clearMovement\(\);/);
-  assert.match(
-    homeOpening,
-    /setConversation\(\{\s*\.\.\.homeConversation,\s*openingBeatId: prologueProgress\.nextBeatId,\s*index: 0,/,
-  );
-
-  const homeTransition = sourceBetween(
-    "const ELVERSON_HOME_GUIDED_TRANSITION",
-    "const ELVERSON_OPENING_MENTOR_INTERACTION",
-  );
-  assert.match(homeTransition, /interactionId: "guided-birthday-race-to-aquarium"/);
-  assert.match(homeTransition, /targetScene: "town"/);
-  assert.match(homeTransition, /spawn: ELVERSON_TOWN_SAFE_POSITIONS\.aquariumExterior/);
-
-  const automaticOpening = sourceBetween(
-    "  useEffect(() => {\n    const freshOpeningReady = prologueProgress?.readyForAquariumRace;",
-    "  useEffect(() => {\n    if (\n      screen !== \"playing\"\n      || !gameSave\n      || sceneId !== ELVERSON_PROLOGUE_AQUARIUM_SCENE_ID",
-  );
-  assert.match(automaticOpening, /const legacyIntroductionReady = prologueProgress\?\.legacySkipped/);
-  assert.match(automaticOpening, /clearMovement\(\);/);
-  assert.equal(automaticOpening.match(/mode: "worldIntroduction"/g)?.length, 1);
-  assert.match(
-    automaticOpening,
-    /if \(freshOpeningReady && sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID\) \{[\s\S]*requestSceneTransition\(\s*ELVERSON_HOME_GUIDED_TRANSITION,\s*saveRef\.current \?\? gameSave,\s*\{ afterArrivalConversation: worldIntroduction \},/,
-  );
-  assert.match(automaticOpening, /if \(sceneId === "town"\) setConversation\(worldIntroduction\);/);
+test("the opening presentation fades from the player's bedroom into Mom's face-to-face greeting", () => {
+  assert.match(component, /setOpeningPrelude\("narration"\)/);
+  assert.match(component, /Is it morning yet\?/);
+  assert.match(component, /I feel like a great adventure awaits me this morning/);
+  assert.match(component, /openingPrelude === "narration"[\s\S]*setOpeningPrelude\(\(current\) => current === "narration" \? "revealing" : null\)/);
+  assert.match(component, /sceneId !== ELVERSON_PROLOGUE_HOME_SCENE_ID[\s\S]*nextBeatId !== ELVERSON_PROLOGUE_BEATS\.breakfast/);
+  assert.match(component, /setMomGreetingStage\("calling"\)/);
+  assert.match(component, /setMomGreetingStage\("approaching"\)/);
+  assert.match(component, /ELVERSON_MOM_GREETING_POSITION/);
+  assert.match(component, /facing: getAdventureFacingToward\([\s\S]*playerPosition,[\s\S]*ELVERSON_MOM_GREETING_POSITION/);
+  assert.match(component, /setGameSave\(greetedSave\)/);
+  assert.match(component, />Good morning, dear!</);
 });
 
-test("accepting the challenge persists its beat before opening the authored aquarium interior intro", () => {
-  const guidedTransition = sourceBetween(
-    "const ELVERSON_AQUARIUM_GUIDED_TRANSITION",
-    "const ELVERSON_HOME_GUIDED_TRANSITION",
-  );
-  assert.match(guidedTransition, /SCENES\.town\.interactions\.find/);
-  assert.match(guidedTransition, /id === "interaction-elverson-enter-aquarium"/);
-  assert.match(guidedTransition, /type: "guided"/);
-  assert.match(guidedTransition, /targetScene: entrance\.targetScene/);
-  assert.match(guidedTransition, /spawn: entrance\.spawn/);
-
-  const completion = sourceBetween(
-    '    if (conversation.mode === "worldIntroduction") {',
-    '    if (conversation.mode === "intro") {',
-  );
-  assert.match(completion, /const introduced = recordWorldIntroduction\(current\);/);
-  assert.match(
-    completion,
-    /recordElversonPrologueBeat\(\s*introduced\.save,\s*ELVERSON_PROLOGUE_BEATS\.challenge,/,
-  );
-  assert.match(
-    completion,
-    /if \(introduced\.applied \|\| opening\.applied\) \{[\s\S]*commitAdventureMutation\(\s*opening\.save,\s*"elverson-aquarium-challenge-accepted"/,
-  );
-  assert.match(
-    completion,
-    /requestSceneTransition\(\s*ELVERSON_AQUARIUM_GUIDED_TRANSITION,\s*opening\.save,\s*\{[\s\S]*afterArrivalConversation:[\s\S]*interactionId: ACADEMY_MENTOR_INTERACTION_ID,[\s\S]*mode: "intro"/,
-  );
-
-  const arrival = sourceBetween(
-    "      const pending = pendingSceneTransitionRef.current;\n      pendingSceneTransitionRef.current = null;",
-    "  useEffect(() => {\n    if (!conversationLeadIn)",
-  );
-  assert.match(arrival, /if \(pending\?\.afterArrivalConversation\)/);
-  assert.match(
-    arrival,
-    /setConversationLeadIn\(\{\s*\.\.\.pending\.afterArrivalConversation,\s*\.\.\.origin,/,
-  );
+test("the dock kickoff stages the town cast, triggers by proximity, and restores free exploration after a black fade", () => {
+  assert.match(component, /const dockSpeechPending = Boolean\([\s\S]*prologueProgress\.readyForDockSpeech/);
+  assert.match(component, /return sceneId === "town" \? \[\.\.\.ELVERSON_DOCK_SPEECH_INTERACTIONS\] : \[\]/);
+  assert.match(component, /const bestFriendLeftHome = Boolean\([\s\S]*ELVERSON_PROLOGUE_BEATS\.race/);
+  assert.match(component, /bestFriendLeftHome[\s\S]*sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID[\s\S]*npcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID/);
+  assert.match(component, /dockSpeechPending && \["trainer", "npc"\]\.includes\(candidate\?\.type\)/);
+  assert.match(component, /const candidateNpcId = candidate\?\.trainerId \?\? candidate\?\.npcId;[\s\S]*bestFriendLeftHome[\s\S]*candidateNpcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID/);
+  assert.match(component, /isElversonDockSpeechTriggerPosition\(position\)/);
+  assert.match(component, /position: \{ \.\.\.ELVERSON_DOCK_SPEECH_PLAYER_POSITION \}[\s\S]*facing: "down"/);
+  assert.match(component, /interactionId: ELVERSON_DOCK_SPEECH_INTERACTION_ID[\s\S]*mode: "worldIntroduction"[\s\S]*dockSpeech: true/);
+  assert.match(component, /pendingDockSpeechSaveRef\.current = opening\.save[\s\S]*setDockCutscenePhase\("covering"\)/);
+  assert.match(component, /position: \{ \.\.\.ELVERSON_DOCK_SPEECH_RESTORE_POSITION \}[\s\S]*commitAdventureMutation\([\s\S]*"elverson-dock-speech-complete"[\s\S]*setDockCutscenePhase\("revealing"\)/);
 });
 
-test("the exterior mentor and aquarium friend are transient story-stage actors", () => {
-  const stagedActors = sourceBetween(
-    "const ELVERSON_OPENING_MENTOR_INTERACTION_ID",
-    "const ELVERSON_FISHING_TUTORIAL_SESSION",
+test("Mr. Easterling's speech advertises aquarium registration, then registration opens starter selection", () => {
+  const mentor = resolveAdventureNpc("academy-mentor");
+  const speech = mentor.conversation.lines.worldIntroduction;
+  const registration = mentor.conversation.lines.registration;
+  assert.ok(speech.some((line) => /Sea Creature Challenge/i.test(line)));
+  assert.equal(
+    speech.at(-1),
+    "For anyone who wants to register for the Sea Creature Challenge, come see me in my aquarium!",
   );
-  assert.match(stagedActors, /id: ELVERSON_OPENING_MENTOR_INTERACTION_ID/);
-  assert.match(stagedActors, /npcId: ACADEMY_MENTOR_ID/);
-  assert.match(stagedActors, /x: aquariumExit\.spawn\.x \+ 1/);
-  assert.match(stagedActors, /const ELVERSON_RIVAL_AQUARIUM_INTERACTION/);
-  assert.match(stagedActors, /id: ELVERSON_RIVAL_DEPARTURE_CONVERSATION\.interactionId/);
-  assert.match(stagedActors, /npcId: ELVERSON_PROLOGUE_BEST_FRIEND_ID/);
+  assert.equal(
+    registration[0],
+    "Oh, hello, adventurer! Have you come to register for the Sea Creature Challenge?",
+  );
+  assert.match(component, /if \(conversation\.mode === "registration"\) \{[\s\S]*mode: "starterPresentation"/);
+  assert.match(component, /if \(conversation\.mode === "starterPresentation"\) \{[\s\S]*openStarterSelection\(\)/);
 
-  const sceneActors = sourceBetween(
-    "  const worldIntroductionConversationActive",
-    "  const anchoredActorStates = useMemo(",
+  const town = getAdventureScene("town").world;
+  const aquariumEntrance = town.interactions.find(
+    ({ id }) => id === "interaction-elverson-enter-aquarium",
   );
-  assert.match(sceneActors, /const openingMentorReady = prologueProgress\?\.legacySkipped/);
-  assert.match(sceneActors, /const stageOpeningMentor = sceneId === "town"/);
-  assert.match(sceneActors, /if \(stageOpeningMentor\) interactions\.push\(ELVERSON_OPENING_MENTOR_INTERACTION\);/);
-  assert.match(
-    sceneActors,
-    /sceneId === ELVERSON_PROLOGUE_AQUARIUM_SCENE_ID[\s\S]*prologueProgress\?\.friendVisibleInAquarium[\s\S]*interactions\.push\(ELVERSON_RIVAL_AQUARIUM_INTERACTION\);/,
+  const aquarium = getAdventureScene("academy-lab").world;
+  const mentorInteraction = aquarium.interactions.find(
+    ({ id }) => id === "interaction-academy-mentor",
   );
-
-  assert.doesNotMatch(
-    content,
-    /interaction-elverson-opening-mentor/,
-    "the exterior mentor must not become a permanent town resident or collision",
-  );
-  assert.doesNotMatch(
-    content,
-    /interaction-elverson-rival-aquarium/,
-    "the best friend's aquarium appearance must remain story-stage controlled",
-  );
+  assert.deepEqual(aquariumEntrance.spawn, { x: mentorInteraction.at.x, y: 7 });
+  assert.equal(aquariumEntrance.facing, "up");
+  assert.deepEqual(aquarium.spawn, aquariumEntrance.spawn);
+  assert.equal(aquarium.startFacing, "up");
 });
 
-test("Escape and movement cannot bypass any required opening conversation", () => {
-  const movementLock = sourceBetween(
-    "  const openingFreeRoamLocked = Boolean(",
-    "  movementPausedRef.current = movementPaused;",
+test("free exploration is available before the speech while required conversations and transitions remain protected", () => {
+  const movementLock = component.slice(
+    component.indexOf("  const openingFreeRoamLocked = Boolean("),
+    component.indexOf("  movementPausedRef.current = movementPaused;"),
   );
-  assert.match(movementLock, /!prologueProgress\.legacySkipped/);
-  assert.match(movementLock, /!prologueProgress\.complete/);
-  assert.match(movementLock, /prologueProgress\.needsHomeSequence/);
-  assert.match(movementLock, /prologueProgress\.readyForAquariumRace/);
   assert.match(movementLock, /prologueProgress\.needsRivalDeparture/);
-  assert.match(movementLock, /const movementPaused = screen !== "playing"\s*\|\| openingFreeRoamLocked/);
-
-  const escapeHandler = sourceBetween(
-    "  escapeRef.current = () => {",
-    "  useEffect(() => {\n    function onKeyDown",
-  );
-  assert.match(
-    escapeHandler,
-    /conversation\?\.mode === "worldIntroduction"\s*\|\| Boolean\(conversation\?\.openingBeatId\)[\s\S]*return;/,
-  );
-  assert.match(
-    escapeHandler,
-    /else if \(conversation\) \{\s*closeConversation\(\);/,
-  );
+  assert.doesNotMatch(movementLock, /needsHomeSequence/);
+  assert.doesNotMatch(movementLock, /readyForDockSpeech/);
+  assert.match(component, /doorway\?\.interactionId === "interaction-player-home-exit"[\s\S]*needsHomeSequence/);
+  assert.match(component, /if \(openingPrelude \|\| momGreetingStage \|\| dockCutscenePhase\) return;/);
+  assert.match(component, /conversation\?\.mode === "worldIntroduction"[\s\S]*Boolean\(conversation\?\.openingBeatId\)[\s\S]*return;/);
 });

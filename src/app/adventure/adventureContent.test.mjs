@@ -145,6 +145,7 @@ test("Elverson launches from its authored town while dormant later-world scenes 
   const runtimeScenes = getRuntimeAdventureScenes();
   assert.deepEqual(runtimeScenes.map((scene) => scene.id), [
     "town",
+    "player-bedroom",
     "player-home",
     "coral-home",
     "deep-home",
@@ -1042,9 +1043,10 @@ test("Reading a Reef is a complete evidence-first Field Note with science source
   assert.match(fieldNote.summary, /different observations.*evidence before naming a cause.*instant cure/i);
 });
 
-test("Elverson's nine interiors define validated art-aligned furniture collision rectangles", () => {
+test("Elverson's public interiors and upstairs bedroom define validated art-aligned furniture collision rectangles", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   const expectedRectangleCounts = new Map([
+    ["player-bedroom", 6],
     ["player-home", 6],
     ["coral-home", 5],
     ["deep-home", 4],
@@ -1075,7 +1077,7 @@ test("Elverson v3 layers its portal buildings while streets and waterfront route
   const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
   assert.equal(town.world.tiles.length, 28);
   assert.ok(town.world.tiles.every((row) => row.length === 42));
-  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v3.png");
+  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v3.webp");
   assert.deepEqual(
     town.world.walkableRegions.map(({ id }) => id),
     [
@@ -1140,7 +1142,7 @@ test("Elverson v3 layers its portal buildings while streets and waterfront route
     { x: 20.5, y: 10.5 },
     { x: 20.5, y: 16.8 },
     { x: 20.5, y: 21.75 },
-    { x: 24.22, y: 22.2 },
+    { x: 25.55, y: 22.2 },
   ]) {
     assert.equal(colliderContains(clearRoutePosition), false, "the birthday route must stay clear");
   }
@@ -1148,7 +1150,7 @@ test("Elverson v3 layers its portal buildings while streets and waterfront route
   const aquariumExit = getRuntimeAdventureScenes()
     .find((scene) => scene.id === "academy-lab")
     .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
-  assert.deepEqual(aquariumExit.spawn, { x: 24.22, y: 22.2 });
+  assert.deepEqual(aquariumExit.spawn, { x: 25.55, y: 22.2 });
   assert.equal(aquariumExit.doorwayHalfWidth, 0.5);
 });
 
@@ -1213,9 +1215,9 @@ test("all nine Elverson town doors have matching two-way interior portals", () =
     {
       entryId: "interaction-elverson-enter-aquarium",
       targetScene: "academy-lab",
-      interiorSpawn: { x: 6, y: 7 },
+      interiorSpawn: { x: 7, y: 7 },
       exitId: "interaction-academy-exit",
-      exteriorSpawn: { x: 24.22, y: 22.2 },
+      exteriorSpawn: { x: 25.55, y: 22.2 },
     },
   ];
   const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
@@ -1332,9 +1334,9 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   }
 
   const aquariumDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-aquarium");
-  assert.deepEqual(aquariumDoor.at, { x: 24.22, y: 21.35 });
+  assert.deepEqual(aquariumDoor.at, { x: 25.55, y: 21.35 });
   assert.equal(aquariumDoor.targetSceneContent.id, "academy-lab");
-  assert.deepEqual(aquariumDoor.spawn, { x: 6, y: 7 });
+  assert.deepEqual(aquariumDoor.spawn, { x: 7, y: 7 });
   const supplyDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-supply-company");
   assert.deepEqual(supplyDoor.at, { x: 37.5, y: 15.5 });
   assert.equal(supplyDoor.targetSceneContent.id, "elverson-supply-company");
@@ -1353,6 +1355,11 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   assert.match(
     worldIntroduction.join(" "),
     /misplace my notes.*never forget a sea creature.*food, shelter, habitat, neighbors.*SeaRealm card game/i,
+  );
+  assert.match(worldIntroduction.at(-1), /register.*Sea Creature Challenge.*aquarium/i);
+  assert.match(
+    mentorInteraction.npc.conversation.lines.registration.join(" "),
+    /hello, adventurer.*register for the Sea Creature Challenge/i,
   );
   assert.match(mentorInteraction.npc.conversation.lines.intro.join(" "), /Sea Realm Aquarium.*ecosystem room/i);
   assert.match(mentorInteraction.npc.conversation.lines.starterPresentation.join(" "), /aquarium lesson/i);
@@ -1578,7 +1585,7 @@ test("content validation protects layered object identity, sprite, base, and dep
     /\.kind must equal object/,
     /\.archetype must be non-empty/,
     /\.at requires finite x and y coordinates/,
-    /sprite\.src must reference a PNG/,
+    /sprite\.src must reference a PNG or WebP/,
     /sprite\.width must be a positive finite number/,
     /sprite\.anchorX must stay between 0 and 1/,
     /\.scale must be a positive finite number/,
@@ -1704,7 +1711,7 @@ test("content validation protects Brackwater art, evidence, science-source, and 
 
   const result = validateAdventureContent(invalid);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => /sunpatch-brackwater-sea.*artPath must reference a PNG/.test(error)));
+  assert.ok(result.errors.some((error) => /sunpatch-brackwater-sea.*artPath must reference a PNG or WebP/.test(error)));
   assert.ok(result.errors.some((error) => /brackwater-landing-town.*observationId is required/.test(error)));
   assert.ok(result.errors.some((error) => /field-note-estuary-conditions.*sourceUrls must contain at least three HTTPS science sources/.test(error)));
   assert.ok(result.errors.some((error) => /brackwater-landing.*no NPC for role field-partner/.test(error)));
@@ -1723,7 +1730,7 @@ test("content validation protects Current route, evidence, science-source, and N
 
   const result = validateAdventureContent(invalid);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => /brackwater-current-sea.*artPath must reference a PNG/.test(error)));
+  assert.ok(result.errors.some((error) => /brackwater-current-sea.*artPath must reference a PNG or WebP/.test(error)));
   assert.ok(result.errors.some((error) => /current-commons-town.*observationId is required/.test(error)));
   assert.ok(result.errors.some((error) => /field-note-current-connections.*sourceUrls must contain at least three HTTPS science sources/.test(error)));
   assert.ok(result.errors.some((error) => /current-commons.*no NPC for role field-partner/.test(error)));
@@ -1742,7 +1749,7 @@ test("content validation protects Kelpwatch route, evidence, science-source, and
 
   const result = validateAdventureContent(invalid);
   assert.equal(result.valid, false);
-  assert.ok(result.errors.some((error) => /current-kelpwatch-sea.*artPath must reference a PNG/.test(error)));
+  assert.ok(result.errors.some((error) => /current-kelpwatch-sea.*artPath must reference a PNG or WebP/.test(error)));
   assert.ok(result.errors.some((error) => /kelpwatch-island-town.*observationId is required/.test(error)));
   assert.ok(result.errors.some((error) => /field-note-kelp-food-web.*sourceUrls must contain at least three HTTPS science sources/.test(error)));
   assert.ok(result.errors.some((error) => /kelpwatch-island.*no NPC for role field-partner/.test(error)));

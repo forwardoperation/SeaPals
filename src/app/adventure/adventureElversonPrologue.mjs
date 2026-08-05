@@ -11,6 +11,7 @@ import {
 } from "./adventureOnboarding.mjs";
 
 export const ELVERSON_PROLOGUE_CONTENT_VERSION = ADVENTURE_OPENING_CONTENT_VERSION;
+export const ELVERSON_PROLOGUE_BEDROOM_SCENE_ID = "player-bedroom";
 export const ELVERSON_PROLOGUE_HOME_SCENE_ID = "player-home";
 export const ELVERSON_PROLOGUE_AQUARIUM_SCENE_ID = "academy-lab";
 export const ELVERSON_PROLOGUE_BEST_FRIEND_ID = "player-best-friend";
@@ -99,6 +100,7 @@ export function getElversonPrologueProgress(saveValue) {
     : ELVERSON_PROLOGUE_BEAT_IDS[completedBeatIds.length] ?? null;
   const homeConversation = HOME_BEAT_SPEAKERS[nextBeatId] ?? null;
   const raceComplete = completedBeatIds.includes(ELVERSON_PROLOGUE_BEATS.race);
+  const challengeComplete = completedBeatIds.includes(ELVERSON_PROLOGUE_BEATS.challenge);
   const rivalDeparted = legacySkipped || finalBeatRecorded;
 
   return Object.freeze({
@@ -110,14 +112,21 @@ export function getElversonPrologueProgress(saveValue) {
     nextBeatId,
     homeConversation,
     needsHomeSequence: Boolean(homeConversation),
+    readyForDockSpeech: !complete
+      && nextBeatId === ELVERSON_PROLOGUE_BEATS.challenge,
+    // Compatibility alias for callers and historical tests written before the
+    // race beat became the player's invitation to the public dock kickoff.
     readyForAquariumRace: !complete
       && nextBeatId === ELVERSON_PROLOGUE_BEATS.challenge,
-    aquariumChallengeAccepted: completedBeatIds.includes(ELVERSON_PROLOGUE_BEATS.challenge),
+    aquariumChallengeAccepted: challengeComplete,
     starterRecorded: completedBeatIds.includes(ELVERSON_PROLOGUE_BEATS.starter),
     tutorialRecorded: completedBeatIds.includes(ELVERSON_PROLOGUE_BEATS.tutorial),
     needsRivalDeparture: !complete
       && nextBeatId === ELVERSON_PROLOGUE_BEATS.rivalDeparture,
-    friendVisibleInAquarium: !legacySkipped && raceComplete && !rivalDeparted,
+    friendVisibleInAquarium: !legacySkipped
+      && raceComplete
+      && challengeComplete
+      && !rivalDeparted,
   });
 }
 

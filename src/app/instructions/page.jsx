@@ -655,7 +655,7 @@ export default function InstructionsPage() {
             <div className="mt-7 grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
               <div className="rounded-3xl border border-cyan-100 bg-cyan-50 p-4 shadow-sm">
                 <Image
-                  src="/images/cards/fish/Reef/picasso-triggerfish.png"
+                  src="/images/cards/fish/Reef/picasso-triggerfish.webp"
                   alt="Picasso Triggerfish SeaPals card used as a reading example"
                   width={500}
                   height={700}

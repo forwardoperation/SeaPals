@@ -10,7 +10,7 @@ import { canOccupyLayeredScenePosition } from "./adventureLayeredScene.mjs";
 
 test("Elverson v3 compiles the expanded ground and exactly nine public facades", () => {
   assert.equal(ELVERSON_LAYERED_SCENE.id, "elverson-town-layered-v3");
-  assert.equal(ELVERSON_LAYERED_SCENE.groundPath, "/images/adventure/elverson-ground-v3.png");
+  assert.equal(ELVERSON_LAYERED_SCENE.groundPath, "/images/adventure/elverson-ground-v3.webp");
   assert.equal(ELVERSON_LAYERED_SCENE.width, ELVERSON_TOWN_DIMENSIONS.width);
   assert.equal(ELVERSON_LAYERED_SCENE.height, ELVERSON_TOWN_DIMENSIONS.height);
   assert.equal(ELVERSON_LAYERED_SCENE.objects.length, 9);

@@ -892,17 +892,17 @@ function getAcademyCurriculumHelp(uiState) {
       });
     }
     return help({
-      title: "The reef can support a giant",
-      message: `${cards.filterFeeder?.cardName ?? "Whale Shark"} demonstrates the full chain: a Creature School supplies School Density, a Habitat satisfies the ecological requirement, and a well-timed Condition makes the play legal. Your reef is now at ${playerVp}/${targetVp} VP. ${cards.apex?.cardName ?? "Hammerhead"} is worth ${Math.max(0, Number(cards.apex?.victoryPoints) || 6)} VP, so the planned Apex play can complete this tutorial.`,
-      action: "Press End Turn. In Round 7, use Deep Sea Fishing to find Hammerhead, then play it in the Apex slot.",
+      title: `${playerVp} / ${targetVp} VP — One Final Round Remains`,
+      message: `${cards.filterFeeder?.cardName ?? "Whale Shark"} is the 20 VP milestone, not the end of the lesson. It demonstrates the full chain: a Creature School supplies School Density, a Habitat satisfies the ecological requirement, and a well-timed Condition makes the play legal. One final round remains: ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} finds ${cards.apex?.cardName ?? "Hammerhead"}, whose ${Math.max(0, Number(cards.apex?.victoryPoints) || 6)} VP completes the ${targetVp} VP reef.`,
+      action: `Press End Turn to begin the final round. Draw and play ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}, choose ${cards.apex?.cardName ?? "Hammerhead"}, then play it in the Apex slot.`,
     }, "turn-button", "end-round-6");
   }
 
   if (round >= 7) {
     if (!cards.apexSupport?.inDiscard && !cards.apex?.inHand && !cards.apex?.inPlay) {
       return play(cards.apexSupport, {
-        title: `Search with ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}`,
-        message: `You are almost there. ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} is a zero-cost, one-shot Support that searches for a Predator or Apex and then goes to the discard pile. Before searching, check that the result will be playable: Coral Reef satisfies Hammerhead's Habitat requirement, Brain Coral provides the Apex slot, and even Bleak Overcast leaves exactly the 6 RP we need.`,
+        title: `Final Round: Search with ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}`,
+        message: `Your reef is at ${playerVp}/${targetVp} VP, and this is the final round. ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} is a zero-cost, one-shot Support that searches for a Predator or Apex and then goes to the discard pile. Before searching, check that the result will be playable: Coral Reef satisfies Hammerhead's Habitat requirement, Brain Coral provides the Apex slot, and even Bleak Overcast leaves exactly the 6 RP we need.`,
         action: `Play ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}, then choose the highlighted Hammerhead.`,
       });
     }
@@ -910,7 +910,7 @@ function getAcademyCurriculumHelp(uiState) {
       return play(cards.apex, {
         title: `Finish the lesson with ${cards.apex?.cardName ?? "Hammerhead"}`,
         message: "Apex creatures are powerful finishers with demanding prerequisites, so they belong at the end of a plan rather than the beginning. Hammerhead is good here because the reef already supports it: Coral Reef is active, an Apex slot is open, there is enough RP, and I have legal targets for Ravage.",
-        action: `Play ${cards.apex?.cardName ?? "Hammerhead"} in the highlighted Apex slot, then resolve its coral damage and two attacks to complete the ${targetVp} VP aquarium reef.`,
+        action: `Play ${cards.apex?.cardName ?? "Hammerhead"} in the highlighted Apex slot, then resolve its coral damage and two attacks to reach ${targetVp} of ${targetVp} VP. The Aquarium Lesson Complete dialog will give you a Finish Lesson & Return button.`,
       });
     }
   }

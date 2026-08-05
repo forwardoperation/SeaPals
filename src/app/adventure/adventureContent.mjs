@@ -536,13 +536,13 @@ const ELVERSON_PROLOGUE_CAST = Object.freeze([
     color: "coral",
     roleId: "resident",
     at: Object.freeze({ x: 4.75, y: 4.55 }),
-    facing: "right",
+    facing: "left",
     lines: Object.freeze({
       intro: Object.freeze(["Happy tenth birthday! I made your favorite breakfast, and your best friend arrived before the toast was even ready."]),
       guidance: Object.freeze(["Check with Dad, stay together, listen to the grown-ups, and treat every creature gently."]),
       return: Object.freeze(["Your breakfast will be here when you need another bite. Have a wonderful first adventure!"]),
       birthdayMorning: Object.freeze([
-        "Happy tenth birthday! I made your favorite breakfast, though your best friend arrived so early that the toast is barely ready.",
+        "Happy tenth birthday, dear! I made your favorite breakfast, though your best friend arrived so early that the toast is barely ready.",
         "The whole town is talking about Mr. Easterling's new Sea Realm Aquarium and the creature-collecting challenge. I can see why neither of you slept much.",
         "Eat a little, check with Dad, and then you have our permission to go together. Listen to the grown-ups, treat every creature gently, and look out for one another.",
       ]),
@@ -581,8 +581,8 @@ const ELVERSON_PROLOGUE_CAST = Object.freeze([
       return: Object.freeze(["I'll see you in Pelora City. Keep collecting, studying, and practicing!"]),
       birthdayMorning: Object.freeze([
         "You're finally ten! I was so excited about the aquarium challenge that I barely slept at all.",
-        "Mr. Easterling is letting new adventurers choose their first SeaRealm decks today. Imagine all the creatures waiting for us out there!",
-        "Your parents said yes, so let's race to the aquarium. Last one there is a sleepy sea cucumber!",
+        "Mr. Easterling is about to give a speech at the dock to kick off the Sea Creature Challenge. The whole town is heading down there to watch!",
+        "I'm going over now. Come join me by the dock when you're ready, and then we can explore every corner of Elverson together.",
       ]),
       rivalDeparture: Object.freeze([
         "That lesson was amazing. Now we both know that a real Master of the Sea has to understand an ecosystem, not just find its creatures.",
@@ -690,11 +690,50 @@ const shellshoreRuntimeScenes = {
         .map(elversonResidentInteraction),
     ],
   },
+  "player-bedroom": {
+    name: "Your Upstairs Bedroom",
+    worldKind: "interior",
+    theme: "player-bedroom",
+    artPath: "/images/adventure/player-bedroom-v1.webp",
+    tiles: [
+      "wwwwwwwwwwwwwww",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wfffffffffffffw",
+      "wwwwwwwEwwwwwww",
+    ],
+    spawn: { x: 7, y: 7 },
+    startFacing: "down",
+    collisionRects: [
+      { id: "player-bedroom-bed", left: 0.25, top: 1.15, right: 3.35, bottom: 5.75 },
+      { id: "player-bedroom-left-bookcase", left: 0.25, top: 5.7, right: 2.85, bottom: 8.6 },
+      { id: "player-bedroom-writing-desk", left: 10.25, top: 1.35, right: 14.4, bottom: 4.65 },
+      { id: "player-bedroom-right-dresser", left: 12.25, top: 4.45, right: 14.5, bottom: 8.5 },
+      { id: "player-bedroom-stair-rail-left", left: 5.7, top: 7.35, right: 6.35, bottom: 9.1 },
+      { id: "player-bedroom-stair-rail-right", left: 8.65, top: 7.35, right: 9.3, bottom: 9.1 },
+    ],
+    interactions: [
+      {
+        id: "interaction-player-bedroom-downstairs",
+        type: "exit",
+        at: { x: 7, y: 9 },
+        doorwayHalfWidth: 0.55,
+        targetScene: "player-home",
+        spawn: { x: 7, y: 3.55 },
+        facing: "down",
+      },
+    ],
+  },
   "player-home": {
     name: "Your Elverson Home",
     worldKind: "interior",
     theme: "player-home",
-    artPath: "/images/adventure/player-home-v1.png",
+    artPath: "/images/adventure/player-home-v1.webp",
     tiles: [
       "wwwwwwwwwwwwwww",
       "wfffffffffffffw",
@@ -714,11 +753,22 @@ const shellshoreRuntimeScenes = {
       { id: "player-home-staircase", left: 5.7, top: -0.1, right: 8.3, bottom: 2.85 },
       { id: "player-home-upper-right-storage", left: 10.35, top: 0.45, right: 14.2, bottom: 2.65 },
       { id: "player-home-breakfast-table", left: 0.75, top: 5.45, right: 5.75, bottom: 8.75 },
-      { id: "player-home-reading-nook", left: 10.55, top: 3.1, right: 14.2, bottom: 6.65 },
+      // Leave the chair's left edge open so Dad can be approached face-to-face
+      // without letting the player walk through the chair, table, or bookcase.
+      { id: "player-home-reading-nook", left: 11.05, top: 3.1, right: 14.2, bottom: 6.65 },
       { id: "player-home-lower-right-console", left: 9.85, top: 7, right: 14.2, bottom: 8.85 },
     ],
     interactions: [
       ...ELVERSON_PROLOGUE_CAST.map(elversonPrologueInteraction),
+      {
+        id: "interaction-player-home-upstairs",
+        type: "enter",
+        at: { x: 7, y: 3.05 },
+        doorwayHalfWidth: 0.48,
+        targetScene: "player-bedroom",
+        spawn: { x: 7, y: 8.05 },
+        facing: "up",
+      },
       {
         id: "interaction-player-home-exit",
         type: "exit",
@@ -844,7 +894,7 @@ const shellshoreRuntimeScenes = {
     tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
     spawn: { x: 6, y: 7 },
     exitAt: { x: 6, y: 8 },
-    artPath: "/images/adventure/shellshore-academy.png",
+    artPath: "/images/adventure/shellshore-academy.webp",
   }),
   "elverson-red-schoolhouse": elversonInteriorScene({
     sceneId: "elverson-red-schoolhouse",
@@ -853,7 +903,7 @@ const shellshoreRuntimeScenes = {
     tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
     spawn: { x: 6, y: 7 },
     exitAt: { x: 6, y: 8 },
-    artPath: "/images/adventure/shellshore-academy.png",
+    artPath: "/images/adventure/shellshore-academy.webp",
   }),
   "elverson-marine-research-lab": elversonInteriorScene({
     sceneId: "elverson-marine-research-lab",
@@ -862,7 +912,7 @@ const shellshoreRuntimeScenes = {
     tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
     spawn: { x: 6, y: 7 },
     exitAt: { x: 6, y: 8 },
-    artPath: "/images/adventure/shellshore-academy.png",
+    artPath: "/images/adventure/shellshore-academy.webp",
   }),
   "academy-lab": {
     name: "Elverson Aquarium Workshop",
@@ -879,7 +929,8 @@ const shellshoreRuntimeScenes = {
       "wffffffffffffw",
       "wwwwwwEwwwwwww",
     ],
-    spawn: { x: 6, y: 7 },
+    spawn: { x: 7, y: 7 },
+    startFacing: "up",
     collisionRects: [
       { id: "academy-top-left-cabinetry", left: 0.5, top: 1.45, right: 3.75, bottom: 3.2 },
       { id: "academy-rear-bench", left: 4.95, top: 1.45, right: 7.95, bottom: 2.65 },
@@ -2883,6 +2934,7 @@ const championsWakeRuntimeScenes = {
 
 const scenes = [
   { id: "town", townId: "shellshore-village", kind: "exterior", status: "prototype", world: shellshoreRuntimeScenes.town },
+  { id: "player-bedroom", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["player-bedroom"] },
   { id: "player-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["player-home"] },
   { id: "coral-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["coral-home"] },
   { id: "deep-home", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["deep-home"] },
@@ -2966,13 +3018,18 @@ const conversations = [
     npcId: "academy-mentor",
     lines: {
       worldIntroduction: [
-        "Hello there! I'm Mr. Easterling. Welcome to Elverson, a small town where our streets, streams, and harbor all meet the sea.",
+        "Good morning, Elverson! For anyone I have not met, I'm Mr. Easterling. Our streets, streams, and harbor all meet the sea, so every one of us has a part to play in caring for it.",
         "Our new Sea Realm Aquarium is nearly ready to open, and I have invited adventurers young and old to help us find its first requested set of fantastic sea creatures, great and small!",
         "Every creature you deliver will be assessed by our care team and placed in the habitat that meets its needs. In return, I will award you the matching Sea Realm trading card. Complete the whole requested set and you will earn the title Master of the Sea!",
         "Now, where did I put that requested-set clipboard? Ah, under the other clipboard. Of course. I may misplace my notes, but I never forget a sea creature... or a promising new adventurer.",
         "Finding a creature is only the beginning. To catch every species I need, you must study its food, shelter, habitat, neighbors, and role in a healthy ocean ecosystem.",
         "That is why I created the SeaRealm card game. A playable ecosystem helps us understand the same relationships we will care for in the aquarium.",
-        "Come with me. You may choose your first deck, and I will stay beside you while you learn how to play.",
+        "For anyone who wants to register for the Sea Creature Challenge, come see me in my aquarium!",
+      ],
+      registration: [
+        "Oh, hello, adventurer! Have you come to register for the Sea Creature Challenge?",
+        "Wonderful! Registration begins with a SeaRealm deck of your own. It will help you study the food webs and habitats every creature needs.",
+        "I prepared three complete starter ecosystems for new adventurers. Let me show you what makes each one special.",
       ],
       intro: [
         "Here we are: the Sea Realm Aquarium workshop. These tanks look empty today, but every careful delivery will help an ecosystem room come alive.",
@@ -3004,7 +3061,8 @@ const conversations = [
         "Review the lesson steps, try the practice duel again, or step outside for a break.",
       ],
       practiceExit: [
-        "A smart explorer knows when to pause. Your completed lesson steps are saved, and we can continue when you're ready.",
+        "A smart explorer knows when to pause. Your completed lesson skills are saved, but a practice reef cannot be frozen halfway through a match.",
+        "When you're ready, we'll restart the practice duel from setup and rebuild the reef together.",
       ],
       practiceRetry: [
         "Nice work reaching the end of that match. This workshop lesson is about building a sound plan, not merely checking off controls.",

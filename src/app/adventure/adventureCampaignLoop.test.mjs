@@ -695,8 +695,8 @@ for (const [starterIndex, starterDeckId] of STARTER_DECK_IDS.entries()) {
     const openedPackIds = [];
 
     let save = createNewAdventureSession(profileId);
-    assert.equal(save.world.sceneId, "player-home");
-    assert.deepEqual(save.world.position, { x: 7, y: 4 });
+    assert.equal(save.world.sceneId, "player-bedroom");
+    assert.deepEqual(save.world.position, { x: 7, y: 7 });
     assert.equal(save.world.facing, "down");
     const created = adapter.startNewProfile(profileId, { saveValue: save });
     assert.equal(created.ok, true, created.error?.message);

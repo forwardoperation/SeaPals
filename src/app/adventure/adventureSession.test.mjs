@@ -185,13 +185,13 @@ function withTrenchlightResumeSentinels(saveValue, suffix) {
   });
 }
 
-test("new sessions begin the tenth-birthday opening at home in one of three explicit profiles", () => {
+test("new sessions begin the tenth-birthday opening upstairs in one of three explicit profiles", () => {
   const save = createNewAdventureSession("profile-2");
   assert.equal(save.profileId, "profile-2");
   assert.equal(save.progression.quests[SHELLSHORE_QUEST_ID].status, "active");
   assert.equal(save.world.townId, "shellshore-village");
-  assert.equal(save.world.sceneId, "player-home");
-  assert.deepEqual(save.world.position, { x: 7, y: 4 });
+  assert.equal(save.world.sceneId, "player-bedroom");
+  assert.deepEqual(save.world.position, { x: 7, y: 7 });
   assert.equal(save.world.facing, "down");
   assert.equal(save.world.lastSafeDockId, "shellshore-dock");
   assert.deepEqual(save.opening, {
@@ -942,8 +942,8 @@ test("all live portals use safe spawns and preserve their authored arrival facin
 
   assert.equal(
     portalCount,
-    55,
-    "the birthday home, all nine Elverson location pairs, and every later-town entrance and exit should be covered",
+    57,
+    "the upstairs/downstairs pair, all nine Elverson location pairs, and every later-town entrance and exit should be covered",
   );
 });
 
