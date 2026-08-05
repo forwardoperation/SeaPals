@@ -34,7 +34,7 @@ export const habitatCards = [
     name: "Coral Reef",
     kind: CardKind.HABITAT,
     category: CardCategory.HABITAT,
-    image: "/images/cards/habitats/coral-reef.png",
+    image: "/images/cards/habitats/coral-reef.webp",
     sortOrder: 301,
     cost: { rp: 0 },
     health: 40,

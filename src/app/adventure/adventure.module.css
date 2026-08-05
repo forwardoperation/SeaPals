@@ -1484,6 +1484,7 @@
 .elversonTownMap,
 .townMap,
 .academyLabMap,
+.playerBedroomMap,
 .playerHomeMap,
 .coralHomeMap,
 .deepHomeMap,
@@ -1530,7 +1531,7 @@
 
 .academyLabMap {
   background-color: #d7a362;
-  background-image: url("/images/adventure/shellshore-academy.png");
+  background-image: url("/images/adventure/shellshore-academy.webp");
 }
 
 .aquariumExhibitLayer {
@@ -1655,6 +1656,53 @@
 
 .playerHomeMap {
   background-color: #d7a56c;
+}
+
+.playerBedroomMap {
+  background-color: #c98a4d;
+}
+
+.overworldSpeechAnchor {
+  position: absolute;
+  pointer-events: none;
+}
+
+.overworldSpeechAnchor span {
+  position: absolute;
+  bottom: 105%;
+  left: 50%;
+  width: max-content;
+  max-width: min(190px, 24vw);
+  padding: 7px 10px;
+  border: 2px solid #164e63;
+  border-radius: 12px;
+  color: #172033;
+  font-size: clamp(7px, 0.8vw, 12px);
+  font-weight: 1000;
+  line-height: 1.15;
+  text-align: center;
+  background: #fffdf4;
+  box-shadow: 0 4px 0 rgba(8, 47, 73, 0.35);
+  transform: translate(-50%, -5px);
+  animation: openingGreetingIn 180ms ease-out both;
+}
+
+.overworldSpeechAnchor span::after {
+  position: absolute;
+  top: 100%;
+  left: calc(50% - 6px);
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid #164e63;
+  border-bottom: 2px solid #164e63;
+  background: #fffdf4;
+  content: "";
+  transform: translateY(-5px) rotate(45deg);
+}
+
+@keyframes openingGreetingIn {
+  from { opacity: 0; transform: translate(-50%, 3px) scale(0.94); }
+  to { opacity: 1; transform: translate(-50%, -5px) scale(1); }
 }
 
 .coralHomeMap {
@@ -1983,7 +2031,7 @@
   --row-left: 33.717105%;
   --row-right: 63.569079%;
   --row-up: 93.421053%;
-  background-image: url("/images/adventure/player-sprites-512-v2.png");
+  background-image: url("/images/adventure/player-sprites-512-v2.webp");
 }
 
 .marinaSpriteArtwork {
@@ -1991,7 +2039,7 @@
   --row-left: 33.470395%;
   --row-right: 63.815789%;
   --row-up: 93.832237%;
-  background-image: url("/images/adventure/marina-sprites-512-v2.png");
+  background-image: url("/images/adventure/marina-sprites-512-v2.webp");
 }
 
 .dorianSpriteArtwork {
@@ -1999,7 +2047,7 @@
   --row-left: 31.743421%;
   --row-right: 60.690789%;
   --row-up: 90.131579%;
-  background-image: url("/images/adventure/dorian-sprites-512-v2.png");
+  background-image: url("/images/adventure/dorian-sprites-512-v2.webp");
 }
 
 .fisherman-wyethSpriteArtwork,
@@ -2016,26 +2064,17 @@
   --row-up: 93.421053%;
 }
 
-.fisherman-wyethSpriteArtwork { background-image: url("/images/adventure/fisherman-wyeth-sprites-512-v2.png"); }
-.teacher-carolineSpriteArtwork { background-image: url("/images/adventure/teacher-caroline-sprites-512-v2.png"); }
-.ivySpriteArtwork { background-image: url("/images/adventure/ivy-sprites-512-v2.png"); }
-.explorer-jordanSpriteArtwork { background-image: url("/images/adventure/explorer-jordan-sprites-512-v2.png"); }
-.marine-biologist-jonahSpriteArtwork { background-image: url("/images/adventure/marine-biologist-jonah-sprites-512-v2.png"); }
-.programmer-harlanSpriteArtwork { background-image: url("/images/adventure/programmer-harlan-sprites.png"); }
-.town-elderSpriteArtwork { background-image: url("/images/adventure/town-elder-sprites.png"); }
-.town-adultSpriteArtwork { background-image: url("/images/adventure/town-adult-sprites-512-v2.png"); }
+.fisherman-wyethSpriteArtwork { background-image: url("/images/adventure/fisherman-wyeth-sprites-512-v2.webp"); }
+.teacher-carolineSpriteArtwork { background-image: url("/images/adventure/teacher-caroline-sprites-512-v2.webp"); }
+.ivySpriteArtwork { background-image: url("/images/adventure/ivy-sprites-512-v2.webp"); }
+.explorer-jordanSpriteArtwork { background-image: url("/images/adventure/explorer-jordan-sprites-512-v2.webp"); }
+.marine-biologist-jonahSpriteArtwork { background-image: url("/images/adventure/marine-biologist-jonah-sprites-512-v2.webp"); }
+.programmer-harlanSpriteArtwork { background-image: url("/images/adventure/programmer-harlan-sprites.webp"); }
+.town-elderSpriteArtwork { background-image: url("/images/adventure/town-elder-sprites.webp"); }
+.town-adultSpriteArtwork { background-image: url("/images/adventure/town-adult-sprites-512-v2.webp"); }
 
-/* Keep dialogue and mini portraits on the full-resolution sources. These
- * overrides load only for the one resident portrait that is actually open. */
-.playerSpriteArtwork.spritePortrait { background-image: url("/images/adventure/player-sprites.png"); }
-.marinaSpriteArtwork.spritePortrait { background-image: url("/images/adventure/marina-sprites.png"); }
-.dorianSpriteArtwork.spritePortrait { background-image: url("/images/adventure/dorian-sprites.png"); }
-.fisherman-wyethSpriteArtwork.spritePortrait { background-image: url("/images/adventure/fisherman-wyeth-sprites.png"); }
-.teacher-carolineSpriteArtwork.spritePortrait { background-image: url("/images/adventure/teacher-caroline-sprites.png"); }
-.ivySpriteArtwork.spritePortrait { background-image: url("/images/adventure/ivy-sprites.png"); }
-.explorer-jordanSpriteArtwork.spritePortrait { background-image: url("/images/adventure/explorer-jordan-sprites.png"); }
-.marine-biologist-jonahSpriteArtwork.spritePortrait { background-image: url("/images/adventure/marine-biologist-jonah-sprites.png"); }
-.town-adultSpriteArtwork.spritePortrait { background-image: url("/images/adventure/town-adult-sprites.png"); }
+/* Dialogue portraits reuse the same compact sheets. Their nearest-neighbor
+ * pixel scale remains crisp without downloading a second full-size sheet. */
 
 .academy-mentorSpriteArtwork {
   --row-down: 0%;
@@ -2048,7 +2087,7 @@
   translate: -50% 0;
   scale: 1;
   transform-origin: center bottom;
-  background-image: url("/images/adventure/mr-easterling-sprites-627-v3.png");
+  background-image: url("/images/adventure/mr-easterling-sprites-627-v3.webp");
   background-size: auto 400%;
 }
 
@@ -2352,7 +2391,7 @@
   position: absolute;
   inset: 0;
   display: block;
-  background-image: url("/images/adventure/mr-easterling-portrait-v2.png");
+  background-image: url("/images/adventure/mr-easterling-portrait-v2.webp");
   background-position: center bottom;
   background-repeat: no-repeat;
   background-size: contain;
@@ -2631,6 +2670,85 @@
 .introLayer {
   background: rgba(2, 10, 18, 0.48);
   backdrop-filter: blur(3px);
+}
+
+.openingPrelude,
+.dockCutsceneFade {
+  position: fixed;
+  z-index: 220;
+  inset: 0;
+  background: #000;
+}
+
+.openingPrelude {
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  color: #f8fafc;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 1050ms ease-in-out;
+}
+
+.openingPrelude > div {
+  display: grid;
+  gap: 18px;
+  width: min(680px, 100%);
+}
+
+.openingPrelude p {
+  margin: 0;
+  font-size: clamp(18px, 3vw, 34px);
+  font-style: italic;
+  font-weight: 750;
+  line-height: 1.45;
+  letter-spacing: 0.015em;
+}
+
+.openingPreludeRevealing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dockCutsceneFade {
+  pointer-events: all;
+  opacity: 0;
+}
+
+.dockCutsceneFadeCovering {
+  animation: dockCutsceneCover 520ms ease-in both;
+}
+
+.dockCutsceneFadeRevealing {
+  animation: dockCutsceneReveal 700ms ease-out both;
+}
+
+@keyframes dockCutsceneCover {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dockCutsceneReveal {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.reducedMotionMode .openingPrelude {
+  transition-duration: 0ms;
+}
+
+.reducedMotionMode .overworldSpeechAnchor span {
+  animation: none;
+}
+
+.reducedMotionMode .dockCutsceneFadeCovering {
+  animation: none;
+  opacity: 1;
+}
+
+.reducedMotionMode .dockCutsceneFadeRevealing {
+  animation: none;
+  opacity: 0;
 }
 
 .dialogueBox {

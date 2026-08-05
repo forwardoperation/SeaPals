@@ -64,7 +64,7 @@ export const invertebrateCards = [
     name: "Sea Urchin",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/cards/invertebrates/Reef/Sea Urchin.png",
+    image: "/images/cards/invertebrates/Reef/Sea Urchin.webp",
     sortOrder: 300,
 
     cost: { rp: 1 },

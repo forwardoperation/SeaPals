@@ -81,7 +81,7 @@ test("world conversations explicitly turn the selected live actor toward the pla
 test("multi-step mentor dialogue preserves its world actor origin", () => {
   const functionalConversationUpdates = component.match(/setConversation\(\(currentConversation\) => \(\{[\s\S]*?\.\.\.currentConversation,[\s\S]*?mode: "(?:starterConfirmed|starterPresentation|tutorialIntro)",[\s\S]*?\}\)\);/g) ?? [];
 
-  assert.equal(functionalConversationUpdates.length, 3);
+  assert.equal(functionalConversationUpdates.length, 4);
   assert.match(component, /const activeWorldConversation = conversationLeadIn \?\? conversation/);
   assert.match(component, /activeWorldConversation\?\.sceneId === sceneId/);
 });

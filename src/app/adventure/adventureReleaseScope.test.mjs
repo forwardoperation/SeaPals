@@ -28,6 +28,7 @@ test("Elverson release scope retains persisted IDs and exposes no active routes"
     startDockId: "shellshore-dock",
     sceneIds: [
       "town",
+      "player-bedroom",
       "player-home",
       "academy-lab",
       "coral-home",

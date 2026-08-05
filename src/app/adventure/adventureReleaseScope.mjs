@@ -10,6 +10,7 @@ export const ELVERSON_RELEASE_SCOPE = Object.freeze({
   startDockId: "shellshore-dock",
   sceneIds: Object.freeze([
     "town",
+    "player-bedroom",
     "player-home",
     "academy-lab",
     "coral-home",

@@ -120,7 +120,7 @@ export const predatorCards = [
     name: "Reef Shark",
     kind: CardKind.CREATURE,
     category: CardCategory.PREDATOR,
-    image: "/images/cards/predator/reef/reef-shark.png",
+    image: "/images/cards/predator/reef/reef-shark.webp",
     sortOrder: 101,
 
     cost: { rp: 4 },

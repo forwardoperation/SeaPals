@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import sharp from "sharp";
 
 import { ADVENTURE_CONTENT } from "./adventureContent.mjs";
 import { ELVERSON_REEF_CREATURE_ATLAS_PATH } from "./adventureAquariumExhibits.mjs";
@@ -11,37 +12,67 @@ import { ELVERSON_TOWN_PORTALS } from "./adventureElversonTownLayout.mjs";
 const TEST_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIRECTORY = path.resolve(TEST_DIRECTORY, "../../../public");
 const PNG_SIGNATURE = "89504e470d0a1a0a";
+const ELVERSON_MOBILE_OPENING_ASSETS = Object.freeze([
+  "/images/adventure/player-bedroom-v1.webp",
+  "/images/adventure/player-home-v1.webp",
+  "/images/adventure/elverson-ground-v3.webp",
+  "/images/adventure/shellshore-academy.webp",
+  "/images/adventure/elverson-reef-creature-atlas-v1.webp",
+  "/images/adventure/mr-easterling-portrait-v2.webp",
+  "/images/adventure/player-sprites-512-v2.webp",
+  "/images/adventure/marina-sprites-512-v2.webp",
+  "/images/adventure/dorian-sprites-512-v2.webp",
+  "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
+  "/images/adventure/teacher-caroline-sprites-512-v2.webp",
+  "/images/adventure/ivy-sprites-512-v2.webp",
+  "/images/adventure/explorer-jordan-sprites-512-v2.webp",
+  "/images/adventure/marine-biologist-jonah-sprites-512-v2.webp",
+  "/images/adventure/town-adult-sprites-512-v2.webp",
+  "/images/adventure/mr-easterling-sprites-627-v3.webp",
+  "/images/adventure/programmer-harlan-sprites.webp",
+  "/images/adventure/town-elder-sprites.webp",
+  "/images/adventure/elverson-objects-v2/blue-home.webp",
+  "/images/adventure/elverson-objects-v2/tan-home.webp",
+  "/images/adventure/elverson-objects-v2/green-home.webp",
+  "/images/adventure/elverson-objects-v2/brick-school.webp",
+  "/images/adventure/elverson-objects-v2/brick-civic-hall.webp",
+  "/images/adventure/elverson-objects-v2/green-awning-shop.webp",
+  "/images/adventure/elverson-objects-v2/aquarium-workshop.webp",
+  "/images/cards/coral/Reef/mustard-coral-base.webp",
+  "/images/cards/coral/Reef/brain-coral-base.webp",
+  "/images/cards/coral/Reef/brain-coral-stage-1.webp",
+  "/images/cards/coral/Reef/brain-coral-stage-2.webp",
+  "/images/cards/habitats/coral-reef.webp",
+  "/images/cards/coral/Reef/clubfinger-stage-1.webp",
+  "/images/cards/invertebrates/Reef/Sea Urchin.webp",
+  "/images/cards/fish/Reef/picasso-triggerfish.webp",
+  "/images/cards/predator/reef/reef-shark.webp",
+]);
 
 function publicAssetPath(artPath) {
   return path.join(PUBLIC_DIRECTORY, ...artPath.split("/").filter(Boolean));
 }
 
-test("every playable scene artwork is a structurally complete map-sized PNG", async () => {
+async function readWebpAsset(artPath) {
+  const asset = await readFile(publicAssetPath(artPath));
+  assert.equal(asset.subarray(0, 4).toString("ascii"), "RIFF", `${artPath} RIFF header`);
+  assert.equal(asset.subarray(8, 12).toString("ascii"), "WEBP", `${artPath} WebP header`);
+  const metadata = await sharp(asset).metadata();
+  assert.equal(metadata.format, "webp", `${artPath} format`);
+  return { asset, metadata };
+}
+
+test("every playable scene artwork is a structurally complete map-sized PNG or WebP", async () => {
   const playableScenes = ADVENTURE_CONTENT.scenes.filter((scene) => (
     scene.status === "prototype" && scene.world?.artPath
   ));
 
   assert.ok(playableScenes.length > 0);
   for (const scene of playableScenes) {
-    const png = await readFile(publicAssetPath(scene.world.artPath));
-    assert.equal(
-      png.subarray(0, 8).toString("hex"),
-      PNG_SIGNATURE,
-      `${scene.id} must point to a valid PNG`,
-    );
-    assert.equal(
-      png.subarray(12, 16).toString("ascii"),
-      "IHDR",
-      `${scene.id} must contain a PNG image header`,
-    );
-    assert.equal(
-      png.subarray(-8, -4).toString("ascii"),
-      "IEND",
-      `${scene.id} must contain a complete PNG end chunk`,
-    );
-
-    const width = png.readUInt32BE(16);
-    const height = png.readUInt32BE(20);
+    const metadata = await sharp(publicAssetPath(scene.world.artPath)).metadata();
+    assert.ok(["png", "webp"].includes(metadata.format), `${scene.id} must use PNG or WebP`);
+    const width = metadata.width;
+    const height = metadata.height;
     const aspectRatio = width / height;
     assert.ok(width >= 1000 && height >= 900, `${scene.id} artwork is unexpectedly small`);
     assert.ok(
@@ -72,16 +103,16 @@ test("Kelpwatch ships the exact five map-sized PNG assets used by its live scene
   }
 });
 
-test("Elverson ships its layered ground and every referenced transparent object sprite", async () => {
+test("Elverson ships its mobile-sized layered ground and transparent WebP facades", async () => {
   const town = ADVENTURE_CONTENT.scenes.find((scene) => scene.id === "town");
   assert.equal(town?.status, "prototype");
-  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v3.png");
+  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v3.webp");
   assert.notEqual(town.world.artPath, "/images/adventure/elverson-town.png");
 
-  const ground = await readFile(publicAssetPath(town.world.artPath));
-  assert.equal(ground.subarray(0, 8).toString("hex"), PNG_SIGNATURE);
-  assert.equal(ground.readUInt32BE(16), 1536, "layered Elverson ground width");
-  assert.equal(ground.readUInt32BE(20), 1024, "layered Elverson ground height");
+  const ground = await readWebpAsset(town.world.artPath);
+  assert.equal(ground.metadata.width, 1536, "layered Elverson ground width");
+  assert.equal(ground.metadata.height, 1024, "layered Elverson ground height");
+  assert.ok(ground.asset.byteLength < 650_000, "the Elverson ground must remain mobile-sized");
 
   const objects = town.world.layeredObjects;
   assert.equal(objects.length, 9, "Elverson v3 should expose one facade for each town portal");
@@ -93,29 +124,23 @@ test("Elverson ships its layered ground and every referenced transparent object 
   assert.equal(spritePaths.length, 7, "the nine facades should reuse the seven authored buildings");
   assert.ok(spritePaths.every((spritePath) => (
     spritePath.startsWith("/images/adventure/elverson-objects-v2/")
+    && spritePath.endsWith(".webp")
   )));
 
   for (const spritePath of spritePaths) {
-    const png = await readFile(publicAssetPath(spritePath));
-    assert.equal(png.subarray(0, 8).toString("hex"), PNG_SIGNATURE, spritePath);
-    assert.equal(png.subarray(12, 16).toString("ascii"), "IHDR", `${spritePath} header`);
-    assert.ok(png.readUInt32BE(16) > 0 && png.readUInt32BE(20) > 0, `${spritePath} dimensions`);
-    assert.ok([3, 6].includes(png[25]), `${spritePath} must use indexed-alpha or RGBA color`);
-    if (png[25] === 3) {
-      assert.ok(png.includes(Buffer.from("tRNS")), `${spritePath} must retain indexed transparency`);
-    }
-    assert.equal(png.subarray(-8, -4).toString("ascii"), "IEND", `${spritePath} must be complete`);
+    const webp = await readWebpAsset(spritePath);
+    assert.ok(webp.metadata.width > 0 && webp.metadata.height > 0, `${spritePath} dimensions`);
+    assert.equal(webp.metadata.hasAlpha, true, `${spritePath} must retain transparency`);
+    assert.ok(webp.asset.byteLength < 50_000, `${spritePath} must remain mobile-sized`);
   }
 });
 
-test("Elverson ships one complete transparent atlas for hand-net and Aquarium creatures", async () => {
-  const png = await readFile(publicAssetPath(ELVERSON_REEF_CREATURE_ATLAS_PATH));
-  assert.equal(png.subarray(0, 8).toString("hex"), PNG_SIGNATURE);
-  assert.equal(png.subarray(12, 16).toString("ascii"), "IHDR");
-  assert.equal(png.readUInt32BE(16), 1983);
-  assert.equal(png.readUInt32BE(20), 793);
-  assert.equal(png[25], 6, "the ten-species atlas must retain true RGBA transparency");
-  assert.equal(png.subarray(-8, -4).toString("ascii"), "IEND");
+test("Elverson ships one complete mobile WebP atlas for hand-net and Aquarium creatures", async () => {
+  const webp = await readWebpAsset(ELVERSON_REEF_CREATURE_ATLAS_PATH);
+  assert.equal(webp.metadata.width, 1983);
+  assert.equal(webp.metadata.height, 793);
+  assert.equal(webp.metadata.hasAlpha, true, "the ten-species atlas must retain transparency");
+  assert.ok(webp.asset.byteLength < 180_000, "the atlas must remain mobile-sized");
 });
 
 test("Elverson ships distinct transparent GBA-style resident walk sheets", async () => {
@@ -143,48 +168,38 @@ test("Elverson ships distinct transparent GBA-style resident walk sheets", async
   }
 });
 
-test("Elverson town ships compact versioned walk sheets without softening portraits", async () => {
+test("Elverson town ships compact transparent WebP walk sheets", async () => {
   const optimizedSpriteAssets = [
-    ["/images/adventure/player-sprites-512-v2.png", "/images/adventure/player-sprites.png"],
-    ["/images/adventure/marina-sprites-512-v2.png", "/images/adventure/marina-sprites.png"],
-    ["/images/adventure/dorian-sprites-512-v2.png", "/images/adventure/dorian-sprites.png"],
-    ["/images/adventure/fisherman-wyeth-sprites-512-v2.png", "/images/adventure/fisherman-wyeth-sprites.png"],
-    ["/images/adventure/teacher-caroline-sprites-512-v2.png", "/images/adventure/teacher-caroline-sprites.png"],
-    ["/images/adventure/ivy-sprites-512-v2.png", "/images/adventure/ivy-sprites.png"],
-    ["/images/adventure/explorer-jordan-sprites-512-v2.png", "/images/adventure/explorer-jordan-sprites.png"],
-    ["/images/adventure/marine-biologist-jonah-sprites-512-v2.png", "/images/adventure/marine-biologist-jonah-sprites.png"],
-    ["/images/adventure/town-adult-sprites-512-v2.png", "/images/adventure/town-adult-sprites.png"],
+    ["/images/adventure/player-sprites-512-v2.webp", "/images/adventure/player-sprites.png"],
+    ["/images/adventure/marina-sprites-512-v2.webp", "/images/adventure/marina-sprites.png"],
+    ["/images/adventure/dorian-sprites-512-v2.webp", "/images/adventure/dorian-sprites.png"],
+    ["/images/adventure/fisherman-wyeth-sprites-512-v2.webp", "/images/adventure/fisherman-wyeth-sprites.png"],
+    ["/images/adventure/teacher-caroline-sprites-512-v2.webp", "/images/adventure/teacher-caroline-sprites.png"],
+    ["/images/adventure/ivy-sprites-512-v2.webp", "/images/adventure/ivy-sprites.png"],
+    ["/images/adventure/explorer-jordan-sprites-512-v2.webp", "/images/adventure/explorer-jordan-sprites.png"],
+    ["/images/adventure/marine-biologist-jonah-sprites-512-v2.webp", "/images/adventure/marine-biologist-jonah-sprites.png"],
+    ["/images/adventure/town-adult-sprites-512-v2.webp", "/images/adventure/town-adult-sprites.png"],
   ];
   let optimizedBytes = 0;
   let sourceBytes = 0;
 
   for (const [optimizedPath, sourcePath] of optimizedSpriteAssets) {
-    const optimized = await readFile(publicAssetPath(optimizedPath));
+    const { asset: optimized, metadata } = await readWebpAsset(optimizedPath);
     const source = await readFile(publicAssetPath(sourcePath));
-    assert.equal(optimized.subarray(0, 8).toString("hex"), PNG_SIGNATURE, optimizedPath);
-    assert.equal(optimized.readUInt32BE(16), 512, `${optimizedPath} width`);
-    assert.equal(optimized.readUInt32BE(20), 768, `${optimizedPath} height`);
-    assert.ok([3, 6].includes(optimized[25]), `${optimizedPath} must retain alpha transparency`);
-    if (optimized[25] === 3) {
-      assert.ok(optimized.includes(Buffer.from("tRNS")), `${optimizedPath} must retain indexed transparency`);
-    }
-    assert.equal(optimized.subarray(-8, -4).toString("ascii"), "IEND", `${optimizedPath} must be complete`);
+    assert.equal(metadata.width, 512, `${optimizedPath} width`);
+    assert.equal(metadata.height, 768, `${optimizedPath} height`);
+    assert.equal(metadata.hasAlpha, true, `${optimizedPath} must retain transparency`);
     optimizedBytes += optimized.byteLength;
     sourceBytes += source.byteLength;
   }
 
-  const mentorOptimizedPath = "/images/adventure/mr-easterling-sprites-627-v3.png";
+  const mentorOptimizedPath = "/images/adventure/mr-easterling-sprites-627-v3.webp";
   const mentorSourcePath = "/images/adventure/mr-easterling-sprites-v2.png";
-  const mentorOptimized = await readFile(publicAssetPath(mentorOptimizedPath));
+  const { asset: mentorOptimized, metadata: mentorMetadata } = await readWebpAsset(mentorOptimizedPath);
   const mentorSource = await readFile(publicAssetPath(mentorSourcePath));
-  assert.equal(mentorOptimized.subarray(0, 8).toString("hex"), PNG_SIGNATURE, mentorOptimizedPath);
-  assert.equal(mentorOptimized.readUInt32BE(16), 627, `${mentorOptimizedPath} width`);
-  assert.equal(mentorOptimized.readUInt32BE(20), 627, `${mentorOptimizedPath} height`);
-  assert.ok([3, 6].includes(mentorOptimized[25]), `${mentorOptimizedPath} must retain alpha transparency`);
-  if (mentorOptimized[25] === 3) {
-    assert.ok(mentorOptimized.includes(Buffer.from("tRNS")), `${mentorOptimizedPath} must retain indexed transparency`);
-  }
-  assert.equal(mentorOptimized.subarray(-8, -4).toString("ascii"), "IEND", `${mentorOptimizedPath} must be complete`);
+  assert.equal(mentorMetadata.width, 627, `${mentorOptimizedPath} width`);
+  assert.equal(mentorMetadata.height, 627, `${mentorOptimizedPath} height`);
+  assert.equal(mentorMetadata.hasAlpha, true, `${mentorOptimizedPath} must retain transparency`);
   optimizedBytes += mentorOptimized.byteLength;
   sourceBytes += mentorSource.byteLength;
 
@@ -203,6 +218,18 @@ test("Mr. Easterling ships a transparent identity-based walk sheet and portrait"
     assert.equal(png[25], 6, `${spritePath} must retain RGBA transparency`);
     assert.equal(png.subarray(-8, -4).toString("ascii"), "IEND", `${spritePath} must be complete`);
   }
+});
+
+test("the Elverson opening and first tutorial remain inside the mobile image budget", async () => {
+  let totalBytes = 0;
+  for (const assetPath of ELVERSON_MOBILE_OPENING_ASSETS) {
+    const { asset } = await readWebpAsset(assetPath);
+    totalBytes += asset.byteLength;
+  }
+  assert.ok(
+    totalBytes < 3_200_000,
+    `Elverson mobile opening assets total ${totalBytes} bytes; expected less than 3.2 MB`,
+  );
 });
 
 test("playable science notes use unique authoritative government sources", () => {

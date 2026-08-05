@@ -191,7 +191,7 @@ test("the wharf and aquarium platforms connect to town without opening the surro
   walkAxisRoute([
     { x: 20, y: 21.45 },
     { x: 20, y: 22 },
-    { x: 24.22, y: 22 },
+    { x: 25.55, y: 22 },
     ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
   ]);
 

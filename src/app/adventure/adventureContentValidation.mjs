@@ -16,6 +16,7 @@ const NON_DUEL_CONVERSATION_MODES = ["intro", "guidance", "return"];
 const MENTOR_CONVERSATION_MODES = [
   "worldIntroduction",
   "starterPresentation",
+  "registration",
   "starterConfirmed",
   "tutorialIntro",
   "practiceLoss",
@@ -43,7 +44,7 @@ const TOURNAMENT_REFLECTION_CONVERSATION_MODES = ["epilogue", "postgame"];
 const FACING_DIRECTIONS = new Set(["up", "down", "left", "right"]);
 const PATROL_MODES = new Set(["loop", "ping-pong"]);
 const LAYERED_OBJECT_LAYERS = new Set(["ground", "depth", "overhead"]);
-const ADVENTURE_SPRITE_PATH = /^\/images\/adventure\/(?:[a-z0-9-]+\/)*[a-z0-9-]+\.png$/;
+const ADVENTURE_SPRITE_PATH = /^\/images\/adventure\/(?:[a-z0-9-]+\/)*[a-z0-9-]+\.(?:png|webp)$/;
 const SCENE_GEOMETRY_EPSILON = 1e-9;
 const PACK_POOL_STATUSES = new Set(["planned", "playable"]);
 const PLAYABLE_PACK_GUARANTEE = "at-least-one-unowned-card-when-eligible";
@@ -248,7 +249,7 @@ function validateSceneLayeredObjects(world, {
     } else {
       const { sprite } = object;
       if (typeof sprite.src !== "string" || !ADVENTURE_SPRITE_PATH.test(sprite.src)) {
-        errors.push(`${objectPath}.sprite.src must reference a PNG in /images/adventure/.`);
+        errors.push(`${objectPath}.sprite.src must reference a PNG or WebP in /images/adventure/.`);
       }
       for (const dimension of ["width", "height"]) {
         if (!Number.isFinite(sprite[dimension]) || sprite[dimension] <= 0) {
@@ -647,9 +648,9 @@ export function validateAdventureContent(content) {
     }
     if (
       scene.world.artPath !== undefined
-      && (typeof scene.world.artPath !== "string" || !/^\/images\/adventure\/[a-z0-9-]+\.png$/.test(scene.world.artPath))
+      && (typeof scene.world.artPath !== "string" || !/^\/images\/adventure\/[a-z0-9-]+\.(?:png|webp)$/.test(scene.world.artPath))
     ) {
-      errors.push(`scenes.${scene.id}.world.artPath must reference a PNG in /images/adventure/.`);
+      errors.push(`scenes.${scene.id}.world.artPath must reference a PNG or WebP in /images/adventure/.`);
     }
     if (!Number.isInteger(scene.world.spawn?.x) || !Number.isInteger(scene.world.spawn?.y)) {
       errors.push(`scenes.${scene.id}.world.spawn requires integer x and y coordinates.`);

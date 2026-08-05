@@ -39,6 +39,7 @@ import {
 import { ONBOARDING_QUEST_FLAGS } from "./adventureOnboarding.mjs";
 import {
   ELVERSON_PROLOGUE_BEATS,
+  ELVERSON_PROLOGUE_BEDROOM_SCENE_ID,
   ELVERSON_PROLOGUE_HOME_SCENE_ID,
   beginElversonPrologue,
 } from "./adventureElversonPrologue.mjs";
@@ -60,6 +61,7 @@ const SCENE_VISIT_FLAGS = Object.freeze({
 });
 
 const ELVERSON_PLAYER_HOME = SCENES[ELVERSON_PROLOGUE_HOME_SCENE_ID];
+const ELVERSON_PLAYER_BEDROOM = SCENES[ELVERSON_PROLOGUE_BEDROOM_SCENE_ID];
 
 function includeElversonLayoutRecovery(result, layoutMigration) {
   if (!layoutMigration.migrated) return result;
@@ -274,19 +276,19 @@ export function createNewAdventureSession(profileId) {
   );
   const prologue = beginElversonPrologue(introductionPending);
   if (
-    !ELVERSON_PLAYER_HOME
+    !ELVERSON_PLAYER_BEDROOM
     || !canOccupyScenePosition(
-      ELVERSON_PROLOGUE_HOME_SCENE_ID,
-      ELVERSON_PLAYER_HOME.spawn,
+      ELVERSON_PROLOGUE_BEDROOM_SCENE_ID,
+      ELVERSON_PLAYER_BEDROOM.spawn,
     )
   ) {
-    throw new Error("Elverson's player-home opening spawn is unavailable.");
+    throw new Error("Elverson's upstairs-bedroom opening spawn is unavailable.");
   }
   return withWorld(
     prologue.save,
-    ELVERSON_PROLOGUE_HOME_SCENE_ID,
-    ELVERSON_PLAYER_HOME.spawn,
-    "down",
+    ELVERSON_PROLOGUE_BEDROOM_SCENE_ID,
+    ELVERSON_PLAYER_BEDROOM.spawn,
+    ELVERSON_PLAYER_BEDROOM.startFacing ?? "down",
   );
 }
 
@@ -305,14 +307,20 @@ export function recoverElversonAdventureResume(saveValue) {
   const openingStillAtHome = !["legacySkipped", "complete"].includes(
     current.opening.status,
   ) && !openingBeatIds.includes(ELVERSON_PROLOGUE_BEATS.race);
-  if (openingStillAtHome && ELVERSON_PLAYER_HOME) {
-    const homeSave = current.world.sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID
+  if (openingStillAtHome && ELVERSON_PLAYER_HOME && ELVERSON_PLAYER_BEDROOM) {
+    const breakfastComplete = openingBeatIds.includes(ELVERSON_PROLOGUE_BEATS.breakfast);
+    const currentOpeningSceneIsSafe = breakfastComplete
+      ? [ELVERSON_PROLOGUE_BEDROOM_SCENE_ID, ELVERSON_PROLOGUE_HOME_SCENE_ID]
+        .includes(current.world.sceneId)
+      : current.world.sceneId === ELVERSON_PROLOGUE_BEDROOM_SCENE_ID;
+    const openingScene = breakfastComplete ? ELVERSON_PLAYER_HOME : ELVERSON_PLAYER_BEDROOM;
+    const homeSave = currentOpeningSceneIsSafe
       ? current
       : withWorld(
           current,
-          ELVERSON_PROLOGUE_HOME_SCENE_ID,
-          ELVERSON_PLAYER_HOME.spawn,
-          "down",
+          openingScene.id,
+          openingScene.spawn,
+          openingScene.startFacing ?? "down",
         );
     return includeElversonLayoutRecovery(recoverAdventureResume(homeSave), layoutMigration);
   }

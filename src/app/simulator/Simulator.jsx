@@ -52,6 +52,11 @@ import {
 } from "./tutorialContract.mjs";
 import { getSimulatorTutorialConditionHelp, getSimulatorTutorialHelp } from "./tutorialHelp.mjs";
 import {
+  createTutorialFinalRoundMilestone,
+  isTutorialLessonVictory,
+  shouldConfirmTutorialExit,
+} from "./tutorialLessonUx.mjs";
+import {
   createScriptedTutorialScenario,
   getScriptedTutorialDiscardEntries,
   getScriptedTutorialFoundationDrawCardId,
@@ -115,6 +120,16 @@ function shuffle(arr, random = Math.random) {
 
 const defaultDeckId = DEFAULT_SIMULATOR_DECK_ID;
 const CARD_ART_FALLBACK = "/images/brand/SeaPalsTCGLogoWhite.svg";
+const TUTORIAL_HISTORY_GUARD_STATE_KEY = "__reefboundTutorialGuard";
+let tutorialHistoryGuardSequence = 0;
+
+function createTutorialHistoryGuardState(state, token) {
+  const preservedState = state && typeof state === "object" && !Array.isArray(state)
+    ? state
+    : {};
+  return { ...preservedState, [TUTORIAL_HISTORY_GUARD_STATE_KEY]: token };
+}
+
 const SPEARFISHING_FOREIGN_TARGET_CARD_IDS = (cardsById.spearfishing?.effects ?? [])
   .flatMap((effect) => effect.target?.includesOpponentOwnedInvasiveCardIds ?? []);
 
@@ -2152,7 +2167,7 @@ export default function Simulator({
   const tutorialGuide = {
     name: String(tutorialRuntime?.guide?.name ?? "").trim() || "Mr. Easterling",
     role: String(tutorialRuntime?.guide?.role ?? "").trim() || "Aquarium Project Lead",
-    portraitSrc: String(tutorialRuntime?.guide?.portraitSrc ?? "").trim() || "/images/adventure/mr-easterling-portrait-v2.png",
+    portraitSrc: String(tutorialRuntime?.guide?.portraitSrc ?? "").trim() || "/images/adventure/mr-easterling-portrait-v2.webp",
     textSpeed: accessibilityTextSpeed,
     reducedMotion: accessibilityReducedMotion,
   };
@@ -2273,6 +2288,8 @@ export default function Simulator({
   const [attackContext, setAttackContext] = useState(null);
   const [searchContext, setSearchContext] = useState(null);
   const [gameResult, setGameResult] = useState(null);
+  const [tutorialExitConfirmationOpen, setTutorialExitConfirmationOpen] = useState(false);
+  const tutorialHistoryGuardRef = useRef(null);
   const storyResultRecordedRef = useRef(false);
   const openingCoinFlipIdRef = useRef(0);
   const openingCoinFlipActiveRef = useRef(false);
@@ -2724,6 +2741,82 @@ export default function Simulator({
   const schoolDensityConditionIds = [...new Set([activeConditionId, ...persistentConditionIds].filter(Boolean))];
   const playingCard = playingCardId ? cardsById[playingCardId] : null;
   const inspectedCardData = inspectedCard ? cardsById[inspectedCard.cardId] : null;
+  const tutorialLessonWon = isTutorialLessonVictory({
+    tutorialActive: Boolean(tutorialContract && scriptedTutorialScenario),
+    gameResult,
+    playerVp,
+    victoryTarget,
+  });
+  const tutorialCompletionDialogOpen = Boolean(
+    tutorialLessonWon
+    && !eventOverlay
+    && !modal
+    && !inspectedCardData
+    && !attackContext
+    && !searchContext
+    && !pendingCreatureAction
+  );
+  const tutorialExitRequiresConfirmation = shouldConfirmTutorialExit({
+    isStoryMode,
+    tutorialActive: Boolean(tutorialContract && scriptedTutorialScenario),
+    gameResult,
+    initialOverlay: eventOverlay?.initial === true,
+  });
+  useEffect(() => {
+    if (!tutorialExitRequiresConfirmation) return undefined;
+    const warnBeforeLeaving = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    let disposed = false;
+    let historyGuard = null;
+    const installHistoryGuard = () => {
+      if (disposed) return;
+      const token = `reefbound-tutorial-${++tutorialHistoryGuardSequence}`;
+      historyGuard = {
+        token,
+        allowNavigation: false,
+        handlePopState: null,
+      };
+      historyGuard.handlePopState = () => {
+        if (historyGuard.allowNavigation) return;
+        window.history.pushState(
+          createTutorialHistoryGuardState(window.history.state, token),
+          "",
+          window.location.href,
+        );
+        setTutorialExitConfirmationOpen(true);
+      };
+      tutorialHistoryGuardRef.current = historyGuard;
+      window.history.pushState(
+        createTutorialHistoryGuardState(window.history.state, token),
+        "",
+        window.location.href,
+      );
+      window.addEventListener("popstate", historyGuard.handlePopState);
+    };
+    // Deferring the sentinel avoids inserting duplicate entries during React's
+    // development-only effect rehearsal while still guarding the live board.
+    const installTimer = window.setTimeout(installHistoryGuard, 0);
+    return () => {
+      disposed = true;
+      window.clearTimeout(installTimer);
+      window.removeEventListener("beforeunload", warnBeforeLeaving);
+      if (!historyGuard) return;
+      window.removeEventListener("popstate", historyGuard.handlePopState);
+      if (tutorialHistoryGuardRef.current === historyGuard) {
+        tutorialHistoryGuardRef.current = null;
+      }
+      if (
+        !historyGuard.allowNavigation
+        && window.history.state?.[TUTORIAL_HISTORY_GUARD_STATE_KEY] === historyGuard.token
+      ) {
+        historyGuard.allowNavigation = true;
+        window.history.back();
+      }
+    };
+  }, [tutorialExitRequiresConfirmation]);
   const selectedTutorialCard = selectedHandCard ? cardsById[selectedHandCard] : null;
   const inspectedCreatureSlot = inspectedCard?.owner === "player" && inspectedCard.coralId
     ? playerCorals.find((coral) => coral.id === inspectedCard.coralId)?.slots.find((slot) => slot.id === inspectedCard.slotId)
@@ -5314,6 +5407,11 @@ export default function Simulator({
     setFaceoffRolling(false);
     setFaceoffPreview(null);
     commitEventState(eventOverlay);
+    if (eventOverlay?.continueToEndTurn) {
+      setEventOverlay(null);
+      endTurn();
+      return;
+    }
     if (eventOverlay?.continueAttackSequence) {
       setEventOverlay(null);
       return;
@@ -5772,7 +5870,22 @@ export default function Simulator({
         setEventOverlay({ type: "utility-result", sourceCardId: card.id, title: `Player's ${card.name} used Territorial`, message: `${card.name}'s Territorial had no Creature School to target.`, success: false });
       }
     }
-    if (!beganTerritorialChoice && !beganOnPlayDamage && !beganOnPlayAttack && !beganOnPlaySearch && !beganOnPlayDraw && !discardedOpponentDeck && !blockedOpponentSupports) setEventOverlay({ type: "utility-result", sourceCardId: card.id, title: `Player played ${card.name}`, message, success: true });
+    if (!beganTerritorialChoice && !beganOnPlayDamage && !beganOnPlayAttack && !beganOnPlaySearch && !beganOnPlayDraw && !discardedOpponentDeck && !blockedOpponentSupports) {
+      const finalRoundMilestone = createTutorialFinalRoundMilestone({
+        tutorialActive: Boolean(tutorialContract),
+        scriptedLesson: tutorialUsesScriptedScenario,
+        round,
+        cardId: card.id,
+        finishPlan: scriptedFinishPlan,
+      });
+      setEventOverlay(finalRoundMilestone ?? {
+        type: "utility-result",
+        sourceCardId: card.id,
+        title: `Player played ${card.name}`,
+        message,
+        success: true,
+      });
+    }
   }
 
   function playCardFromHand(cardId) {
@@ -10491,6 +10604,7 @@ export default function Simulator({
 
   function restartStoryGame(reason = eventOverlay?.initial ? "begin" : "retry") {
     storyResultRecordedRef.current = false;
+    setTutorialExitConfirmationOpen(false);
     setTutorialHelpDismissedId(null);
     setTutorialBoardTourStep(tutorialContract && tutorialUsesScriptedScenario ? 0 : null);
     if (tutorialContract) {
@@ -10542,6 +10656,40 @@ export default function Simulator({
       return;
     }
     returnToStoryTown("player-exit");
+  }
+
+  function requestStoryExit() {
+    if (tutorialExitRequiresConfirmation) {
+      setTutorialExitConfirmationOpen(true);
+      return;
+    }
+    exitStoryMode();
+  }
+
+  function confirmTutorialExit() {
+    setTutorialExitConfirmationOpen(false);
+    const historyGuard = tutorialHistoryGuardRef.current;
+    if (
+      !historyGuard
+      || window.history.state?.[TUTORIAL_HISTORY_GUARD_STATE_KEY] !== historyGuard.token
+    ) {
+      exitStoryMode();
+      return;
+    }
+
+    historyGuard.allowNavigation = true;
+    let completed = false;
+    let fallbackTimer = null;
+    const completeExit = () => {
+      if (completed) return;
+      completed = true;
+      window.removeEventListener("popstate", completeExit);
+      if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
+      exitStoryMode();
+    };
+    window.addEventListener("popstate", completeExit, { once: true });
+    window.history.back();
+    fallbackTimer = window.setTimeout(completeExit, 500);
   }
 
   function openNewGameSetup() {
@@ -11146,7 +11294,7 @@ export default function Simulator({
             <div>
               <div className="flex items-center gap-3">
                 {isStoryMode ? (
-                  <button type="button" onClick={exitStoryMode} aria-label={`Exit duel and return to ${storyReturnLabel}`} className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
+                  <button type="button" onClick={requestStoryExit} aria-label={`Exit duel and return to ${storyReturnLabel}`} className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
                     <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">{storyReturnLabel}</span>
                   </button>
                 ) : (
@@ -11213,7 +11361,7 @@ export default function Simulator({
                     </button>
                   ) : null}
                   {isStoryMode ? (
-                    <button type="button" onClick={exitStoryMode} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to {storyReturnLabel}</button>
+                    <button type="button" onClick={requestStoryExit} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to {storyReturnLabel}</button>
                   ) : (
                     <>
                       <a href="/adventure" className="mt-1 block rounded-lg bg-cyan-400/10 px-3 py-2 text-sm font-bold text-cyan-100 hover:bg-cyan-300/20">Play Reefbound Story</a>
@@ -11333,7 +11481,7 @@ export default function Simulator({
             </button>
           ) : null}
 
-          {gameResult ? (
+          {gameResult && !tutorialLessonWon ? (
             <div className="mb-4 rounded-2xl border-2 border-amber-400 bg-amber-100 px-6 py-4 text-center text-lg font-black text-amber-950" role="alert">
               <div>{gameResult}</div>
               {isStoryMode ? (
@@ -12121,6 +12269,45 @@ export default function Simulator({
         </div>
       ) : null}
 
+      {tutorialCompletionDialogOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="tutorial-complete-title" aria-describedby="tutorial-complete-description">
+          <div className="w-full max-w-xl rounded-[2rem] border-2 border-amber-300 bg-gradient-to-br from-cyan-950 via-slate-900 to-emerald-950 p-6 text-center text-white shadow-[0_24px_90px_rgba(8,145,178,.45)] sm:p-8">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-amber-200 bg-amber-300 text-3xl font-black text-amber-950 shadow-lg" aria-hidden="true">✓</div>
+            <div className="mt-5 text-xs font-black uppercase tracking-[0.25em] text-amber-200">26 VP Aquarium Reef</div>
+            <h2 id="tutorial-complete-title" className="mt-2 text-3xl font-black sm:text-4xl">Aquarium Lesson Complete</h2>
+            <div className="mx-auto mt-5 w-fit rounded-2xl border border-emerald-300/45 bg-emerald-300/15 px-6 py-3 text-2xl font-black tabular-nums text-emerald-100">
+              {playerVp} of {victoryTarget} VP
+            </div>
+            <p id="tutorial-complete-description" className="mt-5 text-base leading-relaxed text-cyan-50/85">
+              You carried the Whale Shark milestone into the final round, used Deep Sea Fishing to find Hammerhead, and completed the practice reef. Your lesson progress has been recorded.
+            </p>
+            <button type="button" autoFocus onClick={() => returnToStoryTown("duel-complete")} className="mt-7 min-h-12 rounded-full bg-gradient-to-r from-amber-300 to-emerald-300 px-8 py-3 text-base font-black text-slate-950 shadow-lg transition hover:brightness-105 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-amber-200">
+              Finish Lesson &amp; Return
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {tutorialExitConfirmationOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="tutorial-exit-title" aria-describedby="tutorial-exit-description">
+          <div className="w-full max-w-lg rounded-[2rem] border border-cyan-300/45 bg-slate-900 p-6 text-white shadow-2xl sm:p-8">
+            <div className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">Unfinished Aquarium Lesson</div>
+            <h2 id="tutorial-exit-title" className="mt-2 text-2xl font-black sm:text-3xl">Leave the lesson?</h2>
+            <p id="tutorial-exit-description" className="mt-4 text-base leading-relaxed text-slate-200">
+              Your completed lesson skills are saved. The current practice reef and board will restart from setup, so leaving now means you will replay this practice duel when you return.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={confirmTutorialExit} className="min-h-11 rounded-full border border-rose-300/50 px-6 py-2.5 text-sm font-black text-rose-100 transition hover:bg-rose-300/10">
+                Leave &amp; Restart Later
+              </button>
+              <button type="button" autoFocus onClick={() => setTutorialExitConfirmationOpen(false)} className="min-h-11 rounded-full bg-emerald-400 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:bg-emerald-300">
+                Keep Playing
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {eventOverlay ? (
         <div
           className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5"
@@ -12138,7 +12325,7 @@ export default function Simulator({
                 {eventOverlay.defenderCardId ? <img src={cardsById[eventOverlay.defenderCardId]?.image} alt={cardsById[eventOverlay.defenderCardId]?.name} className="h-80 w-full rounded-2xl bg-white object-contain" /> : null}
               </div> : null}
               <div className="flex flex-col justify-center">
-                <div className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">{isOpeningCoinEvent ? "Opening Flip" : "Game Event"}</div>
+                <div className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">{eventOverlay.type === "tutorial-final-round-milestone" ? "Aquarium Lesson Milestone" : isOpeningCoinEvent ? "Opening Flip" : "Game Event"}</div>
                 <h2 id="seapals-event-title" className="mt-2 text-3xl font-black md:text-4xl">{eventOverlay.title}</h2>
                 {!["condition-reveal", "opponent-status"].includes(eventOverlay.type) && eventOverlay.message ? <p id="seapals-event-message" className="mt-4 text-lg text-slate-200">{eventOverlay.message}</p> : null}
                 {eventOverlay.type === OpeningCoinPhase.CALL ? (
@@ -12742,7 +12929,7 @@ export default function Simulator({
                     {eventOverlay.drawnCards?.length ? <div className="mb-5 grid max-h-64 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">{eventOverlay.drawnCards.map((entry, index) => { const card = cardsById[entry.cardId]; return <div key={`${entry.cardId}-${index}`} className={`rounded-xl border p-2 text-center ${entry.discarded ? "border-rose-400 bg-rose-500/10" : "border-cyan-400 bg-cyan-500/10"}`}><img src={card?.image} alt={card?.name} className="h-32 w-full rounded-lg bg-white object-contain" /><div className="mt-1 truncate text-xs font-bold">{card?.name}</div><div className="text-[10px] uppercase text-slate-300">{entry.source}{entry.discarded ? " • discarded" : ""}</div></div>; })}</div> : null}
                     {eventOverlay.repeatDamageCounterAbilityId ? <button type="button" onClick={() => repeatDamageCounterMove(eventOverlay.repeatDamageCounterAbilityId)} className="mr-3 rounded-full bg-violet-600 px-7 py-3 font-black text-white">Move Another Counter</button> : null}
                     <button type="button" onClick={closeEventOverlay} className={`rounded-full px-7 py-3 font-black text-white ${eventOverlay.sourceCardId ? "self-start" : "self-center"} ${eventOverlay.success ? "bg-emerald-500" : "bg-cyan-600"}`}>
-                      Continue
+                      {eventOverlay.continueLabel ?? "Continue"}
                     </button>
                   </div>
                 )}

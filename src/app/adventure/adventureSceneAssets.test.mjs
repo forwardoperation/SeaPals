@@ -31,8 +31,8 @@ test("scene asset collection includes ground, unique layered art, and unique cha
     "/images/adventure/sunpatch-cay.png",
     "/objects/tree.png",
     "/objects/bench.png",
-    "/images/adventure/player-sprites-512-v2.png",
-    "/images/adventure/fisherman-wyeth-sprites-512-v2.png",
+    "/images/adventure/player-sprites-512-v2.webp",
+    "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
   ]);
   assert.equal(Object.isFrozen(paths), true);
   assert.equal(getAdventureCharacterSpriteAssetPath("unknown"), null);
@@ -148,23 +148,26 @@ test("Elverson's town manifest covers its ground, layered objects, and resident 
       "dorian",
     ],
   });
-  assert.equal(paths[0], "/images/adventure/elverson-ground-v3.png");
+  assert.equal(paths[0], "/images/adventure/elverson-ground-v3.webp");
   assert.equal(SCENES.town.layeredObjects.length, 9);
   for (const { sprite } of SCENES.town.layeredObjects) {
     assert.ok(paths.includes(sprite.src), `${sprite.src} must be preloaded`);
   }
   for (const residentPath of [
-    "/images/adventure/player-sprites-512-v2.png",
-    "/images/adventure/fisherman-wyeth-sprites-512-v2.png",
-    "/images/adventure/town-adult-sprites-512-v2.png",
-    "/images/adventure/dorian-sprites-512-v2.png",
+    "/images/adventure/player-sprites-512-v2.webp",
+    "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
+    "/images/adventure/town-adult-sprites-512-v2.webp",
+    "/images/adventure/dorian-sprites-512-v2.webp",
   ]) {
     assert.ok(paths.includes(residentPath), `${residentPath} must be preloaded`);
   }
-  assert.ok(!paths.includes("/images/adventure/explorer-jordan-sprites-512-v2.png"));
   assert.ok(
-    paths.includes("/images/adventure/mr-easterling-sprites-627-v3.png"),
-    "the progression-staged academy mentor should be preloaded even though he is not authored",
+    paths.includes("/images/adventure/explorer-jordan-sprites-512-v2.webp"),
+    "the dock-speech crowd profiles should be preloaded while the player explores town",
+  );
+  assert.ok(
+    paths.includes("/images/adventure/mr-easterling-sprites-627-v3.webp"),
+    "the progression-staged dock speaker should be preloaded even though he is not authored",
   );
   assert.equal(paths.length, new Set(paths).size);
 });
@@ -190,7 +193,16 @@ test("AdventureGame warms interior destinations and reuses the cached promise wi
   assert.match(component, /createAdventureSceneAssetPreloader/);
   assert.match(component, /scene\.kind !== "interior"/);
   assert.match(component, /getAdventureInteriorDestinationSceneIds\(scene\)/);
+  assert.match(component, /await preloadAdventureSceneAssets\(scene\)/);
+  assert.match(component, /connection\?\.saveData === true/);
+  assert.match(component, /connection\?\.effectiveType === "2g"/);
   assert.match(component, /preloadAdventureSceneAssets\(SCENES\[destinationSceneId\]\)/);
   assert.match(component, /const artworkReady = preloadAdventureSceneAssets\(SCENES\[candidate\.targetScene\]\)/);
   assert.match(component, /Promise\.race\(\[[\s\S]*?pending\.artworkReady[\s\S]*?window\.setTimeout\(resolve, 600\)/);
+});
+
+test("the full simulator is deferred until the player launches a duel", () => {
+  const component = readFileSync(new URL("./AdventureGame.jsx", import.meta.url), "utf8");
+  assert.match(component, /dynamic\(\(\) => import\("@\/app\/simulator\/Simulator"\)/);
+  assert.doesNotMatch(component, /import Simulator from "@\/app\/simulator\/Simulator"/);
 });
