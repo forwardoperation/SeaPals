@@ -181,6 +181,27 @@ test("full facade footprints are solid while each front approach remains open", 
   }
 });
 
+test("the aquarium's visible door remains reachable from the public pier", () => {
+  const portal = ELVERSON_TOWN_PORTALS.find(({ objectId }) => objectId === "aquarium-workshop");
+  assert.ok(portal);
+  assert.deepEqual(portal.at, { x: 26, y: 22.55 });
+  assert.deepEqual(portal.doorway, { x: 24.22, y: 21.35 });
+
+  walkAxisRoute([
+    { x: 20, y: 21.45 },
+    { x: 20, y: 22 },
+    { x: portal.exteriorSpawn.x, y: 22 },
+    portal.exteriorSpawn,
+  ]);
+
+  const doorwayApproach = { x: portal.doorway.x, y: portal.doorway.y + 0.73 };
+  assert.equal(canOccupyContinuousPosition("town", doorwayApproach), true);
+  assert.equal(
+    getDoorwayTransition("town", doorwayApproach, "up")?.interactionId,
+    portal.id,
+  );
+});
+
 test("the wharf and aquarium platforms connect to town without opening the surrounding sea", () => {
   walkAxisRoute([
     ELVERSON_TOWN_SAFE_POSITIONS.townStart,
@@ -191,7 +212,7 @@ test("the wharf and aquarium platforms connect to town without opening the surro
   walkAxisRoute([
     { x: 20, y: 21.45 },
     { x: 20, y: 22 },
-    { x: 25.55, y: 22 },
+    { x: 24.22, y: 22 },
     ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
   ]);
 

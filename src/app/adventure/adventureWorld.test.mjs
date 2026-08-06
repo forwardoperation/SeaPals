@@ -685,7 +685,7 @@ test("Elverson exposes the v3 town start, route dock, and every semantic safe po
     supplyCompanyExterior: { x: 37.5, y: 16.45 },
     wharfApproach: { x: 14.55, y: 21.45 },
     handNetCove: { x: 15.15, y: 21.65 },
-    aquariumExterior: { x: 25.55, y: 22.2 },
+    aquariumExterior: { x: 24.22, y: 22.2 },
   });
   assert.deepEqual(SCENES.town.spawn, ELVERSON_TOWN_SAFE_POSITIONS.townStart);
   assert.deepEqual(START_STATE, {

@@ -143,6 +143,18 @@ test("Elverson ships one complete mobile WebP atlas for hand-net and Aquarium cr
   assert.ok(webp.asset.byteLength < 180_000, "the atlas must remain mobile-sized");
 });
 
+test("the hand-net player atlas ships seven complete poses for four isometric facings", async () => {
+  const artPath = "/images/adventure/player-hand-net-isometric-v1.png";
+  const png = await readFile(publicAssetPath(artPath));
+  const metadata = await sharp(png).metadata();
+
+  assert.equal(png.subarray(0, 8).toString("hex"), PNG_SIGNATURE);
+  assert.equal(metadata.width, 2_464, "seven 352px animation cells");
+  assert.equal(metadata.height, 1_024, "four 256px facing rows");
+  assert.equal(metadata.hasAlpha, true, "the integrated player and net must retain transparency");
+  assert.ok(png.byteLength < 1_500_000, "the lossless animation atlas must remain practical on mobile");
+});
+
 test("Elverson ships distinct transparent GBA-style resident walk sheets", async () => {
   const spriteAssets = [
     "/images/adventure/fisherman-wyeth-sprites.png",

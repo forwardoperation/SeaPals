@@ -14,6 +14,15 @@ export const HAND_NET_ACTIONS = Object.freeze({
   SCOOP: "scoop",
 });
 
+export const HAND_NET_SCOOP_PHASES = Object.freeze({
+  IDLE: "idle",
+  WINDUP: "windup",
+  SWING: "swing",
+  IMPACT: "impact",
+  RECOVERY: "recovery",
+  COMPLETE: "complete",
+});
+
 const PHASE_SET = new Set(Object.values(HAND_NET_PHASES));
 const ARENA = Object.freeze({ width: 12, height: 8 });
 const PLAYER_BOUNDS = Object.freeze({ left: 0.4, top: 2, right: 11.6, bottom: 7.05 });
@@ -115,10 +124,24 @@ function creatureSpeed(creature, { reducedMotion, assisted }) {
 
 function netPosition(player, reach) {
   const facing = normalized(player.facing);
+  const landingDirection = normalized({
+    x: (facing.x < 0 ? -1 : 1),
+    // The authored isometric atlas lands lower in front-facing rows and just
+    // above the player's feet in rear-facing rows. This is the same vector
+    // used for collision, so the invisible hitbox follows the painted hoop.
+    y: facing.y < 0 ? -0.1 : 0.41,
+  });
   return {
-    x: clamp(player.position.x + facing.x * reach, 0.15, ARENA.width - 0.15),
-    y: clamp(player.position.y + facing.y * reach, 0.15, ARENA.height - 0.15),
+    x: clamp(player.position.x + landingDirection.x * reach, 0.15, ARENA.width - 0.15),
+    y: clamp(player.position.y + landingDirection.y * reach, 0.15, ARENA.height - 0.15),
   };
+}
+
+function isometricFacing(intent, currentFacing) {
+  return normalized({
+    x: Math.abs(intent.x) > EPSILON ? Math.sign(intent.x) : (currentFacing.x < 0 ? -1 : 1),
+    y: Math.abs(intent.y) > EPSILON ? Math.sign(intent.y) : (currentFacing.y < 0 ? -1 : 1),
+  });
 }
 
 function initialSchool(count, cursor, settings, requiredCreatureId) {
@@ -169,7 +192,11 @@ function createSettings({ assisted = false, reducedMotion = false } = {}) {
     alertGainPerSecond: assisted ? 0.58 : 1.75,
     fastApproachSpeed: assisted ? 1.15 : 0.68,
     netRadius: assisted ? 0.7 : 0.45,
-    scoopWindowMs: assisted ? 360 : 180,
+    scoopAnimationMs: 700,
+    scoopWindupEndMs: 240,
+    scoopContactMs: 440,
+    scoopRecoveryStartMs: 500,
+    scoopContactWindowMs: SIMULATION_STEP_MS,
     cooldownMs: assisted ? 280 : 440,
     missAlert: assisted ? 0.07 : 0.18,
     motionScale: reducedMotion ? 0.48 : 1,
@@ -200,7 +227,7 @@ export function createHandNetState({
   const settings = createSettings({ assisted, reducedMotion });
   const cursor = { state: seed >>> 0 };
   const player = {
-    position: { x: ARENA.width / 2, y: 6.65 },
+    position: { x: ARENA.width / 2, y: 5.72 },
     intent: { x: 0, y: 0 },
     velocity: { x: 0, y: 0 },
     facing: { x: Math.SQRT1_2, y: -Math.SQRT1_2 },
@@ -223,6 +250,7 @@ export function createHandNetState({
       radius: settings.netRadius,
       scoopRemainingMs: 0,
       cooldownRemainingMs: 0,
+      contactedCreatureId: null,
     },
     creatures: initialSchool(creatureCount, cursor, settings, requiredCreatureId),
     scoopCount: 0,
@@ -233,6 +261,13 @@ export function createHandNetState({
       waveMotion: !reducedMotion,
       motionScale: settings.motionScale,
       netImpact: null,
+      scoopPhase: HAND_NET_SCOOP_PHASES.IDLE,
+      scoopElapsedMs: 0,
+      scoopDurationMs: settings.scoopAnimationMs,
+      scoopProgress: 0,
+      scoopPhaseProgress: 0,
+      scoopFrameIndex: 0,
+      scoopHitboxActive: false,
     },
   };
   state.rngState = cursor.state;
@@ -294,7 +329,7 @@ export function applyHandNetAction(stateValue, action) {
     const intent = normalizedIntent(action.x, action.y);
     const next = cloneState(state);
     next.player.intent = intent;
-    if (magnitude(intent) > EPSILON) next.player.facing = normalized(intent);
+    if (magnitude(intent) > EPSILON) next.player.facing = isometricFacing(intent, next.player.facing);
     next.net.position = netPosition(next.player, next.net.reach);
     return deepFreeze(next);
   }
@@ -308,12 +343,17 @@ export function applyHandNetAction(stateValue, action) {
   if (action.type === HAND_NET_ACTIONS.SCOOP) {
     if (state.net.scoopRemainingMs > 0 || state.net.cooldownRemainingMs > 0) return state;
     const next = cloneState(state);
-    next.net.scoopRemainingMs = state.settings.scoopWindowMs;
+    next.net.scoopRemainingMs = state.settings.scoopAnimationMs;
+    next.net.contactedCreatureId = null;
     next.scoopCount += 1;
-    next.presentation.netImpact = {
-      sequence: next.scoopCount,
-      position: copyPoint(next.net.position),
-    };
+    next.presentation.netImpact = null;
+    next.presentation.scoopPhase = HAND_NET_SCOOP_PHASES.WINDUP;
+    next.presentation.scoopElapsedMs = 0;
+    next.presentation.scoopDurationMs = state.settings.scoopAnimationMs;
+    next.presentation.scoopProgress = 0;
+    next.presentation.scoopPhaseProgress = 0;
+    next.presentation.scoopFrameIndex = 3;
+    next.presentation.scoopHitboxActive = false;
     next.lastEvent = { type: "scoop-started", atMs: next.simulationTimeMs };
     return deepFreeze(next);
   }
@@ -336,7 +376,7 @@ function updatePlayer(state, elapsedSeconds) {
     PLAYER_BOUNDS.top,
     PLAYER_BOUNDS.bottom,
   );
-  if (magnitude(intent) > EPSILON) state.player.facing = normalized(intent);
+  if (magnitude(intent) > EPSILON) state.player.facing = isometricFacing(intent, state.player.facing);
   state.net.position = netPosition(state.player, state.net.reach);
 }
 
@@ -456,6 +496,7 @@ function finishCatch(state, creature) {
   state.player.velocity = { x: 0, y: 0 };
   state.net.scoopRemainingMs = 0;
   state.net.cooldownRemainingMs = 0;
+  state.net.contactedCreatureId = null;
   state.outcome = {
     type: "caught",
     creatureId: creature.id,
@@ -467,6 +508,7 @@ function finishCatch(state, creature) {
 }
 
 function finishEscapeIfNeeded(state) {
+  if (state.net.scoopRemainingMs > 0 || state.net.contactedCreatureId) return;
   if (state.creatures.some(({ status }) => status === "wandering" || status === "fleeing")) return;
   const speciesIds = state.creatures.map(({ speciesId }) => speciesId);
   state.phase = HAND_NET_PHASES.ESCAPED;
@@ -484,6 +526,7 @@ function finishEscapeIfNeeded(state) {
 function finishMiss(state) {
   state.net.scoopRemainingMs = 0;
   state.net.cooldownRemainingMs = state.settings.cooldownMs;
+  state.net.contactedCreatureId = null;
   state.missCount += 1;
   for (const creature of state.creatures) {
     if (creature.status !== "wandering" || creatureDistanceToNet(state, creature) > 2.25) continue;
@@ -493,21 +536,114 @@ function finishMiss(state) {
   state.lastEvent = { type: "scoop-missed", atMs: state.simulationTimeMs };
 }
 
-function updateNet(state, elapsedMs) {
-  state.net.cooldownRemainingMs = Math.max(0, state.net.cooldownRemainingMs - elapsedMs);
-  if (state.net.scoopRemainingMs <= 0) return;
+function progressBetween(value, start, end) {
+  if (end <= start) return 1;
+  return clamp((value - start) / (end - start), 0, 1);
+}
 
-  const caught = state.creatures.find((creature) => (
-    creature.status === "wandering"
-    && creatureDistanceToNet(state, creature) <= state.net.radius + creature.radius * 0.5
-  ));
-  if (caught) {
-    finishCatch(state, caught);
+function updateScoopPresentation(state, elapsedMs, contactActive) {
+  const durationMs = state.settings.scoopAnimationMs;
+  const windupEndMs = state.settings.scoopWindupEndMs;
+  const contactMs = state.settings.scoopContactMs;
+  const recoveryStartMs = state.settings.scoopRecoveryStartMs;
+  let phase;
+  let phaseProgress;
+  let frameIndex;
+  if (elapsedMs >= durationMs) {
+    phase = HAND_NET_SCOOP_PHASES.COMPLETE;
+    phaseProgress = 1;
+    frameIndex = 6;
+  } else if (elapsedMs >= recoveryStartMs) {
+    phase = HAND_NET_SCOOP_PHASES.RECOVERY;
+    phaseProgress = progressBetween(elapsedMs, recoveryStartMs, durationMs);
+    frameIndex = 6;
+  } else if (elapsedMs >= contactMs) {
+    phase = HAND_NET_SCOOP_PHASES.IMPACT;
+    phaseProgress = progressBetween(elapsedMs, contactMs, recoveryStartMs);
+    frameIndex = 5;
+  } else if (elapsedMs >= windupEndMs) {
+    phase = HAND_NET_SCOOP_PHASES.SWING;
+    phaseProgress = progressBetween(elapsedMs, windupEndMs, contactMs);
+    frameIndex = 4;
+  } else {
+    phase = HAND_NET_SCOOP_PHASES.WINDUP;
+    phaseProgress = progressBetween(elapsedMs, 0, windupEndMs);
+    frameIndex = 3;
+  }
+  state.presentation.scoopPhase = phase;
+  state.presentation.scoopElapsedMs = elapsedMs;
+  state.presentation.scoopDurationMs = durationMs;
+  state.presentation.scoopProgress = progressBetween(elapsedMs, 0, durationMs);
+  state.presentation.scoopPhaseProgress = phaseProgress;
+  state.presentation.scoopFrameIndex = frameIndex;
+  state.presentation.scoopHitboxActive = contactActive;
+}
+
+function resetCompletedScoopPresentation(state) {
+  state.presentation.scoopPhase = HAND_NET_SCOOP_PHASES.IDLE;
+  state.presentation.scoopElapsedMs = 0;
+  state.presentation.scoopProgress = 0;
+  state.presentation.scoopPhaseProgress = 0;
+  state.presentation.scoopFrameIndex = 0;
+  state.presentation.scoopHitboxActive = false;
+}
+
+function updateNet(state, elapsedMs) {
+  const previousCooldownMs = state.net.cooldownRemainingMs;
+  state.net.cooldownRemainingMs = Math.max(0, previousCooldownMs - elapsedMs);
+  if (state.net.scoopRemainingMs <= 0) {
+    if (
+      previousCooldownMs > 0
+      && state.net.cooldownRemainingMs === 0
+      && state.presentation.scoopPhase === HAND_NET_SCOOP_PHASES.COMPLETE
+    ) resetCompletedScoopPresentation(state);
     return;
   }
 
-  state.net.scoopRemainingMs = Math.max(0, state.net.scoopRemainingMs - elapsedMs);
-  if (state.net.scoopRemainingMs === 0) finishMiss(state);
+  const elapsedBeforeStep = state.settings.scoopAnimationMs - state.net.scoopRemainingMs;
+  const scoopElapsedMs = Math.min(
+    state.settings.scoopAnimationMs,
+    elapsedBeforeStep + elapsedMs,
+  );
+  const contactActive = elapsedBeforeStep < state.settings.scoopContactMs
+    && scoopElapsedMs >= state.settings.scoopContactMs
+    && !state.net.contactedCreatureId;
+  state.net.scoopRemainingMs = Math.max(0, state.settings.scoopAnimationMs - scoopElapsedMs);
+  updateScoopPresentation(state, scoopElapsedMs, contactActive);
+
+  if (
+    contactActive
+    && !state.presentation.netImpact
+  ) {
+    state.presentation.netImpact = {
+      sequence: state.scoopCount,
+      position: copyPoint(state.net.position),
+    };
+  }
+
+  if (state.presentation.scoopHitboxActive) {
+    const caught = state.creatures.find((creature) => (
+      creature.status === "wandering"
+      && creatureDistanceToNet(state, creature) <= state.net.radius + creature.radius * 0.5
+    ));
+    if (caught) {
+      caught.status = "caught";
+      state.net.contactedCreatureId = caught.id;
+      state.lastEvent = {
+        type: "creature-netted",
+        creatureId: caught.id,
+        speciesId: caught.speciesId,
+        atMs: state.simulationTimeMs,
+      };
+    }
+  }
+
+  if (state.net.scoopRemainingMs > 0) return;
+  const contacted = state.net.contactedCreatureId
+    ? state.creatures.find(({ id }) => id === state.net.contactedCreatureId)
+    : null;
+  if (contacted) finishCatch(state, contacted);
+  else finishMiss(state);
 }
 
 function simulationStep(state) {
