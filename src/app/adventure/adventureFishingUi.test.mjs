@@ -30,10 +30,35 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(modal, /creature\.alert > 0\.35/);
   assert.match(modal, /Scoop net/);
   assert.match(modal, /Move slowly through the shallows/);
+  assert.match(modal, /ELVERSON_HAND_NET_TIDEPOOL_PATH/);
+  assert.match(modal, /playerSpriteArtwork/);
+  assert.match(modal, /handNetHandle/);
+  assert.match(modal, /handNetToolHud/);
+  assert.match(modal, /handNetCatchTray/);
+  assert.match(modal, /--hand-net-player-x/);
+  assert.match(modal, /--hand-net-player-y/);
+  assert.match(modal, /--hand-net-player-velocity-x/);
+  assert.match(modal, /--hand-net-player-velocity-y/);
+  assert.match(modal, /--hand-net-player-speed-ratio/);
+  assert.match(modal, /handNetCaustics/);
+  assert.match(modal, /handNetCausticWake/);
+  assert.match(modal, /data-hand-net-effect="surface-caustics" aria-hidden="true"/);
+  assert.match(modal, /data-hand-net-effect="wading-wake" aria-hidden="true"/);
+  assert.match(modal, /state\.presentation\.netImpact/);
+  assert.match(modal, /key=\{`\$\{seedRef\.current\}-\$\{netSplash\.sequence\}`\}/);
+  assert.match(modal, /handNetNetSplashActive/);
+  assert.match(modal, /data-hand-net-effect="net-splash"/);
+  assert.match(game, /preloadAdventureAsset\(ELVERSON_HAND_NET_TIDEPOOL_PATH\)/);
   assert.match(styles, /\.handNetShallows[\s\S]*?aspect-ratio:\s*3 \/ 2/);
+  assert.match(styles, /var\(--hand-net-tidepool-image\)/);
   assert.match(styles, /\.handNetCreature[\s\S]*?background-size:\s*500% 200%/);
   assert.match(styles, /@keyframes handNetWaveDrift/);
   assert.match(styles, /@keyframes handNetScoop/);
+  assert.match(styles, /\.handNetCaustics[\s\S]*?pointer-events:\s*none/);
+  assert.match(styles, /\.handNetCausticWake[\s\S]*?var\(--hand-net-player-motion-angle\)/);
+  assert.match(styles, /\.handNetNetSplash[\s\S]*?pointer-events:\s*none/);
+  assert.match(styles, /@keyframes handNetCausticsDrift/);
+  assert.match(styles, /@keyframes handNetSplashFlash/);
 });
 
 test("the required tutorial stays with the player until a catch is recorded", () => {
@@ -47,6 +72,10 @@ test("the required tutorial stays with the player until a catch is recorded", ()
 
 test("Wyeth visibly leads a locked-input predetermined walk to the sandy cove", () => {
   assert.match(game, /createGuidedWalkPlan\(\{[\s\S]*?path: ELVERSON_WYETH_HAND_NET_PATH\.leader/);
+  assert.match(game, /followerPath: ELVERSON_WYETH_HAND_NET_PATH\.follower/);
+  assert.match(game, /advanceGuidedWalkClock\(/);
+  assert.match(game, /completionFallbackMs/);
+  assert.doesNotMatch(game, /startedAt: performance\.now\(\)/);
   assert.match(game, /sampleGuidedWalk\(/);
   assert.match(game, /FISHERMAN_WYETH_INTERACTION_ID/);
   assert.match(game, /position: \{ \.\.\.sample\.leader\.position \}/);
@@ -68,6 +97,8 @@ test("keyboard, touch, focus, live status, and reduced-motion affordances are ex
   assert.match(modal, /Gentle guidance: \{assistedMode \? "On" : "Off"\}/);
   assert.match(styles, /\.reducedMotionMode \.handNetWave,[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.handNetCreature/);
+  assert.match(styles, /\.reducedMotionMode \.handNetCaustics[\s\S]*?animation:\s*none !important/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.handNetNetSplash::before/);
   assert.match(styles, /@media \(forced-colors: active\)[\s\S]*?\.handNetCard/);
 });
 

@@ -155,7 +155,10 @@ test("assisted mode gives a wider net, longer scoop, and a calmer approach respo
   const standard = createHandNetState({ seed: 8, creatureCount: 1 });
   const assisted = createHandNetState({ seed: 8, creatureCount: 1, assisted: true });
   assert.ok(assisted.net.radius > standard.net.radius);
+  assert.ok(assisted.net.reach > standard.net.reach);
+  assert.ok(standard.net.reach >= 1.4);
   assert.ok(assisted.settings.scoopWindowMs > standard.settings.scoopWindowMs);
+  assert.ok(assisted.settings.cooldownMs < standard.settings.cooldownMs);
   assert.ok(assisted.settings.alertThreshold > standard.settings.alertThreshold);
 
   const standardApproach = tickHandNetState(applyHandNetAction(
@@ -180,6 +183,12 @@ test("the active scoop window catches a creature and reports its matching card",
 
   assert.equal(scooping.net.scoopRemainingMs, scooping.settings.scoopWindowMs);
   assert.equal(scooping.scoopCount, 1);
+  assert.deepEqual(scooping.presentation.netImpact, {
+    sequence: 1,
+    position: initial.net.position,
+  });
+  assert.ok(Object.isFrozen(scooping.presentation.netImpact));
+  assert.ok(Object.isFrozen(scooping.presentation.netImpact.position));
   assert.equal(scooping.phase, HAND_NET_PHASES.PLAYING);
 
   const caught = tickHandNetState(scooping, 20);
@@ -206,13 +215,24 @@ test("an empty scoop expires briefly, records the miss, and alerts nearby creatu
 
   assert.equal(almostFinished.net.scoopRemainingMs, 20);
   assert.equal(missed.net.scoopRemainingMs, 0);
-  assert.ok(missed.net.cooldownRemainingMs > 0);
+  assert.equal(missed.net.cooldownRemainingMs, missed.settings.cooldownMs);
   assert.equal(missed.missCount, 1);
   assert.equal(missed.lastEvent.type, "scoop-missed");
   assert.ok(missed.creatures[0].alert > 0);
 
   const blockedRepeat = applyHandNetAction(missed, { type: HAND_NET_ACTIONS.SCOOP });
   assert.strictEqual(blockedRepeat, missed);
+
+  const firstImpact = started.presentation.netImpact;
+  const readyAgain = tickHandNetState(missed, missed.settings.cooldownMs);
+  const repeated = applyHandNetAction(readyAgain, { type: HAND_NET_ACTIONS.SCOOP });
+  assert.equal(repeated.scoopCount, 2);
+  assert.deepEqual(repeated.presentation.netImpact, {
+    sequence: 2,
+    position: readyAgain.net.position,
+  });
+  assert.notStrictEqual(repeated.presentation.netImpact, firstImpact);
+  assert.deepEqual(started.presentation.netImpact, firstImpact);
 });
 
 test("reduced-motion mode slows simulation movement while keeping catch outcomes playable", () => {

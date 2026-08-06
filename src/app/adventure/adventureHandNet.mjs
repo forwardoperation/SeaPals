@@ -16,7 +16,7 @@ export const HAND_NET_ACTIONS = Object.freeze({
 
 const PHASE_SET = new Set(Object.values(HAND_NET_PHASES));
 const ARENA = Object.freeze({ width: 12, height: 8 });
-const PLAYER_BOUNDS = Object.freeze({ left: 0.4, top: 2, right: 11.6, bottom: 7.55 });
+const PLAYER_BOUNDS = Object.freeze({ left: 0.4, top: 2, right: 11.6, bottom: 7.05 });
 const CREATURE_BOUNDS = Object.freeze({ left: 0.45, top: 0.65, right: 11.55, bottom: 6.45 });
 const ESCAPE_BOUNDS = Object.freeze({ left: -0.25, top: 0.2, right: 12.25, bottom: 7.8 });
 const SIMULATION_STEP_MS = 20;
@@ -168,8 +168,9 @@ function createSettings({ assisted = false, reducedMotion = false } = {}) {
     alertThreshold: assisted ? 0.92 : 0.72,
     alertGainPerSecond: assisted ? 0.58 : 1.75,
     fastApproachSpeed: assisted ? 1.15 : 0.68,
-    netRadius: assisted ? 0.82 : 0.54,
+    netRadius: assisted ? 0.7 : 0.45,
     scoopWindowMs: assisted ? 360 : 180,
+    cooldownMs: assisted ? 280 : 440,
     missAlert: assisted ? 0.07 : 0.18,
     motionScale: reducedMotion ? 0.48 : 1,
   };
@@ -199,13 +200,13 @@ export function createHandNetState({
   const settings = createSettings({ assisted, reducedMotion });
   const cursor = { state: seed >>> 0 };
   const player = {
-    position: { x: ARENA.width / 2, y: 7.15 },
+    position: { x: ARENA.width / 2, y: 6.65 },
     intent: { x: 0, y: 0 },
     velocity: { x: 0, y: 0 },
-    facing: { x: 0, y: -1 },
+    facing: { x: Math.SQRT1_2, y: -Math.SQRT1_2 },
     speed: (assisted ? 2.25 : 2.6) * (reducedMotion ? 0.72 : 1),
   };
-  const reach = assisted ? 0.72 : 0.62;
+  const reach = assisted ? 1.55 : 1.4;
   const state = {
     version: HAND_NET_STATE_VERSION,
     phase: HAND_NET_PHASES.PLAYING,
@@ -231,6 +232,7 @@ export function createHandNetState({
     presentation: {
       waveMotion: !reducedMotion,
       motionScale: settings.motionScale,
+      netImpact: null,
     },
   };
   state.rngState = cursor.state;
@@ -257,7 +259,15 @@ function cloneState(state) {
     })),
     outcome: state.outcome ? { ...state.outcome, speciesIds: state.outcome.speciesIds?.slice() } : null,
     lastEvent: state.lastEvent ? { ...state.lastEvent } : null,
-    presentation: { ...state.presentation },
+    presentation: {
+      ...state.presentation,
+      netImpact: state.presentation.netImpact
+        ? {
+            ...state.presentation.netImpact,
+            position: copyPoint(state.presentation.netImpact.position),
+          }
+        : null,
+    },
   };
 }
 
@@ -300,6 +310,10 @@ export function applyHandNetAction(stateValue, action) {
     const next = cloneState(state);
     next.net.scoopRemainingMs = state.settings.scoopWindowMs;
     next.scoopCount += 1;
+    next.presentation.netImpact = {
+      sequence: next.scoopCount,
+      position: copyPoint(next.net.position),
+    };
     next.lastEvent = { type: "scoop-started", atMs: next.simulationTimeMs };
     return deepFreeze(next);
   }
@@ -352,8 +366,8 @@ function makeCreatureFlee(state, creature) {
 function updateCreatureAlert(state, creature, elapsedSeconds) {
   if (creature.status !== "wandering") return;
   const offset = {
-    x: creature.position.x - state.net.position.x,
-    y: creature.position.y - state.net.position.y,
+    x: creature.position.x - state.player.position.x,
+    y: creature.position.y - state.player.position.y,
   };
   const distance = magnitude(offset);
   const toward = normalized(offset);
@@ -469,7 +483,7 @@ function finishEscapeIfNeeded(state) {
 
 function finishMiss(state) {
   state.net.scoopRemainingMs = 0;
-  state.net.cooldownRemainingMs = state.settings.assisted ? 280 : 440;
+  state.net.cooldownRemainingMs = state.settings.cooldownMs;
   state.missCount += 1;
   for (const creature of state.creatures) {
     if (creature.status !== "wandering" || creatureDistanceToNet(state, creature) > 2.25) continue;

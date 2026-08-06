@@ -26,7 +26,9 @@ import {
   getLayeredSceneObjectStyle,
   getLayeredSceneZIndex,
 } from "./adventureLayeredScene.mjs";
-import AdventureHandNetModal from "./AdventureHandNetModal";
+import AdventureHandNetModal, {
+  ELVERSON_HAND_NET_TIDEPOOL_PATH,
+} from "./AdventureHandNetModal";
 import {
   ELVERSON_AQUARIUM_SCENE_ID,
   ELVERSON_REEF_CREATURE_ATLAS_PATH,
@@ -129,6 +131,7 @@ import {
   ELVERSON_WYETH_HAND_NET_PATH,
 } from "./adventureElversonTownLayout.mjs";
 import {
+  advanceGuidedWalkClock,
   createGuidedWalkPlan,
   sampleGuidedWalk,
 } from "./adventureGuidedWalk.mjs";
@@ -2609,6 +2612,7 @@ export default function AdventureGame({
   const movementIntentReleaseTimersRef = useRef(new Map());
   const boatMotionRef = useRef(null);
   const actorRuntimeRef = useRef(actorRuntime);
+  const guidedWalkClockRef = useRef(null);
   const movementActiveRef = useRef(false);
   const movementPausedRef = useRef(true);
   const interactRef = useRef(null);
@@ -3177,8 +3181,10 @@ export default function AdventureGame({
   const startElversonHandNetGuidedWalk = useCallback((sourceSave) => {
     if (!sourceSave || sourceSave.world.sceneId !== "town") return false;
     void preloadAdventureAsset(ELVERSON_REEF_CREATURE_ATLAS_PATH);
+    void preloadAdventureAsset(ELVERSON_HAND_NET_TIDEPOOL_PATH);
     const plan = createGuidedWalkPlan({
       path: ELVERSON_WYETH_HAND_NET_PATH.leader,
+      followerPath: ELVERSON_WYETH_HAND_NET_PATH.follower,
       speed: 1.75,
       followerDelayMs: 520,
       reducedMotion: effectiveReducedMotion,
@@ -3186,26 +3192,23 @@ export default function AdventureGame({
     });
     const initialSample = sampleGuidedWalk(plan, 0);
     clearMovement();
+    guidedWalkClockRef.current = null;
     setGuidedWalkSample(initialSample);
     setGuidedWalk({
       id: "wyeth-hand-net-cove",
       plan,
-      startedAt: performance.now(),
       sourceProfileId: sourceSave.profileId,
     });
     return true;
   }, [clearMovement, effectiveReducedMotion, preloadAdventureAsset]);
 
   useEffect(() => {
-    if (!guidedWalk || !pageVisible || screen !== "playing") return undefined;
+    if (!guidedWalk || screen !== "playing") return undefined;
     let animationFrame = 0;
+    let completionTimer = 0;
     let finished = false;
-    const advance = (timestamp) => {
-      if (finished) return;
-      const sample = sampleGuidedWalk(
-        guidedWalk.plan,
-        Math.max(0, timestamp - guidedWalk.startedAt),
-      );
+
+    const applySample = (sample) => {
       setGuidedWalkSample(sample);
 
       const currentSave = saveRef.current;
@@ -3247,35 +3250,75 @@ export default function AdventureGame({
         actorRuntimeRef.current = nextRuntime;
         setActorRuntime(nextRuntime);
       }
+    };
 
-      if (!sample.complete) {
-        animationFrame = window.requestAnimationFrame(advance);
-        return;
-      }
-
+    const finishWalk = (sample) => {
+      if (finished) return;
+      applySample(sample);
       finished = true;
-      const arrivedSave = saveRef.current;
-      if (arrivedSave) {
-        setDirty(true);
-        persistSave(arrivedSave, { checkpointId: "elverson-hand-net-guided-walk-complete" });
-      }
+      guidedWalkClockRef.current = null;
+
       const resetRuntime = { sceneId: "town", actors: anchoredActorStates };
       actorRuntimeRef.current = resetRuntime;
       setActorRuntime(resetRuntime);
+      // Release the movement lock and open the required lesson before saving.
+      // A storage failure must never strand the player in the escort state.
       setGuidedWalk(null);
       setGuidedWalkSample(null);
       setFishingSession({ ...ELVERSON_FISHING_TUTORIAL_SESSION });
+
+      const arrivedSave = saveRef.current;
+      if (arrivedSave) {
+        setDirty(true);
+        try {
+          const saveResult = persistSave(arrivedSave, {
+            checkpointId: "elverson-hand-net-guided-walk-complete",
+          });
+          if (!saveResult?.ok) return;
+        } catch (error) {
+          setSaveNotice({
+            kind: "error",
+            message: `You reached the sandy cove, but the arrival checkpoint could not save: ${error?.message ?? "unknown storage error"}.`,
+          });
+          return;
+        }
+      }
       setSaveNotice({
         kind: "info",
         message: "You followed Wyeth to the sandy cove. Move gently and make one safe hand-net catch.",
       });
     };
+
+    const advance = (timestamp) => {
+      if (finished) return;
+      const clock = advanceGuidedWalkClock(
+        guidedWalk.plan,
+        guidedWalkClockRef.current,
+        timestamp,
+      );
+      guidedWalkClockRef.current = clock;
+      const sample = sampleGuidedWalk(guidedWalk.plan, clock.elapsedMs);
+      applySample(sample);
+
+      if (!sample.complete) {
+        animationFrame = window.requestAnimationFrame(advance);
+        return;
+      }
+      finishWalk(sample);
+    };
+
+    const elapsedMs = guidedWalkClockRef.current?.elapsedMs ?? 0;
+    const completionFallbackMs = Math.max(0, guidedWalk.plan.durationMs - elapsedMs) + 750;
+    completionTimer = window.setTimeout(() => {
+      finishWalk(sampleGuidedWalk(guidedWalk.plan, guidedWalk.plan.durationMs));
+    }, completionFallbackMs);
     animationFrame = window.requestAnimationFrame(advance);
     return () => {
       finished = true;
       window.cancelAnimationFrame(animationFrame);
+      window.clearTimeout(completionTimer);
     };
-  }, [anchoredActorStates, guidedWalk, pageVisible, persistSave, screen, setDirty]);
+  }, [anchoredActorStates, guidedWalk, persistSave, screen, setDirty]);
 
   const applySceneTransition = useCallback((candidate, sourceSave) => {
     if (!candidate?.targetScene || !candidate.spawn || !sourceSave) return null;
@@ -3641,6 +3684,7 @@ export default function AdventureGame({
     setOpeningPrelude(null);
     setMomGreetingStage(null);
     setDockCutscenePhase(null);
+    guidedWalkClockRef.current = null;
     setGuidedWalk(null);
     setGuidedWalkSample(null);
     residentConversationSeenRef.current = new Set();
@@ -6108,6 +6152,7 @@ export default function AdventureGame({
     setOpeningPrelude(null);
     setMomGreetingStage(null);
     setDockCutscenePhase(null);
+    guidedWalkClockRef.current = null;
     setGuidedWalk(null);
     setGuidedWalkSample(null);
     setDirty(false);
