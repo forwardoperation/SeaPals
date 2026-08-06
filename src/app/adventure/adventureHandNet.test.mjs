@@ -5,6 +5,7 @@ import { ELVERSON_REEF_CATCHES } from "./adventureFishing.mjs";
 import {
   HAND_NET_ACTIONS,
   HAND_NET_PHASES,
+  HAND_NET_SCOOP_PHASES,
   applyHandNetAction,
   createHandNetState,
   tickHandNetState,
@@ -25,9 +26,13 @@ function controlledSingleCreature({ assisted = false, reducedMotion = false } = 
   state.player.position = { x: 6, y: 7.1 };
   state.player.intent = { x: 0, y: 0 };
   state.player.velocity = { x: 0, y: 0 };
-  state.player.facing = { x: 0, y: -1 };
-  state.net.position = { x: 6, y: 7.1 - state.net.reach };
-  state.creatures[0].position = { x: 6, y: 5.7 };
+  state.player.facing = { x: Math.SQRT1_2, y: -Math.SQRT1_2 };
+  const atlasLandingLength = Math.hypot(1, -0.1);
+  state.net.position = {
+    x: 6 + (1 / atlasLandingLength) * state.net.reach,
+    y: 7.1 + (-0.1 / atlasLandingLength) * state.net.reach,
+  };
+  state.creatures[0].position = { ...state.net.position };
   state.creatures[0].heading = { x: 0.15, y: -0.988686 };
   state.creatures[0].turnRemainingMs = 10_000;
   state.creatures[0].alert = 0;
@@ -129,6 +134,7 @@ test("creatures wander deterministically and remain inside the shallow-water are
 
 test("a quick direct approach raises alert, starts flight, and can end in escape", () => {
   const initial = controlledSingleCreature();
+  initial.creatures[0].position = { x: 6, y: 5.7 };
   const approaching = applyHandNetAction(initial, {
     type: HAND_NET_ACTIONS.MOVE,
     x: 0,
@@ -151,13 +157,22 @@ test("a quick direct approach raises alert, starts flight, and can end in escape
   assert.equal(escaped.creatures[0].status, "escaped");
 });
 
-test("assisted mode gives a wider net, longer scoop, and a calmer approach response", () => {
+test("assisted mode gives a wider net and calmer approach at the same contact frame", () => {
   const standard = createHandNetState({ seed: 8, creatureCount: 1 });
   const assisted = createHandNetState({ seed: 8, creatureCount: 1, assisted: true });
   assert.ok(assisted.net.radius > standard.net.radius);
   assert.ok(assisted.net.reach > standard.net.reach);
   assert.ok(standard.net.reach >= 1.4);
-  assert.ok(assisted.settings.scoopWindowMs > standard.settings.scoopWindowMs);
+  assert.equal(standard.settings.scoopAnimationMs, 700);
+  assert.equal(assisted.settings.scoopAnimationMs, 700);
+  assert.equal(standard.settings.scoopWindupEndMs, 240);
+  assert.equal(assisted.settings.scoopWindupEndMs, 240);
+  assert.equal(standard.settings.scoopContactMs, 440);
+  assert.equal(assisted.settings.scoopContactMs, 440);
+  assert.equal(standard.settings.scoopRecoveryStartMs, 500);
+  assert.equal(assisted.settings.scoopRecoveryStartMs, 500);
+  assert.equal(standard.settings.scoopContactWindowMs, 20);
+  assert.equal(assisted.settings.scoopContactWindowMs, 20);
   assert.ok(assisted.settings.cooldownMs < standard.settings.cooldownMs);
   assert.ok(assisted.settings.alertThreshold > standard.settings.alertThreshold);
 
@@ -174,30 +189,82 @@ test("assisted mode gives a wider net, longer scoop, and a calmer approach respo
   assert.equal(assistedApproach.creatures[0].status, "wandering");
 });
 
-test("the active scoop window catches a creature and reports its matching card", () => {
+test("a scoop winds up, contacts near the landing frame, recovers, then reports its matching card", () => {
   const initial = controlledSingleCreature();
   initial.creatures[0].position = { ...initial.net.position };
+  initial.creatures[0].speed = 0;
   initial.creatures[0].turnRemainingMs = 10_000;
   const before = structuredClone(initial);
   const scooping = applyHandNetAction(initial, { type: HAND_NET_ACTIONS.SCOOP });
 
-  assert.equal(scooping.net.scoopRemainingMs, scooping.settings.scoopWindowMs);
+  assert.equal(scooping.net.scoopRemainingMs, scooping.settings.scoopAnimationMs);
   assert.equal(scooping.scoopCount, 1);
-  assert.deepEqual(scooping.presentation.netImpact, {
-    sequence: 1,
-    position: initial.net.position,
-  });
-  assert.ok(Object.isFrozen(scooping.presentation.netImpact));
-  assert.ok(Object.isFrozen(scooping.presentation.netImpact.position));
+  assert.equal(scooping.presentation.netImpact, null);
+  assert.equal(scooping.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.WINDUP);
+  assert.equal(scooping.presentation.scoopElapsedMs, 0);
+  assert.equal(scooping.presentation.scoopDurationMs, 700);
+  assert.equal(scooping.presentation.scoopProgress, 0);
+  assert.equal(scooping.presentation.scoopPhaseProgress, 0);
+  assert.equal(scooping.presentation.scoopFrameIndex, 3);
+  assert.equal(scooping.presentation.scoopHitboxActive, false);
   assert.equal(scooping.phase, HAND_NET_PHASES.PLAYING);
 
-  const caught = tickHandNetState(scooping, 20);
+  const beforeImpact = tickHandNetState(scooping, scooping.settings.scoopContactMs - 20);
+  assert.equal(beforeImpact.phase, HAND_NET_PHASES.PLAYING);
+  assert.equal(beforeImpact.creatures[0].status, "wandering");
+  assert.equal(beforeImpact.outcome, null);
+  assert.equal(beforeImpact.presentation.netImpact, null);
+  assert.equal(beforeImpact.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.SWING);
+  assert.equal(beforeImpact.presentation.scoopFrameIndex, 4);
+  assert.equal(beforeImpact.presentation.scoopHitboxActive, false);
+
+  const contacted = tickHandNetState(beforeImpact, 20);
+  assert.equal(contacted.phase, HAND_NET_PHASES.PLAYING);
+  assert.equal(contacted.outcome, null);
+  assert.equal(contacted.creatures[0].status, "caught");
+  assert.equal(contacted.net.contactedCreatureId, "hand-net-creature-1");
+  assert.equal(contacted.lastEvent.type, "creature-netted");
+  assert.equal(contacted.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.IMPACT);
+  assert.equal(contacted.presentation.scoopElapsedMs, 440);
+  assert.equal(contacted.presentation.scoopFrameIndex, 5);
+  assert.equal(contacted.presentation.scoopHitboxActive, true);
+  assert.deepEqual(contacted.presentation.netImpact, {
+    sequence: 1,
+    position: contacted.net.position,
+  });
+  assert.ok(Object.isFrozen(contacted.presentation.netImpact));
+  assert.ok(Object.isFrozen(contacted.presentation.netImpact.position));
+
+  const blockedDuringRecovery = applyHandNetAction(contacted, { type: HAND_NET_ACTIONS.SCOOP });
+  assert.strictEqual(blockedDuringRecovery, contacted);
+  const recovering = tickHandNetState(
+    contacted,
+    contacted.settings.scoopRecoveryStartMs - contacted.settings.scoopContactMs,
+  );
+  assert.equal(recovering.phase, HAND_NET_PHASES.PLAYING);
+  assert.equal(recovering.outcome, null);
+  assert.equal(recovering.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.RECOVERY);
+  assert.equal(recovering.presentation.scoopHitboxActive, false);
+
+  const caught = tickHandNetState(
+    recovering,
+    recovering.settings.scoopAnimationMs - recovering.settings.scoopRecoveryStartMs,
+  );
   assert.equal(caught.phase, HAND_NET_PHASES.CAUGHT);
   assert.equal(caught.outcome.type, "caught");
   assert.equal(caught.outcome.speciesId, "cleaner-wrasse");
   assert.equal(caught.outcome.cardId, "cleaner-wrasse");
   assert.equal(caught.creatures[0].status, "caught");
   assert.equal(caught.net.scoopRemainingMs, 0);
+  assert.equal(caught.net.contactedCreatureId, null);
+  assert.equal(caught.outcome.atMs, 700);
+  assert.equal(caught.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.COMPLETE);
+  assert.equal(caught.presentation.scoopElapsedMs, 700);
+  assert.equal(caught.presentation.scoopProgress, 1);
+  assert.equal(caught.presentation.scoopPhaseProgress, 1);
+  assert.equal(caught.presentation.scoopFrameIndex, 6);
+  assert.equal(caught.presentation.scoopHitboxActive, false);
+  assert.deepEqual(tickHandNetState(scooping, 700), caught);
   assert.deepEqual(initial, before);
   assert.strictEqual(
     applyHandNetAction(caught, { type: HAND_NET_ACTIONS.MOVE, x: 1, y: 0 }),
@@ -206,33 +273,64 @@ test("the active scoop window catches a creature and reports its matching card",
   assert.strictEqual(tickHandNetState(caught, 100), caught);
 });
 
-test("an empty scoop expires briefly, records the miss, and alerts nearby creatures", () => {
+test("an empty scoop completes recovery, records the miss, cools down, and can remount impact", () => {
   const standard = controlledSingleCreature();
   standard.creatures[0].position = { x: standard.net.position.x + 1.5, y: standard.net.position.y };
+  standard.creatures[0].speed = 0;
   const started = applyHandNetAction(standard, { type: HAND_NET_ACTIONS.SCOOP });
-  const almostFinished = tickHandNetState(started, started.settings.scoopWindowMs - 20);
+  const beforeImpact = tickHandNetState(started, started.settings.scoopContactMs - 20);
+  const impact = tickHandNetState(beforeImpact, 20);
+  const recovery = tickHandNetState(
+    impact,
+    impact.settings.scoopRecoveryStartMs - impact.settings.scoopContactMs,
+  );
+  const almostFinished = tickHandNetState(
+    recovery,
+    recovery.settings.scoopAnimationMs - recovery.settings.scoopRecoveryStartMs - 20,
+  );
   const missed = tickHandNetState(almostFinished, 20);
 
+  assert.equal(beforeImpact.presentation.netImpact, null);
+  assert.equal(impact.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.IMPACT);
+  assert.equal(impact.presentation.scoopHitboxActive, true);
+  assert.deepEqual(impact.presentation.netImpact, {
+    sequence: 1,
+    position: impact.net.position,
+  });
+  const lateArrival = mutableCopy(impact);
+  lateArrival.creatures[0].position = { ...lateArrival.net.position };
+  const afterContact = tickHandNetState(lateArrival, 20);
+  assert.equal(afterContact.net.contactedCreatureId, null);
+  assert.equal(afterContact.creatures[0].status, "wandering");
+  assert.equal(afterContact.presentation.scoopHitboxActive, false);
+  assert.equal(recovery.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.RECOVERY);
+  assert.equal(recovery.presentation.scoopHitboxActive, false);
   assert.equal(almostFinished.net.scoopRemainingMs, 20);
   assert.equal(missed.net.scoopRemainingMs, 0);
   assert.equal(missed.net.cooldownRemainingMs, missed.settings.cooldownMs);
   assert.equal(missed.missCount, 1);
   assert.equal(missed.lastEvent.type, "scoop-missed");
   assert.ok(missed.creatures[0].alert > 0);
+  assert.equal(missed.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.COMPLETE);
+  assert.equal(missed.presentation.scoopProgress, 1);
 
   const blockedRepeat = applyHandNetAction(missed, { type: HAND_NET_ACTIONS.SCOOP });
   assert.strictEqual(blockedRepeat, missed);
 
-  const firstImpact = started.presentation.netImpact;
+  const firstImpact = impact.presentation.netImpact;
   const readyAgain = tickHandNetState(missed, missed.settings.cooldownMs);
+  assert.equal(readyAgain.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.IDLE);
   const repeated = applyHandNetAction(readyAgain, { type: HAND_NET_ACTIONS.SCOOP });
   assert.equal(repeated.scoopCount, 2);
-  assert.deepEqual(repeated.presentation.netImpact, {
+  assert.equal(repeated.presentation.netImpact, null);
+  assert.equal(repeated.presentation.scoopPhase, HAND_NET_SCOOP_PHASES.WINDUP);
+  const repeatedImpact = tickHandNetState(repeated, repeated.settings.scoopContactMs);
+  assert.deepEqual(repeatedImpact.presentation.netImpact, {
     sequence: 2,
     position: readyAgain.net.position,
   });
-  assert.notStrictEqual(repeated.presentation.netImpact, firstImpact);
-  assert.deepEqual(started.presentation.netImpact, firstImpact);
+  assert.notStrictEqual(repeatedImpact.presentation.netImpact, firstImpact);
+  assert.deepEqual(impact.presentation.netImpact, firstImpact);
 });
 
 test("reduced-motion mode slows simulation movement while keeping catch outcomes playable", () => {
@@ -255,11 +353,14 @@ test("reduced-motion mode slows simulation movement while keeping catch outcomes
 
   const controlled = controlledSingleCreature({ reducedMotion: true });
   controlled.creatures[0].position = { ...controlled.net.position };
+  controlled.creatures[0].speed = 0;
   const caught = tickHandNetState(
     applyHandNetAction(controlled, { type: HAND_NET_ACTIONS.SCOOP }),
-    20,
+    controlled.settings.scoopAnimationMs,
   );
   assert.equal(caught.phase, HAND_NET_PHASES.CAUGHT);
+  assert.equal(controlled.settings.scoopAnimationMs, standard.settings.scoopAnimationMs);
+  assert.equal(controlled.settings.scoopContactMs, standard.settings.scoopContactMs);
 });
 
 test("public functions reject malformed options, actions, state, and elapsed time", () => {

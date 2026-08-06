@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { cardsById } from "@/data/cards";
 import {
   ELVERSON_REEF_CATCHES,
@@ -16,6 +16,7 @@ import { ELVERSON_REEF_CREATURE_ATLAS_PATH } from "./adventureAquariumExhibits.m
 import styles from "./adventure.module.css";
 
 export const ELVERSON_HAND_NET_TIDEPOOL_PATH = "/images/adventure/elverson-hand-net-tidepool-v2.webp";
+export const ELVERSON_HAND_NET_PLAYER_ATLAS_PATH = "/images/adventure/player-hand-net-isometric-v1.png";
 
 const HAND_NET_CATCH_TARGET = 1;
 
@@ -33,6 +34,24 @@ const MOVE_KEYS = Object.freeze({
   d: [1, 0],
   D: [1, 0],
 });
+
+const HAND_NET_DIRECTION_VECTORS = Object.freeze({
+  up: [0, -1],
+  left: [-1, 0],
+  right: [1, 0],
+  down: [0, 1],
+});
+
+const WALK_FRAME_SEQUENCE = Object.freeze([0, 1, 2, 1]);
+
+function seedFromIdentity(identity) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < identity.length; index += 1) {
+    hash ^= identity.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
 
 function createAttempt({ seed, tutorial, assistedMode, reducedMotion }) {
   return createHandNetState({
@@ -67,9 +86,84 @@ function movementIntent(keys) {
   };
 }
 
-function cardinalFacing(vector) {
-  if (Math.abs(vector.x) >= Math.abs(vector.y)) return vector.x >= 0 ? "Right" : "Left";
-  return vector.y >= 0 ? "Down" : "Up";
+function isometricSpriteRow(vector) {
+  if (vector.y >= 0) return vector.x >= 0 ? 0 : 1;
+  return vector.x >= 0 ? 2 : 3;
+}
+
+function HandNetDirectionButton({ direction, onStart, onStop }) {
+  const suppressClickRef = useRef(false);
+  const clickStopTimerRef = useRef(null);
+  const [x, y] = HAND_NET_DIRECTION_VECTORS[direction];
+  const ariaLabel = `Move ${direction}`;
+
+  useEffect(() => () => {
+    if (clickStopTimerRef.current) window.clearTimeout(clickStopTimerRef.current);
+  }, []);
+
+  function releaseClickSuppression() {
+    window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 0);
+  }
+
+  function stopPointer(event) {
+    event.preventDefault();
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    onStop();
+    releaseClickSuppression();
+  }
+
+  return (
+    <button
+      type="button"
+      className={`${styles.directionButton} ${styles[`direction${direction}`]}`}
+      aria-label={ariaLabel}
+      title={ariaLabel}
+      onPointerDown={(event) => {
+        event.preventDefault();
+        suppressClickRef.current = true;
+        if (clickStopTimerRef.current) window.clearTimeout(clickStopTimerRef.current);
+        try {
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+        } catch {
+          // Pointer capture is an enhancement; pointer-up still stops movement.
+        }
+        onStart(x, y);
+      }}
+      onPointerUp={stopPointer}
+      onPointerCancel={stopPointer}
+      onLostPointerCapture={() => {
+        onStop();
+        releaseClickSuppression();
+      }}
+      onContextMenu={(event) => event.preventDefault()}
+      onClick={() => {
+        if (suppressClickRef.current) return;
+        onStart(x, y);
+        clickStopTimerRef.current = window.setTimeout(() => {
+          clickStopTimerRef.current = null;
+          onStop();
+        }, 140);
+      }}
+      onBlur={() => {
+        onStop();
+        releaseClickSuppression();
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        suppressClickRef.current = true;
+        onStart(x, y);
+      }}
+      onKeyUp={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        onStop();
+        releaseClickSuppression();
+      }}
+    />
+  );
 }
 
 function formatElapsedTime(milliseconds) {
@@ -106,8 +200,8 @@ export default function AdventureHandNetModal({
   const dialogRef = useRef(null);
   const primaryActionRef = useRef(null);
   const pressedKeysRef = useRef(new Set());
-  const seedRef = useRef((Math.floor(Math.random() * 0x1_0000_0000)) >>> 0);
-  const previousPlayerPositionRef = useRef(null);
+  const attemptIdentity = useId();
+  const seedRef = useRef(seedFromIdentity(attemptIdentity));
   const recordedOutcomeRef = useRef(null);
   const previousFocusRef = useRef(null);
   const [assistedMode, setAssistedMode] = useState(Boolean(reducedMotion || (tutorial && required)));
@@ -132,23 +226,26 @@ export default function AdventureHandNetModal({
     creature.status === "wandering" || creature.status === "fleeing"
   )).length;
   const caughtCount = state.phase === HAND_NET_PHASES.CAUGHT && !catchError ? 1 : 0;
-  const previousPlayerPosition = previousPlayerPositionRef.current ?? state.player.position;
-  const playerDisplacement = {
-    x: state.player.position.x - previousPlayerPosition.x,
-    y: state.player.position.y - previousPlayerPosition.y,
-  };
-  const playerDisplacementMagnitude = Math.hypot(playerDisplacement.x, playerDisplacement.y);
-  const playerMoving = playerDisplacementMagnitude > 0.0001;
+  const playerVelocityMagnitude = Math.hypot(state.player.velocity.x, state.player.velocity.y);
+  const playerMoving = playerVelocityMagnitude > 0.0001;
   const visualVelocity = playerMoving
     ? {
-        x: (playerDisplacement.x / playerDisplacementMagnitude) * state.player.speed,
-        y: (playerDisplacement.y / playerDisplacementMagnitude) * state.player.speed,
+        x: state.player.velocity.x,
+        y: state.player.velocity.y,
       }
     : { x: 0, y: 0 };
   const playerSpeedRatio = playerMoving ? 1 : 0;
   const playerMotionAngle = Math.atan2(visualVelocity.y, visualVelocity.x) * (180 / Math.PI);
-  const playerFacing = cardinalFacing(state.player.facing);
-  const handleAngle = Math.atan2(state.player.facing.y, state.player.facing.x) * (180 / Math.PI);
+  const playerSpriteRow = isometricSpriteRow(state.player.facing);
+  const playerSpriteFrame = state.net.scoopRemainingMs > 0
+    ? state.presentation.scoopFrameIndex
+    : playerMoving
+      ? WALK_FRAME_SEQUENCE[Math.floor(state.simulationTimeMs / 115) % WALK_FRAME_SEQUENCE.length]
+      : 0;
+  const playerSpritePosition = {
+    x: `${(playerSpriteFrame / 6) * 100}%`,
+    y: `${(playerSpriteRow / 3) * 100}%`,
+  };
   const cooldownMs = Math.max(1, state.settings.cooldownMs ?? 440);
   const netReadiness = state.net.scoopRemainingMs > 0
     ? 0
@@ -182,7 +279,6 @@ export default function AdventureHandNetModal({
     seedRef.current = (seedRef.current + 1) >>> 0;
     recordedOutcomeRef.current = null;
     pressedKeysRef.current.clear();
-    previousPlayerPositionRef.current = null;
     setCatchResult(null);
     setCatchError(null);
     setState(createAttempt({
@@ -213,10 +309,6 @@ export default function AdventureHandNetModal({
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
-
-  useEffect(() => {
-    previousPlayerPositionRef.current = { ...state.player.position };
-  }, [state.player.position.x, state.player.position.y]);
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement;
@@ -307,7 +399,19 @@ export default function AdventureHandNetModal({
     setState((current) => applyHandNetAction(current, { type: HAND_NET_ACTIONS.SCOOP }));
   }
 
+  function handleWaterScoop(event) {
+    if (terminal || event.defaultPrevented) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest("button, a, input, select, textarea, [data-hand-net-ui]")) return;
+    event.currentTarget.focus({ preventScroll: true });
+    scoop();
+  }
+
   function handleKeyDown(event) {
+    const target = event.target;
+    const nativeInteractive = target instanceof Element
+      && target.closest("button, a, input, select, textarea");
+    if (nativeInteractive && event.key !== "Escape") return;
     if (MOVE_KEYS[event.key]) {
       event.preventDefault();
       pressedKeysRef.current.add(event.key);
@@ -351,9 +455,11 @@ export default function AdventureHandNetModal({
             "--hand-net-player-motion-angle": `${playerMotionAngle}deg`,
           }}
           role="application"
-          aria-label="Top-down shallow-water hand-net area. Use arrow keys or WASD to move and Enter or Space to scoop."
+          tabIndex={0}
+          aria-label="Shallow-water hand-net area. Use arrow keys or WASD to move. Press Enter or Space, or click or tap the water, to catch."
+          onClick={handleWaterScoop}
         >
-          <header className={styles.handNetObjective}>
+          <header className={styles.handNetObjective} data-hand-net-ui>
             <span>{tutorial ? "Fisherman Wyeth's lesson" : "Elverson tide-pool survey"}</span>
             <h2 id="hand-net-title">{terminal
               ? state.phase === HAND_NET_PHASES.CAUGHT
@@ -367,7 +473,7 @@ export default function AdventureHandNetModal({
             </div>
           </header>
 
-          <aside className={styles.handNetToolHud} aria-label={netReadiness >= 1 ? "Hand net ready" : "Hand net recovering"}>
+          <aside className={styles.handNetToolHud} data-hand-net-ui aria-label={netReadiness >= 1 ? "Hand net ready" : "Hand net recovering"}>
             <span className={styles.handNetToolIcon} aria-hidden="true"><i /><b /></span>
             <span className={styles.handNetToolReadiness} aria-hidden="true">
               <strong>Hand net</strong>
@@ -403,39 +509,22 @@ export default function AdventureHandNetModal({
               </span>
             );
           })}
+          <span className={styles.handNetSurfaceVeil} data-hand-net-effect="surface-veil" aria-hidden="true" />
           <span
-            className={styles.handNetHandle}
+            className={`${styles.handNetPlayer} ${playerMoving ? styles.handNetPlayerMoving : ""} ${playerSpriteRow >= 2 ? styles.handNetPlayerFacingRear : styles.handNetPlayerFacingFront}`}
             style={{
               left: `${(state.player.position.x / state.arena.width) * 100}%`,
               top: `${(state.player.position.y / state.arena.height) * 100}%`,
-              width: `${(state.net.reach / state.arena.width) * 100}%`,
-              "--hand-net-handle-angle": `${handleAngle}deg`,
-            }}
-            aria-hidden="true"
-          />
-          <span
-            className={`${styles.handNetPlayer} ${playerMoving ? styles.handNetPlayerMoving : ""}`}
-            style={{
-              left: `${(state.player.position.x / state.arena.width) * 100}%`,
-              top: `${(state.player.position.y / state.arena.height) * 100}%`,
+              "--hand-net-player-atlas-x": playerSpritePosition.x,
+              "--hand-net-player-atlas-y": playerSpritePosition.y,
+              backgroundImage: `url("${ELVERSON_HAND_NET_PLAYER_ATLAS_PATH}")`,
             }}
             aria-label="You with Wyeth's hand net"
+            data-hand-net-scoop-phase={state.presentation.scoopPhase}
+            data-hand-net-scoop-frame={playerSpriteFrame}
           >
             <i className={styles.handNetPlayerRipple} aria-hidden="true" />
-            <span
-              className={`${styles.spriteArtwork} ${styles.playerSpriteArtwork} ${styles[`spriteFacing${playerFacing}`]} ${playerMoving ? styles.spriteWalking : ""}`}
-              aria-hidden="true"
-            />
           </span>
-          <span
-            className={`${styles.handNetScoop} ${state.net.scoopRemainingMs > 0 ? styles.handNetScoopActive : ""}`}
-            style={{
-              left: `${(state.net.position.x / state.arena.width) * 100}%`,
-              top: `${(state.net.position.y / state.arena.height) * 100}%`,
-              width: `${(state.net.radius / state.arena.width) * 200}%`,
-            }}
-            aria-hidden="true"
-          />
           {netSplash ? (
             <span
               key={`${seedRef.current}-${netSplash.sequence}`}
@@ -449,48 +538,11 @@ export default function AdventureHandNetModal({
             ><i /><b /></span>
           ) : null}
 
-          <p id="hand-net-status" className={styles.handNetStatus} role="status" aria-live="polite" aria-atomic="true">
+          <p id="hand-net-status" className={styles.handNetStatus} data-hand-net-ui role="status" aria-live="polite" aria-atomic="true">
             {status}
           </p>
 
-          <div className={styles.handNetControls}>
-            {!terminal ? (
-              <div className={styles.handNetDpad} aria-label="Move in the shallows">
-                <button type="button" aria-label="Move up" onPointerDown={() => beginMove(0, -1)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>↑</button>
-                <button type="button" aria-label="Move left" onPointerDown={() => beginMove(-1, 0)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>←</button>
-                <button type="button" aria-label="Stop moving" onClick={stopMoving}>•</button>
-                <button type="button" aria-label="Move right" onPointerDown={() => beginMove(1, 0)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>→</button>
-                <button type="button" aria-label="Move down" onPointerDown={() => beginMove(0, 1)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>↓</button>
-              </div>
-            ) : null}
-            {!terminal ? (
-              <button
-                ref={primaryActionRef}
-                type="button"
-                className={styles.handNetScoopButton}
-                disabled={state.net.scoopRemainingMs > 0 || state.net.cooldownRemainingMs > 0}
-                aria-keyshortcuts="Enter Space"
-                onClick={scoop}
-              >Scoop net</button>
-            ) : state.phase === HAND_NET_PHASES.ESCAPED ? (
-              <button ref={primaryActionRef} type="button" className={styles.handNetScoopButton} onClick={() => resetAttempt()}>
-                Try another calm patch
-              </button>
-            ) : catchError ? (
-              <button ref={primaryActionRef} type="button" className={styles.handNetScoopButton} onClick={() => resetAttempt()}>
-                Retry the catch safely
-              </button>
-            ) : (
-              <button
-                ref={primaryActionRef}
-                type="button"
-                className={styles.handNetScoopButton}
-                onClick={() => returnToShore(tutorial ? "tutorial-complete" : "caught")}
-              >Return to shore</button>
-            )}
-          </div>
-
-          <aside className={styles.handNetCatchTray} aria-label="Catches in Wyeth's seawater carrier">
+          <aside className={styles.handNetCatchTray} data-hand-net-ui aria-label="Catches in Wyeth's seawater carrier">
             <span className={styles.handNetCatchTrayLabel}>Carrier</span>
             {carrierCreatures.map((creature) => (
               <span
@@ -514,7 +566,7 @@ export default function AdventureHandNetModal({
             ))}
           </aside>
 
-          <footer className={styles.handNetFooter}>
+          <footer className={styles.handNetFooter} data-hand-net-ui>
             <button
               className={styles.handNetGuidanceButton}
               type="button"
@@ -526,8 +578,53 @@ export default function AdventureHandNetModal({
               }}
             >Gentle guidance: {assistedMode ? "On" : "Off"}</button>
             <span className={styles.handNetCollectionSummary}>{(catchResult?.progress ?? progress)?.discoveredCount ?? 0} discovered · {(catchResult?.progress ?? progress)?.aquariumSpeciesCount ?? 0} in Aquarium</span>
-            {!required ? <button className={styles.handNetLeaveButton} type="button" onClick={() => returnToShore("cancelled")}><kbd>B</kbd> Leave</button> : null}
           </footer>
+        </div>
+        <div className={`${styles.controlDock} ${styles.handNetControlDock}`} data-hand-net-ui>
+          {!terminal ? (
+            <div className={`${styles.dpad} ${styles.handNetDockDpad}`} aria-label="Move in the shallows">
+              <HandNetDirectionButton direction="up" onStart={beginMove} onStop={stopMoving} />
+              <HandNetDirectionButton direction="left" onStart={beginMove} onStop={stopMoving} />
+              <span className={styles.dpadCenter} aria-hidden="true" />
+              <HandNetDirectionButton direction="right" onStart={beginMove} onStop={stopMoving} />
+              <HandNetDirectionButton direction="down" onStart={beginMove} onStop={stopMoving} />
+            </div>
+          ) : null}
+          <div className={styles.handNetDockActions}>
+            {!terminal ? (
+              <button
+                ref={primaryActionRef}
+                type="button"
+                className={`${styles.actionButton} ${styles.handNetPrimaryAction}`}
+                disabled={state.net.scoopRemainingMs > 0 || state.net.cooldownRemainingMs > 0}
+                aria-keyshortcuts="Enter Space"
+                onClick={scoop}
+              ><span aria-hidden="true">A</span> Catch</button>
+            ) : state.phase === HAND_NET_PHASES.ESCAPED ? (
+              <button ref={primaryActionRef} type="button" className={`${styles.actionButton} ${styles.handNetPrimaryAction}`} onClick={() => resetAttempt()}>
+                <span aria-hidden="true">A</span> Try again
+              </button>
+            ) : catchError ? (
+              <button ref={primaryActionRef} type="button" className={`${styles.actionButton} ${styles.handNetPrimaryAction}`} onClick={() => resetAttempt()}>
+                <span aria-hidden="true">A</span> Retry catch
+              </button>
+            ) : (
+              <button
+                ref={primaryActionRef}
+                type="button"
+                className={`${styles.actionButton} ${styles.handNetPrimaryAction}`}
+                onClick={() => returnToShore(tutorial ? "tutorial-complete" : "caught")}
+              ><span aria-hidden="true">A</span> Return to shore</button>
+            )}
+            {!required || catchResult ? (
+              <button
+                type="button"
+                className={`${styles.actionButton} ${styles.handNetSecondaryAction}`}
+                aria-keyshortcuts="Escape"
+                onClick={() => returnToShore(catchResult ? (tutorial ? "tutorial-complete" : "caught") : "cancelled")}
+              ><span aria-hidden="true">B</span> {catchResult ? "Shore" : "Leave"}</button>
+            ) : null}
+          </div>
         </div>
         <span className={styles.srOnly}>Watch their paths, approach gently, then scoop when the net is close.</span>
         {startWithCast ? <span className={styles.srOnly}>The hand net is ready for another attempt.</span> : null}

@@ -28,11 +28,15 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(modal, /handNetShallows/);
   assert.match(modal, /creature\.status === "fleeing"/);
   assert.match(modal, /creature\.alert > 0\.35/);
-  assert.match(modal, /Scoop net/);
+  assert.match(modal, /<span aria-hidden="true">A<\/span> Catch/);
   assert.match(modal, /Move slowly through the shallows/);
   assert.match(modal, /ELVERSON_HAND_NET_TIDEPOOL_PATH/);
-  assert.match(modal, /playerSpriteArtwork/);
-  assert.match(modal, /handNetHandle/);
+  assert.match(modal, /ELVERSON_HAND_NET_PLAYER_ATLAS_PATH/);
+  assert.match(modal, /player-hand-net-isometric-v1\.png/);
+  assert.match(modal, /state\.presentation\.scoopFrameIndex/);
+  assert.match(modal, /data-hand-net-scoop-frame=\{playerSpriteFrame\}/);
+  assert.doesNotMatch(modal, /styles\.handNetHandle/);
+  assert.doesNotMatch(modal, /styles\.handNetScoop\b/);
   assert.match(modal, /handNetToolHud/);
   assert.match(modal, /handNetCatchTray/);
   assert.match(modal, /--hand-net-player-x/);
@@ -43,6 +47,7 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(modal, /handNetCaustics/);
   assert.match(modal, /handNetCausticWake/);
   assert.match(modal, /data-hand-net-effect="surface-caustics" aria-hidden="true"/);
+  assert.match(modal, /data-hand-net-effect="surface-veil" aria-hidden="true"/);
   assert.match(modal, /data-hand-net-effect="wading-wake" aria-hidden="true"/);
   assert.match(modal, /state\.presentation\.netImpact/);
   assert.match(modal, /key=\{`\$\{seedRef\.current\}-\$\{netSplash\.sequence\}`\}/);
@@ -55,6 +60,10 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(styles, /@keyframes handNetWaveDrift/);
   assert.match(styles, /@keyframes handNetScoop/);
   assert.match(styles, /\.handNetCaustics[\s\S]*?pointer-events:\s*none/);
+  assert.match(styles, /\.handNetSurfaceVeil[\s\S]*?z-index:\s*8/);
+  assert.match(styles, /\.handNetSurfaceVeil[\s\S]*?pointer-events:\s*none/);
+  assert.match(styles, /\.handNetPlayer[\s\S]*?background-size:\s*700% 400%/);
+  assert.match(styles, /\.handNetControlDock[\s\S]*?justify-content:\s*space-between/);
   assert.match(styles, /\.handNetCausticWake[\s\S]*?var\(--hand-net-player-motion-angle\)/);
   assert.match(styles, /\.handNetNetSplash[\s\S]*?pointer-events:\s*none/);
   assert.match(styles, /@keyframes handNetCausticsDrift/);
@@ -64,10 +73,10 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
 test("the required tutorial stays with the player until a catch is recorded", () => {
   assert.match(game, /fishingSession\.required[\s\S]*?Complete Wyeth's practice catch before leaving the lesson/);
   assert.match(modal, /if \(required && !catchResult\) return/);
-  assert.match(modal, /!required \? <button[\s\S]*?: null/);
+  assert.match(modal, /!required \|\| catchResult/);
   assert.match(modal, /tutorial \? "tutorial-complete" : "caught"/);
-  assert.match(modal, /Retry the catch safely/);
-  assert.match(modal, /Try another calm patch/);
+  assert.match(modal, /Retry catch/);
+  assert.match(modal, /Try again/);
 });
 
 test("Wyeth visibly leads a locked-input predetermined walk to the sandy cove", () => {
@@ -90,7 +99,14 @@ test("keyboard, touch, focus, live status, and reduced-motion affordances are ex
   assert.match(modal, /role="application"/);
   assert.match(modal, /aria-keyshortcuts="Enter Space"/);
   assert.match(modal, /window\.addEventListener\("keyup", releaseMovementKey\)/);
-  assert.match(modal, /onPointerDown=\{\(\) => beginMove/);
+  assert.match(modal, /setPointerCapture/);
+  assert.match(modal, /onPointerDown=\{\(event\) =>/);
+  assert.match(modal, /onClick=\{handleWaterScoop\}/);
+  assert.match(modal, /target\.closest\("button, a, input, select, textarea, \[data-hand-net-ui\]"\)/);
+  assert.match(modal, /tabIndex=\{0\}/);
+  assert.match(modal, /styles\.controlDock/);
+  assert.match(modal, /styles\.dpad/);
+  assert.match(modal, /styles\.actionButton/);
   assert.match(modal, /modalStack\.at\(-1\) !== dialog/);
   assert.match(modal, /previousFocusRef\.current\?\.focus/);
   assert.match(modal, /role="status" aria-live="polite"/);
@@ -98,6 +114,7 @@ test("keyboard, touch, focus, live status, and reduced-motion affordances are ex
   assert.match(styles, /\.reducedMotionMode \.handNetWave,[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.handNetCreature/);
   assert.match(styles, /\.reducedMotionMode \.handNetCaustics[\s\S]*?animation:\s*none !important/);
+  assert.match(styles, /\.reducedMotionMode \.handNetSurfaceVeil[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.handNetNetSplash::before/);
   assert.match(styles, /@media \(forced-colors: active\)[\s\S]*?\.handNetCard/);
 });

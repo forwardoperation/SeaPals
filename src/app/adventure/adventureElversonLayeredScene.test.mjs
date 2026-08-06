@@ -25,6 +25,32 @@ test("all authored facade links match the town portal contract", () => {
   );
 });
 
+test("the aquarium facade centers on its deck while its visible door meets the connector", () => {
+  const portal = ELVERSON_TOWN_PORTALS.find(({ objectId }) => objectId === "aquarium-workshop");
+  const object = ELVERSON_LAYERED_SCENE.objects.find(({ id }) => id === "aquarium-workshop");
+  const platform = ELVERSON_LAYERED_SCENE.walkableRegions.find(({ id }) => id === "aquarium-platform");
+  const connector = ELVERSON_LAYERED_SCENE.walkableRegions.find(({ id }) => id === "aquarium-connector");
+
+  assert.ok(portal);
+  assert.ok(object);
+  assert.ok(platform);
+  assert.ok(connector);
+
+  const facadeCenterX = (object.visualBounds.left + object.visualBounds.right) / 2;
+  const platformCenterX = (platform.left + platform.right) / 2;
+  assert.ok(
+    Math.abs(facadeCenterX - platformCenterX) <= 0.5,
+    `aquarium facade center ${facadeCenterX} must stay over deck center ${platformCenterX}`,
+  );
+  assert.ok(
+    portal.doorway.x >= Math.max(platform.left, connector.left)
+      && portal.doorway.x <= Math.min(platform.right, connector.right),
+    "the aquarium's visible left-hand door must remain over the deck/connector overlap",
+  );
+  assert.equal(portal.at.x, 26);
+  assert.equal(portal.doorway.x, 24.22);
+});
+
 test("full-facade collision removes every walkable sample hidden behind a building", () => {
   const radius = 0.12;
   for (const object of ELVERSON_LAYERED_SCENE.objects) {
