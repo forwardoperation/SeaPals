@@ -15,6 +15,10 @@ import {
 import { ELVERSON_REEF_CREATURE_ATLAS_PATH } from "./adventureAquariumExhibits.mjs";
 import styles from "./adventure.module.css";
 
+export const ELVERSON_HAND_NET_TIDEPOOL_PATH = "/images/adventure/elverson-hand-net-tidepool-v2.webp";
+
+const HAND_NET_CATCH_TARGET = 1;
+
 const MOVE_KEYS = Object.freeze({
   ArrowUp: [0, -1],
   ArrowDown: [0, 1],
@@ -63,6 +67,18 @@ function movementIntent(keys) {
   };
 }
 
+function cardinalFacing(vector) {
+  if (Math.abs(vector.x) >= Math.abs(vector.y)) return vector.x >= 0 ? "Right" : "Left";
+  return vector.y >= 0 ? "Down" : "Up";
+}
+
+function formatElapsedTime(milliseconds) {
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
 function handNetStatus(state, tutorial, required, catchError) {
   if (catchError) return catchError;
   if (state.phase === HAND_NET_PHASES.CAUGHT) return "Safe catch! The animal is resting in Wyeth's seawater carrier.";
@@ -91,6 +107,7 @@ export default function AdventureHandNetModal({
   const primaryActionRef = useRef(null);
   const pressedKeysRef = useRef(new Set());
   const seedRef = useRef((Math.floor(Math.random() * 0x1_0000_0000)) >>> 0);
+  const previousPlayerPositionRef = useRef(null);
   const recordedOutcomeRef = useRef(null);
   const previousFocusRef = useRef(null);
   const [assistedMode, setAssistedMode] = useState(Boolean(reducedMotion || (tutorial && required)));
@@ -114,14 +131,58 @@ export default function AdventureHandNetModal({
   const activeCreatureCount = state.creatures.filter((creature) => (
     creature.status === "wandering" || creature.status === "fleeing"
   )).length;
+  const caughtCount = state.phase === HAND_NET_PHASES.CAUGHT && !catchError ? 1 : 0;
+  const previousPlayerPosition = previousPlayerPositionRef.current ?? state.player.position;
+  const playerDisplacement = {
+    x: state.player.position.x - previousPlayerPosition.x,
+    y: state.player.position.y - previousPlayerPosition.y,
+  };
+  const playerDisplacementMagnitude = Math.hypot(playerDisplacement.x, playerDisplacement.y);
+  const playerMoving = playerDisplacementMagnitude > 0.0001;
+  const visualVelocity = playerMoving
+    ? {
+        x: (playerDisplacement.x / playerDisplacementMagnitude) * state.player.speed,
+        y: (playerDisplacement.y / playerDisplacementMagnitude) * state.player.speed,
+      }
+    : { x: 0, y: 0 };
+  const playerSpeedRatio = playerMoving ? 1 : 0;
+  const playerMotionAngle = Math.atan2(visualVelocity.y, visualVelocity.x) * (180 / Math.PI);
+  const playerFacing = cardinalFacing(state.player.facing);
+  const handleAngle = Math.atan2(state.player.facing.y, state.player.facing.x) * (180 / Math.PI);
+  const cooldownMs = Math.max(1, state.settings.cooldownMs ?? 440);
+  const netReadiness = state.net.scoopRemainingMs > 0
+    ? 0
+    : Math.max(0, Math.min(1, 1 - state.net.cooldownRemainingMs / cooldownMs));
+  const netSplash = state.presentation.netImpact;
   const atlasPositions = useMemo(() => Object.fromEntries(
     ELVERSON_REEF_CATCHES.map((entry) => [entry.id, creatureAtlasPosition(entry.id)]),
   ), []);
+  const carrierCreatures = useMemo(() => {
+    const latestProgress = catchResult?.progress ?? progress;
+    const progressById = new Map((latestProgress?.creatures ?? []).map((entry) => [entry.id, entry]));
+    const orderedIds = [
+      state.outcome?.speciesId,
+      ...(latestProgress?.creatures ?? []).filter((entry) => entry.held > 0).map((entry) => entry.id),
+      ...state.creatures.map((creature) => creature.speciesId),
+    ].filter(Boolean);
+    const uniqueIds = [...new Set(orderedIds)].slice(0, 4);
+    return uniqueIds.map((speciesId) => {
+      const species = progressById.get(speciesId)
+        ?? ELVERSON_REEF_CATCHES.find((entry) => entry.id === speciesId);
+      return {
+        ...species,
+        id: speciesId,
+        held: progressById.get(speciesId)?.held ?? (state.outcome?.speciesId === speciesId ? caughtCount : 0),
+        atlasPosition: atlasPositions[speciesId],
+      };
+    });
+  }, [atlasPositions, catchResult, caughtCount, progress, state.creatures, state.outcome?.speciesId]);
 
   const resetAttempt = useCallback((nextAssistedMode = assistedMode) => {
     seedRef.current = (seedRef.current + 1) >>> 0;
     recordedOutcomeRef.current = null;
     pressedKeysRef.current.clear();
+    previousPlayerPositionRef.current = null;
     setCatchResult(null);
     setCatchError(null);
     setState(createAttempt({
@@ -152,6 +213,10 @@ export default function AdventureHandNetModal({
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
+
+  useEffect(() => {
+    previousPlayerPositionRef.current = { ...state.player.position };
+  }, [state.player.position.x, state.player.position.y]);
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement;
@@ -274,31 +339,47 @@ export default function AdventureHandNetModal({
       onKeyDown={handleKeyDown}
     >
       <section className={styles.handNetCard} data-hand-net-phase={state.phase}>
-        <header className={styles.handNetHeader}>
-          <div>
-            <span>{tutorial ? "Fisherman Wyeth's lesson" : "Elverson shallow-water survey"}</span>
+        <div
+          className={`${styles.handNetShallows} ${state.presentation.waveMotion ? styles.handNetShallowsMoving : ""}`}
+          style={{
+            "--hand-net-tidepool-image": `url("${ELVERSON_HAND_NET_TIDEPOOL_PATH}")`,
+            "--hand-net-player-x": `${(state.player.position.x / state.arena.width) * 100}%`,
+            "--hand-net-player-y": `${(state.player.position.y / state.arena.height) * 100}%`,
+            "--hand-net-player-velocity-x": visualVelocity.x,
+            "--hand-net-player-velocity-y": visualVelocity.y,
+            "--hand-net-player-speed-ratio": playerSpeedRatio,
+            "--hand-net-player-motion-angle": `${playerMotionAngle}deg`,
+          }}
+          role="application"
+          aria-label="Top-down shallow-water hand-net area. Use arrow keys or WASD to move and Enter or Space to scoop."
+        >
+          <header className={styles.handNetObjective}>
+            <span>{tutorial ? "Fisherman Wyeth's lesson" : "Elverson tide-pool survey"}</span>
             <h2 id="hand-net-title">{terminal
               ? state.phase === HAND_NET_PHASES.CAUGHT
                 ? `${caughtCreature?.name ?? "Creature"} safely caught!`
                 : "The animals found cover"
-              : "Approach gently, then scoop"}</h2>
-          </div>
-          <span className={styles.handNetCount}>{activeCreatureCount} in view</span>
-        </header>
+              : `Catch ${HAND_NET_CATCH_TARGET} critter!`}</h2>
+            <div className={styles.handNetObjectiveStats}>
+              <span>Caught: <strong>{caughtCount} / {HAND_NET_CATCH_TARGET}</strong></span>
+              <span>Time: <strong>{formatElapsedTime(state.simulationTimeMs)}</strong></span>
+              <span><strong>{activeCreatureCount}</strong> in view</span>
+            </div>
+          </header>
 
-        <ol className={styles.handNetSteps} aria-label="Hand-net catching steps">
-          <li><span>1</span><strong>Watch</strong><small>Learn their paths</small></li>
-          <li><span>2</span><strong>Approach</strong><small>Move gently</small></li>
-          <li><span>3</span><strong>Scoop</strong><small>Net when close</small></li>
-        </ol>
+          <aside className={styles.handNetToolHud} aria-label={netReadiness >= 1 ? "Hand net ready" : "Hand net recovering"}>
+            <span className={styles.handNetToolIcon} aria-hidden="true"><i /><b /></span>
+            <span className={styles.handNetToolReadiness} aria-hidden="true">
+              <strong>Hand net</strong>
+              <i><b style={{ width: `${netReadiness * 100}%` }} /></i>
+              <small>{netReadiness >= 1 ? "Ready" : "Recovering"}</small>
+            </span>
+          </aside>
 
-        <div
-          className={`${styles.handNetShallows} ${state.presentation.waveMotion ? styles.handNetShallowsMoving : ""}`}
-          role="application"
-          aria-label="Top-down shallow-water hand-net area. Use arrow keys or WASD to move and Enter or Space to scoop."
-        >
           <span className={styles.handNetWave} aria-hidden="true"><i /><i /><i /></span>
           <span className={styles.handNetSandRipples} aria-hidden="true" />
+          <span className={styles.handNetCaustics} data-hand-net-effect="surface-caustics" aria-hidden="true" />
+          <span className={styles.handNetCausticWake} data-hand-net-effect="wading-wake" aria-hidden="true"><i /><b /></span>
           {state.creatures.map((creature) => {
             if (creature.status === "escaped" || creature.status === "caught") return null;
             const sprite = atlasPositions[creature.speciesId];
@@ -323,14 +404,29 @@ export default function AdventureHandNetModal({
             );
           })}
           <span
-            className={`${styles.handNetPlayer} ${Math.hypot(state.player.velocity.x, state.player.velocity.y) > 0 ? styles.handNetPlayerMoving : ""}`}
+            className={styles.handNetHandle}
             style={{
               left: `${(state.player.position.x / state.arena.width) * 100}%`,
               top: `${(state.player.position.y / state.arena.height) * 100}%`,
-              "--hand-net-player-angle": `${Math.atan2(state.player.facing.y, state.player.facing.x) * (180 / Math.PI) + 90}deg`,
+              width: `${(state.net.reach / state.arena.width) * 100}%`,
+              "--hand-net-handle-angle": `${handleAngle}deg`,
+            }}
+            aria-hidden="true"
+          />
+          <span
+            className={`${styles.handNetPlayer} ${playerMoving ? styles.handNetPlayerMoving : ""}`}
+            style={{
+              left: `${(state.player.position.x / state.arena.width) * 100}%`,
+              top: `${(state.player.position.y / state.arena.height) * 100}%`,
             }}
             aria-label="You with Wyeth's hand net"
-          ><i /><b /></span>
+          >
+            <i className={styles.handNetPlayerRipple} aria-hidden="true" />
+            <span
+              className={`${styles.spriteArtwork} ${styles.playerSpriteArtwork} ${styles[`spriteFacing${playerFacing}`]} ${playerMoving ? styles.spriteWalking : ""}`}
+              aria-hidden="true"
+            />
+          </span>
           <span
             className={`${styles.handNetScoop} ${state.net.scoopRemainingMs > 0 ? styles.handNetScoopActive : ""}`}
             style={{
@@ -340,60 +436,100 @@ export default function AdventureHandNetModal({
             }}
             aria-hidden="true"
           />
-        </div>
+          {netSplash ? (
+            <span
+              key={`${seedRef.current}-${netSplash.sequence}`}
+              className={`${styles.handNetNetSplash} ${styles.handNetNetSplashActive}`}
+              data-hand-net-effect="net-splash"
+              style={{
+                left: `${(netSplash.position.x / state.arena.width) * 100}%`,
+                top: `${(netSplash.position.y / state.arena.height) * 100}%`,
+              }}
+              aria-hidden="true"
+            ><i /><b /></span>
+          ) : null}
 
-        <p id="hand-net-status" className={styles.handNetStatus} role="status" aria-live="polite" aria-atomic="true">
-          {status}
-        </p>
+          <p id="hand-net-status" className={styles.handNetStatus} role="status" aria-live="polite" aria-atomic="true">
+            {status}
+          </p>
 
-        <div className={styles.handNetControls}>
-          <div className={styles.handNetDpad} aria-label="Move in the shallows">
-            <button type="button" aria-label="Move up" onPointerDown={() => beginMove(0, -1)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>↑</button>
-            <button type="button" aria-label="Move left" onPointerDown={() => beginMove(-1, 0)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>←</button>
-            <button type="button" aria-label="Stop moving" onClick={stopMoving}>•</button>
-            <button type="button" aria-label="Move right" onPointerDown={() => beginMove(1, 0)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>→</button>
-            <button type="button" aria-label="Move down" onPointerDown={() => beginMove(0, 1)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>↓</button>
+          <div className={styles.handNetControls}>
+            {!terminal ? (
+              <div className={styles.handNetDpad} aria-label="Move in the shallows">
+                <button type="button" aria-label="Move up" onPointerDown={() => beginMove(0, -1)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>↑</button>
+                <button type="button" aria-label="Move left" onPointerDown={() => beginMove(-1, 0)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>←</button>
+                <button type="button" aria-label="Stop moving" onClick={stopMoving}>•</button>
+                <button type="button" aria-label="Move right" onPointerDown={() => beginMove(1, 0)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>→</button>
+                <button type="button" aria-label="Move down" onPointerDown={() => beginMove(0, 1)} onPointerUp={stopMoving} onPointerCancel={stopMoving}>↓</button>
+              </div>
+            ) : null}
+            {!terminal ? (
+              <button
+                ref={primaryActionRef}
+                type="button"
+                className={styles.handNetScoopButton}
+                disabled={state.net.scoopRemainingMs > 0 || state.net.cooldownRemainingMs > 0}
+                aria-keyshortcuts="Enter Space"
+                onClick={scoop}
+              >Scoop net</button>
+            ) : state.phase === HAND_NET_PHASES.ESCAPED ? (
+              <button ref={primaryActionRef} type="button" className={styles.handNetScoopButton} onClick={() => resetAttempt()}>
+                Try another calm patch
+              </button>
+            ) : catchError ? (
+              <button ref={primaryActionRef} type="button" className={styles.handNetScoopButton} onClick={() => resetAttempt()}>
+                Retry the catch safely
+              </button>
+            ) : (
+              <button
+                ref={primaryActionRef}
+                type="button"
+                className={styles.handNetScoopButton}
+                onClick={() => returnToShore(tutorial ? "tutorial-complete" : "caught")}
+              >Return to shore</button>
+            )}
           </div>
-          {!terminal ? (
-            <button
-              ref={primaryActionRef}
-              type="button"
-              className={styles.handNetScoopButton}
-              disabled={state.net.scoopRemainingMs > 0 || state.net.cooldownRemainingMs > 0}
-              aria-keyshortcuts="Enter Space"
-              onClick={scoop}
-            >Scoop net</button>
-          ) : state.phase === HAND_NET_PHASES.ESCAPED ? (
-            <button ref={primaryActionRef} type="button" className={styles.handNetScoopButton} onClick={() => resetAttempt()}>
-              Try another calm patch
-            </button>
-          ) : catchError ? (
-            <button ref={primaryActionRef} type="button" className={styles.handNetScoopButton} onClick={() => resetAttempt()}>
-              Retry the catch safely
-            </button>
-          ) : (
-            <button
-              ref={primaryActionRef}
-              type="button"
-              className={styles.handNetScoopButton}
-              onClick={() => returnToShore(tutorial ? "tutorial-complete" : "caught")}
-            >Return to shore</button>
-          )}
-        </div>
 
-        <footer className={styles.handNetFooter}>
-          <button
-            type="button"
-            aria-pressed={assistedMode}
-            onClick={() => {
-              const next = !assistedMode;
-              setAssistedMode(next);
-              resetAttempt(next);
-            }}
-          >Gentle guidance: {assistedMode ? "On" : "Off"}</button>
-          <span>{progress?.discoveredCount ?? 0} discovered · {progress?.aquariumSpeciesCount ?? 0} in Aquarium</span>
-          {!required ? <button type="button" onClick={() => returnToShore("cancelled")}>Leave shallows</button> : null}
-        </footer>
+          <aside className={styles.handNetCatchTray} aria-label="Catches in Wyeth's seawater carrier">
+            <span className={styles.handNetCatchTrayLabel}>Carrier</span>
+            {carrierCreatures.map((creature) => (
+              <span
+                key={creature.id}
+                className={styles.handNetCatchSlot}
+                title={`${cardsById[creature.cardId]?.name ?? creature.id}: ${creature.held ?? 0} held`}
+              >
+                <i
+                  style={{
+                    "--hand-net-atlas-x": `${creature.atlasPosition?.x ?? 0}%`,
+                    "--hand-net-atlas-y": `${creature.atlasPosition?.y ?? 0}%`,
+                    backgroundImage: `url("${ELVERSON_REEF_CREATURE_ATLAS_PATH}")`,
+                  }}
+                  aria-hidden="true"
+                />
+                <b>{creature.held ?? 0}</b>
+              </span>
+            ))}
+            {Array.from({ length: Math.max(0, 4 - carrierCreatures.length) }, (_, index) => (
+              <span key={`empty-${index}`} className={`${styles.handNetCatchSlot} ${styles.handNetCatchSlotEmpty}`} aria-hidden="true" />
+            ))}
+          </aside>
+
+          <footer className={styles.handNetFooter}>
+            <button
+              className={styles.handNetGuidanceButton}
+              type="button"
+              aria-pressed={assistedMode}
+              onClick={() => {
+                const next = !assistedMode;
+                setAssistedMode(next);
+                resetAttempt(next);
+              }}
+            >Gentle guidance: {assistedMode ? "On" : "Off"}</button>
+            <span className={styles.handNetCollectionSummary}>{(catchResult?.progress ?? progress)?.discoveredCount ?? 0} discovered · {(catchResult?.progress ?? progress)?.aquariumSpeciesCount ?? 0} in Aquarium</span>
+            {!required ? <button className={styles.handNetLeaveButton} type="button" onClick={() => returnToShore("cancelled")}><kbd>B</kbd> Leave</button> : null}
+          </footer>
+        </div>
+        <span className={styles.srOnly}>Watch their paths, approach gently, then scoop when the net is close.</span>
         {startWithCast ? <span className={styles.srOnly}>The hand net is ready for another attempt.</span> : null}
       </section>
     </div>

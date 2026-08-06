@@ -1,4 +1,5 @@
 export const GUIDED_WALK_PLAN_VERSION = 1;
+export const GUIDED_WALK_CLOCK_VERSION = 1;
 
 const EPSILON = 1e-9;
 
@@ -69,9 +70,10 @@ function compilePath(path) {
   return { points, segments, totalDistance };
 }
 
-/** Validates and compiles one immutable leader/follower route. */
+/** Validates and compiles immutable leader and follower routes. */
 export function createGuidedWalkPlan({
   path,
+  followerPath = path,
   speed = 2,
   followerDelayMs = 450,
   reducedMotion = false,
@@ -88,9 +90,17 @@ export function createGuidedWalkPlan({
   }
 
   const { points, segments, totalDistance } = compilePath(path);
+  const {
+    points: followerPoints,
+    segments: followerSegments,
+    totalDistance: followerTotalDistance,
+  } = followerPath === path
+    ? { points, segments, totalDistance }
+    : compilePath(followerPath);
   const effectiveSpeed = reducedMotion ? reducedMotionSpeed : speed;
   const leaderDurationMs = (totalDistance / effectiveSpeed) * 1000;
-  const durationMs = leaderDurationMs + followerDelayMs;
+  const followerDurationMs = (followerTotalDistance / effectiveSpeed) * 1000;
+  const durationMs = Math.max(leaderDurationMs, followerDelayMs + followerDurationMs);
   if (!Number.isFinite(durationMs)) {
     throw new RangeError("Guided walk duration must be finite.");
   }
@@ -100,12 +110,16 @@ export function createGuidedWalkPlan({
     path: points,
     segments,
     totalDistance,
+    followerPath: followerPoints,
+    followerSegments,
+    followerTotalDistance,
     speed: effectiveSpeed,
     standardSpeed: speed,
     reducedMotionSpeed,
     reducedMotion,
     followerDelayMs,
     leaderDurationMs,
+    followerDurationMs,
     durationMs,
   });
 }
@@ -123,18 +137,18 @@ function requirePlan(plan) {
   return plan;
 }
 
-function samplePosition(plan, distance) {
+function samplePosition(path, segments, totalDistance, distance) {
   if (distance <= 0) {
-    return { position: { ...plan.path[0] }, facing: plan.segments[0].facing };
+    return { position: { ...path[0] }, facing: segments[0].facing };
   }
-  if (distance >= plan.totalDistance) {
+  if (distance >= totalDistance) {
     return {
-      position: { ...plan.path.at(-1) },
-      facing: plan.segments.at(-1).facing,
+      position: { ...path.at(-1) },
+      facing: segments.at(-1).facing,
     };
   }
 
-  const segment = plan.segments.find(({ endDistance }) => distance < endDistance);
+  const segment = segments.find(({ endDistance }) => distance < endDistance);
   const progress = (distance - segment.startDistance) / segment.length;
   return {
     position: {
@@ -145,13 +159,13 @@ function samplePosition(plan, distance) {
   };
 }
 
-function sampleActor(plan, elapsedMs, started) {
-  const complete = elapsedMs >= plan.leaderDurationMs;
+function sampleActor({ path, segments, totalDistance, durationMs, speed }, elapsedMs, started) {
+  const complete = elapsedMs >= durationMs;
   const distance = complete
-    ? plan.totalDistance
-    : plan.speed * (elapsedMs / 1000);
+    ? totalDistance
+    : speed * (elapsedMs / 1000);
   return {
-    ...samplePosition(plan, distance),
+    ...samplePosition(path, segments, totalDistance, distance),
     moving: started && !complete,
     complete,
   };
@@ -164,10 +178,22 @@ export function sampleGuidedWalk(planValue, elapsedMs) {
   if (elapsedMs < 0) throw new RangeError("Guided walk elapsedMs must be zero or greater.");
 
   const sampledElapsedMs = Math.min(elapsedMs, plan.durationMs);
-  const leader = sampleActor(plan, Math.min(sampledElapsedMs, plan.leaderDurationMs), true);
+  const leader = sampleActor({
+    path: plan.path,
+    segments: plan.segments,
+    totalDistance: plan.totalDistance,
+    durationMs: plan.leaderDurationMs,
+    speed: plan.speed,
+  }, Math.min(sampledElapsedMs, plan.leaderDurationMs), true);
   const followerStarted = sampledElapsedMs >= plan.followerDelayMs;
   const followerElapsedMs = Math.max(0, sampledElapsedMs - plan.followerDelayMs);
-  const follower = sampleActor(plan, followerElapsedMs, followerStarted);
+  const follower = sampleActor({
+    path: plan.followerPath ?? plan.path,
+    segments: plan.followerSegments ?? plan.segments,
+    totalDistance: plan.followerTotalDistance ?? plan.totalDistance,
+    durationMs: plan.followerDurationMs ?? plan.leaderDurationMs,
+    speed: plan.speed,
+  }, followerElapsedMs, followerStarted);
   return deepFreeze({
     elapsedMs: sampledElapsedMs,
     durationMs: plan.durationMs,
@@ -175,5 +201,48 @@ export function sampleGuidedWalk(planValue, elapsedMs) {
     follower,
     moving: leader.moving || follower.moving,
     complete: leader.complete && follower.complete,
+  });
+}
+
+/**
+ * Advances animation time from requestAnimationFrame timestamps without
+ * assuming that another browser clock has the same origin. A regressed frame
+ * timestamp resets the baseline instead of pinning elapsed time at zero.
+ */
+export function advanceGuidedWalkClock(planValue, clockValue, timestampMs) {
+  const plan = requirePlan(planValue);
+  requireFinite(timestampMs, "Guided walk frame timestampMs");
+  if (timestampMs < 0) {
+    throw new RangeError("Guided walk frame timestampMs must be zero or greater.");
+  }
+
+  const clock = clockValue ?? {
+    version: GUIDED_WALK_CLOCK_VERSION,
+    elapsedMs: 0,
+    lastTimestampMs: null,
+  };
+  if (!clock || typeof clock !== "object" || clock.version !== GUIDED_WALK_CLOCK_VERSION) {
+    throw new TypeError(`Guided walk clock must use version ${GUIDED_WALK_CLOCK_VERSION}.`);
+  }
+  requireFinite(clock.elapsedMs, "Guided walk clock elapsedMs");
+  if (clock.elapsedMs < 0) {
+    throw new RangeError("Guided walk clock elapsedMs must be zero or greater.");
+  }
+  if (clock.lastTimestampMs !== null) {
+    requireFinite(clock.lastTimestampMs, "Guided walk clock lastTimestampMs");
+    if (clock.lastTimestampMs < 0) {
+      throw new RangeError("Guided walk clock lastTimestampMs must be zero or greater.");
+    }
+  }
+
+  const deltaMs = clock.lastTimestampMs === null || timestampMs < clock.lastTimestampMs
+    ? 0
+    : timestampMs - clock.lastTimestampMs;
+  const elapsedMs = Math.min(plan.durationMs, clock.elapsedMs + deltaMs);
+  return Object.freeze({
+    version: GUIDED_WALK_CLOCK_VERSION,
+    elapsedMs,
+    lastTimestampMs: timestampMs,
+    complete: elapsedMs >= plan.durationMs,
   });
 }

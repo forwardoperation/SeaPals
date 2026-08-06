@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  GUIDED_WALK_CLOCK_VERSION,
   GUIDED_WALK_PLAN_VERSION,
+  advanceGuidedWalkClock,
   createGuidedWalkPlan,
   sampleGuidedWalk,
 } from "./adventureGuidedWalk.mjs";
@@ -47,6 +49,10 @@ test("guided walk plan validation rejects malformed geometry and timing", () => 
     () => createGuidedWalkPlan({ path: CORNER_PATH, reducedMotion: "yes" }),
     /must be boolean/,
   );
+  assert.throws(
+    () => createGuidedWalkPlan({ path: CORNER_PATH, followerPath: [{ x: 1, y: 1 }] }),
+    /at least two points/,
+  );
 });
 
 test("leader and follower sample the same path at one constant speed with a delay", () => {
@@ -86,6 +92,24 @@ test("leader waits at the destination until the delayed follower completes", () 
   });
   assert.equal(sample.complete, false);
   assert.equal(sample.moving, true);
+});
+
+test("leader and follower can use separate authored paths without snapping together", () => {
+  const plan = createGuidedWalkPlan({
+    path: [{ x: 0, y: 0 }, { x: 4, y: 0 }],
+    followerPath: [{ x: 0, y: 1 }, { x: 3, y: 1 }],
+    speed: 1,
+    followerDelayMs: 500,
+  });
+
+  assert.equal(plan.leaderDurationMs, 4000);
+  assert.equal(plan.followerDurationMs, 3000);
+  assert.equal(plan.durationMs, 4000);
+  assert.deepEqual(sampleGuidedWalk(plan, 0).follower.position, { x: 0, y: 1 });
+  assert.deepEqual(sampleGuidedWalk(plan, 2000).leader.position, { x: 2, y: 0 });
+  assert.deepEqual(sampleGuidedWalk(plan, 2000).follower.position, { x: 1.5, y: 1 });
+  assert.deepEqual(sampleGuidedWalk(plan, plan.durationMs).follower.position, { x: 3, y: 1 });
+  assert.equal(sampleGuidedWalk(plan, plan.durationMs).complete, true);
 });
 
 test("terminal guided-walk sampling is deterministic and idempotent", () => {
@@ -129,4 +153,47 @@ test("guided walk sampling rejects invalid plans and elapsed time", () => {
   assert.throws(() => sampleGuidedWalk({}, 0), /must use version/);
   assert.throws(() => sampleGuidedWalk(plan, -1), /zero or greater/);
   assert.throws(() => sampleGuidedWalk(plan, Number.POSITIVE_INFINITY), /must be finite/);
+});
+
+test("guided walk frame clock progresses across arbitrary and regressed timestamp origins", () => {
+  const plan = createGuidedWalkPlan({
+    path: [{ x: 0, y: 0 }, { x: 2, y: 0 }],
+    speed: 1,
+    followerDelayMs: 0,
+  });
+
+  let clock = advanceGuidedWalkClock(plan, null, 50_000);
+  assert.deepEqual(clock, {
+    version: GUIDED_WALK_CLOCK_VERSION,
+    elapsedMs: 0,
+    lastTimestampMs: 50_000,
+    complete: false,
+  });
+  clock = advanceGuidedWalkClock(plan, clock, 50_750);
+  assert.equal(clock.elapsedMs, 750);
+
+  // A resumed document timeline may establish a lower baseline. The reset
+  // frame contributes no time, but subsequent frames must continue advancing.
+  clock = advanceGuidedWalkClock(plan, clock, 10);
+  assert.equal(clock.elapsedMs, 750);
+  clock = advanceGuidedWalkClock(plan, clock, 510);
+  assert.equal(clock.elapsedMs, 1250);
+  clock = advanceGuidedWalkClock(plan, clock, 1510);
+  assert.equal(clock.elapsedMs, plan.durationMs);
+  assert.equal(clock.complete, true);
+  assert.equal(advanceGuidedWalkClock(plan, clock, 2510).elapsedMs, plan.durationMs);
+});
+
+test("guided walk frame clock validates state and timestamps", () => {
+  const plan = createGuidedWalkPlan({ path: CORNER_PATH });
+  assert.throws(() => advanceGuidedWalkClock(plan, {}, 0), /must use version/);
+  assert.throws(() => advanceGuidedWalkClock(plan, null, -1), /zero or greater/);
+  assert.throws(
+    () => advanceGuidedWalkClock(plan, {
+      version: GUIDED_WALK_CLOCK_VERSION,
+      elapsedMs: Number.NaN,
+      lastTimestampMs: null,
+    }, 0),
+    /must be finite/,
+  );
 });
