@@ -21,6 +21,12 @@ test("the active adventure presentation begins with Elverson's aquarium project"
   assert.match(page, /Explore coastal Elverson and help Mr\. Easterling create a new community aquarium exhibit/);
 });
 
+test("the opening setup clips Mr. Easterling inside its portrait frame", () => {
+  assert.match(component, /className=\{styles\.openingSetupPortrait\}[\s\S]*?<CharacterPortrait character=\{ACADEMY_MENTOR_ID\}/);
+  assert.match(styles, /\.openingSetupPortrait\s*\{[\s\S]*?position:\s*relative;[\s\S]*?overflow:\s*hidden;[\s\S]*?isolation:\s*isolate;/);
+  assert.match(styles, /\.mrEasterlingPortraitArtwork\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?inset:\s*0;/);
+});
+
 test("the Elverson vertical slice does not offer outward world navigation", () => {
   assert.doesNotMatch(component, />Open World Map</);
   assert.doesNotMatch(component, /onWorldMap=/);

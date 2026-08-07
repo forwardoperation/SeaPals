@@ -3433,9 +3433,12 @@
 }
 
 .openingSetupPortrait {
+  position: relative;
+  flex: 0 0 auto;
   width: 112px;
   height: 112px;
   overflow: hidden;
+  isolation: isolate;
   border: 2px solid rgba(103, 232, 249, 0.54);
   border-radius: 20px;
   background: rgba(5, 25, 38, 0.7);
