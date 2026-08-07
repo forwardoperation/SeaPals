@@ -39,8 +39,11 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(modal, /data-hand-net-scoop-frame=\{playerSpriteFrame\}/);
   assert.doesNotMatch(modal, /styles\.handNetHandle/);
   assert.doesNotMatch(modal, /styles\.handNetScoop\b/);
-  assert.match(modal, /handNetToolHud/);
-  assert.match(modal, /handNetCatchTray/);
+  assert.doesNotMatch(modal, /handNetObjective/);
+  assert.doesNotMatch(modal, /handNetToolHud/);
+  assert.doesNotMatch(modal, /handNetCatchTray/);
+  assert.doesNotMatch(modal, /handNetGuidanceButton/);
+  assert.doesNotMatch(modal, /handNetCollectionSummary/);
   assert.match(modal, /--hand-net-player-x/);
   assert.match(modal, /--hand-net-player-y/);
   assert.match(modal, /--hand-net-player-velocity-x/);
@@ -55,6 +58,16 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(modal, /key=\{`\$\{seedRef\.current\}-\$\{netSplash\.sequence\}`\}/);
   assert.match(modal, /handNetNetSplashActive/);
   assert.match(modal, /data-hand-net-effect="net-splash"/);
+  assert.match(modal, /styles\.handNetPlayerCelebrating/);
+  assert.match(modal, /const playerSpriteFrame = celebrating[\s\S]*?\? 6/);
+  assert.match(modal, /styles\.handNetCatchReveal/);
+  assert.match(modal, /catchResult\.firstDiscovery/);
+  assert.match(modal, /aria-expanded=\{catchDetailsOpen\}/);
+  assert.match(modal, /import\("@\/data\/encyclopedia"\)/);
+  assert.match(modal, /encyclopediaSlugByCardId\[caughtCardId\]/);
+  assert.match(modal, /href=\{`\/encyclopedia\/\$\{encyclopediaSlug\}`\}/);
+  assert.match(modal, /styles\.handNetDockExit/);
+  assert.match(modal, /state\.phase !== HAND_NET_PHASES\.CAUGHT/);
   assert.match(game, /preloadAdventureAsset\(ELVERSON_HAND_NET_TIDEPOOL_PATH\)/);
   assert.match(styles, /\.handNetShallows[\s\S]*?aspect-ratio:\s*3 \/ 2/);
   assert.match(styles, /var\(--hand-net-tidepool-image\)/);
@@ -70,12 +83,16 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(styles, /\.handNetNetSplash[\s\S]*?pointer-events:\s*none/);
   assert.match(styles, /@keyframes handNetCausticsDrift/);
   assert.match(styles, /@keyframes handNetSplashFlash/);
+  assert.match(styles, /@keyframes handNetVictoryPose/);
+  assert.match(styles, /@keyframes handNetCatchBannerEnter/);
+  assert.match(styles, /@keyframes handNetCatchCreatureEnter/);
+  assert.match(styles, /\.handNetControlDock[\s\S]*?grid-template-columns/);
 });
 
 test("the required tutorial stays with the player until a catch is recorded", () => {
   assert.match(game, /fishingSession\.required[\s\S]*?Complete Wyeth's practice catch before leaving the lesson/);
   assert.match(modal, /if \(required && !catchResult\) return/);
-  assert.match(modal, /!required \|\| catchResult/);
+  assert.match(modal, /!required && state\.phase !== HAND_NET_PHASES\.CAUGHT/);
   assert.match(modal, /tutorial \? "tutorial-complete" : "caught"/);
   assert.match(modal, /Retry catch/);
   assert.match(modal, /Try again/);
@@ -112,12 +129,13 @@ test("keyboard, touch, focus, live status, and reduced-motion affordances are ex
   assert.match(modal, /modalStack\.at\(-1\) !== dialog/);
   assert.match(modal, /previousFocusRef\.current\?\.focus/);
   assert.match(modal, /role="status" aria-live="polite"/);
-  assert.match(modal, /Gentle guidance: \{assistedMode \? "On" : "Off"\}/);
+  assert.doesNotMatch(modal, /Gentle guidance|assistedMode/);
   assert.match(styles, /\.reducedMotionMode \.handNetWave,[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.handNetCreature/);
   assert.match(styles, /\.reducedMotionMode \.handNetCaustics[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /\.reducedMotionMode \.handNetSurfaceVeil[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.handNetNetSplash::before/);
+  assert.match(styles, /\.reducedMotionMode \.handNetPlayerCelebrating,[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /@media \(forced-colors: active\)[\s\S]*?\.handNetCard/);
 });
 

@@ -6214,7 +6214,7 @@ export default function AdventureGame({
       if (fishingSession.required) {
         setSaveNotice({
           kind: "info",
-          message: "Wyeth will stay with you until you make this first practice catch. Gentle guidance slows the animals and widens the scoop area.",
+          message: "Wyeth will stay with you until you make this first practice catch. Let the animals settle, approach slowly, and scoop when the net is close.",
         });
       } else {
         closeFishingSession();
@@ -7394,7 +7394,6 @@ export default function AdventureGame({
           required={fishingSession.required}
           startWithCast={fishingSession.startWithCast}
           reducedMotion={gameSave.settings.reducedMotion || systemReducedMotion}
-          progress={fishingProgress}
           onCatch={saveFishingCatch}
           onClose={closeFishingSession}
           onReturnToShore={returnFishingSessionToShore}
