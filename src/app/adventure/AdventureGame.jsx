@@ -708,11 +708,9 @@ function SpriteArtwork({
   const walkStyle = (moving || steppingInPlace) && Number.isFinite(walkSpeed) && walkSpeed > 0
     ? {
         "--sprite-walk-cycle-duration": `${getAdventureWalkCycleDurationMs(walkSpeed)}ms`,
-        ...(steppingInPlace ? {
-          "--sprite-step-frame-a-x": `${frameRegistration.frameA}%`,
-          "--sprite-step-neutral-x": `${frameRegistration.neutral}%`,
-          "--sprite-step-frame-b-x": `${frameRegistration.frameB}%`,
-        } : {}),
+        "--sprite-step-frame-a-x": `${frameRegistration.frameA}%`,
+        "--sprite-step-neutral-x": `${frameRegistration.neutral}%`,
+        "--sprite-step-frame-b-x": `${frameRegistration.frameB}%`,
       }
     : undefined;
   return (
@@ -3169,6 +3167,11 @@ export default function AdventureGame({
   const playerWalking = bestFriendWalkSample?.follower.moving === true
     || guidedWalkSample?.follower.moving === true
     || isAdventurePlayerWalking({ isMoving, boatMode, movementPaused });
+  const playerWalkSpeed = bestFriendWalkSample?.follower.moving === true
+    ? bestFriendSequence?.plan?.speed
+    : guidedWalkSample?.follower.moving === true
+      ? guidedWalk?.plan?.speed
+      : scene.movement?.speed;
   const authoredInteraction = useMemo(() => {
     if (screen !== "playing" || !gameSave || vehicleMode) return null;
     const candidate = getContinuousInteraction(sceneId, position, facing, {
@@ -7631,7 +7634,7 @@ export default function AdventureGame({
                 position={position}
                 facing={facing}
                 moving={playerWalking}
-                walkSpeed={scene.movement?.speed}
+                walkSpeed={playerWalkSpeed}
                 interaction={actionInteraction}
                 scene={scene}
                 transitionPhase={sceneTransition?.phase ?? null}

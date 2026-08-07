@@ -31,7 +31,7 @@ test("scene asset collection includes ground, unique layered art, and unique cha
     "/images/adventure/sunpatch-cay.png",
     "/objects/tree.png",
     "/objects/bench.png",
-    "/images/adventure/player-sprites-512-v2.webp",
+    "/images/adventure/player-sprites-512-v3.webp",
     "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
   ]);
   assert.equal(Object.isFrozen(paths), true);
@@ -154,7 +154,7 @@ test("Elverson's town manifest covers its ground, layered objects, and resident 
     assert.ok(paths.includes(sprite.src), `${sprite.src} must be preloaded`);
   }
   for (const residentPath of [
-    "/images/adventure/player-sprites-512-v2.webp",
+    "/images/adventure/player-sprites-512-v3.webp",
     "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
     "/images/adventure/town-adult-sprites-512-v2.webp",
     "/images/adventure/dorian-sprites-512-v2.webp",

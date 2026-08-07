@@ -67,5 +67,7 @@ test("held walking intent animates through collision while every inactive state 
   assert.match(component, /moving=\{playerWalking\}/);
   assert.doesNotMatch(component, /moving=\{playerWalking \|\| Boolean\(sceneTransition\)\}/);
   assert.match(component, /position: \{ \.\.\.sample\.follower\.position \}/);
+  assert.match(component, /const playerWalkSpeed = bestFriendWalkSample\?\.follower\.moving === true[\s\S]*?\? bestFriendSequence\?\.plan\?\.speed[\s\S]*?: guidedWalkSample\?\.follower\.moving === true[\s\S]*?\? guidedWalk\?\.plan\?\.speed[\s\S]*?: scene\.movement\?\.speed/);
+  assert.match(component, /walkSpeed=\{playerWalkSpeed\}/);
   assert.match(component, /getAdventureWalkCycleDurationMs\(walkSpeed\)/);
 });

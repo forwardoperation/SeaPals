@@ -17,7 +17,7 @@ import { ELVERSON_REEF_CREATURE_ATLAS_PATH } from "./adventureAquariumExhibits.m
 import styles from "./adventure.module.css";
 
 export const ELVERSON_HAND_NET_TIDEPOOL_PATH = "/images/adventure/elverson-hand-net-tidepool-v2.webp";
-export const ELVERSON_HAND_NET_PLAYER_ATLAS_PATH = "/images/adventure/player-hand-net-isometric-v1.png";
+export const ELVERSON_HAND_NET_PLAYER_ATLAS_PATH = "/images/adventure/player-hand-net-isometric-v2.png";
 
 const MOVE_KEYS = Object.freeze({
   ArrowUp: [0, -1],

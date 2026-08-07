@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { ELVERSON_REEF_CATCHES } from "./adventureFishing.mjs";
@@ -10,6 +11,8 @@ import {
   createHandNetState,
   tickHandNetState,
 } from "./adventureHandNet.mjs";
+
+const handNetSource = readFileSync(new URL("./adventureHandNet.mjs", import.meta.url), "utf8");
 
 function mutableCopy(value) {
   return JSON.parse(JSON.stringify(value));
@@ -114,6 +117,9 @@ test("move actions drive the player and forward net without mutating prior state
 });
 
 test("walk presentation starts predictably, advances locally, and resets when movement stops", () => {
+  assert.match(handNetSource, /const WALK_FRAME_DURATION_MS = 110;/);
+  assert.match(handNetSource, /const WALK_FRAME_SEQUENCE = Object\.freeze\(\[1, 0, 2, 0\]\);/);
+
   const initial = createHandNetState({ seed: 15, creatureCount: 1 });
   const idled = tickHandNetState(initial, 1_000);
   assert.equal(idled.presentation.walkElapsedMs, 0);
@@ -121,23 +127,23 @@ test("walk presentation starts predictably, advances locally, and resets when mo
 
   const started = applyHandNetAction(idled, { type: HAND_NET_ACTIONS.MOVE, x: 1, y: 0 });
   assert.equal(started.presentation.walkElapsedMs, 0);
-  assert.equal(started.presentation.walkFrameIndex, 0);
+  assert.equal(started.presentation.walkFrameIndex, 1, "movement immediately plants the first stepping leg");
 
   const firstPose = tickHandNetState(started, 100);
   assert.equal(firstPose.presentation.walkElapsedMs, 100);
-  assert.equal(firstPose.presentation.walkFrameIndex, 0);
+  assert.equal(firstPose.presentation.walkFrameIndex, 1);
   const secondPose = tickHandNetState(firstPose, 20);
   assert.equal(secondPose.presentation.walkElapsedMs, 120);
-  assert.equal(secondPose.presentation.walkFrameIndex, 1);
-  const thirdPose = tickHandNetState(secondPose, 120);
-  assert.equal(thirdPose.presentation.walkElapsedMs, 240);
-  assert.equal(thirdPose.presentation.walkFrameIndex, 0, "neutral separates the two planted steps");
+  assert.equal(secondPose.presentation.walkFrameIndex, 0, "neutral separates the two planted steps");
+  const thirdPose = tickHandNetState(secondPose, 100);
+  assert.equal(thirdPose.presentation.walkElapsedMs, 220);
+  assert.equal(thirdPose.presentation.walkFrameIndex, 2);
   const oppositeStep = tickHandNetState(thirdPose, 120);
-  assert.equal(oppositeStep.presentation.walkElapsedMs, 360);
-  assert.equal(oppositeStep.presentation.walkFrameIndex, 2);
+  assert.equal(oppositeStep.presentation.walkElapsedMs, 340);
+  assert.equal(oppositeStep.presentation.walkFrameIndex, 0);
 
-  const redirected = applyHandNetAction(oppositeStep, { type: HAND_NET_ACTIONS.MOVE, x: 0, y: -1 });
-  assert.equal(redirected.presentation.walkElapsedMs, 360, "turning mid-stride preserves cadence");
+  const redirected = applyHandNetAction(thirdPose, { type: HAND_NET_ACTIONS.MOVE, x: 0, y: -1 });
+  assert.equal(redirected.presentation.walkElapsedMs, 220, "turning mid-stride preserves cadence");
   assert.equal(redirected.presentation.walkFrameIndex, 2);
 
   const stopped = applyHandNetAction(redirected, { type: HAND_NET_ACTIONS.STOP });
@@ -148,7 +154,7 @@ test("walk presentation starts predictably, advances locally, and resets when mo
     { type: HAND_NET_ACTIONS.MOVE, x: -1, y: 0 },
   );
   assert.equal(restarted.presentation.walkElapsedMs, 0);
-  assert.equal(restarted.presentation.walkFrameIndex, 0);
+  assert.equal(restarted.presentation.walkFrameIndex, 1);
 });
 
 test("creatures wander deterministically and remain inside the shallow-water arena", () => {

@@ -12,13 +12,14 @@ import {
   isAdventurePlayerWalking,
 } from "./adventureWalkAnimation.mjs";
 
-test("one complete walk cycle covers one world tile", () => {
+test("one complete walk cycle covers one world tile without flashing through poses", () => {
   assert.deepEqual(ADVENTURE_WALK_ANIMATION_DEFAULTS, {
     cycleDistance: 1,
+    minimumCycleDurationMs: 480,
     displacementEpsilon: 0.0005,
   });
   assert.equal(Object.isFrozen(ADVENTURE_WALK_ANIMATION_DEFAULTS), true);
-  assert.equal(getAdventureWalkCycleDurationMs(4), 250);
+  assert.equal(getAdventureWalkCycleDurationMs(4), 480);
   assert.equal(getAdventureWalkCycleDurationMs(0.5), 2000);
 });
 
@@ -116,7 +117,14 @@ test("walk displacement rejects malformed positions and thresholds", () => {
 });
 
 test("walk cadence supports an explicitly measured cycle distance", () => {
-  assert.equal(getAdventureWalkCycleDurationMs(2, { cycleDistance: 0.5 }), 250);
+  assert.equal(getAdventureWalkCycleDurationMs(2, { cycleDistance: 0.5 }), 480);
+  assert.equal(
+    getAdventureWalkCycleDurationMs(2, {
+      cycleDistance: 0.5,
+      minimumCycleDurationMs: 100,
+    }),
+    250,
+  );
 });
 
 test("walk cadence rejects invalid speeds and distances", () => {
@@ -125,5 +133,9 @@ test("walk cadence rejects invalid speeds and distances", () => {
   assert.throws(
     () => getAdventureWalkCycleDurationMs(4, { cycleDistance: -1 }),
     /cycle distance must be a positive finite number/,
+  );
+  assert.throws(
+    () => getAdventureWalkCycleDurationMs(4, { minimumCycleDurationMs: 0 }),
+    /minimum walk cycle duration must be a positive finite number/,
   );
 });

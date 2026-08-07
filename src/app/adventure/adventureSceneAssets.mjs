@@ -17,7 +17,7 @@ export const ADVENTURE_SCENE_THEME_GROUND_ASSETS = Object.freeze({
 
 /** Maps rendered sprite-profile IDs to the bitmap actually used by CSS. */
 export const ADVENTURE_CHARACTER_SPRITE_ASSETS = Object.freeze({
-  player: "/images/adventure/player-sprites-512-v2.webp",
+  player: "/images/adventure/player-sprites-512-v3.webp",
   marina: "/images/adventure/marina-sprites-512-v2.webp",
   dorian: "/images/adventure/dorian-sprites-512-v2.webp",
   "fisherman-wyeth": "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",

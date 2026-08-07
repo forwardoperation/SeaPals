@@ -68,7 +68,7 @@ test("Elverson uses a close-follow camera and compact human-toned overworld spri
 
 test("Elverson overworld sprites and dialogue portraits reuse compact WebP sheets", () => {
   const spriteSheets = {
-    player: "player-sprites-512-v2.webp",
+    player: "player-sprites-512-v3.webp",
     marina: "marina-sprites-512-v2.webp",
     dorian: "dorian-sprites-512-v2.webp",
     "fisherman-wyeth": "fisherman-wyeth-sprites-512-v2.webp",
