@@ -121,12 +121,17 @@ test("progress exposes the home sequence, dock speech, aquarium handoff, and riv
   save = recordElversonPrologueBeat(save, ELVERSON_PROLOGUE_BEATS.breakfast).save;
   assert.equal(getElversonPrologueProgress(save).homeConversation.trainerId, "player-dad");
   save = recordElversonPrologueBeat(save, ELVERSON_PROLOGUE_BEATS.permission).save;
-  assert.equal(getElversonPrologueProgress(save).homeConversation.trainerId, "player-best-friend");
+  const exteriorArrival = getElversonPrologueProgress(save);
+  assert.equal(exteriorArrival.homeConversation.trainerId, "player-best-friend");
+  assert.equal(exteriorArrival.homeConversation.sceneId, "town");
+  assert.equal(exteriorArrival.needsHomeSequence, false);
+  assert.equal(exteriorArrival.needsBestFriendArrival, true);
   save = recordElversonPrologueBeat(save, ELVERSON_PROLOGUE_BEATS.race).save;
 
   const aquariumBound = getElversonPrologueProgress(save);
   assert.equal(aquariumBound.homeConversation, null);
   assert.equal(aquariumBound.readyForDockSpeech, true);
+  assert.equal(aquariumBound.needsBestFriendArrival, false);
   assert.equal(aquariumBound.readyForAquariumRace, true);
   assert.equal(aquariumBound.friendVisibleInAquarium, false);
 

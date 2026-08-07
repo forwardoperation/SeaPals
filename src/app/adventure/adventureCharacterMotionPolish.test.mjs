@@ -60,7 +60,7 @@ test("shadow calibration stays out of portraits and boats", () => {
 });
 
 test("held walking intent animates through collision while every inactive state stops", () => {
-  assert.match(component, /const playerWalking = guidedWalkSample\?\.follower\.moving === true[\s\S]*?\|\| isAdventurePlayerWalking\(\{ isMoving, boatMode, movementPaused \}\)/);
+  assert.match(component, /const playerWalking = bestFriendWalkSample\?\.follower\.moving === true[\s\S]*?\|\| guidedWalkSample\?\.follower\.moving === true[\s\S]*?\|\| isAdventurePlayerWalking\(\{ isMoving, boatMode, movementPaused \}\)/);
   assert.match(component, /if \(vector\.x === 0 && vector\.y === 0\) \{[\s\S]*?setMovementActive\(false\);[\s\S]*?return;/);
   assert.match(component, /function clearMovement|const clearMovement/);
   assert.doesNotMatch(component, /setPlayerWalking\(/);

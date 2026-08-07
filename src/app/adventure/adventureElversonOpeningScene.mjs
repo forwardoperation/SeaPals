@@ -1,5 +1,7 @@
 export const ELVERSON_DOCK_SPEECH_INTERACTION_ID =
   "interaction-elverson-dock-speech-mentor";
+export const ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID =
+  "interaction-elverson-best-friend-arrival";
 
 export const ELVERSON_DOCK_SPEECH_TRIGGER = Object.freeze({
   left: 18.75,
@@ -26,6 +28,45 @@ export const ELVERSON_DOCK_SPEECH_RESTORE_POSITION = Object.freeze({
 export const ELVERSON_MOM_GREETING_POSITION = Object.freeze({
   x: 6.15,
   y: 3.55,
+});
+
+export const ELVERSON_MOM_GREETING_PATH = Object.freeze([
+  Object.freeze({ x: 4.75, y: 4.55 }),
+  Object.freeze({ x: 6.15, y: 4.55 }),
+  ELVERSON_MOM_GREETING_POSITION,
+]);
+
+export const ELVERSON_BEST_FRIEND_ARRIVAL_POSITION = Object.freeze({
+  x: 11.2,
+  y: 5.05,
+});
+
+export const ELVERSON_BEST_FRIEND_MEETING_POSITION = Object.freeze({
+  x: 4.5,
+  y: 5.05,
+});
+
+export const ELVERSON_BEST_FRIEND_ARRIVAL_PATH = Object.freeze([
+  ELVERSON_BEST_FRIEND_ARRIVAL_POSITION,
+  Object.freeze({ x: 8, y: 5.05 }),
+  ELVERSON_BEST_FRIEND_MEETING_POSITION,
+]);
+
+export const ELVERSON_BEST_FRIEND_DOCK_WALK = Object.freeze({
+  leader: Object.freeze([
+    ELVERSON_BEST_FRIEND_MEETING_POSITION,
+    Object.freeze({ x: 8, y: 5.8 }),
+    Object.freeze({ x: 20.5, y: 5.8 }),
+    Object.freeze({ x: 20.5, y: 14.8 }),
+    Object.freeze({ x: 21.2, y: 15.7 }),
+  ]),
+  follower: Object.freeze([
+    Object.freeze({ x: 3.55, y: 5.05 }),
+    Object.freeze({ x: 7.2, y: 6.2 }),
+    Object.freeze({ x: 19.7, y: 6.2 }),
+    Object.freeze({ x: 19.7, y: 14.8 }),
+    ELVERSON_DOCK_SPEECH_PLAYER_POSITION,
+  ]),
 });
 
 const DOCK_AUDIENCE_POSITIONS = Object.freeze([

@@ -18,6 +18,10 @@ export {
 
 export const ADVENTURE_SAVE_SCHEMA_VERSION = 4;
 
+export const ADVENTURE_CHARACTER_NAME_MAX_LENGTH = 16;
+export const DEFAULT_ADVENTURE_PLAYER_NAME = "Explorer";
+export const DEFAULT_ADVENTURE_BEST_FRIEND_NAME = "Finn";
+
 export const QUEST_STATUSES = Object.freeze([
   "notStarted",
   "active",
@@ -53,6 +57,7 @@ const TOURNAMENT_STATUS_SET = new Set(TOURNAMENT_STATUSES);
 const ADVENTURE_OPENING_STATUS_SET = new Set(ADVENTURE_OPENING_STATUSES);
 const TEXT_SPEEDS = new Set(["slow", "normal", "fast", "instant"]);
 const IDENTIFIER_PATTERN = /^[a-z0-9]+(?:[._:-][a-z0-9]+)*$/;
+const CHARACTER_NAME_PATTERN = /^[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N} .'\u2019-]*$/u;
 const MAX_IDENTIFIER_LENGTH = 128;
 const MAX_LABEL_LENGTH = 80;
 
@@ -101,6 +106,19 @@ function normalizeLabel(value, path) {
   const normalized = value.trim();
   if (!normalized) fail(path, "must not be empty.");
   if (normalized.length > MAX_LABEL_LENGTH) fail(path, `must be at most ${MAX_LABEL_LENGTH} characters.`);
+  return normalized;
+}
+
+export function normalizeAdventureCharacterName(value, path = "characterName") {
+  if (typeof value !== "string") fail(path, "must be a string.");
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (!normalized) fail(path, "must not be empty.");
+  if (normalized.length > ADVENTURE_CHARACTER_NAME_MAX_LENGTH) {
+    fail(path, `must be at most ${ADVENTURE_CHARACTER_NAME_MAX_LENGTH} characters.`);
+  }
+  if (!CHARACTER_NAME_PATTERN.test(normalized)) {
+    fail(path, "may use letters, numbers, spaces, periods, apostrophes, and hyphens only.");
+  }
   return normalized;
 }
 
@@ -337,7 +355,13 @@ function normalizeSavedDecks(value, path, fallback = {}) {
   return Object.fromEntries(entries);
 }
 
-function createInitialState(profileId) {
+function createInitialState(
+  profileId,
+  {
+    playerName = DEFAULT_ADVENTURE_PLAYER_NAME,
+    bestFriendName = DEFAULT_ADVENTURE_BEST_FRIEND_NAME,
+  } = {},
+) {
   return {
     schemaVersion: ADVENTURE_SAVE_SCHEMA_VERSION,
     profileId,
@@ -347,6 +371,8 @@ function createInitialState(profileId) {
       completedBeatIds: [],
     },
     player: {
+      name: normalizeAdventureCharacterName(playerName, "playerName"),
+      bestFriendName: normalizeAdventureCharacterName(bestFriendName, "bestFriendName"),
       starterDeckId: null,
       activeDeckId: null,
     },
@@ -401,8 +427,8 @@ function createInitialState(profileId) {
 }
 
 /** Creates a new canonical schema-v4 save without reading time, storage, or random state. */
-export function createInitialAdventureSave(profileId) {
-  return createInitialState(normalizeIdentifier(profileId, "profileId"));
+export function createInitialAdventureSave(profileId, identity) {
+  return createInitialState(normalizeIdentifier(profileId, "profileId"), identity);
 }
 
 /**
@@ -533,6 +559,14 @@ export function normalizeAdventureSave(value) {
       completedBeatIds: openingCompletedBeatIds,
     },
     player: {
+      name: normalizeAdventureCharacterName(
+        player.name ?? defaults.player.name,
+        "save.player.name",
+      ),
+      bestFriendName: normalizeAdventureCharacterName(
+        player.bestFriendName ?? defaults.player.bestFriendName,
+        "save.player.bestFriendName",
+      ),
       starterDeckId: normalizeNullableIdentifier(
         player.starterDeckId,
         "save.player.starterDeckId",

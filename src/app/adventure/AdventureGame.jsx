@@ -119,9 +119,15 @@ import {
   recoverElversonPrologueResume,
 } from "./adventureElversonPrologue.mjs";
 import {
+  ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID,
+  ELVERSON_BEST_FRIEND_ARRIVAL_PATH,
+  ELVERSON_BEST_FRIEND_ARRIVAL_POSITION,
+  ELVERSON_BEST_FRIEND_DOCK_WALK,
+  ELVERSON_BEST_FRIEND_MEETING_POSITION,
   ELVERSON_DOCK_SPEECH_INTERACTION_ID,
   ELVERSON_DOCK_SPEECH_PLAYER_POSITION,
   ELVERSON_DOCK_SPEECH_RESTORE_POSITION,
+  ELVERSON_MOM_GREETING_PATH,
   ELVERSON_MOM_GREETING_POSITION,
   createElversonDockSpeechInteractions,
   isElversonDockSpeechTriggerPosition,
@@ -147,7 +153,11 @@ import { reconcileStarterCollection } from "./adventureCollection.mjs";
 import { createActiveDuelDeckSnapshot } from "./adventureDecks.mjs";
 import { assertAdventureDuelResultMatchesLaunch } from "./adventureDuel.mjs";
 import { openAdventurePack } from "./adventurePacks.mjs";
-import { setQuestFlag } from "./adventureProgression.mjs";
+import {
+  ADVENTURE_CHARACTER_NAME_MAX_LENGTH,
+  normalizeAdventureCharacterName,
+  setQuestFlag,
+} from "./adventureProgression.mjs";
 import AdventureDecksModal from "./AdventureDecksModal";
 import AdventureSettingsModal from "./AdventureSettingsModal";
 import {
@@ -315,8 +325,14 @@ const ELVERSON_DOCK_SPEECH_INTERACTIONS = createElversonDockSpeechInteractions(
 const ELVERSON_HOME_OPENING_TRAINER_IDS = new Set([
   "player-mom",
   "player-dad",
-  ELVERSON_PROLOGUE_BEST_FRIEND_ID,
 ]);
+const ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION = Object.freeze({
+  id: ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID,
+  type: "npc",
+  npcId: ELVERSON_PROLOGUE_BEST_FRIEND_ID,
+  at: ELVERSON_BEST_FRIEND_ARRIVAL_POSITION,
+  facing: "left",
+});
 const ELVERSON_RIVAL_AQUARIUM_INTERACTION = Object.freeze({
   id: ELVERSON_RIVAL_DEPARTURE_CONVERSATION.interactionId,
   type: "npc",
@@ -1139,11 +1155,21 @@ function BoatHelmReadout({ motion, maximumForwardSpeed, destinationDock, dockRea
   );
 }
 
-function conversationLines(conversation, trainer, defeated) {
-  if (Array.isArray(conversation?.lines) && conversation.lines.length) return conversation.lines;
+function personalizeDialogueLine(line, identity = {}) {
+  return String(line ?? "")
+    .replaceAll("{{playerName}}", identity.playerName ?? "Explorer")
+    .replaceAll("{{bestFriendName}}", identity.bestFriendName ?? "Finn");
+}
+
+function conversationLines(conversation, trainer, defeated, identity = {}) {
+  let lines = null;
+  if (Array.isArray(conversation?.lines) && conversation.lines.length) {
+    lines = conversation.lines;
+  }
   const authored = trainer.dialogue?.[conversation?.mode];
-  if (Array.isArray(authored) && authored.length) return authored;
-  return defeated ? trainer.rematch : trainer.intro;
+  if (!lines && Array.isArray(authored) && authored.length) lines = authored;
+  if (!lines) lines = defeated ? trainer.rematch : trainer.intro;
+  return lines.map((line) => personalizeDialogueLine(line, identity));
 }
 
 function ProgressiveDialogueLine({
@@ -1280,12 +1306,13 @@ function Conversation({
   secondaryLabel = "Not yet",
   textSpeed = "normal",
   reducedMotion = false,
+  identity,
   onAdvance,
   onPrimary,
   onSecondary,
 }) {
   const dialogRef = useDialogFocusTrap(!blocked);
-  const lines = conversationLines(conversation, trainer, defeated);
+  const lines = conversationLines(conversation, trainer, defeated, identity);
   const finalLine = conversation.index === lines.length - 1;
   const line = lines[conversation.index] ?? "";
 
@@ -1322,6 +1349,166 @@ function Conversation({
           </ProgressiveDialogueLine>
         </div>
       </div>
+    </div>
+  );
+}
+
+function OpeningSetupModal({ profileId, onCancel, onBegin }) {
+  const dialogRef = useDialogFocusTrap();
+  const [step, setStep] = useState("world");
+  const [playerName, setPlayerName] = useState("");
+  const [bestFriendName, setBestFriendName] = useState("");
+  const [error, setError] = useState(null);
+  const steps = ["world", "player", "friend", "confirm"];
+  const stepNumber = steps.indexOf(step) + 1;
+
+  function acceptName(value, field, nextStep) {
+    try {
+      const normalized = normalizeAdventureCharacterName(value, field);
+      if (field === "Your name") setPlayerName(normalized);
+      else setBestFriendName(normalized);
+      setError(null);
+      setStep(nextStep);
+    } catch (nameError) {
+      setError(nameError?.message ?? "Choose a short first name or nickname.");
+    }
+  }
+
+  function submitName(event) {
+    event.preventDefault();
+    if (step === "player") {
+      acceptName(playerName, "Your name", "friend");
+    } else if (step === "friend") {
+      acceptName(bestFriendName, "Your best friend's name", "confirm");
+    }
+  }
+
+  return (
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      data-adventure-modal="true"
+      className={styles.openingSetupLayer}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="opening-setup-title"
+    >
+      <section className={styles.openingSetupCard}>
+        <div className={styles.openingSetupProgress} aria-label={`Opening setup step ${stepNumber} of ${steps.length}`}>
+          {steps.map((stepId, index) => (
+            <span key={stepId} className={index < stepNumber ? styles.openingSetupProgressActive : ""} />
+          ))}
+        </div>
+
+        {step === "world" ? (
+          <>
+            <div className={styles.openingSetupEyebrow}>Welcome to Reefbound</div>
+            <div className={styles.openingSetupIntroduction}>
+              <div className={styles.openingSetupPortrait}>
+                <CharacterPortrait character={ACADEMY_MENTOR_ID} facing="down" />
+              </div>
+              <div className={styles.openingSeaPal} aria-label="A colorful SeaPal" role="img" />
+            </div>
+            <div className={styles.openingSetupSpeaker}>
+              <strong>Mr. Easterling</strong>
+              <span>Aquarium Project Lead</span>
+            </div>
+            <h2 id="opening-setup-title">A world alive with SeaPals</h2>
+            <p>
+              This world is full of wonderful sea creatures. Around here, we call them
+              <strong> SeaPals</strong>.
+            </p>
+            <p>
+              People study their habitats, learn how healthy ecosystems fit together,
+              and care for the waters they all share. Today, your own story begins.
+            </p>
+            <div className={styles.openingSetupActions}>
+              <button type="button" className={styles.secondaryButton} onClick={onCancel}>Back</button>
+              <button type="button" autoFocus onClick={() => setStep("player")}>Continue</button>
+            </div>
+          </>
+        ) : null}
+
+        {step === "player" ? (
+          <form onSubmit={submitName}>
+            <div className={styles.openingSetupEyebrow}>Your adventure</div>
+            <h2 id="opening-setup-title">What is your name?</h2>
+            <p>Choose the first name or nickname the people of Elverson will call you.</p>
+            <label className={styles.openingNameField}>
+              <span>Your name</span>
+              <input
+                autoFocus
+                type="text"
+                value={playerName}
+                maxLength={ADVENTURE_CHARACTER_NAME_MAX_LENGTH}
+                autoComplete="off"
+                spellCheck="false"
+                onChange={(event) => {
+                  setPlayerName(event.target.value);
+                  setError(null);
+                }}
+              />
+              <small>Use a first name or nickname only—never a last name or contact information.</small>
+            </label>
+            {error ? <p className={styles.openingNameError} role="alert">{error}</p> : null}
+            <div className={styles.openingSetupActions}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setStep("world")}>Back</button>
+              <button type="submit">That&apos;s my name</button>
+            </div>
+          </form>
+        ) : null}
+
+        {step === "friend" ? (
+          <form onSubmit={submitName}>
+            <div className={styles.openingSetupEyebrow}>Your friendly rival</div>
+            <h2 id="opening-setup-title">What is your best friend&apos;s name?</h2>
+            <p>Your best friend will share the first steps of this adventure—and challenge you along the way.</p>
+            <label className={styles.openingNameField}>
+              <span>Best friend&apos;s name</span>
+              <input
+                autoFocus
+                type="text"
+                value={bestFriendName}
+                maxLength={ADVENTURE_CHARACTER_NAME_MAX_LENGTH}
+                autoComplete="off"
+                spellCheck="false"
+                onChange={(event) => {
+                  setBestFriendName(event.target.value);
+                  setError(null);
+                }}
+              />
+              <small>A short first name or nickname works best.</small>
+            </label>
+            {error ? <p className={styles.openingNameError} role="alert">{error}</p> : null}
+            <div className={styles.openingSetupActions}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setStep("player")}>Back</button>
+              <button type="submit">That&apos;s their name</button>
+            </div>
+          </form>
+        ) : null}
+
+        {step === "confirm" ? (
+          <>
+            <div className={styles.openingSetupEyebrow}>Save {ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1}</div>
+            <h2 id="opening-setup-title">Ready for your birthday adventure?</h2>
+            <div className={styles.openingIdentitySummary}>
+              <span><small>You</small><strong>{playerName}</strong></span>
+              <span><small>Best friend</small><strong>{bestFriendName}</strong></span>
+            </div>
+            <p>These names will be used in dialogue and saved with this Reefbound adventure.</p>
+            <div className={styles.openingSetupActions}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setStep("friend")}>Change names</button>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => onBegin({ playerName, bestFriendName })}
+              >
+                Begin the adventure
+              </button>
+            </div>
+          </>
+        ) : null}
+      </section>
     </div>
   );
 }
@@ -1521,8 +1708,8 @@ function TitleScreen({
               <div className={styles.profileSlot}>Save {profile.slot}</div>
               {profile.canContinue ? (
                 <>
-                  <strong>Elverson</strong>
-                  <span>{profile.completedEncounterCount} encounters complete</span>
+                  <strong>{profile.playerName ?? "Explorer"}</strong>
+                  <span>Elverson · {profile.completedEncounterCount} encounters complete</span>
                   {profile.starterDeckId ? <em>{getAdventureStarterDeck(profile.starterDeckId)?.name ?? "SeaPals"} starter</em> : null}
                   <small>{formatPlaytime(profile.playtimeSeconds)} · {formatSavedAt(profile.savedAt)}</small>
                   {profile.status === "recovered" ? <em>Backup recovery available</em> : null}
@@ -1543,7 +1730,7 @@ function TitleScreen({
               ) : (
                 <>
                   <strong>{profile.occupied ? "Save needs recovery" : "Empty save"}</strong>
-                  <span>{profile.occupied ? "No valid copy could be loaded." : "Begin at the Elverson Aquarium."}</span>
+                  <span>{profile.occupied ? "No valid copy could be loaded." : "Begin at home on your tenth birthday."}</span>
                   <button type="button" onClick={() => onNewGame(profile.profileId, profile.occupied)}>
                     {profile.occupied ? "Recover with new game" : "New Game"}
                   </button>
@@ -2546,6 +2733,7 @@ export default function AdventureGame({
     playtimeSeconds: 0,
     completedEncounterCount: 0,
   })));
+  const [newGameSetup, setNewGameSetup] = useState(null);
   const [gameSave, setGameSave] = useState(null);
   const [conversation, setConversation] = useState(null);
   const [conversationLeadIn, setConversationLeadIn] = useState(null);
@@ -2601,6 +2789,8 @@ export default function AdventureGame({
   const [sceneTransition, setSceneTransition] = useState(null);
   const [openingPrelude, setOpeningPrelude] = useState(null);
   const [momGreetingStage, setMomGreetingStage] = useState(null);
+  const [bestFriendSequence, setBestFriendSequence] = useState(null);
+  const [bestFriendWalkSample, setBestFriendWalkSample] = useState(null);
   const [dockCutscenePhase, setDockCutscenePhase] = useState(null);
   const [guidedWalk, setGuidedWalk] = useState(null);
   const [guidedWalkSample, setGuidedWalkSample] = useState(null);
@@ -2613,6 +2803,7 @@ export default function AdventureGame({
   const boatMotionRef = useRef(null);
   const actorRuntimeRef = useRef(actorRuntime);
   const guidedWalkClockRef = useRef(null);
+  const bestFriendWalkClockRef = useRef(null);
   const movementActiveRef = useRef(false);
   const movementPausedRef = useRef(true);
   const interactRef = useRef(null);
@@ -2759,6 +2950,10 @@ export default function AdventureGame({
     () => gameSave ? getElversonPrologueProgress(gameSave) : null,
     [gameSave],
   );
+  const dialogueIdentity = useMemo(() => ({
+    playerName: gameSave?.player?.name ?? "Explorer",
+    bestFriendName: gameSave?.player?.bestFriendName ?? "Finn",
+  }), [gameSave?.player?.bestFriendName, gameSave?.player?.name]);
   const fishingProgress = useMemo(
     () => gameSave ? getElversonHandNetProgress(gameSave) : null,
     [gameSave],
@@ -2862,10 +3057,11 @@ export default function AdventureGame({
     && !prologueProgress.legacySkipped
     && prologueProgress.readyForDockSpeech
   );
-  const bestFriendLeftHome = Boolean(
+  const bestFriendArrivalPending = Boolean(
     prologueProgress
     && !prologueProgress.legacySkipped
-    && prologueProgress.completedBeatIds.includes(ELVERSON_PROLOGUE_BEATS.race)
+    && prologueProgress.needsBestFriendArrival
+    && sceneId === "town"
   );
   const openingMentorReady = prologueProgress?.legacySkipped
     && onboardingProgress?.needsWorldIntroduction;
@@ -2887,13 +3083,15 @@ export default function AdventureGame({
         ["trainer", "npc"].includes(candidate.type)
         && TRAINERS[npcId]
         && !(
-          bestFriendLeftHome
-          && sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID
+          sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID
           && npcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID
         )
       );
     });
     const interactions = [...authoredInteractions];
+    if (bestFriendArrivalPending) {
+      interactions.push(ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION);
+    }
     if (stageOpeningMentor) interactions.push(ELVERSON_OPENING_MENTOR_INTERACTION);
     if (
       sceneId === ELVERSON_PROLOGUE_AQUARIUM_SCENE_ID
@@ -2902,7 +3100,7 @@ export default function AdventureGame({
       interactions.push(ELVERSON_RIVAL_AQUARIUM_INTERACTION);
     }
     return interactions;
-  }, [bestFriendLeftHome, dockSpeechPending, prologueProgress?.friendVisibleInAquarium, scene.interactions, sceneId, stageOpeningMentor]);
+  }, [bestFriendArrivalPending, dockSpeechPending, prologueProgress?.friendVisibleInAquarium, scene.interactions, sceneId, stageOpeningMentor]);
   const anchoredActorStates = useMemo(
     () => createAdventureActorStates(sceneCharacterInteractions),
     [sceneCharacterInteractions],
@@ -2945,6 +3143,7 @@ export default function AdventureGame({
     || openingFreeRoamLocked
     || Boolean(openingPrelude)
     || Boolean(momGreetingStage)
+    || Boolean(bestFriendSequence)
     || Boolean(dockCutscenePhase)
     || vehicleMode
     || pauseOpen
@@ -2967,7 +3166,8 @@ export default function AdventureGame({
     || Boolean(championshipEndingStage)
     || newsletterInviteOpen;
   movementPausedRef.current = movementPaused;
-  const playerWalking = guidedWalkSample?.follower.moving === true
+  const playerWalking = bestFriendWalkSample?.follower.moving === true
+    || guidedWalkSample?.follower.moving === true
     || isAdventurePlayerWalking({ isMoving, boatMode, movementPaused });
   const authoredInteraction = useMemo(() => {
     if (screen !== "playing" || !gameSave || vehicleMode) return null;
@@ -2979,8 +3179,7 @@ export default function AdventureGame({
     }
     const candidateNpcId = candidate?.trainerId ?? candidate?.npcId;
     if (
-      bestFriendLeftHome
-      && sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID
+      sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID
       && candidateNpcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID
     ) {
       return null;
@@ -2988,7 +3187,6 @@ export default function AdventureGame({
     return candidate;
   }, [
     actorPositionOverrides,
-    bestFriendLeftHome,
     dockSpeechPending,
     facing,
     gameSave,
@@ -3676,6 +3874,7 @@ export default function AdventureGame({
     setPauseOpen(false);
     setSettingsOpen(false);
     setConfirmation(null);
+    setNewGameSetup(null);
     pendingSceneTransitionRef.current = null;
     pendingDockSpeechSaveRef.current = null;
     momGreetingPlayerPositionRef.current = null;
@@ -3683,6 +3882,9 @@ export default function AdventureGame({
     setSceneTransition(null);
     setOpeningPrelude(null);
     setMomGreetingStage(null);
+    bestFriendWalkClockRef.current = null;
+    setBestFriendSequence(null);
+    setBestFriendWalkSample(null);
     setDockCutscenePhase(null);
     guidedWalkClockRef.current = null;
     setGuidedWalk(null);
@@ -3773,8 +3975,15 @@ export default function AdventureGame({
     if (momGreetingStage !== "approaching") return undefined;
     const interactionId = "interaction-elverson-prologue-player-mom";
     const playerPosition = momGreetingPlayerPositionRef.current ?? position;
+    const plan = createGuidedWalkPlan({
+      path: ELVERSON_MOM_GREETING_PATH,
+      speed: 1.7,
+      followerDelayMs: 0,
+      reducedMotion: effectiveReducedMotion,
+      reducedMotionSpeed: 8,
+    });
     let animationFrame = 0;
-    let previousTime = null;
+    let walkClock = null;
     let finished = false;
 
     const finishGreeting = (runtime) => {
@@ -3833,36 +4042,26 @@ export default function AdventureGame({
         finishGreeting(runtime);
         return;
       }
-      const elapsedMs = previousTime === null ? 0 : Math.min(timestamp - previousTime, 80);
-      previousTime = timestamp;
-      const delta = {
-        x: ELVERSON_MOM_GREETING_POSITION.x - actor.position.x,
-        y: ELVERSON_MOM_GREETING_POSITION.y - actor.position.y,
-      };
-      const distance = Math.hypot(delta.x, delta.y);
-      if (distance <= 0.035) {
-        finishGreeting(runtime);
-        return;
-      }
-      const travel = Math.min(distance, (elapsedMs / 1000) * 1.7);
-      const nextPosition = elapsedMs === 0 ? actor.position : {
-        x: actor.position.x + ((delta.x / distance) * travel),
-        y: actor.position.y + ((delta.y / distance) * travel),
-      };
+      walkClock = advanceGuidedWalkClock(plan, walkClock, timestamp);
+      const sample = sampleGuidedWalk(plan, walkClock.elapsedMs).leader;
       const nextRuntime = {
         sceneId,
         actors: {
           ...runtime.actors,
           [interactionId]: {
             ...actor,
-            position: nextPosition,
-            facing: getAdventureFacingToward(actor.position, ELVERSON_MOM_GREETING_POSITION, actor.facing),
-            moving: elapsedMs > 0,
+            position: { ...sample.position },
+            facing: sample.facing,
+            moving: sample.moving,
           },
         },
       };
       actorRuntimeRef.current = nextRuntime;
       setActorRuntime(nextRuntime);
+      if (sample.complete) {
+        finishGreeting(nextRuntime);
+        return;
+      }
       animationFrame = window.requestAnimationFrame(updateGreeting);
     };
 
@@ -3885,12 +4084,258 @@ export default function AdventureGame({
     if (
       screen !== "playing"
       || !gameSave
+      || !bestFriendArrivalPending
+      || sceneId !== "town"
+      || bestFriendSequence
+      || conversation
+      || conversationLeadIn
+      || activeTrainerId
+      || sceneTransition
+      || pauseOpen
+      || settingsOpen
+      || confirmation
+    ) return;
+
+    clearMovement();
+    const stagedSave = {
+      ...(saveRef.current ?? gameSave),
+      world: {
+        ...(saveRef.current ?? gameSave).world,
+        position: { ...ELVERSON_TOWN_SAFE_POSITIONS.playerHomeExterior },
+        facing: "right",
+      },
+    };
+    saveRef.current = stagedSave;
+    setGameSave(stagedSave);
+    setDirty(true);
+
+    const friendActor = anchoredActorStates[ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID];
+    if (friendActor) {
+      const stagedRuntime = {
+        sceneId: "town",
+        actors: {
+          ...anchoredActorStates,
+          [ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID]: {
+            ...friendActor,
+            position: { ...ELVERSON_BEST_FRIEND_ARRIVAL_POSITION },
+            facing: "left",
+            moving: false,
+          },
+        },
+      };
+      actorRuntimeRef.current = stagedRuntime;
+      setActorRuntime(stagedRuntime);
+    }
+    setBestFriendWalkSample(null);
+    bestFriendWalkClockRef.current = null;
+    setBestFriendSequence({ phase: "calling", plan: null });
+  }, [
+    activeTrainerId,
+    anchoredActorStates,
+    bestFriendArrivalPending,
+    bestFriendSequence,
+    clearMovement,
+    confirmation,
+    conversation,
+    conversationLeadIn,
+    gameSave,
+    pauseOpen,
+    sceneId,
+    sceneTransition,
+    screen,
+    setDirty,
+    settingsOpen,
+  ]);
+
+  useEffect(() => {
+    if (bestFriendSequence?.phase !== "calling") return undefined;
+    const timer = window.setTimeout(() => {
+      const plan = createGuidedWalkPlan({
+        path: ELVERSON_BEST_FRIEND_ARRIVAL_PATH,
+        speed: 2.35,
+        followerDelayMs: 0,
+        reducedMotion: effectiveReducedMotion,
+        reducedMotionSpeed: 6,
+      });
+      bestFriendWalkClockRef.current = null;
+      setBestFriendWalkSample(sampleGuidedWalk(plan, 0));
+      setBestFriendSequence({ phase: "approaching", plan });
+    }, effectiveReducedMotion ? 250 : 900);
+    return () => window.clearTimeout(timer);
+  }, [bestFriendSequence?.phase, effectiveReducedMotion]);
+
+  useEffect(() => {
+    if (
+      !["approaching", "escorting"].includes(bestFriendSequence?.phase)
+      || !bestFriendSequence?.plan
+      || screen !== "playing"
+    ) return undefined;
+
+    const phase = bestFriendSequence.phase;
+    const plan = bestFriendSequence.plan;
+    let animationFrame = 0;
+    let completionTimer = 0;
+    let finished = false;
+
+    const applySample = (sample) => {
+      setBestFriendWalkSample(sample);
+      const currentRuntime = actorRuntimeRef.current?.sceneId === "town"
+        ? actorRuntimeRef.current
+        : { sceneId: "town", actors: anchoredActorStates };
+      const friendActor = currentRuntime.actors[ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID]
+        ?? anchoredActorStates[ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID];
+      if (friendActor) {
+        const nextRuntime = {
+          sceneId: "town",
+          actors: {
+            ...currentRuntime.actors,
+            [ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID]: {
+              ...friendActor,
+              position: { ...sample.leader.position },
+              facing: sample.leader.facing,
+              moving: sample.leader.moving,
+            },
+          },
+        };
+        actorRuntimeRef.current = nextRuntime;
+        setActorRuntime(nextRuntime);
+      }
+
+      if (phase === "escorting") {
+        const currentSave = saveRef.current;
+        if (currentSave?.world.sceneId === "town") {
+          const movedSave = {
+            ...currentSave,
+            world: {
+              ...currentSave.world,
+              position: { ...sample.follower.position },
+              facing: sample.follower.facing,
+            },
+          };
+          saveRef.current = movedSave;
+          setGameSave(movedSave);
+          setDirty(true);
+        }
+      }
+    };
+
+    const finishWalk = (sample) => {
+      if (finished) return;
+      applySample(sample);
+      finished = true;
+      bestFriendWalkClockRef.current = null;
+      setBestFriendWalkSample(null);
+
+      if (phase === "approaching") {
+        const currentSave = saveRef.current;
+        if (currentSave) {
+          const facingSave = {
+            ...currentSave,
+            world: {
+              ...currentSave.world,
+              position: { ...ELVERSON_TOWN_SAFE_POSITIONS.playerHomeExterior },
+              facing: "right",
+            },
+          };
+          saveRef.current = facingSave;
+          setGameSave(facingSave);
+          setDirty(true);
+        }
+        const currentRuntime = actorRuntimeRef.current;
+        const friendActor = currentRuntime.actors[ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID];
+        if (friendActor) {
+          const settledRuntime = {
+            sceneId: "town",
+            actors: {
+              ...currentRuntime.actors,
+              [ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID]: {
+                ...friendActor,
+                position: { ...ELVERSON_BEST_FRIEND_MEETING_POSITION },
+                facing: "left",
+                moving: false,
+              },
+            },
+          };
+          actorRuntimeRef.current = settledRuntime;
+          setActorRuntime(settledRuntime);
+        }
+        setBestFriendSequence({ phase: "talking", plan: null });
+        setConversation({
+          trainerId: ELVERSON_PROLOGUE_BEST_FRIEND_ID,
+          sceneId: "town",
+          interactionId: ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID,
+          openingBeatId: ELVERSON_PROLOGUE_BEATS.race,
+          mode: "birthdayMorning",
+          escortToDock: true,
+          index: 0,
+        });
+        return;
+      }
+
+      try {
+        const currentSave = saveRef.current;
+        const recorded = recordElversonPrologueBeat(
+          currentSave,
+          ELVERSON_PROLOGUE_BEATS.race,
+        );
+        setBestFriendSequence(null);
+        if (recorded.applied) {
+          commitAdventureMutation(recorded.save, "elverson-opening:best-friend-dock-escort");
+        }
+      } catch (error) {
+        setBestFriendSequence(null);
+        setSaveNotice({
+          kind: "error",
+          message: error?.message ?? "The walk to the dock could not be recorded.",
+        });
+      }
+    };
+
+    const advance = (timestamp) => {
+      if (finished) return;
+      const clock = advanceGuidedWalkClock(
+        plan,
+        bestFriendWalkClockRef.current,
+        timestamp,
+      );
+      bestFriendWalkClockRef.current = clock;
+      const sample = sampleGuidedWalk(plan, clock.elapsedMs);
+      applySample(sample);
+      if (sample.complete) {
+        finishWalk(sample);
+        return;
+      }
+      animationFrame = window.requestAnimationFrame(advance);
+    };
+
+    const elapsedMs = bestFriendWalkClockRef.current?.elapsedMs ?? 0;
+    completionTimer = window.setTimeout(() => {
+      finishWalk(sampleGuidedWalk(plan, plan.durationMs));
+    }, Math.max(0, plan.durationMs - elapsedMs) + 750);
+    animationFrame = window.requestAnimationFrame(advance);
+    return () => {
+      finished = true;
+      window.cancelAnimationFrame(animationFrame);
+      window.clearTimeout(completionTimer);
+    };
+  }, [
+    anchoredActorStates,
+    bestFriendSequence,
+    screen,
+    setDirty,
+  ]);
+
+  useEffect(() => {
+    if (
+      screen !== "playing"
+      || !gameSave
       || !dockSpeechPending
       || sceneId !== "town"
       || !isElversonDockSpeechTriggerPosition(position)
       || conversation
       || conversationLeadIn
       || activeTrainerId
+      || bestFriendSequence
       || dockCutscenePhase
       || sceneTransition
       || pauseOpen
@@ -3922,6 +4367,7 @@ export default function AdventureGame({
     });
   }, [
     activeTrainerId,
+    bestFriendSequence,
     clearMovement,
     confirmation,
     conversation,
@@ -4054,9 +4500,9 @@ export default function AdventureGame({
     starterSelectionOpen,
   ]);
 
-  function beginNewGame(profileId, overwriteConfirmed = false) {
+  function beginNewGame(profileId, overwriteConfirmed = false, identity = {}) {
     const adapter = storageRef.current;
-    const initial = createNewAdventureSession(profileId);
+    const initial = createNewAdventureSession(profileId, identity);
     let storageResult = null;
     if (adapter) {
       storageResult = adapter.startNewProfile(profileId, {
@@ -4068,7 +4514,7 @@ export default function AdventureGame({
           title: "Start this Elverson adventure over?",
           message: "The existing save in this slot will be replaced. This cannot be undone.",
           confirmLabel: "Start over",
-          onConfirm: () => beginNewGame(profileId, true),
+          onConfirm: () => beginNewGame(profileId, true, identity),
         });
         return;
       }
@@ -4091,14 +4537,14 @@ export default function AdventureGame({
 
   function requestNewGame(profileId, needsConfirmation = false) {
     if (!needsConfirmation) {
-      beginNewGame(profileId, false);
+      setNewGameSetup({ profileId, overwriteConfirmed: false });
       return;
     }
     setConfirmation({
       title: "Replace this Elverson adventure?",
       message: "Starting a new game will replace this slot's current progress and backup.",
       confirmLabel: "Replace adventure",
-      onConfirm: () => beginNewGame(profileId, true),
+      onConfirm: () => setNewGameSetup({ profileId, overwriteConfirmed: true }),
     });
   }
 
@@ -4544,7 +4990,7 @@ export default function AdventureGame({
             kind: "info",
             message: expected?.trainerId === "player-dad"
               ? "Check with Dad before heading into town."
-              : "Your best friend is waiting downstairs with news about the waterfront kickoff.",
+              : "Finish talking with your family before heading into town.",
           });
           return;
         }
@@ -5027,7 +5473,7 @@ export default function AdventureGame({
   }
 
   function interact() {
-    if (screen !== "playing" || openingFreeRoamLocked || pauseOpen || settingsOpen || conversation || conversationLeadIn || activeTrainerId || sceneTransition || guidedWalk || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !interaction || !gameSave) return;
+    if (screen !== "playing" || openingFreeRoamLocked || openingPrelude || momGreetingStage || bestFriendSequence || dockCutscenePhase || pauseOpen || settingsOpen || conversation || conversationLeadIn || activeTrainerId || sceneTransition || guidedWalk || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !interaction || !gameSave) return;
     clearMovement();
     const worldConversationOrigin = ["trainer", "npc"].includes(interaction.type)
       ? { sceneId, interactionId: interaction.interactionId }
@@ -5294,7 +5740,12 @@ export default function AdventureGame({
   function advanceConversation() {
     if (!conversation) return;
     const trainer = TRAINERS[conversation.trainerId];
-    const lines = conversationLines(conversation, trainer, defeated.has(trainer.encounterId));
+    const lines = conversationLines(
+      conversation,
+      trainer,
+      defeated.has(trainer.encounterId),
+      dialogueIdentity,
+    );
     setConversation((current) => ({
       ...current,
       index: Math.min(current.index + 1, lines.length - 1),
@@ -5664,6 +6115,25 @@ export default function AdventureGame({
     const trainer = TRAINERS[conversation.trainerId];
     if (!trainer) return;
     if (conversation.openingBeatId) {
+      if (
+        conversation.openingBeatId === ELVERSON_PROLOGUE_BEATS.race
+        && conversation.escortToDock
+      ) {
+        const plan = createGuidedWalkPlan({
+          path: ELVERSON_BEST_FRIEND_DOCK_WALK.leader,
+          followerPath: ELVERSON_BEST_FRIEND_DOCK_WALK.follower,
+          speed: 2.45,
+          followerDelayMs: 420,
+          reducedMotion: effectiveReducedMotion,
+          reducedMotionSpeed: 6,
+        });
+        clearMovement();
+        bestFriendWalkClockRef.current = null;
+        setBestFriendWalkSample(sampleGuidedWalk(plan, 0));
+        setConversation(null);
+        setBestFriendSequence({ phase: "escorting", plan });
+        return;
+      }
       const current = saveRef.current ?? gameSave;
       if (!current) return;
       try {
@@ -5676,7 +6146,7 @@ export default function AdventureGame({
             recorded.save,
             `elverson-opening:${conversation.openingBeatId}`,
             conversation.openingBeatId === ELVERSON_PROLOGUE_BEATS.rivalDeparture
-              ? "Your friendly rival has set out for Pelora City. The race to Master of the Sea is underway."
+              ? `${dialogueIdentity.bestFriendName} has set out for Pelora City. The race to Master of the Sea is underway.`
               : null,
           );
         }
@@ -6144,6 +6614,7 @@ export default function AdventureGame({
     setPauseOpen(false);
     setSettingsOpen(false);
     setConfirmation(null);
+    setNewGameSetup(null);
     pendingSceneTransitionRef.current = null;
     pendingDockSpeechSaveRef.current = null;
     momGreetingPlayerPositionRef.current = null;
@@ -6151,6 +6622,9 @@ export default function AdventureGame({
     setSceneTransition(null);
     setOpeningPrelude(null);
     setMomGreetingStage(null);
+    bestFriendWalkClockRef.current = null;
+    setBestFriendSequence(null);
+    setBestFriendWalkSample(null);
     setDockCutscenePhase(null);
     guidedWalkClockRef.current = null;
     setGuidedWalk(null);
@@ -6183,13 +6657,16 @@ export default function AdventureGame({
       title: "Restart this Elverson adventure?",
       message: "All progress in this save will be replaced with a new Elverson start.",
       confirmLabel: "Restart adventure",
-      onConfirm: () => beginNewGame(gameSave.profileId, true),
+      onConfirm: () => beginNewGame(gameSave.profileId, true, {
+        playerName: gameSave.player.name,
+        bestFriendName: gameSave.player.bestFriendName,
+      }),
     });
   }
 
   escapeRef.current = () => {
     if (screen !== "playing" || activeTrainerId || sceneTransition || guidedWalk || conversationLeadIn) return;
-    if (openingPrelude || momGreetingStage || dockCutscenePhase) return;
+    if (openingPrelude || momGreetingStage || bestFriendSequence || dockCutscenePhase) return;
     clearMovement();
     if (openingFreeRoamLocked && !conversation) return;
     if (confirmation) {
@@ -6339,7 +6816,7 @@ export default function AdventureGame({
   }, [clearMovement]);
 
   useEffect(() => {
-    if (screen !== "playing" || pauseOpen || settingsOpen || confirmation || sceneTransition || guidedWalk || conversationLeadIn || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !pageVisible) return undefined;
+    if (screen !== "playing" || openingPrelude || momGreetingStage || bestFriendSequence || dockCutscenePhase || pauseOpen || settingsOpen || confirmation || sceneTransition || guidedWalk || conversationLeadIn || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen || !pageVisible) return undefined;
     const timer = window.setInterval(() => {
       if (!pageVisibleRef.current) return;
       setGameSave((current) => {
@@ -6354,7 +6831,7 @@ export default function AdventureGame({
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [championshipEndingStage, confirmation, conversationLeadIn, decksOpen, fieldNoteOpen, fieldworkActivity, fishingSession, guidedWalk, inventoryOpen, newsletterInviteOpen, pageVisible, pauseOpen, sceneTransition, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
+  }, [bestFriendSequence, championshipEndingStage, confirmation, conversationLeadIn, decksOpen, dockCutscenePhase, fieldNoteOpen, fieldworkActivity, fishingSession, guidedWalk, inventoryOpen, momGreetingStage, newsletterInviteOpen, openingPrelude, pageVisible, pauseOpen, sceneTransition, screen, setDirty, settingsOpen, starterSelectionOpen, tournamentRegistrationOpen, worldMapOpen]);
 
   useEffect(() => {
     function saveWhenHidden() {
@@ -6394,7 +6871,7 @@ export default function AdventureGame({
           profiles={profiles}
           notice={accountNotice ?? saveNotice}
           account={account}
-          blocked={Boolean(confirmation || legacySavePrompt)}
+          blocked={Boolean(confirmation || legacySavePrompt || newGameSetup)}
           onContinue={continueProfile}
           onNewGame={requestNewGame}
           onRetry={retryStorage}
@@ -6406,6 +6883,18 @@ export default function AdventureGame({
             importableProfileCount={legacySavePrompt.importableProfileCount}
             onImport={() => resolveLegacySaveChoice(true)}
             onStartFresh={() => resolveLegacySaveChoice(false)}
+          />
+        ) : null}
+        {newGameSetup ? (
+          <OpeningSetupModal
+            key={`${newGameSetup.profileId}:${newGameSetup.overwriteConfirmed}`}
+            profileId={newGameSetup.profileId}
+            onCancel={() => setNewGameSetup(null)}
+            onBegin={(identity) => beginNewGame(
+              newGameSetup.profileId,
+              newGameSetup.overwriteConfirmed,
+              identity,
+            )}
           />
         ) : null}
         {confirmation ? (
@@ -6506,13 +6995,18 @@ export default function AdventureGame({
     );
   }
 
-  const activeConversationTrainer = conversation ? TRAINERS[conversation.trainerId] : null;
+  const baseConversationTrainer = conversation ? TRAINERS[conversation.trainerId] : null;
+  const activeConversationTrainer = baseConversationTrainer?.id === ELVERSON_PROLOGUE_BEST_FRIEND_ID
+    ? { ...baseConversationTrainer, name: dialogueIdentity.bestFriendName }
+    : baseConversationTrainer;
   const activeWorldConversation = conversationLeadIn ?? conversation;
   const activeConversationInteractionId = activeWorldConversation?.sceneId === sceneId
     ? activeWorldConversation.interactionId ?? null
     : null;
   const conversationLeadInLabel = conversationLeadIn
-    ? `${TRAINERS[conversationLeadIn.trainerId]?.name ?? "Your neighbor"} turns to greet you...`
+    ? `${conversationLeadIn.trainerId === ELVERSON_PROLOGUE_BEST_FRIEND_ID
+      ? dialogueIdentity.bestFriendName
+      : TRAINERS[conversationLeadIn.trainerId]?.name ?? "Your neighbor"} turns to greet you...`
     : null;
   const canOfferSunpatchExhibition = conversation?.trainerId === "sunpatch-leader"
     && defeated.has("encounter-sunpatch-qualifier");
@@ -6579,12 +7073,20 @@ export default function AdventureGame({
   const shellshoreQuestView = prologueProgress.needsHomeSequence
     ? {
         title: "Your tenth-birthday morning",
-        description: "Head downstairs, greet Mom, check with Dad, and hear your best friend's news about the waterfront kickoff.",
+        description: `Head downstairs, greet Mom, check with Dad, then meet ${dialogueIdentity.bestFriendName} outside.`,
         value: completedHomeBeatCount,
         total: 3,
-        label: `${completedHomeBeatCount} / 3 family opening beats complete`,
+        label: `${completedHomeBeatCount} / 3 birthday opening beats complete`,
       }
-    : prologueProgress.readyForDockSpeech
+    : prologueProgress.needsBestFriendArrival
+      ? {
+          title: `Meet ${dialogueIdentity.bestFriendName} outside`,
+          description: "Head through the front door. Your best friend is coming to find you with news about the waterfront kickoff.",
+          value: completedHomeBeatCount,
+          total: 3,
+          label: "Your birthday adventure is about to begin",
+        }
+      : prologueProgress.readyForDockSpeech
       ? {
           title: "Join the kickoff at the dock",
           description: "Explore Elverson at your own pace, then approach the central dock to hear Mr. Easterling open the Sea Creature Challenge.",
@@ -6621,7 +7123,7 @@ export default function AdventureGame({
             : prologueProgress.needsRivalDeparture
               ? {
                   title: "Begin the friendly race",
-                  description: "Your best friend has one last thing to say before setting out for Pelora City.",
+                  description: `${dialogueIdentity.bestFriendName} has one last thing to say before setting out for Pelora City.`,
                   value: 0,
                   total: 1,
                   label: "Your rival is ready to depart",
@@ -6794,7 +7296,7 @@ export default function AdventureGame({
   const unopenedPackCount = Object.values(gameSave.inventory.unopenedPacks)
     .reduce((total, quantity) => total + quantity, 0);
   const explorationBlocked = Boolean(
-    openingPrelude || momGreetingStage || dockCutscenePhase || pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || guidedWalk || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen,
+    openingPrelude || momGreetingStage || bestFriendSequence || dockCutscenePhase || pauseOpen || settingsOpen || confirmation || activeConversationTrainer || starterSelectionOpen || fieldNoteOpen || inventoryOpen || decksOpen || worldMapOpen || fieldworkActivity || fishingSession || guidedWalk || showCompletion || tournamentRegistrationOpen || championshipEndingStage || newsletterInviteOpen,
   );
   const gameplaySurfaceLocked = Boolean(
     explorationBlocked || sceneTransition || conversationLeadIn,
@@ -6808,17 +7310,25 @@ export default function AdventureGame({
   const sceneTransitionVector = sceneTransition
     ? getAdventureDoorStepVector(sceneTransition.direction)
     : null;
-  const sceneTransitionLabel = guidedWalk
-    ? "Following Fisherman Wyeth to the sandy practice cove..."
-    : sceneTransition
-      ? sceneTransition.type === "guided"
-        ? sceneTransition.phase === "departing"
-          ? "Walking with Mr. Easterling to the waterfront aquarium..."
-          : "Arriving at the Elverson Aquarium workshop..."
-      : sceneTransition.phase === "departing"
-        ? `Entering ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
-        : `Arriving in ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
-      : null;
+  const bestFriendSequenceLabel = bestFriendSequence?.phase === "calling"
+    ? `${dialogueIdentity.playerName}!! ${dialogueIdentity.bestFriendName} is calling from the right...`
+    : bestFriendSequence?.phase === "approaching"
+      ? `${dialogueIdentity.bestFriendName} is hurrying over from the right...`
+      : bestFriendSequence?.phase === "escorting"
+        ? `Following ${dialogueIdentity.bestFriendName} to the waterfront dock...`
+        : null;
+  const sceneTransitionLabel = bestFriendSequenceLabel
+    ?? (guidedWalk
+      ? "Following Fisherman Wyeth to the sandy practice cove..."
+      : sceneTransition
+        ? sceneTransition.type === "guided"
+          ? sceneTransition.phase === "departing"
+            ? "Walking with Mr. Easterling to the waterfront aquarium..."
+            : "Arriving at the Elverson Aquarium workshop..."
+          : sceneTransition.phase === "departing"
+            ? `Entering ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
+            : `Arriving in ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
+        : null);
   const displayedBoatMotion = boatTelemetry.sceneId === sceneId
     ? boatTelemetry
     : {
@@ -6882,7 +7392,7 @@ export default function AdventureGame({
           type="button"
           className={styles.exitLink}
           aria-label="Open pause menu"
-          disabled={Boolean(sceneTransition || guidedWalk || conversationLeadIn)}
+          disabled={Boolean(bestFriendSequence || sceneTransition || guidedWalk || conversationLeadIn)}
           onClick={() => {
             clearMovement();
             setPauseOpen(true);
@@ -6961,7 +7471,7 @@ export default function AdventureGame({
                 : conversationLeadIn
                   ? `greeting:${conversationLeadIn.interactionId}`
                   : "steady-guidance"}
-              className={sceneTransition || guidedWalk || conversationLeadIn ? styles.sceneTransitionStatus : undefined}
+              className={bestFriendSequence || sceneTransition || guidedWalk || conversationLeadIn ? styles.sceneTransitionStatus : undefined}
             >
               {sceneTransitionLabel ?? conversationLeadInLabel ?? (vehicleMode
                 ? trenchlightExpeditionState?.currentStep?.title ?? "Return to Mission Control for the next expedition decision"
@@ -7053,11 +7563,14 @@ export default function AdventureGame({
                     runtimeActor?.facing ?? characterInteraction.facing ?? "down",
                   )
                 : runtimeActor?.facing ?? "down";
+              const actorIsScriptedWalker = runtimeActor?.moving === true && Boolean(
+                momGreetingStage || bestFriendSequence || guidedWalk,
+              );
               const actorAnimationMode = getAdventureActorAnimationMode({
                 hasPatrol: Boolean(characterInteraction.patrol),
                 isMoving: runtimeActor?.moving === true,
                 isEngaged: actorIsEngaged,
-                movementPaused,
+                movementPaused: movementPaused && !actorIsScriptedWalker,
                 pageVisible,
                 reducedMotion: effectiveReducedMotion,
               });
@@ -7100,7 +7613,7 @@ export default function AdventureGame({
                 )}
                 aria-live="assertive"
               >
-                <span>Good morning, dear!</span>
+                <span>{dialogueIdentity.playerName}! Good morning!</span>
               </div>
             ) : null}
             {boatMode ? (
@@ -7126,6 +7639,11 @@ export default function AdventureGame({
               />
             )}
             </div>
+            {bestFriendSequence?.phase === "calling" && sceneId === "town" ? (
+              <div className={styles.openingNameCallout} role="status" aria-live="assertive">
+                {dialogueIdentity.playerName}!!
+              </div>
+            ) : null}
             {sceneTransition ? (
               <div
                 className={`${styles.sceneTransitionCurtain} ${styles[`sceneTransition${sceneTransition.phase === "departing" ? "Departing" : "Arriving"}`]}`}
@@ -7268,6 +7786,7 @@ export default function AdventureGame({
           secondaryLabel={conversationSecondaryAction?.label}
           textSpeed={gameSave.settings.textSpeed}
           reducedMotion={gameSave.settings.reducedMotion}
+          identity={dialogueIdentity}
           onAdvance={advanceConversation}
           onPrimary={handleConversationPrimary}
           onSecondary={conversationSecondaryAction?.kind === "exhibition"

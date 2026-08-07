@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  DEFAULT_ADVENTURE_BEST_FRIEND_NAME,
+  DEFAULT_ADVENTURE_PLAYER_NAME,
   createInitialAdventureSave,
   normalizeAdventureSave,
   validateAdventureSave,
@@ -188,6 +190,8 @@ function withTrenchlightResumeSentinels(saveValue, suffix) {
 test("new sessions begin the tenth-birthday opening upstairs in one of three explicit profiles", () => {
   const save = createNewAdventureSession("profile-2");
   assert.equal(save.profileId, "profile-2");
+  assert.equal(save.player.name, DEFAULT_ADVENTURE_PLAYER_NAME);
+  assert.equal(save.player.bestFriendName, DEFAULT_ADVENTURE_BEST_FRIEND_NAME);
   assert.equal(save.progression.quests[SHELLSHORE_QUEST_ID].status, "active");
   assert.equal(save.world.townId, "shellshore-village");
   assert.equal(save.world.sceneId, "player-bedroom");
@@ -205,6 +209,22 @@ test("new sessions begin the tenth-birthday opening upstairs in one of three exp
     false,
   );
   assert.equal(getOnboardingProgress(save).needsWorldIntroduction, true);
+});
+
+test("new sessions normalize and retain the chosen player and best-friend names", () => {
+  const save = createNewAdventureSession("profile-3", {
+    playerName: "  Ana   María ",
+    bestFriendName: " D’Arcy ",
+  });
+
+  assert.equal(save.player.name, "Ana María");
+  assert.equal(save.player.bestFriendName, "D’Arcy");
+  assert.equal(save.world.sceneId, "player-bedroom");
+  assert.equal(save.opening.status, "active");
+
+  const restored = normalizeAdventureSave(JSON.parse(JSON.stringify(save)));
+  assert.deepEqual(restored, save);
+  assert.equal(validateAdventureSave(restored).valid, true);
 });
 
 test("scene transitions persist a safe position and a meaningful quest flag", () => {

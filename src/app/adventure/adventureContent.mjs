@@ -542,8 +542,8 @@ const ELVERSON_PROLOGUE_CAST = Object.freeze([
       guidance: Object.freeze(["Check with Dad, stay together, listen to the grown-ups, and treat every creature gently."]),
       return: Object.freeze(["Your breakfast will be here when you need another bite. Have a wonderful first adventure!"]),
       birthdayMorning: Object.freeze([
-        "Happy tenth birthday, dear! I made your favorite breakfast, though your best friend arrived so early that the toast is barely ready.",
-        "The whole town is talking about Mr. Easterling's new Sea Realm Aquarium and the creature-collecting challenge. I can see why neither of you slept much.",
+        "Happy tenth birthday, {{playerName}}! I made your favorite breakfast, and {{bestFriendName}} will be here before the toast has time to cool.",
+        "The whole town is talking about Mr. Easterling's new Sea Realm Aquarium and the creature-collecting challenge. I can see why you hardly slept.",
         "Eat a little, check with Dad, and then you have our permission to go together. Listen to the grown-ups, treat every creature gently, and look out for one another.",
       ]),
     }),
@@ -554,7 +554,7 @@ const ELVERSON_PROLOGUE_CAST = Object.freeze([
     title: "Your Dad",
     color: "deep",
     roleId: "resident",
-    at: Object.freeze({ x: 11.65, y: 4.45 }),
+    at: Object.freeze({ x: 11.25, y: 5.15 }),
     facing: "left",
     lines: Object.freeze({
       intro: Object.freeze(["This morning's Elverson Gazette is all about Mr. Easterling's new aquarium challenge."]),
@@ -563,7 +563,7 @@ const ELVERSON_PROLOGUE_CAST = Object.freeze([
       birthdayMorning: Object.freeze([
         "Listen to this headline: 'Elverson Adventurers Invited to Help Fill the New Sea Realm Aquarium!' It says the first gathering begins this morning.",
         "Mr. Easterling wants explorers to learn about each animal's habitat and care, not simply race to collect it. That sounds like an adventure worth starting properly.",
-        "You have my permission. Stay with your friend, follow the aquarium team's safety rules, and come home ready to tell us everything you learned.",
+        "You have my permission, {{playerName}}. Stay with {{bestFriendName}}, follow the aquarium team's safety rules, and come home ready to tell us everything you learned.",
       ]),
     }),
   }),
@@ -580,9 +580,9 @@ const ELVERSON_PROLOGUE_CAST = Object.freeze([
       guidance: Object.freeze(["Let's learn everything we can, build our best decks, and see who reaches Pelora City first."]),
       return: Object.freeze(["I'll see you in Pelora City. Keep collecting, studying, and practicing!"]),
       birthdayMorning: Object.freeze([
-        "You're finally ten! I was so excited about the aquarium challenge that I barely slept at all.",
+        "There you are, {{playerName}}! You're finally ten! I was so excited about the aquarium challenge that I barely slept at all.",
         "Mr. Easterling is about to give a speech at the dock to kick off the Sea Creature Challenge. The whole town is heading down there to watch!",
-        "I'm going over now. Come join me by the dock when you're ready, and then we can explore every corner of Elverson together.",
+        "Come on—follow me! I'll lead us straight to the dock so we don't miss a word.",
       ]),
       rivalDeparture: Object.freeze([
         "That lesson was amazing. Now we both know that a real Master of the Sea has to understand an ecosystem, not just find its creatures.",
@@ -694,7 +694,7 @@ const shellshoreRuntimeScenes = {
     name: "Your Upstairs Bedroom",
     worldKind: "interior",
     theme: "player-bedroom",
-    artPath: "/images/adventure/player-bedroom-v1.webp",
+    artPath: "/images/adventure/player-bedroom-v2.webp",
     tiles: [
       "wwwwwwwwwwwwwww",
       "wfffffffffffffw",
@@ -733,7 +733,7 @@ const shellshoreRuntimeScenes = {
     name: "Your Elverson Home",
     worldKind: "interior",
     theme: "player-home",
-    artPath: "/images/adventure/player-home-v1.webp",
+    artPath: "/images/adventure/player-home-v2.webp",
     tiles: [
       "wwwwwwwwwwwwwww",
       "wfffffffffffffw",
@@ -753,9 +753,11 @@ const shellshoreRuntimeScenes = {
       { id: "player-home-staircase", left: 5.7, top: -0.1, right: 8.3, bottom: 2.85 },
       { id: "player-home-upper-right-storage", left: 10.35, top: 0.45, right: 14.2, bottom: 2.65 },
       { id: "player-home-breakfast-table", left: 0.75, top: 5.45, right: 5.75, bottom: 8.75 },
-      // Leave the chair's left edge open so Dad can be approached face-to-face
-      // without letting the player walk through the chair, table, or bookcase.
-      { id: "player-home-reading-nook", left: 11.05, top: 3.1, right: 14.2, bottom: 6.65 },
+      // The round reading table was removed so Dad and the player can meet on
+      // the open rug. These tighter bounds cover only the chair, lamp,
+      // footstool, and wall shelving.
+      { id: "player-home-reading-chair", left: 11.7, top: 3.35, right: 13.15, bottom: 5.25 },
+      { id: "player-home-reading-nook-edge", left: 12.65, top: 2.9, right: 14.2, bottom: 6.15 },
       { id: "player-home-lower-right-console", left: 9.85, top: 7, right: 14.2, bottom: 8.85 },
     ],
     interactions: [

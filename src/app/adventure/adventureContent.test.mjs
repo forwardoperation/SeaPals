@@ -19,6 +19,10 @@ import {
 } from "./adventureContent.mjs";
 import { assertValidAdventureContent, validateAdventureContent } from "./adventureContentValidation.mjs";
 import { createInitialAdventureSave, grantReward, validateAdventureSave } from "./adventureProgression.mjs";
+import {
+  canOccupyContinuousPosition,
+  getContinuousInteraction,
+} from "./adventureWorld.mjs";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -1047,7 +1051,7 @@ test("Elverson's public interiors and upstairs bedroom define validated art-alig
   const runtimeScenes = getRuntimeAdventureScenes();
   const expectedRectangleCounts = new Map([
     ["player-bedroom", 6],
-    ["player-home", 6],
+    ["player-home", 7],
     ["coral-home", 5],
     ["deep-home", 4],
     ["elverson-oceanic-home", 0],
@@ -1071,6 +1075,31 @@ test("Elverson's public interiors and upstairs bedroom define validated art-alig
       && rect.bottom <= scene.world.tiles.length - 0.5
     )));
   }
+
+  const bedroom = runtimeScenes.find((candidate) => candidate.id === "player-bedroom");
+  const home = runtimeScenes.find((candidate) => candidate.id === "player-home");
+  assert.equal(bedroom.world.artPath, "/images/adventure/player-bedroom-v2.webp");
+  assert.equal(home.world.artPath, "/images/adventure/player-home-v2.webp");
+  assert.deepEqual(
+    home.world.collisionRects
+      .filter(({ id }) => id.startsWith("player-home-reading"))
+      .map(({ id }) => id),
+    ["player-home-reading-chair", "player-home-reading-nook-edge"],
+  );
+  assert.equal(
+    canOccupyContinuousPosition("player-home", { x: 10.5, y: 5.15 }),
+    true,
+    "the removed reading table leaves a clear face-to-face approach to Dad",
+  );
+  assert.equal(
+    getContinuousInteraction("player-home", { x: 10.5, y: 5.15 }, "right")?.npcId,
+    "player-dad",
+  );
+  assert.equal(
+    canOccupyContinuousPosition("player-home", { x: 12, y: 4.45 }),
+    false,
+    "the remaining reading chair stays solid",
+  );
 });
 
 test("Elverson v3 layers its portal buildings while streets and waterfront routes stay clear", () => {

@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   ADVENTURE_OPENING_STATUS,
   ADVENTURE_SAVE_SCHEMA_VERSION,
+  DEFAULT_ADVENTURE_BEST_FRIEND_NAME,
+  DEFAULT_ADVENTURE_PLAYER_NAME,
   createInitialAdventureSave,
 } from "./adventureProgression.mjs";
 import { ADVENTURE_SAVE_V1_FIXTURE } from "./fixtures/adventureSaveV1.mjs";
@@ -82,6 +84,9 @@ test("the adapter exposes exactly three fixed local profile slots", () => {
   assert.deepEqual(list.profiles.map((profile) => profile.status), ["empty", "empty", "empty"]);
   assert.deepEqual(list.profiles.map((profile) => profile.slot), [1, 2, 3]);
   assert.ok(list.profiles.every((profile) => !profile.occupied && !profile.canContinue));
+  assert.ok(list.profiles.every((profile) => (
+    profile.playerName === null && profile.bestFriendName === null
+  )));
 
   const invalid = adapter.loadProfile("profile-4");
   assert.equal(invalid.ok, false);
@@ -90,7 +95,10 @@ test("the adapter exposes exactly three fixed local profile slots", () => {
 
 test("manual saves validate, canonicalize, verify, and expose title-screen metadata", () => {
   const { adapter, backend } = createAdapter();
-  const save = createInitialAdventureSave("profile-1");
+  const save = createInitialAdventureSave("profile-1", {
+    playerName: "Marina",
+    bestFriendName: "Kai",
+  });
   save.world.townId = "sunpatch-cay";
   save.world.sceneId = "sunpatch-harbor";
   save.player.starterDeckId = "coral-garden";
@@ -108,6 +116,8 @@ test("manual saves validate, canonicalize, verify, and expose title-screen metad
   assert.equal(result.summary.canContinue, true);
   assert.equal(result.summary.townId, "sunpatch-cay");
   assert.equal(result.summary.sceneId, "sunpatch-harbor");
+  assert.equal(result.summary.playerName, "Marina");
+  assert.equal(result.summary.bestFriendName, "Kai");
   assert.equal(result.summary.starterDeckId, "coral-garden");
   assert.equal(result.summary.tideMarkCount, 1);
   assert.equal(result.summary.completedEncounterCount, 2);
@@ -116,6 +126,8 @@ test("manual saves validate, canonicalize, verify, and expose title-screen metad
   const stored = decode(backend, keys.primary);
   assert.equal(stored.storageVersion, ADVENTURE_STORAGE_FORMAT_VERSION);
   assert.equal(stored.save.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
+  assert.equal(stored.save.player.name, "Marina");
+  assert.equal(stored.save.player.bestFriendName, "Kai");
   assert.deepEqual(stored.save.progression.completedEncounterIds, ["encounter-b", "encounter-a"]);
   assert.equal(backend.getItem(keys.backup), null);
   assert.equal(backend.getItem(keys.staging), null);
@@ -129,6 +141,8 @@ test("manual saves validate, canonicalize, verify, and expose title-screen metad
   assert.equal(loaded.metadata.migratedFromSchemaVersion, null);
   assert.equal(loaded.metadata.needsRewrite, false);
   assert.deepEqual(loaded.save, result.save);
+  assert.equal(loaded.summary.playerName, "Marina");
+  assert.equal(loaded.summary.bestFriendName, "Kai");
   assert.equal(loaded.summary.playtimeSeconds, 145);
 });
 
@@ -258,6 +272,10 @@ test("complete v1 and v2 envelopes migrate stepwise with rewrite metadata", () =
     assert.equal(migrated.ok, true);
     assert.equal(migrated.save.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
     assert.equal(migrated.save.opening.status, ADVENTURE_OPENING_STATUS.LEGACY_SKIPPED);
+    assert.equal(migrated.save.player.name, DEFAULT_ADVENTURE_PLAYER_NAME);
+    assert.equal(migrated.save.player.bestFriendName, DEFAULT_ADVENTURE_BEST_FRIEND_NAME);
+    assert.equal(migrated.summary.playerName, DEFAULT_ADVENTURE_PLAYER_NAME);
+    assert.equal(migrated.summary.bestFriendName, DEFAULT_ADVENTURE_BEST_FRIEND_NAME);
     assert.equal(migrated.metadata.sourceSchemaVersion, fixture.schemaVersion);
     assert.equal(migrated.metadata.migratedFromSchemaVersion, fixture.schemaVersion);
     assert.equal(migrated.metadata.needsRewrite, true);
@@ -607,7 +625,10 @@ test("legacy import, new-game overwrite, and deletion require explicit confirmat
 
 test("new profiles can persist the fully initialized game session", () => {
   const { adapter } = createAdapter();
-  const session = createInitialAdventureSave("profile-2");
+  const session = createInitialAdventureSave("profile-2", {
+    playerName: "Nia",
+    bestFriendName: "Bo",
+  });
   session.progression.quests["quest-shellshore-first-voyage"] = {
     status: "active",
     flags: {},
@@ -615,10 +636,32 @@ test("new profiles can persist the fully initialized game session", () => {
 
   const created = adapter.startNewProfile("profile-2", { saveValue: session });
   assert.equal(created.ok, true);
+  const loaded = adapter.loadProfile("profile-2");
   assert.equal(
-    adapter.loadProfile("profile-2").save.progression.quests["quest-shellshore-first-voyage"].status,
+    loaded.save.progression.quests["quest-shellshore-first-voyage"].status,
     "active",
   );
+  assert.equal(loaded.save.player.name, "Nia");
+  assert.equal(loaded.save.player.bestFriendName, "Bo");
+  assert.equal(loaded.summary.playerName, "Nia");
+  assert.equal(loaded.summary.bestFriendName, "Bo");
+});
+
+test("current-schema saves without identity fields receive canonical legacy defaults", () => {
+  const backend = new MemoryStorage();
+  const keys = ADVENTURE_PROFILE_STORAGE_KEYS["profile-3"];
+  const bare = createInitialAdventureSave("profile-3");
+  delete bare.player.name;
+  delete bare.player.bestFriendName;
+  backend.setItem(keys.primary, JSON.stringify(bare));
+  const { adapter } = createAdapter(backend);
+
+  const loaded = adapter.loadProfile("profile-3");
+  assert.equal(loaded.ok, true);
+  assert.equal(loaded.save.player.name, DEFAULT_ADVENTURE_PLAYER_NAME);
+  assert.equal(loaded.save.player.bestFriendName, DEFAULT_ADVENTURE_BEST_FRIEND_NAME);
+  assert.equal(loaded.summary.playerName, DEFAULT_ADVENTURE_PLAYER_NAME);
+  assert.equal(loaded.summary.bestFriendName, DEFAULT_ADVENTURE_BEST_FRIEND_NAME);
 });
 
 test("a bare canonical save can be loaded as a recovery import and normalized", () => {

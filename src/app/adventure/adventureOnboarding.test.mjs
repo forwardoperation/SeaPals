@@ -18,6 +18,8 @@ import {
   recoverOnboardingResume,
 } from "./adventureOnboarding.mjs";
 import {
+  DEFAULT_ADVENTURE_BEST_FRIEND_NAME,
+  DEFAULT_ADVENTURE_PLAYER_NAME,
   createInitialAdventureSave,
   normalizeAdventureSave,
   validateAdventureSave,
@@ -169,6 +171,8 @@ test("each supported starter commits once and becomes the active deck", () => {
 
     assert.equal(selection.applied, true);
     assert.deepEqual(selection.save.player, {
+      name: DEFAULT_ADVENTURE_PLAYER_NAME,
+      bestFriendName: DEFAULT_ADVENTURE_BEST_FRIEND_NAME,
       starterDeckId,
       activeDeckId: starterDeckId,
     });
