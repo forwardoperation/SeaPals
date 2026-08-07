@@ -42,8 +42,6 @@ const HAND_NET_DIRECTION_VECTORS = Object.freeze({
   down: [0, 1],
 });
 
-const WALK_FRAME_SEQUENCE = Object.freeze([0, 1, 2, 1]);
-
 function seedFromIdentity(identity) {
   let hash = 0x811c9dc5;
   for (let index = 0; index < identity.length; index += 1) {
@@ -240,7 +238,7 @@ export default function AdventureHandNetModal({
   const playerSpriteFrame = state.net.scoopRemainingMs > 0
     ? state.presentation.scoopFrameIndex
     : playerMoving
-      ? WALK_FRAME_SEQUENCE[Math.floor(state.simulationTimeMs / 115) % WALK_FRAME_SEQUENCE.length]
+      ? state.presentation.walkFrameIndex
       : 0;
   const playerSpritePosition = {
     x: `${(playerSpriteFrame / 6) * 100}%`,

@@ -8823,13 +8823,13 @@
 }
 
 .handNetPlayerFacingFront {
-  --hand-net-player-anchor: 65%;
-  transform: translate(-50%, -65%);
+  --hand-net-player-anchor: 96%;
+  transform: translate(-50%, -96%);
 }
 
 .handNetPlayerFacingRear {
-  --hand-net-player-anchor: 91%;
-  transform: translate(-50%, -91%);
+  --hand-net-player-anchor: 93%;
+  transform: translate(-50%, -93%);
 }
 
 .handNetPlayerRipple,
