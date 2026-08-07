@@ -1171,7 +1171,7 @@ test("Elverson v3 layers its portal buildings while streets and waterfront route
     { x: 20.5, y: 10.5 },
     { x: 20.5, y: 16.8 },
     { x: 20.5, y: 21.75 },
-    { x: 24.22, y: 22.2 },
+    { x: 24.54, y: 22.25 },
   ]) {
     assert.equal(colliderContains(clearRoutePosition), false, "the birthday route must stay clear");
   }
@@ -1179,7 +1179,7 @@ test("Elverson v3 layers its portal buildings while streets and waterfront route
   const aquariumExit = getRuntimeAdventureScenes()
     .find((scene) => scene.id === "academy-lab")
     .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
-  assert.deepEqual(aquariumExit.spawn, { x: 24.22, y: 22.2 });
+  assert.deepEqual(aquariumExit.spawn, { x: 24.54, y: 22.25 });
   assert.equal(aquariumExit.doorwayHalfWidth, 0.5);
 });
 
@@ -1246,7 +1246,7 @@ test("all nine Elverson town doors have matching two-way interior portals", () =
       targetScene: "academy-lab",
       interiorSpawn: { x: 7, y: 7 },
       exitId: "interaction-academy-exit",
-      exteriorSpawn: { x: 24.22, y: 22.2 },
+      exteriorSpawn: { x: 24.54, y: 22.25 },
     },
   ];
   const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
@@ -1363,7 +1363,7 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   }
 
   const aquariumDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-aquarium");
-  assert.deepEqual(aquariumDoor.at, { x: 24.22, y: 21.35 });
+  assert.deepEqual(aquariumDoor.at, { x: 24.54, y: 21.85 });
   assert.equal(aquariumDoor.targetSceneContent.id, "academy-lab");
   assert.deepEqual(aquariumDoor.spawn, { x: 7, y: 7 });
   const supplyDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-supply-company");

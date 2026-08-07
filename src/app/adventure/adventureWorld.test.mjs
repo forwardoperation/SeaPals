@@ -82,8 +82,16 @@ const ELVERSON_PORTAL_EXPECTATIONS = Object.freeze([
   }),
 ]);
 
+const ELVERSON_AQUARIUM_PORTAL_ID = "interaction-elverson-enter-aquarium";
+
 function getElversonPortal(portalId) {
   return ELVERSON_TOWN_PORTALS.find(({ id }) => id === portalId);
+}
+
+function getElversonExteriorApproach(portal) {
+  return portal.id === ELVERSON_AQUARIUM_PORTAL_ID
+    ? portal.exteriorSpawn
+    : { x: portal.doorway.x, y: portal.doorway.y + 0.73 };
 }
 
 function assertWalkablePolyline(sceneId, points, label) {
@@ -203,7 +211,8 @@ test("Elverson's authored shoreline is solid outside the public pier corridor", 
     "town",
     [
       ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock,
-      { x: 20, y: 22.2 },
+      { x: 20, y: 22.22 },
+      { x: 24.54, y: 22.22 },
       ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
     ],
     "Elverson public pier and aquarium approach",
@@ -685,7 +694,7 @@ test("Elverson exposes the v3 town start, route dock, and every semantic safe po
     supplyCompanyExterior: { x: 37.5, y: 16.45 },
     wharfApproach: { x: 14.55, y: 21.45 },
     handNetCove: { x: 15.15, y: 21.65 },
-    aquariumExterior: { x: 24.22, y: 22.2 },
+    aquariumExterior: { x: 24.54, y: 22.25 },
   });
   assert.deepEqual(SCENES.town.spawn, ELVERSON_TOWN_SAFE_POSITIONS.townStart);
   assert.deepEqual(START_STATE, {
@@ -753,7 +762,7 @@ test("Elverson exposes exactly nine semantic entrance portals with safe approach
     assert.equal(portal.targetScene, expected.targetScene);
     assert.deepEqual(portal.interiorSpawn, expected.interiorSpawn);
 
-    const approach = { x: portal.doorway.x, y: portal.doorway.y + 0.73 };
+    const approach = getElversonExteriorApproach(portal);
     assert.equal(canOccupyContinuousPosition("town", approach), true, `${expected.id} approach must be safe`);
     assert.deepEqual(getContinuousInteraction("town", approach, "up"), {
       type: "enter",
@@ -1262,7 +1271,7 @@ test("interaction position overrides keep moving characters targetable", () => {
 test("automatic doorway transitions recognize all nine semantic portal pairs only at contact", () => {
   for (const expected of ELVERSON_PORTAL_EXPECTATIONS) {
     const portal = getElversonPortal(expected.id);
-    const exteriorApproach = { x: portal.doorway.x, y: portal.doorway.y + 0.73 };
+    const exteriorApproach = getElversonExteriorApproach(portal);
     assert.deepEqual(getDoorwayTransition("town", exteriorApproach, "up"), {
       type: "enter",
       interactionId: expected.id,

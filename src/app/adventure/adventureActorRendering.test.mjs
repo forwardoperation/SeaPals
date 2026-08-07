@@ -45,6 +45,24 @@ test("player and patrol walk cycles derive their cadence from world speed", () =
   assert.match(styles, /animation:\s*spriteWalk var\(--sprite-walk-cycle-duration, 480ms\) steps\(1, end\) infinite/);
 });
 
+test("the bedroom enlarges the player artwork without changing world geometry", () => {
+  const playerSpriteBlock = component.slice(
+    component.indexOf("function AdventurePlayerSprite"),
+    component.indexOf("function AdventureBoatSprite"),
+  );
+  const shadowRules = styles.match(/\.characterShadow\s*\{[\s\S]*?\n\}/g) ?? [];
+  const spriteRule = styles.match(/\.spriteArtwork\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
+
+  assert.match(
+    playerSpriteBlock,
+    /scene\.id === ELVERSON_PROLOGUE_BEDROOM_SCENE_ID \? 1\.6 : 1/,
+  );
+  assert.match(playerSpriteBlock, /"--character-scale": characterScale/);
+  assert.match(shadowRules.at(-1) ?? "", /scale:\s*var\(--character-scale, 1\)/);
+  assert.match(spriteRule, /scale:\s*var\(--character-scale, 1\)/);
+  assert.match(spriteRule, /transform-origin:\s*center 94\.7%/);
+});
+
 test("stationary residents use a registered alternating-leg gait over one world anchor", () => {
   assert.match(component, /const frameRegistration = getAdventureWalkFrameRegistration\(\{/);
   assert.match(component, /const walkStyle = \(moving \|\| steppingInPlace\)/);

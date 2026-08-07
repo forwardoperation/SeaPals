@@ -21,10 +21,43 @@ test("the active adventure presentation begins with Elverson's aquarium project"
   assert.match(page, /Explore coastal Elverson and help Mr\. Easterling create a new community aquarium exhibit/);
 });
 
-test("the opening setup clips Mr. Easterling inside its portrait frame", () => {
-  assert.match(component, /className=\{styles\.openingSetupPortrait\}[\s\S]*?<CharacterPortrait character=\{ACADEMY_MENTOR_ID\}/);
-  assert.match(styles, /\.openingSetupPortrait\s*\{[\s\S]*?position:\s*relative;[\s\S]*?overflow:\s*hidden;[\s\S]*?isolation:\s*isolate;/);
+test("the opening setup keeps Mr. Easterling in a fixed shared dialogue portrait", () => {
+  assert.match(
+    component,
+    /className=\{`\$\{styles\.portrait\} \$\{styles\.portraitteal\}`\}[\s\S]*?<CharacterPortrait character=\{ACADEMY_MENTOR_ID\}/,
+  );
+  assert.match(
+    styles,
+    /\.portrait\s*\{[\s\S]*?position:\s*relative;[\s\S]*?overflow:\s*hidden;/,
+  );
+  assert.match(
+    styles,
+    /\.openingSetupDialogueBox\s*>\s*\.portrait\s*\{[^}]*align-self:\s*start;[^}]*height:\s*120px;[^}]*min-height:\s*120px;[^}]*\}/,
+  );
+  assert.match(
+    styles,
+    /@media \(max-width:\s*700px\)[\s\S]*?\.openingSetupDialogueBox\s*>\s*\.portrait\s*\{[^}]*height:\s*94px;[^}]*min-height:\s*94px;[^}]*\}/,
+  );
   assert.match(styles, /\.mrEasterlingPortraitArtwork\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?inset:\s*0;/);
+});
+
+test("the opening dialogue exposes progress and readable light-surface name controls", () => {
+  assert.match(
+    component,
+    /className=\{styles\.openingSetupProgress\}[\s\S]*?role="progressbar"[\s\S]*?aria-valuemin=\{1\}[\s\S]*?aria-valuemax=\{steps\.length\}[\s\S]*?aria-valuenow=\{stepNumber\}/,
+  );
+  assert.match(
+    styles,
+    /\.openingSetupResponse \.openingNameField input\s*\{[^}]*border-color:\s*#0e7490;[^}]*\}/,
+  );
+  assert.match(
+    styles,
+    /\.openingSetupResponse \.openingNameField input:focus\s*\{[^}]*border-color:\s*#155e75;[^}]*\}/,
+  );
+  assert.match(
+    styles,
+    /\.openingSetupResponse \.openingNameError\s*\{[^}]*color:\s*#b91c1c\s*!important;[^}]*\}/,
+  );
 });
 
 test("the Elverson vertical slice does not offer outward world navigation", () => {

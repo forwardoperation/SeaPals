@@ -333,6 +333,12 @@ const ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION = Object.freeze({
   at: ELVERSON_BEST_FRIEND_ARRIVAL_POSITION,
   facing: "left",
 });
+const ELVERSON_DOCK_ESCORT_INTERACTIONS = Object.freeze([
+  ...ELVERSON_DOCK_SPEECH_INTERACTIONS.filter(
+    ({ npcId }) => npcId !== ELVERSON_PROLOGUE_BEST_FRIEND_ID,
+  ),
+  ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION,
+]);
 const ELVERSON_RIVAL_AQUARIUM_INTERACTION = Object.freeze({
   id: ELVERSON_RIVAL_DEPARTURE_CONVERSATION.interactionId,
   type: "npc",
@@ -787,6 +793,7 @@ function AdventurePlayerSprite({
   transitionPhase = null,
   transitionVector = null,
 }) {
+  const characterScale = scene.id === ELVERSON_PROLOGUE_BEDROOM_SCENE_ID ? 1.6 : 1;
   const transitionStyle = transitionVector ? {
     "--door-step-x": `${transitionVector.x * 28}%`,
     "--door-step-y": `${transitionVector.y * 28}%`,
@@ -796,7 +803,11 @@ function AdventurePlayerSprite({
   return (
     <div
       className={`${styles.characterCell} ${styles.playerCell} ${transitionPhase ? styles[`playerScene${transitionPhase === "departing" ? "Departing" : "Arriving"}`] : ""}`}
-      style={{ ...actorPosition(position, scene, "player"), ...transitionStyle }}
+      style={{
+        ...actorPosition(position, scene, "player"),
+        "--character-scale": characterScale,
+        ...transitionStyle,
+      }}
       aria-label="You"
     >
       <CharacterGroundShadow facing={facing} />
@@ -1359,6 +1370,12 @@ function OpeningSetupModal({ profileId, onCancel, onBegin }) {
   const [error, setError] = useState(null);
   const steps = ["world", "player", "friend", "confirm"];
   const stepNumber = steps.indexOf(step) + 1;
+  const dialogueMessages = {
+    world: "This world is full of wonderful sea creatures. Around here, we call them SeaPals. People study their habitats, learn how healthy ecosystems fit together, and care for the waters they all share. Today, your own story begins.",
+    player: "Before your story begins, what is your name?",
+    friend: `Wonderful, ${playerName}. And what is your best friend's name?`,
+    confirm: `Wonderful, ${playerName}. You and ${bestFriendName} are ready for your birthday adventure in Elverson.`,
+  };
 
   function acceptName(value, field, nextStep) {
     try {
@@ -1389,123 +1406,121 @@ function OpeningSetupModal({ profileId, onCancel, onBegin }) {
       className={styles.openingSetupLayer}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="opening-setup-title"
+      aria-labelledby="opening-setup-speaker"
     >
-      <section className={styles.openingSetupCard}>
-        <div className={styles.openingSetupProgress} aria-label={`Opening setup step ${stepNumber} of ${steps.length}`}>
-          {steps.map((stepId, index) => (
-            <span key={stepId} className={index < stepNumber ? styles.openingSetupProgressActive : ""} />
-          ))}
+      <section className={`${styles.dialogueBox} ${styles.openingSetupDialogueBox}`}>
+        <div className={`${styles.portrait} ${styles.portraitteal}`}>
+          <CharacterPortrait character={ACADEMY_MENTOR_ID} facing="down" />
         </div>
-
-        {step === "world" ? (
-          <>
-            <div className={styles.openingSetupEyebrow}>Welcome to Reefbound</div>
-            <div className={styles.openingSetupIntroduction}>
-              <div className={styles.openingSetupPortrait}>
-                <CharacterPortrait character={ACADEMY_MENTOR_ID} facing="down" />
+        <div className={styles.dialogueCopy}>
+          <div className={styles.dialogueMeta}>
+            <strong id="opening-setup-speaker">Mr. Easterling</strong>
+            <span>Aquarium Project Lead</span>
+          </div>
+          <div
+            className={styles.openingSetupProgress}
+            role="progressbar"
+            aria-label="Opening dialogue progress"
+            aria-valuemin={1}
+            aria-valuemax={steps.length}
+            aria-valuenow={stepNumber}
+            aria-valuetext={`Step ${stepNumber} of ${steps.length}`}
+          >
+            {steps.map((stepId, index) => (
+              <span key={stepId} className={index < stepNumber ? styles.openingSetupProgressActive : ""} />
+            ))}
+          </div>
+          <ProgressiveDialogueLine
+            key={`${step}:${dialogueMessages[step]}`}
+            message={dialogueMessages[step]}
+            speaker="Mr. Easterling"
+          >
+            {step === "world" ? (
+              <div className={`${styles.openingSetupResponse} ${styles.openingSetupWorldResponse}`}>
+                <div className={styles.openingSeaPal} aria-label="A colorful SeaPal" role="img" />
+                <div className={styles.openingSetupActions}>
+                  <button type="button" className={styles.secondaryButton} onClick={onCancel}>Back</button>
+                  <button type="button" autoFocus onClick={() => setStep("player")}>Continue</button>
+                </div>
               </div>
-              <div className={styles.openingSeaPal} aria-label="A colorful SeaPal" role="img" />
-            </div>
-            <div className={styles.openingSetupSpeaker}>
-              <strong>Mr. Easterling</strong>
-              <span>Aquarium Project Lead</span>
-            </div>
-            <h2 id="opening-setup-title">A world alive with SeaPals</h2>
-            <p>
-              This world is full of wonderful sea creatures. Around here, we call them
-              <strong> SeaPals</strong>.
-            </p>
-            <p>
-              People study their habitats, learn how healthy ecosystems fit together,
-              and care for the waters they all share. Today, your own story begins.
-            </p>
-            <div className={styles.openingSetupActions}>
-              <button type="button" className={styles.secondaryButton} onClick={onCancel}>Back</button>
-              <button type="button" autoFocus onClick={() => setStep("player")}>Continue</button>
-            </div>
-          </>
-        ) : null}
+            ) : null}
 
-        {step === "player" ? (
-          <form onSubmit={submitName}>
-            <div className={styles.openingSetupEyebrow}>Your adventure</div>
-            <h2 id="opening-setup-title">What is your name?</h2>
-            <p>Choose the first name or nickname the people of Elverson will call you.</p>
-            <label className={styles.openingNameField}>
-              <span>Your name</span>
-              <input
-                autoFocus
-                type="text"
-                value={playerName}
-                maxLength={ADVENTURE_CHARACTER_NAME_MAX_LENGTH}
-                autoComplete="off"
-                spellCheck="false"
-                onChange={(event) => {
-                  setPlayerName(event.target.value);
-                  setError(null);
-                }}
-              />
-              <small>Use a first name or nickname only—never a last name or contact information.</small>
-            </label>
-            {error ? <p className={styles.openingNameError} role="alert">{error}</p> : null}
-            <div className={styles.openingSetupActions}>
-              <button type="button" className={styles.secondaryButton} onClick={() => setStep("world")}>Back</button>
-              <button type="submit">That&apos;s my name</button>
-            </div>
-          </form>
-        ) : null}
+            {step === "player" ? (
+              <form className={styles.openingSetupResponse} onSubmit={submitName}>
+                <p>Choose the first name or nickname the people of Elverson will call you.</p>
+                <label className={styles.openingNameField}>
+                  <span>Your name</span>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={playerName}
+                    maxLength={ADVENTURE_CHARACTER_NAME_MAX_LENGTH}
+                    autoComplete="off"
+                    spellCheck="false"
+                    onChange={(event) => {
+                      setPlayerName(event.target.value);
+                      setError(null);
+                    }}
+                  />
+                  <small>Use a first name or nickname only—never a last name or contact information.</small>
+                </label>
+                {error ? <p className={styles.openingNameError} role="alert">{error}</p> : null}
+                <div className={styles.openingSetupActions}>
+                  <button type="button" className={styles.secondaryButton} onClick={() => setStep("world")}>Back</button>
+                  <button type="submit">That&apos;s my name</button>
+                </div>
+              </form>
+            ) : null}
 
-        {step === "friend" ? (
-          <form onSubmit={submitName}>
-            <div className={styles.openingSetupEyebrow}>Your friendly rival</div>
-            <h2 id="opening-setup-title">What is your best friend&apos;s name?</h2>
-            <p>Your best friend will share the first steps of this adventure—and challenge you along the way.</p>
-            <label className={styles.openingNameField}>
-              <span>Best friend&apos;s name</span>
-              <input
-                autoFocus
-                type="text"
-                value={bestFriendName}
-                maxLength={ADVENTURE_CHARACTER_NAME_MAX_LENGTH}
-                autoComplete="off"
-                spellCheck="false"
-                onChange={(event) => {
-                  setBestFriendName(event.target.value);
-                  setError(null);
-                }}
-              />
-              <small>A short first name or nickname works best.</small>
-            </label>
-            {error ? <p className={styles.openingNameError} role="alert">{error}</p> : null}
-            <div className={styles.openingSetupActions}>
-              <button type="button" className={styles.secondaryButton} onClick={() => setStep("player")}>Back</button>
-              <button type="submit">That&apos;s their name</button>
-            </div>
-          </form>
-        ) : null}
+            {step === "friend" ? (
+              <form className={styles.openingSetupResponse} onSubmit={submitName}>
+                <p>Your best friend will share the first steps of this adventure—and challenge you along the way.</p>
+                <label className={styles.openingNameField}>
+                  <span>Best friend&apos;s name</span>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={bestFriendName}
+                    maxLength={ADVENTURE_CHARACTER_NAME_MAX_LENGTH}
+                    autoComplete="off"
+                    spellCheck="false"
+                    onChange={(event) => {
+                      setBestFriendName(event.target.value);
+                      setError(null);
+                    }}
+                  />
+                  <small>A short first name or nickname works best.</small>
+                </label>
+                {error ? <p className={styles.openingNameError} role="alert">{error}</p> : null}
+                <div className={styles.openingSetupActions}>
+                  <button type="button" className={styles.secondaryButton} onClick={() => setStep("player")}>Back</button>
+                  <button type="submit">That&apos;s their name</button>
+                </div>
+              </form>
+            ) : null}
 
-        {step === "confirm" ? (
-          <>
-            <div className={styles.openingSetupEyebrow}>Save {ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1}</div>
-            <h2 id="opening-setup-title">Ready for your birthday adventure?</h2>
-            <div className={styles.openingIdentitySummary}>
-              <span><small>You</small><strong>{playerName}</strong></span>
-              <span><small>Best friend</small><strong>{bestFriendName}</strong></span>
-            </div>
-            <p>These names will be used in dialogue and saved with this Reefbound adventure.</p>
-            <div className={styles.openingSetupActions}>
-              <button type="button" className={styles.secondaryButton} onClick={() => setStep("friend")}>Change names</button>
-              <button
-                type="button"
-                autoFocus
-                onClick={() => onBegin({ playerName, bestFriendName })}
-              >
-                Begin the adventure
-              </button>
-            </div>
-          </>
-        ) : null}
+            {step === "confirm" ? (
+              <div className={styles.openingSetupResponse}>
+                <div className={styles.openingSetupEyebrow}>Save {ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1}</div>
+                <div className={styles.openingIdentitySummary}>
+                  <span><small>You</small><strong>{playerName}</strong></span>
+                  <span><small>Best friend</small><strong>{bestFriendName}</strong></span>
+                </div>
+                <p>These names will be used in dialogue and saved with this Reefbound adventure.</p>
+                <div className={styles.openingSetupActions}>
+                  <button type="button" className={styles.secondaryButton} onClick={() => setStep("friend")}>Change names</button>
+                  <button
+                    type="button"
+                    autoFocus
+                    onClick={() => onBegin({ playerName, bestFriendName })}
+                  >
+                    Begin the adventure
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </ProgressiveDialogueLine>
+        </div>
       </section>
     </div>
   );
@@ -3061,6 +3076,7 @@ export default function AdventureGame({
     && prologueProgress.needsBestFriendArrival
     && sceneId === "town"
   );
+  const bestFriendEscortActive = bestFriendSequence?.phase === "escorting";
   const openingMentorReady = prologueProgress?.legacySkipped
     && onboardingProgress?.needsWorldIntroduction;
   const stageOpeningMentor = !dockSpeechPending && sceneId === "town" && (
@@ -3072,8 +3088,13 @@ export default function AdventureGame({
     )
   );
   const sceneCharacterInteractions = useMemo(() => {
-    if (dockSpeechPending) {
-      return sceneId === "town" ? [...ELVERSON_DOCK_SPEECH_INTERACTIONS] : [];
+    if (dockSpeechPending || bestFriendEscortActive) {
+      if (sceneId !== "town") return [];
+      return [...(
+        bestFriendEscortActive
+          ? ELVERSON_DOCK_ESCORT_INTERACTIONS
+          : ELVERSON_DOCK_SPEECH_INTERACTIONS
+      )];
     }
     const authoredInteractions = scene.interactions.filter((candidate) => {
       const npcId = candidate.trainerId ?? candidate.npcId;
@@ -3098,7 +3119,7 @@ export default function AdventureGame({
       interactions.push(ELVERSON_RIVAL_AQUARIUM_INTERACTION);
     }
     return interactions;
-  }, [bestFriendArrivalPending, dockSpeechPending, prologueProgress?.friendVisibleInAquarium, scene.interactions, sceneId, stageOpeningMentor]);
+  }, [bestFriendArrivalPending, bestFriendEscortActive, dockSpeechPending, prologueProgress?.friendVisibleInAquarium, scene.interactions, sceneId, stageOpeningMentor]);
   const anchoredActorStates = useMemo(
     () => createAdventureActorStates(sceneCharacterInteractions),
     [sceneCharacterInteractions],
