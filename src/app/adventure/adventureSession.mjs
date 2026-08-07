@@ -262,9 +262,9 @@ function recoverToSafeDockOrStart(save, reason) {
   };
 }
 
-export function createNewAdventureSession(profileId) {
+export function createNewAdventureSession(profileId, identity) {
   const save = transitionQuest(
-    createInitialAdventureSave(profileId),
+    createInitialAdventureSave(profileId, identity),
     SHELLSHORE_QUEST_ID,
     "active",
   );

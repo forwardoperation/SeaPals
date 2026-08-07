@@ -62,7 +62,7 @@ test("stationary residents use a registered alternating-leg gait over one world 
 });
 
 test("the player walk cycle follows active walking intent even when collision stops displacement", () => {
-  assert.match(component, /const playerWalking = guidedWalkSample\?\.follower\.moving === true[\s\S]*?\|\| isAdventurePlayerWalking\(\{ isMoving, boatMode, movementPaused \}\)/);
+  assert.match(component, /const playerWalking = bestFriendWalkSample\?\.follower\.moving === true[\s\S]*?\|\| guidedWalkSample\?\.follower\.moving === true[\s\S]*?\|\| isAdventurePlayerWalking\(\{ isMoving, boatMode, movementPaused \}\)/);
   assert.doesNotMatch(component, /\[playerWalking, setPlayerWalking\]/);
   assert.doesNotMatch(component, /setPlayerWalking\(/);
   assert.match(component, /moving=\{playerWalking\}/);

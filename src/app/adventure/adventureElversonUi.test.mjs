@@ -9,8 +9,11 @@ const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), 
 
 test("the active adventure presentation begins with Elverson's aquarium project", () => {
   assert.match(component, /Begin in coastal Elverson, where Mr\. Easterling is creating a new aquarium exhibit/);
+  assert.match(component, /This world is full of wonderful sea creatures\. Around here, we call them/);
   assert.match(component, /Your tenth-birthday morning/);
-  assert.match(component, /Head downstairs, greet Mom, check with Dad, and hear your best friend's news about the waterfront kickoff/);
+  assert.match(component, /Head downstairs, greet Mom, check with Dad, then meet/);
+  assert.match(component, /Meet \$\{dialogueIdentity\.bestFriendName\} outside/);
+  assert.match(component, /Your best friend is coming to find you with news about the waterfront kickoff/);
   assert.match(component, /Join the kickoff at the dock/);
   assert.match(component, /approach the central dock to hear Mr\. Easterling open the Sea Creature Challenge/);
   assert.match(component, /Mr\. Easterling&apos;s three starter reefs/);

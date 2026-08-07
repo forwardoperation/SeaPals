@@ -34,14 +34,18 @@ function recordPersistedBeat(save, beatId) {
   return persisted(result.save);
 }
 
-test("a fresh profile starts upstairs and persists the ordered home sequence before the dock kickoff", () => {
-  let save = persisted(createNewAdventureSession("profile-1"));
+test("a named fresh profile starts upstairs, meets family indoors, then meets the best friend outside", () => {
+  let save = persisted(createNewAdventureSession("profile-1", {
+    playerName: "Kai",
+    bestFriendName: "Mira",
+  }));
   assert.equal(save.world.sceneId, ELVERSON_PROLOGUE_BEDROOM_SCENE_ID);
+  assert.equal(save.player.name, "Kai");
+  assert.equal(save.player.bestFriendName, "Mira");
 
   const expectedHomeBeats = [
     [ELVERSON_PROLOGUE_BEATS.breakfast, "player-mom"],
     [ELVERSON_PROLOGUE_BEATS.permission, "player-dad"],
-    [ELVERSON_PROLOGUE_BEATS.race, "player-best-friend"],
   ];
 
   for (const [beatId, trainerId] of expectedHomeBeats) {
@@ -51,6 +55,14 @@ test("a fresh profile starts upstairs and persists the ordered home sequence bef
     assert.equal(progress.homeConversation?.sceneId, ELVERSON_PROLOGUE_HOME_SCENE_ID);
     save = recordPersistedBeat(save, beatId);
   }
+
+  const outsideMeeting = getElversonPrologueProgress(save);
+  assert.equal(outsideMeeting.nextBeatId, ELVERSON_PROLOGUE_BEATS.race);
+  assert.equal(outsideMeeting.homeConversation?.trainerId, "player-best-friend");
+  assert.equal(outsideMeeting.homeConversation?.sceneId, "town");
+  assert.equal(outsideMeeting.needsHomeSequence, false);
+  assert.equal(outsideMeeting.needsBestFriendArrival, true);
+  save = recordPersistedBeat(save, ELVERSON_PROLOGUE_BEATS.race);
 
   const kickoffReady = getElversonPrologueProgress(save);
   assert.equal(kickoffReady.nextBeatId, ELVERSON_PROLOGUE_BEATS.challenge);
@@ -68,7 +80,14 @@ test("a fresh profile starts upstairs and persists the ordered home sequence bef
   assert.equal(getOnboardingProgress(save).worldIntroductionComplete, true);
 });
 
-test("the opening presentation fades from the player's bedroom into Mom's face-to-face greeting", () => {
+test("the opening introduces SeaPals, names both children, then stages Mom's cardinal face-to-face greeting", () => {
+  assert.match(component, /function OpeningSetupModal/);
+  assert.match(component, /This world is full of wonderful sea creatures\. Around here, we call them/);
+  assert.match(component, /<strong> SeaPals<\/strong>/);
+  assert.match(component, /What is your name\?/);
+  assert.match(component, /What is your best friend/);
+  assert.match(component, /normalizeAdventureCharacterName/);
+  assert.match(component, /createNewAdventureSession\(profileId, identity\)/);
   assert.match(component, /setOpeningPrelude\("narration"\)/);
   assert.match(component, /Is it morning yet\?/);
   assert.match(component, /I feel like a great adventure awaits me this morning/);
@@ -76,19 +95,33 @@ test("the opening presentation fades from the player's bedroom into Mom's face-t
   assert.match(component, /sceneId !== ELVERSON_PROLOGUE_HOME_SCENE_ID[\s\S]*nextBeatId !== ELVERSON_PROLOGUE_BEATS\.breakfast/);
   assert.match(component, /setMomGreetingStage\("calling"\)/);
   assert.match(component, /setMomGreetingStage\("approaching"\)/);
-  assert.match(component, /ELVERSON_MOM_GREETING_POSITION/);
+  assert.match(component, /path: ELVERSON_MOM_GREETING_PATH/);
   assert.match(component, /facing: getAdventureFacingToward\([\s\S]*playerPosition,[\s\S]*ELVERSON_MOM_GREETING_POSITION/);
   assert.match(component, /setGameSave\(greetedSave\)/);
-  assert.match(component, />Good morning, dear!</);
+  assert.match(component, /dialogueIdentity\.playerName\}! Good morning!/);
 });
 
-test("the dock kickoff stages the town cast, triggers by proximity, and restores free exploration after a black fade", () => {
+test("the exterior arrival calls the player's name, walks in from the right, and escorts to the dock before recording the race beat", () => {
+  assert.match(component, /const bestFriendArrivalPending = Boolean\([\s\S]*needsBestFriendArrival[\s\S]*sceneId === "town"/);
+  assert.match(component, /interactions\.push\(ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION\)/);
+  assert.match(component, /setBestFriendSequence\(\{ phase: "calling", plan: null \}\)/);
+  assert.match(component, /bestFriendSequence\?\.phase === "calling"[\s\S]*dialogueIdentity\.playerName\}!!/);
+  assert.match(component, /path: ELVERSON_BEST_FRIEND_ARRIVAL_PATH/);
+  assert.match(component, /position: \{ \.\.\.ELVERSON_BEST_FRIEND_MEETING_POSITION \}[\s\S]*facing: "left"/);
+  assert.match(component, /position: \{ \.\.\.ELVERSON_TOWN_SAFE_POSITIONS\.playerHomeExterior \}[\s\S]*facing: "right"/);
+  assert.match(component, /escortToDock: true/);
+  assert.match(component, /path: ELVERSON_BEST_FRIEND_DOCK_WALK\.leader[\s\S]*followerPath: ELVERSON_BEST_FRIEND_DOCK_WALK\.follower/);
+  assert.match(component, /phase === "escorting"[\s\S]*position: \{ \.\.\.sample\.follower\.position \}/);
+  assert.match(component, /recordElversonPrologueBeat\([\s\S]*ELVERSON_PROLOGUE_BEATS\.race[\s\S]*elverson-opening:best-friend-dock-escort/);
+  assert.match(component, /!dockSpeechPending[\s\S]*bestFriendSequence/);
+});
+
+test("the dock kickoff stages the town cast and restores exploration after its black fade", () => {
   assert.match(component, /const dockSpeechPending = Boolean\([\s\S]*prologueProgress\.readyForDockSpeech/);
   assert.match(component, /return sceneId === "town" \? \[\.\.\.ELVERSON_DOCK_SPEECH_INTERACTIONS\] : \[\]/);
-  assert.match(component, /const bestFriendLeftHome = Boolean\([\s\S]*ELVERSON_PROLOGUE_BEATS\.race/);
-  assert.match(component, /bestFriendLeftHome[\s\S]*sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID[\s\S]*npcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID/);
+  assert.match(component, /sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID[\s\S]*npcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID/);
   assert.match(component, /dockSpeechPending && \["trainer", "npc"\]\.includes\(candidate\?\.type\)/);
-  assert.match(component, /const candidateNpcId = candidate\?\.trainerId \?\? candidate\?\.npcId;[\s\S]*bestFriendLeftHome[\s\S]*candidateNpcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID/);
+  assert.match(component, /const candidateNpcId = candidate\?\.trainerId \?\? candidate\?\.npcId;[\s\S]*candidateNpcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID/);
   assert.match(component, /isElversonDockSpeechTriggerPosition\(position\)/);
   assert.match(component, /position: \{ \.\.\.ELVERSON_DOCK_SPEECH_PLAYER_POSITION \}[\s\S]*facing: "down"/);
   assert.match(component, /interactionId: ELVERSON_DOCK_SPEECH_INTERACTION_ID[\s\S]*mode: "worldIntroduction"[\s\S]*dockSpeech: true/);
@@ -126,7 +159,7 @@ test("Mr. Easterling's speech advertises aquarium registration, then registratio
   assert.equal(aquarium.startFacing, "up");
 });
 
-test("free exploration is available before the speech while required conversations and transitions remain protected", () => {
+test("input stays frozen through authored arrivals and escorts while required conversations and transitions remain protected", () => {
   const movementLock = component.slice(
     component.indexOf("  const openingFreeRoamLocked = Boolean("),
     component.indexOf("  movementPausedRef.current = movementPaused;"),
@@ -134,7 +167,10 @@ test("free exploration is available before the speech while required conversatio
   assert.match(movementLock, /prologueProgress\.needsRivalDeparture/);
   assert.doesNotMatch(movementLock, /needsHomeSequence/);
   assert.doesNotMatch(movementLock, /readyForDockSpeech/);
+  assert.match(movementLock, /Boolean\(bestFriendSequence\)/);
   assert.match(component, /doorway\?\.interactionId === "interaction-player-home-exit"[\s\S]*needsHomeSequence/);
-  assert.match(component, /if \(openingPrelude \|\| momGreetingStage \|\| dockCutscenePhase\) return;/);
+  assert.match(component, /if \(openingPrelude \|\| momGreetingStage \|\| bestFriendSequence \|\| dockCutscenePhase\) return;/);
+  assert.match(component, /openingFreeRoamLocked \|\| openingPrelude \|\| momGreetingStage \|\| bestFriendSequence \|\| dockCutscenePhase/);
+  assert.match(component, /actorIsScriptedWalker[\s\S]*movementPaused: movementPaused && !actorIsScriptedWalker/);
   assert.match(component, /conversation\?\.mode === "worldIntroduction"[\s\S]*Boolean\(conversation\?\.openingBeatId\)[\s\S]*return;/);
 });

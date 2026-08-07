@@ -34,8 +34,8 @@ const HOME_BEAT_SPEAKERS = Object.freeze({
   }),
   [ELVERSON_PROLOGUE_BEATS.race]: Object.freeze({
     trainerId: ELVERSON_PROLOGUE_BEST_FRIEND_ID,
-    sceneId: ELVERSON_PROLOGUE_HOME_SCENE_ID,
-    interactionId: "interaction-elverson-prologue-player-best-friend",
+    sceneId: "town",
+    interactionId: "interaction-elverson-best-friend-arrival",
     mode: "birthdayMorning",
   }),
 });
@@ -111,7 +111,8 @@ export function getElversonPrologueProgress(saveValue) {
     completedBeatIds: Object.freeze([...completedBeatIds]),
     nextBeatId,
     homeConversation,
-    needsHomeSequence: Boolean(homeConversation),
+    needsHomeSequence: homeConversation?.sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID,
+    needsBestFriendArrival: nextBeatId === ELVERSON_PROLOGUE_BEATS.race,
     readyForDockSpeech: !complete
       && nextBeatId === ELVERSON_PROLOGUE_BEATS.challenge,
     // Compatibility alias for callers and historical tests written before the

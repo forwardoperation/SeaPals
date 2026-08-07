@@ -1,18 +1,22 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  ADVENTURE_CHARACTER_NAME_MAX_LENGTH,
   ADVENTURE_OPENING_CONTENT_VERSION,
   ADVENTURE_OPENING_STATUS,
   ADVENTURE_OPENING_STATUSES,
   ADVENTURE_SAVE_SCHEMA_VERSION,
   ADVENTURE_START_LOCATION,
   AdventureSaveValidationError,
+  DEFAULT_ADVENTURE_BEST_FRIEND_NAME,
+  DEFAULT_ADVENTURE_PLAYER_NAME,
   QUEST_STATUSES,
   createInitialAdventureSave,
   grantReward,
   legacyEncounterId,
   migrateAdventureSave,
   normalizeAdventureSave,
+  normalizeAdventureCharacterName,
   normalizeRewardGrant,
   setQuestFlag,
   transitionQuest,
@@ -57,7 +61,12 @@ test("initial save is canonical schema v4 and starts the versioned birthday open
     unlockedRouteIds: [],
     completedRouteIds: [],
   });
-  assert.deepEqual(save.player, { starterDeckId: null, activeDeckId: null });
+  assert.deepEqual(save.player, {
+    name: DEFAULT_ADVENTURE_PLAYER_NAME,
+    bestFriendName: DEFAULT_ADVENTURE_BEST_FRIEND_NAME,
+    starterDeckId: null,
+    activeDeckId: null,
+  });
   assert.deepEqual(save.progression.quests, {});
   assert.deepEqual(save.progression.completedEncounterIds, []);
   assert.deepEqual(save.progression.encounterResults, {});
@@ -127,7 +136,12 @@ test("normalization fills omitted optional v4 fields and canonicalizes IDs, arra
 
   assert.equal(normalized.profileId, "profile-2");
   assert.deepEqual(normalized.opening.completedBeatIds, [ELVERSON_PROLOGUE_BEATS.breakfast]);
-  assert.deepEqual(normalized.player, { starterDeckId: "coral-garden", activeDeckId: null });
+  assert.deepEqual(normalized.player, {
+    name: DEFAULT_ADVENTURE_PLAYER_NAME,
+    bestFriendName: DEFAULT_ADVENTURE_BEST_FRIEND_NAME,
+    starterDeckId: "coral-garden",
+    activeDeckId: null,
+  });
   assert.deepEqual(normalized.world.unlockedRouteIds, ["route-sunpatch", "route-shellshore"]);
   assert.deepEqual(normalized.world.completedRouteIds, ["route-shellshore"]);
   assert.equal(normalized.world.layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION);
@@ -136,6 +150,51 @@ test("normalization fills omitted optional v4 fields and canonicalizes IDs, arra
   assert.deepEqual(normalized.rewardLedger, ["reward-first", "reward-second"]);
   assert.equal("ignoredSameVersionField" in normalized, false);
   assert.equal(validateAdventureSave(normalized).valid, true);
+});
+
+test("character names normalize safely and persist in the canonical player identity", () => {
+  assert.equal(normalizeAdventureCharacterName("  Ana   María  "), "Ana María");
+  assert.equal(normalizeAdventureCharacterName("O’Neil-Jr. 2"), "O’Neil-Jr. 2");
+
+  const save = createInitialAdventureSave("profile-identity", {
+    playerName: "  Zoë  ",
+    bestFriendName: "  D’Arcy  ",
+  });
+  assert.equal(save.player.name, "Zoë");
+  assert.equal(save.player.bestFriendName, "D’Arcy");
+
+  const restored = migrateAdventureSave(jsonRoundTrip(save));
+  assert.deepEqual(restored, save);
+  assert.equal(validateAdventureSave(restored).valid, true);
+});
+
+test("character names reject empty, overlong, non-string, and unsupported values", () => {
+  const invalidCases = [
+    ["", /must not be empty/],
+    ["   ", /must not be empty/],
+    ["A".repeat(ADVENTURE_CHARACTER_NAME_MAX_LENGTH + 1), /must be at most 16 characters/],
+    ["Reef@Home", /letters, numbers, spaces, periods, apostrophes, and hyphens only/],
+    ["Finn/Blue", /letters, numbers, spaces, periods, apostrophes, and hyphens only/],
+    ["-Finn", /letters, numbers, spaces, periods, apostrophes, and hyphens only/],
+    [42, /must be a string/],
+  ];
+
+  for (const [value, message] of invalidCases) {
+    assert.throws(
+      () => normalizeAdventureCharacterName(value),
+      message,
+      `expected ${JSON.stringify(value)} to be rejected`,
+    );
+  }
+
+  for (const [field, value] of [["name", "Reef@Home"], ["bestFriendName", "A".repeat(17)]]) {
+    const malformed = createInitialAdventureSave("profile-1");
+    malformed.player[field] = value;
+    assert.throws(
+      () => normalizeAdventureSave(malformed),
+      new RegExp(`save\\.player\\.${field}`),
+    );
+  }
 });
 
 test("schema-v1 saves migrate stepwise with v2 provenance defaults and skip the birthday opening", () => {
@@ -156,6 +215,8 @@ test("schema-v1 saves migrate stepwise with v2 provenance defaults and skip the 
   assert.equal(normalized.playtimeSeconds, ADVENTURE_SAVE_V1_FIXTURE.playtimeSeconds);
   assert.equal(normalized.schemaVersion, ADVENTURE_SAVE_SCHEMA_VERSION);
   assert.equal(normalized.world.layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION_LEGACY);
+  assert.equal(normalized.player.name, DEFAULT_ADVENTURE_PLAYER_NAME);
+  assert.equal(normalized.player.bestFriendName, DEFAULT_ADVENTURE_BEST_FRIEND_NAME);
   assert.deepEqual(jsonRoundTrip(ADVENTURE_SAVE_V1_FIXTURE), before);
   assert.deepEqual(migrateAdventureSave(normalized), normalized);
 });
@@ -183,7 +244,17 @@ test("schema-v2 migration preserves every prior domain and cannot replay the bir
     completedBeatIds: [],
   });
   assert.equal(layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION_LEGACY);
-  assert.deepEqual({ ...migratedDomains, world: migratedWorld }, legacyDomains);
+  assert.deepEqual(
+    { ...migratedDomains, world: migratedWorld },
+    {
+      ...legacyDomains,
+      player: {
+        name: DEFAULT_ADVENTURE_PLAYER_NAME,
+        bestFriendName: DEFAULT_ADVENTURE_BEST_FRIEND_NAME,
+        ...legacyDomains.player,
+      },
+    },
+  );
   assert.deepEqual(jsonRoundTrip(ADVENTURE_SAVE_V2_FIXTURE), before);
   assert.deepEqual(migrateAdventureSave(migrated), migrated);
 });
@@ -343,6 +414,8 @@ test("v0 fixture migrates known wins without inventing rewards the prototype nev
   ]);
   assert.deepEqual(migrated.rewardLedger, []);
   assert.equal(migrated.opening.status, ADVENTURE_OPENING_STATUS.LEGACY_SKIPPED);
+  assert.equal(migrated.player.name, DEFAULT_ADVENTURE_PLAYER_NAME);
+  assert.equal(migrated.player.bestFriendName, DEFAULT_ADVENTURE_BEST_FRIEND_NAME);
   assert.deepEqual(jsonRoundTrip(ADVENTURE_SAVE_V0_FIXTURE), before);
   assert.equal(validateAdventureSave(migrated).valid, true);
 
@@ -541,8 +614,11 @@ test("new reward grants reject malformed quantities and overflow", () => {
   assert.deepEqual(initial.rewardLedger, []);
 });
 
-test("progression results survive a JSON round trip without sets, dates, or functions", () => {
-  let save = createInitialAdventureSave("profile-1");
+test("progression results and custom names survive a JSON round trip without sets, dates, or functions", () => {
+  let save = createInitialAdventureSave("profile-1", {
+    playerName: "Marina",
+    bestFriendName: "Kai-7",
+  });
   save = transitionQuest(save, "quest-sunpatch-reef-response", "active");
   save = grantReward(save, {
     grantId: "reward-field-note",
@@ -551,5 +627,9 @@ test("progression results survive a JSON round trip without sets, dates, or func
 
   const restored = migrateAdventureSave(jsonRoundTrip(save));
   assert.deepEqual(restored, save);
+  assert.deepEqual(
+    { name: restored.player.name, bestFriendName: restored.player.bestFriendName },
+    { name: "Marina", bestFriendName: "Kai-7" },
+  );
   assert.equal(validateAdventureSave(restored).valid, true);
 });
