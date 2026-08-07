@@ -29,8 +29,8 @@ const PLAYER_BOUNDS = Object.freeze({ left: 0.4, top: 2, right: 11.6, bottom: 7.
 const CREATURE_BOUNDS = Object.freeze({ left: 0.45, top: 0.65, right: 11.55, bottom: 6.45 });
 const ESCAPE_BOUNDS = Object.freeze({ left: -0.25, top: 0.2, right: 12.25, bottom: 7.8 });
 const SIMULATION_STEP_MS = 20;
-const WALK_FRAME_DURATION_MS = 120;
-const WALK_FRAME_SEQUENCE = Object.freeze([0, 1, 0, 2]);
+const WALK_FRAME_DURATION_MS = 110;
+const WALK_FRAME_SEQUENCE = Object.freeze([1, 0, 2, 0]);
 const MAX_TICK_MS = 10_000;
 const UINT32_MAX = 0xffff_ffff;
 const TAU = Math.PI * 2;
@@ -334,7 +334,7 @@ export function applyHandNetAction(stateValue, action) {
     if (isMoving) next.player.facing = isometricFacing(intent, next.player.facing);
     if (!wasMoving && isMoving) {
       next.presentation.walkElapsedMs = 0;
-      next.presentation.walkFrameIndex = 0;
+      next.presentation.walkFrameIndex = WALK_FRAME_SEQUENCE[0];
     } else if (!isMoving) {
       next.presentation.walkElapsedMs = 0;
       next.presentation.walkFrameIndex = 0;

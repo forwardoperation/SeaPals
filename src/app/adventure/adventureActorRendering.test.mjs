@@ -40,12 +40,14 @@ test("player and patrol walk cycles derive their cadence from world speed", () =
   assert.match(component, /getAdventureWalkCycleDurationMs\(walkSpeed\)/);
   assert.match(component, /"--sprite-walk-cycle-duration": `\$\{getAdventureWalkCycleDurationMs\(walkSpeed\)\}ms`/);
   assert.match(component, /walkSpeed=\{characterInteraction\.patrol\?\.speed \?\? ADVENTURE_ACTOR_DEFAULTS\.speed\}/);
-  assert.match(component, /walkSpeed=\{scene\.movement\?\.speed\}/);
-  assert.match(styles, /animation:\s*spriteWalk var\(--sprite-walk-cycle-duration, 250ms\) steps\(1, end\) infinite/);
+  assert.match(component, /const playerWalkSpeed = bestFriendWalkSample\?\.follower\.moving === true[\s\S]*?\? bestFriendSequence\?\.plan\?\.speed[\s\S]*?: guidedWalkSample\?\.follower\.moving === true[\s\S]*?\? guidedWalk\?\.plan\?\.speed[\s\S]*?: scene\.movement\?\.speed/);
+  assert.match(component, /walkSpeed=\{playerWalkSpeed\}/);
+  assert.match(styles, /animation:\s*spriteWalk var\(--sprite-walk-cycle-duration, 480ms\) steps\(1, end\) infinite/);
 });
 
 test("stationary residents use a registered alternating-leg gait over one world anchor", () => {
   assert.match(component, /const frameRegistration = getAdventureWalkFrameRegistration\(\{/);
+  assert.match(component, /const walkStyle = \(moving \|\| steppingInPlace\)/);
   assert.match(component, /"--sprite-step-frame-a-x": `\$\{frameRegistration\.frameA\}%`/);
   assert.match(component, /"--sprite-step-neutral-x": `\$\{frameRegistration\.neutral\}%`/);
   assert.match(component, /"--sprite-step-frame-b-x": `\$\{frameRegistration\.frameB\}%`/);
@@ -59,6 +61,13 @@ test("stationary residents use a registered alternating-leg gait over one world 
   assert.match(idleCycle, /--sprite-step-neutral-x/);
   assert.match(idleCycle, /--sprite-step-frame-b-x/);
   assert.doesNotMatch(idleCycle, /translateX|scaleY/);
+
+  const movingCycle = styles.match(/@keyframes spriteWalk\s*\{[\s\S]*?(?=@keyframes professorSpriteWalk)/)?.[0] ?? "";
+  assert.ok(movingCycle);
+  assert.match(movingCycle, /--sprite-step-frame-a-x/);
+  assert.match(movingCycle, /--sprite-step-neutral-x/);
+  assert.match(movingCycle, /--sprite-step-frame-b-x/);
+  assert.doesNotMatch(movingCycle, /translateY\(-/);
 });
 
 test("the player walk cycle follows active walking intent even when collision stops displacement", () => {

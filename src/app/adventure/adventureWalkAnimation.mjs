@@ -2,6 +2,10 @@ export const ADVENTURE_WALK_ANIMATION_DEFAULTS = Object.freeze({
   // The four-pose sequence is left foot, neutral, right foot, neutral. One
   // complete sequence therefore represents one world tile of travel.
   cycleDistance: 1,
+  // At normal player speed the distance-derived cycle was only 250ms, leaving
+  // each authored pose on screen for about one video frame. Keep the physical
+  // relationship for slower actors, but give every pose time to read.
+  minimumCycleDurationMs: 480,
   displacementEpsilon: 0.0005,
 });
 
@@ -134,11 +138,15 @@ function requireFinitePosition(position, label) {
  */
 export function getAdventureWalkCycleDurationMs(
   speed,
-  { cycleDistance = ADVENTURE_WALK_ANIMATION_DEFAULTS.cycleDistance } = {},
+  {
+    cycleDistance = ADVENTURE_WALK_ANIMATION_DEFAULTS.cycleDistance,
+    minimumCycleDurationMs = ADVENTURE_WALK_ANIMATION_DEFAULTS.minimumCycleDurationMs,
+  } = {},
 ) {
   requirePositiveFinite(speed, "Adventure walk speed");
   requirePositiveFinite(cycleDistance, "Adventure walk cycle distance");
-  return (cycleDistance / speed) * 1000;
+  requirePositiveFinite(minimumCycleDurationMs, "Adventure minimum walk cycle duration");
+  return Math.max(minimumCycleDurationMs, (cycleDistance / speed) * 1000);
 }
 
 /**

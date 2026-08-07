@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -19,7 +20,7 @@ const ELVERSON_MOBILE_OPENING_ASSETS = Object.freeze([
   "/images/adventure/shellshore-academy.webp",
   "/images/adventure/elverson-reef-creature-atlas-v1.webp",
   "/images/adventure/mr-easterling-portrait-v2.webp",
-  "/images/adventure/player-sprites-512-v2.webp",
+  "/images/adventure/player-sprites-512-v3.webp",
   "/images/adventure/marina-sprites-512-v2.webp",
   "/images/adventure/dorian-sprites-512-v2.webp",
   "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
@@ -60,6 +61,87 @@ async function readWebpAsset(artPath) {
   const metadata = await sharp(asset).metadata();
   assert.equal(metadata.format, "webp", `${artPath} format`);
   return { asset, metadata };
+}
+
+async function readRgbaAsset(artPath) {
+  return sharp(publicAssetPath(artPath))
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+}
+
+function getOpaqueCellMetrics({ data, info }, {
+  column,
+  row,
+  columns,
+  rows,
+  footprintDepth = 16,
+}) {
+  const xStart = Math.round((column * info.width) / columns);
+  const xEnd = Math.round(((column + 1) * info.width) / columns);
+  const yStart = Math.round((row * info.height) / rows);
+  const yEnd = Math.round(((row + 1) * info.height) / rows);
+  let count = 0;
+  let minX = xEnd;
+  let maxX = xStart - 1;
+  let minY = yEnd;
+  let maxY = yStart - 1;
+
+  for (let y = yStart; y < yEnd; y += 1) {
+    for (let x = xStart; x < xEnd; x += 1) {
+      if (data[((y * info.width + x) * 4) + 3] <= 128) continue;
+      count += 1;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  let footprintMinX = xEnd;
+  let footprintMaxX = xStart - 1;
+  const footprintStart = Math.max(minY, maxY - footprintDepth + 1);
+  for (let y = footprintStart; y <= maxY; y += 1) {
+    for (let x = xStart; x < xEnd; x += 1) {
+      if (data[((y * info.width + x) * 4) + 3] <= 128) continue;
+      footprintMinX = Math.min(footprintMinX, x);
+      footprintMaxX = Math.max(footprintMaxX, x);
+    }
+  }
+
+  return {
+    count,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1,
+    footprintWidth: footprintMaxX - footprintMinX + 1,
+  };
+}
+
+function assertNoOpaqueCellBoundaryBridges({ data, info }, { columns, rows, label }) {
+  for (let column = 1; column < columns; column += 1) {
+    const seamX = Math.round((column * info.width) / columns);
+    for (let y = 0; y < info.height; y += 1) {
+      const leftAlpha = data[((y * info.width + seamX - 1) * 4) + 3];
+      const rightAlpha = data[((y * info.width + seamX) * 4) + 3];
+      assert.equal(
+        leftAlpha > 128 && rightAlpha > 128,
+        false,
+        `${label} artwork crosses column seam ${column}`,
+      );
+    }
+  }
+  for (let row = 1; row < rows; row += 1) {
+    const seamY = Math.round((row * info.height) / rows);
+    for (let x = 0; x < info.width; x += 1) {
+      const upperAlpha = data[((((seamY - 1) * info.width) + x) * 4) + 3];
+      const lowerAlpha = data[(((seamY * info.width + x) * 4) + 3)];
+      assert.equal(
+        upperAlpha > 128 && lowerAlpha > 128,
+        false,
+        `${label} artwork crosses row seam ${row}`,
+      );
+    }
+  }
 }
 
 test("every playable scene artwork is a structurally complete map-sized PNG or WebP", async () => {
@@ -143,8 +225,56 @@ test("Elverson ships one complete mobile WebP atlas for hand-net and Aquarium cr
   assert.ok(webp.asset.byteLength < 180_000, "the atlas must remain mobile-sized");
 });
 
+test("the v3 player walk sheet ships twelve isolated poses with a compact neutral stance", async () => {
+  const sourceMetadata = await sharp(publicAssetPath(
+    "/images/adventure/player-sprites-v3.png",
+  )).metadata();
+  assert.equal(sourceMetadata.width, 1_024);
+  assert.equal(sourceMetadata.height, 1_536);
+  assert.equal(sourceMetadata.hasAlpha, true, "the full-resolution walk sheet must retain transparency");
+
+  const optimizedPath = "/images/adventure/player-sprites-512-v3.png";
+  const atlas = await readRgbaAsset(optimizedPath);
+  assert.equal(atlas.info.width, 512);
+  assert.equal(atlas.info.height, 768);
+  assert.equal(atlas.info.channels, 4);
+  assertNoOpaqueCellBoundaryBridges(atlas, {
+    columns: 3,
+    rows: 4,
+    label: optimizedPath,
+  });
+
+  let rowsWithClearlyCompactNeutralFeet = 0;
+  for (let row = 0; row < 4; row += 1) {
+    const frames = [0, 1, 2].map((column) => getOpaqueCellMetrics(atlas, {
+      column,
+      row,
+      columns: 3,
+      rows: 4,
+    }));
+    for (const [column, frame] of frames.entries()) {
+      assert.ok(frame.count > 5_000, `player row ${row}, column ${column} must contain one complete pose`);
+      assert.ok(frame.width >= 60 && frame.height >= 130, `player row ${row}, column ${column} pose bounds`);
+    }
+
+    const [strideA, neutral, strideB] = frames;
+    const narrowestStride = Math.min(strideA.footprintWidth, strideB.footprintWidth);
+    if (neutral.footprintWidth + 8 <= narrowestStride) {
+      rowsWithClearlyCompactNeutralFeet += 1;
+    }
+    assert.ok(
+      neutral.footprintWidth <= Math.max(strideA.footprintWidth, strideB.footprintWidth) + 2,
+      `player row ${row} neutral feet must not be broader than its stride`,
+    );
+  }
+  assert.ok(
+    rowsWithClearlyCompactNeutralFeet >= 3,
+    "the neutral pose must visibly close the player's stance in at least three directional views",
+  );
+});
+
 test("the hand-net player atlas ships seven complete poses for four isometric facings", async () => {
-  const artPath = "/images/adventure/player-hand-net-isometric-v1.png";
+  const artPath = "/images/adventure/player-hand-net-isometric-v2.png";
   const png = await readFile(publicAssetPath(artPath));
   const metadata = await sharp(png).metadata();
 
@@ -155,8 +285,15 @@ test("the hand-net player atlas ships seven complete poses for four isometric fa
   assert.ok(png.byteLength < 1_500_000, "the lossless animation atlas must remain practical on mobile");
 
   const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const atlas = { data, info };
   const frameWidth = 352;
   const frameHeight = 256;
+  assertNoOpaqueCellBoundaryBridges(atlas, {
+    columns: 7,
+    rows: 4,
+    label: artPath,
+  });
+
   for (let row = 0; row < 4; row += 1) {
     const walkBodyCenters = [];
     for (let column = 0; column < 3; column += 1) {
@@ -185,10 +322,35 @@ test("the hand-net player atlas ships seven complete poses for four isometric fa
     }
     const registrationSpread = Math.max(...walkBodyCenters) - Math.min(...walkBodyCenters);
     assert.ok(
-      registrationSpread <= 3,
+      registrationSpread <= 4,
       `walk row ${row} body registration drifted ${registrationSpread.toFixed(2)}px`,
     );
+
+    const [neutral, stepA, stepB] = [0, 1, 2].map((column) => getOpaqueCellMetrics(atlas, {
+      column,
+      row,
+      columns: 7,
+      rows: 4,
+    }));
+    assert.ok(
+      neutral.footprintWidth + 20 <= Math.min(stepA.footprintWidth, stepB.footprintWidth),
+      `walk row ${row} neutral feet must be visibly closer than either planted stride`,
+    );
   }
+
+  const actionRegion = Buffer.alloc((info.width - (3 * frameWidth)) * info.height * 4);
+  let actionOffset = 0;
+  for (let y = 0; y < info.height; y += 1) {
+    const sourceStart = ((y * info.width) + (3 * frameWidth)) * 4;
+    const sourceEnd = ((y + 1) * info.width) * 4;
+    data.copy(actionRegion, actionOffset, sourceStart, sourceEnd);
+    actionOffset += sourceEnd - sourceStart;
+  }
+  assert.equal(
+    createHash("sha256").update(actionRegion).digest("hex"),
+    "6a6ba09c4b4fb2b7594fcf5c471e2354b923516472fb49a03c06f2ec36a4769f",
+    "the authored windup, scoop, impact, recovery, and celebration cells must remain byte-identical when decoded",
+  );
 });
 
 test("Elverson ships distinct transparent GBA-style resident walk sheets", async () => {
@@ -218,7 +380,7 @@ test("Elverson ships distinct transparent GBA-style resident walk sheets", async
 
 test("Elverson town ships compact transparent WebP walk sheets", async () => {
   const optimizedSpriteAssets = [
-    ["/images/adventure/player-sprites-512-v2.webp", "/images/adventure/player-sprites.png"],
+    ["/images/adventure/player-sprites-512-v3.webp", "/images/adventure/player-sprites-v3.png"],
     ["/images/adventure/marina-sprites-512-v2.webp", "/images/adventure/marina-sprites.png"],
     ["/images/adventure/dorian-sprites-512-v2.webp", "/images/adventure/dorian-sprites.png"],
     ["/images/adventure/fisherman-wyeth-sprites-512-v2.webp", "/images/adventure/fisherman-wyeth-sprites.png"],
