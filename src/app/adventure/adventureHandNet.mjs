@@ -29,6 +29,8 @@ const PLAYER_BOUNDS = Object.freeze({ left: 0.4, top: 2, right: 11.6, bottom: 7.
 const CREATURE_BOUNDS = Object.freeze({ left: 0.45, top: 0.65, right: 11.55, bottom: 6.45 });
 const ESCAPE_BOUNDS = Object.freeze({ left: -0.25, top: 0.2, right: 12.25, bottom: 7.8 });
 const SIMULATION_STEP_MS = 20;
+const WALK_FRAME_DURATION_MS = 120;
+const WALK_FRAME_SEQUENCE = Object.freeze([0, 1, 2, 1]);
 const MAX_TICK_MS = 10_000;
 const UINT32_MAX = 0xffff_ffff;
 const TAU = Math.PI * 2;
@@ -260,6 +262,8 @@ export function createHandNetState({
     presentation: {
       waveMotion: !reducedMotion,
       motionScale: settings.motionScale,
+      walkElapsedMs: 0,
+      walkFrameIndex: 0,
       netImpact: null,
       scoopPhase: HAND_NET_SCOOP_PHASES.IDLE,
       scoopElapsedMs: 0,
@@ -328,8 +332,17 @@ export function applyHandNetAction(stateValue, action) {
   if (action.type === HAND_NET_ACTIONS.MOVE) {
     const intent = normalizedIntent(action.x, action.y);
     const next = cloneState(state);
+    const wasMoving = magnitude(state.player.intent) > EPSILON;
     next.player.intent = intent;
-    if (magnitude(intent) > EPSILON) next.player.facing = isometricFacing(intent, next.player.facing);
+    const isMoving = magnitude(intent) > EPSILON;
+    if (isMoving) next.player.facing = isometricFacing(intent, next.player.facing);
+    if (!wasMoving && isMoving) {
+      next.presentation.walkElapsedMs = 0;
+      next.presentation.walkFrameIndex = 0;
+    } else if (!isMoving) {
+      next.presentation.walkElapsedMs = 0;
+      next.presentation.walkFrameIndex = 0;
+    }
     next.net.position = netPosition(next.player, next.net.reach);
     return deepFreeze(next);
   }
@@ -338,6 +351,8 @@ export function applyHandNetAction(stateValue, action) {
     const next = cloneState(state);
     next.player.intent = { x: 0, y: 0 };
     next.player.velocity = { x: 0, y: 0 };
+    next.presentation.walkElapsedMs = 0;
+    next.presentation.walkFrameIndex = 0;
     return deepFreeze(next);
   }
   if (action.type === HAND_NET_ACTIONS.SCOOP) {
@@ -378,6 +393,19 @@ function updatePlayer(state, elapsedSeconds) {
   );
   if (magnitude(intent) > EPSILON) state.player.facing = isometricFacing(intent, state.player.facing);
   state.net.position = netPosition(state.player, state.net.reach);
+}
+
+function updateWalkPresentation(state, elapsedMs) {
+  if (magnitude(state.player.intent) <= EPSILON) {
+    state.presentation.walkElapsedMs = 0;
+    state.presentation.walkFrameIndex = 0;
+    return;
+  }
+  state.presentation.walkElapsedMs += elapsedMs;
+  const sequenceIndex = Math.floor(
+    state.presentation.walkElapsedMs / WALK_FRAME_DURATION_MS,
+  ) % WALK_FRAME_SEQUENCE.length;
+  state.presentation.walkFrameIndex = WALK_FRAME_SEQUENCE[sequenceIndex];
 }
 
 function creatureDistanceToNet(state, creature) {
@@ -651,6 +679,7 @@ function simulationStep(state) {
   state.simulationTimeMs += SIMULATION_STEP_MS;
   state.tickCount += 1;
   updatePlayer(state, elapsedSeconds);
+  updateWalkPresentation(state, SIMULATION_STEP_MS);
   updateCreatures(state, SIMULATION_STEP_MS);
   updateNet(state, SIMULATION_STEP_MS);
   if (state.phase === HAND_NET_PHASES.PLAYING) finishEscapeIfNeeded(state);

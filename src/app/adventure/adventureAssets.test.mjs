@@ -153,6 +153,42 @@ test("the hand-net player atlas ships seven complete poses for four isometric fa
   assert.equal(metadata.height, 1_024, "four 256px facing rows");
   assert.equal(metadata.hasAlpha, true, "the integrated player and net must retain transparency");
   assert.ok(png.byteLength < 1_500_000, "the lossless animation atlas must remain practical on mobile");
+
+  const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const frameWidth = 352;
+  const frameHeight = 256;
+  for (let row = 0; row < 4; row += 1) {
+    const walkBodyCenters = [];
+    for (let column = 0; column < 3; column += 1) {
+      let weightedX = 0;
+      let bodyPixelCount = 0;
+      for (let y = 50; y < 250; y += 1) {
+        for (let x = 45; x < 307; x += 1) {
+          const pixel = (((row * frameHeight + y) * info.width) + column * frameWidth + x) * 4;
+          const red = data[pixel];
+          const green = data[pixel + 1];
+          const blue = data[pixel + 2];
+          const alpha = data[pixel + 3];
+          const playerTeal = alpha > 128
+            && green >= 70
+            && blue >= 55
+            && green > red * 1.05
+            && blue > red * 0.72
+            && Math.abs(green - blue) < 100;
+          if (!playerTeal) continue;
+          weightedX += x;
+          bodyPixelCount += 1;
+        }
+      }
+      assert.ok(bodyPixelCount > 1_000, `walk body mask must find row ${row}, frame ${column}`);
+      walkBodyCenters.push(weightedX / bodyPixelCount);
+    }
+    const registrationSpread = Math.max(...walkBodyCenters) - Math.min(...walkBodyCenters);
+    assert.ok(
+      registrationSpread <= 3,
+      `walk row ${row} body registration drifted ${registrationSpread.toFixed(2)}px`,
+    );
+  }
 });
 
 test("Elverson ships distinct transparent GBA-style resident walk sheets", async () => {

@@ -114,6 +114,41 @@ test("move actions drive the player and forward net without mutating prior state
   assert.deepEqual(afterStop.player.position, stoppedPosition);
 });
 
+test("walk presentation starts predictably, advances locally, and resets when movement stops", () => {
+  const initial = createHandNetState({ seed: 15, creatureCount: 1 });
+  const idled = tickHandNetState(initial, 1_000);
+  assert.equal(idled.presentation.walkElapsedMs, 0);
+  assert.equal(idled.presentation.walkFrameIndex, 0);
+
+  const started = applyHandNetAction(idled, { type: HAND_NET_ACTIONS.MOVE, x: 1, y: 0 });
+  assert.equal(started.presentation.walkElapsedMs, 0);
+  assert.equal(started.presentation.walkFrameIndex, 0);
+
+  const firstPose = tickHandNetState(started, 100);
+  assert.equal(firstPose.presentation.walkElapsedMs, 100);
+  assert.equal(firstPose.presentation.walkFrameIndex, 0);
+  const secondPose = tickHandNetState(firstPose, 20);
+  assert.equal(secondPose.presentation.walkElapsedMs, 120);
+  assert.equal(secondPose.presentation.walkFrameIndex, 1);
+  const thirdPose = tickHandNetState(secondPose, 120);
+  assert.equal(thirdPose.presentation.walkElapsedMs, 240);
+  assert.equal(thirdPose.presentation.walkFrameIndex, 2);
+
+  const redirected = applyHandNetAction(thirdPose, { type: HAND_NET_ACTIONS.MOVE, x: 0, y: -1 });
+  assert.equal(redirected.presentation.walkElapsedMs, 240, "turning mid-stride preserves cadence");
+  assert.equal(redirected.presentation.walkFrameIndex, 2);
+
+  const stopped = applyHandNetAction(redirected, { type: HAND_NET_ACTIONS.STOP });
+  assert.equal(stopped.presentation.walkElapsedMs, 0);
+  assert.equal(stopped.presentation.walkFrameIndex, 0);
+  const restarted = applyHandNetAction(
+    tickHandNetState(stopped, 500),
+    { type: HAND_NET_ACTIONS.MOVE, x: -1, y: 0 },
+  );
+  assert.equal(restarted.presentation.walkElapsedMs, 0);
+  assert.equal(restarted.presentation.walkFrameIndex, 0);
+});
+
 test("creatures wander deterministically and remain inside the shallow-water arena", () => {
   const initial = createHandNetState({ seed: 71, creatureCount: 5 });
   const advanced = tickHandNetState(initial, 2_000);

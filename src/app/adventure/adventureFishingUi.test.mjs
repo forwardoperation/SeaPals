@@ -34,6 +34,8 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(modal, /ELVERSON_HAND_NET_PLAYER_ATLAS_PATH/);
   assert.match(modal, /player-hand-net-isometric-v1\.png/);
   assert.match(modal, /state\.presentation\.scoopFrameIndex/);
+  assert.match(modal, /state\.presentation\.walkFrameIndex/);
+  assert.doesNotMatch(modal, /state\.simulationTimeMs\s*\/\s*115/);
   assert.match(modal, /data-hand-net-scoop-frame=\{playerSpriteFrame\}/);
   assert.doesNotMatch(modal, /styles\.handNetHandle/);
   assert.doesNotMatch(modal, /styles\.handNetScoop\b/);
