@@ -39,8 +39,15 @@ import { canOccupyContinuousPosition } from "./adventureWorld.mjs";
 
 const WORLD_INTRODUCTION_FLAG = "world-introduction-complete";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const jiti = createJiti(import.meta.url);
+const jiti = createJiti(import.meta.url, {
+  fsCache: false,
+  alias: { "@": path.join(projectRoot, "src") },
+});
 const { cardsById } = jiti(path.join(projectRoot, "src/data/cards/index.js"));
+const {
+  encyclopediaCreatureBySlug,
+  encyclopediaSlugByCardId,
+} = jiti(path.join(projectRoot, "src/data/encyclopedia/index.js"));
 
 class MemoryStorage {
   constructor() {
@@ -116,6 +123,14 @@ test("Elverson exposes ten immutable weighted reef catches with deterministic ra
     assert.ok(Number.isSafeInteger(creature.catchZoneWidth) && creature.catchZoneWidth > 0);
     assert.equal(cardsById[creature.cardId]?.kind, "creature");
     assert.equal(cardsById[creature.cardId]?.category, creature.category);
+    const encyclopediaSlug = encyclopediaSlugByCardId[creature.cardId];
+    const encyclopediaCreature = encyclopediaCreatureBySlug[encyclopediaSlug];
+    assert.ok(encyclopediaCreature, `${creature.cardId} must have an encyclopedia profile`);
+    assert.ok(encyclopediaCreature.cardIds.includes(creature.cardId));
+    assert.ok(encyclopediaCreature.name.length > 0);
+    assert.ok(encyclopediaCreature.tagline.length > 0);
+    assert.ok(encyclopediaCreature.intro.length > 0);
+    assert.ok(encyclopediaCreature.funFacts.length > 0);
 
     const middleOfBand = (cumulativeWeight + (creature.weight / 2)) / 100;
     assert.equal(rollElversonReefCatch(middleOfBand), creature);

@@ -30,7 +30,7 @@ const CREATURE_BOUNDS = Object.freeze({ left: 0.45, top: 0.65, right: 11.55, bot
 const ESCAPE_BOUNDS = Object.freeze({ left: -0.25, top: 0.2, right: 12.25, bottom: 7.8 });
 const SIMULATION_STEP_MS = 20;
 const WALK_FRAME_DURATION_MS = 120;
-const WALK_FRAME_SEQUENCE = Object.freeze([0, 1, 2, 1]);
+const WALK_FRAME_SEQUENCE = Object.freeze([0, 1, 0, 2]);
 const MAX_TICK_MS = 10_000;
 const UINT32_MAX = 0xffff_ffff;
 const TAU = Math.PI * 2;
@@ -115,12 +115,11 @@ function weightedCreature(randomValue) {
   return ELVERSON_REEF_CATCHES.at(-1);
 }
 
-function creatureSpeed(creature, { reducedMotion, assisted }) {
+function creatureSpeed(creature, { reducedMotion }) {
   let speed = RARITY_SPEED[creature.rarity] ?? RARITY_SPEED.common;
   if (creature.id === "sea-urchin") speed = 0.2;
   else if (creature.category === "invertebrate") speed *= 0.7;
   if (reducedMotion) speed *= 0.48;
-  if (assisted) speed *= 0.82;
   return speed;
 }
 
@@ -183,24 +182,22 @@ function initialSchool(count, cursor, settings, requiredCreatureId) {
   return school;
 }
 
-function createSettings({ assisted = false, reducedMotion = false } = {}) {
-  if (typeof assisted !== "boolean") throw new TypeError("Hand-net assisted must be boolean.");
+function createSettings({ reducedMotion = false } = {}) {
   if (typeof reducedMotion !== "boolean") throw new TypeError("Hand-net reducedMotion must be boolean.");
   return {
-    assisted,
     reducedMotion,
-    alertRadius: assisted ? 1.2 : 1.65,
-    alertThreshold: assisted ? 0.92 : 0.72,
-    alertGainPerSecond: assisted ? 0.58 : 1.75,
-    fastApproachSpeed: assisted ? 1.15 : 0.68,
-    netRadius: assisted ? 0.7 : 0.45,
+    alertRadius: 1.65,
+    alertThreshold: 0.72,
+    alertGainPerSecond: 1.75,
+    fastApproachSpeed: 0.68,
+    netRadius: 0.45,
     scoopAnimationMs: 700,
     scoopWindupEndMs: 240,
     scoopContactMs: 440,
     scoopRecoveryStartMs: 500,
     scoopContactWindowMs: SIMULATION_STEP_MS,
-    cooldownMs: assisted ? 280 : 440,
-    missAlert: assisted ? 0.07 : 0.18,
+    cooldownMs: 440,
+    missAlert: 0.18,
     motionScale: reducedMotion ? 0.48 : 1,
   };
 }
@@ -210,7 +207,6 @@ export function createHandNetState({
   seed = 1,
   creatureCount = 5,
   requiredCreatureId = null,
-  assisted = false,
   reducedMotion = false,
 } = {}) {
   if (!Number.isSafeInteger(seed) || seed < 0 || seed > UINT32_MAX) {
@@ -226,16 +222,16 @@ export function createHandNetState({
     throw new RangeError(`Unknown required hand-net creature: ${String(requiredCreatureId)}.`);
   }
 
-  const settings = createSettings({ assisted, reducedMotion });
+  const settings = createSettings({ reducedMotion });
   const cursor = { state: seed >>> 0 };
   const player = {
     position: { x: ARENA.width / 2, y: 5.72 },
     intent: { x: 0, y: 0 },
     velocity: { x: 0, y: 0 },
     facing: { x: Math.SQRT1_2, y: -Math.SQRT1_2 },
-    speed: (assisted ? 2.25 : 2.6) * (reducedMotion ? 0.72 : 1),
+    speed: 2.6 * (reducedMotion ? 0.72 : 1),
   };
-  const reach = assisted ? 1.55 : 1.4;
+  const reach = 1.4;
   const state = {
     version: HAND_NET_STATE_VERSION,
     phase: HAND_NET_PHASES.PLAYING,

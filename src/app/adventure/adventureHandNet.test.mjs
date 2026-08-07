@@ -15,12 +15,11 @@ function mutableCopy(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function controlledSingleCreature({ assisted = false, reducedMotion = false } = {}) {
+function controlledSingleCreature({ reducedMotion = false } = {}) {
   const state = mutableCopy(createHandNetState({
     seed: 19,
     creatureCount: 1,
     requiredCreatureId: "cleaner-wrasse",
-    assisted,
     reducedMotion,
   }));
   state.player.position = { x: 6, y: 7.1 };
@@ -132,10 +131,13 @@ test("walk presentation starts predictably, advances locally, and resets when mo
   assert.equal(secondPose.presentation.walkFrameIndex, 1);
   const thirdPose = tickHandNetState(secondPose, 120);
   assert.equal(thirdPose.presentation.walkElapsedMs, 240);
-  assert.equal(thirdPose.presentation.walkFrameIndex, 2);
+  assert.equal(thirdPose.presentation.walkFrameIndex, 0, "neutral separates the two planted steps");
+  const oppositeStep = tickHandNetState(thirdPose, 120);
+  assert.equal(oppositeStep.presentation.walkElapsedMs, 360);
+  assert.equal(oppositeStep.presentation.walkFrameIndex, 2);
 
-  const redirected = applyHandNetAction(thirdPose, { type: HAND_NET_ACTIONS.MOVE, x: 0, y: -1 });
-  assert.equal(redirected.presentation.walkElapsedMs, 240, "turning mid-stride preserves cadence");
+  const redirected = applyHandNetAction(oppositeStep, { type: HAND_NET_ACTIONS.MOVE, x: 0, y: -1 });
+  assert.equal(redirected.presentation.walkElapsedMs, 360, "turning mid-stride preserves cadence");
   assert.equal(redirected.presentation.walkFrameIndex, 2);
 
   const stopped = applyHandNetAction(redirected, { type: HAND_NET_ACTIONS.STOP });
@@ -190,38 +192,6 @@ test("a quick direct approach raises alert, starts flight, and can end in escape
   assert.equal(escaped.outcome.type, "escaped");
   assert.deepEqual(escaped.outcome.speciesIds, ["cleaner-wrasse"]);
   assert.equal(escaped.creatures[0].status, "escaped");
-});
-
-test("assisted mode gives a wider net and calmer approach at the same contact frame", () => {
-  const standard = createHandNetState({ seed: 8, creatureCount: 1 });
-  const assisted = createHandNetState({ seed: 8, creatureCount: 1, assisted: true });
-  assert.ok(assisted.net.radius > standard.net.radius);
-  assert.ok(assisted.net.reach > standard.net.reach);
-  assert.ok(standard.net.reach >= 1.4);
-  assert.equal(standard.settings.scoopAnimationMs, 700);
-  assert.equal(assisted.settings.scoopAnimationMs, 700);
-  assert.equal(standard.settings.scoopWindupEndMs, 240);
-  assert.equal(assisted.settings.scoopWindupEndMs, 240);
-  assert.equal(standard.settings.scoopContactMs, 440);
-  assert.equal(assisted.settings.scoopContactMs, 440);
-  assert.equal(standard.settings.scoopRecoveryStartMs, 500);
-  assert.equal(assisted.settings.scoopRecoveryStartMs, 500);
-  assert.equal(standard.settings.scoopContactWindowMs, 20);
-  assert.equal(assisted.settings.scoopContactWindowMs, 20);
-  assert.ok(assisted.settings.cooldownMs < standard.settings.cooldownMs);
-  assert.ok(assisted.settings.alertThreshold > standard.settings.alertThreshold);
-
-  const standardApproach = tickHandNetState(applyHandNetAction(
-    controlledSingleCreature(),
-    { type: HAND_NET_ACTIONS.MOVE, x: 0, y: -1 },
-  ), 500);
-  const assistedApproach = tickHandNetState(applyHandNetAction(
-    controlledSingleCreature({ assisted: true }),
-    { type: HAND_NET_ACTIONS.MOVE, x: 0, y: -1 },
-  ), 500);
-
-  assert.ok(standardApproach.creatures[0].alert > assistedApproach.creatures[0].alert);
-  assert.equal(assistedApproach.creatures[0].status, "wandering");
 });
 
 test("a scoop winds up, contacts near the landing frame, recovers, then reports its matching card", () => {
@@ -409,7 +379,6 @@ test("public functions reject malformed options, actions, state, and elapsed tim
     () => createHandNetState({ requiredCreatureId: "imaginary-fish" }),
     /Unknown required hand-net creature/,
   );
-  assert.throws(() => createHandNetState({ assisted: "yes" }), /assisted must be boolean/);
   assert.throws(() => createHandNetState({ reducedMotion: 1 }), /reducedMotion must be boolean/);
 
   const state = createHandNetState({ seed: 1, creatureCount: 1 });

@@ -9015,3 +9015,477 @@
     background: Canvas;
   }
 }
+
+/* Minimal hand-net HUD and catch celebration. These rules intentionally sit
+ * after the earlier encounter skin so the catch moment owns the final layer. */
+.handNetStatus {
+  top: clamp(10px, 1.6vw, 18px);
+  width: min(68%, 620px);
+}
+
+.handNetControlDock {
+  display: grid;
+  grid-template-columns: minmax(132px, 1fr) auto minmax(132px, 1fr);
+  column-gap: clamp(32px, 5vw, 72px);
+}
+
+.handNetDockDpad {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+}
+
+.handNetDockExit {
+  display: grid;
+  min-width: 112px;
+  grid-column: 2;
+  grid-row: 1;
+  place-items: center;
+}
+
+.handNetDockActions {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.handNetExitAction {
+  min-width: 112px;
+  border-color: rgba(186, 230, 253, 0.32);
+  color: #d9f6ff;
+  background: rgba(8, 47, 73, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(186, 230, 253, 0.08);
+}
+
+.handNetExitAction span {
+  border-color: #214d60;
+  color: #e8fbff;
+  background: #1d5368;
+}
+
+.handNetPlayerCelebrating {
+  z-index: 43;
+  animation: handNetVictoryPose 920ms cubic-bezier(0.16, 0.78, 0.2, 1.14) 80ms both;
+}
+
+.handNetPlayerCelebrating .handNetPlayerRipple {
+  opacity: 0;
+  animation: none;
+}
+
+.handNetVictoryBurst {
+  position: absolute;
+  z-index: 39;
+  top: 54%;
+  left: 19%;
+  display: block;
+  width: 29%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.handNetVictoryBurst::before,
+.handNetVictoryBurst::after,
+.handNetVictoryBurst i,
+.handNetVictoryBurst b {
+  position: absolute;
+  display: block;
+  content: "";
+}
+
+.handNetVictoryBurst::before {
+  inset: 12%;
+  border: 4px solid rgba(255, 242, 153, 0.78);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 250, 207, 0.4), rgba(253, 224, 71, 0.12) 48%, transparent 70%);
+  box-shadow: 0 0 34px rgba(250, 204, 21, 0.4), inset 0 0 24px rgba(255, 255, 255, 0.22);
+  animation: handNetVictoryRing 780ms ease-out 100ms both;
+}
+
+.handNetVictoryBurst::after {
+  inset: 0;
+  background: repeating-conic-gradient(from 8deg, rgba(255, 239, 142, 0.92) 0 2deg, transparent 2deg 22.5deg);
+  opacity: 0;
+  mask: radial-gradient(circle, transparent 0 35%, #000 36% 58%, transparent 59%);
+  animation: handNetVictoryRays 980ms ease-out 80ms both;
+}
+
+.handNetVictoryBurst i,
+.handNetVictoryBurst b {
+  top: 7%;
+  left: 12%;
+  width: 13%;
+  aspect-ratio: 1;
+  background: #fff6a8;
+  clip-path: polygon(50% 0, 62% 37%, 100% 50%, 62% 63%, 50% 100%, 38% 63%, 0 50%, 38% 37%);
+  filter: drop-shadow(0 0 5px rgba(255, 229, 92, 0.82));
+  animation: handNetVictorySpark 1.1s ease-out 260ms both;
+}
+
+.handNetVictoryBurst b {
+  top: 70%;
+  left: 78%;
+  width: 9%;
+  animation-delay: 390ms;
+}
+
+.handNetCatchReveal {
+  position: absolute;
+  z-index: 40;
+  top: 50%;
+  left: 59%;
+  width: min(65%, 700px);
+  max-height: 86%;
+  overflow: auto;
+  border: 3px solid #ffe79b;
+  border-radius: clamp(14px, 2vw, 24px);
+  padding: clamp(18px, 2.5vw, 30px);
+  color: #eafbff;
+  background:
+    linear-gradient(135deg, rgba(24, 105, 115, 0.96), rgba(5, 43, 61, 0.98) 62%),
+    #073047;
+  box-shadow:
+    inset 0 0 0 2px rgba(194, 255, 240, 0.22),
+    0 0 0 7px rgba(4, 31, 40, 0.82),
+    0 18px 48px rgba(0, 17, 29, 0.54),
+    0 0 38px rgba(110, 231, 214, 0.24);
+  text-shadow: 0 2px 1px rgba(0, 24, 34, 0.62);
+  transform: translate(-50%, -50%);
+  animation: handNetCatchBannerEnter 680ms cubic-bezier(0.16, 0.82, 0.22, 1) 260ms both;
+}
+
+.handNetCatchReveal::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 19% 50%, rgba(174, 255, 232, 0.2), transparent 27%),
+    linear-gradient(105deg, transparent 28%, rgba(255, 255, 255, 0.08) 46%, transparent 62%);
+  background-size: 100% 100%, 220% 100%;
+  animation: handNetCatchBannerShine 1.1s ease-out 520ms both;
+}
+
+.handNetCatchEyebrow {
+  position: relative;
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  border: 1px solid rgba(255, 241, 158, 0.64);
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #3a2b11;
+  background: linear-gradient(180deg, #fff3a8, #f7c947);
+  box-shadow: 0 3px 0 rgba(55, 36, 9, 0.45);
+  font-size: clamp(0.62rem, 1vw, 0.8rem);
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+  text-shadow: none;
+  text-transform: uppercase;
+}
+
+.handNetCatchRevealBody {
+  position: relative;
+  display: grid;
+  grid-template-columns: clamp(86px, 14vw, 156px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(15px, 2.5vw, 28px);
+  margin-top: 10px;
+}
+
+.handNetCatchCreatureStage {
+  position: relative;
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 2px solid rgba(216, 255, 238, 0.62);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 42% 36%, rgba(255, 255, 229, 0.32), transparent 15%),
+    radial-gradient(circle, rgba(82, 205, 194, 0.5), rgba(3, 75, 92, 0.72) 70%);
+  box-shadow: inset 0 0 24px rgba(203, 255, 236, 0.24), 0 8px 20px rgba(1, 26, 38, 0.38);
+}
+
+.handNetCatchCreatureStage::before,
+.handNetCatchCreatureStage::after {
+  position: absolute;
+  border: 2px solid rgba(218, 255, 239, 0.5);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+  animation: handNetCatchCreatureRipple 1.25s ease-out 580ms both;
+}
+
+.handNetCatchCreatureStage::before { inset: 12%; }
+.handNetCatchCreatureStage::after { inset: 24%; animation-delay: 720ms; }
+
+.handNetCatchCreatureStage > i {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 88%;
+  aspect-ratio: 1;
+  background-position: var(--hand-net-atlas-x) var(--hand-net-atlas-y);
+  background-repeat: no-repeat;
+  background-size: 500% 200%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 7px 3px rgba(0, 31, 42, 0.38));
+  animation: handNetCatchCreatureEnter 780ms cubic-bezier(0.17, 0.9, 0.25, 1.2) 420ms both;
+}
+
+.handNetCatchCopy {
+  min-width: 0;
+}
+
+.handNetCatchCopy h3 {
+  margin: 0;
+  color: #fff8cd;
+  font-family: var(--font-heading, inherit);
+  font-size: clamp(1.35rem, 3vw, 2.55rem);
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.handNetCatchTagline {
+  margin: 8px 0 12px;
+  color: #c8fff2;
+  font-size: clamp(0.78rem, 1.35vw, 1.02rem);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.handNetReadMoreButton,
+.handNetEncyclopediaLink {
+  position: relative;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid #f7d768;
+  border-radius: 999px;
+  padding: 8px 15px;
+  color: #2f250d;
+  background: linear-gradient(180deg, #fff3a2, #edbd37);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.55), 0 4px 0 rgba(53, 35, 7, 0.55);
+  font: inherit;
+  font-size: clamp(0.72rem, 1vw, 0.86rem);
+  font-weight: 1000;
+  text-decoration: none;
+  text-shadow: none;
+  cursor: pointer;
+}
+
+.handNetReadMoreButton:hover,
+.handNetReadMoreButton:focus-visible,
+.handNetEncyclopediaLink:hover,
+.handNetEncyclopediaLink:focus-visible {
+  color: #171004;
+  background: #fff2a2;
+  outline: 3px solid rgba(190, 255, 241, 0.85);
+  outline-offset: 3px;
+}
+
+.handNetCatchDetails {
+  margin-top: 14px;
+  border-left: 3px solid rgba(247, 215, 104, 0.72);
+  padding-left: 12px;
+  color: #e0fbf6;
+  font-size: clamp(0.68rem, 1vw, 0.84rem);
+  line-height: 1.45;
+  animation: handNetCatchDetailsOpen 240ms ease-out both;
+}
+
+.handNetCatchDetails[hidden] {
+  display: none;
+}
+
+.handNetCatchDetails p {
+  margin: 0 0 8px;
+}
+
+.handNetCatchDetails strong {
+  color: #fff0a7;
+}
+
+.handNetEncyclopediaLink {
+  min-height: 40px;
+  margin-top: 3px;
+  padding: 6px 13px;
+  color: #e7ffff;
+  background: rgba(3, 54, 72, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(216, 255, 239, 0.16);
+}
+
+@keyframes handNetVictoryPose {
+  0% { opacity: 0; transform: translate(-50%, -96%) translateY(22%) rotate(-7deg) scale(0.76); }
+  46% { opacity: 1; transform: translate(-50%, -96%) translateY(-9%) rotate(4deg) scale(1.13); }
+  68% { transform: translate(-50%, -96%) translateY(1%) rotate(-2deg) scale(0.98); }
+  100% { opacity: 1; transform: translate(-50%, -96%) rotate(0) scale(1.04); }
+}
+
+@keyframes handNetVictoryRing {
+  0% { opacity: 0; transform: scale(0.35); }
+  55% { opacity: 1; }
+  100% { opacity: 0.68; transform: scale(1); }
+}
+
+@keyframes handNetVictoryRays {
+  0% { opacity: 0; transform: rotate(-18deg) scale(0.45); }
+  48% { opacity: 0.88; }
+  100% { opacity: 0.5; transform: rotate(9deg) scale(1.08); }
+}
+
+@keyframes handNetVictorySpark {
+  0% { opacity: 0; transform: rotate(-30deg) scale(0.2); }
+  55% { opacity: 1; transform: rotate(12deg) scale(1.25); }
+  100% { opacity: 0.86; transform: rotate(0) scale(1); }
+}
+
+@keyframes handNetCatchBannerEnter {
+  0% { opacity: 0; transform: translate(-42%, -50%) scaleX(0.55) scaleY(0.86); }
+  60% { opacity: 1; transform: translate(-52%, -50%) scaleX(1.03) scaleY(1.01); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes handNetCatchBannerShine {
+  0% { opacity: 0; background-position: 0 0, 120% 0; }
+  35% { opacity: 1; }
+  100% { opacity: 0.42; background-position: 0 0, -120% 0; }
+}
+
+@keyframes handNetCatchCreatureEnter {
+  0% { opacity: 0; transform: translateX(-120%) rotate(-18deg) scale(0.35); }
+  68% { opacity: 1; transform: translateX(7%) rotate(4deg) scale(1.14); }
+  100% { opacity: 1; transform: translateX(0) rotate(0) scale(1); }
+}
+
+@keyframes handNetCatchCreatureRipple {
+  0% { opacity: 0.75; transform: scale(0.35); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+@keyframes handNetCatchDetailsOpen {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  .handNetStatus {
+    top: 8px;
+    left: 50%;
+    width: min(calc(100% - 16px), 520px);
+    padding: 5px 9px;
+    font-size: clamp(0.5rem, 1.9vw, 0.68rem);
+    transform: translateX(-50%);
+  }
+
+  .handNetControlDock {
+    grid-template-columns: 132px minmax(76px, 1fr) minmax(64px, 1fr);
+    column-gap: 12px;
+  }
+
+  .handNetDockExit,
+  .handNetExitAction {
+    min-width: 76px;
+  }
+
+  .handNetExitAction {
+    padding-right: 9px;
+    font-size: 0.64rem;
+  }
+
+  .handNetCatchReveal {
+    left: 61%;
+    width: min(72%, 520px);
+    max-height: 84%;
+    padding: 12px;
+  }
+
+  .handNetCatchRevealBody {
+    grid-template-columns: clamp(62px, 17vw, 104px) minmax(0, 1fr);
+    gap: 10px;
+    margin-top: 7px;
+  }
+
+  .handNetCatchCopy h3 { font-size: clamp(0.95rem, 4.2vw, 1.45rem); }
+  .handNetCatchTagline { margin: 5px 0 7px; font-size: clamp(0.58rem, 2.2vw, 0.76rem); }
+  .handNetReadMoreButton { min-height: 38px; padding: 5px 10px; font-size: 0.62rem; }
+  .handNetCatchDetails { margin-top: 9px; font-size: clamp(0.54rem, 1.9vw, 0.68rem); }
+  .handNetCatchEyebrow { min-height: 21px; padding: 2px 7px; font-size: 0.5rem; }
+}
+
+@media (max-width: 520px) {
+  .handNetControlDock {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px 28px;
+  }
+
+  .handNetDockDpad { grid-column: 1; grid-row: 1; }
+  .handNetDockActions { grid-column: 2; grid-row: 1; }
+
+  .handNetDockExit {
+    width: 100%;
+    min-width: 0;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    border-top: 1px solid rgba(165, 243, 252, 0.14);
+    padding-top: 10px;
+  }
+
+  .handNetExitAction { min-width: 112px; }
+}
+
+.reducedMotionMode .handNetPlayerCelebrating,
+.reducedMotionMode .handNetVictoryBurst::before,
+.reducedMotionMode .handNetVictoryBurst::after,
+.reducedMotionMode .handNetVictoryBurst i,
+.reducedMotionMode .handNetVictoryBurst b,
+.reducedMotionMode .handNetCatchReveal,
+.reducedMotionMode .handNetCatchReveal::before,
+.reducedMotionMode .handNetCatchCreatureStage::before,
+.reducedMotionMode .handNetCatchCreatureStage::after,
+.reducedMotionMode .handNetCatchCreatureStage > i,
+.reducedMotionMode .handNetCatchDetails {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handNetPlayerCelebrating,
+  .handNetVictoryBurst::before,
+  .handNetVictoryBurst::after,
+  .handNetVictoryBurst i,
+  .handNetVictoryBurst b,
+  .handNetCatchReveal,
+  .handNetCatchReveal::before,
+  .handNetCatchCreatureStage::before,
+  .handNetCatchCreatureStage::after,
+  .handNetCatchCreatureStage > i,
+  .handNetCatchDetails {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .handNetCatchReveal,
+  .handNetCatchCreatureStage,
+  .handNetReadMoreButton,
+  .handNetEncyclopediaLink,
+  .handNetExitAction {
+    border-color: CanvasText;
+    color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+    text-shadow: none;
+  }
+
+  .handNetVictoryBurst { display: none; }
+  .handNetCatchCreatureStage > i { forced-color-adjust: none; }
+}
