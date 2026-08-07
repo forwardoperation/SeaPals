@@ -83,9 +83,13 @@ test("a named fresh profile starts upstairs, meets family indoors, then meets th
 test("the opening introduces SeaPals, names both children, then stages Mom's cardinal face-to-face greeting", () => {
   assert.match(component, /function OpeningSetupModal/);
   assert.match(component, /This world is full of wonderful sea creatures\. Around here, we call them/);
-  assert.match(component, /<strong> SeaPals<\/strong>/);
-  assert.match(component, /What is your name\?/);
-  assert.match(component, /What is your best friend/);
+  assert.match(component, /className=\{`\$\{styles\.dialogueBox\} \$\{styles\.openingSetupDialogueBox\}`\}/);
+  assert.match(component, /id="opening-setup-speaker">Mr\. Easterling<\/strong>/);
+  assert.match(component, /<ProgressiveDialogueLine[\s\S]*message=\{dialogueMessages\[step\]\}[\s\S]*speaker="Mr\. Easterling"/);
+  assert.match(component, /key=\{`\$\{step\}:\$\{dialogueMessages\[step\]\}`\}/);
+  assert.match(component, /className=\{styles\.openingSetupResponse\} onSubmit=\{submitName\}/);
+  assert.match(component, /what is your name\?/i);
+  assert.match(component, /what is your best friend/i);
   assert.match(component, /normalizeAdventureCharacterName/);
   assert.match(component, /createNewAdventureSession\(profileId, identity\)/);
   assert.match(component, /setOpeningPrelude\("narration"\)/);
@@ -104,6 +108,11 @@ test("the opening introduces SeaPals, names both children, then stages Mom's car
 test("the exterior arrival calls the player's name, walks in from the right, and escorts to the dock before recording the race beat", () => {
   assert.match(component, /const bestFriendArrivalPending = Boolean\([\s\S]*needsBestFriendArrival[\s\S]*sceneId === "town"/);
   assert.match(component, /interactions\.push\(ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION\)/);
+  assert.match(component, /const bestFriendEscortActive = bestFriendSequence\?\.phase === "escorting"/);
+  assert.match(
+    component,
+    /const ELVERSON_DOCK_ESCORT_INTERACTIONS = Object\.freeze\(\[[\s\S]*ELVERSON_DOCK_SPEECH_INTERACTIONS\.filter\([\s\S]*npcId !== ELVERSON_PROLOGUE_BEST_FRIEND_ID[\s\S]*ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION/,
+  );
   assert.match(component, /setBestFriendSequence\(\{ phase: "calling", plan: null \}\)/);
   assert.match(component, /bestFriendSequence\?\.phase === "calling"[\s\S]*dialogueIdentity\.playerName\}!!/);
   assert.match(component, /path: ELVERSON_BEST_FRIEND_ARRIVAL_PATH/);
@@ -118,7 +127,10 @@ test("the exterior arrival calls the player's name, walks in from the right, and
 
 test("the dock kickoff stages the town cast and restores exploration after its black fade", () => {
   assert.match(component, /const dockSpeechPending = Boolean\([\s\S]*prologueProgress\.readyForDockSpeech/);
-  assert.match(component, /return sceneId === "town" \? \[\.\.\.ELVERSON_DOCK_SPEECH_INTERACTIONS\] : \[\]/);
+  assert.match(
+    component,
+    /if \(dockSpeechPending \|\| bestFriendEscortActive\)[\s\S]*bestFriendEscortActive[\s\S]*ELVERSON_DOCK_ESCORT_INTERACTIONS[\s\S]*ELVERSON_DOCK_SPEECH_INTERACTIONS/,
+  );
   assert.match(component, /sceneId === ELVERSON_PROLOGUE_HOME_SCENE_ID[\s\S]*npcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID/);
   assert.match(component, /dockSpeechPending && \["trainer", "npc"\]\.includes\(candidate\?\.type\)/);
   assert.match(component, /const candidateNpcId = candidate\?\.trainerId \?\? candidate\?\.npcId;[\s\S]*candidateNpcId === ELVERSON_PROLOGUE_BEST_FRIEND_ID/);

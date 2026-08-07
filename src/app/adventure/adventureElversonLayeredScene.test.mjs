@@ -7,6 +7,7 @@ import {
   ELVERSON_TOWN_PORTALS,
 } from "./adventureElversonTownLayout.mjs";
 import { canOccupyLayeredScenePosition } from "./adventureLayeredScene.mjs";
+import { CONTINUOUS_MOVEMENT_DEFAULTS } from "./adventureWorld.mjs";
 
 test("Elverson v3 compiles the expanded ground and exactly nine public facades", () => {
   assert.equal(ELVERSON_LAYERED_SCENE.id, "elverson-town-layered-v3");
@@ -25,7 +26,7 @@ test("all authored facade links match the town portal contract", () => {
   );
 });
 
-test("the aquarium facade centers on its deck while its visible door meets the connector", () => {
+test("the scaled aquarium facade fits its deck while its visible door meets the connector", () => {
   const portal = ELVERSON_TOWN_PORTALS.find(({ objectId }) => objectId === "aquarium-workshop");
   const object = ELVERSON_LAYERED_SCENE.objects.find(({ id }) => id === "aquarium-workshop");
   const platform = ELVERSON_LAYERED_SCENE.walkableRegions.find(({ id }) => id === "aquarium-platform");
@@ -36,19 +37,23 @@ test("the aquarium facade centers on its deck while its visible door meets the c
   assert.ok(platform);
   assert.ok(connector);
 
-  const facadeCenterX = (object.visualBounds.left + object.visualBounds.right) / 2;
-  const platformCenterX = (platform.left + platform.right) / 2;
-  assert.ok(
-    Math.abs(facadeCenterX - platformCenterX) <= 0.5,
-    `aquarium facade center ${facadeCenterX} must stay over deck center ${platformCenterX}`,
-  );
+  assert.equal(portal.scale, 0.58);
+  assert.deepEqual(portal.at, { x: 25.575, y: 22.55 });
+  assert.deepEqual(portal.doorway, { x: 24.54, y: 21.85 });
+  assert.ok(object.visualBounds.left >= platform.left, "aquarium facade must not hang west of the deck");
+  assert.ok(object.visualBounds.right <= platform.right, "aquarium facade must not hang east of the deck");
+  assert.ok(object.visualBounds.top >= platform.top, "aquarium facade must not hang north of the deck");
+  assert.ok(object.visualBounds.bottom <= platform.bottom, "aquarium facade must not hang south of the deck");
   assert.ok(
     portal.doorway.x >= Math.max(platform.left, connector.left)
       && portal.doorway.x <= Math.min(platform.right, connector.right),
     "the aquarium's visible left-hand door must remain over the deck/connector overlap",
   );
-  assert.equal(portal.at.x, 26);
-  assert.equal(portal.doorway.x, 24.22);
+  const playerRadius = CONTINUOUS_MOVEMENT_DEFAULTS.radius;
+  assert.ok(portal.doorway.x - platform.left >= playerRadius);
+  assert.ok(platform.right - portal.doorway.x >= playerRadius);
+  assert.ok(portal.doorway.y - platform.top >= playerRadius);
+  assert.ok(platform.bottom - portal.doorway.y >= playerRadius);
 });
 
 test("full-facade collision removes every walkable sample hidden behind a building", () => {

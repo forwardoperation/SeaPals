@@ -2039,6 +2039,7 @@
   height: 10%;
   background: rgba(5, 20, 26, 0.36);
   filter: blur(1px);
+  scale: var(--character-scale, 1);
   transform: translate(-50%, -50%);
 }
 
@@ -2055,6 +2056,8 @@
   background-size: 457.142857% 480%;
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 1px rgba(4, 15, 25, 0.34));
+  scale: var(--character-scale, 1);
+  transform-origin: center 94.7%;
   animation: none;
   will-change: background-position, transform;
 }
@@ -3343,6 +3346,78 @@
     radial-gradient(circle at 50% 15%, rgba(45, 212, 191, 0.2), transparent 38%),
     rgba(1, 8, 14, 0.9);
   backdrop-filter: blur(12px);
+}
+
+.openingSetupDialogueBox {
+  width: min(860px, 100%);
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+}
+
+.openingSetupDialogueBox > .portrait {
+  align-self: start;
+  height: 120px;
+  min-height: 120px;
+}
+
+.openingSetupDialogueBox .openingSetupProgress {
+  margin: 12px 0 0;
+}
+
+.openingSetupDialogueBox .dialogueActions {
+  flex-wrap: wrap;
+}
+
+.openingSetupResponse {
+  width: 100%;
+  min-width: 0;
+  color: #172033;
+}
+
+.openingSetupResponse > p {
+  margin: 0 0 12px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.openingSetupResponse .openingSetupEyebrow,
+.openingSetupResponse .openingNameField > span {
+  color: #155e75;
+}
+
+.openingSetupResponse .openingNameField small {
+  color: #475569;
+}
+
+.openingSetupResponse .openingNameField input {
+  border-color: #0e7490;
+}
+
+.openingSetupResponse .openingNameField input:focus {
+  border-color: #155e75;
+  box-shadow: 0 0 0 4px rgba(21, 94, 117, 0.24);
+}
+
+.openingSetupResponse .openingNameError {
+  color: #b91c1c !important;
+}
+
+.openingSetupWorldResponse {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.openingSetupWorldResponse .openingSeaPal {
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
+}
+
+.openingSetupResponse .openingSetupActions {
+  margin-top: 16px;
 }
 
 .openingSetupCard {
@@ -7243,12 +7318,16 @@
   .confirmCard { padding: 22px 18px; }
   .confirmActions { flex-direction: column; }
   .openingSetupLayer { padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); }
+  .openingSetupDialogueBox { max-height: calc(100dvh - 20px); }
+  .openingSetupDialogueBox > .portrait { height: 94px; min-height: 94px; }
   .openingSetupCard { padding: 24px 18px; border-radius: 20px; }
   .openingSetupIntroduction { min-height: 96px; gap: 12px; }
   .openingSetupPortrait,
   .openingSeaPal { width: 88px; height: 88px; }
   .openingSetupActions { flex-direction: column-reverse; }
   .openingSetupActions button { width: 100%; }
+  .openingSetupWorldResponse { align-items: stretch; }
+  .openingSetupWorldResponse .openingSetupActions { flex: 1; }
   .openingIdentitySummary { grid-template-columns: minmax(0, 1fr); }
 
   .starterLayer,

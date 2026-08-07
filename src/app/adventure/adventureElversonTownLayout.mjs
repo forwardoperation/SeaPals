@@ -25,7 +25,7 @@ export const ELVERSON_TOWN_SAFE_POSITIONS = Object.freeze({
   supplyCompanyExterior: point(37.5, 16.45),
   wharfApproach: point(14.55, 21.45),
   handNetCove: point(15.15, 21.65),
-  aquariumExterior: point(24.22, 22.2),
+  aquariumExterior: point(24.54, 22.25),
 });
 
 export const ELVERSON_TOWN_PORTALS = Object.freeze([
@@ -113,10 +113,11 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     id: "interaction-elverson-enter-aquarium",
     objectId: "aquarium-workshop",
     archetype: "aquarium-door",
-    // Keep the full facade centered over the right-hand deck. Its authored
-    // entrance sits left of center, directly above the deck connector.
-    at: point(26, 22.55),
-    doorway: point(24.22, 21.35),
+    // The source facade is wider than the waterfront platform. Scale it to
+    // the deck, then keep its authored left-hand door over solid planks.
+    at: point(25.575, 22.55),
+    scale: 0.58,
+    doorway: point(24.54, 21.85),
     targetScene: "academy-lab",
     interiorSpawn: point(7, 7),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,

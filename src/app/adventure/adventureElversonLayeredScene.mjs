@@ -67,6 +67,7 @@ const OBJECTS = ELVERSON_TOWN_PORTALS.map((portal) => ({
   id: portal.objectId,
   archetype: portal.archetype,
   at: portal.at,
+  ...(portal.scale === undefined ? {} : { scale: portal.scale }),
   interactionId: portal.id,
 }));
 
