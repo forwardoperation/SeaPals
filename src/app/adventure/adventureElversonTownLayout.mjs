@@ -7,7 +7,9 @@ function bounds(left, top, right, bottom) {
 }
 
 export const ELVERSON_TOWN_LAYOUT_VERSION_LEGACY = 1;
-export const ELVERSON_TOWN_LAYOUT_VERSION = 2;
+export const ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL = 2;
+export const ELVERSON_TOWN_LAYOUT_VERSION = 3;
+export const ELVERSON_TOWN_SAFE_PROMENADE_Y = 16.45;
 
 export const ELVERSON_TOWN_DIMENSIONS = Object.freeze({ width: 42, height: 28 });
 
@@ -19,10 +21,10 @@ export const ELVERSON_TOWN_SAFE_POSITIONS = Object.freeze({
   reefHouseExterior: point(13.8, 5.05),
   deepHouseExterior: point(28.2, 5.05),
   oceanicHouseExterior: point(36.8, 5.05),
-  schoolhouseExterior: point(4.3, 16.45),
-  hybridHouseExterior: point(13.8, 16.45),
-  researchLabExterior: point(30.7, 16.45),
-  supplyCompanyExterior: point(37.5, 16.45),
+  schoolhouseExterior: point(4.3, ELVERSON_TOWN_SAFE_PROMENADE_Y),
+  hybridHouseExterior: point(13.8, ELVERSON_TOWN_SAFE_PROMENADE_Y),
+  researchLabExterior: point(30.7, ELVERSON_TOWN_SAFE_PROMENADE_Y),
+  supplyCompanyExterior: point(37.5, ELVERSON_TOWN_SAFE_PROMENADE_Y),
   wharfApproach: point(14.55, 21.45),
   handNetCove: point(15.15, 21.65),
   aquariumExterior: point(24.54, 22.25),

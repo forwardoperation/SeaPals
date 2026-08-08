@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   ADVENTURE_ACTOR_ANIMATION_MODES,
+  ADVENTURE_NPC_WALK_CYCLE_DISTANCE,
   ADVENTURE_WALK_FRAME_REGISTRATIONS,
   ADVENTURE_WALK_ANIMATION_DEFAULTS,
   getAdventureActorAnimationMode,
@@ -116,6 +117,7 @@ test("walk displacement rejects malformed positions and thresholds", () => {
 });
 
 test("walk cadence supports an explicitly measured cycle distance", () => {
+  assert.equal(ADVENTURE_NPC_WALK_CYCLE_DISTANCE, 0.5);
   assert.equal(getAdventureWalkCycleDurationMs(2, { cycleDistance: 0.5 }), 480);
   assert.equal(
     getAdventureWalkCycleDurationMs(2, {
@@ -123,6 +125,13 @@ test("walk cadence supports an explicitly measured cycle distance", () => {
       minimumCycleDurationMs: 100,
     }),
     250,
+  );
+  assert.equal(getAdventureWalkCycleDurationMs(0.5), 2000);
+  assert.equal(
+    getAdventureWalkCycleDurationMs(0.5, {
+      cycleDistance: ADVENTURE_NPC_WALK_CYCLE_DISTANCE,
+    }),
+    1000,
   );
 });
 

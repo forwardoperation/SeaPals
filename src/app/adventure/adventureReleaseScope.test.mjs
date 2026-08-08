@@ -18,7 +18,9 @@ import {
 import {
   ELVERSON_TOWN_LAYOUT_VERSION,
   ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+  ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
   ELVERSON_TOWN_SAFE_POSITIONS,
+  ELVERSON_TOWN_SAFE_PROMENADE_Y,
 } from "./adventureElversonTownLayout.mjs";
 
 test("Elverson release scope retains persisted IDs and exposes no active routes", () => {
@@ -220,7 +222,7 @@ test("release recovery moves a blocked legacy Elverson position to a safe spawn 
   const initial = withLegacySkippedOpening(createNewAdventureSession("release-blocked-elverson-resume"));
   // Old flat-map builds could persist the player beyond the end of the public
   // pier. The layered map must recover that now-water position safely.
-  const legacyPosition = { x: 14, y: 18.6 };
+  const legacyPosition = { x: 5, y: 20 };
   assert.equal(canOccupyContinuousPosition("town", legacyPosition), false);
 
   const legacy = JSON.parse(JSON.stringify({
@@ -278,7 +280,7 @@ test("release recovery moves a blocked legacy Elverson position to a safe spawn 
 test("release recovery migrates the retired aquarium exit onto the new aquarium platform", () => {
   const initial = withLegacySkippedOpening(createNewAdventureSession("release-aquarium-exit-resume"));
   const legacyExit = { x: 16, y: 17 };
-  assert.equal(canOccupyContinuousPosition("town", legacyExit), true);
+  assert.equal(canOccupyContinuousPosition("town", legacyExit), false);
 
   const stranded = {
     ...initial,
@@ -303,6 +305,51 @@ test("release recovery migrates the retired aquarium exit onto the new aquarium 
   assert.equal(canOccupyContinuousPosition("town", recovered.save.world.position), true);
   assert.equal(recovered.save.world.facing, "down");
   assert.equal(recovered.save.playtimeSeconds, 321);
+
+  const stable = recoverElversonAdventureResume(JSON.parse(JSON.stringify(recovered.save)));
+  assert.equal(stable.recovered, false);
+  assert.equal(stable.reason, null);
+  assert.equal(stable.fallback, null);
+  assert.deepEqual(stable.save, recovered.save);
+});
+
+test("release recovery moves an epoch-2 retired seawall save onto the promenade", () => {
+  const initial = withLegacySkippedOpening(createNewAdventureSession("release-seawall-resume"));
+  const retiredSeawallPosition = { x: 15, y: 17.15 };
+  assert.equal(canOccupyContinuousPosition("town", retiredSeawallPosition), false);
+
+  const stranded = {
+    ...initial,
+    playtimeSeconds: 654,
+    inventory: {
+      ...initial.inventory,
+      storyItems: { "elverson-keepsake": 2 },
+    },
+    world: {
+      ...initial.world,
+      layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
+      townId: ELVERSON_RELEASE_SCOPE.townId,
+      sceneId: "town",
+      position: retiredSeawallPosition,
+      facing: "left",
+      lastSafeDockId: ELVERSON_RELEASE_SCOPE.startDockId,
+    },
+  };
+
+  const recovered = recoverElversonAdventureResume(stranded);
+  assert.equal(recovered.recovered, true);
+  assert.equal(recovered.reason, "elverson-layout-seawall-promenade");
+  assert.equal(recovered.layoutMigrationReason, "seawall-promenade");
+  assert.equal(recovered.fallback, null);
+  assert.equal(recovered.save.world.layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION);
+  assert.deepEqual(recovered.save.world.position, {
+    x: retiredSeawallPosition.x,
+    y: ELVERSON_TOWN_SAFE_PROMENADE_Y,
+  });
+  assert.equal(canOccupyContinuousPosition("town", recovered.save.world.position), true);
+  assert.equal(recovered.save.world.facing, "left");
+  assert.equal(recovered.save.playtimeSeconds, 654);
+  assert.deepEqual(recovered.save.inventory, stranded.inventory);
 
   const stable = recoverElversonAdventureResume(JSON.parse(JSON.stringify(recovered.save)));
   assert.equal(stable.recovered, false);

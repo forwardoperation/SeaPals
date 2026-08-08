@@ -9,9 +9,9 @@ import {
 import { canOccupyLayeredScenePosition } from "./adventureLayeredScene.mjs";
 import { CONTINUOUS_MOVEMENT_DEFAULTS } from "./adventureWorld.mjs";
 
-test("Elverson v3 compiles the expanded ground and exactly nine public facades", () => {
-  assert.equal(ELVERSON_LAYERED_SCENE.id, "elverson-town-layered-v3");
-  assert.equal(ELVERSON_LAYERED_SCENE.groundPath, "/images/adventure/elverson-ground-v3.webp");
+test("Elverson v4 compiles the expanded waterfront and exactly nine public facades", () => {
+  assert.equal(ELVERSON_LAYERED_SCENE.id, "elverson-town-layered-v4");
+  assert.equal(ELVERSON_LAYERED_SCENE.groundPath, "/images/adventure/elverson-ground-v4.webp");
   assert.equal(ELVERSON_LAYERED_SCENE.width, ELVERSON_TOWN_DIMENSIONS.width);
   assert.equal(ELVERSON_LAYERED_SCENE.height, ELVERSON_TOWN_DIMENSIONS.height);
   assert.equal(ELVERSON_LAYERED_SCENE.objects.length, 9);
@@ -54,6 +54,11 @@ test("the scaled aquarium facade fits its deck while its visible door meets the 
   assert.ok(platform.right - portal.doorway.x >= playerRadius);
   assert.ok(portal.doorway.y - platform.top >= playerRadius);
   assert.ok(platform.bottom - portal.doorway.y >= playerRadius);
+  const facadeBottom = Math.max(...object.collisionRects.map(({ bottom }) => bottom));
+  assert.ok(
+    platform.bottom - facadeBottom >= 2,
+    "the aquarium must have at least two dry tiles of approach south of its facade",
+  );
 });
 
 test("full-facade collision removes every walkable sample hidden behind a building", () => {
@@ -94,16 +99,18 @@ test("the mainland, central pier, wharf, and aquarium platform are the only dry 
   };
 
   for (const position of [
-    { x: 2, y: 16.8 },
+    { x: 2, y: 16.55 },
     { x: 20, y: 26.8 },
     { x: 15.3, y: 21.4 },
     { x: 24.5, y: 21.7 },
+    { x: 28, y: 23 },
   ]) assert.equal(insideAllowlist(position), true);
 
   for (const position of [
     { x: 2, y: 19 },
+    { x: 15, y: 17.15 },
     { x: 18, y: 24 },
-    { x: 23, y: 19 },
-    { x: 30, y: 23 },
+    { x: 10, y: 23 },
+    { x: 32, y: 22 },
   ]) assert.equal(insideAllowlist(position), false);
 });

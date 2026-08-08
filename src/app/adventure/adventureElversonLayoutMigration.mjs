@@ -1,10 +1,26 @@
 import {
   ELVERSON_TOWN_LAYOUT_VERSION,
   ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+  ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
   ELVERSON_TOWN_SAFE_POSITIONS,
+  ELVERSON_TOWN_SAFE_PROMENADE_Y,
 } from "./adventureElversonTownLayout.mjs";
 
 const POSITION_TOLERANCE = 0.21;
+const RELEASED_PLAYER_RADIUS = 0.22;
+const WALKABLE_REGION_EDGE_SAMPLES = 16;
+const GEOMETRY_EPSILON = 1e-9;
+
+const WIDE_SEAWALL_MAINLAND = Object.freeze({
+  left: -0.5,
+  top: -0.5,
+  right: 41.5,
+  bottom: 17.55,
+});
+const CURRENT_WATERFRONT_REGIONS = Object.freeze([
+  Object.freeze({ left: -0.5, top: -0.5, right: 41.5, bottom: 16.85 }),
+  Object.freeze({ left: 19.05, top: 16.25, right: 21.95, bottom: 27.25 }),
+]);
 
 function copyPoint(position) {
   return { x: position.x, y: position.y };
@@ -12,6 +28,50 @@ function copyPoint(position) {
 
 function near(position, target) {
   return Math.hypot(position.x - target.x, position.y - target.y) <= POSITION_TOLERANCE;
+}
+
+function isFinitePosition(position) {
+  return Boolean(position)
+    && Number.isFinite(position.x)
+    && Number.isFinite(position.y);
+}
+
+function circleFitsRegionUnion(position, radius, regions) {
+  const samples = [position];
+  for (let index = 0; index < WALKABLE_REGION_EDGE_SAMPLES; index += 1) {
+    const angle = (index / WALKABLE_REGION_EDGE_SAMPLES) * Math.PI * 2;
+    samples.push({
+      x: position.x + Math.cos(angle) * radius,
+      y: position.y + Math.sin(angle) * radius,
+    });
+  }
+  return samples.every((sample) => regions.some((region) => (
+    sample.x >= region.left - GEOMETRY_EPSILON
+    && sample.x <= region.right + GEOMETRY_EPSILON
+    && sample.y >= region.top - GEOMETRY_EPSILON
+    && sample.y <= region.bottom + GEOMETRY_EPSILON
+  )));
+}
+
+function mapWideSeawallTownPosition(position) {
+  if (!isFinitePosition(position)) {
+    throw new TypeError("Wide-seawall Elverson migration requires a finite position.");
+  }
+  const occupiedRetiredMainland = circleFitsRegionUnion(
+    position,
+    RELEASED_PLAYER_RADIUS,
+    [WIDE_SEAWALL_MAINLAND],
+  );
+  const occupiesCurrentWaterfront = circleFitsRegionUnion(
+    position,
+    RELEASED_PLAYER_RADIUS,
+    CURRENT_WATERFRONT_REGIONS,
+  );
+  if (!occupiedRetiredMainland || occupiesCurrentWaterfront) return null;
+  return Object.freeze({
+    position: { x: position.x, y: ELVERSON_TOWN_SAFE_PROMENADE_Y },
+    reason: "seawall-promenade",
+  });
 }
 
 const LEGACY_TOWN_LANDMARKS = Object.freeze([
@@ -38,7 +98,7 @@ const LEGACY_TOWN_LANDMARKS = Object.freeze([
 ]);
 
 export function mapLegacyElversonTownPosition(position) {
-  if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) {
+  if (!isFinitePosition(position)) {
     throw new TypeError("Legacy Elverson migration requires a finite position.");
   }
   const landmark = LEGACY_TOWN_LANDMARKS.find(({ positions }) => (
@@ -66,12 +126,20 @@ export function migrateElversonLayout(saveValue) {
   if (world.layoutVersion === ELVERSON_TOWN_LAYOUT_VERSION) {
     return Object.freeze({ save: saveValue, migrated: false, reason: null });
   }
-  if (world.layoutVersion !== ELVERSON_TOWN_LAYOUT_VERSION_LEGACY) {
+  if (![
+    ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+    ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
+  ].includes(world.layoutVersion)) {
     throw new RangeError(`Unsupported Elverson layout version: ${String(world.layoutVersion)}.`);
   }
 
-  const mapped = world.townId === "shellshore-village" && world.sceneId === "town"
-    ? mapLegacyElversonTownPosition(world.position)
+  const isElversonTown = world.townId === "shellshore-village" && world.sceneId === "town";
+  const mapped = isElversonTown
+    ? (
+      world.layoutVersion === ELVERSON_TOWN_LAYOUT_VERSION_LEGACY
+        ? mapLegacyElversonTownPosition(world.position)
+        : mapWideSeawallTownPosition(world.position)
+    )
     : null;
   return Object.freeze({
     save: {

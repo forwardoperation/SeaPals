@@ -1102,11 +1102,11 @@ test("Elverson's public interiors and upstairs bedroom define validated art-alig
   );
 });
 
-test("Elverson v3 layers its portal buildings while streets and waterfront routes stay clear", () => {
+test("Elverson v4 layers its portal buildings while streets and waterfront routes stay clear", () => {
   const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
   assert.equal(town.world.tiles.length, 28);
   assert.ok(town.world.tiles.every((row) => row.length === 42));
-  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v3.webp");
+  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v4.webp");
   assert.deepEqual(
     town.world.walkableRegions.map(({ id }) => id),
     [

@@ -82,6 +82,7 @@ import {
 } from "./adventureRenderCulling.mjs";
 import {
   ADVENTURE_ACTOR_ANIMATION_MODES,
+  ADVENTURE_NPC_WALK_CYCLE_DISTANCE,
   getAdventureActorAnimationMode,
   getAdventureWalkCycleDurationMs,
   getAdventureWalkFrameRegistration,
@@ -703,6 +704,8 @@ function SpriteArtwork({
   moving = false,
   portrait = false,
   walkSpeed = null,
+  walkCycleDistance = undefined,
+  idleGesture = null,
 }) {
   const facingName = `${facing[0].toUpperCase()}${facing.slice(1)}`;
   const artworkCharacter = spriteArtworkCharacter(character);
@@ -711,19 +714,48 @@ function SpriteArtwork({
     profile: animationProfile,
     facing,
   });
+  const idleGestureRegistrations = idleGesture ? Object.fromEntries(
+    ["down", "left", "right", "up"].map((gestureFacing) => [
+      gestureFacing,
+      getAdventureWalkFrameRegistration({
+        profile: animationProfile,
+        facing: gestureFacing,
+      }),
+    ]),
+  ) : null;
   const spriteStyle = {
     "--sprite-step-neutral-x": `${frameRegistration.neutral}%`,
+    ...(idleGesture
+      ? {
+        "--sprite-idle-gesture-duration": `${idleGesture.durationMs}ms`,
+        "--sprite-idle-gesture-delay": `${idleGesture.delayMs}ms`,
+        "--sprite-idle-down-x": `${idleGestureRegistrations.down.neutral}%`,
+        "--sprite-idle-left-x": `${idleGestureRegistrations.left.neutral}%`,
+        "--sprite-idle-right-x": `${idleGestureRegistrations.right.neutral}%`,
+        "--sprite-idle-up-x": `${idleGestureRegistrations.up.neutral}%`,
+      }
+      : {}),
     ...(moving && Number.isFinite(walkSpeed) && walkSpeed > 0
       ? {
-        "--sprite-walk-cycle-duration": `${getAdventureWalkCycleDurationMs(walkSpeed)}ms`,
+        "--sprite-walk-cycle-duration": `${getAdventureWalkCycleDurationMs(
+          walkSpeed,
+          { cycleDistance: walkCycleDistance },
+        )}ms`,
         "--sprite-step-frame-a-x": `${frameRegistration.frameA}%`,
         "--sprite-step-frame-b-x": `${frameRegistration.frameB}%`,
       }
       : {}),
   };
+  const idleGestureClass = idleGesture?.kind === "speaker"
+    ? styles.spriteDockSpeechSpeaker
+    : idleGesture?.kind === "audience-left"
+      ? styles.spriteDockAudienceGlanceLeft
+      : idleGesture?.kind === "audience-right"
+        ? styles.spriteDockAudienceGlanceRight
+        : "";
   return (
     <span
-      className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""}`}
+      className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""} ${idleGestureClass}`}
       data-sprite-profile={animationProfile}
       style={spriteStyle}
       aria-hidden="true"
@@ -758,9 +790,11 @@ function AdventureTrainerSprite({
   status = null,
   scene,
   walkSpeed = ADVENTURE_ACTOR_DEFAULTS.speed,
+  markersEnabled = true,
+  idleGesture = null,
 }) {
   const resolvedStatus = defeated ? "Won" : status;
-  const showMarker = Boolean(trainer.encounterId || status);
+  const showMarker = markersEnabled && Boolean(trainer.encounterId || status);
   return (
     <div
       className={`${styles.characterCell} ${styles.npcCell} ${engaged ? styles.npcEngaged : ""}`}
@@ -773,6 +807,8 @@ function AdventureTrainerSprite({
         facing={facing}
         moving={moving}
         walkSpeed={walkSpeed}
+        walkCycleDistance={ADVENTURE_NPC_WALK_CYCLE_DISTANCE}
+        idleGesture={idleGesture}
       />
       {showMarker ? (
         <span className={`${styles.trainerMarker} ${defeated ? styles.trainerDefeated : ""} ${status === "Locked" ? styles.trainerLocked : ""}`}>
@@ -1371,7 +1407,7 @@ function OpeningSetupModal({ profileId, onCancel, onBegin }) {
   const steps = ["world", "player", "friend", "confirm"];
   const stepNumber = steps.indexOf(step) + 1;
   const dialogueMessages = {
-    world: "This world is full of wonderful sea creatures. Around here, we call them SeaPals. People study their habitats, learn how healthy ecosystems fit together, and care for the waters they all share. Today, your own story begins.",
+    world: "Hello Adventurer! I am Mr. Easterling, and I study Sea Creatures in the Sea Realm. Around here, we call them SeaPals because every creature can be your friend given enough time and effort. Today your own journey into the Sea Realm begins.",
     player: "Before your story begins, what is your name?",
     friend: `Wonderful, ${playerName}. And what is your best friend's name?`,
     confirm: `Wonderful, ${playerName}. You and ${bestFriendName} are ready for your birthday adventure in Elverson.`,
@@ -1436,8 +1472,7 @@ function OpeningSetupModal({ profileId, onCancel, onBegin }) {
             speaker="Mr. Easterling"
           >
             {step === "world" ? (
-              <div className={`${styles.openingSetupResponse} ${styles.openingSetupWorldResponse}`}>
-                <div className={styles.openingSeaPal} aria-label="A colorful SeaPal" role="img" />
+              <div className={styles.openingSetupResponse}>
                 <div className={styles.openingSetupActions}>
                   <button type="button" className={styles.secondaryButton} onClick={onCancel}>Back</button>
                   <button type="button" autoFocus onClick={() => setStep("player")}>Continue</button>
@@ -3077,6 +3112,7 @@ export default function AdventureGame({
     && sceneId === "town"
   );
   const bestFriendEscortActive = bestFriendSequence?.phase === "escorting";
+  const dockGatheringStaged = dockSpeechPending || bestFriendEscortActive;
   const openingMentorReady = prologueProgress?.legacySkipped
     && onboardingProgress?.needsWorldIntroduction;
   const stageOpeningMentor = !dockSpeechPending && sceneId === "town" && (
@@ -3132,6 +3168,12 @@ export default function AdventureGame({
     [actorStates],
   );
   const effectiveReducedMotion = gameSave?.settings?.reducedMotion === true || systemReducedMotion;
+  const dockSpeechGestureActive = Boolean(
+    dockCutscenePhase === "speech"
+    && conversation?.dockSpeech === true
+    && pageVisible
+    && !effectiveReducedMotion
+  );
   const activeRoute = useMemo(
     () => boatMode ? ADVENTURE_CONTENT.routes.find((route) => route.id === scene.routeId) ?? null : null,
     [boatMode, scene.routeId],
@@ -7401,7 +7443,7 @@ export default function AdventureGame({
         >
           <div>
             <p>…Is it morning yet?</p>
-            <p>…I feel like a great adventure awaits me this morning…</p>
+            <p>…I sense the call of the sea…</p>
           </div>
         </div>
       ) : null}
@@ -7588,8 +7630,12 @@ export default function AdventureGame({
                     runtimeActor?.position ?? characterInteraction.at,
                     position,
                     runtimeActor?.facing ?? characterInteraction.facing ?? "down",
-                  )
+                )
                 : runtimeActor?.facing ?? "down";
+              const idleGesture = dockSpeechGestureActive
+                ? characterInteraction.dockSpeechGesture ?? null
+                : null;
+              const renderedActorFacing = idleGesture?.baseFacing ?? actorFacing;
               const actorIsScriptedWalker = runtimeActor?.moving === true && Boolean(
                 momGreetingStage || bestFriendSequence || guidedWalk,
               );
@@ -7617,10 +7663,12 @@ export default function AdventureGame({
                   key={characterInteraction.id ?? characterInteraction.interactionId}
                   trainer={trainer}
                   position={runtimeActor?.position ?? characterInteraction.at}
-                  facing={actorFacing}
-                  moving={actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES.WALKING}
+                  facing={renderedActorFacing}
+                  moving={!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES.WALKING}
                   engaged={actorIsEngaged}
                   walkSpeed={characterInteraction.patrol?.speed ?? ADVENTURE_ACTOR_DEFAULTS.speed}
+                  markersEnabled={!dockGatheringStaged}
+                  idleGesture={idleGesture}
                   defeated={trainerDefeated}
                   status={tournamentStatus?.startsWith("Won") ? "Won" : tournamentStatus}
                   scene={scene}

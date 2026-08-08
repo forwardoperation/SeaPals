@@ -7,6 +7,7 @@ import {
 import {
   ELVERSON_TOWN_LAYOUT_VERSION,
   ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+  ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
   ELVERSON_TOWN_SAFE_POSITIONS,
 } from "./adventureElversonTownLayout.mjs";
 
@@ -528,10 +529,15 @@ export function normalizeAdventureSave(value) {
     world.layoutVersion,
     "save.world.layoutVersion",
   );
-  if (![ELVERSON_TOWN_LAYOUT_VERSION_LEGACY, ELVERSON_TOWN_LAYOUT_VERSION].includes(layoutVersion)) {
+  if (![
+    ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+    ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
+    ELVERSON_TOWN_LAYOUT_VERSION,
+  ].includes(layoutVersion)) {
     fail(
       "save.world.layoutVersion",
-      `must be ${ELVERSON_TOWN_LAYOUT_VERSION_LEGACY} or ${ELVERSON_TOWN_LAYOUT_VERSION}.`,
+      `must be ${ELVERSON_TOWN_LAYOUT_VERSION_LEGACY}, `
+        + `${ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL}, or ${ELVERSON_TOWN_LAYOUT_VERSION}.`,
     );
   }
 

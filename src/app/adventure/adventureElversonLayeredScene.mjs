@@ -42,12 +42,10 @@ function terrainRow(...walkableSpans) {
 
 const TERRAIN_ROWS = Object.freeze([
   ...Array.from({ length: 18 }, () => "g".repeat(ELVERSON_TOWN_DIMENSIONS.width)),
-  terrainRow([19, 22]),
-  terrainRow([14, 17], [19, 22], [24, 27]),
-  terrainRow([14, 27]),
-  terrainRow([14, 27]),
-  terrainRow([14, 27]),
-  ...Array.from({ length: 5 }, () => terrainRow([19, 22])),
+  terrainRow([11, 31]),
+  ...Array.from({ length: 4 }, () => terrainRow([11, 31])),
+  ...Array.from({ length: 2 }, () => terrainRow([19, 31])),
+  ...Array.from({ length: 3 }, () => terrainRow([19, 22])),
 ]);
 
 const ARCHETYPES = {
@@ -72,22 +70,22 @@ const OBJECTS = ELVERSON_TOWN_PORTALS.map((portal) => ({
 }));
 
 export const ELVERSON_LAYERED_SCENE = compileLayeredScene({
-  id: "elverson-town-layered-v3",
+  id: "elverson-town-layered-v4",
   width: ELVERSON_TOWN_DIMENSIONS.width,
   height: ELVERSON_TOWN_DIMENSIONS.height,
-  groundPath: "/images/adventure/elverson-ground-v3.webp",
+  groundPath: "/images/adventure/elverson-ground-v4.webp",
   terrainRows: TERRAIN_ROWS,
   terrainLegend: {
     g: { walkable: true },
     w: { walkable: false },
   },
   walkableRegions: [
-    { id: "mainland", left: -0.5, top: -0.5, right: 41.5, bottom: 17.55 },
+    { id: "mainland", left: -0.5, top: -0.5, right: 41.5, bottom: 16.85 },
     { id: "central-pier", left: 19.05, top: 16.25, right: 21.95, bottom: 27.25 },
-    { id: "wharf-platform", left: 14.05, top: 18.7, right: 16.7, bottom: 22.3 },
-    { id: "wharf-connector", left: 16.35, top: 20.4, right: 19.35, bottom: 21.9 },
-    { id: "aquarium-connector", left: 21.65, top: 20.4, right: 24.65, bottom: 22.45 },
-    { id: "aquarium-platform", left: 24.05, top: 18.7, right: 27.1, bottom: 22.55 },
+    { id: "wharf-platform", left: 10.9, top: 17.35, right: 19.35, bottom: 22.55 },
+    { id: "wharf-connector", left: 18.9, top: 17.35, right: 19.35, bottom: 22.55 },
+    { id: "aquarium-connector", left: 21.65, top: 17.35, right: 24.65, bottom: 24.1 },
+    { id: "aquarium-platform", left: 24.05, top: 17.35, right: 31.2, bottom: 24.1 },
   ],
   archetypes: ARCHETYPES,
   objects: OBJECTS,

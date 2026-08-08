@@ -8,7 +8,9 @@ import {
 import {
   ELVERSON_TOWN_LAYOUT_VERSION,
   ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+  ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
   ELVERSON_TOWN_SAFE_POSITIONS,
+  ELVERSON_TOWN_SAFE_PROMENADE_Y,
 } from "./adventureElversonTownLayout.mjs";
 import {
   createInitialAdventureSave,
@@ -69,7 +71,18 @@ function withoutWorld(save) {
   return rest;
 }
 
-test("layout epoch 1 maps released Elverson landmarks to authored epoch-2 safe positions", () => {
+function wideSeawallSaveAt(position, options) {
+  const save = legacySaveAt(position, options);
+  return {
+    ...save,
+    world: {
+      ...save.world,
+      layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
+    },
+  };
+}
+
+test("layout epoch 1 maps released Elverson landmarks to authored epoch-3 safe positions", () => {
   const cases = [
     {
       label: "old aquarium exit",
@@ -183,7 +196,88 @@ test("epoch upgrade preserves Elverson interior and non-Elverson coordinates exa
   }
 });
 
-test("an epoch-2 save is an identity-preserving no-op and repeated migration is idempotent", () => {
+test("epoch-2 positions stranded on the retired seawall move straight north to the promenade", () => {
+  const positions = [
+    { x: 0, y: 17.2 },
+    { x: 15, y: 17.15 },
+    { x: 19.2, y: 17.15 },
+    { x: 22, y: 16.8 },
+    { x: 41, y: 17.3 },
+  ];
+
+  for (const position of positions) {
+    const save = wideSeawallSaveAt(position);
+    const before = structuredClone(save);
+    const result = migrateElversonLayout(save);
+
+    assert.equal(result.migrated, true);
+    assert.equal(result.reason, "seawall-promenade");
+    assert.equal(result.save.world.layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION);
+    assert.deepEqual(result.save.world.position, {
+      x: position.x,
+      y: ELVERSON_TOWN_SAFE_PROMENADE_Y,
+    });
+    assert.equal(result.save.world.facing, save.world.facing);
+    assert.deepEqual(withoutWorld(result.save), withoutWorld(save));
+    assert.deepEqual(save, before, "migration must not mutate an epoch-2 source save");
+  }
+});
+
+test("epoch-2 migration preserves every coordinate not stranded on the retired seawall", () => {
+  const locations = [
+    {
+      label: "current mainland edge",
+      townId: "shellshore-village",
+      sceneId: "town",
+      position: { x: 15, y: 16.63 },
+    },
+    {
+      label: "mainland-to-pier seam",
+      townId: "shellshore-village",
+      sceneId: "town",
+      position: { x: 19.1, y: 16.64 },
+    },
+    {
+      label: "central pier",
+      townId: "shellshore-village",
+      sceneId: "town",
+      position: { x: 20, y: 17.15 },
+    },
+    {
+      label: "coordinate outside the released seawall",
+      townId: "shellshore-village",
+      sceneId: "town",
+      position: { x: 12, y: 17.34 },
+    },
+    {
+      label: "player home",
+      townId: "shellshore-village",
+      sceneId: "player-home",
+      position: { x: 7, y: 4 },
+    },
+    {
+      label: "non-Elverson town",
+      townId: "sunpatch-cay",
+      sceneId: "sunpatch-cay-town",
+      position: { x: 9.25, y: 5.5 },
+    },
+  ];
+
+  for (const location of locations) {
+    const save = wideSeawallSaveAt(location.position, location);
+    const positionReference = save.world.position;
+    const result = migrateElversonLayout(save);
+
+    assert.equal(result.migrated, true, location.label);
+    assert.equal(result.reason, "coordinate-epoch-updated", location.label);
+    assert.equal(result.save.world.layoutVersion, ELVERSON_TOWN_LAYOUT_VERSION, location.label);
+    assert.strictEqual(result.save.world.position, positionReference, location.label);
+    assert.deepEqual(result.save.world.position, location.position, location.label);
+    assert.deepEqual(withoutWorld(result.save), withoutWorld(save), location.label);
+  }
+});
+
+test("an epoch-3 save is an identity-preserving no-op and repeated migration is idempotent", () => {
   const legacy = legacySaveAt({ x: 14, y: 10 });
   const migrated = migrateElversonLayout(legacy);
   const repeated = migrateElversonLayout(migrated.save);
@@ -233,5 +327,12 @@ test("layout migration rejects invalid saves, world state, epochs, and exterior 
   assert.throws(
     () => migrateElversonLayout(invalidTownSave),
     { name: "TypeError", message: "Legacy Elverson migration requires a finite position." },
+  );
+
+  const invalidWideSeawallSave = wideSeawallSaveAt({ x: 1, y: 2 });
+  invalidWideSeawallSave.world.position = { x: 1, y: Number.NaN };
+  assert.throws(
+    () => migrateElversonLayout(invalidWideSeawallSave),
+    { name: "TypeError", message: "Wide-seawall Elverson migration requires a finite position." },
   );
 });

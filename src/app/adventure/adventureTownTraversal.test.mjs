@@ -218,9 +218,13 @@ test("the wharf and aquarium platforms connect to town without opening the surro
   ]);
 
   for (const [label, position] of [
+    ["expanded wharf", { x: 12, y: 20 }],
+    ["expanded aquarium apron", { x: 29, y: 23 }],
+  ]) assert.equal(canOccupyContinuousPosition("town", position), true, `${label} must be walkable`);
+
+  for (const [label, position] of [
     ["west open water", { x: 8, y: 22 }],
-    ["between wharf and pier", { x: 18, y: 19 }],
-    ["between pier and aquarium", { x: 23, y: 19 }],
+    ["southwest open water", { x: 10, y: 23 }],
     ["east open water", { x: 32, y: 22 }],
     ["beyond the pier", { x: 20, y: 27.4 }],
   ]) assert.equal(canOccupyContinuousPosition("town", position), false, `${label} must stay solid`);

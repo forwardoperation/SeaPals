@@ -9,7 +9,7 @@ const spritesOnly = process.argv.includes("--sprites-only");
 
 const MOBILE_ASSETS = Object.freeze([
   { source: "player-home-v1.png", destination: "player-home-v1.webp", quality: 82, maxBytes: 350_000 },
-  { source: "elverson-ground-v3.png", destination: "elverson-ground-v3.webp", quality: 82, maxBytes: 650_000 },
+  { source: "elverson-ground-v4.png", destination: "elverson-ground-v4.webp", quality: 82, maxBytes: 650_000 },
   { source: "shellshore-academy.png", destination: "shellshore-academy.webp", quality: 82, maxBytes: 300_000 },
   { source: "elverson-reef-creature-atlas-v1.png", destination: "elverson-reef-creature-atlas-v1.webp", quality: 90, maxBytes: 180_000 },
   { source: "mr-easterling-portrait-v2.png", destination: "mr-easterling-portrait-v2.webp", quality: 90, maxBytes: 120_000 },
