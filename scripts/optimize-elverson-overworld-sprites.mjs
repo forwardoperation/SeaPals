@@ -5,16 +5,18 @@ const ROOT = process.cwd();
 const ASSET_DIRECTORY = path.join(ROOT, "public", "images", "adventure");
 
 const OVERWORLD_SHEETS = Object.freeze([
-  ["player-sprites.png", "player-sprites-512-v2.png", 1024, 1536, 512, 768],
-  ["marina-sprites.png", "marina-sprites-512-v2.png", 1024, 1536, 512, 768],
-  ["dorian-sprites.png", "dorian-sprites-512-v2.png", 1024, 1536, 512, 768],
-  ["fisherman-wyeth-sprites.png", "fisherman-wyeth-sprites-512-v2.png", 1024, 1536, 512, 768],
-  ["teacher-caroline-sprites.png", "teacher-caroline-sprites-512-v2.png", 1024, 1536, 512, 768],
-  ["ivy-sprites.png", "ivy-sprites-512-v2.png", 1024, 1536, 512, 768],
-  ["explorer-jordan-sprites.png", "explorer-jordan-sprites-512-v2.png", 1024, 1536, 512, 768],
-  ["marine-biologist-jonah-sprites.png", "marine-biologist-jonah-sprites-512-v2.png", 1024, 1536, 512, 768],
-  ["town-adult-sprites.png", "town-adult-sprites-512-v2.png", 1024, 1536, 512, 768],
-  ["mr-easterling-sprites-v2.png", "mr-easterling-sprites-627-v3.png", 1254, 1254, 627, 627],
+  ["player-sprites-v3.png", "player-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["marina-sprites-v3.png", "marina-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["dorian-sprites-v3.png", "dorian-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["fisherman-wyeth-sprites-v3.png", "fisherman-wyeth-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["teacher-caroline-sprites-v3.png", "teacher-caroline-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["ivy-sprites-v3.png", "ivy-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["explorer-jordan-sprites-v3.png", "explorer-jordan-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["marine-biologist-jonah-sprites-v3.png", "marine-biologist-jonah-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["programmer-harlan-sprites-v3.png", "programmer-harlan-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["town-elder-sprites-v3.png", "town-elder-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["town-adult-sprites-v3.png", "town-adult-sprites-512-v3.png", 1024, 1536, 512, 768],
+  ["mr-easterling-sprites-v3.png", "mr-easterling-sprites-627-v4.png", 1254, 1254, 627, 627],
 ]);
 
 for (const [

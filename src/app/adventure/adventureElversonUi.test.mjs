@@ -94,6 +94,10 @@ test("ambient residents render with stable sprite fallbacks and no duel marker",
 
 test("Elverson uses a close-follow camera and compact human-toned overworld sprites", () => {
   assert.match(component, /getAdventureCameraLayout\(\{/);
+  assert.match(
+    component,
+    /const cameraTarget = conversation\?\.dockSpeech[\s\S]{0,120}ELVERSON_DOCK_SPEECH_CAMERA_POSITION/,
+  );
   assert.match(component, /className=\{`\$\{styles\.map\} \$\{sceneTransition/);
   assert.match(component, /className=\{`\$\{styles\.mapWorld\} \$\{mapThemeClass\} \$\{sceneTransition/);
   assert.match(component, /width: `\$\{cameraLayout\.worldWidthPercent\}%`/);
@@ -101,23 +105,23 @@ test("Elverson uses a close-follow camera and compact human-toned overworld spri
   assert.match(styles, /\.map\s*\{[\s\S]*?aspect-ratio:\s*16\s*\/\s*9/);
   assert.match(styles, /\.mapWorld\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?display:\s*grid/);
   assert.match(styles, /\.spriteArtwork\s*\{[\s\S]*?width:\s*72%;[\s\S]*?height:\s*103%/);
-  assert.match(styles, /\.town-elderSpriteArtwork\s*\{\s*background-image:\s*url\("\/images\/adventure\/town-elder-sprites\.webp"\);\s*\}/);
+  assert.match(styles, /\.town-elderSpriteArtwork\s*\{\s*background-image:\s*url\("\/images\/adventure\/town-elder-sprites-512-v3\.webp"\);\s*\}/);
   assert.doesNotMatch(styles, /hue-rotate\(/);
 });
 
 test("Elverson overworld sprites and dialogue portraits reuse compact WebP sheets", () => {
   const spriteSheets = {
     player: "player-sprites-512-v3.webp",
-    marina: "marina-sprites-512-v2.webp",
-    dorian: "dorian-sprites-512-v2.webp",
-    "fisherman-wyeth": "fisherman-wyeth-sprites-512-v2.webp",
-    "teacher-caroline": "teacher-caroline-sprites-512-v2.webp",
-    ivy: "ivy-sprites-512-v2.webp",
-    "explorer-jordan": "explorer-jordan-sprites-512-v2.webp",
-    "marine-biologist-jonah": "marine-biologist-jonah-sprites-512-v2.webp",
-    "programmer-harlan": "programmer-harlan-sprites.webp",
-    "town-elder": "town-elder-sprites.webp",
-    "town-adult": "town-adult-sprites-512-v2.webp",
+    marina: "marina-sprites-512-v3.webp",
+    dorian: "dorian-sprites-512-v3.webp",
+    "fisherman-wyeth": "fisherman-wyeth-sprites-512-v3.webp",
+    "teacher-caroline": "teacher-caroline-sprites-512-v3.webp",
+    ivy: "ivy-sprites-512-v3.webp",
+    "explorer-jordan": "explorer-jordan-sprites-512-v3.webp",
+    "marine-biologist-jonah": "marine-biologist-jonah-sprites-512-v3.webp",
+    "programmer-harlan": "programmer-harlan-sprites-512-v3.webp",
+    "town-elder": "town-elder-sprites-512-v3.webp",
+    "town-adult": "town-adult-sprites-512-v3.webp",
   };
 
   for (const [spriteName, sheetName] of Object.entries(spriteSheets)) {
@@ -138,7 +142,7 @@ test("the tutorial interface consistently identifies Mr. Easterling as the guide
 });
 
 test("Mr. Easterling uses his identity-based overworld sheet and dedicated portrait", () => {
-  assert.match(styles, /\.academy-mentorSpriteArtwork[\s\S]*?mr-easterling-sprites-627-v3\.webp/);
+  assert.match(styles, /\.academy-mentorSpriteArtwork[\s\S]*?mr-easterling-sprites-627-v4\.webp/);
   assert.match(styles, /\.mrEasterlingPortraitArtwork[\s\S]*?mr-easterling-portrait-v2\.webp/);
   assert.match(component, /function CharacterPortrait[\s\S]*?character === ACADEMY_MENTOR_ID[\s\S]*?mrEasterlingPortraitArtwork/);
   assert.match(component, /portraitSrc: "\/images\/adventure\/mr-easterling-portrait-v2\.webp"/);

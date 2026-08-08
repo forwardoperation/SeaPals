@@ -20,6 +20,15 @@ export const ELVERSON_DOCK_SPEECH_MENTOR_POSITION = Object.freeze({
   y: 19,
 });
 
+// Keep the speech group high enough to clear the fixed bottom dialogue box.
+// The vertical target accounts for the artwork extending above and below each
+// actor cell, so neither the player's head nor Mr. Easterling's feet are cropped.
+export const ELVERSON_DOCK_SPEECH_CAMERA_POSITION = Object.freeze({
+  x: ((ELVERSON_DOCK_SPEECH_PLAYER_POSITION.x + 0.5)
+    + (ELVERSON_DOCK_SPEECH_MENTOR_POSITION.x + 0.5)) / 2,
+  y: 18.6,
+});
+
 export const ELVERSON_DOCK_SPEECH_RESTORE_POSITION = Object.freeze({
   x: 20,
   y: 17,

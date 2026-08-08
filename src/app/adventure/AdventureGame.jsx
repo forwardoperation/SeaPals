@@ -124,6 +124,7 @@ import {
   ELVERSON_BEST_FRIEND_ARRIVAL_POSITION,
   ELVERSON_BEST_FRIEND_DOCK_WALK,
   ELVERSON_BEST_FRIEND_MEETING_POSITION,
+  ELVERSON_DOCK_SPEECH_CAMERA_POSITION,
   ELVERSON_DOCK_SPEECH_INTERACTION_ID,
   ELVERSON_DOCK_SPEECH_PLAYER_POSITION,
   ELVERSON_DOCK_SPEECH_RESTORE_POSITION,
@@ -700,7 +701,6 @@ function SpriteArtwork({
   character = "player",
   facing = "down",
   moving = false,
-  steppingInPlace = false,
   portrait = false,
   walkSpeed = null,
 }) {
@@ -711,19 +711,21 @@ function SpriteArtwork({
     profile: animationProfile,
     facing,
   });
-  const walkStyle = (moving || steppingInPlace) && Number.isFinite(walkSpeed) && walkSpeed > 0
-    ? {
+  const spriteStyle = {
+    "--sprite-step-neutral-x": `${frameRegistration.neutral}%`,
+    ...(moving && Number.isFinite(walkSpeed) && walkSpeed > 0
+      ? {
         "--sprite-walk-cycle-duration": `${getAdventureWalkCycleDurationMs(walkSpeed)}ms`,
         "--sprite-step-frame-a-x": `${frameRegistration.frameA}%`,
-        "--sprite-step-neutral-x": `${frameRegistration.neutral}%`,
         "--sprite-step-frame-b-x": `${frameRegistration.frameB}%`,
       }
-    : undefined;
+      : {}),
+  };
   return (
     <span
-      className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${steppingInPlace ? styles.spriteSteppingInPlace : ""} ${portrait ? styles.spritePortrait : ""}`}
+      className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""}`}
       data-sprite-profile={animationProfile}
-      style={walkStyle}
+      style={spriteStyle}
       aria-hidden="true"
     />
   );
@@ -751,7 +753,6 @@ function AdventureTrainerSprite({
   position,
   facing = "down",
   moving = false,
-  steppingInPlace = false,
   engaged = false,
   defeated,
   status = null,
@@ -771,7 +772,6 @@ function AdventureTrainerSprite({
         character={trainer.id}
         facing={facing}
         moving={moving}
-        steppingInPlace={steppingInPlace}
         walkSpeed={walkSpeed}
       />
       {showMarker ? (
@@ -7063,11 +7063,14 @@ export default function AdventureGame({
     )
   ));
   const mapThemeClass = mapThemeClassForScene(scene);
+  const cameraTarget = conversation?.dockSpeech
+    ? ELVERSON_DOCK_SPEECH_CAMERA_POSITION
+    : { x: position.x + 0.5, y: position.y + 0.5 };
   const cameraLayout = getAdventureCameraLayout({
     worldWidth: scene.width,
     worldHeight: scene.height,
-    playerX: position.x + 0.5,
-    playerY: position.y + 0.5,
+    playerX: cameraTarget.x,
+    playerY: cameraTarget.y,
   });
   // Elverson is the first layered scene large enough for off-camera DOM to be
   // meaningful. Runtime actors, collision, and interaction lists stay whole;
@@ -7591,7 +7594,6 @@ export default function AdventureGame({
                 momGreetingStage || bestFriendSequence || guidedWalk,
               );
               const actorAnimationMode = getAdventureActorAnimationMode({
-                hasPatrol: Boolean(characterInteraction.patrol),
                 isMoving: runtimeActor?.moving === true,
                 isEngaged: actorIsEngaged,
                 movementPaused: movementPaused && !actorIsScriptedWalker,
@@ -7617,7 +7619,6 @@ export default function AdventureGame({
                   position={runtimeActor?.position ?? characterInteraction.at}
                   facing={actorFacing}
                   moving={actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES.WALKING}
-                  steppingInPlace={actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES.STEPPING_IN_PLACE}
                   engaged={actorIsEngaged}
                   walkSpeed={characterInteraction.patrol?.speed ?? ADVENTURE_ACTOR_DEFAULTS.speed}
                   defeated={trainerDefeated}

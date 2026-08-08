@@ -1050,7 +1050,7 @@ test("Reading a Reef is a complete evidence-first Field Note with science source
 test("Elverson's public interiors and upstairs bedroom define validated art-aligned furniture collision rectangles", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   const expectedRectangleCounts = new Map([
-    ["player-bedroom", 6],
+    ["player-bedroom", 7],
     ["player-home", 7],
     ["coral-home", 5],
     ["deep-home", 4],

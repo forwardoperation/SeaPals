@@ -64,6 +64,6 @@ test("Simulator mounts the embedded contextual Finn chat while the global chat r
   assert.match(chat, /resolveSimulatorFinnQuestion\(nextQuestion, gameContext \?\? \{\}\)/);
   assert.match(chat, /top: "calc\(100% \+ 0\.75rem\)".*zIndex: 150/);
   assert.match(chat, /style=\{simulatorPlacement \? \{ zIndex: 140 \}/);
-  assert.match(chat, /dorian-sprites\.png/);
+  assert.match(chat, /dorian-sprites-512-v3\.webp/);
   assert.doesNotMatch(chat, /🐠/u);
 });

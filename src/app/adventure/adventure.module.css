@@ -2051,7 +2051,7 @@
   left: 14%;
   width: 72%;
   height: 103%;
-  background-position: 50% var(--sprite-row);
+  background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row);
   background-repeat: no-repeat;
   background-size: 457.142857% 480%;
   image-rendering: pixelated;
@@ -2075,7 +2075,7 @@
   --row-left: 33.470395%;
   --row-right: 63.815789%;
   --row-up: 93.832237%;
-  background-image: url("/images/adventure/marina-sprites-512-v2.webp");
+  background-image: url("/images/adventure/marina-sprites-512-v3.webp");
 }
 
 .dorianSpriteArtwork {
@@ -2083,7 +2083,7 @@
   --row-left: 31.743421%;
   --row-right: 60.690789%;
   --row-up: 90.131579%;
-  background-image: url("/images/adventure/dorian-sprites-512-v2.webp");
+  background-image: url("/images/adventure/dorian-sprites-512-v3.webp");
 }
 
 .fisherman-wyethSpriteArtwork,
@@ -2100,14 +2100,14 @@
   --row-up: 93.421053%;
 }
 
-.fisherman-wyethSpriteArtwork { background-image: url("/images/adventure/fisherman-wyeth-sprites-512-v2.webp"); }
-.teacher-carolineSpriteArtwork { background-image: url("/images/adventure/teacher-caroline-sprites-512-v2.webp"); }
-.ivySpriteArtwork { background-image: url("/images/adventure/ivy-sprites-512-v2.webp"); }
-.explorer-jordanSpriteArtwork { background-image: url("/images/adventure/explorer-jordan-sprites-512-v2.webp"); }
-.marine-biologist-jonahSpriteArtwork { background-image: url("/images/adventure/marine-biologist-jonah-sprites-512-v2.webp"); }
-.programmer-harlanSpriteArtwork { background-image: url("/images/adventure/programmer-harlan-sprites.webp"); }
-.town-elderSpriteArtwork { background-image: url("/images/adventure/town-elder-sprites.webp"); }
-.town-adultSpriteArtwork { background-image: url("/images/adventure/town-adult-sprites-512-v2.webp"); }
+.fisherman-wyethSpriteArtwork { background-image: url("/images/adventure/fisherman-wyeth-sprites-512-v3.webp"); }
+.teacher-carolineSpriteArtwork { background-image: url("/images/adventure/teacher-caroline-sprites-512-v3.webp"); }
+.ivySpriteArtwork { background-image: url("/images/adventure/ivy-sprites-512-v3.webp"); }
+.explorer-jordanSpriteArtwork { background-image: url("/images/adventure/explorer-jordan-sprites-512-v3.webp"); }
+.marine-biologist-jonahSpriteArtwork { background-image: url("/images/adventure/marine-biologist-jonah-sprites-512-v3.webp"); }
+.programmer-harlanSpriteArtwork { background-image: url("/images/adventure/programmer-harlan-sprites-512-v3.webp"); }
+.town-elderSpriteArtwork { background-image: url("/images/adventure/town-elder-sprites-512-v3.webp"); }
+.town-adultSpriteArtwork { background-image: url("/images/adventure/town-adult-sprites-512-v3.webp"); }
 
 /* Dialogue portraits reuse the same compact sheets. Their nearest-neighbor
  * pixel scale remains crisp without downloading a second full-size sheet. */
@@ -2123,7 +2123,7 @@
   translate: -50% 0;
   scale: 1;
   transform-origin: center bottom;
-  background-image: url("/images/adventure/mr-easterling-sprites-627-v3.webp");
+  background-image: url("/images/adventure/mr-easterling-sprites-627-v4.webp");
   background-size: auto 400%;
 }
 
@@ -2138,7 +2138,7 @@
   --row-left: 33.717105%;
   --row-right: 63.569079%;
   --row-up: 93.421053%;
-  background-image: url("/images/adventure/player-sprites.png");
+  background-image: url("/images/adventure/player-sprites-512-v3.webp");
 }
 
 .current-analystSpriteArtwork,
@@ -2147,7 +2147,7 @@
   --row-left: 33.470395%;
   --row-right: 63.815789%;
   --row-up: 93.832237%;
-  background-image: url("/images/adventure/marina-sprites.png");
+  background-image: url("/images/adventure/marina-sprites-512-v3.webp");
 }
 
 .current-navigatorSpriteArtwork {
@@ -2155,7 +2155,7 @@
   --row-left: 31.743421%;
   --row-right: 60.690789%;
   --row-up: 90.131579%;
-  background-image: url("/images/adventure/dorian-sprites.png");
+  background-image: url("/images/adventure/dorian-sprites-512-v3.webp");
 }
 
 .current-guideSpriteArtwork {
@@ -2189,7 +2189,7 @@
   --row-left: 33.717105%;
   --row-right: 63.569079%;
   --row-up: 93.421053%;
-  background-image: url("/images/adventure/player-sprites.png");
+  background-image: url("/images/adventure/player-sprites-512-v3.webp");
 }
 
 .kelpwatch-ecologistSpriteArtwork,
@@ -2198,7 +2198,7 @@
   --row-left: 33.470395%;
   --row-right: 63.815789%;
   --row-up: 93.832237%;
-  background-image: url("/images/adventure/marina-sprites.png");
+  background-image: url("/images/adventure/marina-sprites-512-v3.webp");
 }
 
 .kelpwatch-diverSpriteArtwork {
@@ -2206,7 +2206,7 @@
   --row-left: 31.743421%;
   --row-right: 60.690789%;
   --row-up: 90.131579%;
-  background-image: url("/images/adventure/dorian-sprites.png");
+  background-image: url("/images/adventure/dorian-sprites-512-v3.webp");
 }
 
 .kelpwatch-guideSpriteArtwork {
@@ -2236,7 +2236,7 @@
   --row-left: 33.717105%;
   --row-right: 63.569079%;
   --row-up: 93.421053%;
-  background-image: url("/images/adventure/player-sprites.png");
+  background-image: url("/images/adventure/player-sprites-512-v3.webp");
 }
 
 .trenchlight-scientistSpriteArtwork,
@@ -2245,7 +2245,7 @@
   --row-left: 33.470395%;
   --row-right: 63.815789%;
   --row-up: 93.832237%;
-  background-image: url("/images/adventure/marina-sprites.png");
+  background-image: url("/images/adventure/marina-sprites-512-v3.webp");
 }
 
 .trenchlight-observerSpriteArtwork {
@@ -2253,7 +2253,7 @@
   --row-left: 31.743421%;
   --row-right: 60.690789%;
   --row-up: 90.131579%;
-  background-image: url("/images/adventure/dorian-sprites.png");
+  background-image: url("/images/adventure/dorian-sprites-512-v3.webp");
 }
 
 .trenchlight-guideSpriteArtwork {
@@ -2283,7 +2283,7 @@
   --row-left: 33.470395%;
   --row-right: 63.815789%;
   --row-up: 93.832237%;
-  background-image: url("/images/adventure/marina-sprites.png");
+  background-image: url("/images/adventure/marina-sprites-512-v3.webp");
 }
 
 .tournament-quarterfinalistSpriteArtwork,
@@ -2292,7 +2292,7 @@
   --row-left: 33.717105%;
   --row-right: 63.569079%;
   --row-up: 93.421053%;
-  background-image: url("/images/adventure/player-sprites.png");
+  background-image: url("/images/adventure/player-sprites-512-v3.webp");
 }
 
 .tournament-semifinalistSpriteArtwork,
@@ -2301,7 +2301,7 @@
   --row-left: 31.743421%;
   --row-right: 60.690789%;
   --row-up: 90.131579%;
-  background-image: url("/images/adventure/dorian-sprites.png");
+  background-image: url("/images/adventure/dorian-sprites-512-v3.webp");
 }
 
 .champions-wake-directorSpriteArtwork {
@@ -2332,16 +2332,6 @@
   animation: spriteWalk var(--sprite-walk-cycle-duration, 480ms) steps(1, end) infinite;
 }
 
-.spriteSteppingInPlace {
-  /*
-   * Stationary residents use the complete alternating-leg gait, while
-   * per-sheet frame registration keeps their torso over one ground anchor.
-   */
-  background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row);
-  transform-origin: center bottom;
-  animation: spriteWalkInPlace var(--sprite-walk-cycle-duration, 1600ms) steps(1, end) infinite;
-}
-
 .academy-mentorSpriteArtwork.spriteWalking {
   animation-name: professorSpriteWalk;
 }
@@ -2360,14 +2350,6 @@
   50% { background-position: 100% var(--sprite-row); transform: translateY(0); }
   75% { background-position: 50% var(--sprite-row); transform: translateY(0); }
   100% { background-position: 0% var(--sprite-row); transform: translateY(0); }
-}
-
-@keyframes spriteWalkInPlace {
-  0% { background-position: var(--sprite-step-frame-a-x, 12%) var(--sprite-row); transform: translateY(0); }
-  25% { background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row); transform: translateY(0); }
-  50% { background-position: var(--sprite-step-frame-b-x, 88%) var(--sprite-row); transform: translateY(0); }
-  75% { background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row); transform: translateY(0); }
-  100% { background-position: var(--sprite-step-frame-a-x, 12%) var(--sprite-row); transform: translateY(0); }
 }
 
 @keyframes spriteBreathe {
