@@ -5,6 +5,7 @@ import {
   createInitialAdventureSave,
   normalizeAdventureSave,
 } from "./adventureProgression.mjs";
+import { ELVERSON_TOWN_LAYOUT_VERSION } from "./adventureElversonTownLayout.mjs";
 import {
   autoSteerAdventureRoute,
   boardAdventureRoute,
@@ -325,7 +326,7 @@ test("manual destination docking atomically records first completion and safe Su
   }, TEST_CONTENT);
 
   assert.deepEqual(docked.world, {
-    layoutVersion: 2,
+    layoutVersion: ELVERSON_TOWN_LAYOUT_VERSION,
     townId: "sunpatch-cay",
     sceneId: "sunpatch-cay-town",
     position: { x: 2, y: 7 },

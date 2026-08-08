@@ -9,7 +9,7 @@ const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), 
 
 test("the active adventure presentation begins with Elverson's aquarium project", () => {
   assert.match(component, /Begin in coastal Elverson, where Mr\. Easterling is creating a new aquarium exhibit/);
-  assert.match(component, /This world is full of wonderful sea creatures\. Around here, we call them/);
+  assert.match(component, /Hello Adventurer! I am Mr\. Easterling, and I study Sea Creatures in the Sea Realm\./);
   assert.match(component, /Your tenth-birthday morning/);
   assert.match(component, /Head downstairs, greet Mom, check with Dad, then meet/);
   assert.match(component, /Meet \$\{dialogueIdentity\.bestFriendName\} outside/);
@@ -39,6 +39,24 @@ test("the opening setup keeps Mr. Easterling in a fixed shared dialogue portrait
     /@media \(max-width:\s*700px\)[\s\S]*?\.openingSetupDialogueBox\s*>\s*\.portrait\s*\{[^}]*height:\s*94px;[^}]*min-height:\s*94px;[^}]*\}/,
   );
   assert.match(styles, /\.mrEasterlingPortraitArtwork\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?inset:\s*0;/);
+  assert.doesNotMatch(component, /openingSeaPal/);
+  assert.doesNotMatch(styles, /\.openingSeaPal/);
+});
+
+test("the opening callouts point back to their actual speaker direction", () => {
+  assert.match(
+    styles,
+    /\.overworldSpeechAnchor\s*\{[^}]*transform:\s*translate\(-50%,\s*-50%\);/,
+  );
+  assert.match(
+    styles,
+    /\.openingNameCallout\s*\{[^}]*top:\s*50%;[^}]*right:[^;}]+;[^}]*bottom:\s*auto;[^}]*animation:\s*openingEdgeGreetingIn/,
+  );
+  assert.match(
+    styles,
+    /\.openingNameCallout::after\s*\{[^}]*top:\s*50%;[^}]*left:\s*100%;[^}]*border-top:[^;}]+;[^}]*border-right:/,
+  );
+  assert.match(styles, /@keyframes openingEdgeGreetingIn\s*\{/);
 });
 
 test("the opening dialogue exposes progress and readable light-surface name controls", () => {
@@ -82,14 +100,29 @@ test("ambient residents render with stable sprite fallbacks and no duel marker",
   assert.match(component, /\bedith:\s*"marina"/);
   assert.doesNotMatch(component, /\bedith:\s*"town-elder"/);
   assert.match(component, /SPRITE_SOURCE_BY_CHARACTER\[character\] \?\? residentSpriteSource\(character\)/);
-  assert.match(component, /const showMarker = Boolean\(trainer\.encounterId \|\| status\)/);
+  assert.match(component, /const showMarker = markersEnabled && Boolean\(trainer\.encounterId \|\| status\)/);
   assert.match(component, /\{showMarker \? \(/);
+  assert.match(component, /const dockGatheringStaged = dockSpeechPending \|\| bestFriendEscortActive/);
+  assert.match(component, /markersEnabled=\{!dockGatheringStaged\}/);
   assert.match(component, /trainer\.encounterId && trainer\.townId === "shellshore-village"/);
   assert.match(component, /\.\.\.\(trainer\.dialogue\?\.intro \?\? \[\]\)/);
   assert.match(component, /\.\.\.\(trainer\.dialogue\?\.guidance \?\? \[\]\)/);
   assert.match(component, /residentConversationSeenRef\.current\.has\(trainerId\)/);
   assert.match(component, /trainer\.dialogue\?\.return \?\? trainer\.dialogue\?\.guidance/);
   assert.match(component, /trainer\.townId === "shellshore-village"\) \{\s*closeConversation\(\);\s*return;/);
+});
+
+test("the dock speech uses neutral-frame gestures without turning them into walking", () => {
+  assert.match(
+    component,
+    /const dockSpeechGestureActive = Boolean\([\s\S]*?dockCutscenePhase === "speech"[\s\S]*?conversation\?\.dockSpeech === true[\s\S]*?pageVisible[\s\S]*?!effectiveReducedMotion/,
+  );
+  assert.match(component, /const renderedActorFacing = idleGesture\?\.baseFacing \?\? actorFacing/);
+  assert.match(component, /moving=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.WALKING\}/);
+  assert.match(component, /idleGesture=\{idleGesture\}/);
+  assert.match(styles, /\.spriteDockAudienceGlanceLeft\s*\{[^}]*dockAudienceGlanceLeft/);
+  assert.match(styles, /\.spriteDockAudienceGlanceRight\s*\{[^}]*dockAudienceGlanceRight/);
+  assert.match(styles, /\.spriteDockSpeechSpeaker\s*\{[^}]*dockSpeechSpeakerTurn/);
 });
 
 test("Elverson uses a close-follow camera and compact human-toned overworld sprites", () => {

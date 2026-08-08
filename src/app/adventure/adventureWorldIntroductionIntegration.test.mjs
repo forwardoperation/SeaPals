@@ -82,7 +82,7 @@ test("a named fresh profile starts upstairs, meets family indoors, then meets th
 
 test("the opening introduces SeaPals, names both children, then stages Mom's cardinal face-to-face greeting", () => {
   assert.match(component, /function OpeningSetupModal/);
-  assert.match(component, /This world is full of wonderful sea creatures\. Around here, we call them/);
+  assert.match(component, /Hello Adventurer! I am Mr\. Easterling, and I study Sea Creatures in the Sea Realm\./);
   assert.match(component, /className=\{`\$\{styles\.dialogueBox\} \$\{styles\.openingSetupDialogueBox\}`\}/);
   assert.match(component, /id="opening-setup-speaker">Mr\. Easterling<\/strong>/);
   assert.match(component, /<ProgressiveDialogueLine[\s\S]*message=\{dialogueMessages\[step\]\}[\s\S]*speaker="Mr\. Easterling"/);
@@ -94,7 +94,7 @@ test("the opening introduces SeaPals, names both children, then stages Mom's car
   assert.match(component, /createNewAdventureSession\(profileId, identity\)/);
   assert.match(component, /setOpeningPrelude\("narration"\)/);
   assert.match(component, /Is it morning yet\?/);
-  assert.match(component, /I feel like a great adventure awaits me this morning/);
+  assert.match(component, /I sense the call of the sea/);
   assert.match(component, /openingPrelude === "narration"[\s\S]*setOpeningPrelude\(\(current\) => current === "narration" \? "revealing" : null\)/);
   assert.match(component, /sceneId !== ELVERSON_PROLOGUE_HOME_SCENE_ID[\s\S]*nextBeatId !== ELVERSON_PROLOGUE_BEATS\.breakfast/);
   assert.match(component, /setMomGreetingStage\("calling"\)/);
@@ -137,6 +137,14 @@ test("the dock kickoff stages the town cast and restores exploration after its b
   assert.match(component, /isElversonDockSpeechTriggerPosition\(position\)/);
   assert.match(component, /position: \{ \.\.\.ELVERSON_DOCK_SPEECH_PLAYER_POSITION \}[\s\S]*facing: "down"/);
   assert.match(component, /interactionId: ELVERSON_DOCK_SPEECH_INTERACTION_ID[\s\S]*mode: "worldIntroduction"[\s\S]*dockSpeech: true/);
+  assert.match(component, /const dockGatheringStaged = dockSpeechPending \|\| bestFriendEscortActive/);
+  assert.match(component, /markersEnabled=\{!dockGatheringStaged\}/);
+  assert.match(
+    component,
+    /dockCutscenePhase === "speech"[\s\S]*conversation\?\.dockSpeech === true[\s\S]*pageVisible[\s\S]*!effectiveReducedMotion/,
+  );
+  assert.match(component, /const renderedActorFacing = idleGesture\?\.baseFacing \?\? actorFacing/);
+  assert.match(component, /moving=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.WALKING\}/);
   assert.match(component, /pendingDockSpeechSaveRef\.current = opening\.save[\s\S]*setDockCutscenePhase\("covering"\)/);
   assert.match(component, /position: \{ \.\.\.ELVERSON_DOCK_SPEECH_RESTORE_POSITION \}[\s\S]*commitAdventureMutation\([\s\S]*"elverson-dock-speech-complete"[\s\S]*setDockCutscenePhase\("revealing"\)/);
 });

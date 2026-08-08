@@ -1,3 +1,5 @@
+import { ELVERSON_TOWN_ROADS } from "./adventureElversonTownLayout.mjs";
+
 export const ELVERSON_DOCK_SPEECH_INTERACTION_ID =
   "interaction-elverson-dock-speech-mentor";
 export const ELVERSON_BEST_FRIEND_ARRIVAL_INTERACTION_ID =
@@ -78,16 +80,60 @@ export const ELVERSON_BEST_FRIEND_DOCK_WALK = Object.freeze({
   ]),
 });
 
-const DOCK_AUDIENCE_POSITIONS = Object.freeze([
-  ...Array.from({ length: 25 }, (_, index) => Object.freeze({
-    x: 12.3 + (index * 0.65),
-    y: 16.35,
-  })),
-  ...Array.from({ length: 23 }, (_, index) => Object.freeze({
-    x: 9.7 + (index * 0.65),
-    y: 17.15,
-  })),
-]);
+const DOCK_AUDIENCE_COLUMN_COUNT = 12;
+const DOCK_AUDIENCE_COLUMN_SPACING = 0.65;
+const DOCK_AUDIENCE_STAGGER = DOCK_AUDIENCE_COLUMN_SPACING / 2;
+const DOCK_AUDIENCE_AISLE_PADDING = 0.25;
+const waterfrontPromenade = ELVERSON_TOWN_ROADS.waterfrontPromenade.bounds;
+const dockAudienceBackRowY = waterfrontPromenade.top;
+const dockAudienceFrontRowY = waterfrontPromenade.top + 0.18;
+const dockAudienceInnerLeftX = ELVERSON_DOCK_SPEECH_TRIGGER.left
+  - DOCK_AUDIENCE_AISLE_PADDING;
+const dockAudienceInnerRightX = ELVERSON_DOCK_SPEECH_TRIGGER.right
+  + DOCK_AUDIENCE_AISLE_PADDING;
+
+export const ELVERSON_DOCK_AUDIENCE_POSITIONS = Object.freeze(
+  Array.from({ length: DOCK_AUDIENCE_COLUMN_COUNT }, (_, columnIndex) => {
+    const columnOffset = columnIndex * DOCK_AUDIENCE_COLUMN_SPACING;
+    return [
+      Object.freeze({
+        x: dockAudienceInnerLeftX - columnOffset,
+        y: dockAudienceBackRowY,
+      }),
+      Object.freeze({
+        x: dockAudienceInnerRightX + columnOffset,
+        y: dockAudienceBackRowY,
+      }),
+      Object.freeze({
+        x: dockAudienceInnerLeftX - DOCK_AUDIENCE_STAGGER - columnOffset,
+        y: dockAudienceFrontRowY,
+      }),
+      Object.freeze({
+        x: dockAudienceInnerRightX + DOCK_AUDIENCE_STAGGER + columnOffset,
+        y: dockAudienceFrontRowY,
+      }),
+    ];
+  }).flat(),
+);
+
+function createDockSpeechGesture(index, { speaker = false } = {}) {
+  if (speaker) {
+    return Object.freeze({
+      kind: "speaker",
+      baseFacing: "up",
+      durationMs: 3600,
+      delayMs: 0,
+    });
+  }
+  if (index % 4 === 3) return null;
+  const durationMs = 6800 + ((index % 5) * 520);
+  return Object.freeze({
+    kind: index % 2 === 0 ? "audience-left" : "audience-right",
+    baseFacing: "down",
+    durationMs,
+    delayMs: -((index * 1379) % durationMs),
+  });
+}
 
 export function isElversonDockSpeechTriggerPosition(position) {
   return Boolean(
@@ -118,9 +164,9 @@ export function createElversonDockSpeechInteractions(
     throw new RangeError("Elverson dock speech requires Mr. Easterling in the cast.");
   }
   const audienceIds = uniqueNpcIds.filter((npcId) => npcId !== mentorId);
-  if (audienceIds.length > DOCK_AUDIENCE_POSITIONS.length) {
+  if (audienceIds.length > ELVERSON_DOCK_AUDIENCE_POSITIONS.length) {
     throw new RangeError(
-      `Elverson dock speech has ${audienceIds.length} audience members but only ${DOCK_AUDIENCE_POSITIONS.length} safe positions.`,
+      `Elverson dock speech has ${audienceIds.length} audience members but only ${ELVERSON_DOCK_AUDIENCE_POSITIONS.length} safe positions.`,
     );
   }
 
@@ -131,13 +177,15 @@ export function createElversonDockSpeechInteractions(
       npcId: mentorId,
       at: ELVERSON_DOCK_SPEECH_MENTOR_POSITION,
       facing: "up",
+      dockSpeechGesture: createDockSpeechGesture(0, { speaker: true }),
     }),
     ...audienceIds.map((npcId, index) => Object.freeze({
       id: `interaction-elverson-dock-speech-audience-${npcId}`,
       type: "npc",
       npcId,
-      at: DOCK_AUDIENCE_POSITIONS[index],
+      at: ELVERSON_DOCK_AUDIENCE_POSITIONS[index],
       facing: "down",
+      dockSpeechGesture: createDockSpeechGesture(index),
     })),
   ]);
 }

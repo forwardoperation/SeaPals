@@ -11,14 +11,14 @@ test("live actor state drives rendering, interaction targeting, and player colli
   assert.match(component, /dynamicBlockers:\s*getAdventureActorBlockers\(/);
   assert.match(component, /ignoreActorTiles:\s*true/);
   assert.match(component, /position=\{runtimeActor\?\.position \?\? characterInteraction\.at\}/);
-  assert.match(component, /facing=\{actorFacing\}/);
+  assert.match(component, /facing=\{renderedActorFacing\}/);
   assert.match(component, /const actorAnimationMode = getAdventureActorAnimationMode\(\{/);
   assert.match(component, /isMoving:\s*runtimeActor\?\.moving === true/);
   assert.match(component, /isEngaged:\s*actorIsEngaged/);
   assert.match(component, /movementPaused,/);
   assert.match(component, /pageVisible,/);
   assert.match(component, /reducedMotion:\s*effectiveReducedMotion/);
-  assert.match(component, /moving=\{actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.WALKING\}/);
+  assert.match(component, /moving=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.WALKING\}/);
   assert.doesNotMatch(component, /hasPatrol:/);
   assert.doesNotMatch(component, /steppingInPlace|STEPPING_IN_PLACE/);
 });
@@ -37,11 +37,19 @@ test("patrol animation pauses with gameplay and honors reduced motion", () => {
 });
 
 test("player and patrol walk cycles derive their cadence from world speed", () => {
-  assert.match(component, /getAdventureWalkCycleDurationMs\(walkSpeed\)/);
-  assert.match(component, /"--sprite-walk-cycle-duration": `\$\{getAdventureWalkCycleDurationMs\(walkSpeed\)\}ms`/);
+  assert.match(component, /ADVENTURE_NPC_WALK_CYCLE_DISTANCE/);
+  assert.match(component, /walkCycleDistance = undefined/);
+  assert.match(component, /getAdventureWalkCycleDurationMs\(\s*walkSpeed,\s*\{ cycleDistance: walkCycleDistance \},\s*\)/);
+  assert.match(component, /"--sprite-walk-cycle-duration": `\$\{getAdventureWalkCycleDurationMs\(/);
   assert.match(component, /walkSpeed=\{characterInteraction\.patrol\?\.speed \?\? ADVENTURE_ACTOR_DEFAULTS\.speed\}/);
   assert.match(component, /const playerWalkSpeed = bestFriendWalkSample\?\.follower\.moving === true[\s\S]*?\? bestFriendSequence\?\.plan\?\.speed[\s\S]*?: guidedWalkSample\?\.follower\.moving === true[\s\S]*?\? guidedWalk\?\.plan\?\.speed[\s\S]*?: scene\.movement\?\.speed/);
   assert.match(component, /walkSpeed=\{playerWalkSpeed\}/);
+  assert.match(component, /walkCycleDistance=\{ADVENTURE_NPC_WALK_CYCLE_DISTANCE\}/);
+  const playerSpriteBlock = component.slice(
+    component.indexOf("function AdventurePlayerSprite"),
+    component.indexOf("function AdventureBoatSprite"),
+  );
+  assert.doesNotMatch(playerSpriteBlock, /walkCycleDistance/);
   assert.match(styles, /animation:\s*spriteWalk var\(--sprite-walk-cycle-duration, 480ms\) steps\(1, end\) infinite/);
 });
 
@@ -79,6 +87,33 @@ test("stationary residents use their registered neutral frame while moving actor
   assert.match(movingCycle, /--sprite-step-neutral-x/);
   assert.match(movingCycle, /--sprite-step-frame-b-x/);
   assert.doesNotMatch(movingCycle, /translateY\(-/);
+});
+
+test("dock gestures switch registered neutral facings only during the visible full-motion speech", () => {
+  assert.match(
+    component,
+    /dockCutscenePhase === "speech"[\s\S]*?conversation\?\.dockSpeech === true[\s\S]*?pageVisible[\s\S]*?!effectiveReducedMotion/,
+  );
+  assert.match(component, /const idleGesture = dockSpeechGestureActive[\s\S]*?characterInteraction\.dockSpeechGesture \?\? null/);
+  assert.match(component, /const renderedActorFacing = idleGesture\?\.baseFacing \?\? actorFacing/);
+  assert.match(component, /"--sprite-idle-left-x": `\$\{idleGestureRegistrations\.left\.neutral\}%`/);
+  assert.match(component, /"--sprite-idle-right-x": `\$\{idleGestureRegistrations\.right\.neutral\}%`/);
+  assert.match(component, /const dockGatheringStaged = dockSpeechPending \|\| bestFriendEscortActive/);
+  assert.match(component, /markersEnabled=\{!dockGatheringStaged\}/);
+  assert.match(component, /idleGesture=\{idleGesture\}/);
+
+  for (const keyframesName of [
+    "dockAudienceGlanceLeft",
+    "dockAudienceGlanceRight",
+    "dockSpeechSpeakerTurn",
+  ]) {
+    const keyframes = styles.match(
+      new RegExp(`@keyframes ${keyframesName}\\s*\\{[\\s\\S]*?(?=\\n@keyframes|\\n\\.spritePortrait)`),
+    )?.[0] ?? "";
+    assert.ok(keyframes, `${keyframesName} should be authored`);
+    assert.match(keyframes, /--sprite-idle-(?:down|left|right|up)-x/);
+    assert.doesNotMatch(keyframes, /frameA|frameB|sprite-step-frame/);
+  }
 });
 
 test("the player walk cycle follows active walking intent even when collision stops displacement", () => {

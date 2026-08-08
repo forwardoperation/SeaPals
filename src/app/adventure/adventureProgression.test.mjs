@@ -30,6 +30,7 @@ import { ELVERSON_PROLOGUE_BEATS } from "./adventureOpeningContract.mjs";
 import {
   ELVERSON_TOWN_LAYOUT_VERSION,
   ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+  ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
   ELVERSON_TOWN_SAFE_POSITIONS,
 } from "./adventureElversonTownLayout.mjs";
 
@@ -150,6 +151,21 @@ test("normalization fills omitted optional v4 fields and canonicalizes IDs, arra
   assert.deepEqual(normalized.rewardLedger, ["reward-first", "reward-second"]);
   assert.equal("ignoredSameVersionField" in normalized, false);
   assert.equal(validateAdventureSave(normalized).valid, true);
+});
+
+test("schema-v4 normalization accepts every released Elverson layout epoch exactly", () => {
+  for (const layoutVersion of [
+    ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
+    ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
+    ELVERSON_TOWN_LAYOUT_VERSION,
+  ]) {
+    const save = createInitialAdventureSave(`profile-layout-${layoutVersion}`);
+    save.world.layoutVersion = layoutVersion;
+
+    const normalized = normalizeAdventureSave(save);
+    assert.equal(normalized.world.layoutVersion, layoutVersion);
+    assert.equal(validateAdventureSave(save).valid, true);
+  }
 });
 
 test("character names normalize safely and persist in the canonical player identity", () => {
@@ -326,17 +342,17 @@ test("schema-v4 normalization requires complete supported opening and layout pro
     assert.equal(validateAdventureSave(malformed).valid, false, label);
   }
 
-  for (const [label, layoutVersion] of [
-    ["missing", undefined],
-    ["zero", 0],
-    ["future", ELVERSON_TOWN_LAYOUT_VERSION + 1],
+  for (const [label, layoutVersion, expected] of [
+    ["missing", undefined, /save\.world\.layoutVersion is required for schema-v4 saves/],
+    ["zero", 0, /save\.world\.layoutVersion must be 1, 2, or 3/],
+    ["future", ELVERSON_TOWN_LAYOUT_VERSION + 1, /save\.world\.layoutVersion must be 1, 2, or 3/],
   ]) {
     const malformed = createInitialAdventureSave("profile-1");
     if (layoutVersion === undefined) delete malformed.world.layoutVersion;
     else malformed.world.layoutVersion = layoutVersion;
     assert.throws(
       () => normalizeAdventureSave(malformed),
-      /save\.world\.layoutVersion/,
+      expected,
       `${label} layout version`,
     );
   }

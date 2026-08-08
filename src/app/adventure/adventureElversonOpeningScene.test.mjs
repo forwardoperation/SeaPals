@@ -12,6 +12,7 @@ import {
   ELVERSON_BEST_FRIEND_ARRIVAL_POSITION,
   ELVERSON_BEST_FRIEND_DOCK_WALK,
   ELVERSON_BEST_FRIEND_MEETING_POSITION,
+  ELVERSON_DOCK_AUDIENCE_POSITIONS,
   ELVERSON_DOCK_SPEECH_CAMERA_POSITION,
   ELVERSON_DOCK_SPEECH_INTERACTION_ID,
   ELVERSON_DOCK_SPEECH_MENTOR_POSITION,
@@ -24,7 +25,10 @@ import {
   isElversonDockSpeechTriggerPosition,
 } from "./adventureElversonOpeningScene.mjs";
 import { getAdventureCameraLayout } from "./adventureCamera.mjs";
-import { ELVERSON_TOWN_SAFE_POSITIONS } from "./adventureElversonTownLayout.mjs";
+import {
+  ELVERSON_TOWN_ROADS,
+  ELVERSON_TOWN_SAFE_POSITIONS,
+} from "./adventureElversonTownLayout.mjs";
 import { canOccupyContinuousPosition, SCENES } from "./adventureWorld.mjs";
 
 const adventureStyles = readFileSync(
@@ -152,9 +156,93 @@ test("the dock kickoff stages every Elverson NPC in unique safe waterfront posit
   assert.equal(canOccupyContinuousPosition("town", ELVERSON_DOCK_SPEECH_RESTORE_POSITION), true);
 });
 
+test("all 48 audience marks form two shallow promenade rows around a clear central aisle", () => {
+  const promenade = ELVERSON_TOWN_ROADS.waterfrontPromenade.bounds;
+  const actorRadius = 0.18;
+  // The crowd sprites' opaque feet sit about 0.92 tile below their authored
+  // actor coordinate. The lower row therefore uses the last safe baseline at
+  // the visual brick/curb edge instead of filling the logical road bounds.
+  const spriteFeetRegistrationOffsetY = 0.92;
+  const brickCurbEdgeY = promenade.bottom + 0.42;
+  assert.equal(ELVERSON_DOCK_AUDIENCE_POSITIONS.length, 48);
+
+  const rowYs = [...new Set(ELVERSON_DOCK_AUDIENCE_POSITIONS.map(({ y }) => y))].sort();
+  assert.equal(rowYs.length, 2);
+  assert.deepEqual(rowYs, [promenade.top, promenade.top + actorRadius]);
+  assert.equal(
+    ELVERSON_DOCK_AUDIENCE_POSITIONS.filter(({ y }) => y === rowYs[0]).length,
+    24,
+  );
+  assert.equal(
+    ELVERSON_DOCK_AUDIENCE_POSITIONS.filter(({ y }) => y === rowYs[1]).length,
+    24,
+  );
+
+  for (const position of ELVERSON_DOCK_AUDIENCE_POSITIONS) {
+    assert.ok(position.x - actorRadius >= promenade.left);
+    assert.ok(position.x + actorRadius <= promenade.right);
+    assert.ok(position.y >= promenade.top);
+    assert.ok(position.y <= promenade.bottom);
+    assert.ok(
+      position.y + spriteFeetRegistrationOffsetY <= brickCurbEdgeY + Number.EPSILON,
+      `audience mark ${position.x},${position.y} must render above the brick/curb edge`,
+    );
+    assert.ok(
+      position.x + actorRadius <= ELVERSON_DOCK_SPEECH_TRIGGER.left
+      || position.x - actorRadius >= ELVERSON_DOCK_SPEECH_TRIGGER.right,
+      `audience mark ${position.x},${position.y} must leave the central dock aisle clear`,
+    );
+    assert.equal(canOccupyContinuousPosition("town", position, actorRadius), true);
+  }
+
+  const backRowXs = new Set(
+    ELVERSON_DOCK_AUDIENCE_POSITIONS
+      .filter(({ y }) => y === rowYs[0])
+      .map(({ x }) => x.toFixed(3)),
+  );
+  const frontRowXs = ELVERSON_DOCK_AUDIENCE_POSITIONS
+    .filter(({ y }) => y === rowYs[1])
+    .map(({ x }) => x.toFixed(3));
+  assert.ok(frontRowXs.every((x) => !backRowXs.has(x)), "the two rows must be staggered");
+});
+
+test("dock speech gestures are frozen, deterministic, and use only neutral facings", () => {
+  const first = createElversonDockSpeechInteractions(elversonNpcIds);
+  const repeated = createElversonDockSpeechInteractions(elversonNpcIds);
+  const mentor = first[0];
+  const audience = first.slice(1);
+  const animatedAudience = audience.filter(({ dockSpeechGesture }) => dockSpeechGesture);
+  const stillAudience = audience.filter(({ dockSpeechGesture }) => !dockSpeechGesture);
+
+  assert.deepEqual(mentor.dockSpeechGesture, {
+    kind: "speaker",
+    baseFacing: "up",
+    durationMs: 3600,
+    delayMs: 0,
+  });
+  assert.equal(Object.isFrozen(mentor.dockSpeechGesture), true);
+  assert.deepEqual(
+    first.map(({ dockSpeechGesture }) => dockSpeechGesture),
+    repeated.map(({ dockSpeechGesture }) => dockSpeechGesture),
+  );
+  assert.ok(stillAudience.length > 0, "some audience members should remain calmly still");
+  assert.deepEqual(
+    new Set(animatedAudience.map(({ dockSpeechGesture }) => dockSpeechGesture.kind)),
+    new Set(["audience-left", "audience-right"]),
+  );
+  assert.ok(audience.every(({ moving }) => moving === undefined));
+  assert.ok(animatedAudience.every(({ dockSpeechGesture }) => (
+    dockSpeechGesture.baseFacing === "down"
+    && dockSpeechGesture.durationMs >= 6800
+    && dockSpeechGesture.delayMs <= 0
+    && Object.isFrozen(dockSpeechGesture)
+  )));
+});
+
 test("the dock speech camera keeps both actors above the bottom dialogue overlay", () => {
   const townScene = SCENES.town;
   const artworkCellBounds = getSpriteArtworkCellBounds();
+  assert.ok(artworkCellBounds.top < 0, "the camera regression must include artwork above the logical actor cell");
   const camera = getAdventureCameraLayout({
     worldWidth: townScene.width,
     worldHeight: townScene.height,
@@ -199,12 +287,19 @@ test("the dock speech camera keeps both actors above the bottom dialogue overlay
 test("the dock gathering leaves safe capacity for future Elverson residents", () => {
   const futureCast = [
     "academy-mentor",
-    ...Array.from({ length: 45 }, (_, index) => `future-resident-${index + 1}`),
+    ...Array.from({ length: 48 }, (_, index) => `future-resident-${index + 1}`),
   ];
   const interactions = createElversonDockSpeechInteractions(futureCast);
   assert.equal(interactions.length, futureCast.length);
   assert.equal(new Set(interactions.map(({ id }) => id)).size, futureCast.length);
   assert.ok(interactions.every(({ at }) => canOccupyContinuousPosition("town", at, 0.18)));
+  assert.throws(
+    () => createElversonDockSpeechInteractions([
+      "academy-mentor",
+      ...Array.from({ length: 49 }, (_, index) => `overflow-resident-${index + 1}`),
+    ]),
+    /49 audience members but only 48 safe positions/,
+  );
 });
 
 test("the dock trigger starts only inside the authored waterfront approach", () => {

@@ -1665,6 +1665,7 @@
 .overworldSpeechAnchor {
   position: absolute;
   pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
 .overworldSpeechAnchor span {
@@ -1703,8 +1704,9 @@
 .openingNameCallout {
   position: absolute;
   z-index: 52;
+  top: 50%;
   right: clamp(14px, 4vw, 36px);
-  bottom: clamp(14px, 5vw, 38px);
+  bottom: auto;
   max-width: calc(100% - 28px);
   padding: 12px 18px;
   border: 3px solid #164e63;
@@ -1716,26 +1718,33 @@
   overflow-wrap: anywhere;
   background: #fffdf4;
   box-shadow: 0 6px 0 rgba(8, 47, 73, 0.4);
-  animation: openingGreetingIn 180ms ease-out both;
+  transform: translateY(-50%);
+  animation: openingEdgeGreetingIn 180ms ease-out both;
   pointer-events: none;
 }
 
 .openingNameCallout::after {
   position: absolute;
-  top: 100%;
-  right: 22px;
+  top: 50%;
+  right: auto;
+  left: 100%;
   width: 14px;
   height: 14px;
+  border-top: 3px solid #164e63;
   border-right: 3px solid #164e63;
-  border-bottom: 3px solid #164e63;
   background: #fffdf4;
   content: "";
-  transform: translateY(-7px) rotate(45deg);
+  transform: translate(-7px, -50%) rotate(45deg);
 }
 
 @keyframes openingGreetingIn {
   from { opacity: 0; transform: translate(-50%, 3px) scale(0.94); }
   to { opacity: 1; transform: translate(-50%, -5px) scale(1); }
+}
+
+@keyframes openingEdgeGreetingIn {
+  from { opacity: 0; transform: translateY(calc(-50% + 3px)) scale(0.94); }
+  to { opacity: 1; transform: translateY(-50%) scale(1); }
 }
 
 .coralHomeMap {
@@ -2332,6 +2341,18 @@
   animation: spriteWalk var(--sprite-walk-cycle-duration, 480ms) steps(1, end) infinite;
 }
 
+.spriteDockAudienceGlanceLeft {
+  animation: dockAudienceGlanceLeft var(--sprite-idle-gesture-duration, 7600ms) steps(1, end) var(--sprite-idle-gesture-delay, 0ms) infinite;
+}
+
+.spriteDockAudienceGlanceRight {
+  animation: dockAudienceGlanceRight var(--sprite-idle-gesture-duration, 7600ms) steps(1, end) var(--sprite-idle-gesture-delay, 0ms) infinite;
+}
+
+.spriteDockSpeechSpeaker {
+  animation: dockSpeechSpeakerTurn var(--sprite-idle-gesture-duration, 3600ms) steps(1, end) var(--sprite-idle-gesture-delay, 0ms) infinite;
+}
+
 .academy-mentorSpriteArtwork.spriteWalking {
   animation-name: professorSpriteWalk;
 }
@@ -2350,6 +2371,36 @@
   50% { background-position: 100% var(--sprite-row); transform: translateY(0); }
   75% { background-position: 50% var(--sprite-row); transform: translateY(0); }
   100% { background-position: 0% var(--sprite-row); transform: translateY(0); }
+}
+
+@keyframes dockAudienceGlanceLeft {
+  0%, 14%, 30%, 100% {
+    background-position: var(--sprite-idle-down-x, 50%) var(--row-down);
+  }
+  15%, 29% {
+    background-position: var(--sprite-idle-left-x, 50%) var(--row-left);
+  }
+}
+
+@keyframes dockAudienceGlanceRight {
+  0%, 14%, 30%, 100% {
+    background-position: var(--sprite-idle-down-x, 50%) var(--row-down);
+  }
+  15%, 29% {
+    background-position: var(--sprite-idle-right-x, 50%) var(--row-right);
+  }
+}
+
+@keyframes dockSpeechSpeakerTurn {
+  0%, 18%, 32%, 52%, 66%, 100% {
+    background-position: var(--sprite-idle-up-x, 50%) var(--row-up);
+  }
+  19%, 31% {
+    background-position: var(--sprite-idle-left-x, 50%) var(--row-left);
+  }
+  53%, 65% {
+    background-position: var(--sprite-idle-right-x, 50%) var(--row-right);
+  }
 }
 
 @keyframes spriteBreathe {
@@ -3385,19 +3436,6 @@
   color: #b91c1c !important;
 }
 
-.openingSetupWorldResponse {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.openingSetupWorldResponse .openingSeaPal {
-  flex: 0 0 72px;
-  width: 72px;
-  height: 72px;
-}
-
 .openingSetupResponse .openingSetupActions {
   margin-top: 16px;
 }
@@ -3499,19 +3537,6 @@
   border: 2px solid rgba(103, 232, 249, 0.54);
   border-radius: 20px;
   background: rgba(5, 25, 38, 0.7);
-}
-
-.openingSeaPal {
-  width: 112px;
-  height: 112px;
-  border: 2px solid rgba(94, 234, 212, 0.56);
-  border-radius: 50% 50% 44% 56%;
-  background-color: rgba(11, 50, 62, 0.72);
-  background-image: url("/images/adventure/elverson-reef-creature-atlas-v1.webp");
-  background-position: 0 0;
-  background-size: 500% 200%;
-  box-shadow: inset 0 0 26px rgba(34, 211, 238, 0.16);
-  image-rendering: pixelated;
 }
 
 .openingNameField {
@@ -7304,12 +7329,9 @@
   .openingSetupDialogueBox > .portrait { height: 94px; min-height: 94px; }
   .openingSetupCard { padding: 24px 18px; border-radius: 20px; }
   .openingSetupIntroduction { min-height: 96px; gap: 12px; }
-  .openingSetupPortrait,
-  .openingSeaPal { width: 88px; height: 88px; }
+  .openingSetupPortrait { width: 88px; height: 88px; }
   .openingSetupActions { flex-direction: column-reverse; }
   .openingSetupActions button { width: 100%; }
-  .openingSetupWorldResponse { align-items: stretch; }
-  .openingSetupWorldResponse .openingSetupActions { flex: 1; }
   .openingIdentitySummary { grid-template-columns: minmax(0, 1fr); }
 
   .starterLayer,

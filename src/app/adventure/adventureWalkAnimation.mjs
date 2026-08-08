@@ -9,6 +9,11 @@ export const ADVENTURE_WALK_ANIMATION_DEFAULTS = Object.freeze({
   displacementEpsilon: 0.0005,
 });
 
+// Residents travel more slowly than the player, but their legs still need a
+// readable walking rhythm. Two gait cycles per world tile preserve patrol
+// movement speed while keeping the authored poses from lingering unnaturally.
+export const ADVENTURE_NPC_WALK_CYCLE_DISTANCE = 0.5;
+
 export const ADVENTURE_ACTOR_ANIMATION_MODES = Object.freeze({
   STILL: "still",
   WALKING: "walking",

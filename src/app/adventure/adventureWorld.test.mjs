@@ -115,7 +115,7 @@ function assertWalkablePolyline(sceneId, points, label) {
   }
 }
 
-test("world exposes the 42-by-28 Elverson v3 town, nine public interiors, and the upstairs bedroom", () => {
+test("world exposes the 42-by-28 Elverson v4 town, nine public interiors, and the upstairs bedroom", () => {
   for (const sceneId of ELVERSON_RELEASE_SCOPE.sceneIds) {
     assert.ok(SCENES[sceneId], `${sceneId} should remain available`);
   }
@@ -123,7 +123,7 @@ test("world exposes the 42-by-28 Elverson v3 town, nine public interiors, and th
   assert.deepEqual(ELVERSON_TOWN_DIMENSIONS, { width: 42, height: 28 });
   assert.equal(SCENES.town.width, ELVERSON_TOWN_DIMENSIONS.width);
   assert.equal(SCENES.town.height, ELVERSON_TOWN_DIMENSIONS.height);
-  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v3.webp");
+  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v4.webp");
   assert.equal(SCENES.town.layeredObjects.length, 9);
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "central-pier"));
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "wharf-platform"));
@@ -217,7 +217,8 @@ test("Elverson's authored shoreline is solid outside the public pier corridor", 
     ],
     "Elverson public pier and aquarium approach",
   );
-  assert.equal(canOccupyContinuousPosition("town", { x: 28, y: 22 }), false);
+  assert.equal(canOccupyContinuousPosition("town", { x: 28, y: 23 }), true);
+  assert.equal(canOccupyContinuousPosition("town", { x: 32, y: 22 }), false);
 });
 
 test("every authored character anchor stays inside its scene grid", () => {
@@ -679,7 +680,7 @@ test("every Sunpatch, Brackwater, Current, and Kelpwatch exterior doorway auto-t
   }
 });
 
-test("Elverson exposes the v3 town start, route dock, and every semantic safe position", () => {
+test("Elverson exposes the v4 town start, route dock, and every semantic safe position", () => {
   assert.deepEqual(ELVERSON_TOWN_SAFE_POSITIONS, {
     townStart: { x: 20, y: 6 },
     legacyTownResume: { x: 20, y: 6 },
@@ -722,7 +723,7 @@ test("movement advances over walkable tiles and respects map bounds", () => {
   assert.equal(getTile("town", { x: -1, y: 0 }), null);
 });
 
-test("continuous movement cannot cross Elverson v3 facades, water, furniture, exits, or trainers", () => {
+test("continuous movement cannot cross Elverson v4 facades, water, furniture, exits, or trainers", () => {
   for (const position of [
     { x: 4.2, y: 3 },
     { x: 13.8, y: 3 },
@@ -734,7 +735,7 @@ test("continuous movement cannot cross Elverson v3 facades, water, furniture, ex
     { x: 37.5, y: 14 },
     { x: 26, y: 20 },
     { x: 2, y: 19 },
-    { x: 30, y: 20 },
+    { x: 32, y: 20 },
   ]) {
     assert.equal(canOccupyContinuousPosition("town", position), false);
   }
