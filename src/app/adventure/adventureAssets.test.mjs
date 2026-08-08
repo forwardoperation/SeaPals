@@ -21,17 +21,17 @@ const ELVERSON_MOBILE_OPENING_ASSETS = Object.freeze([
   "/images/adventure/elverson-reef-creature-atlas-v1.webp",
   "/images/adventure/mr-easterling-portrait-v2.webp",
   "/images/adventure/player-sprites-512-v3.webp",
-  "/images/adventure/marina-sprites-512-v2.webp",
-  "/images/adventure/dorian-sprites-512-v2.webp",
-  "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
-  "/images/adventure/teacher-caroline-sprites-512-v2.webp",
-  "/images/adventure/ivy-sprites-512-v2.webp",
-  "/images/adventure/explorer-jordan-sprites-512-v2.webp",
-  "/images/adventure/marine-biologist-jonah-sprites-512-v2.webp",
-  "/images/adventure/town-adult-sprites-512-v2.webp",
-  "/images/adventure/mr-easterling-sprites-627-v3.webp",
-  "/images/adventure/programmer-harlan-sprites.webp",
-  "/images/adventure/town-elder-sprites.webp",
+  "/images/adventure/marina-sprites-512-v3.webp",
+  "/images/adventure/dorian-sprites-512-v3.webp",
+  "/images/adventure/fisherman-wyeth-sprites-512-v3.webp",
+  "/images/adventure/teacher-caroline-sprites-512-v3.webp",
+  "/images/adventure/ivy-sprites-512-v3.webp",
+  "/images/adventure/explorer-jordan-sprites-512-v3.webp",
+  "/images/adventure/marine-biologist-jonah-sprites-512-v3.webp",
+  "/images/adventure/town-adult-sprites-512-v3.webp",
+  "/images/adventure/mr-easterling-sprites-627-v4.webp",
+  "/images/adventure/programmer-harlan-sprites-512-v3.webp",
+  "/images/adventure/town-elder-sprites-512-v3.webp",
   "/images/adventure/elverson-objects-v2/blue-home.webp",
   "/images/adventure/elverson-objects-v2/tan-home.webp",
   "/images/adventure/elverson-objects-v2/green-home.webp",
@@ -115,6 +115,153 @@ function getOpaqueCellMetrics({ data, info }, {
     height: maxY - minY + 1,
     footprintWidth: footprintMaxX - footprintMinX + 1,
   };
+}
+
+function getOpaqueConnectedComponents({ data, info }, alphaThreshold = 128) {
+  const { width, height } = info;
+  const pixelCount = width * height;
+  const visited = new Uint8Array(pixelCount);
+  const queue = new Uint32Array(pixelCount);
+  const components = [];
+
+  for (let start = 0; start < pixelCount; start += 1) {
+    if (visited[start] || data[(start * 4) + 3] <= alphaThreshold) continue;
+
+    let head = 0;
+    let tail = 1;
+    queue[0] = start;
+    visited[start] = 1;
+    let minX = width;
+    let maxX = -1;
+    let minY = height;
+    let maxY = -1;
+
+    while (head < tail) {
+      const pixel = queue[head];
+      head += 1;
+      const x = pixel % width;
+      const y = Math.floor(pixel / width);
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+
+      const neighborMinX = Math.max(0, x - 1);
+      const neighborMaxX = Math.min(width - 1, x + 1);
+      const neighborMinY = Math.max(0, y - 1);
+      const neighborMaxY = Math.min(height - 1, y + 1);
+      for (let neighborY = neighborMinY; neighborY <= neighborMaxY; neighborY += 1) {
+        for (let neighborX = neighborMinX; neighborX <= neighborMaxX; neighborX += 1) {
+          const neighbor = (neighborY * width) + neighborX;
+          if (
+            neighbor === pixel
+            || visited[neighbor]
+            || data[(neighbor * 4) + 3] <= alphaThreshold
+          ) {
+            continue;
+          }
+          visited[neighbor] = 1;
+          queue[tail] = neighbor;
+          tail += 1;
+        }
+      }
+    }
+
+    components.push({
+      pixels: queue.slice(0, tail),
+      minX,
+      maxX,
+      minY,
+      maxY,
+    });
+  }
+
+  return components;
+}
+
+function getBoundingBoxDistanceSquared(a, b) {
+  const distanceX = a.maxX < b.minX
+    ? b.minX - a.maxX
+    : b.maxX < a.minX
+      ? a.minX - b.maxX
+      : 0;
+  const distanceY = a.maxY < b.minY
+    ? b.minY - a.maxY
+    : b.maxY < a.minY
+      ? a.minY - b.maxY
+      : 0;
+  return (distanceX * distanceX) + (distanceY * distanceY);
+}
+
+function getOpaqueSpriteGroups(atlas, { columns, rows, label }) {
+  const { width } = atlas.info;
+  const componentsByColumn = Array.from({ length: columns }, () => []);
+  for (const component of getOpaqueConnectedComponents(atlas)) {
+    const centerX = (component.minX + component.maxX) / 2;
+    const column = Math.max(0, Math.min(
+      columns - 1,
+      Math.floor((centerX * columns) / width),
+    ));
+    componentsByColumn[column].push(component);
+  }
+
+  return componentsByColumn.map((components, column) => {
+    const mainComponents = [...components]
+      .sort((a, b) => b.pixels.length - a.pixels.length)
+      .slice(0, rows)
+      .sort((a, b) => a.minY - b.minY);
+    assert.equal(mainComponents.length, rows, `${label} column ${column} sprite bodies`);
+    for (const [row, component] of mainComponents.entries()) {
+      assert.ok(component.pixels.length > 400, `${label} column ${column}, row ${row} body`);
+    }
+
+    const groups = mainComponents.map((component) => ({
+      components: [component],
+      minX: component.minX,
+      maxX: component.maxX,
+      minY: component.minY,
+      maxY: component.maxY,
+    }));
+    const mainComponentSet = new Set(mainComponents);
+    for (const component of components) {
+      if (mainComponentSet.has(component)) continue;
+      let closestGroup = groups[0];
+      let closestDistance = getBoundingBoxDistanceSquared(component, closestGroup);
+      for (const group of groups.slice(1)) {
+        const distance = getBoundingBoxDistanceSquared(component, group);
+        if (distance >= closestDistance) continue;
+        closestGroup = group;
+        closestDistance = distance;
+      }
+      closestGroup.components.push(component);
+      closestGroup.minX = Math.min(closestGroup.minX, component.minX);
+      closestGroup.maxX = Math.max(closestGroup.maxX, component.maxX);
+      closestGroup.minY = Math.min(closestGroup.minY, component.minY);
+      closestGroup.maxY = Math.max(closestGroup.maxY, component.maxY);
+    }
+
+    return groups;
+  });
+}
+
+function getGroupedFootprintWidth(group, imageWidth, depthFraction = 0.25) {
+  const spriteHeight = group.maxY - group.minY + 1;
+  const footprintStart = group.maxY - Math.ceil(spriteHeight * depthFraction) + 1;
+  let minX = imageWidth;
+  let maxX = -1;
+
+  for (const component of group.components) {
+    for (const pixel of component.pixels) {
+      const y = Math.floor(pixel / imageWidth);
+      if (y < footprintStart) continue;
+      const x = pixel % imageWidth;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+    }
+  }
+
+  assert.ok(maxX >= minX, "grouped sprite footprint must contain opaque pixels");
+  return maxX - minX + 1;
 }
 
 function assertNoOpaqueCellBoundaryBridges({ data, info }, { columns, rows, label }) {
@@ -273,6 +420,94 @@ test("the v3 player walk sheet ships twelve isolated poses with a compact neutra
   );
 });
 
+test("the live player WebP preserves the v3 pixel art losslessly", async () => {
+  const png = await readRgbaAsset("/images/adventure/player-sprites-512-v3.png");
+  const webp = await readRgbaAsset("/images/adventure/player-sprites-512-v3.webp");
+
+  assert.deepEqual(webp.info, png.info);
+  let alphaMismatches = 0;
+  let visibleColorMismatches = 0;
+  for (let offset = 0; offset < png.data.length; offset += 4) {
+    const pngAlpha = png.data[offset + 3];
+    const webpAlpha = webp.data[offset + 3];
+    if (pngAlpha !== webpAlpha) alphaMismatches += 1;
+    if (
+      pngAlpha > 0
+      && (
+        png.data[offset] !== webp.data[offset]
+        || png.data[offset + 1] !== webp.data[offset + 1]
+        || png.data[offset + 2] !== webp.data[offset + 2]
+      )
+    ) {
+      visibleColorMismatches += 1;
+    }
+  }
+  assert.equal(alphaMismatches, 0, "the runtime player sheet must preserve alpha exactly");
+  assert.equal(
+    visibleColorMismatches,
+    0,
+    "the runtime asset must not introduce visible color noise into the player or NPC aliases",
+  );
+});
+
+test("every distinct NPC walk sheet has a feet-together neutral column", async () => {
+  const npcSheets = [
+    "/images/adventure/marina-sprites-512-v3.png",
+    "/images/adventure/dorian-sprites-512-v3.png",
+    "/images/adventure/fisherman-wyeth-sprites-512-v3.png",
+    "/images/adventure/teacher-caroline-sprites-512-v3.png",
+    "/images/adventure/ivy-sprites-512-v3.png",
+    "/images/adventure/explorer-jordan-sprites-512-v3.png",
+    "/images/adventure/marine-biologist-jonah-sprites-512-v3.png",
+    "/images/adventure/programmer-harlan-sprites-512-v3.png",
+    "/images/adventure/town-elder-sprites-512-v3.png",
+    "/images/adventure/town-adult-sprites-512-v3.png",
+    "/images/adventure/mr-easterling-sprites-627-v4.png",
+  ];
+
+  for (const spritePath of npcSheets) {
+    const atlas = await readRgbaAsset(spritePath);
+    assert.equal(atlas.info.channels, 4, `${spritePath} channels`);
+    const cellWidth = atlas.info.width / 3;
+    for (let row = 0; row < 4; row += 1) {
+      const frames = [0, 1, 2].map((column) => getOpaqueCellMetrics(atlas, {
+        column,
+        row,
+        columns: 3,
+        rows: 4,
+      }));
+      for (const [column, frame] of frames.entries()) {
+        assert.ok(frame.count > 400, `${spritePath} row ${row}, column ${column} pose`);
+      }
+      const [strideA, neutral, strideB] = frames;
+      assert.ok(
+        neutral.footprintWidth <= cellWidth * 0.33,
+        `${spritePath} row ${row} neutral feet must stay together`,
+      );
+      assert.ok(
+        neutral.footprintWidth <= Math.max(strideA.footprintWidth, strideB.footprintWidth)
+          + (cellWidth * 0.1),
+        `${spritePath} row ${row} neutral stance must not read broader than the gait`,
+      );
+    }
+
+    const spriteGroups = getOpaqueSpriteGroups(atlas, {
+      columns: 3,
+      rows: 4,
+      label: spritePath,
+    });
+    for (const row of [1, 2]) {
+      const [strideAWidth, neutralWidth, strideBWidth] = [0, 1, 2].map((column) => (
+        getGroupedFootprintWidth(spriteGroups[column][row], atlas.info.width)
+      ));
+      assert.ok(
+        neutralWidth * 5 <= Math.min(strideAWidth, strideBWidth) * 4,
+        `${spritePath} row ${row} connected neutral footprint ${neutralWidth}px must be at least 20% narrower than both stride footprints (${strideAWidth}px, ${strideBWidth}px)`,
+      );
+    }
+  }
+});
+
 test("the hand-net player atlas ships seven complete poses for four isometric facings", async () => {
   const artPath = "/images/adventure/player-hand-net-isometric-v2.png";
   const png = await readFile(publicAssetPath(artPath));
@@ -355,14 +590,16 @@ test("the hand-net player atlas ships seven complete poses for four isometric fa
 
 test("Elverson ships distinct transparent GBA-style resident walk sheets", async () => {
   const spriteAssets = [
-    "/images/adventure/fisherman-wyeth-sprites.png",
-    "/images/adventure/teacher-caroline-sprites.png",
-    "/images/adventure/ivy-sprites.png",
-    "/images/adventure/explorer-jordan-sprites.png",
-    "/images/adventure/marine-biologist-jonah-sprites.png",
-    "/images/adventure/programmer-harlan-sprites.png",
-    "/images/adventure/town-elder-sprites.png",
-    "/images/adventure/town-adult-sprites.png",
+    "/images/adventure/marina-sprites-v3.png",
+    "/images/adventure/dorian-sprites-v3.png",
+    "/images/adventure/fisherman-wyeth-sprites-v3.png",
+    "/images/adventure/teacher-caroline-sprites-v3.png",
+    "/images/adventure/ivy-sprites-v3.png",
+    "/images/adventure/explorer-jordan-sprites-v3.png",
+    "/images/adventure/marine-biologist-jonah-sprites-v3.png",
+    "/images/adventure/programmer-harlan-sprites-v3.png",
+    "/images/adventure/town-elder-sprites-v3.png",
+    "/images/adventure/town-adult-sprites-v3.png",
   ];
 
   for (const spritePath of spriteAssets) {
@@ -381,14 +618,16 @@ test("Elverson ships distinct transparent GBA-style resident walk sheets", async
 test("Elverson town ships compact transparent WebP walk sheets", async () => {
   const optimizedSpriteAssets = [
     ["/images/adventure/player-sprites-512-v3.webp", "/images/adventure/player-sprites-v3.png"],
-    ["/images/adventure/marina-sprites-512-v2.webp", "/images/adventure/marina-sprites.png"],
-    ["/images/adventure/dorian-sprites-512-v2.webp", "/images/adventure/dorian-sprites.png"],
-    ["/images/adventure/fisherman-wyeth-sprites-512-v2.webp", "/images/adventure/fisherman-wyeth-sprites.png"],
-    ["/images/adventure/teacher-caroline-sprites-512-v2.webp", "/images/adventure/teacher-caroline-sprites.png"],
-    ["/images/adventure/ivy-sprites-512-v2.webp", "/images/adventure/ivy-sprites.png"],
-    ["/images/adventure/explorer-jordan-sprites-512-v2.webp", "/images/adventure/explorer-jordan-sprites.png"],
-    ["/images/adventure/marine-biologist-jonah-sprites-512-v2.webp", "/images/adventure/marine-biologist-jonah-sprites.png"],
-    ["/images/adventure/town-adult-sprites-512-v2.webp", "/images/adventure/town-adult-sprites.png"],
+    ["/images/adventure/marina-sprites-512-v3.webp", "/images/adventure/marina-sprites-v3.png"],
+    ["/images/adventure/dorian-sprites-512-v3.webp", "/images/adventure/dorian-sprites-v3.png"],
+    ["/images/adventure/fisherman-wyeth-sprites-512-v3.webp", "/images/adventure/fisherman-wyeth-sprites-v3.png"],
+    ["/images/adventure/teacher-caroline-sprites-512-v3.webp", "/images/adventure/teacher-caroline-sprites-v3.png"],
+    ["/images/adventure/ivy-sprites-512-v3.webp", "/images/adventure/ivy-sprites-v3.png"],
+    ["/images/adventure/explorer-jordan-sprites-512-v3.webp", "/images/adventure/explorer-jordan-sprites-v3.png"],
+    ["/images/adventure/marine-biologist-jonah-sprites-512-v3.webp", "/images/adventure/marine-biologist-jonah-sprites-v3.png"],
+    ["/images/adventure/programmer-harlan-sprites-512-v3.webp", "/images/adventure/programmer-harlan-sprites-v3.png"],
+    ["/images/adventure/town-elder-sprites-512-v3.webp", "/images/adventure/town-elder-sprites-v3.png"],
+    ["/images/adventure/town-adult-sprites-512-v3.webp", "/images/adventure/town-adult-sprites-v3.png"],
   ];
   let optimizedBytes = 0;
   let sourceBytes = 0;
@@ -403,8 +642,8 @@ test("Elverson town ships compact transparent WebP walk sheets", async () => {
     sourceBytes += source.byteLength;
   }
 
-  const mentorOptimizedPath = "/images/adventure/mr-easterling-sprites-627-v3.webp";
-  const mentorSourcePath = "/images/adventure/mr-easterling-sprites-v2.png";
+  const mentorOptimizedPath = "/images/adventure/mr-easterling-sprites-627-v4.webp";
+  const mentorSourcePath = "/images/adventure/mr-easterling-sprites-v3.png";
   const { asset: mentorOptimized, metadata: mentorMetadata } = await readWebpAsset(mentorOptimizedPath);
   const mentorSource = await readFile(publicAssetPath(mentorSourcePath));
   assert.equal(mentorMetadata.width, 627, `${mentorOptimizedPath} width`);
@@ -418,7 +657,7 @@ test("Elverson town ships compact transparent WebP walk sheets", async () => {
 
 test("Mr. Easterling ships a transparent identity-based walk sheet and portrait", async () => {
   for (const spritePath of [
-    "/images/adventure/mr-easterling-sprites-v2.png",
+    "/images/adventure/mr-easterling-sprites-v3.png",
     "/images/adventure/mr-easterling-portrait-v2.png",
   ]) {
     const png = await readFile(publicAssetPath(spritePath));

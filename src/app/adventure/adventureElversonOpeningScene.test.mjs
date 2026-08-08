@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -11,7 +12,9 @@ import {
   ELVERSON_BEST_FRIEND_ARRIVAL_POSITION,
   ELVERSON_BEST_FRIEND_DOCK_WALK,
   ELVERSON_BEST_FRIEND_MEETING_POSITION,
+  ELVERSON_DOCK_SPEECH_CAMERA_POSITION,
   ELVERSON_DOCK_SPEECH_INTERACTION_ID,
+  ELVERSON_DOCK_SPEECH_MENTOR_POSITION,
   ELVERSON_DOCK_SPEECH_PLAYER_POSITION,
   ELVERSON_DOCK_SPEECH_RESTORE_POSITION,
   ELVERSON_DOCK_SPEECH_TRIGGER,
@@ -20,8 +23,34 @@ import {
   createElversonDockSpeechInteractions,
   isElversonDockSpeechTriggerPosition,
 } from "./adventureElversonOpeningScene.mjs";
+import { getAdventureCameraLayout } from "./adventureCamera.mjs";
 import { ELVERSON_TOWN_SAFE_POSITIONS } from "./adventureElversonTownLayout.mjs";
-import { canOccupyContinuousPosition } from "./adventureWorld.mjs";
+import { canOccupyContinuousPosition, SCENES } from "./adventureWorld.mjs";
+
+const adventureStyles = readFileSync(
+  new URL("./adventure.module.css", import.meta.url),
+  "utf8",
+);
+
+function getSpriteArtworkCellBounds() {
+  const rule = adventureStyles.match(/\.spriteArtwork\s*\{([\s\S]*?)\}/)?.[1];
+  assert.ok(rule, "the shared sprite artwork rule must exist");
+  const readPercent = (property) => {
+    const value = rule.match(new RegExp(`${property}:\\s*([\\d.]+)%`))?.[1];
+    assert.ok(value, `the shared sprite artwork rule must define ${property} as a percentage`);
+    return Number(value) / 100;
+  };
+  const left = readPercent("left");
+  const width = readPercent("width");
+  const height = readPercent("height");
+  const bottom = readPercent("bottom");
+  return Object.freeze({
+    left,
+    top: 1 - bottom - height,
+    right: left + width,
+    bottom: 1 - bottom,
+  });
+}
 
 const elversonNpcIds = ADVENTURE_CONTENT.npcs
   .filter((npc) => npc.townId === "shellshore-village")
@@ -121,6 +150,50 @@ test("the dock kickoff stages every Elverson NPC in unique safe waterfront posit
   }
   assert.equal(canOccupyContinuousPosition("town", ELVERSON_DOCK_SPEECH_PLAYER_POSITION), true);
   assert.equal(canOccupyContinuousPosition("town", ELVERSON_DOCK_SPEECH_RESTORE_POSITION), true);
+});
+
+test("the dock speech camera keeps both actors above the bottom dialogue overlay", () => {
+  const townScene = SCENES.town;
+  const artworkCellBounds = getSpriteArtworkCellBounds();
+  const camera = getAdventureCameraLayout({
+    worldWidth: townScene.width,
+    worldHeight: townScene.height,
+    playerX: ELVERSON_DOCK_SPEECH_CAMERA_POSITION.x,
+    playerY: ELVERSON_DOCK_SPEECH_CAMERA_POSITION.y,
+  });
+  const visibleBounds = {
+    left: camera.originX,
+    top: camera.originY,
+    right: camera.originX + camera.viewWidth,
+    bottom: camera.originY + camera.viewHeight,
+  };
+  const dialogueSafeFrame = {
+    top: 0.04,
+    bottom: 0.76,
+  };
+
+  for (const [label, position] of [
+    ["player", ELVERSON_DOCK_SPEECH_PLAYER_POSITION],
+    ["Mr. Easterling", ELVERSON_DOCK_SPEECH_MENTOR_POSITION],
+  ]) {
+    const artworkBounds = {
+      left: position.x + artworkCellBounds.left,
+      top: position.y + artworkCellBounds.top,
+      right: position.x + artworkCellBounds.right,
+      bottom: position.y + artworkCellBounds.bottom,
+    };
+    assert.ok(artworkBounds.left >= visibleBounds.left, `${label} artwork left edge must be visible`);
+    assert.ok(artworkBounds.right <= visibleBounds.right, `${label} artwork right edge must be visible`);
+    assert.ok(artworkBounds.top >= visibleBounds.top, `${label} artwork top edge must be visible`);
+    assert.ok(artworkBounds.bottom <= visibleBounds.bottom, `${label} artwork bottom edge must be visible`);
+    const screenTop = (artworkBounds.top - camera.originY) / camera.viewHeight;
+    const screenBottom = (artworkBounds.bottom - camera.originY) / camera.viewHeight;
+    assert.ok(screenTop >= dialogueSafeFrame.top, `${label} must clear the top crop`);
+    assert.ok(
+      screenBottom <= dialogueSafeFrame.bottom,
+      `${label} must stay above the fixed bottom dialogue box`,
+    );
+  }
 });
 
 test("the dock gathering leaves safe capacity for future Elverson residents", () => {

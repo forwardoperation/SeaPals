@@ -13,14 +13,14 @@ test("live actor state drives rendering, interaction targeting, and player colli
   assert.match(component, /position=\{runtimeActor\?\.position \?\? characterInteraction\.at\}/);
   assert.match(component, /facing=\{actorFacing\}/);
   assert.match(component, /const actorAnimationMode = getAdventureActorAnimationMode\(\{/);
-  assert.match(component, /hasPatrol:\s*Boolean\(characterInteraction\.patrol\)/);
   assert.match(component, /isMoving:\s*runtimeActor\?\.moving === true/);
   assert.match(component, /isEngaged:\s*actorIsEngaged/);
   assert.match(component, /movementPaused,/);
   assert.match(component, /pageVisible,/);
   assert.match(component, /reducedMotion:\s*effectiveReducedMotion/);
   assert.match(component, /moving=\{actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.WALKING\}/);
-  assert.match(component, /steppingInPlace=\{actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.STEPPING_IN_PLACE\}/);
+  assert.doesNotMatch(component, /hasPatrol:/);
+  assert.doesNotMatch(component, /steppingInPlace|STEPPING_IN_PLACE/);
 });
 
 test("patrol animation pauses with gameplay and honors reduced motion", () => {
@@ -63,22 +63,15 @@ test("the bedroom enlarges the player artwork without changing world geometry", 
   assert.match(spriteRule, /transform-origin:\s*center 94\.7%/);
 });
 
-test("stationary residents use a registered alternating-leg gait over one world anchor", () => {
+test("stationary residents use their registered neutral frame while moving actors cycle", () => {
   assert.match(component, /const frameRegistration = getAdventureWalkFrameRegistration\(\{/);
-  assert.match(component, /const walkStyle = \(moving \|\| steppingInPlace\)/);
+  assert.match(component, /const spriteStyle = \{/);
   assert.match(component, /"--sprite-step-frame-a-x": `\$\{frameRegistration\.frameA\}%`/);
   assert.match(component, /"--sprite-step-neutral-x": `\$\{frameRegistration\.neutral\}%`/);
   assert.match(component, /"--sprite-step-frame-b-x": `\$\{frameRegistration\.frameB\}%`/);
   assert.match(component, /data-sprite-profile=\{animationProfile\}/);
-  assert.match(styles, /\.spriteSteppingInPlace\s*\{[\s\S]*?background-position:\s*var\(--sprite-step-neutral-x, 50%\) var\(--sprite-row\)/);
-  assert.match(styles, /\.spriteSteppingInPlace\s*\{[\s\S]*?transform-origin:\s*center bottom/);
-  assert.match(styles, /\.spriteSteppingInPlace\s*\{[\s\S]*?animation:\s*spriteWalkInPlace[\s\S]*?steps\(1, end\)/);
-  const idleCycle = styles.match(/@keyframes spriteWalkInPlace[\s\S]*?(?=@keyframes spriteBreathe)/)?.[0] ?? "";
-  assert.ok(idleCycle);
-  assert.match(idleCycle, /--sprite-step-frame-a-x/);
-  assert.match(idleCycle, /--sprite-step-neutral-x/);
-  assert.match(idleCycle, /--sprite-step-frame-b-x/);
-  assert.doesNotMatch(idleCycle, /translateX|scaleY/);
+  assert.match(styles, /\.spriteArtwork\s*\{[\s\S]*?background-position:\s*var\(--sprite-step-neutral-x, 50%\) var\(--sprite-row\)/);
+  assert.doesNotMatch(styles, /spriteSteppingInPlace|spriteWalkInPlace/);
 
   const movingCycle = styles.match(/@keyframes spriteWalk\s*\{[\s\S]*?(?=@keyframes professorSpriteWalk)/)?.[0] ?? "";
   assert.ok(movingCycle);

@@ -12,7 +12,6 @@ export const ADVENTURE_WALK_ANIMATION_DEFAULTS = Object.freeze({
 export const ADVENTURE_ACTOR_ANIMATION_MODES = Object.freeze({
   STILL: "still",
   WALKING: "walking",
-  STEPPING_IN_PLACE: "stepping-in-place",
 });
 
 const createFrameRegistration = ([frameA, neutral, frameB]) => Object.freeze({
@@ -163,11 +162,10 @@ export function isAdventurePlayerWalking({
 }
 
 /**
- * Keeps authored stationary residents visually alive without changing their
- * runtime position or pretending that a paused patrol is still travelling.
+ * Reserves the four-pose gait for real movement. Stationary residents hold
+ * their authored feet-together neutral frame instead of stepping in place.
  */
 export function getAdventureActorAnimationMode({
-  hasPatrol = false,
   isMoving = false,
   isEngaged = false,
   movementPaused = false,
@@ -178,8 +176,7 @@ export function getAdventureActorAnimationMode({
     return ADVENTURE_ACTOR_ANIMATION_MODES.STILL;
   }
   if (isMoving) return ADVENTURE_ACTOR_ANIMATION_MODES.WALKING;
-  if (hasPatrol) return ADVENTURE_ACTOR_ANIMATION_MODES.STILL;
-  return ADVENTURE_ACTOR_ANIMATION_MODES.STEPPING_IN_PLACE;
+  return ADVENTURE_ACTOR_ANIMATION_MODES.STILL;
 }
 
 /**

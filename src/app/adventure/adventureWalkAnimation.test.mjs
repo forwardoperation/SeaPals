@@ -30,27 +30,26 @@ test("player walking follows intent immediately and stops in inactive modes", ()
   assert.equal(isAdventurePlayerWalking({ isMoving: false }), false);
 });
 
-test("stationary residents walk in place while patrols follow real movement", () => {
+test("stationary residents hold their neutral pose while moving actors walk", () => {
   assert.equal(
-    getAdventureActorAnimationMode({ hasPatrol: false }),
-    ADVENTURE_ACTOR_ANIMATION_MODES.STEPPING_IN_PLACE,
-  );
-  assert.equal(
-    getAdventureActorAnimationMode({ hasPatrol: true, isMoving: true }),
-    ADVENTURE_ACTOR_ANIMATION_MODES.WALKING,
-  );
-  assert.equal(
-    getAdventureActorAnimationMode({ hasPatrol: false, isMoving: true }),
-    ADVENTURE_ACTOR_ANIMATION_MODES.WALKING,
-  );
-  assert.equal(
-    getAdventureActorAnimationMode({ hasPatrol: true, isMoving: false }),
+    getAdventureActorAnimationMode(),
     ADVENTURE_ACTOR_ANIMATION_MODES.STILL,
   );
+  assert.equal(
+    getAdventureActorAnimationMode({ isMoving: true }),
+    ADVENTURE_ACTOR_ANIMATION_MODES.WALKING,
+  );
+  assert.equal(
+    getAdventureActorAnimationMode({ isMoving: false }),
+    ADVENTURE_ACTOR_ANIMATION_MODES.STILL,
+  );
+  assert.deepEqual(ADVENTURE_ACTOR_ANIMATION_MODES, {
+    STILL: "still",
+    WALKING: "walking",
+  });
 });
 
 test("resident animation stops during conversations, pauses, hidden tabs, and reduced motion", () => {
-  const stationaryResident = { hasPatrol: false };
   for (const inactiveState of [
     { isEngaged: true },
     { movementPaused: true },
@@ -58,7 +57,7 @@ test("resident animation stops during conversations, pauses, hidden tabs, and re
     { reducedMotion: true },
   ]) {
     assert.equal(
-      getAdventureActorAnimationMode({ ...stationaryResident, ...inactiveState }),
+      getAdventureActorAnimationMode(inactiveState),
       ADVENTURE_ACTOR_ANIMATION_MODES.STILL,
     );
   }

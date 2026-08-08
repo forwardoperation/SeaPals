@@ -710,6 +710,10 @@ const shellshoreRuntimeScenes = {
     spawn: { x: 7, y: 7 },
     startFacing: "down",
     collisionRects: [
+      // The painted rear wall reaches well below the coarse top wall tile.
+      // Keep the player's feet on the floor instead of letting their anchor
+      // climb into the window, shelves, and wall paneling.
+      { id: "player-bedroom-rear-wall", left: -0.5, top: -0.5, right: 14.5, bottom: 2.45 },
       { id: "player-bedroom-bed", left: 0.25, top: 1.15, right: 3.35, bottom: 5.75 },
       { id: "player-bedroom-left-bookcase", left: 0.25, top: 5.7, right: 2.85, bottom: 8.6 },
       { id: "player-bedroom-writing-desk", left: 10.25, top: 1.35, right: 14.4, bottom: 4.65 },

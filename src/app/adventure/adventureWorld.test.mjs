@@ -1060,6 +1060,33 @@ test("continuous movement scales with elapsed milliseconds and normalizes diagon
   assert.ok(Math.abs(Math.hypot(diagonal.x - start.x, diagonal.y - start.y) - 0.4) < 1e-9);
 });
 
+test("the upstairs bedroom keeps the player below the painted rear wall", () => {
+  assert.ok(
+    SCENES["player-bedroom"].collisionRects.some(
+      ({ id }) => id === "player-bedroom-rear-wall",
+    ),
+  );
+  assert.equal(canOccupyContinuousPosition("player-bedroom", { x: 7, y: 2.4 }), false);
+  assert.equal(canOccupyContinuousPosition("player-bedroom", { x: 7, y: 2.7 }), true);
+
+  const stopped = movePlayerContinuous(
+    "player-bedroom",
+    SCENES["player-bedroom"].spawn,
+    { x: 0, y: -1 },
+    3_000,
+  );
+  assert.ok(
+    stopped.y >= 2.67 && stopped.y <= 2.75,
+    `expected the rear wall to stop upward travel, received y=${stopped.y}`,
+  );
+  assert.equal(canOccupyContinuousPosition("player-bedroom", stopped), true);
+  assertWalkablePolyline(
+    "player-bedroom",
+    [SCENES["player-bedroom"].spawn, { x: 7, y: 8.05 }],
+    "bedroom stair corridor",
+  );
+});
+
 test("continuous movement substeps prevent tunneling through a blocked exit", () => {
   const result = movePlayerContinuous("coral-home", { x: 5, y: 6 }, { x: 0, y: 1 }, 1000);
   assert.ok(result.y >= 6.19 && result.y <= 6.3, `expected to stop before exit, received y=${result.y}`);

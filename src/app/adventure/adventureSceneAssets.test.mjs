@@ -32,7 +32,7 @@ test("scene asset collection includes ground, unique layered art, and unique cha
     "/objects/tree.png",
     "/objects/bench.png",
     "/images/adventure/player-sprites-512-v3.webp",
-    "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
+    "/images/adventure/fisherman-wyeth-sprites-512-v3.webp",
   ]);
   assert.equal(Object.isFrozen(paths), true);
   assert.equal(getAdventureCharacterSpriteAssetPath("unknown"), null);
@@ -155,18 +155,18 @@ test("Elverson's town manifest covers its ground, layered objects, and resident 
   }
   for (const residentPath of [
     "/images/adventure/player-sprites-512-v3.webp",
-    "/images/adventure/fisherman-wyeth-sprites-512-v2.webp",
-    "/images/adventure/town-adult-sprites-512-v2.webp",
-    "/images/adventure/dorian-sprites-512-v2.webp",
+    "/images/adventure/fisherman-wyeth-sprites-512-v3.webp",
+    "/images/adventure/town-adult-sprites-512-v3.webp",
+    "/images/adventure/dorian-sprites-512-v3.webp",
   ]) {
     assert.ok(paths.includes(residentPath), `${residentPath} must be preloaded`);
   }
   assert.ok(
-    paths.includes("/images/adventure/explorer-jordan-sprites-512-v2.webp"),
+    paths.includes("/images/adventure/explorer-jordan-sprites-512-v3.webp"),
     "the dock-speech crowd profiles should be preloaded while the player explores town",
   );
   assert.ok(
-    paths.includes("/images/adventure/mr-easterling-sprites-627-v3.webp"),
+    paths.includes("/images/adventure/mr-easterling-sprites-627-v4.webp"),
     "the progression-staged dock speaker should be preloaded even though he is not authored",
   );
   assert.equal(paths.length, new Set(paths).size);
