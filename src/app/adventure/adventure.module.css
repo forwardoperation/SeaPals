@@ -1839,8 +1839,8 @@
 }
 
 /* Behavior classes refine the broad locomotion profile with authored habitat
- * features. Each social group shares one centroid track, so its presentation
- * members remain cohesive while the whole group follows the same route. */
+ * features. These tracks remain the non-school fallback; live schools use the
+ * same authored route as their shared boids target. */
 .aquariumGalleryBehaviorShelterSchool,
 .aquariumGalleryBehaviorContourSchool,
 .aquariumGalleryBehaviorCrypticGrazer,
@@ -2030,6 +2030,69 @@
 
 .aquariumGalleryBehaviorSubstrateGrazer .aquariumGalleryResidentBody {
   animation: none;
+}
+
+/* Native atlas sprites face right. Moving fish use stage-relative velocity to
+ * set this live direction, avoiding backward swimming through route reversals. */
+.aquariumGalleryVelocityFacing:not(.aquariumGalleryLiveSchool) .aquariumGalleryResidentBody {
+  animation:
+    aquariumGalleryResidentFloat
+    4.8s
+    ease-in-out
+    var(--aquarium-gallery-member-float-delay, 0s)
+    infinite;
+}
+
+.aquariumGalleryVelocityFacing[data-facing="right"]:not(.aquariumGalleryLiveSchool) .aquariumGalleryResidentBody {
+  left: var(--aquarium-gallery-member-right-x, var(--aquarium-gallery-member-x, 0%));
+}
+
+.aquariumGalleryVelocityFacing[data-facing="left"]:not(.aquariumGalleryLiveSchool) .aquariumGalleryResidentBody {
+  left: var(--aquarium-gallery-member-left-x, var(--aquarium-gallery-member-x, 0%));
+}
+
+/* A pair turns in place and naturally exchanges which fish leads. Keeping the
+ * companion's world-space offset avoids snapping it through its partner when
+ * the velocity-derived sprite facing changes. */
+.aquariumGalleryVelocityFacing[data-social-formation="pair"]:not(.aquariumGalleryLiveSchool) .aquariumGalleryResidentBody {
+  left: var(--aquarium-gallery-member-world-x, var(--aquarium-gallery-member-x, 0%));
+}
+
+/* A boids track fills the glass. Every member owns its position and velocity;
+ * the authored biological/depth scales remain separate multipliers. */
+.aquariumGalleryLiveSchool {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  animation: none !important;
+  transform: none;
+  will-change: auto;
+}
+
+.aquariumGalleryLiveSchool .aquariumGalleryResidentBody {
+  top: var(--aquarium-gallery-boid-y, 50%);
+  left: var(--aquarium-gallery-boid-x, 50%);
+  width: var(--resident-size, 6%);
+  height: auto;
+  aspect-ratio: 1;
+  opacity: 1;
+  animation: none;
+  transform:
+    translate(-50%, -50%)
+    scale(var(--aquarium-gallery-member-scale, 1))
+    scale(var(--aquarium-gallery-resident-biological-scale, 1))
+    scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
+    scaleX(var(--aquarium-gallery-resident-direction, 1));
+  will-change: left, top, transform;
+}
+
+.aquariumGalleryApexTank .aquariumGalleryLiveSchool .aquariumGalleryResidentBody {
+  width: var(--resident-size, 11%);
+}
+
+.aquariumGalleryLiveSchool[data-boids-phase="hide"] .aquariumGalleryResidentBody {
+  opacity: 0.42;
 }
 
 .aquariumGalleryTankFrame {
@@ -2564,6 +2627,14 @@
   animation: none !important;
 }
 
+.reducedMotionMode .aquariumGalleryLiveSchool,
+.aquariumGalleryReducedMotion .aquariumGalleryLiveSchool {
+  inset: 0 !important;
+  width: 100%;
+  height: 100%;
+  transform: none !important;
+}
+
 .highContrastMode .aquariumGalleryTankFrame,
 .highContrastMode .aquariumGalleryPlaque,
 .highContrastMode .aquariumGalleryEmpty,
@@ -2599,6 +2670,13 @@
   }
 
   .aquariumGalleryResidentBody { animation: none !important; }
+
+  .aquariumGalleryLiveSchool {
+    inset: 0 !important;
+    width: 100%;
+    height: 100%;
+    transform: none !important;
+  }
 }
 
 @media (forced-colors: active) {
