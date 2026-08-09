@@ -520,9 +520,15 @@ test("contour and shelter schools sustain smooth non-stalling motion for sixty s
       bounds: { minX: 3, maxX: 97, minY: 5, maxY: 94 },
     });
     let previousAgents = state.agents;
+    let previousAccelerations = state.agents.map(() => ({ x: 0, y: 0 }));
+    let previousHeadingChanges = state.agents.map(() => 0);
     let previousCenter = centroid(state.agents);
     let twoSecondPath = 0;
     let windowSteps = 0;
+    const accelerationJerks = [];
+    let headingChangeTotal = 0;
+    let headingChangeSamples = 0;
+    let abruptTurnReversals = 0;
     for (let step = 0; step < 1800; step += 1) {
       state = stepAquariumBoids(state);
       const center = centroid(state.agents);
@@ -541,6 +547,29 @@ test("contour and shelter schools sustain smooth non-stalling motion for sixty s
           Math.sin(agent.heading - previous.heading),
           Math.cos(agent.heading - previous.heading),
         ));
+        const signedHeadingChange = Math.atan2(
+          Math.sin(agent.heading - previous.heading),
+          Math.cos(agent.heading - previous.heading),
+        );
+        const previousAcceleration = previousAccelerations[agentIndex];
+        const accelerationX = (agent.vx - previous.vx) / state.config.fixedStepSeconds;
+        const accelerationY = (agent.vy - previous.vy) / state.config.fixedStepSeconds;
+        if (step > 30) {
+          accelerationJerks.push(Math.hypot(
+            accelerationX - previousAcceleration.x,
+            accelerationY - previousAcceleration.y,
+          ) / state.config.fixedStepSeconds);
+          headingChangeTotal += headingChange;
+          headingChangeSamples += 1;
+          const previousHeadingChange = previousHeadingChanges[agentIndex];
+          if (
+            Math.sign(signedHeadingChange) !== Math.sign(previousHeadingChange)
+            && Math.abs(signedHeadingChange) > 0.005
+            && Math.abs(previousHeadingChange) > 0.005
+          ) abruptTurnReversals += 1;
+        }
+        previousAccelerations[agentIndex] = { x: accelerationX, y: accelerationY };
+        previousHeadingChanges[agentIndex] = signedHeadingChange;
         assert.ok(speed >= state.config.minSpeed - 0.02, `${scenario.id} speed floor`);
         assert.ok(
           acceleration <= (state.config.maxForce * 1.6) + 0.1,
@@ -556,6 +585,22 @@ test("contour and shelter schools sustain smooth non-stalling motion for sixty s
         windowSteps = 0;
       }
     }
+    accelerationJerks.sort((left, right) => left - right);
+    const ninetyFifthPercentileJerk = accelerationJerks[
+      Math.floor(accelerationJerks.length * 0.95)
+    ];
+    assert.ok(
+      ninetyFifthPercentileJerk < 50,
+      `${scenario.id} separation/steering must not chatter`,
+    );
+    assert.ok(
+      (headingChangeTotal / headingChangeSamples) < 3 * (Math.PI / 180),
+      `${scenario.id} average heading changes must remain fluid`,
+    );
+    assert.ok(
+      abruptTurnReversals <= scenario.movementProfile.groupSize * 8,
+      `${scenario.id} must not rapidly alternate its turn direction`,
+    );
   }
 });
 
@@ -614,6 +659,10 @@ test("agents stay bounded, finite, and expose velocity-derived native-right faci
         agent.depth,
         agent.wanderPhase,
         agent.wanderRate,
+        agent.ax,
+        agent.ay,
+        agent.steeringAx,
+        agent.steeringAy,
       ]) {
         assert.ok(Number.isFinite(value));
       }

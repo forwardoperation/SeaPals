@@ -26,9 +26,10 @@ const BEHAVIOR_TUNING = Object.freeze({
     cohesionWeight: 0.92,
     targetWeight: 1.1,
     initialSpreadMultiplier: 1,
-    separationRadiusMultiplier: 0.88,
+    separationRadiusMultiplier: 1.2,
     wanderWeight: 0.3,
     wanderSpacingAmplitude: 0.045,
+    steeringResponsePerSecond: 9,
     refugeStyle: null,
   }),
   "shelter-school": Object.freeze({
@@ -40,9 +41,10 @@ const BEHAVIOR_TUNING = Object.freeze({
     cohesionWeight: 0.82,
     targetWeight: 1.05,
     initialSpreadMultiplier: 1.25,
-    separationRadiusMultiplier: 1.15,
+    separationRadiusMultiplier: 1.5,
     wanderWeight: 0.38,
     wanderSpacingAmplitude: 0.09,
+    steeringResponsePerSecond: 10,
     refugeStyle: "loose",
   }),
   "cover-school-ball": Object.freeze({
@@ -54,9 +56,10 @@ const BEHAVIOR_TUNING = Object.freeze({
     cohesionWeight: 0.78,
     targetWeight: 1,
     initialSpreadMultiplier: 0.62,
-    separationRadiusMultiplier: 0.65,
+    separationRadiusMultiplier: 0.82,
     wanderWeight: 0.24,
     wanderSpacingAmplitude: 0.06,
+    steeringResponsePerSecond: 12,
     refugeStyle: "compact",
   }),
 });
@@ -310,7 +313,7 @@ function phaseTuning(config, phase) {
   if (phase === "dart") {
     return config.refuge.style === "compact"
       ? {
-        speed: 2, separation: 1.15, alignment: 1.35, cohesion: 1.3, target: 2.8, wander: 0.8,
+        speed: 2, separation: 1, alignment: 1.35, cohesion: 1.3, target: 2.8, wander: 0.8,
       }
       : {
         speed: 1.55, separation: 0.95, alignment: 1.2, cohesion: 1.2, target: 2.1, wander: 0.85,
@@ -319,7 +322,7 @@ function phaseTuning(config, phase) {
   if (phase === "hide") {
     return config.refuge.style === "compact"
       ? {
-        speed: 0.42, separation: 1.25, alignment: 0.8, cohesion: 1.25, target: 3.1, wander: 0.55,
+        speed: 0.42, separation: 1.1, alignment: 0.8, cohesion: 1.25, target: 3.1, wander: 0.55,
       }
       : {
         speed: 0.58, separation: 1, alignment: 0.85, cohesion: 1.15, target: 2.25, wander: 0.7,
@@ -417,9 +420,19 @@ function targetInsideSteeringEnvelope(target, config) {
   };
 }
 
+function interactionFalloff(distance, radius, fullStrengthRatio) {
+  if (distance >= radius) return 0;
+  const fullStrengthDistance = radius * fullStrengthRatio;
+  if (distance <= fullStrengthDistance) return 1;
+  const progress = (distance - fullStrengthDistance) / (radius - fullStrengthDistance);
+  const smoothStep = progress * progress * (3 - (2 * progress));
+  return 1 - smoothStep;
+}
+
 function groupForces(agent, agentIndex, agents, config, phaseScale, timeSeconds) {
-  let neighbors = 0;
+  let neighborWeight = 0;
   let separationNeighbors = 0;
+  let separationPressure = 0;
   let alignmentX = 0;
   let alignmentY = 0;
   let centerX = 0;
@@ -445,22 +458,26 @@ function groupForces(agent, agentIndex, agents, config, phaseScale, timeSeconds)
       const angle = (lowerIndex * 2.399963229728653) + (upperIndex * 0.618033988749895);
       const sign = agentIndex < otherIndex ? -1 : 1;
       separationNeighbors += 1;
+      separationPressure += 1;
       separationX += Math.cos(angle) * sign;
       separationY += Math.sin(angle) * sign;
       continue;
     }
     const distance = Math.sqrt(distanceSquared);
-    if (distance <= config.perceptionRadius) {
-      neighbors += 1;
-      alignmentX += other.vx;
-      alignmentY += other.vy;
-      centerX += other.x;
-      centerY += other.y;
+    const perceptionWeight = interactionFalloff(distance, config.perceptionRadius, 0.68);
+    if (perceptionWeight > 0) {
+      neighborWeight += perceptionWeight;
+      alignmentX += other.vx * perceptionWeight;
+      alignmentY += other.vy * perceptionWeight;
+      centerX += other.x * perceptionWeight;
+      centerY += other.y * perceptionWeight;
     }
-    if (distance <= separationRadius) {
+    const separationWeight = interactionFalloff(distance, separationRadius, 0.55);
+    if (separationWeight > 0) {
       separationNeighbors += 1;
-      separationX += offsetX / distanceSquared;
-      separationY += offsetY / distanceSquared;
+      separationPressure += separationWeight;
+      separationX += (offsetX / distance) * separationWeight;
+      separationY += (offsetY / distance) * separationWeight;
     }
   }
 
@@ -474,24 +491,36 @@ function groupForces(agent, agentIndex, agents, config, phaseScale, timeSeconds)
       x: separationX / separationNeighbors,
       y: separationY / separationNeighbors,
     }, desiredSpeed);
+    const pressure = separationPressure / separationNeighbors;
     separation = limited(
-      { x: desired.x - agent.vx, y: desired.y - agent.vy },
+      {
+        x: desired.x * pressure,
+        y: desired.y * pressure,
+      },
       config.maxForce,
     );
   }
-  if (neighbors > 0) {
+  if (neighborWeight > 0) {
+    const confidence = clamp(neighborWeight, 0, 1);
     const desiredAlignment = scaledTo({
-      x: alignmentX / neighbors,
-      y: alignmentY / neighbors,
+      x: alignmentX / neighborWeight,
+      y: alignmentY / neighborWeight,
     }, desiredSpeed);
     alignment = limited(
-      { x: desiredAlignment.x - agent.vx, y: desiredAlignment.y - agent.vy },
+      {
+        x: (desiredAlignment.x - agent.vx) * confidence,
+        y: (desiredAlignment.y - agent.vy) * confidence,
+      },
       config.maxForce,
     );
-    cohesion = steeringToward(agent, {
-      x: centerX / neighbors,
-      y: centerY / neighbors,
+    const cohesionSteering = steeringToward(agent, {
+      x: centerX / neighborWeight,
+      y: centerY / neighborWeight,
     }, desiredSpeed, config.maxForce);
+    cohesion = {
+      x: cohesionSteering.x * confidence,
+      y: cohesionSteering.y * confidence,
+    };
   }
 
   return { separation, alignment, cohesion };
@@ -537,19 +566,37 @@ function updatedAgent(
   const desiredSpeed = config.maxSpeed * phaseScale.speed;
   const boundary = boundarySteering(agent, config);
   const wander = wanderSteering(agent, timeSeconds, config, phaseScale);
-  const acceleration = limited({
-    x: (group.separation.x * config.separationWeight * phaseScale.separation)
-      + (group.alignment.x * config.alignmentWeight * phaseScale.alignment)
+  const separationAcceleration = {
+    x: group.separation.x * config.separationWeight * phaseScale.separation,
+    y: group.separation.y * config.separationWeight * phaseScale.separation,
+  };
+  const rawSteeringAcceleration = limited({
+    x: (group.alignment.x * config.alignmentWeight * phaseScale.alignment)
       + (group.cohesion.x * config.cohesionWeight * phaseScale.cohesion)
       + (centroidSteering.x * config.targetWeight * phaseScale.target)
       + (boundary.x * config.boundaryWeight)
       + wander.x,
-    y: (group.separation.y * config.separationWeight * phaseScale.separation)
-      + (group.alignment.y * config.alignmentWeight * phaseScale.alignment)
+    y: (group.alignment.y * config.alignmentWeight * phaseScale.alignment)
       + (group.cohesion.y * config.cohesionWeight * phaseScale.cohesion)
       + (centroidSteering.y * config.targetWeight * phaseScale.target)
       + (boundary.y * config.boundaryWeight)
       + wander.y,
+  }, config.maxForce * phaseScale.speed);
+  const responseMultiplier = clamp(phaseScale.speed, 0.75, 1.5);
+  const accelerationBlend = 1 - Math.exp(
+    -config.steeringResponsePerSecond * responseMultiplier * config.fixedStepSeconds,
+  );
+  const previousSteeringX = finiteNumber(agent.steeringAx, agent.ax);
+  const previousSteeringY = finiteNumber(agent.steeringAy, agent.ay);
+  const steeringAcceleration = {
+    x: previousSteeringX
+      + ((rawSteeringAcceleration.x - previousSteeringX) * accelerationBlend),
+    y: previousSteeringY
+      + ((rawSteeringAcceleration.y - previousSteeringY) * accelerationBlend),
+  };
+  const acceleration = limited({
+    x: steeringAcceleration.x + separationAcceleration.x,
+    y: steeringAcceleration.y + separationAcceleration.y,
   }, config.maxForce * phaseScale.speed);
 
   const previousSpeed = magnitude({ x: agent.vx, y: agent.vy });
@@ -595,6 +642,10 @@ function updatedAgent(
     y,
     vx: velocity.x,
     vy: velocity.y,
+    ax: acceleration.x,
+    ay: acceleration.y,
+    steeringAx: steeringAcceleration.x,
+    steeringAy: steeringAcceleration.y,
     heading,
     direction,
   };
@@ -625,6 +676,10 @@ function initialAgent(value, index, config, random, origin, forward) {
         value.wanderRate,
         config.wanderRateMin + (random() * (config.wanderRateMax - config.wanderRateMin)),
       ),
+      ax: finiteNumber(value.ax, 0),
+      ay: finiteNumber(value.ay, 0),
+      steeringAx: finiteNumber(value.steeringAx, 0),
+      steeringAy: finiteNumber(value.steeringAy, 0),
     };
   }
 
@@ -650,6 +705,10 @@ function initialAgent(value, index, config, random, origin, forward) {
     wanderPhase: random() * Math.PI * 2,
     wanderRate: config.wanderRateMin
       + (random() * (config.wanderRateMax - config.wanderRateMin)),
+    ax: 0,
+    ay: 0,
+    steeringAx: 0,
+    steeringAy: 0,
   };
 }
 
@@ -780,6 +839,14 @@ function buildConfig(options) {
       finiteNumber(options?.wanderSpacingAmplitude, behavior.wanderSpacingAmplitude),
       0,
       0.2,
+    ),
+    steeringResponsePerSecond: clamp(
+      finiteNumber(
+        options?.steeringResponsePerSecond,
+        behavior.steeringResponsePerSecond,
+      ),
+      1,
+      30,
     ),
     wanderRateMin: clamp(finiteNumber(options?.wanderRateMin, 0.62), 0.1, 2),
     wanderRateMax: clamp(finiteNumber(options?.wanderRateMax, 1.08), 0.1, 2),

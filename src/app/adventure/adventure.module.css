@@ -2094,10 +2094,6 @@
   width: var(--resident-size, 11%);
 }
 
-.aquariumGalleryLiveSchool[data-boids-phase="hide"] .aquariumGalleryResidentBody {
-  opacity: 0.42;
-}
-
 .aquariumGalleryTankFrame {
   position: absolute;
   z-index: 6;

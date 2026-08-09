@@ -364,7 +364,10 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
     styles,
     /\.aquariumGalleryVelocityFacing\[data-social-formation="pair"\]:not\(\.aquariumGalleryLiveSchool\)[\s\S]*?--aquarium-gallery-member-world-x/,
   );
-  assert.match(styles, /\.aquariumGalleryLiveSchool\[data-boids-phase="hide"\][\s\S]*?opacity:\s*0\.42/);
+  assert.doesNotMatch(
+    styles,
+    /\.aquariumGalleryLiveSchool\[data-boids-phase="hide"\][\s\S]*?opacity:/,
+  );
   assert.match(
     styles,
     /\.aquariumGalleryBehaviorTerritorialPair\s*\{[\s\S]*?animation-name:\s*aquariumGalleryResidentTerritorialRoute;[\s\S]*?animation-timing-function:\s*linear/,
