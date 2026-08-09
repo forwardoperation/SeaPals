@@ -45,16 +45,13 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.doesNotMatch(modal, /handNetCatchTray/);
   assert.doesNotMatch(modal, /handNetGuidanceButton/);
   assert.doesNotMatch(modal, /handNetCollectionSummary/);
-  assert.match(modal, /--hand-net-player-x/);
-  assert.match(modal, /--hand-net-player-y/);
-  assert.match(modal, /--hand-net-player-velocity-x/);
-  assert.match(modal, /--hand-net-player-velocity-y/);
-  assert.match(modal, /--hand-net-player-speed-ratio/);
-  assert.match(modal, /handNetCaustics/);
-  assert.match(modal, /handNetCausticWake/);
-  assert.match(modal, /data-hand-net-effect="surface-caustics" aria-hidden="true"/);
+  assert.match(modal, /interpolateHandNetRenderPositions/);
+  assert.match(modal, /element\.style\.translate/);
+  assert.match(modal, /ref=\{creatureNodeRef\(creature\.id\)\}/);
+  assert.match(modal, /ref=\{playerElementRef\}/);
+  assert.doesNotMatch(modal, /--hand-net-player-(?:x|y|velocity|speed|motion)/);
+  assert.doesNotMatch(modal, /handNetCaustics|handNetCausticWake/);
   assert.match(modal, /data-hand-net-effect="surface-veil" aria-hidden="true"/);
-  assert.match(modal, /data-hand-net-effect="wading-wake" aria-hidden="true"/);
   assert.match(modal, /state\.presentation\.netImpact/);
   assert.match(modal, /key=\{`\$\{seedRef\.current\}-\$\{netSplash\.sequence\}`\}/);
   assert.match(modal, /handNetNetSplashActive/);
@@ -73,16 +70,13 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(styles, /\.handNetShallows[\s\S]*?aspect-ratio:\s*3 \/ 2/);
   assert.match(styles, /var\(--hand-net-tidepool-image\)/);
   assert.match(styles, /\.handNetCreature[\s\S]*?background-size:\s*500% 200%/);
-  assert.match(styles, /@keyframes handNetWaveDrift/);
+  assert.match(styles, /\.handNetShallowsMoving \.handNetWave\s*\{[\s\S]*?animation:\s*none/);
   assert.match(styles, /@keyframes handNetScoop/);
-  assert.match(styles, /\.handNetCaustics[\s\S]*?pointer-events:\s*none/);
   assert.match(styles, /\.handNetSurfaceVeil[\s\S]*?z-index:\s*8/);
   assert.match(styles, /\.handNetSurfaceVeil[\s\S]*?pointer-events:\s*none/);
   assert.match(styles, /\.handNetPlayer[\s\S]*?background-size:\s*700% 400%/);
   assert.match(styles, /\.handNetControlDock[\s\S]*?justify-content:\s*space-between/);
-  assert.match(styles, /\.handNetCausticWake[\s\S]*?var\(--hand-net-player-motion-angle\)/);
   assert.match(styles, /\.handNetNetSplash[\s\S]*?pointer-events:\s*none/);
-  assert.match(styles, /@keyframes handNetCausticsDrift/);
   assert.match(styles, /@keyframes handNetSplashFlash/);
   assert.match(styles, /@keyframes handNetVictoryPose/);
   assert.match(styles, /@keyframes handNetCatchBannerEnter/);
@@ -133,7 +127,6 @@ test("keyboard, touch, focus, live status, and reduced-motion affordances are ex
   assert.doesNotMatch(modal, /Gentle guidance|assistedMode/);
   assert.match(styles, /\.reducedMotionMode \.handNetWave,[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.handNetCreature/);
-  assert.match(styles, /\.reducedMotionMode \.handNetCaustics[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /\.reducedMotionMode \.handNetSurfaceVeil[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.handNetNetSplash::before/);
   assert.match(styles, /\.reducedMotionMode \.handNetPlayerCelebrating,[\s\S]*?animation:\s*none !important/);
@@ -158,14 +151,32 @@ test("desktop hand-net input handles focused controls once and stays isolated fr
   assert.match(modal, /nativeTextEntry[\s\S]*?\[contenteditable='true'\]/);
 });
 
-test("the hand-net RAF commits React state only when fixed simulation work is available", () => {
-  assert.match(modal, /consumeHandNetFrameElapsed\(simulationAccumulatorMs, elapsed\)/);
-  assert.match(modal, /simulationAccumulatorMs = frame\.remainderMs/);
+test("the hand-net RAF interpolates compositor positions while React stays fixed-step", () => {
+  assert.match(modal, /consumeHandNetFrameElapsed\(clock\.remainderMs, elapsed\)/);
+  assert.match(modal, /clock\.remainderMs = clock\.current\.phase/);
+  assert.match(modal, /clock\.previous = clock\.current;[\s\S]*?tickHandNetState\(clock\.current, HAND_NET_SIMULATION_STEP_MS\)/);
+  assert.match(modal, /paintRenderPositions\(interpolateHandNetRenderPositions\(/);
+  assert.match(modal, /element\.style\.translate =/);
+  assert.match(modal, /new ResizeObserver\(measureAndPaint\)/);
   assert.match(
     modal,
-    /if \(frame\.simulationElapsedMs > 0\) \{[\s\S]*?setState\(\(current\) => tickHandNetState\(current, frame\.simulationElapsedMs\)\)/,
+    /if \(frame\.simulationElapsedMs > 0\) \{[\s\S]*?setState\(clock\.current\)/,
   );
   assert.doesNotMatch(modal, /tickHandNetState\(current, elapsed\)/);
+  assert.doesNotMatch(modal, /left:\s*`\$\{\(creature\.position/);
+  assert.doesNotMatch(modal, /top:\s*`\$\{\(creature\.position/);
+  assert.doesNotMatch(modal, /left:\s*celebrating/);
+  assert.doesNotMatch(
+    styles,
+    /\.handNetCreature\s*\{[^}]*transition:[^;}]*(?:left|top)/,
+  );
+  assert.doesNotMatch(
+    styles,
+    /\.handNetPlayer\s*\{[^}]*transition:[^;}]*(?:left|top)/,
+  );
+  assert.match(styles, /\.handNetCreature\s*\{[\s\S]*?will-change:\s*translate/);
+  assert.match(styles, /\.handNetPlayer\s*\{[\s\S]*?will-change:\s*translate/);
+  assert.match(styles, /\.handNetPlayerCelebrating\s*\{[\s\S]*?translate:\s*none !important/);
 });
 
 test("delivered creatures populate six scenic tanks directly inside the scrolling Aquarium galleries", () => {
