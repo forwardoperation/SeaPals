@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   AQUARIUM_BOIDS_FIXED_STEP_SECONDS,
+  aquariumFishPitchDegrees,
   createAquariumBoids,
   createAquariumBoidsSimulationKey,
   stepAquariumBoids,
@@ -64,6 +65,11 @@ const AQUARIUM_BOIDS_BOUNDS = Object.freeze({
 const MAX_BOIDS_STEPS_PER_FRAME = 5;
 const FACING_DEAD_ZONE_PIXELS_PER_SECOND = 2;
 const FACING_WRAP_STAGE_FRACTION = 0.36;
+const DEFAULT_FISH_MAX_PITCH_DEGREES = 20;
+const ABSOLUTE_FISH_MAX_PITCH_DEGREES = 25;
+const PITCH_SMOOTHING_RATE_PER_SECOND = 9;
+const BOID_PITCH_DEAD_ZONE = 0.08;
+const TRACK_PITCH_DEAD_ZONE_PIXELS_PER_SECOND = 1.5;
 const LIVE_BOIDS_BEHAVIOR_KINDS = new Set([
   "cover-school-ball",
   "shelter-school",
@@ -121,6 +127,30 @@ function setElementFacing(element, direction) {
     "--aquarium-gallery-resident-direction",
     String(normalizedDirection),
   );
+}
+
+function smoothPitchDegrees(currentPitch, targetPitch, elapsedSeconds) {
+  const elapsed = clamp(finiteNumber(elapsedSeconds, 0), 0, 0.1);
+  const blend = 1 - Math.exp(-PITCH_SMOOTHING_RATE_PER_SECOND * elapsed);
+  return finiteNumber(currentPitch, 0)
+    + ((finiteNumber(targetPitch, 0) - finiteNumber(currentPitch, 0)) * blend);
+}
+
+function setElementPitch(element, pitchDegrees) {
+  if (!element) return;
+  const pitch = clamp(
+    finiteNumber(pitchDegrees, 0),
+    -ABSOLUTE_FISH_MAX_PITCH_DEGREES,
+    ABSOLUTE_FISH_MAX_PITCH_DEGREES,
+  );
+  const serializedPitch = pitch.toFixed(2);
+  element.dataset.pitchDegrees = serializedPitch;
+  element.style.setProperty("--aquarium-gallery-resident-pitch", `${serializedPitch}deg`);
+}
+
+function setElementMotion(element, direction, pitchDegrees) {
+  setElementFacing(element, direction);
+  setElementPitch(element, pitchDegrees);
 }
 
 function cssUrl(path) {
@@ -212,6 +242,25 @@ function residentUsesVelocityFacing(occupant, movementProfile) {
   return movementProfile?.kind !== "anchored"
     && occupant?.category !== "coral"
     && occupant?.category !== "invertebrate";
+}
+
+function residentMaxPitchDegrees(movementProfile) {
+  const behaviorKind = movementProfile?.behaviorKind;
+  const fallback = behaviorKind === "pelagic-apex-glide"
+    || behaviorKind === "filter-feeder-glide"
+    ? 9
+    : movementProfile?.kind === "school"
+      ? DEFAULT_FISH_MAX_PITCH_DEGREES
+      : 16;
+  return clamp(
+    finiteNumber(
+      movementProfile?.presentation?.maxPitchDegrees
+        ?? movementProfile?.maxPitchDegrees,
+      fallback,
+    ),
+    0,
+    ABSOLUTE_FISH_MAX_PITCH_DEGREES,
+  );
 }
 
 function residentBehaviorClass(behaviorKind) {
@@ -624,6 +673,7 @@ function AquariumGalleryResident({
   direction,
   index,
   liveBoids,
+  maxPitchDegrees,
   memberCount,
   movementProfile,
   occupant,
@@ -656,12 +706,14 @@ function AquariumGalleryResident({
     residentTrackConfigsRef.current.set(trackKey, {
       initialBoids,
       liveBoids,
+      maxPitchDegrees,
       simulationKey,
       velocityFacing,
     });
   }, [
     initialBoids,
     liveBoids,
+    maxPitchDegrees,
     residentBoidsRef,
     residentTrackConfigsRef,
     residentTracksRef,
@@ -691,6 +743,8 @@ function AquariumGalleryResident({
       data-live-boids={liveBoids ? "true" : undefined}
       data-boids-phase={initialBoids?.phase}
       data-facing={facingLabel(initialFacing)}
+      data-max-pitch-degrees={maxPitchDegrees}
+      data-pitch-degrees="0.00"
       title={`${occupant.name ?? occupant.id ?? "Aquarium resident"}${
         finiteNumber(occupant.quantity, 1) > 1 ? ` x${occupant.quantity}` : ""
       }`}
@@ -714,6 +768,7 @@ function AquariumGalleryResident({
           data-facing={facingLabel(
             initialBoids?.agents[memberIndex]?.direction ?? direction,
           )}
+          data-pitch-degrees="0.00"
         />
       ))}
     </span>
@@ -755,6 +810,7 @@ export default function AdventureAquariumGallery({
         const direction = residentInitialDirection(movementProfile, authoredDirection);
         const memberCount = residentMemberCount(movementProfile);
         const liveBoids = residentUsesLiveBoids(movementProfile, memberCount);
+        const maxPitchDegrees = residentMaxPitchDegrees(movementProfile);
         const velocityFacing = residentUsesVelocityFacing(occupant, movementProfile);
         const trackKey = residentTrackKey(tank.id, occupant, index);
         const boidsOptions = residentBoidsOptions(
@@ -772,6 +828,7 @@ export default function AdventureAquariumGallery({
           boidsOptions,
           direction,
           liveBoids,
+          maxPitchDegrees,
           memberCount,
           movementProfile,
           simulationKey,
@@ -801,7 +858,17 @@ export default function AdventureAquariumGallery({
   const residentBoidsRef = useRef(new Map());
 
   useEffect(() => {
-    if (!hasGallery || reducedMotion) {
+    if (!hasGallery) {
+      residentBoidsRef.current.clear();
+      return undefined;
+    }
+    if (reducedMotion) {
+      residentTracksRef.current.forEach((track) => {
+        setElementPitch(track, 0);
+        track.querySelectorAll("[data-school-member]").forEach((body) => {
+          setElementPitch(body, 0);
+        });
+      });
       residentBoidsRef.current.clear();
       return undefined;
     }
@@ -811,6 +878,7 @@ export default function AdventureAquariumGallery({
     let accumulatorSeconds = 0;
     const previousTrackPositions = new Map();
     const previousDirections = new Map();
+    const previousPitches = new Map();
     const resetFrameClock = () => {
       previousTimestamp = undefined;
       accumulatorSeconds = 0;
@@ -840,7 +908,7 @@ export default function AdventureAquariumGallery({
       const activeTrackKeys = new Set();
       const stageRects = new Map();
       const boidsUpdates = [];
-      const facingUpdates = [];
+      const motionUpdates = [];
       for (const [trackKey, config] of residentTrackConfigsRef.current) {
         const track = residentTracksRef.current.get(trackKey);
         if (!track?.isConnected) continue;
@@ -848,16 +916,43 @@ export default function AdventureAquariumGallery({
 
         if (config.liveBoids) {
           let simulation = residentBoidsRef.current.get(trackKey);
-          if (!simulation || simulation.simulationKey !== config.simulationKey) {
+          if (
+            !simulation
+            || simulation.simulationKey !== config.simulationKey
+            || !simulation.previousState
+          ) {
             simulation = {
               simulationKey: config.simulationKey,
-              state: config.initialBoids,
+              previousState: config.initialBoids,
+              state: stepAquariumBoids(config.initialBoids),
             };
           }
           if (stepCount > 0) {
-            simulation.state = stepAquariumBoids(simulation.state, stepCount);
-            boidsUpdates.push({ track, state: simulation.state });
+            for (let step = 0; step < stepCount; step += 1) {
+              simulation.previousState = simulation.state;
+              simulation.state = stepAquariumBoids(simulation.state);
+            }
           }
+          const stage = track.parentElement;
+          let stageRect = stage ? stageRects.get(stage) : null;
+          if (stage && !stageRect) {
+            stageRect = stage.getBoundingClientRect();
+            stageRects.set(stage, stageRect);
+          }
+          boidsUpdates.push({
+            interpolationAlpha: clamp(
+              accumulatorSeconds / AQUARIUM_BOIDS_FIXED_STEP_SECONDS,
+              0,
+              1,
+            ),
+            maxPitchDegrees: config.maxPitchDegrees,
+            previousState: simulation.previousState,
+            stageHeight: stageRect?.height ?? 100,
+            stageWidth: stageRect?.width ?? 100,
+            track,
+            trackKey,
+            state: simulation.state,
+          });
           residentBoidsRef.current.set(trackKey, simulation);
           continue;
         }
@@ -873,35 +968,100 @@ export default function AdventureAquariumGallery({
         }
         const trackRect = track.getBoundingClientRect();
         const relativeX = trackRect.left - stageRect.left;
-        const previousX = previousTrackPositions.get(trackKey);
-        previousTrackPositions.set(trackKey, relativeX);
-        if (previousX == null || stageRect.width <= 0) continue;
-        const deltaX = relativeX - previousX;
-        if (Math.abs(deltaX) >= stageRect.width * FACING_WRAP_STAGE_FRACTION) continue;
+        const relativeY = trackRect.top - stageRect.top;
+        const previousPosition = previousTrackPositions.get(trackKey);
+        previousTrackPositions.set(trackKey, { x: relativeX, y: relativeY });
+        if (!previousPosition || stageRect.width <= 0 || stageRect.height <= 0) continue;
+        const deltaX = relativeX - previousPosition.x;
+        const deltaY = relativeY - previousPosition.y;
+        if (
+          Math.abs(deltaX) >= stageRect.width * FACING_WRAP_STAGE_FRACTION
+          || Math.abs(deltaY) >= stageRect.height * FACING_WRAP_STAGE_FRACTION
+        ) continue;
         const velocityX = deltaX / elapsedSeconds;
-        if (Math.abs(velocityX) <= FACING_DEAD_ZONE_PIXELS_PER_SECOND) continue;
-        const direction = velocityX > 0 ? 1 : -1;
-        if (previousDirections.get(trackKey) === direction) continue;
-        previousDirections.set(trackKey, direction);
-        facingUpdates.push({ track, direction });
+        const velocityY = deltaY / elapsedSeconds;
+        let direction = previousDirections.get(trackKey)
+          ?? (track.dataset.facing === "left" ? -1 : 1);
+        if (Math.abs(velocityX) > FACING_DEAD_ZONE_PIXELS_PER_SECOND) {
+          direction = velocityX > 0 ? 1 : -1;
+          previousDirections.set(trackKey, direction);
+        }
+        const targetPitch = Math.hypot(velocityX, velocityY)
+          <= TRACK_PITCH_DEAD_ZONE_PIXELS_PER_SECOND
+          ? 0
+          : aquariumFishPitchDegrees(
+            velocityX,
+            velocityY,
+            direction,
+            config.maxPitchDegrees,
+          );
+        const pitch = smoothPitchDegrees(
+          previousPitches.get(trackKey),
+          targetPitch,
+          elapsedSeconds,
+        );
+        previousPitches.set(trackKey, pitch);
+        motionUpdates.push({ direction, pitch, track });
       }
 
       // Apply writes after every stage-relative layout read so camera panning
       // cannot contaminate facing and the loop does not thrash layout.
-      boidsUpdates.forEach(({ track, state }) => {
+      boidsUpdates.forEach(({
+        interpolationAlpha,
+        maxPitchDegrees,
+        previousState,
+        stageHeight,
+        stageWidth,
+        track,
+        trackKey,
+        state,
+      }) => {
         const bodies = track.querySelectorAll("[data-boid-member]");
         state.agents.forEach((agent, memberIndex) => {
           const body = bodies[memberIndex];
           if (!body) return;
-          body.style.setProperty("--aquarium-gallery-boid-x", `${agent.x.toFixed(3)}%`);
-          body.style.setProperty("--aquarium-gallery-boid-y", `${agent.y.toFixed(3)}%`);
+          const previousAgent = previousState.agents[memberIndex] ?? agent;
+          const renderX = previousAgent.x
+            + ((agent.x - previousAgent.x) * interpolationAlpha);
+          const renderY = previousAgent.y
+            + ((agent.y - previousAgent.y) * interpolationAlpha);
+          const renderVelocityX = previousAgent.vx
+            + ((agent.vx - previousAgent.vx) * interpolationAlpha);
+          const renderVelocityY = previousAgent.vy
+            + ((agent.vy - previousAgent.vy) * interpolationAlpha);
+          const renderDirection = Math.abs(renderVelocityX) > BOID_PITCH_DEAD_ZONE
+            ? (renderVelocityX > 0 ? 1 : -1)
+            : previousAgent.direction
+              ?? (body.dataset.facing === "left" ? -1 : 1);
+          body.style.setProperty("--aquarium-gallery-boid-x", `${renderX.toFixed(3)}%`);
+          body.style.setProperty("--aquarium-gallery-boid-y", `${renderY.toFixed(3)}%`);
           body.dataset.boidDepth = agent.depth.toFixed(3);
-          setElementFacing(body, agent.direction);
+          const pitchKey = `${trackKey}:${agent.id ?? memberIndex}`;
+          const pixelVelocityX = renderVelocityX * (stageWidth / 100);
+          const pixelVelocityY = renderVelocityY * (stageHeight / 100);
+          const targetPitch = Math.hypot(pixelVelocityX, pixelVelocityY)
+            <= BOID_PITCH_DEAD_ZONE
+            ? 0
+            : aquariumFishPitchDegrees(
+              pixelVelocityX,
+              pixelVelocityY,
+              renderDirection,
+              maxPitchDegrees,
+            );
+          const pitch = smoothPitchDegrees(
+            previousPitches.get(pitchKey),
+            targetPitch,
+            elapsedSeconds,
+          );
+          previousPitches.set(pitchKey, pitch);
+          setElementMotion(body, renderDirection, pitch);
         });
         track.dataset.boidsPhase = state.phase;
         setElementFacing(track, state.agents[0]?.direction ?? 1);
       });
-      facingUpdates.forEach(({ track, direction }) => setElementFacing(track, direction));
+      motionUpdates.forEach(({ track, direction, pitch }) => {
+        setElementMotion(track, direction, pitch);
+      });
       for (const trackKey of residentBoidsRef.current.keys()) {
         if (!activeTrackKeys.has(trackKey)) residentBoidsRef.current.delete(trackKey);
       }
@@ -959,6 +1119,7 @@ export default function AdventureAquariumGallery({
                   boidsOptions,
                   direction,
                   liveBoids,
+                  maxPitchDegrees,
                   memberCount,
                   movementProfile,
                   simulationKey,
@@ -972,6 +1133,7 @@ export default function AdventureAquariumGallery({
                     direction={direction}
                     index={index}
                     liveBoids={liveBoids}
+                    maxPitchDegrees={maxPitchDegrees}
                     memberCount={memberCount}
                     movementProfile={movementProfile}
                     occupant={occupant}

@@ -203,6 +203,7 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
   assert.match(gallery, /Array\.from\(\{ length: memberCount \}/);
   assert.match(gallery, /data-school-member=\{memberCount > 1/);
   assert.match(gallery, /AQUARIUM_BOIDS_FIXED_STEP_SECONDS/);
+  assert.match(gallery, /aquariumFishPitchDegrees/);
   assert.match(gallery, /createAquariumBoids/);
   assert.match(gallery, /createAquariumBoidsSimulationKey/);
   assert.match(gallery, /trackIdentity: trackKey/);
@@ -232,8 +233,38 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
   assert.match(gallery, /document\.visibilityState !== "visible"/);
   assert.match(gallery, /Math\.floor\(accumulatorSeconds \/ AQUARIUM_BOIDS_FIXED_STEP_SECONDS\)/);
   assert.match(gallery, /trackRect\.left - stageRect\.left/);
+  assert.match(gallery, /trackRect\.top - stageRect\.top/);
   assert.match(gallery, /FACING_WRAP_STAGE_FRACTION/);
-  assert.match(gallery, /setElementFacing\(body, agent\.direction\)/);
+  assert.match(gallery, /setElementMotion\(body, renderDirection, pitch\)/);
+  assert.match(gallery, /setElementMotion\(track, direction, pitch\)/);
+  assert.match(gallery, /Math\.exp\(-PITCH_SMOOTHING_RATE_PER_SECOND \* elapsed\)/);
+  assert.match(gallery, /data-max-pitch-degrees=\{maxPitchDegrees\}/);
+  assert.match(gallery, /data-pitch-degrees="0\.00"/);
+  assert.match(gallery, /previousState: config\.initialBoids/);
+  assert.match(gallery, /state: stepAquariumBoids\(config\.initialBoids\)/);
+  assert.match(
+    gallery,
+    /interpolationAlpha: clamp\([\s\S]*?accumulatorSeconds \/ AQUARIUM_BOIDS_FIXED_STEP_SECONDS/,
+  );
+  assert.match(gallery, /previousAgent\.x[\s\S]*?agent\.x - previousAgent\.x[\s\S]*?interpolationAlpha/);
+  assert.match(gallery, /previousAgent\.y[\s\S]*?agent\.y - previousAgent\.y[\s\S]*?interpolationAlpha/);
+  assert.doesNotMatch(gallery, /agent\.x \+ \(agent\.vx \* renderLeadSeconds\)/);
+  assert.match(gallery, /renderVelocityX \* \(stageWidth \/ 100\)/);
+  assert.match(gallery, /renderVelocityY \* \(stageHeight \/ 100\)/);
+  assert.match(gallery, /maxPitchDegrees: config\.maxPitchDegrees/);
+  assert.match(
+    gallery,
+    /aquariumFishPitchDegrees\([\s\S]*?pixelVelocityX,[\s\S]*?pixelVelocityY,[\s\S]*?renderDirection,[\s\S]*?maxPitchDegrees/,
+  );
+  assert.doesNotMatch(gallery, /track\.dataset\.maxPitchDegrees/);
+  assert.match(
+    gallery,
+    /renderDirection = Math\.abs\(renderVelocityX\)[\s\S]*?: previousAgent\.direction[\s\S]*?body\.dataset\.facing/,
+  );
+  assert.doesNotMatch(
+    gallery,
+    /renderDirection = Math\.abs\(renderVelocityX\)[\s\S]*?: agent\.direction;/,
+  );
   assert.match(gallery, /window\.requestAnimationFrame\(animateResidents\)/);
   assert.match(gallery, /window\.cancelAnimationFrame\(animationFrame\)/);
   assert.doesNotMatch(gallery, /Math\.random/);
@@ -309,6 +340,10 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
     styles,
     /\.aquariumGalleryResidentBody[\s\S]*?scale\(var\(--aquarium-gallery-resident-biological-scale[\s\S]*?scale\(var\(--aquarium-gallery-resident-depth-scale/,
   );
+  assert.match(
+    styles,
+    /\.aquariumGalleryResidentBody[\s\S]*?transform:[\s\S]*?rotate\(var\(--aquarium-gallery-resident-pitch, 0deg\)\)[\s\S]*?scale\(var\(--aquarium-gallery-resident-biological-scale[\s\S]*?scale\(var\(--aquarium-gallery-resident-depth-scale[\s\S]*?scaleX\(var\(--aquarium-gallery-resident-direction/,
+  );
   assert.match(styles, /\.aquariumGalleryResidentTrack[\s\S]*?width:\s*var\(--resident-size, 6%\)/);
   assert.match(styles, /--aquarium-gallery-member-x/);
   assert.match(gallery, /--aquarium-gallery-member-return-x/);
@@ -330,6 +365,14 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
     /\.aquariumGalleryVelocityFacing\[data-social-formation="pair"\]:not\(\.aquariumGalleryLiveSchool\)[\s\S]*?--aquarium-gallery-member-world-x/,
   );
   assert.match(styles, /\.aquariumGalleryLiveSchool\[data-boids-phase="hide"\][\s\S]*?opacity:\s*0\.42/);
+  assert.match(
+    styles,
+    /\.aquariumGalleryBehaviorTerritorialPair\s*\{[\s\S]*?animation-name:\s*aquariumGalleryResidentTerritorialRoute;[\s\S]*?animation-timing-function:\s*linear/,
+  );
+  assert.match(
+    styles,
+    /@keyframes aquariumGalleryResidentTerritorialRoute[\s\S]*?0%, 100%[\s\S]*?route-0-x[\s\S]*?16\.67%[\s\S]*?route-1-x[\s\S]*?33\.33%[\s\S]*?route-2-x[\s\S]*?50%[\s\S]*?route-3-x[\s\S]*?66\.67%[\s\S]*?route-4-x[\s\S]*?83\.33%[\s\S]*?route-5-x/,
+  );
   assert.match(
     styles,
     /@keyframes aquariumGalleryResidentRouteTurn[\s\S]*?left:\s*var\(--aquarium-gallery-member-x[\s\S]*?left:\s*var\(--aquarium-gallery-member-return-x/,
@@ -366,6 +409,7 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
   );
   assert.match(styles, /\.aquariumGalleryReducedMotion[\s\S]*?\.aquariumGalleryResidentTrack[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /\.aquariumGalleryReducedMotion[\s\S]*?\.aquariumGalleryResidentBody[\s\S]*?animation:\s*none !important/);
+  assert.match(styles, /\.aquariumGalleryReducedMotion \.aquariumGalleryResidentBody[\s\S]*?--aquarium-gallery-resident-pitch:\s*0deg !important/);
   assert.match(styles, /\.aquariumGalleryReducedMotion \.aquariumGalleryLiveSchool[\s\S]*?inset:\s*0 !important/);
   assert.doesNotMatch(styles, /\.aquariumGalleryTankPlaque|\.aquariumGalleryEmptyPlaque/);
   assert.doesNotMatch(styles, /\.aquariumSpectator/);

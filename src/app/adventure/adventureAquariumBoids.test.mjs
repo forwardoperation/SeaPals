@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   AQUARIUM_BOIDS_FIXED_STEP_SECONDS,
+  aquariumFishPitchDegrees,
   createAquariumBoids,
   createAquariumBoidsSimulationKey,
   stepAquariumBoids,
@@ -13,6 +14,20 @@ const ROUTE = Object.freeze([
   Object.freeze({ xPercent: 50, yPercent: 18 }),
   Object.freeze({ xPercent: 85, yPercent: 36 }),
 ]);
+
+test("fish pitch uses native-right local quadrants and safe presentation limits", () => {
+  assert.ok(aquariumFishPitchDegrees(4, -2, 1, 25) < 0, "right-up pitches negatively");
+  assert.ok(aquariumFishPitchDegrees(4, 2, 1, 25) > 0, "right-down pitches positively");
+  assert.ok(aquariumFishPitchDegrees(-4, -2, -1, 25) > 0, "left-up mirrors local pitch");
+  assert.ok(aquariumFishPitchDegrees(-4, 2, -1, 25) < 0, "left-down mirrors local pitch");
+  assert.equal(aquariumFishPitchDegrees(0, 4, 1, 90), 25);
+  assert.equal(aquariumFishPitchDegrees(0, -4, -1, 12), 12);
+  assert.equal(aquariumFishPitchDegrees(0, 0, 1), 0);
+  assert.equal(aquariumFishPitchDegrees(Infinity, 1, 1), 0);
+  assert.equal(aquariumFishPitchDegrees(1, Number.NaN, 1), 0);
+  assert.equal(aquariumFishPitchDegrees(1, 4, 1, -10), 0);
+  assert.ok(Math.abs(aquariumFishPitchDegrees(1, 10, 1)) <= 22);
+});
 
 function createSchool(overrides = {}) {
   return createAquariumBoids({
@@ -440,6 +455,107 @@ test("seeded individual wander visibly reshapes stable schools without breaking 
     assert.ok(Math.min(...nearest) >= scenario.nearestBounds[0]);
     assert.ok(Math.max(...nearest) <= scenario.nearestBounds[1]);
     assert.ok(averageDistanceFromCenter(state.agents) <= scenario.centerLimit);
+  }
+});
+
+test("contour and shelter schools sustain smooth non-stalling motion for sixty seconds", () => {
+  const scenarios = [
+    {
+      id: "tang",
+      movementProfile: {
+        behaviorKind: "contour-school",
+        groupSize: 4,
+        speed: 0.9,
+        social: { visualCount: 4, spacingPercent: 6, cohesion: 0.82 },
+        timing: {},
+        habitat: {
+          contourPath: {
+            points: [
+              { xPercent: 4, yPercent: 54 },
+              { xPercent: 17, yPercent: 45 },
+              { xPercent: 31, yPercent: 52 },
+              { xPercent: 46, yPercent: 46 },
+              { xPercent: 61, yPercent: 55 },
+              { xPercent: 77, yPercent: 42 },
+              { xPercent: 96, yPercent: 51 },
+            ],
+          },
+          coverPoints: [],
+        },
+      },
+    },
+    {
+      id: "grunt",
+      movementProfile: {
+        behaviorKind: "shelter-school",
+        groupSize: 5,
+        speed: 0.72,
+        social: { visualCount: 5, spacingPercent: 5, cohesion: 0.78 },
+        timing: {
+          pauseSeconds: { min: 0.8, max: 1.8 },
+          refugeCadenceSeconds: { min: 10, max: 18 },
+          burstSeconds: { min: 1, max: 2 },
+        },
+        habitat: {
+          contourPath: {
+            points: [
+              { xPercent: 34, yPercent: 55 },
+              { xPercent: 42, yPercent: 49 },
+              { xPercent: 53, yPercent: 50 },
+              { xPercent: 61, yPercent: 57 },
+              { xPercent: 52, yPercent: 63 },
+              { xPercent: 40, yPercent: 62 },
+            ],
+          },
+          coverPoints: [{ xPercent: 47, yPercent: 56 }],
+        },
+      },
+    },
+  ];
+
+  for (const scenario of scenarios) {
+    let state = createAquariumBoids({
+      seed: `sixty-second-${scenario.id}`,
+      movementProfile: scenario.movementProfile,
+      bounds: { minX: 3, maxX: 97, minY: 5, maxY: 94 },
+    });
+    let previousAgents = state.agents;
+    let previousCenter = centroid(state.agents);
+    let twoSecondPath = 0;
+    let windowSteps = 0;
+    for (let step = 0; step < 1800; step += 1) {
+      state = stepAquariumBoids(state);
+      const center = centroid(state.agents);
+      twoSecondPath += Math.hypot(center.x - previousCenter.x, center.y - previousCenter.y);
+      previousCenter = center;
+      windowSteps += 1;
+
+      state.agents.forEach((agent, agentIndex) => {
+        const previous = previousAgents[agentIndex];
+        const speed = Math.hypot(agent.vx, agent.vy);
+        const acceleration = Math.hypot(
+          agent.vx - previous.vx,
+          agent.vy - previous.vy,
+        ) / state.config.fixedStepSeconds;
+        const headingChange = Math.abs(Math.atan2(
+          Math.sin(agent.heading - previous.heading),
+          Math.cos(agent.heading - previous.heading),
+        ));
+        assert.ok(speed >= state.config.minSpeed - 0.02, `${scenario.id} speed floor`);
+        assert.ok(
+          acceleration <= (state.config.maxForce * 1.6) + 0.1,
+          `${scenario.id} acceleration must remain fluid`,
+        );
+        assert.ok(headingChange <= 12 * (Math.PI / 180), `${scenario.id} heading must turn smoothly`);
+      });
+      previousAgents = state.agents;
+
+      if (windowSteps === 60) {
+        assert.ok(twoSecondPath / 2 >= 0.75, `${scenario.id} centroid must not pause`);
+        twoSecondPath = 0;
+        windowSteps = 0;
+      }
+    }
   }
 });
 
