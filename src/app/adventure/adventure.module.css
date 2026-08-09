@@ -1808,10 +1808,43 @@
   animation: none;
 }
 
+/* Movement profiles keep aquarium residents in habitat-appropriate spaces.
+ * Only schools and cruisers traverse the full window; all other routes are
+ * closed loops around an authored coral or rock hotspot. */
+.aquariumGalleryMovementCruiser,
+.aquariumGalleryMovementSchool {
+  animation-name: aquariumGalleryResidentSwim;
+  animation-timing-function: linear;
+}
+
+.aquariumGalleryMovementCoralHome {
+  top: var(--aquarium-gallery-resident-y, 62%);
+  left: var(--aquarium-gallery-resident-static-x, 18%);
+  animation-name: aquariumGalleryResidentCoralHome;
+  animation-timing-function: ease-in-out;
+}
+
+.aquariumGalleryMovementLocalizedBenthic {
+  top: var(--aquarium-gallery-resident-y, 87%);
+  left: var(--aquarium-gallery-resident-static-x, 50%);
+  animation-name: aquariumGalleryResidentLocalizedCrawl;
+  animation-timing-function: ease-in-out;
+}
+
+.aquariumGalleryMovementAnchored {
+  top: var(--aquarium-gallery-resident-y, 86%);
+  left: var(--aquarium-gallery-resident-static-x, 50%);
+  animation: none;
+  will-change: auto;
+}
+
 .aquariumGalleryResidentBody {
   position: absolute;
-  inset: 0;
+  top: var(--aquarium-gallery-member-y, 0%);
+  left: var(--aquarium-gallery-member-x, 0%);
   display: block;
+  width: 100%;
+  height: 100%;
   background-image: var(--aquarium-gallery-atlas, none);
   background-repeat: no-repeat;
   background-position:
@@ -1828,11 +1861,35 @@
     blur(var(--aquarium-gallery-resident-blur, var(--resident-blur, 0px)))
     drop-shadow(0 5px 4px rgba(0, 8, 20, 0.36));
   transform:
+    scale(var(--aquarium-gallery-member-scale, 1))
     scale(var(--aquarium-gallery-resident-biological-scale, 1))
     scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
     scaleX(var(--aquarium-gallery-resident-direction, var(--resident-direction, 1)));
   transform-origin: center;
-  animation: aquariumGalleryResidentFloat 4.8s ease-in-out var(--resident-float-delay, 0s) infinite;
+  animation: aquariumGalleryResidentFloat 4.8s ease-in-out var(--aquarium-gallery-member-float-delay, 0s) infinite;
+}
+
+.aquariumGalleryMovementLocalizedBenthic .aquariumGalleryResidentBody,
+.aquariumGalleryMovementAnchored .aquariumGalleryResidentBody {
+  animation: none;
+}
+
+.aquariumGalleryMovementCoralHome .aquariumGalleryResidentBody {
+  animation:
+    aquariumGalleryResidentCoralTurn
+    var(--aquarium-gallery-resident-duration, 12s)
+    linear
+    var(--aquarium-gallery-resident-delay, 0s)
+    infinite;
+}
+
+.aquariumGalleryMovementLocalizedBenthic .aquariumGalleryResidentBody {
+  animation:
+    aquariumGalleryResidentBenthicTurn
+    var(--aquarium-gallery-resident-duration, 34s)
+    linear
+    var(--aquarium-gallery-resident-delay, 0s)
+    infinite;
 }
 
 .aquariumGalleryTankFrame {
@@ -1948,15 +2005,90 @@
   }
 }
 
-@keyframes aquariumGalleryResidentCrawl {
-  0% { left: var(--aquarium-gallery-resident-start-x, var(--resident-start-x, -8%)); }
-  50% { top: calc(var(--aquarium-gallery-resident-y, var(--resident-start-y, 88%)) - 0.3%); }
-  100% { left: var(--aquarium-gallery-resident-end-x, var(--resident-end-x, 108%)); }
+@keyframes aquariumGalleryResidentCoralHome {
+  0%, 100% {
+    left: var(--aquarium-gallery-resident-static-x, 18%);
+    top: var(--aquarium-gallery-resident-y, 62%);
+  }
+  18% {
+    left: var(--aquarium-gallery-resident-weave-forward, 20%);
+    top: var(--aquarium-gallery-resident-weave-top, 61%);
+  }
+  30% {
+    left: var(--aquarium-gallery-resident-local-forward, 23%);
+    top: var(--aquarium-gallery-resident-local-top, 59%);
+  }
+  40% {
+    left: var(--aquarium-gallery-resident-local-forward, 23%);
+    top: var(--aquarium-gallery-resident-local-top, 59%);
+  }
+  58% {
+    left: var(--aquarium-gallery-resident-weave-return, 16%);
+    top: var(--aquarium-gallery-resident-weave-bottom, 63%);
+  }
+  74% {
+    left: var(--aquarium-gallery-resident-local-return, 13%);
+    top: var(--aquarium-gallery-resident-local-bottom, 65%);
+  }
+  84% {
+    left: var(--aquarium-gallery-resident-local-return, 13%);
+    top: var(--aquarium-gallery-resident-local-bottom, 65%);
+  }
+}
+
+@keyframes aquariumGalleryResidentLocalizedCrawl {
+  0%, 14%, 100% {
+    left: var(--aquarium-gallery-resident-static-x, 50%);
+    top: var(--aquarium-gallery-resident-y, 87%);
+  }
+  34%, 46% {
+    left: var(--aquarium-gallery-resident-local-forward, 55%);
+    top: var(--aquarium-gallery-resident-local-top, 86%);
+  }
+  66%, 80% {
+    left: var(--aquarium-gallery-resident-local-return, 45%);
+    top: var(--aquarium-gallery-resident-local-bottom, 88%);
+  }
+}
+
+@keyframes aquariumGalleryResidentCoralTurn {
+  0%, 38%, 88%, 100% {
+    transform:
+      scale(var(--aquarium-gallery-member-scale, 1))
+      scale(var(--aquarium-gallery-resident-biological-scale, 1))
+      scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
+      scaleX(var(--aquarium-gallery-resident-direction, 1));
+  }
+  43%, 83% {
+    transform:
+      scale(var(--aquarium-gallery-member-scale, 1))
+      scale(var(--aquarium-gallery-resident-biological-scale, 1))
+      scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
+      scaleX(var(--aquarium-gallery-resident-reverse-direction, -1));
+  }
+}
+
+@keyframes aquariumGalleryResidentBenthicTurn {
+  0%, 44%, 84%, 100% {
+    transform:
+      scale(var(--aquarium-gallery-member-scale, 1))
+      scale(var(--aquarium-gallery-resident-biological-scale, 1))
+      scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
+      scaleX(var(--aquarium-gallery-resident-direction, 1));
+  }
+  49%, 79% {
+    transform:
+      scale(var(--aquarium-gallery-member-scale, 1))
+      scale(var(--aquarium-gallery-resident-biological-scale, 1))
+      scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
+      scaleX(var(--aquarium-gallery-resident-reverse-direction, -1));
+  }
 }
 
 @keyframes aquariumGalleryResidentFloat {
   0%, 100% {
     transform:
+      scale(var(--aquarium-gallery-member-scale, 1))
       scale(var(--aquarium-gallery-resident-biological-scale, 1))
       scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
       scaleX(var(--aquarium-gallery-resident-direction, var(--resident-direction, 1)));
@@ -1964,6 +2096,7 @@
   50% {
     transform:
       translateY(-2.5%)
+      scale(var(--aquarium-gallery-member-scale, 1))
       scale(var(--aquarium-gallery-resident-biological-scale, 1))
       scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
       scaleX(var(--aquarium-gallery-resident-direction, var(--resident-direction, 1)));
@@ -1985,7 +2118,7 @@
 .reducedMotionMode .aquariumGalleryResidentCoral,
 .aquariumGalleryReducedMotion .aquariumGalleryResidentBenthic,
 .aquariumGalleryReducedMotion .aquariumGalleryResidentCoral {
-  top: var(--resident-static-y, 88%) !important;
+  top: var(--aquarium-gallery-resident-y, var(--resident-static-y, 88%)) !important;
 }
 
 .reducedMotionMode .aquariumGalleryResidentBody,
@@ -2024,7 +2157,7 @@
   .aquariumGalleryResident[data-category="coral"],
   .aquariumGalleryResidentBenthic,
   .aquariumGalleryResidentCoral {
-    top: var(--resident-static-y, 88%) !important;
+    top: var(--aquarium-gallery-resident-y, var(--resident-static-y, 88%)) !important;
   }
 
   .aquariumGalleryResidentBody { animation: none !important; }

@@ -6,6 +6,13 @@ export const ELVERSON_REEF_CREATURE_ATLAS_PATH = "/images/adventure/elverson-ree
 
 export const AQUARIUM_ECOSYSTEM_IDS = Object.freeze(["reef", "oceanic", "deep"]);
 export const AQUARIUM_TANK_KINDS = Object.freeze(["community", "apex"]);
+export const AQUARIUM_MOVEMENT_KINDS = Object.freeze([
+  "school",
+  "coral-home",
+  "localized-benthic",
+  "anchored",
+  "cruiser",
+]);
 
 const ATLAS_COLUMNS = 5;
 const ATLAS_ROWS = 2;
@@ -39,10 +46,72 @@ function authoredDisplaySize(value, speciesId) {
   return Object.freeze({ ...value });
 }
 
+function authoredMovementVector(value, fieldName, speciesId) {
+  if (
+    !Number.isFinite(value?.xPercent)
+    || value.xPercent < 0
+    || !Number.isFinite(value?.yPercent)
+    || value.yPercent < 0
+  ) {
+    throw new Error(`Aquarium species ${speciesId} needs a valid ${fieldName} vector.`);
+  }
+  return Object.freeze({ ...value });
+}
+
+function authoredMovementAnchor(value, speciesId) {
+  if (value === null) return null;
+  if (
+    typeof value?.id !== "string"
+    || value.id.length === 0
+    || !Number.isFinite(value.xPercent)
+    || value.xPercent < 0
+    || value.xPercent > 100
+    || !Number.isFinite(value.yPercent)
+    || value.yPercent < 0
+    || value.yPercent > 100
+  ) {
+    throw new Error(`Aquarium species ${speciesId} needs a valid movement anchor.`);
+  }
+  // Shared habitat anchors intentionally retain object identity so species
+  // such as clownfish and cleaner wrasses gather around the same coral head.
+  return Object.isFrozen(value) ? value : Object.freeze({ ...value });
+}
+
+function authoredMovementProfile(value, speciesId) {
+  if (
+    !AQUARIUM_MOVEMENT_KINDS.includes(value?.kind)
+    || !Number.isSafeInteger(value.groupSize)
+    || value.groupSize < 1
+    || value.groupSize > 12
+    || !Number.isFinite(value.speed)
+    || value.speed < 0
+  ) {
+    throw new Error(`Aquarium species ${speciesId} needs a valid movement profile.`);
+  }
+  if (value.kind === "school" && value.groupSize < 2) {
+    throw new Error(`Aquarium schooling species ${speciesId} needs more than one group member.`);
+  }
+  return Object.freeze({
+    kind: value.kind,
+    anchor: authoredMovementAnchor(value.anchor, speciesId),
+    roam: authoredMovementVector(value.roam, "roam", speciesId),
+    groupSize: value.groupSize,
+    speed: value.speed,
+    amplitude: authoredMovementVector(value.amplitude, "amplitude", speciesId),
+  });
+}
+
+const REEF_COMMUNITY_CORAL_HOME_ANCHOR = Object.freeze({
+  id: "reef-community-coral-home",
+  xPercent: 18,
+  yPercent: 62,
+});
+
 function aquariumSpecies(definition) {
   const cell = Object.freeze({ ...definition.spriteCell });
   const position = atlasPosition(cell);
   const displaySize = authoredDisplaySize(definition.displaySize, definition.id);
+  const movementProfile = authoredMovementProfile(definition.movementProfile, definition.id);
   return Object.freeze({
     id: definition.id,
     cardId: definition.cardId,
@@ -54,6 +123,7 @@ function aquariumSpecies(definition) {
     requested: definition.requested !== false,
     source: definition.source ?? "elverson-hand-net",
     displaySize,
+    movementProfile,
     sprite: Object.freeze({
       type: "atlas",
       path: ELVERSON_REEF_CREATURE_ATLAS_PATH,
@@ -70,6 +140,11 @@ function aquariumSpecies(definition) {
  * a starter deck or booster pack is not a live resident; only the matching
  * delivered story-item quantity can populate a tank.
  *
+ * Movement-profile coordinates are percentages of the tank's resident stage.
+ * `anchor` is a habitat landmark, `roam` is the permitted travel envelope,
+ * and `amplitude` controls small-scale weaving within that larger behavior.
+ * `speed` is a relative multiplier rather than a duration in seconds.
+ *
  * Future collection loops can append species from any ecosystem and choose a
  * care-appropriate tank without changing the exhibit-model algorithm.
  */
@@ -82,6 +157,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-white-grunt",
     displaySize: { referenceInches: 17, measurement: "length", biologicalScale: 0.88 },
+    movementProfile: {
+      kind: "school",
+      anchor: null,
+      roam: { xPercent: 104, yPercent: 32 },
+      groupSize: 5,
+      speed: 0.78,
+      amplitude: { xPercent: 3, yPercent: 4.5 },
+    },
     spriteCell: { column: 0, row: 0 },
   }),
   aquariumSpecies({
@@ -92,6 +175,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-cleaner-wrasse",
     displaySize: { referenceInches: 2, measurement: "length", biologicalScale: 0.24 },
+    movementProfile: {
+      kind: "coral-home",
+      anchor: REEF_COMMUNITY_CORAL_HOME_ANCHOR,
+      roam: { xPercent: 11, yPercent: 9 },
+      groupSize: 1,
+      speed: 0.42,
+      amplitude: { xPercent: 3.5, yPercent: 2.5 },
+    },
     spriteCell: { column: 1, row: 0 },
   }),
   aquariumSpecies({
@@ -102,6 +193,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-clownfish",
     displaySize: { referenceInches: 4, measurement: "length", biologicalScale: 0.34 },
+    movementProfile: {
+      kind: "coral-home",
+      anchor: REEF_COMMUNITY_CORAL_HOME_ANCHOR,
+      roam: { xPercent: 9, yPercent: 7 },
+      groupSize: 1,
+      speed: 0.36,
+      amplitude: { xPercent: 3, yPercent: 2 },
+    },
     spriteCell: { column: 2, row: 0 },
   }),
   aquariumSpecies({
@@ -112,6 +211,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-emerald-crab",
     displaySize: { referenceInches: 1.5, measurement: "carapace-width", biologicalScale: 0.22 },
+    movementProfile: {
+      kind: "localized-benthic",
+      anchor: { id: "reef-community-left-rock", xPercent: 28, yPercent: 86 },
+      roam: { xPercent: 6, yPercent: 1.5 },
+      groupSize: 1,
+      speed: 0.12,
+      amplitude: { xPercent: 2.5, yPercent: 0.4 },
+    },
     spriteCell: { column: 3, row: 0 },
   }),
   aquariumSpecies({
@@ -122,6 +229,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-blue-tang",
     displaySize: { referenceInches: 15, measurement: "length", biologicalScale: 0.82 },
+    movementProfile: {
+      kind: "school",
+      anchor: null,
+      roam: { xPercent: 106, yPercent: 30 },
+      groupSize: 4,
+      speed: 0.9,
+      amplitude: { xPercent: 3.5, yPercent: 5 },
+    },
     spriteCell: { column: 4, row: 0 },
   }),
   aquariumSpecies({
@@ -132,6 +247,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-sea-urchin",
     displaySize: { referenceInches: 12, measurement: "spine-diameter", biologicalScale: 0.68 },
+    movementProfile: {
+      kind: "anchored",
+      anchor: { id: "reef-community-right-rock", xPercent: 78, yPercent: 84 },
+      roam: { xPercent: 0.8, yPercent: 0.4 },
+      groupSize: 1,
+      speed: 0.03,
+      amplitude: { xPercent: 0.3, yPercent: 0.2 },
+    },
     spriteCell: { column: 0, row: 1 },
   }),
   aquariumSpecies({
@@ -142,6 +265,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-fairy-parrotfish",
     displaySize: { referenceInches: 30, measurement: "length", biologicalScale: 1.35 },
+    movementProfile: {
+      kind: "cruiser",
+      anchor: null,
+      roam: { xPercent: 112, yPercent: 24 },
+      groupSize: 1,
+      speed: 0.68,
+      amplitude: { xPercent: 0, yPercent: 4 },
+    },
     spriteCell: { column: 1, row: 1 },
   }),
   aquariumSpecies({
@@ -152,6 +283,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-blue-crab",
     displaySize: { referenceInches: 9, measurement: "carapace-width", biologicalScale: 0.58 },
+    movementProfile: {
+      kind: "localized-benthic",
+      anchor: { id: "reef-community-center-right-rock", xPercent: 68, yPercent: 88 },
+      roam: { xPercent: 8, yPercent: 1.5 },
+      groupSize: 1,
+      speed: 0.14,
+      amplitude: { xPercent: 3.5, yPercent: 0.4 },
+    },
     spriteCell: { column: 2, row: 1 },
   }),
   aquariumSpecies({
@@ -162,6 +301,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-spanish-hogfish",
     displaySize: { referenceInches: 16, measurement: "length", biologicalScale: 0.86 },
+    movementProfile: {
+      kind: "cruiser",
+      anchor: null,
+      roam: { xPercent: 108, yPercent: 28 },
+      groupSize: 1,
+      speed: 0.82,
+      amplitude: { xPercent: 0, yPercent: 4.5 },
+    },
     spriteCell: { column: 3, row: 1 },
   }),
   aquariumSpecies({
@@ -172,6 +319,14 @@ export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
     tankKind: "community",
     aquariumItemId: "aquarium-french-angelfish",
     displaySize: { referenceInches: 24, measurement: "length", biologicalScale: 1.1 },
+    movementProfile: {
+      kind: "cruiser",
+      anchor: null,
+      roam: { xPercent: 110, yPercent: 26 },
+      groupSize: 1,
+      speed: 0.6,
+      amplitude: { xPercent: 0, yPercent: 4 },
+    },
     spriteCell: { column: 4, row: 1 },
   }),
 ]);
@@ -394,6 +549,7 @@ function aquariumOccupant(species, quantity, depth) {
     tankId: species.tankId,
     tankKind: species.tankKind,
     displaySize: species.displaySize,
+    movementProfile: species.movementProfile,
     sprite: species.sprite,
     // Flat atlas and visual fields preserve the existing renderer contract.
     atlasCell: species.sprite.cell,

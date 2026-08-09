@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   AQUARIUM_ECOSYSTEM_IDS,
+  AQUARIUM_MOVEMENT_KINDS,
   AQUARIUM_TANK_KINDS,
   ELVERSON_AQUARIUM_ECOSYSTEMS,
   ELVERSON_AQUARIUM_EXHIBITS,
@@ -119,6 +120,68 @@ test("species registry authors biologically distinct aquarium display sizes", ()
   assert.ok(ELVERSON_AQUARIUM_SPECIES.every((species) => Object.isFrozen(species.displaySize)));
 });
 
+test("species registry authors habitat-specific movement profiles", () => {
+  assert.deepEqual(AQUARIUM_MOVEMENT_KINDS, [
+    "school",
+    "coral-home",
+    "localized-benthic",
+    "anchored",
+    "cruiser",
+  ]);
+  assert.deepEqual(
+    Object.fromEntries(ELVERSON_AQUARIUM_SPECIES.map((species) => [
+      species.id,
+      [
+        species.movementProfile.kind,
+        species.movementProfile.groupSize,
+        species.movementProfile.anchor?.id ?? null,
+      ],
+    ])),
+    {
+      "white-grunt": ["school", 5, null],
+      "cleaner-wrasse": ["coral-home", 1, "reef-community-coral-home"],
+      clownfish: ["coral-home", 1, "reef-community-coral-home"],
+      "emerald-crab": ["localized-benthic", 1, "reef-community-left-rock"],
+      "blue-tang": ["school", 4, null],
+      "sea-urchin": ["anchored", 1, "reef-community-right-rock"],
+      "fairy-parrotfish": ["cruiser", 1, null],
+      "blue-crab": ["localized-benthic", 1, "reef-community-center-right-rock"],
+      "spanish-hogfish": ["cruiser", 1, null],
+      "french-angelfish": ["cruiser", 1, null],
+    },
+  );
+
+  for (const species of ELVERSON_AQUARIUM_SPECIES) {
+    const profile = species.movementProfile;
+    assert.ok(Object.isFrozen(profile));
+    assert.ok(Object.isFrozen(profile.roam));
+    assert.ok(Object.isFrozen(profile.amplitude));
+    assert.equal(profile.anchor === null || Object.isFrozen(profile.anchor), true);
+    assert.ok(Number.isSafeInteger(profile.groupSize) && profile.groupSize >= 1);
+    assert.ok(Number.isFinite(profile.speed) && profile.speed >= 0);
+    assert.ok(profile.roam.xPercent >= 0 && profile.roam.yPercent >= 0);
+    assert.ok(profile.amplitude.xPercent >= 0 && profile.amplitude.yPercent >= 0);
+  }
+
+  const whiteGrunt = ELVERSON_AQUARIUM_SPECIES_BY_ID["white-grunt"].movementProfile;
+  const blueTang = ELVERSON_AQUARIUM_SPECIES_BY_ID["blue-tang"].movementProfile;
+  assert.ok(whiteGrunt.groupSize >= 3 && whiteGrunt.roam.xPercent >= 100);
+  assert.ok(blueTang.groupSize >= 3 && blueTang.roam.xPercent >= 100);
+
+  const cleanerWrasse = ELVERSON_AQUARIUM_SPECIES_BY_ID["cleaner-wrasse"].movementProfile;
+  const clownfish = ELVERSON_AQUARIUM_SPECIES_BY_ID.clownfish.movementProfile;
+  assert.equal(cleanerWrasse.anchor, clownfish.anchor);
+  assert.deepEqual(cleanerWrasse.anchor, {
+    id: "reef-community-coral-home",
+    xPercent: 18,
+    yPercent: 62,
+  });
+
+  const seaUrchin = ELVERSON_AQUARIUM_SPECIES_BY_ID["sea-urchin"].movementProfile;
+  assert.ok(seaUrchin.roam.xPercent <= 1 && seaUrchin.roam.yPercent <= 1);
+  assert.ok(seaUrchin.speed < 0.1);
+});
+
 test("empty aquarium exposes all six tanks without inventing residents or completion", () => {
   const model = getElversonAquariumExhibitModel(withInventory());
   assert.equal(model.sceneId, ELVERSON_AQUARIUM_SCENE_ID);
@@ -198,6 +261,10 @@ test("resident size, motion, position, and depth coloration are deterministic an
     assert.ok(Number.isInteger(occupant.visual.zIndex));
     assert.ok(occupant.visual.zIndex >= 20 && occupant.visual.zIndex <= 80);
     assert.equal(occupant.displaySize, ELVERSON_AQUARIUM_SPECIES_BY_ID[occupant.id].displaySize);
+    assert.equal(
+      occupant.movementProfile,
+      ELVERSON_AQUARIUM_SPECIES_BY_ID[occupant.id].movementProfile,
+    );
     assert.equal(occupant.biologicalScale, occupant.displaySize.biologicalScale);
     assert.equal(occupant.biologicalScale, occupant.visual.biologicalScale);
     assert.equal(occupant.depthScale, occupant.visual.depthScale);
