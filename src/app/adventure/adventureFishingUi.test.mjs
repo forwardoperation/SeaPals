@@ -183,9 +183,28 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
   assert.match(gallery, /--aquarium-gallery-resident-depth-scale/);
   assert.match(gallery, /occupant\?\.movementProfile \?\? occupant\?\.movement/);
   assert.match(gallery, /data-movement-profile=\{movementProfile\.kind\}/);
-  assert.match(gallery, /movementProfile\?\.kind !== "school"/);
+  assert.match(gallery, /data-aquarium-behavior=\{movementProfile\.behaviorKind\}/);
+  assert.match(gallery, /data-habitat-feature=\{residentHabitatFeatureId\(movementProfile\)\}/);
+  assert.match(gallery, /data-social-formation=\{movementProfile\.social\?\.formation\}/);
+  assert.match(gallery, /movementProfile\?\.social\?\.visualCount/);
+  assert.match(gallery, /movementProfile\.groupSize/);
+  assert.match(gallery, /movementProfile\?\.social\?\.cohesion/);
+  assert.match(gallery, /movementProfile\?\.social\?\.spacingPercent/);
+  assert.match(gallery, /movementProfile\?\.habitat\?\.contourPath\?\.points/);
+  assert.match(gallery, /habitat\.station/);
+  assert.match(gallery, /habitat\.openWaterLane/);
+  assert.match(gallery, /habitat\.coverPoints/);
+  assert.match(gallery, /midpointSeconds\(timing\.pauseSeconds/);
+  assert.match(gallery, /midpointSeconds\(timing\.refugeCadenceSeconds/);
+  assert.match(gallery, /midpointSeconds\(timing\.burstSeconds/);
   assert.match(gallery, /Array\.from\(\{ length: memberCount \}/);
   assert.match(gallery, /data-school-member=\{memberCount > 1/);
+  const memberCountSource = gallery.slice(
+    gallery.indexOf("function residentMemberCount"),
+    gallery.indexOf("function residentMemberStyle"),
+  );
+  assert.doesNotMatch(memberCountSource, /occupant|quantity/);
+  assert.doesNotMatch(gallery, /requestAnimationFrame|cancelAnimationFrame/);
   assert.match(gallery, /styles\.aquariumGalleryResidentBenthic/);
   assert.match(gallery, /aria-hidden="true"/);
   assert.match(gallery, /className=\{styles\.srOnly\}/);
@@ -202,6 +221,15 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
   assert.match(styles, /\.aquariumGalleryScenery/);
   assert.match(styles, /\.aquariumGalleryTankWindow/);
   assert.match(styles, /@keyframes aquariumGalleryResidentSwim/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentShelterRoute/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentContourRoute/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentCoverBall/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentCleaningStation/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentCrypticGrazer/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentBottomScuttle/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentForagerRoute/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentCreviceRoute/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentTerritorialRoute/);
   assert.match(styles, /@keyframes aquariumGalleryResidentCoralHome/);
   assert.match(styles, /@keyframes aquariumGalleryResidentLocalizedCrawl/);
   assert.match(styles, /@keyframes aquariumGalleryResidentCoralTurn[\s\S]*?--aquarium-gallery-resident-reverse-direction/);
@@ -210,6 +238,23 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
   assert.match(styles, /\.aquariumGalleryMovementCoralHome[\s\S]*?animation-name:\s*aquariumGalleryResidentCoralHome/);
   assert.match(styles, /\.aquariumGalleryMovementLocalizedBenthic[\s\S]*?animation-name:\s*aquariumGalleryResidentLocalizedCrawl/);
   assert.match(styles, /\.aquariumGalleryMovementAnchored[\s\S]*?animation:\s*none/);
+  for (const behaviorKind of [
+    "shelter-school",
+    "cleaning-station",
+    "host-bound-pair",
+    "cryptic-grazer",
+    "contour-school",
+    "substrate-grazer",
+    "reef-grazer-solo",
+    "bottom-scuttler",
+    "crevice-hunter",
+    "territorial-pair",
+    "cover-school-ball",
+    "pelagic-apex-glide",
+    "reef-ambush-patrol",
+    "benthic-predator",
+    "filter-feeder-glide",
+  ]) assert.match(gallery, new RegExp(`"${behaviorKind}"`));
   for (const movementClass of [
     "aquariumGalleryMovementCoralHome",
     "aquariumGalleryMovementLocalizedBenthic",
@@ -229,12 +274,44 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
   );
   assert.match(styles, /\.aquariumGalleryResidentTrack[\s\S]*?width:\s*var\(--resident-size, 6%\)/);
   assert.match(styles, /--aquarium-gallery-member-x/);
+  assert.match(gallery, /--aquarium-gallery-member-return-x/);
   assert.match(styles, /--aquarium-gallery-member-scale/);
+  assert.match(
+    styles,
+    /@keyframes aquariumGalleryResidentRouteTurn[\s\S]*?left:\s*var\(--aquarium-gallery-member-x[\s\S]*?left:\s*var\(--aquarium-gallery-member-return-x/,
+  );
+  assert.match(
+    styles,
+    /@keyframes aquariumGalleryResidentLateRouteTurn[\s\S]*?left:\s*var\(--aquarium-gallery-member-x[\s\S]*?left:\s*var\(--aquarium-gallery-member-return-x/,
+  );
+  assert.match(
+    styles,
+    /@keyframes aquariumGalleryResidentCoralTurn[\s\S]*?left:\s*var\(--aquarium-gallery-member-x[\s\S]*?left:\s*var\(--aquarium-gallery-member-return-x/,
+  );
+  assert.match(styles, /--aquarium-gallery-route-0-x/);
+  assert.match(styles, /--aquarium-gallery-route-5-x/);
+  assert.match(
+    styles,
+    /@keyframes aquariumGalleryResidentContourRoute[\s\S]*?0%, 6%, 100%[\s\S]*?route-0-x[\s\S]*?15%, 88%[\s\S]*?route-1-x[\s\S]*?24%, 78%[\s\S]*?route-2-x[\s\S]*?34%, 68%[\s\S]*?route-3-x[\s\S]*?43%, 59%[\s\S]*?route-4-x[\s\S]*?49%, 53%[\s\S]*?route-5-x/,
+  );
+  assert.match(
+    styles,
+    /@keyframes aquariumGalleryResidentShelterRoute[\s\S]*?resident-cover-opacity[\s\S]*?scale\(0\.72\)/,
+  );
+  assert.match(
+    styles,
+    /@keyframes aquariumGalleryResidentCrypticGrazer[\s\S]*?resident-cover-opacity[\s\S]*?scale\(0\.76\)/,
+  );
+  assert.match(
+    styles,
+    /@keyframes aquariumGalleryResidentCreviceRoute[\s\S]*?resident-cover-opacity[\s\S]*?scale\(0\.72\)/,
+  );
   assert.doesNotMatch(
     styles,
     /aquariumGalleryResident(?:Track|Predator|Benthic|Coral)?[^}]*width:\s*var\(--resident-size,\s*clamp\(/,
   );
   assert.match(styles, /\.aquariumGalleryReducedMotion[\s\S]*?\.aquariumGalleryResidentTrack[\s\S]*?animation:\s*none !important/);
+  assert.match(styles, /\.aquariumGalleryReducedMotion[\s\S]*?\.aquariumGalleryResidentBody[\s\S]*?animation:\s*none !important/);
   assert.doesNotMatch(styles, /\.aquariumGalleryTankPlaque|\.aquariumGalleryEmptyPlaque/);
   assert.doesNotMatch(styles, /\.aquariumSpectator/);
   assert.doesNotMatch(game, /function AdventureAquariumExhibits/);
