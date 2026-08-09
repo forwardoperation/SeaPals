@@ -35,6 +35,10 @@ import {
 } from "./adventureOnboarding.mjs";
 import { createNewAdventureSession } from "./adventureSession.mjs";
 import { createAdventureStorageAdapter } from "./adventureStorage.mjs";
+import {
+  ELVERSON_TOWN_SAFE_POSITIONS,
+  ELVERSON_TOWN_WEST_COVE,
+} from "./adventureElversonTownLayout.mjs";
 import { canOccupyContinuousPosition } from "./adventureWorld.mjs";
 
 const WORLD_INTRODUCTION_FLAG = "world-introduction-complete";
@@ -150,46 +154,66 @@ test("Elverson exposes ten immutable weighted reef catches with deterministic ra
   }
 });
 
-test("hand-net interactions appear only at an authored Elverson shallow-water edge", () => {
-  const position = { x: 5, y: 17.1 };
+test("hand-net interactions require the player's feet to be in the west-cove shallows", () => {
+  const position = { ...ELVERSON_TOWN_SAFE_POSITIONS.handNetCove };
   const interaction = getElversonFishingInteraction("town", position, "down");
 
   assert.equal(interaction?.type, "fishing");
-  assert.equal(interaction?.spotId, "west-promenade");
-  assert.match(interaction?.interactionId ?? "", /^interaction-elverson-hand-net-/);
+  assert.equal(interaction?.spotId, "west-cove-shallows");
+  assert.equal(
+    interaction?.interactionId,
+    "interaction-elverson-hand-net-west-cove-shallows",
+  );
+  assert.deepEqual(interaction?.at, position);
+  assert.match(interaction?.label ?? "", /feet are in the shallows/i);
   assert.match(interaction?.label ?? "", /Press Enter to ready the hand net/i);
   assert.equal(Object.isFrozen(interaction), true);
   assert.equal(Object.isFrozen(interaction.at), true);
-  assert.deepEqual(position, { x: 5, y: 17.1 });
+  assert.deepEqual(position, ELVERSON_TOWN_SAFE_POSITIONS.handNetCove);
+
+  for (const facing of ["up", "down", "left", "right"]) {
+    assert.equal(
+      getElversonFishingInteraction("town", position, facing)?.spotId,
+      "west-cove-shallows",
+      `wading should work while facing ${facing}`,
+    );
+  }
+
+  for (const [label, dryPosition] of [
+    ["west-cove stairs", { x: 9.5, y: 17.2 }],
+    ["Wyeth's sand position", ELVERSON_TOWN_WEST_COVE.wyeth],
+    ["old wharf practice position", ELVERSON_TOWN_SAFE_POSITIONS.wharfApproach],
+    ["central pier end", ELVERSON_TOWN_SAFE_POSITIONS.pierEnd],
+    ["aquarium apron", ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior],
+  ]) {
+    assert.equal(
+      getElversonFishingInteraction("town", dryPosition, "down"),
+      null,
+      `${label} must not offer the hand net`,
+    );
+  }
 
   assert.equal(getElversonFishingInteraction("academy-lab", position, "down"), null);
-  assert.equal(getElversonFishingInteraction("town", position, "up"), null);
-  assert.equal(getElversonFishingInteraction("town", { x: 5, y: 16.9 }, "down"), null);
-  assert.equal(getElversonFishingInteraction("town", { x: 20.4, y: 17.1 }, "down"), null);
-  assert.equal(getElversonFishingInteraction("town", { x: Number.NaN, y: 17.1 }, "down"), null);
-
-  const practicePosition = { x: 14.55, y: 21.45 };
-  for (const wyethPosition of [{ x: 18.05, y: 20.85 }, { x: 15.65, y: 21.65 }]) {
-    assert.equal(canOccupyContinuousPosition(
-      "town",
-      practicePosition,
-      0.22,
-      {
-        ignoreActorTiles: true,
-        dynamicBlockers: [{
-          id: "interaction-elverson-fisherman-wyeth",
-          position: wyethPosition,
-          radius: 0.18,
-          collisionRadiusX: 0.28,
-          collisionRadiusY: 0.24,
-        }],
-      },
-    ), true);
-  }
   assert.equal(
-    getElversonFishingInteraction("town", practicePosition, "left")?.spotId,
-    "fishing-platform-west",
+    getElversonFishingInteraction("town", { x: Number.NaN, y: position.y }, "down"),
+    null,
   );
+
+  assert.equal(canOccupyContinuousPosition(
+    "town",
+    position,
+    0.22,
+    {
+      ignoreActorTiles: true,
+      dynamicBlockers: [{
+        id: "interaction-elverson-fisherman-wyeth",
+        position: ELVERSON_TOWN_WEST_COVE.wyeth,
+        radius: 0.18,
+        collisionRadiusX: 0.28,
+        collisionRadiusY: 0.24,
+      }],
+    },
+  ), true, "Wyeth must not block the player's authored wading position");
 });
 
 test("Wyeth grants one permanent rod and starts, but does not complete, the hands-on tutorial", () => {

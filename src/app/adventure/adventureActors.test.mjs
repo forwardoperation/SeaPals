@@ -28,7 +28,7 @@ const AUTHORED_PATROL_IDS = Object.freeze([
 const ELVERSON_TOWN_RESIDENTS = Object.freeze([
   Object.freeze({
     id: "interaction-elverson-fisherman-wyeth",
-    at: Object.freeze({ x: 18.05, y: 20.85 }),
+    at: Object.freeze({ x: 8.35, y: 18.2 }),
   }),
   Object.freeze({
     id: "interaction-elverson-town-theo",

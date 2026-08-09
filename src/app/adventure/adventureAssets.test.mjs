@@ -19,7 +19,7 @@ const PNG_SIGNATURE = "89504e470d0a1a0a";
 const ELVERSON_MOBILE_OPENING_ASSETS = Object.freeze([
   "/images/adventure/player-bedroom-v1.webp",
   "/images/adventure/player-home-v1.webp",
-  "/images/adventure/elverson-ground-v4.webp",
+  "/images/adventure/elverson-ground-v5.webp",
   "/images/adventure/shellshore-academy.webp",
   "/images/adventure/elverson-reef-creature-atlas-v1.webp",
   "/images/adventure/mr-easterling-portrait-v2.webp",
@@ -338,7 +338,7 @@ test("Kelpwatch ships the exact five map-sized PNG assets used by its live scene
 test("Elverson ships its mobile-sized layered ground and transparent WebP facades", async () => {
   const town = ADVENTURE_CONTENT.scenes.find((scene) => scene.id === "town");
   assert.equal(town?.status, "prototype");
-  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v4.webp");
+  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v5.webp");
   assert.notEqual(town.world.artPath, "/images/adventure/elverson-town.png");
 
   const ground = await readWebpAsset(town.world.artPath);
@@ -347,7 +347,7 @@ test("Elverson ships its mobile-sized layered ground and transparent WebP facade
   assert.ok(ground.asset.byteLength < 650_000, "the Elverson ground must remain mobile-sized");
 
   const objects = town.world.layeredObjects;
-  assert.equal(objects.length, 9, "Elverson v4 should expose one facade for each town portal");
+  assert.equal(objects.length, 9, "Elverson v5 should expose one facade for each town portal");
   assert.deepEqual(
     objects.map(({ id, interactionId }) => ({ id, interactionId })),
     ELVERSON_TOWN_PORTALS.map(({ objectId, id }) => ({ id: objectId, interactionId: id })),

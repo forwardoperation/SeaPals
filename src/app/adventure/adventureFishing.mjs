@@ -3,6 +3,7 @@ import {
   normalizeAdventureSave,
   setQuestFlag,
 } from "./adventureProgression.mjs";
+import { ELVERSON_TOWN_WEST_COVE } from "./adventureElversonTownLayout.mjs";
 
 export const ELVERSON_FISHING_QUEST_ID = "quest-shellshore-first-voyage";
 // These persisted identifiers shipped in the earlier prototype. Keep them so
@@ -167,94 +168,31 @@ export function rollElversonReefCatch(randomValue) {
   return ELVERSON_REEF_CATCHES.at(-1);
 }
 
-const ELVERSON_FISHING_EDGES = Object.freeze([
-  Object.freeze({
-    id: "west-promenade",
-    facing: "down",
-    axis: "y",
-    edge: 17.55,
-    start: 0,
-    end: 18.8,
-  }),
-  Object.freeze({
-    id: "east-promenade",
-    facing: "down",
-    axis: "y",
-    edge: 17.55,
-    start: 22.2,
-    end: 41,
-  }),
-  Object.freeze({
-    id: "fishing-platform-west",
-    facing: "left",
-    axis: "x",
-    edge: 14.05,
-    start: 18.9,
-    end: 22.1,
-  }),
-  Object.freeze({
-    id: "fishing-platform-south",
-    facing: "down",
-    axis: "y",
-    edge: 22.3,
-    start: 14.2,
-    end: 16.5,
-  }),
-  Object.freeze({
-    id: "pier-end",
-    facing: "down",
-    axis: "y",
-    edge: 27.25,
-    start: 19.2,
-    end: 21.8,
-  }),
-  Object.freeze({
-    id: "aquarium-apron",
-    facing: "down",
-    axis: "y",
-    edge: 22.3,
-    start: 24.4,
-    end: 27,
-  }),
-]);
-
-const EDGE_REACH = 0.52;
 const EDGE_EPSILON = 1e-9;
 
-function edgeDistance(edge, position) {
-  if (edge.axis === "y") {
-    if (position.x < edge.start - EDGE_EPSILON || position.x > edge.end + EDGE_EPSILON) return null;
-    return edge.facing === "down" ? edge.edge - position.y : position.y - edge.edge;
-  }
-  if (position.y < edge.start - EDGE_EPSILON || position.y > edge.end + EDGE_EPSILON) return null;
-  return edge.facing === "right" ? edge.edge - position.x : position.x - edge.edge;
+function pointInsideBounds(position, rectangle) {
+  return position.x >= rectangle.left - EDGE_EPSILON
+    && position.x <= rectangle.right + EDGE_EPSILON
+    && position.y >= rectangle.top - EDGE_EPSILON
+    && position.y <= rectangle.bottom + EDGE_EPSILON;
 }
 
 /**
- * Returns a virtual interaction while the player is facing open water at an
- * authored Elverson shoreline edge. It intentionally does not add collision or
- * a visible prop to the world map.
+ * Returns a virtual interaction only while the player's feet are in the
+ * authored west-cove shallows. Facing never substitutes for actually wading.
  */
-export function getElversonHandNetInteraction(sceneId, position, facing) {
+export function getElversonHandNetInteraction(sceneId, position, _facing) {
   if (sceneId !== "town" || !position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) {
     return null;
   }
-  const edge = ELVERSON_FISHING_EDGES.find((candidate) => {
-    if (candidate.facing !== facing) return false;
-    const distance = edgeDistance(candidate, position);
-    return distance !== null && distance >= -EDGE_EPSILON && distance <= EDGE_REACH + EDGE_EPSILON;
-  });
-  if (!edge) return null;
+  if (!pointInsideBounds(position, ELVERSON_TOWN_WEST_COVE.shallows)) return null;
 
-  const at = edge.axis === "y"
-    ? { x: position.x, y: edge.edge + (edge.facing === "down" ? 0.35 : -0.35) }
-    : { x: edge.edge + (edge.facing === "right" ? 0.35 : -0.35), y: position.y };
   return Object.freeze({
     type: "fishing",
-    interactionId: `interaction-elverson-hand-net-${edge.id}`,
-    spotId: edge.id,
-    at: Object.freeze(at),
-    label: "Small creatures move through the shallows. Press Enter to ready the hand net.",
+    interactionId: "interaction-elverson-hand-net-west-cove-shallows",
+    spotId: "west-cove-shallows",
+    at: Object.freeze({ x: position.x, y: position.y }),
+    label: "Your feet are in the shallows. Press Enter to ready the hand net.",
   });
 }
 

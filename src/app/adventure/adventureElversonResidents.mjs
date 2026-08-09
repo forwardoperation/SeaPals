@@ -1,10 +1,12 @@
+import { ELVERSON_TOWN_WEST_COVE } from "./adventureElversonTownLayout.mjs";
+
 export const ELVERSON_AMBIENT_RESIDENTS = Object.freeze([
   {
     id: "fisherman-wyeth",
     name: "Fisherman Wyeth",
     title: "Fisherman's Wharf Guide",
     sceneId: "town",
-    at: { x: 18.05, y: 20.85 },
+    at: ELVERSON_TOWN_WEST_COVE.wyeth,
     intro: "It's a fine day for fishing! I hear you'd like to learn how to catch some sea creatures? Let's start with a good old-fashioned hand net.",
     guidance: "A hand net is for the shallow shore. Move slowly, watch the animal's path, and never chase it into a place where you could damage its shelter.",
     returnLine: "Meet me at the sandy practice cove when you're ready for your first hand-net lesson.",

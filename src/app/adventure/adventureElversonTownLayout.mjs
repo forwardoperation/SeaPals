@@ -8,7 +8,8 @@ function bounds(left, top, right, bottom) {
 
 export const ELVERSON_TOWN_LAYOUT_VERSION_LEGACY = 1;
 export const ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL = 2;
-export const ELVERSON_TOWN_LAYOUT_VERSION = 3;
+export const ELVERSON_TOWN_LAYOUT_VERSION_EXPANDED_WATERFRONT = 3;
+export const ELVERSON_TOWN_LAYOUT_VERSION = 4;
 export const ELVERSON_TOWN_SAFE_PROMENADE_Y = 16.45;
 
 export const ELVERSON_TOWN_DIMENSIONS = Object.freeze({ width: 42, height: 28 });
@@ -26,9 +27,20 @@ export const ELVERSON_TOWN_SAFE_POSITIONS = Object.freeze({
   researchLabExterior: point(30.7, ELVERSON_TOWN_SAFE_PROMENADE_Y),
   supplyCompanyExterior: point(37.5, ELVERSON_TOWN_SAFE_PROMENADE_Y),
   wharfApproach: point(14.55, 21.45),
-  handNetCove: point(15.15, 21.65),
+  handNetCove: point(9.4, 19.35),
+  pierEnd: point(20.5, 25.9),
   aquariumExterior: point(27.6, 23.72),
 });
+
+export const ELVERSON_TOWN_WEST_COVE = Object.freeze({
+  stairs: bounds(9, 16.35, 10.05, 18.25),
+  sand: bounds(7.4, 17.75, 10.85, 19.2),
+  shallows: bounds(7.65, 18.85, 10.65, 20.35),
+  wyeth: point(8.35, 18.2),
+});
+
+export const ELVERSON_TOWN_PIER_END_Y = 26.35;
+export const ELVERSON_TOWN_AQUARIUM_APRON = bounds(21.65, 22.65, 31.2, 24.1);
 
 export const ELVERSON_TOWN_PORTALS = Object.freeze([
   Object.freeze({
@@ -164,16 +176,13 @@ export const ELVERSON_BIRTHDAY_RACE_PATH = Object.freeze([
 
 export const ELVERSON_WYETH_HAND_NET_PATH = Object.freeze({
   leader: Object.freeze([
-    point(18.05, 20.85),
-    point(17.15, 20.85),
-    point(16.35, 20.85),
-    point(15.65, 21.2),
-    ELVERSON_TOWN_SAFE_POSITIONS.handNetCove,
+    ELVERSON_TOWN_WEST_COVE.wyeth,
+    point(8.45, 18.55),
+    point(8.55, 18.9),
   ]),
   follower: Object.freeze([
-    point(17.55, 21.35),
-    point(16.8, 21.35),
-    point(16.1, 21.35),
+    point(8.85, 18.15),
+    point(9.05, 18.65),
     ELVERSON_TOWN_SAFE_POSITIONS.handNetCove,
   ]),
 });

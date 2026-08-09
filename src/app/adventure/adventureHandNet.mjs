@@ -28,7 +28,7 @@ const ARENA = Object.freeze({ width: 12, height: 8 });
 const PLAYER_BOUNDS = Object.freeze({ left: 0.4, top: 2, right: 11.6, bottom: 7.05 });
 const CREATURE_BOUNDS = Object.freeze({ left: 0.45, top: 0.65, right: 11.55, bottom: 6.45 });
 const ESCAPE_BOUNDS = Object.freeze({ left: -0.25, top: 0.2, right: 12.25, bottom: 7.8 });
-const SIMULATION_STEP_MS = 20;
+export const HAND_NET_SIMULATION_STEP_MS = 20;
 const WALK_FRAME_DURATION_MS = 110;
 const WALK_FRAME_SEQUENCE = Object.freeze([1, 0, 2, 0]);
 const MAX_TICK_MS = 10_000;
@@ -56,6 +56,34 @@ function deepFreeze(value) {
 function finiteNumber(value, label) {
   if (!Number.isFinite(value)) throw new TypeError(`${label} must be finite.`);
   return value;
+}
+
+/**
+ * Separates display-frame time from the deterministic simulation cadence.
+ * The UI can retain the sub-step remainder without replacing React state on
+ * frames where the simulation has no work to perform.
+ */
+export function consumeHandNetFrameElapsed(accumulatorMs, elapsedMs) {
+  finiteNumber(accumulatorMs, "Hand-net frame accumulatorMs");
+  finiteNumber(elapsedMs, "Hand-net frame elapsedMs");
+  if (accumulatorMs < 0 || accumulatorMs >= HAND_NET_SIMULATION_STEP_MS) {
+    throw new RangeError(
+      `Hand-net frame accumulatorMs must stay between 0 and ${HAND_NET_SIMULATION_STEP_MS}.`,
+    );
+  }
+  if (elapsedMs < 0 || elapsedMs > MAX_TICK_MS) {
+    throw new RangeError(`Hand-net frame elapsedMs must stay between 0 and ${MAX_TICK_MS}.`);
+  }
+
+  const availableMs = accumulatorMs + elapsedMs;
+  const stepCount = Math.floor(
+    (availableMs + EPSILON) / HAND_NET_SIMULATION_STEP_MS,
+  );
+  const simulationElapsedMs = stepCount * HAND_NET_SIMULATION_STEP_MS;
+  return {
+    simulationElapsedMs,
+    remainderMs: Math.max(0, availableMs - simulationElapsedMs),
+  };
 }
 
 function requireState(state) {
@@ -195,7 +223,7 @@ function createSettings({ reducedMotion = false } = {}) {
     scoopWindupEndMs: 240,
     scoopContactMs: 440,
     scoopRecoveryStartMs: 500,
-    scoopContactWindowMs: SIMULATION_STEP_MS,
+    scoopContactWindowMs: HAND_NET_SIMULATION_STEP_MS,
     cooldownMs: 440,
     missAlert: 0.18,
     motionScale: reducedMotion ? 0.48 : 1,
@@ -327,6 +355,10 @@ export function applyHandNetAction(stateValue, action) {
 
   if (action.type === HAND_NET_ACTIONS.MOVE) {
     const intent = normalizedIntent(action.x, action.y);
+    if (
+      Math.abs(intent.x - state.player.intent.x) <= EPSILON
+      && Math.abs(intent.y - state.player.intent.y) <= EPSILON
+    ) return state;
     const next = cloneState(state);
     const wasMoving = magnitude(state.player.intent) > EPSILON;
     next.player.intent = intent;
@@ -671,13 +703,13 @@ function updateNet(state, elapsedMs) {
 }
 
 function simulationStep(state) {
-  const elapsedSeconds = SIMULATION_STEP_MS / 1000;
-  state.simulationTimeMs += SIMULATION_STEP_MS;
+  const elapsedSeconds = HAND_NET_SIMULATION_STEP_MS / 1000;
+  state.simulationTimeMs += HAND_NET_SIMULATION_STEP_MS;
   state.tickCount += 1;
   updatePlayer(state, elapsedSeconds);
-  updateWalkPresentation(state, SIMULATION_STEP_MS);
-  updateCreatures(state, SIMULATION_STEP_MS);
-  updateNet(state, SIMULATION_STEP_MS);
+  updateWalkPresentation(state, HAND_NET_SIMULATION_STEP_MS);
+  updateCreatures(state, HAND_NET_SIMULATION_STEP_MS);
+  updateNet(state, HAND_NET_SIMULATION_STEP_MS);
   if (state.phase === HAND_NET_PHASES.PLAYING) finishEscapeIfNeeded(state);
 }
 
@@ -692,9 +724,9 @@ export function tickHandNetState(stateValue, elapsedMs) {
 
   const next = cloneState(state);
   let availableMs = next.accumulatorMs + elapsedMs;
-  while (availableMs + EPSILON >= SIMULATION_STEP_MS && next.phase === HAND_NET_PHASES.PLAYING) {
+  while (availableMs + EPSILON >= HAND_NET_SIMULATION_STEP_MS && next.phase === HAND_NET_PHASES.PLAYING) {
     simulationStep(next);
-    availableMs -= SIMULATION_STEP_MS;
+    availableMs -= HAND_NET_SIMULATION_STEP_MS;
   }
   next.accumulatorMs = next.phase === HAND_NET_PHASES.PLAYING
     ? Math.max(0, availableMs)

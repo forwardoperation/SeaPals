@@ -7,7 +7,9 @@ import {
   HAND_NET_ACTIONS,
   HAND_NET_PHASES,
   HAND_NET_SCOOP_PHASES,
+  HAND_NET_SIMULATION_STEP_MS,
   applyHandNetAction,
+  consumeHandNetFrameElapsed,
   createHandNetState,
   tickHandNetState,
 } from "./adventureHandNet.mjs";
@@ -88,6 +90,33 @@ test("fixed simulation steps make replay independent of UI frame partitioning", 
   assert.equal(oneFrame.simulationTimeMs, 1_000);
 });
 
+test("display frames retain partial time and request React updates only for whole simulation steps", () => {
+  assert.equal(HAND_NET_SIMULATION_STEP_MS, 20);
+  assert.deepEqual(consumeHandNetFrameElapsed(0, 19), {
+    simulationElapsedMs: 0,
+    remainderMs: 19,
+  });
+  assert.deepEqual(consumeHandNetFrameElapsed(19, 100), {
+    simulationElapsedMs: 100,
+    remainderMs: 19,
+  }, "a clamped long frame must not discard its carried partial step");
+
+  let remainderMs = 0;
+  let simulatedMs = 0;
+  let reactUpdateCount = 0;
+  const refreshRate = 165;
+  for (let frame = 0; frame < refreshRate * 60; frame += 1) {
+    const partition = consumeHandNetFrameElapsed(remainderMs, 1_000 / refreshRate);
+    remainderMs = partition.remainderMs;
+    simulatedMs += partition.simulationElapsedMs;
+    if (partition.simulationElapsedMs > 0) reactUpdateCount += 1;
+  }
+
+  assert.equal(simulatedMs, 60_000);
+  assert.equal(reactUpdateCount, 3_000, "a high-refresh display should commit at the 50 Hz simulation rate");
+  assert.ok(remainderMs < 1e-7);
+});
+
 test("move actions drive the player and forward net without mutating prior state", () => {
   const initial = createHandNetState({ seed: 5, creatureCount: 2 });
   const before = structuredClone(initial);
@@ -114,6 +143,37 @@ test("move actions drive the player and forward net without mutating prior state
   const stoppedPosition = stopped.player.position;
   const afterStop = tickHandNetState(stopped, 200);
   assert.deepEqual(afterStop.player.position, stoppedPosition);
+});
+
+test("repeating an unchanged move intent preserves state identity and walk cadence", () => {
+  const initial = createHandNetState({ seed: 6, creatureCount: 2 });
+  const moving = applyHandNetAction(initial, {
+    type: HAND_NET_ACTIONS.MOVE,
+    x: 1,
+    y: -1,
+  });
+  const repeated = applyHandNetAction(moving, {
+    type: HAND_NET_ACTIONS.MOVE,
+    x: 1,
+    y: -1,
+  });
+  assert.strictEqual(repeated, moving);
+
+  const advanced = tickHandNetState(moving, 120);
+  assert.strictEqual(applyHandNetAction(advanced, {
+    type: HAND_NET_ACTIONS.MOVE,
+    x: 1,
+    y: -1,
+  }), advanced);
+  assert.equal(advanced.presentation.walkElapsedMs, 120);
+
+  const redirected = applyHandNetAction(advanced, {
+    type: HAND_NET_ACTIONS.MOVE,
+    x: -1,
+    y: 0,
+  });
+  assert.notStrictEqual(redirected, advanced);
+  assert.equal(redirected.presentation.walkElapsedMs, 120);
 });
 
 test("walk presentation starts predictably, advances locally, and resets when movement stops", () => {
@@ -402,6 +462,9 @@ test("public functions reject malformed options, actions, state, and elapsed tim
   assert.throws(() => tickHandNetState(state, -1), /elapsedMs must stay between/);
   assert.throws(() => tickHandNetState(state, 10_001), /elapsedMs must stay between/);
   assert.throws(() => tickHandNetState(state, Number.NaN), /elapsedMs must be finite/);
+  assert.throws(() => consumeHandNetFrameElapsed(-1, 20), /accumulatorMs must stay between/);
+  assert.throws(() => consumeHandNetFrameElapsed(20, 20), /accumulatorMs must stay between/);
+  assert.throws(() => consumeHandNetFrameElapsed(0, Number.NaN), /elapsedMs must be finite/);
 });
 
 function UINT32_MAX_PLUS_ONE() {

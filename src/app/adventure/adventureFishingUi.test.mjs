@@ -92,7 +92,7 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
 
 test("the required tutorial stays with the player until a catch is recorded", () => {
   assert.match(game, /fishingSession\.required[\s\S]*?Complete Wyeth's practice catch before leaving the lesson/);
-  assert.match(modal, /if \(required && !catchResult\) return/);
+  assert.match(modal, /if \(required && !catchResult\)/);
   assert.match(modal, /!required && state\.phase !== HAND_NET_PHASES\.CAUGHT/);
   assert.match(modal, /tutorial \? "tutorial-complete" : "caught"/);
   assert.match(modal, /Retry catch/);
@@ -138,6 +138,34 @@ test("keyboard, touch, focus, live status, and reduced-motion affordances are ex
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.handNetNetSplash::before/);
   assert.match(styles, /\.reducedMotionMode \.handNetPlayerCelebrating,[\s\S]*?animation:\s*none !important/);
   assert.match(styles, /@media \(forced-colors: active\)[\s\S]*?\.handNetCard/);
+});
+
+test("desktop hand-net input handles focused controls once and stays isolated from overworld shortcuts", () => {
+  const movementBranchIndex = modal.indexOf("if (MOVE_KEYS[movementKey] && !nativeTextEntry)");
+  const interactiveGuardIndex = modal.indexOf("if (nativeInteractive && event.key !== \"Escape\") {");
+  assert.ok(movementBranchIndex >= 0, "the modal must recognize normalized keyboard movement");
+  assert.ok(interactiveGuardIndex >= 0, "the modal must retain native control handling");
+  assert.ok(
+    movementBranchIndex < interactiveGuardIndex,
+    "WASD and arrows must work when the initially focused Catch button owns the event",
+  );
+  assert.match(modal, /function normalizedMovementKey\(key\)[\s\S]*?key\.toLowerCase\(\)/);
+  assert.match(modal, /pressedKeysRef\.current\.has\(movementKey\)/);
+  assert.match(modal, /pressedKeysRef\.current\.delete\(movementKey\)/);
+  assert.match(modal, /nativeInteractive[\s\S]*?actionKey && event\.repeat/);
+  assert.match(modal, /onKeyDown=\{\(event\) => \{[\s\S]*?if \(event\.repeat\) return;/);
+  assert.match(modal, /event\.stopPropagation\(\)/);
+  assert.match(modal, /nativeTextEntry[\s\S]*?\[contenteditable='true'\]/);
+});
+
+test("the hand-net RAF commits React state only when fixed simulation work is available", () => {
+  assert.match(modal, /consumeHandNetFrameElapsed\(simulationAccumulatorMs, elapsed\)/);
+  assert.match(modal, /simulationAccumulatorMs = frame\.remainderMs/);
+  assert.match(
+    modal,
+    /if \(frame\.simulationElapsedMs > 0\) \{[\s\S]*?setState\(\(current\) => tickHandNetState\(current, frame\.simulationElapsedMs\)\)/,
+  );
+  assert.doesNotMatch(modal, /tickHandNetState\(current, elapsed\)/);
 });
 
 test("delivered creatures populate six scenic tanks directly inside the scrolling Aquarium galleries", () => {

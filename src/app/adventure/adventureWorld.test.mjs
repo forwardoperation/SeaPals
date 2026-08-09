@@ -115,7 +115,7 @@ function assertWalkablePolyline(sceneId, points, label) {
   }
 }
 
-test("world exposes the 42-by-28 Elverson v4 town, aquarium galleries, public interiors, and the upstairs bedroom", () => {
+test("world exposes the 42-by-28 Elverson v5 town, aquarium galleries, public interiors, and the upstairs bedroom", () => {
   for (const sceneId of ELVERSON_RELEASE_SCOPE.sceneIds) {
     assert.ok(SCENES[sceneId], `${sceneId} should remain available`);
   }
@@ -123,11 +123,12 @@ test("world exposes the 42-by-28 Elverson v4 town, aquarium galleries, public in
   assert.deepEqual(ELVERSON_TOWN_DIMENSIONS, { width: 42, height: 28 });
   assert.equal(SCENES.town.width, ELVERSON_TOWN_DIMENSIONS.width);
   assert.equal(SCENES.town.height, ELVERSON_TOWN_DIMENSIONS.height);
-  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v4.webp");
+  assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v5.webp");
   assert.equal(SCENES.town.layeredObjects.length, 9);
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "central-pier"));
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "wharf-platform"));
-  assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "aquarium-platform"));
+  assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "west-cove-shallows"));
+  assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "aquarium-front-apron"));
   assert.equal(SCENES["player-bedroom"].width, 15);
   assert.equal(SCENES["player-bedroom"].height, 10);
   assert.equal(SCENES["player-home"].width, 15);
@@ -741,7 +742,7 @@ test("every Sunpatch, Brackwater, Current, and Kelpwatch exterior doorway auto-t
   }
 });
 
-test("Elverson exposes the v4 town start, route dock, and every semantic safe position", () => {
+test("Elverson exposes the v5 town start, route dock, and every semantic safe position", () => {
   assert.deepEqual(ELVERSON_TOWN_SAFE_POSITIONS, {
     townStart: { x: 20, y: 6 },
     legacyTownResume: { x: 20, y: 6 },
@@ -755,7 +756,8 @@ test("Elverson exposes the v4 town start, route dock, and every semantic safe po
     researchLabExterior: { x: 30.7, y: 16.45 },
     supplyCompanyExterior: { x: 37.5, y: 16.45 },
     wharfApproach: { x: 14.55, y: 21.45 },
-    handNetCove: { x: 15.15, y: 21.65 },
+    handNetCove: { x: 9.4, y: 19.35 },
+    pierEnd: { x: 20.5, y: 25.9 },
     aquariumExterior: { x: 27.6, y: 23.72 },
   });
   assert.deepEqual(SCENES.town.spawn, ELVERSON_TOWN_SAFE_POSITIONS.townStart);
@@ -771,7 +773,7 @@ test("Elverson exposes the v4 town start, route dock, and every semantic safe po
     assert.equal(
       canOccupyContinuousPosition("town", position),
       true,
-      `${label} must remain a safe v3 position`,
+      `${label} must remain a safe v5 position`,
     );
   }
 });
@@ -784,7 +786,7 @@ test("movement advances over walkable tiles and respects map bounds", () => {
   assert.equal(getTile("town", { x: -1, y: 0 }), null);
 });
 
-test("continuous movement cannot cross Elverson v4 facades, water, furniture, exits, or trainers", () => {
+test("continuous movement cannot cross Elverson v5 facades, water, furniture, exits, or trainers", () => {
   for (const position of [
     { x: 4.2, y: 3 },
     { x: 13.8, y: 3 },
