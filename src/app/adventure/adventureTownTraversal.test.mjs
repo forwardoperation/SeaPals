@@ -184,14 +184,14 @@ test("full facade footprints are solid while each front approach remains open", 
 test("the aquarium's visible door remains reachable from the public pier", () => {
   const portal = ELVERSON_TOWN_PORTALS.find(({ objectId }) => objectId === "aquarium-workshop");
   assert.ok(portal);
-  assert.deepEqual(portal.at, { x: 25.575, y: 22.55 });
-  assert.equal(portal.scale, 0.58);
-  assert.deepEqual(portal.doorway, { x: 24.54, y: 21.85 });
+  assert.deepEqual(portal.at, { x: 27.6, y: 23.75 });
+  assert.equal(portal.scale, 0.8);
+  assert.deepEqual(portal.doorway, { x: 27.6, y: 23.3 });
 
   walkAxisRoute([
     { x: 20, y: 21.45 },
-    { x: 20, y: 22.22 },
-    { x: portal.exteriorSpawn.x, y: 22.22 },
+    { x: 20, y: 23.72 },
+    { x: portal.exteriorSpawn.x, y: 23.72 },
     portal.exteriorSpawn,
   ]);
 
@@ -212,14 +212,13 @@ test("the wharf and aquarium platforms connect to town without opening the surro
   ]);
   walkAxisRoute([
     { x: 20, y: 21.45 },
-    { x: 20, y: 22.22 },
-    { x: 24.54, y: 22.22 },
+    { x: 20, y: 23.72 },
     ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
   ]);
 
   for (const [label, position] of [
     ["expanded wharf", { x: 12, y: 20 }],
-    ["expanded aquarium apron", { x: 29, y: 23 }],
+    ["expanded aquarium apron", { x: 29, y: 23.72 }],
   ]) assert.equal(canOccupyContinuousPosition("town", position), true, `${label} must be walkable`);
 
   for (const [label, position] of [

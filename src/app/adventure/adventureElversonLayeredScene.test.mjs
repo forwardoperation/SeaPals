@@ -26,7 +26,7 @@ test("all authored facade links match the town portal contract", () => {
   );
 });
 
-test("the scaled aquarium facade fits its deck while its visible door meets the connector", () => {
+test("the grand aquarium facade fills its deck while its central entrance stays reachable", () => {
   const portal = ELVERSON_TOWN_PORTALS.find(({ objectId }) => objectId === "aquarium-workshop");
   const object = ELVERSON_LAYERED_SCENE.objects.find(({ id }) => id === "aquarium-workshop");
   const platform = ELVERSON_LAYERED_SCENE.walkableRegions.find(({ id }) => id === "aquarium-platform");
@@ -37,18 +37,14 @@ test("the scaled aquarium facade fits its deck while its visible door meets the 
   assert.ok(platform);
   assert.ok(connector);
 
-  assert.equal(portal.scale, 0.58);
-  assert.deepEqual(portal.at, { x: 25.575, y: 22.55 });
-  assert.deepEqual(portal.doorway, { x: 24.54, y: 21.85 });
+  assert.equal(portal.scale, 0.8);
+  assert.deepEqual(portal.at, { x: 27.6, y: 23.75 });
+  assert.deepEqual(portal.doorway, { x: 27.6, y: 23.3 });
   assert.ok(object.visualBounds.left >= platform.left, "aquarium facade must not hang west of the deck");
   assert.ok(object.visualBounds.right <= platform.right, "aquarium facade must not hang east of the deck");
   assert.ok(object.visualBounds.top >= platform.top, "aquarium facade must not hang north of the deck");
   assert.ok(object.visualBounds.bottom <= platform.bottom, "aquarium facade must not hang south of the deck");
-  assert.ok(
-    portal.doorway.x >= Math.max(platform.left, connector.left)
-      && portal.doorway.x <= Math.min(platform.right, connector.right),
-    "the aquarium's visible left-hand door must remain over the deck/connector overlap",
-  );
+  assert.ok(portal.doorway.x >= platform.left && portal.doorway.x <= platform.right);
   const playerRadius = CONTINUOUS_MOVEMENT_DEFAULTS.radius;
   assert.ok(portal.doorway.x - platform.left >= playerRadius);
   assert.ok(platform.right - portal.doorway.x >= playerRadius);
@@ -56,8 +52,8 @@ test("the scaled aquarium facade fits its deck while its visible door meets the 
   assert.ok(platform.bottom - portal.doorway.y >= playerRadius);
   const facadeBottom = Math.max(...object.collisionRects.map(({ bottom }) => bottom));
   assert.ok(
-    platform.bottom - facadeBottom >= 2,
-    "the aquarium must have at least two dry tiles of approach south of its facade",
+    platform.bottom - facadeBottom >= 0.75,
+    "the aquarium must retain a dry approach south of its facade",
   );
 });
 

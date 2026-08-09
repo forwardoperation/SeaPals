@@ -2,6 +2,10 @@ import {
   getAdventureStartLocation,
   getRuntimeAdventureScenes,
 } from "./adventureContent.mjs";
+import {
+  ADVENTURE_MOVEMENT_AXES,
+  isAdventureMovementDirectionAllowed,
+} from "./adventureMovementInput.mjs";
 
 const DIRECTION_DELTAS = Object.freeze({
   up: Object.freeze({ x: 0, y: -1 }),
@@ -21,6 +25,7 @@ const STRUCTURAL_INTERACTION_FIXTURES = new WeakMap();
 export const DIRECTIONS = Object.freeze(Object.keys(DIRECTION_DELTAS));
 
 export const CONTINUOUS_MOVEMENT_DEFAULTS = Object.freeze({
+  axis: "free",
   radius: 0.22,
   speed: 4,
   maxStepDistance: 0.1,
@@ -134,7 +139,77 @@ function defineMovementProfile(movement = {}) {
   for (const field of ["interactionLateralTolerance", "doorwayLateralTolerance"]) {
     requirePositiveNumber(profile[field], `Scene movement ${field}`, { allowZero: true });
   }
+  if (!ADVENTURE_MOVEMENT_AXES.includes(profile.axis)) {
+    throw new RangeError(`Scene movement axis must be one of ${ADVENTURE_MOVEMENT_AXES.join(", ")}.`);
+  }
+  if (profile.idleFacing !== undefined && !DIRECTION_DELTAS[profile.idleFacing]) {
+    throw new RangeError("Scene movement idleFacing must be up, down, left, or right when supplied.");
+  }
   return Object.freeze(profile);
+}
+
+function defineSceneCamera(camera) {
+  if (camera === undefined || camera === null) return null;
+  if (!camera || typeof camera !== "object" || Array.isArray(camera)) {
+    throw new TypeError("Scene camera must be an object when supplied.");
+  }
+  const supportedFields = new Set(["viewportAspect", "tilesAcross", "playerAnchorX", "playerAnchorY"]);
+  for (const field of Object.keys(camera)) {
+    if (!supportedFields.has(field)) throw new RangeError(`Unknown scene camera field ${field}.`);
+  }
+  for (const field of ["viewportAspect", "tilesAcross"]) {
+    if (camera[field] !== undefined) requirePositiveNumber(camera[field], `Scene camera ${field}`);
+  }
+  for (const field of ["playerAnchorX", "playerAnchorY"]) {
+    if (
+      camera[field] !== undefined
+      && (!Number.isFinite(camera[field]) || camera[field] < 0 || camera[field] > 1)
+    ) {
+      throw new RangeError(`Scene camera ${field} must be between zero and one.`);
+    }
+  }
+  return freezePublicValue(camera);
+}
+
+function defineAquariumGallery(aquariumGallery, scene) {
+  if (aquariumGallery === undefined || aquariumGallery === null) return null;
+  if (!aquariumGallery || typeof aquariumGallery !== "object" || Array.isArray(aquariumGallery)) {
+    throw new TypeError(`Scene ${scene.id} aquariumGallery must be an object when supplied.`);
+  }
+  if (typeof aquariumGallery.ecosystemId !== "string" || !aquariumGallery.ecosystemId.trim()) {
+    throw new TypeError(`Scene ${scene.id} aquariumGallery requires an ecosystemId.`);
+  }
+  if (!Array.isArray(aquariumGallery.tankSlots) || aquariumGallery.tankSlots.length !== 2) {
+    throw new RangeError(`Scene ${scene.id} aquariumGallery requires exactly two tank slots.`);
+  }
+  const tankIds = new Set();
+  for (const [index, slot] of aquariumGallery.tankSlots.entries()) {
+    if (!slot || typeof slot !== "object" || Array.isArray(slot)) {
+      throw new TypeError(`Scene ${scene.id} aquariumGallery tank slot ${index} must be an object.`);
+    }
+    if (typeof slot.tankId !== "string" || !slot.tankId.trim() || tankIds.has(slot.tankId)) {
+      throw new Error(`Scene ${scene.id} aquariumGallery tank slot ${index} requires a unique tankId.`);
+    }
+    const bounds = slot.bounds;
+    if (!bounds || typeof bounds !== "object" || Array.isArray(bounds)) {
+      throw new TypeError(`Scene ${scene.id} aquariumGallery tank slot ${index} requires bounds.`);
+    }
+    if ([bounds.left, bounds.top, bounds.right, bounds.bottom].some((value) => !Number.isFinite(value))) {
+      throw new TypeError(`Scene ${scene.id} aquariumGallery tank slot ${index} requires finite bounds.`);
+    }
+    if (
+      bounds.left < 0
+      || bounds.top < 0
+      || bounds.left >= bounds.right
+      || bounds.top >= bounds.bottom
+      || bounds.right > scene.width
+      || bounds.bottom > scene.height
+    ) {
+      throw new RangeError(`Scene ${scene.id} aquariumGallery tank slot ${index} must stay inside the scene.`);
+    }
+    tankIds.add(slot.tankId);
+  }
+  return freezePublicValue(aquariumGallery);
 }
 
 function defineScene({
@@ -144,6 +219,8 @@ function defineScene({
   theme,
   artPath = null,
   routeId = null,
+  camera,
+  aquariumGallery,
   movement,
   tiles,
   spawn,
@@ -197,6 +274,8 @@ function defineScene({
     theme,
     artPath,
     routeId,
+    camera: defineSceneCamera(camera),
+    aquariumGallery: defineAquariumGallery(aquariumGallery, sceneBounds),
     movement: defineMovementProfile(movement),
     width,
     height,
@@ -219,6 +298,8 @@ export const SCENES = Object.freeze(Object.fromEntries(
       theme: scene.world.theme,
       artPath: scene.world.artPath,
       routeId: scene.routeId ?? scene.world.routeId ?? null,
+      camera: scene.world.camera,
+      aquariumGallery: scene.world.aquariumGallery,
       movement: scene.world.movement,
       tiles: scene.world.tiles,
       spawn: scene.world.spawn,
@@ -580,6 +661,38 @@ function getManualInteractionLateralTolerance(scene, interaction, explicitTolera
   return Math.max(scene.movement.interactionLateralTolerance, PROP_INTERACTION_HALF_WIDTH);
 }
 
+function getManualInteractionGeometry(interaction, interactionPosition, position, facingVector) {
+  const interactionHalfWidth = interaction.interactionHalfWidth ?? 0;
+  requirePositiveNumber(
+    interactionHalfWidth,
+    `Adventure interaction ${interaction.id} half-width`,
+    { allowZero: true },
+  );
+  const offsetX = interactionPosition.x - position.x;
+  const offsetY = interactionPosition.y - position.y;
+  const forwardDistance = offsetX * facingVector.x + offsetY * facingVector.y;
+  const signedLateralDistance = offsetX * facingVector.y - offsetY * facingVector.x;
+  const lateralDistance = Math.max(0, Math.abs(signedLateralDistance) - interactionHalfWidth);
+  const lateralDirection = {
+    x: facingVector.y,
+    y: -facingVector.x,
+  };
+  const clampedLateralDistance = Math.max(
+    -interactionHalfWidth,
+    Math.min(signedLateralDistance, interactionHalfWidth),
+  );
+  const pathTarget = {
+    x: interactionPosition.x - lateralDirection.x * clampedLateralDistance,
+    y: interactionPosition.y - lateralDirection.y * clampedLateralDistance,
+  };
+  return {
+    distance: Math.hypot(pathTarget.x - position.x, pathTarget.y - position.y),
+    forwardDistance,
+    lateralDistance,
+    pathTarget,
+  };
+}
+
 export function isInBounds(sceneId, position) {
   const scene = requireScene(sceneId);
   requirePosition(position);
@@ -679,19 +792,30 @@ export function canOccupyContinuousPosition(
 
 /** Uses the scene-authored collision radius while preserving the legacy helper's default. */
 export function canOccupyScenePosition(sceneId, position, options = {}) {
+  const scene = requireScene(sceneId);
+  requireContinuousPosition(position);
+  if (
+    scene.movement.axis === "horizontal"
+    && Math.abs(position.y - scene.spawn.y) > INTERACTION_GEOMETRY_EPSILON
+  ) {
+    return false;
+  }
   return canOccupyContinuousPosition(
     sceneId,
     position,
-    getSceneMovementProfile(sceneId).radius,
+    scene.movement.radius,
     options,
   );
 }
 
 export function movePlayer(sceneId, position, direction) {
-  requireScene(sceneId);
+  const scene = requireScene(sceneId);
   requirePosition(position);
   const delta = DIRECTION_DELTAS[direction];
   if (!delta) throw new RangeError(`Unknown movement direction: ${direction}`);
+  if (!isAdventureMovementDirectionAllowed(direction, scene.movement.axis)) {
+    return { x: position.x, y: position.y };
+  }
 
   const destination = {
     x: position.x + delta.x,
@@ -730,14 +854,17 @@ export function movePlayerContinuous(
   requirePositiveNumber(speed, "Movement speed", { allowZero: true });
   requirePositiveNumber(maxStepDistance, "Maximum movement step");
 
-  const inputMagnitude = Math.hypot(movement.x, movement.y);
+  const resolvedMovement = profile.axis === "horizontal"
+    ? { x: movement.x, y: 0 }
+    : movement;
+  const inputMagnitude = Math.hypot(resolvedMovement.x, resolvedMovement.y);
   if (!inputMagnitude || !elapsedMs || !speed) return { x: position.x, y: position.y };
   const resolvedDynamicBlockers = requireDynamicBlockers(dynamicBlockers);
 
   const inputScale = inputMagnitude > 1 ? 1 / inputMagnitude : 1;
   const travelScale = speed * (elapsedMs / 1000) * inputScale;
-  const totalX = movement.x * travelScale;
-  const totalY = movement.y * travelScale;
+  const totalX = resolvedMovement.x * travelScale;
+  const totalY = resolvedMovement.y * travelScale;
   const stepCount = Math.max(1, Math.ceil(Math.max(Math.abs(totalX), Math.abs(totalY)) / maxStepDistance));
   const stepX = totalX / stepCount;
   const stepY = totalY / stepCount;
@@ -810,17 +937,16 @@ export function getContinuousInteraction(
   const candidates = scene.interactions
     .map((interaction) => {
       const interactionPosition = resolveInteractionPosition(interaction, positionOverrides);
-      const offsetX = interactionPosition.x - position.x;
-      const offsetY = interactionPosition.y - position.y;
-      const forwardDistance = offsetX * facingVector.x + offsetY * facingVector.y;
-      const lateralDistance = Math.abs(offsetX * facingVector.y - offsetY * facingVector.x);
-      const distance = Math.hypot(offsetX, offsetY);
+      const geometry = getManualInteractionGeometry(
+        interaction,
+        interactionPosition,
+        position,
+        facingVector,
+      );
       return {
         interaction,
         interactionPosition,
-        distance,
-        forwardDistance,
-        lateralDistance,
+        ...geometry,
       };
     })
     .filter((candidate) => (
@@ -852,7 +978,7 @@ export function getContinuousInteraction(
       && hasClearInteractionPath(
         scene,
         position,
-        candidate.interactionPosition,
+        candidate.pathTarget,
         candidate.interaction,
         positionOverrides,
       )

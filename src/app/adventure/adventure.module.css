@@ -1484,6 +1484,10 @@
 .elversonTownMap,
 .townMap,
 .academyLabMap,
+.aquariumGrandHallMap,
+.aquariumReefGalleryMap,
+.aquariumOceanicGalleryMap,
+.aquariumDeepGalleryMap,
 .playerBedroomMap,
 .playerHomeMap,
 .coralHomeMap,
@@ -1534,124 +1538,520 @@
   background-image: url("/images/adventure/shellshore-academy.webp");
 }
 
-.aquariumExhibitLayer {
+.aquariumGrandHallMap {
+  background-color: #0b3340;
+  background-image: url("/images/adventure/aquarium-grand-hall-v1.webp");
+}
+
+.aquariumReefGalleryMap,
+.aquariumOceanicGalleryMap,
+.aquariumDeepGalleryMap {
+  --aquarium-gallery-wall-top: #061923;
+  --aquarium-gallery-wall: #0b3440;
+  --aquarium-gallery-trim: #c7a45c;
+  --aquarium-gallery-sill: #173f49;
+  --aquarium-gallery-floor: #245c64;
+  --aquarium-gallery-floor-front: #0b303b;
+  background-color: var(--aquarium-gallery-floor-front);
+  background-image: linear-gradient(
+    180deg,
+    var(--aquarium-gallery-wall-top) 0 5%,
+    var(--aquarium-gallery-wall) 5% 68%,
+    var(--aquarium-gallery-trim) 68% 70%,
+    var(--aquarium-gallery-sill) 70% 74%,
+    var(--aquarium-gallery-floor) 74% 87%,
+    var(--aquarium-gallery-floor-front) 100%
+  );
+}
+
+.aquariumReefGalleryMap {
+  --aquarium-gallery-wall-top: #071b22;
+  --aquarium-gallery-wall: #10383d;
+  --aquarium-gallery-trim: #c9a158;
+  --aquarium-gallery-sill: #24535a;
+  --aquarium-gallery-floor: #2c6970;
+  --aquarium-gallery-floor-front: #123f48;
+}
+
+.aquariumOceanicGalleryMap {
+  --aquarium-gallery-wall-top: #061725;
+  --aquarium-gallery-wall: #0c3044;
+  --aquarium-gallery-trim: #a9c8c8;
+  --aquarium-gallery-sill: #24556a;
+  --aquarium-gallery-floor: #285f72;
+  --aquarium-gallery-floor-front: #103a4d;
+}
+
+.aquariumDeepGalleryMap {
+  --aquarium-gallery-wall-top: #030a1b;
+  --aquarium-gallery-wall: #111d3c;
+  --aquarium-gallery-trim: #71879a;
+  --aquarium-gallery-sill: #202f52;
+  --aquarium-gallery-floor: #1b2b50;
+  --aquarium-gallery-floor-front: #09132f;
+}
+
+/* The 32 x 9 aquarium scenes are lateral promenades. Tank artwork and labels
+ * are real scene children so the camera can reveal one habitat at a time. */
+.aquariumGalleryScenery {
   position: absolute;
-  z-index: 12;
+  z-index: 1;
   inset: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 
-.aquariumExhibit {
+.aquariumGalleryScenery::before,
+.aquariumGalleryScenery::after {
   position: absolute;
-  overflow: hidden;
-  border: max(1px, 0.12vw) solid rgba(207, 250, 254, 0.86);
-  border-radius: 7%;
-  background:
-    linear-gradient(180deg, rgba(236, 254, 255, 0.42), transparent 28%),
-    linear-gradient(180deg, rgba(8, 145, 178, 0.76), rgba(14, 116, 144, 0.84));
-  box-shadow:
-    inset 0 0 0 max(1px, 0.08vw) rgba(8, 47, 73, 0.42),
-    inset 0 -0.4vw 0 rgba(120, 80, 42, 0.44),
-    0 0.16vw 0.32vw rgba(8, 47, 73, 0.35);
+  right: 0;
+  left: 0;
+  content: "";
+  pointer-events: none;
 }
 
-.aquariumExhibitWater,
-.aquariumExhibitWater i {
-  position: absolute;
-  inset: 0;
+.aquariumGalleryScenery::before {
+  z-index: 1;
+  top: 0;
+  height: 5%;
+  border-bottom: max(2px, 0.14vw) solid rgba(219, 245, 246, 0.24);
+  background: #061923;
+  box-shadow: 0 max(3px, 0.24vw) 0 rgba(1, 12, 19, 0.56);
 }
 
-.aquariumExhibitWater {
-  opacity: 0.7;
-  background:
-    radial-gradient(circle at 20% 76%, rgba(250, 204, 21, 0.52) 0 2%, transparent 2.5%),
-    radial-gradient(circle at 73% 81%, rgba(254, 240, 138, 0.44) 0 2.6%, transparent 3.1%);
+.aquariumGalleryScenery::after {
+  z-index: 1;
+  top: 69.5%;
+  height: 5.5%;
+  border-top: max(2px, 0.18vw) solid var(--aquarium-gallery-trim, #bda05d);
+  border-bottom: max(2px, 0.16vw) solid rgba(3, 21, 28, 0.82);
+  background: var(--aquarium-gallery-sill, #173f49);
+  box-shadow: 0 max(4px, 0.35vw) 0 rgba(0, 11, 19, 0.42);
 }
 
-.aquariumExhibitWater i:first-child {
-  background: repeating-linear-gradient(174deg, transparent 0 13%, rgba(207, 250, 254, 0.18) 14% 16%, transparent 17% 29%);
-  animation: aquariumWaterDrift 5.2s linear infinite alternate;
-}
-
-.aquariumExhibitWater i:last-child {
-  top: auto;
-  height: 28%;
-  background: linear-gradient(180deg, transparent, rgba(22, 101, 52, 0.38));
-}
-
-.aquariumCreature {
+.aquariumGalleryTank,
+.aquariumGalleryTankWindow {
   position: absolute;
   z-index: 2;
-  left: -30%;
-  top: calc(8% + (var(--aquarium-lane) * 25%));
-  display: block;
-  width: 27%;
-  aspect-ratio: 1;
-  background-position: var(--aquarium-atlas-x) var(--aquarium-atlas-y);
-  background-repeat: no-repeat;
-  background-size: 500% 200%;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0.08vw 0.08vw rgba(8, 47, 73, 0.4));
-  animation: aquariumCreatureSwim var(--aquarium-duration) linear var(--aquarium-delay) infinite;
+  top: var(--aquarium-gallery-tank-top, 5.8%);
+  left: var(--aquarium-gallery-tank-left, 1.6%);
+  width: var(--aquarium-gallery-tank-width, 46.1%);
+  height: var(--aquarium-gallery-tank-height, 63.5%);
+  overflow: visible;
+  box-sizing: border-box;
+  border: max(3px, 0.32vw) solid #91bdc1;
+  border-radius: max(3px, 0.28vw);
+  isolation: isolate;
+  background: #063044;
+  box-shadow:
+    inset 0 0 0 max(1px, 0.08vw) rgba(224, 252, 253, 0.58),
+    0 0 0 max(2px, 0.2vw) #102d34,
+    0 max(5px, 0.42vw) 0 rgba(4, 20, 25, 0.68);
 }
 
-.aquariumCreatureReverse {
-  animation-direction: reverse;
+/* AdventureAquariumGallery supplies two full 16 x 9 slot wrappers. Keep the
+ * glass in the upper portion of each slot so the shared promenade remains
+ * visible and actors cross in front of the sill instead of over the artwork. */
+.aquariumGalleryTankWindow {
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.aquariumCreatureInvertebrate {
-  top: calc(48% + (var(--aquarium-lane) * 11%));
-  width: 24%;
-  animation-duration: calc(var(--aquarium-duration) * 1.45);
-}
-
-.aquariumExhibitAwaiting {
+.aquariumGalleryTankWindow::before {
   position: absolute;
-  inset: 24% 8% auto;
-  color: rgba(236, 254, 255, 0.82);
-  font-size: clamp(2px, 0.42vw, 7px);
-  font-weight: 800;
-  line-height: 1.15;
-  text-align: center;
-  text-shadow: 0 1px rgba(8, 47, 73, 0.7);
+  z-index: 6;
+  top: 2.5%;
+  right: 2.4%;
+  left: 2.4%;
+  height: 66.5%;
+  box-sizing: border-box;
+  border: max(3px, 0.32vw) solid #91bdc1;
+  border-radius: max(3px, 0.28vw);
+  content: "";
+  box-shadow:
+    inset 0 0 0 max(1px, 0.08vw) rgba(224, 252, 253, 0.58),
+    0 0 0 max(2px, 0.2vw) #102d34,
+    0 max(5px, 0.42vw) 0 rgba(4, 20, 25, 0.68);
+  pointer-events: none;
 }
 
-.aquariumExhibitLabel {
+.aquariumGalleryTank[data-tank-kind="apex"],
+.aquariumGalleryTank[data-kind="apex"],
+.aquariumGalleryApexTank {
+  left: var(--aquarium-gallery-tank-left, 52.3%);
+}
+
+.aquariumGalleryTankImage,
+.aquariumGalleryTankBackground {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: pixelated;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.aquariumGalleryTankBackground {
+  top: 2.5%;
+  right: 2.4%;
+  bottom: auto;
+  left: 2.4%;
+  width: auto;
+  height: 66.5%;
+}
+
+.aquariumGalleryTank::after,
+.aquariumGalleryTankWindow::after {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, rgba(0, 32, 49, 0.02), rgba(0, 19, 36, 0.08) 58%, rgba(0, 8, 22, 0.32));
+  pointer-events: none;
+}
+
+.aquariumGalleryTankWindow::after {
+  top: 2.5%;
+  right: 2.4%;
+  bottom: auto;
+  left: 2.4%;
+  height: 66.5%;
+}
+
+.aquariumGalleryResidentField,
+.aquariumGalleryResidentStage {
   position: absolute;
   z-index: 3;
-  right: 3%;
-  bottom: 4%;
-  left: 3%;
+  inset: 2.5% 1.5% 5%;
   overflow: hidden;
-  color: #ecfeff;
-  font-size: clamp(2px, 0.34vw, 6px);
-  font-weight: 900;
-  line-height: 1;
-  text-align: center;
-  text-overflow: ellipsis;
-  text-shadow: 0 1px #083344;
-  white-space: nowrap;
+  pointer-events: none;
 }
 
-@keyframes aquariumCreatureSwim {
-  from { transform: translateX(0) scaleX(var(--aquarium-direction)); }
-  48% { transform: translateX(250%) translateY(-6%) scaleX(var(--aquarium-direction)); }
-  to { transform: translateX(480%) scaleX(var(--aquarium-direction)); }
+.aquariumGalleryResidentStage {
+  top: 2.5%;
+  right: 2.4%;
+  bottom: auto;
+  left: 2.4%;
+  height: 66.5%;
 }
 
-@keyframes aquariumWaterDrift {
-  from { transform: translateX(-2%); }
-  to { transform: translateX(2%); }
+.aquariumGalleryResident,
+.aquariumGalleryResidentTrack {
+  position: absolute;
+  z-index: var(--resident-z-index, 3);
+  top: var(--aquarium-gallery-resident-y, var(--resident-start-y, 46%));
+  left: var(--aquarium-gallery-resident-start-x, var(--resident-start-x, -12%));
+  /* This is a responsive reference square, not a minimum creature size.
+   * Biological and depth scales are applied independently to its sprite body. */
+  width: var(--resident-size, 6%);
+  aspect-ratio: 1;
+  opacity: var(--aquarium-gallery-resident-opacity, var(--resident-opacity, 0.94));
+  transform: translate(-50%, -50%);
+  animation: aquariumGalleryResidentSwim var(--aquarium-gallery-resident-duration, var(--resident-duration, 20s)) linear var(--aquarium-gallery-resident-delay, var(--resident-delay, 0s)) infinite;
+  will-change: left, top;
 }
 
-.reducedMotionMode .aquariumCreature,
-.reducedMotionMode .aquariumExhibitWater i:first-child {
+.aquariumGalleryTank[data-tank-kind="apex"] .aquariumGalleryResident,
+.aquariumGalleryTank[data-kind="apex"] .aquariumGalleryResident,
+.aquariumGalleryApexTank .aquariumGalleryResidentTrack {
+  width: var(--resident-size, 11%);
+}
+
+.aquariumGalleryResident[data-category="predator"],
+.aquariumGalleryResident[data-category="apex"],
+.aquariumGalleryResident[data-category="filter-feeder"],
+.aquariumGalleryResident[data-category="filter_feeder"] {
+  width: var(--resident-size, 10%);
+}
+
+.aquariumGalleryResidentPredator {
+  width: var(--resident-size, 10%);
+}
+
+.aquariumGalleryResident[data-category="invertebrate"] {
+  top: var(--resident-start-y, 88%);
+  width: var(--resident-size, 5%);
+  animation-name: aquariumGalleryResidentCrawl;
+  animation-duration: var(--resident-duration, 34s);
+}
+
+.aquariumGalleryResidentBenthic {
+  top: var(--aquarium-gallery-resident-y, var(--resident-start-y, 88%));
+  width: var(--resident-size, 5%);
+  animation-name: aquariumGalleryResidentCrawl;
+  animation-duration: var(--aquarium-gallery-resident-duration, var(--resident-duration, 34s));
+}
+
+.aquariumGalleryResident[data-category="coral"] {
+  top: var(--resident-static-y, 88%);
+  left: var(--resident-static-x, 50%);
+  width: var(--resident-size, 6%);
   animation: none;
 }
 
-.reducedMotionMode .aquariumCreature {
-  left: calc(8% + (var(--aquarium-lane) * 25%));
-  transform: scaleX(var(--aquarium-direction));
+.aquariumGalleryResidentCoral {
+  top: var(--aquarium-gallery-resident-y, var(--resident-static-y, 88%));
+  left: var(--aquarium-gallery-resident-static-x, var(--resident-static-x, 50%));
+  width: var(--resident-size, 6%);
+  animation: none;
+}
+
+.aquariumGalleryResidentBody {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-image: var(--aquarium-gallery-atlas, none);
+  background-repeat: no-repeat;
+  background-position:
+    var(--aquarium-gallery-atlas-x, var(--resident-atlas-x, 0%))
+    var(--aquarium-gallery-atlas-y, var(--resident-atlas-y, 0%));
+  background-size:
+    var(--aquarium-gallery-atlas-width, var(--resident-atlas-width, 500%))
+    var(--aquarium-gallery-atlas-height, var(--resident-atlas-height, 200%));
+  image-rendering: pixelated;
+  filter:
+    brightness(var(--aquarium-gallery-resident-brightness, var(--resident-brightness, 1)))
+    saturate(var(--aquarium-gallery-resident-saturation, var(--resident-saturation, 1)))
+    hue-rotate(var(--aquarium-gallery-resident-hue, var(--resident-hue, 0deg)))
+    blur(var(--aquarium-gallery-resident-blur, var(--resident-blur, 0px)))
+    drop-shadow(0 5px 4px rgba(0, 8, 20, 0.36));
+  transform:
+    scale(var(--aquarium-gallery-resident-biological-scale, 1))
+    scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
+    scaleX(var(--aquarium-gallery-resident-direction, var(--resident-direction, 1)));
+  transform-origin: center;
+  animation: aquariumGalleryResidentFloat 4.8s ease-in-out var(--resident-float-delay, 0s) infinite;
+}
+
+.aquariumGalleryTankFrame {
+  position: absolute;
+  z-index: 6;
+  inset: -1.1%;
+  border: max(3px, 0.32vw) solid #91bdc1;
+  border-radius: max(3px, 0.28vw);
+  box-shadow:
+    inset 0 0 0 max(1px, 0.08vw) rgba(224, 252, 253, 0.58),
+    0 0 0 max(2px, 0.2vw) #102d34,
+    0 max(5px, 0.42vw) 0 rgba(4, 20, 25, 0.68);
+  pointer-events: none;
+}
+
+.aquariumGalleryTankFrame::after {
+  position: absolute;
+  right: -1.2%;
+  bottom: -7%;
+  left: -1.2%;
+  height: 6%;
+  border-top: max(2px, 0.16vw) solid rgba(230, 245, 239, 0.34);
+  background: #173f49;
+  content: "";
+}
+
+.aquariumGalleryTank[data-active="true"] .aquariumGalleryTankFrame,
+.aquariumGalleryTank[data-active] .aquariumGalleryTankFrame {
+  border-color: #c7eef0;
+  box-shadow:
+    inset 0 0 0 max(1px, 0.08vw) rgba(238, 255, 255, 0.72),
+    0 0 0 max(2px, 0.2vw) #163d43,
+    0 max(5px, 0.42vw) 0 rgba(4, 20, 25, 0.68);
+}
+
+.aquariumGalleryPlaque {
+  position: absolute;
+  z-index: 9;
+  top: calc(100% + max(8px, 0.62vw));
+  left: 50%;
+  display: grid;
+  min-width: max(132px, 32%);
+  max-width: 72%;
+  gap: 2px;
+  padding: max(5px, 0.38vw) max(10px, 0.76vw);
+  border: max(2px, 0.14vw) solid #d5b562;
+  border-radius: max(4px, 0.3vw);
+  color: #f9f5df;
+  background: linear-gradient(180deg, #173b42, #0a252e);
+  box-shadow: 0 max(3px, 0.25vw) 0 rgba(3, 16, 21, 0.68);
+  font-size: clamp(7px, 0.62vw, 12px);
+  font-weight: 1000;
+  letter-spacing: 0.055em;
+  line-height: 1.12;
+  text-align: center;
+  text-shadow: 0 1px 1px #001117;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+.aquariumGalleryPlaque strong,
+.aquariumGalleryPlaque span {
+  display: block;
+}
+
+.aquariumGalleryPlaque small {
+  color: #b9dce0;
+  font-size: 0.78em;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+}
+
+.aquariumGalleryTank[data-active="true"] .aquariumGalleryPlaque,
+.aquariumGalleryTank[data-active] .aquariumGalleryPlaque {
+  border-color: #ffe18b;
+  color: #fff6c8;
+  background: linear-gradient(180deg, #24515a, #10323c);
+}
+
+.aquariumGalleryEmpty {
+  position: absolute;
+  z-index: 5;
+  top: 54%;
+  left: 50%;
+  width: min(66%, 390px);
+  padding: max(6px, 0.48vw) max(10px, 0.78vw);
+  border: max(1px, 0.08vw) solid rgba(190, 232, 235, 0.58);
+  border-radius: max(4px, 0.32vw);
+  color: #e6f6f5;
+  background: linear-gradient(180deg, rgba(4, 32, 42, 0.88), rgba(2, 22, 32, 0.92));
+  box-shadow: 0 max(4px, 0.32vw) max(10px, 0.8vw) rgba(0, 9, 18, 0.32);
+  font-size: clamp(7px, 0.58vw, 11px);
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes aquariumGalleryResidentSwim {
+  0% {
+    left: var(--aquarium-gallery-resident-start-x, var(--resident-start-x, -12%));
+    top: var(--aquarium-gallery-resident-y, var(--resident-start-y, 46%));
+  }
+  50% {
+    top: calc(
+      var(--aquarium-gallery-resident-y, var(--resident-start-y, 46%))
+      + var(--aquarium-gallery-resident-drift, 1%)
+    );
+  }
+  100% {
+    left: var(--aquarium-gallery-resident-end-x, var(--resident-end-x, 112%));
+    top: var(--aquarium-gallery-resident-y, var(--resident-start-y, 46%));
+  }
+}
+
+@keyframes aquariumGalleryResidentCrawl {
+  0% { left: var(--aquarium-gallery-resident-start-x, var(--resident-start-x, -8%)); }
+  50% { top: calc(var(--aquarium-gallery-resident-y, var(--resident-start-y, 88%)) - 0.3%); }
+  100% { left: var(--aquarium-gallery-resident-end-x, var(--resident-end-x, 108%)); }
+}
+
+@keyframes aquariumGalleryResidentFloat {
+  0%, 100% {
+    transform:
+      scale(var(--aquarium-gallery-resident-biological-scale, 1))
+      scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
+      scaleX(var(--aquarium-gallery-resident-direction, var(--resident-direction, 1)));
+  }
+  50% {
+    transform:
+      translateY(-2.5%)
+      scale(var(--aquarium-gallery-resident-biological-scale, 1))
+      scale(var(--aquarium-gallery-resident-depth-scale, var(--resident-scale, 1)))
+      scaleX(var(--aquarium-gallery-resident-direction, var(--resident-direction, 1)));
+  }
+}
+
+.reducedMotionMode .aquariumGalleryResident,
+.reducedMotionMode .aquariumGalleryResidentTrack,
+.aquariumGalleryReducedMotion .aquariumGalleryResident,
+.aquariumGalleryReducedMotion .aquariumGalleryResidentTrack {
+  top: var(--aquarium-gallery-resident-y, var(--resident-static-y, 48%)) !important;
+  left: var(--aquarium-gallery-resident-static-x, var(--resident-static-x, 50%)) !important;
+  animation: none !important;
+}
+
+.reducedMotionMode .aquariumGalleryResident[data-category="invertebrate"],
+.reducedMotionMode .aquariumGalleryResident[data-category="coral"],
+.reducedMotionMode .aquariumGalleryResidentBenthic,
+.reducedMotionMode .aquariumGalleryResidentCoral,
+.aquariumGalleryReducedMotion .aquariumGalleryResidentBenthic,
+.aquariumGalleryReducedMotion .aquariumGalleryResidentCoral {
+  top: var(--resident-static-y, 88%) !important;
+}
+
+.reducedMotionMode .aquariumGalleryResidentBody,
+.aquariumGalleryReducedMotion .aquariumGalleryResidentBody {
+  animation: none !important;
+}
+
+.highContrastMode .aquariumGalleryTankFrame,
+.highContrastMode .aquariumGalleryPlaque,
+.highContrastMode .aquariumGalleryEmpty,
+.highContrastMode .aquariumGalleryTankWindow,
+.highContrastMode .aquariumGalleryTankWindow::before {
+  border-color: #f4ffff;
+}
+
+.highContrastMode .aquariumGalleryPlaque,
+.highContrastMode .aquariumGalleryEmpty {
+  color: #fff;
+  background: #031c27;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aquariumGalleryResident {
+    top: var(--aquarium-gallery-resident-y, var(--resident-static-y, 48%)) !important;
+    left: var(--aquarium-gallery-resident-static-x, var(--resident-static-x, 50%)) !important;
+    animation: none !important;
+  }
+
+  .aquariumGalleryResidentTrack {
+    top: var(--aquarium-gallery-resident-y, var(--resident-static-y, 48%)) !important;
+    left: var(--aquarium-gallery-resident-static-x, var(--resident-static-x, 50%)) !important;
+    animation: none !important;
+  }
+
+  .aquariumGalleryResident[data-category="invertebrate"],
+  .aquariumGalleryResident[data-category="coral"],
+  .aquariumGalleryResidentBenthic,
+  .aquariumGalleryResidentCoral {
+    top: var(--resident-static-y, 88%) !important;
+  }
+
+  .aquariumGalleryResidentBody { animation: none !important; }
+}
+
+@media (forced-colors: active) {
+  .aquariumGalleryTankImage,
+  .aquariumGalleryTankBackground,
+  .aquariumGalleryResidentBody {
+    forced-color-adjust: none;
+  }
+
+  .aquariumGalleryTankFrame,
+  .aquariumGalleryTankWindow,
+  .aquariumGalleryPlaque,
+  .aquariumGalleryEmpty {
+    border-color: CanvasText;
+    color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+    text-shadow: none;
+  }
+
+  .aquariumGalleryTankWindow::before {
+    border-color: CanvasText;
+    box-shadow: none;
+  }
 }
 
 .playerHomeMap {
@@ -2479,6 +2879,51 @@
   gap: 20px;
   margin-top: 12px;
 }
+
+.controlDock.aquariumGalleryControls {
+  gap: 14px;
+}
+
+.dpad.aquariumGalleryDpad {
+  grid-template: 44px / repeat(3, 44px);
+}
+
+.aquariumGalleryDpad .directionup,
+.aquariumGalleryDpad .directiondown {
+  display: none;
+}
+
+.aquariumGalleryDpad .directionleft {
+  grid-area: 1 / 1;
+  border-radius: 10px 0 0 10px;
+}
+
+.aquariumGalleryDpad .dpadCenter {
+  grid-area: 1 / 2;
+}
+
+.aquariumGalleryDpad .directionright {
+  grid-area: 1 / 3;
+  border-radius: 0 10px 10px 0;
+}
+
+.aquariumGalleryDpad .directionButton {
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aquariumGalleryDpad .directionButton::after {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: currentColor;
+  font-size: 18px;
+  font-weight: 1000;
+}
+
+.aquariumGalleryDpad .directionleft::after { content: "\2190"; }
+.aquariumGalleryDpad .directionright::after { content: "\2192"; }
 
 .boatControlDock {
   margin-top: 8px;
@@ -7431,6 +7876,19 @@
   .boatHelmReadout > span:not(.boatHelmDestination) { display: none; }
   .boatHelmDestination { grid-column: 1; padding: 4px 10px !important; border-top: 0; }
   .controlDock { position: fixed; right: max(13px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom)); z-index: 25; margin: 0; padding: 6px 8px; border-radius: 16px; background: rgba(3, 19, 31, 0.82); }
+  .controlDock.aquariumGalleryControls {
+    right: max(13px, env(safe-area-inset-right));
+    left: max(13px, env(safe-area-inset-left));
+    width: auto;
+    justify-content: space-between;
+    gap: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+  .aquariumGalleryControls > .aquariumGalleryDpad,
+  .aquariumGalleryControls > .actionButton { pointer-events: auto; }
   .dpad { grid-template: repeat(3, 44px) / repeat(3, 44px); }
   .actionButton { min-width: 46px; width: 46px; height: 46px; padding: 6px; }
   .actionButton > span { width: 30px; }

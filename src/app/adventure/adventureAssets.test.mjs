@@ -7,7 +7,10 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 import { ADVENTURE_CONTENT } from "./adventureContent.mjs";
-import { ELVERSON_REEF_CREATURE_ATLAS_PATH } from "./adventureAquariumExhibits.mjs";
+import {
+  ELVERSON_AQUARIUM_TANKS,
+  ELVERSON_REEF_CREATURE_ATLAS_PATH,
+} from "./adventureAquariumExhibits.mjs";
 import { ELVERSON_TOWN_PORTALS } from "./adventureElversonTownLayout.mjs";
 
 const TEST_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
@@ -38,7 +41,7 @@ const ELVERSON_MOBILE_OPENING_ASSETS = Object.freeze([
   "/images/adventure/elverson-objects-v2/brick-school.webp",
   "/images/adventure/elverson-objects-v2/brick-civic-hall.webp",
   "/images/adventure/elverson-objects-v2/green-awning-shop.webp",
-  "/images/adventure/elverson-objects-v2/aquarium-workshop.webp",
+  "/images/adventure/elverson-objects-v2/aquarium-grand-exterior-v1.webp",
   "/images/cards/coral/Reef/mustard-coral-base.webp",
   "/images/cards/coral/Reef/brain-coral-base.webp",
   "/images/cards/coral/Reef/brain-coral-stage-1.webp",
@@ -370,6 +373,24 @@ test("Elverson ships one complete mobile WebP atlas for hand-net and Aquarium cr
   assert.equal(webp.metadata.height, 793);
   assert.equal(webp.metadata.hasAlpha, true, "the ten-species atlas must retain transparency");
   assert.ok(webp.asset.byteLength < 180_000, "the atlas must remain mobile-sized");
+});
+
+test("the Aquarium Grand Hall and all six spectator habitats ship optimized scenic WebP art", async () => {
+  const hall = ADVENTURE_CONTENT.scenes.find((scene) => scene.id === "academy-lab");
+  const assetPaths = [
+    hall?.world?.artPath,
+    ...ELVERSON_AQUARIUM_TANKS.map((tank) => tank.backgroundPath),
+  ];
+
+  assert.equal(hall?.world?.artPath, "/images/adventure/aquarium-grand-hall-v1.webp");
+  assert.equal(new Set(assetPaths).size, 7, "the hall and six habitats should use distinct scenic art");
+
+  for (const assetPath of assetPaths) {
+    const webp = await readWebpAsset(assetPath);
+    assert.ok(webp.metadata.width >= 1_280, `${assetPath} should remain full-screen width`);
+    assert.ok(webp.metadata.height >= 720, `${assetPath} should remain full-screen height`);
+    assert.ok(webp.asset.byteLength < 550_000, `${assetPath} must remain mobile-sized`);
+  }
 });
 
 test("the v3 player walk sheet ships twelve isolated poses with a compact neutral stance", async () => {

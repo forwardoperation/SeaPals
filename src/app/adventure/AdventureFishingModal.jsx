@@ -536,7 +536,7 @@ export default function AdventureFishingModal({
               <h3>{creatureCard?.name ?? creature.id}</h3>
               <p>{creature.note}</p>
               <strong>{catchResult?.firstDiscovery ? "New Reef Log discovery!" : "Another healthy observation recorded."}</strong>
-              <small>Bring this catch to Mr. Easterling in the aquarium workshop.</small>
+              <small>Bring this catch to Mr. Easterling at the Aquarium care desk.</small>
             </div>
           </article>
         ) : null}

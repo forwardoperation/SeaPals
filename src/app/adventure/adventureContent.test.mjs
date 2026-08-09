@@ -10,6 +10,7 @@ import {
   getAdventureDock,
   getAdventureFieldNote,
   getAdventureRoute,
+  getAdventureScene,
   getAdventureStartLocation,
   getAdventureStarterDeck,
   getRuntimeAdventureScenes,
@@ -159,6 +160,9 @@ test("Elverson launches from its authored town while dormant later-world scenes 
     "elverson-red-schoolhouse",
     "elverson-marine-research-lab",
     "academy-lab",
+    "aquarium-reef-gallery",
+    "aquarium-oceanic-gallery",
+    "aquarium-deep-gallery",
     "shellshore-sunpatch-sea",
     "sunpatch-cay-town",
     "sunpatch-field-station",
@@ -207,6 +211,75 @@ test("Elverson launches from its authored town while dormant later-world scenes 
     position: { x: 20, y: 17 },
     facing: "down",
   });
+});
+
+test("the grand aquarium hall connects three wide horizontal ecosystem promenades", () => {
+  const hall = getAdventureScene("academy-lab").world;
+  assert.equal(hall.name, "Sea Realm Aquarium Grand Hall");
+  assert.equal(hall.theme, "aquarium-grand-hall");
+  assert.equal(hall.artPath, "/images/adventure/aquarium-grand-hall-v1.webp");
+  assert.deepEqual(hall.spawn, { x: 7, y: 7 });
+  assert.ok(hall.interactions.some(({ id }) => id === "interaction-academy-mentor"));
+  assert.ok(hall.interactions.some(({ id }) => id === "interaction-academy-exit"));
+  assert.deepEqual(
+    hall.interactions
+      .filter(({ type }) => type === "enter")
+      .map(({ targetScene, spawn }) => ({ targetScene, spawn })),
+    [
+      { targetScene: "aquarium-reef-gallery", spawn: { x: 1, y: 7 } },
+      { targetScene: "aquarium-oceanic-gallery", spawn: { x: 1, y: 7 } },
+      { targetScene: "aquarium-deep-gallery", spawn: { x: 1, y: 7 } },
+    ],
+  );
+
+  for (const [ecosystemId, sceneId, name, theme] of [
+    ["reef", "aquarium-reef-gallery", "Reef Gallery", "aquarium-reef-gallery"],
+    ["oceanic", "aquarium-oceanic-gallery", "Oceanic Gallery", "aquarium-oceanic-gallery"],
+    ["deep", "aquarium-deep-gallery", "Deep Gallery", "aquarium-deep-gallery"],
+  ]) {
+    const gallery = getAdventureScene(sceneId).world;
+    assert.equal(gallery.name, name);
+    assert.equal(gallery.theme, theme);
+    assert.equal(gallery.tiles.length, 9);
+    assert.ok(gallery.tiles.every((row) => row.length === 32));
+    assert.deepEqual(gallery.spawn, { x: 1, y: 7 });
+    assert.deepEqual(gallery.camera, {
+      tilesAcross: 16,
+      playerAnchorX: 0.5,
+      playerAnchorY: 0.5,
+    });
+    assert.deepEqual(gallery.movement, { axis: "horizontal", idleFacing: "up" });
+    assert.deepEqual(
+      gallery.aquariumGallery,
+      {
+        ecosystemId,
+        tankSlots: [
+          {
+            tankId: `${ecosystemId}-community`,
+            bounds: { left: 0, top: 0, right: 16, bottom: 9 },
+          },
+          {
+            tankId: `${ecosystemId}-apex`,
+            bounds: { left: 16, top: 0, right: 32, bottom: 9 },
+          },
+        ],
+      },
+    );
+    assert.equal(gallery.interactions.some(({ type }) => type === "aquarium-view"), false);
+    const visitors = gallery.interactions.filter(({ type }) => type === "npc");
+    assert.equal(visitors.length, 2);
+    assert.ok(visitors.every(({ at, patrol }) => (
+      at.y === 6.25
+      && patrol.mode === "ping-pong"
+      && patrol.waypoints.every((waypoint) => waypoint.y === at.y)
+    )));
+    const exit = gallery.interactions.find(({ type }) => type === "exit");
+    assert.deepEqual(exit.at, { x: 0, y: 7 });
+    assert.equal(exit.targetScene, "academy-lab");
+    assert.equal(exit.facing, "down");
+    assert.ok(gallery.collisionRects.some(({ id }) => id === `aquarium-${ecosystemId}-community-tank`));
+    assert.ok(gallery.collisionRects.some(({ id }) => id === `aquarium-${ecosystemId}-apex-tank`));
+  }
 });
 
 test("the dormant first outbound route remains valid without an active Elverson boarding interaction", () => {
@@ -1047,7 +1120,7 @@ test("Reading a Reef is a complete evidence-first Field Note with science source
   assert.match(fieldNote.summary, /different observations.*evidence before naming a cause.*instant cure/i);
 });
 
-test("Elverson's public interiors and upstairs bedroom define validated art-aligned furniture collision rectangles", () => {
+test("Elverson's public interiors, aquarium galleries, and upstairs bedroom define validated art-aligned collision rectangles", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   const expectedRectangleCounts = new Map([
     ["player-bedroom", 7],
@@ -1059,7 +1132,10 @@ test("Elverson's public interiors and upstairs bedroom define validated art-alig
     ["elverson-supply-company", 0],
     ["elverson-red-schoolhouse", 0],
     ["elverson-marine-research-lab", 0],
-    ["academy-lab", 8],
+    ["academy-lab", 6],
+    ["aquarium-reef-gallery", 3],
+    ["aquarium-oceanic-gallery", 3],
+    ["aquarium-deep-gallery", 3],
   ]);
 
   for (const [sceneId, expectedCount] of expectedRectangleCounts) {
@@ -1171,7 +1247,7 @@ test("Elverson v4 layers its portal buildings while streets and waterfront route
     { x: 20.5, y: 10.5 },
     { x: 20.5, y: 16.8 },
     { x: 20.5, y: 21.75 },
-    { x: 24.54, y: 22.25 },
+    { x: 27.6, y: 23.72 },
   ]) {
     assert.equal(colliderContains(clearRoutePosition), false, "the birthday route must stay clear");
   }
@@ -1179,7 +1255,7 @@ test("Elverson v4 layers its portal buildings while streets and waterfront route
   const aquariumExit = getRuntimeAdventureScenes()
     .find((scene) => scene.id === "academy-lab")
     .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
-  assert.deepEqual(aquariumExit.spawn, { x: 24.54, y: 22.25 });
+  assert.deepEqual(aquariumExit.spawn, { x: 27.6, y: 23.72 });
   assert.equal(aquariumExit.doorwayHalfWidth, 0.5);
 });
 
@@ -1246,7 +1322,7 @@ test("all nine Elverson town doors have matching two-way interior portals", () =
       targetScene: "academy-lab",
       interiorSpawn: { x: 7, y: 7 },
       exitId: "interaction-academy-exit",
-      exteriorSpawn: { x: 24.54, y: 22.25 },
+      exteriorSpawn: { x: 27.6, y: 23.72 },
     },
   ];
   const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
@@ -1348,7 +1424,7 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
     ["jack", ["coral-home", "Murky Water Player"]],
     ["landon", ["deep-home", "Age 10 · The Abyss Player"]],
     ["oliver", ["deep-home", "Age 11 · Deep Waters Player"]],
-    ["charlotte", ["elverson-oceanic-home", "Age 13 · Open Ocean Player"]],
+    ["charlotte", ["aquarium-oceanic-gallery", "Age 13 · Open Ocean Player"]],
     ["eloise", ["elverson-oceanic-home", "Age 7 · Pelagic Zone Player"]],
     ["edith", ["elverson-oceanic-home", "Age 7 · Plankton Bloom Player"]],
     ["william", ["elverson-hybrid-home", "Murky Water's Revenge Player"]],
@@ -1363,7 +1439,7 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   }
 
   const aquariumDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-aquarium");
-  assert.deepEqual(aquariumDoor.at, { x: 24.54, y: 21.85 });
+  assert.deepEqual(aquariumDoor.at, { x: 27.6, y: 23.3 });
   assert.equal(aquariumDoor.targetSceneContent.id, "academy-lab");
   assert.deepEqual(aquariumDoor.spawn, { x: 7, y: 7 });
   const supplyDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-supply-company");
@@ -1390,7 +1466,10 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
     mentorInteraction.npc.conversation.lines.registration.join(" "),
     /hello, adventurer.*register for the Sea Creature Challenge/i,
   );
-  assert.match(mentorInteraction.npc.conversation.lines.intro.join(" "), /Sea Realm Aquarium.*ecosystem room/i);
+  assert.match(
+    mentorInteraction.npc.conversation.lines.intro.join(" "),
+    /Sea Realm Aquarium Grand Hall.*Reef, Oceanic, and Deep galleries/i,
+  );
   assert.match(mentorInteraction.npc.conversation.lines.starterPresentation.join(" "), /aquarium lesson/i);
   assert.match(mentorInteraction.npc.conversation.lines.starterConfirmed.join(" "), /aquarium project/i);
   assert.doesNotMatch(
@@ -1692,6 +1771,29 @@ test("content validation rejects invalid portal destination facing", () => {
   const result = validateAdventureContent(invalid);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => /facing must be up, down, left, or right/.test(error)));
+});
+
+test("content validation protects horizontal aquarium gallery metadata", () => {
+  const invalid = clone(ADVENTURE_CONTENT);
+  const gallery = invalid.scenes.find((scene) => scene.id === "aquarium-reef-gallery").world;
+  gallery.movement.axis = "diagonal";
+  gallery.camera.tilesAcross = 0;
+  gallery.aquariumGallery.tankSlots[0].tankId = "unknown-tank";
+  gallery.aquariumGallery.tankSlots[1].bounds.left = 15;
+  gallery.interactions.push({
+    id: "retired-aquarium-view",
+    type: "aquarium-view",
+    at: { x: 8, y: 4 },
+    tankId: "reef-community",
+  });
+
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => /movement\.axis must be free or horizontal/.test(error)));
+  assert.ok(result.errors.some((error) => /camera\.tilesAcross must be a positive finite number/.test(error)));
+  assert.ok(result.errors.some((error) => /tankId must identify a supported aquarium tank/.test(error)));
+  assert.ok(result.errors.some((error) => /bounds must span its complete gallery half/.test(error)));
+  assert.ok(result.errors.some((error) => /type is not a supported runtime interaction type/.test(error)));
 });
 
 test("content validation protects Phase 4 route, fieldwork, NPC, and exhibition contracts", () => {

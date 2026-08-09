@@ -37,11 +37,22 @@ const RUNTIME_INTERACTION_TYPES = new Set([
   "board",
   "dock",
 ]);
+const AQUARIUM_TANK_IDS = new Set([
+  "reef-community",
+  "reef-apex",
+  "oceanic-community",
+  "oceanic-apex",
+  "deep-community",
+  "deep-apex",
+]);
 const TOURNAMENT_ACTION_TYPES = new Set(["registration", "round", "epilogue"]);
 const TOURNAMENT_DIRECTOR_CONVERSATION_MODES = ["registration", "roundReady", "champion", "postgame"];
 const TOURNAMENT_OPPONENT_CONVERSATION_MODES = ["roundReady", "defeat", "roundVictory", "postgame"];
 const TOURNAMENT_REFLECTION_CONVERSATION_MODES = ["epilogue", "postgame"];
 const FACING_DIRECTIONS = new Set(["up", "down", "left", "right"]);
+const MOVEMENT_AXES = new Set(["free", "horizontal"]);
+const AQUARIUM_ECOSYSTEM_IDS = new Set(["reef", "oceanic", "deep"]);
+const CAMERA_FIELDS = new Set(["viewportAspect", "tilesAcross", "playerAnchorX", "playerAnchorY"]);
 const PATROL_MODES = new Set(["loop", "ping-pong"]);
 const LAYERED_OBJECT_LAYERS = new Set(["ground", "depth", "overhead"]);
 const ADVENTURE_SPRITE_PATH = /^\/images\/adventure\/(?:[a-z0-9-]+\/)*[a-z0-9-]+\.(?:png|webp)$/;
@@ -655,9 +666,110 @@ export function validateAdventureContent(content) {
     if (!Number.isInteger(scene.world.spawn?.x) || !Number.isInteger(scene.world.spawn?.y)) {
       errors.push(`scenes.${scene.id}.world.spawn requires integer x and y coordinates.`);
     }
+    const movement = scene.world.movement;
+    if (movement !== undefined) {
+      if (!isObject(movement)) {
+        errors.push(`scenes.${scene.id}.world.movement must be an object when supplied.`);
+      } else {
+        if (movement.axis !== undefined && !MOVEMENT_AXES.has(movement.axis)) {
+          errors.push(`scenes.${scene.id}.world.movement.axis must be free or horizontal.`);
+        }
+        if (movement.idleFacing !== undefined && !FACING_DIRECTIONS.has(movement.idleFacing)) {
+          errors.push(`scenes.${scene.id}.world.movement.idleFacing must be up, down, left, or right.`);
+        }
+      }
+    }
+    const camera = scene.world.camera;
+    if (camera !== undefined) {
+      if (!isObject(camera)) {
+        errors.push(`scenes.${scene.id}.world.camera must be an object when supplied.`);
+      } else {
+        for (const field of Object.keys(camera)) {
+          if (!CAMERA_FIELDS.has(field)) {
+            errors.push(`scenes.${scene.id}.world.camera contains unknown field ${field}.`);
+          }
+        }
+        for (const field of ["viewportAspect", "tilesAcross"]) {
+          if (camera[field] !== undefined && (!Number.isFinite(camera[field]) || camera[field] <= 0)) {
+            errors.push(`scenes.${scene.id}.world.camera.${field} must be a positive finite number.`);
+          }
+        }
+        for (const field of ["playerAnchorX", "playerAnchorY"]) {
+          if (
+            camera[field] !== undefined
+            && (!Number.isFinite(camera[field]) || camera[field] < 0 || camera[field] > 1)
+          ) {
+            errors.push(`scenes.${scene.id}.world.camera.${field} must be between zero and one.`);
+          }
+        }
+      }
+    }
+    const aquariumGallery = scene.world.aquariumGallery;
+    if (aquariumGallery !== undefined) {
+      const galleryPath = `scenes.${scene.id}.world.aquariumGallery`;
+      if (!isObject(aquariumGallery)) {
+        errors.push(`${galleryPath} must be an object when supplied.`);
+      } else {
+        if (!AQUARIUM_ECOSYSTEM_IDS.has(aquariumGallery.ecosystemId)) {
+          errors.push(`${galleryPath}.ecosystemId must be reef, oceanic, or deep.`);
+        }
+        if (scene.world.worldKind !== "interior") {
+          errors.push(`${galleryPath} may only be supplied for an interior scene.`);
+        }
+        if (width !== 32 || rows.length !== 9) {
+          errors.push(`${galleryPath} scenes must use a 32-by-9 map.`);
+        }
+        if (movement?.axis !== "horizontal" || movement?.idleFacing !== "up") {
+          errors.push(`${galleryPath} scenes must use horizontal movement with an up idle facing.`);
+        }
+        if (
+          camera?.tilesAcross !== 16
+          || camera?.playerAnchorX !== 0.5
+          || camera?.playerAnchorY !== 0.5
+        ) {
+          errors.push(`${galleryPath} scenes must use the authored 16-tile centered camera.`);
+        }
+        const tankSlots = asArray(aquariumGallery.tankSlots);
+        if (!Array.isArray(aquariumGallery.tankSlots) || tankSlots.length !== 2) {
+          errors.push(`${galleryPath}.tankSlots must contain exactly two slots.`);
+        }
+        const seenTankIds = new Set();
+        for (const [slotIndex, slot] of tankSlots.entries()) {
+          const slotPath = `${galleryPath}.tankSlots[${slotIndex}]`;
+          if (!isObject(slot)) {
+            errors.push(`${slotPath} must be an object.`);
+            continue;
+          }
+          if (!AQUARIUM_TANK_IDS.has(slot.tankId)) {
+            errors.push(`${slotPath}.tankId must identify a supported aquarium tank.`);
+          } else if (seenTankIds.has(slot.tankId)) {
+            errors.push(`${galleryPath}.tankSlots contains duplicate tankId ${slot.tankId}.`);
+          }
+          seenTankIds.add(slot.tankId);
+          const expectedTankId = `${aquariumGallery.ecosystemId}-${slotIndex === 0 ? "community" : "apex"}`;
+          if (slot.tankId !== expectedTankId) {
+            errors.push(`${slotPath}.tankId must equal ${expectedTankId}.`);
+          }
+          const bounds = slot.bounds;
+          if (
+            !isObject(bounds)
+            || [bounds.left, bounds.top, bounds.right, bounds.bottom]
+              .some((value) => !Number.isFinite(value))
+          ) {
+            errors.push(`${slotPath}.bounds requires finite left, top, right, and bottom values.`);
+            continue;
+          }
+          const expectedBounds = slotIndex === 0
+            ? { left: 0, top: 0, right: 16, bottom: 9 }
+            : { left: 16, top: 0, right: 32, bottom: 9 };
+          if (Object.entries(expectedBounds).some(([field, value]) => bounds[field] !== value)) {
+            errors.push(`${slotPath}.bounds must span its complete gallery half.`);
+          }
+        }
+      }
+    }
     if (scene.world.worldKind === "route") {
       if (!scene.routeId) errors.push(`scenes.${scene.id} route world requires routeId.`);
-      const movement = scene.world.movement;
       if (!isObject(movement) || movement.mode !== "boat") {
         errors.push(`scenes.${scene.id}.world.movement must declare boat mode.`);
       } else {

@@ -29,8 +29,8 @@ import {
 import AdventureHandNetModal, {
   ELVERSON_HAND_NET_TIDEPOOL_PATH,
 } from "./AdventureHandNetModal";
+import AdventureAquariumGallery from "./AdventureAquariumGallery";
 import {
-  ELVERSON_AQUARIUM_SCENE_ID,
   ELVERSON_REEF_CREATURE_ATLAS_PATH,
   getElversonAquariumExhibitModel,
 } from "./adventureAquariumExhibits.mjs";
@@ -63,7 +63,10 @@ import {
   getAdventureFacingToward,
   getAdventureActorPositionOverrides,
 } from "./adventureActors.mjs";
-import { resolveAdventureMovementInput } from "./adventureMovementInput.mjs";
+import {
+  isAdventureMovementDirectionAllowed,
+  resolveAdventureMovementInput,
+} from "./adventureMovementInput.mjs";
 import { getAdventureConversationSecondaryAction } from "./adventureConversationActions.mjs";
 import {
   advanceAdventureSceneTransition,
@@ -645,56 +648,6 @@ function AdventureLayeredMapObject({ object, scene }) {
       unoptimized
       style={getLayeredSceneObjectStyle(object, scene)}
     />
-  );
-}
-
-function AdventureAquariumExhibits({ model, reducedMotion = false }) {
-  if (!model) return null;
-  return (
-    <div
-      className={styles.aquariumExhibitLayer}
-      aria-label={`${model.representedSpeciesCount} of ${model.requestedSpeciesCount} Elverson species represented in the Aquarium`}
-    >
-      {model.exhibits.map((exhibit) => (
-        <section
-          key={exhibit.id}
-          className={`${styles.aquariumExhibit} ${exhibit.populated ? styles.aquariumExhibitPopulated : styles.aquariumExhibitEmpty}`}
-          style={{
-            left: `${exhibit.bounds.left}%`,
-            top: `${exhibit.bounds.top}%`,
-            width: `${exhibit.bounds.width}%`,
-            height: `${exhibit.bounds.height}%`,
-          }}
-          aria-label={`${exhibit.name}, ${exhibit.representedSpeciesCount} represented species`}
-        >
-          <span className={styles.aquariumExhibitWater} aria-hidden="true"><i /><i /></span>
-          {exhibit.populated ? exhibit.occupants.map((occupant) => {
-            const creatureName = cardsById[occupant.cardId]?.name ?? occupant.id;
-            return (
-              <span
-                key={occupant.id}
-                className={`${styles.aquariumCreature} ${occupant.animation.direction < 0 ? styles.aquariumCreatureReverse : ""} ${occupant.category === "invertebrate" ? styles.aquariumCreatureInvertebrate : ""}`}
-                title={`${creatureName}${occupant.quantity > 1 ? ` ×${occupant.quantity}` : ""}`}
-                aria-label={`${creatureName}, ${occupant.quantity} recorded`}
-                style={{
-                  "--aquarium-atlas-x": `${occupant.atlasPosition.x}%`,
-                  "--aquarium-atlas-y": `${occupant.atlasPosition.y}%`,
-                  "--aquarium-lane": occupant.animation.lane,
-                  "--aquarium-direction": occupant.animation.direction,
-                  "--aquarium-delay": `${reducedMotion ? 0 : occupant.animation.delaySeconds}s`,
-                  "--aquarium-duration": `${occupant.animation.durationSeconds}s`,
-                  animationPlayState: reducedMotion ? "paused" : undefined,
-                  backgroundImage: `url("${model.atlasPath}")`,
-                }}
-              />
-            );
-          }) : (
-            <span className={styles.aquariumExhibitAwaiting}>{exhibit.emptyMessage}</span>
-          )}
-          <span className={styles.aquariumExhibitLabel} aria-hidden="true">{exhibit.name}</span>
-        </section>
-      ))}
-    </div>
   );
 }
 
@@ -2669,7 +2622,9 @@ function interactionLabel(
 ) {
   if (!interaction) return SCENES[sceneId]?.routeId
     ? "Steer through the marked channel and approach a dock"
-    : "Walk into a doorway, or face someone or a field station to interact";
+    : SCENES[sceneId]?.aquariumGallery
+      ? "Walk left or right to explore the habitat windows"
+      : "Walk into a doorway, or face someone or a field station to interact";
   if (interaction.type === "trainer" || interaction.type === "npc") {
     if (interaction.tournamentAction === "registration") return "Review tournament registration with Director Vela";
     if (interaction.tournamentAction === "round") return `Meet ${TRAINERS[interaction.trainerId]?.name ?? "your tournament opponent"} for a 30 VP round`;
@@ -2686,10 +2641,12 @@ function interactionLabel(
   if (interaction.type === "interpretation") return interaction.label ?? "Compare and interpret the evidence";
   if (interaction.type === "response") return interaction.label ?? "Choose an evidence-supported response";
   if (interaction.type === "exit") return sceneId === "academy-lab"
-    ? "Keep walking into the doorway to leave the aquarium workshop"
-    : sceneId === ELVERSON_PROLOGUE_BEDROOM_SCENE_ID
-      ? "Keep walking toward the stairs to head downstairs"
-      : "Keep walking into the doorway to leave this home";
+    ? "Keep walking into the doorway to leave the Aquarium Grand Hall"
+    : sceneId.startsWith("aquarium-")
+      ? "Keep walking into the doorway to return to the Aquarium Grand Hall"
+      : sceneId === ELVERSON_PROLOGUE_BEDROOM_SCENE_ID
+        ? "Keep walking toward the stairs to head downstairs"
+        : "Keep walking into the doorway to leave this home";
   if (interaction.targetScene) return `Keep walking into the doorway to enter ${LOCATION_NAMES[interaction.targetScene] ?? "the building"}`;
   return "Interact";
 }
@@ -2699,6 +2656,10 @@ function mapThemeClassForScene(scene) {
     "coastal-elverson": styles.elversonTownMap,
     "sunlit-reef": styles.townMap,
     "academy-lab": styles.academyLabMap,
+    "aquarium-grand-hall": styles.aquariumGrandHallMap,
+    "aquarium-reef-gallery": styles.aquariumReefGalleryMap,
+    "aquarium-oceanic-gallery": styles.aquariumOceanicGalleryMap,
+    "aquarium-deep-gallery": styles.aquariumDeepGalleryMap,
     "player-bedroom": styles.playerBedroomMap,
     "player-home": styles.playerHomeMap,
     "coral-cottage": styles.coralHomeMap,
@@ -3069,6 +3030,7 @@ export default function AdventureGame({
     [gameSave],
   );
   const scene = SCENES[sceneId];
+  const aquariumGalleryMode = Boolean(scene?.aquariumGallery);
   useEffect(() => {
     if (screen !== "playing" || scene.kind !== "interior") return;
     let cancelled = false;
@@ -3357,7 +3319,9 @@ export default function AdventureGame({
       );
       return;
     }
-    const { vector } = resolveAdventureMovementInput(overworldDirectionsRef.current);
+    const { vector } = resolveAdventureMovementInput(overworldDirectionsRef.current, {
+      axis: currentScene?.movement?.axis,
+    });
     setMovementActive(
       !movementPausedRef.current && (vector.x !== 0 || vector.y !== 0),
     );
@@ -5012,7 +4976,9 @@ export default function AdventureGame({
             || Math.abs(motion.speed) > BOAT_MOTION_DEFAULTS.stoppedSpeed,
           );
         } else {
-          const movementInput = resolveAdventureMovementInput(overworldDirectionsRef.current);
+          const movementInput = resolveAdventureMovementInput(overworldDirectionsRef.current, {
+            axis: scene.movement?.axis,
+          });
           const { vector } = movementInput;
           if (vector.x === 0 && vector.y === 0) {
             setMovementActive(false);
@@ -5089,8 +5055,27 @@ export default function AdventureGame({
     syncMovementActive();
   }, [boatMode, clearMovement, movementPaused, setMovementActive, syncMovementActive, vehicleMode]);
 
+  useEffect(() => {
+    const idleFacing = scene.movement?.idleFacing;
+    if (screen !== "playing" || isMoving || boatMode || !idleFacing) return;
+    setGameSave((current) => {
+      if (!current || current.world.sceneId !== sceneId || current.world.facing === idleFacing) {
+        return current;
+      }
+      const updated = {
+        ...current,
+        world: { ...current.world, facing: idleFacing },
+      };
+      saveRef.current = updated;
+      setDirty(true);
+      return updated;
+    });
+  }, [boatMode, isMoving, scene.movement?.idleFacing, sceneId, screen, setDirty]);
+
   function beginTouchDirection(direction) {
     if (movementPaused) return;
+    const currentScene = SCENES[saveRef.current?.world?.sceneId];
+    if (!isAdventureMovementDirectionAllowed(direction, currentScene?.movement?.axis)) return;
     touchDirectionsRef.current.add(direction);
     activateMovementIntent(`touch:${direction}`, direction);
     setGameSave((current) => {
@@ -5185,7 +5170,7 @@ export default function AdventureGame({
           : `elverson-fishing-catch:${result.progress.heldCount}`,
         tutorialCatch
           ? `${creatureName} completed Wyeth's practice lesson. Shallow-water hand-net collecting is now unlocked.`
-          : `${creatureName} was added to your aquarium catches. Bring it to Mr. Easterling in the workshop.`,
+          : `${creatureName} was added to your aquarium catches. Bring it to Mr. Easterling at the Aquarium care desk.`,
       );
       if (tutorialCatch && result.progress.tutorialComplete) {
         setFishingSession((currentSession) => currentSession
@@ -6809,6 +6794,8 @@ export default function AdventureGame({
         if (event.target?.closest?.("input, select, textarea, [contenteditable='true']")) return;
         if (movementPausedRef.current) return;
         event.preventDefault();
+        const currentScene = SCENES[saveRef.current?.world?.sceneId];
+        if (!isAdventureMovementDirectionAllowed(direction, currentScene?.movement?.axis)) return;
         const inputCode = event.code || event.key;
         if (!keyboardDirectionsRef.current.has(inputCode)) {
           keyboardDirectionsRef.current.set(inputCode, direction);
@@ -7113,7 +7100,7 @@ export default function AdventureGame({
     worldHeight: scene.height,
     playerX: cameraTarget.x,
     playerY: cameraTarget.y,
-  });
+  }, scene.camera ?? {});
   // Elverson is the first layered scene large enough for off-camera DOM to be
   // meaningful. Runtime actors, collision, and interaction lists stay whole;
   // only the mounted visual elements are filtered with a wide safety margin.
@@ -7224,7 +7211,7 @@ export default function AdventureGame({
                     : fishingProgress.heldCount > 0
                       ? {
                           title: "Bring your catch to Mr. Easterling",
-                          description: "Return to the aquarium workshop so the care team can assess your catch and prepare the right habitat.",
+                          description: "Return to the Aquarium Grand Hall so the care team can assess your catch and prepare the right habitat.",
                           value: fishingProgress.heldCount,
                           total: fishingProgress.heldCount,
                           label: `${fishingProgress.heldCount} ${fishingProgress.heldCount === 1 ? "catch" : "catches"} ready for the aquarium`,
@@ -7393,7 +7380,7 @@ export default function AdventureGame({
         ? sceneTransition.type === "guided"
           ? sceneTransition.phase === "departing"
             ? "Walking with Mr. Easterling to the waterfront aquarium..."
-            : "Arriving at the Elverson Aquarium workshop..."
+            : "Arriving at the Sea Realm Aquarium Grand Hall..."
           : sceneTransition.phase === "departing"
             ? `Entering ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
             : `Arriving in ${LOCATION_NAMES[sceneTransition.targetSceneId] ?? "the next room"}...`
@@ -7512,6 +7499,11 @@ export default function AdventureGame({
                 <div><kbd>A / D</kbd><span>Rudder left / right</span></div>
                 <div><kbd>↵</kbd><span>Dock when in reach</span></div>
               </>
+            ) : aquariumGalleryMode ? (
+              <>
+                <div><kbd>A / D</kbd><span>Walk along the aquarium glass</span></div>
+                <div><kbd>↵</kbd><span>Talk to nearby visitors</span></div>
+              </>
             ) : (
               <>
                 <div><kbd>{vehicleMode ? "TAB" : "WASD"}</kbd><span>{vehicleMode ? "Choose an instrument" : "Walk"}</span></div>
@@ -7579,7 +7571,9 @@ export default function AdventureGame({
             aria-busy={Boolean(sceneTransition)}
             aria-label={boatMode
               ? `Top-down sea route at ${LOCATION_NAMES[sceneId]}. Up or W increases throttle. Down or S brakes and reverses. Left and right or A and D move the rudder. Coast toward a dock and press Enter, Space, or the on-screen A button when it is in reach.`
-              : `Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk. Walk into doorways to enter or leave, and press Enter, Space, or the on-screen A button to interact.`}
+              : aquariumGalleryMode
+                ? `Side-scrolling aquarium promenade at ${LOCATION_NAMES[sceneId]}. Use left and right or A and D to walk past the habitat windows. The explorer faces the glass when standing still.`
+                : `Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk. Walk into doorways to enter or leave, and press Enter, Space, or the on-screen A button to interact.`}
           >
             <div
               className={`${styles.mapWorld} ${mapThemeClass} ${sceneTransition ? styles[`mapWorldScene${sceneTransition.phase === "departing" ? "Departing" : "Arriving"}`] : ""}`}
@@ -7593,6 +7587,11 @@ export default function AdventureGame({
                 backgroundImage: scene.artPath ? `url("${scene.artPath}")` : undefined,
               }}
             >
+            <AdventureAquariumGallery
+              scene={scene}
+              aquariumModel={aquariumExhibitModel}
+              reducedMotion={effectiveReducedMotion}
+            />
             {renderedLayeredObjects.map((object) => (
               <AdventureLayeredMapObject
                 key={object.renderId ?? object.id}
@@ -7600,12 +7599,6 @@ export default function AdventureGame({
                 scene={scene}
               />
             ))}
-            {sceneId === ELVERSON_AQUARIUM_SCENE_ID ? (
-              <AdventureAquariumExhibits
-                model={aquariumExhibitModel}
-                reducedMotion={effectiveReducedMotion}
-              />
-            ) : null}
             {worldCueInteractions.map((candidate) => (
               <AdventureWorldCue
                 key={`world-cue:${candidate.id}`}
@@ -7738,13 +7731,16 @@ export default function AdventureGame({
             />
           ) : null}
 
-          <div className={`${styles.controlDock} ${boatMode ? styles.boatControlDock : ""}`}>
-            <div className={styles.dpad} aria-label={boatMode ? "Boat helm controls" : "Movement controls"}>
-              <DirectionButton direction="up" ariaLabel={boatMode ? "Increase boat throttle" : "Walk up"} onStart={beginTouchDirection} onStop={endTouchDirection} />
+          <div className={`${styles.controlDock} ${boatMode ? styles.boatControlDock : ""} ${aquariumGalleryMode ? styles.aquariumGalleryControls : ""}`}>
+            <div
+              className={`${styles.dpad} ${aquariumGalleryMode ? styles.aquariumGalleryDpad : ""}`}
+              aria-label={boatMode ? "Boat helm controls" : aquariumGalleryMode ? "Aquarium promenade movement controls" : "Movement controls"}
+            >
+              {!aquariumGalleryMode ? <DirectionButton direction="up" ariaLabel={boatMode ? "Increase boat throttle" : "Walk up"} onStart={beginTouchDirection} onStop={endTouchDirection} /> : null}
               <DirectionButton direction="left" ariaLabel={boatMode ? "Turn rudder port, left" : "Walk left"} onStart={beginTouchDirection} onStop={endTouchDirection} />
               <span className={styles.dpadCenter} />
               <DirectionButton direction="right" ariaLabel={boatMode ? "Turn rudder starboard, right" : "Walk right"} onStart={beginTouchDirection} onStop={endTouchDirection} />
-              <DirectionButton direction="down" ariaLabel={boatMode ? "Brake or reverse boat" : "Walk down"} onStart={beginTouchDirection} onStop={endTouchDirection} />
+              {!aquariumGalleryMode ? <DirectionButton direction="down" ariaLabel={boatMode ? "Brake or reverse boat" : "Walk down"} onStart={beginTouchDirection} onStop={endTouchDirection} /> : null}
             </div>
             <button
               ref={worldActionRef}
