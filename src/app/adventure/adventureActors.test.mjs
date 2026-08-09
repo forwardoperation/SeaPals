@@ -42,27 +42,38 @@ const ELVERSON_TOWN_RESIDENTS = Object.freeze([
     id: "interaction-elverson-micah",
     at: Object.freeze({ x: 24.2, y: 8.35 }),
   }),
-  Object.freeze({
-    id: "interaction-elverson-town-erik",
-    at: Object.freeze({ x: 34.5, y: 8.35 }),
-  }),
 ]);
 
-const ELVERSON_RELOCATED_RESIDENTS = Object.freeze([
+const AQUARIUM_GALLERY_VISITORS = Object.freeze([
   Object.freeze({
-    sceneId: "academy-lab",
+    sceneId: "aquarium-reef-gallery",
     id: "interaction-elverson-finn",
-    at: Object.freeze({ x: 4.25, y: 3.45 }),
+    at: Object.freeze({ x: 4, y: 6.25 }),
   }),
   Object.freeze({
-    sceneId: "elverson-oceanic-home",
+    sceneId: "aquarium-reef-gallery",
+    id: "interaction-elverson-town-erik",
+    at: Object.freeze({ x: 19, y: 6.25 }),
+  }),
+  Object.freeze({
+    sceneId: "aquarium-oceanic-gallery",
+    id: "interaction-elverson-ivy",
+    at: Object.freeze({ x: 5, y: 6.25 }),
+  }),
+  Object.freeze({
+    sceneId: "aquarium-oceanic-gallery",
     id: "interaction-elverson-charlotte",
-    at: Object.freeze({ x: 5, y: 2.5 }),
+    at: Object.freeze({ x: 18, y: 6.25 }),
   }),
   Object.freeze({
-    sceneId: "elverson-marine-research-lab",
+    sceneId: "aquarium-deep-gallery",
+    id: "interaction-elverson-marine-biologist-jonah",
+    at: Object.freeze({ x: 4.5, y: 6.25 }),
+  }),
+  Object.freeze({
+    sceneId: "aquarium-deep-gallery",
     id: "interaction-elverson-explorer-jordan",
-    at: Object.freeze({ x: 10.5, y: 4.5 }),
+    at: Object.freeze({ x: 19, y: 6.25 }),
   }),
 ]);
 
@@ -354,7 +365,7 @@ test("all authored patrol waypoints and straight legs stay on real walkable grou
   }
 });
 
-test("Elverson v3 keeps its five town residents at their authored stationary anchors", () => {
+test("Elverson keeps its four remaining town residents at their authored stationary anchors", () => {
   const residents = SCENES.town.interactions.filter(({ type }) => (
     type === "npc" || type === "trainer"
   ));
@@ -379,23 +390,26 @@ test("Elverson v3 keeps its five town residents at their authored stationary anc
   }
 });
 
-test("relocated Elverson residents remain static in their currently authored rooms", () => {
-  for (const expected of ELVERSON_RELOCATED_RESIDENTS) {
+test("each aquarium gallery has two horizontally patrolling visitors", () => {
+  for (const expected of AQUARIUM_GALLERY_VISITORS) {
     const scene = SCENES[expected.sceneId];
     const interaction = scene.interactions.find(({ id }) => id === expected.id);
-    assert.ok(interaction, `${expected.id} must remain authored in ${expected.sceneId}`);
+    assert.ok(interaction, `${expected.id} must be authored in ${expected.sceneId}`);
     assert.deepEqual(interaction.at, expected.at);
-    assert.equal(Object.hasOwn(interaction, "patrol"), false);
+    assert.equal(interaction.patrol.mode, "ping-pong");
+    assert.ok(interaction.patrol.waypoints.every(({ y }) => y === expected.at.y));
 
     const initial = createAdventureActorStates([interaction]);
     const advanced = advanceAdventureActorStates(
       expected.sceneId,
       [interaction],
-      initial,
-      120_000,
+      { ...initial, [interaction.id]: { ...initial[interaction.id], dwellRemainingMs: 0 } },
+      500,
+      { playerPosition: { x: -100, y: -100 } },
     );
-    assert.deepEqual(advanced[interaction.id].position, expected.at);
-    assert.equal(advanced[interaction.id].moving, false);
+    assert.ok(advanced[interaction.id].position.x > expected.at.x);
+    assert.equal(advanced[interaction.id].position.y, expected.at.y);
+    assert.equal(advanced[interaction.id].moving, true);
     assert.equal(advanced[interaction.id].blockedMs, 0);
   }
 });

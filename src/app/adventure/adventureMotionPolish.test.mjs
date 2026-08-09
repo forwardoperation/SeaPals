@@ -6,7 +6,10 @@ const component = readFileSync(new URL("./AdventureGame.jsx", import.meta.url), 
 const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), "utf8");
 
 test("overworld movement stays continuous while resolving to one visible cardinal direction", () => {
-  assert.match(component, /resolveAdventureMovementInput\(overworldDirectionsRef\.current\)/);
+  assert.match(
+    component,
+    /resolveAdventureMovementInput\(overworldDirectionsRef\.current, \{[\s\S]*?axis: scene\.movement\?\.axis/,
+  );
   assert.match(component, /nextFacing = movementInput\.direction/);
   assert.match(component, /const MIN_MOVEMENT_INTENT_MS = 34/);
   assert.match(component, /releaseMovementIntent\(/);

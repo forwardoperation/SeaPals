@@ -139,7 +139,11 @@ test("Elverson uses a close-follow camera and compact human-toned overworld spri
   assert.match(styles, /\.mapWorld\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?display:\s*grid/);
   assert.match(styles, /\.spriteArtwork\s*\{[\s\S]*?width:\s*72%;[\s\S]*?height:\s*103%/);
   assert.match(styles, /\.town-elderSpriteArtwork\s*\{\s*background-image:\s*url\("\/images\/adventure\/town-elder-sprites-512-v3\.webp"\);\s*\}/);
-  assert.doesNotMatch(styles, /hue-rotate\(/);
+  assert.doesNotMatch(
+    styles,
+    /\.spriteArtwork\s*\{[^}]*hue-rotate\(/,
+    "overworld character sheets should keep their authored skin and clothing colors",
+  );
 });
 
 test("Elverson overworld sprites and dialogue portraits reuse compact WebP sheets", () => {

@@ -55,9 +55,9 @@ const ARCHETYPES = {
   "brick-school-door": building("brick-school", 4, 4.82),
   "brick-civic-hall-door": building("brick-civic-hall", 4.8, 4.65),
   "green-awning-shop-door": building("green-awning-shop", 3, 3.92),
-  "aquarium-door": building("aquarium-workshop", 5.2, 5.72, {
-    bottom: -0.95,
-    depthOffsetY: -0.95,
+  "aquarium-door": building("aquarium-grand-exterior-v1", 6.8, 7.38, {
+    bottom: -0.82,
+    depthOffsetY: -0.82,
   }),
 };
 

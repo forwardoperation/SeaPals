@@ -244,7 +244,7 @@ export const ELVERSON_LEGACY_AMBIENT_RESIDENTS = [
       "Follow me to the practice rail. We'll watch the float, set the hook, and make one careful reel before you fish on your own.",
     ],
     fishingGuidance: [
-      "Your rod is ready. Face open water at the shore, press Enter, and choose whether to cast. Bring successful catches to Mr. Easterling in the aquarium workshop.",
+      "Your hand net is ready. Face the marked shallows and press Enter to begin a careful scoop. Bring successful catches to Mr. Easterling at the Aquarium care desk.",
       "A rare catch may need a narrower tension window. Patience keeps the line controlled; there is no penalty when a creature gets away.",
     ],
     patrol: {
@@ -501,7 +501,7 @@ export const ELVERSON_LEGACY_AMBIENT_RESIDENTS = [
     title: "Aquarium Marine Biologist",
     sceneId: "academy-lab",
     at: { x: 5, y: 3 },
-    intro: "Welcome to the aquarium workshop. I'm Jonah, the marine biologist responsible for making sure our exhibit starts with the animals' needs.",
+    intro: "Welcome to the Sea Realm Aquarium Grand Hall. I'm Jonah, the marine biologist responsible for making sure every exhibit starts with the animals' needs.",
     guidance: "Before choosing a species, we need a stable habitat: suitable water, space, shelter, food, compatibility, and a plan for long-term care.",
     returnLine: "Bring me your shoreline observations. We'll use them to decide what an honest Elverson habitat exhibit should show.",
   },
@@ -658,6 +658,94 @@ function elversonInteriorScene({
         doorwayHalfWidth: 0.5,
         targetScene: "town",
         spawn: portal.exteriorSpawn,
+        facing: "down",
+      },
+    ],
+  };
+}
+
+const AQUARIUM_GALLERY_TILES = Object.freeze([
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "wffffffffffffffffffffffffffffffw",
+  "wffffffffffffffffffffffffffffffw",
+  "Effffffffffffffffffffffffffffffw",
+  "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+]);
+
+function aquariumGalleryScene({
+  ecosystemId,
+  name,
+  theme,
+  hallSpawn,
+}) {
+  const interactionPrefix = `interaction-aquarium-${ecosystemId}`;
+  return {
+    name,
+    worldKind: "interior",
+    theme,
+    camera: {
+      tilesAcross: 16,
+      playerAnchorX: 0.5,
+      playerAnchorY: 0.5,
+    },
+    movement: {
+      axis: "horizontal",
+      idleFacing: "up",
+    },
+    aquariumGallery: {
+      ecosystemId,
+      tankSlots: [
+        {
+          tankId: `${ecosystemId}-community`,
+          bounds: { left: 0, top: 0, right: 16, bottom: 9 },
+        },
+        {
+          tankId: `${ecosystemId}-apex`,
+          bounds: { left: 16, top: 0, right: 32, bottom: 9 },
+        },
+      ],
+    },
+    tiles: AQUARIUM_GALLERY_TILES,
+    spawn: { x: 1, y: 7 },
+    startFacing: "up",
+    collisionRects: [
+      {
+        id: `aquarium-${ecosystemId}-community-tank`,
+        left: -0.5,
+        top: -0.5,
+        right: 15.75,
+        bottom: 4.75,
+      },
+      {
+        id: `aquarium-${ecosystemId}-apex-tank`,
+        left: 16.25,
+        top: -0.5,
+        right: 31.5,
+        bottom: 4.75,
+      },
+      {
+        id: `aquarium-${ecosystemId}-tank-divider`,
+        left: 15.75,
+        top: -0.5,
+        right: 16.25,
+        bottom: 4.95,
+      },
+    ],
+    interactions: [
+      ...ELVERSON_AMBIENT_RESIDENTS
+        .filter((resident) => resident.sceneId === `aquarium-${ecosystemId}-gallery`)
+        .map(elversonResidentInteraction),
+      {
+        id: `${interactionPrefix}-gallery-exit`,
+        type: "exit",
+        at: { x: 0, y: 7 },
+        doorwayHalfWidth: 0.5,
+        targetScene: "academy-lab",
+        spawn: hallSpawn,
         facing: "down",
       },
     ],
@@ -921,9 +1009,10 @@ const shellshoreRuntimeScenes = {
     artPath: "/images/adventure/shellshore-academy.webp",
   }),
   "academy-lab": {
-    name: "Elverson Aquarium Workshop",
+    name: "Sea Realm Aquarium Grand Hall",
     worldKind: "interior",
-    theme: "academy-lab",
+    theme: "aquarium-grand-hall",
+    artPath: "/images/adventure/aquarium-grand-hall-v1.webp",
     tiles: [
       "wwwwwwwwwwwwww",
       "wwwwwwwwwwwwww",
@@ -938,14 +1027,12 @@ const shellshoreRuntimeScenes = {
     spawn: { x: 7, y: 7 },
     startFacing: "up",
     collisionRects: [
-      { id: "academy-top-left-cabinetry", left: 0.5, top: 1.45, right: 3.75, bottom: 3.2 },
-      { id: "academy-rear-bench", left: 4.95, top: 1.45, right: 7.95, bottom: 2.65 },
-      { id: "academy-helm-wheel", left: 7.95, top: 1.7, right: 8.8, bottom: 2.8 },
-      { id: "academy-top-right-cabinetry", left: 9.3, top: 1.45, right: 12.2, bottom: 3.2 },
-      { id: "academy-left-aquarium-workstation", left: 2.45, top: 4.25, right: 5.1, bottom: 7.1 },
-      { id: "academy-right-aquarium-workstation", left: 7.85, top: 4.25, right: 10.55, bottom: 7.1 },
-      { id: "academy-lower-left-storage", left: 0.05, top: 6.15, right: 1.75, bottom: 7.15 },
-      { id: "academy-right-gear-cabinet", left: 11.05, top: 4.5, right: 12.85, bottom: 7.15 },
+      { id: "aquarium-hall-north-architecture", left: -0.5, top: -0.5, right: 13.5, bottom: 2.4 },
+      { id: "aquarium-hall-west-seating", left: -0.5, top: 2.4, right: 1.25, bottom: 7.35 },
+      { id: "aquarium-hall-east-seating", left: 12.75, top: 2.4, right: 13.5, bottom: 7.35 },
+      { id: "aquarium-hall-reception", left: 1.25, top: 5.1, right: 4.25, bottom: 7.35 },
+      { id: "aquarium-hall-southwest-railing", left: -0.5, top: 7.4, right: 5.2, bottom: 8.5 },
+      { id: "aquarium-hall-southeast-railing", left: 6.8, top: 7.4, right: 13.5, bottom: 8.5 },
     ],
     interactions: [
       {
@@ -961,6 +1048,33 @@ const shellshoreRuntimeScenes = {
         .filter((resident) => resident.sceneId === "academy-lab")
         .map(elversonResidentInteraction),
       {
+        id: "interaction-aquarium-enter-reef-gallery",
+        type: "enter",
+        at: { x: 3.4, y: 2 },
+        doorwayHalfWidth: 0.65,
+        targetScene: "aquarium-reef-gallery",
+        spawn: { x: 1, y: 7 },
+        facing: "up",
+      },
+      {
+        id: "interaction-aquarium-enter-oceanic-gallery",
+        type: "enter",
+        at: { x: 7, y: 2 },
+        doorwayHalfWidth: 0.75,
+        targetScene: "aquarium-oceanic-gallery",
+        spawn: { x: 1, y: 7 },
+        facing: "up",
+      },
+      {
+        id: "interaction-aquarium-enter-deep-gallery",
+        type: "enter",
+        at: { x: 10.6, y: 2 },
+        doorwayHalfWidth: 0.65,
+        targetScene: "aquarium-deep-gallery",
+        spawn: { x: 1, y: 7 },
+        facing: "up",
+      },
+      {
         id: "interaction-academy-exit",
         type: "exit",
         at: { x: 6, y: 8 },
@@ -974,6 +1088,24 @@ const shellshoreRuntimeScenes = {
       },
     ],
   },
+  "aquarium-reef-gallery": aquariumGalleryScene({
+    ecosystemId: "reef",
+    name: "Reef Gallery",
+    theme: "aquarium-reef-gallery",
+    hallSpawn: { x: 3.4, y: 3.4 },
+  }),
+  "aquarium-oceanic-gallery": aquariumGalleryScene({
+    ecosystemId: "oceanic",
+    name: "Oceanic Gallery",
+    theme: "aquarium-oceanic-gallery",
+    hallSpawn: { x: 7, y: 4.15 },
+  }),
+  "aquarium-deep-gallery": aquariumGalleryScene({
+    ecosystemId: "deep",
+    name: "Deep Gallery",
+    theme: "aquarium-deep-gallery",
+    hallSpawn: { x: 10.6, y: 3.4 },
+  }),
 };
 
 const shellshoreSunpatchRouteWorld = {
@@ -2950,6 +3082,9 @@ const scenes = [
   { id: "elverson-red-schoolhouse", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["elverson-red-schoolhouse"] },
   { id: "elverson-marine-research-lab", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["elverson-marine-research-lab"] },
   { id: "academy-lab", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["academy-lab"] },
+  { id: "aquarium-reef-gallery", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["aquarium-reef-gallery"] },
+  { id: "aquarium-oceanic-gallery", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["aquarium-oceanic-gallery"] },
+  { id: "aquarium-deep-gallery", townId: "shellshore-village", kind: "interior", status: "prototype", world: shellshoreRuntimeScenes["aquarium-deep-gallery"] },
   { id: "shellshore-sunpatch-sea", townId: "shellshore-village", routeId: "route-shellshore-sunpatch", kind: "route", status: "prototype", world: shellshoreSunpatchRouteWorld },
   { id: "sunpatch-cay-town", townId: "sunpatch-cay", kind: "exterior", status: "prototype", world: sunpatchRuntimeScenes["sunpatch-cay-town"] },
   { id: "sunpatch-field-station", townId: "sunpatch-cay", kind: "interior", status: "prototype", world: sunpatchRuntimeScenes["sunpatch-field-station"] },
@@ -3038,13 +3173,13 @@ const conversations = [
         "I prepared three complete starter ecosystems for new adventurers. Let me show you what makes each one special.",
       ],
       intro: [
-        "Here we are: the Sea Realm Aquarium workshop. These tanks look empty today, but every careful delivery will help an ecosystem room come alive.",
+        "Here we are: the Sea Realm Aquarium Grand Hall. Those three doorways lead to the Reef, Oceanic, and Deep galleries, and every careful delivery will help the right habitat come alive.",
         "Before any animal enters a prepared habitat, we must understand its water, food, shelter, space, and neighbors. We will begin with a SeaRealm model ecosystem and practice making those connections.",
         "First, choose a starter deck. Each is a complete ecosystem and a different way to begin your journey toward Master of the Sea.",
       ],
       rematch: [
         "Building an aquarium exhibit takes practice, good notes, and the willingness to revise a plan.",
-        "We can replay the strategy lesson or have another friendly 26 VP workshop duel whenever you like.",
+        "We can replay the strategy lesson or have another friendly 26 VP training duel whenever you like.",
       ],
       victory: [
         "You did it! You built a reliable economy, established a Coral Reef habitat, used School Density to welcome a Filter Feeder, brought out an Apex predator, and reached 26 VP.",
@@ -3071,7 +3206,7 @@ const conversations = [
         "When you're ready, we'll restart the practice duel from setup and rebuild the reef together.",
       ],
       practiceRetry: [
-        "Nice work reaching the end of that match. This workshop lesson is about building a sound plan, not merely checking off controls.",
+        "Nice work reaching the end of that match. This Aquarium lesson is about building a sound plan, not merely checking off controls.",
         "Your progress is safe. Let's rebuild our economy, establish the Coral Reef habitat, learn Creature Schools and Filter Feeders, and time an Apex predator carefully on the way to 26 VP.",
       ],
       boatSafety: [

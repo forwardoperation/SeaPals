@@ -115,7 +115,7 @@ function assertWalkablePolyline(sceneId, points, label) {
   }
 }
 
-test("world exposes the 42-by-28 Elverson v4 town, nine public interiors, and the upstairs bedroom", () => {
+test("world exposes the 42-by-28 Elverson v4 town, aquarium galleries, public interiors, and the upstairs bedroom", () => {
   for (const sceneId of ELVERSON_RELEASE_SCOPE.sceneIds) {
     assert.ok(SCENES[sceneId], `${sceneId} should remain available`);
   }
@@ -144,12 +144,27 @@ test("world exposes the 42-by-28 Elverson v4 town, nine public interiors, and th
     "elverson-red-schoolhouse",
     "elverson-marine-research-lab",
     "elverson-supply-company",
+    "academy-lab",
   ]) {
     assert.equal(SCENES[sceneId].width, 14);
     assert.equal(SCENES[sceneId].height, 9);
   }
-  assert.equal(SCENES["academy-lab"].width, 14);
-  assert.equal(SCENES["academy-lab"].height, 9);
+  for (const sceneId of [
+    "aquarium-reef-gallery",
+    "aquarium-oceanic-gallery",
+    "aquarium-deep-gallery",
+  ]) {
+    assert.equal(SCENES[sceneId].width, 32);
+    assert.equal(SCENES[sceneId].height, 9);
+    assert.deepEqual(SCENES[sceneId].camera, {
+      tilesAcross: 16,
+      playerAnchorX: 0.5,
+      playerAnchorY: 0.5,
+    });
+    assert.equal(Object.isFrozen(SCENES[sceneId].camera), true);
+    assert.equal(Object.isFrozen(SCENES[sceneId].aquariumGallery), true);
+    assert.equal(Object.isFrozen(SCENES[sceneId].aquariumGallery.tankSlots), true);
+  }
   assert.ok(Object.values(SCENES).every((scene) => scene.tiles.every((row) => row.length === scene.width)));
 });
 
@@ -211,13 +226,12 @@ test("Elverson's authored shoreline is solid outside the public pier corridor", 
     "town",
     [
       ELVERSON_TOWN_SAFE_POSITIONS.shellshoreDock,
-      { x: 20, y: 22.22 },
-      { x: 24.54, y: 22.22 },
+      { x: 20, y: 23.72 },
       ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
     ],
     "Elverson public pier and aquarium approach",
   );
-  assert.equal(canOccupyContinuousPosition("town", { x: 28, y: 23 }), true);
+  assert.equal(canOccupyContinuousPosition("town", { x: 28, y: 23.72 }), true);
   assert.equal(canOccupyContinuousPosition("town", { x: 32, y: 22 }), false);
 });
 
@@ -659,6 +673,53 @@ test("every active Elverson portal stays inside the release and arrives on a saf
   );
 });
 
+test("the grand aquarium hall opens into metadata-driven horizontal promenades", () => {
+  const hallEntrances = SCENES["academy-lab"].interactions.filter(({ type }) => type === "enter");
+  assert.deepEqual(
+    hallEntrances.map(({ targetScene }) => targetScene),
+    ["aquarium-reef-gallery", "aquarium-oceanic-gallery", "aquarium-deep-gallery"],
+  );
+  for (const entrance of hallEntrances) {
+    const approach = {
+      x: entrance.id.includes("oceanic") ? entrance.at.x - 0.65 : entrance.at.x,
+      y: entrance.at.y + 0.72,
+    };
+    assert.equal(
+      getDoorwayTransition("academy-lab", approach, "up")?.interactionId,
+      entrance.id,
+    );
+  }
+
+  for (const sceneId of [
+    "aquarium-reef-gallery",
+    "aquarium-oceanic-gallery",
+    "aquarium-deep-gallery",
+  ]) {
+    const gallery = SCENES[sceneId];
+    assert.equal(gallery.interactions.some(({ type }) => type === "aquarium-view"), false);
+    assert.deepEqual(
+      gallery.aquariumGallery.tankSlots.map(({ bounds }) => bounds),
+      [
+        { left: 0, top: 0, right: 16, bottom: 9 },
+        { left: 16, top: 0, right: 32, bottom: 9 },
+      ],
+    );
+    assert.deepEqual(movePlayerContinuous(sceneId, { x: 8, y: 7 }, { x: 0, y: -1 }, 250), {
+      x: 8,
+      y: 7,
+    });
+    assert.deepEqual(movePlayer(sceneId, { x: 8, y: 7 }, "up"), { x: 8, y: 7 });
+    assert.deepEqual(movePlayer(sceneId, { x: 8, y: 7 }, "right"), { x: 9, y: 7 });
+    assert.ok(movePlayerContinuous(sceneId, { x: 8, y: 7 }, { x: 1, y: 0 }, 250).x > 8);
+    assert.equal(canOccupyContinuousPosition(sceneId, { x: 8, y: 6.25 }), true);
+    assert.equal(canOccupyScenePosition(sceneId, { x: 8, y: 6.25 }), false);
+    assert.equal(
+      getDoorwayTransition(sceneId, { x: 0.72, y: 7 }, "left")?.targetScene,
+      "academy-lab",
+    );
+  }
+});
+
 test("every Sunpatch, Brackwater, Current, and Kelpwatch exterior doorway auto-triggers from a safe approach", () => {
   for (const sceneId of ["sunpatch-cay-town", "brackwater-landing-town", "current-commons-town", "kelpwatch-island-town"]) {
     const entrances = SCENES[sceneId].interactions.filter(({ type }) => type === "enter");
@@ -695,7 +756,7 @@ test("Elverson exposes the v4 town start, route dock, and every semantic safe po
     supplyCompanyExterior: { x: 37.5, y: 16.45 },
     wharfApproach: { x: 14.55, y: 21.45 },
     handNetCove: { x: 15.15, y: 21.65 },
-    aquariumExterior: { x: 24.54, y: 22.25 },
+    aquariumExterior: { x: 27.6, y: 23.72 },
   });
   assert.deepEqual(SCENES.town.spawn, ELVERSON_TOWN_SAFE_POSITIONS.townStart);
   assert.deepEqual(START_STATE, {
@@ -824,7 +885,7 @@ test("facing an adjacent trainer yields the matching trainer interaction", () =>
 
 test("the legacy grid API resolves residents at their relocated v3 scenes", () => {
   assert.equal(
-    getInteraction("elverson-marine-research-lab", { x: 10, y: 5 }, "right")?.interactionId,
+    getInteraction("aquarium-deep-gallery", { x: 18, y: 6 }, "right")?.interactionId,
     "interaction-elverson-explorer-jordan",
   );
   assert.equal(getInteraction("town", { x: 20, y: 10 }, "right"), null);
@@ -855,11 +916,13 @@ test("authored furniture rectangles block artwork while preserving real floor sp
     ["coral-home", "coral-lower-right-display", { x: 9, y: 5 }],
     ["deep-home", "deep-left-habitat-tank", { x: 1.675, y: 3.15 }],
     ["deep-home", "deep-lower-right-equipment", { x: 7, y: 6 }],
-    ["academy-lab", "academy-top-left-cabinetry", { x: 3, y: 2 }],
-    ["academy-lab", "academy-rear-bench", { x: 6, y: 2 }],
-    ["academy-lab", "academy-left-aquarium-workstation", { x: 3, y: 5 }],
-    ["academy-lab", "academy-right-aquarium-workstation", { x: 10, y: 5 }],
-    ["academy-lab", "academy-lower-left-storage", { x: 1, y: 6.5 }],
+    ["academy-lab", "aquarium-hall-north-architecture", { x: 3, y: 2 }],
+    ["academy-lab", "aquarium-hall-west-seating", { x: 0.8, y: 4.5 }],
+    ["academy-lab", "aquarium-hall-reception", { x: 3, y: 6 }],
+    ["academy-lab", "aquarium-hall-east-seating", { x: 13, y: 5 }],
+    ["aquarium-reef-gallery", "aquarium-reef-community-tank", { x: 3, y: 2.5 }],
+    ["aquarium-reef-gallery", "aquarium-reef-apex-tank", { x: 24, y: 2.5 }],
+    ["aquarium-reef-gallery", "aquarium-reef-tank-divider", { x: 16, y: 2.5 }],
   ];
 
   for (const [sceneId, rectangleId, position] of furnitureRegressionPoints) {
@@ -882,6 +945,10 @@ test("authored furniture rectangles block artwork while preserving real floor sp
     ["deep-home", { x: 5, y: 4 }],
     ["academy-lab", SCENES["academy-lab"].spawn],
     ["academy-lab", { x: 6, y: 5 }],
+    ["aquarium-reef-gallery", SCENES["aquarium-reef-gallery"].spawn],
+    ["aquarium-reef-gallery", { x: 16, y: 7 }],
+    ["aquarium-oceanic-gallery", SCENES["aquarium-oceanic-gallery"].spawn],
+    ["aquarium-deep-gallery", SCENES["aquarium-deep-gallery"].spawn],
   ];
   for (const [sceneId, position] of safeFloorAndSpawnPoints) {
     assert.equal(canOccupyContinuousPosition(sceneId, position), true, `${sceneId} floor should stay open`);
@@ -1250,13 +1317,13 @@ test("full-tile stations stay reachable only across their visible front edge", (
 
 test("interaction rays cannot reach a character through unrelated furniture", () => {
   const blockedTarget = "interaction-academy-mentor";
-  const playerPosition = { x: 6, y: 4.5 };
+  const playerPosition = { x: 6.2, y: 6 };
   assert.equal(canOccupyContinuousPosition("academy-lab", playerPosition), true);
   assert.equal(
     getContinuousInteraction("academy-lab", playerPosition, "left", {
-      range: 5,
+      range: 6,
       lateralTolerance: 0.1,
-      positionOverrides: { [blockedTarget]: { x: 2, y: 4.5 } },
+      positionOverrides: { [blockedTarget]: { x: 0.8, y: 6 } },
     }),
     null,
   );

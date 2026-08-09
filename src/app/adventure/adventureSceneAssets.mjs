@@ -1,4 +1,13 @@
+import {
+  ELVERSON_AQUARIUM_SPECIES,
+  ELVERSON_AQUARIUM_TANKS,
+} from "./adventureAquariumExhibits.mjs";
+
 const EMPTY_ASSET_PATHS = Object.freeze([]);
+
+const AQUARIUM_TANK_BY_ID = Object.freeze(Object.fromEntries(
+  ELVERSON_AQUARIUM_TANKS.map((tank) => [tank.id, tank]),
+));
 
 /**
  * Scenes with inline `artPath` values do not need this fallback. These entries
@@ -73,6 +82,26 @@ function isAssetPath(value) {
   return typeof value === "string" && value.trim().startsWith("/");
 }
 
+function collectAquariumGalleryAssetPaths(scene) {
+  const tankSlots = scene?.aquariumGallery?.tankSlots;
+  if (!Array.isArray(tankSlots)) return EMPTY_ASSET_PATHS;
+
+  const paths = new Set();
+  const tankIds = new Set();
+  for (const slot of tankSlots) {
+    const tank = AQUARIUM_TANK_BY_ID[slot?.tankId];
+    if (!tank) continue;
+    tankIds.add(tank.id);
+    if (isAssetPath(tank.backgroundPath)) paths.add(tank.backgroundPath);
+  }
+  for (const species of ELVERSON_AQUARIUM_SPECIES) {
+    if (tankIds.has(species.tankId) && isAssetPath(species.sprite?.path)) {
+      paths.add(species.sprite.path);
+    }
+  }
+  return paths;
+}
+
 export function getAdventureCharacterSpriteAssetPath(spriteProfileId) {
   return typeof spriteProfileId === "string"
     ? ADVENTURE_CHARACTER_SPRITE_ASSETS[spriteProfileId] ?? null
@@ -109,6 +138,7 @@ export function collectAdventureSceneAssetPaths(
     ? scene.artPath
     : ADVENTURE_SCENE_THEME_GROUND_ASSETS[scene.theme];
   if (isAssetPath(groundPath)) paths.add(groundPath);
+  for (const path of collectAquariumGalleryAssetPaths(scene)) paths.add(path);
 
   for (const object of scene.layeredObjects ?? []) {
     if (isAssetPath(object?.sprite?.src)) paths.add(object.sprite.src);

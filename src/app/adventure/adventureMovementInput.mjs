@@ -12,6 +12,26 @@ export const ADVENTURE_CARDINAL_VECTORS = Object.freeze({
   left: Object.freeze({ x: -1, y: 0 }),
 });
 
+export const ADVENTURE_MOVEMENT_AXES = Object.freeze([
+  "free",
+  "horizontal",
+]);
+
+function requireMovementAxis(axis) {
+  if (!ADVENTURE_MOVEMENT_AXES.includes(axis)) {
+    throw new RangeError(`Unknown adventure movement axis: ${String(axis)}`);
+  }
+  return axis;
+}
+
+export function isAdventureMovementDirectionAllowed(direction, axis = "free") {
+  if (!Object.prototype.hasOwnProperty.call(ADVENTURE_CARDINAL_VECTORS, direction)) {
+    throw new RangeError(`Unknown adventure movement direction: ${String(direction)}`);
+  }
+  requireMovementAxis(axis);
+  return axis !== "horizontal" || direction === "left" || direction === "right";
+}
+
 function directionValues(orderedDirections) {
   if (orderedDirections === undefined || orderedDirections === null) return [];
   if (typeof orderedDirections === "string") {
@@ -33,13 +53,15 @@ function directionValues(orderedDirections) {
  * shared order for keyboard and touch means the latest deliberate press wins
  * instead of producing a diagonal or cancelling an opposing pair.
  */
-export function resolveAdventureMovementInput(orderedDirections) {
+export function resolveAdventureMovementInput(orderedDirections, { axis = "free" } = {}) {
+  requireMovementAxis(axis);
   let direction = null;
 
   for (const candidate of directionValues(orderedDirections)) {
     if (!Object.prototype.hasOwnProperty.call(ADVENTURE_CARDINAL_VECTORS, candidate)) {
       throw new RangeError(`Unknown adventure movement direction: ${String(candidate)}`);
     }
+    if (!isAdventureMovementDirectionAllowed(candidate, axis)) continue;
     direction = candidate;
   }
 

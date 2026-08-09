@@ -4,6 +4,7 @@ import test from "node:test";
 
 const game = readFileSync(new URL("./AdventureGame.jsx", import.meta.url), "utf8");
 const modal = readFileSync(new URL("./AdventureHandNetModal.jsx", import.meta.url), "utf8");
+const gallery = readFileSync(new URL("./AdventureAquariumGallery.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), "utf8");
 const residents = readFileSync(new URL("./adventureElversonResidents.mjs", import.meta.url), "utf8");
 const exhibits = readFileSync(new URL("./adventureAquariumExhibits.mjs", import.meta.url), "utf8");
@@ -139,16 +140,82 @@ test("keyboard, touch, focus, live status, and reduced-motion affordances are ex
   assert.match(styles, /@media \(forced-colors: active\)[\s\S]*?\.handNetCard/);
 });
 
-test("delivered creatures populate animated care-specific Aquarium exhibits", () => {
+test("delivered creatures populate six scenic tanks directly inside the scrolling Aquarium galleries", () => {
   assert.match(game, /getElversonAquariumExhibitModel\(gameSave\)/);
-  assert.match(game, /sceneId === ELVERSON_AQUARIUM_SCENE_ID/);
-  assert.match(game, /<AdventureAquariumExhibits/);
-  assert.match(exhibits, /Reef Cleaning Station/);
-  assert.match(exhibits, /Sheltered Coral Garden/);
-  assert.match(exhibits, /Rocky Invertebrate Nursery/);
-  assert.match(exhibits, /creature\?\.aquarium > 0/);
-  assert.match(styles, /@keyframes aquariumCreatureSwim/);
-  assert.match(styles, /\.aquariumCreature[\s\S]*?background-size:\s*500% 200%/);
+  assert.match(game, /import AdventureAquariumGallery from "\.\/AdventureAquariumGallery"/);
+  assert.match(
+    game,
+    /styles\.mapWorld[\s\S]*?<AdventureAquariumGallery[\s\S]*?scene=\{scene\}[\s\S]*?aquariumModel=\{aquariumExhibitModel\}[\s\S]*?reducedMotion=\{effectiveReducedMotion\}/,
+  );
+  assert.match(game, /getAdventureCameraLayout\(\{[\s\S]*?\}, scene\.camera \?\? \{\}\)/);
+  assert.match(
+    game,
+    /const idleFacing = scene\.movement\?\.idleFacing;[\s\S]*?world: \{ \.\.\.current\.world, facing: idleFacing \}/,
+  );
+  assert.match(
+    game,
+    /isAdventureMovementDirectionAllowed\(direction, currentScene\?\.movement\?\.axis\)/,
+  );
+  assert.match(game, /aquariumGalleryMode \? "Aquarium promenade movement controls"/);
+  assert.match(game, /!aquariumGalleryMode \? <DirectionButton direction="up"/);
+  assert.doesNotMatch(game, /AdventureAquariumSpectator|activeAquariumTank|interaction\.type === "aquarium-view"/);
+  assert.match(exhibits, /AQUARIUM_ECOSYSTEM_IDS = Object\.freeze\(\["reef", "oceanic", "deep"\]\)/);
+  assert.match(exhibits, /AQUARIUM_TANK_KINDS = Object\.freeze\(\["community", "apex"\]\)/);
+  assert.match(exhibits, /save\.inventory\.storyItems/);
+  assert.doesNotMatch(exhibits, /inventory\.cards/);
+
+  assert.match(gallery, /const gallery = scene\?\.aquariumGallery/);
+  assert.match(gallery, /if \(!gallery\) return null/);
+  assert.match(gallery, /gallery\.tankSlots/);
+  assert.match(gallery, /aquariumModel\?\.tanks/);
+  assert.match(gallery, /tankSlotStyle\(slot\?\.bounds, scene\)/);
+  assert.match(gallery, /backgroundImage: cssUrl\(tank\.backgroundPath\)/);
+  assert.match(gallery, /Array\.isArray\(tank\.occupants\)/);
+  assert.match(gallery, /sprite\.path \?\? atlasPath/);
+  assert.match(gallery, /sprite\.columns/);
+  assert.match(gallery, /sprite\.rows/);
+  assert.match(gallery, /--aquarium-gallery-resident-brightness/);
+  assert.match(gallery, /--aquarium-gallery-resident-saturation/);
+  assert.match(gallery, /visual\.biologicalScale/);
+  assert.match(gallery, /visual\.depthScale/);
+  assert.match(gallery, /legacyCombinedScale/);
+  assert.match(gallery, /--aquarium-gallery-resident-biological-scale/);
+  assert.match(gallery, /--aquarium-gallery-resident-depth-scale/);
+  assert.match(gallery, /styles\.aquariumGalleryResidentBenthic/);
+  assert.match(gallery, /aria-hidden="true"/);
+  assert.match(gallery, /className=\{styles\.srOnly\}/);
+  assert.match(gallery, /tankCountSummary\(tank\)/);
+  assert.doesNotMatch(
+    gallery,
+    /aquariumGalleryTankPlaque|aquariumGalleryEmptyPlaque|tank\.subtitle|tank\.emptyMessage/,
+  );
+  assert.doesNotMatch(
+    gallery,
+    /role="dialog"|aria-modal|onClick|handleEscape|focus\(|caustic|lightShaft|particle|aquariumSpectator/i,
+  );
+
+  assert.match(styles, /\.aquariumGalleryScenery/);
+  assert.match(styles, /\.aquariumGalleryTankWindow/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentSwim/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentCrawl/);
+  assert.match(
+    styles,
+    /\.aquariumGalleryResidentBody[\s\S]*?background-size:[\s\S]*?var\(--aquarium-gallery-atlas-width[\s\S]*?var\(--aquarium-gallery-atlas-height/,
+  );
+  assert.match(
+    styles,
+    /\.aquariumGalleryResidentBody[\s\S]*?scale\(var\(--aquarium-gallery-resident-biological-scale[\s\S]*?scale\(var\(--aquarium-gallery-resident-depth-scale/,
+  );
+  assert.match(styles, /\.aquariumGalleryResidentTrack[\s\S]*?width:\s*var\(--resident-size, 6%\)/);
+  assert.doesNotMatch(
+    styles,
+    /aquariumGalleryResident(?:Track|Predator|Benthic|Coral)?[^}]*width:\s*var\(--resident-size,\s*clamp\(/,
+  );
+  assert.match(styles, /\.aquariumGalleryReducedMotion[\s\S]*?\.aquariumGalleryResidentTrack[\s\S]*?animation:\s*none !important/);
+  assert.doesNotMatch(styles, /\.aquariumGalleryTankPlaque|\.aquariumGalleryEmptyPlaque/);
+  assert.doesNotMatch(styles, /\.aquariumSpectator/);
+  assert.doesNotMatch(game, /function AdventureAquariumExhibits/);
+  assert.doesNotMatch(styles, /\.aquariumExhibitLayer/);
 });
 
 test("Aquarium deliveries still award matching cards without granting the campaign title early", () => {

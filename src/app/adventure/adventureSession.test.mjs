@@ -52,6 +52,11 @@ import {
   START_STATE,
   canOccupyContinuousPosition,
 } from "./adventureWorld.mjs";
+import { getAdventureCameraLayout } from "./adventureCamera.mjs";
+import {
+  advanceAdventureActorStates,
+  createAdventureActorStates,
+} from "./adventureActors.mjs";
 import {
   ONBOARDING_QUEST_FLAGS,
   getOnboardingProgress,
@@ -897,16 +902,36 @@ test("unsafe writes are rejected and unsafe loaded positions recover to the scen
   assert.deepEqual(recovered.save.world.position, { x: 5, y: 6 });
 });
 
+test("horizontal gallery resumes normalize retired off-lane positions to the promenade spawn", () => {
+  const initial = createNewAdventureSession("aquarium-horizontal-resume");
+  const gallery = SCENES["aquarium-reef-gallery"];
+  const recovered = recoverAdventureResume({
+    ...initial,
+    world: {
+      ...initial.world,
+      sceneId: gallery.id,
+      position: { x: 8, y: 6.25 },
+      facing: "left",
+    },
+  });
+
+  assert.equal(canOccupyContinuousPosition(gallery.id, { x: 8, y: 6.25 }), true);
+  assert.equal(recovered.recovered, true);
+  assert.equal(recovered.reason, "unsafe-position");
+  assert.equal(recovered.fallback, "scene-spawn");
+  assert.deepEqual(recovered.save.world.position, gallery.spawn);
+});
+
 test("resume recovery rejects positions inside authored interior furniture", () => {
   const initial = createNewAdventureSession("profile-1");
   const academy = SCENES["academy-lab"];
   const furniture = academy.collisionRects.find(
-    (rectangle) => rectangle.id === "academy-left-aquarium-workstation",
+    (rectangle) => rectangle.id === "aquarium-hall-reception",
   );
-  const furniturePosition = { x: 4, y: 5 };
+  const furniturePosition = { x: 3, y: 6 };
 
-  assert.ok(furniture, "academy furniture collision rectangle should be authored");
-  assert.equal(academy.tiles[furniturePosition.y][furniturePosition.x], "r");
+  assert.ok(furniture, "Aquarium Grand Hall reception collision rectangle should be authored");
+  assert.equal(academy.tiles[furniturePosition.y][furniturePosition.x], "f");
   assert.equal(canOccupyContinuousPosition(academy.id, furniturePosition), false);
 
   const recovered = recoverAdventureResume({
@@ -949,6 +974,49 @@ test("all live portals use safe spawns and preserve their authored arrival facin
         `${sourceScene.id}/${portal.id} should face into its destination`,
       );
 
+      const camera = getAdventureCameraLayout({
+        worldWidth: targetScene.width,
+        worldHeight: targetScene.height,
+        playerX: portal.spawn.x + 0.5,
+        playerY: portal.spawn.y + 0.5,
+      }, targetScene.camera ?? {});
+      for (const [field, value] of Object.entries(camera)) {
+        assert.equal(
+          Number.isFinite(value),
+          true,
+          `${sourceScene.id}/${portal.id} should create a finite destination camera ${field}`,
+        );
+      }
+
+      const expectedActorIds = targetScene.interactions
+        .filter(({ type }) => type === "npc" || type === "trainer")
+        .map(({ id }) => id)
+        .sort();
+      const destinationActors = createAdventureActorStates(targetScene.interactions);
+      assert.deepEqual(
+        Object.keys(destinationActors).sort(),
+        expectedActorIds,
+        `${sourceScene.id}/${portal.id} should initialize only its destination actors`,
+      );
+      const advancedDestinationActors = advanceAdventureActorStates(
+        targetScene.id,
+        targetScene.interactions,
+        destinationActors,
+        16,
+        { playerPosition: portal.spawn },
+      );
+      assert.deepEqual(
+        Object.keys(advancedDestinationActors).sort(),
+        expectedActorIds,
+        `${sourceScene.id}/${portal.id} should advance exactly its destination actors`,
+      );
+      for (const interactionId of expectedActorIds) {
+        const actor = advancedDestinationActors[interactionId];
+        assert.equal(actor.interactionId, interactionId);
+        assert.equal(Number.isFinite(actor.position.x), true);
+        assert.equal(Number.isFinite(actor.position.y), true);
+      }
+
       const entered = enterAdventureScene(initial, {
         sceneId: portal.targetScene,
         position: portal.spawn,
@@ -962,8 +1030,8 @@ test("all live portals use safe spawns and preserve their authored arrival facin
 
   assert.equal(
     portalCount,
-    57,
-    "the upstairs/downstairs pair, all nine Elverson location pairs, and every later-town entrance and exit should be covered",
+    63,
+    "the upstairs/downstairs pair, all Elverson building and Aquarium gallery pairs, and every later-town entrance and exit should be covered",
   );
 });
 

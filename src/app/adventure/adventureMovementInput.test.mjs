@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   ADVENTURE_CARDINAL_DIRECTIONS,
   ADVENTURE_CARDINAL_VECTORS,
+  ADVENTURE_MOVEMENT_AXES,
+  isAdventureMovementDirectionAllowed,
   resolveAdventureMovementInput,
 } from "./adventureMovementInput.mjs";
 
@@ -41,6 +43,24 @@ test("the most recently pressed direction wins competing and opposing ties", () 
     direction: "down",
     vector: { x: 0, y: 1 },
   });
+});
+
+test("horizontal scenes ignore vertical intent without cancelling a held horizontal direction", () => {
+  assert.deepEqual(ADVENTURE_MOVEMENT_AXES, ["free", "horizontal"]);
+  assert.equal(isAdventureMovementDirectionAllowed("left", "horizontal"), true);
+  assert.equal(isAdventureMovementDirectionAllowed("up", "horizontal"), false);
+  assert.deepEqual(
+    resolveAdventureMovementInput(["left", "up", "down"], { axis: "horizontal" }),
+    { direction: "left", vector: { x: -1, y: 0 } },
+  );
+  assert.deepEqual(
+    resolveAdventureMovementInput(["up", "right", "down", "left"], { axis: "horizontal" }),
+    { direction: "left", vector: { x: -1, y: 0 } },
+  );
+  assert.deepEqual(
+    resolveAdventureMovementInput(["up", "down"], { axis: "horizontal" }),
+    { direction: null, vector: { x: 0, y: 0 } },
+  );
 });
 
 test("keyboard Maps and touch Sets retain their input order", () => {
@@ -87,6 +107,14 @@ test("movement input rejects malformed collections and unknown directions", () =
   );
   assert.throws(
     () => resolveAdventureMovementInput(["up", "north"]),
+    /Unknown adventure movement direction: north/,
+  );
+  assert.throws(
+    () => resolveAdventureMovementInput(["left"], { axis: "diagonal" }),
+    /Unknown adventure movement axis: diagonal/,
+  );
+  assert.throws(
+    () => isAdventureMovementDirectionAllowed("north", "horizontal"),
     /Unknown adventure movement direction: north/,
   );
 });

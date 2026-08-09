@@ -3,6 +3,11 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { SCENES } from "./adventureWorld.mjs";
 import {
+  AQUARIUM_ECOSYSTEM_IDS,
+  ELVERSON_AQUARIUM_SPECIES,
+  ELVERSON_AQUARIUM_TANKS,
+} from "./adventureAquariumExhibits.mjs";
+import {
   ADVENTURE_CHARACTER_SPRITE_ASSETS,
   collectAdventureSceneAssetPaths,
   createAdventureSceneAssetPreloader,
@@ -36,6 +41,31 @@ test("scene asset collection includes ground, unique layered art, and unique cha
   ]);
   assert.equal(Object.isFrozen(paths), true);
   assert.equal(getAdventureCharacterSpriteAssetPath("unknown"), null);
+});
+
+test("Aquarium gallery scene assets include both scenic tanks and every applicable resident atlas", () => {
+  for (const ecosystemId of AQUARIUM_ECOSYSTEM_IDS) {
+    const tanks = ELVERSON_AQUARIUM_TANKS.filter((tank) => tank.ecosystemId === ecosystemId);
+    const scene = SCENES[`aquarium-${ecosystemId}-gallery`];
+    assert.equal(scene.aquariumGallery.ecosystemId, ecosystemId);
+    assert.deepEqual(
+      scene.aquariumGallery.tankSlots.map((slot) => slot.tankId),
+      tanks.map((tank) => tank.id),
+    );
+    const paths = collectAdventureSceneAssetPaths(scene);
+
+    for (const tank of tanks) {
+      assert.ok(paths.includes(tank.backgroundPath), `${tank.id} background must be preloaded`);
+    }
+    for (const atlasPath of new Set(
+      ELVERSON_AQUARIUM_SPECIES
+        .filter((species) => species.ecosystemId === ecosystemId)
+        .map((species) => species.sprite.path),
+    )) {
+      assert.ok(paths.includes(atlasPath), `${ecosystemId} resident atlas must be preloaded`);
+    }
+    assert.equal(paths.length, new Set(paths).size);
+  }
 });
 
 test("only interior doorway destinations are selected for background warming", () => {

@@ -1,69 +1,22 @@
-import {
-  ELVERSON_REEF_CATCHES,
-  getElversonFishingProgress,
-} from "./adventureFishing.mjs";
+import { normalizeAdventureSave } from "./adventureProgression.mjs";
+import { ELVERSON_REEF_CATCHES } from "./adventureFishing.mjs";
 
 export const ELVERSON_AQUARIUM_SCENE_ID = "academy-lab";
 export const ELVERSON_REEF_CREATURE_ATLAS_PATH = "/images/adventure/elverson-reef-creature-atlas-v1.webp";
 
+export const AQUARIUM_ECOSYSTEM_IDS = Object.freeze(["reef", "oceanic", "deep"]);
+export const AQUARIUM_TANK_KINDS = Object.freeze(["community", "apex"]);
+
 const ATLAS_COLUMNS = 5;
 const ATLAS_ROWS = 2;
+const HASH_RANGE = 0x100000000;
+const MIN_OCCUPANT_DEPTH = 0.14;
+const MAX_OCCUPANT_DEPTH = 0.86;
 
-const SPRITE_CELL_BY_ID = Object.freeze(Object.fromEntries(
-  ELVERSON_REEF_CATCHES.map((creature, index) => [
-    creature.id,
-    Object.freeze({
-      column: index % ATLAS_COLUMNS,
-      row: Math.floor(index / ATLAS_COLUMNS),
-    }),
-  ]),
-));
-
-function exhibit(definition) {
-  return Object.freeze({
-    ...definition,
-    bounds: Object.freeze({ ...definition.bounds }),
-    creatureIds: Object.freeze([...definition.creatureIds]),
-  });
-}
-
-/**
- * The workshop is the first aquarium room. These three care-first exhibits
- * intentionally group animals by the habitat features the player has learned
- * to provide, rather than presenting one undifferentiated collection tank.
- */
-export const ELVERSON_AQUARIUM_EXHIBITS = Object.freeze([
-  exhibit({
-    id: "reef-cleaning-station",
-    name: "Reef Cleaning Station",
-    ecosystem: "Shallow coral reef",
-    emptyMessage: "Awaiting a small reef fish",
-    bounds: { left: 35.4, top: 17.2, width: 21.5, height: 15.4 },
-    creatureIds: ["white-grunt", "cleaner-wrasse", "blue-tang", "spanish-hogfish"],
-  }),
-  exhibit({
-    id: "sheltered-coral-garden",
-    name: "Sheltered Coral Garden",
-    ecosystem: "Protected reef ledge",
-    emptyMessage: "Awaiting a shelter-seeking reef fish",
-    bounds: { left: 18.1, top: 48.4, width: 18.1, height: 24.2 },
-    creatureIds: ["clownfish", "fairy-parrotfish", "french-angelfish"],
-  }),
-  exhibit({
-    id: "rocky-invertebrate-nursery",
-    name: "Rocky Invertebrate Nursery",
-    ecosystem: "Reef rubble and tide pools",
-    emptyMessage: "Awaiting a small invertebrate",
-    bounds: { left: 56.2, top: 48.4, width: 18.8, height: 24.2 },
-    creatureIds: ["emerald-crab", "sea-urchin", "blue-crab"],
-  }),
-]);
-
-const EXHIBIT_BY_CREATURE_ID = Object.freeze(Object.fromEntries(
-  ELVERSON_AQUARIUM_EXHIBITS.flatMap((entry) => (
-    entry.creatureIds.map((creatureId) => [creatureId, entry.id])
-  )),
-));
+const TANK_CATEGORIES = Object.freeze({
+  community: Object.freeze(["fish", "invertebrate", "coral"]),
+  apex: Object.freeze(["predator", "apex", "filter-feeder"]),
+});
 
 function atlasPosition(cell) {
   return Object.freeze({
@@ -72,62 +25,519 @@ function atlasPosition(cell) {
   });
 }
 
-function aquariumOccupant(creature, exhibitIndex, occupantIndex) {
-  const cell = SPRITE_CELL_BY_ID[creature.id];
-  const lane = occupantIndex % 3;
-  const direction = (exhibitIndex + occupantIndex) % 2 === 0 ? 1 : -1;
+function authoredDisplaySize(value, speciesId) {
+  if (
+    !Number.isFinite(value?.referenceInches)
+    || value.referenceInches <= 0
+    || typeof value.measurement !== "string"
+    || value.measurement.length === 0
+    || !Number.isFinite(value.biologicalScale)
+    || value.biologicalScale <= 0
+  ) {
+    throw new Error(`Aquarium species ${speciesId} needs valid display-size metadata.`);
+  }
+  return Object.freeze({ ...value });
+}
+
+function aquariumSpecies(definition) {
+  const cell = Object.freeze({ ...definition.spriteCell });
+  const position = atlasPosition(cell);
+  const displaySize = authoredDisplaySize(definition.displaySize, definition.id);
   return Object.freeze({
-    id: creature.id,
-    cardId: creature.cardId,
-    quantity: creature.aquarium,
-    category: creature.category,
-    atlasCell: cell,
-    atlasPosition: atlasPosition(cell),
-    animation: Object.freeze({
-      lane,
-      direction,
-      delaySeconds: -((exhibitIndex * 1.7) + (occupantIndex * 1.15)),
-      durationSeconds: 8 + ((exhibitIndex + occupantIndex) % 4) * 1.35,
+    id: definition.id,
+    cardId: definition.cardId,
+    category: definition.category,
+    ecosystemId: definition.ecosystemId,
+    tankKind: definition.tankKind,
+    tankId: `${definition.ecosystemId}-${definition.tankKind}`,
+    aquariumItemId: definition.aquariumItemId,
+    requested: definition.requested !== false,
+    source: definition.source ?? "elverson-hand-net",
+    displaySize,
+    sprite: Object.freeze({
+      type: "atlas",
+      path: ELVERSON_REEF_CREATURE_ATLAS_PATH,
+      columns: ATLAS_COLUMNS,
+      rows: ATLAS_ROWS,
+      cell,
+      position,
     }),
   });
 }
 
 /**
- * Builds a render-safe, immutable view of the Aquarium from delivered
- * creatures. Held catches never appear until Mr. Easterling records them.
+ * Aquarium species are authored independently from card ownership. A card in
+ * a starter deck or booster pack is not a live resident; only the matching
+ * delivered story-item quantity can populate a tank.
+ *
+ * Future collection loops can append species from any ecosystem and choose a
+ * care-appropriate tank without changing the exhibit-model algorithm.
+ */
+export const ELVERSON_AQUARIUM_SPECIES = Object.freeze([
+  aquariumSpecies({
+    id: "white-grunt",
+    cardId: "white-grunt",
+    category: "fish",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-white-grunt",
+    displaySize: { referenceInches: 17, measurement: "length", biologicalScale: 0.88 },
+    spriteCell: { column: 0, row: 0 },
+  }),
+  aquariumSpecies({
+    id: "cleaner-wrasse",
+    cardId: "cleaner-wrasse",
+    category: "fish",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-cleaner-wrasse",
+    displaySize: { referenceInches: 2, measurement: "length", biologicalScale: 0.24 },
+    spriteCell: { column: 1, row: 0 },
+  }),
+  aquariumSpecies({
+    id: "clownfish",
+    cardId: "clownfish",
+    category: "fish",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-clownfish",
+    displaySize: { referenceInches: 4, measurement: "length", biologicalScale: 0.34 },
+    spriteCell: { column: 2, row: 0 },
+  }),
+  aquariumSpecies({
+    id: "emerald-crab",
+    cardId: "emerald-crab",
+    category: "invertebrate",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-emerald-crab",
+    displaySize: { referenceInches: 1.5, measurement: "carapace-width", biologicalScale: 0.22 },
+    spriteCell: { column: 3, row: 0 },
+  }),
+  aquariumSpecies({
+    id: "blue-tang",
+    cardId: "blue-tang",
+    category: "fish",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-blue-tang",
+    displaySize: { referenceInches: 15, measurement: "length", biologicalScale: 0.82 },
+    spriteCell: { column: 4, row: 0 },
+  }),
+  aquariumSpecies({
+    id: "sea-urchin",
+    cardId: "sea-urchin",
+    category: "invertebrate",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-sea-urchin",
+    displaySize: { referenceInches: 12, measurement: "spine-diameter", biologicalScale: 0.68 },
+    spriteCell: { column: 0, row: 1 },
+  }),
+  aquariumSpecies({
+    id: "fairy-parrotfish",
+    cardId: "fairy-parrotfish",
+    category: "fish",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-fairy-parrotfish",
+    displaySize: { referenceInches: 30, measurement: "length", biologicalScale: 1.35 },
+    spriteCell: { column: 1, row: 1 },
+  }),
+  aquariumSpecies({
+    id: "blue-crab",
+    cardId: "blue-crab",
+    category: "invertebrate",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-blue-crab",
+    displaySize: { referenceInches: 9, measurement: "carapace-width", biologicalScale: 0.58 },
+    spriteCell: { column: 2, row: 1 },
+  }),
+  aquariumSpecies({
+    id: "spanish-hogfish",
+    cardId: "spanish-hogfish",
+    category: "fish",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-spanish-hogfish",
+    displaySize: { referenceInches: 16, measurement: "length", biologicalScale: 0.86 },
+    spriteCell: { column: 3, row: 1 },
+  }),
+  aquariumSpecies({
+    id: "french-angelfish",
+    cardId: "french-angelfish",
+    category: "fish",
+    ecosystemId: "reef",
+    tankKind: "community",
+    aquariumItemId: "aquarium-french-angelfish",
+    displaySize: { referenceInches: 24, measurement: "length", biologicalScale: 1.1 },
+    spriteCell: { column: 4, row: 1 },
+  }),
+]);
+
+export const ELVERSON_AQUARIUM_SPECIES_BY_ID = Object.freeze(Object.fromEntries(
+  ELVERSON_AQUARIUM_SPECIES.map((species) => [species.id, species]),
+));
+
+// Keep the shipped catch table and the aquarium registry in lockstep. This is
+// intentionally a development-time invariant, not a card-catalog inference.
+const catchById = Object.fromEntries(ELVERSON_REEF_CATCHES.map((creature) => [creature.id, creature]));
+for (const creature of ELVERSON_REEF_CATCHES) {
+  const species = ELVERSON_AQUARIUM_SPECIES_BY_ID[creature.id];
+  if (
+    !species
+    || species.cardId !== creature.cardId
+    || species.category !== creature.category
+    || species.aquariumItemId !== creature.aquariumItemId
+  ) {
+    throw new Error(`Aquarium species registry is out of sync for ${creature.id}.`);
+  }
+}
+for (const species of ELVERSON_AQUARIUM_SPECIES) {
+  if (species.source === "elverson-hand-net" && !catchById[species.id]) {
+    throw new Error(`Aquarium species ${species.id} is missing from the Elverson catch table.`);
+  }
+}
+
+const ECOSYSTEM_BLUEPRINTS = Object.freeze([
+  Object.freeze({
+    id: "reef",
+    name: "Reef",
+    subtitle: "A sunlit city of coral, cleaners, grazers, and reef hunters.",
+    doorway: Object.freeze({ left: 6, top: 24, width: 26, height: 58 }),
+    tanks: Object.freeze({
+      community: Object.freeze({
+        name: "Reef Community",
+        subtitle: "Coral gardens, reef fish, and invertebrates",
+        emptyMessage: "Deliver a Reef fish or invertebrate to welcome the first resident.",
+      }),
+      apex: Object.freeze({
+        name: "Reef Giants",
+        subtitle: "Predators, apex hunters, and roaming filter feeders",
+        emptyMessage: "No large Reef residents have been delivered yet.",
+      }),
+    }),
+  }),
+  Object.freeze({
+    id: "oceanic",
+    name: "Oceanic",
+    subtitle: "Open blue water shaped by schools, currents, and long migrations.",
+    doorway: Object.freeze({ left: 37, top: 19, width: 26, height: 63 }),
+    tanks: Object.freeze({
+      community: Object.freeze({
+        name: "Oceanic Community",
+        subtitle: "Pelagic schools and drifting invertebrates",
+        emptyMessage: "No Oceanic community residents have been delivered yet.",
+      }),
+      apex: Object.freeze({
+        name: "Oceanic Giants",
+        subtitle: "Fast hunters, ocean wanderers, and great filter feeders",
+        emptyMessage: "No large Oceanic residents have been delivered yet.",
+      }),
+    }),
+  }),
+  Object.freeze({
+    id: "deep",
+    name: "Deep",
+    subtitle: "A twilight-to-abyss journey lit by living constellations.",
+    doorway: Object.freeze({ left: 68, top: 24, width: 26, height: 58 }),
+    tanks: Object.freeze({
+      community: Object.freeze({
+        name: "Deep Community",
+        subtitle: "Twilight fish, benthic invertebrates, and vent life",
+        emptyMessage: "No Deep community residents have been delivered yet.",
+      }),
+      apex: Object.freeze({
+        name: "Deep Giants",
+        subtitle: "Abyssal predators and immense deep-water animals",
+        emptyMessage: "No large Deep residents have been delivered yet.",
+      }),
+    }),
+  }),
+]);
+
+function aquariumTank(ecosystem, tankKind) {
+  const details = ecosystem.tanks[tankKind];
+  const id = `${ecosystem.id}-${tankKind}`;
+  const backgroundPath = `/images/adventure/aquarium-${id}-v1.webp`;
+  const creatureIds = ELVERSON_AQUARIUM_SPECIES
+    .filter((species) => species.ecosystemId === ecosystem.id && species.tankKind === tankKind)
+    .map((species) => species.id);
+  return Object.freeze({
+    id,
+    ecosystemId: ecosystem.id,
+    ecosystemName: ecosystem.name,
+    tankKind,
+    name: details.name,
+    subtitle: details.subtitle,
+    emptyMessage: details.emptyMessage,
+    backgroundPath,
+    acceptedCategories: TANK_CATEGORIES[tankKind],
+    creatureIds: Object.freeze(creatureIds),
+    spectatorView: Object.freeze({
+      id: `${id}-spectator`,
+      title: details.name,
+      subtitle: details.subtitle,
+      backgroundPath,
+      ariaLabel: `${ecosystem.name} ${tankKind === "apex" ? "large-animal" : "community"} aquarium tank`,
+    }),
+  });
+}
+
+export const ELVERSON_AQUARIUM_TANKS = Object.freeze(ECOSYSTEM_BLUEPRINTS.flatMap(
+  (ecosystem) => AQUARIUM_TANK_KINDS.map((tankKind) => aquariumTank(ecosystem, tankKind)),
+));
+
+const TANK_BY_ID = Object.freeze(Object.fromEntries(
+  ELVERSON_AQUARIUM_TANKS.map((tank) => [tank.id, tank]),
+));
+
+function aquariumExhibit(ecosystem) {
+  const tanks = AQUARIUM_TANK_KINDS.map((tankKind) => TANK_BY_ID[`${ecosystem.id}-${tankKind}`]);
+  const creatureIds = tanks.flatMap((tank) => tank.creatureIds);
+  return Object.freeze({
+    id: ecosystem.id,
+    ecosystemId: ecosystem.id,
+    ecosystem: ecosystem.name,
+    name: ecosystem.name,
+    subtitle: ecosystem.subtitle,
+    emptyMessage: ecosystem.tanks.community.emptyMessage,
+    doorway: ecosystem.doorway,
+    // `bounds` retains the old entrance-layout field name for callers that
+    // position exhibit entry points rather than reading `doorway` directly.
+    bounds: ecosystem.doorway,
+    tanks: Object.freeze(tanks),
+    creatureIds: Object.freeze(creatureIds),
+  });
+}
+
+/** The three grand-hall doorways, each leading to community and giant tanks. */
+export const ELVERSON_AQUARIUM_EXHIBITS = Object.freeze(
+  ECOSYSTEM_BLUEPRINTS.map(aquariumExhibit),
+);
+export const ELVERSON_AQUARIUM_ECOSYSTEMS = ELVERSON_AQUARIUM_EXHIBITS;
+
+const EXHIBIT_BY_CREATURE_ID = Object.freeze(Object.fromEntries(
+  ELVERSON_AQUARIUM_SPECIES.map((species) => [species.id, species.ecosystemId]),
+));
+const TANK_ID_BY_CREATURE_ID = Object.freeze(Object.fromEntries(
+  ELVERSON_AQUARIUM_SPECIES.map((species) => [species.id, species.tankId]),
+));
+
+function stableHash(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function stableUnit(key, salt) {
+  return stableHash(`${key}:${salt}`) / HASH_RANGE;
+}
+
+function round(value, places = 3) {
+  const factor = 10 ** places;
+  return Math.round(value * factor) / factor;
+}
+
+function aquariumOccupant(species, quantity, depth) {
+  const key = `${species.tankId}:${species.id}`;
+  const biologicalScale = species.displaySize.biologicalScale;
+  const depthScale = round(1.1 - depth * 0.64);
+  const scale = round(biologicalScale * depthScale);
+  const opacity = round(0.98 - depth * 0.2);
+  const brightness = round(1.04 - depth * 0.31);
+  const saturation = round(1.05 - depth * 0.48);
+  const hueRotate = round(depth * 13, 2);
+  const blur = round(depth * 0.7, 2);
+  const zIndex = 20 + Math.round((1 - depth) * 60);
+  const direction = stableUnit(key, "direction") < 0.5 ? -1 : 1;
+  const startX = round(8 + stableUnit(key, "start-x") * 84, 2);
+  const startY = round(14 + stableUnit(key, "start-y") * 68, 2);
+  const visual = Object.freeze({
+    biologicalScale,
+    depthScale,
+    scale,
+    opacity,
+    brightness,
+    saturation,
+    hueRotate,
+    blur,
+    zIndex,
+  });
+  const color = Object.freeze({
+    brightness,
+    saturation,
+    hueRotate,
+    cyanTint: round(0.05 + depth * 0.38),
+    opacity,
+  });
+  const animation = Object.freeze({
+    lane: Math.floor(stableUnit(key, "lane") * 3),
+    direction,
+    delaySeconds: -round(stableUnit(key, "delay") * 12, 2),
+    durationSeconds: round(9 + stableUnit(key, "duration") * 8 + depth * 3, 2),
+    startX,
+    startY,
+    verticalDriftPercent: round((stableUnit(key, "drift") - 0.5) * 8, 2),
+  });
+  return Object.freeze({
+    id: species.id,
+    speciesId: species.id,
+    cardId: species.cardId,
+    quantity,
+    category: species.category,
+    ecosystemId: species.ecosystemId,
+    tankId: species.tankId,
+    tankKind: species.tankKind,
+    displaySize: species.displaySize,
+    sprite: species.sprite,
+    // Flat atlas and visual fields preserve the existing renderer contract.
+    atlasCell: species.sprite.cell,
+    atlasPosition: species.sprite.position,
+    depth,
+    biologicalScale,
+    depthScale,
+    scale,
+    opacity,
+    brightness,
+    saturation,
+    hueRotate,
+    blur,
+    zIndex,
+    visual,
+    color,
+    animation,
+  });
+}
+
+function aquariumOccupants(deliveredResidents) {
+  if (deliveredResidents.length === 0) return Object.freeze([]);
+
+  const rankedSpeciesIds = deliveredResidents
+    .map(({ species }) => species.id)
+    .sort((leftId, rightId) => {
+      const leftRank = stableUnit(leftId, "aquarium-depth-rank");
+      const rightRank = stableUnit(rightId, "aquarium-depth-rank");
+      return leftRank - rightRank || leftId.localeCompare(rightId);
+    });
+  const depthBySpeciesId = new Map(rankedSpeciesIds.map((speciesId, index) => {
+    const unit = rankedSpeciesIds.length === 1
+      ? stableUnit(speciesId, "aquarium-solo-depth")
+      : index / (rankedSpeciesIds.length - 1);
+    return [speciesId, round(MIN_OCCUPANT_DEPTH + unit * (
+      MAX_OCCUPANT_DEPTH - MIN_OCCUPANT_DEPTH
+    ), 4)];
+  }));
+
+  return Object.freeze(deliveredResidents.map(({ species, quantity }) => aquariumOccupant(
+    species,
+    quantity,
+    depthBySpeciesId.get(species.id),
+  )));
+}
+
+function deliveredQuantity(storyItems, species) {
+  const quantity = storyItems[species.aquariumItemId];
+  return Number.isSafeInteger(quantity) && quantity > 0 ? quantity : 0;
+}
+
+function modeledTank(tank, occupants) {
+  const requestedSpeciesCount = tank.creatureIds.length;
+  const representedSpeciesCount = occupants.length;
+  return Object.freeze({
+    ...tank,
+    occupants: Object.freeze(occupants),
+    populated: representedSpeciesCount > 0,
+    representedSpeciesCount,
+    requestedSpeciesCount,
+    deliveredCreatureCount: occupants.reduce((total, occupant) => total + occupant.quantity, 0),
+    collectionActive: requestedSpeciesCount > 0,
+    complete: requestedSpeciesCount > 0 && representedSpeciesCount === requestedSpeciesCount,
+  });
+}
+
+/**
+ * Builds an immutable, render-safe view of the grand Aquarium from delivered
+ * specimens. Held catches and owned cards never appear in a tank.
  */
 export function getElversonAquariumExhibitModel(saveValue) {
-  const progress = getElversonFishingProgress(saveValue);
-  const creatureById = Object.fromEntries(
-    progress.creatures.map((creature) => [creature.id, creature]),
+  const save = normalizeAdventureSave(saveValue);
+  const deliveredResidentsByTankId = Object.fromEntries(
+    ELVERSON_AQUARIUM_TANKS.map((tank) => [tank.id, []]),
   );
-  const exhibits = ELVERSON_AQUARIUM_EXHIBITS.map((entry, exhibitIndex) => {
-    const occupants = entry.creatureIds
-      .map((creatureId) => creatureById[creatureId])
-      .filter((creature) => creature?.aquarium > 0)
-      .map((creature, occupantIndex) => aquariumOccupant(creature, exhibitIndex, occupantIndex));
+
+  for (const species of ELVERSON_AQUARIUM_SPECIES) {
+    const quantity = deliveredQuantity(save.inventory.storyItems, species);
+    if (quantity > 0) deliveredResidentsByTankId[species.tankId].push({ species, quantity });
+  }
+
+  const occupantsByTankId = Object.fromEntries(ELVERSON_AQUARIUM_TANKS.map((tank) => [
+    tank.id,
+    aquariumOccupants(deliveredResidentsByTankId[tank.id]),
+  ]));
+
+  const tanks = ELVERSON_AQUARIUM_TANKS.map((tank) => (
+    modeledTank(tank, occupantsByTankId[tank.id])
+  ));
+  const tankById = Object.fromEntries(tanks.map((tank) => [tank.id, tank]));
+  const exhibits = ELVERSON_AQUARIUM_EXHIBITS.map((exhibit) => {
+    const exhibitTanks = exhibit.tanks.map((tank) => tankById[tank.id]);
+    const occupants = exhibitTanks.flatMap((tank) => tank.occupants);
+    const requestedSpeciesCount = exhibitTanks.reduce(
+      (total, tank) => total + tank.requestedSpeciesCount,
+      0,
+    );
+    const representedSpeciesCount = occupants.length;
     return Object.freeze({
-      ...entry,
+      ...exhibit,
+      tanks: Object.freeze(exhibitTanks),
       occupants: Object.freeze(occupants),
-      populated: occupants.length > 0,
-      representedSpeciesCount: occupants.length,
+      populated: representedSpeciesCount > 0,
+      populatedTankCount: exhibitTanks.filter((tank) => tank.populated).length,
+      representedSpeciesCount,
+      requestedSpeciesCount,
       deliveredCreatureCount: occupants.reduce((total, occupant) => total + occupant.quantity, 0),
+      collectionActive: requestedSpeciesCount > 0,
+      complete: requestedSpeciesCount > 0 && representedSpeciesCount === requestedSpeciesCount,
     });
   });
-  const representedSpeciesCount = exhibits.reduce(
-    (total, entry) => total + entry.representedSpeciesCount,
+  const representedSpeciesCount = tanks.reduce(
+    (total, tank) => total + tank.representedSpeciesCount,
     0,
   );
+  const requestedSpeciesCount = ELVERSON_AQUARIUM_SPECIES.filter(
+    (species) => species.requested,
+  ).length;
+  const deliveredCreatureCount = tanks.reduce(
+    (total, tank) => total + tank.deliveredCreatureCount,
+    0,
+  );
+
   return Object.freeze({
     sceneId: ELVERSON_AQUARIUM_SCENE_ID,
     atlasPath: ELVERSON_REEF_CREATURE_ATLAS_PATH,
     exhibits: Object.freeze(exhibits),
+    ecosystems: Object.freeze(exhibits),
+    tanks: Object.freeze(tanks),
+    exhibitCount: exhibits.length,
+    tankCount: tanks.length,
+    populatedExhibitCount: exhibits.filter((exhibit) => exhibit.populated).length,
+    populatedTankCount: tanks.filter((tank) => tank.populated).length,
     representedSpeciesCount,
-    requestedSpeciesCount: ELVERSON_REEF_CATCHES.length,
-    complete: representedSpeciesCount === ELVERSON_REEF_CATCHES.length,
+    requestedSpeciesCount,
+    deliveredCreatureCount,
+    complete: requestedSpeciesCount > 0 && representedSpeciesCount === requestedSpeciesCount,
   });
 }
 
 export function getElversonAquariumExhibitIdForCreature(creatureId) {
   return EXHIBIT_BY_CREATURE_ID[creatureId] ?? null;
+}
+
+export function getElversonAquariumTankIdForCreature(creatureId) {
+  return TANK_ID_BY_CREATURE_ID[creatureId] ?? null;
 }
