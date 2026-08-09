@@ -4,6 +4,20 @@ import styles from "./adventure.module.css";
 
 const FALLBACK_ATLAS_COLUMNS = 5;
 const FALLBACK_ATLAS_ROWS = 2;
+const AQUARIUM_MOVEMENT_KINDS = new Set([
+  "school",
+  "coral-home",
+  "localized-benthic",
+  "anchored",
+  "cruiser",
+]);
+const SCHOOL_FORMATION = Object.freeze([
+  Object.freeze({ x: 0, y: 0, scale: 1 }),
+  Object.freeze({ x: -78, y: -48, scale: 0.92 }),
+  Object.freeze({ x: -86, y: 48, scale: 0.84 }),
+  Object.freeze({ x: -158, y: 5, scale: 0.78 }),
+  Object.freeze({ x: -162, y: -74, scale: 0.72 }),
+]);
 
 function finiteNumber(value, fallback) {
   const number = Number(value);
@@ -61,7 +75,42 @@ function residentCategoryClass(category) {
   return "";
 }
 
-function residentStyle(occupant, index, atlasPath) {
+function residentMovementProfile(occupant) {
+  const authored = occupant?.movementProfile ?? occupant?.movement ?? {};
+  const speciesId = String(occupant?.speciesId ?? occupant?.id ?? "");
+  const fallbackKind = occupant?.category === "coral" || speciesId.includes("urchin")
+    ? "anchored"
+    : occupant?.category === "invertebrate"
+      ? "localized-benthic"
+      : "cruiser";
+  const kind = AQUARIUM_MOVEMENT_KINDS.has(authored.kind) ? authored.kind : fallbackKind;
+  return { ...authored, kind };
+}
+
+function residentMovementClass(kind) {
+  if (kind === "school") return styles.aquariumGalleryMovementSchool;
+  if (kind === "coral-home") return styles.aquariumGalleryMovementCoralHome;
+  if (kind === "localized-benthic") return styles.aquariumGalleryMovementLocalizedBenthic;
+  if (kind === "anchored") return styles.aquariumGalleryMovementAnchored;
+  return styles.aquariumGalleryMovementCruiser;
+}
+
+function residentMemberCount(movementProfile) {
+  if (movementProfile?.kind !== "school") return 1;
+  return clamp(Math.round(finiteNumber(movementProfile.groupSize, 3)), 2, SCHOOL_FORMATION.length);
+}
+
+function residentMemberStyle(memberIndex, direction) {
+  const formation = SCHOOL_FORMATION[memberIndex] ?? SCHOOL_FORMATION[0];
+  return {
+    "--aquarium-gallery-member-x": `${formation.x * direction}%`,
+    "--aquarium-gallery-member-y": `${formation.y}%`,
+    "--aquarium-gallery-member-scale": formation.scale,
+    "--aquarium-gallery-member-float-delay": `${-(memberIndex * 0.53)}s`,
+  };
+}
+
+function residentStyle(occupant, index, atlasPath, movementProfile) {
   const animation = occupant?.animation ?? {};
   const visual = occupant?.visual ?? {};
   const sprite = occupant?.sprite ?? {};
@@ -90,13 +139,54 @@ function residentStyle(occupant, index, atlasPath) {
   const direction = finiteNumber(animation.direction, index % 2 === 0 ? 1 : -1) < 0 ? -1 : 1;
   const benthic = occupant?.category === "invertebrate";
   const coral = occupant?.category === "coral";
-  const staticX = clamp(finiteNumber(animation.startX, 12 + ((index * 23) % 76)), 6, 94);
+  const anchor = movementProfile?.anchor ?? {};
+  const roam = movementProfile?.roam ?? {};
+  const amplitude = movementProfile?.amplitude ?? {};
+  const authoredStaticX = finiteNumber(animation.startX, 12 + ((index * 23) % 76));
+  const staticX = clamp(finiteNumber(anchor.xPercent, authoredStaticX), 6, 94);
   const authoredY = finiteNumber(animation.startY, 24 + (lane * 18));
-  const staticY = coral
+  const categoryY = coral
     ? clamp(authoredY, 72, 91)
     : benthic
       ? clamp(81 + (lane * 2.2), 81, 90)
       : clamp(authoredY, 12, 88);
+  const staticY = clamp(finiteNumber(anchor.yPercent, categoryY), 8, 92);
+  const usesLocalEnvelope = movementProfile?.kind === "localized-benthic"
+    || movementProfile?.kind === "coral-home";
+  const localX = clamp(
+    finiteNumber(usesLocalEnvelope ? roam.xPercent : amplitude.xPercent, usesLocalEnvelope ? 4 : 2.5)
+      * (usesLocalEnvelope ? 0.5 : 1),
+    0,
+    movementProfile?.kind === "localized-benthic" ? 10 : 28,
+  );
+  const localY = clamp(
+    finiteNumber(usesLocalEnvelope ? roam.yPercent : amplitude.yPercent, usesLocalEnvelope ? 1.2 : 2)
+      * (usesLocalEnvelope ? 0.5 : 1),
+    0,
+    movementProfile?.kind === "localized-benthic" ? 4 : 10,
+  );
+  const weaveX = clamp(finiteNumber(amplitude.xPercent, 1.2), 0, 8);
+  const weaveY = clamp(finiteNumber(amplitude.yPercent, 0.8), 0, 6);
+  const speed = clamp(finiteNumber(movementProfile?.speed, 1), 0.05, 3);
+  const defaultDuration = movementProfile?.kind === "coral-home"
+    ? 7.2 + ((index % 3) * 0.8)
+    : movementProfile?.kind === "localized-benthic"
+      ? 22 + ((index % 3) * 3)
+      : finiteNumber(animation.durationSeconds, 18 + ((index % 5) * 2.7));
+  const duration = clamp(defaultDuration / speed, 3.8, 80);
+  const isOpenWaterMover = movementProfile?.kind === "school"
+    || movementProfile?.kind === "cruiser";
+  const schoolWeave = isOpenWaterMover
+    ? clamp(
+      finiteNumber(amplitude.yPercent, finiteNumber(animation.verticalDriftPercent, 1.2)),
+      0,
+      6,
+    )
+    : clamp(finiteNumber(animation.verticalDriftPercent, 1.2), -8, 8);
+  const localLeft = clamp(staticX - localX, 3, 97);
+  const localRight = clamp(staticX + localX, 3, 97);
+  const weaveLeft = clamp(staticX - weaveX, 3, 97);
+  const weaveRight = clamp(staticX + weaveX, 3, 97);
 
   return {
     "--aquarium-gallery-atlas": cssUrl(sprite.path ?? atlasPath),
@@ -108,18 +198,23 @@ function residentStyle(occupant, index, atlasPath) {
     "--aquarium-gallery-resident-start-x": `${direction > 0 ? -14 : 114}%`,
     "--aquarium-gallery-resident-end-x": `${direction > 0 ? 114 : -14}%`,
     "--aquarium-gallery-resident-y": `${staticY}%`,
+    "--aquarium-gallery-resident-local-left": `${localLeft}%`,
+    "--aquarium-gallery-resident-local-right": `${localRight}%`,
+    "--aquarium-gallery-resident-local-forward": `${direction > 0 ? localRight : localLeft}%`,
+    "--aquarium-gallery-resident-local-return": `${direction > 0 ? localLeft : localRight}%`,
+    "--aquarium-gallery-resident-local-top": `${clamp(staticY - localY, 5, 94)}%`,
+    "--aquarium-gallery-resident-local-bottom": `${clamp(staticY + localY, 5, 94)}%`,
+    "--aquarium-gallery-resident-weave-left": `${weaveLeft}%`,
+    "--aquarium-gallery-resident-weave-right": `${weaveRight}%`,
+    "--aquarium-gallery-resident-weave-forward": `${direction > 0 ? weaveRight : weaveLeft}%`,
+    "--aquarium-gallery-resident-weave-return": `${direction > 0 ? weaveLeft : weaveRight}%`,
+    "--aquarium-gallery-resident-weave-top": `${clamp(staticY - weaveY, 5, 94)}%`,
+    "--aquarium-gallery-resident-weave-bottom": `${clamp(staticY + weaveY, 5, 94)}%`,
     "--aquarium-gallery-resident-direction": direction,
+    "--aquarium-gallery-resident-reverse-direction": -direction,
     "--aquarium-gallery-resident-delay": `${finiteNumber(animation.delaySeconds, -(index * 1.7))}s`,
-    "--aquarium-gallery-resident-duration": `${clamp(
-      finiteNumber(animation.durationSeconds, 18 + ((index % 5) * 2.7)),
-      6,
-      80,
-    )}s`,
-    "--aquarium-gallery-resident-drift": `${clamp(
-      finiteNumber(animation.verticalDriftPercent, 1.2),
-      -8,
-      8,
-    )}%`,
+    "--aquarium-gallery-resident-duration": `${duration}s`,
+    "--aquarium-gallery-resident-drift": `${schoolWeave}%`,
     // Species size and distance are independent. A cleaner wrasse should stay
     // tiny even when it happens to swim in the foreground, while a large fish
     // should still shrink as it crosses a far-depth lane. Older occupant models
@@ -215,23 +310,48 @@ export default function AdventureAquariumGallery({
               style={{ backgroundImage: cssUrl(tank.backgroundPath) }}
             />
             <span className={styles.aquariumGalleryResidentStage}>
-              {occupants.map((occupant, index) => (
-                <span
-                  key={occupant.id ?? `${occupant.cardId ?? "resident"}-${index}`}
-                  className={[
-                    styles.aquariumGalleryResidentTrack,
-                    residentCategoryClass(occupant.category),
-                  ].filter(Boolean).join(" ")}
-                  style={residentStyle(occupant, index, aquariumModel?.atlasPath)}
-                  data-aquarium-species={occupant.speciesId ?? occupant.id}
-                  data-category={occupant.category}
-                  title={`${occupant.name ?? occupant.id ?? "Aquarium resident"}${
-                    finiteNumber(occupant.quantity, 1) > 1 ? ` x${occupant.quantity}` : ""
-                  }`}
-                >
-                  <span className={styles.aquariumGalleryResidentBody} />
-                </span>
-              ))}
+              {occupants.map((occupant, index) => {
+                const movementProfile = residentMovementProfile(occupant);
+                const direction = finiteNumber(
+                  occupant?.animation?.direction,
+                  index % 2 === 0 ? 1 : -1,
+                ) < 0 ? -1 : 1;
+                const memberCount = residentMemberCount(movementProfile);
+                return (
+                  <span
+                    key={occupant.id ?? `${occupant.cardId ?? "resident"}-${index}`}
+                    className={[
+                      styles.aquariumGalleryResidentTrack,
+                      residentCategoryClass(occupant.category),
+                      residentMovementClass(movementProfile.kind),
+                    ].filter(Boolean).join(" ")}
+                    style={residentStyle(
+                      occupant,
+                      index,
+                      aquariumModel?.atlasPath,
+                      movementProfile,
+                    )}
+                    data-aquarium-species={occupant.speciesId ?? occupant.id}
+                    data-category={occupant.category}
+                    data-movement-profile={movementProfile.kind}
+                    title={`${occupant.name ?? occupant.id ?? "Aquarium resident"}${
+                      finiteNumber(occupant.quantity, 1) > 1 ? ` x${occupant.quantity}` : ""
+                    }`}
+                  >
+                    {Array.from({ length: memberCount }, (_, memberIndex) => (
+                      <span
+                        key={memberIndex}
+                        className={[
+                          styles.aquariumGalleryResidentBody,
+                          memberCount > 1 ? styles.aquariumGallerySchoolMember : "",
+                        ].filter(Boolean).join(" ")}
+                        style={residentMemberStyle(memberIndex, direction)}
+                        data-school-member={memberCount > 1 ? memberIndex + 1 : undefined}
+                      />
+                    ))}
+                  </span>
+                );
+              })}
             </span>
           </section>
         );

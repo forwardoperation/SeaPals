@@ -181,6 +181,11 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
   assert.match(gallery, /legacyCombinedScale/);
   assert.match(gallery, /--aquarium-gallery-resident-biological-scale/);
   assert.match(gallery, /--aquarium-gallery-resident-depth-scale/);
+  assert.match(gallery, /occupant\?\.movementProfile \?\? occupant\?\.movement/);
+  assert.match(gallery, /data-movement-profile=\{movementProfile\.kind\}/);
+  assert.match(gallery, /movementProfile\?\.kind !== "school"/);
+  assert.match(gallery, /Array\.from\(\{ length: memberCount \}/);
+  assert.match(gallery, /data-school-member=\{memberCount > 1/);
   assert.match(gallery, /styles\.aquariumGalleryResidentBenthic/);
   assert.match(gallery, /aria-hidden="true"/);
   assert.match(gallery, /className=\{styles\.srOnly\}/);
@@ -197,7 +202,23 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
   assert.match(styles, /\.aquariumGalleryScenery/);
   assert.match(styles, /\.aquariumGalleryTankWindow/);
   assert.match(styles, /@keyframes aquariumGalleryResidentSwim/);
-  assert.match(styles, /@keyframes aquariumGalleryResidentCrawl/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentCoralHome/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentLocalizedCrawl/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentCoralTurn[\s\S]*?--aquarium-gallery-resident-reverse-direction/);
+  assert.match(styles, /@keyframes aquariumGalleryResidentBenthicTurn[\s\S]*?--aquarium-gallery-resident-reverse-direction/);
+  assert.match(styles, /\.aquariumGalleryMovementSchool[\s\S]*?animation-name:\s*aquariumGalleryResidentSwim/);
+  assert.match(styles, /\.aquariumGalleryMovementCoralHome[\s\S]*?animation-name:\s*aquariumGalleryResidentCoralHome/);
+  assert.match(styles, /\.aquariumGalleryMovementLocalizedBenthic[\s\S]*?animation-name:\s*aquariumGalleryResidentLocalizedCrawl/);
+  assert.match(styles, /\.aquariumGalleryMovementAnchored[\s\S]*?animation:\s*none/);
+  for (const movementClass of [
+    "aquariumGalleryMovementCoralHome",
+    "aquariumGalleryMovementLocalizedBenthic",
+    "aquariumGalleryMovementAnchored",
+  ]) {
+    const rule = styles.match(new RegExp(`\\.${movementClass}\\s*\\{([^}]*)\\}`))?.[1];
+    assert.ok(rule, `${movementClass} should have an explicit motion rule`);
+    assert.doesNotMatch(rule, /aquariumGalleryResidentSwim|resident-start-x|resident-end-x/);
+  }
   assert.match(
     styles,
     /\.aquariumGalleryResidentBody[\s\S]*?background-size:[\s\S]*?var\(--aquarium-gallery-atlas-width[\s\S]*?var\(--aquarium-gallery-atlas-height/,
@@ -207,6 +228,8 @@ test("delivered creatures populate six scenic tanks directly inside the scrollin
     /\.aquariumGalleryResidentBody[\s\S]*?scale\(var\(--aquarium-gallery-resident-biological-scale[\s\S]*?scale\(var\(--aquarium-gallery-resident-depth-scale/,
   );
   assert.match(styles, /\.aquariumGalleryResidentTrack[\s\S]*?width:\s*var\(--resident-size, 6%\)/);
+  assert.match(styles, /--aquarium-gallery-member-x/);
+  assert.match(styles, /--aquarium-gallery-member-scale/);
   assert.doesNotMatch(
     styles,
     /aquariumGalleryResident(?:Track|Predator|Benthic|Coral)?[^}]*width:\s*var\(--resident-size,\s*clamp\(/,
