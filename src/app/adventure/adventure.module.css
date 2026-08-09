@@ -8682,7 +8682,6 @@
     max(18px, env(safe-area-inset-bottom))
     max(18px, env(safe-area-inset-left));
   background: rgba(3, 27, 46, 0.88);
-  backdrop-filter: blur(8px);
 }
 
 .handNetCard {
@@ -9120,7 +9119,6 @@
   background:
     radial-gradient(circle at 50% 35%, rgba(27, 102, 111, 0.28), transparent 52%),
     rgba(1, 17, 25, 0.92);
-  backdrop-filter: blur(4px);
 }
 
 .handNetCard {
@@ -9159,6 +9157,7 @@
     inset 0 0 0 2px rgba(244, 201, 117, 0.32),
     inset 0 0 70px rgba(3, 35, 42, 0.22);
   isolation: isolate;
+  contain: layout paint;
   touch-action: none;
   user-select: none;
 }
@@ -10205,72 +10204,12 @@
   inset: -8%;
   display: block;
   pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse 18% 13% at var(--hand-net-player-x) var(--hand-net-player-y),
-      rgba(237, 255, 224, 0.4),
-      rgba(137, 228, 214, 0.13) 38%,
-      transparent 72%
-    ),
-    repeating-radial-gradient(
-      ellipse at 16% 27%,
-      transparent 0 16px,
-      rgba(242, 255, 220, 0.29) 17px 20px,
-      rgba(29, 119, 126, 0.1) 21px 24px,
-      transparent 25px 47px
-    ),
-    repeating-radial-gradient(
-      ellipse at 78% 62%,
-      transparent 0 21px,
-      rgba(212, 255, 225, 0.24) 22px 25px,
-      transparent 26px 56px
-    );
-  background-size: 100% 100%, 212px 146px, 286px 194px;
-  mix-blend-mode: screen;
-  opacity: 0.68;
-  transform: translate3d(-1.4%, -0.8%, 0) scale(1.03);
-  will-change: transform, background-position, opacity;
-  animation: handNetSurfaceVeilDrift 7.8s ease-in-out infinite alternate;
-}
-
-.handNetSurfaceVeil::before,
-.handNetSurfaceVeil::after {
-  position: absolute;
-  inset: -7%;
-  content: "";
-  pointer-events: none;
-}
-
-.handNetSurfaceVeil::before {
-  background:
-    repeating-conic-gradient(
-      from 22deg at 34% 43%,
-      transparent 0 7deg,
-      rgba(235, 255, 220, 0.22) 8deg 10deg,
-      transparent 11deg 23deg
-    );
-  background-size: 158px 126px;
-  mix-blend-mode: screen;
-  opacity: 0.72;
-  animation: handNetSurfaceVeilCrosscurrent 6.4s ease-in-out infinite alternate;
-}
-
-.handNetSurfaceVeil::after {
-  background:
-    repeating-linear-gradient(
-      112deg,
-      transparent 0 28px,
-      rgba(5, 66, 78, 0.14) 31px 36px,
-      transparent 39px 68px
-    );
-  mix-blend-mode: multiply;
-  opacity: 0.54;
-  animation: handNetSurfaceVeilCrosscurrent 9.2s ease-in-out infinite alternate-reverse;
+  background: linear-gradient(180deg, rgba(225, 255, 238, 0.12), rgba(23, 112, 124, 0.08));
+  opacity: 0.32;
 }
 
 .handNetShallowsMoving .handNetSurfaceVeil {
-  opacity: 0.76;
-  animation-duration: 6.2s;
+  opacity: 0.36;
 }
 
 .handNetPlayer {
@@ -10373,22 +10312,6 @@
   background: #155e75;
 }
 
-@keyframes handNetSurfaceVeilDrift {
-  from {
-    background-position: 0 0, -18px -9px, 21px 12px;
-    transform: translate3d(-1.4%, -0.8%, 0) scale(1.03) rotate(-0.25deg);
-  }
-  to {
-    background-position: 0 0, 24px 17px, -28px -16px;
-    transform: translate3d(1.5%, 1%, 0) scale(1.06) rotate(0.35deg);
-  }
-}
-
-@keyframes handNetSurfaceVeilCrosscurrent {
-  from { transform: translate3d(-2.2%, 1%, 0) rotate(-1.6deg) scale(1.04); }
-  to { transform: translate3d(2%, -1.4%, 0) rotate(2deg) scale(1.09); }
-}
-
 @media (max-width: 720px) {
   .handNetCard {
     width: min(100%, calc((100dvh - 185px) * 1.5));
@@ -10445,8 +10368,6 @@
 }
 
 .reducedMotionMode .handNetSurfaceVeil,
-.reducedMotionMode .handNetSurfaceVeil::before,
-.reducedMotionMode .handNetSurfaceVeil::after,
 .reducedMotionMode .handNetPlayer {
   animation: none !important;
   transition: none !important;
@@ -10459,8 +10380,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .handNetSurfaceVeil,
-  .handNetSurfaceVeil::before,
-  .handNetSurfaceVeil::after,
   .handNetPlayer {
     animation: none !important;
     transition: none !important;

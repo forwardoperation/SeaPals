@@ -178,7 +178,7 @@ test("Elverson's town manifest covers its ground, layered objects, and resident 
       "dorian",
     ],
   });
-  assert.equal(paths[0], "/images/adventure/elverson-ground-v4.webp");
+  assert.equal(paths[0], "/images/adventure/elverson-ground-v5.webp");
   assert.equal(SCENES.town.layeredObjects.length, 9);
   for (const { sprite } of SCENES.town.layeredObjects) {
     assert.ok(paths.includes(sprite.src), `${sprite.src} must be preloaded`);

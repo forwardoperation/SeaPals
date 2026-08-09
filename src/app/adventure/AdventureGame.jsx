@@ -354,7 +354,7 @@ const ELVERSON_RIVAL_AQUARIUM_INTERACTION = Object.freeze({
 const ELVERSON_FISHING_TUTORIAL_SESSION = Object.freeze({
   tutorial: true,
   required: true,
-  spotId: "fishing-platform-west",
+  spotId: "west-cove-shallows",
 });
 const SHELLSHORE_TUTORIAL = resolveAdventureTutorial("tutorial-shellshore-live-basics");
 const SHELLSHORE_FIELD_NOTE = SHELLSHORE_TUTORIAL.fieldNote;
@@ -7195,7 +7195,7 @@ export default function AdventureGame({
                 : !fishingProgress.hasHandNet || !fishingProgress.tutorialStarted
                   ? {
                       title: "Find Fisherman Wyeth",
-                      description: "Mr. Easterling asked you to learn how to collect responsibly. Find Wyeth on the south platform beside the pier.",
+                      description: "Mr. Easterling asked you to learn how to collect responsibly. Find Wyeth on the sand beside the west-cove stairs.",
                       value: 0,
                       total: 1,
                       label: "First catching lesson waiting",

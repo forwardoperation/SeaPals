@@ -142,6 +142,20 @@ test("terrain owns shoreline navigation instead of water-shaped prop rectangles"
   assert.equal(canOccupyLayeredScenePosition(scene, { x: 0.6, y: 1 }, 0.22), false);
 });
 
+test("walkable-region unions tighten coarse terrain around authored shore and deck edges", () => {
+  const scene = makeScene({
+    walkableRegions: [
+      { id: "west-deck", left: 2, top: 2, right: 4.2, bottom: 6 },
+      { id: "east-deck", left: 4, top: 3, right: 7, bottom: 6 },
+    ],
+  });
+
+  assert.equal(canOccupyLayeredScenePosition(scene, { x: 3, y: 4 }, 0.22), true);
+  assert.equal(canOccupyLayeredScenePosition(scene, { x: 4.1, y: 5 }, 0.22), true);
+  assert.equal(canOccupyLayeredScenePosition(scene, { x: 1.5, y: 4 }, 0.22), false);
+  assert.equal(canOccupyLayeredScenePosition(scene, { x: 6, y: 2.6 }, 0.22), false);
+});
+
 test("live actor circles participate without becoming authored scene objects", () => {
   const scene = makeScene();
   const options = {

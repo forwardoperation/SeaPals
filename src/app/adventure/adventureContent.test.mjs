@@ -1178,20 +1178,21 @@ test("Elverson's public interiors, aquarium galleries, and upstairs bedroom defi
   );
 });
 
-test("Elverson v4 layers its portal buildings while streets and waterfront routes stay clear", () => {
+test("Elverson v5 layers its portal buildings while streets, the west cove, and waterfront routes stay clear", () => {
   const town = getRuntimeAdventureScenes().find((scene) => scene.id === "town");
   assert.equal(town.world.tiles.length, 28);
   assert.ok(town.world.tiles.every((row) => row.length === 42));
-  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v4.webp");
+  assert.equal(town.world.artPath, "/images/adventure/elverson-ground-v5.webp");
   assert.deepEqual(
     town.world.walkableRegions.map(({ id }) => id),
     [
       "mainland",
+      "west-cove-stairs",
+      "west-cove-sand",
+      "west-cove-shallows",
       "central-pier",
       "wharf-platform",
-      "wharf-connector",
-      "aquarium-connector",
-      "aquarium-platform",
+      "aquarium-front-apron",
     ],
   );
 
@@ -1229,10 +1230,12 @@ test("Elverson v4 layers its portal buildings while streets and waterfront route
     && position.y <= region.bottom
   ));
   assert.equal(regionContains({ x: 20.5, y: 24 }), true, "central pier stays walkable");
-  assert.equal(regionContains({ x: 15.2, y: 21 }), true, "fishing platform stays walkable");
-  assert.equal(regionContains({ x: 25, y: 22 }), true, "aquarium platform stays walkable");
+  assert.equal(regionContains({ x: 15.2, y: 21 }), true, "wharf platform stays walkable");
+  assert.equal(regionContains({ x: 8.35, y: 18.2 }), true, "west-cove sand stays walkable");
+  assert.equal(regionContains({ x: 9.4, y: 19.35 }), true, "west-cove shallows stay walkable");
+  assert.equal(regionContains({ x: 25, y: 23 }), true, "aquarium apron stays walkable");
   assert.equal(regionContains({ x: 10, y: 21 }), false, "open water is outside the allowlist");
-  assert.equal(regionContains({ x: 20.5, y: 27.4 }), false, "water past the pier is outside the allowlist");
+  assert.equal(regionContains({ x: 20.5, y: 26.4 }), false, "water past the pier is outside the allowlist");
 
   const colliderContains = (position) => town.world.collisionRects.some((rect) => (
     position.x >= rect.left

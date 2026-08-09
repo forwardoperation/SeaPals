@@ -6,9 +6,12 @@ import {
   getAdventureActorBlockers,
 } from "./adventureActors.mjs";
 import {
+  ELVERSON_TOWN_AQUARIUM_APRON,
+  ELVERSON_TOWN_PIER_END_Y,
   ELVERSON_TOWN_PORTALS,
   ELVERSON_TOWN_ROADS,
   ELVERSON_TOWN_SAFE_POSITIONS,
+  ELVERSON_TOWN_WEST_COVE,
   ELVERSON_WYETH_HAND_NET_PATH,
 } from "./adventureElversonTownLayout.mjs";
 import {
@@ -87,6 +90,13 @@ function canReachPortal(reachable, portalId) {
   )));
 }
 
+function pointInsideBounds(point, bounds) {
+  return point.x >= bounds.left
+    && point.x <= bounds.right
+    && point.y >= bounds.top
+    && point.y <= bounds.bottom;
+}
+
 test("two full-width lanes remain clear on every named Elverson road", () => {
   for (const road of Object.values(ELVERSON_TOWN_ROADS)) {
     const margin = 0.35;
@@ -106,7 +116,19 @@ test("two full-width lanes remain clear on every named Elverson road", () => {
   }
 });
 
-test("Wyeth's predetermined hand-net escort path stays entirely on the wharf", () => {
+test("Wyeth's hand-net escort stays entirely on the walkable west cove", () => {
+  assert.equal(pointInsideBounds(ELVERSON_TOWN_WEST_COVE.wyeth, ELVERSON_TOWN_WEST_COVE.sand), true);
+  assert.equal(
+    pointInsideBounds(ELVERSON_TOWN_WEST_COVE.wyeth, ELVERSON_TOWN_WEST_COVE.shallows),
+    false,
+    "Wyeth should wait on dry sand",
+  );
+  assert.equal(
+    pointInsideBounds(ELVERSON_TOWN_SAFE_POSITIONS.handNetCove, ELVERSON_TOWN_WEST_COVE.shallows),
+    true,
+    "the follower destination should put the player's feet in the shallows",
+  );
+
   for (const path of Object.values(ELVERSON_WYETH_HAND_NET_PATH)) {
     for (let index = 0; index < path.length - 1; index += 1) {
       const start = path[index];
@@ -126,6 +148,33 @@ test("Wyeth's predetermined hand-net escort path stays entirely on the wharf", (
         );
       }
     }
+  }
+});
+
+test("the west-cove stairs connect the promenade, sand, and wading spot around Wyeth", () => {
+  const dynamicBlockers = getAdventureActorBlockers(
+    createAdventureActorStates(SCENES.town.interactions),
+  );
+  const promenade = { x: 9.5, y: 16.45 };
+  const stairLane = { x: 9.5, y: ELVERSON_TOWN_SAFE_POSITIONS.handNetCove.y };
+  const route = [promenade, stairLane, ELVERSON_TOWN_SAFE_POSITIONS.handNetCove];
+
+  walkAxisRoute(route, { dynamicBlockers });
+  walkAxisRoute([...route].reverse(), { dynamicBlockers });
+
+  for (const [label, position] of [
+    ["stairs", { x: 9.5, y: 17.2 }],
+    ["sand", { x: 9.5, y: 18.2 }],
+    ["shallows", ELVERSON_TOWN_SAFE_POSITIONS.handNetCove],
+  ]) {
+    assert.equal(
+      canOccupyContinuousPosition("town", position, undefined, {
+        dynamicBlockers,
+        ignoreActorTiles: true,
+      }),
+      true,
+      `${label} must remain walkable with Wyeth present`,
+    );
   }
 });
 
@@ -203,7 +252,7 @@ test("the aquarium's visible door remains reachable from the public pier", () =>
   );
 });
 
-test("the wharf and aquarium platforms connect to town without opening the surrounding sea", () => {
+test("the west cove, pier, and aquarium apron stay bounded by the surrounding sea", () => {
   walkAxisRoute([
     ELVERSON_TOWN_SAFE_POSITIONS.townStart,
     { x: 20, y: 17 },
@@ -217,15 +266,23 @@ test("the wharf and aquarium platforms connect to town without opening the surro
   ]);
 
   for (const [label, position] of [
+    ["west-cove stairs", { x: 9.5, y: 17.2 }],
+    ["west-cove sand", { x: 9.5, y: 18.2 }],
+    ["west-cove shallows", ELVERSON_TOWN_SAFE_POSITIONS.handNetCove],
     ["expanded wharf", { x: 12, y: 20 }],
     ["expanded aquarium apron", { x: 29, y: 23.72 }],
+    ["aquarium apron west edge", { x: ELVERSON_TOWN_AQUARIUM_APRON.left + 2.85, y: 23.72 }],
+    ["aquarium apron east edge", { x: ELVERSON_TOWN_AQUARIUM_APRON.right - 0.5, y: 23.72 }],
+    ["authored pier end", ELVERSON_TOWN_SAFE_POSITIONS.pierEnd],
   ]) assert.equal(canOccupyContinuousPosition("town", position), true, `${label} must be walkable`);
 
   for (const [label, position] of [
     ["west open water", { x: 8, y: 22 }],
     ["southwest open water", { x: 10, y: 23 }],
     ["east open water", { x: 32, y: 22 }],
-    ["beyond the pier", { x: 20, y: 27.4 }],
+    ["west of the aquarium apron", { x: 24.5, y: 20 }],
+    ["east of the aquarium apron", { x: 30.7, y: 20 }],
+    ["just beyond the pier", { x: 20.5, y: ELVERSON_TOWN_PIER_END_Y - 0.15 }],
   ]) assert.equal(canOccupyContinuousPosition("town", position), false, `${label} must stay solid`);
 });
 

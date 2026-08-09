@@ -1,7 +1,10 @@
 import { compileLayeredScene } from "./adventureLayeredScene.mjs";
 import {
+  ELVERSON_TOWN_AQUARIUM_APRON,
   ELVERSON_TOWN_DIMENSIONS,
+  ELVERSON_TOWN_PIER_END_Y,
   ELVERSON_TOWN_PORTALS,
+  ELVERSON_TOWN_WEST_COVE,
 } from "./adventureElversonTownLayout.mjs";
 
 const OBJECT_ROOT = "/images/adventure/elverson-objects-v2";
@@ -42,10 +45,11 @@ function terrainRow(...walkableSpans) {
 
 const TERRAIN_ROWS = Object.freeze([
   ...Array.from({ length: 18 }, () => "g".repeat(ELVERSON_TOWN_DIMENSIONS.width)),
-  terrainRow([11, 31]),
-  ...Array.from({ length: 4 }, () => terrainRow([11, 31])),
+  ...Array.from({ length: 3 }, () => terrainRow([7, 31])),
+  ...Array.from({ length: 2 }, () => terrainRow([11, 31])),
   ...Array.from({ length: 2 }, () => terrainRow([19, 31])),
-  ...Array.from({ length: 3 }, () => terrainRow([19, 22])),
+  ...Array.from({ length: 2 }, () => terrainRow([19, 22])),
+  terrainRow(),
 ]);
 
 const ARCHETYPES = {
@@ -70,10 +74,10 @@ const OBJECTS = ELVERSON_TOWN_PORTALS.map((portal) => ({
 }));
 
 export const ELVERSON_LAYERED_SCENE = compileLayeredScene({
-  id: "elverson-town-layered-v4",
+  id: "elverson-town-layered-v5",
   width: ELVERSON_TOWN_DIMENSIONS.width,
   height: ELVERSON_TOWN_DIMENSIONS.height,
-  groundPath: "/images/adventure/elverson-ground-v4.webp",
+  groundPath: "/images/adventure/elverson-ground-v5.webp",
   terrainRows: TERRAIN_ROWS,
   terrainLegend: {
     g: { walkable: true },
@@ -81,11 +85,12 @@ export const ELVERSON_LAYERED_SCENE = compileLayeredScene({
   },
   walkableRegions: [
     { id: "mainland", left: -0.5, top: -0.5, right: 41.5, bottom: 16.85 },
-    { id: "central-pier", left: 19.05, top: 16.25, right: 21.95, bottom: 27.25 },
+    { id: "west-cove-stairs", ...ELVERSON_TOWN_WEST_COVE.stairs },
+    { id: "west-cove-sand", ...ELVERSON_TOWN_WEST_COVE.sand },
+    { id: "west-cove-shallows", ...ELVERSON_TOWN_WEST_COVE.shallows },
+    { id: "central-pier", left: 19.05, top: 16.25, right: 21.95, bottom: ELVERSON_TOWN_PIER_END_Y },
     { id: "wharf-platform", left: 10.9, top: 17.35, right: 19.35, bottom: 22.55 },
-    { id: "wharf-connector", left: 18.9, top: 17.35, right: 19.35, bottom: 22.55 },
-    { id: "aquarium-connector", left: 21.65, top: 17.35, right: 24.65, bottom: 24.1 },
-    { id: "aquarium-platform", left: 24.05, top: 17.35, right: 31.2, bottom: 24.1 },
+    { id: "aquarium-front-apron", ...ELVERSON_TOWN_AQUARIUM_APRON },
   ],
   archetypes: ARCHETYPES,
   objects: OBJECTS,

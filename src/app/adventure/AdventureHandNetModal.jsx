@@ -10,6 +10,7 @@ import {
   HAND_NET_ACTIONS,
   HAND_NET_PHASES,
   applyHandNetAction,
+  consumeHandNetFrameElapsed,
   createHandNetState,
   tickHandNetState,
 } from "./adventureHandNet.mjs";
@@ -25,13 +26,9 @@ const MOVE_KEYS = Object.freeze({
   ArrowLeft: [-1, 0],
   ArrowRight: [1, 0],
   w: [0, -1],
-  W: [0, -1],
   s: [0, 1],
-  S: [0, 1],
   a: [-1, 0],
-  A: [-1, 0],
   d: [1, 0],
-  D: [1, 0],
 });
 
 const HAND_NET_DIRECTION_VECTORS = Object.freeze({
@@ -80,6 +77,10 @@ function movementIntent(keys) {
     x: Math.max(-1, Math.min(1, x)),
     y: Math.max(-1, Math.min(1, y)),
   };
+}
+
+function normalizedMovementKey(key) {
+  return typeof key === "string" && key.length === 1 ? key.toLowerCase() : key;
 }
 
 function isometricSpriteRow(vector) {
@@ -150,6 +151,8 @@ function HandNetDirectionButton({ direction, onStart, onStop }) {
       }}
       onKeyDown={(event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        if (event.repeat) return;
         suppressClickRef.current = true;
         onStart(x, y);
       }}
@@ -347,10 +350,15 @@ export default function AdventureHandNetModal({
     if (!pageVisible || state.phase !== HAND_NET_PHASES.PLAYING) return undefined;
     let animationFrame = 0;
     let lastTimestamp = null;
+    let simulationAccumulatorMs = 0;
     const advance = (timestamp) => {
       if (lastTimestamp !== null) {
         const elapsed = Math.min(100, Math.max(0, timestamp - lastTimestamp));
-        setState((current) => tickHandNetState(current, elapsed));
+        const frame = consumeHandNetFrameElapsed(simulationAccumulatorMs, elapsed);
+        simulationAccumulatorMs = frame.remainderMs;
+        if (frame.simulationElapsedMs > 0) {
+          setState((current) => tickHandNetState(current, frame.simulationElapsedMs));
+        }
       }
       lastTimestamp = timestamp;
       animationFrame = window.requestAnimationFrame(advance);
@@ -373,8 +381,9 @@ export default function AdventureHandNetModal({
 
   useEffect(() => {
     const releaseMovementKey = (event) => {
-      if (!MOVE_KEYS[event.key]) return;
-      pressedKeysRef.current.delete(event.key);
+      const movementKey = normalizedMovementKey(event.key);
+      if (!MOVE_KEYS[movementKey]) return;
+      pressedKeysRef.current.delete(movementKey);
       const intent = movementIntent(pressedKeysRef.current);
       setState((current) => applyHandNetAction(current, {
         type: Math.abs(intent.x) + Math.abs(intent.y) > 0 ? HAND_NET_ACTIONS.MOVE : HAND_NET_ACTIONS.STOP,
@@ -409,24 +418,43 @@ export default function AdventureHandNetModal({
 
   function handleKeyDown(event) {
     const target = event.target;
-    const nativeInteractive = target instanceof Element
-      && target.closest("button, a, input, select, textarea");
-    if (nativeInteractive && event.key !== "Escape") return;
-    if (MOVE_KEYS[event.key]) {
+    const nativeTextEntry = target instanceof Element
+      && target.closest("input, select, textarea, [contenteditable='true']");
+    const movementKey = normalizedMovementKey(event.key);
+    if (MOVE_KEYS[movementKey] && !nativeTextEntry) {
       event.preventDefault();
-      pressedKeysRef.current.add(event.key);
+      event.stopPropagation();
+      if (terminal || event.repeat || pressedKeysRef.current.has(movementKey)) return;
+      pressedKeysRef.current.add(movementKey);
       const intent = movementIntent(pressedKeysRef.current);
       beginMove(intent.x, intent.y);
       return;
     }
-    if ((event.key === "Enter" || event.key === " ") && !terminal) {
+    const nativeInteractive = target instanceof Element
+      && target.closest("button, a, input, select, textarea, [contenteditable='true']");
+    const actionKey = event.key === "Enter" || event.key === " ";
+    if (nativeInteractive && event.key !== "Escape") {
+      if (actionKey && event.repeat) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
+    if (actionKey && !terminal) {
       event.preventDefault();
+      event.stopPropagation();
+      if (event.repeat) return;
       scoop();
       return;
     }
     if (event.key !== "Escape") return;
     event.preventDefault();
-    if (required && !catchResult) return;
+    event.stopPropagation();
+    if (required && !catchResult) {
+      stopMoving();
+      onClose?.();
+      return;
+    }
     returnToShore(catchResult ? (tutorial ? "tutorial-complete" : "caught") : "escaped");
   }
 

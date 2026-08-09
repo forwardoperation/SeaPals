@@ -29,6 +29,7 @@ import { ADVENTURE_SAVE_V2_FIXTURE } from "./fixtures/adventureSaveV2.mjs";
 import { ELVERSON_PROLOGUE_BEATS } from "./adventureOpeningContract.mjs";
 import {
   ELVERSON_TOWN_LAYOUT_VERSION,
+  ELVERSON_TOWN_LAYOUT_VERSION_EXPANDED_WATERFRONT,
   ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
   ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
   ELVERSON_TOWN_SAFE_POSITIONS,
@@ -157,6 +158,7 @@ test("schema-v4 normalization accepts every released Elverson layout epoch exact
   for (const layoutVersion of [
     ELVERSON_TOWN_LAYOUT_VERSION_LEGACY,
     ELVERSON_TOWN_LAYOUT_VERSION_WIDE_SEAWALL,
+    ELVERSON_TOWN_LAYOUT_VERSION_EXPANDED_WATERFRONT,
     ELVERSON_TOWN_LAYOUT_VERSION,
   ]) {
     const save = createInitialAdventureSave(`profile-layout-${layoutVersion}`);
@@ -344,8 +346,8 @@ test("schema-v4 normalization requires complete supported opening and layout pro
 
   for (const [label, layoutVersion, expected] of [
     ["missing", undefined, /save\.world\.layoutVersion is required for schema-v4 saves/],
-    ["zero", 0, /save\.world\.layoutVersion must be 1, 2, or 3/],
-    ["future", ELVERSON_TOWN_LAYOUT_VERSION + 1, /save\.world\.layoutVersion must be 1, 2, or 3/],
+    ["zero", 0, /save\.world\.layoutVersion must be 1, 2, 3, or 4/],
+    ["future", ELVERSON_TOWN_LAYOUT_VERSION + 1, /save\.world\.layoutVersion must be 1, 2, 3, or 4/],
   ]) {
     const malformed = createInitialAdventureSave("profile-1");
     if (layoutVersion === undefined) delete malformed.world.layoutVersion;

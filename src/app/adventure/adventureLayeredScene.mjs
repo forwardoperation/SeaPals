@@ -5,6 +5,7 @@ const LAYER_ORDER = Object.freeze({
 });
 
 const GEOMETRY_EPSILON = 1e-9;
+const WALKABLE_REGION_EDGE_SAMPLES = 32;
 
 export const LAYERED_SCENE_LAYERS = Object.freeze(Object.keys(LAYER_ORDER));
 
@@ -328,7 +329,26 @@ function circlesIntersect(position, radius, blocker) {
     < combinedRadius * combinedRadius - Number.EPSILON;
 }
 
-/** Tests a circular actor body against terrain, object bases, and live actors. */
+function circleFitsWalkableRegionUnion(position, radius, regions) {
+  if (!regions.length) return true;
+  const pointIsInside = (point) => regions.some((region) => (
+    point.x >= region.left - GEOMETRY_EPSILON
+    && point.x <= region.right + GEOMETRY_EPSILON
+    && point.y >= region.top - GEOMETRY_EPSILON
+    && point.y <= region.bottom + GEOMETRY_EPSILON
+  ));
+  if (!pointIsInside(position)) return false;
+  for (let index = 0; index < WALKABLE_REGION_EDGE_SAMPLES; index += 1) {
+    const angle = (index / WALKABLE_REGION_EDGE_SAMPLES) * Math.PI * 2;
+    if (!pointIsInside({
+      x: position.x + Math.cos(angle) * radius,
+      y: position.y + Math.sin(angle) * radius,
+    })) return false;
+  }
+  return true;
+}
+
+/** Tests a circular actor body against authored ground, object bases, and live actors. */
 export function canOccupyLayeredScenePosition(
   scene,
   position,
@@ -352,6 +372,7 @@ export function canOccupyLayeredScenePosition(
     || position.y - radius < worldTop
     || position.y + radius > worldBottom
   ) return false;
+  if (!circleFitsWalkableRegionUnion(position, radius, scene.walkableRegions ?? [])) return false;
 
   const radiusSquared = radius * radius;
   const minTileX = Math.max(0, Math.floor(position.x - radius + 0.5));
