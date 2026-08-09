@@ -1,5 +1,13 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import {
+  AQUARIUM_BOIDS_FIXED_STEP_SECONDS,
+  createAquariumBoids,
+  createAquariumBoidsSimulationKey,
+  stepAquariumBoids,
+} from "./adventureAquariumBoids.mjs";
 import styles from "./adventure.module.css";
 
 const FALLBACK_ATLAS_COLUMNS = 5;
@@ -47,6 +55,20 @@ const PAIR_FORMATION = Object.freeze([
   Object.freeze({ x: -82, y: 36, scale: 0.84 }),
 ]);
 const ROUTE_POINT_COUNT = 6;
+const AQUARIUM_BOIDS_BOUNDS = Object.freeze({
+  minX: 3,
+  maxX: 97,
+  minY: 5,
+  maxY: 94,
+});
+const MAX_BOIDS_STEPS_PER_FRAME = 5;
+const FACING_DEAD_ZONE_PIXELS_PER_SECOND = 2;
+const FACING_WRAP_STAGE_FRACTION = 0.36;
+const LIVE_BOIDS_BEHAVIOR_KINDS = new Set([
+  "cover-school-ball",
+  "shelter-school",
+  "contour-school",
+]);
 const FALLBACK_BEHAVIOR_BY_SPECIES = Object.freeze({
   "white-grunt": "shelter-school",
   "cleaner-wrasse": "cleaning-station",
@@ -79,6 +101,26 @@ function finiteNumber(value, fallback) {
 
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
+}
+
+function facingDirection(value, fallback = 1) {
+  const direction = finiteNumber(value, fallback);
+  return direction < 0 ? -1 : 1;
+}
+
+function facingLabel(direction) {
+  return facingDirection(direction) < 0 ? "left" : "right";
+}
+
+function setElementFacing(element, direction) {
+  if (!element) return;
+  const normalizedDirection = facingDirection(direction);
+  const label = facingLabel(normalizedDirection);
+  if (element.dataset.facing !== label) element.dataset.facing = label;
+  element.style.setProperty(
+    "--aquarium-gallery-resident-direction",
+    String(normalizedDirection),
+  );
 }
 
 function cssUrl(path) {
@@ -160,6 +202,18 @@ function residentMovementClass(kind) {
   return styles.aquariumGalleryMovementCruiser;
 }
 
+function residentUsesLiveBoids(movementProfile, memberCount) {
+  return movementProfile?.kind === "school"
+    && LIVE_BOIDS_BEHAVIOR_KINDS.has(movementProfile?.behaviorKind)
+    && memberCount > 1;
+}
+
+function residentUsesVelocityFacing(occupant, movementProfile) {
+  return movementProfile?.kind !== "anchored"
+    && occupant?.category !== "coral"
+    && occupant?.category !== "invertebrate";
+}
+
 function residentBehaviorClass(behaviorKind) {
   if (behaviorKind === "cover-school-ball") {
     return styles.aquariumGalleryBehaviorBallSchool;
@@ -209,7 +263,7 @@ function residentMemberCount(movementProfile) {
   );
 }
 
-function residentMemberStyle(memberIndex, direction, movementProfile) {
+function residentMemberStyle(memberIndex, direction, movementProfile, boidAgent = null) {
   const behaviorKind = movementProfile?.behaviorKind;
   const authoredFormation = movementProfile?.social?.formation;
   const formationSet = authoredFormation === "pair"
@@ -228,15 +282,28 @@ function residentMemberStyle(memberIndex, direction, movementProfile) {
     12,
   );
   const spacingScale = clamp((spacingPercent / 4.5) * (1.12 - (cohesion * 0.12)), 0.35, 2);
-  const memberX = formation.x * direction * spacingScale;
-  return {
+  const rightFacingX = formation.x * spacingScale;
+  const memberX = rightFacingX * direction;
+  const style = {
     "--aquarium-gallery-member-x": `${memberX}%`,
+    // Pairs keep this world-space offset when the group reverses. Mirroring it
+    // with the sprite facing made the companion teleport through its partner.
+    "--aquarium-gallery-member-world-x": `${memberX}%`,
     "--aquarium-gallery-member-return-x": `${-memberX}%`,
+    "--aquarium-gallery-member-right-x": `${rightFacingX}%`,
+    "--aquarium-gallery-member-left-x": `${-rightFacingX}%`,
     "--aquarium-gallery-member-y": `${formation.y * spacingScale}%`,
     "--aquarium-gallery-member-scale": formation.scale,
     "--aquarium-gallery-member-float-delay": `${-(memberIndex * 0.53)}s`,
     "--aquarium-gallery-school-cohesion": cohesion,
     "--aquarium-gallery-school-spacing": `${spacingPercent}%`,
+  };
+  if (!boidAgent) return style;
+  return {
+    ...style,
+    "--aquarium-gallery-boid-x": `${finiteNumber(boidAgent.x, 50).toFixed(3)}%`,
+    "--aquarium-gallery-boid-y": `${finiteNumber(boidAgent.y, 50).toFixed(3)}%`,
+    "--aquarium-gallery-resident-direction": facingDirection(boidAgent.direction),
   };
 }
 
@@ -287,6 +354,33 @@ function residentRoutePoints(movementProfile, fallbackX, fallbackY) {
   });
 }
 
+function residentInitialDirection(movementProfile, fallbackDirection) {
+  if (!ROUTE_BEHAVIOR_KINDS.has(movementProfile?.behaviorKind)) {
+    return facingDirection(fallbackDirection);
+  }
+  const points = movementProfile?.habitat?.contourPath?.points;
+  if (!Array.isArray(points)) return 1;
+  for (let index = 1; index < points.length; index += 1) {
+    const deltaX = finiteNumber(points[index]?.xPercent, 0)
+      - finiteNumber(points[index - 1]?.xPercent, 0);
+    if (Math.abs(deltaX) > 0.001) return deltaX > 0 ? 1 : -1;
+  }
+  return facingDirection(fallbackDirection);
+}
+
+function residentBoidsOptions(tankId, occupant, index, movementProfile, memberCount) {
+  return {
+    seed: `${tankId}:${occupant?.speciesId ?? occupant?.id ?? index}`,
+    memberCount,
+    movementProfile,
+    bounds: AQUARIUM_BOIDS_BOUNDS,
+  };
+}
+
+function residentTrackKey(tankId, occupant, index) {
+  return `${tankId}:${occupant?.speciesId ?? occupant?.id ?? index}`;
+}
+
 function residentHabitatFeatureId(movementProfile) {
   const habitat = movementProfile?.habitat ?? {};
   return habitat.contourPath?.id
@@ -295,7 +389,7 @@ function residentHabitatFeatureId(movementProfile) {
     ?? habitat.coverPoints?.[0]?.id;
 }
 
-function residentStyle(occupant, index, atlasPath, movementProfile) {
+function residentStyle(occupant, index, atlasPath, movementProfile, initialDirection) {
   const animation = occupant?.animation ?? {};
   const visual = occupant?.visual ?? {};
   const sprite = occupant?.sprite ?? {};
@@ -321,7 +415,10 @@ function residentStyle(occupant, index, atlasPath, movementProfile) {
       ? 1
       : legacyCombinedScale;
   const lane = clamp(Math.round(finiteNumber(animation.lane, index % 3)), 0, 4);
-  const direction = finiteNumber(animation.direction, index % 2 === 0 ? 1 : -1) < 0 ? -1 : 1;
+  const direction = facingDirection(
+    initialDirection,
+    finiteNumber(animation.direction, index % 2 === 0 ? 1 : -1),
+  );
   const benthic = occupant?.category === "invertebrate";
   const coral = occupant?.category === "coral";
   const behaviorKind = movementProfile?.behaviorKind;
@@ -521,27 +618,307 @@ function tankCountSummary(tank) {
   return `${tank?.name ?? "Habitat"}: ${speciesCount} species, ${residentCount} ${residentCount === 1 ? "resident" : "residents"}.`;
 }
 
+function AquariumGalleryResident({
+  atlasPath,
+  boidsOptions,
+  direction,
+  index,
+  liveBoids,
+  memberCount,
+  movementProfile,
+  occupant,
+  residentBoidsRef,
+  residentTrackConfigsRef,
+  residentTracksRef,
+  simulationKey,
+  trackKey,
+  velocityFacing,
+}) {
+  const [initialBoids] = useState(() => (
+    liveBoids ? createAquariumBoids(boidsOptions) : null
+  ));
+  const initialFacing = initialBoids?.agents[0]?.direction ?? direction;
+  const registerTrack = useCallback((element) => {
+    if (!element) {
+      residentTracksRef.current.delete(trackKey);
+      residentTrackConfigsRef.current.delete(trackKey);
+      residentBoidsRef.current.delete(trackKey);
+      return;
+    }
+    const currentSimulation = residentBoidsRef.current.get(trackKey);
+    if (
+      !liveBoids
+      || (currentSimulation && currentSimulation.simulationKey !== simulationKey)
+    ) {
+      residentBoidsRef.current.delete(trackKey);
+    }
+    residentTracksRef.current.set(trackKey, element);
+    residentTrackConfigsRef.current.set(trackKey, {
+      initialBoids,
+      liveBoids,
+      simulationKey,
+      velocityFacing,
+    });
+  }, [
+    initialBoids,
+    liveBoids,
+    residentBoidsRef,
+    residentTrackConfigsRef,
+    residentTracksRef,
+    simulationKey,
+    trackKey,
+    velocityFacing,
+  ]);
+
+  return (
+    <span
+      ref={registerTrack}
+      className={[
+        styles.aquariumGalleryResidentTrack,
+        residentCategoryClass(occupant.category),
+        residentMovementClass(movementProfile.kind),
+        residentBehaviorClass(movementProfile.behaviorKind),
+        liveBoids ? styles.aquariumGalleryLiveSchool : "",
+        velocityFacing ? styles.aquariumGalleryVelocityFacing : "",
+      ].filter(Boolean).join(" ")}
+      style={residentStyle(occupant, index, atlasPath, movementProfile, direction)}
+      data-aquarium-species={occupant.speciesId ?? occupant.id}
+      data-category={occupant.category}
+      data-movement-profile={movementProfile.kind}
+      data-aquarium-behavior={movementProfile.behaviorKind}
+      data-habitat-feature={residentHabitatFeatureId(movementProfile)}
+      data-social-formation={movementProfile.social?.formation}
+      data-live-boids={liveBoids ? "true" : undefined}
+      data-boids-phase={initialBoids?.phase}
+      data-facing={facingLabel(initialFacing)}
+      title={`${occupant.name ?? occupant.id ?? "Aquarium resident"}${
+        finiteNumber(occupant.quantity, 1) > 1 ? ` x${occupant.quantity}` : ""
+      }`}
+    >
+      {Array.from({ length: memberCount }, (_, memberIndex) => (
+        <span
+          key={memberIndex}
+          className={[
+            styles.aquariumGalleryResidentBody,
+            memberCount > 1 ? styles.aquariumGallerySchoolMember : "",
+          ].filter(Boolean).join(" ")}
+          style={residentMemberStyle(
+            memberIndex,
+            direction,
+            movementProfile,
+            initialBoids?.agents[memberIndex],
+          )}
+          data-school-member={memberCount > 1 ? memberIndex + 1 : undefined}
+          data-boid-member={liveBoids ? memberIndex + 1 : undefined}
+          data-boid-depth={initialBoids?.agents[memberIndex]?.depth.toFixed(3)}
+          data-facing={facingLabel(
+            initialBoids?.agents[memberIndex]?.direction ?? direction,
+          )}
+        />
+      ))}
+    </span>
+  );
+}
+
 export default function AdventureAquariumGallery({
   scene,
   aquariumModel,
   reducedMotion = false,
 }) {
   const gallery = scene?.aquariumGallery;
+  const hasGallery = Boolean(gallery);
+  const galleryEcosystemId = gallery?.ecosystemId;
+  const galleryName = gallery?.name;
+  const galleryTankSlots = gallery?.tankSlots;
+  const sceneWidth = scene?.width;
+  const sceneHeight = scene?.height;
+  const galleryRenderModel = useMemo(() => {
+    const tanks = Array.isArray(aquariumModel?.tanks) ? aquariumModel.tanks : [];
+    const tankById = new Map(tanks.map((tank) => [tank.id, tank]));
+    const tankSlots = (Array.isArray(galleryTankSlots) ? galleryTankSlots : [])
+      .map((slot) => ({
+        slot,
+        tank: tankById.get(slot?.tankId),
+        style: tankSlotStyle(slot?.bounds, { width: sceneWidth, height: sceneHeight }),
+      }))
+      .filter(({ tank, style }) => tank && style);
+    const residentConfigs = new Map();
+
+    tankSlots.forEach(({ tank }) => {
+      const occupants = Array.isArray(tank.occupants) ? tank.occupants.filter(Boolean) : [];
+      occupants.forEach((occupant, index) => {
+        const movementProfile = residentMovementProfile(occupant);
+        const authoredDirection = finiteNumber(
+          occupant?.animation?.direction,
+          index % 2 === 0 ? 1 : -1,
+        ) < 0 ? -1 : 1;
+        const direction = residentInitialDirection(movementProfile, authoredDirection);
+        const memberCount = residentMemberCount(movementProfile);
+        const liveBoids = residentUsesLiveBoids(movementProfile, memberCount);
+        const velocityFacing = residentUsesVelocityFacing(occupant, movementProfile);
+        const trackKey = residentTrackKey(tank.id, occupant, index);
+        const boidsOptions = residentBoidsOptions(
+          tank.id,
+          occupant,
+          index,
+          movementProfile,
+          memberCount,
+        );
+        const simulationKey = createAquariumBoidsSimulationKey({
+          trackIdentity: trackKey,
+          ...boidsOptions,
+        });
+        residentConfigs.set(trackKey, {
+          boidsOptions,
+          direction,
+          liveBoids,
+          memberCount,
+          movementProfile,
+          simulationKey,
+          velocityFacing,
+        });
+      });
+    });
+
+    return {
+      ecosystemName: tankSlots[0]?.tank?.ecosystemName
+        ?? galleryName
+        ?? galleryEcosystemId
+        ?? "Aquarium",
+      residentConfigs,
+      tankSlots,
+    };
+  }, [
+    aquariumModel,
+    galleryEcosystemId,
+    galleryName,
+    galleryTankSlots,
+    sceneHeight,
+    sceneWidth,
+  ]);
+  const residentTracksRef = useRef(new Map());
+  const residentTrackConfigsRef = useRef(new Map());
+  const residentBoidsRef = useRef(new Map());
+
+  useEffect(() => {
+    if (!hasGallery || reducedMotion) {
+      residentBoidsRef.current.clear();
+      return undefined;
+    }
+
+    let animationFrame = 0;
+    let previousTimestamp;
+    let accumulatorSeconds = 0;
+    const previousTrackPositions = new Map();
+    const previousDirections = new Map();
+    const resetFrameClock = () => {
+      previousTimestamp = undefined;
+      accumulatorSeconds = 0;
+      previousTrackPositions.clear();
+    };
+
+    const animateResidents = (timestamp) => {
+      animationFrame = window.requestAnimationFrame(animateResidents);
+      if (document.visibilityState !== "visible") {
+        resetFrameClock();
+        return;
+      }
+
+      const elapsedSeconds = previousTimestamp == null
+        ? 0
+        : clamp((timestamp - previousTimestamp) / 1000, 0, 0.1);
+      previousTimestamp = timestamp;
+      accumulatorSeconds += elapsedSeconds;
+      const stepCount = Math.min(
+        MAX_BOIDS_STEPS_PER_FRAME,
+        Math.floor(accumulatorSeconds / AQUARIUM_BOIDS_FIXED_STEP_SECONDS),
+      );
+      if (stepCount > 0) {
+        accumulatorSeconds -= stepCount * AQUARIUM_BOIDS_FIXED_STEP_SECONDS;
+      }
+
+      const activeTrackKeys = new Set();
+      const stageRects = new Map();
+      const boidsUpdates = [];
+      const facingUpdates = [];
+      for (const [trackKey, config] of residentTrackConfigsRef.current) {
+        const track = residentTracksRef.current.get(trackKey);
+        if (!track?.isConnected) continue;
+        activeTrackKeys.add(trackKey);
+
+        if (config.liveBoids) {
+          let simulation = residentBoidsRef.current.get(trackKey);
+          if (!simulation || simulation.simulationKey !== config.simulationKey) {
+            simulation = {
+              simulationKey: config.simulationKey,
+              state: config.initialBoids,
+            };
+          }
+          if (stepCount > 0) {
+            simulation.state = stepAquariumBoids(simulation.state, stepCount);
+            boidsUpdates.push({ track, state: simulation.state });
+          }
+          residentBoidsRef.current.set(trackKey, simulation);
+          continue;
+        }
+
+        residentBoidsRef.current.delete(trackKey);
+        if (!config.velocityFacing || elapsedSeconds <= 0) continue;
+        const stage = track.parentElement;
+        if (!stage) continue;
+        let stageRect = stageRects.get(stage);
+        if (!stageRect) {
+          stageRect = stage.getBoundingClientRect();
+          stageRects.set(stage, stageRect);
+        }
+        const trackRect = track.getBoundingClientRect();
+        const relativeX = trackRect.left - stageRect.left;
+        const previousX = previousTrackPositions.get(trackKey);
+        previousTrackPositions.set(trackKey, relativeX);
+        if (previousX == null || stageRect.width <= 0) continue;
+        const deltaX = relativeX - previousX;
+        if (Math.abs(deltaX) >= stageRect.width * FACING_WRAP_STAGE_FRACTION) continue;
+        const velocityX = deltaX / elapsedSeconds;
+        if (Math.abs(velocityX) <= FACING_DEAD_ZONE_PIXELS_PER_SECOND) continue;
+        const direction = velocityX > 0 ? 1 : -1;
+        if (previousDirections.get(trackKey) === direction) continue;
+        previousDirections.set(trackKey, direction);
+        facingUpdates.push({ track, direction });
+      }
+
+      // Apply writes after every stage-relative layout read so camera panning
+      // cannot contaminate facing and the loop does not thrash layout.
+      boidsUpdates.forEach(({ track, state }) => {
+        const bodies = track.querySelectorAll("[data-boid-member]");
+        state.agents.forEach((agent, memberIndex) => {
+          const body = bodies[memberIndex];
+          if (!body) return;
+          body.style.setProperty("--aquarium-gallery-boid-x", `${agent.x.toFixed(3)}%`);
+          body.style.setProperty("--aquarium-gallery-boid-y", `${agent.y.toFixed(3)}%`);
+          body.dataset.boidDepth = agent.depth.toFixed(3);
+          setElementFacing(body, agent.direction);
+        });
+        track.dataset.boidsPhase = state.phase;
+        setElementFacing(track, state.agents[0]?.direction ?? 1);
+      });
+      facingUpdates.forEach(({ track, direction }) => setElementFacing(track, direction));
+      for (const trackKey of residentBoidsRef.current.keys()) {
+        if (!activeTrackKeys.has(trackKey)) residentBoidsRef.current.delete(trackKey);
+      }
+    };
+
+    document.addEventListener("visibilitychange", resetFrameClock);
+    animationFrame = window.requestAnimationFrame(animateResidents);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      document.removeEventListener("visibilitychange", resetFrameClock);
+      previousTrackPositions.clear();
+    };
+  }, [galleryEcosystemId, hasGallery, reducedMotion]);
+
   if (!gallery) return null;
 
-  const tanks = Array.isArray(aquariumModel?.tanks) ? aquariumModel.tanks : [];
-  const tankById = new Map(tanks.map((tank) => [tank.id, tank]));
-  const tankSlots = (Array.isArray(gallery.tankSlots) ? gallery.tankSlots : [])
-    .map((slot) => ({
-      slot,
-      tank: tankById.get(slot?.tankId),
-      style: tankSlotStyle(slot?.bounds, scene),
-    }))
-    .filter(({ tank, style }) => tank && style);
-  const ecosystemName = tankSlots[0]?.tank?.ecosystemName
-    ?? gallery.name
-    ?? gallery.ecosystemId
-    ?? "Aquarium";
+  const { ecosystemName, residentConfigs, tankSlots } = galleryRenderModel;
 
   return (
     <div
@@ -575,49 +952,36 @@ export default function AdventureAquariumGallery({
             />
             <span className={styles.aquariumGalleryResidentStage}>
               {occupants.map((occupant, index) => {
-                const movementProfile = residentMovementProfile(occupant);
-                const direction = finiteNumber(
-                  occupant?.animation?.direction,
-                  index % 2 === 0 ? 1 : -1,
-                ) < 0 ? -1 : 1;
-                const memberCount = residentMemberCount(movementProfile);
+                const trackKey = residentTrackKey(tank.id, occupant, index);
+                const residentConfig = residentConfigs.get(trackKey);
+                if (!residentConfig) return null;
+                const {
+                  boidsOptions,
+                  direction,
+                  liveBoids,
+                  memberCount,
+                  movementProfile,
+                  simulationKey,
+                  velocityFacing,
+                } = residentConfig;
                 return (
-                  <span
-                    key={occupant.id ?? `${occupant.cardId ?? "resident"}-${index}`}
-                    className={[
-                      styles.aquariumGalleryResidentTrack,
-                      residentCategoryClass(occupant.category),
-                      residentMovementClass(movementProfile.kind),
-                      residentBehaviorClass(movementProfile.behaviorKind),
-                    ].filter(Boolean).join(" ")}
-                    style={residentStyle(
-                      occupant,
-                      index,
-                      aquariumModel?.atlasPath,
-                      movementProfile,
-                    )}
-                    data-aquarium-species={occupant.speciesId ?? occupant.id}
-                    data-category={occupant.category}
-                    data-movement-profile={movementProfile.kind}
-                    data-aquarium-behavior={movementProfile.behaviorKind}
-                    data-habitat-feature={residentHabitatFeatureId(movementProfile)}
-                    data-social-formation={movementProfile.social?.formation}
-                    title={`${occupant.name ?? occupant.id ?? "Aquarium resident"}${
-                      finiteNumber(occupant.quantity, 1) > 1 ? ` x${occupant.quantity}` : ""
-                    }`}
-                  >
-                    {Array.from({ length: memberCount }, (_, memberIndex) => (
-                      <span
-                        key={memberIndex}
-                        className={[
-                          styles.aquariumGalleryResidentBody,
-                          memberCount > 1 ? styles.aquariumGallerySchoolMember : "",
-                        ].filter(Boolean).join(" ")}
-                        style={residentMemberStyle(memberIndex, direction, movementProfile)}
-                        data-school-member={memberCount > 1 ? memberIndex + 1 : undefined}
-                      />
-                    ))}
-                  </span>
+                  <AquariumGalleryResident
+                    key={simulationKey}
+                    atlasPath={aquariumModel?.atlasPath}
+                    boidsOptions={boidsOptions}
+                    direction={direction}
+                    index={index}
+                    liveBoids={liveBoids}
+                    memberCount={memberCount}
+                    movementProfile={movementProfile}
+                    occupant={occupant}
+                    residentBoidsRef={residentBoidsRef}
+                    residentTrackConfigsRef={residentTrackConfigsRef}
+                    residentTracksRef={residentTracksRef}
+                    simulationKey={simulationKey}
+                    trackKey={trackKey}
+                    velocityFacing={velocityFacing}
+                  />
                 );
               })}
             </span>
