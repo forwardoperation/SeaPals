@@ -19,6 +19,7 @@ const SCHOOL_BEHAVIOR_KINDS = new Set([
 const BEHAVIOR_TUNING = Object.freeze({
   "contour-school": Object.freeze({
     maxSpeedMultiplier: 1,
+    minSpeedMultiplier: 0.34,
     routeSpeedMultiplier: 0.42,
     separationWeight: 1.7,
     alignmentWeight: 1.2,
@@ -32,6 +33,7 @@ const BEHAVIOR_TUNING = Object.freeze({
   }),
   "shelter-school": Object.freeze({
     maxSpeedMultiplier: 0.84,
+    minSpeedMultiplier: 0.36,
     routeSpeedMultiplier: 0.3,
     separationWeight: 1.45,
     alignmentWeight: 1.05,
@@ -45,6 +47,7 @@ const BEHAVIOR_TUNING = Object.freeze({
   }),
   "cover-school-ball": Object.freeze({
     maxSpeedMultiplier: 0.92,
+    minSpeedMultiplier: 0.28,
     routeSpeedMultiplier: 0.25,
     separationWeight: 2.4,
     alignmentWeight: 1.15,
@@ -57,6 +60,28 @@ const BEHAVIOR_TUNING = Object.freeze({
     refugeStyle: "compact",
   }),
 });
+
+/**
+ * Converts world velocity into pitch in the sprite's native-right local space.
+ * Screen y grows downward, so ascending right-facing fish pitch negatively;
+ * horizontal mirroring reverses that local rotation for left-facing fish.
+ */
+export function aquariumFishPitchDegrees(
+  velocityX,
+  velocityY,
+  direction,
+  maxPitchDegrees = 22,
+) {
+  if (!Number.isFinite(velocityX) || !Number.isFinite(velocityY)) return 0;
+  if (Math.hypot(velocityX, velocityY) <= EPSILON) return 0;
+  const facing = Number.isFinite(direction)
+    ? (direction < 0 ? -1 : 1)
+    : (velocityX < 0 ? -1 : 1);
+  const maximum = clamp(Number.isFinite(maxPitchDegrees) ? maxPitchDegrees : 22, 0, 25);
+  const worldPitch = Math.atan2(velocityY, Math.max(Math.abs(velocityX), EPSILON))
+    * (180 / Math.PI);
+  return clamp(worldPitch * facing, -maximum, maximum);
+}
 
 function finiteNumber(value, fallback) {
   return Number.isFinite(value) ? value : fallback;
@@ -326,6 +351,24 @@ function nearestCoverIndex(coverPoints, target, cycle, seedHash) {
   return (nearestIndex + cycle + (seedHash % coverPoints.length)) % coverPoints.length;
 }
 
+function shelterOrbitTarget(coverPoint, config, timeSeconds) {
+  const radius = clamp(config.separationRadius * 0.72, 1.5, 4.5);
+  const seedAngle = ((config.seedHash % 4096) / 4096) * Math.PI * 2;
+  const angle = seedAngle + (timeSeconds * 0.68);
+  return {
+    x: clamp(
+      coverPoint.x + (Math.cos(angle) * radius),
+      config.bounds.minX,
+      config.bounds.maxX,
+    ),
+    y: clamp(
+      coverPoint.y + (Math.sin(angle) * radius * 0.62),
+      config.bounds.minY,
+      config.bounds.maxY,
+    ),
+  };
+}
+
 function schoolCentroid(agents) {
   return agents.reduce((total, agent) => ({
     x: total.x + (agent.x / agents.length),
@@ -337,6 +380,7 @@ function schoolCentroid(agents) {
 
 function coverArrivalSpeedScale(agents, target, config, phaseState, normalScale) {
   if (phaseState.phase !== "dart" && phaseState.phase !== "hide") return normalScale;
+  if (config.refuge.style !== "compact") return normalScale;
   const center = schoolCentroid(agents);
   const distance = Math.hypot(target.x - center.x, target.y - center.y);
   const arrivalWindow = Math.max(
@@ -347,6 +391,29 @@ function coverArrivalSpeedScale(agents, target, config, phaseState, normalScale)
   return {
     ...normalScale,
     speed: Math.min(12, Math.max(normalScale.speed, requiredScale * 1.12)),
+  };
+}
+
+function targetInsideSteeringEnvelope(target, config) {
+  const horizontalMargin = Math.min(
+    config.boundaryMargin,
+    ((config.bounds.maxX - config.bounds.minX) / 2) - EPSILON,
+  );
+  const verticalMargin = Math.min(
+    config.boundaryMargin,
+    ((config.bounds.maxY - config.bounds.minY) / 2) - EPSILON,
+  );
+  return {
+    x: clamp(
+      target.x,
+      config.bounds.minX + horizontalMargin,
+      config.bounds.maxX - horizontalMargin,
+    ),
+    y: clamp(
+      target.y,
+      config.bounds.minY + verticalMargin,
+      config.bounds.maxY - verticalMargin,
+    ),
   };
 }
 
@@ -485,13 +552,27 @@ function updatedAgent(
       + wander.y,
   }, config.maxForce * phaseScale.speed);
 
-  let velocity = limited({
+  const previousSpeed = magnitude({ x: agent.vx, y: agent.vy });
+  let velocity = {
     x: agent.vx + (acceleration.x * config.fixedStepSeconds),
     y: agent.vy + (acceleration.y * config.fixedStepSeconds),
-  }, desiredSpeed);
-  const velocityMagnitude = magnitude(velocity);
-  if (velocityMagnitude < config.minSpeed && velocityMagnitude > EPSILON) {
-    velocity = scaledTo(velocity, Math.min(config.minSpeed, desiredSpeed));
+  };
+  let velocityMagnitude = magnitude(velocity);
+  if (velocityMagnitude > desiredSpeed) {
+    const gradualSpeedLimit = config.behaviorKind !== "cover-school-ball" && previousSpeed > desiredSpeed
+      ? Math.max(desiredSpeed, previousSpeed - (config.maxForce * config.fixedStepSeconds))
+      : desiredSpeed;
+    velocity = limited(velocity, gradualSpeedLimit);
+    velocityMagnitude = magnitude(velocity);
+  }
+  const minimumSpeed = Math.min(config.minSpeed, desiredSpeed);
+  if (velocityMagnitude < minimumSpeed) {
+    const forward = velocityMagnitude > EPSILON
+      ? velocity
+      : previousSpeed > EPSILON
+        ? { x: agent.vx, y: agent.vy }
+        : { x: Math.cos(agent.heading), y: Math.sin(agent.heading) };
+    velocity = scaledTo(forward, minimumSpeed);
   }
 
   let x = agent.x + (velocity.x * config.fixedStepSeconds);
@@ -626,7 +707,11 @@ function buildConfig(options) {
     finiteNumber(options?.maxSpeed, 3.5 + (profileSpeed * 3.1)),
   );
   const maxSpeed = baseMaxSpeed * behavior.maxSpeedMultiplier;
-  const minSpeed = clamp(finiteNumber(options?.minSpeed, maxSpeed * 0.28), 0, maxSpeed);
+  const minSpeed = clamp(
+    finiteNumber(options?.minSpeed, maxSpeed * behavior.minSpeedMultiplier),
+    0,
+    maxSpeed,
+  );
   const refugeCadence = midpoint(timing.refugeCadenceSeconds, behaviorKind === "cover-school-ball" ? 28 : 14);
   const dartSeconds = midpoint(timing.burstSeconds, behaviorKind === "cover-school-ball" ? 0.8 : 1.4);
   const holdSeconds = midpoint(timing.pauseSeconds, behaviorKind === "cover-school-ball" ? 2.2 : 1.3);
@@ -768,7 +853,11 @@ function singleStep(state) {
   const coverIndex = seekingCover
     ? nearestCoverIndex(config.coverPoints, routeTarget, phaseState.cycle, config.seedHash)
     : -1;
-  const target = seekingCover ? config.coverPoints[coverIndex] : routeTarget;
+  let target = seekingCover ? config.coverPoints[coverIndex] : routeTarget;
+  if (config.behaviorKind === "shelter-school" && phaseState.phase === "hide") {
+    target = shelterOrbitTarget(target, config, timeSeconds);
+  }
+  target = targetInsideSteeringEnvelope(target, config);
   const phaseScale = coverArrivalSpeedScale(
     state.agents,
     target,
