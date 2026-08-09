@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { cardsById } from "@/data/cards";
 import {
   ELVERSON_REEF_CATCHES,
@@ -9,9 +17,11 @@ import {
 import {
   HAND_NET_ACTIONS,
   HAND_NET_PHASES,
+  HAND_NET_SIMULATION_STEP_MS,
   applyHandNetAction,
   consumeHandNetFrameElapsed,
   createHandNetState,
+  interpolateHandNetRenderPositions,
   tickHandNetState,
 } from "./adventureHandNet.mjs";
 import { ELVERSON_REEF_CREATURE_ATLAS_PATH } from "./adventureAquariumExhibits.mjs";
@@ -198,15 +208,32 @@ export default function AdventureHandNetModal({
   const dialogRef = useRef(null);
   const primaryActionRef = useRef(null);
   const pressedKeysRef = useRef(new Set());
+  const shallowsRef = useRef(null);
+  const playerElementRef = useRef(null);
+  const creatureNodesRef = useRef(new Map());
+  const creatureNodeCallbacks = useRef(new Map());
+  const shallowsSizeRef = useRef({ width: 0, height: 0 });
   const attemptIdentity = useId();
   const seedRef = useRef(seedFromIdentity(attemptIdentity));
   const recordedOutcomeRef = useRef(null);
   const previousFocusRef = useRef(null);
-  const [state, setState] = useState(() => createAttempt({
-    seed: seedRef.current,
-    tutorial,
-    reducedMotion,
-  }));
+  const initialStateRef = useRef(null);
+  if (initialStateRef.current === null) {
+    initialStateRef.current = createAttempt({
+      seed: seedRef.current,
+      tutorial,
+      reducedMotion,
+    });
+  }
+  const [state, setState] = useState(initialStateRef.current);
+  const simulationClockRef = useRef(null);
+  if (simulationClockRef.current === null) {
+    simulationClockRef.current = {
+      previous: initialStateRef.current,
+      current: initialStateRef.current,
+      remainderMs: 0,
+    };
+  }
   const [catchResult, setCatchResult] = useState(null);
   const [catchError, setCatchError] = useState(null);
   const [catchDetailsOpen, setCatchDetailsOpen] = useState(false);
@@ -229,14 +256,6 @@ export default function AdventureHandNetModal({
   const celebrating = state.phase === HAND_NET_PHASES.CAUGHT && Boolean(catchResult) && !catchError;
   const playerVelocityMagnitude = Math.hypot(state.player.velocity.x, state.player.velocity.y);
   const playerMoving = playerVelocityMagnitude > 0.0001;
-  const visualVelocity = playerMoving
-    ? {
-        x: state.player.velocity.x,
-        y: state.player.velocity.y,
-      }
-    : { x: 0, y: 0 };
-  const playerSpeedRatio = playerMoving ? 1 : 0;
-  const playerMotionAngle = Math.atan2(visualVelocity.y, visualVelocity.x) * (180 / Math.PI);
   const playerSpriteRow = celebrating ? 0 : isometricSpriteRow(state.player.facing);
   const playerSpriteFrame = celebrating
     ? 6
@@ -253,6 +272,90 @@ export default function AdventureHandNetModal({
   const atlasPositions = useMemo(() => Object.fromEntries(
     ELVERSON_REEF_CATCHES.map((entry) => [entry.id, creatureAtlasPosition(entry.id)]),
   ), []);
+
+  const positionActorElement = useCallback((element, position) => {
+    const { width, height } = shallowsSizeRef.current;
+    if (!element || !position || width <= 0 || height <= 0) return;
+    const arena = simulationClockRef.current.current.arena;
+    const nextTranslate = [
+      `${Math.round(((position.x / arena.width) * width) * 1_000) / 1_000}px`,
+      `${Math.round(((position.y / arena.height) * height) * 1_000) / 1_000}px`,
+    ].join(" ");
+    if (element.style.translate !== nextTranslate) element.style.translate = nextTranslate;
+  }, []);
+
+  const paintRenderPositions = useCallback((renderPositions) => {
+    positionActorElement(playerElementRef.current, renderPositions.player.position);
+    for (const creature of renderPositions.creatures) {
+      positionActorElement(
+        creatureNodesRef.current.get(creature.id),
+        creature.position,
+      );
+    }
+  }, [positionActorElement]);
+
+  const creatureNodeRef = useCallback((creatureId) => {
+    let ref = creatureNodeCallbacks.current.get(creatureId);
+    if (!ref) {
+      ref = (element) => {
+        if (!element) {
+          creatureNodesRef.current.delete(creatureId);
+          return;
+        }
+        creatureNodesRef.current.set(creatureId, element);
+        const clock = simulationClockRef.current;
+        const renderPositions = interpolateHandNetRenderPositions(
+          clock.previous,
+          clock.current,
+          clock.remainderMs,
+        );
+        const creature = renderPositions.creatures.find(({ id }) => id === creatureId);
+        positionActorElement(element, creature?.position);
+      };
+      creatureNodeCallbacks.current.set(creatureId, ref);
+    }
+    return ref;
+  }, [positionActorElement]);
+
+  useLayoutEffect(() => {
+    const shallows = shallowsRef.current;
+    if (!shallows) return undefined;
+    const measureAndPaint = () => {
+      shallowsSizeRef.current = {
+        width: shallows.clientWidth,
+        height: shallows.clientHeight,
+      };
+      const clock = simulationClockRef.current;
+      paintRenderPositions(interpolateHandNetRenderPositions(
+        clock.previous,
+        clock.current,
+        clock.remainderMs,
+      ));
+    };
+    measureAndPaint();
+    const resizeObserver = typeof ResizeObserver === "function"
+      ? new ResizeObserver(measureAndPaint)
+      : null;
+    resizeObserver?.observe(shallows);
+    window.addEventListener("resize", measureAndPaint);
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", measureAndPaint);
+    };
+  }, [paintRenderPositions]);
+
+  const applyClockAction = useCallback((action) => {
+    const clock = simulationClockRef.current;
+    const nextCurrent = applyHandNetAction(clock.current, action);
+    const nextPrevious = clock.previous === clock.current
+      ? nextCurrent
+      : applyHandNetAction(clock.previous, action);
+    clock.previous = nextPrevious;
+    clock.current = nextCurrent;
+    setState(nextCurrent);
+    return nextCurrent;
+  }, []);
+
   const resetAttempt = useCallback(() => {
     seedRef.current = (seedRef.current + 1) >>> 0;
     recordedOutcomeRef.current = null;
@@ -260,17 +363,24 @@ export default function AdventureHandNetModal({
     setCatchResult(null);
     setCatchError(null);
     setCatchDetailsOpen(false);
-    setState(createAttempt({
+    const nextAttempt = createAttempt({
       seed: seedRef.current,
       tutorial,
       reducedMotion,
-    }));
-  }, [reducedMotion, tutorial]);
+    });
+    simulationClockRef.current = {
+      previous: nextAttempt,
+      current: nextAttempt,
+      remainderMs: 0,
+    };
+    paintRenderPositions(interpolateHandNetRenderPositions(nextAttempt, nextAttempt, 0));
+    setState(nextAttempt);
+  }, [paintRenderPositions, reducedMotion, tutorial]);
 
   const stopMoving = useCallback(() => {
     pressedKeysRef.current.clear();
-    setState((current) => applyHandNetAction(current, { type: HAND_NET_ACTIONS.STOP }));
-  }, []);
+    applyClockAction({ type: HAND_NET_ACTIONS.STOP });
+  }, [applyClockAction]);
 
   const returnToShore = useCallback((reason) => {
     stopMoving();
@@ -350,22 +460,44 @@ export default function AdventureHandNetModal({
     if (!pageVisible || state.phase !== HAND_NET_PHASES.PLAYING) return undefined;
     let animationFrame = 0;
     let lastTimestamp = null;
-    let simulationAccumulatorMs = 0;
     const advance = (timestamp) => {
       if (lastTimestamp !== null) {
         const elapsed = Math.min(100, Math.max(0, timestamp - lastTimestamp));
-        const frame = consumeHandNetFrameElapsed(simulationAccumulatorMs, elapsed);
-        simulationAccumulatorMs = frame.remainderMs;
+        const clock = simulationClockRef.current;
+        const frame = consumeHandNetFrameElapsed(clock.remainderMs, elapsed);
+        let simulationElapsedMs = frame.simulationElapsedMs;
+        while (
+          simulationElapsedMs > 0
+          && clock.current.phase === HAND_NET_PHASES.PLAYING
+        ) {
+          clock.previous = clock.current;
+          clock.current = tickHandNetState(clock.current, HAND_NET_SIMULATION_STEP_MS);
+          simulationElapsedMs -= HAND_NET_SIMULATION_STEP_MS;
+        }
+        clock.remainderMs = clock.current.phase === HAND_NET_PHASES.PLAYING
+          ? frame.remainderMs
+          : 0;
         if (frame.simulationElapsedMs > 0) {
-          setState((current) => tickHandNetState(current, frame.simulationElapsedMs));
+          setState(clock.current);
         }
       }
       lastTimestamp = timestamp;
-      animationFrame = window.requestAnimationFrame(advance);
+      const clock = simulationClockRef.current;
+      if (clock.current.phase !== HAND_NET_PHASES.PLAYING) {
+        clock.previous = clock.current;
+      }
+      paintRenderPositions(interpolateHandNetRenderPositions(
+        clock.previous,
+        clock.current,
+        clock.remainderMs,
+      ));
+      if (clock.current.phase === HAND_NET_PHASES.PLAYING) {
+        animationFrame = window.requestAnimationFrame(advance);
+      }
     };
     animationFrame = window.requestAnimationFrame(advance);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [pageVisible, state.phase]);
+  }, [pageVisible, paintRenderPositions, state.phase]);
 
   useEffect(() => {
     if (state.outcome?.type !== "caught" || recordedOutcomeRef.current === state.outcome.creatureId) return;
@@ -385,10 +517,10 @@ export default function AdventureHandNetModal({
       if (!MOVE_KEYS[movementKey]) return;
       pressedKeysRef.current.delete(movementKey);
       const intent = movementIntent(pressedKeysRef.current);
-      setState((current) => applyHandNetAction(current, {
+      applyClockAction({
         type: Math.abs(intent.x) + Math.abs(intent.y) > 0 ? HAND_NET_ACTIONS.MOVE : HAND_NET_ACTIONS.STOP,
         ...intent,
-      }));
+      });
     };
     window.addEventListener("keyup", releaseMovementKey);
     window.addEventListener("blur", stopMoving);
@@ -396,16 +528,16 @@ export default function AdventureHandNetModal({
       window.removeEventListener("keyup", releaseMovementKey);
       window.removeEventListener("blur", stopMoving);
     };
-  }, [stopMoving]);
+  }, [applyClockAction, stopMoving]);
 
   function beginMove(x, y) {
     if (terminal) return;
-    setState((current) => applyHandNetAction(current, { type: HAND_NET_ACTIONS.MOVE, x, y }));
+    applyClockAction({ type: HAND_NET_ACTIONS.MOVE, x, y });
   }
 
   function scoop() {
     if (terminal) return;
-    setState((current) => applyHandNetAction(current, { type: HAND_NET_ACTIONS.SCOOP }));
+    applyClockAction({ type: HAND_NET_ACTIONS.SCOOP });
   }
 
   function handleWaterScoop(event) {
@@ -472,15 +604,10 @@ export default function AdventureHandNetModal({
     >
       <section className={styles.handNetCard} data-hand-net-phase={state.phase}>
         <div
+          ref={shallowsRef}
           className={`${styles.handNetShallows} ${state.presentation.waveMotion ? styles.handNetShallowsMoving : ""}`}
           style={{
             "--hand-net-tidepool-image": `url("${ELVERSON_HAND_NET_TIDEPOOL_PATH}")`,
-            "--hand-net-player-x": `${(state.player.position.x / state.arena.width) * 100}%`,
-            "--hand-net-player-y": `${(state.player.position.y / state.arena.height) * 100}%`,
-            "--hand-net-player-velocity-x": visualVelocity.x,
-            "--hand-net-player-velocity-y": visualVelocity.y,
-            "--hand-net-player-speed-ratio": playerSpeedRatio,
-            "--hand-net-player-motion-angle": `${playerMotionAngle}deg`,
           }}
           role="application"
           tabIndex={0}
@@ -493,8 +620,6 @@ export default function AdventureHandNetModal({
 
           <span className={styles.handNetWave} aria-hidden="true"><i /><i /><i /></span>
           <span className={styles.handNetSandRipples} aria-hidden="true" />
-          <span className={styles.handNetCaustics} data-hand-net-effect="surface-caustics" aria-hidden="true" />
-          <span className={styles.handNetCausticWake} data-hand-net-effect="wading-wake" aria-hidden="true"><i /><b /></span>
           {state.creatures.map((creature) => {
             if (creature.status === "escaped" || creature.status === "caught") return null;
             const sprite = atlasPositions[creature.speciesId];
@@ -502,10 +627,9 @@ export default function AdventureHandNetModal({
             return (
               <span
                 key={creature.id}
+                ref={creatureNodeRef(creature.id)}
                 className={`${styles.handNetCreature} ${creature.status === "fleeing" ? styles.handNetCreatureFleeing : ""} ${creature.category === "invertebrate" ? styles.handNetCreatureInvertebrate : ""}`}
                 style={{
-                  left: `${(creature.position.x / state.arena.width) * 100}%`,
-                  top: `${(creature.position.y / state.arena.height) * 100}%`,
                   "--hand-net-facing": creature.heading.x < 0 ? -1 : 1,
                   "--hand-net-atlas-x": `${sprite.x}%`,
                   "--hand-net-atlas-y": `${sprite.y}%`,
@@ -520,10 +644,9 @@ export default function AdventureHandNetModal({
           })}
           <span className={styles.handNetSurfaceVeil} data-hand-net-effect="surface-veil" aria-hidden="true" />
           <span
+            ref={playerElementRef}
             className={`${styles.handNetPlayer} ${playerMoving ? styles.handNetPlayerMoving : ""} ${celebrating ? styles.handNetPlayerCelebrating : ""} ${playerSpriteRow >= 2 ? styles.handNetPlayerFacingRear : styles.handNetPlayerFacingFront}`}
             style={{
-              left: celebrating ? "19%" : `${(state.player.position.x / state.arena.width) * 100}%`,
-              top: celebrating ? "72%" : `${(state.player.position.y / state.arena.height) * 100}%`,
               "--hand-net-player-atlas-x": playerSpritePosition.x,
               "--hand-net-player-atlas-y": playerSpritePosition.y,
               backgroundImage: `url("${ELVERSON_HAND_NET_PLAYER_ATLAS_PATH}")`,

@@ -11,6 +11,7 @@ import {
   applyHandNetAction,
   consumeHandNetFrameElapsed,
   createHandNetState,
+  interpolateHandNetRenderPositions,
   tickHandNetState,
 } from "./adventureHandNet.mjs";
 
@@ -115,6 +116,130 @@ test("display frames retain partial time and request React updates only for whol
   assert.equal(simulatedMs, 60_000);
   assert.equal(reactUpdateCount, 3_000, "a high-refresh display should commit at the 50 Hz simulation rate");
   assert.ok(remainderMs < 1e-7);
+});
+
+test("render positions interpolate immutable fixed-step snapshots", () => {
+  const previous = applyHandNetAction(
+    createHandNetState({ seed: 71, creatureCount: 2 }),
+    { type: HAND_NET_ACTIONS.MOVE, x: 1, y: 0 },
+  );
+  const previousCopy = structuredClone(previous);
+  const current = tickHandNetState(previous, HAND_NET_SIMULATION_STEP_MS);
+  const midpoint = interpolateHandNetRenderPositions(previous, current, 10);
+
+  assert.equal(midpoint.interpolationAlpha, 0.5);
+  assert.equal(
+    midpoint.player.position.x,
+    (previous.player.position.x + current.player.position.x) / 2,
+  );
+  assert.equal(
+    midpoint.player.position.y,
+    (previous.player.position.y + current.player.position.y) / 2,
+  );
+  assert.equal(midpoint.creatures[0].id, previous.creatures[0].id);
+  assert.equal(
+    midpoint.creatures[0].position.x,
+    (previous.creatures[0].position.x + current.creatures[0].position.x) / 2,
+  );
+  assert.deepEqual(previous, previousCopy);
+  assert.equal(Object.isFrozen(midpoint), true);
+  assert.equal(Object.isFrozen(midpoint.player.position), true);
+
+  const start = interpolateHandNetRenderPositions(previous, current, 0);
+  assert.deepEqual(start.player.position, previous.player.position);
+  const nearEnd = interpolateHandNetRenderPositions(previous, current, 19.999);
+  assert.ok(Math.abs(nearEnd.player.position.x - current.player.position.x) < 0.00001);
+
+  assert.throws(
+    () => interpolateHandNetRenderPositions(previous, current, 20),
+    /render remainderMs/,
+  );
+  const mismatched = mutableCopy(current);
+  mismatched.creatures[0].id = "different-creature";
+  assert.throws(
+    () => interpolateHandNetRenderPositions(previous, mismatched, 10),
+    /missing creature/,
+  );
+});
+
+test("render interpolation gives every common desktop refresh an even movement delta", () => {
+  for (const refreshRate of [60, 120, 144, 165]) {
+    const initial = applyHandNetAction(
+      createHandNetState({ seed: 81, creatureCount: 1 }),
+      { type: HAND_NET_ACTIONS.MOVE, x: 1, y: 0 },
+    );
+    const clock = { previous: initial, current: initial, remainderMs: 0 };
+    const deltas = [];
+    let priorX = null;
+    const frameCount = Math.floor(refreshRate / 2);
+    for (let frameIndex = 0; frameIndex < frameCount; frameIndex += 1) {
+      const frame = consumeHandNetFrameElapsed(clock.remainderMs, 1_000 / refreshRate);
+      clock.remainderMs = frame.remainderMs;
+      for (
+        let simulationElapsedMs = frame.simulationElapsedMs;
+        simulationElapsedMs > 0;
+        simulationElapsedMs -= HAND_NET_SIMULATION_STEP_MS
+      ) {
+        clock.previous = clock.current;
+        clock.current = tickHandNetState(clock.current, HAND_NET_SIMULATION_STEP_MS);
+      }
+      const render = interpolateHandNetRenderPositions(
+        clock.previous,
+        clock.current,
+        clock.remainderMs,
+      );
+      if (priorX !== null && frameIndex >= 5) {
+        deltas.push(render.player.position.x - priorX);
+      }
+      priorX = render.player.position.x;
+    }
+
+    const expectedDelta = initial.player.speed / refreshRate;
+    assert.ok(deltas.length > 0);
+    assert.equal(
+      deltas.every((delta) => delta > 0),
+      true,
+      `${refreshRate} Hz rendering must not hold a 50 Hz position for a display frame`,
+    );
+    for (const delta of deltas) {
+      assert.ok(
+        Math.abs(delta - expectedDelta) < 1e-9,
+        `${refreshRate} Hz displacement should be uniform`,
+      );
+    }
+  }
+});
+
+test("long display frames retain adjacent interpolation endpoints", () => {
+  const initial = applyHandNetAction(
+    createHandNetState({ seed: 91, creatureCount: 1 }),
+    { type: HAND_NET_ACTIONS.MOVE, x: 1, y: 0 },
+  );
+  const frame = consumeHandNetFrameElapsed(0, 100);
+  const clock = { previous: initial, current: initial, remainderMs: frame.remainderMs };
+  for (
+    let simulationElapsedMs = frame.simulationElapsedMs;
+    simulationElapsedMs > 0;
+    simulationElapsedMs -= HAND_NET_SIMULATION_STEP_MS
+  ) {
+    clock.previous = clock.current;
+    clock.current = tickHandNetState(clock.current, HAND_NET_SIMULATION_STEP_MS);
+  }
+
+  assert.equal(clock.previous.tickCount, 4);
+  assert.equal(clock.current.tickCount, 5);
+  assert.equal(
+    clock.current.simulationTimeMs - clock.previous.simulationTimeMs,
+    HAND_NET_SIMULATION_STEP_MS,
+  );
+  assert.deepEqual(
+    interpolateHandNetRenderPositions(
+      clock.previous,
+      clock.current,
+      clock.remainderMs,
+    ).player.position,
+    clock.previous.player.position,
+  );
 });
 
 test("move actions drive the player and forward net without mutating prior state", () => {

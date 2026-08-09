@@ -107,6 +107,58 @@ function copyPoint(point) {
   return { x: point.x, y: point.y };
 }
 
+/**
+ * Builds the compositor-only actor positions for the current display frame.
+ * Gameplay remains on the deterministic fixed-step states; rendering stays one
+ * simulation step behind so every monitor refresh receives an even position.
+ */
+export function interpolateHandNetRenderPositions(
+  previousStateValue,
+  currentStateValue,
+  remainderMs,
+) {
+  const previousState = requireState(previousStateValue);
+  const currentState = requireState(currentStateValue);
+  finiteNumber(remainderMs, "Hand-net render remainderMs");
+  if (remainderMs < 0 || remainderMs >= HAND_NET_SIMULATION_STEP_MS) {
+    throw new RangeError(
+      `Hand-net render remainderMs must stay between 0 and ${HAND_NET_SIMULATION_STEP_MS}.`,
+    );
+  }
+  if (previousState.creatures.length !== currentState.creatures.length) {
+    throw new RangeError("Hand-net render states must contain the same creatures.");
+  }
+
+  const interpolationAlpha = remainderMs / HAND_NET_SIMULATION_STEP_MS;
+  const interpolatePoint = (previousPoint, currentPoint) => ({
+    x: previousPoint.x + ((currentPoint.x - previousPoint.x) * interpolationAlpha),
+    y: previousPoint.y + ((currentPoint.y - previousPoint.y) * interpolationAlpha),
+  });
+  const creatures = previousState.creatures.map((previousCreature, index) => {
+    const currentCreature = currentState.creatures[index];
+    if (currentCreature?.id !== previousCreature.id) {
+      throw new RangeError(
+        `Hand-net render states are missing creature ${String(previousCreature.id)}.`,
+      );
+    }
+    return {
+      id: previousCreature.id,
+      position: interpolatePoint(previousCreature.position, currentCreature.position),
+    };
+  });
+
+  return deepFreeze({
+    interpolationAlpha,
+    player: {
+      position: interpolatePoint(
+        previousState.player.position,
+        currentState.player.position,
+      ),
+    },
+    creatures,
+  });
+}
+
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
 }
