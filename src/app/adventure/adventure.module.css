@@ -3399,6 +3399,10 @@
   animation: spriteWalk var(--sprite-walk-cycle-duration, 480ms) steps(1, end) infinite;
 }
 
+.spriteIdleWalking {
+  animation: spriteIdleWalk var(--sprite-idle-walk-cycle-duration, 3200ms) steps(1, end) var(--sprite-idle-walk-delay, 0ms) infinite;
+}
+
 .spriteDockAudienceGlanceLeft {
   animation: dockAudienceGlanceLeft var(--sprite-idle-gesture-duration, 7600ms) steps(1, end) var(--sprite-idle-gesture-delay, 0ms) infinite;
 }
@@ -3421,6 +3425,13 @@
   50% { background-position: var(--sprite-step-frame-b-x, 88%) var(--sprite-row); transform: translateY(0); }
   75% { background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row); transform: translateY(0); }
   100% { background-position: var(--sprite-step-frame-a-x, 12%) var(--sprite-row); transform: translateY(0); }
+}
+
+@keyframes spriteIdleWalk {
+  0% { background-position: var(--sprite-step-frame-a-x, 12%) var(--sprite-row); }
+  12.5% { background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row); }
+  25% { background-position: var(--sprite-step-frame-b-x, 88%) var(--sprite-row); }
+  37.5%, 100% { background-position: var(--sprite-step-neutral-x, 50%) var(--sprite-row); }
 }
 
 @keyframes professorSpriteWalk {

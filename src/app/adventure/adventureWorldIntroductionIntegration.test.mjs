@@ -145,6 +145,7 @@ test("the dock kickoff stages the town cast and restores exploration after its b
   );
   assert.match(component, /const renderedActorFacing = idleGesture\?\.baseFacing \?\? actorFacing/);
   assert.match(component, /moving=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.WALKING\}/);
+  assert.match(component, /idleWalking=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.IDLE_WALKING\}/);
   assert.match(component, /pendingDockSpeechSaveRef\.current = opening\.save[\s\S]*setDockCutscenePhase\("covering"\)/);
   assert.match(component, /position: \{ \.\.\.ELVERSON_DOCK_SPEECH_RESTORE_POSITION \}[\s\S]*commitAdventureMutation\([\s\S]*"elverson-dock-speech-complete"[\s\S]*setDockCutscenePhase\("revealing"\)/);
 });

@@ -1,5 +1,34 @@
 import { ELVERSON_TOWN_WEST_COVE } from "./adventureElversonTownLayout.mjs";
 
+// Only fixed-position interior residents opt into the presentation-only walk.
+// Outdoor, scripted, and already-patrolling residents keep their authored
+// movement behavior.
+const ELVERSON_IDLE_WALK_RESIDENT_IDS = Object.freeze([
+  "henderson",
+  "sam",
+  "ellis",
+  "karah",
+  "teacher-caroline",
+  "red-schoolhouse-hudson",
+  "red-schoolhouse-harrison",
+  "red-schoolhouse-rosie",
+  "red-schoolhouse-juliana",
+  "programmer-harlan",
+  "henry",
+  "reef-house-charlie",
+  "reef-house-danny",
+  "jack",
+  "landon",
+  "oliver",
+  "charlotte",
+  "eloise",
+  "edith",
+  "william",
+  "hybrid-house-olivia",
+  "hybrid-house-alyssa",
+  "hybrid-house-henry",
+]);
+
 export const ELVERSON_AMBIENT_RESIDENTS = Object.freeze([
   {
     id: "fisherman-wyeth",
@@ -457,4 +486,8 @@ export const ELVERSON_AMBIENT_RESIDENTS = Object.freeze([
     guidance: "A hybrid deck needs cards that make the transition between its habitats worthwhile.",
     returnLine: "Drop Off is still being tuned for a future match.",
   },
-]);
+].map((resident) => (
+  ELVERSON_IDLE_WALK_RESIDENT_IDS.includes(resident.id)
+    ? { ...resident, idleWalk: true }
+    : resident
+)));

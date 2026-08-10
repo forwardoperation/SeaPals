@@ -532,6 +532,7 @@ function elversonResidentInteraction(resident) {
     at: resident.at,
     npcId: resident.id,
     conversationId: `conversation-elverson-${resident.id}`,
+    ...(resident.idleWalk ? { idleWalk: true } : {}),
     ...(resident.duel
       ? {
           trainerId: resident.id,
@@ -921,6 +922,7 @@ const shellshoreRuntimeScenes = {
         npcId: "marina",
         conversationId: "conversation-shellshore-marina",
         encounterId: "encounter-shellshore-marina",
+        idleWalk: true,
       },
       ...ELVERSON_AMBIENT_RESIDENTS
         .filter((resident) => resident.sceneId === "coral-home")
@@ -966,6 +968,7 @@ const shellshoreRuntimeScenes = {
         npcId: "dorian",
         conversationId: "conversation-shellshore-dorian",
         encounterId: "encounter-shellshore-dorian",
+        idleWalk: true,
       },
       ...ELVERSON_AMBIENT_RESIDENTS
         .filter((resident) => resident.sceneId === "deep-home")

@@ -18,11 +18,14 @@ test("live actor state drives rendering, interaction targeting, and player colli
   assert.match(component, /facing=\{renderedActorFacing\}/);
   assert.match(component, /const actorAnimationMode = getAdventureActorAnimationMode\(\{/);
   assert.match(component, /isMoving:\s*runtimeActor\?\.moving === true/);
+  assert.match(component, /idleWalk:\s*characterInteraction\.idleWalk === true/);
   assert.match(component, /isEngaged:\s*actorIsEngaged/);
   assert.match(component, /movementPaused,/);
   assert.match(component, /pageVisible,/);
   assert.match(component, /reducedMotion:\s*effectiveReducedMotion/);
   assert.match(component, /moving=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.WALKING\}/);
+  assert.match(component, /idleWalking=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.IDLE_WALKING\}/);
+  assert.match(component, /idleWalkKey=\{characterInteraction\.id\}/);
   assert.doesNotMatch(component, /hasPatrol:/);
   assert.doesNotMatch(component, /steppingInPlace|STEPPING_IN_PLACE/);
 });
@@ -75,22 +78,38 @@ test("the bedroom enlarges the player artwork without changing world geometry", 
   assert.match(spriteRule, /transform-origin:\s*center 94\.7%/);
 });
 
-test("stationary residents use their registered neutral frame while moving actors cycle", () => {
+test("opted-in stationary residents use a slow registered walk cycle without moving", () => {
   assert.match(component, /const frameRegistration = getAdventureWalkFrameRegistration\(\{/);
+  assert.match(component, /const idleWalkActive = idleWalking && !moving && !idleGesture/);
   assert.match(component, /const spriteStyle = \{/);
   assert.match(component, /"--sprite-step-frame-a-x": `\$\{frameRegistration\.frameA\}%`/);
   assert.match(component, /"--sprite-step-neutral-x": `\$\{frameRegistration\.neutral\}%`/);
   assert.match(component, /"--sprite-step-frame-b-x": `\$\{frameRegistration\.frameB\}%`/);
+  assert.match(component, /"--sprite-idle-walk-cycle-duration": `\$\{ADVENTURE_NPC_IDLE_WALK_CYCLE_DURATION_MS\}ms`/);
+  assert.match(component, /"--sprite-idle-walk-delay": `\$\{getAdventureIdleWalkDelayMs\(idleWalkKey\)\}ms`/);
+  assert.match(component, /idleWalkActive[\s\S]*?styles\.spriteIdleWalking/);
   assert.match(component, /data-sprite-profile=\{animationProfile\}/);
   assert.match(styles, /\.spriteArtwork\s*\{[\s\S]*?background-position:\s*var\(--sprite-step-neutral-x, 50%\) var\(--sprite-row\)/);
   assert.doesNotMatch(styles, /spriteSteppingInPlace|spriteWalkInPlace/);
 
-  const movingCycle = styles.match(/@keyframes spriteWalk\s*\{[\s\S]*?(?=@keyframes professorSpriteWalk)/)?.[0] ?? "";
+  const movingCycle = styles.match(/@keyframes spriteWalk\s*\{[\s\S]*?(?=@keyframes spriteIdleWalk)/)?.[0] ?? "";
   assert.ok(movingCycle);
   assert.match(movingCycle, /--sprite-step-frame-a-x/);
   assert.match(movingCycle, /--sprite-step-neutral-x/);
   assert.match(movingCycle, /--sprite-step-frame-b-x/);
   assert.doesNotMatch(movingCycle, /translateY\(-/);
+
+  assert.match(
+    styles,
+    /\.spriteIdleWalking\s*\{\s*animation:\s*spriteIdleWalk var\(--sprite-idle-walk-cycle-duration, 3200ms\) steps\(1, end\) var\(--sprite-idle-walk-delay, 0ms\) infinite/,
+  );
+  const idleCycle = styles.match(/@keyframes spriteIdleWalk\s*\{[\s\S]*?(?=@keyframes professorSpriteWalk)/)?.[0] ?? "";
+  assert.ok(idleCycle);
+  assert.match(idleCycle, /--sprite-step-frame-a-x/);
+  assert.match(idleCycle, /--sprite-step-neutral-x/);
+  assert.match(idleCycle, /--sprite-step-frame-b-x/);
+  assert.match(idleCycle, /37\.5%, 100%/);
+  assert.doesNotMatch(idleCycle, /transform|translate|scale/);
 });
 
 test("dock gestures switch registered neutral facings only during the visible full-motion speech", () => {
@@ -100,11 +119,14 @@ test("dock gestures switch registered neutral facings only during the visible fu
   );
   assert.match(component, /const idleGesture = dockSpeechGestureActive[\s\S]*?characterInteraction\.dockSpeechGesture \?\? null/);
   assert.match(component, /const renderedActorFacing = idleGesture\?\.baseFacing \?\? actorFacing/);
+  assert.match(component, /const walkingActive = moving && !idleGesture/);
+  assert.match(component, /const idleWalkActive = idleWalking && !moving && !idleGesture/);
   assert.match(component, /"--sprite-idle-left-x": `\$\{idleGestureRegistrations\.left\.neutral\}%`/);
   assert.match(component, /"--sprite-idle-right-x": `\$\{idleGestureRegistrations\.right\.neutral\}%`/);
   assert.match(component, /const dockGatheringStaged = dockSpeechPending \|\| bestFriendEscortActive/);
   assert.match(component, /markersEnabled=\{!dockGatheringStaged\}/);
   assert.match(component, /idleGesture=\{idleGesture\}/);
+  assert.match(component, /idleWalking=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.IDLE_WALKING\}/);
 
   for (const keyframesName of [
     "dockAudienceGlanceLeft",

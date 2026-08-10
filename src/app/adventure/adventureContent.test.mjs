@@ -1400,6 +1400,51 @@ test("every Elverson resident cross-resolves through one conversation and one sc
   }
 });
 
+test("only fixed-position Elverson interior residents opt into idle walking", () => {
+  const expectedIdleWalkInteractions = [
+    "coral-home:interaction-coral-home-marina",
+    "coral-home:interaction-elverson-henry",
+    "coral-home:interaction-elverson-reef-house-charlie",
+    "coral-home:interaction-elverson-reef-house-danny",
+    "coral-home:interaction-elverson-jack",
+    "deep-home:interaction-deep-home-dorian",
+    "deep-home:interaction-elverson-landon",
+    "deep-home:interaction-elverson-oliver",
+    "elverson-oceanic-home:interaction-elverson-charlotte",
+    "elverson-oceanic-home:interaction-elverson-eloise",
+    "elverson-oceanic-home:interaction-elverson-edith",
+    "elverson-hybrid-home:interaction-elverson-william",
+    "elverson-hybrid-home:interaction-elverson-hybrid-house-olivia",
+    "elverson-hybrid-home:interaction-elverson-hybrid-house-alyssa",
+    "elverson-hybrid-home:interaction-elverson-hybrid-house-henry",
+    "elverson-supply-company:interaction-elverson-henderson",
+    "elverson-supply-company:interaction-elverson-sam",
+    "elverson-supply-company:interaction-elverson-ellis",
+    "elverson-supply-company:interaction-elverson-karah",
+    "elverson-red-schoolhouse:interaction-elverson-teacher-caroline",
+    "elverson-red-schoolhouse:interaction-elverson-red-schoolhouse-hudson",
+    "elverson-red-schoolhouse:interaction-elverson-red-schoolhouse-harrison",
+    "elverson-red-schoolhouse:interaction-elverson-red-schoolhouse-rosie",
+    "elverson-red-schoolhouse:interaction-elverson-red-schoolhouse-juliana",
+    "elverson-marine-research-lab:interaction-elverson-programmer-harlan",
+  ].sort();
+  const idleWalkInteractions = ADVENTURE_CONTENT.scenes.flatMap((scene) => (
+    scene.world.interactions
+      .filter((interaction) => interaction.idleWalk === true)
+      .map((interaction) => `${scene.id}:${interaction.id}`)
+  )).sort();
+
+  assert.deepEqual(idleWalkInteractions, expectedIdleWalkInteractions);
+  for (const sceneInteraction of idleWalkInteractions) {
+    const separatorIndex = sceneInteraction.indexOf(":");
+    const sceneId = sceneInteraction.slice(0, separatorIndex);
+    const interactionId = sceneInteraction.slice(separatorIndex + 1);
+    const interaction = resolveAdventureInteraction(sceneId, interactionId);
+    assert.ok(["npc", "trainer"].includes(interaction.type));
+    assert.equal(interaction.patrol, undefined);
+  }
+});
+
 test("Elverson doors, challengers, mentor, conversations, and encounters cross-resolve", () => {
   const reefDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-reef-house");
   assert.deepEqual(reefDoor.at, { x: 13.8, y: 4.1 });

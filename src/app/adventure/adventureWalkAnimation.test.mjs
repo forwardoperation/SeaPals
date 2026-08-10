@@ -3,10 +3,12 @@ import test from "node:test";
 
 import {
   ADVENTURE_ACTOR_ANIMATION_MODES,
+  ADVENTURE_NPC_IDLE_WALK_CYCLE_DURATION_MS,
   ADVENTURE_NPC_WALK_CYCLE_DISTANCE,
   ADVENTURE_WALK_FRAME_REGISTRATIONS,
   ADVENTURE_WALK_ANIMATION_DEFAULTS,
   getAdventureActorAnimationMode,
+  getAdventureIdleWalkDelayMs,
   getAdventureWalkCycleDurationMs,
   getAdventureWalkFrameRegistration,
   hasAdventureWalkDisplacement,
@@ -31,7 +33,7 @@ test("player walking follows intent immediately and stops in inactive modes", ()
   assert.equal(isAdventurePlayerWalking({ isMoving: false }), false);
 });
 
-test("stationary residents hold their neutral pose while moving actors walk", () => {
+test("only opted-in stationary residents use the presentation-only walk", () => {
   assert.equal(
     getAdventureActorAnimationMode(),
     ADVENTURE_ACTOR_ANIMATION_MODES.STILL,
@@ -44,24 +46,47 @@ test("stationary residents hold their neutral pose while moving actors walk", ()
     getAdventureActorAnimationMode({ isMoving: false }),
     ADVENTURE_ACTOR_ANIMATION_MODES.STILL,
   );
+  assert.equal(
+    getAdventureActorAnimationMode({ idleWalk: true }),
+    ADVENTURE_ACTOR_ANIMATION_MODES.IDLE_WALKING,
+  );
+  assert.equal(
+    getAdventureActorAnimationMode({ isMoving: true, idleWalk: true }),
+    ADVENTURE_ACTOR_ANIMATION_MODES.WALKING,
+  );
   assert.deepEqual(ADVENTURE_ACTOR_ANIMATION_MODES, {
     STILL: "still",
     WALKING: "walking",
+    IDLE_WALKING: "idle-walking",
   });
 });
 
 test("resident animation stops during conversations, pauses, hidden tabs, and reduced motion", () => {
   for (const inactiveState of [
-    { isEngaged: true },
-    { movementPaused: true },
-    { pageVisible: false },
-    { reducedMotion: true },
+    { isMoving: true, idleWalk: true, isEngaged: true },
+    { isMoving: true, idleWalk: true, movementPaused: true },
+    { isMoving: true, idleWalk: true, pageVisible: false },
+    { isMoving: true, idleWalk: true, reducedMotion: true },
   ]) {
     assert.equal(
       getAdventureActorAnimationMode(inactiveState),
       ADVENTURE_ACTOR_ANIMATION_MODES.STILL,
     );
   }
+});
+
+test("idle resident cycles use a deterministic staggered phase", () => {
+  assert.equal(ADVENTURE_NPC_IDLE_WALK_CYCLE_DURATION_MS, 3200);
+  const georgeDelay = getAdventureIdleWalkDelayMs("interaction-coral-home-marina");
+  const calvinDelay = getAdventureIdleWalkDelayMs("interaction-deep-home-dorian");
+  assert.equal(georgeDelay, getAdventureIdleWalkDelayMs("interaction-coral-home-marina"));
+  assert.notEqual(georgeDelay, calvinDelay);
+  assert.ok(georgeDelay <= 0 && georgeDelay > -ADVENTURE_NPC_IDLE_WALK_CYCLE_DURATION_MS);
+  assert.ok(calvinDelay <= 0 && calvinDelay > -ADVENTURE_NPC_IDLE_WALK_CYCLE_DURATION_MS);
+  assert.throws(
+    () => getAdventureIdleWalkDelayMs("resident", { cycleDurationMs: 0 }),
+    /idle walk cycle duration must be a positive finite number/,
+  );
 });
 
 test("every authored sprite profile registers all three walk frames for every facing", () => {

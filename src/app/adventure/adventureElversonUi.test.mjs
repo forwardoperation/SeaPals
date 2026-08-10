@@ -119,6 +119,7 @@ test("the dock speech uses neutral-frame gestures without turning them into walk
   );
   assert.match(component, /const renderedActorFacing = idleGesture\?\.baseFacing \?\? actorFacing/);
   assert.match(component, /moving=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.WALKING\}/);
+  assert.match(component, /idleWalking=\{!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES\.IDLE_WALKING\}/);
   assert.match(component, /idleGesture=\{idleGesture\}/);
   assert.match(styles, /\.spriteDockAudienceGlanceLeft\s*\{[^}]*dockAudienceGlanceLeft/);
   assert.match(styles, /\.spriteDockAudienceGlanceRight\s*\{[^}]*dockAudienceGlanceRight/);

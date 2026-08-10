@@ -85,8 +85,10 @@ import {
 } from "./adventureRenderCulling.mjs";
 import {
   ADVENTURE_ACTOR_ANIMATION_MODES,
+  ADVENTURE_NPC_IDLE_WALK_CYCLE_DURATION_MS,
   ADVENTURE_NPC_WALK_CYCLE_DISTANCE,
   getAdventureActorAnimationMode,
+  getAdventureIdleWalkDelayMs,
   getAdventureWalkCycleDurationMs,
   getAdventureWalkFrameRegistration,
   isAdventurePlayerWalking,
@@ -655,6 +657,8 @@ function SpriteArtwork({
   character = "player",
   facing = "down",
   moving = false,
+  idleWalking = false,
+  idleWalkKey = null,
   portrait = false,
   walkSpeed = null,
   walkCycleDistance = undefined,
@@ -676,6 +680,8 @@ function SpriteArtwork({
       }),
     ]),
   ) : null;
+  const walkingActive = moving && !idleGesture;
+  const idleWalkActive = idleWalking && !moving && !idleGesture;
   const spriteStyle = {
     "--sprite-step-neutral-x": `${frameRegistration.neutral}%`,
     ...(idleGesture
@@ -688,14 +694,24 @@ function SpriteArtwork({
         "--sprite-idle-up-x": `${idleGestureRegistrations.up.neutral}%`,
       }
       : {}),
-    ...(moving && Number.isFinite(walkSpeed) && walkSpeed > 0
+    ...(walkingActive || idleWalkActive
+      ? {
+        "--sprite-step-frame-a-x": `${frameRegistration.frameA}%`,
+        "--sprite-step-frame-b-x": `${frameRegistration.frameB}%`,
+      }
+      : {}),
+    ...(walkingActive && Number.isFinite(walkSpeed) && walkSpeed > 0
       ? {
         "--sprite-walk-cycle-duration": `${getAdventureWalkCycleDurationMs(
           walkSpeed,
           { cycleDistance: walkCycleDistance },
         )}ms`,
-        "--sprite-step-frame-a-x": `${frameRegistration.frameA}%`,
-        "--sprite-step-frame-b-x": `${frameRegistration.frameB}%`,
+      }
+      : {}),
+    ...(idleWalkActive
+      ? {
+        "--sprite-idle-walk-cycle-duration": `${ADVENTURE_NPC_IDLE_WALK_CYCLE_DURATION_MS}ms`,
+        "--sprite-idle-walk-delay": `${getAdventureIdleWalkDelayMs(idleWalkKey)}ms`,
       }
       : {}),
   };
@@ -706,9 +722,14 @@ function SpriteArtwork({
       : idleGesture?.kind === "audience-right"
         ? styles.spriteDockAudienceGlanceRight
         : "";
+  const locomotionClass = walkingActive
+    ? styles.spriteWalking
+    : idleWalkActive
+      ? styles.spriteIdleWalking
+      : "";
   return (
     <span
-      className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${moving ? styles.spriteWalking : ""} ${portrait ? styles.spritePortrait : ""} ${idleGestureClass}`}
+      className={`${styles.spriteArtwork} ${styles[`${artworkCharacter}SpriteArtwork`]} ${styles[`spriteFacing${facingName}`]} ${locomotionClass} ${portrait ? styles.spritePortrait : ""} ${idleGestureClass}`}
       data-sprite-profile={animationProfile}
       style={spriteStyle}
       aria-hidden="true"
@@ -738,6 +759,8 @@ function AdventureTrainerSprite({
   position,
   facing = "down",
   moving = false,
+  idleWalking = false,
+  idleWalkKey = null,
   engaged = false,
   defeated,
   status = null,
@@ -759,6 +782,8 @@ function AdventureTrainerSprite({
         character={trainer.id}
         facing={facing}
         moving={moving}
+        idleWalking={idleWalking}
+        idleWalkKey={idleWalkKey}
         walkSpeed={walkSpeed}
         walkCycleDistance={ADVENTURE_NPC_WALK_CYCLE_DISTANCE}
         idleGesture={idleGesture}
@@ -7634,6 +7659,7 @@ export default function AdventureGame({
               );
               const actorAnimationMode = getAdventureActorAnimationMode({
                 isMoving: runtimeActor?.moving === true,
+                idleWalk: characterInteraction.idleWalk === true,
                 isEngaged: actorIsEngaged,
                 movementPaused: movementPaused && !actorIsScriptedWalker,
                 pageVisible,
@@ -7658,6 +7684,8 @@ export default function AdventureGame({
                   position={runtimeActor?.position ?? characterInteraction.at}
                   facing={renderedActorFacing}
                   moving={!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES.WALKING}
+                  idleWalking={!idleGesture && actorAnimationMode === ADVENTURE_ACTOR_ANIMATION_MODES.IDLE_WALKING}
+                  idleWalkKey={characterInteraction.id}
                   engaged={actorIsEngaged}
                   walkSpeed={characterInteraction.patrol?.speed ?? ADVENTURE_ACTOR_DEFAULTS.speed}
                   markersEnabled={!dockGatheringStaged}

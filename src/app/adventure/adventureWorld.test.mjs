@@ -873,6 +873,7 @@ test("facing an adjacent trainer yields the matching trainer interaction", () =>
     npcId: "marina",
     conversationId: "conversation-shellshore-marina",
     encounterId: "encounter-shellshore-marina",
+    idleWalk: true,
   });
   assert.deepEqual(getInteraction("deep-home", { x: 4, y: 2 }, "right"), {
     type: "trainer",
@@ -881,6 +882,7 @@ test("facing an adjacent trainer yields the matching trainer interaction", () =>
     npcId: "dorian",
     conversationId: "conversation-shellshore-dorian",
     encounterId: "encounter-shellshore-dorian",
+    idleWalk: true,
   });
   assert.equal(getInteraction("deep-home", { x: 5, y: 4 }, "up"), null);
 });
@@ -1294,6 +1296,7 @@ test("continuous interactions require immediate, forward-facing alignment", () =
     npcId: "dorian",
     conversationId: "conversation-shellshore-dorian",
     encounterId: "encounter-shellshore-dorian",
+    idleWalk: true,
   });
 });
 

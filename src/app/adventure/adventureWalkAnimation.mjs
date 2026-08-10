@@ -14,9 +14,15 @@ export const ADVENTURE_WALK_ANIMATION_DEFAULTS = Object.freeze({
 // movement speed while keeping the authored poses from lingering unnaturally.
 export const ADVENTURE_NPC_WALK_CYCLE_DISTANCE = 0.5;
 
+// A fixed-position resident takes one relaxed two-step cycle, then rests in
+// neutral. The slower presentation keeps interiors alive without looking like
+// the actor is trying to travel through its collision footprint.
+export const ADVENTURE_NPC_IDLE_WALK_CYCLE_DURATION_MS = 3200;
+
 export const ADVENTURE_ACTOR_ANIMATION_MODES = Object.freeze({
   STILL: "still",
   WALKING: "walking",
+  IDLE_WALKING: "idle-walking",
 });
 
 const createFrameRegistration = ([frameA, neutral, frameB]) => Object.freeze({
@@ -167,11 +173,12 @@ export function isAdventurePlayerWalking({
 }
 
 /**
- * Reserves the four-pose gait for real movement. Stationary residents hold
- * their authored feet-together neutral frame instead of stepping in place.
+ * Keeps physical travel separate from the presentation-only gait used by
+ * explicitly opted-in stationary residents.
  */
 export function getAdventureActorAnimationMode({
   isMoving = false,
+  idleWalk = false,
   isEngaged = false,
   movementPaused = false,
   pageVisible = true,
@@ -181,7 +188,26 @@ export function getAdventureActorAnimationMode({
     return ADVENTURE_ACTOR_ANIMATION_MODES.STILL;
   }
   if (isMoving) return ADVENTURE_ACTOR_ANIMATION_MODES.WALKING;
+  if (idleWalk) return ADVENTURE_ACTOR_ANIMATION_MODES.IDLE_WALKING;
   return ADVENTURE_ACTOR_ANIMATION_MODES.STILL;
+}
+
+/**
+ * Staggers presentation-only idle cycles without random values that could
+ * disagree between server and client rendering.
+ */
+export function getAdventureIdleWalkDelayMs(
+  identity,
+  { cycleDurationMs = ADVENTURE_NPC_IDLE_WALK_CYCLE_DURATION_MS } = {},
+) {
+  requirePositiveFinite(cycleDurationMs, "Adventure idle walk cycle duration");
+  const cycleLength = Math.max(1, Math.round(cycleDurationMs));
+  let hash = 0;
+  for (const character of String(identity ?? "")) {
+    hash = ((hash * 31) + character.codePointAt(0)) >>> 0;
+  }
+  const phase = hash % cycleLength;
+  return phase === 0 ? 0 : -phase;
 }
 
 /**
