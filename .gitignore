@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 
 # Local browser QA profiles, screenshots, and scratch copies
 tmp/
+
+# Trailer video is distributed through Google Drive, not GitHub
+public/videos/sea-realm-core-features-trailer.mp4
