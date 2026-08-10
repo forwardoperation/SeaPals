@@ -103,12 +103,12 @@ export const ELVERSON_AMBIENT_RESIDENTS = Object.freeze([
   {
     id: "henderson",
     name: "Henderson",
-    title: "Elverson Supply Company Clerk",
+    title: "Elverson Bait & Tackle Keeper",
     sceneId: "elverson-supply-company",
     at: { x: 7, y: 2.5 },
-    intro: "Welcome to Elverson Supply Company! I keep practical, habitat-safe gear ready for every kind of adventure.",
-    guidance: "Choose tools for the creature, habitat, and conditions you expect, and inspect every item before you leave town.",
-    returnLine: "If you're unsure what to carry, tell me where you're headed and what you hope to study.",
+    intro: "Welcome to Elverson Bait & Tackle! I keep habitat-safe bait and practical gear ready for careful shoreline fieldwork.",
+    guidance: "Different creatures follow different food cues. Pick a bait for the animals you hope to observe, then give them room to approach and feed.",
+    returnLine: "Tell me what you hope to find, and we'll choose a bait that belongs in that habitat.",
   },
   {
     id: "sam",
@@ -118,7 +118,7 @@ export const ELVERSON_AMBIENT_RESIDENTS = Object.freeze([
     at: { x: 4, y: 4.5 },
     intro: "I'm looking for just the right cast net before I set out on my adventure!",
     guidance: "Henderson says the mesh and size should match the job so the net can be used responsibly.",
-    returnLine: "There are so many nets to compare!",
+    returnLine: "There are so many nets to compare—and Henderson says the bait pouch has to match the habitat, too!",
   },
   {
     id: "ellis",
@@ -128,7 +128,7 @@ export const ELVERSON_AMBIENT_RESIDENTS = Object.freeze([
     at: { x: 7, y: 4.5 },
     intro: "I just got a fishing rod! This will help me catch fish that a net can't reach.",
     guidance: "Wyeth says different tools belong in different collection areas, and every catch must be handled gently.",
-    returnLine: "I can't wait to learn where a rod is safe to use.",
+    returnLine: "I can't wait to learn where a rod is safe to use—and which bait belongs in the marked shallows.",
   },
   {
     id: "karah",
@@ -138,7 +138,7 @@ export const ELVERSON_AMBIENT_RESIDENTS = Object.freeze([
     at: { x: 10, y: 4.5 },
     intro: "With so many creatures to collect, make sure you stock up on essential items.",
     guidance: "Water, weather protection, safe carriers, and a clear plan matter just as much as collection gear.",
-    returnLine: "Preparation makes every adventure safer and more enjoyable.",
+    returnLine: "Preparation—including habitat-safe bait and cleanup—makes every adventure safer and more enjoyable.",
   },
   {
     id: "finn",

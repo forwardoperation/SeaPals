@@ -84,6 +84,34 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(styles, /\.handNetControlDock[\s\S]*?grid-template-columns/);
 });
 
+test("Henderson's bait shop connects the inventory to a feeding-only catch assist", () => {
+  assert.match(game, /<AdventureBaitShopModal[\s\S]*?onPurchase=\{buyElversonBait\}/);
+  assert.match(game, /trainer\.id === ELVERSON_BAIT_SHOPKEEPER_ID/);
+  assert.match(game, /welcomeToElversonBaitShop\(current\)/);
+  assert.match(game, /<AdventureHandNetModal[\s\S]*?baitShop=\{fishingSession\.tutorial \? null : baitShop\}/);
+  assert.match(game, /onUseBait=\{useElversonFishingBait\}/);
+  assert.match(modal, /HAND_NET_ACTIONS\.PLACE_BAIT/);
+  assert.match(modal, /onUseBait\(baitId\)/);
+  assert.match(modal, /const baitActionLocked = placingBait \|\| state\.net\.scoopRemainingMs > 0 \|\| state\.net\.cooldownRemainingMs > 0/);
+  assert.match(modal, /disabled=\{baitActionLocked\}/);
+  assert.match(modal, /Inventory · Bait bag/);
+  assert.match(modal, /styles\.handNetBaitDrawer/);
+  assert.match(modal, /const matchingCreatureCount = state\.creatures\.filter/);
+  assert.match(modal, /No match here/);
+  assert.match(modal, /const returnToShore = useCallback\(\(reason\) => \{\s*if \(placingBait\) return;/);
+  assert.match(modal, /creature\.status === "attracted"/);
+  assert.match(modal, /creature\.status === "feeding"/);
+  assert.match(modal, /eating bait and easier to catch/);
+  assert.match(modal, /state\.presentation\.baitPlacementFrameIndex/);
+  assert.match(modal, /data-hand-net-bait-placement-phase/);
+  assert.match(modal, /data-hand-net-effect="bait-impact"/);
+  assert.match(modal, /if \(!pageVisible \|\| baitMenuOpen \|\| state\.phase/);
+  assert.match(styles, /\.handNetBaitSpot[\s\S]*?z-index:\s*6/);
+  assert.match(styles, /\.handNetCreatureFeeding/);
+  assert.match(styles, /@keyframes handNetBaitPlacement/);
+  assert.match(styles, /\.reducedMotionMode \.handNetPlayerPlacingBait[\s\S]*?animation:\s*none !important/);
+});
+
 test("the required tutorial stays with the player until a catch is recorded", () => {
   assert.match(game, /fishingSession\.required[\s\S]*?Complete Wyeth's practice catch before leaving the lesson/);
   assert.match(modal, /if \(required && !catchResult\)/);

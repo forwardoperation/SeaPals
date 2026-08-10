@@ -29,6 +29,7 @@ import {
 import AdventureHandNetModal, {
   ELVERSON_HAND_NET_TIDEPOOL_PATH,
 } from "./AdventureHandNetModal";
+import AdventureBaitShopModal from "./AdventureBaitShopModal";
 import AdventureAquariumGallery from "./AdventureAquariumGallery";
 import {
   ELVERSON_REEF_CREATURE_ATLAS_PATH,
@@ -47,6 +48,12 @@ import {
   recordElversonHandNetCatch,
   recordElversonHandNetTutorialCatch,
 } from "./adventureFishing.mjs";
+import {
+  consumeElversonBait,
+  getElversonBaitShopState,
+  purchaseElversonBait,
+  welcomeToElversonBaitShop,
+} from "./adventureBait.mjs";
 import {
   BOAT_MOTION_DEFAULTS,
   createBoatMotionState,
@@ -291,6 +298,7 @@ const TRAINERS = Object.freeze({
 
 const ACADEMY_MENTOR_ID = "academy-mentor";
 const FISHERMAN_WYETH_ID = "fisherman-wyeth";
+const ELVERSON_BAIT_SHOPKEEPER_ID = "henderson";
 const FISHERMAN_WYETH_INTERACTION_ID = "interaction-elverson-fisherman-wyeth";
 const ACADEMY_MENTOR_INTERACTION_ID = "interaction-academy-mentor";
 const ELVERSON_OPENING_MENTOR_INTERACTION_ID = "interaction-elverson-opening-mentor";
@@ -2139,6 +2147,7 @@ function InventoryItemList({ items, emptyMessage }) {
 function InventoryModal({
   inventory,
   fishingProgress,
+  baitShop,
   reveal = null,
   notice = null,
   blocked = false,
@@ -2162,6 +2171,7 @@ function InventoryModal({
     Object.entries(inventory.storyItems).filter(([itemId]) => !getElversonHandNetItemDefinition(itemId)),
   );
   const aquariumLog = fishingProgress?.creatures ?? [];
+  const ownedBaitCount = baitShop?.baits.reduce((total, bait) => total + bait.quantity, 0) ?? 0;
 
   return (
     <div
@@ -2314,16 +2324,36 @@ function InventoryModal({
             </div>
           </section>
 
+          <section className={styles.inventorySection} aria-labelledby="bait-inventory-heading">
+            <div className={styles.inventorySectionHeading}>
+              <div><span>04</span><h3 id="bait-inventory-heading">Bait &amp; Tackle</h3></div>
+              <b>{ownedBaitCount} pouches / {baitShop?.creditBalance ?? 0} credits</b>
+            </div>
+            <div className={styles.baitInventoryGrid}>
+              {baitShop?.baits.map((bait) => (
+                <article key={bait.id} className={styles.baitInventoryItem} style={{ "--bait-color": bait.color }}>
+                  <span className={styles.baitInventoryPouch} aria-hidden="true"><i /></span>
+                  <span>
+                    <strong>{bait.name}</strong>
+                    <small>{bait.targetLabel}</small>
+                    <em>{bait.quantity > 0 ? `${bait.quantity} ready to place` : "Visit Henderson's shop"}</em>
+                  </span>
+                  <b aria-label={`${bait.quantity} owned`}>x{bait.quantity}</b>
+                </article>
+              ))}
+            </div>
+          </section>
+
           <section className={styles.inventorySection} aria-labelledby="story-items-heading">
             <div className={styles.inventorySectionHeading}>
-              <div><span>04</span><h3 id="story-items-heading">Story Items</h3></div>
+              <div><span>05</span><h3 id="story-items-heading">Story Items</h3></div>
             </div>
             <InventoryItemList items={nonFishingStoryItems} emptyMessage="Adventure keepsakes will appear here." />
           </section>
 
           <section className={styles.inventorySection} aria-labelledby="boat-items-heading">
             <div className={styles.inventorySectionHeading}>
-              <div><span>05</span><h3 id="boat-items-heading">Project Gear</h3></div>
+              <div><span>06</span><h3 id="boat-items-heading">Project Gear</h3></div>
             </div>
             <InventoryItemList items={inventory.boatItems} emptyMessage="Collection tools and aquarium equipment will appear as the exhibit grows." />
           </section>
@@ -2990,6 +3020,10 @@ export default function AdventureGame({
   }), [gameSave?.player?.bestFriendName, gameSave?.player?.name]);
   const fishingProgress = useMemo(
     () => gameSave ? getElversonHandNetProgress(gameSave) : null,
+    [gameSave],
+  );
+  const baitShop = useMemo(
+    () => gameSave ? getElversonBaitShopState(gameSave) : null,
     [gameSave],
   );
   const aquariumExhibitModel = useMemo(
@@ -5212,6 +5246,53 @@ export default function AdventureGame({
     }
   }
 
+  function buyElversonBait(baitId) {
+    const current = saveRef.current ?? gameSave;
+    if (!current) return null;
+    try {
+      const purchase = purchaseElversonBait(current, baitId);
+      commitAdventureMutation(
+        purchase.save,
+        `elverson-bait-purchased:${purchase.bait.id}:${purchase.quantity}`,
+        `${purchase.bait.name} was added to your bait bag. ${purchase.remainingCredits} Reef Credits remain.`,
+      );
+      return purchase;
+    } catch (error) {
+      setSaveNotice({
+        kind: "error",
+        message: error?.message ?? "Henderson could not complete that bait purchase.",
+      });
+      return null;
+    }
+  }
+
+  function useElversonFishingBait(baitId) {
+    const current = saveRef.current ?? gameSave;
+    if (!current || fishingSession?.tutorial) return null;
+    try {
+      const used = consumeElversonBait(current, baitId);
+      commitAdventureMutation(
+        used.save,
+        `elverson-bait-placed:${used.bait.id}:${used.remaining}`,
+        `${used.bait.name} is in the water. Matching creatures will move in to feed.`,
+      );
+      return used;
+    } catch (error) {
+      setSaveNotice({
+        kind: "error",
+        message: error?.message ?? "That bait could not be placed.",
+      });
+      return null;
+    }
+  }
+
+  function closeElversonBaitShop() {
+    setInventoryOpen(false);
+    window.requestAnimationFrame(() => {
+      worldActionRef.current?.focus({ preventScroll: true });
+    });
+  }
+
   function restoreFishingActionFocus() {
     window.requestAnimationFrame(() => {
       worldActionRef.current?.focus({ preventScroll: true });
@@ -6285,6 +6366,31 @@ export default function AdventureGame({
           closeConversation();
           return;
         }
+        if (trainer.id === ELVERSON_BAIT_SHOPKEEPER_ID) {
+          try {
+            const welcomed = welcomeToElversonBaitShop(current);
+            if (welcomed.applied) {
+              commitAdventureMutation(
+                welcomed.save,
+                "elverson-bait-shop-welcome",
+                `Henderson opened a fieldwork account with ${welcomed.creditsGranted} Reef Credits. Choose a few bait pouches for the shallows.`,
+              );
+            } else {
+              setSaveNotice({
+                kind: "info",
+                message: "Henderson can match each bait pouch to the creatures you want to observe.",
+              });
+            }
+            setConversation(null);
+            setInventoryOpen("bait-shop");
+          } catch (error) {
+            setSaveNotice({
+              kind: "error",
+              message: error?.message ?? "Elverson Bait & Tackle could not open your fieldwork account.",
+            });
+          }
+          return;
+        }
         if (trainer.townId === "shellshore-village") {
           closeConversation();
           return;
@@ -6372,11 +6478,14 @@ export default function AdventureGame({
         commitAdventureMutation(
           delivered.save,
           `elverson-aquarium-delivery:${delivered.progress.aquariumCount}`,
-          `${delivered.deliveredCount} ${delivered.deliveredCount === 1 ? "catch is" : "catches are"} now with the aquarium care team; ${delivered.awardedCardCount} matching ${delivered.awardedCardCount === 1 ? "card was" : "cards were"} added to your collection.`,
+          `${delivered.deliveredCount} ${delivered.deliveredCount === 1 ? "catch is" : "catches are"} now with the aquarium care team; ${delivered.awardedCardCount} matching ${delivered.awardedCardCount === 1 ? "card was" : "cards were"} added to your collection, and ${delivered.baitCreditsGranted} Reef Credits were earned.`,
         );
         const rewardLines = [
           matchingCardSummary
             ? `Your Sea Realm reward: ${matchingCardSummary}.`
+            : null,
+          delivered.baitCreditsGranted > 0
+            ? `The care team also added ${delivered.baitCreditsGranted} Reef Credits to your Elverson Bait & Tackle account.`
             : null,
         ].filter(Boolean);
         setConversation((currentConversation) => ({
@@ -6535,6 +6644,7 @@ export default function AdventureGame({
         ) {
           return "Follow Wyeth to the sandy cove";
         }
+        if (trainer?.id === ELVERSON_BAIT_SHOPKEEPER_ID) return "Browse bait & tackle";
         if (trainer?.townId === "shellshore-village") return "Continue exploring";
         if (trainer?.roleId === "tournament-director") {
           return tournamentProgress?.complete ? "View championship record" : tournamentProgress?.status === "active" ? "Review registered deck" : "Review registration";
@@ -7923,10 +8033,19 @@ export default function AdventureGame({
           onDismiss={() => setFieldNoteOpen(false)}
         />
       ) : null}
-      {inventoryOpen ? (
+      {inventoryOpen === "bait-shop" ? (
+        <AdventureBaitShopModal
+          shop={baitShop}
+          notice={saveNotice}
+          blocked={Boolean(confirmation)}
+          onPurchase={buyElversonBait}
+          onClose={closeElversonBaitShop}
+        />
+      ) : inventoryOpen ? (
         <InventoryModal
           inventory={gameSave.inventory}
           fishingProgress={fishingProgress}
+          baitShop={baitShop}
           reveal={packReveal}
           notice={saveNotice}
           blocked={Boolean(confirmation)}
@@ -8010,6 +8129,8 @@ export default function AdventureGame({
           required={fishingSession.required}
           startWithCast={fishingSession.startWithCast}
           reducedMotion={gameSave.settings.reducedMotion || systemReducedMotion}
+          baitShop={fishingSession.tutorial ? null : baitShop}
+          onUseBait={useElversonFishingBait}
           onCatch={saveFishingCatch}
           onClose={closeFishingSession}
           onReturnToShore={returnFishingSessionToShore}

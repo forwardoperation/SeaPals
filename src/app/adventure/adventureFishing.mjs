@@ -4,6 +4,10 @@ import {
   setQuestFlag,
 } from "./adventureProgression.mjs";
 import { ELVERSON_TOWN_WEST_COVE } from "./adventureElversonTownLayout.mjs";
+import {
+  getElversonBaitItemDefinition,
+  grantElversonBaitDeliveryCredits,
+} from "./adventureBait.mjs";
 
 export const ELVERSON_FISHING_QUEST_ID = "quest-shellshore-first-voyage";
 // These persisted identifiers shipped in the earlier prototype. Keep them so
@@ -592,6 +596,7 @@ export function deliverElversonFishingCatches(saveValue) {
       collectionCompletedNow: false,
       awardedCards: priorRewards.awardedCards,
       awardedCardCount: priorRewards.awardedCardCount,
+      baitCreditsGranted: 0,
       repairedRewardFlags: priorRewards.repairedRewardFlags,
       progress: priorRewards.progress,
     };
@@ -634,6 +639,8 @@ export function deliverElversonFishingCatches(saveValue) {
       true,
     );
   }
+  const baitCredits = grantElversonBaitDeliveryCredits(next, deliveredSpecies);
+  next = baitCredits.save;
   const deliveryRewards = reconcileElversonAquariumRewards(next);
   next = deliveryRewards.save;
   const awardedCards = mergeAwardedCardRewards(
@@ -652,6 +659,7 @@ export function deliverElversonFishingCatches(saveValue) {
     collectionCompletedNow,
     awardedCards,
     awardedCardCount: awardedCards.reduce((total, reward) => total + reward.quantity, 0),
+    baitCreditsGranted: baitCredits.creditsGranted,
     repairedRewardFlags,
     progress: getElversonFishingProgress(next),
   };
@@ -660,6 +668,8 @@ export function deliverElversonFishingCatches(saveValue) {
 export const deliverElversonHandNetCatches = deliverElversonFishingCatches;
 
 export function getElversonFishingItemDefinition(itemId) {
+  const baitItem = getElversonBaitItemDefinition(itemId);
+  if (baitItem) return baitItem;
   if (itemId === ELVERSON_HAND_NET_ITEM_ID) return ELVERSON_HAND_NET;
   const creature = ELVERSON_REEF_CATCHES.find((entry) => (
     entry.inventoryItemId === itemId || entry.aquariumItemId === itemId

@@ -2,15 +2,18 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { ELVERSON_BAITS_BY_ID } from "./adventureBait.mjs";
 import { ELVERSON_REEF_CATCHES } from "./adventureFishing.mjs";
 import {
   HAND_NET_ACTIONS,
+  HAND_NET_BAIT_PLACEMENT_PHASES,
   HAND_NET_PHASES,
   HAND_NET_SCOOP_PHASES,
   HAND_NET_SIMULATION_STEP_MS,
   applyHandNetAction,
   consumeHandNetFrameElapsed,
   createHandNetState,
+  getHandNetEffectiveCatchRadius,
   interpolateHandNetRenderPositions,
   tickHandNetState,
 } from "./adventureHandNet.mjs";
@@ -21,11 +24,14 @@ function mutableCopy(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function controlledSingleCreature({ reducedMotion = false } = {}) {
+function controlledSingleCreature({
+  reducedMotion = false,
+  speciesId = "cleaner-wrasse",
+} = {}) {
   const state = mutableCopy(createHandNetState({
     seed: 19,
     creatureCount: 1,
-    requiredCreatureId: "cleaner-wrasse",
+    requiredCreatureId: speciesId,
     reducedMotion,
   }));
   state.player.position = { x: 6, y: 7.1 };
@@ -49,6 +55,31 @@ function tickRepeatedly(state, elapsedMs, count) {
   let next = state;
   for (let index = 0; index < count; index += 1) next = tickHandNetState(next, elapsedMs);
   return next;
+}
+
+function tickForDuration(state, durationMs) {
+  let next = state;
+  let remainingMs = durationMs;
+  while (remainingMs > 0) {
+    const elapsedMs = Math.min(10_000, remainingMs);
+    next = tickHandNetState(next, elapsedMs);
+    remainingMs -= elapsedMs;
+  }
+  return next;
+}
+
+function beginBaitPlacement(state, definition) {
+  return applyHandNetAction(state, {
+    type: HAND_NET_ACTIONS.PLACE_BAIT,
+    baitId: definition.id,
+  });
+}
+
+function settleBait(state, definition) {
+  return tickHandNetState(
+    beginBaitPlacement(state, definition),
+    state.settings.baitPlacementReleaseMs,
+  );
 }
 
 test("seeded school generation is deterministic, frozen, and sourced from Elverson catches", () => {
@@ -342,6 +373,247 @@ test("walk presentation starts predictably, advances locally, and resets when mo
   assert.equal(restarted.presentation.walkFrameIndex, 1);
 });
 
+test("bait placement is immutable, fixed-step deterministic, and presents frames 3, 4, 5, then 0", () => {
+  const definition = Object.values(ELVERSON_BAITS_BY_ID)[0];
+  const initial = controlledSingleCreature({ speciesId: definition.speciesIds[0] });
+  const before = structuredClone(initial);
+  const started = beginBaitPlacement(initial, definition);
+
+  assert.deepEqual(initial, before);
+  assert.notStrictEqual(started, initial);
+  assert.equal(started.player.intent.x, 0);
+  assert.equal(started.player.velocity.x, 0);
+  assert.equal(started.bait.active, null);
+  assert.equal(started.bait.placement.baitId, definition.id);
+  assert.deepEqual(started.bait.placement.position, started.net.position);
+  assert.equal(started.presentation.baitPlacementPhase, HAND_NET_BAIT_PLACEMENT_PHASES.WINDUP);
+  assert.equal(started.presentation.baitPlacementFrameIndex, 3);
+  assert.equal(Object.isFrozen(started.bait.placement.position), true);
+  assert.strictEqual(
+    applyHandNetAction(started, { type: HAND_NET_ACTIONS.MOVE, x: 1, y: 0 }),
+    started,
+  );
+  assert.strictEqual(applyHandNetAction(started, { type: HAND_NET_ACTIONS.SCOOP }), started);
+
+  const lowering = tickHandNetState(started, started.settings.baitPlacementLoweringMs);
+  assert.equal(lowering.bait.active, null);
+  assert.equal(lowering.presentation.baitPlacementPhase, HAND_NET_BAIT_PLACEMENT_PHASES.LOWERING);
+  assert.equal(lowering.presentation.baitPlacementFrameIndex, 4);
+  const beforeRelease = tickHandNetState(
+    lowering,
+    lowering.settings.baitPlacementReleaseMs
+      - lowering.settings.baitPlacementLoweringMs
+      - HAND_NET_SIMULATION_STEP_MS,
+  );
+  assert.equal(beforeRelease.bait.active, null);
+  assert.equal(beforeRelease.presentation.baitPlacementFrameIndex, 4);
+
+  const settled = tickHandNetState(beforeRelease, HAND_NET_SIMULATION_STEP_MS);
+  assert.equal(settled.presentation.baitPlacementPhase, HAND_NET_BAIT_PLACEMENT_PHASES.SETTLING);
+  assert.equal(settled.presentation.baitPlacementFrameIndex, 5);
+  assert.equal(settled.bait.active.baitId, definition.id);
+  assert.deepEqual(settled.bait.active.position, started.net.position);
+  assert.equal(settled.bait.active.durationMs, definition.durationMs);
+  assert.equal(settled.bait.active.remainingMs, definition.durationMs);
+  assert.equal(settled.bait.active.placedAtMs, settled.simulationTimeMs);
+  assert.equal(settled.lastEvent.type, "bait-placed");
+  assert.deepEqual(settled.presentation.baitImpact, {
+    sequence: 1,
+    baitId: definition.id,
+    position: settled.bait.active.position,
+  });
+
+  const completed = tickHandNetState(
+    settled,
+    settled.settings.baitPlacementAnimationMs - settled.settings.baitPlacementReleaseMs,
+  );
+  assert.equal(completed.bait.placement, null);
+  assert.equal(completed.presentation.baitPlacementPhase, HAND_NET_BAIT_PLACEMENT_PHASES.COMPLETE);
+  assert.equal(completed.presentation.baitPlacementFrameIndex, 0);
+  assert.equal(completed.presentation.baitPlacementProgress, 1);
+  assert.strictEqual(
+    beginBaitPlacement(completed, Object.values(ELVERSON_BAITS_BY_ID)[1]),
+    completed,
+    "an active pouch cannot be silently replaced",
+  );
+  const idled = tickHandNetState(completed, HAND_NET_SIMULATION_STEP_MS);
+  assert.equal(idled.presentation.baitPlacementPhase, HAND_NET_BAIT_PLACEMENT_PHASES.IDLE);
+  assert.equal(idled.presentation.baitPlacementFrameIndex, 0);
+
+  const oneFrame = tickHandNetState(started, 1_000);
+  const fixedSteps = tickRepeatedly(started, HAND_NET_SIMULATION_STEP_MS, 50);
+  assert.deepEqual(fixedSteps, oneFrame);
+});
+
+test("bait placed at the bottom shoreline remains inside a creature's feeding reach", () => {
+  const definition = ELVERSON_BAITS_BY_ID["bait-kelp-crumble"];
+  let edgeState = createHandNetState({
+    seed: 3,
+    creatureCount: 1,
+    requiredCreatureId: definition.speciesIds[0],
+  });
+  edgeState = applyHandNetAction(edgeState, { type: HAND_NET_ACTIONS.MOVE, x: 0, y: 1 });
+  edgeState = tickHandNetState(edgeState, 1_000);
+  const started = beginBaitPlacement(edgeState, definition);
+  const closestCreaturePoint = {
+    x: Math.max(0.45, Math.min(11.55, started.bait.placement.position.x)),
+    y: Math.max(0.65, Math.min(6.45, started.bait.placement.position.y)),
+  };
+  const distanceToReachableWater = Math.hypot(
+    started.bait.placement.position.x - closestCreaturePoint.x,
+    started.bait.placement.position.y - closestCreaturePoint.y,
+  );
+  assert.ok(started.bait.placement.position.y < started.net.position.y);
+  assert.ok(distanceToReachableWater < started.settings.baitFeedingRadius);
+
+  const ready = mutableCopy(started);
+  ready.creatures[0].position = closestCreaturePoint;
+  ready.creatures[0].speed = 0;
+  ready.creatures[0].turnRemainingMs = 10_000;
+  const settled = tickHandNetState(ready, ready.settings.baitPlacementReleaseMs);
+  assert.equal(settled.creatures[0].status, "feeding");
+});
+
+test("matching creatures approach settled bait, feed, and resume wandering after it expires", () => {
+  const definition = Object.values(ELVERSON_BAITS_BY_ID)[0];
+  const matchingSpeciesId = definition.speciesIds[0];
+  const settled = settleBait(
+    controlledSingleCreature({ speciesId: matchingSpeciesId }),
+    definition,
+  );
+  const approaching = mutableCopy(settled);
+  approaching.creatures[0].position = {
+    x: settled.bait.active.position.x - 2,
+    y: settled.bait.active.position.y,
+  };
+  approaching.creatures[0].heading = { x: -1, y: 0 };
+  approaching.creatures[0].status = "wandering";
+  approaching.creatures[0].baitTargetId = null;
+  approaching.creatures[0].turnRemainingMs = 10_000;
+  const distanceBefore = Math.abs(
+    approaching.creatures[0].position.x - approaching.bait.active.position.x,
+  );
+  const attracted = tickHandNetState(approaching, HAND_NET_SIMULATION_STEP_MS);
+  const distanceAfter = Math.abs(
+    attracted.creatures[0].position.x - attracted.bait.active.position.x,
+  );
+  assert.equal(attracted.creatures[0].status, "attracted");
+  assert.equal(attracted.creatures[0].baitTargetId, definition.id);
+  assert.ok(distanceAfter < distanceBefore);
+
+  const readyToFeed = mutableCopy(attracted);
+  readyToFeed.creatures[0].position = {
+    x: readyToFeed.bait.active.position.x + readyToFeed.settings.baitFeedingRadius * 0.75,
+    y: readyToFeed.bait.active.position.y,
+  };
+  readyToFeed.creatures[0].status = "attracted";
+  const feeding = tickHandNetState(readyToFeed, HAND_NET_SIMULATION_STEP_MS);
+  assert.equal(feeding.creatures[0].status, "feeding");
+  assert.equal(feeding.creatures[0].baitTargetId, definition.id);
+
+  const expired = tickForDuration(feeding, feeding.bait.active.remainingMs);
+  assert.equal(expired.bait.active, null);
+  assert.equal(expired.creatures[0].status, "wandering");
+  assert.equal(expired.creatures[0].baitTargetId, null);
+  assert.equal(expired.lastEvent.type, "bait-expired");
+
+  const nonmatchingSpecies = ELVERSON_REEF_CATCHES.find(
+    ({ id }) => !definition.speciesIds.includes(id),
+  );
+  assert.ok(nonmatchingSpecies);
+  const nonmatching = settleBait(
+    controlledSingleCreature({ speciesId: nonmatchingSpecies.id }),
+    definition,
+  );
+  const nearbyNonmatch = mutableCopy(nonmatching);
+  nearbyNonmatch.creatures[0].position = {
+    x: nearbyNonmatch.bait.active.position.x + 0.2,
+    y: nearbyNonmatch.bait.active.position.y,
+  };
+  nearbyNonmatch.creatures[0].speed = 0;
+  const ignored = tickHandNetState(nearbyNonmatch, HAND_NET_SIMULATION_STEP_MS);
+  assert.equal(ignored.creatures[0].status, "wandering");
+  assert.equal(ignored.creatures[0].baitTargetId, null);
+});
+
+test("even the slowest matching creature reaches feeding range before bait expires", () => {
+  const definition = ELVERSON_BAITS_BY_ID["bait-kelp-crumble"];
+  const settled = settleBait(
+    controlledSingleCreature({ speciesId: "sea-urchin" }),
+    definition,
+  );
+  const farUrchin = mutableCopy(settled);
+  farUrchin.creatures[0].position = {
+    x: Math.max(0.45, farUrchin.bait.active.position.x - 2.4),
+    y: 6.45,
+  };
+  farUrchin.creatures[0].status = "attracted";
+  farUrchin.creatures[0].baitTargetId = definition.id;
+  const feeding = tickHandNetState(
+    farUrchin,
+    Math.floor(farUrchin.bait.active.remainingMs * 0.85 / HAND_NET_SIMULATION_STEP_MS)
+      * HAND_NET_SIMULATION_STEP_MS,
+  );
+  assert.equal(feeding.creatures[0].status, "feeding");
+  assert.ok(feeding.bait.active.remainingMs > 0);
+});
+
+test("feeding bait multiplies the real scoop collision envelope", () => {
+  const definition = Object.values(ELVERSON_BAITS_BY_ID)[0];
+  assert.ok(definition.hitboxMultiplier > 1);
+  const placementStarted = beginBaitPlacement(
+    controlledSingleCreature({ speciesId: definition.speciesIds[0] }),
+    definition,
+  );
+  const ready = tickHandNetState(
+    placementStarted,
+    placementStarted.settings.baitPlacementAnimationMs,
+  );
+  const baited = mutableCopy(ready);
+  const creature = baited.creatures[0];
+  const baseRadius = baited.net.radius + creature.radius * 0.5;
+  const catchDistance = Math.min(
+    baited.settings.baitFeedingRadius * 0.9,
+    baseRadius * 1.2,
+  );
+  creature.position = {
+    x: baited.net.position.x + catchDistance,
+    y: baited.net.position.y,
+  };
+  creature.heading = { x: 1, y: 0 };
+  creature.speed = 0;
+  creature.status = "feeding";
+  creature.baitTargetId = definition.id;
+  creature.turnRemainingMs = 10_000;
+
+  const effectiveRadius = getHandNetEffectiveCatchRadius(baited, creature);
+  assert.ok(catchDistance > baseRadius);
+  assert.ok(catchDistance < effectiveRadius);
+  assert.equal(
+    effectiveRadius,
+    baited.net.radius + creature.radius * 0.5 * definition.hitboxMultiplier,
+  );
+
+  const control = mutableCopy(baited);
+  control.bait.active = null;
+  control.creatures[0].status = "wandering";
+  control.creatures[0].baitTargetId = null;
+  assert.equal(getHandNetEffectiveCatchRadius(control, control.creatures[0]), baseRadius);
+
+  const baitedOutcome = tickHandNetState(
+    applyHandNetAction(baited, { type: HAND_NET_ACTIONS.SCOOP }),
+    baited.settings.scoopAnimationMs,
+  );
+  const controlOutcome = tickHandNetState(
+    applyHandNetAction(control, { type: HAND_NET_ACTIONS.SCOOP }),
+    control.settings.scoopAnimationMs,
+  );
+  assert.equal(baitedOutcome.phase, HAND_NET_PHASES.CAUGHT);
+  assert.equal(baitedOutcome.outcome.speciesId, creature.speciesId);
+  assert.equal(controlOutcome.phase, HAND_NET_PHASES.PLAYING);
+  assert.equal(controlOutcome.lastEvent.type, "scoop-missed");
+});
+
 test("creatures wander deterministically and remain inside the shallow-water arena", () => {
   const initial = createHandNetState({ seed: 71, creatureCount: 5 });
   const advanced = tickHandNetState(initial, 2_000);
@@ -383,6 +655,25 @@ test("a quick direct approach raises alert, starts flight, and can end in escape
   assert.equal(escaped.outcome.type, "escaped");
   assert.deepEqual(escaped.outcome.speciesIds, ["cleaner-wrasse"]);
   assert.equal(escaped.creatures[0].status, "escaped");
+});
+
+test("baited creatures can still be startled by a fast direct approach", () => {
+  const definition = ELVERSON_BAITS_BY_ID["bait-plankton-puff"];
+  const feeding = mutableCopy(settleBait(
+    controlledSingleCreature({ speciesId: definition.speciesIds[0] }),
+    definition,
+  ));
+  feeding.bait.active.position = { x: 6, y: 5.7 };
+  feeding.creatures[0].position = { x: 6, y: 5.7 };
+  feeding.creatures[0].status = "feeding";
+  feeding.creatures[0].baitTargetId = definition.id;
+  feeding.player.position = { x: 6, y: 7.05 };
+  feeding.player.intent = { x: 0, y: -1 };
+  feeding.player.velocity = { x: 0, y: -feeding.player.speed };
+  const alarmed = tickHandNetState(feeding, 700);
+
+  assert.ok(alarmed.creatures[0].alert >= alarmed.settings.alertThreshold);
+  assert.ok(["fleeing", "escaped"].includes(alarmed.creatures[0].status));
 });
 
 test("a scoop winds up, contacts near the landing frame, recovers, then reports its matching card", () => {
@@ -576,6 +867,14 @@ test("public functions reject malformed options, actions, state, and elapsed tim
   assert.throws(() => applyHandNetAction(state, null), /action requires a type/);
   assert.throws(() => applyHandNetAction(state, { type: "jump" }), /Unknown hand-net action/);
   assert.throws(
+    () => applyHandNetAction(state, { type: HAND_NET_ACTIONS.PLACE_BAIT, baitId: "imaginary-bait" }),
+    /Unknown Elverson bait/,
+  );
+  assert.throws(
+    () => applyHandNetAction(state, { type: HAND_NET_ACTIONS.PLACE_BAIT, baitId: "toString" }),
+    /Unknown Elverson bait/,
+  );
+  assert.throws(
     () => applyHandNetAction(state, { type: HAND_NET_ACTIONS.MOVE, x: 2, y: 0 }),
     /between -1 and 1/,
   );
@@ -590,6 +889,10 @@ test("public functions reject malformed options, actions, state, and elapsed tim
   assert.throws(() => consumeHandNetFrameElapsed(-1, 20), /accumulatorMs must stay between/);
   assert.throws(() => consumeHandNetFrameElapsed(20, 20), /accumulatorMs must stay between/);
   assert.throws(() => consumeHandNetFrameElapsed(0, Number.NaN), /elapsedMs must be finite/);
+  assert.throws(
+    () => getHandNetEffectiveCatchRadius(state, null),
+    /requires a creature with a non-negative finite radius/,
+  );
 });
 
 function UINT32_MAX_PLUS_ONE() {

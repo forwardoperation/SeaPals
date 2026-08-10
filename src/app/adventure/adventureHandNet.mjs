@@ -1,4 +1,5 @@
 import { ELVERSON_REEF_CATCHES } from "./adventureFishing.mjs";
+import { ELVERSON_BAITS_BY_ID } from "./adventureBait.mjs";
 
 export const HAND_NET_STATE_VERSION = 1;
 
@@ -12,6 +13,7 @@ export const HAND_NET_ACTIONS = Object.freeze({
   MOVE: "move",
   STOP: "stop",
   SCOOP: "scoop",
+  PLACE_BAIT: "place-bait",
 });
 
 export const HAND_NET_SCOOP_PHASES = Object.freeze({
@@ -23,6 +25,14 @@ export const HAND_NET_SCOOP_PHASES = Object.freeze({
   COMPLETE: "complete",
 });
 
+export const HAND_NET_BAIT_PLACEMENT_PHASES = Object.freeze({
+  IDLE: "idle",
+  WINDUP: "windup",
+  LOWERING: "lowering",
+  SETTLING: "settling",
+  COMPLETE: "complete",
+});
+
 const PHASE_SET = new Set(Object.values(HAND_NET_PHASES));
 const ARENA = Object.freeze({ width: 12, height: 8 });
 const PLAYER_BOUNDS = Object.freeze({ left: 0.4, top: 2, right: 11.6, bottom: 7.05 });
@@ -31,6 +41,7 @@ const ESCAPE_BOUNDS = Object.freeze({ left: -0.25, top: 0.2, right: 12.25, botto
 export const HAND_NET_SIMULATION_STEP_MS = 20;
 const WALK_FRAME_DURATION_MS = 110;
 const WALK_FRAME_SEQUENCE = Object.freeze([1, 0, 2, 0]);
+const ACTIVE_CREATURE_STATUSES = new Set(["wandering", "attracted", "feeding"]);
 const MAX_TICK_MS = 10_000;
 const UINT32_MAX = 0xffff_ffff;
 const TAU = Math.PI * 2;
@@ -96,6 +107,9 @@ function requireState(state) {
   }
   if (!isRecord(state.net) || !isRecord(state.net.position)) {
     throw new TypeError("Hand-net state requires net geometry.");
+  }
+  if (!isRecord(state.bait)) {
+    throw new TypeError("Hand-net state requires bait state.");
   }
   if (!Array.isArray(state.creatures) || state.creatures.length === 0) {
     throw new TypeError("Hand-net state requires at least one creature.");
@@ -195,6 +209,28 @@ function weightedCreature(randomValue) {
   return ELVERSON_REEF_CATCHES.at(-1);
 }
 
+function requireBaitDefinition(baitId) {
+  const definition = typeof baitId === "string"
+    && Object.prototype.hasOwnProperty.call(ELVERSON_BAITS_BY_ID, baitId)
+    ? ELVERSON_BAITS_BY_ID[baitId]
+    : null;
+  if (!definition) {
+    throw new RangeError(`Unknown Elverson bait: ${String(baitId)}.`);
+  }
+  return definition;
+}
+
+function baitMatchesCreature(definition, creature) {
+  return definition.speciesIds.includes(creature.speciesId);
+}
+
+function settledBaitDefinition(state) {
+  const activeBait = state.bait.active;
+  if (!activeBait || activeBait.remainingMs <= 0) return null;
+  const definition = ELVERSON_BAITS_BY_ID[activeBait.baitId];
+  return definition ? { activeBait, definition } : null;
+}
+
 function creatureSpeed(creature, { reducedMotion }) {
   let speed = RARITY_SPEED[creature.rarity] ?? RARITY_SPEED.common;
   if (creature.id === "sea-urchin") speed = 0.2;
@@ -215,6 +251,29 @@ function netPosition(player, reach) {
   return {
     x: clamp(player.position.x + landingDirection.x * reach, 0.15, ARENA.width - 0.15),
     y: clamp(player.position.y + landingDirection.y * reach, 0.15, ARENA.height - 0.15),
+  };
+}
+
+function reachableBaitPosition(position, feedingRadius) {
+  const closestCreaturePoint = {
+    x: clamp(position.x, CREATURE_BOUNDS.left, CREATURE_BOUNDS.right),
+    y: clamp(position.y, CREATURE_BOUNDS.top, CREATURE_BOUNDS.bottom),
+  };
+  const offset = {
+    x: position.x - closestCreaturePoint.x,
+    y: position.y - closestCreaturePoint.y,
+  };
+  const distance = magnitude(offset);
+  if (distance <= feedingRadius) return copyPoint(position);
+
+  // Project onto the rounded edge of the swim area. This keeps the bait as
+  // close as possible to the painted hoop while guaranteeing that a matching
+  // creature can enter its feeding radius even at the bottom shoreline.
+  const reachableDistance = feedingRadius * 0.95;
+  const scale = reachableDistance / distance;
+  return {
+    x: closestCreaturePoint.x + offset.x * scale,
+    y: closestCreaturePoint.y + offset.y * scale,
   };
 }
 
@@ -256,6 +315,7 @@ function initialSchool(count, cursor, settings, requiredCreatureId) {
       radius: species.category === "invertebrate" ? 0.16 : 0.19,
       alert: 0,
       status: "wandering",
+      baitTargetId: null,
       turnRemainingMs,
     });
   }
@@ -278,6 +338,10 @@ function createSettings({ reducedMotion = false } = {}) {
     scoopContactWindowMs: HAND_NET_SIMULATION_STEP_MS,
     cooldownMs: 440,
     missAlert: 0.18,
+    baitPlacementAnimationMs: 700,
+    baitPlacementLoweringMs: 240,
+    baitPlacementReleaseMs: 440,
+    baitFeedingRadius: 0.7,
     motionScale: reducedMotion ? 0.48 : 1,
   };
 }
@@ -330,6 +394,11 @@ export function createHandNetState({
       cooldownRemainingMs: 0,
       contactedCreatureId: null,
     },
+    bait: {
+      active: null,
+      placement: null,
+      placementCount: 0,
+    },
     creatures: initialSchool(creatureCount, cursor, settings, requiredCreatureId),
     scoopCount: 0,
     missCount: 0,
@@ -348,6 +417,12 @@ export function createHandNetState({
       scoopPhaseProgress: 0,
       scoopFrameIndex: 0,
       scoopHitboxActive: false,
+      baitImpact: null,
+      baitPlacementPhase: HAND_NET_BAIT_PLACEMENT_PHASES.IDLE,
+      baitPlacementElapsedMs: 0,
+      baitPlacementDurationMs: settings.baitPlacementAnimationMs,
+      baitPlacementProgress: 0,
+      baitPlacementFrameIndex: 0,
     },
   };
   state.rngState = cursor.state;
@@ -367,19 +442,44 @@ function cloneState(state) {
       facing: copyPoint(state.player.facing),
     },
     net: { ...state.net, position: copyPoint(state.net.position) },
+    bait: {
+      ...state.bait,
+      active: state.bait.active
+        ? { ...state.bait.active, position: copyPoint(state.bait.active.position) }
+        : null,
+      placement: state.bait.placement
+        ? { ...state.bait.placement, position: copyPoint(state.bait.placement.position) }
+        : null,
+    },
     creatures: state.creatures.map((creature) => ({
       ...creature,
       position: copyPoint(creature.position),
       heading: copyPoint(creature.heading),
     })),
     outcome: state.outcome ? { ...state.outcome, speciesIds: state.outcome.speciesIds?.slice() } : null,
-    lastEvent: state.lastEvent ? { ...state.lastEvent } : null,
+    lastEvent: state.lastEvent
+      ? {
+          ...state.lastEvent,
+          ...(state.lastEvent.speciesIds
+            ? { speciesIds: state.lastEvent.speciesIds.slice() }
+            : {}),
+          ...(state.lastEvent.position
+            ? { position: copyPoint(state.lastEvent.position) }
+            : {}),
+        }
+      : null,
     presentation: {
       ...state.presentation,
       netImpact: state.presentation.netImpact
         ? {
             ...state.presentation.netImpact,
             position: copyPoint(state.presentation.netImpact.position),
+          }
+        : null,
+      baitImpact: state.presentation.baitImpact
+        ? {
+            ...state.presentation.baitImpact,
+            position: copyPoint(state.presentation.baitImpact.position),
           }
         : null,
     },
@@ -407,6 +507,7 @@ export function applyHandNetAction(stateValue, action) {
 
   if (action.type === HAND_NET_ACTIONS.MOVE) {
     const intent = normalizedIntent(action.x, action.y);
+    if (state.bait.placement) return state;
     if (
       Math.abs(intent.x - state.player.intent.x) <= EPSILON
       && Math.abs(intent.y - state.player.intent.y) <= EPSILON
@@ -436,7 +537,11 @@ export function applyHandNetAction(stateValue, action) {
     return deepFreeze(next);
   }
   if (action.type === HAND_NET_ACTIONS.SCOOP) {
-    if (state.net.scoopRemainingMs > 0 || state.net.cooldownRemainingMs > 0) return state;
+    if (
+      state.bait.placement
+      || state.net.scoopRemainingMs > 0
+      || state.net.cooldownRemainingMs > 0
+    ) return state;
     const next = cloneState(state);
     next.net.scoopRemainingMs = state.settings.scoopAnimationMs;
     next.net.contactedCreatureId = null;
@@ -450,6 +555,43 @@ export function applyHandNetAction(stateValue, action) {
     next.presentation.scoopFrameIndex = 3;
     next.presentation.scoopHitboxActive = false;
     next.lastEvent = { type: "scoop-started", atMs: next.simulationTimeMs };
+    return deepFreeze(next);
+  }
+  if (action.type === HAND_NET_ACTIONS.PLACE_BAIT) {
+    const definition = requireBaitDefinition(action.baitId);
+    if (
+      state.bait.active
+      || state.bait.placement
+      || state.net.scoopRemainingMs > 0
+      || state.net.cooldownRemainingMs > 0
+    ) return state;
+    const next = cloneState(state);
+    const sequence = next.bait.placementCount + 1;
+    next.player.intent = { x: 0, y: 0 };
+    next.player.velocity = { x: 0, y: 0 };
+    next.presentation.walkElapsedMs = 0;
+    next.presentation.walkFrameIndex = 0;
+    next.bait.placementCount = sequence;
+    next.bait.placement = {
+      baitId: definition.id,
+      position: reachableBaitPosition(next.net.position, next.settings.baitFeedingRadius),
+      elapsedMs: 0,
+      remainingMs: next.settings.baitPlacementAnimationMs,
+      deployed: false,
+      sequence,
+    };
+    next.presentation.baitImpact = null;
+    next.presentation.baitPlacementPhase = HAND_NET_BAIT_PLACEMENT_PHASES.WINDUP;
+    next.presentation.baitPlacementElapsedMs = 0;
+    next.presentation.baitPlacementDurationMs = next.settings.baitPlacementAnimationMs;
+    next.presentation.baitPlacementProgress = 0;
+    next.presentation.baitPlacementFrameIndex = 3;
+    next.lastEvent = {
+      type: "bait-placement-started",
+      baitId: definition.id,
+      position: copyPoint(next.bait.placement.position),
+      atMs: next.simulationTimeMs,
+    };
     return deepFreeze(next);
   }
   throw new RangeError(`Unknown hand-net action: ${action.type}.`);
@@ -495,9 +637,33 @@ function creatureDistanceToNet(state, creature) {
   );
 }
 
+function effectiveCatchRadius(state, creature) {
+  const creatureCatchRadius = creature.radius * 0.5;
+  const baseRadius = state.net.radius + creatureCatchRadius;
+  const settledBait = settledBaitDefinition(state);
+  if (
+    creature.status !== "feeding"
+    || !settledBait
+    || creature.baitTargetId !== settledBait.activeBait.baitId
+    || !baitMatchesCreature(settledBait.definition, creature)
+  ) return baseRadius;
+  return state.net.radius
+    + creatureCatchRadius * Math.max(1, settledBait.definition.hitboxMultiplier);
+}
+
+/** Returns the net collision envelope, including a feeding creature's bait bonus. */
+export function getHandNetEffectiveCatchRadius(stateValue, creatureValue) {
+  const state = requireState(stateValue);
+  if (!isRecord(creatureValue) || !Number.isFinite(creatureValue.radius) || creatureValue.radius < 0) {
+    throw new TypeError("Hand-net catch radius requires a creature with a non-negative finite radius.");
+  }
+  return effectiveCatchRadius(state, creatureValue);
+}
+
 function makeCreatureFlee(state, creature) {
-  if (creature.status !== "wandering") return;
+  if (!ACTIVE_CREATURE_STATUSES.has(creature.status)) return;
   creature.status = "fleeing";
+  creature.baitTargetId = null;
   creature.alert = 1;
   creature.heading = normalized({
     x: creature.position.x - state.net.position.x,
@@ -512,7 +678,7 @@ function makeCreatureFlee(state, creature) {
 }
 
 function updateCreatureAlert(state, creature, elapsedSeconds) {
-  if (creature.status !== "wandering") return;
+  if (!ACTIVE_CREATURE_STATUSES.has(creature.status)) return;
   const offset = {
     x: creature.position.x - state.player.position.x,
     y: creature.position.y - state.player.position.y,
@@ -561,6 +727,77 @@ function moveWanderingCreature(state, creature, elapsedMs, elapsedSeconds) {
   creature.position = { x: nextX, y: nextY };
 }
 
+function clearCreatureBaitBehavior(creature) {
+  if (creature.status === "attracted" || creature.status === "feeding") {
+    creature.status = "wandering";
+  }
+  creature.baitTargetId = null;
+}
+
+function updateCreatureBaitBehavior(state, creature, elapsedSeconds) {
+  if (!ACTIVE_CREATURE_STATUSES.has(creature.status)) {
+    creature.baitTargetId = null;
+    return false;
+  }
+  const settledBait = settledBaitDefinition(state);
+  if (!settledBait || !baitMatchesCreature(settledBait.definition, creature)) {
+    clearCreatureBaitBehavior(creature);
+    return false;
+  }
+
+  const offset = {
+    x: settledBait.activeBait.position.x - creature.position.x,
+    y: settledBait.activeBait.position.y - creature.position.y,
+  };
+  const distance = magnitude(offset);
+  if (distance > settledBait.definition.attractionRadius) {
+    clearCreatureBaitBehavior(creature);
+    return false;
+  }
+
+  const towardBait = normalized(offset, creature.heading);
+  creature.heading = towardBait;
+  creature.baitTargetId = settledBait.activeBait.baitId;
+  if (distance <= state.settings.baitFeedingRadius + EPSILON) {
+    creature.status = "feeding";
+    return true;
+  }
+
+  creature.status = "attracted";
+  const remainingTravelSeconds = Math.max(
+    HAND_NET_SIMULATION_STEP_MS / 1000,
+    settledBait.activeBait.remainingMs / 1000,
+  );
+  const arrivalSpeed = distance / Math.max(0.1, remainingTravelSeconds * 0.8);
+  const approachSpeed = Math.max(
+    creature.speed * settledBait.definition.approachSpeedMultiplier,
+    arrivalSpeed,
+  );
+  const travel = Math.min(
+    approachSpeed * elapsedSeconds,
+    Math.max(0, distance - state.settings.baitFeedingRadius),
+  );
+  creature.position = {
+    x: clamp(
+      creature.position.x + towardBait.x * travel,
+      CREATURE_BOUNDS.left,
+      CREATURE_BOUNDS.right,
+    ),
+    y: clamp(
+      creature.position.y + towardBait.y * travel,
+      CREATURE_BOUNDS.top,
+      CREATURE_BOUNDS.bottom,
+    ),
+  };
+  if (
+    Math.hypot(
+      creature.position.x - settledBait.activeBait.position.x,
+      creature.position.y - settledBait.activeBait.position.y,
+    ) <= state.settings.baitFeedingRadius + EPSILON
+  ) creature.status = "feeding";
+  return true;
+}
+
 function moveFleeingCreature(state, creature, elapsedSeconds) {
   creature.heading = normalized({
     x: creature.position.x - state.net.position.x,
@@ -589,6 +826,7 @@ function updateCreatures(state, elapsedMs) {
   const elapsedSeconds = elapsedMs / 1000;
   for (const creature of state.creatures) {
     updateCreatureAlert(state, creature, elapsedSeconds);
+    if (updateCreatureBaitBehavior(state, creature, elapsedSeconds)) continue;
     if (creature.status === "wandering") {
       moveWanderingCreature(state, creature, elapsedMs, elapsedSeconds);
     } else if (creature.status === "fleeing") {
@@ -599,6 +837,7 @@ function updateCreatures(state, elapsedMs) {
 
 function finishCatch(state, creature) {
   creature.status = "caught";
+  creature.baitTargetId = null;
   state.phase = HAND_NET_PHASES.CAUGHT;
   state.player.intent = { x: 0, y: 0 };
   state.player.velocity = { x: 0, y: 0 };
@@ -617,7 +856,9 @@ function finishCatch(state, creature) {
 
 function finishEscapeIfNeeded(state) {
   if (state.net.scoopRemainingMs > 0 || state.net.contactedCreatureId) return;
-  if (state.creatures.some(({ status }) => status === "wandering" || status === "fleeing")) return;
+  if (state.creatures.some(({ status }) => (
+    ACTIVE_CREATURE_STATUSES.has(status) || status === "fleeing"
+  ))) return;
   const speciesIds = state.creatures.map(({ speciesId }) => speciesId);
   state.phase = HAND_NET_PHASES.ESCAPED;
   state.player.intent = { x: 0, y: 0 };
@@ -637,7 +878,7 @@ function finishMiss(state) {
   state.net.contactedCreatureId = null;
   state.missCount += 1;
   for (const creature of state.creatures) {
-    if (creature.status !== "wandering" || creatureDistanceToNet(state, creature) > 2.25) continue;
+    if (!ACTIVE_CREATURE_STATUSES.has(creature.status) || creatureDistanceToNet(state, creature) > 2.25) continue;
     creature.alert = Math.min(1, creature.alert + state.settings.missAlert);
     if (creature.alert >= state.settings.alertThreshold) makeCreatureFlee(state, creature);
   }
@@ -647,6 +888,106 @@ function finishMiss(state) {
 function progressBetween(value, start, end) {
   if (end <= start) return 1;
   return clamp((value - start) / (end - start), 0, 1);
+}
+
+function updateBaitPlacementPresentation(state, elapsedMs) {
+  const durationMs = state.settings.baitPlacementAnimationMs;
+  let phase;
+  let frameIndex;
+  if (elapsedMs >= durationMs) {
+    phase = HAND_NET_BAIT_PLACEMENT_PHASES.COMPLETE;
+    frameIndex = 0;
+  } else if (elapsedMs >= state.settings.baitPlacementReleaseMs) {
+    phase = HAND_NET_BAIT_PLACEMENT_PHASES.SETTLING;
+    frameIndex = 5;
+  } else if (elapsedMs >= state.settings.baitPlacementLoweringMs) {
+    phase = HAND_NET_BAIT_PLACEMENT_PHASES.LOWERING;
+    frameIndex = 4;
+  } else {
+    phase = HAND_NET_BAIT_PLACEMENT_PHASES.WINDUP;
+    frameIndex = 3;
+  }
+  state.presentation.baitPlacementPhase = phase;
+  state.presentation.baitPlacementElapsedMs = elapsedMs;
+  state.presentation.baitPlacementDurationMs = durationMs;
+  state.presentation.baitPlacementProgress = progressBetween(elapsedMs, 0, durationMs);
+  state.presentation.baitPlacementFrameIndex = frameIndex;
+}
+
+function resetCompletedBaitPlacementPresentation(state) {
+  state.presentation.baitPlacementPhase = HAND_NET_BAIT_PLACEMENT_PHASES.IDLE;
+  state.presentation.baitPlacementElapsedMs = 0;
+  state.presentation.baitPlacementProgress = 0;
+  state.presentation.baitPlacementFrameIndex = 0;
+}
+
+function updateBait(state, elapsedMs) {
+  if (state.bait.active) {
+    state.bait.active.remainingMs = Math.max(
+      0,
+      state.bait.active.remainingMs - elapsedMs,
+    );
+    if (state.bait.active.remainingMs === 0) {
+      const expired = state.bait.active;
+      state.bait.active = null;
+      state.lastEvent = {
+        type: "bait-expired",
+        baitId: expired.baitId,
+        position: copyPoint(expired.position),
+        atMs: state.simulationTimeMs,
+      };
+    }
+  }
+
+  const placement = state.bait.placement;
+  if (!placement) {
+    if (
+      state.presentation.baitPlacementPhase
+      === HAND_NET_BAIT_PLACEMENT_PHASES.COMPLETE
+    ) resetCompletedBaitPlacementPresentation(state);
+    return;
+  }
+
+  const elapsedBeforeStep = placement.elapsedMs;
+  const placementElapsedMs = Math.min(
+    state.settings.baitPlacementAnimationMs,
+    elapsedBeforeStep + elapsedMs,
+  );
+  placement.elapsedMs = placementElapsedMs;
+  placement.remainingMs = Math.max(
+    0,
+    state.settings.baitPlacementAnimationMs - placementElapsedMs,
+  );
+  updateBaitPlacementPresentation(state, placementElapsedMs);
+
+  const released = !placement.deployed
+    && elapsedBeforeStep < state.settings.baitPlacementReleaseMs
+    && placementElapsedMs >= state.settings.baitPlacementReleaseMs;
+  if (released) {
+    const definition = requireBaitDefinition(placement.baitId);
+    placement.deployed = true;
+    state.bait.active = {
+      baitId: definition.id,
+      position: copyPoint(placement.position),
+      remainingMs: definition.durationMs,
+      durationMs: definition.durationMs,
+      placedAtMs: state.simulationTimeMs,
+      sequence: placement.sequence,
+    };
+    state.presentation.baitImpact = {
+      sequence: placement.sequence,
+      baitId: definition.id,
+      position: copyPoint(placement.position),
+    };
+    state.lastEvent = {
+      type: "bait-placed",
+      baitId: definition.id,
+      position: copyPoint(placement.position),
+      atMs: state.simulationTimeMs,
+    };
+  }
+
+  if (placement.remainingMs === 0) state.bait.placement = null;
 }
 
 function updateScoopPresentation(state, elapsedMs, contactActive) {
@@ -731,11 +1072,12 @@ function updateNet(state, elapsedMs) {
 
   if (state.presentation.scoopHitboxActive) {
     const caught = state.creatures.find((creature) => (
-      creature.status === "wandering"
-      && creatureDistanceToNet(state, creature) <= state.net.radius + creature.radius * 0.5
+      ACTIVE_CREATURE_STATUSES.has(creature.status)
+      && creatureDistanceToNet(state, creature) <= effectiveCatchRadius(state, creature)
     ));
     if (caught) {
       caught.status = "caught";
+      caught.baitTargetId = null;
       state.net.contactedCreatureId = caught.id;
       state.lastEvent = {
         type: "creature-netted",
@@ -760,6 +1102,7 @@ function simulationStep(state) {
   state.tickCount += 1;
   updatePlayer(state, elapsedSeconds);
   updateWalkPresentation(state, HAND_NET_SIMULATION_STEP_MS);
+  updateBait(state, HAND_NET_SIMULATION_STEP_MS);
   updateCreatures(state, HAND_NET_SIMULATION_STEP_MS);
   updateNet(state, HAND_NET_SIMULATION_STEP_MS);
   if (state.phase === HAND_NET_PHASES.PLAYING) finishEscapeIfNeeded(state);

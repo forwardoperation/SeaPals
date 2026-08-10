@@ -14,6 +14,7 @@ import { cardsById } from "@/data/cards";
 import {
   ELVERSON_REEF_CATCHES,
 } from "./adventureFishing.mjs";
+import { ELVERSON_BAITS_BY_ID } from "./adventureBait.mjs";
 import {
   HAND_NET_ACTIONS,
   HAND_NET_PHASES,
@@ -181,6 +182,15 @@ function handNetStatus(state, tutorial, required, catchError) {
   if (state.phase === HAND_NET_PHASES.ESCAPED) return required
     ? "The animals found cover. Wyeth points out another calm patch for you to try."
     : "The shallows went quiet. Return to shore or try a fresh patch.";
+  const baitDefinition = state.bait?.active
+    ? ELVERSON_BAITS_BY_ID[state.bait.active.baitId]
+    : state.bait?.placement
+      ? ELVERSON_BAITS_BY_ID[state.bait.placement.baitId]
+      : null;
+  if (state.bait?.placement) return `You lower ${baitDefinition?.name ?? "the bait pouch"} into the water with the hand net.`;
+  const feedingCount = state.creatures.filter(({ status }) => status === "feeding").length;
+  if (feedingCount > 0) return `${feedingCount} ${feedingCount === 1 ? "creature is" : "creatures are"} eating ${baitDefinition?.name ?? "the bait"}. Their catch area is larger while they feed.`;
+  if (state.bait?.active) return `${baitDefinition?.name ?? "The bait"} is drifting. Matching creatures are following the scent.`;
   if (state.lastEvent?.type === "creature-fled") return "That one startled. Stop moving and let the others settle before approaching again.";
   if (state.lastEvent?.type === "scoop-missed") return "The net missed. Pause, watch the animal's path, then line up another gentle scoop.";
   if (state.net.scoopRemainingMs > 0) return "Scoop!";
@@ -201,12 +211,17 @@ export default function AdventureHandNetModal({
   required = false,
   reducedMotion = false,
   startWithCast = false,
+  baitShop = null,
+  onUseBait,
   onCatch,
   onClose,
   onReturnToShore,
 }) {
   const dialogRef = useRef(null);
   const primaryActionRef = useRef(null);
+  const baitMenuTriggerRef = useRef(null);
+  const baitMenuRef = useRef(null);
+  const baitMenuOpenRef = useRef(false);
   const pressedKeysRef = useRef(new Set());
   const shallowsRef = useRef(null);
   const playerElementRef = useRef(null);
@@ -237,6 +252,7 @@ export default function AdventureHandNetModal({
   const [catchResult, setCatchResult] = useState(null);
   const [catchError, setCatchError] = useState(null);
   const [catchDetailsOpen, setCatchDetailsOpen] = useState(false);
+  const [baitMenuOpen, setBaitMenuOpen] = useState(false);
   const [encyclopediaEntry, setEncyclopediaEntry] = useState({ slug: null, creature: null });
   const [pageVisible, setPageVisible] = useState(
     () => typeof document === "undefined" || document.visibilityState !== "hidden",
@@ -254,21 +270,31 @@ export default function AdventureHandNetModal({
   const encyclopediaSlug = encyclopediaEntry.slug;
   const encyclopediaCreature = encyclopediaEntry.creature;
   const celebrating = state.phase === HAND_NET_PHASES.CAUGHT && Boolean(catchResult) && !catchError;
+  const baitPlacement = state.bait?.placement ?? null;
+  const activeBait = state.bait?.active ?? null;
+  const activeBaitDefinition = activeBait ? ELVERSON_BAITS_BY_ID[activeBait.baitId] ?? null : null;
+  const placingBait = Boolean(baitPlacement);
+  const baitActionLocked = placingBait || state.net.scoopRemainingMs > 0 || state.net.cooldownRemainingMs > 0;
+  const availableBaitCount = baitShop?.baits.reduce((total, bait) => total + bait.quantity, 0) ?? 0;
   const playerVelocityMagnitude = Math.hypot(state.player.velocity.x, state.player.velocity.y);
   const playerMoving = playerVelocityMagnitude > 0.0001;
   const playerSpriteRow = celebrating ? 0 : isometricSpriteRow(state.player.facing);
   const playerSpriteFrame = celebrating
     ? 6
-    : state.net.scoopRemainingMs > 0
-      ? state.presentation.scoopFrameIndex
-      : playerMoving
-        ? state.presentation.walkFrameIndex
-        : 0;
+    : placingBait
+      ? state.presentation.baitPlacementFrameIndex
+      : state.net.scoopRemainingMs > 0
+        ? state.presentation.scoopFrameIndex
+        : playerMoving
+          ? state.presentation.walkFrameIndex
+          : 0;
   const playerSpritePosition = {
     x: `${(playerSpriteFrame / 6) * 100}%`,
     y: `${(playerSpriteRow / 3) * 100}%`,
   };
   const netSplash = state.presentation.netImpact;
+  const baitImpact = state.presentation.baitImpact;
+  const baitImpactDefinition = baitImpact ? ELVERSON_BAITS_BY_ID[baitImpact.baitId] ?? null : null;
   const atlasPositions = useMemo(() => Object.fromEntries(
     ELVERSON_REEF_CATCHES.map((entry) => [entry.id, creatureAtlasPosition(entry.id)]),
   ), []);
@@ -363,6 +389,7 @@ export default function AdventureHandNetModal({
     setCatchResult(null);
     setCatchError(null);
     setCatchDetailsOpen(false);
+    setBaitMenuOpen(false);
     const nextAttempt = createAttempt({
       seed: seedRef.current,
       tutorial,
@@ -383,6 +410,7 @@ export default function AdventureHandNetModal({
   }, [applyClockAction]);
 
   const returnToShore = useCallback((reason) => {
+    if (placingBait) return;
     stopMoving();
     const payload = {
       reason,
@@ -390,7 +418,7 @@ export default function AdventureHandNetModal({
     };
     if (onReturnToShore) onReturnToShore(payload);
     else onClose?.();
-  }, [onClose, onReturnToShore, state.outcome?.speciesId, stopMoving]);
+  }, [onClose, onReturnToShore, placingBait, state.outcome?.speciesId, stopMoving]);
 
   useEffect(() => {
     const handleVisibilityChange = () => setPageVisible(document.visibilityState !== "hidden");
@@ -424,6 +452,14 @@ export default function AdventureHandNetModal({
   }, [caughtCardId]);
 
   useEffect(() => {
+    baitMenuOpenRef.current = baitMenuOpen;
+    if (!baitMenuOpen) return;
+    window.requestAnimationFrame(() => {
+      baitMenuRef.current?.querySelector("button:not(:disabled)")?.focus({ preventScroll: true });
+    });
+  }, [baitMenuOpen]);
+
+  useEffect(() => {
     previousFocusRef.current = document.activeElement;
     primaryActionRef.current?.focus({ preventScroll: true });
     const dialog = dialogRef.current;
@@ -433,7 +469,8 @@ export default function AdventureHandNetModal({
       if (event.key !== "Tab") return;
       const modalStack = [...document.querySelectorAll("[data-adventure-modal='true']")];
       if (modalStack.at(-1) !== dialog) return;
-      const focusable = [...dialog.querySelectorAll(focusableSelector)];
+      const focusScope = baitMenuOpenRef.current ? baitMenuRef.current : dialog;
+      const focusable = [...(focusScope ?? dialog).querySelectorAll(focusableSelector)];
       if (!focusable.length) {
         event.preventDefault();
         dialog.focus();
@@ -457,7 +494,7 @@ export default function AdventureHandNetModal({
   }, []);
 
   useEffect(() => {
-    if (!pageVisible || state.phase !== HAND_NET_PHASES.PLAYING) return undefined;
+    if (!pageVisible || baitMenuOpen || state.phase !== HAND_NET_PHASES.PLAYING) return undefined;
     let animationFrame = 0;
     let lastTimestamp = null;
     const advance = (timestamp) => {
@@ -497,7 +534,7 @@ export default function AdventureHandNetModal({
     };
     animationFrame = window.requestAnimationFrame(advance);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [pageVisible, paintRenderPositions, state.phase]);
+  }, [baitMenuOpen, pageVisible, paintRenderPositions, state.phase]);
 
   useEffect(() => {
     if (state.outcome?.type !== "caught" || recordedOutcomeRef.current === state.outcome.creatureId) return;
@@ -536,8 +573,36 @@ export default function AdventureHandNetModal({
   }
 
   function scoop() {
-    if (terminal) return;
+    if (terminal || baitMenuOpen || placingBait) return;
     applyClockAction({ type: HAND_NET_ACTIONS.SCOOP });
+  }
+
+  function openBaitMenu() {
+    if (terminal || baitActionLocked) return;
+    baitMenuOpenRef.current = true;
+    stopMoving();
+    setBaitMenuOpen(true);
+  }
+
+  function closeBaitMenu({ restoreFocus = true } = {}) {
+    baitMenuOpenRef.current = false;
+    setBaitMenuOpen(false);
+    if (!restoreFocus) return;
+    window.requestAnimationFrame(() => {
+      baitMenuTriggerRef.current?.focus({ preventScroll: true });
+    });
+  }
+
+  function placeBait(baitId) {
+    if (terminal || placingBait || activeBait || !onUseBait) return;
+    const action = { type: HAND_NET_ACTIONS.PLACE_BAIT, baitId };
+    const clock = simulationClockRef.current;
+    if (applyHandNetAction(clock.current, action) === clock.current) return;
+    const used = onUseBait(baitId);
+    if (!used) return;
+    applyClockAction(action);
+    closeBaitMenu({ restoreFocus: false });
+    window.requestAnimationFrame(() => shallowsRef.current?.focus({ preventScroll: true }));
   }
 
   function handleWaterScoop(event) {
@@ -553,6 +618,30 @@ export default function AdventureHandNetModal({
     const nativeTextEntry = target instanceof Element
       && target.closest("input, select, textarea, [contenteditable='true']");
     const movementKey = normalizedMovementKey(event.key);
+    const nativeInteractive = target instanceof Element
+      && target.closest("button, a, input, select, textarea, [contenteditable='true']");
+    const actionKey = event.key === "Enter" || event.key === " ";
+    if (baitMenuOpen) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        closeBaitMenu();
+        return;
+      }
+      if (MOVE_KEYS[movementKey]) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      if (nativeInteractive) {
+        if (actionKey && event.repeat) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        return;
+      }
+      return;
+    }
     if (MOVE_KEYS[movementKey] && !nativeTextEntry) {
       event.preventDefault();
       event.stopPropagation();
@@ -562,9 +651,6 @@ export default function AdventureHandNetModal({
       beginMove(intent.x, intent.y);
       return;
     }
-    const nativeInteractive = target instanceof Element
-      && target.closest("button, a, input, select, textarea, [contenteditable='true']");
-    const actionKey = event.key === "Enter" || event.key === " ";
     if (nativeInteractive && event.key !== "Escape") {
       if (actionKey && event.repeat) {
         event.preventDefault();
@@ -582,6 +668,7 @@ export default function AdventureHandNetModal({
     if (event.key !== "Escape") return;
     event.preventDefault();
     event.stopPropagation();
+    if (placingBait) return;
     if (required && !catchResult) {
       stopMoving();
       onClose?.();
@@ -611,7 +698,9 @@ export default function AdventureHandNetModal({
           }}
           role="application"
           tabIndex={0}
-          aria-label="Shallow-water hand-net area. Use arrow keys or WASD to move. Press Enter or Space, or click or tap the water, to catch."
+          inert={baitMenuOpen}
+          aria-hidden={baitMenuOpen ? "true" : undefined}
+          aria-label="Shallow-water hand-net area. Use arrow keys or WASD to move. Press Enter or Space, or click or tap the water, to catch. Open the bait bag from the controls to attract fish."
           onClick={handleWaterScoop}
         >
           <h2 id="hand-net-title" className={styles.srOnly}>
@@ -620,6 +709,19 @@ export default function AdventureHandNetModal({
 
           <span className={styles.handNetWave} aria-hidden="true"><i /><i /><i /></span>
           <span className={styles.handNetSandRipples} aria-hidden="true" />
+          {activeBait && activeBaitDefinition ? (
+            <span
+              key={`active-bait-${activeBait.sequence}`}
+              className={styles.handNetBaitSpot}
+              data-hand-net-bait={activeBait.baitId}
+              style={{
+                left: `${(activeBait.position.x / state.arena.width) * 100}%`,
+                top: `${(activeBait.position.y / state.arena.height) * 100}%`,
+                "--hand-net-bait-color": activeBaitDefinition.color,
+              }}
+              aria-hidden="true"
+            ><i /><b /><em /></span>
+          ) : null}
           {state.creatures.map((creature) => {
             if (creature.status === "escaped" || creature.status === "caught") return null;
             const sprite = atlasPositions[creature.speciesId];
@@ -628,7 +730,7 @@ export default function AdventureHandNetModal({
               <span
                 key={creature.id}
                 ref={creatureNodeRef(creature.id)}
-                className={`${styles.handNetCreature} ${creature.status === "fleeing" ? styles.handNetCreatureFleeing : ""} ${creature.category === "invertebrate" ? styles.handNetCreatureInvertebrate : ""}`}
+                className={`${styles.handNetCreature} ${creature.status === "fleeing" ? styles.handNetCreatureFleeing : ""} ${creature.status === "attracted" ? styles.handNetCreatureAttracted : ""} ${creature.status === "feeding" ? styles.handNetCreatureFeeding : ""} ${creature.category === "invertebrate" ? styles.handNetCreatureInvertebrate : ""}`}
                 style={{
                   "--hand-net-facing": creature.heading.x < 0 ? -1 : 1,
                   "--hand-net-atlas-x": `${sprite.x}%`,
@@ -636,7 +738,12 @@ export default function AdventureHandNetModal({
                   "--hand-net-alert": creature.alert,
                   backgroundImage: `url("${ELVERSON_REEF_CREATURE_ATLAS_PATH}")`,
                 }}
-                aria-label={`${creatureName}, ${creature.status}${creature.alert > 0.35 ? ", becoming alert" : ""}`}
+                data-hand-net-creature-status={creature.status}
+                aria-label={creature.status === "feeding"
+                  ? `${creatureName}, eating bait and easier to catch`
+                  : creature.status === "attracted"
+                    ? `${creatureName}, following the bait scent`
+                    : `${creatureName}, ${creature.status}${creature.alert > 0.35 ? ", becoming alert" : ""}`}
               >
                 {creature.alert > 0.12 ? <i className={styles.handNetAlert} aria-hidden="true" /> : null}
               </span>
@@ -645,15 +752,21 @@ export default function AdventureHandNetModal({
           <span className={styles.handNetSurfaceVeil} data-hand-net-effect="surface-veil" aria-hidden="true" />
           <span
             ref={playerElementRef}
-            className={`${styles.handNetPlayer} ${playerMoving ? styles.handNetPlayerMoving : ""} ${celebrating ? styles.handNetPlayerCelebrating : ""} ${playerSpriteRow >= 2 ? styles.handNetPlayerFacingRear : styles.handNetPlayerFacingFront}`}
+            className={`${styles.handNetPlayer} ${playerMoving ? styles.handNetPlayerMoving : ""} ${placingBait ? styles.handNetPlayerPlacingBait : ""} ${celebrating ? styles.handNetPlayerCelebrating : ""} ${playerSpriteRow >= 2 ? styles.handNetPlayerFacingRear : styles.handNetPlayerFacingFront}`}
             style={{
               "--hand-net-player-atlas-x": playerSpritePosition.x,
               "--hand-net-player-atlas-y": playerSpritePosition.y,
               backgroundImage: `url("${ELVERSON_HAND_NET_PLAYER_ATLAS_PATH}")`,
             }}
-            aria-label={celebrating ? "You celebrate the catch with the hand net held high" : "You with Wyeth's hand net"}
+            aria-label={celebrating
+              ? "You celebrate the catch with the hand net held high"
+              : placingBait
+                ? "You lower a bait pouch into the water with the hand net"
+                : "You with Wyeth's hand net"}
             data-hand-net-scoop-phase={state.presentation.scoopPhase}
             data-hand-net-scoop-frame={playerSpriteFrame}
+            data-hand-net-bait-placement-phase={state.presentation.baitPlacementPhase}
+            data-hand-net-bait-placement-frame={state.presentation.baitPlacementFrameIndex}
           >
             <i className={styles.handNetPlayerRipple} aria-hidden="true" />
           </span>
@@ -668,6 +781,19 @@ export default function AdventureHandNetModal({
               style={{
                 left: `${(netSplash.position.x / state.arena.width) * 100}%`,
                 top: `${(netSplash.position.y / state.arena.height) * 100}%`,
+              }}
+              aria-hidden="true"
+            ><i /><b /></span>
+          ) : null}
+          {baitImpact && baitImpactDefinition ? (
+            <span
+              key={`bait-impact-${baitImpact.sequence}`}
+              className={styles.handNetBaitImpact}
+              data-hand-net-effect="bait-impact"
+              style={{
+                left: `${(baitImpact.position.x / state.arena.width) * 100}%`,
+                top: `${(baitImpact.position.y / state.arena.height) * 100}%`,
+                "--hand-net-bait-color": baitImpactDefinition.color,
               }}
               aria-hidden="true"
             ><i /><b /></span>
@@ -718,7 +844,75 @@ export default function AdventureHandNetModal({
             </section>
           ) : null}
         </div>
-        <div className={`${styles.controlDock} ${styles.handNetControlDock}`} data-hand-net-ui>
+        {baitMenuOpen && baitShop ? (
+          <div className={styles.handNetBaitMenuBackdrop} data-hand-net-ui>
+            <section
+              ref={baitMenuRef}
+              className={styles.handNetBaitDrawer}
+              aria-labelledby="hand-net-bait-title"
+              aria-describedby="hand-net-bait-help"
+            >
+              <header>
+                <div>
+                  <span>Inventory · Bait bag</span>
+                  <h3 id="hand-net-bait-title">Choose bait for this patch</h3>
+                </div>
+                <button type="button" onClick={() => closeBaitMenu()} aria-label="Close bait bag">Close</button>
+              </header>
+              <p id="hand-net-bait-help">
+                Place one pouch with the hand net. Matching creatures will follow it and become easier to catch while they eat.
+              </p>
+              {activeBaitDefinition ? (
+                <p className={styles.handNetBaitActiveNotice} role="status">
+                  {activeBaitDefinition.name} is already working in the water. Close the bait bag and let it finish before placing another pouch.
+                </p>
+              ) : null}
+              <div className={styles.handNetBaitOptions}>
+                {baitShop.baits.map((bait) => {
+                  const matchingCreatureCount = state.creatures.filter((creature) => (
+                    ["wandering", "attracted", "feeding"].includes(creature.status)
+                    && bait.speciesIds.includes(creature.speciesId)
+                  )).length;
+                  const hasMatchingCreature = matchingCreatureCount > 0;
+                  return (
+                    <article
+                      key={bait.id}
+                      className={styles.handNetBaitOption}
+                      style={{ "--bait-color": bait.color }}
+                    >
+                      <span className={styles.baitInventoryPouch} aria-hidden="true"><i /></span>
+                      <div>
+                        <span>{bait.targetLabel}</span>
+                        <h4>{bait.name}</h4>
+                        <p>{bait.description}</p>
+                      </div>
+                      <div className={styles.handNetBaitOptionAction}>
+                        <b>{bait.quantity} in bag / {matchingCreatureCount} {matchingCreatureCount === 1 ? "match" : "matches"} here</b>
+                        <button
+                          type="button"
+                          disabled={bait.quantity < 1 || Boolean(activeBait) || placingBait || !hasMatchingCreature}
+                          onClick={() => placeBait(bait.id)}
+                        >{bait.quantity < 1
+                            ? "Out of bait"
+                            : activeBait
+                              ? "Bait active"
+                              : hasMatchingCreature
+                                ? "Place bait"
+                                : "No match here"}</button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+        ) : null}
+        <div
+          className={`${styles.controlDock} ${styles.handNetControlDock}`}
+          data-hand-net-ui
+          inert={baitMenuOpen}
+          aria-hidden={baitMenuOpen ? "true" : undefined}
+        >
           {!terminal ? (
             <div className={`${styles.dpad} ${styles.handNetDockDpad}`} aria-label="Move in the shallows">
               <HandNetDirectionButton direction="up" onStart={beginMove} onStop={stopMoving} />
@@ -734,20 +928,34 @@ export default function AdventureHandNetModal({
                 type="button"
                 className={`${styles.actionButton} ${styles.handNetExitAction}`}
                 aria-keyshortcuts="Escape"
+                disabled={placingBait}
                 onClick={() => returnToShore("cancelled")}
               ><span aria-hidden="true">B</span> Leave</button>
             ) : null}
           </div>
           <div className={styles.handNetDockActions}>
             {!terminal ? (
-              <button
-                ref={primaryActionRef}
-                type="button"
-                className={`${styles.actionButton} ${styles.handNetPrimaryAction}`}
-                disabled={state.net.scoopRemainingMs > 0 || state.net.cooldownRemainingMs > 0}
-                aria-keyshortcuts="Enter Space"
-                onClick={scoop}
-              ><span aria-hidden="true">A</span> Catch</button>
+              <>
+                {baitShop ? (
+                  <button
+                    ref={baitMenuTriggerRef}
+                    type="button"
+                    className={`${styles.actionButton} ${styles.handNetSecondaryAction}`}
+                    disabled={baitActionLocked}
+                    aria-haspopup="true"
+                    aria-expanded={baitMenuOpen}
+                    onClick={openBaitMenu}
+                  ><span aria-hidden="true">X</span> Bait bag ({availableBaitCount})</button>
+                ) : null}
+                <button
+                  ref={primaryActionRef}
+                  type="button"
+                  className={`${styles.actionButton} ${styles.handNetPrimaryAction}`}
+                  disabled={placingBait || state.net.scoopRemainingMs > 0 || state.net.cooldownRemainingMs > 0}
+                  aria-keyshortcuts="Enter Space"
+                  onClick={scoop}
+                ><span aria-hidden="true">A</span> Catch</button>
+              </>
             ) : state.phase === HAND_NET_PHASES.ESCAPED ? (
               <button ref={primaryActionRef} type="button" className={`${styles.actionButton} ${styles.handNetPrimaryAction}`} onClick={() => resetAttempt()}>
                 <span aria-hidden="true">A</span> Try again

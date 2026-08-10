@@ -1006,7 +1006,7 @@ const shellshoreRuntimeScenes = {
   }),
   "elverson-supply-company": elversonInteriorScene({
     sceneId: "elverson-supply-company",
-    name: "Elverson Supply Company",
+    name: "Elverson Bait & Tackle",
     theme: "academy-lab",
     tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
     spawn: { x: 6.5, y: 7 },

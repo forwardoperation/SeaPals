@@ -10895,3 +10895,681 @@
   .handNetVictoryBurst { display: none; }
   .handNetCatchCreatureStage > i { forced-color-adjust: none; }
 }
+
+/* Elverson's existing green-awning Supply Company now hosts Henderson's bait counter. */
+.baitShopLayer {
+  position: fixed;
+  z-index: 99;
+  inset: 0;
+  display: grid;
+  overflow-y: auto;
+  place-items: center;
+  padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  background:
+    radial-gradient(circle at 72% 15%, rgba(122, 206, 169, 0.2), transparent 30%),
+    rgba(3, 18, 25, 0.86);
+  backdrop-filter: blur(9px);
+}
+
+.baitShopCard {
+  width: min(1020px, 100%);
+  border: 3px solid #2d1d10;
+  border-radius: 20px;
+  padding: clamp(17px, 2.6vw, 28px);
+  color: #2d2518;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.2), transparent 24%),
+    linear-gradient(160deg, #f5e3b7, #ddbd80 68%, #c99d5b);
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 247, 213, 0.5),
+    0 0 0 5px #78522d,
+    0 28px 90px rgba(0, 0, 0, 0.62);
+  animation: introIn 260ms ease-out;
+}
+
+.baitShopHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: start;
+  gap: 16px;
+  padding-bottom: 17px;
+  border-bottom: 2px solid rgba(91, 61, 31, 0.28);
+}
+
+.baitShopHeader > div:first-child > span {
+  color: #22675b;
+  font-size: 0.67rem;
+  font-weight: 1000;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.baitShopHeader h2 {
+  margin: 5px 0;
+  color: #263f35;
+  font-family: var(--font-heading, inherit);
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+  line-height: 1;
+}
+
+.baitShopHeader p {
+  max-width: 650px;
+  margin: 0;
+  color: #59462f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.baitShopBalance {
+  display: grid;
+  min-width: 102px;
+  place-items: center;
+  border: 2px solid #2f665b;
+  border-radius: 14px;
+  padding: 8px 12px;
+  color: #ecfdf5;
+  background: linear-gradient(145deg, #318274, #1d5a50);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.2), 0 4px 0 #173e38;
+}
+
+.baitShopBalance small {
+  font-size: 0.56rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.baitShopBalance strong { font-size: 1.45rem; }
+
+.baitShopClose,
+.baitShopFooter button,
+.baitShopProductAction button {
+  min-height: 44px;
+  border: 2px solid #49301a;
+  border-radius: 11px;
+  padding: 9px 13px;
+  color: #fff9e6;
+  background: linear-gradient(180deg, #397e70, #24594f);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.17), 0 3px 0 #173b35;
+  font: inherit;
+  font-size: 0.67rem;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.baitShopClose:hover,
+.baitShopClose:focus-visible,
+.baitShopFooter button:hover,
+.baitShopFooter button:focus-visible,
+.baitShopProductAction button:hover:not(:disabled),
+.baitShopProductAction button:focus-visible:not(:disabled) {
+  outline: 3px solid #f59e0b;
+  outline-offset: 2px;
+  filter: brightness(1.1);
+}
+
+.baitShopCatalog {
+  display: grid;
+  gap: 12px;
+  margin-top: 17px;
+}
+
+.baitShopProduct {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr) minmax(126px, auto);
+  align-items: center;
+  gap: 15px;
+  border: 2px solid rgba(73, 48, 26, 0.36);
+  border-left: 8px solid var(--bait-color);
+  border-radius: 15px;
+  padding: 13px;
+  background: rgba(255, 250, 226, 0.62);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.72), 0 5px 13px rgba(72, 46, 24, 0.12);
+}
+
+.baitShopPouch,
+.baitInventoryPouch {
+  position: relative;
+  display: grid;
+  aspect-ratio: 0.82;
+  place-items: center;
+  border: 3px solid #51351d;
+  border-radius: 12px 12px 19px 19px;
+  background:
+    radial-gradient(circle at 35% 33%, rgba(255, 255, 255, 0.46), transparent 16%),
+    linear-gradient(145deg, color-mix(in srgb, var(--bait-color) 80%, white), var(--bait-color));
+  box-shadow: inset 0 -7px rgba(68, 42, 22, 0.16), 0 5px 0 rgba(78, 48, 25, 0.22);
+}
+
+.baitShopPouch { width: 64px; }
+
+.baitShopPouch::before,
+.baitInventoryPouch::before {
+  position: absolute;
+  top: -7px;
+  width: 70%;
+  height: 10px;
+  border: 3px solid #51351d;
+  border-radius: 999px;
+  background: #e8d2a0;
+  content: "";
+}
+
+.baitShopPouch i,
+.baitShopPouch b,
+.baitInventoryPouch i {
+  display: block;
+  width: 9px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fff3b7;
+  box-shadow: 14px -6px 0 -2px #fff3b7, -13px 7px 0 -2px #fff3b7;
+}
+
+.baitShopProductCopy > span {
+  color: #287267;
+  font-size: 0.58rem;
+  font-weight: 1000;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.baitShopProductCopy h3 {
+  margin: 2px 0 4px;
+  color: #2f271b;
+  font-size: 1.12rem;
+}
+
+.baitShopProductCopy p,
+.baitShopProductCopy small {
+  display: block;
+  margin: 0;
+  color: #5f4b33;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.42;
+}
+
+.baitShopProductCopy small { margin-top: 4px; color: #2d675d; }
+
+.baitShopProductAction {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+
+.baitShopProductAction > b {
+  color: #654421;
+  font-size: 0.67rem;
+}
+
+.baitShopProductAction button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+  opacity: 0.56;
+}
+
+.baitShopFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 17px;
+  border-top: 2px solid rgba(91, 61, 31, 0.24);
+  padding-top: 15px;
+}
+
+.baitShopFooter p {
+  margin: 0;
+  color: #5b472f;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.baitInventoryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.baitInventoryItem {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(148, 220, 203, 0.3);
+  border-radius: 10px;
+  padding: 7px;
+  background: rgba(20, 74, 69, 0.3);
+}
+
+.baitInventoryPouch { width: 29px; border-width: 2px; border-radius: 6px 6px 9px 9px; }
+.baitInventoryPouch::before { top: -5px; height: 6px; border-width: 2px; }
+.baitInventoryPouch i { width: 4px; box-shadow: 7px -3px 0 -1px #fff3b7, -6px 4px 0 -1px #fff3b7; }
+
+.baitInventoryItem > span:nth-child(2) { min-width: 0; }
+.baitInventoryItem strong,
+.baitInventoryItem small,
+.baitInventoryItem em { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.baitInventoryItem strong { color: #fff; font-size: 0.64rem; }
+.baitInventoryItem small { margin-top: 2px; color: #b8eee3; font-size: 0.5rem; }
+.baitInventoryItem em { margin-top: 2px; color: #fcd34d; font-size: 0.47rem; font-style: normal; }
+.baitInventoryItem > b { color: #7dd3fc; font-size: 0.62rem; }
+
+@media (max-width: 720px) {
+  .baitShopLayer { place-items: start center; padding: 6px; }
+  .baitShopCard { border-radius: 12px; padding: 13px; }
+  .baitShopHeader { grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
+  .baitShopHeader p { font-size: 0.64rem; }
+  .baitShopBalance { min-width: 80px; padding: 6px 8px; }
+  .baitShopClose { grid-column: 1 / -1; width: 100%; }
+  .baitShopProduct { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; border-left-width: 5px; padding: 9px; }
+  .baitShopPouch { width: 44px; }
+  .baitShopProductAction { grid-column: 1 / -1; grid-template-columns: 1fr 1.4fr; align-items: center; }
+  .baitShopFooter { align-items: stretch; flex-direction: column; }
+  .baitShopFooter button { width: 100%; }
+  .baitInventoryGrid { grid-template-columns: 1fr; }
+}
+
+@media (forced-colors: active) {
+  .baitShopCard,
+  .baitShopProduct,
+  .baitShopBalance,
+  .baitShopClose,
+  .baitShopFooter button,
+  .baitShopProductAction button,
+  .baitInventoryItem {
+    border-color: CanvasText;
+    color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+}
+
+/* Bait bag, feeding assist, and the hand-net placement sequence. */
+.handNetBaitSpot,
+.handNetBaitImpact {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.handNetBaitSpot {
+  z-index: 6;
+  width: 7.5%;
+  aspect-ratio: 1.55;
+  border: 2px solid color-mix(in srgb, var(--hand-net-bait-color) 52%, white);
+  background: color-mix(in srgb, var(--hand-net-bait-color) 18%, transparent);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--hand-net-bait-color) 10%, transparent),
+    inset 0 0 12px rgba(255, 255, 255, 0.18);
+  animation: handNetBaitDrift 2.4s ease-in-out infinite;
+}
+
+.handNetBaitSpot::before,
+.handNetBaitSpot::after,
+.handNetBaitSpot i,
+.handNetBaitSpot b,
+.handNetBaitSpot em {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  content: "";
+}
+
+.handNetBaitSpot::before,
+.handNetBaitSpot::after {
+  inset: -28%;
+  border: 2px solid color-mix(in srgb, var(--hand-net-bait-color) 45%, white);
+  opacity: 0;
+  animation: handNetBaitRipple 2s ease-out infinite;
+}
+
+.handNetBaitSpot::after { animation-delay: 1s; }
+
+.handNetBaitSpot i,
+.handNetBaitSpot b,
+.handNetBaitSpot em {
+  top: 45%;
+  left: 48%;
+  width: 10%;
+  aspect-ratio: 1;
+  background: color-mix(in srgb, var(--hand-net-bait-color) 76%, #fff5bd);
+  box-shadow:
+    -12px 4px 0 -1px color-mix(in srgb, var(--hand-net-bait-color) 72%, #fff5bd),
+    11px -5px 0 -1px color-mix(in srgb, var(--hand-net-bait-color) 66%, #fff5bd);
+}
+
+.handNetBaitSpot b { top: 68%; left: 35%; scale: 0.78; }
+.handNetBaitSpot em { top: 27%; left: 63%; scale: 0.62; }
+
+.handNetBaitImpact {
+  z-index: 16;
+  width: 11%;
+  aspect-ratio: 1;
+  opacity: 0;
+  animation: handNetBaitImpactFlash 820ms ease-out both;
+}
+
+.handNetBaitImpact::before,
+.handNetBaitImpact::after {
+  position: absolute;
+  inset: 34%;
+  border: 3px solid color-mix(in srgb, var(--hand-net-bait-color) 58%, white);
+  border-radius: 50%;
+  content: "";
+  animation: handNetBaitImpactRing 780ms ease-out both;
+}
+
+.handNetBaitImpact::after { animation-delay: 90ms; }
+
+.handNetBaitImpact i,
+.handNetBaitImpact b {
+  position: absolute;
+  top: 48%;
+  left: 48%;
+  display: block;
+  width: 7%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--hand-net-bait-color) 72%, #fff7c9);
+  box-shadow:
+    -25px -17px 0 1px color-mix(in srgb, var(--hand-net-bait-color) 68%, #fff7c9),
+    23px -11px 0 0 color-mix(in srgb, var(--hand-net-bait-color) 68%, #fff7c9),
+    -14px 20px 0 -1px color-mix(in srgb, var(--hand-net-bait-color) 68%, #fff7c9),
+    19px 17px 0 -1px color-mix(in srgb, var(--hand-net-bait-color) 68%, #fff7c9);
+  animation: handNetBaitPellets 700ms cubic-bezier(0.18, 0.7, 0.24, 1) both;
+}
+
+.handNetBaitImpact b { rotate: 45deg; scale: 0.7; animation-delay: 55ms; }
+
+.handNetCreatureAttracted {
+  filter: drop-shadow(0 0 5px rgba(254, 240, 138, 0.74)) drop-shadow(0 4px 2px rgba(8, 47, 73, 0.36));
+}
+
+.handNetCreatureFeeding {
+  filter: drop-shadow(0 0 7px rgba(253, 224, 71, 0.92)) drop-shadow(0 4px 2px rgba(8, 47, 73, 0.34));
+  animation: handNetCreatureFeeding 920ms ease-in-out infinite;
+}
+
+.handNetCreatureFeeding::after {
+  position: absolute;
+  z-index: -1;
+  inset: 12% 5%;
+  border: 2px dashed rgba(254, 240, 138, 0.82);
+  border-radius: 50%;
+  content: "";
+  animation: handNetFeedingRing 1.25s ease-out infinite;
+}
+
+.handNetPlayerPlacingBait {
+  animation: handNetBaitPlacement 700ms cubic-bezier(0.2, 0.72, 0.22, 1) both;
+}
+
+.handNetBaitMenuBackdrop {
+  position: absolute;
+  z-index: 70;
+  inset: 0;
+  display: grid;
+  overflow: auto;
+  place-items: center;
+  border-radius: 7px;
+  padding: clamp(10px, 2.5vw, 28px);
+  background:
+    radial-gradient(circle at 50% 25%, rgba(110, 231, 183, 0.14), transparent 40%),
+    rgba(1, 21, 30, 0.88);
+  backdrop-filter: blur(7px);
+  animation: handNetBaitMenuIn 180ms ease-out both;
+}
+
+.handNetBaitDrawer {
+  width: min(900px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  border: 2px solid #92dec8;
+  border-radius: 17px;
+  padding: clamp(13px, 2.2vw, 22px);
+  color: #effdf8;
+  background:
+    linear-gradient(145deg, rgba(28, 103, 92, 0.98), rgba(8, 47, 58, 0.99) 72%),
+    #083b3d;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08), 0 18px 55px rgba(0, 0, 0, 0.52);
+}
+
+.handNetBaitDrawer > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.handNetBaitDrawer > header span {
+  color: #fde68a;
+  font-size: 0.58rem;
+  font-weight: 1000;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.handNetBaitDrawer h3 {
+  margin: 3px 0 0;
+  font-size: clamp(1.12rem, 2.8vw, 1.7rem);
+  line-height: 1.1;
+}
+
+.handNetBaitDrawer > header button,
+.handNetBaitOptionAction button {
+  min-height: 40px;
+  border: 2px solid #c6f5e8;
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: #052e2b;
+  background: #d8fff1;
+  box-shadow: 0 3px 0 #103f3b;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 1000;
+  cursor: pointer;
+}
+
+.handNetBaitDrawer > header button:hover,
+.handNetBaitDrawer > header button:focus-visible,
+.handNetBaitOptionAction button:hover:not(:disabled),
+.handNetBaitOptionAction button:focus-visible:not(:disabled) {
+  outline: 3px solid #fde047;
+  outline-offset: 2px;
+  filter: brightness(1.08);
+}
+
+.handNetBaitDrawer > p {
+  margin: 9px 0 13px;
+  color: #c5eee4;
+  font-size: 0.65rem;
+  font-weight: 720;
+  line-height: 1.45;
+}
+
+.handNetBaitActiveNotice {
+  border: 1px solid rgba(253, 224, 71, 0.7);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #fff7c2 !important;
+  background: rgba(113, 63, 18, 0.44);
+}
+
+.handNetBaitOptions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.handNetBaitOption {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-content: start;
+  gap: 9px;
+  border: 2px solid color-mix(in srgb, var(--bait-color) 60%, #b7eee0);
+  border-radius: 13px;
+  padding: 11px;
+  background: rgba(1, 38, 45, 0.54);
+}
+
+.handNetBaitOption .baitInventoryPouch { width: 42px; }
+.handNetBaitOption > div { min-width: 0; }
+
+.handNetBaitOption > div > span {
+  color: color-mix(in srgb, var(--bait-color) 45%, white);
+  font-size: 0.49rem;
+  font-weight: 1000;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.handNetBaitOption h4 {
+  margin: 2px 0 4px;
+  color: #fff;
+  font-size: 0.78rem;
+}
+
+.handNetBaitOption p {
+  margin: 0;
+  color: #c2e6df;
+  font-size: 0.54rem;
+  font-weight: 680;
+  line-height: 1.4;
+}
+
+.handNetBaitOptionAction {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(183, 238, 224, 0.2);
+  padding-top: 9px;
+}
+
+.handNetBaitOptionAction b {
+  color: #fde68a;
+  font-size: 0.58rem;
+}
+
+.handNetBaitOptionAction button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+  opacity: 0.5;
+}
+
+@keyframes handNetBaitPlacement {
+  0% { scale: 1; filter: drop-shadow(0 5px 2px rgba(4, 31, 34, 0.44)); }
+  34% { scale: 0.98 1.02; filter: drop-shadow(0 5px 2px rgba(4, 31, 34, 0.5)); }
+  63% { scale: 1.035 0.97; filter: drop-shadow(0 7px 3px rgba(4, 31, 34, 0.48)); }
+  100% { scale: 1; filter: drop-shadow(0 5px 2px rgba(4, 31, 34, 0.44)); }
+}
+
+@keyframes handNetBaitDrift {
+  0%, 100% { scale: 0.96; opacity: 0.78; }
+  50% { scale: 1.08; opacity: 1; }
+}
+
+@keyframes handNetBaitRipple {
+  0% { scale: 0.42; opacity: 0.7; }
+  100% { scale: 1.35; opacity: 0; }
+}
+
+@keyframes handNetBaitImpactFlash {
+  0% { opacity: 0; scale: 0.35; }
+  16% { opacity: 1; }
+  100% { opacity: 0; scale: 1.12; }
+}
+
+@keyframes handNetBaitImpactRing {
+  0% { scale: 0.35; opacity: 0.95; }
+  100% { scale: 2.1 1.05; opacity: 0; }
+}
+
+@keyframes handNetBaitPellets {
+  0% { translate: 0 -28px; scale: 0.35; opacity: 0; }
+  28% { opacity: 1; }
+  100% { translate: 0 4px; scale: 1; opacity: 0; }
+}
+
+@keyframes handNetCreatureFeeding {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.075; }
+}
+
+@keyframes handNetFeedingRing {
+  0% { scale: 0.74; opacity: 0.9; }
+  100% { scale: 1.35; opacity: 0; }
+}
+
+@keyframes handNetBaitMenuIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 720px) {
+  .handNetBaitMenuBackdrop { place-items: start center; padding: 7px; }
+  .handNetBaitDrawer { border-radius: 11px; padding: 11px; }
+  .handNetBaitOptions { grid-template-columns: 1fr; }
+  .handNetBaitOption { grid-template-columns: 38px minmax(0, 1fr); padding: 8px; }
+  .handNetBaitOption .baitInventoryPouch { width: 34px; }
+  .handNetBaitOption p { font-size: 0.5rem; }
+  .handNetBaitDrawer > p { margin: 6px 0 9px; }
+}
+
+.reducedMotionMode .handNetBaitSpot,
+.reducedMotionMode .handNetBaitSpot::before,
+.reducedMotionMode .handNetBaitSpot::after,
+.reducedMotionMode .handNetBaitImpact,
+.reducedMotionMode .handNetBaitImpact::before,
+.reducedMotionMode .handNetBaitImpact::after,
+.reducedMotionMode .handNetBaitImpact i,
+.reducedMotionMode .handNetBaitImpact b,
+.reducedMotionMode .handNetCreatureFeeding,
+.reducedMotionMode .handNetCreatureFeeding::after,
+.reducedMotionMode .handNetPlayerPlacingBait,
+.reducedMotionMode .handNetBaitMenuBackdrop {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handNetBaitSpot,
+  .handNetBaitSpot::before,
+  .handNetBaitSpot::after,
+  .handNetBaitImpact,
+  .handNetBaitImpact::before,
+  .handNetBaitImpact::after,
+  .handNetBaitImpact i,
+  .handNetBaitImpact b,
+  .handNetCreatureFeeding,
+  .handNetCreatureFeeding::after,
+  .handNetPlayerPlacingBait,
+  .handNetBaitMenuBackdrop {
+    animation: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .handNetBaitDrawer,
+  .handNetBaitOption,
+  .handNetBaitDrawer > header button,
+  .handNetBaitOptionAction button,
+  .handNetBaitActiveNotice {
+    border-color: CanvasText;
+    color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .handNetBaitSpot,
+  .handNetBaitImpact,
+  .handNetCreatureFeeding::after { forced-color-adjust: none; }
+}

@@ -547,6 +547,8 @@ test("Easterling moves every held catch into the aquarium and repeated delivery 
   const delivered = deliverElversonFishingCatches(save);
   assert.equal(delivered.applied, true);
   assert.equal(delivered.deliveredCount, 3);
+  assert.equal(delivered.baitCreditsGranted, 7);
+  assert.equal(delivered.save.inventory.storyItems["elverson-reef-credit"], 7);
   assert.deepEqual(
     delivered.deliveredSpecies.map(({ creature, quantity }) => [creature.id, quantity]),
     [["white-grunt", 2], ["sea-urchin", 1]],
@@ -580,6 +582,7 @@ test("Easterling moves every held catch into the aquarium and repeated delivery 
   assert.equal(repeated.deliveredCount, 0);
   assert.equal(repeated.collectionCompletedNow, false);
   assert.equal(repeated.awardedCardCount, 0);
+  assert.equal(repeated.baitCreditsGranted, 0);
   assert.deepEqual(repeated.awardedCards, []);
   assert.deepEqual(repeated.deliveredSpecies, []);
   assert.deepEqual(repeated.save, delivered.save);
