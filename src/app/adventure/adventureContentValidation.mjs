@@ -985,6 +985,12 @@ export function validateAdventureContent(content) {
         if (interaction.facing !== undefined && !FACING_DIRECTIONS.has(interaction.facing)) {
           errors.push(`${path}.facing must be up, down, left, or right when supplied.`);
         }
+        if (
+          interaction.approachDirection !== undefined
+          && !FACING_DIRECTIONS.has(interaction.approachDirection)
+        ) {
+          errors.push(`${path}.approachDirection must be up, down, left, or right when supplied.`);
+        }
       }
     }
     if (!Array.isArray(scene.world.interactions)) {

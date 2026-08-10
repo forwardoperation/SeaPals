@@ -642,6 +642,38 @@ const ELVERSON_OPEN_HOME_TILES = Object.freeze([
   "wwwwwEEwwwww",
 ]);
 
+// These rooms reuse the same shipped paintings, so their collision geometry
+// must stay shared as well. Otherwise a visually identical table or aquarium
+// can be solid in one home and ordinary floor in the next.
+const ELVERSON_CORAL_HOME_COLLISION_RECTS = Object.freeze([
+  Object.freeze({ id: "coral-upper-left-table", left: 0.45, top: 1.45, right: 2.75, bottom: 1.98 }),
+  Object.freeze({ id: "coral-left-aquarium", left: 0.35, top: 2.1, right: 3.3, bottom: 4.65 }),
+  Object.freeze({ id: "coral-upper-right-bookcase", left: 7.75, top: 1.55, right: 10.45, bottom: 4.25 }),
+  Object.freeze({ id: "coral-lower-left-display", left: -0.1, top: 4.6, right: 3.1, bottom: 6.35 }),
+  Object.freeze({ id: "coral-lower-right-display", left: 7.75, top: 4.55, right: 10.95, bottom: 6.35 }),
+]);
+
+const ELVERSON_DEEP_HOME_COLLISION_RECTS = Object.freeze([
+  Object.freeze({ id: "deep-left-habitat-tank", left: 0.25, top: 1.65, right: 3.1, bottom: 4.65 }),
+  Object.freeze({ id: "deep-left-wall-apparatus", left: 0.45, top: 4.6, right: 0.95, bottom: 5.45 }),
+  Object.freeze({ id: "deep-right-research-console", left: 7.6, top: 1.85, right: 10.25, bottom: 4.8 }),
+  Object.freeze({ id: "deep-lower-left-equipment", left: -0.05, top: 5.45, right: 3.3, bottom: 6.95 }),
+  Object.freeze({ id: "deep-lower-right-equipment", left: 7.2, top: 5.45, right: 10.7, bottom: 6.95 }),
+]);
+
+const ELVERSON_PUBLIC_INTERIOR_COLLISION_RECTS = Object.freeze([
+  Object.freeze({ id: "public-rear-left-fixture", left: 0.9, top: 0.45, right: 3.75, bottom: 3.15 }),
+  Object.freeze({ id: "public-rear-center-counter", left: 5, top: 1.25, right: 8, bottom: 2.7 }),
+  Object.freeze({ id: "public-center-wheel", left: 8.15, top: 1.5, right: 8.85, bottom: 2.75 }),
+  Object.freeze({ id: "public-rear-right-fixture", left: 9.3, top: 0.45, right: 12.1, bottom: 3.15 }),
+  Object.freeze({ id: "public-west-plant", left: 0.15, top: 2.5, right: 1.1, bottom: 3.9 }),
+  Object.freeze({ id: "public-east-plant", left: 11.5, top: 2.5, right: 12.6, bottom: 3.9 }),
+  Object.freeze({ id: "public-west-lower-gear", left: -0.05, top: 3.95, right: 1.65, bottom: 7.4 }),
+  Object.freeze({ id: "public-lower-left-tank", left: 2.5, top: 4.3, right: 5.05, bottom: 7.3 }),
+  Object.freeze({ id: "public-lower-right-tank", left: 7.95, top: 4.3, right: 10.55, bottom: 7.35 }),
+  Object.freeze({ id: "public-east-gear-cabinet", left: 11.3, top: 4.55, right: 12.85, bottom: 7.35 }),
+]);
+
 function elversonInteriorScene({
   sceneId,
   name,
@@ -651,6 +683,7 @@ function elversonInteriorScene({
   exitAt,
   exitHalfWidth,
   artPath,
+  collisionRects = [],
 }) {
   const portal = ELVERSON_TOWN_PORTAL_BY_SCENE[sceneId];
   if (!portal) throw new Error(`Elverson interior ${sceneId} is missing its exterior portal.`);
@@ -662,7 +695,7 @@ function elversonInteriorScene({
     tiles,
     spawn,
     startFacing: "up",
-    collisionRects: [],
+    collisionRects,
     interactions: [
       ...ELVERSON_AMBIENT_RESIDENTS
         .filter((resident) => resident.sceneId === sceneId)
@@ -672,6 +705,7 @@ function elversonInteriorScene({
         type: "exit",
         at: exitAt,
         doorwayHalfWidth: exitHalfWidth,
+        approachDirection: "down",
         targetScene: "town",
         spawn: portal.exteriorSpawn,
         facing: "down",
@@ -760,6 +794,7 @@ function aquariumGalleryScene({
         type: "exit",
         at: { x: 0, y: 7 },
         doorwayHalfWidth: 0.5,
+        approachDirection: "left",
         targetScene: "academy-lab",
         spawn: hallSpawn,
         facing: "down",
@@ -786,6 +821,7 @@ const shellshoreRuntimeScenes = {
         type: "enter",
         at: portal.doorway,
         doorwayHalfWidth: portal.doorwayHalfWidth,
+        approachDirection: portal.approachDirection,
         targetScene: portal.targetScene,
         spawn: portal.interiorSpawn,
         facing: "up",
@@ -820,8 +856,10 @@ const shellshoreRuntimeScenes = {
       // climb into the window, shelves, and wall paneling.
       { id: "player-bedroom-rear-wall", left: -0.5, top: -0.5, right: 14.5, bottom: 2.45 },
       { id: "player-bedroom-bed", left: 0.25, top: 1.15, right: 3.35, bottom: 5.75 },
-      { id: "player-bedroom-left-bookcase", left: 0.25, top: 5.7, right: 2.85, bottom: 8.6 },
-      { id: "player-bedroom-writing-desk", left: 10.25, top: 1.35, right: 14.4, bottom: 4.65 },
+      { id: "player-bedroom-nightstand", left: 3.25, top: 2.4, right: 4.2, bottom: 3.1 },
+      { id: "player-bedroom-left-bookcase", left: 0.25, top: 5.7, right: 2.35, bottom: 7.65 },
+      { id: "player-bedroom-writing-desk", left: 9.85, top: 1.35, right: 13.2, bottom: 3.2 },
+      { id: "player-bedroom-desk-chair", left: 10.85, top: 2.75, right: 12.4, bottom: 4.2 },
       { id: "player-bedroom-right-dresser", left: 12.25, top: 4.45, right: 14.5, bottom: 8.5 },
       { id: "player-bedroom-stair-rail-left", left: 5.25, top: 6.65, right: 5.9, bottom: 9.25 },
       { id: "player-bedroom-stair-rail-right", left: 8.1, top: 6.65, right: 8.75, bottom: 9.25 },
@@ -832,6 +870,7 @@ const shellshoreRuntimeScenes = {
         type: "exit",
         at: { x: 7, y: 9 },
         doorwayHalfWidth: 0.85,
+        approachDirection: "down",
         targetScene: "player-home",
         spawn: { x: 7, y: 3.55 },
         facing: "down",
@@ -860,14 +899,15 @@ const shellshoreRuntimeScenes = {
     collisionRects: [
       { id: "player-home-kitchen", left: 0.2, top: 0.45, right: 4.25, bottom: 4.4 },
       { id: "player-home-staircase", left: 5.7, top: -0.1, right: 8.3, bottom: 2.85 },
+      { id: "player-home-coat-rack", left: 8.1, top: 0.45, right: 9.65, bottom: 2.25 },
       { id: "player-home-upper-right-storage", left: 10.35, top: 0.45, right: 14.2, bottom: 2.65 },
-      { id: "player-home-breakfast-table", left: 0.75, top: 5.45, right: 5.75, bottom: 8.75 },
+      { id: "player-home-breakfast-table", left: 0.75, top: 5.05, right: 5.75, bottom: 8.75 },
       // The round reading table was removed so Dad and the player can meet on
       // the open rug. These tighter bounds cover only the chair, lamp,
       // footstool, and wall shelving.
-      { id: "player-home-reading-chair", left: 11.7, top: 3.35, right: 13.15, bottom: 5.25 },
+      { id: "player-home-reading-chair", left: 11.05, top: 2.95, right: 12.8, bottom: 4.9 },
       { id: "player-home-reading-nook-edge", left: 12.65, top: 2.9, right: 14.2, bottom: 6.15 },
-      { id: "player-home-lower-right-console", left: 9.85, top: 7, right: 14.2, bottom: 8.85 },
+      { id: "player-home-lower-right-console", left: 9.35, top: 6.6, right: 14.2, bottom: 8.85 },
     ],
     interactions: [
       ...ELVERSON_PROLOGUE_CAST.map(elversonPrologueInteraction),
@@ -876,6 +916,7 @@ const shellshoreRuntimeScenes = {
         type: "enter",
         at: { x: 7, y: 3.05 },
         doorwayHalfWidth: 0.85,
+        approachDirection: "up",
         targetScene: "player-bedroom",
         spawn: { x: 7, y: 8.05 },
         facing: "up",
@@ -885,6 +926,7 @@ const shellshoreRuntimeScenes = {
         type: "exit",
         at: { x: 7, y: 9 },
         doorwayHalfWidth: 0.9,
+        approachDirection: "down",
         targetScene: "town",
         spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["player-home"].exteriorSpawn,
         facing: "down",
@@ -906,13 +948,7 @@ const shellshoreRuntimeScenes = {
       "wwwwwEEwwwww",
     ],
     spawn: { x: 5.5, y: 6 },
-    collisionRects: [
-      { id: "coral-upper-left-table", left: 0.45, top: 1.45, right: 2.75, bottom: 1.98 },
-      { id: "coral-left-aquarium", left: 0.35, top: 2.1, right: 3.3, bottom: 4.65 },
-      { id: "coral-upper-right-bookcase", left: 7.75, top: 1.55, right: 10.45, bottom: 4.25 },
-      { id: "coral-lower-left-display", left: -0.1, top: 4.6, right: 3.1, bottom: 6.35 },
-      { id: "coral-lower-right-display", left: 7.75, top: 4.55, right: 10.95, bottom: 6.35 },
-    ],
+    collisionRects: ELVERSON_CORAL_HOME_COLLISION_RECTS,
     interactions: [
       {
         id: "interaction-coral-home-marina",
@@ -932,6 +968,7 @@ const shellshoreRuntimeScenes = {
         type: "exit",
         at: { x: 5.5, y: 7 },
         doorwayHalfWidth: 0.8,
+        approachDirection: "down",
         targetScene: "town",
         spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["coral-home"].exteriorSpawn,
         facing: "down",
@@ -953,12 +990,7 @@ const shellshoreRuntimeScenes = {
       "wwwwwEEwwwww",
     ],
     spawn: { x: 5.5, y: 6 },
-    collisionRects: [
-      { id: "deep-left-habitat-tank", left: 0.25, top: 1.65, right: 3.1, bottom: 4.65 },
-      { id: "deep-right-research-console", left: 7.6, top: 1.85, right: 10.25, bottom: 4.8 },
-      { id: "deep-lower-left-equipment", left: -0.05, top: 5.45, right: 3.3, bottom: 6.95 },
-      { id: "deep-lower-right-equipment", left: 7.2, top: 5.45, right: 10.7, bottom: 6.95 },
-    ],
+    collisionRects: ELVERSON_DEEP_HOME_COLLISION_RECTS,
     interactions: [
       {
         id: "interaction-deep-home-dorian",
@@ -978,6 +1010,7 @@ const shellshoreRuntimeScenes = {
         type: "exit",
         at: { x: 5.5, y: 7 },
         doorwayHalfWidth: 0.8,
+        approachDirection: "down",
         targetScene: "town",
         spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["deep-home"].exteriorSpawn,
         facing: "down",
@@ -993,6 +1026,7 @@ const shellshoreRuntimeScenes = {
     exitAt: { x: 5.5, y: 7 },
     exitHalfWidth: 0.8,
     artPath: "/images/adventure/deepwater-den.png",
+    collisionRects: ELVERSON_DEEP_HOME_COLLISION_RECTS,
   }),
   "elverson-hybrid-home": elversonInteriorScene({
     sceneId: "elverson-hybrid-home",
@@ -1003,6 +1037,7 @@ const shellshoreRuntimeScenes = {
     exitAt: { x: 5.5, y: 7 },
     exitHalfWidth: 0.8,
     artPath: "/images/adventure/coral-cottage.png",
+    collisionRects: ELVERSON_CORAL_HOME_COLLISION_RECTS,
   }),
   "elverson-supply-company": elversonInteriorScene({
     sceneId: "elverson-supply-company",
@@ -1013,6 +1048,7 @@ const shellshoreRuntimeScenes = {
     exitAt: { x: 6.5, y: 8 },
     exitHalfWidth: 1,
     artPath: "/images/adventure/shellshore-academy.webp",
+    collisionRects: ELVERSON_PUBLIC_INTERIOR_COLLISION_RECTS,
   }),
   "elverson-red-schoolhouse": elversonInteriorScene({
     sceneId: "elverson-red-schoolhouse",
@@ -1023,6 +1059,7 @@ const shellshoreRuntimeScenes = {
     exitAt: { x: 6.5, y: 8 },
     exitHalfWidth: 1,
     artPath: "/images/adventure/shellshore-academy.webp",
+    collisionRects: ELVERSON_PUBLIC_INTERIOR_COLLISION_RECTS,
   }),
   "elverson-marine-research-lab": elversonInteriorScene({
     sceneId: "elverson-marine-research-lab",
@@ -1033,6 +1070,7 @@ const shellshoreRuntimeScenes = {
     exitAt: { x: 6.5, y: 8 },
     exitHalfWidth: 1,
     artPath: "/images/adventure/shellshore-academy.webp",
+    collisionRects: ELVERSON_PUBLIC_INTERIOR_COLLISION_RECTS,
   }),
   "academy-lab": {
     name: "Sea Realm Aquarium Grand Hall",
@@ -1043,7 +1081,7 @@ const shellshoreRuntimeScenes = {
       "wwwwwwwwwwwwww",
       "wwwwwwwwwwwwww",
       "waaffffaffffaw",
-      "waaffffnffffaw",
+      "waafffnfffffaw",
       "wfffrrrrrrfffw",
       "wfffrrrrrrfffw",
       "wfffaaffaafffw",
@@ -1055,8 +1093,10 @@ const shellshoreRuntimeScenes = {
     collisionRects: [
       { id: "aquarium-hall-north-architecture", left: -0.5, top: -0.5, right: 13.5, bottom: 2.4 },
       { id: "aquarium-hall-west-seating", left: -0.5, top: 2.4, right: 1.25, bottom: 7.35 },
-      { id: "aquarium-hall-east-seating", left: 12.75, top: 2.4, right: 13.5, bottom: 7.35 },
-      { id: "aquarium-hall-reception", left: 1.25, top: 5.1, right: 4.25, bottom: 7.35 },
+      { id: "aquarium-hall-west-upper-protrusion", left: 1.15, top: 2.4, right: 1.7, bottom: 3.65 },
+      { id: "aquarium-hall-east-seating", left: 11.55, top: 2.35, right: 13.5, bottom: 6.25 },
+      { id: "aquarium-hall-east-lower-wall", left: 12.75, top: 6.25, right: 13.5, bottom: 7.35 },
+      { id: "aquarium-hall-reception", left: 0.8, top: 4.35, right: 3.25, bottom: 6.45 },
       { id: "aquarium-hall-southwest-railing", left: -0.5, top: 7.4, right: 5.25, bottom: 8.5 },
       { id: "aquarium-hall-southeast-railing", left: 7.75, top: 7.4, right: 13.5, bottom: 8.5 },
     ],
@@ -1064,7 +1104,9 @@ const shellshoreRuntimeScenes = {
       {
         id: "interaction-academy-mentor",
         type: "trainer",
-        at: { x: 7, y: 3 },
+        // Keep the central gallery doorway clear so returning visitors can
+        // arrive on the same threshold line as the two side galleries.
+        at: { x: 6, y: 3 },
         trainerId: "academy-mentor",
         npcId: "academy-mentor",
         conversationId: "conversation-shellshore-academy-mentor",
@@ -1078,6 +1120,7 @@ const shellshoreRuntimeScenes = {
         type: "enter",
         at: { x: 3.4, y: 2 },
         doorwayHalfWidth: 0.65,
+        approachDirection: "up",
         targetScene: "aquarium-reef-gallery",
         spawn: { x: 1, y: 7 },
         facing: "up",
@@ -1087,6 +1130,7 @@ const shellshoreRuntimeScenes = {
         type: "enter",
         at: { x: 7, y: 2 },
         doorwayHalfWidth: 0.75,
+        approachDirection: "up",
         targetScene: "aquarium-oceanic-gallery",
         spawn: { x: 1, y: 7 },
         facing: "up",
@@ -1096,6 +1140,7 @@ const shellshoreRuntimeScenes = {
         type: "enter",
         at: { x: 10.6, y: 2 },
         doorwayHalfWidth: 0.65,
+        approachDirection: "up",
         targetScene: "aquarium-deep-gallery",
         spawn: { x: 1, y: 7 },
         facing: "up",
@@ -1108,6 +1153,7 @@ const shellshoreRuntimeScenes = {
         // keep walking out from either side of that visible opening instead of
         // requiring them to line up on its exact centre pixel.
         doorwayHalfWidth: 1,
+        approachDirection: "down",
         targetScene: "town",
         spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["academy-lab"].exteriorSpawn,
         facing: "down",
@@ -1124,7 +1170,7 @@ const shellshoreRuntimeScenes = {
     ecosystemId: "oceanic",
     name: "Oceanic Gallery",
     theme: "aquarium-oceanic-gallery",
-    hallSpawn: { x: 7, y: 4.15 },
+    hallSpawn: { x: 7, y: 3.4 },
   }),
   "aquarium-deep-gallery": aquariumGalleryScene({
     ecosystemId: "deep",

@@ -29,7 +29,7 @@ const ELVERSON_PORTAL_EXPECTATIONS = Object.freeze([
   Object.freeze({
     id: "interaction-elverson-enter-player-home",
     targetScene: "player-home",
-    interiorSpawn: Object.freeze({ x: 7, y: 4 }),
+    interiorSpawn: Object.freeze({ x: 7, y: 8.05 }),
     exitId: "interaction-player-home-exit",
   }),
   Object.freeze({
@@ -808,8 +808,9 @@ test("continuous movement cannot cross Elverson v5 facades, water, furniture, ex
   assert.equal(isWalkable("coral-home", { x: 6, y: 1 }), false);
   assert.equal(isWalkable("deep-home", { x: 6, y: 1 }), false);
   assert.equal(getTile("academy-lab", { x: 7, y: 2 }).id, "furniture");
-  assert.equal(getTile("academy-lab", { x: 7, y: 3 }).id, "trainer");
-  assert.equal(isWalkable("academy-lab", { x: 7, y: 3 }), false);
+  assert.equal(getTile("academy-lab", { x: 6, y: 3 }).id, "trainer");
+  assert.equal(isWalkable("academy-lab", { x: 6, y: 3 }), false);
+  assert.equal(isWalkable("academy-lab", { x: 7, y: 3 }), true);
 });
 
 test("Elverson exposes exactly nine semantic entrance portals with safe approaches", () => {
@@ -858,7 +859,7 @@ test("all nine semantic interiors return to their matching safe town positions",
 });
 
 test("facing an adjacent trainer yields the matching trainer interaction", () => {
-  assert.deepEqual(getInteraction("academy-lab", { x: 7, y: 4 }, "up"), {
+  assert.deepEqual(getInteraction("academy-lab", { x: 6, y: 4 }, "up"), {
     type: "trainer",
     interactionId: "interaction-academy-mentor",
     trainerId: "academy-mentor",
@@ -916,14 +917,30 @@ test("fractional player positions use a circular collision radius", () => {
 
 test("authored furniture rectangles block artwork while preserving real floor space", () => {
   const furnitureRegressionPoints = [
+    ["player-home", "player-home-coat-rack", { x: 9, y: 1.6 }],
+    ["player-home", "player-home-reading-chair", { x: 11.25, y: 4 }],
+    ["player-home", "player-home-lower-right-console", { x: 9.55, y: 7.3 }],
+    ["player-bedroom", "player-bedroom-nightstand", { x: 4, y: 2.8 }],
     ["coral-home", "coral-lower-right-display", { x: 8, y: 5 }],
     ["coral-home", "coral-lower-right-display", { x: 9, y: 5 }],
+    ["elverson-hybrid-home", "coral-left-aquarium", { x: 2, y: 3 }],
     ["deep-home", "deep-left-habitat-tank", { x: 1.675, y: 3.15 }],
+    ["deep-home", "deep-left-wall-apparatus", { x: 0.8, y: 5 }],
     ["deep-home", "deep-lower-right-equipment", { x: 7, y: 6 }],
+    ["elverson-oceanic-home", "deep-left-habitat-tank", { x: 2, y: 3 }],
+    ["elverson-oceanic-home", "deep-left-wall-apparatus", { x: 0.8, y: 5 }],
+    ["elverson-supply-company", "public-rear-left-fixture", { x: 2.5, y: 2.5 }],
+    ["elverson-supply-company", "public-rear-center-counter", { x: 7, y: 2 }],
+    ["elverson-supply-company", "public-rear-right-fixture", { x: 11, y: 2.5 }],
+    ["elverson-supply-company", "public-lower-left-tank", { x: 4, y: 6 }],
+    ["elverson-supply-company", "public-lower-right-tank", { x: 9, y: 6 }],
+    ["elverson-red-schoolhouse", "public-lower-left-tank", { x: 4, y: 6 }],
+    ["elverson-marine-research-lab", "public-lower-right-tank", { x: 9, y: 6 }],
     ["academy-lab", "aquarium-hall-north-architecture", { x: 3, y: 2 }],
     ["academy-lab", "aquarium-hall-west-seating", { x: 0.8, y: 4.5 }],
+    ["academy-lab", "aquarium-hall-west-upper-protrusion", { x: 1.55, y: 3.3 }],
     ["academy-lab", "aquarium-hall-reception", { x: 3, y: 6 }],
-    ["academy-lab", "aquarium-hall-east-seating", { x: 13, y: 5 }],
+    ["academy-lab", "aquarium-hall-east-seating", { x: 12, y: 5 }],
     ["aquarium-reef-gallery", "aquarium-reef-community-tank", { x: 3, y: 2.5 }],
     ["aquarium-reef-gallery", "aquarium-reef-apex-tank", { x: 24, y: 2.5 }],
     ["aquarium-reef-gallery", "aquarium-reef-tank-divider", { x: 16, y: 2.5 }],
@@ -947,8 +964,14 @@ test("authored furniture rectangles block artwork while preserving real floor sp
     ["coral-home", { x: 5, y: 4 }],
     ["deep-home", SCENES["deep-home"].spawn],
     ["deep-home", { x: 5, y: 4 }],
+    ["player-bedroom", { x: 2.75, y: 8 }],
+    ["elverson-hybrid-home", SCENES["elverson-hybrid-home"].spawn],
+    ["elverson-oceanic-home", SCENES["elverson-oceanic-home"].spawn],
+    ["elverson-supply-company", SCENES["elverson-supply-company"].spawn],
+    ["elverson-red-schoolhouse", SCENES["elverson-red-schoolhouse"].spawn],
+    ["elverson-marine-research-lab", SCENES["elverson-marine-research-lab"].spawn],
     ["academy-lab", SCENES["academy-lab"].spawn],
-    ["academy-lab", { x: 6, y: 5 }],
+    ["academy-lab", { x: 4, y: 6 }],
     ["aquarium-reef-gallery", SCENES["aquarium-reef-gallery"].spawn],
     ["aquarium-reef-gallery", { x: 16, y: 7 }],
     ["aquarium-oceanic-gallery", SCENES["aquarium-oceanic-gallery"].spawn],
@@ -1269,7 +1292,7 @@ test("runtime actors replace their authored n tiles without weakening other geom
 });
 
 test("continuous interactions require immediate, forward-facing alignment", () => {
-  assert.deepEqual(getContinuousInteraction("academy-lab", { x: 7.2, y: 3.8 }, "up"), {
+  assert.deepEqual(getContinuousInteraction("academy-lab", { x: 6.2, y: 3.8 }, "up"), {
     type: "trainer",
     interactionId: "interaction-academy-mentor",
     trainerId: "academy-mentor",
@@ -1285,9 +1308,9 @@ test("continuous interactions require immediate, forward-facing alignment", () =
     facing: "up",
   });
   assert.equal(getContinuousInteraction("town", { x: 13.8, y: 4.83 }, "right"), null);
-  assert.equal(getContinuousInteraction("academy-lab", { x: 7, y: 3.9 }, "up"), null);
-  assert.equal(getContinuousInteraction("academy-lab", { x: 7.26, y: 3.8 }, "up"), null);
-  assert.equal(getContinuousInteraction("academy-lab", { x: 7.2, y: 3.8 }, "down"), null);
+  assert.equal(getContinuousInteraction("academy-lab", { x: 6, y: 3.9 }, "up"), null);
+  assert.equal(getContinuousInteraction("academy-lab", { x: 6.26, y: 3.8 }, "up"), null);
+  assert.equal(getContinuousInteraction("academy-lab", { x: 6.2, y: 3.8 }, "down"), null);
   assert.equal(getContinuousInteraction("town", { x: 13.8, y: 5 }, "up"), null);
   assert.deepEqual(getContinuousInteraction("deep-home", { x: 5.2, y: 2.8 }, "up"), {
     type: "trainer",
@@ -1328,7 +1351,7 @@ test("interaction rays cannot reach a character through unrelated furniture", ()
     getContinuousInteraction("academy-lab", playerPosition, "left", {
       range: 6,
       lateralTolerance: 0.1,
-      positionOverrides: { [blockedTarget]: { x: 0.8, y: 6 } },
+      positionOverrides: { [blockedTarget]: { x: 0.4, y: 6 } },
     }),
     null,
   );
@@ -1390,6 +1413,106 @@ test("automatic doorway transitions recognize all nine semantic portal pairs onl
       facing: "down",
     });
   }
+});
+
+test("all 26 Elverson doorways keep a fixed source-side approach and ignore passers-by", () => {
+  const cases = [
+    ["town", "interaction-elverson-enter-player-home", { x: 3.86, y: 4.72 }, "up", "right"],
+    ["town", "interaction-elverson-enter-reef-house", { x: 13.5, y: 4.72 }, "up", "right"],
+    ["town", "interaction-elverson-enter-deep-house", { x: 27.86, y: 4.72 }, "up", "right"],
+    ["town", "interaction-elverson-enter-oceanic-house", { x: 37.11, y: 4.72 }, "up", "right"],
+    ["town", "interaction-elverson-enter-schoolhouse", { x: 4, y: 16.12 }, "up", "right"],
+    ["town", "interaction-elverson-enter-hybrid-house", { x: 13.5, y: 16.12 }, "up", "right"],
+    ["town", "interaction-elverson-enter-research-lab", { x: 30.4, y: 16.12 }, "up", "right"],
+    ["town", "interaction-elverson-enter-supply-company", { x: 37.06, y: 16.12 }, "up", "right"],
+    ["town", "interaction-elverson-enter-aquarium", { x: 27.3, y: 23.72 }, "up", "right"],
+    ["player-bedroom", "interaction-player-bedroom-downstairs", { x: 6.7, y: 8.28 }, "down", "right"],
+    ["player-home", "interaction-player-home-upstairs", { x: 6.7, y: 3.47 }, "up", "right"],
+    ["player-home", "interaction-player-home-exit", { x: 6.7, y: 8.28 }, "down", "right"],
+    ["coral-home", "interaction-coral-home-exit", { x: 5.2, y: 6.28 }, "down", "right"],
+    ["deep-home", "interaction-deep-home-exit", { x: 5.2, y: 6.28 }, "down", "right"],
+    ["elverson-oceanic-home", "interaction-elverson-oceanic-home-exit", { x: 5.2, y: 6.28 }, "down", "right"],
+    ["elverson-hybrid-home", "interaction-elverson-hybrid-home-exit", { x: 5.2, y: 6.28 }, "down", "right"],
+    ["elverson-supply-company", "interaction-elverson-supply-company-exit", { x: 6.2, y: 7.28 }, "down", "right"],
+    ["elverson-red-schoolhouse", "interaction-elverson-red-schoolhouse-exit", { x: 6.2, y: 7.28 }, "down", "right"],
+    ["elverson-marine-research-lab", "interaction-elverson-marine-research-lab-exit", { x: 6.2, y: 7.28 }, "down", "right"],
+    ["academy-lab", "interaction-aquarium-enter-reef-gallery", { x: 3.1, y: 2.62 }, "up", "right"],
+    ["academy-lab", "interaction-aquarium-enter-oceanic-gallery", { x: 7.72, y: 2.62 }, "up", "left"],
+    ["academy-lab", "interaction-aquarium-enter-deep-gallery", { x: 10.3, y: 2.62 }, "up", "right"],
+    ["academy-lab", "interaction-academy-exit", { x: 6.2, y: 7.28 }, "down", "right"],
+    ["aquarium-reef-gallery", "interaction-aquarium-reef-gallery-exit", { x: 0.72, y: 6.56 }, "left", "down"],
+    ["aquarium-oceanic-gallery", "interaction-aquarium-oceanic-gallery-exit", { x: 0.72, y: 6.56 }, "left", "down"],
+    ["aquarium-deep-gallery", "interaction-aquarium-deep-gallery-exit", { x: 0.72, y: 6.56 }, "left", "down"],
+  ];
+
+  const authoredPortals = ELVERSON_RELEASE_SCOPE.sceneIds.flatMap((sceneId) => (
+    SCENES[sceneId].interactions
+      .filter(({ type }) => type === "enter" || type === "exit")
+      .map((interaction) => [sceneId, interaction])
+  ));
+  assert.equal(authoredPortals.length, 26);
+  assert.equal(cases.length, authoredPortals.length);
+
+  for (const [sceneId, interactionId, position, approachDirection, perpendicularDirection] of cases) {
+    const interaction = SCENES[sceneId].interactions.find(({ id }) => id === interactionId);
+    assert.equal(interaction?.approachDirection, approachDirection, `${interactionId} source approach`);
+    assert.equal(canOccupyContinuousPosition(sceneId, position), true, `${interactionId} pass-by point`);
+    assert.equal(
+      getDoorwayTransition(sceneId, position, approachDirection)?.interactionId,
+      interactionId,
+      `${interactionId} should trigger only while entering its threshold`,
+    );
+    assert.equal(
+      getDoorwayTransition(sceneId, position, perpendicularDirection),
+      null,
+      `${interactionId} must ignore perpendicular movement`,
+    );
+  }
+
+  assert.equal(
+    getContinuousInteraction("town", { x: 27.56, y: 23.32 }, "right"),
+    null,
+    "the aquarium door must not become a manual prompt while walking past it",
+  );
+  assert.equal(
+    getContinuousInteraction("player-home", { x: 6.96, y: 3.07 }, "right"),
+    null,
+    "the staircase portal must not become a manual prompt while crossing its opening",
+  );
+});
+
+test("every Elverson transition arrives beside its reciprocal doorway", () => {
+  const transitionTypes = new Set(["enter", "exit"]);
+  const portalEntries = ELVERSON_RELEASE_SCOPE.sceneIds.flatMap((sceneId) => (
+    SCENES[sceneId].interactions
+      .filter(({ type }) => transitionTypes.has(type))
+      .map((interaction) => ({ sceneId, interaction }))
+  ));
+
+  for (const { sceneId, interaction } of portalEntries) {
+    const reciprocals = SCENES[interaction.targetScene].interactions.filter((candidate) => (
+      transitionTypes.has(candidate.type) && candidate.targetScene === sceneId
+    ));
+    assert.equal(reciprocals.length, 1, `${interaction.id} needs exactly one reciprocal doorway`);
+    const [reciprocal] = reciprocals;
+    assert.ok(
+      Math.hypot(
+        interaction.spawn.x - reciprocal.at.x,
+        interaction.spawn.y - reciprocal.at.y,
+      ) <= 1.5,
+      `${interaction.id} must arrive at ${reciprocal.id}, not in the middle of the room`,
+    );
+    assert.equal(
+      canOccupyContinuousPosition(interaction.targetScene, interaction.spawn),
+      true,
+      `${interaction.id} doorway arrival must be collision-clear`,
+    );
+  }
+
+  assert.deepEqual(
+    SCENES["aquarium-oceanic-gallery"].interactions.find(({ type }) => type === "exit").spawn,
+    { x: 7, y: 3.4 },
+  );
 });
 
 test("every Elverson interior exit works across both visible threshold edges", () => {

@@ -1136,16 +1136,16 @@ test("Reading a Reef is a complete evidence-first Field Note with science source
 test("Elverson's public interiors, aquarium galleries, and upstairs bedroom define validated art-aligned collision rectangles", () => {
   const runtimeScenes = getRuntimeAdventureScenes();
   const expectedRectangleCounts = new Map([
-    ["player-bedroom", 7],
-    ["player-home", 7],
+    ["player-bedroom", 9],
+    ["player-home", 8],
     ["coral-home", 5],
-    ["deep-home", 4],
-    ["elverson-oceanic-home", 0],
-    ["elverson-hybrid-home", 0],
-    ["elverson-supply-company", 0],
-    ["elverson-red-schoolhouse", 0],
-    ["elverson-marine-research-lab", 0],
-    ["academy-lab", 6],
+    ["deep-home", 5],
+    ["elverson-oceanic-home", 5],
+    ["elverson-hybrid-home", 5],
+    ["elverson-supply-company", 10],
+    ["elverson-red-schoolhouse", 10],
+    ["elverson-marine-research-lab", 10],
+    ["academy-lab", 8],
     ["aquarium-reef-gallery", 3],
     ["aquarium-oceanic-gallery", 3],
     ["aquarium-deep-gallery", 3],
@@ -1167,8 +1167,21 @@ test("Elverson's public interiors, aquarium galleries, and upstairs bedroom defi
 
   const bedroom = runtimeScenes.find((candidate) => candidate.id === "player-bedroom");
   const home = runtimeScenes.find((candidate) => candidate.id === "player-home");
+  const sceneRects = (sceneId) => runtimeScenes
+    .find((candidate) => candidate.id === sceneId)
+    .world.collisionRects;
   assert.equal(bedroom.world.artPath, "/images/adventure/player-bedroom-v2.webp");
   assert.equal(home.world.artPath, "/images/adventure/player-home-v2.webp");
+  assert.deepEqual(sceneRects("elverson-hybrid-home"), sceneRects("coral-home"));
+  assert.deepEqual(sceneRects("elverson-oceanic-home"), sceneRects("deep-home"));
+  assert.deepEqual(
+    sceneRects("elverson-red-schoolhouse"),
+    sceneRects("elverson-supply-company"),
+  );
+  assert.deepEqual(
+    sceneRects("elverson-marine-research-lab"),
+    sceneRects("elverson-supply-company"),
+  );
   assert.deepEqual(
     home.world.collisionRects
       .filter(({ id }) => id.startsWith("player-home-reading"))
@@ -1281,7 +1294,7 @@ test("all nine Elverson town doors have matching two-way interior portals", () =
     {
       entryId: "interaction-elverson-enter-player-home",
       targetScene: "player-home",
-      interiorSpawn: { x: 7, y: 4 },
+      interiorSpawn: { x: 7, y: 8.05 },
       exitId: "interaction-player-home-exit",
       exteriorSpawn: { x: 4.2, y: 5.05 },
     },
@@ -1928,13 +1941,16 @@ test("content validation rejects malformed and out-of-bounds NPC patrol metadata
   assert.ok(result.errors.some((error) => /waypoints\[0\] must match the interaction at position/.test(error)));
 });
 
-test("content validation rejects invalid portal destination facing", () => {
+test("content validation rejects invalid portal destination facing or source approach", () => {
   const invalid = clone(ADVENTURE_CONTENT);
-  invalid.scenes.find((scene) => scene.id === "town").world.interactions[0].facing = "diagonal";
+  const portals = invalid.scenes.find((scene) => scene.id === "town").world.interactions;
+  portals[0].facing = "diagonal";
+  portals[1].approachDirection = "sideways";
 
   const result = validateAdventureContent(invalid);
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((error) => /facing must be up, down, left, or right/.test(error)));
+  assert.ok(result.errors.some((error) => /approachDirection must be up, down, left, or right/.test(error)));
 });
 
 test("content validation protects horizontal aquarium gallery metadata", () => {

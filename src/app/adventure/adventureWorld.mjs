@@ -265,6 +265,11 @@ function defineScene({
     if (interaction.facing !== undefined && !DIRECTION_DELTAS[interaction.facing]) {
       throw new RangeError(`Scene ${id} interaction ${interaction.id} uses unknown facing ${interaction.facing}.`);
     }
+    if (interaction.approachDirection !== undefined && !DIRECTION_DELTAS[interaction.approachDirection]) {
+      throw new RangeError(
+        `Scene ${id} interaction ${interaction.id} uses unknown approach direction ${interaction.approachDirection}.`,
+      );
+    }
   }
 
   return Object.freeze({
@@ -365,6 +370,7 @@ function publicInteraction(interaction) {
       || key === "type"
       || key === "at"
       || key === "doorwayHalfWidth"
+      || key === "approachDirection"
       || value === undefined
     ) continue;
     result[key] = freezePublicValue(value);
@@ -937,20 +943,28 @@ export function getContinuousInteraction(
   const candidates = scene.interactions
     .map((interaction) => {
       const interactionPosition = resolveInteractionPosition(interaction, positionOverrides);
+      const isFixedDoorwayApproach = PORTAL_INTERACTION_TYPES.has(interaction.type)
+        && interaction.approachDirection !== undefined;
+      const approachMatches = !isFixedDoorwayApproach || interaction.approachDirection === facing;
+      const geometryFacingVector = isFixedDoorwayApproach
+        ? DIRECTION_DELTAS[interaction.approachDirection]
+        : facingVector;
       const geometry = getManualInteractionGeometry(
         interaction,
         interactionPosition,
         position,
-        facingVector,
+        geometryFacingVector,
       );
       return {
         interaction,
         interactionPosition,
+        approachMatches,
         ...geometry,
       };
     })
     .filter((candidate) => (
-      candidate.forwardDistance > INTERACTION_GEOMETRY_EPSILON
+      candidate.approachMatches
+      && candidate.forwardDistance > INTERACTION_GEOMETRY_EPSILON
       && candidate.forwardDistance <= broadRange + INTERACTION_GEOMETRY_EPSILON
       && candidate.lateralDistance <= broadLateralTolerance + INTERACTION_GEOMETRY_EPSILON
       && (
@@ -1006,7 +1020,13 @@ export function getDoorwayTransition(
 
   const candidates = scene.interactions
     .filter((interaction) => interaction.type === "enter" || interaction.type === "exit")
+    .filter((interaction) => (
+      interaction.approachDirection === undefined || interaction.approachDirection === facing
+    ))
     .map((interaction) => {
+      const doorwayFacingVector = interaction.approachDirection === undefined
+        ? facingVector
+        : DIRECTION_DELTAS[interaction.approachDirection];
       const doorwayHalfWidth = interaction.doorwayHalfWidth ?? 0;
       requirePositiveNumber(
         doorwayHalfWidth,
@@ -1015,13 +1035,15 @@ export function getDoorwayTransition(
       );
       const offsetX = interaction.at.x - position.x;
       const offsetY = interaction.at.y - position.y;
-      const forwardDistance = offsetX * facingVector.x + offsetY * facingVector.y;
-      const signedLateralDistance = offsetX * facingVector.y - offsetY * facingVector.x;
+      const forwardDistance = offsetX * doorwayFacingVector.x + offsetY * doorwayFacingVector.y;
+      const signedLateralDistance = (
+        offsetX * doorwayFacingVector.y - offsetY * doorwayFacingVector.x
+      );
       const lateralDistance = Math.max(0, Math.abs(signedLateralDistance) - doorwayHalfWidth);
       const distance = Math.hypot(offsetX, offsetY);
       const lateralDirection = {
-        x: facingVector.y,
-        y: -facingVector.x,
+        x: doorwayFacingVector.y,
+        y: -doorwayFacingVector.x,
       };
       const clampedLateralDistance = Math.max(
         -doorwayHalfWidth,
