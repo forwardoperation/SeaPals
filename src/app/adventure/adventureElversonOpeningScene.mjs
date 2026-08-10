@@ -1,4 +1,7 @@
-import { ELVERSON_TOWN_ROADS } from "./adventureElversonTownLayout.mjs";
+import {
+  ELVERSON_TOWN_ROADS,
+  ELVERSON_TOWN_SAFE_POSITIONS,
+} from "./adventureElversonTownLayout.mjs";
 
 export const ELVERSON_DOCK_SPEECH_INTERACTION_ID =
   "interaction-elverson-dock-speech-mentor";
@@ -72,7 +75,7 @@ export const ELVERSON_BEST_FRIEND_DOCK_WALK = Object.freeze({
     Object.freeze({ x: 21.2, y: 15.7 }),
   ]),
   follower: Object.freeze([
-    Object.freeze({ x: 3.55, y: 5.05 }),
+    ELVERSON_TOWN_SAFE_POSITIONS.playerHomeExterior,
     Object.freeze({ x: 7.2, y: 6.2 }),
     Object.freeze({ x: 19.7, y: 6.2 }),
     Object.freeze({ x: 19.7, y: 14.8 }),

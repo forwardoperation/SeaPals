@@ -35,49 +35,49 @@ const ELVERSON_PORTAL_EXPECTATIONS = Object.freeze([
   Object.freeze({
     id: "interaction-elverson-enter-reef-house",
     targetScene: "coral-home",
-    interiorSpawn: Object.freeze({ x: 5, y: 6 }),
+    interiorSpawn: Object.freeze({ x: 5.5, y: 6 }),
     exitId: "interaction-coral-home-exit",
   }),
   Object.freeze({
     id: "interaction-elverson-enter-deep-house",
     targetScene: "deep-home",
-    interiorSpawn: Object.freeze({ x: 5, y: 6 }),
+    interiorSpawn: Object.freeze({ x: 5.5, y: 6 }),
     exitId: "interaction-deep-home-exit",
   }),
   Object.freeze({
     id: "interaction-elverson-enter-oceanic-house",
     targetScene: "elverson-oceanic-home",
-    interiorSpawn: Object.freeze({ x: 5, y: 6 }),
+    interiorSpawn: Object.freeze({ x: 5.5, y: 6 }),
     exitId: "interaction-elverson-oceanic-home-exit",
   }),
   Object.freeze({
     id: "interaction-elverson-enter-schoolhouse",
     targetScene: "elverson-red-schoolhouse",
-    interiorSpawn: Object.freeze({ x: 6, y: 7 }),
+    interiorSpawn: Object.freeze({ x: 6.5, y: 7 }),
     exitId: "interaction-elverson-red-schoolhouse-exit",
   }),
   Object.freeze({
     id: "interaction-elverson-enter-hybrid-house",
     targetScene: "elverson-hybrid-home",
-    interiorSpawn: Object.freeze({ x: 5, y: 6 }),
+    interiorSpawn: Object.freeze({ x: 5.5, y: 6 }),
     exitId: "interaction-elverson-hybrid-home-exit",
   }),
   Object.freeze({
     id: "interaction-elverson-enter-research-lab",
     targetScene: "elverson-marine-research-lab",
-    interiorSpawn: Object.freeze({ x: 6, y: 7 }),
+    interiorSpawn: Object.freeze({ x: 6.5, y: 7 }),
     exitId: "interaction-elverson-marine-research-lab-exit",
   }),
   Object.freeze({
     id: "interaction-elverson-enter-supply-company",
     targetScene: "elverson-supply-company",
-    interiorSpawn: Object.freeze({ x: 6, y: 7 }),
+    interiorSpawn: Object.freeze({ x: 6.5, y: 7 }),
     exitId: "interaction-elverson-supply-company-exit",
   }),
   Object.freeze({
     id: "interaction-elverson-enter-aquarium",
     targetScene: "academy-lab",
-    interiorSpawn: Object.freeze({ x: 7, y: 7 }),
+    interiorSpawn: Object.freeze({ x: 6.5, y: 7 }),
     exitId: "interaction-academy-exit",
   }),
 ]);
@@ -128,7 +128,7 @@ test("world exposes the 42-by-28 Elverson v5 town, aquarium galleries, public in
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "central-pier"));
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "wharf-platform"));
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "west-cove-shallows"));
-  assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "aquarium-front-apron"));
+  assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "aquarium-deck"));
   assert.equal(SCENES["player-bedroom"].width, 15);
   assert.equal(SCENES["player-bedroom"].height, 10);
   assert.equal(SCENES["player-home"].width, 15);
@@ -747,10 +747,10 @@ test("Elverson exposes the v5 town start, route dock, and every semantic safe po
     townStart: { x: 20, y: 6 },
     legacyTownResume: { x: 20, y: 6 },
     shellshoreDock: { x: 20, y: 17 },
-    playerHomeExterior: { x: 3.55, y: 5.05 },
+    playerHomeExterior: { x: 4.2, y: 5.05 },
     reefHouseExterior: { x: 13.8, y: 5.05 },
     deepHouseExterior: { x: 28.2, y: 5.05 },
-    oceanicHouseExterior: { x: 36.8, y: 5.05 },
+    oceanicHouseExterior: { x: 37.45, y: 5.05 },
     schoolhouseExterior: { x: 4.3, y: 16.45 },
     hybridHouseExterior: { x: 13.8, y: 16.45 },
     researchLabExterior: { x: 30.7, y: 16.45 },
@@ -791,7 +791,7 @@ test("continuous movement cannot cross Elverson v5 facades, water, furniture, ex
     { x: 4.2, y: 3 },
     { x: 13.8, y: 3 },
     { x: 28.2, y: 3 },
-    { x: 36.8, y: 3 },
+    { x: 37.45, y: 3 },
     { x: 4.3, y: 14 },
     { x: 13.8, y: 14 },
     { x: 30.7, y: 14 },
@@ -845,8 +845,8 @@ test("all nine semantic interiors return to their matching safe town positions",
     const scene = SCENES[expected.targetScene];
     const exit = scene.interactions.find(({ type }) => type === "exit");
     assert.equal(exit?.id, expected.exitId);
-    const approach = { x: Math.round(exit.at.x), y: Math.round(exit.at.y - 1) };
-    assert.deepEqual(getInteraction(expected.targetScene, approach, "down"), {
+    const approach = { x: exit.at.x, y: exit.at.y - 0.73 };
+    assert.deepEqual(getContinuousInteraction(expected.targetScene, approach, "down"), {
       type: "exit",
       interactionId: expected.exitId,
       targetScene: "town",
@@ -1279,7 +1279,7 @@ test("continuous interactions require immediate, forward-facing alignment", () =
     type: "enter",
     interactionId: "interaction-elverson-enter-reef-house",
     targetScene: "coral-home",
-    spawn: { x: 5, y: 6 },
+    spawn: { x: 5.5, y: 6 },
     facing: "up",
   });
   assert.equal(getContinuousInteraction("town", { x: 13.8, y: 4.83 }, "right"), null);
@@ -1389,8 +1389,45 @@ test("automatic doorway transitions recognize all nine semantic portal pairs onl
   }
 });
 
+test("every Elverson interior exit works across both visible threshold edges", () => {
+  for (const expected of ELVERSON_PORTAL_EXPECTATIONS) {
+    const exit = SCENES[expected.targetScene].interactions.find(({ id }) => id === expected.exitId);
+    assert.ok(exit?.doorwayHalfWidth > 0, `${expected.exitId} must publish its visible width`);
+    for (const direction of [-1, 1]) {
+      const approach = {
+        x: exit.at.x + direction * exit.doorwayHalfWidth,
+        y: exit.at.y - 0.73,
+      };
+      assert.equal(canOccupyContinuousPosition(expected.targetScene, approach), true);
+      assert.equal(
+        getDoorwayTransition(expected.targetScene, approach, "down")?.interactionId,
+        expected.exitId,
+        `${expected.exitId} must trigger at ${direction < 0 ? "left" : "right"} threshold edge`,
+      );
+    }
+  }
+});
+
+test("the player-home staircase and bedroom landing trigger across their painted openings", () => {
+  const thresholds = [
+    ["player-home", "interaction-player-home-upstairs", "up", 0.73],
+    ["player-bedroom", "interaction-player-bedroom-downstairs", "down", -0.73],
+  ];
+  for (const [sceneId, interactionId, facing, yOffset] of thresholds) {
+    const doorway = SCENES[sceneId].interactions.find(({ id }) => id === interactionId);
+    for (const direction of [-1, 1]) {
+      const approach = {
+        x: doorway.at.x + direction * doorway.doorwayHalfWidth,
+        y: doorway.at.y + yOffset,
+      };
+      assert.equal(canOccupyContinuousPosition(sceneId, approach), true);
+      assert.equal(getDoorwayTransition(sceneId, approach, facing)?.interactionId, interactionId);
+    }
+  }
+});
+
 test("the aquarium's full visible exit opening lets an off-centre player walk out", () => {
-  for (const x of [5.5, 6, 6.5]) {
+  for (const x of [5.5, 6.5, 7.5]) {
     let position = { x, y: 7 };
     for (let frame = 0; frame < 30; frame += 1) {
       position = movePlayerContinuous("academy-lab", position, { x: 0, y: 1 }, 16);
@@ -1405,7 +1442,7 @@ test("the aquarium's full visible exit opening lets an off-centre player walk ou
   }
 
   assert.equal(
-    getDoorwayTransition("academy-lab", { x: 6.76, y: 7.27 }, "down"),
+    getDoorwayTransition("academy-lab", { x: 7.76, y: 7.27 }, "down"),
     null,
     "the wider trigger must not extend past the doorway's contact tolerance",
   );
@@ -1414,10 +1451,10 @@ test("the aquarium's full visible exit opening lets an off-centre player walk ou
 test("automatic doorway transitions stay tight, directional, and portal-only", () => {
   assert.equal(getDoorwayTransition("town", { x: 13.8, y: 4.93 }, "up"), null);
   assert.equal(
-    getDoorwayTransition("town", { x: 14.04, y: 4.83 }, "up")?.interactionId,
+    getDoorwayTransition("town", { x: 14.54, y: 4.83 }, "up")?.interactionId,
     "interaction-elverson-enter-reef-house",
   );
-  assert.equal(getDoorwayTransition("town", { x: 14.06, y: 4.83 }, "up"), null);
+  assert.equal(getDoorwayTransition("town", { x: 14.56, y: 4.83 }, "up"), null);
   assert.equal(getDoorwayTransition("town", { x: 13.8, y: 4.83 }, "down"), null);
 
   const nearest = getDoorwayTransition(

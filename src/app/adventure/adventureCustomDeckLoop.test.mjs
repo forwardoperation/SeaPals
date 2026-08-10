@@ -118,19 +118,19 @@ test("earned card to custom deck to immutable resident duel survives save and re
     playerDeckId: runtimeSnapshot.id,
     playerDeckSnapshot: runtimeSnapshot,
     opponentDeckId: "darkness-shroud",
-    victoryTarget: 10,
-    difficulty: "medium",
-    playerVp: 12,
+    victoryTarget: 30,
+    difficulty: "hard",
+    playerVp: 30,
     opponentVp: 6,
     round: 4,
     turn: 8,
-    message: "Victory: you reached 12 VP against Dorian's 6 VP.",
+    message: "Victory: you reached 30 VP against Dorian's 6 VP.",
   });
   assertAdventureDuelResultMatchesLaunch(result, {
     encounterId: "encounter-shellshore-dorian",
     opponentId: "dorian",
     opponentDeckId: "darkness-shroud",
-    victoryTarget: 10,
+    victoryTarget: 30,
     playerDeckSnapshot: runtimeSnapshot,
   });
   const recorded = recordAdventureDuelResult(editedAfterLaunch, result).save;

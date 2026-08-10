@@ -663,8 +663,8 @@ export function validateAdventureContent(content) {
     ) {
       errors.push(`scenes.${scene.id}.world.artPath must reference a PNG or WebP in /images/adventure/.`);
     }
-    if (!Number.isInteger(scene.world.spawn?.x) || !Number.isInteger(scene.world.spawn?.y)) {
-      errors.push(`scenes.${scene.id}.world.spawn requires integer x and y coordinates.`);
+    if (!Number.isFinite(scene.world.spawn?.x) || !Number.isFinite(scene.world.spawn?.y)) {
+      errors.push(`scenes.${scene.id}.world.spawn requires finite x and y coordinates.`);
     }
     const movement = scene.world.movement;
     if (movement !== undefined) {

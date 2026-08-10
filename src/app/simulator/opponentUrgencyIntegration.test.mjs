@@ -30,9 +30,26 @@ test("Hard can spend surplus RP on several straightforward permanent cards", () 
   );
   assert.match(opponentTurn, /const permanentPlays = \[\{/);
   assert.match(opponentTurn, /opponentDifficulty === OpponentDifficulty\.HARD/);
+  assert.match(opponentTurn, /&& !opponentOnPlayAttack/);
   assert.match(opponentTurn, /for \(let playIndex = 0; playIndex < safetyLimit; playIndex \+= 1\)/);
   assert.match(opponentTurn, /permanentPlays\.push\(\{/);
   assert.match(opponentTurn, /getAttackRpReserve\(next\)/);
+  assert.match(opponentTurn, /candidate\.zone === CreatureZone\.OCEAN/);
+  assert.match(opponentTurn, /createCreatureInstance\(candidate\.id, createStableInstanceId\(`opponent-reef-/);
+  assert.match(opponentTurn, /discard one oceanic predator or two oceanic fish/);
+});
+
+test("Hard support play preserves a legal attack or permanent before spending RP", () => {
+  const supports = sourceBetween(
+    "function runOpponentSupports",
+    "function runOpponentTurn",
+  );
+  assert.match(supports, /getReservedHardPlayRp/);
+  assert.match(supports, /getHardOpponentSupportRpReserve\(\{/);
+  assert.match(supports, /existingAttackPlays/);
+  assert.match(supports, /if \(actionCost > state\.rp\) return \[\]/);
+  assert.match(supports, /existingBoardAttacks: existingAttackPlays/);
+  assert.match(supports, /canOpponentSpendSupportWithoutBreakingHardPlan\(\{/);
 });
 
 test("normal attacks filter out attackers without targets and Hard can continue to another attacker", () => {
@@ -52,7 +69,19 @@ test("normal attacks filter out attackers without targets and Hard can continue 
   assert.match(normalAttacks, /nextOpponent = resolution\.opponentState/);
 });
 
-test("critical Hard attacks before utility actions can spend its RP", () => {
+test("Hard attack planning uses expected values without consuming combat RNG", () => {
+  const targetPlanning = sourceBetween(
+    "const scoreTarget = (entry, candidateAttacker)",
+    "const hardAttackPlan",
+  );
+  assert.match(targetPlanning, /rollConditionalDie: \(expression\) => \(\{ total: getExpectedDieValue\(expression\) \}\)/);
+  assert.match(targetPlanning, /cardHasAttackAdvantage/);
+  assert.match(targetPlanning, /attackerHasDisadvantageFromMassive/);
+  assert.match(targetPlanning, /getExpectedRepeatCount/);
+  assert.doesNotMatch(targetPlanning, /Math\.random|rollDie\(/);
+});
+
+test("Hard attacks before utility actions can spend its RP", () => {
   const normalActions = sourceBetween(
     "function runOpponentNormalActions",
     "function resolvePlayerRegenerateChoice",

@@ -170,10 +170,7 @@ test("Mr. Easterling's speech advertises aquarium registration, then registratio
     ({ id }) => id === "interaction-elverson-enter-aquarium",
   );
   const aquarium = getAdventureScene("academy-lab").world;
-  const mentorInteraction = aquarium.interactions.find(
-    ({ id }) => id === "interaction-academy-mentor",
-  );
-  assert.deepEqual(aquariumEntrance.spawn, { x: mentorInteraction.at.x, y: 7 });
+  assert.deepEqual(aquariumEntrance.spawn, { x: 6.5, y: 7 });
   assert.equal(aquariumEntrance.facing, "up");
   assert.deepEqual(aquarium.spawn, aquariumEntrance.spawn);
   assert.equal(aquarium.startFacing, "up");

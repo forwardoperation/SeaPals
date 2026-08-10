@@ -18,10 +18,10 @@ export const ELVERSON_TOWN_SAFE_POSITIONS = Object.freeze({
   townStart: point(20, 6),
   legacyTownResume: point(20, 6),
   shellshoreDock: point(20, 17),
-  playerHomeExterior: point(3.55, 5.05),
+  playerHomeExterior: point(4.2, 5.05),
   reefHouseExterior: point(13.8, 5.05),
   deepHouseExterior: point(28.2, 5.05),
-  oceanicHouseExterior: point(36.8, 5.05),
+  oceanicHouseExterior: point(37.45, 5.05),
   schoolhouseExterior: point(4.3, ELVERSON_TOWN_SAFE_PROMENADE_Y),
   hybridHouseExterior: point(13.8, ELVERSON_TOWN_SAFE_PROMENADE_Y),
   researchLabExterior: point(30.7, ELVERSON_TOWN_SAFE_PROMENADE_Y),
@@ -33,14 +33,18 @@ export const ELVERSON_TOWN_SAFE_POSITIONS = Object.freeze({
 });
 
 export const ELVERSON_TOWN_WEST_COVE = Object.freeze({
-  stairs: bounds(9, 16.35, 10.05, 18.25),
+  // Includes the full stone stair opening. With the released 0.22 actor
+  // radius, anchors remain between the painted rails instead of being forced
+  // through the former one-character centre slit.
+  stairs: bounds(8, 16.35, 10.2, 18.25),
   sand: bounds(7.4, 17.75, 10.85, 19.2),
   shallows: bounds(7.65, 18.85, 10.65, 20.35),
   wyeth: point(8.35, 18.2),
 });
 
 export const ELVERSON_TOWN_PIER_END_Y = 26.35;
-export const ELVERSON_TOWN_AQUARIUM_APRON = bounds(21.65, 22.65, 31.2, 24.1);
+export const ELVERSON_TOWN_WHARF_DECK = bounds(10.5, 17.35, 19.35, 22.55);
+export const ELVERSON_TOWN_AQUARIUM_DECK = bounds(21.65, 17.35, 31.2, 24.1);
 
 export const ELVERSON_TOWN_PORTALS = Object.freeze([
   Object.freeze({
@@ -48,7 +52,8 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     objectId: "player-home",
     archetype: "blue-home-left-door",
     at: point(4.2, 4.45),
-    doorway: point(3.55, 4.1),
+    doorway: point(4.2, 4.1),
+    doorwayHalfWidth: 0.45,
     targetScene: "player-home",
     interiorSpawn: point(7, 4),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.playerHomeExterior,
@@ -59,8 +64,9 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     archetype: "green-home-door",
     at: point(13.8, 4.45),
     doorway: point(13.8, 4.1),
+    doorwayHalfWidth: 0.5,
     targetScene: "coral-home",
-    interiorSpawn: point(5, 6),
+    interiorSpawn: point(5.5, 6),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.reefHouseExterior,
   }),
   Object.freeze({
@@ -69,8 +75,9 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     archetype: "tan-home-door",
     at: point(28.2, 4.45),
     doorway: point(28.2, 4.1),
+    doorwayHalfWidth: 0.45,
     targetScene: "deep-home",
-    interiorSpawn: point(5, 6),
+    interiorSpawn: point(5.5, 6),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.deepHouseExterior,
   }),
   Object.freeze({
@@ -78,9 +85,10 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     objectId: "oceanic-house",
     archetype: "blue-home-left-door",
     at: point(37.45, 4.45),
-    doorway: point(36.8, 4.1),
+    doorway: point(37.45, 4.1),
+    doorwayHalfWidth: 0.45,
     targetScene: "elverson-oceanic-home",
-    interiorSpawn: point(5, 6),
+    interiorSpawn: point(5.5, 6),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.oceanicHouseExterior,
   }),
   Object.freeze({
@@ -89,8 +97,9 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     archetype: "brick-school-door",
     at: point(4.3, 15.85),
     doorway: point(4.3, 15.5),
+    doorwayHalfWidth: 0.55,
     targetScene: "elverson-red-schoolhouse",
-    interiorSpawn: point(6, 7),
+    interiorSpawn: point(6.5, 7),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.schoolhouseExterior,
   }),
   Object.freeze({
@@ -99,8 +108,9 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     archetype: "green-home-door",
     at: point(13.8, 15.85),
     doorway: point(13.8, 15.5),
+    doorwayHalfWidth: 0.5,
     targetScene: "elverson-hybrid-home",
-    interiorSpawn: point(5, 6),
+    interiorSpawn: point(5.5, 6),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.hybridHouseExterior,
   }),
   Object.freeze({
@@ -109,8 +119,9 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     archetype: "brick-civic-hall-door",
     at: point(30.7, 15.85),
     doorway: point(30.7, 15.5),
+    doorwayHalfWidth: 0.8,
     targetScene: "elverson-marine-research-lab",
-    interiorSpawn: point(6, 7),
+    interiorSpawn: point(6.5, 7),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.researchLabExterior,
   }),
   Object.freeze({
@@ -119,8 +130,9 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     archetype: "green-awning-shop-door",
     at: point(37.5, 15.85),
     doorway: point(37.5, 15.5),
+    doorwayHalfWidth: 0.4,
     targetScene: "elverson-supply-company",
-    interiorSpawn: point(6, 7),
+    interiorSpawn: point(6.5, 7),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.supplyCompanyExterior,
   }),
   Object.freeze({
@@ -132,8 +144,9 @@ export const ELVERSON_TOWN_PORTALS = Object.freeze([
     at: point(27.6, 23.75),
     scale: 0.8,
     doorway: point(27.6, 23.3),
+    doorwayHalfWidth: 0.75,
     targetScene: "academy-lab",
-    interiorSpawn: point(7, 7),
+    interiorSpawn: point(6.5, 7),
     exteriorSpawn: ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
   }),
 ]);

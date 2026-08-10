@@ -289,25 +289,13 @@ test("epoch-2 migration preserves every coordinate not stranded on the retired s
   }
 });
 
-test("epoch-3 positions on retired pier water and aquarium side pockets move to safe ground", () => {
+test("epoch-3 positions beyond the shortened pier move to safe ground", () => {
   const cases = [
     {
       label: "retired pier end",
       position: { x: 20.5, y: 26.8 },
       expected: ELVERSON_TOWN_SAFE_POSITIONS.pierEnd,
       reason: "pier-end",
-    },
-    {
-      label: "aquarium west side pocket",
-      position: { x: 23, y: 20 },
-      expected: ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
-      reason: "aquarium-front-apron",
-    },
-    {
-      label: "aquarium east side pocket",
-      position: { x: 30, y: 20 },
-      expected: ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
-      reason: "aquarium-front-apron",
     },
   ];
 
@@ -330,6 +318,8 @@ test("epoch-3 migration preserves coordinates that remain on current walkable gr
     { x: 5, y: 5 },
     { x: 15, y: 20 },
     { x: 20.5, y: 25 },
+    { x: 23, y: 20 },
+    { x: 30, y: 20 },
     { x: 27, y: 23.2 },
   ];
 

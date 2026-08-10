@@ -29,25 +29,25 @@ test("all authored facade links match the town portal contract", () => {
 test("the grand aquarium facade fills its deck while its central entrance stays reachable", () => {
   const portal = ELVERSON_TOWN_PORTALS.find(({ objectId }) => objectId === "aquarium-workshop");
   const object = ELVERSON_LAYERED_SCENE.objects.find(({ id }) => id === "aquarium-workshop");
-  const apron = ELVERSON_LAYERED_SCENE.walkableRegions.find(({ id }) => id === "aquarium-front-apron");
+  const deck = ELVERSON_LAYERED_SCENE.walkableRegions.find(({ id }) => id === "aquarium-deck");
 
   assert.ok(portal);
   assert.ok(object);
-  assert.ok(apron);
+  assert.ok(deck);
 
   assert.equal(portal.scale, 0.8);
   assert.deepEqual(portal.at, { x: 27.6, y: 23.75 });
   assert.deepEqual(portal.doorway, { x: 27.6, y: 23.3 });
-  assert.ok(portal.doorway.x >= apron.left && portal.doorway.x <= apron.right);
-  assert.ok(portal.doorway.y >= apron.top && portal.doorway.y <= apron.bottom);
+  assert.ok(portal.doorway.x >= deck.left && portal.doorway.x <= deck.right);
+  assert.ok(portal.doorway.y >= deck.top && portal.doorway.y <= deck.bottom);
   const playerRadius = CONTINUOUS_MOVEMENT_DEFAULTS.radius;
-  assert.ok(portal.doorway.x - apron.left >= playerRadius);
-  assert.ok(apron.right - portal.doorway.x >= playerRadius);
-  assert.ok(portal.doorway.y - apron.top >= playerRadius);
-  assert.ok(apron.bottom - portal.doorway.y >= playerRadius);
+  assert.ok(portal.doorway.x - deck.left >= playerRadius);
+  assert.ok(deck.right - portal.doorway.x >= playerRadius);
+  assert.ok(portal.doorway.y - deck.top >= playerRadius);
+  assert.ok(deck.bottom - portal.doorway.y >= playerRadius);
   const facadeBottom = Math.max(...object.collisionRects.map(({ bottom }) => bottom));
   assert.ok(
-    apron.bottom - facadeBottom >= 0.75,
+    deck.bottom - facadeBottom >= 0.75,
     "the aquarium must retain a dry approach south of its facade",
   );
 });
@@ -70,7 +70,7 @@ test("full-facade collision removes every walkable sample hidden behind a buildi
   }
 });
 
-test("the cove route and public decks are tight while pilings and aquarium side pockets stay blocked", () => {
+test("the full cove stairs and visible decks are walkable while water and facade art stay solid", () => {
   const radius = 0.22;
   const insideAllowlist = (position) => {
     const samples = [position];
@@ -91,11 +91,14 @@ test("the cove route and public decks are tight while pilings and aquarium side 
 
   for (const position of [
     { x: 2, y: 16.55 },
-    { x: 9.5, y: 17.2 },
+    { x: 8.25, y: 17.2 },
+    { x: 9.95, y: 17.2 },
     { x: 8.35, y: 18.2 },
     { x: 9.4, y: 19.35 },
     { x: 20.5, y: 25.9 },
-    { x: 15.3, y: 21.4 },
+    { x: 10.75, y: 21.4 },
+    { x: 23, y: 20.5 },
+    { x: 30.75, y: 20.5 },
     { x: 28, y: 23.5 },
   ]) assert.equal(insideAllowlist(position), true);
 
@@ -106,20 +109,21 @@ test("the cove route and public decks are tight while pilings and aquarium side 
     { x: 10, y: 23 },
     { x: 32, y: 22 },
     { x: 20, y: 26.8 },
-    { x: 24.5, y: 21.7 },
-    { x: 30.7, y: 21.7 },
   ]) assert.equal(insideAllowlist(position), false);
 
   for (const position of [
-    { x: 9.5, y: 17.2 },
+    { x: 8.25, y: 17.2 },
+    { x: 9.95, y: 17.2 },
     { x: 8.35, y: 18.2 },
     { x: 9.4, y: 19.35 },
+    { x: 10.75, y: 21.4 },
+    { x: 23, y: 20.5 },
+    { x: 30.75, y: 20.5 },
   ]) assert.equal(canOccupyLayeredScenePosition(ELVERSON_LAYERED_SCENE, position, radius), true);
 
   for (const position of [
     { x: 9.4, y: 20.7 },
     { x: 20, y: 26.8 },
-    { x: 24.5, y: 21.7 },
-    { x: 30.7, y: 21.7 },
+    { x: 27.6, y: 20.5 },
   ]) assert.equal(canOccupyLayeredScenePosition(ELVERSON_LAYERED_SCENE, position, radius), false);
 });

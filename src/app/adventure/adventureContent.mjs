@@ -627,7 +627,7 @@ const ELVERSON_OPEN_PUBLIC_ROOM_TILES = Object.freeze([
   "wffffffffffffw",
   "wffffffffffffw",
   "wffffffffffffw",
-  "wwwwwwEwwwwwww",
+  "wwwwwwEEwwwwww",
 ]);
 
 const ELVERSON_OPEN_HOME_TILES = Object.freeze([
@@ -638,7 +638,7 @@ const ELVERSON_OPEN_HOME_TILES = Object.freeze([
   "wffffffffffw",
   "wffffffffffw",
   "wffffffffffw",
-  "wwwwwEwwwwww",
+  "wwwwwEEwwwww",
 ]);
 
 function elversonInteriorScene({
@@ -648,6 +648,7 @@ function elversonInteriorScene({
   tiles,
   spawn,
   exitAt,
+  exitHalfWidth,
   artPath,
 }) {
   const portal = ELVERSON_TOWN_PORTAL_BY_SCENE[sceneId];
@@ -669,7 +670,7 @@ function elversonInteriorScene({
         id: `interaction-${sceneId}-exit`,
         type: "exit",
         at: exitAt,
-        doorwayHalfWidth: 0.5,
+        doorwayHalfWidth: exitHalfWidth,
         targetScene: "town",
         spawn: portal.exteriorSpawn,
         facing: "down",
@@ -783,6 +784,7 @@ const shellshoreRuntimeScenes = {
         id: portal.id,
         type: "enter",
         at: portal.doorway,
+        doorwayHalfWidth: portal.doorwayHalfWidth,
         targetScene: portal.targetScene,
         spawn: portal.interiorSpawn,
         facing: "up",
@@ -820,15 +822,15 @@ const shellshoreRuntimeScenes = {
       { id: "player-bedroom-left-bookcase", left: 0.25, top: 5.7, right: 2.85, bottom: 8.6 },
       { id: "player-bedroom-writing-desk", left: 10.25, top: 1.35, right: 14.4, bottom: 4.65 },
       { id: "player-bedroom-right-dresser", left: 12.25, top: 4.45, right: 14.5, bottom: 8.5 },
-      { id: "player-bedroom-stair-rail-left", left: 5.7, top: 7.35, right: 6.35, bottom: 9.1 },
-      { id: "player-bedroom-stair-rail-right", left: 8.65, top: 7.35, right: 9.3, bottom: 9.1 },
+      { id: "player-bedroom-stair-rail-left", left: 5.25, top: 6.65, right: 5.9, bottom: 9.25 },
+      { id: "player-bedroom-stair-rail-right", left: 8.1, top: 6.65, right: 8.75, bottom: 9.25 },
     ],
     interactions: [
       {
         id: "interaction-player-bedroom-downstairs",
         type: "exit",
         at: { x: 7, y: 9 },
-        doorwayHalfWidth: 0.55,
+        doorwayHalfWidth: 0.85,
         targetScene: "player-home",
         spawn: { x: 7, y: 3.55 },
         facing: "down",
@@ -872,7 +874,7 @@ const shellshoreRuntimeScenes = {
         id: "interaction-player-home-upstairs",
         type: "enter",
         at: { x: 7, y: 3.05 },
-        doorwayHalfWidth: 0.48,
+        doorwayHalfWidth: 0.85,
         targetScene: "player-bedroom",
         spawn: { x: 7, y: 8.05 },
         facing: "up",
@@ -881,7 +883,7 @@ const shellshoreRuntimeScenes = {
         id: "interaction-player-home-exit",
         type: "exit",
         at: { x: 7, y: 9 },
-        doorwayHalfWidth: 0.45,
+        doorwayHalfWidth: 0.9,
         targetScene: "town",
         spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["player-home"].exteriorSpawn,
         facing: "down",
@@ -900,9 +902,9 @@ const shellshoreRuntimeScenes = {
       "waaarrrraaaw",
       "waaarrrrfffw",
       "waaaffffaaaw",
-      "wwwwwEwwwwww",
+      "wwwwwEEwwwww",
     ],
-    spawn: { x: 5, y: 6 },
+    spawn: { x: 5.5, y: 6 },
     collisionRects: [
       { id: "coral-upper-left-table", left: 0.45, top: 1.45, right: 2.75, bottom: 1.98 },
       { id: "coral-left-aquarium", left: 0.35, top: 2.1, right: 3.3, bottom: 4.65 },
@@ -926,7 +928,8 @@ const shellshoreRuntimeScenes = {
       {
         id: "interaction-coral-home-exit",
         type: "exit",
-        at: { x: 5, y: 7 },
+        at: { x: 5.5, y: 7 },
+        doorwayHalfWidth: 0.8,
         targetScene: "town",
         spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["coral-home"].exteriorSpawn,
         facing: "down",
@@ -945,9 +948,9 @@ const shellshoreRuntimeScenes = {
       "waaarrrraaaw",
       "waaarrrraaaw",
       "waaaffffaaaw",
-      "wwwwwEwwwwww",
+      "wwwwwEEwwwww",
     ],
-    spawn: { x: 5, y: 6 },
+    spawn: { x: 5.5, y: 6 },
     collisionRects: [
       { id: "deep-left-habitat-tank", left: 0.25, top: 1.65, right: 3.1, bottom: 4.65 },
       { id: "deep-right-research-console", left: 7.6, top: 1.85, right: 10.25, bottom: 4.8 },
@@ -970,7 +973,8 @@ const shellshoreRuntimeScenes = {
       {
         id: "interaction-deep-home-exit",
         type: "exit",
-        at: { x: 5, y: 7 },
+        at: { x: 5.5, y: 7 },
+        doorwayHalfWidth: 0.8,
         targetScene: "town",
         spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["deep-home"].exteriorSpawn,
         facing: "down",
@@ -982,8 +986,9 @@ const shellshoreRuntimeScenes = {
     name: "Oceanic House",
     theme: "deep-sea-den",
     tiles: ELVERSON_OPEN_HOME_TILES,
-    spawn: { x: 5, y: 6 },
-    exitAt: { x: 5, y: 7 },
+    spawn: { x: 5.5, y: 6 },
+    exitAt: { x: 5.5, y: 7 },
+    exitHalfWidth: 0.8,
     artPath: "/images/adventure/deepwater-den.png",
   }),
   "elverson-hybrid-home": elversonInteriorScene({
@@ -991,8 +996,9 @@ const shellshoreRuntimeScenes = {
     name: "Hybrid Deck House",
     theme: "coral-cottage",
     tiles: ELVERSON_OPEN_HOME_TILES,
-    spawn: { x: 5, y: 6 },
-    exitAt: { x: 5, y: 7 },
+    spawn: { x: 5.5, y: 6 },
+    exitAt: { x: 5.5, y: 7 },
+    exitHalfWidth: 0.8,
     artPath: "/images/adventure/coral-cottage.png",
   }),
   "elverson-supply-company": elversonInteriorScene({
@@ -1000,8 +1006,9 @@ const shellshoreRuntimeScenes = {
     name: "Elverson Supply Company",
     theme: "academy-lab",
     tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
-    spawn: { x: 6, y: 7 },
-    exitAt: { x: 6, y: 8 },
+    spawn: { x: 6.5, y: 7 },
+    exitAt: { x: 6.5, y: 8 },
+    exitHalfWidth: 1,
     artPath: "/images/adventure/shellshore-academy.webp",
   }),
   "elverson-red-schoolhouse": elversonInteriorScene({
@@ -1009,8 +1016,9 @@ const shellshoreRuntimeScenes = {
     name: "Red Schoolhouse",
     theme: "coral-cottage",
     tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
-    spawn: { x: 6, y: 7 },
-    exitAt: { x: 6, y: 8 },
+    spawn: { x: 6.5, y: 7 },
+    exitAt: { x: 6.5, y: 8 },
+    exitHalfWidth: 1,
     artPath: "/images/adventure/shellshore-academy.webp",
   }),
   "elverson-marine-research-lab": elversonInteriorScene({
@@ -1018,8 +1026,9 @@ const shellshoreRuntimeScenes = {
     name: "Marine Research Lab",
     theme: "academy-lab",
     tiles: ELVERSON_OPEN_PUBLIC_ROOM_TILES,
-    spawn: { x: 6, y: 7 },
-    exitAt: { x: 6, y: 8 },
+    spawn: { x: 6.5, y: 7 },
+    exitAt: { x: 6.5, y: 8 },
+    exitHalfWidth: 1,
     artPath: "/images/adventure/shellshore-academy.webp",
   }),
   "academy-lab": {
@@ -1036,17 +1045,17 @@ const shellshoreRuntimeScenes = {
       "wfffrrrrrrfffw",
       "wfffaaffaafffw",
       "wffffffffffffw",
-      "wwwwwwEwwwwwww",
+      "wwwwwwEEwwwwww",
     ],
-    spawn: { x: 7, y: 7 },
+    spawn: { x: 6.5, y: 7 },
     startFacing: "up",
     collisionRects: [
       { id: "aquarium-hall-north-architecture", left: -0.5, top: -0.5, right: 13.5, bottom: 2.4 },
       { id: "aquarium-hall-west-seating", left: -0.5, top: 2.4, right: 1.25, bottom: 7.35 },
       { id: "aquarium-hall-east-seating", left: 12.75, top: 2.4, right: 13.5, bottom: 7.35 },
       { id: "aquarium-hall-reception", left: 1.25, top: 5.1, right: 4.25, bottom: 7.35 },
-      { id: "aquarium-hall-southwest-railing", left: -0.5, top: 7.4, right: 5.2, bottom: 8.5 },
-      { id: "aquarium-hall-southeast-railing", left: 6.8, top: 7.4, right: 13.5, bottom: 8.5 },
+      { id: "aquarium-hall-southwest-railing", left: -0.5, top: 7.4, right: 5.25, bottom: 8.5 },
+      { id: "aquarium-hall-southeast-railing", left: 7.75, top: 7.4, right: 13.5, bottom: 8.5 },
     ],
     interactions: [
       {
@@ -1091,11 +1100,11 @@ const shellshoreRuntimeScenes = {
       {
         id: "interaction-academy-exit",
         type: "exit",
-        at: { x: 6, y: 8 },
+        at: { x: 6.5, y: 8 },
         // The artwork's open threshold spans the full exit tile. Let players
         // keep walking out from either side of that visible opening instead of
         // requiring them to line up on its exact centre pixel.
-        doorwayHalfWidth: 0.5,
+        doorwayHalfWidth: 1,
         targetScene: "town",
         spawn: ELVERSON_TOWN_PORTAL_BY_SCENE["academy-lab"].exteriorSpawn,
         facing: "down",
@@ -3254,14 +3263,14 @@ const conversations = [
     lines: {
       intro: [
         "Hi, I'm George. I'm ten, too, and my Coral Garden deck is built around patient growth and reef relationships.",
-        "Want to practice with a friendly 10 VP duel?",
+        "Want to test it in a full 30 VP duel?",
       ],
       rematch: [
         "Good to see you again! Coral Garden always has something new to practice.",
-        "Would you like another 10 VP duel with my Coral Garden deck?",
+        "Would you like another 30 VP duel with my Coral Garden deck?",
       ],
       victory: [
-        "That was a beautiful ecosystem! You read the current and reached 10 VP first.",
+        "That was a beautiful ecosystem! You read the current and reached 30 VP first.",
         "You earned an Elverson Discovery Pack, too. Open your Inventory from the pause menu when you are ready to add four new cards to your collection.",
         "Take the Coral Crest. Calvin in the Deep House has a very different deck if you want another challenge.",
       ],
@@ -3274,11 +3283,11 @@ const conversations = [
     lines: {
       intro: [
         "Hello! I'm Calvin. I'm thirteen, and my Darkness Shroud deck hides powerful creatures in the abyss.",
-        "George said you were ready for a different kind of Elverson challenge. Show me how your reef handles the pressure.",
+        "George said you were ready for a different kind of Elverson challenge. Show me how your reef handles the pressure in a full 30 VP duel.",
       ],
       rematch: [
         "The Abyss Crest belongs to you, but the deep is never the same twice.",
-        "Ready to face my Darkness Shroud deck again?",
+        "Ready to face my Darkness Shroud deck in another 30 VP duel?",
       ],
       victory: [
         "Impressive. You kept building even when the deep pushed back.",
@@ -5225,8 +5234,8 @@ const dialogues = [
 
 const encounters = [
   { id: "encounter-shellshore-mentor-practice", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", tutorialId: "tutorial-shellshore-live-basics", role: "practice", opponentId: "academy-mentor", opponentDeckId: "coral-garden", victoryTarget: 26, difficulty: "easy", rewardId: "reward-shellshore-tutorial" },
-  { id: "encounter-shellshore-marina", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "marina", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: "reward-shellshore-marina-first-win" },
-  { id: "encounter-shellshore-dorian", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "dorian", opponentDeckId: "darkness-shroud", victoryTarget: 10, difficulty: "medium", rewardId: null },
+  { id: "encounter-shellshore-marina", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "marina", opponentDeckId: "coral-garden", victoryTarget: 30, difficulty: "hard", rewardId: "reward-shellshore-marina-first-win" },
+  { id: "encounter-shellshore-dorian", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "dorian", opponentDeckId: "darkness-shroud", victoryTarget: 30, difficulty: "hard", rewardId: null },
   ...ELVERSON_AMBIENT_RESIDENTS
     .filter((resident) => resident.duel)
     .map((resident) => ({

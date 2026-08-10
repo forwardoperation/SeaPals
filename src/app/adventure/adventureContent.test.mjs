@@ -72,6 +72,19 @@ test("launch adventure content is internally valid and JSON serializable", () =>
   assert.deepEqual(JSON.parse(JSON.stringify(ADVENTURE_CONTENT)), ADVENTURE_CONTENT);
 });
 
+test("content validation accepts continuous scene spawns and rejects non-finite coordinates", () => {
+  const centeredScene = getAdventureScene("coral-home");
+  assert.deepEqual(centeredScene.world.spawn, { x: 5.5, y: 6 });
+
+  const invalid = clone(ADVENTURE_CONTENT);
+  invalid.scenes.find(({ id }) => id === "coral-home").world.spawn.x = Number.NaN;
+  const result = validateAdventureContent(invalid);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => (
+    /scenes\.coral-home\.world\.spawn requires finite x and y coordinates/.test(error)
+  )));
+});
+
 test("all seven settlements are islands or floating towns reached through the route plan", () => {
   assert.equal(ADVENTURE_CONTENT.towns.length, 7);
   assert.ok(ADVENTURE_CONTENT.towns.every((town) => ["island", "floating"].includes(town.settlementType)));
@@ -218,7 +231,7 @@ test("the grand aquarium hall connects three wide horizontal ecosystem promenade
   assert.equal(hall.name, "Sea Realm Aquarium Grand Hall");
   assert.equal(hall.theme, "aquarium-grand-hall");
   assert.equal(hall.artPath, "/images/adventure/aquarium-grand-hall-v1.webp");
-  assert.deepEqual(hall.spawn, { x: 7, y: 7 });
+  assert.deepEqual(hall.spawn, { x: 6.5, y: 7 });
   assert.ok(hall.interactions.some(({ id }) => id === "interaction-academy-mentor"));
   assert.ok(hall.interactions.some(({ id }) => id === "interaction-academy-exit"));
   assert.deepEqual(
@@ -1192,7 +1205,7 @@ test("Elverson v5 layers its portal buildings while streets, the west cove, and 
       "west-cove-shallows",
       "central-pier",
       "wharf-platform",
-      "aquarium-front-apron",
+      "aquarium-deck",
     ],
   );
 
@@ -1233,7 +1246,8 @@ test("Elverson v5 layers its portal buildings while streets, the west cove, and 
   assert.equal(regionContains({ x: 15.2, y: 21 }), true, "wharf platform stays walkable");
   assert.equal(regionContains({ x: 8.35, y: 18.2 }), true, "west-cove sand stays walkable");
   assert.equal(regionContains({ x: 9.4, y: 19.35 }), true, "west-cove shallows stay walkable");
-  assert.equal(regionContains({ x: 25, y: 23 }), true, "aquarium apron stays walkable");
+  assert.equal(regionContains({ x: 23, y: 20 }), true, "aquarium west side deck stays walkable");
+  assert.equal(regionContains({ x: 30.75, y: 20 }), true, "aquarium east side deck stays walkable");
   assert.equal(regionContains({ x: 10, y: 21 }), false, "open water is outside the allowlist");
   assert.equal(regionContains({ x: 20.5, y: 26.4 }), false, "water past the pier is outside the allowlist");
 
@@ -1244,7 +1258,7 @@ test("Elverson v5 layers its portal buildings while streets, the west cove, and 
     && position.y <= rect.bottom
   ));
   for (const clearRoutePosition of [
-    { x: 3.55, y: 5.05 },
+    { x: 4.2, y: 5.05 },
     { x: 8, y: 5.8 },
     { x: 20.5, y: 5.8 },
     { x: 20.5, y: 10.5 },
@@ -1259,7 +1273,7 @@ test("Elverson v5 layers its portal buildings while streets, the west cove, and 
     .find((scene) => scene.id === "academy-lab")
     .world.interactions.find((interaction) => interaction.id === "interaction-academy-exit");
   assert.deepEqual(aquariumExit.spawn, { x: 27.6, y: 23.72 });
-  assert.equal(aquariumExit.doorwayHalfWidth, 0.5);
+  assert.equal(aquariumExit.doorwayHalfWidth, 1);
 });
 
 test("all nine Elverson town doors have matching two-way interior portals", () => {
@@ -1269,61 +1283,61 @@ test("all nine Elverson town doors have matching two-way interior portals", () =
       targetScene: "player-home",
       interiorSpawn: { x: 7, y: 4 },
       exitId: "interaction-player-home-exit",
-      exteriorSpawn: { x: 3.55, y: 5.05 },
+      exteriorSpawn: { x: 4.2, y: 5.05 },
     },
     {
       entryId: "interaction-elverson-enter-reef-house",
       targetScene: "coral-home",
-      interiorSpawn: { x: 5, y: 6 },
+      interiorSpawn: { x: 5.5, y: 6 },
       exitId: "interaction-coral-home-exit",
       exteriorSpawn: { x: 13.8, y: 5.05 },
     },
     {
       entryId: "interaction-elverson-enter-deep-house",
       targetScene: "deep-home",
-      interiorSpawn: { x: 5, y: 6 },
+      interiorSpawn: { x: 5.5, y: 6 },
       exitId: "interaction-deep-home-exit",
       exteriorSpawn: { x: 28.2, y: 5.05 },
     },
     {
       entryId: "interaction-elverson-enter-oceanic-house",
       targetScene: "elverson-oceanic-home",
-      interiorSpawn: { x: 5, y: 6 },
+      interiorSpawn: { x: 5.5, y: 6 },
       exitId: "interaction-elverson-oceanic-home-exit",
-      exteriorSpawn: { x: 36.8, y: 5.05 },
+      exteriorSpawn: { x: 37.45, y: 5.05 },
     },
     {
       entryId: "interaction-elverson-enter-schoolhouse",
       targetScene: "elverson-red-schoolhouse",
-      interiorSpawn: { x: 6, y: 7 },
+      interiorSpawn: { x: 6.5, y: 7 },
       exitId: "interaction-elverson-red-schoolhouse-exit",
       exteriorSpawn: { x: 4.3, y: 16.45 },
     },
     {
       entryId: "interaction-elverson-enter-hybrid-house",
       targetScene: "elverson-hybrid-home",
-      interiorSpawn: { x: 5, y: 6 },
+      interiorSpawn: { x: 5.5, y: 6 },
       exitId: "interaction-elverson-hybrid-home-exit",
       exteriorSpawn: { x: 13.8, y: 16.45 },
     },
     {
       entryId: "interaction-elverson-enter-research-lab",
       targetScene: "elverson-marine-research-lab",
-      interiorSpawn: { x: 6, y: 7 },
+      interiorSpawn: { x: 6.5, y: 7 },
       exitId: "interaction-elverson-marine-research-lab-exit",
       exteriorSpawn: { x: 30.7, y: 16.45 },
     },
     {
       entryId: "interaction-elverson-enter-supply-company",
       targetScene: "elverson-supply-company",
-      interiorSpawn: { x: 6, y: 7 },
+      interiorSpawn: { x: 6.5, y: 7 },
       exitId: "interaction-elverson-supply-company-exit",
       exteriorSpawn: { x: 37.5, y: 16.45 },
     },
     {
       entryId: "interaction-elverson-enter-aquarium",
       targetScene: "academy-lab",
-      interiorSpawn: { x: 7, y: 7 },
+      interiorSpawn: { x: 6.5, y: 7 },
       exitId: "interaction-academy-exit",
       exteriorSpawn: { x: 27.6, y: 23.72 },
     },
@@ -1390,13 +1404,15 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   const reefDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-reef-house");
   assert.deepEqual(reefDoor.at, { x: 13.8, y: 4.1 });
   assert.equal(reefDoor.targetSceneContent.id, "coral-home");
-  assert.deepEqual(reefDoor.spawn, { x: 5, y: 6 });
+  assert.deepEqual(reefDoor.spawn, { x: 5.5, y: 6 });
 
   const georgeInteraction = resolveAdventureInteraction("coral-home", "interaction-coral-home-marina");
   assert.equal(georgeInteraction.npc.name, "George");
   assert.equal(georgeInteraction.npc.conversation.lines.intro.length, 2);
   assert.equal(georgeInteraction.npc.encounter.opponentDeckId, "coral-garden");
-  assert.equal(georgeInteraction.npc.encounter.victoryTarget, 10);
+  assert.equal(georgeInteraction.npc.encounter.victoryTarget, 30);
+  assert.equal(georgeInteraction.npc.encounter.difficulty, "hard");
+  assert.match(georgeInteraction.npc.conversation.lines.intro.join(" "), /30 VP/);
 
   const calvin = ADVENTURE_CONTENT.npcs.find((npc) => (
     npc.townId === "shellshore-village" && npc.name === "Calvin"
@@ -1405,7 +1421,9 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   assert.equal(resolvedCalvin.sceneId, "deep-home");
   assert.equal(resolvedCalvin.conversation.lines.rematch.length, 2);
   assert.equal(resolvedCalvin.encounter.opponentDeckId, "darkness-shroud");
-  assert.equal(resolvedCalvin.encounter.difficulty, "medium");
+  assert.equal(resolvedCalvin.encounter.victoryTarget, 30);
+  assert.equal(resolvedCalvin.encounter.difficulty, "hard");
+  assert.match(resolvedCalvin.conversation.lines.intro.join(" "), /30 VP/);
 
   const rosieInteraction = resolveAdventureInteraction(
     "elverson-red-schoolhouse",
@@ -1444,7 +1462,7 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   const aquariumDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-aquarium");
   assert.deepEqual(aquariumDoor.at, { x: 27.6, y: 23.3 });
   assert.equal(aquariumDoor.targetSceneContent.id, "academy-lab");
-  assert.deepEqual(aquariumDoor.spawn, { x: 7, y: 7 });
+  assert.deepEqual(aquariumDoor.spawn, { x: 6.5, y: 7 });
   const supplyDoor = resolveAdventureInteraction("town", "interaction-elverson-enter-supply-company");
   assert.deepEqual(supplyDoor.at, { x: 37.5, y: 15.5 });
   assert.equal(supplyDoor.targetSceneContent.id, "elverson-supply-company");
@@ -1489,7 +1507,7 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   assert.equal(mentorInteraction.npc.encounter.victoryTarget, 26);
 });
 
-test("the three Elverson houses expose all ten requested 10 VP duelists and exact decks", () => {
+test("the three Elverson houses expose ten hard duelists and three rear 30 VP leads", () => {
   const expectedDuelists = [
     { id: "marina", name: "George", age: 10, sceneId: "coral-home", interactionId: "interaction-coral-home-marina", deckId: "coral-garden", role: "resident" },
     { id: "henry", name: "Henry", age: 8, sceneId: "coral-home", interactionId: "interaction-elverson-henry", deckId: "disruption", role: "optional" },
@@ -1502,7 +1520,40 @@ test("the three Elverson houses expose all ten requested 10 VP duelists and exac
     { id: "charlotte", name: "Charlotte", age: 13, sceneId: "elverson-oceanic-home", interactionId: "interaction-elverson-charlotte", deckId: "open-ocean-hunt", role: "optional" },
     { id: "eloise", name: "Eloise", age: 7, sceneId: "elverson-oceanic-home", interactionId: "interaction-elverson-eloise", deckId: "pelagic-zone", role: "optional" },
   ];
+  const expectedHardDuelistIds = [
+    "marina",
+    "henry",
+    "reef-house-charlie",
+    "reef-house-danny",
+    "jack",
+    "dorian",
+    "landon",
+    "oliver",
+    "charlotte",
+    "eloise",
+  ];
+  const expectedRearThirtyVpDuelistIds = ["marina", "dorian", "charlotte"];
+  const expectedTenVpDuelistIds = [
+    "henry",
+    "reef-house-charlie",
+    "reef-house-danny",
+    "jack",
+    "landon",
+    "oliver",
+    "eloise",
+  ];
   const elverson = ADVENTURE_CONTENT.towns.find(({ id }) => id === "shellshore-village");
+  const houseSceneIds = new Set(["coral-home", "deep-home", "elverson-oceanic-home"]);
+  const actualHouseDuelistIds = ADVENTURE_CONTENT.npcs
+    .filter((npc) => (
+      npc.townId === "shellshore-village"
+      && houseSceneIds.has(npc.sceneId)
+      && npc.encounterId
+    ))
+    .map(({ id }) => id);
+
+  assert.deepEqual(expectedDuelists.map(({ id }) => id), expectedHardDuelistIds);
+  assert.deepEqual([...actualHouseDuelistIds].sort(), [...expectedHardDuelistIds].sort());
 
   for (const expected of expectedDuelists) {
     const duelist = resolveAdventureNpc(expected.id);
@@ -1514,7 +1565,11 @@ test("the three Elverson houses expose all ten requested 10 VP duelists and exac
     if (expected.skinTone) assert.equal(duelist.skinTone, expected.skinTone);
     assert.equal(duelist.encounter.opponentId, expected.id);
     assert.equal(duelist.encounter.opponentDeckId, expected.deckId);
-    assert.equal(duelist.encounter.victoryTarget, 10);
+    assert.equal(duelist.encounter.difficulty, "hard");
+    assert.equal(
+      duelist.encounter.victoryTarget,
+      expectedRearThirtyVpDuelistIds.includes(expected.id) ? 30 : 10,
+    );
     assert.equal(duelist.encounter.role, expected.role);
     assert.ok(elverson.encounterIds.includes(duelist.encounter.id));
     assert.ok(duelist.conversation.lines.intro.length > 0);
@@ -1523,7 +1578,28 @@ test("the three Elverson houses expose all ten requested 10 VP duelists and exac
     assert.equal(interaction.type, "trainer");
     assert.equal(interaction.trainerId, expected.id);
     assert.equal(interaction.encounterId, duelist.encounter.id);
+    if (expectedRearThirtyVpDuelistIds.includes(expected.id)) {
+      assert.deepEqual(interaction.at, { x: 5, y: 2 });
+      assert.match(
+        [...duelist.conversation.lines.intro, ...duelist.conversation.lines.rematch].join(" "),
+        /30 VP/,
+      );
+    }
   }
+
+  const houseDuelists = expectedDuelists.map(({ id }) => resolveAdventureNpc(id));
+  assert.deepEqual(
+    houseDuelists.filter(({ encounter }) => encounter.difficulty === "hard").map(({ id }) => id),
+    expectedHardDuelistIds,
+  );
+  assert.deepEqual(
+    houseDuelists.filter(({ encounter }) => encounter.victoryTarget === 30).map(({ id }) => id),
+    expectedRearThirtyVpDuelistIds,
+  );
+  assert.deepEqual(
+    houseDuelists.filter(({ encounter }) => encounter.victoryTarget === 10).map(({ id }) => id),
+    expectedTenVpDuelistIds,
+  );
 
   assert.equal(elverson.encounterPlan.resident, 2);
   assert.equal(elverson.encounterPlan.optional, 8);

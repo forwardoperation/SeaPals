@@ -14,7 +14,7 @@ const EXPECTED = Object.freeze({
   encounterId: "encounter-shellshore-marina",
   opponentId: "marina",
   opponentDeckId: "coral-garden",
-  victoryTarget: 10,
+  victoryTarget: 30,
   playerDeckSnapshot: SNAPSHOT,
 });
 
@@ -24,7 +24,7 @@ function result(overrides = {}) {
     playerDeckId: SNAPSHOT.id,
     playerDeckFingerprint: SNAPSHOT.fingerprint,
     opponent: { id: EXPECTED.opponentId, deckId: EXPECTED.opponentDeckId },
-    scores: { playerVp: 10, opponentVp: 3, targetVp: EXPECTED.victoryTarget },
+    scores: { playerVp: 30, opponentVp: 3, targetVp: EXPECTED.victoryTarget },
     ...overrides,
   };
 }
@@ -39,7 +39,7 @@ test("encounter, opponent, target, deck id, and fingerprint mismatches fail clos
     result({ encounterId: "encounter-shellshore-dorian" }),
     result({ opponent: { id: "dorian", deckId: EXPECTED.opponentDeckId } }),
     result({ opponent: { id: EXPECTED.opponentId, deckId: "murky-water" } }),
-    result({ scores: { playerVp: 10, opponentVp: 3, targetVp: 30 } }),
+    result({ scores: { playerVp: 30, opponentVp: 3, targetVp: 10 } }),
     result({ playerDeckId: "different-deck" }),
     result({ playerDeckFingerprint: "deck-v1-fedcba9876543210" }),
   ];

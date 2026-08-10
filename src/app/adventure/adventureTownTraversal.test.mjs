@@ -6,7 +6,7 @@ import {
   getAdventureActorBlockers,
 } from "./adventureActors.mjs";
 import {
-  ELVERSON_TOWN_AQUARIUM_APRON,
+  ELVERSON_TOWN_AQUARIUM_DECK,
   ELVERSON_TOWN_PIER_END_Y,
   ELVERSON_TOWN_PORTALS,
   ELVERSON_TOWN_ROADS,
@@ -163,7 +163,8 @@ test("the west-cove stairs connect the promenade, sand, and wading spot around W
   walkAxisRoute([...route].reverse(), { dynamicBlockers });
 
   for (const [label, position] of [
-    ["stairs", { x: 9.5, y: 17.2 }],
+    ["west stair lane", { x: 8.25, y: 17.2 }],
+    ["east stair lane", { x: 9.95, y: 17.2 }],
     ["sand", { x: 9.5, y: 18.2 }],
     ["shallows", ELVERSON_TOWN_SAFE_POSITIONS.handNetCove],
   ]) {
@@ -195,6 +196,27 @@ test("all nine public portals remain reachable with every town resident present"
   });
   for (const portal of ELVERSON_TOWN_PORTALS) {
     assert.equal(canReachPortal(reachable, portal.id), true, `${portal.id} must be reachable`);
+  }
+});
+
+test("each painted facade threshold triggers across its authored doorway width", () => {
+  for (const portal of ELVERSON_TOWN_PORTALS) {
+    assert.ok(portal.doorwayHalfWidth > 0, `${portal.id} must publish a doorway width`);
+    const approachY = portal.objectId === "aquarium-workshop"
+      ? portal.exteriorSpawn.y
+      : portal.at.y + 0.27;
+    for (const direction of [-1, 1]) {
+      const approach = {
+        x: portal.doorway.x + direction * portal.doorwayHalfWidth,
+        y: approachY,
+      };
+      assert.equal(canOccupyContinuousPosition("town", approach), true, `${portal.id} edge must be clear`);
+      assert.equal(
+        getDoorwayTransition("town", approach, "up")?.interactionId,
+        portal.id,
+        `${portal.id} must trigger at ${direction < 0 ? "left" : "right"} threshold edge`,
+      );
+    }
   }
 });
 
@@ -252,7 +274,7 @@ test("the aquarium's visible door remains reachable from the public pier", () =>
   );
 });
 
-test("the west cove, pier, and aquarium apron stay bounded by the surrounding sea", () => {
+test("the west cove and full visible wharf decks stay bounded by the surrounding sea", () => {
   walkAxisRoute([
     ELVERSON_TOWN_SAFE_POSITIONS.townStart,
     { x: 20, y: 17 },
@@ -264,15 +286,27 @@ test("the west cove, pier, and aquarium apron stay bounded by the surrounding se
     { x: 20, y: 23.72 },
     ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
   ]);
+  walkAxisRoute([
+    { x: 20, y: 20.5 },
+    { x: 23, y: 20.5 },
+  ]);
+  walkAxisRoute([
+    ELVERSON_TOWN_SAFE_POSITIONS.aquariumExterior,
+    { x: 30.75, y: 23.72 },
+    { x: 30.75, y: 20.5 },
+  ]);
 
   for (const [label, position] of [
-    ["west-cove stairs", { x: 9.5, y: 17.2 }],
+    ["west-cove stair west lane", { x: 8.25, y: 17.2 }],
+    ["west-cove stair east lane", { x: 9.95, y: 17.2 }],
     ["west-cove sand", { x: 9.5, y: 18.2 }],
     ["west-cove shallows", ELVERSON_TOWN_SAFE_POSITIONS.handNetCove],
-    ["expanded wharf", { x: 12, y: 20 }],
-    ["expanded aquarium apron", { x: 29, y: 23.72 }],
-    ["aquarium apron west edge", { x: ELVERSON_TOWN_AQUARIUM_APRON.left + 2.85, y: 23.72 }],
-    ["aquarium apron east edge", { x: ELVERSON_TOWN_AQUARIUM_APRON.right - 0.5, y: 23.72 }],
+    ["wharf west edge", { x: 10.75, y: 21.4 }],
+    ["aquarium south approach", { x: 29, y: 23.72 }],
+    ["aquarium west side deck", { x: 23, y: 20.5 }],
+    ["aquarium east side deck", { x: 30.75, y: 20.5 }],
+    ["aquarium deck west edge", { x: ELVERSON_TOWN_AQUARIUM_DECK.left + 0.3, y: 21.5 }],
+    ["aquarium deck east edge", { x: ELVERSON_TOWN_AQUARIUM_DECK.right - 0.3, y: 21.5 }],
     ["authored pier end", ELVERSON_TOWN_SAFE_POSITIONS.pierEnd],
   ]) assert.equal(canOccupyContinuousPosition("town", position), true, `${label} must be walkable`);
 
@@ -280,8 +314,7 @@ test("the west cove, pier, and aquarium apron stay bounded by the surrounding se
     ["west open water", { x: 8, y: 22 }],
     ["southwest open water", { x: 10, y: 23 }],
     ["east open water", { x: 32, y: 22 }],
-    ["west of the aquarium apron", { x: 24.5, y: 20 }],
-    ["east of the aquarium apron", { x: 30.7, y: 20 }],
+    ["aquarium facade", { x: 27.6, y: 20.5 }],
     ["just beyond the pier", { x: 20.5, y: ELVERSON_TOWN_PIER_END_Y - 0.15 }],
   ]) assert.equal(canOccupyContinuousPosition("town", position), false, `${label} must stay solid`);
 });

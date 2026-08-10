@@ -1,9 +1,10 @@
 import { compileLayeredScene } from "./adventureLayeredScene.mjs";
 import {
-  ELVERSON_TOWN_AQUARIUM_APRON,
+  ELVERSON_TOWN_AQUARIUM_DECK,
   ELVERSON_TOWN_DIMENSIONS,
   ELVERSON_TOWN_PIER_END_Y,
   ELVERSON_TOWN_PORTALS,
+  ELVERSON_TOWN_WHARF_DECK,
   ELVERSON_TOWN_WEST_COVE,
 } from "./adventureElversonTownLayout.mjs";
 
@@ -89,8 +90,8 @@ export const ELVERSON_LAYERED_SCENE = compileLayeredScene({
     { id: "west-cove-sand", ...ELVERSON_TOWN_WEST_COVE.sand },
     { id: "west-cove-shallows", ...ELVERSON_TOWN_WEST_COVE.shallows },
     { id: "central-pier", left: 19.05, top: 16.25, right: 21.95, bottom: ELVERSON_TOWN_PIER_END_Y },
-    { id: "wharf-platform", left: 10.9, top: 17.35, right: 19.35, bottom: 22.55 },
-    { id: "aquarium-front-apron", ...ELVERSON_TOWN_AQUARIUM_APRON },
+    { id: "wharf-platform", ...ELVERSON_TOWN_WHARF_DECK },
+    { id: "aquarium-deck", ...ELVERSON_TOWN_AQUARIUM_DECK },
   ],
   archetypes: ARCHETYPES,
   objects: OBJECTS,

@@ -141,9 +141,9 @@ export function scoreHardOpponentPermanentPlay({
   const isCritical = threatLevel === OpponentThreatLevel.CRITICAL;
   const isPressure = threatLevel === OpponentThreatLevel.PRESSURE;
   const attackBonus = hasLegalAttack
-    ? isCritical ? 240 : isPressure ? 90 : 14
-    : hasAttack && (isCritical || isPressure)
-      ? -80
+    ? isCritical ? 280 : isPressure ? 190 : 110
+    : hasAttack
+      ? isCritical || isPressure ? -90 : -25
       : 0;
   const tempoVpMultiplier = isCritical ? 18 : isPressure ? 12 : 8;
   const economyMultiplier = isCritical ? 0 : isPressure ? 2 : 7;
@@ -161,11 +161,74 @@ export function scoreHardOpponentPermanentPlay({
 }
 
 export function shouldOpponentAttackBeforeUtility(difficulty, threatLevel) {
-  return difficulty === "hard" && threatLevel === OpponentThreatLevel.CRITICAL;
+  return difficulty === "hard" && Object.values(OpponentThreatLevel).includes(threatLevel);
 }
 
 export function getOpponentNormalAttackLimit(difficulty) {
   return difficulty === "hard" ? Infinity : 1;
+}
+
+/**
+ * Supports resolve before permanent cards in the automated turn. Hard must
+ * reserve the cumulative cost of every currently legal deployed attack,
+ * otherwise one paid search can silently remove a later attack from Hard's
+ * turn. Hand cards are alternative primary lines, so reserve only the highest
+ * priority affordable combat permanent in addition to those board attacks.
+ * If none is available, keep the cheapest legal permanent so Hard still
+ * advances its board.
+ */
+export function getHardOpponentSupportRpReserve({
+  difficulty,
+  availableRp = 0,
+  existingBoardAttacks = [],
+  permanentPlays = [],
+  getCost = (play) => play?.cost,
+  isCombatPlay = (play) => Boolean(play?.hasLegalAttack),
+  getPriority = (play) => play?.priority,
+} = {}) {
+  if (difficulty !== "hard") return 0;
+  const bank = Math.max(0, Number(availableRp) || 0);
+  const normalizeCost = (play) => Math.max(0, Number(getCost(play)) || 0);
+  const boardAttackReserve = Math.min(
+    bank,
+    (existingBoardAttacks ?? []).reduce((total, attack) => total + normalizeCost(attack), 0),
+  );
+  const remainingForPermanent = Math.max(0, bank - boardAttackReserve);
+  const affordable = (permanentPlays ?? []).map((play, index) => ({
+    play,
+    cost: normalizeCost(play),
+    index,
+  })).filter(({ cost }) => cost <= remainingForPermanent);
+  if (!affordable.length) return boardAttackReserve;
+  const combat = affordable.filter(({ play }) => isCombatPlay(play));
+  if (combat.length) {
+    const selectedCombatLine = combat.reduce((best, candidate) => {
+      const candidatePriority = Number(getPriority(candidate.play));
+      const bestPriority = Number(getPriority(best.play));
+      const normalizedCandidatePriority = Number.isFinite(candidatePriority) ? candidatePriority : candidate.cost;
+      const normalizedBestPriority = Number.isFinite(bestPriority) ? bestPriority : best.cost;
+      if (normalizedCandidatePriority !== normalizedBestPriority) {
+        return normalizedCandidatePriority > normalizedBestPriority ? candidate : best;
+      }
+      if (candidate.cost !== best.cost) return candidate.cost > best.cost ? candidate : best;
+      return candidate.index < best.index ? candidate : best;
+    }, combat[0]);
+    return boardAttackReserve + selectedCombatLine.cost;
+  }
+  return boardAttackReserve + Math.min(...affordable.map(({ cost }) => cost));
+}
+
+export function canOpponentSpendSupportWithoutBreakingHardPlan({
+  difficulty,
+  availableRp = 0,
+  supportCost = 0,
+  reservedRp = 0,
+} = {}) {
+  const bank = Math.max(0, Number(availableRp) || 0);
+  const cost = Math.max(0, Number(supportCost) || 0);
+  if (cost > bank) return false;
+  if (difficulty !== "hard" || cost === 0) return true;
+  return bank - cost >= Math.max(0, Number(reservedRp) || 0);
 }
 
 /**
@@ -181,4 +244,39 @@ export function filterOpponentAttackersWithLegalTargets(
   const candidates = [...(attackers ?? [])];
   if (preserveMandatoryAttack) return candidates;
   return candidates.filter((attacker) => (getLegalTargets(attacker) ?? []).length > 0);
+}
+
+/**
+ * Hard attack selection is a joint attacker/target decision. Ranking an
+ * attacker before looking at what it can actually hit can choose a large die
+ * that only reaches a disposable card while overlooking a smaller attacker
+ * that can remove the opponent's engine.
+ */
+export function selectHardOpponentAttackPlan(
+  attackers = [],
+  getLegalTargets = () => [],
+  {
+    scoreAttacker = () => 0,
+    scoreTarget = () => 0,
+    scorePair = null,
+  } = {},
+) {
+  const plans = (attackers ?? []).flatMap((attacker, attackerIndex) => (
+    (getLegalTargets(attacker) ?? []).map((target, targetIndex) => ({
+      attacker,
+      target,
+      attackerIndex,
+      targetIndex,
+    }))
+  ));
+  if (!plans.length) return null;
+
+  const getScore = (plan) => Number(
+    typeof scorePair === "function"
+      ? scorePair(plan.attacker, plan.target)
+      : scoreAttacker(plan.attacker) + scoreTarget(plan.target, plan.attacker),
+  ) || 0;
+  return plans.reduce((best, candidate) => (
+    getScore(candidate) > getScore(best) ? candidate : best
+  ), plans[0]);
 }

@@ -899,7 +899,7 @@ test("unsafe writes are rejected and unsafe loaded positions recover to the scen
   assert.equal(recovered.recovered, true);
   assert.equal(recovered.reason, "unsafe-position");
   assert.equal(recovered.fallback, "scene-spawn");
-  assert.deepEqual(recovered.save.world.position, { x: 5, y: 6 });
+  assert.deepEqual(recovered.save.world.position, { x: 5.5, y: 6 });
 });
 
 test("horizontal gallery resumes normalize retired off-lane positions to the promenade spawn", () => {

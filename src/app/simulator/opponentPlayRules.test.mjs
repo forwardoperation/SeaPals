@@ -2,12 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   OpponentThreatLevel,
+  canOpponentSpendSupportWithoutBreakingHardPlan,
   filterOpponentAttackersWithLegalTargets,
+  getHardOpponentSupportRpReserve,
   getOpponentNormalAttackLimit,
   getOpponentThreatProfile,
   getPreferredOpponentPermanentPlayPool,
   preferOpponentPlaysWithResolvableOnPlayAttacks,
   scoreHardOpponentPermanentPlay,
+  selectHardOpponentAttackPlan,
   shouldOpponentAttackBeforeUtility,
 } from "./opponentPlayRules.mjs";
 
@@ -113,14 +116,39 @@ test("critical Hard AI values a legal attack over another slow coral upgrade", (
   assert.ok(attackScore > upgradeScore);
 });
 
-test("only critical Hard AI attacks before utility and may use every legal attacker", () => {
+test("Hard AI values an immediate attack during setup instead of goldfishing an upgrade", () => {
+  const openOceanAttacker = scoreHardOpponentPermanentPlay({
+    baseScore: 43,
+    threatLevel: OpponentThreatLevel.SETUP,
+    printedVp: 2,
+    cost: 2,
+    hasAttack: true,
+    hasLegalAttack: true,
+  });
+  const schoolUpgrade = scoreHardOpponentPermanentPlay({
+    baseScore: 133,
+    threatLevel: OpponentThreatLevel.SETUP,
+    income: 2,
+    cost: 3,
+    isFoundation: true,
+    isUpgrade: true,
+  });
+
+  assert.ok(openOceanAttacker > schoolUpgrade);
+});
+
+test("Hard AI protects combat RP before utility at every threat level", () => {
   assert.equal(
     shouldOpponentAttackBeforeUtility("hard", OpponentThreatLevel.CRITICAL),
     true,
   );
   assert.equal(
     shouldOpponentAttackBeforeUtility("hard", OpponentThreatLevel.PRESSURE),
-    false,
+    true,
+  );
+  assert.equal(
+    shouldOpponentAttackBeforeUtility("hard", OpponentThreatLevel.SETUP),
+    true,
   );
   assert.equal(
     shouldOpponentAttackBeforeUtility("medium", OpponentThreatLevel.CRITICAL),
@@ -128,6 +156,135 @@ test("only critical Hard AI attacks before utility and may use every legal attac
   );
   assert.equal(getOpponentNormalAttackLimit("hard"), Infinity);
   assert.equal(getOpponentNormalAttackLimit("medium"), 1);
+});
+
+test("Hard support sequencing preserves an affordable Open Ocean attack during setup and pressure", () => {
+  for (const threatLevel of [OpponentThreatLevel.SETUP, OpponentThreatLevel.PRESSURE]) {
+    const reserve = getHardOpponentSupportRpReserve({
+      difficulty: "hard",
+      availableRp: 5,
+      permanentPlays: [
+        { id: "herring-ball-upgrade", cost: 2, hasLegalAttack: false, threatLevel },
+        { id: "frigate-tuna", cost: 4, hasLegalAttack: true, threatLevel },
+      ],
+    });
+    assert.equal(reserve, 4, `${threatLevel} should preserve the combat line`);
+  }
+  assert.equal(getHardOpponentSupportRpReserve({
+    difficulty: "medium",
+    availableRp: 5,
+    permanentPlays: [{ cost: 4, hasLegalAttack: true }],
+  }), 0);
+});
+
+test("Hard reserves a board-building permanent when no combat card is currently affordable", () => {
+  assert.equal(getHardOpponentSupportRpReserve({
+    difficulty: "hard",
+    availableRp: 3,
+    permanentPlays: [
+      { id: "sailfish", cost: 4, hasLegalAttack: true },
+      { id: "sardine-ball", cost: 2, hasLegalAttack: false },
+    ],
+  }), 2);
+});
+
+test("a free board attack does not erase Hard's reserve for an affordable attack play", () => {
+  assert.equal(getHardOpponentSupportRpReserve({
+    difficulty: "hard",
+    availableRp: 5,
+    existingBoardAttacks: [{ id: "free-board-attack", cost: 0 }],
+    permanentPlays: [
+      { id: "sailfish", cost: 4, hasLegalAttack: true },
+    ],
+  }), 4);
+});
+
+test("Hard cumulatively reserves every legal deployed attack before paid support", () => {
+  assert.equal(getHardOpponentSupportRpReserve({
+    difficulty: "hard",
+    availableRp: 4,
+    existingBoardAttacks: [
+      { id: "attacker-a", cost: 2 },
+      { id: "attacker-b", cost: 2 },
+    ],
+  }), 4);
+});
+
+test("Hard adds one strategic hand combat line without summing mutually exclusive alternatives", () => {
+  assert.equal(getHardOpponentSupportRpReserve({
+    difficulty: "hard",
+    availableRp: 8,
+    existingBoardAttacks: [
+      { id: "attacker-a", cost: 2 },
+      { id: "attacker-b", cost: 2 },
+    ],
+    permanentPlays: [
+      { id: "cheap-attacker", cost: 2, hasLegalAttack: true, priority: 20 },
+      { id: "strong-attacker", cost: 4, hasLegalAttack: true, priority: 80 },
+    ],
+  }), 8);
+  assert.equal(getHardOpponentSupportRpReserve({
+    difficulty: "hard",
+    availableRp: 7,
+    existingBoardAttacks: [
+      { id: "attacker-a", cost: 2 },
+      { id: "attacker-b", cost: 2 },
+    ],
+    permanentPlays: [
+      { id: "cheap-attacker", cost: 3, hasLegalAttack: true, priority: 20 },
+      { id: "unaffordable-strong-attacker", cost: 4, hasLegalAttack: true, priority: 80 },
+    ],
+  }), 7);
+});
+
+test("Hard support-to-attack sequencing keeps both deployed attacks available", () => {
+  const attackCosts = [2, 2];
+  let rp = 4;
+  const reservedRp = getHardOpponentSupportRpReserve({
+    difficulty: "hard",
+    availableRp: rp,
+    existingBoardAttacks: attackCosts.map((cost, index) => ({ id: `attacker-${index}`, cost })),
+  });
+  const canSpendSupport = canOpponentSpendSupportWithoutBreakingHardPlan({
+    difficulty: "hard",
+    availableRp: rp,
+    supportCost: 2,
+    reservedRp,
+  });
+  if (canSpendSupport) rp -= 2;
+
+  let attacksResolved = 0;
+  for (const attackCost of attackCosts) {
+    if (attackCost > rp) break;
+    rp -= attackCost;
+    attacksResolved += 1;
+  }
+
+  assert.equal(canSpendSupport, false);
+  assert.equal(attacksResolved, 2);
+  assert.equal(rp, 0);
+});
+
+test("Hard evaluates attacker and target together instead of choosing the largest die first", () => {
+  const broadSmallAttacker = { id: "school-hunter", die: 6 };
+  const narrowLargeAttacker = { id: "invertebrate-hunter", die: 12 };
+  const engineSchool = { id: "herring-ball", value: 160 };
+  const disposableInvertebrate = { id: "blue-sea-dragon", value: 10 };
+  const targets = {
+    "school-hunter": [engineSchool, disposableInvertebrate],
+    "invertebrate-hunter": [disposableInvertebrate],
+  };
+
+  const plan = selectHardOpponentAttackPlan(
+    [narrowLargeAttacker, broadSmallAttacker],
+    (attacker) => targets[attacker.id],
+    {
+      scorePair: (attacker, target) => attacker.die + target.value,
+    },
+  );
+
+  assert.equal(plan.attacker, broadSmallAttacker);
+  assert.equal(plan.target, engineSchool);
 });
 
 test("normal attack selection drops a stronger attacker with no target instead of ending the turn", () => {
