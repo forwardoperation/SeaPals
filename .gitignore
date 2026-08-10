@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 
 # Local browser QA profiles, screenshots, and scratch copies
 tmp/
+
+# Local video assets
+/public/videos/
