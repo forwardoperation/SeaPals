@@ -61,11 +61,6 @@ const AQUARIUM_GALLERY_VISITORS = Object.freeze([
     at: Object.freeze({ x: 5, y: 6.25 }),
   }),
   Object.freeze({
-    sceneId: "aquarium-oceanic-gallery",
-    id: "interaction-elverson-charlotte",
-    at: Object.freeze({ x: 18, y: 6.25 }),
-  }),
-  Object.freeze({
     sceneId: "aquarium-deep-gallery",
     id: "interaction-elverson-marine-biologist-jonah",
     at: Object.freeze({ x: 4.5, y: 6.25 }),
@@ -390,7 +385,7 @@ test("Elverson keeps its four remaining town residents at their authored station
   }
 });
 
-test("each aquarium gallery has two horizontally patrolling visitors", () => {
+test("authored aquarium gallery visitors patrol horizontally", () => {
   for (const expected of AQUARIUM_GALLERY_VISITORS) {
     const scene = SCENES[expected.sceneId];
     const interaction = scene.interactions.find(({ id }) => id === expected.id);

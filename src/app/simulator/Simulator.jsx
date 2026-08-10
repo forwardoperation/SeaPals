@@ -7,7 +7,7 @@ import RulesChat from "@/components/rules/RulesChat";
 import { cardsById } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
 import { conditionCards } from "@/data/cards/conditions";
-import { prebuiltDecks } from "@/data/tournaments/prebuiltDecks";
+import { getPlayableDeckById, prebuiltDecks } from "@/data/tournaments/prebuiltDecks";
 import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveBlueCrabRecycle, resolveConditionalDiceDamage, resolveOpposedRoll, rollDie } from "./gameRules.mjs";
 import { createHabitatInstance, evaluateHabitatComposition, getHabitatRequirementError, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
 import { createHandLimitChoice, resolveHandLimitChoice, selectAutomatedHandLimitDiscards } from "./handLimitRules.mjs";
@@ -641,7 +641,7 @@ function createDeck(deckType, deckId = defaultDeckId, random = Math.random, play
       random,
     );
   }
-  const selectedDeck = prebuiltDecks.find((deck) => deck.id === deckId) ?? prebuiltDecks[0];
+  const selectedDeck = getPlayableDeckById(deckId) ?? prebuiltDecks[0];
   const ids = (selectedDeck?.cards ?? []).flatMap((entry) => {
     const card = cardsById[entry.cardId];
     if (!card) return [];
@@ -653,7 +653,7 @@ function createDeck(deckType, deckId = defaultDeckId, random = Math.random, play
 
 function getUnavailableDeckEntries(deckId, playerDeckSnapshot = null) {
   if (playerDeckSnapshot) return [];
-  const selectedDeck = prebuiltDecks.find((deck) => deck.id === deckId);
+  const selectedDeck = getPlayableDeckById(deckId);
   return (selectedDeck?.cards ?? []).filter((entry) => !cardsById[entry.cardId]);
 }
 
@@ -2149,7 +2149,7 @@ export default function Simulator({
   const initialPlayerDeckId = isStoryMode ? storyPlayerDeckId : normalInitialDeckId;
   const initialOpponentDeckId = isStoryMode ? storyOpponentDeckId : defaultDeckId;
   const initialPlayerDeckName =
-    prebuiltDecks.find((deck) => deck.id === initialPlayerDeckId)?.name ??
+    getPlayableDeckById(initialPlayerDeckId)?.name ??
     initialPlayerDeckId;
   const initialVictoryTarget = isStoryMode ? storyVictoryTarget : 30;
   const initialOpponentDifficulty = isStoryMode ? storyDifficulty : OpponentDifficulty.MEDIUM;
@@ -2339,9 +2339,9 @@ export default function Simulator({
   const [turnLog, setTurnLog] = useState(["Setup began with 3 RP and an eight-card hand."]);
   const opponentDifficultyProfile = getOpponentDifficultyProfile(opponentDifficulty);
   const storyPlayerDeckName = storyPlayerDeckSnapshot?.name
-    ?? prebuiltDecks.find((deck) => deck.id === storyPlayerDeckId)?.name
+    ?? getPlayableDeckById(storyPlayerDeckId)?.name
     ?? storyPlayerDeckId;
-  const storyOpponentDeckName = prebuiltDecks.find((deck) => deck.id === storyOpponentDeckId)?.name ?? storyOpponentDeckId;
+  const storyOpponentDeckName = getPlayableDeckById(storyOpponentDeckId)?.name ?? storyOpponentDeckId;
   const selectedPlayerDeck = prebuiltDecks.find(
     (deck) => deck.id === selectedDeckId,
   );
@@ -10497,7 +10497,7 @@ export default function Simulator({
     const deckName = isStoryMode && storyPlayerDeckSnapshot
       ? storyPlayerDeckSnapshot.name
       : prebuiltDecks.find((deck) => deck.id === deckId)?.name ?? deckId;
-    const opponentDeckName = prebuiltDecks.find((deck) => deck.id === opponentDeckId)?.name ?? opponentDeckId;
+    const opponentDeckName = getPlayableDeckById(opponentDeckId)?.name ?? opponentDeckId;
     const normalizedDifficulty = normalizeOpponentDifficulty(nextOpponentDifficulty);
     const difficultyLabel = getOpponentDifficultyProfile(normalizedDifficulty).label;
     setSelectedDeckId(deckId);

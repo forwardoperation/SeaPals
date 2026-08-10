@@ -6,7 +6,7 @@ import { getAdventureConversationSecondaryAction } from "./adventureConversation
 test("ambient Elverson dialogue has one meaningful Continue exploring action", () => {
   assert.equal(getAdventureConversationSecondaryAction({
     trainer: {
-      id: "landon",
+      id: "micah",
       townId: "shellshore-village",
       roleId: "resident",
       encounterId: null,

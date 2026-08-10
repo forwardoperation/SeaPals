@@ -93,12 +93,20 @@ const towns = [
       "encounter-shellshore-mentor-practice",
       "encounter-shellshore-marina",
       "encounter-shellshore-dorian",
+      ...ELVERSON_AMBIENT_RESIDENTS
+        .filter((resident) => resident.duel)
+        .map((resident) => resident.duel.encounterId),
     ],
     plannedNpcRoleIds: ["mentor", "field-partner", "town-challenger", "reflection-character"],
     packPoolId: "pack-pool-shellshore-discovery",
     unlockRuleId: "unlock-shellshore-start",
     arrivalRouteId: null,
-    encounterPlan: { practice: 1, resident: 2, qualifier: 0 },
+    encounterPlan: {
+      practice: 1,
+      resident: 2,
+      optional: 8,
+      qualifier: 0,
+    },
   },
   {
     id: "sunpatch-cay",
@@ -520,10 +528,16 @@ export const ELVERSON_LEGACY_AMBIENT_RESIDENTS = [
 function elversonResidentInteraction(resident) {
   return {
     id: `interaction-elverson-${resident.id}`,
-    type: "npc",
+    type: resident.duel ? "trainer" : "npc",
     at: resident.at,
     npcId: resident.id,
     conversationId: `conversation-elverson-${resident.id}`,
+    ...(resident.duel
+      ? {
+          trainerId: resident.id,
+          encounterId: resident.duel.encounterId,
+        }
+      : {}),
     ...(resident.patrol ? { patrol: resident.patrol } : {}),
   };
 }
@@ -3144,14 +3158,20 @@ const conversations = [
     id: `conversation-elverson-${resident.id}`,
     townId: "shellshore-village",
     npcId: resident.id,
-    lines: {
-      intro: [resident.intro],
-      guidance: [resident.guidance],
-      return: [resident.returnLine],
-      ...(resident.fishingLesson ? { fishingLesson: resident.fishingLesson } : {}),
-      ...(resident.fishingPractice ? { fishingPractice: resident.fishingPractice } : {}),
-      ...(resident.fishingGuidance ? { fishingGuidance: resident.fishingGuidance } : {}),
-    },
+    lines: resident.duel
+      ? {
+          intro: [resident.intro, resident.guidance, resident.duel.challengeLine],
+          rematch: [resident.returnLine, resident.duel.rematchLine],
+          victory: [resident.duel.victoryLine],
+        }
+      : {
+          intro: [resident.intro],
+          guidance: [resident.guidance],
+          return: [resident.returnLine],
+          ...(resident.fishingLesson ? { fishingLesson: resident.fishingLesson } : {}),
+          ...(resident.fishingPractice ? { fishingPractice: resident.fishingPractice } : {}),
+          ...(resident.fishingGuidance ? { fishingGuidance: resident.fishingGuidance } : {}),
+        },
   })),
   {
     id: "conversation-shellshore-academy-mentor",
@@ -4001,17 +4021,21 @@ const npcs = [
     id: resident.id,
     townId: "shellshore-village",
     sceneId: resident.sceneId,
-    roleId: resident.id === "fisherman-wyeth" || resident.id === "explorer-jordan" || resident.id === "marine-biologist-jonah"
-      ? "field-partner"
-      : resident.id === "teacher-caroline" || resident.id === "programmer-harlan"
-        ? "reflection-character"
-        : "resident",
+    roleId: resident.duel
+      ? "town-challenger"
+      : resident.id === "fisherman-wyeth" || resident.id === "explorer-jordan" || resident.id === "marine-biologist-jonah"
+        ? "field-partner"
+        : resident.id === "teacher-caroline" || resident.id === "programmer-harlan"
+          ? "reflection-character"
+          : "resident",
     name: resident.name,
     title: resident.title,
+    ...(Number.isInteger(resident.age) ? { age: resident.age } : {}),
+    ...(resident.skinTone ? { skinTone: resident.skinTone } : {}),
     color: ["teal", "coral", "deep"][index % 3],
-    crest: null,
+    crest: resident.duel?.crest ?? null,
     conversationId: `conversation-elverson-${resident.id}`,
-    encounterId: null,
+    encounterId: resident.duel?.encounterId ?? null,
   })),
   {
     id: "academy-mentor",
@@ -4032,6 +4056,7 @@ const npcs = [
     roleId: "town-challenger",
     name: "George",
     title: "Age 10 · Coral Garden Player",
+    age: 10,
     color: "coral",
     crest: "Coral Crest",
     conversationId: "conversation-shellshore-marina",
@@ -4044,6 +4069,7 @@ const npcs = [
     roleId: "town-challenger",
     name: "Calvin",
     title: "Age 13 · Darkness Shroud Player",
+    age: 13,
     color: "deep",
     crest: "Abyss Crest",
     conversationId: "conversation-shellshore-dorian",
@@ -5201,6 +5227,19 @@ const encounters = [
   { id: "encounter-shellshore-mentor-practice", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", tutorialId: "tutorial-shellshore-live-basics", role: "practice", opponentId: "academy-mentor", opponentDeckId: "coral-garden", victoryTarget: 26, difficulty: "easy", rewardId: "reward-shellshore-tutorial" },
   { id: "encounter-shellshore-marina", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "marina", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: "reward-shellshore-marina-first-win" },
   { id: "encounter-shellshore-dorian", townId: "shellshore-village", questId: "quest-shellshore-first-voyage", role: "resident", opponentId: "dorian", opponentDeckId: "darkness-shroud", victoryTarget: 10, difficulty: "medium", rewardId: null },
+  ...ELVERSON_AMBIENT_RESIDENTS
+    .filter((resident) => resident.duel)
+    .map((resident) => ({
+      id: resident.duel.encounterId,
+      townId: "shellshore-village",
+      questId: "quest-shellshore-first-voyage",
+      role: "optional",
+      opponentId: resident.id,
+      opponentDeckId: resident.duel.deckId,
+      victoryTarget: resident.duel.victoryTarget,
+      difficulty: resident.duel.difficulty,
+      rewardId: null,
+    })),
   { id: "encounter-sunpatch-resident-gardener", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "resident", opponentId: "sunpatch-gardener", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "easy", rewardId: null },
   { id: "encounter-sunpatch-resident-surveyor", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "resident", opponentId: "sunpatch-surveyor", opponentDeckId: "stinging-fortress", victoryTarget: 10, difficulty: "easy-medium", rewardId: null },
   { id: "encounter-sunpatch-qualifier", townId: "sunpatch-cay", questId: "quest-sunpatch-reef-response", role: "qualifier", opponentId: "sunpatch-leader", opponentDeckId: "coral-garden", victoryTarget: 10, difficulty: "medium", rewardId: "reward-sunpatch-qualifier", prerequisites: [{ type: "questStatus", questId: "quest-sunpatch-reef-response", status: "complete" }] },

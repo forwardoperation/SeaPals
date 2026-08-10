@@ -232,10 +232,10 @@ test("the grand aquarium hall connects three wide horizontal ecosystem promenade
     ],
   );
 
-  for (const [ecosystemId, sceneId, name, theme] of [
-    ["reef", "aquarium-reef-gallery", "Reef Gallery", "aquarium-reef-gallery"],
-    ["oceanic", "aquarium-oceanic-gallery", "Oceanic Gallery", "aquarium-oceanic-gallery"],
-    ["deep", "aquarium-deep-gallery", "Deep Gallery", "aquarium-deep-gallery"],
+  for (const [ecosystemId, sceneId, name, theme, expectedVisitorCount] of [
+    ["reef", "aquarium-reef-gallery", "Reef Gallery", "aquarium-reef-gallery", 2],
+    ["oceanic", "aquarium-oceanic-gallery", "Oceanic Gallery", "aquarium-oceanic-gallery", 1],
+    ["deep", "aquarium-deep-gallery", "Deep Gallery", "aquarium-deep-gallery", 2],
   ]) {
     const gallery = getAdventureScene(sceneId).world;
     assert.equal(gallery.name, name);
@@ -267,7 +267,7 @@ test("the grand aquarium hall connects three wide horizontal ecosystem promenade
     );
     assert.equal(gallery.interactions.some(({ type }) => type === "aquarium-view"), false);
     const visitors = gallery.interactions.filter(({ type }) => type === "npc");
-    assert.equal(visitors.length, 2);
+    assert.equal(visitors.length, expectedVisitorCount);
     assert.ok(visitors.every(({ at, patrol }) => (
       at.y === 6.25
       && patrol.mode === "ping-pong"
@@ -1427,7 +1427,7 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
     ["jack", ["coral-home", "Murky Water Player"]],
     ["landon", ["deep-home", "Age 10 · The Abyss Player"]],
     ["oliver", ["deep-home", "Age 11 · Deep Waters Player"]],
-    ["charlotte", ["aquarium-oceanic-gallery", "Age 13 · Open Ocean Player"]],
+    ["charlotte", ["elverson-oceanic-home", "Age 13 · Open Ocean Player"]],
     ["eloise", ["elverson-oceanic-home", "Age 7 · Pelagic Zone Player"]],
     ["edith", ["elverson-oceanic-home", "Age 7 · Plankton Bloom Player"]],
     ["william", ["elverson-hybrid-home", "Murky Water's Revenge Player"]],
@@ -1487,6 +1487,46 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   assert.match(mentorInteraction.npc.conversation.lines.victory.join(" "), /Coral Reef habitat.*School Density.*Filter Feeder.*Apex predator.*26 VP/i);
   assert.equal(mentorInteraction.npc.encounter.id, "encounter-shellshore-mentor-practice");
   assert.equal(mentorInteraction.npc.encounter.victoryTarget, 26);
+});
+
+test("the three Elverson houses expose all ten requested 10 VP duelists and exact decks", () => {
+  const expectedDuelists = [
+    { id: "marina", name: "George", age: 10, sceneId: "coral-home", interactionId: "interaction-coral-home-marina", deckId: "coral-garden", role: "resident" },
+    { id: "henry", name: "Henry", age: 8, sceneId: "coral-home", interactionId: "interaction-elverson-henry", deckId: "disruption", role: "optional" },
+    { id: "reef-house-charlie", name: "Charlie", age: 10, sceneId: "coral-home", interactionId: "interaction-elverson-reef-house-charlie", deckId: "stinging-fortress", role: "optional" },
+    { id: "reef-house-danny", name: "Danny", age: 12, sceneId: "coral-home", interactionId: "interaction-elverson-reef-house-danny", deckId: "blue-water", role: "optional", skinTone: "Black" },
+    { id: "jack", name: "Jack", sceneId: "coral-home", interactionId: "interaction-elverson-jack", deckId: "murky-water", role: "optional" },
+    { id: "dorian", name: "Calvin", age: 13, sceneId: "deep-home", interactionId: "interaction-deep-home-dorian", deckId: "darkness-shroud", role: "resident" },
+    { id: "landon", name: "Landon", age: 10, sceneId: "deep-home", interactionId: "interaction-elverson-landon", deckId: "the-abyss", role: "optional" },
+    { id: "oliver", name: "Oliver", age: 11, sceneId: "deep-home", interactionId: "interaction-elverson-oliver", deckId: "deep-waters", role: "optional" },
+    { id: "charlotte", name: "Charlotte", age: 13, sceneId: "elverson-oceanic-home", interactionId: "interaction-elverson-charlotte", deckId: "open-ocean-hunt", role: "optional" },
+    { id: "eloise", name: "Eloise", age: 7, sceneId: "elverson-oceanic-home", interactionId: "interaction-elverson-eloise", deckId: "pelagic-zone", role: "optional" },
+  ];
+  const elverson = ADVENTURE_CONTENT.towns.find(({ id }) => id === "shellshore-village");
+
+  for (const expected of expectedDuelists) {
+    const duelist = resolveAdventureNpc(expected.id);
+    const interaction = resolveAdventureInteraction(expected.sceneId, expected.interactionId);
+
+    assert.equal(duelist.name, expected.name);
+    assert.equal(duelist.sceneId, expected.sceneId);
+    if (expected.age) assert.equal(duelist.age, expected.age);
+    if (expected.skinTone) assert.equal(duelist.skinTone, expected.skinTone);
+    assert.equal(duelist.encounter.opponentId, expected.id);
+    assert.equal(duelist.encounter.opponentDeckId, expected.deckId);
+    assert.equal(duelist.encounter.victoryTarget, 10);
+    assert.equal(duelist.encounter.role, expected.role);
+    assert.ok(elverson.encounterIds.includes(duelist.encounter.id));
+    assert.ok(duelist.conversation.lines.intro.length > 0);
+    assert.ok(duelist.conversation.lines.rematch.length > 0);
+    assert.ok(duelist.conversation.lines.victory.length > 0);
+    assert.equal(interaction.type, "trainer");
+    assert.equal(interaction.trainerId, expected.id);
+    assert.equal(interaction.encounterId, duelist.encounter.id);
+  }
+
+  assert.equal(elverson.encounterPlan.resident, 2);
+  assert.equal(elverson.encounterPlan.optional, 8);
 });
 
 test("starter previews, the live tutorial, and first Field Note form one canonical introduction", () => {

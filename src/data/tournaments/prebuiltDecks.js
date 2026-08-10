@@ -283,6 +283,86 @@ export const prebuiltDecks = [
   },
 ];
 
+function createStoryDeckVariant({ id, name, sourceDeckId, quantityChanges }) {
+  const sourceDeck = prebuiltDecks.find((deck) => deck.id === sourceDeckId);
+  if (!sourceDeck) throw new Error(`Unknown story deck source: ${sourceDeckId}`);
+
+  const changes = new Map(Object.entries(quantityChanges));
+  const cards = sourceDeck.cards.flatMap((entry) => {
+    const quantity = entry.quantity + (changes.get(entry.cardId) ?? 0);
+    changes.delete(entry.cardId);
+    if (quantity < 0 || !Number.isInteger(quantity)) {
+      throw new Error(`Invalid ${id} quantity for ${entry.cardId}.`);
+    }
+    return quantity === 0 ? [] : [{ ...entry, quantity }];
+  });
+  if (changes.size) {
+    throw new Error(`${id} changes reference unknown source cards: ${[...changes.keys()].join(", ")}`);
+  }
+  const sourceSize = sourceDeck.cards.reduce((total, entry) => total + entry.quantity, 0);
+  const variantSize = cards.reduce((total, entry) => total + entry.quantity, 0);
+  if (variantSize !== sourceSize) {
+    throw new Error(`${id} must preserve its source deck's ${sourceSize}-card size.`);
+  }
+
+  return { id, name, storyOnly: true, cards };
+}
+
+/** Legal opponent variants used by Adventure encounters but not sold as retail deck products. */
+export const storyOpponentDecks = [
+  createStoryDeckVariant({
+    id: "the-abyss",
+    name: "The Abyss",
+    sourceDeckId: "darkness-shroud",
+    quantityChanges: {
+      owlfish: 1,
+      viperfish: 1,
+      "deep-cucumber": 1,
+      "remote-search": -1,
+      fishing: -1,
+      "super-whirlpool": -1,
+    },
+  }),
+  createStoryDeckVariant({
+    id: "deep-waters",
+    name: "Deep Waters",
+    sourceDeckId: "darkness-shroud",
+    quantityChanges: {
+      bristlemouth: 1,
+      "barrel-eye-fish": 1,
+      "deep-sea-jelly": 1,
+      bamboo_coral_stage1: 1,
+      "colossal-squid": -1,
+      "giant-phantom-jelly": -1,
+      "remote-search": -1,
+      "coral-gardener": -1,
+    },
+  }),
+  createStoryDeckVariant({
+    id: "pelagic-zone",
+    name: "Pelagic Zone",
+    sourceDeckId: "open-ocean-hunt",
+    quantityChanges: {
+      "sardine-ball-stage2": 1,
+      "herring-ball-stage2": 1,
+      halfbeak: 1,
+      "flying-fish": 1,
+      "blue-sea-dragon": 1,
+      "killer-whale-oceanic": -1,
+      "shortfin-mako-shark": -1,
+      swordfish: -1,
+      "silky-shark": -1,
+      "deep-sea-fishing": -1,
+    },
+  }),
+];
+
+export const playableDecks = [...prebuiltDecks, ...storyOpponentDecks];
+
 export function getPrebuiltDeckById(deckId) {
   return prebuiltDecks.find((deck) => deck.id === deckId) ?? null;
+}
+
+export function getPlayableDeckById(deckId) {
+  return playableDecks.find((deck) => deck.id === deckId) ?? null;
 }

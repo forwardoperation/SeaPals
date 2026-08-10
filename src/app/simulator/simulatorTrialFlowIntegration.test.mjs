@@ -58,6 +58,24 @@ test("the simulator page preselects only a validated player deck and story mode 
   );
 });
 
+test("story-only opponent decks resolve in story mode without entering normal deck selectors", async () => {
+  const simulatorSource = await readSourceFromApp("simulator", "Simulator.jsx");
+
+  assert.match(simulatorSource, /import \{ getPlayableDeckById, prebuiltDecks \}/);
+  assert.match(
+    simulatorSource,
+    /const selectedDeck = getPlayableDeckById\(deckId\) \?\? prebuiltDecks\[0\]/,
+  );
+  assert.match(
+    simulatorSource,
+    /const storyOpponentDeckName = getPlayableDeckById\(storyOpponentDeckId\)\?\.name/,
+  );
+  assert.match(
+    simulatorSource,
+    /Opponent Deck<\/span><select[\s\S]*?\{prebuiltDecks\.map\(\(deck\) =>/,
+  );
+});
+
 test("the guided tutorial preserves a validated selected deck as its return target", async () => {
   const tutorialPageSource = await readSourceFromApp("instructions", "tutorial", "page.jsx");
   const simulatorSource = await readSourceFromApp("simulator", "Simulator.jsx");

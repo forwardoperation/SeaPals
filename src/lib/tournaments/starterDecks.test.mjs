@@ -17,7 +17,7 @@ const jiti = createJiti(filename, {
 const { cardsById } = jiti(
   path.join(projectRoot, "src/data/cards/index.js")
 );
-const { prebuiltDecks } = jiti(
+const { getPlayableDeckById, playableDecks, prebuiltDecks, storyOpponentDecks } = jiti(
   path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js")
 );
 const { defaultDeckRules, isBaseFoundation } = jiti(
@@ -243,8 +243,8 @@ test("gallery exposes revised card art and complete rule text", async () => {
   assert.equal(byId["ocean-jake"], undefined, "Ocean Jake should stay out of the gallery for now");
 });
 
-test("every planned story encounter references a legal prebuilt opponent deck", () => {
-  const decksById = new Map(prebuiltDecks.map((deck) => [deck.id, deck]));
+test("every planned story encounter references a legal playable opponent deck", () => {
+  const decksById = new Map(playableDecks.map((deck) => [deck.id, deck]));
   const referencedDeckIds = new Set(
     ADVENTURE_CONTENT.encounters.map((encounter) => encounter.opponentDeckId)
   );
@@ -261,6 +261,32 @@ test("every planned story encounter references a legal prebuilt opponent deck", 
       validateGameDeck({ cards: deck.cards }),
       { isValid: true, errors: [], warnings: [] },
       `${deckId} must satisfy the game-facing deck rules`
+    );
+  }
+});
+
+test("story-only opponent variants stay legal and separate from retail prebuilt decks", () => {
+  assert.deepEqual(
+    storyOpponentDecks.map(({ id, name, storyOnly }) => ({ id, name, storyOnly })),
+    [
+      { id: "the-abyss", name: "The Abyss", storyOnly: true },
+      { id: "deep-waters", name: "Deep Waters", storyOnly: true },
+      { id: "pelagic-zone", name: "Pelagic Zone", storyOnly: true },
+    ],
+  );
+
+  const retailIds = new Set(prebuiltDecks.map((deck) => deck.id));
+  for (const deck of storyOpponentDecks) {
+    assert.equal(retailIds.has(deck.id), false, `${deck.id} must remain story-only`);
+    assert.equal(getPlayableDeckById(deck.id), deck);
+    assert.equal(
+      deck.cards.reduce((total, entry) => total + entry.quantity, 0),
+      defaultDeckRules.deckSize,
+    );
+    assert.deepEqual(deck.cards.filter((entry) => !cardsById[entry.cardId]), []);
+    assert.deepEqual(
+      validateGameDeck({ cards: deck.cards }),
+      { isValid: true, errors: [], warnings: [] },
     );
   }
 });

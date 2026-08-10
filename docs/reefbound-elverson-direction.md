@@ -269,7 +269,7 @@ The current build uses historical internal IDs such as `shellshore-village`, `ac
 ### Chunk 6 — Elverson residents and deck curriculum
 
 - Implement the supplied shop, school, lab, street, and four-house cast.
-- Map all named decks to encounters, create missing deck definitions, and stage pure-to-hybrid learning order. The currently missing requested decks are The Abyss, Deep Waters, Pelagic Zone, Plankton Bloom, Murky Water’s Revenge, Whirlpool, Coral Ledge, and Drop Off.
+- Map all named decks to encounters, create missing deck definitions, and stage pure-to-hybrid learning order. The currently missing requested decks are Plankton Bloom, Murky Water’s Revenge, Whirlpool, Coral Ledge, and Drop Off. The Abyss, Deep Waters, and Pelagic Zone now have legal story-only manifests for the three requested resident-house duels.
 
 **Exit:** Every named resident, age/identity fact, location role, supplied teaching line, and deck assignment validates against the authored register. Every requested duel resolves to a valid playable deck and passes a live launch smoke test; an unresolved deck dependency cannot satisfy this chunk.
 

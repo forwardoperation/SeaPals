@@ -5,6 +5,10 @@ import test from "node:test";
 const component = readFileSync(new URL("./AdventureGame.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), "utf8");
 
+test("Danny retains the authored Black character artwork", () => {
+  assert.match(component, /"reef-house-danny": "dorian"/);
+});
+
 test("live actor state drives rendering, interaction targeting, and player collision", () => {
   assert.match(component, /advanceAdventureActorStates\(/);
   assert.match(component, /positionOverrides:\s*actorPositionOverrides/);
