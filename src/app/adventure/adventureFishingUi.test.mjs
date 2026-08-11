@@ -84,6 +84,42 @@ test("the modal is a top-down shallow-water stealth-and-scoop game", () => {
   assert.match(styles, /\.handNetControlDock[\s\S]*?grid-template-columns/);
 });
 
+test("hand-net populations emerge around rock shelters", () => {
+  const arrivalStatusIndex = modal.indexOf('if (recentEvent?.type === "creature-arrived")');
+  const feedingStatusIndex = modal.indexOf("const feedingCount = state.creatures.filter");
+  assert.match(modal, /creatureCount: tutorial \? 2 : 3/);
+  assert.match(modal, /populationCap: tutorial \? 5 : 7/);
+  assert.match(modal, /if \(\["waiting", "escaped", "caught"\]\.includes\(creature\.status\)\) return null/);
+  assert.match(modal, /Stay still to let new creatures venture out/);
+  assert.match(modal, /hidden behind rocks are safe from the net/i);
+  assert.match(modal, /styles\.handNetCreatureArriving/);
+  assert.match(modal, /styles\.handNetCreatureSeekingCover/);
+  assert.match(modal, /styles\.handNetCreatureHidden/);
+  assert.match(modal, /hidden behind a rock and safe from the net/);
+  assert.match(modal, /darting toward a rock shelter/);
+  assert.ok(arrivalStatusIndex >= 0 && arrivalStatusIndex < feedingStatusIndex, "safety and arrival announcements must take priority over persistent bait copy");
+  assert.match(modal, /"--hand-net-creature-scale": creature\.visualScale \?\? 1/);
+  assert.match(modal, /data-hand-net-creature-scale=\{creature\.visualScale \?\? 1\}/);
+  assert.match(styles, /\.handNetCreature\s*\{[^}]*scale\(var\(--hand-net-creature-scale, 1\)\)/);
+  assert.match(modal, /\{state\.rocks\.map\(\(rock\) => \(/);
+  assert.match(modal, /data-hand-net-rock=\{rock\.id\}/);
+  assert.match(modal, /"--hand-net-rock-radius-x": `\$\{\(rock\.coverRadius\.x \/ state\.arena\.width\) \* 100\}%`/);
+  assert.match(modal, /"--hand-net-rock-radius-y": `\$\{\(rock\.coverRadius\.y \/ state\.arena\.height\) \* 100\}%`/);
+  assert.match(
+    styles,
+    /\.handNetRockCover\s*\{[^}]*z-index:\s*7;[^}]*pointer-events:\s*none;[^}]*background-image:[^}]*var\(--hand-net-tidepool-image\)/,
+  );
+  assert.match(styles, /@keyframes handNetCreatureArrive/);
+  assert.match(
+    styles,
+    /\.reducedMotionMode \.handNetSurfaceVeil,\s*\.reducedMotionMode \.handNetCreatureArriving,\s*\.reducedMotionMode \.handNetPlayer\s*\{[^}]*animation:\s*none !important/,
+  );
+  assert.match(
+    styles,
+    /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.handNetSurfaceVeil,\s*\.handNetCreatureArriving,\s*\.handNetPlayer\s*\{[^}]*animation:\s*none !important/,
+  );
+});
+
 test("Henderson's bait shop connects the inventory to a feeding-only catch assist", () => {
   assert.match(game, /<AdventureBaitShopModal[\s\S]*?onPurchase=\{buyElversonBait\}/);
   assert.match(game, /trainer\.id === ELVERSON_BAIT_SHOPKEEPER_ID/);

@@ -8,6 +8,7 @@ import {
   HAND_NET_ACTIONS,
   HAND_NET_BAIT_PLACEMENT_PHASES,
   HAND_NET_PHASES,
+  HAND_NET_ROCKS,
   HAND_NET_SCOOP_PHASES,
   HAND_NET_SIMULATION_STEP_MS,
   applyHandNetAction,
@@ -82,6 +83,39 @@ function settleBait(state, definition) {
   );
 }
 
+function waitingCreatures(state) {
+  return state.creatures.filter(({ status }) => status === "waiting");
+}
+
+function controlledHiddenCreature({ hideRemainingMs = 5_000 } = {}) {
+  const state = controlledSingleCreature({ speciesId: "cleaner-wrasse" });
+  const rock = state.rocks[0];
+  const creature = state.creatures[0];
+  creature.position = { ...rock.position };
+  creature.heading = { x: 1, y: 0 };
+  creature.alert = 1;
+  creature.status = "hidden";
+  creature.homeRockId = rock.id;
+  creature.seekingRockId = null;
+  creature.hiddenByRockId = rock.id;
+  creature.hideRemainingMs = hideRemainingMs;
+  creature.baitTargetId = null;
+  return { state, creature, rock };
+}
+
+function placeNetAt(state, position) {
+  const landingLength = Math.hypot(1, -0.1);
+  state.player.position = {
+    x: position.x - (1 / landingLength) * state.net.reach,
+    y: position.y - (-0.1 / landingLength) * state.net.reach,
+  };
+  state.player.intent = { x: 0, y: 0 };
+  state.player.velocity = { x: 0, y: 0 };
+  state.player.facing = { x: Math.SQRT1_2, y: -Math.SQRT1_2 };
+  state.net.position = { ...position };
+  return state;
+}
+
 test("seeded school generation is deterministic, frozen, and sourced from Elverson catches", () => {
   const first = createHandNetState({
     seed: 2_024,
@@ -105,6 +139,159 @@ test("seeded school generation is deterministic, frozen, and sourced from Elvers
   assert.equal(Object.isFrozen(first), true);
   assert.equal(Object.isFrozen(first.player.position), true);
   assert.equal(Object.isFrozen(first.creatures[0]), true);
+});
+
+test("authored hand-net rocks are frozen geometry copied into every attempt", () => {
+  const state = createHandNetState({ seed: 31, creatureCount: 2 });
+
+  assert.equal(Object.isFrozen(HAND_NET_ROCKS), true);
+  assert.deepEqual(state.rocks, HAND_NET_ROCKS);
+  assert.notStrictEqual(state.rocks, HAND_NET_ROCKS);
+  assert.equal(Object.isFrozen(state.rocks), true);
+  assert.equal(new Set(state.rocks.map(({ id }) => id)).size, state.rocks.length);
+  for (const [index, rock] of state.rocks.entries()) {
+    assert.equal(Object.isFrozen(HAND_NET_ROCKS[index]), true);
+    assert.equal(Object.isFrozen(HAND_NET_ROCKS[index].position), true);
+    assert.equal(Object.isFrozen(HAND_NET_ROCKS[index].coverRadius), true);
+    assert.equal(Object.isFrozen(rock), true);
+    assert.equal(Object.isFrozen(rock.position), true);
+    assert.equal(Object.isFrozen(rock.coverRadius), true);
+    assert.ok(rock.position.x > 0 && rock.position.x < state.arena.width);
+    assert.ok(rock.position.y > 0 && rock.position.y < state.arena.height);
+    assert.ok(rock.shelterRadius > 0);
+    assert.ok(rock.influenceRadius > rock.shelterRadius);
+    assert.ok(rock.coverRadius.x >= rock.shelterRadius);
+    assert.ok(rock.coverRadius.y > 0);
+  }
+});
+
+test("population caps preallocate stable waiting slots while creatureCount controls the initial school", () => {
+  const state = createHandNetState({
+    seed: 2_606,
+    creatureCount: 2,
+    populationCap: 6,
+    requiredCreatureId: "cleaner-wrasse",
+  });
+  const ids = state.creatures.map(({ id }) => id);
+
+  assert.equal(state.population.initialCount, 2);
+  assert.equal(state.population.cap, 6);
+  assert.equal(state.creatures.length, 6);
+  assert.equal(new Set(ids).size, 6);
+  assert.equal(state.creatures.filter(({ status }) => status !== "waiting").length, 2);
+  assert.equal(state.creatures.filter(({ status }) => status === "wandering").length, 2);
+  assert.equal(waitingCreatures(state).length, 4);
+  assert.equal(state.creatures.slice(2).every(({ spawnedAtMs }) => spawnedAtMs === null), true);
+  assert.equal(Object.isFrozen(state.population), true);
+  assert.equal(Object.isFrozen(state.creatures), true);
+});
+
+test("a calm player gets the first arrival at 2600ms deterministically, then fills only to the cap", () => {
+  const initial = createHandNetState({
+    seed: 4_204,
+    creatureCount: 2,
+    populationCap: 5,
+  });
+  const stableIds = initial.creatures.map(({ id }) => id);
+  const beforeArrival = tickHandNetState(initial, 2_580);
+
+  assert.equal(beforeArrival.population.stillnessMs, 2_580);
+  assert.equal(beforeArrival.population.arrivalCount, 0);
+  assert.equal(waitingCreatures(beforeArrival).length, 3);
+
+  const oneTickLater = tickHandNetState(beforeArrival, HAND_NET_SIMULATION_STEP_MS);
+  const oneShot = tickHandNetState(initial, 2_600);
+  const evenPartitions = tickRepeatedly(initial, HAND_NET_SIMULATION_STEP_MS, 130);
+  const unevenPartitions = [377, 611, 1_612].reduce(
+    (state, elapsedMs) => tickHandNetState(state, elapsedMs),
+    initial,
+  );
+
+  assert.deepEqual(oneTickLater, oneShot);
+  assert.deepEqual(evenPartitions, oneShot);
+  assert.deepEqual(unevenPartitions, oneShot);
+  assert.equal(oneShot.population.arrivalCount, 1);
+  assert.equal(oneShot.population.stillnessMs, 0);
+  assert.equal(waitingCreatures(oneShot).length, 2);
+  assert.deepEqual(oneShot.creatures.map(({ id }) => id), stableIds);
+  assert.equal(oneShot.lastEvent.type, "creature-arrived");
+  assert.equal(oneShot.lastEvent.atMs, 2_600);
+  assert.equal(
+    oneShot.creatures.find(({ id }) => id === oneShot.lastEvent.creatureId)?.spawnedAtMs,
+    2_600,
+  );
+
+  let capped = oneShot;
+  while (waitingCreatures(capped).length > 0) {
+    capped = tickForDuration(
+      capped,
+      capped.population.nextArrivalMs + HAND_NET_SIMULATION_STEP_MS,
+    );
+  }
+  assert.equal(capped.population.arrivalCount, 3);
+  assert.equal(capped.creatures.length, capped.population.cap);
+  assert.equal(waitingCreatures(capped).length, 0);
+  assert.deepEqual(capped.creatures.map(({ id }) => id), stableIds);
+
+  const afterExtraCalm = tickHandNetState(capped, 10_000);
+  assert.equal(afterExtraCalm.population.arrivalCount, capped.population.arrivalCount);
+  assert.equal(afterExtraCalm.creatures.length, capped.creatures.length);
+});
+
+test("movement resets calm time while scoop and bait placement hold it at zero", () => {
+  const calm = tickHandNetState(
+    createHandNetState({ seed: 802, creatureCount: 1, populationCap: 2 }),
+    1_000,
+  );
+  assert.equal(calm.population.stillnessMs, 1_000);
+
+  const moving = applyHandNetAction(calm, { type: HAND_NET_ACTIONS.MOVE, x: 1, y: 0 });
+  assert.equal(moving.population.stillnessMs, 0);
+  const whileMoving = tickHandNetState(moving, 200);
+  assert.equal(whileMoving.population.stillnessMs, 0);
+  const stopped = applyHandNetAction(whileMoving, { type: HAND_NET_ACTIONS.STOP });
+  assert.equal(tickHandNetState(stopped, HAND_NET_SIMULATION_STEP_MS).population.stillnessMs, 20);
+
+  const scooping = applyHandNetAction(calm, { type: HAND_NET_ACTIONS.SCOOP });
+  assert.equal(scooping.population.stillnessMs, 0);
+  assert.equal(tickHandNetState(scooping, 200).population.stillnessMs, 0);
+
+  const bait = ELVERSON_BAITS_BY_ID["bait-plankton-puff"];
+  const placingBait = beginBaitPlacement(calm, bait);
+  assert.equal(placingBait.population.stillnessMs, 0);
+  assert.equal(tickHandNetState(placingBait, 200).population.stillnessMs, 0);
+});
+
+test("cleaner wrasses are much smaller rock-affine residents with a stable home shelter", () => {
+  const wrasseState = createHandNetState({
+    seed: 93,
+    creatureCount: 1,
+    requiredCreatureId: "cleaner-wrasse",
+  });
+  const gruntState = createHandNetState({
+    seed: 93,
+    creatureCount: 1,
+    requiredCreatureId: "white-grunt",
+  });
+  const wrasse = wrasseState.creatures[0];
+  const grunt = gruntState.creatures[0];
+  const homeRock = wrasseState.rocks.find(({ id }) => id === wrasse.homeRockId);
+
+  assert.ok(wrasse.visualScale < grunt.visualScale * 0.5);
+  assert.ok(wrasse.radius < grunt.radius * 0.5);
+  assert.equal(wrasse.rockAffine, true);
+  assert.ok(homeRock, "cleaner wrasses must receive an authored home rock");
+  const normalizedCoverDistance = (
+    ((wrasse.position.x - homeRock.position.x) / homeRock.coverRadius.x) ** 2
+    + ((wrasse.position.y - homeRock.position.y) / homeRock.coverRadius.y) ** 2
+  );
+  assert.ok(normalizedCoverDistance > 1, "a catchable resident must begin outside the painted rock cover");
+  assert.ok(
+    Math.hypot(
+      wrasse.position.x - homeRock.position.x,
+      wrasse.position.y - homeRock.position.y,
+    ) < homeRock.influenceRadius * wrasse.homeRangeScale,
+  );
 });
 
 test("fixed simulation steps make replay independent of UI frame partitioning", () => {
@@ -632,29 +819,35 @@ test("creatures wander deterministically and remain inside the shallow-water are
   }
 });
 
-test("a quick direct approach raises alert, starts flight, and can end in escape", () => {
-  const initial = controlledSingleCreature();
-  initial.creatures[0].position = { x: 6, y: 5.7 };
-  const approaching = applyHandNetAction(initial, {
-    type: HAND_NET_ACTIONS.MOVE,
-    x: 0,
-    y: -1,
-  });
-  const alarmed = tickHandNetState(approaching, 700);
+test("a startled fish seeks its authored rock and hides without ending the attempt", () => {
+  const initial = controlledSingleCreature({ speciesId: "cleaner-wrasse" });
+  const rock = initial.rocks[0];
+  const creature = initial.creatures[0];
+  creature.position = { x: rock.position.x, y: rock.position.y + 1.25 };
+  creature.homeRockId = rock.id;
+  creature.alert = initial.settings.alertThreshold - 0.02;
+  initial.player.position = { x: creature.position.x, y: creature.position.y + 1 };
+  initial.player.intent = { x: 0, y: -1 };
+  initial.player.velocity = { x: 0, y: -initial.player.speed };
 
-  assert.ok(alarmed.creatures[0].alert >= alarmed.settings.alertThreshold);
-  assert.ok(["fleeing", "escaped"].includes(alarmed.creatures[0].status));
-  assert.equal(alarmed.lastEvent?.type, "creature-fled");
+  const seeking = tickHandNetState(initial, HAND_NET_SIMULATION_STEP_MS);
+  assert.equal(seeking.creatures[0].status, "seeking-cover");
+  assert.equal(seeking.creatures[0].seekingRockId, rock.id);
+  assert.ok(seeking.creatures[0].alert >= seeking.settings.alertThreshold);
+  assert.equal(seeking.lastEvent?.type, "creature-fled");
+  assert.equal(seeking.lastEvent?.rockId, rock.id);
+  assert.equal(seeking.phase, HAND_NET_PHASES.PLAYING);
 
-  const stopped = applyHandNetAction(alarmed, { type: HAND_NET_ACTIONS.STOP });
-  let escaped = stopped;
-  for (let index = 0; index < 10 && escaped.phase === HAND_NET_PHASES.PLAYING; index += 1) {
-    escaped = tickHandNetState(escaped, 1_000);
+  let sheltered = applyHandNetAction(seeking, { type: HAND_NET_ACTIONS.STOP });
+  for (let index = 0; index < 200 && sheltered.creatures[0].status !== "hidden"; index += 1) {
+    sheltered = tickHandNetState(sheltered, HAND_NET_SIMULATION_STEP_MS);
   }
-  assert.equal(escaped.phase, HAND_NET_PHASES.ESCAPED);
-  assert.equal(escaped.outcome.type, "escaped");
-  assert.deepEqual(escaped.outcome.speciesIds, ["cleaner-wrasse"]);
-  assert.equal(escaped.creatures[0].status, "escaped");
+  assert.equal(sheltered.creatures[0].status, "hidden");
+  assert.equal(sheltered.creatures[0].hiddenByRockId, rock.id);
+  assert.ok(sheltered.creatures[0].hideRemainingMs > 0);
+  assert.equal(sheltered.lastEvent?.type, "creature-hidden");
+  assert.equal(sheltered.phase, HAND_NET_PHASES.PLAYING);
+  assert.equal(sheltered.outcome, null);
 });
 
 test("baited creatures can still be startled by a fast direct approach", () => {
@@ -673,7 +866,118 @@ test("baited creatures can still be startled by a fast direct approach", () => {
   const alarmed = tickHandNetState(feeding, 700);
 
   assert.ok(alarmed.creatures[0].alert >= alarmed.settings.alertThreshold);
-  assert.ok(["fleeing", "escaped"].includes(alarmed.creatures[0].status));
+  assert.ok(["seeking-cover", "hidden"].includes(alarmed.creatures[0].status));
+  assert.equal(alarmed.creatures[0].baitTargetId, null);
+});
+
+test("a creature hidden directly under the net is uncatchable and the attempt keeps playing", () => {
+  const { state, creature } = controlledHiddenCreature();
+  placeNetAt(state, creature.position);
+  const before = structuredClone(state);
+
+  const missed = tickHandNetState(
+    applyHandNetAction(state, { type: HAND_NET_ACTIONS.SCOOP }),
+    state.settings.scoopAnimationMs,
+  );
+
+  assert.equal(missed.phase, HAND_NET_PHASES.PLAYING);
+  assert.equal(missed.outcome, null);
+  assert.equal(missed.creatures[0].status, "hidden");
+  assert.equal(missed.net.contactedCreatureId, null);
+  assert.equal(missed.lastEvent.type, "scoop-missed");
+  assert.equal(missed.missCount, 1);
+  assert.deepEqual(state, before);
+});
+
+test("painted rock cover and simulation catchability cannot disagree", () => {
+  const state = controlledSingleCreature({ speciesId: "white-grunt" });
+  const rock = state.rocks[0];
+  const creature = state.creatures[0];
+  creature.position = { ...rock.position };
+  creature.speed = 0;
+  creature.turnRemainingMs = 10_000;
+  placeNetAt(state, rock.position);
+
+  const cleared = tickHandNetState(state, HAND_NET_SIMULATION_STEP_MS);
+  const visibleCreature = cleared.creatures[0];
+  const normalizedCoverDistance = (
+    ((visibleCreature.position.x - rock.position.x) / rock.coverRadius.x) ** 2
+    + ((visibleCreature.position.y - rock.position.y) / rock.coverRadius.y) ** 2
+  );
+  assert.ok(normalizedCoverDistance > 1, "wandering creatures are pushed in front of the foreground mask");
+
+  const missed = tickHandNetState(
+    applyHandNetAction(state, { type: HAND_NET_ACTIONS.SCOOP }),
+    state.settings.scoopAnimationMs,
+  );
+  assert.equal(missed.phase, HAND_NET_PHASES.PLAYING);
+  assert.equal(missed.outcome, null);
+  assert.equal(missed.lastEvent.type, "scoop-missed");
+});
+
+test("hidden fish emerge only when their timer has elapsed and the player is calm and far away", () => {
+  const hidden = controlledHiddenCreature({ hideRemainingMs: 0 });
+
+  const movingFar = mutableCopy(hidden.state);
+  movingFar.player.position = { x: 11, y: 6.8 };
+  movingFar.player.intent = { x: -1, y: 0 };
+  movingFar.player.velocity = { x: -movingFar.player.speed, y: 0 };
+  const stillHiddenWhileMoving = tickHandNetState(movingFar, HAND_NET_SIMULATION_STEP_MS);
+  assert.equal(stillHiddenWhileMoving.creatures[0].status, "hidden");
+
+  const stillNear = mutableCopy(hidden.state);
+  stillNear.player.position = {
+    x: hidden.rock.position.x,
+    y: hidden.rock.position.y + hidden.rock.shelterRadius + 0.5,
+  };
+  stillNear.player.intent = { x: 0, y: 0 };
+  stillNear.player.velocity = { x: 0, y: 0 };
+  const stillHiddenNearRock = tickHandNetState(stillNear, HAND_NET_SIMULATION_STEP_MS);
+  assert.equal(stillHiddenNearRock.creatures[0].status, "hidden");
+
+  const calmAndFar = mutableCopy(hidden.state);
+  calmAndFar.player.position = { x: 11, y: 6.8 };
+  calmAndFar.player.intent = { x: 0, y: 0 };
+  calmAndFar.player.velocity = { x: 0, y: 0 };
+  const emerged = tickHandNetState(calmAndFar, HAND_NET_SIMULATION_STEP_MS);
+  assert.equal(emerged.creatures[0].status, "wandering");
+  assert.equal(emerged.creatures[0].hiddenByRockId, null);
+  assert.equal(emerged.creatures[0].hideRemainingMs, 0);
+  assert.equal(emerged.creatures[0].alert, 0);
+  const normalizedCoverDistance = (
+    ((emerged.creatures[0].position.x - hidden.rock.position.x) / hidden.rock.coverRadius.x) ** 2
+    + ((emerged.creatures[0].position.y - hidden.rock.position.y) / hidden.rock.coverRadius.y) ** 2
+  );
+  assert.ok(normalizedCoverDistance > 1, "an emerged fish must be painted in front of the rock");
+  assert.equal(emerged.lastEvent.type, "creature-emerged");
+  assert.equal(emerged.phase, HAND_NET_PHASES.PLAYING);
+});
+
+test("an escaped invertebrate leaves play running and its stable slot can be recycled by calm water", () => {
+  const initial = controlledSingleCreature({ speciesId: "emerald-crab" });
+  initial.creatures[0].status = "fleeing";
+  initial.creatures[0].position = { x: 12.3, y: 4 };
+  const stableId = initial.creatures[0].id;
+  const escaped = tickHandNetState(initial, HAND_NET_SIMULATION_STEP_MS);
+
+  assert.equal(escaped.creatures[0].status, "escaped");
+  assert.equal(escaped.creatures[0].category, "invertebrate");
+  assert.equal(escaped.phase, HAND_NET_PHASES.PLAYING);
+  assert.equal(escaped.outcome, null);
+  assert.equal(escaped.lastEvent.type, "creature-escaped");
+
+  const calm = mutableCopy(escaped);
+  calm.population.stillnessMs = 0;
+  const beforeArrival = tickHandNetState(calm, 2_580);
+  assert.equal(beforeArrival.creatures[0].status, "escaped");
+  const recycled = tickHandNetState(beforeArrival, HAND_NET_SIMULATION_STEP_MS);
+
+  assert.equal(recycled.phase, HAND_NET_PHASES.PLAYING);
+  assert.equal(recycled.creatures[0].id, stableId);
+  assert.equal(recycled.creatures[0].status, "wandering");
+  assert.equal(recycled.creatures[0].spawnedAtMs, recycled.simulationTimeMs);
+  assert.equal(recycled.population.arrivalCount, 1);
+  assert.equal(recycled.lastEvent.type, "creature-arrived");
 });
 
 test("a scoop winds up, contacts near the landing frame, recovers, then reports its matching card", () => {
@@ -857,6 +1161,13 @@ test("public functions reject malformed options, actions, state, and elapsed tim
   for (const creatureCount of [0, 9, 1.5]) {
     assert.throws(() => createHandNetState({ creatureCount }), /creatureCount/);
   }
+  for (const populationCap of [0, 9, 1.5, Number.NaN]) {
+    assert.throws(() => createHandNetState({ populationCap }), /populationCap/);
+  }
+  assert.throws(
+    () => createHandNetState({ creatureCount: 3, populationCap: 2 }),
+    /populationCap must be at least creatureCount/,
+  );
   assert.throws(
     () => createHandNetState({ requiredCreatureId: "imaginary-fish" }),
     /Unknown required hand-net creature/,

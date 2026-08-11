@@ -8862,7 +8862,10 @@
   background-size: 500% 200%;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 2px rgba(8, 47, 73, 0.34));
-  transform: translate(-50%, -50%) scaleX(var(--hand-net-facing));
+  transform:
+    translate(-50%, -50%)
+    scale(var(--hand-net-creature-scale, 1))
+    scaleX(var(--hand-net-facing));
   transition: filter 120ms ease;
   will-change: translate;
 }
@@ -9584,6 +9587,60 @@
 
 .handNetCreatureFleeing {
   filter: drop-shadow(0 4px 2px rgba(8, 47, 73, 0.42)) saturate(1.35) brightness(1.1);
+}
+
+.handNetCreatureArriving {
+  animation: handNetCreatureArrive 720ms cubic-bezier(0.16, 0.76, 0.24, 1) both;
+}
+
+.handNetCreatureSeekingCover {
+  filter:
+    drop-shadow(0 4px 2px rgba(8, 47, 73, 0.42))
+    saturate(1.22)
+    brightness(1.08);
+}
+
+.handNetCreatureHidden {
+  opacity: 0.72;
+  filter:
+    drop-shadow(0 2px 1px rgba(8, 47, 73, 0.28))
+    saturate(0.76)
+    brightness(0.78);
+}
+
+/* Each shelter is a clipped foreground copy of the tide-pool artwork. The
+ * matching painted reef therefore sits in front of fish without introducing
+ * a second art style or a visible seam. */
+.handNetRockCover {
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  background-image:
+    linear-gradient(180deg, rgba(17, 78, 83, 0.06), transparent 20% 78%, rgba(32, 24, 13, 0.14)),
+    var(--hand-net-tidepool-image);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  clip-path: ellipse(
+    var(--hand-net-rock-radius-x)
+    var(--hand-net-rock-radius-y)
+    at var(--hand-net-rock-x) var(--hand-net-rock-y)
+  );
+}
+
+@keyframes handNetCreatureArrive {
+  0% {
+    clip-path: circle(0 at 50% 50%);
+    opacity: 0;
+    filter: brightness(1.5) saturate(0.72) drop-shadow(0 0 8px rgba(224, 255, 243, 0.72));
+  }
+  58% { opacity: 1; }
+  100% {
+    clip-path: circle(75% at 50% 50%);
+    opacity: 1;
+  }
 }
 
 .handNetAlert {
@@ -10383,6 +10440,7 @@
 }
 
 .reducedMotionMode .handNetSurfaceVeil,
+.reducedMotionMode .handNetCreatureArriving,
 .reducedMotionMode .handNetPlayer {
   animation: none !important;
   transition: none !important;
@@ -10395,6 +10453,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .handNetSurfaceVeil,
+  .handNetCreatureArriving,
   .handNetPlayer {
     animation: none !important;
     transition: none !important;

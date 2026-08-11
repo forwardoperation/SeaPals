@@ -41,17 +41,76 @@ const ESCAPE_BOUNDS = Object.freeze({ left: -0.25, top: 0.2, right: 12.25, botto
 export const HAND_NET_SIMULATION_STEP_MS = 20;
 const WALK_FRAME_DURATION_MS = 110;
 const WALK_FRAME_SEQUENCE = Object.freeze([1, 0, 2, 0]);
-const ACTIVE_CREATURE_STATUSES = new Set(["wandering", "attracted", "feeding"]);
+const ALERTABLE_CREATURE_STATUSES = new Set(["wandering", "attracted", "feeding"]);
+const BAITABLE_CREATURE_STATUSES = new Set(["wandering", "attracted", "feeding"]);
+const CATCHABLE_CREATURE_STATUSES = new Set([
+  "wandering",
+  "attracted",
+  "feeding",
+  "seeking-cover",
+]);
 const MAX_TICK_MS = 10_000;
 const UINT32_MAX = 0xffff_ffff;
 const TAU = Math.PI * 2;
 const EPSILON = 1e-9;
+const FIRST_CALM_ARRIVAL_MS = 2_600;
+const MIN_LATER_ARRIVAL_MS = 3_200;
+const MAX_LATER_ARRIVAL_MS = 4_800;
+const MIN_HIDE_DURATION_MS = 1_800;
+const MAX_HIDE_DURATION_MS = 3_200;
+
+/** Authored underwater cover shared by simulation and presentation. */
+export const HAND_NET_ROCKS = deepFreeze([
+  {
+    id: "reef-shelter-northwest",
+    position: { x: 4.05, y: 2.05 },
+    shelterRadius: 0.48,
+    influenceRadius: 2.05,
+    coverRadius: { x: 0.84, y: 0.52 },
+  },
+  {
+    id: "reef-shelter-northeast",
+    position: { x: 8.85, y: 1.65 },
+    shelterRadius: 0.44,
+    influenceRadius: 1.9,
+    coverRadius: { x: 0.78, y: 0.48 },
+  },
+  {
+    id: "reef-shelter-southwest",
+    position: { x: 3.25, y: 5.65 },
+    shelterRadius: 0.52,
+    influenceRadius: 2.15,
+    coverRadius: { x: 0.9, y: 0.56 },
+  },
+  {
+    id: "reef-shelter-southeast",
+    position: { x: 9.75, y: 5.2 },
+    shelterRadius: 0.5,
+    influenceRadius: 2.1,
+    coverRadius: { x: 0.88, y: 0.54 },
+  },
+]);
 
 const RARITY_SPEED = Object.freeze({
   common: 0.72,
   uncommon: 0.82,
   rare: 0.92,
   legendary: 1,
+});
+
+const SPECIES_TRAITS = deepFreeze({
+  "cleaner-wrasse": {
+    visualScale: 0.42,
+    radius: 0.09,
+    rockAffine: true,
+    homeRangeScale: 0.72,
+  },
+  clownfish: {
+    visualScale: 0.68,
+    radius: 0.13,
+    rockAffine: true,
+    homeRangeScale: 0.82,
+  },
 });
 
 function isRecord(value) {
@@ -110,6 +169,12 @@ function requireState(state) {
   }
   if (!isRecord(state.bait)) {
     throw new TypeError("Hand-net state requires bait state.");
+  }
+  if (!isRecord(state.population)) {
+    throw new TypeError("Hand-net state requires population state.");
+  }
+  if (!Array.isArray(state.rocks) || state.rocks.length === 0) {
+    throw new TypeError("Hand-net state requires reef shelter geometry.");
   }
   if (!Array.isArray(state.creatures) || state.creatures.length === 0) {
     throw new TypeError("Hand-net state requires at least one creature.");
@@ -239,6 +304,118 @@ function creatureSpeed(creature, { reducedMotion }) {
   return speed;
 }
 
+function creatureTraits(species) {
+  const authored = SPECIES_TRAITS[species.id];
+  return {
+    visualScale: authored?.visualScale ?? 1,
+    radius: authored?.radius ?? (species.category === "invertebrate" ? 0.16 : 0.19),
+    rockAffine: authored?.rockAffine === true,
+    homeRangeScale: authored?.homeRangeScale ?? 1,
+  };
+}
+
+function rockById(rocks, rockId) {
+  return rockId ? rocks.find(({ id }) => id === rockId) ?? null : null;
+}
+
+function nearestRock(rocks, position) {
+  let nearest = rocks[0] ?? null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (const rock of rocks) {
+    const distance = Math.hypot(
+      rock.position.x - position.x,
+      rock.position.y - position.y,
+    );
+    if (distance < nearestDistance) {
+      nearest = rock;
+      nearestDistance = distance;
+    }
+  }
+  return nearest;
+}
+
+function randomRock(cursor, rocks = HAND_NET_ROCKS) {
+  const index = Math.min(
+    rocks.length - 1,
+    Math.floor(drawRandom(cursor) * rocks.length),
+  );
+  return rocks[index];
+}
+
+function rockCoverBoundaryDistance(rock, direction, padding = 0) {
+  const unitDirection = normalized(direction, { x: 1, y: 0 });
+  const radiusX = Math.max(EPSILON, rock.coverRadius.x + padding);
+  const radiusY = Math.max(EPSILON, rock.coverRadius.y + padding);
+  return 1 / Math.sqrt(
+    (unitDirection.x / radiusX) ** 2
+    + (unitDirection.y / radiusY) ** 2,
+  );
+}
+
+function positionInsideRockCover(rock, position, padding = 0) {
+  const radiusX = Math.max(EPSILON, rock.coverRadius.x + padding);
+  const radiusY = Math.max(EPSILON, rock.coverRadius.y + padding);
+  const normalizedX = (position.x - rock.position.x) / radiusX;
+  const normalizedY = (position.y - rock.position.y) / radiusY;
+  return normalizedX ** 2 + normalizedY ** 2 <= 1 + EPSILON;
+}
+
+function coveringRockAtPosition(rocks, position, padding = 0) {
+  return rocks.find((rock) => positionInsideRockCover(rock, position, padding)) ?? null;
+}
+
+function movePositionOutsideRockCovers(position, rocks, padding = 0) {
+  let next = copyPoint(position);
+  for (const rock of rocks) {
+    if (!positionInsideRockCover(rock, next, padding)) continue;
+    const direction = normalized({
+      x: next.x - rock.position.x,
+      y: next.y - rock.position.y,
+    }, { x: 1, y: 0 });
+    const distance = rockCoverBoundaryDistance(rock, direction, padding) + 0.03;
+    next = {
+      x: clamp(
+        rock.position.x + direction.x * distance,
+        CREATURE_BOUNDS.left,
+        CREATURE_BOUNDS.right,
+      ),
+      y: clamp(
+        rock.position.y + direction.y * distance,
+        CREATURE_BOUNDS.top,
+        CREATURE_BOUNDS.bottom,
+      ),
+    };
+  }
+  return next;
+}
+
+function randomPositionNearRock(cursor, rock, homeRangeScale = 1, creatureRadius = 0) {
+  const angle = drawRandom(cursor) * TAU;
+  const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+  const innerRadius = rockCoverBoundaryDistance(
+    rock,
+    direction,
+    creatureRadius + 0.08,
+  );
+  const outerRadius = Math.max(
+    innerRadius,
+    rock.influenceRadius * 0.72 * homeRangeScale,
+  );
+  const distance = innerRadius + drawRandom(cursor) * (outerRadius - innerRadius);
+  return {
+    x: clamp(
+      rock.position.x + direction.x * distance,
+      CREATURE_BOUNDS.left,
+      CREATURE_BOUNDS.right,
+    ),
+    y: clamp(
+      rock.position.y + direction.y * distance,
+      CREATURE_BOUNDS.top,
+      CREATURE_BOUNDS.bottom,
+    ),
+  };
+}
+
 function netPosition(player, reach) {
   const facing = normalized(player.facing);
   const landingDirection = normalized({
@@ -254,7 +431,7 @@ function netPosition(player, reach) {
   };
 }
 
-function reachableBaitPosition(position, feedingRadius) {
+function reachableBaitPosition(position, feedingRadius, rocks = HAND_NET_ROCKS) {
   const closestCreaturePoint = {
     x: clamp(position.x, CREATURE_BOUNDS.left, CREATURE_BOUNDS.right),
     y: clamp(position.y, CREATURE_BOUNDS.top, CREATURE_BOUNDS.bottom),
@@ -264,17 +441,22 @@ function reachableBaitPosition(position, feedingRadius) {
     y: position.y - closestCreaturePoint.y,
   };
   const distance = magnitude(offset);
-  if (distance <= feedingRadius) return copyPoint(position);
+  let reachablePosition;
+  if (distance <= feedingRadius) {
+    reachablePosition = copyPoint(position);
+  } else {
+    // Project onto the rounded edge of the swim area. This keeps the bait as
+    // close as possible to the painted hoop while guaranteeing that a matching
+    // creature can enter its feeding radius even at the bottom shoreline.
+    const reachableDistance = feedingRadius * 0.95;
+    const scale = reachableDistance / distance;
+    reachablePosition = {
+      x: closestCreaturePoint.x + offset.x * scale,
+      y: closestCreaturePoint.y + offset.y * scale,
+    };
+  }
 
-  // Project onto the rounded edge of the swim area. This keeps the bait as
-  // close as possible to the painted hoop while guaranteeing that a matching
-  // creature can enter its feeding radius even at the bottom shoreline.
-  const reachableDistance = feedingRadius * 0.95;
-  const scale = reachableDistance / distance;
-  return {
-    x: closestCreaturePoint.x + offset.x * scale,
-    y: closestCreaturePoint.y + offset.y * scale,
-  };
+  return movePositionOutsideRockCovers(reachablePosition, rocks, 0.08);
 }
 
 function isometricFacing(intent, currentFacing) {
@@ -284,38 +466,51 @@ function isometricFacing(intent, currentFacing) {
   });
 }
 
-function initialSchool(count, cursor, settings, requiredCreatureId) {
-  const columns = Math.ceil(Math.sqrt(count * 1.5));
-  const rows = Math.ceil(count / columns);
+function initialSchool(initialCount, populationCap, cursor, settings, requiredCreatureId) {
+  const columns = Math.ceil(Math.sqrt(initialCount * 1.5));
+  const rows = Math.ceil(initialCount / columns);
   const school = [];
 
-  for (let index = 0; index < count; index += 1) {
+  for (let index = 0; index < populationCap; index += 1) {
     const speciesRoll = drawRandom(cursor);
     const species = index === 0 && requiredCreatureId
       ? ELVERSON_REEF_CATCHES.find(({ id }) => id === requiredCreatureId)
       : weightedCreature(speciesRoll);
+    const traits = creatureTraits(species);
     const column = index % columns;
     const row = Math.floor(index / columns);
     const jitterX = (drawRandom(cursor) - 0.5) * 0.5;
     const jitterY = (drawRandom(cursor) - 0.5) * 0.38;
     const angle = drawRandom(cursor) * TAU;
     const turnRemainingMs = 500 + Math.round(drawRandom(cursor) * 700);
+    const homeRock = traits.rockAffine ? randomRock(cursor) : null;
+    const initialPosition = traits.rockAffine
+      ? randomPositionNearRock(cursor, homeRock, traits.homeRangeScale, traits.radius)
+      : movePositionOutsideRockCovers({
+          x: clamp(1.1 + ((column + 0.5) / columns) * 9.8 + jitterX, CREATURE_BOUNDS.left, CREATURE_BOUNDS.right),
+          y: clamp(0.75 + ((row + 0.5) / rows) * 4.6 + jitterY, CREATURE_BOUNDS.top, 5.65),
+        }, HAND_NET_ROCKS, traits.radius + 0.06);
     school.push({
       id: `hand-net-creature-${index + 1}`,
       speciesId: species.id,
       cardId: species.cardId,
       category: species.category,
       rarity: species.rarity,
-      position: {
-        x: clamp(1.1 + ((column + 0.5) / columns) * 9.8 + jitterX, CREATURE_BOUNDS.left, CREATURE_BOUNDS.right),
-        y: clamp(0.75 + ((row + 0.5) / rows) * 4.6 + jitterY, CREATURE_BOUNDS.top, 5.65),
-      },
+      position: index < initialCount ? initialPosition : { x: -1, y: -1 },
       heading: { x: Math.cos(angle), y: Math.sin(angle) },
       speed: creatureSpeed(species, settings),
-      radius: species.category === "invertebrate" ? 0.16 : 0.19,
+      radius: traits.radius,
+      visualScale: traits.visualScale,
+      rockAffine: traits.rockAffine,
+      homeRangeScale: traits.homeRangeScale,
+      homeRockId: homeRock?.id ?? null,
       alert: 0,
-      status: "wandering",
+      status: index < initialCount ? "wandering" : "waiting",
+      spawnedAtMs: index < initialCount ? 0 : null,
       baitTargetId: null,
+      seekingRockId: null,
+      hiddenByRockId: null,
+      hideRemainingMs: 0,
       turnRemainingMs,
     });
   }
@@ -350,6 +545,7 @@ function createSettings({ reducedMotion = false } = {}) {
 export function createHandNetState({
   seed = 1,
   creatureCount = 5,
+  populationCap = creatureCount,
   requiredCreatureId = null,
   reducedMotion = false,
 } = {}) {
@@ -358,6 +554,12 @@ export function createHandNetState({
   }
   if (!Number.isSafeInteger(creatureCount) || creatureCount < 1 || creatureCount > 8) {
     throw new RangeError("Hand-net creatureCount must be an integer from 1 through 8.");
+  }
+  if (!Number.isSafeInteger(populationCap) || populationCap < 1 || populationCap > 8) {
+    throw new RangeError("Hand-net populationCap must be an integer from 1 through 8.");
+  }
+  if (populationCap < creatureCount) {
+    throw new RangeError("Hand-net populationCap must be at least creatureCount.");
   }
   if (
     requiredCreatureId !== null
@@ -384,6 +586,11 @@ export function createHandNetState({
     tickCount: 0,
     rngState: cursor.state,
     arena: { ...ARENA },
+    rocks: HAND_NET_ROCKS.map((rock) => ({
+      ...rock,
+      position: copyPoint(rock.position),
+      coverRadius: { ...rock.coverRadius },
+    })),
     settings,
     player,
     net: {
@@ -399,7 +606,20 @@ export function createHandNetState({
       placement: null,
       placementCount: 0,
     },
-    creatures: initialSchool(creatureCount, cursor, settings, requiredCreatureId),
+    population: {
+      initialCount: creatureCount,
+      cap: populationCap,
+      stillnessMs: 0,
+      nextArrivalMs: FIRST_CALM_ARRIVAL_MS,
+      arrivalCount: 0,
+    },
+    creatures: initialSchool(
+      creatureCount,
+      populationCap,
+      cursor,
+      settings,
+      requiredCreatureId,
+    ),
     scoopCount: 0,
     missCount: 0,
     outcome: null,
@@ -433,7 +653,13 @@ function cloneState(state) {
   return {
     ...state,
     arena: { ...state.arena },
+    rocks: state.rocks.map((rock) => ({
+      ...rock,
+      position: copyPoint(rock.position),
+      coverRadius: { ...rock.coverRadius },
+    })),
     settings: { ...state.settings },
+    population: { ...state.population },
     player: {
       ...state.player,
       position: copyPoint(state.player.position),
@@ -516,6 +742,7 @@ export function applyHandNetAction(stateValue, action) {
     const wasMoving = magnitude(state.player.intent) > EPSILON;
     next.player.intent = intent;
     const isMoving = magnitude(intent) > EPSILON;
+    if (isMoving) next.population.stillnessMs = 0;
     if (isMoving) next.player.facing = isometricFacing(intent, next.player.facing);
     if (!wasMoving && isMoving) {
       next.presentation.walkElapsedMs = 0;
@@ -543,6 +770,7 @@ export function applyHandNetAction(stateValue, action) {
       || state.net.cooldownRemainingMs > 0
     ) return state;
     const next = cloneState(state);
+    next.population.stillnessMs = 0;
     next.net.scoopRemainingMs = state.settings.scoopAnimationMs;
     next.net.contactedCreatureId = null;
     next.scoopCount += 1;
@@ -567,6 +795,7 @@ export function applyHandNetAction(stateValue, action) {
     ) return state;
     const next = cloneState(state);
     const sequence = next.bait.placementCount + 1;
+    next.population.stillnessMs = 0;
     next.player.intent = { x: 0, y: 0 };
     next.player.velocity = { x: 0, y: 0 };
     next.presentation.walkElapsedMs = 0;
@@ -574,7 +803,11 @@ export function applyHandNetAction(stateValue, action) {
     next.bait.placementCount = sequence;
     next.bait.placement = {
       baitId: definition.id,
-      position: reachableBaitPosition(next.net.position, next.settings.baitFeedingRadius),
+      position: reachableBaitPosition(
+        next.net.position,
+        next.settings.baitFeedingRadius,
+        next.rocks,
+      ),
       elapsedMs: 0,
       remainingMs: next.settings.baitPlacementAnimationMs,
       deployed: false,
@@ -661,24 +894,40 @@ export function getHandNetEffectiveCatchRadius(stateValue, creatureValue) {
 }
 
 function makeCreatureFlee(state, creature) {
-  if (!ACTIVE_CREATURE_STATUSES.has(creature.status)) return;
-  creature.status = "fleeing";
+  if (!ALERTABLE_CREATURE_STATUSES.has(creature.status)) return;
   creature.baitTargetId = null;
   creature.alert = 1;
-  creature.heading = normalized({
-    x: creature.position.x - state.net.position.x,
-    y: creature.position.y - state.net.position.y,
-  }, creature.heading);
+  const coverRock = creature.category === "fish"
+    ? rockById(state.rocks, creature.homeRockId) ?? nearestRock(state.rocks, creature.position)
+    : null;
+  if (coverRock) {
+    creature.status = "seeking-cover";
+    creature.seekingRockId = coverRock.id;
+    creature.hiddenByRockId = null;
+    creature.hideRemainingMs = 0;
+    creature.heading = normalized({
+      x: coverRock.position.x - creature.position.x,
+      y: coverRock.position.y - creature.position.y,
+    }, creature.heading);
+  } else {
+    creature.status = "fleeing";
+    creature.seekingRockId = null;
+    creature.heading = normalized({
+      x: creature.position.x - state.net.position.x,
+      y: creature.position.y - state.net.position.y,
+    }, creature.heading);
+  }
   state.lastEvent = {
     type: "creature-fled",
     creatureId: creature.id,
     speciesId: creature.speciesId,
+    rockId: coverRock?.id ?? null,
     atMs: state.simulationTimeMs,
   };
 }
 
 function updateCreatureAlert(state, creature, elapsedSeconds) {
-  if (!ACTIVE_CREATURE_STATUSES.has(creature.status)) return;
+  if (!ALERTABLE_CREATURE_STATUSES.has(creature.status)) return;
   const offset = {
     x: creature.position.x - state.player.position.x,
     y: creature.position.y - state.player.position.y,
@@ -714,6 +963,36 @@ function moveWanderingCreature(state, creature, elapsedMs, elapsedSeconds) {
   creature.turnRemainingMs -= elapsedMs;
   if (creature.turnRemainingMs <= 0) turnWanderingCreature(state, creature);
 
+  const homeRock = creature.rockAffine
+    ? rockById(state.rocks, creature.homeRockId)
+    : null;
+  const homeRange = homeRock
+    ? homeRock.influenceRadius * creature.homeRangeScale
+    : 0;
+  if (homeRock) {
+    const offsetToHome = {
+      x: homeRock.position.x - creature.position.x,
+      y: homeRock.position.y - creature.position.y,
+    };
+    const distanceToHome = magnitude(offsetToHome);
+    if (distanceToHome > homeRange * 0.88) {
+      const towardHome = normalized(offsetToHome, creature.heading);
+      creature.heading = normalized({
+        x: creature.heading.x * 0.35 + towardHome.x * 0.85,
+        y: creature.heading.y * 0.35 + towardHome.y * 0.85,
+      }, towardHome);
+    } else if (distanceToHome < homeRock.shelterRadius * 1.18) {
+      const awayFromHome = normalized({
+        x: -offsetToHome.x,
+        y: -offsetToHome.y,
+      }, creature.heading);
+      creature.heading = normalized({
+        x: creature.heading.x * 0.55 + awayFromHome.x * 0.75,
+        y: creature.heading.y * 0.55 + awayFromHome.y * 0.75,
+      }, awayFromHome);
+    }
+  }
+
   let nextX = creature.position.x + creature.heading.x * creature.speed * elapsedSeconds;
   let nextY = creature.position.y + creature.heading.y * creature.speed * elapsedSeconds;
   if (nextX < CREATURE_BOUNDS.left || nextX > CREATURE_BOUNDS.right) {
@@ -724,7 +1003,47 @@ function moveWanderingCreature(state, creature, elapsedMs, elapsedSeconds) {
     creature.heading.y *= -1;
     nextY = clamp(nextY, CREATURE_BOUNDS.top, CREATURE_BOUNDS.bottom);
   }
-  creature.position = { x: nextX, y: nextY };
+  if (homeRock) {
+    const nextOffset = {
+      x: nextX - homeRock.position.x,
+      y: nextY - homeRock.position.y,
+    };
+    const currentDistance = Math.hypot(
+      creature.position.x - homeRock.position.x,
+      creature.position.y - homeRock.position.y,
+    );
+    const nextDistance = magnitude(nextOffset);
+    if (currentDistance <= homeRange + EPSILON && nextDistance > homeRange) {
+      const fromHome = normalized(nextOffset, creature.heading);
+      nextX = clamp(
+        homeRock.position.x + fromHome.x * homeRange,
+        CREATURE_BOUNDS.left,
+        CREATURE_BOUNDS.right,
+      );
+      nextY = clamp(
+        homeRock.position.y + fromHome.y * homeRange,
+        CREATURE_BOUNDS.top,
+        CREATURE_BOUNDS.bottom,
+      );
+      creature.heading = normalized({ x: -fromHome.x, y: -fromHome.y }, creature.heading);
+    }
+  }
+  const nextPosition = { x: nextX, y: nextY };
+  const coveringRock = coveringRockAtPosition(state.rocks, nextPosition);
+  if (coveringRock) {
+    const fromRock = normalized({
+      x: nextPosition.x - coveringRock.position.x,
+      y: nextPosition.y - coveringRock.position.y,
+    }, creature.heading);
+    creature.position = movePositionOutsideRockCovers(
+      nextPosition,
+      state.rocks,
+      creature.radius + 0.04,
+    );
+    creature.heading = fromRock;
+    return;
+  }
+  creature.position = nextPosition;
 }
 
 function clearCreatureBaitBehavior(creature) {
@@ -735,7 +1054,7 @@ function clearCreatureBaitBehavior(creature) {
 }
 
 function updateCreatureBaitBehavior(state, creature, elapsedSeconds) {
-  if (!ACTIVE_CREATURE_STATUSES.has(creature.status)) {
+  if (!BAITABLE_CREATURE_STATUSES.has(creature.status)) {
     creature.baitTargetId = null;
     return false;
   }
@@ -743,6 +1062,14 @@ function updateCreatureBaitBehavior(state, creature, elapsedSeconds) {
   if (!settledBait || !baitMatchesCreature(settledBait.definition, creature)) {
     clearCreatureBaitBehavior(creature);
     return false;
+  }
+
+  if (coveringRockAtPosition(state.rocks, creature.position)) {
+    creature.position = movePositionOutsideRockCovers(
+      creature.position,
+      state.rocks,
+      creature.radius * 0.25,
+    );
   }
 
   const offset = {
@@ -777,7 +1104,7 @@ function updateCreatureBaitBehavior(state, creature, elapsedSeconds) {
     approachSpeed * elapsedSeconds,
     Math.max(0, distance - state.settings.baitFeedingRadius),
   );
-  creature.position = {
+  const proposedPosition = {
     x: clamp(
       creature.position.x + towardBait.x * travel,
       CREATURE_BOUNDS.left,
@@ -789,6 +1116,11 @@ function updateCreatureBaitBehavior(state, creature, elapsedSeconds) {
       CREATURE_BOUNDS.bottom,
     ),
   };
+  creature.position = movePositionOutsideRockCovers(
+    proposedPosition,
+    state.rocks,
+    creature.radius * 0.25,
+  );
   if (
     Math.hypot(
       creature.position.x - settledBait.activeBait.position.x,
@@ -796,6 +1128,135 @@ function updateCreatureBaitBehavior(state, creature, elapsedSeconds) {
     ) <= state.settings.baitFeedingRadius + EPSILON
   ) creature.status = "feeding";
   return true;
+}
+
+function hideCreatureAtRock(state, creature, rock) {
+  const cursor = { state: state.rngState };
+  const hideDurationMs = MIN_HIDE_DURATION_MS + Math.round(
+    drawRandom(cursor) * (MAX_HIDE_DURATION_MS - MIN_HIDE_DURATION_MS),
+  );
+  const shelterDirection = normalized({
+    x: creature.position.x - rock.position.x,
+    y: creature.position.y - rock.position.y,
+  }, creature.heading);
+  creature.position = {
+    x: rock.position.x + shelterDirection.x * rock.shelterRadius * 0.34,
+    y: rock.position.y + shelterDirection.y * rock.shelterRadius * 0.34,
+  };
+  creature.status = "hidden";
+  creature.alert = 0;
+  creature.seekingRockId = null;
+  creature.hiddenByRockId = rock.id;
+  creature.hideRemainingMs = hideDurationMs;
+  creature.baitTargetId = null;
+  state.rngState = cursor.state;
+  state.lastEvent = {
+    type: "creature-hidden",
+    creatureId: creature.id,
+    speciesId: creature.speciesId,
+    rockId: rock.id,
+    atMs: state.simulationTimeMs,
+  };
+}
+
+function moveSeekingCoverCreature(state, creature, elapsedSeconds) {
+  const rock = rockById(state.rocks, creature.seekingRockId)
+    ?? rockById(state.rocks, creature.homeRockId)
+    ?? nearestRock(state.rocks, creature.position);
+  if (!rock) {
+    creature.status = "fleeing";
+    creature.seekingRockId = null;
+    return;
+  }
+  creature.seekingRockId = rock.id;
+  if (positionInsideRockCover(rock, creature.position)) {
+    hideCreatureAtRock(state, creature, rock);
+    return;
+  }
+  const towardRock = {
+    x: rock.position.x - creature.position.x,
+    y: rock.position.y - creature.position.y,
+  };
+  const distance = magnitude(towardRock);
+  creature.heading = normalized(towardRock, creature.heading);
+  const coverSpeed = Math.max(1.2, creature.speed * 2.35);
+  const travel = Math.min(
+    coverSpeed * elapsedSeconds,
+    Math.max(0, distance - rock.shelterRadius * 0.72),
+  );
+  const nextPosition = {
+    x: clamp(
+      creature.position.x + creature.heading.x * travel,
+      CREATURE_BOUNDS.left,
+      CREATURE_BOUNDS.right,
+    ),
+    y: clamp(
+      creature.position.y + creature.heading.y * travel,
+      CREATURE_BOUNDS.top,
+      CREATURE_BOUNDS.bottom,
+    ),
+  };
+  creature.position = nextPosition;
+  if (positionInsideRockCover(rock, nextPosition)) {
+    hideCreatureAtRock(state, creature, rock);
+  }
+}
+
+function playerIsStill(state) {
+  return magnitude(state.player.intent) <= EPSILON
+    && magnitude(state.player.velocity) <= EPSILON;
+}
+
+function updateHiddenCreature(state, creature, elapsedMs) {
+  const rock = rockById(state.rocks, creature.hiddenByRockId);
+  if (!rock) {
+    creature.status = "wandering";
+    creature.hiddenByRockId = null;
+    creature.hideRemainingMs = 0;
+    return;
+  }
+  creature.hideRemainingMs = Math.max(0, creature.hideRemainingMs - elapsedMs);
+  if (creature.hideRemainingMs > 0 || !playerIsStill(state)) return;
+  const playerDistance = Math.hypot(
+    state.player.position.x - rock.position.x,
+    state.player.position.y - rock.position.y,
+  );
+  if (playerDistance <= rock.shelterRadius + 1.05) return;
+
+  const awayFromPlayer = normalized({
+    x: rock.position.x - state.player.position.x,
+    y: rock.position.y - state.player.position.y,
+  }, creature.heading);
+  const emergenceDistance = rockCoverBoundaryDistance(
+    rock,
+    awayFromPlayer,
+    creature.radius + 0.12,
+  );
+  creature.position = {
+    x: clamp(
+      rock.position.x + awayFromPlayer.x * emergenceDistance,
+      CREATURE_BOUNDS.left,
+      CREATURE_BOUNDS.right,
+    ),
+    y: clamp(
+      rock.position.y + awayFromPlayer.y * emergenceDistance,
+      CREATURE_BOUNDS.top,
+      CREATURE_BOUNDS.bottom,
+    ),
+  };
+  creature.heading = awayFromPlayer;
+  creature.status = "wandering";
+  creature.alert = 0;
+  creature.hiddenByRockId = null;
+  creature.hideRemainingMs = 0;
+  creature.turnRemainingMs = 650;
+  state.lastEvent = {
+    type: "creature-emerged",
+    creatureId: creature.id,
+    speciesId: creature.speciesId,
+    rockId: rock.id,
+    atMs: state.simulationTimeMs,
+  };
 }
 
 function moveFleeingCreature(state, creature, elapsedSeconds) {
@@ -825,7 +1286,15 @@ function moveFleeingCreature(state, creature, elapsedSeconds) {
 function updateCreatures(state, elapsedMs) {
   const elapsedSeconds = elapsedMs / 1000;
   for (const creature of state.creatures) {
+    if (creature.status === "hidden") {
+      updateHiddenCreature(state, creature, elapsedMs);
+      continue;
+    }
     updateCreatureAlert(state, creature, elapsedSeconds);
+    if (creature.status === "seeking-cover") {
+      moveSeekingCoverCreature(state, creature, elapsedSeconds);
+      continue;
+    }
     if (updateCreatureBaitBehavior(state, creature, elapsedSeconds)) continue;
     if (creature.status === "wandering") {
       moveWanderingCreature(state, creature, elapsedMs, elapsedSeconds);
@@ -835,9 +1304,134 @@ function updateCreatures(state, elapsedMs) {
   }
 }
 
+function randomArrivalGeometry(cursor) {
+  const side = Math.min(3, Math.floor(drawRandom(cursor) * 4));
+  const along = drawRandom(cursor);
+  const headingJitter = (drawRandom(cursor) - 0.5) * 0.55;
+  if (side === 0) {
+    return {
+      position: {
+        x: CREATURE_BOUNDS.left + along * (CREATURE_BOUNDS.right - CREATURE_BOUNDS.left),
+        y: CREATURE_BOUNDS.top,
+      },
+      heading: normalized({ x: headingJitter, y: 1 }),
+    };
+  }
+  if (side === 1) {
+    return {
+      position: {
+        x: CREATURE_BOUNDS.right,
+        y: CREATURE_BOUNDS.top + along * (CREATURE_BOUNDS.bottom - CREATURE_BOUNDS.top),
+      },
+      heading: normalized({ x: -1, y: headingJitter }),
+    };
+  }
+  if (side === 2) {
+    return {
+      position: {
+        x: CREATURE_BOUNDS.left + along * (CREATURE_BOUNDS.right - CREATURE_BOUNDS.left),
+        y: CREATURE_BOUNDS.bottom,
+      },
+      heading: normalized({ x: headingJitter, y: -1 }),
+    };
+  }
+  return {
+    position: {
+      x: CREATURE_BOUNDS.left,
+      y: CREATURE_BOUNDS.top + along * (CREATURE_BOUNDS.bottom - CREATURE_BOUNDS.top),
+    },
+    heading: normalized({ x: 1, y: headingJitter }),
+  };
+}
+
+function activateCreatureSlot(state, creature) {
+  const cursor = { state: state.rngState };
+  const retainedSpecies = creature.status === "waiting"
+    ? ELVERSON_REEF_CATCHES.find(({ id }) => id === creature.speciesId) ?? null
+    : null;
+  const species = retainedSpecies ?? weightedCreature(drawRandom(cursor));
+  const traits = creatureTraits(species);
+  const homeRock = traits.rockAffine
+    ? rockById(state.rocks, creature.homeRockId) ?? randomRock(cursor, state.rocks)
+    : null;
+  const arrivalGeometry = homeRock
+    ? {
+        position: randomPositionNearRock(
+          cursor,
+          homeRock,
+          traits.homeRangeScale,
+          traits.radius,
+        ),
+        heading: null,
+      }
+    : randomArrivalGeometry(cursor);
+  const heading = arrivalGeometry.heading ?? normalized({
+    x: homeRock.position.x - arrivalGeometry.position.x,
+    y: homeRock.position.y - arrivalGeometry.position.y,
+  });
+
+  creature.speciesId = species.id;
+  creature.cardId = species.cardId;
+  creature.category = species.category;
+  creature.rarity = species.rarity;
+  creature.position = arrivalGeometry.position;
+  creature.heading = heading;
+  creature.speed = creatureSpeed(species, state.settings);
+  creature.radius = traits.radius;
+  creature.visualScale = traits.visualScale;
+  creature.rockAffine = traits.rockAffine;
+  creature.homeRangeScale = traits.homeRangeScale;
+  creature.homeRockId = homeRock?.id ?? null;
+  creature.alert = 0;
+  creature.status = "wandering";
+  creature.spawnedAtMs = state.simulationTimeMs;
+  creature.baitTargetId = null;
+  creature.seekingRockId = null;
+  creature.hiddenByRockId = null;
+  creature.hideRemainingMs = 0;
+  creature.turnRemainingMs = 550 + Math.round(drawRandom(cursor) * 750);
+  state.rngState = cursor.state;
+}
+
+function updatePopulation(state, elapsedMs, calmAtStepStart) {
+  if (!calmAtStepStart) {
+    state.population.stillnessMs = 0;
+    return;
+  }
+  state.population.stillnessMs += elapsedMs;
+  if (state.population.stillnessMs + EPSILON < state.population.nextArrivalMs) return;
+
+  const slot = state.creatures.find(({ status }) => status === "waiting")
+    ?? state.creatures.find(({ status }) => status === "escaped");
+  if (!slot) {
+    state.population.stillnessMs = state.population.nextArrivalMs;
+    return;
+  }
+
+  activateCreatureSlot(state, slot);
+  state.population.arrivalCount += 1;
+  state.population.stillnessMs = 0;
+  const cursor = { state: state.rngState };
+  state.population.nextArrivalMs = MIN_LATER_ARRIVAL_MS + Math.round(
+    drawRandom(cursor) * (MAX_LATER_ARRIVAL_MS - MIN_LATER_ARRIVAL_MS),
+  );
+  state.rngState = cursor.state;
+  state.lastEvent = {
+    type: "creature-arrived",
+    creatureId: slot.id,
+    speciesId: slot.speciesId,
+    position: copyPoint(slot.position),
+    arrivalCount: state.population.arrivalCount,
+    atMs: state.simulationTimeMs,
+  };
+}
+
 function finishCatch(state, creature) {
   creature.status = "caught";
   creature.baitTargetId = null;
+  creature.seekingRockId = null;
+  creature.hiddenByRockId = null;
+  creature.hideRemainingMs = 0;
   state.phase = HAND_NET_PHASES.CAUGHT;
   state.player.intent = { x: 0, y: 0 };
   state.player.velocity = { x: 0, y: 0 };
@@ -854,31 +1448,13 @@ function finishCatch(state, creature) {
   state.lastEvent = { ...state.outcome };
 }
 
-function finishEscapeIfNeeded(state) {
-  if (state.net.scoopRemainingMs > 0 || state.net.contactedCreatureId) return;
-  if (state.creatures.some(({ status }) => (
-    ACTIVE_CREATURE_STATUSES.has(status) || status === "fleeing"
-  ))) return;
-  const speciesIds = state.creatures.map(({ speciesId }) => speciesId);
-  state.phase = HAND_NET_PHASES.ESCAPED;
-  state.player.intent = { x: 0, y: 0 };
-  state.player.velocity = { x: 0, y: 0 };
-  state.net.scoopRemainingMs = 0;
-  state.outcome = {
-    type: "escaped",
-    speciesIds,
-    atMs: state.simulationTimeMs,
-  };
-  state.lastEvent = { ...state.outcome, speciesIds: speciesIds.slice() };
-}
-
 function finishMiss(state) {
   state.net.scoopRemainingMs = 0;
   state.net.cooldownRemainingMs = state.settings.cooldownMs;
   state.net.contactedCreatureId = null;
   state.missCount += 1;
   for (const creature of state.creatures) {
-    if (!ACTIVE_CREATURE_STATUSES.has(creature.status) || creatureDistanceToNet(state, creature) > 2.25) continue;
+    if (!ALERTABLE_CREATURE_STATUSES.has(creature.status) || creatureDistanceToNet(state, creature) > 2.25) continue;
     creature.alert = Math.min(1, creature.alert + state.settings.missAlert);
     if (creature.alert >= state.settings.alertThreshold) makeCreatureFlee(state, creature);
   }
@@ -1072,12 +1648,14 @@ function updateNet(state, elapsedMs) {
 
   if (state.presentation.scoopHitboxActive) {
     const caught = state.creatures.find((creature) => (
-      ACTIVE_CREATURE_STATUSES.has(creature.status)
+      CATCHABLE_CREATURE_STATUSES.has(creature.status)
+      && !coveringRockAtPosition(state.rocks, creature.position)
       && creatureDistanceToNet(state, creature) <= effectiveCatchRadius(state, creature)
     ));
     if (caught) {
       caught.status = "caught";
       caught.baitTargetId = null;
+      caught.seekingRockId = null;
       state.net.contactedCreatureId = caught.id;
       state.lastEvent = {
         type: "creature-netted",
@@ -1098,6 +1676,9 @@ function updateNet(state, elapsedMs) {
 
 function simulationStep(state) {
   const elapsedSeconds = HAND_NET_SIMULATION_STEP_MS / 1000;
+  const calmAtStepStart = playerIsStill(state)
+    && state.net.scoopRemainingMs <= 0
+    && !state.bait.placement;
   state.simulationTimeMs += HAND_NET_SIMULATION_STEP_MS;
   state.tickCount += 1;
   updatePlayer(state, elapsedSeconds);
@@ -1105,7 +1686,9 @@ function simulationStep(state) {
   updateBait(state, HAND_NET_SIMULATION_STEP_MS);
   updateCreatures(state, HAND_NET_SIMULATION_STEP_MS);
   updateNet(state, HAND_NET_SIMULATION_STEP_MS);
-  if (state.phase === HAND_NET_PHASES.PLAYING) finishEscapeIfNeeded(state);
+  if (state.phase === HAND_NET_PHASES.PLAYING) {
+    updatePopulation(state, HAND_NET_SIMULATION_STEP_MS, calmAtStepStart);
+  }
 }
 
 /** Advances the simulation in fixed deterministic steps without mutating input. */

@@ -61,7 +61,8 @@ function seedFromIdentity(identity) {
 function createAttempt({ seed, tutorial, reducedMotion }) {
   return createHandNetState({
     seed,
-    creatureCount: tutorial ? 4 : 6,
+    creatureCount: tutorial ? 2 : 3,
+    populationCap: tutorial ? 5 : 7,
     requiredCreatureId: tutorial ? "white-grunt" : null,
     reducedMotion,
   });
@@ -188,15 +189,23 @@ function handNetStatus(state, tutorial, required, catchError) {
       ? ELVERSON_BAITS_BY_ID[state.bait.placement.baitId]
       : null;
   if (state.bait?.placement) return `You lower ${baitDefinition?.name ?? "the bait pouch"} into the water with the hand net.`;
+  const recentEvent = state.lastEvent
+    && state.simulationTimeMs - state.lastEvent.atMs < 2_200
+    ? state.lastEvent
+    : null;
+  if (recentEvent?.type === "creature-arrived") return "The quiet water stirs—a new creature has ventured out.";
+  if (recentEvent?.type === "creature-hidden") return "That fish tucked behind a rock. It is safe from the net until it comes back out.";
   const feedingCount = state.creatures.filter(({ status }) => status === "feeding").length;
   if (feedingCount > 0) return `${feedingCount} ${feedingCount === 1 ? "creature is" : "creatures are"} eating ${baitDefinition?.name ?? "the bait"}. Their catch area is larger while they feed.`;
   if (state.bait?.active) return `${baitDefinition?.name ?? "The bait"} is drifting. Matching creatures are following the scent.`;
   if (state.lastEvent?.type === "creature-fled") return "That one startled. Stop moving and let the others settle before approaching again.";
   if (state.lastEvent?.type === "scoop-missed") return "The net missed. Pause, watch the animal's path, then line up another gentle scoop.";
   if (state.net.scoopRemainingMs > 0) return "Scoop!";
+  const presentCount = state.creatures.filter(({ status }) => !["waiting", "escaped", "caught"].includes(status)).length;
+  if (presentCount === 0) return "The pool is quiet. Stay still for a moment and the reef life will return.";
   return tutorial
-    ? "Move slowly through the shallows. Face a nearby animal, then scoop without chasing it."
-    : "Watch each animal's path, approach gently, and scoop only when the net is close.";
+    ? "Move slowly through the shallows. Stay still to draw reef life out, then scoop without chasing it."
+    : "Watch each animal's path and the rocks it trusts. Stay still to let more creatures venture out.";
 }
 
 function encyclopediaSnippet(text, fallback) {
@@ -700,7 +709,7 @@ export default function AdventureHandNetModal({
           tabIndex={0}
           inert={baitMenuOpen}
           aria-hidden={baitMenuOpen ? "true" : undefined}
-          aria-label="Shallow-water hand-net area. Use arrow keys or WASD to move. Press Enter or Space, or click or tap the water, to catch. Open the bait bag from the controls to attract fish."
+          aria-label="Shallow-water hand-net area with reef-rock shelters. Use arrow keys or WASD to move. Stay still to let new creatures venture out. Press Enter or Space, or click or tap the water, to catch. Fish hidden behind rocks are safe from the net. Open the bait bag from the controls to attract fish."
           onClick={handleWaterScoop}
         >
           <h2 id="hand-net-title" className={styles.srOnly}>
@@ -723,32 +732,52 @@ export default function AdventureHandNetModal({
             ><i /><b /><em /></span>
           ) : null}
           {state.creatures.map((creature) => {
-            if (creature.status === "escaped" || creature.status === "caught") return null;
+            if (["waiting", "escaped", "caught"].includes(creature.status)) return null;
             const sprite = atlasPositions[creature.speciesId];
             const creatureName = cardsById[creature.cardId]?.name ?? creature.speciesId;
             return (
               <span
                 key={creature.id}
                 ref={creatureNodeRef(creature.id)}
-                className={`${styles.handNetCreature} ${creature.status === "fleeing" ? styles.handNetCreatureFleeing : ""} ${creature.status === "attracted" ? styles.handNetCreatureAttracted : ""} ${creature.status === "feeding" ? styles.handNetCreatureFeeding : ""} ${creature.category === "invertebrate" ? styles.handNetCreatureInvertebrate : ""}`}
+                className={`${styles.handNetCreature} ${creature.spawnedAtMs > 0 && state.simulationTimeMs - creature.spawnedAtMs < 900 ? styles.handNetCreatureArriving : ""} ${creature.status === "fleeing" ? styles.handNetCreatureFleeing : ""} ${creature.status === "seeking-cover" ? styles.handNetCreatureSeekingCover : ""} ${creature.status === "hidden" ? styles.handNetCreatureHidden : ""} ${creature.status === "attracted" ? styles.handNetCreatureAttracted : ""} ${creature.status === "feeding" ? styles.handNetCreatureFeeding : ""} ${creature.category === "invertebrate" ? styles.handNetCreatureInvertebrate : ""}`}
                 style={{
                   "--hand-net-facing": creature.heading.x < 0 ? -1 : 1,
+                  "--hand-net-creature-scale": creature.visualScale ?? 1,
                   "--hand-net-atlas-x": `${sprite.x}%`,
                   "--hand-net-atlas-y": `${sprite.y}%`,
                   "--hand-net-alert": creature.alert,
                   backgroundImage: `url("${ELVERSON_REEF_CREATURE_ATLAS_PATH}")`,
                 }}
                 data-hand-net-creature-status={creature.status}
-                aria-label={creature.status === "feeding"
-                  ? `${creatureName}, eating bait and easier to catch`
-                  : creature.status === "attracted"
-                    ? `${creatureName}, following the bait scent`
-                    : `${creatureName}, ${creature.status}${creature.alert > 0.35 ? ", becoming alert" : ""}`}
+                data-hand-net-creature-scale={creature.visualScale ?? 1}
+                aria-label={creature.status === "hidden"
+                  ? `${creatureName}, hidden behind a rock and safe from the net`
+                  : creature.status === "seeking-cover"
+                    ? `${creatureName}, darting toward a rock shelter`
+                    : creature.status === "feeding"
+                      ? `${creatureName}, eating bait and easier to catch`
+                      : creature.status === "attracted"
+                        ? `${creatureName}, following the bait scent`
+                        : `${creatureName}, ${creature.status}${creature.alert > 0.35 ? ", becoming alert" : ""}`}
               >
                 {creature.alert > 0.12 ? <i className={styles.handNetAlert} aria-hidden="true" /> : null}
               </span>
             );
           })}
+          {state.rocks.map((rock) => (
+            <span
+              key={rock.id}
+              className={styles.handNetRockCover}
+              data-hand-net-rock={rock.id}
+              style={{
+                "--hand-net-rock-x": `${(rock.position.x / state.arena.width) * 100}%`,
+                "--hand-net-rock-y": `${(rock.position.y / state.arena.height) * 100}%`,
+                "--hand-net-rock-radius-x": `${(rock.coverRadius.x / state.arena.width) * 100}%`,
+                "--hand-net-rock-radius-y": `${(rock.coverRadius.y / state.arena.height) * 100}%`,
+              }}
+              aria-hidden="true"
+            />
+          ))}
           <span className={styles.handNetSurfaceVeil} data-hand-net-effect="surface-veil" aria-hidden="true" />
           <span
             ref={playerElementRef}
