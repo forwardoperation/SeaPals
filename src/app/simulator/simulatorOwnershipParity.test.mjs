@@ -72,7 +72,7 @@ test("own-reef invader removal shares Blue Crab math without bypassing Toxic or 
   assert.ok((playerAttack.match(/resolveBlueCrabRecycle\(/g) ?? []).length >= 2, "ordinary and invasive defender paths should share the resolver");
 });
 
-test("successful attacks send an invasive Lionfish to its original owner's Lost Zone in either direction", () => {
+test("successful attacks send an invasive Lionfish to its original owner's configured discard destination in either direction", () => {
   const opponentOwnedInvader = sourceBetween(
     "if (targetEntry.targetsOwnInvader)",
     "const resilienceTriggered",

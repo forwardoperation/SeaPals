@@ -155,6 +155,15 @@ function isOceanic(card) {
   return card?.tags?.includes("oceanic") || card?.subtype === "oceanic";
 }
 
+export function getRequiredOceanicPredatorCount(card) {
+  const rules = [...(card?.playRequirements ?? []), ...(card?.specialRules ?? [])]
+    .map((rule) => typeof rule === "string" ? rule : rule?.text ?? "");
+  const requirement = rules
+    .map((rule) => rule.match(/(?:requires?|only be played if)[^.]*?(\d+)\s+oceanic predators?\b/i))
+    .find(Boolean);
+  return Math.max(0, Number(requirement?.[1] ?? 0));
+}
+
 function makeSacrificeChoice(kind, candidates) {
   const instanceIds = candidates.map((candidate) => candidate.instanceId);
   return {

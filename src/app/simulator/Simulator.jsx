@@ -11,8 +11,8 @@ import { getPlayableDeckById, prebuiltDecks } from "@/data/tournaments/prebuiltD
 import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveBlueCrabRecycle, resolveConditionalDiceDamage, resolveOpposedRoll, rollDie } from "./gameRules.mjs";
 import { createHabitatInstance, evaluateHabitatComposition, getHabitatRequirementError, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
 import { createHandLimitChoice, resolveHandLimitChoice, selectAutomatedHandLimitDiscards } from "./handLimitRules.mjs";
-import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstance, getOceanicApexSacrificeChoices, getPersonalDeckType, getSpecialPlacementHostTags, moveSlottedCreatureBetweenFoundations, placeCardInSpecialHost, removeCreatureInstances, resolveDestructionRecoveryWaves } from "./zoneRules.mjs";
-import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingAlarmTurn, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, endFlashingAlarmTurn, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getFlashingAlarmAttackBonus, getRemainingAttackTargets, getRovLightsAttackBonus, hasDefenseAdvantage, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume, triggerFlashingAlarm } from "./combatRules.mjs";
+import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstance, getOceanicApexSacrificeChoices, getPersonalDeckType, getRequiredOceanicPredatorCount, getSpecialPlacementHostTags, moveSlottedCreatureBetweenFoundations, placeCardInSpecialHost, removeCreatureInstances, resolveDestructionRecoveryWaves } from "./zoneRules.mjs";
+import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingAlarmTurn, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, endFlashingAlarmTurn, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getFlashingAlarmAttackBonus, getNightVisionAttackBonus, getRemainingAttackTargets, getRovLightsAttackBonus, hasDefenseAdvantage, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume, triggerFlashingAlarm } from "./combatRules.mjs";
 import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
 import { createSchoolDensityBucketState, getEcosystemSchoolDensityCommitted } from "./schoolDensityRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
@@ -41,6 +41,12 @@ import {
   getOpeningCoinFlipRevealDelay,
   resolveOpeningCoinFlip,
 } from "./openingCoinFlip.mjs";
+import {
+  collectHostTurnLionfishInvaders,
+  getLionfishInvaderTargetController,
+  resolveLionfishInvaderCoin,
+  selectLionfishInvaderTarget,
+} from "./lionfishInvaderRules.mjs";
 import { createStoryDuelResult } from "./storyModeContract.mjs";
 import { expandResolvedStoryDeckCards, resolveStoryPlayerDeckSnapshot } from "./storyDeckRuntime.mjs";
 import {
@@ -635,6 +641,581 @@ function ProfessorCoachOverlay({ help, children }) {
 
 function destroyedCardGoesToLostZone(card) {
   return card?.destroyedDestination === "lost-zone";
+}
+
+function getLionfishStateReefEntries(state, controller) {
+  const instances = state?.reefCreatureInstances;
+  if (Array.isArray(instances) && (instances.length || !(state?.reefCreatures ?? []).length)) {
+    return instances;
+  }
+  return (state?.reefCreatures ?? []).map((cardId, index) => ({
+    cardId,
+    instanceId: `legacy-${controller}-reef-${index}-${cardId}`,
+  }));
+}
+
+function getLionfishStateOrphans(state, controller) {
+  return controller === "player"
+    ? state?.orphanCreatureInstances ?? []
+    : state?.orphanCreatures ?? [];
+}
+
+function withLionfishStateOrphans(state, controller, orphanEntries) {
+  return controller === "player"
+    ? { ...state, orphanCreatureInstances: orphanEntries }
+    : { ...state, orphanCreatures: orphanEntries };
+}
+
+function cloneLionfishTurnControllerState(state, controller) {
+  const reefCreatureInstances = getLionfishStateReefEntries(state, controller).map((entry) => ({
+    ...entry,
+    hostedCardIds: [...(entry.hostedCardIds ?? [])],
+  }));
+  const orphanEntries = getLionfishStateOrphans(state, controller).map((entry) => ({
+    ...entry,
+    hostedCardIds: [...(entry.hostedCardIds ?? [])],
+    hostedSchoolDensityRequirements: [...(entry.hostedSchoolDensityRequirements ?? [])],
+  }));
+  let next = {
+    ...state,
+    corals: (state?.corals ?? []).map((coral) => ({
+      ...coral,
+      slots: (coral.slots ?? []).map((slot) => ({
+        ...slot,
+        hostedCardIds: [...(slot.hostedCardIds ?? [])],
+        hostedSchoolDensityRequirements: [...(slot.hostedSchoolDensityRequirements ?? [])],
+      })),
+    })),
+    reefCreatureInstances,
+    discardPile: [...(state?.discardPile ?? [])],
+    lostZone: [...(state?.lostZone ?? [])],
+  };
+  if (controller === "opponent") {
+    next = { ...next, reefCreatures: reefCreatureInstances.map((entry) => entry.cardId) };
+  }
+  return withLionfishStateOrphans(next, controller, orphanEntries);
+}
+
+function getLionfishSlotInstanceId(coral, slot) {
+  return slot?.cardInstanceId
+    ?? slot?.instanceId
+    ?? `${coral?.id}:${slot?.id}:${slot?.cardId}`;
+}
+
+function getLionfishOrphanInstanceId(entry, orphanIndex) {
+  return entry?.instanceId
+    ?? entry?.cardInstanceId
+    ?? `orphan:${orphanIndex}:${entry?.cardId}`;
+}
+
+function getLionfishOwnedFishTargets(states, targetController) {
+  const targets = [];
+  ["player", "opponent"].forEach((physicalController) => {
+    const state = states[physicalController];
+    const habitatIds = state?.habitats
+      ?? (state?.habitatInstances ?? []).map((entry) => entry.cardId);
+    const addTarget = (target) => {
+      const card = cardsById[target.cardId];
+      if (
+        target.controller !== targetController
+        || card?.category !== CardCategory.FISH
+        || cardIsHiddenByAbyss(card, habitatIds)
+      ) return;
+      targets.push({ ...target, card, category: card.category });
+    };
+
+    (state?.corals ?? []).forEach((coral) => {
+      const foundationCard = cardsById[coral.cardId];
+      if (isCreatureSchool(foundationCard)) {
+        addTarget({
+          physicalController,
+          location: "foundation",
+          coralId: coral.id,
+          instanceId: `foundation:${coral.id}`,
+          cardId: coral.cardId,
+          controller: physicalController,
+        });
+      }
+      (coral.slots ?? []).forEach((slot) => {
+        const controller = getReefCardOwner(slot, physicalController);
+        if (slot.cardId) {
+          addTarget({
+            physicalController,
+            location: "slot",
+            coralId: coral.id,
+            slotId: slot.id,
+            instanceId: getLionfishSlotInstanceId(coral, slot),
+            cardId: slot.cardId,
+            controller,
+          });
+        }
+        (slot.hostedCardIds ?? []).forEach((cardId, hostedIndex) => {
+          if (!cardId) return;
+          addTarget({
+            physicalController,
+            location: "hosted-slot",
+            coralId: coral.id,
+            slotId: slot.id,
+            hostedIndex,
+            instanceId: `hosted:${slot.id}:${hostedIndex}`,
+            cardId,
+            controller,
+          });
+        });
+      });
+    });
+
+    getLionfishStateReefEntries(state, physicalController).forEach((entry, reefIndex) => {
+      addTarget({
+        physicalController,
+        location: "reef",
+        reefIndex,
+        instanceId: entry.instanceId ?? `legacy-${physicalController}-reef-${reefIndex}-${entry.cardId}`,
+        cardId: entry.cardId,
+        controller: getReefCardOwner(entry, physicalController),
+      });
+    });
+
+    getLionfishStateOrphans(state, physicalController).forEach((entry, orphanIndex) => {
+      const controller = getReefCardOwner(entry, physicalController);
+      const orphanInstanceId = getLionfishOrphanInstanceId(entry, orphanIndex);
+      addTarget({
+        physicalController,
+        location: "orphan",
+        orphanIndex,
+        instanceId: orphanInstanceId,
+        cardId: entry.cardId,
+        controller,
+      });
+      (entry.hostedCardIds ?? []).forEach((cardId, hostedIndex) => {
+        if (!cardId) return;
+        addTarget({
+          physicalController,
+          location: "hosted-orphan",
+          orphanIndex,
+          orphanInstanceId,
+          hostedIndex,
+          instanceId: `orphan-hosted:${orphanInstanceId}:${hostedIndex}`,
+          cardId,
+          controller,
+        });
+      });
+    });
+  });
+  return targets;
+}
+
+function emptyLionfishOccupiedSlot(slot) {
+  const {
+    controller: _controller,
+    invasiveOwner: _invasiveOwner,
+    ...emptySlot
+  } = slot;
+  return {
+    ...emptySlot,
+    cardId: null,
+    cardInstanceId: null,
+    hostedCardIds: [],
+    hostedSchoolDensityRequirements: [],
+  };
+}
+
+function removeLionfishBoardEntry(states, target) {
+  const physicalController = target?.physicalController;
+  const state = states[physicalController];
+  if (!state || !target?.instanceId) return { removed: false, hostedCardIds: [] };
+  let removed = false;
+  let hostedCardIds = [];
+
+  if (target.location === "foundation") {
+    const foundation = state.corals.find((coral) => coral.id === target.coralId && coral.cardId === target.cardId);
+    if (!foundation) return { removed: false, hostedCardIds };
+    const remainingCorals = state.corals.filter((coral) => coral.id !== target.coralId);
+    const orphanEntries = [
+      ...getLionfishStateOrphans(state, physicalController),
+      ...getOrphanEntriesFromFoundation(foundation),
+    ];
+    const redistributed = redistributeOrphanCreatures(remainingCorals, orphanEntries);
+    states[physicalController] = withLionfishStateOrphans(
+      { ...state, corals: redistributed.corals },
+      physicalController,
+      redistributed.orphans,
+    );
+    return { removed: true, hostedCardIds };
+  }
+
+  if (target.location === "slot" || target.location === "hosted-slot") {
+    const corals = state.corals.map((coral) => {
+      if (coral.id !== target.coralId) return coral;
+      return {
+        ...coral,
+        slots: coral.slots.map((slot) => {
+          if (slot.id !== target.slotId) return slot;
+          if (target.location === "hosted-slot") {
+            if (slot.hostedCardIds?.[target.hostedIndex] !== target.cardId) return slot;
+            removed = true;
+            return {
+              ...slot,
+              hostedCardIds: removeHostedCardAtIndex(slot.hostedCardIds, target.hostedIndex),
+              hostedSchoolDensityRequirements: (slot.hostedSchoolDensityRequirements ?? [])
+                .map((requirement, index) => index === target.hostedIndex ? null : requirement),
+            };
+          }
+          if (
+            slot.cardId !== target.cardId
+            || getLionfishSlotInstanceId(coral, slot) !== target.instanceId
+          ) return slot;
+          removed = true;
+          hostedCardIds = (slot.hostedCardIds ?? []).filter(Boolean);
+          return emptyLionfishOccupiedSlot(slot);
+        }),
+      };
+    });
+    states[physicalController] = { ...state, corals };
+    return { removed, hostedCardIds };
+  }
+
+  if (target.location === "reef") {
+    const reefCreatureInstances = getLionfishStateReefEntries(state, physicalController)
+      .filter((entry, index) => {
+        const instanceId = entry.instanceId ?? `legacy-${physicalController}-reef-${index}-${entry.cardId}`;
+        const matches = instanceId === target.instanceId && entry.cardId === target.cardId;
+        if (matches) removed = true;
+        return !matches;
+      });
+    states[physicalController] = {
+      ...state,
+      reefCreatureInstances,
+      ...(physicalController === "opponent"
+        ? { reefCreatures: reefCreatureInstances.map((entry) => entry.cardId) }
+        : {}),
+    };
+    return { removed, hostedCardIds };
+  }
+
+  const orphanEntries = getLionfishStateOrphans(state, physicalController);
+  let nextOrphans = orphanEntries;
+  if (target.location === "hosted-orphan") {
+    nextOrphans = orphanEntries.map((entry, orphanIndex) => {
+      const orphanInstanceId = getLionfishOrphanInstanceId(entry, orphanIndex);
+      if (
+        orphanInstanceId !== target.orphanInstanceId
+        || entry.hostedCardIds?.[target.hostedIndex] !== target.cardId
+      ) return entry;
+      removed = true;
+      return {
+        ...entry,
+        hostedCardIds: removeHostedCardAtIndex(entry.hostedCardIds, target.hostedIndex),
+        hostedSchoolDensityRequirements: (entry.hostedSchoolDensityRequirements ?? [])
+          .map((requirement, index) => index === target.hostedIndex ? null : requirement),
+      };
+    });
+  } else if (target.location === "orphan") {
+    const released = [];
+    nextOrphans = orphanEntries.filter((entry, orphanIndex) => {
+      const instanceId = getLionfishOrphanInstanceId(entry, orphanIndex);
+      const matches = instanceId === target.instanceId && entry.cardId === target.cardId;
+      if (!matches) return true;
+      removed = true;
+      (entry.hostedCardIds ?? []).forEach((cardId, hostedIndex) => {
+        if (!cardId) return;
+        released.push(createCreatureInstance(
+          cardId,
+          `${instanceId}-released-${hostedIndex}-${cardId}`,
+          target.controller !== physicalController
+            ? { controller: target.controller, invasiveOwner: target.controller }
+            : {},
+        ));
+      });
+      return false;
+    });
+    nextOrphans = [...nextOrphans, ...released];
+  }
+  states[physicalController] = withLionfishStateOrphans(state, physicalController, nextOrphans);
+  return { removed, hostedCardIds };
+}
+
+function routeLionfishDestroyedCard(states, owner, cardId, { forceDiscard = false } = {}) {
+  const state = states[owner];
+  if (!state || !cardId) return;
+  const goesToLostZone = !forceDiscard && destroyedCardGoesToLostZone(cardsById[cardId]);
+  states[owner] = {
+    ...state,
+    discardPile: goesToLostZone ? state.discardPile : [cardId, ...(state.discardPile ?? [])],
+    lostZone: goesToLostZone ? [cardId, ...(state.lostZone ?? [])] : state.lostZone,
+  };
+}
+
+function resolveHostTurnLionfishInvaders({
+  playerState,
+  opponentState,
+  hostController,
+  random = Math.random,
+} = {}) {
+  const states = {
+    player: cloneLionfishTurnControllerState(playerState, "player"),
+    opponent: cloneLionfishTurnControllerState(opponentState, "opponent"),
+  };
+  const hostState = states[hostController];
+  if (!hostState) return { ...states, events: [], triggeredCount: 0 };
+  const invaders = collectHostTurnLionfishInvaders({
+    foundations: hostState.corals,
+    orphanEntries: getLionfishStateOrphans(hostState, hostController),
+    hostController,
+  });
+  const events = [];
+  let triggeredCount = 0;
+
+  invaders.forEach((invader) => {
+    const currentHostState = states[hostController];
+    const stillInPlay = collectHostTurnLionfishInvaders({
+      foundations: currentHostState.corals,
+      orphanEntries: getLionfishStateOrphans(currentHostState, hostController),
+      hostController,
+    }).some((candidate) => candidate.instanceId === invader.instanceId);
+    if (!stillInPlay) return;
+    triggeredCount += 1;
+    const coinResult = resolveLionfishInvaderCoin(random);
+    const targetController = getLionfishInvaderTargetController({
+      invaderController: invader.controller,
+      coinResult,
+    });
+    const candidates = getLionfishOwnedFishTargets(states, targetController);
+    const target = selectLionfishInvaderTarget(candidates, {
+      sourceInstanceId: invader.instanceId,
+      scoreTarget: (candidate) => {
+        const defenseDice = candidate.card?.defense?.dice ?? candidate.card?.defense ?? "";
+        const targetValue = Number(candidate.card?.victoryPoints ?? 0) * 100
+          + Number(candidate.card?.cost?.rp ?? 0) * 10
+          + Number(String(defenseDice).match(/D(\d+)/i)?.[1] ?? 0);
+        return (targetController === invader.controller ? -1 : 1) * targetValue;
+      },
+    });
+    const invaderOwnerLabel = invader.controller === "player" ? "Your" : "Opponent's";
+    const branchOwnerLabel = targetController === "player" ? "your" : "the opponent's";
+    if (!target) {
+      const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult}, but ${branchOwnerLabel} reef had no other legal Fish for Invader to attack. The mandatory attack fizzled.`;
+      events.push({
+        type: "faceoff-result",
+        sourceCardId: "lionfish",
+        title: `Lionfish Invader — ${coinResult === "heads" ? "Heads" : "Tails"}`,
+        message,
+        success: false,
+        logMessage: message,
+      });
+      return;
+    }
+    const invaderPoisonHealActive = Boolean(
+      states[invader.controller].poisonImmunityNextPredatorAttack,
+    );
+    if (invaderPoisonHealActive) {
+      states[invader.controller] = {
+        ...states[invader.controller],
+        poisonImmunityNextPredatorAttack: false,
+      };
+    }
+
+    if (target.location === "foundation" && isCreatureSchool(target.card)) {
+      const school = states[target.physicalController].corals
+        .find((coral) => coral.id === target.coralId && coral.cardId === target.cardId);
+      const attackRoll = rollDie("D4-1", random);
+      if (!school || !attackRoll) {
+        const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult}, but the selected Creature School was no longer a legal target. The attack fizzled.`;
+        events.push({ type: "faceoff-result", sourceCardId: "lionfish", defenderCardId: target.cardId, title: "Lionfish Invader Fizzled", message, success: false, logMessage: message });
+        return;
+      }
+      const damage = attackRoll.total * 10;
+      const damageResult = applyDamage(school.health ?? school.maxHealth, damage);
+      if (damageResult.destroyed) {
+        const removal = removeLionfishBoardEntry(states, target);
+        if (removal.removed) routeLionfishDestroyedCard(states, target.controller, target.cardId);
+      } else {
+        const physicalState = states[target.physicalController];
+        states[target.physicalController] = {
+          ...physicalState,
+          corals: physicalState.corals.map((coral) => coral.id === target.coralId
+            ? { ...coral, health: damageResult.remainingHealth }
+            : coral),
+        };
+      }
+      const schoolResult = damageResult.destroyed
+        ? `${target.card.name} was destroyed and went to its owner's ${destroyedCardGoesToLostZone(target.card) ? "Lost Zone" : "discard pile"}.`
+        : `${target.card.name} has ${damageResult.remainingHealth} HP remaining.`;
+      const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult} and automatically chose ${branchOwnerLabel} ${target.card.name}. Invader rolled ${attackRoll.total} (D4-1), dealing ${damage} damage to the Creature School. ${schoolResult}`;
+      events.push({
+        type: "faceoff-result",
+        sourceCardId: "lionfish",
+        defenderCardId: target.cardId,
+        title: damageResult.destroyed ? "Lionfish Destroyed a Creature School" : "Lionfish Damaged a Creature School",
+        message,
+        success: damage > 0,
+        logMessage: message,
+      });
+      return;
+    }
+
+    const physicalTargetState = states[target.physicalController];
+    const targetCoral = physicalTargetState.corals.find((coral) => coral.id === target.coralId) ?? null;
+    const targetSlot = targetCoral?.slots.find((slot) => slot.id === target.slotId) ?? null;
+    const targetOwnerState = states[target.controller];
+    const nextFlashingAlarm = triggerFlashingAlarm(targetOwnerState.flashingAlarmAttackBonus, target.card);
+    states[target.controller] = { ...targetOwnerState, flashingAlarmAttackBonus: nextFlashingAlarm };
+    const targetAvoidance = getTargetAvoidance(target.card);
+    if (targetAvoidance) {
+      const avoidanceCoin = resolveLionfishInvaderCoin(random);
+      if (avoidanceCoin === targetAvoidance.failureResult) {
+        const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult} and automatically chose ${branchOwnerLabel} ${target.card.name}. ${target.card.name} used ${targetAvoidance.abilityName} and flipped ${avoidanceCoin}, so the attack failed before dice were rolled.`;
+        events.push({ type: "faceoff-result", sourceCardId: target.cardId, defenderCardId: "lionfish", title: `${targetAvoidance.abilityName} Evaded Invader`, message, success: false, logMessage: message });
+        return;
+      }
+    }
+    const defenseDice = target.card?.defense?.dice ?? target.card?.defense;
+    const opposed = resolveOpposedRoll("D4-1", defenseDice, random);
+    if (!opposed.resolved) {
+      const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult} and automatically chose ${target.card?.name ?? "a Fish"}, but its defense die could not be resolved. The attack fizzled.`;
+      events.push({ type: "faceoff-result", sourceCardId: "lionfish", defenderCardId: target.cardId, title: "Lionfish Invader Fizzled", message, success: false, logMessage: message });
+      return;
+    }
+    const defenseStatusKey = target.location === "hosted-slot"
+      ? getHostedTargetSlotId(target.slotId, target.hostedIndex)
+      : target.location === "hosted-orphan"
+        ? getOrphanHostedTargetSlotId(target.orphanInstanceId, target.hostedIndex)
+        : target.location === "slot"
+          ? getSlotActionKey(targetSlot)
+          : target.location === "reef"
+            ? `reef-${target.instanceId}`
+            : target.location === "orphan"
+              ? `orphan-${target.instanceId}`
+              : null;
+    const defenseStatuses = states[target.controller].creatureStatuses?.[defenseStatusKey] ?? [];
+    const defenseAdvantage = hasDefenseAdvantage({ targetCard: target.card, statuses: defenseStatuses });
+    const attackDisadvantage = attackerHasDisadvantageFromMassive(target.card);
+    const secondAttackRoll = attackDisadvantage ? rollDie("D4-1", random) : null;
+    const attackTotal = secondAttackRoll
+      ? Math.min(opposed.attack.total, secondAttackRoll.total)
+      : opposed.attack.total;
+    const secondDefenseRoll = defenseAdvantage ? rollDie(defenseDice, random) : null;
+    const baseDefenseTotal = secondDefenseRoll
+      ? Math.max(opposed.defense.total, secondDefenseRoll.total)
+      : opposed.defense.total;
+    const attachedDefenseBonus = targetCoral && !coralIsStunned(targetCoral)
+      ? calculateAttachedCreatureDefenseBonus(cardsById[targetCoral.cardId])
+      : 0;
+    const hostedDefenseBonusDice = ["hosted-slot", "hosted-orphan"].includes(target.location)
+      ? getHostedDefenseBonusDice(
+          target.location === "hosted-slot"
+            ? cardsById[targetSlot?.cardId]
+            : cardsById[getLionfishStateOrphans(physicalTargetState, target.physicalController)[target.orphanIndex]?.cardId],
+          target.card,
+        )
+      : null;
+    const hostedDefenseRoll = hostedDefenseBonusDice ? rollDie(hostedDefenseBonusDice, random) : null;
+    const statusDefenseRolls = defenseStatuses
+      .filter((status) => status.type === "defenseBonusDice")
+      .map((status) => rollDie(status.dice, random))
+      .filter(Boolean);
+    const cloakDefenseBonus = getCloakDefenseBonus(target.card);
+    const darknessShroudDefenseBonus = getDarknessShroudDefenseBonus(
+      target.card,
+      physicalTargetState.habitats ?? (physicalTargetState.habitatInstances ?? []).map((entry) => entry.cardId),
+    );
+    const defenseTotal = Math.max(
+      0,
+      baseDefenseTotal
+        + attachedDefenseBonus
+        + Number(hostedDefenseRoll?.total ?? 0)
+        + statusDefenseRolls.reduce((total, roll) => total + roll.total, 0)
+        + cloakDefenseBonus
+        + darknessShroudDefenseBonus,
+    );
+    const defenseDetails = [
+      secondDefenseRoll ? `defense advantage ${opposed.defense.total}/${secondDefenseRoll.total}` : null,
+      attachedDefenseBonus ? `+${attachedDefenseBonus} Shelter` : null,
+      hostedDefenseRoll ? `+${hostedDefenseRoll.total} ${hostedDefenseBonusDice}` : null,
+      ...statusDefenseRolls.map((roll) => `+${roll.total} action defense`),
+      cloakDefenseBonus ? `+${cloakDefenseBonus} Cloak` : null,
+      darknessShroudDefenseBonus ? `+${darknessShroudDefenseBonus} Darkness Shroud` : null,
+    ].filter(Boolean);
+    const attackerWins = attackTotal > defenseTotal;
+    let resolutionMessage = " The defender won; ties defend.";
+    if (attackerWins) {
+      const defenderState = states[target.controller];
+      const resilienceTriggered = cardHasAncientResilience(target.card)
+        && !(defenderState.resilienceUsedCardIds ?? []).includes(target.instanceId);
+      const regenerateDecision = createRegenerateDecision({
+        defenderCard: target.card,
+        defenderWasDefeated: true,
+        controllerRp: defenderState.rp,
+        survivalAlreadyApplied: resilienceTriggered,
+      });
+      const regenerateResolution = regenerateDecision.available
+        ? resolveRegenerateDecision(regenerateDecision, "regenerate")
+        : null;
+      const regenerateTriggered = Boolean(regenerateResolution?.keepDefender);
+      const defenderKept = resilienceTriggered || regenerateTriggered;
+      if (defenderKept) {
+        states[target.controller] = {
+          ...defenderState,
+          rp: Math.max(0, Number(defenderState.rp ?? 0) - (regenerateTriggered ? regenerateResolution.rpCost : 0)),
+          resilienceUsedCardIds: resilienceTriggered
+            ? [...(defenderState.resilienceUsedCardIds ?? []), target.instanceId]
+            : defenderState.resilienceUsedCardIds,
+        };
+        resolutionMessage = resilienceTriggered
+          ? ` The attack landed, but ${target.card.name}'s Ancient Resilience kept it in play.`
+          : ` The attack landed, but its controller automatically paid ${regenerateResolution.rpCost} RP for Regenerate.`;
+      }
+      const removal = defenderKept ? { removed: false, hostedCardIds: [] } : removeLionfishBoardEntry(states, target);
+      if (!defenderKept && removal.removed) {
+        routeLionfishDestroyedCard(states, target.controller, target.cardId);
+        removal.hostedCardIds.forEach((cardId) => routeLionfishDestroyedCard(states, target.controller, cardId, { forceDiscard: true }));
+        const toxicResult = resolveToxicConsumption({
+          attackerCard: cardsById.lionfish,
+          toxicSourceCard: target.card,
+          consumed: true,
+          poisonHealActive: invaderPoisonHealActive,
+        }, random);
+        const selfDiscarded = shouldSelfDiscardAfterConsume({
+          attackerCard: cardsById.lionfish,
+          defenderCard: target.card,
+          consumed: true,
+        });
+        const discardInvader = toxicResult.discardAttacker || selfDiscarded;
+        if (discardInvader) {
+          const sourceRemoval = removeLionfishBoardEntry(states, {
+            ...invader,
+            physicalController: hostController,
+          });
+          if (sourceRemoval.removed) routeLionfishDestroyedCard(states, invader.controller, invader.cardId);
+        }
+        const targetDestination = destroyedCardGoesToLostZone(target.card) ? "Lost Zone" : "discard pile";
+        resolutionMessage = ` The attack succeeded, so ${target.card.name} went to its owner's ${targetDestination}.`;
+        if (toxicResult.triggered) {
+          resolutionMessage += toxicResult.discardAttacker
+            ? " Toxic then discarded the consuming Lionfish."
+            : " Toxic triggered, but the Lionfish survived its coin flip.";
+        }
+        if (selfDiscarded && !toxicResult.discardAttacker) resolutionMessage += " The Lionfish's consume rule also discarded it.";
+      } else if (!defenderKept) {
+        resolutionMessage = " The target was no longer in play, so the attack fizzled.";
+      }
+    }
+    if (nextFlashingAlarm !== targetOwnerState.flashingAlarmAttackBonus) {
+      resolutionMessage += ` ${target.card.name}'s Flashing Alarm is primed for its controller's next turn.`;
+    }
+    const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult} and automatically chose ${branchOwnerLabel} ${target.card.name}. Invader rolled ${attackTotal} (D4-1${secondAttackRoll ? `; Massive disadvantage ${opposed.attack.total}/${secondAttackRoll.total}` : ""}) against ${defenseTotal} (${defenseDice}${defenseDetails.length ? `; ${defenseDetails.join(", ")}` : ""}).${resolutionMessage}`;
+    events.push({
+      type: "faceoff-result",
+      sourceCardId: "lionfish",
+      defenderCardId: target.cardId,
+      title: attackerWins ? "Lionfish Invader Attack" : "Lionfish Invader Defended",
+      message,
+      success: attackerWins,
+      logMessage: message,
+    });
+  });
+
+  return { ...states, events, triggeredCount };
 }
 
 function createDeck(deckType, deckId = defaultDeckId, random = Math.random, playerDeckSnapshot = null) {
@@ -1232,6 +1813,11 @@ function getAttackConditionalModifier(attacker, targetCard, habitats, friendlyCo
       details.push(`+${titanBonus[1]} Battle of the Titans`);
     }
   });
+  const nightVisionBonus = getNightVisionAttackBonus(attacker, targetCard);
+  if (nightVisionBonus) {
+    flat += nightVisionBonus;
+    details.push(`+${nightVisionBonus} Night Vision`);
+  }
   const habitatBonus = (habitatId, pattern) => {
     const match = text.match(pattern);
     if (habitats.includes(habitatId) && match) {
@@ -1860,8 +2446,10 @@ function getCompositionRequirementError(card, corals, reefCreatures = []) {
   const oceanicFishCount = ecosystemCards.filter((candidate) => candidate.category === CardCategory.FISH && candidate.tags?.includes("oceanic")).length;
   const oceanicPredatorCount = ecosystemCards.filter((candidate) => candidate.category === CardCategory.PREDATOR && candidate.tags?.includes("oceanic")).length;
   const oceanicApexCount = ecosystemCards.filter((candidate) => candidate.category === CardCategory.APEX && candidate.tags?.includes("oceanic")).length;
+  const requiredOceanicPredators = getRequiredOceanicPredatorCount(card);
   const fishRequirement = rules.map((rule) => rule.match(/requires?\s+(\d+)\s+oceanic fish/i)).find(Boolean);
   if (fishRequirement && oceanicFishCount < Number(fishRequirement[1])) return `${card.name} requires ${fishRequirement[1]} Oceanic Fish in your ecosystem; you have ${oceanicFishCount}.`;
+  if (requiredOceanicPredators > oceanicPredatorCount) return `${card.name} requires ${requiredOceanicPredators} Oceanic Predators in your ecosystem; you have ${oceanicPredatorCount}.`;
   if (rules.some((rule) => /requires? an oceanic predator or oceanic apex/i.test(rule)) && oceanicPredatorCount + oceanicApexCount < 1) return `${card.name} requires an Oceanic Predator or Oceanic Apex in your ecosystem.`;
   if (rules.some((rule) => /discard one oceanic predator or two oceanic fish/i.test(rule)) && oceanicPredatorCount < 1 && oceanicFishCount < 2) return `${card.name} requires an Oceanic Predator or two Oceanic Fish in your ecosystem to discard as its additional play cost.`;
   return "";
@@ -5395,6 +5983,7 @@ export default function Simulator({
       if (has("creatureStatuses")) setCreatureStatuses(next.creatureStatuses);
       if (has("blueCrabRecycleUsedTurn")) setBlueCrabRecycleUsedTurn(next.blueCrabRecycleUsedTurn);
       if (has("flashingAlarmAttackBonus")) setFlashingAlarmAttackBonus(next.flashingAlarmAttackBonus);
+      if (has("poisonImmunityNextPredatorAttack")) setPoisonImmunityNextPredatorAttack(next.poisonImmunityNextPredatorAttack);
     }
     const eventLogMessages = [
       ...(event?.logMessages ?? []),
@@ -5488,21 +6077,52 @@ export default function Simulator({
     conditionTitle = null,
   } = {}) {
     const condition = reuseConditionId ? cardsById[reuseConditionId] : drawNextCondition();
-    const ecosystemRp = getEcosystemStartTurnRp(playerCorals, condition);
+    const lionfishResolution = resolveHostTurnLionfishInvaders({
+      playerState: {
+        corals: playerCorals,
+        habitats: playerHabitats,
+        habitatInstances: playerHabitatInstances,
+        reefCreatureInstances: playerReefCreatureInstances,
+        orphanCreatureInstances: playerOrphanCreatureInstances,
+        hand,
+        discardPile,
+        lostZone,
+        foundationDeck,
+        palsDeck,
+        rp,
+        supportBlockedUntilRound,
+        resilienceUsedCardIds,
+        creatureStatuses,
+        blueCrabRecycleUsedTurn,
+        flashingAlarmAttackBonus: beginFlashingAlarmTurn(flashingAlarmAttackBonus),
+        poisonImmunityNextPredatorAttack,
+      },
+      opponentState: opponent,
+      hostController: "player",
+    });
+    const playerAtTurnStart = normalizeProjectedPlayerState(lionfishResolution.player);
+    const opponentAtTurnStart = normalizeProjectedOpponentState(
+      reconcileOpponentInstances(opponent, lionfishResolution.opponent),
+    );
+    const playerCoralsAtTurnStart = playerAtTurnStart.corals;
+    const playerReefInstancesAtTurnStart = playerAtTurnStart.reefCreatureInstances;
+    const playerReefAtTurnStart = playerReefInstancesAtTurnStart.map((entry) => entry.cardId);
+    const playerOrphansAtTurnStart = playerAtTurnStart.orphanCreatureInstances;
+    const ecosystemRp = getEcosystemStartTurnRp(playerCoralsAtTurnStart, condition);
     const collectedRp = 1 + ecosystemRp;
-    const roundRpCap = getEcosystemRpCap(playerCorals, [...playerHabitats, ...playerReefCreatures, ...playerOrphanCreatures.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], condition);
+    const roundRpCap = getEcosystemRpCap(playerCoralsAtTurnStart, [...playerHabitats, ...playerReefAtTurnStart, ...playerOrphansAtTurnStart.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], condition);
     const parasiteRequestedRp = getParasiteRequestedRp(
-      playerCorals,
-      playerReefCreatures,
-      playerOrphanCreatures,
-      opponent.corals,
-      opponent.reefCreatures,
-      opponent.orphanCreatures,
+      playerCoralsAtTurnStart,
+      playerReefAtTurnStart,
+      playerOrphansAtTurnStart,
+      opponentAtTurnStart.corals,
+      opponentAtTurnStart.reefCreatures,
+      opponentAtTurnStart.orphanCreatures,
     );
     const parasiteTransfer = resolveParasiteCollection({
       requested: parasiteRequestedRp,
-      opposingRp: opponent.rp,
-      recipientRp: rp,
+      opposingRp: opponentAtTurnStart.rp,
+      recipientRp: playerAtTurnStart.rp,
       recipientCap: roundRpCap,
     });
     const parasiteMessage = describeParasiteTransfer("Your Cookie Cutter", parasiteTransfer);
@@ -5519,18 +6139,24 @@ export default function Simulator({
       capped: cappedRp,
     }, { phase: "draw", round: nextRound, turn: advanceTurn ? turn + 1 : turn });
     setRp(rpAfterCollection);
-    setPlayerCorals((current) => current.map(({ rpPenaltyNextTurn, ...coral }) => coral));
-    if (parasiteRequestedRp) {
-      setOpponent((current) => ({ ...current, rp: parasiteTransfer.sourceAfter }));
-    }
+    setPlayerCorals(playerCoralsAtTurnStart.map(({ rpPenaltyNextTurn, ...coral }) => coral));
+    setPlayerReefCreatureInstances(playerReefInstancesAtTurnStart);
+    setPlayerOrphanCreatureInstances(playerOrphansAtTurnStart);
+    setDiscardPile(playerAtTurnStart.discardPile);
+    setLostZone(playerAtTurnStart.lostZone);
+    setFlashingAlarmAttackBonus(playerAtTurnStart.flashingAlarmAttackBonus);
+    setPoisonImmunityNextPredatorAttack(playerAtTurnStart.poisonImmunityNextPredatorAttack);
+    const opponentAfterParasite = parasiteRequestedRp
+      ? { ...opponentAtTurnStart, rp: parasiteTransfer.sourceAfter }
+      : opponentAtTurnStart;
     const handLimitEffect = (condition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
     const handLimit = Number(handLimitEffect?.amount ?? Infinity);
     const excessCards = Number.isFinite(handLimit) && hand.length > handLimit ? hand.slice(handLimit) : [];
     const opponentHandLimitResult = skipOpponentHandLimit
-      ? { state: opponent, cardsToDiscard: [] }
-      : applyAutomatedHandLimitToState(opponent, handLimit, { round: nextRound });
+      ? { state: opponentAfterParasite, cardsToDiscard: [] }
+      : applyAutomatedHandLimitToState(opponentAfterParasite, handLimit, { round: nextRound });
     const opponentExcessCards = opponentHandLimitResult.cardsToDiscard;
-    if (opponentExcessCards.length) setOpponent(opponentHandLimitResult.state);
+    setOpponent(opponentHandLimitResult.state);
     setRound(nextRound);
     setTurnLog([]);
     setGamePhase("draw");
@@ -5545,7 +6171,6 @@ export default function Simulator({
     setUsedAttackers([]);
     setUsedCreatureActions([]);
     setPendingCreatureAction(null);
-    setFlashingAlarmAttackBonus((current) => beginFlashingAlarmTurn(current));
     if (advanceTurn) {
       const nextPlayerTurn = turn + 1;
       setCreatureStatuses((current) => Object.fromEntries(Object.entries(current).map(([slotId, statuses]) => [slotId, statuses.filter((status) => status.expiresTurn > nextPlayerTurn)]).filter(([, statuses]) => statuses.length)));
@@ -5581,13 +6206,16 @@ export default function Simulator({
         roundNotes,
       });
     }
-    setPendingEvents(parasiteRequestedRp ? [{
-      type: "impact-result",
-      sourceCardId: "cookie-cutter-shark",
-      title: "Player's Cookie Cutter used Parasite",
-      message: parasiteMessage,
-      success: parasiteTransfer.collected > 0,
-    }] : []);
+    setPendingEvents([
+      ...lionfishResolution.events,
+      ...(parasiteRequestedRp ? [{
+        type: "impact-result",
+        sourceCardId: "cookie-cutter-shark",
+        title: "Player's Cookie Cutter used Parasite",
+        message: parasiteMessage,
+        success: parasiteTransfer.collected > 0,
+      }] : []),
+    ]);
     pushLog(
       `Round ${nextRound}: revealed ${condition?.name ?? "no condition"}. Collected ${actualCollectedRp} RP from ${collectedRp} available; bank ${rpAfterCollection}/${roundRpCap}.${cappedRp ? ` ${cappedRp} RP was discarded at the cap.` : ""} Now choose your card draw.${parasiteMessage ? ` ${parasiteMessage}` : ""}${excessCards.length ? ` Your hand is ${excessCards.length} card${excessCards.length === 1 ? "" : "s"} over the limit; choose what to discard.` : ""}${opponentExcessCards.length ? ` The opponent chose ${opponentExcessCards.length} excess card(s) to discard.` : ""}`,
     );
@@ -7722,13 +8350,15 @@ export default function Simulator({
     return { state: reconcileOpponentInstances(opponentState, next), summaries, impacts, events, lost: Boolean(lossSummary), lossSummary };
   }
 
-  function runOpponentTurn(current) {
+  function runOpponentTurn(current, { startTurnAlreadyBegun = false } = {}) {
     const income = 1 + getEcosystemStartTurnRp(current.corals, activeCondition);
     let next = {
       ...current,
       cardsBlockedFromPlayThisTurn: [],
       creatureStatuses: Object.fromEntries(Object.entries(current.creatureStatuses ?? {}).map(([statusKey, statuses]) => [statusKey, statuses.filter((status) => Number(status.expiresTurn ?? Infinity) > turn)]).filter(([, statuses]) => statuses.length)),
-      flashingAlarmAttackBonus: beginFlashingAlarmTurn(current.flashingAlarmAttackBonus),
+      flashingAlarmAttackBonus: startTurnAlreadyBegun
+        ? current.flashingAlarmAttackBonus
+        : beginFlashingAlarmTurn(current.flashingAlarmAttackBonus),
     };
     const collectionCap = getEcosystemRpCap(next.corals, [...next.habitats, ...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
     const rpBeforeCollection = next.rp;
@@ -10274,39 +10904,58 @@ export default function Simulator({
       creatureStatuses,
       blueCrabRecycleUsedTurn,
       flashingAlarmAttackBonus: endFlashingAlarmTurn(flashingAlarmAttackBonus),
+      poisonImmunityNextPredatorAttack,
     });
     const stagePlayerState = (updates) => {
       stagedPlayerState = normalizeProjectedPlayerState({ ...stagedPlayerState, ...updates });
       return stagedPlayerState;
     };
-    const opponentParasiteRequestedRp = getParasiteRequestedRp(
-      opponent.corals,
-      opponent.reefCreatures,
-      opponent.orphanCreatures,
-      playerCorals,
-      playerReefCreatures,
-      playerOrphanCreatures,
+    const lionfishResolution = resolveHostTurnLionfishInvaders({
+      playerState: stagedPlayerState,
+      opponentState: {
+        ...opponent,
+        flashingAlarmAttackBonus: beginFlashingAlarmTurn(opponent.flashingAlarmAttackBonus),
+      },
+      hostController: "opponent",
+    });
+    stagedPlayerState = normalizeProjectedPlayerState(lionfishResolution.player);
+    const opponentAtTurnStart = normalizeProjectedOpponentState(
+      reconcileOpponentInstances(opponent, lionfishResolution.opponent),
     );
-    const opponentStartCap = getEcosystemRpCap(opponent.corals, [
-      ...opponent.habitats,
-      ...opponent.reefCreatures,
-      ...(opponent.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
+    turnEvents.push(...lionfishResolution.events.map((event) => ({
+      ...event,
+      playerStateAfter: stagedPlayerState,
+      opponentStateAfter: opponentAtTurnStart,
+      opponentSequence: true,
+    })));
+    const opponentParasiteRequestedRp = getParasiteRequestedRp(
+      opponentAtTurnStart.corals,
+      opponentAtTurnStart.reefCreatures,
+      opponentAtTurnStart.orphanCreatures,
+      stagedPlayerState.corals,
+      stagedPlayerState.reefCreatureInstances.map((entry) => entry.cardId),
+      stagedPlayerState.orphanCreatureInstances,
+    );
+    const opponentStartCap = getEcosystemRpCap(opponentAtTurnStart.corals, [
+      ...opponentAtTurnStart.habitats,
+      ...opponentAtTurnStart.reefCreatures,
+      ...(opponentAtTurnStart.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
     ], activeCondition);
     const opponentParasiteTransfer = resolveParasiteCollection({
       requested: opponentParasiteRequestedRp,
       opposingRp: stagedPlayerState.rp,
-      recipientRp: opponent.rp,
+      recipientRp: opponentAtTurnStart.rp,
       recipientCap: opponentStartCap,
     });
     const opponentParasiteMessage = describeParasiteTransfer("Opponent's Cookie Cutter", opponentParasiteTransfer);
     const opponentForTurn = opponentParasiteRequestedRp
-      ? { ...opponent, rp: opponentParasiteTransfer.recipientAfter }
-      : opponent;
+      ? { ...opponentAtTurnStart, rp: opponentParasiteTransfer.recipientAfter }
+      : opponentAtTurnStart;
     const playerStateAfterOpponentParasite = opponentParasiteRequestedRp
       ? stagePlayerState({ rp: opponentParasiteTransfer.sourceAfter })
       : stagedPlayerState;
-    const opponentResult = runOpponentTurn(opponentForTurn);
-    const opponentStateAfterPlay = normalizeProjectedOpponentState(reconcileOpponentInstances(opponent, opponentResult.state));
+    const opponentResult = runOpponentTurn(opponentForTurn, { startTurnAlreadyBegun: true });
+    const opponentStateAfterPlay = normalizeProjectedOpponentState(reconcileOpponentInstances(opponentAtTurnStart, opponentResult.state));
     const opponentVpAfterPlay = getEcosystemVictoryPoints(
       opponentStateAfterPlay.corals,
       opponentStateAfterPlay.habitats,
@@ -10327,7 +10976,7 @@ export default function Simulator({
         message: opponentParasiteMessage,
         success: opponentParasiteTransfer.collected > 0,
         playerStateAfter: playerStateAfterOpponentParasite,
-        opponentStateAfter: normalizeProjectedOpponentState(reconcileOpponentInstances(opponent, opponentForTurn)),
+        opponentStateAfter: normalizeProjectedOpponentState(reconcileOpponentInstances(opponentAtTurnStart, opponentForTurn)),
         logMessage: opponentParasiteMessage,
       });
     }

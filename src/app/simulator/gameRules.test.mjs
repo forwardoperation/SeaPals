@@ -325,6 +325,10 @@ test("legacy attack text exposes base combat rules", () => {
   assert.equal(attack.skipNextTurn, true);
   const consumeAttack = parseLegacyAttackText("Eyes Bigger Than Stomach: D4-1 attack targeting Predator, Apex, or Filter Feeder. If you successfully consume an Apex or Predator, discard this card.");
   assert.equal(consumeAttack.unsupportedDetails, "");
+
+  const modifiedRepeatedAttack = parseLegacyAttackText("Breach Strike: Perform 2 D8+5 attacks targeting Apex, Predator, or Fish.");
+  assert.equal(modifiedRepeatedAttack.attackDice, "D8+5");
+  assert.equal(modifiedRepeatedAttack.repeat, 2);
 });
 
 test("legacy Deep attacks retain their zone restriction", () => {

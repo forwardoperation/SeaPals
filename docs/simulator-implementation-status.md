@@ -74,10 +74,16 @@ limitation instead of inventing a rule.
   controller identity remains on the card instance. The invaded controller can
   target and remove it with a successful legal attack or Spearfishing. Because
   Spearfishing targets a Fish or Predator physically on the acting player's reef,
-  an opponent-owned Lionfish is eligible. A successful attack destroys Lionfish
-  and sends it to its original owner's Lost Zone. Spearfishing instead discards
-  Lionfish to its original owner's discard pile, enters the acting player's discard
+  an opponent-owned Lionfish is eligible. Lionfish has no Lost Zone
+  instruction, so a successful attack or Spearfishing sends it to its original
+  owner's discard pile. Spearfishing itself enters the acting player's discard
   pile, and awards the recovered RP only to that acting player.
+  The maintained Invader ruling triggers at the start of the turn of the player
+  whose ecosystem physically contains Lionfish, but resolves targets from the
+  Lionfish owner's perspective: heads attacks an opponent-controlled Fish and
+  tails attacks another owner-controlled Fish. The triggering Lionfish is
+  excluded; if the rolled branch has no legal target, the attack fizzles without
+  switching branches.
 - Cookie Cutter Parasite now transfers opposing RP first, collects any shortfall
   from the shared board supply up to the recipient's live bank cap, and reports
   both sources separately. Giant and Colossal Squid resolve a fresh Ensnare coin
@@ -85,11 +91,10 @@ limitation instead of inventing a rule.
 
 ## Known rule/data boundaries
 
-- Apex, Filter Feeder, and Lionfish card data now defines the printed destruction
-  destination: when one of those creatures is destroyed in combat, the simulator
-  moves it to its owner's Lost Zone instead of discard. Effects that merely discard
-  or sacrifice a card still use the discard pile unless their text explicitly says
-  otherwise; this is why Spearfishing sends Lionfish to its owner's discard pile.
+- Apex and Filter Feeder card data defines the printed destruction destination:
+  when one of those creatures is destroyed in combat, the simulator moves it to
+  its owner's Lost Zone instead of discard. Lionfish has no such
+  instruction, so both destruction and Spearfishing send it to its owner's discard.
 - Complex companion effects on an otherwise supported attack resolve the documented
   attack portion and explicitly identify the remainder as unsupported.
 - Several original card-art files remain absent from the repository. Every absent art
@@ -106,12 +111,12 @@ limitation instead of inventing a rule.
 
 ## Verification checkpoint
 
-- Simulator suite: `npm.cmd run test:simulator` (**195/195 passed** on 2026-07-19),
+- Simulator suite: `npm.cmd run test:simulator` (**349/349 passed** on 2026-08-11),
   including Stunned lifecycle, Parasite supply fallback, per-attack Ensnare,
-  Lionfish attack-to-owner-Lost and Spearfishing-to-owner-discard routing,
+  Lionfish start-of-host-turn Invader resolution and owner-zone routing,
   Flashing Alarm lifecycle, and automatic legal Coral Heal targeting.
-- Full repository suite: `npm.cmd test` (**651/651 passed** on 2026-07-19).
-- Production build: `npm.cmd run build` (**26/26 routes generated** on 2026-07-19).
+- Full repository suite: `npm.cmd test` (**1183/1183 passed** on 2026-08-11).
+- Production build: `npm.cmd run build` (**154 static pages generated** on 2026-08-11).
 - Diff whitespace and duplicate named-function audits pass.
 - Rendered browser verification covers every prebuilt deck's opening setup, an Open
   Ocean setup-to-opponent-turn sequence, correct opponent summary/draw ordering,

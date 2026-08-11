@@ -49,6 +49,17 @@ const biteEffect = ({ count = 1, categories }) => ({
   },
 });
 
+const toxicImmunityPassive = {
+  id: "toxic-immunity",
+  name: "Toxic Immunity",
+  text: "Goliath Groupers are immune to the effects of Toxic.",
+  timing: Timing.PASSIVE,
+  effect: {
+    type: EffectType.IGNORE_EFFECT,
+    ignoredEffectType: EffectType.TOXIC_WHEN_EATEN,
+  },
+};
+
 export const predatorCards = [
   {
     id: "green-moray-eel",
@@ -263,25 +274,25 @@ export const predatorCards = [
       scientificName: "Epinephelus itajara",
       role: "Predator",
       species: "Grouper",
-      region: "Caribbean",
+      region: "Worldwide",
       length: "7’ 4”",
       weight: "800 lbs",
     },
 
-    playRequirements: [requiresCoralReef],
+    playRequirements: [],
 
-    passives: [],
+    passives: [toxicImmunityPassive],
 
     onPlay: [
       {
-        id: "ambush",
-        name: "Ambush",
-        text: "1 Bite. If Coral Reef is in your ecosystem, add +4 to your attack.",
+        id: "ambush-hunt",
+        name: "Ambush Hunt",
+        text: "Perform a D6 attack targeting a Fish or Invertebrate. If Coral Reef Habitat is in your ecosystem, add +4 to your attack.",
         effects: [
           {
             ...biteEffect({
               count: 1,
-              categories: [CardCategory.FISH, CardCategory.PREDATOR],
+              categories: [CardCategory.FISH, CardCategory.INVERTEBRATE],
             }),
             conditionalModifiers: [{
               condition: { type: "cardInPlay", cardId: "coral-reef" },
@@ -291,7 +302,7 @@ export const predatorCards = [
         ],
         icons: {
           attack: "bite",
-          targetable: [CardCategory.FISH, CardCategory.PREDATOR],
+          targetable: [CardCategory.FISH, CardCategory.INVERTEBRATE],
         },
       },
     ],

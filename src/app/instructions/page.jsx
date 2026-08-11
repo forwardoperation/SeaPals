@@ -67,7 +67,7 @@ const glossary = [
   ["Defense", "The target's roll against a normal attack. A tied total means the defender stays in play."],
   ["School Density", "Oceanic capacity supplied by Creature Schools. Density requirements add together and stay committed while those creatures remain in play."],
   ["Discard", "Cards that are spent, discarded, or destroyed unless another rule gives them a different destination."],
-  ["Lost Zone", "Where destroyed Apex, Filter Feeder, and Lionfish cards go instead of the discard pile."],
+  ["Lost Zone", "Where destroyed Apex and Filter Feeder cards go instead of the discard pile."],
 ];
 
 const faqQuestions = [
@@ -134,7 +134,12 @@ const faqQuestions = [
   {
     question: "Which cards go to the Lost Zone when destroyed?",
     answer:
-      "Destroyed Apex, Filter Feeder, and Lionfish cards go to their owner's Lost Zone instead of the discard pile. This applies only when the card is destroyed. Spearfishing discards Lionfish rather than destroying it, so Spearfishing returns Lionfish to its original owner's discard pile. Other discard effects still use discard unless they explicitly name the Lost Zone.",
+      "Destroyed Apex and Filter Feeder cards go to their owner's Lost Zone instead of the discard pile. Lionfish has no Lost Zone instruction, so destroying it or discarding it with Spearfishing returns it to its original owner's discard pile. Other discard effects still use discard unless they explicitly name the Lost Zone.",
+  },
+  {
+    question: "When does Lionfish's Invader trigger, and whose Fish can it attack?",
+    answer:
+      "Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Targets stay relative to the Lionfish owner: heads attacks a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles instead of switching branches.",
   },
   {
     question: "Do Support cards stay in play?",
@@ -816,7 +821,7 @@ export default function InstructionsPage() {
                     "Roll the printed attack die. The target rolls its Defense die.",
                     "Apply valid + or − modifiers. A modified total cannot go below 0.",
                     "The attacker succeeds only if its final total is higher. A tie goes to the defender.",
-                    "A successful normal attack destroys the defending creature unless an effect saves it. Put a destroyed Apex, Filter Feeder, or Lionfish in its owner's Lost Zone; put other destroyed creatures in discard unless their text says otherwise.",
+                    "A successful normal attack destroys the defending creature unless an effect saves it. Put a destroyed Apex or Filter Feeder in its owner's Lost Zone; put other destroyed creatures in discard unless their text says otherwise.",
                   ].map((step, index) => (
                     <li key={step} className="flex gap-3">
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cyan-400 text-xs font-black text-slate-950">{index + 1}</span>
@@ -912,7 +917,7 @@ export default function InstructionsPage() {
                   <li>• If a Creature School leaves or changes and your commitments exceed the new capacity, keep the creatures already in play. You cannot play another creature with a positive School Density requirement until enough capacity is restored.</li>
                   <li>• Non-school Oceanic creatures live in open water rather than Reef or Deep Coral slots. Obey any printed School Density and Habitat requirements.</li>
                   <li>• Creature Schools do not roll Defense. An attack deals the attack roll ×10 as damage, and the School is discarded at 0 HP.</li>
-                  <li>• Oceanic Apex requirements are card-specific. Killer Whale and Shortfin Mako require Open Ocean and 2 Oceanic Predators already in your ecosystem; those Predators stay in play. Bluefin Tuna requires Open Ocean, while Swordfish allows Open Ocean or Abyss.</li>
+                  <li>• Oceanic Apex requirements are card-specific. Shortfin Mako, Sperm Whale, Pilot Whale, and Killer Whale require Open Ocean and 2 Oceanic Predators already in your ecosystem; those Predators stay in play. Bluefin Tuna requires Open Ocean, while Swordfish allows Open Ocean or Abyss.</li>
                   <li>• Ocean Triggerfish&apos;s Territorial gives 1 chosen Creature School +30 HP while that Triggerfish remains in play. The choice is not transferable.</li>
                   <li>• Thresher Shark requires 3 Oceanic Fish. Its Stun Strike adds +2 when the attack roll is 4 or higher; that bonus does not require Open Ocean.</li>
                   <li>• Sardine Run and Krill Bloom can reduce the next qualifying School Density requirement once per player as printed.</li>
@@ -936,14 +941,26 @@ export default function InstructionsPage() {
 
               <RuleDetails
                 title="Lost Zone"
-                summary="Destroyed Apex, Filter Feeder, and Lionfish cards do not enter the discard pile"
+                summary="Destroyed Apex and Filter Feeder cards do not enter the discard pile"
               >
                 <ul className="space-y-2">
-                  <li>• When an <strong>Apex</strong>, <strong>Filter Feeder</strong>, or <strong>Lionfish</strong> is destroyed, place that physical card in its owner's Lost Zone instead of the discard pile.</li>
+                  <li>• When an <strong>Apex</strong> or <strong>Filter Feeder</strong> is destroyed, place that physical card in its owner's Lost Zone instead of the discard pile.</li>
                   <li>• A card in the Lost Zone is no longer in play, so its VP and in-play abilities stop applying immediately.</li>
-                  <li>• Destroying and discarding are different instructions. Spearfishing discards Lionfish, so it returns the Lionfish to its original owner's discard pile instead of the Lost Zone.</li>
+                  <li>• Lionfish has no Lost Zone instruction, so destroying it or discarding it with Spearfishing returns the Lionfish to its original owner's discard pile.</li>
                   <li>• An Apex or Filter Feeder discarded as a cost, sacrifice, hand-limit overflow, or card effect goes to discard unless that instruction explicitly names the Lost Zone.</li>
                   <li>• Other destroyed cards go to discard unless their own printed text gives them another destination.</li>
+                </ul>
+              </RuleDetails>
+
+              <RuleDetails
+                title="Lionfish Invader"
+                summary="The host starts the trigger; the Lionfish owner determines target perspective"
+              >
+                <ul className="space-y-2">
+                  <li>• Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish.</li>
+                  <li>• Ownership does not change when Lionfish invades another ecosystem. Resolve “opponent” and “your own” from the Lionfish owner's perspective.</li>
+                  <li>• On heads, perform the D4-1 attack against a Fish controlled by the Lionfish owner's opponent, normally the ecosystem holder. On tails, attack another Fish controlled by the Lionfish owner.</li>
+                  <li>• The triggering Lionfish is not a legal target. Flip before choosing a target; if the rolled branch has no legal Fish, that attack fizzles and you do not switch branches.</li>
                 </ul>
               </RuleDetails>
 
@@ -1008,7 +1025,7 @@ export default function InstructionsPage() {
                   passives, and cannot be upgraded through the end of its controller's
                   next turn. Coral Heal removes Stunned early because it removes all
                   effects from the chosen Coral. The Lost Zone is defined above for
-                  destroyed Apex, Filter Feeder, and Lionfish cards.
+                  destroyed Apex and Filter Feeder cards.
                 </p>
               </RuleDetails>
             </div>

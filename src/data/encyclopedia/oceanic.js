@@ -187,7 +187,7 @@ export const oceanicEncyclopediaEntries = [
   {
     name: "Shortfin Mako Shark",
     scientificName: "Isurus oxyrinchus",
-    aliases: ["Mako Shark", "Blue Pointer", "Bonito Shark"],
+    aliases: ["Shortfin Mako", "Mako Shark", "Blue Pointer", "Bonito Shark"],
     zone: "Oceanic",
     group: "Apex",
     tagline: "A warm-muscled shark shaped like a living rocket.",

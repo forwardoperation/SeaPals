@@ -98,15 +98,28 @@ test("every proposed question has a useful built-in answer", () => {
   }
 });
 
-test("distinguishes destroying Lionfish from discarding it with Spearfishing", () => {
+test("routes Lionfish destruction and Spearfishing to its owner's discard", () => {
   const answer = findRulesAnswer(
     "Where does Lionfish go when destroyed, and where does Spearfishing send it?",
     CORE_RULES,
   );
 
   assert.equal(answer?.title, "Lost Zone");
-  assert.match(answer?.text ?? "", /Lionfish is destroyed.*owner's Lost Zone/i);
-  assert.match(answer?.text ?? "", /Spearfishing discards Lionfish.*owner's discard pile/i);
+  assert.match(answer?.text ?? "", /Lionfish has no Lost Zone instruction/i);
+  assert.match(answer?.text ?? "", /successful destruction and Spearfishing.*owner's discard pile/i);
+});
+
+test("answers Lionfish Invader timing and owner-relative targeting without inventing a fallback", () => {
+  const answer = findRulesAnswer(
+    "When does Lionfish Invader trigger, and whose Fish do heads and tails attack?",
+    CORE_RULES,
+  );
+
+  assert.equal(answer?.title, "Invader");
+  assert.match(answer?.text ?? "", /start of the turn.*ecosystem physically contains Lionfish/i);
+  assert.match(answer?.text ?? "", /Lionfish owner's perspective/i);
+  assert.match(answer?.text ?? "", /triggering Lionfish is excluded/i);
+  assert.match(answer?.text ?? "", /no legal Fish.*fizzles.*do not switch/i);
 });
 
 test("defense questions cannot be hijacked by the generic word game", () => {

@@ -119,7 +119,7 @@
 | Oceanic | Bluefin Tuna | Apex | Oceanic |  | 7 | 7 |  | 70 | D10 |
 | Oceanic | Swordfish | Apex | Oceanic |  | 6 | 6 |  | 90 | D10 |
 | Oceanic | Black Marlin | Apex | Oceanic |  | 6 | 6 |  | 90 | D12 |
-| Oceanic | Shortfin Mako Shark | Apex | Oceanic |  | 8 | 8 |  | 1 | D12 |
+| Oceanic | Shortfin Mako | Apex | Oceanic |  | 8 | 8 |  | 1 | D12 |
 | Oceanic | Sperm Whale | Apex | Oceanic |  | 9 | 9 |  |  | D20 |
 | Oceanic | Blue Sea Dragon | Invertebrate | Oceanic |  | 2 | 1 |  | 20 | D4-2 |
 | Oceanic | Portuguese Man O' War | Invertebrate | Oceanic |  | 2 | 1 |  | 40 | D4-2 |

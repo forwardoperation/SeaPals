@@ -37,7 +37,7 @@ const deepCreatureData = [
       "Big Eyes: Can target creatures hidden by the Abyss.",
       "Darkness Shroud: If Abyss is in play, gain +2 Defense.",
     ],
-    onPlay: ["Snap: D4 attack targeting Deep Fish."],
+    onPlay: ["Snap: D4 attack targeting Fish."],
   },
   {
     id: "pacific-grenadier",
@@ -46,8 +46,9 @@ const deepCreatureData = [
     image: "/images/cards/fish/Deep/pacific-grenadier.png",
     rp: 3,
     vp: 3,
-    defense: "D6",
-    onPlay: ["Bite: D4 attack targeting Deep Fish. If Abyss is in your play area, add +2 to your dice roll."],
+    defense: "D6-2",
+    passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
+    onPlay: ["Bite: D4 attack targeting Fish or Invertebrate. If Abyss is in your play area, add +2 to your dice roll."],
   },
   {
     id: "viperfish",
@@ -58,7 +59,7 @@ const deepCreatureData = [
     vp: 2,
     defense: "D4-2",
     passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
-    onPlay: ["Trap: D6 attack targeting Deep Fish."],
+    onPlay: ["Trap: D6 attack targeting Fish."],
   },
   {
     id: "barrel-eye-fish",
@@ -80,7 +81,7 @@ const deepCreatureData = [
     vp: 2,
     defense: "D4-2",
     passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
-    onPlay: ["Snatch: D6 attack targeting Deep Fish."],
+    onPlay: ["Snatch: D6 attack targeting Fish."],
   },
   {
     id: "black-swallower",
@@ -130,7 +131,7 @@ const deepCreatureData = [
     vp: 3,
     defense: "D4-2",
     passives: ["Darkness Shroud: If Abyss is in play, gain +2 Defense."],
-    onPlay: ["Lure: D4 attack targeting Deep Fish. If Abyss is in your play area, gain advantage."],
+    onPlay: ["Lure: D4 attack targeting Fish. If Abyss is in your play area, gain advantage."],
   },
   {
     id: "chimera",

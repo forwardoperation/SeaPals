@@ -583,7 +583,7 @@ test("answers the reconciled Oceanic requirements and printed bonuses", () => {
     {
       question: "Do Oceanic Apex cards always sacrifice fish, or what requirements do they use?",
       title: "Oceanic Apex additional cost",
-      includes: [/card-specific/i, /Killer Whale/i, /Shortfin Mako/i, /2 Oceanic Predators/i, /not sacrificed|stay in play/i, /Bluefin Tuna.*Open Ocean/i, /Swordfish.*Open Ocean or Abyss/i],
+      includes: [/card-specific/i, /Shortfin Mako/i, /Sperm Whale/i, /Pilot Whale/i, /Killer Whale/i, /2 Oceanic Predators/i, /not sacrificed|stay in play/i, /Bluefin Tuna.*Open Ocean/i, /Swordfish.*Open Ocean or Abyss/i],
     },
     {
       question: "How much HP does Territorial give a Creature School, and can I transfer it?",
@@ -619,4 +619,32 @@ test("answers the reconciled Oceanic requirements and printed bonuses", () => {
   assert.equal(protection.kind, "answer");
   assert.match(protection.text, /Territorial.*\+30 HP/i);
   assert.doesNotMatch(protection.text, /\+10 HP/i);
+});
+
+test("answers the maintained Lionfish Invader ruling instead of only repeating printed text", () => {
+  const lionfishRules = buildRulesKnowledgeBank({
+    cards: [{
+      id: "lionfish",
+      name: "Lionfish",
+      kind: "creature",
+      category: "fish",
+      passives: [{
+        name: "Invader",
+        text: "Flip a coin. If heads, perform a D4-1 attack on an opponent's Fish. If tails, perform the attack on one of your own Fish.",
+      }],
+    }],
+    simulatorRules: SIMULATOR_RULES,
+  });
+  const answer = answerRulesQuestion(
+    "When does Lionfish's Invader trigger, and what if the rolled branch has no legal Fish?",
+    lionfishRules,
+  );
+
+  assert.equal(answer.kind, "answer");
+  assert.equal(answer.title, "Invader");
+  assert.deepEqual(answer.sources.map((source) => source.id), ["knowledge:invader"]);
+  assert.match(answer.text, /start of the turn.*ecosystem physically contains Lionfish/i);
+  assert.match(answer.text, /Lionfish owner's perspective/i);
+  assert.match(answer.text, /triggering Lionfish is excluded/i);
+  assert.match(answer.text, /no legal Fish.*fizzles.*do not switch/i);
 });

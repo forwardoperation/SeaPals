@@ -257,10 +257,10 @@ export const STRUCTURED_RULE_FACTS = [
   {
     id: "oceanic-apex-cost",
     sourceTitle: "Oceanic Apex additional cost",
-    concepts: ["oceanic apex", "apex sacrifice", "sacrifice fish", "sacrifice predator", "killer whale", "shortfin mako", "bluefin tuna", "swordfish"],
+    concepts: ["oceanic apex", "apex sacrifice", "sacrifice fish", "sacrifice predator", "killer whale", "pilot whale", "sperm whale", "shortfin mako", "bluefin tuna", "swordfish"],
     intents: ["play", "cost", "need", "sacrifice", "requirement", "qualify", "open ocean", "abyss"],
     answerTypes: ["procedure", "quantity"],
-    text: "Oceanic Apex requirements are card-specific. Killer Whale and Shortfin Mako require Open Ocean and 2 Oceanic Predators already in your ecosystem; those Predators stay in play. Bluefin Tuna requires Open Ocean, while Swordfish allows Open Ocean or Abyss. Sacrifice cards only when that specific Apex explicitly instructs you to do so.",
+    text: "Oceanic Apex requirements are card-specific. Shortfin Mako, Sperm Whale, Pilot Whale, and Killer Whale require Open Ocean and 2 Oceanic Predators already in your ecosystem; those Predators stay in play. Bluefin Tuna requires Open Ocean, while Swordfish allows Open Ocean or Abyss. Sacrifice cards only when a specific card explicitly instructs you to do so.",
   },
   {
     id: "ocean-triggerfish-territorial",
@@ -287,7 +287,16 @@ export const STRUCTURED_RULE_FACTS = [
     concepts: ["lost zone", "lost pile", "destroyed apex", "destroyed filter feeder", "destroyed lionfish", "spearfishing lionfish"],
     intents: ["where", "go", "destroy", "discard", "removed"],
     answerTypes: ["location", "procedure", "boolean"],
-    text: "When an Apex, Filter Feeder, or Lionfish is destroyed, place that physical card in its owner's Lost Zone instead of discard. A card that is discarded without being destroyed still goes to discard unless the resolving effect explicitly says otherwise; Spearfishing therefore returns Lionfish to its original owner's discard pile.",
+    text: "When an Apex or Filter Feeder is destroyed, place that physical card in its owner's Lost Zone instead of discard. Lionfish has no Lost Zone instruction, so destroying it or discarding it with Spearfishing returns it to its original owner's discard pile.",
+  },
+  {
+    id: "lionfish-invader",
+    sourceTitle: "Invader",
+    concepts: ["lionfish", "invader", "invader passive", "heads", "tails"],
+    intents: ["when", "start", "turn", "trigger", "owner", "opponent", "target", "no legal target", "fizzle"],
+    answerTypes: ["timing", "procedure", "boolean"],
+    overrideNamedAbility: true,
+    text: "Lionfish's Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Flip first. Targets are determined from the Lionfish owner's perspective: heads performs the D4-1 attack against a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles; do not switch to the other branch.",
   },
   {
     id: "school-density",

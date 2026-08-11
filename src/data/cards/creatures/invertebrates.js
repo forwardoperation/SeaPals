@@ -438,7 +438,7 @@ export const invertebrateCards = [
     name: "Cleaner Shrimp",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
-    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
+    image: "/images/cards/invertebrates/Reef/Cleaner Shrimp.png",
     sortOrder: 307,
 
     cost: { rp: 1 },
@@ -449,8 +449,8 @@ export const invertebrateCards = [
       commonName: "Cleaner Shrimp",
       role: "Invertebrate",
       region: "Caribbean",
-      length: "2.5”",
-      weight: "3 g",
+      length: "3”",
+      weight: "1 oz",
     },
 
     playRequirements: [],

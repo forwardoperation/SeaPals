@@ -44,7 +44,7 @@ export function parseLegacyAttackText(action) {
   if (/\bfish\b/i.test(targetText)) categories.push("fish");
   if (/\binvertebrates?\b/i.test(targetText)) categories.push("invertebrate");
   if (/filter feeders?/i.test(targetText)) categories.push("filter-feeder");
-  const repeatMatch = action.match(/perform\s+(\d+)\s+(?:\w+\s+)?attacks?/i);
+  const repeatMatch = action.match(/perform\s+(\d+)\s+(?:(?:D\d+(?:\s*[+-]\s*\d+)?)\s+)?attacks?/i);
   const wordRepeat = /\bthree\s+[^.]*attacks?/i.test(action) ? 3 : /\btwo\s+[^.]*attacks?/i.test(action) ? 2 : 1;
   const targetZone = /\bdeep\s+(?:fish|predators?|invertebrates?|apex|filter feeders?)\b/i.test(targetText) ? "deep" : null;
   const unresolvedText = action.replace(/if you successfully consume[^.]*discard this card\.?/i, "");

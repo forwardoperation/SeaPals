@@ -91,7 +91,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Oceanic Apex additional cost",
-    text: "Oceanic Apex requirements are card-specific; these cards do not share one universal additional cost. Killer Whale and Shortfin Mako each require Open Ocean plus 2 Oceanic Predators already in your ecosystem, and those Predators are not sacrificed. Bluefin Tuna requires Open Ocean. Swordfish requires either Open Ocean or Abyss. If another Oceanic Apex explicitly instructs you to sacrifice cards, only that card uses the printed sacrifice cost.",
+    text: "Oceanic Apex requirements are card-specific; these cards do not share one universal additional cost. Shortfin Mako, Sperm Whale, Pilot Whale, and Killer Whale each require Open Ocean plus 2 Oceanic Predators already in your ecosystem, and those Predators stay in play rather than being sacrificed. Bluefin Tuna requires Open Ocean. Swordfish requires either Open Ocean or Abyss. Sacrifice cards only when a specific card explicitly instructs you to do so.",
   },
   {
     title: "Ocean Triggerfish Territorial",
@@ -179,7 +179,11 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Lost Zone",
-    text: "If an Apex, Filter Feeder, or Lionfish is destroyed, its printed Special Rules send that physical card to its owner's Lost Zone instead of the discard pile. It leaves play and its VP stops counting. Cards of other classes go to discard when destroyed unless their own printed text explicitly names another destination. Destroying and discarding are different instructions: Spearfishing discards Lionfish, so it returns the invading Lionfish to its original owner's discard pile instead of the Lost Zone.",
+    text: "If an Apex or Filter Feeder is destroyed, its rules send that physical card to its owner's Lost Zone instead of the discard pile. It leaves play and its VP stops counting. Cards of other classes go to discard when destroyed unless their own printed text explicitly names another destination. Lionfish has no Lost Zone instruction, so both a successful destruction and Spearfishing return it to its original owner's discard pile.",
+  },
+  {
+    title: "Invader",
+    text: "Lionfish's Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Flip first. Targets are determined from the Lionfish owner's perspective: heads performs the D4-1 attack against a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles; do not switch to the other branch.",
   },
   {
     title: "Stunned boundary",

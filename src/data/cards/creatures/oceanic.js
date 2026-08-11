@@ -253,8 +253,9 @@ const oceanicCreatureData = [
     onPlay: [
       "Slash: Perform 3 D8 attacks targeting fish or invertebrates. Ignore defensive bonuses.",
     ],
-    passives: ["Night Vision: Can target creatures hidden by the Abyss."],
+    passives: ["Night Vision: Add +3 to this card's attack when targeting a creature with Deep in its name."],
     defense: "D10",
+    destroyedDestination: "lost-zone",
     image: "/images/cards/apex/Oceanic/swordfish.png",
   },
   {
@@ -273,20 +274,21 @@ const oceanicCreatureData = [
   },
   {
     id: "shortfin-mako-shark",
-    name: "Shortfin Mako Shark",
+    name: "Shortfin Mako",
     class: CreatureClass.APEX,
     rp: 8,
     vp: 8,
-    specialRules: [
-      "Discard one Oceanic Predator or two Oceanic Fish in your ecosystem to play.",
+    playRequirements: [
+      "Can only be played if Open Ocean and 2 Oceanic Predators are in your ecosystem.",
     ],
     onPlay: [
-      "Breach Strike: Perform 2 D8+5 attacks targeting apex or predator.",
+      "Breach Strike: Perform 2 D8+5 attacks targeting apex, predator, or fish.",
     ],
     passives: [
       "Open Pursuit: Gain +3 on attacks when Open Ocean Habitat is in your ecosystem.",
     ],
     defense: "D12",
+    destroyedDestination: "lost-zone",
     image: "/images/cards/apex/Oceanic/shortfin-mako.png",
   },
   {
@@ -295,16 +297,17 @@ const oceanicCreatureData = [
     class: CreatureClass.APEX,
     rp: 9,
     vp: 9,
-    specialRules: [
-      "Discard one Oceanic Predator or two Oceanic Fish in your ecosystem to play.",
+    playRequirements: [
+      "Can only be played if Open Ocean and 2 Oceanic Predators are in your ecosystem.",
     ],
     onPlay: [
-      "Deep Hunt: Perform 2 D12 attacks targeting filter feeders, apex, or predators. Can target predators hidden by the Abyss.",
+      "Deep Hunt: Perform 2 D12 attacks targeting filter feeders, apex, predators, or fish.",
     ],
     passives: [
       "Battle of the Titans: If this Sperm Whale is attacking a Giant or Colossal Squid, gain +6.",
     ],
     defense: "D20",
+    destroyedDestination: "lost-zone",
     image: "/images/cards/apex/Oceanic/sperm-whale.png",
   },
   {
@@ -313,15 +316,16 @@ const oceanicCreatureData = [
     class: CreatureClass.APEX,
     rp: 7,
     vp: 7,
-    specialRules: [
-      "Discard one Oceanic Predator or two Oceanic Fish in your ecosystem to play.",
+    playRequirements: [
+      "Can only be played if Open Ocean and 2 Oceanic Predators are in your ecosystem.",
     ],
     onPlay: [
       "Echo Disruption: Your opponent cannot play support cards on their next turn.",
-      "Deep Hunt: Perform 2 D12 attacks targeting filter feeders, apex, or predators. Can target predators hidden by the Abyss.",
+      "Deep Hunt: Perform 2 D12 attacks targeting filter feeders, apex, predators, or fish.",
     ],
-    prerelease: false,
+    prerelease: true,
     defense: "D10",
+    destroyedDestination: "lost-zone",
     image: "/images/cards/apex/Oceanic/pilot-whale.png",
   },
   {
@@ -330,12 +334,13 @@ const oceanicCreatureData = [
     class: CreatureClass.APEX,
     rp: 10,
     vp: 10,
-    specialRules: [
-      "Discard one Oceanic Predator or two Oceanic Fish in your ecosystem to play.",
+    playRequirements: [
+      "Can only be played if Open Ocean and 2 Oceanic Predators are in your ecosystem.",
     ],
     onPlay: ["Apex Hunter: Perform 2 D20 attacks targeting filter feeders, apex, or predators. Attacks have advantage."],
-    prerelease: false,
+    prerelease: true,
     defense: "D20",
+    destroyedDestination: "lost-zone",
     image: "/images/cards/apex/Oceanic/killer-whale.png",
   },
   {
@@ -815,6 +820,7 @@ const oceanicCreatureData = [
       "Stun Strike: Perform a D6 attack targeting apex, predator, or fish. If you roll a 4 or higher, add +2 to your attack.",
     ],
     defense: "D10",
+    prerelease: false,
     image: "/images/cards/predator/oceanic/thresher-shark.png",
   },
   {

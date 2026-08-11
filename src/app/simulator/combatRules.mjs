@@ -41,6 +41,14 @@ export function getRovLightsAttackBonus(isActive, targetCard) {
   return isActive && targetCard?.zone === "deep" ? 2 : 0;
 }
 
+export function getNightVisionAttackBonus(attackerCard, targetCard) {
+  const rule = (attackerCard?.passives ?? [])
+    .map(passiveText)
+    .find((text) => /night vision:.*add\s*\+(\d+).*targeting a creature with deep in its name/i.test(text));
+  if (!rule || !/\bdeep\b/i.test(targetCard?.name ?? "")) return 0;
+  return Math.max(0, Number(rule.match(/add\s*\+(\d+)/i)?.[1] ?? 0));
+}
+
 export function getFlashingAlarmAmount(card) {
   const rule = (card?.passives ?? [])
     .map(passiveText)

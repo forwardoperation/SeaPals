@@ -363,25 +363,26 @@ test("a Regenerate choice resumes deferred normal actions without replaying On P
 test("Cookie Cutter uses the shared board-supply fallback for both controllers", () => {
   const playerRound = sourceBetween("function startRound", "function beginOpeningOpponentTurn");
   assert.match(playerRound, /resolveParasiteCollection\(/);
-  assert.match(playerRound, /recipientRp: rp/);
+  assert.match(playerRound, /recipientRp: playerAtTurnStart\.rp/);
   assert.match(playerRound, /const rpBeforeCollection = parasiteTransfer\.recipientAfter/);
 
   const opponentTurn = sourceBetween("function resolveOpponentTurn", "function flipForOpeningTurn");
   assert.match(opponentTurn, /resolveParasiteCollection\(/);
-  assert.match(opponentTurn, /recipientRp: opponent\.rp/);
+  assert.match(opponentTurn, /recipientRp: opponentAtTurnStart\.rp/);
   assert.match(opponentTurn, /opponentParasiteTransfer\.recipientAfter/);
 });
 
-test("authored Lionfish and Spearfishing data identify the specialized removal route", () => {
+test("Lionfish and Spearfishing data identify owner-discard removal", () => {
   const lionfishStart = fishCardSource.indexOf('id: "lionfish"');
   const lionfishEnd = fishCardSource.indexOf('id: "flounder"', lionfishStart);
   const lionfish = fishCardSource.slice(lionfishStart, lionfishEnd);
-  assert.match(lionfish, /discard it with Spearfishing or destroy it with a successful attack/);
-  assert.match(lionfish, /destroyedDestination: "lost-zone"/);
+  assert.match(lionfish, /This Fish may be targeted by your opponent/);
+  assert.doesNotMatch(lionfish, /destroyedDestination: "lost-zone"/);
+  assert.match(lionfish, /name: "Invader"/);
   assert.match(lionfish, /specializedSupportCardIds: \["spearfishing"\]/);
 
-  assert.equal(cardsById.lionfish.destroyedDestination, "lost-zone");
-  assert.match(cardsById.lionfish.specialRules.join(" "), /If destroyed, place this card in your Lost Zone\./);
+  assert.equal(cardsById.lionfish.destroyedDestination, "discard");
+  assert.doesNotMatch(cardsById.lionfish.specialRules.join(" "), /Lost Zone/i);
   assert.equal(cardsById.flounder.destroyedDestination, "discard", "ordinary Fish still discard when destroyed");
 
   const spearfishingStart = supportCardSource.indexOf('id: "spearfishing"');
@@ -390,4 +391,43 @@ test("authored Lionfish and Spearfishing data identify the specialized removal r
   assert.match(spearfishing, /from: Zone\.YOUR_REEF/);
   assert.match(spearfishing, /to: Zone\.DISCARD/);
   assert.match(spearfishing, /includesOpponentOwnedInvasiveCardIds: \["lionfish"\]/);
+});
+
+test("Lionfish Invader data preserves its text and encodes host timing with owner-relative targets", () => {
+  const invader = cardsById.lionfish.passives.find((passive) => passive.id === "invader");
+
+  assert.equal(
+    invader.text,
+    "Flip a coin. If heads, perform a D4-1 attack on an opponent's Fish. If tails, perform the attack on one of your own Fish.",
+  );
+  assert.equal(invader.timing, "startOfTurn");
+  assert.deepEqual(invader.trigger, {
+    type: "ecosystemControllerTurnStart",
+    controller: "host",
+  });
+  assert.deepEqual(invader.effect, {
+    type: "flipCoin",
+    heads: {
+      type: "attack",
+      attackDice: "D4-1",
+      target: {
+        controller: "sourceOpponent",
+        kind: "creature",
+        categories: ["fish"],
+      },
+      excludeSource: true,
+      noLegalTarget: "fizzle",
+    },
+    tails: {
+      type: "attack",
+      attackDice: "D4-1",
+      target: {
+        controller: "sourceController",
+        kind: "creature",
+        categories: ["fish"],
+      },
+      excludeSource: true,
+      noLegalTarget: "fizzle",
+    },
+  });
 });

@@ -112,6 +112,10 @@ const INTENT_ROUTES = [
     title: /^Thresher Shark requirements and Stun Strike$/i,
   },
   {
+    question: /\b(?:lionfish(?:'s)?\s+invader|invader)\b/i,
+    title: /^Invader$/i,
+  },
+  {
     question: /(?=.*\bsupport cards?\b)(?=.*\b(?:after|resolves?|where|go)\b)/i,
     title: /^Support cards$/i,
   },

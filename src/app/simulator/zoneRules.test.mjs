@@ -6,6 +6,7 @@ import {
   canHostSpecialPlacement,
   createCreatureInstance,
   getOceanicApexSacrificeChoices,
+  getRequiredOceanicPredatorCount,
   getPersonalDeckType,
   getHostedCardCapacity,
   getSpecialPlacementHostTags,
@@ -227,6 +228,15 @@ test("Oceanic Apex sacrifice choices include each predator and each distinct fis
     { kind: "fish-pair", instanceIds: ["f-b", "f-c"] },
   ]);
   assert.equal(choices[0].candidates[0], candidates[0]);
+});
+
+test("Oceanic Predator play requirements read the printed count without implying a sacrifice", () => {
+  const card = {
+    playRequirements: ["Can only be played if Open Ocean and 2 Oceanic Predators are in your ecosystem."],
+  };
+  assert.equal(getRequiredOceanicPredatorCount(card), 2);
+  assert.equal(getRequiredOceanicPredatorCount({ specialRules: ["Requires 3 Oceanic Predators."] }), 3);
+  assert.equal(getRequiredOceanicPredatorCount({ playRequirements: ["Requires Open Ocean."] }), 0);
 });
 
 test("Oceanic Apex sacrifice choices reject ambiguous duplicate identities", () => {

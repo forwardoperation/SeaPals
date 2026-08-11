@@ -14,6 +14,7 @@ import {
   getFlashingAlarmAttackBonus,
   getFlashingAlarmAmount,
   getMassiveDefenseMode,
+  getNightVisionAttackBonus,
   getRemainingAttackTargets,
   getRovLightsAttackBonus,
   hasExplicitToxicImmunity,
@@ -45,6 +46,13 @@ test("ROV Lights adds two only when an attack targets a Deep creature", () => {
   assert.equal(getRovLightsAttackBonus(true, { zone: "deep" }), 2);
   assert.equal(getRovLightsAttackBonus(true, { zone: "reef" }), 0);
   assert.equal(getRovLightsAttackBonus(false, { zone: "deep" }), 0);
+});
+
+test("Night Vision keys off Deep in the target's name rather than its zone", () => {
+  const swordfish = { passives: ["Night Vision: Add +3 to this card's attack when targeting a creature with Deep in its name."] };
+  assert.equal(getNightVisionAttackBonus(swordfish, { name: "Deep Sea Skate", zone: "deep" }), 3);
+  assert.equal(getNightVisionAttackBonus(swordfish, { name: "Fangtooth Fish", zone: "deep" }), 0);
+  assert.equal(getNightVisionAttackBonus({ passives: [] }, { name: "Deep Cucumber" }), 0);
 });
 
 test("Flashing Alarm applies to every attack roll on the controller's next turn only", () => {

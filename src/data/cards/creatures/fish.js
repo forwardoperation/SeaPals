@@ -82,6 +82,17 @@ const toxicPassive = {
   },
 };
 
+const toxicImmunityPassive = (text) => ({
+  id: "toxic-immunity",
+  name: "Toxic Immunity",
+  text,
+  timing: Timing.PASSIVE,
+  effect: {
+    type: EffectType.IGNORE_EFFECT,
+    ignoredEffectType: EffectType.TOXIC_WHEN_EATEN,
+  },
+});
+
 export const fishCards = [
   {
     id: "fairy-parrotfish",
@@ -335,7 +346,7 @@ export const fishCards = [
     name: "Frogfish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
+    image: "/images/cards/fish/Reef/Frogfish.png",
     sortOrder: 204,
 
     cost: { rp: 2 },
@@ -346,19 +357,21 @@ export const fishCards = [
       commonName: "Frogfish",
       scientificName: "",
       role: "Reef Fish",
-      region: "Caribbean",
+      region: "Worldwide",
       length: "8”",
       weight: "33 g",
     },
 
     playRequirements: [],
-    passives: [],
+    passives: [
+      toxicImmunityPassive("Frogfish are immune to the effects of Toxic."),
+    ],
 
     onPlay: [
       {
         id: "sneak-attack",
         name: "Sneak Attack",
-        text: "Perform 1 Bite.",
+        text: "Perform a D4 attack targeting a Fish or Invertebrate.",
         effects: [
           attackEffect({
             dice: "D4",
@@ -459,7 +472,7 @@ export const fishCards = [
     name: "Porcupine Fish",
     kind: CardKind.CREATURE,
     category: CardCategory.FISH,
-    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
+    image: "/images/cards/fish/Reef/Porcupinefish.png",
     sortOrder: 207,
 
     cost: { rp: 2 },
@@ -476,7 +489,12 @@ export const fishCards = [
     },
 
     playRequirements: [],
-    passives: [toxicPassive],
+    passives: [
+      {
+        ...toxicPassive,
+        text: "If eaten, your opponent flips a coin. If tails, they discard the consuming card.",
+      },
+    ],
 
     onPlay: [],
 
@@ -484,7 +502,7 @@ export const fishCards = [
       {
         id: "crunch",
         name: "Crunch",
-        text: "Perform a 1D4 attack targeting one of opponent’s invertebrates. You cannot use this action on your next turn.",
+        text: "Perform a D4 attack targeting an opponent's Invertebrate. You cannot use this action on your next turn.",
         cost: { rp: 1 },
         timing: Timing.ACTION_PHASE,
         effect: attackEffect({
@@ -513,7 +531,6 @@ export const fishCards = [
 
     cost: { rp: 4 },
     victoryPoints: 0,
-    destroyedDestination: "lost-zone",
     tags: ["creature", "fish", "lionfish", "toxic", "invasive"],
 
     bio: {
@@ -527,7 +544,7 @@ export const fishCards = [
 
     playRequirements: [],
     specialRules: [
-      "You may play this creature onto one of your opponent’s reefs. It may possess any coral slot type. Your opponent may discard it with Spearfishing or destroy it with a successful attack.",
+      "Play this creature onto one of your opponent's reef slots. It may possess any coral slot type. This Fish may be targeted by your opponent.",
     ],
     specialPlacement: {
       controller: "opponent",
@@ -540,6 +557,41 @@ export const fishCards = [
       specializedSupportCardIds: ["spearfishing"],
     },
     passives: [
+      {
+        id: "invader",
+        name: "Invader",
+        text: "Flip a coin. If heads, perform a D4-1 attack on an opponent's Fish. If tails, perform the attack on one of your own Fish.",
+        timing: Timing.START_OF_TURN,
+        trigger: {
+          type: "ecosystemControllerTurnStart",
+          controller: "host",
+        },
+        effect: {
+          type: EffectType.FLIP_COIN,
+          heads: {
+            type: EffectType.ATTACK,
+            attackDice: "D4-1",
+            target: {
+              controller: "sourceOpponent",
+              kind: CardKind.CREATURE,
+              categories: [CardCategory.FISH],
+            },
+            excludeSource: true,
+            noLegalTarget: "fizzle",
+          },
+          tails: {
+            type: EffectType.ATTACK,
+            attackDice: "D4-1",
+            target: {
+              controller: "sourceController",
+              kind: CardKind.CREATURE,
+              categories: [CardCategory.FISH],
+            },
+            excludeSource: true,
+            noLegalTarget: "fizzle",
+          },
+        },
+      },
       {
         ...toxicPassive,
         text: "If eaten, your opponent flips a coin. If tails, they discard the consuming card.",

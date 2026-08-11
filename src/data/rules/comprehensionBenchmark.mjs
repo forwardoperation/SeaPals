@@ -7,12 +7,13 @@ const basic = (id, question, expectedSourceAny, textIncludes = []) => ({
   textIncludes,
 });
 
-const ability = (id, question, sourceId) => ({
+const ability = (id, question, sourceId, textIncludes = []) => ({
   id: `ability-${id}`,
   category: "ability",
   question,
   expectedKind: "answer",
   expectedSourceAny: Array.isArray(sourceId) ? sourceId : [sourceId],
+  textIncludes,
 });
 
 const clarification = (id, question) => ({
@@ -305,7 +306,7 @@ export const COMPREHENSION_BENCHMARK = [
   ability("010", "How does the Ambush Hunt ability work?", "ability:ambush-hunt"),
   ability("011", "What does Feeding Frenzy add when its condition is met?", "ability:feeding-frenzy"),
   ability("012", "Can you walk me through Quick Strike?", "ability:quick-strike"),
-  ability("013", "What is the Ambush ability's effect?", "ability:ambush"),
+  ability("013", "When does Lionfish's Invader trigger, and how do heads, tails, and no legal target work?", "knowledge:invader", ["start of the turn", "ecosystem", "owner", "fizzles"]),
   ability("014", "What does the ability named Coral Heal do?", "ability:coral-heal"),
   ability("015", "When does Expert Hunter grant its benefit?", "ability:expert-hunter"),
   ability("016", "Which targets can Agile Hunt attack?", "ability:agile-hunt"),
@@ -339,13 +340,13 @@ export const COMPREHENSION_BENCHMARK = [
   ability("044", "What happens after a card with Plenteous is destroyed?", "ability:plenteous"),
   ability("045", "How can Agility cause an attack to fail?", "ability:agility"),
   ability("046", "Explain how Group Hunt counts extra Tuna attacks.", "ability:group-hunt"),
-  ability("047", "What hidden creatures can Night Vision target?", "ability:night-vision"),
+  ability("047", "When does Night Vision add +3 to Swordfish's attack?", "ability:night-vision"),
   ability("048", "How many attacks does Slash perform and what does it ignore?", "ability:slash"),
   ability("049", "What are the four attacks from Quick Strikes?", "ability:quick-strikes"),
   ability("050", "When does Open Pursuit grant its attack bonus?", "ability:open-pursuit"),
   ability("051", "Which creatures can Breach Strike target?", "ability:breach-strike"),
   ability("052", "When does Battle of the Titans give Sperm Whale +6?", "ability:battle-of-the-titans"),
-  ability("053", "What does Deep Hunt do, including its Abyss exception?", "ability:deep-hunt"),
+  ability("053", "What targets can Deep Hunt attack, and how many times?", "ability:deep-hunt"),
   ability("054", "How long does Echo Disruption stop Support cards?", "ability:echo-disruption"),
   ability("055", "What dice and advantage does Apex Hunter use?", "ability:apex-hunter"),
   ability("056", "How does Take to the Skies avoid being targeted?", "ability:take-to-the-skies"),
