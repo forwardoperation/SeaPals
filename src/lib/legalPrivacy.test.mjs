@@ -48,6 +48,7 @@ test("legal links and direct notices are present at collection points", async ()
       "../app/store/Storefront.jsx",
       "../app/surveys/page.jsx",
       "../app/tournaments/[slug]/enter/page.jsx",
+      "../components/feedback/BugReportDialog.jsx",
       "../components/layout/SiteFooter.jsx",
     ].map((path) => readFile(new URL(path, import.meta.url), "utf8")),
   );

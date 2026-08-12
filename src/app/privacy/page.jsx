@@ -21,7 +21,7 @@ export const metadata = {
 const providerRows = [
   [
     "Supabase",
-    "Account authentication, adult account email, authorization records, surveys, tournament entries, and order records.",
+    "Account authentication, adult account email, authorization records, surveys, private bug reports, tournament entries, and order records.",
     "Account access, database hosting, security, and administration.",
   ],
   [
@@ -144,6 +144,20 @@ export default function PrivacyPage() {
           publish de-identified totals and summaries. A parent or guardian
           should submit any survey for a player under 13, and free-text answers
           should not contain contact details or other identifying information.
+        </p>
+
+        <h3>Bug reports</h3>
+        <p>
+          Reefbound and the Simulator offer a private bug-report form. It may
+          collect a written description, steps to repeat the problem, the
+          expected result, player-selected impact, and limited technical and
+          game context such as the page, browser, screen size, game phase,
+          round, card identifiers, and board health values. The form does not
+          intentionally attach an account email, account identifier, player
+          name, or Reefbound save file. Reporters should not type personal
+          information into the free-text fields, and a parent or guardian
+          should help a player under 13 submit a report. We use reports to
+          reproduce, prioritize, repair, and verify problems with the games.
         </p>
 
         <h3>Tournaments</h3>

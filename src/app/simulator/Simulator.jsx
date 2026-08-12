@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import RulesChat from "@/components/rules/RulesChat";
+import BugReportDialog from "@/components/feedback/BugReportDialog";
 import { cardsById } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
 import { conditionCards } from "@/data/cards/conditions";
@@ -2342,9 +2343,9 @@ function reconcileGlobalCoralHealth(foundations, ecosystemCreatures = []) {
     const totalBonus = (card.kind === CardKind.CORAL ? bonus : 0) + attachedBonus + Number(territorialBonuses.get(foundation.id) ?? 0);
     const desiredMax = Math.max(0, Number(card.health ?? 0) + totalBonus);
     const currentMax = Number(foundation.maxHealth ?? card.health ?? 0);
-    if (desiredMax === currentMax) return foundation;
-    changed = true;
     const reconciled = reconcileContinuousHealth(foundation.health ?? currentMax, currentMax, card.health, totalBonus);
+    if (desiredMax === currentMax && !reconciled.destroyed) return foundation;
+    changed = true;
     const next = { ...foundation, maxHealth: reconciled.maxHealth, health: reconciled.health };
     if (reconciled.destroyed) destroyed.push(next);
     return next;
@@ -2879,6 +2880,7 @@ export default function Simulator({
   const [attackContext, setAttackContext] = useState(null);
   const [searchContext, setSearchContext] = useState(null);
   const [gameResult, setGameResult] = useState(null);
+  const [bugReportOpen, setBugReportOpen] = useState(false);
   const [tutorialExitConfirmationOpen, setTutorialExitConfirmationOpen] = useState(false);
   const tutorialHistoryGuardRef = useRef(null);
   const storyResultRecordedRef = useRef(false);
@@ -12206,6 +12208,7 @@ export default function Simulator({
                 <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden">Menu</summary>
                 <div className="absolute right-0 top-11 z-[70] w-48 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-xl">
                   <button type="button" onClick={openNewGameSetup} className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">{isStoryMode ? "Restart Duel" : "Start New Game"}</button>
+                  <button type="button" onClick={() => setBugReportOpen(true)} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-amber-100 hover:bg-amber-300/10">Report a bug</button>
                   {accessibilitySettingsAvailable ? (
                     <button
                       type="button"
@@ -13806,6 +13809,63 @@ export default function Simulator({
         </div>
       ) : null}
 
+      <BugReportDialog
+        open={bugReportOpen}
+        surface={isStoryMode ? "reefbound" : "simulator"}
+        context={{
+          encounterId: isStoryMode ? storyMode?.encounterId ?? null : null,
+          // Reefbound custom deck ids can include the player-authored deck name.
+          // Keep that identifier out of reports while still identifying the deck source.
+          playerDeckId: isStoryMode ? null : selectedDeckId,
+          playerDeckKind: isStoryMode ? "reefbound-story-deck" : "prebuilt-deck",
+          opponentDeckId: selectedOpponentDeckId,
+          opponentDifficulty,
+          victoryTarget,
+          round,
+          turn,
+          gamePhase,
+          activeConditionId,
+          player: {
+            rp,
+            victoryPoints: playerVp,
+            foundations: playerCorals.map((coral) => ({
+              instanceId: coral.id,
+              cardId: coral.cardId,
+              health: coral.health,
+              maxHealth: coral.maxHealth,
+              slots: coral.slots.map((slot) => ({
+                id: slot.id,
+                cardId: slot.cardId,
+                hostedCardIds: slot.hostedCardIds,
+              })),
+            })),
+            reefCreatureIds: playerReefCreatures,
+            orphanCreatureIds: playerOrphanCreatures.map((entry) => entry.cardId),
+            discardPile,
+            lostZone,
+          },
+          opponent: {
+            rp: opponent.rp,
+            victoryPoints: opponentVp,
+            foundations: opponent.corals.map((coral) => ({
+              instanceId: coral.id,
+              cardId: coral.cardId,
+              health: coral.health,
+              maxHealth: coral.maxHealth,
+              slots: coral.slots.map((slot) => ({
+                id: slot.id,
+                cardId: slot.cardId,
+                hostedCardIds: slot.hostedCardIds,
+              })),
+            })),
+            reefCreatureIds: opponent.reefCreatures,
+            orphanCreatureIds: (opponent.orphanCreatures ?? []).map((entry) => entry.cardId),
+            discardPile: opponent.discardPile,
+            lostZone: opponent.lostZone,
+          },
+        }}
+        onClose={() => setBugReportOpen(false)}
+      />
       {modal ? (
         <div
           className={`fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-2 backdrop-blur-sm sm:p-4 ${modal === "hand" ? "xl:hidden" : ""}`}

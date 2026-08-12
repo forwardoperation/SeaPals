@@ -174,6 +174,7 @@ import {
 } from "./adventureProgression.mjs";
 import AdventureDecksModal from "./AdventureDecksModal";
 import AdventureSettingsModal from "./AdventureSettingsModal";
+import BugReportDialog from "@/components/feedback/BugReportDialog";
 import {
   AdventureWorldMapModal,
   AdventureFieldworkModal,
@@ -1941,6 +1942,7 @@ function PauseMenu({
   onInventory,
   onFieldNote,
   onSettings,
+  onReportBug,
   onReturnTitle,
   onRestart,
 }) {
@@ -1966,6 +1968,7 @@ function PauseMenu({
           <button type="button" onClick={onDecks}>Open Deck Workshop</button>
           <button type="button" onClick={onInventory}>Open Inventory</button>
           <button type="button" onClick={onSettings}>Settings</button>
+          <button type="button" onClick={onReportBug}>Report a bug</button>
           {fieldNoteCount > 0 ? (
             <button type="button" onClick={onFieldNote}>Open Field Notes ({fieldNoteCount})</button>
           ) : null}
@@ -2832,6 +2835,7 @@ export default function AdventureGame({
   );
   const [pauseOpen, setPauseOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [bugReportOpen, setBugReportOpen] = useState(false);
   const [saveNotice, setSaveNotice] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const [activeDuelDeckSnapshot, setActiveDuelDeckSnapshot] = useState(null);
@@ -6853,6 +6857,9 @@ export default function AdventureGame({
   escapeRef.current = () => {
     if (screen !== "playing" || activeTrainerId || sceneTransition || guidedWalk || conversationLeadIn) return;
     if (openingPrelude || momGreetingStage || bestFriendSequence || dockCutscenePhase) return;
+    // The portaled reporter owns Escape so it can reset successful submissions,
+    // restore focus, and leave the underlying pause menu open.
+    if (bugReportOpen) return;
     clearMovement();
     if (openingFreeRoamLocked && !conversation) return;
     if (confirmation) {
@@ -8197,6 +8204,9 @@ export default function AdventureGame({
             setPauseOpen(false);
             setSettingsOpen(true);
           }}
+          onReportBug={() => {
+            setBugReportOpen(true);
+          }}
           onFieldNote={() => {
             setPauseOpen(false);
             setActiveFieldNoteId(unlockedFieldNotes.at(-1)?.id ?? SHELLSHORE_FIELD_NOTE.id);
@@ -8206,6 +8216,21 @@ export default function AdventureGame({
           onRestart={requestRestart}
         />
       ) : null}
+      <BugReportDialog
+        open={bugReportOpen}
+        surface="reefbound"
+        context={{
+          screen,
+          sceneId,
+          townId: currentTownId,
+          questId: activeFieldworkChapter?.questId ?? null,
+          activeEncounterId: activeTrainerId
+            ? TRAINERS[activeTrainerId]?.encounterId ?? null
+            : null,
+          vehicleMode: vehicleMode ? "submarine" : boatMode ? "boat" : "walking",
+        }}
+        onClose={() => setBugReportOpen(false)}
+      />
       {confirmation ? (
         <ConfirmDialog
           {...confirmation}

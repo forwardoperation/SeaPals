@@ -1,5 +1,5 @@
-export const LEGAL_EFFECTIVE_DATE_ISO = "2026-07-30";
-export const LEGAL_EFFECTIVE_DATE_LABEL = "July 30, 2026";
+export const LEGAL_EFFECTIVE_DATE_ISO = "2026-08-12";
+export const LEGAL_EFFECTIVE_DATE_LABEL = "August 12, 2026";
 
 export const SEAPALS_OPERATOR = Object.freeze({
   legalName: "Sea Realm, LLC",
@@ -47,6 +47,12 @@ export const PRIVACY_RETENTION_SCHEDULE = Object.freeze([
     period: "Up to 12 months",
     detail:
       "After that period, the response is deleted or stripped of identifying fields. De-identified totals may be retained.",
+  }),
+  Object.freeze({
+    category: "Bug reports and game diagnostics",
+    period: "Up to 24 months after submission",
+    detail:
+      "Reports are deleted or de-identified sooner when practical after resolution, unless they are needed for an unresolved safety, security, or legal matter.",
   }),
   Object.freeze({
     category: "Tournament contact and edit information",
