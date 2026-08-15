@@ -19,7 +19,7 @@ test("mobile board follows turn boundaries without blocking manual inspection", 
   const phaseEffect = sourceSection(
     simulatorSource,
     'if (gamePhase === "opponent")',
-    "useEffect(() => {\n    if (!tutorialHelpTargetActive)"
+    "if (!tutorialHelpTargetActive) return undefined;"
   );
 
   assert.match(phaseEffect, /setMobileBoardView\("opponent"\)/);
