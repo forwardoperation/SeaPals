@@ -41,10 +41,25 @@ test("the storefront keeps production speed independent from shipping or pickup"
 });
 
 test("carrier choices explain that they follow production", () => {
-  assert.match(shipping, /Standard carrier service after production/);
+  assert.match(shipping, /Economy carrier service after production/);
+  assert.match(shipping, /estimated 2–7 business days in transit/);
+  assert.match(shipping, /USPS Priority Mail after production/);
+  assert.match(shipping, /estimated 2–3 business days in transit/);
   assert.match(shipping, /This does not change production time/);
   assert.match(shipping, /Free scheduled pickup/);
   assert.match(shipping, /email after your order is built to arrange a pickup time/);
+});
+
+test("the storefront previews the same weight tier enforced by the server", () => {
+  assert.match(storefront, /resolveStoreShippingRateTier/);
+  assert.match(storefront, /STORE_MAX_CART_QUANTITY/);
+  assert.match(storefront, /STORE_MAX_PER_PRODUCT_QUANTITY/);
+  assert.match(storefront, /product\.shippingWeightOunces/);
+  assert.match(storefront, /cartShippingWeightOunces/);
+  assert.match(storefront, /selectedShippingRateTier\?\.amountCents/);
+  assert.match(storefront, /Large-parcel rate applies above 1 lb through 8 lb/);
+  assert.match(storefront, /Base rate applies through 1 lb/);
+  assert.doesNotMatch(storefront, /const MAX_CART_QUANTITY = 20/);
 });
 
 test("scheduled pickup is arranged privately after production", () => {

@@ -3,6 +3,14 @@ import {
   storeLaunchProductIds,
   storeProductDefinitions,
 } from "../src/data/store/products.js";
+import {
+  STORE_BASE_SHIPPING_MAX_WEIGHT_OUNCES,
+  STORE_MAX_SHIPPING_WEIGHT_OUNCES,
+} from "../src/data/store/shipping.js";
+import {
+  STORE_MAX_CART_QUANTITY,
+  STORE_MAX_PER_PRODUCT_QUANTITY,
+} from "../src/lib/store/cart.mjs";
 
 if (
   process.env.STORE_SKIP_LOCAL_ENV !== "true" &&
@@ -20,6 +28,10 @@ const EXPEDITED_PRODUCTION_CENTS = 1000;
 const EXPEDITED_PRODUCTION_TAX_CODE = "txcd_92010004";
 const EXPEDITED_PRODUCTION_DAILY_ORDER_LIMIT = 10;
 const EXPEDITED_PRODUCTION_TIME_ZONE = "America/New_York";
+const STANDARD_SHIPPING_CENTS = 1000;
+const PRIORITY_SHIPPING_CENTS = 1500;
+const LARGE_STANDARD_SHIPPING_CENTS = 2000;
+const LARGE_PRIORITY_SHIPPING_CENTS = 3500;
 
 function addCheck(label, passed, detail, required = true) {
   checks.push({ label, passed: Boolean(passed), detail, required });
@@ -119,9 +131,16 @@ const expectedInventoryProducts = availableProducts
 const standardShippingCents =
   centsValue(process.env.STORE_STANDARD_SHIPPING_CENTS) ??
   centsValue(process.env.STORE_SHIPPING_CENTS) ??
-  750;
+  STANDARD_SHIPPING_CENTS;
 const priorityShippingCents =
-  centsValue(process.env.STORE_PRIORITY_SHIPPING_CENTS) ?? 1250;
+  centsValue(process.env.STORE_PRIORITY_SHIPPING_CENTS) ??
+  PRIORITY_SHIPPING_CENTS;
+const largeStandardShippingCents =
+  centsValue(process.env.STORE_LARGE_STANDARD_SHIPPING_CENTS) ??
+  LARGE_STANDARD_SHIPPING_CENTS;
+const largePriorityShippingCents =
+  centsValue(process.env.STORE_LARGE_PRIORITY_SHIPPING_CENTS) ??
+  LARGE_PRIORITY_SHIPPING_CENTS;
 const expeditedProductionEnabled = trueValue(
   "STORE_EXPEDITED_PRODUCTION_ENABLED"
 );
@@ -304,10 +323,38 @@ addCheck(
 );
 addCheck(
   "Shipping options",
-  standardShippingCents > 0 && priorityShippingCents > 0,
-  localPickupEnabled
-    ? `Standard is ${standardShippingCents} cents, Priority is ${priorityShippingCents} cents, and optional Elverson pickup is enabled.`
-    : `Standard is ${standardShippingCents} cents, Priority is ${priorityShippingCents} cents, and local pickup is disabled.`
+  standardShippingCents === STANDARD_SHIPPING_CENTS &&
+    priorityShippingCents === PRIORITY_SHIPPING_CENTS &&
+    largeStandardShippingCents === LARGE_STANDARD_SHIPPING_CENTS &&
+    largePriorityShippingCents === LARGE_PRIORITY_SHIPPING_CENTS,
+  standardShippingCents === STANDARD_SHIPPING_CENTS &&
+    priorityShippingCents === PRIORITY_SHIPPING_CENTS &&
+    largeStandardShippingCents === LARGE_STANDARD_SHIPPING_CENTS &&
+    largePriorityShippingCents === LARGE_PRIORITY_SHIPPING_CENTS
+    ? localPickupEnabled
+      ? `Up to one pound is ${standardShippingCents}/${priorityShippingCents} cents, over one through eight pounds is ${largeStandardShippingCents}/${largePriorityShippingCents} cents, and optional Elverson pickup is enabled.`
+      : `Up to one pound is ${standardShippingCents}/${priorityShippingCents} cents, over one through eight pounds is ${largeStandardShippingCents}/${largePriorityShippingCents} cents, and local pickup is disabled.`
+    : `Use the owner-approved tiers: ${STANDARD_SHIPPING_CENTS}/${PRIORITY_SHIPPING_CENTS} cents through one pound and ${LARGE_STANDARD_SHIPPING_CENTS}/${LARGE_PRIORITY_SHIPPING_CENTS} cents over one through eight pounds.`,
+  true
+);
+const invalidShippingWeightProducts = availableProducts.filter((productId) => {
+  const ounces = productDefinitions.get(productId)?.shippingWeightOunces;
+  return !Number.isSafeInteger(ounces) || ounces < 1 || ounces > 16;
+});
+addCheck(
+  "Conservative product shipping weights",
+  invalidShippingWeightProducts.length === 0,
+  invalidShippingWeightProducts.length
+    ? `Set a conservative one-to-sixteen-ounce shipping weight for: ${invalidShippingWeightProducts.join(", ")}.`
+    : "Every allowlisted product has a conservative shipping weight for the one- and eight-pound rate tiers."
+);
+addCheck(
+  "Mailed-order cart limits",
+  STORE_MAX_PER_PRODUCT_QUANTITY === 8 &&
+    STORE_MAX_CART_QUANTITY === 8 &&
+    STORE_BASE_SHIPPING_MAX_WEIGHT_OUNCES === 16 &&
+    STORE_MAX_SHIPPING_WEIGHT_OUNCES === 128,
+  "Checkout must cap each SKU and the whole cart at eight items, with approved one- and eight-pound tier boundaries."
 );
 if (localPickupEnabled) {
   addCheck(

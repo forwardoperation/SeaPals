@@ -229,10 +229,29 @@ export function getStoreConfiguration() {
       const configuredAmount = definition.amountEnvKey
         ? readCents(process.env[definition.amountEnvKey])
         : null;
-      const amountCents =
+      const legacyBaseAmountCents =
         configuredAmount ??
         (definition.id === "standard" ? legacyShippingCents : null) ??
         definition.defaultAmountCents;
+      const rateTiers = Array.isArray(definition.rateTiers)
+        ? definition.rateTiers.map((tier) => {
+            const configuredTierAmount = tier.amountEnvKey
+              ? readCents(process.env[tier.amountEnvKey])
+              : null;
+
+            return {
+              id: tier.id,
+              maxWeightOunces: tier.maxWeightOunces,
+              amountCents:
+                configuredTierAmount ??
+                (tier.id === "base" ? legacyBaseAmountCents : null) ??
+                tier.defaultAmountCents,
+            };
+          })
+        : [];
+      const amountCents =
+        rateTiers.find((tier) => tier.id === "base")?.amountCents ??
+        legacyBaseAmountCents;
       const minimumDays =
         definition.id === "standard" && legacyShippingEstimateMinDays
           ? legacyShippingEstimateMinDays
@@ -250,6 +269,7 @@ export function getStoreConfiguration() {
         fulfillmentMethod: definition.fulfillmentMethod,
         pickupLocation: definition.pickupLocation ?? null,
         amountCents,
+        rateTiers,
         deliveryEstimateMinDays: minimumDays,
         deliveryEstimateMaxDays:
           minimumDays &&
@@ -263,6 +283,22 @@ export function getStoreConfiguration() {
     shippingOptions.find(
       (option) => option.id === defaultStoreShippingOptionId
     ) ?? shippingOptions[0];
+  const standardShippingOption = shippingOptions.find(
+    (option) => option.id === "standard"
+  );
+  const priorityShippingOption = shippingOptions.find(
+    (option) => option.id === "priority"
+  );
+  const shippingConfigurationReady = Boolean(
+    standardShippingOption?.rateTiers?.find((tier) => tier.id === "base")
+      ?.amountCents === 1000 &&
+      standardShippingOption?.rateTiers?.find((tier) => tier.id === "large")
+        ?.amountCents === 2000 &&
+      priorityShippingOption?.rateTiers?.find((tier) => tier.id === "base")
+        ?.amountCents === 1500 &&
+      priorityShippingOption?.rateTiers?.find((tier) => tier.id === "large")
+        ?.amountCents === 3500
+  );
 
   const catalogDefinitions = showFutureProducts
     ? storeProductDefinitions
@@ -327,6 +363,7 @@ export function getStoreConfiguration() {
       trialDecks,
       image: definition.image,
       cardsIncluded: definition.cardsIncluded ?? null,
+      shippingWeightOunces: definition.shippingWeightOunces ?? null,
       defaultPriceCents,
       featured: definition.featured,
       requiresConfiguration: Boolean(definition.requiresConfiguration),
@@ -356,6 +393,7 @@ export function getStoreConfiguration() {
       orderNotificationConfigurationReady &&
       expeditedProductionConfigurationReady &&
       pickupTaxConfigurationReady &&
+      shippingConfigurationReady &&
       (paymentMode !== "live" || synchronousPaymentMethodsConfirmed) &&
       (paymentMode !== "live" || orderNotificationDeliveryConfirmed) &&
       (!automaticTaxRequested || taxRegistrationConfirmed) &&
@@ -393,6 +431,7 @@ export function getStoreConfiguration() {
     expeditedProductionTimeZone,
     catalogConfirmed,
     shippingRatesConfirmed,
+    shippingConfigurationReady,
     pickupTaxConfirmed,
     pickupTaxRateId,
     // Retain the legacy fields for older local tooling while Checkout uses the

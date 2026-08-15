@@ -100,3 +100,32 @@ test("all launch products publish the confirmed five-business-day standard produ
     );
   }
 });
+
+test("launch products publish conservative ready-to-mail weights", () => {
+  const productsById = new Map(
+    storeProductDefinitions.map((product) => [product.id, product])
+  );
+
+  assert.equal(productsById.get("starter-kit")?.shippingWeightOunces, 16);
+
+  for (const productId of [
+    "blue-water",
+    "disruption",
+    "coral-garden",
+    "darkness-shroud",
+    "open-ocean-hunt",
+    "murky-water",
+    "stinging-fortress",
+  ]) {
+    assert.equal(productsById.get(productId)?.shippingWeightOunces, 8);
+  }
+
+  for (const productId of [
+    "accessory-set",
+    "conditions-deck",
+    "dice-pack",
+    "reef-point-tokens",
+  ]) {
+    assert.equal(productsById.get(productId)?.shippingWeightOunces, 16);
+  }
+});

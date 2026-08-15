@@ -98,24 +98,45 @@ expedited order already accepted.
 
 ## Packing and delivery
 
-Measure a ready-to-mail parcel, including the mailer, cushioning, label, and
-inserts—not an unpackaged product.
+The owner approved conservative shipping weights of **0.5 lb (8 oz) per deck**
+and **1 lb (16 oz) per Starter Kit or accessory SKU**. Checkout sums those
+per-unit weights to select a rate tier. They intentionally avoid understating
+postage; ready-to-mail measurements include the brown box, cushioning, label,
+and inserts—not only the unpackaged product.
 
-| Test parcel | Weight | Length × width × height | Actual quoted postage |
-| --- | --- | --- | ---: |
-| One lightest launch item |  |  |  |
-| One Starter Kit |  |  |  |
-| Heaviest allowed 20-item cart |  |  |  |
+| Confirmed ready-to-mail parcel | Conservative weight | Outside length × width × height | Pirate Ship postage to 90001 before $0.75 box cost | Estimated postage + box |
+| --- | ---: | --- | --- | --- |
+| One 60-card deck | 0.5 lb | 8 × 6 × 2 in | Economy $6.23; Priority $13.48 | Economy $6.98; Priority $14.23 |
+| One Starter Kit | 1 lb | 10 × 8 × 2 in | Economy $8.76; Priority $13.48 | Economy $9.51; Priority $14.23 |
+| Maximum allowed 8-item cart | 8 lb | 20 × 14 × 6 in | Economy $18.86; Priority $33.04 | Economy $19.61; Priority $33.79 |
+
+Online checkout is limited to **8 items and 8 lb (128 oz)** per order.
+
+| Approved conservative order-weight tier | Standard Shipping & Handling | Priority Shipping & Handling |
+| --- | ---: | ---: |
+| Up to and including 1 lb (16 oz) | $10.00 | $15.00 |
+| More than 1 lb (>16 oz) through 8 lb (128 oz) | $20.00 | $35.00 |
 
 - Made-to-order wording to publish: ________________________________________.
 - Standard orders leave the business within: **5 business days**.
 - Expedited orders leave the business within: **1 business day**.
-- Standard customer delivery estimate to publish: __________.
-- Priority customer delivery estimate to publish: __________.
-- Approved Standard Shipping & Handling charge: __________.
-- Approved Priority Shipping & Handling charge: __________.
+- Standard customer delivery estimate to publish: **2–7 business days in
+  transit after production; economy carrier selected through Pirate Ship**.
+- Priority customer delivery estimate to publish: **2–3 business days in
+  transit after production via USPS Priority Mail**.
+- Approved mailed-order Shipping & Handling charges: **use the weight-tier
+  table above**.
+- Approved Scheduled pickup charge: **free**.
 - Initial destinations: United States only / other: __________.
-- Carrier/label workflow and daily cutoff: __________.
+- Carrier/label workflow and daily cutoff: **Buy labels through Pirate Ship;
+  daily cutoff still to be recorded**.
+
+Rate basis and approval date: **2026-08-15**. The Pirate Ship quotes above use
+Elverson 19520 to Los Angeles 90001 and exclude the owner-confirmed $0.75 brown
+box cost shown separately. Automated checkout tests now verify the
+8-item/128-ounce maximum and the $10/$15 and $20/$35 tier boundary, so the
+production shipping-rate confirmation may remain enabled while these inputs
+stay unchanged.
 
 The owner requested free **Scheduled pickup — Elverson, PA**. No appointment is
 chosen during Checkout and no street address is published. After production,

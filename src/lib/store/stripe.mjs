@@ -318,25 +318,31 @@ function appendShippingOption(
   }
 }
 
-function appendShippingEstimate(form, shippingOption) {
+function appendShippingEstimate(form, shippingOption, productionOption) {
   if (
     shippingOption.fulfillmentMethod !== "shipping" ||
     !shippingOption.deliveryEstimateMinDays ||
-    !shippingOption.deliveryEstimateMaxDays
+    !shippingOption.deliveryEstimateMaxDays ||
+    !Number.isSafeInteger(productionOption?.maxBusinessDays) ||
+    productionOption.maxBusinessDays < 1
   ) {
     return;
   }
 
+  const minimumBusinessDays =
+    productionOption.maxBusinessDays + shippingOption.deliveryEstimateMinDays;
+  const maximumBusinessDays =
+    productionOption.maxBusinessDays + shippingOption.deliveryEstimateMaxDays;
   const prefix = "shipping_options[0][shipping_rate_data][delivery_estimate]";
   form.set(`${prefix}[minimum][unit]`, "business_day");
   form.set(
     `${prefix}[minimum][value]`,
-    String(shippingOption.deliveryEstimateMinDays)
+    String(minimumBusinessDays)
   );
   form.set(`${prefix}[maximum][unit]`, "business_day");
   form.set(
     `${prefix}[maximum][value]`,
-    String(shippingOption.deliveryEstimateMaxDays)
+    String(maximumBusinessDays)
   );
 }
 
@@ -520,7 +526,7 @@ export async function createStripeCheckoutSession({
     });
   }
   appendShippingOption(form, fulfillmentOption, currency, configuration);
-  appendShippingEstimate(form, fulfillmentOption);
+  appendShippingEstimate(form, fulfillmentOption, productionOption);
 
   const session = await stripeRequest("/checkout/sessions", {
     method: "POST",

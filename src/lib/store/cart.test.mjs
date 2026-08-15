@@ -9,6 +9,8 @@ import {
   CartValidationError,
   formatMoney,
   quoteCart,
+  STORE_MAX_CART_QUANTITY,
+  STORE_MAX_PER_PRODUCT_QUANTITY,
 } from "./cart.mjs";
 
 const products = [
@@ -21,6 +23,7 @@ const products = [
     description: "A balanced deck.",
     checkoutDescription: "Coral Garden 60-card ready-to-play expansion deck.",
     image: "/coral.png",
+    shippingWeightOunces: 8,
     taxCode: "txcd_99999999",
     priceCents: 2200,
     available: true,
@@ -34,6 +37,7 @@ const products = [
     description: "A deep-sea deck.",
     checkoutDescription: "Darkness Shroud 60-card expansion deck.",
     image: "/deep.png",
+    shippingWeightOunces: 8,
     taxCode: "txcd_99999999",
     priceCents: 2200,
     available: false,
@@ -48,6 +52,7 @@ const products = [
     checkoutDescription:
       "Includes two 60-card decks, conditions, dice, and Reef Point tokens.",
     image: "/starter-kit.svg",
+    shippingWeightOunces: 16,
     taxCode: "txcd_99999999",
     priceCents: 4400,
     available: true,
@@ -62,6 +67,7 @@ const products = [
     checkoutDescription:
       "Includes Conditions Deck, Dice Pack, and Reef Point Token Set.",
     image: "/accessory-set.svg",
+    shippingWeightOunces: 16,
     taxCode: "txcd_99999999",
     priceCents: 1200,
     available: true,
@@ -159,6 +165,28 @@ test("the default storefront is limited to the twelve prelaunch products", () =>
       configuration.products.some((product) => product.id === "custom-t-shirt"),
       false
     );
+    assert.deepEqual(
+      configuration.shippingOptions.map((option) => ({
+        id: option.id,
+        amountCents: option.amountCents,
+        deliveryEstimateMinDays: option.deliveryEstimateMinDays,
+        deliveryEstimateMaxDays: option.deliveryEstimateMaxDays,
+      })),
+      [
+        {
+          id: "standard",
+          amountCents: 1000,
+          deliveryEstimateMinDays: 2,
+          deliveryEstimateMaxDays: 7,
+        },
+        {
+          id: "priority",
+          amountCents: 1500,
+          deliveryEstimateMinDays: 2,
+          deliveryEstimateMaxDays: 3,
+        },
+      ]
+    );
   });
 });
 
@@ -167,6 +195,8 @@ test("the catalog exposes server-controlled shipping and scheduled Elverson pick
     {
       STORE_STANDARD_SHIPPING_CENTS: "800",
       STORE_PRIORITY_SHIPPING_CENTS: "1350",
+      STORE_LARGE_STANDARD_SHIPPING_CENTS: "2100",
+      STORE_LARGE_PRIORITY_SHIPPING_CENTS: "3600",
       STORE_LOCAL_PICKUP_ENABLED: "true",
     },
     () => {
@@ -182,26 +212,42 @@ test("the catalog exposes server-controlled shipping and scheduled Elverson pick
           amountCents: option.amountCents,
           fulfillmentMethod: option.fulfillmentMethod,
           pickupLocation: option.pickupLocation,
+          rateTiers: option.rateTiers,
+          deliveryEstimateMinDays: option.deliveryEstimateMinDays,
+          deliveryEstimateMaxDays: option.deliveryEstimateMaxDays,
         })),
         [
           {
             id: "standard",
             displayName: "Standard Shipping & Handling",
             shortName: "Standard",
-            description: "Standard carrier service after production.",
+            description:
+              "Economy carrier service after production; estimated 2–7 business days in transit.",
             amountCents: 800,
             fulfillmentMethod: "shipping",
             pickupLocation: null,
+            rateTiers: [
+              { id: "base", maxWeightOunces: 16, amountCents: 800 },
+              { id: "large", maxWeightOunces: 128, amountCents: 2100 },
+            ],
+            deliveryEstimateMinDays: 2,
+            deliveryEstimateMaxDays: 7,
           },
           {
             id: "priority",
             displayName: "Priority Shipping & Handling",
             shortName: "Priority",
             description:
-              "Faster carrier service after production. This does not change production time.",
+              "USPS Priority Mail after production; estimated 2–3 business days in transit. This does not change production time.",
             amountCents: 1350,
             fulfillmentMethod: "shipping",
             pickupLocation: null,
+            rateTiers: [
+              { id: "base", maxWeightOunces: 16, amountCents: 1350 },
+              { id: "large", maxWeightOunces: 128, amountCents: 3600 },
+            ],
+            deliveryEstimateMinDays: 2,
+            deliveryEstimateMaxDays: 3,
           },
           {
             id: "pickup-elverson-pa",
@@ -212,6 +258,9 @@ test("the catalog exposes server-controlled shipping and scheduled Elverson pick
             amountCents: 0,
             fulfillmentMethod: "pickup",
             pickupLocation: "Elverson, PA",
+            rateTiers: [],
+            deliveryEstimateMinDays: null,
+            deliveryEstimateMaxDays: null,
           },
         ]
       );
@@ -396,12 +445,13 @@ test("approved launch accessories use their server-controlled source prices", ()
   );
 });
 
-test("the complete prelaunch catalog quotes all twelve products safely", () => {
+test("the complete prelaunch catalog exposes all twelve products and quotes the eight-item limit", () => {
   withStoreEnvironment(
     {
       ...infrastructureEnvironment,
       STORE_CHECKOUT_ENABLED: "false",
       STORE_AVAILABLE_PRODUCT_IDS: storeLaunchProductIds.join(","),
+      // Exercise the legacy single-rate fallback independently of the approved defaults.
       STORE_SHIPPING_CENTS: "750",
       STRIPE_AUTOMATIC_TAX: "false",
     },
@@ -437,16 +487,20 @@ test("the complete prelaunch catalog quotes all twelve products safely", () => {
       assert.equal(configuration.automaticTaxEnabled, false);
 
       const quote = quoteCart(
-        storeLaunchProductIds.map((productId) => ({ productId, quantity: 1 })),
+        storeLaunchProductIds
+          .slice(0, STORE_MAX_CART_QUANTITY)
+          .map((productId) => ({ productId, quantity: 1 })),
         configuration.products,
-        { shippingCents: configuration.shippingCents }
+        { fulfillmentOption: configuration.shippingOptions[0] }
       );
 
-      assert.equal(quote.items.length, 12);
-      assert.equal(quote.totalQuantity, 12);
-      assert.equal(quote.subtotalCents, 22_500);
-      assert.equal(quote.shippingCents, 750);
-      assert.equal(quote.totalCents, 23_250);
+      assert.equal(quote.items.length, STORE_MAX_CART_QUANTITY);
+      assert.equal(quote.totalQuantity, STORE_MAX_CART_QUANTITY);
+      assert.equal(quote.subtotalCents, 19_800);
+      assert.equal(quote.shippingWeightOunces, 72);
+      assert.equal(quote.shippingRateTierId, "large");
+      assert.equal(quote.shippingCents, 2000);
+      assert.equal(quote.totalCents, 21_800);
     }
   );
 });
@@ -675,6 +729,27 @@ test("live checkout requires catalog, tax, and shipping owner gates", () => {
       STORE_CATALOG_CONFIRMED: "true",
       STORE_SHIPPING_RATES_CONFIRMED: "true",
       STORE_PICKUP_TAX_CONFIRMED: "true",
+      STORE_SYNCHRONOUS_PAYMENT_METHODS_CONFIRMED: "true",
+      STRIPE_AUTOMATIC_TAX: "true",
+      STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
+      STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
+      STORE_LARGE_PRIORITY_SHIPPING_CENTS: "0",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.shippingConfigurationReady, false);
+      assert.equal(configuration.checkoutEnabled, false);
+    }
+  );
+
+  withStoreEnvironment(
+    {
+      ...liveEnvironment,
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
+      STORE_CATALOG_CONFIRMED: "true",
+      STORE_SHIPPING_RATES_CONFIRMED: "true",
+      STORE_PICKUP_TAX_CONFIRMED: "true",
       STRIPE_AUTOMATIC_TAX: "true",
       STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
       STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
@@ -739,8 +814,10 @@ test("quoteCart resolves prices from the server catalog and totals shipping", ()
   assert.equal(quote.items[0].taxCode, "txcd_99999999");
   assert.equal(quote.items[0].category, "expansion-decks");
   assert.equal(quote.subtotalCents, 6600);
-  assert.equal(quote.shippingCents, 500);
-  assert.equal(quote.totalCents, 7100);
+  assert.equal(quote.shippingWeightOunces, 24);
+  assert.equal(quote.shippingRateTierId, "large");
+  assert.equal(quote.shippingCents, 2000);
+  assert.equal(quote.totalCents, 8600);
 });
 
 test("quoteCart supports kits and accessories without deck ids", () => {
@@ -769,18 +846,21 @@ test("quoteCart snapshots the selected fulfillment option and its server price",
       fulfillmentOption: {
         id: "priority",
         displayName: "Priority Shipping & Handling",
-        description: "Faster carrier service.",
+        description:
+          "USPS Priority Mail after production; estimated 2–3 business days in transit.",
         fulfillmentMethod: "shipping",
         pickupLocation: null,
-        amountCents: 1250,
+        amountCents: 1500,
       },
     }
   );
 
   assert.equal(priorityQuote.fulfillmentOptionId, "priority");
   assert.equal(priorityQuote.fulfillmentMethod, "shipping");
-  assert.equal(priorityQuote.shippingCents, 1250);
-  assert.equal(priorityQuote.totalCents, 5650);
+  assert.equal(priorityQuote.shippingWeightOunces, 16);
+  assert.equal(priorityQuote.shippingRateTierId, "base");
+  assert.equal(priorityQuote.shippingCents, 1500);
+  assert.equal(priorityQuote.totalCents, 5900);
 
   const pickupQuote = quoteCart(
     [{ productId: "starter-kit", quantity: 1 }],
@@ -805,6 +885,7 @@ test("quoteCart snapshots the selected fulfillment option and its server price",
   );
   assert.match(pickupQuote.fulfillmentOption.description, /arrange a pickup time/i);
   assert.equal(pickupQuote.pickupLocation, "Elverson, PA");
+  assert.equal(pickupQuote.shippingRateTierId, "pickup");
   assert.equal(pickupQuote.shippingCents, 0);
   assert.equal(pickupQuote.totalCents, 4400);
 
@@ -827,20 +908,22 @@ test("quoteCart snapshots an independent fixed per-order production option", () 
   const standardQuote = quoteCart(
     [{ productId: "starter-kit", quantity: 2 }],
     products,
-    { shippingCents: 750 }
+    { shippingCents: 1000 }
   );
   assert.equal(standardQuote.productionOptionId, "standard-production");
   assert.equal(standardQuote.productionOptionName, "Standard production");
   assert.equal(standardQuote.productionMaxBusinessDays, 5);
   assert.equal(standardQuote.productionCents, 0);
   assert.equal(standardQuote.subtotalCents, 8800);
-  assert.equal(standardQuote.totalCents, 9550);
+  assert.equal(standardQuote.shippingRateTierId, "large");
+  assert.equal(standardQuote.shippingCents, 2000);
+  assert.equal(standardQuote.totalCents, 10_800);
 
   const expeditedQuote = quoteCart(
     [{ productId: "starter-kit", quantity: 2 }],
     products,
     {
-      shippingCents: 750,
+      shippingCents: 1000,
       productionOption: {
         id: "expedited-production",
         displayName: "Expedited production",
@@ -853,8 +936,8 @@ test("quoteCart snapshots an independent fixed per-order production option", () 
   assert.equal(expeditedQuote.productionMaxBusinessDays, 1);
   assert.equal(expeditedQuote.productionCents, 1000);
   assert.equal(expeditedQuote.subtotalCents, 8800);
-  assert.equal(expeditedQuote.shippingCents, 750);
-  assert.equal(expeditedQuote.totalCents, 10_550);
+  assert.equal(expeditedQuote.shippingCents, 2000);
+  assert.equal(expeditedQuote.totalCents, 11_800);
 
   assert.throws(
     () =>
@@ -887,7 +970,16 @@ test("quoteCart rejects unknown and unavailable products", () => {
 
 test("quoteCart enforces per-product and whole-cart quantity limits", () => {
   assert.throws(
-    () => quoteCart([{ productId: "coral-garden", quantity: 11 }], products),
+    () =>
+      quoteCart(
+        [
+          {
+            productId: "coral-garden",
+            quantity: STORE_MAX_PER_PRODUCT_QUANTITY + 1,
+          },
+        ],
+        products
+      ),
     (error) => error.code === "quantity_limit"
   );
 
@@ -895,13 +987,67 @@ test("quoteCart enforces per-product and whole-cart quantity limits", () => {
     () =>
       quoteCart(
         [
-          { productId: "coral-garden", quantity: 10 },
-          { productId: "starter-kit", quantity: 11 },
+          { productId: "coral-garden", quantity: 4 },
+          { productId: "starter-kit", quantity: 5 },
         ],
         products,
         { maxPerProduct: 20, maxTotalQuantity: 20 }
       ),
     (error) => error.code === "cart_quantity_limit"
+  );
+});
+
+test("quoteCart applies the confirmed weight tiers and rejects parcels over eight pounds", () => {
+  const baseStandard = quoteCart(
+    [{ productId: "coral-garden", quantity: 2 }],
+    products
+  );
+  assert.equal(baseStandard.shippingWeightOunces, 16);
+  assert.equal(baseStandard.shippingRateTierId, "base");
+  assert.equal(baseStandard.shippingCents, 1000);
+
+  const largePriority = quoteCart(
+    [
+      { productId: "coral-garden", quantity: 1 },
+      { productId: "starter-kit", quantity: 1 },
+    ],
+    products,
+    {
+      fulfillmentOption: {
+        id: "priority",
+        fulfillmentMethod: "shipping",
+        rateTiers: [
+          { id: "base", amountCents: 1500 },
+          { id: "large", amountCents: 3500 },
+        ],
+      },
+    }
+  );
+  assert.equal(largePriority.shippingWeightOunces, 24);
+  assert.equal(largePriority.shippingRateTierId, "large");
+  assert.equal(largePriority.shippingCents, 3500);
+
+  const maximumParcel = quoteCart(
+    [{ productId: "accessory-set", quantity: 8 }],
+    products
+  );
+  assert.equal(maximumParcel.shippingWeightOunces, 128);
+  assert.equal(maximumParcel.shippingRateTierId, "large");
+  assert.equal(maximumParcel.shippingCents, 2000);
+
+  const overweightProduct = {
+    ...products[0],
+    id: "overweight",
+    name: "Overweight parcel",
+    shippingWeightOunces: 129,
+  };
+  assert.throws(
+    () =>
+      quoteCart(
+        [{ productId: overweightProduct.id, quantity: 1 }],
+        [overweightProduct]
+      ),
+    (error) => error.code === "shipping_weight_limit"
   );
 });
 

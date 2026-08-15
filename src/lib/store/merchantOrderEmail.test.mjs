@@ -39,9 +39,9 @@ function paidOrder(overrides = {}) {
     fulfillment_option_id: "priority",
     fulfillment_option_name: "Priority Shipping & Handling",
     pickup_location: null,
-    shipping_cents: 1250,
-    tax_cents: 411,
-    total_cents: 7261,
+    shipping_cents: 1500,
+    tax_cents: 426,
+    total_cents: 7526,
     payment_livemode: true,
     store_order_items: [
       {
@@ -76,7 +76,7 @@ test("merchant email lists every quantity, total, production choice, shipping de
 
   assert.equal(
     email.subject,
-    "New SeaPals order SP-260814-REEF01 — $72.61"
+    "New SeaPals order SP-260814-REEF01 — $75.26"
   );
   assert.match(
     email.text,
@@ -92,13 +92,13 @@ test("merchant email lists every quantity, total, production choice, shipping de
   );
   assert.match(
     email.text,
-    /Fulfillment: Priority Shipping & Handling — \$12\.50/
+    /Fulfillment: Priority Shipping & Handling — \$15\.00/
   );
   assert.match(email.text, /Ship to[\s\S]*123 Reef Road[\s\S]*Reading PA 19601/);
   assert.match(email.text, /Products: \$56\.00/);
-  assert.match(email.text, /Shipping & handling: \$12\.50/);
-  assert.match(email.text, /Tax: \$4\.11/);
-  assert.match(email.text, /Total paid: \$72\.61/);
+  assert.match(email.text, /Shipping & handling: \$15\.00/);
+  assert.match(email.text, /Tax: \$4\.26/);
+  assert.match(email.text, /Total paid: \$75\.26/);
   assert.match(
     email.text,
     /https:\/\/seapalstcg\.com\/admin\/orders\?order=00000000-0000-4000-8000-000000000001/

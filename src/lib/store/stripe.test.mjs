@@ -354,15 +354,15 @@ test("checkout charges expedited production once and copies its signed snapshot"
         productionOptionName: "Expedited production",
         productionMaxBusinessDays: 1,
         productionCents: 1000,
-        shippingCents: 750,
+        shippingCents: 1000,
         fulfillmentOption: {
           id: "standard",
           displayName: "Standard Shipping & Handling",
           fulfillmentMethod: "shipping",
           pickupLocation: null,
-          amountCents: 750,
-          deliveryEstimateMinDays: null,
-          deliveryEstimateMaxDays: null,
+          amountCents: 1000,
+          deliveryEstimateMinDays: 2,
+          deliveryEstimateMaxDays: 7,
         },
         items: [
           {
@@ -415,6 +415,18 @@ test("checkout charges expedited production once and copies its signed snapshot"
     assert.equal(form.get("metadata[production_max_business_days]"), "1");
     assert.equal(form.get("metadata[production_cents]"), "1000");
     assert.equal(
+      form.get(
+        "shipping_options[0][shipping_rate_data][delivery_estimate][minimum][value]"
+      ),
+      "3"
+    );
+    assert.equal(
+      form.get(
+        "shipping_options[0][shipping_rate_data][delivery_estimate][maximum][value]"
+      ),
+      "8"
+    );
+    assert.equal(
       form.get("payment_intent_data[metadata][production_option_id]"),
       "expedited-production"
     );
@@ -429,12 +441,12 @@ test("checkout charges expedited production once and copies its signed snapshot"
   }
 });
 
-test("checkout sends a twelve-line launch cart with Priority shipping", async () => {
+test("checkout sends an eight-item launch cart with Priority shipping", async () => {
   const originalFetch = globalThis.fetch;
   const originalSecret = process.env.STRIPE_SECRET_KEY;
   let request = null;
 
-  const items = Array.from({ length: 12 }, (_, index) => ({
+  const items = Array.from({ length: 8 }, (_, index) => ({
     productId: `launch-product-${index + 1}`,
     sku: `SP-LAUNCH-${index + 1}`,
     category: index === 0 ? "starter-kits" : "game-accessories",
@@ -467,15 +479,15 @@ test("checkout sends a twelve-line launch cart with Priority shipping", async ()
         ).toISOString(),
       },
       quote: {
-        shippingCents: 1250,
+        shippingCents: 1500,
         fulfillmentOption: {
           id: "priority",
           displayName: "Priority Shipping & Handling",
           fulfillmentMethod: "shipping",
           pickupLocation: null,
-          amountCents: 1250,
-          deliveryEstimateMinDays: null,
-          deliveryEstimateMaxDays: null,
+          amountCents: 1500,
+          deliveryEstimateMinDays: 2,
+          deliveryEstimateMaxDays: 3,
         },
         items,
       },
@@ -493,15 +505,27 @@ test("checkout sends a twelve-line launch cart with Priority shipping", async ()
     const form = new URLSearchParams(request.options.body);
     assert.equal(form.get("automatic_tax[enabled]"), "false");
     assert.equal(form.get("payment_method_types[0]"), null);
-    assert.equal(form.get("line_items[11][quantity]"), "1");
-    assert.equal(form.get("line_items[12][quantity]"), null);
+    assert.equal(form.get("line_items[7][quantity]"), "1");
+    assert.equal(form.get("line_items[8][quantity]"), null);
     assert.equal(
       form.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]"),
-      "1250"
+      "1500"
     );
     assert.equal(
       form.get("shipping_options[0][shipping_rate_data][display_name]"),
       "Priority Shipping & Handling"
+    );
+    assert.equal(
+      form.get(
+        "shipping_options[0][shipping_rate_data][delivery_estimate][minimum][value]"
+      ),
+      "7"
+    );
+    assert.equal(
+      form.get(
+        "shipping_options[0][shipping_rate_data][delivery_estimate][maximum][value]"
+      ),
+      "8"
     );
     assert.equal(
       form.get(

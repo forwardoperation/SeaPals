@@ -19,10 +19,14 @@
 		"STRIPE_PRODUCTION_TAX_CODE": "txcd_92010004",
 		// Owner confirmed the hard 10-rush-order daily ceiling.
 		"STORE_EXPEDITED_PRODUCTION_CAPACITY_CONFIRMED": "true",
-		"STORE_STANDARD_SHIPPING_CENTS": "750",
-		"STORE_PRIORITY_SHIPPING_CENTS": "1250",
+		// Owner approved 2026-08-15 from ready-to-mail parcels through eight
+		// pounds. Checkout still stays off until the separate catalog gate passes.
+		"STORE_STANDARD_SHIPPING_CENTS": "1000",
+		"STORE_PRIORITY_SHIPPING_CENTS": "1500",
+		"STORE_LARGE_STANDARD_SHIPPING_CENTS": "2000",
+		"STORE_LARGE_PRIORITY_SHIPPING_CENTS": "3500",
 		"STORE_LOCAL_PICKUP_ENABLED": "true",
-		"STORE_SHIPPING_RATES_CONFIRMED": "false",
+		"STORE_SHIPPING_RATES_CONFIRMED": "true",
 		"STORE_ALLOWED_COUNTRIES": "US",
 		"STORE_TAX_REGISTRATION_CONFIRMED": "true",
 		"STORE_PICKUP_TAX_CONFIRMED": "true",

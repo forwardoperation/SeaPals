@@ -3,6 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { resolveStoreShippingRateTier } from "@/data/store/shipping.js";
+import {
+  STORE_MAX_CART_QUANTITY,
+  STORE_MAX_PER_PRODUCT_QUANTITY,
+} from "@/lib/store/cart.mjs";
 import { getOrCreateCheckoutRequest } from "@/lib/store/checkoutRequest.mjs";
 import {
   parseCheckoutRequestStorage,
@@ -11,8 +16,6 @@ import {
 
 const CART_STORAGE_KEY = "seapals-store-cart-v1";
 const CHECKOUT_REQUEST_STORAGE_KEY = "seapals-store-checkout-request-v1";
-const MAX_PRODUCT_QUANTITY = 10;
-const MAX_CART_QUANTITY = 20;
 const FALLBACK_PRODUCTION_OPTIONS = Object.freeze([
   Object.freeze({
     id: "standard-production",
@@ -129,7 +132,7 @@ function readStoredCart(productById) {
       const productId = String(item?.productId ?? "");
       const product = productById.get(productId);
       const quantity = Math.min(
-        MAX_PRODUCT_QUANTITY,
+        STORE_MAX_PER_PRODUCT_QUANTITY,
         Math.floor(Number(item?.quantity ?? 0))
       );
 
@@ -138,8 +141,8 @@ function readStoredCart(productById) {
       }
 
       const acceptedQuantity = Math.min(
-        MAX_PRODUCT_QUANTITY,
-        MAX_CART_QUANTITY - savedTotal,
+        STORE_MAX_PER_PRODUCT_QUANTITY,
+        STORE_MAX_CART_QUANTITY - savedTotal,
         quantity
       );
       if (acceptedQuantity < 1) return nextCart;
@@ -430,14 +433,29 @@ export default function Storefront({
       total + Number(product.priceCents ?? 0) * quantity,
     0
   );
+  const cartShippingWeightOunces = cartItems.reduce(
+    (total, { product, quantity }) =>
+      total + Number(product.shippingWeightOunces ?? 0) * quantity,
+    0
+  );
   const selectedFulfillmentOption =
     fulfillmentOptions.find(
       (option) => option.id === selectedFulfillmentOptionId
     ) ?? fulfillmentOptions[0];
-  const normalizedShippingCents = Math.max(
-    0,
-    Number(selectedFulfillmentOption.amountCents)
+  const selectedShippingRateTier = resolveStoreShippingRateTier(
+    selectedFulfillmentOption,
+    Math.max(1, cartShippingWeightOunces)
   );
+  const normalizedShippingCents =
+    selectedFulfillmentOption.fulfillmentMethod === "pickup"
+      ? 0
+      : Math.max(
+          0,
+          Number(
+            selectedShippingRateTier?.amountCents ??
+              selectedFulfillmentOption.amountCents
+          )
+        );
   const selectedProductionOption =
     productionChoices.find(
       (option) => option.id === selectedProductionOptionId
@@ -456,9 +474,9 @@ export default function Storefront({
       (total, quantity) => total + Number(quantity || 0),
       0
     );
-    if (currentTotal >= MAX_CART_QUANTITY) {
+    if (currentTotal >= STORE_MAX_CART_QUANTITY) {
       setCheckoutError(
-        `Online checkout supports up to ${MAX_CART_QUANTITY} items per order.`
+        `Online checkout supports up to ${STORE_MAX_CART_QUANTITY} items per order.`
       );
       return;
     }
@@ -467,7 +485,7 @@ export default function Storefront({
     setCart((currentCart) => ({
       ...currentCart,
       [product.id]: Math.min(
-        MAX_PRODUCT_QUANTITY,
+        STORE_MAX_PER_PRODUCT_QUANTITY,
         (currentCart[product.id] ?? 0) + 1
       ),
     }));
@@ -475,16 +493,16 @@ export default function Storefront({
 
   function changeQuantity(productId, amount) {
     setCheckoutError("");
-    if (amount > 0 && cartCount >= MAX_CART_QUANTITY) {
+    if (amount > 0 && cartCount >= STORE_MAX_CART_QUANTITY) {
       setCheckoutError(
-        `Online checkout supports up to ${MAX_CART_QUANTITY} items per order.`
+        `Online checkout supports up to ${STORE_MAX_CART_QUANTITY} items per order.`
       );
       return;
     }
 
     setCart((currentCart) => {
       const nextQuantity = Math.min(
-        MAX_PRODUCT_QUANTITY,
+        STORE_MAX_PER_PRODUCT_QUANTITY,
         (currentCart[productId] ?? 0) + amount
       );
       const nextCart = { ...currentCart };
@@ -783,8 +801,8 @@ export default function Storefront({
                         const canAdd =
                           Boolean(checkoutEnabled) &&
                           Boolean(product.available) &&
-                          quantityInCart < MAX_PRODUCT_QUANTITY &&
-                          cartCount < MAX_CART_QUANTITY &&
+                          quantityInCart < STORE_MAX_PER_PRODUCT_QUANTITY &&
+                          cartCount < STORE_MAX_CART_QUANTITY &&
                           !isCheckingOut;
                         const comingSoonLabel = product.requiresConfiguration
                           ? "Options coming soon"
@@ -946,8 +964,9 @@ export default function Storefront({
                                   ? unavailableButtonLabel(product)
                                   : !checkoutEnabled
                                     ? "Preview only"
-                                    : quantityInCart >= MAX_PRODUCT_QUANTITY ||
-                                        cartCount >= MAX_CART_QUANTITY
+                                    : quantityInCart >=
+                                        STORE_MAX_PER_PRODUCT_QUANTITY ||
+                                        cartCount >= STORE_MAX_CART_QUANTITY
                                       ? "Cart limit reached"
                                     : quantityInCart
                                       ? "Add another"
@@ -1058,8 +1077,8 @@ export default function Storefront({
                                 type="button"
                                 disabled={
                                   !checkoutEnabled ||
-                                  quantity >= MAX_PRODUCT_QUANTITY ||
-                                  cartCount >= MAX_CART_QUANTITY
+                                  quantity >= STORE_MAX_PER_PRODUCT_QUANTITY ||
+                                  cartCount >= STORE_MAX_CART_QUANTITY
                                 }
                                 onClick={() => changeQuantity(product.id, 1)}
                                 className="flex h-9 w-9 items-center justify-center rounded-r-full text-lg font-bold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-cyan-200/60 disabled:cursor-not-allowed disabled:text-slate-300"
@@ -1156,6 +1175,14 @@ export default function Storefront({
                   </legend>
                   {fulfillmentOptions.map((option) => {
                     const selected = option.id === selectedFulfillmentOption.id;
+                    const rateTier = resolveStoreShippingRateTier(
+                      option,
+                      Math.max(1, cartShippingWeightOunces)
+                    );
+                    const displayedAmountCents =
+                      option.fulfillmentMethod === "pickup"
+                        ? 0
+                        : (rateTier?.amountCents ?? option.amountCents);
                     return (
                       <label
                         key={option.id}
@@ -1183,8 +1210,8 @@ export default function Storefront({
                               {option.displayName}
                             </span>
                             <span className="shrink-0 text-sm font-black text-slate-900">
-                              {option.amountCents
-                                ? formatMoney(option.amountCents, currency)
+                              {displayedAmountCents
+                                ? formatMoney(displayedAmountCents, currency)
                                 : "Free"}
                             </span>
                           </span>
@@ -1197,7 +1224,10 @@ export default function Storefront({
                             </span>
                           ) : option.description ? (
                             <span className="mt-1 block text-xs leading-5 text-slate-500">
-                              {option.description}
+                              {option.description}{" "}
+                              {rateTier?.id === "large"
+                                ? "Large-parcel rate applies above 1 lb through 8 lb."
+                                : "Base rate applies through 1 lb."}
                             </span>
                           ) : null}
                         </span>

@@ -291,21 +291,42 @@ Keep `STORE_SHOW_FUTURE_PRODUCTS=false` for the launch store. Run
 `npm.cmd run store:check:launch` to verify the exact twelve-product allowlist
 and server-controlled prices.
 
-The draft fulfillment choices are server-controlled:
+The owner-approved fulfillment choices and conservative weight tiers are
+server-controlled:
 
-| Option | Draft price | Checkout behavior |
-| --- | ---: | --- |
-| Standard Shipping & Handling | $7.50 | Collects a US delivery address |
-| Priority Shipping & Handling | $12.50 | Collects a US delivery address |
-| Scheduled pickup — Elverson, PA | Free | No time is chosen at Checkout; after production, Sea Realm emails the customer to arrange a time and privately shares the address/instructions |
+| Option | Up to and including 1 lb (16 oz) | More than 1 lb through 8 lb (128 oz) | Checkout behavior |
+| --- | ---: | ---: | --- |
+| Standard Shipping & Handling | $10.00 | $20.00 | Collects a US delivery address; economy carrier service is estimated at 2–7 business days in transit after production |
+| Priority Shipping & Handling | $15.00 | $35.00 | Collects a US delivery address; USPS Priority Mail is estimated at 2–3 business days in transit after production |
+| Scheduled pickup — Elverson, PA | Free | Free | No time is chosen at Checkout; after production, Sea Realm emails the customer to arrange a time and privately shares the address/instructions |
 
-Override the two mailed-order prices with
-`STORE_STANDARD_SHIPPING_CENTS` and `STORE_PRIORITY_SHIPPING_CENTS`.
-`STORE_SHIPPING_CENTS` remains only as a legacy Standard-rate fallback. Stripe
-Shipping Rates are fixed per whole order, not weight- or quantity-sensitive,
-so weigh the packed SKUs and test multi-item orders before setting
-`STORE_SHIPPING_RATES_CONFIRMED=true`. No delivery-day promise is configured
-yet. Keep `STORE_ALLOWED_COUNTRIES=US` for the initial launch unless
+Configure the base tier with `STORE_STANDARD_SHIPPING_CENTS` and
+`STORE_PRIORITY_SHIPPING_CENTS`, and the higher tier with
+`STORE_LARGE_STANDARD_SHIPPING_CENTS` and
+`STORE_LARGE_PRIORITY_SHIPPING_CENTS`. `STORE_SHIPPING_CENTS` remains only as a
+legacy Standard base-rate fallback.
+
+Checkout uses the catalog's conservative `shippingWeightOunces`: 8 ounces for
+each deck and 16 ounces for each Starter Kit or accessory SKU. It sums quantity
+times weight, selects the base tier through 16 ounces and the higher tier above
+16 ounces, and rejects orders above 8 items or 128 ounces. Never accept a
+client-supplied weight or use an unpackaged product weight for tier selection.
+
+The shipping approval and Pirate Ship evidence were recorded on 2026-08-15 for
+Elverson 19520 to Los Angeles 90001:
+
+| Confirmed ready-to-mail parcel | Weight and outside dimensions | Economy postage | Priority postage | Economy / Priority incl. $0.75 box |
+| --- | --- | ---: | ---: | --- |
+| One 60-card deck | 0.5 lb; 8 × 6 × 2 in | $6.23 | $13.48 | $6.98 / $14.23 |
+| One Starter Kit | 1 lb; 10 × 8 × 2 in | $8.76 | $13.48 | $9.51 / $14.23 |
+| Maximum 8-item cart | 8 lb; 20 × 14 × 6 in | $18.86 | $33.04 | $19.61 / $33.79 |
+
+The quoted postage excludes the $0.75 brown box shown in the final column.
+These are estimates rather than carrier guarantees. Automated tests cover the
+16-ounce tier boundary and the 8-item/128-ounce rejection; production therefore
+uses `STORE_SHIPPING_RATES_CONFIRMED=true`. Re-run those tests and reconfirm the
+gate whenever weights, carton sizes, carrier services, or rates change. Keep
+`STORE_ALLOWED_COUNTRIES=US` for the initial launch unless
 international tax, customs, pricing, and delivery are ready.
 
 Set `STORE_LOCAL_PICKUP_ENABLED=true` to publish the free option. Checkout does
@@ -551,8 +572,9 @@ copy with the store's private launch records.
   capacity, verify each physical sample deck against its 60-card manifest, and
   replace concept/representative art with accurate packaged-product
   photography.
-- Weigh packed one- and multi-item orders, confirm the $7.50/$12.50 fixed rates,
-  and document handling and delivery expectations before setting
+- Retain the confirmed 0.5-pound deck, 1-pound Starter Kit, and 8-pound maximum
+  parcel measurements; keep the tested $10/$15 and $20/$35 tier boundary plus
+  the 8-item/128-ounce rejection unchanged while
   `STORE_SHIPPING_RATES_CONFIRMED=true`.
 - Test the standard five-business-day and expedited one-business-day production
   paths, confirm the $10 fee is once per order, and verify the hard 10-order

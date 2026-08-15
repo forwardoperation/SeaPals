@@ -40,6 +40,10 @@ const launchEnvironment = {
   STORE_LOCAL_PICKUP_ENABLED: "false",
   STORE_PICKUP_TAX_CONFIRMED: "false",
   STRIPE_PICKUP_TAX_RATE_ID: "",
+  STORE_STANDARD_SHIPPING_CENTS: "1000",
+  STORE_PRIORITY_SHIPPING_CENTS: "1500",
+  STORE_LARGE_STANDARD_SHIPPING_CENTS: "2000",
+  STORE_LARGE_PRIORITY_SHIPPING_CENTS: "3500",
 };
 
 const onlineFetchMock = String.raw`
@@ -251,6 +255,17 @@ test("launch readiness names a missing approved product", () => {
   assert.equal(result.status, 1);
   assert.match(result.stdout, /TODO.*Complete twelve-product launch allowlist/);
   assert.match(result.stdout, /dice-pack/);
+});
+
+test("launch readiness requires every owner-approved shipping tier", () => {
+  const result = runLaunchCheck({
+    STORE_LARGE_PRIORITY_SHIPPING_CENTS: "3499",
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /TODO.*Shipping options/);
+  assert.match(result.stdout, /1000\/1500 cents through one pound/);
+  assert.match(result.stdout, /2000\/3500 cents over one through eight pounds/);
 });
 
 test("automatic tax remains blocked without government registration confirmation", () => {

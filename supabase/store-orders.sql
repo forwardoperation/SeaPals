@@ -300,7 +300,7 @@ create table if not exists public.store_order_items (
   deck_id text,
   product_name text not null,
   unit_amount_cents integer not null check (unit_amount_cents >= 0),
-  quantity integer not null check (quantity between 1 and 10),
+  quantity integer not null check (quantity between 1 and 8),
   line_total_cents integer not null check (line_total_cents >= 0),
   created_at timestamptz not null default now(),
   unique (order_id, product_id)
@@ -310,6 +310,11 @@ alter table public.store_order_items
   add column if not exists product_category text not null default 'uncategorized';
 alter table public.store_order_items
   alter column deck_id drop not null;
+alter table public.store_order_items
+  drop constraint if exists store_order_items_quantity_check;
+alter table public.store_order_items
+  add constraint store_order_items_quantity_check
+    check (quantity between 1 and 8);
 
 create table if not exists public.store_inventory (
   sku text primary key,
@@ -521,7 +526,7 @@ begin
 
   if jsonb_typeof(p_items) is distinct from 'array'
      or jsonb_array_length(p_items) < 1
-     or jsonb_array_length(p_items) > 20 then
+     or jsonb_array_length(p_items) > 8 then
     raise exception 'Invalid store order items.';
   end if;
 
@@ -563,7 +568,7 @@ begin
            or item.unit_amount_cents is null
            or item.unit_amount_cents < 0
            or item.quantity is null
-           or item.quantity not between 1 and 10
+           or item.quantity not between 1 and 8
            or item.line_total_cents is null
            or item.line_total_cents <> item.unit_amount_cents * item.quantity
      )
@@ -574,7 +579,7 @@ begin
      or (
        select coalesce(sum(item.quantity), 0)
          from jsonb_to_recordset(p_items) as item(quantity integer)
-     ) > 20 then
+     ) > 8 then
     raise exception 'Invalid store order item snapshots.';
   end if;
 

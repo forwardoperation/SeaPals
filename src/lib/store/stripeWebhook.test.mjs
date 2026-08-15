@@ -22,8 +22,8 @@ test("checkout normalization separates the signed per-order production fee", () 
         payment_status: "paid",
         currency: "usd",
         amount_subtotal: 5400,
-        amount_total: 6225,
-        total_details: { amount_shipping: 750, amount_tax: 75 },
+        amount_total: 6475,
+        total_details: { amount_shipping: 1000, amount_tax: 75 },
         metadata: {
           order_id: "00000000-0000-4000-8000-000000000001",
           production_option_id: "expedited-production",
@@ -43,9 +43,9 @@ test("checkout normalization separates the signed per-order production fee", () 
   assert.equal(details.productionOptionName, "Expedited production");
   assert.equal(details.productionMaxBusinessDays, 1);
   assert.equal(details.productionCents, 1000);
-  assert.equal(details.shippingCents, 750);
+  assert.equal(details.shippingCents, 1000);
   assert.equal(details.taxCents, 75);
-  assert.equal(details.totalCents, 6225);
+  assert.equal(details.totalCents, 6475);
 });
 
 test("checkout normalization fails closed when production exceeds Stripe subtotal", () => {

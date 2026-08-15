@@ -2,6 +2,14 @@ import {
   defaultStoreProductionOptionId,
   storeProductionOptionDefinitions,
 } from "../../data/store/production.js";
+import {
+  resolveStoreShippingRateTier,
+  STORE_MAX_SHIPPING_WEIGHT_OUNCES,
+  storeShippingOptionDefinitions,
+} from "../../data/store/shipping.js";
+
+export const STORE_MAX_PER_PRODUCT_QUANTITY = 8;
+export const STORE_MAX_CART_QUANTITY = 8;
 
 export class CartValidationError extends Error {
   constructor(message, code = "invalid_cart") {
@@ -83,54 +91,110 @@ export function normalizeCartItems(value) {
   }));
 }
 
-function normalizeShippingOption(value, fallbackShippingCents) {
-  const amountCents = Number(value?.amountCents ?? fallbackShippingCents);
-  if (!Number.isSafeInteger(amountCents) || amountCents < 0) {
-    throw new CartValidationError("Shipping is not configured correctly.");
-  }
-
-  const fulfillmentMethod =
-    value?.fulfillmentMethod === "pickup" ? "pickup" : "shipping";
+function normalizeShippingOption(value, fallbackShippingCents, weightOunces) {
   const id = String(value?.id ?? "standard").trim().toLowerCase();
-  const displayName = String(
-    value?.displayName ?? "Standard Shipping & Handling"
-  )
-    .trim()
-    .slice(0, 100);
-  const pickupLocation =
-    fulfillmentMethod === "pickup"
-      ? String(value?.pickupLocation ?? "").trim().slice(0, 100)
-      : null;
+  const definition = storeShippingOptionDefinitions.find(
+    (option) => option.id === id
+  );
 
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) || !displayName) {
+  if (!definition) {
     throw new CartValidationError(
       "That fulfillment option is not available.",
       "invalid_shipping_option"
     );
   }
 
-  if (fulfillmentMethod === "pickup" && (amountCents !== 0 || !pickupLocation)) {
+  const providedAmount = value?.amountCents ?? fallbackShippingCents;
+  if (
+    providedAmount !== null &&
+    providedAmount !== undefined &&
+    (!Number.isSafeInteger(Number(providedAmount)) || Number(providedAmount) < 0)
+  ) {
+    throw new CartValidationError("Shipping is not configured correctly.");
+  }
+
+  const fulfillmentMethod = definition.fulfillmentMethod;
+  if (
+    value?.fulfillmentMethod &&
+    value.fulfillmentMethod !== fulfillmentMethod
+  ) {
+    throw new CartValidationError(
+      "That fulfillment option is not available.",
+      "invalid_shipping_option"
+    );
+  }
+
+  const displayName = String(value?.displayName ?? definition.displayName)
+    .trim()
+    .slice(0, 100);
+  const pickupLocation =
+    fulfillmentMethod === "pickup"
+      ? String(value?.pickupLocation ?? definition.pickupLocation ?? "")
+          .trim()
+          .slice(0, 100)
+      : null;
+
+  if (!displayName) {
+    throw new CartValidationError(
+      "That fulfillment option is not available.",
+      "invalid_shipping_option"
+    );
+  }
+
+  if (
+    fulfillmentMethod === "pickup" &&
+    ((providedAmount !== null &&
+      providedAmount !== undefined &&
+      Number(providedAmount) !== 0) ||
+      !pickupLocation)
+  ) {
     throw new CartValidationError(
       "Scheduled pickup is not configured correctly."
+    );
+  }
+
+  const rateTier = resolveStoreShippingRateTier(
+    {
+      ...definition,
+      ...value,
+      ...(providedAmount !== null && providedAmount !== undefined
+        ? { amountCents: Number(providedAmount) }
+        : {}),
+    },
+    weightOunces
+  );
+
+  if (!rateTier) {
+    throw new CartValidationError(
+      "Shipping is not configured for that order.",
+      "shipping_weight_limit"
     );
   }
 
   return {
     id,
     displayName,
-    description: String(value?.description ?? "").trim().slice(0, 200),
+    description: String(value?.description ?? definition.description ?? "")
+      .trim()
+      .slice(0, 200),
     fulfillmentMethod,
     pickupLocation,
-    amountCents,
+    amountCents: rateTier.amountCents,
+    rateTierId: rateTier.id,
+    rateTierMaxWeightOunces: rateTier.maxWeightOunces,
     deliveryEstimateMinDays:
-      Number.isSafeInteger(value?.deliveryEstimateMinDays) &&
-      value.deliveryEstimateMinDays > 0
-        ? value.deliveryEstimateMinDays
+      Number.isSafeInteger(
+        value?.deliveryEstimateMinDays ?? definition.deliveryEstimateMinDays
+      ) &&
+      (value?.deliveryEstimateMinDays ?? definition.deliveryEstimateMinDays) > 0
+        ? (value?.deliveryEstimateMinDays ?? definition.deliveryEstimateMinDays)
         : null,
     deliveryEstimateMaxDays:
-      Number.isSafeInteger(value?.deliveryEstimateMaxDays) &&
-      value.deliveryEstimateMaxDays > 0
-        ? value.deliveryEstimateMaxDays
+      Number.isSafeInteger(
+        value?.deliveryEstimateMaxDays ?? definition.deliveryEstimateMaxDays
+      ) &&
+      (value?.deliveryEstimateMaxDays ?? definition.deliveryEstimateMaxDays) > 0
+        ? (value?.deliveryEstimateMaxDays ?? definition.deliveryEstimateMaxDays)
         : null,
   };
 }
@@ -142,9 +206,9 @@ export function quoteCart(
     fulfillmentOption = null,
     productionOption = null,
     shippingOption = null,
-    shippingCents = 0,
-    maxPerProduct = 10,
-    maxTotalQuantity = 20,
+    shippingCents = null,
+    maxPerProduct = STORE_MAX_PER_PRODUCT_QUANTITY,
+    maxTotalQuantity = STORE_MAX_CART_QUANTITY,
   } = {}
 ) {
   const items = normalizeCartItems(requestedItems);
@@ -154,8 +218,21 @@ export function quoteCart(
   }
 
   const productsById = new Map(products.map((product) => [product.id, product]));
+  const effectiveMaxPerProduct = Math.min(
+    STORE_MAX_PER_PRODUCT_QUANTITY,
+    Number.isSafeInteger(maxPerProduct) && maxPerProduct > 0
+      ? maxPerProduct
+      : STORE_MAX_PER_PRODUCT_QUANTITY
+  );
+  const effectiveMaxTotalQuantity = Math.min(
+    STORE_MAX_CART_QUANTITY,
+    Number.isSafeInteger(maxTotalQuantity) && maxTotalQuantity > 0
+      ? maxTotalQuantity
+      : STORE_MAX_CART_QUANTITY
+  );
   let totalQuantity = 0;
   let subtotalCents = 0;
+  let shippingWeightOunces = 0;
 
   const quotedItems = items.map(({ productId, quantity }) => {
     const product = productsById.get(productId);
@@ -174,20 +251,35 @@ export function quoteCart(
       );
     }
 
-    if (quantity > maxPerProduct) {
+    if (quantity > effectiveMaxPerProduct) {
       throw new CartValidationError(
-        `You can order up to ${maxPerProduct} of each item at once.`,
+        `You can order up to ${effectiveMaxPerProduct} of each item at once.`,
         "quantity_limit"
       );
     }
 
+    if (
+      !Number.isSafeInteger(product.shippingWeightOunces) ||
+      product.shippingWeightOunces < 1
+    ) {
+      throw new CartValidationError(
+        `${product.name} does not have a valid shipping weight.`,
+        "invalid_shipping_weight"
+      );
+    }
+
     const lineTotalCents = product.priceCents * quantity;
-    if (!Number.isSafeInteger(lineTotalCents)) {
+    const lineShippingWeightOunces = product.shippingWeightOunces * quantity;
+    if (
+      !Number.isSafeInteger(lineTotalCents) ||
+      !Number.isSafeInteger(lineShippingWeightOunces)
+    ) {
       throw new CartValidationError("That order total is too large.");
     }
 
     totalQuantity += quantity;
     subtotalCents += lineTotalCents;
+    shippingWeightOunces += lineShippingWeightOunces;
 
     return {
       productId: product.id,
@@ -201,21 +293,34 @@ export function quoteCart(
       image: product.image,
       taxCode: product.taxCode ?? null,
       unitAmountCents: product.priceCents,
+      shippingWeightOunces: product.shippingWeightOunces,
       quantity,
       lineTotalCents,
+      lineShippingWeightOunces,
     };
   });
 
-  if (totalQuantity > maxTotalQuantity) {
+  if (totalQuantity > effectiveMaxTotalQuantity) {
     throw new CartValidationError(
-      `You can order up to ${maxTotalQuantity} items at once. Contact us for a larger order.`,
+      `You can order up to ${effectiveMaxTotalQuantity} items at once. Contact us for a larger order.`,
       "cart_quantity_limit"
+    );
+  }
+
+  if (
+    !Number.isSafeInteger(shippingWeightOunces) ||
+    shippingWeightOunces > STORE_MAX_SHIPPING_WEIGHT_OUNCES
+  ) {
+    throw new CartValidationError(
+      "Online checkout supports mailed orders up to 8 lb. Contact us for a larger order.",
+      "shipping_weight_limit"
     );
   }
 
   const normalizedShippingOption = normalizeShippingOption(
     fulfillmentOption ?? shippingOption,
-    shippingCents
+    shippingCents,
+    shippingWeightOunces
   );
   const normalizedShipping = normalizedShippingOption.amountCents;
   const normalizedProductionOption = normalizeProductionOption(productionOption);
@@ -229,6 +334,7 @@ export function quoteCart(
   return {
     items: quotedItems,
     totalQuantity,
+    shippingWeightOunces,
     subtotalCents,
     productionOption: normalizedProductionOption,
     productionOptionId: normalizedProductionOption.id,
@@ -240,6 +346,7 @@ export function quoteCart(
     fulfillmentOptionName: normalizedShippingOption.displayName,
     fulfillmentMethod: normalizedShippingOption.fulfillmentMethod,
     pickupLocation: normalizedShippingOption.pickupLocation,
+    shippingRateTierId: normalizedShippingOption.rateTierId,
     shippingCents: normalizedShipping,
     totalCents,
   };

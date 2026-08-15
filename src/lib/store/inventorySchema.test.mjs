@@ -24,6 +24,34 @@ test("inventory reservation creation is one atomic row-locking RPC", () => {
   );
 });
 
+test("order snapshots enforce at most eight units per line and per cart", () => {
+  const reservationStart = schema.indexOf(
+    "create or replace function public.reserve_store_order_inventory"
+  );
+  const reservationEnd = schema.indexOf(
+    "create or replace function public.attach_store_checkout_session",
+    reservationStart
+  );
+  const reservationFunction = schema.slice(reservationStart, reservationEnd);
+
+  assert.match(
+    schema,
+    /quantity integer not null check \(quantity between 1 and 8\)/
+  );
+  assert.match(
+    schema,
+    /drop constraint if exists store_order_items_quantity_check;[\s\S]*add constraint store_order_items_quantity_check[\s\S]*check \(quantity between 1 and 8\)/
+  );
+  assert.match(reservationFunction, /jsonb_array_length\(p_items\) > 8/);
+  assert.match(reservationFunction, /item\.quantity not between 1 and 8/);
+  assert.match(
+    reservationFunction,
+    /select coalesce\(sum\(item\.quantity\), 0\)[\s\S]*\) > 8 then/
+  );
+  assert.doesNotMatch(reservationFunction, /jsonb_array_length\(p_items\) > 20/);
+  assert.doesNotMatch(reservationFunction, /item\.quantity not between 1 and 10/);
+});
+
 test("expedited production atomically caps each New York business-day bucket at ten orders", () => {
   assert.match(schema, /add column if not exists production_due_date date/);
   assert.match(

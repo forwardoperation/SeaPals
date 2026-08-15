@@ -136,6 +136,40 @@ on the product/store policy before accepting payment. Delivery estimates must
 add carrier transit time to that production window rather than presenting the
 production deadline as an arrival date.
 
+## Shipping weights, packages, and order limits
+
+The owner approved the launch shipping model on **2026-08-15**. For checkout
+tiering, each deck has a conservative `shippingWeightOunces` value of 8 ounces;
+each Starter Kit and accessory SKU has a conservative value of 16 ounces.
+Multiply by quantity and sum the order before creating Checkout. These values
+intentionally avoid understating postage and are separate from inventory ATP
+units.
+
+Reject an online order above **8 items** or **128 ounces (8 lb)**. Select the
+customer-facing rate from the approved conservative order weight:
+
+| Fulfillment option | Up to and including 16 oz | More than 16 oz through 128 oz |
+| --- | ---: | ---: |
+| Standard Shipping & Handling | $10.00 | $20.00 |
+| Priority Shipping & Handling | $15.00 | $35.00 |
+| Scheduled pickup — Elverson, PA | Free | Free |
+
+The confirmed ready-to-mail parcels and 19520-to-90001 Pirate Ship quotes that
+support those rates are:
+
+| Parcel | Conservative weight | Outside dimensions | Economy postage | Priority postage | Economy / Priority incl. $0.75 box |
+| --- | ---: | --- | ---: | ---: | --- |
+| One 60-card deck | 0.5 lb | 8 × 6 × 2 in | $6.23 | $13.48 | $6.98 / $14.23 |
+| One Starter Kit | 1 lb | 10 × 8 × 2 in | $8.76 | $13.48 | $9.51 / $14.23 |
+| Maximum 8-item order | 8 lb | 20 × 14 × 6 in | $18.86 | $33.04 | $19.61 / $33.79 |
+
+The Pirate Ship figures are postage before the owner-confirmed $0.75 brown box
+cost; the final column adds it. At fulfillment, still enter the actual packed
+weight and outside dimensions when purchasing the label. If an order exceeds
+the recorded 8-pound or 20 × 14 × 6 inch maximum, do not improvise a cheaper
+service or split shipment: stop and resolve the shipping configuration before
+accepting another affected order.
+
 ## Standard and expedited production
 
 Standard production is included with every launch order and promises build and
