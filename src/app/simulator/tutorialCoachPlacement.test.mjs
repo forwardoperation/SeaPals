@@ -156,7 +156,7 @@ test("the board tour wires its full Next card to the target-aware coach and one 
   );
 });
 
-test("the tutorial coach and interaction shield stay above Ask Finn", async () => {
+test("blocking simulator layers and the tutorial stay above Ask Finn", async () => {
   const [simulatorSource, rulesChatSource] = await Promise.all([
     readFile(new URL("./Simulator.jsx", import.meta.url), "utf8"),
     readFile(new URL("../../components/rules/RulesChat.jsx", import.meta.url), "utf8"),
@@ -173,6 +173,28 @@ test("the tutorial coach and interaction shield stay above Ask Finn", async () =
   const askFinnPanelZIndex = Number(
     rulesChatSource.match(/simulatorPlacement\s*\?\s*\{\s*top:[^}]*zIndex:\s*(\d+)\s*\}/)?.[1],
   );
+  const modalZIndex = Number(
+    simulatorSource.match(/\{modal \? \(\s*<div\s*className=\{`fixed inset-0 z-\[(\d+)\]/)?.[1],
+  );
+  const eventOverlayZIndex = Number(
+    simulatorSource.match(/\{eventOverlay \? \(\s*<div\s*className="fixed inset-0 z-\[(\d+)\]/)?.[1],
+  );
+  const inspectorBackdropZIndex = Number(
+    simulatorSource.match(/aria-label="Close card inspector"[^>]*className="fixed inset-0 z-\[(\d+)\]/)?.[1],
+  );
+  const inspectorPanelZIndex = Number(
+    simulatorSource.match(/className="seapals-card-drawer[^\"]*z-\[(\d+)\]/)?.[1],
+  );
+
+  for (const blockingZIndex of [
+    modalZIndex,
+    eventOverlayZIndex,
+    inspectorBackdropZIndex,
+    inspectorPanelZIndex,
+  ]) {
+    assert.ok(blockingZIndex > askFinnZIndex);
+    assert.ok(blockingZIndex > askFinnPanelZIndex);
+  }
 
   assert.ok(coachZIndex > askFinnZIndex);
   assert.ok(coachZIndex > askFinnPanelZIndex);

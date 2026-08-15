@@ -214,6 +214,43 @@ test("Momentum may find another Creature School with the same name", () => {
   );
 });
 
+test("Momentum resolves only through its School search and revalidates the chosen deck card", () => {
+  const genericOnPlaySearch = sourceBetween(
+    "function getOnPlayUtilitySearch",
+    "function getOnPlayReorder",
+  );
+  assert.match(
+    genericOnPlaySearch,
+    /if \(cardHasSchoolMomentum\(card\)\) return null;/,
+    "Momentum must not fall through the generic Creature search after its dedicated resolution",
+  );
+
+  const completion = sourceBetween(
+    "function completeSchoolMomentum",
+    "function spendResolvedSupport",
+  );
+  assert.match(
+    completion,
+    /searchContext\.candidates\?\.includes\(cardId\)/,
+    "the choice must remain one of the offered Momentum candidates",
+  );
+  assert.match(
+    completion,
+    /cardHasSchoolMomentum\(sourceCard\)/,
+    "the pending source must still own the Momentum ability",
+  );
+  assert.match(
+    completion,
+    /isCreatureSchool\(foundCard\)/,
+    "a stale or corrupted candidate cannot add an ordinary Creature",
+  );
+  assert.match(
+    completion,
+    /foundationDeck\.includes\(cardId\) \|\| palsDeck\.includes\(cardId\)/,
+    "the chosen School must still be present in a current personal deck",
+  );
+});
+
 test("Stunned is enforced by live income, action, destruction, and turn-boundary paths", () => {
   const income = sourceBetween("function getEcosystemStartTurnRp", "function getParasiteRequestedRp");
   assert.match(income, /coralIsStunned\(coral\)/);

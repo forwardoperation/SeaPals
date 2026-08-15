@@ -161,14 +161,14 @@ export default function RulesChat({
   return (
     <div
       className={simulatorPlacement ? "relative" : "fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6"}
-      style={simulatorPlacement ? { zIndex: 140 } : undefined}
+      style={simulatorPlacement ? { zIndex: 65 } : undefined}
     >
       {open ? (
         <section
           aria-label="SeaPals rules chat"
           className={`${simulatorPlacement ? "absolute right-0" : "mb-3"} flex flex-col overflow-hidden rounded-3xl border border-cyan-200 bg-white shadow-2xl shadow-cyan-950/20`}
           style={{
-            ...(simulatorPlacement ? { top: "calc(100% + 0.75rem)", zIndex: 150 } : null),
+            ...(simulatorPlacement ? { top: "calc(100% + 0.75rem)", zIndex: 66 } : null),
             height: "min(620px, calc(100dvh - 7rem))",
             width: "min(390px, calc(100vw - 2rem))",
           }}

@@ -1474,6 +1474,11 @@ function getOnPlayEnsnare(card) {
 }
 
 function getOnPlayUtilitySearch(card) {
+  // Creature School Momentum has its own resolver. Letting the legacy search
+  // parser handle it as well would resolve the same On Play ability twice and
+  // broaden its target from a Creature School to any Creature.
+  if (cardHasSchoolMomentum(card)) return null;
+
   for (const action of card?.onPlay ?? []) {
     const effect = typeof action === "object" ? (action.effects ?? []).find((candidate) => candidate.type === EffectType.SEARCH_DECK) : parseLegacyUtilityAction(action);
     if (effect?.type === EffectType.SEARCH_DECK) return { action, effect, actionName: getActionName(action) };
@@ -2089,6 +2094,37 @@ const BUBBLE_PARTICLES = [
   { drift: 44, rise: 282, size: 16, delay: 340, duration: 1800 },
 ];
 
+const PERMANENT_PLACEMENT_BURST_POINTS = Object.freeze({
+  foundation: Object.freeze({ x: 50, y: 64 }),
+  habitat: Object.freeze({ x: 18, y: 24 }),
+  reef: Object.freeze({ x: 50, y: 24 }),
+  slot: Object.freeze({ x: 50, y: 58 }),
+});
+
+function getPermanentPlacementCue(card, { invasive = false } = {}) {
+  if (invasive) {
+    return {
+      board: "player",
+      zone: "slot",
+      ...PERMANENT_PLACEMENT_BURST_POINTS.slot,
+    };
+  }
+
+  const zone = card?.kind === CardKind.HABITAT
+    ? "habitat"
+    : isFoundationCard(card)
+      ? "foundation"
+      : card?.zone === CreatureZone.OCEAN
+        ? "reef"
+        : "slot";
+
+  return {
+    board: "opponent",
+    zone,
+    ...PERMANENT_PLACEMENT_BURST_POINTS[zone],
+  };
+}
+
 function BubbleBurst({ x, y }) {
   return (
     <span className="seapals-bubble-burst" style={{ left: `${x}%`, top: `${y}%` }} aria-hidden="true">
@@ -2106,6 +2142,24 @@ function BubbleBurst({ x, y }) {
         />
       ))}
     </span>
+  );
+}
+
+function BoardBubbleBursts({ bursts, board }) {
+  const boardBursts = bursts.filter(
+    (burst) => (burst.board ?? "player") === board,
+  );
+  if (!boardBursts.length) return null;
+
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-[60] overflow-hidden"
+      aria-hidden="true"
+    >
+      {boardBursts.map((burst) => (
+        <BubbleBurst key={burst.id} x={burst.x} y={burst.y} />
+      ))}
+    </div>
   );
 }
 
@@ -2978,10 +3032,11 @@ export default function Simulator({
     });
   }
 
-  function queueBubbleBurst(x, y) {
+  function queueBubbleBurst(x, y, board = "player") {
     const id = ++bubbleBurstIdRef.current;
     const burst = {
       id,
+      board: board === "opponent" ? "opponent" : "player",
       x: Math.min(96, Math.max(4, Number(x) || 50)),
       y: Math.min(92, Math.max(8, Number(y) || 50)),
     };
@@ -4115,6 +4170,14 @@ export default function Simulator({
           .map((coral) => coral.id)
       : [],
   );
+
+  useEffect(() => {
+    if (gamePhase === "opponent") {
+      setMobileBoardView("opponent");
+    } else if (gamePhase === "draw") {
+      setMobileBoardView("player");
+    }
+  }, [gamePhase]);
 
   useEffect(() => {
     if (!tutorialHelpTargetActive) return undefined;
@@ -5987,6 +6050,11 @@ export default function Simulator({
       if (has("flashingAlarmAttackBonus")) setFlashingAlarmAttackBonus(next.flashingAlarmAttackBonus);
       if (has("poisonImmunityNextPredatorAttack")) setPoisonImmunityNextPredatorAttack(next.poisonImmunityNextPredatorAttack);
     }
+    if (event?.permanentPlacementCue) {
+      const { board, x, y } = event.permanentPlacementCue;
+      setMobileBoardView(board === "opponent" ? "opponent" : "player");
+      queueBubbleBurst(x, y, board);
+    }
     const eventLogMessages = [
       ...(event?.logMessages ?? []),
       ...(event?.logMessage ? [event.logMessage] : []),
@@ -6895,10 +6963,17 @@ export default function Simulator({
   }
 
   function completeSchoolMomentum(cardId) {
-    if (searchContext?.mode !== "school-momentum" || !searchContext.candidates.includes(cardId)) return;
+    if (searchContext?.mode !== "school-momentum" || !searchContext.candidates?.includes(cardId)) return;
     const sourceCard = cardsById[searchContext.sourceCardId];
     const foundCard = cardsById[cardId];
-    if (!sourceCard || !foundCard) return;
+    const cardIsStillInDeck = foundationDeck.includes(cardId) || palsDeck.includes(cardId);
+    if (
+      !sourceCard
+      || !cardHasSchoolMomentum(sourceCard)
+      || !foundCard
+      || !isCreatureSchool(foundCard)
+      || !cardIsStillInDeck
+    ) return;
     setFoundationDeck((current) => shuffle(removeOneCard(current, cardId)));
     setPalsDeck((current) => shuffle(removeOneCard(current, cardId)));
     const handResult = addCardsToHandWithLimit(hand, [cardId], discardPile, Infinity);
@@ -8858,10 +8933,15 @@ export default function Simulator({
       ensnareSummary = " Ensnare will flip independently before each attack in this sequence.";
     }
     const firstPlaySummary = `Opponent played ${card.name} for ${cost} RP.${placementSummary}${densityDiscountSummary}${sacrificeSummary}${symbiosisSummary}${onPlayResourceSummary}${onPlayHealSummary}${momentumSummary}${onPlayDrawSummary}${onPlayDrawLossSummary}${onPlayReorderSummary}${onPlaySearchSummary}${onPlayAttackBonusSummary}${ensnareSummary}`;
+    let opponentPlaySnapshot = reconcileOpponentInstances(current, next);
     const permanentPlays = [{
       playedCardId: card.id,
       onPlayRevealedCardIds,
       playSummary: firstPlaySummary,
+      opponentStateAfter: opponentPlaySnapshot,
+      permanentPlacementCue: getPermanentPlacementCue(card, {
+        invasive: Boolean(invasivePlacement),
+      }),
     }];
 
     // Players may spend RP on several permanent cards in one action phase.
@@ -9051,10 +9131,16 @@ export default function Simulator({
           if (discountResult.discount) followUpPlacement += ` ${discountResult.discount.label} reduced its School Density requirement by ${discountResult.discount.amount}.`;
         }
         const followUpSummary = `Opponent also played ${candidate.name} for ${candidateCost} RP.${followUpPlacement}`;
+        opponentPlaySnapshot = reconcileOpponentInstances(
+          opponentPlaySnapshot,
+          next,
+        );
         permanentPlays.push({
           playedCardId: candidate.id,
           onPlayRevealedCardIds: [],
           playSummary: followUpSummary,
+          opponentStateAfter: opponentPlaySnapshot,
+          permanentPlacementCue: getPermanentPlacementCue(candidate),
         });
       }
     }
@@ -11186,7 +11272,24 @@ export default function Simulator({
         : "";
       const revealedCards = play.onPlayRevealedCardIds ?? [];
       const message = `${play.playSummary}${noTargetOnPlaySummary}${revealedCards.length ? " Its searched card selection is revealed below." : ""}`;
-      turnEvents.push({ type: "opponent-play", sourceCardId: play.playedCardId, title: `Opponent played ${cardsById[play.playedCardId]?.name}`, message, revealedCards, success: true, opponentStateAfter: opponentStateAfterPlay, playerStateAfter: playerStateAfterInvasion, logMessage: message });
+      turnEvents.push({
+        type: "opponent-play",
+        sourceCardId: play.playedCardId,
+        title: `Opponent played ${cardsById[play.playedCardId]?.name}`,
+        message,
+        revealedCards,
+        success: true,
+        opponentStateAfter:
+          play.opponentStateAfter ?? opponentStateAfterPlay,
+        playerStateAfter: playerStateAfterInvasion,
+        permanentPlacementCue:
+          play.permanentPlacementCue ??
+          getPermanentPlacementCue(cardsById[play.playedCardId], {
+            invasive:
+              playIndex === 0 && Boolean(opponentResult.invasivePlacement),
+          }),
+        logMessage: message,
+      });
     });
     if (opponentResult.supportBlock) {
       const message = `Opponent's ${opponentResult.damageSourceName} used ${opponentResult.supportBlock.actionName}. You cannot play Support cards during your next turn.`;
@@ -12372,8 +12475,8 @@ export default function Simulator({
           ) : null}
 
           <div className="mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label="Choose ecosystem to view">
-            <button type="button" onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
-            <button type="button" onClick={() => setMobileBoardView("opponent")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
+            <button type="button" aria-pressed={mobileBoardView === "player"} onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
+            <button type="button" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
           </div>
 
           <div className="min-h-0 w-full flex-1 rounded-2xl border border-cyan-300/20 bg-[#06111d] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
@@ -12511,6 +12614,10 @@ export default function Simulator({
                       }) : <div className="absolute inset-0 flex items-center justify-center"><div className="rounded-2xl border border-rose-200 bg-white/90 px-6 py-4 font-semibold text-rose-700">The opponent has no coral in play.</div></div>}
                     </div>
                   </div>
+                  <BoardBubbleBursts
+                    bursts={bubbleBursts}
+                    board="opponent"
+                  />
                 </div>
               </div>
 
@@ -12839,11 +12946,7 @@ export default function Simulator({
                       })}
                     </div>
                   </div>
-                  {bubbleBursts.length ? (
-                    <div className="pointer-events-none absolute inset-0 z-[60] overflow-hidden" aria-hidden="true">
-                      {bubbleBursts.map((burst) => <BubbleBurst key={burst.id} x={burst.x} y={burst.y} />)}
-                    </div>
-                  ) : null}
+                  <BoardBubbleBursts bursts={bubbleBursts} board="player" />
                   {isPlacingCoral && (
                     <button
                       type="button"
@@ -12890,7 +12993,7 @@ export default function Simulator({
           <div className="mt-2 grid h-14 shrink-0 grid-cols-[64px_64px_minmax(0,1fr)_92px] gap-1.5 xl:hidden" aria-label="Mobile game command dock">
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("zones")}`} data-tutorial-target="zones">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">Guide<br /><span className="text-violet-300">Feed</span></button>
-            <button type="button" onClick={() => setModal("hand")} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{rp} RP ready</span></button>
+            <button type="button" onClick={() => setModal("hand")} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg${isSetup && !hasCoralInPlay ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{rp} RP ready</span></button>
             <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Opponent First" : "Round 1" : "End Turn"}</button>
           </div>
         </div>
