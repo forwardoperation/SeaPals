@@ -35,7 +35,8 @@
 		"STORE_SYNCHRONOUS_PAYMENT_METHODS_CONFIRMED": "true",
 		"STORE_ORDER_NOTIFICATION_ENABLED": "true",
 		"STORE_ORDER_NOTIFICATION_EMAIL": "maker@seapalstcg.com",
-		"STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED": "false",
+		// Verified 2026-08-15 with a received synthetic production-Worker alert.
+		"STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED": "true",
 		"EMAIL_FROM": "SeaPals <maker@seapalstcg.com>",
 		"STORE_CHECKOUT_ENABLED": "false",
 		"STORE_SHOW_FUTURE_PRODUCTS": "false",
