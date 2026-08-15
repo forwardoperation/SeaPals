@@ -20,6 +20,16 @@ const PAYMENT_HOLD_STATUSES = new Set([
   "refunded",
   "disputed",
 ]);
+const STORE_TIME_ZONE = "America/New_York";
+const SHIPPING_PRODUCTION_COMPLETE_STATUSES = new Set([
+  "shipped",
+  "cancelled",
+]);
+const PICKUP_PRODUCTION_COMPLETE_STATUSES = new Set([
+  "ready_for_pickup",
+  "picked_up",
+  "cancelled",
+]);
 
 function cleanStatus(value, fallback = "unknown") {
   return String(value ?? fallback).trim().toLowerCase() || fallback;
@@ -75,6 +85,127 @@ function isPaid(order) {
 
 function isPickup(order) {
   return cleanStatus(order?.fulfillment_method, "shipping") === "pickup";
+}
+
+function isExpeditedProduction(order) {
+  return (
+    cleanStatus(order?.production_option_id, "standard-production") ===
+      "expedited-production" ||
+    (Number(order?.production_max_business_days) === 1 &&
+      Number(order?.production_cents) > 0)
+  );
+}
+
+function productionName(order) {
+  const configuredName = String(order?.production_option_name ?? "").trim();
+  if (configuredName) return configuredName;
+  return isExpeditedProduction(order)
+    ? "Expedited production"
+    : "Standard production";
+}
+
+function productionMaxBusinessDays(order) {
+  const days = Number(order?.production_max_business_days);
+  if (Number.isSafeInteger(days) && days > 0) return days;
+  return isExpeditedProduction(order) ? 1 : 5;
+}
+
+function expeditedCapacityState(order) {
+  const value = String(order?.expedited_capacity_state ?? "").trim();
+  if (value) return cleanStatus(value);
+  return isExpeditedProduction(order) ? "unknown" : "not_applicable";
+}
+
+function expeditedCapacityStateLabel(order) {
+  const state = expeditedCapacityState(order);
+  return state === "unknown" ? "State missing" : statusLabel(state);
+}
+
+function expeditedCapacityStateClasses(order) {
+  const state = expeditedCapacityState(order);
+  if (state === "committed") {
+    return "border-emerald-200 bg-emerald-100 text-emerald-900";
+  }
+  if (state === "reserved") {
+    return "border-cyan-200 bg-cyan-100 text-cyan-900";
+  }
+  if (state === "released" || state === "not_applicable") {
+    return "border-slate-200 bg-slate-100 text-slate-700";
+  }
+  return "border-rose-200 bg-rose-100 text-rose-900";
+}
+
+function productionDueDateKey(order) {
+  const value = String(order?.production_due_date ?? "").trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return "";
+
+  const [, year, month, day] = match;
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (
+    date.getUTCFullYear() !== Number(year) ||
+    date.getUTCMonth() !== Number(month) - 1 ||
+    date.getUTCDate() !== Number(day)
+  ) {
+    return "";
+  }
+
+  return value;
+}
+
+function newYorkDateKey(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: STORE_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const part = (type) => parts.find((entry) => entry.type === type)?.value ?? "";
+  const year = part("year");
+  const month = part("month");
+  const day = part("day");
+  return year && month && day ? `${year}-${month}-${day}` : "";
+}
+
+function formatProductionDueDate(order) {
+  const dueDate = productionDueDateKey(order);
+  if (!dueDate) return "Due date missing";
+
+  const [year, month, day] = dueDate.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+}
+
+function isActionablePaidRush(order) {
+  if (!isExpeditedProduction(order) || !isPaid(order)) return false;
+  if (expeditedCapacityState(order) === "released") return false;
+
+  const status = cleanStatus(order?.fulfillment_status, "unfulfilled");
+  const completedStatuses = isPickup(order)
+    ? PICKUP_PRODUCTION_COMPLETE_STATUSES
+    : SHIPPING_PRODUCTION_COMPLETE_STATUSES;
+  return !completedStatuses.has(status);
+}
+
+function productionDueState(order, now = new Date()) {
+  if (!isActionablePaidRush(order)) return "complete";
+
+  const dueDate = productionDueDateKey(order);
+  if (!dueDate) return "missing";
+
+  const today = newYorkDateKey(now);
+  if (!today) return "scheduled";
+  if (dueDate < today) return "overdue";
+  if (dueDate === today) return "due-today";
+  return "scheduled";
 }
 
 function fulfillmentLabel(order) {
@@ -248,6 +379,11 @@ function buildShippingCsv(orders) {
     "Email",
     "Fulfillment Method",
     "Fulfillment Option",
+    "Production Option",
+    "Production Max Business Days",
+    "Production Fee",
+    "Production Due Date",
+    "Expedited Capacity State",
     "Address Line 1",
     "Address Line 2",
     "City",
@@ -287,6 +423,11 @@ function buildShippingCsv(orders) {
       order.customer_email,
       order.fulfillment_method,
       order.fulfillment_option_name,
+      productionName(order),
+      productionMaxBusinessDays(order),
+      centsToDecimal(order.production_cents),
+      order.production_due_date,
+      order.expedited_capacity_state,
       address.line1,
       address.line2,
       address.city,
@@ -320,6 +461,7 @@ function StatCard({ label, value, detail, tone = "slate" }) {
     cyan: "border-cyan-200 bg-cyan-50 text-cyan-950",
     amber: "border-amber-200 bg-amber-50 text-amber-950",
     emerald: "border-emerald-200 bg-emerald-50 text-emerald-950",
+    rose: "border-rose-200 bg-rose-50 text-rose-950",
   };
 
   return (
@@ -336,6 +478,7 @@ function StatCard({ label, value, detail, tone = "slate" }) {
 function Totals({ order }) {
   const rows = [
     ["Subtotal", order.subtotal_cents],
+    [productionName(order), order.production_cents],
     [isPickup(order) ? "Local pickup" : "Shipping & handling", order.shipping_cents],
     ["Tax", order.tax_cents],
   ];
@@ -473,19 +616,74 @@ function OrderCard({ order, onSave, saving }) {
   }
 
   const orderLabel = order.order_number || String(order.id).slice(0, 8);
+  const rushProduction = isExpeditedProduction(order);
+  const rushDueState = productionDueState(order);
+  const productionDueDate = productionDueDateKey(order);
+  const productionDueLabel = formatProductionDueDate(order);
+  const capacityStateLabel = expeditedCapacityStateLabel(order);
+  const capacityStateClasses = expeditedCapacityStateClasses(order);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <article
+      className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${
+        rushDueState === "overdue"
+          ? "border-rose-400 ring-2 ring-rose-100"
+          : rushDueState === "due-today"
+            ? "border-orange-300 ring-2 ring-orange-100"
+            : rushProduction
+              ? "border-amber-200"
+              : "border-slate-200"
+      }`}
+    >
       <button
         type="button"
         aria-expanded={expanded}
         aria-controls={detailsId}
         onClick={() => setExpanded((current) => !current)}
-        className="grid w-full gap-4 px-5 py-5 text-left transition hover:bg-cyan-50/50 focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-cyan-200 md:grid-cols-[1.2fr_1fr_auto_auto_2rem] md:items-center"
+        className={`grid w-full gap-4 px-5 py-5 text-left transition focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-cyan-200 md:grid-cols-[1.2fr_1fr_auto_auto_2rem] md:items-center ${
+          rushDueState === "overdue"
+            ? "bg-rose-50/70 hover:bg-rose-100/70"
+            : rushDueState === "due-today"
+              ? "bg-orange-50/60 hover:bg-orange-100/60"
+              : "hover:bg-cyan-50/50"
+        }`}
       >
         <span>
-          <span className="block text-xs font-black uppercase tracking-[0.16em] text-cyan-700">
-            Order {orderLabel}
+          <span className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-700">
+            <span>Order {orderLabel}</span>
+            {isExpeditedProduction(order) ? (
+              <span className="rounded-full bg-amber-300 px-2.5 py-1 text-[0.65rem] tracking-[0.13em] text-amber-950 shadow-sm">
+                Rush · 1 business day
+              </span>
+            ) : null}
+            {rushProduction ? (
+              <>
+                <span
+                  className={`rounded-full border px-2.5 py-1 text-[0.65rem] tracking-[0.1em] ${capacityStateClasses}`}
+                >
+                  Capacity: {capacityStateLabel}
+                </span>
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[0.65rem] tracking-[0.1em] ${
+                    rushDueState === "overdue"
+                      ? "bg-rose-600 text-white"
+                      : rushDueState === "due-today"
+                        ? "bg-orange-500 text-white"
+                        : !productionDueDate
+                          ? "bg-rose-100 text-rose-900"
+                          : "bg-amber-100 text-amber-900"
+                  }`}
+                >
+                  {rushDueState === "overdue"
+                    ? `Overdue · due ${productionDueLabel}`
+                    : rushDueState === "due-today"
+                      ? `Due today · ${productionDueLabel}`
+                      : !productionDueDate
+                        ? "Production due date missing"
+                        : `Due ${productionDueLabel}`}
+                </span>
+              </>
+            ) : null}
           </span>
           <span className="mt-1 block text-lg font-black text-slate-950">
             {order.customer_name || order.customer_email || "Customer name unavailable"}
@@ -505,6 +703,15 @@ function OrderCard({ order, onSave, saving }) {
           <span className="mt-1 block text-xs font-semibold text-slate-500">
             {order.fulfillment_option_name ||
               (pickupOrder ? "Local pickup" : "Shipping")}
+          </span>
+          <span
+            className={`mt-1 block text-xs font-black ${
+              isExpeditedProduction(order)
+                ? "text-amber-700"
+                : "text-slate-500"
+            }`}
+          >
+            {productionName(order)}
           </span>
         </span>
 
@@ -610,20 +817,116 @@ function OrderCard({ order, onSave, saving }) {
             </section>
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+              <section
+                className={`rounded-2xl border p-5 ${
+                  rushDueState === "overdue"
+                    ? "border-rose-400 bg-rose-50"
+                    : rushDueState === "due-today"
+                      ? "border-orange-300 bg-orange-50"
+                      : rushProduction
+                        ? "border-amber-300 bg-amber-50"
+                        : "border-slate-200 bg-white"
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-lg font-black text-slate-950">
+                    Production
+                  </h3>
+                  {rushProduction ? (
+                    <span className="rounded-full bg-amber-300 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-amber-950">
+                      Rush
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-3 font-black text-slate-950">
+                  {productionName(order)}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {pickupOrder ? "Build and mark ready" : "Build and dispatch"}{" "}
+                  within {productionMaxBusinessDays(order)} business{" "}
+                  {productionMaxBusinessDays(order) === 1 ? "day" : "days"}.
+                  {!pickupOrder ? " Carrier transit is additional." : ""}
+                </p>
+                <dl className="mt-4 grid gap-2 text-sm">
+                  {rushProduction ? (
+                    <div
+                      className={`rounded-xl border px-3 py-3 ${
+                        rushDueState === "overdue"
+                          ? "border-rose-300 bg-rose-100 text-rose-950"
+                          : rushDueState === "due-today"
+                            ? "border-orange-300 bg-orange-100 text-orange-950"
+                            : !productionDueDate
+                              ? "border-rose-200 bg-rose-100 text-rose-950"
+                              : "border-amber-200 bg-amber-100 text-amber-950"
+                      }`}
+                    >
+                      <dt className="text-xs font-black uppercase tracking-[0.12em] opacity-70">
+                        Production due
+                      </dt>
+                      <dd className="mt-1 font-black">
+                        {rushDueState === "overdue" ? "Overdue · " : ""}
+                        {rushDueState === "due-today" ? "Due today · " : ""}
+                        {productionDueLabel}
+                      </dd>
+                    </div>
+                  ) : null}
+                  <div className="flex items-center justify-between gap-4 rounded-xl border border-current/10 px-3 py-2">
+                    <dt className="text-slate-600">Rush capacity</dt>
+                    <dd
+                      className={`rounded-full border px-2.5 py-1 text-xs font-black ${capacityStateClasses}`}
+                    >
+                      {capacityStateLabel}
+                    </dd>
+                  </div>
+                </dl>
+                <div className="mt-4 flex items-center justify-between gap-4 border-t border-current/10 pt-3 text-sm">
+                  <span className="text-slate-600">Production fee</span>
+                  <span className="font-black text-slate-950">
+                    {Number(order.production_cents ?? 0) > 0
+                      ? formatMoney(order.production_cents, order.currency)
+                      : "Included"}
+                  </span>
+                </div>
+              </section>
+
               <section className="rounded-2xl border border-slate-200 bg-white p-5">
                 <h3 className="text-lg font-black text-slate-950">
-                  {pickupOrder ? "Local pickup" : "Ship to"}
+                  {pickupOrder ? "Scheduled pickup" : "Ship to"}
                 </h3>
                 {pickupOrder ? (
                   <div className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm leading-6 text-cyan-950">
                     <p className="font-black">
                       {order.fulfillment_option_name ||
-                        "Local pickup — Elverson, PA"}
+                        "Scheduled pickup — Elverson, PA"}
                     </p>
                     <p className="mt-1">
-                      Prepare the order, mark it ready for pickup, and contact
-                      the customer before marking it picked up.
+                      After the order is built, email the customer to arrange a
+                      pickup time. Share the exact pickup address and instructions
+                      privately in that email, then record the agreed time in
+                      Internal notes.
                     </p>
+                    <p className="mt-2 text-xs font-semibold text-cyan-800">
+                      Set Ready for pickup after the order is built and the
+                      arrangement email is sent. Set Picked up only after
+                      handoff.
+                    </p>
+                    {order.customer_email ? (
+                      <a
+                        href={
+                          "mailto:" +
+                          order.customer_email +
+                          "?subject=" +
+                          encodeURIComponent(
+                            "SeaPals order " +
+                              orderLabel +
+                              " pickup scheduling"
+                          )
+                        }
+                        className="mt-3 inline-flex rounded-full border border-cyan-300 bg-white px-3 py-2 text-xs font-black text-cyan-800 hover:bg-cyan-100"
+                      >
+                        Email customer to arrange pickup
+                      </a>
+                    ) : null}
                   </div>
                 ) : (
                   <address className="mt-3 space-y-1 text-sm not-italic leading-6 text-slate-700">
@@ -797,12 +1100,16 @@ function OrderCard({ order, onSave, saving }) {
             </div>
 
             <label className="mt-4 block text-sm font-bold text-slate-700">
-              Internal notes
+              {pickupOrder ? "Internal notes — pickup schedule" : "Internal notes"}
               <textarea
                 value={internalNotes}
                 onChange={(event) => setInternalNotes(event.target.value)}
                 rows={3}
-                placeholder="Packing details, exceptions, or follow-up notes."
+                placeholder={
+                  pickupOrder
+                    ? "Agreed pickup date and time, contact attempts, or handoff notes."
+                    : "Packing details, exceptions, or follow-up notes."
+                }
                 className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3 font-normal text-slate-900 outline-none placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
               />
             </label>
@@ -898,9 +1205,17 @@ export default function OrdersDashboard() {
         }
 
         if (
+          fulfillmentFilter === "rush-orders" &&
+          !isExpeditedProduction(order)
+        ) {
+          return false;
+        }
+
+        if (
           fulfillmentFilter !== "all" &&
           fulfillmentFilter !== "paid-unshipped" &&
           fulfillmentFilter !== "pickup-orders" &&
+          fulfillmentFilter !== "rush-orders" &&
           cleanStatus(order.fulfillment_status, "unfulfilled") !==
             fulfillmentFilter
         ) {
@@ -923,6 +1238,10 @@ export default function OrdersDashboard() {
           order.charge_id,
           order.fulfillment_method,
           order.fulfillment_option_name,
+          order.production_option_id,
+          order.production_option_name,
+          order.production_due_date,
+          order.expedited_capacity_state,
           order.pickup_location,
           itemText,
         ]
@@ -933,6 +1252,26 @@ export default function OrdersDashboard() {
         return searchable.includes(normalizedQuery);
       })
       .sort((first, second) => {
+        if (fulfillmentFilter === "rush-orders") {
+          const actionableDifference =
+            Number(!isActionablePaidRush(first)) -
+            Number(!isActionablePaidRush(second));
+          if (actionableDifference !== 0) return actionableDifference;
+
+          const firstDueDate = productionDueDateKey(first);
+          const secondDueDate = productionDueDateKey(second);
+          if (firstDueDate !== secondDueDate) {
+            if (!firstDueDate) return -1;
+            if (!secondDueDate) return 1;
+            return firstDueDate.localeCompare(secondDueDate);
+          }
+
+          const firstTime =
+            new Date(first.paid_at ?? first.created_at ?? 0).getTime() || 0;
+          const secondTime =
+            new Date(second.paid_at ?? second.created_at ?? 0).getTime() || 0;
+          return firstTime - secondTime;
+        }
         const firstTime = new Date(first.created_at ?? 0).getTime() || 0;
         const secondTime = new Date(second.created_at ?? 0).getTime() || 0;
         return secondTime - firstTime;
@@ -940,6 +1279,7 @@ export default function OrdersDashboard() {
   }, [fulfillmentFilter, orderList, paymentFilter, query]);
 
   const stats = useMemo(() => {
+    const now = new Date();
     const packing = orderList.filter(
       (order) => cleanStatus(order.fulfillment_status) === "packing"
     ).length;
@@ -959,8 +1299,20 @@ export default function OrdersDashboard() {
       0
     );
     const currency = paidOrders[0]?.currency || "usd";
+    const rushQueue = orderList.filter(isActionablePaidRush).length;
+    const overdueRush = orderList.filter(
+      (order) => productionDueState(order, now) === "overdue"
+    ).length;
 
-    return { packing, pickup, shipped, paidTotal, currency };
+    return {
+      packing,
+      pickup,
+      shipped,
+      paidTotal,
+      currency,
+      rushQueue,
+      overdueRush,
+    };
   }, [orderList, paidOrders]);
 
   async function loadOrders(event) {
@@ -1182,9 +1534,21 @@ export default function OrdersDashboard() {
 
       {orders !== null ? (
         <>
-          <section aria-label="Order totals" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          <section aria-label="Order totals" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label="All orders" value={orderList.length} />
             <StatCard label="Paid" value={paidOrders.length} tone="cyan" />
+            <StatCard
+              label="Rush queue"
+              value={stats.rushQueue}
+              detail="Paid and still in production"
+              tone="amber"
+            />
+            <StatCard
+              label="Overdue rush"
+              value={stats.overdueRush}
+              detail={`Compared in ${STORE_TIME_ZONE}`}
+              tone={stats.overdueRush > 0 ? "rose" : "emerald"}
+            />
             <StatCard
               label="Ready to ship"
               value={paidUnshippedOrders.length}
@@ -1246,6 +1610,9 @@ export default function OrdersDashboard() {
                     <option value="all">All fulfillment statuses</option>
                     <option value="paid-unshipped">Paid & ready to ship</option>
                     <option value="pickup-orders">Local pickup orders</option>
+                    <option value="rush-orders">
+                      Rush production orders (due date first)
+                    </option>
                     {fulfillmentStatuses.map((status) => (
                       <option key={status} value={status}>
                         {statusLabel(status)}

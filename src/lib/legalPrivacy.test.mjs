@@ -40,6 +40,18 @@ test("every retention category has a finite published period", () => {
   }
 });
 
+test("purchase terms separate production timing from carrier delivery", async () => {
+  const terms = await readFile(
+    new URL("../app/terms/page.jsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(terms, /Production timing is separate from carrier transit/);
+  assert.match(terms, /within five business days after payment/);
+  assert.match(terms, /one-business-day production/);
+  assert.match(terms, /does not promise one-business-day\s+delivery/);
+});
+
 test("legal links and direct notices are present at collection points", async () => {
   const files = await Promise.all(
     [

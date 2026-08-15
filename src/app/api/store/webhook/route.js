@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
-import { processStorePaymentEvent } from "@/lib/store/orders";
 import {
+  processStorePaymentEvent,
+  storePaymentEventReferencesKnownOrder,
+} from "@/lib/store/orders";
+import { deliverPaidStoreOrderMerchantNotification } from "@/lib/store/merchantOrderNotification";
+import {
+  retrieveStripePaymentOwnership,
   retrieveStripePaymentReceiptDetails,
   verifyStripeWebhookSignature,
 } from "@/lib/store/stripe.mjs";
+import {
+  normalizeStripeCheckoutEvent,
+  recoverStripeStoreEventOwnership,
+  shouldProcessStripeStoreEvent,
+} from "@/lib/store/stripeWebhook.mjs";
 
 export const runtime = "nodejs";
 const MAX_WEBHOOK_BODY_BYTES = 1_000_000;
@@ -14,6 +24,11 @@ const CHECKOUT_EVENT_TYPES = new Set([
   "checkout.session.async_payment_failed",
   "checkout.session.expired",
 ]);
+
+function safeErrorCode(error) {
+  const code = String(error?.code ?? error?.name ?? "unknown_error");
+  return /^[A-Za-z0-9_-]{1,100}$/.test(code) ? code : "unknown_error";
+}
 
 function nullableInteger(value) {
   return Number.isSafeInteger(value) && value >= 0 ? value : null;
@@ -50,108 +65,27 @@ function eventTimestamp(event) {
     : new Date().toISOString();
 }
 
-function normalizeCheckoutPaymentStatus(eventType, session) {
-  if (
-    (eventType === "checkout.session.completed" ||
-      eventType === "checkout.session.async_payment_succeeded") &&
-    session?.payment_status === "paid"
-  ) {
-    return "paid";
+async function addCheckoutReceiptDetails(details) {
+  if (details.paymentStatus !== "paid" || !details.paymentIntentId) {
+    return details;
   }
 
-  if (
-    eventType === "checkout.session.async_payment_failed" ||
-    eventType === "checkout.session.expired"
-  ) {
-    return "failed";
+  try {
+    const receipt = await retrieveStripePaymentReceiptDetails(
+      details.paymentIntentId
+    );
+    return {
+      ...details,
+      chargeId: receipt?.chargeId ?? null,
+      receiptUrl: receipt?.receiptUrl ?? null,
+      receiptNumber: receipt?.receiptNumber ?? null,
+    };
+  } catch (error) {
+    // Stripe still emails its configured receipt. A later retry or manual
+    // Dashboard lookup can fill this optional convenience link.
+    console.error("Stripe receipt lookup failed", safeErrorCode(error));
+    return details;
   }
-
-  return "pending";
-}
-
-function normalizeShippingAddress(session) {
-  if (session?.metadata?.fulfillment_method === "pickup") return null;
-
-  const customer = session?.customer_details ?? {};
-  const shipping =
-    session?.collected_information?.shipping_details ??
-    session?.shipping_details ??
-    {};
-  const address = shipping?.address ?? null;
-
-  if (!address) return null;
-
-  return {
-    name: shipping?.name || customer?.name || null,
-    phone: customer?.phone || null,
-    address: {
-      line1: address.line1 || null,
-      line2: address.line2 || null,
-      city: address.city || null,
-      state: address.state || null,
-      postal_code: address.postal_code || null,
-      country: address.country || null,
-    },
-  };
-}
-
-async function normalizeCheckoutEvent(event) {
-  const session = event.data.object;
-  const fulfillmentMethod = ["shipping", "pickup"].includes(
-    session?.metadata?.fulfillment_method
-  )
-    ? session.metadata.fulfillment_method
-    : null;
-  const paymentStatus = normalizeCheckoutPaymentStatus(event.type, session);
-  const paymentIntentId = nullableId(session.payment_intent, "pi_");
-  let receipt = null;
-
-  if (paymentStatus === "paid" && paymentIntentId) {
-    try {
-      receipt = await retrieveStripePaymentReceiptDetails(paymentIntentId);
-    } catch (error) {
-      // Stripe still emails its configured receipt. A later retry or manual
-      // Dashboard lookup can fill this optional convenience link.
-      console.error("Stripe receipt lookup failed", error);
-    }
-  }
-
-  return {
-    providerEventId: event.id,
-    eventType: event.type,
-    eventCreatedAt: eventTimestamp(event),
-    orderId: nullableUuid(
-      session?.metadata?.order_id || session?.client_reference_id
-    ),
-    checkoutSessionId: nullableId(session.id, "cs_"),
-    paymentIntentId,
-    chargeId: receipt?.chargeId ?? null,
-    paymentStatus,
-    customerEmail: session?.customer_details?.email ?? null,
-    customerName: session?.customer_details?.name ?? null,
-    shippingAddress: normalizeShippingAddress(session),
-    currency: session?.currency ?? null,
-    subtotalCents: nullableInteger(session?.amount_subtotal),
-    shippingCents: nullableInteger(session?.total_details?.amount_shipping),
-    taxCents: nullableInteger(session?.total_details?.amount_tax),
-    totalCents: nullableInteger(session?.amount_total),
-    amountRefundedCents: null,
-    receiptUrl: receipt?.receiptUrl ?? null,
-    receiptNumber: receipt?.receiptNumber ?? null,
-    paymentLivemode: Boolean(event?.livemode),
-    fulfillmentMethod,
-    fulfillmentOptionId: nullableOptionId(
-      session?.metadata?.fulfillment_option_id
-    ),
-    fulfillmentOptionName: nullableText(
-      session?.metadata?.fulfillment_option_name
-    ),
-    pickupLocation: nullableText(session?.metadata?.pickup_location),
-    stripeShippingRateId: nullableId(
-      session?.shipping_cost?.shipping_rate,
-      "shr_"
-    ),
-  };
 }
 
 function normalizeRefundEvent(event) {
@@ -222,7 +156,10 @@ function normalizeFailedPaymentIntentEvent(event) {
     checkoutSessionId: null,
     paymentIntentId: nullableId(intent?.id, "pi_"),
     chargeId: null,
-    paymentStatus: "failed",
+    // A PaymentIntent can fail while its Checkout Session remains open for a
+    // retry. Record the event without releasing its inventory reservation;
+    // only Checkout's terminal async-failure/expired events release stock.
+    paymentStatus: "pending",
     customerEmail: intent?.receipt_email ?? null,
     customerName: null,
     shippingAddress: null,
@@ -270,7 +207,7 @@ export async function POST(request) {
 
   let details;
   if (CHECKOUT_EVENT_TYPES.has(event.type)) {
-    details = await normalizeCheckoutEvent(event);
+    details = normalizeStripeCheckoutEvent(event);
   } else if (event.type === "charge.refunded") {
     details = normalizeRefundEvent(event);
   } else if (event.type === "charge.dispute.created") {
@@ -281,20 +218,51 @@ export async function POST(request) {
     return NextResponse.json({ received: true, ignored: true });
   }
 
-  if (
-    !details.orderId &&
-    !details.checkoutSessionId &&
-    !details.paymentIntentId &&
-    !details.chargeId
-  ) {
-    return NextResponse.json({ received: true, ignored: true });
-  }
-
   try {
+    let shouldProcess = await shouldProcessStripeStoreEvent(
+      event,
+      details,
+      storePaymentEventReferencesKnownOrder
+    );
+    if (
+      !shouldProcess &&
+      ["charge.refunded", "charge.dispute.created"].includes(event.type)
+    ) {
+      const recovered = await recoverStripeStoreEventOwnership(
+        event,
+        details,
+        retrieveStripePaymentOwnership
+      );
+      event = recovered.event;
+      details = {
+        ...recovered.details,
+        orderId: nullableUuid(recovered.recoveredOrderId),
+      };
+      shouldProcess = await shouldProcessStripeStoreEvent(
+        event,
+        details,
+        storePaymentEventReferencesKnownOrder
+      );
+    }
+    if (!shouldProcess) {
+      return NextResponse.json({ received: true, ignored: true });
+    }
+
+    if (CHECKOUT_EVENT_TYPES.has(event.type)) {
+      details = await addCheckoutReceiptDetails(details);
+    }
+
     const result = await processStorePaymentEvent(details);
-    return NextResponse.json({ received: true, ...result });
+    const notification = await deliverPaidStoreOrderMerchantNotification(details);
+    return NextResponse.json({
+      received: true,
+      ...result,
+      merchantNotification: notification.status,
+    });
   } catch (error) {
-    console.error("Store payment webhook failed", error);
+    // Log only a stable diagnostic code. Provider, database, and customer
+    // details stay out of Worker logs.
+    console.error("Store payment webhook failed", safeErrorCode(error));
     return NextResponse.json(
       { error: "The payment event could not be recorded." },
       { status: 500 }

@@ -1,3 +1,8 @@
+import {
+  defaultStoreProductionOptionId,
+  storeProductionOptionDefinitions,
+} from "../../data/store/production.js";
+
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
 const STRIPE_API_VERSION = "2026-07-29.dahlia";
 const STRIPE_CHECKOUT_INTEGRATION_IDENTIFIER = "seapals_store_web_kvqzrmta";
@@ -5,11 +10,15 @@ const STRIPE_REQUEST_TIMEOUT_MS = 15_000;
 const encoder = new TextEncoder();
 
 export class StripeApiError extends Error {
-  constructor(message, { status = 502, code = "stripe_error" } = {}) {
+  constructor(
+    message,
+    { status = 502, code = "stripe_error", outcomeUnknown = false } = {}
+  ) {
     super(message);
     this.name = "StripeApiError";
     this.status = status;
     this.code = code;
+    this.outcomeUnknown = outcomeUnknown;
   }
 }
 
@@ -50,13 +59,23 @@ async function stripeRequest(
     headers["Idempotency-Key"] = idempotencyKey;
   }
 
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: body?.toString(),
-    cache: "no-store",
-    signal: AbortSignal.timeout(STRIPE_REQUEST_TIMEOUT_MS),
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers,
+      body: body?.toString(),
+      cache: "no-store",
+      signal: AbortSignal.timeout(STRIPE_REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    throw new StripeApiError("Stripe did not confirm the request outcome.", {
+      status: 503,
+      code: "stripe_outcome_unknown",
+      outcomeUnknown: method !== "GET",
+      cause: error,
+    });
+  }
 
   let payload;
   try {
@@ -71,6 +90,9 @@ async function stripeRequest(
       {
         status: response.status >= 500 ? 502 : 400,
         code: payload?.error?.code || "stripe_request_failed",
+        outcomeUnknown:
+          method !== "GET" &&
+          (response.status >= 500 || [409, 429].includes(response.status)),
       }
     );
   }
@@ -83,7 +105,7 @@ function appendCheckoutLineItem(
   item,
   index,
   currency,
-  { automaticTaxEnabled }
+  { automaticTaxEnabled, manualTaxRateId }
 ) {
   const prefix = `line_items[${index}]`;
   form.set(`${prefix}[quantity]`, String(item.quantity));
@@ -116,6 +138,149 @@ function appendCheckoutLineItem(
     form.set(
       `${prefix}[price_data][product_data][tax_code]`,
       item.taxCode
+    );
+    form.set(`${prefix}[price_data][tax_behavior]`, "exclusive");
+  }
+  if (manualTaxRateId) {
+    form.set(`${prefix}[tax_rates][0]`, manualTaxRateId);
+  }
+}
+
+function getCheckoutTaxConfiguration(configuration, fulfillmentOption) {
+  if (fulfillmentOption?.fulfillmentMethod !== "pickup") {
+    return {
+      automaticTaxEnabled: Boolean(configuration.automaticTaxEnabled),
+      manualTaxRateId: null,
+    };
+  }
+
+  const pickupTaxRateId = String(
+    configuration.pickupTaxRateId ?? ""
+  ).trim();
+  if (
+    configuration.pickupTaxConfirmed !== true ||
+    !/^txr_[A-Za-z0-9_]+$/.test(pickupTaxRateId)
+  ) {
+    throw new StripeApiError(
+      "Scheduled pickup tax sourcing is not configured.",
+      {
+        status: 503,
+        code: "pickup_tax_not_configured",
+      }
+    );
+  }
+
+  // Pickup is performed in Elverson, so it uses an owner-confirmed fixed,
+  // exclusive PA Tax Rate instead of customer-address-based automatic tax.
+  return {
+    automaticTaxEnabled: false,
+    manualTaxRateId: pickupTaxRateId,
+  };
+}
+
+function getQuotedProductionOption(quote) {
+  const optionId = String(
+    quote?.productionOptionId ??
+      quote?.productionOption?.id ??
+      defaultStoreProductionOptionId
+  )
+    .trim()
+    .toLowerCase();
+  const definition = storeProductionOptionDefinitions.find(
+    (option) => option.id === optionId
+  );
+
+  if (!definition) {
+    throw new StripeApiError("The production option is not valid.", {
+      status: 503,
+      code: "production_option_invalid",
+    });
+  }
+
+  const productionCents = Number(
+    quote?.productionCents ??
+      quote?.productionOption?.amountCents ??
+      definition.amountCents
+  );
+  const maxBusinessDays = Number(
+    quote?.productionMaxBusinessDays ??
+      quote?.productionOption?.maxBusinessDays ??
+      definition.maxBusinessDays
+  );
+  const displayName = String(
+    quote?.productionOptionName ??
+      quote?.productionOption?.displayName ??
+      definition.displayName
+  ).trim();
+
+  if (
+    productionCents !== definition.amountCents ||
+    maxBusinessDays !== definition.maxBusinessDays ||
+    displayName !== definition.displayName
+  ) {
+    throw new StripeApiError("The production option is not valid.", {
+      status: 503,
+      code: "production_option_invalid",
+    });
+  }
+
+  return definition;
+}
+
+function appendProductionLineItem(
+  form,
+  productionOption,
+  index,
+  currency,
+  configuration,
+  fulfillmentOption,
+  taxConfiguration
+) {
+  if (!productionOption.expedited) return;
+
+  const prefix = `line_items[${index}]`;
+  form.set(`${prefix}[quantity]`, "1");
+  form.set(`${prefix}[price_data][currency]`, currency);
+  form.set(
+    `${prefix}[price_data][unit_amount]`,
+    String(productionOption.amountCents)
+  );
+  form.set(
+    `${prefix}[price_data][product_data][name]`,
+    "Expedited production"
+  );
+  form.set(
+    `${prefix}[price_data][product_data][description]`,
+    fulfillmentOption?.fulfillmentMethod === "pickup"
+      ? "Build and mark ready for pickup within 1 business day."
+      : "Build and dispatch within 1 business day; carrier transit time not included."
+  );
+  form.set(
+    `${prefix}[price_data][product_data][metadata][production_option_id]`,
+    productionOption.id
+  );
+
+  if (taxConfiguration.manualTaxRateId) {
+    form.set(`${prefix}[tax_rates][0]`, taxConfiguration.manualTaxRateId);
+  } else if (taxConfiguration.automaticTaxEnabled) {
+    const configuredTaxCode = String(
+      configuration.productionTaxCode ??
+        process.env[productionOption.taxCodeEnvKey] ??
+        productionOption.defaultTaxCode ??
+        ""
+    ).trim();
+    if (!/^txcd_[0-9]+$/.test(configuredTaxCode)) {
+      throw new StripeApiError(
+        "A validated production tax code is required when automatic tax is enabled.",
+        {
+          status: 503,
+          code: "production_tax_code_required",
+        }
+      );
+    }
+    form.set(
+      `${prefix}[price_data][product_data][tax_code]`,
+      configuredTaxCode
     );
     form.set(`${prefix}[price_data][tax_behavior]`, "exclusive");
   }
@@ -175,14 +340,53 @@ function appendShippingEstimate(form, shippingOption) {
   );
 }
 
+export function assertStripeCheckoutConfiguration(configuration) {
+  if (configuration?.allowPromotionCodes === true) {
+    throw new StripeApiError(
+      "Promotion codes are disabled until discounted Stripe totals can be reconciled with the order ledger.",
+      {
+        status: 503,
+        code: "promotion_codes_not_supported",
+      }
+    );
+  }
+}
+
+function getStripeCheckoutExpiration(order, nowMilliseconds = Date.now()) {
+  const expirationMilliseconds = Date.parse(
+    order?.inventoryReservationExpiresAt ?? ""
+  );
+  const remainingMilliseconds = expirationMilliseconds - nowMilliseconds;
+
+  if (
+    !Number.isFinite(expirationMilliseconds) ||
+    remainingMilliseconds < 30 * 60 * 1000 ||
+    remainingMilliseconds > 24 * 60 * 60 * 1000
+  ) {
+    throw new StripeApiError(
+      "The inventory reservation deadline is not valid for Stripe Checkout.",
+      {
+        status: 503,
+        code: "inventory_reservation_deadline_invalid",
+      }
+    );
+  }
+
+  return Math.floor(expirationMilliseconds / 1000);
+}
+
 export async function createStripeCheckoutSession({
   order,
   quote,
   configuration,
   siteUrl,
 }) {
+  assertStripeCheckoutConfiguration(configuration);
+
   const form = new URLSearchParams();
   const currency = String(configuration.currency || "usd").toLowerCase();
+  const checkoutExpiration = getStripeCheckoutExpiration(order);
+  const productionOption = getQuotedProductionOption(quote);
   const fulfillmentOption = quote.fulfillmentOption ?? {
     id: "standard",
     displayName: "Standard Shipping & Handling",
@@ -192,8 +396,13 @@ export async function createStripeCheckoutSession({
     deliveryEstimateMinDays: configuration.shippingEstimateMinDays ?? null,
     deliveryEstimateMaxDays: configuration.shippingEstimateMaxDays ?? null,
   };
+  const taxConfiguration = getCheckoutTaxConfiguration(
+    configuration,
+    fulfillmentOption
+  );
 
   form.set("mode", "payment");
+  form.set("expires_at", String(checkoutExpiration));
   form.set(
     "integration_identifier",
     STRIPE_CHECKOUT_INTEGRATION_IDENTIFIER
@@ -203,12 +412,39 @@ export async function createStripeCheckoutSession({
   form.set("cancel_url", `${siteUrl}/store/cancel`);
   form.set("customer_creation", "always");
   form.set("billing_address_collection", "auto");
-  form.set("automatic_tax[enabled]", String(configuration.automaticTaxEnabled));
+  form.set(
+    "automatic_tax[enabled]",
+    String(taxConfiguration.automaticTaxEnabled)
+  );
   form.set("allow_promotion_codes", String(configuration.allowPromotionCodes));
   form.set("phone_number_collection[enabled]", String(configuration.collectPhone));
   form.set("invoice_creation[enabled]", "false");
+  // Launch inventory holds assume synchronous payment methods. Configure a
+  // dedicated Stripe payment-method configuration that excludes delayed
+  // methods before enabling checkout.
+  if (!/^pmc_[A-Za-z0-9_]+$/.test(String(configuration.paymentMethodConfiguration ?? ""))) {
+    throw new StripeApiError(
+      "A synchronous Stripe payment-method configuration is required for inventory reservations.",
+      {
+        status: 503,
+        code: "payment_method_configuration_required",
+      }
+    );
+  }
+  form.set(
+    "payment_method_configuration",
+    configuration.paymentMethodConfiguration
+  );
   form.set("metadata[order_id]", order.id);
   form.set("metadata[order_number]", order.orderNumber);
+  form.set("metadata[inventory_reservation]", "v1");
+  form.set("metadata[production_option_id]", productionOption.id);
+  form.set("metadata[production_option_name]", productionOption.displayName);
+  form.set(
+    "metadata[production_max_business_days]",
+    String(productionOption.maxBusinessDays)
+  );
+  form.set("metadata[production_cents]", String(productionOption.amountCents));
   form.set("metadata[fulfillment_option_id]", fulfillmentOption.id);
   form.set(
     "metadata[fulfillment_option_name]",
@@ -220,6 +456,23 @@ export async function createStripeCheckoutSession({
   );
   form.set("payment_intent_data[metadata][order_id]", order.id);
   form.set("payment_intent_data[metadata][order_number]", order.orderNumber);
+  form.set("payment_intent_data[metadata][inventory_reservation]", "v1");
+  form.set(
+    "payment_intent_data[metadata][production_option_id]",
+    productionOption.id
+  );
+  form.set(
+    "payment_intent_data[metadata][production_option_name]",
+    productionOption.displayName
+  );
+  form.set(
+    "payment_intent_data[metadata][production_max_business_days]",
+    String(productionOption.maxBusinessDays)
+  );
+  form.set(
+    "payment_intent_data[metadata][production_cents]",
+    String(productionOption.amountCents)
+  );
   form.set(
     "payment_intent_data[metadata][fulfillment_option_id]",
     fulfillmentOption.id
@@ -241,12 +494,21 @@ export async function createStripeCheckoutSession({
     );
     form.set(
       "custom_text[submit][message]",
-      `Local pickup in ${fulfillmentOption.pickupLocation}. We will email when your order is ready.`
+      `Scheduled pickup in ${fulfillmentOption.pickupLocation} is free. We will email after your order is built to arrange a pickup time.`
     );
   }
 
   quote.items.forEach((item, index) =>
-    appendCheckoutLineItem(form, item, index, currency, configuration)
+    appendCheckoutLineItem(form, item, index, currency, taxConfiguration)
+  );
+  appendProductionLineItem(
+    form,
+    productionOption,
+    quote.items.length,
+    currency,
+    configuration,
+    fulfillmentOption,
+    taxConfiguration
   );
 
   if (fulfillmentOption.fulfillmentMethod === "shipping") {
@@ -260,11 +522,28 @@ export async function createStripeCheckoutSession({
   appendShippingOption(form, fulfillmentOption, currency, configuration);
   appendShippingEstimate(form, fulfillmentOption);
 
-  return stripeRequest("/checkout/sessions", {
+  const session = await stripeRequest("/checkout/sessions", {
     method: "POST",
     body: form,
     idempotencyKey: `seapals-checkout-${order.id}`,
   });
+
+  if (
+    typeof session?.id !== "string" ||
+    !/^cs_[A-Za-z0-9_]+$/.test(session.id) ||
+    typeof session?.url !== "string"
+  ) {
+    throw new StripeApiError(
+      "Stripe did not return a valid checkout reference.",
+      {
+        status: 503,
+        code: "stripe_outcome_unknown",
+        outcomeUnknown: true,
+      }
+    );
+  }
+
+  return session;
 }
 
 export async function retrieveStripeCheckoutSession(sessionId) {
@@ -318,17 +597,79 @@ export async function retrieveStripePaymentReceipt(paymentIntentId) {
   return details?.receiptUrl ?? null;
 }
 
+function stripeMetadataText(metadata, key) {
+  const value = metadata?.[key];
+  return typeof value === "string" && value.trim()
+    ? value.trim().slice(0, 200)
+    : null;
+}
+
+export async function retrieveStripePaymentOwnership({
+  chargeId,
+  paymentIntentId,
+}) {
+  let resolvedChargeId = /^ch_[A-Za-z0-9_]+$/.test(String(chargeId ?? ""))
+    ? chargeId
+    : null;
+  let resolvedPaymentIntentId =
+    /^pi_[A-Za-z0-9_]+$/.test(String(paymentIntentId ?? ""))
+      ? paymentIntentId
+      : null;
+  let chargeMetadata = null;
+  let paymentIntentMetadata = null;
+
+  if (resolvedChargeId) {
+    const charge = await stripeRequest(
+      `/charges/${encodeURIComponent(resolvedChargeId)}`
+    );
+    if (charge?.id !== resolvedChargeId) {
+      throw new StripeApiError("Stripe returned an invalid Charge reference.");
+    }
+
+    chargeMetadata = charge.metadata;
+    const chargePaymentIntentId =
+      typeof charge.payment_intent === "object"
+        ? charge.payment_intent?.id
+        : charge.payment_intent;
+    if (/^pi_[A-Za-z0-9_]+$/.test(String(chargePaymentIntentId ?? ""))) {
+      resolvedPaymentIntentId = chargePaymentIntentId;
+    }
+  }
+
+  if (
+    resolvedPaymentIntentId &&
+    !stripeMetadataText(chargeMetadata, "order_id")
+  ) {
+    const paymentIntent = await stripeRequest(
+      `/payment_intents/${encodeURIComponent(resolvedPaymentIntentId)}`
+    );
+    if (paymentIntent?.id !== resolvedPaymentIntentId) {
+      throw new StripeApiError(
+        "Stripe returned an invalid Payment Intent reference."
+      );
+    }
+    paymentIntentMetadata = paymentIntent.metadata;
+  }
+
+  return {
+    chargeId: resolvedChargeId,
+    paymentIntentId: resolvedPaymentIntentId,
+    orderId:
+      stripeMetadataText(chargeMetadata, "order_id") ??
+      stripeMetadataText(paymentIntentMetadata, "order_id"),
+    orderNumber:
+      stripeMetadataText(chargeMetadata, "order_number") ??
+      stripeMetadataText(paymentIntentMetadata, "order_number"),
+  };
+}
+
 export async function expireStripeCheckoutSession(sessionId) {
   if (!/^cs_[A-Za-z0-9_]+$/.test(String(sessionId ?? ""))) return null;
 
-  try {
-    return await stripeRequest(
-      `/checkout/sessions/${encodeURIComponent(sessionId)}/expire`,
-      { method: "POST", body: new URLSearchParams() }
-    );
-  } catch {
-    return null;
-  }
+  return stripeRequest(
+    `/checkout/sessions/${encodeURIComponent(sessionId)}/expire`,
+    { method: "POST", body: new URLSearchParams() }
+  );
 }
 
 export function parseStripeSignatureHeader(header) {

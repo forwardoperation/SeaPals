@@ -1,42 +1,29 @@
 import { NextResponse } from "next/server";
+import {
+  defaultStoreProductionOptionId,
+  storeProductionOptionDefinitions,
+} from "@/data/store/production";
 import { getStoreConfiguration } from "@/lib/store/catalog";
 import { CartValidationError, quoteCart } from "@/lib/store/cart.mjs";
+import { normalizeCheckoutRequestId } from "@/lib/store/checkoutRequest.mjs";
+import {
+  getStoreSiteUrl,
+  requestOriginIsAllowed,
+} from "@/lib/store/checkoutOrigin.mjs";
 import {
   attachCheckoutSessionToOrder,
   createPendingStoreOrder,
   markStoreOrderCheckoutFailed,
+  OrderStoreError,
 } from "@/lib/store/orders";
 import {
+  assertStripeCheckoutConfiguration,
   createStripeCheckoutSession,
+  expireStripeCheckoutSession,
   StripeApiError,
 } from "@/lib/store/stripe.mjs";
 
 export const runtime = "nodejs";
-
-function getSiteUrl(request) {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  const url = new URL(configured || request.url);
-  const isLocalHttp =
-    url.protocol === "http:" &&
-    ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
-
-  if (url.protocol !== "https:" && !isLocalHttp) {
-    throw new Error("The store URL must use HTTPS.");
-  }
-
-  return url.origin;
-}
-
-function requestOriginIsAllowed(request, siteUrl) {
-  const origin = request.headers.get("origin");
-  if (!origin) return true;
-
-  try {
-    return new URL(origin).origin === new URL(siteUrl).origin;
-  } catch {
-    return false;
-  }
-}
 
 function json(payload, status = 200) {
   return NextResponse.json(payload, {
@@ -48,7 +35,7 @@ function json(payload, status = 200) {
 export async function POST(request) {
   let siteUrl;
   try {
-    siteUrl = getSiteUrl(request);
+    siteUrl = getStoreSiteUrl(request);
   } catch {
     return json({ error: "The store URL is not configured correctly." }, 503);
   }
@@ -91,8 +78,53 @@ export async function POST(request) {
     );
   }
 
-  let quote;
   try {
+    assertStripeCheckoutConfiguration(configuration);
+  } catch (error) {
+    console.error("Store checkout configuration blocked", error);
+    return json(
+      { error: "Checkout is temporarily unavailable. Please try again shortly." },
+      503
+    );
+  }
+
+  let quote;
+  const checkoutRequestId = normalizeCheckoutRequestId(
+    payload?.checkoutRequestId
+  );
+  if (!checkoutRequestId) {
+    return json(
+      {
+        error: "Checkout could not be prepared for that cart.",
+        code: "invalid_checkout_request_id",
+      },
+      400
+    );
+  }
+
+  try {
+    const configuredProductionOptions = Array.isArray(
+      configuration.productionOptions
+    )
+      ? configuration.productionOptions
+      : storeProductionOptionDefinitions;
+    const requestedProductionOptionId = String(
+      payload?.productionOptionId ??
+        configuration.defaultProductionOptionId ??
+        defaultStoreProductionOptionId
+    )
+      .trim()
+      .toLowerCase();
+    const productionOption = configuredProductionOptions.find(
+      (option) => option.id === requestedProductionOptionId
+    );
+    if (!productionOption) {
+      throw new CartValidationError(
+        "Choose an available production option.",
+        "invalid_production_option"
+      );
+    }
+
     const requestedFulfillmentOptionId = String(
       payload?.fulfillmentOptionId ??
         configuration.defaultShippingOptionId ??
@@ -112,6 +144,7 @@ export async function POST(request) {
 
     quote = quoteCart(payload?.items, configuration.products, {
       fulfillmentOption,
+      productionOption,
     });
   } catch (error) {
     if (error instanceof CartValidationError) {
@@ -121,14 +154,22 @@ export async function POST(request) {
   }
 
   let order;
+  let session;
+  let stripeCreateAttempted = false;
   try {
     order = await createPendingStoreOrder({
       quote,
       currency: configuration.currency,
       paymentLivemode: configuration.paymentMode === "live",
+      checkoutRequestId,
     });
 
-    const session = await createStripeCheckoutSession({
+    if (order.checkoutUrl) {
+      return json({ url: order.checkoutUrl, orderNumber: order.orderNumber });
+    }
+
+    stripeCreateAttempted = true;
+    session = await createStripeCheckoutSession({
       order,
       quote,
       configuration,
@@ -139,31 +180,66 @@ export async function POST(request) {
       throw new StripeApiError("Stripe did not return a checkout link.");
     }
 
-    try {
-      await attachCheckoutSessionToOrder(order.id, session.id);
-    } catch (error) {
-      // The signed webhook also carries the internal order id and can reconcile
-      // this field. Do not strand a valid customer checkout for a transient write.
-      console.error("Store checkout reference write failed", error);
-    }
+    await attachCheckoutSessionToOrder(order.id, session);
 
     return json({ url: session.url, orderNumber: order.orderNumber });
   } catch (error) {
-    if (order?.id) {
-      await markStoreOrderCheckoutFailed(
-        order.id,
-        error?.code || "Checkout session creation failed."
-      );
+    let inventoryReleaseFailed = false;
+    let sessionTerminal =
+      !stripeCreateAttempted ||
+      (error instanceof StripeApiError && error.outcomeUnknown === false);
+    if (session?.id) {
+      try {
+        const expiredSession = await expireStripeCheckoutSession(session.id);
+        sessionTerminal = expiredSession?.status === "expired";
+      } catch (expirationError) {
+        console.error("Store checkout session expiration failed", expirationError);
+      }
+    }
+
+    // Never release stock while a known Stripe Session might still accept
+    // payment. A signed terminal webhook or an operator reconciliation must
+    // release that hold instead.
+    if (order?.id && sessionTerminal) {
+      try {
+        await markStoreOrderCheckoutFailed(
+          order.id,
+          session?.id
+            ? "Stripe session expired after attach failure"
+            : "Checkout session creation failed"
+        );
+      } catch (releaseError) {
+        inventoryReleaseFailed = true;
+        console.error("Store checkout inventory release failed", releaseError);
+      }
     }
 
     console.error("Store checkout failed", error);
-    const status = error instanceof StripeApiError ? error.status : 503;
+    const status = inventoryReleaseFailed
+      ? 503
+      : error instanceof StripeApiError || error instanceof OrderStoreError
+        ? error.status
+        : 503;
     return json(
       {
         error:
-          status === 400
+          error instanceof OrderStoreError &&
+          error.code === "inventory_unavailable"
+            ? "One or more items just sold out. Please update your cart and try again."
+            : error instanceof OrderStoreError &&
+                error.code === "expedited_capacity_unavailable"
+              ? "Expedited production is full for the next business day. Choose Standard production or try again."
+            : status === 400
             ? "Checkout could not be prepared for that cart."
             : "Checkout is temporarily unavailable. Please try again shortly.",
+        ...(error instanceof OrderStoreError &&
+        ["inventory_unavailable", "expedited_capacity_unavailable"].includes(
+          error.code
+        )
+          ? { code: error.code }
+          : status >= 500 && order?.id && !sessionTerminal
+            ? { code: "retry_same_request" }
+            : {}),
       },
       status
     );

@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  assertStripeCheckoutConfiguration,
   computeStripeWebhookSignature,
   createStripeCheckoutSession,
   parseStripeSignatureHeader,
+  retrieveStripePaymentOwnership,
   retrieveStripePaymentReceiptDetails,
   verifyStripeWebhookSignature,
 } from "./stripe.mjs";
@@ -11,6 +13,159 @@ import {
 const payload = JSON.stringify({ id: "evt_test", type: "checkout.session.completed" });
 const secret = "whsec_test_secret";
 const timestamp = 1_800_000_000;
+
+test("promotion codes fail closed until discounted totals are reconciled", async () => {
+  let fetchCount = 0;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    fetchCount += 1;
+    throw new Error("Stripe must not be called");
+  };
+
+  try {
+    assert.throws(
+      () => assertStripeCheckoutConfiguration({ allowPromotionCodes: true }),
+      (error) =>
+        error?.code === "promotion_codes_not_supported" && error?.status === 503
+    );
+
+    await assert.rejects(
+      createStripeCheckoutSession({
+        order: {},
+        quote: {},
+        configuration: { allowPromotionCodes: true },
+        siteUrl: "https://seapals.example",
+      }),
+      (error) =>
+        error?.code === "promotion_codes_not_supported" && error?.status === 503
+    );
+    assert.equal(fetchCount, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("checkout fails closed without a Stripe-compatible inventory deadline", async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCount = 0;
+  globalThis.fetch = async () => {
+    fetchCount += 1;
+    throw new Error("Stripe must not be called");
+  };
+
+  try {
+    await assert.rejects(
+      createStripeCheckoutSession({
+        order: {
+          id: "00000000-0000-4000-8000-000000000001",
+          orderNumber: "SP-TEST",
+        },
+        quote: {},
+        configuration: { allowPromotionCodes: false },
+        siteUrl: "https://seapals.example",
+      }),
+      (error) =>
+        error?.code === "inventory_reservation_deadline_invalid" &&
+        error?.status === 503
+    );
+    assert.equal(fetchCount, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("checkout fails closed without a synchronous payment-method configuration", async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCount = 0;
+  globalThis.fetch = async () => {
+    fetchCount += 1;
+    throw new Error("Stripe must not be called");
+  };
+
+  try {
+    await assert.rejects(
+      createStripeCheckoutSession({
+        order: {
+          id: "00000000-0000-4000-8000-000000000001",
+          orderNumber: "SP-TEST",
+          inventoryReservationExpiresAt: new Date(
+            Date.now() + 60 * 60 * 1000
+          ).toISOString(),
+        },
+        quote: { items: [] },
+        configuration: {
+          allowPromotionCodes: false,
+          paymentMethodConfiguration: null,
+        },
+        siteUrl: "https://seapals.example",
+      }),
+      (error) => error?.code === "payment_method_configuration_required"
+    );
+    assert.equal(fetchCount, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("scheduled pickup fails closed without both owner confirmation and a Tax Rate ID", async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCount = 0;
+  globalThis.fetch = async () => {
+    fetchCount += 1;
+    throw new Error("Stripe must not be called");
+  };
+
+  const order = {
+    id: "00000000-0000-4000-8000-000000000099",
+    orderNumber: "SP-PICKUP-TAX-GATE",
+    inventoryReservationExpiresAt: new Date(
+      Date.now() + 60 * 60 * 1000
+    ).toISOString(),
+  };
+  const quote = {
+    fulfillmentOption: {
+      id: "pickup-elverson-pa",
+      displayName: "Scheduled pickup — Elverson, PA",
+      fulfillmentMethod: "pickup",
+      pickupLocation: "Elverson, PA",
+      amountCents: 0,
+    },
+    items: [],
+  };
+  const configuration = {
+    allowPromotionCodes: false,
+    paymentMethodConfiguration: "pmc_test_synchronous",
+    pickupTaxRateId: "txr_test_elverson_pa",
+  };
+
+  try {
+    await assert.rejects(
+      createStripeCheckoutSession({
+        order,
+        quote,
+        configuration,
+        siteUrl: "https://seapals.example",
+      }),
+      (error) => error?.code === "pickup_tax_not_configured"
+    );
+    await assert.rejects(
+      createStripeCheckoutSession({
+        order,
+        quote,
+        configuration: {
+          ...configuration,
+          pickupTaxConfirmed: true,
+          pickupTaxRateId: "not-a-tax-rate",
+        },
+        siteUrl: "https://seapals.example",
+      }),
+      (error) => error?.code === "pickup_tax_not_configured"
+    );
+    assert.equal(fetchCount, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test("parseStripeSignatureHeader keeps all v1 signatures", () => {
   const result = parseStripeSignatureHeader(
@@ -88,7 +243,13 @@ test("checkout uses generic product labels and each item's tax code", async () =
 
   try {
     await createStripeCheckoutSession({
-      order: { id: "00000000-0000-4000-8000-000000000001", orderNumber: "SP-TEST" },
+      order: {
+        id: "00000000-0000-4000-8000-000000000001",
+        orderNumber: "SP-TEST",
+        inventoryReservationExpiresAt: new Date(
+          Date.now() + 60 * 60 * 1000
+        ).toISOString(),
+      },
       quote: {
         shippingCents: 0,
         fulfillmentOption: {
@@ -118,6 +279,7 @@ test("checkout uses generic product labels and each item's tax code", async () =
         automaticTaxEnabled: true,
         shippingTaxCode: "txcd_92010001",
         allowPromotionCodes: false,
+        paymentMethodConfiguration: "pmc_test_synchronous",
         collectPhone: false,
         allowedCountries: ["US"],
       },
@@ -134,7 +296,10 @@ test("checkout uses generic product labels and each item's tax code", async () =
       form.get("integration_identifier"),
       "seapals_store_web_kvqzrmta"
     );
+    assert.ok(Number(form.get("expires_at")) > Math.floor(Date.now() / 1000));
     assert.equal(form.get("payment_method_types[0]"), null);
+    assert.equal(form.get("automatic_tax[enabled]"), "true");
+    assert.equal(form.get("line_items[0][tax_rates][0]"), null);
     assert.equal(form.get(`${prefix}[name]`), "SeaPals — SeaPals Card Binder");
     assert.equal(form.get(`${prefix}[tax_code]`), "txcd_99999999");
     assert.equal(form.get(`${prefix}[metadata][category]`), "storage");
@@ -142,8 +307,120 @@ test("checkout uses generic product labels and each item's tax code", async () =
     assert.equal(form.get("metadata[fulfillment_option_id]"), "standard");
     assert.equal(form.get("metadata[fulfillment_method]"), "shipping");
     assert.equal(
+      form.get("metadata[production_option_id]"),
+      "standard-production"
+    );
+    assert.equal(form.get("metadata[production_cents]"), "0");
+    assert.equal(
+      form.get("payment_intent_data[metadata][production_max_business_days]"),
+      "5"
+    );
+    assert.equal(
       form.get("shipping_options[0][shipping_rate_data][tax_code]"),
       "txcd_92010001"
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalSecret === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = originalSecret;
+  }
+});
+
+test("checkout charges expedited production once and copies its signed snapshot", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalSecret = process.env.STRIPE_SECRET_KEY;
+  let request = null;
+
+  process.env.STRIPE_SECRET_KEY = "sk_test_storefront";
+  globalThis.fetch = async (url, options) => {
+    request = { url: String(url), options };
+    return Response.json({
+      id: "cs_test_expedited",
+      url: "https://checkout.stripe.com/expedited",
+    });
+  };
+
+  try {
+    await createStripeCheckoutSession({
+      order: {
+        id: "00000000-0000-4000-8000-000000000021",
+        orderNumber: "SP-EXPEDITED-TEST",
+        inventoryReservationExpiresAt: new Date(
+          Date.now() + 60 * 60 * 1000
+        ).toISOString(),
+      },
+      quote: {
+        productionOptionId: "expedited-production",
+        productionOptionName: "Expedited production",
+        productionMaxBusinessDays: 1,
+        productionCents: 1000,
+        shippingCents: 750,
+        fulfillmentOption: {
+          id: "standard",
+          displayName: "Standard Shipping & Handling",
+          fulfillmentMethod: "shipping",
+          pickupLocation: null,
+          amountCents: 750,
+          deliveryEstimateMinDays: null,
+          deliveryEstimateMaxDays: null,
+        },
+        items: [
+          {
+            productId: "starter-kit",
+            sku: "SP-KIT-STARTER",
+            category: "starter-kits",
+            name: "Starter Kit",
+            checkoutDescription: "SeaPals two-player Starter Kit.",
+            unitAmountCents: 4400,
+            quantity: 2,
+            taxCode: "txcd_99999999",
+          },
+        ],
+      },
+      configuration: {
+        currency: "usd",
+        automaticTaxEnabled: true,
+        shippingTaxCode: "txcd_92010001",
+        productionTaxCode: "txcd_92010004",
+        allowPromotionCodes: false,
+        paymentMethodConfiguration: "pmc_test_synchronous",
+        collectPhone: false,
+        allowedCountries: ["US"],
+      },
+      siteUrl: "https://seapals.example",
+    });
+
+    const form = new URLSearchParams(request.options.body);
+    const prefix = "line_items[1][price_data]";
+    assert.equal(form.get("line_items[1][quantity]"), "1");
+    assert.equal(form.get(`${prefix}[unit_amount]`), "1000");
+    assert.equal(
+      form.get(`${prefix}[product_data][name]`),
+      "Expedited production"
+    );
+    assert.equal(
+      form.get(`${prefix}[product_data][description]`),
+      "Build and dispatch within 1 business day; carrier transit time not included."
+    );
+    assert.equal(
+      form.get(`${prefix}[product_data][tax_code]`),
+      "txcd_92010004"
+    );
+    assert.equal(form.get(`${prefix}[tax_behavior]`), "exclusive");
+    assert.equal(
+      form.get("metadata[production_option_id]"),
+      "expedited-production"
+    );
+    assert.equal(form.get("metadata[production_option_name]"), "Expedited production");
+    assert.equal(form.get("metadata[production_max_business_days]"), "1");
+    assert.equal(form.get("metadata[production_cents]"), "1000");
+    assert.equal(
+      form.get("payment_intent_data[metadata][production_option_id]"),
+      "expedited-production"
+    );
+    assert.equal(
+      form.get("payment_intent_data[metadata][production_cents]"),
+      "1000"
     );
   } finally {
     globalThis.fetch = originalFetch;
@@ -185,6 +462,9 @@ test("checkout sends a twelve-line launch cart with Priority shipping", async ()
       order: {
         id: "00000000-0000-4000-8000-000000000011",
         orderNumber: "SP-LAUNCH-TEST",
+        inventoryReservationExpiresAt: new Date(
+          Date.now() + 60 * 60 * 1000
+        ).toISOString(),
       },
       quote: {
         shippingCents: 1250,
@@ -203,6 +483,7 @@ test("checkout sends a twelve-line launch cart with Priority shipping", async ()
         currency: "usd",
         automaticTaxEnabled: false,
         allowPromotionCodes: false,
+        paymentMethodConfiguration: "pmc_test_synchronous",
         collectPhone: false,
         allowedCountries: ["US"],
       },
@@ -280,12 +561,19 @@ test("checkout configures free Elverson pickup without a shipping address", asyn
       order: {
         id: "00000000-0000-4000-8000-000000000012",
         orderNumber: "SP-PICKUP-TEST",
+        inventoryReservationExpiresAt: new Date(
+          Date.now() + 60 * 60 * 1000
+        ).toISOString(),
       },
       quote: {
+        productionOptionId: "expedited-production",
+        productionOptionName: "Expedited production",
+        productionMaxBusinessDays: 1,
+        productionCents: 1000,
         shippingCents: 0,
         fulfillmentOption: {
           id: "pickup-elverson-pa",
-          displayName: "Local pickup — Elverson, PA",
+          displayName: "Scheduled pickup — Elverson, PA",
           fulfillmentMethod: "pickup",
           pickupLocation: "Elverson, PA",
           amountCents: 0,
@@ -307,8 +595,11 @@ test("checkout configures free Elverson pickup without a shipping address", asyn
       },
       configuration: {
         currency: "usd",
-        automaticTaxEnabled: false,
+        automaticTaxEnabled: true,
         allowPromotionCodes: false,
+        paymentMethodConfiguration: "pmc_test_synchronous",
+        pickupTaxConfirmed: true,
+        pickupTaxRateId: "txr_test_elverson_pa",
         collectPhone: false,
         allowedCountries: ["US"],
       },
@@ -321,6 +612,10 @@ test("checkout configures free Elverson pickup without a shipping address", asyn
       "pickup-elverson-pa"
     );
     assert.equal(form.get("metadata[fulfillment_method]"), "pickup");
+    assert.equal(
+      form.get("metadata[fulfillment_option_name]"),
+      "Scheduled pickup — Elverson, PA"
+    );
     assert.equal(form.get("metadata[pickup_location]"), "Elverson, PA");
     assert.equal(
       form.get("payment_intent_data[metadata][fulfillment_method]"),
@@ -328,7 +623,24 @@ test("checkout configures free Elverson pickup without a shipping address", asyn
     );
     assert.equal(
       form.get("custom_text[submit][message]"),
-      "Local pickup in Elverson, PA. We will email when your order is ready."
+      "Scheduled pickup in Elverson, PA is free. We will email after your order is built to arrange a pickup time."
+    );
+    assert.equal(form.get("automatic_tax[enabled]"), "false");
+    assert.equal(
+      form.get("line_items[0][tax_rates][0]"),
+      "txr_test_elverson_pa"
+    );
+    assert.equal(
+      form.get("line_items[1][tax_rates][0]"),
+      "txr_test_elverson_pa"
+    );
+    assert.equal(
+      form.get("line_items[0][price_data][product_data][tax_code]"),
+      null
+    );
+    assert.equal(
+      form.get("line_items[1][price_data][product_data][tax_code]"),
+      null
     );
     assert.equal(
       form.get("shipping_address_collection[allowed_countries][0]"),
@@ -337,6 +649,11 @@ test("checkout configures free Elverson pickup without a shipping address", asyn
     assert.equal(
       form.get("shipping_options[0][shipping_rate_data][display_name]"),
       null
+    );
+    assert.equal(form.get("line_items[1][quantity]"), "1");
+    assert.equal(
+      form.get("line_items[1][price_data][product_data][description]"),
+      "Build and mark ready for pickup within 1 business day."
     );
   } finally {
     globalThis.fetch = originalFetch;
@@ -372,6 +689,58 @@ test("receipt details retain durable Stripe references", async () => {
         receiptUrl: "https://pay.stripe.com/receipts/test",
       }
     );
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalSecret === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = originalSecret;
+  }
+});
+
+test("payment ownership recovers order metadata through Charge and PaymentIntent", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalSecret = process.env.STRIPE_SECRET_KEY;
+  const requestedPaths = [];
+
+  process.env.STRIPE_SECRET_KEY = "sk_test_storefront";
+  globalThis.fetch = async (url) => {
+    const path = new URL(url).pathname;
+    requestedPaths.push(path);
+    if (path === "/v1/charges/ch_test_dispute") {
+      return Response.json({
+        id: "ch_test_dispute",
+        payment_intent: "pi_test_dispute",
+        metadata: {},
+      });
+    }
+    if (path === "/v1/payment_intents/pi_test_dispute") {
+      return Response.json({
+        id: "pi_test_dispute",
+        metadata: {
+          order_id: "00000000-0000-4000-8000-000000000001",
+          order_number: "SP-TEST",
+        },
+      });
+    }
+    return Response.json({ error: { message: "unexpected request" } }, { status: 404 });
+  };
+
+  try {
+    assert.deepEqual(
+      await retrieveStripePaymentOwnership({
+        chargeId: "ch_test_dispute",
+        paymentIntentId: null,
+      }),
+      {
+        chargeId: "ch_test_dispute",
+        paymentIntentId: "pi_test_dispute",
+        orderId: "00000000-0000-4000-8000-000000000001",
+        orderNumber: "SP-TEST",
+      }
+    );
+    assert.deepEqual(requestedPaths, [
+      "/v1/charges/ch_test_dispute",
+      "/v1/payment_intents/pi_test_dispute",
+    ]);
   } finally {
     globalThis.fetch = originalFetch;
     if (originalSecret === undefined) delete process.env.STRIPE_SECRET_KEY;

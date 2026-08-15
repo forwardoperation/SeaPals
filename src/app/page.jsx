@@ -117,16 +117,15 @@ const questions = [
     question: "When can I buy it?",
     answer: (
       <>
-        You can preview the complete launch collection in the{" "}
+        You can browse the complete launch collection in the{" "}
         <Link
           href="/store"
           className="font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950"
         >
           SeaPals Store
         </Link>
-        . Checkout will open after the Pennsylvania sales tax license and final
-        launch checks are complete. Join the crew below to hear when ordering
-        begins.
+        . Online checkout will open after the final launch checks are complete.
+        Join the crew below to hear when ordering begins.
       </>
     ),
   },

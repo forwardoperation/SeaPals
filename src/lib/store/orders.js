@@ -1,10 +1,21 @@
 import { createSupabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  buildStoreOrderReservationArguments,
+  createInventoryReservationDeadline,
+  expeditedCapacityReservationIsUnavailable,
+  inventoryReservationIsUnavailable,
+  parseStoreOrderReservationResult,
+} from "@/lib/store/inventory.mjs";
 
 export class OrderStoreError extends Error {
-  constructor(message, { code = "order_store_error", cause } = {}) {
+  constructor(
+    message,
+    { code = "order_store_error", status = 503, cause } = {}
+  ) {
     super(message, { cause });
     this.name = "OrderStoreError";
     this.code = code;
+    this.status = status;
   }
 }
 
@@ -22,70 +33,119 @@ export async function createPendingStoreOrder({
   quote,
   currency,
   paymentLivemode,
+  checkoutRequestId,
 }) {
   const supabase = createSupabaseAdmin();
   const id = globalThis.crypto.randomUUID();
   const orderNumber = createOrderNumber();
-  const order = {
-    id,
-    order_number: orderNumber,
+  const inventoryReservedUntil = createInventoryReservationDeadline();
+  const rpcArguments = buildStoreOrderReservationArguments({
+    orderId: id,
+    orderNumber,
+    quote,
     currency,
-    payment_livemode: Boolean(paymentLivemode),
-    subtotal_cents: quote.subtotalCents,
-    fulfillment_method: quote.fulfillmentMethod,
-    fulfillment_option_id: quote.fulfillmentOptionId,
-    fulfillment_option_name: quote.fulfillmentOptionName,
-    pickup_location: quote.pickupLocation,
-    shipping_cents: quote.shippingCents,
-    tax_cents: 0,
-    total_cents: quote.totalCents,
-    payment_status: "pending",
-    fulfillment_status: "unfulfilled",
-  };
-
-  const { error: orderError } = await supabase.from("store_orders").insert(order);
-  if (orderError) {
-    throw new OrderStoreError("The order ledger is not ready.", {
-      code: "order_insert_failed",
-      cause: orderError,
-    });
-  }
-
-  const items = quote.items.map((item) => ({
-    order_id: id,
-    product_id: item.productId,
-    product_category: item.category || "uncategorized",
-    sku: item.sku,
-    deck_id: item.deckId || null,
-    product_name: item.name,
-    unit_amount_cents: item.unitAmountCents,
-    quantity: item.quantity,
-    line_total_cents: item.lineTotalCents,
-  }));
-
-  const { error: itemsError } = await supabase
-    .from("store_order_items")
-    .insert(items);
-
-  if (itemsError) {
-    await supabase.from("store_orders").delete().eq("id", id);
-    throw new OrderStoreError("The order items could not be saved.", {
-      code: "order_items_insert_failed",
-      cause: itemsError,
-    });
-  }
-
-  return { id, orderNumber };
-}
-
-export async function attachCheckoutSessionToOrder(orderId, sessionId) {
-  const supabase = createSupabaseAdmin();
-  const { error } = await supabase
-    .from("store_orders")
-    .update({ checkout_session_id: sessionId })
-    .eq("id", orderId);
+    paymentLivemode,
+    checkoutRequestId,
+    inventoryReservedUntil,
+  });
+  const { data, error } = await supabase.rpc(
+    "reserve_store_order_inventory",
+    rpcArguments
+  );
 
   if (error) {
+    await releaseOrderInventoryBestEffort(
+      supabase,
+      id,
+      "Order creation did not complete"
+    );
+
+    if (expeditedCapacityReservationIsUnavailable(error)) {
+      throw new OrderStoreError(
+        "Expedited production is full for the next business day. Choose Standard production or try again.",
+        {
+          code: "expedited_capacity_unavailable",
+          status: 409,
+          cause: error,
+        }
+      );
+    }
+
+    if (inventoryReservationIsUnavailable(error)) {
+      throw new OrderStoreError("One or more items are out of stock.", {
+        code: "inventory_unavailable",
+        status: 409,
+        cause: error,
+      });
+    }
+
+    throw new OrderStoreError("Inventory could not be reserved.", {
+      code: "inventory_reservation_failed",
+      cause: error,
+    });
+  }
+
+  try {
+    return parseStoreOrderReservationResult(data, {
+      orderId: id,
+      orderNumber,
+      inventoryReservedUntil,
+      productionOptionId: quote.productionOptionId,
+    });
+  } catch (error) {
+    await releaseOrderInventoryBestEffort(
+      supabase,
+      id,
+      "Order creation returned an invalid response"
+    );
+    throw new OrderStoreError("Inventory could not be reserved.", {
+      code: "inventory_reservation_failed",
+      cause: error,
+    });
+  }
+}
+
+async function releaseOrderInventoryBestEffort(supabase, orderId, reason) {
+  try {
+    const { error } = await supabase.rpc(
+      "fail_store_order_checkout_and_release_inventory",
+      {
+        p_order_id: orderId,
+        p_reason: String(reason).slice(0, 500),
+      }
+    );
+    if (error) {
+      console.error("Store inventory rollback failed", error);
+    }
+  } catch (error) {
+    console.error("Store inventory rollback failed", error);
+  }
+}
+
+export async function attachCheckoutSessionToOrder(orderId, session) {
+  const sessionId = session?.id;
+  const checkoutUrl = session?.url;
+  if (
+    typeof sessionId !== "string" ||
+    !/^cs_[A-Za-z0-9_]+$/.test(sessionId) ||
+    typeof checkoutUrl !== "string"
+  ) {
+    throw new OrderStoreError("The checkout reference was invalid.", {
+      code: "checkout_session_update_failed",
+    });
+  }
+
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase.rpc(
+    "attach_store_checkout_session",
+    {
+      p_order_id: orderId,
+      p_checkout_session_id: sessionId,
+      p_checkout_url: checkoutUrl,
+    }
+  );
+
+  if (error || data !== true) {
     throw new OrderStoreError("The checkout reference could not be saved.", {
       code: "checkout_session_update_failed",
       cause: error,
@@ -95,13 +155,58 @@ export async function attachCheckoutSessionToOrder(orderId, sessionId) {
 
 export async function markStoreOrderCheckoutFailed(orderId, reason) {
   const supabase = createSupabaseAdmin();
-  const note = String(reason ?? "Checkout session creation failed.").slice(0, 500);
+  const note = String(reason ?? "Checkout session creation failed").slice(0, 500);
+  const { data, error } = await supabase.rpc(
+    "fail_store_order_checkout_and_release_inventory",
+    {
+      p_order_id: orderId,
+      p_reason: note,
+    }
+  );
 
-  await supabase
-    .from("store_orders")
-    .update({ payment_status: "failed", internal_notes: note })
-    .eq("id", orderId)
-    .eq("payment_status", "pending");
+  if (error) {
+    throw new OrderStoreError(
+      "The checkout failure could not release its inventory.",
+      {
+        code: "inventory_release_failed",
+        cause: error,
+      }
+    );
+  }
+
+  return Boolean(data);
+}
+
+export async function storePaymentEventReferencesKnownOrder(details) {
+  const references = [
+    ["id", details?.orderId],
+    ["checkout_session_id", details?.checkoutSessionId],
+    ["payment_intent_id", details?.paymentIntentId],
+    ["charge_id", details?.chargeId],
+  ].filter(([, value]) => Boolean(value));
+
+  if (!references.length) return false;
+
+  const supabase = createSupabaseAdmin();
+  const results = await Promise.all(
+    references.map(([column, value]) =>
+      supabase.from("store_orders").select("id").eq(column, value).limit(1)
+    )
+  );
+
+  for (const { error } of results) {
+    if (error) {
+      throw new OrderStoreError(
+        "Payment event ownership could not be checked.",
+        {
+          code: "payment_event_ownership_check_failed",
+          cause: error,
+        }
+      );
+    }
+  }
+
+  return results.some(({ data }) => Array.isArray(data) && data.length > 0);
 }
 
 export async function processStorePaymentEvent(details) {
@@ -120,6 +225,11 @@ export async function processStorePaymentEvent(details) {
     p_shipping_address: details.shippingAddress,
     p_currency: details.currency,
     p_subtotal_cents: details.subtotalCents,
+    p_production_option_id: details.productionOptionId ?? null,
+    p_production_option_name: details.productionOptionName ?? null,
+    p_production_max_business_days:
+      details.productionMaxBusinessDays ?? null,
+    p_production_cents: details.productionCents ?? null,
     p_shipping_cents: details.shippingCents,
     p_tax_cents: details.taxCents,
     p_total_cents: details.totalCents,
@@ -149,7 +259,7 @@ export async function listStoreOrders({ limit = 250 } = {}) {
   const { data, error } = await supabase
     .from("store_orders")
     .select(
-      "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, stripe_shipping_rate_id, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, fulfillment_status, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, tracking_number, tracking_url, internal_notes, store_order_items(id, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents)"
+      "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, production_option_id, production_option_name, production_max_business_days, production_cents, production_due_date, expedited_capacity_state, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, stripe_shipping_rate_id, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, fulfillment_status, inventory_state, inventory_reserved_until, inventory_committed_at, inventory_released_at, inventory_release_reason, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, tracking_number, tracking_url, internal_notes, store_order_items(id, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents)"
     )
     .order("created_at", { ascending: false })
     .limit(Math.min(Math.max(Number(limit) || 250, 1), 500));

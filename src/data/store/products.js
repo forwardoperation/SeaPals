@@ -21,6 +21,8 @@ export const storeProductDefinitions = [
   {
     id: "starter-kit",
     sku: "SP-KIT-STARTER",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     category: "starter-kits",
     name: "Starter Kit",
     shortName: "Starter Kit",
@@ -47,6 +49,8 @@ export const storeProductDefinitions = [
   {
     id: "blue-water",
     sku: "SP-DECK-BLUE-WATER",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     deckId: "blue-water",
     category: "expansion-decks",
     name: "Blue Water Deck",
@@ -66,6 +70,8 @@ export const storeProductDefinitions = [
   {
     id: "disruption",
     sku: "SP-DECK-DISRUPTION",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     deckId: "disruption",
     category: "expansion-decks",
     name: "Disruption Deck",
@@ -85,6 +91,8 @@ export const storeProductDefinitions = [
   {
     id: "coral-garden",
     sku: "SP-DECK-CORAL-GARDEN",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     deckId: "coral-garden",
     category: "expansion-decks",
     name: "Coral Garden Deck",
@@ -104,6 +112,8 @@ export const storeProductDefinitions = [
   {
     id: "darkness-shroud",
     sku: "SP-DECK-DARKNESS-SHROUD",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     deckId: "darkness-shroud",
     category: "expansion-decks",
     name: "Darkness Shroud Deck",
@@ -123,6 +133,8 @@ export const storeProductDefinitions = [
   {
     id: "open-ocean-hunt",
     sku: "SP-DECK-OPEN-OCEAN-HUNT",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     deckId: "open-ocean-hunt",
     category: "expansion-decks",
     name: "Open Ocean Deck",
@@ -142,6 +154,8 @@ export const storeProductDefinitions = [
   {
     id: "murky-water",
     sku: "SP-DECK-MURKY-WATER",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     deckId: "murky-water",
     category: "expansion-decks",
     name: "Murky Water Deck",
@@ -161,6 +175,8 @@ export const storeProductDefinitions = [
   {
     id: "stinging-fortress",
     sku: "SP-DECK-STINGING-FORTRESS",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     deckId: "stinging-fortress",
     category: "expansion-decks",
     name: "Stinging Fortress Deck",
@@ -180,6 +196,8 @@ export const storeProductDefinitions = [
   {
     id: "accessory-set",
     sku: "SP-ACC-SET",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     category: "game-accessories",
     name: "Accessories Kit",
     shortName: "Accessories Kit",
@@ -201,6 +219,8 @@ export const storeProductDefinitions = [
   {
     id: "reef-point-tokens",
     sku: "SP-ACC-REEF-POINTS",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     category: "game-accessories",
     name: "Reef Point (RP) Token Set",
     shortName: "RP Token Set",
@@ -220,12 +240,14 @@ export const storeProductDefinitions = [
   {
     id: "dice-pack",
     sku: "SP-ACC-DICE-PACK",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     category: "game-accessories",
     name: "Dice Pack",
     shortName: "Dice Pack",
     productLabel: "Game accessory",
     description: "A SeaPals dice pack for attacks, defense, and card effects.",
-    details: "Dice for SeaPals gameplay",
+    details: "Dice pack contents pending final confirmation",
     checkoutDescription: "SeaPals gameplay dice pack.",
     image: "/images/store/dice-pack.svg",
     defaultPriceCents: 500,
@@ -238,6 +260,8 @@ export const storeProductDefinitions = [
   {
     id: "conditions-deck",
     sku: "SP-ACC-CONDITIONS-DECK",
+    madeToOrder: true,
+    buildDispatchMaxBusinessDays: 5,
     category: "game-accessories",
     name: "Conditions Deck",
     shortName: "Conditions Deck",

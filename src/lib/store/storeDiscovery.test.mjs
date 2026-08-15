@@ -37,5 +37,6 @@ test("the homepage provides a complete try-before-you-buy path", () => {
   assert.match(homeSource, /href="\/decks"/);
   assert.match(homeSource, /href="\/instructions\/tutorial"/);
   assert.match(homeSource, /href="#signup"/);
-  assert.match(homeSource, /Pennsylvania sales tax license/);
+  assert.match(homeSource, /final launch checks/);
+  assert.doesNotMatch(homeSource, /sales tax license/i);
 });

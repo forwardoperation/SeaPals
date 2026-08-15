@@ -2,11 +2,28 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getOrCreateCheckoutRequest } from "@/lib/store/checkoutRequest.mjs";
+import {
+  parseCheckoutRequestStorage,
+  serializeCheckoutRequestStorage,
+} from "@/lib/store/inventory.mjs";
 
 const CART_STORAGE_KEY = "seapals-store-cart-v1";
+const CHECKOUT_REQUEST_STORAGE_KEY = "seapals-store-checkout-request-v1";
 const MAX_PRODUCT_QUANTITY = 10;
 const MAX_CART_QUANTITY = 20;
+const FALLBACK_PRODUCTION_OPTIONS = Object.freeze([
+  Object.freeze({
+    id: "standard-production",
+    displayName: "Standard production",
+    description:
+      "Complete production within 5 business days; mailed orders are dispatched and pickup orders are marked ready.",
+    amountCents: 0,
+    maxBusinessDays: 5,
+    expedited: false,
+  }),
+]);
 
 const CATEGORY_ORDER = [
   "starter-kits",
@@ -160,6 +177,11 @@ export default function Storefront({
   shippingCents,
   shippingOptions,
   defaultShippingOptionId,
+  productionOptions,
+  defaultProductionOptionId,
+  defaultProductionOption,
+  expeditedProductionDailyOrderLimit,
+  expeditedProductionTimeZone,
   automaticTaxEnabled,
   products,
   highlightedProductId,
@@ -250,10 +272,50 @@ export default function Storefront({
     ];
   }, [shippingCents, shippingOptions]);
 
+  const productionChoices = useMemo(() => {
+    const configuredOptions = (Array.isArray(productionOptions)
+      ? productionOptions
+      : []
+    ).filter(
+      (option) =>
+        option &&
+        typeof option.id === "string" &&
+        typeof option.displayName === "string" &&
+        Number.isSafeInteger(option.amountCents) &&
+        option.amountCents >= 0 &&
+        Number.isSafeInteger(option.maxBusinessDays) &&
+        option.maxBusinessDays > 0
+    );
+
+    return configuredOptions.length
+      ? configuredOptions
+      : FALLBACK_PRODUCTION_OPTIONS;
+  }, [productionOptions]);
+  const configuredDefaultProductionOptionId = String(
+    defaultProductionOptionId ??
+      (typeof defaultProductionOption === "string"
+        ? defaultProductionOption
+        : defaultProductionOption?.id ?? "")
+  ).trim();
+  const expeditedProductionOption =
+    productionChoices.find((option) => option.expedited) ??
+    productionChoices.find((option) => option.id === "expedited-production") ??
+    null;
+  const normalizedExpeditedDailyOrderLimit = Number(
+    expeditedProductionDailyOrderLimit
+  );
+  const hasExpeditedDailyOrderLimit =
+    Number.isSafeInteger(normalizedExpeditedDailyOrderLimit) &&
+    normalizedExpeditedDailyOrderLimit > 0;
+  const normalizedExpeditedTimeZone = String(
+    expeditedProductionTimeZone ?? ""
+  ).trim();
+
   const [cart, setCart] = useState({});
   const [cartReady, setCartReady] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const checkoutRequestRef = useRef(null);
   const [selectedFulfillmentOptionId, setSelectedFulfillmentOptionId] =
     useState(() => {
       const configuredDefault = String(defaultShippingOptionId ?? "").trim();
@@ -263,6 +325,14 @@ export default function Storefront({
         ? configuredDefault
         : fulfillmentOptions[0].id;
     });
+  const [selectedProductionOptionId, setSelectedProductionOptionId] = useState(
+    () =>
+      productionChoices.some(
+        (option) => option.id === configuredDefaultProductionOptionId
+      )
+        ? configuredDefaultProductionOptionId
+        : productionChoices[0].id
+  );
 
   useEffect(() => {
     if (
@@ -285,7 +355,35 @@ export default function Storefront({
   ]);
 
   useEffect(() => {
+    if (
+      productionChoices.some(
+        (option) => option.id === selectedProductionOptionId
+      )
+    ) {
+      return;
+    }
+
+    setSelectedProductionOptionId(
+      productionChoices.find(
+        (option) => option.id === configuredDefaultProductionOptionId
+      )?.id ?? productionChoices[0].id
+    );
+  }, [
+    configuredDefaultProductionOptionId,
+    productionChoices,
+    selectedProductionOptionId,
+  ]);
+
+  useEffect(() => {
     setCart(readStoredCart(productById));
+    try {
+      checkoutRequestRef.current = parseCheckoutRequestStorage(
+        window.sessionStorage.getItem(CHECKOUT_REQUEST_STORAGE_KEY),
+        Date.now()
+      );
+    } catch {
+      checkoutRequestRef.current = null;
+    }
     setCartReady(true);
   }, [productById]);
 
@@ -340,7 +438,16 @@ export default function Storefront({
     0,
     Number(selectedFulfillmentOption.amountCents)
   );
-  const totalCents = subtotalCents + normalizedShippingCents;
+  const selectedProductionOption =
+    productionChoices.find(
+      (option) => option.id === selectedProductionOptionId
+    ) ?? productionChoices[0];
+  const normalizedProductionCents = Math.max(
+    0,
+    Number(selectedProductionOption.amountCents)
+  );
+  const totalCents =
+    subtotalCents + normalizedProductionCents + normalizedShippingCents;
 
   function addToCart(product) {
     if (!checkoutEnabled || !product.available || isCheckingOut) return;
@@ -413,17 +520,41 @@ export default function Storefront({
 
     setCheckoutError("");
     setIsCheckingOut(true);
+    const checkoutInput = {
+      fulfillmentOptionId: selectedFulfillmentOption.id,
+      productionOptionId: selectedProductionOption.id,
+      items: cartItems.map(({ product, quantity }) => ({
+        productId: product.id,
+        quantity,
+      })),
+    };
 
     try {
+      const checkoutRequest = getOrCreateCheckoutRequest(
+        checkoutRequestRef.current,
+        checkoutInput
+      );
+      checkoutRequestRef.current = checkoutRequest;
+      try {
+        const storedRequest = serializeCheckoutRequestStorage(
+          checkoutRequest,
+          Date.now()
+        );
+        if (storedRequest) {
+          window.sessionStorage.setItem(
+            CHECKOUT_REQUEST_STORAGE_KEY,
+            storedRequest
+          );
+        }
+      } catch {
+        // Memory-only idempotency remains available for this visit.
+      }
       const response = await fetch("/api/store/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fulfillmentOptionId: selectedFulfillmentOption.id,
-          items: cartItems.map(({ product, quantity }) => ({
-            productId: product.id,
-            quantity,
-          })),
+          checkoutRequestId: checkoutRequest.id,
+          ...checkoutInput,
         }),
       });
 
@@ -435,6 +566,17 @@ export default function Storefront({
       }
 
       if (!response.ok) {
+        if (
+          response.status < 500 ||
+          result?.code !== "retry_same_request"
+        ) {
+          checkoutRequestRef.current = null;
+          try {
+            window.sessionStorage.removeItem(CHECKOUT_REQUEST_STORAGE_KEY);
+          } catch {
+            // The in-memory key is already cleared.
+          }
+        }
         throw new Error(
           typeof result?.error === "string"
             ? result.error
@@ -447,7 +589,10 @@ export default function Storefront({
       }
 
       const checkoutUrl = new URL(result.url, window.location.origin);
-      if (checkoutUrl.protocol !== "https:") {
+      if (
+        checkoutUrl.protocol !== "https:" ||
+        checkoutUrl.hostname !== "checkout.stripe.com"
+      ) {
         throw new Error("Checkout returned an invalid payment link.");
       }
 
@@ -478,7 +623,7 @@ export default function Storefront({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <p className="inline-flex rounded-full border border-cyan-200/25 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">
-                SeaPals shop
+                {checkoutEnabled ? "SeaPals shop" : "SeaPals store preview"}
               </p>
               <span
                 className={
@@ -531,18 +676,40 @@ export default function Storefront({
             className="relative border-t border-amber-200/20 bg-amber-300/10 px-6 py-4 text-sm font-semibold leading-6 text-amber-50 sm:px-9 md:px-12 lg:px-14"
           >
             Stripe sandbox mode is on. Use test payment details only; no real
-            charge or Chase payout will occur.
+            charge or payout will occur.
           </div>
         ) : !checkoutEnabled ? (
           <div
             role="status"
             className="relative border-t border-white/10 bg-white/5 px-6 py-4 text-sm leading-6 text-cyan-50/80 sm:px-9 md:px-12 lg:px-14"
           >
-            Prelaunch preview is on. Ordering stays disabled until the
-            Pennsylvania sales tax license is active and shipping-rate,
-            inventory, tax, and fulfillment checks pass.
+            Store preview is on. Ordering stays disabled while shipping-rate,
+            inventory, tax, and fulfillment launch checks are completed.
           </div>
         ) : null}
+      </section>
+
+      <section
+        aria-label="Made-to-order production timing"
+        className="mt-6 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 text-sm leading-6 text-cyan-950 shadow-sm"
+      >
+        <p>
+          <strong>Made to order:</strong> standard production is included, and
+          launch products are dispatched within 5 business days.
+          {expeditedProductionOption ? (
+            <>
+              {" "}One-business-day production {checkoutEnabled
+                ? "can be requested at checkout"
+                : "will be offered when ordering opens"} for{" "}
+              <strong>
+                {formatMoney(expeditedProductionOption.amountCents, currency)}
+                {" per order"}
+              </strong>
+              {" "}when a daily rush slot remains.
+            </>
+          ) : null}{" "}
+          Carrier transit time is additional.
+        </p>
       </section>
 
       <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
@@ -556,12 +723,15 @@ export default function Storefront({
                 id="store-products-heading"
                 className="mt-2 font-serif text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl"
               >
-                Preview the launch collection
+                {checkoutEnabled
+                  ? "Shop the SeaPals collection"
+                  : "Preview the launch collection"}
               </h2>
             </div>
             <p className="max-w-md text-sm leading-6 text-slate-500">
-              Draft launch prices are shown for all twelve launch products.
-              Ordering remains disabled until the launch checks are complete.
+              {checkoutEnabled
+                ? "Choose your products and add available items to your order. Prices and availability reflect the current catalog."
+                : "Launch prices are shown for all twelve launch products. Ordering remains disabled until the final launch checks are complete."}
             </p>
           </div>
 
@@ -689,6 +859,15 @@ export default function Storefront({
                                 {product.description}
                               </p>
 
+                              {product.madeToOrder ? (
+                                <p className="mt-3 text-sm font-bold leading-6 text-cyan-800">
+                                  Made to order
+                                  {product.buildDispatchMaxBusinessDays
+                                    ? ` · standard dispatch within ${product.buildDispatchMaxBusinessDays} business days`
+                                    : ""}
+                                </p>
+                              ) : null}
+
                               {product.includedItems?.length ? (
                                 <div className="mt-5 rounded-2xl bg-cyan-50/70 p-4">
                                   <p className="text-xs font-black uppercase tracking-[0.15em] text-cyan-800">
@@ -745,7 +924,12 @@ export default function Storefront({
                                 </div>
                               ) : null}
 
-                              {product.availabilityNote ? (
+                              {product.availabilityNote &&
+                              !(
+                                checkoutEnabled &&
+                                paymentMode === "live" &&
+                                product.available
+                              ) ? (
                                 <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">
                                   {product.availabilityNote}
                                 </p>
@@ -802,10 +986,10 @@ export default function Storefront({
                 </span>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.15em] text-cyan-200">
-                    Order summary
+                    {checkoutEnabled ? "Order summary" : "Store preview"}
                   </p>
                   <h2 id="cart-heading" className="text-xl font-bold">
-                    Your cart
+                    {checkoutEnabled ? "Your cart" : "Ordering opens soon"}
                   </h2>
                 </div>
               </div>
@@ -900,6 +1084,74 @@ export default function Storefront({
 
                 <fieldset className="space-y-2 border-t border-slate-200 pt-4">
                   <legend className="text-sm font-black text-slate-950">
+                    Production speed
+                  </legend>
+                  {productionChoices.map((option) => {
+                    const selected = option.id === selectedProductionOption.id;
+                    return (
+                      <label
+                        key={option.id}
+                        className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition ${
+                          selected
+                            ? "border-cyan-500 bg-cyan-50"
+                            : "border-slate-200 bg-white hover:border-cyan-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="production-option"
+                          value={option.id}
+                          checked={selected}
+                          disabled={isCheckingOut}
+                          onChange={() => {
+                            setCheckoutError("");
+                            setSelectedProductionOptionId(option.id);
+                          }}
+                          className="mt-1 h-4 w-4 accent-cyan-700"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-start justify-between gap-3">
+                            <span className="text-sm font-bold text-slate-900">
+                              {option.displayName}
+                            </span>
+                            <span className="shrink-0 text-sm font-black text-slate-900">
+                              {option.amountCents
+                                ? `+${formatMoney(option.amountCents, currency)}`
+                                : "Included"}
+                            </span>
+                          </span>
+                          {option.description ? (
+                            <span className="mt-1 block text-xs leading-5 text-slate-500">
+                              {option.description}
+                            </span>
+                          ) : null}
+                        </span>
+                      </label>
+                    );
+                  })}
+                  <p className="px-1 text-xs leading-5 text-slate-500">
+                    Production timing ends when a mailed order is handed to the
+                    carrier or a pickup order is marked ready. It is not a
+                    delivery estimate.
+                  </p>
+                  {expeditedProductionOption ? (
+                    <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-950">
+                      Expedited production is limited to{" "}
+                      {hasExpeditedDailyOrderLimit
+                        ? `${normalizedExpeditedDailyOrderLimit} orders per SeaPals production day`
+                        : "a fixed number of orders per SeaPals production day"}
+                      {normalizedExpeditedTimeZone
+                        ? ` (${normalizedExpeditedTimeZone})`
+                        : ""}
+                      {" "}and is subject to server-confirmed availability.
+                      Selecting it does not reserve a rush slot; checkout
+                      confirms the slot before opening payment.
+                    </p>
+                  ) : null}
+                </fieldset>
+
+                <fieldset className="space-y-2 border-t border-slate-200 pt-4">
+                  <legend className="text-sm font-black text-slate-950">
                     Shipping or pickup
                   </legend>
                   {fulfillmentOptions.map((option) => {
@@ -936,7 +1188,14 @@ export default function Storefront({
                                 : "Free"}
                             </span>
                           </span>
-                          {option.description ? (
+                          {option.fulfillmentMethod === "pickup" ? (
+                            <span className="mt-1 block text-xs leading-5 text-slate-500">
+                              Free scheduled pickup in Elverson, PA. After your
+                              order is built, we will email you to arrange a
+                              pickup time. You do not choose a pickup time during
+                              checkout.
+                            </span>
+                          ) : option.description ? (
                             <span className="mt-1 block text-xs leading-5 text-slate-500">
                               {option.description}
                             </span>
@@ -952,6 +1211,14 @@ export default function Storefront({
                     <dt>Subtotal</dt>
                     <dd className="font-bold text-slate-900">
                       {formatMoney(subtotalCents, currency)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 text-slate-600">
+                    <dt>{selectedProductionOption.displayName}</dt>
+                    <dd className="font-bold text-slate-900">
+                      {normalizedProductionCents
+                        ? formatMoney(normalizedProductionCents, currency)
+                        : "Included"}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 text-slate-600">
@@ -1040,15 +1307,18 @@ export default function Storefront({
                   Your cart is empty
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Choose an available product to begin your order.
+                  {checkoutEnabled
+                    ? "Choose an available product to begin your order."
+                    : "Browse the collection while final launch checks are completed."}
                 </p>
               </div>
             )}
 
             <p className="mt-5 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500">
               Prices and availability shown here come from the current SeaPals
-              store catalog. The checkout service verifies them again before
-              payment.
+              store catalog. {checkoutEnabled
+                ? "The checkout service verifies them again before payment."
+                : "Ordering will open after the final launch checks are complete."}
             </p>
           </div>
         </aside>

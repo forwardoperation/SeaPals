@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="dice-title dice-desc">
   <title id="dice-title">SeaPals Dice Pack</title>
-  <desc id="dice-desc">Three colorful game dice arranged over a soft underwater background.</desc>
+  <desc id="dice-desc">Concept artwork for a colorful SeaPals game-dice pack.</desc>
   <defs>
     <linearGradient id="dice-bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#ebfbff"/>

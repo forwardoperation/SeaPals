@@ -3,17 +3,9 @@
 import { useEffect } from "react";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
+import { excludesAnalytics } from "./googleAnalyticsRouting.mjs";
 
 const GA_ID = "G-WT26D58KF0";
-
-function excludesAnalytics(pathname) {
-  return (
-    pathname === "/adventure" ||
-    pathname.startsWith("/adventure/") ||
-    pathname === "/auth" ||
-    pathname.startsWith("/auth/")
-  );
-}
 
 export default function GoogleAnalytics() {
   const pathname = usePathname();

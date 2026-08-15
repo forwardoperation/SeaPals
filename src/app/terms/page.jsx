@@ -165,9 +165,23 @@ export default function TermsPage() {
         </p>
         <p>
           Mailed orders require a delivery address and the selected Shipping &amp;
-          Handling charge. A local-pickup order does not include shipping and
-          is not ready until Sea Realm emails the purchaser with pickup
-          instructions for Elverson, Pennsylvania.
+          Handling charge. Free scheduled local pickup is available in
+          Elverson, Pennsylvania, and does not include shipping. No pickup
+          appointment is selected or confirmed during checkout. After the order
+          is built, Sea Realm will email the purchaser to arrange a pickup time
+          and privately provide the pickup address and instructions. The
+          purchaser should not travel to pick up the order until that time is
+          confirmed.
+        </p>
+        <p>
+          Production timing is separate from carrier transit. Standard
+          production means we hand mailed orders to the carrier, or mark pickup
+          orders ready, within five business days after payment. If purchased,
+          one-business-day production changes that production window to one
+          business day for the whole order; it does not promise one-business-day
+          delivery. Expedited production is limited to ten orders per SeaPals
+          production day and remains subject to server-confirmed availability
+          when checkout begins.
         </p>
         <p>
           Do not complete a purchase unless an adult authorized to use the

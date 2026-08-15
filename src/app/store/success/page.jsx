@@ -52,12 +52,63 @@ function getFulfillmentDetails(session) {
   const method = firstString(session?.metadata?.fulfillment_method);
   const optionName = firstString(session?.metadata?.fulfillment_option_name);
   const pickupLocation = firstString(session?.metadata?.pickup_location);
+  const localPickup = method === "pickup";
 
   return {
-    method: method === "pickup" ? "pickup" : "shipping",
-    optionName,
-    pickupLocation,
+    method: localPickup ? "pickup" : "shipping",
+    optionName:
+      optionName ?? (localPickup ? "Scheduled pickup — Elverson, PA" : null),
+    pickupLocation:
+      pickupLocation ?? (localPickup ? "Elverson, PA" : null),
   };
+}
+
+function firstNonNegativeInteger(...values) {
+  const candidate = values.find((value) => {
+    if (value === undefined || value === null || String(value).trim() === "") {
+      return false;
+    }
+    const number = Number(value);
+    return Number.isSafeInteger(number) && number >= 0;
+  });
+  return candidate === undefined ? null : Number(candidate);
+}
+
+function getProductionDetails(session) {
+  const metadata = session?.metadata ?? {};
+  const id = firstString(metadata.production_option_id);
+  const optionName = firstString(metadata.production_option_name);
+  const maxBusinessDays = firstNonNegativeInteger(
+    metadata.production_max_business_days
+  );
+  const amountCents = firstNonNegativeInteger(metadata.production_cents);
+
+  if (!id && !optionName && maxBusinessDays === null && amountCents === null) {
+    return null;
+  }
+
+  return {
+    id,
+    optionName: optionName ??
+      (id === "expedited-production"
+        ? "Expedited production"
+        : "Standard production"),
+    maxBusinessDays,
+    amountCents,
+  };
+}
+
+function formatProductionAmount(cents, currency) {
+  if (!Number.isSafeInteger(cents) || cents <= 0) return "Included";
+
+  try {
+    return `+${new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: String(currency || "usd").toUpperCase(),
+    }).format(cents / 100)} per order`;
+  } catch {
+    return `+$${(cents / 100).toFixed(2)} per order`;
+  }
 }
 
 function getReceiptUrl(session) {
@@ -99,6 +150,7 @@ export default async function StoreSuccessPage({ searchParams }) {
   const paymentState = getPaymentState(session);
   const receiptUrl = getReceiptUrl(session);
   const fulfillment = getFulfillmentDetails(session);
+  const production = getProductionDetails(session);
   const localPickup = fulfillment.method === "pickup";
   const paymentComplete =
     session?.payment_status === "paid" ||
@@ -109,7 +161,7 @@ export default async function StoreSuccessPage({ searchParams }) {
 
   return (
     <main className="pb-16 md:pb-24">
-      {paymentComplete ? <ClearCart /> : null}
+      <ClearCart clearCart={paymentComplete} />
       <section className="relative isolate mx-auto max-w-3xl overflow-hidden rounded-[2rem] bg-[#062f46] px-6 py-10 text-white shadow-2xl shadow-cyan-950/15 sm:px-10 md:rounded-[2.75rem] md:px-14 md:py-14">
         <div
           aria-hidden="true"
@@ -161,16 +213,41 @@ export default async function StoreSuccessPage({ searchParams }) {
                 </dt>
                 <dd className="font-black text-white">{paymentState}</dd>
               </div>
+              {production ? (
+                <div className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <dt className="text-sm font-bold text-cyan-100/70">
+                    Production
+                  </dt>
+                  <dd className="text-right font-black text-white">
+                    {production.optionName}
+                    <span className="mt-1 block text-xs font-semibold text-cyan-100/70">
+                      {production.maxBusinessDays
+                        ? `${localPickup ? "Built" : "Built and dispatched"} within ${production.maxBusinessDays} business ${production.maxBusinessDays === 1 ? "day" : "days"}. `
+                        : ""}
+                      {formatProductionAmount(
+                        production.amountCents,
+                        session?.currency
+                      )}
+                      {localPickup
+                        ? " · We will email after it is built to arrange pickup."
+                        : " · Carrier transit is separate."}
+                    </span>
+                  </dd>
+                </div>
+              ) : null}
               {fulfillment.optionName ? (
                 <div className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                   <dt className="text-sm font-bold text-cyan-100/70">
-                    Fulfillment
+                    Shipping or pickup
                   </dt>
                   <dd className="text-right font-black text-white">
                     {fulfillment.optionName}
                     {localPickup && fulfillment.pickupLocation ? (
                       <span className="mt-1 block text-xs font-semibold text-cyan-100/70">
-                        We will email when pickup in {fulfillment.pickupLocation} is ready.
+                        After your order is built, we will email you to arrange a
+                        pickup time in {fulfillment.pickupLocation} and privately
+                        share the pickup instructions. No pickup time has been
+                        scheduled yet.
                       </span>
                     ) : null}
                   </dd>

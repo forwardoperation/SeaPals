@@ -6,9 +6,15 @@ import {
   defaultStoreShippingOptionId,
   storeShippingOptionDefinitions,
 } from "../../data/store/shipping.js";
+import {
+  defaultStoreProductionOptionId,
+  storeProductionOptionDefinitions,
+} from "../../data/store/production.js";
 import { prebuiltDecks } from "../../data/tournaments/prebuiltDecks.js";
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
+const EXPEDITED_PRODUCTION_DAILY_ORDER_LIMIT = 10;
+const EXPEDITED_PRODUCTION_TIME_ZONE = "America/New_York";
 const PREBUILT_DECKS_BY_ID = new Map(
   prebuiltDecks.map((deck) => [deck.id, deck])
 );
@@ -65,11 +71,26 @@ function readStripeTaxCode(value) {
   return /^txcd_[0-9]+$/.test(taxCode) ? taxCode : null;
 }
 
+function readStripeTaxRateId(value) {
+  const taxRateId = String(value ?? "").trim();
+  return /^txr_[A-Za-z0-9_]+$/.test(taxRateId) ? taxRateId : null;
+}
+
 function readStripeMode(value) {
   const key = String(value ?? "").trim();
   if (/^(?:sk|rk)_test_/.test(key)) return "test";
   if (/^(?:sk|rk)_live_/.test(key)) return "live";
   return null;
+}
+
+function readEmailAddress(value) {
+  const header = String(value ?? "").trim();
+  if (!header || header.length > 500 || /[\r\n]/.test(header)) return null;
+  const angleAddress = /<([^<>]+)>$/.exec(header)?.[1]?.trim();
+  const address = angleAddress ?? header;
+  return /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(address)
+    ? address
+    : null;
 }
 
 export function getStoreConfiguration() {
@@ -113,7 +134,7 @@ export function getStoreConfiguration() {
   );
   const localPickupEnabled = readBoolean(
     process.env.STORE_LOCAL_PICKUP_ENABLED,
-    true
+    false
   );
   const shippingRatesConfirmed = readBoolean(
     process.env.STORE_SHIPPING_RATES_CONFIRMED
@@ -121,6 +142,84 @@ export function getStoreConfiguration() {
   const pickupTaxConfirmed = readBoolean(
     process.env.STORE_PICKUP_TAX_CONFIRMED
   );
+  const pickupTaxRateId = readStripeTaxRateId(
+    process.env.STRIPE_PICKUP_TAX_RATE_ID
+  );
+  const pickupTaxConfigurationReady =
+    !localPickupEnabled ||
+    (pickupTaxConfirmed && Boolean(pickupTaxRateId));
+  const paymentMethodConfiguration = String(
+    process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION_ID ?? ""
+  ).trim();
+  const paymentMethodConfigurationReady =
+    /^pmc_[A-Za-z0-9_]+$/.test(paymentMethodConfiguration);
+  const synchronousPaymentMethodsConfirmed = readBoolean(
+    process.env.STORE_SYNCHRONOUS_PAYMENT_METHODS_CONFIRMED
+  );
+  const orderNotificationEnabled = readBoolean(
+    process.env.STORE_ORDER_NOTIFICATION_ENABLED
+  );
+  const orderNotificationDeliveryConfirmed = readBoolean(
+    process.env.STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED
+  );
+  const orderNotificationConfigurationReady = Boolean(
+    orderNotificationEnabled &&
+      /^re_[A-Za-z0-9_-]{8,}$/.test(
+        String(process.env.RESEND_API_KEY ?? "").trim()
+      ) &&
+      readEmailAddress(process.env.EMAIL_FROM) &&
+      readEmailAddress(process.env.STORE_ORDER_NOTIFICATION_EMAIL)
+  );
+  const catalogConfirmed = readBoolean(
+    process.env.STORE_CATALOG_CONFIRMED
+  );
+  const expeditedProductionEnabled = readBoolean(
+    process.env.STORE_EXPEDITED_PRODUCTION_ENABLED
+  );
+  const expeditedProductionCapacityConfirmed = readBoolean(
+    process.env.STORE_EXPEDITED_PRODUCTION_CAPACITY_CONFIRMED
+  );
+  const expeditedProductionDailyOrderLimit = readPositiveInteger(
+    process.env.STORE_EXPEDITED_PRODUCTION_DAILY_ORDER_LIMIT
+  );
+  const expeditedProductionTimeZone = String(
+    process.env.STORE_EXPEDITED_PRODUCTION_TIME_ZONE ?? ""
+  ).trim();
+  const expeditedProductionDefinition = storeProductionOptionDefinitions.find(
+    (definition) => definition.expedited
+  );
+  const expeditedProductionCentsValue =
+    process.env.STORE_EXPEDITED_PRODUCTION_CENTS;
+  const expeditedProductionCents =
+    expeditedProductionCentsValue === undefined ||
+    expeditedProductionCentsValue === null ||
+    String(expeditedProductionCentsValue).trim() === ""
+      ? expeditedProductionDefinition?.amountCents ?? 1000
+      : readCents(expeditedProductionCentsValue);
+  const productionTaxCode =
+    readStripeTaxCode(process.env.STRIPE_PRODUCTION_TAX_CODE) ??
+    readStripeTaxCode(expeditedProductionDefinition?.defaultTaxCode);
+  const productionOptions = storeProductionOptionDefinitions
+    .filter(
+      (definition) => !definition.expedited || expeditedProductionEnabled
+    )
+    .map((definition) => ({
+      id: definition.id,
+      displayName: definition.displayName,
+      description: definition.description,
+      amountCents: definition.expedited
+        ? expeditedProductionCents
+        : definition.amountCents,
+      maxBusinessDays: definition.maxBusinessDays,
+      expedited: definition.expedited,
+    }));
+  const expeditedProductionConfigurationReady =
+    !expeditedProductionEnabled ||
+    (expeditedProductionCents === 1000 &&
+      productionTaxCode === "txcd_92010004" &&
+      expeditedProductionDailyOrderLimit ===
+        EXPEDITED_PRODUCTION_DAILY_ORDER_LIMIT &&
+      expeditedProductionTimeZone === EXPEDITED_PRODUCTION_TIME_ZONE);
   const shippingOptions = storeShippingOptionDefinitions
     .filter(
       (definition) =>
@@ -207,6 +306,12 @@ export function getStoreConfiguration() {
     return {
       id: definition.id,
       sku: definition.sku,
+      madeToOrder: Boolean(definition.madeToOrder),
+      buildDispatchMaxBusinessDays:
+        Number.isSafeInteger(definition.buildDispatchMaxBusinessDays) &&
+        definition.buildDispatchMaxBusinessDays > 0
+          ? definition.buildDispatchMaxBusinessDays
+          : null,
       deckId: definition.deckId ?? null,
       category: definition.category,
       name: definition.name,
@@ -247,25 +352,49 @@ export function getStoreConfiguration() {
       process.env.NEXT_PUBLIC_SUPABASE_URL &&
       process.env.SUPABASE_SERVICE_ROLE_KEY &&
       availableProducts.length > 0 &&
+      paymentMethodConfigurationReady &&
+      orderNotificationConfigurationReady &&
+      expeditedProductionConfigurationReady &&
+      pickupTaxConfigurationReady &&
+      (paymentMode !== "live" || synchronousPaymentMethodsConfirmed) &&
+      (paymentMode !== "live" || orderNotificationDeliveryConfirmed) &&
       (!automaticTaxRequested || taxRegistrationConfirmed) &&
       (paymentMode !== "live" ||
-        (taxRegistrationConfirmed && shippingRatesConfirmed)) &&
+        (taxRegistrationConfirmed &&
+          catalogConfirmed &&
+          shippingRatesConfirmed &&
+          automaticTaxEnabled &&
+          (!expeditedProductionEnabled ||
+            expeditedProductionCapacityConfirmed))) &&
       (!automaticTaxEnabled ||
         (availableProductsHaveTaxCodes &&
-          Boolean(shippingTaxCode) &&
-          (!localPickupEnabled || pickupTaxConfirmed)))
+          Boolean(shippingTaxCode)))
   );
 
   return {
     checkoutEnabled:
       readBoolean(process.env.STORE_CHECKOUT_ENABLED) && infrastructureReady,
     paymentMode,
+    paymentMethodConfiguration,
+    synchronousPaymentMethodsConfirmed,
+    orderNotificationEnabled,
+    orderNotificationConfigurationReady,
+    orderNotificationDeliveryConfirmed,
     showFutureProducts,
     currency,
     shippingOptions,
     defaultShippingOptionId: defaultShippingOption?.id ?? null,
+    productionOptions,
+    defaultProductionOptionId: defaultStoreProductionOptionId,
+    productionTaxCode,
+    expeditedProductionEnabled,
+    expeditedProductionCapacityConfirmed,
+    expeditedProductionDailyOrderLimit,
+    expeditedProductionTimeZone,
+    catalogConfirmed,
     shippingRatesConfirmed,
     pickupTaxConfirmed,
+    pickupTaxRateId,
     // Retain the legacy fields for older local tooling while Checkout uses the
     // selected server-controlled shipping option below.
     shippingCents: defaultShippingOption?.amountCents ?? 0,

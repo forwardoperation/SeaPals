@@ -46,8 +46,8 @@ const providerRows = [
   ],
   [
     "Resend",
-    "Tournament participant email, display name, deck name, event name, status, and review message when notifications are enabled.",
-    "Sending transactional tournament review messages.",
+    "Tournament participant details for review messages; customer contact, order contents, totals, fulfillment method, and delivery address for paid-order alerts when those notifications are enabled.",
+    "Sending transactional tournament review messages and private merchant purchase alerts.",
   ],
 ];
 
@@ -178,17 +178,25 @@ export default function PrivacyPage() {
           purchased items, totals, payment state, and receipt references. Sea
           Realm does not receive or store a full payment-card number.
         </p>
+        <p>
+          After Stripe confirms a paid order, Resend processes an email alert to
+          Sea Realm containing the customer contact information, purchased
+          items and quantities, production speed, fulfillment method, totals,
+          and any delivery address needed to prepare the order. These alerts are
+          used only for order administration and fulfillment.
+        </p>
 
         <h3>Website analytics, logs, and support</h3>
         <p>
           On general site pages, Google Analytics may receive page, device,
           browser, approximate location, referral, cookie, and usage
-          information. Google Analytics is excluded from adventure and
-          authentication routes. Cloudflare and other infrastructure providers
-          may process IP addresses, request headers, timestamps, device or
-          browser information, and security signals to deliver and protect the
-          site. If someone contacts us, we receive the information included in
-          that message.
+          information. Google Analytics is excluded from adventure,
+          authentication, checkout-result, and administration routes.
+          Cloudflare and other infrastructure providers may process IP
+          addresses, request headers, timestamps, device or browser
+          information, and security signals to deliver and protect the site. If
+          someone contacts us, we receive the information included in that
+          message.
         </p>
       </LegalSection>
 
@@ -213,7 +221,8 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Google Analytics cookies</strong> may be used on general
-            pages, but not on adventure or authentication routes.
+            pages, but not on adventure, authentication, checkout-result, or
+            administration routes.
           </li>
         </ul>
         <p>

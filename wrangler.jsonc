@@ -1,12 +1,49 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"main": ".open-next/worker.js",
+	"main": "custom-worker.mjs",
 	"name": "seapals",
 	"compatibility_date": "2026-04-30",
 	"compatibility_flags": [
 		"nodejs_compat",
 		"global_fetch_strictly_public"
 	],
+	"vars": {
+		"SITE_URL": "https://seapalstcg.com",
+		"STORE_CURRENCY": "usd",
+		"STORE_AVAILABLE_PRODUCT_IDS": "starter-kit,blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,accessory-set,conditions-deck,dice-pack,reef-point-tokens",
+		"STORE_CATALOG_CONFIRMED": "false",
+		"STORE_EXPEDITED_PRODUCTION_ENABLED": "true",
+		"STORE_EXPEDITED_PRODUCTION_CENTS": "1000",
+		"STORE_EXPEDITED_PRODUCTION_DAILY_ORDER_LIMIT": "10",
+		"STORE_EXPEDITED_PRODUCTION_TIME_ZONE": "America/New_York",
+		"STRIPE_PRODUCTION_TAX_CODE": "txcd_92010004",
+		// Owner confirmed the hard 10-rush-order daily ceiling.
+		"STORE_EXPEDITED_PRODUCTION_CAPACITY_CONFIRMED": "true",
+		"STORE_STANDARD_SHIPPING_CENTS": "750",
+		"STORE_PRIORITY_SHIPPING_CENTS": "1250",
+		"STORE_LOCAL_PICKUP_ENABLED": "true",
+		"STORE_SHIPPING_RATES_CONFIRMED": "false",
+		"STORE_ALLOWED_COUNTRIES": "US",
+		"STORE_TAX_REGISTRATION_CONFIRMED": "true",
+		"STORE_PICKUP_TAX_CONFIRMED": "true",
+		"STRIPE_PICKUP_TAX_RATE_ID": "txr_1U4VO4E82MgJzjAxjYT88WGQ",
+		"STRIPE_AUTOMATIC_TAX": "true",
+		"STRIPE_GAME_PRODUCT_TAX_CODE": "txcd_99999999",
+		"STRIPE_SHIPPING_TAX_CODE": "txcd_92010000",
+		"STRIPE_ALLOW_PROMOTION_CODES": "false",
+		"STRIPE_PAYMENT_METHOD_CONFIGURATION_ID": "pmc_1U47FJE82MgJzjAx30GeH09c",
+		"STORE_SYNCHRONOUS_PAYMENT_METHODS_CONFIRMED": "true",
+		"STORE_ORDER_NOTIFICATION_ENABLED": "true",
+		"STORE_ORDER_NOTIFICATION_EMAIL": "maker@seapalstcg.com",
+		"STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED": "false",
+		"EMAIL_FROM": "SeaPals <maker@seapalstcg.com>",
+		"STORE_CHECKOUT_ENABLED": "false",
+		"STORE_SHOW_FUTURE_PRODUCTS": "false",
+		"STORE_COLLECT_PHONE": "false"
+	},
+	"triggers": {
+		"crons": ["*/5 * * * *"]
+	},
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"

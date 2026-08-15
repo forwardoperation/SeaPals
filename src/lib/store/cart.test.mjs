@@ -72,8 +72,14 @@ const infrastructureEnvironment = {
   STORE_CHECKOUT_ENABLED: "true",
   STRIPE_SECRET_KEY: "sk_test_example",
   STRIPE_WEBHOOK_SECRET: "whsec_example",
+  STRIPE_PAYMENT_METHOD_CONFIGURATION_ID: "pmc_test_synchronous",
   NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-example",
+  RESEND_API_KEY: "re_storefront_test_value",
+  EMAIL_FROM: "SeaPals <maker@seapalstcg.com>",
+  STORE_ORDER_NOTIFICATION_ENABLED: "true",
+  STORE_ORDER_NOTIFICATION_EMAIL: "maker@seapalstcg.com",
+  STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED: "true",
 };
 
 function withStoreEnvironment(values, callback) {
@@ -156,7 +162,7 @@ test("the default storefront is limited to the twelve prelaunch products", () =>
   });
 });
 
-test("the catalog exposes server-controlled shipping and Elverson pickup options", () => {
+test("the catalog exposes server-controlled shipping and scheduled Elverson pickup", () => {
   withStoreEnvironment(
     {
       STORE_STANDARD_SHIPPING_CENTS: "800",
@@ -170,6 +176,9 @@ test("the catalog exposes server-controlled shipping and Elverson pickup options
       assert.deepEqual(
         configuration.shippingOptions.map((option) => ({
           id: option.id,
+          displayName: option.displayName,
+          shortName: option.shortName,
+          description: option.description,
           amountCents: option.amountCents,
           fulfillmentMethod: option.fulfillmentMethod,
           pickupLocation: option.pickupLocation,
@@ -177,24 +186,126 @@ test("the catalog exposes server-controlled shipping and Elverson pickup options
         [
           {
             id: "standard",
+            displayName: "Standard Shipping & Handling",
+            shortName: "Standard",
+            description: "Standard carrier service after production.",
             amountCents: 800,
             fulfillmentMethod: "shipping",
             pickupLocation: null,
           },
           {
             id: "priority",
+            displayName: "Priority Shipping & Handling",
+            shortName: "Priority",
+            description:
+              "Faster carrier service after production. This does not change production time.",
             amountCents: 1350,
             fulfillmentMethod: "shipping",
             pickupLocation: null,
           },
           {
             id: "pickup-elverson-pa",
+            displayName: "Scheduled pickup — Elverson, PA",
+            shortName: "Scheduled pickup",
+            description:
+              "Free scheduled pickup. We will email after your order is built to arrange a pickup time.",
             amountCents: 0,
             fulfillmentMethod: "pickup",
             pickupLocation: "Elverson, PA",
           },
         ]
       );
+    }
+  );
+});
+
+test("scheduled pickup can be shown while its unconfirmed tax sourcing keeps live checkout closed", () => {
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STRIPE_SECRET_KEY: "rk_live_example",
+      STORE_CHECKOUT_ENABLED: "true",
+      STORE_AVAILABLE_PRODUCT_IDS: "starter-kit",
+      STORE_LOCAL_PICKUP_ENABLED: "true",
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
+      STORE_CATALOG_CONFIRMED: "true",
+      STORE_SHIPPING_RATES_CONFIRMED: "true",
+      STORE_PICKUP_TAX_CONFIRMED: "false",
+      STRIPE_PICKUP_TAX_RATE_ID: "txr_live_elverson_pa",
+      STORE_SYNCHRONOUS_PAYMENT_METHODS_CONFIRMED: "true",
+      STRIPE_AUTOMATIC_TAX: "true",
+      STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
+      STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+      const pickup = configuration.shippingOptions.find(
+        (option) => option.id === "pickup-elverson-pa"
+      );
+
+      assert.equal(pickup?.displayName, "Scheduled pickup — Elverson, PA");
+      assert.equal(pickup?.amountCents, 0);
+      assert.equal(configuration.pickupTaxConfirmed, false);
+      assert.equal(
+        configuration.pickupTaxRateId,
+        "txr_live_elverson_pa"
+      );
+      assert.equal(configuration.checkoutEnabled, false);
+    }
+  );
+
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STRIPE_SECRET_KEY: "rk_live_example",
+      STORE_CHECKOUT_ENABLED: "true",
+      STORE_AVAILABLE_PRODUCT_IDS: "starter-kit",
+      STORE_LOCAL_PICKUP_ENABLED: "true",
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
+      STORE_CATALOG_CONFIRMED: "true",
+      STORE_SHIPPING_RATES_CONFIRMED: "true",
+      STORE_PICKUP_TAX_CONFIRMED: "true",
+      STRIPE_PICKUP_TAX_RATE_ID: "not-a-tax-rate",
+      STORE_SYNCHRONOUS_PAYMENT_METHODS_CONFIRMED: "true",
+      STRIPE_AUTOMATIC_TAX: "true",
+      STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
+      STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.pickupTaxConfirmed, true);
+      assert.equal(configuration.pickupTaxRateId, null);
+      assert.equal(configuration.checkoutEnabled, false);
+    }
+  );
+
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STRIPE_SECRET_KEY: "rk_live_example",
+      STORE_CHECKOUT_ENABLED: "false",
+      STORE_AVAILABLE_PRODUCT_IDS: "starter-kit",
+      STORE_LOCAL_PICKUP_ENABLED: "true",
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
+      STORE_CATALOG_CONFIRMED: "true",
+      STORE_SHIPPING_RATES_CONFIRMED: "true",
+      STORE_PICKUP_TAX_CONFIRMED: "true",
+      STRIPE_PICKUP_TAX_RATE_ID: "txr_live_elverson_pa",
+      STORE_SYNCHRONOUS_PAYMENT_METHODS_CONFIRMED: "true",
+      STRIPE_AUTOMATIC_TAX: "true",
+      STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
+      STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.pickupTaxConfirmed, true);
+      assert.equal(
+        configuration.pickupTaxRateId,
+        "txr_live_elverson_pa"
+      );
+      assert.equal(configuration.checkoutEnabled, false);
     }
   );
 });
@@ -304,6 +415,17 @@ test("the complete prelaunch catalog quotes all twelve products safely", () => {
       assert.equal(new Set(ids).size, 12);
       assert.equal(new Set(skus).size, 12);
       assert.equal(decks.length, 7);
+      assert.ok(configuration.products.every((product) => product.madeToOrder));
+      assert.equal(
+        configuration.products.find((product) => product.id === "blue-water")
+          ?.buildDispatchMaxBusinessDays,
+        5
+      );
+      assert.ok(
+        configuration.products.every(
+          (product) => product.buildDispatchMaxBusinessDays === 5
+        )
+      );
       assert.ok(
         decks.every(
           (product) =>
@@ -470,7 +592,7 @@ test("automatic tax requires a resolved code for every available product", () =>
   );
 });
 
-test("live checkout requires owner-confirmed registration and shipping rates", () => {
+test("live checkout requires catalog, tax, and shipping owner gates", () => {
   const liveEnvironment = {
     ...infrastructureEnvironment,
     STRIPE_SECRET_KEY: "rk_live_example",
@@ -501,7 +623,67 @@ test("live checkout requires owner-confirmed registration and shipping rates", (
       STORE_SHIPPING_RATES_CONFIRMED: "true",
     },
     () => {
-      assert.equal(getStoreConfiguration().checkoutEnabled, true);
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.automaticTaxEnabled, false);
+      assert.equal(configuration.checkoutEnabled, false);
+    }
+  );
+
+  withStoreEnvironment(
+    {
+      ...liveEnvironment,
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
+      STORE_SHIPPING_RATES_CONFIRMED: "true",
+      STORE_PICKUP_TAX_CONFIRMED: "true",
+      STRIPE_AUTOMATIC_TAX: "true",
+      STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
+      STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.catalogConfirmed, false);
+      assert.equal(configuration.checkoutEnabled, false);
+    }
+  );
+
+  withStoreEnvironment(
+    {
+      ...liveEnvironment,
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
+      STORE_CATALOG_CONFIRMED: "true",
+      STORE_SHIPPING_RATES_CONFIRMED: "true",
+      STORE_PICKUP_TAX_CONFIRMED: "true",
+      STORE_SYNCHRONOUS_PAYMENT_METHODS_CONFIRMED: "true",
+      STRIPE_AUTOMATIC_TAX: "true",
+      STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
+      STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.automaticTaxEnabled, true);
+      assert.equal(configuration.checkoutEnabled, true);
+    }
+  );
+
+  withStoreEnvironment(
+    {
+      ...liveEnvironment,
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
+      STORE_CATALOG_CONFIRMED: "true",
+      STORE_SHIPPING_RATES_CONFIRMED: "true",
+      STORE_PICKUP_TAX_CONFIRMED: "true",
+      STRIPE_AUTOMATIC_TAX: "true",
+      STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
+      STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.synchronousPaymentMethodsConfirmed, false);
+      assert.equal(configuration.checkoutEnabled, false);
     }
   );
 
@@ -518,6 +700,23 @@ test("live checkout requires owner-confirmed registration and shipping rates", (
 
       assert.equal(configuration.automaticTaxRequested, true);
       assert.equal(configuration.automaticTaxEnabled, false);
+      assert.equal(configuration.checkoutEnabled, false);
+    }
+  );
+});
+
+test("checkout fails closed when paid-order merchant alerts are not configured", () => {
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STORE_AVAILABLE_PRODUCT_IDS: "starter-kit",
+      STORE_ORDER_NOTIFICATION_ENABLED: "false",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.orderNotificationEnabled, false);
+      assert.equal(configuration.orderNotificationConfigurationReady, false);
       assert.equal(configuration.checkoutEnabled, false);
     }
   );
@@ -589,7 +788,9 @@ test("quoteCart snapshots the selected fulfillment option and its server price",
     {
       fulfillmentOption: {
         id: "pickup-elverson-pa",
-        displayName: "Local pickup — Elverson, PA",
+        displayName: "Scheduled pickup — Elverson, PA",
+        description:
+          "Free scheduled pickup. We will email after your order is built to arrange a pickup time.",
         fulfillmentMethod: "pickup",
         pickupLocation: "Elverson, PA",
         amountCents: 0,
@@ -598,6 +799,11 @@ test("quoteCart snapshots the selected fulfillment option and its server price",
   );
 
   assert.equal(pickupQuote.fulfillmentMethod, "pickup");
+  assert.equal(
+    pickupQuote.fulfillmentOptionName,
+    "Scheduled pickup — Elverson, PA"
+  );
+  assert.match(pickupQuote.fulfillmentOption.description, /arrange a pickup time/i);
   assert.equal(pickupQuote.pickupLocation, "Elverson, PA");
   assert.equal(pickupQuote.shippingCents, 0);
   assert.equal(pickupQuote.totalCents, 4400);
@@ -607,13 +813,60 @@ test("quoteCart snapshots the selected fulfillment option and its server price",
       quoteCart([{ productId: "starter-kit", quantity: 1 }], products, {
         fulfillmentOption: {
           id: "pickup-elverson-pa",
-          displayName: "Local pickup — Elverson, PA",
+          displayName: "Scheduled pickup — Elverson, PA",
           fulfillmentMethod: "pickup",
           pickupLocation: "Elverson, PA",
           amountCents: 100,
         },
       }),
     CartValidationError
+  );
+});
+
+test("quoteCart snapshots an independent fixed per-order production option", () => {
+  const standardQuote = quoteCart(
+    [{ productId: "starter-kit", quantity: 2 }],
+    products,
+    { shippingCents: 750 }
+  );
+  assert.equal(standardQuote.productionOptionId, "standard-production");
+  assert.equal(standardQuote.productionOptionName, "Standard production");
+  assert.equal(standardQuote.productionMaxBusinessDays, 5);
+  assert.equal(standardQuote.productionCents, 0);
+  assert.equal(standardQuote.subtotalCents, 8800);
+  assert.equal(standardQuote.totalCents, 9550);
+
+  const expeditedQuote = quoteCart(
+    [{ productId: "starter-kit", quantity: 2 }],
+    products,
+    {
+      shippingCents: 750,
+      productionOption: {
+        id: "expedited-production",
+        displayName: "Expedited production",
+        amountCents: 1000,
+        maxBusinessDays: 1,
+      },
+    }
+  );
+  assert.equal(expeditedQuote.productionOptionId, "expedited-production");
+  assert.equal(expeditedQuote.productionMaxBusinessDays, 1);
+  assert.equal(expeditedQuote.productionCents, 1000);
+  assert.equal(expeditedQuote.subtotalCents, 8800);
+  assert.equal(expeditedQuote.shippingCents, 750);
+  assert.equal(expeditedQuote.totalCents, 10_550);
+
+  assert.throws(
+    () =>
+      quoteCart([{ productId: "starter-kit", quantity: 1 }], products, {
+        productionOption: {
+          id: "expedited-production",
+          displayName: "Expedited production",
+          amountCents: 999,
+          maxBusinessDays: 1,
+        },
+      }),
+    (error) => error?.code === "invalid_production_option"
   );
 });
 

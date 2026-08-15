@@ -1,9 +1,60 @@
+import {
+  defaultStoreProductionOptionId,
+  storeProductionOptionDefinitions,
+} from "../../data/store/production.js";
+
 export class CartValidationError extends Error {
   constructor(message, code = "invalid_cart") {
     super(message);
     this.name = "CartValidationError";
     this.code = code;
   }
+}
+
+function normalizeProductionOption(value) {
+  const requestedId = String(value?.id ?? defaultStoreProductionOptionId)
+    .trim()
+    .toLowerCase();
+  const definition = storeProductionOptionDefinitions.find(
+    (option) => option.id === requestedId
+  );
+
+  if (!definition) {
+    throw new CartValidationError(
+      "That production option is not available.",
+      "invalid_production_option"
+    );
+  }
+
+  const amountCents = Number(value?.amountCents ?? definition.amountCents);
+  const maxBusinessDays = Number(
+    value?.maxBusinessDays ?? definition.maxBusinessDays
+  );
+  const displayName = String(value?.displayName ?? definition.displayName)
+    .trim()
+    .slice(0, 100);
+
+  if (
+    amountCents !== definition.amountCents ||
+    maxBusinessDays !== definition.maxBusinessDays ||
+    displayName !== definition.displayName
+  ) {
+    throw new CartValidationError(
+      "That production option is not configured correctly.",
+      "invalid_production_option"
+    );
+  }
+
+  return {
+    id: definition.id,
+    displayName: definition.displayName,
+    description: definition.description,
+    amountCents: definition.amountCents,
+    maxBusinessDays: definition.maxBusinessDays,
+    expedited: definition.expedited,
+    taxCodeEnvKey: definition.taxCodeEnvKey,
+    defaultTaxCode: definition.defaultTaxCode,
+  };
 }
 
 export function normalizeCartItems(value) {
@@ -59,7 +110,9 @@ function normalizeShippingOption(value, fallbackShippingCents) {
   }
 
   if (fulfillmentMethod === "pickup" && (amountCents !== 0 || !pickupLocation)) {
-    throw new CartValidationError("Local pickup is not configured correctly.");
+    throw new CartValidationError(
+      "Scheduled pickup is not configured correctly."
+    );
   }
 
   return {
@@ -87,6 +140,7 @@ export function quoteCart(
   products,
   {
     fulfillmentOption = null,
+    productionOption = null,
     shippingOption = null,
     shippingCents = 0,
     maxPerProduct = 10,
@@ -164,8 +218,10 @@ export function quoteCart(
     shippingCents
   );
   const normalizedShipping = normalizedShippingOption.amountCents;
+  const normalizedProductionOption = normalizeProductionOption(productionOption);
+  const productionCents = normalizedProductionOption.amountCents;
 
-  const totalCents = subtotalCents + normalizedShipping;
+  const totalCents = subtotalCents + productionCents + normalizedShipping;
   if (!Number.isSafeInteger(totalCents)) {
     throw new CartValidationError("That order total is too large.");
   }
@@ -174,6 +230,11 @@ export function quoteCart(
     items: quotedItems,
     totalQuantity,
     subtotalCents,
+    productionOption: normalizedProductionOption,
+    productionOptionId: normalizedProductionOption.id,
+    productionOptionName: normalizedProductionOption.displayName,
+    productionMaxBusinessDays: normalizedProductionOption.maxBusinessDays,
+    productionCents,
     fulfillmentOption: normalizedShippingOption,
     fulfillmentOptionId: normalizedShippingOption.id,
     fulfillmentOptionName: normalizedShippingOption.displayName,
