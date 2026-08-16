@@ -13,6 +13,10 @@ import {
   parseCheckoutRequestStorage,
   serializeCheckoutRequestStorage,
 } from "@/lib/store/inventory.mjs";
+import {
+  isCartSummaryAheadOfViewport,
+  shouldShowMobileCartDock,
+} from "@/lib/store/mobileCartAccess.mjs";
 
 const CART_STORAGE_KEY = "seapals-store-cart-v1";
 const CHECKOUT_REQUEST_STORAGE_KEY = "seapals-store-checkout-request-v1";
@@ -432,11 +436,7 @@ export default function Storefront({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const viewportBottom = entry.rootBounds?.bottom ?? window.innerHeight;
-        setIsCartSummaryAhead(
-          !entry.isIntersecting &&
-            entry.boundingClientRect.top >= viewportBottom
-        );
+        setIsCartSummaryAhead(isCartSummaryAheadOfViewport(entry));
       },
       { threshold: 0.1 }
     );
@@ -1421,10 +1421,12 @@ export default function Storefront({
         </aside>
       </div>
 
-      {checkoutEnabled &&
-      cartReady &&
-      cartCount > 0 &&
-      isCartSummaryAhead ? (
+      {shouldShowMobileCartDock({
+        checkoutEnabled,
+        cartReady,
+        cartCount,
+        isCartSummaryAhead,
+      }) ? (
         <div
           className="fixed inset-x-0 bottom-0 z-40 border-t border-cyan-100 bg-white/95 pt-3 shadow-[0_-12px_30px_rgba(6,47,70,0.16)] backdrop-blur lg:hidden"
           style={{

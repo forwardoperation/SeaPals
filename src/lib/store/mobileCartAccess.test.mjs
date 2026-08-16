@@ -6,6 +6,10 @@ import {
   RULES_CHAT_PLACEMENTS,
   shouldRenderRulesChat,
 } from "../../components/rules/rulesChatPresentation.mjs";
+import {
+  isCartSummaryAheadOfViewport,
+  shouldShowMobileCartDock,
+} from "./mobileCartAccess.mjs";
 
 const storefront = await readFile(
   new URL("../../app/store/Storefront.jsx", import.meta.url),
@@ -20,7 +24,7 @@ test("mobile shoppers can reach a non-empty cart in one tap", () => {
   assert.match(storefront, /aria-controls="store-cart-summary"/);
   assert.match(storefront, /onClick=\{viewCart\}/);
   assert.match(storefront, />View cart</);
-  assert.match(storefront, /cartCount > 0 &&\s*isCartSummaryAhead/);
+  assert.match(storefront, /shouldShowMobileCartDock\(\{/);
   assert.match(storefront, /lg:hidden/);
 });
 
@@ -28,9 +32,8 @@ test("the mobile cart dock avoids duplicate and obstructive presentation", () =>
   assert.match(storefront, /new IntersectionObserver/);
   assert.match(
     storefront,
-    /entry\.boundingClientRect\.top\s*>=\s*viewportBottom/
+    /setIsCartSummaryAhead\(isCartSummaryAheadOfViewport\(entry\)\)/
   );
-  assert.match(storefront, /!entry\.isIntersecting/);
   assert.match(storefront, /observer\.disconnect\(\)/);
   assert.match(storefront, /safe-area-inset-bottom/);
   assert.match(storefront, /safe-area-inset-left/);
@@ -41,6 +44,42 @@ test("the mobile cart dock avoids duplicate and obstructive presentation", () =>
     shouldRenderRulesChat("/store", RULES_CHAT_PLACEMENTS.SITE),
     false,
     "Ask Finn must not overlap the fixed mobile cart dock"
+  );
+});
+
+test("the mobile cart dock returns when the shopper scrolls back above the cart", () => {
+  const dockState = (entry) =>
+    shouldShowMobileCartDock({
+      checkoutEnabled: true,
+      cartReady: true,
+      cartCount: 1,
+      isCartSummaryAhead: isCartSummaryAheadOfViewport(entry),
+    });
+
+  assert.deepEqual(
+    [
+      dockState({
+        isIntersecting: false,
+        boundingClientRect: { top: 900 },
+        rootBounds: { top: 0, bottom: 800 },
+      }),
+      dockState({
+        isIntersecting: true,
+        boundingClientRect: { top: 650 },
+        rootBounds: { top: 0, bottom: 800 },
+      }),
+      dockState({
+        isIntersecting: false,
+        boundingClientRect: { top: -200 },
+        rootBounds: { top: 0, bottom: 800 },
+      }),
+      dockState({
+        isIntersecting: false,
+        boundingClientRect: { top: 799.5 },
+        rootBounds: { top: 0, bottom: 800 },
+      }),
+    ],
+    [true, false, false, true]
   );
 });
 
