@@ -45,7 +45,7 @@
 		// Verified 2026-08-15 with a received synthetic production-Worker alert.
 		"STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED": "true",
 		"EMAIL_FROM": "SeaPals <maker@seapalstcg.com>",
-		"STORE_CHECKOUT_ENABLED": "false",
+		"STORE_CHECKOUT_ENABLED": "true",
 		"STORE_SHOW_FUTURE_PRODUCTS": "false",
 		"STORE_COLLECT_PHONE": "false"
 	},
