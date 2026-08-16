@@ -24,6 +24,7 @@ export function shouldRenderRulesChat(pathname, placement = RULES_CHAT_PLACEMENT
     && !route.startsWith("/adventure")
     && !route.startsWith("/auth")
     && !route.startsWith("/privacy")
+    && !route.startsWith("/store")
     && !route.startsWith("/terms");
 }
 

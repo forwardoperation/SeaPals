@@ -318,6 +318,8 @@ export default function Storefront({
   const [cartReady, setCartReady] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [isCartSummaryAhead, setIsCartSummaryAhead] = useState(true);
+  const cartSummaryRef = useRef(null);
   const checkoutRequestRef = useRef(null);
   const [selectedFulfillmentOptionId, setSelectedFulfillmentOptionId] =
     useState(() => {
@@ -424,6 +426,25 @@ export default function Storefront({
     }
   }, [cartItems, cartReady]);
 
+  useEffect(() => {
+    const cartSummary = cartSummaryRef.current;
+    if (!cartSummary || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const viewportBottom = entry.rootBounds?.bottom ?? window.innerHeight;
+        setIsCartSummaryAhead(
+          !entry.isIntersecting &&
+            entry.boundingClientRect.top >= viewportBottom
+        );
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(cartSummary);
+
+    return () => observer.disconnect();
+  }, []);
+
   const cartCount = cartItems.reduce(
     (total, item) => total + item.quantity,
     0
@@ -523,6 +544,22 @@ export default function Storefront({
       const nextCart = { ...currentCart };
       delete nextCart[productId];
       return nextCart;
+    });
+  }
+
+  function viewCart() {
+    const cartSummary = cartSummaryRef.current;
+    if (!cartSummary) return;
+
+    const prefersReducedMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    )?.matches;
+    cartSummary.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+    window.requestAnimationFrame(() => {
+      cartSummary.focus({ preventScroll: true });
     });
   }
 
@@ -626,7 +663,14 @@ export default function Storefront({
   }
 
   return (
-    <main className="pb-16 text-slate-900 md:pb-24">
+    <main
+      className={
+        "text-slate-900 " +
+        (checkoutEnabled && cartReady && cartCount > 0
+          ? "pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-24"
+          : "pb-16 md:pb-24")
+      }
+    >
       <section className="relative isolate overflow-hidden rounded-[2rem] bg-[#062f46] text-white shadow-2xl shadow-cyan-950/15 md:rounded-[2.75rem]">
         <div
           aria-hidden="true"
@@ -994,8 +1038,11 @@ export default function Storefront({
         </section>
 
         <aside
+          id="store-cart-summary"
+          ref={cartSummaryRef}
+          tabIndex={-1}
           aria-labelledby="cart-heading"
-          className="overflow-hidden rounded-[1.75rem] border border-cyan-100 bg-white shadow-xl shadow-cyan-950/10 lg:sticky lg:top-6"
+          className="scroll-mt-4 overflow-hidden rounded-[1.75rem] border border-cyan-100 bg-white shadow-xl shadow-cyan-950/10 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/70 lg:sticky lg:top-6"
         >
           <div className="bg-[#073d58] px-5 py-5 text-white">
             <div className="flex items-center justify-between gap-4">
@@ -1373,6 +1420,54 @@ export default function Storefront({
           </div>
         </aside>
       </div>
+
+      {checkoutEnabled &&
+      cartReady &&
+      cartCount > 0 &&
+      isCartSummaryAhead ? (
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-cyan-100 bg-white/95 pt-3 shadow-[0_-12px_30px_rgba(6,47,70,0.16)] backdrop-blur lg:hidden"
+          style={{
+            paddingRight: "max(1rem, env(safe-area-inset-right))",
+            paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+            paddingLeft: "max(1rem, env(safe-area-inset-left))",
+          }}
+        >
+          <button
+            type="button"
+            onClick={viewCart}
+            aria-controls="store-cart-summary"
+            aria-label={`${cartCount === 1 ? "1 item" : `${cartCount} items`} in cart. View cart. Subtotal ${formatMoney(subtotalCents, currency)}.`}
+            className="mx-auto flex min-h-14 w-full max-w-lg items-center justify-between gap-4 rounded-2xl bg-[#073d58] px-4 py-3 text-left text-white shadow-lg shadow-cyan-950/25 transition active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-cyan-300/70"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-cyan-100">
+                <CartGlyph />
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[#f7c948] px-1 text-[11px] font-black tabular-nums text-[#082f49]"
+                >
+                  {cartCount}
+                </span>
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-black">View cart</span>
+                <span className="block text-xs text-cyan-100">
+                  {cartCount === 1 ? "1 item" : `${cartCount} items`}
+                </span>
+              </span>
+            </span>
+            <span className="shrink-0 text-right">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-cyan-200">
+                Subtotal
+              </span>
+              <span className="block text-base font-black text-white">
+                {formatMoney(subtotalCents, currency)}
+              </span>
+            </span>
+          </button>
+        </div>
+      ) : null}
     </main>
   );
 }
