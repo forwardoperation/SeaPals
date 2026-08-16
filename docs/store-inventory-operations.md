@@ -362,8 +362,10 @@ short database lease, sends through Resend with a stable per-order idempotency
 key, and marks it sent. The Cloudflare Worker also drains eligible pending rows
 every five minutes, so recovery does not end with Stripe's webhook retry
 window. A delivery or database-completion failure leaves the outbox entry
-retryable and never logs customer details. Concurrent webhook and cron workers
-cannot hold the same lease.
+retryable and never logs customer details. Once a paid transition creates the
+outbox row, later refund, dispute, or chargeback state does not suppress the
+original purchase alert. Concurrent webhook and cron workers cannot hold the
+same lease.
 
 Before accepting payments, enable `STORE_ORDER_NOTIFICATION_ENABLED`, configure
 `RESEND_API_KEY`, `EMAIL_FROM`, and `STORE_ORDER_NOTIFICATION_EMAIL`, and verify a

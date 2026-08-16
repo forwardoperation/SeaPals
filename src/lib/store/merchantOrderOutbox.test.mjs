@@ -137,15 +137,26 @@ test("v5 readiness contract detects the outbox table, drainer, and all RPCs", ()
   );
 });
 
-test("the scheduled drainer can list only paid, unsent, unleased alerts", () => {
+test("the scheduled drainer keeps paid-transition alerts eligible after later lifecycle changes", () => {
+  const listFunctionStart = schema.indexOf(
+    "create or replace function public.list_pending_store_order_notifications"
+  );
+  const listFunctionEnd = schema.indexOf(
+    "create or replace function public.list_overdue_store_inventory_reservations",
+    listFunctionStart
+  );
+  const listFunction = schema.slice(listFunctionStart, listFunctionEnd);
+
   assert.match(
-    schema,
+    listFunction,
     /create or replace function public\.list_pending_store_order_notifications\([\s\S]*p_limit integer default 25[\s\S]*p_limit not between 1 and 50/
   );
   assert.match(
-    schema,
-    /notifications\.sent_at is null[\s\S]*notifications\.claimed_until <= now\(\)[\s\S]*orders\.payment_status = 'paid'/
+    listFunction,
+    /notifications\.notification_type = 'merchant_purchase'[\s\S]*notifications\.sent_at is null[\s\S]*notifications\.claimed_until <= now\(\)/
   );
+  assert.doesNotMatch(listFunction, /join public\.store_orders/);
+  assert.doesNotMatch(listFunction, /orders\.payment_status/);
   assert.match(
     schema,
     /revoke all on function public\.list_pending_store_order_notifications\(integer\)[\s\S]*from public, anon, authenticated/

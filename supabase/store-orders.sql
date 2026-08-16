@@ -1277,14 +1277,15 @@ begin
   return query
   select notifications.order_id
     from public.store_order_notifications as notifications
-    join public.store_orders as orders on orders.id = notifications.order_id
    where notifications.notification_type = 'merchant_purchase'
      and notifications.sent_at is null
      and (
        notifications.claimed_until is null
        or notifications.claimed_until <= now()
      )
-     and orders.payment_status = 'paid'
+     -- Enqueueing is the durable proof that this order reached paid. Do not
+     -- hide a pending purchase alert if a later refund, dispute, or chargeback
+     -- changes the mutable order payment status before the outbox is drained.
    order by notifications.created_at, notifications.id
    limit p_limit;
 end;
