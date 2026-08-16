@@ -3,9 +3,9 @@
 -- Apply this file only after supabase/store-orders.sql has completed, during a
 -- checkout-disabled production cutover. The owner approved an initial
 -- available-to-promise capacity of 10 for each of the 12 prepared SKUs below.
--- Only the seven deck SKUs are in the initial public allowlist; retaining the
--- other five rows does not make those products purchasable. Reserved capacity
--- starts at zero.
+-- The seven deck SKUs and Accessories Kit are in the current public allowlist;
+-- retaining the other four rows does not make those products purchasable.
+-- Reserved capacity starts at zero.
 --
 -- These numbers do not validate shared materials, shared kit components,
 -- production labor, or the promised dispatch window. Confirm those constraints

@@ -237,12 +237,12 @@ function runOnlineLiveCheck(fixtureOverrides = {}, environmentOverrides = {}) {
   );
 }
 
-test("launch readiness accepts the exact seven priced decks while checkout is off", () => {
+test("launch readiness accepts the exact eight approved products while checkout is off", () => {
   const result = runLaunchCheck();
 
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.match(result.stdout, /PASS.*Exact seven-deck launch allowlist/);
-  assert.match(result.stdout, /PASS.*Approved \$22 prices/);
+  assert.match(result.stdout, /PASS.*Exact approved launch allowlist/);
+  assert.match(result.stdout, /PASS.*Approved launch prices/);
   assert.match(result.stdout, /INFO.*Checkout launch switch/);
 });
 
@@ -254,17 +254,17 @@ test("launch readiness names a missing approved product", () => {
   });
 
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /TODO.*Exact seven-deck launch allowlist/);
+  assert.match(result.stdout, /TODO.*Exact approved launch allowlist/);
   assert.match(result.stdout, /blue-water/);
 });
 
-test("launch readiness rejects prepared products outside the seven-deck allowlist", () => {
+test("launch readiness rejects prepared products outside the approved allowlist", () => {
   const result = runLaunchCheck({
     STORE_AVAILABLE_PRODUCT_IDS: `${storeLaunchProductIds.join(",")},starter-kit`,
   });
 
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /TODO.*Exact seven-deck launch allowlist/);
+  assert.match(result.stdout, /TODO.*Exact approved launch allowlist/);
   assert.match(result.stdout, /Remove non-launch products: starter-kit/);
 });
 
@@ -272,8 +272,16 @@ test("launch readiness rejects a deck price that differs from the approved $22",
   const result = runLaunchCheck({ STORE_PRICE_BLUE_WATER_CENTS: "2199" });
 
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /TODO.*Approved \$22 prices/);
+  assert.match(result.stdout, /TODO.*Approved launch prices/);
   assert.match(result.stdout, /blue-water/);
+});
+
+test("launch readiness rejects an Accessories Kit price other than $12", () => {
+  const result = runLaunchCheck({ STORE_PRICE_ACCESSORY_SET_CENTS: "1199" });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /TODO.*Approved launch prices/);
+  assert.match(result.stdout, /accessory-set/);
 });
 
 test("launch readiness requires every owner-approved shipping tier", () => {

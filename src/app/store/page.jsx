@@ -9,8 +9,8 @@ export function generateMetadata() {
       ? "Shop | SeaPals TCG"
       : "Store Preview | SeaPals TCG",
     description: checkoutEnabled
-      ? "Shop seven made-to-order SeaPals ready-to-play decks with five-business-day standard production or optional one-business-day production."
-      : "Preview seven made-to-order SeaPals ready-to-play decks before ordering opens.",
+      ? "Shop seven made-to-order SeaPals ready-to-play decks and the Accessories Kit with five-business-day standard production or optional one-business-day production."
+      : "Preview seven made-to-order SeaPals ready-to-play decks and the Accessories Kit before ordering opens.",
   };
 }
 

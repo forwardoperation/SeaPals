@@ -156,7 +156,7 @@ test("the catalog definitions use the established cash prices", () => {
   }
 });
 
-test("the default storefront is limited to the seven launch decks", () => {
+test("the default storefront is limited to the eight approved launch products", () => {
   withStoreEnvironment({}, () => {
     const configuration = getStoreConfiguration();
 
@@ -164,10 +164,10 @@ test("the default storefront is limited to the seven launch decks", () => {
       configuration.products.map((product) => product.id),
       storeLaunchProductIds
     );
-    assert.equal(configuration.products.length, 7);
+    assert.equal(configuration.products.length, 8);
     assert.equal(
       configuration.products.some((product) => product.id === "accessory-set"),
-      false
+      true
     );
     assert.equal(
       configuration.products.some((product) => product.id === "custom-t-shirt"),
@@ -417,7 +417,7 @@ test("the server catalog requires explicit product allowlisting", () => {
   );
 });
 
-test("prepared future accessories retain their server-controlled source prices", () => {
+test("game accessories retain their server-controlled source prices", () => {
   const accessoryIds = [
     "accessory-set",
     "conditions-deck",
@@ -454,7 +454,7 @@ test("prepared future accessories retain their server-controlled source prices",
   );
 });
 
-test("the exact seven-deck launch catalog supports the eight-item cart limit", () => {
+test("the exact eight-product launch catalog supports the eight-item cart limit", () => {
   withStoreEnvironment(
     {
       ...infrastructureEnvironment,
@@ -471,8 +471,8 @@ test("the exact seven-deck launch catalog supports the eight-item cart limit", (
       const decks = configuration.products.filter((product) => product.deckId);
 
       assert.deepEqual(ids, storeLaunchProductIds);
-      assert.equal(new Set(ids).size, 7);
-      assert.equal(new Set(skus).size, 7);
+      assert.equal(new Set(ids).size, 8);
+      assert.equal(new Set(skus).size, 8);
       assert.equal(decks.length, 7);
       assert.ok(configuration.products.every((product) => product.madeToOrder));
       assert.equal(
@@ -496,9 +496,9 @@ test("the exact seven-deck launch catalog supports the eight-item cart limit", (
       assert.equal(configuration.automaticTaxEnabled, false);
 
       const quote = quoteCart(
-        storeLaunchProductIds.map((productId, index) => ({
+        storeLaunchProductIds.map((productId) => ({
           productId,
-          quantity: index === 0 ? 2 : 1,
+          quantity: 1,
         })),
         configuration.products,
         { fulfillmentOption: configuration.shippingOptions[0] }
@@ -506,11 +506,11 @@ test("the exact seven-deck launch catalog supports the eight-item cart limit", (
 
       assert.equal(quote.items.length, storeLaunchProductIds.length);
       assert.equal(quote.totalQuantity, STORE_MAX_CART_QUANTITY);
-      assert.equal(quote.subtotalCents, 17_600);
-      assert.equal(quote.shippingWeightOunces, 64);
+      assert.equal(quote.subtotalCents, 16_600);
+      assert.equal(quote.shippingWeightOunces, 72);
       assert.equal(quote.shippingRateTierId, "large");
       assert.equal(quote.shippingCents, 2000);
-      assert.equal(quote.totalCents, 19_600);
+      assert.equal(quote.totalCents, 18_600);
     }
   );
 });

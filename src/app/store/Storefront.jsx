@@ -58,7 +58,7 @@ const CATEGORY_META = {
     label: "Game Accessories",
     eyebrow: "Build the table",
     description:
-      "Choose the complete Accessories Kit or individual condition cards, dice, and Reef Point tokens.",
+      "Add the shared Conditions Deck, seven-die pack, and 15 Reef Point tokens in one complete kit.",
   },
   apparel: {
     label: "Custom T-Shirts",
@@ -707,8 +707,8 @@ export default function Storefront({
               Choose how your reef grows.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
-              Seven ready-to-play SeaPals decks, built to order for your next
-              reef.
+              Seven ready-to-play SeaPals decks and the Accessories Kit, built
+              to order for your next reef.
             </p>
 
             {highlightedProduct ? (
@@ -793,7 +793,7 @@ export default function Storefront({
             <p className="max-w-md text-sm leading-6 text-slate-500">
               {checkoutEnabled
                 ? "Choose your products and add available items to your order. Prices and availability reflect the current catalog."
-                : "The seven approved $22 launch decks are shown. Ordering remains disabled until the final launch checks are complete."}
+                : "The approved seven $22 decks and $12 Accessories Kit are shown. Ordering remains disabled until the final launch checks are complete."}
             </p>
           </div>
 

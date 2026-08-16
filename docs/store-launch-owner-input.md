@@ -23,12 +23,13 @@ labor allotment to each bundle and individually sold product. A Starter Kit or
 Accessories Kit may be assembled after purchase, but its allocated components
 cannot also support the ATP capacity of its component SKUs.
 
-The owner approved the initial public catalog on **2026-08-15** as exactly the
-seven `$22` 60-card decks: Blue Water, Disruption, Coral Garden, Darkness
-Shroud, Open Ocean, Murky Water, and Stinging Fortress. Each has an approved
-initial ATP capacity of **10** and a five-business-day build-and-dispatch
-window. The other prepared rows remain private and unavailable; retaining their
-capacity records does not add them to the public allowlist.
+The owner approved the initial public catalog on **2026-08-15** as the seven
+`$22` 60-card decks: Blue Water, Disruption, Coral Garden, Darkness Shroud, Open
+Ocean, Murky Water, and Stinging Fortress. On **2026-08-16**, the owner added the
+`$12` Accessories Kit. Each public SKU has an approved initial ATP capacity of
+**10** and a five-business-day build-and-dispatch window. The other prepared
+rows remain private and unavailable; retaining their capacity records does not
+add them to the public allowlist.
 
 | SKU | Product | Configured price | Initial ATP capacity | Build and dispatch within | Contents/sample verified |
 | --- | --- | ---: | ---: | --- | --- |
@@ -40,7 +41,7 @@ capacity records does not add them to the public allowlist.
 | `SP-DECK-OPEN-OCEAN-HUNT` | Open Ocean Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
 | `SP-DECK-MURKY-WATER` | Murky Water Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
 | `SP-DECK-STINGING-FORTRESS` | Stinging Fortress Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
-| `SP-ACC-SET` | Accessories Kit | $12 | **10** | **5 business days** |  |
+| `SP-ACC-SET` | Accessories Kit | $12 | **10** | **5 business days** | **Public catalog approved 2026-08-16: 1 Conditions Deck; 7 dice (D4, D6, D8, D10, D12, D20, D100); 15 RP tokens; no condition-card count claimed** |
 | `SP-ACC-CONDITIONS-DECK` | Conditions Deck | $5 | **10** | **5 business days** | ___ cards; title list approved:  |
 | `SP-ACC-DICE-PACK` | Dice Pack | $5 | **10** | **5 business days** | **7 dice: one each D4, D6, D8, D10, D12, D20, D100; future release** |
 | `SP-ACC-REEF-POINTS` | Reef Point Token Set | $5 | **10** | **5 business days** | **15 tokens; future release** |
@@ -64,7 +65,7 @@ Capacity calculation reviewed by: **Sea Realm owner**  Date: **2026-08-15**
 
 Materials or production constraint used for each ATP count: **the owner can
 build and dispatch up to 10 units of each prepared SKU within five business
-days; only the seven deck SKUs are publicly enabled at launch**.
+days; the seven deck SKUs and Accessories Kit are publicly enabled**.
 
 Replenishment owner and review cadence: **Sea Realm owner; review before every
 manual ATP increase and whenever materials or production capacity change**.
@@ -197,7 +198,7 @@ Policy approval: **owner-confirmed in the launch task**  Date: **2026-08-15**
 ## Final operational sign-off
 
 - [x] All 12 prepared SKU rows were seeded with owner-approved ATP capacities;
-      only the seven deck rows are in the initial public allowlist.
+      the seven deck rows and Accessories Kit are in the public allowlist.
 - [ ] Latest Supabase order, refund, notification, and reservation-reconciliation
       migration applied; the current inventory contract RPC and online readiness
       checks pass before checkout is enabled.

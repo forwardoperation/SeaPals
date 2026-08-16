@@ -32,7 +32,16 @@ const STANDARD_SHIPPING_CENTS = 1000;
 const PRIORITY_SHIPPING_CENTS = 1500;
 const LARGE_STANDARD_SHIPPING_CENTS = 2000;
 const LARGE_PRIORITY_SHIPPING_CENTS = 3500;
-const LAUNCH_DECK_PRICE_CENTS = 2200;
+const APPROVED_LAUNCH_PRICE_CENTS_BY_PRODUCT_ID = Object.freeze({
+  "blue-water": 2200,
+  disruption: 2200,
+  "coral-garden": 2200,
+  "darkness-shroud": 2200,
+  "open-ocean-hunt": 2200,
+  "murky-water": 2200,
+  "stinging-fortress": 2200,
+  "accessory-set": 1200,
+});
 
 function addCheck(label, passed, detail, required = true) {
   checks.push({ label, passed: Boolean(passed), detail, required });
@@ -412,11 +421,13 @@ if (launchCatalog) {
     (productId, index) => availableProducts.indexOf(productId) !== index
   );
   const incorrectlyPricedLaunchProducts = storeLaunchProductIds.filter(
-    (productId) => resolvedProductPrice(productId) !== LAUNCH_DECK_PRICE_CENTS
+    (productId) =>
+      resolvedProductPrice(productId) !==
+      APPROVED_LAUNCH_PRICE_CENTS_BY_PRODUCT_ID[productId]
   );
 
   addCheck(
-    "Exact seven-deck launch allowlist",
+    "Exact approved launch allowlist",
     missingLaunchProducts.length === 0 &&
       unexpectedLaunchProducts.length === 0 &&
       duplicateLaunchProducts.length === 0,
@@ -426,14 +437,14 @@ if (launchCatalog) {
         ? `Remove non-launch products: ${unexpectedLaunchProducts.join(", ")}.`
         : duplicateLaunchProducts.length
           ? `Remove duplicate product IDs: ${[...new Set(duplicateLaunchProducts)].join(", ")}.`
-          : "Only Blue Water, Disruption, Coral Garden, Darkness Shroud, Open Ocean, Murky Water, and Stinging Fortress are selected."
+          : "Only the seven approved decks and Accessories Kit are selected."
   );
   addCheck(
-    "Approved $22 prices for the seven-deck launch catalog",
+    "Approved launch prices",
     incorrectlyPricedLaunchProducts.length === 0,
     incorrectlyPricedLaunchProducts.length
-      ? `Restore the owner-approved $22 price for: ${incorrectlyPricedLaunchProducts.join(", ")}.`
-      : "Every launch deck has the owner-approved server-controlled $22 price."
+      ? `Restore the owner-approved price for: ${incorrectlyPricedLaunchProducts.join(", ")}.`
+      : "The seven decks are $22 each and the Accessories Kit is $12."
   );
 }
 
@@ -796,7 +807,7 @@ if (!online) {
 
 if (!launchCatalog) {
   console.log(
-    "Run `npm run store:check:launch` to verify the exact seven-deck launch catalog."
+    "Run `npm run store:check:launch` to verify the exact approved launch catalog."
   );
 }
 

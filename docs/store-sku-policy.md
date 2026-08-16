@@ -34,9 +34,9 @@ new SKU when the fulfilled product remains interchangeable.
 ## Prepared inventory SKUs
 
 These values are canonical and must match their product definitions and private
-`store_inventory.sku` rows exactly. The initial public allowlist contains only
-the seven `SP-DECK-*` rows; keeping the Starter Kit and accessory rows prepared
-does not authorize them for sale.
+`store_inventory.sku` rows exactly. The public allowlist contains the seven
+`SP-DECK-*` rows and `SP-ACC-SET`; keeping the Starter Kit and individual
+accessory rows prepared does not authorize them for sale.
 
 | Product | Canonical SKU |
 | --- | --- |

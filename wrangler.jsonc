@@ -10,10 +10,10 @@
 	"vars": {
 		"SITE_URL": "https://seapalstcg.com",
 		"STORE_CURRENCY": "usd",
-		// Owner-approved initial public catalog: the seven $22 decks only.
-		// Prepared inventory rows for the Starter Kit and accessories remain in
-		// Supabase but are intentionally absent from this availability allowlist.
-		"STORE_AVAILABLE_PRODUCT_IDS": "blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress",
+		// Owner-approved public catalog: seven $22 decks plus the $12 Accessories Kit.
+		// Prepared inventory rows for the Starter Kit and individual accessories
+		// remain in Supabase but are intentionally absent from this allowlist.
+		"STORE_AVAILABLE_PRODUCT_IDS": "blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,accessory-set",
 		"STORE_CATALOG_CONFIRMED": "true",
 		"STORE_EXPEDITED_PRODUCTION_ENABLED": "true",
 		"STORE_EXPEDITED_PRODUCTION_CENTS": "1000",

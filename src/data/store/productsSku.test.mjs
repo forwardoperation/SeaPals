@@ -33,10 +33,10 @@ const EXPECTED_LAUNCH_PRODUCT_IDS = Object.freeze([
   "open-ocean-hunt",
   "murky-water",
   "stinging-fortress",
+  "accessory-set",
 ]);
 
 const EXPECTED_FUTURE_PRODUCT_IDS = Object.freeze([
-  "accessory-set",
   "backpack",
   "card-binder",
   "conditions-deck",
@@ -71,7 +71,7 @@ test("all canonical product IDs and SKUs are unique and well formed", () => {
   }
 });
 
-test("the catalog remains partitioned into seven launch decks and nine prepared future products", () => {
+test("the catalog remains partitioned into eight launch products and eight prepared future products", () => {
   const launchProductIds = new Set(storeLaunchProductIds);
   const futureProductIds = storeProductDefinitions
     .map(({ id }) => id)
@@ -79,7 +79,7 @@ test("the catalog remains partitioned into seven launch decks and nine prepared 
     .sort();
 
   assert.deepEqual(storeLaunchProductIds, EXPECTED_LAUNCH_PRODUCT_IDS);
-  assert.equal(launchProductIds.size, 7);
+  assert.equal(launchProductIds.size, 8);
   assert.deepEqual(futureProductIds, EXPECTED_FUTURE_PRODUCT_IDS);
 
   for (const productId of EXPECTED_FUTURE_PRODUCT_IDS) {
@@ -130,7 +130,7 @@ test("launch decks and prepared products publish conservative ready-to-mail weig
   }
 });
 
-test("prepared dice and Reef Point products preserve the owner-confirmed contents", () => {
+test("the Accessories Kit and prepared components preserve the owner-confirmed contents", () => {
   const productsById = new Map(
     storeProductDefinitions.map((product) => [product.id, product])
   );
@@ -151,4 +151,10 @@ test("prepared dice and Reef Point products preserve the owner-confirmed content
     productsById.get("reef-point-tokens")?.checkoutDescription ?? "",
     /15 Reef Point/
   );
+  assert.deepEqual(productsById.get("accessory-set")?.includedItems, [
+    "1 Conditions Deck",
+    "7 dice: D4, D6, D8, D10, D12, D20, and D100",
+    "15 Reef Point tokens",
+  ]);
+  assert.equal(productsById.get("accessory-set")?.defaultPriceCents, 1200);
 });

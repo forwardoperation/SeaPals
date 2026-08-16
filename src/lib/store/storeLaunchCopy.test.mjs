@@ -11,18 +11,18 @@ const storePageSource = readFileSync(
   "utf8"
 );
 
-test("public launch copy advertises only the seven enabled decks", () => {
+test("public launch copy advertises the seven decks and Accessories Kit", () => {
   assert.match(
     storefrontSource,
-    /Seven ready-to-play SeaPals decks, built to order for your next\s+reef\./
+    /Seven ready-to-play SeaPals decks and the Accessories Kit, built\s+to order for your next reef\./
   );
   assert.match(
     storePageSource,
-    /Shop seven made-to-order SeaPals ready-to-play decks/
+    /Shop seven made-to-order SeaPals ready-to-play decks and the Accessories Kit/
   );
   assert.match(
     storePageSource,
-    /Preview seven made-to-order SeaPals ready-to-play decks/
+    /Preview seven made-to-order SeaPals ready-to-play decks and the Accessories Kit/
   );
   assert.doesNotMatch(
     storePageSource,

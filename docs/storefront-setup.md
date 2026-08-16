@@ -6,27 +6,30 @@ cart and no payment can start until its product ID is explicitly allowlisted,
 the private order ledger and Stripe webhook are ready, and the launch switch is
 turned on.
 
-## Seven-deck launch catalog
+## Current launch catalog
 
-The owner approved the first public catalog on **2026-08-15** as exactly seven
-`$22` ready-to-play decks. The `$44` Starter Kit, `$12` Accessories Kit, three
-`$5` individual accessories, and future apparel, storage, and plush products
-remain defined for preparation but are hidden and unavailable by default.
+The owner approved the first public catalog on **2026-08-15** as seven `$22`
+ready-to-play decks, then approved the `$12` Accessories Kit on **2026-08-16**.
+The `$44` Starter Kit, three `$5` individual accessories, and future apparel,
+storage, and plush products remain defined for preparation but are hidden and
+unavailable by default.
 
-All seven launch prices are server-controlled and owner-approved. Each deck's
-60-card code manifest and initial made-to-order ATP capacity of 10 are confirmed,
-with a standard build-and-dispatch window of five business days.
+All eight public prices are server-controlled and owner-approved. Each deck's
+60-card code manifest is confirmed. Every public SKU has an initial
+made-to-order ATP capacity of 10 and a standard build-and-dispatch window of
+five business days. The Accessories Kit contains one Conditions Deck, seven
+dice (D4, D6, D8, D10, D12, D20, and D100), and 15 Reef Point tokens; it does
+not advertise an unconfirmed Conditions Deck card count.
 The optional expedited choice adds $10 once per order for build and dispatch
 within one business day, subject to a hard limit of 10 expedited orders per
-Eastern-time production due date; carrier transit time is separate. The prepared
-future Dice Pack is one each D4, D6, D8, D10, D12, D20, and D100, and the RP
-Token Set contains 15 tokens. They remain unavailable with the Starter Kit,
-Accessories Kit, and Conditions Deck. The Pennsylvania license supplied by the owner
+Eastern-time production due date; carrier transit time is separate. The
+individual Dice Pack, RP Token Set, Conditions Deck, and Starter Kit remain
+unavailable as standalone products. The Pennsylvania license supplied by the owner
 satisfies the storefront's government-registration confirmation gate. Stripe
 Automatic Tax is required for mailed orders; scheduled Elverson pickup uses a
-separately verified fixed manual Tax Rate. Checkout remains off until the sellable
-catalog, made-to-order capacity, packaged shipping rates, pickup sourcing, live
-webhook, deployment secrets, and end-to-end order lifecycle are also ready.
+separately verified fixed manual Tax Rate. Checkout fails closed unless the
+sellable catalog, made-to-order capacity, packaged shipping rates, pickup
+sourcing, live webhook, deployment secrets, and order lifecycle gates are ready.
 
 The `$44` Starter Kit can remain the first local sandbox purchase. The payment
 flow is:
@@ -56,7 +59,7 @@ measured separately in Stripe.
 ## What is included
 
 - `/store`: responsive launch catalog containing the seven approved Expansion
-  Decks. Prepared future products require an explicit private
+  Decks and the Accessories Kit. Prepared future products require an explicit private
   preview switch.
 - `/api/store/checkout`: server-priced cart validation and Stripe-hosted
   Checkout. Payment credentials never pass through SeaPals servers.
@@ -83,13 +86,14 @@ the payment page and retains the underlying payment record.
 
 SeaPals Credits are intentionally excluded. The repository currently uses
 these server-controlled cash-price definitions. The owner approved the seven
-launch decks at $22 each on 2026-08-15; the other rows remain unavailable:
+launch decks at $22 each on 2026-08-15 and the Accessories Kit at $12 on
+2026-08-16; the other rows remain unavailable:
 
 | Product | Configured price | Included | Initial availability |
 | --- | ---: | --- | --- |
 | Each Expansion Deck | $22 | One 60-card ready-to-play deck | **Launch** |
 | Starter Kit | $44 | Coral Garden 60 Card Deck, Blue Water 60 Card Deck, Conditions Deck, Dice Set, and Reef Point Tokens | Future |
-| Accessories Kit | $12 | Conditions Deck, Dice Pack, and Reef Point Tokens | Future |
+| Accessories Kit | $12 | One Conditions Deck, seven dice (D4, D6, D8, D10, D12, D20, D100), and 15 Reef Point tokens | **Launch** |
 | Conditions Deck | $5 | Packaged card count must be confirmed before a future release | Future |
 | Dice Pack | $5 | One each D4, D6, D8, D10, D12, D20, D100 | Future |
 | Reef Point (RP) Token Set | $5 | 15 tokens | Future |
@@ -100,8 +104,8 @@ manifest resolves to exactly 60 cards. The local print-sheet folder contains a
 sheet set for every deck. The owner approved those 60-card manifests and an
 initial made-to-order ATP capacity of 10 per launch deck on 2026-08-15.
 
-The prepared Starter Kit and accessories plus future Custom T-Shirt, Card
-Binder, Backpack, and Plush Toy concepts are hidden
+The prepared Starter Kit and individual accessories plus future Custom T-Shirt,
+Card Binder, Backpack, and Plush Toy concepts are hidden
 unless `STORE_SHOW_FUTURE_PRODUCTS=true`. Custom T-Shirts remain locked even if
 priced because checkout does not yet collect size, color, or customization
 choices.
@@ -246,7 +250,7 @@ its final SKU and retail price are known.
 Set `STORE_AVAILABLE_PRODUCT_IDS` to a comma-separated list of reviewed product
 IDs, for example:
 
-`blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress`
+`blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,accessory-set`
 
 There is deliberately no `all` wildcard. The server rejects unknown,
 unavailable, client-priced, over-quantity, or stale cart items. Add a product
@@ -300,8 +304,9 @@ if it is enabled because the private order ledger does not yet reconcile a
 offering any promotion code, or staff totals can disagree with Stripe.
 
 Keep `STORE_SHOW_FUTURE_PRODUCTS=false` for the launch store. Run
-`npm.cmd run store:check:launch` to verify the exact seven-deck allowlist and
-the owner-approved server-controlled $22 prices.
+`npm.cmd run store:check:launch` to verify the exact eight-product allowlist and
+the owner-approved server-controlled prices: $22 per deck and $12 for the
+Accessories Kit.
 
 The owner-approved fulfillment choices and conservative weight tiers are
 server-controlled:
@@ -464,10 +469,10 @@ npm.cmd run build
 npm.cmd run cloudflare:build
 ```
 
-The seven-deck catalog audit and owner approval were recorded on 2026-08-15, so
-`STORE_CATALOG_CONFIRMED=true`. The independent
-`STORE_CHECKOUT_ENABLED=false` switch remains in place until the final live
-lifecycle check is complete.
+The seven-deck catalog audit was recorded on 2026-08-15 and the Accessories Kit
+expansion was approved on 2026-08-16, so `STORE_CATALOG_CONFIRMED=true`. Keep the
+independent `STORE_CHECKOUT_ENABLED` switch true only while the production
+launch checks remain satisfied.
 
 ## 7. Receipts and fulfillment
 
@@ -586,16 +591,17 @@ copy with the store's private launch records.
 - Audit finished stock or owner-approved made-to-order ATP capacity and
   packaging for every enabled SKU. Keep the current representative art clearly
   presented as illustration rather than packaged-product photography.
-- Keep the prepared Starter Kit, Accessories Kit, and individual accessories
+- Keep the prepared Starter Kit and individual accessories
   unavailable until each future-release audit is complete.
 - Before a future Conditions Deck release, confirm its packaged card count and
   titles. Two local candidate sheets
   contain 18 card positions but disagree with the coded condition list, so they
-  are not yet a retail-package specification.
-- Preserve the confirmed future Dice Pack contents (one each D4, D6, D8, D10,
-  D12, D20, D100) and RP Token Set count (15 tokens).
-- Preserve the approved $22 launch prices, ATP capacity of 10 per deck, and
-  seven 60-card manifests.
+  are not yet a standalone retail-package specification. The public Accessories
+  Kit promises one Conditions Deck but does not claim its card count.
+- Preserve the Accessories Kit contents: one Conditions Deck, one each D4, D6,
+  D8, D10, D12, D20, and D100, and 15 Reef Point tokens.
+- Preserve the approved $22 deck prices, $12 Accessories Kit price, ATP capacity
+  of 10 per public SKU, and seven 60-card deck manifests.
 - Retain the confirmed 0.5-pound deck, 1-pound Starter Kit, and 8-pound maximum
   parcel measurements; keep the tested $10/$15 and $20/$35 tier boundary plus
   the 8-item/128-ounce rejection unchanged while
@@ -603,7 +609,7 @@ copy with the store's private launch records.
 - Test the standard five-business-day and expedited one-business-day production
   paths, confirm the $10 fee is once per order, and verify the hard 10-order
   rush limit, Eastern due-date allocation, and terminal-unpaid slot release.
-- Keep `STORE_CATALOG_CONFIRMED=true` only while the exact seven enabled decks
+- Keep `STORE_CATALOG_CONFIRMED=true` only while the exact eight enabled products
   continue to satisfy those checks; an allowlist by itself is not an inventory
   reservation system.
 - Confirm the Elverson pickup workflow and pickup tax sourcing before setting

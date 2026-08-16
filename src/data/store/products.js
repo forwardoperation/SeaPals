@@ -10,6 +10,7 @@ export const storeLaunchProductIds = Object.freeze([
   "open-ocean-hunt",
   "murky-water",
   "stinging-fortress",
+  "accessory-set",
 ]);
 
 // These inventory-backed products are already prepared operationally even
@@ -18,7 +19,6 @@ export const storeLaunchProductIds = Object.freeze([
 export const storePreparedProductIds = Object.freeze([
   "starter-kit",
   ...storeLaunchProductIds,
-  "accessory-set",
   "conditions-deck",
   "dice-pack",
   "reef-point-tokens",
@@ -219,17 +219,19 @@ export const storeProductDefinitions = [
     productLabel: "Gameplay essentials",
     description:
       "Bundle the three shared gameplay accessories used around every SeaPals table.",
-    details: "Dice, conditions, and reef point tokens",
+    details: "Conditions Deck, seven-die pack, and 15 Reef Point tokens",
     checkoutDescription:
-      "Accessories Kit with Conditions Deck, Dice Pack, and Reef Point Token Set.",
-    includedItems: ["Conditions Deck", "Dice Pack", "Reef Point Token Set"],
+      "Accessories Kit with one Conditions Deck, seven-die pack, and 15 Reef Point tokens.",
+    includedItems: [
+      "1 Conditions Deck",
+      "7 dice: D4, D6, D8, D10, D12, D20, and D100",
+      "15 Reef Point tokens",
+    ],
     shippingWeightOunces: 16,
     image: "/images/store/accessory-set.svg",
     defaultPriceCents: 1200,
     priceEnvKey: "STORE_PRICE_ACCESSORY_SET_CENTS",
     taxCodeEnvKey: GAME_PRODUCT_TAX_CODE_ENV_KEY,
-    availabilityNote:
-      "Confirm the packaged counts match the individual accessory listings before launch.",
     featured: true,
   },
   {
