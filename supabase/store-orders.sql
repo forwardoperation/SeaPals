@@ -32,8 +32,12 @@ create table if not exists public.store_orders (
   total_cents integer not null default 0 check (total_cents >= 0),
   amount_refunded_cents integer not null default 0
     check (amount_refunded_cents >= 0),
+  refund_lifecycle_started_at timestamptz not null default now(),
+  dispute_id text,
+  dispute_status text,
+  dispute_updated_at timestamptz,
   payment_status text not null default 'pending'
-    check (payment_status in ('pending', 'paid', 'failed', 'partially_refunded', 'refunded', 'disputed')),
+    check (payment_status in ('pending', 'paid', 'failed', 'partially_refunded', 'refunded', 'disputed', 'chargeback')),
   fulfillment_status text not null default 'unfulfilled'
     check (fulfillment_status in ('unfulfilled', 'packing', 'ready_for_pickup', 'picked_up', 'on_hold', 'shipped', 'cancelled')),
   receipt_url text,
@@ -54,6 +58,14 @@ alter table public.store_orders
   add column if not exists receipt_number text;
 alter table public.store_orders
   add column if not exists amount_refunded_cents integer not null default 0;
+alter table public.store_orders
+  add column if not exists refund_lifecycle_started_at timestamptz not null default now();
+alter table public.store_orders
+  add column if not exists dispute_id text;
+alter table public.store_orders
+  add column if not exists dispute_status text;
+alter table public.store_orders
+  add column if not exists dispute_updated_at timestamptz;
 alter table public.store_orders
   add column if not exists fulfillment_method text not null default 'shipping';
 alter table public.store_orders
@@ -92,6 +104,18 @@ alter table public.store_orders
   add column if not exists inventory_released_at timestamptz;
 alter table public.store_orders
   add column if not exists inventory_release_reason text;
+alter table public.store_orders
+  add column if not exists inventory_reconciliation_claim_token uuid;
+alter table public.store_orders
+  add column if not exists inventory_reconciliation_claimed_until timestamptz;
+alter table public.store_orders
+  add column if not exists inventory_reconciliation_attempt_count integer not null default 0;
+alter table public.store_orders
+  add column if not exists inventory_reconciliation_last_attempt_at timestamptz;
+alter table public.store_orders
+  add column if not exists inventory_reconciliation_retry_at timestamptz;
+alter table public.store_orders
+  add column if not exists inventory_reconciliation_last_error_code text;
 update public.store_orders
    set amount_refunded_cents = 0
  where amount_refunded_cents is null;
@@ -127,7 +151,8 @@ update public.store_orders
            'paid',
            'partially_refunded',
            'refunded',
-           'disputed'
+           'disputed',
+           'chargeback'
          ) or inventory_state = 'committed' then 'committed'
          when payment_status = 'pending' and inventory_state = 'reserved'
            then 'reserved'
@@ -246,6 +271,30 @@ alter table public.store_orders
     );
 
 alter table public.store_orders
+  drop constraint if exists store_orders_inventory_reconciliation_lease_check;
+alter table public.store_orders
+  add constraint store_orders_inventory_reconciliation_lease_check
+    check (
+      (inventory_reconciliation_claim_token is null) =
+      (inventory_reconciliation_claimed_until is null)
+    );
+
+alter table public.store_orders
+  drop constraint if exists store_orders_inventory_reconciliation_attempt_check;
+alter table public.store_orders
+  add constraint store_orders_inventory_reconciliation_attempt_check
+    check (inventory_reconciliation_attempt_count >= 0);
+
+alter table public.store_orders
+  drop constraint if exists store_orders_inventory_reconciliation_error_check;
+alter table public.store_orders
+  add constraint store_orders_inventory_reconciliation_error_check
+    check (
+      inventory_reconciliation_last_error_code is null
+      or inventory_reconciliation_last_error_code ~ '^[A-Za-z0-9_-]{1,100}$'
+    );
+
+alter table public.store_orders
   drop constraint if exists store_orders_checkout_url_check;
 alter table public.store_orders
   add constraint store_orders_checkout_url_check
@@ -264,8 +313,35 @@ alter table public.store_orders
       'failed',
       'partially_refunded',
       'refunded',
-      'disputed'
+      'disputed',
+      'chargeback'
     ));
+
+alter table public.store_orders
+  drop constraint if exists store_orders_dispute_lifecycle_check;
+alter table public.store_orders
+  add constraint store_orders_dispute_lifecycle_check
+    check (
+      (
+        dispute_id is null
+        and dispute_status is null
+        and dispute_updated_at is null
+      )
+      or (
+        dispute_id ~ '^dp_[A-Za-z0-9_]+$'
+        and dispute_status in (
+          'warning_needs_response',
+          'warning_under_review',
+          'warning_closed',
+          'needs_response',
+          'under_review',
+          'won',
+          'lost',
+          'prevented'
+        )
+        and dispute_updated_at is not null
+      )
+    );
 
 alter table public.store_orders
   drop constraint if exists store_orders_fulfillment_status_check;
@@ -285,10 +361,15 @@ alter table public.store_orders
 -- by new webhook events. Shipped orders are intentionally never overwritten.
 update public.store_orders
    set fulfillment_status = case
-         when payment_status = 'refunded' then 'cancelled'
+         when payment_status in ('refunded', 'chargeback') then 'cancelled'
          else 'on_hold'
        end
- where payment_status in ('partially_refunded', 'refunded', 'disputed')
+ where payment_status in (
+   'partially_refunded',
+   'refunded',
+   'disputed',
+   'chargeback'
+ )
    and fulfillment_status in ('unfulfilled', 'packing', 'ready_for_pickup');
 
 create table if not exists public.store_order_items (
@@ -337,6 +418,39 @@ create table if not exists public.store_payment_events (
   processed_at timestamptz
 );
 
+create table if not exists public.store_refunds (
+  id uuid primary key default gen_random_uuid(),
+  provider_refund_id text not null unique
+    check (provider_refund_id ~ '^re_[A-Za-z0-9_]+$'),
+  order_id uuid not null references public.store_orders(id) on delete cascade,
+  payment_intent_id text,
+  charge_id text,
+  amount_cents integer not null check (amount_cents > 0),
+  currency text not null check (currency ~ '^[a-z]{3}$'),
+  status text not null
+    check (status in (
+      'pending',
+      'requires_action',
+      'succeeded',
+      'failed',
+      'canceled'
+    )),
+  pending_reason text,
+  failure_reason text,
+  payment_livemode boolean not null,
+  provider_created_at timestamptz,
+  provider_updated_at timestamptz not null,
+  latest_provider_event_id text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (payment_intent_id is null or payment_intent_id ~ '^pi_[A-Za-z0-9_]+$'),
+  check (charge_id is null or charge_id ~ '^ch_[A-Za-z0-9_]+$'),
+  check (payment_intent_id is not null or charge_id is not null),
+  check (pending_reason is null or pending_reason ~ '^[a-z0-9_]{1,100}$'),
+  check (failure_reason is null or failure_reason ~ '^[a-z0-9_]{1,100}$'),
+  check (length(latest_provider_event_id) between 1 and 255)
+);
+
 create table if not exists public.store_order_notifications (
   id uuid primary key default gen_random_uuid(),
   order_id uuid not null references public.store_orders(id) on delete cascade,
@@ -366,6 +480,13 @@ create index if not exists store_orders_expedited_capacity_active_idx
   on public.store_orders (production_due_date, expedited_capacity_state)
   where production_option_id = 'expedited-production'
     and expedited_capacity_state in ('reserved', 'committed');
+create index if not exists store_orders_overdue_inventory_reconciliation_idx
+  on public.store_orders (
+    inventory_reserved_until,
+    inventory_reconciliation_retry_at,
+    inventory_reconciliation_claimed_until
+  )
+  where inventory_state = 'reserved';
 create unique index if not exists store_orders_charge_id_idx
   on public.store_orders (charge_id) where charge_id is not null;
 create unique index if not exists store_orders_checkout_request_id_idx
@@ -378,6 +499,8 @@ create index if not exists store_order_items_order_id_idx
   on public.store_order_items (order_id);
 create index if not exists store_payment_events_order_id_idx
   on public.store_payment_events (order_id);
+create index if not exists store_refunds_order_status_idx
+  on public.store_refunds (order_id, status, provider_updated_at desc);
 create unique index if not exists store_order_notifications_order_type_idx
   on public.store_order_notifications (order_id, notification_type);
 create index if not exists store_order_notifications_pending_idx
@@ -409,6 +532,11 @@ drop trigger if exists set_store_order_notifications_updated_at
   on public.store_order_notifications;
 create trigger set_store_order_notifications_updated_at
 before update on public.store_order_notifications
+for each row execute function public.set_store_order_updated_at();
+
+drop trigger if exists set_store_refunds_updated_at on public.store_refunds;
+create trigger set_store_refunds_updated_at
+before update on public.store_refunds
 for each row execute function public.set_store_order_updated_at();
 
 drop function if exists public.reserve_store_order_inventory(
@@ -1162,11 +1290,215 @@ begin
 end;
 $$;
 
+drop function if exists public.list_overdue_store_inventory_reservations(integer);
+create or replace function public.list_overdue_store_inventory_reservations(
+  p_limit integer default 10
+)
+returns table (order_id uuid)
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if p_limit is null or p_limit not between 1 and 25 then
+    raise exception 'Inventory reconciliation batch limit must be between 1 and 25.';
+  end if;
+
+  -- Passing the reservation deadline only makes a row eligible for Stripe
+  -- verification. This function never releases inventory by the clock alone.
+  return query
+  select orders.id
+    from public.store_orders as orders
+   where orders.inventory_state = 'reserved'
+     and orders.inventory_reserved_until <= now()
+     and (
+       orders.inventory_reconciliation_retry_at is null
+       or orders.inventory_reconciliation_retry_at <= now()
+     )
+     and (
+       orders.inventory_reconciliation_claimed_until is null
+       or orders.inventory_reconciliation_claimed_until <= now()
+     )
+   order by orders.inventory_reserved_until, orders.id
+   limit p_limit;
+end;
+$$;
+
+drop function if exists public.claim_overdue_store_inventory_reservation(
+  uuid, uuid, integer
+);
+create or replace function public.claim_overdue_store_inventory_reservation(
+  p_order_id uuid,
+  p_claim_token uuid,
+  p_lease_seconds integer default 180
+)
+returns table (
+  claim_status text,
+  order_id uuid,
+  checkout_session_id text,
+  payment_livemode boolean
+)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_order public.store_orders%rowtype;
+begin
+  if p_order_id is null or p_claim_token is null then
+    raise exception 'An inventory reconciliation order and claim token are required.';
+  end if;
+  if p_lease_seconds is null or p_lease_seconds not between 60 and 600 then
+    raise exception 'Inventory reconciliation lease must be between 60 and 600 seconds.';
+  end if;
+
+  select orders.*
+    into v_order
+    from public.store_orders as orders
+   where orders.id = p_order_id
+   for update;
+
+  if not found then
+    return query select 'missing', p_order_id, null::text, null::boolean;
+    return;
+  end if;
+  if v_order.inventory_state <> 'reserved' then
+    return query select 'resolved', v_order.id, null::text, v_order.payment_livemode;
+    return;
+  end if;
+  if v_order.inventory_reserved_until > now() then
+    return query select 'not_due', v_order.id, null::text, v_order.payment_livemode;
+    return;
+  end if;
+  if v_order.inventory_reconciliation_retry_at > now() then
+    return query select 'retry_later', v_order.id, null::text, v_order.payment_livemode;
+    return;
+  end if;
+  if v_order.inventory_reconciliation_claim_token is not null
+     and v_order.inventory_reconciliation_claimed_until > now()
+     and v_order.inventory_reconciliation_claim_token <> p_claim_token then
+    return query select 'busy', v_order.id, null::text, v_order.payment_livemode;
+    return;
+  end if;
+
+  update public.store_orders
+     set inventory_reconciliation_claim_token = p_claim_token,
+         inventory_reconciliation_claimed_until =
+           now() + make_interval(secs => p_lease_seconds),
+         inventory_reconciliation_attempt_count =
+           inventory_reconciliation_attempt_count + 1,
+         inventory_reconciliation_last_attempt_at = now(),
+         inventory_reconciliation_last_error_code = null
+   where id = v_order.id;
+
+  return query
+  select 'claimed', v_order.id, v_order.checkout_session_id,
+         v_order.payment_livemode;
+end;
+$$;
+
+drop function if exists public.release_store_inventory_reconciliation_claim(
+  uuid, uuid, text, integer
+);
+create or replace function public.release_store_inventory_reconciliation_claim(
+  p_order_id uuid,
+  p_claim_token uuid,
+  p_failure_code text default 'inventory_reconciliation_failed',
+  p_retry_seconds integer default 300
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_failure_code text := coalesce(
+    nullif(left(trim(p_failure_code), 100), ''),
+    'inventory_reconciliation_failed'
+  );
+  v_updated integer;
+begin
+  if p_retry_seconds is null or p_retry_seconds not between 60 and 3600 then
+    raise exception 'Inventory reconciliation retry must be between 60 and 3600 seconds.';
+  end if;
+  if v_failure_code !~ '^[A-Za-z0-9_-]{1,100}$' then
+    v_failure_code := 'inventory_reconciliation_failed';
+  end if;
+
+  update public.store_orders
+     set inventory_reconciliation_claim_token = null,
+         inventory_reconciliation_claimed_until = null,
+         inventory_reconciliation_retry_at =
+           now() + make_interval(secs => p_retry_seconds),
+         inventory_reconciliation_last_error_code = v_failure_code
+   where id = p_order_id
+     and inventory_state = 'reserved'
+     and inventory_reconciliation_claim_token = p_claim_token;
+
+  get diagnostics v_updated = row_count;
+  return v_updated = 1;
+end;
+$$;
+
+drop function if exists public.complete_store_inventory_reconciliation_claim(
+  uuid, uuid
+);
+create or replace function public.complete_store_inventory_reconciliation_claim(
+  p_order_id uuid,
+  p_claim_token uuid
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_order public.store_orders%rowtype;
+  v_updated integer;
+begin
+  select orders.*
+    into v_order
+    from public.store_orders as orders
+   where orders.id = p_order_id
+   for update;
+
+  if not found
+     or v_order.inventory_state not in ('committed', 'released') then
+    return false;
+  end if;
+  -- The payment-event transaction clears the lease atomically with its
+  -- terminal inventory transition. A lost HTTP response can therefore retry
+  -- completion safely after the token is already gone.
+  if v_order.inventory_reconciliation_claim_token is null then
+    return true;
+  end if;
+  if v_order.inventory_reconciliation_claim_token <> p_claim_token then
+    return false;
+  end if;
+
+  -- Completion is legal only after the payment-event RPC moved the order to a
+  -- terminal inventory state. A caller cannot use this RPC to clear a hold.
+  update public.store_orders
+     set inventory_reconciliation_claim_token = null,
+         inventory_reconciliation_claimed_until = null,
+         inventory_reconciliation_retry_at = null,
+         inventory_reconciliation_last_error_code = null
+   where id = p_order_id
+     and inventory_state in ('committed', 'released')
+     and inventory_reconciliation_claim_token = p_claim_token;
+
+  get diagnostics v_updated = row_count;
+  return v_updated = 1;
+end;
+$$;
+
 drop function if exists public.check_store_inventory_contract();
 drop function if exists public.check_store_inventory_contract_v2();
 drop function if exists public.check_store_inventory_contract_v3();
 drop function if exists public.check_store_inventory_contract_v4();
-create or replace function public.check_store_inventory_contract_v4()
+drop function if exists public.check_store_inventory_contract_v5();
+create or replace function public.check_store_inventory_contract_v5()
 returns boolean
 language sql
 stable
@@ -1176,12 +1508,42 @@ as $$
   select
     to_regclass('public.store_inventory') is not null
     and to_regclass('public.store_order_notifications') is not null
+    and to_regclass('public.store_refunds') is not null
     and to_regclass(
       'public.store_orders_expedited_capacity_active_idx'
     ) is not null
     and to_regclass(
       'public.store_order_notifications_order_type_idx'
     ) is not null
+    and to_regclass(
+      'public.store_orders_overdue_inventory_reconciliation_idx'
+    ) is not null
+    and to_regclass('public.store_refunds_order_status_idx') is not null
+    and not exists (
+      select 1
+        from unnest(array[
+          'provider_refund_id',
+          'order_id',
+          'payment_intent_id',
+          'charge_id',
+          'amount_cents',
+          'currency',
+          'status',
+          'pending_reason',
+          'failure_reason',
+          'payment_livemode',
+          'provider_created_at',
+          'provider_updated_at',
+          'latest_provider_event_id'
+        ]) as required(column_name)
+       where not exists (
+         select 1
+           from information_schema.columns as columns
+          where columns.table_schema = 'public'
+            and columns.table_name = 'store_refunds'
+            and columns.column_name = required.column_name
+       )
+    )
     and not exists (
       select 1
         from unnest(array[
@@ -1218,8 +1580,18 @@ as $$
           'inventory_state',
           'inventory_reserved_until',
           'inventory_committed_at',
-          'inventory_released_at',
-          'inventory_release_reason'
+           'inventory_released_at',
+           'inventory_release_reason',
+           'inventory_reconciliation_claim_token',
+           'inventory_reconciliation_claimed_until',
+           'inventory_reconciliation_attempt_count',
+           'inventory_reconciliation_last_attempt_at',
+           'inventory_reconciliation_retry_at',
+           'inventory_reconciliation_last_error_code',
+           'refund_lifecycle_started_at',
+           'dispute_id',
+           'dispute_status',
+           'dispute_updated_at'
         ]) as required(column_name)
        where not exists (
          select 1
@@ -1262,7 +1634,25 @@ as $$
       'public.list_pending_store_order_notifications(integer)'
     ) is not null
     and to_regprocedure(
+      'public.list_overdue_store_inventory_reservations(integer)'
+    ) is not null
+    and to_regprocedure(
+      'public.claim_overdue_store_inventory_reservation(uuid,uuid,integer)'
+    ) is not null
+    and to_regprocedure(
+      'public.release_store_inventory_reconciliation_claim(uuid,uuid,text,integer)'
+    ) is not null
+    and to_regprocedure(
+      'public.complete_store_inventory_reconciliation_claim(uuid,uuid)'
+    ) is not null
+    and to_regprocedure(
       'public.process_store_payment_event(text,text,timestamp with time zone,uuid,text,text,text,text,text,text,jsonb,text,integer,text,text,integer,integer,integer,integer,integer,text,text,boolean,integer,text,text,text,text,text)'
+    ) is not null
+    and to_regprocedure(
+      'public.process_store_refund_event(text,text,timestamp with time zone,uuid,text,text,text,text,integer,text,timestamp with time zone,text,text,boolean)'
+    ) is not null
+    and to_regprocedure(
+      'public.process_store_dispute_event(text,text,timestamp with time zone,uuid,text,text,integer,text,text,text,boolean)'
     ) is not null;
 $$;
 
@@ -1320,13 +1710,18 @@ begin
 
   if new.fulfillment_status is distinct from old.fulfillment_status then
     if old.fulfillment_status in ('shipped', 'picked_up')
-       and new.payment_status in ('partially_refunded', 'refunded', 'disputed') then
+       and new.payment_status in (
+         'partially_refunded',
+         'refunded',
+         'disputed',
+         'chargeback'
+       ) then
       raise exception 'Refund or dispute updates cannot overwrite a completed order.';
     end if;
 
-    if new.payment_status = 'refunded'
+    if new.payment_status in ('refunded', 'chargeback')
        and new.fulfillment_status <> 'cancelled' then
-      raise exception 'Refunded orders must remain cancelled before shipment.';
+      raise exception 'Refunded or charged-back orders must remain cancelled before shipment.';
     end if;
 
     if new.payment_status in ('partially_refunded', 'disputed')
@@ -1833,13 +2228,53 @@ begin
              then coalesce(inventory_released_at, v_event_time)
            else inventory_released_at
          end,
-         inventory_release_reason = case
+          inventory_release_reason = case
            when p_payment_status = 'failed'
              and inventory_state = 'reserved'
              then left('Stripe event: ' || p_event_type, 500)
-           else inventory_release_reason
-         end,
-         payment_status = case
+            else inventory_release_reason
+          end,
+          inventory_reconciliation_claim_token = case
+            when p_payment_status in (
+              'paid',
+              'failed',
+              'partially_refunded',
+              'refunded',
+              'disputed'
+            ) then null
+            else inventory_reconciliation_claim_token
+          end,
+          inventory_reconciliation_claimed_until = case
+            when p_payment_status in (
+              'paid',
+              'failed',
+              'partially_refunded',
+              'refunded',
+              'disputed'
+            ) then null
+            else inventory_reconciliation_claimed_until
+          end,
+          inventory_reconciliation_retry_at = case
+            when p_payment_status in (
+              'paid',
+              'failed',
+              'partially_refunded',
+              'refunded',
+              'disputed'
+            ) then null
+            else inventory_reconciliation_retry_at
+          end,
+          inventory_reconciliation_last_error_code = case
+            when p_payment_status in (
+              'paid',
+              'failed',
+              'partially_refunded',
+              'refunded',
+              'disputed'
+            ) then null
+            else inventory_reconciliation_last_error_code
+          end,
+          payment_status = case
            when p_payment_status = 'paid'
              and payment_status in ('pending', 'failed') then 'paid'
            when p_payment_status = 'partially_refunded'
@@ -1914,15 +2349,730 @@ begin
 end;
 $$;
 
+drop function if exists public.process_store_refund_event(
+  text, text, timestamptz, uuid, text, text, text, text, integer, text,
+  timestamptz, text, text, boolean
+);
+create or replace function public.process_store_refund_event(
+  p_provider_event_id text,
+  p_event_type text,
+  p_event_created_at timestamptz,
+  p_order_id uuid,
+  p_refund_id text,
+  p_refund_status text,
+  p_refund_pending_reason text,
+  p_refund_failure_reason text,
+  p_amount_cents integer,
+  p_currency text,
+  p_refund_created_at timestamptz,
+  p_payment_intent_id text,
+  p_charge_id text,
+  p_payment_livemode boolean
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_inserted integer;
+  v_match_count integer;
+  v_order public.store_orders%rowtype;
+  v_existing_refund public.store_refunds%rowtype;
+  v_inventory public.store_inventory%rowtype;
+  v_item record;
+  v_event_time timestamptz := coalesce(p_event_created_at, now());
+  v_previous_status text;
+  v_should_update boolean := true;
+  v_refund_delta integer := 0;
+  v_refunded_total integer;
+  v_has_refund_attention boolean;
+begin
+  if nullif(trim(coalesce(p_provider_event_id, '')), '') is null then
+    raise exception 'A provider event id is required.';
+  end if;
+
+  if not coalesce((
+    (p_event_type in ('refund.created', 'refund.updated')
+      and p_refund_status in (
+        'pending',
+        'requires_action',
+        'succeeded',
+        'failed',
+        'canceled'
+      ))
+    or (p_event_type = 'refund.failed' and p_refund_status = 'failed')
+  ), false) then
+    raise exception 'Refund event % has an invalid lifecycle status.',
+      p_provider_event_id;
+  end if;
+
+  if p_refund_id is null or p_refund_id !~ '^re_[A-Za-z0-9_]+$' then
+    raise exception 'Refund event % is missing a valid refund id.',
+      p_provider_event_id;
+  end if;
+
+  if p_amount_cents is null or p_amount_cents <= 0 then
+    raise exception 'Refund event % is missing a positive amount.',
+      p_provider_event_id;
+  end if;
+
+  if p_currency is null or lower(p_currency) !~ '^[a-z]{3}$' then
+    raise exception 'Refund event % is missing a valid currency.',
+      p_provider_event_id;
+  end if;
+
+  if p_payment_intent_id is null and p_charge_id is null then
+    raise exception 'Refund event % has no payment reference.',
+      p_provider_event_id;
+  end if;
+
+  if p_refund_pending_reason is not null
+     and (
+       p_refund_status <> 'pending'
+       or p_refund_pending_reason !~ '^[a-z0-9_]{1,100}$'
+     ) then
+    raise exception 'Refund event % supplied an invalid pending reason.',
+      p_provider_event_id;
+  end if;
+
+  if p_refund_failure_reason is not null
+     and (
+       p_refund_status <> 'failed'
+       or p_refund_failure_reason !~ '^[a-z0-9_]{1,100}$'
+     ) then
+    raise exception 'Refund event % supplied an invalid failure reason.',
+      p_provider_event_id;
+  end if;
+
+  insert into public.store_payment_events (
+    provider_event_id,
+    event_type,
+    event_created_at
+  ) values (
+    p_provider_event_id,
+    p_event_type,
+    p_event_created_at
+  )
+  on conflict (provider_event_id) do nothing;
+
+  get diagnostics v_inserted = row_count;
+  if v_inserted = 0 then
+    return false;
+  end if;
+
+  select count(distinct orders.id)
+    into v_match_count
+    from public.store_orders as orders
+   where (p_order_id is not null and orders.id = p_order_id)
+      or (
+        p_payment_intent_id is not null
+        and orders.payment_intent_id = p_payment_intent_id
+      )
+      or (p_charge_id is not null and orders.charge_id = p_charge_id);
+
+  if v_match_count > 1 then
+    raise exception 'Refund event % matched conflicting store orders.',
+      p_provider_event_id;
+  end if;
+
+  select orders.*
+    into v_order
+    from public.store_orders as orders
+   where (p_order_id is not null and orders.id = p_order_id)
+      or (
+        p_payment_intent_id is not null
+        and orders.payment_intent_id = p_payment_intent_id
+      )
+      or (p_charge_id is not null and orders.charge_id = p_charge_id)
+   order by
+     case when p_order_id is not null and orders.id = p_order_id then 0 else 1 end,
+     orders.created_at desc
+   limit 1
+   for update;
+
+  if v_order.id is null then
+    raise exception 'No store order matched refund event %.',
+      p_provider_event_id;
+  end if;
+
+  if p_order_id is not null and p_order_id <> v_order.id then
+    raise exception 'Refund event % supplied a conflicting order id.',
+      p_provider_event_id;
+  end if;
+
+  if p_payment_intent_id is not null
+     and v_order.payment_intent_id is not null
+     and p_payment_intent_id <> v_order.payment_intent_id then
+    raise exception 'Refund event % supplied a conflicting Payment Intent.',
+      p_provider_event_id;
+  end if;
+
+  if p_charge_id is not null
+     and v_order.charge_id is not null
+     and p_charge_id <> v_order.charge_id then
+    raise exception 'Refund event % supplied a conflicting Charge.',
+      p_provider_event_id;
+  end if;
+
+  if p_payment_livemode is null
+     or (
+       v_order.payment_livemode is not null
+       and p_payment_livemode <> v_order.payment_livemode
+     ) then
+    raise exception 'Refund event % used the wrong Stripe mode.',
+      p_provider_event_id;
+  end if;
+
+  if lower(p_currency) <> v_order.currency then
+    raise exception 'Refund event % used the wrong currency.',
+      p_provider_event_id;
+  end if;
+
+  if p_amount_cents > v_order.total_cents then
+    raise exception 'Refund event % supplied an amount larger than the order total.',
+      p_provider_event_id;
+  end if;
+
+  select refunds.*
+    into v_existing_refund
+    from public.store_refunds as refunds
+   where refunds.provider_refund_id = p_refund_id
+   for update;
+
+  if found then
+    if v_existing_refund.order_id <> v_order.id
+       or v_existing_refund.amount_cents <> p_amount_cents
+       or v_existing_refund.currency <> lower(p_currency)
+       or v_existing_refund.payment_livemode <> p_payment_livemode
+       or (
+         p_payment_intent_id is not null
+         and v_existing_refund.payment_intent_id is not null
+         and p_payment_intent_id <> v_existing_refund.payment_intent_id
+       )
+       or (
+         p_charge_id is not null
+         and v_existing_refund.charge_id is not null
+         and p_charge_id <> v_existing_refund.charge_id
+       ) then
+      raise exception 'Refund event % conflicts with its saved refund.',
+        p_provider_event_id;
+    end if;
+
+    v_previous_status := v_existing_refund.status;
+    v_should_update := v_event_time > v_existing_refund.provider_updated_at;
+
+    if v_event_time = v_existing_refund.provider_updated_at then
+      v_should_update := case p_refund_status
+        when 'failed' then 5
+        when 'canceled' then 4
+        when 'succeeded' then 3
+        when 'requires_action' then 2
+        else 1
+      end >= case v_existing_refund.status
+        when 'failed' then 5
+        when 'canceled' then 4
+        when 'succeeded' then 3
+        when 'requires_action' then 2
+        else 1
+      end;
+    end if;
+  else
+    v_previous_status := null;
+  end if;
+
+  if v_should_update then
+    insert into public.store_refunds (
+      provider_refund_id,
+      order_id,
+      payment_intent_id,
+      charge_id,
+      amount_cents,
+      currency,
+      status,
+      pending_reason,
+      failure_reason,
+      payment_livemode,
+      provider_created_at,
+      provider_updated_at,
+      latest_provider_event_id
+    ) values (
+      p_refund_id,
+      v_order.id,
+      p_payment_intent_id,
+      p_charge_id,
+      p_amount_cents,
+      lower(p_currency),
+      p_refund_status,
+      p_refund_pending_reason,
+      p_refund_failure_reason,
+      p_payment_livemode,
+      p_refund_created_at,
+      v_event_time,
+      p_provider_event_id
+    )
+    on conflict (provider_refund_id) do update
+      set payment_intent_id = coalesce(
+            excluded.payment_intent_id,
+            store_refunds.payment_intent_id
+          ),
+          charge_id = coalesce(excluded.charge_id, store_refunds.charge_id),
+          status = excluded.status,
+          pending_reason = excluded.pending_reason,
+          failure_reason = excluded.failure_reason,
+          provider_created_at = coalesce(
+            store_refunds.provider_created_at,
+            excluded.provider_created_at
+          ),
+          provider_updated_at = excluded.provider_updated_at,
+          latest_provider_event_id = excluded.latest_provider_event_id;
+
+    if v_previous_status is null
+       and p_refund_created_at is not null
+       and p_refund_created_at < v_order.refund_lifecycle_started_at
+       and v_order.amount_refunded_cents >= p_amount_cents then
+      -- Before the Refund-object cutover, charge.refunded snapshots could
+      -- already have counted this amount. Do not double count a historical
+      -- success, and undo the legacy optimistic amount as soon as Stripe says
+      -- that historical refund is not actually succeeded.
+      if p_refund_status <> 'succeeded' then
+        v_refund_delta := -p_amount_cents;
+      end if;
+    elsif v_previous_status = 'succeeded'
+       and p_refund_status <> 'succeeded' then
+      v_refund_delta := -p_amount_cents;
+    elsif coalesce(v_previous_status, '') <> 'succeeded'
+          and p_refund_status = 'succeeded' then
+      v_refund_delta := p_amount_cents;
+    end if;
+  end if;
+
+  v_refunded_total := v_order.amount_refunded_cents + v_refund_delta;
+  if v_refunded_total < 0 or v_refunded_total > v_order.total_cents then
+    raise exception 'Refund event % produced an invalid refunded total.',
+      p_provider_event_id;
+  end if;
+
+  if v_order.inventory_state = 'released' then
+    raise exception 'Refund event % arrived after inventory was released.',
+      p_provider_event_id;
+  end if;
+
+  if v_order.inventory_state = 'reserved' then
+    for v_item in
+      select items.sku, sum(items.quantity)::integer as quantity
+        from public.store_order_items as items
+       where items.order_id = v_order.id
+       group by items.sku
+       order by items.sku
+    loop
+      select inventory.*
+        into v_inventory
+        from public.store_inventory as inventory
+       where inventory.sku = v_item.sku
+       for update;
+
+      if not found
+         or v_inventory.reserved_quantity < v_item.quantity
+         or v_inventory.on_hand_quantity < v_item.quantity then
+        raise exception 'Reserved inventory is inconsistent for refund SKU %.',
+          v_item.sku;
+      end if;
+    end loop;
+
+    for v_item in
+      select items.sku, sum(items.quantity)::integer as quantity
+        from public.store_order_items as items
+       where items.order_id = v_order.id
+       group by items.sku
+       order by items.sku
+    loop
+      update public.store_inventory
+         set on_hand_quantity = on_hand_quantity - v_item.quantity,
+             reserved_quantity = reserved_quantity - v_item.quantity
+       where sku = v_item.sku;
+    end loop;
+  end if;
+
+  select exists (
+    select 1
+      from public.store_refunds as refunds
+     where refunds.order_id = v_order.id
+       and refunds.status in (
+         'pending',
+         'requires_action',
+         'failed',
+         'canceled'
+       )
+  ) into v_has_refund_attention;
+
+  update public.store_orders
+     set payment_intent_id = coalesce(
+           payment_intent_id,
+           nullif(p_payment_intent_id, '')
+         ),
+         charge_id = coalesce(charge_id, nullif(p_charge_id, '')),
+         payment_livemode = coalesce(payment_livemode, p_payment_livemode),
+         amount_refunded_cents = v_refunded_total,
+         payment_status = case
+           when payment_status in ('disputed', 'chargeback') then payment_status
+           when v_refunded_total = total_cents and total_cents > 0
+             then 'refunded'
+           when v_refunded_total > 0 then 'partially_refunded'
+           else 'paid'
+         end,
+         fulfillment_status = case
+           when fulfillment_status in ('shipped', 'picked_up')
+             then fulfillment_status
+           when payment_status = 'chargeback' then 'cancelled'
+           when payment_status = 'disputed' then 'on_hold'
+           when v_refunded_total = total_cents and total_cents > 0
+             then 'cancelled'
+           when v_refunded_total > 0 or v_has_refund_attention
+             then 'on_hold'
+           else fulfillment_status
+         end,
+         inventory_state = case
+           when inventory_state = 'reserved' then 'committed'
+           else inventory_state
+         end,
+         expedited_capacity_state = case
+           when expedited_capacity_state = 'reserved' then 'committed'
+           else expedited_capacity_state
+         end,
+         inventory_committed_at = case
+           when inventory_state = 'reserved'
+             then coalesce(inventory_committed_at, v_event_time)
+           else inventory_committed_at
+         end,
+         inventory_reconciliation_claim_token = null,
+         inventory_reconciliation_claimed_until = null,
+         inventory_reconciliation_retry_at = null,
+         inventory_reconciliation_last_error_code = null,
+         paid_at = coalesce(paid_at, v_event_time),
+         refunded_at = case
+           when v_refunded_total > 0 then coalesce(refunded_at, v_event_time)
+           else null
+         end
+   where id = v_order.id;
+
+  update public.store_payment_events
+     set order_id = v_order.id,
+         processed_at = now()
+   where provider_event_id = p_provider_event_id;
+
+  return true;
+end;
+$$;
+
+drop function if exists public.process_store_dispute_event(
+  text, text, timestamptz, uuid, text, text, integer, text, text, text, boolean
+);
+create or replace function public.process_store_dispute_event(
+  p_provider_event_id text,
+  p_event_type text,
+  p_event_created_at timestamptz,
+  p_order_id uuid,
+  p_dispute_id text,
+  p_dispute_status text,
+  p_amount_cents integer,
+  p_currency text,
+  p_payment_intent_id text,
+  p_charge_id text,
+  p_payment_livemode boolean
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_inserted integer;
+  v_match_count integer;
+  v_order public.store_orders%rowtype;
+  v_inventory public.store_inventory%rowtype;
+  v_item record;
+  v_event_time timestamptz := coalesce(p_event_created_at, now());
+  v_should_update boolean := true;
+begin
+  if nullif(trim(coalesce(p_provider_event_id, '')), '') is null then
+    raise exception 'A provider event id is required.';
+  end if;
+
+  if not coalesce((
+    (p_event_type = 'charge.dispute.created'
+      and p_dispute_status in (
+        'warning_needs_response',
+        'warning_under_review',
+        'warning_closed',
+        'needs_response',
+        'under_review',
+        'won',
+        'lost',
+        'prevented'
+      ))
+    or (p_event_type = 'charge.dispute.closed'
+      and p_dispute_status in ('warning_closed', 'won', 'lost', 'prevented'))
+  ), false) then
+    raise exception 'Dispute event % has an invalid lifecycle status.',
+      p_provider_event_id;
+  end if;
+
+  if p_dispute_id is null or p_dispute_id !~ '^dp_[A-Za-z0-9_]+$' then
+    raise exception 'Dispute event % is missing a valid dispute id.',
+      p_provider_event_id;
+  end if;
+
+  if p_amount_cents is null or p_amount_cents <= 0 then
+    raise exception 'Dispute event % is missing a positive amount.',
+      p_provider_event_id;
+  end if;
+
+  if p_currency is null or lower(p_currency) !~ '^[a-z]{3}$' then
+    raise exception 'Dispute event % is missing a valid currency.',
+      p_provider_event_id;
+  end if;
+
+  if p_payment_intent_id is null and p_charge_id is null then
+    raise exception 'Dispute event % has no payment reference.',
+      p_provider_event_id;
+  end if;
+
+  insert into public.store_payment_events (
+    provider_event_id,
+    event_type,
+    event_created_at
+  ) values (
+    p_provider_event_id,
+    p_event_type,
+    p_event_created_at
+  )
+  on conflict (provider_event_id) do nothing;
+
+  get diagnostics v_inserted = row_count;
+  if v_inserted = 0 then
+    return false;
+  end if;
+
+  select count(distinct orders.id)
+    into v_match_count
+    from public.store_orders as orders
+   where (p_order_id is not null and orders.id = p_order_id)
+      or (
+        p_payment_intent_id is not null
+        and orders.payment_intent_id = p_payment_intent_id
+      )
+      or (p_charge_id is not null and orders.charge_id = p_charge_id);
+
+  if v_match_count > 1 then
+    raise exception 'Dispute event % matched conflicting store orders.',
+      p_provider_event_id;
+  end if;
+
+  select orders.*
+    into v_order
+    from public.store_orders as orders
+   where (p_order_id is not null and orders.id = p_order_id)
+      or (
+        p_payment_intent_id is not null
+        and orders.payment_intent_id = p_payment_intent_id
+      )
+      or (p_charge_id is not null and orders.charge_id = p_charge_id)
+   order by
+     case when p_order_id is not null and orders.id = p_order_id then 0 else 1 end,
+     orders.created_at desc
+   limit 1
+   for update;
+
+  if v_order.id is null then
+    raise exception 'No store order matched dispute event %.',
+      p_provider_event_id;
+  end if;
+
+  if p_order_id is not null and p_order_id <> v_order.id then
+    raise exception 'Dispute event % supplied a conflicting order id.',
+      p_provider_event_id;
+  end if;
+
+  if v_order.dispute_id is not null and v_order.dispute_id <> p_dispute_id then
+    raise exception 'Dispute event % conflicts with the saved dispute.',
+      p_provider_event_id;
+  end if;
+
+  if p_payment_intent_id is not null
+     and v_order.payment_intent_id is not null
+     and p_payment_intent_id <> v_order.payment_intent_id then
+    raise exception 'Dispute event % supplied a conflicting Payment Intent.',
+      p_provider_event_id;
+  end if;
+
+  if p_charge_id is not null
+     and v_order.charge_id is not null
+     and p_charge_id <> v_order.charge_id then
+    raise exception 'Dispute event % supplied a conflicting Charge.',
+      p_provider_event_id;
+  end if;
+
+  if p_payment_livemode is null
+     or (
+       v_order.payment_livemode is not null
+       and p_payment_livemode <> v_order.payment_livemode
+     ) then
+    raise exception 'Dispute event % used the wrong Stripe mode.',
+      p_provider_event_id;
+  end if;
+
+  if lower(p_currency) <> v_order.currency
+     or p_amount_cents > v_order.total_cents then
+    raise exception 'Dispute event % conflicts with the order amount.',
+      p_provider_event_id;
+  end if;
+
+  if v_order.dispute_updated_at is not null then
+    v_should_update := v_event_time > v_order.dispute_updated_at;
+    if v_event_time = v_order.dispute_updated_at then
+      v_should_update := case p_dispute_status
+        when 'won' then 8
+        when 'lost' then 7
+        when 'prevented' then 6
+        when 'warning_closed' then 5
+        when 'under_review' then 4
+        when 'warning_under_review' then 3
+        when 'needs_response' then 2
+        else 1
+      end >= case v_order.dispute_status
+        when 'won' then 8
+        when 'lost' then 7
+        when 'prevented' then 6
+        when 'warning_closed' then 5
+        when 'under_review' then 4
+        when 'warning_under_review' then 3
+        when 'needs_response' then 2
+        else 1
+      end;
+    end if;
+  end if;
+
+  if not v_should_update then
+    update public.store_payment_events
+       set order_id = v_order.id,
+           processed_at = now()
+     where provider_event_id = p_provider_event_id;
+    return true;
+  end if;
+
+  if v_order.inventory_state = 'released' then
+    raise exception 'Dispute event % arrived after inventory was released.',
+      p_provider_event_id;
+  end if;
+
+  if v_order.inventory_state = 'reserved' then
+    for v_item in
+      select items.sku, sum(items.quantity)::integer as quantity
+        from public.store_order_items as items
+       where items.order_id = v_order.id
+       group by items.sku
+       order by items.sku
+    loop
+      select inventory.*
+        into v_inventory
+        from public.store_inventory as inventory
+       where inventory.sku = v_item.sku
+       for update;
+
+      if not found
+         or v_inventory.reserved_quantity < v_item.quantity
+         or v_inventory.on_hand_quantity < v_item.quantity then
+        raise exception 'Reserved inventory is inconsistent for dispute SKU %.',
+          v_item.sku;
+      end if;
+    end loop;
+
+    for v_item in
+      select items.sku, sum(items.quantity)::integer as quantity
+        from public.store_order_items as items
+       where items.order_id = v_order.id
+       group by items.sku
+       order by items.sku
+    loop
+      update public.store_inventory
+         set on_hand_quantity = on_hand_quantity - v_item.quantity,
+             reserved_quantity = reserved_quantity - v_item.quantity
+       where sku = v_item.sku;
+    end loop;
+  end if;
+
+  update public.store_orders
+     set payment_intent_id = coalesce(
+           payment_intent_id,
+           nullif(p_payment_intent_id, '')
+         ),
+         charge_id = coalesce(charge_id, nullif(p_charge_id, '')),
+         payment_livemode = coalesce(payment_livemode, p_payment_livemode),
+         dispute_id = p_dispute_id,
+         dispute_status = p_dispute_status,
+         dispute_updated_at = v_event_time,
+         payment_status = case
+           when p_dispute_status in (
+             'warning_needs_response',
+             'warning_under_review',
+             'needs_response',
+             'under_review'
+           ) then 'disputed'
+           when p_dispute_status = 'lost' then 'chargeback'
+           when amount_refunded_cents = total_cents and total_cents > 0
+             then 'refunded'
+           when amount_refunded_cents > 0 then 'partially_refunded'
+           else 'paid'
+         end,
+         fulfillment_status = case
+           when fulfillment_status in ('shipped', 'picked_up')
+             then fulfillment_status
+           when p_dispute_status = 'lost'
+             or (amount_refunded_cents = total_cents and total_cents > 0)
+             then 'cancelled'
+           else 'on_hold'
+         end,
+         inventory_state = case
+           when inventory_state = 'reserved' then 'committed'
+           else inventory_state
+         end,
+         expedited_capacity_state = case
+           when expedited_capacity_state = 'reserved' then 'committed'
+           else expedited_capacity_state
+         end,
+         inventory_committed_at = case
+           when inventory_state = 'reserved'
+             then coalesce(inventory_committed_at, v_event_time)
+           else inventory_committed_at
+         end,
+         inventory_reconciliation_claim_token = null,
+         inventory_reconciliation_claimed_until = null,
+         inventory_reconciliation_retry_at = null,
+         inventory_reconciliation_last_error_code = null,
+         paid_at = coalesce(paid_at, v_event_time)
+   where id = v_order.id;
+
+  update public.store_payment_events
+     set order_id = v_order.id,
+         processed_at = now()
+   where provider_event_id = p_provider_event_id;
+
+  return true;
+end;
+$$;
+
 alter table public.store_orders enable row level security;
 alter table public.store_order_items enable row level security;
 alter table public.store_payment_events enable row level security;
+alter table public.store_refunds enable row level security;
 alter table public.store_inventory enable row level security;
 alter table public.store_order_notifications enable row level security;
 
 drop policy if exists "Store orders are private" on public.store_orders;
 drop policy if exists "Store order items are private" on public.store_order_items;
 drop policy if exists "Store payment events are private" on public.store_payment_events;
+drop policy if exists "Store refunds are private" on public.store_refunds;
 drop policy if exists "Store inventory is private" on public.store_inventory;
 drop policy if exists "Store order notifications are private"
   on public.store_order_notifications;
@@ -1933,6 +3083,8 @@ create policy "Store order items are private"
   on public.store_order_items for all using (false) with check (false);
 create policy "Store payment events are private"
   on public.store_payment_events for all using (false) with check (false);
+create policy "Store refunds are private"
+  on public.store_refunds for all using (false) with check (false);
 create policy "Store inventory is private"
   on public.store_inventory for all using (false) with check (false);
 create policy "Store order notifications are private"
@@ -1941,6 +3093,7 @@ create policy "Store order notifications are private"
 revoke all on public.store_orders from public, anon, authenticated;
 revoke all on public.store_order_items from public, anon, authenticated;
 revoke all on public.store_payment_events from public, anon, authenticated;
+revoke all on public.store_refunds from public, anon, authenticated;
 revoke all on public.store_inventory from public, anon, authenticated;
 revoke all on public.store_order_notifications from public, anon, authenticated;
 revoke all on function public.reserve_store_order_inventory(
@@ -1953,7 +3106,7 @@ revoke all on function public.attach_store_checkout_session(
 revoke all on function public.fail_store_order_checkout_and_release_inventory(
   uuid, text
 ) from public, anon, authenticated;
-revoke all on function public.check_store_inventory_contract_v4()
+revoke all on function public.check_store_inventory_contract_v5()
   from public, anon, authenticated;
 revoke all on function public.claim_store_order_notification(
   uuid, text, uuid, integer
@@ -1966,15 +3119,34 @@ revoke all on function public.release_store_order_notification(
 ) from public, anon, authenticated;
 revoke all on function public.list_pending_store_order_notifications(integer)
   from public, anon, authenticated;
+revoke all on function public.list_overdue_store_inventory_reservations(integer)
+  from public, anon, authenticated;
+revoke all on function public.claim_overdue_store_inventory_reservation(
+  uuid, uuid, integer
+) from public, anon, authenticated;
+revoke all on function public.release_store_inventory_reconciliation_claim(
+  uuid, uuid, text, integer
+) from public, anon, authenticated;
+revoke all on function public.complete_store_inventory_reconciliation_claim(
+  uuid, uuid
+) from public, anon, authenticated;
 revoke all on function public.process_store_payment_event(
   text, text, timestamptz, uuid, text, text, text, text, text, text, jsonb,
   text, integer, text, text, integer, integer, integer, integer, integer,
   text, text, boolean, integer, text, text, text, text, text
 ) from public, anon, authenticated;
+revoke all on function public.process_store_refund_event(
+  text, text, timestamptz, uuid, text, text, text, text, integer, text,
+  timestamptz, text, text, boolean
+) from public, anon, authenticated;
+revoke all on function public.process_store_dispute_event(
+  text, text, timestamptz, uuid, text, text, integer, text, text, text, boolean
+) from public, anon, authenticated;
 
 revoke all on public.store_orders from service_role;
 revoke all on public.store_order_items from service_role;
 revoke all on public.store_payment_events from service_role;
+revoke all on public.store_refunds from service_role;
 revoke all on public.store_inventory from service_role;
 revoke all on public.store_order_notifications from service_role;
 grant select on public.store_orders to service_role;
@@ -1987,6 +3159,7 @@ grant update (
 ) on public.store_orders to service_role;
 grant select on public.store_order_items to service_role;
 grant select on public.store_inventory to service_role;
+grant select on public.store_refunds to service_role;
 grant execute on function public.reserve_store_order_inventory(
   uuid, uuid, text, text, boolean, integer, text, text, integer, integer,
   text, text, text, text, integer, integer, timestamptz, jsonb
@@ -1997,7 +3170,7 @@ grant execute on function public.attach_store_checkout_session(
 grant execute on function public.fail_store_order_checkout_and_release_inventory(
   uuid, text
 ) to service_role;
-grant execute on function public.check_store_inventory_contract_v4()
+grant execute on function public.check_store_inventory_contract_v5()
   to service_role;
 grant execute on function public.claim_store_order_notification(
   uuid, text, uuid, integer
@@ -2010,10 +3183,28 @@ grant execute on function public.release_store_order_notification(
 ) to service_role;
 grant execute on function public.list_pending_store_order_notifications(integer)
   to service_role;
+grant execute on function public.list_overdue_store_inventory_reservations(integer)
+  to service_role;
+grant execute on function public.claim_overdue_store_inventory_reservation(
+  uuid, uuid, integer
+) to service_role;
+grant execute on function public.release_store_inventory_reconciliation_claim(
+  uuid, uuid, text, integer
+) to service_role;
+grant execute on function public.complete_store_inventory_reconciliation_claim(
+  uuid, uuid
+) to service_role;
 grant execute on function public.process_store_payment_event(
   text, text, timestamptz, uuid, text, text, text, text, text, text, jsonb,
   text, integer, text, text, integer, integer, integer, integer, integer,
   text, text, boolean, integer, text, text, text, text, text
+) to service_role;
+grant execute on function public.process_store_refund_event(
+  text, text, timestamptz, uuid, text, text, text, text, integer, text,
+  timestamptz, text, text, boolean
+) to service_role;
+grant execute on function public.process_store_dispute_event(
+  text, text, timestamptz, uuid, text, text, integer, text, text, text, boolean
 ) to service_role;
 
 comment on table public.store_orders is
@@ -2022,7 +3213,15 @@ comment on table public.store_order_items is
   'Immutable product and price snapshots retained with each order.';
 comment on table public.store_payment_events is
   'Idempotency log for payment-provider webhook events.';
+comment on table public.store_refunds is
+  'Private Stripe Refund lifecycle ledger. Only succeeded rows contribute to the order refunded amount; pending and failed attempts remain visible without restocking inventory.';
+comment on column public.store_orders.refund_lifecycle_started_at is
+  'Stable cutover boundary used to avoid double-counting refunds previously recorded from legacy charge.refunded snapshots.';
 comment on table public.store_inventory is
   'Private per-SKU finished inventory or owner-approved made-to-order ATP capacity. On-hand includes active reservations; available capacity is on-hand minus reserved.';
 comment on table public.store_order_notifications is
   'Private transactional outbox for idempotent merchant order notifications. Customer PII remains in the canonical order ledger, not in this retry table.';
+comment on column public.store_orders.inventory_reconciliation_claim_token is
+  'Private short-lived lease token for Stripe-verified overdue reservation reconciliation.';
+comment on column public.store_orders.inventory_reconciliation_retry_at is
+  'Earliest time an unresolved overdue reservation may be retried; never authorizes inventory release.';

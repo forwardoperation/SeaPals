@@ -44,8 +44,8 @@ Use a checkout-disabled maintenance window:
    build and dispatch within the published window, after accounting for work
    already promised. Use the smaller supported limit when materials and labor
    produce different answers. The owner has set the initial cap at 10 for each
-   of the 12 launch SKUs. The reviewed one-time seed is
-   `supabase/store-launch-capacity.sql`; it inserts one row for every launch
+   of the 12 prepared SKUs. The reviewed one-time seed is
+   `supabase/store-launch-capacity.sql`; it inserts one row for every prepared
    catalog SKU. Its values are reproduced here for operational review:
 
    ```sql
@@ -67,7 +67,10 @@ Use a checkout-disabled maintenance window:
    ```
 
    This example records the owner-approved caps; it does not prove that shared
-   resources can support 120 simultaneous units. Confirm the aggregate material
+   resources can support 120 simultaneous units. The initial public allowlist
+   contains only the seven deck SKUs (70 units of aggregate ATP); the other five
+   rows remain dormant preparation records and must not be treated as public
+   availability. Confirm the aggregate material
    and labor plan before running it. Never use an `on conflict ... do update`
    deployment script: redeploying it could replenish already-sold capacity.
    Never reset a count merely because a new day or week began.
@@ -85,14 +88,16 @@ Use a checkout-disabled maintenance window:
    synchronous payment methods and set `STRIPE_PAYMENT_METHOD_CONFIGURATION_ID`.
    Do not enable delayed methods until processing-state holds are designed.
 8. Run `npm run store:check:online` against production; its inventory checks are
-   read-only. Run test-mode Checkout, signed webhook, expiration/failure release,
-   and refund/dispute lifecycle tests against a separate non-production Supabase
-   project and inventory dataset. Never give a staging/test deployment the
-   production service-role key or let Stripe test-mode events mutate production
-   inventory. The ledger is keyed by SKU rather than Stripe mode, so a test-mode
-   payment against production would consume real counters. Any production smoke
-   purchase must be a real live sale with its finished unit or ATP capacity
-   allocated; do not silently restore it afterward. Verify `on_hand` and
+   read-only. Prefer a separate non-production Supabase project and inventory
+   dataset for test-mode Checkout, signed webhook, expiration/failure release,
+   and refund/dispute lifecycle tests. The ledger is keyed by SKU rather than
+   Stripe mode, so a test-mode payment against production consumes real counters.
+   If a separate project is unavailable, keep public checkout disabled, expose
+   only the dormant `SP-KIT-STARTER-V01` test SKU locally, and treat its one test
+   unit as an intentional production-ledger mutation. Never use a seven-deck
+   launch row for that test. A refund does not restock it; leave the unit
+   conservatively consumed or make a documented, intentional capacity adjustment
+   only after reviewing the order and refund records. Verify `on_hand` and
    `reserved` after every transition.
 9. Enable checkout only after the owner confirms the ATP capacities and
    published build-and-dispatch windows, confirms the shared one-business-day
@@ -117,7 +122,8 @@ SKU its operational meaning is the currently unconsumed ATP capacity. It is not
 a raw-material ledger, production schedule, or bill-of-materials system.
 
 The owner-approved initial cap is 10 and the standard build-and-dispatch window
-is five business days for each of the 12 launch SKUs. Before seeding all rows,
+is five business days for each of the 12 prepared SKUs. The initial public
+catalog uses only the seven deck rows. Before seeding all rows,
 verify that dedicated materials and labor can support the aggregate promise;
 twelve separate rows at 10 can accept up to 120 units concurrently. If that is
 not supportable, dedicate resources or lower the affected values.
@@ -218,8 +224,9 @@ owner-approved 10-order control remains active.
 - available units equal `on_hand_quantity - reserved_quantity`.
 - reservation atomically locks each SKU, checks availability, increments the
   hold, creates the order, and stores immutable item snapshots.
-- paid/refund/dispute events commit once by subtracting both on-hand and held
-  units. Refunds never automatically restock a returned product.
+- paid and authenticated refund/dispute lifecycle events commit once by
+  subtracting both on-hand and held units. Refunds and chargebacks never
+  automatically restock a returned product.
 - `checkout.session.expired` and `checkout.session.async_payment_failed`
   release both the inventory hold and an expedited due-date slot. A
   `payment_intent.payment_failed` event is a retryable payment attempt and
@@ -228,6 +235,76 @@ owner-approved 10-order control remains active.
   idempotent. A browser retry, cancel return, or reload reuses the saved Session
   while the cart, production choice, and fulfillment choice are unchanged.
 
+## Cancellations, returns, and customer problems
+
+Use `maker@seapalstcg.com` as the public support channel and require the order
+number plus the purchaser's email address before changing an order. Apply the
+owner-approved policy consistently:
+
+- Honor a cancellation request emailed within two hours after purchase. After
+  that window, use the return rules rather than promising cancellation.
+- Accept an unopened-item return requested within 30 calendar days after
+  carrier-tracked delivery or scheduled pickup. Send return instructions
+  before the customer mails anything. The customer pays postage for an ordinary
+  unopened-item return.
+- Treat opened or played products as final sale unless they are damaged,
+  defective, missing, or incorrect. Require those problems to be reported
+  within 14 calendar days after delivery or pickup, then record the report and
+  send the applicable return or remedy instructions.
+- Investigate a shipment when tracking suggests carrier loss. Once carrier loss
+  is confirmed, replace the affected order subject to product availability or
+  issue a refund.
+- Issue an accepted refund to the original payment method within five business
+  days. For a physical return, count from receipt and inspection. Tell the
+  customer that their bank or card issuer may take additional time to post it.
+
+Record the support request timestamp, order number, decision, any returned
+quantity, inspection result, refund identifier, and customer communication in
+the private order record. A refund does not automatically put returned units
+back into available inventory. Inspect the returned item and make any safe,
+intentional inventory adjustment separately.
+
+### Stripe refund and dispute lifecycle
+
+The live Stripe event destination must subscribe to this exact effective set:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `checkout.session.expired`
+- `payment_intent.payment_failed`
+- `refund.created`
+- `refund.updated`
+- `refund.failed`
+- `charge.dispute.created`
+- `charge.dispute.closed`
+
+`charge.refunded` may remain subscribed temporarily for compatibility, making
+11 selected events, but the endpoint deliberately acknowledges and ignores it.
+Stripe identifies `refund.created`, `refund.updated`, and `refund.failed` as the
+authoritative Refund-object lifecycle. A Charge snapshot can describe a refund
+before it ultimately succeeds, so it must never mark an order refunded.
+
+Each Refund object is stored privately by its `re_` identifier. `pending` and
+`requires_action` refunds keep fulfillment on hold but do not increase the
+refunded amount or cancel the order. `failed` and `canceled` attempts remain
+visible for operator follow-up and do not change inventory. Only `succeeded`
+refunds increase `amount_refunded_cents`; a succeeded refund that later fails
+is subtracted again and the order remains on hold for manual resolution.
+Multiple partial refunds reconcile independently and webhook event IDs make
+retries idempotent. The schema records a stable per-order Refund-object cutover
+time so a delayed event for a legacy `charge.refunded` snapshot is not counted
+twice, and a later failure can remove that legacy optimistic amount.
+
+An open dispute sets the payment to `disputed`. `charge.dispute.closed`
+records Stripe's final status: `lost` becomes `chargeback` and cancels an
+unfulfilled order, while `won`, `prevented`, or `warning_closed` restores the
+underlying paid/partially-refunded/refunded state. A merchant-favorable closure
+stays on hold until an operator deliberately resumes fulfillment; a late win
+therefore never restarts a previously cancelled order automatically. Completed
+shipments and pickups are never overwritten, and neither outcome restocks
+inventory.
+
 ## Stale or ambiguous reservations
 
 Never release solely because `inventory_reserved_until` passed. Stripe can
@@ -235,23 +312,47 @@ deliver a terminal webhook late, and a completed asynchronous payment can settle
 after Checkout itself closes. Launch configuration therefore excludes delayed
 payment methods.
 
-For a reserved order whose Session outcome is unclear:
+The five-minute Worker cron now reconciles overdue `reserved` rows through a
+private, service-role-only queue. Passing the deadline only makes a row
+eligible for inspection; neither the listing RPC nor the lease RPC changes an
+inventory count. Each run lists at most 10 rows, processes them sequentially,
+and gives each candidate a three-minute database lease. An unresolved claim is
+released with a five-minute retry delay, and database limits cap a manual batch
+at 25, a lease at 10 minutes, and retry delay at one hour.
 
-1. Retrieve the saved `checkout_session_id` from Stripe.
-2. If Stripe says `complete` or `payment_status=paid`, replay/reconcile the
-   signed event and commit the reservation.
-3. If Stripe says `open`, explicitly expire it and confirm Stripe returns
-   `status=expired`; the signed expiration event should release the hold.
-4. Only after Stripe confirms terminal unpaid/expired status may an operator
-   call `fail_store_order_checkout_and_release_inventory` for that order.
-5. If the order has no saved Session because Session creation had an ambiguous
-   network outcome, retry the same browser request UUID. Stripe receives the
-   same per-order idempotency key. Do not create a second request UUID merely
-   to clear the hold.
+For each claimed order, the Worker follows this state machine:
 
-A scheduled reconciliation job should follow those Stripe verification steps
-for overdue `reserved` orders. The database intentionally has no clock-only
-sweep because that could sell a unit twice.
+1. Retrieve the exact saved `checkout_session_id` from Stripe and verify its
+   ID, live/test mode, order metadata, client reference, reservation version,
+   and payment mode against the private order row. A missing or mismatched
+   reference remains held.
+2. If Stripe reports both `status=complete` and `payment_status=paid`, feed a
+   deterministic synthetic event ID into the same atomic
+   `process_store_payment_event` RPC used by signed webhooks. That commits the
+   reservation and repairs the merchant-notification outbox idempotently. A
+   complete-but-unpaid or otherwise ambiguous Session remains held.
+3. If Stripe reports `status=open` and `payment_status=unpaid`, explicitly ask
+   Stripe to expire it with a stable idempotency key. Ignore the POST response
+   for release purposes and retrieve the Session again.
+4. Release inventory only when that fresh Stripe retrieval reports
+   `status=expired` and `payment_status=unpaid`. The terminal transition again
+   runs through `process_store_payment_event`; no reconciliation RPC directly
+   decrements `reserved_quantity`.
+5. Provider, database, missing-reference, and ambiguous-state failures clear
+   only the short reconciliation lease and schedule a retry. They leave the
+   inventory and rush-capacity reservation intact.
+
+The payment transition clears reconciliation lease metadata atomically, while
+claim completion is idempotent if its response is lost. The cron runs this job
+and the merchant-notification drain with `Promise.allSettled`, so either job is
+attempted even if the other fails. Logs contain bounded count summaries and
+stable error codes only—never order IDs, Session IDs, secrets, addresses, or
+customer details.
+
+For a reservation with no saved Session because Session creation had an
+ambiguous network outcome, retry the same browser request UUID. Stripe receives
+the same per-order idempotency key. Do not create a second request UUID or
+manually release the row merely to clear the hold.
 
 ## Merchant purchase-alert outbox
 
@@ -298,14 +399,19 @@ Monitor:
 - reservations past their deadline;
 - repeated checkout request conflicts;
 - `reserved_quantity > 0` for long periods;
-- inventory RPC/webhook failures; and
+- inventory RPC/webhook failures;
+- reconciliation rows whose attempt count or last safe error code keeps
+  increasing after the underlying Stripe or database incident is corrected;
 - unsent `store_order_notifications` rows, failed Cron Trigger outcomes, or
   repeated email-provider failures;
-- bursts of new unpaid reservations.
+- bursts of new unpaid reservations or checkout 429 responses in Cloudflare
+  Worker logs.
 
-Unauthenticated reservations can be abused to hold scarce stock. Add a
-Cloudflare rate limit for `POST /api/store/checkout` by IP/device plus a global
-burst alarm before a limited-inventory launch. The SQL locking prevents
-overselling, but rate limiting protects availability from deliberate hoarding.
-Treat that rate limit and a scheduled Stripe-verified overdue-reservation
-reconciliation job as launch blockers, not optional future cleanup.
+Unauthenticated reservations can be abused to hold scarce stock. The production
+Worker therefore calls a native Cloudflare Rate Limiting binding only for exact
+`POST /api/store/checkout` requests. It permits 10 attempts per 60 seconds per
+one-way hash of the edge-reported network address, emits safe 429/503 log
+records, and fails closed if the binding is unavailable. Cloudflare documents
+these counters as local, permissive, and eventually consistent, so they reduce
+abuse but do not replace SQL locking, hard ATP limits, or the Stripe-verified
+scheduled reconciler.

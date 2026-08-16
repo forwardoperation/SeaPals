@@ -32,6 +32,7 @@ const STANDARD_SHIPPING_CENTS = 1000;
 const PRIORITY_SHIPPING_CENTS = 1500;
 const LARGE_STANDARD_SHIPPING_CENTS = 2000;
 const LARGE_PRIORITY_SHIPPING_CENTS = 3500;
+const LAUNCH_DECK_PRICE_CENTS = 2200;
 
 function addCheck(label, passed, detail, required = true) {
   checks.push({ label, passed: Boolean(passed), detail, required });
@@ -400,26 +401,39 @@ addCheck(
 );
 
 if (launchCatalog) {
+  const availableProductIdSet = new Set(availableProducts);
   const missingLaunchProducts = storeLaunchProductIds.filter(
-    (productId) => !availableProducts.includes(productId)
+    (productId) => !availableProductIdSet.has(productId)
   );
-  const unpricedLaunchProducts = storeLaunchProductIds.filter(
-    (productId) => resolvedProductPrice(productId) === null
+  const unexpectedLaunchProducts = availableProducts.filter(
+    (productId) => !storeLaunchProductIds.includes(productId)
+  );
+  const duplicateLaunchProducts = availableProducts.filter(
+    (productId, index) => availableProducts.indexOf(productId) !== index
+  );
+  const incorrectlyPricedLaunchProducts = storeLaunchProductIds.filter(
+    (productId) => resolvedProductPrice(productId) !== LAUNCH_DECK_PRICE_CENTS
   );
 
   addCheck(
-    "Complete twelve-product launch allowlist",
-    missingLaunchProducts.length === 0,
+    "Exact seven-deck launch allowlist",
+    missingLaunchProducts.length === 0 &&
+      unexpectedLaunchProducts.length === 0 &&
+      duplicateLaunchProducts.length === 0,
     missingLaunchProducts.length
       ? `Still missing: ${missingLaunchProducts.join(", ")}.`
-      : "The Starter Kit, seven decks, Accessories Kit, Conditions Deck, Dice Pack, and RP Tokens are all selected."
+      : unexpectedLaunchProducts.length
+        ? `Remove non-launch products: ${unexpectedLaunchProducts.join(", ")}.`
+        : duplicateLaunchProducts.length
+          ? `Remove duplicate product IDs: ${[...new Set(duplicateLaunchProducts)].join(", ")}.`
+          : "Only Blue Water, Disruption, Coral Garden, Darkness Shroud, Open Ocean, Murky Water, and Stinging Fortress are selected."
   );
   addCheck(
-    "Prices for the twelve-product launch catalog",
-    unpricedLaunchProducts.length === 0,
-    unpricedLaunchProducts.length
-      ? `Owner-confirmed prices are still needed for: ${unpricedLaunchProducts.join(", ")}.`
-      : "Every launch product has a server-controlled price."
+    "Approved $22 prices for the seven-deck launch catalog",
+    incorrectlyPricedLaunchProducts.length === 0,
+    incorrectlyPricedLaunchProducts.length
+      ? `Restore the owner-approved $22 price for: ${incorrectlyPricedLaunchProducts.join(", ")}.`
+      : "Every launch deck has the owner-approved server-controlled $22 price."
   );
 }
 
@@ -742,7 +756,7 @@ if (
 
   try {
     const response = await fetch(
-      `${supabaseUrl}/rest/v1/rpc/check_store_inventory_contract_v4`,
+      `${supabaseUrl}/rest/v1/rpc/check_store_inventory_contract_v5`,
       {
         method: "POST",
         headers: { ...supabaseHeaders, "Content-Type": "application/json" },
@@ -782,7 +796,7 @@ if (!online) {
 
 if (!launchCatalog) {
   console.log(
-    "Run `npm run store:check:launch` to verify the complete twelve-product launch catalog."
+    "Run `npm run store:check:launch` to verify the exact seven-deck launch catalog."
   );
 }
 

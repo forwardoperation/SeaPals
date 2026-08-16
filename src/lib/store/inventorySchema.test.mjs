@@ -216,7 +216,7 @@ test("the readiness probe validates the complete inventory contract without writ
   );
   assert.match(
     schema,
-    /create or replace function public\.check_store_inventory_contract_v4\(\)/
+    /create or replace function public\.check_store_inventory_contract_v5\(\)/
   );
   assert.doesNotMatch(
     schema,
@@ -239,11 +239,79 @@ test("the readiness probe validates the complete inventory contract without writ
   );
   assert.match(
     schema,
-    /revoke all on function public\.check_store_inventory_contract_v4\(\)\s*from public, anon, authenticated/
+    /revoke all on function public\.check_store_inventory_contract_v5\(\)\s*from public, anon, authenticated/
   );
   assert.match(
     schema,
-    /grant execute on function public\.check_store_inventory_contract_v4\(\)\s*to service_role/
+    /grant execute on function public\.check_store_inventory_contract_v5\(\)\s*to service_role/
   );
   assert.match(schema, /Order production option snapshots are immutable/);
+});
+
+test("overdue reservations are leased for Stripe verification and never released by time alone", () => {
+  assert.match(
+    schema,
+    /create or replace function public\.list_overdue_store_inventory_reservations\([\s\S]*p_limit integer default 10[\s\S]*p_limit not between 1 and 25/
+  );
+  assert.match(
+    schema,
+    /inventory_state = 'reserved'[\s\S]*inventory_reserved_until <= now\(\)[\s\S]*inventory_reconciliation_claimed_until <= now\(\)/
+  );
+  const listStart = schema.indexOf(
+    "create or replace function public.list_overdue_store_inventory_reservations"
+  );
+  const claimStart = schema.indexOf(
+    "create or replace function public.claim_overdue_store_inventory_reservation",
+    listStart
+  );
+  const listFunction = schema.slice(listStart, claimStart);
+  assert.doesNotMatch(listFunction, /inventory_state\s*=\s*'released'/);
+  assert.doesNotMatch(listFunction, /reserved_quantity\s*=/);
+
+  assert.match(
+    schema,
+    /create or replace function public\.claim_overdue_store_inventory_reservation\([\s\S]*p_lease_seconds integer default 180[\s\S]*between 60 and 600[\s\S]*for update/
+  );
+  assert.match(
+    schema,
+    /inventory_reconciliation_claimed_until > now\(\)[\s\S]*return query select 'busy'/
+  );
+  assert.match(
+    schema,
+    /inventory_reconciliation_attempt_count =\s*inventory_reconciliation_attempt_count \+ 1/
+  );
+  assert.match(
+    schema,
+    /create or replace function public\.release_store_inventory_reconciliation_claim\([\s\S]*p_retry_seconds integer default 300[\s\S]*inventory_state = 'reserved'[\s\S]*inventory_reconciliation_claim_token = p_claim_token/
+  );
+  assert.match(
+    schema,
+    /create or replace function public\.complete_store_inventory_reconciliation_claim\([\s\S]*inventory_state in \('committed', 'released'\)[\s\S]*inventory_reconciliation_claim_token = p_claim_token/
+  );
+});
+
+test("inventory reconciliation state and RPCs are private and service-role only", () => {
+  for (const signature of [
+    "list_overdue_store_inventory_reservations\\(integer\\)",
+    "claim_overdue_store_inventory_reservation\\([\\s\\S]*uuid, uuid, integer[\\s\\S]*\\)",
+    "release_store_inventory_reconciliation_claim\\([\\s\\S]*uuid, uuid, text, integer[\\s\\S]*\\)",
+    "complete_store_inventory_reconciliation_claim\\([\\s\\S]*uuid, uuid[\\s\\S]*\\)",
+  ]) {
+    assert.match(
+      schema,
+      new RegExp(
+        `revoke all on function public\\.${signature}[\\s\\S]*from public, anon, authenticated`
+      )
+    );
+    assert.match(
+      schema,
+      new RegExp(
+        `grant execute on function public\\.${signature}[\\s\\S]*to service_role`
+      )
+    );
+  }
+  assert.match(
+    schema,
+    /check_store_inventory_contract_v5\([\s\S]*store_orders_overdue_inventory_reconciliation_idx[\s\S]*inventory_reconciliation_last_error_code[\s\S]*list_overdue_store_inventory_reservations[\s\S]*complete_store_inventory_reconciliation_claim/
+  );
 });

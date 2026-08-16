@@ -4,9 +4,124 @@ import {
   eventClaimsSeaPalsOrderMetadata,
   hasStoreOrderReference,
   normalizeStripeCheckoutEvent,
+  normalizeStripeDisputeEvent,
+  normalizeStripeRefundEvent,
   recoverStripeStoreEventOwnership,
   shouldProcessStripeStoreEvent,
 } from "./stripeWebhook.mjs";
+
+test("refund normalization preserves Stripe's lifecycle instead of assuming success", () => {
+  const details = normalizeStripeRefundEvent({
+    id: "evt_refund_pending",
+    type: "refund.created",
+    created: 1_800_000_000,
+    livemode: true,
+    data: {
+      object: {
+        id: "re_pending",
+        created: 1_799_999_900,
+        amount: 2200,
+        currency: "usd",
+        status: "pending",
+        pending_reason: "insufficient_funds",
+        failure_reason: null,
+        payment_intent: "pi_refund",
+        charge: "ch_refund",
+        metadata: {},
+      },
+    },
+  });
+
+  assert.equal(details.refundId, "re_pending");
+  assert.equal(details.refundStatus, "pending");
+  assert.equal(details.refundPendingReason, "insufficient_funds");
+  assert.equal(details.refundFailureReason, null);
+  assert.equal(details.amountCents, 2200);
+  assert.equal(details.refundCreatedAt, "2027-01-15T07:58:20.000Z");
+  assert.equal(details.paymentIntentId, "pi_refund");
+  assert.equal(details.chargeId, "ch_refund");
+  assert.equal(details.paymentLivemode, true);
+});
+
+test("failed refund normalization records a diagnostic code without declaring payment refunded", () => {
+  const details = normalizeStripeRefundEvent({
+    id: "evt_refund_failed",
+    type: "refund.failed",
+    data: {
+      object: {
+        id: "re_failed",
+        amount: 2200,
+        currency: "usd",
+        status: "failed",
+        failure_reason: "expired_or_canceled_card",
+        payment_intent: "pi_refund",
+        charge: "ch_refund",
+      },
+    },
+  });
+
+  assert.equal(details.refundStatus, "failed");
+  assert.equal(details.refundFailureReason, "expired_or_canceled_card");
+  assert.equal(Object.hasOwn(details, "paymentStatus"), false);
+});
+
+test("unknown refund states fail closed for database validation", () => {
+  const details = normalizeStripeRefundEvent({
+    id: "evt_refund_unknown",
+    type: "refund.updated",
+    data: {
+      object: {
+        id: "re_unknown",
+        amount: 2200,
+        currency: "usd",
+        status: "future_status",
+        payment_intent: "pi_refund",
+      },
+    },
+  });
+
+  assert.equal(details.refundStatus, null);
+});
+
+test("closed dispute normalization preserves won and lost outcomes", () => {
+  const won = normalizeStripeDisputeEvent({
+    id: "evt_dispute_won",
+    type: "charge.dispute.closed",
+    created: 1_800_000_000,
+    livemode: true,
+    data: {
+      object: {
+        id: "dp_won",
+        amount: 2200,
+        currency: "usd",
+        status: "won",
+        payment_intent: "pi_dispute",
+        charge: "ch_dispute",
+      },
+    },
+  });
+  const lost = normalizeStripeDisputeEvent({
+    ...{
+      id: "evt_dispute_lost",
+      type: "charge.dispute.closed",
+      livemode: true,
+    },
+    data: {
+      object: {
+        id: "dp_lost",
+        amount: 2200,
+        currency: "usd",
+        status: "lost",
+        payment_intent: "pi_dispute",
+        charge: "ch_dispute",
+      },
+    },
+  });
+
+  assert.equal(won.disputeStatus, "won");
+  assert.equal(lost.disputeStatus, "lost");
+  assert.equal(Object.hasOwn(won, "paymentStatus"), false);
+});
 
 test("checkout normalization separates the signed per-order production fee", () => {
   const details = normalizeStripeCheckoutEvent({
@@ -276,6 +391,43 @@ test("an out-of-order dispute recovers SeaPals ownership from its Charge", async
   );
   assert.equal(recovered.details.paymentIntentId, "pi_test_dispute");
   assert.equal(eventClaimsSeaPalsOrderMetadata(recovered.event), true);
+});
+
+test("an untagged refund recovers SeaPals ownership from its payment", async () => {
+  const refund = {
+    id: "evt_refund",
+    type: "refund.updated",
+    data: {
+      object: {
+        id: "re_test",
+        charge: "ch_test_refund",
+        payment_intent: "pi_test_refund",
+        metadata: {},
+      },
+    },
+  };
+  const details = {
+    orderId: null,
+    paymentIntentId: "pi_test_refund",
+    chargeId: "ch_test_refund",
+  };
+
+  const recovered = await recoverStripeStoreEventOwnership(
+    refund,
+    details,
+    async () => ({
+      chargeId: "ch_test_refund",
+      paymentIntentId: "pi_test_refund",
+      orderId: "00000000-0000-4000-8000-000000000001",
+      orderNumber: "SP-TEST",
+    })
+  );
+
+  assert.equal(
+    recovered.event.data.object.metadata.order_id,
+    "00000000-0000-4000-8000-000000000001"
+  );
+  assert.equal(recovered.recoveredOrderId, recovered.event.data.object.metadata.order_id);
 });
 
 test("unrelated recovered payments remain unclaimed", async () => {

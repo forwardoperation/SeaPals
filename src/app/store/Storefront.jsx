@@ -663,8 +663,8 @@ export default function Storefront({
               Choose how your reef grows.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
-              The two-player Starter Kit, seven ready-to-play decks, and the
-              Accessories Kit or individual game accessories for your table.
+              Seven ready-to-play SeaPals decks, built to order for your next
+              reef.
             </p>
 
             {highlightedProduct ? (
@@ -749,7 +749,7 @@ export default function Storefront({
             <p className="max-w-md text-sm leading-6 text-slate-500">
               {checkoutEnabled
                 ? "Choose your products and add available items to your order. Prices and availability reflect the current catalog."
-                : "Launch prices are shown for all twelve launch products. Ordering remains disabled until the final launch checks are complete."}
+                : "The seven approved $22 launch decks are shown. Ordering remains disabled until the final launch checks are complete."}
             </p>
           </div>
 
@@ -1287,6 +1287,26 @@ export default function Storefront({
                     {checkoutError}
                   </p>
                 ) : null}
+
+                <p className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+                  Need to change an order? Email{" "}
+                  <a
+                    href="mailto:maker@seapalstcg.com"
+                    className="font-bold text-cyan-800 underline underline-offset-4"
+                  >
+                    maker@seapalstcg.com
+                  </a>{" "}
+                  within two hours to request cancellation. Unopened items may
+                  be returned within 30 days after delivery or pickup; the{" "}
+                  <Link
+                    href="/terms#purchases"
+                    className="font-bold text-cyan-800 underline underline-offset-4"
+                  >
+                    purchase terms
+                  </Link>{" "}
+                  explain return postage, exceptions, and problem-reporting
+                  deadlines.
+                </p>
 
                 <p className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs leading-5 text-slate-600">
                   Stripe will collect the adult purchaser&apos;s payment,

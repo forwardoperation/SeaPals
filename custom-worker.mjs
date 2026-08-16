@@ -1,6 +1,8 @@
 // The OpenNext worker is generated during `npm run cloudflare:build`.
 // @ts-ignore
 import openNextWorker from "./.open-next/worker.js";
+import { enforceStoreCheckoutRateLimit } from "./src/lib/store/checkoutRateLimit.mjs";
+import { reconcileOverdueInventoryReservations } from "./src/lib/store/inventoryReservationReconciler.mjs";
 import { drainMerchantPurchaseNotifications } from "./src/lib/store/merchantOrderNotificationDrain.mjs";
 
 export {
@@ -17,7 +19,24 @@ function safeErrorCode(error) {
 }
 
 export default {
-  fetch: openNextWorker.fetch,
+  async fetch(request, environment, context) {
+    const blockedResponse = await enforceStoreCheckoutRateLimit({
+      request,
+      environment,
+    });
+    if (blockedResponse) {
+      const log = JSON.stringify({
+        message: "Store checkout request blocked",
+        status: blockedResponse.status,
+        path: "/api/store/checkout",
+      });
+      if (blockedResponse.status >= 500) console.error(log);
+      else console.warn(log);
+      return blockedResponse;
+    }
+
+    return openNextWorker.fetch(request, environment, context);
+  },
 
   async scheduled(controller, environment) {
     if (controller?.cron !== STORE_NOTIFICATION_CRON) {
@@ -25,16 +44,54 @@ export default {
       return;
     }
 
-    try {
-      const summary = await drainMerchantPurchaseNotifications({ environment });
-      console.log("Store merchant notification cron completed", summary);
-    } catch (error) {
-      console.error(
-        "Store merchant notification cron failed",
-        safeErrorCode(error),
-        error?.summary ?? null
+    const [notificationResult, reservationResult] = await Promise.allSettled([
+      drainMerchantPurchaseNotifications({ environment }),
+      reconcileOverdueInventoryReservations({ environment }),
+    ]);
+
+    if (notificationResult.status === "fulfilled") {
+      console.log(
+        JSON.stringify({
+          message: "Store merchant notification cron completed",
+          ...notificationResult.value,
+        })
       );
-      throw error;
+    } else {
+      console.error(
+        JSON.stringify({
+          message: "Store merchant notification cron failed",
+          code: safeErrorCode(notificationResult.reason),
+          summary: notificationResult.reason?.summary ?? null,
+        })
+      );
+    }
+
+    if (reservationResult.status === "fulfilled") {
+      console.log(
+        JSON.stringify({
+          message: "Store inventory reconciliation cron completed",
+          ...reservationResult.value,
+        })
+      );
+    } else {
+      console.error(
+        JSON.stringify({
+          message: "Store inventory reconciliation cron failed",
+          code: safeErrorCode(reservationResult.reason),
+          summary: reservationResult.reason?.summary ?? null,
+        })
+      );
+    }
+
+    if (
+      notificationResult.status === "rejected" ||
+      reservationResult.status === "rejected"
+    ) {
+      throw (
+        notificationResult.status === "rejected"
+          ? notificationResult.reason
+          : reservationResult.reason
+      );
     }
   },
 };

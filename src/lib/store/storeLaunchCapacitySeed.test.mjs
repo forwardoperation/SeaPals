@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
-  storeLaunchProductIds,
+  storePreparedProductIds,
   storeProductDefinitions,
 } from "../../data/store/products.js";
 
@@ -12,7 +12,7 @@ const seedSql = readFileSync(
   "utf8"
 );
 
-const EXPECTED_LAUNCH_SKUS_BY_PRODUCT_ID = Object.freeze([
+const EXPECTED_PREPARED_SKUS_BY_PRODUCT_ID = Object.freeze([
   ["starter-kit", "SP-KIT-STARTER"],
   ["blue-water", "SP-DECK-BLUE-WATER"],
   ["disruption", "SP-DECK-DISRUPTION"],
@@ -40,20 +40,20 @@ function parseSeedRows(sql) {
     }));
 }
 
-test("the launch-capacity seed matches the exact twelve canonical catalog SKUs", () => {
+test("the launch-capacity seed preserves the exact twelve prepared catalog SKUs", () => {
   const definitionsById = new Map(
     storeProductDefinitions.map((definition) => [definition.id, definition])
   );
-  const expectedProductIds = EXPECTED_LAUNCH_SKUS_BY_PRODUCT_ID.map(
+  const expectedProductIds = EXPECTED_PREPARED_SKUS_BY_PRODUCT_ID.map(
     ([productId]) => productId
   );
-  const expectedSkus = EXPECTED_LAUNCH_SKUS_BY_PRODUCT_ID.map(([, sku]) => sku);
-  const catalogSkus = EXPECTED_LAUNCH_SKUS_BY_PRODUCT_ID.map(
+  const expectedSkus = EXPECTED_PREPARED_SKUS_BY_PRODUCT_ID.map(([, sku]) => sku);
+  const catalogSkus = EXPECTED_PREPARED_SKUS_BY_PRODUCT_ID.map(
     ([productId]) => definitionsById.get(productId)?.sku
   );
   const seedRows = parseSeedRows(seedSql);
 
-  assert.deepEqual(storeLaunchProductIds, expectedProductIds);
+  assert.deepEqual(storePreparedProductIds, expectedProductIds);
   assert.deepEqual(catalogSkus, expectedSkus);
   assert.deepEqual(seedRows.map(({ sku }) => sku), expectedSkus);
   assert.equal(new Set(seedRows.map(({ sku }) => sku)).size, 12);

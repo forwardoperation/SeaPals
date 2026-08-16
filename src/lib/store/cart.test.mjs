@@ -129,6 +129,14 @@ test("the catalog definitions use the established cash prices", () => {
   assert.equal(definitionsById.get("accessory-set").defaultPriceCents, 1200);
   assert.equal(expansionDecks.length, 7);
   assert.ok(expansionDecks.every((product) => product.defaultPriceCents === 2200));
+  assert.equal(
+    definitionsById.get("dice-pack").details,
+    "7 dice: one each D4, D6, D8, D10, D12, D20, and D100"
+  );
+  assert.equal(
+    definitionsById.get("reef-point-tokens").details,
+    "15 Reef Point tokens"
+  );
 
   for (const productId of [
     "custom-t-shirt",
@@ -148,7 +156,7 @@ test("the catalog definitions use the established cash prices", () => {
   }
 });
 
-test("the default storefront is limited to the twelve prelaunch products", () => {
+test("the default storefront is limited to the seven launch decks", () => {
   withStoreEnvironment({}, () => {
     const configuration = getStoreConfiguration();
 
@@ -156,10 +164,10 @@ test("the default storefront is limited to the twelve prelaunch products", () =>
       configuration.products.map((product) => product.id),
       storeLaunchProductIds
     );
-    assert.equal(configuration.products.length, 12);
+    assert.equal(configuration.products.length, 7);
     assert.equal(
       configuration.products.some((product) => product.id === "accessory-set"),
-      true
+      false
     );
     assert.equal(
       configuration.products.some((product) => product.id === "custom-t-shirt"),
@@ -409,7 +417,7 @@ test("the server catalog requires explicit product allowlisting", () => {
   );
 });
 
-test("approved launch accessories use their server-controlled source prices", () => {
+test("prepared future accessories retain their server-controlled source prices", () => {
   const accessoryIds = [
     "accessory-set",
     "conditions-deck",
@@ -420,6 +428,7 @@ test("approved launch accessories use their server-controlled source prices", ()
   withStoreEnvironment(
     {
       ...infrastructureEnvironment,
+      STORE_SHOW_FUTURE_PRODUCTS: "true",
       STORE_AVAILABLE_PRODUCT_IDS: accessoryIds.join(","),
     },
     () => {
@@ -445,7 +454,7 @@ test("approved launch accessories use their server-controlled source prices", ()
   );
 });
 
-test("the complete prelaunch catalog exposes all twelve products and quotes the eight-item limit", () => {
+test("the exact seven-deck launch catalog supports the eight-item cart limit", () => {
   withStoreEnvironment(
     {
       ...infrastructureEnvironment,
@@ -462,8 +471,8 @@ test("the complete prelaunch catalog exposes all twelve products and quotes the 
       const decks = configuration.products.filter((product) => product.deckId);
 
       assert.deepEqual(ids, storeLaunchProductIds);
-      assert.equal(new Set(ids).size, 12);
-      assert.equal(new Set(skus).size, 12);
+      assert.equal(new Set(ids).size, 7);
+      assert.equal(new Set(skus).size, 7);
       assert.equal(decks.length, 7);
       assert.ok(configuration.products.every((product) => product.madeToOrder));
       assert.equal(
@@ -487,20 +496,21 @@ test("the complete prelaunch catalog exposes all twelve products and quotes the 
       assert.equal(configuration.automaticTaxEnabled, false);
 
       const quote = quoteCart(
-        storeLaunchProductIds
-          .slice(0, STORE_MAX_CART_QUANTITY)
-          .map((productId) => ({ productId, quantity: 1 })),
+        storeLaunchProductIds.map((productId, index) => ({
+          productId,
+          quantity: index === 0 ? 2 : 1,
+        })),
         configuration.products,
         { fulfillmentOption: configuration.shippingOptions[0] }
       );
 
-      assert.equal(quote.items.length, STORE_MAX_CART_QUANTITY);
+      assert.equal(quote.items.length, storeLaunchProductIds.length);
       assert.equal(quote.totalQuantity, STORE_MAX_CART_QUANTITY);
-      assert.equal(quote.subtotalCents, 19_800);
-      assert.equal(quote.shippingWeightOunces, 72);
+      assert.equal(quote.subtotalCents, 17_600);
+      assert.equal(quote.shippingWeightOunces, 64);
       assert.equal(quote.shippingRateTierId, "large");
       assert.equal(quote.shippingCents, 2000);
-      assert.equal(quote.totalCents, 21_800);
+      assert.equal(quote.totalCents, 19_600);
     }
   );
 });
@@ -510,6 +520,7 @@ test("the catalog exposes structured simulator trials for decks and the starter 
     {
       ...infrastructureEnvironment,
       STORE_CHECKOUT_ENABLED: "false",
+      STORE_SHOW_FUTURE_PRODUCTS: "true",
       STORE_AVAILABLE_PRODUCT_IDS: storeLaunchProductIds.join(","),
     },
     () => {
@@ -582,6 +593,7 @@ test("legacy deck allowlisting and shared deck pricing remain supported", () => 
   withStoreEnvironment(
     {
       ...infrastructureEnvironment,
+      STORE_SHOW_FUTURE_PRODUCTS: "true",
       STORE_AVAILABLE_DECK_IDS: "coral-garden",
       STORE_DEFAULT_PRICE_CENTS: "2250",
     },
@@ -650,7 +662,7 @@ test("live checkout requires catalog, tax, and shipping owner gates", () => {
   const liveEnvironment = {
     ...infrastructureEnvironment,
     STRIPE_SECRET_KEY: "rk_live_example",
-    STORE_AVAILABLE_PRODUCT_IDS: "starter-kit",
+    STORE_AVAILABLE_PRODUCT_IDS: "coral-garden",
   };
 
   withStoreEnvironment(liveEnvironment, () => {

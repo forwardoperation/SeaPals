@@ -26,7 +26,6 @@ const EXPECTED_SKUS_BY_PRODUCT_ID = Object.freeze({
 });
 
 const EXPECTED_LAUNCH_PRODUCT_IDS = Object.freeze([
-  "starter-kit",
   "blue-water",
   "disruption",
   "coral-garden",
@@ -34,17 +33,18 @@ const EXPECTED_LAUNCH_PRODUCT_IDS = Object.freeze([
   "open-ocean-hunt",
   "murky-water",
   "stinging-fortress",
-  "accessory-set",
-  "conditions-deck",
-  "dice-pack",
-  "reef-point-tokens",
 ]);
 
 const EXPECTED_FUTURE_PRODUCT_IDS = Object.freeze([
+  "accessory-set",
   "backpack",
   "card-binder",
+  "conditions-deck",
   "custom-t-shirt",
+  "dice-pack",
   "plush-toy",
+  "reef-point-tokens",
+  "starter-kit",
 ]);
 
 const CANONICAL_SKU_PATTERN = /^SP-[A-Z0-9]+-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
@@ -71,7 +71,7 @@ test("all canonical product IDs and SKUs are unique and well formed", () => {
   }
 });
 
-test("the catalog remains partitioned into twelve launch and four future products", () => {
+test("the catalog remains partitioned into seven launch decks and nine prepared future products", () => {
   const launchProductIds = new Set(storeLaunchProductIds);
   const futureProductIds = storeProductDefinitions
     .map(({ id }) => id)
@@ -79,7 +79,7 @@ test("the catalog remains partitioned into twelve launch and four future product
     .sort();
 
   assert.deepEqual(storeLaunchProductIds, EXPECTED_LAUNCH_PRODUCT_IDS);
-  assert.equal(launchProductIds.size, 12);
+  assert.equal(launchProductIds.size, 7);
   assert.deepEqual(futureProductIds, EXPECTED_FUTURE_PRODUCT_IDS);
 
   for (const productId of EXPECTED_FUTURE_PRODUCT_IDS) {
@@ -101,7 +101,7 @@ test("all launch products publish the confirmed five-business-day standard produ
   }
 });
 
-test("launch products publish conservative ready-to-mail weights", () => {
+test("launch decks and prepared products publish conservative ready-to-mail weights", () => {
   const productsById = new Map(
     storeProductDefinitions.map((product) => [product.id, product])
   );
@@ -128,4 +128,27 @@ test("launch products publish conservative ready-to-mail weights", () => {
   ]) {
     assert.equal(productsById.get(productId)?.shippingWeightOunces, 16);
   }
+});
+
+test("prepared dice and Reef Point products preserve the owner-confirmed contents", () => {
+  const productsById = new Map(
+    storeProductDefinitions.map((product) => [product.id, product])
+  );
+
+  assert.equal(
+    productsById.get("dice-pack")?.details,
+    "7 dice: one each D4, D6, D8, D10, D12, D20, and D100"
+  );
+  assert.match(
+    productsById.get("dice-pack")?.checkoutDescription ?? "",
+    /one each D4, D6, D8, D10, D12, D20, and D100/
+  );
+  assert.equal(
+    productsById.get("reef-point-tokens")?.details,
+    "15 Reef Point tokens"
+  );
+  assert.match(
+    productsById.get("reef-point-tokens")?.checkoutDescription ?? "",
+    /15 Reef Point/
+  );
 });

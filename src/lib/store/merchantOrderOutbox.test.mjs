@@ -29,12 +29,20 @@ test("paid reconciliation atomically creates one merchant-purchase outbox row", 
     /if p_payment_status = 'paid' then[\s\S]*insert into public\.store_order_notifications[\s\S]*orders\.payment_status = 'paid'[\s\S]*on conflict \(order_id, notification_type\) do nothing/
   );
 
-  const orderUpdate = schema.lastIndexOf("update public.store_orders");
-  const enqueue = schema.indexOf(
+  const paymentFunctionStart = schema.indexOf(
+    "create or replace function public.process_store_payment_event"
+  );
+  const paymentFunctionEnd = schema.indexOf(
+    "create or replace function public.process_store_refund_event",
+    paymentFunctionStart
+  );
+  const paymentFunction = schema.slice(paymentFunctionStart, paymentFunctionEnd);
+  const orderUpdate = paymentFunction.lastIndexOf("update public.store_orders");
+  const enqueue = paymentFunction.indexOf(
     "insert into public.store_order_notifications",
     orderUpdate
   );
-  const eventComplete = schema.indexOf(
+  const eventComplete = paymentFunction.indexOf(
     "update public.store_payment_events",
     enqueue
   );
@@ -100,10 +108,10 @@ test("notification outbox and mutation RPCs are private and service-role scoped"
   }
 });
 
-test("v4 readiness contract detects the outbox table, drainer, and all RPCs", () => {
+test("v5 readiness contract detects the outbox table, drainer, and all RPCs", () => {
   assert.match(
     schema,
-    /create or replace function public\.check_store_inventory_contract_v4\(\)/
+    /create or replace function public\.check_store_inventory_contract_v5\(\)/
   );
   assert.match(schema, /to_regclass\('public\.store_order_notifications'\)/);
   for (const column of [

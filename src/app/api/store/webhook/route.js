@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   processStorePaymentEvent,
+  processStoreDisputeEvent,
+  processStoreRefundEvent,
   storePaymentEventReferencesKnownOrder,
 } from "@/lib/store/orders";
 import { deliverPaidStoreOrderMerchantNotification } from "@/lib/store/merchantOrderNotification";
@@ -11,6 +13,8 @@ import {
 } from "@/lib/store/stripe.mjs";
 import {
   normalizeStripeCheckoutEvent,
+  normalizeStripeDisputeEvent,
+  normalizeStripeRefundEvent,
   recoverStripeStoreEventOwnership,
   shouldProcessStripeStoreEvent,
 } from "@/lib/store/stripeWebhook.mjs";
@@ -24,14 +28,19 @@ const CHECKOUT_EVENT_TYPES = new Set([
   "checkout.session.async_payment_failed",
   "checkout.session.expired",
 ]);
+const REFUND_EVENT_TYPES = new Set([
+  "refund.created",
+  "refund.updated",
+  "refund.failed",
+]);
+const DISPUTE_EVENT_TYPES = new Set([
+  "charge.dispute.created",
+  "charge.dispute.closed",
+]);
 
 function safeErrorCode(error) {
   const code = String(error?.code ?? error?.name ?? "unknown_error");
   return /^[A-Za-z0-9_-]{1,100}$/.test(code) ? code : "unknown_error";
-}
-
-function nullableInteger(value) {
-  return Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 
 function nullableId(value, prefix) {
@@ -86,64 +95,6 @@ async function addCheckoutReceiptDetails(details) {
     console.error("Stripe receipt lookup failed", safeErrorCode(error));
     return details;
   }
-}
-
-function normalizeRefundEvent(event) {
-  const charge = event.data.object;
-  const amount = nullableInteger(charge?.amount);
-  const amountRefunded = nullableInteger(charge?.amount_refunded);
-  const fullyRefunded =
-    amount !== null && amountRefunded !== null && amountRefunded >= amount;
-
-  return {
-    providerEventId: event.id,
-    eventType: event.type,
-    eventCreatedAt: eventTimestamp(event),
-    orderId: nullableUuid(charge?.metadata?.order_id),
-    checkoutSessionId: null,
-    paymentIntentId: nullableId(charge?.payment_intent, "pi_"),
-    chargeId: nullableId(charge?.id, "ch_"),
-    paymentStatus: fullyRefunded ? "refunded" : "partially_refunded",
-    customerEmail: null,
-    customerName: null,
-    shippingAddress: null,
-    currency: charge?.currency ?? null,
-    subtotalCents: null,
-    shippingCents: null,
-    taxCents: null,
-    totalCents: null,
-    amountRefundedCents: amountRefunded,
-    receiptUrl: charge?.receipt_url ?? null,
-    receiptNumber: charge?.receipt_number ?? null,
-    paymentLivemode: Boolean(event?.livemode),
-  };
-}
-
-function normalizeDisputeEvent(event) {
-  const dispute = event.data.object;
-
-  return {
-    providerEventId: event.id,
-    eventType: event.type,
-    eventCreatedAt: eventTimestamp(event),
-    orderId: nullableUuid(dispute?.metadata?.order_id),
-    checkoutSessionId: null,
-    paymentIntentId: nullableId(dispute?.payment_intent, "pi_"),
-    chargeId: nullableId(dispute?.charge, "ch_"),
-    paymentStatus: "disputed",
-    customerEmail: null,
-    customerName: null,
-    shippingAddress: null,
-    currency: dispute?.currency ?? null,
-    subtotalCents: null,
-    shippingCents: null,
-    taxCents: null,
-    totalCents: null,
-    amountRefundedCents: null,
-    receiptUrl: null,
-    receiptNumber: null,
-    paymentLivemode: Boolean(event?.livemode),
-  };
 }
 
 function normalizeFailedPaymentIntentEvent(event) {
@@ -208,10 +159,15 @@ export async function POST(request) {
   let details;
   if (CHECKOUT_EVENT_TYPES.has(event.type)) {
     details = normalizeStripeCheckoutEvent(event);
+  } else if (REFUND_EVENT_TYPES.has(event.type)) {
+    details = normalizeStripeRefundEvent(event);
   } else if (event.type === "charge.refunded") {
-    details = normalizeRefundEvent(event);
-  } else if (event.type === "charge.dispute.created") {
-    details = normalizeDisputeEvent(event);
+    // Stripe recommends refund.* events for refund state. A Charge snapshot can
+    // include a refund that is still pending and can later fail, so retain this
+    // legacy subscription only as an acknowledged compatibility signal.
+    return NextResponse.json({ received: true, ignored: true });
+  } else if (DISPUTE_EVENT_TYPES.has(event.type)) {
+    details = normalizeStripeDisputeEvent(event);
   } else if (event.type === "payment_intent.payment_failed") {
     details = normalizeFailedPaymentIntentEvent(event);
   } else {
@@ -226,7 +182,8 @@ export async function POST(request) {
     );
     if (
       !shouldProcess &&
-      ["charge.refunded", "charge.dispute.created"].includes(event.type)
+      (REFUND_EVENT_TYPES.has(event.type) ||
+        DISPUTE_EVENT_TYPES.has(event.type))
     ) {
       const recovered = await recoverStripeStoreEventOwnership(
         event,
@@ -252,7 +209,11 @@ export async function POST(request) {
       details = await addCheckoutReceiptDetails(details);
     }
 
-    const result = await processStorePaymentEvent(details);
+    const result = REFUND_EVENT_TYPES.has(event.type)
+      ? await processStoreRefundEvent(details)
+      : DISPUTE_EVENT_TYPES.has(event.type)
+        ? await processStoreDisputeEvent(details)
+        : await processStorePaymentEvent(details);
     const notification = await deliverPaidStoreOrderMerchantNotification(details);
     return NextResponse.json({
       received: true,

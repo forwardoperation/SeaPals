@@ -3,7 +3,6 @@ const GAME_PRODUCT_TAX_CODE_ENV_KEY = "STRIPE_GAME_PRODUCT_TAX_CODE";
 // Keep the first public catalog deliberately narrow. Future merchandise stays
 // defined below so it can be prepared without appearing in the launch shop.
 export const storeLaunchProductIds = Object.freeze([
-  "starter-kit",
   "blue-water",
   "disruption",
   "coral-garden",
@@ -11,6 +10,14 @@ export const storeLaunchProductIds = Object.freeze([
   "open-ocean-hunt",
   "murky-water",
   "stinging-fortress",
+]);
+
+// These inventory-backed products are already prepared operationally even
+// when a narrower public allowlist is used. Keep this distinct from the launch
+// IDs so retaining a private ATP row never makes a product purchasable.
+export const storePreparedProductIds = Object.freeze([
+  "starter-kit",
+  ...storeLaunchProductIds,
   "accessory-set",
   "conditions-deck",
   "dice-pack",
@@ -236,15 +243,14 @@ export const storeProductDefinitions = [
     productLabel: "Game accessory",
     description:
       "A dedicated set of Reef Point tokens for tracking resources during play.",
-    details: "Reef Point token set",
-    checkoutDescription: "SeaPals Reef Point (RP) Token Set.",
+    details: "15 Reef Point tokens",
+    checkoutDescription: "SeaPals set of 15 Reef Point (RP) tokens.",
     shippingWeightOunces: 16,
     image: "/images/store/reef-points.svg",
     defaultPriceCents: 500,
     priceEnvKey: "STORE_PRICE_REEF_POINT_TOKENS_CENTS",
     taxCodeEnvKey: GAME_PRODUCT_TAX_CODE_ENV_KEY,
-    availabilityNote:
-      "Confirm the number of tokens in each set before launch.",
+    availabilityNote: "Prepared for a future catalog release.",
     featured: false,
   },
   {
@@ -257,15 +263,15 @@ export const storeProductDefinitions = [
     shortName: "Dice Pack",
     productLabel: "Game accessory",
     description: "A SeaPals dice pack for attacks, defense, and card effects.",
-    details: "Dice pack contents pending final confirmation",
-    checkoutDescription: "SeaPals gameplay dice pack.",
+    details: "7 dice: one each D4, D6, D8, D10, D12, D20, and D100",
+    checkoutDescription:
+      "SeaPals seven-die gameplay pack with one each D4, D6, D8, D10, D12, D20, and D100.",
     shippingWeightOunces: 16,
     image: "/images/store/dice-pack.svg",
     defaultPriceCents: 500,
     priceEnvKey: "STORE_PRICE_DICE_PACK_CENTS",
     taxCodeEnvKey: GAME_PRODUCT_TAX_CODE_ENV_KEY,
-    availabilityNote:
-      "Confirm the included dice types and quantities before launch.",
+    availabilityNote: "Prepared for a future catalog release.",
     featured: false,
   },
   {

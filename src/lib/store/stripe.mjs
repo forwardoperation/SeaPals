@@ -552,7 +552,10 @@ export async function createStripeCheckoutSession({
   return session;
 }
 
-export async function retrieveStripeCheckoutSession(sessionId) {
+export async function retrieveStripeCheckoutSession(
+  sessionId,
+  { secretKey } = {}
+) {
   if (!/^cs_[A-Za-z0-9_]+$/.test(String(sessionId ?? ""))) {
     throw new StripeApiError("That checkout reference is invalid.", {
       status: 400,
@@ -565,6 +568,7 @@ export async function retrieveStripeCheckoutSession(sessionId) {
 
   return stripeRequest(`/checkout/sessions/${encodeURIComponent(sessionId)}`, {
     query,
+    secretKey,
   });
 }
 
@@ -669,12 +673,20 @@ export async function retrieveStripePaymentOwnership({
   };
 }
 
-export async function expireStripeCheckoutSession(sessionId) {
+export async function expireStripeCheckoutSession(
+  sessionId,
+  { secretKey, idempotencyKey } = {}
+) {
   if (!/^cs_[A-Za-z0-9_]+$/.test(String(sessionId ?? ""))) return null;
 
   return stripeRequest(
     `/checkout/sessions/${encodeURIComponent(sessionId)}/expire`,
-    { method: "POST", body: new URLSearchParams() }
+    {
+      method: "POST",
+      body: new URLSearchParams(),
+      idempotencyKey,
+      secretKey,
+    }
   );
 }
 

@@ -189,6 +189,46 @@ export default function TermsPage() {
           order affected by a pricing error, unavailable inventory, suspected
           fraud, or a legal restriction.
         </p>
+        <p>
+          <strong>Cancellation, returns, and order problems.</strong> To request
+          help, email{" "}
+          <a href={`mailto:${SEAPALS_OPERATOR.privacyEmail}`}>
+            {SEAPALS_OPERATOR.privacyEmail}
+          </a>{" "}
+          from the purchaser&apos;s email address and include the order number.
+          Do not mail a return until we provide return instructions.
+        </p>
+        <ul>
+          <li>
+            You may cancel an order by emailing us within two hours after
+            purchase. A request sent after that window is handled under the
+            return policy below.
+          </li>
+          <li>
+            You may request a return for an unopened item within 30 calendar
+            days after carrier tracking shows delivery or, for local pickup,
+            after the order is picked up. The purchaser pays return postage
+            for an ordinary unopened-item return.
+          </li>
+          <li>
+            Opened or played products are final sale except when an item is
+            damaged, defective, missing, or incorrect. Report one of those
+            problems within 14 calendar days after delivery or pickup so we
+            can review it and provide return or remedy instructions.
+          </li>
+          <li>
+            If tracking suggests that a mailed order may be lost, contact us
+            so we can investigate with the carrier. Once carrier loss is
+            confirmed, we will replace the affected order, subject to product
+            availability, or refund it.
+          </li>
+          <li>
+            Once we approve a refund, we issue it to the original payment
+            method within five business days. For a physical return, that
+            period begins after the accepted item is received and inspected.
+            A bank or card issuer may take additional time to post the credit.
+          </li>
+        </ul>
       </LegalSection>
 
       <LegalSection id="ownership" title="8. SeaPals content and ownership">

@@ -254,12 +254,67 @@ export async function processStorePaymentEvent(details) {
   return { processed: Boolean(data) };
 }
 
+export async function processStoreRefundEvent(details) {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase.rpc("process_store_refund_event", {
+    p_provider_event_id: details.providerEventId,
+    p_event_type: details.eventType,
+    p_event_created_at: details.eventCreatedAt,
+    p_order_id: details.orderId,
+    p_refund_id: details.refundId,
+    p_refund_status: details.refundStatus,
+    p_refund_pending_reason: details.refundPendingReason ?? null,
+    p_refund_failure_reason: details.refundFailureReason ?? null,
+    p_amount_cents: details.amountCents,
+    p_currency: details.currency,
+    p_refund_created_at: details.refundCreatedAt ?? null,
+    p_payment_intent_id: details.paymentIntentId,
+    p_charge_id: details.chargeId,
+    p_payment_livemode: details.paymentLivemode,
+  });
+
+  if (error) {
+    throw new OrderStoreError("The refund event could not be recorded.", {
+      code: "refund_event_failed",
+      cause: error,
+    });
+  }
+
+  return { processed: Boolean(data) };
+}
+
+export async function processStoreDisputeEvent(details) {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase.rpc("process_store_dispute_event", {
+    p_provider_event_id: details.providerEventId,
+    p_event_type: details.eventType,
+    p_event_created_at: details.eventCreatedAt,
+    p_order_id: details.orderId,
+    p_dispute_id: details.disputeId,
+    p_dispute_status: details.disputeStatus,
+    p_amount_cents: details.amountCents,
+    p_currency: details.currency,
+    p_payment_intent_id: details.paymentIntentId,
+    p_charge_id: details.chargeId,
+    p_payment_livemode: details.paymentLivemode,
+  });
+
+  if (error) {
+    throw new OrderStoreError("The dispute event could not be recorded.", {
+      code: "dispute_event_failed",
+      cause: error,
+    });
+  }
+
+  return { processed: Boolean(data) };
+}
+
 export async function listStoreOrders({ limit = 250 } = {}) {
   const supabase = createSupabaseAdmin();
   const { data, error } = await supabase
     .from("store_orders")
     .select(
-      "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, production_option_id, production_option_name, production_max_business_days, production_cents, production_due_date, expedited_capacity_state, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, stripe_shipping_rate_id, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, fulfillment_status, inventory_state, inventory_reserved_until, inventory_committed_at, inventory_released_at, inventory_release_reason, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, tracking_number, tracking_url, internal_notes, store_order_items(id, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents)"
+      "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, production_option_id, production_option_name, production_max_business_days, production_cents, production_due_date, expedited_capacity_state, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, stripe_shipping_rate_id, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, fulfillment_status, inventory_state, inventory_reserved_until, inventory_committed_at, inventory_released_at, inventory_release_reason, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, dispute_id, dispute_status, dispute_updated_at, tracking_number, tracking_url, internal_notes, store_order_items(id, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents), store_refunds(id, provider_refund_id, amount_cents, currency, status, pending_reason, failure_reason, provider_created_at, provider_updated_at)"
     )
     .order("created_at", { ascending: false })
     .limit(Math.min(Math.max(Number(limit) || 250, 1), 500));

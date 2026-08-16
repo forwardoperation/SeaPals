@@ -35,6 +35,39 @@ function optionId(value) {
   return id && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) ? id : null;
 }
 
+const STRIPE_REFUND_STATUSES = new Set([
+  "pending",
+  "requires_action",
+  "succeeded",
+  "failed",
+  "canceled",
+]);
+const STRIPE_DISPUTE_STATUSES = new Set([
+  "warning_needs_response",
+  "warning_under_review",
+  "warning_closed",
+  "needs_response",
+  "under_review",
+  "won",
+  "lost",
+  "prevented",
+]);
+
+function refundStatus(value) {
+  const status = text(value, 50);
+  return status && STRIPE_REFUND_STATUSES.has(status) ? status : null;
+}
+
+function diagnosticCode(value) {
+  const code = text(value, 100);
+  return code && /^[a-z0-9_]+$/.test(code) ? code : null;
+}
+
+function disputeStatus(value) {
+  const status = text(value, 50);
+  return status && STRIPE_DISPUTE_STATUSES.has(status) ? status : null;
+}
+
 function checkoutPaymentStatus(eventType, session) {
   if (
     [
@@ -163,6 +196,57 @@ export function normalizeStripeCheckoutEvent(event) {
   };
 }
 
+export function normalizeStripeRefundEvent(event) {
+  const refund = event?.data?.object ?? {};
+  const eventCreatedMilliseconds = Number(event?.created) * 1000;
+  const refundCreatedMilliseconds = Number(refund?.created) * 1000;
+
+  return {
+    providerEventId: event?.id,
+    eventType: event?.type,
+    eventCreatedAt:
+      Number.isFinite(eventCreatedMilliseconds) && eventCreatedMilliseconds > 0
+      ? new Date(eventCreatedMilliseconds).toISOString()
+      : new Date().toISOString(),
+    orderId: uuid(refund?.metadata?.order_id),
+    refundId: stripeId(refund?.id, "re_"),
+    refundStatus: refundStatus(refund?.status),
+    refundPendingReason: diagnosticCode(refund?.pending_reason),
+    refundFailureReason: diagnosticCode(refund?.failure_reason),
+    amountCents: nonNegativeInteger(refund?.amount),
+    currency: text(refund?.currency, 3)?.toLowerCase() ?? null,
+    refundCreatedAt:
+      Number.isFinite(refundCreatedMilliseconds) && refundCreatedMilliseconds > 0
+      ? new Date(refundCreatedMilliseconds).toISOString()
+      : null,
+    paymentIntentId: stripeId(refund?.payment_intent, "pi_"),
+    chargeId: stripeId(refund?.charge, "ch_"),
+    paymentLivemode: Boolean(event?.livemode),
+  };
+}
+
+export function normalizeStripeDisputeEvent(event) {
+  const dispute = event?.data?.object ?? {};
+  const eventCreatedMilliseconds = Number(event?.created) * 1000;
+
+  return {
+    providerEventId: event?.id,
+    eventType: event?.type,
+    eventCreatedAt:
+      Number.isFinite(eventCreatedMilliseconds) && eventCreatedMilliseconds > 0
+        ? new Date(eventCreatedMilliseconds).toISOString()
+        : new Date().toISOString(),
+    orderId: uuid(dispute?.metadata?.order_id),
+    disputeId: stripeId(dispute?.id, "dp_"),
+    disputeStatus: disputeStatus(dispute?.status),
+    amountCents: nonNegativeInteger(dispute?.amount),
+    currency: text(dispute?.currency, 3)?.toLowerCase() ?? null,
+    paymentIntentId: stripeId(dispute?.payment_intent, "pi_"),
+    chargeId: stripeId(dispute?.charge, "ch_"),
+    paymentLivemode: Boolean(event?.livemode),
+  };
+}
+
 export function eventClaimsSeaPalsOrderMetadata(event) {
   const object = event?.data?.object;
   const metadata = object?.metadata;
@@ -212,7 +296,13 @@ export async function recoverStripeStoreEventOwnership(
   if (
     eventClaimsSeaPalsOrderMetadata(event) ||
     details?.orderId ||
-    !["charge.refunded", "charge.dispute.created"].includes(event?.type)
+    ![
+      "refund.created",
+      "refund.updated",
+      "refund.failed",
+      "charge.dispute.created",
+      "charge.dispute.closed",
+    ].includes(event?.type)
   ) {
     return { event, details, recoveredOrderId: null };
   }

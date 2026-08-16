@@ -1,5 +1,5 @@
-export const LEGAL_EFFECTIVE_DATE_ISO = "2026-08-12";
-export const LEGAL_EFFECTIVE_DATE_LABEL = "August 12, 2026";
+export const LEGAL_EFFECTIVE_DATE_ISO = "2026-08-15";
+export const LEGAL_EFFECTIVE_DATE_LABEL = "August 15, 2026";
 
 export const SEAPALS_OPERATOR = Object.freeze({
   legalName: "Sea Realm, LLC",

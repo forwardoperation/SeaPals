@@ -31,10 +31,12 @@ create a new SKU such as a reviewed `-V2` revision; never repurpose an SKU that
 appears in order history. Display names and descriptions may change without a
 new SKU when the fulfilled product remains interchangeable.
 
-## Launch SKUs
+## Prepared inventory SKUs
 
-These values are canonical and must match the storefront catalog and the
-private `store_inventory.sku` rows exactly.
+These values are canonical and must match their product definitions and private
+`store_inventory.sku` rows exactly. The initial public allowlist contains only
+the seven `SP-DECK-*` rows; keeping the Starter Kit and accessory rows prepared
+does not authorize them for sale.
 
 | Product | Canonical SKU |
 | --- | --- |
@@ -91,8 +93,8 @@ The catalog reserves the following values, but they are not approved for sale:
 
 A reserved SKU is planning metadata, not authorization to expose a product or
 seed inventory. Finalize its contents, variant structure, price, tax treatment,
-photos, packaging, fulfillment procedure, and available-to-promise capacity
-before adding it to the launch allowlist.
+approved representative imagery, packaging, fulfillment procedure, and
+available-to-promise capacity before adding it to the public allowlist.
 
 ## Change control
 

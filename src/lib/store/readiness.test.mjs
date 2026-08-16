@@ -82,7 +82,7 @@ globalThis.fetch = async (input) => {
     payload = fixtures.pickupTaxRate;
   } else if (
     url.hostname === "example.supabase.co" &&
-    url.pathname === "/rest/v1/rpc/check_store_inventory_contract_v4"
+    url.pathname === "/rest/v1/rpc/check_store_inventory_contract_v5"
   ) {
     payload = fixtures.supabaseInventoryContract;
   } else if (
@@ -237,24 +237,43 @@ function runOnlineLiveCheck(fixtureOverrides = {}, environmentOverrides = {}) {
   );
 }
 
-test("launch readiness accepts all twelve priced products while checkout is off", () => {
+test("launch readiness accepts the exact seven priced decks while checkout is off", () => {
   const result = runLaunchCheck();
 
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.match(result.stdout, /PASS.*Complete twelve-product launch allowlist/);
+  assert.match(result.stdout, /PASS.*Exact seven-deck launch allowlist/);
+  assert.match(result.stdout, /PASS.*Approved \$22 prices/);
   assert.match(result.stdout, /INFO.*Checkout launch switch/);
 });
 
 test("launch readiness names a missing approved product", () => {
   const result = runLaunchCheck({
     STORE_AVAILABLE_PRODUCT_IDS: storeLaunchProductIds
-      .filter((productId) => productId !== "dice-pack")
+      .filter((productId) => productId !== "blue-water")
       .join(","),
   });
 
   assert.equal(result.status, 1);
-  assert.match(result.stdout, /TODO.*Complete twelve-product launch allowlist/);
-  assert.match(result.stdout, /dice-pack/);
+  assert.match(result.stdout, /TODO.*Exact seven-deck launch allowlist/);
+  assert.match(result.stdout, /blue-water/);
+});
+
+test("launch readiness rejects prepared products outside the seven-deck allowlist", () => {
+  const result = runLaunchCheck({
+    STORE_AVAILABLE_PRODUCT_IDS: `${storeLaunchProductIds.join(",")},starter-kit`,
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /TODO.*Exact seven-deck launch allowlist/);
+  assert.match(result.stdout, /Remove non-launch products: starter-kit/);
+});
+
+test("launch readiness rejects a deck price that differs from the approved $22", () => {
+  const result = runLaunchCheck({ STORE_PRICE_BLUE_WATER_CENTS: "2199" });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /TODO.*Approved \$22 prices/);
+  assert.match(result.stdout, /blue-water/);
 });
 
 test("launch readiness requires every owner-approved shipping tier", () => {
@@ -526,7 +545,7 @@ test("online readiness fails closed without the inventory RPC contract", () => {
 });
 
 test("online readiness fails closed when an enabled SKU has no inventory row", () => {
-  const missingProductId = "starter-kit";
+  const missingProductId = "blue-water";
   const missingSku = storeProductDefinitionsById.get(missingProductId).sku;
   const inventory = storeLaunchProductIds
     .filter((productId) => productId !== missingProductId)

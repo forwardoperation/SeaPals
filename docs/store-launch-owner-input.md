@@ -11,7 +11,7 @@ Every Blue Water Deck, for example, uses `SP-DECK-BLUE-WATER`; do not create a
 new SKU for each order, print run, or assembled deck. See
 `docs/store-sku-policy.md` for the complete naming and lifecycle policy.
 
-For the made-to-order launch, **available-to-promise (ATP) capacity** is the
+For made-to-order products, **available-to-promise (ATP) capacity** is the
 maximum number of additional units that current dedicated materials and labor
 can support within the published build-and-dispatch window. It is a firm
 fulfillment limit, not a sales forecast or aspirational target. Include active
@@ -23,23 +23,30 @@ labor allotment to each bundle and individually sold product. A Starter Kit or
 Accessories Kit may be assembled after purchase, but its allocated components
 cannot also support the ATP capacity of its component SKUs.
 
+The owner approved the initial public catalog on **2026-08-15** as exactly the
+seven `$22` 60-card decks: Blue Water, Disruption, Coral Garden, Darkness
+Shroud, Open Ocean, Murky Water, and Stinging Fortress. Each has an approved
+initial ATP capacity of **10** and a five-business-day build-and-dispatch
+window. The other prepared rows remain private and unavailable; retaining their
+capacity records does not add them to the public allowlist.
+
 | SKU | Product | Configured price | Initial ATP capacity | Build and dispatch within | Contents/sample verified |
 | --- | --- | ---: | ---: | --- | --- |
 | `SP-KIT-STARTER` | Starter Kit | $44 | **10** | **5 business days** |  |
-| `SP-DECK-BLUE-WATER` | Blue Water Deck | $22 | **10** | **5 business days** | 60 cards:  |
-| `SP-DECK-DISRUPTION` | Disruption Deck | $22 | **10** | **5 business days** | 60 cards:  |
-| `SP-DECK-CORAL-GARDEN` | Coral Garden Deck | $22 | **10** | **5 business days** | 60 cards:  |
-| `SP-DECK-DARKNESS-SHROUD` | Darkness Shroud Deck | $22 | **10** | **5 business days** | 60 cards:  |
-| `SP-DECK-OPEN-OCEAN-HUNT` | Open Ocean Deck | $22 | **10** | **5 business days** | 60 cards:  |
-| `SP-DECK-MURKY-WATER` | Murky Water Deck | $22 | **10** | **5 business days** | 60 cards:  |
-| `SP-DECK-STINGING-FORTRESS` | Stinging Fortress Deck | $22 | **10** | **5 business days** | 60 cards:  |
+| `SP-DECK-BLUE-WATER` | Blue Water Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-DISRUPTION` | Disruption Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-CORAL-GARDEN` | Coral Garden Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-DARKNESS-SHROUD` | Darkness Shroud Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-OPEN-OCEAN-HUNT` | Open Ocean Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-MURKY-WATER` | Murky Water Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-STINGING-FORTRESS` | Stinging Fortress Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
 | `SP-ACC-SET` | Accessories Kit | $12 | **10** | **5 business days** |  |
 | `SP-ACC-CONDITIONS-DECK` | Conditions Deck | $5 | **10** | **5 business days** | ___ cards; title list approved:  |
-| `SP-ACC-DICE-PACK` | Dice Pack | $5 | **10** | **5 business days** | Dice types and quantities:  |
-| `SP-ACC-REEF-POINTS` | Reef Point Token Set | $5 | **10** | **5 business days** | Count and denominations:  |
+| `SP-ACC-DICE-PACK` | Dice Pack | $5 | **10** | **5 business days** | **7 dice: one each D4, D6, D8, D10, D12, D20, D100; future release** |
+| `SP-ACC-REEF-POINTS` | Reef Point Token Set | $5 | **10** | **5 business days** | **15 tokens; future release** |
 
 The owner has confirmed an initial ATP cap of 10 and a standard
-five-business-day build-and-dispatch window for each launch SKU. The per-SKU
+five-business-day build-and-dispatch window for each prepared SKU. The per-SKU
 caps are safe only when materials and labor support them concurrently. If
 resources are shared, dedicate the allotments or lower the affected caps before
 checkout opens.
@@ -53,17 +60,20 @@ art and concept illustrations and deferred packaged-product photography. A
 package photo is not a launch gate, but representative art must not be described
 as a photograph of the delivered package.
 
-Capacity calculation reviewed by: ____________________  Date: __________
+Capacity calculation reviewed by: **Sea Realm owner**  Date: **2026-08-15**
 
-Materials or production constraint used for each ATP count: ________________
+Materials or production constraint used for each ATP count: **the owner can
+build and dispatch up to 10 units of each prepared SKU within five business
+days; only the seven deck SKUs are publicly enabled at launch**.
 
-Replenishment owner and review cadence: _____________________________________
+Replenishment owner and review cadence: **Sea Realm owner; review before every
+manual ATP increase and whenever materials or production capacity change**.
 
 Increase a SKU only after materials and build capacity are actually restored.
 Decrease it immediately if materials, labor, quality, or shipping capacity
 falls. Never reset a sold-down count to its original number on a schedule.
 
-Price approval: ____________________  Date: __________
+Price approval: **owner confirmed the configured prices**  Date: **2026-08-15**
 
 ## Production speed options
 
@@ -94,12 +104,13 @@ time, or queue conditions make the promise unsafe, disable expedited selection
 for new orders immediately and continue honoring or personally resolving every
 expedited order already accepted.
 
-- One-business-day capacity confirmed by: ____________________
-- Confirmation date: __________
+- One-business-day capacity confirmed by: **Sea Realm owner**
+- Confirmation date: **2026-08-15**
 - Daily expedited-order limit: **10 orders per production due date**
 - Allocation time zone and boundary: **America/New_York; Eastern midnight**
 - Non-business-day rule: **Friday/Saturday/Sunday target Monday**
-- Queue owner and review frequency: ____________________
+- Queue owner and review frequency: **Sea Realm owner; review each business
+  day and after every expedited order alert**
 
 ## Packing and delivery
 
@@ -122,7 +133,9 @@ Online checkout is limited to **8 items and 8 lb (128 oz)** per order.
 | Up to and including 1 lb (16 oz) | $10.00 | $15.00 |
 | More than 1 lb (>16 oz) through 8 lb (128 oz) | $20.00 | $35.00 |
 
-- Made-to-order wording to publish: ________________________________________.
+- Made-to-order wording to publish: **Built to order; standard production and
+  dispatch within five business days, or one business day with the optional
+  per-order expedited-production service; carrier transit is separate**.
 - Standard orders leave the business within: **5 business days**.
 - Expedited orders leave the business within: **1 business day**.
 - Standard customer delivery estimate to publish: **2–7 business days in
@@ -132,9 +145,10 @@ Online checkout is limited to **8 items and 8 lb (128 oz)** per order.
 - Approved mailed-order Shipping & Handling charges: **use the weight-tier
   table above**.
 - Approved Scheduled pickup charge: **free**.
-- Initial destinations: United States only / other: __________.
+- Initial destinations: **United States only**.
 - Carrier/label workflow and daily cutoff: **Buy labels through Pirate Ship;
-  daily cutoff still to be recorded**.
+  no same-day carrier-acceptance cutoff is promised; buy and tender the parcel
+  by its production dispatch deadline**.
 
 Rate basis and approval date: **2026-08-15**. The Pirate Ship quotes above use
 Elverson 19520 to Los Angeles 90001 and exclude the owner-confirmed $0.75 brown
@@ -155,25 +169,39 @@ and `STORE_PICKUP_TAX_CONFIRMED=true` is recorded.
 Use plain, specific promises that the business can perform. A Pennsylvania CPA
 or attorney should review any fact-specific tax or legal question.
 
-- Cancellation allowed until: __________.
-- Return request window: __________ days from __________.
-- Opened/played card products: returnable / not returnable / conditions: __________.
-- Items that cannot be returned: __________.
-- Return shipping paid by: __________.
-- Refund timing after an accepted return: __________.
-- Damaged, defective, missing, or incorrect-order process: __________.
-- Lost/delayed carrier shipment process: __________.
-- Public customer-support email: __________.
-- Published dispatch and delivery wording approved: yes / no.
-- Published return/refund/cancellation wording approved: yes / no.
+- Cancellation allowed until: **a cancellation request is emailed within two
+  hours after purchase**.
+- Return request window: **30 calendar days after carrier-tracked delivery or
+  scheduled pickup**.
+- Opened/played card products: **final sale except when damaged, defective,
+  missing, or incorrect**.
+- Items that cannot be returned: **opened or played products outside the
+  approved damaged/defective/missing/incorrect exception**.
+- Return shipping paid by: **the purchaser for an ordinary unopened-item
+  return**.
+- Refund timing after an accepted return: **issued to the original payment
+  method within five business days after approval; for a physical return, the
+  clock starts after receipt and inspection**.
+- Damaged, defective, missing, or incorrect-order process: **the purchaser must
+  email the order number and problem within 14 calendar days after delivery or
+  pickup, then wait for return or remedy instructions**.
+- Lost carrier shipment process: **investigate when tracking suggests loss;
+  once carrier loss is confirmed, replace the affected order subject to
+  availability or refund it**.
+- Public customer-support email: **`maker@seapalstcg.com`**.
+- Published dispatch and delivery wording approved: **yes**.
+- Published return/refund/cancellation wording approved: **yes**.
 
-Policy approval: ____________________  Date: __________
+Policy approval: **owner-confirmed in the launch task**  Date: **2026-08-15**
 
 ## Final operational sign-off
 
-- [ ] Supabase inventory migration applied and all 12 SKU rows seeded with
-      owner-approved ATP capacities.
-- [ ] Restricted live Stripe key and live webhook secret saved in Cloudflare.
+- [x] All 12 prepared SKU rows were seeded with owner-approved ATP capacities;
+      only the seven deck rows are in the initial public allowlist.
+- [ ] Latest Supabase order, refund, notification, and reservation-reconciliation
+      migration applied; the current inventory contract RPC and online readiness
+      checks pass before checkout is enabled.
+- [x] Restricted live Stripe key and live webhook secret saved in Cloudflare.
 - [ ] Live webhook events and pinned API version verified.
 - [ ] Stripe receipt emails, public details, branding, and descriptor reviewed.
 - [ ] A synthetic paid-order alert reaches `maker@seapalstcg.com`, contains all
@@ -188,9 +216,12 @@ Policy approval: ____________________  Date: __________
 - [ ] Standard and expedited production wording, one-charge-per-order behavior,
       10-order daily cap, Eastern due-date allocation, terminal-unpaid slot
       release, and carrier-transit distinction verified.
-- [ ] Return/refund/cancellation terms published and linked before payment.
+- [ ] Return/refund/cancellation terms deployed, published, and linked before
+      payment. The owner-approved source text is complete.
 - [ ] Test payment, failure, expiration, duplicate event, refund, inventory
       release, receipt, packing, shipping, and CSV export all passed.
-- [ ] One small live order/refund audit passed before broad availability.
+- [ ] Sandbox paid/refund lifecycle passed, followed by a live no-payment
+      Checkout Session creation-and-expiration smoke that released its
+      reservation. Do not test live mode with real payment details.
 - [ ] myPATH filing frequency and next due date recorded privately.
 - [ ] License copy displayed as required, without publishing it online.

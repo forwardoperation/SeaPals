@@ -19,7 +19,10 @@ const PAYMENT_HOLD_STATUSES = new Set([
   "partially_refunded",
   "refunded",
   "disputed",
+  "chargeback",
 ]);
+const ACTIVE_REFUND_STATUSES = new Set(["pending", "requires_action"]);
+const FAILED_REFUND_STATUSES = new Set(["failed", "canceled"]);
 const STORE_TIME_ZONE = "America/New_York";
 const SHIPPING_PRODUCTION_COMPLETE_STATUSES = new Set([
   "shipped",
@@ -336,7 +339,8 @@ function statusClasses(status, type) {
     normalized === "failed" ||
     normalized === "cancelled" ||
     normalized === "refunded" ||
-    normalized === "disputed"
+    normalized === "disputed" ||
+    normalized === "chargeback"
   ) {
     return "border-rose-200 bg-rose-50 text-rose-800";
   }
@@ -543,7 +547,21 @@ function OrderCard({ order, onSave, saving }) {
   const savedTrackingUrl = pickupOrder ? "" : safeHttpsUrl(order.tracking_url);
   const currentStatus = cleanStatus(order.fulfillment_status, "unfulfilled");
   const paymentStatus = cleanStatus(order.payment_status);
-  const fulfillmentOnHold = PAYMENT_HOLD_STATUSES.has(paymentStatus);
+  const refundRecords = Array.isArray(order.store_refunds)
+    ? [...order.store_refunds].sort(
+        (left, right) =>
+          new Date(right.provider_updated_at ?? 0).getTime() -
+          new Date(left.provider_updated_at ?? 0).getTime()
+      )
+    : [];
+  const activeRefunds = refundRecords.filter((refund) =>
+    ACTIVE_REFUND_STATUSES.has(cleanStatus(refund.status))
+  );
+  const failedRefunds = refundRecords.filter((refund) =>
+    FAILED_REFUND_STATUSES.has(cleanStatus(refund.status))
+  );
+  const fulfillmentOnHold =
+    PAYMENT_HOLD_STATUSES.has(paymentStatus) || activeRefunds.length > 0;
   const hasChanges =
     fulfillmentStatus !== currentStatus ||
     trackingNumber.trim() !== String(order.tracking_number ?? "").trim() ||
@@ -562,10 +580,14 @@ function OrderCard({ order, onSave, saving }) {
         ? methodFulfillmentOptions.filter(
             (option) => option.value === "picked_up"
           )
-      : paymentStatus === "refunded"
+      : ["refunded", "chargeback"].includes(paymentStatus)
         ? methodFulfillmentOptions.filter(
             (option) => option.value === "cancelled"
           )
+        : activeRefunds.length > 0
+          ? methodFulfillmentOptions.filter(
+              (option) => option.value === "on_hold"
+            )
         : methodFulfillmentOptions.filter((option) =>
             ["on_hold", "cancelled"].includes(option.value)
           );
@@ -597,7 +619,7 @@ function OrderCard({ order, onSave, saving }) {
       fulfillmentStatus !== currentStatus &&
       !permittedStatuses.some((option) => option.value === fulfillmentStatus)
     ) {
-      setFormError("Refunded or disputed orders must remain on hold.");
+      setFormError("This payment or refund lifecycle must remain on hold.");
       return;
     }
 
@@ -959,6 +981,42 @@ function OrderCard({ order, onSave, saving }) {
                 <div className="mt-4">
                   <Totals order={order} />
                 </div>
+                {refundRecords.length > 0 ? (
+                  <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                    <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
+                      Refund lifecycle
+                    </p>
+                    {refundRecords.map((refund) => (
+                      <div
+                        key={refund.id || refund.provider_refund_id}
+                        className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <StatusBadge value={refund.status} type="payment" />
+                          <span className="font-black text-slate-800">
+                            {formatMoney(refund.amount_cents, refund.currency)}
+                          </span>
+                        </div>
+                        <p className="mt-2 break-all font-mono text-[11px] text-slate-500">
+                          {refund.provider_refund_id}
+                        </p>
+                        {refund.pending_reason ? (
+                          <p className="mt-1 font-semibold text-amber-800">
+                            Pending reason: {statusLabel(refund.pending_reason)}
+                          </p>
+                        ) : null}
+                        {refund.failure_reason ? (
+                          <p className="mt-1 font-semibold text-rose-800">
+                            Failure reason: {statusLabel(refund.failure_reason)}
+                          </p>
+                        ) : null}
+                        <p className="mt-1 text-slate-500">
+                          Updated {formatDate(refund.provider_updated_at)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 <dl className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-xs">
                   <div className="flex justify-between gap-4">
                     <dt className="font-semibold text-slate-500">Paid</dt>
@@ -996,6 +1054,17 @@ function OrderCard({ order, onSave, saving }) {
                       </dd>
                     </div>
                   ) : null}
+                  {order.dispute_id ? (
+                    <div>
+                      <dt className="font-semibold text-slate-500">Dispute</dt>
+                      <dd className="mt-1 break-all font-mono text-[11px] text-slate-700">
+                        {order.dispute_id}
+                      </dd>
+                      <dd className="mt-1 font-bold text-slate-700">
+                        {statusLabel(order.dispute_status)} - updated {formatDate(order.dispute_updated_at)}
+                      </dd>
+                    </div>
+                  ) : null}
                   {order.receipt_number ? (
                     <div className="flex justify-between gap-4">
                       <dt className="font-semibold text-slate-500">
@@ -1013,13 +1082,30 @@ function OrderCard({ order, onSave, saving }) {
 
           {fulfillmentOnHold ? (
             <div className="mt-5 rounded-2xl border border-rose-300 bg-rose-50 px-5 py-4 text-sm text-rose-900">
-              <p className="font-black">Fulfillment hold</p>
+              <p className="font-black">
+                {activeRefunds.length > 0 ? "Refund pending" : "Fulfillment hold"}
+              </p>
               <p className="mt-1 leading-6">
-                {paymentStatus === "partially_refunded"
+                {activeRefunds.length > 0
+                  ? "Stripe has not completed this refund. Keep the order on hold; do not treat the amount as refunded unless the Refund status becomes Succeeded."
+                  : paymentStatus === "partially_refunded"
                   ? "This order has a partial refund. Keep it on hold and resolve the order before shipping."
                   : paymentStatus === "disputed"
                     ? "This payment is disputed. Do not pack or ship the order while the dispute is open."
-                    : "This order was refunded and must not be fulfilled."}
+                    : paymentStatus === "chargeback"
+                      ? "This dispute was lost. The charge was reversed and this unfulfilled order must remain cancelled."
+                      : "This order was refunded and must not be fulfilled."}
+              </p>
+            </div>
+          ) : null}
+
+          {failedRefunds.length > 0 ? (
+            <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm text-amber-950">
+              <p className="font-black">Refund needs attention</p>
+              <p className="mt-1 leading-6">
+                A refund failed or was canceled. The failed amount is not included
+                in Refunded above, inventory was not restocked, and fulfillment
+                remains on hold until you retry or deliberately resume the order.
               </p>
             </div>
           ) : null}

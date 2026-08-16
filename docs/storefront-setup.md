@@ -6,21 +6,22 @@ cart and no payment can start until its product ID is explicitly allowlisted,
 the private order ledger and Stripe webhook are ready, and the launch switch is
 turned on.
 
-## Twelve-product prelaunch catalog
+## Seven-deck launch catalog
 
-The first public catalog is deliberately limited to the `$44` Starter Kit,
-seven `$22` ready-to-play decks, the `$12` Accessories Kit, and three `$5`
-individual gameplay accessories: the Conditions Deck, Dice Pack, and Reef
-Point (RP) Token Set. Future apparel, storage, and plush products are hidden by
-default.
+The owner approved the first public catalog on **2026-08-15** as exactly seven
+`$22` ready-to-play decks. The `$44` Starter Kit, `$12` Accessories Kit, three
+`$5` individual accessories, and future apparel, storage, and plush products
+remain defined for preparation but are hidden and unavailable by default.
 
-All twelve draft prices are server-controlled, and the owner has approved a
-standard build-and-dispatch window of five business days for every launch SKU.
+All seven launch prices are server-controlled and owner-approved. Each deck's
+60-card code manifest and initial made-to-order ATP capacity of 10 are confirmed,
+with a standard build-and-dispatch window of five business days.
 The optional expedited choice adds $10 once per order for build and dispatch
 within one business day, subject to a hard limit of 10 expedited orders per
-Eastern-time production due date; carrier transit time is separate. Exact packaged
-counts for the Conditions Deck, Dice Pack, and RP Token Set still need to be
-confirmed before publication. The Pennsylvania license supplied by the owner
+Eastern-time production due date; carrier transit time is separate. The prepared
+future Dice Pack is one each D4, D6, D8, D10, D12, D20, and D100, and the RP
+Token Set contains 15 tokens. They remain unavailable with the Starter Kit,
+Accessories Kit, and Conditions Deck. The Pennsylvania license supplied by the owner
 satisfies the storefront's government-registration confirmation gate. Stripe
 Automatic Tax is required for mailed orders; scheduled Elverson pickup uses a
 separately verified fixed manual Tax Rate. Checkout remains off until the sellable
@@ -42,10 +43,11 @@ flow is:
    purchased item and quantity, totals, and the selected shipping or scheduled
    pickup method. Pickup customers are contacted after the build to arrange a
    time.
-5. Test payments remain in Stripe's sandbox and never settle. After the
-   lifecycle passes, separate live credentials and a live webhook are used,
-   and Stripe pays the live balance to the configured business settlement
-   account.
+5. Test payments remain in Stripe's sandbox and never settle. They can still
+   mutate whichever Supabase inventory project is configured, so use the
+   isolated test procedure in section 6. After the lifecycle passes, separate
+   live credentials and a live webhook are used, and Stripe pays the live
+   balance to the configured business settlement account.
 
 Checkout uses Stripe's Dashboard-managed dynamic payment methods and tags each
 Session with `seapals_store_web_kvqzrmta` so this storefront flow can be
@@ -53,8 +55,8 @@ measured separately in Stripe.
 
 ## What is included
 
-- `/store`: responsive prelaunch catalog grouped into Starter Kits, Expansion
-  Decks, and Game Accessories. Future concepts require an explicit private
+- `/store`: responsive launch catalog containing the seven approved Expansion
+  Decks. Prepared future products require an explicit private
   preview switch.
 - `/api/store/checkout`: server-priced cart validation and Stripe-hosted
   Checkout. Payment credentials never pass through SeaPals servers.
@@ -77,29 +79,29 @@ SeaPals stores order, customer contact, delivery, total, payment state,
 processor references, receipt references, and fulfillment records. Stripe hosts
 the payment page and retains the underlying payment record.
 
-## Catalog prices pending owner approval
+## Owner-approved launch prices
 
 SeaPals Credits are intentionally excluded. The repository currently uses
-these server-controlled cash-price defaults, but no authoritative pricing sheet
-is present locally. The owner must approve them before the live catalog gate is
-enabled:
+these server-controlled cash-price definitions. The owner approved the seven
+launch decks at $22 each on 2026-08-15; the other rows remain unavailable:
 
-| Product | Configured price | Included |
-| --- | ---: | --- |
-| Starter Kit | $44 | Coral Garden 60 Card Deck, Blue Water 60 Card Deck, Conditions Deck, Dice Set, and Reef Point Tokens |
-| Each Expansion Deck | $22 | One 60-card ready-to-play deck |
-| Accessories Kit | $12 | Conditions Deck, Dice Pack, and Reef Point Tokens |
-| Conditions Deck | $5 | Packaged card count must also be confirmed |
-| Dice Pack | $5 | Dice types and quantities must also be confirmed |
-| Reef Point (RP) Token Set | $5 | Tokens per set must also be confirmed |
+| Product | Configured price | Included | Initial availability |
+| --- | ---: | --- | --- |
+| Each Expansion Deck | $22 | One 60-card ready-to-play deck | **Launch** |
+| Starter Kit | $44 | Coral Garden 60 Card Deck, Blue Water 60 Card Deck, Conditions Deck, Dice Set, and Reef Point Tokens | Future |
+| Accessories Kit | $12 | Conditions Deck, Dice Pack, and Reef Point Tokens | Future |
+| Conditions Deck | $5 | Packaged card count must be confirmed before a future release | Future |
+| Dice Pack | $5 | One each D4, D6, D8, D10, D12, D20, D100 | Future |
+| Reef Point (RP) Token Set | $5 | 15 tokens | Future |
 
 The seven Expansion Decks are Blue Water, Coral Garden, Murky Water,
 Disruption, Stinging Fortress, Darkness Shroud, and Open Ocean. Each code
 manifest resolves to exactly 60 cards. The local print-sheet folder contains a
-sheet set for every deck, but physical parity and either finished stock or
-owner-approved made-to-order capacity must still be checked before launch.
+sheet set for every deck. The owner approved those 60-card manifests and an
+initial made-to-order ATP capacity of 10 per launch deck on 2026-08-15.
 
-Future Custom T-Shirt, Card Binder, Backpack, and Plush Toy concepts are hidden
+The prepared Starter Kit and accessories plus future Custom T-Shirt, Card
+Binder, Backpack, and Plush Toy concepts are hidden
 unless `STORE_SHOW_FUTURE_PRODUCTS=true`. Custom T-Shirts remain locked even if
 priced because checkout does not yet collect size, color, or customization
 choices.
@@ -114,7 +116,7 @@ Do not seed capacity merely because the schema has been applied. During the
 checkout-disabled production cutover, follow
 `docs/store-inventory-operations.md` to drain any legacy payment sessions and
 then run the non-replenishing `supabase/store-launch-capacity.sql` seed. It
-creates the twelve launch SKU rows at the owner's approved ATP limit of 10 and
+creates twelve prepared SKU rows at the owner's approved ATP limit of 10 and
 leaves existing rows untouched on reruns.
 
 It is safe to rerun when this branch changes: the script adds missing catalog
@@ -213,8 +215,16 @@ Pin it to Stripe API version `2026-07-29.dahlia` and subscribe to:
 - `checkout.session.async_payment_failed`
 - `checkout.session.expired`
 - `payment_intent.payment_failed`
-- `charge.refunded`
+- `refund.created`
+- `refund.updated`
+- `refund.failed`
 - `charge.dispute.created`
+- `charge.dispute.closed`
+
+The application intentionally treats legacy `charge.refunded` deliveries as an
+acknowledged no-op because that Charge snapshot does not prove the underlying
+refund ultimately succeeded. It can be removed from the destination once the
+three `refund.*` subscriptions above are active.
 
 Only a signature-verified webhook moves an order to paid. The success page is
 informational and never authorizes fulfillment. For local testing, use Stripe
@@ -236,7 +246,7 @@ its final SKU and retail price are known.
 Set `STORE_AVAILABLE_PRODUCT_IDS` to a comma-separated list of reviewed product
 IDs, for example:
 
-`starter-kit,blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,accessory-set,conditions-deck,dice-pack,reef-point-tokens`
+`blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress`
 
 There is deliberately no `all` wildcard. The server rejects unknown,
 unavailable, client-priced, over-quantity, or stale cart items. Add a product
@@ -290,8 +300,8 @@ if it is enabled because the private order ledger does not yet reconcile a
 offering any promotion code, or staff totals can disagree with Stripe.
 
 Keep `STORE_SHOW_FUTURE_PRODUCTS=false` for the launch store. Run
-`npm.cmd run store:check:launch` to verify the exact twelve-product allowlist
-and server-controlled prices.
+`npm.cmd run store:check:launch` to verify the exact seven-deck allowlist and
+the owner-approved server-controlled $22 prices.
 
 The owner-approved fulfillment choices and conservative weight tiers are
 server-controlled:
@@ -410,6 +420,15 @@ that the future local rates are configured.
 
 Keep `STORE_CHECKOUT_ENABLED=false` while preparing the store. Then:
 
+Stripe sandbox mode does not isolate the Supabase ledger or ATP rows. Prefer a
+separate staging Supabase project for paid lifecycle tests. If the production
+Supabase project must be used while public checkout is still disabled, allowlist
+only the non-public `starter-kit` test SKU and consume one of its prepared ATP
+units; do not use any of the seven public deck rows. A refund intentionally does
+not restock inventory. Leave the test unit conservatively consumed, or restore
+it only through a documented, intentional capacity adjustment after reviewing
+the order and refund records.
+
 1. Run the SQL and add Stripe/Supabase test credentials.
 2. Allowlist only test-ready products and set realistic Standard and Priority
    shipping amounts.
@@ -445,9 +464,10 @@ npm.cmd run build
 npm.cmd run cloudflare:build
 ```
 
-After the physical catalog audit passes, set `STORE_CATALOG_CONFIRMED=true`.
-This gate is required only for live credentials, so it does not block sandbox
-lifecycle testing.
+The seven-deck catalog audit and owner approval were recorded on 2026-08-15, so
+`STORE_CATALOG_CONFIRMED=true`. The independent
+`STORE_CHECKOUT_ENABLED=false` switch remains in place until the final live
+lifecycle check is complete.
 
 ## 7. Receipts and fulfillment
 
@@ -507,34 +527,38 @@ are:
    and `America/New_York` allocation boundary, confirm current shared one-day
    capacity, and set `STORE_EXPEDITED_PRODUCTION_CAPACITY_CONFIRMED=true`.
 6. Run `npm run store:check:online` against live credentials.
-7. Complete one small real purchase, receipt, packing, shipping, and refund
-   audit before enabling additional product IDs.
+7. Complete the paid, receipt, packing, shipping, failure, and refund lifecycle
+   in a Stripe sandbox. [Stripe prohibits testing live mode with real payment
+   details](https://docs.stripe.com/testing?testing-method=payment-methods).
+   For the live smoke test, create a Checkout Session without entering payment
+   details, expire it, and verify the signed expiration event releases the
+   reservation before opening public ordering.
 
 ## 9. Edge protection
 
-Before placing customer PII in `/admin/orders`, put both `/admin/*` and
-`/api/admin/*` behind a Cloudflare Access self-hosted application whose Allow
-policy contains only the owner's verified identity. Keep the application-level
-admin token as a second layer until staff authentication replaces it. Because
-the dashboard fetches its API on the same origin, the Access session cookie
-should cover both protected paths; test the page, GET, and PATCH after enabling
-the policy. Cloudflare Access applications deny unmatched users by default.
+As defense in depth for customer PII in `/admin/orders`, put both `/admin/*`
+and `/api/admin/*` behind a Cloudflare Access self-hosted application whose
+Allow policy contains only the owner's verified identity. Keep the existing
+application-level high-entropy admin token as the required authorization layer
+until staff authentication replaces it. Because the dashboard fetches its API
+on the same origin, the Access session cookie should cover both protected paths;
+test the page, GET, and PATCH after enabling the policy. Cloudflare Access
+applications deny unmatched users by default.
 See [Cloudflare application paths](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/)
 and [self-hosted applications](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/).
 
-Add a conservative IP-based Cloudflare rate-limit rule for the exact
-`/api/store/checkout` path (start with 10 requests per 60 seconds and a 60-second
-429 block), then tune it from Security Events. Protect `/api/admin/store-orders`
-with Access first; a second 30-per-60-second IP rule is reasonable defense in
-depth for the owner dashboard. Free-plan rate-limit expressions may offer only
-the path field, so all methods on an exact API path can count. Do not apply a
-low per-IP limit to the Stripe webhook: Stripe delivery addresses are shared
-and legitimate event retries can burst. Its one-megabyte body cap, signature
-verification, event ownership check, and idempotent ledger remain the primary
-controls. See [Cloudflare rate limiting](https://developers.cloudflare.com/waf/rate-limiting-rules/).
+The Worker uses a native Cloudflare Rate Limiting binding for exact `POST
+/api/store/checkout` requests: 10 attempts per 60 seconds for a one-way hash of
+the edge-reported network address. Exhausted callers receive a private 429 with
+`Retry-After: 60`; a missing or failed binding makes checkout fail closed with
+503. The binding and limit are encoded in `wrangler.jsonc`, and the webhook is
+deliberately excluded because legitimate Stripe retries can burst. The rate
+limiter is permissive and eventually consistent, so inventory reservations and
+scheduled Stripe-verified cleanup remain the authoritative availability
+controls. See [Cloudflare Worker Rate Limiting](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/).
 
-Access identity selection and WAF rules require an owner-approved Cloudflare
-Dashboard change; they are not encoded in `wrangler.jsonc`.
+Cloudflare Access identity selection remains an optional owner Dashboard
+change; it is not encoded in `wrangler.jsonc`.
 
 ## Cost posture
 
@@ -562,16 +586,16 @@ copy with the store's private launch records.
 - Audit finished stock or owner-approved made-to-order ATP capacity and
   packaging for every enabled SKU. Keep the current representative art clearly
   presented as illustration rather than packaged-product photography.
-- Confirm the printed Starter Kit and Accessories Kit match their listed
-  contents.
-- Confirm the Conditions Deck card count and titles. Two local candidate sheets
+- Keep the prepared Starter Kit, Accessories Kit, and individual accessories
+  unavailable until each future-release audit is complete.
+- Before a future Conditions Deck release, confirm its packaged card count and
+  titles. Two local candidate sheets
   contain 18 card positions but disagree with the coded condition list, so they
   are not yet a retail-package specification.
-- Confirm the Dice Pack die types and quantities; gameplay references six die
-  types while the current three-dice SVG is only concept art. Confirm RP Token
-  count and denominations per set as well.
-- Approve the configured prices, record finished stock or made-to-order ATP
-  capacity, and verify each physical sample deck against its 60-card manifest.
+- Preserve the confirmed future Dice Pack contents (one each D4, D6, D8, D10,
+  D12, D20, D100) and RP Token Set count (15 tokens).
+- Preserve the approved $22 launch prices, ATP capacity of 10 per deck, and
+  seven 60-card manifests.
 - Retain the confirmed 0.5-pound deck, 1-pound Starter Kit, and 8-pound maximum
   parcel measurements; keep the tested $10/$15 and $20/$35 tier boundary plus
   the 8-item/128-ounce rejection unchanged while
@@ -579,8 +603,9 @@ copy with the store's private launch records.
 - Test the standard five-business-day and expedited one-business-day production
   paths, confirm the $10 fee is once per order, and verify the hard 10-order
   rush limit, Eastern due-date allocation, and terminal-unpaid slot release.
-- Set `STORE_CATALOG_CONFIRMED=true` only after all enabled-SKU checks above
-  pass; an allowlist by itself is not an inventory reservation system.
+- Keep `STORE_CATALOG_CONFIRMED=true` only while the exact seven enabled decks
+  continue to satisfy those checks; an allowlist by itself is not an inventory
+  reservation system.
 - Confirm the Elverson pickup workflow and pickup tax sourcing before setting
   `STORE_PICKUP_TAX_CONFIRMED=true`; publish only a pickup address approved for
   customers.

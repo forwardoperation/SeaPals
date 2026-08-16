@@ -4,7 +4,9 @@ import {
   assertStripeCheckoutConfiguration,
   computeStripeWebhookSignature,
   createStripeCheckoutSession,
+  expireStripeCheckoutSession,
   parseStripeSignatureHeader,
+  retrieveStripeCheckoutSession,
   retrieveStripePaymentOwnership,
   retrieveStripePaymentReceiptDetails,
   verifyStripeWebhookSignature,
@@ -769,5 +771,45 @@ test("payment ownership recovers order metadata through Charge and PaymentIntent
     globalThis.fetch = originalFetch;
     if (originalSecret === undefined) delete process.env.STRIPE_SECRET_KEY;
     else process.env.STRIPE_SECRET_KEY = originalSecret;
+  }
+});
+
+test("scheduled reconciliation passes its Worker secret explicitly and expires idempotently", async () => {
+  const originalFetch = globalThis.fetch;
+  const requests = [];
+  globalThis.fetch = async (url, options = {}) => {
+    requests.push({ url: new URL(url), options });
+    return Response.json({
+      object: "checkout.session",
+      id: "cs_test_scheduled_reconciliation",
+      status: options.method === "POST" ? "expired" : "open",
+    });
+  };
+
+  try {
+    await retrieveStripeCheckoutSession("cs_test_scheduled_reconciliation", {
+      secretKey: "rk_test_worker_reconciliation",
+    });
+    await expireStripeCheckoutSession("cs_test_scheduled_reconciliation", {
+      secretKey: "rk_test_worker_reconciliation",
+      idempotencyKey:
+        "seapals-reservation-expire-cs_test_scheduled_reconciliation",
+    });
+
+    assert.equal(requests.length, 2);
+    assert.equal(
+      requests[0].options.headers.Authorization,
+      "Bearer rk_test_worker_reconciliation"
+    );
+    assert.deepEqual(requests[0].url.searchParams.getAll("expand[]"), [
+      "payment_intent.latest_charge",
+    ]);
+    assert.equal(requests[1].options.method, "POST");
+    assert.equal(
+      requests[1].options.headers["Idempotency-Key"],
+      "seapals-reservation-expire-cs_test_scheduled_reconciliation"
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
   }
 });

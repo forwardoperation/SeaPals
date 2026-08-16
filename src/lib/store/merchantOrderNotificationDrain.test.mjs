@@ -194,9 +194,15 @@ test("the OpenNext custom worker retains fetch and adds the exact five-minute cr
   );
 
   assert.match(worker, /import openNextWorker from "\.\/\.open-next\/worker\.js"/);
-  assert.match(worker, /fetch: openNextWorker\.fetch/);
+  assert.match(worker, /async fetch\(request, environment, context\)/);
+  assert.match(
+    worker,
+    /return openNextWorker\.fetch\(request, environment, context\)/
+  );
   assert.match(worker, /async scheduled\(controller, environment\)/);
   assert.match(worker, /drainMerchantPurchaseNotifications\(\{ environment \}\)/);
+  assert.match(worker, /reconcileOverdueInventoryReservations\(\{ environment \}\)/);
+  assert.match(worker, /Promise\.allSettled/);
   assert.match(worker, /DOQueueHandler/);
   assert.match(wrangler, /"main": "custom-worker\.mjs"/);
   assert.match(wrangler, /"crons": \["\*\/5 \* \* \* \*"\]/);
