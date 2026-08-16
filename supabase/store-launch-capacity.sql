@@ -3,8 +3,10 @@
 -- Apply this file only after supabase/store-orders.sql has completed, during a
 -- checkout-disabled production cutover. The owner approved an initial
 -- available-to-promise capacity of 10 for each of the 12 prepared SKUs below.
--- The seven deck SKUs and Accessories Kit are in the current public allowlist;
--- retaining the other four rows does not make those products purchasable.
+-- The Starter Kit, seven deck SKUs, and Accessories Kit are in the current
+-- public allowlist; retaining the other three rows does not make those products
+-- purchasable. This non-replenishing seed records initial capacity only; the
+-- Starter Kit may now be below 10 because an earlier test consumed one unit.
 -- Reserved capacity starts at zero.
 --
 -- These numbers do not validate shared materials, shared kit components,

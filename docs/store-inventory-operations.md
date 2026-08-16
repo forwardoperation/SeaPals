@@ -68,9 +68,11 @@ Use a checkout-disabled maintenance window:
 
    This example records the owner-approved caps; it does not prove that shared
    resources can support 120 simultaneous units. The public allowlist contains
-   the seven deck SKUs and Accessories Kit (80 units of aggregate ATP); the
-   other four rows remain dormant preparation records and must not be treated
-   as public availability. Confirm the aggregate material
+   the Starter Kit, seven deck SKUs, and Accessories Kit (90 units of initial
+   aggregate ATP); the other three rows remain private preparation records and
+   must not be treated as public availability. The Starter Kit row was verified
+   at 9 ATP and 0 reserved on 2026-08-16 after an earlier test unit; never rerun
+   the seed to restore it. Confirm the aggregate material
    and labor plan before running it. Never use an `on conflict ... do update`
    deployment script: redeploying it could replenish already-sold capacity.
    Never reset a count merely because a new day or week began.
@@ -93,9 +95,9 @@ Use a checkout-disabled maintenance window:
    and refund/dispute lifecycle tests. The ledger is keyed by SKU rather than
    Stripe mode, so a test-mode payment against production consumes real counters.
    If a separate project is unavailable, keep public checkout disabled, expose
-   only the dormant `SP-KIT-STARTER-V01` test SKU locally, and treat its one test
-   unit as an intentional production-ledger mutation. Never use a public launch
-   row for that test. A refund does not restock it; leave the unit
+   only a nonpublic test SKU such as `SP-ACC-CONDITIONS-DECK` locally, and treat
+   its one test unit as an intentional production-ledger mutation. Never use a
+   public launch row for that test. A refund does not restock it; leave the unit
    conservatively consumed or make a documented, intentional capacity adjustment
    only after reviewing the order and refund records. Verify `on_hand` and
    `reserved` after every transition.
@@ -123,7 +125,7 @@ a raw-material ledger, production schedule, or bill-of-materials system.
 
 The owner-approved initial cap is 10 and the standard build-and-dispatch window
 is five business days for each of the 12 prepared SKUs. The public catalog uses
-the seven deck rows and Accessories Kit row. Before seeding all rows,
+the Starter Kit, seven deck rows, and Accessories Kit row. Before seeding all rows,
 verify that dedicated materials and labor can support the aggregate promise;
 twelve separate rows at 10 can accept up to 120 units concurrently. If that is
 not supportable, dedicate resources or lower the affected values.

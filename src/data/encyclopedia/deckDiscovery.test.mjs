@@ -151,7 +151,7 @@ test("multi-stage creatures sum every owned card in a deck", () => {
   ]);
 });
 
-test("discovery returns actionable deck routes without unavailable bundles", () => {
+test("discovery returns actionable deck routes and available bundles", () => {
   const discovery = getCreatureDeckDiscovery(
     encyclopediaCreatureBySlug["fairy-parrotfish"]
   );
@@ -162,7 +162,14 @@ test("discovery returns actionable deck routes without unavailable bundles", () 
   assert.equal(blueWater.simulatorHref, "/simulator?deck=blue-water");
   assert.equal(blueWater.storeHref, "/store?product=blue-water");
   assert.equal(blueWater.deckListHref, "/decks#blue-water");
-  assert.deepEqual(discovery.bundles, []);
+  assert.deepEqual(discovery.bundles, [
+    {
+      productId: "starter-kit",
+      productName: "Starter Kit",
+      matchingDeckIds: ["blue-water"],
+      storeHref: "/store?product=starter-kit",
+    },
+  ]);
 });
 
 test("a creature outside current decks gets a stable empty state", () => {

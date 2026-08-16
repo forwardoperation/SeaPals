@@ -33,6 +33,7 @@ const PRIORITY_SHIPPING_CENTS = 1500;
 const LARGE_STANDARD_SHIPPING_CENTS = 2000;
 const LARGE_PRIORITY_SHIPPING_CENTS = 3500;
 const APPROVED_LAUNCH_PRICE_CENTS_BY_PRODUCT_ID = Object.freeze({
+  "starter-kit": 4400,
   "blue-water": 2200,
   disruption: 2200,
   "coral-garden": 2200,
@@ -437,14 +438,14 @@ if (launchCatalog) {
         ? `Remove non-launch products: ${unexpectedLaunchProducts.join(", ")}.`
         : duplicateLaunchProducts.length
           ? `Remove duplicate product IDs: ${[...new Set(duplicateLaunchProducts)].join(", ")}.`
-          : "Only the seven approved decks and Accessories Kit are selected."
+          : "Only the Starter Kit, seven approved decks, and Accessories Kit are selected."
   );
   addCheck(
     "Approved launch prices",
     incorrectlyPricedLaunchProducts.length === 0,
     incorrectlyPricedLaunchProducts.length
       ? `Restore the owner-approved price for: ${incorrectlyPricedLaunchProducts.join(", ")}.`
-      : "The seven decks are $22 each and the Accessories Kit is $12."
+      : "The Starter Kit is $44, the seven decks are $22 each, and the Accessories Kit is $12."
   );
 }
 

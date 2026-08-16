@@ -3,6 +3,7 @@ const GAME_PRODUCT_TAX_CODE_ENV_KEY = "STRIPE_GAME_PRODUCT_TAX_CODE";
 // Keep the first public catalog deliberately narrow. Future merchandise stays
 // defined below so it can be prepared without appearing in the launch shop.
 export const storeLaunchProductIds = Object.freeze([
+  "starter-kit",
   "blue-water",
   "disruption",
   "coral-garden",
@@ -17,7 +18,6 @@ export const storeLaunchProductIds = Object.freeze([
 // when a narrower public allowlist is used. Keep this distinct from the launch
 // IDs so retaining a private ATP row never makes a product purchasable.
 export const storePreparedProductIds = Object.freeze([
-  "starter-kit",
   ...storeLaunchProductIds,
   "conditions-deck",
   "dice-pack",
@@ -36,15 +36,16 @@ export const storeProductDefinitions = [
     productLabel: "Two-player starter kit",
     description:
       "Everything two players need to start building reefs and playing SeaPals together.",
-    details: "Two 60-card decks plus the shared play accessories",
+    details:
+      "Two 60-card decks, one 18-card Conditions Deck, seven dice, and 15 Reef Point tokens",
     checkoutDescription:
-      "Includes Coral Garden and Blue Water 60-card decks, Conditions Deck, Dice Set, and Reef Point Tokens.",
+      "Two-player Starter Kit with Coral Garden and Blue Water 60-card ready-to-play decks, one 18-card Conditions Deck, seven dice (one each D4, D6, D8, D10, D12, D20, and D100), and 15 Reef Point tokens.",
     includedItems: [
-      "Coral Garden 60 Card Deck",
-      "Blue Water 60 Card Deck",
-      "Conditions Deck",
-      "Dice Set",
-      "Reef Point Tokens",
+      "Coral Garden 60-card ready-to-play deck",
+      "Blue Water 60-card ready-to-play deck",
+      "1 Conditions Deck (18 cards)",
+      "7 dice: D4, D6, D8, D10, D12, D20, and D100",
+      "15 Reef Point tokens",
     ],
     includedDeckIds: ["coral-garden", "blue-water"],
     shippingWeightOunces: 16,
@@ -219,11 +220,11 @@ export const storeProductDefinitions = [
     productLabel: "Gameplay essentials",
     description:
       "Bundle the three shared gameplay accessories used around every SeaPals table.",
-    details: "Conditions Deck, seven-die pack, and 15 Reef Point tokens",
+    details: "18-card Conditions Deck, seven-die pack, and 15 Reef Point tokens",
     checkoutDescription:
-      "Accessories Kit with one Conditions Deck, seven-die pack, and 15 Reef Point tokens.",
+      "Accessories Kit with one 18-card Conditions Deck, seven-die pack, and 15 Reef Point tokens.",
     includedItems: [
-      "1 Conditions Deck",
+      "1 Conditions Deck (18 cards)",
       "7 dice: D4, D6, D8, D10, D12, D20, and D100",
       "15 Reef Point tokens",
     ],
@@ -287,15 +288,15 @@ export const storeProductDefinitions = [
     productLabel: "Game accessory",
     description:
       "A standalone Conditions Deck for adding changing ocean conditions to a match.",
-    details: "Condition cards for SeaPals gameplay",
-    checkoutDescription: "SeaPals Conditions Deck.",
+    details: "18 condition cards for SeaPals gameplay",
+    checkoutDescription: "SeaPals 18-card Conditions Deck.",
+    cardsIncluded: 18,
     shippingWeightOunces: 16,
     image: "/images/store/conditions-deck.svg",
     defaultPriceCents: 500,
     priceEnvKey: "STORE_PRICE_CONDITIONS_DECK_CENTS",
     taxCodeEnvKey: GAME_PRODUCT_TAX_CODE_ENV_KEY,
-    availabilityNote:
-      "Confirm the packaged card count before launch.",
+    availabilityNote: "Prepared for a future standalone catalog release.",
     featured: false,
   },
   {

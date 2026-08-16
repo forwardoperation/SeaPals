@@ -26,6 +26,7 @@ const EXPECTED_SKUS_BY_PRODUCT_ID = Object.freeze({
 });
 
 const EXPECTED_LAUNCH_PRODUCT_IDS = Object.freeze([
+  "starter-kit",
   "blue-water",
   "disruption",
   "coral-garden",
@@ -44,7 +45,6 @@ const EXPECTED_FUTURE_PRODUCT_IDS = Object.freeze([
   "dice-pack",
   "plush-toy",
   "reef-point-tokens",
-  "starter-kit",
 ]);
 
 const CANONICAL_SKU_PATTERN = /^SP-[A-Z0-9]+-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
@@ -71,7 +71,7 @@ test("all canonical product IDs and SKUs are unique and well formed", () => {
   }
 });
 
-test("the catalog remains partitioned into eight launch products and eight prepared future products", () => {
+test("the catalog remains partitioned into nine launch products and seven prepared future products", () => {
   const launchProductIds = new Set(storeLaunchProductIds);
   const futureProductIds = storeProductDefinitions
     .map(({ id }) => id)
@@ -79,7 +79,7 @@ test("the catalog remains partitioned into eight launch products and eight prepa
     .sort();
 
   assert.deepEqual(storeLaunchProductIds, EXPECTED_LAUNCH_PRODUCT_IDS);
-  assert.equal(launchProductIds.size, 8);
+  assert.equal(launchProductIds.size, 9);
   assert.deepEqual(futureProductIds, EXPECTED_FUTURE_PRODUCT_IDS);
 
   for (const productId of EXPECTED_FUTURE_PRODUCT_IDS) {
@@ -130,7 +130,7 @@ test("launch decks and prepared products publish conservative ready-to-mail weig
   }
 });
 
-test("the Accessories Kit and prepared components preserve the owner-confirmed contents", () => {
+test("the Starter Kit, Accessories Kit, and prepared components preserve the owner-confirmed contents", () => {
   const productsById = new Map(
     storeProductDefinitions.map((product) => [product.id, product])
   );
@@ -152,9 +152,22 @@ test("the Accessories Kit and prepared components preserve the owner-confirmed c
     /15 Reef Point/
   );
   assert.deepEqual(productsById.get("accessory-set")?.includedItems, [
-    "1 Conditions Deck",
+    "1 Conditions Deck (18 cards)",
     "7 dice: D4, D6, D8, D10, D12, D20, and D100",
     "15 Reef Point tokens",
   ]);
   assert.equal(productsById.get("accessory-set")?.defaultPriceCents, 1200);
+  assert.deepEqual(productsById.get("starter-kit")?.includedItems, [
+    "Coral Garden 60-card ready-to-play deck",
+    "Blue Water 60-card ready-to-play deck",
+    "1 Conditions Deck (18 cards)",
+    "7 dice: D4, D6, D8, D10, D12, D20, and D100",
+    "15 Reef Point tokens",
+  ]);
+  assert.equal(productsById.get("starter-kit")?.defaultPriceCents, 4400);
+  assert.equal(productsById.get("conditions-deck")?.cardsIncluded, 18);
+  assert.equal(
+    productsById.get("conditions-deck")?.details,
+    "18 condition cards for SeaPals gameplay"
+  );
 });

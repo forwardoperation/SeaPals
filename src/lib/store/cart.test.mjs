@@ -50,7 +50,7 @@ const products = [
     name: "Starter Kit",
     description: "Everything two players need to play.",
     checkoutDescription:
-      "Includes two 60-card decks, conditions, dice, and Reef Point tokens.",
+      "Includes two 60-card decks, an 18-card Conditions Deck, seven dice, and 15 Reef Point tokens.",
     image: "/starter-kit.svg",
     shippingWeightOunces: 16,
     taxCode: "txcd_99999999",
@@ -65,7 +65,7 @@ const products = [
     name: "Accessories Kit",
     description: "Shared gameplay accessories.",
     checkoutDescription:
-      "Includes Conditions Deck, Dice Pack, and Reef Point Token Set.",
+      "Includes an 18-card Conditions Deck, seven dice, and 15 Reef Point tokens.",
     image: "/accessory-set.svg",
     shippingWeightOunces: 16,
     taxCode: "txcd_99999999",
@@ -156,7 +156,7 @@ test("the catalog definitions use the established cash prices", () => {
   }
 });
 
-test("the default storefront is limited to the eight approved launch products", () => {
+test("the default storefront is limited to the nine approved launch products", () => {
   withStoreEnvironment({}, () => {
     const configuration = getStoreConfiguration();
 
@@ -164,7 +164,11 @@ test("the default storefront is limited to the eight approved launch products", 
       configuration.products.map((product) => product.id),
       storeLaunchProductIds
     );
-    assert.equal(configuration.products.length, 8);
+    assert.equal(configuration.products.length, 9);
+    assert.equal(
+      configuration.products.some((product) => product.id === "starter-kit"),
+      true
+    );
     assert.equal(
       configuration.products.some((product) => product.id === "accessory-set"),
       true
@@ -373,7 +377,7 @@ test("future catalog products require an explicit preview switch", () => {
 
     assert.equal(configuration.products.length, storeProductDefinitions.length);
     assert.ok(
-      configuration.products.some((product) => product.id === "accessory-set")
+      configuration.products.some((product) => product.id === "conditions-deck")
     );
     assert.ok(
       configuration.products.some((product) => product.id === "custom-t-shirt")
@@ -454,7 +458,7 @@ test("game accessories retain their server-controlled source prices", () => {
   );
 });
 
-test("the exact eight-product launch catalog supports the eight-item cart limit", () => {
+test("the nine-product launch catalog preserves the eight-item cart limit", () => {
   withStoreEnvironment(
     {
       ...infrastructureEnvironment,
@@ -471,8 +475,8 @@ test("the exact eight-product launch catalog supports the eight-item cart limit"
       const decks = configuration.products.filter((product) => product.deckId);
 
       assert.deepEqual(ids, storeLaunchProductIds);
-      assert.equal(new Set(ids).size, 8);
-      assert.equal(new Set(skus).size, 8);
+      assert.equal(new Set(ids).size, 9);
+      assert.equal(new Set(skus).size, 9);
       assert.equal(decks.length, 7);
       assert.ok(configuration.products.every((product) => product.madeToOrder));
       assert.equal(
@@ -495,8 +499,12 @@ test("the exact eight-product launch catalog supports the eight-item cart limit"
       assert.equal(configuration.checkoutEnabled, false);
       assert.equal(configuration.automaticTaxEnabled, false);
 
+      const maximumMixedCartIds = storeLaunchProductIds.slice(
+        0,
+        STORE_MAX_CART_QUANTITY
+      );
       const quote = quoteCart(
-        storeLaunchProductIds.map((productId) => ({
+        maximumMixedCartIds.map((productId) => ({
           productId,
           quantity: 1,
         })),
@@ -504,13 +512,26 @@ test("the exact eight-product launch catalog supports the eight-item cart limit"
         { fulfillmentOption: configuration.shippingOptions[0] }
       );
 
-      assert.equal(quote.items.length, storeLaunchProductIds.length);
+      assert.equal(quote.items.length, STORE_MAX_CART_QUANTITY);
       assert.equal(quote.totalQuantity, STORE_MAX_CART_QUANTITY);
-      assert.equal(quote.subtotalCents, 16_600);
+      assert.equal(quote.subtotalCents, 19_800);
       assert.equal(quote.shippingWeightOunces, 72);
       assert.equal(quote.shippingRateTierId, "large");
       assert.equal(quote.shippingCents, 2000);
-      assert.equal(quote.totalCents, 18_600);
+      assert.equal(quote.totalCents, 21_800);
+
+      assert.throws(
+        () =>
+          quoteCart(
+            storeLaunchProductIds.map((productId) => ({
+              productId,
+              quantity: 1,
+            })),
+            configuration.products,
+            { fulfillmentOption: configuration.shippingOptions[0] }
+          ),
+        (error) => error.code === "cart_quantity_limit"
+      );
     }
   );
 });

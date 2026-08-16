@@ -707,8 +707,8 @@ export default function Storefront({
               Choose how your reef grows.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
-              Seven ready-to-play SeaPals decks and the Accessories Kit, built
-              to order for your next reef.
+              The two-player Starter Kit, seven ready-to-play SeaPals decks,
+              and the Accessories Kit, built to order for your next reef.
             </p>
 
             {highlightedProduct ? (
@@ -793,7 +793,7 @@ export default function Storefront({
             <p className="max-w-md text-sm leading-6 text-slate-500">
               {checkoutEnabled
                 ? "Choose your products and add available items to your order. Prices and availability reflect the current catalog."
-                : "The approved seven $22 decks and $12 Accessories Kit are shown. Ordering remains disabled until the final launch checks are complete."}
+                : "The approved $44 Starter Kit, seven $22 decks, and $12 Accessories Kit are shown. Ordering remains disabled until the final launch checks are complete."}
             </p>
           </div>
 

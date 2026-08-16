@@ -237,7 +237,7 @@ function runOnlineLiveCheck(fixtureOverrides = {}, environmentOverrides = {}) {
   );
 }
 
-test("launch readiness accepts the exact eight approved products while checkout is off", () => {
+test("launch readiness accepts the exact nine approved products while checkout is off", () => {
   const result = runLaunchCheck();
 
   assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -260,12 +260,12 @@ test("launch readiness names a missing approved product", () => {
 
 test("launch readiness rejects prepared products outside the approved allowlist", () => {
   const result = runLaunchCheck({
-    STORE_AVAILABLE_PRODUCT_IDS: `${storeLaunchProductIds.join(",")},starter-kit`,
+    STORE_AVAILABLE_PRODUCT_IDS: `${storeLaunchProductIds.join(",")},conditions-deck`,
   });
 
   assert.equal(result.status, 1);
   assert.match(result.stdout, /TODO.*Exact approved launch allowlist/);
-  assert.match(result.stdout, /Remove non-launch products: starter-kit/);
+  assert.match(result.stdout, /Remove non-launch products: conditions-deck/);
 });
 
 test("launch readiness rejects a deck price that differs from the approved $22", () => {
@@ -282,6 +282,14 @@ test("launch readiness rejects an Accessories Kit price other than $12", () => {
   assert.equal(result.status, 1);
   assert.match(result.stdout, /TODO.*Approved launch prices/);
   assert.match(result.stdout, /accessory-set/);
+});
+
+test("launch readiness rejects a Starter Kit price other than $44", () => {
+  const result = runLaunchCheck({ STORE_PRICE_STARTER_KIT_CENTS: "4399" });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /TODO.*Approved launch prices/);
+  assert.match(result.stdout, /starter-kit/);
 });
 
 test("launch readiness requires every owner-approved shipping tier", () => {

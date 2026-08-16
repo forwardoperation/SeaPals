@@ -10,22 +10,26 @@ const storePageSource = readFileSync(
   new URL("../../app/store/page.jsx", import.meta.url),
   "utf8"
 );
+const homePageSource = readFileSync(
+  new URL("../../app/page.jsx", import.meta.url),
+  "utf8"
+);
 
-test("public launch copy advertises the seven decks and Accessories Kit", () => {
+test("public launch copy advertises the Starter Kit, seven decks, and Accessories Kit", () => {
   assert.match(
     storefrontSource,
-    /Seven ready-to-play SeaPals decks and the Accessories Kit, built\s+to order for your next reef\./
+    /The two-player Starter Kit, seven ready-to-play SeaPals decks,\s+and the Accessories Kit, built to order for your next reef\./
   );
   assert.match(
     storePageSource,
-    /Shop seven made-to-order SeaPals ready-to-play decks and the Accessories Kit/
+    /Shop the made-to-order SeaPals Starter Kit, seven ready-to-play decks, and the Accessories Kit/
   );
   assert.match(
     storePageSource,
-    /Preview seven made-to-order SeaPals ready-to-play decks and the Accessories Kit/
+    /Preview the made-to-order SeaPals Starter Kit, seven ready-to-play decks, and the Accessories Kit/
   );
-  assert.doesNotMatch(
-    storePageSource,
-    /Shop made-to-order SeaPals starter kits/
+  assert.match(
+    homePageSource,
+    /Shop the Starter Kit, individual decks, and the Accessories\s+Kit in one place\./
   );
 });
