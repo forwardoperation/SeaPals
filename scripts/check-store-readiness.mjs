@@ -243,7 +243,7 @@ if (stripeKey.includes("_live_")) {
   addCheck(
     "Owner-confirmed launch catalog",
     trueValue("STORE_CATALOG_CONFIRMED"),
-    "Confirm finished stock or owner-approved made-to-order ATP capacity, packaged contents, product photos, prices, and fulfillment for every allowlisted SKU before live checkout."
+    "Confirm finished stock or owner-approved made-to-order ATP capacity, packaged contents, prices, and fulfillment for every allowlisted SKU before live checkout."
   );
   addCheck(
     "Live Stripe automatic tax",

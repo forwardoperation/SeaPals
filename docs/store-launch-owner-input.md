@@ -23,20 +23,20 @@ labor allotment to each bundle and individually sold product. A Starter Kit or
 Accessories Kit may be assembled after purchase, but its allocated components
 cannot also support the ATP capacity of its component SKUs.
 
-| SKU | Product | Configured price | Initial ATP capacity | Build and dispatch within | Contents/sample verified | Package photo ready |
-| --- | --- | ---: | ---: | --- | --- | --- |
-| `SP-KIT-STARTER` | Starter Kit | $44 | **10** | **5 business days** |  |  |
-| `SP-DECK-BLUE-WATER` | Blue Water Deck | $22 | **10** | **5 business days** | 60 cards:  |  |
-| `SP-DECK-DISRUPTION` | Disruption Deck | $22 | **10** | **5 business days** | 60 cards:  |  |
-| `SP-DECK-CORAL-GARDEN` | Coral Garden Deck | $22 | **10** | **5 business days** | 60 cards:  |  |
-| `SP-DECK-DARKNESS-SHROUD` | Darkness Shroud Deck | $22 | **10** | **5 business days** | 60 cards:  |  |
-| `SP-DECK-OPEN-OCEAN-HUNT` | Open Ocean Deck | $22 | **10** | **5 business days** | 60 cards:  |  |
-| `SP-DECK-MURKY-WATER` | Murky Water Deck | $22 | **10** | **5 business days** | 60 cards:  |  |
-| `SP-DECK-STINGING-FORTRESS` | Stinging Fortress Deck | $22 | **10** | **5 business days** | 60 cards:  |  |
-| `SP-ACC-SET` | Accessories Kit | $12 | **10** | **5 business days** |  |  |
-| `SP-ACC-CONDITIONS-DECK` | Conditions Deck | $5 | **10** | **5 business days** | ___ cards; title list approved:  |  |
-| `SP-ACC-DICE-PACK` | Dice Pack | $5 | **10** | **5 business days** | Dice types and quantities:  |  |
-| `SP-ACC-REEF-POINTS` | Reef Point Token Set | $5 | **10** | **5 business days** | Count and denominations:  |  |
+| SKU | Product | Configured price | Initial ATP capacity | Build and dispatch within | Contents/sample verified |
+| --- | --- | ---: | ---: | --- | --- |
+| `SP-KIT-STARTER` | Starter Kit | $44 | **10** | **5 business days** |  |
+| `SP-DECK-BLUE-WATER` | Blue Water Deck | $22 | **10** | **5 business days** | 60 cards:  |
+| `SP-DECK-DISRUPTION` | Disruption Deck | $22 | **10** | **5 business days** | 60 cards:  |
+| `SP-DECK-CORAL-GARDEN` | Coral Garden Deck | $22 | **10** | **5 business days** | 60 cards:  |
+| `SP-DECK-DARKNESS-SHROUD` | Darkness Shroud Deck | $22 | **10** | **5 business days** | 60 cards:  |
+| `SP-DECK-OPEN-OCEAN-HUNT` | Open Ocean Deck | $22 | **10** | **5 business days** | 60 cards:  |
+| `SP-DECK-MURKY-WATER` | Murky Water Deck | $22 | **10** | **5 business days** | 60 cards:  |
+| `SP-DECK-STINGING-FORTRESS` | Stinging Fortress Deck | $22 | **10** | **5 business days** | 60 cards:  |
+| `SP-ACC-SET` | Accessories Kit | $12 | **10** | **5 business days** |  |
+| `SP-ACC-CONDITIONS-DECK` | Conditions Deck | $5 | **10** | **5 business days** | ___ cards; title list approved:  |
+| `SP-ACC-DICE-PACK` | Dice Pack | $5 | **10** | **5 business days** | Dice types and quantities:  |
+| `SP-ACC-REEF-POINTS` | Reef Point Token Set | $5 | **10** | **5 business days** | Count and denominations:  |
 
 The owner has confirmed an initial ATP cap of 10 and a standard
 five-business-day build-and-dispatch window for each launch SKU. The per-SKU
@@ -45,8 +45,13 @@ resources are shared, dedicate the allotments or lower the affected caps before
 checkout opens.
 
 Before enabling a SKU, make at least one complete sample to verify contents,
-quality control, package photo, packed weight, dimensions, and postage. The
+quality control, packed weight, dimensions, and postage. The
 sample does not need to be counted in ATP capacity if it will not be sold.
+
+On **2026-08-15**, the owner accepted the catalog's current representative card
+art and concept illustrations and deferred packaged-product photography. A
+package photo is not a launch gate, but representative art must not be described
+as a photograph of the delivered package.
 
 Capacity calculation reviewed by: ____________________  Date: __________
 

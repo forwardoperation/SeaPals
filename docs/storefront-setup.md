@@ -244,8 +244,10 @@ only after its inventory, packaging, contents, price, tax treatment, and
 fulfillment procedure are verified. Live mode also requires the independent
 `STORE_CATALOG_CONFIRMED=true` owner gate; keep it false until every allowlisted
 SKU has verified finished stock or owner-approved made-to-order ATP capacity,
-packaged contents, accurate product photos, an approved price, a published
-build-and-dispatch window, and a repeatable fulfillment procedure.
+packaged contents, an approved price, a published build-and-dispatch window,
+and a repeatable fulfillment procedure. The owner accepted the current
+representative art on 2026-08-15 and deferred packaged-product photography, so
+photography is not a launch gate.
 
 Production speed is selected once for the whole order:
 
@@ -558,8 +560,8 @@ copy with the store's private launch records.
 - Publish owner-approved contact, shipping, return/refund/cancellation, privacy,
   and promotion terms.
 - Audit finished stock or owner-approved made-to-order ATP capacity and
-  packaging for every enabled SKU, and replace any remaining placeholder
-  product art with accurate photography.
+  packaging for every enabled SKU. Keep the current representative art clearly
+  presented as illustration rather than packaged-product photography.
 - Confirm the printed Starter Kit and Accessories Kit match their listed
   contents.
 - Confirm the Conditions Deck card count and titles. Two local candidate sheets
@@ -569,9 +571,7 @@ copy with the store's private launch records.
   types while the current three-dice SVG is only concept art. Confirm RP Token
   count and denominations per set as well.
 - Approve the configured prices, record finished stock or made-to-order ATP
-  capacity, verify each physical sample deck against its 60-card manifest, and
-  replace concept/representative art with accurate packaged-product
-  photography.
+  capacity, and verify each physical sample deck against its 60-card manifest.
 - Retain the confirmed 0.5-pound deck, 1-pound Starter Kit, and 8-pound maximum
   parcel measurements; keep the tested $10/$15 and $20/$35 tier boundary plus
   the 8-item/128-ounce rejection unchanged while
