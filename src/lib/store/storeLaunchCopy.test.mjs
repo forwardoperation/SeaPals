@@ -16,6 +16,8 @@ const homePageSource = readFileSync(
 );
 
 test("public launch copy advertises the Starter Kit, seven decks, and Accessories Kit", () => {
+  assert.match(storefrontSource, />\s*Master the Sea\s*</);
+  assert.doesNotMatch(storefrontSource, /Choose how your reef grows\./);
   assert.match(
     storefrontSource,
     /The two-player Starter Kit, seven ready-to-play SeaPals decks,\s+and the Accessories Kit, built to order for your next reef\./

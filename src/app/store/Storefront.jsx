@@ -704,7 +704,7 @@ export default function Storefront({
             </div>
 
             <h1 className="mt-6 max-w-2xl font-serif text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">
-              Choose how your reef grows.
+              Master the Sea
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
               The two-player Starter Kit, seven ready-to-play SeaPals decks,
