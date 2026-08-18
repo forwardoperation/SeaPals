@@ -768,7 +768,7 @@ if (
 
   try {
     const response = await fetch(
-      `${supabaseUrl}/rest/v1/rpc/check_store_inventory_contract_v5`,
+      `${supabaseUrl}/rest/v1/rpc/check_store_inventory_contract_v6`,
       {
         method: "POST",
         headers: { ...supabaseHeaders, "Content-Type": "application/json" },
@@ -782,7 +782,7 @@ if (
     addCheck(
       "Supabase inventory RPC contract",
       true,
-      "The read-only schema check confirms reservation and merchant-notification RPCs."
+      "The read-only schema check confirms reservation, notification, and fulfillment-workflow contracts."
     );
   } catch {
     addCheck(

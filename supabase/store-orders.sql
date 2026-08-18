@@ -39,7 +39,7 @@ create table if not exists public.store_orders (
   payment_status text not null default 'pending'
     check (payment_status in ('pending', 'paid', 'failed', 'partially_refunded', 'refunded', 'disputed', 'chargeback')),
   fulfillment_status text not null default 'unfulfilled'
-    check (fulfillment_status in ('unfulfilled', 'packing', 'ready_for_pickup', 'picked_up', 'on_hold', 'shipped', 'cancelled')),
+    check (fulfillment_status in ('unfulfilled', 'in_production', 'packing', 'awaiting_shipment', 'ready_for_pickup', 'picked_up', 'on_hold', 'shipped', 'cancelled')),
   receipt_url text,
   receipt_number text,
   tracking_number text,
@@ -349,7 +349,9 @@ alter table public.store_orders
   add constraint store_orders_fulfillment_status_check
     check (fulfillment_status in (
       'unfulfilled',
+      'in_production',
       'packing',
+      'awaiting_shipment',
       'ready_for_pickup',
       'picked_up',
       'on_hold',
@@ -370,7 +372,13 @@ update public.store_orders
    'disputed',
    'chargeback'
  )
-   and fulfillment_status in ('unfulfilled', 'packing', 'ready_for_pickup');
+   and fulfillment_status in (
+     'unfulfilled',
+     'in_production',
+     'packing',
+     'awaiting_shipment',
+     'ready_for_pickup'
+   );
 
 create table if not exists public.store_order_items (
   id uuid primary key default gen_random_uuid(),
@@ -1498,6 +1506,7 @@ drop function if exists public.check_store_inventory_contract();
 drop function if exists public.check_store_inventory_contract_v2();
 drop function if exists public.check_store_inventory_contract_v3();
 drop function if exists public.check_store_inventory_contract_v4();
+drop function if exists public.check_store_inventory_contract_v6();
 drop function if exists public.check_store_inventory_contract_v5();
 create or replace function public.check_store_inventory_contract_v5()
 returns boolean
@@ -1700,8 +1709,8 @@ begin
   end if;
 
   if new.fulfillment_method = 'pickup'
-     and new.fulfillment_status = 'shipped' then
-    raise exception 'Pickup orders must be marked picked up, not shipped.';
+     and new.fulfillment_status in ('awaiting_shipment', 'shipped') then
+    raise exception 'Pickup orders cannot use shipping fulfillment statuses.';
   end if;
 
   if new.fulfillment_method = 'shipping'
@@ -1731,7 +1740,9 @@ begin
     end if;
 
     if new.fulfillment_status in (
+         'in_production',
          'packing',
+         'awaiting_shipment',
          'ready_for_pickup',
          'picked_up',
          'shipped'
@@ -2293,7 +2304,9 @@ begin
            when p_payment_status = 'refunded'
              and fulfillment_status in (
                'unfulfilled',
+               'in_production',
                'packing',
+               'awaiting_shipment',
                'ready_for_pickup',
                'on_hold'
              )
@@ -2301,7 +2314,9 @@ begin
            when p_payment_status in ('partially_refunded', 'disputed')
              and fulfillment_status in (
                'unfulfilled',
+               'in_production',
                'packing',
+               'awaiting_shipment',
                'ready_for_pickup'
              )
              then 'on_hold'
@@ -3063,6 +3078,51 @@ begin
 end;
 $$;
 
+create or replace function public.check_store_inventory_contract_v6()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select public.check_store_inventory_contract_v5()
+    and exists (
+      select 1
+        from pg_catalog.pg_constraint as constraints
+        join pg_catalog.pg_class as tables
+          on tables.oid = constraints.conrelid
+        join pg_catalog.pg_namespace as schemas
+          on schemas.oid = tables.relnamespace
+       where schemas.nspname = 'public'
+         and tables.relname = 'store_orders'
+         and constraints.conname = 'store_orders_fulfillment_status_check'
+         and pg_catalog.pg_get_constraintdef(constraints.oid)
+           like '%in_production%'
+         and pg_catalog.pg_get_constraintdef(constraints.oid)
+           like '%awaiting_shipment%'
+    )
+    and exists (
+      select 1
+        from pg_catalog.pg_proc as functions
+        join pg_catalog.pg_namespace as schemas
+          on schemas.oid = functions.pronamespace
+       where schemas.nspname = 'public'
+         and functions.proname = 'guard_store_order_fulfillment'
+         and functions.prosrc like '%in_production%'
+         and functions.prosrc like '%awaiting_shipment%'
+    )
+    and exists (
+      select 1
+        from pg_catalog.pg_proc as functions
+        join pg_catalog.pg_namespace as schemas
+          on schemas.oid = functions.pronamespace
+       where schemas.nspname = 'public'
+         and functions.proname = 'process_store_payment_event'
+         and functions.prosrc like '%in_production%'
+         and functions.prosrc like '%awaiting_shipment%'
+    );
+$$;
+
 alter table public.store_orders enable row level security;
 alter table public.store_order_items enable row level security;
 alter table public.store_payment_events enable row level security;
@@ -3108,6 +3168,8 @@ revoke all on function public.fail_store_order_checkout_and_release_inventory(
   uuid, text
 ) from public, anon, authenticated;
 revoke all on function public.check_store_inventory_contract_v5()
+  from public, anon, authenticated;
+revoke all on function public.check_store_inventory_contract_v6()
   from public, anon, authenticated;
 revoke all on function public.claim_store_order_notification(
   uuid, text, uuid, integer
@@ -3172,6 +3234,8 @@ grant execute on function public.fail_store_order_checkout_and_release_inventory
   uuid, text
 ) to service_role;
 grant execute on function public.check_store_inventory_contract_v5()
+  to service_role;
+grant execute on function public.check_store_inventory_contract_v6()
   to service_role;
 grant execute on function public.claim_store_order_notification(
   uuid, text, uuid, integer

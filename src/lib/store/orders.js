@@ -6,6 +6,10 @@ import {
   inventoryReservationIsUnavailable,
   parseStoreOrderReservationResult,
 } from "@/lib/store/inventory.mjs";
+import {
+  isFulfillmentStatusAllowedForMethod,
+  isPaidFulfillmentAdvancement,
+} from "@/lib/store/fulfillmentStatus.mjs";
 
 export class OrderStoreError extends Error {
   constructor(
@@ -352,8 +356,10 @@ export async function updateStoreOrderFulfillment({
 
   const pickupOrder = existingOrder.fulfillment_method === "pickup";
   if (
-    (pickupOrder && fulfillmentStatus === "shipped") ||
-    (!pickupOrder && ["ready_for_pickup", "picked_up"].includes(fulfillmentStatus))
+    !isFulfillmentStatusAllowedForMethod(
+      fulfillmentStatus,
+      pickupOrder ? "pickup" : "shipping"
+    )
   ) {
     throw new OrderStoreError("That fulfillment status does not match the order method.", {
       code: "invalid_fulfillment_status",
@@ -385,13 +391,9 @@ export async function updateStoreOrderFulfillment({
     .update(update)
     .eq("id", id);
 
-  if (
-    ["packing", "ready_for_pickup", "picked_up", "shipped"].includes(
-      fulfillmentStatus
-    )
-  ) {
+  if (isPaidFulfillmentAdvancement(fulfillmentStatus)) {
     // Non-paid orders may retain an already-saved terminal status for staff
-    // notes, but they cannot transition into packing or shipped.
+    // notes, but they cannot transition into active production or fulfillment.
     query = query.or(
       `payment_status.eq.paid,fulfillment_status.eq.${fulfillmentStatus}`
     );

@@ -82,7 +82,7 @@ globalThis.fetch = async (input) => {
     payload = fixtures.pickupTaxRate;
   } else if (
     url.hostname === "example.supabase.co" &&
-    url.pathname === "/rest/v1/rpc/check_store_inventory_contract_v5"
+    url.pathname === "/rest/v1/rpc/check_store_inventory_contract_v6"
   ) {
     payload = fixtures.supabaseInventoryContract;
   } else if (

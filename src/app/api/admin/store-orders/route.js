@@ -3,18 +3,9 @@ import {
   listStoreOrders,
   updateStoreOrderFulfillment,
 } from "@/lib/store/orders";
+import { isStoreFulfillmentStatus } from "@/lib/store/fulfillmentStatus.mjs";
 
 export const runtime = "nodejs";
-
-const FULFILLMENT_STATUSES = new Set([
-  "unfulfilled",
-  "packing",
-  "ready_for_pickup",
-  "picked_up",
-  "on_hold",
-  "shipped",
-  "cancelled",
-]);
 
 function constantTimeTokenEqual(first, second) {
   const a = String(first ?? "");
@@ -94,7 +85,7 @@ export async function PATCH(request) {
 
   if (
     !/^[0-9a-f-]{36}$/i.test(id) ||
-    !FULFILLMENT_STATUSES.has(fulfillmentStatus) ||
+    !isStoreFulfillmentStatus(fulfillmentStatus) ||
     trackingUrl === null
   ) {
     return json({ error: "Invalid fulfillment update." }, 400);

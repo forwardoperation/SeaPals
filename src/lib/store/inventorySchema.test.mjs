@@ -248,6 +248,34 @@ test("the readiness probe validates the complete inventory contract without writ
   assert.match(schema, /Order production option snapshots are immutable/);
 });
 
+test("v6 readiness proves the production and shipment workflow is installed", () => {
+  assert.ok(
+    schema.indexOf("drop function if exists public.check_store_inventory_contract_v6()") <
+      schema.indexOf("drop function if exists public.check_store_inventory_contract_v5()"),
+    "the dependent v6 probe must be dropped before its v5 base on reruns"
+  );
+  assert.match(
+    schema,
+    /create or replace function public\.check_store_inventory_contract_v6\(\)/
+  );
+  assert.match(
+    schema,
+    /check_store_inventory_contract_v6\([\s\S]*check_store_inventory_contract_v5\(\)[\s\S]*store_orders_fulfillment_status_check[\s\S]*in_production[\s\S]*awaiting_shipment/
+  );
+  assert.match(
+    schema,
+    /check_store_inventory_contract_v6\([\s\S]*guard_store_order_fulfillment[\s\S]*process_store_payment_event/
+  );
+  assert.match(
+    schema,
+    /revoke all on function public\.check_store_inventory_contract_v6\(\)\s*from public, anon, authenticated/
+  );
+  assert.match(
+    schema,
+    /grant execute on function public\.check_store_inventory_contract_v6\(\)\s*to service_role/
+  );
+});
+
 test("overdue reservations are leased for Stripe verification and never released by time alone", () => {
   assert.match(
     schema,
