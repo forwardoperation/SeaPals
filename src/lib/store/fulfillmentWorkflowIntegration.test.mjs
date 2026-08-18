@@ -25,6 +25,10 @@ test("the admin exposes the shipping and pickup production workflows", () => {
 });
 
 test("the API and order writer share the canonical status validation", () => {
+  assert.match(
+    route,
+    /cleanText\(payload\?\.fulfillmentStatus, 40\)\.toLowerCase\(\)/
+  );
   assert.match(route, /isStoreFulfillmentStatus\(fulfillmentStatus\)/);
   assert.match(
     orders,
@@ -35,6 +39,16 @@ test("the API and order writer share the canonical status validation", () => {
     orders,
     /\["shipped", "picked_up"\]\.includes\(fulfillmentStatus\)/
   );
+});
+
+test("rush production stays actionable until carrier dispatch", () => {
+  const completionStatuses =
+    /const SHIPPING_PRODUCTION_COMPLETE_STATUSES = new Set\(\[([\s\S]*?)\]\);/.exec(
+      admin
+    )?.[1] ?? "";
+
+  assert.doesNotMatch(completionStatuses, /awaiting_shipment/);
+  assert.match(admin, /Paid rush orders not yet dispatched/);
 });
 
 test("the SQL migration accepts and protects both new active states", () => {

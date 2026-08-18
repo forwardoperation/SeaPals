@@ -1630,7 +1630,7 @@ export default function OrdersDashboard() {
             <StatCard
               label="Rush queue"
               value={stats.rushQueue}
-              detail="Paid and still in production"
+              detail="Paid rush orders not yet dispatched"
               tone="amber"
             />
             <StatCard

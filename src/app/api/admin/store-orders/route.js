@@ -78,7 +78,10 @@ export async function PATCH(request) {
   }
 
   const id = cleanText(payload?.id, 80);
-  const fulfillmentStatus = cleanText(payload?.fulfillmentStatus, 40);
+  const fulfillmentStatus = cleanText(
+    payload?.fulfillmentStatus,
+    40
+  ).toLowerCase();
   const trackingNumber = cleanText(payload?.trackingNumber, 200);
   const trackingUrl = cleanTrackingUrl(payload?.trackingUrl);
   const internalNotes = cleanText(payload?.internalNotes, 2000);
