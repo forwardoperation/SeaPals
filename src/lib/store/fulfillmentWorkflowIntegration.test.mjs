@@ -27,7 +27,7 @@ test("the admin exposes the shipping and pickup production workflows", () => {
 test("the API and order writer share the canonical status validation", () => {
   assert.match(
     route,
-    /cleanText\(payload\?\.fulfillmentStatus, 40\)\.toLowerCase\(\)/
+    /cleanText\(\s*payload\?\.fulfillmentStatus,\s*40\s*\)\.toLowerCase\(\)/
   );
   assert.match(route, /isStoreFulfillmentStatus\(fulfillmentStatus\)/);
   assert.match(
