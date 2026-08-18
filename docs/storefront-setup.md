@@ -459,9 +459,9 @@ adjustment.
    describing carrier delivery as one day. Verify the eleventh expedited order
    for one production due date is rejected, Friday through Sunday share Monday's
    slots, and a terminal unpaid/expired Session releases its slot. Also test a
-   decline, partial/full refund, dispute hold, packing update, tracking entry,
-   shipped update, pickup scheduling notes, Ready for Pickup, Picked Up, and the
-   shipping-only CSV export.
+   decline, partial/full refund, dispute hold, In Production, Packing, Awaiting
+   Shipment, tracking entry, Shipped, pickup scheduling notes, Ready for Pickup,
+   Picked Up, and the paid-unshipped CSV export.
 9. Run the application checks:
 
 ```powershell
@@ -504,17 +504,19 @@ keys](https://resend.com/docs/dashboard/emails/idempotency-keys).
 
 One-time invoice PDFs remain disabled. Normal payment receipts are sufficient
 at launch, while post-payment Invoicing adds a fee. Staff use `/admin/orders`
-with `STORE_ADMIN_TOKEN` to move mailed orders through Unfulfilled, Packing,
-and Shipped, or pickup orders through Awaiting Preparation, Preparing Pickup,
-Ready for Pickup, and Picked Up. Tracking is unavailable for pickup. The token
-is stored only in that browser tab's session storage.
+with `STORE_ADMIN_TOKEN` to move mailed orders through Awaiting Production, In
+Production, Packing, Awaiting Shipment, and Shipped. Pickup orders follow
+Awaiting Production, In Production, Packing for Pickup, Ready for Pickup, and
+Picked Up. On Hold and Cancelled remain available for exceptions. Tracking is
+unavailable for pickup. The token is stored only in that browser tab's session
+storage.
 
 For low-volume shipping, the CSV can feed a label workflow such as Pirate Ship.
 Its software has no monthly or per-label service fee, but postage still costs
 money. Refunds stay in Stripe so the signed webhook reconciles the local
 ledger. Partial refunds and disputes automatically move incomplete shipments or
 pickups to `on_hold`; full refunds cancel incomplete orders. Pickup orders and
-those states are excluded from the ready-to-ship CSV.
+those states are excluded from the paid-unshipped CSV.
 
 ## 8. Live-mode handoff
 

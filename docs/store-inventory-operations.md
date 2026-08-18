@@ -307,6 +307,19 @@ therefore never restarts a previously cancelled order automatically. Completed
 shipments and pickups are never overwritten, and neither outcome restocks
 inventory.
 
+## Staff fulfillment workflow
+
+The private `/admin/orders` workspace records production separately from
+payment and inventory. Mailed orders normally move through **Awaiting
+production**, **In production**, **Packing**, **Awaiting shipment**, then
+**Shipped**. Local pickup orders normally move through **Awaiting production**,
+**In production**, **Packing for pickup**, **Ready for pickup**, then **Picked
+up**. Staff can move backward to correct an operational mistake; the database still prevents pickup-only
+states on shipped orders, shipping-only states on pickup orders, and active work
+on orders that are not fully paid. Only Shipped or Picked up records the
+completion timestamp. On hold and Cancelled are exception states used by the
+refund/dispute lifecycle or deliberate staff action.
+
 ## Stale or ambiguous reservations
 
 Never release solely because `inventory_reserved_until` passed. Stripe can

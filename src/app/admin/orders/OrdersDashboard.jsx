@@ -1,20 +1,19 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState } from "react";
+import {
+  STORE_FULFILLMENT_STATUS_VALUES,
+  isFulfillmentStatusAllowedForMethod,
+  isShippingQueueStatus,
+  storeFulfillmentStatusLabel,
+} from "@/lib/store/fulfillmentStatus.mjs";
 
 const TOKEN_STORAGE_KEY = "seapals-store-admin-token";
 
-const FULFILLMENT_OPTIONS = [
-  { value: "unfulfilled", label: "Unfulfilled" },
-  { value: "packing", label: "Packing" },
-  { value: "ready_for_pickup", label: "Ready for pickup" },
-  { value: "picked_up", label: "Picked up" },
-  { value: "on_hold", label: "On hold" },
-  { value: "shipped", label: "Shipped" },
-  { value: "cancelled", label: "Cancelled" },
-];
-
-const READY_FULFILLMENT_STATUSES = new Set(["unfulfilled", "packing"]);
+const FULFILLMENT_OPTIONS = STORE_FULFILLMENT_STATUS_VALUES.map((value) => ({
+  value,
+  label: storeFulfillmentStatusLabel(value),
+}));
 const PAYMENT_HOLD_STATUSES = new Set([
   "partially_refunded",
   "refunded",
@@ -212,16 +211,9 @@ function productionDueState(order, now = new Date()) {
 }
 
 function fulfillmentLabel(order) {
-  const status = cleanStatus(order?.fulfillment_status, "unfulfilled");
-  if (!isPickup(order)) return statusLabel(status);
-
-  return (
-    {
-      unfulfilled: "Awaiting preparation",
-      packing: "Preparing pickup",
-      ready_for_pickup: "Ready for pickup",
-      picked_up: "Picked up",
-    }[status] || statusLabel(status)
+  return storeFulfillmentStatusLabel(
+    cleanStatus(order?.fulfillment_status, "unfulfilled"),
+    isPickup(order) ? "pickup" : "shipping"
   );
 }
 
@@ -229,7 +221,7 @@ function isPaidUnshipped(order) {
   return (
     isPaid(order) &&
     !isPickup(order) &&
-    READY_FULFILLMENT_STATUSES.has(
+    isShippingQueueStatus(
       cleanStatus(order?.fulfillment_status, "unfulfilled")
     )
   );
@@ -327,6 +319,8 @@ function statusClasses(status, type) {
 
   if (
     normalized === "packing" ||
+    normalized === "in_production" ||
+    normalized === "awaiting_shipment" ||
     normalized === "ready_for_pickup" ||
     normalized === "on_hold" ||
     normalized === "pending" ||
@@ -567,11 +561,13 @@ function OrderCard({ order, onSave, saving }) {
     trackingNumber.trim() !== String(order.tracking_number ?? "").trim() ||
     trackingUrl.trim() !== String(order.tracking_url ?? "").trim() ||
     internalNotes.trim() !== String(order.internal_notes ?? "").trim();
+  const fulfillmentMethod = pickupOrder ? "pickup" : "shipping";
   const methodFulfillmentOptions = FULFILLMENT_OPTIONS.filter((option) =>
-    pickupOrder
-      ? option.value !== "shipped"
-      : !["ready_for_pickup", "picked_up"].includes(option.value)
-  );
+    isFulfillmentStatusAllowedForMethod(option.value, fulfillmentMethod)
+  ).map((option) => ({
+    ...option,
+    label: storeFulfillmentStatusLabel(option.value, fulfillmentMethod),
+  }));
   const permittedStatuses = !fulfillmentOnHold
     ? methodFulfillmentOptions
     : currentStatus === "shipped"
@@ -597,7 +593,13 @@ function OrderCard({ order, onSave, saving }) {
     ? permittedStatuses
     : [
         ...permittedStatuses,
-        { value: fulfillmentStatus, label: statusLabel(fulfillmentStatus) },
+        {
+          value: fulfillmentStatus,
+          label: storeFulfillmentStatusLabel(
+            fulfillmentStatus,
+            fulfillmentMethod
+          ),
+        },
       ];
 
   async function handleSubmit(event) {
@@ -662,7 +664,7 @@ function OrderCard({ order, onSave, saving }) {
         aria-expanded={expanded}
         aria-controls={detailsId}
         onClick={() => setExpanded((current) => !current)}
-        className={`grid w-full gap-4 px-5 py-5 text-left transition focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-cyan-200 md:grid-cols-[1.2fr_1fr_auto_auto_2rem] md:items-center ${
+        className={`grid w-full gap-4 px-5 py-5 text-left transition focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-cyan-200 md:grid-cols-[1.2fr_1fr_auto_auto_auto] md:items-center ${
           rushDueState === "overdue"
             ? "bg-rose-50/70 hover:bg-rose-100/70"
             : rushDueState === "due-today"
@@ -749,11 +751,9 @@ function OrderCard({ order, onSave, saving }) {
           />
         </span>
 
-        <span
-          aria-hidden="true"
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xl font-bold text-slate-600"
-        >
-          {expanded ? "−" : "+"}
+        <span className="flex min-h-10 items-center justify-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm font-black text-slate-700">
+          <span>{expanded ? "Close" : "Manage"}</span>
+          <span aria-hidden="true">{expanded ? "−" : "+"}</span>
         </span>
       </button>
 
@@ -1121,8 +1121,8 @@ function OrderCard({ order, onSave, saving }) {
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   {pickupOrder
-                    ? "Track preparation, customer notification, and pickup completion."
-                    : "Update the packing status and add customer-facing tracking."}
+                    ? "Workflow: Awaiting production, In production, Packing for pickup, Ready for pickup, then Picked up."
+                    : "Workflow: Awaiting production, In production, Packing, Awaiting shipment, then Shipped."}
                 </p>
               </div>
               {savedTrackingUrl ? (
@@ -1366,8 +1366,11 @@ export default function OrdersDashboard() {
 
   const stats = useMemo(() => {
     const now = new Date();
-    const packing = orderList.filter(
-      (order) => cleanStatus(order.fulfillment_status) === "packing"
+    const inProduction = orderList.filter(
+      (order) => cleanStatus(order.fulfillment_status) === "in_production"
+    ).length;
+    const awaitingShipment = orderList.filter(
+      (order) => cleanStatus(order.fulfillment_status) === "awaiting_shipment"
     ).length;
     const shipped = orderList.filter((order) =>
       ["shipped"].includes(cleanStatus(order.fulfillment_status))
@@ -1391,7 +1394,8 @@ export default function OrdersDashboard() {
     ).length;
 
     return {
-      packing,
+      inProduction,
+      awaitingShipment,
       pickup,
       shipped,
       paidTotal,
@@ -1636,7 +1640,7 @@ export default function OrdersDashboard() {
               tone={stats.overdueRush > 0 ? "rose" : "emerald"}
             />
             <StatCard
-              label="Ready to ship"
+              label="Shipping queue"
               value={paidUnshippedOrders.length}
               detail="Paid and not shipped"
               tone="amber"
@@ -1647,7 +1651,16 @@ export default function OrdersDashboard() {
               detail="Paid and awaiting pickup"
               tone="cyan"
             />
-            <StatCard label="Packing" value={stats.packing} tone="amber" />
+            <StatCard
+              label="In production"
+              value={stats.inProduction}
+              tone="amber"
+            />
+            <StatCard
+              label="Awaiting shipment"
+              value={stats.awaitingShipment}
+              tone="amber"
+            />
             <StatCard
               label="Paid total"
               value={formatMoney(stats.paidTotal, stats.currency)}
@@ -1694,14 +1707,14 @@ export default function OrdersDashboard() {
                     className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
                   >
                     <option value="all">All fulfillment statuses</option>
-                    <option value="paid-unshipped">Paid & ready to ship</option>
+                    <option value="paid-unshipped">Paid & unshipped</option>
                     <option value="pickup-orders">Local pickup orders</option>
                     <option value="rush-orders">
                       Rush production orders (due date first)
                     </option>
                     {fulfillmentStatuses.map((status) => (
                       <option key={status} value={status}>
-                        {statusLabel(status)}
+                        {storeFulfillmentStatusLabel(status)}
                       </option>
                     ))}
                   </select>
