@@ -101,6 +101,9 @@ const orderNotificationEnabled = trueValue(
 const orderNotificationDeliveryConfirmed = trueValue(
   "STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED"
 );
+const fulfillmentDueNotificationEnabled = trueValue(
+  "STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED"
+);
 const orderNotificationEmail = emailAddress(
   process.env.STORE_ORDER_NOTIFICATION_EMAIL
 );
@@ -319,6 +322,11 @@ addCheck(
   orderNotificationDeliveryConfirmed,
   "Set STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED=true only after a synthetic alert reaches the private inbox.",
   stripeKey.includes("_live_")
+);
+addCheck(
+  "Fulfillment due reminders",
+  fulfillmentDueNotificationEnabled,
+  "Set STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED=true so paid live orders are checked before their ready-to-ship or ready-for-pickup date."
 );
 addCheck(
   "Explicit product allowlist",
@@ -780,7 +788,7 @@ if (
 
   try {
     const response = await fetch(
-      `${supabaseUrl}/rest/v1/rpc/check_store_inventory_contract_v6`,
+      `${supabaseUrl}/rest/v1/rpc/check_store_inventory_contract_v7`,
       {
         method: "POST",
         headers: { ...supabaseHeaders, "Content-Type": "application/json" },

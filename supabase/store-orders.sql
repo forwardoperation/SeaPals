@@ -472,11 +472,23 @@ create table if not exists public.store_order_notifications (
   last_error_code text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  check (notification_type = 'merchant_purchase'),
+  check (notification_type in (
+    'merchant_purchase',
+    'merchant_fulfillment_due'
+  )),
   check ((claim_token is null) = (claimed_until is null)),
   check (provider_message_id is null or length(provider_message_id) <= 255),
   check (last_error_code is null or last_error_code ~ '^[A-Za-z0-9_-]{1,100}$')
 );
+
+alter table public.store_order_notifications
+  drop constraint if exists store_order_notifications_notification_type_check;
+alter table public.store_order_notifications
+  add constraint store_order_notifications_notification_type_check
+    check (notification_type in (
+      'merchant_purchase',
+      'merchant_fulfillment_due'
+    ));
 
 create index if not exists store_orders_created_at_idx
   on public.store_orders (created_at desc);
@@ -1147,7 +1159,10 @@ begin
   if p_order_id is null or p_claim_token is null then
     raise exception 'A notification order and claim token are required.';
   end if;
-  if p_notification_type <> 'merchant_purchase' then
+  if p_notification_type is null or p_notification_type not in (
+    'merchant_purchase',
+    'merchant_fulfillment_due'
+  ) then
     raise exception 'Unsupported store notification type.';
   end if;
   if p_lease_seconds is null or p_lease_seconds not between 30 and 900 then
@@ -1202,7 +1217,10 @@ as $$
 declare
   v_updated integer;
 begin
-  if p_notification_type <> 'merchant_purchase' then
+  if p_notification_type is null or p_notification_type not in (
+    'merchant_purchase',
+    'merchant_fulfillment_due'
+  ) then
     raise exception 'Unsupported store notification type.';
   end if;
 
@@ -1246,7 +1264,10 @@ declare
   );
   v_updated integer;
 begin
-  if p_notification_type <> 'merchant_purchase' then
+  if p_notification_type is null or p_notification_type not in (
+    'merchant_purchase',
+    'merchant_fulfillment_due'
+  ) then
     raise exception 'Unsupported store notification type.';
   end if;
   if v_failure_code !~ '^[A-Za-z0-9_-]{1,100}$' then
@@ -1295,6 +1316,177 @@ begin
      -- hide a pending purchase alert if a later refund, dispute, or chargeback
      -- changes the mutable order payment status before the outbox is drained.
    order by notifications.created_at, notifications.id
+   limit p_limit;
+end;
+$$;
+
+-- Fulfillment promises count Monday through Friday only. This intentionally
+-- matches expedited capacity and does not apply a public-holiday calendar.
+create or replace function public.add_store_business_days(
+  p_start_date date,
+  p_business_days integer
+)
+returns date
+language plpgsql
+immutable
+set search_path = public, pg_temp
+as $$
+declare
+  v_due_date date;
+begin
+  if p_start_date is null then
+    return null;
+  end if;
+  if p_business_days is null or p_business_days not between 1 and 30 then
+    raise exception 'Business-day count must be between 1 and 30.';
+  end if;
+
+  select candidates.candidate_date
+    into v_due_date
+    from (
+      select p_start_date + offsets.day_offset as candidate_date,
+             row_number() over (
+               order by offsets.day_offset
+             ) as business_day_number
+        from generate_series(
+          1,
+          greatest(14, p_business_days * 3)
+        ) as offsets(day_offset)
+       where extract(
+         isodow from p_start_date + offsets.day_offset
+       ) between 1 and 5
+    ) as candidates
+   where candidates.business_day_number = p_business_days;
+
+  if v_due_date is null then
+    raise exception 'A fulfillment due date could not be calculated.';
+  end if;
+  return v_due_date;
+end;
+$$;
+
+drop function if exists public.prepare_store_fulfillment_due_notifications(
+  integer,
+  timestamptz
+);
+-- Atomically make due-soon live orders eligible and return a bounded retry
+-- batch. The outbox stores no customer PII, and the delivery worker reloads
+-- mutable order state before it sends.
+create or replace function public.prepare_store_fulfillment_due_notifications(
+  p_limit integer default 25,
+  p_now timestamptz default now()
+)
+returns table (order_id uuid, due_date date)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_local_now timestamp without time zone;
+  v_local_date date;
+  v_local_time time without time zone;
+begin
+  if p_limit is null or p_limit not between 1 and 50 then
+    raise exception 'Fulfillment reminder batch limit must be between 1 and 50.';
+  end if;
+  if p_now is null then
+    raise exception 'Fulfillment reminder time is required.';
+  end if;
+
+  v_local_now := p_now at time zone 'America/New_York';
+  v_local_date := v_local_now::date;
+  v_local_time := v_local_now::time;
+
+  with order_deadlines as (
+    select orders.id as order_id,
+           case
+             when orders.production_option_id = 'expedited-production'
+               then orders.production_due_date
+             else public.add_store_business_days(
+               (orders.paid_at at time zone 'America/New_York')::date,
+               orders.production_max_business_days
+             )
+           end as due_date
+      from public.store_orders as orders
+     where orders.payment_status = 'paid'
+       and orders.payment_livemode is true
+       and orders.fulfillment_status <> 'cancelled'
+       and (
+         (
+           orders.fulfillment_method = 'shipping'
+           and orders.fulfillment_status not in (
+             'awaiting_shipment',
+             'shipped'
+           )
+         )
+         or (
+           orders.fulfillment_method = 'pickup'
+           and orders.fulfillment_status not in (
+             'ready_for_pickup',
+             'picked_up'
+           )
+         )
+       )
+  ), due_windows as (
+    select deadlines.order_id,
+           deadlines.due_date,
+           deadlines.due_date - case
+             when extract(isodow from deadlines.due_date)::integer = 1 then 3
+             when extract(isodow from deadlines.due_date)::integer = 7 then 2
+             else 1
+           end as reminder_date
+      from order_deadlines as deadlines
+     where deadlines.due_date is not null
+  )
+  insert into public.store_order_notifications (
+    order_id,
+    notification_type
+  )
+  select windows.order_id,
+         'merchant_fulfillment_due'
+    from due_windows as windows
+   where v_local_date between windows.reminder_date and windows.due_date
+     and (
+       v_local_date > windows.reminder_date
+       or v_local_time >= time '09:00'
+     )
+     and not exists (
+       select 1
+         from public.store_order_notifications as existing
+        where existing.order_id = windows.order_id
+          and existing.notification_type = 'merchant_fulfillment_due'
+     )
+   order by windows.due_date, windows.order_id
+   limit p_limit
+  on conflict do nothing;
+
+  return query
+  with pending_deadlines as (
+    select notifications.order_id as pending_order_id,
+           case
+             when orders.production_option_id = 'expedited-production'
+               then orders.production_due_date
+             else public.add_store_business_days(
+               (orders.paid_at at time zone 'America/New_York')::date,
+               orders.production_max_business_days
+             )
+           end as pending_due_date,
+           notifications.created_at as notification_created_at,
+           notifications.id as notification_id
+      from public.store_order_notifications as notifications
+      join public.store_orders as orders on orders.id = notifications.order_id
+     where notifications.notification_type = 'merchant_fulfillment_due'
+       and notifications.sent_at is null
+       and (
+         notifications.claimed_until is null
+         or notifications.claimed_until <= p_now
+       )
+  )
+  select deadlines.pending_order_id,
+         deadlines.pending_due_date
+    from pending_deadlines as deadlines
+   where deadlines.pending_due_date is not null
+   order by deadlines.notification_created_at, deadlines.notification_id
    limit p_limit;
 end;
 $$;
@@ -1506,6 +1698,7 @@ drop function if exists public.check_store_inventory_contract();
 drop function if exists public.check_store_inventory_contract_v2();
 drop function if exists public.check_store_inventory_contract_v3();
 drop function if exists public.check_store_inventory_contract_v4();
+drop function if exists public.check_store_inventory_contract_v7();
 drop function if exists public.check_store_inventory_contract_v6();
 drop function if exists public.check_store_inventory_contract_v5();
 create or replace function public.check_store_inventory_contract_v5()
@@ -3123,6 +3316,56 @@ as $$
     );
 $$;
 
+create or replace function public.check_store_inventory_contract_v7()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select public.check_store_inventory_contract_v6()
+    and to_regprocedure(
+      'public.add_store_business_days(date,integer)'
+    ) is not null
+    and to_regprocedure(
+      'public.prepare_store_fulfillment_due_notifications(integer,timestamp with time zone)'
+    ) is not null
+    and exists (
+      select 1
+        from pg_catalog.pg_constraint as constraints
+        join pg_catalog.pg_class as tables
+          on tables.oid = constraints.conrelid
+        join pg_catalog.pg_namespace as schemas
+          on schemas.oid = tables.relnamespace
+       where schemas.nspname = 'public'
+         and tables.relname = 'store_order_notifications'
+         and constraints.conname =
+           'store_order_notifications_notification_type_check'
+         and pg_catalog.pg_get_constraintdef(constraints.oid)
+           like '%merchant_purchase%'
+         and pg_catalog.pg_get_constraintdef(constraints.oid)
+           like '%merchant_fulfillment_due%'
+    )
+    and not exists (
+      select 1
+        from unnest(array[
+          'claim_store_order_notification',
+          'complete_store_order_notification',
+          'release_store_order_notification',
+          'prepare_store_fulfillment_due_notifications'
+        ]) as required(function_name)
+       where not exists (
+         select 1
+           from pg_catalog.pg_proc as functions
+           join pg_catalog.pg_namespace as schemas
+             on schemas.oid = functions.pronamespace
+          where schemas.nspname = 'public'
+            and functions.proname = required.function_name
+            and functions.prosrc like '%merchant_fulfillment_due%'
+       )
+    );
+$$;
+
 alter table public.store_orders enable row level security;
 alter table public.store_order_items enable row level security;
 alter table public.store_payment_events enable row level security;
@@ -3171,6 +3414,10 @@ revoke all on function public.check_store_inventory_contract_v5()
   from public, anon, authenticated;
 revoke all on function public.check_store_inventory_contract_v6()
   from public, anon, authenticated;
+revoke all on function public.check_store_inventory_contract_v7()
+  from public, anon, authenticated;
+revoke all on function public.add_store_business_days(date, integer)
+  from public, anon, authenticated;
 revoke all on function public.claim_store_order_notification(
   uuid, text, uuid, integer
 ) from public, anon, authenticated;
@@ -3182,6 +3429,9 @@ revoke all on function public.release_store_order_notification(
 ) from public, anon, authenticated;
 revoke all on function public.list_pending_store_order_notifications(integer)
   from public, anon, authenticated;
+revoke all on function public.prepare_store_fulfillment_due_notifications(
+  integer, timestamptz
+) from public, anon, authenticated;
 revoke all on function public.list_overdue_store_inventory_reservations(integer)
   from public, anon, authenticated;
 revoke all on function public.claim_overdue_store_inventory_reservation(
@@ -3237,6 +3487,8 @@ grant execute on function public.check_store_inventory_contract_v5()
   to service_role;
 grant execute on function public.check_store_inventory_contract_v6()
   to service_role;
+grant execute on function public.check_store_inventory_contract_v7()
+  to service_role;
 grant execute on function public.claim_store_order_notification(
   uuid, text, uuid, integer
 ) to service_role;
@@ -3248,6 +3500,9 @@ grant execute on function public.release_store_order_notification(
 ) to service_role;
 grant execute on function public.list_pending_store_order_notifications(integer)
   to service_role;
+grant execute on function public.prepare_store_fulfillment_due_notifications(
+  integer, timestamptz
+) to service_role;
 grant execute on function public.list_overdue_store_inventory_reservations(integer)
   to service_role;
 grant execute on function public.claim_overdue_store_inventory_reservation(

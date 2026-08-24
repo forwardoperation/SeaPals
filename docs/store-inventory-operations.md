@@ -359,8 +359,8 @@ For each claimed order, the Worker follows this state machine:
 
 The payment transition clears reconciliation lease metadata atomically, while
 claim completion is idempotent if its response is lost. The cron runs this job
-and the merchant-notification drain with `Promise.allSettled`, so either job is
-attempted even if the other fails. Logs contain bounded count summaries and
+and both merchant-notification drains with `Promise.allSettled`, so every job is
+attempted even if another fails. Logs contain bounded count summaries and
 stable error codes only—never order IDs, Session IDs, secrets, addresses, or
 customer details.
 
@@ -382,6 +382,23 @@ outbox row, later refund, dispute, or chargeback state does not suppress the
 original purchase alert. Concurrent webhook and cron workers cannot hold the
 same lease.
 
+The same private outbox also carries one `merchant_fulfillment_due` reminder
+per paid live order. At 9:00 a.m. Eastern on the business day before the order's
+production promise ends, the cron queues a reminder unless a mailed order is
+already **Awaiting shipment** or **Shipped**, or a pickup order is already
+**Ready for pickup** or **Picked up**. Cancelled and non-paid orders are never
+queued. A paid order deliberately left **On hold** is still surfaced because
+its promised date remains at risk.
+
+Expedited reminders use the immutable reserved `production_due_date`. Standard
+reminders calculate five Monday-through-Friday production days after `paid_at`,
+matching the published promise and the existing no-holiday-calendar policy. The
+database only opens the queue from the prior business day through the due date,
+so applying the migration cannot create a flood of historical reminders. The
+drainer rechecks payment and fulfillment after claiming; if staff marked the
+order ready in the meantime, or the due date has ended, it closes the stale
+outbox row without sending.
+
 Before accepting payments, enable `STORE_ORDER_NOTIFICATION_ENABLED`, configure
 `RESEND_API_KEY`, `EMAIL_FROM`, and `STORE_ORDER_NOTIFICATION_EMAIL`, and verify a
 synthetic test-mode order reaches the private recipient. Only then set
@@ -389,6 +406,17 @@ synthetic test-mode order reaches the private recipient. Only then set
 Trigger outcomes and the unsent queue; after correcting a provider or
 configuration problem, the next five-minute run retries it automatically. Never
 manually mark an alert sent merely to silence the retry.
+
+Set `STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED=true` to activate due reminders
+through that same verified sender and recipient. Disable this flag to pause new
+reminder preparation and delivery without affecting purchase alerts.
+
+Roll out the schema before the Worker: apply the current
+`supabase/store-orders.sql`, verify `npm.cmd run store:check:online` reaches the
+v7 contract, and only then deploy the Worker with the reminder flag enabled. If
+the Worker must be deployed first, keep the reminder flag false until the v7
+RPC is installed; otherwise each five-minute reminder drain will call a function
+that does not exist yet.
 
 The delivery guarantee is at-least-once, not exactly-once. Resend retains an
 idempotency key for 24 hours. If it accepted a message but the response and

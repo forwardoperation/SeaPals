@@ -26,6 +26,7 @@ const launchEnvironment = {
   STORE_ORDER_NOTIFICATION_ENABLED: "true",
   STORE_ORDER_NOTIFICATION_EMAIL: "maker@seapalstcg.com",
   STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED: "true",
+  STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED: "true",
   STORE_CHECKOUT_ENABLED: "false",
   STORE_AVAILABLE_PRODUCT_IDS: storeLaunchProductIds.join(","),
   STORE_TAX_REGISTRATION_CONFIRMED: "false",
@@ -82,7 +83,7 @@ globalThis.fetch = async (input) => {
     payload = fixtures.pickupTaxRate;
   } else if (
     url.hostname === "example.supabase.co" &&
-    url.pathname === "/rest/v1/rpc/check_store_inventory_contract_v6"
+    url.pathname === "/rest/v1/rpc/check_store_inventory_contract_v7"
   ) {
     payload = fixtures.supabaseInventoryContract;
   } else if (
@@ -511,6 +512,15 @@ test("readiness rejects an invalid checkout origin allowlist", () => {
 
   assert.equal(result.status, 1);
   assert.match(result.stdout, /TODO.*Checkout origin allowlist/);
+});
+
+test("readiness requires fulfillment due reminders", () => {
+  const result = runLaunchCheck({
+    STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED: "false",
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /TODO.*Fulfillment due reminders/);
 });
 
 test("live checkout requires a successfully delivered merchant alert", () => {

@@ -49,6 +49,9 @@
 		"STORE_ORDER_NOTIFICATION_EMAIL": "maker@seapalstcg.com",
 		// Verified 2026-08-15 with a received synthetic production-Worker alert.
 		"STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED": "true",
+		// One reminder is queued at 9:00 a.m. Eastern on the business day before
+		// each paid live order must be ready for shipment or pickup.
+		"STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED": "true",
 		"EMAIL_FROM": "SeaPals <maker@seapalstcg.com>",
 		"STORE_CHECKOUT_ENABLED": "true",
 		"STORE_SHOW_FUTURE_PRODUCTS": "false",

@@ -68,5 +68,5 @@ test("the SQL migration accepts and protects both new active states", () => {
     schema,
     /p_payment_status = 'refunded'[\s\S]*'in_production'[\s\S]*'awaiting_shipment'[\s\S]*then 'cancelled'/
   );
-  assert.match(readiness, /check_store_inventory_contract_v6/);
+  assert.match(readiness, /check_store_inventory_contract_v7/);
 });

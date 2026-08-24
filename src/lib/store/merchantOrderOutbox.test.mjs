@@ -142,7 +142,7 @@ test("the scheduled drainer keeps paid-transition alerts eligible after later li
     "create or replace function public.list_pending_store_order_notifications"
   );
   const listFunctionEnd = schema.indexOf(
-    "create or replace function public.list_overdue_store_inventory_reservations",
+    "create or replace function public.add_store_business_days",
     listFunctionStart
   );
   const listFunction = schema.slice(listFunctionStart, listFunctionEnd);

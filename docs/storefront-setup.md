@@ -42,8 +42,9 @@ The payment flow is:
 3. A signature-verified Stripe webhook updates the private Supabase order
    ledger, atomically queues one merchant purchase alert, and immediately tries
    to send that alert through Resend. A five-minute Cloudflare Cron Trigger
-   independently drains anything still pending; the browser success page never
-   authorizes fulfillment.
+   independently drains anything still pending and prepares due-soon
+   fulfillment reminders; the browser success page never authorizes
+   fulfillment.
 4. The alert separates production speed from carrier service and includes every
    purchased item and quantity, totals, and the selected shipping or scheduled
    pickup method. Pickup customers are contacted after the build to arrange a
@@ -68,9 +69,9 @@ measured separately in Stripe.
 - `/api/store/webhook`: raw-body Stripe signature verification plus
   idempotent payment, failure, expiration, refund, dispute hold, receipt,
   address recording, and immediate merchant purchase-alert delivery.
-- `custom-worker.mjs`: the generated OpenNext fetch handler plus a five-minute
-  private outbox drainer, so alert recovery does not depend on Stripe's webhook
-  retry window.
+- `custom-worker.mjs`: the generated OpenNext fetch handler plus five-minute
+  private purchase-alert and fulfillment-reminder drains, so recovery does not
+  depend on Stripe's webhook retry window.
 - `/admin/orders`: a token-protected shipping and Elverson pickup workspace with
   immutable product, price, and fulfillment-method snapshots; receipt and
   Stripe references; tracking; private notes; and a shipping-only CSV export.
@@ -173,6 +174,8 @@ Copy `.env.example` to the local/deployment secret store and set:
 - `STORE_ORDER_NOTIFICATION_ENABLED=true` to exercise alerts in sandbox
 - `STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED=true` only after a synthetic
   alert reaches the private inbox; this owner gate is required in live mode
+- `STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED=true` to send one due-soon alert
+  for each paid live order through the same verified sender and recipient
 
 `NEXT_PUBLIC_SITE_URL` remains a legacy fallback, but new deployments should
 prefer `SITE_URL` so the canonical store origin is not compiled into browser
@@ -457,7 +460,13 @@ adjustment.
    and verify the already-sent database row suppresses an immediate duplicate;
    simulate one delivery failure and verify the five-minute scheduled drainer
    sends the pending outbox entry without replaying Stripe manually.
-8. Verify the expedited fee appears exactly once on a multi-item order, uses the
+8. Verify a paid live shipping order receives one reminder at 9 a.m. Eastern on
+   the business day before it is due until it reaches Awaiting Shipment, and a
+   pickup order until it reaches Ready for Pickup. Verify a status change after
+   queueing or the end of the due date suppresses a stale email, and a repeated
+   cron does not duplicate it. Apply `supabase/store-orders.sql` and verify the
+   online v7 contract before deploying a Worker with the reminder flag enabled.
+9. Verify the expedited fee appears exactly once on a multi-item order, uses the
    handling tax code, and records a one-business-day production promise without
    describing carrier delivery as one day. Verify the eleventh expedited order
    for one production due date is rejected, Friday through Sunday share Monday's
@@ -465,7 +474,7 @@ adjustment.
    decline, partial/full refund, dispute hold, In Production, Packing, Awaiting
    Shipment, tracking entry, Shipped, pickup scheduling notes, Ready for Pickup,
    Picked Up, and the paid-unshipped CSV export.
-9. Run the application checks:
+10. Run the application checks:
 
 ```powershell
 npm.cmd test
@@ -513,6 +522,16 @@ Awaiting Production, In Production, Packing for Pickup, Ready for Pickup, and
 Picked Up. On Hold and Cancelled remain available for exceptions. Tracking is
 unavailable for pickup. The token is stored only in that browser tab's session
 storage.
+
+The scheduled Worker also sends one private due-soon reminder for each paid
+live order that has not reached its method's ready state. Expedited orders use
+their stored next-business-day deadline; Standard orders are due after five
+Monday-through-Friday days from payment. The reminder window opens at 9 a.m.
+Eastern on the prior business day. For shipping, **Awaiting shipment** is the
+existing ready-to-ship milestone; for pickup, the milestone is **Ready for
+pickup**. The outbox lease, a per-order-and-date Resend idempotency key, and a
+final status-and-time-window recheck prevent routine duplicates and stale
+alerts.
 
 For low-volume shipping, the CSV can feed a label workflow such as Pirate Ship.
 Its software has no monthly or per-label service fee, but postage still costs

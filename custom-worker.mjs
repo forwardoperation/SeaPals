@@ -7,6 +7,7 @@ import {
 } from "./src/lib/siteRedirect.mjs";
 import { enforceStoreCheckoutRateLimit } from "./src/lib/store/checkoutRateLimit.mjs";
 import { reconcileOverdueInventoryReservations } from "./src/lib/store/inventoryReservationReconciler.mjs";
+import { drainFulfillmentDueNotifications } from "./src/lib/store/fulfillmentDueNotificationDrain.mjs";
 import { drainMerchantPurchaseNotifications } from "./src/lib/store/merchantOrderNotificationDrain.mjs";
 
 export {
@@ -63,10 +64,16 @@ export default {
       return;
     }
 
-    const [notificationResult, reservationResult] = await Promise.allSettled([
-      drainMerchantPurchaseNotifications({ environment }),
-      reconcileOverdueInventoryReservations({ environment }),
-    ]);
+    const [notificationResult, dueReminderResult, reservationResult] =
+      await Promise.allSettled([
+        drainMerchantPurchaseNotifications({ environment }),
+        drainFulfillmentDueNotifications({
+          environment,
+          now: new Date(controller.scheduledTime),
+          currentTime: () => new Date(),
+        }),
+        reconcileOverdueInventoryReservations({ environment }),
+      ]);
 
     if (notificationResult.status === "fulfilled") {
       console.log(
@@ -81,6 +88,23 @@ export default {
           message: "Store merchant notification cron failed",
           code: safeErrorCode(notificationResult.reason),
           summary: notificationResult.reason?.summary ?? null,
+        })
+      );
+    }
+
+    if (dueReminderResult.status === "fulfilled") {
+      console.log(
+        JSON.stringify({
+          message: "Store fulfillment reminder cron completed",
+          ...dueReminderResult.value,
+        })
+      );
+    } else {
+      console.error(
+        JSON.stringify({
+          message: "Store fulfillment reminder cron failed",
+          code: safeErrorCode(dueReminderResult.reason),
+          summary: dueReminderResult.reason?.summary ?? null,
         })
       );
     }
@@ -104,12 +128,15 @@ export default {
 
     if (
       notificationResult.status === "rejected" ||
+      dueReminderResult.status === "rejected" ||
       reservationResult.status === "rejected"
     ) {
       throw (
         notificationResult.status === "rejected"
           ? notificationResult.reason
-          : reservationResult.reason
+          : dueReminderResult.status === "rejected"
+            ? dueReminderResult.reason
+            : reservationResult.reason
       );
     }
   },
