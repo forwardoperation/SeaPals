@@ -137,6 +137,7 @@ vite.config.ts.timestamp-*
 
 # OpenNext
 .open-next
+.wrangler/
 
 # Local browser QA profiles, screenshots, and scratch copies
 tmp/
