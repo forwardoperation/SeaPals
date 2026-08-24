@@ -40,6 +40,42 @@ test("every retention category has a finite published period", () => {
   }
 });
 
+test("legal notices disclose Reefbound cloud-save data and account rights", async () => {
+  const [privacy, terms, setup] = await Promise.all(
+    [
+      "../app/privacy/page.jsx",
+      "../app/terms/page.jsx",
+      "../../docs/adventure-account-setup.md",
+    ].map((path) => readFile(new URL(path, import.meta.url), "utf8")),
+  );
+
+  for (const source of [privacy, terms, setup]) {
+    assert.match(source, /Supabase/);
+    assert.match(source, /player(?:-entered)? player and\s+best-friend names/i);
+    assert.match(source, /progress/);
+    assert.match(source, /settings/);
+    assert.match(source, /decks/);
+    assert.match(source, /export/);
+    assert.match(source, /correction/);
+    assert.match(source, /delet/i);
+  }
+
+  assert.match(privacy, /cross-device/);
+  assert.match(privacy, /Reefbound cloud saves/);
+  assert.match(privacy, /up to 30 days/);
+  assert.match(privacy, /provider&apos;s backup\s+schedule/);
+  assert.match(terms, /conflicting copies/);
+  assert.match(setup, /Child-privacy launch gate/);
+  assert.match(setup, /supabase\/adventure-saves\.sql/);
+  assert.match(setup, /\/api\/adventure\/saves/);
+  assert.match(setup, /row-level security/i);
+  assert.match(
+    setup,
+    /Do not enable the account requirement or cloud-save synchronization publicly/,
+  );
+  assert.match(setup, /authenticated export and correction\s+workflow/);
+});
+
 test("purchase terms separate production timing from carrier delivery", async () => {
   const terms = await readFile(
     new URL("../app/terms/page.jsx", import.meta.url),

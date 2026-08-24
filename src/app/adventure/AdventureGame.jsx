@@ -163,6 +163,20 @@ import {
   createAdventureStorageAdapter,
   inspectUnscopedAdventureSaves,
 } from "./adventureStorage.mjs";
+import { createAdventureCloudSaveClient } from "./adventureCloudClient.mjs";
+import {
+  acknowledgeAdventureCloudSyncAction,
+  createAdventureCloudLocalState,
+  createAdventureCloudRemoteState,
+  createAdventureCloudSyncMetadataStore,
+  getAdventureCloudSyncRetryDelay,
+  isAdventureCloudConflictCopyTargetAvailable,
+  markAdventureCloudLocalDeletion,
+  planAdventureCloudConflictResolution,
+  preserveAdventureCloudConcurrentIntent,
+  reconcileAdventureCloudProfile,
+  recordAdventureCloudSyncFailure,
+} from "./adventureCloudSync.mjs";
 import { reconcileStarterCollection } from "./adventureCollection.mjs";
 import { createActiveDuelDeckSnapshot } from "./adventureDecks.mjs";
 import { assertAdventureDuelResultMatchesLaunch } from "./adventureDuel.mjs";
@@ -1704,9 +1718,12 @@ function TitleScreen({
   profiles,
   notice,
   account,
+  cloudStatuses,
   blocked = false,
   onContinue,
   onNewGame,
+  onDelete,
+  onOpenConflict,
   onRetry,
   onSignOut,
 }) {
@@ -1728,8 +1745,8 @@ function TitleScreen({
           </span>
           <button type="button" onClick={onSignOut}>Sign out</button>
           <p>
-            SeaPals keeps each account&apos;s save slots separate in this
-            browser profile.
+            Saves stay available on this device and sync to this family
+            account whenever Reefbound is online.
           </p>
         </div>
         {notice ? (
@@ -1740,7 +1757,15 @@ function TitleScreen({
         <div className={styles.profileGrid} aria-label="Adventure save profiles">
           {profiles.map((profile) => (
             <section key={profile.profileId} className={`${styles.profileCard} ${profile.canContinue ? styles.profileCardUsed : ""}`}>
-              <div className={styles.profileSlot}>Save {profile.slot}</div>
+              <div className={styles.profileHeading}>
+                <div className={styles.profileSlot}>Save {profile.slot}</div>
+                <CloudSaveStatus
+                  status={cloudStatuses?.[profile.profileId]}
+                  onClick={cloudStatuses?.[profile.profileId]?.state === "conflict"
+                    ? () => onOpenConflict(profile.profileId)
+                    : null}
+                />
+              </div>
               {profile.canContinue ? (
                 <>
                   <strong>{profile.playerName ?? "Explorer"}</strong>
@@ -1748,9 +1773,13 @@ function TitleScreen({
                   {profile.starterDeckId ? <em>{getAdventureStarterDeck(profile.starterDeckId)?.name ?? "SeaPals"} starter</em> : null}
                   <small>{formatPlaytime(profile.playtimeSeconds)} · {formatSavedAt(profile.savedAt)}</small>
                   {profile.status === "recovered" ? <em>Backup recovery available</em> : null}
+                  {isCloudSaveSlotLocked(cloudStatuses?.[profile.profileId])
+                    ? <em>Choose which protected save to keep before playing this slot.</em>
+                    : null}
                   <div className={styles.profileActions}>
-                    <button type="button" onClick={() => onContinue(profile.profileId)}>Continue</button>
-                    <button type="button" className={styles.secondaryButton} onClick={() => onNewGame(profile.profileId, true)}>Start over</button>
+                    <button type="button" disabled={isCloudSaveSlotLocked(cloudStatuses?.[profile.profileId])} onClick={() => onContinue(profile.profileId)}>Continue</button>
+                    <button type="button" disabled={isCloudSaveSlotLocked(cloudStatuses?.[profile.profileId])} className={styles.secondaryButton} onClick={() => onNewGame(profile.profileId, true)}>Start over</button>
+                    <button type="button" disabled={isCloudSaveSlotLocked(cloudStatuses?.[profile.profileId])} className={styles.dangerButton} onClick={() => onDelete(profile.profileId)}>Delete</button>
                   </div>
                 </>
               ) : profile.status === "unavailable" ? (
@@ -1759,14 +1788,17 @@ function TitleScreen({
                   <span>Your browser did not allow this slot to be read.</span>
                   <div className={styles.profileActions}>
                     <button type="button" onClick={onRetry}>Retry</button>
-                    <button type="button" className={styles.secondaryButton} onClick={() => onNewGame(profile.profileId, false)}>Play without saving</button>
+                    <button type="button" disabled={isCloudSaveSlotLocked(cloudStatuses?.[profile.profileId])} className={styles.secondaryButton} onClick={() => onNewGame(profile.profileId, false)}>Play without saving</button>
                   </div>
                 </>
               ) : (
                 <>
                   <strong>{profile.occupied ? "Save needs recovery" : "Empty save"}</strong>
                   <span>{profile.occupied ? "No valid copy could be loaded." : "Begin at home on your tenth birthday."}</span>
-                  <button type="button" onClick={() => onNewGame(profile.profileId, profile.occupied)}>
+                  {isCloudSaveSlotLocked(cloudStatuses?.[profile.profileId])
+                    ? <em>Choose which protected save to keep before playing this slot.</em>
+                    : null}
+                  <button type="button" disabled={isCloudSaveSlotLocked(cloudStatuses?.[profile.profileId])} onClick={() => onNewGame(profile.profileId, profile.occupied)}>
                     {profile.occupied ? "Recover with new game" : "New Game"}
                   </button>
                 </>
@@ -1782,6 +1814,47 @@ function TitleScreen({
         <a className={styles.titleExitLink} href="/">Return to SeaPals</a>
       </div>
     </div>
+  );
+}
+
+function isCloudSaveSlotLocked(status) {
+  return status?.state === "conflict" || status?.state === "resolving";
+}
+
+function CloudSaveStatus({ status, onClick = null }) {
+  const state = status?.state ?? "checking";
+  const labels = {
+    checking: "Checking cloud",
+    local: "On this device",
+    queued: "Waiting to sync",
+    syncing: "Syncing",
+    resolving: "Applying choice",
+    synced: "Saved to account",
+    offline: "Device save safe",
+    conflict: "Choose a save",
+    deleted: "Deleted everywhere",
+  };
+  const className = `${styles.cloudSaveStatus} ${styles[`cloudSaveStatus${state[0].toUpperCase()}${state.slice(1)}`] ?? ""}`;
+  const label = labels[state] ?? "Cloud unavailable";
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className={className}
+        title={status?.message ?? label}
+        onClick={onClick}
+      >
+        {label}
+      </button>
+    );
+  }
+  return (
+    <span
+      className={className}
+      title={status?.message ?? label}
+    >
+      {label}
+    </span>
   );
 }
 
@@ -1932,6 +2005,7 @@ function NewsletterOptInModal({
 function PauseMenu({
   profileId,
   notice,
+  cloudStatus,
   blocked = false,
   fieldNoteCount = 0,
   activeDeckName = "No active deck",
@@ -1952,7 +2026,8 @@ function PauseMenu({
       <div className={styles.pauseCard}>
         <div className={styles.introEyebrow}>Elverson save {ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1}</div>
         <h2 id="pause-title">Adventure paused</h2>
-        <p>Your current safe position and quest progress can be saved to this device.</p>
+        <p>Your current safe position and quest progress save to this device first, then sync to your family account.</p>
+        <CloudSaveStatus status={cloudStatus} />
         <div className={styles.pauseLoadout} aria-label="Current card loadout">
           <span><small>Active deck</small><strong>{activeDeckName}</strong></span>
           <span><small>Booster packs</small><strong>{unopenedPackCount} unopened</strong></span>
@@ -1991,6 +2066,63 @@ function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel }) {
         <div className={styles.confirmActions}>
           <button type="button" className={styles.dangerButton} onClick={onConfirm}>{confirmLabel}</button>
           <button type="button" autoFocus className={styles.secondaryButton} onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CloudSaveConflictDialog({
+  conflict,
+  onUseCloud,
+  onUseDevice,
+  onKeepBoth,
+  onCancel,
+}) {
+  const dialogRef = useDialogFocusTrap();
+  if (!conflict) return null;
+  const slot = ADVENTURE_PROFILE_IDS.indexOf(conflict.profileId) + 1;
+  const localName = conflict.localSave?.player?.name ?? "Empty or deleted";
+  const cloudName = conflict.remoteRecord?.payload?.player?.name ?? "Empty or deleted";
+  return (
+    <div
+      ref={dialogRef}
+      tabIndex={-1}
+      data-adventure-modal="true"
+      className={styles.confirmLayer}
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="cloud-conflict-title"
+      aria-describedby="cloud-conflict-description"
+    >
+      <div className={`${styles.confirmCard} ${styles.cloudConflictCard}`}>
+        <div className={styles.introEyebrow}>Save {slot} changed on two devices</div>
+        <h2 id="cloud-conflict-title">Which adventure should Reefbound keep?</h2>
+        <p id="cloud-conflict-description">
+          Reefbound protected both versions instead of guessing. Choose the
+          version for Save {slot}, or keep both when another slot is empty.
+        </p>
+        <div className={styles.cloudConflictVersions}>
+          <section>
+            <small>This device</small>
+            <strong>{localName}</strong>
+            <span>{conflict.localSave ? formatPlaytime(conflict.localSave.playtimeSeconds) : "No active save"}</span>
+          </section>
+          <section>
+            <small>Family account</small>
+            <strong>{cloudName}</strong>
+            <span>{conflict.remoteRecord?.payload ? formatPlaytime(conflict.remoteRecord.payload.playtimeSeconds) : "No active save"}</span>
+          </section>
+        </div>
+        <div className={`${styles.confirmActions} ${styles.cloudConflictActions}`}>
+          <button type="button" disabled={conflict.resolving} onClick={onUseCloud}>Use family-account save</button>
+          <button type="button" disabled={conflict.resolving} onClick={onUseDevice}>Use this device</button>
+          <button type="button" disabled={conflict.resolving || !conflict.copyProfileId} onClick={onKeepBoth}>
+            {conflict.copyProfileId
+              ? `Keep both (copy to Save ${ADVENTURE_PROFILE_IDS.indexOf(conflict.copyProfileId) + 1})`
+              : "Keep both (no empty slot)"}
+          </button>
+          <button type="button" disabled={conflict.resolving} className={styles.secondaryButton} onClick={onCancel}>Decide later</button>
         </div>
       </div>
     </div>
@@ -2837,6 +2969,10 @@ export default function AdventureGame({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [bugReportOpen, setBugReportOpen] = useState(false);
   const [saveNotice, setSaveNotice] = useState(null);
+  const [cloudStatuses, setCloudStatuses] = useState(() => Object.fromEntries(
+    ADVENTURE_PROFILE_IDS.map((profileId) => [profileId, { state: "checking", message: null }]),
+  ));
+  const [cloudConflict, setCloudConflict] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const [activeDuelDeckSnapshot, setActiveDuelDeckSnapshot] = useState(null);
   const [subAssistedMode, setSubAssistedMode] = useState(false);
@@ -2877,6 +3013,28 @@ export default function AdventureGame({
   const interactRef = useRef(null);
   const escapeRef = useRef(null);
   const storageRef = useRef(null);
+  const cloudClientRef = useRef(null);
+  const cloudMetadataStoreRef = useRef(null);
+  const cloudRecordsRef = useRef({});
+  const cloudListLoadedRef = useRef(false);
+  const cloudListPromiseRef = useRef(null);
+  const cloudInitializePromiseRef = useRef(null);
+  const cloudInitializeRef = useRef(null);
+  const cloudListRetryTimerRef = useRef(null);
+  const cloudListRetryAttemptRef = useRef(0);
+  const cloudAccountGenerationRef = useRef(0);
+  const cloudSyncChainsRef = useRef(new Map());
+  const cloudSyncTimersRef = useRef(new Map());
+  const cloudSyncEpochRef = useRef(Object.fromEntries(
+    ADVENTURE_PROFILE_IDS.map((profileId) => [profileId, 0]),
+  ));
+  const cloudConflictResolutionRef = useRef(new Set());
+  const cloudKeepBothRef = useRef(new Set());
+  const cloudSyncReadyRef = useRef(false);
+  const cloudSyncMountedRef = useRef(true);
+  const screenRef = useRef(screen);
+  const scheduleCloudSyncRef = useRef(null);
+  const refreshProfilesRef = useRef(null);
   const saveRef = useRef(null);
   const dirtyRef = useRef(false);
   const profileWriteAuthorizedRef = useRef(false);
@@ -2891,6 +3049,8 @@ export default function AdventureGame({
   const worldActionRef = useRef(null);
   const sceneAssetPreloaderRef = useRef(null);
 
+  screenRef.current = screen;
+
   const createAccountStorageAdapter = useCallback(() => {
     if (!account?.id) {
       throw new Error("A signed-in family account is required for saving.");
@@ -2901,6 +3061,459 @@ export default function AdventureGame({
     });
     return createAdventureStorageAdapter({ backend });
   }, [account?.id]);
+
+  const updateCloudStatus = useCallback((profileId, state, message = null) => {
+    if (!cloudSyncMountedRef.current) return;
+    setCloudStatuses((current) => ({
+      ...current,
+      [profileId]: { state, message },
+    }));
+  }, []);
+
+  const loadCloudRecords = useCallback(async ({ force = false } = {}) => {
+    if (!cloudClientRef.current) {
+      throw new Error("Cloud saves are not initialized.");
+    }
+    if (cloudListPromiseRef.current) return cloudListPromiseRef.current;
+    if (cloudListLoadedRef.current && !force) return cloudRecordsRef.current;
+
+    const generation = cloudAccountGenerationRef.current;
+    const request = cloudClientRef.current.listProfiles().then((records) => {
+      if (generation !== cloudAccountGenerationRef.current) {
+        throw new Error("A newer family account replaced this cloud-save request.");
+      }
+      const next = {};
+      for (const record of records) {
+        if (ADVENTURE_PROFILE_IDS.includes(record?.profileId)) {
+          next[record.profileId] = record;
+        }
+      }
+      cloudRecordsRef.current = next;
+      cloudListLoadedRef.current = true;
+      return next;
+    }).finally(() => {
+      cloudListPromiseRef.current = null;
+    });
+    cloudListPromiseRef.current = request;
+    return request;
+  }, []);
+
+  const surfaceCloudConflict = useCallback((profileId, conflict, remoteRecord) => {
+    updateCloudStatus(
+      profileId,
+      "conflict",
+      "This save changed on two devices. Choose which version to keep.",
+    );
+    if (screenRef.current !== "title" && screenRef.current !== "boot") return;
+    // A conflict can offer another slot as a Keep Both target. Close every
+    // pending slot mutation so a stale dialog cannot overwrite that protected
+    // copy after the choice completes.
+    setNewGameSetup(null);
+    setConfirmation((current) => (
+      current?.profileId ? null : current
+    ));
+
+    const adapter = storageRef.current;
+    const conflictRemote = remoteRecord ?? (
+      conflict?.remote?.kind === "active"
+        ? {
+            profileId,
+            cloudVersion: conflict.remote.cloudVersion,
+            payload: conflict.remote.save,
+            deleted: false,
+          }
+        : {
+            profileId,
+            cloudVersion: conflict?.remote?.cloudVersion ?? 0,
+            payload: null,
+            deleted: conflict?.remote?.kind === "tombstone",
+          }
+    );
+    const currentLocal = adapter?.loadProfile(profileId);
+    const localSave = currentLocal?.ok && currentLocal.save
+      ? currentLocal.save
+      : conflict?.local?.save ?? null;
+    const canCopyBoth = Boolean(localSave && conflictRemote?.payload);
+    const copyProfileId = canCopyBoth
+      ? ADVENTURE_PROFILE_IDS.find((candidateId) => {
+          if (candidateId === profileId) return false;
+          const local = adapter?.loadProfile(candidateId);
+          const remote = cloudRecordsRef.current[candidateId];
+          const metadataResult = cloudMetadataStoreRef.current?.load(candidateId);
+          if (!metadataResult?.ok) return false;
+          return isAdventureCloudConflictCopyTargetAvailable({
+            profileId: candidateId,
+            localStatus: local?.status,
+            remoteKind: !remote ? "absent" : (remote.deleted ? "tombstone" : "active"),
+            metadata: metadataResult.metadata,
+          });
+        }) ?? null
+      : null;
+    setCloudConflict({
+      profileId,
+      conflict,
+      localSave,
+      remoteRecord: conflictRemote,
+      copyProfileId,
+    });
+  }, [updateCloudStatus]);
+
+  function blockProtectedCloudProfileMutation(profileId) {
+    const metadataResult = cloudMetadataStoreRef.current?.load(profileId);
+    const conflict = metadataResult?.ok
+      ? metadataResult.metadata.conflict
+      : null;
+    const resolutionInProgress = cloudConflictResolutionRef.current.has(profileId)
+      || cloudKeepBothRef.current.has(profileId);
+    if (!conflict && !resolutionInProgress) return false;
+
+    setNewGameSetup((current) => (
+      current?.profileId === profileId ? null : current
+    ));
+    setConfirmation((current) => (
+      current?.profileId === profileId ? null : current
+    ));
+    setSaveNotice({
+      kind: "error",
+      message: resolutionInProgress
+        ? "Wait for the protected save choice to finish before changing this slot."
+        : "Choose which protected save to keep before changing this slot.",
+    });
+    if (conflict) {
+      surfaceCloudConflict(
+        profileId,
+        conflict,
+        cloudRecordsRef.current[profileId] ?? null,
+      );
+    }
+    return true;
+  }
+
+  const performCloudSyncProfile = useCallback(async (profileId) => {
+    if (!cloudSyncReadyRef.current) return;
+    const accountGeneration = cloudAccountGenerationRef.current;
+    const adapter = storageRef.current;
+    const metadataStore = cloudMetadataStoreRef.current;
+    const client = cloudClientRef.current;
+    if (!adapter || !metadataStore || !client) return;
+
+    let currentAction = null;
+    let currentMetadata = null;
+    try {
+      await loadCloudRecords();
+      if (accountGeneration !== cloudAccountGenerationRef.current) return;
+      for (let reconciliationAttempt = 0; reconciliationAttempt < 2; reconciliationAttempt += 1) {
+        const reconciliationEpoch = cloudSyncEpochRef.current[profileId];
+        const loaded = adapter.loadProfile(profileId);
+        if (!loaded.ok && loaded.status === "unavailable") {
+          throw new Error("This device save could not be read for cloud sync.");
+        }
+        const local = await createAdventureCloudLocalState({
+          profileId,
+          save: loaded.save ?? null,
+          saveKind: loaded.metadata?.saveKind ?? null,
+          checkpointId: loaded.metadata?.checkpointId ?? null,
+        });
+        if (reconciliationEpoch !== cloudSyncEpochRef.current[profileId]) {
+          updateCloudStatus(profileId, "queued", "Newer device progress is waiting to sync.");
+          scheduleCloudSyncRef.current?.(profileId, 0);
+          return;
+        }
+        const metadataResult = metadataStore.load(profileId);
+        if (!metadataResult.ok) throw new Error(metadataResult.error.message);
+        currentMetadata = metadataResult.metadata;
+        const remoteRecord = cloudRecordsRef.current[profileId] ?? null;
+        const remote = await createAdventureCloudRemoteState(remoteRecord, { profileId });
+        if (reconciliationEpoch !== cloudSyncEpochRef.current[profileId]) {
+          updateCloudStatus(profileId, "queued", "Newer device progress is waiting to sync.");
+          scheduleCloudSyncRef.current?.(profileId, 0);
+          return;
+        }
+        const plan = reconcileAdventureCloudProfile({
+          profileId,
+          local,
+          remote,
+          metadata: currentMetadata,
+        });
+        currentAction = plan.action;
+
+        const persistedConflict = plan.status === "conflict" && plan.current?.local
+          ? {
+              ...plan.conflict,
+              local: plan.current.local,
+              remote: plan.current.remote ?? plan.conflict?.remote,
+            }
+          : plan.conflict;
+        const nextMetadata = persistedConflict
+          ? { ...plan.nextMetadata, conflict: persistedConflict }
+          : plan.nextMetadata;
+        if (reconciliationEpoch !== cloudSyncEpochRef.current[profileId]) {
+          updateCloudStatus(profileId, "queued", "Newer device progress is waiting to sync.");
+          scheduleCloudSyncRef.current?.(profileId, 0);
+          return;
+        }
+        const plannedMetadata = metadataStore.save(profileId, nextMetadata);
+        if (!plannedMetadata.ok) throw new Error(plannedMetadata.error.message);
+        currentMetadata = plannedMetadata.metadata;
+
+        if (plan.status === "conflict" || currentAction.type === "conflict") {
+          surfaceCloudConflict(profileId, persistedConflict, remoteRecord);
+          return;
+        }
+
+        if (currentAction.type === "noop") {
+          updateCloudStatus(
+            profileId,
+            remote.kind === "tombstone" ? "deleted" : "synced",
+            remote.kind === "tombstone"
+              ? "This profile is deleted on every synced device."
+              : "This save slot is up to date with the family account.",
+          );
+          return;
+        }
+
+        if (currentAction.type === "pull" || currentAction.type === "delete-local") {
+          if (screenRef.current === "playing") {
+            updateCloudStatus(
+              profileId,
+              "queued",
+              "A newer family-account save is waiting. Return to the title screen to apply it safely.",
+            );
+            return;
+          }
+          if (reconciliationEpoch !== cloudSyncEpochRef.current[profileId]) {
+            updateCloudStatus(profileId, "queued", "Newer device progress is waiting to sync.");
+            scheduleCloudSyncRef.current?.(profileId, 0);
+            return;
+          }
+
+          const localResult = currentAction.type === "pull"
+            ? adapter.startNewProfile(profileId, {
+                overwriteConfirmed: true,
+                saveValue: currentAction.remoteRecord.payload,
+              })
+            : adapter.deleteProfile(profileId, { confirmed: true });
+          if (!localResult.ok) {
+            throw new Error(localResult.error?.message ?? "The family-account save could not be applied on this device.");
+          }
+          let acknowledged = await acknowledgeAdventureCloudSyncAction({
+            metadata: currentMetadata,
+            action: currentAction,
+          });
+          const latestMetadata = metadataStore.load(profileId);
+          if (
+            reconciliationEpoch !== cloudSyncEpochRef.current[profileId]
+            && latestMetadata.ok
+          ) {
+            acknowledged = preserveAdventureCloudConcurrentIntent({
+              acknowledgedMetadata: acknowledged,
+              latestMetadata: latestMetadata.metadata,
+            });
+          }
+          const stored = metadataStore.save(profileId, acknowledged);
+          if (!stored.ok) throw new Error(stored.error.message);
+          refreshProfilesRef.current?.();
+          if (reconciliationEpoch !== cloudSyncEpochRef.current[profileId]) {
+            updateCloudStatus(profileId, "queued", "Newer device progress is waiting to sync.");
+            scheduleCloudSyncRef.current?.(profileId, 0);
+            return;
+          }
+          updateCloudStatus(
+            profileId,
+            currentAction.type === "pull" ? "synced" : "deleted",
+            currentAction.type === "pull"
+              ? "The family-account save is ready on this device."
+              : "This profile deletion is synced.",
+          );
+          return;
+        }
+
+        if (currentAction.type !== "push") {
+          throw new Error(`Unsupported cloud-sync action: ${String(currentAction.type)}.`);
+        }
+
+        const operationEpoch = cloudSyncEpochRef.current[profileId];
+        updateCloudStatus(profileId, "syncing", "Saving progress to the family account.");
+        const result = currentAction.mutation === "delete"
+          ? await client.deleteProfile(currentAction.body)
+          : await client.saveProfile({
+              profileId: currentAction.body.profileId,
+              expectedCloudVersion: currentAction.body.expectedCloudVersion,
+              save: currentAction.body.save,
+              saveKind: currentAction.body.metadata.saveKind ?? "autosave",
+              checkpointId: currentAction.body.metadata.checkpointId,
+            });
+
+        if (accountGeneration !== cloudAccountGenerationRef.current) return;
+
+        if (result.conflict) {
+          if (result.record) cloudRecordsRef.current[profileId] = result.record;
+          continue;
+        }
+
+        cloudRecordsRef.current[profileId] = result.record;
+        let acknowledged = await acknowledgeAdventureCloudSyncAction({
+          metadata: currentMetadata,
+          action: currentAction,
+          record: result.record,
+        });
+        const latestMetadata = metadataStore.load(profileId);
+        if (
+          operationEpoch !== cloudSyncEpochRef.current[profileId]
+          && latestMetadata.ok
+        ) {
+          acknowledged = preserveAdventureCloudConcurrentIntent({
+            acknowledgedMetadata: acknowledged,
+            latestMetadata: latestMetadata.metadata,
+          });
+        }
+        const stored = metadataStore.save(profileId, acknowledged);
+        if (!stored.ok) throw new Error(stored.error.message);
+
+        if (operationEpoch !== cloudSyncEpochRef.current[profileId]) {
+          updateCloudStatus(profileId, "queued", "Newer device progress is waiting to sync.");
+          scheduleCloudSyncRef.current?.(profileId, 0);
+        } else {
+          updateCloudStatus(
+            profileId,
+            result.record.deleted ? "deleted" : "synced",
+            result.record.deleted
+              ? "This profile deletion is synced."
+              : "Progress is saved to the family account.",
+          );
+        }
+        return;
+      }
+
+      const latestRecord = cloudRecordsRef.current[profileId] ?? null;
+      const reconciliationEpoch = cloudSyncEpochRef.current[profileId];
+      const loaded = adapter.loadProfile(profileId);
+      const local = await createAdventureCloudLocalState({
+        profileId,
+        save: loaded.save ?? null,
+        saveKind: loaded.metadata?.saveKind ?? null,
+        checkpointId: loaded.metadata?.checkpointId ?? null,
+      });
+      const remote = await createAdventureCloudRemoteState(latestRecord, { profileId });
+      if (reconciliationEpoch !== cloudSyncEpochRef.current[profileId]) {
+        updateCloudStatus(profileId, "queued", "Newer device progress is waiting to sync.");
+        scheduleCloudSyncRef.current?.(profileId, 0);
+        return;
+      }
+      const conflictPlan = reconcileAdventureCloudProfile({
+        profileId,
+        local,
+        remote,
+        metadata: currentMetadata,
+      });
+      metadataStore.save(profileId, conflictPlan.nextMetadata);
+      surfaceCloudConflict(profileId, conflictPlan.conflict, latestRecord);
+    } catch (error) {
+      if (accountGeneration !== cloudAccountGenerationRef.current) return;
+      let retryDelay = null;
+      if (currentAction?.coalesceKey && currentMetadata) {
+        const failure = recordAdventureCloudSyncFailure({
+          metadata: currentMetadata,
+          action: currentAction,
+          error,
+        });
+        cloudMetadataStoreRef.current?.save(profileId, failure.metadata);
+        if (failure.classification.retryable) {
+          retryDelay = getAdventureCloudSyncRetryDelay(
+            failure.metadata.retry?.attemptCount ?? 1,
+          );
+        }
+      }
+      updateCloudStatus(
+        profileId,
+        "offline",
+        error?.message ?? "Progress is safe on this device and will sync later.",
+      );
+      if (retryDelay !== null) scheduleCloudSyncRef.current?.(profileId, retryDelay);
+    }
+  }, [loadCloudRecords, surfaceCloudConflict, updateCloudStatus]);
+
+  const enqueueCloudSync = useCallback((profileId) => {
+    const previous = cloudSyncChainsRef.current.get(profileId) ?? Promise.resolve();
+    const task = previous.catch(() => {}).then(() => performCloudSyncProfile(profileId));
+    cloudSyncChainsRef.current.set(profileId, task);
+    void task.finally(() => {
+      if (cloudSyncChainsRef.current.get(profileId) === task) {
+        cloudSyncChainsRef.current.delete(profileId);
+      }
+    });
+    return task;
+  }, [performCloudSyncProfile]);
+
+  const scheduleCloudSync = useCallback((profileId, delayMs = 180) => {
+    if (!cloudSyncReadyRef.current) return;
+    const previous = cloudSyncTimersRef.current.get(profileId);
+    if (previous) window.clearTimeout(previous);
+    const timer = window.setTimeout(() => {
+      cloudSyncTimersRef.current.delete(profileId);
+      void enqueueCloudSync(profileId);
+    }, Math.max(0, delayMs));
+    cloudSyncTimersRef.current.set(profileId, timer);
+  }, [enqueueCloudSync]);
+  scheduleCloudSyncRef.current = scheduleCloudSync;
+
+  const initializeCloudSync = useCallback(async ({ force = false } = {}) => {
+    if (cloudInitializePromiseRef.current) return cloudInitializePromiseRef.current;
+    const generation = cloudAccountGenerationRef.current;
+    const operation = (async () => {
+      for (const profileId of ADVENTURE_PROFILE_IDS) {
+        updateCloudStatus(profileId, "checking", "Checking the family-account save.");
+      }
+      try {
+        await loadCloudRecords({ force });
+        if (generation !== cloudAccountGenerationRef.current) return;
+        cloudSyncReadyRef.current = true;
+        cloudListRetryAttemptRef.current = 0;
+        if (cloudListRetryTimerRef.current) {
+          window.clearTimeout(cloudListRetryTimerRef.current);
+          cloudListRetryTimerRef.current = null;
+        }
+        await Promise.all(ADVENTURE_PROFILE_IDS.map((profileId) => enqueueCloudSync(profileId)));
+      } catch (error) {
+        if (generation !== cloudAccountGenerationRef.current) return;
+        cloudSyncReadyRef.current = true;
+        for (const profileId of ADVENTURE_PROFILE_IDS) {
+          updateCloudStatus(
+            profileId,
+            "offline",
+            error?.message ?? "Progress is safe on this device and will sync when Reefbound reconnects.",
+          );
+        }
+        cloudListRetryAttemptRef.current += 1;
+        const retryDelay = getAdventureCloudSyncRetryDelay(
+          cloudListRetryAttemptRef.current,
+          { baseDelayMs: 5_000, maxDelayMs: 60_000 },
+        );
+        if (cloudListRetryTimerRef.current) {
+          window.clearTimeout(cloudListRetryTimerRef.current);
+        }
+        cloudListRetryTimerRef.current = window.setTimeout(() => {
+          cloudListRetryTimerRef.current = null;
+          if (
+            cloudSyncMountedRef.current
+            && generation === cloudAccountGenerationRef.current
+          ) {
+            cloudListLoadedRef.current = false;
+            void cloudInitializeRef.current?.({ force: true });
+          }
+        }, retryDelay);
+      }
+    })();
+    cloudInitializePromiseRef.current = operation;
+    try {
+      await operation;
+    } finally {
+      if (cloudInitializePromiseRef.current === operation) {
+        cloudInitializePromiseRef.current = null;
+      }
+    }
+  }, [enqueueCloudSync, loadCloudRecords, updateCloudStatus]);
+  cloudInitializeRef.current = initializeCloudSync;
 
   function rememberNewsletterInviteDismissal() {
     try {
@@ -3430,6 +4043,7 @@ export default function AdventureGame({
     setProfiles(result.profiles);
     return result;
   }, []);
+  refreshProfilesRef.current = refreshProfiles;
 
   const persistSave = useCallback((nextSave, { kind = "autosave", checkpointId = "exploration" } = {}) => {
     const adapter = storageRef.current;
@@ -3459,6 +4073,9 @@ export default function AdventureGame({
           : "Progress autosaved.",
       });
       refreshProfiles();
+      cloudSyncEpochRef.current[nextSave.profileId] += 1;
+      updateCloudStatus(nextSave.profileId, "queued", "Progress is waiting to sync.");
+      scheduleCloudSyncRef.current?.(nextSave.profileId);
     } else {
       setDirty(true);
       setSaveNotice({
@@ -3467,7 +4084,7 @@ export default function AdventureGame({
       });
     }
     return result;
-  }, [refreshProfiles, setDirty]);
+  }, [refreshProfiles, setDirty, updateCloudStatus]);
 
   const startElversonHandNetGuidedWalk = useCallback((sourceSave) => {
     if (!sourceSave || sourceSave.world.sceneId !== "town") return false;
@@ -3842,9 +4459,40 @@ export default function AdventureGame({
   }, [account.id, account.newsletter?.status]);
 
   useEffect(() => {
+    let active = true;
+    const accountGeneration = cloudAccountGenerationRef.current + 1;
+    cloudAccountGenerationRef.current = accountGeneration;
+    cloudSyncMountedRef.current = true;
+    cloudSyncReadyRef.current = false;
+    cloudListLoadedRef.current = false;
+    cloudListPromiseRef.current = null;
+    cloudInitializePromiseRef.current = null;
+    cloudListRetryAttemptRef.current = 0;
+    if (cloudListRetryTimerRef.current) {
+      window.clearTimeout(cloudListRetryTimerRef.current);
+      cloudListRetryTimerRef.current = null;
+    }
+    cloudRecordsRef.current = {};
+    cloudSyncChainsRef.current.clear();
+    cloudConflictResolutionRef.current.clear();
+    cloudKeepBothRef.current.clear();
+    for (const timer of cloudSyncTimersRef.current.values()) {
+      window.clearTimeout(timer);
+    }
+    cloudSyncTimersRef.current.clear();
+    setScreen("boot");
+
+    let waitForLegacyChoice = false;
     try {
       const adapter = createAccountStorageAdapter();
       storageRef.current = adapter;
+      cloudClientRef.current = createAdventureCloudSaveClient({
+        expectedAccountId: account.id,
+      });
+      cloudMetadataStoreRef.current = createAdventureCloudSyncMetadataStore({
+        backend: window.localStorage,
+        accountId: account.id,
+      });
       let listed = adapter.listProfileSummaries();
       const unscoped = inspectUnscopedAdventureSaves({
         backend: window.localStorage,
@@ -3863,10 +4511,9 @@ export default function AdventureGame({
             ...(unscoped.legacy.valid ? ["profile-1"] : []),
           ]).size,
         });
+        waitForLegacyChoice = true;
         setScreen("title");
-        return;
-      }
-      if (listed.profiles.every((profile) => !profile.occupied)) {
+      } else if (listed.profiles.every((profile) => !profile.occupied)) {
         const migration = adapter.migrateLegacyProfile("profile-1");
         if (migration.ok && migration.migrated) {
           setSaveNotice({ kind: "info", message: "Your earlier Elverson progress was recovered into Save 1." });
@@ -3880,8 +4527,50 @@ export default function AdventureGame({
       setProfiles((current) => current.map((profile) => ({ ...profile, status: "unavailable" })));
       setSaveNotice({ kind: "error", message: `Local saves are unavailable: ${error?.message ?? "storage access failed"}.` });
     }
-    setScreen("title");
-  }, [account.id, createAccountStorageAdapter]);
+    if (!waitForLegacyChoice) {
+      void initializeCloudSync().finally(() => {
+        if (active && accountGeneration === cloudAccountGenerationRef.current) {
+          setScreen("title");
+        }
+      });
+    }
+
+    return () => {
+      active = false;
+      if (cloudAccountGenerationRef.current === accountGeneration) {
+        cloudAccountGenerationRef.current += 1;
+        cloudSyncMountedRef.current = false;
+      }
+      if (cloudListRetryTimerRef.current) {
+        window.clearTimeout(cloudListRetryTimerRef.current);
+        cloudListRetryTimerRef.current = null;
+      }
+      for (const timer of cloudSyncTimersRef.current.values()) {
+        window.clearTimeout(timer);
+      }
+      cloudSyncTimersRef.current.clear();
+    };
+  }, [account.id, createAccountStorageAdapter, initializeCloudSync]);
+
+  useEffect(() => {
+    function refreshCloudSaves() {
+      if (!cloudSyncReadyRef.current) return;
+      cloudListLoadedRef.current = false;
+      void initializeCloudSync({ force: true });
+    }
+    window.addEventListener("online", refreshCloudSaves);
+    window.addEventListener("focus", refreshCloudSaves);
+    return () => {
+      window.removeEventListener("online", refreshCloudSaves);
+      window.removeEventListener("focus", refreshCloudSaves);
+    };
+  }, [initializeCloudSync]);
+
+  useEffect(() => {
+    if (screen !== "title" || !cloudSyncReadyRef.current || legacySavePrompt) return;
+    cloudListLoadedRef.current = false;
+    void initializeCloudSync({ force: true });
+  }, [initializeCloudSync, legacySavePrompt, screen]);
 
   function resolveLegacySaveChoice(importSaves) {
     const claim = claimUnscopedAdventureSaves({
@@ -4594,6 +5283,7 @@ export default function AdventureGame({
   ]);
 
   function beginNewGame(profileId, overwriteConfirmed = false, identity = {}) {
+    if (blockProtectedCloudProfileMutation(profileId)) return;
     const adapter = storageRef.current;
     const initial = createNewAdventureSession(profileId, identity);
     let storageResult = null;
@@ -4604,6 +5294,7 @@ export default function AdventureGame({
       });
       if (!storageResult.ok && storageResult.error?.code === "OVERWRITE_CONFIRMATION_REQUIRED") {
         setConfirmation({
+          profileId,
           title: "Start this Elverson adventure over?",
           message: "The existing save in this slot will be replaced. This cannot be undone.",
           confirmLabel: "Start over",
@@ -4634,12 +5325,311 @@ export default function AdventureGame({
       return;
     }
     setConfirmation({
+      profileId,
       title: "Replace this Elverson adventure?",
       message: "Starting a new game will replace this slot's current progress and backup.",
       confirmLabel: "Replace adventure",
       onConfirm: () => setNewGameSetup({ profileId, overwriteConfirmed: true }),
     });
   }
+
+  function deleteProfileEverywhere(profileId) {
+    if (blockProtectedCloudProfileMutation(profileId)) return;
+    const adapter = storageRef.current;
+    const metadataStore = cloudMetadataStoreRef.current;
+    if (!adapter || !metadataStore) {
+      setSaveNotice({
+        kind: "error",
+        message: "This save cannot be deleted safely until local and cloud storage are available.",
+      });
+      return;
+    }
+
+    const existing = adapter.loadProfile(profileId);
+    const metadataResult = metadataStore.load(profileId);
+    if (!existing.ok || !metadataResult.ok) {
+      setSaveNotice({
+        kind: "error",
+        message: existing.error?.message
+          ?? metadataResult.error?.message
+          ?? "This save could not be prepared for deletion.",
+      });
+      return;
+    }
+    const deleted = adapter.deleteProfile(profileId, { confirmed: true });
+    if (!deleted.ok) {
+      setSaveNotice({ kind: "error", message: deleted.error?.message ?? "This save could not be deleted." });
+      return;
+    }
+
+    const pendingDeletion = metadataStore.save(
+      profileId,
+      markAdventureCloudLocalDeletion(metadataResult.metadata),
+    );
+    if (!pendingDeletion.ok) {
+      if (existing.save) {
+        adapter.startNewProfile(profileId, {
+          overwriteConfirmed: true,
+          saveValue: existing.save,
+        });
+      }
+      refreshProfiles();
+      setSaveNotice({
+        kind: "error",
+        message: "The deletion could not be queued safely, so Reefbound restored the device copy.",
+      });
+      return;
+    }
+
+    cloudSyncEpochRef.current[profileId] += 1;
+    refreshProfiles();
+    updateCloudStatus(profileId, "queued", "Profile deletion is waiting to sync.");
+    setSaveNotice({
+      kind: "info",
+      message: "This device copy was deleted. Reefbound will remove the family-account copy too.",
+    });
+    scheduleCloudSyncRef.current?.(profileId, 0);
+  }
+
+  function requestDeleteProfile(profileId) {
+    setConfirmation({
+      profileId,
+      title: `Delete Save ${ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1} everywhere?`,
+      message: "This removes the profile from this device and your family account. Other devices will remove their copy when they reconnect.",
+      confirmLabel: "Delete everywhere",
+      onConfirm: () => deleteProfileEverywhere(profileId),
+    });
+  }
+
+  function reopenCloudConflict(profileId) {
+    const metadataResult = cloudMetadataStoreRef.current?.load(profileId);
+    if (!metadataResult?.ok || !metadataResult.metadata.conflict) {
+      setSaveNotice({
+        kind: "error",
+        message: "That protected save choice could not be reopened. Reefbound will check the account again.",
+      });
+      cloudListLoadedRef.current = false;
+      void initializeCloudSync({ force: true });
+      return;
+    }
+    surfaceCloudConflict(
+      profileId,
+      metadataResult.metadata.conflict,
+      cloudRecordsRef.current[profileId] ?? null,
+    );
+  }
+
+  const resolveCloudConflictChoice = useCallback((choice) => {
+    const visibleConflict = cloudConflict;
+    if (!visibleConflict || (choice !== "local" && choice !== "remote")) return;
+    const { profileId } = visibleConflict;
+    if (cloudConflictResolutionRef.current.has(profileId)) return;
+    cloudConflictResolutionRef.current.add(profileId);
+    setCloudConflict({ ...visibleConflict, resolving: true });
+    updateCloudStatus(profileId, "resolving", "Applying your protected save choice.");
+
+    const previous = cloudSyncChainsRef.current.get(profileId) ?? Promise.resolve();
+    const task = previous.catch(() => {}).then(async () => {
+      const adapter = storageRef.current;
+      const metadataStore = cloudMetadataStoreRef.current;
+      const client = cloudClientRef.current;
+      if (!adapter || !metadataStore || !client) {
+        throw new Error("Save storage is unavailable.");
+      }
+
+      await loadCloudRecords({ force: true });
+      const metadataResult = metadataStore.load(profileId);
+      if (!metadataResult.ok) throw new Error(metadataResult.error.message);
+      const loadedLocal = choice === "local" ? adapter.loadProfile(profileId) : null;
+      if (loadedLocal && !loadedLocal.ok && loadedLocal.status === "unavailable") {
+        throw new Error("This device save could not be read safely.");
+      }
+      const currentLocal = loadedLocal?.save
+        ? await createAdventureCloudLocalState({
+            profileId,
+            save: loadedLocal.save,
+            saveKind: loadedLocal.metadata?.saveKind ?? "manual",
+            checkpointId: loadedLocal.metadata?.checkpointId ?? null,
+          })
+        : undefined;
+      const resolution = await planAdventureCloudConflictResolution({
+        metadata: metadataResult.metadata,
+        choice,
+        currentRemote: cloudRecordsRef.current[profileId] ?? null,
+        currentLocal,
+      });
+      const action = resolution.action;
+      if (action.type === "noop") {
+        const stored = metadataStore.save(profileId, resolution.nextMetadata);
+        if (!stored.ok) throw new Error(stored.error.message);
+        updateCloudStatus(profileId, "synced", "Your chosen save is already current.");
+        setCloudConflict(null);
+        return;
+      }
+
+      if (action.type === "pull" || action.type === "delete-local") {
+        const applied = action.type === "pull"
+          ? adapter.startNewProfile(profileId, {
+              overwriteConfirmed: true,
+              saveValue: action.remoteRecord.payload,
+            })
+          : adapter.deleteProfile(profileId, { confirmed: true });
+        if (!applied.ok) throw new Error(applied.error?.message ?? "The family-account save could not be applied.");
+        const acknowledged = await acknowledgeAdventureCloudSyncAction({
+          metadata: metadataResult.metadata,
+          action,
+        });
+        const stored = metadataStore.save(profileId, acknowledged);
+        if (!stored.ok) throw new Error(stored.error.message);
+        refreshProfilesRef.current?.();
+        updateCloudStatus(
+          profileId,
+          action.type === "pull" ? "synced" : "deleted",
+          "Your family-account save choice is now active.",
+        );
+        setCloudConflict(null);
+        return;
+      }
+
+      const result = action.mutation === "delete"
+        ? await client.deleteProfile(action.body)
+        : await client.saveProfile({
+            profileId: action.body.profileId,
+            expectedCloudVersion: action.body.expectedCloudVersion,
+            save: action.body.save,
+            saveKind: action.body.metadata.saveKind ?? "manual",
+            checkpointId: action.body.metadata.checkpointId,
+          });
+      if (result.conflict) {
+        if (result.record) cloudRecordsRef.current[profileId] = result.record;
+        surfaceCloudConflict(profileId, resolution.conflict, result.record);
+        return;
+      }
+
+      cloudRecordsRef.current[profileId] = result.record;
+      const acknowledged = await acknowledgeAdventureCloudSyncAction({
+        metadata: metadataResult.metadata,
+        action,
+        record: result.record,
+      });
+      const stored = metadataStore.save(profileId, acknowledged);
+      if (!stored.ok) throw new Error(stored.error.message);
+      updateCloudStatus(
+        profileId,
+        result.record.deleted ? "deleted" : "synced",
+        "Your device save choice is now saved to the family account.",
+      );
+      setCloudConflict(null);
+    }).catch((error) => {
+      setCloudConflict({ ...visibleConflict, resolving: false });
+      updateCloudStatus(
+        profileId,
+        "conflict",
+        error?.message ?? "That save choice did not finish. Both copies are still protected.",
+      );
+    }).finally(() => {
+      cloudConflictResolutionRef.current.delete(profileId);
+    });
+    cloudSyncChainsRef.current.set(profileId, task);
+    void task.finally(() => {
+      if (cloudSyncChainsRef.current.get(profileId) === task) {
+        cloudSyncChainsRef.current.delete(profileId);
+      }
+    });
+  }, [cloudConflict, loadCloudRecords, surfaceCloudConflict, updateCloudStatus]);
+
+  const keepBothCloudConflictCopies = useCallback(async () => {
+    const visibleConflict = cloudConflict;
+    if (!visibleConflict?.copyProfileId || !visibleConflict.localSave) return;
+    if (cloudKeepBothRef.current.has(visibleConflict.profileId)) return;
+    cloudKeepBothRef.current.add(visibleConflict.profileId);
+    setCloudConflict({ ...visibleConflict, resolving: true });
+    updateCloudStatus(visibleConflict.profileId, "resolving", "Preserving both save copies.");
+    const copyProfileId = visibleConflict.copyProfileId;
+    const previousTargetTask = cloudSyncChainsRef.current.get(copyProfileId)
+      ?? Promise.resolve();
+    const task = previousTargetTask.catch(() => {}).then(async () => {
+      await loadCloudRecords({ force: true });
+      const adapter = storageRef.current;
+      const metadataStore = cloudMetadataStoreRef.current;
+      if (!adapter || !metadataStore) throw new Error("Save storage is unavailable.");
+      const existingLocal = adapter.loadProfile(copyProfileId);
+      const existingRemoteRecord = cloudRecordsRef.current[copyProfileId] ?? null;
+      const remote = await createAdventureCloudRemoteState(existingRemoteRecord, {
+        profileId: copyProfileId,
+      });
+      const targetMetadataResult = metadataStore.load(copyProfileId);
+      if (!targetMetadataResult.ok) throw new Error(targetMetadataResult.error.message);
+      if (!isAdventureCloudConflictCopyTargetAvailable({
+        profileId: copyProfileId,
+        localStatus: existingLocal.status,
+        remoteKind: remote.kind,
+        metadata: targetMetadataResult.metadata,
+      })) {
+        throw new Error("That save slot now contains progress or protected sync work. Choose one version or free another slot.");
+      }
+      const preparedMetadata = metadataStore.save(copyProfileId, {
+        profileId: copyProfileId,
+        base: {
+          profileId: copyProfileId,
+          kind: remote.kind,
+          hash: remote.kind === "active" ? remote.hash : null,
+          schemaVersion: remote.kind === "active" ? remote.schemaVersion : null,
+          cloudVersion: remote.cloudVersion,
+        },
+      });
+      if (!preparedMetadata.ok) throw new Error(preparedMetadata.error.message);
+
+      const sourceLocal = adapter.loadProfile(visibleConflict.profileId);
+      if (!sourceLocal.ok && sourceLocal.status === "unavailable") {
+        throw new Error("This device save could not be read safely.");
+      }
+      const latestLocalSave = sourceLocal.save ?? visibleConflict.localSave;
+      if (!latestLocalSave) {
+        throw new Error("The protected device copy is no longer available.");
+      }
+      const copySave = {
+        ...latestLocalSave,
+        profileId: copyProfileId,
+      };
+      const copied = adapter.startNewProfile(copyProfileId, {
+        overwriteConfirmed: false,
+        saveValue: copySave,
+      });
+      if (!copied.ok) throw new Error(copied.error?.message ?? "The second save copy could not be created.");
+      cloudSyncEpochRef.current[copyProfileId] += 1;
+      refreshProfilesRef.current?.();
+      updateCloudStatus(copyProfileId, "queued", "The protected copy is waiting to sync.");
+      scheduleCloudSyncRef.current?.(copyProfileId, 0);
+      cloudKeepBothRef.current.delete(visibleConflict.profileId);
+      setCloudConflict({ ...visibleConflict, resolving: false });
+      resolveCloudConflictChoice("remote");
+      setSaveNotice({
+        kind: "info",
+        message: `Both adventures were preserved. This device's version was copied to Save ${ADVENTURE_PROFILE_IDS.indexOf(copyProfileId) + 1}.`,
+      });
+    });
+    cloudSyncChainsRef.current.set(copyProfileId, task);
+    try {
+      await task;
+    } catch (error) {
+      setCloudConflict({ ...visibleConflict, resolving: false });
+      updateCloudStatus(
+        visibleConflict.profileId,
+        "conflict",
+        "Both versions are still protected. Choose which save to keep.",
+      );
+      setSaveNotice({
+        kind: "error",
+        message: error?.message ?? "Reefbound could not preserve both save copies.",
+      });
+    } finally {
+      cloudKeepBothRef.current.delete(visibleConflict.profileId);
+      if (cloudSyncChainsRef.current.get(copyProfileId) === task) {
+        cloudSyncChainsRef.current.delete(copyProfileId);
+      }
+    }
+  }, [cloudConflict, loadCloudRecords, resolveCloudConflictChoice, updateCloudStatus]);
 
   function continueProfile(profileId) {
     const adapter = storageRef.current;
@@ -6681,6 +7671,7 @@ export default function AdventureGame({
   }
 
   function claimSaveSlotAndSave(current, overwriteConfirmed = false) {
+    if (blockProtectedCloudProfileMutation(current.profileId)) return;
     let adapter = storageRef.current;
     if (!adapter) {
       try {
@@ -6701,6 +7692,7 @@ export default function AdventureGame({
     });
     if (!claimed.ok && claimed.error?.code === "OVERWRITE_CONFIRMATION_REQUIRED") {
       setConfirmation({
+        profileId: current.profileId,
         title: "Replace the recovered adventure?",
         message: "This slot became readable again and already contains progress. Saving this offline session will replace it.",
         confirmLabel: "Replace and save",
@@ -7066,9 +8058,12 @@ export default function AdventureGame({
           profiles={profiles}
           notice={accountNotice ?? saveNotice}
           account={account}
-          blocked={Boolean(confirmation || legacySavePrompt || newGameSetup)}
+          cloudStatuses={cloudStatuses}
+          blocked={Boolean(confirmation || cloudConflict || legacySavePrompt || newGameSetup)}
           onContinue={continueProfile}
           onNewGame={requestNewGame}
+          onDelete={requestDeleteProfile}
+          onOpenConflict={reopenCloudConflict}
           onRetry={retryStorage}
           onSignOut={onSignOut}
         />
@@ -7101,6 +8096,15 @@ export default function AdventureGame({
               action();
             }}
             onCancel={() => setConfirmation(null)}
+          />
+        ) : null}
+        {cloudConflict ? (
+          <CloudSaveConflictDialog
+            conflict={cloudConflict}
+            onUseCloud={() => resolveCloudConflictChoice("remote")}
+            onUseDevice={() => resolveCloudConflictChoice("local")}
+            onKeepBoth={keepBothCloudConflictCopies}
+            onCancel={() => setCloudConflict(null)}
           />
         ) : null}
       </main>
@@ -8185,6 +9189,7 @@ export default function AdventureGame({
         <PauseMenu
           profileId={gameSave.profileId}
           notice={saveNotice}
+          cloudStatus={cloudStatuses[gameSave.profileId]}
           blocked={Boolean(confirmation)}
           fieldNoteCount={unlockedFieldNotes.length}
           activeDeckName={activeDeckName}

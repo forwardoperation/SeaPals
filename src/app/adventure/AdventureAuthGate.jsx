@@ -504,9 +504,10 @@ export default function AdventureAuthGate({
         <div id={saveNoteId} className={styles.deviceNotice}>
           <DeviceMark />
           <span>
-            <strong>Your saves remain on this device.</strong>
+            <strong>Your saves follow your family account.</strong>
             <small>
-              Signing in does not move Reefbound progress to another device.
+              Reefbound saves on this device first, then syncs progress when
+              you are online so you can continue on another device.
             </small>
           </span>
         </div>
@@ -516,10 +517,12 @@ export default function AdventureAuthGate({
           <p>
             Sea Realm, LLC uses Supabase to handle the adult account email and
             secure sign-in. Google receives sign-in information only if Google
-            is selected. Account approval is recorded, while Reefbound saves
-            remain in this browser. Kit receives the adult email only when the
-            optional updates box is checked. Google Analytics is not loaded on
-            account or adventure pages.
+            is selected. Account approval is recorded, and Reefbound keeps local
+            saves while synchronizing the account&apos;s three slots through
+            Supabase. Saves can include player-entered names and game progress.
+            Kit receives the adult email only when the optional updates box is
+            checked. Google Analytics is not loaded on account or adventure
+            pages.
           </p>
           <p>
             To review or delete account information, email{" "}

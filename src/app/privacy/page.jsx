@@ -21,8 +21,8 @@ export const metadata = {
 const providerRows = [
   [
     "Supabase",
-    "Account authentication, adult account email, authorization records, surveys, private bug reports, tournament entries, and order records.",
-    "Account access, database hosting, security, and administration.",
+    "Account authentication, adult account email, authorization records, synchronized Reefbound saves, surveys, private bug reports, tournament entries, and order records.",
+    "Account access, cross-device save synchronization and recovery, database hosting, security, and administration.",
   ],
   [
     "Google",
@@ -51,11 +51,18 @@ const providerRows = [
   ],
 ];
 
-const retentionRows = PRIVACY_RETENTION_SCHEDULE.map((entry) => [
-  entry.category,
-  entry.period,
-  entry.detail,
-]);
+const retentionRows = [
+  ...PRIVACY_RETENTION_SCHEDULE.map((entry) => [
+    entry.category,
+    entry.period,
+    entry.detail,
+  ]),
+  [
+    "Reefbound cloud saves",
+    "While the profile and account are active; prior versions for up to 30 days",
+    "A current deletion record remains while the account exists to stop an offline device from restoring a removed profile. Account deletion removes active saves, deletion records, and save history. Provider backups may take a limited additional period to age out.",
+  ],
+];
 
 export default function PrivacyPage() {
   return (
@@ -67,14 +74,18 @@ export default function PrivacyPage() {
       <LegalNotice title="The short version for parents">
         <p>
           The Reefbound adventure requires an adult-managed account. Children
-          should not enter their own email address. The adventure stores game
-          progress locally in the browser, does not offer public chat or player
-          profiles, and does not load Google Analytics on adventure or account
-          sign-in pages. Email updates are optional and separate from game
-          access.
+          should not enter their own email address. The adventure keeps a local
+          copy of game progress and synchronizes its three save slots through
+          Supabase so the family account can continue on another device or
+          restore progress after local browser data is lost. Saves can include
+          player-entered player and best-friend names, progress, settings, and
+          decks. Reefbound does not offer public chat or player profiles and
+          does not load Google Analytics on adventure or account sign-in pages.
+          Email updates are optional and separate from game access.
         </p>
         <p>
-          An adult can request access to or deletion of an account by emailing{" "}
+          An adult can request access to, export, correction, or deletion of
+          account and cloud-save information by emailing{" "}
           <a href={`mailto:${SEAPALS_OPERATOR.privacyEmail}`}>
             {SEAPALS_OPERATOR.privacyEmail}
           </a>
@@ -113,13 +124,23 @@ export default function PrivacyPage() {
           access, prevent abuse, and answer account requests.
         </p>
 
-        <h3>Adventure progress and device storage</h3>
+        <h3>Adventure progress, sync, and device storage</h3>
         <p>
-          Reefbound save files, settings, deck progress, and profile slots are
-          stored in the browser on the device and separated by signed-in
-          account. The save feature does not upload those files to Sea Realm.
-          We cannot retrieve or delete local saves remotely; the user can
-          remove a profile in the game or clear the browser’s site data.
+          Reefbound keeps save files in local browser storage and synchronizes
+          the account&apos;s three save slots to account-owned records hosted by
+          Supabase. A save can include player-entered player and best-friend
+          names, campaign and collection progress, settings, decks, inventory,
+          quests, world position, and other game state. We use this information
+          to let a family account continue across devices, restore an account
+          copy after local data is lost, and resolve synchronization conflicts.
+        </p>
+        <p>
+          If two devices change one slot independently, Reefbound preserves the
+          conflicting copies and asks which one to keep instead of silently
+          overwriting progress. Removing a profile creates a synchronized
+          deletion record so an older offline device does not restore it as the
+          current save. Clearing a browser&apos;s site data removes that device&apos;s
+          local copy but does not by itself delete the account&apos;s cloud copy.
         </p>
 
         <h3>Optional email updates</h3>
@@ -214,6 +235,8 @@ export default function PrivacyPage() {
           <li>
             <strong>Adventure saves and settings</strong> remain in local
             browser storage until the user removes them or clears site data.
+            The account&apos;s three save slots are also synchronized through
+            Supabase until the relevant profile or account is deleted.
           </li>
           <li>
             <strong>The shopping cart</strong> may remain in local browser
@@ -261,6 +284,17 @@ export default function PrivacyPage() {
           headers={["Category", "Maximum period", "What happens next"]}
           rows={retentionRows}
         />
+        <p>
+          Active cloud saves are kept while the corresponding family account
+          and Reefbound profile remain active. After a profile is removed,
+          prior save versions may be kept for up to 30 days for recovery and
+          security, then deleted. The synchronized deletion record remains
+          while the account exists so an older offline device cannot restore
+          that profile as current. A verified account-deletion request removes
+          active cloud saves, deletion records, and save history with the
+          account. Supabase or other infrastructure backups may take a limited
+          additional period to age out under the provider&apos;s backup schedule.
+        </p>
       </LegalSection>
 
       <LegalSection id="family-rights" title="6. Parent and account-holder rights">
@@ -269,7 +303,7 @@ export default function PrivacyPage() {
         </p>
         <ul>
           <li>confirm whether we hold information connected to an account;</li>
-          <li>review or correct that information;</li>
+          <li>review, receive an export of, or correct that information;</li>
           <li>delete the account and associated personal information;</li>
           <li>stop further collection or use; or</li>
           <li>withdraw optional email consent.</li>
@@ -283,12 +317,17 @@ export default function PrivacyPage() {
           submission, but do not send government identification unless we
           specifically request an appropriate verification method. We will
           verify authority before disclosing or deleting account information
-          and aim to complete verified deletion requests within 30 days.
+          and aim to complete verified deletion requests within 30 days. An
+          account export can include the account&apos;s cloud saves in a portable
+          form.
         </p>
         <p>
           Marketing email can also be stopped through the unsubscribe link in
-          the message. Local game saves must be removed on the device because
-          Sea Realm does not receive those save files.
+          the message. Removing a Reefbound profile synchronizes that
+          profile&apos;s deletion; deleting the family account removes its active
+          cloud saves and save history. Local copies on devices that remain
+          offline may persist until the profile is removed there, the device
+          reconnects, or the browser&apos;s site data is cleared.
         </p>
       </LegalSection>
 

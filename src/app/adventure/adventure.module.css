@@ -4350,6 +4350,80 @@
   text-transform: uppercase;
 }
 
+.profileHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cloudSaveStatus {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 22px;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid rgba(103, 232, 249, 0.32);
+  border-radius: 99px;
+  color: #bae6fd !important;
+  font-family: inherit;
+  font-size: 8px !important;
+  font-weight: 1000;
+  letter-spacing: 0.04em;
+  line-height: 1 !important;
+  white-space: nowrap;
+  background: rgba(8, 145, 178, 0.13);
+}
+
+button.cloudSaveStatus {
+  cursor: pointer;
+}
+
+.cloudSaveStatus::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+.cloudSaveStatusSynced {
+  border-color: rgba(110, 231, 183, 0.38);
+  color: #a7f3d0 !important;
+  background: rgba(5, 150, 105, 0.14);
+}
+
+.cloudSaveStatusSyncing,
+.cloudSaveStatusResolving,
+.cloudSaveStatusQueued,
+.cloudSaveStatusChecking {
+  color: #fde68a !important;
+}
+
+.cloudSaveStatusSyncing::before,
+.cloudSaveStatusResolving::before,
+.cloudSaveStatusChecking::before {
+  animation: cloudSavePulse 900ms ease-in-out infinite alternate;
+}
+
+.cloudSaveStatusConflict {
+  border-color: rgba(251, 113, 133, 0.5);
+  color: #fecdd3 !important;
+  background: rgba(159, 18, 57, 0.22);
+}
+
+.cloudSaveStatusOffline,
+.cloudSaveStatusLocal {
+  color: #cbd5e1 !important;
+  background: rgba(51, 65, 85, 0.35);
+}
+
+@keyframes cloudSavePulse {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
 .profileCard strong {
   color: #fff;
   font-size: 19px;
@@ -4399,9 +4473,13 @@
 
 .profileActions {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 8px;
   margin-top: auto;
+}
+
+.profileActions button {
+  padding-inline: 10px;
 }
 
 .secondaryButton {
@@ -4430,6 +4508,14 @@
   outline: 3px solid #67e8f9;
   outline-offset: 2px;
   transform: translateY(-1px);
+}
+
+.profileCard button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.45);
+  opacity: 0.48;
+  outline: none;
+  transform: none;
 }
 
 .titleExitLink {
@@ -4480,6 +4566,50 @@
 .confirmLayer {
   z-index: 110;
   background: rgba(1, 8, 14, 0.86);
+}
+
+.cloudConflictCard {
+  width: min(660px, 100%);
+}
+
+.cloudConflictVersions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+  text-align: left;
+}
+
+.cloudConflictVersions section {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid rgba(103, 232, 249, 0.25);
+  border-radius: 12px;
+  background: rgba(2, 17, 28, 0.72);
+}
+
+.cloudConflictVersions small {
+  color: #67e8f9;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cloudConflictVersions strong {
+  color: #fff;
+  font-size: 17px;
+}
+
+.cloudConflictVersions span {
+  color: #a9cbd5;
+  font-size: 10px;
+}
+
+.cloudConflictActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .openingSetupLayer {
@@ -8435,6 +8565,8 @@
   .profileGrid { grid-template-columns: minmax(0, 1fr); }
   .profileCard { min-height: 190px; }
   .profileActions { grid-template-columns: 1fr; }
+  .cloudConflictVersions,
+  .cloudConflictActions { grid-template-columns: minmax(0, 1fr); }
   .pauseCard,
   .confirmCard { padding: 22px 18px; }
   .confirmActions { flex-direction: column; }

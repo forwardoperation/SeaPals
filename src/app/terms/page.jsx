@@ -25,8 +25,11 @@ export default function TermsPage() {
         <p>
           A parent or legal guardian should review these terms with a minor.
           The Reefbound account must be created and managed by an adult using
-          the adult’s email address. Game progress remains stored locally in
-          the browser, so clearing browser data can permanently remove it.
+          the adult’s email address. Game progress is cached locally and the
+          account&apos;s three save slots are synchronized through Supabase for
+          cross-device play and recovery. Clearing browser data removes that
+          device&apos;s copy; deleting a profile or account also affects its cloud
+          copies as described below.
         </p>
       </LegalNotice>
 
@@ -62,7 +65,10 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection id="accounts" title="3. Family accounts and local saves">
+      <LegalSection
+        id="accounts"
+        title="3. Family accounts and synchronized saves"
+      >
         <ul>
           <li>
             An adult must provide accurate account information and keep access
@@ -77,9 +83,23 @@ export default function TermsPage() {
             account and should sign out on a shared or public device.
           </li>
           <li>
-            Reefbound save files are stored locally in the browser and are not
-            cloud backups. Sea Realm cannot restore a save erased by a browser,
-            device, privacy tool, or user action.
+            Reefbound keeps a local save cache and synchronizes the account&apos;s
+            three save slots through Supabase. Synchronized saves can include
+            player-entered player and best-friend names, progress, settings,
+            decks, and other game state so the same account can continue on
+            another device or restore an account copy.
+          </li>
+          <li>
+            If devices independently change one slot, Reefbound preserves the
+            conflicting copies and asks which version to keep. Availability of
+            a particular local or cloud copy is not guaranteed.
+          </li>
+          <li>
+            Removing a profile synchronizes its deletion. Deleting the family
+            account removes its active cloud saves and save history, although
+            provider backups may take a limited additional period to age out.
+            An offline device may retain a local copy until it reconnects, the
+            profile is removed there, or its browser data is cleared.
           </li>
         </ul>
         <p>
@@ -87,7 +107,8 @@ export default function TermsPage() {
           <a href={`mailto:${SEAPALS_OPERATOR.privacyEmail}`}>
             {SEAPALS_OPERATOR.privacyEmail}
           </a>{" "}
-          to request account deletion or report suspected unauthorized access.
+          to request access, export, correction, or deletion of account and
+          cloud-save information, or to report suspected unauthorized access.
         </p>
       </LegalSection>
 
@@ -268,15 +289,15 @@ export default function TermsPage() {
           To the extent permitted by law, SeaPals is provided “as is” and “as
           available.” Sea Realm does not guarantee that every feature will be
           uninterrupted, error-free, compatible with every device, or that
-          locally stored progress can be recovered.
+          every local or synchronized version of progress can be recovered.
         </p>
         <p>
           To the extent permitted by law, Sea Realm will not be liable for
           indirect, incidental, special, consequential, or punitive damages, or
-          for lost local saves, lost profits, or lost data resulting from use
-          of the service. Nothing in these Terms excludes a right or remedy
-          that cannot legally be excluded, including applicable consumer
-          protections.
+          for lost saves, synchronization conflicts, lost profits, or lost data
+          resulting from use of the service. Nothing in these Terms excludes a
+          right or remedy that cannot legally be excluded, including applicable
+          consumer protections.
         </p>
       </LegalSection>
 

@@ -12,12 +12,29 @@ the game. Signed-out visitors see one account screen with:
 - an optional post-play invitation that can email the adult account holder a
   Kit confirmation request after the first completed game session
 
-Adventure saves are still device-local. Their local-storage namespace now
-includes the verified Supabase user ID, so the SeaPals interface keeps three
-save slots separate for accounts sharing a browser profile. This is
-namespacing, not encryption against device users, developer tools, or other
-same-origin code. A one-time prompt lets the first account explicitly copy
-older pre-account saves; the source copies are preserved.
+Reefbound keeps a local cache of each save and synchronizes the account's three
+save slots to account-owned rows in Supabase. This lets the same adult-managed
+family account continue on another device and provides an account copy when
+local browser data is lost. A save can include player-entered player and
+best-friend names, campaign and collection progress, settings, decks, and other
+game state. The local-storage namespace includes the verified Supabase user ID,
+so the SeaPals interface keeps saves separate for accounts sharing a browser
+profile. This is namespacing, not encryption against device users, developer
+tools, or other same-origin code. A one-time prompt lets the first account
+explicitly copy older pre-account saves; the source copies are preserved.
+
+Sync is local-first: play writes to the current device and then uploads the
+account copy when a connection is available. When devices independently change
+the same slot, the service preserves the conflicting copies and asks the user
+which version to keep instead of silently overwriting either one. Removing a
+profile creates a synchronized deletion record so an offline device cannot
+later restore the removed save as current. Prior save history may be retained
+for up to 30 days for recovery and security, then deleted, subject to limited
+provider backup aging. The current deletion record remains while the family
+account exists so a long-offline device cannot silently resurrect the profile.
+Deleting the family account must remove its active cloud saves, deletion
+records, and save history; clearing one browser's site data removes only that
+device's cache and does not itself delete the account copy.
 
 Supabase Auth stores account emails. A signed, one-hour HttpOnly setup cookie
 survives OAuth and magic-link tab changes, and the game fails closed until a
@@ -39,7 +56,32 @@ unfinished one-hour setup transactions. The code falls back to the Supabase
 service-role key for local/backward-compatible setup, but production should use
 the dedicated secret.
 
-### 1. Google Cloud and Supabase
+### 1. Cloud-save database and account isolation
+
+Run `supabase/adventure-saves.sql` in the SQL editor for the existing SeaPals
+Supabase project before enabling cloud saves. The migration creates the private
+account-owned save storage, synchronized deletion/history support, and row-level
+security policies used by `/api/adventure/saves`. Do not expose the Supabase
+service-role key to the browser; the same-origin API must authenticate the
+adult-managed family account and scope every operation to that account.
+
+Schedule `select public.prune_adventure_save_history();` to run at least daily
+with a server-side scheduler authorized as `service_role` (for example, a
+Supabase scheduled database job or an authenticated maintenance worker). The
+function is intentionally unavailable to browser roles. Verify the job after
+deployment; creating the function alone does not enforce the published 30-day
+history limit.
+
+After applying the migration, use two separate test accounts to verify account
+isolation. Account A must be able to create, list, update, conflict, and delete
+its own three profiles through `/api/adventure/saves`. Account B must not see
+Account A's saves in a list response or read, change, or delete one by supplying
+a guessed profile identifier. Repeat the checks without a session and confirm
+the API fails closed. Inspect the resulting Supabase rows to confirm that save
+ownership comes from the authenticated server session rather than a user ID in
+the request body.
+
+### 2. Google Cloud and Supabase
 
 The Supabase project's public settings were checked on July 29, 2026: email
 sign-in was enabled and Google was disabled.
@@ -69,7 +111,7 @@ References:
 - [Supabase Google login](https://supabase.com/docs/guides/auth/social-login/auth-google)
 - [Supabase redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls)
 
-### 2. Production email delivery
+### 3. Production email delivery
 
 Passwordless email uses Supabase Auth mail delivery. Configure and test custom
 SMTP before inviting the public; the default Supabase mail service is intended
@@ -78,7 +120,7 @@ allowed `/auth/callback` URL.
 
 - [Supabase custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp)
 
-### 3. Kit
+### 4. Kit
 
 `KIT_FORM_ID` defaults to the existing form `9233650`. Confirm in Kit that this
 form's incentive/double-opt-in email, sender identity, consent copy, automation,
@@ -111,20 +153,26 @@ qualified review.
 
 The privacy draft also contains finite retention periods. Before publishing
 those periods as an operational promise, assign an owner and implement a
-repeatable deletion process for Supabase accounts and authorization metadata,
-survey records, tournament contact/edit data, store records, server/security
-logs, support correspondence, Kit records, and Google Analytics settings.
-Provider backup and deletion behavior must be confirmed as part of that work.
+repeatable deletion process for Supabase accounts, authorization metadata,
+active cloud saves and their history, survey records, tournament contact/edit
+data, store records, server/security logs, support correspondence, Kit records,
+and Google Analytics settings. Implement an authenticated export and correction
+workflow for account and save data, and test that deleting a Reefbound profile
+synchronizes its deletion across devices while deleting a family account
+cascades to all active saves and save history. Provider backup aging and
+deletion behavior must be confirmed as part of that work.
 
-Do not enable the account requirement publicly until an owner-approved review
-has covered:
+Do not enable the account requirement or cloud-save synchronization publicly
+until an owner-approved review has covered:
 
 - whether the service is child-directed or mixed-audience and which consent
   model applies;
 - the direct parental notice and the drafted public privacy notice;
 - Google, Supabase, Kit, Cloudflare, Resend, and analytics data flows;
-- account email retention, export, correction, and deletion;
-- local-save ownership and device-sharing behavior;
+- account email and cloud-save retention, export, correction, and deletion;
+- player-entered names and all other fields included in synchronized saves;
+- local-cache and cloud-save ownership, conflicts, recovery, deletion, and
+  device-sharing behavior;
 - marketing consent records and withdrawal;
 - the missing public telephone contact and all operator details that must
   appear in the privacy notice; and
@@ -138,22 +186,41 @@ Primary U.S. reference:
 
 Before publishing:
 
-1. Test Google account creation and returning sign-in.
-2. Test email account creation, returning sign-in, expired links, and resend.
-3. Verify the unchecked marketing path creates no Kit subscriber.
-4. Verify the checked path submits one Kit signup, records it as pending, and
+1. Apply `supabase/adventure-saves.sql` to the existing Supabase project and
+   verify its row-level security policies are enabled. Configure and verify the
+   daily service-role history-pruning job.
+2. Exercise `/api/adventure/saves` with no session and with two different test
+   accounts. Confirm it fails closed without authentication and neither account
+   can list, read, change, or delete the other account's profiles.
+3. Test Google account creation and returning sign-in.
+4. Test email account creation, returning sign-in, expired links, and resend.
+5. Verify the unchecked marketing path creates no Kit subscriber.
+6. Verify the checked path submits one Kit signup, records it as pending, and
    sends the configured confirmation; do not mark it subscribed until Kit
    confirms that state.
-5. Complete one duel without account-setup marketing consent. Verify the
+7. Complete one duel without account-setup marketing consent. Verify the
    post-play invitation appears only after returning from the duel and its
    conversation, both confirmations start unchecked, **Not now** continues
    play, and no request includes an email or user ID from the browser.
-6. Verify the post-play affirmative path sends one Kit confirmation request,
+8. Verify the post-play affirmative path sends one Kit confirmation request,
    remains optional when Kit fails, and is suppressed after a submitted or
    confirmed status.
-7. Sign into two accounts in one browser and confirm their save slots remain
-   separate.
-8. Exercise the older-save choice in both "Use these saves" and "Start fresh"
-   paths.
-9. Verify sign-out returns to the account gate without deleting local saves.
-10. Test direct `/adventure` access with missing, expired, and valid sessions.
+9. Sign into the same account on two devices. Confirm all three slots can sync,
+   including player and best-friend names, progress, settings, and decks, while
+   each device keeps a usable local cache.
+10. Change the same slot independently while both devices are offline,
+    reconnect, and confirm both versions are preserved until the user chooses
+    one.
+11. Delete a profile, reconnect a device that still has an older local copy,
+    and confirm the synchronized deletion prevents that copy from becoming
+    current.
+12. Sign into two accounts in one browser and confirm their save slots remain
+    separate.
+13. Exercise the older-save choice in both "Use these saves" and "Start fresh"
+    paths.
+14. Verify sign-out returns to the account gate without deleting local saves or
+    the account's cloud copies.
+15. Verify an authenticated account-data export includes cloud saves in a
+    portable form; exercise correction, profile deletion, and full account
+    deletion; and confirm active saves and save history are removed as promised.
+16. Test direct `/adventure` access with missing, expired, and valid sessions.
