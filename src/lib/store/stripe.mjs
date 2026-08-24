@@ -381,11 +381,18 @@ function getStripeCheckoutExpiration(order, nowMilliseconds = Date.now()) {
   return Math.floor(expirationMilliseconds / 1000);
 }
 
+export function stripeCheckoutReturnUrls(returnOrigin) {
+  return Object.freeze({
+    successUrl: `${returnOrigin}/store/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${returnOrigin}/store/cancel`,
+  });
+}
+
 export async function createStripeCheckoutSession({
   order,
   quote,
   configuration,
-  siteUrl,
+  returnOrigin,
 }) {
   assertStripeCheckoutConfiguration(configuration);
 
@@ -406,6 +413,7 @@ export async function createStripeCheckoutSession({
     configuration,
     fulfillmentOption
   );
+  const returnUrls = stripeCheckoutReturnUrls(returnOrigin);
 
   form.set("mode", "payment");
   form.set("expires_at", String(checkoutExpiration));
@@ -414,8 +422,8 @@ export async function createStripeCheckoutSession({
     STRIPE_CHECKOUT_INTEGRATION_IDENTIFIER
   );
   form.set("client_reference_id", order.id);
-  form.set("success_url", `${siteUrl}/store/success?session_id={CHECKOUT_SESSION_ID}`);
-  form.set("cancel_url", `${siteUrl}/store/cancel`);
+  form.set("success_url", returnUrls.successUrl);
+  form.set("cancel_url", returnUrls.cancelUrl);
   form.set("customer_creation", "always");
   form.set("billing_address_collection", "auto");
   form.set(

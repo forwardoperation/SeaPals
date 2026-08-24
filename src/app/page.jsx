@@ -5,6 +5,10 @@ import {
   youngPlayerSurvey,
 } from "@/data/homepage/proof";
 
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 const heroCards = [
   {
     src: "/images/cards/fish/Reef/french-angelfish.png",

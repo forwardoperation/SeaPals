@@ -1,4 +1,5 @@
 import process from "node:process";
+import { CANONICAL_SITE_ORIGIN } from "../src/lib/siteIdentity.mjs";
 
 const KIT_API_URL = "https://api.kit.com/v4/broadcasts";
 
@@ -80,7 +81,7 @@ function buildBroadcast({ files, siteUrl }) {
 
 async function main() {
   const apiKey = requiredEnv("KIT_API_KEY");
-  const siteUrl = process.env.SITE_URL || "https://seapalstcg.com";
+  const siteUrl = process.env.SITE_URL || CANONICAL_SITE_ORIGIN;
   const mode = process.env.KIT_BROADCAST_MODE || "draft";
   const rawFiles = requiredEnv("ART_DROP_FILES");
   const files = rawFiles

@@ -4,6 +4,7 @@ export const metadata = {
   title: "Guided Interactive Tutorial | SeaPals TCG",
   description:
     "Learn SeaPals by playing Mr. Easterling's complete guided aquarium lesson.",
+  alternates: { canonical: "/instructions/tutorial" },
 };
 
 export default function TutorialPage() {

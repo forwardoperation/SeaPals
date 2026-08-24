@@ -7,8 +7,8 @@ import { getStoreConfiguration } from "@/lib/store/catalog";
 import { CartValidationError, quoteCart } from "@/lib/store/cart.mjs";
 import { normalizeCheckoutRequestId } from "@/lib/store/checkoutRequest.mjs";
 import {
+  getAllowedStoreRequestOrigin,
   getStoreSiteUrl,
-  requestOriginIsAllowed,
 } from "@/lib/store/checkoutOrigin.mjs";
 import {
   attachCheckoutSessionToOrder,
@@ -34,13 +34,15 @@ function json(payload, status = 200) {
 
 export async function POST(request) {
   let siteUrl;
+  let checkoutReturnOrigin;
   try {
     siteUrl = getStoreSiteUrl(request);
+    checkoutReturnOrigin = getAllowedStoreRequestOrigin(request, siteUrl);
   } catch {
     return json({ error: "The store URL is not configured correctly." }, 503);
   }
 
-  if (!requestOriginIsAllowed(request, siteUrl)) {
+  if (!checkoutReturnOrigin) {
     return json({ error: "This checkout request was not allowed." }, 403);
   }
 
@@ -173,7 +175,7 @@ export async function POST(request) {
       order,
       quote,
       configuration,
-      siteUrl,
+      returnOrigin: checkoutReturnOrigin,
     });
 
     if (!session?.id || !session?.url) {

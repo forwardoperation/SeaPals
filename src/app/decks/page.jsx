@@ -8,6 +8,7 @@ import { getDeckAnalytics } from "@/lib/tournaments/deckAnalytics";
 export const metadata = {
   title: "Decks | SeaPals TCG",
   description: "Explore SeaPals prebuilt deck lists and performance profiles.",
+  alternates: { canonical: "/decks" },
 };
 
 const CATEGORY_LABELS = {

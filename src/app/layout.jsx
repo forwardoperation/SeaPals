@@ -3,9 +3,10 @@ import Header from "@/components/layout/Header";
 import SiteFooter from "@/components/layout/SiteFooter";
 import RulesChat from "@/components/rules/RulesChat";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import { CANONICAL_SITE_ORIGIN } from "@/lib/siteIdentity.mjs";
 
 export const metadata = {
-  metadataBase: new URL("https://seapalstcg.com"),
+  metadataBase: new URL(CANONICAL_SITE_ORIGIN),
   title: "SeaPals TCG | Creation-Focused Family Card Game",
   description:
     "A fast, face-to-face marine-life strategy game for families who want fun, learning, and a clear Christian worldview.",

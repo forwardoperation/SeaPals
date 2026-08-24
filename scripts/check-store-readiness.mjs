@@ -11,6 +11,7 @@ import {
   STORE_MAX_CART_QUANTITY,
   STORE_MAX_PER_PRODUCT_QUANTITY,
 } from "../src/lib/store/cart.mjs";
+import { getStoreCheckoutAllowedOrigins } from "../src/lib/store/checkoutOrigin.mjs";
 
 if (
   process.env.STORE_SKIP_LOCAL_ENV !== "true" &&
@@ -112,6 +113,12 @@ const pickupTaxRateId = String(
 const siteUrl =
   String(process.env.SITE_URL ?? "").trim() ||
   String(process.env.NEXT_PUBLIC_SITE_URL ?? "").trim();
+let checkoutAllowedOrigins = null;
+try {
+  checkoutAllowedOrigins = getStoreCheckoutAllowedOrigins(siteUrl, process.env);
+} catch {
+  checkoutAllowedOrigins = null;
+}
 const availableProducts = String(
   process.env.STORE_AVAILABLE_PRODUCT_IDS ??
     process.env.STORE_AVAILABLE_DECK_IDS ??
@@ -234,6 +241,11 @@ addCheck(
   "Public site URL",
   validSiteUrl(siteUrl),
   "Set server-only SITE_URL to localhost for testing and the final HTTPS domain for live checkout."
+);
+addCheck(
+  "Checkout origin allowlist",
+  Boolean(checkoutAllowedOrigins?.size),
+  "Set STORE_CHECKOUT_ALLOWED_ORIGINS to comma-separated exact HTTPS app origins; localhost HTTP is permitted only for development."
 );
 if (stripeKey.includes("_live_")) {
   addCheck(

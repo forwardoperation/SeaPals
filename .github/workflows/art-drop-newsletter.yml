@@ -61,5 +61,5 @@ jobs:
           KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
           KIT_BROADCAST_MODE: ${{ inputs.mode || vars.KIT_BROADCAST_MODE || 'draft' }}
           KIT_FROM_EMAIL: ${{ vars.KIT_FROM_EMAIL }}
-          SITE_URL: ${{ vars.SITE_URL || 'https://seapalstcg.com' }}
+          SITE_URL: ${{ vars.SITE_URL }}
         run: node scripts/create-art-drop-broadcast.mjs

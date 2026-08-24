@@ -1,3 +1,5 @@
+import { PUBLIC_SUPPORT_EMAIL } from "./siteIdentity.mjs";
+
 export const LEGAL_EFFECTIVE_DATE_ISO = "2026-08-15";
 export const LEGAL_EFFECTIVE_DATE_LABEL = "August 15, 2026";
 
@@ -10,7 +12,7 @@ export const SEAPALS_OPERATOR = Object.freeze({
     "United States",
   ]),
   publicPhone: null,
-  privacyEmail: "maker@seapalstcg.com",
+  privacyEmail: PUBLIC_SUPPORT_EMAIL,
   jurisdiction: "Pennsylvania, United States",
 });
 

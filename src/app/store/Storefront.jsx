@@ -17,6 +17,7 @@ import {
   isCartSummaryAheadOfViewport,
   shouldShowMobileCartDock,
 } from "@/lib/store/mobileCartAccess.mjs";
+import { PUBLIC_SUPPORT_EMAIL } from "@/lib/siteIdentity.mjs";
 
 const CART_STORAGE_KEY = "seapals-store-cart-v1";
 const CHECKOUT_REQUEST_STORAGE_KEY = "seapals-store-checkout-request-v1";
@@ -1338,10 +1339,10 @@ export default function Storefront({
                 <p className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
                   Need to change an order? Email{" "}
                   <a
-                    href="mailto:maker@seapalstcg.com"
+                    href={`mailto:${PUBLIC_SUPPORT_EMAIL}`}
                     className="font-bold text-cyan-800 underline underline-offset-4"
                   >
-                    maker@seapalstcg.com
+                    {PUBLIC_SUPPORT_EMAIL}
                   </a>{" "}
                   within two hours to request cancellation. Unopened items may
                   be returned within 30 days after delivery or pickup; the{" "}

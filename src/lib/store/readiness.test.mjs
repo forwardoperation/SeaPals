@@ -504,6 +504,15 @@ test("readiness requires lease-backed paid-order merchant alerts", () => {
   assert.match(result.stdout, /TODO.*Paid-order merchant notifications/);
 });
 
+test("readiness rejects an invalid checkout origin allowlist", () => {
+  const result = runLaunchCheck({
+    STORE_CHECKOUT_ALLOWED_ORIGINS: "https://searealm.com,not a URL",
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /TODO.*Checkout origin allowlist/);
+});
+
 test("live checkout requires a successfully delivered merchant alert", () => {
   const configuration = readLiveCatalogConfiguration({
     STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED: "false",

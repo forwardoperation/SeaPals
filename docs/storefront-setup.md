@@ -161,6 +161,9 @@ Copy `.env.example` to the local/deployment secret store and set:
 
 - `SITE_URL` (the server-only canonical origin; use the final HTTPS origin in
   production)
+- `STORE_CHECKOUT_ALLOWED_ORIGINS` (comma-separated exact app origins allowed
+  to initiate checkout; the browser Origin must also equal the request URL
+  origin)
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - the existing Supabase URL and service-role key

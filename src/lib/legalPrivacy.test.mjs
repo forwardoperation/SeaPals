@@ -9,10 +9,11 @@ import {
   SEAPALS_OPERATOR,
   operatorMailingAddress,
 } from "./legalPrivacy.mjs";
+import { PUBLIC_SUPPORT_EMAIL } from "./siteIdentity.mjs";
 
 test("legal operator details are publishable and internally consistent", () => {
   assert.equal(SEAPALS_OPERATOR.legalName, "Sea Realm, LLC");
-  assert.equal(SEAPALS_OPERATOR.privacyEmail, "maker@seapalstcg.com");
+  assert.equal(SEAPALS_OPERATOR.privacyEmail, PUBLIC_SUPPORT_EMAIL);
   assert.match(operatorMailingAddress(), /PO Box 11/);
   assert.match(operatorMailingAddress(), /Elverson, PA 19520/);
   assert.match(LEGAL_EFFECTIVE_DATE_ISO, /^\d{4}-\d{2}-\d{2}$/);
@@ -108,7 +109,7 @@ test("legal links and direct notices are present at collection points", async ()
 
   assert.match(files[0], /Sea Realm,\s*LLC/);
   assert.match(files[1], /Supabase/);
-  assert.match(files[1], /maker@seapalstcg\.com/);
+  assert.match(files[1], /PUBLIC_SUPPORT_EMAIL/);
   assert.match(files[2], /Stripe/);
   assert.match(files[3], /12 months/);
   assert.match(files[4], /publicly/);

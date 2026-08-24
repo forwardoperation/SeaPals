@@ -12,6 +12,7 @@ export const metadata = {
   title: "Reefbound Adventure | SeaPals TCG",
   description:
     "Explore coastal Elverson and help Mr. Easterling create a new community aquarium exhibit.",
+  alternates: { canonical: "/adventure" },
 };
 
 export const dynamic = "force-dynamic";

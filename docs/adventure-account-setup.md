@@ -88,18 +88,27 @@ sign-in was enabled and Google was disabled.
 
 1. In Google Auth Platform, create a Web OAuth client and configure the
    production consent screen.
-2. Add these authorized JavaScript origins:
-   - `https://seapalstcg.com`
-   - `http://localhost:3000`
+2. In the production Web client's authorized JavaScript origins, include both
+   `https://seapalstcg.com` and `https://searealm.com` during migration. Use a
+   separate development OAuth client/project for `http://localhost:3000`; do
+   not add localhost to the verified production client.
 3. Add the Supabase provider callback URL shown in the Supabase Google provider
    panel as Google's authorized redirect URI. It has the form
    `https://<project-ref>.supabase.co/auth/v1/callback`.
 4. In Supabase Authentication > Providers > Google, add the Google client ID
    and client secret and enable the provider.
 5. In Supabase Authentication > URL Configuration:
-   - set the Site URL to `https://seapalstcg.com`
+   - keep the Site URL at `https://seapalstcg.com` during dual-domain testing,
+     then switch it to `https://searealm.com` at the canonical cutover
    - allow `https://seapalstcg.com/auth/callback`
+   - allow `https://searealm.com/auth/callback`
    - allow `http://localhost:3000/auth/callback` for local testing
+
+Keep Google's authorized redirect URI pointed at Supabase rather than either
+site origin. Browser auth cookies and PKCE verifiers are host-only, so users
+must start a fresh sign-in on SeaRealm. An OAuth attempt or magic link started
+on SeaPals cannot bridge its cookie state to SeaRealm and must be reissued after
+cutover. See `docs/domain-migration.md` for the coordinated cutover order.
 
 The UI uses Google&apos;s pre-approved light pill asset at
 `public/images/auth/sign-in-with-google-light-pill@2x.png`. Do not recolor,
@@ -115,8 +124,10 @@ References:
 
 Passwordless email uses Supabase Auth mail delivery. Configure and test custom
 SMTP before inviting the public; the default Supabase mail service is intended
-for limited testing. Confirm that the magic-link template returns to the app's
-allowed `/auth/callback` URL.
+for limited testing. Confirm that the magic-link template preserves Supabase's
+confirmation token and honors the requested `RedirectTo` back to the app's
+allowed `/auth/callback` URL. The default `{{ .ConfirmationURL }}` does this;
+linking a raw redirect URL does not authenticate the user.
 
 - [Supabase custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp)
 

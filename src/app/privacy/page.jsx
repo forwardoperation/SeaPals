@@ -11,11 +11,16 @@ import {
   PRIVACY_RETENTION_SCHEDULE,
   SEAPALS_OPERATOR,
 } from "@/lib/legalPrivacy.mjs";
+import {
+  CANONICAL_SITE_HOSTNAME,
+  CANONICAL_SITE_ORIGIN,
+} from "@/lib/siteIdentity.mjs";
 
 export const metadata = {
   title: "Privacy Policy | SeaPals TCG",
   description:
     "How Sea Realm, LLC collects, uses, shares, protects, retains, and deletes information for SeaPals TCG.",
+  alternates: { canonical: "/privacy" },
 };
 
 const providerRows = [
@@ -99,7 +104,7 @@ export default function PrivacyPage() {
           {SEAPALS_OPERATOR.legalName} (“Sea Realm,” “we,” “us,” or “our”)
           operates the SeaPals TCG website, online tools, store preview,
           tournaments, surveys, and the Reefbound adventure at{" "}
-          <a href="https://seapalstcg.com">seapalstcg.com</a>. This policy
+          <a href={CANONICAL_SITE_ORIGIN}>{CANONICAL_SITE_HOSTNAME}</a>. This policy
           applies to information handled through those services.
         </p>
         <p>

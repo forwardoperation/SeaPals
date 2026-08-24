@@ -7,6 +7,7 @@ import { encyclopediaSlugByCardId } from "@/data/encyclopedia";
 export const metadata = {
   title: "Gallery | SeaPals TCG",
   description: "Browse SeaPals cards by zone, class, and category.",
+  alternates: { canonical: "/gallery" },
 };
 
 function formatLabel(value) {

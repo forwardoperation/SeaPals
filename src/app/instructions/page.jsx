@@ -8,6 +8,7 @@ export const metadata = {
   title: "How to Play SeaPals | Beginner Guide & Complete Rules",
   description:
     "Learn SeaPals TCG through a guided interactive lesson, then use the complete rules, examples, glossary, and FAQ as a reference.",
+  alternates: { canonical: "/instructions" },
 };
 
 const fullRulesUrl =

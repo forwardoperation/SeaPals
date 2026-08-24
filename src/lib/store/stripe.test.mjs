@@ -9,12 +9,22 @@ import {
   retrieveStripeCheckoutSession,
   retrieveStripePaymentOwnership,
   retrieveStripePaymentReceiptDetails,
+  stripeCheckoutReturnUrls,
   verifyStripeWebhookSignature,
 } from "./stripe.mjs";
 
 const payload = JSON.stringify({ id: "evt_test", type: "checkout.session.completed" });
 const secret = "whsec_test_secret";
 const timestamp = 1_800_000_000;
+
+test("checkout return URLs stay on each initiating apex origin", () => {
+  for (const origin of ["https://seapalstcg.com", "https://searealm.com"]) {
+    assert.deepEqual(stripeCheckoutReturnUrls(origin), {
+      successUrl: `${origin}/store/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${origin}/store/cancel`,
+    });
+  }
+});
 
 test("promotion codes fail closed until discounted totals are reconciled", async () => {
   let fetchCount = 0;
@@ -36,7 +46,7 @@ test("promotion codes fail closed until discounted totals are reconciled", async
         order: {},
         quote: {},
         configuration: { allowPromotionCodes: true },
-        siteUrl: "https://seapals.example",
+        returnOrigin: "https://seapals.example",
       }),
       (error) =>
         error?.code === "promotion_codes_not_supported" && error?.status === 503
@@ -64,7 +74,7 @@ test("checkout fails closed without a Stripe-compatible inventory deadline", asy
         },
         quote: {},
         configuration: { allowPromotionCodes: false },
-        siteUrl: "https://seapals.example",
+        returnOrigin: "https://seapals.example",
       }),
       (error) =>
         error?.code === "inventory_reservation_deadline_invalid" &&
@@ -99,7 +109,7 @@ test("checkout fails closed without a synchronous payment-method configuration",
           allowPromotionCodes: false,
           paymentMethodConfiguration: null,
         },
-        siteUrl: "https://seapals.example",
+        returnOrigin: "https://seapals.example",
       }),
       (error) => error?.code === "payment_method_configuration_required"
     );
@@ -146,7 +156,7 @@ test("scheduled pickup fails closed without both owner confirmation and a Tax Ra
         order,
         quote,
         configuration,
-        siteUrl: "https://seapals.example",
+        returnOrigin: "https://seapals.example",
       }),
       (error) => error?.code === "pickup_tax_not_configured"
     );
@@ -159,7 +169,7 @@ test("scheduled pickup fails closed without both owner confirmation and a Tax Ra
           pickupTaxConfirmed: true,
           pickupTaxRateId: "not-a-tax-rate",
         },
-        siteUrl: "https://seapals.example",
+        returnOrigin: "https://seapals.example",
       }),
       (error) => error?.code === "pickup_tax_not_configured"
     );
@@ -285,7 +295,7 @@ test("checkout uses generic product labels and each item's tax code", async () =
         collectPhone: false,
         allowedCountries: ["US"],
       },
-      siteUrl: "https://seapals.example",
+      returnOrigin: "https://searealm.com",
     });
 
     const form = new URLSearchParams(request.options.body);
@@ -298,6 +308,11 @@ test("checkout uses generic product labels and each item's tax code", async () =
       form.get("integration_identifier"),
       "seapals_store_web_kvqzrmta"
     );
+    assert.equal(
+      form.get("success_url"),
+      "https://searealm.com/store/success?session_id={CHECKOUT_SESSION_ID}"
+    );
+    assert.equal(form.get("cancel_url"), "https://searealm.com/store/cancel");
     assert.ok(Number(form.get("expires_at")) > Math.floor(Date.now() / 1000));
     assert.equal(form.get("payment_method_types[0]"), null);
     assert.equal(form.get("automatic_tax[enabled]"), "true");
@@ -389,7 +404,7 @@ test("checkout charges expedited production once and copies its signed snapshot"
         collectPhone: false,
         allowedCountries: ["US"],
       },
-      siteUrl: "https://seapals.example",
+      returnOrigin: "https://seapals.example",
     });
 
     const form = new URLSearchParams(request.options.body);
@@ -501,7 +516,7 @@ test("checkout sends an eight-item launch cart with Priority shipping", async ()
         collectPhone: false,
         allowedCountries: ["US"],
       },
-      siteUrl: "https://seapals.example",
+      returnOrigin: "https://seapals.example",
     });
 
     const form = new URLSearchParams(request.options.body);
@@ -629,7 +644,7 @@ test("checkout configures free Elverson pickup without a shipping address", asyn
         collectPhone: false,
         allowedCountries: ["US"],
       },
-      siteUrl: "https://seapals.example",
+      returnOrigin: "https://seapals.example",
     });
 
     const form = new URLSearchParams(request.options.body);

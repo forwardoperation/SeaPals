@@ -6,6 +6,15 @@ import TournamentLeaderboard from "./TournamentLeaderboard";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  return {
+    alternates: {
+      canonical: `/tournaments/${encodeURIComponent(String(slug ?? ""))}`,
+    },
+  };
+}
+
 async function getMatchResults(tournamentId) {
   const { data, error } = await supabase
     .from("match_results")

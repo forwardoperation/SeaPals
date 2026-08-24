@@ -1,5 +1,10 @@
-const DEFAULT_MERCHANT_EMAIL = "maker@seapalstcg.com";
-const DEFAULT_SITE_ORIGIN = "https://seapalstcg.com";
+import {
+  CANONICAL_SITE_ORIGIN,
+  PUBLIC_SUPPORT_EMAIL,
+} from "../siteIdentity.mjs";
+
+const DEFAULT_MERCHANT_EMAIL = PUBLIC_SUPPORT_EMAIL;
+const DEFAULT_SITE_ORIGIN = CANONICAL_SITE_ORIGIN;
 const NOTIFICATION_TYPE = "merchant_purchase";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

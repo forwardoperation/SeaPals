@@ -4,6 +4,7 @@ import { getValidSimulatorDeck } from "./simulatorDeckRoute.mjs";
 export const metadata = {
   title: "Simulator | SeaPals TCG",
   description: "A turn-based simulator for experimenting with play patterns.",
+  alternates: { canonical: "/simulator" },
 };
 
 export default async function SimulatorPage({ searchParams }) {

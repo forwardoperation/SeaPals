@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { PUBLIC_SUPPORT_EMAIL } from "../siteIdentity.mjs";
+
 const [terms, storefront, launchInput, operations, legalConfig] =
   await Promise.all(
     [
@@ -14,7 +16,8 @@ const [terms, storefront, launchInput, operations, legalConfig] =
   );
 
 test("the public checkout and purchase terms publish the approved customer policy", () => {
-  assert.match(storefront, /mailto:maker@seapalstcg\.com/);
+  assert.match(storefront, /PUBLIC_SUPPORT_EMAIL/);
+  assert.equal(PUBLIC_SUPPORT_EMAIL, "maker@seapalstcg.com");
   assert.match(storefront, /within two hours to request cancellation/);
   assert.match(
     storefront,

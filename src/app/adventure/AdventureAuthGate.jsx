@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { createAdventureAuthIntent } from "@/lib/adventureAccount.mjs";
+import { PUBLIC_SUPPORT_EMAIL } from "@/lib/siteIdentity.mjs";
 import styles from "./AdventureAuthGate.module.css";
 
 const ADVENTURE_AUTH_NEXT_PATH = "/adventure";
@@ -526,8 +527,8 @@ export default function AdventureAuthGate({
           </p>
           <p>
             To review or delete account information, email{" "}
-            <a href="mailto:maker@seapalstcg.com">
-              maker@seapalstcg.com
+            <a href={`mailto:${PUBLIC_SUPPORT_EMAIL}`}>
+              {PUBLIC_SUPPORT_EMAIL}
             </a>
             .
           </p>

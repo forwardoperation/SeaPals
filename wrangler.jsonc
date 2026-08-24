@@ -9,6 +9,12 @@
 	],
 	"vars": {
 		"SITE_URL": "https://seapalstcg.com",
+		// During validation, checkout may originate on either exact app hostname.
+		// SITE_URL remains canonical until the coordinated final cutover.
+		"STORE_CHECKOUT_ALLOWED_ORIGINS": "https://seapalstcg.com,https://searealm.com",
+		"SITE_LEGACY_ORIGINS": "https://seapalstcg.com,https://www.seapalstcg.com",
+		"SITE_LEGACY_REDIRECT_ENABLED": "false",
+		"SITE_LEGACY_REDIRECT_PERMANENT": "false",
 		"STORE_CURRENCY": "usd",
 		// Owner-approved public catalog: $44 Starter Kit, seven $22 decks, and the
 		// $12 Accessories Kit. Individual accessories remain prepared but private.

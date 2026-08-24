@@ -5,6 +5,7 @@ import ClearCart from "./ClearCart";
 export const metadata = {
   title: "Order received | SeaPals TCG",
   description: "Review the payment status for your SeaPals order.",
+  robots: { index: false, follow: false },
 };
 
 const PAYMENT_LABELS = {

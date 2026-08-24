@@ -11,6 +11,7 @@ export function generateMetadata() {
     description: checkoutEnabled
       ? "Shop the made-to-order SeaPals Starter Kit, seven ready-to-play decks, and the Accessories Kit with five-business-day standard production or optional one-business-day production."
       : "Preview the made-to-order SeaPals Starter Kit, seven ready-to-play decks, and the Accessories Kit before ordering opens.",
+    alternates: { canonical: "/store" },
   };
 }
 

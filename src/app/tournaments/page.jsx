@@ -4,6 +4,7 @@ import Link from "next/link";
 
 export const metadata = {
   title: "Tournaments | SeaPals TCG",
+  alternates: { canonical: "/tournaments" },
 };
 
 export default async function TournamentsPage() {

@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { SURVEY_SECTIONS, SURVEY_TITLE } from "@/data/survey/questions";
 
 const TOTAL_STEPS = SURVEY_SECTIONS.length;
-const RESULTS_URL = "https://seapalstcg.com/surveys/results";
+const RESULTS_URL = "/surveys/results";
 
 function getInitialAnswers() {
   const answers = {};

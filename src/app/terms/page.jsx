@@ -12,6 +12,7 @@ export const metadata = {
   title: "Terms of Use | SeaPals TCG",
   description:
     "Terms governing use of the SeaPals TCG website, online tools, tournaments, surveys, store, and Reefbound adventure.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {
