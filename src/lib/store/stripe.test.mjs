@@ -239,7 +239,7 @@ test("verifyStripeWebhookSignature accepts any matching v1 signature", async () 
   assert.equal(verified, true);
 });
 
-test("checkout uses generic product labels and each item's tax code", async () => {
+test("checkout preserves quoted fixed shipping and each item's tax code", async () => {
   const originalFetch = globalThis.fetch;
   const originalSecret = process.env.STRIPE_SECRET_KEY;
   let request = null;
@@ -263,13 +263,13 @@ test("checkout uses generic product labels and each item's tax code", async () =
         ).toISOString(),
       },
       quote: {
-        shippingCents: 0,
+        shippingCents: 500,
         fulfillmentOption: {
           id: "standard",
           displayName: "Standard Shipping & Handling",
           fulfillmentMethod: "shipping",
           pickupLocation: null,
-          amountCents: 0,
+          amountCents: 500,
           deliveryEstimateMinDays: null,
           deliveryEstimateMaxDays: null,
         },
@@ -331,6 +331,10 @@ test("checkout uses generic product labels and each item's tax code", async () =
     assert.equal(
       form.get("payment_intent_data[metadata][production_max_business_days]"),
       "5"
+    );
+    assert.equal(
+      form.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]"),
+      "500"
     );
     assert.equal(
       form.get("shipping_options[0][shipping_rate_data][tax_code]"),

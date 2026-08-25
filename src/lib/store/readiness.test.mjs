@@ -45,6 +45,8 @@ const launchEnvironment = {
   STORE_LOCAL_PICKUP_ENABLED: "false",
   STORE_PICKUP_TAX_CONFIRMED: "false",
   STRIPE_PICKUP_TAX_RATE_ID: "",
+  STORE_DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS: "500",
+  STORE_DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS: "1000",
   STORE_STANDARD_SHIPPING_CENTS: "1000",
   STORE_PRIORITY_SHIPPING_CENTS: "1500",
   STORE_LARGE_STANDARD_SHIPPING_CENTS: "2000",
@@ -313,15 +315,43 @@ test("launch readiness rejects a Starter Kit price other than $44", () => {
   assert.match(result.stdout, /starter-kit/);
 });
 
-test("launch readiness requires every owner-approved shipping tier", () => {
-  const result = runLaunchCheck({
+test("launch readiness requires every owner-approved shipping tier", async (t) => {
+  const wrongLargeRate = runLaunchCheck({
     STORE_LARGE_PRIORITY_SHIPPING_CENTS: "3499",
   });
 
-  assert.equal(result.status, 1);
-  assert.match(result.stdout, /TODO.*Shipping options/);
-  assert.match(result.stdout, /1000\/1500 cents through one pound/);
-  assert.match(result.stdout, /2000\/3500 cents over one through eight pounds/);
+  assert.equal(wrongLargeRate.status, 1);
+  assert.match(wrongLargeRate.stdout, /TODO.*Shipping options/);
+  assert.match(
+    wrongLargeRate.stdout,
+    /Dive Pack-only carts are 500\/1000 cents through one pound/
+  );
+  assert.match(
+    wrongLargeRate.stdout,
+    /other carts are 1000\/1500 cents through one pound/
+  );
+  assert.match(
+    wrongLargeRate.stdout,
+    /2000\/3500 cents over one through eight pounds/
+  );
+
+  await t.test("rejects the wrong Dive Pack-only standard rate", () => {
+    const result = runLaunchCheck({
+      STORE_DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS: "499",
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /TODO.*Shipping options/);
+  });
+
+  await t.test("rejects the wrong Dive Pack-only priority rate", () => {
+    const result = runLaunchCheck({
+      STORE_DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS: "999",
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /TODO.*Shipping options/);
+  });
 });
 
 test("automatic tax remains blocked without government registration confirmation", () => {

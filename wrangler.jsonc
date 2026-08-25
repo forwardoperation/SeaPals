@@ -30,7 +30,9 @@
 		// Owner confirmed the hard 10-rush-order daily ceiling.
 		"STORE_EXPEDITED_PRODUCTION_CAPACITY_CONFIRMED": "true",
 		// Owner approved 2026-08-15 from ready-to-mail parcels through eight
-		// pounds. Checkout still stays off until the separate catalog gate passes.
+		// pounds, then approved the Dive Pack-only base discount on 2026-08-25.
+		"STORE_DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS": "500",
+		"STORE_DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS": "1000",
 		"STORE_STANDARD_SHIPPING_CENTS": "1000",
 		"STORE_PRIORITY_SHIPPING_CENTS": "1500",
 		"STORE_LARGE_STANDARD_SHIPPING_CENTS": "2000",

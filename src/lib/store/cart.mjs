@@ -91,7 +91,12 @@ export function normalizeCartItems(value) {
   }));
 }
 
-function normalizeShippingOption(value, fallbackShippingCents, weightOunces) {
+function normalizeShippingOption(
+  value,
+  fallbackShippingCents,
+  weightOunces,
+  productCategories
+) {
   const id = String(value?.id ?? "standard").trim().toLowerCase();
   const definition = storeShippingOptionDefinitions.find(
     (option) => option.id === id
@@ -161,7 +166,8 @@ function normalizeShippingOption(value, fallbackShippingCents, weightOunces) {
         ? { amountCents: Number(providedAmount) }
         : {}),
     },
-    weightOunces
+    weightOunces,
+    { productCategories }
   );
 
   if (!rateTier) {
@@ -320,7 +326,8 @@ export function quoteCart(
   const normalizedShippingOption = normalizeShippingOption(
     fulfillmentOption ?? shippingOption,
     shippingCents,
-    shippingWeightOunces
+    shippingWeightOunces,
+    quotedItems.map((item) => item.category)
   );
   const normalizedShipping = normalizedShippingOption.amountCents;
   const normalizedProductionOption = normalizeProductionOption(productionOption);

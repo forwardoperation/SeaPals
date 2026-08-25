@@ -56,9 +56,12 @@ test("the storefront previews the same weight tier enforced by the server", () =
   assert.match(storefront, /STORE_MAX_PER_PRODUCT_QUANTITY/);
   assert.match(storefront, /product\.shippingWeightOunces/);
   assert.match(storefront, /cartShippingWeightOunces/);
+  assert.match(storefront, /productCategories: cartProductCategories/);
   assert.match(storefront, /selectedShippingRateTier\?\.amountCents/);
   assert.match(storefront, /Large-parcel rate applies above 1 lb through 8 lb/);
+  assert.match(storefront, /Dive Pack-only rate applies through 1 lb/);
   assert.match(storefront, /Base rate applies through 1 lb/);
+  assert.match(shipping, /exclusiveProductCategory/);
   assert.doesNotMatch(storefront, /const MAX_CART_QUANTITY = 20/);
 });
 

@@ -72,6 +72,20 @@ const products = [
     priceCents: 1200,
     available: true,
   },
+  {
+    id: "oceanic-dive-pack",
+    sku: "SP-PACK-OCEANIC",
+    deckId: null,
+    category: "dive-packs",
+    name: "Pelagic Rush Dive Pack",
+    description: "An Oceanic Set Dive Pack.",
+    checkoutDescription: "One Oceanic Set Dive Pack.",
+    image: "/killer-whale.png",
+    shippingWeightOunces: 8,
+    taxCode: "txcd_99999999",
+    priceCents: 1000,
+    available: true,
+  },
 ];
 
 const infrastructureEnvironment = {
@@ -218,6 +232,8 @@ test("the catalog exposes server-controlled shipping and scheduled Elverson pick
     {
       STORE_STANDARD_SHIPPING_CENTS: "800",
       STORE_PRIORITY_SHIPPING_CENTS: "1350",
+      STORE_DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS: "450",
+      STORE_DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS: "950",
       STORE_LARGE_STANDARD_SHIPPING_CENTS: "2100",
       STORE_LARGE_PRIORITY_SHIPPING_CENTS: "3600",
       STORE_LOCAL_PICKUP_ENABLED: "true",
@@ -250,6 +266,11 @@ test("the catalog exposes server-controlled shipping and scheduled Elverson pick
             fulfillmentMethod: "shipping",
             pickupLocation: null,
             rateTiers: [
+              {
+                id: "dive-pack-base",
+                maxWeightOunces: 16,
+                amountCents: 450,
+              },
               { id: "base", maxWeightOunces: 16, amountCents: 800 },
               { id: "large", maxWeightOunces: 128, amountCents: 2100 },
             ],
@@ -266,6 +287,11 @@ test("the catalog exposes server-controlled shipping and scheduled Elverson pick
             fulfillmentMethod: "shipping",
             pickupLocation: null,
             rateTiers: [
+              {
+                id: "dive-pack-base",
+                maxWeightOunces: 16,
+                amountCents: 950,
+              },
               { id: "base", maxWeightOunces: 16, amountCents: 1350 },
               { id: "large", maxWeightOunces: 128, amountCents: 3600 },
             ],
@@ -732,6 +758,27 @@ test("live checkout requires catalog, tax, and shipping owner gates", () => {
     {
       ...liveEnvironment,
       STORE_TAX_REGISTRATION_CONFIRMED: "true",
+      STORE_CATALOG_CONFIRMED: "true",
+      STORE_SHIPPING_RATES_CONFIRMED: "true",
+      STORE_PICKUP_TAX_CONFIRMED: "true",
+      STORE_SYNCHRONOUS_PAYMENT_METHODS_CONFIRMED: "true",
+      STRIPE_AUTOMATIC_TAX: "true",
+      STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
+      STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
+      STORE_DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS: "499",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+
+      assert.equal(configuration.shippingConfigurationReady, false);
+      assert.equal(configuration.checkoutEnabled, false);
+    }
+  );
+
+  withStoreEnvironment(
+    {
+      ...liveEnvironment,
+      STORE_TAX_REGISTRATION_CONFIRMED: "true",
       STORE_SHIPPING_RATES_CONFIRMED: "true",
       STORE_PICKUP_TAX_CONFIRMED: "true",
       STRIPE_AUTOMATIC_TAX: "true",
@@ -1049,6 +1096,42 @@ test("quoteCart applies the confirmed weight tiers and rejects parcels over eigh
   assert.equal(baseStandard.shippingWeightOunces, 16);
   assert.equal(baseStandard.shippingRateTierId, "base");
   assert.equal(baseStandard.shippingCents, 1000);
+
+  const divePackStandard = quoteCart(
+    [{ productId: "oceanic-dive-pack", quantity: 2 }],
+    products
+  );
+  assert.equal(divePackStandard.shippingWeightOunces, 16);
+  assert.equal(divePackStandard.shippingRateTierId, "dive-pack-base");
+  assert.equal(divePackStandard.shippingCents, 500);
+
+  const divePackPriority = quoteCart(
+    [{ productId: "oceanic-dive-pack", quantity: 1 }],
+    products,
+    { fulfillmentOption: { id: "priority" } }
+  );
+  assert.equal(divePackPriority.shippingWeightOunces, 8);
+  assert.equal(divePackPriority.shippingRateTierId, "dive-pack-base");
+  assert.equal(divePackPriority.shippingCents, 1000);
+
+  const mixedBaseCart = quoteCart(
+    [
+      { productId: "oceanic-dive-pack", quantity: 1 },
+      { productId: "coral-garden", quantity: 1 },
+    ],
+    products
+  );
+  assert.equal(mixedBaseCart.shippingWeightOunces, 16);
+  assert.equal(mixedBaseCart.shippingRateTierId, "base");
+  assert.equal(mixedBaseCart.shippingCents, 1000);
+
+  const heavierDivePackCart = quoteCart(
+    [{ productId: "oceanic-dive-pack", quantity: 3 }],
+    products
+  );
+  assert.equal(heavierDivePackCart.shippingWeightOunces, 24);
+  assert.equal(heavierDivePackCart.shippingRateTierId, "large");
+  assert.equal(heavierDivePackCart.shippingCents, 2000);
 
   const largePriority = quoteCart(
     [

@@ -289,15 +289,16 @@ export function getStoreConfiguration() {
   const priorityShippingOption = shippingOptions.find(
     (option) => option.id === "priority"
   );
+  const shippingRateAmountCents = (option, tierId) =>
+    option?.rateTiers?.find((tier) => tier.id === tierId)?.amountCents;
   const shippingConfigurationReady = Boolean(
-    standardShippingOption?.rateTiers?.find((tier) => tier.id === "base")
-      ?.amountCents === 1000 &&
-      standardShippingOption?.rateTiers?.find((tier) => tier.id === "large")
-        ?.amountCents === 2000 &&
-      priorityShippingOption?.rateTiers?.find((tier) => tier.id === "base")
-        ?.amountCents === 1500 &&
-      priorityShippingOption?.rateTiers?.find((tier) => tier.id === "large")
-        ?.amountCents === 3500
+    shippingRateAmountCents(standardShippingOption, "dive-pack-base") === 500 &&
+      shippingRateAmountCents(standardShippingOption, "base") === 1000 &&
+      shippingRateAmountCents(standardShippingOption, "large") === 2000 &&
+      shippingRateAmountCents(priorityShippingOption, "dive-pack-base") ===
+        1000 &&
+      shippingRateAmountCents(priorityShippingOption, "base") === 1500 &&
+      shippingRateAmountCents(priorityShippingOption, "large") === 3500
   );
 
   const catalogDefinitions = showFutureProducts

@@ -390,27 +390,33 @@ allowlist. `npm.cmd run store:check:launch` verifies that exact allowlist and th
 owner-approved server-controlled prices: $44 for the Starter Kit, $22 per deck,
 $10 per set-specific Dive Pack, and $12 for the Accessories Kit.
 
-The owner-approved fulfillment choices and conservative weight tiers are
-server-controlled:
+The owner-approved fulfillment choices, cart-composition rule, and conservative
+weight tiers are server-controlled:
 
-| Option | Up to and including 1 lb (16 oz) | More than 1 lb through 8 lb (128 oz) | Checkout behavior |
-| --- | ---: | ---: | --- |
-| Standard Shipping & Handling | $10.00 | $20.00 | Collects a US delivery address; economy carrier service is estimated at 2–7 business days in transit after production |
-| Priority Shipping & Handling | $15.00 | $35.00 | Collects a US delivery address; USPS Priority Mail is estimated at 2–3 business days in transit after production |
-| Scheduled pickup — Elverson, PA | Free | Free | No time is chosen at Checkout; after production, Sea Realm emails the customer to arrange a time and privately shares the address/instructions |
+| Option | Dive Pack-only cart through 1 lb | Other cart through 1 lb | More than 1 lb through 8 lb | Checkout behavior |
+| --- | ---: | ---: | ---: | --- |
+| Standard Shipping & Handling | $5.00 | $10.00 | $20.00 | Collects a US delivery address; economy carrier service is estimated at 2–7 business days in transit after production |
+| Priority Shipping & Handling | $10.00 | $15.00 | $35.00 | Collects a US delivery address; USPS Priority Mail is estimated at 2–3 business days in transit after production |
+| Scheduled pickup — Elverson, PA | Free | Free | Free | No time is chosen at Checkout; after production, Sea Realm emails the customer to arrange a time and privately shares the address/instructions |
 
-Configure the base tier with `STORE_STANDARD_SHIPPING_CENTS` and
-`STORE_PRIORITY_SHIPPING_CENTS`, and the higher tier with
+Configure the one- or two-pack exclusive tier with
+`STORE_DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS` and
+`STORE_DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS`, the ordinary base tier with
+`STORE_STANDARD_SHIPPING_CENTS` and `STORE_PRIORITY_SHIPPING_CENTS`, and the
+higher tier with
 `STORE_LARGE_STANDARD_SHIPPING_CENTS` and
 `STORE_LARGE_PRIORITY_SHIPPING_CENTS`. `STORE_SHIPPING_CENTS` remains only as a
 legacy Standard base-rate fallback.
 
 Checkout uses the catalog's conservative `shippingWeightOunces`: 8 ounces for
 each deck or set-specific Dive Pack and 16 ounces for each Starter Kit or
-accessory SKU. It sums quantity times weight, selects the base tier through 16
-ounces and the higher tier above 16 ounces, and rejects orders above 8 items or
-128 ounces. Never accept a client-supplied weight or use an unpackaged product
-weight for tier selection.
+accessory SKU. It sums quantity times weight and also checks server-controlled
+product categories. A cart containing only one or two Dive Packs receives the
+exclusive $5/$10 tier through 16 ounces. Mixed carts receive the ordinary base
+tier through 16 ounces, and every cart above 16 ounces receives the higher tier.
+Checkout rejects orders above 8 items or 128 ounces. Never accept a
+client-supplied category or weight or use an unpackaged product weight for tier
+selection.
 
 The original shipping approval and Pirate Ship evidence were recorded on
 2026-08-15 for Elverson 19520 to Los Angeles 90001. The owner accepted the same
@@ -427,7 +433,10 @@ and does not assert Dive Pack dimensions or a separate quote:
 
 The quoted postage excludes the $0.75 brown box shown in the final column.
 These are estimates rather than carrier guarantees. Automated tests cover the
-16-ounce tier boundary and the 8-item/128-ounce rejection; production therefore
+exclusive Dive Pack-only tier, mixed-cart fallback, 16-ounce boundary, and the
+8-item/128-ounce rejection. The owner approved the customer-facing Dive Pack
+discount on 2026-08-25 and accepts that actual postage and packaging can exceed
+the amount charged; production therefore
 uses `STORE_SHIPPING_RATES_CONFIRMED=true`. Re-run those tests and reconfirm the
 gate whenever weights, carton sizes, carrier services, or rates change. Keep
 `STORE_ALLOWED_COUNTRIES=US` for the initial launch unless
@@ -727,8 +736,9 @@ copy with the store's private launch records.
   owner-accepted 0.5-pound checkout input for each Dive Pack, the 1-pound
   Starter Kit weight, and the 8-pound maximum order weight. The Dive Pack input
   is not a measured packed weight or dimensions record;
-  keep the tested $10/$15 and $20/$35 tier boundary plus the 8-item/128-ounce
-  rejection unchanged while
+  keep the tested Dive Pack-only $5/$10 tier through 16 ounces, ordinary
+  $10/$15 tier through 16 ounces, $20/$35 large-parcel tier, and the
+  8-item/128-ounce rejection unchanged while
   `STORE_SHIPPING_RATES_CONFIRMED=true`.
 - Test the standard five-business-day and expedited one-business-day production
   paths, confirm the $10 fee is once per order, and verify the hard 10-order

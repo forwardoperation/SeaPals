@@ -180,16 +180,23 @@ and sum the order before creating Checkout. These values are separate from
 inventory ATP units.
 
 Reject an online order above **8 items** or **128 ounces (8 lb)**. Select the
-customer-facing rate from the approved conservative order weight:
+customer-facing rate from the approved server-side composition and conservative
+order weight:
 
-| Fulfillment option | Up to and including 16 oz | More than 16 oz through 128 oz |
-| --- | ---: | ---: |
-| Standard Shipping & Handling | $10.00 | $20.00 |
-| Priority Shipping & Handling | $15.00 | $35.00 |
-| Scheduled pickup — Elverson, PA | Free | Free |
+| Fulfillment option | Dive Pack-only cart through 16 oz | Other cart through 16 oz | More than 16 oz through 128 oz |
+| --- | ---: | ---: | ---: |
+| Standard Shipping & Handling | $5.00 | $10.00 | $20.00 |
+| Priority Shipping & Handling | $10.00 | $15.00 | $35.00 |
+| Scheduled pickup — Elverson, PA | Free | Free | Free |
+
+The Dive Pack-only rate applies to one or two packs with no other product in the
+cart. Mixed carts use the ordinary weight tier, while three or more Dive Packs
+exceed 16 ounces and use the large-parcel tier. The owner approved this
+customer-facing discount on 2026-08-25 and accepts that the business may absorb
+the difference from actual postage and packaging cost.
 
 The confirmed ready-to-mail parcels and 19520-to-90001 Pirate Ship quotes that
-support those rates are:
+support the ordinary weight tiers are:
 
 | Parcel | Conservative weight | Outside dimensions | Economy postage | Priority postage | Economy / Priority incl. $0.75 box |
 | --- | ---: | --- | ---: | ---: | --- |

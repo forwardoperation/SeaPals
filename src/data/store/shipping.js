@@ -1,7 +1,15 @@
 export const STORE_BASE_SHIPPING_MAX_WEIGHT_OUNCES = 16;
 export const STORE_MAX_SHIPPING_WEIGHT_OUNCES = 128;
+export const STORE_DIVE_PACK_PRODUCT_CATEGORY = "dive-packs";
 
 const standardShippingRateTiers = Object.freeze([
+  Object.freeze({
+    id: "dive-pack-base",
+    maxWeightOunces: STORE_BASE_SHIPPING_MAX_WEIGHT_OUNCES,
+    defaultAmountCents: 500,
+    amountEnvKey: "STORE_DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS",
+    exclusiveProductCategory: STORE_DIVE_PACK_PRODUCT_CATEGORY,
+  }),
   Object.freeze({
     id: "base",
     maxWeightOunces: STORE_BASE_SHIPPING_MAX_WEIGHT_OUNCES,
@@ -17,6 +25,13 @@ const standardShippingRateTiers = Object.freeze([
 ]);
 
 const priorityShippingRateTiers = Object.freeze([
+  Object.freeze({
+    id: "dive-pack-base",
+    maxWeightOunces: STORE_BASE_SHIPPING_MAX_WEIGHT_OUNCES,
+    defaultAmountCents: 1000,
+    amountEnvKey: "STORE_DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS",
+    exclusiveProductCategory: STORE_DIVE_PACK_PRODUCT_CATEGORY,
+  }),
   Object.freeze({
     id: "base",
     maxWeightOunces: STORE_BASE_SHIPPING_MAX_WEIGHT_OUNCES,
@@ -75,7 +90,11 @@ export const storeShippingOptionDefinitions = Object.freeze([
 
 export const defaultStoreShippingOptionId = "standard";
 
-export function resolveStoreShippingRateTier(option, weightOunces) {
+export function resolveStoreShippingRateTier(
+  option,
+  weightOunces,
+  { productCategories = [] } = {}
+) {
   const optionId = String(option?.id ?? "").trim().toLowerCase();
   const definition = storeShippingOptionDefinitions.find(
     (candidate) => candidate.id === optionId
@@ -100,9 +119,23 @@ export function resolveStoreShippingRateTier(option, weightOunces) {
     configuredTiers.map((tier) => [tier?.id, tier])
   );
   const definitionTiers = definition.rateTiers ?? [];
+  const normalizedProductCategories = Array.isArray(productCategories)
+    ? productCategories.map((category) =>
+        typeof category === "string" ? category.trim().toLowerCase() : null
+      )
+    : [];
 
   for (const definitionTier of definitionTiers) {
     if (weightOunces > definitionTier.maxWeightOunces) continue;
+    if (
+      definitionTier.exclusiveProductCategory &&
+      (!normalizedProductCategories.length ||
+        !normalizedProductCategories.every(
+          (category) => category === definitionTier.exclusiveProductCategory
+        ))
+    ) {
+      continue;
+    }
 
     const configuredTier = configuredTiersById.get(definitionTier.id);
     const configuredAmount = Number(configuredTier?.amountCents);

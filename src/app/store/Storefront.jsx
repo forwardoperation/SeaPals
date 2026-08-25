@@ -60,7 +60,7 @@ const CATEGORY_META = {
     label: "Dive Packs",
     eyebrow: "Discover a new current",
     description:
-      "Choose an Oceanic, Reef, or Deep Dive Pack and add cards from your chosen set to your SeaPals collection.",
+      "Choose an Oceanic, Reef, or Deep Dive Pack and add cards from your chosen set to your SeaPals collection. Dive Pack-only mailed orders up to 1 lb qualify for $5 Standard or $10 Priority Shipping & Handling.",
   },
   "game-accessories": {
     label: "Game Accessories",
@@ -467,13 +467,15 @@ export default function Storefront({
       total + Number(product.shippingWeightOunces ?? 0) * quantity,
     0
   );
+  const cartProductCategories = cartItems.map(({ product }) => product.category);
   const selectedFulfillmentOption =
     fulfillmentOptions.find(
       (option) => option.id === selectedFulfillmentOptionId
     ) ?? fulfillmentOptions[0];
   const selectedShippingRateTier = resolveStoreShippingRateTier(
     selectedFulfillmentOption,
-    Math.max(1, cartShippingWeightOunces)
+    Math.max(1, cartShippingWeightOunces),
+    { productCategories: cartProductCategories }
   );
   const normalizedShippingCents =
     selectedFulfillmentOption.fulfillmentMethod === "pickup"
@@ -1233,7 +1235,8 @@ export default function Storefront({
                     const selected = option.id === selectedFulfillmentOption.id;
                     const rateTier = resolveStoreShippingRateTier(
                       option,
-                      Math.max(1, cartShippingWeightOunces)
+                      Math.max(1, cartShippingWeightOunces),
+                      { productCategories: cartProductCategories }
                     );
                     const displayedAmountCents =
                       option.fulfillmentMethod === "pickup"
@@ -1283,7 +1286,9 @@ export default function Storefront({
                               {option.description}{" "}
                               {rateTier?.id === "large"
                                 ? "Large-parcel rate applies above 1 lb through 8 lb."
-                                : "Base rate applies through 1 lb."}
+                                : rateTier?.id === "dive-pack-base"
+                                  ? "Dive Pack-only rate applies through 1 lb."
+                                  : "Base rate applies through 1 lb."}
                             </span>
                           ) : null}
                         </span>

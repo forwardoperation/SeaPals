@@ -161,10 +161,11 @@ label, and inserts—not only the unpackaged product.
 
 Online checkout is limited to **8 items and 8 lb (128 oz)** per order.
 
-| Approved conservative order-weight tier | Standard Shipping & Handling | Priority Shipping & Handling |
+| Approved conservative cart tier | Standard Shipping & Handling | Priority Shipping & Handling |
 | --- | ---: | ---: |
-| Up to and including 1 lb (16 oz) | $10.00 | $15.00 |
-| More than 1 lb (>16 oz) through 8 lb (128 oz) | $20.00 | $35.00 |
+| Dive Pack-only cart up to and including 1 lb (one or two packs) | $5.00 | $10.00 |
+| Any other cart up to and including 1 lb (16 oz) | $10.00 | $15.00 |
+| Any mailed cart over 1 lb (>16 oz) through 8 lb (128 oz) | $20.00 | $35.00 |
 
 - Made-to-order wording to publish: **Built to order; standard production and
   dispatch within five business days, or one business day with the optional
@@ -175,8 +176,8 @@ Online checkout is limited to **8 items and 8 lb (128 oz)** per order.
   transit after production; economy carrier selected through Pirate Ship**.
 - Priority customer delivery estimate to publish: **2–3 business days in
   transit after production via USPS Priority Mail**.
-- Approved mailed-order Shipping & Handling charges: **use the weight-tier
-  table above**.
+- Approved mailed-order Shipping & Handling charges: **use the composition and
+  weight-tier table above**.
 - Approved Scheduled pickup charge: **free**.
 - Initial destinations: **United States only**.
 - Carrier/label workflow and daily cutoff: **Buy labels through Pirate Ship;
@@ -188,8 +189,16 @@ input was added on **2026-08-24** and accepted by the owner for live release on
 **2026-08-25**. It is not a completed parcel measurement, dimensions record, or
 carrier quote. The Pirate Ship quotes above use Elverson 19520 to Los Angeles
 90001 and exclude the owner-confirmed $0.75 brown box cost shown separately.
-Automated checkout tests verify the 8-item/128-ounce maximum and the $10/$15 and
-$20/$35 tier boundary.
+On **2026-08-25**, the owner separately approved the $5 Standard / $10 Priority
+customer charge for a mailed cart containing only one or two Dive Packs. Any
+mixed cart keeps the ordinary weight tier, and three or more Dive Packs exceed
+the 16-ounce special-rate boundary and use the large-parcel tier. This is an
+owner-funded discount, not new carrier-cost evidence: the recorded single-deck
+postage plus box is $6.98 Economy / $14.23 Priority, so Sea Realm absorbs any
+difference between the customer charge and actual fulfillment cost.
+Automated checkout tests verify the Dive Pack-only $5/$10 tier, mixed-cart
+fallback, 16-ounce boundary, 8-item/128-ounce maximum, and the ordinary $10/$15
+and $20/$35 tiers.
 
 The owner requested free **Scheduled pickup — Elverson, PA**. No appointment is
 chosen during Checkout and no street address is published. After production,

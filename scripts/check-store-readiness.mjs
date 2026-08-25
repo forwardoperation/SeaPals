@@ -29,6 +29,8 @@ const EXPEDITED_PRODUCTION_CENTS = 1000;
 const EXPEDITED_PRODUCTION_TAX_CODE = "txcd_92010004";
 const EXPEDITED_PRODUCTION_DAILY_ORDER_LIMIT = 10;
 const EXPEDITED_PRODUCTION_TIME_ZONE = "America/New_York";
+const DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS = 500;
+const DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS = 1000;
 const STANDARD_SHIPPING_CENTS = 1000;
 const PRIORITY_SHIPPING_CENTS = 1500;
 const LARGE_STANDARD_SHIPPING_CENTS = 2000;
@@ -164,6 +166,12 @@ const standardShippingCents =
   centsValue(process.env.STORE_STANDARD_SHIPPING_CENTS) ??
   centsValue(process.env.STORE_SHIPPING_CENTS) ??
   STANDARD_SHIPPING_CENTS;
+const divePackStandardShippingCents =
+  centsValue(process.env.STORE_DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS) ??
+  DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS;
+const divePackPriorityShippingCents =
+  centsValue(process.env.STORE_DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS) ??
+  DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS;
 const priorityShippingCents =
   centsValue(process.env.STORE_PRIORITY_SHIPPING_CENTS) ??
   PRIORITY_SHIPPING_CENTS;
@@ -379,18 +387,22 @@ addCheck(
 );
 addCheck(
   "Shipping options",
-  standardShippingCents === STANDARD_SHIPPING_CENTS &&
+  divePackStandardShippingCents === DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS &&
+    divePackPriorityShippingCents === DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS &&
+    standardShippingCents === STANDARD_SHIPPING_CENTS &&
     priorityShippingCents === PRIORITY_SHIPPING_CENTS &&
     largeStandardShippingCents === LARGE_STANDARD_SHIPPING_CENTS &&
     largePriorityShippingCents === LARGE_PRIORITY_SHIPPING_CENTS,
-  standardShippingCents === STANDARD_SHIPPING_CENTS &&
+  divePackStandardShippingCents === DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS &&
+    divePackPriorityShippingCents === DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS &&
+    standardShippingCents === STANDARD_SHIPPING_CENTS &&
     priorityShippingCents === PRIORITY_SHIPPING_CENTS &&
     largeStandardShippingCents === LARGE_STANDARD_SHIPPING_CENTS &&
     largePriorityShippingCents === LARGE_PRIORITY_SHIPPING_CENTS
     ? localPickupEnabled
-      ? `Up to one pound is ${standardShippingCents}/${priorityShippingCents} cents, over one through eight pounds is ${largeStandardShippingCents}/${largePriorityShippingCents} cents, and optional Elverson pickup is enabled.`
-      : `Up to one pound is ${standardShippingCents}/${priorityShippingCents} cents, over one through eight pounds is ${largeStandardShippingCents}/${largePriorityShippingCents} cents, and local pickup is disabled.`
-    : `Use the owner-approved tiers: ${STANDARD_SHIPPING_CENTS}/${PRIORITY_SHIPPING_CENTS} cents through one pound and ${LARGE_STANDARD_SHIPPING_CENTS}/${LARGE_PRIORITY_SHIPPING_CENTS} cents over one through eight pounds.`,
+      ? `Dive Pack-only carts through one pound are ${divePackStandardShippingCents}/${divePackPriorityShippingCents} cents; other carts through one pound are ${standardShippingCents}/${priorityShippingCents} cents; over one through eight pounds is ${largeStandardShippingCents}/${largePriorityShippingCents} cents; optional Elverson pickup is enabled.`
+      : `Dive Pack-only carts through one pound are ${divePackStandardShippingCents}/${divePackPriorityShippingCents} cents; other carts through one pound are ${standardShippingCents}/${priorityShippingCents} cents; over one through eight pounds is ${largeStandardShippingCents}/${largePriorityShippingCents} cents; local pickup is disabled.`
+    : `Use the owner-approved tiers: Dive Pack-only carts are ${DIVE_PACK_ONLY_STANDARD_SHIPPING_CENTS}/${DIVE_PACK_ONLY_PRIORITY_SHIPPING_CENTS} cents through one pound, other carts are ${STANDARD_SHIPPING_CENTS}/${PRIORITY_SHIPPING_CENTS} cents through one pound, and ${LARGE_STANDARD_SHIPPING_CENTS}/${LARGE_PRIORITY_SHIPPING_CENTS} cents over one through eight pounds.`,
   true
 );
 const invalidShippingWeightProducts = availableProducts.filter((productId) => {
