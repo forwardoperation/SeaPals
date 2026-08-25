@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  storeLaunchProductIds,
   storePreparedProductIds,
   storeProductDefinitions,
 } from "../../data/store/products.js";
@@ -99,24 +100,17 @@ test("the seed records its checkout-disabled cutover and capacity limitations", 
   assert.match(seedSql, /future merchandise SKUs are[^]*excluded/i);
 });
 
-test("Dive Packs stay outside the live allowlist until their release cutover", () => {
+test("the live allowlist matches the twelve-product launch catalog", () => {
   const availableProductIds = wranglerConfig
     .match(/"STORE_AVAILABLE_PRODUCT_IDS"\s*:\s*"([^"]+)"/)?.[1]
     .split(",");
 
-  assert.deepEqual(availableProductIds, [
-    "starter-kit",
-    "blue-water",
-    "disruption",
-    "coral-garden",
-    "darkness-shroud",
-    "open-ocean-hunt",
-    "murky-water",
-    "stinging-fortress",
-    "accessory-set",
-  ]);
-  assert.equal(
-    availableProductIds.some((productId) => productId.endsWith("-dive-pack")),
-    false
+  assert.deepEqual(availableProductIds, storeLaunchProductIds);
+  assert.deepEqual(
+    availableProductIds.filter((productId) => productId.endsWith("-dive-pack")),
+    ["oceanic-dive-pack", "reef-dive-pack", "deep-dive-pack"]
   );
+  assert.equal(availableProductIds.includes("conditions-deck"), false);
+  assert.equal(availableProductIds.includes("dice-pack"), false);
+  assert.equal(availableProductIds.includes("reef-point-tokens"), false);
 });

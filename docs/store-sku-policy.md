@@ -35,12 +35,13 @@ new SKU when the fulfilled product remains interchangeable.
 ## Catalog and prepared inventory SKUs
 
 These values are canonical and must match their product definitions and private
-`store_inventory.sku` rows exactly when those rows exist. The public catalog
-contains all twelve launch definitions, including the three Dive Packs, but the
-current live allowlist contains only `SP-KIT-STARTER`, the seven `SP-DECK-*`
-rows, and `SP-ACC-SET`. The three `SP-PACK-*` SKUs are canonical prelaunch
-identifiers, not evidence that their inventory rows have been applied or that
-they are authorized for checkout. Individual accessory rows also remain private.
+`store_inventory.sku` rows exactly when those rows exist. As of 2026-08-25, the
+live twelve-product catalog contains `SP-KIT-STARTER`, the seven `SP-DECK-*`
+rows, the three `SP-PACK-*` Dive Pack rows, and `SP-ACC-SET`. The owner
+authorized each Dive Pack at $10 with the established five-business-day
+made-to-order policy and its approved Apex card cover. Production verification
+found each `SP-PACK-*` row at exactly 10 on hand and 0 reserved. The individual
+accessory rows remain private and unavailable.
 
 | Product | Canonical SKU |
 | --- | --- |
@@ -60,12 +61,14 @@ they are authorized for checkout. Individual accessory rows also remain private.
 | Dice Pack | `SP-ACC-DICE-PACK` |
 | Reef Point Token Set | `SP-ACC-REEF-POINTS` |
 
-Before enabling a Dive Pack, verify its contents, packaging/fulfillment
-procedure, and five-business-day capacity. Retain its approved canonical Apex
-card cover, apply and verify its `store_inventory` row during a
-checkout-disabled cutover, run the
-launch and online readiness checks; then add its product ID to the live
-allowlist. Keep the stable `SP-PACK-*` SKU throughout that sequence.
+The 2026-08-25 Dive Pack release retained the approved canonical Apex card
+covers, used the owner-accepted conservative 8-ounce checkout input and ATP 10
+per SKU, verified each `store_inventory` row at 10 on hand and 0 reserved during
+the checkout-disabled cutover, ran the launch and online readiness sequence, and
+added the three product IDs to the live allowlist. This record does not assert a
+cards-per-pack count, collation or randomization method, wrapper material, or a
+measured packed weight or dimensions. Keep the stable `SP-PACK-*` SKUs for all
+future inventory, order, and fulfillment records.
 
 Kits have their own SKUs because the customer buys and the business fulfills
 them as configurations distinct from their components. The current inventory

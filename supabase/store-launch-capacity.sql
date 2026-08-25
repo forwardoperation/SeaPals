@@ -6,13 +6,13 @@
 -- changing or deploying this file does not prove that any production row was
 -- inserted, and rerunning it never restores an existing sold-down row.
 --
--- The current live allowlist remains the Starter Kit, seven deck SKUs, and
--- Accessories Kit. The three SP-PACK-* Dive Pack rows are prelaunch: verify
--- their contents, packaging/fulfillment procedure, and
--- five-business-day capacity before applying these missing rows. With checkout
--- disabled, apply the seed, verify all three rows and online readiness, and only
--- then add the Dive Pack product IDs to STORE_AVAILABLE_PRODUCT_IDS.
--- The other three accessory rows remain private preparation records.
+-- On 2026-08-25, the owner authorized the three Dive Packs for the live
+-- five-business-day made-to-order catalog at $10 each. Production verification
+-- found SP-PACK-OCEANIC, SP-PACK-REEF, and SP-PACK-DEEP at exactly 10 on hand
+-- and 0 reserved, and the live allowlist now contains the Starter Kit, seven
+-- deck SKUs, those three Dive Packs, and the Accessories Kit. The other three
+-- accessory rows remain private preparation records. This file remains
+-- non-replenishing: rerunning it does not restore or overwrite any existing row.
 -- The Starter Kit may now be below 10 because an earlier test consumed one unit.
 -- Reserved capacity starts at zero.
 --

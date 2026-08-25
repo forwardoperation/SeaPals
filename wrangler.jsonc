@@ -16,11 +16,11 @@
 		"SITE_LEGACY_REDIRECT_ENABLED": "false",
 		"SITE_LEGACY_REDIRECT_PERMANENT": "false",
 		"STORE_CURRENCY": "usd",
-		// The public catalog shows the $44 Starter Kit, seven $22 decks, three $10
-		// prelaunch Dive Packs, and the $12 Accessories Kit. Only the established
-		// nine products remain live until Dive Pack inventory, contents, and
-		// fulfillment are verified. STORE_CATALOG_CONFIRMED applies to these nine.
-		"STORE_AVAILABLE_PRODUCT_IDS": "starter-kit,blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,accessory-set",
+		// The live catalog is the $44 Starter Kit, seven $22 decks, three $10
+		// Dive Packs, and the $12 Accessories Kit. The Dive Pack inventory rows
+		// and offline twelve-product launch readiness were verified during the
+		// 2026-08-25 cutover.
+		"STORE_AVAILABLE_PRODUCT_IDS": "starter-kit,blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,oceanic-dive-pack,reef-dive-pack,deep-dive-pack,accessory-set",
 		"STORE_CATALOG_CONFIRMED": "true",
 		"STORE_EXPEDITED_PRODUCTION_ENABLED": "true",
 		"STORE_EXPEDITED_PRODUCTION_CENTS": "1000",
