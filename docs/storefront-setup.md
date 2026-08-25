@@ -70,15 +70,18 @@ measured separately in Stripe.
   idempotent payment, failure, expiration, refund, dispute hold, receipt,
   address recording, and immediate merchant purchase-alert delivery.
 - `custom-worker.mjs`: the generated OpenNext fetch handler plus five-minute
-  private purchase-alert and fulfillment-reminder drains, so recovery does not
-  depend on Stripe's webhook retry window.
+  private purchase-alert, fulfillment-reminder, inventory-reconciliation, and
+  quarterly PA-report drains, so recovery does not depend on one request.
 - `/admin/orders`: a token-protected shipping and Elverson pickup workspace with
   immutable product, price, and fulfillment-method snapshots; receipt and
-  Stripe references; tracking; private notes; and a shipping-only CSV export.
+  Stripe references; tracking; private notes; a shipping CSV; and a
+  Pennsylvania quarterly website-ledger reconciliation plus myPATH return CSV.
 - `supabase/store-orders.sql`: private orders, items, payment-event idempotency,
   durable receipt references, fulfillment state, and a private notification
   outbox with lease-based concurrent-claim prevention and a private pending-row
   listing RPC for the scheduled drainer.
+- `supabase/pa-quarterly-report-email.sql`: a separate quarter-keyed, frozen
+  aggregate outbox and PII-reduced tax-ledger RPC for the scheduled PA report.
 - `npm run store:check` and `npm run store:check:online`: launch-readiness checks.
 
 SeaPals stores order, customer contact, delivery, total, payment state,
@@ -118,6 +121,9 @@ choices.
 Open the Supabase SQL editor for the existing SeaPals project and run:
 
 `supabase/store-orders.sql`
+
+Then apply `supabase/pa-quarterly-report-email.sql` before enabling the
+quarterly Pennsylvania email.
 
 Do not seed capacity merely because the schema has been applied. During the
 checkout-disabled production cutover, follow
@@ -176,10 +182,20 @@ Copy `.env.example` to the local/deployment secret store and set:
   alert reaches the private inbox; this owner gate is required in live mode
 - `STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED=true` to send one due-soon alert
   for each paid live order through the same verified sender and recipient
+- `STORE_PA_TAX_REPORT_ENABLED=true`, an explicit private
+  `STORE_PA_TAX_REPORT_EMAIL`,
+  `STORE_PA_TAX_REPORT_START_PERIOD_END=2026-09-30`, and
+  `STORE_PA_TAX_REPORT_DELIVERY_CONFIRMED=true` for the once-per-quarter
+  Pennsylvania preparation email
 
 `NEXT_PUBLIC_SITE_URL` remains a legacy fallback, but new deployments should
 prefer `SITE_URL` so the canonical store origin is not compiled into browser
 JavaScript.
+
+Apply `supabase/pa-quarterly-report-email.sql` after the main store schema
+before enabling that quarterly job. It creates a separate private aggregate
+outbox; it does not reuse the per-order notification table and does not store
+tax account IDs, customer data, banking details, or filing CSVs.
 
 Prefer a restricted sandbox key (`rk_test_...`) named `SeaPals storefront
 sandbox`. Start every permission at **None**, then grant:
@@ -408,6 +424,9 @@ is no longer active.
 Use [the Pennsylvania sales-tax operations checklist](pa-sales-tax-operations.md)
 for myPATH, display, filing, reconciliation, records, resale-certificate, and
 other-state nexus tasks. It deliberately contains no license or account IDs.
+Use [the free Pennsylvania quarterly filing runbook](pa-automatic-filing.md)
+for the private website-ledger reconciliation, myPATH return CSV, first-period
+confirmation, exception review, owner submission, and record retention.
 
 Shipped orders use Stripe Automatic Tax. Pickup is handed over at the fixed
 Elverson location, so its Checkout path intentionally disables Automatic Tax

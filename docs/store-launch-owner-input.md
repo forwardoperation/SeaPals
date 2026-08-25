@@ -232,5 +232,11 @@ Policy approval: **owner-confirmed in the launch task**  Date: **2026-08-15**
 - [ ] Sandbox paid/refund lifecycle passed, followed by a live no-payment
       Checkout Session creation-and-expiration smoke that released its
       reservation. Do not test live mode with real payment details.
-- [ ] myPATH filing frequency and next due date recorded privately.
+- [x] Pennsylvania notice assigns quarterly filing; no identifier was copied
+      into the repository.
+- [ ] myPATH Location Start Date, first open filing period, and next due date
+      recorded privately.
+- [ ] First generated Pennsylvania return passes myPATH validation; website and
+      Stripe totals, pickup inclusion, use-tax review, Submit confirmation, and
+      Processed status are retained under `docs/pa-automatic-filing.md`.
 - [ ] License copy displayed as required, without publishing it online.

@@ -7,6 +7,15 @@ import {
   isShippingQueueStatus,
   storeFulfillmentStatusLabel,
 } from "@/lib/store/fulfillmentStatus.mjs";
+import {
+  PA_ENTITY_ID_TYPES,
+  PA_SALES_TAX_CODES,
+  buildPaSalesTaxReconciliationCsv,
+  buildPaSalesTaxReturnCsv,
+  currentPaQuarterEnd,
+  paQuarterPeriod,
+  reconcilePaSalesTaxPeriod,
+} from "@/lib/store/paSalesTaxReturn.mjs";
 
 const TOKEN_STORAGE_KEY = "seapals-store-admin-token";
 
@@ -79,6 +88,58 @@ function formatMoney(cents, currency = "usd") {
 
 function centsToDecimal(cents) {
   return (Number(cents ?? 0) / 100).toFixed(2);
+}
+
+function dollarsToCents(value, label) {
+  const text = String(value ?? "").trim();
+  if (!text) return 0;
+  if (!/^\d+(?:\.\d{1,2})?$/.test(text)) {
+    throw new Error(`${label} must be a dollar amount with no more than two decimals.`);
+  }
+  const cents = Math.round(Number(text) * 100);
+  if (!Number.isSafeInteger(cents) || cents < 0) {
+    throw new Error(`${label} is too large.`);
+  }
+  return cents;
+}
+
+function paQuarterOptions(count = 8) {
+  const current = paQuarterPeriod(currentPaQuarterEnd());
+  const options = [];
+
+  for (let offset = 0; offset < count; offset += 1) {
+    const index = current.year * 4 + (current.quarter - 1) - offset;
+    const year = Math.floor(index / 4);
+    const quarter = (index % 4) + 1;
+    const monthDay = ["03-31", "06-30", "09-30", "12-31"][quarter - 1];
+    const period = paQuarterPeriod(`${year}-${monthDay}`);
+    options.push(period);
+  }
+
+  return options;
+}
+
+function downloadCsvFile(csv, filename, includeBom = false) {
+  const blob = new Blob([includeBom ? "\uFEFF" : "", csv], {
+    type: "text/csv;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function paReconciliationFingerprint(reconciliation) {
+  return JSON.stringify({
+    rows: reconciliation?.rows,
+    records: reconciliation?.records,
+    exclusions: reconciliation?.exclusions,
+    issues: reconciliation?.issues,
+  });
 }
 
 function isPaid(order) {
@@ -1233,6 +1294,24 @@ export default function OrdersDashboard() {
   const [query, setQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [fulfillmentFilter, setFulfillmentFilter] = useState("all");
+  const [paPeriodEnd, setPaPeriodEnd] = useState(() => currentPaQuarterEnd());
+  const [paLinkedPeriod, setPaLinkedPeriod] = useState(null);
+  const [paLinkScrollPending, setPaLinkScrollPending] = useState(false);
+  const [paFilingOrders, setPaFilingOrders] = useState(null);
+  const [paFilingLoading, setPaFilingLoading] = useState(false);
+  const [paFilingError, setPaFilingError] = useState("");
+  const [paFilingNotice, setPaFilingNotice] = useState("");
+  const [paAccountNumber, setPaAccountNumber] = useState("");
+  const [paEntityId, setPaEntityId] = useState("");
+  const [paEntityIdType, setPaEntityIdType] = useState("001");
+  const [paUseTaxDollars, setPaUseTaxDollars] = useState("");
+  const [paCreditDollars, setPaCreditDollars] = useState("");
+  const [paTpprCredit, setPaTpprCredit] = useState(false);
+  const [paOtherCredit, setPaOtherCredit] = useState(false);
+  const [paWebsiteOnlyConfirmed, setPaWebsiteOnlyConfirmed] = useState(false);
+  const [paUseTaxReviewed, setPaUseTaxReviewed] = useState(false);
+  const [paStripeReviewed, setPaStripeReviewed] = useState(false);
+  const [paUploadReviewConfirmed, setPaUploadReviewConfirmed] = useState(false);
 
   useEffect(() => {
     try {
@@ -1249,6 +1328,68 @@ export default function OrdersDashboard() {
     () => orderList.filter(isPaidUnshipped),
     [orderList]
   );
+  const availablePaQuarters = useMemo(() => {
+    const periods = paQuarterOptions();
+    if (
+      !paLinkedPeriod ||
+      periods.some((period) => period.periodEnd === paLinkedPeriod.periodEnd)
+    ) {
+      return periods;
+    }
+    return [...periods, paLinkedPeriod].sort((left, right) =>
+      right.periodEnd.localeCompare(left.periodEnd)
+    );
+  }, [paLinkedPeriod]);
+
+  useEffect(() => {
+    const requestedPeriodEnd = new URLSearchParams(
+      window.location.search
+    ).get("paPeriodEnd")?.trim();
+    if (!requestedPeriodEnd) return;
+
+    try {
+      const period = paQuarterPeriod(requestedPeriodEnd);
+      setPaLinkedPeriod(period);
+      setPaPeriodEnd(period.periodEnd);
+      setPaLinkScrollPending(true);
+      setPaFilingOrders(null);
+      setPaFilingError("");
+      setPaFilingNotice(
+        `${period.label} was selected from the secure email link. Reconcile the complete period to prepare its CSV.`
+      );
+    } catch {
+      setPaFilingError(
+        "The emailed filing-period link is invalid. Select the quarter manually."
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!paLinkScrollPending || orders === null) return;
+    const filingWorkspace = document.getElementById("pa-sales-tax-filing");
+    if (!filingWorkspace) return;
+    filingWorkspace.scrollIntoView({ block: "start" });
+    filingWorkspace.focus({ preventScroll: true });
+    setPaLinkScrollPending(false);
+  }, [orders, paLinkScrollPending]);
+  const paReconciliation = useMemo(
+    () =>
+      paFilingOrders === null
+        ? null
+        : reconcilePaSalesTaxPeriod(paFilingOrders, paPeriodEnd),
+    [paFilingOrders, paPeriodEnd]
+  );
+  const selectedPaPeriod = useMemo(
+    () => paQuarterPeriod(paPeriodEnd),
+    [paPeriodEnd]
+  );
+  const paPeriodClosed =
+    Date.now() >= Date.parse(selectedPaPeriod.endExclusiveIso);
+  const paAttestationsComplete =
+    paWebsiteOnlyConfirmed &&
+    paUseTaxReviewed &&
+    paStripeReviewed &&
+    paUploadReviewConfirmed;
 
   const fulfillmentStatuses = useMemo(() => {
     const values = new Set(FULFILLMENT_OPTIONS.map((option) => option.value));
@@ -1474,6 +1615,16 @@ export default function OrdersDashboard() {
     setError("");
     setNotice("The staff token was cleared from this tab.");
     setLastUpdated(null);
+    setPaFilingOrders(null);
+    setPaAccountNumber("");
+    setPaEntityId("");
+    setPaUseTaxDollars("");
+    setPaCreditDollars("");
+    setPaTpprCredit(false);
+    setPaOtherCredit(false);
+    resetPaFilingReview();
+    setPaFilingError("");
+    setPaFilingNotice("");
   }
 
   async function saveFulfillment(update) {
@@ -1534,24 +1685,153 @@ export default function OrdersDashboard() {
     if (paidUnshippedOrders.length === 0) return;
 
     const csv = buildShippingCsv(paidUnshippedOrders);
-    const blob = new Blob(["\uFEFF", csv], {
-      type: "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
     const date = new Date().toISOString().slice(0, 10);
-
-    link.href = url;
-    link.download = `seapals-paid-unshipped-${date}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    downloadCsvFile(csv, `seapals-paid-unshipped-${date}.csv`, true);
     setNotice(
       `Exported ${paidUnshippedOrders.length} paid unshipped ${
         paidUnshippedOrders.length === 1 ? "order" : "orders"
       }.`
     );
+  }
+
+  function resetPaFilingReview() {
+    setPaWebsiteOnlyConfirmed(false);
+    setPaUseTaxReviewed(false);
+    setPaStripeReviewed(false);
+    setPaUploadReviewConfirmed(false);
+  }
+
+  async function requestPaFilingOrders() {
+    const token = adminToken.trim();
+    if (!token) {
+      throw new Error("Enter the staff admin token before loading tax records.");
+    }
+
+    const response = await fetch(
+      `/api/admin/store-orders?paPeriodEnd=${encodeURIComponent(paPeriodEnd)}`,
+      {
+        method: "GET",
+        headers: { "x-admin-token": token },
+        cache: "no-store",
+      }
+    );
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.error || "Could not load the filing period.");
+    }
+    return {
+      orders: Array.isArray(payload.orders) ? payload.orders : [],
+      period: payload.period,
+    };
+  }
+
+  async function loadPaFilingPeriod() {
+    setPaFilingError("");
+    setPaFilingNotice("");
+
+    setPaFilingLoading(true);
+    try {
+      const payload = await requestPaFilingOrders();
+      const filingOrders = payload.orders;
+      setPaFilingOrders(filingOrders);
+      resetPaFilingReview();
+      setPaFilingNotice(
+        `Reconciled ${payload.period?.label || selectedPaPeriod.label} from the complete live-order ledger.`
+      );
+    } catch (requestError) {
+      setPaFilingOrders(null);
+      setPaFilingError(
+        requestError.message || "Could not load the filing period."
+      );
+    } finally {
+      setPaFilingLoading(false);
+    }
+  }
+
+  function exportPaReconciliationCsv() {
+    if (!paReconciliation) return;
+    const csv = buildPaSalesTaxReconciliationCsv(paReconciliation);
+    downloadCsvFile(
+      csv,
+      `seapals-pa-sales-tax-audit-${paPeriodEnd}.csv`,
+      true
+    );
+    setPaFilingNotice(`Exported the ${selectedPaPeriod.label} website audit.`);
+  }
+
+  async function exportPaReturnCsv() {
+    setPaFilingError("");
+    setPaFilingNotice("");
+
+    try {
+      if (!paReconciliation?.ready) {
+        throw new Error("Resolve every filing exception before creating the return file.");
+      }
+      if (!paPeriodClosed) {
+        throw new Error("This quarter is still open. Create the return after the period ends.");
+      }
+      if (!paAttestationsComplete) {
+        throw new Error("Complete all four quarterly review confirmations first.");
+      }
+
+      const creditCents = dollarsToCents(paCreditDollars, "Credit");
+      const useTaxCents = dollarsToCents(paUseTaxDollars, "Use tax");
+      if (creditCents > 0 && !paTpprCredit && !paOtherCredit) {
+        throw new Error("Identify the entered credit as TPPR, Other, or both.");
+      }
+      if (creditCents === 0 && (paTpprCredit || paOtherCredit)) {
+        throw new Error("Clear the credit-type boxes or enter the related credit amount.");
+      }
+
+      setPaFilingLoading(true);
+      const latestPayload = await requestPaFilingOrders();
+      const latestReconciliation = reconcilePaSalesTaxPeriod(
+        latestPayload.orders,
+        paPeriodEnd
+      );
+      if (
+        paReconciliationFingerprint(latestReconciliation) !==
+        paReconciliationFingerprint(paReconciliation)
+      ) {
+        setPaFilingOrders(latestPayload.orders);
+        resetPaFilingReview();
+        throw new Error(
+          "The live ledger changed since your review. Review the refreshed totals and confirmations before downloading."
+        );
+      }
+      if (!latestReconciliation.ready) {
+        setPaFilingOrders(latestPayload.orders);
+        resetPaFilingReview();
+        throw new Error(
+          "A new filing exception appeared. Review the refreshed ledger before downloading."
+        );
+      }
+
+      const rows = latestReconciliation.rows.map((row) => ({ ...row }));
+      rows[0].creditCents = creditCents;
+      rows[0].tpprCredit = paTpprCredit;
+      rows[0].otherCredit = paOtherCredit;
+      rows[0].useTaxCents = useTaxCents;
+
+      const csv = buildPaSalesTaxReturnCsv({
+        accountNumber: paAccountNumber,
+        entityId: paEntityId,
+        entityIdType: paEntityIdType,
+        periodEnd: paPeriodEnd,
+        rows,
+        returnType: "O",
+      });
+      // Deliberately omit a UTF-8 BOM from the state import file. Every field
+      // is constrained to PA's published numeric/code schema.
+      downloadCsvFile(csv, `seapals-pa-sales-tax-return-${paPeriodEnd}.csv`);
+      setPaFilingNotice(
+        "Created the myPATH return file. Upload it, review validation totals, and select Submit yourself."
+      );
+    } catch (filingError) {
+      setPaFilingError(filingError.message || "The return file could not be created.");
+    } finally {
+      setPaFilingLoading(false);
+    }
   }
 
   return (
@@ -1667,6 +1947,393 @@ export default function OrdersDashboard() {
               detail={`${stats.shipped} shipped`}
               tone="emerald"
             />
+          </section>
+
+          <section
+            id="pa-sales-tax-filing"
+            tabIndex={-1}
+            className="rounded-3xl border border-blue-200 bg-gradient-to-br from-white to-blue-50 p-5 shadow-sm md:p-6"
+          >
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="max-w-3xl">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">
+                    Pennsylvania quarterly filing
+                  </p>
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-black text-emerald-800">
+                    No filing-service fee
+                  </span>
+                </div>
+                <h2 className="mt-2 text-2xl font-black text-slate-950">
+                  Build the myPATH return from the website ledger
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  This prepares Pennsylvania&apos;s 14-field sales-return CSV and an
+                  order-level audit. It never stores your license number or FEIN,
+                  never sends bank details, and never submits or debits tax without
+                  you. Tax owed is still due.
+                </p>
+              </div>
+              <a
+                href="https://mypath.pa.gov/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-black text-blue-800 hover:bg-blue-50"
+              >
+                Open myPATH
+              </a>
+            </div>
+
+            <div className="mt-5 grid gap-4 border-t border-blue-100 pt-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+              <label className="text-sm font-bold text-slate-700">
+                Filing quarter
+                <select
+                  value={paPeriodEnd}
+                  onChange={(event) => {
+                    setPaPeriodEnd(event.target.value);
+                    setPaFilingOrders(null);
+                    setPaFilingError("");
+                    setPaFilingNotice("");
+                    setPaUseTaxDollars("");
+                    setPaCreditDollars("");
+                    setPaTpprCredit(false);
+                    setPaOtherCredit(false);
+                    resetPaFilingReview();
+                  }}
+                  className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                >
+                  {availablePaQuarters.map((period) => (
+                    <option key={period.periodEnd} value={period.periodEnd}>
+                      {period.label} · ends {formatDate(`${period.periodEnd}T12:00:00Z`, false)}
+                    </option>
+                  ))}
+                </select>
+                <span className="mt-1 block text-xs font-medium text-slate-500">
+                  Scheduled return and payment due{
+                  " "
+                  }
+                  {formatDate(`${selectedPaPeriod.dueDate}T12:00:00Z`, false)};
+                  confirm the open period in myPATH.
+                </span>
+              </label>
+              <button
+                type="button"
+                onClick={loadPaFilingPeriod}
+                disabled={paFilingLoading}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-5 py-2 text-sm font-black text-white transition hover:bg-blue-800 disabled:cursor-wait disabled:bg-blue-300"
+              >
+                {paFilingLoading ? "Reconciling…" : "Reconcile complete period"}
+              </button>
+            </div>
+
+            <div aria-live="polite" className="mt-3 min-h-5 text-sm font-semibold">
+              {paFilingError ? <p className="text-rose-700">{paFilingError}</p> : null}
+              {!paFilingError && paFilingNotice ? (
+                <p className="text-emerald-700">{paFilingNotice}</p>
+              ) : null}
+            </div>
+
+            {paReconciliation ? (
+              <div className="mt-5 space-y-5">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <StatCard
+                    label="Website PA gross"
+                    value={formatMoney(paReconciliation.summary.paGrossSalesCents)}
+                    detail={`${paReconciliation.summary.includedSales} included live sales`}
+                    tone="cyan"
+                  />
+                  <StatCard
+                    label="PA taxable"
+                    value={formatMoney(paReconciliation.summary.paTaxableSalesCents)}
+                  />
+                  <StatCard
+                    label="Tax collected"
+                    value={formatMoney(
+                      paReconciliation.summary.salesTaxCollectedCents
+                    )}
+                    tone="emerald"
+                  />
+                  <StatCard
+                    label="Exceptions"
+                    value={paReconciliation.summary.issueCount}
+                    detail={`${paReconciliation.summary.excludedSales} test/outbound excluded from the PA return`}
+                    tone={paReconciliation.ready ? "emerald" : "rose"}
+                  />
+                </div>
+
+                {!paPeriodClosed ? (
+                  <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+                    <strong>This quarter is still open.</strong> You can preview the
+                    ledger now, but the return download stays locked until after{
+                    " "
+                    }
+                    {formatDate(
+                      `${selectedPaPeriod.periodEnd}T12:00:00Z`,
+                      false
+                    )}.
+                  </div>
+                ) : null}
+
+                {paReconciliation.issues.length > 0 ? (
+                  <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4">
+                    <h3 className="font-black text-rose-950">
+                      Review required before filing
+                    </h3>
+                    <ul className="mt-2 space-y-2 text-sm leading-6 text-rose-900">
+                      {paReconciliation.issues.map((issue, index) => (
+                        <li key={`${issue.reference}-${issue.code}-${index}`}>
+                          <strong>{issue.reference}:</strong> {issue.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
+                    The website ledger reconciles without tax-rate, refund, or dispute
+                    exceptions. A zero-sales quarter is valid and still produces the
+                    required state row.
+                  </div>
+                )}
+
+                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="bg-slate-100 text-xs font-black uppercase tracking-wide text-slate-600">
+                      <tr>
+                        <th className="px-4 py-3">Code</th>
+                        <th className="px-4 py-3">Jurisdiction</th>
+                        <th className="px-4 py-3 text-right">Gross</th>
+                        <th className="px-4 py-3 text-right">Taxable</th>
+                        <th className="px-4 py-3 text-right">Collected</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paReconciliation.rows.map((row) => {
+                        const definition = PA_SALES_TAX_CODES.find(
+                          (option) => option.code === row.code
+                        );
+                        return (
+                          <tr key={row.code} className="border-t border-slate-100">
+                            <td className="px-4 py-3 font-mono font-black text-slate-900">
+                              {row.code}
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-slate-700">
+                              {definition?.label}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono">
+                              {formatMoney(row.grossSalesCents)}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono">
+                              {formatMoney(row.netTaxableSalesCents)}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono">
+                              {formatMoney(row.actualSalesTaxCollectedCents)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <label className="text-sm font-bold text-slate-700">
+                    Sales License / Account ID
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={paAccountNumber}
+                      onChange={(event) => setPaAccountNumber(event.target.value)}
+                      placeholder="8 or 11 digits"
+                      className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    />
+                  </label>
+                  <label className="text-sm font-bold text-slate-700">
+                    Entity ID
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={paEntityId}
+                      onChange={(event) => setPaEntityId(event.target.value)}
+                      placeholder="9-digit FEIN / SSN / ITIN"
+                      className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    />
+                  </label>
+                  <label className="text-sm font-bold text-slate-700">
+                    Entity ID type
+                    <select
+                      value={paEntityIdType}
+                      onChange={(event) => setPaEntityIdType(event.target.value)}
+                      className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    >
+                      {PA_ENTITY_ID_TYPES.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {option.code} · {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-sm font-bold text-slate-700">
+                    PA state use tax due
+                    <div className="mt-2 flex min-h-11 items-center rounded-xl border border-slate-300 bg-white focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
+                      <span className="pl-3 text-slate-500">$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        autoComplete="off"
+                        value={paUseTaxDollars}
+                        onChange={(event) => {
+                          setPaUseTaxDollars(event.target.value);
+                          resetPaFilingReview();
+                        }}
+                        placeholder="0.00"
+                        className="min-h-10 w-full rounded-xl px-2 py-2 font-mono text-slate-950 outline-none"
+                      />
+                    </div>
+                    <span className="mt-1 block text-xs font-medium leading-5 text-slate-500">
+                      Enter the tax amount, not the untaxed purchase price.
+                    </span>
+                  </label>
+                  <label className="text-sm font-bold text-slate-700">
+                    Return credit
+                    <div className="mt-2 flex min-h-11 items-center rounded-xl border border-slate-300 bg-white focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
+                      <span className="pl-3 text-slate-500">$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        autoComplete="off"
+                        value={paCreditDollars}
+                        onChange={(event) => {
+                          setPaCreditDollars(event.target.value);
+                          resetPaFilingReview();
+                        }}
+                        placeholder="0.00"
+                        className="min-h-10 w-full rounded-xl px-2 py-2 font-mono text-slate-950 outline-none"
+                      />
+                    </div>
+                    <span className="mt-1 block text-xs font-medium leading-5 text-slate-500">
+                      Do not include prepayments or the timely-filer discount.
+                    </span>
+                  </label>
+                  <fieldset className="rounded-xl border border-slate-300 bg-white p-3">
+                    <legend className="px-1 text-sm font-bold text-slate-700">
+                      Credit type
+                    </legend>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={paTpprCredit}
+                        onChange={(event) => {
+                          setPaTpprCredit(event.target.checked);
+                          resetPaFilingReview();
+                        }}
+                        className="size-4 accent-blue-700"
+                      />
+                      TPPR credit
+                    </label>
+                    <label className="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={paOtherCredit}
+                        onChange={(event) => {
+                          setPaOtherCredit(event.target.checked);
+                          resetPaFilingReview();
+                        }}
+                        className="size-4 accent-blue-700"
+                      />
+                      Other credit
+                    </label>
+                  </fieldset>
+                </div>
+
+                <p className="rounded-xl bg-slate-100 px-4 py-3 text-xs leading-5 text-slate-600">
+                  The account and entity IDs stay only in this page&apos;s memory and
+                  the downloaded file. They are cleared when you choose Forget token
+                  or close the tab. E-911 is fixed at $0 because the current catalog
+                  contains no prepaid-wireless products.
+                </p>
+
+                <fieldset className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+                  <legend className="px-1 font-black text-slate-900">
+                    Quarterly review
+                  </legend>
+                  {[
+                    {
+                      checked: paWebsiteOnlyConfirmed,
+                      set: setPaWebsiteOnlyConfirmed,
+                      label:
+                        "All Pennsylvania sales for this period came through this website; there were no offline, exempt, or marketplace sales to add.",
+                    },
+                    {
+                      checked: paUseTaxReviewed,
+                      set: setPaUseTaxReviewed,
+                      label:
+                        "I reviewed untaxed business purchases used in Pennsylvania and entered any use tax due above.",
+                    },
+                    {
+                      checked: paStripeReviewed,
+                      set: setPaStripeReviewed,
+                      label:
+                        "I checked Stripe for live sales or refunds missing from this website ledger.",
+                    },
+                    {
+                      checked: paUploadReviewConfirmed,
+                      set: setPaUploadReviewConfirmed,
+                      label:
+                        "I will review myPATH's validation totals, select Submit, save the confirmation, and verify Processed status.",
+                    },
+                  ].map((confirmation) => (
+                    <label
+                      key={confirmation.label}
+                      className="flex items-start gap-3 text-sm font-semibold leading-6 text-slate-700"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={confirmation.checked}
+                        onChange={(event) => confirmation.set(event.target.checked)}
+                        className="mt-1 size-4 shrink-0 accent-blue-700"
+                      />
+                      {confirmation.label}
+                    </label>
+                  ))}
+                </fieldset>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={exportPaReturnCsv}
+                    disabled={
+                      paFilingLoading ||
+                      !paReconciliation.ready ||
+                      !paPeriodClosed ||
+                      !paAttestationsComplete
+                    }
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-700 px-5 py-2 text-sm font-black text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    {paFilingLoading
+                      ? "Checking live ledger…"
+                      : "Download myPATH return CSV"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportPaReconciliationCsv}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
+                  >
+                    Download website audit CSV
+                  </button>
+                </div>
+
+                <p className="text-xs leading-5 text-slate-500">
+                  Pennsylvania says myPATH does not support automation. The final
+                  authenticated upload, Submit action, and ACH approval therefore
+                  remain yours; the portal itself charges no filing fee, and ACH
+                  avoids the card convenience fee.
+                </p>
+              </div>
+            ) : null}
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

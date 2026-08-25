@@ -10,6 +10,12 @@ import {
   isFulfillmentStatusAllowedForMethod,
   isPaidFulfillmentAdvancement,
 } from "@/lib/store/fulfillmentStatus.mjs";
+import { paQuarterPeriod } from "@/lib/store/paSalesTaxReturn.mjs";
+
+const STORE_ORDER_ADMIN_SELECT =
+  "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, production_option_id, production_option_name, production_max_business_days, production_cents, production_due_date, expedited_capacity_state, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, stripe_shipping_rate_id, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, fulfillment_status, inventory_state, inventory_reserved_until, inventory_committed_at, inventory_released_at, inventory_release_reason, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, dispute_id, dispute_status, dispute_updated_at, tracking_number, tracking_url, internal_notes, store_order_items(id, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents), store_refunds(id, provider_refund_id, amount_cents, currency, status, pending_reason, failure_reason, provider_created_at, provider_updated_at)";
+const STORE_ORDER_PA_TAX_SELECT =
+  "id, order_number, paid_at, refunded_at, shipping_address, currency, subtotal_cents, production_cents, fulfillment_method, pickup_location, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, payment_livemode, dispute_id, dispute_status, dispute_updated_at, store_order_items(line_total_cents), store_refunds(amount_cents, currency, status, provider_created_at, provider_updated_at)";
 
 export class OrderStoreError extends Error {
   constructor(
@@ -317,9 +323,7 @@ export async function listStoreOrders({ limit = 250 } = {}) {
   const supabase = createSupabaseAdmin();
   const { data, error } = await supabase
     .from("store_orders")
-    .select(
-      "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, production_option_id, production_option_name, production_max_business_days, production_cents, production_due_date, expedited_capacity_state, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, stripe_shipping_rate_id, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, fulfillment_status, inventory_state, inventory_reserved_until, inventory_committed_at, inventory_released_at, inventory_release_reason, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, dispute_id, dispute_status, dispute_updated_at, tracking_number, tracking_url, internal_notes, store_order_items(id, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents), store_refunds(id, provider_refund_id, amount_cents, currency, status, pending_reason, failure_reason, provider_created_at, provider_updated_at)"
-    )
+    .select(STORE_ORDER_ADMIN_SELECT)
     .order("created_at", { ascending: false })
     .limit(Math.min(Math.max(Number(limit) || 250, 1), 500));
 
@@ -331,6 +335,104 @@ export async function listStoreOrders({ limit = 250 } = {}) {
   }
 
   return data ?? [];
+}
+
+async function listPagedStoreOrders(applyFilters) {
+  const supabase = createSupabaseAdmin();
+  const pageSize = 500;
+  const orders = [];
+
+  for (let offset = 0; ; offset += pageSize) {
+    let query = supabase
+      .from("store_orders")
+      .select(STORE_ORDER_PA_TAX_SELECT)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true });
+    query = applyFilters(query).range(offset, offset + pageSize - 1);
+
+    const { data, error } = await query;
+    if (error) {
+      throw new OrderStoreError("Tax-period orders could not be loaded.", {
+        code: "pa_tax_orders_load_failed",
+        cause: error,
+      });
+    }
+
+    const page = data ?? [];
+    orders.push(...page);
+    if (page.length < pageSize) break;
+  }
+
+  return orders;
+}
+
+function paTaxDestination(order) {
+  let parsed = order?.shipping_address;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return null;
+    }
+  }
+  const address =
+    parsed?.address && typeof parsed.address === "object"
+      ? parsed.address
+      : parsed && typeof parsed === "object"
+        ? parsed
+        : null;
+  if (!address) return null;
+  return {
+    city: address.city ?? null,
+    state: address.state ?? address.province ?? address.region ?? null,
+    postalCode: address.postal_code ?? address.postalCode ?? address.zip ?? null,
+    country: address.country ?? null,
+  };
+}
+
+export async function listStoreOrdersForPaTaxPeriod(periodEnd) {
+  const period = paQuarterPeriod(periodEnd);
+  const [periodSales, adjustmentOrders] = await Promise.all([
+    listPagedStoreOrders((query) =>
+      query
+        .gte("paid_at", period.startIso)
+        .lt("paid_at", period.endExclusiveIso)
+    ),
+    // Later refunds and disputes can affect a period even when the original
+    // sale occurred earlier, so include every order with an adjustment ledger
+    // and let the pure reconciler validate payment mode and place dated events.
+    listPagedStoreOrders((query) =>
+      query
+        .or("refunded_at.not.is.null,dispute_id.not.is.null")
+    ),
+  ]);
+  const byId = new Map();
+  for (const order of [...periodSales, ...adjustmentOrders]) {
+    byId.set(order.id, order);
+  }
+
+  const orders = [...byId.values()].map((order) => {
+    const address = paTaxDestination(order);
+
+    return {
+      ...order,
+      // Tax preparation needs only the jurisdictional destination. Do not send
+      // recipient name, email, phone, or street lines in this endpoint.
+      shipping_address: address
+        ? {
+            address: {
+              city: address.city ?? null,
+              state: address.state ?? address.province ?? address.region ?? null,
+              postal_code:
+                address.postalCode ?? null,
+              country: address.country ?? null,
+            },
+          }
+        : null,
+    };
+  });
+
+  return { period, orders };
 }
 
 export async function updateStoreOrderFulfillment({

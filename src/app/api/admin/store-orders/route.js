@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   listStoreOrders,
+  listStoreOrdersForPaTaxPeriod,
   updateStoreOrderFulfillment,
 } from "@/lib/store/orders";
 import { isStoreFulfillmentStatus } from "@/lib/store/fulfillmentStatus.mjs";
@@ -57,6 +58,19 @@ export async function GET(request) {
   }
 
   try {
+    const paPeriodEnd = request.nextUrl.searchParams.get("paPeriodEnd")?.trim();
+    if (paPeriodEnd) {
+      try {
+        const filingData = await listStoreOrdersForPaTaxPeriod(paPeriodEnd);
+        return json(filingData);
+      } catch (error) {
+        if (/calendar-quarter end date/i.test(String(error?.message ?? ""))) {
+          return json({ error: "Invalid Pennsylvania filing period." }, 400);
+        }
+        throw error;
+      }
+    }
+
     const orders = await listStoreOrders();
     return json({ orders });
   } catch (error) {

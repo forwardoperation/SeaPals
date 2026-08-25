@@ -142,6 +142,9 @@ vite.config.ts.timestamp-*
 # Local browser QA profiles, screenshots, and scratch copies
 tmp/
 
+# Private Pennsylvania filing exports
+seapals-pa-sales-tax-*.csv
+
 # Local video assets
 /public/videos/
 

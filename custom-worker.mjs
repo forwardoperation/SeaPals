@@ -9,6 +9,7 @@ import { enforceStoreCheckoutRateLimit } from "./src/lib/store/checkoutRateLimit
 import { reconcileOverdueInventoryReservations } from "./src/lib/store/inventoryReservationReconciler.mjs";
 import { drainFulfillmentDueNotifications } from "./src/lib/store/fulfillmentDueNotificationDrain.mjs";
 import { drainMerchantPurchaseNotifications } from "./src/lib/store/merchantOrderNotificationDrain.mjs";
+import { drainPaQuarterlyReportEmail } from "./src/lib/store/paQuarterlyReportDrain.mjs";
 
 export {
   BucketCachePurge,
@@ -64,7 +65,12 @@ export default {
       return;
     }
 
-    const [notificationResult, dueReminderResult, reservationResult] =
+    const [
+      notificationResult,
+      dueReminderResult,
+      reservationResult,
+      paQuarterlyReportResult,
+    ] =
       await Promise.allSettled([
         drainMerchantPurchaseNotifications({ environment }),
         drainFulfillmentDueNotifications({
@@ -73,6 +79,10 @@ export default {
           currentTime: () => new Date(),
         }),
         reconcileOverdueInventoryReservations({ environment }),
+        drainPaQuarterlyReportEmail({
+          environment,
+          now: new Date(controller.scheduledTime),
+        }),
       ]);
 
     if (notificationResult.status === "fulfilled") {
@@ -126,17 +136,36 @@ export default {
       );
     }
 
+    if (paQuarterlyReportResult.status === "fulfilled") {
+      console.log(
+        JSON.stringify({
+          message: "PA quarterly sales-tax report cron completed",
+          ...paQuarterlyReportResult.value,
+        })
+      );
+    } else {
+      console.error(
+        JSON.stringify({
+          message: "PA quarterly sales-tax report cron failed",
+          code: safeErrorCode(paQuarterlyReportResult.reason),
+        })
+      );
+    }
+
     if (
       notificationResult.status === "rejected" ||
       dueReminderResult.status === "rejected" ||
-      reservationResult.status === "rejected"
+      reservationResult.status === "rejected" ||
+      paQuarterlyReportResult.status === "rejected"
     ) {
       throw (
         notificationResult.status === "rejected"
           ? notificationResult.reason
           : dueReminderResult.status === "rejected"
             ? dueReminderResult.reason
-            : reservationResult.reason
+            : reservationResult.status === "rejected"
+              ? reservationResult.reason
+              : paQuarterlyReportResult.reason
       );
     }
   },

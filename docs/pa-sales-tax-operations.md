@@ -6,9 +6,10 @@ the repository and outside the public website.
 
 ## Before the first taxable order
 
-- Confirm in [myPATH](https://mypath.pa.gov/) that the sales-tax account is
-  active, note its effective date and assigned filing frequency, and clear any
-  account notices. The printed certificate does not show those items.
+- The supplied Pennsylvania notice assigns **quarterly** filing. Confirm in
+  [myPATH](https://mypath.pa.gov/) that the account is active, find its Location
+  Start Date and first open return period, and clear any account notices. Do not
+  assume the notice issue date is the registration effective date.
 - Prominently display a copy of the license at each Pennsylvania place of
   business as directed on the certificate. If the licensed location is not
   customer-facing, ask the Department of Revenue how it wants the display
@@ -57,12 +58,25 @@ together. Mailed orders continue using Automatic Tax.
 ## Filing and reconciliation
 
 - File every assigned Pennsylvania return, including zero-sales periods. Use
-  the frequency and due dates shown in myPATH rather than guessing from the
-  certificate.
+  the quarterly frequency on the notice and the open periods shown in myPATH.
+  For 2026, Q3 is due October 20, 2026 and Q4 is due January 20, 2027; confirm
+  that Q3 is actually the first open period before treating it as the first
+  return.
 - Reconcile both Stripe Tax's automatic-tax report for mailed orders and
   Checkout's manual-tax export for pickups to the private order ledger for each
-  filing period. Calculation and collection do not file or remit a return unless
-  the business separately enrolls in an available filing service.
+  filing period. Calculation and collection do not file or remit a return; the
+  owner must still submit the prepared file and payment through myPATH.
+- Use the private `/admin/orders` Pennsylvania filing panel and follow the
+  [free quarterly filing runbook](pa-automatic-filing.md). It prepares the
+  website return and audit CSV without a filing subscription, including the
+  manual-rate pickup path. myPATH still requires the owner to upload, review,
+  submit, and authorize payment.
+- The period-keyed Worker emails a privacy-safe preparation notice at 9:00 a.m.
+  Eastern on the first business day on or after the second calendar day after
+  quarter-end, leaving a full day for final payment reconciliation. It is not
+  a filing-status integration: open the authenticated workspace, resolve every
+  reported check, and submit the return and payment in myPATH by the listed
+  due date.
 - Include business use tax for taxable business purchases on which the vendor
   did not collect sales tax.
 - Retain auditable sales and purchase invoices, taxable and nontaxable sale

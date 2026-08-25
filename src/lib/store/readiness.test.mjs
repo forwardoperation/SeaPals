@@ -27,6 +27,10 @@ const launchEnvironment = {
   STORE_ORDER_NOTIFICATION_EMAIL: "maker@seapalstcg.com",
   STORE_ORDER_NOTIFICATION_DELIVERY_CONFIRMED: "true",
   STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED: "true",
+  STORE_PA_TAX_REPORT_ENABLED: "true",
+  STORE_PA_TAX_REPORT_EMAIL: "maker@seapalstcg.com",
+  STORE_PA_TAX_REPORT_START_PERIOD_END: "2026-09-30",
+  STORE_PA_TAX_REPORT_DELIVERY_CONFIRMED: "true",
   STORE_CHECKOUT_ENABLED: "false",
   STORE_AVAILABLE_PRODUCT_IDS: storeLaunchProductIds.join(","),
   STORE_TAX_REGISTRATION_CONFIRMED: "false",
@@ -86,6 +90,11 @@ globalThis.fetch = async (input) => {
     url.pathname === "/rest/v1/rpc/check_store_inventory_contract_v7"
   ) {
     payload = fixtures.supabaseInventoryContract;
+  } else if (
+    url.hostname === "example.supabase.co" &&
+    url.pathname === "/rest/v1/rpc/check_store_pa_quarterly_report_contract_v1"
+  ) {
+    payload = fixtures.supabasePaQuarterlyReportContract;
   } else if (
     url.hostname === "example.supabase.co" &&
     url.pathname === "/rest/v1/store_inventory"
@@ -182,6 +191,7 @@ function runOnlineLiveCheck(fixtureOverrides = {}, environmentOverrides = {}) {
       },
     ],
     supabaseInventoryContract: true,
+    supabasePaQuarterlyReportContract: true,
     supabaseInventory: storeLaunchProductIds.map((productId) => ({
       sku: storeProductDefinitionsById.get(productId).sku,
       on_hand_quantity: 0,

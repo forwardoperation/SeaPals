@@ -52,6 +52,12 @@
 		// One reminder is queued at 9:00 a.m. Eastern on the business day before
 		// each paid live order must be ready for shipment or pickup.
 		"STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED": "true",
+		// Q3 2026 closes September 30 and is due October 20. The same verified
+		// private sender/recipient path used by purchase alerts is already tested.
+		"STORE_PA_TAX_REPORT_ENABLED": "true",
+		"STORE_PA_TAX_REPORT_EMAIL": "maker@seapalstcg.com",
+		"STORE_PA_TAX_REPORT_START_PERIOD_END": "2026-09-30",
+		"STORE_PA_TAX_REPORT_DELIVERY_CONFIRMED": "true",
 		"EMAIL_FROM": "SeaPals <maker@seapalstcg.com>",
 		"STORE_CHECKOUT_ENABLED": "true",
 		"STORE_SHOW_FUTURE_PRODUCTS": "false",

@@ -104,6 +104,14 @@ const orderNotificationDeliveryConfirmed = trueValue(
 const fulfillmentDueNotificationEnabled = trueValue(
   "STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED"
 );
+const paTaxReportEnabled = trueValue("STORE_PA_TAX_REPORT_ENABLED");
+const paTaxReportDeliveryConfirmed = trueValue(
+  "STORE_PA_TAX_REPORT_DELIVERY_CONFIRMED"
+);
+const paTaxReportEmail = emailAddress(process.env.STORE_PA_TAX_REPORT_EMAIL);
+const paTaxReportStartPeriodEnd = String(
+  process.env.STORE_PA_TAX_REPORT_START_PERIOD_END ?? ""
+).trim();
 const orderNotificationEmail = emailAddress(
   process.env.STORE_ORDER_NOTIFICATION_EMAIL
 );
@@ -327,6 +335,20 @@ addCheck(
   "Fulfillment due reminders",
   fulfillmentDueNotificationEnabled,
   "Set STORE_FULFILLMENT_DUE_NOTIFICATION_ENABLED=true so paid live orders are checked before their ready-to-ship or ready-for-pickup date."
+);
+addCheck(
+  "PA quarterly report email",
+  paTaxReportEnabled &&
+    Boolean(paTaxReportEmail) &&
+    /^\d{4}-(?:03-31|06-30|09-30|12-31)$/.test(
+      paTaxReportStartPeriodEnd
+    ),
+  "Enable the quarterly report and configure its explicit private recipient and first period."
+);
+addCheck(
+  "PA quarterly report delivery confirmation",
+  paTaxReportDeliveryConfirmed,
+  "Set STORE_PA_TAX_REPORT_DELIVERY_CONFIRMED=true only for a verified sender/private-recipient path."
 );
 addCheck(
   "Explicit product allowlist",
@@ -686,6 +708,7 @@ if (online && stripeKeyPattern.test(stripeKey)) {
       "Stripe must report an active live US/PA state_sales_tax registration before launch."
     );
   }
+
 }
 
 if (
@@ -810,6 +833,34 @@ if (
       false,
       "Run the current supabase/store-orders.sql migration before checkout."
     );
+  }
+
+  if (paTaxReportEnabled) {
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/rpc/check_store_pa_quarterly_report_contract_v1`,
+        {
+          method: "POST",
+          headers: { ...supabaseHeaders, "Content-Type": "application/json" },
+          body: "{}",
+        }
+      );
+      if (!response.ok || (await response.json()) !== true) {
+        throw new Error("PA quarterly report RPC contract is unavailable.");
+      }
+
+      addCheck(
+        "Supabase PA quarterly report contract",
+        true,
+        "The private aggregate outbox and report-ledger RPCs are installed."
+      );
+    } catch {
+      addCheck(
+        "Supabase PA quarterly report contract",
+        false,
+        "Apply supabase/pa-quarterly-report-email.sql before enabling scheduled reports."
+      );
+    }
   }
 }
 
