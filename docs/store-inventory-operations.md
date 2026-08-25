@@ -43,10 +43,12 @@ Use a checkout-disabled maintenance window:
    maximum number of additional units that dedicated materials and labor can
    build and dispatch within the published window, after accounting for work
    already promised. Use the smaller supported limit when materials and labor
-   produce different answers. The owner has set the initial cap at 10 for each
-   of the 12 prepared SKUs. The reviewed one-time seed is
-   `supabase/store-launch-capacity.sql`; it inserts one row for every prepared
-   catalog SKU. Its values are reproduced here for operational review:
+   produce different answers. The seed source plans an initial cap of 10 for
+   each of 15 prepared SKUs. The three Dive Pack values are targets, not a claim
+   that their production capacity or inventory rows have been verified. The
+   reviewed one-time seed is `supabase/store-launch-capacity.sql`; it inserts
+   only missing rows and never restores existing rows. Its planned values are
+   reproduced here for operational review:
 
    ```sql
    insert into public.store_inventory (sku, on_hand_quantity)
@@ -59,6 +61,9 @@ Use a checkout-disabled maintenance window:
      ('SP-DECK-OPEN-OCEAN-HUNT', 10),
      ('SP-DECK-MURKY-WATER', 10),
      ('SP-DECK-STINGING-FORTRESS', 10),
+     ('SP-PACK-OCEANIC', 10),
+     ('SP-PACK-REEF', 10),
+     ('SP-PACK-DEEP', 10),
      ('SP-ACC-SET', 10),
      ('SP-ACC-CONDITIONS-DECK', 10),
      ('SP-ACC-DICE-PACK', 10),
@@ -66,16 +71,19 @@ Use a checkout-disabled maintenance window:
    on conflict (sku) do nothing;
    ```
 
-   This example records the owner-approved caps; it does not prove that shared
-   resources can support 120 simultaneous units. The public allowlist contains
-   the Starter Kit, seven deck SKUs, and Accessories Kit (90 units of initial
-   aggregate ATP); the other three rows remain private preparation records and
-   must not be treated as public availability. The Starter Kit row was verified
-   at 9 ATP and 0 reserved on 2026-08-16 after an earlier test unit; never rerun
-   the seed to restore it. Confirm the aggregate material
-   and labor plan before running it. Never use an `on conflict ... do update`
-   deployment script: redeploying it could replenish already-sold capacity.
-   Never reset a count merely because a new day or week began.
+   This example describes a planned 150-unit from-empty maximum; it neither
+   proves shared resources can support that promise nor proves all 15 rows exist
+   in production. The current live allowlist contains the Starter Kit, seven
+   deck SKUs, and Accessories Kit (90 units of intended initial aggregate ATP).
+   The three visible Dive Packs are prelaunch and would add a planned 30 only
+   after their release gates pass. The other three rows remain private
+   preparation records and must not be treated as public availability. The
+   Starter Kit row was verified at 9 ATP and 0 reserved on 2026-08-16 after an
+   earlier test unit; never rerun the seed to restore it. Confirm current
+   production rows by query and the aggregate material and labor plan before
+   running the seed. Never use an `on conflict ... do update` deployment script:
+   redeploying it could replenish already-sold capacity. Never reset a count
+   merely because a new day or week began.
 5. Treat Starter Kits and Accessories Kits as independent SKUs. They may be
    assembled after purchase, but this ledger does not allocate shared component
    stock across a bundle and its individually sold components. Until a
@@ -106,7 +114,16 @@ Use a checkout-disabled maintenance window:
    expedited workload and hard 10-order daily limit when that option is
    enabled, verifies its Eastern allocation boundary and exact Stripe Handling
    Charge tax code, drains every legacy pay-capable Session, and all test
-   results pass.
+    results pass.
+
+For the three Dive Packs, keep the existing nine-product live allowlist in
+place until this release sequence is complete: verify contents, representative
+art, packaging/fulfillment, and five-business-day capacity; deploy
+`STORE_CHECKOUT_ENABLED=false`; apply the non-replenishing seed and query the
+three `SP-PACK-*` rows; stage the twelve-product allowlist and run both launch
+and online readiness checks; then add the three Dive Pack product IDs and
+re-enable checkout. Do not use the seed file itself as evidence that a row was
+applied.
 
 Applying the app before the SQL migration is safe: the missing reservation RPC
 causes checkout to fail before Stripe is called. Do not leave the old app live
@@ -123,12 +140,16 @@ The database column remains named `on_hand_quantity`, but for a made-to-order
 SKU its operational meaning is the currently unconsumed ATP capacity. It is not
 a raw-material ledger, production schedule, or bill-of-materials system.
 
-The owner-approved initial cap is 10 and the standard build-and-dispatch window
-is five business days for each of the 12 prepared SKUs. The public catalog uses
-the Starter Kit, seven deck rows, and Accessories Kit row. Before seeding all rows,
-verify that dedicated materials and labor can support the aggregate promise;
-twelve separate rows at 10 can accept up to 120 units concurrently. If that is
-not supportable, dedicate resources or lower the affected values.
+The established nine live products use an initial cap of 10 and a standard
+five-business-day build-and-dispatch window. The owner approved the same
+five-business-day policy for each Dive Pack; the seed proposes an initial cap of
+10 subject to physical capacity verification before enablement. The visible
+public catalog has 12 products, but the live allowlist remains the Starter Kit,
+seven deck rows, and Accessories Kit row. The full seed source plans 15 rows; if
+every row were missing, it could insert up to 150 units of intended initial capacity.
+That arithmetic is not evidence of current production state or aggregate
+support. Query the ledger and verify dedicated materials and labor before any
+cutover; dedicate resources or lower affected values when 10 is not supportable.
 
 A reservation reduces customer-visible availability while payment is pending.
 A paid order permanently consumes one of the ten slots for its SKU. Restore one
@@ -146,12 +167,15 @@ production deadline as an arrival date.
 
 ## Shipping weights, packages, and order limits
 
-The owner approved the launch shipping model on **2026-08-15**. For checkout
-tiering, each deck has a conservative `shippingWeightOunces` value of 8 ounces;
-each Starter Kit and accessory SKU has a conservative value of 16 ounces.
-Multiply by quantity and sum the order before creating Checkout. These values
-intentionally avoid understating postage and are separate from inventory ATP
-units.
+The owner approved the launch shipping model on **2026-08-15**. The Dive Pack
+definitions use a planned conservative 8-ounce checkout input. For checkout
+tiering, each deck or set-specific Dive Pack has a
+`shippingWeightOunces` value of 8 ounces; each Starter Kit and accessory SKU has
+a value of 16 ounces. Before enabling a Dive Pack, verify a complete packed
+sample does not exceed that conservative input and record its packaging
+procedure; no Dive Pack parcel measurement or material is asserted here.
+Multiply quantity by weight and sum the order before creating Checkout. These
+values are separate from inventory ATP units.
 
 Reject an online order above **8 items** or **128 ounces (8 lb)**. Select the
 customer-facing rate from the approved conservative order weight:

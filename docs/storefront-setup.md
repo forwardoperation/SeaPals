@@ -6,21 +6,30 @@ cart and no payment can start until its product ID is explicitly allowlisted,
 the private order ledger and Stripe webhook are ready, and the launch switch is
 turned on.
 
-## Current launch catalog
+## Current public catalog and live allowlist
 
 The owner approved the first public catalog on **2026-08-15** as seven `$22`
 ready-to-play decks, then approved the `$12` Accessories Kit and `$44`
-two-player Starter Kit on **2026-08-16**. The three `$5` individual accessories
-and future apparel, storage, and plush products remain defined for preparation
-but are hidden and unavailable by default.
+two-player Starter Kit on **2026-08-16**. Those nine products remain the live
+checkout allowlist. On **2026-08-24**, the owner approved the names, `$10`
+prices, and same five-business-day made-to-order policy for three set-specific
+Dive Packs: Pelagic Rush for the Oceanic Set, Coral Bloom for the Reef Set, and
+Abyssal Glow for the Deep Set. The Dive Packs appear in the public catalog as
+prelaunch products but are not currently allowlisted for checkout. The three
+`$5` individual accessories and future apparel, storage, and plush products
+remain defined for preparation but are hidden and unavailable by default.
 
-All nine public prices are server-controlled and owner-approved. Each deck's
-60-card code manifest is confirmed. Every public SKU began with an approved
-made-to-order ATP capacity of 10 and a standard build-and-dispatch window of
-five business days. The Starter Kit contains the Coral Garden and Blue Water
-60-card decks, one 18-card Conditions Deck, seven dice (D4, D6, D8, D10, D12,
-D20, and D100), and 15 Reef Point tokens. The Accessories Kit contains the same
-18-card Conditions Deck, seven dice, and 15 Reef Point tokens.
+All twelve displayed prices are server-controlled and owner-approved. Each
+established deck's 60-card code manifest is confirmed, and the nine live SKUs
+use verified production inventory with a standard five-business-day
+build-and-dispatch window. Each Dive Pack definition represents one Dive Pack
+from its named set; no cards-per-pack count, collation, wrapper material, applied
+inventory row, or completed fulfillment verification is claimed. Its planned
+initial ATP is 10 after those gates are completed. The Starter Kit contains the
+Coral Garden and Blue Water 60-card decks, one 18-card Conditions Deck, seven
+dice (D4, D6, D8, D10, D12, D20, and D100), and 15 Reef Point tokens. The
+Accessories Kit contains the same 18-card Conditions Deck, seven dice, and 15
+Reef Point tokens.
 The optional expedited choice adds $10 once per order for build and dispatch
 within one business day, subject to a hard limit of 10 expedited orders per
 Eastern-time production due date; carrier transit time is separate. The
@@ -62,7 +71,9 @@ measured separately in Stripe.
 ## What is included
 
 - `/store`: responsive launch catalog containing the two-player Starter Kit,
-  seven approved Expansion Decks, and the Accessories Kit. Prepared future
+  seven approved Expansion Decks, three prelaunch set-specific Dive Packs, and
+  the Accessories Kit. The established nine are live; the Dive Packs remain
+  visible but unavailable until their release gates pass. Prepared future
   products require an explicit private preview switch.
 - `/api/store/checkout`: server-priced cart validation and Stripe-hosted
   Checkout. Payment credentials never pass through SeaPals servers.
@@ -88,18 +99,23 @@ SeaPals stores order, customer contact, delivery, total, payment state,
 processor references, receipt references, and fulfillment records. Stripe hosts
 the payment page and retains the underlying payment record.
 
-## Owner-approved launch prices
+## Owner-approved catalog prices
 
 SeaPals Credits are intentionally excluded. The repository currently uses
 these server-controlled cash-price definitions. The owner approved the seven
 launch decks at $22 each on 2026-08-15, then the Accessories Kit at $12 and
-Starter Kit at $44 on 2026-08-16; the other rows remain unavailable:
+Starter Kit at $44 on 2026-08-16, then three set-specific Dive Packs at $10
+each on 2026-08-24. Price approval does not enable a product; the Dive Pack rows
+remain prelaunch and the other future rows remain unavailable:
 
-| Product | Configured price | Included | Initial availability |
+| Product | Configured price | Included | Catalog state |
 | --- | ---: | --- | --- |
-| Each Expansion Deck | $22 | One 60-card ready-to-play deck | **Launch** |
-| Starter Kit | $44 | Coral Garden and Blue Water 60-card decks, one 18-card Conditions Deck, seven dice (D4, D6, D8, D10, D12, D20, D100), and 15 Reef Point tokens | **Launch** |
-| Accessories Kit | $12 | One 18-card Conditions Deck, seven dice (D4, D6, D8, D10, D12, D20, D100), and 15 Reef Point tokens | **Launch** |
+| Each Expansion Deck | $22 | One 60-card ready-to-play deck | **Live** |
+| Pelagic Rush — Oceanic Set Dive Pack | $10 | One Oceanic Set Dive Pack | **Prelaunch; not allowlisted** |
+| Coral Bloom — Reef Set Dive Pack | $10 | One Reef Set Dive Pack | **Prelaunch; not allowlisted** |
+| Abyssal Glow — Deep Set Dive Pack | $10 | One Deep Set Dive Pack | **Prelaunch; not allowlisted** |
+| Starter Kit | $44 | Coral Garden and Blue Water 60-card decks, one 18-card Conditions Deck, seven dice (D4, D6, D8, D10, D12, D20, D100), and 15 Reef Point tokens | **Live** |
+| Accessories Kit | $12 | One 18-card Conditions Deck, seven dice (D4, D6, D8, D10, D12, D20, D100), and 15 Reef Point tokens | **Live** |
 | Conditions Deck | $5 | 18 cards; title-list/sample review remains required before a standalone release | Future |
 | Dice Pack | $5 | One each D4, D6, D8, D10, D12, D20, D100 | Future |
 | Reef Point (RP) Token Set | $5 | 15 tokens | Future |
@@ -109,6 +125,10 @@ Disruption, Stinging Fortress, Darkness Shroud, and Open Ocean. Each code
 manifest resolves to exactly 60 cards. The local print-sheet folder contains a
 sheet set for every deck. The owner approved those 60-card manifests and an
 initial made-to-order ATP capacity of 10 per launch deck on 2026-08-15.
+The Dive Pack approval defines each sellable unit as one set-specific Dive Pack
+and intentionally does not claim a cards-per-pack count or collation. Contents,
+representative art, packaging/fulfillment, and production-row verification
+remain release gates.
 
 The prepared individual accessories plus future Custom T-Shirt, Card Binder,
 Backpack, and Plush Toy concepts are hidden
@@ -128,12 +148,17 @@ quarterly Pennsylvania email.
 Do not seed capacity merely because the schema has been applied. During the
 checkout-disabled production cutover, follow
 `docs/store-inventory-operations.md` to drain any legacy payment sessions and
-then run the non-replenishing `supabase/store-launch-capacity.sql` seed. It
-creates twelve prepared SKU rows at the owner's approved ATP limit of 10 and
-leaves existing rows untouched on reruns.
+then run the non-replenishing `supabase/store-launch-capacity.sql` seed. The
+file defines the planned 15-row catalog at an intended initial ATP limit of 10;
+it inserts only missing rows and leaves existing, potentially sold-down rows
+untouched. Its presence in source or a deployment does not prove that all 15
+rows exist in production. Query production after the cutover. In particular,
+the three `SP-PACK-*` rows remain a pending Dive Pack release step until their
+contents, representative art, packaging/fulfillment procedure, and
+five-business-day capacity have been verified.
 
-It is safe to rerun when this branch changes: the script adds missing catalog
-and receipt columns and replaces the payment-event function. The tables have
+`supabase/store-orders.sql` is safe to rerun when this branch changes: it adds
+missing catalog and receipt columns and replaces the payment-event function. The tables have
 row-level security enabled and deny the public `anon` and `authenticated`
 roles. Store routes use the server-only service-role key. Never expose
 `SUPABASE_SERVICE_ROLE_KEY` to browser code.
@@ -272,7 +297,7 @@ defaults; every price can still be overridden with the matching
 its final SKU and retail price are known.
 
 Set `STORE_AVAILABLE_PRODUCT_IDS` to a comma-separated list of reviewed product
-IDs, for example:
+IDs. The current live nine-product value is:
 
 `starter-kit,blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,accessory-set`
 
@@ -280,12 +305,27 @@ There is deliberately no `all` wildcard. The server rejects unknown,
 unavailable, client-priced, over-quantity, or stale cart items. Add a product
 only after its inventory, packaging, contents, price, tax treatment, and
 fulfillment procedure are verified. Live mode also requires the independent
-`STORE_CATALOG_CONFIRMED=true` owner gate; keep it false until every allowlisted
-SKU has verified finished stock or owner-approved made-to-order ATP capacity,
-packaged contents, an approved price, a published build-and-dispatch window,
-and a repeatable fulfillment procedure. The owner accepted the current
-representative art on 2026-08-15 and deferred packaged-product photography, so
-photography is not a launch gate.
+`STORE_CATALOG_CONFIRMED=true` owner gate. It currently confirms the established
+nine-product allowlist only. Before extending the allowlist, every added SKU
+must have verified finished stock or owner-approved made-to-order ATP capacity,
+verified packaged contents, an approved price, a published build-and-dispatch
+window, and a repeatable fulfillment procedure. The representative-art
+approval recorded on 2026-08-15 covers the established catalog, not the new
+Dive Packs. Packaged-product photography remains optional, but representative
+Dive Pack art is still a release gate.
+
+Release the Dive Packs in this order:
+
+1. Verify each pack's contents, representative art, packaging/fulfillment
+   procedure, and capacity to meet the approved five-business-day policy.
+2. Set `STORE_CHECKOUT_ENABLED=false`, deploy that closed state, and apply the
+   non-replenishing capacity seed. Query all three `SP-PACK-*` rows and confirm
+   the intended ATP and zero unexplained reservations; do not infer this from
+   the SQL file.
+3. Stage all twelve product IDs and run `npm.cmd run store:check:launch` plus
+   `npm.cmd run store:check:online` while checkout remains disabled.
+4. Only after both checks and the physical release gates pass, deploy the three
+   Dive Pack IDs in `STORE_AVAILABLE_PRODUCT_IDS` and re-enable checkout.
 
 Production speed is selected once for the whole order:
 
@@ -328,9 +368,12 @@ if it is enabled because the private order ledger does not yet reconcile a
 offering any promotion code, or staff totals can disagree with Stripe.
 
 Keep `STORE_SHOW_FUTURE_PRODUCTS=false` for the launch store. Run
-`npm.cmd run store:check:launch` to verify the exact nine-product allowlist and
-the owner-approved server-controlled prices: $44 for the Starter Kit, $22 per
-deck, and $12 for the Accessories Kit.
+`npm.cmd run store:check:online` against the current nine-product production
+allowlist. `npm.cmd run store:check:launch` is the Dive Pack release check: run
+it only after staging the exact twelve-product allowlist during the
+checkout-disabled cutover. It verifies the owner-approved server-controlled
+prices: $44 for the Starter Kit, $22 per deck, $10 per set-specific Dive Pack,
+and $12 for the Accessories Kit.
 
 The owner-approved fulfillment choices and conservative weight tiers are
 server-controlled:
@@ -348,13 +391,18 @@ Configure the base tier with `STORE_STANDARD_SHIPPING_CENTS` and
 legacy Standard base-rate fallback.
 
 Checkout uses the catalog's conservative `shippingWeightOunces`: 8 ounces for
-each deck and 16 ounces for each Starter Kit or accessory SKU. It sums quantity
-times weight, selects the base tier through 16 ounces and the higher tier above
-16 ounces, and rejects orders above 8 items or 128 ounces. Never accept a
-client-supplied weight or use an unpackaged product weight for tier selection.
+each deck or set-specific Dive Pack and 16 ounces for each Starter Kit or
+accessory SKU. It sums quantity times weight, selects the base tier through 16
+ounces and the higher tier above 16 ounces, and rejects orders above 8 items or
+128 ounces. Never accept a client-supplied weight or use an unpackaged product
+weight for tier selection.
 
-The shipping approval and Pirate Ship evidence were recorded on 2026-08-15 for
-Elverson 19520 to Los Angeles 90001:
+The original shipping approval and Pirate Ship evidence were recorded on
+2026-08-15 for Elverson 19520 to Los Angeles 90001. The Dive Pack definitions
+use the same conservative 8-ounce checkout input as a prelaunch target; verify a
+complete packed sample before allowlisting them. The measured parcel table
+remains evidence for the listed deck, kit, and maximum cart samples and does not
+assert Dive Pack dimensions or a separate quote:
 
 | Confirmed ready-to-mail parcel | Weight and outside dimensions | Economy postage | Priority postage | Economy / Priority incl. $0.75 box |
 | --- | --- | ---: | ---: | --- |
@@ -455,10 +503,11 @@ Keep `STORE_CHECKOUT_ENABLED=false` while preparing the store. Then:
 Stripe sandbox mode does not isolate the Supabase ledger or ATP rows. Use a
 separate staging Supabase project for paid lifecycle tests and allowlist only a
 nonpublic test product such as `conditions-deck`. Do not use the production
-ledger's Starter Kit, Accessories Kit, or seven public deck rows. A refund
-intentionally does not restock inventory; any deliberate production-ledger test
-unit remains consumed unless restored through a documented, reviewed capacity
-adjustment.
+ledger's Starter Kit, Accessories Kit, seven public deck rows, or any prelaunch
+`SP-PACK-*` row if one exists. The seed file is not evidence that those three
+rows exist. A refund intentionally does not restock inventory; any
+deliberate production-ledger test unit remains consumed unless restored through
+a documented, reviewed capacity adjustment.
 
 1. Run the SQL and add Stripe/Supabase test credentials.
 2. Allowlist only test-ready products and set realistic Standard and Priority
@@ -502,10 +551,14 @@ npm.cmd run cloudflare:build
 ```
 
 The seven-deck catalog audit was recorded on 2026-08-15; the Accessories Kit,
-Starter Kit, and 18-card Conditions Deck count were approved on 2026-08-16, so
-`STORE_CATALOG_CONFIRMED=true`. Keep the independent
-`STORE_CHECKOUT_ENABLED` switch true only while the production launch checks
-remain satisfied.
+Starter Kit, and 18-card Conditions Deck count were approved on 2026-08-16.
+Those approvals support `STORE_CATALOG_CONFIRMED=true` for the current
+nine-product live allowlist. The 2026-08-24 Dive Pack approval covers names,
+$10 prices, and the same five-business-day policy, but not contents,
+representative art, completed fulfillment verification, or production inventory
+rows. Keep the Dive Packs prelaunch until those gates pass, and keep the
+independent `STORE_CHECKOUT_ENABLED` switch true only while the production
+checks for every live product remain satisfied.
 
 ## 7. Receipts and fulfillment
 
@@ -646,18 +699,27 @@ copy with the store's private launch records.
   and 15 Reef Point tokens.
 - Preserve the Accessories Kit contents: one 18-card Conditions Deck, one each
   D4, D6, D8, D10, D12, D20, and D100, and 15 Reef Point tokens.
-- Preserve the approved $44 Starter Kit, $22 deck, and $12 Accessories Kit
-  prices, the reviewed per-SKU ATP capacity, and seven 60-card deck manifests.
-- Retain the confirmed 0.5-pound deck, 1-pound Starter Kit, and 8-pound maximum
-  parcel measurements; keep the tested $10/$15 and $20/$35 tier boundary plus
-  the 8-item/128-ounce rejection unchanged while
+- Preserve the approved $44 Starter Kit, $22 deck, $10 set-specific Dive Pack,
+  and $12 Accessories Kit prices, the reviewed capacity for established SKUs,
+  the planned initial ATP of 10 per Dive Pack, and seven 60-card deck manifests.
+  Do not publish a Dive Pack card count or collation until separately approved.
+- Retain the 0.5-pound conservative checkout weight for each deck and the
+  planned 0.5-pound checkout input for each Dive Pack, the 1-pound
+  Starter Kit weight, and the 8-pound maximum order weight;
+  keep the tested $10/$15 and $20/$35 tier boundary plus the 8-item/128-ounce
+  rejection unchanged while
   `STORE_SHIPPING_RATES_CONFIRMED=true`.
 - Test the standard five-business-day and expedited one-business-day production
   paths, confirm the $10 fee is once per order, and verify the hard 10-order
   rush limit, Eastern due-date allocation, and terminal-unpaid slot release.
-- Keep `STORE_CATALOG_CONFIRMED=true` only while the exact nine enabled products
-  continue to satisfy those checks; an allowlist by itself is not an inventory
-  reservation system.
+- Keep `STORE_CATALOG_CONFIRMED=true` only while the exact nine currently
+  enabled products continue to satisfy those checks; an allowlist by itself is
+  not an inventory reservation system.
+- Keep the three Dive Packs visible but unavailable until contents,
+  representative art, packaging/fulfillment, five-business-day capacity, and
+  their production inventory rows are verified. Then use the checkout-disabled
+  seed, query, twelve-product launch/online-check, allowlist, and re-enable
+  sequence documented above.
 - Confirm the Elverson pickup workflow and pickup tax sourcing before setting
   `STORE_PICKUP_TAX_CONFIRMED=true`; publish only a pickup address approved for
   customers.

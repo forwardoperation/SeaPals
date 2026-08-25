@@ -66,3 +66,15 @@ test("public survey summaries expose only authored aggregate choices", () => {
   assert.equal(summary.free_text, undefined);
   assert.doesNotMatch(JSON.stringify(summary), /Private Person|private@example|phone/i);
 });
+
+test("legacy Booster pack interest rolls into the authored Dive Packs summary", () => {
+  const summary = summarizeSurveyResponses([
+    { answers: { see_next: ["Booster packs"] } },
+    { answers: { see_next: ["Dive Packs"] } },
+  ]);
+
+  assert.deepEqual(summary.see_next, {
+    type: "checkbox",
+    counts: { "Dive Packs": 2 },
+  });
+});

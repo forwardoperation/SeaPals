@@ -248,7 +248,7 @@ function runOnlineLiveCheck(fixtureOverrides = {}, environmentOverrides = {}) {
   );
 }
 
-test("launch readiness accepts the exact nine approved products while checkout is off", () => {
+test("launch readiness accepts the exact twelve approved products while checkout is off", () => {
   const result = runLaunchCheck();
 
   assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -285,6 +285,16 @@ test("launch readiness rejects a deck price that differs from the approved $22",
   assert.equal(result.status, 1);
   assert.match(result.stdout, /TODO.*Approved launch prices/);
   assert.match(result.stdout, /blue-water/);
+});
+
+test("launch readiness rejects a Dive Pack price that differs from the approved $10", () => {
+  const result = runLaunchCheck({
+    STORE_PRICE_OCEANIC_DIVE_PACK_CENTS: "999",
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /TODO.*Approved launch prices/);
+  assert.match(result.stdout, /oceanic-dive-pack/);
 });
 
 test("launch readiness rejects an Accessories Kit price other than $12", () => {

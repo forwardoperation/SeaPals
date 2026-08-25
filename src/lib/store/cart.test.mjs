@@ -124,11 +124,16 @@ test("the catalog definitions use the established cash prices", () => {
   const expansionDecks = storeProductDefinitions.filter(
     (product) => product.category === "expansion-decks"
   );
+  const divePacks = storeProductDefinitions.filter(
+    (product) => product.category === "dive-packs"
+  );
 
   assert.equal(definitionsById.get("starter-kit").defaultPriceCents, 4400);
   assert.equal(definitionsById.get("accessory-set").defaultPriceCents, 1200);
   assert.equal(expansionDecks.length, 7);
   assert.ok(expansionDecks.every((product) => product.defaultPriceCents === 2200));
+  assert.equal(divePacks.length, 3);
+  assert.ok(divePacks.every((product) => product.defaultPriceCents === 1000));
   assert.equal(
     definitionsById.get("dice-pack").details,
     "7 dice: one each D4, D6, D8, D10, D12, D20, and D100"
@@ -156,7 +161,7 @@ test("the catalog definitions use the established cash prices", () => {
   }
 });
 
-test("the default storefront is limited to the nine approved launch products", () => {
+test("the default storefront is limited to the twelve approved launch products", () => {
   withStoreEnvironment({}, () => {
     const configuration = getStoreConfiguration();
 
@@ -164,13 +169,19 @@ test("the default storefront is limited to the nine approved launch products", (
       configuration.products.map((product) => product.id),
       storeLaunchProductIds
     );
-    assert.equal(configuration.products.length, 9);
+    assert.equal(configuration.products.length, 12);
     assert.equal(
       configuration.products.some((product) => product.id === "starter-kit"),
       true
     );
     assert.equal(
       configuration.products.some((product) => product.id === "accessory-set"),
+      true
+    );
+    assert.equal(
+      configuration.products.some(
+        (product) => product.id === "oceanic-dive-pack"
+      ),
       true
     );
     assert.equal(
@@ -458,7 +469,7 @@ test("game accessories retain their server-controlled source prices", () => {
   );
 });
 
-test("the nine-product launch catalog preserves the eight-item cart limit", () => {
+test("the twelve-product launch catalog preserves the eight-item cart limit", () => {
   withStoreEnvironment(
     {
       ...infrastructureEnvironment,
@@ -475,8 +486,8 @@ test("the nine-product launch catalog preserves the eight-item cart limit", () =
       const decks = configuration.products.filter((product) => product.deckId);
 
       assert.deepEqual(ids, storeLaunchProductIds);
-      assert.equal(new Set(ids).size, 9);
-      assert.equal(new Set(skus).size, 9);
+      assert.equal(new Set(ids).size, 12);
+      assert.equal(new Set(skus).size, 12);
       assert.equal(decks.length, 7);
       assert.ok(configuration.products.every((product) => product.madeToOrder));
       assert.equal(

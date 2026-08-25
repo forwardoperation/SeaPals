@@ -36,6 +36,7 @@ const FALLBACK_PRODUCTION_OPTIONS = Object.freeze([
 const CATEGORY_ORDER = [
   "starter-kits",
   "expansion-decks",
+  "dive-packs",
   "game-accessories",
   "apparel",
   "storage",
@@ -54,6 +55,12 @@ const CATEGORY_META = {
     eyebrow: "Choose a strategy",
     description:
       "Seven ready-to-play 60-card options, each with a different way to grow and defend your reef.",
+  },
+  "dive-packs": {
+    label: "Dive Packs",
+    eyebrow: "Discover a new current",
+    description:
+      "Choose an Oceanic, Reef, or Deep Dive Pack and add cards from your chosen set to your SeaPals collection.",
   },
   "game-accessories": {
     label: "Game Accessories",
@@ -709,7 +716,8 @@ export default function Storefront({
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
               The two-player Starter Kit, seven ready-to-play SeaPals decks,
-              and the Accessories Kit, built to order for your next reef.
+              three set-specific Dive Packs, and the Accessories Kit, built
+              to order for your next reef.
             </p>
 
             {highlightedProduct ? (
@@ -794,7 +802,7 @@ export default function Storefront({
             <p className="max-w-md text-sm leading-6 text-slate-500">
               {checkoutEnabled
                 ? "Choose your products and add available items to your order. Prices and availability reflect the current catalog."
-                : "The approved $44 Starter Kit, seven $22 decks, and $12 Accessories Kit are shown. Ordering remains disabled until the final launch checks are complete."}
+                : "The approved $44 Starter Kit, seven $22 decks, three $10 Dive Packs, and $12 Accessories Kit are shown. Ordering remains disabled until the final launch checks are complete."}
             </p>
           </div>
 

@@ -15,6 +15,7 @@ The current families are:
 
 - `KIT` for multi-product kits;
 - `DECK` for ready-to-play decks;
+- `PACK` for set-specific Dive Packs;
 - `ACC` for game accessories; and
 - `MERCH` for future apparel, storage, and character merchandise.
 
@@ -31,12 +32,15 @@ create a new SKU such as a reviewed `-V2` revision; never repurpose an SKU that
 appears in order history. Display names and descriptions may change without a
 new SKU when the fulfilled product remains interchangeable.
 
-## Prepared inventory SKUs
+## Catalog and prepared inventory SKUs
 
 These values are canonical and must match their product definitions and private
-`store_inventory.sku` rows exactly. The public allowlist contains
-`SP-KIT-STARTER`, the seven `SP-DECK-*` rows, and `SP-ACC-SET`; keeping the
-individual accessory rows prepared does not authorize them for sale.
+`store_inventory.sku` rows exactly when those rows exist. The public catalog
+contains all twelve launch definitions, including the three Dive Packs, but the
+current live allowlist contains only `SP-KIT-STARTER`, the seven `SP-DECK-*`
+rows, and `SP-ACC-SET`. The three `SP-PACK-*` SKUs are canonical prelaunch
+identifiers, not evidence that their inventory rows have been applied or that
+they are authorized for checkout. Individual accessory rows also remain private.
 
 | Product | Canonical SKU |
 | --- | --- |
@@ -48,10 +52,19 @@ individual accessory rows prepared does not authorize them for sale.
 | Open Ocean Deck | `SP-DECK-OPEN-OCEAN-HUNT` |
 | Murky Water Deck | `SP-DECK-MURKY-WATER` |
 | Stinging Fortress Deck | `SP-DECK-STINGING-FORTRESS` |
+| Pelagic Rush — Oceanic Set Dive Pack | `SP-PACK-OCEANIC` |
+| Coral Bloom — Reef Set Dive Pack | `SP-PACK-REEF` |
+| Abyssal Glow — Deep Set Dive Pack | `SP-PACK-DEEP` |
 | Accessories Kit | `SP-ACC-SET` |
 | Conditions Deck | `SP-ACC-CONDITIONS-DECK` |
 | Dice Pack | `SP-ACC-DICE-PACK` |
 | Reef Point Token Set | `SP-ACC-REEF-POINTS` |
+
+Before enabling a Dive Pack, verify its contents, representative art,
+packaging/fulfillment procedure, and five-business-day capacity; apply and
+verify its `store_inventory` row during a checkout-disabled cutover; run the
+launch and online readiness checks; then add its product ID to the live
+allowlist. Keep the stable `SP-PACK-*` SKU throughout that sequence.
 
 Kits have their own SKUs because the customer buys and the business fulfills
 them as configurations distinct from their components. The current inventory

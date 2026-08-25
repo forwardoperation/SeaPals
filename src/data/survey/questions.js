@@ -324,7 +324,7 @@ export const SURVEY_SECTIONS = [
         label: "What would you like to see next?",
         type: "checkbox",
         options: [
-          "Booster packs",
+          "Dive Packs",
           "More decks",
           "Sharks",
           "Deep sea creatures",
@@ -334,6 +334,9 @@ export const SURVEY_SECTIONS = [
           "Video game",
           "Stickers",
         ],
+        legacyOptionAliases: {
+          "Booster packs": "Dive Packs",
+        },
         other: true,
       },
       {

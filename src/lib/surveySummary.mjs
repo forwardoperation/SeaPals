@@ -26,15 +26,29 @@ export function summarizeSurveyResponses(
       const summary = byQuestion[question.id];
       const value = answers[question.id];
       const allowedOptions = new Set(question.options ?? []);
+      const canonicalOption = (option) => {
+        if (allowedOptions.has(option)) return option;
+        if (
+          Object.prototype.hasOwnProperty.call(
+            question.legacyOptionAliases ?? {},
+            option,
+          )
+        ) {
+          return question.legacyOptionAliases[option];
+        }
+        return undefined;
+      };
 
       if (!summary) continue;
 
       if (question.type === "checkbox") {
         for (const item of Array.isArray(value) ? value : []) {
-          if (allowedOptions.has(item)) addCount(summary.counts, item);
+          const option = canonicalOption(item);
+          if (allowedOptions.has(option)) addCount(summary.counts, option);
         }
       } else if (question.type === "radio") {
-        if (allowedOptions.has(value)) addCount(summary.counts, value);
+        const option = canonicalOption(value);
+        if (allowedOptions.has(option)) addCount(summary.counts, option);
       } else if (question.type === "scale") {
         const numeric = Number(value);
         if (

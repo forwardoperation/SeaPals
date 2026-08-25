@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="deep-dive-title deep-dive-desc">
+  <title id="deep-dive-title">Abyssal Glow Deep Set Dive Pack</title>
+  <desc id="deep-dive-desc">A midnight blue and violet SeaPals Dive Pack illustration glowing with a deep-sea squid, anglerfish, and bioluminescent bubbles.</desc>
+  <defs>
+    <linearGradient id="deep-dive-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dff9ff"/>
+      <stop offset=".55" stop-color="#dce7fb"/>
+      <stop offset="1" stop-color="#eee2ff"/>
+    </linearGradient>
+    <linearGradient id="deep-dive-foil" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#163f72"/>
+      <stop offset=".39" stop-color="#112952"/>
+      <stop offset=".7" stop-color="#4c2a75"/>
+      <stop offset="1" stop-color="#21143f"/>
+    </linearGradient>
+    <radialGradient id="deep-dive-panel" cx="50%" cy="43%" r="76%">
+      <stop offset="0" stop-color="#146987"/>
+      <stop offset=".46" stop-color="#092f57"/>
+      <stop offset="1" stop-color="#070f2b"/>
+    </radialGradient>
+    <filter id="deep-dive-shadow" x="-35%" y="-25%" width="170%" height="175%">
+      <feDropShadow dx="0" dy="17" stdDeviation="14" flood-color="#061a33" flood-opacity=".3"/>
+    </filter>
+    <filter id="deep-dive-glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="6" result="deep-dive-blur"/>
+      <feMerge>
+        <feMergeNode in="deep-dive-blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="800" height="600" fill="url(#deep-dive-bg)"/>
+  <path d="M0 443c111-51 211-47 299 5 100 59 213 58 339-5 61-31 115-36 162-25v182H0Z" fill="#fff" opacity=".63"/>
+  <g fill="none" stroke="#6c5bd5" opacity=".2">
+    <circle cx="100" cy="126" r="19" stroke-width="6"/>
+    <circle cx="143" cy="80" r="8" stroke-width="4"/>
+    <circle cx="695" cy="131" r="22" stroke-width="7"/>
+  </g>
+  <g fill="#47e7dc" opacity=".26">
+    <circle cx="78" cy="348" r="7"/>
+    <circle cx="111" cy="311" r="4"/>
+    <circle cx="703" cy="337" r="6"/>
+    <circle cx="728" cy="293" r="4"/>
+  </g>
+
+  <g filter="url(#deep-dive-shadow)">
+    <ellipse cx="400" cy="492" rx="184" ry="31" fill="#061a33" opacity=".2"/>
+    <rect x="230" y="69" width="340" height="425" rx="29" fill="url(#deep-dive-foil)" stroke="#061a33" stroke-width="10"/>
+    <path d="M248 94h304M248 105h304M248 458h304M248 469h304" fill="none" stroke="#90fff2" stroke-width="5" stroke-linecap="round" opacity=".61"/>
+    <path d="m253 78 48 407M315 77l46 406M487 77l42 404" fill="none" stroke="#c8bcff" stroke-width="15" stroke-linecap="round" opacity=".1"/>
+
+    <rect x="267" y="139" width="266" height="259" rx="22" fill="url(#deep-dive-panel)" stroke="#061a33" stroke-width="8"/>
+    <g fill="#7fffee" filter="url(#deep-dive-glow)">
+      <circle cx="300" cy="187" r="4"/>
+      <circle cx="326" cy="216" r="7"/>
+      <circle cx="493" cy="190" r="5"/>
+      <circle cx="506" cy="237" r="3"/>
+      <circle cx="294" cy="326" r="5"/>
+    </g>
+
+    <g transform="translate(347 180)">
+      <path d="M53 0c30 0 52 27 49 63-2 29-21 49-49 49S6 92 4 63C1 27 23 0 53 0Z" fill="#7655c7" stroke="#9ffbef" stroke-width="7"/>
+      <path d="M16 91c-15 30-10 60 15 90m15-76c-12 33-7 66 15 98m14-98c17 29 18 61 2 96m11-105c27 25 36 54 27 88" fill="none" stroke="#9ffbef" stroke-width="9" stroke-linecap="round"/>
+      <path d="M26 47c17-17 36-19 56-5" fill="none" stroke="#c9b9ff" stroke-width="8" stroke-linecap="round" opacity=".7"/>
+      <circle cx="37" cy="60" r="7" fill="#061a33"/>
+      <circle cx="72" cy="60" r="7" fill="#061a33"/>
+    </g>
+
+    <g transform="translate(287 302)">
+      <path d="M0 21c19-24 54-26 77-5 13 12 17 27 12 45-27 18-60 14-80-8C2 45-1 34 0 21Z" fill="#143d65" stroke="#061a33" stroke-width="6"/>
+      <path d="m80 21 30-22-5 33 7 30-32-18Z" fill="#143d65" stroke="#061a33" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M35 3c4-22 21-29 38-17" fill="none" stroke="#7fffee" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="76" cy="-12" r="6" fill="#f7c948" filter="url(#deep-dive-glow)"/>
+      <circle cx="22" cy="25" r="4.5" fill="#7fffee"/>
+      <path d="m45 39 8 6 8-7 7 5" fill="none" stroke="#eaffff" stroke-width="4" stroke-linecap="round"/>
+    </g>
+
+    <text x="400" y="124" text-anchor="middle" fill="#dffff9" font-family="Arial, sans-serif" font-size="18" font-weight="900" letter-spacing="3">SEAPALS TCG</text>
+    <text x="400" y="424" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="23" font-weight="900" letter-spacing="2.5">DEEP SET</text>
+    <rect x="310" y="439" width="180" height="29" rx="14.5" fill="#7fffee"/>
+    <text x="400" y="459" text-anchor="middle" fill="#061a33" font-family="Arial, sans-serif" font-size="14" font-weight="900" letter-spacing="2">DIVE PACK</text>
+  </g>
+
+  <g transform="translate(242 519)">
+    <rect width="316" height="54" rx="27" fill="#061a33"/>
+    <text x="158" y="35" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="23" font-weight="800" letter-spacing="2.8">ABYSSAL GLOW</text>
+  </g>
+</svg>

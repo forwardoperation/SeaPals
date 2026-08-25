@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -15,6 +16,9 @@ const EXPECTED_SKUS_BY_PRODUCT_ID = Object.freeze({
   "open-ocean-hunt": "SP-DECK-OPEN-OCEAN-HUNT",
   "murky-water": "SP-DECK-MURKY-WATER",
   "stinging-fortress": "SP-DECK-STINGING-FORTRESS",
+  "oceanic-dive-pack": "SP-PACK-OCEANIC",
+  "reef-dive-pack": "SP-PACK-REEF",
+  "deep-dive-pack": "SP-PACK-DEEP",
   "accessory-set": "SP-ACC-SET",
   "reef-point-tokens": "SP-ACC-REEF-POINTS",
   "dice-pack": "SP-ACC-DICE-PACK",
@@ -34,6 +38,9 @@ const EXPECTED_LAUNCH_PRODUCT_IDS = Object.freeze([
   "open-ocean-hunt",
   "murky-water",
   "stinging-fortress",
+  "oceanic-dive-pack",
+  "reef-dive-pack",
+  "deep-dive-pack",
   "accessory-set",
 ]);
 
@@ -54,7 +61,7 @@ test("the store catalog preserves the exact canonical SKU map", () => {
     storeProductDefinitions.map(({ id, sku }) => [id, sku])
   );
 
-  assert.equal(storeProductDefinitions.length, 16);
+  assert.equal(storeProductDefinitions.length, 19);
   assert.deepEqual(actualSkusByProductId, EXPECTED_SKUS_BY_PRODUCT_ID);
 });
 
@@ -71,7 +78,7 @@ test("all canonical product IDs and SKUs are unique and well formed", () => {
   }
 });
 
-test("the catalog remains partitioned into nine launch products and seven prepared future products", () => {
+test("the catalog remains partitioned into twelve launch products and seven prepared future products", () => {
   const launchProductIds = new Set(storeLaunchProductIds);
   const futureProductIds = storeProductDefinitions
     .map(({ id }) => id)
@@ -79,7 +86,7 @@ test("the catalog remains partitioned into nine launch products and seven prepar
     .sort();
 
   assert.deepEqual(storeLaunchProductIds, EXPECTED_LAUNCH_PRODUCT_IDS);
-  assert.equal(launchProductIds.size, 9);
+  assert.equal(launchProductIds.size, 12);
   assert.deepEqual(futureProductIds, EXPECTED_FUTURE_PRODUCT_IDS);
 
   for (const productId of EXPECTED_FUTURE_PRODUCT_IDS) {
@@ -101,7 +108,7 @@ test("all launch products publish the confirmed five-business-day standard produ
   }
 });
 
-test("launch decks and prepared products publish conservative ready-to-mail weights", () => {
+test("launch decks, Dive Packs, and prepared products publish conservative ready-to-mail weights", () => {
   const productsById = new Map(
     storeProductDefinitions.map((product) => [product.id, product])
   );
@@ -116,6 +123,9 @@ test("launch decks and prepared products publish conservative ready-to-mail weig
     "open-ocean-hunt",
     "murky-water",
     "stinging-fortress",
+    "oceanic-dive-pack",
+    "reef-dive-pack",
+    "deep-dive-pack",
   ]) {
     assert.equal(productsById.get(productId)?.shippingWeightOunces, 8);
   }
@@ -127,6 +137,55 @@ test("launch decks and prepared products publish conservative ready-to-mail weig
     "reef-point-tokens",
   ]) {
     assert.equal(productsById.get(productId)?.shippingWeightOunces, 16);
+  }
+});
+
+test("the three set Dive Packs preserve their approved names, price, and card-product policies", () => {
+  const productsById = new Map(
+    storeProductDefinitions.map((product) => [product.id, product])
+  );
+  const expectedDivePacks = Object.freeze({
+    "oceanic-dive-pack": {
+      name: "Pelagic Rush Dive Pack",
+      setName: "Oceanic",
+      priceEnvKey: "STORE_PRICE_OCEANIC_DIVE_PACK_CENTS",
+      image: "/images/store/oceanic-dive-pack.svg",
+    },
+    "reef-dive-pack": {
+      name: "Coral Bloom Dive Pack",
+      setName: "Reef",
+      priceEnvKey: "STORE_PRICE_REEF_DIVE_PACK_CENTS",
+      image: "/images/store/reef-dive-pack.svg",
+    },
+    "deep-dive-pack": {
+      name: "Abyssal Glow Dive Pack",
+      setName: "Deep",
+      priceEnvKey: "STORE_PRICE_DEEP_DIVE_PACK_CENTS",
+      image: "/images/store/deep-dive-pack.svg",
+    },
+  });
+
+  for (const [productId, expected] of Object.entries(expectedDivePacks)) {
+    const product = productsById.get(productId);
+
+    assert.equal(product?.name, expected.name);
+    assert.equal(product?.category, "dive-packs");
+    assert.equal(product?.details, `1 ${expected.setName} Set Dive Pack`);
+    assert.match(product?.checkoutDescription ?? "", new RegExp(expected.setName));
+    assert.equal(product?.defaultPriceCents, 1000);
+    assert.equal(product?.priceEnvKey, expected.priceEnvKey);
+    assert.equal(product?.taxCodeEnvKey, "STRIPE_GAME_PRODUCT_TAX_CODE");
+    assert.equal(product?.madeToOrder, true);
+    assert.equal(product?.buildDispatchMaxBusinessDays, 5);
+    assert.equal(product?.shippingWeightOunces, 8);
+    assert.equal(product?.image, expected.image);
+    const imageUrl = new URL(`../../../public${expected.image}`, import.meta.url);
+    assert.equal(
+      existsSync(imageUrl),
+      true,
+      `${productId} image is missing from public/`
+    );
+    assert.doesNotMatch(readFileSync(imageUrl, "utf8"), /booster[ -]?pack/i);
   }
 });
 

@@ -42,6 +42,9 @@ const APPROVED_LAUNCH_PRICE_CENTS_BY_PRODUCT_ID = Object.freeze({
   "open-ocean-hunt": 2200,
   "murky-water": 2200,
   "stinging-fortress": 2200,
+  "oceanic-dive-pack": 1000,
+  "reef-dive-pack": 1000,
+  "deep-dive-pack": 1000,
   "accessory-set": 1200,
 });
 
@@ -480,14 +483,14 @@ if (launchCatalog) {
         ? `Remove non-launch products: ${unexpectedLaunchProducts.join(", ")}.`
         : duplicateLaunchProducts.length
           ? `Remove duplicate product IDs: ${[...new Set(duplicateLaunchProducts)].join(", ")}.`
-          : "Only the Starter Kit, seven approved decks, and Accessories Kit are selected."
+          : "Only the Starter Kit, seven approved decks, three set-specific Dive Packs, and Accessories Kit are selected."
   );
   addCheck(
     "Approved launch prices",
     incorrectlyPricedLaunchProducts.length === 0,
     incorrectlyPricedLaunchProducts.length
       ? `Restore the owner-approved price for: ${incorrectlyPricedLaunchProducts.join(", ")}.`
-      : "The Starter Kit is $44, the seven decks are $22 each, and the Accessories Kit is $12."
+      : "The Starter Kit is $44, the seven decks are $22 each, the three Dive Packs are $10 each, and the Accessories Kit is $12."
   );
 }
 

@@ -27,12 +27,17 @@ The owner approved the initial public catalog on **2026-08-15** as the seven
 `$22` 60-card decks: Blue Water, Disruption, Coral Garden, Darkness Shroud, Open
 Ocean, Murky Water, and Stinging Fortress. On **2026-08-16**, the owner added the
 `$12` Accessories Kit and `$44` two-player Starter Kit and confirmed that the
-Conditions Deck contains 18 cards. Each public SKU has an approved initial ATP
-capacity of **10** and a five-business-day build-and-dispatch window. The other
-prepared rows remain private and unavailable; retaining their capacity records
-does not add them to the public allowlist.
+Conditions Deck contains 18 cards. On **2026-08-24**, the owner added three `$10`
+set-specific Dive Packs: Pelagic Rush for the Oceanic Set, Coral Bloom for
+the Reef Set, and Abyssal Glow for the Deep Set, with the same five-business-day
+made-to-order policy as the established card products. The Dive Packs are visible
+as prelaunch products but are not allowlisted for checkout. Their planned initial
+ATP target is **10** each, subject to contents, sample, artwork,
+packaging/fulfillment, packed-weight, and production-capacity verification. The
+other prepared rows remain private and unavailable; retaining their capacity
+records does not add them to the public allowlist.
 
-| SKU | Product | Configured price | Initial ATP capacity | Build and dispatch within | Contents/sample verified |
+| SKU | Product | Configured price | Initial ATP capacity | Build and dispatch within | Contents / catalog verification |
 | --- | --- | ---: | ---: | --- | --- |
 | `SP-KIT-STARTER` | Starter Kit | $44 | **10** | **5 business days** | **Public catalog approved 2026-08-16: Coral Garden and Blue Water 60-card decks; 18-card Conditions Deck; 7 dice (D4, D6, D8, D10, D12, D20, D100); 15 RP tokens** |
 | `SP-DECK-BLUE-WATER` | Blue Water Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
@@ -42,16 +47,21 @@ does not add them to the public allowlist.
 | `SP-DECK-OPEN-OCEAN-HUNT` | Open Ocean Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
 | `SP-DECK-MURKY-WATER` | Murky Water Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
 | `SP-DECK-STINGING-FORTRESS` | Stinging Fortress Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-PACK-OCEANIC` | Pelagic Rush — Oceanic Set Dive Pack | $10 | **10 planned** | **5 business days** | **Prelaunch: one Oceanic Set Dive Pack; contents/sample/art/fulfillment verification pending** |
+| `SP-PACK-REEF` | Coral Bloom — Reef Set Dive Pack | $10 | **10 planned** | **5 business days** | **Prelaunch: one Reef Set Dive Pack; contents/sample/art/fulfillment verification pending** |
+| `SP-PACK-DEEP` | Abyssal Glow — Deep Set Dive Pack | $10 | **10 planned** | **5 business days** | **Prelaunch: one Deep Set Dive Pack; contents/sample/art/fulfillment verification pending** |
 | `SP-ACC-SET` | Accessories Kit | $12 | **10** | **5 business days** | **Public catalog approved 2026-08-16: 18-card Conditions Deck; 7 dice (D4, D6, D8, D10, D12, D20, D100); 15 RP tokens** |
 | `SP-ACC-CONDITIONS-DECK` | Conditions Deck | $5 | **10** | **5 business days** | **18 cards confirmed 2026-08-16; standalone title list/sample remains a future-release check** |
 | `SP-ACC-DICE-PACK` | Dice Pack | $5 | **10** | **5 business days** | **7 dice: one each D4, D6, D8, D10, D12, D20, D100; future release** |
 | `SP-ACC-REEF-POINTS` | Reef Point Token Set | $5 | **10** | **5 business days** | **15 tokens; future release** |
 
-The owner has confirmed an initial ATP cap of 10 and a standard
-five-business-day build-and-dispatch window for each prepared SKU. The per-SKU
-caps are safe only when materials and labor support them concurrently. If
-resources are shared, dedicate the allotments or lower the affected caps before
-checkout opens.
+The owner has confirmed an initial ATP cap of 10 for the established prepared
+SKUs and a standard five-business-day build-and-dispatch window. The three Dive
+Pack definitions use the same published window and a planned cap of 10, but that
+capacity is not confirmed until a complete sample and the dedicated materials
+and labor are verified. Per-SKU caps are safe only when resources support them
+concurrently; dedicate shared allotments or lower affected caps before checkout
+opens.
 
 Before enabling a SKU, make at least one complete sample to verify contents,
 quality control, packed weight, dimensions, and postage. The
@@ -60,14 +70,18 @@ sample does not need to be counted in ATP capacity if it will not be sold.
 On **2026-08-15**, the owner accepted the catalog's current representative card
 art and concept illustrations and deferred packaged-product photography. A
 package photo is not a launch gate, but representative art must not be described
-as a photograph of the delivered package.
+as a photograph of the delivered package. The new Dive Pack illustrations remain
+prelaunch representative art until they receive the same review.
 
 Capacity calculation reviewed by: **Sea Realm owner**  Date: **2026-08-15**
+
+Dive Pack target recorded: **10 per SKU on 2026-08-24; physical capacity
+verification remains pending before enablement**
 
 Materials or production constraint used for each ATP count: **the owner can
 build and dispatch up to 10 units of each prepared SKU within five business
 days; the Starter Kit, seven deck SKUs, and Accessories Kit are publicly
-enabled**.
+enabled. The three Dive Pack targets are not yet verified or enabled**.
 
 Production verification on **2026-08-16** found the Starter Kit row at **9 ATP,
 0 reserved** after one earlier test unit was consumed. Do not rerun the seed or
@@ -81,7 +95,8 @@ Increase a SKU only after materials and build capacity are actually restored.
 Decrease it immediately if materials, labor, quality, or shipping capacity
 falls. Never reset a sold-down count to its original number on a schedule.
 
-Price approval: **owner confirmed the configured prices**  Date: **2026-08-15**
+Price approval: **owner confirmed the configured prices**  Dates:
+**2026-08-15; Dive Pack prices approved 2026-08-24**
 
 ## Production speed options
 
@@ -123,10 +138,11 @@ expedited order already accepted.
 ## Packing and delivery
 
 The owner approved conservative shipping weights of **0.5 lb (8 oz) per deck**
-and **1 lb (16 oz) per Starter Kit or accessory SKU**. Checkout sums those
-per-unit weights to select a rate tier. They intentionally avoid understating
-postage; ready-to-mail measurements include the brown box, cushioning, label,
-and inserts—not only the unpackaged product.
+and **1 lb (16 oz) per Starter Kit or accessory SKU**. The Dive Pack definitions
+use **0.5 lb (8 oz)** as a planned conservative checkout input; verify a complete
+packed sample does not exceed it before allowlisting those products. Checkout
+sums per-unit weights to select a rate tier. Ready-to-mail measurements include
+the brown box, cushioning, label, and inserts—not only the unpackaged product.
 
 | Confirmed ready-to-mail parcel | Conservative weight | Outside length × width × height | Pirate Ship postage to 90001 before $0.75 box cost | Estimated postage + box |
 | --- | ---: | --- | --- | --- |
@@ -158,12 +174,13 @@ Online checkout is limited to **8 items and 8 lb (128 oz)** per order.
   no same-day carrier-acceptance cutoff is promised; buy and tender the parcel
   by its production dispatch deadline**.
 
-Rate basis and approval date: **2026-08-15**. The Pirate Ship quotes above use
-Elverson 19520 to Los Angeles 90001 and exclude the owner-confirmed $0.75 brown
-box cost shown separately. Automated checkout tests now verify the
-8-item/128-ounce maximum and the $10/$15 and $20/$35 tier boundary, so the
-production shipping-rate confirmation may remain enabled while these inputs
-stay unchanged.
+Rate basis and approval date: **2026-08-15**. The Dive Pack 8-ounce input was
+added as a prelaunch conservative target on **2026-08-24**, not as a completed
+parcel measurement or carrier quote. The Pirate Ship quotes above use Elverson
+19520 to Los Angeles 90001 and exclude the owner-confirmed $0.75 brown box cost
+shown separately. Automated checkout tests verify the 8-item/128-ounce maximum
+and the $10/$15 and $20/$35 tier boundary; keep the Dive Packs unavailable until
+their complete packed samples validate the planned input.
 
 The owner requested free **Scheduled pickup — Elverson, PA**. No appointment is
 chosen during Checkout and no street address is published. After production,
@@ -204,9 +221,14 @@ Policy approval: **owner-confirmed in the launch task**  Date: **2026-08-15**
 
 ## Final operational sign-off
 
-- [x] All 12 prepared SKU rows were seeded with owner-approved ATP capacities;
-      the Starter Kit, seven deck rows, and Accessories Kit are in the public
-      allowlist. The Starter Kit currently has 9 ATP and must not be reseeded.
+- [x] The established 12 prepared rows were seeded previously; the Starter Kit,
+      seven deck rows, and Accessories Kit are in the live public allowlist. The
+      Starter Kit currently has 9 ATP and must not be reseeded.
+- [ ] Verify Dive Pack contents, sample, representative art,
+      packaging/fulfillment, packed weight, and five-business-day capacity;
+      during a checkout-disabled cutover apply and query the three missing
+      `SP-PACK-*` rows, run launch and online readiness, then add the three Dive
+      Pack IDs to the live allowlist.
 - [ ] Latest Supabase order, refund, notification, and reservation-reconciliation
       migration applied; the current inventory contract RPC and online readiness
       checks pass before checkout is enabled.

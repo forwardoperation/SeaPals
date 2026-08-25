@@ -11,6 +11,10 @@ const seedSql = readFileSync(
   new URL("../../../supabase/store-launch-capacity.sql", import.meta.url),
   "utf8"
 );
+const wranglerConfig = readFileSync(
+  new URL("../../../wrangler.jsonc", import.meta.url),
+  "utf8"
+);
 
 const EXPECTED_PREPARED_SKUS_BY_PRODUCT_ID = Object.freeze([
   ["starter-kit", "SP-KIT-STARTER"],
@@ -21,6 +25,9 @@ const EXPECTED_PREPARED_SKUS_BY_PRODUCT_ID = Object.freeze([
   ["open-ocean-hunt", "SP-DECK-OPEN-OCEAN-HUNT"],
   ["murky-water", "SP-DECK-MURKY-WATER"],
   ["stinging-fortress", "SP-DECK-STINGING-FORTRESS"],
+  ["oceanic-dive-pack", "SP-PACK-OCEANIC"],
+  ["reef-dive-pack", "SP-PACK-REEF"],
+  ["deep-dive-pack", "SP-PACK-DEEP"],
   ["accessory-set", "SP-ACC-SET"],
   ["conditions-deck", "SP-ACC-CONDITIONS-DECK"],
   ["dice-pack", "SP-ACC-DICE-PACK"],
@@ -40,7 +47,7 @@ function parseSeedRows(sql) {
     }));
 }
 
-test("the launch-capacity seed preserves the exact twelve prepared catalog SKUs", () => {
+test("the launch-capacity seed preserves the exact fifteen prepared catalog SKUs", () => {
   const definitionsById = new Map(
     storeProductDefinitions.map((definition) => [definition.id, definition])
   );
@@ -56,8 +63,8 @@ test("the launch-capacity seed preserves the exact twelve prepared catalog SKUs"
   assert.deepEqual(storePreparedProductIds, expectedProductIds);
   assert.deepEqual(catalogSkus, expectedSkus);
   assert.deepEqual(seedRows.map(({ sku }) => sku), expectedSkus);
-  assert.equal(new Set(seedRows.map(({ sku }) => sku)).size, 12);
-  assert.equal(seedRows.length, 12);
+  assert.equal(new Set(seedRows.map(({ sku }) => sku)).size, 15);
+  assert.equal(seedRows.length, 15);
 
   for (const row of seedRows) {
     assert.equal(row.onHandQuantity, 10, `${row.sku} must start with capacity 10`);
@@ -87,7 +94,29 @@ test("the launch-capacity seed cannot replenish or overwrite an existing SKU", (
 test("the seed records its checkout-disabled cutover and capacity limitations", () => {
   assert.match(seedSql, /after supabase\/store-orders\.sql/i);
   assert.match(seedSql, /checkout-disabled production cutover/i);
-  assert.match(seedSql, /owner approved[^]*capacity of 10/i);
+  assert.match(seedSql, /intended initial available-to-promise capacity of 10/i);
   assert.match(seedSql, /do not validate shared materials[^]*production labor[^]*dispatch window/i);
   assert.match(seedSql, /future merchandise SKUs are[^]*excluded/i);
+});
+
+test("Dive Packs stay outside the live allowlist until their release cutover", () => {
+  const availableProductIds = wranglerConfig
+    .match(/"STORE_AVAILABLE_PRODUCT_IDS"\s*:\s*"([^"]+)"/)?.[1]
+    .split(",");
+
+  assert.deepEqual(availableProductIds, [
+    "starter-kit",
+    "blue-water",
+    "disruption",
+    "coral-garden",
+    "darkness-shroud",
+    "open-ocean-hunt",
+    "murky-water",
+    "stinging-fortress",
+    "accessory-set",
+  ]);
+  assert.equal(
+    availableProductIds.some((productId) => productId.endsWith("-dive-pack")),
+    false
+  );
 });

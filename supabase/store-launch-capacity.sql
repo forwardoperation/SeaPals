@@ -1,12 +1,19 @@
--- ONE-TIME PRODUCTION CAPACITY SEED FOR THE INITIAL SEAPALS STORE LAUNCH.
+-- NON-REPLENISHING CAPACITY SEED FOR THE PLANNED 15-SKU STORE CATALOG.
 --
 -- Apply this file only after supabase/store-orders.sql has completed, during a
--- checkout-disabled production cutover. The owner approved an initial
--- available-to-promise capacity of 10 for each of the 12 prepared SKUs below.
--- The Starter Kit, seven deck SKUs, and Accessories Kit are in the current
--- public allowlist; retaining the other three rows does not make those products
--- purchasable. This non-replenishing seed records initial capacity only; the
--- Starter Kit may now be below 10 because an earlier test consumed one unit.
+-- checkout-disabled production cutover. The source lists 15 planned/prepared
+-- SKUs at an intended initial available-to-promise capacity of 10 each. Merely
+-- changing or deploying this file does not prove that any production row was
+-- inserted, and rerunning it never restores an existing sold-down row.
+--
+-- The current live allowlist remains the Starter Kit, seven deck SKUs, and
+-- Accessories Kit. The three SP-PACK-* Dive Pack rows are prelaunch: verify
+-- their contents, representative art, packaging/fulfillment procedure, and
+-- five-business-day capacity before applying these missing rows. With checkout
+-- disabled, apply the seed, verify all three rows and online readiness, and only
+-- then add the Dive Pack product IDs to STORE_AVAILABLE_PRODUCT_IDS.
+-- The other three accessory rows remain private preparation records.
+-- The Starter Kit may now be below 10 because an earlier test consumed one unit.
 -- Reserved capacity starts at zero.
 --
 -- These numbers do not validate shared materials, shared kit components,
@@ -34,6 +41,9 @@ values
   ('SP-DECK-OPEN-OCEAN-HUNT', 10, 0),
   ('SP-DECK-MURKY-WATER', 10, 0),
   ('SP-DECK-STINGING-FORTRESS', 10, 0),
+  ('SP-PACK-OCEANIC', 10, 0),
+  ('SP-PACK-REEF', 10, 0),
+  ('SP-PACK-DEEP', 10, 0),
   ('SP-ACC-SET', 10, 0),
   ('SP-ACC-CONDITIONS-DECK', 10, 0),
   ('SP-ACC-DICE-PACK', 10, 0),

@@ -475,8 +475,8 @@ export default function HomePage() {
                   Explore the Store
                 </span>
                 <span className="mt-2 block text-sm font-semibold leading-6 text-[#073d58]">
-                  Shop the Starter Kit, individual decks, and the Accessories
-                  Kit in one place.
+                  Shop the Starter Kit, individual decks, set-specific Dive
+                  Packs, and the Accessories Kit in one place.
                 </span>
               </Link>
             </div>
