@@ -117,8 +117,9 @@ Use a checkout-disabled maintenance window:
     results pass.
 
 For the three Dive Packs, keep the existing nine-product live allowlist in
-place until this release sequence is complete: verify contents, representative
-art, packaging/fulfillment, and five-business-day capacity; deploy
+place until this release sequence is complete: verify contents,
+packaging/fulfillment, and five-business-day capacity; retain the approved
+Killer Whale, Great White, and Colossal Squid Apex card covers; deploy
 `STORE_CHECKOUT_ENABLED=false`; apply the non-replenishing seed and query the
 three `SP-PACK-*` rows; stage the twelve-product allowlist and run both launch
 and online readiness checks; then add the three Dive Pack product IDs and

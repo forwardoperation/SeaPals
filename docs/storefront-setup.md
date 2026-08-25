@@ -126,9 +126,11 @@ manifest resolves to exactly 60 cards. The local print-sheet folder contains a
 sheet set for every deck. The owner approved those 60-card manifests and an
 initial made-to-order ATP capacity of 10 per launch deck on 2026-08-15.
 The Dive Pack approval defines each sellable unit as one set-specific Dive Pack
-and intentionally does not claim a cards-per-pack count or collation. Contents,
-representative art, packaging/fulfillment, and production-row verification
-remain release gates.
+and intentionally does not claim a cards-per-pack count or collation. Their
+approved representative covers use the existing Killer Whale Oceanic Apex,
+Great White Reef Apex, and Colossal Squid Deep Apex card fronts. A cover does not
+promise that card is included. Contents, packaging/fulfillment, and
+production-row verification remain release gates.
 
 The prepared individual accessories plus future Custom T-Shirt, Card Binder,
 Backpack, and Plush Toy concepts are hidden
@@ -154,8 +156,8 @@ it inserts only missing rows and leaves existing, potentially sold-down rows
 untouched. Its presence in source or a deployment does not prove that all 15
 rows exist in production. Query production after the cutover. In particular,
 the three `SP-PACK-*` rows remain a pending Dive Pack release step until their
-contents, representative art, packaging/fulfillment procedure, and
-five-business-day capacity have been verified.
+contents, packaging/fulfillment procedure, and five-business-day capacity have
+been verified.
 
 `supabase/store-orders.sql` is safe to rerun when this branch changes: it adds
 missing catalog and receipt columns and replaces the payment-event function. The tables have
@@ -309,15 +311,17 @@ fulfillment procedure are verified. Live mode also requires the independent
 nine-product allowlist only. Before extending the allowlist, every added SKU
 must have verified finished stock or owner-approved made-to-order ATP capacity,
 verified packaged contents, an approved price, a published build-and-dispatch
-window, and a repeatable fulfillment procedure. The representative-art
-approval recorded on 2026-08-15 covers the established catalog, not the new
-Dive Packs. Packaged-product photography remains optional, but representative
-Dive Pack art is still a release gate.
+window, and a repeatable fulfillment procedure. The owner approved the Dive
+Pack cover assignments on 2026-08-24: Killer Whale for Oceanic, Great White for
+Reef, and Colossal Squid for Deep. They use canonical card fronts directly,
+with no separate custom wrapper illustration. Packaged-product photography
+remains optional.
 
 Release the Dive Packs in this order:
 
-1. Verify each pack's contents, representative art, packaging/fulfillment
-   procedure, and capacity to meet the approved five-business-day policy.
+1. Verify each pack's contents, packaging/fulfillment procedure, and capacity
+   to meet the approved five-business-day policy; retain the approved Apex card
+   cover assignment.
 2. Set `STORE_CHECKOUT_ENABLED=false`, deploy that closed state, and apply the
    non-replenishing capacity seed. Query all three `SP-PACK-*` rows and confirm
    the intended ATP and zero unexplained reservations; do not infer this from
@@ -554,9 +558,9 @@ The seven-deck catalog audit was recorded on 2026-08-15; the Accessories Kit,
 Starter Kit, and 18-card Conditions Deck count were approved on 2026-08-16.
 Those approvals support `STORE_CATALOG_CONFIRMED=true` for the current
 nine-product live allowlist. The 2026-08-24 Dive Pack approval covers names,
-$10 prices, and the same five-business-day policy, but not contents,
-representative art, completed fulfillment verification, or production inventory
-rows. Keep the Dive Packs prelaunch until those gates pass, and keep the
+$10 prices, the same five-business-day policy, and the three canonical Apex card
+covers, but not contents, completed fulfillment verification, or production
+inventory rows. Keep the Dive Packs prelaunch until those gates pass, and keep the
 independent `STORE_CHECKOUT_ENABLED` switch true only while the production
 checks for every live product remain satisfied.
 
@@ -687,8 +691,8 @@ copy with the store's private launch records.
 - Publish owner-approved contact, shipping, return/refund/cancellation, privacy,
   and promotion terms.
 - Audit finished stock or owner-approved made-to-order ATP capacity and
-  packaging for every enabled SKU. Keep the current representative art clearly
-  presented as illustration rather than packaged-product photography.
+  packaging for every enabled SKU. Keep representative imagery clearly
+  presented as a product preview rather than packaged-product photography.
 - Keep the individual accessories unavailable until each standalone
   future-release audit is complete.
 - The Conditions Deck count is owner-confirmed at 18 cards. Before a standalone
@@ -716,10 +720,10 @@ copy with the store's private launch records.
   enabled products continue to satisfy those checks; an allowlist by itself is
   not an inventory reservation system.
 - Keep the three Dive Packs visible but unavailable until contents,
-  representative art, packaging/fulfillment, five-business-day capacity, and
-  their production inventory rows are verified. Then use the checkout-disabled
-  seed, query, twelve-product launch/online-check, allowlist, and re-enable
-  sequence documented above.
+  packaging/fulfillment, five-business-day capacity, and their production
+  inventory rows are verified. Retain the approved Apex card covers, then use
+  the checkout-disabled seed, query, twelve-product launch/online-check,
+  allowlist, and re-enable sequence documented above.
 - Confirm the Elverson pickup workflow and pickup tax sourcing before setting
   `STORE_PICKUP_TAX_CONFIRMED=true`; publish only a pickup address approved for
   customers.

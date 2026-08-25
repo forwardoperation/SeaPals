@@ -60,9 +60,10 @@ they are authorized for checkout. Individual accessory rows also remain private.
 | Dice Pack | `SP-ACC-DICE-PACK` |
 | Reef Point Token Set | `SP-ACC-REEF-POINTS` |
 
-Before enabling a Dive Pack, verify its contents, representative art,
-packaging/fulfillment procedure, and five-business-day capacity; apply and
-verify its `store_inventory` row during a checkout-disabled cutover; run the
+Before enabling a Dive Pack, verify its contents, packaging/fulfillment
+procedure, and five-business-day capacity. Retain its approved canonical Apex
+card cover, apply and verify its `store_inventory` row during a
+checkout-disabled cutover, run the
 launch and online readiness checks; then add its product ID to the live
 allowlist. Keep the stable `SP-PACK-*` SKU throughout that sequence.
 

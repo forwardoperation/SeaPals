@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -149,19 +149,22 @@ test("the three set Dive Packs preserve their approved names, price, and card-pr
       name: "Pelagic Rush Dive Pack",
       setName: "Oceanic",
       priceEnvKey: "STORE_PRICE_OCEANIC_DIVE_PACK_CENTS",
-      image: "/images/store/oceanic-dive-pack.svg",
+      coverCard: "Killer Whale",
+      image: "/images/cards/apex/Oceanic/killer-whale.png",
     },
     "reef-dive-pack": {
       name: "Coral Bloom Dive Pack",
       setName: "Reef",
       priceEnvKey: "STORE_PRICE_REEF_DIVE_PACK_CENTS",
-      image: "/images/store/reef-dive-pack.svg",
+      coverCard: "Great White",
+      image: "/images/cards/apex/Reef/great-white.png",
     },
     "deep-dive-pack": {
       name: "Abyssal Glow Dive Pack",
       setName: "Deep",
       priceEnvKey: "STORE_PRICE_DEEP_DIVE_PACK_CENTS",
-      image: "/images/store/deep-dive-pack.svg",
+      coverCard: "Colossal Squid",
+      image: "/images/cards/apex/Deep/colossal-squid.png",
     },
   });
 
@@ -171,6 +174,7 @@ test("the three set Dive Packs preserve their approved names, price, and card-pr
     assert.equal(product?.name, expected.name);
     assert.equal(product?.category, "dive-packs");
     assert.equal(product?.details, `1 ${expected.setName} Set Dive Pack`);
+    assert.match(product?.description ?? "", new RegExp(expected.coverCard));
     assert.match(product?.checkoutDescription ?? "", new RegExp(expected.setName));
     assert.equal(product?.defaultPriceCents, 1000);
     assert.equal(product?.priceEnvKey, expected.priceEnvKey);
@@ -179,13 +183,17 @@ test("the three set Dive Packs preserve their approved names, price, and card-pr
     assert.equal(product?.buildDispatchMaxBusinessDays, 5);
     assert.equal(product?.shippingWeightOunces, 8);
     assert.equal(product?.image, expected.image);
+    assert.match(
+      product?.image ?? "",
+      new RegExp(`/images/cards/apex/${expected.setName}/`, "i"),
+      `${productId} must use a matching-set Apex card cover`
+    );
     const imageUrl = new URL(`../../../public${expected.image}`, import.meta.url);
     assert.equal(
       existsSync(imageUrl),
       true,
-      `${productId} image is missing from public/`
+      `${productId} ${expected.coverCard} cover is missing from public/`
     );
-    assert.doesNotMatch(readFileSync(imageUrl, "utf8"), /booster[ -]?pack/i);
   }
 });
 

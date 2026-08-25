@@ -32,10 +32,10 @@ set-specific Dive Packs: Pelagic Rush for the Oceanic Set, Coral Bloom for
 the Reef Set, and Abyssal Glow for the Deep Set, with the same five-business-day
 made-to-order policy as the established card products. The Dive Packs are visible
 as prelaunch products but are not allowlisted for checkout. Their planned initial
-ATP target is **10** each, subject to contents, sample, artwork,
-packaging/fulfillment, packed-weight, and production-capacity verification. The
-other prepared rows remain private and unavailable; retaining their capacity
-records does not add them to the public allowlist.
+ATP target is **10** each, subject to contents, sample, packaging/fulfillment,
+packed-weight, and production-capacity verification. The other prepared rows
+remain private and unavailable; retaining their capacity records does not add
+them to the public allowlist.
 
 | SKU | Product | Configured price | Initial ATP capacity | Build and dispatch within | Contents / catalog verification |
 | --- | --- | ---: | ---: | --- | --- |
@@ -47,9 +47,9 @@ records does not add them to the public allowlist.
 | `SP-DECK-OPEN-OCEAN-HUNT` | Open Ocean Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
 | `SP-DECK-MURKY-WATER` | Murky Water Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
 | `SP-DECK-STINGING-FORTRESS` | Stinging Fortress Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
-| `SP-PACK-OCEANIC` | Pelagic Rush — Oceanic Set Dive Pack | $10 | **10 planned** | **5 business days** | **Prelaunch: one Oceanic Set Dive Pack; contents/sample/art/fulfillment verification pending** |
-| `SP-PACK-REEF` | Coral Bloom — Reef Set Dive Pack | $10 | **10 planned** | **5 business days** | **Prelaunch: one Reef Set Dive Pack; contents/sample/art/fulfillment verification pending** |
-| `SP-PACK-DEEP` | Abyssal Glow — Deep Set Dive Pack | $10 | **10 planned** | **5 business days** | **Prelaunch: one Deep Set Dive Pack; contents/sample/art/fulfillment verification pending** |
+| `SP-PACK-OCEANIC` | Pelagic Rush — Oceanic Set Dive Pack | $10 | **10 planned** | **5 business days** | **Prelaunch: Killer Whale Apex card cover approved; contents/sample/fulfillment verification pending** |
+| `SP-PACK-REEF` | Coral Bloom — Reef Set Dive Pack | $10 | **10 planned** | **5 business days** | **Prelaunch: Great White Apex card cover approved; contents/sample/fulfillment verification pending** |
+| `SP-PACK-DEEP` | Abyssal Glow — Deep Set Dive Pack | $10 | **10 planned** | **5 business days** | **Prelaunch: Colossal Squid Apex card cover approved; contents/sample/fulfillment verification pending** |
 | `SP-ACC-SET` | Accessories Kit | $12 | **10** | **5 business days** | **Public catalog approved 2026-08-16: 18-card Conditions Deck; 7 dice (D4, D6, D8, D10, D12, D20, D100); 15 RP tokens** |
 | `SP-ACC-CONDITIONS-DECK` | Conditions Deck | $5 | **10** | **5 business days** | **18 cards confirmed 2026-08-16; standalone title list/sample remains a future-release check** |
 | `SP-ACC-DICE-PACK` | Dice Pack | $5 | **10** | **5 business days** | **7 dice: one each D4, D6, D8, D10, D12, D20, D100; future release** |
@@ -68,10 +68,12 @@ quality control, packed weight, dimensions, and postage. The
 sample does not need to be counted in ATP capacity if it will not be sold.
 
 On **2026-08-15**, the owner accepted the catalog's current representative card
-art and concept illustrations and deferred packaged-product photography. A
-package photo is not a launch gate, but representative art must not be described
-as a photograph of the delivered package. The new Dive Pack illustrations remain
-prelaunch representative art until they receive the same review.
+art and concept illustrations and deferred packaged-product photography. On
+**2026-08-24**, the owner directed the Dive Packs to use existing Apex card
+fronts instead of custom illustrations: Killer Whale for Oceanic, Great White
+for Reef, and Colossal Squid for Deep. These are representative cover cards,
+not photographs of the delivered packages or promises that the pictured card
+is included.
 
 Capacity calculation reviewed by: **Sea Realm owner**  Date: **2026-08-15**
 
@@ -224,8 +226,9 @@ Policy approval: **owner-confirmed in the launch task**  Date: **2026-08-15**
 - [x] The established 12 prepared rows were seeded previously; the Starter Kit,
       seven deck rows, and Accessories Kit are in the live public allowlist. The
       Starter Kit currently has 9 ATP and must not be reseeded.
-- [ ] Verify Dive Pack contents, sample, representative art,
-      packaging/fulfillment, packed weight, and five-business-day capacity;
+- [ ] Verify Dive Pack contents, sample, packaging/fulfillment, packed weight,
+      and five-business-day capacity; retain the approved Killer Whale, Great
+      White, and Colossal Squid Apex card covers;
       during a checkout-disabled cutover apply and query the three missing
       `SP-PACK-*` rows, run launch and online readiness, then add the three Dive
       Pack IDs to the live allowlist.

@@ -222,11 +222,11 @@ export const storeProductDefinitions = [
     shortName: "Pelagic Rush",
     productLabel: "Oceanic Set Dive Pack",
     description:
-      "Ride the blue-water current with the Pelagic Rush Dive Pack, an Oceanic Set release inspired by fast schools, open water, and apex hunters.",
+      "The Killer Whale Apex card fronts the Pelagic Rush Dive Pack, an Oceanic Set release inspired by fast schools, open water, and apex hunters.",
     details: "1 Oceanic Set Dive Pack",
     checkoutDescription:
       "One Pelagic Rush Dive Pack featuring cards from the SeaPals Oceanic Set.",
-    image: "/images/store/oceanic-dive-pack.svg",
+    image: "/images/cards/apex/Oceanic/killer-whale.png",
     shippingWeightOunces: 8,
     defaultPriceCents: 1000,
     priceEnvKey: "STORE_PRICE_OCEANIC_DIVE_PACK_CENTS",
@@ -243,11 +243,11 @@ export const storeProductDefinitions = [
     shortName: "Coral Bloom",
     productLabel: "Reef Set Dive Pack",
     description:
-      "Grow a vivid new reef with the Coral Bloom Dive Pack, a Reef Set release inspired by coral gardens, colorful fish, and reef defenders.",
+      "The Great White Apex card fronts the Coral Bloom Dive Pack, a Reef Set release inspired by coral gardens, colorful fish, and reef defenders.",
     details: "1 Reef Set Dive Pack",
     checkoutDescription:
       "One Coral Bloom Dive Pack featuring cards from the SeaPals Reef Set.",
-    image: "/images/store/reef-dive-pack.svg",
+    image: "/images/cards/apex/Reef/great-white.png",
     shippingWeightOunces: 8,
     defaultPriceCents: 1000,
     priceEnvKey: "STORE_PRICE_REEF_DIVE_PACK_CENTS",
@@ -264,11 +264,11 @@ export const storeProductDefinitions = [
     shortName: "Abyssal Glow",
     productLabel: "Deep Set Dive Pack",
     description:
-      "Descend beyond the sunlight with the Abyssal Glow Dive Pack, a Deep Set release inspired by bioluminescent creatures and abyssal predators.",
+      "The Colossal Squid Apex card fronts the Abyssal Glow Dive Pack, a Deep Set release inspired by bioluminescent creatures and abyssal predators.",
     details: "1 Deep Set Dive Pack",
     checkoutDescription:
       "One Abyssal Glow Dive Pack featuring cards from the SeaPals Deep Set.",
-    image: "/images/store/deep-dive-pack.svg",
+    image: "/images/cards/apex/Deep/colossal-squid.png",
     shippingWeightOunces: 8,
     defaultPriceCents: 1000,
     priceEnvKey: "STORE_PRICE_DEEP_DIVE_PACK_CENTS",

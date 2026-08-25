@@ -8,7 +8,7 @@
 --
 -- The current live allowlist remains the Starter Kit, seven deck SKUs, and
 -- Accessories Kit. The three SP-PACK-* Dive Pack rows are prelaunch: verify
--- their contents, representative art, packaging/fulfillment procedure, and
+-- their contents, packaging/fulfillment procedure, and
 -- five-business-day capacity before applying these missing rows. With checkout
 -- disabled, apply the seed, verify all three rows and online readiness, and only
 -- then add the Dive Pack product IDs to STORE_AVAILABLE_PRODUCT_IDS.
