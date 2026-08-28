@@ -297,25 +297,31 @@ function ProfessorGuideCard({
       role="note"
       aria-label={`${guide.name} tutorial help`}
     >
-      <ProfessorGuidePortrait guide={guide} compact={inline} />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pr-9">
+      <div className="seapals-professor-card-header">
+        <ProfessorGuidePortrait guide={guide} compact />
+        <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
           <strong className="text-sm font-black text-cyan-800">{guide.name}</strong>
           <span className="rounded-full bg-cyan-900 px-2 py-0.5 text-[9px] font-black text-cyan-50">
             {help.progressLabel ?? `Step ${step} of ${total}`}
           </span>
         </div>
-        <span className="mt-0.5 block text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">{guide.role}</span>
+        <span className="seapals-professor-role mt-0.5 block text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">{guide.role}</span>
         <strong className="mt-1 block text-sm font-black text-slate-900 sm:text-base">{help.title}</strong>
-        <ProfessorTypewriter key={speechKey} guide={guide} message={professorMessage} />
-        <p className="seapals-professor-next mt-2 rounded-xl border border-amber-300/70 bg-amber-100 px-3 py-2 text-xs font-black leading-snug text-amber-950" style={{ animationDelay: "180ms" }}>
-          Next: {help.action}
-        </p>
-        <span className="seapals-professor-next mt-1.5 block text-[10px] font-bold uppercase tracking-wide text-cyan-800" style={{ animationDelay: "260ms" }}>Look for {help.targetLabel}</span>
+        </div>
+      </div>
+      <div className="seapals-professor-card-content min-w-0 flex-1">
+        <div className="seapals-professor-card-scroll">
+          <ProfessorTypewriter key={speechKey} guide={guide} message={professorMessage} />
+          <p className="seapals-professor-next mt-2 rounded-xl border border-amber-300/70 bg-amber-100 px-3 py-2 text-xs font-black leading-snug text-amber-950" style={{ animationDelay: "180ms" }}>
+            Next: {help.action}
+          </p>
+          <span className="seapals-professor-next mt-1.5 block text-[10px] font-bold uppercase tracking-wide text-cyan-800" style={{ animationDelay: "260ms" }}>Look for {help.targetLabel}</span>
+        </div>
         {onAdvance ? (
-          <div className="seapals-professor-next mt-3 flex flex-wrap justify-end gap-2" style={{ animationDelay: "320ms" }} data-tutorial-board-tour-control>
-            {onBack ? <button type="button" onClick={onBack} className="rounded-full border border-cyan-700/30 bg-white/70 px-4 py-2 text-xs font-black text-cyan-900 hover:bg-white">Back</button> : null}
-            <button type="button" onClick={onAdvance} className="rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 px-5 py-2 text-xs font-black text-slate-950 shadow-lg hover:brightness-105">{advanceLabel}</button>
+          <div className="seapals-professor-actions seapals-professor-next mt-3 flex justify-end gap-2" style={{ animationDelay: "320ms" }} data-tutorial-board-tour-control>
+            {onBack ? <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-cyan-700/30 bg-white/70 px-4 py-2 text-xs font-black text-cyan-900 hover:bg-white">Back</button> : null}
+            <button type="button" onClick={onAdvance} className="min-h-11 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 px-5 py-2 text-xs font-black text-slate-950 shadow-lg hover:brightness-105">{advanceLabel}</button>
           </div>
         ) : null}
       </div>
@@ -328,7 +334,8 @@ function ProfessorGuideCard({
           title={`${dismissLabel} this guidance`}
           data-tutorial-board-tour-control={onAdvance ? "true" : undefined}
         >
-          {dismissLabel}
+          <span className="seapals-professor-dismiss-label">{dismissLabel}</span>
+          <span className="seapals-professor-dismiss-label-mobile" aria-hidden="true">{dismissLabel === "Skip tour" ? "Skip" : dismissLabel}</span>
         </button>
       ) : null}
     </aside>
@@ -2880,6 +2887,7 @@ export default function Simulator({
   const [ecosystemOffset, setEcosystemOffset] = useState({ x: 0, y: 0 });
   const [opponentEcosystemZoom, setOpponentEcosystemZoom] = useState(1);
   const [opponentEcosystemOffset, setOpponentEcosystemOffset] = useState({ x: 0, y: 0 });
+  const [playerViewportTouched, setPlayerViewportTouched] = useState(false);
   const [opponentViewportTouched, setOpponentViewportTouched] = useState(false);
   const [mobileBoardView, setMobileBoardView] = useState("player");
   const [mobileHudPanel, setMobileHudPanel] = useState(null);
@@ -3262,6 +3270,12 @@ export default function Simulator({
   const opponentCorals = opponent.corals;
   const playerCoralCards = playerCorals.filter((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL);
   const opponentCoralCards = opponentCorals.filter((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL);
+  const playerLayoutSignature = [
+    ...playerCorals.map((coral) => `${coral.id}:${coral.slots.map((slot) => `${slot.cardId ?? "_"}:${(slot.hostedCardIds ?? []).filter(Boolean).join(",")}`).join(";")}`),
+    ...playerHabitatInstances.map((instance) => `habitat:${instance.instanceId}`),
+    ...playerReefCreatureInstances.map((instance) => `reef:${instance.instanceId}`),
+    ...playerOrphanCreatureInstances.map((instance) => `orphan:${instance.instanceId}:${(instance.hostedCardIds ?? []).filter(Boolean).join(",")}`),
+  ].join("|");
   const opponentLayoutSignature = [
     ...opponentCorals.map((coral) => `${coral.id}:${coral.slots.map((slot) => `${slot.cardId ?? "_"}:${(slot.hostedCardIds ?? []).filter(Boolean).join(",")}`).join(";")}`),
     ...opponent.habitatInstances.map((instance) => `habitat:${instance.instanceId}`),
@@ -4236,9 +4250,47 @@ export default function Simulator({
   }, [opponentRpCap]);
 
   useEffect(() => {
+    if (!playerLayoutSignature || playerViewportTouched) return undefined;
+    const element = ecosystemRef.current;
+    if (!element) return undefined;
+    let frame = null;
+    const fitPlayerBoard = () => {
+      if (frame != null) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => zoomEcosystemToFit("player"));
+    };
+    fitPlayerBoard();
+    const resizeObserver = typeof ResizeObserver === "function"
+      ? new ResizeObserver(fitPlayerBoard)
+      : null;
+    resizeObserver?.observe(element);
+    window.addEventListener("resize", fitPlayerBoard);
+    return () => {
+      if (frame != null) cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", fitPlayerBoard);
+    };
+  }, [playerLayoutSignature, playerViewportTouched, mobileBoardView]);
+
+  useEffect(() => {
     if (!opponentLayoutSignature || opponentViewportTouched) return undefined;
-    const frame = requestAnimationFrame(() => zoomEcosystemToFit("opponent"));
-    return () => cancelAnimationFrame(frame);
+    const element = opponentEcosystemRef.current;
+    if (!element) return undefined;
+    let frame = null;
+    const fitOpponentBoard = () => {
+      if (frame != null) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => zoomEcosystemToFit("opponent"));
+    };
+    fitOpponentBoard();
+    const resizeObserver = typeof ResizeObserver === "function"
+      ? new ResizeObserver(fitOpponentBoard)
+      : null;
+    resizeObserver?.observe(element);
+    window.addEventListener("resize", fitOpponentBoard);
+    return () => {
+      if (frame != null) cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", fitOpponentBoard);
+    };
   }, [opponentLayoutSignature, opponentViewportTouched, mobileBoardView]);
 
   useEffect(() => {
@@ -4622,7 +4674,14 @@ export default function Simulator({
     const maxX = Math.max(...bounds.map((entry) => entry.maxX)) + padding;
     const minY = Math.min(...bounds.map((entry) => entry.minY)) - padding;
     const maxY = Math.max(...bounds.map((entry) => entry.maxY)) + padding;
-    const nextZoom = clampZoom(Math.min((rect.width - 48) / Math.max(1, maxX - minX), (rect.height - 48) / Math.max(1, maxY - minY), 1.15));
+    const sparsePlayerBoardMaxZoom = !isOpponent && corals.length === 1 && !floatingCardsPresent
+      ? Math.min(1.15, (rect.width * 0.34) / coralWidth)
+      : 1.15;
+    const nextZoom = clampZoom(Math.min(
+      (rect.width - 48) / Math.max(1, maxX - minX),
+      (rect.height - 48) / Math.max(1, maxY - minY),
+      sparsePlayerBoardMaxZoom,
+    ));
     const contentCenterX = (minX + maxX) / 2;
     const contentCenterY = (minY + maxY) / 2;
     const nextOffset = {
@@ -5843,6 +5902,7 @@ export default function Simulator({
     if (!isPanning || !panStart) return;
     const dx = event.clientX - panStart.x;
     const dy = event.clientY - panStart.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) setPlayerViewportTouched(true);
     setEcosystemOffset({ x: panStart.offsetX + dx, y: panStart.offsetY + dy });
   }
 
@@ -5968,7 +6028,7 @@ export default function Simulator({
       element.addEventListener("wheel", onWheel, { passive: false, capture: true });
       return () => element.removeEventListener("wheel", onWheel, { capture: true });
     };
-    const detachPlayer = attachCursorZoom(ecosystemRef.current, setEcosystemZoom, setEcosystemOffset);
+    const detachPlayer = attachCursorZoom(ecosystemRef.current, setEcosystemZoom, setEcosystemOffset, () => setPlayerViewportTouched(true));
     const detachOpponent = attachCursorZoom(opponentEcosystemRef.current, setOpponentEcosystemZoom, setOpponentEcosystemOffset, () => setOpponentViewportTouched(true));
     return () => {
       detachPlayer();
@@ -11547,6 +11607,7 @@ export default function Simulator({
     setEcosystemOffset({ x: 0, y: 0 });
     setOpponentEcosystemZoom(1);
     setOpponentEcosystemOffset({ x: 0, y: 0 });
+    setPlayerViewportTouched(false);
     setOpponentViewportTouched(false);
     setFloatingCardOffsets({});
     setFloatingCardDrag(null);
@@ -11693,7 +11754,7 @@ export default function Simulator({
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
 
   return (
-    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
+    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
         @keyframes seapalsDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
@@ -11734,6 +11795,7 @@ export default function Simulator({
         @keyframes seapalsTargetBeaconIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes seapalsTargetArrowBob { 0%, 100% { opacity: 1; } 50% { opacity: .62; } }
         .seapals-game-shell {
+          --seapals-mobile-dock-clearance: 4.25rem;
           background-image:
             radial-gradient(circle at 12% 8%, rgba(14,165,233,.18), transparent 30%),
             radial-gradient(circle at 88% 92%, rgba(16,185,129,.14), transparent 34%),
@@ -11894,9 +11956,11 @@ export default function Simulator({
         .seapals-professor-card {
           position: relative;
           display: flex;
-          gap: .75rem;
+          min-height: 0;
+          flex-direction: column;
+          gap: .5rem;
           overflow: hidden;
-          padding: 1rem 3.5rem 1rem 1rem;
+          padding: .875rem;
           border: 2px solid rgba(14, 116, 144, .42);
           border-radius: 1.5rem;
           color: #0f172a;
@@ -11904,21 +11968,48 @@ export default function Simulator({
           box-shadow: 0 20px 56px rgba(2, 8, 23, .42), 0 0 0 5px rgba(103, 232, 249, .08);
           pointer-events: auto;
         }
+        .seapals-professor-card-header {
+          display: flex;
+          flex: 0 0 auto;
+          align-items: flex-start;
+          gap: .75rem;
+          padding-right: 2.75rem;
+        }
+        .seapals-professor-card-content {
+          display: flex;
+          min-height: 0;
+          flex-direction: column;
+        }
+        .seapals-professor-card-scroll {
+          min-height: 0;
+          max-height: min(12rem, 30dvh);
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          padding-right: .25rem;
+          scrollbar-gutter: stable;
+        }
+        .seapals-professor-actions {
+          flex: 0 0 auto;
+          padding-top: .55rem;
+          border-top: 1px solid rgba(14, 116, 144, .16);
+          background: linear-gradient(180deg, rgba(242, 251, 250, .2), rgba(242, 251, 250, .96) 30%);
+        }
         .seapals-professor-card-inline {
           margin: 1rem 0;
-          padding: .75rem 3.25rem .75rem .75rem;
+          padding: .75rem;
           border-radius: 1.125rem;
           box-shadow: 0 12px 32px rgba(2, 8, 23, .28);
+        }
+        .seapals-professor-card-inline .seapals-professor-card-scroll {
+          max-height: none;
+          overflow: visible;
+          padding-right: 0;
+          scrollbar-gutter: auto;
         }
         .seapals-professor-dialogue {
           display: flex;
           flex-direction: column;
           gap: .5rem;
-          max-height: min(10rem, 24dvh);
-          overflow-y: auto;
-          overscroll-behavior: contain;
-          padding-right: .25rem;
-          scrollbar-gutter: stable;
         }
         .seapals-professor-turn {
           width: fit-content;
@@ -12130,6 +12221,7 @@ export default function Simulator({
           outline: 2px solid rgba(34, 211, 238, .45);
           outline-offset: 2px;
         }
+        .seapals-professor-dismiss-label-mobile { display: none; }
         .seapals-professor-show {
           position: absolute;
           z-index: 65;
@@ -12213,12 +12305,129 @@ export default function Simulator({
         .seapals-card-drawer { animation: seapalsDrawerIn 260ms ease-out; }
         .seapals-event-card { animation: seapalsEventPop 320ms ease-out; }
         @media (max-width: 767px) {
+          .seapals-game-shell {
+            height: 100dvh;
+            max-height: 100dvh;
+            padding-top: max(.5rem, env(safe-area-inset-top));
+            padding-right: max(.5rem, env(safe-area-inset-right));
+            padding-bottom: max(.5rem, env(safe-area-inset-bottom));
+            padding-left: max(.5rem, env(safe-area-inset-left));
+          }
+          .seapals-arena-frame {
+            padding: .5rem;
+            border-radius: 1rem;
+          }
+          .seapals-simulator-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            grid-template-rows: auto auto auto;
+            align-items: center;
+            gap: .25rem;
+            margin-bottom: .25rem;
+          }
+          .seapals-simulator-brand {
+            grid-column: 1;
+            grid-row: 1;
+          }
+          .seapals-simulator-brand > div { gap: .5rem; }
+          .seapals-simulator-brand :is(a, button) {
+            width: 2.75rem;
+            height: 2.75rem;
+            flex: 0 0 auto;
+            justify-content: center;
+            padding-right: .5rem;
+            padding-left: .5rem;
+          }
+          .seapals-simulator-brand h1 {
+            overflow: hidden;
+            font-size: 1rem;
+            line-height: 1.1;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .seapals-simulator-controls { display: contents; }
+          .seapals-mobile-scoreboard {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            width: 100%;
+          }
+          .seapals-mobile-scoreboard > div {
+            min-width: 0;
+            flex: 1 1 50%;
+            padding: .25rem .5rem;
+          }
+          .seapals-mobile-scoreboard > div > div {
+            overflow: hidden;
+            line-height: 1.1;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .seapals-mobile-scoreboard > div > div:nth-child(2) { font-size: 1rem; }
+          .seapals-mobile-scoreboard > div > div:nth-child(2) > span { font-size: .625rem; }
+          .seapals-mobile-scoreboard > div > div:nth-child(3) { font-size: .5rem; }
+          .seapals-phase-chip {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            justify-self: start;
+            padding: .3rem .65rem;
+            font-size: .625rem;
+            line-height: 1;
+          }
+          .seapals-finn-control {
+            grid-column: 2;
+            grid-row: 1;
+          }
+          .seapals-finn-control > div > button {
+            width: 2.75rem;
+            min-height: 2.75rem;
+            justify-content: center;
+            padding: .35rem;
+          }
+          .seapals-finn-control > div > button > span:last-child { display: none; }
+          .seapals-finn-control > div > section {
+            position: fixed;
+            top: calc(max(.5rem, env(safe-area-inset-top)) + 3.25rem) !important;
+            right: max(.5rem, env(safe-area-inset-right)) !important;
+            left: max(.5rem, env(safe-area-inset-left)) !important;
+            width: auto !important;
+          }
+          .seapals-menu-control {
+            grid-column: 3;
+            grid-row: 1;
+          }
+          .seapals-menu-control > summary {
+            width: 2.75rem;
+            padding-right: .35rem;
+            padding-left: .35rem;
+          }
+          .seapals-menu-label { display: none; }
+          .seapals-menu-icon { display: block; }
+          .seapals-board-tabs {
+            margin-bottom: .25rem;
+            padding: .2rem;
+          }
+          .seapals-board-tabs > button {
+            min-height: 2.75rem;
+            padding-top: .35rem;
+            padding-bottom: .35rem;
+            font-size: .625rem;
+          }
+          .seapals-mobile-hud-panel {
+            bottom: var(--seapals-mobile-dock-clearance);
+          }
+          .seapals-mobile-dock {
+            grid-template-columns: 3.25rem 3.25rem minmax(0, 1fr) 5.25rem;
+            gap: .25rem;
+            height: 3.25rem;
+            margin-top: .25rem;
+          }
+          .seapals-tutorial-help-floating .seapals-target-beacon { display: none; }
           .seapals-professor-coach-wrap,
           .seapals-professor-coach-wrap-low {
             position: fixed;
             top: auto;
             right: .5rem;
-            bottom: 4.75rem;
+            bottom: calc(var(--seapals-mobile-dock-clearance) + env(safe-area-inset-bottom));
             left: .5rem;
             width: auto;
           }
@@ -12228,32 +12437,57 @@ export default function Simulator({
             width: min(32rem, calc(100vw - 1.5rem));
           }
           .seapals-professor-card {
-            max-height: 32dvh;
-            overflow-y: auto;
-            gap: .625rem;
-            padding: .75rem 3.125rem .75rem .75rem;
+            max-height: min(34dvh, 15rem);
+            gap: .4rem;
+            padding: .625rem;
             border-radius: 1.125rem;
           }
           .seapals-professor-card-inline {
             max-height: none;
-            overflow: visible;
           }
+          .seapals-professor-card-header { gap: .6rem; }
+          .seapals-professor-card-content { flex: 1 1 auto; }
+          .seapals-professor-card-scroll {
+            flex: 1 1 auto;
+            max-height: none;
+          }
+          .seapals-professor-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+            margin-top: .35rem;
+            padding-top: .45rem;
+          }
+          .seapals-professor-actions > button { width: 100%; }
+          .seapals-professor-turn {
+            width: 100%;
+            max-width: none;
+            padding: .45rem .55rem;
+            line-height: 1.4;
+          }
+          .seapals-professor-role { display: none; }
+          .seapals-professor-dismiss-label { display: none; }
+          .seapals-professor-dismiss-label-mobile { display: inline; }
           .seapals-professor-portrait {
-            width: 3.5rem;
-            height: 3.5rem;
+            width: 3rem;
+            height: 3rem;
             border-radius: .875rem;
           }
           .seapals-professor-show {
             position: fixed;
             left: .5rem;
-            bottom: 4.75rem;
+            bottom: calc(var(--seapals-mobile-dock-clearance) + env(safe-area-inset-bottom));
+          }
+        }
+        @media (max-width: 767px) and (max-height: 500px) {
+          .seapals-professor-card {
+            max-height: min(calc(100dvh - var(--seapals-mobile-dock-clearance) - 1rem - env(safe-area-inset-bottom)), 15rem);
           }
         }
       `}</style>
       <section className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)_9rem_auto]">
         <div className="seapals-hud-panel seapals-arena-frame relative flex h-full min-h-0 flex-col rounded-2xl border border-cyan-400/25 p-3 shadow-2xl xl:col-start-1 xl:row-span-3 xl:row-start-1">
-          <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
+          <div className="seapals-simulator-header mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div className="seapals-simulator-brand min-w-0">
               <div className="flex items-center gap-3">
                 {isStoryMode ? (
                   <button type="button" onClick={requestStoryExit} aria-label={`Exit duel and return to ${storyReturnLabel}`} className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
@@ -12270,8 +12504,8 @@ export default function Simulator({
                 </div>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className={`flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 shadow-lg xl:hidden${tutorialTargetClass("vp-score")}`} aria-label="Victory points in play" data-tutorial-target="vp-score">
+            <div className="seapals-simulator-controls flex flex-wrap items-center gap-2">
+              <div className={`seapals-mobile-scoreboard flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 shadow-lg xl:hidden${tutorialTargetClass("vp-score")}`} aria-label="Victory points in play" data-tutorial-target="vp-score">
                 <div className="border-r border-white/10 px-4 py-1.5 text-center">
                   <div className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300">Your Reef</div>
                   <div className="text-xl font-black tabular-nums text-white">{playerVp}<span className="text-xs text-emerald-300">/{victoryTarget} VP</span></div>
@@ -12283,11 +12517,12 @@ export default function Simulator({
                   <div className="text-[9px] font-semibold text-rose-300/80">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensityState.committed}/{opponentSchoolDensity} SD used{opponentSchoolDensityState.overCapacity ? ` · ${opponentSchoolDensityState.overCapacity} over` : ""}</div>
                 </div>
               </div>
-              <div className="rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-violet-100 shadow-sm">
+              <div className="seapals-phase-chip rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-violet-100 shadow-sm">
                 <span className={`xl:hidden${tutorialTargetClass("condition-panel")}`} data-tutorial-target="condition-panel">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
                 <span className="hidden xl:inline">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
               </div>
-              <RulesChat
+              <div className="seapals-finn-control">
+                <RulesChat
                 placement="simulator"
                 gamePhase={gamePhase}
                 activeConditionName={activeCondition?.name ?? null}
@@ -12306,9 +12541,10 @@ export default function Simulator({
                   tutorialTargetLabel: tutorialTargetBeaconHelp?.targetLabel ?? tutorialHelp?.targetLabel ?? null,
                   tutorialGuideName: tutorialGuide.name,
                 }}
-              />
-              <details className="relative">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden">Menu</summary>
+                />
+              </div>
+              <details className="seapals-menu-control relative">
+                <summary aria-label="Open simulator menu" className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden"><span className="seapals-menu-label">Menu</span><span className="seapals-menu-icon hidden" aria-hidden="true">•••</span></summary>
                 <div className="absolute right-0 top-11 z-[70] w-48 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-xl">
                   <button type="button" onClick={openNewGameSetup} className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">{isStoryMode ? "Restart Duel" : "Start New Game"}</button>
                   <button type="button" onClick={() => setBugReportOpen(true)} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-amber-100 hover:bg-amber-300/10">Report a bug</button>
@@ -12474,7 +12710,7 @@ export default function Simulator({
             </div>
           ) : null}
 
-          <div className="mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label="Choose ecosystem to view">
+          <div className="seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label="Choose ecosystem to view">
             <button type="button" aria-pressed={mobileBoardView === "player"} onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
             <button type="button" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
           </div>
@@ -12503,9 +12739,9 @@ export default function Simulator({
                   style={{ touchAction: "none", overscrollBehavior: "contain", cursor: isOpponentPanning ? "grabbing" : "grab" }}
                 >
                   <div className="absolute right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col overflow-hidden rounded-full border border-rose-300/25 bg-slate-950/85 text-white shadow-xl backdrop-blur" aria-label="Opponent ecosystem zoom controls">
-                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); setOpponentEcosystemZoom((current) => clampZoom(current + 0.1)); }} className="flex h-10 w-10 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom in on opponent ecosystem">+</button>
-                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); zoomEcosystemToFit("opponent"); }} className="border-y border-white/10 px-1 py-1 text-[9px] font-black uppercase text-rose-200" aria-label="Fit opponent ecosystem to view">Fit</button>
-                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); setOpponentEcosystemZoom((current) => clampZoom(current - 0.1)); }} className="flex h-10 w-10 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom out on opponent ecosystem">−</button>
+                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); setOpponentEcosystemZoom((current) => clampZoom(current + 0.1)); }} className="flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom in on opponent ecosystem">+</button>
+                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); zoomEcosystemToFit("opponent"); }} className="min-h-11 w-11 border-y border-white/10 px-1 py-1 text-[9px] font-black uppercase text-rose-200" aria-label="Fit opponent ecosystem to view">Fit</button>
+                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); setOpponentEcosystemZoom((current) => clampZoom(current - 0.1)); }} className="flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom out on opponent ecosystem">−</button>
                   </div>
                   <div className="absolute inset-0" style={{ transform: `translate(${opponentEcosystemOffset.x}px, ${opponentEcosystemOffset.y}px) scale(${opponentEcosystemZoom})`, transformOrigin: "center center" }}>
                     <div className="absolute inset-0">
@@ -12661,10 +12897,11 @@ export default function Simulator({
                         data-tutorial-target="player-zoom-in"
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => {
+                          setPlayerViewportTouched(true);
                           setEcosystemZoom((current) => clampZoom(current + 0.1));
                           completeTutorialLayoutLessonAction(GUIDED_ACADEMY_LAYOUT_ACTIONS.ZOOM_IN);
                         }}
-                        className={`flex h-10 w-10 items-center justify-center text-xl font-bold hover:bg-white/10${tutorialTargetClass("player-zoom-in")}`}
+                        className={`flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10${tutorialTargetClass("player-zoom-in")}`}
                         aria-label="Zoom in on your ecosystem"
                       >+</button>
                       <button
@@ -12672,10 +12909,11 @@ export default function Simulator({
                         data-tutorial-target="player-zoom-fit"
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => {
+                          setPlayerViewportTouched(true);
                           zoomEcosystemToFit("player");
                           completeTutorialLayoutLessonAction(GUIDED_ACADEMY_LAYOUT_ACTIONS.FIT);
                         }}
-                        className={`border-y border-white/10 px-1 py-1 text-[9px] font-black uppercase text-emerald-200${tutorialTargetClass("player-zoom-fit")}`}
+                        className={`min-h-11 w-11 border-y border-white/10 px-1 py-1 text-[9px] font-black uppercase text-emerald-200${tutorialTargetClass("player-zoom-fit")}`}
                         aria-label="Fit your ecosystem to view"
                       >Fit</button>
                       <button
@@ -12683,10 +12921,11 @@ export default function Simulator({
                         data-tutorial-target="player-zoom-out"
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => {
+                          setPlayerViewportTouched(true);
                           setEcosystemZoom((current) => clampZoom(current - 0.1));
                           completeTutorialLayoutLessonAction(GUIDED_ACADEMY_LAYOUT_ACTIONS.ZOOM_OUT);
                         }}
-                        className={`flex h-10 w-10 items-center justify-center text-xl font-bold hover:bg-white/10${tutorialTargetClass("player-zoom-out")}`}
+                        className={`flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10${tutorialTargetClass("player-zoom-out")}`}
                         aria-label="Zoom out on your ecosystem"
                       >−</button>
                     </div>
@@ -12981,7 +13220,7 @@ export default function Simulator({
             </div>
           </div>
           {mobileHudPanel ? (
-            <div className="absolute inset-x-3 bottom-[4.75rem] z-[60] max-h-[45dvh] overflow-y-auto rounded-2xl border border-cyan-300/25 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-xl xl:hidden">
+            <div className="seapals-mobile-hud-panel absolute inset-x-3 bottom-[4.75rem] z-[60] max-h-[45dvh] overflow-y-auto rounded-2xl border border-cyan-300/25 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-xl xl:hidden">
               <div className="mb-3 flex items-center justify-between"><h2 className="font-black text-white">{mobileHudPanel === "zones" ? "Game Zones" : "Mission Feed"}</h2><button type="button" onClick={() => setMobileHudPanel(null)} className="rounded-lg border border-white/10 px-3 py-1 text-xs font-bold text-slate-200">Close</button></div>
               {mobileHudPanel === "zones" ? (
                 <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => { setMobileHudPanel(null); setModal("discard"); }} className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 font-bold text-cyan-100">Discard Pile<span className="mt-1 block text-2xl font-black">{discardPile.length}</span></button><button type="button" onClick={() => { setMobileHudPanel(null); setModal("lost"); }} className="rounded-xl border border-violet-300/20 bg-violet-400/10 p-4 font-bold text-violet-100">Lost Zone<span className="mt-1 block text-2xl font-black">{lostZone.length}</span></button></div>
@@ -12990,7 +13229,7 @@ export default function Simulator({
               )}
             </div>
           ) : null}
-          <div className="mt-2 grid h-14 shrink-0 grid-cols-[64px_64px_minmax(0,1fr)_92px] gap-1.5 xl:hidden" aria-label="Mobile game command dock">
+          <div className="seapals-mobile-dock mt-2 grid h-14 shrink-0 grid-cols-[64px_64px_minmax(0,1fr)_92px] gap-1.5 xl:hidden" aria-label="Mobile game command dock">
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("zones")}`} data-tutorial-target="zones">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">Guide<br /><span className="text-violet-300">Feed</span></button>
             <button type="button" onClick={() => setModal("hand")} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg${isSetup && !hasCoralInPlay ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{rp} RP ready</span></button>
