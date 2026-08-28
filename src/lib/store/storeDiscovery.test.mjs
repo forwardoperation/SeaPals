@@ -40,3 +40,8 @@ test("the homepage provides a complete try-before-you-buy path", () => {
   assert.match(homeSource, /final launch checks/);
   assert.doesNotMatch(homeSource, /sales tax license/i);
 });
+
+test("the homepage uses the canonical Gallery artwork for Coral Reef", () => {
+  assert.match(homeSource, /\/images\/cards\/habitats\/coral-reef\.webp/);
+  assert.doesNotMatch(homeSource, /\/images\/cards\/coral-reef\.png/);
+});

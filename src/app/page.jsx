@@ -394,10 +394,10 @@ export default function HomePage() {
             <div aria-hidden="true" className="absolute h-72 w-72 rounded-full border-[32px] border-white/55" />
             <div className="relative grid w-full max-w-lg grid-cols-2 gap-4 sm:gap-6">
               <Image
-                src="/images/cards/coral-reef.png"
+                src="/images/cards/habitats/coral-reef.webp"
                 alt="Coral Reef habitat card"
-                width={375}
-                height={525}
+                width={750}
+                height={1050}
                 sizes="(max-width: 640px) 38vw, 220px"
                 className="h-auto w-full -rotate-5 rounded-xl shadow-xl"
               />
