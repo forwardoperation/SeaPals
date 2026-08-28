@@ -167,7 +167,7 @@ test("academy scenario pins the complete opening, authored draws, searches, and 
 test("authored turn draws are stable by round and deck after any shuffle", () => {
   const expected = [
     [1, "foundation", "pillar-coral-base"],
-    [2, "pals", "spanish-hogfish"],
+    [2, "pals", "porcupine-fish"],
     [3, "pals", "fairy-parrotfish"],
     [4, "pals", "great-barracuda"],
     [5, "foundation", "white-grunt"],
@@ -186,11 +186,22 @@ test("authored turn draws are stable by round and deck after any shuffle", () =>
   assert.equal(getScriptedTutorialFoundationDrawCardId("blue-water"), "pillar-coral-base");
 
   const shuffledFoundation = ["white-grunt", "lettuce-coral-base", "brain-coral-stage-2", "pillar-coral-base"].reverse();
-  const shuffledPals = ["whale-shark", "great-barracuda", "deep-sea-fishing", "fairy-parrotfish", "spanish-hogfish"].reverse();
+  const shuffledPals = ["whale-shark", "great-barracuda", "deep-sea-fishing", "fairy-parrotfish", "porcupine-fish"].reverse();
   for (const [round, deckType, cardId] of expected) {
     const deck = deckType === "foundation" ? shuffledFoundation : shuffledPals;
     assert.ok(deck.includes(cardId), `round ${round} draw remains addressable by id after a shuffle`);
   }
+});
+
+test("the authored Fish attack lesson uses Porcupine Fish's current-format card", () => {
+  const card = cardsById[SCRIPTED_TUTORIAL_FINISH_PLAN.attackCardId];
+  const crunch = card.actions.find((action) => action.id === "crunch");
+  assert.equal(card.id, "porcupine-fish");
+  assert.equal(card.image, "/images/cards/fish/Reef/Porcupinefish.png");
+  assert.equal(card.cost.rp, 2);
+  assert.equal(card.victoryPoints, 2);
+  assert.equal(crunch.cost.rp, 1);
+  assert.match(crunch.text, /D4 attack.*Invertebrate/i);
 });
 
 test("Support search targets advance from the fourth Coral to the Apex", () => {
@@ -207,7 +218,7 @@ test("Support search targets advance from the fourth Coral to the Apex", () => {
   }), null);
   assert.equal(isScriptedTutorialSearchTarget("lettuce-coral-base"), true);
   assert.equal(isScriptedTutorialSearchTarget("hammerhead"), true);
-  assert.equal(isScriptedTutorialSearchTarget("spanish-hogfish"), false);
+  assert.equal(isScriptedTutorialSearchTarget("porcupine-fish"), false);
 });
 
 test("temporary academy loaners preserve every starter deck's length and source arrays", () => {
@@ -223,6 +234,8 @@ test("temporary academy loaners preserve every starter deck's length and source 
     });
     assert.equal(scenario.foundationCards.length, split.foundationCards.length);
     assert.equal(scenario.palsCards.length, split.palsCards.length);
+    assert.equal(scenario.palsCards.includes("spanish-hogfish"), false, `${playerDeckId} removes the legacy-format Fish from Academy play`);
+    assert.ok(scenario.palsCards.includes("porcupine-fish"), `${playerDeckId} uses the current-format Porcupine Fish`);
     assert.deepEqual(split.foundationCards, foundationBefore);
     assert.deepEqual(split.palsCards, palsBefore);
 
@@ -520,7 +533,7 @@ test("the authored placement plan reserves Predator and Apex slots", () => {
       "great-barracuda",
       "hammerhead",
       "nudibranch",
-      "spanish-hogfish",
+      "porcupine-fish",
     ],
   );
 });

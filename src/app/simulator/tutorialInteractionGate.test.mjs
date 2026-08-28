@@ -41,7 +41,7 @@ test("Academy card play accepts only the card named by the live Professor cue", 
 test("Academy actions must match both the highlighted control and instance key", () => {
   const help = { target: "utility-action-button", targetActionKey: "slot-nudi:munch" };
   assert.equal(getAcademyActionBlock({ route, help, actionKey: "slot-nudi:munch", target: "utility-action-button" }), "");
-  assert.match(getAcademyActionBlock({ route, help, actionKey: "slot-hogfish:crunch", target: "attack-button" }), /different action/i);
+  assert.match(getAcademyActionBlock({ route, help, actionKey: "slot-porcupine:crunch", target: "attack-button" }), /different action/i);
 });
 
 test("Academy turns end only when the Professor cue reaches the turn control", () => {

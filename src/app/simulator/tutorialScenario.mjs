@@ -31,7 +31,7 @@ export const SCRIPTED_TUTORIAL_PALS_OPENING_ORDER = Object.freeze([
 
 const SCRIPTED_TUTORIAL_TURN_DRAWS = Object.freeze({
   1: Object.freeze({ deckType: "foundation", cardId: "pillar-coral-base" }),
-  2: Object.freeze({ deckType: "pals", cardId: "spanish-hogfish" }),
+  2: Object.freeze({ deckType: "pals", cardId: "porcupine-fish" }),
   3: Object.freeze({ deckType: "pals", cardId: "fairy-parrotfish" }),
   4: Object.freeze({ deckType: "pals", cardId: "great-barracuda" }),
   5: Object.freeze({ deckType: "foundation", cardId: "white-grunt" }),
@@ -49,7 +49,7 @@ export const SCRIPTED_TUTORIAL_PLACEMENT_PLAN = Object.freeze({
     foundationCardId: "mustard-hill-coral-base",
     slotClass: "invertebrate",
   }),
-  "spanish-hogfish": Object.freeze({
+  "porcupine-fish": Object.freeze({
     foundationCardId: "mustard-hill-coral-base",
     slotClass: "fish",
   }),
@@ -104,7 +104,7 @@ export const SCRIPTED_TUTORIAL_OPPONENT_TABLEAU = Object.freeze([
  */
 export const SCRIPTED_TUTORIAL_PALS_ORDER = Object.freeze([
   ...SCRIPTED_TUTORIAL_PALS_OPENING_ORDER,
-  "spanish-hogfish",
+  "porcupine-fish",
   "fairy-parrotfish",
   "great-barracuda",
   "whale-shark",
@@ -129,7 +129,7 @@ export const SCRIPTED_TUTORIAL_FINISH_PLAN = Object.freeze({
   bankBoostCardId: "arrow-crab",
   utilityCardId: "nudibranch",
   secondInvertebrateCardId: "nudibranch",
-  attackCardId: "spanish-hogfish",
+  attackCardId: "porcupine-fish",
   attackTargetCardId: "sea-urchin",
   reefFishCardId: "fairy-parrotfish",
   habitatCardId: "coral-reef",
@@ -188,6 +188,22 @@ const PROTECTED_HAND_CARD_IDS = new Set([
   ...Object.values(SCRIPTED_TUTORIAL_TURN_DRAWS).map((draw) => draw.cardId),
   ...SCRIPTED_TUTORIAL_SEARCH_SEQUENCE,
 ]);
+
+const TUTORIAL_CARD_FORMAT_REPLACEMENTS = Object.freeze({
+  "spanish-hogfish": "porcupine-fish",
+});
+
+function replaceLegacyTutorialCardFormats(cardIds) {
+  if (!Array.isArray(cardIds)) return { cards: cardIds, loanerCardIds: [] };
+  const originalIds = new Set(cardIds);
+  const loanerCardIds = [];
+  const cards = cardIds.map((cardId) => {
+    const replacementCardId = TUTORIAL_CARD_FORMAT_REPLACEMENTS[cardId] ?? cardId;
+    if (replacementCardId !== cardId && !originalIds.has(replacementCardId)) loanerCardIds.push(replacementCardId);
+    return replacementCardId;
+  });
+  return { cards, loanerCardIds: [...new Set(loanerCardIds)] };
+}
 
 function normalizeDeckType(value) {
   const normalized = String(value ?? "").trim().toLowerCase();
@@ -333,8 +349,9 @@ export function createScriptedTutorialScenario({
   conditionCards,
 }) {
   const foundation = pinCardsAtIndexes(foundationCards, FOUNDATION_PINS, { replaceMissing: true });
+  const formattedPals = replaceLegacyTutorialCardFormats(palsCards);
   const pals = pinCardsAtIndexes(
-    palsCards,
+    formattedPals.cards,
     SCRIPTED_TUTORIAL_PALS_ORDER.map((cardId, index) => ({ index, cardId })),
     { replaceMissing: true },
   );
@@ -357,6 +374,7 @@ export function createScriptedTutorialScenario({
     opponentStartingTableau: SCRIPTED_TUTORIAL_OPPONENT_TABLEAU,
     loanerCardIds: Object.freeze([...new Set([
       ...foundation.loanerCardIds,
+      ...formattedPals.loanerCardIds,
       ...pals.loanerCardIds,
     ])]),
   });

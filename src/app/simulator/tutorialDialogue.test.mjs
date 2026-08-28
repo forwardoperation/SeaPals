@@ -83,7 +83,7 @@ test("Professor announcements speak the final VP goal instead of a completed che
 test("Professor lead-ins describe the board instead of replying to an imaginary player", () => {
   const blocked = createProfessorSpokenMessage({
     title: "No legal attack yet",
-    message: "Spanish Hogfish cannot attack until it has a compatible target.",
+    message: "Porcupine Fish cannot attack until it has a compatible target.",
     target: "turn-button",
   });
   assert.match(blocked, /^The turn control is next\./);

@@ -14,7 +14,7 @@ const TARGET_LABELS = Object.freeze({
   "attack-button": "the creature's attack button",
   "utility-action-button": "the highlighted card action button",
   "condition-continue": "the Continue button beneath the condition lesson",
-  "script-search-card": "the highlighted Spanish Hogfish",
+  "script-search-card": "the highlighted planned attacker",
   "search-card": "the highlighted lesson card in the search results",
   "vp-score": "your Victory Point counter",
   "rp-bank": "your RP bank",
@@ -77,7 +77,7 @@ const CONDITION_HELP_BY_ID = Object.freeze({
   "clear-water": Object.freeze({
     title: "Ask exactly who is affected",
     message: "In the ocean, clear water has fewer suspended particles, so light travels farther and animals can see one another more easily. That can change how predators and prey hunt or hide. In SeaPals, Clear Water simplifies that visibility shift by making Predator and Apex cards cost 1 more RP this round. Corals, other Fish and Invertebrates, and actions already in play keep their normal costs.",
-    playerThought: "Then I should not treat this as a tax on every card. Arrow Crab and Spanish Hogfish follow their printed costs because neither is a Predator or Apex.",
+    playerThought: "Then I should not treat this as a tax on every card. Arrow Crab and Porcupine Fish follow their printed costs because neither is a Predator or Apex.",
     encouragement: "Beautifully read. Conditions often look broad at first glance. Check the named card types, players, and duration before changing your plan.",
   }),
   "algae-bloom": Object.freeze({
@@ -554,7 +554,7 @@ function getAcademyDrawResultLesson(round, cards, drawnCards) {
     },
     3: {
       cardId: cards.secondFish?.cardId,
-      message: `${cards.secondFish?.cardName ?? primaryCard.name} came from the Pals Deck. Coral Reef accepts any two regular Fish; ${cards.firstFish?.cardName ?? "Spanish Hogfish"} can fill one spot and this card can fill the other. It can wait in hand until the Habitat turn. First establish ${cards.bankBoost?.cardName ?? "Arrow Crab"} and ${cards.utility?.cardName ?? "Nudibranch"}, use Munch, and attack with ${cards.firstFish?.cardName ?? "Spanish Hogfish"}.`,
+      message: `${cards.secondFish?.cardName ?? primaryCard.name} came from the Pals Deck. Coral Reef accepts any two regular Fish; ${cards.firstFish?.cardName ?? "Porcupine Fish"} can fill one spot and this card can fill the other. It can wait in hand until the Habitat turn. First establish ${cards.bankBoost?.cardName ?? "Arrow Crab"} and ${cards.utility?.cardName ?? "Nudibranch"}, use Munch, and attack with ${cards.firstFish?.cardName ?? "Porcupine Fish"}.`,
       action: `Press Continue to Actions, then choose ${cards.bankBoost?.cardName ?? "Arrow Crab"}. Keep ${cards.secondFish?.cardName ?? primaryCard.name} in hand for Round 4.`,
     },
     4: {
@@ -646,8 +646,8 @@ function getAcademyCurriculumHelp(uiState) {
     const preferredDeck = expected?.deckType === "foundation" ? "Foundation" : "Pals";
     const reasons = {
       1: `${cards.economy?.cardName ?? "Pillar Coral"} is our second foundation. Early Foundation draws improve income and add the spaces future creatures need.`,
-      2: `${cards.firstFish?.cardName ?? "Spanish Hogfish"} will wait in hand while we use a Support card and establish the remaining Corals.`,
-      3: `Coral Reef requires two regular, non-school Fish cards in your ecosystem; it does not require ${cards.secondFish?.cardName ?? "Parrotfish"} specifically. This lesson uses ${cards.firstFish?.cardName ?? "Spanish Hogfish"} and ${cards.secondFish?.cardName ?? "Parrotfish"}. Before playing the second Fish, we will practice an Invertebrate action and a Fish attack.`,
+      2: `${cards.firstFish?.cardName ?? "Porcupine Fish"} will wait in hand while we use a Support card and establish the remaining Corals.`,
+      3: `Coral Reef requires two regular, non-school Fish cards in your ecosystem; it does not require ${cards.secondFish?.cardName ?? "Parrotfish"} specifically. This lesson uses ${cards.firstFish?.cardName ?? "Porcupine Fish"} and ${cards.secondFish?.cardName ?? "Parrotfish"}. Before playing the second Fish, we will practice an Invertebrate action and a Fish attack.`,
       4: `We waited to draw ${cards.predator?.cardName ?? "Great Barracuda"} until I had compatible creatures for it to target and your Coral Reef plan was nearly complete. Now its On Play ability can matter instead of being wasted.`,
       5: `${cards.creatureSchool?.cardName ?? "White Grunt"} comes from the Foundation Deck. Its Creature School supplies 30 School Density, and Severe Coral Bleaching does not stop Eco Foundation from producing 1 RP.`,
       6: `${cards.filterFeeder?.cardName ?? "Whale Shark"} normally needs 180 School Density. Krill Bloom lowers that requirement by 150, so ${cards.creatureSchool?.cardName ?? "White Grunt"}'s 30 meets the remainder and makes this planned 11 VP play legal.`,
@@ -693,7 +693,7 @@ function getAcademyCurriculumHelp(uiState) {
         ? `${cards.apex?.cardName ?? "The Apex"} is demonstrating an on-play sequence: coral damage followed by two attacks. On-play abilities resolve when the card enters, before you choose another main-phase action.`
         : isPredator
           ? `${cards.predator?.cardName ?? "Great Barracuda"} has a worthwhile target now. Coral Reef grants its second Bite, which is why playing this predator after building the habitat is stronger than leading with it on an empty opposing reef.`
-          : `${cards.firstFish?.cardName ?? "Spanish Hogfish"}'s Crunch is a paid attack action. Choose the highlighted compatible Invertebrate; the simulator will compare your attack die with its defense die.`,
+          : `${cards.firstFish?.cardName ?? "Porcupine Fish"}'s Crunch is a paid attack action. Choose the highlighted compatible Invertebrate; the simulator will compare your attack die with its defense die.`,
       action: "Choose a glowing legal creature in my reef, then resolve the faceoff dice.",
     }, "opponent-board", `attack-${sourceId ?? "active"}`);
   }
@@ -765,7 +765,7 @@ function getAcademyCurriculumHelp(uiState) {
     }
     return help({
       title: "The reef has room to grow",
-      message: `You used a Support card and built four Corals. Keep ${cards.firstFish?.cardName ?? "Spanish Hogfish"} in hand until the next RP collection can pay for the creatures, an action, an attack, and a Coral upgrade during the same planned turn.`,
+      message: `You used a Support card and built four Corals. Keep ${cards.firstFish?.cardName ?? "Porcupine Fish"} in hand until the next RP collection can pay for the creatures, an action, an attack, and a Coral upgrade during the same planned turn.`,
       action: "Press End Turn to collect the larger RP budget for Round 3.",
     }, "turn-button", "end-round-2");
   }
@@ -785,8 +785,8 @@ function getAcademyCurriculumHelp(uiState) {
     }
     if (!cards.firstFish?.inPlay) {
       return play(cards.firstFish, {
-        title: `Add your first Fish: ${cards.firstFish?.cardName ?? "Spanish Hogfish"}`,
-        message: `Fish occupy Fish slots and can contribute to Habitat requirements. ${cards.firstFish?.cardName ?? "Spanish Hogfish"} also has Crunch, a paid attack action. A Sea Urchin is waiting in my reef, so Crunch will have a legal target when you are ready to attack.`,
+        title: `Add your first Fish: ${cards.firstFish?.cardName ?? "Porcupine Fish"}`,
+        message: `Fish occupy Fish slots and can contribute to Habitat requirements. ${cards.firstFish?.cardName ?? "Porcupine Fish"} also has Toxic and Crunch: Toxic matters if another creature eats it, while Crunch is a paid attack action. A Sea Urchin is waiting in my reef, so Crunch will have a legal target when you are ready to attack.`,
       });
     }
     if (!completedAction(route.utilityAction)) {
@@ -815,9 +815,9 @@ function getAcademyCurriculumHelp(uiState) {
         }, "attack-button", "crunch-button");
       }
       return help({
-        title: `Attack with ${cards.firstFish?.cardName ?? "Spanish Hogfish"}`,
-        message: "Now compare the earlier card action with combat. Select Spanish Hogfish; the simulator will only glow targets that Crunch is allowed to challenge.",
-        action: `Select ${cards.firstFish?.cardName ?? "Spanish Hogfish"}, then use Crunch on Sea Urchin.`,
+        title: `Attack with ${cards.firstFish?.cardName ?? "Porcupine Fish"}`,
+        message: `Now compare the earlier card action with combat. Select ${cards.firstFish?.cardName ?? "Porcupine Fish"}; the simulator will only glow targets that Crunch is allowed to challenge.`,
+        action: `Select ${cards.firstFish?.cardName ?? "Porcupine Fish"}, then use Crunch on Sea Urchin.`,
         targetActionKey: route.attackAction?.actionKey,
       }, "player-board", "crunch-card");
     }
@@ -1629,13 +1629,13 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
           : "Close these details, then follow the highlighted card or turn control.";
       cue = `opponent-inspector:${uiState.inspectedCardName ?? "card"}`;
     } else if (scriptedWaitingForAttackRp && isLookingAtHand) {
-      title = "Save Spanish Hogfish for the next tide";
-      message = `Spanish Hogfish is the attacker we searched for, but playing it and using Crunch requires ${scriptedAttackRequiredRp} RP together. You currently have ${Math.max(0, Number(uiState.availableRp ?? 0))} RP, so forcing the play now would leave the lesson unfinished.`;
+      title = "Save Porcupine Fish for the next tide";
+      message = `Porcupine Fish is the attacker we searched for, but playing it and using Crunch requires ${scriptedAttackRequiredRp} RP together. You currently have ${Math.max(0, Number(uiState.availableRp ?? 0))} RP, so forcing the play now would leave the lesson unfinished.`;
       target = "close-modal";
-      action = "Close your hand, then end the turn. The next collection will fund both Spanish Hogfish and Crunch.";
-      playerThought = "Searching found the right answer, but timing still matters. I should keep Spanish Hogfish in hand until I can pay for both the creature and its attack.";
+      action = "Close your hand, then end the turn. The next collection will fund both Porcupine Fish and Crunch.";
+      playerThought = "Searching found the right answer, but timing still matters. I should keep Porcupine Fish in hand until I can pay for both the creature and its attack.";
       encouragement = "Exactly. A plan includes the card, its action, and the RP for both. Waiting one tide here is preparation, not lost momentum.";
-      cue = `scripted:bank-for-hogfish:close:${Math.max(0, Number(uiState.availableRp ?? 0))}`;
+      cue = `scripted:bank-for-porcupine:close:${Math.max(0, Number(uiState.availableRp ?? 0))}`;
     } else if (uiState.handPopoverOpen) {
       const next = uiState.readyAttack;
       title = next ? `${next.cardName} is already ready` : "Return to the guided action";
@@ -1700,14 +1700,14 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       action = `Choose ${card.cardName}, press Play Card, follow its placement or effect prompt, then select it and use ${card.attackName}.`;
       cue = `setup-attack:${card.cardId}`;
     } else if (scriptedWaitingForAttackRp) {
-      title = "Bank RP for Spanish Hogfish";
+      title = "Bank RP for Porcupine Fish";
       lead = "";
-      message = `Splendid work—Scavenge found the exact attacker we wanted. Spanish Hogfish costs ${Math.max(0, Number(uiState.scriptedAttackCardCost ?? 0))} RP to play, and Crunch needs another ${Math.max(0, Number(uiState.scriptedAttackActionCost ?? 0))} RP. You have ${Math.max(0, Number(uiState.availableRp ?? 0))} RP left, so we will keep the card safe in hand and fund the complete move next round.`;
+      message = `Splendid work—Scavenge found the exact attacker we wanted. Porcupine Fish costs ${Math.max(0, Number(uiState.scriptedAttackCardCost ?? 0))} RP to play, and Crunch needs another ${Math.max(0, Number(uiState.scriptedAttackActionCost ?? 0))} RP. You have ${Math.max(0, Number(uiState.availableRp ?? 0))} RP left, so we will keep the card safe in hand and fund the complete move next round.`;
       target = "turn-button";
-      action = "End your turn. After the next condition and collection, make the required draw, then play Spanish Hogfish and use Crunch on Sea Urchin.";
-      playerThought = "I found the correct attacker, but I need enough RP for the entire sequence. Ending now preserves Spanish Hogfish and turns next round into a prepared attack.";
+      action = "End your turn. After the next condition and collection, make the required draw, then play Porcupine Fish and use Crunch on Sea Urchin.";
+      playerThought = "I found the correct attacker, but I need enough RP for the entire sequence. Ending now preserves Porcupine Fish and turns next round into a prepared attack.";
       encouragement = "Precisely! Good strategy is not only choosing the right card; it is arranging the resources and timing that let the card do its job.";
-      cue = `scripted:bank-for-hogfish:${Math.max(0, Number(uiState.availableRp ?? 0))}`;
+      cue = `scripted:bank-for-porcupine:${Math.max(0, Number(uiState.availableRp ?? 0))}`;
     } else if (uiState.readyUtilityAction) {
       const utility = uiState.readyUtilityAction;
       title = `Use ${utility.cardName}'s ${utility.actionName}`;

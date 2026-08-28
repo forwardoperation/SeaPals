@@ -52,7 +52,7 @@ test("condition lessons explain the exact effect as a short conversation", () =>
   assert.match(clearWater.message, /Predator and Apex.*1 more RP/i);
   assert.match(clearWater.message, /clear water.*suspended particles.*predators and prey.*In SeaPals.*visibility shift/i);
   assert.match(clearWater.message, /other Fish and Invertebrates.*normal costs/i);
-  assert.match(clearWater.playerThought, /Arrow Crab.*Spanish Hogfish/i);
+  assert.match(clearWater.playerThought, /Arrow Crab.*Porcupine Fish/i);
 
   const algaeBloom = getSimulatorTutorialConditionHelp({
     id: "algae-bloom",
@@ -333,7 +333,7 @@ test("scripted lesson deliberately bridges the economy turn into Arrow Crab", ()
   const restoredArrowInHand = getSimulatorTutorialHelp(checkpoint, {
     scriptedLesson: true,
     round: 1,
-    nextPalsCardName: "Spanish Hogfish",
+    nextPalsCardName: "Porcupine Fish",
     recommendedBuildCard: {
       cardId: "arrow-crab",
       cardName: "Arrow Crab",
@@ -353,10 +353,10 @@ test("scripted lesson deliberately bridges the economy turn into Arrow Crab", ()
     scriptedAttackActionCost: 1,
     availableRp: 1,
   });
-  assert.equal(bankForAttack.title, "Bank RP for Spanish Hogfish");
+  assert.equal(bankForAttack.title, "Bank RP for Porcupine Fish");
   assert.equal(bankForAttack.target, "turn-button");
   assert.match(bankForAttack.message, /costs 2 RP.*Crunch.*another 1 RP.*have 1 RP/i);
-  assert.match(bankForAttack.action, /End your turn.*next condition.*play Spanish Hogfish.*Crunch.*Sea Urchin/i);
+  assert.match(bankForAttack.action, /End your turn.*next condition.*play Porcupine Fish.*Crunch.*Sea Urchin/i);
   assert.match(bankForAttack.playerThought, /enough RP for the entire sequence/i);
 
   const bankFromHand = getSimulatorTutorialHelp(checkpoint, {
@@ -368,7 +368,7 @@ test("scripted lesson deliberately bridges the economy turn into Arrow Crab", ()
     availableRp: 1,
     modal: "hand",
   });
-  assert.equal(bankFromHand.title, "Save Spanish Hogfish for the next tide");
+  assert.equal(bankFromHand.title, "Save Porcupine Fish for the next tide");
   assert.equal(bankFromHand.target, "close-modal");
   assert.match(bankFromHand.action, /Close your hand.*end the turn/i);
 
@@ -389,7 +389,7 @@ test("scripted lesson deliberately bridges the economy turn into Arrow Crab", ()
       ready: true,
     },
   });
-  assert.equal(delayedBank.title, "Bank RP for Spanish Hogfish");
+  assert.equal(delayedBank.title, "Bank RP for Porcupine Fish");
   assert.equal(delayedBank.target, "turn-button");
 });
 
@@ -710,7 +710,7 @@ function scriptedFinishRoute({
     setup: { cardId: "mustard-hill-coral-base", cardName: "Mustard Hill Coral", cost: 2, printedCost: 2, victoryPoints: 0, inPlay: true },
     economy: { cardId: "pillar-coral-base", cardName: "Pillar Coral", cost: 3, printedCost: 3, victoryPoints: 0, inPlay: true },
     utility: { cardId: "arrow-crab", cardName: "Arrow Crab", cost: 1, printedCost: 1, victoryPoints: 1, inPlay: true },
-    attack: { cardId: "spanish-hogfish", cardName: "Spanish Hogfish", cost: 2, printedCost: 2, victoryPoints: 2, inPlay: true },
+    attack: { cardId: "porcupine-fish", cardName: "Porcupine Fish", cost: 2, printedCost: 2, victoryPoints: 2, inPlay: true },
     heldFinish: { cardId: "giant-clam", cardName: "Giant Clam", cost: 5, printedCost: 5, victoryPoints: 3, inHand: true, ready: true },
     finishSearch: { cardId: "spinner-dolphins", cardName: "Spinner Dolphins", cost: 4, printedCost: 4, victoryPoints: 4, inPalsDeck: true },
   };
@@ -720,7 +720,7 @@ function scriptedFinishRoute({
       setupCardId: "mustard-hill-coral-base",
       economyCardId: "pillar-coral-base",
       utilityCardId: "arrow-crab",
-      attackCardId: "spanish-hogfish",
+      attackCardId: "porcupine-fish",
       attackTargetCardId: "sea-urchin",
       heldFinishCardId: "giant-clam",
       finishSearchCardId: "spinner-dolphins",
@@ -1106,7 +1106,7 @@ function academyCurriculumRoute({
     coralStageTwo: { cardId: "brain-coral-stage-2", cardName: "Brain Coral Stage 2", inHand: true, ready: true, cost: 5, victoryPoints: 0 },
     bankBoost: { cardId: "arrow-crab", cardName: "Arrow Crab", inHand: true, ready: true, cost: 1, victoryPoints: 1 },
     utility: { cardId: "nudibranch", cardName: "Nudibranch", inHand: true, ready: true, cost: 1, victoryPoints: 1 },
-    firstFish: { cardId: "spanish-hogfish", cardName: "Spanish Hogfish", inPalsDeck: true, cost: 2, victoryPoints: 2 },
+    firstFish: { cardId: "porcupine-fish", cardName: "Porcupine Fish", inPalsDeck: true, cost: 2, victoryPoints: 2 },
     secondFish: { cardId: "fairy-parrotfish", cardName: "Parrotfish", inPalsDeck: true, cost: 2, victoryPoints: 2 },
     habitat: { cardId: "coral-reef", cardName: "Coral Reef", inHand: true, ready: true, cost: 0, victoryPoints: 0 },
     predator: { cardId: "great-barracuda", cardName: "Great Barracuda", inPalsDeck: true, cost: 3, victoryPoints: 3 },
@@ -1121,7 +1121,7 @@ function academyCurriculumRoute({
       curriculumVersion: 3,
       victoryTarget: 26,
       utilityCardId: "nudibranch",
-      attackCardId: "spanish-hogfish",
+      attackCardId: "porcupine-fish",
       predatorCardId: "great-barracuda",
       creatureSchoolCardId: "white-grunt",
       filterFeederCardId: "whale-shark",
@@ -1219,7 +1219,7 @@ test("the strategy curriculum overrides generic VP rushing even while checkpoint
 test("the authored draw explains the purpose of each deck and cannot jump to a predator", () => {
   const route = academyCurriculumRoute({
     round: 2,
-    expectedDraw: { deckType: "pals", cardId: "spanish-hogfish" },
+    expectedDraw: { deckType: "pals", cardId: "porcupine-fish" },
     cards: { economy: { inHand: false, inPlay: true } },
   });
   const help = getSimulatorTutorialHelp({ id: "tutorial-draw-card" }, {
@@ -1234,7 +1234,7 @@ test("the authored draw explains the purpose of each deck and cannot jump to a p
     scriptedFinishRoute: route,
   });
   assert.equal(help.targetDeck, "pals");
-  assert.match(help.message, /Spanish Hogfish.*wait in hand.*Support.*Corals/i);
+  assert.match(help.message, /Porcupine Fish.*wait in hand.*Support.*Corals/i);
   assert.doesNotMatch(help.message, /Barracuda.*clearest next step/i);
 });
 
@@ -1250,8 +1250,8 @@ test("every authored draw result explains the actual card and its concrete next 
     },
     {
       round: 2,
-      cardId: "spanish-hogfish",
-      name: "Spanish Hogfish",
+      cardId: "porcupine-fish",
+      name: "Porcupine Fish",
       source: "Pals",
       message: /Pals Deck.*any two regular Fish.*one of those spots.*Crunch.*Keep it in hand.*Coral Gardener.*Lettuce Coral/i,
       action: /Continue to Actions.*Coral Gardener.*Round 3/i,
@@ -1261,7 +1261,7 @@ test("every authored draw result explains the actual card and its concrete next 
       cardId: "fairy-parrotfish",
       name: "Parrotfish",
       source: "Pals",
-      message: /Pals Deck.*any two regular Fish.*Spanish Hogfish.*one spot.*fill the other.*wait in hand.*Arrow Crab.*Nudibranch.*Munch/i,
+      message: /Pals Deck.*any two regular Fish.*Porcupine Fish.*one spot.*fill the other.*wait in hand.*Arrow Crab.*Nudibranch.*Munch/i,
       action: /Continue to Actions.*Arrow Crab.*Round 4/i,
     },
     {
@@ -1337,7 +1337,7 @@ test("the Parrotfish draw explains that Coral Reef accepts any regular Fish spec
 
   assert.match(help.message, /Coral Reef requires two regular, non-school Fish/i);
   assert.match(help.message, /does not require Parrotfish specifically/i);
-  assert.match(help.message, /Spanish Hogfish and Parrotfish/i);
+  assert.match(help.message, /Porcupine Fish and Parrotfish/i);
   assert.match(help.message, /Invertebrate action and a Fish attack/i);
   assert.doesNotMatch(help.message, /Parrotfish is the second Fish required/i);
 });
@@ -1440,7 +1440,7 @@ test("Round 3 teaches a non-attack card action before a paid attack", () => {
     firstFish: { inPalsDeck: false, inPlay: true },
   };
   const utilityAction = { cardId: "nudibranch", actionKey: "slot-nudi", utilityActionKey: "slot-nudi:munch", actionName: "Munch", actionCost: 0, ready: true };
-  const attackAction = { cardId: "spanish-hogfish", actionKey: "slot-hogfish", attackName: "Crunch", attackCost: 1, ready: true };
+  const attackAction = { cardId: "porcupine-fish", actionKey: "slot-porcupine", attackName: "Crunch", attackCost: 1, ready: true };
   const munch = getSimulatorTutorialHelp({ id: "tutorial-attack" }, {
     ...ACADEMY_STATE,
     round: 3,
@@ -1459,7 +1459,7 @@ test("Round 3 teaches a non-attack card action before a paid attack", () => {
       attackAction,
     }),
   });
-  assert.equal(crunch.targetActionKey, "slot-hogfish");
+  assert.equal(crunch.targetActionKey, "slot-porcupine");
   assert.match(crunch.message, /combat.*only glow targets.*allowed/i);
 
   const endRound = getSimulatorTutorialHelp({ id: "tutorial-attack" }, {
@@ -1510,8 +1510,8 @@ test("starting the Brain Coral upgrade cannot send Round 3 guidance back to Munc
         ready: false,
       },
       attackAction: {
-        cardId: "spanish-hogfish",
-        actionKey: "slot-hogfish",
+        cardId: "porcupine-fish",
+        actionKey: "slot-porcupine",
         attackName: "Crunch",
         blockType: "interaction",
         blockReason: "Finish the current card action first.",

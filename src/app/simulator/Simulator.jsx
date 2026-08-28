@@ -81,6 +81,7 @@ import {
   createGuidedAcademyCardLesson,
   getGuidedAcademyIntroductionStep,
   getNextGuidedAcademyIntroductionStep,
+  getTutorialCardFocusRegion,
   getTutorialCardReferenceRules,
   mergeTutorialSeenConcepts,
 } from "./tutorialCardLessons.mjs";
@@ -2208,65 +2209,129 @@ function BubbleBurst({ x, y }) {
   );
 }
 
-function TutorialCardReference({ card, classLabel, focus = null }) {
+function TutorialCardCueOverlay({ focus, referenceMode }) {
+  const region = getTutorialCardFocusRegion(focus, { referenceMode });
+  if (!region) return null;
+  const floatX = region.targetX < region.x ? -5 : region.targetX > region.x + region.width ? 5 : 0;
+  const floatY = region.targetY < region.y ? -5 : region.targetY > region.y + region.height ? 5 : 0;
+  return (
+    <svg
+      viewBox="0 0 375 525"
+      preserveAspectRatio="xMidYMid meet"
+      className="pointer-events-none absolute inset-0 z-20 h-full w-full overflow-visible"
+      data-card-cue-region={focus}
+      aria-hidden="true"
+    >
+      <defs>
+        <marker id="seapals-card-cue-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24" />
+        </marker>
+      </defs>
+      <rect
+        x={region.x}
+        y={region.y}
+        width={region.width}
+        height={region.height}
+        rx="6"
+        fill="none"
+        stroke="#fde68a"
+        strokeWidth="3"
+        vectorEffect="non-scaling-stroke"
+        className="seapals-card-cue-region"
+      />
+      <g
+        className="seapals-card-cue-arrow"
+        style={{ "--seapals-card-cue-float-x": `${floatX}px`, "--seapals-card-cue-float-y": `${floatY}px` }}
+      >
+        <path d={region.path} fill="none" stroke="#071827" strokeWidth="8" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        <path d={region.path} fill="none" stroke="#fbbf24" strokeWidth="4" strokeLinecap="round" markerEnd="url(#seapals-card-cue-arrowhead)" vectorEffect="non-scaling-stroke" />
+        <circle cx={region.targetX} cy={region.targetY} r="5" fill="none" stroke="#fde68a" strokeWidth="2" vectorEffect="non-scaling-stroke" className="seapals-card-cue-pulse" />
+      </g>
+    </svg>
+  );
+}
+
+function TutorialCardReference({ card, classLabel, focus = null, referenceMode = "printed" }) {
   if (!card) return null;
   const placeholderArt = /SeaPalsTCGLogoWhite\.svg$/i.test(card.image ?? "");
+  const effectiveReferenceMode = referenceMode === "normalized" || placeholderArt ? "normalized" : "printed";
   const cost = Number(card.cost?.rp ?? card.rp ?? 0);
   const victoryPoints = Number(card.victoryPoints ?? card.vp ?? 0);
   const defense = card.defense?.dice ?? card.defense ?? null;
+  const health = Number(card.health ?? 0);
+  const schoolDensity = Number(card.schoolDensity ?? card.schoolDensityRequirement ?? 0);
   const referenceRules = getTutorialCardReferenceRules(card);
-  const focusLabel = {
-    identity: "Name, type, and RP cost",
-    rules: "Ability label, rule, and timing",
-    fit: "HP, VP, and creature slots",
-  }[focus] ?? null;
+  const weaknesses = (Array.isArray(card.weaknesses) ? card.weaknesses : card.weaknesses ? [card.weaknesses] : [])
+    .map((value) => String(value).replaceAll("-", " "))
+    .filter(Boolean)
+    .join(" / ");
+  const slotSummary = (Array.isArray(card.slots) ? card.slots : [])
+    .map((slot) => `${Math.max(1, Number(slot?.count ?? 1))} ${String(slot?.slotType ?? slot?.class ?? slot?.type ?? "creature").replaceAll("-", " ")}`)
+    .join(" / ");
+  const normalizedFacts = [
+    health > 0 ? { label: "Health", value: `${health} HP` } : defense ? { label: "Defense", value: String(defense) } : null,
+    Object.prototype.hasOwnProperty.call(card, "weaknesses")
+      ? { label: "Weakness", value: weaknesses || "None" }
+      : victoryPoints > 0 ? { label: "Victory", value: `${victoryPoints} VP` } : null,
+    slotSummary
+      ? { label: "Slots", value: slotSummary }
+      : schoolDensity > 0 ? { label: "School Density", value: String(schoolDensity) }
+        : null,
+  ];
+  const fallbackFacts = [
+    { label: "Card type", value: classLabel },
+    { label: "Play cost", value: `${cost} RP` },
+    { label: "Board role", value: card.kind === CardKind.SUPPORT ? "Resolve, then discard" : "Stays in play" },
+  ];
+  const visibleFacts = normalizedFacts.map((fact, index) => fact ?? fallbackFacts[index]);
 
   return (
-    <div className="mx-auto w-full max-w-[17rem] lg:max-w-[23rem]">
-      <div className="relative aspect-[5/7] overflow-hidden rounded-[1.75rem] border-2 border-cyan-200/35 bg-slate-950 shadow-[0_24px_70px_rgba(0,0,0,0.42)]">
-        {placeholderArt ? (
-          <div className="flex h-full flex-col bg-gradient-to-b from-cyan-950 via-slate-950 to-emerald-950 p-4 text-left text-white">
-            <div className="flex items-start justify-between gap-3 border-b border-cyan-200/20 pb-3">
-              <div>
-                <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">{classLabel}</span>
-                <strong className="mt-1 block text-xl font-black leading-tight">{card.name}</strong>
-              </div>
-              <span className="shrink-0 rounded-full bg-emerald-300 px-3 py-1 text-sm font-black text-emerald-950">{cost} RP</span>
+    <div
+      className="seapals-card-reference relative aspect-[5/7] max-h-full max-w-full overflow-visible"
+      data-card-reference
+    >
+      <div className="absolute inset-0 overflow-hidden rounded-[1.35rem] border-2 border-cyan-200/35 bg-slate-950 shadow-[0_22px_64px_rgba(0,0,0,0.42)] sm:rounded-[1.75rem]">
+        {effectiveReferenceMode === "normalized" ? (
+          <div className="relative h-full bg-gradient-to-b from-cyan-950 via-slate-950 to-emerald-950 text-left text-white">
+            <div className="absolute left-[3.2%] top-[1.9%] h-[11.5%] w-[93.6%] border-b border-cyan-200/20">
+              <span className="seapals-normalized-card-type absolute left-[1.2%] top-[2%] max-w-[70%] truncate font-black uppercase tracking-[0.16em] text-cyan-300">{classLabel}</span>
+              <strong className="seapals-normalized-card-name absolute bottom-[5%] left-[1.2%] max-w-[72%] truncate font-black leading-none">{card.name}</strong>
+              <span className="seapals-normalized-card-cost absolute right-[1%] top-[8%] rounded-full bg-emerald-300 font-black text-emerald-950">{cost} RP</span>
             </div>
-            <div className="my-4 flex min-h-0 flex-1 items-center justify-center rounded-2xl border border-white/10 bg-black/20 p-5">
-              <img src={card.image || CARD_ART_FALLBACK} alt="" className="max-h-full max-w-full object-contain opacity-90" />
+            <div className="absolute left-[4.27%] top-[16.76%] h-[34.29%] w-[91.47%] overflow-hidden rounded-xl border border-white/10 bg-black/20">
+              <img
+                src={card.image || CARD_ART_FALLBACK}
+                alt=""
+                className={`h-full w-full ${placeholderArt ? "object-contain p-5 opacity-80" : "object-cover object-center"}`}
+              />
+              <span className="seapals-normalized-card-caption absolute inset-x-0 bottom-0 truncate bg-slate-950/80 font-black uppercase tracking-wide text-cyan-100">
+                {card.bio?.role ?? card.bio?.species ?? classLabel}
+              </span>
             </div>
-            {referenceRules.length ? (
-              <div className="max-h-[38%] space-y-2 overflow-y-auto rounded-xl bg-white/10 p-3 text-xs leading-relaxed text-slate-100">
-                {referenceRules.map((rule) => (
-                  <p key={rule.key}>
-                    <strong className="text-emerald-300">{rule.label}{rule.name ? ` - ${rule.name}` : ""}: </strong>
-                    <span className="font-semibold">{rule.text}</span>
-                  </p>
-                ))}
-              </div>
-            ) : null}
-            <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-wide text-cyan-100">
-              {card.health ? <span className="rounded-full bg-cyan-400/15 px-2 py-1">{card.health} HP</span> : null}
-              {defense ? <span className="rounded-full bg-violet-400/15 px-2 py-1">Defense {defense}</span> : null}
-              {victoryPoints > 0 ? <span className="rounded-full bg-amber-400/15 px-2 py-1">{victoryPoints} VP</span> : null}
+            <div className="seapals-normalized-card-rules absolute left-[4.27%] top-[53.33%] h-[32%] w-[91.47%] space-y-1.5 overflow-y-auto rounded-xl border border-cyan-100/15 bg-white/10 text-slate-100">
+              {referenceRules.length ? referenceRules.map((rule) => (
+                <p key={rule.key}>
+                  <strong className="text-emerald-300">{rule.label}{rule.name ? ` - ${rule.name}` : ""}: </strong>
+                  <span className="font-semibold">{rule.text}</span>
+                </p>
+              )) : (
+                <p className="font-semibold text-cyan-50/75">This card has no additional rules text. Its type, cost, and printed stats explain how it enters play.</p>
+              )}
+            </div>
+            <div className="absolute left-[4.27%] top-[87.62%] grid h-[9.52%] w-[91.47%] grid-cols-3 gap-1 text-center">
+              {visibleFacts.map((fact, index) => (
+                <div key={`${fact.label}-${index}`} className="flex min-w-0 flex-col items-center justify-center rounded-lg bg-cyan-400/10 px-1">
+                  <span className="seapals-normalized-card-stat-label font-black uppercase tracking-wide text-cyan-300">{fact.label}</span>
+                  <strong className="seapals-normalized-card-stat-value mt-0.5 max-w-full truncate font-black text-white">{fact.value}</strong>
+                </div>
+              ))}
             </div>
           </div>
         ) : (
           <img src={card.image || CARD_ART_FALLBACK} alt={`${card.name} card`} className="h-full w-full bg-slate-950/70 object-contain" />
         )}
-        {focusLabel ? (
-          <div className={`pointer-events-none absolute inset-x-3 rounded-2xl border-2 border-amber-300 bg-amber-300/10 shadow-[0_0_28px_rgba(252,211,77,0.5)] ${focus === "identity" ? "top-3 h-[18%]" : focus === "rules" ? "top-[45%] h-[28%]" : "bottom-3 h-[20%]"}`}>
-            <span className="absolute -top-3 left-3 rounded-full bg-amber-300 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-amber-950">{focusLabel}</span>
-          </div>
-        ) : null}
       </div>
-      <div className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-black">
-        <span className="rounded-full bg-cyan-400/15 px-3 py-1 text-cyan-100">{classLabel}</span>
-        <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-100">{cost} RP</span>
-        {defense ? <span className="rounded-full bg-violet-400/15 px-3 py-1 text-violet-100">Defense {defense}</span> : null}
-        {victoryPoints > 0 ? <span className="rounded-full bg-amber-400/15 px-3 py-1 text-amber-100">{victoryPoints} VP</span> : null}
-      </div>
+      <TutorialCardCueOverlay focus={focus} referenceMode={effectiveReferenceMode} />
     </div>
   );
 }
@@ -2282,7 +2347,35 @@ function TutorialCardLessonOverlay({
 }) {
   const dialogRef = useRef(null);
   const scrollRef = useRef(null);
+  const [segmentIndex, setSegmentIndex] = useState(0);
   const classLabel = card ? getCardClassLabel(card) : "Card";
+  const segments = Array.isArray(lesson.segments) ? lesson.segments : [];
+  const safeSegmentIndex = Math.min(segmentIndex, Math.max(0, segments.length - 1));
+  const activeSegment = segments[safeSegmentIndex] ?? null;
+  const activeTitle = activeSegment?.title ?? lesson.title;
+  const activeMessage = activeSegment?.message ?? lesson.message;
+  const activeFocus = activeSegment?.focus ?? lesson.focus ?? null;
+  const segmentProgressLabel = segments.length > 1
+    ? `${lesson.eyebrow ?? "Card lesson"} - ${safeSegmentIndex + 1}/${segments.length}`
+    : lesson.progressLabel ?? lesson.eyebrow ?? "Card lesson";
+  const hasNextSegment = segments.length > 0 && safeSegmentIndex < segments.length - 1;
+  const canGoBack = safeSegmentIndex > 0 || Boolean(onBack);
+
+  function goBack() {
+    if (safeSegmentIndex > 0) {
+      setSegmentIndex((current) => Math.max(0, current - 1));
+      return;
+    }
+    onBack?.();
+  }
+
+  function goForward() {
+    if (hasNextSegment) {
+      setSegmentIndex((current) => current + 1);
+      return;
+    }
+    onAdvance();
+  }
 
   useEffect(() => {
     const previousFocus = document.activeElement;
@@ -2305,9 +2398,13 @@ function TutorialCardLessonOverlay({
   }, []);
 
   useEffect(() => {
+    setSegmentIndex(0);
+  }, [lesson.cueId]);
+
+  useEffect(() => {
     dialogRef.current?.focus({ preventScroll: true });
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
-  }, [lesson.cueId]);
+  }, [lesson.cueId, safeSegmentIndex]);
 
   return (
     <section
@@ -2341,49 +2438,56 @@ function TutorialCardLessonOverlay({
         }
       }}
     >
-      <header className="shrink-0 border-b border-cyan-200/15 bg-slate-950/65 px-4 py-3 backdrop-blur sm:px-6">
+      <header className="shrink-0 border-b border-cyan-200/15 bg-slate-950/65 px-3 py-2 backdrop-blur sm:px-6 sm:py-3">
         <div className="mx-auto flex max-w-6xl items-center gap-3">
-          <ProfessorGuidePortrait guide={guide} compact />
           <div className="min-w-0 flex-1">
             <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">{lesson.eyebrow ?? "Sea Realm Academy"}</span>
-            <strong className="block truncate text-sm font-black text-white">{guide.name}</strong>
+            <strong className="block truncate text-sm font-black text-white">{segmentProgressLabel}</strong>
           </div>
-          <span className="hidden rounded-full bg-cyan-400/15 px-3 py-1 text-xs font-black text-cyan-100 sm:block">{lesson.progressLabel ?? "New card lesson"}</span>
           <button type="button" onClick={onSkip} className="min-h-11 shrink-0 rounded-full border border-cyan-100/25 bg-white/5 px-4 py-2 text-xs font-black text-cyan-50 hover:bg-white/10">
-            {introduction ? "Skip introduction" : "Skip card lesson"}
+            <span className="hidden sm:inline">{introduction ? "Skip introduction" : "Skip card lesson"}</span>
+            <span className="sm:hidden">Skip</span>
           </button>
         </div>
       </header>
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-8">
-        <div className={`mx-auto grid max-w-6xl items-center gap-6 ${lesson.cardVisible === false || !card ? "" : "lg:grid-cols-[minmax(18rem,0.82fr)_minmax(22rem,1.18fr)] lg:gap-10"}`}>
-          {lesson.cardVisible === false || !card ? null : (
-            <TutorialCardReference card={card} classLabel={classLabel} focus={lesson.focus} />
-          )}
-          <div className={lesson.cardVisible === false || !card ? "mx-auto w-full max-w-3xl text-center" : "min-w-0"}>
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">{lesson.progressLabel ?? lesson.eyebrow}</span>
-            <h2 id="seapals-card-lesson-title" className="mt-2 text-3xl font-black leading-tight text-white sm:text-4xl">{lesson.title}</h2>
-            <p id="seapals-card-lesson-description" className="mt-3 text-sm font-semibold leading-relaxed text-cyan-50/80 sm:text-base">{lesson.message}</p>
-            <div className={`mt-5 grid gap-3 ${lesson.callouts?.length > 1 ? "sm:grid-cols-2" : ""}`}>
-              {(lesson.callouts ?? []).map((callout) => (
-                <article key={callout.key ?? callout.title} className="rounded-2xl border border-cyan-200/20 bg-white/[0.07] p-4 text-left shadow-inner">
-                  <strong className="block text-sm font-black text-amber-200">{callout.title}</strong>
-                  <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-200">{callout.text}</p>
-                </article>
-              ))}
+      <div className="seapals-card-lesson-stage min-h-0 flex-1 overflow-hidden px-3 py-2 sm:px-6 sm:py-4" data-card-lesson-stage>
+        <div className="flex h-full min-h-0 items-center justify-center">
+          {lesson.cardVisible === false || !card ? (
+            <div className="mx-auto w-full max-w-3xl text-center">
+              <span className="text-3xl font-black uppercase tracking-[0.2em] text-cyan-100 sm:text-5xl">Sea Realm</span>
+              <div className="mt-5 flex flex-wrap justify-center gap-2 sm:gap-3">
+                {(lesson.callouts ?? []).map((callout) => (
+                  <span key={callout.title} className="rounded-full border border-cyan-200/20 bg-cyan-300/10 px-4 py-2 text-xs font-black text-cyan-100 sm:text-sm">{callout.title}</span>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <TutorialCardReference card={card} classLabel={classLabel} focus={activeFocus} referenceMode={lesson.referenceMode} />
+          )}
         </div>
       </div>
 
-      <footer className="shrink-0 border-t border-cyan-200/15 bg-slate-950/85 px-4 pt-3 backdrop-blur sm:px-6" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-          {onBack ? <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-cyan-100/25 bg-white/5 px-5 py-2 text-sm font-black text-cyan-50 hover:bg-white/10">Back</button> : <span />}
-          <button type="button" onClick={onAdvance} className="min-h-11 rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_10px_30px_rgba(16,185,129,0.25)] hover:brightness-105">
-            {lesson.advanceLabel ?? "Continue"}
-          </button>
+      <aside className="shrink-0 border-t-4 border-cyan-400/60 bg-[#f4fbf8] text-slate-950 shadow-[0_-16px_50px_rgba(0,0,0,0.3)]" data-card-lesson-coach data-card-cue-region={activeFocus ?? undefined}>
+        <div ref={scrollRef} className="max-h-[25dvh] overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4" aria-live="polite" aria-atomic="true">
+          <div className="mx-auto flex max-w-6xl items-start gap-3 sm:gap-4">
+            <ProfessorGuidePortrait guide={guide} compact />
+            <div className="min-w-0 flex-1">
+              <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-cyan-800">{guide.name} - {segmentProgressLabel}</span>
+              <h2 id="seapals-card-lesson-title" className="mt-1 text-lg font-black leading-tight text-slate-950 sm:text-2xl">{activeTitle}</h2>
+              <p id="seapals-card-lesson-description" className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-700 sm:text-base">{activeMessage}</p>
+            </div>
+          </div>
         </div>
-      </footer>
+        <footer className="border-t border-cyan-900/10 bg-white/75 px-4 pt-2 sm:px-6 sm:pt-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+            {canGoBack ? <button type="button" onClick={goBack} className="min-h-11 rounded-full border border-cyan-900/20 bg-white px-5 py-2 text-sm font-black text-cyan-950 hover:bg-cyan-50">Back</button> : <span />}
+            <button type="button" onClick={goForward} className="min-h-11 rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_10px_30px_rgba(16,185,129,0.25)] hover:brightness-105">
+              {hasNextSegment ? "Next detail" : lesson.advanceLabel ?? "Continue"}
+            </button>
+          </div>
+        </footer>
+      </aside>
     </section>
   );
 }
@@ -4028,6 +4132,7 @@ export default function Simulator({
     return card && attack ? { cardId: card.id, cardName: card.name, attackName: attack.actionName } : null;
   })() : null;
   const scriptedFinishPlan = scriptedTutorialScenario?.finishPlan ?? null;
+  const scriptedAttackCardId = scriptedFinishPlan?.attackCardId ?? "porcupine-fish";
   const scriptedPlayerCardIdsInPlay = [
     ...playerCorals.map((coral) => coral.cardId),
     ...playerHabitats,
@@ -4178,9 +4283,9 @@ export default function Simulator({
     scriptedLesson: tutorialUsesScriptedScenario,
     scriptedFinishRoute,
     layoutLessonProgress: tutorialLayoutProgress,
-    scriptedAttackCardInHand: tutorialUsesScriptedScenario && hand.includes("spanish-hogfish"),
-    scriptedAttackCardCost: getPlayerCardPlayCost(cardsById["spanish-hogfish"]),
-    scriptedAttackActionCost: Number(getBasicAttackEffect(cardsById["spanish-hogfish"])?.actionCost ?? 0),
+    scriptedAttackCardInHand: tutorialUsesScriptedScenario && hand.includes(scriptedAttackCardId),
+    scriptedAttackCardCost: getPlayerCardPlayCost(cardsById[scriptedAttackCardId]),
+    scriptedAttackActionCost: Number(getBasicAttackEffect(cardsById[scriptedAttackCardId])?.actionCost ?? 0),
     availableRp: rp,
     nextPalsCardName: cardsById[palsDeck[0]]?.name ?? null,
     drawSelected: Number(turnDrawSelection?.foundation ?? 0) + Number(turnDrawSelection?.pals ?? 0),
@@ -4308,18 +4413,18 @@ export default function Simulator({
     lead: "",
     message: scriptedSearchIsFinishCard
       ? `The discard and 2 RP cost are committed. Choose ${scriptedSearchTargetCard?.name ?? "Spinner Dolphins"} now, but keep it in your hand this round. Murky Water will reduce its Predator play cost next round, letting the RP you bank fund both final creatures.`
-      : `The discard and 2 RP cost are committed, so Scavenge lets you choose any remaining card. ${scriptedSearchTargetCard?.name ?? "Spanish Hogfish"} is our lesson target because its Crunch action can attack the Sea Urchin I placed on my reef.`,
+      : `The discard and 2 RP cost are committed, so Scavenge lets you choose any remaining card. ${scriptedSearchTargetCard?.name ?? "Porcupine Fish"} is our lesson target because its Crunch action can attack the Sea Urchin I placed on my reef.`,
     playerThought: scriptedSearchIsFinishCard
       ? "This search is planning an entire future turn: find the discounted Predator now, preserve Giant Clam, and carry the remaining RP forward."
-      : "Instead of hoping my next draw solves the problem, I can use Scavenge to choose Spanish Hogfish because I already know it has a legal target.",
+      : `Instead of hoping my next draw solves the problem, I can use Scavenge to choose ${scriptedSearchTargetCard?.name ?? "Porcupine Fish"} because I already know it has a legal target.`,
     encouragement: scriptedSearchIsFinishCard
       ? "That is careful sequencing. The strongest search target is the one your board, hand, condition, and RP can use together."
       : "Exactly! That is the difference between searching with a plan and searching for a card that merely looks strong. We began with the board, identified a need, and selected the answer.",
     action: scriptedSearchIsFinishCard
       ? `Choose the highlighted ${scriptedSearchTargetCard?.name ?? "Spinner Dolphins"}, then end the turn with it and Giant Clam protected for Round ${scriptedFinishPlan?.finishRound ?? 4}.`
       : rp >= getPlayerCardPlayCost(scriptedSearchTargetCard) + Number(getBasicAttackEffect(scriptedSearchTargetCard)?.actionCost ?? 0)
-        ? `Choose the highlighted ${scriptedSearchTargetCard?.name ?? "Spanish Hogfish"}, play it now, and keep 1 RP to use Crunch on Sea Urchin.`
-        : `Choose the highlighted ${scriptedSearchTargetCard?.name ?? "Spanish Hogfish"}. Keep it in hand, end the turn, and bank enough RP to play it and use Crunch next round.`,
+        ? `Choose the highlighted ${scriptedSearchTargetCard?.name ?? "Porcupine Fish"}, play it now, and keep 1 RP to use Crunch on Sea Urchin.`
+        : `Choose the highlighted ${scriptedSearchTargetCard?.name ?? "Porcupine Fish"}. Keep it in hand, end the turn, and bank enough RP to play it and use Crunch next round.`,
     target: "script-search-card",
     targetLabel: `the highlighted ${scriptedSearchTargetCard?.name ?? "search card"}`,
   } : null);
@@ -12186,6 +12291,8 @@ export default function Simulator({
         @keyframes seapalsTypeCursorBlink { 0%, 45% { opacity: 1; } 46%, 100% { opacity: .12; } }
         @keyframes seapalsTargetBeaconIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes seapalsTargetArrowBob { 0%, 100% { opacity: 1; } 50% { opacity: .62; } }
+        @keyframes seapalsCardCueFloat { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(var(--seapals-card-cue-float-x, 0), var(--seapals-card-cue-float-y, -5px)); } }
+        @keyframes seapalsCardCuePulse { 0%, 100% { opacity: .4; transform: scale(.75); } 50% { opacity: 1; transform: scale(1.25); } }
         .seapals-game-shell {
           --seapals-mobile-dock-clearance: 4.25rem;
           background-image:
@@ -12359,6 +12466,41 @@ export default function Simulator({
           background: linear-gradient(135deg, #fffdf4 0%, #f2fbfa 55%, #dff8fb 100%);
           box-shadow: 0 20px 56px rgba(2, 8, 23, .42), 0 0 0 5px rgba(103, 232, 249, .08);
           pointer-events: auto;
+        }
+        .seapals-card-cue-region { filter: drop-shadow(0 0 6px rgba(251, 191, 36, .9)); }
+        .seapals-card-lesson-stage { container-type: size; }
+        .seapals-card-reference { container-type: inline-size; width: min(100%, 34.25rem); }
+        @supports (width: 1cqw) {
+          .seapals-card-reference { width: min(100cqw, 71.4286cqh, 34.25rem); }
+        }
+        .seapals-normalized-card-type { font-size: clamp(6px, 2.6cqw, 10px); line-height: 1; }
+        .seapals-normalized-card-name { font-size: clamp(10px, 5.1cqw, 20px); }
+        .seapals-normalized-card-cost {
+          font-size: clamp(8px, 3.6cqw, 14px);
+          line-height: 1;
+          padding: clamp(2px, .8cqw, 4px) clamp(4px, 2.1cqw, 12px);
+        }
+        .seapals-normalized-card-caption {
+          font-size: clamp(6px, 2.4cqw, 10px);
+          line-height: 1;
+          padding: clamp(2px, .8cqw, 4px) clamp(4px, 2.1cqw, 8px);
+        }
+        .seapals-normalized-card-rules {
+          font-size: clamp(7px, 3cqw, 12px);
+          line-height: 1.25;
+          padding: clamp(4px, 2.5cqw, 12px);
+        }
+        .seapals-normalized-card-stat-label { font-size: clamp(5px, 2.1cqw, 8px); line-height: 1; }
+        .seapals-normalized-card-stat-value { font-size: clamp(6px, 2.7cqw, 10px); line-height: 1; }
+        .seapals-card-cue-arrow {
+          animation: seapalsCardCueFloat 1.6s ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        .seapals-card-cue-pulse {
+          animation: seapalsCardCuePulse 1.35s ease-in-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
         }
         .seapals-professor-card-header {
           display: flex;
