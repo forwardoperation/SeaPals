@@ -20,7 +20,7 @@ test("the mobile hand button blinks only until setup has a starting Foundation",
 
   assert.match(
     mobileDock,
-    /onClick=\{\(\) => setModal\("hand"\)\}[\s\S]*?\$\{isSetup && !hasCoralInPlay \? " seapals-setup-playable-card" : ""\}[\s\S]*?>Open Hand/,
+    /onClick=\{\(\) => \{ if \(!playingCardId\) setModal\("hand"\); \}\}[\s\S]*?disabled=\{Boolean\(playingCardId\)\}[\s\S]*?\$\{isSetup && !hasCoralInPlay && !playingCardId \? " seapals-setup-playable-card" : ""\}[\s\S]*?>Open Hand/,
   );
 });
 

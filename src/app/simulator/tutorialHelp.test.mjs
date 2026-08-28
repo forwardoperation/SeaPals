@@ -165,8 +165,21 @@ test("scripted setup highlights only the prepared economy foundation", () => {
     scriptedSetupCardName: "Mustard Hill Coral",
   });
   assert.equal(selected.target, "play-card");
+  assert.equal(selected.targetCardId, "mustard-hill-coral-base");
+  assert.notEqual(selected.cueId, choose.cueId);
   assert.equal(selected.lead, "");
   assert.match(selected.action, /Play Card.*place Mustard Hill Coral/i);
+
+  const placing = getSimulatorTutorialHelp(checkpoint, {
+    gamePhase: "setup",
+    hasCoralInPlay: false,
+    playingCardId: "mustard-hill-coral-base",
+    scriptedSetupCardId: "mustard-hill-coral-base",
+    scriptedSetupCardName: "Mustard Hill Coral",
+  });
+  assert.equal(placing.target, "placement");
+  assert.notEqual(placing.cueId, selected.cueId);
+  assert.match(placing.action, /highlighted area/i);
 });
 
 test("turn draw cues always point inside the blocking draw modal", () => {

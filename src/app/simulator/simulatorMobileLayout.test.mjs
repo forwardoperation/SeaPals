@@ -26,9 +26,14 @@ test("mobile tutorial copy scrolls independently from persistent tour actions", 
 
   assert.match(
     guideCard,
-    /className="seapals-professor-card-scroll"[\s\S]*?<\/div>\s*\{onAdvance \? \(\s*<div className="seapals-professor-actions/,
+    /className="seapals-professor-card-scroll"[\s\S]*?<\/div>\s*\{onRevealTarget \? \([\s\S]*?\{onAdvance \? \(\s*<div className="seapals-professor-actions/,
+  );
+  assert.match(
+    guideCard,
+    /<div key=\{speechKey\} className="seapals-professor-card-scroll">/,
   );
   assert.match(guideCard, /seapals-professor-actions[\s\S]*?min-h-11[\s\S]*?onClick=\{onAdvance\}/);
+  assert.match(guideCard, /onClick=\{onRevealTarget\}[\s\S]*?min-h-11[\s\S]*?\{revealTargetLabel\}[\s\S]*?&darr;/);
   assert.match(simulatorSource, /\.seapals-professor-card-scroll\s*\{[\s\S]*?overflow-y:\s*auto;/);
   assert.match(simulatorSource, /\.seapals-professor-actions\s*\{[\s\S]*?flex:\s*0 0 auto;/);
   assert.match(mobileStyles, /\.seapals-professor-card\s*\{[\s\S]*?max-height:\s*min\(34dvh, 15rem\);/);
@@ -38,15 +43,68 @@ test("mobile tutorial copy scrolls independently from persistent tour actions", 
   );
 });
 
-test("an open mobile coach suppresses the duplicate target beacon", () => {
+test("an open mobile coach keeps the target arrow without duplicate beacon copy", () => {
   assert.match(simulatorSource, /tutorialHelpFloating \? " seapals-tutorial-help-floating"/);
+  assert.match(simulatorSource, /tutorialHelpInline \? " seapals-tutorial-help-inline"/);
   assert.match(
     simulatorSource,
-    /@media \(max-width: 767px\)[\s\S]*?\.seapals-tutorial-help-floating \.seapals-target-beacon \{ display: none; \}/,
+    /@media \(max-width: 767px\)[\s\S]*?\.seapals-tutorial-help-floating \.seapals-target-beacon,\s*\.seapals-tutorial-help-inline \.seapals-target-beacon \{[\s\S]*?z-index:\s*161;[\s\S]*?width:\s*0;[\s\S]*?height:\s*0;[\s\S]*?background:\s*transparent;/,
   );
   assert.match(
     simulatorSource,
+    /\.seapals-tutorial-help-floating \.seapals-target-beacon-copy,[\s\S]*?\.seapals-tutorial-help-inline \.seapals-target-beacon-copy \{ display: none; \}/,
+  );
+  assert.match(simulatorSource, /className="seapals-target-beacon-arrow"/);
+  assert.match(
+    simulatorSource,
     /active=\{tutorialTargetBeaconOpen && !tutorialBoardTourOpen\}/,
+  );
+});
+
+test("the guided hand keeps new copy at the top and offers a direct jump to its target", () => {
+  const targetFinder = sourceSection(
+    simulatorSource,
+    "function getVisibleTutorialTargets(",
+    "function ProfessorTargetBeacon(",
+  );
+  const targetScrollEffect = sourceSection(
+    simulatorSource,
+    "if (modal !== \"hand\" || !tutorialHelpInline) return undefined;",
+    "if (!tutorialBoardTourOpen) return;",
+  );
+  const handModal = sourceSection(
+    simulatorSource,
+    "{modal ? (",
+    "</main>",
+  );
+
+  assert.match(targetFinder, /includeOffscreen = false/);
+  assert.match(targetFinder, /help\.target === "hand" && help\.targetCardId/);
+  assert.match(targetFinder, /function scrollTutorialTargetWithinContainer/);
+  assert.match(targetScrollEffect, /modalScrollRef\.current\?\.scrollTo\(\{[\s\S]*?top:\s*0,[\s\S]*?getTutorialScrollBehavior\(accessibilityReducedMotion\)/);
+  assert.match(targetScrollEffect, /const targetCardId = tutorialHelp\.target === "hand" \? tutorialHelp\.targetCardId : null/);
+  assert.match(targetScrollEffect, /target\.closest\("\[data-simulator-hand-card-rail\]"\)[\s\S]*?scrollTutorialTargetWithinContainer/);
+  assert.match(simulatorSource, /findTutorialTarget\(tutorialHelp, \{ includeOffscreen: true \}\)[\s\S]*?scrollIntoView\(\{[\s\S]*?block:\s*"center"/);
+  assert.match(simulatorSource, /tutorialHelp\?\.target === "hand"[\s\S]*?`Show \$\{cardsById\[tutorialHelp\.targetCardId\]\?\.name/);
+  assert.match(handModal, /ref=\{modalScrollRef\}[\s\S]*?data-simulator-modal-scroll/);
+  assert.match(handModal, /onRevealTarget=\{tutorialHandRevealLabel \? revealHandTutorialTarget : null\}/);
+  assert.match(handModal, /data-simulator-hand-card-rail/);
+});
+
+test("pending placement cannot reopen the mobile hand or replay the same card", () => {
+  const playCard = sourceSection(
+    simulatorSource,
+    "function playCardFromHand(cardId)",
+    "function completeInvasivePlacement",
+  );
+  assert.ok(
+    playCard.indexOf("if (playingCardId === cardId)") < playCard.indexOf("const academyBlock = getAcademyCardPlayBlock"),
+    "the already-pending card should return to placement before the tutorial guard runs",
+  );
+  assert.match(simulatorSource, /if \(playingCardId && modal === "hand"\)[\s\S]*?setModal\(null\)/);
+  assert.match(
+    simulatorSource,
+    /onClick=\{\(\) => \{ if \(!playingCardId\) setModal\("hand"\); \}\} disabled=\{Boolean\(playingCardId\)\}[\s\S]*?Place card first/,
   );
 });
 

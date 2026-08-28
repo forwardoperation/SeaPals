@@ -288,6 +288,8 @@ function ProfessorGuideCard({
   onAdvance = null,
   advanceLabel = "Next",
   onBack = null,
+  onRevealTarget = null,
+  revealTargetLabel = "Show highlighted action",
 }) {
   const professorMessage = createProfessorSpokenMessage(help);
   const speechKey = createProfessorSpeechKey(help.cueId ?? help.id, professorMessage);
@@ -311,13 +313,24 @@ function ProfessorGuideCard({
         </div>
       </div>
       <div className="seapals-professor-card-content min-w-0 flex-1">
-        <div className="seapals-professor-card-scroll">
+        <div key={speechKey} className="seapals-professor-card-scroll">
           <ProfessorTypewriter key={speechKey} guide={guide} message={professorMessage} />
           <p className="seapals-professor-next mt-2 rounded-xl border border-amber-300/70 bg-amber-100 px-3 py-2 text-xs font-black leading-snug text-amber-950" style={{ animationDelay: "180ms" }}>
             Next: {help.action}
           </p>
           <span className="seapals-professor-next mt-1.5 block text-[10px] font-bold uppercase tracking-wide text-cyan-800" style={{ animationDelay: "260ms" }}>Look for {help.targetLabel}</span>
         </div>
+        {onRevealTarget ? (
+          <button
+            type="button"
+            onClick={onRevealTarget}
+            className="seapals-professor-reveal-target seapals-professor-next mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-cyan-700/25 bg-cyan-50 px-4 py-2 text-xs font-black text-cyan-900 shadow-sm hover:bg-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+            style={{ animationDelay: "300ms" }}
+          >
+            <span>{revealTargetLabel}</span>
+            <span aria-hidden="true">&darr;</span>
+          </button>
+        ) : null}
         {onAdvance ? (
           <div className="seapals-professor-actions seapals-professor-next mt-3 flex justify-end gap-2" style={{ animationDelay: "320ms" }} data-tutorial-board-tour-control>
             {onBack ? <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-cyan-700/30 bg-white/70 px-4 py-2 text-xs font-black text-cyan-900 hover:bg-white">Back</button> : null}
@@ -390,12 +403,12 @@ function escapeTutorialSelectorValue(value) {
     : normalized.replace(/["\\]/g, "\\$&");
 }
 
-function getVisibleTutorialTargets(selector) {
+function getVisibleTutorialTargets(selector, { includeOffscreen = false } = {}) {
   return [...document.querySelectorAll(selector)]
     .map((element) => ({ element, rect: element.getBoundingClientRect() }))
     .filter(({ element, rect }) => {
       if (rect.width < 4 || rect.height < 4) return false;
-      if (rect.bottom <= 0 || rect.right <= 0 || rect.top >= window.innerHeight || rect.left >= window.innerWidth) return false;
+      if (!includeOffscreen && (rect.bottom <= 0 || rect.right <= 0 || rect.top >= window.innerHeight || rect.left >= window.innerWidth)) return false;
       if (element.closest("[inert], [aria-hidden=\"true\"]")) return false;
       const style = window.getComputedStyle(element);
       return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity || 1) > 0;
@@ -412,13 +425,13 @@ function chooseTutorialTarget(entries, help) {
   ))[0];
 }
 
-function findTutorialTarget(help) {
+function findTutorialTarget(help, { includeOffscreen = false } = {}) {
   if (!help?.target) return null;
   const selectors = [];
   if (help.coachAnchor) {
     selectors.push(`[data-tutorial-coach-anchor="${escapeTutorialSelectorValue(help.coachAnchor)}"]`);
   }
-  if (help.targetCardId) {
+  if (help.target === "hand" && help.targetCardId) {
     selectors.push(`[data-tutorial-hand-card-id="${escapeTutorialSelectorValue(help.targetCardId)}"]`);
   }
   if (help.targetSearchCardId) {
@@ -438,10 +451,40 @@ function findTutorialTarget(help) {
     selectors.push(`[data-tutorial-action-key="${escapeTutorialSelectorValue(help.targetActionKey)}"]`);
   }
   for (const selector of selectors) {
-    const target = chooseTutorialTarget(getVisibleTutorialTargets(selector), help);
+    const target = chooseTutorialTarget(getVisibleTutorialTargets(selector, { includeOffscreen }), help);
     if (target) return target;
   }
   return null;
+}
+
+function scrollTutorialTargetWithinContainer(container, target, behavior) {
+  const containerRect = container.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const canScrollHorizontally = container.scrollWidth > container.clientWidth + 1;
+  const canScrollVertically = container.scrollHeight > container.clientHeight + 1;
+  const centeredLeft = container.scrollLeft
+    + targetRect.left
+    - containerRect.left
+    - ((containerRect.width - targetRect.width) / 2);
+  const centeredTop = container.scrollTop
+    + targetRect.top
+    - containerRect.top
+    - ((containerRect.height - targetRect.height) / 2);
+  container.scrollTo({
+    left: canScrollHorizontally
+      ? Math.max(0, Math.min(centeredLeft, container.scrollWidth - container.clientWidth))
+      : container.scrollLeft,
+    top: canScrollVertically
+      ? Math.max(0, Math.min(centeredTop, container.scrollHeight - container.clientHeight))
+      : container.scrollTop,
+    behavior,
+  });
+}
+
+function getTutorialScrollBehavior(reducedMotion) {
+  if (reducedMotion) return "auto";
+  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return "auto";
+  return "smooth";
 }
 
 function ProfessorTargetBeacon({ guide, help, active }) {
@@ -511,7 +554,7 @@ function ProfessorTargetBeacon({ guide, help, active }) {
       aria-hidden="true"
     >
       <ProfessorGuidePortrait guide={guide} compact />
-      <div className="min-w-0 flex-1">
+      <div className="seapals-target-beacon-copy min-w-0 flex-1">
         <strong>{guide.name}</strong>
         <span>{getTutorialPointerPrompt(help)}</span>
       </div>
@@ -2927,6 +2970,7 @@ export default function Simulator({
   const [turnDrawResult, setTurnDrawResult] = useState(null);
   const [actionBlinkOn, setActionBlinkOn] = useState(true);
   const [modal, setModal] = useState(null);
+  const modalScrollRef = useRef(null);
   const [selectedHandCard, setSelectedHandCard] = useState(null);
   const [handPopoverCardId, setHandPopoverCardId] = useState(null);
   const [playingCardId, setPlayingCardId] = useState(null);
@@ -4118,6 +4162,23 @@ export default function Simulator({
     && !handPopoverCardId
     && !gameResult,
   );
+  const tutorialHandRevealLabel = modal === "hand" && tutorialHelpInline
+    ? tutorialHelp?.target === "hand" && tutorialHelp.targetCardId
+      ? `Show ${cardsById[tutorialHelp.targetCardId]?.name ?? "highlighted card"}`
+      : tutorialHelp?.target === "play-card"
+        ? "Show Play Card"
+        : null
+    : null;
+  function revealHandTutorialTarget() {
+    const target = findTutorialTarget(tutorialHelp, { includeOffscreen: true });
+    if (!target) return;
+    target.element.focus?.({ preventScroll: true });
+    target.element.scrollIntoView({
+      block: "center",
+      inline: "center",
+      behavior: getTutorialScrollBehavior(accessibilityReducedMotion),
+    });
+  }
   const tutorialTargetBeaconHelp = tutorialBoardTourOpen
     ? tutorialBoardTourHelp
     : eventOverlay
@@ -4159,7 +4220,11 @@ export default function Simulator({
       : ""
   );
   const tutorialCardTargetClass = (cardId) => (
-    tutorialHelpTargetActive && tutorialHelp?.targetCardId === cardId ? " seapals-tutorial-target" : ""
+    tutorialHelpTargetActive
+    && tutorialHelp?.target === "hand"
+    && tutorialHelp.targetCardId === cardId
+      ? " seapals-tutorial-target"
+      : ""
   );
   const tutorialActionTargetClass = (actionKey) => (
     tutorialHelpTargetActive && tutorialHelp?.targetActionKey === actionKey ? " seapals-tutorial-target" : ""
@@ -4198,22 +4263,43 @@ export default function Simulator({
   }, [gamePhase]);
 
   useEffect(() => {
+    if (modal !== "hand" || !tutorialHelpInline) return undefined;
+    const frame = requestAnimationFrame(() => {
+      modalScrollRef.current?.scrollTo({
+        top: 0,
+        behavior: getTutorialScrollBehavior(accessibilityReducedMotion),
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [accessibilityReducedMotion, modal, tutorialHelpDismissalKey, tutorialHelpInline]);
+
+  useEffect(() => {
     if (!tutorialHelpTargetActive) return undefined;
     if (tutorialHelp.target === "opponent-board") setMobileBoardView("opponent");
     else if (tutorialHelp.target === "player-board" || tutorialHelp.targetActionKey) setMobileBoardView("player");
 
-    if (!tutorialHelp.targetCardId && !tutorialHelp.targetActionKey) return undefined;
+    const targetCardId = tutorialHelp.target === "hand" ? tutorialHelp.targetCardId : null;
+    if (!targetCardId && !tutorialHelp.targetActionKey) return undefined;
     const frame = requestAnimationFrame(() => {
-      const attribute = tutorialHelp.targetCardId ? "data-tutorial-hand-card-id" : "data-tutorial-action-key";
-      const value = tutorialHelp.targetCardId ?? tutorialHelp.targetActionKey;
+      const attribute = targetCardId ? "data-tutorial-hand-card-id" : "data-tutorial-action-key";
+      const value = targetCardId ?? tutorialHelp.targetActionKey;
       const candidates = [...document.querySelectorAll(`[${attribute}]`)];
       if (modal === "hand") candidates.reverse();
       const target = candidates
         .find((element) => element.getAttribute(attribute) === value && element.getClientRects().length > 0);
-      target?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+      if (!target) return;
+      const behavior = getTutorialScrollBehavior(accessibilityReducedMotion);
+      const handCardRail = targetCardId && modal === "hand"
+        ? target.closest("[data-simulator-hand-card-rail]")
+        : null;
+      if (handCardRail) {
+        scrollTutorialTargetWithinContainer(handCardRail, target, behavior);
+        return;
+      }
+      target.scrollIntoView({ block: "nearest", inline: "nearest", behavior });
     });
     return () => cancelAnimationFrame(frame);
-  }, [tutorialHelpDismissalKey, tutorialHelpTargetActive, tutorialHelp?.target, tutorialHelp?.targetCardId, tutorialHelp?.targetActionKey, modal, handPopoverCardId, mobileBoardView]);
+  }, [accessibilityReducedMotion, tutorialHelpDismissalKey, tutorialHelpTargetActive, tutorialHelp?.target, tutorialHelp?.targetCardId, tutorialHelp?.targetActionKey, modal, handPopoverCardId, mobileBoardView]);
 
   useEffect(() => {
     if (!tutorialBoardTourOpen) return;
@@ -4395,6 +4481,13 @@ export default function Simulator({
     const interval = setInterval(() => setActionBlinkOn((value) => !value), 500);
     return () => clearInterval(interval);
   }, [isPlacingCoral, isUpgradingCoral]);
+
+  useEffect(() => {
+    if (playingCardId && modal === "hand") {
+      setModal(null);
+      setPlayError("");
+    }
+  }, [modal, playingCardId]);
 
   useEffect(() => {
     if (modal === "hand" && hand.length) {
@@ -6657,6 +6750,11 @@ export default function Simulator({
     const card = cardsById[cardId];
     if (!card) {
       setPlayError("Select a card first.");
+      return;
+    }
+    if (playingCardId === cardId) {
+      setModal(null);
+      setPlayError("");
       return;
     }
     const academyBlock = getAcademyCardPlayBlock({
@@ -11758,7 +11856,7 @@ export default function Simulator({
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
 
   return (
-    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
+    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
         @keyframes seapalsDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
@@ -12425,7 +12523,21 @@ export default function Simulator({
             height: 3.25rem;
             margin-top: .25rem;
           }
-          .seapals-tutorial-help-floating .seapals-target-beacon { display: none; }
+          .seapals-tutorial-help-floating .seapals-target-beacon,
+          .seapals-tutorial-help-inline .seapals-target-beacon {
+            z-index: 161;
+            display: block;
+            width: 0;
+            height: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+          }
+          .seapals-tutorial-help-floating .seapals-target-beacon > .seapals-professor-portrait,
+          .seapals-tutorial-help-floating .seapals-target-beacon-copy,
+          .seapals-tutorial-help-inline .seapals-target-beacon > .seapals-professor-portrait,
+          .seapals-tutorial-help-inline .seapals-target-beacon-copy { display: none; }
           .seapals-professor-coach-wrap,
           .seapals-professor-coach-wrap-low {
             position: fixed;
@@ -13236,7 +13348,7 @@ export default function Simulator({
           <div className="seapals-mobile-dock mt-2 grid h-14 shrink-0 grid-cols-[64px_64px_minmax(0,1fr)_92px] gap-1.5 xl:hidden" aria-label="Mobile game command dock">
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("zones")}`} data-tutorial-target="zones">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">Guide<br /><span className="text-violet-300">Feed</span></button>
-            <button type="button" onClick={() => setModal("hand")} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg${isSetup && !hasCoralInPlay ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{rp} RP ready</span></button>
+            <button type="button" onClick={() => { if (!playingCardId) setModal("hand"); }} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish or cancel this card placement first." : undefined} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg disabled:cursor-not-allowed disabled:opacity-45${isSetup && !hasCoralInPlay && !playingCardId ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{playingCardId ? "Place card first" : `${rp} RP ready`}</span></button>
             <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Opponent First" : "Round 1" : "End Turn"}</button>
           </div>
         </div>
@@ -14218,7 +14330,7 @@ export default function Simulator({
           aria-hidden={inspectedCardData ? "true" : undefined}
           inert={inspectedCardData || undefined}
         >
-          <div className={`max-h-[calc(100dvh-1rem)] max-w-[56rem] w-full overflow-y-auto rounded-[2rem] border p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-6 ${isDarkZoneModal ? "seapals-hud-panel border-cyan-300/25 text-slate-100" : "border-transparent bg-white text-slate-900"}`}>
+          <div ref={modalScrollRef} data-simulator-modal-scroll className={`max-h-[calc(100dvh-1rem)] max-w-[56rem] w-full overflow-y-auto rounded-[2rem] border p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-6 ${isDarkZoneModal ? "seapals-hud-panel border-cyan-300/25 text-slate-100" : "border-transparent bg-white text-slate-900"}`}>
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h3 className="text-xl font-bold">{modalTitle}</h3>
@@ -14272,7 +14384,16 @@ export default function Simulator({
             </div>
 
             {tutorialHelpInline && modal ? (
-              <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
+              <ProfessorGuideCard
+                guide={tutorialGuide}
+                help={tutorialHelp}
+                step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                total={tutorialContract.checkpoints.length}
+                inline
+                onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)}
+                onRevealTarget={tutorialHandRevealLabel ? revealHandTutorialTarget : null}
+                revealTargetLabel={tutorialHandRevealLabel ?? undefined}
+              />
             ) : null}
 
             {modal === "turn-draw" ? (
@@ -14347,7 +14468,7 @@ export default function Simulator({
               </div>
             ) : modal === "hand" ? (
               <div className="flex min-h-0 flex-col gap-3 lg:grid lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-4">
-                <div className={`order-2 overflow-x-auto overflow-y-hidden rounded-3xl border border-cyan-300/20 bg-slate-950/35 p-3 overscroll-contain lg:order-1 lg:max-h-[560px] lg:overflow-x-hidden lg:overflow-y-auto lg:p-4${tutorialTargetClass("hand")}`} style={{ minWidth: 180 }} data-tutorial-target="hand">
+                <div className={`order-2 overflow-x-auto overflow-y-hidden rounded-3xl border border-cyan-300/20 bg-slate-950/35 p-3 overscroll-contain lg:order-1 lg:max-h-[560px] lg:overflow-x-hidden lg:overflow-y-auto lg:p-4${tutorialTargetClass("hand")}`} style={{ minWidth: 180 }} data-tutorial-target="hand" data-simulator-hand-card-rail>
                   {modalCards.length ? (
                     <div className="flex w-max gap-2 lg:block lg:w-auto lg:space-y-3">
                       {modalCards.map((cardId, cardIndex) => {
