@@ -22,7 +22,7 @@ const jiti = createJiti(filename, {
   alias: { "@": path.join(projectRoot, "src") },
 });
 
-const { prebuiltDecks } = jiti(path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js"));
+const { prebuiltDecks } = jiti(path.join(projectRoot, "src/data/decks/prebuiltDecks.js"));
 
 function starterManifest(starterDeckId) {
   const deck = prebuiltDecks.find((candidate) => candidate.id === starterDeckId);

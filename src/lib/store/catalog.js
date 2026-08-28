@@ -10,7 +10,7 @@ import {
   defaultStoreProductionOptionId,
   storeProductionOptionDefinitions,
 } from "../../data/store/production.js";
-import { prebuiltDecks } from "../../data/tournaments/prebuiltDecks.js";
+import { prebuiltDecks } from "../../data/decks/prebuiltDecks.js";
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
 const EXPEDITED_PRODUCTION_DAILY_ORDER_LIMIT = 10;

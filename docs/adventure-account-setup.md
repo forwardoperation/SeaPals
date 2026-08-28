@@ -150,7 +150,7 @@ by itself a verifiable-parental-consent program.
 
 The site now includes owner-review drafts at `/privacy` and `/terms`, a
 sitewide legal footer, and direct privacy notices at the adventure account
-gate, homepage email form, survey, tournament entry, and store checkout. The
+gate, homepage email form, survey, and store checkout. The
 privacy draft identifies the operator as:
 
 - Sea Realm, LLC
@@ -165,8 +165,8 @@ qualified review.
 The privacy draft also contains finite retention periods. Before publishing
 those periods as an operational promise, assign an owner and implement a
 repeatable deletion process for Supabase accounts, authorization metadata,
-active cloud saves and their history, survey records, tournament contact/edit
-data, store records, server/security logs, support correspondence, Kit records,
+active cloud saves and their history, survey records, store records,
+server/security logs, support correspondence, Kit records,
 and Google Analytics settings. Implement an authenticated export and correction
 workflow for account and save data, and test that deleting a Reefbound profile
 synchronizes its deletion across devices while deleting a family account

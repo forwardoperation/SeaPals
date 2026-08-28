@@ -25,7 +25,7 @@ const jiti = createJiti(filename, {
 });
 
 const { prebuiltDecks } = jiti(
-  path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js"),
+  path.join(projectRoot, "src/data/decks/prebuiltDecks.js"),
 );
 
 const PROFILE_ID = "profile-1";

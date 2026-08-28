@@ -57,12 +57,6 @@ export const PRIVACY_RETENTION_SCHEDULE = Object.freeze([
       "Reports are deleted or de-identified sooner when practical after resolution, unless they are needed for an unresolved safety, security, or legal matter.",
   }),
   Object.freeze({
-    category: "Tournament contact and edit information",
-    period: "Up to 90 days after the event",
-    detail:
-      "Display names, deck lists, and results may be kept for up to 24 months before deletion or de-identification.",
-  }),
-  Object.freeze({
     category: "Orders and transaction records",
     period: "Up to 7 years",
     detail:

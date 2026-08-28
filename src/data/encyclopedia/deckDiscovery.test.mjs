@@ -30,7 +30,7 @@ const { storeLaunchProductIds, storeProductDefinitions } = jiti(
   path.join(projectRoot, "src/data/store/products.js")
 );
 const { prebuiltDecks } = jiti(
-  path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js")
+  path.join(projectRoot, "src/data/decks/prebuiltDecks.js")
 );
 
 function copiesByDeck(slug) {

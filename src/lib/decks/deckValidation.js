@@ -1,13 +1,13 @@
 import { cardsById } from "@/data/cards";
 import { getDeckStats } from "./deckStats";
 import {
-  getTournamentDeckRules,
+  getDeckRules,
   isBaseFoundation,
   isFoundation,
 } from "./deckRules";
 
 export function validateGameDeck(deck, rulesProfile) {
-  const rules = getTournamentDeckRules(rulesProfile);
+  const rules = getDeckRules(rulesProfile);
   const errors = [];
   const warnings = [];
 
@@ -51,7 +51,7 @@ export function validateGameDeck(deck, rulesProfile) {
     }
 
     if (rules.bannedCardIds.includes(entry.cardId)) {
-      errors.push(`${card.name} is banned in this tournament.`);
+      errors.push(`${card.name} is not allowed by these deck rules.`);
     }
 
     if (rules.restrictedCardIds.includes(entry.cardId) && quantity > 1) {
@@ -93,28 +93,5 @@ export function validateGameDeck(deck, rulesProfile) {
     isValid: errors.length === 0,
     errors,
     warnings,
-  };
-}
-
-export function validateDeck(deck, tournament) {
-  const gameValidation = validateGameDeck(deck, tournament);
-  if (!deck) return gameValidation;
-
-  const submissionErrors = [];
-
-  if (!deck.name && !deck.deckName) {
-    submissionErrors.push("Deck name is required.");
-  }
-
-  if (!deck.playerName) {
-    submissionErrors.push("Player name is required.");
-  }
-
-  const errors = [...submissionErrors, ...gameValidation.errors];
-
-  return {
-    ...gameValidation,
-    isValid: errors.length === 0,
-    errors,
   };
 }

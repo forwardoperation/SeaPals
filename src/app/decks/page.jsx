@@ -2,8 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { cardsById } from "@/data/cards";
 import { CardCategory } from "@/data/cards/types";
-import { prebuiltDecks } from "@/data/tournaments/prebuiltDecks";
-import { getDeckAnalytics } from "@/lib/tournaments/deckAnalytics";
+import { prebuiltDecks } from "@/data/decks/prebuiltDecks";
+import { getDeckAnalytics } from "@/lib/decks/deckAnalytics";
 
 export const metadata = {
   title: "Decks | SeaPals TCG",
@@ -349,7 +349,7 @@ export default function DecksPage() {
           </h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
             Compare each ready-to-play deck, see what is inside, and review the
-            same performance profile used for tournament analytics.
+            a strategy profile based on the cards in each deck.
           </p>
         </div>
       </section>

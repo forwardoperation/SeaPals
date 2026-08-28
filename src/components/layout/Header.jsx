@@ -68,10 +68,6 @@ export default function Header() {
           Store
         </Link>
 
-        <Link href="/tournaments" aria-current={pathname.startsWith("/tournaments") ? "page" : undefined} className={linkClass("/tournaments")}>
-          Tournaments
-        </Link>
-
         <Link href="/companion" aria-current={pathname.startsWith("/companion") ? "page" : undefined} className={linkClass("/companion")}>
           Tools
         </Link>

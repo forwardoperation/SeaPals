@@ -2,7 +2,7 @@ import {
   storeLaunchProductIds,
   storeProductDefinitions,
 } from "../store/products.js";
-import { prebuiltDecks } from "../tournaments/prebuiltDecks.js";
+import { prebuiltDecks } from "../decks/prebuiltDecks.js";
 
 function currentStoreProducts(products, launchProductIds) {
   const launchIds = new Set(launchProductIds);

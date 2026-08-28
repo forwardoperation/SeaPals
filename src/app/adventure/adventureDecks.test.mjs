@@ -39,7 +39,7 @@ const jiti = createJiti(filename, {
   alias: { "@": path.join(projectRoot, "src") },
 });
 const { cardsById } = jiti(path.join(projectRoot, "src/data/cards/index.js"));
-const { prebuiltDecks } = jiti(path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js"));
+const { prebuiltDecks } = jiti(path.join(projectRoot, "src/data/decks/prebuiltDecks.js"));
 
 function syntheticCatalog() {
   return Object.fromEntries(Array.from({ length: 15 }, (_, index) => {

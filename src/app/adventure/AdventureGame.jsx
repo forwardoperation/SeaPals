@@ -4,7 +4,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cardsById } from "@/data/cards";
-import { prebuiltDecks } from "@/data/tournaments/prebuiltDecks";
+import { prebuiltDecks } from "@/data/decks/prebuiltDecks";
 import { ADVENTURE_MARKETING_CONSENT_VERSION } from "@/lib/adventureAccount.mjs";
 import { isStoryDuelVpTargetVictory } from "@/app/simulator/storyModeContract.mjs";
 import {

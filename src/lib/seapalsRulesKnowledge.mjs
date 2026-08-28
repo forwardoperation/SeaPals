@@ -11,7 +11,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Deck construction",
-    text: "A standard deck has 60 cards, allows up to 4 copies of a card, includes at least one Foundation card and a base Foundation, and contains at least 30 total printed Victory Points. Tournament-specific restrictions can override the defaults.",
+    text: "A standard deck has 60 cards, allows up to 4 copies of a card, includes at least one Foundation card and a base Foundation, and contains at least 30 total printed Victory Points.",
   },
   {
     title: "Building a consistent deck",

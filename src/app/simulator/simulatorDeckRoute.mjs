@@ -1,4 +1,4 @@
-import { getPrebuiltDeckById } from "../../data/tournaments/prebuiltDecks.js";
+import { getPrebuiltDeckById } from "../../data/decks/prebuiltDecks.js";
 
 export const DEFAULT_SIMULATOR_DECK_ID = "coral-garden";
 

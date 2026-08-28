@@ -35,7 +35,7 @@ const jiti = createJiti(filename, {
 const { cardsById } = jiti(path.join(projectRoot, "src/data/cards/index.js"));
 const { conditionCards } = jiti(path.join(projectRoot, "src/data/cards/conditions.js"));
 const { CardCategory, CardKind, canCardOccupySlot } = jiti(path.join(projectRoot, "src/data/cards/types.js"));
-const { prebuiltDecks } = jiti(path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js"));
+const { prebuiltDecks } = jiti(path.join(projectRoot, "src/data/decks/prebuiltDecks.js"));
 
 const conditionIds = conditionCards.map((condition) => condition.id);
 

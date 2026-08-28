@@ -8,36 +8,24 @@ export const defaultDeckRules = {
   requireBaseFoundation: true,
 };
 
-export function getTournamentDeckRules(tournament) {
+export function getDeckRules(rulesProfile) {
   return {
     ...defaultDeckRules,
-    deckSize:
-      tournament?.deckSize ??
-      tournament?.deck_size ??
-      defaultDeckRules.deckSize,
+    deckSize: rulesProfile?.deckSize ?? defaultDeckRules.deckSize,
     maxCopiesPerCard:
-      tournament?.maxCopiesPerCard ??
-      tournament?.max_copies_per_card ??
+      rulesProfile?.maxCopiesPerCard ??
       defaultDeckRules.maxCopiesPerCard,
     minFoundationCards:
-      tournament?.minFoundationCards ??
-      tournament?.min_foundation_cards ??
-      tournament?.minCoralCards ??
-      tournament?.min_coral_cards ??
+      rulesProfile?.minFoundationCards ??
       defaultDeckRules.minFoundationCards,
     minVictoryPoints:
-      tournament?.minVictoryPoints ??
-      tournament?.min_victory_points ??
+      rulesProfile?.minVictoryPoints ??
       defaultDeckRules.minVictoryPoints,
     requireBaseFoundation:
-      tournament?.requireBaseFoundation ??
-      tournament?.require_base_foundation ??
-      tournament?.requireBaseCoral ??
-      tournament?.require_base_coral ??
+      rulesProfile?.requireBaseFoundation ??
       defaultDeckRules.requireBaseFoundation,
-    bannedCardIds: tournament?.bannedCardIds ?? tournament?.banned_card_ids ?? [],
-    restrictedCardIds:
-      tournament?.restrictedCardIds ?? tournament?.restricted_card_ids ?? [],
+    bannedCardIds: rulesProfile?.bannedCardIds ?? [],
+    restrictedCardIds: rulesProfile?.restrictedCardIds ?? [],
   };
 }
 

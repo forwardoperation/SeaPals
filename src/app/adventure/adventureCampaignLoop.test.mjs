@@ -99,7 +99,7 @@ const jiti = createJiti(filename, {
 });
 const { cardsById } = jiti(path.join(projectRoot, "src/data/cards/index.js"));
 const { prebuiltDecks } = jiti(
-  path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js"),
+  path.join(projectRoot, "src/data/decks/prebuiltDecks.js"),
 );
 
 const CAMPAIGN_ROUTE_IDS = Object.freeze([

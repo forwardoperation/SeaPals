@@ -6,7 +6,7 @@
     "audit:rules": "node scripts/audit-rules-chat.cjs --seed=0x5ea5a1 --enforce && node scripts/audit-rules-chat.cjs --seed=0xc0a1be --enforce && node scripts/audit-rules-chat.cjs --seed=0x0cea11 --enforce",
     "build": "next build",
     "test": "node --test \"src/**/*.test.mjs\"",
-    "test:adventure": "node --test src/app/adventure/*.test.mjs src/lib/tournaments/*.test.mjs src/lib/adventureAccount.test.mjs src/lib/adventureAuthorization.test.mjs src/lib/adventureNewsletterOptIn.test.mjs src/lib/adventurePendingAuth.test.mjs src/lib/newsletter.test.mjs src/lib/sameOriginMutation.test.mjs",
+    "test:adventure": "node --test src/app/adventure/*.test.mjs src/lib/decks/*.test.mjs src/lib/adventureAccount.test.mjs src/lib/adventureAuthorization.test.mjs src/lib/adventureNewsletterOptIn.test.mjs src/lib/adventurePendingAuth.test.mjs src/lib/newsletter.test.mjs src/lib/sameOriginMutation.test.mjs",
     "test:simulator": "node --test src/app/simulator/*.test.mjs src/components/rules/*.test.mjs",
     "test:rules": "node --test src/lib/rulesAssistant.test.mjs src/lib/rulesEngine.test.mjs src/lib/rulesExam.test.mjs src/lib/rulesAdversarial.test.mjs src/lib/rulesComprehension.test.mjs src/lib/rulesPlayerInterrogation.test.mjs src/lib/rulesSemanticRedTeam.test.mjs",
     "test:api": "node --test \"src/app/api/**/*.test.mjs\"",

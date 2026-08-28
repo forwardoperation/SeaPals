@@ -96,7 +96,6 @@ test("legal links and direct notices are present at collection points", async ()
       "../app/adventure/AdventureAuthGate.jsx",
       "../app/store/Storefront.jsx",
       "../app/surveys/page.jsx",
-      "../app/tournaments/[slug]/enter/page.jsx",
       "../components/feedback/BugReportDialog.jsx",
       "../components/layout/SiteFooter.jsx",
     ].map((path) => readFile(new URL(path, import.meta.url), "utf8")),
@@ -112,5 +111,4 @@ test("legal links and direct notices are present at collection points", async ()
   assert.match(files[1], /PUBLIC_SUPPORT_EMAIL/);
   assert.match(files[2], /Stripe/);
   assert.match(files[3], /12 months/);
-  assert.match(files[4], /publicly/);
 });

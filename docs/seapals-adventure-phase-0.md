@@ -49,7 +49,7 @@ The intended flow is:
 ### Starter decks
 
 - White Grunt is defined from the supplied card and used by Blue Water and Murky Water.
-- `validateGameDeck` checks game legality without requiring tournament-submission name/player fields.
+- `validateGameDeck` checks the shared game-legality rules for any deck list.
 - Coral Garden, Murky Water, and Blue Water each resolve to 60 cards, respect the four-copy limit, contain a base Foundation, and meet the 30 VP deck minimum.
 - Blue Water's Foundation quantities were rebalanced to respect the four-copy limit while preserving its 60-card size and strategy.
 
@@ -78,7 +78,7 @@ The intended flow is:
 ```powershell
 node --test src/app/adventure/*.test.mjs
 node --test src/app/simulator/*.test.mjs
-node --test src/lib/tournaments/*.test.mjs
+node --test src/lib/decks/*.test.mjs
 npm.cmd test
 npm.cmd run build
 ```

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cardsById } from "@/data/cards";
-import { getDeckAnalytics } from "@/lib/tournaments/deckAnalytics";
+import { getDeckAnalytics } from "@/lib/decks/deckAnalytics";
 import {
   createSavedDeck,
   deleteSavedDeck,

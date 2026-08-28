@@ -54,7 +54,7 @@ The project already contains useful pieces. The plan should extend these rather 
 | Adventure prototype | `/adventure` has continuous keyboard/touch movement, animated sprites, collision, doors, two homes, NPC conversations, story duels, rematches, and local defeat progress. | Scenes, NPCs, dialogue, trainers, and progression are hardcoded. There is no reusable quest system, boat, world map, inventory, or complete save state. |
 | SeaPals simulator | Story mode accepts player/opponent prebuilt deck IDs, opponent name and difficulty, a victory target, exit handling, and a victory callback. The simulator supports 10 and 30 VP games. | It needs structured win/loss results, arbitrary saved deck lists, story reward hooks, stronger loss handling, and a stable adapter between adventure and match state. Mid-duel saving is not planned for version 1.0. |
 | Starter decks and cards | Coral Garden, Murky Water, and Blue Water exist as resolved, legal 60-card prebuilt decks. White Grunt now has bundled artwork and card data; reef/open-ocean/deep mechanics, Coral Disease, and Severe Coral Bleaching already exist. | White Grunt's printed three-school-stack cap still needs generic simulator enforcement before a required deck can exceed it. Card conditions are not substitutes for educational quests. |
-| Deck editing and metrics | The tournament entry page already edits decks. Shared logic provides deck validation, card counts, VP, average RP, composition, VP share, and Offense/Defense/Economy/Consistency/Tempo metrics. | The editor must be extracted from tournament submission, limited to owned cards, given deck-library controls, and connected to the simulator. A game-facing rules profile must validate 60 cards, copy limits, Foundation requirements, and at least 30 total VP without requiring tournament submission fields. |
+| Deck editing and metrics | Shared deck modules provide validation, card counts, VP, average RP, composition, VP share, and Offense/Defense/Economy/Consistency/Tempo metrics. | The Reefbound editor must be limited to owned cards, include deck-library controls, and connect to the simulator. A game-facing rules profile must validate 60 cards, copy limits, Foundation requirements, and at least 30 total VP. |
 | Tutorial material | A scripted seven-round, 26 VP live tutorial, board tour, and explanatory interaction patterns now exist. | Target-age playtesting and named marine-science approval remain release gates. |
 | Persistence | The adventure stores defeated trainer IDs locally; tutorial progress and storefront cart data also demonstrate local browser storage. Supabase is already present for other site features. | Player profiles, collection, packs, decks, inventory, quests, world position, boat, settings, and tournament state are new. There is no player authentication or private cloud-save model. |
 
@@ -62,7 +62,7 @@ Recommended reuse boundaries:
 
 - Keep the current adventure movement, collision, interaction, and responsive controls as the exploration foundation.
 - Keep the simulator and its pure rule modules as the source of truth for SeaPals matches.
-- Extract the existing deck editor and metrics into reusable game-facing components.
+- Keep deck data, validation, and metrics in reusable game-facing modules.
 - Keep centralized card IDs and prebuilt decks as shared domain data.
 - Build quests, rewards, inventory, boat travel, town definitions, and game saves as new versioned systems.
 
@@ -191,7 +191,7 @@ Reward rules:
 
 ### 8.5 Deck builder and metrics
 
-- Extract the existing tournament deck editor into reusable card browser, quantity control, deck summary, metric, and validation components.
+- Use reusable card-browser, quantity-control, deck-summary, metric, and validation components.
 - Allow create, rename, duplicate, delete, and select-active operations for a small deck library.
 - Limit additions to owned quantities and show why locked/unowned cards cannot be added.
 - Enforce the game rules profile: exactly 60 cards, maximum four copies per card, at least one base Foundation, and at least 30 total printed VP, subject to final official rules.
@@ -215,7 +215,7 @@ The pause menu includes **Save**, **Decks**, **Inventory**, **Field Notes**, **W
 
 Writes must be atomic or recoverable, validated before loading, and migrated when the schema changes. If local storage is unavailable or full, the game must explain that saving failed instead of implying success. Deleting or overwriting a profile requires confirmation.
 
-Account-based cloud saves may be added later using player-owned rows and restrictive row-level security. Anonymous tournament RPC patterns must not be reused for private player data. The current account gate collects an adult account email through Supabase; children are instructed to ask a parent or guardian rather than provide their own personal information. The adult-attestation control is not a substitute for the formal privacy and consent review required before public launch.
+Account-based cloud saves may be added later using player-owned rows and restrictive row-level security. Server-side mutations must not use anonymous `SECURITY DEFINER` RPC patterns for private player data. The current account gate collects an adult account email through Supabase; children are instructed to ask a parent or guardian rather than provide their own personal information. The adult-attestation control is not a substitute for the formal privacy and consent review required before public launch.
 
 ### 8.7 Field Notes, map, and accessibility
 

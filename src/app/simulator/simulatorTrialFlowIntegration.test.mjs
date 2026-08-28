@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { prebuiltDecks } from "../../data/tournaments/prebuiltDecks.js";
+import { prebuiltDecks } from "../../data/decks/prebuiltDecks.js";
 import {
   DEFAULT_SIMULATOR_DECK_ID,
   createSimulatorDeckHref,

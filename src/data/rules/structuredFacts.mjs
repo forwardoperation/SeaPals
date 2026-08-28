@@ -36,7 +36,7 @@ export const STRUCTURED_RULE_FACTS = [
     intents: ["how many", "allowed", "can i include", "maximum"],
     answerTypes: ["quantity"],
     values: { maximumCopies: 4 },
-    text: "You may include up to 4 copies of a card in a standard deck, unless a tournament rule overrides that limit.",
+    text: "You may include up to 4 copies of a card in a standard deck.",
   },
   {
     id: "starting-hand",

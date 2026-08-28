@@ -19,7 +19,7 @@ const jiti = createJiti(filename, {
   alias: { "@": path.join(projectRoot, "src") },
 });
 const { cardsById } = jiti(path.join(projectRoot, "src/data/cards/index.js"));
-const { getPlayableDeckById } = jiti(path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js"));
+const { getPlayableDeckById } = jiti(path.join(projectRoot, "src/data/decks/prebuiltDecks.js"));
 
 function getOnPlayAttacks(card) {
   return (card?.onPlay ?? []).flatMap((ability) => {

@@ -11,7 +11,7 @@ import { SEAPALS_OPERATOR } from "@/lib/legalPrivacy.mjs";
 export const metadata = {
   title: "Terms of Use | SeaPals TCG",
   description:
-    "Terms governing use of the SeaPals TCG website, online tools, tournaments, surveys, store, and Reefbound adventure.",
+    "Terms governing use of the SeaPals TCG website, online tools, surveys, store, and Reefbound adventure.",
   alternates: { canonical: "/terms" },
 };
 
@@ -20,7 +20,7 @@ export default function TermsPage() {
     <LegalDocument
       eyebrow="SeaPals website and online game"
       title="Terms of Use"
-      summary="These terms describe the rules for using the SeaPals website, family account, Reefbound adventure, online tools, surveys, tournaments, and store."
+      summary="These terms describe the rules for using the SeaPals website, family account, Reefbound adventure, online tools, surveys, and store."
     >
       <LegalNotice title="A note for families">
         <p>
@@ -53,8 +53,8 @@ export default function TermsPage() {
       <LegalSection id="service" title="2. The SeaPals service">
         <p>
           SeaPals includes a card-game website, educational marine-life
-          content, game instructions and tools, surveys, tournament features,
-          a store or store preview, and the Reefbound browser adventure.
+          content, game instructions and tools, surveys, a store or store
+          preview, and the Reefbound browser adventure.
           Features may be added, changed, paused, or removed as the project
           develops.
         </p>
@@ -123,7 +123,7 @@ export default function TermsPage() {
           </li>
           <li>
             automate abusive account creation, email delivery, survey
-            submissions, tournament entries, or store requests;
+            submissions, or store requests;
           </li>
           <li>
             impersonate another person or submit another person’s contact
@@ -140,22 +140,19 @@ export default function TermsPage() {
         </ul>
       </LegalSection>
 
-      <LegalSection id="submissions" title="5. Surveys, tournaments, and submissions">
+      <LegalSection id="submissions" title="5. Surveys and submissions">
         <p>
-          Use a first name or display name rather than a full legal name for
-          public-facing tournament and survey activity. A parent or guardian
-          should make submissions for a player under 13. Do not include an
-          address, phone number, school, private account credential, or other
-          sensitive information in a deck name, survey answer, or other
-          free-text field.
+          Use a first name or display name rather than a full legal name in a
+          survey. A parent or guardian should make submissions for a player
+          under 13. Do not include an address, phone number, school, private
+          account credential, or other sensitive information in a survey answer
+          or other free-text field.
         </p>
         <p>
           You retain ownership of original material you submit. You give Sea
           Realm a non-exclusive, worldwide, royalty-free license to host, copy,
           format, review, and display that material only as reasonably needed
-          to operate the submitted survey, tournament, event, or related
-          SeaPals feature. Public tournament standings may show the submitted
-          display name, deck information, and results.
+          to operate the submitted survey or related SeaPals feature.
         </p>
         <p>
           We may reject, remove, de-identify, or moderate a submission that
@@ -167,12 +164,11 @@ export default function TermsPage() {
       <LegalSection id="email" title="6. Email communications">
         <p>
           Authentication and account-security messages are transactional and
-          may be needed to use the account. Tournament review messages may be
-          sent to the address supplied with a tournament entry. Marketing
-          emails are optional, require a separate request at account setup or
-          through the adult-facing post-play invitation, and can be stopped
-          with the unsubscribe link. Declining updates does not restrict game
-          access or progress.
+          may be needed to use the account. Marketing emails are optional,
+          require a separate request at account setup or through the
+          adult-facing post-play invitation, and can be stopped with the
+          unsubscribe link. Declining updates does not restrict game access or
+          progress.
         </p>
       </LegalSection>
 
@@ -279,9 +275,9 @@ export default function TermsPage() {
         <p>
           We may suspend or limit access when reasonably necessary to protect
           users, investigate abuse, maintain the service, follow the law, or
-          enforce these Terms. We may also discontinue a preview, tournament,
-          or unfinished feature. Where practical, we will provide notice of a
-          material service change.
+          enforce these Terms. We may also discontinue a preview or unfinished
+          feature. Where practical, we will provide notice of a material
+          service change.
         </p>
       </LegalSection>
 

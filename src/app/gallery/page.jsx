@@ -312,7 +312,7 @@ function TypeSection({ title, slug, images }) {
       </div>
 
       <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
-        {images.map((image, index) => (
+        {images.map((image) => (
           <details
             key={image.cardId ?? image.src}
             id={image.cardId ? `card-${image.cardId}` : undefined}
@@ -326,7 +326,7 @@ function TypeSection({ title, slug, images }) {
                     alt={cardDisplayName(image.card, image.name)}
                     width={400}
                     height={560}
-                    loading={index < 4 ? "eager" : "lazy"}
+                    loading="lazy"
                     className="h-auto w-full drop-shadow-lg"
                   />
                 </div>

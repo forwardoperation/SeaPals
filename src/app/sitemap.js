@@ -15,7 +15,6 @@ const PUBLIC_PATHS = Object.freeze([
   "/store",
   "/surveys",
   "/terms",
-  "/tournaments",
 ]);
 
 export default function sitemap() {

@@ -889,7 +889,6 @@ export default function InstructionsPage() {
                   <li>• Coral, Creature Schools, and their stages go in the Foundation Deck.</li>
                   <li>• Regular creatures, Support cards, and playable Habitat cards go in the Pals Deck.</li>
                   <li>• Conditions use a separate shared deck and are not part of either player’s 60 cards.</li>
-                  <li>• Tournament-specific rules may override the standard construction limits.</li>
                 </ul>
               </RuleDetails>
 

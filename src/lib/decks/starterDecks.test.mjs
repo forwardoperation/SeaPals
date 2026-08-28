@@ -18,19 +18,19 @@ const { cardsById } = jiti(
   path.join(projectRoot, "src/data/cards/index.js")
 );
 const { getPlayableDeckById, playableDecks, prebuiltDecks, storyOpponentDecks } = jiti(
-  path.join(projectRoot, "src/data/tournaments/prebuiltDecks.js")
+  path.join(projectRoot, "src/data/decks/prebuiltDecks.js")
 );
 const { defaultDeckRules, isBaseFoundation } = jiti(
-  path.join(projectRoot, "src/lib/tournaments/deckRules.js")
+  path.join(projectRoot, "src/lib/decks/deckRules.js")
 );
 const { getDeckStats } = jiti(
-  path.join(projectRoot, "src/lib/tournaments/deckStats.js")
+  path.join(projectRoot, "src/lib/decks/deckStats.js")
 );
 const { getGalleryData } = jiti(
   path.join(projectRoot, "src/lib/gallery.js")
 );
-const { validateDeck, validateGameDeck } = jiti(
-  path.join(projectRoot, "src/lib/tournaments/validateDeck.js")
+const { validateGameDeck } = jiti(
+  path.join(projectRoot, "src/lib/decks/deckValidation.js")
 );
 
 const starterDeckIds = ["coral-garden", "murky-water", "blue-water"];
@@ -141,20 +141,6 @@ for (const deckId of starterDeckIds) {
     );
   });
 }
-
-test("game deck validation omits tournament submission fields", () => {
-  const deck = prebuiltDecks.find((candidate) => candidate.id === "coral-garden");
-  const gameDeck = { cards: deck.cards };
-
-  assert.equal(validateGameDeck(gameDeck).isValid, true);
-
-  const tournamentValidation = validateDeck(gameDeck);
-  assert.equal(tournamentValidation.isValid, false);
-  assert.deepEqual(tournamentValidation.errors, [
-    "Deck name is required.",
-    "Player name is required.",
-  ]);
-});
 
 test("Open Ocean matches the revised 60-card physical deck", () => {
   const deck = prebuiltDecks.find(

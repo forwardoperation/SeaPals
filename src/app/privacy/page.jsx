@@ -26,7 +26,7 @@ export const metadata = {
 const providerRows = [
   [
     "Supabase",
-    "Account authentication, adult account email, authorization records, synchronized Reefbound saves, surveys, private bug reports, tournament entries, and order records.",
+    "Account authentication, adult account email, authorization records, synchronized Reefbound saves, surveys, private bug reports, and order records.",
     "Account access, cross-device save synchronization and recovery, database hosting, security, and administration.",
   ],
   [
@@ -51,8 +51,8 @@ const providerRows = [
   ],
   [
     "Resend",
-    "Tournament participant details for review messages; customer contact, order contents, totals, fulfillment method, and delivery address for paid-order alerts when those notifications are enabled.",
-    "Sending transactional tournament review messages and private merchant purchase alerts.",
+    "Customer contact, order contents, totals, fulfillment method, and delivery address for paid-order alerts when those notifications are enabled.",
+    "Sending private merchant purchase alerts.",
   ],
 ];
 
@@ -103,7 +103,7 @@ export default function PrivacyPage() {
         <p>
           {SEAPALS_OPERATOR.legalName} (“Sea Realm,” “we,” “us,” or “our”)
           operates the SeaPals TCG website, online tools, store preview,
-          tournaments, surveys, and the Reefbound adventure at{" "}
+          surveys, and the Reefbound adventure at{" "}
           <a href={CANONICAL_SITE_ORIGIN}>{CANONICAL_SITE_HOSTNAME}</a>. This policy
           applies to information handled through those services.
         </p>
@@ -184,15 +184,6 @@ export default function PrivacyPage() {
           information into the free-text fields, and a parent or guardian
           should help a player under 13 submit a report. We use reports to
           reproduce, prioritize, repair, and verify problems with the games.
-        </p>
-
-        <h3>Tournaments</h3>
-        <p>
-          Tournament entry may collect a display name, adult-managed contact
-          email, deck name, deck list, review notes, edit credential, match
-          results, and event status. Display names, deck information, and match
-          results may appear publicly in the applicable event. Contact emails
-          and private edit credentials are not intended for public display.
         </p>
 
         <h3>Store and transactions</h3>
