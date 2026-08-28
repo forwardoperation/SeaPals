@@ -5,7 +5,7 @@ export const GUIDED_ACADEMY_BOARD_TOUR_STEPS = Object.freeze([
     id: "score",
     target: "vp-score",
     title: "First, know how to win",
-    message: "Welcome to the match table, Reefkeeper. This scoreboard tracks both reefs. Victory Points come from the cards you successfully add to your ecosystem, and the lesson will not end until you reach its full target.",
+    message: "Now that you can read your first card, let us map the match table. This scoreboard tracks both reefs. Victory Points come from the cards you successfully add to your ecosystem, and the lesson will not end until you reach its full target.",
     targetLabel: "the Victory Point scoreboard",
     pointerPrompt: "This scoreboard shows your progress toward victory.",
   }),

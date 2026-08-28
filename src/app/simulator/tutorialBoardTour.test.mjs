@@ -36,6 +36,7 @@ test("guided Academy board tour visits the decision areas in a stable teaching o
 
 test("guided Academy board tour exposes paced Professor cues and hands off to the coin flip", () => {
   const first = getGuidedAcademyBoardTourStep(0);
+  assert.match(first.message, /now that you can read your first card.*map the match table/i);
   assert.equal(first.progressLabel, "Board tour • 1/9");
   assert.equal(first.advanceLabel, "Next");
   assert.equal(first.finalStep, false);

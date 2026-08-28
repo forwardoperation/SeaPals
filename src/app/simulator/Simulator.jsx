@@ -76,6 +76,15 @@ import {
 } from "./tutorialScenario.mjs";
 import { getGuidedAcademyBoardTourStep, getNextGuidedAcademyBoardTourStep } from "./tutorialBoardTour.mjs";
 import {
+  GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS,
+  GUIDED_ACADEMY_INTRO_CARD_ID,
+  createGuidedAcademyCardLesson,
+  getGuidedAcademyIntroductionStep,
+  getNextGuidedAcademyIntroductionStep,
+  getTutorialCardReferenceRules,
+  mergeTutorialSeenConcepts,
+} from "./tutorialCardLessons.mjs";
+import {
   getTutorialBeaconAnchor,
   getTutorialCoachPlacement,
 } from "./tutorialCoachPlacement.mjs";
@@ -2199,6 +2208,186 @@ function BubbleBurst({ x, y }) {
   );
 }
 
+function TutorialCardReference({ card, classLabel, focus = null }) {
+  if (!card) return null;
+  const placeholderArt = /SeaPalsTCGLogoWhite\.svg$/i.test(card.image ?? "");
+  const cost = Number(card.cost?.rp ?? card.rp ?? 0);
+  const victoryPoints = Number(card.victoryPoints ?? card.vp ?? 0);
+  const defense = card.defense?.dice ?? card.defense ?? null;
+  const referenceRules = getTutorialCardReferenceRules(card);
+  const focusLabel = {
+    identity: "Name, type, and RP cost",
+    rules: "Ability label, rule, and timing",
+    fit: "HP, VP, and creature slots",
+  }[focus] ?? null;
+
+  return (
+    <div className="mx-auto w-full max-w-[17rem] lg:max-w-[23rem]">
+      <div className="relative aspect-[5/7] overflow-hidden rounded-[1.75rem] border-2 border-cyan-200/35 bg-slate-950 shadow-[0_24px_70px_rgba(0,0,0,0.42)]">
+        {placeholderArt ? (
+          <div className="flex h-full flex-col bg-gradient-to-b from-cyan-950 via-slate-950 to-emerald-950 p-4 text-left text-white">
+            <div className="flex items-start justify-between gap-3 border-b border-cyan-200/20 pb-3">
+              <div>
+                <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">{classLabel}</span>
+                <strong className="mt-1 block text-xl font-black leading-tight">{card.name}</strong>
+              </div>
+              <span className="shrink-0 rounded-full bg-emerald-300 px-3 py-1 text-sm font-black text-emerald-950">{cost} RP</span>
+            </div>
+            <div className="my-4 flex min-h-0 flex-1 items-center justify-center rounded-2xl border border-white/10 bg-black/20 p-5">
+              <img src={card.image || CARD_ART_FALLBACK} alt="" className="max-h-full max-w-full object-contain opacity-90" />
+            </div>
+            {referenceRules.length ? (
+              <div className="max-h-[38%] space-y-2 overflow-y-auto rounded-xl bg-white/10 p-3 text-xs leading-relaxed text-slate-100">
+                {referenceRules.map((rule) => (
+                  <p key={rule.key}>
+                    <strong className="text-emerald-300">{rule.label}{rule.name ? ` - ${rule.name}` : ""}: </strong>
+                    <span className="font-semibold">{rule.text}</span>
+                  </p>
+                ))}
+              </div>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-wide text-cyan-100">
+              {card.health ? <span className="rounded-full bg-cyan-400/15 px-2 py-1">{card.health} HP</span> : null}
+              {defense ? <span className="rounded-full bg-violet-400/15 px-2 py-1">Defense {defense}</span> : null}
+              {victoryPoints > 0 ? <span className="rounded-full bg-amber-400/15 px-2 py-1">{victoryPoints} VP</span> : null}
+            </div>
+          </div>
+        ) : (
+          <img src={card.image || CARD_ART_FALLBACK} alt={`${card.name} card`} className="h-full w-full bg-slate-950/70 object-contain" />
+        )}
+        {focusLabel ? (
+          <div className={`pointer-events-none absolute inset-x-3 rounded-2xl border-2 border-amber-300 bg-amber-300/10 shadow-[0_0_28px_rgba(252,211,77,0.5)] ${focus === "identity" ? "top-3 h-[18%]" : focus === "rules" ? "top-[45%] h-[28%]" : "bottom-3 h-[20%]"}`}>
+            <span className="absolute -top-3 left-3 rounded-full bg-amber-300 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-amber-950">{focusLabel}</span>
+          </div>
+        ) : null}
+      </div>
+      <div className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-black">
+        <span className="rounded-full bg-cyan-400/15 px-3 py-1 text-cyan-100">{classLabel}</span>
+        <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-100">{cost} RP</span>
+        {defense ? <span className="rounded-full bg-violet-400/15 px-3 py-1 text-violet-100">Defense {defense}</span> : null}
+        {victoryPoints > 0 ? <span className="rounded-full bg-amber-400/15 px-3 py-1 text-amber-100">{victoryPoints} VP</span> : null}
+      </div>
+    </div>
+  );
+}
+
+function TutorialCardLessonOverlay({
+  guide,
+  lesson,
+  card = null,
+  onBack = null,
+  onAdvance,
+  onSkip,
+  introduction = false,
+}) {
+  const dialogRef = useRef(null);
+  const scrollRef = useRef(null);
+  const classLabel = card ? getCardClassLabel(card) : "Card";
+
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const isolatedElements = [];
+    const simulatorRoot = dialogRef.current?.closest("main");
+    let activeBranch = dialogRef.current;
+    while (activeBranch?.parentElement && activeBranch !== simulatorRoot) {
+      const parent = activeBranch.parentElement;
+      [...parent.children].forEach((sibling) => {
+        if (sibling === activeBranch || !(sibling instanceof HTMLElement)) return;
+        isolatedElements.push({ element: sibling, inert: sibling.inert });
+        sibling.inert = true;
+      });
+      activeBranch = parent;
+    }
+    return () => {
+      isolatedElements.forEach(({ element, inert }) => { element.inert = inert; });
+      previousFocus?.focus?.({ preventScroll: true });
+    };
+  }, []);
+
+  useEffect(() => {
+    dialogRef.current?.focus({ preventScroll: true });
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [lesson.cueId]);
+
+  return (
+    <section
+      ref={dialogRef}
+      className="fixed inset-0 z-[180] flex min-h-0 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_#0d5770_0%,_#071c2d_42%,_#030b14_100%)] text-white"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="seapals-card-lesson-title"
+      aria-describedby="seapals-card-lesson-description"
+      tabIndex={-1}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onSkip();
+          return;
+        }
+        if (event.key !== "Tab") return;
+        const controls = [...dialogRef.current.querySelectorAll("button:not([disabled]), [href], [tabindex]:not([tabindex='-1'])")];
+        if (!controls.length) {
+          event.preventDefault();
+          return;
+        }
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }}
+    >
+      <header className="shrink-0 border-b border-cyan-200/15 bg-slate-950/65 px-4 py-3 backdrop-blur sm:px-6">
+        <div className="mx-auto flex max-w-6xl items-center gap-3">
+          <ProfessorGuidePortrait guide={guide} compact />
+          <div className="min-w-0 flex-1">
+            <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">{lesson.eyebrow ?? "Sea Realm Academy"}</span>
+            <strong className="block truncate text-sm font-black text-white">{guide.name}</strong>
+          </div>
+          <span className="hidden rounded-full bg-cyan-400/15 px-3 py-1 text-xs font-black text-cyan-100 sm:block">{lesson.progressLabel ?? "New card lesson"}</span>
+          <button type="button" onClick={onSkip} className="min-h-11 shrink-0 rounded-full border border-cyan-100/25 bg-white/5 px-4 py-2 text-xs font-black text-cyan-50 hover:bg-white/10">
+            {introduction ? "Skip introduction" : "Skip card lesson"}
+          </button>
+        </div>
+      </header>
+
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-8">
+        <div className={`mx-auto grid max-w-6xl items-center gap-6 ${lesson.cardVisible === false || !card ? "" : "lg:grid-cols-[minmax(18rem,0.82fr)_minmax(22rem,1.18fr)] lg:gap-10"}`}>
+          {lesson.cardVisible === false || !card ? null : (
+            <TutorialCardReference card={card} classLabel={classLabel} focus={lesson.focus} />
+          )}
+          <div className={lesson.cardVisible === false || !card ? "mx-auto w-full max-w-3xl text-center" : "min-w-0"}>
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">{lesson.progressLabel ?? lesson.eyebrow}</span>
+            <h2 id="seapals-card-lesson-title" className="mt-2 text-3xl font-black leading-tight text-white sm:text-4xl">{lesson.title}</h2>
+            <p id="seapals-card-lesson-description" className="mt-3 text-sm font-semibold leading-relaxed text-cyan-50/80 sm:text-base">{lesson.message}</p>
+            <div className={`mt-5 grid gap-3 ${lesson.callouts?.length > 1 ? "sm:grid-cols-2" : ""}`}>
+              {(lesson.callouts ?? []).map((callout) => (
+                <article key={callout.key ?? callout.title} className="rounded-2xl border border-cyan-200/20 bg-white/[0.07] p-4 text-left shadow-inner">
+                  <strong className="block text-sm font-black text-amber-200">{callout.title}</strong>
+                  <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-200">{callout.text}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer className="shrink-0 border-t border-cyan-200/15 bg-slate-950/85 px-4 pt-3 backdrop-blur sm:px-6" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+          {onBack ? <button type="button" onClick={onBack} className="min-h-11 rounded-full border border-cyan-100/25 bg-white/5 px-5 py-2 text-sm font-black text-cyan-50 hover:bg-white/10">Back</button> : <span />}
+          <button type="button" onClick={onAdvance} className="min-h-11 rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_10px_30px_rgba(16,185,129,0.25)] hover:brightness-105">
+            {lesson.advanceLabel ?? "Continue"}
+          </button>
+        </div>
+      </footer>
+    </section>
+  );
+}
+
 function BoardBubbleBursts({ bursts, board }) {
   const boardBursts = bursts.filter(
     (burst) => (burst.board ?? "player") === board,
@@ -2872,6 +3061,9 @@ export default function Simulator({
     reducedMotion: accessibilityReducedMotion,
   };
   const [tutorialHelpDismissedId, setTutorialHelpDismissedId] = useState(null);
+  const [tutorialIntroductionStep, setTutorialIntroductionStep] = useState(null);
+  const [tutorialCardLesson, setTutorialCardLesson] = useState(null);
+  const [tutorialSeenCardConceptKeys, setTutorialSeenCardConceptKeys] = useState([]);
   const [tutorialBoardTourStep, setTutorialBoardTourStep] = useState(null);
   const [tutorialLayoutProgress, setTutorialLayoutProgress] = useState(
     createGuidedAcademyLayoutProgress,
@@ -3350,7 +3542,25 @@ export default function Simulator({
   const tutorialBoardTourHelp = tutorialContract && tutorialUsesScriptedScenario
     ? getGuidedAcademyBoardTourStep(tutorialBoardTourStep, { guideName: tutorialGuide.name })
     : null;
-  const tutorialBoardTourOpen = Boolean(tutorialBoardTourHelp && !eventOverlay && !gameResult);
+  const tutorialIntroductionCard = cardsById[GUIDED_ACADEMY_INTRO_CARD_ID] ?? null;
+  const tutorialIntroductionHelp = tutorialContract && tutorialUsesScriptedScenario
+    ? getGuidedAcademyIntroductionStep(tutorialIntroductionStep, {
+        guideName: tutorialGuide.name,
+        card: tutorialIntroductionCard,
+      })
+    : null;
+  const tutorialIntroductionOpen = Boolean(tutorialIntroductionHelp && !eventOverlay && !gameResult);
+  const tutorialCardLessonCard = tutorialCardLesson?.cardId
+    ? cardsById[tutorialCardLesson.cardId]
+    : null;
+  const tutorialCardLessonOpen = Boolean(tutorialCardLesson && tutorialCardLessonCard && !eventOverlay && !gameResult);
+  const tutorialBoardTourOpen = Boolean(
+    tutorialBoardTourHelp
+    && !tutorialIntroductionOpen
+    && !tutorialCardLessonOpen
+    && !eventOverlay
+    && !gameResult,
+  );
 
   useEffect(() => {
     if (!["draw", "main"].includes(gamePhase) || !Number.isFinite(activeHandLimit)) return;
@@ -4127,6 +4337,48 @@ export default function Simulator({
   );
   const tutorialHelpDismissalKey = tutorialHelp?.cueId ?? tutorialHelp?.id ?? null;
   const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelpDismissalKey);
+
+  useEffect(() => {
+    if (
+      !tutorialContract
+      || !tutorialUsesScriptedScenario
+      || tutorialIntroductionOpen
+      || tutorialBoardTourOpen
+      || tutorialCardLesson
+      || !tutorialHelpOpen
+      || tutorialHelp?.target !== "hand"
+      || !tutorialHelp.targetCardId
+      || eventOverlay
+      || modal
+      || handPopoverCardId
+      || inspectedCardData
+      || roundFlash
+      || gameResult
+    ) return;
+    const card = cardsById[tutorialHelp.targetCardId];
+    const lesson = createGuidedAcademyCardLesson(card, {
+      seenConceptKeys: tutorialSeenCardConceptKeys,
+      cardClassLabel: getCardClassLabel(card),
+    });
+    if (lesson) setTutorialCardLesson(lesson);
+  }, [
+    eventOverlay,
+    gameResult,
+    handPopoverCardId,
+    inspectedCardData,
+    modal,
+    roundFlash,
+    tutorialBoardTourOpen,
+    tutorialCardLesson,
+    tutorialContract,
+    tutorialHelp?.target,
+    tutorialHelp?.targetCardId,
+    tutorialHelpOpen,
+    tutorialIntroductionOpen,
+    tutorialSeenCardConceptKeys,
+    tutorialUsesScriptedScenario,
+  ]);
+
   const keepAcademyPointer = Boolean(tutorialUsesScriptedScenario && scriptedFinishRoute?.active);
   const tutorialHelpTargetActive = Boolean(tutorialHelp && (tutorialHelpOpen || keepAcademyPointer));
   const tutorialConditionTargetActive = Boolean(
@@ -4152,6 +4404,8 @@ export default function Simulator({
   const tutorialHelpFloating = Boolean(
     tutorialHelpOpen
     && !tutorialBoardTourOpen
+    && !tutorialIntroductionOpen
+    && !tutorialCardLessonOpen
     && !tutorialHelpInline
     && !eventOverlay
     && !modal
@@ -4194,6 +4448,8 @@ export default function Simulator({
       : null;
   const tutorialTargetBeaconOpen = Boolean(
     tutorialTargetBeaconHelp
+    && !tutorialIntroductionOpen
+    && !tutorialCardLessonOpen
     && !roundFlash
     && !gameResult
     && !opponentThinking,
@@ -11598,6 +11854,32 @@ export default function Simulator({
     setTurnLog(["The opening coin flip will decide who takes the first turn."]);
   }
 
+  function finishTutorialIntroduction() {
+    setTutorialIntroductionStep(null);
+    setTutorialSeenCardConceptKeys((current) => mergeTutorialSeenConcepts(
+      current,
+      GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS,
+    ));
+    setTutorialBoardTourStep(0);
+  }
+
+  function advanceTutorialIntroduction() {
+    const nextStep = getNextGuidedAcademyIntroductionStep(tutorialIntroductionStep);
+    if (nextStep === null) {
+      finishTutorialIntroduction();
+      return;
+    }
+    setTutorialIntroductionStep(nextStep);
+  }
+
+  function finishTutorialCardLesson() {
+    setTutorialSeenCardConceptKeys((current) => mergeTutorialSeenConcepts(
+      current,
+      tutorialCardLesson?.conceptKeys ?? [],
+    ));
+    setTutorialCardLesson(null);
+  }
+
   function finishTutorialBoardTour() {
     setTutorialBoardTourStep(null);
     openOpeningCoinFlip();
@@ -11736,7 +12018,10 @@ export default function Simulator({
     storyResultRecordedRef.current = false;
     setTutorialExitConfirmationOpen(false);
     setTutorialHelpDismissedId(null);
-    setTutorialBoardTourStep(tutorialContract && tutorialUsesScriptedScenario ? 0 : null);
+    setTutorialIntroductionStep(tutorialContract && tutorialUsesScriptedScenario ? 0 : null);
+    setTutorialCardLesson(null);
+    setTutorialSeenCardConceptKeys([]);
+    setTutorialBoardTourStep(null);
     if (tutorialContract) {
       if (reason === "begin") {
         emitTutorialEvent(SIMULATOR_TUTORIAL_LIFECYCLE_TYPES.DUEL_STARTED, {
@@ -12756,6 +13041,30 @@ export default function Simulator({
             </p>
           ) : null}
 
+          {tutorialIntroductionOpen ? (
+            <TutorialCardLessonOverlay
+              guide={tutorialGuide}
+              lesson={tutorialIntroductionHelp}
+              card={tutorialIntroductionHelp.cardVisible ? tutorialIntroductionCard : null}
+              introduction
+              onBack={tutorialIntroductionHelp.index > 0
+                ? () => setTutorialIntroductionStep((current) => Math.max(0, Number(current) - 1))
+                : null}
+              onAdvance={advanceTutorialIntroduction}
+              onSkip={finishTutorialIntroduction}
+            />
+          ) : null}
+
+          {tutorialCardLessonOpen ? (
+            <TutorialCardLessonOverlay
+              guide={tutorialGuide}
+              lesson={tutorialCardLesson}
+              card={tutorialCardLessonCard}
+              onAdvance={finishTutorialCardLesson}
+              onSkip={finishTutorialCardLesson}
+            />
+          ) : null}
+
           {tutorialBoardTourOpen ? <div className="fixed inset-0 z-[159]" aria-hidden="true" /> : null}
 
           {tutorialBoardTourOpen ? (
@@ -12792,7 +13101,7 @@ export default function Simulator({
             active={tutorialTargetBeaconOpen && !tutorialBoardTourOpen}
           />
 
-          {tutorialHelp && !tutorialHelpOpen && !eventOverlay && !modal && !roundFlash && !gameResult ? (
+          {tutorialHelp && !tutorialHelpOpen && !tutorialIntroductionOpen && !tutorialCardLessonOpen && !eventOverlay && !modal && !roundFlash && !gameResult ? (
             <button
               type="button"
               onClick={() => setTutorialHelpDismissedId(null)}
