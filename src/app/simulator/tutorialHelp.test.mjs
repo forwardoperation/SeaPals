@@ -174,12 +174,17 @@ test("scripted setup highlights only the prepared economy foundation", () => {
     gamePhase: "setup",
     hasCoralInPlay: false,
     playingCardId: "mustard-hill-coral-base",
+    playingCardName: "Mustard Hill Coral",
     scriptedSetupCardId: "mustard-hill-coral-base",
     scriptedSetupCardName: "Mustard Hill Coral",
   });
   assert.equal(placing.target, "placement");
   assert.notEqual(placing.cueId, selected.cueId);
-  assert.match(placing.action, /highlighted area/i);
+  assert.equal(placing.title, "Place Mustard Hill Coral in Your Reef");
+  assert.match(placing.message, /focused on Your Reef.*your cards belong/i);
+  assert.match(placing.action, /glowing Place here marker.*Your Reef.*Mustard Hill Coral/i);
+  assert.match(placing.targetLabel, /Place here marker in Your Reef/i);
+  assert.match(placing.pointerPrompt, /Mustard Hill Coral.*marker in Your Reef/i);
 });
 
 test("turn draw cues always point inside the blocking draw modal", () => {

@@ -53,6 +53,30 @@ test("mobile board follows turn boundaries without blocking manual inspection", 
   );
 });
 
+test("player card placement restores Your Reef after inspecting the opponent", () => {
+  const placementEffect = sourceSection(
+    simulatorSource,
+    "if (!playingCardId) return;",
+    'if (modal !== "hand" || !tutorialHelpInline) return undefined;',
+  );
+  const tutorialTargetEffect = sourceSection(
+    simulatorSource,
+    "if (!tutorialHelpTargetActive) return undefined;",
+    "if (!tutorialBoardTourOpen) return;",
+  );
+
+  assert.match(placementEffect, /setMobileBoardView\("player"\)/);
+  assert.match(placementEffect, /\}, \[playingCardId\]\);/);
+  assert.match(
+    tutorialTargetEffect,
+    /\["player-board", "placement"\]\.includes\(tutorialHelp\.target\)[\s\S]*?setMobileBoardView\("player"\)/,
+  );
+  assert.match(
+    simulatorSource,
+    /data-tutorial-coach-anchor="opponent-board-tab"[\s\S]{0,400}?disabled=\{Boolean\(playingCardId\)\}[\s\S]{0,300}?Finish placing this card in Your Reef first\./,
+  );
+});
+
 test("bubble bursts are scoped and rendered independently on both boards", () => {
   assert.match(
     simulatorSource,

@@ -613,9 +613,11 @@ function getAcademyCurriculumHelp(uiState) {
   if (uiState.gamePhase === "setup") {
     if (uiState.playingCardId === cards.setup?.cardId) {
       return help({
-        title: `Place ${cards.setup.cardName}`,
-        message: `${cards.setup.cardName} is a Base Coral: a foundation that produces RP and supplies legal creature slots. Its Photosynthesis income is why we begin with a reef rather than a flashy creature.`,
-        action: `Place ${cards.setup.cardName} in the highlighted foundation area.`,
+        title: `Place ${cards.setup.cardName} in Your Reef`,
+        message: `We are now focused on Your Reef, where your cards belong. ${cards.setup.cardName} is a Base Coral: a foundation that produces RP and supplies legal creature slots. Its Photosynthesis income is why we begin with a reef rather than a flashy creature.`,
+        action: `Select the glowing Place here marker in Your Reef to establish ${cards.setup.cardName}.`,
+        targetLabel: "the glowing Place here marker in Your Reef",
+        pointerPrompt: `Place ${cards.setup.cardName} on this marker in Your Reef.`,
       }, "placement", "setup-place");
     }
     if (!cards.setup?.inPlay) {
@@ -1151,11 +1153,13 @@ function getFinishDuelHelp(uiState) {
 
   if (uiState.gamePhase === "setup") {
     if (uiState.playingCardId) {
+      const foundationName = uiState.playingCardName ?? "your starting foundation";
       return decorateFinishDuelHelp(withTarget({
         id: FINISH_DUEL_HELP_ID,
-        title: `Place ${uiState.playingCardName ?? "your foundation"}`,
-        message: `A new practice board still needs its first legal foundation before we can continue toward the ${context.targetVp} VP goal.`,
-        action: "Choose one of the glowing legal placement areas in your ecosystem.",
+        title: `Place ${foundationName} in Your Reef`,
+        message: `We are now focused on Your Reef. This practice board needs its first legal foundation before we can continue toward the ${context.targetVp} VP goal.`,
+        action: `Select a glowing Place here marker in Your Reef to establish ${foundationName}.`,
+        targetLabel: "a glowing Place here marker in Your Reef",
       }, "placement", "setup:placement"), uiState, `setup:placement:${uiState.playingCardId}`);
     }
     if (!uiState.hasCoralInPlay) {
@@ -1372,11 +1376,14 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
   // Coach the executable setup prerequisite without changing saved evidence.
   if (uiState.gamePhase === "setup") {
     if (uiState.playingCardId) {
+      const foundationName = uiState.playingCardName ?? "your starting foundation";
       return withTarget({
         id: checkpointId,
-        title: "Place your starting foundation",
-        message: "This fresh practice board still needs a Base Coral or Creature School before later tutorial steps are possible.",
-        action: "Place the selected foundation in the highlighted area.",
+        title: `Place ${foundationName} in Your Reef`,
+        message: "We are now focused on Your Reef, where your cards belong. This fresh practice board still needs a Base Coral or Creature School before later tutorial steps are possible.",
+        action: `Select a glowing Place here marker in Your Reef to establish ${foundationName}.`,
+        targetLabel: "a glowing Place here marker in Your Reef",
+        pointerPrompt: `Place ${foundationName} on this marker in Your Reef.`,
       }, "placement", "setup:placement");
     }
     if (!uiState.hasCoralInPlay) {

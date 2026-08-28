@@ -53,6 +53,11 @@ test("guided foundation targets spread early tutorial cards across distinct open
   const positions = Array.from({ length: 5 }, (_, index) => (
     getGuidedAcademyFoundationPlacementTarget(index)
   ));
+  assert.deepEqual(
+    positions[0],
+    { x: 50, y: 24 },
+    "the first foundation marker must stay above the mobile Professor card",
+  );
   assert.equal(new Set(positions.map(({ x, y }) => `${x}:${y}`)).size, positions.length);
   for (let left = 0; left < positions.length; left += 1) {
     for (let right = left + 1; right < positions.length; right += 1) {

@@ -43,6 +43,41 @@ test("mobile tutorial copy scrolls independently from persistent tour actions", 
   );
 });
 
+test("desktop board-tour progress and Skip Tour keep separate header space", () => {
+  const guideCard = sourceSection(
+    simulatorSource,
+    "function ProfessorGuideCard(",
+    "const TUTORIAL_POINTER_TARGETS",
+  );
+  const headerStyles = sourceSection(
+    simulatorSource,
+    ".seapals-professor-card-header {",
+    ".seapals-professor-card-content {",
+  );
+  const dismissStyles = sourceSection(
+    simulatorSource,
+    ".seapals-professor-hide {",
+    ".seapals-professor-hide:hover,",
+  );
+
+  assert.match(
+    guideCard,
+    /<div className="seapals-professor-card-header">[\s\S]*?\{onDismiss \? \([\s\S]*?className="seapals-professor-hide"[\s\S]*?\) : null\}\s*<\/div>\s*<div className="seapals-professor-card-content/,
+  );
+  assert.match(
+    guideCard,
+    /className="shrink-0 whitespace-nowrap rounded-full[\s\S]*?help\.progressLabel/,
+  );
+  assert.doesNotMatch(headerStyles, /padding-right/);
+  assert.match(dismissStyles, /position:\s*static;/);
+  assert.match(dismissStyles, /flex:\s*0 0 auto;/);
+  assert.match(dismissStyles, /white-space:\s*nowrap;/);
+  assert.match(
+    guideCard,
+    /seapals-professor-dismiss-label-mobile[\s\S]*?dismissLabel === "Skip tour" \? "Skip" : dismissLabel/,
+  );
+});
+
 test("an open mobile coach keeps the target arrow without duplicate beacon copy", () => {
   assert.match(simulatorSource, /tutorialHelpFloating \? " seapals-tutorial-help-floating"/);
   assert.match(simulatorSource, /tutorialHelpInline \? " seapals-tutorial-help-inline"/);

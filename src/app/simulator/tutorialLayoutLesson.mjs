@@ -57,10 +57,10 @@ const GUIDED_ACADEMY_LAYOUT_STEPS = Object.freeze([
 ]);
 
 const GUIDED_FOUNDATION_POSITIONS = Object.freeze([
+  Object.freeze({ x: 50, y: 24 }),
   Object.freeze({ x: 32, y: 72 }),
   Object.freeze({ x: 68, y: 72 }),
   Object.freeze({ x: 14, y: 24 }),
-  Object.freeze({ x: 50, y: 24 }),
   Object.freeze({ x: 86, y: 24 }),
 ]);
 

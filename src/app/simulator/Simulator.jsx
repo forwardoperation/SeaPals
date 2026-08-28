@@ -304,13 +304,26 @@ function ProfessorGuideCard({
         <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
           <strong className="text-sm font-black text-cyan-800">{guide.name}</strong>
-          <span className="rounded-full bg-cyan-900 px-2 py-0.5 text-[9px] font-black text-cyan-50">
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-cyan-900 px-2 py-0.5 text-[9px] font-black text-cyan-50">
             {help.progressLabel ?? `Step ${step} of ${total}`}
           </span>
         </div>
         <span className="seapals-professor-role mt-0.5 block text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">{guide.role}</span>
         <strong className="mt-1 block text-sm font-black text-slate-900 sm:text-base">{help.title}</strong>
         </div>
+        {onDismiss ? (
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="seapals-professor-hide"
+            aria-label={`${dismissLabel} ${guide.name}'s guidance`}
+            title={`${dismissLabel} this guidance`}
+            data-tutorial-board-tour-control={onAdvance ? "true" : undefined}
+          >
+            <span className="seapals-professor-dismiss-label">{dismissLabel}</span>
+            <span className="seapals-professor-dismiss-label-mobile" aria-hidden="true">{dismissLabel === "Skip tour" ? "Skip" : dismissLabel}</span>
+          </button>
+        ) : null}
       </div>
       <div className="seapals-professor-card-content min-w-0 flex-1">
         <div key={speechKey} className="seapals-professor-card-scroll">
@@ -338,19 +351,6 @@ function ProfessorGuideCard({
           </div>
         ) : null}
       </div>
-      {onDismiss ? (
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="seapals-professor-hide"
-          aria-label={`${dismissLabel} ${guide.name}'s guidance`}
-          title={`${dismissLabel} this guidance`}
-          data-tutorial-board-tour-control={onAdvance ? "true" : undefined}
-        >
-          <span className="seapals-professor-dismiss-label">{dismissLabel}</span>
-          <span className="seapals-professor-dismiss-label-mobile" aria-hidden="true">{dismissLabel === "Skip tour" ? "Skip" : dismissLabel}</span>
-        </button>
-      ) : null}
     </aside>
   );
 }
@@ -4263,6 +4263,11 @@ export default function Simulator({
   }, [gamePhase]);
 
   useEffect(() => {
+    if (!playingCardId) return;
+    setMobileBoardView("player");
+  }, [playingCardId]);
+
+  useEffect(() => {
     if (modal !== "hand" || !tutorialHelpInline) return undefined;
     const frame = requestAnimationFrame(() => {
       modalScrollRef.current?.scrollTo({
@@ -4276,7 +4281,7 @@ export default function Simulator({
   useEffect(() => {
     if (!tutorialHelpTargetActive) return undefined;
     if (tutorialHelp.target === "opponent-board") setMobileBoardView("opponent");
-    else if (tutorialHelp.target === "player-board" || tutorialHelp.targetActionKey) setMobileBoardView("player");
+    else if (["player-board", "placement"].includes(tutorialHelp.target) || tutorialHelp.targetActionKey) setMobileBoardView("player");
 
     const targetCardId = tutorialHelp.target === "hand" ? tutorialHelp.targetCardId : null;
     if (!targetCardId && !tutorialHelp.targetActionKey) return undefined;
@@ -12075,7 +12080,6 @@ export default function Simulator({
           flex: 0 0 auto;
           align-items: flex-start;
           gap: .75rem;
-          padding-right: 2.75rem;
         }
         .seapals-professor-card-content {
           display: flex;
@@ -12298,14 +12302,15 @@ export default function Simulator({
           border-radius: .875rem;
         }
         .seapals-professor-hide {
-          position: absolute;
-          top: .5rem;
-          right: .5rem;
+          position: static;
           display: inline-flex;
           min-width: 2.75rem;
           min-height: 2.75rem;
+          flex: 0 0 auto;
+          align-self: flex-start;
           align-items: center;
           justify-content: center;
+          padding: .45rem .65rem;
           border: 1px solid rgba(14, 116, 144, .24);
           border-radius: .75rem;
           color: #155e75;
@@ -12314,6 +12319,7 @@ export default function Simulator({
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: .06em;
+          white-space: nowrap;
           cursor: pointer;
         }
         .seapals-professor-hide:hover,
@@ -12828,7 +12834,7 @@ export default function Simulator({
 
           <div className="seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label="Choose ecosystem to view">
             <button type="button" data-tutorial-coach-anchor="player-board-tab" aria-pressed={mobileBoardView === "player"} onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
-            <button type="button" data-tutorial-coach-anchor="opponent-board-tab" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
+            <button type="button" data-tutorial-coach-anchor="opponent-board-tab" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish placing this card in Your Reef first." : undefined} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-40 ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
           </div>
 
           <div className="min-h-0 w-full flex-1 rounded-2xl border border-cyan-300/20 bg-[#06111d] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
