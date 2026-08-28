@@ -12,6 +12,7 @@ export const GUIDED_ACADEMY_BOARD_TOUR_STEPS = Object.freeze([
   Object.freeze({
     id: "player-ecosystem",
     target: "player-board",
+    coachAnchor: "player-board-tab",
     title: "Your ecosystem",
     message: "This lower ocean is your ecosystem. Foundation Corals create the structure of your reef, and their open slots tell you which creatures they can support. Habitats and special reef creatures also appear here as your ecosystem grows.",
     targetLabel: "your ecosystem",
@@ -20,6 +21,7 @@ export const GUIDED_ACADEMY_BOARD_TOUR_STEPS = Object.freeze([
   Object.freeze({
     id: "opponent-ecosystem",
     target: "opponent-board",
+    coachAnchor: "opponent-board-tab",
     title: "Read the opposing reef",
     message: "The upper ocean belongs to your opponent. I prepared durable Corals and compatible practice targets for this lesson. In a normal match, inspect the opposing reef before choosing an attack or On Play ability; a powerful effect can be wasted when there is no legal target.",
     targetLabel: "the opposing ecosystem",

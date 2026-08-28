@@ -415,6 +415,9 @@ function chooseTutorialTarget(entries, help) {
 function findTutorialTarget(help) {
   if (!help?.target) return null;
   const selectors = [];
+  if (help.coachAnchor) {
+    selectors.push(`[data-tutorial-coach-anchor="${escapeTutorialSelectorValue(help.coachAnchor)}"]`);
+  }
   if (help.targetCardId) {
     selectors.push(`[data-tutorial-hand-card-id="${escapeTutorialSelectorValue(help.targetCardId)}"]`);
   }
@@ -493,7 +496,7 @@ function ProfessorTargetBeacon({ guide, help, active }) {
       window.removeEventListener("resize", requestUpdate);
       window.removeEventListener("scroll", requestUpdate, true);
     };
-  }, [active, help?.cueId, help?.target, help?.targetActionKey, help?.targetCardId, help?.targetSearchCardId, help?.targetDeck, help?.targetDrawAction]);
+  }, [active, help?.cueId, help?.target, help?.coachAnchor, help?.targetActionKey, help?.targetCardId, help?.targetSearchCardId, help?.targetDeck, help?.targetDrawAction]);
 
   if (!active || !anchor || !help) return null;
   return (
@@ -618,6 +621,7 @@ function ProfessorCoachOverlay({ help, children }) {
   }, [
     help?.cueId,
     help?.target,
+    help?.coachAnchor,
     help?.targetActionKey,
     help?.targetCardId,
     help?.targetSearchCardId,
@@ -12711,8 +12715,8 @@ export default function Simulator({
           ) : null}
 
           <div className="seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label="Choose ecosystem to view">
-            <button type="button" aria-pressed={mobileBoardView === "player"} onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
-            <button type="button" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
+            <button type="button" data-tutorial-coach-anchor="player-board-tab" aria-pressed={mobileBoardView === "player"} onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
+            <button type="button" data-tutorial-coach-anchor="opponent-board-tab" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
           </div>
 
           <div className="min-h-0 w-full flex-1 rounded-2xl border border-cyan-300/20 bg-[#06111d] shadow-[0_18px_60px_rgba(0,0,0,.35)]">

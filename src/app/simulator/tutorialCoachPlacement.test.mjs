@@ -78,6 +78,33 @@ test("mobile targets choose the open vertical band and remain clamped", () => {
   assertInsideViewport(bottomTarget, 320, 568);
 });
 
+test("mobile reef-tab anchors keep the coach below the visible board context", () => {
+  for (const scenario of [
+    {
+      viewportWidth: 320,
+      viewportHeight: 568,
+      targetRect: { left: 162, top: 168, right: 308, bottom: 212 },
+      coachRect: { left: 0, top: 0, right: 296, bottom: 180 },
+    },
+    {
+      viewportWidth: 390,
+      viewportHeight: 844,
+      targetRect: { left: 198, top: 220, right: 378, bottom: 264 },
+      coachRect: { left: 0, top: 0, right: 366, bottom: 228 },
+    },
+  ]) {
+    const placement = getTutorialCoachPlacement(scenario);
+
+    assert.equal(placement.side, TUTORIAL_COACH_SIDES.BELOW);
+    assert.ok(placement.top > scenario.targetRect.bottom);
+    assertInsideViewport(
+      placement,
+      scenario.viewportWidth,
+      scenario.viewportHeight,
+    );
+  }
+});
+
 test("oversized cards use a documented constrained fallback without leaving the viewport", () => {
   const placement = getTutorialCoachPlacement({
     viewportWidth: 360,
@@ -154,6 +181,12 @@ test("the board tour wires its full Next card to the target-aware coach and one 
     simulatorSource,
     /<ProfessorTargetBeacon[\s\S]*?active=\{tutorialTargetBeaconOpen && !tutorialBoardTourOpen\}/,
   );
+  const coachAnchorSelector = simulatorSource.indexOf("[data-tutorial-coach-anchor=");
+  const genericTargetSelector = simulatorSource.indexOf("[data-tutorial-target=", coachAnchorSelector);
+  assert.ok(coachAnchorSelector >= 0);
+  assert.ok(genericTargetSelector > coachAnchorSelector);
+  assert.match(simulatorSource, /data-tutorial-coach-anchor="player-board-tab"/);
+  assert.match(simulatorSource, /data-tutorial-coach-anchor="opponent-board-tab"/);
 });
 
 test("blocking simulator layers and the tutorial stay above Ask Finn", async () => {

@@ -22,6 +22,8 @@ test("guided Academy board tour visits the decision areas in a stable teaching o
     ],
   );
   assert.equal(new Set(GUIDED_ACADEMY_BOARD_TOUR_STEPS.map((step) => step.target)).size, 9);
+  assert.equal(GUIDED_ACADEMY_BOARD_TOUR_STEPS[1].coachAnchor, "player-board-tab");
+  assert.equal(GUIDED_ACADEMY_BOARD_TOUR_STEPS[2].coachAnchor, "opponent-board-tab");
 });
 
 test("guided Academy board tour exposes paced Professor cues and hands off to the coin flip", () => {
