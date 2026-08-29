@@ -225,8 +225,8 @@ test("the Starter Kit, Accessories Kit, and prepared components preserve the own
   ]);
   assert.equal(productsById.get("accessory-set")?.defaultPriceCents, 1200);
   assert.deepEqual(productsById.get("starter-kit")?.includedItems, [
-    "Coral Garden 60-card ready-to-play deck",
-    "Blue Water 60-card ready-to-play deck",
+    "1 Coral Garden 60-card ready-to-play deck",
+    "1 Blue Water 60-card ready-to-play deck",
     "1 Conditions Deck (18 cards)",
     "7 dice: D4, D6, D8, D10, D12, D20, and D100",
     "15 Reef Point tokens",

@@ -605,6 +605,14 @@ test("the catalog exposes structured simulator trials for decks and the starter 
           href: "/simulator?deck=blue-water",
         },
       ]);
+      assert.match(
+        starterKit.playerSetupNote,
+        /One Starter Kit provides both decks needed for two players/
+      );
+      assert.match(
+        starterKit.simulatorNote,
+        /Both physical decks are already included/
+      );
       assert.deepEqual(openOcean.includedDeckIds, ["open-ocean-hunt"]);
       assert.deepEqual(openOcean.trialDecks, [
         {

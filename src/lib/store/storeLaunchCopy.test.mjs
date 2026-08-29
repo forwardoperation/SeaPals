@@ -10,6 +10,10 @@ const storePageSource = readFileSync(
   new URL("../../app/store/page.jsx", import.meta.url),
   "utf8"
 );
+const storeProductsSource = readFileSync(
+  new URL("../../data/store/products.js", import.meta.url),
+  "utf8"
+);
 const homePageSource = readFileSync(
   new URL("../../app/page.jsx", import.meta.url),
   "utf8"
@@ -20,7 +24,7 @@ test("public launch copy advertises the Starter Kit, seven decks, three Dive Pac
   assert.doesNotMatch(storefrontSource, /Choose how your reef grows\./);
   assert.match(
     storefrontSource,
-    /The two-player Starter Kit, seven ready-to-play SeaPals decks,\s+three set-specific Dive Packs, and the Accessories Kit, built\s+to order for your next reef\./
+    /The two-player Starter Kit, plus optional ready-to-play SeaPals\s+decks, three set-specific Dive Packs, and the Accessories Kit,\s+built to order for your next reef\./
   );
   assert.match(
     storePageSource,
@@ -38,5 +42,30 @@ test("public launch copy advertises the Starter Kit, seven decks, three Dive Pac
   assert.doesNotMatch(
     [storefrontSource, storePageSource, homePageSource].join("\n"),
     /booster[ -]?packs?/i
+  );
+});
+
+test("the Starter Kit clearly explains the complete two-player setup and optional deck demos", () => {
+  assert.match(
+    storefrontSource,
+    /One Starter Kit gives two players a ready-to-play deck each, plus the shared Conditions Deck/
+  );
+  assert.match(storefrontSource, />\s*One kit supports two players\s*</);
+  assert.match(storefrontSource, />\s*Optional online deck demos\s*</);
+  assert.match(
+    storefrontSource,
+    /`Preview \$\{deck\.name\.replace\(\/\\s\+Deck\$\/i, ""\)\} online`/
+  );
+  assert.match(
+    storeProductsSource,
+    /One Starter Kit provides both decks needed for two players:[\s\S]*No second kit or extra deck is required; just bring a few small counters for damage or HP\./
+  );
+  assert.match(
+    storeProductsSource,
+    /Both physical decks are already included\.[\s\S]*optional links simply open either deck in our free simulator/
+  );
+  assert.match(
+    storefrontSource,
+    /Optional ready-to-play 60-card decks for different strategies\. The Starter Kit already includes Coral Garden and Blue Water\./
   );
 });

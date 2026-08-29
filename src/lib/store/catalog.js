@@ -355,6 +355,8 @@ export function getStoreConfiguration() {
       shortName: definition.shortName,
       productLabel: definition.productLabel,
       description: definition.description,
+      playerSetupNote: definition.playerSetupNote ?? null,
+      simulatorNote: definition.simulatorNote ?? null,
       details: definition.details,
       checkoutDescription: definition.checkoutDescription,
       includedItems: definition.includedItems

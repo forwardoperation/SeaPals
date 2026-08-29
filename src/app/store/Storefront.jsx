@@ -48,13 +48,13 @@ const CATEGORY_META = {
     label: "Starter Kits",
     eyebrow: "Start playing",
     description:
-      "Two-player bundles with decks and the shared pieces needed for a complete match.",
+      "One Starter Kit gives two players a ready-to-play deck each, plus the shared Conditions Deck, dice, and Reef Point tokens.",
   },
   "expansion-decks": {
     label: "Expansion Decks",
     eyebrow: "Choose a strategy",
     description:
-      "Seven ready-to-play 60-card options, each with a different way to grow and defend your reef.",
+      "Optional ready-to-play 60-card decks for different strategies. The Starter Kit already includes Coral Garden and Blue Water.",
   },
   "dive-packs": {
     label: "Dive Packs",
@@ -717,9 +717,9 @@ export default function Storefront({
               Master the Sea
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
-              The two-player Starter Kit, seven ready-to-play SeaPals decks,
-              three set-specific Dive Packs, and the Accessories Kit, built
-              to order for your next reef.
+              The two-player Starter Kit, plus optional ready-to-play SeaPals
+              decks, three set-specific Dive Packs, and the Accessories Kit,
+              built to order for your next reef.
             </p>
 
             {highlightedProduct ? (
@@ -932,6 +932,17 @@ export default function Storefront({
                                 {product.description}
                               </p>
 
+                              {product.playerSetupNote ? (
+                                <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-950">
+                                  <p className="font-black">
+                                    One kit supports two players
+                                  </p>
+                                  <p className="mt-1">
+                                    {product.playerSetupNote}
+                                  </p>
+                                </div>
+                              ) : null}
+
                               {product.madeToOrder ? (
                                 <p className="mt-3 text-sm font-bold leading-6 text-cyan-800">
                                   Made to order
@@ -980,20 +991,38 @@ export default function Storefront({
 
                               {product.trialDecks?.length ? (
                                 <div
-                                  className="mt-4 flex flex-wrap gap-2"
-                                  aria-label={`Try ${product.name} decks in the simulator`}
+                                  className="mt-4"
+                                  aria-label={
+                                    product.simulatorNote
+                                      ? `Preview decks included with ${product.name} in the online simulator`
+                                      : `Try ${product.name} decks in the simulator`
+                                  }
                                 >
-                                  {product.trialDecks.map((deck) => (
-                                    <Link
-                                      key={deck.id}
-                                      href={deck.href}
-                                      className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border-2 border-cyan-700 bg-cyan-50 px-4 py-2 text-center text-sm font-black text-cyan-900 transition hover:-translate-y-0.5 hover:bg-cyan-100 focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
-                                    >
-                                      {product.trialDecks.length > 1
-                                        ? `Try ${deck.name.replace(/\s+Deck$/i, "")}`
-                                        : "Try this deck"}
-                                    </Link>
-                                  ))}
+                                  {product.simulatorNote ? (
+                                    <div className="mb-3">
+                                      <p className="text-xs font-black uppercase tracking-[0.15em] text-cyan-800">
+                                        Optional online deck demos
+                                      </p>
+                                      <p className="mt-1 text-sm leading-5 text-slate-600">
+                                        {product.simulatorNote}
+                                      </p>
+                                    </div>
+                                  ) : null}
+                                  <div className="flex flex-wrap gap-2">
+                                    {product.trialDecks.map((deck) => (
+                                      <Link
+                                        key={deck.id}
+                                        href={deck.href}
+                                        className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border-2 border-cyan-700 bg-cyan-50 px-4 py-2 text-center text-sm font-black text-cyan-900 transition hover:-translate-y-0.5 hover:bg-cyan-100 focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+                                      >
+                                        {product.simulatorNote
+                                          ? `Preview ${deck.name.replace(/\s+Deck$/i, "")} online`
+                                          : product.trialDecks.length > 1
+                                            ? `Try ${deck.name.replace(/\s+Deck$/i, "")}`
+                                            : "Try this deck"}
+                                      </Link>
+                                    ))}
+                                  </div>
                                 </div>
                               ) : null}
 

@@ -38,14 +38,18 @@ export const storeProductDefinitions = [
     shortName: "Starter Kit",
     productLabel: "Two-player starter kit",
     description:
-      "Everything two players need to start building reefs and playing SeaPals together.",
+      "A two-player set with one ready-to-play deck per player, plus the shared Conditions Deck, dice, and Reef Point tokens.",
+    playerSetupNote:
+      "One Starter Kit provides both decks needed for two players: one player uses Coral Garden and the other uses Blue Water. No second kit or extra deck is required; just bring a few small counters for damage or HP.",
+    simulatorNote:
+      "Both physical decks are already included. These optional links simply open either deck in our free simulator; they do not add or change anything in your order.",
     details:
       "Two 60-card decks, one 18-card Conditions Deck, seven dice, and 15 Reef Point tokens",
     checkoutDescription:
       "Two-player Starter Kit with Coral Garden and Blue Water 60-card ready-to-play decks, one 18-card Conditions Deck, seven dice (one each D4, D6, D8, D10, D12, D20, and D100), and 15 Reef Point tokens.",
     includedItems: [
-      "Coral Garden 60-card ready-to-play deck",
-      "Blue Water 60-card ready-to-play deck",
+      "1 Coral Garden 60-card ready-to-play deck",
+      "1 Blue Water 60-card ready-to-play deck",
       "1 Conditions Deck (18 cards)",
       "7 dice: D4, D6, D8, D10, D12, D20, and D100",
       "15 Reef Point tokens",
