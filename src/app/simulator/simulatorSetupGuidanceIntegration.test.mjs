@@ -37,3 +37,20 @@ test("setup hand guidance respects both reduced-motion paths", () => {
     /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.seapals-setup-playable-card[^}]*animation: none !important/,
   );
 });
+
+test("setup guidance anchors the full prompt beside its highlighted hand target", () => {
+  assert.match(
+    simulatorSource,
+    /const tutorialSetupHelpAnchored = Boolean\([\s\S]*?tutorialHelpFloating[\s\S]*?isSetup[\s\S]*?tutorialHelp\?\.target === "hand"[\s\S]*?tutorialHelp\.targetCardId/,
+  );
+  assert.match(
+    simulatorSource,
+    /tutorialSetupHelpAnchored \? \([\s\S]*?<ProfessorCoachOverlay help=\{tutorialHelp\}>[\s\S]*?<ProfessorGuideCard/,
+  );
+  assert.match(
+    simulatorSource,
+    /active=\{tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
+  );
+  assert.match(simulatorSource, /window\.addEventListener\("scroll", requestUpdate, true\)/);
+  assert.match(simulatorSource, /window\.removeEventListener\("scroll", requestUpdate, true\)/);
+});

@@ -30,16 +30,18 @@ test("fullscreen lesson keeps the card clear and docks the coach and navigation 
   assert.match(simulatorSource, /isolatedElements[\s\S]*sibling\.inert = true[\s\S]*element\.inert = inert/);
 });
 
-test("card cues use card-native regions, one floating arrow, and no text over the artwork", () => {
+test("card cues use card-native regions, one larger static arrow, and no text over the artwork", () => {
   assert.match(simulatorSource, /viewBox="0 0 375 525"/);
   assert.match(simulatorSource, /data-card-cue-region=\{focus\}/);
   assert.match(simulatorSource, /className="pointer-events-none absolute inset-0[^"]*overflow-visible"/);
   assert.match(simulatorSource, /<rect[\s\S]*x=\{region\.x\}[\s\S]*width=\{region\.width\}/);
   assert.match(simulatorSource, /<path d=\{region\.path\}[\s\S]*markerEnd="url\(#seapals-card-cue-arrowhead\)"/);
   assert.match(simulatorSource, /markerUnits="userSpaceOnUse"/);
-  assert.match(simulatorSource, /@keyframes seapalsCardCueFloat/);
-  assert.match(simulatorSource, /const floatY = region\.targetY < region\.y \? -5[\s\S]*region\.targetY > region\.y \+ region\.height \? 5 : 0/);
-  assert.match(simulatorSource, /--seapals-card-cue-float-y/);
+  assert.match(simulatorSource, /markerWidth="14" markerHeight="14"/);
+  assert.match(simulatorSource, /stroke="#071827" strokeWidth="10"/);
+  assert.match(simulatorSource, /stroke="#fbbf24" strokeWidth="5"/);
+  assert.doesNotMatch(simulatorSource, /seapals-card-cue-pulse|seapalsCardCuePulse/);
+  assert.doesNotMatch(simulatorSource, /seapals-card-cue-float|seapalsCardCueFloat|const float[XY]/);
   assert.doesNotMatch(simulatorSource, /focusLabel|top-3 h-\[18%\]|top-\[45%\] h-\[28%\]/);
 });
 

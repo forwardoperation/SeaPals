@@ -73,8 +73,8 @@ test("guided Academy introduction rejects missing and invalid steps", () => {
   assert.equal(getGuidedAcademyIntroductionStep(1.5), null);
 });
 
-test("every card cue maps to printed and normalized regions without covering its target", () => {
-  const focusKeys = ["type", "name", "cost", "species", "rules", "health", "weaknesses", "slots", "stats"];
+test("every card cue maps to printed and normalized regions with one straight arrow", () => {
+  const focusKeys = ["type", "identity", "name", "cost", "species", "rules", "health", "weaknesses", "slots", "stats"];
   for (const key of focusKeys) {
     for (const referenceMode of ["printed", "normalized"]) {
       const region = getTutorialCardFocusRegion(key, { referenceMode });
@@ -85,7 +85,11 @@ test("every card cue maps to printed and normalized regions without covering its
       assert.ok(region.y + region.height <= 525);
       assert.ok(region.targetX >= 0 && region.targetX <= 375);
       assert.ok(region.targetY >= 0 && region.targetY <= 525);
-      assert.match(region.path, /^M\d+/);
+      const straightPath = /^M(-?\d+) (-?\d+) L(-?\d+) (-?\d+)$/.exec(region.path);
+      assert.ok(straightPath, `${referenceMode} ${key} should use one direct line`);
+      assert.equal(Number(straightPath[3]), region.targetX);
+      assert.equal(Number(straightPath[4]), region.targetY);
+      assert.doesNotMatch(region.path, /[CQSA]/);
       const targetCoversText = region.targetX >= region.x
         && region.targetX <= region.x + region.width
         && region.targetY >= region.y

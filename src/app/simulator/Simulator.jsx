@@ -663,13 +663,17 @@ function ProfessorCoachOverlay({ help, children }) {
     requestUpdate();
     delayedUpdate = window.setTimeout(requestUpdate, 240);
     window.addEventListener("resize", requestUpdate);
+    window.addEventListener("scroll", requestUpdate, true);
     window.visualViewport?.addEventListener("resize", requestUpdate);
+    window.visualViewport?.addEventListener("scroll", requestUpdate);
     return () => {
       if (animationFrame) cancelAnimationFrame(animationFrame);
       if (delayedUpdate) window.clearTimeout(delayedUpdate);
       resizeObserver?.disconnect();
       window.removeEventListener("resize", requestUpdate);
+      window.removeEventListener("scroll", requestUpdate, true);
       window.visualViewport?.removeEventListener("resize", requestUpdate);
+      window.visualViewport?.removeEventListener("scroll", requestUpdate);
     };
   }, [
     help?.cueId,
@@ -2212,8 +2216,6 @@ function BubbleBurst({ x, y }) {
 function TutorialCardCueOverlay({ focus, referenceMode }) {
   const region = getTutorialCardFocusRegion(focus, { referenceMode });
   if (!region) return null;
-  const floatX = region.targetX < region.x ? -5 : region.targetX > region.x + region.width ? 5 : 0;
-  const floatY = region.targetY < region.y ? -5 : region.targetY > region.y + region.height ? 5 : 0;
   return (
     <svg
       viewBox="0 0 375 525"
@@ -2223,8 +2225,8 @@ function TutorialCardCueOverlay({ focus, referenceMode }) {
       aria-hidden="true"
     >
       <defs>
-        <marker id="seapals-card-cue-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24" />
+        <marker id="seapals-card-cue-arrowhead" viewBox="0 0 12 12" refX="11" refY="6" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">
+          <path d="M 0 0 L 12 6 L 0 12 z" fill="#fbbf24" />
         </marker>
       </defs>
       <rect
@@ -2239,13 +2241,9 @@ function TutorialCardCueOverlay({ focus, referenceMode }) {
         vectorEffect="non-scaling-stroke"
         className="seapals-card-cue-region"
       />
-      <g
-        className="seapals-card-cue-arrow"
-        style={{ "--seapals-card-cue-float-x": `${floatX}px`, "--seapals-card-cue-float-y": `${floatY}px` }}
-      >
-        <path d={region.path} fill="none" stroke="#071827" strokeWidth="8" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-        <path d={region.path} fill="none" stroke="#fbbf24" strokeWidth="4" strokeLinecap="round" markerEnd="url(#seapals-card-cue-arrowhead)" vectorEffect="non-scaling-stroke" />
-        <circle cx={region.targetX} cy={region.targetY} r="5" fill="none" stroke="#fde68a" strokeWidth="2" vectorEffect="non-scaling-stroke" className="seapals-card-cue-pulse" />
+      <g>
+        <path d={region.path} fill="none" stroke="#071827" strokeWidth="10" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        <path d={region.path} fill="none" stroke="#fbbf24" strokeWidth="5" strokeLinecap="round" markerEnd="url(#seapals-card-cue-arrowhead)" vectorEffect="non-scaling-stroke" />
       </g>
     </svg>
   );
@@ -4520,6 +4518,12 @@ export default function Simulator({
     && !inspectedCardData
     && !handPopoverCardId
     && !gameResult,
+  );
+  const tutorialSetupHelpAnchored = Boolean(
+    tutorialHelpFloating
+    && isSetup
+    && tutorialHelp?.target === "hand"
+    && tutorialHelp.targetCardId,
   );
   const tutorialHandRevealLabel = modal === "hand" && tutorialHelpInline
     ? tutorialHelp?.target === "hand" && tutorialHelp.targetCardId
@@ -12291,8 +12295,6 @@ export default function Simulator({
         @keyframes seapalsTypeCursorBlink { 0%, 45% { opacity: 1; } 46%, 100% { opacity: .12; } }
         @keyframes seapalsTargetBeaconIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes seapalsTargetArrowBob { 0%, 100% { opacity: 1; } 50% { opacity: .62; } }
-        @keyframes seapalsCardCueFloat { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(var(--seapals-card-cue-float-x, 0), var(--seapals-card-cue-float-y, -5px)); } }
-        @keyframes seapalsCardCuePulse { 0%, 100% { opacity: .4; transform: scale(.75); } 50% { opacity: 1; transform: scale(1.25); } }
         .seapals-game-shell {
           --seapals-mobile-dock-clearance: 4.25rem;
           background-image:
@@ -12492,16 +12494,6 @@ export default function Simulator({
         }
         .seapals-normalized-card-stat-label { font-size: clamp(5px, 2.1cqw, 8px); line-height: 1; }
         .seapals-normalized-card-stat-value { font-size: clamp(6px, 2.7cqw, 10px); line-height: 1; }
-        .seapals-card-cue-arrow {
-          animation: seapalsCardCueFloat 1.6s ease-in-out infinite;
-          transform-box: fill-box;
-          transform-origin: center;
-        }
-        .seapals-card-cue-pulse {
-          animation: seapalsCardCuePulse 1.35s ease-in-out infinite;
-          transform-box: fill-box;
-          transform-origin: center;
-        }
         .seapals-professor-card-header {
           display: flex;
           flex: 0 0 auto;
@@ -13225,7 +13217,17 @@ export default function Simulator({
             </ProfessorCoachOverlay>
           ) : null}
 
-          {tutorialHelpFloating ? (
+          {tutorialSetupHelpAnchored ? (
+            <ProfessorCoachOverlay help={tutorialHelp}>
+              <ProfessorGuideCard
+                guide={tutorialGuide}
+                help={tutorialHelp}
+                step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                total={tutorialContract.checkpoints.length}
+                onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)}
+              />
+            </ProfessorCoachOverlay>
+          ) : tutorialHelpFloating ? (
             <div className={`seapals-professor-coach-wrap${tutorialHelp.target === "opponent-board" ? " seapals-professor-coach-wrap-low" : ""}`}>
               <ProfessorGuideCard
                 guide={tutorialGuide}
@@ -13240,7 +13242,7 @@ export default function Simulator({
           <ProfessorTargetBeacon
             guide={tutorialGuide}
             help={tutorialTargetBeaconHelp}
-            active={tutorialTargetBeaconOpen && !tutorialBoardTourOpen}
+            active={tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored}
           />
 
           {tutorialHelp && !tutorialHelpOpen && !tutorialIntroductionOpen && !tutorialCardLessonOpen && !eventOverlay && !modal && !roundFlash && !gameResult ? (

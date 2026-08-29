@@ -78,7 +78,7 @@ test("desktop board-tour progress and Skip Tour keep separate header space", () 
   );
 });
 
-test("an open mobile coach keeps the target arrow without duplicate beacon copy", () => {
+test("mobile guidance keeps one target arrow while the full setup coach is anchored", () => {
   assert.match(simulatorSource, /tutorialHelpFloating \? " seapals-tutorial-help-floating"/);
   assert.match(simulatorSource, /tutorialHelpInline \? " seapals-tutorial-help-inline"/);
   assert.match(
@@ -92,7 +92,7 @@ test("an open mobile coach keeps the target arrow without duplicate beacon copy"
   assert.match(simulatorSource, /className="seapals-target-beacon-arrow"/);
   assert.match(
     simulatorSource,
-    /active=\{tutorialTargetBeaconOpen && !tutorialBoardTourOpen\}/,
+    /active=\{tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
   );
 });
 
