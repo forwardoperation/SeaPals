@@ -53,7 +53,7 @@ export const GUIDED_ACADEMY_BOARD_TOUR_STEPS = Object.freeze([
     id: "turn-control",
     target: "turn-button",
     title: "Advance only when your plan is finished",
-    message: "This control begins Round 1 after setup and ends your turn once play begins. It belongs at the bottom because advancing the match should be your final decision after checking the Condition, your RP, your hand, both ecosystems, and any unused card actions. Leave it alone for now; next we will cross to the two oceans where cards are placed.",
+    message: "This control begins Round 1 after setup and ends your turn once play begins. It sits beside the reef divider so it stays visible without taking space from your hand. Advancing the match should still be your final decision after checking the Condition, your RP, your hand, both ecosystems, and any unused card actions. Leave it alone for now; next we will cross to the two oceans where cards are placed.",
     targetLabel: "the turn control",
     pointerPrompt: "The turn control advances the match when your plan is complete.",
   }),

@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [simulatorSource, handDockSource, handPopoverSource, cameraSource] = await Promise.all([
+const [simulatorSource, handDockSource, handPopoverSource, edgeZonesSource, cameraSource] = await Promise.all([
   readFile(new URL("./Simulator.jsx", import.meta.url), "utf8"),
   readFile(new URL("./MobileHandDock.jsx", import.meta.url), "utf8"),
   readFile(new URL("./MobileHandCardPopover.jsx", import.meta.url), "utf8"),
+  readFile(new URL("./MobileEdgeZones.jsx", import.meta.url), "utf8"),
   readFile(new URL("./ecosystemCamera.mjs", import.meta.url), "utf8"),
 ]);
 
@@ -156,7 +157,7 @@ test("V2 uses a headerless, occurrence-safe hand rail that opens a dedicated car
 
   assert.match(simulatorSource, /const mobileHandDockVisible = Boolean\([\s\S]*?previewExperience[\s\S]*?!tutorialBoardTourOpen[\s\S]*?\);/);
   assert.match(simulatorSource, /mobileHandDockVisible \? <MobileHandDock/);
-  assert.match(simulatorSource, /!previewExperience \? <button[\s\S]*?Open Hand/);
+  assert.match(simulatorSource, /\{!previewExperience \? <div className="seapals-mobile-dock[\s\S]*?Open Hand/);
   assert.match(handDockSource, /selectedIndex/);
   assert.match(handDockSource, /entry\.index === selectedIndex/);
   assert.match(handDockSource, /data-simulator-hand-card-rail/);
@@ -402,6 +403,9 @@ test("the V2 hand tray is transparent and compact enough to return space to the 
   const baseHeight = Number(basePreview.match(/--seapals-mobile-hand-height:\s*([\d.]+)rem/)?.[1]);
   const regularHeight = Number(regularPhone.match(/--seapals-mobile-hand-height:\s*([\d.]+)rem/)?.[1] ?? baseHeight);
   const shortHeight = Number(shortPhone.match(/--seapals-mobile-hand-height:\s*([\d.]+)rem/)?.[1] ?? regularHeight);
+  const baseBottom = Number(basePreview.match(/--seapals-mobile-hand-bottom:\s*([\d.]+)rem/)?.[1]);
+  const regularBottom = Number(regularPhone.match(/--seapals-mobile-hand-bottom:\s*([\d.]+)rem/)?.[1] ?? baseBottom);
+  const shortBottom = Number(shortPhone.match(/--seapals-mobile-hand-bottom:\s*([\d.]+)rem/)?.[1] ?? regularBottom);
 
   assert.match(panelRule, /background:\s*transparent;/);
   assert.match(panelRule, /border:\s*0;/);
@@ -409,7 +413,60 @@ test("the V2 hand tray is transparent and compact enough to return space to the 
   assert.match(panelRule, /backdrop-filter:\s*none;/);
   assert.ok(Number.isFinite(regularHeight) && regularHeight < 13, "regular phone hand height should reclaim space from the old 13rem tray");
   assert.ok(Number.isFinite(shortHeight) && shortHeight < 10, "short phone hand height should reclaim space from the old 10rem tray");
+  assert.ok(Number.isFinite(regularBottom) && regularBottom <= .5, "the regular-phone hand should sit against the arena bottom");
+  assert.ok(Number.isFinite(shortBottom) && shortBottom <= .5, "the short-phone hand should sit against the arena bottom");
   assert.match(simulatorSource, /--seapals-mobile-dock-clearance:\s*calc\(var\(--seapals-mobile-hand-height\) \+ (?:[\d.]+rem|var\(--seapals-mobile-hand-bottom\))\);/);
+});
+
+test("V2 peeks deck, discard, and Lost controls from the player-side edge", () => {
+  const playerPane = sourceSection(
+    simulatorSource,
+    'id="simulator-player-reef"',
+    "{mobileHandDockVisible ? <MobileHandDock",
+  );
+  const edgeRule = simulatorSource.match(/\.seapals-mobile-edge-zones\s*\{([^}]*)\}/)?.[1] ?? "";
+  const zoneRule = simulatorSource.match(/\.seapals-mobile-edge-zone\s*\{([^}]*)\}/)?.[1] ?? "";
+  const width = Number(zoneRule.match(/width:\s*([\d.]+)rem/)?.[1]);
+  const clippedRight = Number(edgeRule.match(/right:\s*-([\d.]+)rem/)?.[1]);
+
+  assert.match(playerPane, /previewExperience && mobileHandDockVisible \? \([\s\S]*?<MobileEdgeZones/);
+  assert.match(playerPane, /deckCount=\{foundationDeck\.length \+ palsDeck\.length\}/);
+  assert.match(playerPane, /discardCard=\{cardsById\[discardPile\[0\]\] \?\? null\}/);
+  assert.match(playerPane, /onOpenDiscard=\{\(\) => setModal\("discard"\)\}/);
+  assert.match(playerPane, /onOpenLost=\{\(\) => setModal\("lost"\)\}/);
+  assert.match(edgeZonesSource, /data-mobile-edge-zones/);
+  assert.match(edgeZonesSource, /data-tutorial-target="zones"/);
+  assert.match(edgeZonesSource, /Open your personal decks/);
+  assert.match(edgeZonesSource, /Open your discard pile/);
+  assert.match(edgeZonesSource, /Open your Lost Zone/);
+  assert.match(edgeRule, /position:\s*absolute;/);
+  assert.match(edgeRule, /z-index:\s*59;/);
+  assert.match(edgeRule, /bottom:\s*calc\(var\(--seapals-mobile-hand-height/);
+  assert.ok(Number.isFinite(width) && Number.isFinite(clippedRight) && width - clippedRight >= 2.75, "at least a 44px-wide zone target should remain visible");
+});
+
+test("V2 moves Guide and the turn action onto the reef divider and keeps the old footer legacy-only", () => {
+  const divider = sourceSection(
+    simulatorSource,
+    '<div className="seapals-reef-divider">',
+    'id="simulator-player-reef"',
+  );
+  const legacyDock = sourceSection(
+    simulatorSource,
+    '{!previewExperience ? <div className="seapals-mobile-dock',
+    "</div> : null}",
+  );
+
+  assert.match(divider, /seapals-reef-divider-guide[\s\S]*?data-tutorial-target="event-feed"/);
+  assert.match(divider, /seapals-reef-divider-handle[\s\S]*?role="separator"/);
+  assert.match(divider, /data-mobile-turn-control/);
+  assert.match(divider, /onClick=\{endTurn\}/);
+  assert.match(divider, /disabled=\{Boolean\(gameResult\) \|\| opponentThinking \|\| \(isSetup && !hasCoralInPlay\) \|\| isStartOfTurn\}/);
+  assert.match(divider, /data-tutorial-target="turn-button"/);
+  assert.match(simulatorSource, /\.seapals-reef-divider-control\s*\{[\s\S]*?min-height:\s*2\.75rem;/);
+  assert.match(legacyDock, /Open Hand/);
+  assert.match(legacyDock, /data-tutorial-target="turn-button"/);
+  assert.equal((legacyDock.match(/previewExperience \?/g) ?? []).length, 1, "only the legacy wrapper should branch on previewExperience");
 });
 
 test("V2 removes both ecosystem label rows while preserving action overlays", () => {
