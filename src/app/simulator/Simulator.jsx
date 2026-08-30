@@ -3342,6 +3342,7 @@ export default function Simulator({
   const [searchContext, setSearchContext] = useState(null);
   const [gameResult, setGameResult] = useState(null);
   const [bugReportOpen, setBugReportOpen] = useState(false);
+  const [simulatorExitConfirmationOpen, setSimulatorExitConfirmationOpen] = useState(false);
   const [tutorialExitConfirmationOpen, setTutorialExitConfirmationOpen] = useState(false);
   const tutorialHistoryGuardRef = useRef(null);
   const storyResultRecordedRef = useRef(false);
@@ -12624,6 +12625,23 @@ export default function Simulator({
     exitStoryMode();
   }
 
+  function requestSimulatorExit() {
+    if (isStoryMode && tutorialExitRequiresConfirmation) {
+      requestStoryExit();
+      return;
+    }
+    setSimulatorExitConfirmationOpen(true);
+  }
+
+  function confirmSimulatorExit() {
+    setSimulatorExitConfirmationOpen(false);
+    if (isStoryMode) {
+      exitStoryMode();
+      return;
+    }
+    window.location.assign("/");
+  }
+
   function confirmTutorialExit() {
     setTutorialExitConfirmationOpen(false);
     const historyGuard = tutorialHistoryGuardRef.current;
@@ -13427,31 +13445,32 @@ export default function Simulator({
           pointer-events: none;
         }
         .seapals-mobile-edge-zones {
-          --seapals-edge-card-width: 3.2rem;
+          --seapals-edge-card-width: 2.75rem;
           position: absolute;
           z-index: 59;
-          right: -.45rem;
+          right: .25rem;
           display: none;
-          width: 6.2rem;
-          grid-template-columns: 2.75rem var(--seapals-edge-card-width);
-          grid-template-rows: auto .25rem auto;
-          column-gap: .25rem;
+          width: var(--seapals-edge-card-width);
+          flex-direction: column;
+          align-items: center;
+          gap: .25rem;
           pointer-events: none;
           filter: drop-shadow(0 12px 18px rgba(2, 8, 23, .58));
         }
         .seapals-mobile-edge-zones.is-player {
-          bottom: .2rem;
+          top: calc(.45rem + 2.7rem + .25rem);
         }
         .seapals-mobile-edge-zones.is-opponent {
-          top: 3.35rem;
+          bottom: calc(.45rem + 2.7rem + .25rem);
+          flex-direction: column-reverse;
         }
         .seapals-mobile-edge-zone {
           position: relative;
-          grid-column: 2;
           display: block;
           width: var(--seapals-edge-card-width);
           min-width: 2.75rem;
           min-height: 2.75rem;
+          flex: none;
           aspect-ratio: 63 / 88;
           overflow: visible;
           padding: 0;
@@ -13462,10 +13481,6 @@ export default function Simulator({
           pointer-events: auto;
           transition: filter 160ms ease;
         }
-        .seapals-mobile-edge-zones.is-player .seapals-mobile-edge-zone.is-deck,
-        .seapals-mobile-edge-zones.is-opponent .seapals-mobile-edge-zone.is-discard { grid-row: 1; }
-        .seapals-mobile-edge-zones.is-player .seapals-mobile-edge-zone.is-discard,
-        .seapals-mobile-edge-zones.is-opponent .seapals-mobile-edge-zone.is-deck { grid-row: 3; }
         .seapals-mobile-edge-zone.is-deck::before,
         .seapals-mobile-edge-zone.is-deck::after {
           position: absolute;
@@ -13484,10 +13499,7 @@ export default function Simulator({
           background: #172033;
         }
         .seapals-mobile-edge-zone.is-lost {
-          grid-column: 1;
-          grid-row: 1 / 4;
           align-self: center;
-          justify-self: center;
           z-index: 3;
           width: 2.75rem;
           height: 2.75rem;
@@ -13832,18 +13844,13 @@ export default function Simulator({
         }
         .seapals-mobile-hud-panel { bottom: 15.1rem; }
         @media (max-width: 1279px) {
-          .seapals-mobile-edge-zones { display: grid; }
+          .seapals-mobile-edge-zones { display: flex; }
           .seapals-simulator-preview .seapals-arena-frame { padding: 0; }
           .seapals-simulator-preview .seapals-simulator-header {
             position: absolute;
             z-index: 90;
-            top: .75rem;
-            right: .75rem;
-            left: .75rem;
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 0;
+            inset: 0;
+            display: block;
             margin: 0;
             pointer-events: none;
           }
@@ -13864,8 +13871,13 @@ export default function Simulator({
           }
           .seapals-simulator-preview .seapals-back-control,
           .seapals-simulator-preview .seapals-menu-control {
+            position: absolute;
+            top: .75rem;
+            margin: 0;
             pointer-events: auto;
           }
+          .seapals-simulator-preview .seapals-back-control { left: .75rem; }
+          .seapals-simulator-preview .seapals-menu-control { right: .75rem; }
           .seapals-simulator-preview .seapals-back-control,
           .seapals-simulator-preview .seapals-menu-control > summary {
             width: 2.75rem;
@@ -13877,7 +13889,7 @@ export default function Simulator({
           .seapals-simulator-preview .seapals-back-control > span:last-child,
           .seapals-simulator-preview .seapals-menu-label { display: none; }
           .seapals-simulator-preview .seapals-menu-icon { display: block; }
-          .seapals-simulator-preview .seapals-menu-control { margin-left: auto; }
+          .seapals-simulator-preview .seapals-menu-control { margin: 0; }
           .seapals-simulator-preview .seapals-mobile-hand-panel {
             border: 0;
             background: transparent;
@@ -13943,7 +13955,7 @@ export default function Simulator({
           .seapals-reef-divider-control {
             position: absolute;
             z-index: 2;
-            top: 0;
+            top: 50%;
             display: grid;
             height: 100%;
             min-height: 2.75rem;
@@ -13956,13 +13968,17 @@ export default function Simulator({
             line-height: 1;
             text-transform: uppercase;
             letter-spacing: .04em;
+            transform: translateY(-50%);
           }
           .seapals-reef-divider-turn {
             right: .15rem;
             width: 5.15rem;
+            overflow: hidden;
+            border-radius: .75rem;
             color: #052e2b;
             background: linear-gradient(135deg, #67e8f9, #34d399);
             box-shadow: -5px 0 16px rgba(16, 185, 129, .22);
+            white-space: nowrap;
           }
           .seapals-reef-divider-control:focus-visible {
             outline: 3px solid #fde68a;
@@ -14332,14 +14348,10 @@ export default function Simulator({
           .seapals-mobile-hand-secondary,
           .seapals-mobile-hand-primary { min-height: 2.35rem; padding: 0 .5rem; font-size: .6rem; }
           .seapals-mobile-edge-zones {
-            --seapals-edge-card-width: 3rem;
-            right: -.25rem;
-            width: 6rem;
-            grid-template-columns: 2.75rem var(--seapals-edge-card-width);
-            grid-template-rows: auto .2rem auto;
-            column-gap: .25rem;
+            right: .25rem;
+            width: var(--seapals-edge-card-width);
+            gap: .2rem;
           }
-          .seapals-mobile-edge-zones.is-opponent { top: 3.2rem; }
         }
       `}</style>
       <section className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)_9rem_auto]">
@@ -14348,13 +14360,13 @@ export default function Simulator({
             <div className="seapals-simulator-brand min-w-0">
               <div className="flex items-center gap-3">
                 {isStoryMode ? (
-                  <button type="button" onClick={requestStoryExit} aria-label={`Exit duel and return to ${storyReturnLabel}`} data-simulator-back-control className="seapals-back-control group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
+                  <button type="button" onClick={requestSimulatorExit} aria-label={`Exit duel and return to ${storyReturnLabel}`} data-simulator-back-control className="seapals-back-control group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
                     <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">{storyReturnLabel}</span>
                   </button>
                 ) : (
-                  <Link href="/" aria-label="Exit simulator and return home" data-simulator-back-control className="seapals-back-control group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
+                  <button type="button" onClick={requestSimulatorExit} aria-label="Exit simulator and return home" data-simulator-back-control className="seapals-back-control group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
                     <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">Home</span>
-                  </Link>
+                  </button>
                 )}
                 <div className="seapals-simulator-title">
                   <h1 className="text-lg font-black tracking-tight text-white">SeaPals Simulator{previewExperience ? " V2" : ""}</h1>
@@ -14425,11 +14437,11 @@ export default function Simulator({
                     </button>
                   ) : null}
                   {isStoryMode ? (
-                    <button type="button" onClick={requestStoryExit} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to {storyReturnLabel}</button>
+                    <button type="button" onClick={requestSimulatorExit} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to {storyReturnLabel}</button>
                   ) : (
                     <>
                       <a href="/adventure" className="mt-1 block rounded-lg bg-cyan-400/10 px-3 py-2 text-sm font-bold text-cyan-100 hover:bg-cyan-300/20">Play Reefbound Story</a>
-                      <Link href="/" className="mt-1 block rounded-lg px-3 py-2 text-sm font-bold text-slate-200 hover:bg-white/10">Exit to Home</Link>
+                      <button type="button" onClick={requestSimulatorExit} className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Exit to Home</button>
                     </>
                   )}
                 </div>
@@ -15539,6 +15551,26 @@ export default function Simulator({
                 Leave &amp; Restart Later
               </button>
               <button type="button" autoFocus onClick={() => setTutorialExitConfirmationOpen(false)} className="min-h-11 rounded-full bg-emerald-400 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:bg-emerald-300">
+                Keep Playing
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {simulatorExitConfirmationOpen ? (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="simulator-exit-title" aria-describedby="simulator-exit-description">
+          <div className="w-full max-w-md rounded-[2rem] border border-cyan-300/45 bg-slate-900 p-6 text-white shadow-2xl sm:p-8">
+            <div className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">Quit Game</div>
+            <h2 id="simulator-exit-title" className="mt-2 text-2xl font-black sm:text-3xl">Are you sure you want to quit the game?</h2>
+            <p id="simulator-exit-description" className="mt-4 text-base leading-relaxed text-slate-200">
+              Your current game will end and its board progress will be lost.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={confirmSimulatorExit} className="min-h-11 rounded-full border border-rose-300/50 px-6 py-2.5 text-sm font-black text-rose-100 transition hover:bg-rose-300/10">
+                Quit Game
+              </button>
+              <button type="button" autoFocus onClick={() => setSimulatorExitConfirmationOpen(false)} className="min-h-11 rounded-full bg-emerald-400 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:bg-emerald-300">
                 Keep Playing
               </button>
             </div>

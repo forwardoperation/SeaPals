@@ -418,7 +418,7 @@ test("the V2 hand tray is transparent and compact enough to return space to the 
   assert.match(simulatorSource, /--seapals-mobile-dock-clearance:\s*calc\(var\(--seapals-mobile-hand-height\) \+ (?:[\d.]+rem|var\(--seapals-mobile-hand-bottom\))\);/);
 });
 
-test("V2 uses fixed, label-free mirrored pile grids for both reefs", () => {
+test("V2 aligns label-free mirrored pile columns beneath each reef's RP badge", () => {
   const opponentPane = sourceSection(
     simulatorSource,
     'id="simulator-opponent-reef"',
@@ -431,6 +431,8 @@ test("V2 uses fixed, label-free mirrored pile grids for both reefs", () => {
   );
   const edgeRule = simulatorSource.match(/\.seapals-mobile-edge-zones\s*\{([^}]*)\}/)?.[1] ?? "";
   const zoneRule = simulatorSource.match(/\.seapals-mobile-edge-zone\s*\{([^}]*)\}/)?.[1] ?? "";
+  const scoreRule = simulatorSource.match(/\.seapals-reef-score\s*\{(?=[^}]*right:)([^}]*)\}/)?.[1] ?? "";
+  const scoreCardRule = simulatorSource.match(/\.seapals-reef-score-card\s*\{(?=[^}]*width:)([^}]*)\}/)?.[1] ?? "";
   const mobileZoneIds = [...edgeZonesSource.matchAll(/data-mobile-zone="([^"]+)"/g)].map((match) => match[1]);
 
   assert.match(opponentPane, /<MobileEdgeZones[\s\S]*?owner="opponent"/);
@@ -455,26 +457,33 @@ test("V2 uses fixed, label-free mirrored pile grids for both reefs", () => {
   assert.match(edgeZonesSource, /seapals-mobile-lost-empty/);
   assert.match(edgeRule, /position:\s*absolute;/);
   assert.match(edgeRule, /z-index:\s*59;/);
-  assert.match(edgeRule, /grid-template-columns:\s*2\.75rem var\(--seapals-edge-card-width\);/);
-  assert.match(edgeRule, /grid-template-rows:\s*auto \.25rem auto;/);
-  assert.doesNotMatch(edgeRule, /flex-direction|height:\s*min\(/);
+  assert.match(edgeRule, /right:\s*\.25rem;/);
+  assert.match(edgeRule, /width:\s*var\(--seapals-edge-card-width\);/);
+  assert.match(edgeRule, /flex-direction:\s*column;/);
+  assert.match(edgeRule, /align-items:\s*center;/);
+  assert.doesNotMatch(edgeRule, /grid-template|grid-column|grid-row|height:\s*min\(/);
+  const edgeRight = Number(edgeRule.match(/right:\s*([\d.]+)rem/)?.[1]);
+  const edgeWidth = Number(simulatorSource.match(/--seapals-edge-card-width:\s*([\d.]+)rem/)?.[1]);
+  const scoreRight = Number(scoreRule.match(/right:\s*([\d.]+)rem/)?.[1]);
+  const scoreWidth = Number(scoreCardRule.match(/width:\s*([\d.]+)rem/)?.[1]);
+  assert.equal(edgeRight + edgeWidth / 2, scoreRight + scoreWidth / 2, "the pile rail and RP badge must share one horizontal centerline");
   assert.match(zoneRule, /min-width:\s*2\.75rem;/);
   assert.match(zoneRule, /min-height:\s*2\.75rem;/);
   assert.match(zoneRule, /aspect-ratio:\s*63\s*\/\s*88;/);
   assert.match(
     simulatorSource,
-    /\.seapals-mobile-edge-zones\.is-player \.seapals-mobile-edge-zone\.is-deck,\s*\.seapals-mobile-edge-zones\.is-opponent \.seapals-mobile-edge-zone\.is-discard\s*\{\s*grid-row:\s*1;\s*\}/,
+    /\.seapals-mobile-edge-zones\.is-player\s*\{\s*top:\s*calc\(\.45rem \+ 2\.7rem \+ \.25rem\);\s*\}/,
   );
   assert.match(
     simulatorSource,
-    /\.seapals-mobile-edge-zones\.is-player \.seapals-mobile-edge-zone\.is-discard,\s*\.seapals-mobile-edge-zones\.is-opponent \.seapals-mobile-edge-zone\.is-deck\s*\{\s*grid-row:\s*3;\s*\}/,
+    /\.seapals-mobile-edge-zones\.is-opponent\s*\{[\s\S]*?bottom:\s*calc\(\.45rem \+ 2\.7rem \+ \.25rem\);[\s\S]*?flex-direction:\s*column-reverse;/,
   );
   assert.match(
     simulatorSource,
-    /\.seapals-mobile-edge-zone\.is-lost\s*\{[\s\S]*?grid-column:\s*1;[\s\S]*?grid-row:\s*1\s*\/\s*4;[\s\S]*?width:\s*2\.75rem;[\s\S]*?height:\s*2\.75rem;[\s\S]*?min-height:\s*2\.75rem;[\s\S]*?aspect-ratio:\s*1;/,
+    /\.seapals-mobile-edge-zone\.is-lost\s*\{[\s\S]*?align-self:\s*center;[\s\S]*?width:\s*2\.75rem;[\s\S]*?height:\s*2\.75rem;[\s\S]*?min-height:\s*2\.75rem;[\s\S]*?aspect-ratio:\s*1;/,
   );
-  assert.match(simulatorSource, /\.seapals-mobile-edge-zones\.is-player\s*\{\s*bottom:\s*\.2rem;\s*\}/);
-  assert.match(simulatorSource, /\.seapals-mobile-edge-zones\.is-opponent\s*\{\s*top:\s*3\.35rem;\s*\}/);
+  const lostRule = simulatorSource.match(/\.seapals-mobile-edge-zone\.is-lost\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.doesNotMatch(lostRule, /position:\s*absolute|grid-column|grid-row|left:|right:|top:|bottom:/);
 });
 
 test("V2 keeps only the draggable divider and round action while the old footer stays legacy-only", () => {
@@ -498,7 +507,11 @@ test("V2 keeps only the draggable divider and round action while the old footer 
   assert.match(divider, /\{turnControlLabel\}/);
   assert.doesNotMatch(divider, /Opponent First|Round 1|End Turn/);
   assert.match(simulatorSource, /const turnControlLabel = opponentThinking \? "Opponent Turn" : isSetup \? "Begin Round" : "Next Round";/);
-  assert.match(simulatorSource, /\.seapals-reef-divider-control\s*\{[\s\S]*?min-height:\s*2\.75rem;/);
+  assert.match(
+    simulatorSource,
+    /\.seapals-reef-divider-control\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*50%;[\s\S]*?min-height:\s*2\.75rem;[\s\S]*?transform:\s*translateY\(-50%\);/,
+  );
+  assert.match(simulatorSource, /\.seapals-reef-divider-turn\s*\{[\s\S]*?border-radius:\s*\.75rem;/);
   assert.match(legacyDock, /Open Hand/);
   assert.match(legacyDock, /data-tutorial-target="turn-button"/);
   assert.equal((legacyDock.match(/previewExperience \?/g) ?? []).length, 1, "only the legacy wrapper should branch on previewExperience");
@@ -664,6 +677,11 @@ test("V2 overlays a compact back-and-menu header without consuming board height"
     "@media (max-width: 1279px)",
     "@media (max-width: 1279px) and (max-height: 650px)",
   );
+  const overlayControlsRule = responsiveStyles.match(/\.seapals-simulator-preview \.seapals-back-control,\s*\.seapals-simulator-preview \.seapals-menu-control\s*\{([^}]*)\}/)?.[1] ?? "";
+  const overlayBackRule = responsiveStyles.match(/\.seapals-simulator-preview \.seapals-back-control\s*\{([^}]*)\}/)?.[1] ?? "";
+  const overlayMenuRule = [...responsiveStyles.matchAll(/\.seapals-simulator-preview \.seapals-menu-control\s*\{([^}]*)\}/g)]
+    .map((match) => match[1])
+    .find((rule) => /right:\s*\.75rem;/.test(rule)) ?? "";
 
   assert.match(simulatorSource, /data-mobile-overlay-header=\{previewExperience \? "true" : undefined\}/);
   assert.equal((simulatorSource.match(/data-simulator-back-control/g) ?? []).length, 2);
@@ -672,7 +690,7 @@ test("V2 overlays a compact back-and-menu header without consuming board height"
   assert.match(simulatorSource, /data-tutorial-target={!previewExperience \? "condition-panel" : undefined}/);
   assert.match(
     responsiveStyles,
-    /\.seapals-simulator-preview \.seapals-simulator-header\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*\.75rem;[\s\S]*?right:\s*\.75rem;[\s\S]*?left:\s*\.75rem;[\s\S]*?display:\s*flex;[\s\S]*?pointer-events:\s*none;/,
+    /\.seapals-simulator-preview \.seapals-simulator-header\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?inset:\s*0;[\s\S]*?display:\s*block;[\s\S]*?margin:\s*0;[\s\S]*?pointer-events:\s*none;/,
   );
   assert.match(
     responsiveStyles,
@@ -682,14 +700,54 @@ test("V2 overlays a compact back-and-menu header without consuming board height"
     responsiveStyles,
     /\.seapals-simulator-preview :is\(\.seapals-simulator-title, \.seapals-phase-chip\)\s*\{[^}]*display:\s*none;/,
   );
-  assert.match(
-    responsiveStyles,
-    /\.seapals-simulator-preview \.seapals-back-control,\s*\.seapals-simulator-preview \.seapals-menu-control\s*\{\s*pointer-events:\s*auto;\s*\}/,
-  );
+  assert.match(overlayControlsRule, /position:\s*absolute;/);
+  assert.match(overlayControlsRule, /top:\s*\.75rem;/);
+  assert.match(overlayControlsRule, /margin:\s*0;/);
+  assert.match(overlayControlsRule, /pointer-events:\s*auto;/);
+  assert.match(overlayBackRule, /left:\s*\.75rem;/);
+  assert.match(overlayMenuRule, /right:\s*\.75rem;/);
   assert.match(
     responsiveStyles,
     /\.seapals-simulator-preview \.seapals-back-control,\s*\.seapals-simulator-preview \.seapals-menu-control > summary\s*\{[\s\S]*?width:\s*2\.75rem;[\s\S]*?height:\s*2\.75rem;[\s\S]*?min-height:\s*2\.75rem;/,
   );
+});
+
+test("every simulator exit asks for confirmation before leaving the game", () => {
+  const headerBackControls = sourceSection(
+    simulatorSource,
+    '<div className="seapals-simulator-header',
+    '<div className="seapals-simulator-title">',
+  );
+  const menuExitControls = sourceSection(
+    simulatorSource,
+    '<details className="seapals-menu-control',
+    '<div className="hidden items-center gap-1',
+  );
+  const requestExit = sourceSection(
+    simulatorSource,
+    "function requestSimulatorExit()",
+    "function confirmSimulatorExit()",
+  );
+  const confirmExit = sourceSection(
+    simulatorSource,
+    "function confirmSimulatorExit()",
+    "function confirmTutorialExit()",
+  );
+  const exitDialog = sourceSection(
+    simulatorSource,
+    "{simulatorExitConfirmationOpen ? (",
+    "{eventOverlay ? (",
+  );
+
+  assert.equal((headerBackControls.match(/onClick=\{requestSimulatorExit\}/g) ?? []).length, 2, "both header back branches must request confirmation");
+  assert.equal((headerBackControls.match(/data-simulator-back-control/g) ?? []).length, 2);
+  assert.equal((menuExitControls.match(/onClick=\{requestSimulatorExit\}/g) ?? []).length, 2, "both menu exit branches must request confirmation");
+  assert.match(requestExit, /setSimulatorExitConfirmationOpen\(true\)/);
+  assert.match(confirmExit, /setSimulatorExitConfirmationOpen\(false\)[\s\S]*?window\.location\.assign\("\/"\)/);
+  assert.match(exitDialog, /role="dialog"[\s\S]*?aria-modal="true"/);
+  assert.match(exitDialog, />Are you sure you want to quit the game\?<\/h2>/);
+  assert.match(exitDialog, /onClick=\{confirmSimulatorExit\}[\s\S]*?>\s*Quit Game\s*<\/button>/);
+  assert.match(exitDialog, /onClick=\{\(\) => setSimulatorExitConfirmationOpen\(false\)\}[\s\S]*?>\s*Keep Playing\s*<\/button>/);
 });
 
 test("the narrow HUD uses safe areas, compact rows, and 44px primary tap targets", () => {
