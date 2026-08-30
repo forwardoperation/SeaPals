@@ -4,7 +4,7 @@ import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Simulator from "@/app/simulator/Simulator";
 
-export default function StandaloneTutorial({ storyModeData, returnPath }) {
+export default function StandaloneTutorial({ storyModeData, returnPath, previewExperience = false }) {
   const router = useRouter();
   const returnToInstructions = useCallback(() => {
     router.replace(returnPath);
@@ -14,5 +14,5 @@ export default function StandaloneTutorial({ storyModeData, returnPath }) {
     [returnToInstructions, storyModeData],
   );
 
-  return <Simulator storyMode={storyMode} />;
+  return <Simulator storyMode={storyMode} previewExperience={previewExperience} />;
 }

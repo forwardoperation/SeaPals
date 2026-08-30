@@ -187,6 +187,21 @@ test("scripted setup highlights only the prepared economy foundation", () => {
   assert.match(placing.pointerPrompt, /Mustard Hill Coral.*marker in Your Reef/i);
 });
 
+test("a lifted V2 hand card advances guidance without inventing a Close action", () => {
+  const checkpoint = CHECKPOINTS["tutorial-setup"];
+  const help = getSimulatorTutorialHelp(checkpoint, {
+    gamePhase: "setup",
+    hasCoralInPlay: false,
+    handDockSelectionOpen: true,
+    selectedHandCard: "mustard-hill-coral-base",
+    scriptedSetupCardId: "mustard-hill-coral-base",
+    scriptedSetupCardName: "Mustard Hill Coral",
+  });
+
+  assert.equal(help.target, "play-card");
+  assert.doesNotMatch(help.action, /close/i);
+});
+
 test("turn draw cues always point inside the blocking draw modal", () => {
   const draw = CHECKPOINTS["tutorial-draw-card"];
   const drawChoice = getSimulatorTutorialHelp(draw, {
@@ -1183,6 +1198,22 @@ test("the setup lesson requires real zoom, arrangement, and Fit actions before R
   });
   assert.equal(ready.target, "turn-button");
   assert.match(ready.title, /Begin the first tide/i);
+});
+
+test("the streamlined V2 setup proceeds directly to Round 1", () => {
+  const checkpoint = { id: "tutorial-collect-rp", title: "Collect RP", instruction: "Collect." };
+  const help = getSimulatorTutorialHelp(checkpoint, {
+    ...ACADEMY_STATE,
+    round: 0,
+    gamePhase: "setup",
+    streamlinedTutorial: true,
+    layoutLessonProgress: {},
+    scriptedFinishRoute: academyCurriculumRoute({ round: 0 }),
+  });
+
+  assert.equal(help.target, "turn-button");
+  assert.match(help.title, /Begin the first tide/i);
+  assert.match(help.message, /explain the Condition, RP collection, and draw as each appears/i);
 });
 
 test("the second Coral placement explicitly uses a separate authored marker", () => {

@@ -20,6 +20,14 @@ const TARGET_LABELS = Object.freeze({
   "rp-bank": "your RP bank",
 });
 
+function isHandSelectionOpen(uiState) {
+  return Boolean(
+    uiState.modal === "hand"
+    || uiState.handPopoverOpen
+    || uiState.handDockSelectionOpen
+  );
+}
+
 const HELP_BY_CHECKPOINT = Object.freeze({
   "tutorial-setup": Object.freeze({
     message: "Every ecosystem needs a foundation. Start with a green-glowing Base Coral or Creature School from your hand.",
@@ -497,7 +505,7 @@ function getScriptedCardPlayHelp(uiState, card, {
   }
 
   const selectedCardOpen = Boolean(
-    uiState.selectedHandCard && (uiState.modal === "hand" || uiState.handPopoverOpen)
+    uiState.selectedHandCard && isHandSelectionOpen(uiState)
   );
   if (selectedCardOpen && uiState.selectedHandCard === card.cardId) {
     if (card.playError) return null;
@@ -614,30 +622,44 @@ function getAcademyCurriculumHelp(uiState) {
     if (uiState.playingCardId === cards.setup?.cardId) {
       return help({
         title: `Place ${cards.setup.cardName} in Your Reef`,
-        message: `We are now focused on Your Reef, where your cards belong. ${cards.setup.cardName} is a Base Coral: a foundation that produces RP and supplies legal creature slots. Its Photosynthesis income is why we begin with a reef rather than a flashy creature.`,
-        action: `Select the glowing Place here marker in Your Reef to establish ${cards.setup.cardName}.`,
+        message: uiState.streamlinedTutorial
+          ? `${cards.setup.cardName} is your foundation. Its creature slots appear as soon as it settles.`
+          : `We are now focused on Your Reef, where your cards belong. ${cards.setup.cardName} is a Base Coral: a foundation that produces RP and supplies legal creature slots. Its Photosynthesis income is why we begin with a reef rather than a flashy creature.`,
+        action: uiState.streamlinedTutorial
+          ? "Place it on the glowing foundation marker."
+          : `Select the glowing Place here marker in Your Reef to establish ${cards.setup.cardName}.`,
         targetLabel: "the glowing Place here marker in Your Reef",
         pointerPrompt: `Place ${cards.setup.cardName} on this marker in Your Reef.`,
       }, "placement", "setup-place");
     }
     if (!cards.setup?.inPlay) {
       return play(cards.setup, {
-        title: `Welcome—let's begin with ${cards.setup?.cardName ?? "a Base Coral"}`,
-        message: `Good to have you here, Reefkeeper. We will build this reef patiently, learn every core card type, and finish with an Apex predator. ${cards.setup?.cardName ?? "This Base Coral"} costs 2 RP and creates the steady economy that makes those later plays possible.`,
-        action: `Choose ${cards.setup?.cardName ?? "the highlighted Base Coral"}, press Play Card, then place it in the glowing foundation area.`,
+        title: uiState.streamlinedTutorial ? "Every reef needs a foundation" : `Welcome—let's begin with ${cards.setup?.cardName ?? "a Base Coral"}`,
+        message: uiState.streamlinedTutorial
+          ? `${cards.setup?.cardName ?? "This Base Coral"} gives you creature slots now and collects RP on later turns.`
+          : `Good to have you here, Reefkeeper. We will build this reef patiently, learn every core card type, and finish with an Apex predator. ${cards.setup?.cardName ?? "This Base Coral"} costs 2 RP and creates the steady economy that makes those later plays possible.`,
+        action: uiState.streamlinedTutorial
+          ? `Tap ${cards.setup?.cardName ?? "the highlighted Base Coral"}, then press Play.`
+          : `Choose ${cards.setup?.cardName ?? "the highlighted Base Coral"}, press Play Card, then place it in the glowing foundation area.`,
       });
     }
-    const layoutLesson = getGuidedAcademyLayoutLessonStep(
-      uiState.layoutLessonProgress,
-      { foundationName: cards.setup?.cardName ?? "your Base Coral" },
-    );
-    if (layoutLesson) {
-      return withTarget(layoutLesson, layoutLesson.target, layoutLesson.actionId);
+    if (!uiState.streamlinedTutorial) {
+      const layoutLesson = getGuidedAcademyLayoutLessonStep(
+        uiState.layoutLessonProgress,
+        { foundationName: cards.setup?.cardName ?? "your Base Coral" },
+      );
+      if (layoutLesson) {
+        return withTarget(layoutLesson, layoutLesson.target, layoutLesson.actionId);
+      }
     }
     return help({
       title: "Begin the first tide",
-      message: "Your first Coral is established. At the start of a round, the Condition changes the rules, your foundations collect RP up to the bank cap, and then you choose which personal deck solves the next part of your plan.",
-      action: "Press Begin Round 1 to reveal the Condition and collect RP.",
+      message: uiState.streamlinedTutorial
+        ? "Your foundation is ready. I will explain the Condition, RP collection, and draw as each appears."
+        : "Your first Coral is established. At the start of a round, the Condition changes the rules, your foundations collect RP up to the bank cap, and then you choose which personal deck solves the next part of your plan.",
+      action: uiState.streamlinedTutorial
+        ? "Press Begin Round 1."
+        : "Press Begin Round 1 to reveal the Condition and collect RP.",
     }, "turn-button", "setup-begin");
   }
 
@@ -1168,7 +1190,7 @@ function getFinishDuelHelp(uiState) {
       const selected = Boolean(
         uiState.selectedHandCard
         && (!setupCardId || uiState.selectedHandCard === setupCardId)
-        && (uiState.modal === "hand" || uiState.handPopoverOpen)
+        && isHandSelectionOpen(uiState)
       );
       return decorateFinishDuelHelp(withTarget({
         id: FINISH_DUEL_HELP_ID,
@@ -1215,7 +1237,7 @@ function getFinishDuelHelp(uiState) {
   const vpBuild = uiState.recommendedVpBuildCard ?? null;
   const fallbackBuild = uiState.recommendedBuildCard ?? null;
   const selectedCardOpen = Boolean(
-    uiState.selectedHandCard && (uiState.modal === "hand" || uiState.handPopoverOpen)
+    uiState.selectedHandCard && isHandSelectionOpen(uiState)
   );
   if (selectedCardOpen) {
     const selectedName = uiState.selectedCardName ?? "This card";
@@ -1391,7 +1413,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       if (scriptedSetupCardId) {
         const scriptedSetupCardName = String(uiState.scriptedSetupCardName ?? "Mustard Hill Coral");
         const selectedScriptedCard = uiState.selectedHandCard === scriptedSetupCardId
-          && (uiState.modal === "hand" || uiState.handPopoverOpen);
+          && isHandSelectionOpen(uiState);
         return withTarget({
           id: checkpointId,
           title: `Begin with ${scriptedSetupCardName}`,
@@ -1409,7 +1431,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       const selected = Boolean(
         uiState.selectedHandCard
         && uiState.selectedCardIsSetupFoundation !== false
-        && (uiState.modal === "hand" || uiState.handPopoverOpen)
+        && isHandSelectionOpen(uiState)
       );
       return withTarget({
         id: checkpointId,
@@ -1470,7 +1492,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
     target = "draw-controls";
     cue = "choose-draw";
   } else if (checkpointId === "tutorial-build-card") {
-    if ((uiState.modal === "hand" || uiState.handPopoverOpen) && uiState.selectedHandCard) {
+    if (isHandSelectionOpen(uiState) && uiState.selectedHandCard) {
       cue = `selected:${uiState.selectedHandCard}`;
       if (uiState.selectedCardPlayError) {
         const cardName = uiState.selectedCardName ?? "This card";
@@ -1544,7 +1566,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
       && uiState.scriptedAttackCardInHand
       && Number(uiState.availableRp ?? 0) < scriptedAttackRequiredRp,
     );
-    const isLookingAtHand = uiState.modal === "hand" || uiState.handPopoverOpen;
+    const isLookingAtHand = isHandSelectionOpen(uiState);
     const selectedAttackSetup = Boolean(isLookingAtHand
       && uiState.selectedHandCard
       && uiState.attackSetupCard

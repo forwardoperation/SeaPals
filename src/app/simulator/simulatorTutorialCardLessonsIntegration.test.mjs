@@ -4,8 +4,9 @@ import { readFile } from "node:fs/promises";
 
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
 
-test("scripted tutorial starts with the introduction and hands off to the board tour", () => {
-  assert.match(simulatorSource, /setTutorialIntroductionStep\(tutorialContract && tutorialUsesScriptedScenario \? 0 : null\)/);
+test("legacy tutorial keeps its introduction while V2 hands off directly to the coin flow", () => {
+  assert.match(simulatorSource, /setTutorialIntroductionStep\(tutorialContract && tutorialUsesScriptedScenario && !previewExperience \? 0 : null\)/);
+  assert.match(simulatorSource, /previewExperience[\s\S]*?createOpeningCoinCallOverlay\(\{ tutorial: true, guideName: tutorialGuide\.name \}\)/);
   assert.match(simulatorSource, /setTutorialBoardTourStep\(null\)/);
   assert.match(simulatorSource, /function finishTutorialIntroduction\(\)[\s\S]*setTutorialIntroductionStep\(null\)[\s\S]*setTutorialBoardTourStep\(0\)/);
   assert.match(simulatorSource, /function finishTutorialBoardTour\(\)[\s\S]*openOpeningCoinFlip\(\)/);

@@ -75,6 +75,21 @@ test("standalone tutorial is isolated from adventure saves and only adds a retur
   assert.equal(STANDALONE_TUTORIAL_RETURN_PATH, "/instructions#learn-by-doing");
 });
 
+test("V2 preview routes opt into the new shell without changing canonical routes", async () => {
+  const [simulatorPreview, tutorialPreview, tutorialClient, canonicalSimulator] = await Promise.all([
+    readAppSource("simulator-v2", "page.jsx"),
+    readAppSource("instructions", "tutorial-v2", "page.jsx"),
+    readAppSource("instructions", "tutorial", "StandaloneTutorial.jsx"),
+    readAppSource("simulator", "page.jsx"),
+  ]);
+
+  assert.match(simulatorPreview, /<Simulator[\s\S]*previewExperience/);
+  assert.match(tutorialPreview, /<StandaloneTutorial[\s\S]*previewExperience/);
+  assert.match(tutorialPreview, /\/simulator-v2/);
+  assert.match(tutorialClient, /<Simulator storyMode=\{storyMode\} previewExperience=\{previewExperience\}/);
+  assert.doesNotMatch(canonicalSimulator, /previewExperience/);
+});
+
 test("learn by doing appears before the written rules and legacy tutorial links redirect", async () => {
   const instructionsSource = await readAppSource("instructions", "page.jsx");
   const legacyTutorialSource = await readAppSource("tutorial", "page.jsx");

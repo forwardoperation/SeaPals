@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
+const handDockSource = await readFile(new URL("./MobileHandDock.jsx", import.meta.url), "utf8");
 
 function sourceSection(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
@@ -141,6 +142,25 @@ test("pending placement cannot reopen the mobile hand or replay the same card", 
     simulatorSource,
     /onClick=\{\(\) => \{ if \(!playingCardId\) setModal\("hand"\); \}\} disabled=\{Boolean\(playingCardId\)\}[\s\S]*?Place card first/,
   );
+});
+
+test("V2 uses a persistent occurrence-safe hand rail while legacy keeps Open Hand", () => {
+  assert.match(simulatorSource, /previewExperience && !eventOverlay[\s\S]*?<MobileHandDock/);
+  assert.match(simulatorSource, /!previewExperience \? <button[\s\S]*?Open Hand/);
+  assert.match(handDockSource, /selectedIndex/);
+  assert.match(handDockSource, /entry\.index === selectedIndex/);
+  assert.match(handDockSource, /data-simulator-hand-card-rail/);
+  assert.match(handDockSource, /data-tutorial-target="rp-bank"/);
+  assert.match(handDockSource, /aria-live="polite"/);
+  assert.match(simulatorSource, /document\.querySelector\("\[data-mobile-hand-dock\]"\)/);
+  assert.match(simulatorSource, /visibleHeight = Math\.max\(96, rect\.height - occludedHeight\)/);
+});
+
+test("V2 keeps both mobile reefs mounted and compacts the context reef", () => {
+  assert.match(simulatorSource, /data-board-owner="opponent"[\s\S]*data-board-focus=/);
+  assert.match(simulatorSource, /data-board-owner="player"[\s\S]*data-board-focus=/);
+  assert.match(simulatorSource, /h-\[66%\][\s\S]*h-\[34%\]/);
+  assert.match(simulatorSource, /\[data-board-focus="context"\] \.seapals-board-camera-controls[\s\S]*display: none/);
 });
 
 test("the player reef starts fitted and stops auto-fitting after manual camera input", () => {

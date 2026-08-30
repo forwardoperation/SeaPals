@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import RulesChat from "@/components/rules/RulesChat";
 import BugReportDialog from "@/components/feedback/BugReportDialog";
+import MobileHandDock from "./MobileHandDock";
 import { cardsById } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
 import { conditionCards } from "@/data/cards/conditions";
@@ -3111,6 +3112,7 @@ function OpeningCoinVisual({ mode = "landed", side = "heads", onAnimationEnd = n
 export default function Simulator({
   storyMode = null,
   initialDeckId = null,
+  previewExperience = false,
   accessibilitySettings = null,
   onOpenAccessibilitySettings = null,
 } = {}) {
@@ -3266,6 +3268,7 @@ export default function Simulator({
   const [modal, setModal] = useState(null);
   const modalScrollRef = useRef(null);
   const [selectedHandCard, setSelectedHandCard] = useState(null);
+  const [mobileSelectedHandIndex, setMobileSelectedHandIndex] = useState(null);
   const [handPopoverCardId, setHandPopoverCardId] = useState(null);
   const [playingCardId, setPlayingCardId] = useState(null);
   const [playError, setPlayError] = useState("");
@@ -3297,9 +3300,13 @@ export default function Simulator({
   const [eventOverlay, setEventOverlay] = useState(() => ({
     type: "new-game-setup",
     initial: true,
-    title: isStoryMode ? `${storyOpponentName} challenges you!` : "Welcome to the SeaPals Simulator",
+    title: previewExperience && tutorialUsesScriptedScenario
+      ? "Build your first living reef"
+      : isStoryMode ? `${storyOpponentName} challenges you!` : "Welcome to the SeaPals Simulator",
     message: isStoryMode
-      ? `${storyOpponentName} is ready for a SeaPals duel. Build your ecosystem and be the first to reach ${storyVictoryTarget} VP.`
+      ? previewExperience && tutorialUsesScriptedScenario
+        ? `${tutorialGuide.name} will stay with you on the board and point to one legal action at a time.`
+        : `${storyOpponentName} is ready for a SeaPals duel. Build your ecosystem and be the first to reach ${storyVictoryTarget} VP.`
       : `Your ${initialPlayerDeckName} is selected. Choose an opponent deck and victory target, then begin the setup round with four Foundation and four Pals cards.`,
   }));
   useEffect(() => {
@@ -3839,7 +3846,11 @@ export default function Simulator({
       }
     };
   }, [tutorialExitRequiresConfirmation]);
-  const selectedTutorialCard = selectedHandCard ? cardsById[selectedHandCard] : null;
+  const mobileSelectedHandCardId = mobileSelectedHandIndex === null
+    ? null
+    : hand[mobileSelectedHandIndex] ?? null;
+  const selectedTutorialHandCardId = selectedHandCard ?? mobileSelectedHandCardId;
+  const selectedTutorialCard = selectedTutorialHandCardId ? cardsById[selectedTutorialHandCardId] : null;
   const inspectedCreatureSlot = inspectedCard?.owner === "player" && inspectedCard.coralId
     ? playerCorals.find((coral) => coral.id === inspectedCard.coralId)?.slots.find((slot) => slot.id === inspectedCard.slotId)
     : null;
@@ -4244,7 +4255,7 @@ export default function Simulator({
     playingCardId,
     playingCardName: playingCard?.name,
     modal,
-    selectedHandCard,
+    selectedHandCard: selectedTutorialHandCardId,
     selectedCardIsSupport: selectedTutorialCard?.kind === CardKind.SUPPORT,
     selectedCardPlayError: selectedTutorialCard ? getPlayError(selectedTutorialCard) : "",
     selectedCardIsSetupFoundation: Boolean(
@@ -4258,6 +4269,8 @@ export default function Simulator({
     selectedCardVictoryPoints: Number(selectedTutorialCard?.victoryPoints ?? 0),
     selectedSupportLocksFurtherSupports: supportExplicitlyLocksFurtherSupports(selectedTutorialCard),
     handPopoverOpen: Boolean(handPopoverCardId),
+    handDockSelectionOpen: previewExperience && mobileSelectedHandIndex !== null,
+    streamlinedTutorial: previewExperience,
     inspectedAttack,
     inspectedCardOpen: Boolean(inspectedCardData),
     inspectedPlayerCard: inspectedCard?.owner === "player",
@@ -4874,6 +4887,10 @@ export default function Simulator({
   }, [modal, hand]);
 
   useEffect(() => {
+    setMobileSelectedHandIndex(null);
+  }, [hand, playingCardId]);
+
+  useEffect(() => {
     if (modal) setMobileHudPanel(null);
   }, [modal]);
 
@@ -5106,6 +5123,14 @@ export default function Simulator({
     if (!element) return;
     const rect = element.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return;
+    const handDock = previewExperience && !isOpponent
+      ? document.querySelector("[data-mobile-hand-dock]")
+      : null;
+    const handDockRect = handDock?.getBoundingClientRect();
+    const occludedHeight = handDockRect && handDockRect.top < rect.bottom
+      ? Math.max(0, rect.bottom - Math.max(rect.top, handDockRect.top))
+      : 0;
+    const visibleHeight = Math.max(96, rect.height - occludedHeight);
     const corals = isOpponent ? opponentCorals : playerCorals;
     const floatingCardsPresent = isOpponent
       ? opponent.habitats.length || opponent.reefCreatures.length || (opponent.orphanCreatures?.length ?? 0)
@@ -5146,14 +5171,14 @@ export default function Simulator({
       : 1.15;
     const nextZoom = clampZoom(Math.min(
       (rect.width - 48) / Math.max(1, maxX - minX),
-      (rect.height - 48) / Math.max(1, maxY - minY),
+      (visibleHeight - 32) / Math.max(1, maxY - minY),
       sparsePlayerBoardMaxZoom,
     ));
     const contentCenterX = (minX + maxX) / 2;
     const contentCenterY = (minY + maxY) / 2;
     const nextOffset = {
       x: (rect.width / 2 - contentCenterX) * nextZoom,
-      y: (rect.height / 2 - contentCenterY) * nextZoom,
+      y: (visibleHeight / 2 - contentCenterY) * nextZoom,
     };
     (isOpponent ? setOpponentEcosystemZoom : setEcosystemZoom)(nextZoom);
     (isOpponent ? setOpponentEcosystemOffset : setEcosystemOffset)(nextOffset);
@@ -12059,6 +12084,7 @@ export default function Simulator({
     setTurnDrawResult(null);
     setModal(null);
     setSelectedHandCard(null);
+    setMobileSelectedHandIndex(null);
     setHandPopoverCardId(null);
     setPlayingCardId(null);
     setUsedAttackers([]);
@@ -12092,12 +12118,18 @@ export default function Simulator({
     };
     setInspectedCard(null);
     setHandLimitDiscardSelection([]);
-    setEventOverlay(tutorialUsesScriptedScenario ? null : createOpeningCoinCallOverlay());
+    setEventOverlay(tutorialUsesScriptedScenario
+      ? previewExperience
+        ? createOpeningCoinCallOverlay({ tutorial: true, guideName: tutorialGuide.name })
+        : null
+      : createOpeningCoinCallOverlay());
     setPendingEvents([]);
     setFaceoffRolling(false);
     setFaceoffPreview(null);
     setTurnLog(tutorialUsesScriptedScenario
-      ? [`${tutorialGuide.name} is walking you around the match board before the opening coin flip.`]
+      ? [previewExperience
+        ? `${tutorialGuide.name} is ready to guide the opening coin flip and first legal play.`
+        : `${tutorialGuide.name} is walking you around the match board before the opening coin flip.`]
       : ["The opening coin flip will decide who takes the first turn."]);
     setPlayError("");
     setTutorialLayoutProgress(createGuidedAcademyLayoutProgress());
@@ -12119,7 +12151,9 @@ export default function Simulator({
       unavailableOpponentCards.length ? `Opponent deck data warning: ${unavailableOpponentCards.map((entry) => `${entry.unavailableName ?? entry.cardId} ×${entry.quantity}`).join(", ")} ${unavailableOpponentCards.length === 1 ? "is" : "are"} missing repository card rules and excluded.` : null,
     ].filter(Boolean);
     setLog([...unavailableWarnings, tutorialUsesScriptedScenario
-      ? `New guided aquarium lesson started: your ${deckName} versus ${tutorialGuide.name}'s prepared practice reef. Tour the board before calling the opening coin flip.`
+      ? previewExperience
+        ? `New guided aquarium lesson started: your ${deckName} versus ${tutorialGuide.name}'s prepared practice reef. Call the opening flip, then follow the live board coach.`
+        : `New guided aquarium lesson started: your ${deckName} versus ${tutorialGuide.name}'s prepared practice reef. Tour the board before calling the opening coin flip.`
       : `New ${difficultyLabel} game started: your ${deckName} versus the opponent's ${opponentDeckName}. Call the opening coin flip to decide who takes the first turn.`]);
   }
 
@@ -12127,7 +12161,7 @@ export default function Simulator({
     storyResultRecordedRef.current = false;
     setTutorialExitConfirmationOpen(false);
     setTutorialHelpDismissedId(null);
-    setTutorialIntroductionStep(tutorialContract && tutorialUsesScriptedScenario ? 0 : null);
+    setTutorialIntroductionStep(tutorialContract && tutorialUsesScriptedScenario && !previewExperience ? 0 : null);
     setTutorialCardLesson(null);
     setTutorialSeenCardConceptKeys([]);
     setTutorialBoardTourStep(null);
@@ -12255,7 +12289,7 @@ export default function Simulator({
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
 
   return (
-    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
+    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
         @keyframes seapalsDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
@@ -12831,8 +12865,232 @@ export default function Simulator({
         }
         .seapals-card-drawer { animation: seapalsDrawerIn 260ms ease-out; }
         .seapals-event-card { animation: seapalsEventPop 320ms ease-out; }
+        .seapals-mobile-hand-dock {
+          position: absolute;
+          z-index: 58;
+          right: .75rem;
+          bottom: 4.15rem;
+          left: .75rem;
+          height: 10.75rem;
+          pointer-events: none;
+        }
+        .seapals-high-contrast .seapals-mobile-hand-panel {
+          border-color: #67e8f9;
+          background: #020617;
+        }
+        .seapals-mobile-hand-panel {
+          height: 100%;
+          overflow: hidden;
+          border: 1px solid rgba(103, 232, 249, .3);
+          border-radius: 1.35rem 1.35rem .8rem .8rem;
+          background:
+            radial-gradient(circle at 50% -30%, rgba(34, 211, 238, .2), transparent 48%),
+            linear-gradient(180deg, rgba(9, 33, 51, .97), rgba(3, 15, 27, .985));
+          box-shadow: 0 -14px 44px rgba(2, 8, 23, .58), inset 0 1px rgba(255, 255, 255, .08);
+          pointer-events: auto;
+          backdrop-filter: blur(14px);
+        }
+        .seapals-mobile-hand-summary {
+          position: relative;
+          z-index: 4;
+          display: flex;
+          min-height: 3.35rem;
+          align-items: center;
+          gap: .6rem;
+          padding: .45rem .55rem .45rem .75rem;
+          border-bottom: 1px solid rgba(103, 232, 249, .14);
+          background: linear-gradient(90deg, rgba(8, 47, 67, .98), rgba(8, 28, 45, .98));
+        }
+        .seapals-mobile-hand-kicker {
+          display: block;
+          color: #67e8f9;
+          font-size: .55rem;
+          font-weight: 950;
+          letter-spacing: .16em;
+          line-height: 1;
+          text-transform: uppercase;
+        }
+        .seapals-mobile-hand-title {
+          display: block;
+          overflow: hidden;
+          margin-top: .2rem;
+          color: #f8fafc;
+          font-size: .78rem;
+          font-weight: 950;
+          line-height: 1.05;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .seapals-mobile-hand-status {
+          display: block;
+          overflow: hidden;
+          margin-top: .18rem;
+          color: #6ee7b7;
+          font-size: .6rem;
+          font-weight: 800;
+          line-height: 1.05;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .seapals-mobile-hand-status.is-unavailable { color: #fda4af; }
+        .seapals-mobile-hand-actions {
+          display: flex;
+          flex: 0 0 auto;
+          align-items: center;
+          gap: .35rem;
+        }
+        .seapals-mobile-hand-rp {
+          display: grid;
+          width: 2.65rem;
+          height: 2.65rem;
+          place-items: center;
+          border: 1px solid rgba(110, 231, 183, .48);
+          border-radius: 999px;
+          color: #d1fae5;
+          background: rgba(6, 78, 59, .65);
+          font-size: 1rem;
+          font-weight: 950;
+          line-height: .8;
+          box-shadow: 0 0 22px rgba(52, 211, 153, .12);
+        }
+        .seapals-mobile-hand-rp small {
+          display: block;
+          margin-top: -.6rem;
+          font-size: .42rem;
+          letter-spacing: .08em;
+        }
+        .seapals-mobile-hand-secondary,
+        .seapals-mobile-hand-primary {
+          min-height: 2.75rem;
+          border-radius: .8rem;
+          padding: 0 .65rem;
+          font-size: .68rem;
+          font-weight: 950;
+          text-transform: uppercase;
+        }
+        .seapals-mobile-hand-secondary {
+          border: 1px solid rgba(165, 243, 252, .24);
+          color: #cffafe;
+          background: rgba(255, 255, 255, .06);
+        }
+        .seapals-mobile-hand-primary {
+          border: 1px solid rgba(167, 243, 208, .7);
+          color: #052e2b;
+          background: linear-gradient(135deg, #67e8f9, #34d399);
+          box-shadow: 0 8px 22px rgba(16, 185, 129, .22);
+        }
+        .seapals-mobile-hand-primary:disabled {
+          border-color: rgba(148, 163, 184, .3);
+          color: #94a3b8;
+          background: #334155;
+          box-shadow: none;
+        }
+        .seapals-mobile-hand-secondary:focus-visible,
+        .seapals-mobile-hand-primary:focus-visible {
+          outline: 3px solid #fde68a;
+          outline-offset: 2px;
+        }
+        .seapals-mobile-hand-rail {
+          position: relative;
+          height: calc(100% - 3.35rem);
+          overflow-x: auto;
+          overflow-y: hidden;
+          overscroll-behavior-x: contain;
+          scroll-snap-type: x proximity;
+          scrollbar-width: none;
+          touch-action: pan-x;
+        }
+        .seapals-mobile-hand-rail::-webkit-scrollbar { display: none; }
+        .seapals-mobile-hand-list {
+          display: flex;
+          width: max-content;
+          min-width: 100%;
+          height: 100%;
+          align-items: flex-start;
+          padding: .2rem 2.4rem 0 .8rem;
+        }
+        .seapals-mobile-hand-list > li {
+          position: relative;
+          flex: 0 0 auto;
+          scroll-snap-align: center;
+        }
+        .seapals-mobile-hand-list > li + li { margin-left: -1.05rem; }
+        .seapals-mobile-hand-card {
+          position: relative;
+          display: block;
+          width: 5.15rem;
+          height: 7.25rem;
+          overflow: hidden;
+          border: 2px solid rgba(148, 163, 184, .36);
+          border-radius: .72rem;
+          background: #082f49;
+          box-shadow: 0 8px 18px rgba(2, 8, 23, .52);
+          transform: translateY(2.35rem) rotate(-1deg);
+          transform-origin: center bottom;
+          transition: transform 180ms ease, border-color 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+        }
+        .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(2.35rem) rotate(1deg); }
+        .seapals-mobile-hand-card img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          background: #082f49;
+        }
+        .seapals-mobile-hand-card.is-ready { border-color: rgba(110, 231, 183, .56); }
+        .seapals-mobile-hand-card.is-unavailable { filter: saturate(.62) brightness(.72); }
+        .seapals-mobile-hand-card.is-selected,
+        .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card.is-selected {
+          z-index: 5;
+          border-color: #67e8f9;
+          filter: none;
+          transform: translateY(.15rem) rotate(0deg) scale(1.06);
+          box-shadow: 0 0 0 3px rgba(103, 232, 249, .22), 0 12px 28px rgba(2, 8, 23, .7), 0 0 26px rgba(34, 211, 238, .34);
+        }
+        .seapals-mobile-hand-card:focus-visible {
+          z-index: 6;
+          outline: 3px solid #fde68a;
+          outline-offset: 2px;
+        }
+        .seapals-board-pane { min-height: 0; }
+        .seapals-mobile-hand-card-name,
+        .seapals-mobile-hand-card-cost {
+          position: absolute;
+          z-index: 2;
+          color: #fff;
+          background: rgba(2, 8, 23, .86);
+          font-size: .48rem;
+          font-weight: 900;
+          line-height: 1;
+        }
+        .seapals-mobile-hand-card-name {
+          right: .2rem;
+          bottom: .2rem;
+          left: .2rem;
+          overflow: hidden;
+          padding: .22rem .3rem;
+          border-radius: .35rem;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .seapals-mobile-hand-card-cost {
+          top: .25rem;
+          right: .25rem;
+          padding: .22rem .28rem;
+          border-radius: 999px;
+          color: #d1fae5;
+        }
+        .seapals-mobile-hand-empty {
+          display: grid;
+          height: 100%;
+          place-items: center;
+          color: #94a3b8;
+          font-size: .75rem;
+          font-weight: 800;
+        }
+        .seapals-mobile-hud-panel { bottom: 15.1rem; }
         @media (max-width: 767px) {
-          .seapals-game-shell {
+          .seapals-game-shell.seapals-simulator-preview {
+            --seapals-mobile-dock-clearance: 14.65rem;
             height: 100dvh;
             max-height: 100dvh;
             padding-top: max(.5rem, env(safe-area-inset-top));
@@ -12939,6 +13197,23 @@ export default function Simulator({
             padding-bottom: .35rem;
             font-size: .625rem;
           }
+          .seapals-simulator-preview [data-board-focus="context"] .seapals-board-pane-header {
+            height: 1.75rem;
+            padding-right: .65rem;
+            padding-left: .65rem;
+          }
+          .seapals-simulator-preview [data-board-focus="context"] .seapals-board-pane-header > div:first-child {
+            overflow: hidden;
+            font-size: .55rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .seapals-simulator-preview [data-board-focus="context"] .seapals-ecosystem-ocean {
+            height: calc(100% - 1.75rem);
+          }
+          .seapals-simulator-preview [data-board-focus="context"] .seapals-board-camera-controls {
+            display: none;
+          }
           .seapals-mobile-hud-panel {
             bottom: var(--seapals-mobile-dock-clearance);
           }
@@ -12947,6 +13222,9 @@ export default function Simulator({
             gap: .25rem;
             height: 3.25rem;
             margin-top: .25rem;
+          }
+          .seapals-simulator-preview .seapals-mobile-dock {
+            grid-template-columns: 3.25rem 3.25rem minmax(0, 1fr);
           }
           .seapals-tutorial-help-floating .seapals-target-beacon,
           .seapals-tutorial-help-inline .seapals-target-beacon {
@@ -13024,6 +13302,35 @@ export default function Simulator({
             max-height: min(calc(100dvh - var(--seapals-mobile-dock-clearance) - 1rem - env(safe-area-inset-bottom)), 15rem);
           }
         }
+        @media (max-width: 767px) and (max-height: 650px) {
+          .seapals-game-shell.seapals-simulator-preview {
+            --seapals-mobile-dock-clearance: 10.85rem;
+          }
+          .seapals-mobile-hand-dock {
+            right: .5rem;
+            bottom: 3.75rem;
+            left: .5rem;
+            height: 7rem;
+          }
+          .seapals-mobile-hand-summary { min-height: 2.75rem; }
+          .seapals-mobile-hand-rail { height: calc(100% - 2.75rem); }
+          .seapals-mobile-hand-card {
+            width: 4rem;
+            height: 5.65rem;
+            transform: translateY(1.6rem) rotate(-1deg);
+          }
+          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(1.6rem) rotate(1deg); }
+          .seapals-mobile-hand-card.is-selected,
+          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card.is-selected {
+            transform: translateY(.05rem) rotate(0deg) scale(1.03);
+          }
+          .seapals-mobile-hand-kicker { font-size: .48rem; }
+          .seapals-mobile-hand-title { font-size: .68rem; }
+          .seapals-mobile-hand-status { font-size: .52rem; }
+          .seapals-mobile-hand-rp { width: 2.35rem; height: 2.35rem; }
+          .seapals-mobile-hand-secondary,
+          .seapals-mobile-hand-primary { min-height: 2.35rem; padding: 0 .5rem; font-size: .6rem; }
+        }
       `}</style>
       <section className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)_9rem_auto]">
         <div className="seapals-hud-panel seapals-arena-frame relative flex h-full min-h-0 flex-col rounded-2xl border border-cyan-400/25 p-3 shadow-2xl xl:col-start-1 xl:row-span-3 xl:row-start-1">
@@ -13040,7 +13347,7 @@ export default function Simulator({
                   </Link>
                 )}
                 <div>
-                  <h1 className="text-lg font-black tracking-tight text-white">SeaPals Simulator</h1>
+                  <h1 className="text-lg font-black tracking-tight text-white">SeaPals Simulator{previewExperience ? " V2" : ""}</h1>
                   <p className="hidden text-xs text-cyan-100/60 sm:block">Build your reef. Outsmart the opposing ecosystem.</p>
                 </div>
               </div>
@@ -13285,15 +13592,15 @@ export default function Simulator({
             </div>
           ) : null}
 
-          <div className="seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label="Choose ecosystem to view">
+          <div className="seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label={previewExperience ? "Choose ecosystem to focus" : "Choose ecosystem to view"}>
             <button type="button" data-tutorial-coach-anchor="player-board-tab" aria-pressed={mobileBoardView === "player"} onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
             <button type="button" data-tutorial-coach-anchor="opponent-board-tab" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish placing this card in Your Reef first." : undefined} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-40 ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
           </div>
 
           <div className="min-h-0 w-full flex-1 rounded-2xl border border-cyan-300/20 bg-[#06111d] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
             <div className="h-full min-h-0 overflow-hidden rounded-2xl bg-[#071724]">
-              <div className={`${mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`}>
-                <div className="flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-rose-500/10 via-slate-900 to-slate-900 px-4">
+              <div className={`seapals-board-pane ${previewExperience ? `${mobileBoardView === "opponent" ? "h-[66%]" : "h-[34%]"} block transition-[height] duration-300 ease-out` : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" data-board-focus={mobileBoardView === "opponent" ? "focused" : "context"}>
+                <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-rose-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-200"><span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,.8)]" /> {isStoryMode ? `${storyOpponentName}'s Ecosystem` : "Rival Ecosystem"}</div>
                   {attackContext ? (
                     <div className="flex items-center gap-2" role="status">
@@ -13313,7 +13620,7 @@ export default function Simulator({
                   onLostPointerCapture={handleOpponentPointerUp}
                   style={{ touchAction: "none", overscrollBehavior: "contain", cursor: isOpponentPanning ? "grabbing" : "grab" }}
                 >
-                  <div className="absolute right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col overflow-hidden rounded-full border border-rose-300/25 bg-slate-950/85 text-white shadow-xl backdrop-blur" aria-label="Opponent ecosystem zoom controls">
+                  <div className="seapals-board-camera-controls absolute right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col overflow-hidden rounded-full border border-rose-300/25 bg-slate-950/85 text-white shadow-xl backdrop-blur" aria-label="Opponent ecosystem zoom controls">
                     <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); setOpponentEcosystemZoom((current) => clampZoom(current + 0.1)); }} className="flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom in on opponent ecosystem">+</button>
                     <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); zoomEcosystemToFit("opponent"); }} className="min-h-11 w-11 border-y border-white/10 px-1 py-1 text-[9px] font-black uppercase text-rose-200" aria-label="Fit opponent ecosystem to view">Fit</button>
                     <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); setOpponentEcosystemZoom((current) => clampZoom(current - 0.1)); }} className="flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom out on opponent ecosystem">−</button>
@@ -13432,8 +13739,8 @@ export default function Simulator({
                 </div>
               </div>
 
-              <div className={`${mobileBoardView === "player" ? "h-full" : "hidden"} bg-slate-900 xl:block xl:h-[55%]`}>
-                <div className="flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-slate-900 px-4">
+              <div className={`seapals-board-pane ${previewExperience ? `${mobileBoardView === "player" ? "h-[66%]" : "h-[34%]"} block transition-[height] duration-300 ease-out` : mobileBoardView === "player" ? "h-full" : "hidden"} bg-slate-900 xl:block xl:h-[55%]`} data-board-owner="player" data-board-focus={mobileBoardView === "player" ? "focused" : "context"}>
+                <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-200"><span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]" /> Your Ecosystem</div>
                   {isPlacingCoral && (
                     <div className="flex items-center gap-2" role="status">
@@ -13466,7 +13773,7 @@ export default function Simulator({
                   style={{ touchAction: "none", overscrollBehavior: "contain", userSelect: "none" }}
                 >
                   {!isPlacingCoral && !isUpgradingCoral ? (
-                    <div className="absolute right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col overflow-hidden rounded-full border border-emerald-300/25 bg-slate-950/85 text-white shadow-xl backdrop-blur" aria-label="Your ecosystem zoom controls">
+                    <div className="seapals-board-camera-controls absolute right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col overflow-hidden rounded-full border border-emerald-300/25 bg-slate-950/85 text-white shadow-xl backdrop-blur" aria-label="Your ecosystem zoom controls">
                       <button
                         type="button"
                         data-tutorial-target="player-zoom-in"
@@ -13794,6 +14101,37 @@ export default function Simulator({
               </div>
             </div>
           </div>
+          {previewExperience && !eventOverlay && !modal && !inspectedCardData && !roundFlash && !gameResult && !tutorialIntroductionOpen && !tutorialCardLessonOpen && !tutorialBoardTourOpen ? <MobileHandDock
+            entries={hand.map((cardId, index) => {
+              const card = cardsById[cardId];
+              return {
+                cardId,
+                card,
+                index,
+                cost: getPlayerCardPlayCost(card),
+                playError: getPlayError(card),
+                tutorialClass: tutorialCardTargetClass(cardId),
+              };
+            })}
+            selectedIndex={mobileSelectedHandIndex}
+            playingCardId={playingCardId}
+            rp={rp}
+            tutorialTargetClass={tutorialTargetClass("hand")}
+            onSelect={(index) => {
+              setMobileSelectedHandIndex(index);
+              setPlayError("");
+            }}
+            onInspect={(cardId) => {
+              setSelectedHandCard(cardId);
+              setMobileSelectedHandIndex(null);
+              setPlayError("");
+              setModal("hand");
+            }}
+            onPlay={(cardId) => {
+              setMobileSelectedHandIndex(null);
+              playCardFromHand(cardId);
+            }}
+          /> : null}
           {mobileHudPanel ? (
             <div className="seapals-mobile-hud-panel absolute inset-x-3 bottom-[4.75rem] z-[60] max-h-[45dvh] overflow-y-auto rounded-2xl border border-cyan-300/25 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-xl xl:hidden">
               <div className="mb-3 flex items-center justify-between"><h2 className="font-black text-white">{mobileHudPanel === "zones" ? "Game Zones" : "Mission Feed"}</h2><button type="button" onClick={() => setMobileHudPanel(null)} className="rounded-lg border border-white/10 px-3 py-1 text-xs font-bold text-slate-200">Close</button></div>
@@ -13804,10 +14142,10 @@ export default function Simulator({
               )}
             </div>
           ) : null}
-          <div className="seapals-mobile-dock mt-2 grid h-14 shrink-0 grid-cols-[64px_64px_minmax(0,1fr)_92px] gap-1.5 xl:hidden" aria-label="Mobile game command dock">
+          <div className={`seapals-mobile-dock mt-2 grid h-14 shrink-0 gap-1.5 xl:hidden ${previewExperience ? "grid-cols-[64px_64px_minmax(0,1fr)]" : "grid-cols-[64px_64px_minmax(0,1fr)_92px]"}`} aria-label="Mobile game command dock">
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("zones")}`} data-tutorial-target="zones">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">Guide<br /><span className="text-violet-300">Feed</span></button>
-            <button type="button" onClick={() => { if (!playingCardId) setModal("hand"); }} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish or cancel this card placement first." : undefined} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg disabled:cursor-not-allowed disabled:opacity-45${isSetup && !hasCoralInPlay && !playingCardId ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{playingCardId ? "Place card first" : `${rp} RP ready`}</span></button>
+            {!previewExperience ? <button type="button" onClick={() => { if (!playingCardId) setModal("hand"); }} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish or cancel this card placement first." : undefined} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg disabled:cursor-not-allowed disabled:opacity-45${isSetup && !hasCoralInPlay && !playingCardId ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{playingCardId ? "Place card first" : `${rp} RP ready`}</span></button> : null}
             <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Opponent First" : "Round 1" : "End Turn"}</button>
           </div>
         </div>
@@ -14243,31 +14581,31 @@ export default function Simulator({
                   </div>
                 ) : eventOverlay.type === "new-game-setup" ? (
                   isStoryMode ? (
-                    <div className="mt-6 text-left">
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-4">
+                    <div className={`text-left ${previewExperience && tutorialUsesScriptedScenario ? "mt-4" : "mt-6"}`}>
+                      <div className={`grid sm:grid-cols-2 ${previewExperience && tutorialUsesScriptedScenario ? "grid-cols-2 gap-2" : "gap-4"}`}>
+                        <div className={`rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 ${previewExperience && tutorialUsesScriptedScenario ? "p-3" : "p-4"}`}>
                           <span className="block text-xs font-black uppercase tracking-wider text-emerald-300">Your Deck</span>
-                          <strong className="mt-2 block text-xl text-white">{storyPlayerDeckName}</strong>
+                          <strong className={`${previewExperience && tutorialUsesScriptedScenario ? "mt-1 text-sm" : "mt-2 text-xl"} block text-white`}>{storyPlayerDeckName}</strong>
                         </div>
-                        <div className="rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-4">
+                        <div className={`rounded-2xl border-2 border-rose-400 bg-rose-400/10 ${previewExperience && tutorialUsesScriptedScenario ? "p-3" : "p-4"}`}>
                           <span className="block text-xs font-black uppercase tracking-wider text-rose-300">{storyOpponentName}</span>
-                          <strong className="mt-2 block text-xl text-white">{storyOpponentDeckName}</strong>
+                          <strong className={`${previewExperience && tutorialUsesScriptedScenario ? "mt-1 text-sm" : "mt-2 text-xl"} block text-white`}>{storyOpponentDeckName}</strong>
                         </div>
                       </div>
                       <div className="mt-4 rounded-2xl border border-amber-300/30 bg-amber-400/10 p-4 text-sm text-amber-100">
-                        <strong className="block text-base text-white">Story Duel</strong>
-                        <span className="mt-1 block">{opponentDifficultyProfile.label} difficulty · First to {storyVictoryTarget} VP wins.</span>
+                        <strong className="block text-base text-white">{previewExperience && tutorialUsesScriptedScenario ? "Guided match" : "Story Duel"}</strong>
+                        <span className="mt-1 block">{opponentDifficultyProfile.label} practice rival · Goal: {storyVictoryTarget} VP{previewExperience && tutorialContract ? ` · ${tutorialContract.checkpoints.length} guided milestones` : ""}.</span>
                       </div>
                       {tutorialUsesScriptedScenario ? (
                         <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-cyan-400/10 p-4 text-sm leading-relaxed text-cyan-50">
-                          <strong className="block text-base text-white">Guided Aquarium Lesson</strong>
-                          <span className="mt-1 block">{tutorialGuide.name} has arranged the opening draws, round conditions, and enough compatible practice targets to teach economy, Support cards, card actions, attacks, Coral Reef, Predators, and an Apex finish in a deliberate order. The guided lesson may temporarily prepare cards missing from your selected starter, but your saved deck never changes.</span>
+                          {previewExperience ? <div className="mb-3 flex items-center gap-3"><ProfessorGuidePortrait guide={tutorialGuide} compact /><div><strong className="block text-base text-white">One clear action at a time</strong><span className="text-xs font-bold uppercase tracking-wider text-cyan-200">{tutorialGuide.name} · Live board coach</span></div></div> : <strong className="block text-base text-white">Guided Aquarium Lesson</strong>}
+                          <span className="mt-1 block">{previewExperience ? `${tutorialGuide.name} stays beside the board, explains each new rule when it matters, and keeps the next legal control highlighted. You can still inspect both reefs and your hand at any time.` : `${tutorialGuide.name} has arranged the opening draws, round conditions, and enough compatible practice targets to teach economy, Support cards, card actions, attacks, Coral Reef, Predators, and an Apex finish in a deliberate order. The guided lesson may temporarily prepare cards missing from your selected starter, but your saved deck never changes.`}</span>
                         </div>
                       ) : null}
-                      <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn.</div>
+                      {!previewExperience ? <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn.</div> : null}
                       <div className="mt-5 flex flex-wrap justify-end gap-3">
                         <button type="button" onClick={exitStoryMode} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Return to {storyReturnLabel}</button>
-                        <button type="button" onClick={() => restartStoryGame("begin")} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{tutorialUsesScriptedScenario ? "Begin Aquarium Lesson" : "Begin Duel"}</button>
+                        <button type="button" onClick={() => restartStoryGame("begin")} className="rounded-full bg-emerald-500 px-7 py-3 font-black text-slate-950">{tutorialUsesScriptedScenario ? previewExperience ? "Start Guided Match" : "Begin Aquarium Lesson" : "Begin Duel"}</button>
                       </div>
                     </div>
                   ) : (
@@ -14297,7 +14635,7 @@ export default function Simulator({
                       <span className="mt-1 block">Learn the board and each turn by playing Mr. Easterling&apos;s guided aquarium lesson. Your selected trial deck will still be waiting when you return.</span>
                       <Link
                         href={{
-                          pathname: "/instructions/tutorial",
+                          pathname: previewExperience ? "/instructions/tutorial-v2" : "/instructions/tutorial",
                           query: { returnDeck: selectedDeckId },
                         }}
                         className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-2.5 text-sm font-black text-slate-950 transition hover:bg-cyan-200 focus:outline-none focus:ring-4 focus:ring-cyan-100/70"

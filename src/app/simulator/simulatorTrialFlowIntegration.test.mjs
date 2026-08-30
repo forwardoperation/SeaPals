@@ -83,7 +83,7 @@ test("the guided tutorial preserves a validated selected deck as its return targ
   assert.match(tutorialPageSource, /getValidSimulatorDeck\(params\?\.returnDeck\)/);
   assert.match(tutorialPageSource, /createSimulatorDeckHref\(returnDeck\?\.id\)/);
   assert.match(tutorialPageSource, /\? `\$\{returnDeckName\} Trial` : "Instructions"/);
-  assert.match(simulatorSource, /pathname: "\/instructions\/tutorial"/);
+  assert.match(simulatorSource, /pathname: previewExperience \? "\/instructions\/tutorial-v2" : "\/instructions\/tutorial"/);
   assert.match(simulatorSource, /query: \{ returnDeck: selectedDeckId \}/);
   assert.match(simulatorSource, /Start guided tutorial/);
 });
