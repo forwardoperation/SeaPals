@@ -13978,6 +13978,10 @@ export default function Simulator({
           position: relative;
           flex: 0 0 auto;
           scroll-snap-align: center;
+          touch-action: pan-x;
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          user-select: none;
         }
         .seapals-mobile-hand-list > li + li { margin-left: -1.05rem; }
         .seapals-mobile-hand-card {
@@ -13993,7 +13997,12 @@ export default function Simulator({
           transform: translateY(.5rem) rotate(-1deg);
           transform-origin: center bottom;
           transition: transform 180ms ease, border-color 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+          touch-action: pan-x;
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          user-select: none;
         }
+        .seapals-mobile-hand-card > * { pointer-events: none; }
         .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(.5rem) rotate(1deg); }
         .seapals-mobile-hand-card img {
           width: 100%;

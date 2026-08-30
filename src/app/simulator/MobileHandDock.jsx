@@ -73,7 +73,7 @@ export default function MobileHandDock({
       originY: event.clientY,
       clientX: event.clientX,
       clientY: event.clientY,
-      sourceElement: event.currentTarget,
+      sourceElement: event.target,
     };
   }
 
@@ -95,6 +95,14 @@ export default function MobileHandDock({
         return;
       }
       if (dy <= -MOBILE_HAND_DRAG_THRESHOLD && absY >= absX * MOBILE_HAND_DRAG_AXIS_RATIO) {
+        event.preventDefault();
+        try {
+          if (!gesture.sourceElement.hasPointerCapture?.(event.pointerId)) {
+            gesture.sourceElement.setPointerCapture?.(event.pointerId);
+          }
+        } catch (error) {
+          // Continue without capture if the platform rejects it.
+        }
         const accepted = callbacksRef.current.onDragStart?.({
           cardId: entry.cardId,
           index: entry.index,
@@ -108,12 +116,6 @@ export default function MobileHandDock({
           return;
         }
         gesture.phase = "dragging";
-        event.preventDefault();
-        try {
-          event.currentTarget.setPointerCapture?.(event.pointerId);
-        } catch (error) {
-          // Continue without capture if the platform rejects it.
-        }
         callbacksRef.current.onDragMove?.({
           cardId: entry.cardId,
           index: entry.index,
@@ -167,6 +169,7 @@ export default function MobileHandDock({
   function handleCardLostPointerCapture(entry, event) {
     const gesture = gestureRef.current;
     if (!gesture || gesture.pointerId !== event.pointerId || gesture.index !== entry.index) return;
+    if (event.target !== gesture.sourceElement) return;
     clearHandDragGesture({ cancel: true, event });
   }
 
@@ -211,7 +214,7 @@ export default function MobileHandDock({
                   >
                     <button
                       type="button"
-                      disabled={placementPending}
+                      disabled={placementPending && !dragging}
                       aria-haspopup="dialog"
                       aria-expanded={selected}
                       aria-pressed={selected}

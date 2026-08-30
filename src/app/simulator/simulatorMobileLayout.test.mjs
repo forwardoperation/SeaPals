@@ -282,6 +282,96 @@ test("mobile hand cards distinguish an upward placement drag from horizontal han
   assert.match(simulatorSource, /\.seapals-mobile-hand-rail\s*\{[\s\S]*?touch-action:\s*pan-x;/);
 });
 
+test("the touched hand-card source owns the pan-x policy instead of relying on an ancestor", () => {
+  const handListItemStyles = sourceSection(
+    simulatorSource,
+    ".seapals-mobile-hand-list > li {",
+    ".seapals-mobile-hand-list > li + li",
+  );
+  const handCardStyles = sourceSection(
+    simulatorSource,
+    ".seapals-mobile-hand-card {",
+    ".seapals-mobile-hand-list > li:nth-child(even)",
+  );
+
+  assert.match(
+    handListItemStyles,
+    /touch-action:\s*pan-x;/,
+    "mobile Safari must see the horizontal-only touch policy on the element that receives pointerdown",
+  );
+  assert.match(
+    handCardStyles,
+    /touch-action:\s*pan-x;/,
+    "the touched button must advertise the same horizontal-only gesture policy before Safari chooses implicit capture",
+  );
+});
+
+test("pointer capture is established before drag-start state causes a parent rerender", () => {
+  const pointerMove = functionSectionContaining(
+    handDockSource,
+    [/onDragStart/, /setPointerCapture/, /phase\s*=\s*"dragging"/],
+    "mobile hand drag promotion",
+  );
+  const captureIndex = pointerMove.indexOf("setPointerCapture");
+  const dragStartIndex = pointerMove.indexOf("onDragStart");
+
+  assert.ok(captureIndex >= 0 && dragStartIndex >= 0);
+  assert.ok(
+    captureIndex < dragStartIndex,
+    "capture the pointer before onDragStart updates Simulator state and rerenders the hand dock",
+  );
+  assert.match(
+    pointerMove,
+    /sourceElement\.setPointerCapture\?\.\(event\.pointerId\)/,
+    "capture must stay attached to the exact element Safari implicitly captured on pointerdown",
+  );
+  const pointerStart = functionSectionContaining(
+    handDockSource,
+    [/handleCardPointerDown/, /sourceElement/, /event\.target/],
+    "exact mobile hand pointer source",
+  );
+  assert.match(pointerStart, /sourceElement:\s*event\.target/);
+});
+
+test("pointercancel is terminal but bubbled lost-capture from a different element cannot snap back the drag", () => {
+  const pointerCancel = functionSectionContaining(
+    handDockSource,
+    [/handleCardPointerCancel/, /clearHandDragGesture/],
+    "mobile hand pointer cancellation",
+  );
+  const lostCapture = functionSectionContaining(
+    handDockSource,
+    [/handleCardLostPointerCapture/, /gestureRef\.current/],
+    "mobile hand lost-capture handling",
+  );
+
+  assert.match(pointerCancel, /clearHandDragGesture\(\{\s*cancel:\s*true/);
+  assert.match(
+    lostCapture,
+    /event\.target\s*!==\s*gesture\.sourceElement[\s\S]*?return/,
+    "Safari can bubble lostpointercapture while implicit capture moves between the touched card and its list item",
+  );
+  assert.match(lostCapture, /clearHandDragGesture\(\{\s*cancel:\s*true/);
+});
+
+test("the active source remains interactive when drag state rerenders the hand", () => {
+  assert.match(
+    handDockSource,
+    /disabled=\{placementPending\s*&&\s*!dragging\}/,
+    "disabling the captured source during a parent render can make mobile Safari cancel and snap the gesture back",
+  );
+  assert.match(
+    handDockSource,
+    /key=\{`\$\{entry\.cardId\}-\$\{entry\.index\}`\}/,
+    "drag state must not enter the source key and replace the captured DOM node",
+  );
+  assert.match(
+    handDockSource,
+    /const callbacksRef = useRef[\s\S]*?callbacksRef\.current\s*=\s*\{\s*onDragStart,\s*onDragMove,\s*onDragEnd,\s*onDragCancel\s*\}/,
+    "fresh parent callbacks should be observed without rebuilding the gesture tracker",
+  );
+});
+
 test("a mobile hand drag starts direct placement without opening the tap popover", () => {
   const mobileHandDock = sourceSection(
     simulatorSource,
