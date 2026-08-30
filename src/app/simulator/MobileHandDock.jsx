@@ -84,13 +84,15 @@ export default function MobileHandDock({
                       type="button"
                       disabled={placementPending}
                       aria-pressed={selected}
-                      aria-label={`${entry.card?.name ?? entry.cardId}. ${entry.playError || `${entry.cost} RP, ready to play`}`}
+                      aria-label={`${entry.card?.name ?? entry.cardId}. ${entry.setupPlayable ? "Legal setup card. " : ""}${entry.playError || `${entry.cost} RP, ready to play`}`}
                       data-card-id={entry.cardId}
+                      data-setup-playable={entry.setupPlayable ? "true" : undefined}
                       data-tutorial-hand-card-id={entry.cardId}
                       onClick={() => onSelect(selected ? null : entry.index)}
-                      className={`seapals-mobile-hand-card${selected ? " is-selected" : ""}${entry.playError ? " is-unavailable" : " is-ready"}${entry.tutorialClass ?? ""}`}
+                      className={`seapals-mobile-hand-card${selected ? " is-selected" : ""}${entry.playError ? " is-unavailable" : " is-ready"}${entry.setupPlayable ? " seapals-setup-playable-card" : ""}${entry.tutorialClass ?? ""}`}
                     >
                       <img src={entry.card?.image} alt="" />
+                      {entry.setupPlayable ? <span className="seapals-mobile-hand-card-setup-badge">Setup</span> : null}
                       <span className="seapals-mobile-hand-card-name">{entry.card?.name ?? entry.cardId}</span>
                       <span className="seapals-mobile-hand-card-cost">{entry.cost} RP</span>
                     </button>

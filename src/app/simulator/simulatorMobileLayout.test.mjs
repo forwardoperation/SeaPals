@@ -164,6 +164,74 @@ test("V2 keeps both mobile reefs mounted and compacts the context reef", () => {
   assert.match(simulatorSource, /\[data-board-focus="context"\] \.seapals-board-camera-controls[\s\S]*display: none/);
 });
 
+test("V2 reclaims the visible reef switcher and focuses a reef from its own surface", () => {
+  assert.match(
+    simulatorSource,
+    /className=\{previewExperience \? "seapals-board-tabs sr-only xl:hidden" : "seapals-board-tabs mb-2 grid/,
+  );
+  assert.match(
+    simulatorSource,
+    /function focusMobileBoard\(owner\) \{[\s\S]*?mobileBoardView === owner[\s\S]*?owner === "opponent" && playingCardId[\s\S]*?setMobileBoardView\(owner\)/,
+  );
+  assert.match(
+    simulatorSource,
+    /const MobileScoreControl = previewExperience \? "button" : "div";/,
+  );
+  assert.match(
+    simulatorSource,
+    /<MobileScoreControl[\s\S]*?aria-controls=\{previewExperience \? "simulator-player-reef" : undefined\}[\s\S]*?data-tutorial-coach-anchor=\{previewExperience \? "player-board-tab" : undefined\}/,
+  );
+  assert.match(
+    simulatorSource,
+    /<MobileScoreControl[\s\S]*?aria-controls=\{previewExperience \? "simulator-opponent-reef" : undefined\}[\s\S]*?data-tutorial-coach-anchor=\{previewExperience \? "opponent-board-tab" : undefined\}/,
+  );
+  assert.match(
+    simulatorSource,
+    /id="simulator-opponent-reef"[\s\S]*?onClickCapture=\{\(\) => focusMobileBoard\("opponent"\)\}[\s\S]*?onFocusCapture=\{\(\) => focusMobileBoard\("opponent"\)\}/,
+  );
+  assert.match(
+    simulatorSource,
+    /id="simulator-player-reef"[\s\S]*?onClickCapture=\{\(\) => focusMobileBoard\("player"\)\}[\s\S]*?onFocusCapture=\{\(\) => focusMobileBoard\("player"\)\}/,
+  );
+});
+
+test("V2 keeps all focused-reef camera controls clear of the hand", () => {
+  const mobileStyles = sourceSection(
+    simulatorSource,
+    "@media (max-width: 767px)",
+    "`}</style>",
+  );
+
+  assert.match(
+    mobileStyles,
+    /\[data-board-focus="focused"\] \.seapals-board-camera-controls \{[\s\S]*?top:\s*\.5rem;[\s\S]*?left:\s*\.5rem;[\s\S]*?flex-direction:\s*row;[\s\S]*?transform:\s*none;/,
+  );
+  assert.match(
+    mobileStyles,
+    /\[data-board-focus="focused"\] \.seapals-board-camera-controls > button:nth-child\(2\) \{[\s\S]*?border-right:[\s\S]*?border-left:/,
+  );
+  assert.match(simulatorSource, /aria-label="Zoom in on opponent ecosystem"/);
+  assert.match(simulatorSource, /aria-label="Fit opponent ecosystem to view"/);
+  assert.match(simulatorSource, /aria-label="Zoom out on opponent ecosystem"/);
+  assert.match(simulatorSource, /aria-label="Zoom in on your ecosystem"/);
+  assert.match(simulatorSource, /aria-label="Fit your ecosystem to view"/);
+  assert.match(simulatorSource, /aria-label="Zoom out on your ecosystem"/);
+});
+
+test("V2 marks every legal setup card in the persistent mobile hand", () => {
+  assert.match(
+    simulatorSource,
+    /const playError = getPlayError\(card\);[\s\S]*?playError,[\s\S]*?setupPlayable: isSetup && !playingCardId && !playError/,
+  );
+  assert.match(handDockSource, /data-setup-playable=\{entry\.setupPlayable \? "true" : undefined\}/);
+  assert.match(handDockSource, /entry\.setupPlayable \? " seapals-setup-playable-card" : ""/);
+  assert.match(handDockSource, /seapals-mobile-hand-card-setup-badge">Setup/);
+  assert.match(
+    simulatorSource,
+    /\.seapals-reduced-motion \.seapals-mobile-hand-card\.seapals-setup-playable-card \{[\s\S]*?border-color:\s*#fde68a;[\s\S]*?box-shadow:/,
+  );
+});
+
 test("V2 removes both ecosystem label rows while preserving action overlays", () => {
   const labels = simulatorSource.match(/className="seapals-board-pane-label/g) ?? [];
   const fullHeightOceans = simulatorSource.match(/previewExperience \? "h-full" : "h-\[calc\(100%-40px\)\]"/g) ?? [];

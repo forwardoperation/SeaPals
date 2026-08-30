@@ -3782,6 +3782,7 @@ export default function Simulator({
     && !tutorialCardLessonOpen
     && !tutorialBoardTourOpen
   );
+  const MobileScoreControl = previewExperience ? "button" : "div";
   const tutorialLessonWon = isTutorialLessonVictory({
     tutorialActive: Boolean(tutorialContract && scriptedTutorialScenario),
     gameResult,
@@ -6350,6 +6351,13 @@ export default function Simulator({
   function handleSlotDragEnd() {
     slotDragStartRef.current = null;
     setSlotDragStart(null);
+  }
+
+  function focusMobileBoard(owner) {
+    if (!previewExperience || mobileBoardView === owner) return false;
+    if (owner === "opponent" && playingCardId) return false;
+    setMobileBoardView(owner);
+    return true;
   }
 
   function handleEcosystemPointerDown(event) {
@@ -13053,6 +13061,10 @@ export default function Simulator({
           background: #082f49;
         }
         .seapals-mobile-hand-card.is-ready { border-color: rgba(110, 231, 183, .56); }
+        .seapals-mobile-hand-card.seapals-setup-playable-card {
+          border-color: #fde68a;
+          box-shadow: 0 0 0 3px rgba(250, 204, 21, .2), 0 8px 24px rgba(250, 204, 21, .28);
+        }
         .seapals-mobile-hand-card.is-unavailable { filter: saturate(.62) brightness(.72); }
         .seapals-mobile-hand-card.is-selected,
         .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card.is-selected {
@@ -13114,6 +13126,27 @@ export default function Simulator({
           border-radius: 999px;
           color: #d1fae5;
         }
+        .seapals-mobile-hand-card-setup-badge {
+          position: absolute;
+          z-index: 3;
+          top: .25rem;
+          left: .25rem;
+          padding: .22rem .32rem;
+          border: 1px solid rgba(254, 240, 138, .9);
+          border-radius: 999px;
+          color: #422006;
+          background: #fde68a;
+          font-size: .46rem;
+          font-weight: 950;
+          line-height: 1;
+          text-transform: uppercase;
+          letter-spacing: .05em;
+          box-shadow: 0 3px 10px rgba(2, 8, 23, .35);
+        }
+        .seapals-reduced-motion .seapals-mobile-hand-card.seapals-setup-playable-card {
+          border-color: #fde68a;
+          box-shadow: 0 0 0 3px rgba(250, 204, 21, .24), 0 8px 20px rgba(2, 8, 23, .5);
+        }
         .seapals-mobile-hand-empty {
           display: grid;
           height: 100%;
@@ -13172,20 +13205,41 @@ export default function Simulator({
             grid-row: 2;
             width: 100%;
           }
-          .seapals-mobile-scoreboard > div {
+          .seapals-mobile-scoreboard > * {
             min-width: 0;
             flex: 1 1 50%;
             padding: .25rem .5rem;
           }
-          .seapals-mobile-scoreboard > div > div {
+          .seapals-mobile-score-control {
+            appearance: none;
+            color: inherit;
+            background: transparent;
+            font: inherit;
+          }
+          button.seapals-mobile-score-control {
+            cursor: pointer;
+            transition: background-color 160ms ease, box-shadow 160ms ease;
+          }
+          button.seapals-mobile-score-control[aria-pressed="true"] {
+            background: rgba(34, 211, 238, .08);
+            box-shadow: inset 0 -2px rgba(103, 232, 249, .72);
+          }
+          button.seapals-mobile-score-control:focus-visible {
+            position: relative;
+            z-index: 2;
+            outline: 3px solid #fde68a;
+            outline-offset: -3px;
+          }
+          button.seapals-mobile-score-control:disabled { cursor: not-allowed; opacity: .48; }
+          .seapals-mobile-scoreboard > * > div {
             overflow: hidden;
             line-height: 1.1;
             text-overflow: ellipsis;
             white-space: nowrap;
           }
-          .seapals-mobile-scoreboard > div > div:nth-child(2) { font-size: 1rem; }
-          .seapals-mobile-scoreboard > div > div:nth-child(2) > span { font-size: .625rem; }
-          .seapals-mobile-scoreboard > div > div:nth-child(3) { font-size: .5rem; }
+          .seapals-mobile-scoreboard > * > div:nth-child(2) { font-size: 1rem; }
+          .seapals-mobile-scoreboard > * > div:nth-child(2) > span { font-size: .625rem; }
+          .seapals-mobile-scoreboard > * > div:nth-child(3) { font-size: .5rem; }
           .seapals-phase-chip {
             grid-column: 1 / -1;
             grid-row: 3;
@@ -13235,6 +13289,19 @@ export default function Simulator({
           }
           .seapals-simulator-preview [data-board-focus="context"] .seapals-board-camera-controls {
             display: none;
+          }
+          .seapals-simulator-preview [data-board-focus="focused"] .seapals-board-camera-controls {
+            top: .5rem;
+            right: auto;
+            left: .5rem;
+            flex-direction: row;
+            transform: none;
+          }
+          .seapals-simulator-preview [data-board-focus="focused"] .seapals-board-camera-controls > button:nth-child(2) {
+            border-top: 0;
+            border-right: 1px solid rgba(255, 255, 255, .1);
+            border-bottom: 0;
+            border-left: 1px solid rgba(255, 255, 255, .1);
           }
           .seapals-mobile-hand-dock { height: var(--seapals-mobile-hand-height); }
           .seapals-mobile-hand-card {
@@ -13383,16 +13450,32 @@ export default function Simulator({
             </div>
             <div className="seapals-simulator-controls flex flex-wrap items-center gap-2">
               <div className={`seapals-mobile-scoreboard flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 shadow-lg xl:hidden${tutorialTargetClass("vp-score")}`} aria-label="Victory points in play" data-tutorial-target="vp-score">
-                <div className="border-r border-white/10 px-4 py-1.5 text-center">
+                <MobileScoreControl
+                  type={previewExperience ? "button" : undefined}
+                  className="seapals-mobile-score-control border-r border-white/10 px-4 py-1.5 text-center"
+                  onClick={previewExperience ? () => focusMobileBoard("player") : undefined}
+                  aria-pressed={previewExperience ? mobileBoardView === "player" : undefined}
+                  aria-controls={previewExperience ? "simulator-player-reef" : undefined}
+                  data-tutorial-coach-anchor={previewExperience ? "player-board-tab" : undefined}
+                >
                   <div className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300">Your Reef</div>
                   <div className="text-xl font-black tabular-nums text-white">{playerVp}<span className="text-xs text-emerald-300">/{victoryTarget} VP</span></div>
                   <div className="text-[9px] font-semibold text-cyan-300/70">{playerSchoolDensityState.committed}/{playerSchoolDensity} SD used{playerSchoolDensityState.overCapacity ? ` · ${playerSchoolDensityState.overCapacity} over` : ""}</div>
-                </div>
-                <div className="px-4 py-1.5 text-center">
+                </MobileScoreControl>
+                <MobileScoreControl
+                  type={previewExperience ? "button" : undefined}
+                  className="seapals-mobile-score-control px-4 py-1.5 text-center"
+                  onClick={previewExperience ? () => focusMobileBoard("opponent") : undefined}
+                  disabled={previewExperience ? Boolean(playingCardId) : undefined}
+                  title={previewExperience && playingCardId ? "Finish placing this card in Your Reef first." : undefined}
+                  aria-pressed={previewExperience ? mobileBoardView === "opponent" : undefined}
+                  aria-controls={previewExperience ? "simulator-opponent-reef" : undefined}
+                  data-tutorial-coach-anchor={previewExperience ? "opponent-board-tab" : undefined}
+                >
                   <div className="text-[9px] font-black uppercase tracking-[0.18em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div>
                   <div className="text-xl font-black tabular-nums text-white">{opponentVp}<span className="text-xs text-rose-300">/{victoryTarget} VP</span></div>
                   <div className="text-[9px] font-semibold text-rose-300/80">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensityState.committed}/{opponentSchoolDensity} SD used{opponentSchoolDensityState.overCapacity ? ` · ${opponentSchoolDensityState.overCapacity} over` : ""}</div>
-                </div>
+                </MobileScoreControl>
               </div>
               <div className="seapals-phase-chip rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-violet-100 shadow-sm">
                 <span className={`xl:hidden${tutorialTargetClass("condition-panel")}`} data-tutorial-target="condition-panel">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
@@ -13621,14 +13704,14 @@ export default function Simulator({
             </div>
           ) : null}
 
-          <div className="seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label={previewExperience ? "Choose ecosystem to focus" : "Choose ecosystem to view"}>
+          <div className={previewExperience ? "seapals-board-tabs sr-only xl:hidden" : "seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden"} aria-label={previewExperience ? "Choose ecosystem to focus" : "Choose ecosystem to view"}>
             <button type="button" data-tutorial-coach-anchor="player-board-tab" aria-pressed={mobileBoardView === "player"} onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
             <button type="button" data-tutorial-coach-anchor="opponent-board-tab" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish placing this card in Your Reef first." : undefined} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-40 ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
           </div>
 
           <div className="min-h-0 w-full flex-1 rounded-2xl border border-cyan-300/20 bg-[#06111d] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
             <div className="h-full min-h-0 overflow-hidden rounded-2xl bg-[#071724]">
-              <div className={`seapals-board-pane ${previewExperience ? `${mobileBoardView === "opponent" ? "h-[66%]" : "h-[34%]"} block transition-[height] duration-300 ease-out` : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" data-board-focus={mobileBoardView === "opponent" ? "focused" : "context"} aria-label="Rival reef">
+              <div id="simulator-opponent-reef" className={`seapals-board-pane ${previewExperience ? `${mobileBoardView === "opponent" ? "h-[66%]" : "h-[34%]"} block transition-[height] duration-300 ease-out` : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" data-board-focus={mobileBoardView === "opponent" ? "focused" : "context"} onClickCapture={() => focusMobileBoard("opponent")} onFocusCapture={() => focusMobileBoard("opponent")} aria-label="Rival reef">
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-rose-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-200"><span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,.8)]" /> {isStoryMode ? `${storyOpponentName}'s Ecosystem` : "Rival Ecosystem"}</div>
                   {attackContext ? (
@@ -13770,7 +13853,7 @@ export default function Simulator({
                 </div>
               </div>
 
-              <div className={`seapals-board-pane ${previewExperience ? `${mobileBoardView === "player" ? "h-[66%]" : "h-[34%]"} block transition-[height] duration-300 ease-out` : mobileBoardView === "player" ? "h-full" : "hidden"} bg-slate-900 xl:block xl:h-[55%]`} data-board-owner="player" data-board-focus={mobileBoardView === "player" ? "focused" : "context"} aria-label="Your reef">
+              <div id="simulator-player-reef" className={`seapals-board-pane ${previewExperience ? `${mobileBoardView === "player" ? "h-[66%]" : "h-[34%]"} block transition-[height] duration-300 ease-out` : mobileBoardView === "player" ? "h-full" : "hidden"} bg-slate-900 xl:block xl:h-[55%]`} data-board-owner="player" data-board-focus={mobileBoardView === "player" ? "focused" : "context"} onClickCapture={() => focusMobileBoard("player")} onFocusCapture={() => focusMobileBoard("player")} aria-label="Your reef">
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-200"><span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]" /> Your Ecosystem</div>
                   {isPlacingCoral && (
@@ -14135,12 +14218,14 @@ export default function Simulator({
           {mobileHandDockVisible ? <MobileHandDock
             entries={hand.map((cardId, index) => {
               const card = cardsById[cardId];
+              const playError = getPlayError(card);
               return {
                 cardId,
                 card,
                 index,
                 cost: getPlayerCardPlayCost(card),
-                playError: getPlayError(card),
+                playError,
+                setupPlayable: isSetup && !playingCardId && !playError,
                 tutorialClass: tutorialCardTargetClass(cardId),
               };
             })}
