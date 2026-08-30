@@ -138,9 +138,9 @@ test("setup help follows the live board even when saved progress is later", () =
     hasCoralInPlay: true,
     handPopoverOpen: true,
   });
-  assert.equal(foundationReady.title, "Begin Round 1");
+  assert.equal(foundationReady.title, "Begin Round");
   assert.equal(foundationReady.target, "turn-button");
-  assert.match(foundationReady.action, /close your hand.*Begin Round 1/i);
+  assert.match(foundationReady.action, /close your hand.*Begin Round/i);
 });
 
 test("scripted setup highlights only the prepared economy foundation", () => {
@@ -1508,7 +1508,7 @@ test("Round 3 teaches a non-attack card action before a paid attack", () => {
     }),
   });
   assert.equal(endRound.target, "turn-button");
-  assert.equal(endRound.action, "Press End Turn. In Round 4, build the Coral Reef Habitat, then play a Predator.");
+  assert.equal(endRound.action, "Press Next Round. In Round 4, build the Coral Reef Habitat, then play a Predator.");
   assert.doesNotMatch(endRound.action, /Round 4 will assemble/i);
 });
 
@@ -1723,7 +1723,7 @@ test("Rounds 5 and 6 teach Creature Schools, School Density, and Filter Feeders"
   assert.equal(finalRoundMilestone.target, "turn-button");
   assert.match(finalRoundMilestone.title, /20 \/ 26 VP.*One Final Round Remains/i);
   assert.match(finalRoundMilestone.message, /Whale Shark.*20 VP milestone.*not the end.*one final round.*Deep Sea Fishing.*Hammerhead.*26 VP/i);
-  assert.match(finalRoundMilestone.action, /End Turn.*final round.*Deep Sea Fishing.*Hammerhead.*Apex slot/i);
+  assert.match(finalRoundMilestone.action, /Next Round.*final round.*Deep Sea Fishing.*Hammerhead.*Apex slot/i);
 });
 
 test("Round 7 uses a Support search and finishes the 26 VP curriculum with an Apex", () => {
@@ -1822,7 +1822,7 @@ test("a saved lesson that skipped Whale Shark recovers after Hammerhead's attack
   assert.equal(bank.target, "turn-button");
   assert.match(bank.title, /Bank RP for Whale Shark/i);
   assert.match(bank.message, /Ravage is complete.*11 VP.*costs 9 RP.*have 1.*Coral Reef.*Krill Bloom/i);
-  assert.match(bank.action, /End Turn.*return to Whale Shark/i);
+  assert.match(bank.action, /Next Round.*return to Whale Shark/i);
   assert.doesNotMatch(bank.title, /Return to the authored lesson step/i);
 
   const ready = getSimulatorTutorialHelp(null, {

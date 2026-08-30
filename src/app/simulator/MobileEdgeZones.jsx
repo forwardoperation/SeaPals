@@ -1,4 +1,5 @@
 export default function MobileEdgeZones({
+  owner = "player",
   deckCount,
   discardCount,
   lostCount,
@@ -12,18 +13,20 @@ export default function MobileEdgeZones({
   const safeDeckCount = Math.max(0, Number(deckCount) || 0);
   const safeDiscardCount = Math.max(0, Number(discardCount) || 0);
   const safeLostCount = Math.max(0, Number(lostCount) || 0);
+  const ownerLabel = owner === "opponent" ? "Opponent" : "Your";
 
   return (
     <aside
-      className={`seapals-mobile-edge-zones xl:hidden${tutorialTargetClass}`}
-      aria-label="Your deck, discard pile, and Lost Zone"
+      className={`seapals-mobile-edge-zones is-${owner} xl:hidden${tutorialTargetClass}`}
+      aria-label={`${ownerLabel} deck, discard pile, and Lost Zone`}
       data-mobile-edge-zones
-      data-tutorial-target="zones"
+      data-zone-owner={owner}
+      data-tutorial-target={owner === "player" ? "zones" : undefined}
     >
       <button
         type="button"
         className="seapals-mobile-edge-zone is-deck"
-        aria-label={`Open your personal decks. ${safeDeckCount} cards remain.`}
+        aria-label={`Open ${owner === "opponent" ? "the opponent's" : "your"} deck summary. ${safeDeckCount} cards remain.`}
         disabled={disabled}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={onOpenDecks}
@@ -32,13 +35,12 @@ export default function MobileEdgeZones({
           <img src="/images/brand/SeaPalsTCGLogoWhite.svg" alt="" />
         </span>
         <span className="seapals-mobile-edge-zone-count">{safeDeckCount}</span>
-        <span className="seapals-mobile-edge-zone-label">Deck</span>
       </button>
 
       <button
         type="button"
         className={`seapals-mobile-edge-zone is-discard${discardCard?.image ? " has-card" : " is-empty"}`}
-        aria-label={`Open your discard pile. ${safeDiscardCount} cards.`}
+        aria-label={`Open ${owner === "opponent" ? "the opponent's" : "your"} discard pile. ${safeDiscardCount} cards.`}
         disabled={disabled}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={onOpenDiscard}
@@ -50,19 +52,19 @@ export default function MobileEdgeZones({
             <span className="seapals-mobile-discard-empty">↺</span>
           )}
         </span>
-        <span className="seapals-mobile-edge-zone-count">{safeDiscardCount}</span>
-        <span className="seapals-mobile-edge-zone-label">Discard</span>
       </button>
 
       <button
         type="button"
-        className="seapals-mobile-edge-zone-lost"
-        aria-label={`Open your Lost Zone. ${safeLostCount} cards.`}
+        className="seapals-mobile-edge-zone is-lost"
+        aria-label={`Open ${owner === "opponent" ? "the opponent's" : "your"} Lost Zone. ${safeLostCount} cards.`}
         disabled={disabled}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={onOpenLost}
       >
-        <span aria-hidden="true">◇</span> {safeLostCount}
+        <span className="seapals-mobile-edge-zone-art" aria-hidden="true">
+          <span className="seapals-mobile-lost-empty">◇</span>
+        </span>
       </button>
     </aside>
   );

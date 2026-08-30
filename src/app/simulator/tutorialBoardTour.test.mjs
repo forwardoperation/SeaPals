@@ -15,34 +15,33 @@ test("guided Academy board tour visits the decision areas in a stable teaching o
       "resources",
       "zones",
       "hand",
-      "events",
       "turn-control",
       "opponent-ecosystem",
       "player-ecosystem",
     ],
   );
   assert.deepEqual(
-    GUIDED_ACADEMY_BOARD_TOUR_STEPS.slice(0, 7).map((step) => step.target),
-    ["vp-score", "condition-panel", "rp-bank", "zones", "hand", "event-feed", "turn-button"],
+    GUIDED_ACADEMY_BOARD_TOUR_STEPS.slice(0, 6).map((step) => step.target),
+    ["vp-score", "condition-panel", "rp-bank", "zones", "hand", "turn-button"],
   );
   assert.deepEqual(
-    GUIDED_ACADEMY_BOARD_TOUR_STEPS.slice(7).map((step) => step.target),
+    GUIDED_ACADEMY_BOARD_TOUR_STEPS.slice(6).map((step) => step.target),
     ["opponent-board", "player-board"],
   );
-  assert.equal(new Set(GUIDED_ACADEMY_BOARD_TOUR_STEPS.map((step) => step.target)).size, 9);
-  assert.equal(GUIDED_ACADEMY_BOARD_TOUR_STEPS[7].coachAnchor, "opponent-board-tab");
-  assert.equal(GUIDED_ACADEMY_BOARD_TOUR_STEPS[8].coachAnchor, "player-board-tab");
+  assert.equal(new Set(GUIDED_ACADEMY_BOARD_TOUR_STEPS.map((step) => step.target)).size, 8);
+  assert.equal(GUIDED_ACADEMY_BOARD_TOUR_STEPS[6].coachAnchor, "opponent-board-tab");
+  assert.equal(GUIDED_ACADEMY_BOARD_TOUR_STEPS[7].coachAnchor, "player-board-tab");
 });
 
 test("guided Academy board tour exposes paced Professor cues and hands off to the coin flip", () => {
   const first = getGuidedAcademyBoardTourStep(0);
   assert.match(first.message, /now that you can read your first card.*map the match table/i);
-  assert.equal(first.progressLabel, "Board tour • 1/9");
+  assert.equal(first.progressLabel, "Board tour • 1/8");
   assert.equal(first.advanceLabel, "Next");
   assert.equal(first.finalStep, false);
   assert.equal(getNextGuidedAcademyBoardTourStep(0), 1);
 
-  const opposingReef = getGuidedAcademyBoardTourStep(7, { guideName: "Mr. Easterling" });
+  const opposingReef = getGuidedAcademyBoardTourStep(6, { guideName: "Mr. Easterling" });
   assert.match(opposingReef.message, /I prepared durable Corals.*compatible practice targets/i);
   assert.doesNotMatch(opposingReef.message, /Mr\. Easterling has prepared/i);
   assert.doesNotMatch(opposingReef.message, /Professor Current/i);
@@ -52,6 +51,10 @@ test("guided Academy board tour exposes paced Professor cues and hands off to th
   assert.match(condition.message, /sunlight.*temperature.*visibility.*nutrients.*currents.*food availability/i);
   assert.match(condition.message, /simplified model.*real ecological question.*ecosystem can support/i);
   assert.match(condition.pointerPrompt, /environment changes the game/i);
+
+  const turnControl = GUIDED_ACADEMY_BOARD_TOUR_STEPS.find((step) => step.id === "turn-control");
+  assert.match(turnControl.message, /Begin Round.*Next Round/i);
+  assert.doesNotMatch(turnControl.message, /ends your turn/i);
 
   const lastIndex = GUIDED_ACADEMY_BOARD_TOUR_STEPS.length - 1;
   const last = getGuidedAcademyBoardTourStep(lastIndex);

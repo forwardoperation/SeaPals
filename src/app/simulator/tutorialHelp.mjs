@@ -3,7 +3,7 @@ import { getGuidedAcademyLayoutLessonStep } from "./tutorialLayoutLesson.mjs";
 const TARGET_LABELS = Object.freeze({
   hand: "a glowing card in your hand",
   placement: "the highlighted placement area",
-  "turn-button": "the Begin Round or End Turn button",
+  "turn-button": "the Begin Round or Next Round button",
   "draw-controls": "the two personal deck controls",
   "confirm-draw": "the Draw Selected Cards button",
   "continue-actions": "the Continue to Actions button",
@@ -39,7 +39,7 @@ const HELP_BY_CHECKPOINT = Object.freeze({
     message: "Resource Points, or RP, are the energy you spend to play cards. Your ecosystem collects them at the start of each round.",
     playerThought: "I should compare what I collect with the size of my bank, then decide how much to spend and how much to keep for actions.",
     encouragement: "Well reasoned. RP is a budget, not a command to spend everything immediately. Saving one or two points can keep an important ability available.",
-    action: "Press Begin Round 1 and watch your RP bank increase.",
+    action: "Press Begin Round and watch your RP bank increase.",
   }),
   "tutorial-draw-card": Object.freeze({
     title: "Choose a deck with a plan",
@@ -65,7 +65,7 @@ const HELP_BY_CHECKPOINT = Object.freeze({
     message: "A careful Reefkeeper checks the board, hand, and remaining RP before passing play.",
     playerThought: "Before I pass, I will check for affordable card actions, legal attacks, useful Support cards, and RP I meant to save.",
     encouragement: "Wonderful. That small pause prevents many missed opportunities. When the board says you are finished—not merely the first idea in your head—then end the turn.",
-    action: "When you are satisfied with your choices, press End Turn.",
+    action: "When you are satisfied with your choices, press Next Round.",
   }),
   "tutorial-earn-vp": Object.freeze({
     message: "Victory Points measure the ecosystem you have built. Cards in play add VP automatically, including some relationship bonuses.",
@@ -658,8 +658,8 @@ function getAcademyCurriculumHelp(uiState) {
         ? "Your foundation is ready. I will explain the Condition, RP collection, and draw as each appears."
         : "Your first Coral is established. At the start of a round, the Condition changes the rules, your foundations collect RP up to the bank cap, and then you choose which personal deck solves the next part of your plan.",
       action: uiState.streamlinedTutorial
-        ? "Press Begin Round 1."
-        : "Press Begin Round 1 to reveal the Condition and collect RP.",
+        ? "Press Begin Round."
+        : "Press Begin Round to reveal the Condition and collect RP.",
     }, "turn-button", "setup-begin");
   }
 
@@ -737,7 +737,7 @@ function getAcademyCurriculumHelp(uiState) {
       return help({
         title: `Bank RP for ${cards.filterFeeder.cardName}`,
         message: `Hammerhead's Ravage is complete, but ${cards.filterFeeder.cardName} is still in your hand, so its ${cards.filterFeeder.victoryPoints} VP have not joined the reef. It costs ${requiredRp} RP and you have ${availableRp}. Coral Reef and the unused Krill Bloom reduction already satisfy its other requirements.`,
-        action: `Press End Turn to refill your RP bank. I will return to ${cards.filterFeeder.cardName} before the lesson can finish.`,
+        action: `Press Next Round to refill your RP bank. I will return to ${cards.filterFeeder.cardName} before the lesson can finish.`,
       }, "turn-button", "recover-filter-feeder-rp");
     }
 
@@ -745,7 +745,7 @@ function getAcademyCurriculumHelp(uiState) {
       return help({
         title: `Return to the ${cards.filterFeeder.cardName} lesson`,
         message: `${cards.filterFeeder.cardName} is still in the Pals Deck, so the reef is missing its planned ${cards.filterFeeder.victoryPoints} VP Filter Feeder step.`,
-        action: `Press End Turn, then draw from the Pals Deck next round so we can play ${cards.filterFeeder.cardName}.`,
+        action: `Press Next Round, then draw from the Pals Deck next round so we can play ${cards.filterFeeder.cardName}.`,
       }, "turn-button", "recover-filter-feeder-draw");
     }
   }
@@ -761,7 +761,7 @@ function getAcademyCurriculumHelp(uiState) {
     return help({
       title: "End the turn to grow your RP budget",
       message: "Your opening turn is complete. Both Corals can produce RP next round. Save the RP that remains instead of spending it on a card that does not support the plan.",
-      action: "Press End Turn. In Round 2, play a Support card and establish two more Corals.",
+      action: "Press Next Round. In Round 2, play a Support card and establish two more Corals.",
     }, "turn-button", "end-round-1");
   }
 
@@ -788,7 +788,7 @@ function getAcademyCurriculumHelp(uiState) {
     return help({
       title: "The reef has room to grow",
       message: `You used a Support card and built four Corals. Keep ${cards.firstFish?.cardName ?? "Porcupine Fish"} in hand until the next RP collection can pay for the creatures, an action, an attack, and a Coral upgrade during the same planned turn.`,
-      action: "Press End Turn to collect the larger RP budget for Round 3.",
+      action: "Press Next Round to collect the larger RP budget for Round 3.",
     }, "turn-button", "end-round-2");
   }
 
@@ -853,7 +853,7 @@ function getAcademyCurriculumHelp(uiState) {
     return help({
       title: "A complete action-phase lesson",
       message: "This turn added both creature counts required by the Habitat plan, demonstrated a passive, resolved a non-attack action, made a legal attack, and advanced a Coral. Save the remaining RP for the next part of the plan.",
-      action: "Press End Turn. In Round 4, build the Coral Reef Habitat, then play a Predator.",
+      action: "Press Next Round. In Round 4, build the Coral Reef Habitat, then play a Predator.",
     }, "turn-button", "end-round-3");
   }
 
@@ -887,7 +887,7 @@ function getAcademyCurriculumHelp(uiState) {
     return help({
       title: "The food web is ready for an Apex",
       message: `Your reef is now worth ${playerVp} VP, but more importantly it has an economy, a balanced community, a Habitat, and an Apex slot. Before the finisher, we will learn how Creature Schools support the largest animals in the food web.`,
-      action: "Press End Turn. In Round 5, build your first Creature School.",
+      action: "Press Next Round. In Round 5, build your first Creature School.",
     }, "turn-button", "end-round-4");
   }
 
@@ -903,7 +903,7 @@ function getAcademyCurriculumHelp(uiState) {
     return help({
       title: "School Density is now part of the plan",
       message: `${cards.creatureSchool?.cardName ?? "White Grunt"} shows why foundations are not limited to Corals. Its meter now has 30 open School Density. Playing a qualifying animal fills that capacity like a bucket; adding or upgrading Schools makes the bucket larger.`,
-      action: "Press End Turn. In Round 6, Krill Bloom lowers the requirement so you can play a Filter Feeder.",
+      action: "Press Next Round. In Round 6, Krill Bloom lowers the requirement so you can play a Filter Feeder.",
     }, "turn-button", "end-round-5");
   }
 
@@ -918,7 +918,7 @@ function getAcademyCurriculumHelp(uiState) {
     return help({
       title: `${playerVp} / ${targetVp} VP — One Final Round Remains`,
       message: `${cards.filterFeeder?.cardName ?? "Whale Shark"} is the 20 VP milestone, not the end of the lesson. It demonstrates the full chain: a Creature School supplies School Density, a Habitat satisfies the ecological requirement, and a well-timed Condition makes the play legal. One final round remains: ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} finds ${cards.apex?.cardName ?? "Hammerhead"}, whose ${Math.max(0, Number(cards.apex?.victoryPoints) || 6)} VP completes the ${targetVp} VP reef.`,
-      action: `Press End Turn to begin the final round. Draw and play ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}, choose ${cards.apex?.cardName ?? "Hammerhead"}, then play it in the Apex slot.`,
+      action: `Press Next Round to begin the final round. Draw and play ${cards.apexSupport?.cardName ?? "Deep Sea Fishing"}, choose ${cards.apex?.cardName ?? "Hammerhead"}, then play it in the Apex slot.`,
     }, "turn-button", "end-round-6");
   }
 
@@ -1021,7 +1021,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
       id: FINISH_DUEL_HELP_ID,
       title: "Let the economy collect once",
       message: `${cards.economy.cardName} is in place. End this turn so both foundations can collect before the Scavenge lesson.`,
-      action: `Press End Turn. In Round 2, draw one card from the Pals Deck to reveal ${cards.utility.cardName}.`,
+      action: `Press Next Round. In Round 2, draw one card from the Pals Deck to reveal ${cards.utility.cardName}.`,
     }, "turn-button", "scripted-end-round-one"), uiState, "scripted-end-round-one");
   }
 
@@ -1097,7 +1097,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
       id: FINISH_DUEL_HELP_ID,
       title: "Bank the next collection for the finish",
       message: `The attack lesson is complete at ${Math.max(0, Number(uiState.playerVp) || 0)} VP. End the turn so Round 3 can use Scavenge once more without sacrificing ${cards.heldFinish.cardName}.`,
-      action: "Press End Turn. In Round 3, draw one card from the Foundation Deck before using Scavenge again.",
+      action: "Press Next Round. In Round 3, draw one card from the Foundation Deck before using Scavenge again.",
     }, "turn-button", "scripted-end-round-two"), uiState, "scripted-end-round-two");
   }
 
@@ -1138,7 +1138,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
       id: FINISH_DUEL_HELP_ID,
       title: "Protect the two-card finish",
       message: `${cards.finishSearch.cardName} and ${cards.heldFinish.cardName} are now together in your hand. Keep the remaining ${Math.max(0, Number(uiState.availableRp) || 0)} RP; Murky Water will discount the Predator next round.`,
-      action: `Press End Turn. In Round ${plan.finishRound}, draw one card from the Foundation Deck, then play ${cards.finishSearch.cardName} before ${cards.heldFinish.cardName}.`,
+      action: `Press Next Round. In Round ${plan.finishRound}, draw one card from the Foundation Deck, then play ${cards.finishSearch.cardName} before ${cards.heldFinish.cardName}.`,
     }, "turn-button", "scripted-bank-finish"), uiState, "scripted-bank-finish");
   }
 
@@ -1208,8 +1208,8 @@ function getFinishDuelHelp(uiState) {
       title: "Begin the practice round",
       message: "Your new foundation is ready. Begin the round to collect RP and resume the guided race to the VP target.",
       action: uiState.modal === "hand" || uiState.handPopoverOpen
-        ? "Close your hand, then press Begin Round 1."
-        : "Press Begin Round 1 to collect RP and draw.",
+        ? "Close your hand, then press Begin Round."
+        : "Press Begin Round to collect RP and draw.",
     }, "turn-button", "setup:begin"), uiState, "setup:begin");
   }
 
@@ -1444,11 +1444,11 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
     }
     return withTarget({
       id: checkpointId,
-      title: "Begin Round 1",
-      message: "Your starting foundation is in place. Begin Round 1 to collect RP and continue the lesson.",
+      title: "Begin Round",
+      message: "Your starting foundation is in place. Begin Round to collect RP and continue the lesson.",
       action: uiState.modal === "hand" || uiState.handPopoverOpen
-        ? "Close your hand, then press Begin Round 1."
-        : "Press Begin Round 1 to collect RP and draw.",
+        ? "Close your hand, then press Begin Round."
+        : "Press Begin Round to collect RP and draw.",
     }, "turn-button", "setup:begin-round");
   }
 

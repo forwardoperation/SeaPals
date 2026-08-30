@@ -418,7 +418,12 @@ test("the V2 hand tray is transparent and compact enough to return space to the 
   assert.match(simulatorSource, /--seapals-mobile-dock-clearance:\s*calc\(var\(--seapals-mobile-hand-height\) \+ (?:[\d.]+rem|var\(--seapals-mobile-hand-bottom\))\);/);
 });
 
-test("V2 peeks deck, discard, and Lost controls from the player-side edge", () => {
+test("V2 uses separate label-free mirrored pile rails for both reefs", () => {
+  const opponentPane = sourceSection(
+    simulatorSource,
+    'id="simulator-opponent-reef"',
+    '<div className="seapals-reef-divider">',
+  );
   const playerPane = sourceSection(
     simulatorSource,
     'id="simulator-player-reef"',
@@ -429,23 +434,37 @@ test("V2 peeks deck, discard, and Lost controls from the player-side edge", () =
   const width = Number(zoneRule.match(/width:\s*([\d.]+)rem/)?.[1]);
   const clippedRight = Number(edgeRule.match(/right:\s*-([\d.]+)rem/)?.[1]);
 
+  assert.match(opponentPane, /<MobileEdgeZones[\s\S]*?owner="opponent"/);
+  assert.match(opponentPane, /deckCount=\{opponent\.foundationDeck\.length \+ opponent\.palsDeck\.length\}/);
+  assert.match(opponentPane, /discardCard=\{cardsById\[opponent\.discardPile\[0\]\] \?\? null\}/);
+  assert.match(opponentPane, /onOpenDiscard=\{\(\) => setModal\("opponent-discard"\)\}/);
+  assert.match(opponentPane, /onOpenLost=\{\(\) => setModal\("opponent-lost"\)\}/);
   assert.match(playerPane, /previewExperience && mobileHandDockVisible \? \([\s\S]*?<MobileEdgeZones/);
+  assert.match(playerPane, /owner="player"/);
   assert.match(playerPane, /deckCount=\{foundationDeck\.length \+ palsDeck\.length\}/);
   assert.match(playerPane, /discardCard=\{cardsById\[discardPile\[0\]\] \?\? null\}/);
   assert.match(playerPane, /onOpenDiscard=\{\(\) => setModal\("discard"\)\}/);
   assert.match(playerPane, /onOpenLost=\{\(\) => setModal\("lost"\)\}/);
   assert.match(edgeZonesSource, /data-mobile-edge-zones/);
-  assert.match(edgeZonesSource, /data-tutorial-target="zones"/);
-  assert.match(edgeZonesSource, /Open your personal decks/);
-  assert.match(edgeZonesSource, /Open your discard pile/);
-  assert.match(edgeZonesSource, /Open your Lost Zone/);
+  assert.match(edgeZonesSource, /data-zone-owner=\{owner\}/);
+  assert.match(edgeZonesSource, /data-tutorial-target=\{owner === "player" \? "zones" : undefined\}/);
+  assert.equal((edgeZonesSource.match(/seapals-mobile-edge-zone-count/g) ?? []).length, 1, "only the face-down deck should show a visible count");
+  assert.doesNotMatch(edgeZonesSource, /seapals-mobile-edge-zone-label/);
+  assert.match(edgeZonesSource, /seapals-mobile-deck-back/);
+  assert.match(edgeZonesSource, /discardCard\?\.image/);
+  assert.match(edgeZonesSource, /seapals-mobile-lost-empty/);
   assert.match(edgeRule, /position:\s*absolute;/);
   assert.match(edgeRule, /z-index:\s*59;/);
-  assert.match(edgeRule, /bottom:\s*calc\(var\(--seapals-mobile-hand-height/);
+  assert.match(edgeRule, /gap:\s*\.35rem;/);
+  assert.match(simulatorSource, /\.seapals-mobile-edge-zones\.is-player\s*\{[\s\S]*?bottom:\s*calc\(var\(--seapals-mobile-hand-height/);
+  assert.match(simulatorSource, /\.seapals-mobile-edge-zones\.is-opponent\s*\{[\s\S]*?top:\s*\.35rem;[\s\S]*?flex-direction:\s*column-reverse;/);
+  assert.match(simulatorSource, /\.seapals-mobile-edge-zone\.is-lost\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?right:\s*calc\(100% \+ \.35rem\);/);
+  assert.doesNotMatch(simulatorSource, /\.seapals-mobile-edge-zone\.is-discard\s*\{[^}]*margin-top:\s*-/);
+  assert.doesNotMatch(simulatorSource, /\.seapals-mobile-edge-zone\.is-lost\s*\{[^}]*margin-top:\s*-/);
   assert.ok(Number.isFinite(width) && Number.isFinite(clippedRight) && width - clippedRight >= 2.75, "at least a 44px-wide zone target should remain visible");
 });
 
-test("V2 moves Guide and the turn action onto the reef divider and keeps the old footer legacy-only", () => {
+test("V2 keeps only the draggable divider and round action while the old footer stays legacy-only", () => {
   const divider = sourceSection(
     simulatorSource,
     '<div className="seapals-reef-divider">',
@@ -457,12 +476,15 @@ test("V2 moves Guide and the turn action onto the reef divider and keeps the old
     "</div> : null}",
   );
 
-  assert.match(divider, /seapals-reef-divider-guide[\s\S]*?data-tutorial-target="event-feed"/);
+  assert.doesNotMatch(divider, /seapals-reef-divider-guide|data-tutorial-target="event-feed"|>\s*Guide\s*</);
   assert.match(divider, /seapals-reef-divider-handle[\s\S]*?role="separator"/);
   assert.match(divider, /data-mobile-turn-control/);
   assert.match(divider, /onClick=\{endTurn\}/);
   assert.match(divider, /disabled=\{Boolean\(gameResult\) \|\| opponentThinking \|\| \(isSetup && !hasCoralInPlay\) \|\| isStartOfTurn\}/);
   assert.match(divider, /data-tutorial-target="turn-button"/);
+  assert.match(divider, /\{turnControlLabel\}/);
+  assert.doesNotMatch(divider, /Opponent First|Round 1|End Turn/);
+  assert.match(simulatorSource, /const turnControlLabel = opponentThinking \? "Opponent Turn" : isSetup \? "Begin Round" : "Next Round";/);
   assert.match(simulatorSource, /\.seapals-reef-divider-control\s*\{[\s\S]*?min-height:\s*2\.75rem;/);
   assert.match(legacyDock, /Open Hand/);
   assert.match(legacyDock, /data-tutorial-target="turn-button"/);

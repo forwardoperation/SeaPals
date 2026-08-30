@@ -3662,6 +3662,12 @@ export default function Simulator({
   const isSetup = gamePhase === "setup";
   const isStartOfTurn = gamePhase === "draw" && !hasDrawnThisTurn;
   const hasCoralInPlay = playerCorals.length > 0;
+  const turnControlLabel = opponentThinking ? "Opponent Turn" : isSetup ? "Begin Round" : "Next Round";
+  const turnControlDescription = opponentThinking
+    ? "The opponent turn is in progress."
+    : isSetup
+      ? "Begin the first round."
+      : "End your actions, resolve the opponent turn, and begin the next round.";
   const startTurnRp = getEcosystemStartTurnRp(playerCorals, activeCondition);
   const playerRpCap = getEcosystemRpCap(playerCorals, [...playerHabitats, ...playerReefCreatures, ...getLocallyControlledOrphans(playerOrphanCreatures, "player").flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
   const opponentRpCap = getEcosystemRpCap(opponent.corals, [...opponent.habitats, ...opponent.reefCreatures, ...getLocallyControlledOrphans(opponent.orphanCreatures, "opponent").flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
@@ -12662,11 +12668,13 @@ export default function Simulator({
     if (modal === "hand") return hand;
     if (modal === "discard") return discardPile;
     if (modal === "lost") return lostZone;
+    if (modal === "opponent-discard") return opponent.discardPile;
+    if (modal === "opponent-lost") return opponent.lostZone ?? [];
     if (modal === "search" || modal === "recover" || modal === "lost-recover" || modal === "coral-target" || modal === "restock") return searchContext?.candidates ?? [];
     return [];
-  }, [modal, hand, discardPile, lostZone, searchContext]);
+  }, [modal, hand, discardPile, lostZone, opponent.discardPile, opponent.lostZone, searchContext]);
 
-  const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "lost-recover" ? "Recover from the Lost Zone" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Fish" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
+  const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "opponent-discard" ? "Opponent Discard Pile" : modal === "opponent-lost" ? "Opponent Lost Zone" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "lost-recover" ? "Recover from the Lost Zone" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Fish" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
   const isDarkZoneModal = Boolean(modal);
   const selectedHandPlayError =
     modal === "hand" && selectedHandCard ? getPlayError(cardsById[selectedHandCard]) : "";
@@ -13421,60 +13429,77 @@ export default function Simulator({
         .seapals-mobile-edge-zones {
           position: absolute;
           z-index: 59;
-          right: -1.45rem;
-          bottom: calc(var(--seapals-mobile-hand-height, 9rem) - 1.65rem);
+          right: -.65rem;
           display: none;
-          width: 4.9rem;
+          width: 3.6rem;
+          height: min(10.35rem, max(5.85rem, calc(100% - 4.1rem)));
           flex-direction: column;
+          gap: .35rem;
           align-items: stretch;
           pointer-events: none;
           filter: drop-shadow(0 12px 18px rgba(2, 8, 23, .58));
         }
+        .seapals-mobile-edge-zones.is-player {
+          bottom: calc(var(--seapals-mobile-hand-height, 9rem) + .35rem);
+        }
+        .seapals-mobile-edge-zones.is-opponent {
+          top: .35rem;
+          flex-direction: column-reverse;
+        }
         .seapals-mobile-edge-zone {
           position: relative;
           display: block;
-          width: 4.9rem;
-          height: 6.6rem;
+          width: 3.6rem;
+          min-height: 2.75rem;
+          flex: 1 1 0;
           overflow: visible;
           padding: 0;
           border: 2px solid rgba(165, 243, 252, .55);
-          border-radius: .72rem;
+          border-radius: .58rem;
           color: #fff;
           background: #082f49;
           pointer-events: auto;
-          transform: rotate(1.5deg);
-          transform-origin: center bottom;
-          transition: right 160ms ease, transform 160ms ease, filter 160ms ease;
+          transition: translate 160ms ease, filter 160ms ease;
         }
-        .seapals-mobile-edge-zone::before,
-        .seapals-mobile-edge-zone::after {
+        .seapals-mobile-edge-zone.is-deck::before,
+        .seapals-mobile-edge-zone.is-deck::after {
           position: absolute;
           z-index: -1;
           inset: .12rem;
           border: 1px solid rgba(255, 255, 255, .34);
-          border-radius: .62rem;
+          border-radius: .5rem;
           background: #0f405b;
           content: "";
         }
-        .seapals-mobile-edge-zone::before { translate: -.22rem -.24rem; }
-        .seapals-mobile-edge-zone::after { translate: -.42rem -.45rem; }
+        .seapals-mobile-edge-zone.is-deck::before { translate: -.14rem -.14rem; }
+        .seapals-mobile-edge-zone.is-deck::after { translate: -.28rem -.28rem; }
         .seapals-mobile-edge-zone.is-discard {
           z-index: 2;
-          margin-top: -2.05rem;
           border-color: rgba(253, 230, 138, .7);
           background: #172033;
-          transform: rotate(-1deg);
         }
+        .seapals-mobile-edge-zone.is-lost {
+          position: absolute;
+          right: calc(100% + .35rem);
+          z-index: 3;
+          width: 2.75rem;
+          height: 2.75rem;
+          min-height: 2.75rem;
+          border-color: rgba(216, 180, 254, .78);
+          border-radius: .72rem;
+          background: rgba(46, 16, 101, .96);
+          box-shadow: 0 7px 16px rgba(2, 8, 23, .5), inset 0 0 18px rgba(168, 85, 247, .18);
+        }
+        .seapals-mobile-edge-zones.is-player .seapals-mobile-edge-zone.is-lost { bottom: .15rem; }
+        .seapals-mobile-edge-zones.is-opponent .seapals-mobile-edge-zone.is-lost { top: .15rem; }
         .seapals-mobile-edge-zone:not(:disabled):is(:hover, :focus-visible) {
-          right: 1.05rem;
           z-index: 4;
           outline: 3px solid #fde68a;
           outline-offset: 2px;
           filter: brightness(1.08);
-          transform: rotate(0deg) translateY(-.2rem);
+          translate: -.55rem 0;
         }
-        .seapals-mobile-edge-zone:disabled,
-        .seapals-mobile-edge-zone-lost:disabled {
+        .seapals-mobile-edge-zone:disabled {
           cursor: not-allowed;
           filter: grayscale(.5) brightness(.72);
         }
@@ -13482,7 +13507,7 @@ export default function Simulator({
           position: absolute;
           inset: .18rem;
           overflow: hidden;
-          border-radius: .52rem;
+          border-radius: .42rem;
           background: linear-gradient(150deg, #0f2941, #07131f);
         }
         .seapals-mobile-edge-zone-art > img {
@@ -13504,7 +13529,8 @@ export default function Simulator({
           object-fit: contain;
           filter: drop-shadow(0 2px 5px rgba(2, 8, 23, .65));
         }
-        .seapals-mobile-discard-empty {
+        .seapals-mobile-discard-empty,
+        .seapals-mobile-lost-empty {
           display: grid;
           height: 100%;
           place-items: center;
@@ -13512,6 +13538,7 @@ export default function Simulator({
           font-size: 2rem;
           font-weight: 900;
         }
+        .seapals-mobile-lost-empty { color: rgba(233, 213, 255, .82); }
         .seapals-mobile-edge-zone-count {
           position: absolute;
           z-index: 3;
@@ -13529,48 +13556,6 @@ export default function Simulator({
           font-size: .72rem;
           font-weight: 950;
           box-shadow: 0 4px 10px rgba(2, 8, 23, .5);
-        }
-        .seapals-mobile-edge-zone-label {
-          position: absolute;
-          z-index: 3;
-          right: .2rem;
-          bottom: .2rem;
-          left: .2rem;
-          overflow: hidden;
-          padding: .28rem .3rem;
-          border-radius: .35rem;
-          background: rgba(2, 8, 23, .88);
-          font-size: .52rem;
-          font-weight: 950;
-          line-height: 1;
-          text-align: left;
-          text-overflow: ellipsis;
-          text-transform: uppercase;
-          letter-spacing: .05em;
-          white-space: nowrap;
-        }
-        .seapals-mobile-edge-zone-lost {
-          position: relative;
-          z-index: 3;
-          right: 1.1rem;
-          align-self: flex-end;
-          min-width: 2.8rem;
-          min-height: 2.75rem;
-          margin-top: -.75rem;
-          padding: .45rem .5rem;
-          border: 1px solid rgba(216, 180, 254, .7);
-          border-radius: 999px;
-          color: #f3e8ff;
-          background: rgba(46, 16, 101, .94);
-          font-size: .65rem;
-          font-weight: 950;
-          pointer-events: auto;
-          box-shadow: 0 7px 16px rgba(2, 8, 23, .5);
-        }
-        .seapals-mobile-edge-zone-lost:not(:disabled):is(:hover, :focus-visible) {
-          outline: 3px solid #fde68a;
-          outline-offset: 2px;
-          translate: -.35rem 0;
         }
         .seapals-high-contrast .seapals-mobile-hand-panel {
           border-color: #67e8f9;
@@ -13920,11 +13905,6 @@ export default function Simulator({
             line-height: 1;
             text-transform: uppercase;
             letter-spacing: .04em;
-          }
-          .seapals-reef-divider-guide {
-            left: .15rem;
-            width: 3.45rem;
-            background: linear-gradient(90deg, #071724, rgba(8, 47, 73, .94));
           }
           .seapals-reef-divider-turn {
             right: .15rem;
@@ -14301,20 +14281,18 @@ export default function Simulator({
           .seapals-mobile-hand-secondary,
           .seapals-mobile-hand-primary { min-height: 2.35rem; padding: 0 .5rem; font-size: .6rem; }
           .seapals-mobile-edge-zones {
-            right: -1.15rem;
-            bottom: calc(var(--seapals-mobile-hand-height) - 2.2rem);
-            width: 4.25rem;
+            right: -.45rem;
+            width: 3.25rem;
+            height: min(9.3rem, max(5.7rem, calc(100% - 3.7rem)));
+            gap: .2rem;
           }
           .seapals-mobile-edge-zone {
-            width: 4.25rem;
-            height: 4.8rem;
+            width: 3.25rem;
           }
-          .seapals-mobile-edge-zone.is-discard { margin-top: -1.8rem; }
-          .seapals-mobile-edge-zone-lost {
-            right: .85rem;
-            min-width: 2.5rem;
-            min-height: 2.25rem;
-            margin-top: -.75rem;
+          .seapals-mobile-edge-zone.is-lost {
+            right: calc(100% + .2rem);
+            width: 2.75rem;
+            height: 2.75rem;
           }
         }
       `}</style>
@@ -14412,8 +14390,8 @@ export default function Simulator({
                 <button type="button" onClick={() => setModal("discard")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Discard</button>
                 <button type="button" onClick={() => setModal("lost")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Lost</button>
                 <button type="button" onClick={openNewGameSetup} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 xl:block">{isStoryMode ? "Restart Duel" : "New Game"}</button>
-                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
-                  {opponentThinking ? "Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Opponent First" : "Round 1" : "End Turn"}
+                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
+                  {turnControlLabel}
                 </button>
               </div>
             </div>
@@ -14605,6 +14583,19 @@ export default function Simulator({
                     <span className="seapals-reef-score-card is-rp"><small>RP</small><strong>{opponent.rp}</strong></span>
                   </div>
                 ) : null}
+                {previewExperience && mobileHandDockVisible ? (
+                  <MobileEdgeZones
+                    owner="opponent"
+                    deckCount={opponent.foundationDeck.length + opponent.palsDeck.length}
+                    discardCount={opponent.discardPile.length}
+                    lostCount={(opponent.lostZone ?? []).length}
+                    discardCard={cardsById[opponent.discardPile[0]] ?? null}
+                    disabled={Boolean(playingCardId)}
+                    onOpenDecks={() => setMobileHudPanel((current) => current === "opponent-decks" ? null : "opponent-decks")}
+                    onOpenDiscard={() => setModal("opponent-discard")}
+                    onOpenLost={() => setModal("opponent-lost")}
+                  />
+                ) : null}
                 <div
                   ref={opponentEcosystemRef}
                   className={`seapals-ecosystem-ocean relative ${previewExperience ? "h-full" : "h-[calc(100%-40px)]"} w-full overflow-hidden${tutorialTargetClass("opponent-board")}`}
@@ -14744,16 +14735,6 @@ export default function Simulator({
 
               {previewExperience ? (
                 <div className="seapals-reef-divider">
-                  <button
-                    type="button"
-                    className={`seapals-reef-divider-control seapals-reef-divider-guide${tutorialTargetClass("event-feed")}`}
-                    aria-expanded={mobileHudPanel === "feed"}
-                    data-tutorial-target="event-feed"
-                    onPointerDown={(event) => event.stopPropagation()}
-                    onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")}
-                  >
-                    Guide
-                  </button>
                   <div
                     className={`seapals-reef-divider-handle${reefDividerDragging ? " is-dragging" : ""}`}
                     role="separator"
@@ -14779,11 +14760,13 @@ export default function Simulator({
                     className={`seapals-reef-divider-control seapals-reef-divider-turn seapals-turn-button${tutorialTargetClass("turn-button")}`}
                     data-mobile-turn-control
                     data-tutorial-target="turn-button"
+                    title={turnControlDescription}
+                    aria-busy={opponentThinking || undefined}
                     onPointerDown={(event) => event.stopPropagation()}
                     onClick={endTurn}
                     disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn}
                   >
-                    {opponentThinking ? "Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Opponent First" : "Round 1" : "End Turn"}
+                    {turnControlLabel}
                   </button>
                 </div>
               ) : null}
@@ -14818,6 +14801,7 @@ export default function Simulator({
                 ) : null}
                 {previewExperience && mobileHandDockVisible ? (
                   <MobileEdgeZones
+                    owner="player"
                     deckCount={foundationDeck.length + palsDeck.length}
                     discardCount={discardPile.length}
                     lostCount={lostZone.length}
@@ -15194,11 +15178,13 @@ export default function Simulator({
           /> : null}
           {mobileHudPanel ? (
             <div className="seapals-mobile-hud-panel absolute inset-x-3 bottom-[4.75rem] z-[60] max-h-[45dvh] overflow-y-auto rounded-2xl border border-cyan-300/25 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-xl xl:hidden">
-              <div className="mb-3 flex items-center justify-between"><h2 className="font-black text-white">{mobileHudPanel === "zones" ? "Game Zones" : mobileHudPanel === "decks" ? "Personal Decks" : "Mission Feed"}</h2><button type="button" onClick={() => setMobileHudPanel(null)} className="rounded-lg border border-white/10 px-3 py-1 text-xs font-bold text-slate-200">Close</button></div>
+              <div className="mb-3 flex items-center justify-between"><h2 className="font-black text-white">{mobileHudPanel === "zones" ? "Game Zones" : mobileHudPanel === "decks" ? "Personal Decks" : mobileHudPanel === "opponent-decks" ? "Opponent Deck" : "Mission Feed"}</h2><button type="button" onClick={() => setMobileHudPanel(null)} className="rounded-lg border border-white/10 px-3 py-1 text-xs font-bold text-slate-200">Close</button></div>
               {mobileHudPanel === "zones" ? (
                 <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => { setMobileHudPanel(null); setModal("discard"); }} className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 font-bold text-cyan-100">Discard Pile<span className="mt-1 block text-2xl font-black">{discardPile.length}</span></button><button type="button" onClick={() => { setMobileHudPanel(null); setModal("lost"); }} className="rounded-xl border border-violet-300/20 bg-violet-400/10 p-4 font-bold text-violet-100">Lost Zone<span className="mt-1 block text-2xl font-black">{lostZone.length}</span></button></div>
               ) : mobileHudPanel === "decks" ? (
                 <div className="grid grid-cols-2 gap-2" data-mobile-deck-summary><div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 text-center font-bold text-cyan-100">Foundation<span className="mt-1 block text-2xl font-black">{foundationDeck.length}</span></div><div className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 p-4 text-center font-bold text-emerald-100">Pals<span className="mt-1 block text-2xl font-black">{palsDeck.length}</span></div><p className="col-span-2 text-center text-xs text-slate-400">Deck contents stay hidden until a card effect reveals them.</p></div>
+              ) : mobileHudPanel === "opponent-decks" ? (
+                <div className="rounded-xl border border-rose-300/20 bg-rose-400/10 p-4 text-center font-bold text-rose-100" data-mobile-opponent-deck-summary><span className="block text-4xl font-black">{opponent.foundationDeck.length + opponent.palsDeck.length}</span><span className="mt-1 block text-xs text-rose-100/65">cards remain; contents are hidden</span></div>
               ) : (
                 <div><div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3 text-sm font-semibold text-cyan-50">{isSetup ? "Setup: play a base Coral or Creature School, then begin round 1." : isStartOfTurn ? "Choose cards from your personal decks for this turn." : "Play cards, use abilities, and attack in any legal order."}</div><div className="mt-2 rounded-xl border border-violet-300/20 bg-violet-400/10 p-3 text-sm text-violet-100"><strong>{activeCondition?.name ?? "No active condition"}</strong>{activeCondition?.text ? <span className="mt-1 block text-xs text-violet-100/70">{activeCondition.text}</span> : null}</div><ol className="mt-2 space-y-2 rounded-xl bg-slate-900 p-3 text-xs">{log.slice(0, 8).map((entry, index) => <li key={`${entry}-${index}`} className={index === 0 ? "font-bold text-cyan-300" : "text-slate-300"}>{entry}</li>)}</ol></div>
               )}
@@ -15208,7 +15194,7 @@ export default function Simulator({
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("zones")}`} data-tutorial-target="zones">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">Guide<br /><span className="text-violet-300">Feed</span></button>
             <button type="button" onClick={() => { if (!playingCardId) setModal("hand"); }} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish or cancel this card placement first." : undefined} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg disabled:cursor-not-allowed disabled:opacity-45${isSetup && !hasCoralInPlay && !playingCardId ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{playingCardId ? "Place card first" : `${rp} RP ready`}</span></button>
-            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Opponent First" : "Round 1" : "End Turn"}</button>
+            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
           </div> : null}
         </div>
 
@@ -15303,7 +15289,7 @@ export default function Simulator({
         </div>
 
         <div className="hidden xl:col-start-2 xl:row-start-3 xl:block">
-          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{opponentThinking ? "Opponent Thinking…" : isSetup ? startingPlayer === OpeningPlayer.OPPONENT ? "Begin Opponent Turn" : "Begin Round 1" : "End Turn"}</button>
+          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
         </div>
       </section>
 
@@ -16220,6 +16206,10 @@ export default function Simulator({
                     ? "Review the cards in your hand. Discard or lose them from here."
                     : modal === "discard"
                     ? "Cards sent to the discard pile are shown here."
+                    : modal === "opponent-discard"
+                    ? "Public cards in the opponent's discard pile are shown here."
+                    : modal === "opponent-lost"
+                    ? "Public cards in the opponent's Lost Zone are shown here."
                     : modal === "search"
                     ? `Select a card's artwork or name to read its full details. Use Add to Hand only after you have chosen a card for ${cardsById[searchContext?.supportCardId]?.name}. You may cancel without spending the card or RP.`
                     : modal === "recover"
@@ -16446,7 +16436,7 @@ export default function Simulator({
                           </button>
                         ) : (
                           <div className="flex items-center gap-4">
-                            {["discard", "lost", "recover", "coral-target", "restock"].includes(modal) ? <img src={card.image} alt={card.name} className="h-28 w-20 rounded-xl bg-white object-contain" /> : null}
+                            {["discard", "lost", "opponent-discard", "opponent-lost", "recover", "coral-target", "restock"].includes(modal) ? <img src={card.image} alt={card.name} className="h-28 w-20 rounded-xl bg-white object-contain" /> : null}
                             <div>
                               <p className="font-semibold">{card.name}</p>
                               <p className={`text-sm ${isDarkZoneModal ? "text-slate-400" : "text-slate-600"}`}>{getCardClassLabel(card)}</p>
