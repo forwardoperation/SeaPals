@@ -26,6 +26,7 @@ export default function MobileEdgeZones({
       <button
         type="button"
         className="seapals-mobile-edge-zone is-deck"
+        data-mobile-zone="deck"
         aria-label={`Open ${owner === "opponent" ? "the opponent's" : "your"} deck summary. ${safeDeckCount} cards remain.`}
         disabled={disabled}
         onPointerDown={(event) => event.stopPropagation()}
@@ -40,6 +41,7 @@ export default function MobileEdgeZones({
       <button
         type="button"
         className={`seapals-mobile-edge-zone is-discard${discardCard?.image ? " has-card" : " is-empty"}`}
+        data-mobile-zone="discard"
         aria-label={`Open ${owner === "opponent" ? "the opponent's" : "your"} discard pile. ${safeDiscardCount} cards.`}
         disabled={disabled}
         onPointerDown={(event) => event.stopPropagation()}
@@ -49,7 +51,7 @@ export default function MobileEdgeZones({
           {discardCard?.image ? (
             <img src={discardCard.image} alt="" />
           ) : (
-            <span className="seapals-mobile-discard-empty">↺</span>
+            <span className="seapals-mobile-discard-empty" />
           )}
         </span>
       </button>
@@ -57,13 +59,14 @@ export default function MobileEdgeZones({
       <button
         type="button"
         className="seapals-mobile-edge-zone is-lost"
+        data-mobile-zone="lost"
         aria-label={`Open ${owner === "opponent" ? "the opponent's" : "your"} Lost Zone. ${safeLostCount} cards.`}
         disabled={disabled}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={onOpenLost}
       >
         <span className="seapals-mobile-edge-zone-art" aria-hidden="true">
-          <span className="seapals-mobile-lost-empty">◇</span>
+          <span className="seapals-mobile-lost-empty" />
         </span>
       </button>
     </aside>

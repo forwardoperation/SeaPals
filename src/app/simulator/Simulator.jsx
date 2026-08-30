@@ -13427,31 +13427,32 @@ export default function Simulator({
           pointer-events: none;
         }
         .seapals-mobile-edge-zones {
+          --seapals-edge-card-width: 3.2rem;
           position: absolute;
           z-index: 59;
-          right: -.65rem;
+          right: -.45rem;
           display: none;
-          width: 3.6rem;
-          height: min(10.35rem, max(5.85rem, calc(100% - 4.1rem)));
-          flex-direction: column;
-          gap: .35rem;
-          align-items: stretch;
+          width: 6.2rem;
+          grid-template-columns: 2.75rem var(--seapals-edge-card-width);
+          grid-template-rows: auto .25rem auto;
+          column-gap: .25rem;
           pointer-events: none;
           filter: drop-shadow(0 12px 18px rgba(2, 8, 23, .58));
         }
         .seapals-mobile-edge-zones.is-player {
-          bottom: calc(var(--seapals-mobile-hand-height, 9rem) + .35rem);
+          bottom: .2rem;
         }
         .seapals-mobile-edge-zones.is-opponent {
-          top: .35rem;
-          flex-direction: column-reverse;
+          top: 3.35rem;
         }
         .seapals-mobile-edge-zone {
           position: relative;
+          grid-column: 2;
           display: block;
-          width: 3.6rem;
+          width: var(--seapals-edge-card-width);
+          min-width: 2.75rem;
           min-height: 2.75rem;
-          flex: 1 1 0;
+          aspect-ratio: 63 / 88;
           overflow: visible;
           padding: 0;
           border: 2px solid rgba(165, 243, 252, .55);
@@ -13459,8 +13460,12 @@ export default function Simulator({
           color: #fff;
           background: #082f49;
           pointer-events: auto;
-          transition: translate 160ms ease, filter 160ms ease;
+          transition: filter 160ms ease;
         }
+        .seapals-mobile-edge-zones.is-player .seapals-mobile-edge-zone.is-deck,
+        .seapals-mobile-edge-zones.is-opponent .seapals-mobile-edge-zone.is-discard { grid-row: 1; }
+        .seapals-mobile-edge-zones.is-player .seapals-mobile-edge-zone.is-discard,
+        .seapals-mobile-edge-zones.is-opponent .seapals-mobile-edge-zone.is-deck { grid-row: 3; }
         .seapals-mobile-edge-zone.is-deck::before,
         .seapals-mobile-edge-zone.is-deck::after {
           position: absolute;
@@ -13479,25 +13484,24 @@ export default function Simulator({
           background: #172033;
         }
         .seapals-mobile-edge-zone.is-lost {
-          position: absolute;
-          right: calc(100% + .35rem);
+          grid-column: 1;
+          grid-row: 1 / 4;
+          align-self: center;
+          justify-self: center;
           z-index: 3;
           width: 2.75rem;
           height: 2.75rem;
           min-height: 2.75rem;
-          border-color: rgba(216, 180, 254, .78);
-          border-radius: .72rem;
-          background: rgba(46, 16, 101, .96);
-          box-shadow: 0 7px 16px rgba(2, 8, 23, .5), inset 0 0 18px rgba(168, 85, 247, .18);
+          aspect-ratio: 1;
+          border: 0;
+          background: transparent;
+          box-shadow: none;
         }
-        .seapals-mobile-edge-zones.is-player .seapals-mobile-edge-zone.is-lost { bottom: .15rem; }
-        .seapals-mobile-edge-zones.is-opponent .seapals-mobile-edge-zone.is-lost { top: .15rem; }
         .seapals-mobile-edge-zone:not(:disabled):is(:hover, :focus-visible) {
           z-index: 4;
           outline: 3px solid #fde68a;
           outline-offset: 2px;
           filter: brightness(1.08);
-          translate: -.55rem 0;
         }
         .seapals-mobile-edge-zone:disabled {
           cursor: not-allowed;
@@ -13513,7 +13517,7 @@ export default function Simulator({
         .seapals-mobile-edge-zone-art > img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
         }
         .seapals-mobile-deck-back {
           display: grid;
@@ -13529,16 +13533,18 @@ export default function Simulator({
           object-fit: contain;
           filter: drop-shadow(0 2px 5px rgba(2, 8, 23, .65));
         }
-        .seapals-mobile-discard-empty,
-        .seapals-mobile-lost-empty {
-          display: grid;
-          height: 100%;
-          place-items: center;
-          color: rgba(165, 243, 252, .58);
-          font-size: 2rem;
-          font-weight: 900;
+        .seapals-mobile-edge-zone.is-discard.is-empty .seapals-mobile-edge-zone-art {
+          border: 1px dashed rgba(253, 230, 138, .38);
+          background: rgba(15, 23, 42, .5);
         }
-        .seapals-mobile-lost-empty { color: rgba(233, 213, 255, .82); }
+        .seapals-mobile-edge-zone.is-lost .seapals-mobile-edge-zone-art {
+          inset: .52rem;
+          border: 2px solid rgba(216, 180, 254, .9);
+          border-radius: .28rem;
+          background: linear-gradient(145deg, rgba(126, 34, 206, .96), rgba(46, 16, 101, .98));
+          box-shadow: 0 5px 14px rgba(2, 8, 23, .55), inset 0 0 12px rgba(233, 213, 255, .2);
+          transform: rotate(45deg);
+        }
         .seapals-mobile-edge-zone-count {
           position: absolute;
           z-index: 3;
@@ -13826,7 +13832,52 @@ export default function Simulator({
         }
         .seapals-mobile-hud-panel { bottom: 15.1rem; }
         @media (max-width: 1279px) {
-          .seapals-mobile-edge-zones { display: flex; }
+          .seapals-mobile-edge-zones { display: grid; }
+          .seapals-simulator-preview .seapals-arena-frame { padding: 0; }
+          .seapals-simulator-preview .seapals-simulator-header {
+            position: absolute;
+            z-index: 90;
+            top: .75rem;
+            right: .75rem;
+            left: .75rem;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0;
+            margin: 0;
+            pointer-events: none;
+          }
+          .seapals-simulator-preview :is(.seapals-simulator-brand, .seapals-simulator-brand > div, .seapals-simulator-controls) {
+            display: contents;
+          }
+          .seapals-simulator-preview :is(.seapals-simulator-title, .seapals-phase-chip) {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+            margin: -1px !important;
+            padding: 0 !important;
+            border: 0 !important;
+            clip: rect(0, 0, 0, 0) !important;
+            clip-path: inset(50%) !important;
+            white-space: nowrap !important;
+          }
+          .seapals-simulator-preview .seapals-back-control,
+          .seapals-simulator-preview .seapals-menu-control {
+            pointer-events: auto;
+          }
+          .seapals-simulator-preview .seapals-back-control,
+          .seapals-simulator-preview .seapals-menu-control > summary {
+            width: 2.75rem;
+            height: 2.75rem;
+            min-height: 2.75rem;
+            justify-content: center;
+            padding: 0;
+          }
+          .seapals-simulator-preview .seapals-back-control > span:last-child,
+          .seapals-simulator-preview .seapals-menu-label { display: none; }
+          .seapals-simulator-preview .seapals-menu-icon { display: block; }
+          .seapals-simulator-preview .seapals-menu-control { margin-left: auto; }
           .seapals-simulator-preview .seapals-mobile-hand-panel {
             border: 0;
             background: transparent;
@@ -14281,36 +14332,31 @@ export default function Simulator({
           .seapals-mobile-hand-secondary,
           .seapals-mobile-hand-primary { min-height: 2.35rem; padding: 0 .5rem; font-size: .6rem; }
           .seapals-mobile-edge-zones {
-            right: -.45rem;
-            width: 3.25rem;
-            height: min(9.3rem, max(5.7rem, calc(100% - 3.7rem)));
-            gap: .2rem;
+            --seapals-edge-card-width: 3rem;
+            right: -.25rem;
+            width: 6rem;
+            grid-template-columns: 2.75rem var(--seapals-edge-card-width);
+            grid-template-rows: auto .2rem auto;
+            column-gap: .25rem;
           }
-          .seapals-mobile-edge-zone {
-            width: 3.25rem;
-          }
-          .seapals-mobile-edge-zone.is-lost {
-            right: calc(100% + .2rem);
-            width: 2.75rem;
-            height: 2.75rem;
-          }
+          .seapals-mobile-edge-zones.is-opponent { top: 3.2rem; }
         }
       `}</style>
       <section className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)_9rem_auto]">
         <div className="seapals-hud-panel seapals-arena-frame relative flex h-full min-h-0 flex-col rounded-2xl border border-cyan-400/25 p-3 shadow-2xl xl:col-start-1 xl:row-span-3 xl:row-start-1">
-          <div className="seapals-simulator-header mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="seapals-simulator-header mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between" data-mobile-overlay-header={previewExperience ? "true" : undefined}>
             <div className="seapals-simulator-brand min-w-0">
               <div className="flex items-center gap-3">
                 {isStoryMode ? (
-                  <button type="button" onClick={requestStoryExit} aria-label={`Exit duel and return to ${storyReturnLabel}`} className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
+                  <button type="button" onClick={requestStoryExit} aria-label={`Exit duel and return to ${storyReturnLabel}`} data-simulator-back-control className="seapals-back-control group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
                     <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">{storyReturnLabel}</span>
                   </button>
                 ) : (
-                  <Link href="/" aria-label="Exit simulator and return home" className="group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
+                  <Link href="/" aria-label="Exit simulator and return home" data-simulator-back-control className="seapals-back-control group flex h-10 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,.12)] transition hover:border-cyan-200/50 hover:bg-cyan-300/15">
                     <span className="text-lg font-black transition group-hover:-translate-x-0.5">←</span><span className="hidden text-[10px] font-black uppercase tracking-wider sm:inline">Home</span>
                   </Link>
                 )}
-                <div>
+                <div className="seapals-simulator-title">
                   <h1 className="text-lg font-black tracking-tight text-white">SeaPals Simulator{previewExperience ? " V2" : ""}</h1>
                   <p className="hidden text-xs text-cyan-100/60 sm:block">Build your reef. Outsmart the opposing ecosystem.</p>
                 </div>
@@ -14329,8 +14375,8 @@ export default function Simulator({
                   <div className="text-[9px] font-semibold text-rose-300/80">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensityState.committed}/{opponentSchoolDensity} SD used{opponentSchoolDensityState.overCapacity ? ` · ${opponentSchoolDensityState.overCapacity} over` : ""}</div>
                 </div>
               </div> : null}
-              <div className="seapals-phase-chip rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-violet-100 shadow-sm">
-                <span className={`xl:hidden${tutorialTargetClass("condition-panel")}`} data-tutorial-target="condition-panel">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
+              <div className="seapals-phase-chip rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-violet-100 shadow-sm" role="status" aria-live="polite">
+                <span className={`xl:hidden${!previewExperience ? tutorialTargetClass("condition-panel") : ""}`} data-tutorial-target={!previewExperience ? "condition-panel" : undefined}>{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
                 <span className="hidden xl:inline">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
               </div>
               {!previewExperience ? <div className="seapals-finn-control">
@@ -14355,9 +14401,16 @@ export default function Simulator({
                 }}
                 />
               </div> : null}
-              <details className="seapals-menu-control relative">
-                <summary aria-label="Open simulator menu" className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden"><span className="seapals-menu-label">Menu</span><span className="seapals-menu-icon hidden" aria-hidden="true">•••</span></summary>
+              <details className="seapals-menu-control relative" data-simulator-menu-control>
+                <summary aria-label={previewExperience ? "Open simulator menu and review the current Condition" : "Open simulator menu"} data-tutorial-target={previewExperience ? "condition-panel" : undefined} className={`flex min-h-11 cursor-pointer list-none items-center justify-center rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden${previewExperience ? tutorialTargetClass("condition-panel") : ""}`}><span className="seapals-menu-label">Menu</span><span className="seapals-menu-icon hidden" aria-hidden="true">•••</span></summary>
                 <div className="absolute right-0 top-11 z-[70] w-48 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-xl">
+                  {previewExperience ? (
+                    <div className="mb-2 rounded-lg border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-left normal-case tracking-normal">
+                      <div className="text-[9px] font-black uppercase tracking-[0.14em] text-violet-200">{isSetup ? "Setup Round" : `Round ${round}`}</div>
+                      <div className="mt-1 text-xs font-bold text-white">{activeCondition?.name ?? (isSetup ? "Prepare your reef" : "No active condition")}</div>
+                      {activeCondition?.text ? <div className="mt-1 text-[10px] leading-snug text-violet-100/75">{activeCondition.text}</div> : null}
+                    </div>
+                  ) : null}
                   <button type="button" onClick={openNewGameSetup} className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">{isStoryMode ? "Restart Duel" : "Start New Game"}</button>
                   <button type="button" onClick={() => setBugReportOpen(true)} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-amber-100 hover:bg-amber-300/10">Report a bug</button>
                   {accessibilitySettingsAvailable ? (

@@ -13,9 +13,9 @@ export const GUIDED_ACADEMY_BOARD_TOUR_STEPS = Object.freeze([
     id: "condition",
     target: "condition-panel",
     title: "Conditions model a changing ocean",
-    message: "The ocean never stays exactly the same. Sunlight, temperature, visibility, nutrients, currents, and food availability shift with weather and seasons. The Active Condition models one important environmental change each round by changing an exact game rule. It is a simplified model, but it asks a real ecological question: how does a changing environment alter what an ecosystem can support? Read it before planning your turn.",
-    targetLabel: "the Active Condition panel",
-    pointerPrompt: "Read how this round's environment changes the game.",
+    message: "The ocean never stays exactly the same. Sunlight, temperature, visibility, nutrients, currents, and food availability shift with weather and seasons. The Active Condition models one important environmental change each round by changing an exact game rule. It is a simplified model, but it asks a real ecological question: how does a changing environment alter what an ecosystem can support? Open the ellipsis menu whenever you need to review the current round and Condition without giving up board space.",
+    targetLabel: "the menu with the current Condition",
+    pointerPrompt: "The ellipsis menu keeps this round's Condition close without covering the reef.",
   }),
   Object.freeze({
     id: "resources",

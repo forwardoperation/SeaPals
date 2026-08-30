@@ -50,7 +50,8 @@ test("guided Academy board tour exposes paced Professor cues and hands off to th
   assert.equal(condition.title, "Conditions model a changing ocean");
   assert.match(condition.message, /sunlight.*temperature.*visibility.*nutrients.*currents.*food availability/i);
   assert.match(condition.message, /simplified model.*real ecological question.*ecosystem can support/i);
-  assert.match(condition.pointerPrompt, /environment changes the game/i);
+  assert.match(condition.message, /ellipsis menu.*review the current round and Condition/i);
+  assert.match(condition.pointerPrompt, /ellipsis menu.*without covering the reef/i);
 
   const turnControl = GUIDED_ACADEMY_BOARD_TOUR_STEPS.find((step) => step.id === "turn-control");
   assert.match(turnControl.message, /Begin Round.*Next Round/i);
