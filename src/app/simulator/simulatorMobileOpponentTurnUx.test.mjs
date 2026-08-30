@@ -15,21 +15,22 @@ function sourceSection(source, startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-test("mobile board follows turn boundaries without blocking manual inspection", () => {
+test("legacy mobile tabs follow turn boundaries while V2 keeps the manual split", () => {
   const phaseEffect = sourceSection(
     simulatorSource,
-    'if (gamePhase === "opponent")',
+    "if (previewExperience) return;",
     "if (!tutorialHelpTargetActive) return undefined;"
   );
 
+  assert.match(phaseEffect, /if \(previewExperience\) return;/);
   assert.match(phaseEffect, /setMobileBoardView\("opponent"\)/);
   assert.match(phaseEffect, /gamePhase === "draw"/);
   assert.match(phaseEffect, /setMobileBoardView\("player"\)/);
-  assert.match(phaseEffect, /\}, \[gamePhase\]\);/);
+  assert.match(phaseEffect, /\}, \[gamePhase, previewExperience\]\);/);
 
   assert.match(
     simulatorSource,
-    /onClick=\{\(\) => setMobileBoardView\("player"\)\}/
+    /\{!previewExperience \? <div className="seapals-board-tabs[\s\S]*?onClick=\{\(\) => setMobileBoardView\("player"\)\}/
   );
   assert.match(
     simulatorSource,
@@ -45,18 +46,19 @@ test("mobile board follows turn boundaries without blocking manual inspection", 
   );
   assert.match(
     simulatorSource,
-    /mobileBoardView === "opponent"[\s\S]*xl:block xl:h-\[45%\]/
+    /previewExperience \? "block" : mobileBoardView === "opponent" \? "h-full" : "hidden"[\s\S]*xl:block xl:h-\[45%\]/
   );
   assert.match(
     simulatorSource,
-    /mobileBoardView === "player"[\s\S]*xl:block xl:h-\[55%\]/
+    /previewExperience \? "block" : mobileBoardView === "player" \? "h-full" : "hidden"[\s\S]*xl:block xl:h-\[55%\]/
   );
+  assert.doesNotMatch(phaseEffect, /if \(!previewExperience\)[\s\S]*?setMobileReefSplit/);
 });
 
-test("player card placement restores Your Reef after inspecting the opponent", () => {
+test("placement and tutorial targeting switch only the legacy mobile tabs", () => {
   const placementEffect = sourceSection(
     simulatorSource,
-    "if (!playingCardId) return;",
+    "if (previewExperience || !playingCardId) return;",
     'if (modal !== "hand" || !tutorialHelpInline) return undefined;',
   );
   const tutorialTargetEffect = sourceSection(
@@ -65,11 +67,12 @@ test("player card placement restores Your Reef after inspecting the opponent", (
     "if (!tutorialBoardTourOpen) return;",
   );
 
+  assert.match(placementEffect, /if \(previewExperience \|\| !playingCardId\) return;/);
   assert.match(placementEffect, /setMobileBoardView\("player"\)/);
-  assert.match(placementEffect, /\}, \[playingCardId\]\);/);
+  assert.match(placementEffect, /\}, \[playingCardId, previewExperience\]\);/);
   assert.match(
     tutorialTargetEffect,
-    /\["player-board", "placement"\]\.includes\(tutorialHelp\.target\)[\s\S]*?setMobileBoardView\("player"\)/,
+    /if \(!previewExperience\) \{[\s\S]*?\["player-board", "placement"\]\.includes\(tutorialHelp\.target\)[\s\S]*?setMobileBoardView\("player"\)[\s\S]*?\}/,
   );
   assert.match(
     simulatorSource,
@@ -152,6 +155,7 @@ test("only committed permanent placements create AI placement cues", () => {
   );
   assert.match(
     commitEventState,
-    /if \(event\?\.permanentPlacementCue\)[\s\S]*setMobileBoardView\(board === "opponent" \? "opponent" : "player"\)[\s\S]*queueBubbleBurst\(x, y, board\)/
+    /if \(event\?\.permanentPlacementCue\)[\s\S]*?if \(!previewExperience\) setMobileBoardView\(board === "opponent" \? "opponent" : "player"\)[\s\S]*?queueBubbleBurst\(x, y, board\)/
   );
+  assert.doesNotMatch(commitEventState, /mirrorOpponentCue|100 - x|100 - y/);
 });

@@ -13,6 +13,7 @@ import {
 test("the global Finn launcher stays hidden on game routes while the embedded one is allowed", () => {
   assert.equal(shouldRenderRulesChat("/", RULES_CHAT_PLACEMENTS.SITE), true);
   assert.equal(shouldRenderRulesChat("/simulator", RULES_CHAT_PLACEMENTS.SITE), false);
+  assert.equal(shouldRenderRulesChat("/simulator-v2", RULES_CHAT_PLACEMENTS.SITE), false);
   assert.equal(shouldRenderRulesChat("/adventure", RULES_CHAT_PLACEMENTS.SITE), false);
   assert.equal(shouldRenderRulesChat("/adventure/elverson", RULES_CHAT_PLACEMENTS.SITE), false);
   assert.equal(shouldRenderRulesChat("/auth/callback", RULES_CHAT_PLACEMENTS.SITE), false);

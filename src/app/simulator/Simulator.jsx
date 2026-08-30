@@ -10,6 +10,13 @@ import { cardsById } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
 import { conditionCards } from "@/data/cards/conditions";
 import { getPlayableDeckById, prebuiltDecks } from "@/data/decks/prebuiltDecks";
+import {
+  beginPinchCamera,
+  clampCameraZoom,
+  getVisibleAreaFitOffset,
+  updatePinchCamera,
+  zoomCameraAtPoint,
+} from "./ecosystemCamera.mjs";
 import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveBlueCrabRecycle, resolveConditionalDiceDamage, resolveOpposedRoll, rollDie } from "./gameRules.mjs";
 import { createHabitatInstance, evaluateHabitatComposition, getHabitatRequirementError, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
 import { createHandLimitChoice, resolveHandLimitChoice, selectAutomatedHandLimitDiscards } from "./handLimitRules.mjs";
@@ -3007,6 +3014,10 @@ function getPlacementCoordinates(event, zoom, offset) {
   };
 }
 
+function roundLayoutNumber(value, precision = 4) {
+  return Number(Number(value).toFixed(precision));
+}
+
 function getBracketSlotPositions(count) {
   // place anchors evenly around the coral in a circle to avoid overlap
   const positions = [];
@@ -3016,7 +3027,7 @@ function getBracketSlotPositions(count) {
     const angle = (i / count) * Math.PI * 2 - Math.PI / 2; // start at top
     const left = 50 + Math.cos(angle) * radius;
     const top = 50 + Math.sin(angle) * radius;
-    positions.push({ top: `${top}%`, left: `${left}%` });
+    positions.push({ top: `${roundLayoutNumber(top)}%`, left: `${roundLayoutNumber(left)}%` });
   }
   return positions;
 }
@@ -3027,8 +3038,8 @@ function getOpponentSlotPositions(count, mirrored = false) {
   for (let index = 0; index < count; index += 1) {
     const angle = (index / count) * Math.PI * 2 - Math.PI / 2 + (mirrored ? Math.PI : 0);
     positions.push({
-      top: `${50 + Math.sin(angle) * radius}%`,
-      left: `${50 + Math.cos(angle) * radius}%`,
+      top: `${roundLayoutNumber(50 + Math.sin(angle) * radius)}%`,
+      left: `${roundLayoutNumber(50 + Math.cos(angle) * radius)}%`,
     });
   }
   return positions;
@@ -3047,6 +3058,37 @@ function getOpponentCoralGridOffset(index, total, mirrored = false) {
     y: (row - (rows - 1) / 2) * 780,
   };
   return mirrored ? { x: -offset.x, y: -offset.y } : offset;
+}
+
+function getOpponentSlotPosition(position, mirrored = false) {
+  if (!mirrored || !position) return position;
+  const mirrorCoordinate = (value) => {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? `${100 - parsed}%` : value;
+  };
+  return {
+    ...position,
+    top: mirrorCoordinate(position.top),
+    left: mirrorCoordinate(position.left),
+  };
+}
+
+const MOBILE_REEF_SPLIT_MIN = 24;
+const MOBILE_REEF_SPLIT_MAX = 68;
+
+function clampMobileReefSplit(value) {
+  return Math.min(MOBILE_REEF_SPLIT_MAX, Math.max(MOBILE_REEF_SPLIT_MIN, Number(value) || 0));
+}
+
+function createEcosystemGestureState() {
+  return {
+    pointers: new Map(),
+    activePair: [],
+    pinch: null,
+    pinching: false,
+    moved: false,
+    suppressClick: false,
+  };
 }
 
 function getSlotIconPath(slot) {
@@ -3079,11 +3121,11 @@ function getSlotConnectorStyle(position) {
   const distance = Math.sqrt(dx * dx + dy * dy);
   const angle = Math.atan2(dy, dx);
   return {
-    width: `${distance}%`,
+    width: `${roundLayoutNumber(distance)}%`,
     height: "2px",
-    top: `${50 + dy / 2}%`,
-    left: `${50 + dx / 2}%`,
-    transform: `translateX(-50%) rotate(${angle}rad)`,
+    top: `${roundLayoutNumber(50 + dy / 2)}%`,
+    left: `${roundLayoutNumber(50 + dx / 2)}%`,
+    transform: `translateX(-50%) rotate(${roundLayoutNumber(angle, 6)}rad)`,
   };
 }
 
@@ -3231,12 +3273,21 @@ export default function Simulator({
   const [ecosystemOffset, setEcosystemOffset] = useState({ x: 0, y: 0 });
   const [opponentEcosystemZoom, setOpponentEcosystemZoom] = useState(1);
   const [opponentEcosystemOffset, setOpponentEcosystemOffset] = useState({ x: 0, y: 0 });
+  const playerCameraRef = useRef({ zoom: 1, offset: { x: 0, y: 0 } });
+  const opponentCameraRef = useRef({ zoom: 1, offset: { x: 0, y: 0 } });
+  const playerGestureRef = useRef(createEcosystemGestureState());
+  const opponentGestureRef = useRef(createEcosystemGestureState());
+  const boardClickSuppressionRef = useRef({ player: 0, opponent: 0 });
   const [playerViewportTouched, setPlayerViewportTouched] = useState(false);
   const [opponentViewportTouched, setOpponentViewportTouched] = useState(false);
   const [mobileBoardView, setMobileBoardView] = useState("player");
+  const [mobileReefSplit, setMobileReefSplit] = useState(40);
+  const [reefDividerDragging, setReefDividerDragging] = useState(false);
   const [mobileHudPanel, setMobileHudPanel] = useState(null);
   const ecosystemRef = useRef(null);
   const opponentEcosystemRef = useRef(null);
+  const mobileBoardStackRef = useRef(null);
+  const reefDividerPointerIdRef = useRef(null);
   const coralWasDraggedRef = useRef(false);
   const slotWasDraggedRef = useRef(false);
   const slotDragStartRef = useRef(null);
@@ -3782,7 +3833,6 @@ export default function Simulator({
     && !tutorialCardLessonOpen
     && !tutorialBoardTourOpen
   );
-  const MobileScoreControl = previewExperience ? "button" : "div";
   const tutorialLessonWon = isTutorialLessonVictory({
     tutorialActive: Boolean(tutorialContract && scriptedTutorialScenario),
     gameResult,
@@ -4646,17 +4696,18 @@ export default function Simulator({
   );
 
   useEffect(() => {
+    if (previewExperience) return;
     if (gamePhase === "opponent") {
       setMobileBoardView("opponent");
     } else if (gamePhase === "draw") {
       setMobileBoardView("player");
     }
-  }, [gamePhase]);
+  }, [gamePhase, previewExperience]);
 
   useEffect(() => {
-    if (!playingCardId) return;
+    if (previewExperience || !playingCardId) return;
     setMobileBoardView("player");
-  }, [playingCardId]);
+  }, [playingCardId, previewExperience]);
 
   useEffect(() => {
     if (modal !== "hand" || !tutorialHelpInline) return undefined;
@@ -4671,8 +4722,10 @@ export default function Simulator({
 
   useEffect(() => {
     if (!tutorialHelpTargetActive) return undefined;
-    if (tutorialHelp.target === "opponent-board") setMobileBoardView("opponent");
-    else if (["player-board", "placement"].includes(tutorialHelp.target) || tutorialHelp.targetActionKey) setMobileBoardView("player");
+    if (!previewExperience) {
+      if (tutorialHelp.target === "opponent-board") setMobileBoardView("opponent");
+      else if (["player-board", "placement"].includes(tutorialHelp.target) || tutorialHelp.targetActionKey) setMobileBoardView("player");
+    }
 
     const targetCardId = tutorialHelp.target === "hand" ? tutorialHelp.targetCardId : null;
     if (!targetCardId && !tutorialHelp.targetActionKey) return undefined;
@@ -4695,13 +4748,15 @@ export default function Simulator({
       target.scrollIntoView({ block: "nearest", inline: "nearest", behavior });
     });
     return () => cancelAnimationFrame(frame);
-  }, [accessibilityReducedMotion, tutorialHelpDismissalKey, tutorialHelpTargetActive, tutorialHelp?.target, tutorialHelp?.targetCardId, tutorialHelp?.targetActionKey, modal, handPopoverCardId, mobileBoardView]);
+  }, [accessibilityReducedMotion, tutorialHelpDismissalKey, tutorialHelpTargetActive, tutorialHelp?.target, tutorialHelp?.targetCardId, tutorialHelp?.targetActionKey, modal, handPopoverCardId, mobileBoardView, previewExperience]);
 
   useEffect(() => {
     if (!tutorialBoardTourOpen) return;
-    if (tutorialBoardTourHelp.target === "opponent-board") setMobileBoardView("opponent");
-    else if (tutorialBoardTourHelp.target === "player-board") setMobileBoardView("player");
-  }, [tutorialBoardTourHelp?.cueId, tutorialBoardTourHelp?.target, tutorialBoardTourOpen]);
+    if (!previewExperience) {
+      if (tutorialBoardTourHelp.target === "opponent-board") setMobileBoardView("opponent");
+      else if (tutorialBoardTourHelp.target === "player-board") setMobileBoardView("player");
+    }
+  }, [previewExperience, tutorialBoardTourHelp?.cueId, tutorialBoardTourHelp?.target, tutorialBoardTourOpen]);
 
   useEffect(() => {
     setHasDrawnThisTurn(false);
@@ -5127,7 +5182,51 @@ export default function Simulator({
   }
 
   function clampZoom(zoom) {
-    return Math.min(2.2, Math.max(0.12, zoom));
+    return clampCameraZoom(zoom);
+  }
+
+  function getBoardBottomOcclusion(owner, rect) {
+    if (!previewExperience || owner === "opponent" || !rect) return 0;
+    const handDockRect = document.querySelector("[data-mobile-hand-dock]")?.getBoundingClientRect();
+    if (!handDockRect?.width || !handDockRect?.height) return 0;
+    const overlapTop = Math.max(rect.top, handDockRect.top);
+    const overlapBottom = Math.min(rect.bottom, handDockRect.bottom);
+    return overlapBottom > overlapTop ? overlapBottom - overlapTop : 0;
+  }
+
+  function commitBoardCamera(owner, camera) {
+    const nextCamera = {
+      zoom: clampZoom(camera?.zoom),
+      offset: {
+        x: Number(camera?.offset?.x) || 0,
+        y: Number(camera?.offset?.y) || 0,
+      },
+    };
+    if (owner === "opponent") {
+      opponentCameraRef.current = nextCamera;
+      setOpponentEcosystemZoom(nextCamera.zoom);
+      setOpponentEcosystemOffset(nextCamera.offset);
+    } else {
+      playerCameraRef.current = nextCamera;
+      setEcosystemZoom(nextCamera.zoom);
+      setEcosystemOffset(nextCamera.offset);
+    }
+    return nextCamera;
+  }
+
+  function adjustBoardZoom(owner, delta) {
+    const element = owner === "opponent" ? opponentEcosystemRef.current : ecosystemRef.current;
+    const camera = owner === "opponent" ? opponentCameraRef.current : playerCameraRef.current;
+    if (!element) return;
+    const rect = element.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const visibleHeight = Math.max(96, rect.height - getBoardBottomOcclusion(owner, rect));
+    commitBoardCamera(owner, zoomCameraAtPoint(
+      camera,
+      camera.zoom + delta,
+      { x: rect.width / 2, y: visibleHeight / 2 },
+      { width: rect.width, height: rect.height },
+    ));
   }
 
   function zoomEcosystemToFit(owner) {
@@ -5136,28 +5235,21 @@ export default function Simulator({
     if (!element) return;
     const rect = element.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return;
-    const handDock = previewExperience && !isOpponent
-      ? document.querySelector("[data-mobile-hand-dock]")
-      : null;
-    const handDockRect = handDock?.getBoundingClientRect();
-    const occludedHeight = handDockRect && handDockRect.top < rect.bottom
-      ? Math.max(0, rect.bottom - Math.max(rect.top, handDockRect.top))
-      : 0;
+    const occludedHeight = getBoardBottomOcclusion(owner, rect);
     const visibleHeight = Math.max(96, rect.height - occludedHeight);
     const corals = isOpponent ? opponentCorals : playerCorals;
     const floatingCardsPresent = isOpponent
       ? opponent.habitats.length || opponent.reefCreatures.length || (opponent.orphanCreatures?.length ?? 0)
       : playerHabitats.length || playerReefCreatures.length || playerOrphanCreatures.length;
-    const mirrorOpponentLayout = isOpponent && previewExperience;
+    const invertOpponentSlots = isOpponent && previewExperience;
     const positions = corals.map((coral, index) => {
       if (!isOpponent) return { x: coral.x, y: coral.y, absolute: false };
-      const offset = getOpponentCoralGridOffset(index, corals.length, mirrorOpponentLayout);
-      const floatingOffset = floatingCardsPresent ? (mirrorOpponentLayout ? -360 : 360) : 0;
+      const offset = getOpponentCoralGridOffset(index, corals.length, invertOpponentSlots);
+      const floatingOffset = floatingCardsPresent ? 360 : 0;
       return { x: rect.width / 2 + offset.x, y: rect.height / 2 + offset.y + floatingOffset, absolute: true };
     });
     if (!positions.length && !floatingCardsPresent) {
-      (isOpponent ? setOpponentEcosystemZoom : setEcosystemZoom)(1);
-      (isOpponent ? setOpponentEcosystemOffset : setEcosystemOffset)({ x: 0, y: 0 });
+      commitBoardCamera(owner, { zoom: 1, offset: { x: 0, y: 0 } });
       return;
     }
     const coralWidth = isOpponent ? 180 : 240;
@@ -5165,19 +5257,19 @@ export default function Simulator({
     const bounds = corals.flatMap((coral, coralIndex) => {
       const centerX = positions[coralIndex].absolute ? positions[coralIndex].x : (positions[coralIndex].x / 100) * rect.width;
       const centerY = positions[coralIndex].absolute ? positions[coralIndex].y : (positions[coralIndex].y / 100) * rect.height;
-      const anchors = isOpponent ? getOpponentSlotPositions(coral.slots.length, mirrorOpponentLayout) : getBracketSlotPositions(coral.slots.length);
+      const anchors = isOpponent ? getOpponentSlotPositions(coral.slots.length, invertOpponentSlots) : getBracketSlotPositions(coral.slots.length);
       const cardBounds = [{ minX: centerX - coralWidth / 2, maxX: centerX + coralWidth / 2, minY: centerY - coralHeight / 2, maxY: centerY + coralHeight / 2 }];
       coral.slots.forEach((slot, slotIndex) => {
-        const position = slot.position ?? anchors[slotIndex];
+        const position = isOpponent
+          ? getOpponentSlotPosition(slot.position, invertOpponentSlots) ?? anchors[slotIndex]
+          : slot.position ?? anchors[slotIndex];
         const slotX = centerX + (Number.parseFloat(position.left) - 50) / 100 * coralWidth;
         const slotY = centerY + (Number.parseFloat(position.top) - 50) / 100 * coralHeight;
         cardBounds.push({ minX: slotX - 70, maxX: slotX + 70, minY: slotY - 85, maxY: slotY + 85 });
       });
       return cardBounds;
     });
-    if (floatingCardsPresent) bounds.push(mirrorOpponentLayout
-      ? { minX: 0, maxX: rect.width, minY: Math.max(0, rect.height - 330), maxY: rect.height }
-      : { minX: 0, maxX: rect.width, minY: 0, maxY: 330 });
+    if (floatingCardsPresent) bounds.push({ minX: 0, maxX: rect.width, minY: 0, maxY: 330 });
     const padding = 36;
     const minX = Math.min(...bounds.map((entry) => entry.minX)) - padding;
     const maxX = Math.max(...bounds.map((entry) => entry.maxX)) + padding;
@@ -5193,12 +5285,14 @@ export default function Simulator({
     ));
     const contentCenterX = (minX + maxX) / 2;
     const contentCenterY = (minY + maxY) / 2;
-    const nextOffset = {
-      x: (rect.width / 2 - contentCenterX) * nextZoom,
-      y: (visibleHeight / 2 - contentCenterY) * nextZoom,
-    };
-    (isOpponent ? setOpponentEcosystemZoom : setEcosystemZoom)(nextZoom);
-    (isOpponent ? setOpponentEcosystemOffset : setEcosystemOffset)(nextOffset);
+    const nextOffset = getVisibleAreaFitOffset({
+      viewport: { width: rect.width, height: rect.height },
+      contentCenter: { x: contentCenterX, y: contentCenterY },
+      zoom: nextZoom,
+      bottomOcclusion: occludedHeight,
+      verticalAlign: isOpponent && previewExperience ? .65 : .5,
+    });
+    commitBoardCamera(owner, { zoom: nextZoom, offset: nextOffset });
   }
 
   function canUseSlotWithCard(slot, cardId) {
@@ -6353,19 +6447,232 @@ export default function Simulator({
     setSlotDragStart(null);
   }
 
-  function focusMobileBoard(owner) {
-    if (!previewExperience || mobileBoardView === owner) return false;
-    if (owner === "opponent" && playingCardId) return false;
-    setMobileBoardView(owner);
+  function setMobileReefSplitFromClientY(clientY) {
+    const rect = mobileBoardStackRef.current?.getBoundingClientRect();
+    if (!rect || rect.height <= 0) return;
+    setMobileReefSplit(clampMobileReefSplit(((clientY - rect.top) / rect.height) * 100));
+  }
+
+  function handleReefDividerPointerDown(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    reefDividerPointerIdRef.current = event.pointerId;
+    setReefDividerDragging(true);
+    setMobileReefSplitFromClientY(event.clientY);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch (error) {
+      // Pointer capture is an enhancement; dragging still works while the handle remains targeted.
+    }
+  }
+
+  function handleReefDividerPointerMove(event) {
+    if (reefDividerPointerIdRef.current !== event.pointerId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setMobileReefSplitFromClientY(event.clientY);
+  }
+
+  function handleReefDividerPointerUp(event) {
+    if (reefDividerPointerIdRef.current !== event.pointerId) return;
+    reefDividerPointerIdRef.current = null;
+    setReefDividerDragging(false);
+  }
+
+  function handleReefDividerKeyDown(event) {
+    const step = event.shiftKey ? 8 : 3;
+    let next = mobileReefSplit;
+    if (event.key === "ArrowUp") next -= step;
+    else if (event.key === "ArrowDown") next += step;
+    else if (event.key === "Home") next = MOBILE_REEF_SPLIT_MIN;
+    else if (event.key === "End") next = MOBILE_REEF_SPLIT_MAX;
+    else return;
+    event.preventDefault();
+    setMobileReefSplit(clampMobileReefSplit(next));
+  }
+
+  function getBoardGesture(owner) {
+    return owner === "opponent" ? opponentGestureRef.current : playerGestureRef.current;
+  }
+
+  function getBoardCamera(owner) {
+    return owner === "opponent" ? opponentCameraRef.current : playerCameraRef.current;
+  }
+
+  function getLocalBoardPointer(event, rect) {
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+      clientX: event.clientX,
+      clientY: event.clientY,
+    };
+  }
+
+  function cancelBoardObjectGesture(owner) {
+    setFloatingCardDrag(null);
+    floatingCardWasDraggedRef.current = false;
+    if (owner === "opponent") {
+      setIsOpponentPanning(false);
+      setOpponentPanStart(null);
+      return;
+    }
+    setIsPanning(false);
+    setPanStart(null);
+    setDraggingCoralId(null);
+    setCoralDragStart(null);
+    coralWasDraggedRef.current = false;
+    slotWasDraggedRef.current = false;
+    handleSlotDragEnd();
+  }
+
+  function beginTrackedPinch(owner, gesture, rect) {
+    const pair = [...gesture.pointers.keys()].slice(0, 2);
+    if (pair.length < 2) return false;
+    const first = gesture.pointers.get(pair[0]);
+    const second = gesture.pointers.get(pair[1]);
+    gesture.activePair = pair;
+    gesture.pinch = beginPinchCamera(
+      getBoardCamera(owner),
+      first,
+      second,
+      { width: rect.width, height: rect.height },
+    );
+    gesture.pinching = true;
+    gesture.moved = false;
+    gesture.suppressClick = true;
+    cancelBoardObjectGesture(owner);
+    if (owner === "opponent") setIsOpponentPanning(true);
+    else setIsPanning(true);
     return true;
+  }
+
+  function handleBoardPointerDownCapture(owner, event) {
+    if (event.pointerType !== "touch" || event.target.closest(".seapals-board-camera-controls")) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const gesture = getBoardGesture(owner);
+    gesture.pointers.set(event.pointerId, getLocalBoardPointer(event, rect));
+    if (!gesture.pinching && gesture.pointers.size >= 2) beginTrackedPinch(owner, gesture, rect);
+    if (!gesture.pinching) return;
+    event.preventDefault();
+    event.stopPropagation();
+    for (const pointerId of gesture.activePair) {
+      try {
+        event.currentTarget.setPointerCapture(pointerId);
+      } catch (error) {
+        // Gesture tracking still works while both pointers remain over the reef.
+      }
+    }
+  }
+
+  function handleBoardPointerMoveCapture(owner, event) {
+    if (event.pointerType !== "touch") return;
+    const gesture = getBoardGesture(owner);
+    if (!gesture.pointers.has(event.pointerId)) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    gesture.pointers.set(event.pointerId, getLocalBoardPointer(event, rect));
+    if (!gesture.pinching) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const [firstId, secondId] = gesture.activePair;
+    const first = gesture.pointers.get(firstId);
+    const second = gesture.pointers.get(secondId);
+    if (!first || !second || !gesture.pinch) return;
+    const currentCamera = getBoardCamera(owner);
+    const nextCamera = updatePinchCamera(gesture.pinch, first, second);
+    if (
+      Math.abs(nextCamera.zoom - currentCamera.zoom) > .002
+      || Math.abs(nextCamera.offset.x - currentCamera.offset.x) > 2
+      || Math.abs(nextCamera.offset.y - currentCamera.offset.y) > 2
+    ) gesture.moved = true;
+    commitBoardCamera(owner, nextCamera);
+    if (owner === "opponent") setOpponentViewportTouched(true);
+    else setPlayerViewportTouched(true);
+  }
+
+  function handleBoardPointerEndCapture(owner, event) {
+    if (event.pointerType !== "touch") return;
+    const gesture = getBoardGesture(owner);
+    if (!gesture.pointers.has(event.pointerId)) return;
+    const wasPinching = gesture.pinching;
+    gesture.pointers.delete(event.pointerId);
+    if (!wasPinching && !gesture.suppressClick) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!wasPinching) {
+      gesture.suppressClick = false;
+      boardClickSuppressionRef.current[owner] = Date.now() + 500;
+      if (owner === "opponent") {
+        setIsOpponentPanning(false);
+        setOpponentPanStart(null);
+      } else {
+        setIsPanning(false);
+        setPanStart(null);
+      }
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (gesture.pointers.size >= 2) {
+      beginTrackedPinch(owner, gesture, rect);
+      return;
+    }
+    gesture.pinching = false;
+    gesture.pinch = null;
+    gesture.activePair = [];
+    const remaining = [...gesture.pointers.values()][0];
+    const camera = getBoardCamera(owner);
+    if (remaining) {
+      if (owner === "opponent") {
+        setIsOpponentPanning(true);
+        setOpponentPanStart({ x: remaining.clientX, y: remaining.clientY, offsetX: camera.offset.x, offsetY: camera.offset.y });
+      } else {
+        setIsPanning(true);
+        setPanStart({ x: remaining.clientX, y: remaining.clientY, offsetX: camera.offset.x, offsetY: camera.offset.y });
+      }
+    } else if (owner === "opponent") {
+      gesture.suppressClick = false;
+      boardClickSuppressionRef.current[owner] = Date.now() + 500;
+      setIsOpponentPanning(false);
+      setOpponentPanStart(null);
+    } else {
+      gesture.suppressClick = false;
+      boardClickSuppressionRef.current[owner] = Date.now() + 500;
+      setIsPanning(false);
+      setPanStart(null);
+    }
+  }
+
+  function handleBoardLostPointerCapture(owner, event) {
+    if (event.target !== event.currentTarget) return;
+    const gesture = getBoardGesture(owner);
+    if (!gesture.pointers.has(event.pointerId)) return;
+    const wasPinching = gesture.pinching;
+    handleBoardPointerEndCapture(owner, event);
+    if (wasPinching) return;
+    if (owner === "opponent") {
+      setIsOpponentPanning(false);
+      setOpponentPanStart(null);
+    } else {
+      setIsPanning(false);
+      setPanStart(null);
+    }
+  }
+
+  function suppressBoardGestureClick(owner, event) {
+    if (event.target.closest?.(".seapals-board-camera-controls")) return;
+    if (Date.now() > boardClickSuppressionRef.current[owner]) return;
+    boardClickSuppressionRef.current[owner] = 0;
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   function handleEcosystemPointerDown(event) {
     if (isPlacingCoral) return;
     if (event.target.closest("button") || event.target.closest("[data-coral]")) return;
     event.preventDefault();
+    const camera = playerCameraRef.current;
     setIsPanning(true);
-    setPanStart({ x: event.clientX, y: event.clientY, offsetX: ecosystemOffset.x, offsetY: ecosystemOffset.y });
+    setPanStart({ x: event.clientX, y: event.clientY, offsetX: camera.offset.x, offsetY: camera.offset.y });
     try {
       event.currentTarget?.setPointerCapture?.(event.pointerId);
     } catch (e) {
@@ -6419,7 +6726,10 @@ export default function Simulator({
     const dx = event.clientX - panStart.x;
     const dy = event.clientY - panStart.y;
     if (Math.abs(dx) + Math.abs(dy) > 4) setPlayerViewportTouched(true);
-    setEcosystemOffset({ x: panStart.offsetX + dx, y: panStart.offsetY + dy });
+    commitBoardCamera("player", {
+      zoom: playerCameraRef.current.zoom,
+      offset: { x: panStart.offsetX + dx, y: panStart.offsetY + dy },
+    });
   }
 
   function handleEcosystemPointerUp(event) {
@@ -6452,17 +6762,23 @@ export default function Simulator({
   function handleOpponentPointerDown(event) {
     if (event.target.closest("button")) return;
     event.preventDefault();
-    setOpponentViewportTouched(true);
+    const camera = opponentCameraRef.current;
     setIsOpponentPanning(true);
-    setOpponentPanStart({ x: event.clientX, y: event.clientY, offsetX: opponentEcosystemOffset.x, offsetY: opponentEcosystemOffset.y });
+    setOpponentPanStart({ x: event.clientX, y: event.clientY, offsetX: camera.offset.x, offsetY: camera.offset.y });
     event.currentTarget?.setPointerCapture?.(event.pointerId);
   }
 
   function handleOpponentPointerMove(event) {
     if (!isOpponentPanning || !opponentPanStart) return;
-    setOpponentEcosystemOffset({
-      x: opponentPanStart.offsetX + event.clientX - opponentPanStart.x,
-      y: opponentPanStart.offsetY + event.clientY - opponentPanStart.y,
+    const dx = event.clientX - opponentPanStart.x;
+    const dy = event.clientY - opponentPanStart.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) setOpponentViewportTouched(true);
+    commitBoardCamera("opponent", {
+      zoom: opponentCameraRef.current.zoom,
+      offset: {
+        x: opponentPanStart.offsetX + dx,
+        y: opponentPanStart.offsetY + dy,
+      },
     });
   }
 
@@ -6476,7 +6792,7 @@ export default function Simulator({
     event.stopPropagation();
     const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
     floatingCardWasDraggedRef.current = false;
-    const zoom = key.startsWith("opponent-") ? opponentEcosystemZoom : ecosystemZoom;
+    const zoom = key.startsWith("opponent-") ? opponentCameraRef.current.zoom : playerCameraRef.current.zoom;
     setFloatingCardDrag({ key, pointerX: event.clientX, pointerY: event.clientY, startX: offset.x, startY: offset.y, zoom });
     event.currentTarget?.setPointerCapture?.(event.pointerId);
   }
@@ -6520,7 +6836,7 @@ export default function Simulator({
   }
 
   useEffect(() => {
-    const attachCursorZoom = (element, setZoom, setOffset, onAdjusted) => {
+    const attachCursorZoom = (owner, element, onAdjusted) => {
       if (!element) return () => {};
       const onWheel = (event) => {
         if (event.deltaY === 0) return;
@@ -6528,24 +6844,22 @@ export default function Simulator({
         event.stopPropagation();
         onAdjusted?.();
         const rect = element.getBoundingClientRect();
-        const distanceX = event.clientX - rect.left - rect.width / 2;
-        const distanceY = event.clientY - rect.top - rect.height / 2;
-        const delta = event.deltaY > 0 ? -0.05 : 0.05;
-        setZoom((currentZoom) => {
-          const newZoom = clampZoom(currentZoom + delta);
-          if (newZoom === currentZoom) return currentZoom;
-          setOffset((currentOffset) => ({
-            x: distanceX - ((distanceX - currentOffset.x) / currentZoom) * newZoom,
-            y: distanceY - ((distanceY - currentOffset.y) / currentZoom) * newZoom,
-          }));
-          return newZoom;
-        });
+        const camera = getBoardCamera(owner);
+        const deltaScale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? rect.height : 1;
+        const normalizedDelta = Math.max(-240, Math.min(240, event.deltaY * deltaScale));
+        const requestedZoom = camera.zoom * Math.exp(-normalizedDelta * .0018);
+        commitBoardCamera(owner, zoomCameraAtPoint(
+          camera,
+          requestedZoom,
+          { x: event.clientX - rect.left, y: event.clientY - rect.top },
+          { width: rect.width, height: rect.height },
+        ));
       };
       element.addEventListener("wheel", onWheel, { passive: false, capture: true });
       return () => element.removeEventListener("wheel", onWheel, { capture: true });
     };
-    const detachPlayer = attachCursorZoom(ecosystemRef.current, setEcosystemZoom, setEcosystemOffset, () => setPlayerViewportTouched(true));
-    const detachOpponent = attachCursorZoom(opponentEcosystemRef.current, setOpponentEcosystemZoom, setOpponentEcosystemOffset, () => setOpponentViewportTouched(true));
+    const detachPlayer = attachCursorZoom("player", ecosystemRef.current, () => setPlayerViewportTouched(true));
+    const detachOpponent = attachCursorZoom("opponent", opponentEcosystemRef.current, () => setOpponentViewportTouched(true));
     return () => {
       detachPlayer();
       detachOpponent();
@@ -6628,7 +6942,7 @@ export default function Simulator({
     }
     if (event?.permanentPlacementCue) {
       const { board, x, y } = event.permanentPlacementCue;
-      setMobileBoardView(board === "opponent" ? "opponent" : "player");
+      if (!previewExperience) setMobileBoardView(board === "opponent" ? "opponent" : "player");
       queueBubbleBurst(x, y, board);
     }
     const eventLogMessages = [
@@ -12157,10 +12471,11 @@ export default function Simulator({
       : ["The opening coin flip will decide who takes the first turn."]);
     setPlayError("");
     setTutorialLayoutProgress(createGuidedAcademyLayoutProgress());
-    setEcosystemZoom(1);
-    setEcosystemOffset({ x: 0, y: 0 });
-    setOpponentEcosystemZoom(1);
-    setOpponentEcosystemOffset({ x: 0, y: 0 });
+    commitBoardCamera("player", { zoom: 1, offset: { x: 0, y: 0 } });
+    commitBoardCamera("opponent", { zoom: 1, offset: { x: 0, y: 0 } });
+    playerGestureRef.current = createEcosystemGestureState();
+    opponentGestureRef.current = createEcosystemGestureState();
+    boardClickSuppressionRef.current = { player: 0, opponent: 0 };
     setPlayerViewportTouched(false);
     setOpponentViewportTouched(false);
     setFloatingCardOffsets({});
@@ -12316,6 +12631,11 @@ export default function Simulator({
     <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
         @keyframes seapalsDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes seapalsCardInspectorIn {
+          0% { opacity: 0; transform: translateY(2.25rem) scale(.94); }
+          70% { opacity: 1; transform: translateY(-.2rem) scale(1.008); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes seapalsCoinReady {
           0%, 100% { transform: translateY(0) rotateX(7deg) rotateY(-8deg); }
@@ -13016,7 +13336,7 @@ export default function Simulator({
         }
         .seapals-mobile-hand-rail {
           position: relative;
-          height: calc(100% - 3.35rem);
+          height: 100%;
           overflow-x: auto;
           overflow-y: hidden;
           overscroll-behavior-x: contain;
@@ -13081,6 +13401,16 @@ export default function Simulator({
         }
         .seapals-board-pane { min-height: 0; }
         .seapals-simulator-preview .seapals-board-pane { position: relative; }
+        .seapals-reef-divider,
+        .seapals-reef-score { display: none; }
+        .seapals-opponent-ocean-backdrop {
+          position: absolute;
+          z-index: 0;
+          inset: 0;
+          background: inherit;
+          transform: scaleY(-1);
+          pointer-events: none;
+        }
         .seapals-simulator-preview .seapals-board-pane-header {
           position: absolute;
           z-index: 45;
@@ -13156,6 +13486,174 @@ export default function Simulator({
           font-weight: 800;
         }
         .seapals-mobile-hud-panel { bottom: 15.1rem; }
+        @media (max-width: 1279px) {
+          .seapals-simulator-preview .seapals-board-stack {
+            display: flex;
+            flex-direction: column;
+          }
+          .seapals-simulator-preview .seapals-board-pane[data-board-owner="opponent"] {
+            flex: 0 0 calc(var(--seapals-mobile-reef-split) - 1.375rem);
+            height: auto;
+          }
+          .seapals-simulator-preview .seapals-board-pane[data-board-owner="player"] {
+            flex: 1 1 0;
+            height: auto;
+          }
+          .seapals-reef-divider {
+            position: relative;
+            z-index: 70;
+            display: flex;
+            flex: 0 0 2.75rem;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid rgba(103, 232, 249, .3);
+            border-bottom: 1px solid rgba(103, 232, 249, .3);
+            background: linear-gradient(90deg, #06111d, #164e63 50%, #06111d);
+            box-shadow: 0 0 18px rgba(34, 211, 238, .28);
+            cursor: ns-resize;
+            touch-action: none;
+          }
+          .seapals-reef-divider > span {
+            display: flex;
+            min-width: 4.5rem;
+            height: 1.65rem;
+            align-items: center;
+            justify-content: center;
+            gap: .28rem;
+            border: 1px solid rgba(165, 243, 252, .55);
+            border-radius: 999px;
+            background: #082f49;
+            box-shadow: 0 4px 14px rgba(2, 8, 23, .65);
+          }
+          .seapals-reef-divider i {
+            display: block;
+            width: .28rem;
+            height: .28rem;
+            border-radius: 999px;
+            background: #a5f3fc;
+          }
+          .seapals-reef-divider:is(:focus-visible, .is-dragging) > span {
+            outline: 3px solid #fde68a;
+            outline-offset: 1px;
+            background: #155e75;
+          }
+          .seapals-reef-score {
+            position: absolute;
+            right: .45rem;
+            z-index: 60;
+            display: flex;
+            gap: .25rem;
+            pointer-events: none;
+          }
+          .seapals-reef-score-opponent { bottom: .45rem; }
+          .seapals-reef-score-player { top: .45rem; }
+          .seapals-reef-score-card {
+            display: grid;
+            width: 2.35rem;
+            height: 2.7rem;
+            place-items: center;
+            align-content: center;
+            border: 1px solid rgba(255, 255, 255, .35);
+            border-radius: .6rem;
+            color: #fff;
+            background: rgba(2, 8, 23, .9);
+            line-height: .9;
+            box-shadow: 0 5px 18px rgba(2, 8, 23, .6), inset 0 1px rgba(255, 255, 255, .12);
+            backdrop-filter: blur(8px);
+          }
+          .seapals-reef-score-card small {
+            font-size: .46rem;
+            font-weight: 950;
+            letter-spacing: .08em;
+          }
+          .seapals-reef-score-card strong {
+            margin-top: .22rem;
+            font-size: 1.1rem;
+            font-weight: 950;
+            line-height: 1;
+          }
+          .seapals-reef-score-card.is-vp { border-color: rgba(253, 230, 138, .72); color: #fef3c7; }
+          .seapals-reef-score-card.is-rp { border-color: rgba(110, 231, 183, .68); color: #d1fae5; }
+          .seapals-simulator-preview .seapals-mobile-hand-list {
+            padding-right: 5.75rem;
+            padding-left: 3.75rem;
+          }
+          .seapals-simulator-preview .seapals-player-habitats { left: 4rem; }
+          .seapals-simulator-preview :is(.seapals-player-open-water, .seapals-player-orphans) { right: 5.75rem; }
+          .seapals-simulator-preview [data-board-owner="opponent"] .seapals-board-camera-controls {
+            z-index: 65;
+            top: auto;
+            right: auto;
+            bottom: .5rem;
+            left: .5rem;
+            flex-direction: column;
+            translate: 0 0 !important;
+            transform: none;
+          }
+          .seapals-simulator-preview [data-board-owner="player"] .seapals-board-camera-controls {
+            z-index: 65;
+            top: .5rem;
+            right: auto;
+            left: .5rem;
+            flex-direction: column;
+            translate: 0 0 !important;
+            transform: none;
+          }
+          .seapals-simulator-preview .seapals-board-camera-controls > button:nth-child(2) {
+            border-top: 1px solid rgba(255, 255, 255, .1);
+            border-right: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .1);
+            border-left: 0;
+          }
+          .seapals-simulator-preview .seapals-card-drawer {
+            inset: 0;
+            width: 100%;
+            max-width: none;
+            padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+            border: 0;
+            border-radius: 0;
+            background:
+              radial-gradient(circle at 50% 16%, rgba(34, 211, 238, .2), transparent 34%),
+              linear-gradient(180deg, #071724, #020617);
+            animation: seapalsCardInspectorIn 300ms cubic-bezier(.2, .85, .25, 1);
+          }
+          .seapals-simulator-preview .seapals-card-inspector-header {
+            position: sticky;
+            z-index: 4;
+            top: calc(0px - max(1rem, env(safe-area-inset-top)));
+            margin: calc(0px - max(1rem, env(safe-area-inset-top))) calc(0px - max(1rem, env(safe-area-inset-right))) 0 calc(0px - max(1rem, env(safe-area-inset-left)));
+            padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) .75rem max(1rem, env(safe-area-inset-left));
+            background: linear-gradient(180deg, rgba(2, 6, 23, .98), rgba(2, 6, 23, .82) 75%, transparent);
+            backdrop-filter: blur(12px);
+          }
+          .seapals-simulator-preview .seapals-card-inspector-close {
+            display: grid;
+            width: 2.75rem;
+            height: 2.75rem;
+            flex: 0 0 2.75rem;
+            place-items: center;
+            padding: 0;
+            font-size: 1.75rem;
+            line-height: 1;
+          }
+          .seapals-simulator-preview .seapals-card-inspector-image {
+            height: min(62dvh, 42rem);
+            min-height: 21rem;
+            animation: seapalsCardInspectorIn 360ms cubic-bezier(.18, .86, .24, 1);
+          }
+        }
+        @media (max-width: 1279px) and (max-height: 650px) {
+          .seapals-simulator-preview [data-board-owner] .seapals-board-camera-controls {
+            flex-direction: row;
+          }
+          .seapals-simulator-preview .seapals-board-camera-controls > button:nth-child(2) {
+            border-top: 0;
+            border-right: 1px solid rgba(255, 255, 255, .1);
+            border-bottom: 0;
+            border-left: 1px solid rgba(255, 255, 255, .1);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-list { padding-left: 9rem; }
+        }
         @media (max-width: 767px) {
           .seapals-game-shell.seapals-simulator-preview {
             --seapals-mobile-hand-height: 13rem;
@@ -13205,41 +13703,20 @@ export default function Simulator({
             grid-row: 2;
             width: 100%;
           }
-          .seapals-mobile-scoreboard > * {
+          .seapals-mobile-scoreboard > div {
             min-width: 0;
             flex: 1 1 50%;
             padding: .25rem .5rem;
           }
-          .seapals-mobile-score-control {
-            appearance: none;
-            color: inherit;
-            background: transparent;
-            font: inherit;
-          }
-          button.seapals-mobile-score-control {
-            cursor: pointer;
-            transition: background-color 160ms ease, box-shadow 160ms ease;
-          }
-          button.seapals-mobile-score-control[aria-pressed="true"] {
-            background: rgba(34, 211, 238, .08);
-            box-shadow: inset 0 -2px rgba(103, 232, 249, .72);
-          }
-          button.seapals-mobile-score-control:focus-visible {
-            position: relative;
-            z-index: 2;
-            outline: 3px solid #fde68a;
-            outline-offset: -3px;
-          }
-          button.seapals-mobile-score-control:disabled { cursor: not-allowed; opacity: .48; }
-          .seapals-mobile-scoreboard > * > div {
+          .seapals-mobile-scoreboard > div > div {
             overflow: hidden;
             line-height: 1.1;
             text-overflow: ellipsis;
             white-space: nowrap;
           }
-          .seapals-mobile-scoreboard > * > div:nth-child(2) { font-size: 1rem; }
-          .seapals-mobile-scoreboard > * > div:nth-child(2) > span { font-size: .625rem; }
-          .seapals-mobile-scoreboard > * > div:nth-child(3) { font-size: .5rem; }
+          .seapals-mobile-scoreboard > div > div:nth-child(2) { font-size: 1rem; }
+          .seapals-mobile-scoreboard > div > div:nth-child(2) > span { font-size: .625rem; }
+          .seapals-mobile-scoreboard > div > div:nth-child(3) { font-size: .5rem; }
           .seapals-phase-chip {
             grid-column: 1 / -1;
             grid-row: 3;
@@ -13266,6 +13743,7 @@ export default function Simulator({
             left: max(.5rem, env(safe-area-inset-left)) !important;
             width: auto !important;
           }
+          .seapals-simulator-preview .seapals-finn-control { display: none; }
           .seapals-menu-control {
             grid-column: 3;
             grid-row: 1;
@@ -13277,6 +13755,12 @@ export default function Simulator({
           }
           .seapals-menu-label { display: none; }
           .seapals-menu-icon { display: block; }
+          .seapals-simulator-preview .seapals-simulator-header {
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-rows: auto auto;
+          }
+          .seapals-simulator-preview .seapals-menu-control { grid-column: 2; }
+          .seapals-simulator-preview .seapals-phase-chip { grid-row: 2; }
           .seapals-board-tabs {
             margin-bottom: .25rem;
             padding: .2rem;
@@ -13287,29 +13771,13 @@ export default function Simulator({
             padding-bottom: .35rem;
             font-size: .625rem;
           }
-          .seapals-simulator-preview [data-board-focus="context"] .seapals-board-camera-controls {
-            display: none;
-          }
-          .seapals-simulator-preview [data-board-focus="focused"] .seapals-board-camera-controls {
-            top: .5rem;
-            right: auto;
-            left: .5rem;
-            flex-direction: row;
-            transform: none;
-          }
-          .seapals-simulator-preview [data-board-focus="focused"] .seapals-board-camera-controls > button:nth-child(2) {
-            border-top: 0;
-            border-right: 1px solid rgba(255, 255, 255, .1);
-            border-bottom: 0;
-            border-left: 1px solid rgba(255, 255, 255, .1);
-          }
           .seapals-mobile-hand-dock { height: var(--seapals-mobile-hand-height); }
           .seapals-mobile-hand-card {
-            width: 5.75rem;
-            height: 8.15rem;
-            transform: translateY(1.35rem) rotate(-1deg);
+            width: 6.25rem;
+            height: 8.85rem;
+            transform: translateY(4.15rem) rotate(-1deg);
           }
-          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(1.35rem) rotate(1deg); }
+          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(4.15rem) rotate(1deg); }
           .seapals-mobile-hud-panel {
             bottom: var(--seapals-mobile-dock-clearance);
           }
@@ -13408,14 +13876,12 @@ export default function Simulator({
             bottom: 3.75rem;
             left: .5rem;
           }
-          .seapals-mobile-hand-summary { min-height: 2.75rem; }
-          .seapals-mobile-hand-rail { height: calc(100% - 2.75rem); }
           .seapals-mobile-hand-card {
-            width: 4.5rem;
-            height: 6.35rem;
-            transform: translateY(.8rem) rotate(-1deg);
+            width: 5rem;
+            height: 7.1rem;
+            transform: translateY(3.2rem) rotate(-1deg);
           }
-          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(.8rem) rotate(1deg); }
+          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(3.2rem) rotate(1deg); }
           .seapals-mobile-hand-card.is-selected,
           .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card.is-selected {
             transform: translateY(.05rem) rotate(0deg) scale(1.03);
@@ -13449,39 +13915,23 @@ export default function Simulator({
               </div>
             </div>
             <div className="seapals-simulator-controls flex flex-wrap items-center gap-2">
-              <div className={`seapals-mobile-scoreboard flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 shadow-lg xl:hidden${tutorialTargetClass("vp-score")}`} aria-label="Victory points in play" data-tutorial-target="vp-score">
-                <MobileScoreControl
-                  type={previewExperience ? "button" : undefined}
-                  className="seapals-mobile-score-control border-r border-white/10 px-4 py-1.5 text-center"
-                  onClick={previewExperience ? () => focusMobileBoard("player") : undefined}
-                  aria-pressed={previewExperience ? mobileBoardView === "player" : undefined}
-                  aria-controls={previewExperience ? "simulator-player-reef" : undefined}
-                  data-tutorial-coach-anchor={previewExperience ? "player-board-tab" : undefined}
-                >
+              {!previewExperience ? <div className={`seapals-mobile-scoreboard flex overflow-hidden rounded-xl border border-white/10 bg-slate-950/45 shadow-lg xl:hidden${tutorialTargetClass("vp-score")}`} aria-label="Victory points in play" data-tutorial-target="vp-score">
+                <div className="border-r border-white/10 px-4 py-1.5 text-center">
                   <div className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300">Your Reef</div>
                   <div className="text-xl font-black tabular-nums text-white">{playerVp}<span className="text-xs text-emerald-300">/{victoryTarget} VP</span></div>
                   <div className="text-[9px] font-semibold text-cyan-300/70">{playerSchoolDensityState.committed}/{playerSchoolDensity} SD used{playerSchoolDensityState.overCapacity ? ` · ${playerSchoolDensityState.overCapacity} over` : ""}</div>
-                </MobileScoreControl>
-                <MobileScoreControl
-                  type={previewExperience ? "button" : undefined}
-                  className="seapals-mobile-score-control px-4 py-1.5 text-center"
-                  onClick={previewExperience ? () => focusMobileBoard("opponent") : undefined}
-                  disabled={previewExperience ? Boolean(playingCardId) : undefined}
-                  title={previewExperience && playingCardId ? "Finish placing this card in Your Reef first." : undefined}
-                  aria-pressed={previewExperience ? mobileBoardView === "opponent" : undefined}
-                  aria-controls={previewExperience ? "simulator-opponent-reef" : undefined}
-                  data-tutorial-coach-anchor={previewExperience ? "opponent-board-tab" : undefined}
-                >
+                </div>
+                <div className="px-4 py-1.5 text-center">
                   <div className="text-[9px] font-black uppercase tracking-[0.18em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div>
                   <div className="text-xl font-black tabular-nums text-white">{opponentVp}<span className="text-xs text-rose-300">/{victoryTarget} VP</span></div>
                   <div className="text-[9px] font-semibold text-rose-300/80">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensityState.committed}/{opponentSchoolDensity} SD used{opponentSchoolDensityState.overCapacity ? ` · ${opponentSchoolDensityState.overCapacity} over` : ""}</div>
-                </MobileScoreControl>
-              </div>
+                </div>
+              </div> : null}
               <div className="seapals-phase-chip rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-violet-100 shadow-sm">
                 <span className={`xl:hidden${tutorialTargetClass("condition-panel")}`} data-tutorial-target="condition-panel">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
                 <span className="hidden xl:inline">{isSetup ? "Setup Round" : `Round ${round} • Turn ${turn}`} • {gamePhase === "draw" ? "Choose cards" : gamePhase === "main" ? "Play & Act" : gamePhase === "opponent" ? "Opponent turn" : "Transition"}</span>
               </div>
-              <div className="seapals-finn-control">
+              {!previewExperience ? <div className="seapals-finn-control">
                 <RulesChat
                 placement="simulator"
                 gamePhase={gamePhase}
@@ -13502,7 +13952,7 @@ export default function Simulator({
                   tutorialGuideName: tutorialGuide.name,
                 }}
                 />
-              </div>
+              </div> : null}
               <details className="seapals-menu-control relative">
                 <summary aria-label="Open simulator menu" className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden"><span className="seapals-menu-label">Menu</span><span className="seapals-menu-icon hidden" aria-hidden="true">•••</span></summary>
                 <div className="absolute right-0 top-11 z-[70] w-48 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-xl">
@@ -13704,14 +14154,18 @@ export default function Simulator({
             </div>
           ) : null}
 
-          <div className={previewExperience ? "seapals-board-tabs sr-only xl:hidden" : "seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden"} aria-label={previewExperience ? "Choose ecosystem to focus" : "Choose ecosystem to view"}>
+          {!previewExperience ? <div className="seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label="Choose ecosystem to view">
             <button type="button" data-tutorial-coach-anchor="player-board-tab" aria-pressed={mobileBoardView === "player"} onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
             <button type="button" data-tutorial-coach-anchor="opponent-board-tab" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish placing this card in Your Reef first." : undefined} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-40 ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
-          </div>
+          </div> : null}
 
           <div className="min-h-0 w-full flex-1 rounded-2xl border border-cyan-300/20 bg-[#06111d] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
-            <div className="h-full min-h-0 overflow-hidden rounded-2xl bg-[#071724]">
-              <div id="simulator-opponent-reef" className={`seapals-board-pane ${previewExperience ? `${mobileBoardView === "opponent" ? "h-[66%]" : "h-[34%]"} block transition-[height] duration-300 ease-out` : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" data-board-focus={mobileBoardView === "opponent" ? "focused" : "context"} onClickCapture={() => focusMobileBoard("opponent")} onFocusCapture={() => focusMobileBoard("opponent")} aria-label="Rival reef">
+            <div
+              ref={mobileBoardStackRef}
+              className="seapals-board-stack h-full min-h-0 overflow-hidden rounded-2xl bg-[#071724]"
+              style={previewExperience ? { "--seapals-mobile-reef-split": `${mobileReefSplit}%` } : undefined}
+            >
+              <div id="simulator-opponent-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" onClickCapture={(event) => suppressBoardGestureClick("opponent", event)} aria-label="Rival reef">
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-rose-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-200"><span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,.8)]" /> {isStoryMode ? `${storyOpponentName}'s Ecosystem` : "Rival Ecosystem"}</div>
                   {attackContext ? (
@@ -13721,26 +14175,37 @@ export default function Simulator({
                     </div>
                   ) : null}
                 </div>
+                {previewExperience ? (
+                  <div className="seapals-reef-score seapals-reef-score-opponent" data-tutorial-coach-anchor="opponent-board-tab" aria-label={`${opponentHudLabel}: ${opponentVp} Victory Points and ${opponent.rp} Resource Points`}>
+                    <span className="seapals-reef-score-card is-vp"><small>VP</small><strong>{opponentVp}</strong></span>
+                    <span className="seapals-reef-score-card is-rp"><small>RP</small><strong>{opponent.rp}</strong></span>
+                  </div>
+                ) : null}
                 <div
                   ref={opponentEcosystemRef}
                   className={`seapals-ecosystem-ocean relative ${previewExperience ? "h-full" : "h-[calc(100%-40px)]"} w-full overflow-hidden${tutorialTargetClass("opponent-board")}`}
                   data-tutorial-target="opponent-board"
+                  onPointerDownCapture={(event) => handleBoardPointerDownCapture("opponent", event)}
+                  onPointerMoveCapture={(event) => handleBoardPointerMoveCapture("opponent", event)}
+                  onPointerUpCapture={(event) => handleBoardPointerEndCapture("opponent", event)}
+                  onPointerCancelCapture={(event) => handleBoardPointerEndCapture("opponent", event)}
                   onPointerDown={handleOpponentPointerDown}
                   onPointerMove={handleOpponentPointerMove}
                   onPointerUp={handleOpponentPointerUp}
                   onPointerCancel={handleOpponentPointerUp}
-                  onLostPointerCapture={handleOpponentPointerUp}
+                  onLostPointerCapture={(event) => handleBoardLostPointerCapture("opponent", event)}
                   style={{ touchAction: "none", overscrollBehavior: "contain", cursor: isOpponentPanning ? "grabbing" : "grab" }}
                 >
+                  {previewExperience ? <div className="seapals-opponent-ocean-backdrop" aria-hidden="true" /> : null}
                   <div className="seapals-board-camera-controls absolute right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col overflow-hidden rounded-full border border-rose-300/25 bg-slate-950/85 text-white shadow-xl backdrop-blur" aria-label="Opponent ecosystem zoom controls">
-                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); setOpponentEcosystemZoom((current) => clampZoom(current + 0.1)); }} className="flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom in on opponent ecosystem">+</button>
+                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); adjustBoardZoom("opponent", 0.1); }} className="flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom in on opponent ecosystem">+</button>
                     <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); zoomEcosystemToFit("opponent"); }} className="min-h-11 w-11 border-y border-white/10 px-1 py-1 text-[9px] font-black uppercase text-rose-200" aria-label="Fit opponent ecosystem to view">Fit</button>
-                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); setOpponentEcosystemZoom((current) => clampZoom(current - 0.1)); }} className="flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom out on opponent ecosystem">−</button>
+                    <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => { setOpponentViewportTouched(true); adjustBoardZoom("opponent", -0.1); }} className="flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10" aria-label="Zoom out on opponent ecosystem">−</button>
                   </div>
                   <div className="absolute inset-0" style={{ transform: `translate(${opponentEcosystemOffset.x}px, ${opponentEcosystemOffset.y}px) scale(${opponentEcosystemZoom})`, transformOrigin: "center center" }}>
-                    <div className="seapals-opponent-ecosystem-content absolute inset-0" data-opponent-orientation={previewExperience ? "mirrored" : "standard"}>
+                    <div className="seapals-opponent-ecosystem-content absolute inset-0" data-opponent-orientation={previewExperience ? "inverted" : "standard"}>
                       {opponent.habitats.length ? (
-                        <div className={`absolute z-30 flex max-w-[30%] flex-wrap gap-2 ${previewExperience ? "bottom-4 right-4 justify-end" : "left-4 top-4"}`}>
+                        <div className="seapals-opponent-habitats absolute left-4 top-4 z-30 flex max-w-[30%] flex-wrap gap-2">
                           {opponent.habitatInstances.map((habitatInstance) => {
                             const cardId = habitatInstance.cardId;
                             const card = cardsById[cardId];
@@ -13757,10 +14222,10 @@ export default function Simulator({
                           })}
                         </div>
                       ) : null}
-                      {(opponent.reefCreatures ?? []).length ? <div className={`absolute left-1/2 z-30 flex max-w-[34%] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50/95 p-2 shadow-lg ${previewExperience ? "bottom-4" : "top-4"}`}>{opponent.reefCreatures.map((cardId, index) => { const card = cardsById[cardId]; const targetSlotId = getOpponentReefSlotId(index); const isTarget = attackContext?.targets.some((target) => target.coralId === "__reef__" && target.slotId === targetSlotId); const key = `opponent-${targetSlotId}`; const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 }; return <button key={opponent.reefCreatureInstances?.[index]?.instanceId ?? `${cardId}-${index}`} type="button" data-tutorial-target={isTarget ? "opponent-board" : undefined} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => isTarget ? resolvePlayerAttack("__reef__", targetSlotId) : inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card relative w-[120px] cursor-grab rounded-lg text-center active:cursor-grabbing ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}><InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} /><img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-lg bg-white object-contain" /><span className="block truncate text-[9px] font-bold text-violet-950">{card?.name}</span></button>; })}</div> : null}
+                      {(opponent.reefCreatures ?? []).length ? <div className="seapals-opponent-open-water absolute left-1/2 top-4 z-30 flex max-w-[34%] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50/95 p-2 shadow-lg">{opponent.reefCreatures.map((cardId, index) => { const card = cardsById[cardId]; const targetSlotId = getOpponentReefSlotId(index); const isTarget = attackContext?.targets.some((target) => target.coralId === "__reef__" && target.slotId === targetSlotId); const key = `opponent-${targetSlotId}`; const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 }; return <button key={opponent.reefCreatureInstances?.[index]?.instanceId ?? `${cardId}-${index}`} type="button" data-tutorial-target={isTarget ? "opponent-board" : undefined} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => isTarget ? resolvePlayerAttack("__reef__", targetSlotId) : inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card relative w-[120px] cursor-grab rounded-lg text-center active:cursor-grabbing ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}><InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} /><img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-lg bg-white object-contain" /><span className="block truncate text-[9px] font-bold text-violet-950">{card?.name}</span></button>; })}</div> : null}
                       {(opponent.orphanCreatures ?? []).length ? (
-                        <div className={`absolute z-30 flex max-w-[34%] flex-wrap gap-2 rounded-xl border-2 border-dashed border-orange-400 bg-orange-50/95 p-2 shadow-lg ${previewExperience ? "bottom-4 left-4 justify-start" : "right-4 top-4 justify-end"}`}>
-                          <div className={`absolute rounded-full bg-orange-600 px-2 py-1 text-[8px] font-black uppercase text-white ${previewExperience ? "-bottom-3 left-2" : "-top-3 right-2"}`}>Orphaned</div>
+                        <div className="seapals-opponent-orphans absolute right-4 top-4 z-30 flex max-w-[34%] flex-wrap justify-end gap-2 rounded-xl border-2 border-dashed border-orange-400 bg-orange-50/95 p-2 shadow-lg">
+                          <div className="absolute -top-3 right-2 rounded-full bg-orange-600 px-2 py-1 text-[8px] font-black uppercase text-white">Orphaned</div>
                           {opponent.orphanCreatures.map((entry, index) => {
                             const card = cardsById[entry.cardId];
                             const targetSlotId = getOpponentOrphanSlotId(index);
@@ -13800,7 +14265,7 @@ export default function Simulator({
                         const isFoundationTarget = attackContext?.targets.some((target) => target.coralId === coral.id && target.slotId === "__foundation__");
                         const gridOffset = getOpponentCoralGridOffset(coralIndex, opponentCorals.length, previewExperience);
                         const hasFloatingOpponentCards = opponent.habitats.length || opponent.reefCreatures.length || (opponent.orphanCreatures?.length ?? 0);
-                        const opponentFloatingOffset = hasFloatingOpponentCards ? (previewExperience ? -360 : 360) : 0;
+                        const opponentFloatingOffset = hasFloatingOpponentCards ? 360 : 0;
                         return (
                           <div key={coral.id} className="absolute h-[210px] w-[180px] -translate-x-1/2 -translate-y-1/2" style={{ left: `calc(50% + ${gridOffset.x}px)`, top: `calc(50% + ${gridOffset.y + opponentFloatingOffset}px)` }}>
                             <button type="button" aria-label={`Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
@@ -13813,7 +14278,7 @@ export default function Simulator({
                               {coral.rpPenaltyNextTurn ? <div className="mt-1 rounded-full bg-cyan-100 px-2 py-0.5 text-center text-[9px] font-black text-cyan-800">−{coral.rpPenaltyNextTurn} RP next collection</div> : null}
                             </button>
                             {coral.slots.map((slot, slotIndex) => {
-                              const position = slot.position ?? anchorPositions[slotIndex];
+                              const position = getOpponentSlotPosition(slot.position, previewExperience) ?? anchorPositions[slotIndex];
                               const slotCard = cardsById[slot.cardId];
                               const isTarget = attackContext?.targets.some((target) => target.coralId === coral.id && target.slotId === slot.id);
                               return (
@@ -13853,7 +14318,30 @@ export default function Simulator({
                 </div>
               </div>
 
-              <div id="simulator-player-reef" className={`seapals-board-pane ${previewExperience ? `${mobileBoardView === "player" ? "h-[66%]" : "h-[34%]"} block transition-[height] duration-300 ease-out` : mobileBoardView === "player" ? "h-full" : "hidden"} bg-slate-900 xl:block xl:h-[55%]`} data-board-owner="player" data-board-focus={mobileBoardView === "player" ? "focused" : "context"} onClickCapture={() => focusMobileBoard("player")} onFocusCapture={() => focusMobileBoard("player")} aria-label="Your reef">
+              {previewExperience ? (
+                <div
+                  className={`seapals-reef-divider${reefDividerDragging ? " is-dragging" : ""}`}
+                  role="separator"
+                  aria-label="Resize rival and player reef views"
+                  aria-orientation="horizontal"
+                  aria-controls="simulator-opponent-reef simulator-player-reef"
+                  aria-valuemin={MOBILE_REEF_SPLIT_MIN}
+                  aria-valuemax={MOBILE_REEF_SPLIT_MAX}
+                  aria-valuenow={Math.round(mobileReefSplit)}
+                  aria-valuetext={`${Math.round(mobileReefSplit)} percent Rival Reef, ${100 - Math.round(mobileReefSplit)} percent Your Reef`}
+                  tabIndex={0}
+                  onKeyDown={handleReefDividerKeyDown}
+                  onPointerDown={handleReefDividerPointerDown}
+                  onPointerMove={handleReefDividerPointerMove}
+                  onPointerUp={handleReefDividerPointerUp}
+                  onPointerCancel={handleReefDividerPointerUp}
+                  onLostPointerCapture={handleReefDividerPointerUp}
+                >
+                  <span aria-hidden="true"><i /><i /><i /></span>
+                </div>
+              ) : null}
+
+              <div id="simulator-player-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "player" ? "h-full" : "hidden"} bg-slate-900 xl:block xl:h-[55%]`} data-board-owner="player" onClickCapture={(event) => suppressBoardGestureClick("player", event)} aria-label="Your reef">
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-200"><span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]" /> Your Ecosystem</div>
                   {isPlacingCoral && (
@@ -13875,15 +14363,25 @@ export default function Simulator({
                     </div>
                   )}
                 </div>
+                {previewExperience ? (
+                  <div className="seapals-reef-score seapals-reef-score-player" data-tutorial-coach-anchor="player-board-tab" aria-label={`Your Reef: ${playerVp} Victory Points and ${rp} Resource Points`}>
+                    <span className={`seapals-reef-score-card is-vp${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score"><small>VP</small><strong>{playerVp}</strong></span>
+                    <span className={`seapals-reef-score-card is-rp${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><small>RP</small><strong>{rp}</strong></span>
+                  </div>
+                ) : null}
                 <div
                   ref={ecosystemRef}
                   className={`seapals-ecosystem-ocean relative ${previewExperience ? "h-full" : "h-[calc(100%-40px)]"} w-full ${isPlacingCoral ? "cursor-crosshair" : ""}${tutorialTargetClass("player-board")}`}
                   data-tutorial-target="player-board"
+                  onPointerDownCapture={(event) => handleBoardPointerDownCapture("player", event)}
+                  onPointerMoveCapture={(event) => handleBoardPointerMoveCapture("player", event)}
+                  onPointerUpCapture={(event) => handleBoardPointerEndCapture("player", event)}
+                  onPointerCancelCapture={(event) => handleBoardPointerEndCapture("player", event)}
                   onPointerDown={handleEcosystemPointerDown}
                   onPointerMove={handleEcosystemPointerMove}
                   onPointerUp={handleEcosystemPointerUp}
                   onPointerCancel={handleEcosystemPointerUp}
-                  onLostPointerCapture={handleEcosystemPointerUp}
+                  onLostPointerCapture={(event) => handleBoardLostPointerCapture("player", event)}
                   style={{ touchAction: "none", overscrollBehavior: "contain", userSelect: "none" }}
                 >
                   {!isPlacingCoral && !isUpgradingCoral ? (
@@ -13894,7 +14392,7 @@ export default function Simulator({
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => {
                           setPlayerViewportTouched(true);
-                          setEcosystemZoom((current) => clampZoom(current + 0.1));
+                          adjustBoardZoom("player", 0.1);
                           completeTutorialLayoutLessonAction(GUIDED_ACADEMY_LAYOUT_ACTIONS.ZOOM_IN);
                         }}
                         className={`flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10${tutorialTargetClass("player-zoom-in")}`}
@@ -13918,7 +14416,7 @@ export default function Simulator({
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => {
                           setPlayerViewportTouched(true);
-                          setEcosystemZoom((current) => clampZoom(current - 0.1));
+                          adjustBoardZoom("player", -0.1);
                           completeTutorialLayoutLessonAction(GUIDED_ACADEMY_LAYOUT_ACTIONS.ZOOM_OUT);
                         }}
                         className={`flex h-11 w-11 items-center justify-center text-xl font-bold hover:bg-white/10${tutorialTargetClass("player-zoom-out")}`}
@@ -13937,7 +14435,7 @@ export default function Simulator({
                       }}
                     >
                       {playerHabitats.length ? (
-                        <div className="absolute left-6 top-6 z-30 flex max-w-[70%] gap-3">
+                        <div className="seapals-player-habitats absolute left-6 top-6 z-30 flex max-w-[70%] gap-3">
                           {playerHabitatInstances.map((habitatInstance, index) => {
                             const cardId = habitatInstance.cardId;
                             const habitat = cardsById[cardId];
@@ -13955,7 +14453,7 @@ export default function Simulator({
                         </div>
                       ) : null}
                       {playerReefCreatures.length ? (
-                        <div className="absolute right-6 top-6 z-30 flex gap-3 rounded-2xl border border-violet-300 bg-violet-50/95 p-3 shadow-lg">
+                        <div className="seapals-player-open-water absolute right-6 top-6 z-30 flex gap-3 rounded-2xl border border-violet-300 bg-violet-50/95 p-3 shadow-lg">
                           <div className="absolute -top-3 right-3 rounded-full bg-violet-700 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-white">Open Water</div>
                           {playerReefCreatures.map((cardId, index) => {
                             const card = cardsById[cardId];
@@ -13967,7 +14465,7 @@ export default function Simulator({
                         </div>
                       ) : null}
                       {playerOrphanCreatures.length ? (
-                        <div className="absolute right-6 top-48 z-30 flex max-w-[48%] flex-wrap gap-2 rounded-2xl border-2 border-dashed border-orange-400 bg-orange-50/95 p-3 shadow-lg">
+                        <div className="seapals-player-orphans absolute right-6 top-48 z-30 flex max-w-[48%] flex-wrap gap-2 rounded-2xl border-2 border-dashed border-orange-400 bg-orange-50/95 p-3 shadow-lg">
                           <div className="absolute -top-3 right-3 rounded-full bg-orange-600 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-white">Orphaned — waiting for slots</div>
                           {playerOrphanCreatures.map((entry, index) => {
                             const card = cardsById[entry.cardId];
@@ -14231,7 +14729,6 @@ export default function Simulator({
             })}
             selectedIndex={mobileSelectedHandIndex}
             playingCardId={playingCardId}
-            rp={rp}
             tutorialTargetClass={tutorialTargetClass("hand")}
             onSelect={(index) => {
               setMobileSelectedHandIndex(index);
@@ -14239,13 +14736,8 @@ export default function Simulator({
             }}
             onInspect={(cardId) => {
               setSelectedHandCard(cardId);
-              setMobileSelectedHandIndex(null);
               setPlayError("");
               setModal("hand");
-            }}
-            onPlay={(cardId) => {
-              setMobileSelectedHandIndex(null);
-              playCardFromHand(cardId);
             }}
           /> : null}
           {mobileHudPanel ? (
@@ -14343,24 +14835,24 @@ export default function Simulator({
         <>
           <button type="button" aria-label="Close card inspector" onClick={closeCardInspector} className="fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-sm" />
           <aside
-            className="seapals-card-drawer seapals-hud-panel fixed inset-y-0 right-0 z-[110] w-full max-w-md overflow-y-auto border-l border-cyan-300/30 p-6 text-slate-100 shadow-2xl"
+            className="seapals-card-drawer seapals-card-inspector seapals-hud-panel fixed inset-y-0 right-0 z-[110] w-full max-w-md overflow-y-auto border-l border-cyan-300/30 p-6 text-slate-100 shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="seapals-card-inspector-title"
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="seapals-card-inspector-header flex items-start justify-between gap-4">
               <div>
                 <div className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">{inspectedCard.reference ? "Deck search preview" : inspectedCard.foundation ? inspectedCard.owner === "player" ? "Your Foundation" : "Opponent Foundation" : inspectedCard.owner === "player" ? "Your Creature" : "Opponent Creature"}</div>
                 <h2 id="seapals-card-inspector-title" className="mt-1 text-2xl font-black text-white">{inspectedCardData.name}</h2>
               </div>
-              <button type="button" autoFocus onClick={closeCardInspector} className={`rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal">Close</button>
+              <button type="button" autoFocus aria-label="Close card inspector" onClick={closeCardInspector} className={`seapals-card-inspector-close rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal"><span aria-hidden="true">×</span></button>
             </div>
             {tutorialHelpInline && tutorialHelp.target === "close-modal" ? (
               <div className="mt-4">
                 <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
               </div>
             ) : null}
-            <img src={inspectedCardData.image} alt={inspectedCardData.name} className="mt-5 h-96 w-full rounded-3xl border border-white/10 bg-slate-950/45 object-contain" />
+            <img src={inspectedCardData.image} alt={inspectedCardData.name} className="seapals-card-inspector-image mt-5 h-96 w-full rounded-3xl border border-white/10 bg-slate-950/45 object-contain" />
             <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold">
               <span className="rounded-full bg-cyan-400/15 px-3 py-1 text-cyan-200">{getCardClassLabel(inspectedCardData)}</span>
               <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-200">{getPlayerCardPlayCost(inspectedCardData)} RP</span>
