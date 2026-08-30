@@ -240,7 +240,8 @@ test("V2 keeps both reefs mounted around an accessible 24-to-68 percent divider"
 
   assert.match(simulatorSource, /const MOBILE_REEF_SPLIT_MIN = 24;/);
   assert.match(simulatorSource, /const MOBILE_REEF_SPLIT_MAX = 68;/);
-  assert.match(simulatorSource, /const \[mobileReefSplit, setMobileReefSplit\] = useState\(40\)/);
+  assert.match(simulatorSource, /const MOBILE_REEF_SPLIT_DEFAULT = 40;/);
+  assert.match(simulatorSource, /const \[mobileReefSplit, setMobileReefSplit\] = useState\(MOBILE_REEF_SPLIT_DEFAULT\)/);
   assert.match(
     simulatorSource,
     /id="simulator-opponent-reef"[\s\S]*?previewExperience \? "block" : mobileBoardView === "opponent" \? "h-full" : "hidden"/,
@@ -266,6 +267,42 @@ test("V2 keeps both reefs mounted around an accessible 24-to-68 percent divider"
   assert.match(responsiveStyles, /data-board-owner="opponent"\][\s\S]*?calc\(var\(--seapals-mobile-reef-split\) - 1\.375rem\)/);
   assert.match(responsiveStyles, /\.seapals-reef-divider\s*\{[\s\S]*?flex:\s*0 0 2\.75rem;[\s\S]*?touch-action:\s*none;/);
   assert.doesNotMatch(simulatorSource, /h-\[66%\]|h-\[34%\]|data-board-focus=/);
+});
+
+test("moving the V2 divider continuously refits both reef cameras to their new allocation", () => {
+  const splitDependency = [...simulatorSource.matchAll(/\}, \[([^\]]*mobileReefSplit[^\]]*)\]\);/g)]
+    .find((match) => /previewExperience/.test(match[1]));
+  assert.ok(splitDependency, "the divider allocation should drive a dedicated responsive-camera effect");
+  const effectStart = simulatorSource.lastIndexOf("useEffect(() => {", splitDependency.index);
+  assert.ok(effectStart >= 0, "the divider camera dependency should belong to a useEffect");
+  const splitFitEffect = simulatorSource.slice(effectStart, splitDependency.index + splitDependency[0].length);
+
+  assert.match(splitFitEffect, /if \(!previewExperience\) return undefined;/);
+  assert.match(splitFitEffect, /requestAnimationFrame\(\(\) => \{/);
+  assert.match(splitFitEffect, /zoomEcosystemToFit\("opponent"\)/);
+  assert.match(splitFitEffect, /zoomEcosystemToFit\("player"\)/);
+  assert.match(splitDependency[1], /previewExperience/);
+  assert.match(splitDependency[1], /mobileReefSplit/);
+  assert.doesNotMatch(splitFitEffect, /playerViewportTouched|opponentViewportTouched/);
+  assert.match(splitFitEffect, /cancelAnimationFrame/);
+
+  const splitZoomFactor = sourceSection(
+    simulatorSource,
+    "function getMobileReefZoomFactor(owner, split)",
+    "function createEcosystemGestureState",
+  );
+  const fitFunction = sourceSection(
+    simulatorSource,
+    "function zoomEcosystemToFit(owner)",
+    "function canUseSlotWithCard",
+  );
+  assert.match(splitZoomFactor, /const opponentShare = clampMobileReefSplit\(split\)/);
+  assert.match(splitZoomFactor, /owner === "opponent" \? opponentShare : 100 - opponentShare/);
+  assert.match(splitZoomFactor, /owner === "opponent" \? MOBILE_REEF_SPLIT_DEFAULT : 100 - MOBILE_REEF_SPLIT_DEFAULT/);
+  assert.match(splitZoomFactor, /Math\.sqrt\(currentShare \/ defaultShare\)/);
+  assert.match(splitZoomFactor, /Math\.min\(MOBILE_REEF_ZOOM_FACTOR_MAX, Math\.max\(MOBILE_REEF_ZOOM_FACTOR_MIN, factor\)\)/);
+  assert.match(fitFunction, /const mobileSplitZoomFactor = previewExperience[\s\S]*?getMobileReefZoomFactor\(owner, mobileReefSplit\)/);
+  assert.match(fitFunction, /sparsePlayerBoardMaxZoom \* mobileSplitZoomFactor/);
 });
 
 test("V2 removes its reef switcher while legacy retains explicit reef tabs", () => {
@@ -438,6 +475,7 @@ test("V2 aligns label-free mirrored pile columns beneath each reef's RP badge", 
   assert.match(opponentPane, /<MobileEdgeZones[\s\S]*?owner="opponent"/);
   assert.match(opponentPane, /deckCount=\{opponent\.foundationDeck\.length \+ opponent\.palsDeck\.length\}/);
   assert.match(opponentPane, /discardCard=\{cardsById\[opponent\.discardPile\[0\]\] \?\? null\}/);
+  assert.doesNotMatch(opponentPane, /onOpenDecks=/);
   assert.match(opponentPane, /onOpenDiscard=\{\(\) => setModal\("opponent-discard"\)\}/);
   assert.match(opponentPane, /onOpenLost=\{\(\) => setModal\("opponent-lost"\)\}/);
   assert.match(playerPane, /previewExperience && mobileHandDockVisible \? \([\s\S]*?<MobileEdgeZones/);
@@ -449,12 +487,34 @@ test("V2 aligns label-free mirrored pile columns beneath each reef's RP badge", 
   assert.match(edgeZonesSource, /data-mobile-edge-zones/);
   assert.match(edgeZonesSource, /data-zone-owner=\{owner\}/);
   assert.match(edgeZonesSource, /data-tutorial-target=\{owner === "player" \? "zones" : undefined\}/);
-  assert.deepEqual(mobileZoneIds, ["deck", "discard", "lost"]);
+  assert.deepEqual([...new Set(mobileZoneIds)], ["deck", "discard", "lost"]);
+  assert.equal(mobileZoneIds.filter((zoneId) => zoneId === "deck").length, 2, "the inert opponent deck and interactive player deck should render separately");
   assert.equal((edgeZonesSource.match(/seapals-mobile-edge-zone-count/g) ?? []).length, 1, "only the face-down deck should show a visible count");
   assert.doesNotMatch(edgeZonesSource, /seapals-mobile-edge-zone-label/);
   assert.match(edgeZonesSource, /seapals-mobile-deck-back/);
   assert.match(edgeZonesSource, /discardCard\?\.image/);
   assert.match(edgeZonesSource, /seapals-mobile-lost-empty/);
+  const directOpponentBranchStart = edgeZonesSource.indexOf('owner === "opponent" ? (');
+  const namedOpponentBranchStart = edgeZonesSource.indexOf("opponentDeckHidden ? (");
+  const opponentDeckBranchStart = Math.max(directOpponentBranchStart, namedOpponentBranchStart);
+  const discardZoneStart = edgeZonesSource.indexOf('data-mobile-zone="discard"');
+  assert.ok(opponentDeckBranchStart >= 0 && discardZoneStart > opponentDeckBranchStart, "the deck should branch by owner before the discard control");
+  if (namedOpponentBranchStart >= 0) {
+    assert.match(edgeZonesSource, /const opponentDeckHidden = owner === "opponent";/);
+  }
+  const deckOwnerBranch = edgeZonesSource.slice(opponentDeckBranchStart, discardZoneStart);
+  const branchDivider = deckOwnerBranch.indexOf(") : (");
+  assert.ok(branchDivider > 0, "the opponent and player deck presentations should be explicit branches");
+  const opponentDeckPresentation = deckOwnerBranch.slice(0, branchDivider);
+  const playerDeckPresentation = deckOwnerBranch.slice(branchDivider);
+  assert.match(opponentDeckPresentation, /<div[\s\S]*?data-mobile-zone="deck"/);
+  assert.match(opponentDeckPresentation, /role="img"/);
+  assert.doesNotMatch(opponentDeckPresentation, /<button|onClick|onPointerDown|tabIndex|\bOpen\b/);
+  assert.match(playerDeckPresentation, /<button[\s\S]*?data-mobile-zone="deck"/);
+  assert.match(playerDeckPresentation, /onClick=\{onOpenDecks\}/);
+  assert.match(playerDeckPresentation, /onPointerDown=/);
+  assert.match(edgeZonesSource, /<button[\s\S]*?data-mobile-zone="discard"[\s\S]*?onClick=\{onOpenDiscard\}/);
+  assert.match(edgeZonesSource, /<button[\s\S]*?data-mobile-zone="lost"[\s\S]*?onClick=\{onOpenLost\}/);
   assert.match(edgeRule, /position:\s*absolute;/);
   assert.match(edgeRule, /z-index:\s*59;/);
   assert.match(edgeRule, /right:\s*\.25rem;/);
@@ -509,9 +569,17 @@ test("V2 keeps only the draggable divider and round action while the old footer 
   assert.match(simulatorSource, /const turnControlLabel = opponentThinking \? "Opponent Turn" : isSetup \? "Begin Round" : "Next Round";/);
   assert.match(
     simulatorSource,
-    /\.seapals-reef-divider-control\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*50%;[\s\S]*?min-height:\s*2\.75rem;[\s\S]*?transform:\s*translateY\(-50%\);/,
+    /\.seapals-reef-divider-control\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*50%;[\s\S]*?height:\s*calc\(100% - \.5rem\);[\s\S]*?min-height:\s*2\.25rem;[\s\S]*?transform:\s*translateY\(-50%\);/,
   );
   assert.match(simulatorSource, /\.seapals-reef-divider-turn\s*\{[\s\S]*?border-radius:\s*\.75rem;/);
+  const dividerRule = simulatorSource.match(/\.seapals-reef-divider\s*\{([^}]*)\}/)?.[1] ?? "";
+  const turnControlRule = simulatorSource.match(/\.seapals-reef-divider-control\s*\{([^}]*)\}/)?.[1] ?? "";
+  const dividerHeight = Number(dividerRule.match(/flex:\s*0 0 ([\d.]+)rem/)?.[1]);
+  const turnControlMinHeight = Number(turnControlRule.match(/min-height:\s*([\d.]+)rem/)?.[1]);
+  assert.ok(
+    Number.isFinite(dividerHeight) && Number.isFinite(turnControlMinHeight) && turnControlMinHeight < dividerHeight,
+    "the centered round action should leave visible divider padding above and below",
+  );
   assert.match(legacyDock, /Open Hand/);
   assert.match(legacyDock, /data-tutorial-target="turn-button"/);
   assert.equal((legacyDock.match(/previewExperience \?/g) ?? []).length, 1, "only the legacy wrapper should branch on previewExperience");
@@ -609,6 +677,12 @@ test("capture-phase two-touch pinch and focal wheel zoom share camera helpers", 
 });
 
 test("the player reef starts fitted and stops auto-fitting after manual camera input", () => {
+  const initialZoom = Number(simulatorSource.match(/const PREVIEW_ECOSYSTEM_INITIAL_ZOOM = ([\d.]+);/)?.[1]);
+  assert.ok(Number.isFinite(initialZoom) && initialZoom > 0 && initialZoom <= .8, "the V2 camera should start comfortably zoomed out");
+  assert.match(simulatorSource, /const initialEcosystemZoom = previewExperience \? PREVIEW_ECOSYSTEM_INITIAL_ZOOM : 1;/);
+  assert.match(simulatorSource, /const \[ecosystemZoom, setEcosystemZoom\] = useState\(initialEcosystemZoom\)/);
+  assert.match(simulatorSource, /const playerCameraRef = useRef\(\{ zoom: initialEcosystemZoom, offset: \{ x: 0, y: 0 \} \}\)/);
+  assert.match(simulatorSource, /commitBoardCamera\("player", \{ zoom: initialEcosystemZoom, offset: \{ x: 0, y: 0 \} \}\s*\);/);
   assert.match(simulatorSource, /const \[playerViewportTouched, setPlayerViewportTouched\] = useState\(false\)/);
   assert.match(simulatorSource, /const playerLayoutSignature = \[/);
   assert.match(
@@ -619,10 +693,17 @@ test("the player reef starts fitted and stops auto-fitting after manual camera i
     simulatorSource,
     /\[playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible\]/,
   );
-  assert.match(
+  const fitFunction = sourceSection(
     simulatorSource,
-    /const sparsePlayerBoardMaxZoom = !isOpponent && corals\.length === 1 && !floatingCardsPresent[\s\S]*?rect\.width \* 0\.34/,
+    "function zoomEcosystemToFit(owner)",
+    "function canUseSlotWithCard",
   );
+  const sparseRatioToken = fitFunction.match(/const sparsePlayerBoardMaxZoom = !isOpponent && corals\.length === 1 && !floatingCardsPresent[\s\S]*?rect\.width \* ([A-Za-z_$][\w$]*|(?:0?\.)?\d+)/)?.[1];
+  assert.ok(sparseRatioToken, "a sparse player reef should have an explicit width cap");
+  const sparseRatio = Number.isFinite(Number(sparseRatioToken))
+    ? Number(sparseRatioToken)
+    : Number(simulatorSource.match(new RegExp(`const ${sparseRatioToken} = ((?:0?\\.)?\\d+);`))?.[1]);
+  assert.ok(Number.isFinite(sparseRatio) && sparseRatio <= .28, "a single player card should begin at no more than 28% of the reef width");
   assert.doesNotMatch(
     sourceSection(simulatorSource, "function handleEcosystemPointerDown", "function handleEcosystemPointerMove"),
     /setPlayerViewportTouched\(true\)/,

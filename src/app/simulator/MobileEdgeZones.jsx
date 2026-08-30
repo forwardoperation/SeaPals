@@ -14,6 +14,16 @@ export default function MobileEdgeZones({
   const safeDiscardCount = Math.max(0, Number(discardCount) || 0);
   const safeLostCount = Math.max(0, Number(lostCount) || 0);
   const ownerLabel = owner === "opponent" ? "Opponent" : "Your";
+  const opponentDeckHidden = owner === "opponent";
+
+  const deckArtwork = (
+    <>
+      <span className="seapals-mobile-edge-zone-art seapals-mobile-deck-back" aria-hidden="true">
+        <img src="/images/brand/SeaPalsTCGLogoWhite.svg" alt="" />
+      </span>
+      <span className="seapals-mobile-edge-zone-count">{safeDeckCount}</span>
+    </>
+  );
 
   return (
     <aside
@@ -23,20 +33,28 @@ export default function MobileEdgeZones({
       data-zone-owner={owner}
       data-tutorial-target={owner === "player" ? "zones" : undefined}
     >
-      <button
-        type="button"
-        className="seapals-mobile-edge-zone is-deck"
-        data-mobile-zone="deck"
-        aria-label={`Open ${owner === "opponent" ? "the opponent's" : "your"} deck summary. ${safeDeckCount} cards remain.`}
-        disabled={disabled}
-        onPointerDown={(event) => event.stopPropagation()}
-        onClick={onOpenDecks}
-      >
-        <span className="seapals-mobile-edge-zone-art seapals-mobile-deck-back" aria-hidden="true">
-          <img src="/images/brand/SeaPalsTCGLogoWhite.svg" alt="" />
-        </span>
-        <span className="seapals-mobile-edge-zone-count">{safeDeckCount}</span>
-      </button>
+      {opponentDeckHidden ? (
+        <div
+          className="seapals-mobile-edge-zone is-deck is-readonly"
+          data-mobile-zone="deck"
+          role="img"
+          aria-label={`Opponent deck. ${safeDeckCount} cards remain; contents are hidden.`}
+        >
+          {deckArtwork}
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="seapals-mobile-edge-zone is-deck"
+          data-mobile-zone="deck"
+          aria-label={`Open your deck summary. ${safeDeckCount} cards remain.`}
+          disabled={disabled}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={onOpenDecks}
+        >
+          {deckArtwork}
+        </button>
+      )}
 
       <button
         type="button"

@@ -3077,9 +3077,21 @@ function getOpponentSlotPosition(position, mirrored = false) {
 
 const MOBILE_REEF_SPLIT_MIN = 24;
 const MOBILE_REEF_SPLIT_MAX = 68;
+const MOBILE_REEF_SPLIT_DEFAULT = 40;
+const PREVIEW_ECOSYSTEM_INITIAL_ZOOM = 0.72;
+const MOBILE_REEF_ZOOM_FACTOR_MIN = 0.75;
+const MOBILE_REEF_ZOOM_FACTOR_MAX = 1.25;
 
 function clampMobileReefSplit(value) {
   return Math.min(MOBILE_REEF_SPLIT_MAX, Math.max(MOBILE_REEF_SPLIT_MIN, Number(value) || 0));
+}
+
+function getMobileReefZoomFactor(owner, split) {
+  const opponentShare = clampMobileReefSplit(split);
+  const currentShare = owner === "opponent" ? opponentShare : 100 - opponentShare;
+  const defaultShare = owner === "opponent" ? MOBILE_REEF_SPLIT_DEFAULT : 100 - MOBILE_REEF_SPLIT_DEFAULT;
+  const factor = Math.sqrt(currentShare / defaultShare);
+  return Math.min(MOBILE_REEF_ZOOM_FACTOR_MAX, Math.max(MOBILE_REEF_ZOOM_FACTOR_MIN, factor));
 }
 
 function createEcosystemGestureState() {
@@ -3271,19 +3283,20 @@ export default function Simulator({
   const [floatingCardOffsets, setFloatingCardOffsets] = useState({});
   const [floatingCardDrag, setFloatingCardDrag] = useState(null);
   const floatingCardWasDraggedRef = useRef(false);
-  const [ecosystemZoom, setEcosystemZoom] = useState(1);
+  const initialEcosystemZoom = previewExperience ? PREVIEW_ECOSYSTEM_INITIAL_ZOOM : 1;
+  const [ecosystemZoom, setEcosystemZoom] = useState(initialEcosystemZoom);
   const [ecosystemOffset, setEcosystemOffset] = useState({ x: 0, y: 0 });
-  const [opponentEcosystemZoom, setOpponentEcosystemZoom] = useState(1);
+  const [opponentEcosystemZoom, setOpponentEcosystemZoom] = useState(initialEcosystemZoom);
   const [opponentEcosystemOffset, setOpponentEcosystemOffset] = useState({ x: 0, y: 0 });
-  const playerCameraRef = useRef({ zoom: 1, offset: { x: 0, y: 0 } });
-  const opponentCameraRef = useRef({ zoom: 1, offset: { x: 0, y: 0 } });
+  const playerCameraRef = useRef({ zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
+  const opponentCameraRef = useRef({ zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
   const playerGestureRef = useRef(createEcosystemGestureState());
   const opponentGestureRef = useRef(createEcosystemGestureState());
   const boardClickSuppressionRef = useRef({ player: 0, opponent: 0 });
   const [playerViewportTouched, setPlayerViewportTouched] = useState(false);
   const [opponentViewportTouched, setOpponentViewportTouched] = useState(false);
   const [mobileBoardView, setMobileBoardView] = useState("player");
-  const [mobileReefSplit, setMobileReefSplit] = useState(40);
+  const [mobileReefSplit, setMobileReefSplit] = useState(MOBILE_REEF_SPLIT_DEFAULT);
   const [reefDividerDragging, setReefDividerDragging] = useState(false);
   const [mobileHudPanel, setMobileHudPanel] = useState(null);
   const ecosystemRef = useRef(null);
@@ -4856,6 +4869,15 @@ export default function Simulator({
   }, [opponentLayoutSignature, opponentViewportTouched, mobileBoardView]);
 
   useEffect(() => {
+    if (!previewExperience) return undefined;
+    const frame = requestAnimationFrame(() => {
+      zoomEcosystemToFit("opponent");
+      zoomEcosystemToFit("player");
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [previewExperience, mobileReefSplit]);
+
+  useEffect(() => {
     const result = reconcileFoundationHealthToFixedPoint(playerCorals, playerReefCreatureInstances, playerOrphanCreatures);
     if (!result.changed) return;
     setPlayerCorals(result.corals);
@@ -5303,12 +5325,15 @@ export default function Simulator({
     const minY = Math.min(...bounds.map((entry) => entry.minY)) - padding;
     const maxY = Math.max(...bounds.map((entry) => entry.maxY)) + padding;
     const sparsePlayerBoardMaxZoom = !isOpponent && corals.length === 1 && !floatingCardsPresent
-      ? Math.min(1.15, (rect.width * 0.34) / coralWidth)
+      ? Math.min(1.15, (rect.width * 0.26) / coralWidth)
       : 1.15;
+    const mobileSplitZoomFactor = previewExperience
+      ? getMobileReefZoomFactor(owner, mobileReefSplit)
+      : 1;
     const nextZoom = clampZoom(Math.min(
       (rect.width - 48) / Math.max(1, maxX - minX),
       (visibleHeight - 32) / Math.max(1, maxY - minY),
-      sparsePlayerBoardMaxZoom,
+      sparsePlayerBoardMaxZoom * mobileSplitZoomFactor,
     ));
     const contentCenterX = (minX + maxX) / 2;
     const contentCenterY = (minY + maxY) / 2;
@@ -12533,8 +12558,8 @@ export default function Simulator({
       : ["The opening coin flip will decide who takes the first turn."]);
     setPlayError("");
     setTutorialLayoutProgress(createGuidedAcademyLayoutProgress());
-    commitBoardCamera("player", { zoom: 1, offset: { x: 0, y: 0 } });
-    commitBoardCamera("opponent", { zoom: 1, offset: { x: 0, y: 0 } });
+    commitBoardCamera("player", { zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
+    commitBoardCamera("opponent", { zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
     playerGestureRef.current = createEcosystemGestureState();
     opponentGestureRef.current = createEcosystemGestureState();
     boardClickSuppressionRef.current = { player: 0, opponent: 0 };
@@ -13481,6 +13506,9 @@ export default function Simulator({
           pointer-events: auto;
           transition: filter 160ms ease;
         }
+        .seapals-mobile-edge-zone.is-readonly {
+          pointer-events: none;
+        }
         .seapals-mobile-edge-zone.is-deck::before,
         .seapals-mobile-edge-zone.is-deck::after {
           position: absolute;
@@ -13509,7 +13537,7 @@ export default function Simulator({
           background: transparent;
           box-shadow: none;
         }
-        .seapals-mobile-edge-zone:not(:disabled):is(:hover, :focus-visible) {
+        .seapals-mobile-edge-zone:not(.is-readonly):not(:disabled):is(:hover, :focus-visible) {
           z-index: 4;
           outline: 3px solid #fde68a;
           outline-offset: 2px;
@@ -13957,8 +13985,8 @@ export default function Simulator({
             z-index: 2;
             top: 50%;
             display: grid;
-            height: 100%;
-            min-height: 2.75rem;
+            height: calc(100% - .5rem);
+            min-height: 2.25rem;
             place-items: center;
             padding: .25rem .45rem;
             border: 0;
@@ -14656,7 +14684,6 @@ export default function Simulator({
                     lostCount={(opponent.lostZone ?? []).length}
                     discardCard={cardsById[opponent.discardPile[0]] ?? null}
                     disabled={Boolean(playingCardId)}
-                    onOpenDecks={() => setMobileHudPanel((current) => current === "opponent-decks" ? null : "opponent-decks")}
                     onOpenDiscard={() => setModal("opponent-discard")}
                     onOpenLost={() => setModal("opponent-lost")}
                   />
@@ -15243,13 +15270,11 @@ export default function Simulator({
           /> : null}
           {mobileHudPanel ? (
             <div className="seapals-mobile-hud-panel absolute inset-x-3 bottom-[4.75rem] z-[60] max-h-[45dvh] overflow-y-auto rounded-2xl border border-cyan-300/25 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-xl xl:hidden">
-              <div className="mb-3 flex items-center justify-between"><h2 className="font-black text-white">{mobileHudPanel === "zones" ? "Game Zones" : mobileHudPanel === "decks" ? "Personal Decks" : mobileHudPanel === "opponent-decks" ? "Opponent Deck" : "Mission Feed"}</h2><button type="button" onClick={() => setMobileHudPanel(null)} className="rounded-lg border border-white/10 px-3 py-1 text-xs font-bold text-slate-200">Close</button></div>
+              <div className="mb-3 flex items-center justify-between"><h2 className="font-black text-white">{mobileHudPanel === "zones" ? "Game Zones" : mobileHudPanel === "decks" ? "Personal Decks" : "Mission Feed"}</h2><button type="button" onClick={() => setMobileHudPanel(null)} className="rounded-lg border border-white/10 px-3 py-1 text-xs font-bold text-slate-200">Close</button></div>
               {mobileHudPanel === "zones" ? (
                 <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => { setMobileHudPanel(null); setModal("discard"); }} className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 font-bold text-cyan-100">Discard Pile<span className="mt-1 block text-2xl font-black">{discardPile.length}</span></button><button type="button" onClick={() => { setMobileHudPanel(null); setModal("lost"); }} className="rounded-xl border border-violet-300/20 bg-violet-400/10 p-4 font-bold text-violet-100">Lost Zone<span className="mt-1 block text-2xl font-black">{lostZone.length}</span></button></div>
               ) : mobileHudPanel === "decks" ? (
                 <div className="grid grid-cols-2 gap-2" data-mobile-deck-summary><div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 text-center font-bold text-cyan-100">Foundation<span className="mt-1 block text-2xl font-black">{foundationDeck.length}</span></div><div className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 p-4 text-center font-bold text-emerald-100">Pals<span className="mt-1 block text-2xl font-black">{palsDeck.length}</span></div><p className="col-span-2 text-center text-xs text-slate-400">Deck contents stay hidden until a card effect reveals them.</p></div>
-              ) : mobileHudPanel === "opponent-decks" ? (
-                <div className="rounded-xl border border-rose-300/20 bg-rose-400/10 p-4 text-center font-bold text-rose-100" data-mobile-opponent-deck-summary><span className="block text-4xl font-black">{opponent.foundationDeck.length + opponent.palsDeck.length}</span><span className="mt-1 block text-xs text-rose-100/65">cards remain; contents are hidden</span></div>
               ) : (
                 <div><div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3 text-sm font-semibold text-cyan-50">{isSetup ? "Setup: play a base Coral or Creature School, then begin round 1." : isStartOfTurn ? "Choose cards from your personal decks for this turn." : "Play cards, use abilities, and attack in any legal order."}</div><div className="mt-2 rounded-xl border border-violet-300/20 bg-violet-400/10 p-3 text-sm text-violet-100"><strong>{activeCondition?.name ?? "No active condition"}</strong>{activeCondition?.text ? <span className="mt-1 block text-xs text-violet-100/70">{activeCondition.text}</span> : null}</div><ol className="mt-2 space-y-2 rounded-xl bg-slate-900 p-3 text-xs">{log.slice(0, 8).map((entry, index) => <li key={`${entry}-${index}`} className={index === 0 ? "font-bold text-cyan-300" : "text-slate-300"}>{entry}</li>)}</ol></div>
               )}
