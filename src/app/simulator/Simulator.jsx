@@ -3002,18 +3002,28 @@ function removeLastCard(cards, cardId) {
   return [...cards.slice(0, index), ...cards.slice(index + 1)];
 }
 
-function getPlacementCoordinates(event, zoom, offset) {
-  const rect = event.currentTarget.getBoundingClientRect();
+function getPlacementCoordinatesFromPoint(element, clientX, clientY, zoom, offset) {
+  const rect = element.getBoundingClientRect();
   const centerX = rect.width / 2;
   const centerY = rect.height / 2;
-  const screenX = event.clientX - rect.left;
-  const screenY = event.clientY - rect.top;
+  const screenX = clientX - rect.left;
+  const screenY = clientY - rect.top;
   const worldX = centerX + (screenX - centerX - offset.x) / zoom;
   const worldY = centerY + (screenY - centerY - offset.y) / zoom;
   return {
     x: (worldX / rect.width) * 100,
     y: (worldY / rect.height) * 100,
   };
+}
+
+function getPlacementCoordinates(event, zoom, offset) {
+  return getPlacementCoordinatesFromPoint(
+    event.currentTarget,
+    event.clientX,
+    event.clientY,
+    zoom,
+    offset,
+  );
 }
 
 function roundLayoutNumber(value, precision = 4) {
@@ -3337,6 +3347,7 @@ export default function Simulator({
   const [selectedHandCard, setSelectedHandCard] = useState(null);
   const [mobileSelectedHandIndex, setMobileSelectedHandIndex] = useState(null);
   const [handPopoverCardId, setHandPopoverCardId] = useState(null);
+  const [mobileHandDrag, setMobileHandDrag] = useState(null);
   const [playingCardId, setPlayingCardId] = useState(null);
   const [playError, setPlayError] = useState("");
   const [usedAttackers, setUsedAttackers] = useState([]);
@@ -3844,6 +3855,21 @@ export default function Simulator({
   const opponentSchoolDensity = opponentSchoolDensityState.capacity;
   const schoolDensityConditionIds = [...new Set([activeConditionId, ...persistentConditionIds].filter(Boolean))];
   const playingCard = playingCardId ? cardsById[playingCardId] : null;
+  const activePlacementCardId = playingCardId ?? mobileHandDrag?.cardId ?? null;
+  const activePlacementCard = activePlacementCardId ? cardsById[activePlacementCardId] : null;
+  const mobileHandDragCard = mobileHandDrag ? cardsById[mobileHandDrag.cardId] : null;
+  const mobileHandDragUsesFoundationTarget = Boolean(
+    isFoundationCard(mobileHandDragCard) && Number(mobileHandDragCard.stage ?? 0) > 0
+  );
+  const mobileHandDragUsesSlotTarget = Boolean(
+    mobileHandDragCard?.kind === CardKind.CREATURE
+    && mobileHandDragCard.zone !== CreatureZone.OCEAN
+    && !isFoundationCard(mobileHandDragCard)
+    && !cardUsesOpponentReef(mobileHandDragCard)
+  );
+  const mobileHandDragUsesEcosystemTarget = Boolean(
+    mobileHandDragCard && !mobileHandDragUsesFoundationTarget && !mobileHandDragUsesSlotTarget
+  );
   const inspectedCardData = inspectedCard ? cardsById[inspectedCard.cardId] : null;
   const mobileHandDockVisible = Boolean(
     previewExperience
@@ -4706,20 +4732,23 @@ export default function Simulator({
   );
   const isPlacingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) === 0);
   const isUpgradingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) > 0);
+  const isPreviewingCoralUpgrade = Boolean(
+    isFoundationCard(activePlacementCard) && Number(activePlacementCard.stage ?? 0) > 0
+  );
   const guidedFoundationPlacementTarget = tutorialUsesScriptedScenario
     && isPlacingCoral
     && tutorialHelp?.target === "placement"
       ? getGuidedAcademyFoundationPlacementTarget(playerCorals.length)
       : null;
   const upgradeableCoralIds = new Set(
-    isUpgradingCoral
+    isPreviewingCoralUpgrade
       ? playerCorals
           .filter((coral) => {
             const currentCard = cardsById[coral.cardId];
-            const upgradeCost = Number(currentCard?.upgrade?.cost?.rp ?? playingCard?.cost?.rp ?? 0);
+            const upgradeCost = Number(currentCard?.upgrade?.cost?.rp ?? activePlacementCard?.cost?.rp ?? 0);
             return (
               currentCard?.upgrade?.canUpgrade &&
-              currentCard.upgrade.nextCardId === playingCardId &&
+              currentCard.upgrade.nextCardId === activePlacementCardId &&
               !coralIsStunned(coral) &&
               turn > (coral.stageEnteredTurn ?? coral.playedTurn ?? turn) &&
               rp >= upgradeCost
@@ -6156,16 +6185,16 @@ export default function Simulator({
     return true;
   }
 
-  function placeCardToSlot(slotId) {
-    if (!playingCardId) return;
-    const card = cardsById[playingCardId];
+  function placeCardToSlot(slotId, cardId = playingCardId) {
+    if (!cardId) return;
+    const card = cardsById[cardId];
     const coral = findCoralBySlotId(slotId);
     if (!coral) return;
     const slot = coral.slots.find((s) => s.id === slotId);
     if (!slot) return;
     const academyPlacementBlock = getAcademyPlacementBlock({
       route: scriptedFinishRoute,
-      cardId: playingCardId,
+      cardId,
       foundationCardId: coral.cardId,
       slotClass: slot.slotClass ?? slot.slotType ?? slot.class,
     });
@@ -6181,20 +6210,20 @@ export default function Simulator({
       return;
     }
     const hostedCardIds = slot.cardId
-      ? placeCardInSpecialHost(cardsById[slot.cardId], card, slot.hostedCardIds, playingCardId)
+      ? placeCardInSpecialHost(cardsById[slot.cardId], card, slot.hostedCardIds, cardId)
       : null;
     const isHostedPlacement = Boolean(hostedCardIds);
-    if (!canUseSlotWithCard(slot, playingCardId) && !isHostedPlacement) {
+    if (!canUseSlotWithCard(slot, cardId) && !isHostedPlacement) {
       setPlayError("This creature cannot be placed in that slot.");
       return;
     }
     const densityRequirementAtPlay = getPlayerSchoolDensityRequirement(card).effectiveRequirement;
     const cardInstanceId = isHostedPlacement
       ? null
-      : createStableInstanceId(`player-slot-${playingCardId}`);
+      : createStableInstanceId(`player-slot-${cardId}`);
     const hostedIndex = isHostedPlacement
       ? hostedCardIds.findIndex((hostedCardId, index) => (
-          hostedCardId === playingCardId && slot.hostedCardIds?.[index] !== hostedCardId
+          hostedCardId === cardId && slot.hostedCardIds?.[index] !== hostedCardId
         ))
       : -1;
     const hostedSchoolDensityRequirements = isHostedPlacement
@@ -6208,7 +6237,7 @@ export default function Simulator({
               slots: c.slots.map((s) => (s.id === slotId
                 ? isHostedPlacement
                   ? { ...s, hostedCardIds, hostedSchoolDensityRequirements }
-                  : { ...s, cardId: playingCardId, cardInstanceId }
+                  : { ...s, cardId, cardInstanceId }
                 : s)),
             }
           : c,
@@ -6226,7 +6255,7 @@ export default function Simulator({
     ], activeCondition);
     const rpAfterOnPlayGain = addResourceWithinCap(rpAfterCost, onPlayResourceGain, playerCapAfterPlacement);
     const actualOnPlayGain = rpAfterOnPlayGain - rpAfterCost;
-    setHand((current) => removeOneCard(current, playingCardId));
+    setHand((current) => removeOneCard(current, cardId));
     setRp(rpAfterOnPlayGain);
     consumePlayerSchoolDensityDiscount(card);
     setPlayingCardId(null);
@@ -6311,17 +6340,17 @@ export default function Simulator({
     }
   }
 
-  function placeCoralInEcosystem(x, y) {
-    if (!playingCardId) return;
-    const card = cardsById[playingCardId];
+  function placeCoralInEcosystem(x, y, cardId = playingCardId) {
+    if (!cardId) return;
+    const card = cardsById[cardId];
     if (!isFoundationCard(card) || Number(card.stage ?? 0) > 0) return;
-    const coralId = createCoralId(playingCardId);
+    const coralId = createCoralId(cardId);
     const slots = createCoralSlots(card, coralId);
     const redistributed = redistributeOrphanCreatures([
       ...playerCorals,
       {
         id: coralId,
-        cardId: playingCardId,
+        cardId,
         name: card.name,
         image: card.image,
         x,
@@ -6336,7 +6365,7 @@ export default function Simulator({
     setPlayerCorals(redistributed.corals);
     setPlayerOrphanCreatures(redistributed.orphans);
     const playCost = getPlayerCardPlayCost(card);
-    setHand((current) => removeOneCard(current, playingCardId));
+    setHand((current) => removeOneCard(current, cardId));
     setRp((current) => Math.max(0, current - playCost));
     setPlayingCardId(null);
     setModal(null);
@@ -6346,15 +6375,19 @@ export default function Simulator({
     emitPlayerBuild(card, playCost, "foundation");
   }
 
-  function upgradeCoral(coralId) {
-    if (!isUpgradingCoral || !upgradeableCoralIds.has(coralId)) return;
+  function upgradeCoral(coralId, cardId = playingCardId) {
+    const nextCard = cardId ? cardsById[cardId] : null;
+    if (!nextCard || !isFoundationCard(nextCard) || Number(nextCard.stage ?? 0) <= 0) return;
     const coral = playerCorals.find((candidate) => candidate.id === coralId);
     if (!coral || coralIsStunned(coral)) return;
 
     const currentCard = cardsById[coral.cardId];
-    const nextCard = cardsById[playingCardId];
     const upgradeCost = Number(currentCard?.upgrade?.cost?.rp ?? nextCard?.cost?.rp ?? 0);
-    if (!nextCard || currentCard?.upgrade?.nextCardId !== nextCard.id || rp < upgradeCost) return;
+    if (
+      currentCard?.upgrade?.nextCardId !== nextCard.id
+      || turn <= (coral.stageEnteredTurn ?? coral.playedTurn ?? turn)
+      || rp < upgradeCost
+    ) return;
 
     const upgradedCorals = playerCorals.map((candidate) =>
         candidate.id === coralId
@@ -6399,6 +6432,209 @@ export default function Simulator({
   function cancelCardPlay() {
     setPlayingCardId(null);
     setPlayError("");
+  }
+
+  function finishMobileHandDrag() {
+    setMobileHandDrag(null);
+    setMobileSelectedHandIndex(null);
+    setPlayError("");
+  }
+
+  function cancelMobileHandDrag(message = "") {
+    setMobileHandDrag(null);
+    setMobileSelectedHandIndex(null);
+    cancelCardPlay();
+    setPlayError(message);
+  }
+
+  function resolveMobileHandDrop(cardId, index, clientX, clientY, commit = false) {
+    const card = cardsById[cardId];
+    const elements = typeof document === "undefined" || !document.elementsFromPoint
+      ? []
+      : document.elementsFromPoint(clientX, clientY);
+    const slotElement = elements
+      .map((element) => element.closest("[data-hand-drop-slot-id]"))
+      .find(Boolean);
+    const coralElement = elements
+      .map((element) => element.closest("[data-hand-drop-coral-id]"))
+      .find(Boolean);
+    const topElement = elements[0] ?? null;
+    const ecosystemElement = topElement?.closest("[data-hand-drop-zone=\"ecosystem\"]") ?? null;
+    const topDropTarget = topElement?.closest(
+      "[data-hand-drop-slot-id], [data-hand-drop-coral-id]",
+    ) ?? null;
+    const blockedByBoardControl = Boolean(
+      topElement?.closest("button, [role=\"separator\"], .seapals-board-camera-controls")
+      && !topDropTarget
+    );
+    const ecosystemSurfaceAvailable = Boolean(ecosystemElement && !blockedByBoardControl);
+    let target = {
+      kind: "none",
+      valid: false,
+      message: "Drop the card inside your ecosystem.",
+    };
+
+    if (card && isFoundationCard(card) && Number(card.stage ?? 0) > 0) {
+      const coralId = coralElement?.dataset.handDropCoralId ?? null;
+      const coral = playerCorals.find((candidate) => candidate.id === coralId);
+      const currentCard = coral ? cardsById[coral.cardId] : null;
+      const upgradeCost = Number(currentCard?.upgrade?.cost?.rp ?? card.cost?.rp ?? 0);
+      const valid = Boolean(
+        ecosystemSurfaceAvailable
+        && coral
+        && currentCard?.upgrade?.canUpgrade
+        && currentCard.upgrade.nextCardId === cardId
+        && !coralIsStunned(coral)
+        && turn > (coral.stageEnteredTurn ?? coral.playedTurn ?? turn)
+        && rp >= upgradeCost
+      );
+      target = {
+        kind: "coral",
+        coralId,
+        valid,
+        message: valid
+          ? `Release to upgrade ${currentCard?.name ?? "this foundation"}.`
+          : "Drop this upgrade onto its highlighted foundation.",
+      };
+    } else if (card && isFoundationCard(card)) {
+      target = {
+        kind: "ecosystem",
+        valid: ecosystemSurfaceAvailable,
+        message: ecosystemSurfaceAvailable
+          ? `Release to place ${card.name}.`
+          : "Drop this foundation inside your ecosystem.",
+      };
+    } else if (
+      card?.kind === CardKind.CREATURE
+      && card.zone !== CreatureZone.OCEAN
+      && !cardUsesOpponentReef(card)
+    ) {
+      const slotId = slotElement?.dataset.handDropSlotId ?? null;
+      const coral = slotId ? findCoralBySlotId(slotId) : null;
+      const slot = coral?.slots.find((candidate) => candidate.id === slotId) ?? null;
+      const academyPlacementAllowed = Boolean(slot && isAcademyPlacementAllowed({
+        route: scriptedFinishRoute,
+        cardId,
+        foundationCardId: coral.cardId,
+        slotClass: slot.slotClass ?? slot.slotType ?? slot.class,
+      }));
+      const valid = Boolean(
+        ecosystemSurfaceAvailable
+        && slot
+        && academyPlacementAllowed
+        && (canUseSlotWithCard(slot, cardId) || canHostCardInSlot(slot, cardId))
+      );
+      target = {
+        kind: "slot",
+        slotId,
+        valid,
+        message: valid
+          ? `Release to place ${card.name} in this slot.`
+          : "Drop this creature onto a highlighted compatible slot.",
+      };
+    } else if (card) {
+      target = {
+        kind: "ecosystem",
+        valid: ecosystemSurfaceAvailable,
+        message: ecosystemSurfaceAvailable
+          ? `Release to play ${card.name}.`
+          : "Drop this card inside your ecosystem.",
+      };
+    }
+
+    if (!commit) return target;
+
+    if (hand[index] !== cardId) {
+      cancelMobileHandDrag("That card moved in your hand. Try dragging it again.");
+      return { ...target, valid: false };
+    }
+    const academyBlock = getAcademyCardPlayBlock({
+      route: scriptedFinishRoute,
+      help: tutorialHelp,
+      cardId,
+      guideName: tutorialGuide.name,
+    });
+    const cardPlayError = academyBlock || getPlayError(card);
+    if (cardPlayError) {
+      if (academyBlock) setTutorialHelpDismissedId(null);
+      cancelMobileHandDrag(cardPlayError);
+      return { ...target, valid: false, message: cardPlayError };
+    }
+    if (!target.valid) {
+      cancelMobileHandDrag(target.message);
+      return target;
+    }
+
+    finishMobileHandDrag();
+    if (target.kind === "slot") {
+      placeCardToSlot(target.slotId, cardId);
+    } else if (target.kind === "coral") {
+      upgradeCoral(target.coralId, cardId);
+    } else if (isFoundationCard(card) && Number(card.stage ?? 0) === 0) {
+      const coordinates = (
+        tutorialUsesScriptedScenario && tutorialHelp?.target === "placement"
+          ? getGuidedAcademyFoundationPlacementTarget(playerCorals.length)
+          : null
+      ) ?? getPlacementCoordinatesFromPoint(
+        ecosystemRef.current,
+        clientX,
+        clientY,
+        ecosystemZoom,
+        ecosystemOffset,
+      );
+      placeCoralInEcosystem(coordinates.x, coordinates.y, cardId);
+      queueBubbleBurstAtClientPoint(clientX, clientY);
+    } else {
+      playCardFromHand(cardId);
+    }
+    return target;
+  }
+
+  function handleMobileHandDragStart({ cardId, index, pointerId, clientX, clientY }) {
+    const card = cardsById[cardId];
+    if (!card || hand[index] !== cardId || playingCardId) return false;
+    const academyBlock = getAcademyCardPlayBlock({
+      route: scriptedFinishRoute,
+      help: tutorialHelp,
+      cardId,
+      guideName: tutorialGuide.name,
+    });
+    const cardPlayError = academyBlock || getPlayError(card);
+    if (cardPlayError) {
+      if (academyBlock) setTutorialHelpDismissedId(null);
+      setPlayError(cardPlayError);
+      return false;
+    }
+    setMobileSelectedHandIndex(null);
+    setPlayError("");
+    setMobileHandDrag({
+      cardId,
+      index,
+      pointerId,
+      clientX,
+      clientY,
+      target: { kind: "none", valid: false, message: "Drag into your ecosystem to play." },
+    });
+    return true;
+  }
+
+  function handleMobileHandDragMove({ cardId, index, pointerId, clientX, clientY }) {
+    const target = resolveMobileHandDrop(cardId, index, clientX, clientY, false);
+    setMobileHandDrag((current) => current ? {
+      ...current,
+      pointerId,
+      clientX,
+      clientY,
+      target,
+    } : current);
+  }
+
+  function handleMobileHandDragEnd({ cardId, index, clientX, clientY }) {
+    resolveMobileHandDrop(cardId, index, clientX, clientY, true);
+  }
+
+  function handleMobileHandDragCancel() {
+    cancelMobileHandDrag("");
   }
 
   function completeTutorialLayoutLessonAction(actionId) {
@@ -13779,6 +14015,47 @@ export default function Simulator({
           transform: translateY(0) rotate(0deg) scale(1.02);
           box-shadow: 0 0 0 3px rgba(103, 232, 249, .22), 0 12px 28px rgba(2, 8, 23, .7), 0 0 26px rgba(34, 211, 238, .34);
         }
+        .seapals-mobile-hand-card.is-dragging,
+        .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card.is-dragging {
+          opacity: .3;
+          filter: saturate(.7);
+          transform: translateY(.35rem) rotate(0deg) scale(.94);
+        }
+        .seapals-mobile-hand-drag-ghost {
+          position: fixed;
+          z-index: 120;
+          width: clamp(6.4rem, 26vw, 8rem);
+          pointer-events: none;
+          transform: translate(-50%, -88%) rotate(-2deg) scale(1.04);
+          transform-origin: center bottom;
+          filter: drop-shadow(0 18px 22px rgba(2, 8, 23, .72));
+          transition: filter 100ms ease, transform 100ms ease;
+          will-change: left, top, transform;
+        }
+        .seapals-mobile-hand-drag-ghost img {
+          display: block;
+          width: 100%;
+          border: 3px solid rgba(251, 113, 133, .92);
+          border-radius: .85rem;
+          background: #082f49;
+        }
+        .seapals-mobile-hand-drag-ghost.is-valid {
+          filter: drop-shadow(0 0 18px rgba(52, 211, 153, .95)) drop-shadow(0 18px 22px rgba(2, 8, 23, .68));
+          transform: translate(-50%, -90%) rotate(1deg) scale(1.09);
+        }
+        .seapals-mobile-hand-drag-ghost.is-valid img { border-color: #6ee7b7; }
+        .seapals-hand-drop-valid:not(.seapals-ecosystem-ocean) {
+          filter: drop-shadow(0 0 12px rgba(110, 231, 183, .55));
+        }
+        .seapals-ecosystem-ocean.seapals-hand-drop-valid {
+          box-shadow: inset 0 0 0 4px rgba(110, 231, 183, .78), inset 0 0 42px rgba(16, 185, 129, .2);
+        }
+        .seapals-hand-drop-valid.is-hand-drag-target,
+        .is-hand-drag-target.seapals-hand-drop-valid {
+          outline: 5px solid rgba(167, 243, 208, .94);
+          outline-offset: 5px;
+          filter: drop-shadow(0 0 22px rgba(52, 211, 153, .95));
+        }
         .seapals-mobile-hand-card:focus-visible {
           z-index: 6;
           outline: 3px solid #fde68a;
@@ -14907,7 +15184,9 @@ export default function Simulator({
                 ) : null}
                 <div
                   ref={ecosystemRef}
-                  className={`seapals-ecosystem-ocean relative ${previewExperience ? "h-full" : "h-[calc(100%-40px)]"} w-full ${isPlacingCoral ? "cursor-crosshair" : ""}${tutorialTargetClass("player-board")}`}
+                  className={`seapals-ecosystem-ocean relative ${previewExperience ? "h-full" : "h-[calc(100%-40px)]"} w-full ${isPlacingCoral ? "cursor-crosshair" : ""}${mobileHandDragUsesEcosystemTarget ? " seapals-hand-drop-valid" : ""}${mobileHandDrag?.target?.kind === "ecosystem" && mobileHandDrag.target.valid ? " is-hand-drag-target" : ""}${tutorialTargetClass("player-board")}`}
+                  data-hand-drop-zone="ecosystem"
+                  data-hand-drop-valid={mobileHandDragUsesEcosystemTarget ? "true" : undefined}
                   data-tutorial-target="player-board"
                   onPointerDownCapture={(event) => handleBoardPointerDownCapture("player", event)}
                   onPointerMoveCapture={(event) => handleBoardPointerMoveCapture("player", event)}
@@ -15051,6 +15330,9 @@ export default function Simulator({
                             <div className="relative h-full w-full">
                                <div
                                  data-upgrade-target={canUpgradeThisCoral ? "true" : undefined}
+                                 data-hand-drop-coral-id={coral.id}
+                                 data-hand-drop-foundation-id={coral.id}
+                                 data-hand-drop-valid={canUpgradeThisCoral ? "true" : undefined}
                                  data-tutorial-target={canUpgradeThisCoral
                                    ? "placement"
                                    : isLayoutFoundationTarget
@@ -15059,7 +15341,7 @@ export default function Simulator({
                                  role="button"
                                  tabIndex={0}
                                  aria-label={`Inspect ${coral.name}. ${coral.health ?? coral.maxHealth} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`}
-                                 className={`seapals-in-play-card relative z-20 mx-auto h-[260px] w-[220px] rounded-[1.5rem] bg-slate-100 shadow-xl ${
+                                 className={`seapals-in-play-card relative z-20 mx-auto h-[260px] w-[220px] rounded-[1.5rem] bg-slate-100 shadow-xl${canUpgradeThisCoral ? " seapals-hand-drop-valid" : ""}${mobileHandDrag?.target?.kind === "coral" && mobileHandDrag.target.coralId === coral.id ? " is-hand-drag-target" : ""} ${
                                    draggingCoralId === coral.id ? "ring-2 ring-emerald-300" : ""
                                  } ${
                                    canUpgradeThisCoral ? "cursor-pointer" : ""
@@ -15093,19 +15375,19 @@ export default function Simulator({
                                 const slotFilled = Boolean(slot.cardId);
                                 const slotCard = slotFilled ? cardsById[slot.cardId] : null;
                                 const isInvaderTarget = attackContext?.targets.some((target) => target.coralId === "__own_invader__" && target.hostCoralId === coral.id && target.slotId === slot.id);
-                                const validHostTarget = Boolean(slotFilled && playingCardId && canHostCardInSlot(slot, playingCardId));
-                                const academyPlacementAllowed = !playingCardId || isAcademyPlacementAllowed({
+                                const validHostTarget = Boolean(slotFilled && activePlacementCardId && canHostCardInSlot(slot, activePlacementCardId));
+                                const academyPlacementAllowed = !activePlacementCardId || isAcademyPlacementAllowed({
                                   route: scriptedFinishRoute,
-                                  cardId: playingCardId,
+                                  cardId: activePlacementCardId,
                                   foundationCardId: coral.cardId,
                                   slotClass: slot.slotClass ?? slot.slotType ?? slot.class,
                                 });
                                 const validTarget = Boolean(
-                                  playingCardId
+                                  activePlacementCardId
                                   && academyPlacementAllowed
-                                  && (canUseSlotWithCard(slot, playingCardId) || validHostTarget)
+                                  && (canUseSlotWithCard(slot, activePlacementCardId) || validHostTarget)
                                 );
-                                const emptyPlacementMode = Boolean(!slotFilled && playingCardId && !isUpgradingCoral);
+                                const emptyPlacementMode = Boolean(!slotFilled && activePlacementCardId && !isPreviewingCoralUpgrade);
                                 const isLayoutSlotTarget = Boolean(
                                   tutorialHelpTargetActive
                                   && tutorialHelp?.target === "slot-drag"
@@ -15121,6 +15403,8 @@ export default function Simulator({
                                      <div
                                        data-slot-drag-handle
                                        data-slot-id={slot.id}
+                                       data-hand-drop-slot-id={slot.id}
+                                       data-hand-drop-valid={validTarget ? "true" : undefined}
                                        data-tutorial-target={validTarget
                                          ? "placement"
                                          : isLayoutSlotTarget
@@ -15137,7 +15421,7 @@ export default function Simulator({
                                       onPointerUp={handleEcosystemPointerUp}
                                       onPointerCancel={handleEcosystemPointerUp}
                                       onLostPointerCapture={handleSlotDragEnd}
-                                      className={`absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center transition ${!slotFilled ? "seapals-in-play-card" : ""} ${
+                                      className={`absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center transition ${!slotFilled ? "seapals-in-play-card" : ""}${validTarget ? " seapals-hand-drop-valid" : ""}${mobileHandDrag?.target?.kind === "slot" && mobileHandDrag.target.slotId === slot.id ? " is-hand-drag-target" : ""} ${
                                         slotFilled
                                           ? `h-[220px] w-[180px] rounded-[1.5rem] shadow-2xl ${validHostTarget ? "ring-4 ring-emerald-300" : ""}`
                                           : emptyPlacementMode
@@ -15264,10 +15548,30 @@ export default function Simulator({
               };
             })}
             selectedIndex={mobileSelectedHandIndex}
+            draggingIndex={mobileHandDrag?.index ?? null}
             playingCardId={playingCardId}
             tutorialTargetClass={tutorialTargetClass("hand")}
             onInspect={openHandCardPopover}
+            onDragStart={handleMobileHandDragStart}
+            onDragMove={handleMobileHandDragMove}
+            onDragEnd={handleMobileHandDragEnd}
+            onDragCancel={handleMobileHandDragCancel}
           /> : null}
+          {mobileHandDrag ? (
+            <div
+              className={`seapals-mobile-hand-drag-ghost${mobileHandDrag.target?.valid ? " is-valid" : ""}`}
+              data-mobile-hand-drag-ghost
+              aria-hidden="true"
+              style={{ left: mobileHandDrag.clientX, top: mobileHandDrag.clientY }}
+            >
+              <img src={cardsById[mobileHandDrag.cardId]?.image} alt="" draggable={false} />
+            </div>
+          ) : null}
+          <span className="sr-only" aria-live="polite" aria-atomic="true">
+            {mobileHandDrag
+              ? `${mobileHandDrag.target?.message ?? "Dragging card. Drop it in your ecosystem to place it."}`
+              : playError || ""}
+          </span>
           {mobileHudPanel ? (
             <div className="seapals-mobile-hud-panel absolute inset-x-3 bottom-[4.75rem] z-[60] max-h-[45dvh] overflow-y-auto rounded-2xl border border-cyan-300/25 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-xl xl:hidden">
               <div className="mb-3 flex items-center justify-between"><h2 className="font-black text-white">{mobileHudPanel === "zones" ? "Game Zones" : mobileHudPanel === "decks" ? "Personal Decks" : "Mission Feed"}</h2><button type="button" onClick={() => setMobileHudPanel(null)} className="rounded-lg border border-white/10 px-3 py-1 text-xs font-bold text-slate-200">Close</button></div>

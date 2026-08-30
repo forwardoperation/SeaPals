@@ -18,6 +18,17 @@ function sourceSection(source, startMarker, endMarker) {
   return source.slice(start, end);
 }
 
+function functionSectionContaining(source, requiredPatterns, label) {
+  const starts = [...source.matchAll(/(?:^|\n)\s*function\s+[A-Za-z_$][\w$]*\s*\([^)]*\)\s*\{/g)];
+  const sections = starts.map((match, index) => source.slice(
+    match.index,
+    starts[index + 1]?.index ?? source.length,
+  ));
+  const section = sections.find((candidate) => requiredPatterns.every((pattern) => pattern.test(candidate)));
+  assert.ok(section, `Missing ${label} function with contracts: ${requiredPatterns.map(String).join(", ")}`);
+  return section;
+}
+
 test("mobile tutorial copy scrolls independently from persistent tour actions", () => {
   const guideCard = sourceSection(
     simulatorSource,
@@ -164,8 +175,9 @@ test("V2 uses a headerless, occurrence-safe hand rail that opens a dedicated car
   assert.match(handDockSource, /key=\{`\$\{entry\.cardId\}-\$\{entry\.index\}`\}/);
   assert.match(
     handDockSource,
-    /onClick=\{\(event\) => onInspect\(entry\.cardId, entry\.index, event\.currentTarget\)\}/,
+    /onClick=\{\(event\) => handleCardClick\(entry, event\)\}/,
   );
+  assert.match(handDockSource, /function handleCardClick\(entry, event\)[\s\S]*?onInspect\(entry\.cardId, entry\.index, event\.currentTarget\)/);
   assert.doesNotMatch(handDockSource, /onSelect/);
   assert.doesNotMatch(handDockSource, /seapals-mobile-hand-summary|Swipe cards|tap one to lift/i);
   assert.match(mobileHandDock, /onInspect=\{openHandCardPopover\}/);
@@ -229,6 +241,134 @@ test("the V2 hand-card popout dims the board, animates independently, and expose
     /disabled=\{Boolean\((?:playError|handPopoverPlayError)\)\}[\s\S]*?data-tutorial-target="play-card"[\s\S]*?>\s*Play card\s*<\/button>/i,
   );
   assert.doesNotMatch(handPopoverSource, /seapals-card-drawer|modal === "hand"/);
+});
+
+test("mobile hand cards distinguish an upward placement drag from horizontal hand scrolling", () => {
+  assert.match(
+    handDockSource,
+    /onDragStart[\s\S]*?onDragMove[\s\S]*?onDragEnd[\s\S]*?onDragCancel/,
+    "the dock should expose the full drag lifecycle without replacing tap inspection",
+  );
+  assert.match(handDockSource, /onPointerDown=/);
+  assert.match(handDockSource, /onPointerMove=/);
+  assert.match(handDockSource, /onPointerUp=/);
+  assert.match(handDockSource, /onPointerCancel=/);
+  assert.match(handDockSource, /onLostPointerCapture=/);
+  assert.match(handDockSource, /data-mobile-hand-card-index=\{entry\.index\}/);
+
+  const pointerStart = functionSectionContaining(
+    handDockSource,
+    [/pointerId/, /clientX/, /clientY/, /candidate|origin/i],
+    "mobile hand drag candidate",
+  );
+  assert.doesNotMatch(
+    pointerStart,
+    /preventDefault\(\)|setPointerCapture/,
+    "pointerdown must leave native horizontal rail scrolling available",
+  );
+
+  const pointerMove = functionSectionContaining(
+    handDockSource,
+    [/Math\.abs\([^)]*(?:dx|deltaX)[^)]*\)/i, /Math\.abs\([^)]*(?:dy|deltaY)[^)]*\)/i, /onDragStart/, /preventDefault\(\)/],
+    "mobile hand axis-lock",
+  );
+  assert.match(pointerMove, /(?:dy|deltaY)\s*<=?\s*-\s*(?:[A-Z_$][\w$]*|\d+)/i, "only an upward gesture should promote the candidate to a card drag");
+  assert.match(
+    pointerMove,
+    /(?:absY|verticalDistance)[\s\S]{0,100}(?:absX|horizontalDistance)[\s\S]{0,60}(?:1\.1[5-9]|[A-Z_$][\w$]*)/i,
+    "vertical intent should dominate horizontal movement before placement begins",
+  );
+  assert.match(pointerMove, /setPointerCapture/);
+  assert.match(simulatorSource, /\.seapals-mobile-hand-rail\s*\{[\s\S]*?touch-action:\s*pan-x;/);
+});
+
+test("a mobile hand drag starts direct placement without opening the tap popover", () => {
+  const mobileHandDock = sourceSection(
+    simulatorSource,
+    "{mobileHandDockVisible ? <MobileHandDock",
+    "{mobileHudPanel ? (",
+  );
+  assert.match(mobileHandDock, /onInspect=\{openHandCardPopover\}/, "tap and keyboard inspection must remain available");
+  assert.match(mobileHandDock, /onDragStart=\{[A-Za-z_$][\w$]*\}/);
+  assert.match(mobileHandDock, /onDragMove=\{[A-Za-z_$][\w$]*\}/);
+  assert.match(mobileHandDock, /onDragEnd=\{[A-Za-z_$][\w$]*\}/);
+  assert.match(mobileHandDock, /onDragCancel=\{[A-Za-z_$][\w$]*\}/);
+
+  const dragStart = functionSectionContaining(
+    simulatorSource,
+    [/hand\[index\]\s*!==\s*cardId/, /getPlayError\(card\)/, /setMobileHandDrag\(/],
+    "direct mobile hand drag start",
+  );
+  assert.doesNotMatch(dragStart, /openHandCardPopover|setHandPopoverCardId/);
+  assert.doesNotMatch(dragStart, /setPlayingCardId\(cardId\)|playCardFromHand\(cardId\)/, "drag preview must not commit immediate-play cards before release");
+  assert.match(dragStart, /setMobileSelectedHandIndex\(null\)/, "dragging must stay separate from the popover's lifted-card state");
+});
+
+test("mobile hand drops reuse the normal ecosystem, foundation, and slot placement rules", () => {
+  const playerPane = sourceSection(
+    simulatorSource,
+    'id="simulator-player-reef"',
+    "{mobileHandDockVisible ? <MobileHandDock",
+  );
+  assert.match(playerPane, /data-hand-drop-zone="ecosystem"/);
+  assert.match(playerPane, /data-hand-drop-(?:coral|foundation)-id=\{coral\.id\}/);
+  assert.match(playerPane, /data-hand-drop-slot-id=\{slot\.id\}/);
+  assert.match(playerPane, /data-hand-drop-valid=/);
+
+  const dragDrop = functionSectionContaining(
+    simulatorSource,
+    [/document\.elementsFromPoint\(/, /closest\("\[data-hand-drop-/, /placeCardToSlot\(/, /placeCoralInEcosystem\(/, /upgradeCoral\(/, /playCardFromHand\(/],
+    "mobile hand drop resolver",
+  );
+  assert.match(dragDrop, /placeCardToSlot\([^,]+,\s*cardId\)/, "slot drops should commit the exact dragged occurrence through existing slot validation");
+  assert.match(dragDrop, /upgradeCoral\([^,]+,\s*cardId\)/, "upgrade drops should reuse normal foundation upgrade rules");
+  assert.match(dragDrop, /placeCoralInEcosystem\([^,]+,\s*[^,]+,\s*cardId\)/, "base foundations should use the board placement path with the dragged card id");
+  assert.match(dragDrop, /playCardFromHand\(cardId\)/, "general ecosystem drops should preserve support, habitat, ocean, and targeted-card rules");
+});
+
+test("invalid, canceled, and interrupted mobile hand drops share one complete cleanup path", () => {
+  const cleanup = functionSectionContaining(
+    simulatorSource,
+    [/setMobileHandDrag\(null\)/, /setMobileSelectedHandIndex\(null\)/, /cancelCardPlay\(\)/],
+    "mobile hand drag cleanup",
+  );
+  assert.match(cleanup, /setPlayError\(/);
+
+  const dragDrop = functionSectionContaining(
+    simulatorSource,
+    [/document\.elementsFromPoint\(/, /setMobileHandDrag\(null\)|cancelMobileHand/i],
+    "mobile hand drop completion",
+  );
+  assert.match(dragDrop, /if\s*\([^)]*!.*(?:drop|target|valid)[^)]*\)[\s\S]*?(?:cancelMobileHand|cancelCardPlay)/i, "an invalid spatial target should snap back without spending the card");
+  assert.match(handDockSource, /onPointerCancel=\{\(event\) => handleCardPointerCancel\(entry, event\)\}/);
+  assert.match(handDockSource, /onLostPointerCapture=\{\(event\) => handleCardLostPointerCapture\(entry, event\)\}/);
+  assert.match(handDockSource, /function clearHandDragGesture[\s\S]*?onDragCancel/);
+  assert.match(handDockSource, /useEffect\([\s\S]*?return\s*\(\)\s*=>[\s\S]*?(?:reset|cancel|clear)/i, "unmounting the hand must not leave a captured or lifted card behind");
+});
+
+test("an active mobile hand drag renders a ghost and visibly marks only legal drop targets", () => {
+  assert.match(simulatorSource, /data-mobile-hand-drag-ghost/);
+  assert.match(simulatorSource, /mobileHandDrag[\s\S]*?clientX[\s\S]*?clientY/);
+  assert.match(simulatorSource, /data-hand-drop-valid=\{[^}]+\}/);
+  assert.match(simulatorSource, /is-hand-drag-(?:target|valid)|seapals-hand-drop-(?:target|valid)/);
+  assert.match(
+    simulatorSource,
+    /\.seapals-mobile-hand-drag-ghost\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?pointer-events:\s*none;[\s\S]*?z-index:/,
+  );
+  assert.match(simulatorSource, /\.seapals-hand-drop-(?:target|valid)|\.is-hand-drag-(?:target|valid)[\s\S]*?(?:box-shadow|filter|outline|border)/);
+  assert.match(simulatorSource, /data-mobile-hand-drag-ghost[\s\S]{0,220}aria-hidden="true"|aria-hidden="true"[\s\S]{0,220}data-mobile-hand-drag-ghost/, "the visual ghost must stay outside the accessibility tree");
+});
+
+test("drag and drop preserves the existing tap and keyboard Play Card fallback", () => {
+  assert.match(handDockSource, /<button[\s\S]*?type="button"[\s\S]*?aria-haspopup="dialog"/);
+  assert.match(
+    handDockSource,
+    /onClick=\{\(event\) => handleCardClick\(entry, event\)\}/,
+  );
+  assert.match(handDockSource, /function handleCardClick\(entry, event\)[\s\S]*?onInspect\(entry\.cardId, entry\.index, event\.currentTarget\)/);
+  assert.match(handDockSource, /(?:suppress|ignore|drag)[\w$.]*(?:Click|click)/, "the synthetic click after a completed drag should be ignored exactly once");
+  assert.match(handPopoverSource, /data-tutorial-target="play-card"[\s\S]*?>\s*Play card\s*<\/button>/i);
+  assert.match(simulatorSource, /function playHandPopoverCard[\s\S]*?playCardFromHand\(cardId\)/);
 });
 
 test("V2 keeps both reefs mounted around an accessible 24-to-68 percent divider", () => {
