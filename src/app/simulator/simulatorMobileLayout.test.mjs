@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [simulatorSource, handDockSource, cameraSource] = await Promise.all([
+const [simulatorSource, handDockSource, handPopoverSource, cameraSource] = await Promise.all([
   readFile(new URL("./Simulator.jsx", import.meta.url), "utf8"),
   readFile(new URL("./MobileHandDock.jsx", import.meta.url), "utf8"),
+  readFile(new URL("./MobileHandCardPopover.jsx", import.meta.url), "utf8"),
   readFile(new URL("./ecosystemCamera.mjs", import.meta.url), "utf8"),
 ]);
 
@@ -27,7 +28,6 @@ test("mobile tutorial copy scrolls independently from persistent tour actions", 
     "@media (max-width: 767px)",
     "`}</style>",
   );
-
   assert.match(
     guideCard,
     /className="seapals-professor-card-scroll"[\s\S]*?<\/div>\s*\{onRevealTarget \? \([\s\S]*?\{onAdvance \? \(\s*<div className="seapals-professor-actions/,
@@ -147,7 +147,13 @@ test("pending placement cannot reopen the mobile hand or replay the same card", 
   );
 });
 
-test("V2 uses a headerless, occurrence-safe hand rail that opens card details directly", () => {
+test("V2 uses a headerless, occurrence-safe hand rail that opens a dedicated card popout", () => {
+  const mobileHandDock = sourceSection(
+    simulatorSource,
+    "{mobileHandDockVisible ? <MobileHandDock",
+    "{mobileHudPanel ? (",
+  );
+
   assert.match(simulatorSource, /const mobileHandDockVisible = Boolean\([\s\S]*?previewExperience[\s\S]*?!tutorialBoardTourOpen[\s\S]*?\);/);
   assert.match(simulatorSource, /mobileHandDockVisible \? <MobileHandDock/);
   assert.match(simulatorSource, /!previewExperience \? <button[\s\S]*?Open Hand/);
@@ -157,16 +163,71 @@ test("V2 uses a headerless, occurrence-safe hand rail that opens card details di
   assert.match(handDockSource, /key=\{`\$\{entry\.cardId\}-\$\{entry\.index\}`\}/);
   assert.match(
     handDockSource,
-    /onClick=\{\(\) => \{[\s\S]*?onSelect\(entry\.index\);[\s\S]*?onInspect\(entry\.cardId\);[\s\S]*?\}\}/,
+    /onClick=\{\(event\) => onInspect\(entry\.cardId, entry\.index, event\.currentTarget\)\}/,
   );
+  assert.doesNotMatch(handDockSource, /onSelect/);
   assert.doesNotMatch(handDockSource, /seapals-mobile-hand-summary|Swipe cards|tap one to lift/i);
+  assert.match(mobileHandDock, /onInspect=\{openHandCardPopover\}/);
   assert.match(
     simulatorSource,
-    /onInspect=\{\(cardId\) => \{[\s\S]*?setSelectedHandCard\(cardId\);[\s\S]*?setModal\("hand"\);[\s\S]*?\}\}/,
+    /function openHandCardPopover\(cardId, index = null, returnTarget = null\) \{[\s\S]*?hand\[index\] !== cardId\) return;[\s\S]*?returnTarget instanceof HTMLElement[\s\S]*?handPopoverReturnFocusRef\.current = returnTarget;[\s\S]*?setMobileSelectedHandIndex\(Number\.isInteger\(index\) \? index : null\);[\s\S]*?setSelectedHandCard\(cardId\);[\s\S]*?setHandPopoverCardId\(cardId\);[\s\S]*?\}/,
   );
+  assert.doesNotMatch(mobileHandDock, /setModal\("hand"\)/);
   assert.match(simulatorSource, /\.seapals-mobile-hand-rail\s*\{[\s\S]*?height:\s*100%;/);
   assert.match(simulatorSource, /document\.querySelector\("\[data-mobile-hand-dock\]"\)/);
   assert.match(simulatorSource, /visibleHeight = Math\.max\(96, rect\.height - occludedHeight\)/);
+});
+
+test("closing a V2 hand-card popout clears every selected and lifted card state", () => {
+  const closeHandler = sourceSection(
+    simulatorSource,
+    "function closeHandCardPopover",
+    "function playHandPopoverCard",
+  );
+  const playHandler = sourceSection(
+    simulatorSource,
+    "function playHandPopoverCard",
+    "function inspectSearchResult",
+  );
+
+  assert.match(closeHandler, /setHandPopoverCardId\(null\)/);
+  assert.match(closeHandler, /setSelectedHandCard\(null\)/);
+  assert.match(closeHandler, /setMobileSelectedHandIndex\(null\)/);
+  assert.match(closeHandler, /setPlayError\(""\)/);
+  assert.ok(
+    (handPopoverSource.match(/onClick=\{onClose\}/g) ?? []).length >= 2,
+    "both the dimmed backdrop and close button should delegate to the shared parent reset path",
+  );
+  assert.match(simulatorSource, /<MobileHandCardPopover[\s\S]*?onClose=\{closeHandCardPopover\}[\s\S]*?onPlay=\{playHandPopoverCard\}/);
+  assert.match(playHandler, /closeHandCardPopover\(\{ restoreFocus: false \}\);[\s\S]*?playCardFromHand\(cardId\)/);
+});
+
+test("the V2 hand-card popout dims the board, animates independently, and exposes Play Card", () => {
+  assert.match(simulatorSource, /@keyframes seapalsHandCardPopoverIn[\s\S]*?opacity:\s*0;[\s\S]*?scale\(\.[0-9]+\)[\s\S]*?opacity:\s*1;[\s\S]*?scale\(1\)/);
+  assert.match(simulatorSource, /\.seapals-hand-card-popover\s*\{[\s\S]*?animation:\s*seapalsHandCardPopoverIn/);
+  assert.match(
+    simulatorSource,
+    /\.seapals-reduced-motion :is\([^)]*\.seapals-hand-card-popover[^)]*\)\s*\{[\s\S]*?animation:\s*none !important;/,
+  );
+  assert.match(handPopoverSource, /seapals-hand-card-popover-backdrop/);
+  assert.ok(
+    /seapals-hand-card-popover-backdrop[^"\n]*(?:bg-slate-950\/(?:6[5-9]|[7-9][0-9])|backdrop-blur)/.test(handPopoverSource)
+      || /\.seapals-hand-card-popover-backdrop\s*\{[\s\S]*?(?:rgba\([^)]*,\s*\.(?:6[5-9]|[7-9][0-9])\)|backdrop-filter:\s*blur)/.test(simulatorSource),
+    "the dedicated backdrop should visibly dim or blur the board",
+  );
+  assert.match(simulatorSource, /<MobileHandCardPopover/);
+  assert.match(handPopoverSource, /className="[^"]*seapals-hand-card-popover[^"]*"/);
+  assert.match(handPopoverSource, /role="dialog"[\s\S]*?aria-modal="true"/);
+  assert.match(handPopoverSource, /tabIndex=\{-1\}[\s\S]*?className="seapals-hand-card-popover-backdrop"/);
+  assert.match(handPopoverSource, /function keepFocusInDialog\(event\)[\s\S]*?event\.key !== "Tab"[\s\S]*?querySelectorAll\("button:not\(:disabled\)[\s\S]*?last\.focus\(\)[\s\S]*?first\.focus\(\)/);
+  assert.match(handPopoverSource, /ref=\{dialogRef\}[\s\S]*?onKeyDown=\{keepFocusInDialog\}/);
+  assert.match(handPopoverSource, /aria-label="Close hand card popout"[\s\S]*?<span aria-hidden="true">×<\/span>/);
+  assert.match(handPopoverSource, /src=\{card\.image\}[\s\S]*?alt=\{card\.name\}/);
+  assert.match(
+    handPopoverSource,
+    /disabled=\{Boolean\((?:playError|handPopoverPlayError)\)\}[\s\S]*?data-tutorial-target="play-card"[\s\S]*?>\s*Play card\s*<\/button>/i,
+  );
+  assert.doesNotMatch(handPopoverSource, /seapals-card-drawer|modal === "hand"/);
 });
 
 test("V2 keeps both reefs mounted around an accessible 24-to-68 percent divider", () => {
@@ -309,6 +370,46 @@ test("the hand rail reserves reachable left and right gutters around board contr
     /\.seapals-simulator-preview \.seapals-mobile-hand-list\s*\{[\s\S]*?padding-right:\s*5\.75rem;[\s\S]*?padding-left:\s*3\.75rem;/,
   );
   assert.match(shortStyles, /\.seapals-simulator-preview \.seapals-mobile-hand-list\s*\{\s*padding-left:\s*9rem;/);
+});
+
+test("the V2 hand tray is transparent and compact enough to return space to the reef", () => {
+  const responsiveStyles = sourceSection(
+    simulatorSource,
+    "@media (max-width: 1279px)",
+    "@media (max-width: 1279px) and (max-height: 650px)",
+  );
+  const mobileStyles = sourceSection(
+    simulatorSource,
+    "@media (max-width: 767px)",
+    "`}</style>",
+  );
+  const basePreview = sourceSection(
+    simulatorSource,
+    ".seapals-game-shell.seapals-simulator-preview {",
+    ".seapals-hud-panel {",
+  );
+  const regularPhone = sourceSection(
+    mobileStyles,
+    ".seapals-game-shell.seapals-simulator-preview {",
+    ".seapals-arena-frame {",
+  );
+  const shortPhone = sourceSection(
+    simulatorSource,
+    "@media (max-width: 767px) and (max-height: 650px)",
+    "`}</style>",
+  );
+  const panelRule = responsiveStyles.match(/\.seapals-simulator-preview \.seapals-mobile-hand-panel\s*\{([^}]*)\}/)?.[1] ?? "";
+  const baseHeight = Number(basePreview.match(/--seapals-mobile-hand-height:\s*([\d.]+)rem/)?.[1]);
+  const regularHeight = Number(regularPhone.match(/--seapals-mobile-hand-height:\s*([\d.]+)rem/)?.[1] ?? baseHeight);
+  const shortHeight = Number(shortPhone.match(/--seapals-mobile-hand-height:\s*([\d.]+)rem/)?.[1] ?? regularHeight);
+
+  assert.match(panelRule, /background:\s*transparent;/);
+  assert.match(panelRule, /border:\s*0;/);
+  assert.match(panelRule, /box-shadow:\s*none;/);
+  assert.match(panelRule, /backdrop-filter:\s*none;/);
+  assert.ok(Number.isFinite(regularHeight) && regularHeight < 13, "regular phone hand height should reclaim space from the old 13rem tray");
+  assert.ok(Number.isFinite(shortHeight) && shortHeight < 10, "short phone hand height should reclaim space from the old 10rem tray");
+  assert.match(simulatorSource, /--seapals-mobile-dock-clearance:\s*calc\(var\(--seapals-mobile-hand-height\) \+ (?:[\d.]+rem|var\(--seapals-mobile-hand-bottom\))\);/);
 });
 
 test("V2 removes both ecosystem label rows while preserving action overlays", () => {

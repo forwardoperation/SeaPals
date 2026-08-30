@@ -5,7 +5,6 @@ export default function MobileHandDock({
   selectedIndex,
   playingCardId,
   tutorialTargetClass = "",
-  onSelect,
   onInspect,
 }) {
   const placementPending = Boolean(playingCardId);
@@ -32,15 +31,14 @@ export default function MobileHandDock({
                     <button
                       type="button"
                       disabled={placementPending}
+                      aria-haspopup="dialog"
+                      aria-expanded={selected}
                       aria-pressed={selected}
                       aria-label={`${entry.card?.name ?? entry.cardId}. ${entry.setupPlayable ? "Legal setup card. " : ""}${entry.playError || `${entry.cost} RP, ready to play`}`}
                       data-card-id={entry.cardId}
                       data-setup-playable={entry.setupPlayable ? "true" : undefined}
                       data-tutorial-hand-card-id={entry.cardId}
-                      onClick={() => {
-                        onSelect(entry.index);
-                        onInspect(entry.cardId);
-                      }}
+                      onClick={(event) => onInspect(entry.cardId, entry.index, event.currentTarget)}
                       className={`seapals-mobile-hand-card${selected ? " is-selected" : ""}${entry.playError ? " is-unavailable" : " is-ready"}${entry.setupPlayable ? " seapals-setup-playable-card" : ""}${entry.tutorialClass ?? ""}`}
                     >
                       <img src={entry.card?.image} alt="" />

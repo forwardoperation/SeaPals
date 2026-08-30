@@ -6,6 +6,7 @@ import Link from "next/link";
 import RulesChat from "@/components/rules/RulesChat";
 import BugReportDialog from "@/components/feedback/BugReportDialog";
 import MobileHandDock from "./MobileHandDock";
+import MobileHandCardPopover from "./MobileHandCardPopover";
 import { cardsById } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
 import { conditionCards } from "@/data/cards/conditions";
@@ -3346,6 +3347,7 @@ export default function Simulator({
   const openingCoinFlipIdRef = useRef(0);
   const openingCoinFlipActiveRef = useRef(false);
   const inspectorReturnFocusRef = useRef(null);
+  const handPopoverReturnFocusRef = useRef(null);
   const [inspectedCard, setInspectedCard] = useState(null);
   const handLimitChoiceIdRef = useRef(0);
   const [handLimitDiscardSelection, setHandLimitDiscardSelection] = useState([]);
@@ -3940,6 +3942,17 @@ export default function Simulator({
     return () => window.removeEventListener("keydown", handleInspectorKeyDown);
   }, [inspectedCardData]);
 
+  useEffect(() => {
+    if (!handPopoverCardId) return undefined;
+    const handleHandPopoverKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      closeHandCardPopover();
+    };
+    window.addEventListener("keydown", handleHandPopoverKeyDown);
+    return () => window.removeEventListener("keydown", handleHandPopoverKeyDown);
+  }, [handPopoverCardId]);
+
   const playerTutorialActionCards = tutorialContract ? [
     ...playerCorals.flatMap((coral) => coral.slots.flatMap((slot) => slot.cardId && slot.invasiveOwner !== "opponent" ? [{
       cardId: slot.cardId,
@@ -4332,7 +4345,7 @@ export default function Simulator({
     selectedCardVictoryPoints: Number(selectedTutorialCard?.victoryPoints ?? 0),
     selectedSupportLocksFurtherSupports: supportExplicitlyLocksFurtherSupports(selectedTutorialCard),
     handPopoverOpen: Boolean(handPopoverCardId),
-    handDockSelectionOpen: previewExperience && mobileSelectedHandIndex !== null,
+    handDockSelectionOpen: previewExperience && Boolean(handPopoverCardId),
     streamlinedTutorial: previewExperience,
     inspectedAttack,
     inspectedCardOpen: Boolean(inspectedCardData),
@@ -4956,6 +4969,12 @@ export default function Simulator({
 
   useEffect(() => {
     setMobileSelectedHandIndex(null);
+    if (handPopoverCardId) {
+      handPopoverReturnFocusRef.current = null;
+      setHandPopoverCardId(null);
+      setSelectedHandCard(null);
+      setPlayError("");
+    }
   }, [hand, playingCardId]);
 
   useEffect(() => {
@@ -6808,6 +6827,41 @@ export default function Simulator({
 
   function handleFloatingCardPointerUp() {
     setFloatingCardDrag(null);
+  }
+
+  function openHandCardPopover(cardId, index = null, returnTarget = null) {
+    if (!cardsById[cardId] || playingCardId) return;
+    if (Number.isInteger(index) && hand[index] !== cardId) return;
+    if (returnTarget instanceof HTMLElement) {
+      handPopoverReturnFocusRef.current = returnTarget;
+    } else if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+      handPopoverReturnFocusRef.current = document.activeElement;
+    }
+    setMobileSelectedHandIndex(Number.isInteger(index) ? index : null);
+    setSelectedHandCard(cardId);
+    setHandPopoverCardId(cardId);
+    setPlayError("");
+  }
+
+  function closeHandCardPopover(options = {}) {
+    const restoreFocus = options?.restoreFocus !== false;
+    const returnTarget = handPopoverReturnFocusRef.current;
+    handPopoverReturnFocusRef.current = null;
+    setHandPopoverCardId(null);
+    setSelectedHandCard(null);
+    setMobileSelectedHandIndex(null);
+    setPlayError("");
+    if (restoreFocus && returnTarget?.isConnected) {
+      window.requestAnimationFrame(() => returnTarget.focus());
+    }
+  }
+
+  function playHandPopoverCard() {
+    const cardId = mobileSelectedHandIndex === null
+      ? handPopoverCardId
+      : hand[mobileSelectedHandIndex] === handPopoverCardId ? handPopoverCardId : null;
+    closeHandCardPopover({ restoreFocus: false });
+    if (cardId) playCardFromHand(cardId);
   }
 
   function inspectSearchResult(cardId) {
@@ -12636,6 +12690,11 @@ export default function Simulator({
           70% { opacity: 1; transform: translateY(-.2rem) scale(1.008); }
           100% { opacity: 1; transform: translateY(0) scale(1); }
         }
+        @keyframes seapalsHandCardPopoverIn {
+          0% { opacity: 0; transform: translateY(2rem) scale(.88) rotate(-1deg); }
+          72% { opacity: 1; transform: translateY(-.2rem) scale(1.015) rotate(.25deg); }
+          100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+        }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes seapalsCoinReady {
           0%, 100% { transform: translateY(0) rotateX(7deg) rotateY(-8deg); }
@@ -12679,6 +12738,11 @@ export default function Simulator({
             radial-gradient(circle at 12% 8%, rgba(14,165,233,.18), transparent 30%),
             radial-gradient(circle at 88% 92%, rgba(16,185,129,.14), transparent 34%),
             linear-gradient(145deg, #061522 0%, #071b2d 48%, #04111d 100%);
+        }
+        .seapals-game-shell.seapals-simulator-preview {
+          --seapals-mobile-hand-height: 7.5rem;
+          --seapals-mobile-hand-bottom: 4.15rem;
+          --seapals-mobile-dock-clearance: calc(var(--seapals-mobile-hand-height) + var(--seapals-mobile-hand-bottom));
         }
         .seapals-hud-panel { background: linear-gradient(145deg, rgba(15,35,52,.96), rgba(8,24,39,.96)); }
         .seapals-arena-frame { box-shadow: 0 24px 80px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.06); }
@@ -13179,7 +13243,7 @@ export default function Simulator({
           border-color: #fff !important;
           box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff !important;
         }
-        .seapals-reduced-motion :is(.seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-professor-coach-wrap-anchored, .seapals-professor-coach-arrow, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-card-drawer, .seapals-event-card, .seapals-turn-button) {
+        .seapals-reduced-motion :is(.seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-professor-coach-wrap-anchored, .seapals-professor-coach-arrow, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-card-drawer, .seapals-hand-card-popover, .seapals-event-card, .seapals-turn-button) {
           animation: none !important;
           transition: none !important;
         }
@@ -13201,7 +13265,7 @@ export default function Simulator({
             animation: none !important;
             transition: none !important;
           }
-          .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-professor-coach-wrap-anchored, .seapals-professor-coach-arrow, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor { animation: none !important; opacity: 1 !important; transition: none !important; }
+          .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-professor-coach-wrap-anchored, .seapals-professor-coach-arrow, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-hand-card-popover { animation: none !important; opacity: 1 !important; transition: none !important; }
           .seapals-professor-type-cursor { display: none; }
           .seapals-setup-playable-card { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); }
           .seapals-slot-target { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); box-shadow: 0 0 30px rgba(52,211,153,.45); }
@@ -13209,13 +13273,148 @@ export default function Simulator({
         }
         .seapals-card-drawer { animation: seapalsDrawerIn 260ms ease-out; }
         .seapals-event-card { animation: seapalsEventPop 320ms ease-out; }
+        .seapals-hand-card-popover-layer {
+          position: fixed;
+          z-index: 100;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          padding: max(.75rem, env(safe-area-inset-top)) max(.75rem, env(safe-area-inset-right)) max(.75rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left));
+          pointer-events: none;
+        }
+        .seapals-hand-card-popover-backdrop {
+          position: fixed;
+          z-index: 0;
+          inset: 0;
+          border: 0;
+          background: rgba(2, 6, 23, .78);
+          pointer-events: auto;
+          backdrop-filter: blur(2px) saturate(.78);
+        }
+        .seapals-hand-card-popover {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          width: min(92vw, 30rem);
+          max-height: calc(100dvh - max(1.5rem, env(safe-area-inset-top)) - max(1.5rem, env(safe-area-inset-bottom)));
+          flex-direction: column;
+          align-items: center;
+          gap: .55rem;
+          overflow-y: auto;
+          padding: .35rem;
+          color: #f8fafc;
+          pointer-events: auto;
+          overscroll-behavior: contain;
+          scrollbar-width: none;
+          animation: seapalsHandCardPopoverIn 360ms cubic-bezier(.18, .86, .24, 1);
+        }
+        .seapals-hand-card-popover::-webkit-scrollbar { display: none; }
+        .seapals-hand-card-popover-art {
+          display: grid;
+          width: 100%;
+          min-height: 0;
+          place-items: center;
+        }
+        .seapals-hand-card-popover-art img {
+          width: auto;
+          max-width: 100%;
+          height: min(61dvh, 40rem);
+          max-height: 100%;
+          border-radius: 1rem;
+          object-fit: contain;
+          filter: drop-shadow(0 22px 34px rgba(0, 0, 0, .65)) drop-shadow(0 0 18px rgba(34, 211, 238, .2));
+        }
+        .seapals-hand-card-popover-guidance {
+          width: min(100%, 32rem);
+          margin-top: -1.2rem;
+        }
+        .seapals-hand-card-popover-meta {
+          display: flex;
+          max-width: 100%;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: .35rem;
+          padding: .45rem .6rem;
+          border: 1px solid rgba(103, 232, 249, .22);
+          border-radius: 999px;
+          background: rgba(2, 15, 27, .88);
+          box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
+          backdrop-filter: blur(10px);
+        }
+        .seapals-hand-card-popover-meta strong {
+          overflow: hidden;
+          max-width: 13rem;
+          font-size: .76rem;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .seapals-hand-card-popover-meta span {
+          border-radius: 999px;
+          background: rgba(34, 211, 238, .12);
+          padding: .24rem .42rem;
+          color: #cffafe;
+          font-size: .58rem;
+          font-weight: 900;
+          line-height: 1;
+        }
+        .seapals-hand-card-popover-error {
+          width: min(100%, 27rem);
+          border: 1px solid rgba(253, 164, 175, .4);
+          border-radius: .8rem;
+          background: rgba(136, 19, 55, .82);
+          padding: .55rem .75rem;
+          color: #ffe4e6;
+          font-size: .7rem;
+          font-weight: 750;
+          line-height: 1.35;
+          text-align: center;
+        }
+        .seapals-hand-card-popover-play {
+          width: min(100%, 27rem);
+          min-height: 2.9rem;
+          border: 1px solid rgba(167, 243, 208, .72);
+          border-radius: .9rem;
+          color: #042f2e;
+          background: linear-gradient(120deg, #22d3ee, #34d399);
+          font-size: .8rem;
+          font-weight: 950;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          box-shadow: 0 12px 28px rgba(16, 185, 129, .28);
+        }
+        .seapals-hand-card-popover-play:disabled {
+          border-color: rgba(148, 163, 184, .35);
+          color: #cbd5e1;
+          background: #334155;
+          box-shadow: none;
+        }
+        .seapals-hand-card-popover-close {
+          display: grid;
+          width: 3rem;
+          height: 3rem;
+          flex: 0 0 3rem;
+          place-items: center;
+          border: 3px solid rgba(255, 255, 255, .94);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(2, 6, 23, .82);
+          font-size: 2rem;
+          font-weight: 400;
+          line-height: 1;
+          box-shadow: 0 10px 28px rgba(0, 0, 0, .48);
+        }
+        .seapals-hand-card-popover :is(button, [tabindex]):focus-visible {
+          outline: 3px solid #fde68a;
+          outline-offset: 3px;
+        }
         .seapals-mobile-hand-dock {
           position: absolute;
           z-index: 58;
           right: .75rem;
-          bottom: 4.15rem;
+          bottom: var(--seapals-mobile-hand-bottom, 4.15rem);
           left: .75rem;
-          height: 10.75rem;
+          height: var(--seapals-mobile-hand-height, 10.75rem);
           pointer-events: none;
         }
         .seapals-high-contrast .seapals-mobile-hand-panel {
@@ -13369,11 +13568,11 @@ export default function Simulator({
           border-radius: .72rem;
           background: #082f49;
           box-shadow: 0 8px 18px rgba(2, 8, 23, .52);
-          transform: translateY(2.35rem) rotate(-1deg);
+          transform: translateY(.5rem) rotate(-1deg);
           transform-origin: center bottom;
           transition: transform 180ms ease, border-color 180ms ease, filter 180ms ease, box-shadow 180ms ease;
         }
-        .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(2.35rem) rotate(1deg); }
+        .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(.5rem) rotate(1deg); }
         .seapals-mobile-hand-card img {
           width: 100%;
           height: 100%;
@@ -13391,7 +13590,7 @@ export default function Simulator({
           z-index: 5;
           border-color: #67e8f9;
           filter: none;
-          transform: translateY(.15rem) rotate(0deg) scale(1.06);
+          transform: translateY(0) rotate(0deg) scale(1.02);
           box-shadow: 0 0 0 3px rgba(103, 232, 249, .22), 0 12px 28px rgba(2, 8, 23, .7), 0 0 26px rgba(34, 211, 238, .34);
         }
         .seapals-mobile-hand-card:focus-visible {
@@ -13487,6 +13686,12 @@ export default function Simulator({
         }
         .seapals-mobile-hud-panel { bottom: 15.1rem; }
         @media (max-width: 1279px) {
+          .seapals-simulator-preview .seapals-mobile-hand-panel {
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            backdrop-filter: none;
+          }
           .seapals-simulator-preview .seapals-board-stack {
             display: flex;
             flex-direction: column;
@@ -13656,8 +13861,9 @@ export default function Simulator({
         }
         @media (max-width: 767px) {
           .seapals-game-shell.seapals-simulator-preview {
-            --seapals-mobile-hand-height: 13rem;
-            --seapals-mobile-dock-clearance: calc(var(--seapals-mobile-hand-height) + 3.9rem);
+            --seapals-mobile-hand-height: 9rem;
+            --seapals-mobile-hand-bottom: 4.15rem;
+            --seapals-mobile-dock-clearance: calc(var(--seapals-mobile-hand-height) + var(--seapals-mobile-hand-bottom));
             height: 100dvh;
             max-height: 100dvh;
             padding-top: max(.5rem, env(safe-area-inset-top));
@@ -13775,9 +13981,9 @@ export default function Simulator({
           .seapals-mobile-hand-card {
             width: 6.25rem;
             height: 8.85rem;
-            transform: translateY(4.15rem) rotate(-1deg);
+            transform: translateY(.5rem) rotate(-1deg);
           }
-          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(4.15rem) rotate(1deg); }
+          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(.5rem) rotate(1deg); }
           .seapals-mobile-hud-panel {
             bottom: var(--seapals-mobile-dock-clearance);
           }
@@ -13868,24 +14074,26 @@ export default function Simulator({
         }
         @media (max-width: 767px) and (max-height: 650px) {
           .seapals-game-shell.seapals-simulator-preview {
-            --seapals-mobile-hand-height: 10rem;
-            --seapals-mobile-dock-clearance: calc(var(--seapals-mobile-hand-height) + 3.85rem);
+            --seapals-mobile-hand-height: 7.25rem;
+            --seapals-mobile-hand-bottom: 3.75rem;
+            --seapals-mobile-dock-clearance: calc(var(--seapals-mobile-hand-height) + var(--seapals-mobile-hand-bottom));
           }
           .seapals-mobile-hand-dock {
             right: .5rem;
-            bottom: 3.75rem;
+            bottom: var(--seapals-mobile-hand-bottom);
             left: .5rem;
           }
           .seapals-mobile-hand-card {
             width: 5rem;
             height: 7.1rem;
-            transform: translateY(3.2rem) rotate(-1deg);
+            transform: translateY(.3rem) rotate(-1deg);
           }
-          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(3.2rem) rotate(1deg); }
+          .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card { transform: translateY(.3rem) rotate(1deg); }
           .seapals-mobile-hand-card.is-selected,
           .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card.is-selected {
-            transform: translateY(.05rem) rotate(0deg) scale(1.03);
+            transform: translateY(0) rotate(0deg) scale(1.01);
           }
+          .seapals-hand-card-popover-art img { height: min(52dvh, 29rem); }
           .seapals-mobile-hand-kicker { font-size: .48rem; }
           .seapals-mobile-hand-title { font-size: .68rem; }
           .seapals-mobile-hand-status { font-size: .52rem; }
@@ -14730,15 +14938,7 @@ export default function Simulator({
             selectedIndex={mobileSelectedHandIndex}
             playingCardId={playingCardId}
             tutorialTargetClass={tutorialTargetClass("hand")}
-            onSelect={(index) => {
-              setMobileSelectedHandIndex(index);
-              setPlayError("");
-            }}
-            onInspect={(cardId) => {
-              setSelectedHandCard(cardId);
-              setPlayError("");
-              setModal("hand");
-            }}
+            onInspect={openHandCardPopover}
           /> : null}
           {mobileHudPanel ? (
             <div className="seapals-mobile-hud-panel absolute inset-x-3 bottom-[4.75rem] z-[60] max-h-[45dvh] overflow-y-auto rounded-2xl border border-cyan-300/25 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-xl xl:hidden">
@@ -14777,7 +14977,7 @@ export default function Simulator({
             <div className="flex items-center justify-between px-1 pb-2"><div><h3 className="text-sm font-black uppercase tracking-[0.16em] text-cyan-200">Your hand</h3><p className="text-xs text-slate-400">Click a card for details</p></div><span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-cyan-400/10 px-2 text-sm font-black text-cyan-200" aria-label={`${hand.length} cards in hand`}>{hand.length}</span></div>
             <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
               {hand.length ? hand.map((cardId, cardIndex) => { const card = cardsById[cardId]; const error = getPlayError(card); return (
-                <button key={`${cardId}-${cardIndex}`} type="button" data-card-id={cardId} data-tutorial-hand-card-id={cardId} onClick={() => { setSelectedHandCard(cardId); setHandPopoverCardId(cardId); setPlayError(""); }} className={`group grid w-full grid-cols-[3.6rem_minmax(0,1fr)_auto] items-center gap-2 rounded-xl border p-1.5 text-left transition hover:border-cyan-300/45 hover:bg-cyan-300/10 ${isSetup && !error ? "seapals-setup-playable-card border-emerald-300/60 bg-emerald-400/15" : "border-white/10 bg-white/5"}${tutorialCardTargetClass(cardId)}`}>
+                <button key={`${cardId}-${cardIndex}`} type="button" data-card-id={cardId} data-tutorial-hand-card-id={cardId} onClick={() => openHandCardPopover(cardId)} className={`group grid w-full grid-cols-[3.6rem_minmax(0,1fr)_auto] items-center gap-2 rounded-xl border p-1.5 text-left transition hover:border-cyan-300/45 hover:bg-cyan-300/10 ${isSetup && !error ? "seapals-setup-playable-card border-emerald-300/60 bg-emerald-400/15" : "border-white/10 bg-white/5"}${tutorialCardTargetClass(cardId)}`}>
                   <span className="seapals-card-art-well relative h-20 overflow-hidden rounded-md shadow"><img src={card?.image} alt={card?.name} className="h-full w-full object-contain" /></span>
                   <span className="min-w-0"><strong className="block truncate text-sm text-white">{card?.name}</strong><span className="mt-1 block truncate text-xs font-semibold text-slate-300">{getCardClassLabel(card)}</span><span className={`mt-1 block text-xs font-bold ${error ? "text-rose-300" : "text-emerald-300"}`}>{error ? "Unavailable" : "Ready to play"}</span></span>
                   <span className="rounded-full bg-emerald-400/10 px-2 py-1 text-xs font-black text-emerald-200">{getPlayerCardPlayCost(card)} RP</span>
@@ -14789,10 +14989,32 @@ export default function Simulator({
 
         {handPopoverCard ? (
           <>
-            <button type="button" aria-label="Close hand card details" onClick={() => setHandPopoverCardId(null)} className="fixed inset-0 z-40 hidden bg-slate-950/25 xl:block" />
+            {previewExperience ? (
+              <MobileHandCardPopover
+                card={handPopoverCard}
+                classLabel={getCardClassLabel(handPopoverCard)}
+                cost={getPlayerCardPlayCost(handPopoverCard)}
+                playError={handPopoverPlayError}
+                guidance={tutorialHelpInline && ["play-card", "turn-button", "close-modal"].includes(tutorialHelp.target) ? (
+                  <ProfessorGuideCard
+                    guide={tutorialGuide}
+                    help={tutorialHelp}
+                    step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                    total={tutorialContract.checkpoints.length}
+                    inline
+                    onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)}
+                  />
+                ) : null}
+                tutorialCloseClass={tutorialTargetClass("close-modal")}
+                tutorialPlayClass={tutorialTargetClass("play-card")}
+                onClose={closeHandCardPopover}
+                onPlay={playHandPopoverCard}
+              />
+            ) : null}
+            <button type="button" aria-label="Close hand card details" onClick={closeHandCardPopover} className="fixed inset-0 z-40 hidden bg-slate-950/25 xl:block" />
             <aside className="seapals-hud-panel fixed right-[21.5rem] top-1/2 z-50 hidden max-h-[calc(100dvh-1rem)] w-[24rem] max-w-[calc(100vw-23rem)] -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-cyan-300/30 p-4 shadow-[0_28px_90px_rgba(0,0,0,.65)] xl:flex" aria-label={`${handPopoverCard.name} details`}>
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-                <div className="mb-3 flex items-start justify-between gap-3"><div><div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300">Card details</div><h3 className="text-lg font-black text-white">{handPopoverCard.name}</h3></div><button type="button" onClick={() => setHandPopoverCardId(null)} className={`rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal">Close</button></div>
+                <div className="mb-3 flex items-start justify-between gap-3"><div><div className="text-[9px] font-black uppercase tracking-[0.18em] text-cyan-300">Card details</div><h3 className="text-lg font-black text-white">{handPopoverCard.name}</h3></div><button type="button" onClick={closeHandCardPopover} className={`rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/10${tutorialTargetClass("close-modal")}`} data-tutorial-target="close-modal">Close</button></div>
                 {tutorialHelpInline && tutorialHelp.target === "close-modal" ? (
                   <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
                 ) : null}
@@ -14804,7 +15026,7 @@ export default function Simulator({
                   <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
                 ) : null}
               </div>
-              <button type="button" disabled={Boolean(handPopoverPlayError)} onClick={() => { const cardId = handPopoverCardId; setHandPopoverCardId(null); playCardFromHand(cardId); }} className={`mt-3 w-full shrink-0 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-950 shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:text-slate-300${tutorialTargetClass("play-card")}`} data-tutorial-target="play-card">Play card</button>
+              <button type="button" disabled={Boolean(handPopoverPlayError)} onClick={playHandPopoverCard} className={`mt-3 w-full shrink-0 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-950 shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:text-slate-300${tutorialTargetClass("play-card")}`} data-tutorial-target="play-card">Play card</button>
             </aside>
           </>
         ) : null}

@@ -187,12 +187,13 @@ test("scripted setup highlights only the prepared economy foundation", () => {
   assert.match(placing.pointerPrompt, /Mustard Hill Coral.*marker in Your Reef/i);
 });
 
-test("a lifted V2 hand card advances guidance without inventing a Close action", () => {
+test("an open V2 hand-card popout advances guidance without inventing a Close action", () => {
   const checkpoint = CHECKPOINTS["tutorial-setup"];
   const help = getSimulatorTutorialHelp(checkpoint, {
     gamePhase: "setup",
     hasCoralInPlay: false,
     handDockSelectionOpen: true,
+    handPopoverOpen: true,
     selectedHandCard: "mustard-hill-coral-base",
     scriptedSetupCardId: "mustard-hill-coral-base",
     scriptedSetupCardName: "Mustard Hill Coral",
