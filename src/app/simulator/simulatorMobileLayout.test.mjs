@@ -145,7 +145,8 @@ test("pending placement cannot reopen the mobile hand or replay the same card", 
 });
 
 test("V2 uses a persistent occurrence-safe hand rail while legacy keeps Open Hand", () => {
-  assert.match(simulatorSource, /previewExperience && !eventOverlay[\s\S]*?<MobileHandDock/);
+  assert.match(simulatorSource, /const mobileHandDockVisible = Boolean\([\s\S]*?previewExperience[\s\S]*?!tutorialBoardTourOpen[\s\S]*?\);/);
+  assert.match(simulatorSource, /mobileHandDockVisible \? <MobileHandDock/);
   assert.match(simulatorSource, /!previewExperience \? <button[\s\S]*?Open Hand/);
   assert.match(handDockSource, /selectedIndex/);
   assert.match(handDockSource, /entry\.index === selectedIndex/);
@@ -163,12 +164,79 @@ test("V2 keeps both mobile reefs mounted and compacts the context reef", () => {
   assert.match(simulatorSource, /\[data-board-focus="context"\] \.seapals-board-camera-controls[\s\S]*display: none/);
 });
 
+test("V2 removes both ecosystem label rows while preserving action overlays", () => {
+  const labels = simulatorSource.match(/className="seapals-board-pane-label/g) ?? [];
+  const fullHeightOceans = simulatorSource.match(/previewExperience \? "h-full" : "h-\[calc\(100%-40px\)\]"/g) ?? [];
+  assert.equal(labels.length, 2);
+  assert.equal(fullHeightOceans.length, 2);
+  assert.match(simulatorSource, /\.seapals-simulator-preview \.seapals-board-pane-label \{ display: none; \}/);
+  assert.match(
+    simulatorSource,
+    /\.seapals-simulator-preview \.seapals-board-pane-header \{[\s\S]*?position: absolute;[\s\S]*?pointer-events: none;/,
+  );
+  assert.match(
+    simulatorSource,
+    /\.seapals-simulator-preview \.seapals-board-pane-header \[role="status"\] \{[\s\S]*?pointer-events: auto;/,
+  );
+  assert.match(simulatorSource, /Choose a highlighted target[\s\S]*?Cancel/);
+  assert.match(simulatorSource, /Click to place your[\s\S]*?Cancel/);
+});
+
+test("V2 mirrors only the rival ecosystem layout while keeping card faces and gestures upright", () => {
+  const opponentPane = sourceSection(
+    simulatorSource,
+    'data-board-owner="opponent"',
+    'data-board-owner="player"',
+  );
+  const playerPane = sourceSection(
+    simulatorSource,
+    'data-board-owner="player"',
+    '{mobileHandDockVisible ? <MobileHandDock',
+  );
+
+  assert.match(opponentPane, /style=\{\{ transform: `translate[\s\S]*?seapals-opponent-ecosystem-content/);
+  assert.match(opponentPane, /data-opponent-orientation=\{previewExperience \? "mirrored" : "standard"\}/);
+  assert.match(opponentPane, /previewExperience \? "bottom-4 right-4 justify-end" : "left-4 top-4"/);
+  assert.match(opponentPane, /previewExperience \? "bottom-4" : "top-4"/);
+  assert.match(opponentPane, /previewExperience \? "bottom-4 left-4 justify-start" : "right-4 top-4 justify-end"/);
+  assert.match(opponentPane, /getOpponentSlotPositions\(coral\.slots\.length, previewExperience\)/);
+  assert.match(opponentPane, /getOpponentCoralGridOffset\(coralIndex, opponentCorals\.length, previewExperience\)/);
+  assert.match(opponentPane, /previewExperience \? -360 : 360/);
+  assert.doesNotMatch(playerPane, /data-opponent-orientation|seapals-opponent-ecosystem-content/);
+  assert.match(simulatorSource, /function getOpponentSlotPositions\(count, mirrored = false\)[\s\S]*?mirrored \? Math\.PI : 0/);
+  assert.match(simulatorSource, /function getOpponentCoralGridOffset\(index, total, mirrored = false\)[\s\S]*?mirrored \? \{ x: -offset\.x, y: -offset\.y \} : offset/);
+  assert.match(simulatorSource, /const mirrorOpponentLayout = isOpponent && previewExperience;/);
+  assert.match(simulatorSource, /mirrorOpponentLayout \? -360 : 360/);
+  assert.doesNotMatch(simulatorSource, /seapals-opponent-ecosystem-content[\s\S]{0,120}rotate\(180deg\)/);
+});
+
+test("V2 gives the portrait hand the space reclaimed from the ecosystem labels", () => {
+  const mobileStyles = sourceSection(
+    simulatorSource,
+    "@media (max-width: 767px)",
+    "`}</style>",
+  );
+
+  assert.match(mobileStyles, /--seapals-mobile-hand-height:\s*13rem;/);
+  assert.match(mobileStyles, /--seapals-mobile-dock-clearance:\s*calc\(var\(--seapals-mobile-hand-height\) \+ 3\.9rem\);/);
+  assert.match(mobileStyles, /\.seapals-mobile-hand-dock \{ height: var\(--seapals-mobile-hand-height\); \}/);
+  assert.match(mobileStyles, /\.seapals-mobile-hand-card \{[\s\S]*?width:\s*5\.75rem;[\s\S]*?height:\s*8\.15rem;/);
+  assert.match(
+    simulatorSource,
+    /@media \(max-width: 767px\) and \(max-height: 650px\)[\s\S]*?--seapals-mobile-hand-height:\s*10rem;[\s\S]*?width:\s*4\.5rem;[\s\S]*?height:\s*6\.35rem;/,
+  );
+});
+
 test("the player reef starts fitted and stops auto-fitting after manual camera input", () => {
   assert.match(simulatorSource, /const \[playerViewportTouched, setPlayerViewportTouched\] = useState\(false\)/);
   assert.match(simulatorSource, /const playerLayoutSignature = \[/);
   assert.match(
     simulatorSource,
     /if \(!playerLayoutSignature \|\| playerViewportTouched\) return undefined;[\s\S]*?new ResizeObserver\(fitPlayerBoard\)[\s\S]*?zoomEcosystemToFit\("player"\)/,
+  );
+  assert.match(
+    simulatorSource,
+    /\[playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible\]/,
   );
   assert.match(
     simulatorSource,
