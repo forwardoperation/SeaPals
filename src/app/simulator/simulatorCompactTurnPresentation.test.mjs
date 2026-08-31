@@ -41,7 +41,9 @@ test("turn and condition notices are short non-modal status banners over the liv
   assert.match(compactOverlay, /className="sr-only" role="status" aria-live="polite" aria-atomic="true"/);
   assert.doesNotMatch(compactOverlay, /role="dialog"|aria-modal|bg-slate-950\/80|backdrop-blur-sm/);
 
-  assert.match(simulatorSource, /\.seapals-compact-turn-banner \{[\s\S]*?width: min\(88vw, 34rem\);/);
+  assert.match(simulatorSource, /\.seapals-compact-turn-banner \{[\s\S]*?left: 50vw;[\s\S]*?top: 50dvh;[\s\S]*?width: min\(calc\(100vw - 2rem\), 34rem\);/);
+  assert.match(simulatorSource, /translate: none;[\s\S]*?transform: translate\(-50%, -50%\);/);
+  assert.doesNotMatch(compactOverlay, /left-1\/2|top-1\/2|-translate-x-1\/2|-translate-y-1\/2/);
   assert.match(simulatorSource, /animation: seapalsCompactTurnBannerIn 920ms ease-in-out both;/);
   assert.match(simulatorSource, /\.seapals-compact-turn-banner\.is-condition \{[\s\S]*?animation-duration: var\(--seapals-condition-banner-duration, 2200ms\);/);
   assert.match(simulatorSource, /getCompactConditionBannerDuration\(compactTurnSequence\.condition\?\.text\)/);

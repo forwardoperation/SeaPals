@@ -14804,7 +14804,11 @@ export default function Simulator({
           touch-action: none;
         }
         .seapals-compact-turn-banner {
-          width: min(88vw, 34rem);
+          position: fixed;
+          left: 50vw;
+          top: 50vh;
+          top: 50dvh;
+          width: min(calc(100vw - 2rem), 34rem);
           overflow: hidden;
           border: 2px solid rgba(207, 250, 254, .92);
           border-radius: 1rem;
@@ -14814,6 +14818,8 @@ export default function Simulator({
           text-align: center;
           box-shadow: 0 18px 50px rgba(2, 8, 23, .48), inset 0 -2px 0 rgba(14, 116, 144, .14);
           pointer-events: none;
+          translate: none;
+          transform: translate(-50%, -50%);
           animation: seapalsCompactTurnBannerIn 920ms ease-in-out both;
         }
         .seapals-compact-turn-banner.is-turn strong {
@@ -16793,7 +16799,7 @@ export default function Simulator({
 
       {compactTurnSequence && [CompactTurnStage.TURN, CompactTurnStage.CONDITION].includes(compactTurnStage?.kind) ? (
         <div
-          className={`seapals-compact-turn-banner is-${compactTurnStage.kind} fixed left-1/2 top-1/2 z-[82] -translate-x-1/2 -translate-y-1/2`}
+          className={`seapals-compact-turn-banner is-${compactTurnStage.kind} z-[82]`}
           aria-hidden="true"
           data-compact-turn-banner={compactTurnStage.kind}
           style={compactTurnStage.kind === CompactTurnStage.CONDITION
