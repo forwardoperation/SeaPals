@@ -99,6 +99,8 @@ test("both controllers collect RP from stable board sources into a counting RP b
   assert.match(flightLogic, /allocateCollectedRpSources\(sequence\.rpSources, sequence\.collectedRp\)/);
   assert.match(flightLogic, /\[data-rp-bank-target="\$\{sequence\.owner\}"\]/);
   assert.match(flightLogic, /\[data-board-owner="\$\{sequence\.owner\}"\] \[data-rp-source-key="\$\{coin\.sourceKey\}"\]/);
+  assert.match(flightLogic, /const neutralSourceRect = document\.querySelector\('\[data-rp-source-key="round-supply"\]'\)/);
+  assert.match(flightLogic, /const resolvedSourceRect = sourceRect\?\.width \? sourceRect : neutralSourceRect\?\.width \? neutralSourceRect : null/);
   assert.match(flightLogic, /Math\.min\([\s\S]*?sequence\.rpAfter,[\s\S]*?Number\(current\[sequence\.owner\] \?\? sequence\.rpBefore\) \+ 1/);
 
   assert.match(simulatorSource, /data-rp-bank-target="opponent"[\s\S]*?<strong>\{presentedOpponentRp\}<\/strong>/);
@@ -114,7 +116,8 @@ test("both controllers collect RP from stable board sources into a counting RP b
     "function runOpponentTurn(current,",
     "function cancelOpeningCoinFlip()",
   );
-  assert.match(opponentTurn, /const rpSources = getEcosystemStartTurnRpSources\(current\.corals, activeCondition\)/);
+  assert.match(opponentTurn, /const startTurnCorals = current\.corals\.map/);
+  assert.match(opponentTurn, /const rpSources = getEcosystemStartTurnRpSources\(startTurnCorals, activeCondition\)\.map/);
   assert.match(opponentTurn, /bankBefore: rpBeforeCollection/);
   assert.match(opponentTurn, /rpSources,/);
 });

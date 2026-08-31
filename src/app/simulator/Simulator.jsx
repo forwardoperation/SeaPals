@@ -4419,6 +4419,7 @@ export default function Simulator({
     const fallbackRect = paneRect && paneRect.width > 0 && paneRect.height > 0
       ? paneRect
       : { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight, width: window.innerWidth, height: window.innerHeight };
+    const neutralSourceRect = document.querySelector('[data-rp-source-key="round-supply"]')?.getBoundingClientRect();
     const targetX = targetRect?.width
       ? targetRect.left + targetRect.width / 2
       : fallbackRect.right - 42;
@@ -4431,11 +4432,12 @@ export default function Simulator({
         ? '[data-rp-source-key="round-supply"]'
         : `[data-board-owner="${sequence.owner}"] [data-rp-source-key="${coin.sourceKey}"]`;
       const sourceRect = document.querySelector(selector)?.getBoundingClientRect();
-      const sourceX = sourceRect?.width
-        ? sourceRect.left + sourceRect.width / 2
+      const resolvedSourceRect = sourceRect?.width ? sourceRect : neutralSourceRect?.width ? neutralSourceRect : null;
+      const sourceX = resolvedSourceRect?.width
+        ? resolvedSourceRect.left + resolvedSourceRect.width / 2
         : fallbackRect.left + fallbackRect.width / 2;
-      const sourceY = sourceRect?.height
-        ? sourceRect.top + sourceRect.height / 2
+      const sourceY = resolvedSourceRect?.height
+        ? resolvedSourceRect.top + resolvedSourceRect.height / 2
         : fallbackRect.top + fallbackRect.height / 2;
       const startX = clampToPane(sourceX, fallbackRect.left, fallbackRect.right) - 18;
       const startY = clampToPane(sourceY, fallbackRect.top, fallbackRect.bottom) - 18;
@@ -8682,6 +8684,11 @@ export default function Simulator({
     }
   }
 
+  function returnFromSupportFlowToBoard(selectedCardId = null) {
+    setModal(previewExperience ? null : "hand");
+    setSelectedHandCard(previewExperience ? null : selectedCardId);
+  }
+
   function playCardFromHand(cardId) {
     const card = cardsById[cardId];
     if (!card) {
@@ -8869,7 +8876,7 @@ export default function Simulator({
           setModal("recover");
           pushLog("Recovery coin flip: heads. Choose a card that was already in your discard pile.");
         } else {
-          setModal("hand");
+          returnFromSupportFlowToBoard();
           pushLog("Recovery coin flip: tails. No card was recovered, and Recovery was discarded.");
         }
         return;
@@ -9176,14 +9183,12 @@ export default function Simulator({
         setEventOverlay({ type: "choose-action-deck", sourceCardId: supportCard.id, title: `Player used ${supportCard.name}`, message: `${cardsById[cardId]?.name} was added to your hand. Allocate the additional ${target} draw(s) between your personal decks.` });
       } else {
         setSearchContext(null);
-        setModal("hand");
+        returnFromSupportFlowToBoard(cardId);
         setGameResult((current) => current ?? `Defeat: ${supportCard.name} required an additional draw, but both personal decks were empty.`);
-        setSelectedHandCard(cardId);
       }
     } else {
       setSearchContext(null);
-      setModal("hand");
-      setSelectedHandCard(cardId);
+      returnFromSupportFlowToBoard(cardId);
     }
     pushLog(`${supportCard.name} found ${cardsById[cardId]?.name}.${additionalDrawCount && nextFoundation.length + nextPals.length ? ` Choose how to allocate up to ${additionalDrawCount} additional draw(s).` : additionalDrawCount ? " No cards remained for its additional draws." : ""} The Support card was discarded.`);
   }
@@ -9222,15 +9227,14 @@ export default function Simulator({
     applyExplicitSupportLock(supportCard);
     const names = searchContext.selected.map((cardId) => cardsById[cardId]?.name ?? cardId).join(", ");
     setSearchContext(null);
-    setModal("hand");
-    setSelectedHandCard(searchContext.selected[0]);
+    returnFromSupportFlowToBoard(searchContext.selected[0]);
     pushLog(`${supportCard.name} found ${names}. The Support card was discarded and both personal decks were shuffled.`);
   }
 
   function cancelSupportSearch() {
     setSearchContext(null);
     setTurnDrawSelection(null);
-    setModal("hand");
+    returnFromSupportFlowToBoard();
     setPlayError("Support search cancelled. No RP or card was spent.");
   }
 
@@ -9285,8 +9289,7 @@ export default function Simulator({
     setRp((current) => Math.max(0, current - getPlayerCardPlayCost(supportCard)));
     applyExplicitSupportLock(supportCard);
     setSearchContext(null);
-    setModal("hand");
-    setSelectedHandCard(null);
+    returnFromSupportFlowToBoard();
     pushLog(`${supportCard.name} healed ${cardsById[target.cardId]?.name} for ${healedHealth - previousHealth} HP. The Support card was discarded.`);
   }
 
@@ -10526,10 +10529,19 @@ export default function Simulator({
   }
 
   function runOpponentTurn(current, { startTurnAlreadyBegun = false } = {}) {
-    const income = 1 + getEcosystemStartTurnRp(current.corals, activeCondition);
-    const rpSources = getEcosystemStartTurnRpSources(current.corals, activeCondition);
+    const startTurnCorals = current.corals.map((coral) => ({
+      ...coral,
+      statuses: (coral.statuses ?? []).map((status) => ({ ...status })),
+      slots: (coral.slots ?? []).map((slot) => ({
+        ...slot,
+        hostedCardIds: [...(slot.hostedCardIds ?? [])],
+      })),
+    }));
+    const income = 1 + getEcosystemStartTurnRp(startTurnCorals, activeCondition);
+    const rpSources = getEcosystemStartTurnRpSources(startTurnCorals, activeCondition).map((source) => ({ ...source }));
     let next = {
       ...current,
+      corals: startTurnCorals,
       cardsBlockedFromPlayThisTurn: [],
       creatureStatuses: Object.fromEntries(Object.entries(current.creatureStatuses ?? {}).map(([statusKey, statuses]) => [statusKey, statuses.filter((status) => Number(status.expiresTurn ?? Infinity) > turn)]).filter(([, statuses]) => statuses.length)),
       flashingAlarmAttackBonus: startTurnAlreadyBegun
@@ -17868,12 +17880,12 @@ export default function Simulator({
                 ) : eventOverlay.type === "choose-inspection-deck" ? (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
                     {[{ type: "foundation", count: foundationDeck.length }, { type: "pals", count: palsDeck.length }].map((deck) => <button key={deck.type} type="button" disabled={!deck.count} onClick={() => chooseInspectionDeck(deck.type)} className="rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-5 text-center font-black capitalize hover:bg-cyan-400/25 disabled:opacity-35">{deck.type} Deck<span className="mt-1 block text-sm font-semibold text-cyan-200">{deck.count} cards</span></button>)}
-                    <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setModal("hand"); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">Cancel Inspection</button>
+                    <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">Cancel Inspection</button>
                   </div>
                 ) : eventOverlay.type === "reorder-deck" ? (
                   <div className="mt-6">
                     <div className="grid max-h-96 gap-3 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">{(searchContext?.topCards ?? []).map((cardId, index) => { const card = cardsById[cardId]; return <div key={`${cardId}-${index}`} className="rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-center"><img src={card?.image} alt={card?.name} className="h-40 w-full rounded-xl bg-white object-contain" /><strong className="mt-2 block truncate">{index + 1}. {card?.name}</strong><div className="mt-2 flex justify-center gap-2"><button type="button" disabled={!index} onClick={() => moveInspectedDeckCard(index, -1)} className="rounded-full border border-cyan-300 px-3 py-1 disabled:opacity-30">Earlier</button><button type="button" disabled={index === searchContext.topCards.length - 1} onClick={() => moveInspectedDeckCard(index, 1)} className="rounded-full border border-cyan-300 px-3 py-1 disabled:opacity-30">Later</button></div></div>; })}</div>
-                    <div className="mt-4 flex gap-3"><button type="button" onClick={() => commitDeckInspection()} className="rounded-full bg-emerald-500 px-6 py-3 font-black">Confirm Order</button><button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setModal("hand"); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel</button></div>
+                    <div className="mt-4 flex gap-3"><button type="button" onClick={() => commitDeckInspection()} className="rounded-full bg-emerald-500 px-6 py-3 font-black">Confirm Order</button><button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-explorer-card" ? (
                   <div className="mt-6">
@@ -17883,12 +17895,12 @@ export default function Simulator({
                         return <DeckSearchChoice key={`${cardId}-${index}`} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => commitDeckInspection(cardId)} meta={getCardClassLabel(card)} />;
                       })}
                     </div>
-                    <div className="mt-4 flex gap-3"><button type="button" onClick={() => commitDeckInspection()} className="rounded-full bg-cyan-600 px-6 py-3 font-black">Choose No Card</button><button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setModal("hand"); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel</button></div>
+                    <div className="mt-4 flex gap-3"><button type="button" onClick={() => commitDeckInspection()} className="rounded-full bg-cyan-600 px-6 py-3 font-black">Choose No Card</button><button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-clear-status-target" ? (
                   <div className="mt-6 grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
                     {playerCoralCards.filter((coral) => searchContext?.candidates.includes(coral.id)).map((coral) => { const card = cardsById[coral.cardId]; const effects = [...(coral.statuses ?? []).map((status) => status.type), Number(coral.rpPenaltyNextTurn ?? 0) > 0 ? "RP penalty" : null].filter(Boolean); return <button key={coral.id} type="button" onClick={() => completeCoralStatusClear(coral.id)} className="flex items-center gap-3 rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/25"><img src={card?.image} alt={card?.name} className="h-28 w-20 rounded-xl bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-sm text-cyan-200">Remove {effects.join(", ")}</span></span></button>; })}
-                    <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setModal("hand"); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">Cancel Support</button>
+                    <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">Cancel Support</button>
                   </div>
                 ) : ["choose-coin-coral-target", "choose-coral-effect-target"].includes(eventOverlay.type) ? (
                   <div className="mt-6">
@@ -17915,7 +17927,7 @@ export default function Simulator({
                 ) : eventOverlay.type === "choose-whirlpool-target" ? (
                   <div className="mt-6 grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
                     {opponentCorals.filter((coral) => searchContext?.candidates.includes(coral.id)).map((coral) => { const card = cardsById[coral.cardId]; return <button key={coral.id} type="button" onClick={() => completeWhirlpool(coral.id)} className="flex items-center gap-3 rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/25"><img src={card?.image} alt={card?.name} className="h-28 w-20 rounded-xl bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-sm text-cyan-200">Current penalty: {Number(coral.rpPenaltyNextTurn ?? 0)} RP</span></span></button>; })}
-                    <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setModal("hand"); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Effect</button>
+                    <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Effect</button>
                   </div>
                 ) : eventOverlay.type === "choose-spearfishing-target" ? (
                   <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
@@ -17924,7 +17936,7 @@ export default function Simulator({
                       const foreignInvader = candidate.owner && candidate.owner !== "player";
                       return <button key={`${candidate.coralId}-${candidate.slotId}`} type="button" onClick={() => completeSpearfishing(candidate)} className="flex w-full items-center gap-3 rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-3 text-left transition hover:bg-rose-400/25"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}{foreignInvader ? " — opponent's invader" : ""}</strong><span className="text-sm text-rose-200">Discard to recover {Number(card?.cost?.rp ?? 0)} RP{foreignInvader ? "; card returns to opponent" : ""}</span></span></button>;
                     })}
-                    <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); setModal("hand"); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Spearfishing</button>
+                    <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Spearfishing</button>
                   </div>
                 ) : eventOverlay.type === "choose-friendly-creature" ? (
                   <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
