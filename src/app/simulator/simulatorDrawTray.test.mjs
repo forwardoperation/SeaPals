@@ -43,7 +43,7 @@ test("V2 replaces the blocking turn-draw pages with a tray anchored beside the p
   assert.match(playerPane, /palsCount=\{palsDeck\.length\}/);
   assert.match(playerPane, /onAdjust=\{adjustTurnDraw\}/);
   assert.match(playerPane, /onConfirm=\{confirmTurnDraw\}/);
-  assert.match(playerPane, /onClose=\{closeMobileDrawTray\}/);
+  assert.doesNotMatch(playerPane, /onClose=/);
 
   assert.match(drawTraySource, /data-mobile-draw-tray/);
   assert.match(drawTraySource, /aria-label="Choose cards to draw"/);
@@ -94,15 +94,17 @@ test("the anchored draw tray preserves both personal-deck choices and the existi
   assert.match(adjustDraw, /getScriptedTutorialTurnDraw/);
 });
 
-test("the side tray can collapse and reopen from the player deck without discarding the pending draw", () => {
+test("the mandatory compact draw step has no dismissible status chrome", () => {
   assert.match(simulatorSource, /const \[mobileDrawTrayOpen, setMobileDrawTrayOpen\] = useState\(false\);/);
-
-  const closeTray = functionSectionContaining(
-    simulatorSource,
-    [/function closeMobileDrawTray/, /setMobileDrawTrayOpen\(false\)/],
-    "mobile draw-tray close",
+  assert.doesNotMatch(
+    drawTraySource,
+    /<strong>\s*Draw\s+\{selection\.target\}\s*<\/strong>|remainingChoices|Ready to draw|seapals-mobile-draw-tray-status/,
+    "the tray should not repeat the mandatory draw count or choices-left status",
   );
-  assert.doesNotMatch(closeTray, /setTurnDrawSelection|setHasDrawnThisTurn|setGamePhase|setFoundationDeck|setPalsDeck/);
+  assert.doesNotMatch(drawTraySource, /seapals-mobile-draw-tray-header|aria-describedby=/);
+  assert.doesNotMatch(drawTraySource, /aria-label="Close draw tray"|\bonClose\b/);
+  assert.doesNotMatch(drawTraySource, /event\.key\s*!==\s*"Escape"|addEventListener\("keydown"/);
+  assert.doesNotMatch(simulatorSource, /function\s+closeMobileDrawTray\s*\(/);
 
   const openDeckControl = functionSectionContaining(
     simulatorSource,
@@ -110,8 +112,6 @@ test("the side tray can collapse and reopen from the player deck without discard
     "player deck control",
   );
   assert.match(simulatorSource, /onOpenDecks=\{[A-Za-z_$][\w$]*\}/);
-  assert.match(drawTraySource, /aria-label="Close draw tray"[\s\S]*?onClick=\{onClose\}/);
-  assert.match(drawTraySource, /event\.key !== "Escape"[\s\S]*?onClose\(\)/);
   assert.match(drawTraySource, /querySelector\([\s\S]*?data-tutorial-draw-add[\s\S]*?firstChoice\?\.focus\?\.\(\{ preventScroll: true \}\)/);
   assert.match(edgeZonesSource, /onClick=\{onOpenDecks\}/);
   assert.match(edgeZonesSource, /aria-controls="seapals-mobile-draw-tray"/);
@@ -125,6 +125,42 @@ test("the side tray can collapse and reopen from the player deck without discard
   );
   assert.match(beginDraw, /setMobileDrawTrayOpen\(Boolean\(previewDrawTrayEnabled && availableDraws > 0\)\)/);
   assert.match(openDeckControl, /setMobileHudPanel\(\(current\) => current === "decks" \? null : "decks"\)/);
+  assert.match(
+    simulatorSource,
+    /!modal[\s\S]*?gamePhase === "draw"[\s\S]*?!hasDrawnThisTurn[\s\S]*?turnDrawSelection\?\.target[\s\S]*?setMobileDrawTrayOpen\(true\);[\s\S]*?setModal\("turn-draw"\);/,
+    "closing an auxiliary pile must restore the mandatory draw step automatically",
+  );
+});
+
+test("the mandatory draw confirmation stays visible while only the choices scroll", () => {
+  const trayStyles = sourceSection(
+    simulatorSource,
+    ".seapals-mobile-draw-tray {",
+    ".seapals-mobile-draw-tray-body {",
+  );
+  const bodyStyles = sourceSection(
+    simulatorSource,
+    ".seapals-mobile-draw-tray-body {",
+    ".seapals-mobile-draw-shortfall {",
+  );
+  const confirmStyles = sourceSection(
+    simulatorSource,
+    ".seapals-mobile-draw-confirm {",
+    ".seapals-mobile-draw-confirm:disabled {",
+  );
+
+  assert.match(trayStyles, /display:\s*flex;/);
+  assert.match(trayStyles, /flex-direction:\s*column;/);
+  assert.match(trayStyles, /overflow:\s*hidden;/);
+  assert.match(trayStyles, /max-height:\s*calc\(100% - var\(--seapals-mobile-draw-tray-top\) - var\(--seapals-mobile-dock-clearance\)/);
+  assert.match(bodyStyles, /min-height:\s*0;/);
+  assert.match(bodyStyles, /overflow-y:\s*auto;/);
+  assert.match(confirmStyles, /flex:\s*0\s+0\s+auto;/);
+
+  const bodyIndex = drawTraySource.indexOf('className="seapals-mobile-draw-tray-body"');
+  const confirmIndex = drawTraySource.indexOf('className="seapals-mobile-draw-confirm"');
+  assert.ok(bodyIndex >= 0 && confirmIndex > bodyIndex, "confirmation must remain outside and after the scrolling choice body");
+  assert.match(drawTraySource, />\s*Confirm selection\s*</);
 });
 
 test("compact draw guidance stays attached only while its visible tray can be used", () => {

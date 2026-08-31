@@ -6,7 +6,6 @@ export default function MobileEdgeZones({
   discardCard = null,
   disabled = false,
   deckActionLabel = "Open your deck summary",
-  deckButtonRef = null,
   deckExpanded = false,
   tutorialTargetClass = "",
   onOpenDecks,
@@ -47,7 +46,6 @@ export default function MobileEdgeZones({
         </div>
       ) : (
         <button
-          ref={deckButtonRef}
           type="button"
           className="seapals-mobile-edge-zone is-deck"
           data-mobile-zone="deck"

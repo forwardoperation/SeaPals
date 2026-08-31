@@ -3349,7 +3349,6 @@ export default function Simulator({
   const mobileDrawFlightIdRef = useRef(0);
   const mobileDrawFlightTimersRef = useRef(new Map());
   const mobileDrawSequenceActiveRef = useRef(false);
-  const mobileDrawDeckButtonRef = useRef(null);
   const mobileDrawFocusIndexRef = useRef(null);
   const [actionBlinkOn, setActionBlinkOn] = useState(true);
   const [modal, setModal] = useState(null);
@@ -3915,8 +3914,17 @@ export default function Simulator({
     else if (modal === "draw-result") {
       setMobileDrawTrayOpen(false);
       setModal(null);
+    } else if (
+      !modal
+      && gamePhase === "draw"
+      && !hasDrawnThisTurn
+      && Number(turnDrawSelection?.target) > 0
+      && !gameResult
+    ) {
+      setMobileDrawTrayOpen(true);
+      setModal("turn-draw");
     } else setMobileDrawTrayOpen(false);
-  }, [modal, previewDrawTrayEnabled]);
+  }, [gamePhase, gameResult, hasDrawnThisTurn, modal, previewDrawTrayEnabled, turnDrawSelection?.target]);
 
   useEffect(() => {
     if (compactDrawViewport || !mobileDrawSequenceActiveRef.current) return;
@@ -7653,11 +7661,6 @@ export default function Simulator({
       if (nextAmount < 0 || nextAmount > available || nextTotal < 0 || nextTotal > current.target) return current;
       return { ...current, [deckType]: nextAmount };
     });
-  }
-
-  function closeMobileDrawTray() {
-    setMobileDrawTrayOpen(false);
-    window.requestAnimationFrame(() => mobileDrawDeckButtonRef.current?.focus?.({ preventScroll: true }));
   }
 
   function handlePlayerDeckOpen() {
@@ -13937,13 +13940,16 @@ export default function Simulator({
           flex-direction: column-reverse;
         }
         .seapals-mobile-draw-tray {
+          --seapals-mobile-draw-tray-top: calc(.45rem + 2.7rem + .25rem);
           position: absolute;
           z-index: 74;
-          top: calc(.45rem + 2.7rem + .25rem);
+          top: var(--seapals-mobile-draw-tray-top);
           right: calc(var(--seapals-edge-card-width) + .65rem);
+          display: flex;
           width: min(13.75rem, calc(100vw - 4.75rem - env(safe-area-inset-left, 0px)));
-          max-height: max(10rem, calc(100% - var(--seapals-mobile-dock-clearance) - 1rem));
-          overflow-y: auto;
+          max-height: calc(100% - var(--seapals-mobile-draw-tray-top) - var(--seapals-mobile-dock-clearance) - .5rem);
+          flex-direction: column;
+          overflow: hidden;
           padding: .65rem;
           border: 1px solid rgba(103, 232, 249, .4);
           border-radius: 1rem 0 1rem 1rem;
@@ -13955,43 +13961,14 @@ export default function Simulator({
           backdrop-filter: blur(12px);
           pointer-events: auto;
         }
-        .seapals-mobile-draw-tray-header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: .5rem;
-        }
-        .seapals-mobile-draw-tray-header strong {
-          display: block;
-          font-size: .84rem;
-          font-weight: 950;
-          letter-spacing: .04em;
-          text-transform: uppercase;
-        }
-        .seapals-mobile-draw-tray-header span {
-          display: block;
-          margin-top: .08rem;
-          color: rgba(207, 250, 254, .65);
-          font-size: .65rem;
-          font-weight: 750;
-        }
-        .seapals-mobile-draw-tray-header > button {
-          position: relative;
-          z-index: 2;
-          display: grid;
-          width: 2.75rem;
-          height: 2.75rem;
-          flex: 0 0 2.75rem;
-          place-items: center;
-          border: 1px solid rgba(255, 255, 255, .14);
-          border-radius: 999px;
-          background: rgba(255, 255, 255, .06);
-          color: #e2e8f0;
-          font-size: 1.35rem;
-          line-height: 1;
+        .seapals-mobile-draw-tray-body {
+          min-height: 0;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          scrollbar-width: thin;
         }
         .seapals-mobile-draw-shortfall {
-          margin-top: .5rem;
+          margin-bottom: .5rem;
           padding: .45rem .5rem;
           border: 1px solid rgba(251, 113, 133, .45);
           border-radius: .65rem;
@@ -14004,7 +13981,6 @@ export default function Simulator({
         .seapals-mobile-draw-options {
           display: grid;
           gap: .42rem;
-          margin-top: .5rem;
         }
         .seapals-mobile-draw-option {
           display: grid;
@@ -14063,8 +14039,11 @@ export default function Simulator({
         .seapals-mobile-draw-stepper button:disabled { opacity: .24; }
         .seapals-mobile-draw-stepper strong { color: #a5f3fc; font-size: .9rem; }
         .seapals-mobile-draw-confirm {
+          position: relative;
+          z-index: 2;
           width: 100%;
           min-height: 2.75rem;
+          flex: 0 0 auto;
           margin-top: .55rem;
           padding: .5rem;
           border-radius: .78rem;
@@ -15592,7 +15571,6 @@ export default function Simulator({
                     discardCard={cardsById[discardPile[0]] ?? null}
                     disabled={Boolean(playingCardId) || mobileDrawFlights.length > 0}
                     deckActionLabel={gamePhase === "draw" && turnDrawSelection ? "Open draw options" : "Open your deck summary"}
-                    deckButtonRef={mobileDrawDeckButtonRef}
                     deckExpanded={mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay}
                     tutorialTargetClass={tutorialTargetClass("zones")}
                     onOpenDecks={handlePlayerDeckOpen}
@@ -15610,7 +15588,6 @@ export default function Simulator({
                     tutorialTargetClass={tutorialTargetClass("draw-controls")}
                     onAdjust={adjustTurnDraw}
                     onConfirm={confirmTurnDraw}
-                    onClose={closeMobileDrawTray}
                   />
                 ) : null}
                 <div
