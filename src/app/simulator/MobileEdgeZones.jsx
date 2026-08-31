@@ -5,6 +5,9 @@ export default function MobileEdgeZones({
   lostCount,
   discardCard = null,
   disabled = false,
+  deckActionLabel = "Open your deck summary",
+  deckButtonRef = null,
+  deckExpanded = false,
   tutorialTargetClass = "",
   onOpenDecks,
   onOpenDiscard,
@@ -44,10 +47,13 @@ export default function MobileEdgeZones({
         </div>
       ) : (
         <button
+          ref={deckButtonRef}
           type="button"
           className="seapals-mobile-edge-zone is-deck"
           data-mobile-zone="deck"
-          aria-label={`Open your deck summary. ${safeDeckCount} cards remain.`}
+          aria-label={`${deckActionLabel}. ${safeDeckCount} cards remain.`}
+          aria-controls="seapals-mobile-draw-tray"
+          aria-expanded={deckExpanded}
           disabled={disabled}
           onPointerDown={(event) => event.stopPropagation()}
           onClick={onOpenDecks}

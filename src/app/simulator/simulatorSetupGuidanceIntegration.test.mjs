@@ -45,7 +45,7 @@ test("setup guidance anchors the full prompt beside its highlighted hand target"
   );
   assert.match(
     simulatorSource,
-    /tutorialSetupHelpAnchored \? \([\s\S]*?<ProfessorCoachOverlay help=\{tutorialHelp\}>[\s\S]*?<ProfessorGuideCard/,
+    /tutorialSetupHelpAnchored \|\| tutorialDrawTrayHelpAnchored \? \([\s\S]*?<ProfessorCoachOverlay help=\{tutorialHelp\}>[\s\S]*?<ProfessorGuideCard/,
   );
   assert.match(
     simulatorSource,

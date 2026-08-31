@@ -8,6 +8,7 @@ import BugReportDialog from "@/components/feedback/BugReportDialog";
 import MobileHandDock from "./MobileHandDock";
 import MobileHandCardPopover from "./MobileHandCardPopover";
 import MobileEdgeZones from "./MobileEdgeZones";
+import MobileDrawTray from "./MobileDrawTray";
 import { cardsById } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
 import { conditionCards } from "@/data/cards/conditions";
@@ -3341,6 +3342,15 @@ export default function Simulator({
   const [hasDrawnThisTurn, setHasDrawnThisTurn] = useState(false);
   const [turnDrawSelection, setTurnDrawSelection] = useState(null);
   const [turnDrawResult, setTurnDrawResult] = useState(null);
+  const [compactDrawViewport, setCompactDrawViewport] = useState(true);
+  const [mobileDrawTrayOpen, setMobileDrawTrayOpen] = useState(false);
+  const [mobileDrawFlights, setMobileDrawFlights] = useState([]);
+  const [mobileDrawAnnouncement, setMobileDrawAnnouncement] = useState("");
+  const mobileDrawFlightIdRef = useRef(0);
+  const mobileDrawFlightTimersRef = useRef(new Map());
+  const mobileDrawSequenceActiveRef = useRef(false);
+  const mobileDrawDeckButtonRef = useRef(null);
+  const mobileDrawFocusIndexRef = useRef(null);
   const [actionBlinkOn, setActionBlinkOn] = useState(true);
   const [modal, setModal] = useState(null);
   const modalScrollRef = useRef(null);
@@ -3871,10 +3881,14 @@ export default function Simulator({
     mobileHandDragCard && !mobileHandDragUsesFoundationTarget && !mobileHandDragUsesSlotTarget
   );
   const inspectedCardData = inspectedCard ? cardsById[inspectedCard.cardId] : null;
+  const previewDrawChromeVisible = Boolean(
+    previewExperience && compactDrawViewport && ["turn-draw", "draw-result"].includes(modal)
+  );
+  const previewDrawTrayEnabled = Boolean(previewExperience && compactDrawViewport);
   const mobileHandDockVisible = Boolean(
     previewExperience
     && !eventOverlay
-    && !modal
+    && (!modal || previewDrawChromeVisible)
     && !inspectedCardData
     && !roundFlash
     && !gameResult
@@ -3882,6 +3896,68 @@ export default function Simulator({
     && !tutorialCardLessonOpen
     && !tutorialBoardTourOpen
   );
+
+  useEffect(() => {
+    if (!previewExperience) return undefined;
+    const viewportQuery = window.matchMedia("(max-width: 1279px)");
+    const updateCompactDrawViewport = () => setCompactDrawViewport(viewportQuery.matches);
+    updateCompactDrawViewport();
+    viewportQuery.addEventListener?.("change", updateCompactDrawViewport);
+    return () => viewportQuery.removeEventListener?.("change", updateCompactDrawViewport);
+  }, [previewExperience]);
+
+  useEffect(() => {
+    if (!previewDrawTrayEnabled) {
+      setMobileDrawTrayOpen(false);
+      return;
+    }
+    if (modal === "turn-draw") setMobileDrawTrayOpen(true);
+    else if (modal === "draw-result") {
+      setMobileDrawTrayOpen(false);
+      setModal(null);
+    } else setMobileDrawTrayOpen(false);
+  }, [modal, previewDrawTrayEnabled]);
+
+  useEffect(() => {
+    if (compactDrawViewport || !mobileDrawSequenceActiveRef.current) return;
+    for (const timerId of mobileDrawFlightTimersRef.current.values()) window.clearTimeout(timerId);
+    mobileDrawFlightTimersRef.current.clear();
+    mobileDrawSequenceActiveRef.current = false;
+    mobileDrawFocusIndexRef.current = null;
+    setMobileDrawFlights([]);
+    setGamePhase((current) => current === "draw" && hasDrawnThisTurn ? "main" : current);
+  }, [compactDrawViewport, hasDrawnThisTurn]);
+
+  useEffect(() => {
+    if (!mobileDrawSequenceActiveRef.current) return undefined;
+    if (mobileDrawFlights.length) {
+      const frame = window.requestAnimationFrame(() => {
+        const handRail = document.querySelector("[data-simulator-hand-card-rail]");
+        handRail?.scrollTo?.({ left: handRail.scrollWidth, behavior: "auto" });
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+    mobileDrawSequenceActiveRef.current = false;
+    setGamePhase((current) => current === "draw" && hasDrawnThisTurn ? "main" : current);
+    const handRail = document.querySelector("[data-simulator-hand-card-rail]");
+    handRail?.scrollTo?.({
+      left: handRail.scrollWidth,
+      behavior: "auto",
+    });
+    if (mobileDrawFocusIndexRef.current != null) {
+      const landedCard = document.querySelector(
+        `[data-mobile-hand-card-index="${mobileDrawFocusIndexRef.current}"] button`,
+      );
+      landedCard?.focus?.({ preventScroll: true });
+      mobileDrawFocusIndexRef.current = null;
+    }
+    return undefined;
+  }, [hasDrawnThisTurn, mobileDrawFlights.length]);
+
+  useEffect(() => () => {
+    for (const timerId of mobileDrawFlightTimersRef.current.values()) window.clearTimeout(timerId);
+    mobileDrawFlightTimersRef.current.clear();
+  }, []);
   const tutorialLessonWon = isTutorialLessonVictory({
     tutorialActive: Boolean(tutorialContract && scriptedTutorialScenario),
     gameResult,
@@ -4576,6 +4652,13 @@ export default function Simulator({
   );
   const tutorialHelpDismissalKey = tutorialHelp?.cueId ?? tutorialHelp?.id ?? null;
   const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelpDismissalKey);
+  const tutorialDrawTrayHelpAnchored = Boolean(
+    previewDrawTrayEnabled
+    && modal === "turn-draw"
+    && mobileDrawTrayOpen
+    && !eventOverlay
+    && tutorialHelpOpen,
+  );
 
   useEffect(() => {
     if (
@@ -4631,6 +4714,7 @@ export default function Simulator({
   );
   const tutorialHelpInline = Boolean(
     tutorialHelpOpen
+    && !tutorialDrawTrayHelpAnchored
     && !eventOverlay
     && (
       ["turn-draw", "draw-result", "hand"].includes(modal)
@@ -6947,7 +7031,7 @@ export default function Simulator({
   }
 
   function suppressBoardGestureClick(owner, event) {
-    if (event.target.closest?.(".seapals-board-camera-controls")) return;
+    if (event.target.closest?.(".seapals-board-camera-controls, [data-mobile-draw-tray], [data-mobile-edge-zones]")) return;
     if (Date.now() > boardClickSuppressionRef.current[owner]) return;
     boardClickSuppressionRef.current[owner] = 0;
     event.preventDefault();
@@ -7448,6 +7532,7 @@ export default function Simulator({
     const availableDraws = Math.min(requestedDraws, foundationDeck.length + palsDeck.length);
     setTurnDrawSelection({ requested: requestedDraws, target: availableDraws, shortfall: getRequiredDrawShortfall(requestedDraws, availableDraws), foundation: 0, pals: 0 });
     setTurnDrawResult(null);
+    setMobileDrawTrayOpen(Boolean(previewDrawTrayEnabled && availableDraws > 0));
     if (advanceTurn) setTurn((current) => current + 1);
     setModal(availableDraws > 0 ? "turn-draw" : null);
     setPlayingCardId(null);
@@ -7570,6 +7655,99 @@ export default function Simulator({
     });
   }
 
+  function closeMobileDrawTray() {
+    setMobileDrawTrayOpen(false);
+    window.requestAnimationFrame(() => mobileDrawDeckButtonRef.current?.focus?.({ preventScroll: true }));
+  }
+
+  function handlePlayerDeckOpen() {
+    if (mobileDrawFlights.length) return;
+    if (gamePhase === "draw" && turnDrawSelection) {
+      setMobileHudPanel(null);
+      setModal("turn-draw");
+      setMobileDrawTrayOpen(true);
+      return;
+    }
+    setMobileHudPanel((current) => current === "decks" ? null : "decks");
+  }
+
+  function finishMobileDrawFlight(flightId) {
+    const timerId = mobileDrawFlightTimersRef.current.get(flightId);
+    if (timerId) window.clearTimeout(timerId);
+    mobileDrawFlightTimersRef.current.delete(flightId);
+    setMobileDrawFlights((current) => current.filter((flight) => flight.id !== flightId));
+  }
+
+  function clearMobileDrawFlightSequence() {
+    for (const timerId of mobileDrawFlightTimersRef.current.values()) window.clearTimeout(timerId);
+    mobileDrawFlightTimersRef.current.clear();
+    mobileDrawSequenceActiveRef.current = false;
+    mobileDrawFocusIndexRef.current = null;
+    setMobileDrawFlights([]);
+  }
+
+  function startMobileDrawFlights(revealed, baseHandLength) {
+    const cardsToHand = revealed.filter((entry) => !entry.discarded);
+    if (!previewDrawTrayEnabled || !cardsToHand.length || typeof document === "undefined") return false;
+
+    clearMobileDrawFlightSequence();
+
+    const sourceElement = document.querySelector('[data-mobile-edge-zones][data-zone-owner="player"] [data-mobile-zone="deck"]');
+    const handElement = document.querySelector("[data-mobile-hand-dock]");
+    const sourceRect = sourceElement?.getBoundingClientRect();
+    const handRect = handElement?.getBoundingClientRect();
+    const viewportWidth = Math.max(320, window.innerWidth || 0);
+    const viewportHeight = Math.max(480, window.innerHeight || 0);
+    const flightWidth = Math.min(84, Math.max(64, viewportWidth * 0.2));
+    const flightHeight = flightWidth * (88 / 63);
+    const startX = sourceRect?.width
+      ? sourceRect.left + (sourceRect.width - flightWidth) / 2
+      : viewportWidth - flightWidth * 0.72;
+    const startY = sourceRect?.height
+      ? sourceRect.top + (sourceRect.height - flightHeight) / 2
+      : viewportHeight * 0.52;
+    const endX = handRect?.width
+      ? Math.max(handRect.left + 12, handRect.right - flightWidth - 18)
+      : viewportWidth * 0.56;
+    const endY = handRect?.height
+      ? handRect.top + Math.min(20, handRect.height * 0.12)
+      : viewportHeight - flightHeight * 0.82;
+    const midX = Math.max(12, Math.min(startX, endX) - Math.min(96, viewportWidth * 0.2));
+    const midY = Math.max(12, Math.min(startY, endY) - Math.min(92, viewportHeight * 0.12));
+    const reducedMotion = accessibilityReducedMotion || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    const duration = reducedMotion ? 140 : 680;
+    const stagger = reducedMotion ? 20 : 150;
+    const flights = cardsToHand.map((entry, index) => ({
+      id: `mobile-draw-flight-${++mobileDrawFlightIdRef.current}`,
+      cardId: entry.cardId,
+      source: entry.source.toLowerCase(),
+      handIndex: baseHandLength + index,
+      reducedMotion,
+      startX,
+      startY,
+      midX,
+      midY,
+      endX,
+      endY,
+      width: flightWidth,
+      duration,
+      delay: index * stagger,
+    }));
+
+    mobileDrawSequenceActiveRef.current = true;
+    mobileDrawFocusIndexRef.current = baseHandLength;
+    setMobileDrawFlights(flights);
+    setMobileDrawAnnouncement(`Drew ${cardsToHand.map((entry) => cardsById[entry.cardId]?.name ?? entry.cardId).join(", ")} into your hand.`);
+    flights.forEach((flight, index) => {
+      const timerId = window.setTimeout(
+        () => finishMobileDrawFlight(flight.id),
+        duration + flight.delay + 260,
+      );
+      mobileDrawFlightTimersRef.current.set(flight.id, timerId);
+    });
+    return true;
+  }
+
   function confirmTurnDraw() {
     if (!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target) return;
     const authoredDraw = tutorialUsesScriptedScenario && !turnDrawSelection.mode
@@ -7611,10 +7789,15 @@ export default function Simulator({
       source: index < foundationCards.length ? "Foundation" : "Pals",
       discarded: index >= drawResult.cardsToHand.length,
     }));
+    const mobileFlightsStarted = turnDrawSelection.shortfall > 0
+      ? false
+      : startMobileDrawFlights(revealed, hand.length);
     setTurnDrawResult(revealed);
     setHasDrawnThisTurn(true);
-    setGamePhase("main");
-    setModal("draw-result");
+    setGamePhase(mobileFlightsStarted ? "draw" : "main");
+    setMobileDrawTrayOpen(false);
+    setModal(previewDrawTrayEnabled ? null : "draw-result");
+    if (previewDrawTrayEnabled && !mobileFlightsStarted) setMobileDrawAnnouncement("Your draw is complete.");
     pushLog(`Drew ${foundationCards.length} from Foundation and ${palsCards.length} from Pals.${turnDrawSelection.shortfall > 0 ? " The required draw could not be completed, so you lose by deck depletion." : ""}`);
     if (turnDrawSelection.shortfall > 0) {
       setGameResult((current) => current ?? `Defeat: you were required to draw ${turnDrawSelection.requested} cards, but your personal decks contained only ${turnDrawSelection.target}.`);
@@ -12691,6 +12874,9 @@ export default function Simulator({
 
   function restartGame(deckId = selectedDeckId, opponentDeckId = selectedOpponentDeckId, nextVictoryTarget = pendingVictoryTarget, nextOpponentDifficulty = pendingOpponentDifficulty) {
     cancelOpeningCoinFlip();
+    clearMobileDrawFlightSequence();
+    setMobileDrawTrayOpen(false);
+    setMobileDrawAnnouncement("");
     const nextGame = createInitialGameState(
       deckId,
       opponentDeckId,
@@ -12955,6 +13141,7 @@ export default function Simulator({
 
   const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "opponent-discard" ? "Opponent Discard Pile" : modal === "opponent-lost" ? "Opponent Lost Zone" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "lost-recover" ? "Recover from the Lost Zone" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Fish" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
   const isDarkZoneModal = Boolean(modal);
+  const fullPageModalOpen = Boolean(modal && (!previewDrawTrayEnabled || !["turn-draw", "draw-result"].includes(modal)));
   const selectedHandPlayError =
     modal === "hand" && selectedHandCard ? getPlayError(cardsById[selectedHandCard]) : "";
   const handPopoverCard = handPopoverCardId && hand.includes(handPopoverCardId) ? cardsById[handPopoverCardId] : null;
@@ -12982,6 +13169,29 @@ export default function Simulator({
           0% { opacity: 0; transform: translateY(2rem) scale(.88) rotate(-1deg); }
           72% { opacity: 1; transform: translateY(-.2rem) scale(1.015) rotate(.25deg); }
           100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+        }
+        @keyframes seapalsMobileDrawTrayIn {
+          from { opacity: 0; transform: translateX(1.35rem) scaleX(.92); }
+          to { opacity: 1; transform: translateX(0) scaleX(1); }
+        }
+        @keyframes seapalsDeckToHand {
+          0% {
+            opacity: 0;
+            transform: translate3d(var(--seapals-draw-start-x), var(--seapals-draw-start-y), 0) scale(.45) rotate(9deg);
+          }
+          12% { opacity: 1; }
+          45% {
+            opacity: 1;
+            transform: translate3d(var(--seapals-draw-mid-x), var(--seapals-draw-mid-y), 0) scale(1.08) rotate(-5deg);
+          }
+          100% {
+            opacity: .08;
+            transform: translate3d(var(--seapals-draw-end-x), var(--seapals-draw-end-y), 0) scale(.58) rotate(0deg);
+          }
+        }
+        @keyframes seapalsDrawReduced {
+          from { opacity: 0; transform: translate3d(var(--seapals-draw-end-x), var(--seapals-draw-end-y), 0) scale(.92); }
+          to { opacity: 1; transform: translate3d(var(--seapals-draw-end-x), var(--seapals-draw-end-y), 0) scale(1); }
         }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes seapalsCoinReady {
@@ -13028,6 +13238,7 @@ export default function Simulator({
             linear-gradient(145deg, #061522 0%, #071b2d 48%, #04111d 100%);
         }
         .seapals-game-shell.seapals-simulator-preview {
+          --seapals-edge-card-width: 2.75rem;
           --seapals-mobile-hand-height: 7.5rem;
           --seapals-mobile-hand-bottom: .2rem;
           --seapals-mobile-dock-clearance: calc(var(--seapals-mobile-hand-height) + var(--seapals-mobile-hand-bottom));
@@ -13725,6 +13936,151 @@ export default function Simulator({
           bottom: calc(.45rem + 2.7rem + .25rem);
           flex-direction: column-reverse;
         }
+        .seapals-mobile-draw-tray {
+          position: absolute;
+          z-index: 74;
+          top: calc(.45rem + 2.7rem + .25rem);
+          right: calc(var(--seapals-edge-card-width) + .65rem);
+          width: min(13.75rem, calc(100vw - 4.75rem - env(safe-area-inset-left, 0px)));
+          max-height: max(10rem, calc(100% - var(--seapals-mobile-dock-clearance) - 1rem));
+          overflow-y: auto;
+          padding: .65rem;
+          border: 1px solid rgba(103, 232, 249, .4);
+          border-radius: 1rem 0 1rem 1rem;
+          color: #ecfeff;
+          background: linear-gradient(145deg, rgba(5, 25, 42, .97), rgba(7, 50, 67, .95));
+          box-shadow: 0 18px 42px rgba(2, 8, 23, .58), inset 0 1px rgba(255, 255, 255, .08);
+          transform-origin: right top;
+          animation: seapalsMobileDrawTrayIn 220ms cubic-bezier(.2, .8, .2, 1) both;
+          backdrop-filter: blur(12px);
+          pointer-events: auto;
+        }
+        .seapals-mobile-draw-tray-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: .5rem;
+        }
+        .seapals-mobile-draw-tray-header strong {
+          display: block;
+          font-size: .84rem;
+          font-weight: 950;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+        }
+        .seapals-mobile-draw-tray-header span {
+          display: block;
+          margin-top: .08rem;
+          color: rgba(207, 250, 254, .65);
+          font-size: .65rem;
+          font-weight: 750;
+        }
+        .seapals-mobile-draw-tray-header > button {
+          position: relative;
+          z-index: 2;
+          display: grid;
+          width: 2.75rem;
+          height: 2.75rem;
+          flex: 0 0 2.75rem;
+          place-items: center;
+          border: 1px solid rgba(255, 255, 255, .14);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, .06);
+          color: #e2e8f0;
+          font-size: 1.35rem;
+          line-height: 1;
+        }
+        .seapals-mobile-draw-shortfall {
+          margin-top: .5rem;
+          padding: .45rem .5rem;
+          border: 1px solid rgba(251, 113, 133, .45);
+          border-radius: .65rem;
+          background: rgba(190, 24, 93, .17);
+          color: #ffe4e6;
+          font-size: .63rem;
+          font-weight: 800;
+          line-height: 1.35;
+        }
+        .seapals-mobile-draw-options {
+          display: grid;
+          gap: .42rem;
+          margin-top: .5rem;
+        }
+        .seapals-mobile-draw-option {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: center;
+          gap: .4rem;
+          min-height: 3.05rem;
+          padding: .38rem .4rem .38rem .55rem;
+          border: 1px solid rgba(103, 232, 249, .24);
+          border-radius: .78rem;
+          background: rgba(8, 47, 73, .7);
+        }
+        .seapals-mobile-draw-option.is-pals { border-color: rgba(110, 231, 183, .3); }
+        .seapals-mobile-draw-option-copy { min-width: 0; }
+        .seapals-mobile-draw-option-copy strong {
+          display: block;
+          overflow: hidden;
+          color: #fff;
+          font-size: .72rem;
+          font-weight: 950;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .seapals-mobile-draw-option-copy span {
+          display: block;
+          overflow: hidden;
+          margin-top: .1rem;
+          color: rgba(207, 250, 254, .62);
+          font-size: .55rem;
+          font-weight: 700;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .seapals-mobile-draw-stepper {
+          display: grid;
+          grid-template-columns: 2.75rem 1.2rem 2.75rem;
+          align-items: center;
+          text-align: center;
+        }
+        .seapals-mobile-draw-stepper button {
+          display: grid;
+          width: 2.75rem;
+          height: 2.75rem;
+          place-items: center;
+          border: 1px solid rgba(165, 243, 252, .24);
+          border-radius: .65rem;
+          background: rgba(255, 255, 255, .07);
+          color: #ecfeff;
+          font-size: 1.05rem;
+          font-weight: 950;
+        }
+        .seapals-mobile-draw-stepper button:last-child {
+          color: #052e2b;
+          background: linear-gradient(145deg, #67e8f9, #6ee7b7);
+        }
+        .seapals-mobile-draw-stepper button:disabled { opacity: .24; }
+        .seapals-mobile-draw-stepper strong { color: #a5f3fc; font-size: .9rem; }
+        .seapals-mobile-draw-confirm {
+          width: 100%;
+          min-height: 2.75rem;
+          margin-top: .55rem;
+          padding: .5rem;
+          border-radius: .78rem;
+          color: #052e2b;
+          background: linear-gradient(100deg, #67e8f9, #34d399);
+          font-size: .66rem;
+          font-weight: 950;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+          box-shadow: 0 8px 20px rgba(6, 182, 212, .18);
+        }
+        .seapals-mobile-draw-confirm:disabled {
+          color: #94a3b8;
+          background: #1e293b;
+          box-shadow: none;
+        }
         .seapals-mobile-edge-zone {
           position: relative;
           display: block;
@@ -13978,10 +14334,16 @@ export default function Simulator({
           position: relative;
           flex: 0 0 auto;
           scroll-snap-align: center;
+          opacity: 1;
+          transition: opacity 160ms ease;
           touch-action: pan-x;
           -webkit-touch-callout: none;
           -webkit-user-select: none;
           user-select: none;
+        }
+        .seapals-mobile-hand-list > li.is-arriving { opacity: 0; }
+        .seapals-mobile-hand-dock.is-draw-sequencing .seapals-mobile-hand-rail {
+          pointer-events: none;
         }
         .seapals-mobile-hand-list > li + li { margin-left: -1.05rem; }
         .seapals-mobile-hand-card {
@@ -14029,6 +14391,50 @@ export default function Simulator({
           opacity: .3;
           filter: saturate(.7);
           transform: translateY(.35rem) rotate(0deg) scale(.94);
+        }
+        .seapals-mobile-draw-flight {
+          position: fixed;
+          z-index: 68;
+          top: 0;
+          left: 0;
+          overflow: hidden;
+          aspect-ratio: 63 / 88;
+          border: 2px solid rgba(165, 243, 252, .86);
+          border-radius: .58rem;
+          background: #ecfeff;
+          box-shadow: 0 18px 44px rgba(2, 8, 23, .7), 0 0 24px rgba(34, 211, 238, .5);
+          pointer-events: none;
+          animation: seapalsDeckToHand 680ms cubic-bezier(.16, .78, .22, 1) both;
+          will-change: transform, opacity;
+        }
+        .seapals-mobile-draw-flight > img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+        .seapals-mobile-draw-flight.is-reduced-motion {
+          animation-name: seapalsDrawReduced;
+          animation-timing-function: ease-out;
+        }
+        .seapals-reduced-motion .seapals-mobile-draw-flight {
+          animation: seapalsDrawReduced 140ms ease-out both !important;
+        }
+        .seapals-reduced-motion .seapals-mobile-draw-tray {
+          animation: none !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .seapals-mobile-draw-flight {
+            animation: seapalsDrawReduced 140ms ease-out both !important;
+          }
+          .seapals-mobile-draw-tray {
+            animation: none !important;
+          }
+        }
+        @media (min-width: 1280px) {
+          .seapals-mobile-draw-tray,
+          .seapals-mobile-draw-flight {
+            display: none !important;
+          }
         }
         .seapals-mobile-hand-drag-ghost {
           position: fixed;
@@ -14867,7 +15273,7 @@ export default function Simulator({
             </ProfessorCoachOverlay>
           ) : null}
 
-          {tutorialSetupHelpAnchored ? (
+          {tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (
             <ProfessorCoachOverlay help={tutorialHelp}>
               <ProfessorGuideCard
                 guide={tutorialGuide}
@@ -14969,7 +15375,7 @@ export default function Simulator({
                     discardCount={opponent.discardPile.length}
                     lostCount={(opponent.lostZone ?? []).length}
                     discardCard={cardsById[opponent.discardPile[0]] ?? null}
-                    disabled={Boolean(playingCardId)}
+                    disabled={Boolean(playingCardId) || mobileDrawFlights.length > 0}
                     onOpenDiscard={() => setModal("opponent-discard")}
                     onOpenLost={() => setModal("opponent-lost")}
                   />
@@ -15184,11 +15590,27 @@ export default function Simulator({
                     discardCount={discardPile.length}
                     lostCount={lostZone.length}
                     discardCard={cardsById[discardPile[0]] ?? null}
-                    disabled={Boolean(playingCardId)}
+                    disabled={Boolean(playingCardId) || mobileDrawFlights.length > 0}
+                    deckActionLabel={gamePhase === "draw" && turnDrawSelection ? "Open draw options" : "Open your deck summary"}
+                    deckButtonRef={mobileDrawDeckButtonRef}
+                    deckExpanded={mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay}
                     tutorialTargetClass={tutorialTargetClass("zones")}
-                    onOpenDecks={() => setMobileHudPanel((current) => current === "decks" ? null : "decks")}
+                    onOpenDecks={handlePlayerDeckOpen}
                     onOpenDiscard={() => setModal("discard")}
                     onOpenLost={() => setModal("lost")}
+                  />
+                ) : null}
+                {previewDrawTrayEnabled ? (
+                  <MobileDrawTray
+                    open={mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay}
+                    selection={turnDrawSelection}
+                    foundationCount={foundationDeck.length}
+                    palsCount={palsDeck.length}
+                    allowedDeckType={tutorialUsesScriptedScenario && !turnDrawSelection?.mode ? getScriptedTutorialTurnDraw({ round })?.deckType ?? null : null}
+                    tutorialTargetClass={tutorialTargetClass("draw-controls")}
+                    onAdjust={adjustTurnDraw}
+                    onConfirm={confirmTurnDraw}
+                    onClose={closeMobileDrawTray}
                   />
                 ) : null}
                 <div
@@ -15558,6 +15980,8 @@ export default function Simulator({
             })}
             selectedIndex={mobileSelectedHandIndex}
             draggingIndex={mobileHandDrag?.index ?? null}
+            arrivingIndexes={mobileDrawFlights.map((flight) => flight.handIndex)}
+            interactionDisabled={mobileDrawFlights.length > 0}
             playingCardId={playingCardId}
             tutorialTargetClass={tutorialTargetClass("hand")}
             onInspect={openHandCardPopover}
@@ -15566,6 +15990,30 @@ export default function Simulator({
             onDragEnd={handleMobileHandDragEnd}
             onDragCancel={handleMobileHandDragCancel}
           /> : null}
+          {mobileDrawFlights.map((flight) => (
+            <div
+              key={flight.id}
+              className={`seapals-mobile-draw-flight${flight.reducedMotion ? " is-reduced-motion" : ""}`}
+              data-mobile-draw-flight
+              data-draw-source={flight.source}
+              aria-hidden="true"
+              onAnimationEnd={() => finishMobileDrawFlight(flight.id)}
+              style={{
+                "--seapals-draw-start-x": `${flight.startX}px`,
+                "--seapals-draw-start-y": `${flight.startY}px`,
+                "--seapals-draw-mid-x": `${flight.midX}px`,
+                "--seapals-draw-mid-y": `${flight.midY}px`,
+                "--seapals-draw-end-x": `${flight.endX}px`,
+                "--seapals-draw-end-y": `${flight.endY}px`,
+                width: flight.width,
+                animationDuration: `${flight.duration}ms`,
+                animationDelay: `${flight.delay}ms`,
+              }}
+            >
+              <img src={cardsById[flight.cardId]?.image} alt="" draggable={false} />
+            </div>
+          ))}
+          <span className="sr-only" aria-live="polite" aria-atomic="true">{mobileDrawAnnouncement}</span>
           {mobileHandDrag ? (
             <div
               className={`seapals-mobile-hand-drag-ghost${mobileHandDrag.target?.valid ? " is-valid" : ""}`}
@@ -16614,7 +17062,7 @@ export default function Simulator({
         }}
         onClose={() => setBugReportOpen(false)}
       />
-      {modal ? (
+      {fullPageModalOpen ? (
         <div
           className={`fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-2 backdrop-blur-sm sm:p-4 ${modal === "hand" ? "xl:hidden" : ""}`}
           aria-hidden={inspectedCardData ? "true" : undefined}

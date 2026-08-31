@@ -9,6 +9,8 @@ export default function MobileHandDock({
   entries,
   selectedIndex,
   draggingIndex = null,
+  arrivingIndexes = [],
+  interactionDisabled = false,
   playingCardId,
   tutorialTargetClass = "",
   onInspect,
@@ -17,7 +19,7 @@ export default function MobileHandDock({
   onDragEnd,
   onDragCancel,
 }) {
-  const placementPending = Boolean(playingCardId);
+  const placementPending = Boolean(playingCardId || interactionDisabled);
   const gestureRef = useRef(null);
   const suppressDragClickRef = useRef(null);
   const callbacksRef = useRef({ onDragStart, onDragMove, onDragEnd, onDragCancel });
@@ -186,8 +188,9 @@ export default function MobileHandDock({
 
   return (
     <section
-      className={`seapals-mobile-hand-dock xl:hidden${tutorialTargetClass}`}
+      className={`seapals-mobile-hand-dock xl:hidden${interactionDisabled ? " is-draw-sequencing" : ""}${tutorialTargetClass}`}
       aria-label="Your hand"
+      aria-busy={interactionDisabled || undefined}
       data-mobile-hand-dock
       data-tutorial-target="hand"
     >
@@ -202,9 +205,11 @@ export default function MobileHandDock({
               {entries.map((entry) => {
                 const selected = entry.index === selectedIndex;
                 const dragging = entry.index === draggingIndex;
+                const arriving = arrivingIndexes.includes(entry.index);
                 return (
                   <li
                     key={`${entry.cardId}-${entry.index}`}
+                    className={arriving ? "is-arriving" : undefined}
                     data-mobile-hand-card-index={entry.index}
                     onPointerDown={(event) => handleCardPointerDown(entry, event)}
                     onPointerMove={(event) => handleCardPointerMove(entry, event)}

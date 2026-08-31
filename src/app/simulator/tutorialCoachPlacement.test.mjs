@@ -207,7 +207,7 @@ test("blocking simulator layers and the tutorial stay above Ask Finn", async () 
     rulesChatSource.match(/simulatorPlacement\s*\?\s*\{\s*top:[^}]*zIndex:\s*(\d+)\s*\}/)?.[1],
   );
   const modalZIndex = Number(
-    simulatorSource.match(/\{modal \? \(\s*<div\s*className=\{`fixed inset-0 z-\[(\d+)\]/)?.[1],
+    simulatorSource.match(/\{fullPageModalOpen \? \(\s*<div\s*className=\{`fixed inset-0 z-\[(\d+)\]/)?.[1],
   );
   const eventOverlayZIndex = Number(
     simulatorSource.match(/\{eventOverlay \? \(\s*<div\s*className="fixed inset-0 z-\[(\d+)\]/)?.[1],

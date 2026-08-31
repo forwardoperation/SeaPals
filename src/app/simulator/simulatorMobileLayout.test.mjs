@@ -125,7 +125,7 @@ test("the guided hand keeps new copy at the top and offers a direct jump to its 
   );
   const handModal = sourceSection(
     simulatorSource,
-    "{modal ? (",
+    "{fullPageModalOpen ? (",
     "</main>",
   );
 
