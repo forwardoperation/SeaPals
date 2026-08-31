@@ -9,6 +9,12 @@ import MobileHandDock from "./MobileHandDock";
 import MobileHandCardPopover from "./MobileHandCardPopover";
 import MobileEdgeZones from "./MobileEdgeZones";
 import MobileDrawTray from "./MobileDrawTray";
+import {
+  CompactTurnStage,
+  allocateCollectedRpSources,
+  createCompactTurnStages,
+  getCompactConditionBannerDuration,
+} from "./compactTurnSequence.mjs";
 import { cardsById } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
 import { conditionCards } from "@/data/cards/conditions";
@@ -2558,6 +2564,31 @@ function getEcosystemStartTurnRp(playerCorals, activeCondition = null) {
   }, 0);
 }
 
+function getEcosystemStartTurnRpSources(playerCorals, activeCondition = null) {
+  const sources = [{ key: "round-supply", amount: 1 }];
+
+  playerCorals.forEach((coral) => {
+    const coralCard = cardsById[coral.cardId];
+    const baseCoralRp = coralIsStunned(coral) || conditionPreventsCoralIncome(coralCard, activeCondition)
+      ? 0
+      : getCardStartTurnRp(coralCard);
+    const coralRp = Math.max(0, baseCoralRp - Number(coral.rpPenaltyNextTurn ?? 0));
+    const attachedCardBonus = coralIsStunned(coral) ? 0 : calculateAttachedCardRpBonus(coral, cardsById);
+    const foundationAmount = coralRp + attachedCardBonus;
+    if (foundationAmount > 0) {
+      sources.push({ key: `foundation:${coral.id}`, amount: foundationAmount });
+    }
+
+    (coral.slots ?? []).forEach((slot) => {
+      if (slot.invasiveOwner) return;
+      const amount = getCardStartTurnRp(cardsById[slot.cardId]);
+      if (amount > 0) sources.push({ key: `slot:${slot.id}`, amount });
+    });
+  });
+
+  return sources;
+}
+
 function getEcosystemCreatureCardIds(foundations = [], openWaterCreatures = [], orphanCreatures = []) {
   return [
     ...foundations.flatMap((foundation) => (foundation.slots ?? []).flatMap((slot) => slot.invasiveOwner ? [] : getSlotCardIds(slot))),
@@ -3350,6 +3381,19 @@ export default function Simulator({
   const mobileDrawFlightTimersRef = useRef(new Map());
   const mobileDrawSequenceActiveRef = useRef(false);
   const mobileDrawFocusIndexRef = useRef(null);
+  const compactTurnPresentationEnabled = previewExperience && !tutorialUsesScriptedScenario;
+  const [compactTurnSequence, setCompactTurnSequence] = useState(null);
+  const [compactRpFlights, setCompactRpFlights] = useState([]);
+  const [compactDisplayedRp, setCompactDisplayedRp] = useState({ player: null, opponent: null });
+  const [compactRpPulseOwner, setCompactRpPulseOwner] = useState(null);
+  const [compactRpPulseVersion, setCompactRpPulseVersion] = useState(0);
+  const [compactTurnAnnouncement, setCompactTurnAnnouncement] = useState("");
+  const compactTurnSequenceRef = useRef(null);
+  const compactTurnCompletionRef = useRef(null);
+  const compactTurnSequenceIdRef = useRef(0);
+  const compactTurnFlightIdRef = useRef(0);
+  const compactTurnTimersRef = useRef(new Set());
+  const compactTurnFrameIdsRef = useRef(new Set());
   const [actionBlinkOn, setActionBlinkOn] = useState(true);
   const [modal, setModal] = useState(null);
   const modalScrollRef = useRef(null);
@@ -3424,6 +3468,10 @@ export default function Simulator({
     return () => window.clearTimeout(revealTimer);
   }, [accessibilityReducedMotion, eventOverlay?.flipId, eventOverlay?.type, isStoryMode, storyOpponentName]);
   const [pendingEvents, setPendingEvents] = useState([]);
+  const pendingEventsRef = useRef([]);
+  useEffect(() => {
+    pendingEventsRef.current = pendingEvents;
+  }, [pendingEvents]);
   const [faceoffRolling, setFaceoffRolling] = useState(false);
   const [faceoffPreview, setFaceoffPreview] = useState(null);
   const [log, setLog] = useState([
@@ -3910,6 +3958,10 @@ export default function Simulator({
       setMobileDrawTrayOpen(false);
       return;
     }
+    if (compactTurnSequence || eventOverlay) {
+      setMobileDrawTrayOpen(false);
+      return;
+    }
     if (modal === "turn-draw") setMobileDrawTrayOpen(true);
     else if (modal === "draw-result") {
       setMobileDrawTrayOpen(false);
@@ -3924,7 +3976,7 @@ export default function Simulator({
       setMobileDrawTrayOpen(true);
       setModal("turn-draw");
     } else setMobileDrawTrayOpen(false);
-  }, [gamePhase, gameResult, hasDrawnThisTurn, modal, previewDrawTrayEnabled, turnDrawSelection?.target]);
+  }, [compactTurnSequence, eventOverlay, gamePhase, gameResult, hasDrawnThisTurn, modal, previewDrawTrayEnabled, turnDrawSelection?.target]);
 
   useEffect(() => {
     if (compactDrawViewport || !mobileDrawSequenceActiveRef.current) return;
@@ -3965,6 +4017,248 @@ export default function Simulator({
   useEffect(() => () => {
     for (const timerId of mobileDrawFlightTimersRef.current.values()) window.clearTimeout(timerId);
     mobileDrawFlightTimersRef.current.clear();
+  }, []);
+
+  function scheduleCompactTurnTimer(sequenceId, callback, delay) {
+    const timerId = window.setTimeout(() => {
+      compactTurnTimersRef.current.delete(timerId);
+      if (compactTurnSequenceIdRef.current !== sequenceId) return;
+      callback();
+    }, delay);
+    compactTurnTimersRef.current.add(timerId);
+    return timerId;
+  }
+
+  function clearCompactTurnAsyncHandles() {
+    for (const timerId of compactTurnTimersRef.current) window.clearTimeout(timerId);
+    compactTurnTimersRef.current.clear();
+    for (const frameId of compactTurnFrameIdsRef.current) window.cancelAnimationFrame(frameId);
+    compactTurnFrameIdsRef.current.clear();
+  }
+
+  function clearCompactTurnPresentation({ invalidate = true, updateState = true } = {}) {
+    if (invalidate) compactTurnSequenceIdRef.current += 1;
+    clearCompactTurnAsyncHandles();
+    compactTurnSequenceRef.current = null;
+    compactTurnCompletionRef.current = null;
+    if (updateState) {
+      setCompactTurnSequence(null);
+      setCompactRpFlights([]);
+      setCompactDisplayedRp({ player: null, opponent: null });
+      setCompactRpPulseOwner(null);
+      setCompactTurnAnnouncement("");
+    }
+  }
+
+  function finishCompactTurnSequence(sequenceId) {
+    const sequence = compactTurnSequenceRef.current;
+    if (!sequence || sequence.id !== sequenceId) return;
+    const completion = compactTurnCompletionRef.current;
+    if (sequence.stages.some((stage) => stage.kind === CompactTurnStage.RP)) {
+      setCompactDisplayedRp((current) => ({ ...current, [sequence.owner]: sequence.rpAfter }));
+      setCompactRpPulseOwner(sequence.owner);
+      setCompactRpPulseVersion((current) => current + 1);
+    }
+    scheduleCompactTurnTimer(sequenceId, () => {
+      compactTurnSequenceRef.current = null;
+      compactTurnCompletionRef.current = null;
+      setCompactTurnSequence(null);
+      setCompactRpFlights([]);
+      setCompactDisplayedRp({ player: null, opponent: null });
+      setCompactRpPulseOwner(null);
+      setCompactTurnAnnouncement("");
+      completion?.();
+    }, sequence.stages.some((stage) => stage.kind === CompactTurnStage.RP) ? 260 : 40);
+  }
+
+  function advanceCompactTurnSequence(sequenceId) {
+    const current = compactTurnSequenceRef.current;
+    if (!current || current.id !== sequenceId) return;
+    const nextStageIndex = current.stageIndex + 1;
+    if (nextStageIndex >= current.stages.length) {
+      finishCompactTurnSequence(sequenceId);
+      return;
+    }
+    const next = { ...current, stageIndex: nextStageIndex };
+    compactTurnSequenceRef.current = next;
+    setCompactTurnSequence(next);
+  }
+
+  function beginCompactTurnSequence({
+    owner,
+    turnLabel = null,
+    roundNumber = null,
+    condition = null,
+    includeCondition = true,
+    includeRp = true,
+    rpBefore = 0,
+    rpAfter = 0,
+    collectedRp = 0,
+    cappedRp = 0,
+    rpSources = [],
+  }, completion = null) {
+    clearCompactTurnAsyncHandles();
+    const id = compactTurnSequenceIdRef.current + 1;
+    compactTurnSequenceIdRef.current = id;
+    const stages = createCompactTurnStages({ turnLabel, condition, includeCondition, includeRp });
+    if (!stages.length) {
+      completion?.();
+      return;
+    }
+    const sequence = {
+      id,
+      owner,
+      turnLabel,
+      roundNumber,
+      condition,
+      stages,
+      stageIndex: 0,
+      rpBefore,
+      rpAfter,
+      collectedRp,
+      cappedRp,
+      rpSources,
+    };
+    compactTurnSequenceRef.current = sequence;
+    compactTurnCompletionRef.current = completion;
+    setCompactRpFlights([]);
+    setCompactRpPulseOwner(null);
+    setCompactDisplayedRp((current) => ({
+      ...current,
+      [owner]: includeRp ? rpBefore : null,
+    }));
+    setCompactTurnSequence(sequence);
+  }
+
+  function launchCompactRpFlights(sequence) {
+    const allocatedCoins = allocateCollectedRpSources(sequence.rpSources, sequence.collectedRp);
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    if (!allocatedCoins.length || accessibilityReducedMotion || systemReducedMotion) {
+      setCompactDisplayedRp((current) => ({ ...current, [sequence.owner]: sequence.rpAfter }));
+      setCompactRpPulseOwner(sequence.owner);
+      setCompactRpPulseVersion((current) => current + 1);
+      setCompactTurnAnnouncement(
+        `${sequence.owner === "player" ? "You now have" : "Opponent now has"} ${sequence.rpAfter} RP${sequence.cappedRp ? `; ${sequence.cappedRp} RP was capped` : ""}.`,
+      );
+      scheduleCompactTurnTimer(sequence.id, () => advanceCompactTurnSequence(sequence.id), 420);
+      return;
+    }
+
+    const pane = document.querySelector(`[data-board-owner="${sequence.owner}"]`);
+    const paneRect = pane?.getBoundingClientRect();
+    const target = document.querySelector(`[data-rp-bank-target="${sequence.owner}"]`);
+    const targetRect = target?.getBoundingClientRect();
+    const fallbackRect = paneRect && paneRect.width > 0 && paneRect.height > 0
+      ? paneRect
+      : { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight, width: window.innerWidth, height: window.innerHeight };
+    const targetX = targetRect?.width
+      ? targetRect.left + targetRect.width / 2
+      : fallbackRect.right - 42;
+    const targetY = targetRect?.height
+      ? targetRect.top + targetRect.height / 2
+      : fallbackRect.top + fallbackRect.height / 2;
+    const clampToPane = (value, start, end) => Math.min(Math.max(value, start + 18), end - 18);
+    const flights = allocatedCoins.map((coin, index) => {
+      const selector = coin.sourceKey === "round-supply"
+        ? '[data-rp-source-key="round-supply"]'
+        : `[data-board-owner="${sequence.owner}"] [data-rp-source-key="${coin.sourceKey}"]`;
+      const sourceRect = document.querySelector(selector)?.getBoundingClientRect();
+      const sourceX = sourceRect?.width
+        ? sourceRect.left + sourceRect.width / 2
+        : fallbackRect.left + fallbackRect.width / 2;
+      const sourceY = sourceRect?.height
+        ? sourceRect.top + sourceRect.height / 2
+        : fallbackRect.top + fallbackRect.height / 2;
+      const startX = clampToPane(sourceX, fallbackRect.left, fallbackRect.right) - 18;
+      const startY = clampToPane(sourceY, fallbackRect.top, fallbackRect.bottom) - 18;
+      const endX = targetX - 18;
+      const endY = targetY - 18;
+      return {
+        id: `compact-rp-flight-${++compactTurnFlightIdRef.current}`,
+        sourceKey: coin.sourceKey,
+        startX,
+        startY,
+        midX: startX + (endX - startX) * 0.48,
+        midY: Math.min(startY, endY) - 64 - (index % 3) * 7,
+        endX,
+        endY,
+        delay: index * 125,
+        duration: 620,
+      };
+    });
+    setCompactRpFlights(flights);
+    setCompactTurnAnnouncement(`${flights.length} RP collecting into the ${sequence.owner === "player" ? "player" : "opponent"} bank.`);
+
+    flights.forEach((flight) => {
+      scheduleCompactTurnTimer(sequence.id, () => {
+        setCompactRpFlights((current) => current.filter((entry) => entry.id !== flight.id));
+        setCompactDisplayedRp((current) => ({
+          ...current,
+          [sequence.owner]: Math.min(
+            sequence.rpAfter,
+            Number(current[sequence.owner] ?? sequence.rpBefore) + 1,
+          ),
+        }));
+        setCompactRpPulseOwner(sequence.owner);
+        setCompactRpPulseVersion((current) => current + 1);
+      }, flight.delay + flight.duration);
+    });
+    const lastFlight = flights[flights.length - 1];
+    scheduleCompactTurnTimer(
+      sequence.id,
+      () => advanceCompactTurnSequence(sequence.id),
+      lastFlight.delay + lastFlight.duration + 220,
+    );
+  }
+
+  useEffect(() => {
+    const sequence = compactTurnSequence;
+    if (!sequence) return undefined;
+    const stage = sequence.stages[sequence.stageIndex];
+    if (!stage) return undefined;
+
+    if (stage.kind === CompactTurnStage.TURN) {
+      setCompactTurnAnnouncement(sequence.turnLabel ?? "Turn changed");
+      scheduleCompactTurnTimer(sequence.id, () => advanceCompactTurnSequence(sequence.id), 920);
+      return undefined;
+    }
+    if (stage.kind === CompactTurnStage.CONDITION) {
+      setCompactTurnAnnouncement(
+        `Round ${sequence.roundNumber} condition: ${sequence.condition?.name ?? "No active condition"}. ${sequence.condition?.text ?? ""}`,
+      );
+      scheduleCompactTurnTimer(
+        sequence.id,
+        () => advanceCompactTurnSequence(sequence.id),
+        getCompactConditionBannerDuration(sequence.condition?.text),
+      );
+      return undefined;
+    }
+
+    let cancelled = false;
+    let secondFrame = null;
+    const firstFrame = window.requestAnimationFrame(() => {
+      compactTurnFrameIdsRef.current.delete(firstFrame);
+      secondFrame = window.requestAnimationFrame(() => {
+        compactTurnFrameIdsRef.current.delete(secondFrame);
+        if (!cancelled && compactTurnSequenceIdRef.current === sequence.id) launchCompactRpFlights(sequence);
+      });
+      compactTurnFrameIdsRef.current.add(secondFrame);
+    });
+    compactTurnFrameIdsRef.current.add(firstFrame);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(firstFrame);
+      compactTurnFrameIdsRef.current.delete(firstFrame);
+      if (secondFrame !== null) {
+        window.cancelAnimationFrame(secondFrame);
+        compactTurnFrameIdsRef.current.delete(secondFrame);
+      }
+    };
+  }, [compactTurnSequence?.id, compactTurnSequence?.stageIndex]);
+
+  useEffect(() => () => {
+    clearCompactTurnAsyncHandles();
+    compactTurnSequenceIdRef.current += 1;
   }, []);
   const tutorialLessonWon = isTutorialLessonVictory({
     tutorialActive: Boolean(tutorialContract && scriptedTutorialScenario),
@@ -5081,11 +5375,11 @@ export default function Simulator({
   }, [faceoffRolling, eventOverlay]);
 
   useEffect(() => {
-    if (round === 0) return;
+    if (round === 0 || compactTurnPresentationEnabled) return;
     setRoundFlash(true);
     const timeout = setTimeout(() => setRoundFlash(false), 1400);
     return () => clearTimeout(timeout);
-  }, [round]);
+  }, [compactTurnPresentationEnabled, round]);
 
   useEffect(() => {
     if (!isPlacingCoral && !isUpgradingCoral) {
@@ -7324,14 +7618,12 @@ export default function Simulator({
 
   function queueEvents(eventsToAdd) {
     if (!eventsToAdd.length) return;
-    if (eventOverlay) {
+    if (eventOverlay || compactTurnSequenceRef.current) {
       setPendingEvents((events) => [...events, ...eventsToAdd]);
       return;
     }
     const [firstEvent, ...remainingEvents] = eventsToAdd;
-    if (firstEvent?.type === "choose-regenerate") commitEventState(firstEvent);
-    setEventOverlay(firstEvent);
-    setPendingEvents((events) => [...events, ...remainingEvents]);
+    presentQueuedEvent(firstEvent, remainingEvents);
   }
 
   function commitEventState(event) {
@@ -7370,66 +7662,118 @@ export default function Simulator({
     if (event?.gameResultAfter) setGameResult((current) => current ?? event.gameResultAfter);
   }
 
-  function closeEventOverlay() {
-    setFaceoffRolling(false);
-    setFaceoffPreview(null);
-    commitEventState(eventOverlay);
-    if (eventOverlay?.continueToEndTurn) {
+  function continueAfterPresentedEvent(event, remainingEvents = []) {
+    if (event?.continueToEndTurn) {
       setEventOverlay(null);
       endTurn();
       return;
     }
-    if (eventOverlay?.continueAttackSequence) {
+    if (event?.continueAttackSequence) {
       setEventOverlay(null);
       return;
     }
-    if (eventOverlay?.beginOpponentAfterClose) {
+    if (event?.beginOpponentAfterClose) {
       setEventOverlay(null);
       setPendingEvents([]);
-      if (gameResult) return;
+      if (gameResult || event.gameResultAfter) return;
       setGamePhase("opponent");
       setOpponentThinking(true);
       opponentThinkingTimerRef.current = setTimeout(() => {
         opponentThinkingTimerRef.current = null;
         resolveOpponentTurnRef.current?.();
-      }, scaleOpponentThinkingDelay(Number(eventOverlay.thinkingDelay ?? 1200), opponentDifficulty));
+      }, scaleOpponentThinkingDelay(Number(event.thinkingDelay ?? 1200), opponentDifficulty));
       return;
     }
-    if (eventOverlay?.advanceRoundAfterClose) {
+    if (event?.advanceRoundAfterClose) {
       setEventOverlay(null);
       setPendingEvents([]);
-      if (gameResult || eventOverlay.gameResultAfter) return;
-      startRound(round + 1, { advanceTurn: true });
+      if (gameResult || event.gameResultAfter) return;
+      startRound(round + 1, {
+        advanceTurn: true,
+        skipTurnBanner: compactTurnPresentationEnabled,
+        opponentStateOverride: event.opponentStateAfter ?? null,
+      });
       return;
     }
-    if (eventOverlay?.startOpeningPlayerTurnAfterClose) {
+    if (event?.startOpeningPlayerTurnAfterClose) {
       setEventOverlay(null);
       setPendingEvents([]);
       setOpeningOpponentTurn(false);
-      if (gameResult || eventOverlay.gameResultAfter) return;
+      if (gameResult || event.gameResultAfter) return;
       startRound(round, {
         reuseConditionId: activeConditionId,
         skipOpponentHandLimit: true,
         conditionTitle: `Round ${round} · Your First Turn`,
+        skipTurnBanner: compactTurnPresentationEnabled,
+        opponentStateOverride: event.opponentStateAfter ?? null,
       });
       return;
     }
-    const [nextEvent, ...remaining] = pendingEvents;
-    setPendingEvents(remaining);
-    if (nextEvent?.opponentSequence) {
-      const isComplexDecision = ["faceoff-result", "opponent-impact", "turn-transition"].includes(nextEvent.type) || playerVp >= victoryTarget - 8 || opponentVp >= victoryTarget - 8;
-      const delay = scaleOpponentThinkingDelay(isComplexDecision ? 1500 : 900, opponentDifficulty);
+    const [nextEvent, ...remaining] = remainingEvents;
+    presentQueuedEvent(nextEvent ?? null, remaining, { delayForOpponent: Boolean(nextEvent?.opponentSequence) });
+  }
+
+  function presentQueuedEvent(event, remainingEvents = [], { delayForOpponent = false } = {}) {
+    setPendingEvents(remainingEvents);
+    if (!event) {
       setEventOverlay(null);
-      setOpponentThinking(true);
-      opponentThinkingTimerRef.current = setTimeout(() => {
-        opponentThinkingTimerRef.current = null;
-        setOpponentThinking(false);
-        if (nextEvent.type === "choose-regenerate") commitEventState(nextEvent);
-        setEventOverlay(nextEvent);
-      }, delay);
-    } else {
-      setEventOverlay(nextEvent ?? null);
+      return;
     }
+
+    const present = () => {
+      setOpponentThinking(false);
+      if (compactTurnPresentationEnabled && event.type === "opponent-status") {
+        commitEventState(event);
+        setEventOverlay(null);
+        beginCompactTurnSequence({
+          owner: "opponent",
+          roundNumber: round,
+          includeCondition: false,
+          includeRp: true,
+          rpBefore: Number(event.turnCollection?.bankBefore ?? Math.max(0, Number(event.turnCollection?.bank ?? 0) - Number(event.turnCollection?.collected ?? 0))),
+          rpAfter: Number(event.turnCollection?.bank ?? event.opponentStateAfter?.rp ?? opponent.rp),
+          collectedRp: Number(event.turnCollection?.collected ?? 0),
+          cappedRp: Number(event.turnCollection?.capped ?? 0),
+          rpSources: event.turnCollection?.rpSources ?? [],
+        }, () => continueAfterPresentedEvent(event, pendingEventsRef.current));
+        return;
+      }
+      if (compactTurnPresentationEnabled && event.type === "turn-transition") {
+        commitEventState(event);
+        setEventOverlay(null);
+        beginCompactTurnSequence({
+          owner: event.title?.toLowerCase().includes("opponent") ? "opponent" : "player",
+          turnLabel: event.title ?? "Turn Changed",
+          roundNumber: round,
+          includeCondition: false,
+          includeRp: false,
+        }, () => continueAfterPresentedEvent(event, pendingEventsRef.current));
+        return;
+      }
+      if (event.type === "choose-regenerate") commitEventState(event);
+      setEventOverlay(event);
+    };
+
+    if (!delayForOpponent) {
+      present();
+      return;
+    }
+    const isComplexDecision = ["faceoff-result", "opponent-impact", "turn-transition"].includes(event.type) || playerVp >= victoryTarget - 8 || opponentVp >= victoryTarget - 8;
+    const delay = scaleOpponentThinkingDelay(isComplexDecision ? 1500 : 900, opponentDifficulty);
+    setEventOverlay(null);
+    setOpponentThinking(true);
+    opponentThinkingTimerRef.current = setTimeout(() => {
+      opponentThinkingTimerRef.current = null;
+      present();
+    }, delay);
+  }
+
+  function closeEventOverlay() {
+    setFaceoffRolling(false);
+    setFaceoffPreview(null);
+    const closingEvent = eventOverlay;
+    commitEventState(closingEvent);
+    continueAfterPresentedEvent(closingEvent, pendingEvents);
   }
 
   function drawNextCondition() {
@@ -7450,8 +7794,11 @@ export default function Simulator({
     reuseConditionId = null,
     skipOpponentHandLimit = false,
     conditionTitle = null,
+    skipTurnBanner = false,
+    opponentStateOverride = null,
   } = {}) {
     const condition = reuseConditionId ? cardsById[reuseConditionId] : drawNextCondition();
+    const opponentAtBoundary = opponentStateOverride ?? opponent;
     const lionfishResolution = resolveHostTurnLionfishInvaders({
       playerState: {
         corals: playerCorals,
@@ -7472,12 +7819,12 @@ export default function Simulator({
         flashingAlarmAttackBonus: beginFlashingAlarmTurn(flashingAlarmAttackBonus),
         poisonImmunityNextPredatorAttack,
       },
-      opponentState: opponent,
+      opponentState: opponentAtBoundary,
       hostController: "player",
     });
     const playerAtTurnStart = normalizeProjectedPlayerState(lionfishResolution.player);
     const opponentAtTurnStart = normalizeProjectedOpponentState(
-      reconcileOpponentInstances(opponent, lionfishResolution.opponent),
+      reconcileOpponentInstances(opponentAtBoundary, lionfishResolution.opponent),
     );
     const playerCoralsAtTurnStart = playerAtTurnStart.corals;
     const playerReefInstancesAtTurnStart = playerAtTurnStart.reefCreatureInstances;
@@ -7485,6 +7832,7 @@ export default function Simulator({
     const playerOrphansAtTurnStart = playerAtTurnStart.orphanCreatureInstances;
     const ecosystemRp = getEcosystemStartTurnRp(playerCoralsAtTurnStart, condition);
     const collectedRp = 1 + ecosystemRp;
+    const rpSources = getEcosystemStartTurnRpSources(playerCoralsAtTurnStart, condition);
     const roundRpCap = getEcosystemRpCap(playerCoralsAtTurnStart, [...playerHabitats, ...playerReefAtTurnStart, ...playerOrphansAtTurnStart.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], condition);
     const parasiteRequestedRp = getParasiteRequestedRp(
       playerCoralsAtTurnStart,
@@ -7540,7 +7888,7 @@ export default function Simulator({
     const availableDraws = Math.min(requestedDraws, foundationDeck.length + palsDeck.length);
     setTurnDrawSelection({ requested: requestedDraws, target: availableDraws, shortfall: getRequiredDrawShortfall(requestedDraws, availableDraws), foundation: 0, pals: 0 });
     setTurnDrawResult(null);
-    setMobileDrawTrayOpen(Boolean(previewDrawTrayEnabled && availableDraws > 0));
+    setMobileDrawTrayOpen(false);
     if (advanceTurn) setTurn((current) => current + 1);
     setModal(availableDraws > 0 ? "turn-draw" : null);
     setPlayingCardId(null);
@@ -7558,12 +7906,22 @@ export default function Simulator({
     setSearchContext(null);
     setPlayError("");
     if (availableDraws === 0) setGameResult((current) => current ?? `Defeat: you were required to draw ${requestedDraws} card${requestedDraws === 1 ? "" : "s"}, but both personal decks were empty.`);
-    if (condition) {
-      const roundNotes = [
-        requestedDraws > 1 ? `This round, each player draws ${requestedDraws} cards during their draw phase.` : null,
-        Number.isFinite(handLimit) ? `The hand limit this round is ${handLimit}.` : null,
-        condition.tags?.includes("persistent") ? "This condition remains in play after the round ends." : "This condition applies for the current round.",
-      ].filter(Boolean);
+    const roundNotes = [
+      requestedDraws > 1 ? `This round, each player draws ${requestedDraws} cards during their draw phase.` : null,
+      Number.isFinite(handLimit) ? `The hand limit this round is ${handLimit}.` : null,
+      condition?.tags?.includes("persistent") ? "This condition remains in play after the round ends." : "This condition applies for the current round.",
+    ].filter(Boolean);
+    const startTurnEvents = [
+      ...lionfishResolution.events,
+      ...(parasiteRequestedRp ? [{
+        type: "impact-result",
+        sourceCardId: "cookie-cutter-shark",
+        title: "Player's Cookie Cutter used Parasite",
+        message: parasiteMessage,
+        success: parasiteTransfer.collected > 0,
+      }] : []),
+    ];
+    if (condition && !compactTurnPresentationEnabled) {
       setEventOverlay({
         type: "condition-reveal",
         round: nextRound,
@@ -7582,16 +7940,25 @@ export default function Simulator({
         roundNotes,
       });
     }
-    setPendingEvents([
-      ...lionfishResolution.events,
-      ...(parasiteRequestedRp ? [{
-        type: "impact-result",
-        sourceCardId: "cookie-cutter-shark",
-        title: "Player's Cookie Cutter used Parasite",
-        message: parasiteMessage,
-        success: parasiteTransfer.collected > 0,
-      }] : []),
-    ]);
+    if (compactTurnPresentationEnabled) {
+      setEventOverlay(null);
+      setPendingEvents([]);
+      beginCompactTurnSequence({
+        owner: "player",
+        turnLabel: skipTurnBanner ? null : "Your Turn",
+        roundNumber: nextRound,
+        condition,
+        includeCondition: Boolean(condition && !reuseConditionId),
+        includeRp: true,
+        rpBefore: rpBeforeCollection,
+        rpAfter: rpAfterCollection,
+        collectedRp: actualCollectedRp,
+        cappedRp,
+        rpSources,
+      }, () => queueEvents(startTurnEvents));
+    } else {
+      setPendingEvents(startTurnEvents);
+    }
     pushLog(
       `Round ${nextRound}: revealed ${condition?.name ?? "no condition"}. Collected ${actualCollectedRp} RP from ${collectedRp} available; bank ${rpAfterCollection}/${roundRpCap}.${cappedRp ? ` ${cappedRp} RP was discarded at the cap.` : ""} Now choose your card draw.${parasiteMessage ? ` ${parasiteMessage}` : ""}${excessCards.length ? ` Your hand is ${excessCards.length} card${excessCards.length === 1 ? "" : "s"} over the limit; choose what to discard.` : ""}${opponentExcessCards.length ? ` The opponent chose ${opponentExcessCards.length} excess card(s) to discard.` : ""}`,
     );
@@ -7613,7 +7980,7 @@ export default function Simulator({
     setOpeningOpponentTurn(true);
     setModal(null);
     setPendingEvents([]);
-    setEventOverlay({
+    const openingOpponentEvent = {
       type: "condition-reveal",
       round: 1,
       sourceCardId: condition?.id ?? null,
@@ -7625,7 +7992,20 @@ export default function Simulator({
       beginOpponentAfterClose: true,
       thinkingDelay: 900,
       roundNotes,
-    });
+    };
+    if (compactTurnPresentationEnabled) {
+      setEventOverlay(null);
+      beginCompactTurnSequence({
+        owner: "opponent",
+        turnLabel: "Opponent's Turn",
+        roundNumber: 1,
+        condition,
+        includeCondition: Boolean(condition),
+        includeRp: false,
+      }, () => continueAfterPresentedEvent(openingOpponentEvent, []));
+    } else {
+      setEventOverlay(openingOpponentEvent);
+    }
     pushLog(`The opponent won the opening choice and takes the first turn. Round 1 revealed ${condition?.name ?? "no condition"}.`);
   }
 
@@ -9833,6 +10213,7 @@ export default function Simulator({
 
   function runOpponentTurn(current, { startTurnAlreadyBegun = false } = {}) {
     const income = 1 + getEcosystemStartTurnRp(current.corals, activeCondition);
+    const rpSources = getEcosystemStartTurnRpSources(current.corals, activeCondition);
     let next = {
       ...current,
       cardsBlockedFromPlayThisTurn: [],
@@ -9856,9 +10237,11 @@ export default function Simulator({
     const startOfTurnCollection = {
       collected: collectedIncome,
       available: income,
+      bankBefore: rpBeforeCollection,
       bank: rpAfterCollection,
       cap: collectionCap,
       capped: cappedIncome,
+      rpSources,
       requestedDraws,
     };
     const openingThreatProfile = assessCurrentOpponentThreat(next);
@@ -12294,6 +12677,7 @@ export default function Simulator({
   }
 
   function endTurn() {
+    if (compactTurnSequenceRef.current) return;
     if (isSetup) {
       const academyBlock = getAcademyEndTurnBlock({
         route: scriptedFinishRoute,
@@ -12352,14 +12736,26 @@ export default function Simulator({
     }
     setGamePhase("transition");
     setModal(null);
-    setEventOverlay({
+    const opponentTurnEvent = {
       type: "turn-transition",
       title: "Opponent's Turn",
       message: "Your turn is complete.",
       actions: actions.length ? actions : ["You ended your turn without taking an action."],
       beginOpponentAfterClose: true,
       thinkingDelay,
-    });
+    };
+    if (compactTurnPresentationEnabled) {
+      setEventOverlay(null);
+      beginCompactTurnSequence({
+        owner: "opponent",
+        turnLabel: opponentTurnEvent.title,
+        roundNumber: round,
+        includeCondition: false,
+        includeRp: false,
+      }, () => continueAfterPresentedEvent(opponentTurnEvent, []));
+    } else {
+      setEventOverlay(opponentTurnEvent);
+    }
   }
 
   function resolveOpponentTurn() {
@@ -12878,6 +13274,7 @@ export default function Simulator({
   function restartGame(deckId = selectedDeckId, opponentDeckId = selectedOpponentDeckId, nextVictoryTarget = pendingVictoryTarget, nextOpponentDifficulty = pendingOpponentDifficulty) {
     cancelOpeningCoinFlip();
     clearMobileDrawFlightSequence();
+    clearCompactTurnPresentation();
     setMobileDrawTrayOpen(false);
     setMobileDrawAnnouncement("");
     const nextGame = createInitialGameState(
@@ -13144,7 +13541,10 @@ export default function Simulator({
 
   const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "opponent-discard" ? "Opponent Discard Pile" : modal === "opponent-lost" ? "Opponent Lost Zone" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "lost-recover" ? "Recover from the Lost Zone" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Fish" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
   const isDarkZoneModal = Boolean(modal);
-  const fullPageModalOpen = Boolean(modal && (!previewDrawTrayEnabled || !["turn-draw", "draw-result"].includes(modal)));
+  const fullPageModalOpen = Boolean(modal && !compactTurnSequence && (!previewDrawTrayEnabled || !["turn-draw", "draw-result"].includes(modal)));
+  const presentedPlayerRp = compactDisplayedRp.player ?? rp;
+  const presentedOpponentRp = compactDisplayedRp.opponent ?? opponent.rp;
+  const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;
   const selectedHandPlayError =
     modal === "hand" && selectedHandCard ? getPlayError(cardsById[selectedHandCard]) : "";
   const handPopoverCard = handPopoverCardId && hand.includes(handPopoverCardId) ? cardsById[handPopoverCardId] : null;
@@ -13195,6 +13595,32 @@ export default function Simulator({
         @keyframes seapalsDrawReduced {
           from { opacity: 0; transform: translate3d(var(--seapals-draw-end-x), var(--seapals-draw-end-y), 0) scale(.92); }
           to { opacity: 1; transform: translate3d(var(--seapals-draw-end-x), var(--seapals-draw-end-y), 0) scale(1); }
+        }
+        @keyframes seapalsCompactTurnBannerIn {
+          0% { opacity: 0; transform: translate(-50%, -50%) scaleX(.72) scaleY(.9); }
+          22% { opacity: 1; transform: translate(-50%, -50%) scaleX(1.025) scaleY(1.02); }
+          82% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scaleX(.96) scaleY(.94); }
+        }
+        @keyframes seapalsCompactRpFlight {
+          0% {
+            opacity: 0;
+            transform: translate3d(var(--seapals-rp-start-x), var(--seapals-rp-start-y), 0) scale(.55) rotate(-18deg);
+          }
+          12% { opacity: 1; }
+          48% {
+            opacity: 1;
+            transform: translate3d(var(--seapals-rp-mid-x), var(--seapals-rp-mid-y), 0) scale(1.14) rotate(15deg);
+          }
+          88% { opacity: 1; }
+          100% {
+            opacity: 0;
+            transform: translate3d(var(--seapals-rp-end-x), var(--seapals-rp-end-y), 0) scale(.62) rotate(36deg);
+          }
+        }
+        @keyframes seapalsRpBankCollect {
+          0%, 100% { transform: scale(1); filter: brightness(1); }
+          48% { transform: scale(1.16); filter: brightness(1.45); box-shadow: 0 0 0 4px rgba(253, 230, 138, .24), 0 0 28px rgba(110, 231, 183, .9); }
         }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes seapalsCoinReady {
@@ -14372,6 +14798,91 @@ export default function Simulator({
           filter: saturate(.7);
           transform: translateY(.35rem) rotate(0deg) scale(.94);
         }
+        .seapals-compact-turn-guard {
+          background: transparent;
+          pointer-events: auto;
+          touch-action: none;
+        }
+        .seapals-compact-turn-banner {
+          width: min(88vw, 34rem);
+          overflow: hidden;
+          border: 2px solid rgba(207, 250, 254, .92);
+          border-radius: 1rem;
+          background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(224,242,254,.96));
+          color: #082f49;
+          padding: .92rem 1.35rem;
+          text-align: center;
+          box-shadow: 0 18px 50px rgba(2, 8, 23, .48), inset 0 -2px 0 rgba(14, 116, 144, .14);
+          pointer-events: none;
+          animation: seapalsCompactTurnBannerIn 920ms ease-in-out both;
+        }
+        .seapals-compact-turn-banner.is-turn strong {
+          display: block;
+          font-size: clamp(1rem, 4.2vw, 1.35rem);
+          font-weight: 950;
+          letter-spacing: .13em;
+          text-transform: uppercase;
+        }
+        .seapals-compact-turn-banner.is-condition {
+          border-color: rgba(196, 181, 253, .9);
+          background: linear-gradient(145deg, rgba(15,23,42,.97), rgba(49,46,129,.96));
+          color: white;
+          animation-duration: var(--seapals-condition-banner-duration, 2200ms);
+        }
+        .seapals-compact-turn-banner.is-condition > span {
+          display: block;
+          color: #c4b5fd;
+          font-size: .62rem;
+          font-weight: 900;
+          letter-spacing: .2em;
+          text-transform: uppercase;
+        }
+        .seapals-compact-turn-banner.is-condition > strong {
+          display: block;
+          margin-top: .2rem;
+          font-size: clamp(.95rem, 4vw, 1.25rem);
+          font-weight: 950;
+        }
+        .seapals-compact-turn-banner.is-condition > p {
+          display: -webkit-box;
+          margin: .28rem auto 0;
+          max-width: 29rem;
+          overflow: hidden;
+          color: rgba(237, 233, 254, .82);
+          font-size: clamp(.68rem, 2.7vw, .82rem);
+          font-weight: 650;
+          line-height: 1.35;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 4;
+        }
+        .seapals-compact-rp-flight-layer { pointer-events: none; }
+        .seapals-compact-rp-coin {
+          position: fixed;
+          left: 0;
+          top: 0;
+          display: flex;
+          width: 2.25rem;
+          height: 2.25rem;
+          align-items: center;
+          justify-content: center;
+          border: 3px solid #fef3c7;
+          border-radius: 9999px;
+          background: radial-gradient(circle at 35% 28%, #fef9c3 0 12%, #34d399 14% 52%, #047857 54% 100%);
+          color: white;
+          box-shadow: 0 7px 18px rgba(2, 8, 23, .55), 0 0 18px rgba(110, 231, 183, .7), inset 0 0 0 2px rgba(6, 78, 59, .45);
+          opacity: 0;
+          animation: seapalsCompactRpFlight 620ms cubic-bezier(.18,.74,.2,1) both;
+          will-change: transform, opacity;
+        }
+        .seapals-compact-rp-coin b {
+          font-size: .64rem;
+          font-weight: 950;
+          letter-spacing: -.02em;
+          text-shadow: 0 1px 2px rgba(2, 8, 23, .75);
+        }
+        .seapals-reef-score-card.is-rp.is-collecting { animation: seapalsRpBankCollect 220ms ease-out both; }
+        .seapals-reef-divider-handle[aria-disabled="true"] { pointer-events: none; }
+        .seapals-reduced-motion .seapals-compact-turn-banner { animation: none !important; }
         .seapals-mobile-draw-flight {
           position: fixed;
           z-index: 68;
@@ -15155,7 +15666,7 @@ export default function Simulator({
                 <button type="button" onClick={() => setModal("discard")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Discard</button>
                 <button type="button" onClick={() => setModal("lost")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Lost</button>
                 <button type="button" onClick={openNewGameSetup} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 xl:block">{isStoryMode ? "Restart Duel" : "New Game"}</button>
-                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
+                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
                   {turnControlLabel}
                 </button>
               </div>
@@ -15343,9 +15854,9 @@ export default function Simulator({
                   ) : null}
                 </div>
                 {previewExperience ? (
-                  <div className="seapals-reef-score seapals-reef-score-opponent" data-tutorial-coach-anchor="opponent-board-tab" aria-label={`${opponentHudLabel}: ${opponentVp} Victory Points and ${opponent.rp} Resource Points`}>
+                  <div className="seapals-reef-score seapals-reef-score-opponent" data-tutorial-coach-anchor="opponent-board-tab" aria-label={`${opponentHudLabel}: ${opponentVp} Victory Points and ${presentedOpponentRp} Resource Points`}>
                     <span className="seapals-reef-score-card is-vp"><small>VP</small><strong>{opponentVp}</strong></span>
-                    <span className="seapals-reef-score-card is-rp"><small>RP</small><strong>{opponent.rp}</strong></span>
+                    <span key={`opponent-rp-${compactRpPulseOwner === "opponent" ? compactRpPulseVersion : 0}`} data-rp-bank-target="opponent" className={`seapals-reef-score-card is-rp${compactRpPulseOwner === "opponent" ? " is-collecting" : ""}`}><small>RP</small><strong>{presentedOpponentRp}</strong></span>
                   </div>
                 ) : null}
                 {previewExperience && mobileHandDockVisible ? (
@@ -15355,7 +15866,7 @@ export default function Simulator({
                     discardCount={opponent.discardPile.length}
                     lostCount={(opponent.lostZone ?? []).length}
                     discardCard={cardsById[opponent.discardPile[0]] ?? null}
-                    disabled={Boolean(playingCardId) || mobileDrawFlights.length > 0}
+                    disabled={Boolean(playingCardId) || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence)}
                     onOpenDiscard={() => setModal("opponent-discard")}
                     onOpenLost={() => setModal("opponent-lost")}
                   />
@@ -15447,7 +15958,7 @@ export default function Simulator({
                         const opponentFloatingOffset = hasFloatingOpponentCards ? 360 : 0;
                         return (
                           <div key={coral.id} className="absolute h-[210px] w-[180px] -translate-x-1/2 -translate-y-1/2" style={{ left: `calc(50% + ${gridOffset.x}px)`, top: `calc(50% + ${gridOffset.y + opponentFloatingOffset}px)` }}>
-                            <button type="button" aria-label={`Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
+                            <button type="button" data-rp-source-key={`foundation:${coral.id}`} aria-label={`Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
                               <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
                               <img src={card?.image} alt={card?.name} className="h-[160px] w-full rounded-xl object-contain" />
                               <span className="absolute inset-x-2 bottom-1">
@@ -15466,6 +15977,7 @@ export default function Simulator({
                                   <button
                                     type="button"
                                     disabled={!slotCard}
+                                    data-rp-source-key={slotCard && !slot.invasiveOwner ? `slot:${slot.id}` : undefined}
                                     data-tutorial-target={isTarget ? "opponent-board" : undefined}
                                     onPointerDown={(event) => event.stopPropagation()}
                                     onClick={() => {
@@ -15509,6 +16021,7 @@ export default function Simulator({
                     aria-valuemax={MOBILE_REEF_SPLIT_MAX}
                     aria-valuenow={Math.round(mobileReefSplit)}
                     aria-valuetext={`${Math.round(mobileReefSplit)} percent Rival Reef, ${100 - Math.round(mobileReefSplit)} percent Your Reef`}
+                    data-rp-source-key="round-supply"
                     tabIndex={0}
                     onKeyDown={handleReefDividerKeyDown}
                     onPointerDown={handleReefDividerPointerDown}
@@ -15516,6 +16029,7 @@ export default function Simulator({
                     onPointerUp={handleReefDividerPointerUp}
                     onPointerCancel={handleReefDividerPointerUp}
                     onLostPointerCapture={handleReefDividerPointerUp}
+                    aria-disabled={Boolean(compactTurnSequence) || undefined}
                   >
                     <span aria-hidden="true"><i /><i /><i /></span>
                   </div>
@@ -15528,7 +16042,7 @@ export default function Simulator({
                     aria-busy={opponentThinking || undefined}
                     onPointerDown={(event) => event.stopPropagation()}
                     onClick={endTurn}
-                    disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn}
+                    disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || (isSetup && !hasCoralInPlay) || isStartOfTurn}
                   >
                     {turnControlLabel}
                   </button>
@@ -15558,9 +16072,9 @@ export default function Simulator({
                   )}
                 </div>
                 {previewExperience ? (
-                  <div className="seapals-reef-score seapals-reef-score-player" data-tutorial-coach-anchor="player-board-tab" aria-label={`Your Reef: ${playerVp} Victory Points and ${rp} Resource Points`}>
+                  <div className="seapals-reef-score seapals-reef-score-player" data-tutorial-coach-anchor="player-board-tab" aria-label={`Your Reef: ${playerVp} Victory Points and ${presentedPlayerRp} Resource Points`}>
                     <span className={`seapals-reef-score-card is-vp${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score"><small>VP</small><strong>{playerVp}</strong></span>
-                    <span className={`seapals-reef-score-card is-rp${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><small>RP</small><strong>{rp}</strong></span>
+                    <span key={`player-rp-${compactRpPulseOwner === "player" ? compactRpPulseVersion : 0}`} data-rp-bank-target="player" className={`seapals-reef-score-card is-rp${compactRpPulseOwner === "player" ? " is-collecting" : ""}${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><small>RP</small><strong>{presentedPlayerRp}</strong></span>
                   </div>
                 ) : null}
                 {previewExperience && mobileHandDockVisible ? (
@@ -15570,9 +16084,9 @@ export default function Simulator({
                     discardCount={discardPile.length}
                     lostCount={lostZone.length}
                     discardCard={cardsById[discardPile[0]] ?? null}
-                    disabled={Boolean(playingCardId) || mobileDrawFlights.length > 0}
+                    disabled={Boolean(playingCardId) || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence)}
                     deckActionLabel={gamePhase === "draw" && turnDrawSelection ? "Open draw options" : "Open your deck summary"}
-                    deckExpanded={mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay}
+                    deckExpanded={mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay && !compactTurnSequence}
                     tutorialTargetClass={tutorialTargetClass("zones")}
                     onOpenDecks={handlePlayerDeckOpen}
                     onOpenDiscard={() => setModal("discard")}
@@ -15581,7 +16095,7 @@ export default function Simulator({
                 ) : null}
                 {previewDrawTrayEnabled ? (
                   <MobileDrawTray
-                    open={mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay}
+                    open={mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay && !compactTurnSequence}
                     selection={turnDrawSelection}
                     foundationCount={foundationDeck.length}
                     palsCount={palsDeck.length}
@@ -15741,6 +16255,7 @@ export default function Simulator({
                                  data-upgrade-target={canUpgradeThisCoral ? "true" : undefined}
                                  data-hand-drop-coral-id={coral.id}
                                  data-hand-drop-foundation-id={coral.id}
+                                 data-rp-source-key={`foundation:${coral.id}`}
                                  data-hand-drop-valid={canUpgradeThisCoral ? "true" : undefined}
                                  data-tutorial-target={canUpgradeThisCoral
                                    ? "placement"
@@ -15845,6 +16360,7 @@ export default function Simulator({
                                       {slotFilled ? (
                                         <button
                                           type="button"
+                                          data-rp-source-key={!slot.invasiveOwner ? `slot:${slot.id}` : undefined}
                                           data-tutorial-action-key={getSlotActionKey(slot)}
                                           data-tutorial-target={isInvaderTarget ? "player-board" : undefined}
                                           onPointerDown={(event) => validHostTarget || isInvaderTarget ? event.stopPropagation() : handleSlotPointerDown(coral.id, slot.id, event)}
@@ -15959,7 +16475,7 @@ export default function Simulator({
             selectedIndex={mobileSelectedHandIndex}
             draggingIndex={mobileHandDrag?.index ?? null}
             arrivingIndexes={mobileDrawFlights.map((flight) => flight.handIndex)}
-            interactionDisabled={mobileDrawFlights.length > 0}
+            interactionDisabled={mobileDrawFlights.length > 0 || Boolean(compactTurnSequence)}
             playingCardId={playingCardId}
             tutorialTargetClass={tutorialTargetClass("hand")}
             onInspect={openHandCardPopover}
@@ -16023,7 +16539,7 @@ export default function Simulator({
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("zones")}`} data-tutorial-target="zones">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">Guide<br /><span className="text-violet-300">Feed</span></button>
             <button type="button" onClick={() => { if (!playingCardId) setModal("hand"); }} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish or cancel this card placement first." : undefined} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg disabled:cursor-not-allowed disabled:opacity-45${isSetup && !hasCoralInPlay && !playingCardId ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{playingCardId ? "Place card first" : `${rp} RP ready`}</span></button>
-            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
+            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
           </div> : null}
         </div>
 
@@ -16118,7 +16634,7 @@ export default function Simulator({
         </div>
 
         <div className="hidden xl:col-start-2 xl:row-start-3 xl:block">
-          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
+          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
         </div>
       </section>
 
@@ -16272,6 +16788,55 @@ export default function Simulator({
           </aside>
         </>
       ) : null}
+
+      {compactTurnSequence ? <div className="seapals-compact-turn-guard fixed inset-0 z-[75]" aria-hidden="true" /> : null}
+
+      {compactTurnSequence && [CompactTurnStage.TURN, CompactTurnStage.CONDITION].includes(compactTurnStage?.kind) ? (
+        <div
+          className={`seapals-compact-turn-banner is-${compactTurnStage.kind} fixed left-1/2 top-1/2 z-[82] -translate-x-1/2 -translate-y-1/2`}
+          aria-hidden="true"
+          data-compact-turn-banner={compactTurnStage.kind}
+          style={compactTurnStage.kind === CompactTurnStage.CONDITION
+            ? { "--seapals-condition-banner-duration": `${getCompactConditionBannerDuration(compactTurnSequence.condition?.text)}ms` }
+            : undefined}
+        >
+          {compactTurnStage.kind === CompactTurnStage.TURN ? (
+            <strong>{compactTurnSequence.turnLabel}</strong>
+          ) : (
+            <>
+              <span>Round {compactTurnSequence.roundNumber} condition</span>
+              <strong>{compactTurnSequence.condition?.name ?? "No active condition"}</strong>
+              {compactTurnSequence.condition?.text ? <p>{compactTurnSequence.condition.text}</p> : null}
+            </>
+          )}
+        </div>
+      ) : null}
+
+      {compactRpFlights.length ? (
+        <div className="seapals-compact-rp-flight-layer fixed inset-0 z-[80]" aria-hidden="true" data-compact-rp-flight-layer>
+          {compactRpFlights.map((flight) => (
+            <span
+              key={flight.id}
+              className="seapals-compact-rp-coin"
+              data-compact-rp-flight
+              data-rp-source={flight.sourceKey}
+              style={{
+                "--seapals-rp-start-x": `${flight.startX}px`,
+                "--seapals-rp-start-y": `${flight.startY}px`,
+                "--seapals-rp-mid-x": `${flight.midX}px`,
+                "--seapals-rp-mid-y": `${flight.midY}px`,
+                "--seapals-rp-end-x": `${flight.endX}px`,
+                "--seapals-rp-end-y": `${flight.endY}px`,
+                animationDelay: `${flight.delay}ms`,
+                animationDuration: `${flight.duration}ms`,
+              }}
+            >
+              <b>RP</b>
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">{compactTurnAnnouncement}</span>
 
       {opponentThinking ? (
         <div className="pointer-events-none fixed left-1/2 top-5 z-[85] -translate-x-1/2 rounded-full border border-cyan-300/60 bg-slate-950/95 px-6 py-3 text-white shadow-[0_12px_40px_rgba(15,23,42,0.55)] backdrop-blur" role="status" aria-live="polite">

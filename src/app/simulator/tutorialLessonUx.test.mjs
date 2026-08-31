@@ -68,7 +68,7 @@ test("lesson completion requires a tutorial victory at its VP target", () => {
 test("Simulator wires the milestone through normal end-turn mechanics and renders focused completion and exit dialogs", async () => {
   const source = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
   assert.match(source, /createTutorialFinalRoundMilestone\(\{/);
-  assert.match(source, /eventOverlay\?\.continueToEndTurn[\s\S]*setEventOverlay\(null\);[\s\S]*endTurn\(\);/);
+  assert.match(source, /function continueAfterPresentedEvent\(event,[\s\S]*?event\?\.continueToEndTurn[\s\S]*?setEventOverlay\(null\);[\s\S]*?endTurn\(\);/);
   assert.match(source, /eventOverlay\.continueLabel \?\? "Continue"/);
   assert.match(source, /Aquarium Lesson Complete/);
   assert.match(source, /\{playerVp\} of \{victoryTarget\} VP/);

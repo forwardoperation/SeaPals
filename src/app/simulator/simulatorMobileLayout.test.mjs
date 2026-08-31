@@ -564,11 +564,11 @@ test("V2 puts number-only VP and RP badges at the right edge around the divider"
 
   assert.match(opponentScore, /data-tutorial-coach-anchor="opponent-board-tab"/);
   assert.match(opponentScore, /is-vp"><small>VP<\/small><strong>\{opponentVp\}<\/strong>/);
-  assert.match(opponentScore, /is-rp"><small>RP<\/small><strong>\{opponent\.rp\}<\/strong>/);
+  assert.match(opponentScore, /data-rp-bank-target="opponent"[\s\S]*?<small>RP<\/small><strong>\{presentedOpponentRp\}<\/strong>/);
   assert.doesNotMatch(opponentScore, /victoryTarget|opponentRpCap|School Density|\/\{/);
   assert.match(playerScore, /data-tutorial-coach-anchor="player-board-tab"/);
   assert.match(playerScore, /data-tutorial-target="vp-score"[\s\S]*?<strong>\{playerVp\}<\/strong>/);
-  assert.match(playerScore, /data-tutorial-target="rp-bank"[\s\S]*?<strong>\{rp\}<\/strong>/);
+  assert.match(playerScore, /data-rp-bank-target="player"[\s\S]*?data-tutorial-target="rp-bank"[\s\S]*?<strong>\{presentedPlayerRp\}<\/strong>/);
   assert.doesNotMatch(playerScore, /victoryTarget|playerRpCap|School Density|\/\{/);
   assert.match(responsiveStyles, /\.seapals-reef-score\s*\{[\s\S]*?right:\s*\.45rem;/);
   assert.match(responsiveStyles, /\.seapals-reef-score-opponent\s*\{\s*bottom:\s*\.45rem;/);
@@ -792,7 +792,7 @@ test("V2 keeps only the draggable divider and round action while the old footer 
   assert.match(divider, /seapals-reef-divider-handle[\s\S]*?role="separator"/);
   assert.match(divider, /data-mobile-turn-control/);
   assert.match(divider, /onClick=\{endTurn\}/);
-  assert.match(divider, /disabled=\{Boolean\(gameResult\) \|\| opponentThinking \|\| \(isSetup && !hasCoralInPlay\) \|\| isStartOfTurn\}/);
+  assert.match(divider, /disabled=\{Boolean\(gameResult\) \|\| opponentThinking \|\| Boolean\(compactTurnSequence\) \|\| \(isSetup && !hasCoralInPlay\) \|\| isStartOfTurn\}/);
   assert.match(divider, /data-tutorial-target="turn-button"/);
   assert.match(divider, /\{turnControlLabel\}/);
   assert.doesNotMatch(divider, /Opponent First|Round 1|End Turn/);

@@ -56,9 +56,9 @@ test("V2 replaces the blocking turn-draw pages with a tray anchored beside the p
   assert.match(simulatorSource, /@keyframes seapalsMobileDrawTrayIn/);
 
   const fullPageModalFlag = simulatorSource.match(
-    /const\s+([A-Za-z_$][\w$]*)\s*=\s*Boolean\(modal\s*&&\s*\(!previewDrawTrayEnabled\s*\|\|\s*!\["turn-draw",\s*"draw-result"\]\.includes\(modal\)\)\);/,
+    /const\s+([A-Za-z_$][\w$]*)\s*=\s*Boolean\(modal\s*&&\s*!compactTurnSequence\s*&&\s*\(!previewDrawTrayEnabled\s*\|\|\s*!\["turn-draw",\s*"draw-result"\]\.includes\(modal\)\)\);/,
   );
-  assert.ok(fullPageModalFlag, "V2 draw choice and result states should be excluded from the full-page modal while legacy keeps them");
+  assert.ok(fullPageModalFlag, "V2 draw and compact turn presentation states should be excluded from the full-page modal while legacy keeps its dialogs");
   assert.match(simulatorSource, new RegExp(`\\{${fullPageModalFlag?.[1] ?? "fullPageModalOpen"} \\? \\(`));
 
   // The old interface still relies on these dialogs, so this change must remain V2-only.
@@ -123,7 +123,12 @@ test("the mandatory compact draw step has no dismissible status chrome", () => {
     [/setGamePhase\("draw"\)/, /setTurnDrawSelection/, /availableDraws/],
     "round-start draw setup",
   );
-  assert.match(beginDraw, /setMobileDrawTrayOpen\(Boolean\(previewDrawTrayEnabled && availableDraws > 0\)\)/);
+  assert.match(beginDraw, /setMobileDrawTrayOpen\(false\)/, "round setup should keep the mandatory draw tray closed until the compact turn sequence finishes");
+  assert.match(
+    simulatorSource,
+    /if \(compactTurnSequence \|\| eventOverlay\) \{[\s\S]*?setMobileDrawTrayOpen\(false\);[\s\S]*?return;/,
+    "turn banners and RP collection must finish before the mandatory draw tray can reopen",
+  );
   assert.match(openDeckControl, /setMobileHudPanel\(\(current\) => current === "decks" \? null : "decks"\)/);
   assert.match(
     simulatorSource,
@@ -183,7 +188,7 @@ test("compact draw guidance stays attached only while its visible tray can be us
   );
   assert.match(
     simulatorSource,
-    /deckExpanded=\{mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay\}/,
+    /deckExpanded=\{mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay && !compactTurnSequence\}/,
   );
 });
 
@@ -207,7 +212,7 @@ test("confirmed V2 draws animate each real card continuously from the deck rail 
   assert.match(simulatorSource, /animationDelay:\s*`\$\{flight\.delay\}ms`/);
   assert.match(simulatorSource, /onAnimationEnd=\{\(\) => finishMobileDrawFlight\(flight\.id\)\}/);
   assert.match(simulatorSource, /data-mobile-hand-dock/);
-  assert.match(simulatorSource, /interactionDisabled=\{mobileDrawFlights\.length > 0\}/);
+  assert.match(simulatorSource, /interactionDisabled=\{mobileDrawFlights\.length > 0 \|\| Boolean\(compactTurnSequence\)\}/);
 
   assert.match(
     simulatorSource,
