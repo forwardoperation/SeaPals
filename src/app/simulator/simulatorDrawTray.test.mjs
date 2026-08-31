@@ -143,6 +143,11 @@ test("the mandatory draw confirmation stays visible while only the choices scrol
     ".seapals-mobile-draw-tray-body {",
     ".seapals-mobile-draw-shortfall {",
   );
+  const optionStyles = sourceSection(
+    simulatorSource,
+    ".seapals-mobile-draw-option {",
+    ".seapals-mobile-draw-option.is-pals",
+  );
   const confirmStyles = sourceSection(
     simulatorSource,
     ".seapals-mobile-draw-confirm {",
@@ -153,9 +158,12 @@ test("the mandatory draw confirmation stays visible while only the choices scrol
   assert.match(trayStyles, /flex-direction:\s*column;/);
   assert.match(trayStyles, /overflow:\s*hidden;/);
   assert.match(trayStyles, /max-height:\s*calc\(100% - var\(--seapals-mobile-draw-tray-top\) - var\(--seapals-mobile-dock-clearance\)/);
+  assert.match(bodyStyles, /flex:\s*1\s+1\s+auto;/);
   assert.match(bodyStyles, /min-height:\s*0;/);
   assert.match(bodyStyles, /overflow-y:\s*auto;/);
+  assert.match(optionStyles, /min-height:\s*2\.75rem;/);
   assert.match(confirmStyles, /flex:\s*0\s+0\s+auto;/);
+  assert.doesNotMatch(confirmStyles, /position:\s*(?:absolute|fixed|sticky)|margin-(?:top|bottom):\s*-/);
 
   const bodyIndex = drawTraySource.indexOf('className="seapals-mobile-draw-tray-body"');
   const confirmIndex = drawTraySource.indexOf('className="seapals-mobile-draw-confirm"');

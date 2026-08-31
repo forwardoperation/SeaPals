@@ -13947,10 +13947,10 @@ export default function Simulator({
           right: calc(var(--seapals-edge-card-width) + .65rem);
           display: flex;
           width: min(13.75rem, calc(100vw - 4.75rem - env(safe-area-inset-left, 0px)));
-          max-height: calc(100% - var(--seapals-mobile-draw-tray-top) - var(--seapals-mobile-dock-clearance) - .5rem);
+          max-height: calc(100% - var(--seapals-mobile-draw-tray-top) - var(--seapals-mobile-dock-clearance) - .2rem);
           flex-direction: column;
           overflow: hidden;
-          padding: .65rem;
+          padding: .35rem;
           border: 1px solid rgba(103, 232, 249, .4);
           border-radius: 1rem 0 1rem 1rem;
           color: #ecfeff;
@@ -13962,6 +13962,7 @@ export default function Simulator({
           pointer-events: auto;
         }
         .seapals-mobile-draw-tray-body {
+          flex: 1 1 auto;
           min-height: 0;
           overflow-y: auto;
           overscroll-behavior: contain;
@@ -13980,15 +13981,15 @@ export default function Simulator({
         }
         .seapals-mobile-draw-options {
           display: grid;
-          gap: .42rem;
+          gap: .25rem;
         }
         .seapals-mobile-draw-option {
           display: grid;
           grid-template-columns: minmax(0, 1fr) auto;
           align-items: center;
           gap: .4rem;
-          min-height: 3.05rem;
-          padding: .38rem .4rem .38rem .55rem;
+          min-height: 2.75rem;
+          padding: 0 .25rem 0 .5rem;
           border: 1px solid rgba(103, 232, 249, .24);
           border-radius: .78rem;
           background: rgba(8, 47, 73, .7);
@@ -14044,7 +14045,7 @@ export default function Simulator({
           width: 100%;
           min-height: 2.75rem;
           flex: 0 0 auto;
-          margin-top: .55rem;
+          margin-top: .25rem;
           padding: .5rem;
           border-radius: .78rem;
           color: #052e2b;
