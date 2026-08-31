@@ -13,7 +13,6 @@ import {
   CompactTurnStage,
   allocateCollectedRpSources,
   createCompactTurnStages,
-  getCompactConditionBannerDuration,
 } from "./compactTurnSequence.mjs";
 import { cardsById } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
@@ -3394,6 +3393,15 @@ export default function Simulator({
   const compactTurnFlightIdRef = useRef(0);
   const compactTurnTimersRef = useRef(new Set());
   const compactTurnFrameIdsRef = useRef(new Set());
+  const [opponentPlacementFlight, setOpponentPlacementFlight] = useState(null);
+  const [compactOpponentCardReader, setCompactOpponentCardReader] = useState(null);
+  const [compactOpponentPlaybackLocked, setCompactOpponentPlaybackLocked] = useState(false);
+  const [compactOpponentAnnouncement, setCompactOpponentAnnouncement] = useState("");
+  const compactOpponentPresentationRef = useRef(null);
+  const compactOpponentCompletionRef = useRef(null);
+  const compactOpponentPresentationIdRef = useRef(0);
+  const compactOpponentTimersRef = useRef(new Set());
+  const compactOpponentFrameIdsRef = useRef(new Set());
   const [actionBlinkOn, setActionBlinkOn] = useState(true);
   const [modal, setModal] = useState(null);
   const modalScrollRef = useRef(null);
@@ -4084,6 +4092,14 @@ export default function Simulator({
     setCompactTurnSequence(next);
   }
 
+  function continueCompactCondition() {
+    const sequence = compactTurnSequenceRef.current;
+    if (!sequence) return;
+    const stage = sequence.stages[sequence.stageIndex];
+    if (stage?.kind !== CompactTurnStage.CONDITION) return;
+    advanceCompactTurnSequence(sequence.id);
+  }
+
   function beginCompactTurnSequence({
     owner,
     turnLabel = null,
@@ -4128,6 +4144,258 @@ export default function Simulator({
       [owner]: includeRp ? rpBefore : null,
     }));
     setCompactTurnSequence(sequence);
+  }
+
+  function scheduleCompactOpponentTimer(presentationId, callback, delay) {
+    const timerId = window.setTimeout(() => {
+      compactOpponentTimersRef.current.delete(timerId);
+      if (compactOpponentPresentationIdRef.current !== presentationId) return;
+      callback();
+    }, delay);
+    compactOpponentTimersRef.current.add(timerId);
+    return timerId;
+  }
+
+  function clearCompactOpponentAsyncHandles() {
+    for (const timerId of compactOpponentTimersRef.current) window.clearTimeout(timerId);
+    compactOpponentTimersRef.current.clear();
+    for (const frameId of compactOpponentFrameIdsRef.current) window.cancelAnimationFrame(frameId);
+    compactOpponentFrameIdsRef.current.clear();
+  }
+
+  function clearCompactOpponentPlayback({ invalidate = true, updateState = true } = {}) {
+    if (invalidate) compactOpponentPresentationIdRef.current += 1;
+    clearCompactOpponentAsyncHandles();
+    compactOpponentPresentationRef.current = null;
+    compactOpponentCompletionRef.current = null;
+    if (updateState) {
+      setOpponentPlacementFlight(null);
+      setCompactOpponentCardReader(null);
+      setCompactOpponentPlaybackLocked(false);
+      setCompactOpponentAnnouncement("");
+    }
+  }
+
+  function finishCompactOpponentPresentation(presentationId) {
+    const current = compactOpponentPresentationRef.current;
+    if (!current || current.id !== presentationId) return;
+    const completion = compactOpponentCompletionRef.current;
+    clearCompactOpponentAsyncHandles();
+    compactOpponentPresentationRef.current = null;
+    compactOpponentCompletionRef.current = null;
+    setOpponentPlacementFlight(null);
+    setCompactOpponentCardReader(null);
+    setCompactOpponentPlaybackLocked(false);
+    setCompactOpponentAnnouncement("");
+    completion?.();
+  }
+
+  function getOpponentCardFlightGeometry(event, cueOverride = null) {
+    const cue = cueOverride ?? event?.permanentPlacementCue ?? { board: "opponent", x: 50, y: 38 };
+    const board = cue.board === "player" ? "player" : "opponent";
+    const pane = document.querySelector(`[data-board-owner="${board}"]`);
+    const paneRect = pane?.getBoundingClientRect();
+    const cardWidth = Math.min(104, Math.max(76, window.innerWidth * 0.2));
+    const cardHeight = cardWidth * (88 / 63);
+    const fallbackCenterX = paneRect?.width
+      ? paneRect.left + paneRect.width * (Number(cue.x ?? 50) / 100)
+      : window.innerWidth / 2;
+    const fallbackCenterY = paneRect?.height
+      ? paneRect.top + paneRect.height * (Number(cue.y ?? 50) / 100)
+      : window.innerHeight * 0.34;
+    const matchingCards = pane && event?.sourceCardId
+      ? [...pane.querySelectorAll("[data-card-id]")].filter((node) => {
+          if (node.dataset.cardId !== event.sourceCardId) return false;
+          const rect = node.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        })
+      : [];
+    const previouslyRenderedNodes = event?.previouslyRenderedPlacementNodes ?? [];
+    const newlyRenderedCards = matchingCards.filter((node) => !previouslyRenderedNodes.includes(node));
+    const targetCandidates = newlyRenderedCards.length ? newlyRenderedCards : matchingCards;
+    const targetNode = targetCandidates.reduce((nearest, node) => {
+      const rect = node.getBoundingClientRect();
+      const distance = Math.hypot(
+        rect.left + rect.width / 2 - fallbackCenterX,
+        rect.top + rect.height / 2 - fallbackCenterY,
+      );
+      if (!nearest || distance < nearest.distance) return { node, distance };
+      return nearest;
+    }, null)?.node ?? null;
+    const targetRect = targetNode?.getBoundingClientRect();
+    const targetCenterX = targetRect?.width ? targetRect.left + targetRect.width / 2 : fallbackCenterX;
+    const targetCenterY = targetRect?.height ? targetRect.top + targetRect.height / 2 : fallbackCenterY;
+    const targetScale = targetRect?.width && targetRect?.height
+      ? Math.min(1.2, Math.max(0.38, Math.min(targetRect.width / cardWidth, targetRect.height / cardHeight)))
+      : 0.72;
+
+    return {
+      startX: window.innerWidth / 2 - cardWidth / 2,
+      startY: 10,
+      midX: window.innerWidth / 2 - cardWidth / 2 + (targetCenterX - window.innerWidth / 2) * 0.38,
+      midY: Math.max(44, targetCenterY * 0.42),
+      endX: targetCenterX - cardWidth / 2,
+      endY: targetCenterY - cardHeight / 2,
+      endScale: targetScale,
+      cardWidth,
+    };
+  }
+
+  function startOpponentCardFlight(presentationId, event, {
+    cue = null,
+    duration = 720,
+    kind = "placement",
+    onLanded,
+  } = {}) {
+    let secondFrame = null;
+    const firstFrame = window.requestAnimationFrame(() => {
+      compactOpponentFrameIdsRef.current.delete(firstFrame);
+      secondFrame = window.requestAnimationFrame(() => {
+        compactOpponentFrameIdsRef.current.delete(secondFrame);
+        if (compactOpponentPresentationIdRef.current !== presentationId) return;
+        const geometry = getOpponentCardFlightGeometry(event, cue);
+        setOpponentPlacementFlight({
+          id: `opponent-placement-${presentationId}`,
+          presentationId,
+          cardId: event.sourceCardId,
+          kind,
+          duration,
+          ...geometry,
+        });
+        scheduleCompactOpponentTimer(presentationId, () => {
+          setOpponentPlacementFlight(null);
+          onLanded?.();
+        }, duration + 90);
+      });
+      compactOpponentFrameIdsRef.current.add(secondFrame);
+    });
+    compactOpponentFrameIdsRef.current.add(firstFrame);
+  }
+
+  function beginOpponentPlacementAnimation(
+    event,
+    completion = () => continueAfterPresentedEvent(event, pendingEventsRef.current),
+  ) {
+    clearCompactOpponentAsyncHandles();
+    const id = compactOpponentPresentationIdRef.current + 1;
+    compactOpponentPresentationIdRef.current = id;
+    compactOpponentPresentationRef.current = { id, kind: "placement", event };
+    compactOpponentCompletionRef.current = completion;
+    setCompactOpponentPlaybackLocked(true);
+    setCompactOpponentCardReader(null);
+    setOpponentPlacementFlight(null);
+    setCompactOpponentAnnouncement(`Opponent played ${cardsById[event.sourceCardId]?.name ?? "a card"}.`);
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    if (accessibilityReducedMotion || systemReducedMotion) {
+      scheduleCompactOpponentTimer(id, () => finishCompactOpponentPresentation(id), 90);
+      return;
+    }
+    startOpponentCardFlight(id, event, {
+      cue: event.permanentPlacementCue,
+      kind: "placement",
+      onLanded: () => finishCompactOpponentPresentation(id),
+    });
+  }
+
+  function showCompactOpponentCardReader(presentationId, event) {
+    if (compactOpponentPresentationIdRef.current !== presentationId) return;
+    compactOpponentPresentationRef.current = { id: presentationId, kind: "reader", event };
+    setOpponentPlacementFlight(null);
+    setCompactOpponentCardReader({ id: presentationId, event });
+    setCompactOpponentAnnouncement(`${event.title}. ${event.message ?? ""}`.trim());
+  }
+
+  function beginCompactOpponentCardReader(
+    event,
+    completion = () => continueAfterPresentedEvent(event, pendingEventsRef.current),
+    { skipStaging = false } = {},
+  ) {
+    clearCompactOpponentAsyncHandles();
+    const id = compactOpponentPresentationIdRef.current + 1;
+    compactOpponentPresentationIdRef.current = id;
+    compactOpponentPresentationRef.current = { id, kind: "reader-staging", event };
+    compactOpponentCompletionRef.current = completion;
+    setCompactOpponentPlaybackLocked(true);
+    setCompactOpponentCardReader(null);
+    setOpponentPlacementFlight(null);
+    setCompactOpponentAnnouncement(`Opponent played ${cardsById[event.sourceCardId]?.name ?? "a card"}.`);
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    if (accessibilityReducedMotion || systemReducedMotion || event.type !== "opponent-play" || skipStaging) {
+      showCompactOpponentCardReader(id, event);
+      return;
+    }
+    startOpponentCardFlight(id, event, {
+      cue: { board: "opponent", x: 50, y: 38 },
+      duration: 640,
+      kind: "reader-staging",
+      onLanded: () => scheduleCompactOpponentTimer(
+        id,
+        () => showCompactOpponentCardReader(id, event),
+        180,
+      ),
+    });
+  }
+
+  function continueCompactOpponentCardReader() {
+    const current = compactOpponentPresentationRef.current;
+    if (!current || current.kind !== "reader") return;
+    finishCompactOpponentPresentation(current.id);
+  }
+
+  function shouldShowCompactOpponentCardReader(event) {
+    if (!event?.sourceCardId) return false;
+    if (event.type === "opponent-play") return !event.permanentPlacementCue;
+    return Boolean(
+      event.opponentSequence
+      && ["opponent-impact", "impact-result", "utility-result", "faceoff-result"].includes(event.type),
+    );
+  }
+
+  function getCompactOpponentReaderPlan(event, remainingEvents = []) {
+    if (event?.type !== "opponent-play" || event.permanentPlacementCue) {
+      return { event, remainingEvents };
+    }
+    const mergedImpacts = [];
+    let consumed = 0;
+    while (
+      remainingEvents[consumed]?.type === "opponent-impact"
+      && remainingEvents[consumed]?.sourceCardId === event.sourceCardId
+    ) {
+      mergedImpacts.push(remainingEvents[consumed]);
+      consumed += 1;
+    }
+    if (!mergedImpacts.length) return { event, remainingEvents };
+    const finalImpact = mergedImpacts[mergedImpacts.length - 1];
+    const latestEventValue = (key) => {
+      for (let index = mergedImpacts.length - 1; index >= 0; index -= 1) {
+        if (Object.prototype.hasOwnProperty.call(mergedImpacts[index], key)) return mergedImpacts[index][key];
+      }
+      return event[key];
+    };
+    return {
+      event: {
+        ...event,
+        title: finalImpact.title ?? event.title,
+        message: [event.message, ...mergedImpacts.map((impact) => impact.message)].filter(Boolean).join(" "),
+        defenderCardId: finalImpact.defenderCardId ?? event.defenderCardId,
+        playerStateAfter: latestEventValue("playerStateAfter"),
+        opponentStateAfter: latestEventValue("opponentStateAfter"),
+        gameResultAfter: latestEventValue("gameResultAfter"),
+        continueToEndTurn: latestEventValue("continueToEndTurn"),
+        continueAttackSequence: latestEventValue("continueAttackSequence"),
+        beginOpponentAfterClose: latestEventValue("beginOpponentAfterClose"),
+        advanceRoundAfterClose: latestEventValue("advanceRoundAfterClose"),
+        startOpeningPlayerTurnAfterClose: latestEventValue("startOpeningPlayerTurnAfterClose"),
+        thinkingDelay: latestEventValue("thinkingDelay"),
+        logMessages: [
+          ...(event.logMessages ?? []),
+          event.logMessage,
+          ...mergedImpacts.flatMap((impact) => [...(impact.logMessages ?? []), impact.logMessage]),
+        ].filter(Boolean),
+        logMessage: null,
+      },
+      remainingEvents: remainingEvents.slice(consumed),
+    };
   }
 
   function launchCompactRpFlights(sequence) {
@@ -4226,11 +4494,6 @@ export default function Simulator({
       setCompactTurnAnnouncement(
         `Round ${sequence.roundNumber} condition: ${sequence.condition?.name ?? "No active condition"}. ${sequence.condition?.text ?? ""}`,
       );
-      scheduleCompactTurnTimer(
-        sequence.id,
-        () => advanceCompactTurnSequence(sequence.id),
-        getCompactConditionBannerDuration(sequence.condition?.text),
-      );
       return undefined;
     }
 
@@ -4259,6 +4522,10 @@ export default function Simulator({
   useEffect(() => () => {
     clearCompactTurnAsyncHandles();
     compactTurnSequenceIdRef.current += 1;
+  }, []);
+
+  useEffect(() => () => {
+    clearCompactOpponentPlayback({ updateState: false });
   }, []);
   const tutorialLessonWon = isTutorialLessonVictory({
     tutorialActive: Boolean(tutorialContract && scriptedTutorialScenario),
@@ -7618,8 +7885,12 @@ export default function Simulator({
 
   function queueEvents(eventsToAdd) {
     if (!eventsToAdd.length) return;
-    if (eventOverlay || compactTurnSequenceRef.current) {
-      setPendingEvents((events) => [...events, ...eventsToAdd]);
+    if (eventOverlay || compactTurnSequenceRef.current || compactOpponentPresentationRef.current) {
+      setPendingEvents((events) => {
+        const nextEvents = [...events, ...eventsToAdd];
+        pendingEventsRef.current = nextEvents;
+        return nextEvents;
+      });
       return;
     }
     const [firstEvent, ...remainingEvents] = eventsToAdd;
@@ -7674,6 +7945,7 @@ export default function Simulator({
     }
     if (event?.beginOpponentAfterClose) {
       setEventOverlay(null);
+      pendingEventsRef.current = [];
       setPendingEvents([]);
       if (gameResult || event.gameResultAfter) return;
       setGamePhase("opponent");
@@ -7686,6 +7958,7 @@ export default function Simulator({
     }
     if (event?.advanceRoundAfterClose) {
       setEventOverlay(null);
+      pendingEventsRef.current = [];
       setPendingEvents([]);
       if (gameResult || event.gameResultAfter) return;
       startRound(round + 1, {
@@ -7697,6 +7970,7 @@ export default function Simulator({
     }
     if (event?.startOpeningPlayerTurnAfterClose) {
       setEventOverlay(null);
+      pendingEventsRef.current = [];
       setPendingEvents([]);
       setOpeningOpponentTurn(false);
       if (gameResult || event.gameResultAfter) return;
@@ -7714,6 +7988,7 @@ export default function Simulator({
   }
 
   function presentQueuedEvent(event, remainingEvents = [], { delayForOpponent = false } = {}) {
+    pendingEventsRef.current = remainingEvents;
     setPendingEvents(remainingEvents);
     if (!event) {
       setEventOverlay(null);
@@ -7722,6 +7997,45 @@ export default function Simulator({
 
     const present = () => {
       setOpponentThinking(false);
+      if (
+        compactTurnPresentationEnabled
+        && event.type === "opponent-play"
+        && event.permanentPlacementCue
+      ) {
+        const placementBoard = event.permanentPlacementCue.board === "player" ? "player" : "opponent";
+        const placementPane = document.querySelector(`[data-board-owner="${placementBoard}"]`);
+        const previouslyRenderedPlacementNodes = event.sourceCardId && placementPane
+          ? [...placementPane.querySelectorAll("[data-card-id]")]
+              .filter((node) => node.dataset.cardId === event.sourceCardId)
+          : [];
+        const flightEvent = { ...event, previouslyRenderedPlacementNodes };
+        commitEventState(event);
+        setEventOverlay(null);
+        const continuePermanentPlay = () => continueAfterPresentedEvent(event, pendingEventsRef.current);
+        beginOpponentPlacementAnimation(
+          flightEvent,
+          () => {
+            if (event.revealedCards?.length) {
+              beginCompactOpponentCardReader(event, continuePermanentPlay, { skipStaging: true });
+              return;
+            }
+            continuePermanentPlay();
+          },
+        );
+        return;
+      }
+      if (compactTurnPresentationEnabled && shouldShowCompactOpponentCardReader(event)) {
+        const readerPlan = getCompactOpponentReaderPlan(event, pendingEventsRef.current);
+        pendingEventsRef.current = readerPlan.remainingEvents;
+        setPendingEvents(readerPlan.remainingEvents);
+        commitEventState(readerPlan.event);
+        setEventOverlay(null);
+        beginCompactOpponentCardReader(
+          readerPlan.event,
+          () => continueAfterPresentedEvent(readerPlan.event, pendingEventsRef.current),
+        );
+        return;
+      }
       if (compactTurnPresentationEnabled && event.type === "opponent-status") {
         commitEventState(event);
         setEventOverlay(null);
@@ -12677,7 +12991,7 @@ export default function Simulator({
   }
 
   function endTurn() {
-    if (compactTurnSequenceRef.current) return;
+    if (compactTurnSequenceRef.current || compactOpponentPresentationRef.current) return;
     if (isSetup) {
       const academyBlock = getAcademyEndTurnBlock({
         route: scriptedFinishRoute,
@@ -13275,6 +13589,7 @@ export default function Simulator({
     cancelOpeningCoinFlip();
     clearMobileDrawFlightSequence();
     clearCompactTurnPresentation();
+    clearCompactOpponentPlayback();
     setMobileDrawTrayOpen(false);
     setMobileDrawAnnouncement("");
     const nextGame = createInitialGameState(
@@ -13601,6 +13916,32 @@ export default function Simulator({
           22% { opacity: 1; transform: translate(-50%, -50%) scaleX(1.025) scaleY(1.02); }
           82% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
           100% { opacity: 0; transform: translate(-50%, -50%) scaleX(.96) scaleY(.94); }
+        }
+        @keyframes seapalsCompactConditionBannerIn {
+          0% { opacity: 0; transform: translate(-50%, -46%) scale(.9); }
+          70% { opacity: 1; transform: translate(-50%, -51%) scale(1.012); }
+          100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes seapalsOpponentPlacement {
+          0% {
+            opacity: 0;
+            transform: translate3d(var(--seapals-opponent-start-x), var(--seapals-opponent-start-y), 0) scale(.48) rotate(-8deg);
+          }
+          12% { opacity: 1; }
+          52% {
+            opacity: 1;
+            transform: translate3d(var(--seapals-opponent-mid-x), var(--seapals-opponent-mid-y), 0) scale(1.08) rotate(4deg);
+          }
+          88% { opacity: 1; }
+          100% {
+            opacity: .08;
+            transform: translate3d(var(--seapals-opponent-end-x), var(--seapals-opponent-end-y), 0) scale(var(--seapals-opponent-end-scale)) rotate(0deg);
+          }
+        }
+        @keyframes seapalsOpponentCardFlip {
+          0% { opacity: 0; transform: translateX(-50%) translateY(1.5rem) perspective(900px) rotateY(88deg) scale(.78); }
+          68% { opacity: 1; transform: translateX(-50%) translateY(-.2rem) perspective(900px) rotateY(-4deg) scale(1.015); }
+          100% { opacity: 1; transform: translateX(-50%) translateY(0) perspective(900px) rotateY(0deg) scale(1); }
         }
         @keyframes seapalsCompactRpFlight {
           0% {
@@ -14833,7 +15174,10 @@ export default function Simulator({
           border-color: rgba(196, 181, 253, .9);
           background: linear-gradient(145deg, rgba(15,23,42,.97), rgba(49,46,129,.96));
           color: white;
-          animation-duration: var(--seapals-condition-banner-duration, 2200ms);
+          max-height: min(72dvh, 32rem);
+          overflow-y: auto;
+          pointer-events: auto;
+          animation: seapalsCompactConditionBannerIn 280ms cubic-bezier(.18,.78,.2,1) both;
         }
         .seapals-compact-turn-banner.is-condition > span {
           display: block;
@@ -14850,16 +15194,94 @@ export default function Simulator({
           font-weight: 950;
         }
         .seapals-compact-turn-banner.is-condition > p {
-          display: -webkit-box;
           margin: .28rem auto 0;
           max-width: 29rem;
-          overflow: hidden;
           color: rgba(237, 233, 254, .82);
           font-size: clamp(.68rem, 2.7vw, .82rem);
           font-weight: 650;
           line-height: 1.35;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 4;
+        }
+        .seapals-compact-condition-continue {
+          min-height: 2.75rem;
+          margin-top: .8rem;
+          border-radius: 9999px;
+          background: linear-gradient(90deg, #67e8f9, #6ee7b7);
+          color: #082f49;
+          padding: .65rem 1.65rem;
+          font-size: .82rem;
+          font-weight: 950;
+          box-shadow: 0 10px 26px rgba(34, 211, 238, .22);
+        }
+        .seapals-opponent-placement-layer { pointer-events: none; }
+        .seapals-opponent-placement-flight {
+          position: fixed;
+          left: 0;
+          top: 0;
+          overflow: hidden;
+          aspect-ratio: 63 / 88;
+          border: 3px solid rgba(254, 205, 211, .94);
+          border-radius: .72rem;
+          background: white;
+          box-shadow: 0 18px 46px rgba(2, 8, 23, .72), 0 0 28px rgba(251, 113, 133, .58);
+          object-fit: contain;
+          opacity: 0;
+          animation: seapalsOpponentPlacement 720ms cubic-bezier(.16,.78,.2,1) both;
+          will-change: transform, opacity;
+        }
+        .seapals-opponent-card-reader {
+          position: fixed;
+          z-index: 96;
+          left: 50vw;
+          bottom: calc(var(--seapals-mobile-dock-clearance, 0rem) + .55rem + env(safe-area-inset-bottom, 0px));
+          display: grid;
+          width: min(calc(100vw - 1rem), 30rem);
+          max-height: min(62dvh, 35rem);
+          grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+          overflow: hidden;
+          border: 1px solid rgba(103, 232, 249, .64);
+          border-radius: 1.35rem;
+          background: linear-gradient(155deg, rgba(4, 17, 29, .98), rgba(15, 35, 52, .98));
+          color: white;
+          box-shadow: 0 24px 70px rgba(2, 8, 23, .7), 0 0 0 1px rgba(255,255,255,.06) inset;
+          transform: translateX(-50%);
+          animation: seapalsOpponentCardFlip 380ms cubic-bezier(.18,.78,.2,1) both;
+        }
+        .seapals-opponent-card-reader-art {
+          display: flex;
+          min-height: 0;
+          align-items: center;
+          justify-content: center;
+          padding: .65rem .65rem 0;
+        }
+        .seapals-opponent-card-reader-art > img {
+          width: auto;
+          max-width: min(48vw, 12rem);
+          height: min(34dvh, 20rem);
+          border-radius: .8rem;
+          background: white;
+          object-fit: contain;
+          box-shadow: 0 16px 38px rgba(0,0,0,.5);
+        }
+        .seapals-opponent-card-reader-copy {
+          display: flex;
+          min-height: 0;
+          flex-direction: column;
+          padding: .75rem;
+        }
+        .seapals-opponent-card-reader-scroll {
+          min-height: 0;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+        }
+        .seapals-opponent-card-reader-continue {
+          min-height: 2.8rem;
+          flex: 0 0 auto;
+          margin-top: .65rem;
+          border-radius: 9999px;
+          background: linear-gradient(90deg, #22d3ee, #34d399);
+          color: #052e3a;
+          padding: .7rem 1.4rem;
+          font-weight: 950;
         }
         .seapals-compact-rp-flight-layer { pointer-events: none; }
         .seapals-compact-rp-coin {
@@ -14889,6 +15311,12 @@ export default function Simulator({
         .seapals-reef-score-card.is-rp.is-collecting { animation: seapalsRpBankCollect 220ms ease-out both; }
         .seapals-reef-divider-handle[aria-disabled="true"] { pointer-events: none; }
         .seapals-reduced-motion .seapals-compact-turn-banner { animation: none !important; }
+        .seapals-reduced-motion .seapals-opponent-placement-flight,
+        .seapals-reduced-motion .seapals-opponent-card-reader { animation: none !important; }
+        @media (prefers-reduced-motion: reduce) {
+          .seapals-opponent-placement-flight { animation: none !important; }
+          .seapals-opponent-card-reader { animation: none !important; }
+        }
         .seapals-mobile-draw-flight {
           position: fixed;
           z-index: 68;
@@ -15672,7 +16100,7 @@ export default function Simulator({
                 <button type="button" onClick={() => setModal("discard")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Discard</button>
                 <button type="button" onClick={() => setModal("lost")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Lost</button>
                 <button type="button" onClick={openNewGameSetup} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 xl:block">{isStoryMode ? "Restart Duel" : "New Game"}</button>
-                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
+                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
                   {turnControlLabel}
                 </button>
               </div>
@@ -15908,7 +16336,7 @@ export default function Simulator({
                             const key = `opponent-habitat-${habitatInstance.instanceId}`;
                             const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
                             return (
-                              <button key={habitatInstance.instanceId} type="button" onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId, foundation: true, zone: "habitat", currentHealth: habitatInstance.currentHealth, maxHealth: habitatInstance.maxHealth })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card relative w-[120px] cursor-grab rounded-xl text-center active:cursor-grabbing">
+                              <button key={habitatInstance.instanceId} type="button" data-card-id={cardId} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId, foundation: true, zone: "habitat", currentHealth: habitatInstance.currentHealth, maxHealth: habitatInstance.maxHealth })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card relative w-[120px] cursor-grab rounded-xl text-center active:cursor-grabbing">
                                 <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
                                 <img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-xl bg-white object-contain shadow-lg" />
                                 <span className="block truncate text-[9px] font-bold text-amber-950">{card?.name}</span>
@@ -15918,7 +16346,7 @@ export default function Simulator({
                           })}
                         </div>
                       ) : null}
-                      {(opponent.reefCreatures ?? []).length ? <div className="seapals-opponent-open-water absolute left-1/2 top-4 z-30 flex max-w-[34%] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50/95 p-2 shadow-lg">{opponent.reefCreatures.map((cardId, index) => { const card = cardsById[cardId]; const targetSlotId = getOpponentReefSlotId(index); const isTarget = attackContext?.targets.some((target) => target.coralId === "__reef__" && target.slotId === targetSlotId); const key = `opponent-${targetSlotId}`; const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 }; return <button key={opponent.reefCreatureInstances?.[index]?.instanceId ?? `${cardId}-${index}`} type="button" data-tutorial-target={isTarget ? "opponent-board" : undefined} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => isTarget ? resolvePlayerAttack("__reef__", targetSlotId) : inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card relative w-[120px] cursor-grab rounded-lg text-center active:cursor-grabbing ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}><InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} /><img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-lg bg-white object-contain" /><span className="block truncate text-[9px] font-bold text-violet-950">{card?.name}</span></button>; })}</div> : null}
+                      {(opponent.reefCreatures ?? []).length ? <div className="seapals-opponent-open-water absolute left-1/2 top-4 z-30 flex max-w-[34%] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50/95 p-2 shadow-lg">{opponent.reefCreatures.map((cardId, index) => { const card = cardsById[cardId]; const targetSlotId = getOpponentReefSlotId(index); const isTarget = attackContext?.targets.some((target) => target.coralId === "__reef__" && target.slotId === targetSlotId); const key = `opponent-${targetSlotId}`; const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 }; return <button key={opponent.reefCreatureInstances?.[index]?.instanceId ?? `${cardId}-${index}`} type="button" data-card-id={cardId} data-tutorial-target={isTarget ? "opponent-board" : undefined} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => isTarget ? resolvePlayerAttack("__reef__", targetSlotId) : inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card relative w-[120px] cursor-grab rounded-lg text-center active:cursor-grabbing ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}><InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} /><img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-lg bg-white object-contain" /><span className="block truncate text-[9px] font-bold text-violet-950">{card?.name}</span></button>; })}</div> : null}
                       {(opponent.orphanCreatures ?? []).length ? (
                         <div className="seapals-opponent-orphans absolute right-4 top-4 z-30 flex max-w-[34%] flex-wrap justify-end gap-2 rounded-xl border-2 border-dashed border-orange-400 bg-orange-50/95 p-2 shadow-lg">
                           <div className="absolute -top-3 right-2 rounded-full bg-orange-600 px-2 py-1 text-[8px] font-black uppercase text-white">Orphaned</div>
@@ -15928,7 +16356,7 @@ export default function Simulator({
                             const isTarget = attackContext?.targets.some((target) => target.coralId === "__orphan__" && target.slotId === targetSlotId);
                             return (
                               <div key={entry.instanceId ?? `${entry.cardId}-${index}`} className="rounded-lg bg-orange-100/90 p-1 text-center">
-                                <button type="button" data-tutorial-target={isTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isTarget ? resolvePlayerAttack("__orphan__", targetSlotId) : setInspectedCard({ owner: "opponent", cardId: entry.cardId, coralId: null, slotId: `opponent-${targetSlotId}`, orphanIndex: index })} className={`seapals-in-play-card relative w-14 rounded-lg text-center ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}>
+                                <button type="button" data-card-id={entry.cardId} data-tutorial-target={isTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isTarget ? resolvePlayerAttack("__orphan__", targetSlotId) : setInspectedCard({ owner: "opponent", cardId: entry.cardId, coralId: null, slotId: `opponent-${targetSlotId}`, orphanIndex: index })} className={`seapals-in-play-card relative w-14 rounded-lg text-center ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}>
                                   <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
                                   <img src={card?.image} alt={card?.name} className="h-20 w-14 rounded-lg object-contain" />
                                   <span className="block truncate text-[8px] font-bold text-orange-950">{card?.name}</span>
@@ -15941,7 +16369,7 @@ export default function Simulator({
                                       const hostedSlotId = getOrphanHostedTargetSlotId(entry.instanceId ?? `legacy-${index}`, hostedIndex);
                                       const hostedIsTarget = attackContext?.targets.some((target) => target.coralId === "__orphan__" && target.slotId === hostedSlotId);
                                       return (
-                                        <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack("__orphan__", hostedSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: null, slotId: `opponent-${hostedSlotId}`, orphanIndex: index, hostedIndex })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded ring-4 ring-emerald-400" : "rounded"}`} title={`Hosted by ${card?.name}`}>
+                                        <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack("__orphan__", hostedSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: null, slotId: `opponent-${hostedSlotId}`, orphanIndex: index, hostedIndex })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded ring-4 ring-emerald-400" : "rounded"}`} title={`Hosted by ${card?.name}`}>
                                           <InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} />
                                           <img src={hostedCard?.image} alt={hostedCard?.name} className="h-12 w-9 rounded bg-white object-contain" />
                                         </button>
@@ -15964,7 +16392,7 @@ export default function Simulator({
                         const opponentFloatingOffset = hasFloatingOpponentCards ? 360 : 0;
                         return (
                           <div key={coral.id} className="absolute h-[210px] w-[180px] -translate-x-1/2 -translate-y-1/2" style={{ left: `calc(50% + ${gridOffset.x}px)`, top: `calc(50% + ${gridOffset.y + opponentFloatingOffset}px)` }}>
-                            <button type="button" data-rp-source-key={`foundation:${coral.id}`} aria-label={`Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
+                            <button type="button" data-card-id={coral.cardId} data-rp-source-key={`foundation:${coral.id}`} aria-label={`Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
                               <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
                               <img src={card?.image} alt={card?.name} className="h-[160px] w-full rounded-xl object-contain" />
                               <span className="absolute inset-x-2 bottom-1">
@@ -15983,6 +16411,7 @@ export default function Simulator({
                                   <button
                                     type="button"
                                     disabled={!slotCard}
+                                    data-card-id={slot.cardId ?? undefined}
                                     data-rp-source-key={slotCard && !slot.invasiveOwner ? `slot:${slot.id}` : undefined}
                                     data-tutorial-target={isTarget ? "opponent-board" : undefined}
                                     onPointerDown={(event) => event.stopPropagation()}
@@ -15999,7 +16428,7 @@ export default function Simulator({
                                   >
                                     {slotCard ? <><InPlayHoverLabel card={slotCard} zoom={opponentEcosystemZoom} /><img src={slotCard.image} alt={slotCard.name} className="h-full w-full rounded-[1.15rem] object-contain" /></> : <><EmptySlotHoverLabel slot={slot} zoom={opponentEcosystemZoom} position={position} /><img src={getSlotIconPath(slot)} alt={`${getCreatureSlotLabel(slot)} empty slot`} className="h-28 w-28 max-w-none object-contain opacity-90" /></>}
                                   </button>
-                                  {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute z-30 flex gap-1 rounded-lg border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg" style={{ left: `calc(${position.left} ${previewExperience ? "-" : "+"} 48px)`, top: `calc(${position.top} ${previewExperience ? "+" : "-"} 68px)` }}>{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); const hostedIsTarget = attackContext?.targets.some((target) => target.coralId === coral.id && target.slotId === hostedTargetSlotId); return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack(coral.id, hostedTargetSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: coral.id, slotId: hostedTargetSlotId, hostedBySlotId: slot.id })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded-md ring-4 ring-emerald-400" : "rounded-md"}`} title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-16 w-11 rounded-md bg-white object-contain" /></button>; })}</div> : null}
+                                  {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute z-30 flex gap-1 rounded-lg border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg" style={{ left: `calc(${position.left} ${previewExperience ? "-" : "+"} 48px)`, top: `calc(${position.top} ${previewExperience ? "+" : "-"} 68px)` }}>{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); const hostedIsTarget = attackContext?.targets.some((target) => target.coralId === coral.id && target.slotId === hostedTargetSlotId); return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack(coral.id, hostedTargetSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: coral.id, slotId: hostedTargetSlotId, hostedBySlotId: slot.id })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded-md ring-4 ring-emerald-400" : "rounded-md"}`} title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-16 w-11 rounded-md bg-white object-contain" /></button>; })}</div> : null}
                                 </div>
                               );
                             })}
@@ -16048,7 +16477,7 @@ export default function Simulator({
                     aria-busy={opponentThinking || undefined}
                     onPointerDown={(event) => event.stopPropagation()}
                     onClick={endTurn}
-                    disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || (isSetup && !hasCoralInPlay) || isStartOfTurn}
+                    disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn}
                   >
                     {turnControlLabel}
                   </button>
@@ -16366,6 +16795,7 @@ export default function Simulator({
                                       {slotFilled ? (
                                         <button
                                           type="button"
+                                          data-card-id={slot.cardId}
                                           data-rp-source-key={!slot.invasiveOwner ? `slot:${slot.id}` : undefined}
                                           data-tutorial-action-key={getSlotActionKey(slot)}
                                           data-tutorial-target={isInvaderTarget ? "player-board" : undefined}
@@ -16481,7 +16911,7 @@ export default function Simulator({
             selectedIndex={mobileSelectedHandIndex}
             draggingIndex={mobileHandDrag?.index ?? null}
             arrivingIndexes={mobileDrawFlights.map((flight) => flight.handIndex)}
-            interactionDisabled={mobileDrawFlights.length > 0 || Boolean(compactTurnSequence)}
+            interactionDisabled={mobileDrawFlights.length > 0 || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked}
             playingCardId={playingCardId}
             tutorialTargetClass={tutorialTargetClass("hand")}
             onInspect={openHandCardPopover}
@@ -16545,7 +16975,7 @@ export default function Simulator({
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("zones")}`} data-tutorial-target="zones">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">Guide<br /><span className="text-violet-300">Feed</span></button>
             <button type="button" onClick={() => { if (!playingCardId) setModal("hand"); }} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish or cancel this card placement first." : undefined} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg disabled:cursor-not-allowed disabled:opacity-45${isSetup && !hasCoralInPlay && !playingCardId ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{playingCardId ? "Place card first" : `${rp} RP ready`}</span></button>
-            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
+            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
           </div> : null}
         </div>
 
@@ -16640,7 +17070,7 @@ export default function Simulator({
         </div>
 
         <div className="hidden xl:col-start-2 xl:row-start-3 xl:block">
-          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
+          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
         </div>
       </section>
 
@@ -16797,24 +17227,113 @@ export default function Simulator({
 
       {compactTurnSequence ? <div className="seapals-compact-turn-guard fixed inset-0 z-[75]" aria-hidden="true" /> : null}
 
+      {compactOpponentPlaybackLocked ? <div className="fixed inset-0 z-[83]" aria-hidden="true" data-compact-opponent-guard /> : null}
+
       {compactTurnSequence && [CompactTurnStage.TURN, CompactTurnStage.CONDITION].includes(compactTurnStage?.kind) ? (
-        <div
-          className={`seapals-compact-turn-banner is-${compactTurnStage.kind} z-[82]`}
-          aria-hidden="true"
-          data-compact-turn-banner={compactTurnStage.kind}
-          style={compactTurnStage.kind === CompactTurnStage.CONDITION
-            ? { "--seapals-condition-banner-duration": `${getCompactConditionBannerDuration(compactTurnSequence.condition?.text)}ms` }
-            : undefined}
-        >
-          {compactTurnStage.kind === CompactTurnStage.TURN ? (
+        compactTurnStage.kind === CompactTurnStage.TURN ? (
+          <div
+            className="seapals-compact-turn-banner is-turn z-[82]"
+            aria-hidden="true"
+            data-compact-turn-banner={compactTurnStage.kind}
+          >
             <strong>{compactTurnSequence.turnLabel}</strong>
-          ) : (
-            <>
-              <span>Round {compactTurnSequence.roundNumber} condition</span>
-              <strong>{compactTurnSequence.condition?.name ?? "No active condition"}</strong>
-              {compactTurnSequence.condition?.text ? <p>{compactTurnSequence.condition.text}</p> : null}
-            </>
-          )}
+          </div>
+        ) : (
+          <section
+            className="seapals-compact-turn-banner is-condition z-[82]"
+            role="dialog"
+            aria-modal="false"
+            aria-labelledby="seapals-compact-condition-title"
+            aria-describedby={compactTurnSequence.condition?.text ? "seapals-compact-condition-text" : undefined}
+            data-compact-turn-banner={compactTurnStage.kind}
+            onKeyDown={(event) => {
+              if (event.key !== "Tab") return;
+              event.preventDefault();
+              event.currentTarget.querySelector("button")?.focus();
+            }}
+          >
+            <span>Round {compactTurnSequence.roundNumber} condition</span>
+            <strong id="seapals-compact-condition-title">{compactTurnSequence.condition?.name ?? "No active condition"}</strong>
+            {compactTurnSequence.condition?.text ? <p id="seapals-compact-condition-text">{compactTurnSequence.condition.text}</p> : null}
+            <button
+              type="button"
+              autoFocus
+              className="seapals-compact-condition-continue"
+              data-compact-condition-continue
+              onClick={continueCompactCondition}
+            >Continue</button>
+          </section>
+        )
+      ) : null}
+
+      {compactOpponentCardReader ? (
+        <section
+          className="seapals-opponent-card-reader"
+          data-opponent-card-reader
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby={`seapals-opponent-reader-title-${compactOpponentCardReader.id}`}
+          aria-describedby={compactOpponentCardReader.event.message ? `seapals-opponent-reader-message-${compactOpponentCardReader.id}` : undefined}
+          onKeyDown={(event) => {
+            if (event.key !== "Tab") return;
+            event.preventDefault();
+            event.currentTarget.querySelector("button")?.focus();
+          }}
+        >
+          <div className="seapals-opponent-card-reader-art">
+            <img
+              src={cardsById[compactOpponentCardReader.event.sourceCardId]?.image}
+              alt={cardsById[compactOpponentCardReader.event.sourceCardId]?.name}
+            />
+          </div>
+          <div className="seapals-opponent-card-reader-copy">
+            <div className="seapals-opponent-card-reader-scroll">
+              <span className="text-[10px] font-black uppercase tracking-[.2em] text-rose-200">Opponent card</span>
+              <h2 id={`seapals-opponent-reader-title-${compactOpponentCardReader.id}`} className="mt-1 text-lg font-black leading-tight">
+                {compactOpponentCardReader.event.title}
+              </h2>
+              {compactOpponentCardReader.event.message ? (
+                <p id={`seapals-opponent-reader-message-${compactOpponentCardReader.id}`} className="mt-2 text-sm leading-relaxed text-slate-200">
+                  {compactOpponentCardReader.event.message}
+                </p>
+              ) : null}
+              {compactOpponentCardReader.event.defenderCardId ? (
+                <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose-300/25 bg-rose-300/10 p-2">
+                  <img src={cardsById[compactOpponentCardReader.event.defenderCardId]?.image} alt="" className="h-14 w-10 rounded object-contain" />
+                  <span className="text-xs font-bold text-rose-100">Affected: {cardsById[compactOpponentCardReader.event.defenderCardId]?.name}</span>
+                </div>
+              ) : null}
+              {compactOpponentCardReader.event.revealedCards?.length ? (
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Cards revealed by the opponent">
+                  {compactOpponentCardReader.event.revealedCards.map((cardId, index) => (
+                    <img key={`${cardId}-${index}`} src={cardsById[cardId]?.image} alt={cardsById[cardId]?.name} className="h-24 w-16 shrink-0 rounded bg-white object-contain" />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <button type="button" autoFocus className="seapals-opponent-card-reader-continue" onClick={continueCompactOpponentCardReader}>Continue</button>
+          </div>
+        </section>
+      ) : null}
+
+      {opponentPlacementFlight ? (
+        <div data-opponent-placement-flight className="seapals-opponent-placement-layer fixed inset-0 z-[84]" aria-hidden="true">
+          <img
+            src={cardsById[opponentPlacementFlight.cardId]?.image}
+            alt=""
+            className={`seapals-opponent-placement-flight is-${opponentPlacementFlight.kind}`}
+            style={{
+              width: `${opponentPlacementFlight.cardWidth}px`,
+              "--seapals-opponent-start-x": `${opponentPlacementFlight.startX}px`,
+              "--seapals-opponent-start-y": `${opponentPlacementFlight.startY}px`,
+              "--seapals-opponent-mid-x": `${opponentPlacementFlight.midX}px`,
+              "--seapals-opponent-mid-y": `${opponentPlacementFlight.midY}px`,
+              "--seapals-opponent-end-x": `${opponentPlacementFlight.endX}px`,
+              "--seapals-opponent-end-y": `${opponentPlacementFlight.endY}px`,
+              "--seapals-opponent-end-scale": opponentPlacementFlight.endScale,
+              animationDuration: `${opponentPlacementFlight.duration}ms`,
+            }}
+          />
         </div>
       ) : null}
 
@@ -16842,7 +17361,10 @@ export default function Simulator({
           ))}
         </div>
       ) : null}
-      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">{compactTurnAnnouncement}</span>
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {compactTurnStage?.kind === CompactTurnStage.CONDITION ? "" : compactTurnAnnouncement}
+      </span>
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">{compactOpponentAnnouncement}</span>
 
       {opponentThinking ? (
         <div className="pointer-events-none fixed left-1/2 top-5 z-[85] -translate-x-1/2 rounded-full border border-cyan-300/60 bg-slate-950/95 px-6 py-3 text-white shadow-[0_12px_40px_rgba(15,23,42,0.55)] backdrop-blur" role="status" aria-live="polite">

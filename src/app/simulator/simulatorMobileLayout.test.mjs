@@ -792,7 +792,7 @@ test("V2 keeps only the draggable divider and round action while the old footer 
   assert.match(divider, /seapals-reef-divider-handle[\s\S]*?role="separator"/);
   assert.match(divider, /data-mobile-turn-control/);
   assert.match(divider, /onClick=\{endTurn\}/);
-  assert.match(divider, /disabled=\{Boolean\(gameResult\) \|\| opponentThinking \|\| Boolean\(compactTurnSequence\) \|\| \(isSetup && !hasCoralInPlay\) \|\| isStartOfTurn\}/);
+  assert.match(divider, /disabled=\{Boolean\(gameResult\) \|\| opponentThinking \|\| Boolean\(compactTurnSequence\) \|\| compactOpponentPlaybackLocked \|\| \(isSetup && !hasCoralInPlay\) \|\| isStartOfTurn\}/);
   assert.match(divider, /data-tutorial-target="turn-button"/);
   assert.match(divider, /\{turnControlLabel\}/);
   assert.doesNotMatch(divider, /Opponent First|Round 1|End Turn/);
