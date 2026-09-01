@@ -8077,6 +8077,7 @@ export default function Simulator({
       startRound(round + 1, {
         advanceTurn: true,
         skipTurnBanner: compactTurnPresentationEnabled,
+        playerStateOverride: event.playerStateAfter ?? null,
         opponentStateOverride: event.opponentStateAfter ?? null,
       });
       return;
@@ -8092,6 +8093,7 @@ export default function Simulator({
         skipOpponentHandLimit: true,
         conditionTitle: `Round ${round} · Your First Turn`,
         skipTurnBanner: compactTurnPresentationEnabled,
+        playerStateOverride: event.playerStateAfter ?? null,
         opponentStateOverride: event.opponentStateAfter ?? null,
       });
       return;
@@ -8222,29 +8224,35 @@ export default function Simulator({
     skipOpponentHandLimit = false,
     conditionTitle = null,
     skipTurnBanner = false,
+    playerStateOverride = null,
     opponentStateOverride = null,
   } = {}) {
     const condition = reuseConditionId ? cardsById[reuseConditionId] : drawNextCondition();
     const opponentAtBoundary = opponentStateOverride ?? opponent;
+    const playerAtBoundary = normalizeProjectedPlayerState({
+      corals: playerCorals,
+      habitats: playerHabitats,
+      habitatInstances: playerHabitatInstances,
+      reefCreatureInstances: playerReefCreatureInstances,
+      orphanCreatureInstances: playerOrphanCreatureInstances,
+      hand,
+      discardPile,
+      lostZone,
+      foundationDeck,
+      palsDeck,
+      rp,
+      supportBlockedUntilRound,
+      resilienceUsedCardIds,
+      creatureStatuses,
+      blueCrabRecycleUsedTurn,
+      flashingAlarmAttackBonus,
+      poisonImmunityNextPredatorAttack,
+      ...(playerStateOverride ?? {}),
+    });
     const lionfishResolution = resolveHostTurnLionfishInvaders({
       playerState: {
-        corals: playerCorals,
-        habitats: playerHabitats,
-        habitatInstances: playerHabitatInstances,
-        reefCreatureInstances: playerReefCreatureInstances,
-        orphanCreatureInstances: playerOrphanCreatureInstances,
-        hand,
-        discardPile,
-        lostZone,
-        foundationDeck,
-        palsDeck,
-        rp,
-        supportBlockedUntilRound,
-        resilienceUsedCardIds,
-        creatureStatuses,
-        blueCrabRecycleUsedTurn,
-        flashingAlarmAttackBonus: beginFlashingAlarmTurn(flashingAlarmAttackBonus),
-        poisonImmunityNextPredatorAttack,
+        ...playerAtBoundary,
+        flashingAlarmAttackBonus: beginFlashingAlarmTurn(playerAtBoundary.flashingAlarmAttackBonus),
       },
       opponentState: opponentAtBoundary,
       hostController: "player",
@@ -8292,8 +8300,14 @@ export default function Simulator({
     setPlayerCorals(playerCoralsAtTurnStart.map(({ rpPenaltyNextTurn, ...coral }) => coral));
     setPlayerReefCreatureInstances(playerReefInstancesAtTurnStart);
     setPlayerOrphanCreatureInstances(playerOrphansAtTurnStart);
+    setHand(playerAtTurnStart.hand);
     setDiscardPile(playerAtTurnStart.discardPile);
     setLostZone(playerAtTurnStart.lostZone);
+    setFoundationDeck(playerAtTurnStart.foundationDeck);
+    setPalsDeck(playerAtTurnStart.palsDeck);
+    setSupportBlockedUntilRound(playerAtTurnStart.supportBlockedUntilRound);
+    setResilienceUsedCardIds(playerAtTurnStart.resilienceUsedCardIds);
+    setBlueCrabRecycleUsedTurn(playerAtTurnStart.blueCrabRecycleUsedTurn);
     setFlashingAlarmAttackBonus(playerAtTurnStart.flashingAlarmAttackBonus);
     setPoisonImmunityNextPredatorAttack(playerAtTurnStart.poisonImmunityNextPredatorAttack);
     const opponentAfterParasite = parasiteRequestedRp
@@ -8301,7 +8315,7 @@ export default function Simulator({
       : opponentAtTurnStart;
     const handLimitEffect = (condition?.effects ?? []).find((effect) => effect.type === "setHandLimit");
     const handLimit = Number(handLimitEffect?.amount ?? Infinity);
-    const excessCards = Number.isFinite(handLimit) && hand.length > handLimit ? hand.slice(handLimit) : [];
+    const excessCards = Number.isFinite(handLimit) && playerAtTurnStart.hand.length > handLimit ? playerAtTurnStart.hand.slice(handLimit) : [];
     const opponentHandLimitResult = skipOpponentHandLimit
       ? { state: opponentAfterParasite, cardsToDiscard: [] }
       : applyAutomatedHandLimitToState(opponentAfterParasite, handLimit, { round: nextRound });
@@ -8312,7 +8326,7 @@ export default function Simulator({
     setGamePhase("draw");
     setHasDrawnThisTurn(false);
     const requestedDraws = 1 + getConditionExtraDraws(condition);
-    const availableDraws = Math.min(requestedDraws, foundationDeck.length + palsDeck.length);
+    const availableDraws = Math.min(requestedDraws, playerAtTurnStart.foundationDeck.length + playerAtTurnStart.palsDeck.length);
     setTurnDrawSelection({ requested: requestedDraws, target: availableDraws, shortfall: getRequiredDrawShortfall(requestedDraws, availableDraws), foundation: 0, pals: 0 });
     setTurnDrawResult(null);
     setMobileDrawTrayOpen(false);
@@ -8322,10 +8336,8 @@ export default function Simulator({
     setUsedAttackers([]);
     setUsedCreatureActions([]);
     setPendingCreatureAction(null);
-    if (advanceTurn) {
-      const nextPlayerTurn = turn + 1;
-      setCreatureStatuses((current) => Object.fromEntries(Object.entries(current).map(([slotId, statuses]) => [slotId, statuses.filter((status) => status.expiresTurn > nextPlayerTurn)]).filter(([, statuses]) => statuses.length)));
-    }
+    const nextPlayerTurn = advanceTurn ? turn + 1 : turn;
+    setCreatureStatuses(Object.fromEntries(Object.entries(playerAtTurnStart.creatureStatuses).map(([slotId, statuses]) => [slotId, advanceTurn ? statuses.filter((status) => status.expiresTurn > nextPlayerTurn) : statuses]).filter(([, statuses]) => statuses.length)));
     setSupportLockSourceId(null);
     setCardsBlockedFromPlayThisTurn([]);
     setRovLightsActive(false);
@@ -13588,6 +13600,7 @@ export default function Simulator({
       actions: splitTurnActionLines(opponentSummary),
       advanceRoundAfterClose: !openingOpponentTurn,
       startOpeningPlayerTurnAfterClose: openingOpponentTurn,
+      playerStateAfter: normalizedFinalPlayerState,
       opponentStateAfter: finalOpponentState,
       gameResultAfter: opponentLostAfterUtility ? "Victory: the opponent could not complete a required draw from its personal decks." : opponentVictoryLocked ? `Defeat: the opponent was first to reach ${victoryTarget} VP.` : stagedVictoryResult?.message ?? null,
     });

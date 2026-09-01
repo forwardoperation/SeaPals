@@ -25,7 +25,7 @@ test("Lionfish Invader resolves exactly once before player turn collection and p
   assert.ok(invaderHook >= 0 && invaderHook < collection && collection < parasite);
   assert.match(startRound, /hostController: "player"/);
   assert.equal(occurrenceCount(startRound, /resolveHostTurnLionfishInvaders\(\{/g), 1);
-  assert.equal(occurrenceCount(startRound, /beginFlashingAlarmTurn\(flashingAlarmAttackBonus\)/g), 1);
+  assert.equal(occurrenceCount(startRound, /beginFlashingAlarmTurn\(playerAtBoundary\.flashingAlarmAttackBonus\)/g), 1);
   assert.match(startRound, /setPlayerCorals\(playerCoralsAtTurnStart\.map/);
   assert.match(startRound, /setPlayerReefCreatureInstances\(playerReefInstancesAtTurnStart\)/);
   assert.match(startRound, /setPlayerOrphanCreatureInstances\(playerOrphansAtTurnStart\)/);
