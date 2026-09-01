@@ -209,7 +209,8 @@ test("confirmed V2 draws animate each real card continuously from the deck rail 
   assert.match(simulatorSource, /mobileDrawFlights\.map\(\(flight\) =>/);
   assert.match(simulatorSource, /src=\{cardsById\[flight\.cardId\]\?\.image\}/);
   assert.match(simulatorSource, /data-draw-source=\{flight\.source\}/);
-  assert.match(simulatorSource, /animationDelay:\s*`\$\{flight\.delay\}ms`/);
+  assert.match(simulatorSource, /"--seapals-draw-delay":\s*`\$\{flight\.delay\}ms`/);
+  assert.match(simulatorSource, /"--seapals-draw-play-state":\s*"running"/);
   assert.match(simulatorSource, /onAnimationEnd=\{\(\) => finishMobileDrawFlight\(flight\)\}/);
   assert.match(simulatorSource, /data-mobile-hand-dock/);
   assert.match(simulatorSource, /interactionDisabled=\{boardInteractionOverlayActive \|\| mobileDrawFlights\.length > 0 \|\| Boolean\(compactTurnSequence\) \|\| compactOpponentPlaybackLocked\}/);
@@ -225,6 +226,6 @@ test("confirmed V2 draws animate each real card continuously from the deck rail 
   );
   assert.match(
     simulatorSource,
-    /\.seapals-reduced-motion \.seapals-mobile-draw-flight\s*\{[\s\S]*?animation:\s*seapalsDrawReduced[^;]*!important;/,
+    /\.seapals-reduced-motion \.seapals-mobile-draw-flight\s*\{[\s\S]*?animation-name:\s*seapalsDrawReduced !important;[\s\S]*?animation-duration:\s*140ms !important;[\s\S]*?animation-delay:\s*var\(--seapals-draw-delay, 0ms\) !important;[\s\S]*?animation-play-state:\s*var\(--seapals-draw-play-state, running\) !important;/,
   );
 });

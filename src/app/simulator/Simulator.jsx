@@ -8748,6 +8748,68 @@ export default function Simulator({
     setMobileHudPanel((current) => current === "decks" ? null : "decks");
   }
 
+  function getMobileDrawFlightGeometry({
+    sourceRect,
+    endX,
+    endY,
+    endScale = 0.92,
+    flightWidth,
+    viewportHeight,
+  }) {
+    const flightHeight = flightWidth * (88 / 63);
+    const startX = sourceRect.left + (sourceRect.width - flightWidth) / 2;
+    const startY = sourceRect.top + (sourceRect.height - flightHeight) / 2;
+    const startScale = Math.min(
+      0.62,
+      Math.max(
+        0.4,
+        Math.min(sourceRect.width / flightWidth, sourceRect.height / flightHeight),
+      ),
+    );
+    const controlX = (startX + endX) / 2;
+    const controlY = Math.max(
+      10,
+      Math.min(startY, endY) - Math.min(150, Math.max(76, viewportHeight * 0.14)),
+    );
+    const pointOnArc = (progress) => {
+      const inverse = 1 - progress;
+      return {
+        x: inverse * inverse * startX + 2 * inverse * progress * controlX + progress * progress * endX,
+        y: inverse * inverse * startY + 2 * inverse * progress * controlY + progress * progress * endY,
+      };
+    };
+
+    return {
+      startX,
+      startY,
+      startScale,
+      arc20: pointOnArc(0.2),
+      arc40: pointOnArc(0.4),
+      arc60: pointOnArc(0.6),
+      arc80: pointOnArc(0.8),
+      endX,
+      endY,
+      endScale,
+    };
+  }
+
+  function setMobileDrawFlightGeometry(flightElement, geometry) {
+    flightElement.style.setProperty("--seapals-draw-start-x", `${geometry.startX}px`);
+    flightElement.style.setProperty("--seapals-draw-start-y", `${geometry.startY}px`);
+    flightElement.style.setProperty("--seapals-draw-start-scale", geometry.startScale);
+    flightElement.style.setProperty("--seapals-draw-arc-20-x", `${geometry.arc20.x}px`);
+    flightElement.style.setProperty("--seapals-draw-arc-20-y", `${geometry.arc20.y}px`);
+    flightElement.style.setProperty("--seapals-draw-arc-40-x", `${geometry.arc40.x}px`);
+    flightElement.style.setProperty("--seapals-draw-arc-40-y", `${geometry.arc40.y}px`);
+    flightElement.style.setProperty("--seapals-draw-arc-60-x", `${geometry.arc60.x}px`);
+    flightElement.style.setProperty("--seapals-draw-arc-60-y", `${geometry.arc60.y}px`);
+    flightElement.style.setProperty("--seapals-draw-arc-80-x", `${geometry.arc80.x}px`);
+    flightElement.style.setProperty("--seapals-draw-arc-80-y", `${geometry.arc80.y}px`);
+    flightElement.style.setProperty("--seapals-draw-end-x", `${geometry.endX}px`);
+    flightElement.style.setProperty("--seapals-draw-end-y", `${geometry.endY}px`);
+    flightElement.style.setProperty("--seapals-draw-end-scale", geometry.endScale);
+  }
+
   function prepareMobileDrawFlight(flight, flightElement) {
     if (flight?.kind !== "opening-hand" || !flightElement) return;
     if (!mobileDrawFlightTimersRef.current.has(flight.id)) return;
@@ -8757,7 +8819,18 @@ export default function Simulator({
     const handRail = document.querySelector("[data-simulator-hand-card-rail]");
     const targetItem = document.querySelector(`[data-mobile-hand-card-index="${flight.handIndex}"]`);
     const sourceRect = sourceElement?.getBoundingClientRect();
-    if (!sourceRect?.width || !sourceRect.height || !handRail || !targetItem) return;
+    const resumeFlight = () => {
+      window.requestAnimationFrame(() => {
+        if (flightElement.isConnected) {
+          flightElement.style.setProperty("--seapals-draw-play-state", "running");
+        }
+      });
+    };
+    flightElement.style.setProperty("--seapals-draw-play-state", "paused");
+    if (!sourceRect?.width || !sourceRect.height || !handRail || !targetItem) {
+      resumeFlight();
+      return;
+    }
 
     const targetScrollLeft = Math.max(
       0,
@@ -8769,24 +8842,22 @@ export default function Simulator({
     handRail.scrollTo?.({ left: targetScrollLeft, behavior: "auto" });
     const targetCard = targetItem.querySelector("button") ?? targetItem;
     const targetRect = targetCard.getBoundingClientRect();
-    if (!targetRect.width || !targetRect.height) return;
-    const flightHeight = flight.width * (88 / 63);
-    const startX = sourceRect.left + (sourceRect.width - flight.width) / 2;
-    const startY = sourceRect.top - flightHeight * 0.45;
+    if (!targetRect.width || !targetRect.height) {
+      resumeFlight();
+      return;
+    }
     const endX = targetRect.left + (targetRect.width - flight.width) / 2;
     const endY = targetRect.top + Math.min(10, Math.max(0, (targetRect.height - (flight.width * 88) / 63) / 2));
-    flightElement.style.setProperty("--seapals-draw-start-x", `${startX}px`);
-    flightElement.style.setProperty("--seapals-draw-start-y", `${startY}px`);
-    flightElement.style.setProperty("--seapals-draw-end-x", `${endX}px`);
-    flightElement.style.setProperty("--seapals-draw-end-y", `${endY}px`);
-    flightElement.style.setProperty(
-      "--seapals-draw-mid-x",
-      `${Math.max(12, Math.min(startX, endX) - Math.min(96, (window.innerWidth || 320) * 0.2))}px`,
-    );
-    flightElement.style.setProperty(
-      "--seapals-draw-mid-y",
-      `${Math.max(12, Math.min(startY, endY) - Math.min(92, (window.innerHeight || 480) * 0.12))}px`,
-    );
+    setMobileDrawFlightGeometry(flightElement, getMobileDrawFlightGeometry({
+      sourceRect,
+      endX,
+      endY,
+      endScale: Math.min(1.18, Math.max(0.68, targetRect.width / flight.width)),
+      flightWidth: flight.width,
+      viewportHeight: Math.max(480, window.innerHeight || 0),
+    }));
+    void flightElement.offsetWidth;
+    resumeFlight();
   }
 
   function finishMobileDrawFlight(flightOrId) {
@@ -8858,19 +8929,22 @@ export default function Simulator({
     const viewportHeight = Math.max(480, window.innerHeight || 0);
     const flightWidth = Math.min(84, Math.max(64, viewportWidth * 0.2));
     const flightHeight = flightWidth * (88 / 63);
-    const startX = sourceRect.left + (sourceRect.width - flightWidth) / 2;
-    const startY = sourceRect.top - flightHeight * (openingHandDeal ? 0.45 : 0.35);
     const endX = handRect?.width
       ? Math.max(handRect.left + 12, handRect.right - flightWidth - 18)
       : viewportWidth * 0.56;
     const endY = handRect?.height
       ? handRect.top + Math.min(20, handRect.height * 0.12)
       : viewportHeight - flightHeight * 0.82;
-    const midX = Math.max(12, Math.min(startX, endX) - Math.min(96, viewportWidth * 0.2));
-    const midY = Math.max(12, Math.min(startY, endY) - Math.min(92, viewportHeight * 0.12));
+    const geometry = getMobileDrawFlightGeometry({
+      sourceRect,
+      endX,
+      endY,
+      flightWidth,
+      viewportHeight,
+    });
     const reducedMotion = accessibilityReducedMotion || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
-    const duration = reducedMotion ? 140 : openingHandDeal ? 180 : 680;
-    const stagger = reducedMotion ? openingHandDeal ? 80 : 20 : openingHandDeal ? 200 : 150;
+    const duration = reducedMotion ? 140 : openingHandDeal ? 520 : 680;
+    const stagger = reducedMotion ? openingHandDeal ? 80 : 20 : 150;
     const flights = cardsToHand.map((entry, index) => ({
       id: `mobile-draw-flight-${++mobileDrawFlightIdRef.current}`,
       kind,
@@ -8878,12 +8952,7 @@ export default function Simulator({
       source: String(entry.source || "deck").toLowerCase(),
       handIndex: baseHandLength + index,
       reducedMotion,
-      startX,
-      startY,
-      midX,
-      midY,
-      endX,
-      endY,
+      ...geometry,
       width: flightWidth,
       duration,
       delay: index * stagger,
@@ -15471,17 +15540,32 @@ export default function Simulator({
         }
         @keyframes seapalsDeckToHand {
           0% {
-            opacity: 0;
-            transform: translate3d(var(--seapals-draw-start-x), var(--seapals-draw-start-y), 0) scale(.45) rotate(9deg);
-          }
-          12% { opacity: 1; }
-          45% {
             opacity: 1;
-            transform: translate3d(var(--seapals-draw-mid-x), var(--seapals-draw-mid-y), 0) scale(1.08) rotate(-5deg);
+            transform: translate3d(var(--seapals-draw-start-x), var(--seapals-draw-start-y), 0) scale(var(--seapals-draw-start-scale)) rotate(0deg);
+          }
+          4%, 14% {
+            opacity: 1;
+            transform: translate3d(var(--seapals-draw-start-x), var(--seapals-draw-start-y), 0) scale(var(--seapals-draw-start-scale)) rotate(0deg);
+          }
+          32% {
+            opacity: 1;
+            transform: translate3d(var(--seapals-draw-arc-20-x), var(--seapals-draw-arc-20-y), 0) scale(.7) rotate(-2deg);
+          }
+          48% {
+            opacity: 1;
+            transform: translate3d(var(--seapals-draw-arc-40-x), var(--seapals-draw-arc-40-y), 0) scale(.9) rotate(-5deg);
+          }
+          64% {
+            opacity: 1;
+            transform: translate3d(var(--seapals-draw-arc-60-x), var(--seapals-draw-arc-60-y), 0) scale(.94) rotate(-4deg);
+          }
+          80% {
+            opacity: 1;
+            transform: translate3d(var(--seapals-draw-arc-80-x), var(--seapals-draw-arc-80-y), 0) scale(.76) rotate(-2deg);
           }
           100% {
-            opacity: .08;
-            transform: translate3d(var(--seapals-draw-end-x), var(--seapals-draw-end-y), 0) scale(.58) rotate(0deg);
+            opacity: 1;
+            transform: translate3d(var(--seapals-draw-end-x), var(--seapals-draw-end-y), 0) scale(var(--seapals-draw-end-scale)) rotate(0deg);
           }
         }
         @keyframes seapalsDrawReduced {
@@ -17131,7 +17215,11 @@ export default function Simulator({
           background: #ecfeff;
           box-shadow: 0 18px 44px rgba(2, 8, 23, .7), 0 0 24px rgba(34, 211, 238, .5);
           pointer-events: none;
-          animation: seapalsDeckToHand 680ms cubic-bezier(.16, .78, .22, 1) both;
+          opacity: 0;
+          animation: seapalsDeckToHand 680ms linear forwards;
+          animation-delay: var(--seapals-draw-delay, 0ms);
+          animation-play-state: var(--seapals-draw-play-state, running);
+          transform-origin: center;
           will-change: transform, opacity;
         }
         .seapals-mobile-draw-flight > img {
@@ -17144,14 +17232,24 @@ export default function Simulator({
           animation-timing-function: ease-out;
         }
         .seapals-reduced-motion .seapals-mobile-draw-flight {
-          animation: seapalsDrawReduced 140ms ease-out both !important;
+          animation-name: seapalsDrawReduced !important;
+          animation-duration: 140ms !important;
+          animation-timing-function: ease-out !important;
+          animation-fill-mode: both !important;
+          animation-delay: var(--seapals-draw-delay, 0ms) !important;
+          animation-play-state: var(--seapals-draw-play-state, running) !important;
         }
         .seapals-reduced-motion .seapals-mobile-draw-tray {
           animation: none !important;
         }
         @media (prefers-reduced-motion: reduce) {
           .seapals-mobile-draw-flight {
-            animation: seapalsDrawReduced 140ms ease-out both !important;
+            animation-name: seapalsDrawReduced !important;
+            animation-duration: 140ms !important;
+            animation-timing-function: ease-out !important;
+            animation-fill-mode: both !important;
+            animation-delay: var(--seapals-draw-delay, 0ms) !important;
+            animation-play-state: var(--seapals-draw-play-state, running) !important;
           }
           .seapals-mobile-draw-tray {
             animation: none !important;
@@ -18848,13 +18946,22 @@ export default function Simulator({
               style={{
                 "--seapals-draw-start-x": `${flight.startX}px`,
                 "--seapals-draw-start-y": `${flight.startY}px`,
-                "--seapals-draw-mid-x": `${flight.midX}px`,
-                "--seapals-draw-mid-y": `${flight.midY}px`,
+                "--seapals-draw-start-scale": flight.startScale,
+                "--seapals-draw-arc-20-x": `${flight.arc20.x}px`,
+                "--seapals-draw-arc-20-y": `${flight.arc20.y}px`,
+                "--seapals-draw-arc-40-x": `${flight.arc40.x}px`,
+                "--seapals-draw-arc-40-y": `${flight.arc40.y}px`,
+                "--seapals-draw-arc-60-x": `${flight.arc60.x}px`,
+                "--seapals-draw-arc-60-y": `${flight.arc60.y}px`,
+                "--seapals-draw-arc-80-x": `${flight.arc80.x}px`,
+                "--seapals-draw-arc-80-y": `${flight.arc80.y}px`,
                 "--seapals-draw-end-x": `${flight.endX}px`,
                 "--seapals-draw-end-y": `${flight.endY}px`,
+                "--seapals-draw-end-scale": flight.endScale,
                 width: flight.width,
                 animationDuration: `${flight.duration}ms`,
-                animationDelay: `${flight.delay}ms`,
+                "--seapals-draw-delay": `${flight.delay}ms`,
+                "--seapals-draw-play-state": "running",
               }}
             >
               <img src={cardsById[flight.cardId]?.image} alt="" draggable={false} />
