@@ -20,7 +20,11 @@ export default function MobileEdgeZones({
 
   const deckArtwork = (
     <>
-      <span className="seapals-mobile-edge-zone-art seapals-mobile-deck-back" aria-hidden="true">
+      <span
+        className="seapals-mobile-edge-zone-art seapals-mobile-deck-back"
+        data-mobile-deck-flight-origin
+        aria-hidden="true"
+      >
         <img src="/images/brand/SeaPalsTCGLogoWhite.svg" alt="" />
       </span>
       <span className="seapals-mobile-edge-zone-count">{safeDeckCount}</span>

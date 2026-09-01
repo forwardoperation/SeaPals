@@ -8751,9 +8751,13 @@ export default function Simulator({
   function prepareMobileDrawFlight(flight, flightElement) {
     if (flight?.kind !== "opening-hand" || !flightElement) return;
     if (!mobileDrawFlightTimersRef.current.has(flight.id)) return;
+    const sourceElement = document.querySelector(
+      '[data-mobile-edge-zones][data-zone-owner="player"] [data-mobile-zone="deck"] [data-mobile-deck-flight-origin]',
+    );
     const handRail = document.querySelector("[data-simulator-hand-card-rail]");
     const targetItem = document.querySelector(`[data-mobile-hand-card-index="${flight.handIndex}"]`);
-    if (!handRail || !targetItem) return;
+    const sourceRect = sourceElement?.getBoundingClientRect();
+    if (!sourceRect?.width || !sourceRect.height || !handRail || !targetItem) return;
 
     const targetScrollLeft = Math.max(
       0,
@@ -8766,17 +8770,22 @@ export default function Simulator({
     const targetCard = targetItem.querySelector("button") ?? targetItem;
     const targetRect = targetCard.getBoundingClientRect();
     if (!targetRect.width || !targetRect.height) return;
+    const flightHeight = flight.width * (88 / 63);
+    const startX = sourceRect.left + (sourceRect.width - flight.width) / 2;
+    const startY = sourceRect.top - flightHeight * 0.45;
     const endX = targetRect.left + (targetRect.width - flight.width) / 2;
     const endY = targetRect.top + Math.min(10, Math.max(0, (targetRect.height - (flight.width * 88) / 63) / 2));
+    flightElement.style.setProperty("--seapals-draw-start-x", `${startX}px`);
+    flightElement.style.setProperty("--seapals-draw-start-y", `${startY}px`);
     flightElement.style.setProperty("--seapals-draw-end-x", `${endX}px`);
     flightElement.style.setProperty("--seapals-draw-end-y", `${endY}px`);
     flightElement.style.setProperty(
       "--seapals-draw-mid-x",
-      `${Math.max(12, Math.min(flight.startX, endX) - Math.min(96, (window.innerWidth || 320) * 0.2))}px`,
+      `${Math.max(12, Math.min(startX, endX) - Math.min(96, (window.innerWidth || 320) * 0.2))}px`,
     );
     flightElement.style.setProperty(
       "--seapals-draw-mid-y",
-      `${Math.max(12, Math.min(flight.startY, endY) - Math.min(92, (window.innerHeight || 480) * 0.12))}px`,
+      `${Math.max(12, Math.min(startY, endY) - Math.min(92, (window.innerHeight || 480) * 0.12))}px`,
     );
   }
 
@@ -8824,6 +8833,7 @@ export default function Simulator({
     onCancel = null,
   } = {}) {
     const cardsToHand = revealed.filter((entry) => !entry.discarded);
+    const openingHandDeal = kind === "opening-hand";
     if (
       !previewDrawTrayEnabled
       || !compactDrawViewportRef.current
@@ -8831,25 +8841,25 @@ export default function Simulator({
       || typeof document === "undefined"
     ) return false;
 
-    clearMobileDrawFlightSequence();
-    mobileDrawSequenceCallbacksRef.current = { onCardLanded, onComplete, onCancel };
-
-    const sourceElement = document.querySelector('[data-mobile-edge-zones][data-zone-owner="player"] [data-mobile-zone="deck"]');
+    const sourceElement = document.querySelector(
+      '[data-mobile-edge-zones][data-zone-owner="player"] [data-mobile-zone="deck"] [data-mobile-deck-flight-origin]',
+    );
     const handElement = document.querySelector("[data-mobile-hand-dock]");
     const handRail = document.querySelector("[data-simulator-hand-card-rail]");
     if (kind === "opening-hand") handRail?.scrollTo?.({ left: 0, behavior: "auto" });
     const sourceRect = sourceElement?.getBoundingClientRect();
+    if (!sourceRect?.width || !sourceRect.height) return false;
+
+    clearMobileDrawFlightSequence();
+    mobileDrawSequenceCallbacksRef.current = { onCardLanded, onComplete, onCancel };
+
     const handRect = handElement?.getBoundingClientRect();
     const viewportWidth = Math.max(320, window.innerWidth || 0);
     const viewportHeight = Math.max(480, window.innerHeight || 0);
     const flightWidth = Math.min(84, Math.max(64, viewportWidth * 0.2));
     const flightHeight = flightWidth * (88 / 63);
-    const startX = sourceRect?.width
-      ? sourceRect.left + (sourceRect.width - flightWidth) / 2
-      : viewportWidth - flightWidth * 0.72;
-    const startY = sourceRect?.height
-      ? sourceRect.top + (sourceRect.height - flightHeight) / 2
-      : viewportHeight * 0.52;
+    const startX = sourceRect.left + (sourceRect.width - flightWidth) / 2;
+    const startY = sourceRect.top - flightHeight * (openingHandDeal ? 0.45 : 0.35);
     const endX = handRect?.width
       ? Math.max(handRect.left + 12, handRect.right - flightWidth - 18)
       : viewportWidth * 0.56;
@@ -8859,9 +8869,8 @@ export default function Simulator({
     const midX = Math.max(12, Math.min(startX, endX) - Math.min(96, viewportWidth * 0.2));
     const midY = Math.max(12, Math.min(startY, endY) - Math.min(92, viewportHeight * 0.12));
     const reducedMotion = accessibilityReducedMotion || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
-    const openingHandDeal = kind === "opening-hand";
-    const duration = reducedMotion ? 140 : openingHandDeal ? 360 : 680;
-    const stagger = reducedMotion ? openingHandDeal ? 160 : 20 : openingHandDeal ? 400 : 150;
+    const duration = reducedMotion ? 140 : openingHandDeal ? 180 : 680;
+    const stagger = reducedMotion ? openingHandDeal ? 80 : 20 : openingHandDeal ? 200 : 150;
     const flights = cardsToHand.map((entry, index) => ({
       id: `mobile-draw-flight-${++mobileDrawFlightIdRef.current}`,
       kind,
@@ -17112,7 +17121,7 @@ export default function Simulator({
         }
         .seapals-mobile-draw-flight {
           position: fixed;
-          z-index: 68;
+          z-index: 76;
           top: 0;
           left: 0;
           overflow: hidden;

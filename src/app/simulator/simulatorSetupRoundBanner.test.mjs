@@ -100,6 +100,79 @@ test("opening-hand flights follow each actual card slot without forcing the rail
   );
 });
 
+test("opening-hand cards lift from the visible player's deck top instead of a viewport-center fallback", () => {
+  const startDrawFlights = sourceSection(
+    simulatorSource,
+    "function startMobileDrawFlights(revealed, baseHandLength, {",
+    "function confirmTurnDraw()",
+  );
+  const startYDefinition = sourceSection(
+    startDrawFlights,
+    "const startY =",
+    "const endX =",
+  );
+
+  assert.match(
+    startDrawFlights,
+    /document\.querySelector\([\s\S]*?\[data-mobile-edge-zones\]\[data-zone-owner="player"\] \[data-mobile-zone="deck"\] \[data-mobile-deck-flight-origin\]/,
+    "setup deal geometry should be measured from the visible player deck",
+  );
+  assert.match(simulatorSource, /data-mobile-deck-flight-origin/);
+  assert.match(startYDefinition, /openingHandDeal/);
+  assert.match(
+    startYDefinition,
+    /sourceRect\.top/,
+    "the setup-deal origin should use the deck's top edge rather than its vertical center",
+  );
+  assert.doesNotMatch(
+    startYDefinition,
+    /openingHandDeal[\s\S]*?viewportHeight\s*\*\s*0\.52/,
+    "opening cards must not fall back to the middle of the viewport",
+  );
+});
+
+test("every opening-hand flight resolves its own indexed hand-slot endpoint", () => {
+  const startDrawFlights = sourceSection(
+    simulatorSource,
+    "function startMobileDrawFlights(revealed, baseHandLength, {",
+    "function confirmTurnDraw()",
+  );
+  const prepareFlight = sourceSection(
+    simulatorSource,
+    "function prepareMobileDrawFlight(flight, flightElement)",
+    "function finishMobileDrawFlight",
+  );
+
+  assert.match(startDrawFlights, /cardsToHand\.map\(\(entry, index\) => \(\{/);
+  assert.match(startDrawFlights, /handIndex: baseHandLength \+ index/);
+  assert.match(prepareFlight, /data-mobile-hand-card-index="\$\{flight\.handIndex\}"/);
+  assert.match(prepareFlight, /flightElement\.style\.setProperty\("--seapals-draw-end-x"/);
+  assert.match(prepareFlight, /flightElement\.style\.setProperty\("--seapals-draw-end-y"/);
+});
+
+test("setup cards deal at twice the prior cadence without changing ordinary or reduced-motion draws", () => {
+  const startDrawFlights = sourceSection(
+    simulatorSource,
+    "function startMobileDrawFlights(revealed, baseHandLength, {",
+    "function confirmTurnDraw()",
+  );
+
+  assert.match(
+    startDrawFlights,
+    /const duration = reducedMotion \? 140 : openingHandDeal \? 180 : 680;/,
+    "setup flight travel should be half its prior 360ms while ordinary draws remain 680ms",
+  );
+  assert.match(
+    startDrawFlights,
+    /const stagger = reducedMotion \? openingHandDeal \? 80 : 20 : openingHandDeal \? 200 : 150;/,
+    "setup arrivals should be staggered at half their prior cadence while reduced and ordinary draws retain dedicated timing",
+  );
+  assert.match(
+    simulatorSource,
+    /\.seapals-reduced-motion \.seapals-mobile-draw-flight\s*\{[\s\S]*?animation:\s*seapalsDrawReduced 140ms ease-out both !important;/,
+  );
+});
+
 test("a viewport change before or during the deal fast-forwards safely to RP", () => {
   assert.match(simulatorSource, /compactDrawViewportRef\.current = viewportQuery\.matches/);
   assert.match(
