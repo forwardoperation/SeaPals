@@ -100,7 +100,11 @@ test("draw-flight completion is idempotent when animation and timeout finish tog
 
   assert.match(finishFlight, /!mobileDrawFlightTimersRef\.current\.has\(flightId\)/);
   assert.match(finishFlight, /mobileDrawSequenceCallbacksRef\.current\.onCardLanded\?\.\(flightOrId\)/);
-  assert.match(finishFlight, /if \(!mobileDrawFlightTimersRef\.current\.size\)/);
+  assert.match(
+    finishFlight,
+    /if \([\s\S]*?!mobileDrawFlightTimersRef\.current\.size[\s\S]*?&& !mobileDrawHandoffFramesRef\.current\.size[\s\S]*?&& !mobileDrawLandingAnimationsRef\.current\.size[\s\S]*?\) \{[\s\S]*?onComplete\?\.\(\)/,
+    "completion must wait until timers, paint-boundary handoffs, and live-card animations are all idle",
+  );
   assert.match(finishFlight, /onComplete\?\.\(\)/);
 });
 
@@ -115,6 +119,115 @@ test("opening-hand flights follow each actual card slot without forcing the rail
   assert.match(
     simulatorSource,
     /onAnimationStart=\{\(event\) => prepareMobileDrawFlight\(flight, event\.currentTarget\)\}/,
+  );
+});
+
+test("overlapping setup flights do not invalidate an earlier card's measured hand-slot landing", () => {
+  const startDrawFlights = sourceSection(
+    simulatorSource,
+    "function startMobileDrawFlights(revealed, baseHandLength, {",
+    "function confirmTurnDraw()",
+  );
+  const prepareFlight = sourceSection(
+    simulatorSource,
+    "function prepareMobileDrawFlight(flight, flightElement)",
+    "function finishMobileDrawFlight",
+  );
+  const finishFlight = sourceSection(
+    simulatorSource,
+    "function finishMobileDrawFlight(flightOrId)",
+    "function clearMobileDrawFlightSequence",
+  );
+  const timing = startDrawFlights.match(
+    /const duration = reducedMotion \? \d+ : openingHandDeal \? (\d+) : \d+;[\s\S]*?const stagger = reducedMotion \?[^;]+: (\d+);/,
+  );
+
+  assert.ok(timing, "setup draw timing should remain explicit so overlap is reviewable");
+  assert.ok(
+    Number(timing[1]) > Number(timing[2]),
+    "this regression applies while setup cards intentionally overlap in flight",
+  );
+  assert.match(
+    prepareFlight,
+    /handRail\.scrollTo\?\.\(\{[\s\S]*?left: targetScrollLeft,[\s\S]*?behavior: flight\.reducedMotion \? "auto" : "smooth",[\s\S]*?\}\);/,
+    "the fast overlapping deal should not snap the hand rail between airborne cards",
+  );
+  assert.match(
+    finishFlight,
+    /data-mobile-hand-card-index="\$\{flightOrId\.handIndex\}"/,
+    "landing should resolve the live indexed hand item after intervening rail movement",
+  );
+  assert.match(finishFlight, /data-mobile-draw-flight-id="\$\{flightId\}"/);
+  assert.match(finishFlight, /const targetRect = targetItem\?\.getBoundingClientRect\(\)/);
+  assert.match(finishFlight, /const targetCardRect = targetCard\?\.getBoundingClientRect\(\)/);
+  assert.match(finishFlight, /const flightRect = flightElement\?\.getBoundingClientRect\(\)/);
+  assert.match(
+    finishFlight,
+    /const landingScale = Math\.max\(0\.1, flightRect\.width \/ targetCardRect\.width\);[\s\S]*?flightRect\.left[\s\S]*?- targetRect\.left[\s\S]*?- landingScale \* \(targetCardRect\.left - targetRect\.left\)[\s\S]*?flightRect\.top[\s\S]*?- targetRect\.top[\s\S]*?- landingScale \* \(targetCardRect\.top - targetRect\.top\)/,
+    "the FLIP should compensate for the visible button's built-in lift and rotation inside its list item",
+  );
+  assert.match(
+    finishFlight,
+    /targetItem\.animate\(\[[\s\S]*?translate3d\(\$\{offsetX\}px, \$\{offsetY\}px, 0\) scale\(\$\{landingScale\}\)[\s\S]*?translate3d\(0, 0, 0\) scale\(1\)/,
+    "the live hand item should FLIP from the overlay's current screen position into its moved rail slot",
+  );
+});
+
+test("a setup landing reveals the real hand card before retiring its flight overlay", () => {
+  const finishFlight = sourceSection(
+    simulatorSource,
+    "function finishMobileDrawFlight(flightOrId)",
+    "function clearMobileDrawFlightSequence",
+  );
+  const revealIndex = finishFlight.indexOf("onCardLanded?.(flightOrId)");
+  const retireIndex = finishFlight.indexOf("setMobileDrawFlights");
+
+  assert.ok(revealIndex >= 0, "flight completion should reveal its committed indexed hand card");
+  assert.ok(retireIndex >= 0, "flight completion should eventually retire the overlay");
+  assert.ok(
+    revealIndex < retireIndex,
+    "the real indexed card must be present at the landing coordinate before the overlay is removed",
+  );
+  assert.match(
+    finishFlight,
+    /handoffFrames\.first = window\.requestAnimationFrame\(\(\) => \{[\s\S]*?handoffFrames\.second = window\.requestAnimationFrame\(\(\) => \{[\s\S]*?flightElement\?\.isConnected[\s\S]*?retireFlight\(\)/,
+    "the overlay should remain through two paint boundaries while the live hand card appears beneath it",
+  );
+  assert.match(finishFlight, /landingAnimation\.pause\(\);[\s\S]*?landingAnimation\.currentTime = 0;/);
+  assert.match(
+    finishFlight,
+    /landingFinished = landingAnimation\.finished\.catch\(\(\) => undefined\);/,
+    "cancellation must be handled as soon as the paused landing animation is created",
+  );
+  const hideOverlayIndex = finishFlight.indexOf('flightElement.style.visibility = "hidden"');
+  const playLandingIndex = finishFlight.indexOf("landingAnimation.play()");
+  const secondPaintIndex = finishFlight.indexOf("handoffFrames.second = window.requestAnimationFrame");
+  const landingMeasureIndex = finishFlight.indexOf("const targetRect = targetItem?.getBoundingClientRect()");
+  assert.ok(
+    secondPaintIndex >= 0 && landingMeasureIndex > secondPaintIndex && hideOverlayIndex > landingMeasureIndex,
+    "the moving rail must be remeasured in the final handoff frame immediately before the overlay is hidden",
+  );
+  assert.ok(playLandingIndex > hideOverlayIndex);
+});
+
+test("setup completion preserves its landing rail position instead of applying turn-draw focus scrolling", () => {
+  const drawSequenceEffect = sourceSection(
+    simulatorSource,
+    "useEffect(() => {\n    if (!mobileDrawSequenceActiveRef.current) return undefined;",
+    "useEffect(() => () => {\n    for (const timerId of mobileDrawFlightTimersRef.current.values())",
+  );
+  const completionBranch = sourceSection(
+    drawSequenceEffect,
+    "mobileDrawSequenceActiveRef.current = false;",
+    "return undefined;",
+  );
+  const focusGuardIndex = completionBranch.indexOf("if (mobileDrawFocusIndexRef.current != null)");
+  const completionScrollIndex = completionBranch.indexOf("scrollTo?.(");
+
+  assert.ok(focusGuardIndex >= 0, "ordinary draws should still focus and reveal their landed card");
+  assert.ok(
+    completionScrollIndex < 0 || completionScrollIndex > focusGuardIndex,
+    "opening-hand deals use a null focus index and must not be moved by the ordinary draw completion scroll",
   );
 });
 

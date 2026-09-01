@@ -3434,6 +3434,8 @@ export default function Simulator({
   const [setupOpeningHandVisibleCount, setSetupOpeningHandVisibleCount] = useState(null);
   const mobileDrawFlightIdRef = useRef(0);
   const mobileDrawFlightTimersRef = useRef(new Map());
+  const mobileDrawHandoffFramesRef = useRef(new Map());
+  const mobileDrawLandingAnimationsRef = useRef(new Map());
   const mobileDrawSequenceActiveRef = useRef(false);
   const mobileDrawFocusIndexRef = useRef(null);
   const mobileDrawSequenceCallbacksRef = useRef({
@@ -4099,12 +4101,12 @@ export default function Simulator({
     }
     mobileDrawSequenceActiveRef.current = false;
     setGamePhase((current) => current === "draw" && hasDrawnThisTurn ? "main" : current);
-    const handRail = document.querySelector("[data-simulator-hand-card-rail]");
-    handRail?.scrollTo?.({
-      left: handRail.scrollWidth,
-      behavior: "auto",
-    });
     if (mobileDrawFocusIndexRef.current != null) {
+      const handRail = document.querySelector("[data-simulator-hand-card-rail]");
+      handRail?.scrollTo?.({
+        left: handRail.scrollWidth,
+        behavior: "auto",
+      });
       const landedCard = document.querySelector(
         `[data-mobile-hand-card-index="${mobileDrawFocusIndexRef.current}"] button`,
       );
@@ -4117,6 +4119,13 @@ export default function Simulator({
   useEffect(() => () => {
     for (const timerId of mobileDrawFlightTimersRef.current.values()) window.clearTimeout(timerId);
     mobileDrawFlightTimersRef.current.clear();
+    for (const frames of mobileDrawHandoffFramesRef.current.values()) {
+      if (frames.first != null) window.cancelAnimationFrame(frames.first);
+      if (frames.second != null) window.cancelAnimationFrame(frames.second);
+    }
+    mobileDrawHandoffFramesRef.current.clear();
+    for (const animation of mobileDrawLandingAnimationsRef.current.values()) animation.cancel();
+    mobileDrawLandingAnimationsRef.current.clear();
     mobileDrawSequenceCallbacksRef.current = {
       onCardLanded: null,
       onComplete: null,
@@ -8839,7 +8848,10 @@ export default function Simulator({
         targetItem.offsetLeft + targetItem.offsetWidth / 2 - handRail.clientWidth / 2,
       ),
     );
-    handRail.scrollTo?.({ left: targetScrollLeft, behavior: "auto" });
+    handRail.scrollTo?.({
+      left: targetScrollLeft,
+      behavior: flight.reducedMotion ? "auto" : "smooth",
+    });
     const targetCard = targetItem.querySelector("button") ?? targetItem;
     const targetRect = targetCard.getBoundingClientRect();
     if (!targetRect.width || !targetRect.height) {
@@ -8866,24 +8878,113 @@ export default function Simulator({
     const timerId = mobileDrawFlightTimersRef.current.get(flightId);
     if (timerId) window.clearTimeout(timerId);
     mobileDrawFlightTimersRef.current.delete(flightId);
-    setMobileDrawFlights((current) => current.filter((flight) => flight.id !== flightId));
+
+    const targetItem = typeof flightOrId === "object" && flightOrId?.handIndex != null
+      ? document.querySelector(`[data-mobile-hand-card-index="${flightOrId.handIndex}"]`)
+      : null;
+    const flightElement = document.querySelector(`[data-mobile-draw-flight-id="${flightId}"]`);
     mobileDrawSequenceCallbacksRef.current.onCardLanded?.(flightOrId);
 
-    if (!mobileDrawFlightTimersRef.current.size) {
-      const onComplete = mobileDrawSequenceCallbacksRef.current.onComplete;
-      mobileDrawSequenceCallbacksRef.current = {
-        onCardLanded: null,
-        onComplete: null,
-        onCancel: null,
-      };
-      onComplete?.();
-    }
+    let landingAnimation = null;
+    let landingFinished = null;
+
+    const retireFlight = () => {
+      if (mobileDrawLandingAnimationsRef.current.get(flightId) === landingAnimation) {
+        mobileDrawLandingAnimationsRef.current.delete(flightId);
+      }
+      setMobileDrawFlights((current) => current.filter((flight) => flight.id !== flightId));
+      if (landingAnimation) {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => landingAnimation.cancel());
+        });
+      }
+      if (
+        !mobileDrawFlightTimersRef.current.size
+        && !mobileDrawHandoffFramesRef.current.size
+        && !mobileDrawLandingAnimationsRef.current.size
+      ) {
+        const onComplete = mobileDrawSequenceCallbacksRef.current.onComplete;
+        mobileDrawSequenceCallbacksRef.current = {
+          onCardLanded: null,
+          onComplete: null,
+          onCancel: null,
+        };
+        onComplete?.();
+      }
+    };
+
+    const handoffFrames = { first: null, second: null };
+    handoffFrames.first = window.requestAnimationFrame(() => {
+      handoffFrames.second = window.requestAnimationFrame(() => {
+        mobileDrawHandoffFramesRef.current.delete(flightId);
+        const targetCard = targetItem?.querySelector("button") ?? targetItem;
+        const targetRect = targetItem?.getBoundingClientRect();
+        const targetCardRect = targetCard?.getBoundingClientRect();
+        const flightRect = flightElement?.getBoundingClientRect();
+        if (
+          !flightOrId?.reducedMotion
+          && targetItem?.animate
+          && targetRect?.width
+          && targetRect.height
+          && targetCardRect?.width
+          && targetCardRect.height
+          && flightRect?.width
+          && flightRect.height
+        ) {
+          const landingScale = Math.max(0.1, flightRect.width / targetCardRect.width);
+          const offsetX = flightRect.left
+            - targetRect.left
+            - landingScale * (targetCardRect.left - targetRect.left);
+          const offsetY = flightRect.top
+            - targetRect.top
+            - landingScale * (targetCardRect.top - targetRect.top);
+          landingAnimation = targetItem.animate([
+            {
+              opacity: 1,
+              transform: `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${landingScale})`,
+              transformOrigin: "top left",
+            },
+            {
+              opacity: 1,
+              transform: "translate3d(0, 0, 0) scale(1)",
+              transformOrigin: "top left",
+            },
+          ], {
+            duration: 220,
+            easing: "cubic-bezier(.2, .78, .24, 1)",
+            fill: "both",
+          });
+          landingAnimation.pause();
+          landingAnimation.currentTime = 0;
+          landingFinished = landingAnimation.finished.catch(() => undefined);
+          mobileDrawLandingAnimationsRef.current.set(flightId, landingAnimation);
+        }
+        if (!landingAnimation) {
+          retireFlight();
+          return;
+        }
+        if (flightElement?.isConnected) flightElement.style.visibility = "hidden";
+        landingAnimation.play();
+        landingFinished.then(() => {
+          if (mobileDrawLandingAnimationsRef.current.get(flightId) !== landingAnimation) return;
+          retireFlight();
+        });
+      });
+    });
+    mobileDrawHandoffFramesRef.current.set(flightId, handoffFrames);
   }
 
   function clearMobileDrawFlightSequence({ notifyCancel = false } = {}) {
     const onCancel = notifyCancel ? mobileDrawSequenceCallbacksRef.current.onCancel : null;
     for (const timerId of mobileDrawFlightTimersRef.current.values()) window.clearTimeout(timerId);
     mobileDrawFlightTimersRef.current.clear();
+    for (const frames of mobileDrawHandoffFramesRef.current.values()) {
+      if (frames.first != null) window.cancelAnimationFrame(frames.first);
+      if (frames.second != null) window.cancelAnimationFrame(frames.second);
+    }
+    mobileDrawHandoffFramesRef.current.clear();
+    for (const animation of mobileDrawLandingAnimationsRef.current.values()) animation.cancel();
+    mobileDrawLandingAnimationsRef.current.clear();
     mobileDrawSequenceActiveRef.current = false;
     mobileDrawFocusIndexRef.current = null;
     mobileDrawSequenceCallbacksRef.current = {
@@ -18938,6 +19039,7 @@ export default function Simulator({
               key={flight.id}
               className={`seapals-mobile-draw-flight${flight.reducedMotion ? " is-reduced-motion" : ""}`}
               data-mobile-draw-flight
+              data-mobile-draw-flight-id={flight.id}
               data-draw-kind={flight.kind}
               data-draw-source={flight.source}
               aria-hidden="true"
