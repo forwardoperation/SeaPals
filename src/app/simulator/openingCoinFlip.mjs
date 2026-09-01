@@ -56,9 +56,9 @@ export function createOpeningCoinResultOverlay({ result, opponentName = "The opp
   const playerWon = result.winner === OpeningPlayer.PLAYER;
   return Object.freeze({
     type: OpeningCoinPhase.RESULT,
-    title: playerWon ? "Reef Fish! You go first." : `Blank side. ${opponentName} goes first.`,
+    title: playerWon ? "You go first!" : `Blank side. ${opponentName} goes first.`,
     message: playerWon
-      ? "The Reef Fish surfaced in a burst of color, so you will take the first turn after setup."
+      ? "You won the opening toss, so you will take the first turn after setup."
       : "The blank side surfaced, so the opponent will take the first turn after setup.",
     coinLanded: result.landed,
     coinWinner: result.winner,

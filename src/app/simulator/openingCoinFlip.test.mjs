@@ -73,7 +73,8 @@ test("opening coin presentation moves directly through ready, flipping, and resu
 
   const landed = createOpeningCoinResultOverlay({ result });
   assert.equal(landed.type, OpeningCoinPhase.RESULT);
-  assert.match(`${landed.title} ${landed.message}`, /fish/i);
+  assert.equal(landed.title, "You go first!");
+  assert.doesNotMatch(`${landed.title} ${landed.message}`, /reef fish/i);
   assert.match(`${landed.title} ${landed.message}`, /you.*first/i);
   assert.equal(landed.coinLanded, OpeningCoinSide.FISH);
   assert.equal(landed.coinWinner, OpeningPlayer.PLAYER);

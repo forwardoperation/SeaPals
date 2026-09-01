@@ -419,23 +419,23 @@
 }
 
 @keyframes boardCoinSpin {
-  0% { transform: translateY(0) rotateX(7deg) rotateY(0deg); }
-  50% { transform: translateY(calc(0px - var(--coin-spin-rise))) rotateX(-6deg) rotateY(540deg); }
-  100% { transform: translateY(0) rotateX(7deg) rotateY(1080deg); }
+  0% { transform: translateY(0) rotateX(0deg) rotateZ(-2deg); }
+  50% { transform: translateY(calc(0px - var(--coin-spin-rise))) rotateX(540deg) rotateZ(2deg); }
+  100% { transform: translateY(0) rotateX(1080deg) rotateZ(-2deg); }
 }
 
 @keyframes boardCoinLandFish {
-  0% { transform: translateY(0) rotateY(0deg) rotateZ(0deg); }
-  48% { transform: translateY(calc(0px - var(--coin-toss))) rotateY(900deg) rotateZ(10deg); }
-  82% { transform: translateY(0.16rem) rotateY(1620deg) rotateZ(-4deg); }
-  100% { transform: translateY(0) rotateY(1800deg) rotateZ(0deg); }
+  0% { transform: translateY(0) rotateX(0deg) rotateZ(0deg); }
+  48% { transform: translateY(calc(0px - var(--coin-toss))) rotateX(900deg) rotateZ(10deg); }
+  82% { transform: translateY(0.16rem) rotateX(1620deg) rotateZ(-4deg); }
+  100% { transform: translateY(0) rotateX(1800deg) rotateZ(0deg); }
 }
 
 @keyframes boardCoinLandBlank {
-  0% { transform: translateY(0) rotateY(0deg) rotateZ(0deg); }
-  48% { transform: translateY(calc(0px - var(--coin-toss))) rotateY(990deg) rotateZ(10deg); }
-  82% { transform: translateY(0.16rem) rotateY(1800deg) rotateZ(-4deg); }
-  100% { transform: translateY(0) rotateY(1980deg) rotateZ(0deg); }
+  0% { transform: translateY(0) rotateX(0deg) rotateZ(0deg); }
+  48% { transform: translateY(calc(0px - var(--coin-toss))) rotateX(990deg) rotateZ(10deg); }
+  82% { transform: translateY(0.16rem) rotateX(1800deg) rotateZ(-4deg); }
+  100% { transform: translateY(0) rotateX(1980deg) rotateZ(0deg); }
 }
 
 @keyframes boardCoinBurstHalo {

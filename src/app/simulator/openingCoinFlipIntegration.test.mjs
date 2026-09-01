@@ -6,12 +6,16 @@ const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.ur
 const boardPresentationSource = await readFile(new URL("./OpeningCoinBoardPresentation.jsx", import.meta.url), "utf8");
 const boardPresentationStyles = await readFile(new URL("./OpeningCoinBoardPresentation.module.css", import.meta.url), "utf8");
 
-function sourceBetween(startMarker, endMarker) {
-  const start = simulatorSource.indexOf(startMarker);
-  const end = simulatorSource.indexOf(endMarker, start + startMarker.length);
+function textBetween(source, startMarker, endMarker) {
+  const start = source.indexOf(startMarker);
+  const end = source.indexOf(endMarker, start + startMarker.length);
   assert.notEqual(start, -1, `missing source marker: ${startMarker}`);
   assert.notEqual(end, -1, `missing source marker: ${endMarker}`);
-  return simulatorSource.slice(start, end);
+  return source.slice(start, end);
+}
+
+function sourceBetween(startMarker, endMarker) {
+  return textBetween(simulatorSource, startMarker, endMarker);
 }
 
 test("opening coin flow starts ready and needs only one player-triggered toss", () => {
@@ -74,6 +78,34 @@ test("the coin uses reef-fish and blank faces with a win-only light burst", () =
   assert.match(boardPresentationStyles, /@keyframes boardCoinBurstRay/);
   assert.match(boardPresentationStyles, /\.reducedMotion \.burstHalo[\s\S]*?opacity:/);
   assert.match(boardPresentationStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.burstSpark/);
+});
+
+test("the opening coin flips vertically end over end instead of turning side to side", () => {
+  const boardMotion = textBetween(
+    boardPresentationStyles,
+    "@keyframes boardCoinSpin",
+    "@keyframes boardCoinBurstHalo",
+  );
+  const legacyMotion = textBetween(
+    simulatorSource,
+    "@keyframes seapalsCoinReady",
+    "@keyframes seapalsCoinShadow",
+  );
+  const faceGeometry = textBetween(
+    simulatorSource,
+    ".seapals-opening-coin-fish { transform:",
+    ".seapals-opening-coin-shadow",
+  );
+
+  assert.match(boardMotion, /rotateX\(1080deg\)/);
+  assert.match(boardMotion, /rotateX\(1980deg\)/);
+  assert.doesNotMatch(boardMotion, /rotateY\(/);
+  assert.match(legacyMotion, /rotateX\(1800deg\)/);
+  assert.match(legacyMotion, /rotateX\(1980deg\)/);
+  assert.doesNotMatch(legacyMotion, /rotateY\(/);
+  assert.match(faceGeometry, /opening-coin-blank \{ transform: rotateX\(180deg\)/);
+  assert.match(faceGeometry, /opening-coin-landed-blank \{ transform: rotateX\(180deg\)/);
+  assert.doesNotMatch(faceGeometry, /rotateY\(/);
 });
 
 test("the landed side is handed directly to setup as the automatic starter", () => {

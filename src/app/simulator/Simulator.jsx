@@ -15260,26 +15260,26 @@ export default function Simulator({
         }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes seapalsCoinReady {
-          0%, 100% { transform: translateY(0) rotateX(7deg) rotateY(-8deg); }
-          50% { transform: translateY(-.45rem) rotateX(-4deg) rotateY(8deg); }
+          0%, 100% { transform: translateY(0) rotateX(-8deg) rotateZ(-2deg); }
+          50% { transform: translateY(-.45rem) rotateX(8deg) rotateZ(2deg); }
         }
         @keyframes seapalsCoinReadyBlank {
-          0%, 100% { transform: translateY(0) rotateX(7deg) rotateY(172deg); }
-          50% { transform: translateY(-.45rem) rotateX(-4deg) rotateY(188deg); }
+          0%, 100% { transform: translateY(0) rotateX(172deg) rotateZ(-2deg); }
+          50% { transform: translateY(-.45rem) rotateX(188deg) rotateZ(2deg); }
         }
         @keyframes seapalsCoinFlipFish {
-          0% { transform: translateY(0) rotateY(0deg) rotateZ(0deg); }
-          44% { transform: translateY(-5.25rem) rotateY(900deg) rotateZ(12deg); }
-          78% { transform: translateY(.25rem) rotateY(1620deg) rotateZ(-6deg); }
-          89% { transform: translateY(-.85rem) rotateY(1740deg) rotateZ(3deg); }
-          100% { transform: translateY(0) rotateY(1800deg) rotateZ(0deg); }
+          0% { transform: translateY(0) rotateX(0deg) rotateZ(0deg); }
+          44% { transform: translateY(-5.25rem) rotateX(900deg) rotateZ(12deg); }
+          78% { transform: translateY(.25rem) rotateX(1620deg) rotateZ(-6deg); }
+          89% { transform: translateY(-.85rem) rotateX(1740deg) rotateZ(3deg); }
+          100% { transform: translateY(0) rotateX(1800deg) rotateZ(0deg); }
         }
         @keyframes seapalsCoinFlipBlank {
-          0% { transform: translateY(0) rotateY(0deg) rotateZ(0deg); }
-          44% { transform: translateY(-5.25rem) rotateY(990deg) rotateZ(12deg); }
-          78% { transform: translateY(.25rem) rotateY(1800deg) rotateZ(-6deg); }
-          89% { transform: translateY(-.85rem) rotateY(1920deg) rotateZ(3deg); }
-          100% { transform: translateY(0) rotateY(1980deg) rotateZ(0deg); }
+          0% { transform: translateY(0) rotateX(0deg) rotateZ(0deg); }
+          44% { transform: translateY(-5.25rem) rotateX(990deg) rotateZ(12deg); }
+          78% { transform: translateY(.25rem) rotateX(1800deg) rotateZ(-6deg); }
+          89% { transform: translateY(-.85rem) rotateX(1920deg) rotateZ(3deg); }
+          100% { transform: translateY(0) rotateX(1980deg) rotateZ(0deg); }
         }
         @keyframes seapalsCoinShadow {
           0%, 100% { opacity: .5; transform: scaleX(1); }
@@ -15360,13 +15360,13 @@ export default function Simulator({
           letter-spacing: .16em;
         }
         .seapals-opening-coin-fish { transform: translateZ(.32rem); }
-        .seapals-opening-coin-blank { transform: rotateY(180deg) translateZ(.32rem); }
-        .seapals-opening-coin-ready-fish { transform: rotateY(0deg); animation: seapalsCoinReady 1.8s ease-in-out infinite; }
-        .seapals-opening-coin-ready-blank { transform: rotateY(180deg); animation: seapalsCoinReadyBlank 1.8s ease-in-out infinite; }
+        .seapals-opening-coin-blank { transform: rotateX(180deg) translateZ(.32rem); }
+        .seapals-opening-coin-ready-fish { transform: rotateX(0deg); animation: seapalsCoinReady 1.8s ease-in-out infinite; }
+        .seapals-opening-coin-ready-blank { transform: rotateX(180deg); animation: seapalsCoinReadyBlank 1.8s ease-in-out infinite; }
         .seapals-opening-coin-flipping-fish { animation: seapalsCoinFlipFish 1.35s cubic-bezier(.22,.72,.25,1) forwards; }
         .seapals-opening-coin-flipping-blank { animation: seapalsCoinFlipBlank 1.35s cubic-bezier(.22,.72,.25,1) forwards; }
-        .seapals-opening-coin-landed-fish { transform: rotateY(0deg); }
-        .seapals-opening-coin-landed-blank { transform: rotateY(180deg); }
+        .seapals-opening-coin-landed-fish { transform: rotateX(0deg); }
+        .seapals-opening-coin-landed-blank { transform: rotateX(180deg); }
         .seapals-opening-coin-shadow {
           position: absolute;
           z-index: 1;
