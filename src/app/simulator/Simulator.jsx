@@ -10,6 +10,7 @@ import MobileHandCardPopover from "./MobileHandCardPopover";
 import MobileEdgeZones from "./MobileEdgeZones";
 import MobileDrawTray from "./MobileDrawTray";
 import { AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
+import VictoryCelebration from "./VictoryCelebration";
 import { createCombatResolutionRandom, createCombatRollPacket } from "./combatRollPresentation.mjs";
 import {
   CompactTurnStage,
@@ -5673,14 +5674,14 @@ export default function Simulator({
     if (eventOverlay?.type === "choose-regenerate" || pendingEvents.some((event) => event.type === "choose-regenerate")) return;
     const eventRequiresResolution = String(eventOverlay?.type ?? "").startsWith("choose-")
       || ["onplay-target-prompt", "faceoff-ready", "school-attack-ready"].includes(eventOverlay?.type);
-    if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || eventRequiresResolution) return;
+    if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || consumedAttackFlight || eventRequiresResolution) return;
     const result = determineVictoryResult(playerVp, opponentVp, victoryTarget);
     if (!result) return;
     setGameResult((current) => {
       if (current) return current;
       return result.message;
     });
-  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling]);
+  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, consumedAttackFlight]);
 
   useEffect(() => {
     if (!isStoryMode || storyResultRecordedRef.current || !gameResult) return;
@@ -6163,6 +6164,7 @@ export default function Simulator({
   function queueConsumedAttackFlight({
     cardId,
     targetInstanceId,
+    sourceOwner = null,
     destinationOwner = "opponent",
     destinationZone = "discard",
     onComplete = null,
@@ -6170,8 +6172,14 @@ export default function Simulator({
     if (!previewExperience) return false;
     if (tutorialUsesScriptedScenario) return false;
 
+    const sourceBoard = sourceOwner
+      ? document.querySelector(`[data-board-owner="${sourceOwner}"]`)
+      : null;
     const sourceNode = [...document.querySelectorAll("[data-attack-target-instance]")]
-      .find((node) => node.dataset.attackTargetInstance === targetInstanceId) ?? null;
+      .find((node) => node.dataset.attackTargetInstance === targetInstanceId)
+      ?? [...(sourceBoard?.querySelectorAll("[data-card-id]") ?? [])]
+        .find((node) => node.dataset.cardId === cardId)
+      ?? null;
     const sourceRect = sourceNode?.getBoundingClientRect();
     const destinationNode = document.querySelector(
       `[data-mobile-edge-zones][data-zone-owner="${destinationOwner}"] [data-mobile-zone="${destinationZone}"]`,
@@ -6799,9 +6807,10 @@ export default function Simulator({
         const flightQueued = queueConsumedAttackFlight({
           cardId: targetEntry.card.id,
           targetInstanceId: selectedTarget.instanceId,
+          sourceOwner: "player",
           destinationOwner: "opponent",
           destinationZone: destroyedCardGoesToLostZone(targetEntry.card) ? "lost" : "discard",
-          onComplete: () => setEventOverlay(resultOverlay),
+          onComplete: () => continueAfterPresentedEvent(resultOverlay, pendingEventsRef.current),
         });
         if (flightQueued) setEventOverlay(null);
         else setEventOverlay(resultOverlay);
@@ -6911,9 +6920,10 @@ export default function Simulator({
         const flightQueued = queueConsumedAttackFlight({
           cardId: targetEntry.card.id,
           targetInstanceId: selectedTarget.instanceId,
+          sourceOwner: "opponent",
           destinationOwner: "opponent",
           destinationZone: destroyedCardGoesToLostZone(targetEntry.card) ? "lost" : "discard",
-          onComplete: () => setEventOverlay(resultOverlay),
+          onComplete: () => continueAfterPresentedEvent(resultOverlay, pendingEventsRef.current),
         });
         if (flightQueued) {
           setEventOverlay(null);
@@ -8243,6 +8253,21 @@ export default function Simulator({
           },
         );
         return;
+      }
+      if (
+        compactTurnPresentationEnabled
+        && event.type === "faceoff-result"
+        && event.combatDiscardCue
+      ) {
+        const flightQueued = queueConsumedAttackFlight({
+          ...event.combatDiscardCue,
+          onComplete: () => continueAfterPresentedEvent(event, pendingEventsRef.current),
+        });
+        if (flightQueued) {
+          commitEventState(event);
+          setEventOverlay(null);
+          return;
+        }
       }
       if (compactTurnPresentationEnabled && shouldShowCompactOpponentCardReader(event)) {
         const readerPlan = getCompactOpponentReaderPlan(event, pendingEventsRef.current);
@@ -12873,6 +12898,13 @@ export default function Simulator({
           primaryDefenseRoll: step.primaryDefenseRoll,
           combatAttackerOwner: "opponent",
           combatDefenderOwner: "player",
+          combatDiscardCue: step.discardedCardId ? {
+            cardId: step.discardedCardId,
+            targetInstanceId: step.targetInstanceId,
+            sourceOwner: "player",
+            destinationOwner: "player",
+            destinationZone: destroyedCardGoesToLostZone(cardsById[step.discardedCardId]) ? "lost" : "discard",
+          } : null,
           success: step.noLegalTarget ? false : step.counterCardId ? step.counterSucceeded : !step.attackerWins,
           playerStateAfter: nextPlayer,
           opponentStateAfter: nextOpponent,
@@ -14711,12 +14743,23 @@ export default function Simulator({
     });
     setStartingPlayer(chosenStarter);
     setOpeningOpponentTurn(false);
-    setEventOverlay({
+    const setupRoundEvent = {
       type: "round-transition",
       title: "Setup Round",
       message: `Build the foundation of your ecosystem. You have 3 RP and eight opening cards: play a valid base Coral or Creature School, then ${chosenStarter === OpeningPlayer.PLAYER ? "you will take" : "the opponent will take"} the first turn.`,
       success: true,
-    });
+    };
+    if (compactTurnPresentationEnabled) {
+      setEventOverlay(null);
+      beginCompactTurnSequence({
+        owner: "player",
+        turnLabel: setupRoundEvent.title,
+        includeCondition: false,
+        includeRp: false,
+      });
+    } else {
+      setEventOverlay(setupRoundEvent);
+    }
     pushLog(chosenStarter === OpeningPlayer.PLAYER
       ? "You will take the first turn after setup."
       : "The opponent will take the first turn after setup.");
@@ -17703,7 +17746,7 @@ export default function Simulator({
             </button>
           ) : null}
 
-          {gameResult && !tutorialLessonWon ? (
+          {gameResult && !tutorialLessonWon && !/^Victory\b/i.test(gameResult) ? (
             <div className="mb-4 rounded-2xl border-2 border-amber-400 bg-amber-100 px-6 py-4 text-center text-lg font-black text-amber-950" role="alert">
               <div>{gameResult}</div>
               {isStoryMode ? (
@@ -18946,6 +18989,44 @@ export default function Simulator({
             <span className="hidden text-xs text-slate-300 sm:inline">Reviewing RP, cards, targets, and VP</span>
           </div>
         </div>
+      ) : null}
+
+      {gameResult && !tutorialLessonWon && /^Victory\b/i.test(gameResult) ? (
+        <VictoryCelebration
+          message={gameResult}
+          reducedMotion={accessibilityReducedMotion}
+          actions={isStoryMode ? (
+            <>
+              {tutorialContract ? (
+                <button type="button" onClick={() => restartStoryGame("result-retry")} className="rounded-full border-2 border-amber-100/85 bg-slate-950/45 px-6 py-2.5 text-sm font-black text-amber-50 transition hover:bg-amber-100/15">
+                  Retry Practice Duel
+                </button>
+              ) : null}
+              <button type="button" data-victory-primary-action onClick={() => returnToStoryTown("duel-complete")} className="rounded-full bg-gradient-to-r from-amber-300 to-emerald-300 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105">
+                Return to {storyReturnLabel}
+              </button>
+            </>
+          ) : (
+            <>
+              {selectedPlayerDeck ? (
+                <Link
+                  href={{ pathname: "/store", query: { deck: selectedPlayerDeck.id } }}
+                  className="rounded-full border-2 border-amber-100/85 bg-slate-950/45 px-6 py-2.5 text-sm font-black text-amber-50 transition hover:bg-amber-100/15"
+                >
+                  Shop {selectedPlayerDeck.name}
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                data-victory-primary-action
+                onClick={() => restartGame(selectedDeckId, selectedOpponentDeckId, victoryTarget, opponentDifficulty)}
+                className="rounded-full bg-gradient-to-r from-amber-300 to-emerald-300 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105"
+              >
+                Play Again
+              </button>
+            </>
+          )}
+        />
       ) : null}
 
       {tutorialCompletionDialogOpen ? (

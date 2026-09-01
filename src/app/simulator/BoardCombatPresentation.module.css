@@ -1,0 +1,95 @@
+.rollPrompt {
+  position: absolute;
+  z-index: 4;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  padding: clamp(0.6rem, 2.4vw, 0.82rem) clamp(1.2rem, 5vw, 2.25rem);
+  border: 1px solid rgba(254, 202, 202, 0.72);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(69, 10, 10, 0.88), rgba(15, 23, 42, 0.84));
+  box-shadow:
+    0 0 0 1px rgba(244, 63, 94, 0.24),
+    0 0 28px rgba(244, 63, 94, 0.36),
+    0 12px 28px rgba(2, 8, 23, 0.42);
+  color: #fff7ed;
+  font-size: clamp(0.82rem, 3.6vw, 1.05rem);
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(2, 8, 23, 0.92);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0);
+  animation:
+    combatPromptArrive 260ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    combatPromptPulse 1.35s ease-in-out 260ms infinite;
+}
+
+.rollPromptLocked {
+  opacity: 0.78;
+  animation: combatPromptLock 180ms ease-out both;
+}
+
+.rollPromptReduced {
+  animation: none;
+}
+
+@keyframes combatPromptArrive {
+  from {
+    opacity: 0;
+    transform: translate3d(-50%, calc(-50% + 0.65rem), 0) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0) scale(1);
+  }
+}
+
+@keyframes combatPromptPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(244, 63, 94, 0.24),
+      0 0 24px rgba(244, 63, 94, 0.28),
+      0 12px 28px rgba(2, 8, 23, 0.42);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(254, 202, 202, 0.38),
+      0 0 36px rgba(244, 63, 94, 0.5),
+      0 12px 28px rgba(2, 8, 23, 0.42);
+  }
+}
+
+@keyframes combatPromptLock {
+  from {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0) scale(1);
+  }
+
+  to {
+    opacity: 0.72;
+    transform: translate3d(-50%, -50%, 0) scale(0.96);
+  }
+}
+
+@media (max-width: 640px) {
+  .rollPrompt {
+    max-width: calc(100% - max(1.5rem, env(safe-area-inset-left)) - max(1.5rem, env(safe-area-inset-right)));
+    padding-inline: clamp(1rem, 5vw, 1.55rem);
+    font-size: clamp(0.76rem, 3.8vw, 0.92rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rollPrompt {
+    animation: none;
+  }
+}

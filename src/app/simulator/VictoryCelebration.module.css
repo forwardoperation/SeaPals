@@ -1,0 +1,375 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding:
+    max(16px, env(safe-area-inset-top))
+    max(14px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(14px, env(safe-area-inset-left));
+  overflow: hidden auto;
+  isolation: isolate;
+  color: #fff9dd;
+  animation: victoryLayerReveal 420ms ease-out both;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -4;
+  background:
+    radial-gradient(circle at 50% 37%, rgb(16 205 218 / 22%), transparent min(56vw, 32rem)),
+    radial-gradient(circle at 50% 52%, rgb(244 183 51 / 13%), transparent min(70vw, 42rem)),
+    rgb(1 10 22 / 74%);
+  -webkit-backdrop-filter: blur(3px) saturate(0.76);
+  backdrop-filter: blur(3px) saturate(0.76);
+}
+
+.rays {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  z-index: -3;
+  width: min(126vmax, 1060px);
+  aspect-ratio: 1;
+  opacity: 0.32;
+  background: repeating-conic-gradient(
+    from -4deg,
+    rgb(255 231 127 / 0%) 0deg 7deg,
+    rgb(255 231 127 / 44%) 8deg 11deg,
+    rgb(68 232 235 / 0%) 12deg 20deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 0 15%, rgb(0 0 0 / 86%) 36%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 0 15%, rgb(0 0 0 / 86%) 36%, transparent 72%);
+  transform: translate(-50%, -50%);
+  animation: victoryRaysTurn 18s linear infinite;
+}
+
+.ring {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  z-index: -2;
+  aspect-ratio: 1;
+  border: 2px solid rgb(255 224 111 / 68%);
+  border-radius: 999px;
+  box-shadow: 0 0 24px rgb(255 206 70 / 20%), inset 0 0 24px rgb(26 222 225 / 16%);
+  transform: translate(-50%, -50%);
+  animation: victoryRingExpand 2.8s ease-out infinite;
+}
+
+.ringOuter {
+  width: min(78vmin, 580px);
+}
+
+.ringInner {
+  width: min(52vmin, 380px);
+  border-color: rgb(108 243 243 / 62%);
+  animation-delay: -1.35s;
+}
+
+.sparkles {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  top: var(--spark-y);
+  left: var(--spark-x);
+  width: var(--spark-size);
+  aspect-ratio: 1;
+  background: #fff6b5;
+  box-shadow: 0 0 12px #ffe675, 0 0 24px rgb(52 230 234 / 54%);
+  clip-path: polygon(50% 0, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0 50%, 39% 38%);
+  animation: victorySparkle var(--spark-duration) ease-in-out var(--spark-delay) infinite;
+}
+
+.celebration {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 860px);
+  max-height: calc(100dvh - max(32px, env(safe-area-inset-top)) - max(32px, env(safe-area-inset-bottom)));
+  margin: auto;
+  outline: none;
+  text-align: center;
+}
+
+.emblem {
+  position: relative;
+  width: clamp(168px, 34vmin, 292px);
+  aspect-ratio: 1;
+  filter: drop-shadow(0 18px 24px rgb(0 3 12 / 56%));
+  transform-origin: 50% 52%;
+  animation: victoryEmblemArrive 900ms 100ms cubic-bezier(0.18, 1.36, 0.38, 1) both;
+}
+
+.emblemGlow {
+  position: absolute;
+  inset: 13%;
+  border-radius: 999px;
+  background: rgb(255 225 108 / 54%);
+  box-shadow:
+    0 0 34px rgb(255 205 51 / 74%),
+    0 0 84px rgb(18 220 226 / 44%);
+  animation: victoryEmblemGlow 2.2s ease-in-out infinite;
+}
+
+.crestGraphic {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.crestBurst {
+  transform-origin: center;
+  filter: drop-shadow(0 2px 1px rgb(255 255 255 / 50%));
+}
+
+.crestEdge {
+  fill: none;
+  stroke: #fff9d6;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+}
+
+.crestPearlRim {
+  fill: #fdf7de;
+  stroke: #6e3b0e;
+  stroke-width: 2.4;
+}
+
+.crestWave {
+  fill: rgb(2 54 86 / 78%);
+}
+
+.crestWaveBack {
+  fill: none;
+  stroke: rgb(235 255 253 / 88%);
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.crestBubble {
+  fill: rgb(239 255 254 / 90%);
+  stroke: rgb(5 96 128 / 46%);
+  stroke-width: 0.6;
+}
+
+.title {
+  position: relative;
+  z-index: 2;
+  margin: clamp(-28px, -3.6vmin, -16px) 0 0;
+  color: #ffd54f;
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: clamp(3.65rem, 14vw, 7.8rem);
+  font-stretch: condensed;
+  font-weight: 950;
+  letter-spacing: 0.025em;
+  line-height: 0.86;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fffbd3 0%, #ffe56e 26%, #ffb52e 61%, #c95d0b 100%);
+  background-clip: text;
+  filter: drop-shadow(0 10px 3px rgb(20 7 0 / 56%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 1.4px #6d3407;
+  animation: victoryTitleArrive 780ms 580ms cubic-bezier(0.15, 0.92, 0.34, 1.18) both;
+}
+
+.title::after {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: transparent;
+  content: attr(data-title);
+  background: linear-gradient(106deg, transparent 28%, rgb(255 255 255 / 92%) 47%, transparent 65%) -180% 0 / 56% 100% no-repeat;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0;
+  animation: victoryTitleSweep 2.8s 1.25s ease-in-out infinite;
+}
+
+.reason {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(9px, 2.5vw, 20px);
+  width: min(94%, 680px);
+  min-height: 48px;
+  margin: clamp(18px, 3.2vmin, 30px) 0 0;
+  padding: 11px clamp(18px, 4vw, 32px);
+  overflow: hidden;
+  color: #fff8de;
+  border: 1px solid rgb(255 223 126 / 52%);
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, transparent, rgb(21 93 107 / 30%) 18% 82%, transparent),
+    rgb(2 13 25 / 84%);
+  box-shadow: 0 10px 28px rgb(0 2 12 / 42%), inset 0 1px rgb(255 255 255 / 13%);
+  font-size: clamp(0.82rem, 2.8vw, 1.03rem);
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  line-height: 1.35;
+  text-wrap: balance;
+  animation: victoryReasonReveal 520ms 1.08s ease-out both;
+}
+
+.reasonAccent {
+  flex: 1 1 48px;
+  max-width: 94px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ffe57d);
+  box-shadow: 0 0 8px rgb(255 224 101 / 56%);
+}
+
+.reasonAccent:last-child {
+  background: linear-gradient(90deg, #ffe57d, transparent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  width: min(94%, 680px);
+  margin-top: clamp(14px, 2.5vmin, 24px);
+  animation: victoryActionsReveal 480ms 1.28s ease-out both;
+}
+
+.actions > * {
+  min-height: 44px;
+}
+
+@keyframes victoryLayerReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes victoryRaysTurn {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes victoryRingExpand {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.58); }
+  24% { opacity: 0.74; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.18); }
+}
+
+@keyframes victorySparkle {
+  0%, 100% { opacity: 0.18; transform: scale(0.44) rotate(0deg); }
+  46% { opacity: 1; transform: scale(1.18) rotate(45deg); }
+  68% { opacity: 0.54; transform: scale(0.72) rotate(90deg); }
+}
+
+@keyframes victoryEmblemArrive {
+  0% { opacity: 0; transform: translateY(-18vh) scale(0.22) rotate(-16deg); }
+  62% { opacity: 1; transform: translateY(2.5vmin) scale(1.08) rotate(2deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes victoryEmblemGlow {
+  0%, 100% { opacity: 0.72; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes victoryTitleArrive {
+  from { opacity: 0; transform: translateY(28px) scaleX(0.74) scaleY(1.24); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes victoryTitleSweep {
+  0%, 12% { background-position: -180% 0; }
+  46%, 100% { background-position: 260% 0; }
+}
+
+@keyframes victoryReasonReveal {
+  from { opacity: 0; transform: translateY(16px) scaleX(0.84); }
+  to { opacity: 1; transform: translateY(0) scaleX(1); }
+}
+
+@keyframes victoryActionsReveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reducedMotion,
+.reducedMotion *,
+.reducedMotion *::before,
+.reducedMotion *::after {
+  scroll-behavior: auto !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (max-width: 520px) {
+  .celebration {
+    width: 100%;
+  }
+
+  .emblem {
+    width: clamp(166px, 52vw, 226px);
+  }
+
+  .title {
+    margin-top: -18px;
+    font-size: clamp(3.65rem, 18vw, 5.6rem);
+    -webkit-text-stroke-width: 1px;
+  }
+
+  .reason {
+    width: 100%;
+    padding-inline: 16px;
+  }
+
+  .reasonAccent {
+    flex-basis: 22px;
+  }
+
+  .actions {
+    width: 100%;
+  }
+}
+
+@media (max-height: 620px) {
+  .emblem {
+    width: clamp(126px, 27vmin, 178px);
+  }
+
+  .title {
+    margin-top: -14px;
+    font-size: clamp(3rem, 11vmin, 5.2rem);
+  }
+
+  .reason {
+    min-height: 42px;
+    margin-top: 12px;
+    padding-block: 8px;
+  }
+
+  .actions {
+    margin-top: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer,
+  .layer *,
+  .layer *::before,
+  .layer *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}

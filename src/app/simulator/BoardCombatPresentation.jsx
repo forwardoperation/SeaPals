@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import styles from "./BoardCombatPresentation.module.css";
 
 function getDieKind(expression) {
   const match = String(expression ?? "").toUpperCase().match(/D(\d+)/);
@@ -160,6 +161,17 @@ export function BoardCombatDice({
   const lockedAnnouncement = locked && preview
     ? `Rolls locked. Attack ${preview.attack}${defenseExpression ? `, defense ${preview.defense}` : ""}.`
     : "";
+  const playerRollIntent = attackerOwner === "player"
+    ? "attack"
+    : defenderOwner === "player"
+      ? "defend"
+      : "resolve";
+  const rollPrompt = locked
+    ? "Resolving attack…"
+    : `Tap to ${playerRollIntent}`;
+  const rollControlLabel = locked
+    ? "Attack resolving"
+    : `${rollPrompt}. Stop the dice and resolve the attack.`;
 
   return (
     <div
@@ -176,7 +188,7 @@ export function BoardCombatDice({
         className={`seapals-combat-roll-catcher${tutorialClass}`}
         data-stop-combat-roll
         data-tutorial-target="faceoff-action"
-        aria-label="Stop dice and resolve attack"
+        aria-label={rollControlLabel}
         disabled={!preview || locked}
         onClick={onStop}
         onKeyDown={(event) => {
@@ -191,6 +203,14 @@ export function BoardCombatDice({
           {defenseExpression ? ` and ${String(defenseExpression).toUpperCase()}` : ""} and resolve the attack.
         </span>
       </button>
+      <span
+        className={`${styles.rollPrompt}${reducedMotion ? ` ${styles.rollPromptReduced}` : ""}${locked ? ` ${styles.rollPromptLocked}` : ""}`}
+        data-combat-roll-prompt
+        data-roll-intent={playerRollIntent}
+        aria-hidden="true"
+      >
+        {rollPrompt}
+      </span>
       <div className="seapals-combat-dice-zones" aria-hidden="true">
         <div className="seapals-combat-dice-zone is-opponent">{diceByOwner.opponent}</div>
         <div className="seapals-combat-dice-divider-space" />

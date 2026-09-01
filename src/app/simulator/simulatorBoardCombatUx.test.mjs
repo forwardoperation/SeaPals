@@ -107,7 +107,7 @@ test("combat dice are a transparent board-context dialog, not the full-page even
   assert.match(presentationSource, /owner=\{attackerOwner\}/);
   assert.match(presentationSource, /owner=\{defenderOwner\}/);
   assert.match(presentationSource, /data-stop-combat-roll/);
-  assert.match(presentationSource, /aria-label="Stop dice and resolve attack"/i);
+  assert.match(presentationSource, /aria-label=\{rollControlLabel\}/i);
   assert.match(boardCombatSource, /role="dialog"[\s\S]{0,120}aria-modal="true"[\s\S]{0,120}aria-label="Attack roll off"/);
   assert.match(presentationSource, /aria-live="polite"/);
   assert.match(
@@ -129,6 +129,33 @@ test("combat dice are a transparent board-context dialog, not the full-page even
     /\{eventOverlay\s*&&\s*!boardFaceoffActive\s*\?\s*\(/,
     "V2 faceoffs must be excluded from the generic fixed, aria-modal event overlay",
   );
+});
+
+test("the board roll gives the local player a centered attack or defense tap prompt", () => {
+  assert.match(
+    boardCombatSource,
+    /attackerOwner === "player"[\s\S]{0,120}?"attack"[\s\S]{0,160}?defenderOwner === "player"[\s\S]{0,120}?"defend"/,
+    "The prompt should describe the local player's role in either direction of combat",
+  );
+  assert.match(boardCombatSource, /`Tap to \$\{playerRollIntent\}`/);
+  assert.match(boardCombatSource, /data-combat-roll-prompt/);
+  assert.match(boardCombatSource, /data-roll-intent=\{playerRollIntent\}/);
+  assert.match(
+    boardCombatSource,
+    /data-combat-roll-prompt[\s\S]{0,180}?aria-hidden="true"/,
+    "The visual prompt should not duplicate the accessible full-board control",
+  );
+  assert.match(boardCombatSource, /aria-label=\{rollControlLabel\}/);
+  assert.match(boardCombatSource, /\$\{rollPrompt\}\. Stop the dice and resolve the attack\./);
+
+  assert.match(
+    presentationSource,
+    /\.rollPrompt\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?inset-block-start:\s*50%;[\s\S]*?inset-inline-start:\s*50%;[\s\S]*?pointer-events:\s*none;[\s\S]*?translate3d\(-50%,\s*-50%,\s*0\)/,
+    "The copy should remain centered over the board without intercepting the tap catcher",
+  );
+  assert.match(presentationSource, /@media \(max-width:\s*640px\)[\s\S]*?\.rollPrompt/);
+  assert.match(presentationSource, /\.rollPromptReduced\s*\{[\s\S]*?animation:\s*none;/);
+  assert.match(presentationSource, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.rollPrompt[\s\S]*?animation:\s*none;/);
 });
 
 test("the board roll dialog focuses after dice exist and isolates reef and hand controls", () => {
