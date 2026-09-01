@@ -14,17 +14,22 @@ function sourceBetween(startMarker, endMarker) {
   return simulatorSource.slice(start, end);
 }
 
-test("opening coin flow waits for a call and a separate player-triggered toss", () => {
+test("opening coin flow starts ready and needs only one player-triggered toss", () => {
   const flow = sourceBetween("function cancelOpeningCoinFlip", "function chooseOpeningTurn");
-  assert.match(flow, /function prepareOpeningCoinFlip\(call\)/);
-  assert.match(flow, /createOpeningCoinReadyOverlay\(\{ call \}\)/);
+  const openFlow = sourceBetween("function openOpeningCoinFlip", "function finishTutorialIntroduction");
+
+  assert.doesNotMatch(flow, /function prepareOpeningCoinFlip|createOpeningCoinCallOverlay/);
   assert.match(flow, /function flipForOpeningTurn\(\)/);
   assert.match(flow, /eventOverlay\?\.type !== OpeningCoinPhase\.READY/);
   assert.match(flow, /openingCoinFlipActiveRef\.current/);
+  assert.match(flow, /resolveOpeningCoinFlip\(\{[\s\S]*?random: Math\.random,[\s\S]*?forcedWinner:/);
+  assert.doesNotMatch(flow, /call:|coinCall/);
   assert.match(flow, /createOpeningCoinFlippingOverlay/);
-  assert.doesNotMatch(flow, /setEventOverlay\(\{\s*type: ["']opening-coin-result/);
+  assert.match(openFlow, /createOpeningCoinReadyOverlay\(\)/);
+  assert.doesNotMatch(openFlow, /createOpeningCoinCallOverlay/);
 });
-test("the V2 opening flip is a board-native, one-tap interaction in the player ecosystem", () => {
+
+test("the V2 opening flip remains a board-native, one-tap interaction in the player ecosystem", () => {
   assert.match(simulatorSource, /import OpeningCoinBoardPresentation/);
   assert.match(simulatorSource, /active=\{openingCoinBoardActive\}/);
   assert.match(simulatorSource, /onStop=\{flipForOpeningTurn\}/);
@@ -45,6 +50,41 @@ test("the V2 opening flip is a board-native, one-tap interaction in the player e
   assert.match(boardPresentationStyles, /var\(--seapals-mobile-reef-split, 50%\)/);
 });
 
+test("the board never asks the player to call a side or choose the opening player", () => {
+  assert.doesNotMatch(boardPresentationSource, /\bonCall\b|\bonChangeCall\b/);
+  assert.doesNotMatch(boardPresentationSource, />\s*Heads\s*</i);
+  assert.doesNotMatch(boardPresentationSource, />\s*Tails\s*</i);
+  assert.doesNotMatch(boardPresentationSource, /Change call|>\s*Go First\s*<|Let Opponent Go First/i);
+  assert.equal((boardPresentationSource.match(/Begin Setup/g) ?? []).length, 1);
+  assert.match(
+    boardPresentationSource,
+    /onClick=\{onBeginSetup\}[\s\S]*?>\s*Begin Setup\s*</,
+  );
+  assert.doesNotMatch(simulatorSource, /onCall=|onChangeCall=/);
+  assert.match(simulatorSource, /onBeginSetup=\{chooseOpeningTurn\}/);
+});
+
+test("the coin uses reef-fish and blank faces with a win-only light burst", () => {
+  assert.match(boardPresentationSource, /src="\/images\/icons\/reef-fish-icon\.png"/);
+  assert.match(boardPresentationSource, /seapals-opening-coin-fish/);
+  assert.match(boardPresentationSource, /seapals-opening-coin-blank/);
+  assert.match(boardPresentationSource, /celebrate=\{playerWon\}/);
+  assert.match(boardPresentationSource, /data-opening-coin-win-burst/);
+  assert.match(boardPresentationStyles, /@keyframes boardCoinBurstHalo/);
+  assert.match(boardPresentationStyles, /@keyframes boardCoinBurstRay/);
+  assert.match(boardPresentationStyles, /\.reducedMotion \.burstHalo[\s\S]*?opacity:/);
+  assert.match(boardPresentationStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.burstSpark/);
+});
+
+test("the landed side is handed directly to setup as the automatic starter", () => {
+  const chooseFlow = sourceBetween("function chooseOpeningTurn", "function openOpeningCoinFlip");
+  assert.match(chooseFlow, /function chooseOpeningTurn\(\)/);
+  assert.match(chooseFlow, /winner: eventOverlay\?\.coinWinner/);
+  assert.doesNotMatch(chooseFlow, /playerChoice/);
+  assert.match(chooseFlow, /setStartingPlayer\(chosenStarter\)/);
+  assert.match(chooseFlow, /chooseOpeningPlayer\(\{[\s\S]*?tutorial: tutorialUsesScriptedScenario/);
+});
+
 test("coin toss blocks rerolls and locks the rest of the board while active", () => {
   assert.match(simulatorSource, /openingCoinFlipActiveRef\.current = true/);
   assert.match(simulatorSource, /OpeningCoinPhase\.FLIPPING/);
@@ -59,22 +99,19 @@ test("coin toss blocks rerolls and locks the rest of the board while active", ()
   assert.match(simulatorSource, /data-opening-coin-active="true"[\s\S]*\.seapals-reef-score[\s\S]*visibility:\s*hidden/);
 });
 
-test("coin animation resolves from its stored outcome with a reduced-motion fallback", () => {
+test("tutorial and reduced-motion tosses still land deterministically without skipping resolution", () => {
+  const flipFlow = sourceBetween("function flipForOpeningTurn", "function completeOpeningCoinFlip");
+  assert.match(flipFlow, /forcedWinner: tutorialUsesScriptedScenario \? OpeningPlayer\.PLAYER : null/);
   assert.match(simulatorSource, /prefers-reduced-motion: reduce/);
   assert.match(simulatorSource, /getOpeningCoinFlipRevealDelay\(\{[\s\S]*accessibilityReducedMotion \|\| systemReducedMotion/);
   assert.match(simulatorSource, /return \(\) => window\.clearTimeout\(revealTimer\)/);
   assert.match(boardPresentationSource, /onAnimationEnd=\{\(\) => onLanded\?\.\(event\.flipId\)\}/);
-  assert.match(simulatorSource, /@keyframes seapalsCoinFlipHeads/);
-  assert.match(simulatorSource, /@keyframes seapalsCoinFlipTails/);
   assert.match(boardPresentationSource, /seapals-opening-coin-landed-\$\{normalizedSide\}/);
   assert.match(boardPresentationStyles, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
-test("call and result controls stay compact on the board without changing opening-turn rules", () => {
-  assert.match(boardPresentationSource, /isCalling[\s\S]*onCall\?\.\("heads"\)[\s\S]*onCall\?\.\("tails"\)/);
-  assert.match(boardPresentationSource, /isResult[\s\S]*onChooseOpeningPlayer\?\.\(OpeningPlayer\.PLAYER\)/);
-  assert.match(boardPresentationSource, /onChooseOpeningPlayer\?\.\(OpeningPlayer\.OPPONENT\)/);
-  assert.match(boardPresentationSource, /tutorial \? "Begin Setup" : "Go First"/);
+test("opening the toss still favors Your Reef on constrained mobile screens", () => {
+  const openFlow = sourceBetween("function openOpeningCoinFlip", "function finishTutorialIntroduction");
+  assert.match(openFlow, /if \(previewExperience\) setMobileReefSplit\(MOBILE_REEF_SPLIT_DEFAULT\)/);
   assert.match(boardPresentationStyles, /width:\s*min\(25rem, 100%\)/);
-  assert.match(simulatorSource, /if \(previewExperience\) setMobileReefSplit\(MOBILE_REEF_SPLIT_DEFAULT\)/);
 });

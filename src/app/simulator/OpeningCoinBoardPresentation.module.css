@@ -83,6 +83,10 @@
   backdrop-filter: none;
 }
 
+.resultPanel {
+  overflow: visible;
+}
+
 .eyebrow {
   color: #fde68a;
   font-size: clamp(0.58rem, 2.4vw, 0.72rem);
@@ -107,33 +111,10 @@
   line-height: 1.35;
 }
 
-.callCoin {
-  display: grid;
-  width: clamp(3.6rem, 14vw, 5rem);
-  height: clamp(3.6rem, 14vw, 5rem);
-  margin-top: 0.65rem;
-  place-items: center;
-  border: 0.3rem solid #fef3c7;
-  border-radius: 999px;
-  color: #422006;
-  background: linear-gradient(145deg, #fde68a, #f59e0b 58%, #b45309);
-  box-shadow: inset 0 0 0 0.14rem rgba(120, 53, 15, 0.5), 0 0 28px rgba(251, 191, 36, 0.34);
-  font-size: clamp(1.8rem, 7vw, 2.5rem);
-  font-weight: 950;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.55rem;
-  margin-top: 0.75rem;
-}
-
 .primaryAction,
-.secondaryAction,
 .opponentAction {
   min-height: 2.75rem;
+  margin-top: 0.75rem;
   padding: 0.65rem clamp(1rem, 4vw, 1.55rem);
   border-radius: 999px;
   font-size: clamp(0.72rem, 3vw, 0.88rem);
@@ -147,28 +128,19 @@
   box-shadow: 0 8px 24px rgba(16, 185, 129, 0.28);
 }
 
-.secondaryAction {
-  border: 1px solid rgba(165, 243, 252, 0.66);
-  color: #cffafe;
-  background: rgba(8, 47, 73, 0.58);
-}
-
 .opponentAction {
-  margin-top: 0.75rem;
   color: #4c0519;
   background: linear-gradient(135deg, #fda4af, #fb7185);
   box-shadow: 0 8px 24px rgba(244, 63, 94, 0.24);
 }
 
 .primaryAction:hover,
-.secondaryAction:hover,
 .opponentAction:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
 }
 
 .primaryAction:focus-visible,
-.secondaryAction:focus-visible,
 .opponentAction:focus-visible {
   outline: 3px solid #fef3c7;
   outline-offset: 3px;
@@ -178,6 +150,12 @@
 .resultVisual {
   width: 100%;
   pointer-events: none;
+}
+
+.resultVisual {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
 }
 
 .visual :global(.seapals-opening-coin-stage),
@@ -191,9 +169,46 @@
   height: var(--coin-size);
 }
 
-.visual :global(.seapals-opening-coin-face strong),
-.resultVisual :global(.seapals-opening-coin-face strong) {
-  font-size: clamp(2.1rem, 8vw, 3.25rem);
+.fishFace {
+  border-color: rgba(236, 254, 255, 0.95) !important;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.92), transparent 19%),
+    linear-gradient(145deg, #dffcf7 0%, #67e8f9 24%, #14b8a6 62%, #075985 100%) !important;
+  box-shadow:
+    inset 0 0 0 0.18rem rgba(6, 78, 99, 0.38),
+    inset -0.45rem -0.55rem 0.9rem rgba(8, 47, 73, 0.35),
+    0 0.6rem 1.4rem rgba(2, 8, 23, 0.38) !important;
+}
+
+.fishIcon {
+  display: block;
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  filter: drop-shadow(0 0.22rem 0.32rem rgba(2, 8, 23, 0.35));
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.blankFace {
+  border-color: rgba(236, 254, 255, 0.9) !important;
+  background:
+    radial-gradient(circle at 34% 27%, rgba(255, 255, 255, 0.88), transparent 18%),
+    radial-gradient(circle at 50% 48%, rgba(207, 250, 254, 0.44), transparent 48%),
+    linear-gradient(145deg, #e2f8f6 0%, #94a3b8 48%, #155e75 100%) !important;
+  box-shadow:
+    inset 0 0 0 0.18rem rgba(8, 47, 73, 0.35),
+    inset -0.48rem -0.58rem 0.95rem rgba(15, 23, 42, 0.34),
+    0 0.6rem 1.4rem rgba(2, 8, 23, 0.38) !important;
+}
+
+.blankEmboss {
+  width: 62%;
+  aspect-ratio: 1;
+  border: 0.12rem solid rgba(236, 254, 255, 0.25);
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.09), transparent 62%);
+  box-shadow: inset 0 0 0 0.12rem rgba(8, 47, 73, 0.12);
 }
 
 .visual :global(.seapals-opening-coin-shadow),
@@ -212,6 +227,68 @@
   height: clamp(3.8rem, 12vw, 5.4rem);
 }
 
+.winBurst {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: min(12rem, 44vw);
+  aspect-ratio: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.burstHalo,
+.burstRing,
+.burstRay,
+.burstSpark {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.burstHalo {
+  inset: 14%;
+  border-radius: 999px;
+  background: conic-gradient(from 22deg, rgba(34, 211, 238, 0.82), rgba(251, 191, 36, 0.76), rgba(251, 113, 133, 0.68), rgba(52, 211, 153, 0.78), rgba(167, 139, 250, 0.7), rgba(34, 211, 238, 0.82));
+  filter: blur(0.75rem);
+  animation: boardCoinBurstHalo 900ms ease-out both;
+}
+
+.burstRing {
+  inset: 32%;
+  border: 0.2rem solid rgba(254, 243, 199, 0.92);
+  border-radius: 999px;
+  box-shadow: 0 0 1.3rem rgba(103, 232, 249, 0.78);
+  animation: boardCoinBurstRing 850ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.burstRay {
+  top: 50%;
+  left: calc(50% - 0.12rem);
+  width: 0.24rem;
+  height: 44%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--burst-color), transparent 86%);
+  filter: drop-shadow(0 0 0.32rem var(--burst-color));
+  opacity: 0;
+  transform: rotate(var(--burst-angle)) scaleY(0.08);
+  transform-origin: 50% 0;
+  animation: boardCoinBurstRay 820ms cubic-bezier(0.16, 1, 0.3, 1) var(--burst-delay) both;
+}
+
+.burstSpark {
+  top: 50%;
+  left: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--burst-color);
+  box-shadow: 0 0 0.75rem var(--burst-color);
+  opacity: 0;
+  animation: boardCoinBurstSpark 880ms cubic-bezier(0.16, 1, 0.3, 1) var(--burst-delay) both;
+}
+
 .layer :global(.seapals-opening-coin-spinning) {
   -webkit-transform-style: preserve-3d;
   animation: boardCoinSpin 0.82s linear infinite;
@@ -225,12 +302,12 @@
   animation: boardCoinShadow 0.82s ease-in-out infinite;
 }
 
-.layer :global(.seapals-opening-coin-flipping-heads) {
-  animation: boardCoinLandHeads 1.08s cubic-bezier(0.22, 0.72, 0.25, 1) forwards;
+.layer :global(.seapals-opening-coin-flipping-fish) {
+  animation: boardCoinLandFish 1.08s cubic-bezier(0.22, 0.72, 0.25, 1) forwards;
 }
 
-.layer :global(.seapals-opening-coin-flipping-tails) {
-  animation: boardCoinLandTails 1.08s cubic-bezier(0.22, 0.72, 0.25, 1) forwards;
+.layer :global(.seapals-opening-coin-flipping-blank) {
+  animation: boardCoinLandBlank 1.08s cubic-bezier(0.22, 0.72, 0.25, 1) forwards;
 }
 
 .tapPrompt,
@@ -255,37 +332,29 @@
   animation: none;
 }
 
-.changeCallHint {
-  margin-top: 0.42rem;
-  color: rgba(254, 243, 199, 0.68);
-  font-size: 0.62rem;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.changeCallAction {
-  margin-top: 0.35rem;
-  padding: 0.36rem 0.7rem;
-  border: 1px solid rgba(203, 213, 225, 0.35);
-  border-radius: 999px;
-  color: #cbd5e1;
-  background: rgba(15, 23, 42, 0.72);
-  font-size: 0.62rem;
-  font-weight: 850;
-  pointer-events: auto;
-}
-
-.changeCallAction:focus-visible {
-  outline: 3px solid #fef3c7;
-  outline-offset: 2px;
-}
-
 .reducedMotion .panel,
 .reducedMotion .tapPrompt,
-.reducedMotion :global(.seapals-opening-coin) {
+.reducedMotion :global(.seapals-opening-coin),
+.reducedMotion .burstHalo,
+.reducedMotion .burstRing,
+.reducedMotion .burstRay,
+.reducedMotion .burstSpark {
   animation: none !important;
   transition: none !important;
+}
+
+.reducedMotion .burstHalo {
+  opacity: 0.28;
+}
+
+.reducedMotion .burstRing {
+  opacity: 0.42;
+  transform: scale(1.42);
+}
+
+.reducedMotion .burstRay,
+.reducedMotion .burstSpark {
+  display: none;
 }
 
 @media (max-width: 1279px) {
@@ -308,8 +377,11 @@
     min-height: 5.5rem;
   }
 
-  .message,
-  .changeCallHint {
+  .winBurst {
+    width: min(8.5rem, 40vw);
+  }
+
+  .message {
     display: none;
   }
 }
@@ -317,9 +389,27 @@
 @media (prefers-reduced-motion: reduce) {
   .panel,
   .tapPrompt,
-  .layer :global(.seapals-opening-coin) {
+  .layer :global(.seapals-opening-coin),
+  .burstHalo,
+  .burstRing,
+  .burstRay,
+  .burstSpark {
     animation: none !important;
     transition: none !important;
+  }
+
+  .burstHalo {
+    opacity: 0.28;
+  }
+
+  .burstRing {
+    opacity: 0.42;
+    transform: scale(1.42);
+  }
+
+  .burstRay,
+  .burstSpark {
+    display: none;
   }
 }
 
@@ -334,18 +424,42 @@
   100% { transform: translateY(0) rotateX(7deg) rotateY(1080deg); }
 }
 
-@keyframes boardCoinLandHeads {
+@keyframes boardCoinLandFish {
   0% { transform: translateY(0) rotateY(0deg) rotateZ(0deg); }
   48% { transform: translateY(calc(0px - var(--coin-toss))) rotateY(900deg) rotateZ(10deg); }
   82% { transform: translateY(0.16rem) rotateY(1620deg) rotateZ(-4deg); }
   100% { transform: translateY(0) rotateY(1800deg) rotateZ(0deg); }
 }
 
-@keyframes boardCoinLandTails {
+@keyframes boardCoinLandBlank {
   0% { transform: translateY(0) rotateY(0deg) rotateZ(0deg); }
   48% { transform: translateY(calc(0px - var(--coin-toss))) rotateY(990deg) rotateZ(10deg); }
   82% { transform: translateY(0.16rem) rotateY(1800deg) rotateZ(-4deg); }
   100% { transform: translateY(0) rotateY(1980deg) rotateZ(0deg); }
+}
+
+@keyframes boardCoinBurstHalo {
+  0% { opacity: 0; transform: scale(0.18) rotate(-24deg); }
+  32% { opacity: 0.82; }
+  100% { opacity: 0; transform: scale(1.18) rotate(18deg); }
+}
+
+@keyframes boardCoinBurstRing {
+  0% { opacity: 0; transform: scale(0.36); }
+  22% { opacity: 1; }
+  100% { opacity: 0; transform: scale(2.25); }
+}
+
+@keyframes boardCoinBurstRay {
+  0% { opacity: 0; transform: rotate(var(--burst-angle)) scaleY(0.08); }
+  24% { opacity: 0.92; }
+  100% { opacity: 0; transform: rotate(var(--burst-angle)) scaleY(var(--burst-scale)); }
+}
+
+@keyframes boardCoinBurstSpark {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--burst-angle)) translateY(-0.8rem) scale(0.2); }
+  28% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--burst-angle)) translateY(-5rem) scale(var(--burst-scale)); }
 }
 
 @keyframes boardCoinShadow {

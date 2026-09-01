@@ -54,7 +54,6 @@ import {
   OpeningCoinPhase,
   OpeningPlayer,
   chooseOpeningPlayer,
-  createOpeningCoinCallOverlay,
   createOpeningCoinFlippingOverlay,
   createOpeningCoinReadyOverlay,
   createOpeningCoinResultOverlay,
@@ -3518,7 +3517,6 @@ export default function Simulator({
         }
         return createOpeningCoinResultOverlay({
           result: {
-            call: currentOverlay.coinCall,
             landed: currentOverlay.coinLanded,
             winner: currentOverlay.coinWinner,
           },
@@ -14672,18 +14670,12 @@ export default function Simulator({
     openingCoinFlipActiveRef.current = false;
   }
 
-  function prepareOpeningCoinFlip(call) {
-    cancelOpeningCoinFlip();
-    setEventOverlay(createOpeningCoinReadyOverlay({ call }));
-  }
-
   function flipForOpeningTurn() {
     if (eventOverlay?.type !== OpeningCoinPhase.READY || openingCoinFlipActiveRef.current) return;
     openingCoinFlipActiveRef.current = true;
     const flipId = openingCoinFlipIdRef.current + 1;
     openingCoinFlipIdRef.current = flipId;
     const result = resolveOpeningCoinFlip({
-      call: eventOverlay.coinCall,
       random: Math.random,
       forcedWinner: tutorialUsesScriptedScenario ? OpeningPlayer.PLAYER : null,
     });
@@ -14703,7 +14695,6 @@ export default function Simulator({
       }
       return createOpeningCoinResultOverlay({
         result: {
-          call: currentOverlay.coinCall,
           landed: currentOverlay.coinLanded,
           winner: currentOverlay.coinWinner,
         },
@@ -14712,11 +14703,10 @@ export default function Simulator({
     });
   }
 
-  function chooseOpeningTurn(playerChoice = OpeningPlayer.PLAYER) {
+  function chooseOpeningTurn() {
     cancelOpeningCoinFlip();
     const chosenStarter = chooseOpeningPlayer({
       winner: eventOverlay?.coinWinner,
-      playerChoice,
       tutorial: tutorialUsesScriptedScenario,
     });
     setStartingPlayer(chosenStarter);
@@ -14746,11 +14736,8 @@ export default function Simulator({
   function openOpeningCoinFlip() {
     cancelOpeningCoinFlip();
     if (previewExperience) setMobileReefSplit(MOBILE_REEF_SPLIT_DEFAULT);
-    setEventOverlay(createOpeningCoinCallOverlay({
-      tutorial: tutorialUsesScriptedScenario,
-      guideName: tutorialGuide.name,
-    }));
-    setTurnLog(["The opening coin flip will decide who takes the first turn."]);
+    setEventOverlay(createOpeningCoinReadyOverlay());
+    setTurnLog(["Tap the opening coin. Reef Fish means you go first; blank means the opponent goes first."]);
   }
 
   function finishTutorialIntroduction() {
@@ -14891,9 +14878,9 @@ export default function Simulator({
     setHandLimitDiscardSelection([]);
     setEventOverlay(tutorialUsesScriptedScenario
       ? previewExperience
-        ? createOpeningCoinCallOverlay({ tutorial: true, guideName: tutorialGuide.name })
+        ? createOpeningCoinReadyOverlay()
         : null
-      : createOpeningCoinCallOverlay());
+      : createOpeningCoinReadyOverlay());
     setPendingEvents([]);
     setFaceoffRolling(false);
     setFaceoffPreview(null);
@@ -15276,18 +15263,18 @@ export default function Simulator({
           0%, 100% { transform: translateY(0) rotateX(7deg) rotateY(-8deg); }
           50% { transform: translateY(-.45rem) rotateX(-4deg) rotateY(8deg); }
         }
-        @keyframes seapalsCoinReadyTails {
+        @keyframes seapalsCoinReadyBlank {
           0%, 100% { transform: translateY(0) rotateX(7deg) rotateY(172deg); }
           50% { transform: translateY(-.45rem) rotateX(-4deg) rotateY(188deg); }
         }
-        @keyframes seapalsCoinFlipHeads {
+        @keyframes seapalsCoinFlipFish {
           0% { transform: translateY(0) rotateY(0deg) rotateZ(0deg); }
           44% { transform: translateY(-5.25rem) rotateY(900deg) rotateZ(12deg); }
           78% { transform: translateY(.25rem) rotateY(1620deg) rotateZ(-6deg); }
           89% { transform: translateY(-.85rem) rotateY(1740deg) rotateZ(3deg); }
           100% { transform: translateY(0) rotateY(1800deg) rotateZ(0deg); }
         }
-        @keyframes seapalsCoinFlipTails {
+        @keyframes seapalsCoinFlipBlank {
           0% { transform: translateY(0) rotateY(0deg) rotateZ(0deg); }
           44% { transform: translateY(-5.25rem) rotateY(990deg) rotateZ(12deg); }
           78% { transform: translateY(.25rem) rotateY(1800deg) rotateZ(-6deg); }
@@ -15372,14 +15359,14 @@ export default function Simulator({
           font-weight: 950;
           letter-spacing: .16em;
         }
-        .seapals-opening-coin-heads { transform: translateZ(.32rem); }
-        .seapals-opening-coin-tails { transform: rotateY(180deg) translateZ(.32rem); }
-        .seapals-opening-coin-ready-heads { transform: rotateY(0deg); animation: seapalsCoinReady 1.8s ease-in-out infinite; }
-        .seapals-opening-coin-ready-tails { transform: rotateY(180deg); animation: seapalsCoinReadyTails 1.8s ease-in-out infinite; }
-        .seapals-opening-coin-flipping-heads { animation: seapalsCoinFlipHeads 1.35s cubic-bezier(.22,.72,.25,1) forwards; }
-        .seapals-opening-coin-flipping-tails { animation: seapalsCoinFlipTails 1.35s cubic-bezier(.22,.72,.25,1) forwards; }
-        .seapals-opening-coin-landed-heads { transform: rotateY(0deg); }
-        .seapals-opening-coin-landed-tails { transform: rotateY(180deg); }
+        .seapals-opening-coin-fish { transform: translateZ(.32rem); }
+        .seapals-opening-coin-blank { transform: rotateY(180deg) translateZ(.32rem); }
+        .seapals-opening-coin-ready-fish { transform: rotateY(0deg); animation: seapalsCoinReady 1.8s ease-in-out infinite; }
+        .seapals-opening-coin-ready-blank { transform: rotateY(180deg); animation: seapalsCoinReadyBlank 1.8s ease-in-out infinite; }
+        .seapals-opening-coin-flipping-fish { animation: seapalsCoinFlipFish 1.35s cubic-bezier(.22,.72,.25,1) forwards; }
+        .seapals-opening-coin-flipping-blank { animation: seapalsCoinFlipBlank 1.35s cubic-bezier(.22,.72,.25,1) forwards; }
+        .seapals-opening-coin-landed-fish { transform: rotateY(0deg); }
+        .seapals-opening-coin-landed-blank { transform: rotateY(180deg); }
         .seapals-opening-coin-shadow {
           position: absolute;
           z-index: 1;
@@ -18463,14 +18450,10 @@ export default function Simulator({
                 <OpeningCoinBoardPresentation
                   active={openingCoinBoardActive}
                   event={eventOverlay}
-                  tutorial={tutorialUsesScriptedScenario}
-                  guideName={tutorialGuide.name}
                   reducedMotion={accessibilityReducedMotion}
-                  onCall={prepareOpeningCoinFlip}
                   onStop={flipForOpeningTurn}
                   onLanded={completeOpeningCoinFlip}
-                  onChangeCall={openOpeningCoinFlip}
-                  onChooseOpeningPlayer={chooseOpeningTurn}
+                  onBeginSetup={chooseOpeningTurn}
                 />
               ) : null}
             </div>
@@ -19111,32 +19094,20 @@ export default function Simulator({
                 <div className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">{eventOverlay.type === "tutorial-final-round-milestone" ? "Aquarium Lesson Milestone" : isOpeningCoinEvent ? "Opening Flip" : "Game Event"}</div>
                 <h2 id="seapals-event-title" className="mt-2 text-3xl font-black md:text-4xl">{eventOverlay.title}</h2>
                 {!["condition-reveal", "opponent-status"].includes(eventOverlay.type) && eventOverlay.message ? <p id="seapals-event-message" className="mt-4 text-lg text-slate-200">{eventOverlay.message}</p> : null}
-                {eventOverlay.type === OpeningCoinPhase.CALL ? (
-                  <div className="mt-7">
-                    <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full border-4 border-amber-200 bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 text-5xl font-black text-amber-950 shadow-[0_0_45px_rgba(251,191,36,0.35)]" aria-hidden="true">?</div>
-                    <p className="mt-5 text-sm text-slate-300">Make your call.</p>
-                    <div className="mt-5 flex flex-wrap justify-center gap-3">
-                      <button type="button" autoFocus aria-label="Call heads" onClick={() => prepareOpeningCoinFlip("heads")} className="min-h-11 rounded-full bg-cyan-400 px-8 py-3 font-black text-slate-950 shadow-lg transition hover:brightness-110 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">Heads</button>
-                      <button type="button" aria-label="Call tails" onClick={() => prepareOpeningCoinFlip("tails")} className="min-h-11 rounded-full bg-emerald-400 px-8 py-3 font-black text-slate-950 shadow-lg transition hover:brightness-110 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-emerald-200">Tails</button>
-                    </div>
-                  </div>
-                ) : eventOverlay.type === OpeningCoinPhase.READY ? (
+                {eventOverlay.type === OpeningCoinPhase.READY ? (
                   <div className="mt-6">
                     <button
                       type="button"
                       autoFocus
                       aria-keyshortcuts="Enter Space"
-                      aria-label={`Flip the opening coin. You called ${formatOpeningCoinSide(eventOverlay.coinCall)}.`}
+                      aria-label="Flip the opening coin. Reef Fish means you go first; blank means the opponent goes first."
                       onClick={flipForOpeningTurn}
                       className="seapals-opening-coin-trigger"
                     >
-                      <OpeningCoinVisual mode="ready" side={eventOverlay.coinCall} />
+                      <OpeningCoinVisual mode="ready" />
                       <strong className="text-lg font-black">Flip the Coin</strong>
                       <span className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-amber-100/75">Press Enter or Space</span>
                     </button>
-                    <div>
-                      <button type="button" onClick={openOpeningCoinFlip} className="mt-4 min-h-11 rounded-full border border-slate-500 px-5 py-2 text-sm font-bold text-slate-300 transition hover:border-slate-300 hover:text-white">Change my call</button>
-                    </div>
                   </div>
                 ) : eventOverlay.type === OpeningCoinPhase.FLIPPING ? (
                   <div className="mt-5">
@@ -19149,22 +19120,21 @@ export default function Simulator({
                   </div>
                 ) : eventOverlay.type === OpeningCoinPhase.RESULT ? (
                   <div className="mt-7">
-                    <OpeningCoinVisual mode="landed" side={eventOverlay.coinLanded} label={`Coin landed ${formatOpeningCoinSide(eventOverlay.coinLanded)}`} />
+                    <OpeningCoinVisual
+                      mode="landed"
+                      side={eventOverlay.coinLanded}
+                      label={`Coin landed ${formatOpeningCoinSide(eventOverlay.coinLanded)}`}
+                      celebrate={eventOverlay.coinWinner === OpeningPlayer.PLAYER}
+                    />
                     <p className="sr-only" role="status" aria-live="polite">{eventOverlay.title} {eventOverlay.message}</p>
-                    {eventOverlay.coinWinner === OpeningPlayer.PLAYER ? (
-                      <div className="mt-2">
-                        <p className="text-sm text-slate-300">{tutorialUsesScriptedScenario ? `Nice call. You will take the first turn after setup, and ${tutorialGuide.name} will guide you through it.` : "You won, so choose who takes the first turn."}</p>
-                        <div className="mt-5 flex flex-wrap justify-center gap-3">
-                          <button type="button" autoFocus onClick={() => chooseOpeningTurn(OpeningPlayer.PLAYER)} className="min-h-11 rounded-full bg-emerald-400 px-8 py-3 font-black text-slate-950 shadow-lg transition hover:brightness-110">{tutorialUsesScriptedScenario ? "Begin Setup" : "Go First"}</button>
-                          {!tutorialUsesScriptedScenario ? <button type="button" onClick={() => chooseOpeningTurn(OpeningPlayer.OPPONENT)} className="min-h-11 rounded-full border border-cyan-300 px-8 py-3 font-black text-cyan-100 transition hover:bg-cyan-300/10">Let Opponent Go First</button> : null}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-2">
-                        <p className="text-sm text-slate-300">The opponent chooses to take the first turn.</p>
-                        <button type="button" autoFocus onClick={() => chooseOpeningTurn(OpeningPlayer.OPPONENT)} className="mt-5 min-h-11 rounded-full bg-rose-400 px-8 py-3 font-black text-slate-950 shadow-lg transition hover:brightness-110">Begin Setup</button>
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      autoFocus
+                      onClick={chooseOpeningTurn}
+                      className={`mt-5 min-h-11 rounded-full px-8 py-3 font-black text-slate-950 shadow-lg transition hover:brightness-110 ${eventOverlay.coinWinner === OpeningPlayer.PLAYER ? "bg-emerald-400" : "bg-rose-400"}`}
+                    >
+                      Begin Setup
+                    </button>
                   </div>
                 ) : eventOverlay.type === "condition-reveal" ? (
                   <div className="mt-6 text-left">

@@ -1,6 +1,6 @@
 export const OpeningCoinSide = Object.freeze({
-  HEADS: "heads",
-  TAILS: "tails",
+  FISH: "fish",
+  BLANK: "blank",
 });
 
 export const OpeningPlayer = Object.freeze({
@@ -9,7 +9,6 @@ export const OpeningPlayer = Object.freeze({
 });
 
 export const OpeningCoinPhase = Object.freeze({
-  CALL: "opening-coin-call",
   READY: "opening-coin-ready",
   FLIPPING: "opening-coin-flipping",
   RESULT: "opening-coin-result",
@@ -19,38 +18,22 @@ export const OPENING_COIN_FLIP_FALLBACK_MS = 1550;
 export const OPENING_COIN_REDUCED_MOTION_MS = 120;
 
 function normalizeCoinSide(value) {
-  return value === OpeningCoinSide.TAILS ? OpeningCoinSide.TAILS : OpeningCoinSide.HEADS;
-}
-
-function oppositeCoinSide(side) {
-  return side === OpeningCoinSide.HEADS ? OpeningCoinSide.TAILS : OpeningCoinSide.HEADS;
+  return value === OpeningCoinSide.BLANK ? OpeningCoinSide.BLANK : OpeningCoinSide.FISH;
 }
 
 export function formatOpeningCoinSide(side) {
-  return normalizeCoinSide(side) === OpeningCoinSide.TAILS ? "Tails" : "Heads";
+  return normalizeCoinSide(side) === OpeningCoinSide.BLANK ? "blank side" : "Reef Fish side";
 }
 
 export function getOpeningCoinFlipRevealDelay({ reducedMotion = false } = {}) {
   return reducedMotion ? OPENING_COIN_REDUCED_MOTION_MS : OPENING_COIN_FLIP_FALLBACK_MS;
 }
 
-export function createOpeningCoinCallOverlay({ tutorial = false, guideName = "Mr. Easterling" } = {}) {
-  return Object.freeze({
-    type: OpeningCoinPhase.CALL,
-    title: "Heads or tails?",
-    message: tutorial
-      ? `${guideName} hands you the aquarium workshop coin. Make your call, then give it a toss to decide the opening turn.`
-      : "Make your call, then toss the coin. If your call matches, you choose who takes the first turn after setup.",
-  });
-}
-
-export function createOpeningCoinReadyOverlay({ call = OpeningCoinSide.HEADS } = {}) {
-  const normalizedCall = normalizeCoinSide(call);
+export function createOpeningCoinReadyOverlay() {
   return Object.freeze({
     type: OpeningCoinPhase.READY,
-    title: `You called ${formatOpeningCoinSide(normalizedCall)}.`,
-    message: "The coin is in your hand. Press Enter or select Flip the Coin when you are ready.",
-    coinCall: normalizedCall,
+    title: "Opening toss",
+    message: "Tap anywhere to land the coin. Reef Fish means you go first; blank means the opponent goes first.",
   });
 }
 
@@ -62,7 +45,6 @@ export function createOpeningCoinFlippingOverlay({ result, flipId, tutorial = fa
     message: tutorial
       ? "You send the workshop coin spinning above the table."
       : "The opening coin is spinning above the table.",
-    coinCall: result.call,
     coinLanded: result.landed,
     coinWinner: result.winner,
     flipId,
@@ -71,55 +53,48 @@ export function createOpeningCoinFlippingOverlay({ result, flipId, tutorial = fa
 
 export function createOpeningCoinResultOverlay({ result, opponentName = "The opponent" } = {}) {
   if (!result) return null;
-  const landed = formatOpeningCoinSide(result.landed);
-  const call = formatOpeningCoinSide(result.call);
   const playerWon = result.winner === OpeningPlayer.PLAYER;
   return Object.freeze({
     type: OpeningCoinPhase.RESULT,
-    title: playerWon ? `${landed}! You won the flip.` : `${landed}! ${opponentName} won the flip.`,
+    title: playerWon ? "Reef Fish! You go first." : `Blank side. ${opponentName} goes first.`,
     message: playerWon
-      ? `You called ${call}, and the coin landed ${landed}.`
-      : `You called ${call}, but the coin landed ${landed}.`,
-    coinCall: result.call,
+      ? "The Reef Fish surfaced in a burst of color, so you will take the first turn after setup."
+      : "The blank side surfaced, so the opponent will take the first turn after setup.",
     coinLanded: result.landed,
     coinWinner: result.winner,
   });
 }
 
 /**
- * Resolve the pre-game coin flip. A tutorial may force the winner while still
- * preserving the player's visible heads-or-tails call.
+ * Resolve the pre-game coin flip. The Reef Fish side starts the player and the
+ * blank side starts the opponent. A guided tutorial may force the Reef Fish.
  */
 export function resolveOpeningCoinFlip({
-  call = OpeningCoinSide.HEADS,
   random = Math.random,
   forcedWinner = null,
 } = {}) {
-  const normalizedCall = normalizeCoinSide(call);
   const normalizedForcedWinner = Object.values(OpeningPlayer).includes(forcedWinner)
     ? forcedWinner
     : null;
   const landed = normalizedForcedWinner === OpeningPlayer.PLAYER
-    ? normalizedCall
+    ? OpeningCoinSide.FISH
     : normalizedForcedWinner === OpeningPlayer.OPPONENT
-      ? oppositeCoinSide(normalizedCall)
+      ? OpeningCoinSide.BLANK
       : Number(random()) < 0.5
-        ? OpeningCoinSide.HEADS
-        : OpeningCoinSide.TAILS;
+        ? OpeningCoinSide.FISH
+        : OpeningCoinSide.BLANK;
 
   return Object.freeze({
-    call: normalizedCall,
     landed,
-    winner: landed === normalizedCall ? OpeningPlayer.PLAYER : OpeningPlayer.OPPONENT,
+    winner: landed === OpeningCoinSide.FISH ? OpeningPlayer.PLAYER : OpeningPlayer.OPPONENT,
   });
 }
 
 /**
- * The flip winner chooses the opening player. The AI takes the first turn when
- * it wins; a guided tutorial always keeps the prepared player-first route.
+ * The visible coin side directly determines the opening player. A guided
+ * tutorial always keeps the prepared player-first route.
  */
-export function chooseOpeningPlayer({ winner, playerChoice, tutorial = false } = {}) {
+export function chooseOpeningPlayer({ winner, tutorial = false } = {}) {
   if (tutorial) return OpeningPlayer.PLAYER;
-  if (winner === OpeningPlayer.OPPONENT) return OpeningPlayer.OPPONENT;
-  return playerChoice === OpeningPlayer.OPPONENT ? OpeningPlayer.OPPONENT : OpeningPlayer.PLAYER;
+  return winner === OpeningPlayer.OPPONENT ? OpeningPlayer.OPPONENT : OpeningPlayer.PLAYER;
 }

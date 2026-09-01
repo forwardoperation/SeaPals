@@ -15,7 +15,7 @@ function sourceSection(source, startMarker, endMarker) {
 test("V2 enters setup through the compact round banner while legacy and tutorial boards keep their setup event", () => {
   const chooseOpeningTurn = sourceSection(
     simulatorSource,
-    "function chooseOpeningTurn(playerChoice = OpeningPlayer.PLAYER)",
+    "function chooseOpeningTurn()",
     "function openOpeningCoinFlip()",
   );
 

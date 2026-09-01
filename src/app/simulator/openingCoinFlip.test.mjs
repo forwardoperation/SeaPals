@@ -8,7 +8,6 @@ import {
   OpeningCoinSide,
   OpeningPlayer,
   chooseOpeningPlayer,
-  createOpeningCoinCallOverlay,
   createOpeningCoinFlippingOverlay,
   createOpeningCoinReadyOverlay,
   createOpeningCoinResultOverlay,
@@ -17,81 +16,90 @@ import {
   resolveOpeningCoinFlip,
 } from "./openingCoinFlip.mjs";
 
-test("opening coin flip honors the player's call in a normal game", () => {
-  const heads = resolveOpeningCoinFlip({ call: OpeningCoinSide.HEADS, random: () => 0.49 });
-  assert.deepEqual(heads, { call: "heads", landed: "heads", winner: "player" });
-
-  const tails = resolveOpeningCoinFlip({ call: OpeningCoinSide.HEADS, random: () => 0.5 });
-  assert.deepEqual(tails, { call: "heads", landed: "tails", winner: "opponent" });
+test("the decisionless opening coin maps reef fish to player-first and blank to opponent-first", () => {
+  let randomCalls = 0;
+  assert.deepEqual(
+    resolveOpeningCoinFlip({ random: () => { randomCalls += 1; return 0.49; } }),
+    { landed: OpeningCoinSide.FISH, winner: OpeningPlayer.PLAYER },
+  );
+  assert.equal(randomCalls, 1, "one screen tap samples one outcome exactly once");
+  assert.deepEqual(
+    resolveOpeningCoinFlip({ random: () => 0.5 }),
+    { landed: OpeningCoinSide.BLANK, winner: OpeningPlayer.OPPONENT },
+  );
 });
 
-test("guided tutorial forces a player win for either visible call", () => {
-  for (const call of Object.values(OpeningCoinSide)) {
-    const result = resolveOpeningCoinFlip({
-      call,
-      random: () => (call === OpeningCoinSide.HEADS ? 0.99 : 0),
-      forcedWinner: OpeningPlayer.PLAYER,
-    });
-    assert.equal(result.call, call);
-    assert.equal(result.landed, call);
-    assert.equal(result.winner, OpeningPlayer.PLAYER);
-  }
-});
-
-test("the flip winner controls who takes the opening turn", () => {
-  assert.equal(chooseOpeningPlayer({ winner: "player", playerChoice: "player" }), "player");
-  assert.equal(chooseOpeningPlayer({ winner: "player", playerChoice: "opponent" }), "opponent");
-  assert.equal(chooseOpeningPlayer({ winner: "opponent", playerChoice: "player" }), "opponent");
-  assert.equal(chooseOpeningPlayer({ winner: "opponent", tutorial: true }), "player");
-});
-
-test("opening coin presentation moves through call, ready, flipping, and result states", () => {
-  const call = createOpeningCoinCallOverlay({ tutorial: true, guideName: "Mr. Easterling" });
-  assert.equal(call.type, OpeningCoinPhase.CALL);
-  assert.match(call.message, /make your call.*give it a toss/i);
-
-  const ready = createOpeningCoinReadyOverlay({ call: OpeningCoinSide.TAILS });
-  assert.deepEqual(ready, {
-    type: OpeningCoinPhase.READY,
-    title: "You called Tails.",
-    message: "The coin is in your hand. Press Enter or select Flip the Coin when you are ready.",
-    coinCall: OpeningCoinSide.TAILS,
-  });
-
+test("the guided tutorial forces the reef-fish side and prepared player-first route", () => {
   const result = resolveOpeningCoinFlip({
-    call: ready.coinCall,
+    random: () => 0.99,
     forcedWinner: OpeningPlayer.PLAYER,
   });
+
+  assert.deepEqual(result, {
+    landed: OpeningCoinSide.FISH,
+    winner: OpeningPlayer.PLAYER,
+  });
+  assert.equal(chooseOpeningPlayer({ winner: result.winner, tutorial: true }), OpeningPlayer.PLAYER);
+});
+
+test("the landed side automatically controls who takes the opening turn", () => {
+  assert.equal(chooseOpeningPlayer({ winner: OpeningPlayer.PLAYER }), OpeningPlayer.PLAYER);
+  assert.equal(chooseOpeningPlayer({ winner: OpeningPlayer.OPPONENT }), OpeningPlayer.OPPONENT);
+  assert.equal(
+    chooseOpeningPlayer({ winner: OpeningPlayer.PLAYER, playerChoice: OpeningPlayer.OPPONENT }),
+    OpeningPlayer.PLAYER,
+    "a removed player-choice argument must not override the coin",
+  );
+  assert.equal(
+    chooseOpeningPlayer({ winner: OpeningPlayer.OPPONENT, tutorial: true }),
+    OpeningPlayer.PLAYER,
+    "the scripted tutorial retains its prepared player-first route",
+  );
+});
+
+test("opening coin presentation moves directly through ready, flipping, and result states", () => {
+  const ready = createOpeningCoinReadyOverlay();
+  assert.equal(ready.type, OpeningCoinPhase.READY);
+  assert.match(`${ready.title} ${ready.message}`, /tap/i);
+  assert.equal("coinCall" in ready, false);
+
+  const result = resolveOpeningCoinFlip({ forcedWinner: OpeningPlayer.PLAYER });
   const flipping = createOpeningCoinFlippingOverlay({ result, flipId: 7, tutorial: true });
   assert.equal(flipping.type, OpeningCoinPhase.FLIPPING);
   assert.equal(flipping.flipId, 7);
-  assert.equal(flipping.coinLanded, OpeningCoinSide.TAILS);
+  assert.equal(flipping.coinLanded, OpeningCoinSide.FISH);
+  assert.equal(flipping.coinWinner, OpeningPlayer.PLAYER);
+  assert.equal("coinCall" in flipping, false);
 
   const landed = createOpeningCoinResultOverlay({ result });
   assert.equal(landed.type, OpeningCoinPhase.RESULT);
-  assert.equal(landed.title, "Tails! You won the flip.");
-  assert.match(landed.message, /called Tails.*landed Tails/i);
+  assert.match(`${landed.title} ${landed.message}`, /fish/i);
+  assert.match(`${landed.title} ${landed.message}`, /you.*first/i);
+  assert.equal(landed.coinLanded, OpeningCoinSide.FISH);
+  assert.equal(landed.coinWinner, OpeningPlayer.PLAYER);
+  assert.equal("coinCall" in landed, false);
 });
 
-test("opening coin labels and reveal timing remain accessible with reduced motion", () => {
-  assert.equal(formatOpeningCoinSide("heads"), "Heads");
-  assert.equal(formatOpeningCoinSide("tails"), "Tails");
+test("blank result copy assigns the opponent first without inventing a player decision", () => {
+  const result = resolveOpeningCoinFlip({ forcedWinner: OpeningPlayer.OPPONENT });
+  const overlay = createOpeningCoinResultOverlay({ result, opponentName: "Rosie" });
+
+  assert.equal(result.landed, OpeningCoinSide.BLANK);
+  assert.equal(result.winner, OpeningPlayer.OPPONENT);
+  assert.match(`${overlay.title} ${overlay.message}`, /blank/i);
+  assert.match(`${overlay.title} ${overlay.message}`, /Rosie.*first/i);
+  assert.equal(overlay.coinLanded, OpeningCoinSide.BLANK);
+  assert.equal(overlay.coinWinner, OpeningPlayer.OPPONENT);
+  assert.equal("coinCall" in overlay, false);
+});
+
+test("fish and blank labels and reveal timing remain accessible with reduced motion", () => {
+  assert.equal(formatOpeningCoinSide(OpeningCoinSide.FISH), "Reef Fish side");
+  assert.equal(formatOpeningCoinSide(OpeningCoinSide.BLANK), "blank side");
   assert.equal(getOpeningCoinFlipRevealDelay(), OPENING_COIN_FLIP_FALLBACK_MS);
   assert.equal(
     getOpeningCoinFlipRevealDelay({ reducedMotion: true }),
     OPENING_COIN_REDUCED_MOTION_MS,
   );
   assert.ok(OPENING_COIN_REDUCED_MOTION_MS < OPENING_COIN_FLIP_FALLBACK_MS);
-});
-
-test("opponent coin result copy names the winner without changing the stored outcome", () => {
-  const result = resolveOpeningCoinFlip({
-    call: OpeningCoinSide.HEADS,
-    random: () => 0.9,
-  });
-  const overlay = createOpeningCoinResultOverlay({ result, opponentName: "Rosie" });
-  assert.equal(overlay.title, "Tails! Rosie won the flip.");
-  assert.equal(overlay.coinCall, OpeningCoinSide.HEADS);
-  assert.equal(overlay.coinLanded, OpeningCoinSide.TAILS);
-  assert.equal(overlay.coinWinner, OpeningPlayer.OPPONENT);
 });
