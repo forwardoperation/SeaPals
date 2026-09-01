@@ -15894,12 +15894,14 @@ export default function Simulator({
           }
           .seapals-reef-score-card.is-vp { border-color: rgba(253, 230, 138, .72); color: #fef3c7; }
           .seapals-reef-score-card.is-rp { border-color: rgba(110, 231, 183, .68); color: #d1fae5; }
+          .seapals-reef-score-card.is-sd { border-color: rgba(103, 232, 249, .7); color: #cffafe; }
+          .seapals-reef-score-card.is-sd strong { font-size: .92rem; letter-spacing: -.03em; }
           .seapals-simulator-preview .seapals-mobile-hand-list {
             padding-right: 5.75rem;
             padding-left: 3.75rem;
           }
           .seapals-simulator-preview .seapals-player-habitats { left: 4rem; }
-          .seapals-simulator-preview :is(.seapals-player-open-water, .seapals-player-orphans) { right: 5.75rem; }
+          .seapals-simulator-preview :is(.seapals-player-open-water, .seapals-player-orphans) { right: 8.25rem; }
           .seapals-simulator-preview [data-board-owner="opponent"] .seapals-board-camera-controls {
             z-index: 65;
             top: auto;
@@ -16517,7 +16519,8 @@ export default function Simulator({
                   ) : null}
                 </div>
                 {previewExperience ? (
-                  <div className="seapals-reef-score seapals-reef-score-opponent" data-tutorial-coach-anchor="opponent-board-tab" aria-label={`${opponentHudLabel}: ${opponentVp} Victory Points and ${presentedOpponentRp} Resource Points`}>
+                  <div className="seapals-reef-score seapals-reef-score-opponent" data-tutorial-coach-anchor="opponent-board-tab" aria-label={`${opponentHudLabel}: ${opponentVp} Victory Points, ${presentedOpponentRp} Resource Points, and ${opponentSchoolDensityState.available} School Density available; ${opponentSchoolDensityState.committed} of ${opponentSchoolDensityState.capacity} committed`}>
+                    <span className="seapals-reef-score-card is-sd" data-school-density-owner="opponent" title={`${opponentSchoolDensityState.available} School Density available; ${opponentSchoolDensityState.committed} of ${opponentSchoolDensityState.capacity} committed`}><small>SD</small><strong>{opponentSchoolDensityState.available}</strong></span>
                     <span className="seapals-reef-score-card is-vp"><small>VP</small><strong>{opponentVp}</strong></span>
                     <span key={`opponent-rp-${compactRpPulseOwner === "opponent" ? compactRpPulseVersion : 0}`} data-rp-bank-target="opponent" className={`seapals-reef-score-card is-rp${compactRpPulseOwner === "opponent" ? " is-collecting" : ""}`}><small>RP</small><strong>{presentedOpponentRp}</strong></span>
                   </div>
@@ -16775,7 +16778,8 @@ export default function Simulator({
                   )}
                 </div>
                 {previewExperience ? (
-                  <div className="seapals-reef-score seapals-reef-score-player" data-tutorial-coach-anchor="player-board-tab" aria-label={`Your Reef: ${playerVp} Victory Points and ${presentedPlayerRp} Resource Points`}>
+                  <div className="seapals-reef-score seapals-reef-score-player" data-tutorial-coach-anchor="player-board-tab" aria-label={`Your Reef: ${playerVp} Victory Points, ${presentedPlayerRp} Resource Points, and ${playerSchoolDensityState.available} School Density available; ${playerSchoolDensityState.committed} of ${playerSchoolDensityState.capacity} committed`}>
+                    <span className="seapals-reef-score-card is-sd" data-school-density-owner="player" title={`${playerSchoolDensityState.available} School Density available; ${playerSchoolDensityState.committed} of ${playerSchoolDensityState.capacity} committed`}><small>SD</small><strong>{playerSchoolDensityState.available}</strong></span>
                     <span className={`seapals-reef-score-card is-vp${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score"><small>VP</small><strong>{playerVp}</strong></span>
                     <span key={`player-rp-${compactRpPulseOwner === "player" ? compactRpPulseVersion : 0}`} data-rp-bank-target="player" className={`seapals-reef-score-card is-rp${compactRpPulseOwner === "player" ? " is-collecting" : ""}${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><small>RP</small><strong>{presentedPlayerRp}</strong></span>
                   </div>

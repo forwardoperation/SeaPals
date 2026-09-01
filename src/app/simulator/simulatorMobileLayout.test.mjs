@@ -545,7 +545,7 @@ test("V2 removes its reef switcher while legacy retains explicit reef tabs", () 
   assert.doesNotMatch(simulatorSource, /focusMobileBoard|MobileScoreControl/);
 });
 
-test("V2 puts number-only VP and RP badges at the right edge around the divider", () => {
+test("V2 puts available SD beside the number-only VP and RP badges at the right edge", () => {
   const opponentScore = sourceSection(
     simulatorSource,
     'className="seapals-reef-score seapals-reef-score-opponent"',
@@ -563,16 +563,28 @@ test("V2 puts number-only VP and RP badges at the right edge around the divider"
   );
 
   assert.match(opponentScore, /data-tutorial-coach-anchor="opponent-board-tab"/);
+  assert.match(opponentScore, /data-school-density-owner="opponent"[\s\S]*?<small>SD<\/small><strong>\{opponentSchoolDensityState\.available\}<\/strong>/);
+  assert.match(opponentScore, /opponentSchoolDensityState\.committed[\s\S]*?opponentSchoolDensityState\.capacity[\s\S]*?committed/);
+  assert.match(opponentScore, /is-sd[\s\S]*?is-vp[\s\S]*?data-rp-bank-target="opponent"/);
   assert.match(opponentScore, /is-vp"><small>VP<\/small><strong>\{opponentVp\}<\/strong>/);
   assert.match(opponentScore, /data-rp-bank-target="opponent"[\s\S]*?<small>RP<\/small><strong>\{presentedOpponentRp\}<\/strong>/);
-  assert.doesNotMatch(opponentScore, /victoryTarget|opponentRpCap|School Density|\/\{/);
+  assert.doesNotMatch(opponentScore, /victoryTarget|opponentRpCap|\/\{/);
   assert.match(playerScore, /data-tutorial-coach-anchor="player-board-tab"/);
+  assert.match(playerScore, /data-school-density-owner="player"[\s\S]*?<small>SD<\/small><strong>\{playerSchoolDensityState\.available\}<\/strong>/);
+  assert.match(playerScore, /playerSchoolDensityState\.committed[\s\S]*?playerSchoolDensityState\.capacity[\s\S]*?committed/);
+  assert.match(playerScore, /is-sd[\s\S]*?data-tutorial-target="vp-score"[\s\S]*?data-rp-bank-target="player"/);
   assert.match(playerScore, /data-tutorial-target="vp-score"[\s\S]*?<strong>\{playerVp\}<\/strong>/);
   assert.match(playerScore, /data-rp-bank-target="player"[\s\S]*?data-tutorial-target="rp-bank"[\s\S]*?<strong>\{presentedPlayerRp\}<\/strong>/);
-  assert.doesNotMatch(playerScore, /victoryTarget|playerRpCap|School Density|\/\{/);
+  assert.doesNotMatch(playerScore, /victoryTarget|playerRpCap|\/\{/);
   assert.match(responsiveStyles, /\.seapals-reef-score\s*\{[\s\S]*?right:\s*\.45rem;/);
   assert.match(responsiveStyles, /\.seapals-reef-score-opponent\s*\{\s*bottom:\s*\.45rem;/);
   assert.match(responsiveStyles, /\.seapals-reef-score-player\s*\{\s*top:\s*\.45rem;/);
+  assert.match(responsiveStyles, /\.seapals-reef-score-card\.is-sd\s*\{[\s\S]*?border-color:[\s\S]*?color:/);
+  assert.match(
+    responsiveStyles,
+    /\.seapals-simulator-preview :is\(\.seapals-player-open-water, \.seapals-player-orphans\)\s*\{\s*right:\s*8\.25rem;/,
+    "the player card lanes should clear the full SD, VP, and RP badge row",
+  );
 });
 
 test("V2 keeps vertical camera controls left and above the hand except on short screens", () => {
