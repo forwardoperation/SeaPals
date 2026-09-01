@@ -51,6 +51,24 @@
   pointer-events: none;
 }
 
+.cardCoinZone {
+  overflow: visible;
+}
+
+.cardCoinResultZone {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.cardCoinResultZone .resultPanel {
+  flex: 0 0 auto;
+  max-height: none;
+  margin-block: auto;
+}
+
 .panel {
   display: grid;
   width: min(25rem, 100%);
@@ -361,6 +379,10 @@
   .playerZone {
     inset-block-start: calc(var(--seapals-mobile-reef-split, 50%) + 1.375rem);
   }
+
+  .cardCoinResultZone {
+    inset-block-start: min(calc(var(--seapals-mobile-reef-split, 50%) + 1.375rem), 50%);
+  }
 }
 
 @media (max-height: 690px) {
@@ -383,6 +405,10 @@
 
   .message {
     display: none;
+  }
+
+  .cardResultMessage {
+    display: block;
   }
 }
 

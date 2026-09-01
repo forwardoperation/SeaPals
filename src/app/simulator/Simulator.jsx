@@ -10,8 +10,18 @@ import MobileHandCardPopover from "./MobileHandCardPopover";
 import MobileEdgeZones from "./MobileEdgeZones";
 import MobileDrawTray from "./MobileDrawTray";
 import { AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
+import CardCoinBoardPresentation from "./CardCoinBoardPresentation";
 import OpeningCoinBoardPresentation, { OpeningCoinVisual } from "./OpeningCoinBoardPresentation";
 import VictoryCelebration from "./VictoryCelebration";
+import {
+  CardCoinPhase,
+  cancelCardCoinFlip,
+  completeCardCoinFlip,
+  consumeCardCoinContinuation,
+  createCardCoinReadyState,
+  getCardCoinFlipRevealDelay,
+  startCardCoinFlip,
+} from "./cardCoinFlip.mjs";
 import { createCombatResolutionRandom, createCombatRollPacket } from "./combatRollPresentation.mjs";
 import {
   CompactTurnStage,
@@ -3487,6 +3497,10 @@ export default function Simulator({
   const storyResultRecordedRef = useRef(false);
   const openingCoinFlipIdRef = useRef(0);
   const openingCoinFlipActiveRef = useRef(false);
+  const cardCoinFlipIdRef = useRef(0);
+  const cardCoinFlipActiveRef = useRef(false);
+  const cardCoinFocusFrameRef = useRef(0);
+  const [cardCoinFlip, setCardCoinFlip] = useState(null);
   const startRoundRef = useRef(null);
   const inspectorReturnFocusRef = useRef(null);
   const handPopoverReturnFocusRef = useRef(null);
@@ -3535,6 +3549,19 @@ export default function Simulator({
     }));
     return () => window.clearTimeout(revealTimer);
   }, [accessibilityReducedMotion, eventOverlay?.flipId, eventOverlay?.type, isStoryMode, storyOpponentName]);
+  useEffect(() => {
+    if (cardCoinFlip?.phase !== CardCoinPhase.FLIPPING) return undefined;
+    const flipId = cardCoinFlip.id;
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    const revealTimer = window.setTimeout(() => {
+      if (cardCoinFlipIdRef.current !== flipId) return;
+      cardCoinFlipActiveRef.current = false;
+      setCardCoinFlip((currentFlip) => completeCardCoinFlip(currentFlip, flipId));
+    }, getCardCoinFlipRevealDelay({
+      reducedMotion: accessibilityReducedMotion || systemReducedMotion,
+    }));
+    return () => window.clearTimeout(revealTimer);
+  }, [accessibilityReducedMotion, cardCoinFlip?.id, cardCoinFlip?.phase]);
   const [pendingEvents, setPendingEvents] = useState([]);
   const pendingEventsRef = useRef([]);
   useEffect(() => {
@@ -9289,11 +9316,40 @@ export default function Simulator({
       if (card.id === "recovery") {
         const cost = getPlayerCardPlayCost(card);
         const recoveredCandidates = [...new Set(discardPile)];
+        const coinEffect = (card.effects ?? []).find((effect) => effect.type === EffectType.FLIP_COIN);
         setHand((current) => removeOneCard(current, card.id));
         setDiscardPile((current) => [card.id, ...current]);
         setRp((current) => Math.max(0, current - cost));
         applyExplicitSupportLock(card);
         setSelectedHandCard(null);
+        if (previewExperience) {
+          beginCardCoinFlipPresentation({
+            sourceCardId: card.id,
+            sourceCardName: card.name,
+            successResult: coinEffect?.successResult ?? "heads",
+            eyebrow: card.name,
+            title: `Flip for ${card.name}`,
+            message: "Tap anywhere to flip. Reef Fish counts as heads; blank counts as tails.",
+            outcomes: {
+              heads: {
+                title: "Heads! Recovery succeeded.",
+                message: "Choose one card that was already in your discard pile.",
+                continueLabel: "Choose a Card",
+              },
+              tails: {
+                title: "Tails. Recovery was discarded.",
+                message: "No card was recovered.",
+                continueLabel: "Continue",
+              },
+            },
+            continuation: {
+              type: "recover-from-discard",
+              supportCardId: card.id,
+              candidates: recoveredCandidates,
+            },
+          });
+          return;
+        }
         if (Math.random() < 0.5) {
           setSearchContext({ mode: "recover", supportCardId: card.id, candidates: recoveredCandidates });
           setModal("recover");
@@ -14817,6 +14873,91 @@ export default function Simulator({
     queueEvents(turnEvents.map((event) => ({ ...event, opponentSequence: true })));
   }
 
+  function cancelCardCoinFlipPresentation() {
+    window.cancelAnimationFrame(cardCoinFocusFrameRef.current);
+    cardCoinFocusFrameRef.current = 0;
+    cardCoinFlipIdRef.current += 1;
+    cardCoinFlipActiveRef.current = false;
+    setCardCoinFlip(cancelCardCoinFlip());
+  }
+
+  function focusBoardAfterCardCoinResult() {
+    window.cancelAnimationFrame(cardCoinFocusFrameRef.current);
+    cardCoinFocusFrameRef.current = window.requestAnimationFrame(() => {
+      cardCoinFocusFrameRef.current = 0;
+      const focusTarget = [
+        document.querySelector('[data-mobile-turn-control]:not([disabled])'),
+        document.querySelector('[data-tutorial-target="player-zoom-fit"]:not([disabled])'),
+        document.querySelector('.seapals-back-control'),
+      ].find((candidate) => (
+        candidate?.getClientRects?.().length > 0
+        && !candidate.closest('[inert]')
+      ));
+      focusTarget?.focus?.({ preventScroll: true });
+    });
+  }
+
+  function beginCardCoinFlipPresentation(configuration) {
+    const flipId = cardCoinFlipIdRef.current + 1;
+    cardCoinFlipIdRef.current = flipId;
+    cardCoinFlipActiveRef.current = false;
+    setEventOverlay(null);
+    setModal(null);
+    setCardCoinFlip(createCardCoinReadyState({
+      ...configuration,
+      id: flipId,
+    }));
+  }
+
+  function flipForCardEffect() {
+    if (cardCoinFlip?.phase !== CardCoinPhase.READY || cardCoinFlipActiveRef.current) return;
+    cardCoinFlipActiveRef.current = true;
+    const flipId = cardCoinFlip.id;
+    const flippingState = startCardCoinFlip(cardCoinFlip, { random: Math.random });
+    setCardCoinFlip((currentFlip) => (
+      currentFlip?.phase === CardCoinPhase.READY && currentFlip.id === flipId
+        ? flippingState
+        : currentFlip
+    ));
+  }
+
+  function settleCardCoinFlip(flipId) {
+    if (cardCoinFlipIdRef.current !== flipId) return;
+    cardCoinFlipActiveRef.current = false;
+    setCardCoinFlip((currentFlip) => completeCardCoinFlip(currentFlip, flipId));
+  }
+
+  function continueCardCoinFlip() {
+    if (
+      cardCoinFlip?.phase !== CardCoinPhase.RESULT
+      || cardCoinFlipIdRef.current !== cardCoinFlip.id
+    ) return;
+    const completedFlip = consumeCardCoinContinuation(cardCoinFlip);
+    if (!completedFlip.continuation || !completedFlip.outcome) return;
+    const { continuation, outcome } = completedFlip;
+    cardCoinFlipIdRef.current += 1;
+    cardCoinFlipActiveRef.current = false;
+    setCardCoinFlip(cancelCardCoinFlip());
+
+    if (continuation?.type === "recover-from-discard") {
+      if (outcome.success) {
+        setSearchContext({
+          mode: "recover",
+          supportCardId: continuation.supportCardId,
+          candidates: continuation.candidates,
+        });
+        setModal("recover");
+        setSelectedHandCard(null);
+        pushLog("Recovery coin flip: heads. Choose a card that was already in your discard pile.");
+      } else {
+        setSearchContext(null);
+        returnFromSupportFlowToBoard();
+        focusBoardAfterCardCoinResult();
+        pushLog("Recovery coin flip: tails. No card was recovered, and Recovery was discarded.");
+      }
+    }
+  }
+
   function cancelOpeningCoinFlip() {
     openingCoinFlipIdRef.current += 1;
     openingCoinFlipActiveRef.current = false;
@@ -14944,6 +15085,7 @@ export default function Simulator({
 
   function restartGame(deckId = selectedDeckId, opponentDeckId = selectedOpponentDeckId, nextVictoryTarget = pendingVictoryTarget, nextOpponentDifficulty = pendingOpponentDifficulty) {
     cancelOpeningCoinFlip();
+    cancelCardCoinFlipPresentation();
     clearMobileDrawFlightSequence();
     clearCompactTurnPresentation();
     clearCompactOpponentPlayback();
@@ -15222,7 +15364,8 @@ export default function Simulator({
   );
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
   const openingCoinBoardActive = Boolean(previewExperience && isOpeningCoinEvent);
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive;
+  const cardCoinBoardActive = Boolean(previewExperience && cardCoinFlip);
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -15234,6 +15377,7 @@ export default function Simulator({
     || eventOverlay?.type === "new-game-setup"
     || boardFaceoffActive
     || openingCoinBoardActive
+    || cardCoinBoardActive
     || simulatorExitConfirmationOpen
     || tutorialExitConfirmationOpen
   ));
@@ -17200,6 +17344,12 @@ export default function Simulator({
           .seapals-simulator-preview .seapals-board-stack[data-opening-coin-active="true"] .seapals-reef-score {
             visibility: hidden;
           }
+          .seapals-simulator-preview .seapals-board-stack[data-card-coin-active="true"] {
+            overflow: visible;
+          }
+          .seapals-simulator-preview .seapals-board-stack[data-card-coin-active="true"] .seapals-reef-score {
+            visibility: hidden;
+          }
           .seapals-simulator-preview .seapals-board-pane[data-board-owner="opponent"] {
             flex: 0 0 calc(var(--seapals-mobile-reef-split) - 1.375rem);
             height: auto;
@@ -17936,6 +18086,7 @@ export default function Simulator({
               className="seapals-board-stack relative h-full min-h-0 overflow-hidden rounded-2xl bg-[#071724]"
               data-v2-attack-mode={previewExperience && attackContext && !boardFaceoffActive && !openingCoinBoardActive ? "true" : undefined}
               data-opening-coin-active={openingCoinBoardActive ? "true" : undefined}
+              data-card-coin-active={cardCoinBoardActive ? "true" : undefined}
               data-combat-flight-active={consumedAttackFlight ? "true" : undefined}
               aria-busy={consumedAttackFlight ? "true" : undefined}
               inert={consumedAttackFlight ? true : undefined}
@@ -18628,6 +18779,17 @@ export default function Simulator({
                   onStop={flipForOpeningTurn}
                   onLanded={completeOpeningCoinFlip}
                   onBeginSetup={chooseOpeningTurn}
+                />
+              ) : null}
+              {previewExperience ? (
+                <CardCoinBoardPresentation
+                  active={cardCoinBoardActive}
+                  event={cardCoinFlip}
+                  reducedMotion={accessibilityReducedMotion}
+                  restoreFocus={false}
+                  onStop={flipForCardEffect}
+                  onLanded={settleCardCoinFlip}
+                  onContinue={continueCardCoinFlip}
                 />
               ) : null}
             </div>
@@ -19981,6 +20143,7 @@ export default function Simulator({
                 )}
                 {modal !== "turn-draw" ? <button
                   type="button"
+                  autoFocus={modal === "recover" && !modalCards.length}
                   onClick={() => {
                     if (modal === "search" || modal === "lost-recover" || modal === "coral-target" || modal === "restock" || modal === "support-draw") cancelSupportSearch();
                     else {
@@ -20189,7 +20352,7 @@ export default function Simulator({
                           </div>
                         )}
                         {modal === "search" || modal === "recover" || modal === "lost-recover" || modal === "coral-target" || modal === "restock" ? (
-                          <button type="button" disabled={Boolean(modal === "search" && tutorialUsesScriptedScenario && scriptedFinishRoute?.searchTargetCardId && scriptedFinishRoute.searchTargetCardId !== cardId)} aria-pressed={modal === "search" && searchContext?.maxSelect > 1 ? searchContext?.selected.includes(cardId) : undefined} aria-label={modal === "search" ? `${searchContext?.maxSelect > 1 ? "Select" : "Add to hand"} ${card.name}` : undefined} onClick={() => modal === "recover" ? completeRecovery(cardId) : modal === "lost-recover" ? completeOceanJakeRecovery(cardId) : modal === "coral-target" ? completeCoralHeal(cardId) : modal === "restock" ? toggleRestockCard(cardIndex) : searchContext?.maxSelect > 1 ? toggleSupportSearchCard(cardId) : completeSupportSearch(cardId)} className={`rounded-full px-5 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${(modal === "restock" ? searchContext?.selectedIndices?.includes(cardIndex) : modal === "search" && searchContext?.maxSelect > 1 && searchContext?.selected.includes(cardId)) ? "bg-emerald-600" : "bg-cyan-600 hover:bg-cyan-500"}`}>
+                          <button type="button" autoFocus={modal === "recover" && cardIndex === 0} disabled={Boolean(modal === "search" && tutorialUsesScriptedScenario && scriptedFinishRoute?.searchTargetCardId && scriptedFinishRoute.searchTargetCardId !== cardId)} aria-pressed={modal === "search" && searchContext?.maxSelect > 1 ? searchContext?.selected.includes(cardId) : undefined} aria-label={modal === "search" ? `${searchContext?.maxSelect > 1 ? "Select" : "Add to hand"} ${card.name}` : undefined} onClick={() => modal === "recover" ? completeRecovery(cardId) : modal === "lost-recover" ? completeOceanJakeRecovery(cardId) : modal === "coral-target" ? completeCoralHeal(cardId) : modal === "restock" ? toggleRestockCard(cardIndex) : searchContext?.maxSelect > 1 ? toggleSupportSearchCard(cardId) : completeSupportSearch(cardId)} className={`rounded-full px-5 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${(modal === "restock" ? searchContext?.selectedIndices?.includes(cardIndex) : modal === "search" && searchContext?.maxSelect > 1 && searchContext?.selected.includes(cardId)) ? "bg-emerald-600" : "bg-cyan-600 hover:bg-cyan-500"}`}>
                             {modal === "recover" ? "Recover Card" : modal === "lost-recover" ? "Return to Hand" : modal === "coral-target" ? "Heal 20 HP" : modal === "restock" ? (searchContext?.selectedIndices?.includes(cardIndex) ? "Selected" : "Select") : modal === "search" && searchContext?.maxSelect > 1 ? (searchContext?.selected.includes(cardId) ? `Selected ×${searchContext.selected.filter((selectedId) => selectedId === cardId).length}` : "Select") : "Add to Hand"}
                           </button>
                         ) : null}
