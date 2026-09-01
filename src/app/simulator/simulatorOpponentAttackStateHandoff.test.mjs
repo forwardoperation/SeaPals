@@ -76,17 +76,27 @@ test("the opponent turn boundary hands the final player snapshot into startRound
   );
   const resolveOpponentTurn = sourceSection(
     simulatorSource,
-    "function resolveOpponentTurn()",
+    "function resolveOpponentTurn({",
     "function cancelOpeningCoinFlip()",
   );
   const finalTransition = resolveOpponentTurn.slice(
     resolveOpponentTurn.lastIndexOf('type: "turn-transition"'),
+  );
+  const liveCompletion = sourceSection(
+    simulatorSource,
+    "function buildLiveOpponentTurnCompletionEvents(",
+    "function createLiveOpponentAttackStepEvents(",
   );
 
   assert.match(
     finalTransition,
     /playerStateAfter:\s*normalizedFinalPlayerState/,
     "The terminal opponent event must retain the same snapshot that no longer contains the defeated Blue Crab",
+  );
+  assert.match(
+    liveCompletion,
+    /type: "turn-transition"[\s\S]*?playerStateAfter: finalPlayerState,[\s\S]*?opponentStateAfter: finalOpponentState,/,
+    "The live V2 transition must carry both authoritative post-combat snapshots",
   );
 
   const advanceRound = sourceSection(
@@ -118,7 +128,7 @@ test("the opponent turn boundary hands the final player snapshot into startRound
   );
   assert.match(
     startRound,
-    /resolveHostTurnLionfishInvaders\(\{[\s\S]*?playerState:\s*\{[\s\S]*?\.\.\.playerAtBoundary/,
+    /const playerAtLionfishBoundary = skipLionfish[\s\S]*?playerAtBoundary[\s\S]*?resolveHostTurnLionfishInvaders\(\{[\s\S]*?playerState:\s*playerAtLionfishBoundary/,
     "all player zones entering the new round must originate from the boundary snapshot",
   );
   assert.match(

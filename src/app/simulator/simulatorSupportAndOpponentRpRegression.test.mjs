@@ -128,7 +128,7 @@ test("opponent RP collection snapshots sources before any Support or permanent c
 test("compact opponent RP playback commits the start-of-turn board and uses that event's source snapshot", () => {
   const resolveOpponentTurn = sourceSection(
     simulatorSource,
-    "function resolveOpponentTurn()",
+    "function resolveOpponentTurn({",
     "function cancelOpeningCoinFlip()",
   );
   const compactOpponentStatus = sourceSection(

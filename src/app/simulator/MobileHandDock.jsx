@@ -191,6 +191,7 @@ export default function MobileHandDock({
       className={`seapals-mobile-hand-dock xl:hidden${interactionDisabled ? " is-draw-sequencing" : ""}${tutorialTargetClass}`}
       aria-label="Your hand"
       aria-busy={interactionDisabled || undefined}
+      inert={interactionDisabled ? true : undefined}
       data-mobile-hand-dock
       data-tutorial-target="hand"
     >

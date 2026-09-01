@@ -41,11 +41,13 @@ test("opponent RP collection bypasses the generic opponent thinking delay", () =
     "function presentQueuedEvent(event, remainingEvents = [],",
     "function closeEventOverlay()",
   );
-  const delayedTail = presenter.slice(presenter.lastIndexOf("if (!delayForOpponent ||"));
+  const delayedGateIndex = presenter.search(/if\s*\(\s*!delayForOpponent/);
+  assert.ok(delayedGateIndex >= 0, "The queued-event presenter should retain an explicit immediate-presentation gate");
+  const delayedTail = presenter.slice(delayedGateIndex);
 
   assert.match(
     delayedTail,
-    /if\s*\(\s*!delayForOpponent\s*\|\|\s*\(\s*compactTurnPresentationEnabled\s*&&\s*event\.type\s*===\s*"opponent-status"\s*\)\s*\)\s*\{\s*present\(\);\s*return;/,
+    /if\s*\([\s\S]*?!delayForOpponent[\s\S]*?\|\|\s*\(\s*compactTurnPresentationEnabled\s*&&\s*event\.type\s*===\s*"opponent-status"\s*\)[\s\S]*?\)\s*\{\s*present\(\);\s*return;/,
     "The start-of-turn collection event should present immediately instead of showing a thinking beat",
   );
   assert.ok(
@@ -86,7 +88,7 @@ test("compact V2 begins the opponent turn immediately while legacy keeps its thi
 test("V2 attack targeting tints the board red and drops crosshairs only on legal targets", () => {
   assert.match(
     simulatorSource,
-    /data-v2-attack-mode=\{previewExperience\s*&&\s*attackContext\s*\?\s*"true"\s*:\s*undefined\}/,
+    /data-v2-attack-mode=\{previewExperience\s*&&\s*attackContext\s*&&\s*!boardFaceoffActive\s*\?\s*"true"\s*:\s*undefined\}/,
     "The red targeting treatment must be scoped to V2 and to an active attack context",
   );
 
@@ -109,10 +111,11 @@ test("V2 attack targeting tints the board red and drops crosshairs only on legal
   );
   assert.match(
     simulatorSource,
-    /\[data-v2-attack-mode="true"\][\s\S]*?\[data-attack-target="true"\](?:::(?:before|after))?/,
+    /\[data-v2-attack-mode="true"\][\s\S]*?\[data-attack-target="true"\]/,
     "Crosshair styling must remain scoped beneath the active V2 attack board",
   );
-  assert.match(simulatorSource, /@keyframes\s+seapalsAttackCrosshairDrop/i);
+  assert.match(simulatorSource, /\.seapals-attack-target-layer\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?z-index:\s*88;/);
+  assert.match(simulatorSource, /@keyframes\s+seapalsAttackReticleLand/i);
 });
 
 test("an actually consumed defender gets a V2-only flight to its rules-correct owner pile", () => {

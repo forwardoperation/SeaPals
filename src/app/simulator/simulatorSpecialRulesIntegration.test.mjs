@@ -283,7 +283,8 @@ test("Ensnare resolves inside each real player and opponent attack step", () => 
     "function applyPlayerOnPlayDeckDiscard",
   );
   assert.match(playerAttack, /if \(rollNow && attack\?\.ensnare\)/);
-  assert.match(playerAttack, /resolveEnsnareForAttack\(attack, Math\.random\)/);
+  assert.match(playerAttack, /const combatRandom = stoppedRoll \? createCombatResolutionRandom\(stoppedRoll\) : Math\.random/);
+  assert.match(playerAttack, /resolveEnsnareForAttack\(attack, combatRandom\)/);
 
   const opponentSequence = sourceBetween(
     "function runOpponentAttack(opponentState",
@@ -342,7 +343,7 @@ test("mandatory On Play attacks cannot be canceled before they resolve", () => {
     "function beginOnPlayAttack",
     "function resolvePlayerAttack",
   );
-  assert.match(onPlayAttack, /mandatory On Play sequence must finish/);
+  assert.match(onPlayAttack, /This mandatory attack must finish before your next main-phase action/);
   assert.match(simulatorSource, /!attackContext\.costCommitted && !attackContext\.onPlay \? <button[\s\S]*?>Cancel<\/button>/);
   assert.match(simulatorSource, /!faceoffRolling && !attackContext\?\.costCommitted && !attackContext\?\.onPlay \? <button[\s\S]*?>Cancel Faceoff<\/button>/);
 });
@@ -356,9 +357,9 @@ test("opponent On Play attacks resolve before same-turn normal actions", () => {
     "function runOpponentNormalActions",
     "function resolvePlayerRegenerateChoice",
   );
-  assert.match(normalActions, /runOpponentNormalAttackActions\(opponentState, currentPlayerState\)/);
+  assert.match(normalActions, /runOpponentNormalAttackActions\(opponentState, currentPlayerState, combatRollPacket\)/);
   assert.match(normalActions, /runOpponentUtilityActions\(attacks\.opponentState, attacks\.playerState\)/);
-  assert.match(normalActions, /runOpponentNormalAttackActions\(utilities\.state, utilities\.playerState\)/);
+  assert.match(normalActions, /runOpponentNormalAttackActions\(utilities\.state, utilities\.playerState, combatRollPacket\)/);
   assert.match(normalActions, /events: \[\.\.\.buildOpponentUtilityEvents\(utilities\), \.\.\.attacks\.events\]/);
 
   const opponentTurn = sourceBetween("function resolveOpponentTurn", "function flipForOpeningTurn");

@@ -210,7 +210,10 @@ test("blocking simulator layers and the tutorial stay above Ask Finn", async () 
     simulatorSource.match(/\{fullPageModalOpen \? \(\s*<div\s*className=\{`fixed inset-0 z-\[(\d+)\]/)?.[1],
   );
   const eventOverlayZIndex = Number(
-    simulatorSource.match(/\{eventOverlay \? \(\s*<div\s*className="fixed inset-0 z-\[(\d+)\]/)?.[1],
+    simulatorSource.match(/\{eventOverlay && !boardFaceoffActive \? \(\s*<div\s*className="fixed inset-0 z-\[(\d+)\]/)?.[1],
+  );
+  const combatTargetLayerZIndex = Number(
+    simulatorSource.match(/\.seapals-attack-target-layer\s*\{[\s\S]*?z-index:\s*(\d+);/)?.[1],
   );
   const inspectorBackdropZIndex = Number(
     simulatorSource.match(/aria-label="Close card inspector"[^>]*className="fixed inset-0 z-\[(\d+)\]/)?.[1],
@@ -222,6 +225,7 @@ test("blocking simulator layers and the tutorial stay above Ask Finn", async () 
   for (const blockingZIndex of [
     modalZIndex,
     eventOverlayZIndex,
+    combatTargetLayerZIndex,
     inspectorBackdropZIndex,
     inspectorPanelZIndex,
   ]) {

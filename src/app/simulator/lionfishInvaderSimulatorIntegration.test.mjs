@@ -18,7 +18,7 @@ function occurrenceCount(source, pattern) {
 
 test("Lionfish Invader resolves exactly once before player turn collection and propagates both boards", () => {
   const startRound = sourceBetween("  function startRound(", "  function beginOpeningOpponentTurn");
-  const invaderHook = startRound.indexOf("resolveHostTurnLionfishInvaders({");
+  const invaderHook = startRound.indexOf("createLiveLionfishTurnEvents({");
   const collection = startRound.indexOf("getEcosystemStartTurnRp(");
   const parasite = startRound.indexOf("resolveParasiteCollection({");
 
@@ -32,12 +32,15 @@ test("Lionfish Invader resolves exactly once before player turn collection and p
   assert.match(startRound, /setDiscardPile\(playerAtTurnStart\.discardPile\)/);
   assert.match(startRound, /setLostZone\(playerAtTurnStart\.lostZone\)/);
   assert.match(startRound, /setOpponent\(opponentHandLimitResult\.state\)/);
-  assert.match(startRound, /\.\.\.lionfishResolution\.events/);
+  assert.match(startRound, /previewExperience && playerHostedInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
+  assert.match(startRound, /startRoundRef\.current\?\.\(nextRound,[\s\S]*skipLionfish: true/);
+  assert.match(startRound, /presentQueuedEvent\(firstLionfishEvent, remainingLionfishEvents/);
+  assert.doesNotMatch(startRound, /insertOpponentRollCheckpoints\(lionfishResolution\.events/);
 });
 
 test("Lionfish Invader resolves exactly once before opponent Parasite and automated actions", () => {
-  const opponentTurn = sourceBetween("  function resolveOpponentTurn()", "  function flipForOpeningTurn");
-  const invaderHook = opponentTurn.indexOf("resolveHostTurnLionfishInvaders({");
+  const opponentTurn = sourceBetween("  function resolveOpponentTurn({", "  function flipForOpeningTurn");
+  const invaderHook = opponentTurn.indexOf("createLiveLionfishTurnEvents({");
   const parasite = opponentTurn.indexOf("resolveParasiteCollection({");
   const automatedTurn = opponentTurn.indexOf("runOpponentTurn(opponentForTurn");
 
@@ -48,6 +51,9 @@ test("Lionfish Invader resolves exactly once before opponent Parasite and automa
   assert.match(opponentTurn, /playerStateAfter: stagedPlayerState/);
   assert.match(opponentTurn, /opponentStateAfter: opponentAtTurnStart/);
   assert.match(opponentTurn, /runOpponentTurn\(opponentForTurn, \{ startTurnAlreadyBegun: true \}\)/);
+  assert.match(opponentTurn, /previewExperience && opponentHostedInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
+  assert.match(opponentTurn, /resolveOpponentTurnRef\.current\?\.\(\{[\s\S]*skipLionfish: true/);
+  assert.doesNotMatch(opponentTurn, /insertOpponentRollCheckpoints\(lionfishTurnEvents/);
 
   const automatedPipeline = sourceBetween("  function runOpponentTurn(", "  function applyOpponentFoundationDamage");
   assert.match(automatedPipeline, /startTurnAlreadyBegun[\s\S]*\? current\.flashingAlarmAttackBonus[\s\S]*: beginFlashingAlarmTurn/);
@@ -57,23 +63,25 @@ test("Invader controller branches, source exclusion, fizzle, and owner-zone rout
   const resolver = sourceBetween("function resolveHostTurnLionfishInvaders({", "function createDeck(");
 
   assert.match(resolver, /collectHostTurnLionfishInvaders\(\{/);
-  assert.match(resolver, /const coinResult = resolveLionfishInvaderCoin\(random\)/);
+  assert.match(resolver, /const coinResult = forcedPlan\?\.coinResult \?\? resolveLionfishInvaderCoin\(random\)/);
   assert.match(resolver, /getLionfishInvaderTargetController\(\{/);
   assert.match(resolver, /selectLionfishInvaderTarget\(candidates, \{[\s\S]*sourceInstanceId: invader\.instanceId/);
   assert.match(resolver, /targetController === invader\.controller \? -1 : 1/);
   assert.match(resolver, /no other legal Fish[\s\S]*mandatory attack fizzled/);
-  assert.match(resolver, /resolveOpposedRoll\("D4-1", defenseDice, random\)/);
+  assert.match(resolver, /stoppedPrimaryRolls \?\? resolveOpposedRoll\("D4-1", defenseDice, random\)/);
   assert.match(resolver, /const attackerWins = attackTotal > defenseTotal/);
   assert.match(resolver, /routeLionfishDestroyedCard\(states, target\.controller, target\.cardId\)/);
   assert.match(resolver, /routeLionfishDestroyedCard\(states, invader\.controller, invader\.cardId\)/);
   const poisonHealCommit = resolver.indexOf("const invaderPoisonHealActive");
   const schoolResolution = resolver.indexOf('target.location === "foundation"');
-  const ordinaryResolution = resolver.indexOf('resolveOpposedRoll("D4-1", defenseDice, random)');
+  const ordinaryResolution = resolver.indexOf('stoppedPrimaryRolls ?? resolveOpposedRoll("D4-1", defenseDice, random)');
   assert.ok(poisonHealCommit >= 0 && poisonHealCommit < schoolResolution && schoolResolution < ordinaryResolution);
   assert.match(resolver, /poisonImmunityNextPredatorAttack: false/);
   assert.match(resolver, /poisonHealActive: invaderPoisonHealActive/);
   assert.match(resolver, /getCloakDefenseBonus\(target\.card\)/);
   assert.match(resolver, /getDarknessShroudDefenseBonus\(/);
+  assert.match(resolver, /processedInvaderInstanceIds\.push\(invader\.instanceId\)/);
+  assert.match(resolver, /forcedPlans\.find\(\(candidatePlan\)/);
 });
 
 test("Creature Schools take one D4-1 roll as tenfold HP damage before ordinary defense", () => {
@@ -82,7 +90,7 @@ test("Creature Schools take one D4-1 roll as tenfold HP damage before ordinary d
   const opposedBranch = resolver.indexOf('resolveOpposedRoll("D4-1", defenseDice, random)');
 
   assert.ok(schoolBranch >= 0 && schoolBranch < opposedBranch);
-  assert.match(resolver, /const attackRoll = rollDie\("D4-1", random\)/);
+  assert.match(resolver, /Number\.isFinite\(combatRollPacket\?\.attack\)[\s\S]*\{ total: Number\(combatRollPacket\.attack\) \}[\s\S]*: rollDie\("D4-1", random\)/);
   assert.match(resolver, /const damage = attackRoll\.total \* 10/);
   assert.match(resolver, /const damageResult = applyDamage\(school\.health \?\? school\.maxHealth, damage\)/);
   assert.match(resolver, /health: damageResult\.remainingHealth/);
@@ -91,4 +99,22 @@ test("Creature Schools take one D4-1 roll as tenfold HP damage before ordinary d
   const targets = sourceBetween("function getLionfishOwnedFishTargets(", "function emptyLionfishOccupiedSlot");
   assert.match(targets, /isCreatureSchool\(foundationCard\)/);
   assert.match(targets, /location: "foundation"/);
+});
+
+test("preview Lionfish combat resolves one invader at a time from the board dice stopped by the player", () => {
+  const liveResolver = sourceBetween(
+    "  function createLiveLionfishTurnEvents({",
+    "  function createLiveOpponentAttackStepEvents({",
+  );
+
+  assert.match(liveResolver, /maxInvaders: 1/);
+  assert.match(liveResolver, /excludedInvaderInstanceIds: processedInvaderInstanceIds/);
+  assert.match(liveResolver, /type: "opponent-roll-ready"/);
+  assert.match(liveResolver, /attackDice: plannedEvent\.attackDice/);
+  assert.match(liveResolver, /defenseDice: plannedEvent\.defenseDice \?\? null/);
+  assert.match(liveResolver, /mode: "resolve-live-lionfish-step"/);
+  assert.match(liveResolver, /resolve: \(stoppedPacket\) => \{[\s\S]*combatRollPackets: \[stoppedPacket\]/);
+  assert.match(liveResolver, /forcedPlans: \[plan\]/);
+  assert.match(liveResolver, /\.\.\.createLiveLionfishTurnEvents\(\{/);
+  assert.match(liveResolver, /type: "live-lionfish-continuation"/);
 });
