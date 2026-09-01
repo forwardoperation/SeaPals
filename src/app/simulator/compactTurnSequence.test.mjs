@@ -43,6 +43,18 @@ test("a preceding transition can suppress a duplicate turn banner", () => {
   );
 });
 
+test("setup deals the opening hand before filling the RP bank", () => {
+  assert.deepEqual(
+    createCompactTurnStages({
+      turnLabel: "Setup Round",
+      includeCondition: false,
+      includeOpeningHand: true,
+      includeRp: true,
+    }).map((stage) => stage.kind),
+    [CompactTurnStage.TURN, CompactTurnStage.OPENING_HAND, CompactTurnStage.RP],
+  );
+});
+
 test("RP allocation emits one coin per accepted point and never animates cap overflow", () => {
   assert.deepEqual(
     allocateCollectedRpSources([

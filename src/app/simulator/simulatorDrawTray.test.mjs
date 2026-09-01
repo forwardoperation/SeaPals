@@ -210,7 +210,7 @@ test("confirmed V2 draws animate each real card continuously from the deck rail 
   assert.match(simulatorSource, /src=\{cardsById\[flight\.cardId\]\?\.image\}/);
   assert.match(simulatorSource, /data-draw-source=\{flight\.source\}/);
   assert.match(simulatorSource, /animationDelay:\s*`\$\{flight\.delay\}ms`/);
-  assert.match(simulatorSource, /onAnimationEnd=\{\(\) => finishMobileDrawFlight\(flight\.id\)\}/);
+  assert.match(simulatorSource, /onAnimationEnd=\{\(\) => finishMobileDrawFlight\(flight\)\}/);
   assert.match(simulatorSource, /data-mobile-hand-dock/);
   assert.match(simulatorSource, /interactionDisabled=\{boardInteractionOverlayActive \|\| mobileDrawFlights\.length > 0 \|\| Boolean\(compactTurnSequence\) \|\| compactOpponentPlaybackLocked\}/);
 

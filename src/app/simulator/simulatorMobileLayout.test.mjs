@@ -722,7 +722,10 @@ test("V2 aligns label-free mirrored pile columns beneath each reef's RP badge", 
   assert.match(opponentPane, /onOpenLost=\{\(\) => setModal\("opponent-lost"\)\}/);
   assert.match(playerPane, /previewExperience && mobileHandDockVisible \? \([\s\S]*?<MobileEdgeZones/);
   assert.match(playerPane, /owner="player"/);
-  assert.match(playerPane, /deckCount=\{foundationDeck\.length \+ palsDeck\.length\}/);
+  assert.match(
+    playerPane,
+    /deckCount=\{foundationDeck\.length \+ palsDeck\.length \+ setupOpeningHandConcealedCount\}/,
+  );
   assert.match(playerPane, /discardCard=\{cardsById\[discardPile\[0\]\] \?\? null\}/);
   assert.match(playerPane, /onOpenDiscard=\{\(\) => setModal\("discard"\)\}/);
   assert.match(playerPane, /onOpenLost=\{\(\) => setModal\("lost"\)\}/);

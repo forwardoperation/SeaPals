@@ -3417,13 +3417,20 @@ export default function Simulator({
   const [turnDrawSelection, setTurnDrawSelection] = useState(null);
   const [turnDrawResult, setTurnDrawResult] = useState(null);
   const [compactDrawViewport, setCompactDrawViewport] = useState(true);
+  const compactDrawViewportRef = useRef(true);
   const [mobileDrawTrayOpen, setMobileDrawTrayOpen] = useState(false);
   const [mobileDrawFlights, setMobileDrawFlights] = useState([]);
   const [mobileDrawAnnouncement, setMobileDrawAnnouncement] = useState("");
+  const [setupOpeningHandVisibleCount, setSetupOpeningHandVisibleCount] = useState(null);
   const mobileDrawFlightIdRef = useRef(0);
   const mobileDrawFlightTimersRef = useRef(new Map());
   const mobileDrawSequenceActiveRef = useRef(false);
   const mobileDrawFocusIndexRef = useRef(null);
+  const mobileDrawSequenceCallbacksRef = useRef({
+    onCardLanded: null,
+    onComplete: null,
+    onCancel: null,
+  });
   const compactTurnPresentationEnabled = previewExperience && !tutorialUsesScriptedScenario;
   const [compactTurnSequence, setCompactTurnSequence] = useState(null);
   const [compactRpFlights, setCompactRpFlights] = useState([]);
@@ -4013,7 +4020,10 @@ export default function Simulator({
   useEffect(() => {
     if (!previewExperience) return undefined;
     const viewportQuery = window.matchMedia("(max-width: 1279px)");
-    const updateCompactDrawViewport = () => setCompactDrawViewport(viewportQuery.matches);
+    const updateCompactDrawViewport = () => {
+      compactDrawViewportRef.current = viewportQuery.matches;
+      setCompactDrawViewport(viewportQuery.matches);
+    };
     updateCompactDrawViewport();
     viewportQuery.addEventListener?.("change", updateCompactDrawViewport);
     return () => viewportQuery.removeEventListener?.("change", updateCompactDrawViewport);
@@ -4046,17 +4056,14 @@ export default function Simulator({
 
   useEffect(() => {
     if (compactDrawViewport || !mobileDrawSequenceActiveRef.current) return;
-    for (const timerId of mobileDrawFlightTimersRef.current.values()) window.clearTimeout(timerId);
-    mobileDrawFlightTimersRef.current.clear();
-    mobileDrawSequenceActiveRef.current = false;
-    mobileDrawFocusIndexRef.current = null;
-    setMobileDrawFlights([]);
+    clearMobileDrawFlightSequence({ notifyCancel: true });
     setGamePhase((current) => current === "draw" && hasDrawnThisTurn ? "main" : current);
   }, [compactDrawViewport, hasDrawnThisTurn]);
 
   useEffect(() => {
     if (!mobileDrawSequenceActiveRef.current) return undefined;
     if (mobileDrawFlights.length) {
+      if (mobileDrawFocusIndexRef.current == null) return undefined;
       const frame = window.requestAnimationFrame(() => {
         const handRail = document.querySelector("[data-simulator-hand-card-rail]");
         handRail?.scrollTo?.({ left: handRail.scrollWidth, behavior: "auto" });
@@ -4083,6 +4090,11 @@ export default function Simulator({
   useEffect(() => () => {
     for (const timerId of mobileDrawFlightTimersRef.current.values()) window.clearTimeout(timerId);
     mobileDrawFlightTimersRef.current.clear();
+    mobileDrawSequenceCallbacksRef.current = {
+      onCardLanded: null,
+      onComplete: null,
+      onCancel: null,
+    };
   }, []);
 
   function scheduleCompactTurnTimer(sequenceId, callback, delay) {
@@ -4164,6 +4176,8 @@ export default function Simulator({
     roundNumber = null,
     condition = null,
     includeCondition = true,
+    includeOpeningHand = false,
+    openingHand = [],
     includeRp = true,
     rpBefore = 0,
     rpAfter = 0,
@@ -4174,7 +4188,13 @@ export default function Simulator({
     clearCompactTurnAsyncHandles();
     const id = compactTurnSequenceIdRef.current + 1;
     compactTurnSequenceIdRef.current = id;
-    const stages = createCompactTurnStages({ turnLabel, condition, includeCondition, includeRp });
+    const stages = createCompactTurnStages({
+      turnLabel,
+      condition,
+      includeCondition,
+      includeOpeningHand,
+      includeRp,
+    });
     if (!stages.length) {
       completion?.();
       return;
@@ -4185,6 +4205,7 @@ export default function Simulator({
       turnLabel,
       roundNumber,
       condition,
+      openingHand,
       stages,
       stageIndex: 0,
       rpBefore,
@@ -4555,6 +4576,64 @@ export default function Simulator({
         `Round ${sequence.roundNumber} condition: ${sequence.condition?.name ?? "No active condition"}. ${sequence.condition?.text ?? ""}`,
       );
       return undefined;
+    }
+
+    if (stage.kind === CompactTurnStage.OPENING_HAND) {
+      let cancelled = false;
+      let secondFrame = null;
+      const firstFrame = window.requestAnimationFrame(() => {
+        compactTurnFrameIdsRef.current.delete(firstFrame);
+        secondFrame = window.requestAnimationFrame(() => {
+          compactTurnFrameIdsRef.current.delete(secondFrame);
+          if (cancelled || compactTurnSequenceIdRef.current !== sequence.id) return;
+
+          const openingCards = (sequence.openingHand ?? []).map((cardId) => ({
+            cardId,
+            source: isFoundationCard(cardsById[cardId]) ? "Foundation" : "Pals",
+            discarded: false,
+          }));
+          const landedIndexes = new Set();
+          const completeOpeningDeal = () => {
+            if (cancelled || compactTurnSequenceIdRef.current !== sequence.id) return;
+            setSetupOpeningHandVisibleCount(openingCards.length);
+            advanceCompactTurnSequence(sequence.id);
+          };
+          const started = startMobileDrawFlights(openingCards, 0, {
+            kind: "opening-hand",
+            focusOnComplete: false,
+            announcement: "Dealing your opening hand.",
+            onCardLanded: (flight) => {
+              landedIndexes.add(flight.handIndex);
+              setSetupOpeningHandVisibleCount((current) => {
+                let next = Math.max(0, Number(current) || 0);
+                while (landedIndexes.has(next)) next += 1;
+                return Math.min(next, openingCards.length);
+              });
+            },
+            onComplete: completeOpeningDeal,
+            onCancel: completeOpeningDeal,
+          });
+          if (!started) {
+            setSetupOpeningHandVisibleCount(openingCards.length);
+            scheduleCompactTurnTimer(
+              sequence.id,
+              () => advanceCompactTurnSequence(sequence.id),
+              accessibilityReducedMotion ? 80 : 220,
+            );
+          }
+        });
+        compactTurnFrameIdsRef.current.add(secondFrame);
+      });
+      compactTurnFrameIdsRef.current.add(firstFrame);
+      return () => {
+        cancelled = true;
+        window.cancelAnimationFrame(firstFrame);
+        compactTurnFrameIdsRef.current.delete(firstFrame);
+        if (secondFrame !== null) {
+          window.cancelAnimationFrame(secondFrame);
+          compactTurnFrameIdsRef.current.delete(secondFrame);
+        }
+      };
     }
 
     let cancelled = false;
@@ -5833,6 +5912,7 @@ export default function Simulator({
   function getPlayError(card, { allowUpcomingMain = false } = {}) {
     if (!card) return "Select a card first.";
     if (gameResult) return "This game has ended. Start a new game to continue playing.";
+    if (compactTurnSequenceRef.current) return "Wait for the board sequence to finish before playing a card.";
     if (attackContext) return "Finish or cancel the current attack before playing another card.";
     if (!isSetup && gamePhase !== "main" && !allowUpcomingMain) return "Cards can only be played during your action phase.";
     const blockedCopies = cardsBlockedFromPlayThisTurn.filter((cardId) => cardId === card.id).length;
@@ -8641,29 +8721,96 @@ export default function Simulator({
     setMobileHudPanel((current) => current === "decks" ? null : "decks");
   }
 
-  function finishMobileDrawFlight(flightId) {
+  function prepareMobileDrawFlight(flight, flightElement) {
+    if (flight?.kind !== "opening-hand" || !flightElement) return;
+    if (!mobileDrawFlightTimersRef.current.has(flight.id)) return;
+    const handRail = document.querySelector("[data-simulator-hand-card-rail]");
+    const targetItem = document.querySelector(`[data-mobile-hand-card-index="${flight.handIndex}"]`);
+    if (!handRail || !targetItem) return;
+
+    const targetScrollLeft = Math.max(
+      0,
+      Math.min(
+        handRail.scrollWidth - handRail.clientWidth,
+        targetItem.offsetLeft + targetItem.offsetWidth / 2 - handRail.clientWidth / 2,
+      ),
+    );
+    handRail.scrollTo?.({ left: targetScrollLeft, behavior: "auto" });
+    const targetCard = targetItem.querySelector("button") ?? targetItem;
+    const targetRect = targetCard.getBoundingClientRect();
+    if (!targetRect.width || !targetRect.height) return;
+    const endX = targetRect.left + (targetRect.width - flight.width) / 2;
+    const endY = targetRect.top + Math.min(10, Math.max(0, (targetRect.height - (flight.width * 88) / 63) / 2));
+    flightElement.style.setProperty("--seapals-draw-end-x", `${endX}px`);
+    flightElement.style.setProperty("--seapals-draw-end-y", `${endY}px`);
+    flightElement.style.setProperty(
+      "--seapals-draw-mid-x",
+      `${Math.max(12, Math.min(flight.startX, endX) - Math.min(96, (window.innerWidth || 320) * 0.2))}px`,
+    );
+    flightElement.style.setProperty(
+      "--seapals-draw-mid-y",
+      `${Math.max(12, Math.min(flight.startY, endY) - Math.min(92, (window.innerHeight || 480) * 0.12))}px`,
+    );
+  }
+
+  function finishMobileDrawFlight(flightOrId) {
+    const flightId = typeof flightOrId === "string" ? flightOrId : flightOrId?.id;
+    if (!flightId || !mobileDrawFlightTimersRef.current.has(flightId)) return;
     const timerId = mobileDrawFlightTimersRef.current.get(flightId);
     if (timerId) window.clearTimeout(timerId);
     mobileDrawFlightTimersRef.current.delete(flightId);
     setMobileDrawFlights((current) => current.filter((flight) => flight.id !== flightId));
+    mobileDrawSequenceCallbacksRef.current.onCardLanded?.(flightOrId);
+
+    if (!mobileDrawFlightTimersRef.current.size) {
+      const onComplete = mobileDrawSequenceCallbacksRef.current.onComplete;
+      mobileDrawSequenceCallbacksRef.current = {
+        onCardLanded: null,
+        onComplete: null,
+        onCancel: null,
+      };
+      onComplete?.();
+    }
   }
 
-  function clearMobileDrawFlightSequence() {
+  function clearMobileDrawFlightSequence({ notifyCancel = false } = {}) {
+    const onCancel = notifyCancel ? mobileDrawSequenceCallbacksRef.current.onCancel : null;
     for (const timerId of mobileDrawFlightTimersRef.current.values()) window.clearTimeout(timerId);
     mobileDrawFlightTimersRef.current.clear();
     mobileDrawSequenceActiveRef.current = false;
     mobileDrawFocusIndexRef.current = null;
+    mobileDrawSequenceCallbacksRef.current = {
+      onCardLanded: null,
+      onComplete: null,
+      onCancel: null,
+    };
     setMobileDrawFlights([]);
+    onCancel?.();
   }
 
-  function startMobileDrawFlights(revealed, baseHandLength) {
+  function startMobileDrawFlights(revealed, baseHandLength, {
+    kind = "turn-draw",
+    focusOnComplete = true,
+    announcement = null,
+    onCardLanded = null,
+    onComplete = null,
+    onCancel = null,
+  } = {}) {
     const cardsToHand = revealed.filter((entry) => !entry.discarded);
-    if (!previewDrawTrayEnabled || !cardsToHand.length || typeof document === "undefined") return false;
+    if (
+      !previewDrawTrayEnabled
+      || !compactDrawViewportRef.current
+      || !cardsToHand.length
+      || typeof document === "undefined"
+    ) return false;
 
     clearMobileDrawFlightSequence();
+    mobileDrawSequenceCallbacksRef.current = { onCardLanded, onComplete, onCancel };
 
     const sourceElement = document.querySelector('[data-mobile-edge-zones][data-zone-owner="player"] [data-mobile-zone="deck"]');
     const handElement = document.querySelector("[data-mobile-hand-dock]");
+    const handRail = document.querySelector("[data-simulator-hand-card-rail]");
+    if (kind === "opening-hand") handRail?.scrollTo?.({ left: 0, behavior: "auto" });
     const sourceRect = sourceElement?.getBoundingClientRect();
     const handRect = handElement?.getBoundingClientRect();
     const viewportWidth = Math.max(320, window.innerWidth || 0);
@@ -8685,12 +8832,14 @@ export default function Simulator({
     const midX = Math.max(12, Math.min(startX, endX) - Math.min(96, viewportWidth * 0.2));
     const midY = Math.max(12, Math.min(startY, endY) - Math.min(92, viewportHeight * 0.12));
     const reducedMotion = accessibilityReducedMotion || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
-    const duration = reducedMotion ? 140 : 680;
-    const stagger = reducedMotion ? 20 : 150;
+    const openingHandDeal = kind === "opening-hand";
+    const duration = reducedMotion ? 140 : openingHandDeal ? 360 : 680;
+    const stagger = reducedMotion ? openingHandDeal ? 160 : 20 : openingHandDeal ? 400 : 150;
     const flights = cardsToHand.map((entry, index) => ({
       id: `mobile-draw-flight-${++mobileDrawFlightIdRef.current}`,
+      kind,
       cardId: entry.cardId,
-      source: entry.source.toLowerCase(),
+      source: String(entry.source || "deck").toLowerCase(),
       handIndex: baseHandLength + index,
       reducedMotion,
       startX,
@@ -8705,12 +8854,15 @@ export default function Simulator({
     }));
 
     mobileDrawSequenceActiveRef.current = true;
-    mobileDrawFocusIndexRef.current = baseHandLength;
+    mobileDrawFocusIndexRef.current = focusOnComplete ? baseHandLength : null;
     setMobileDrawFlights(flights);
-    setMobileDrawAnnouncement(`Drew ${cardsToHand.map((entry) => cardsById[entry.cardId]?.name ?? entry.cardId).join(", ")} into your hand.`);
-    flights.forEach((flight, index) => {
+    setMobileDrawAnnouncement(
+      announcement
+      ?? `Drew ${cardsToHand.map((entry) => cardsById[entry.cardId]?.name ?? entry.cardId).join(", ")} into your hand.`,
+    );
+    flights.forEach((flight) => {
       const timerId = window.setTimeout(
-        () => finishMobileDrawFlight(flight.id),
+        () => finishMobileDrawFlight(flight),
         duration + flight.delay + 260,
       );
       mobileDrawFlightTimersRef.current.set(flight.id, timerId);
@@ -14719,11 +14871,21 @@ export default function Simulator({
     };
     if (compactTurnPresentationEnabled) {
       setEventOverlay(null);
+      setSetupOpeningHandVisibleCount(0);
       beginCompactTurnSequence({
         owner: "player",
         turnLabel: setupRoundEvent.title,
         includeCondition: false,
-        includeRp: false,
+        includeOpeningHand: true,
+        openingHand: [...hand],
+        includeRp: true,
+        rpBefore: 0,
+        rpAfter: 3,
+        collectedRp: 3,
+        rpSources: [{ key: "round-supply", amount: 3 }],
+      }, () => {
+        setSetupOpeningHandVisibleCount(null);
+        setMobileDrawAnnouncement("Opening hand ready. You have 3 RP available.");
       });
     } else {
       setEventOverlay(setupRoundEvent);
@@ -14788,6 +14950,7 @@ export default function Simulator({
     clearConsumedAttackFlight();
     setMobileDrawTrayOpen(false);
     setMobileDrawAnnouncement("");
+    setSetupOpeningHandVisibleCount(null);
     const nextGame = createInitialGameState(
       deckId,
       opponentDeckId,
@@ -15076,6 +15239,17 @@ export default function Simulator({
   ));
   const presentedPlayerRp = compactDisplayedRp.player ?? rp;
   const presentedOpponentRp = compactDisplayedRp.opponent ?? opponent.rp;
+  const setupOpeningHandPresentedCount = setupOpeningHandVisibleCount == null
+    ? hand.length
+    : Math.min(hand.length, Math.max(0, Number(setupOpeningHandVisibleCount) || 0));
+  const setupOpeningHandConcealedCount = hand.length - setupOpeningHandPresentedCount;
+  const setupOpeningHandConcealedIndexes = setupOpeningHandVisibleCount == null
+    ? []
+    : hand.map((_, index) => index).filter((index) => index >= setupOpeningHandPresentedCount);
+  const mobileHandArrivingIndexes = [...new Set([
+    ...setupOpeningHandConcealedIndexes,
+    ...mobileDrawFlights.map((flight) => flight.handIndex),
+  ])];
   const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;
   const selectedHandPlayError =
     modal === "hand" && selectedHandCard ? getPlayError(cardsById[selectedHandCard]) : "";
@@ -18047,7 +18221,7 @@ export default function Simulator({
                 {previewExperience && mobileHandDockVisible ? (
                   <MobileEdgeZones
                     owner="player"
-                    deckCount={foundationDeck.length + palsDeck.length}
+                    deckCount={foundationDeck.length + palsDeck.length + setupOpeningHandConcealedCount}
                     discardCount={discardPile.length}
                     lostCount={lostZone.length}
                     discardCard={cardsById[discardPile[0]] ?? null}
@@ -18480,7 +18654,7 @@ export default function Simulator({
             })}
             selectedIndex={mobileSelectedHandIndex}
             draggingIndex={mobileHandDrag?.index ?? null}
-            arrivingIndexes={mobileDrawFlights.map((flight) => flight.handIndex)}
+            arrivingIndexes={mobileHandArrivingIndexes}
             interactionDisabled={boardInteractionOverlayActive || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked}
             playingCardId={playingCardId}
             tutorialTargetClass={tutorialTargetClass("hand")}
@@ -18495,9 +18669,11 @@ export default function Simulator({
               key={flight.id}
               className={`seapals-mobile-draw-flight${flight.reducedMotion ? " is-reduced-motion" : ""}`}
               data-mobile-draw-flight
+              data-draw-kind={flight.kind}
               data-draw-source={flight.source}
               aria-hidden="true"
-              onAnimationEnd={() => finishMobileDrawFlight(flight.id)}
+              onAnimationStart={(event) => prepareMobileDrawFlight(flight, event.currentTarget)}
+              onAnimationEnd={() => finishMobileDrawFlight(flight)}
               style={{
                 "--seapals-draw-start-x": `${flight.startX}px`,
                 "--seapals-draw-start-y": `${flight.startY}px`,
