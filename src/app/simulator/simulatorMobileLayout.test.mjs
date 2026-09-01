@@ -804,7 +804,7 @@ test("V2 keeps only the draggable divider and round action while the old footer 
   assert.match(divider, /seapals-reef-divider-handle[\s\S]*?role="separator"/);
   assert.match(divider, /data-mobile-turn-control/);
   assert.match(divider, /onClick=\{endTurn\}/);
-  assert.match(divider, /disabled=\{boardFaceoffActive \|\| Boolean\(gameResult\) \|\| opponentThinking \|\| Boolean\(compactTurnSequence\) \|\| compactOpponentPlaybackLocked \|\| \(isSetup && !hasCoralInPlay\) \|\| isStartOfTurn\}/);
+  assert.match(divider, /disabled=\{boardInteractionOverlayActive \|\| Boolean\(gameResult\) \|\| opponentThinking \|\| Boolean\(compactTurnSequence\) \|\| compactOpponentPlaybackLocked \|\| \(isSetup && !hasCoralInPlay\) \|\| isStartOfTurn\}/);
   assert.match(divider, /data-tutorial-target="turn-button"/);
   assert.match(divider, /\{turnControlLabel\}/);
   assert.doesNotMatch(divider, /Opponent First|Round 1|End Turn/);
@@ -978,7 +978,7 @@ test("V2 card inspection fills the viewport with an animated card and a simple x
   const inspector = sourceSection(
     simulatorSource,
     "{inspectedCardData ? (",
-    "{eventOverlay && !boardFaceoffActive ? (",
+    "{eventOverlay && !boardFaceoffActive && !openingCoinBoardActive ? (",
   );
 
   assert.match(simulatorSource, /@keyframes seapalsCardInspectorIn[\s\S]*?scale\(\.94\)[\s\S]*?scale\(1\)/);
@@ -1059,7 +1059,7 @@ test("every simulator exit asks for confirmation before leaving the game", () =>
   const exitDialog = sourceSection(
     simulatorSource,
     "{simulatorExitConfirmationOpen ? (",
-    "{eventOverlay && !boardFaceoffActive ? (",
+    "{eventOverlay && !boardFaceoffActive && !openingCoinBoardActive ? (",
   );
 
   assert.equal((headerBackControls.match(/onClick=\{requestSimulatorExit\}/g) ?? []).length, 2, "both header back branches must request confirmation");

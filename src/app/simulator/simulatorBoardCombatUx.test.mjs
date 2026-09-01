@@ -126,7 +126,7 @@ test("combat dice are a transparent board-context dialog, not the full-page even
 
   assert.match(
     simulatorSource,
-    /\{eventOverlay\s*&&\s*!boardFaceoffActive\s*\?\s*\(/,
+    /\{eventOverlay\s*&&\s*!boardFaceoffActive\s*&&\s*!openingCoinBoardActive\s*\?\s*\(/,
     "V2 faceoffs must be excluded from the generic fixed, aria-modal event overlay",
   );
 });
@@ -181,12 +181,12 @@ test("the board roll dialog focuses after dice exist and isolates reef and hand 
   );
 
   const inertReefs = simulatorSource.match(
-    /id="simulator-(?:opponent|player)-reef"[\s\S]{0,1000}?inert=\{boardFaceoffActive \? true : undefined\}/g,
+    /id="simulator-(?:opponent|player)-reef"[\s\S]{0,1000}?inert=\{boardInteractionOverlayActive \? true : undefined\}/g,
   ) ?? [];
   assert.equal(inertReefs.length, 2, "Both reef panes must be inert while the roll dialog owns interaction");
   assert.match(
     simulatorSource,
-    /interactionDisabled=\{boardFaceoffActive \|\| mobileDrawFlights\.length > 0/,
+    /interactionDisabled=\{boardInteractionOverlayActive \|\| mobileDrawFlights\.length > 0/,
     "The hand must receive the same isolation signal as the board",
   );
   assert.match(

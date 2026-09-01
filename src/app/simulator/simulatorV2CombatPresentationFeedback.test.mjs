@@ -88,7 +88,7 @@ test("compact V2 begins the opponent turn immediately while legacy keeps its thi
 test("V2 attack targeting tints the board red and drops crosshairs only on legal targets", () => {
   assert.match(
     simulatorSource,
-    /data-v2-attack-mode=\{previewExperience\s*&&\s*attackContext\s*&&\s*!boardFaceoffActive\s*\?\s*"true"\s*:\s*undefined\}/,
+    /data-v2-attack-mode=\{previewExperience\s*&&\s*attackContext\s*&&\s*!boardFaceoffActive\s*&&\s*!openingCoinBoardActive\s*\?\s*"true"\s*:\s*undefined\}/,
     "The red targeting treatment must be scoped to V2 and to an active attack context",
   );
 

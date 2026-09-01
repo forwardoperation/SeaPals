@@ -161,7 +161,7 @@ test("legacy boards retain the full-page event path", () => {
 
   const legacyOverlay = sourceSection(
     simulatorSource,
-    "{eventOverlay && !boardFaceoffActive ? (",
+    "{eventOverlay && !boardFaceoffActive && !openingCoinBoardActive ? (",
     "{fullPageModalOpen ? (",
   );
   assert.match(legacyOverlay, /role="dialog"/);

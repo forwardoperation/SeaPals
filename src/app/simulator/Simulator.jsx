@@ -10,6 +10,7 @@ import MobileHandCardPopover from "./MobileHandCardPopover";
 import MobileEdgeZones from "./MobileEdgeZones";
 import MobileDrawTray from "./MobileDrawTray";
 import { AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
+import OpeningCoinBoardPresentation, { OpeningCoinVisual } from "./OpeningCoinBoardPresentation";
 import VictoryCelebration from "./VictoryCelebration";
 import { createCombatResolutionRandom, createCombatRollPacket } from "./combatRollPresentation.mjs";
 import {
@@ -3249,29 +3250,6 @@ function getSlotConnectorStyle(position) {
     left: `${roundLayoutNumber(50 + dx / 2)}%`,
     transform: `translateX(-50%) rotate(${roundLayoutNumber(angle, 6)}rad)`,
   };
-}
-
-function OpeningCoinVisual({ mode = "landed", side = "heads", onAnimationEnd = null, label = "" }) {
-  const normalizedSide = side === "tails" ? "tails" : "heads";
-  const motionClass = mode === "flipping"
-    ? `seapals-opening-coin-flipping-${normalizedSide}`
-    : mode === "ready"
-      ? `seapals-opening-coin-ready-${normalizedSide}`
-      : `seapals-opening-coin-landed-${normalizedSide}`;
-  return (
-    <div
-      className="seapals-opening-coin-stage"
-      role={label ? "img" : undefined}
-      aria-label={label || undefined}
-      aria-hidden={label ? undefined : true}
-    >
-      <div className={`seapals-opening-coin ${motionClass}`} onAnimationEnd={onAnimationEnd ?? undefined}>
-        <span className="seapals-opening-coin-face seapals-opening-coin-heads"><strong>H</strong><span>Heads</span></span>
-        <span className="seapals-opening-coin-face seapals-opening-coin-tails"><strong>T</strong><span>Tails</span></span>
-      </div>
-      <span className={`seapals-opening-coin-shadow${mode === "flipping" ? " seapals-opening-coin-shadow-flipping" : ""}`} />
-    </div>
-  );
 }
 
 export default function Simulator({
@@ -14767,6 +14745,7 @@ export default function Simulator({
 
   function openOpeningCoinFlip() {
     cancelOpeningCoinFlip();
+    if (previewExperience) setMobileReefSplit(MOBILE_REEF_SPLIT_DEFAULT);
     setEventOverlay(createOpeningCoinCallOverlay({
       tutorial: tutorialUsesScriptedScenario,
       guideName: tutorialGuide.name,
@@ -15091,6 +15070,9 @@ export default function Simulator({
     previewExperience
     && ["faceoff-ready", "school-attack-ready", "opponent-roll-ready"].includes(eventOverlay?.type),
   );
+  const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
+  const openingCoinBoardActive = Boolean(previewExperience && isOpeningCoinEvent);
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -15101,6 +15083,7 @@ export default function Simulator({
     || bugReportOpen
     || eventOverlay?.type === "new-game-setup"
     || boardFaceoffActive
+    || openingCoinBoardActive
     || simulatorExitConfirmationOpen
     || tutorialExitConfirmationOpen
   ));
@@ -15119,7 +15102,6 @@ export default function Simulator({
     && !eventOverlay
     && !modal
     && !faceoffRolling;
-  const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
   const attackTargetMeasureKey = attackContext ? [
     attackContext.attackerCardId,
     ...(attackContext.targets ?? []).map((target) => target.instanceId),
@@ -17051,6 +17033,12 @@ export default function Simulator({
             display: flex;
             flex-direction: column;
           }
+          .seapals-simulator-preview .seapals-board-stack[data-opening-coin-active="true"] {
+            overflow: visible;
+          }
+          .seapals-simulator-preview .seapals-board-stack[data-opening-coin-active="true"] .seapals-reef-score {
+            visibility: hidden;
+          }
           .seapals-simulator-preview .seapals-board-pane[data-board-owner="opponent"] {
             flex: 0 0 calc(var(--seapals-mobile-reef-split) - 1.375rem);
             height: auto;
@@ -17784,14 +17772,15 @@ export default function Simulator({
           <div className="min-h-0 w-full flex-1 rounded-2xl border border-cyan-300/20 bg-[#06111d] shadow-[0_18px_60px_rgba(0,0,0,.35)]">
             <div
               ref={mobileBoardStackRef}
-              className="seapals-board-stack h-full min-h-0 overflow-hidden rounded-2xl bg-[#071724]"
-              data-v2-attack-mode={previewExperience && attackContext && !boardFaceoffActive ? "true" : undefined}
+              className="seapals-board-stack relative h-full min-h-0 overflow-hidden rounded-2xl bg-[#071724]"
+              data-v2-attack-mode={previewExperience && attackContext && !boardFaceoffActive && !openingCoinBoardActive ? "true" : undefined}
+              data-opening-coin-active={openingCoinBoardActive ? "true" : undefined}
               data-combat-flight-active={consumedAttackFlight ? "true" : undefined}
               aria-busy={consumedAttackFlight ? "true" : undefined}
               inert={consumedAttackFlight ? true : undefined}
               style={previewExperience ? { "--seapals-mobile-reef-split": `${mobileReefSplit}%` } : undefined}
             >
-              <div id="simulator-opponent-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" onClickCapture={(event) => suppressBoardGestureClick("opponent", event)} aria-label="Rival reef" inert={boardFaceoffActive ? true : undefined}>
+              <div id="simulator-opponent-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" onClickCapture={(event) => suppressBoardGestureClick("opponent", event)} aria-label="Rival reef" inert={boardInteractionOverlayActive ? true : undefined}>
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-rose-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-200"><span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,.8)]" /> {isStoryMode ? `${storyOpponentName}'s Ecosystem` : "Rival Ecosystem"}</div>
                   {attackContext ? (
@@ -18019,7 +18008,7 @@ export default function Simulator({
                     onPointerCancel={handleReefDividerPointerUp}
                     onLostPointerCapture={handleReefDividerPointerUp}
                     aria-disabled={Boolean(compactTurnSequence) || undefined}
-                    inert={boardFaceoffActive ? true : undefined}
+                    inert={boardInteractionOverlayActive ? true : undefined}
                   >
                     <span aria-hidden="true"><i /><i /><i /></span>
                   </div>
@@ -18032,14 +18021,14 @@ export default function Simulator({
                     aria-busy={opponentThinking || undefined}
                     onPointerDown={(event) => event.stopPropagation()}
                     onClick={endTurn}
-                    disabled={boardFaceoffActive || Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn}
+                    disabled={boardInteractionOverlayActive || Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn}
                   >
                     {turnControlLabel}
                   </button>
                 </div>
               ) : null}
 
-              <div id="simulator-player-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "player" ? "h-full" : "hidden"} bg-slate-900 xl:block xl:h-[55%]`} data-board-owner="player" onClickCapture={(event) => suppressBoardGestureClick("player", event)} aria-label="Your reef" inert={boardFaceoffActive ? true : undefined}>
+              <div id="simulator-player-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "player" ? "h-full" : "hidden"} bg-slate-900 xl:block xl:h-[55%]`} data-board-owner="player" onClickCapture={(event) => suppressBoardGestureClick("player", event)} aria-label="Your reef" inert={boardInteractionOverlayActive ? true : undefined}>
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-200"><span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]" /> Your Ecosystem</div>
                   {isPlacingCoral && (
@@ -18470,10 +18459,24 @@ export default function Simulator({
                   tutorialClass={tutorialFaceoffHelpOpen ? " seapals-tutorial-target" : ""}
                 />
               ) : null}
+              {previewExperience ? (
+                <OpeningCoinBoardPresentation
+                  active={openingCoinBoardActive}
+                  event={eventOverlay}
+                  tutorial={tutorialUsesScriptedScenario}
+                  guideName={tutorialGuide.name}
+                  reducedMotion={accessibilityReducedMotion}
+                  onCall={prepareOpeningCoinFlip}
+                  onStop={flipForOpeningTurn}
+                  onLanded={completeOpeningCoinFlip}
+                  onChangeCall={openOpeningCoinFlip}
+                  onChooseOpeningPlayer={chooseOpeningTurn}
+                />
+              ) : null}
             </div>
           </div>
           <AttackTargetLayer
-            active={Boolean(previewExperience && attackContext && !boardFaceoffActive)}
+            active={Boolean(previewExperience && attackContext && !boardFaceoffActive && !openingCoinBoardActive)}
             rootRef={mobileBoardStackRef}
             measureKey={attackTargetMeasureKey}
             reducedMotion={accessibilityReducedMotion}
@@ -18495,7 +18498,7 @@ export default function Simulator({
             selectedIndex={mobileSelectedHandIndex}
             draggingIndex={mobileHandDrag?.index ?? null}
             arrivingIndexes={mobileDrawFlights.map((flight) => flight.handIndex)}
-            interactionDisabled={boardFaceoffActive || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked}
+            interactionDisabled={boardInteractionOverlayActive || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked}
             playingCardId={playingCardId}
             tutorialTargetClass={tutorialTargetClass("hand")}
             onInspect={openHandCardPopover}
@@ -19088,7 +19091,7 @@ export default function Simulator({
         </div>
       ) : null}
 
-      {eventOverlay && !boardFaceoffActive ? (
+      {eventOverlay && !boardFaceoffActive && !openingCoinBoardActive ? (
         <div
           className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5"
           role="dialog"

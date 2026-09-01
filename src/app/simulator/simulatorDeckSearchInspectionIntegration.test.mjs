@@ -44,7 +44,7 @@ test("deck searches share a mutation-free reference-card preview", () => {
 
   const cardInspector = sourceBetween(
     "      {inspectedCardData ? (",
-    "      {eventOverlay && !boardFaceoffActive ? (",
+    "      {eventOverlay && !boardFaceoffActive && !openingCoinBoardActive ? (",
   );
   assert.match(cardInspector, /inspectedCard\.reference/);
   assert.match(cardInspector, /inspectedCardData\.image/);
