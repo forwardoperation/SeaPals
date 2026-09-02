@@ -30,7 +30,7 @@ test("turn notices stay transient while round conditions wait in a compact board
   const compactOverlay = sourceSection(
     simulatorSource,
     "{compactTurnSequence ? <div className=\"seapals-compact-turn-guard",
-    "{opponentThinking ? (",
+    "{compactOpponentCardReader ? (",
   );
 
   assert.match(compactOverlay, /data-compact-turn-banner=\{compactTurnStage\.kind\}/);
@@ -42,7 +42,7 @@ test("turn notices stay transient while round conditions wait in a compact board
   assert.match(compactOverlay, /aria-modal="false"/);
   assert.match(compactOverlay, /data-compact-condition-continue/);
   assert.match(compactOverlay, /onClick=\{continueCompactCondition\}/);
-  assert.match(compactOverlay, /className="sr-only" role="status" aria-live="polite" aria-atomic="true"/);
+  assert.match(simulatorSource, /className="sr-only" role="status" aria-live="polite" aria-atomic="true"/);
   assert.doesNotMatch(compactOverlay, /aria-modal="true"|bg-slate-950\/80|backdrop-blur-sm/);
 
   assert.match(simulatorSource, /\.seapals-compact-turn-banner \{[\s\S]*?left: 50vw;[\s\S]*?top: 50dvh;[\s\S]*?width: min\(calc\(100vw - 2rem\), 34rem\);/);

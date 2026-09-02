@@ -12,30 +12,26 @@ function sourceSection(source, startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-test("a visibly discarded defender continues play without reopening the success result", () => {
+test("a consumed defender pauses on its result checkpoint before discard travel", () => {
   const attackResolution = sourceSection(
     simulatorSource,
     "function resolvePlayerAttack(",
     "function applyPlayerOnPlayDeckDiscard(",
   );
-  const continuations = attackResolution.match(
-    /onComplete:\s*\(\)\s*=>\s*continueAfterPresentedEvent\(resultOverlay, pendingEventsRef\.current\)/g,
-  ) ?? [];
-
-  assert.equal(continuations.length, 2, "Both normal defenders and invading defenders should auto-continue after their discard flight");
   assert.doesNotMatch(
     attackResolution,
-    /onComplete:\s*\(\)\s*=>\s*setEventOverlay\(resultOverlay\)/,
-    "The redundant success reader must not return after the discard animation",
+    /queueConsumedAttackFlight\(/,
+    "Attack resolution must not begin discard travel before the player has read the result",
   );
   assert.match(
     attackResolution,
-    /if \(flightQueued\)[\s\S]{0,120}setEventOverlay\(null\)[\s\S]{0,120}else setEventOverlay\(resultOverlay\)/,
-    "Legacy/tutorial fallback should still explain the result when no flight was shown",
+    /beginCombatResultCheckpoint\(resultOverlay,\s*\{[\s\S]*?discardCue:/,
+    "Successful removals should carry their pending discard into the result checkpoint",
   );
+  assert.match(attackResolution, /continueAttackSequence:\s*sequenceResult\.continues/);
 });
 
-test("opponent removals carry a discard cue through the same compact animation path", () => {
+test("opponent removals carry a discard cue through the same post-checkpoint animation path", () => {
   const eventBuilder = sourceSection(
     simulatorSource,
     "function buildOpponentAttackEventSequence(",
@@ -52,24 +48,32 @@ test("opponent removals carry a discard cue through the same compact animation p
     "function presentQueuedEvent(event, remainingEvents = [],",
     "function closeEventOverlay()",
   );
-  const discardBranch = presenter.indexOf('event.type === "faceoff-result"\n        && event.combatDiscardCue');
+  const discardBranch = presenter.indexOf('event.type === "faceoff-result"');
   const genericReader = presenter.indexOf("shouldShowCompactOpponentCardReader(event)");
-  assert.ok(discardBranch >= 0 && discardBranch < genericReader, "A real removal must bypass the generic opponent result reader");
-  assert.match(presenter, /queueConsumedAttackFlight\(\{[\s\S]{0,240}\.\.\.event\.combatDiscardCue/);
-  assert.match(presenter, /onComplete:\s*\(\)\s*=>\s*continueAfterPresentedEvent\(event, pendingEventsRef\.current\)/);
-  assert.match(presenter, /if \(flightQueued\) \{[\s\S]{0,180}commitEventState\(event\);[\s\S]{0,100}setEventOverlay\(null\);/);
+  assert.ok(discardBranch >= 0 && discardBranch < genericReader, "Opponent combat must reach the checkpoint before the generic reader");
+  const combatCheckpointBranch = presenter.slice(discardBranch, genericReader);
+  assert.match(combatCheckpointBranch, /beginCombatResultCheckpoint\(event,/);
+  assert.match(combatCheckpointBranch, /discardCue:\s*event\.combatDiscardCue\s*\?\?\s*null/);
+  assert.match(combatCheckpointBranch, /commit:\s*\(\)\s*=>\s*commitEventState\(event\)/);
+  assert.doesNotMatch(combatCheckpointBranch, /queueConsumedAttackFlight\(/);
 });
 
 test("discard travel can locate a card on either reef before state mutation", () => {
-  const flight = sourceSection(
+  const flightPlan = sourceSection(
+    simulatorSource,
+    "function createConsumedAttackFlightPlan(",
+    "function beginCombatResultCheckpoint(",
+  );
+  const queuedFlight = sourceSection(
     simulatorSource,
     "function queueConsumedAttackFlight(",
     "function getPlayerAttackTargets(",
   );
-  assert.match(flight, /sourceOwner\s*=\s*null/);
-  assert.match(flight, /\[data-board-owner="\$\{sourceOwner\}"\]/);
-  assert.match(flight, /sourceBoard\?\.querySelectorAll\("\[data-card-id\]"\)/);
-  assert.match(flight, /node\.dataset\.cardId === cardId/);
+  assert.match(flightPlan, /sourceOwner\s*=\s*null/);
+  assert.match(flightPlan, /\[data-board-owner="\$\{sourceOwner\}"\]/);
+  assert.match(flightPlan, /sourceBoard\?\.querySelectorAll\("\[data-card-id\]"\)/);
+  assert.match(flightPlan, /node\.dataset\.cardId === cardId/);
+  assert.match(queuedFlight, /(?:flightPlan|sourceGeometry) \?\? createConsumedAttackFlightPlan\(/);
   assert.match(
     simulatorSource,
     /faceoffRolling \|\| consumedAttackFlight \|\| eventRequiresResolution/,

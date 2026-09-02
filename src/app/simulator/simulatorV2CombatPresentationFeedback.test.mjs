@@ -118,12 +118,18 @@ test("V2 attack targeting tints the board red and drops crosshairs only on legal
   assert.match(simulatorSource, /@keyframes\s+seapalsAttackReticleLand/i);
 });
 
-test("an actually consumed defender gets a V2-only flight to its rules-correct owner pile", () => {
-  const consumeFlight = sourceSection(
+test("an actually consumed defender gets a post-checkpoint V2 flight to its rules-correct owner pile", () => {
+  const consumeFlightPlan = sourceSection(
+    simulatorSource,
+    "function createConsumedAttackFlightPlan(",
+    "function beginCombatResultCheckpoint(",
+  );
+  const consumeFlightQueue = sourceSection(
     simulatorSource,
     "function queueConsumedAttackFlight(",
     "function getPlayerAttackTargets(",
   );
+  const consumeFlight = `${consumeFlightPlan}\n${consumeFlightQueue}`;
   assert.match(consumeFlight, /if\s*\(!previewExperience\)\s*return/);
   assert.match(consumeFlight, /destinationOwner/);
   assert.match(consumeFlight, /destinationZone/);
@@ -139,10 +145,14 @@ test("an actually consumed defender gets a V2-only flight to its rules-correct o
   const successfulResolution = attackResolution.slice(attackResolution.indexOf("if (attackerWins)"));
   assert.match(
     successfulResolution,
-    /!defenderKept[\s\S]*?queueConsumedAttackFlight\([\s\S]*?destinationOwner:\s*"opponent"[\s\S]*?destinationZone:\s*destroyedCardGoesToLostZone\(targetEntry\.card\)\s*\?\s*"lost"\s*:\s*"discard"/,
-    "Only a genuinely removed defender should launch a flight, and existing Lost Zone routing must win over presentation",
+    /beginCombatResultCheckpoint\(resultOverlay,\s*\{[\s\S]*?discardCue:\s*!defenderKept\s*\?[\s\S]*?destinationOwner:\s*"opponent"[\s\S]*?destinationZone:\s*destroyedCardGoesToLostZone\(targetEntry\.card\)\s*\?\s*"lost"\s*:\s*"discard"/,
+    "Only a genuinely removed defender should stage a discard cue, and existing Lost Zone routing must win over presentation",
   );
-  assert.match(successfulResolution, /setOpponent\(nextOpponentState\)/, "The existing rules engine must still commit the resolved opponent state");
+  assert.match(
+    successfulResolution,
+    /commit:\s*\(\)\s*=>[\s\S]*?setOpponent\(nextOpponentState\)/,
+    "The existing rules result must be committed only after the checkpoint's Continue action",
+  );
 
   assert.match(simulatorSource, /data-consumed-attack-flight/);
   assert.match(simulatorSource, /@keyframes\s+seapalsConsumedAttackToDiscard/i);

@@ -101,7 +101,7 @@ test("opponent Support and important read events use a compact flip reader with 
   const reader = sourceSection(
     simulatorSource,
     "data-opponent-card-reader",
-    "data-opponent-placement-flight",
+    "{combatResultCheckpoint ? (",
   );
   assert.match(reader, /cardsById\[[^\]]+sourceCardId[^\]]*\]/);
   assert.match(reader, /type="button"/);
@@ -116,7 +116,7 @@ test("opponent search readers show a left-to-right source, arrow, and revealed r
   const reader = sourceSection(
     simulatorSource,
     "data-opponent-card-reader",
-    "data-opponent-placement-flight",
+    "{combatResultCheckpoint ? (",
   );
   const readerStyles = sourceSection(
     simulatorSource,
@@ -170,7 +170,7 @@ test("revealed opponent search readers keep concise copy and Continue visible wi
   const reader = sourceSection(
     simulatorSource,
     "data-opponent-card-reader",
-    "data-opponent-placement-flight",
+    "{combatResultCheckpoint ? (",
   );
   const readerStyles = sourceSection(
     simulatorSource,
@@ -260,7 +260,7 @@ test("single-card opponent readers preserve full detail in a scrollable fallback
   const reader = sourceSection(
     simulatorSource,
     "data-opponent-card-reader",
-    "data-opponent-placement-flight",
+    "{combatResultCheckpoint ? (",
   );
   const readerStyles = sourceSection(
     simulatorSource,
