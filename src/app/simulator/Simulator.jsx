@@ -15574,6 +15574,20 @@ export default function Simulator({
     ...mobileDrawFlights.map((flight) => flight.handIndex),
   ])];
   const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;
+  const compactOpponentReaderEvent = compactOpponentCardReader?.event ?? null;
+  const compactOpponentReaderSourceCard = compactOpponentReaderEvent
+    ? cardsById[compactOpponentReaderEvent.sourceCardId]
+    : null;
+  const compactOpponentReaderRevealedCards = (compactOpponentReaderEvent?.revealedCards ?? [])
+    .map((cardId) => cardsById[cardId])
+    .filter(Boolean);
+  const compactOpponentReaderHasReveal = compactOpponentReaderRevealedCards.length > 0;
+  const compactOpponentReaderRevealedNames = compactOpponentReaderRevealedCards
+    .map((card) => card.name)
+    .join(compactOpponentReaderRevealedCards.length > 2 ? ", " : " and ");
+  const compactOpponentReaderSummary = compactOpponentReaderHasReveal
+    ? `The opponent used ${compactOpponentReaderSourceCard?.name ?? "this card"} to find ${compactOpponentReaderRevealedNames}.`
+    : compactOpponentReaderEvent?.message ?? compactOpponentReaderEvent?.title ?? "";
   const selectedHandPlayError =
     modal === "hand" && selectedHandCard ? getPlayError(cardsById[selectedHandCard]) : "";
   const handPopoverCard = handPopoverCardId && hand.includes(handPopoverCardId) ? cardsById[handPopoverCardId] : null;
@@ -17206,30 +17220,104 @@ export default function Simulator({
           z-index: 96;
           left: 50vw;
           bottom: calc(var(--seapals-mobile-dock-clearance, 0rem) + .55rem + env(safe-area-inset-bottom, 0px));
-          display: grid;
+          display: flex;
           width: min(calc(100vw - 1rem), 30rem);
           max-height: min(62dvh, 35rem);
-          grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+          flex-direction: column;
+          gap: .65rem;
           overflow: hidden;
           border: 1px solid rgba(103, 232, 249, .64);
           border-radius: 1.35rem;
           background: linear-gradient(155deg, rgba(4, 17, 29, .98), rgba(15, 35, 52, .98));
           color: white;
+          padding: .75rem;
           box-shadow: 0 24px 70px rgba(2, 8, 23, .7), 0 0 0 1px rgba(255,255,255,.06) inset;
           transform: translateX(-50%);
           animation: seapalsOpponentCardFlip 380ms cubic-bezier(.18,.78,.2,1) both;
+        }
+        .seapals-opponent-card-reader-flow {
+          display: grid;
+          min-height: 0;
+          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+          align-items: center;
+          gap: .4rem;
+        }
+        .seapals-opponent-card-reader-figure {
+          display: flex;
+          min-width: 0;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          margin: 0;
+        }
+        .seapals-opponent-card-reader-figure > img,
+        .seapals-opponent-card-reader-result-cards {
+          width: min(100%, 7.75rem, calc(26dvh * .716));
+          height: auto;
+          max-height: min(26dvh, 10.75rem);
+          aspect-ratio: 63 / 88;
+        }
+        .seapals-opponent-card-reader-figure > img,
+        .seapals-opponent-card-reader-result-card {
+          border-radius: .65rem;
+          background: white;
+          object-fit: contain;
+          box-shadow: 0 12px 28px rgba(0,0,0,.46);
+        }
+        .seapals-opponent-card-reader-result-cards {
+          position: relative;
+          display: grid;
+          place-items: center;
+        }
+        .seapals-opponent-card-reader-result-card {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          transform: translateX(var(--seapals-reader-card-offset, 0)) rotate(var(--seapals-reader-card-rotation, 0deg));
+        }
+        .seapals-opponent-card-reader-caption {
+          display: grid;
+          width: 100%;
+          min-width: 0;
+          margin-top: .35rem;
+          text-align: center;
+        }
+        .seapals-opponent-card-reader-caption span {
+          color: #a5f3fc;
+          font-size: .58rem;
+          font-weight: 900;
+          letter-spacing: .15em;
+          line-height: 1.15;
+          text-transform: uppercase;
+        }
+        .seapals-opponent-card-reader-caption strong {
+          display: -webkit-box;
+          overflow: hidden;
+          margin-top: .12rem;
+          font-size: .72rem;
+          font-weight: 900;
+          line-height: 1.15;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+        }
+        .seapals-opponent-card-reader-arrow {
+          color: #67e8f9;
+          font-size: clamp(1.55rem, 7vw, 2.25rem);
+          font-weight: 950;
+          line-height: 1;
+          filter: drop-shadow(0 0 10px rgba(34, 211, 238, .64));
         }
         .seapals-opponent-card-reader-art {
           display: flex;
           min-height: 0;
           align-items: center;
           justify-content: center;
-          padding: .65rem .65rem 0;
         }
         .seapals-opponent-card-reader-art > img {
           width: auto;
-          max-width: min(48vw, 12rem);
-          height: min(34dvh, 20rem);
+          max-width: min(40vw, 8.5rem);
+          height: min(24dvh, 10.5rem);
           border-radius: .8rem;
           background: white;
           object-fit: contain;
@@ -17239,22 +17327,65 @@ export default function Simulator({
           display: flex;
           min-height: 0;
           flex-direction: column;
-          padding: .75rem;
+        }
+        .seapals-opponent-card-reader.is-single .seapals-opponent-card-reader-copy {
+          flex: 1 1 auto;
+          overflow: hidden;
         }
         .seapals-opponent-card-reader-scroll {
           min-height: 0;
+          height: 100%;
           overflow-y: auto;
           overscroll-behavior: contain;
+          padding-right: .15rem;
+        }
+        .seapals-opponent-card-reader-summary {
+          margin: 0;
+          color: #e2e8f0;
+          font-size: .8rem;
+          line-height: 1.35;
+        }
+        .seapals-opponent-card-reader.has-reveal .seapals-opponent-card-reader-summary {
+          display: -webkit-box;
+          overflow: hidden;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
         }
         .seapals-opponent-card-reader-continue {
           min-height: 2.8rem;
           flex: 0 0 auto;
-          margin-top: .65rem;
+          margin-top: 0;
           border-radius: 9999px;
           background: linear-gradient(90deg, #22d3ee, #34d399);
           color: #052e3a;
           padding: .7rem 1.4rem;
           font-weight: 950;
+        }
+        @media (max-height: 30rem) {
+          .seapals-opponent-card-reader.has-reveal {
+            gap: .35rem;
+            padding: .5rem;
+          }
+          .seapals-opponent-card-reader.has-reveal .seapals-opponent-card-reader-figure > img,
+          .seapals-opponent-card-reader.has-reveal .seapals-opponent-card-reader-result-cards {
+            width: min(100%, 5rem, calc(20dvh * .716));
+            max-height: 20dvh;
+          }
+          .seapals-opponent-card-reader.has-reveal .seapals-opponent-card-reader-caption {
+            margin-top: .2rem;
+          }
+          .seapals-opponent-card-reader.has-reveal .seapals-opponent-card-reader-caption strong {
+            font-size: .66rem;
+            -webkit-line-clamp: 1;
+          }
+          .seapals-opponent-card-reader.has-reveal .seapals-opponent-card-reader-summary {
+            font-size: .72rem;
+            line-height: 1.25;
+          }
+          .seapals-opponent-card-reader.has-reveal .seapals-opponent-card-reader-continue {
+            min-height: 2.5rem;
+            padding: .45rem 1rem;
+          }
         }
         .seapals-compact-rp-flight-layer { pointer-events: none; }
         .seapals-compact-rp-coin {
@@ -19394,51 +19525,113 @@ export default function Simulator({
 
       {compactOpponentCardReader ? (
         <section
-          className="seapals-opponent-card-reader"
+          className={`seapals-opponent-card-reader${compactOpponentReaderHasReveal ? " has-reveal" : " is-single"}`}
           data-opponent-card-reader
           role="dialog"
           aria-modal="false"
           aria-labelledby={`seapals-opponent-reader-title-${compactOpponentCardReader.id}`}
-          aria-describedby={compactOpponentCardReader.event.message ? `seapals-opponent-reader-message-${compactOpponentCardReader.id}` : undefined}
+          aria-describedby={compactOpponentReaderHasReveal
+            ? `seapals-opponent-reader-message-${compactOpponentCardReader.id}`
+            : compactOpponentCardReader.event.message
+              ? `seapals-opponent-reader-message-${compactOpponentCardReader.id}`
+              : undefined}
           onKeyDown={(event) => {
             if (event.key !== "Tab") return;
             event.preventDefault();
             event.currentTarget.querySelector("button")?.focus();
           }}
         >
-          <div className="seapals-opponent-card-reader-art">
-            <img
-              src={cardsById[compactOpponentCardReader.event.sourceCardId]?.image}
-              alt={cardsById[compactOpponentCardReader.event.sourceCardId]?.name}
-            />
-          </div>
-          <div className="seapals-opponent-card-reader-copy">
-            <div className="seapals-opponent-card-reader-scroll">
-              <span className="text-[10px] font-black uppercase tracking-[.2em] text-rose-200">Opponent card</span>
-              <h2 id={`seapals-opponent-reader-title-${compactOpponentCardReader.id}`} className="mt-1 text-lg font-black leading-tight">
+          {compactOpponentReaderHasReveal ? (
+            <>
+              <h2 id={`seapals-opponent-reader-title-${compactOpponentCardReader.id}`} className="sr-only">
                 {compactOpponentCardReader.event.title}
               </h2>
-              {compactOpponentCardReader.event.message ? (
-                <p id={`seapals-opponent-reader-message-${compactOpponentCardReader.id}`} className="mt-2 text-sm leading-relaxed text-slate-200">
-                  {compactOpponentCardReader.event.message}
+              <div
+                className="seapals-opponent-card-reader-flow"
+                data-opponent-reader-flow
+                aria-label={`${compactOpponentReaderSourceCard?.name ?? "Opponent card"} found ${compactOpponentReaderRevealedNames}`}
+              >
+                <figure className="seapals-opponent-card-reader-figure" data-opponent-reader-source>
+                  <img src={cardsById[compactOpponentCardReader.event.sourceCardId]?.image} alt="" />
+                  <figcaption className="seapals-opponent-card-reader-caption">
+                    <span>Used</span>
+                    <strong>{cardsById[compactOpponentCardReader.event.sourceCardId]?.name ?? "Opponent card"}</strong>
+                  </figcaption>
+                </figure>
+                <span className="seapals-opponent-card-reader-arrow" data-opponent-reader-arrow aria-hidden="true">&rarr;</span>
+                <figure className="seapals-opponent-card-reader-figure" data-opponent-reader-result>
+                  <div className="seapals-opponent-card-reader-result-cards" aria-hidden="true">
+                    {compactOpponentCardReader.event.revealedCards.map((cardId, index) => {
+                      const card = cardsById[cardId];
+                      const cardOffset = (index - ((compactOpponentReaderRevealedCards.length - 1) / 2)) * 18;
+                      const cardRotation = (index - ((compactOpponentReaderRevealedCards.length - 1) / 2)) * 4;
+                      return (
+                        <img
+                          key={`${cardId}-${index}`}
+                          src={card?.image}
+                          alt=""
+                          className="seapals-opponent-card-reader-result-card"
+                          style={{
+                            zIndex: index + 1,
+                            "--seapals-reader-card-offset": `${cardOffset}px`,
+                            "--seapals-reader-card-rotation": `${cardRotation}deg`,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <figcaption className="seapals-opponent-card-reader-caption">
+                    <span>Found</span>
+                    <strong>{compactOpponentReaderRevealedNames}</strong>
+                  </figcaption>
+                </figure>
+              </div>
+              <div className="seapals-opponent-card-reader-copy">
+                <p
+                  id={`seapals-opponent-reader-message-${compactOpponentCardReader.id}`}
+                  className="seapals-opponent-card-reader-summary"
+                  data-opponent-reader-summary
+                >
+                  {compactOpponentReaderSummary}
                 </p>
-              ) : null}
-              {compactOpponentCardReader.event.defenderCardId ? (
-                <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose-300/25 bg-rose-300/10 p-2">
-                  <img src={cardsById[compactOpponentCardReader.event.defenderCardId]?.image} alt="" className="h-14 w-10 rounded object-contain" />
-                  <span className="text-xs font-bold text-rose-100">Affected: {cardsById[compactOpponentCardReader.event.defenderCardId]?.name}</span>
+                {compactOpponentCardReader.event.defenderCardId ? (
+                  <div className="mt-2 flex items-center gap-2 rounded-xl border border-rose-300/25 bg-rose-300/10 p-2">
+                    <img src={cardsById[compactOpponentCardReader.event.defenderCardId]?.image} alt="" className="h-12 w-9 rounded object-contain" />
+                    <span className="text-xs font-bold text-rose-100">Affected: {cardsById[compactOpponentCardReader.event.defenderCardId]?.name}</span>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="seapals-opponent-card-reader-art">
+                <img
+                  src={cardsById[compactOpponentCardReader.event.sourceCardId]?.image}
+                  alt={cardsById[compactOpponentCardReader.event.sourceCardId]?.name}
+                />
+              </div>
+              <div className="seapals-opponent-card-reader-copy">
+                <div className="seapals-opponent-card-reader-scroll">
+                  <span className="text-[10px] font-black uppercase tracking-[.2em] text-rose-200">Opponent card</span>
+                  <h2 id={`seapals-opponent-reader-title-${compactOpponentCardReader.id}`} className="mt-1 text-lg font-black leading-tight">
+                    {compactOpponentCardReader.event.title}
+                  </h2>
+                  {compactOpponentCardReader.event.message ? (
+                    <p id={`seapals-opponent-reader-message-${compactOpponentCardReader.id}`} className="mt-2 text-sm leading-relaxed text-slate-200">
+                      {compactOpponentCardReader.event.message}
+                    </p>
+                  ) : null}
+                  {compactOpponentCardReader.event.defenderCardId ? (
+                    <div className="mt-3 flex items-center gap-2 rounded-xl border border-rose-300/25 bg-rose-300/10 p-2">
+                      <img src={cardsById[compactOpponentCardReader.event.defenderCardId]?.image} alt="" className="h-14 w-10 rounded object-contain" />
+                      <span className="text-xs font-bold text-rose-100">Affected: {cardsById[compactOpponentCardReader.event.defenderCardId]?.name}</span>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-              {compactOpponentCardReader.event.revealedCards?.length ? (
-                <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Cards revealed by the opponent">
-                  {compactOpponentCardReader.event.revealedCards.map((cardId, index) => (
-                    <img key={`${cardId}-${index}`} src={cardsById[cardId]?.image} alt={cardsById[cardId]?.name} className="h-24 w-16 shrink-0 rounded bg-white object-contain" />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-            <button type="button" autoFocus className="seapals-opponent-card-reader-continue" onClick={continueCompactOpponentCardReader}>Continue</button>
-          </div>
+              </div>
+            </>
+          )}
+          <button className="seapals-opponent-card-reader-continue" type="button" autoFocus onClick={continueCompactOpponentCardReader}>Continue</button>
         </section>
       ) : null}
 
