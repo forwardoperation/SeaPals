@@ -157,6 +157,12 @@ import {
   DEFAULT_SIMULATOR_DECK_ID,
   resolveSimulatorDeckId,
 } from "./simulatorDeckRoute.mjs";
+import {
+  clearSimulatorResumeCheckpoint,
+  isSimulatorResumeCheckpointStable,
+  readSimulatorResumeCheckpoint,
+  writeSimulatorResumeCheckpoint,
+} from "./simulatorResumeState.mjs";
 
 function shuffle(arr, random = Math.random) {
   const result = arr.slice();
@@ -3383,6 +3389,12 @@ export default function Simulator({
     ? createSimulatorTutorialContract(tutorialRuntime.contract ?? tutorialRuntime)
     : null);
   const tutorialUsesScriptedScenario = Boolean(tutorialRuntime && tutorialRuntime.scriptedDecks !== false);
+  const simulatorResumeEnabled = Boolean(previewExperience && !isStoryMode && !tutorialRuntime);
+  const [resumeCheckpoint, setResumeCheckpoint] = useState(null);
+  const [resumeCheckpointReady, setResumeCheckpointReady] = useState(!simulatorResumeEnabled);
+  const [resumeDecisionResolved, setResumeDecisionResolved] = useState(!simulatorResumeEnabled);
+  const resumeDecisionResolvedRef = useRef(!simulatorResumeEnabled);
+  const resumeSaveSuppressedRef = useRef(false);
   const scriptedFoundationLessonCardId = tutorialUsesScriptedScenario
     ? getScriptedTutorialFoundationDrawCardId(storyPlayerDeckId)
     : null;
@@ -3663,6 +3675,26 @@ export default function Simulator({
     `New ${initialPlayerDeckName} game started. Setup: play a base Coral or Creature School using your 3 RP.`,
   ]);
   const [turnLog, setTurnLog] = useState(["Setup began with 3 RP and an eight-card hand."]);
+  useEffect(() => {
+    if (!simulatorResumeEnabled) return;
+    let checkpoint = readSimulatorResumeCheckpoint(window.localStorage, {
+      isKnownCardId: (cardId) => Boolean(cardsById[cardId]),
+    });
+    if (
+      checkpoint
+      && (
+        !getPlayableDeckById(checkpoint.state.selectedDeckId)
+        || !getPlayableDeckById(checkpoint.state.selectedOpponentDeckId)
+      )
+    ) {
+      clearSimulatorResumeCheckpoint(window.localStorage);
+      checkpoint = null;
+    }
+    setResumeCheckpoint(checkpoint);
+    resumeDecisionResolvedRef.current = !checkpoint;
+    setResumeDecisionResolved(!checkpoint);
+    setResumeCheckpointReady(true);
+  }, [simulatorResumeEnabled]);
   const opponentDifficultyProfile = getOpponentDifficultyProfile(opponentDifficulty);
   const storyPlayerDeckName = storyPlayerDeckSnapshot?.name
     ?? getPlayableDeckById(storyPlayerDeckId)?.name
@@ -5730,10 +5762,6 @@ export default function Simulator({
       else if (tutorialBoardTourHelp.target === "player-board") setMobileBoardView("player");
     }
   }, [previewExperience, tutorialBoardTourHelp?.cueId, tutorialBoardTourHelp?.target, tutorialBoardTourOpen]);
-
-  useEffect(() => {
-    setHasDrawnThisTurn(false);
-  }, [turn]);
 
   useEffect(() => {
     if (!tutorialContract) return;
@@ -15498,6 +15526,13 @@ export default function Simulator({
     });
     setStartingPlayer(chosenStarter);
     setOpeningOpponentTurn(false);
+    if (simulatorResumeEnabled) {
+      writeSimulatorResumeCheckpoint(window.localStorage, {
+        ...getCurrentSimulatorResumeState(),
+        startingPlayer: chosenStarter,
+        openingOpponentTurn: false,
+      });
+    }
     const setupRoundEvent = {
       type: "round-transition",
       title: "Setup Round",
@@ -15577,7 +15612,210 @@ export default function Simulator({
     setTutorialBoardTourStep(nextStep);
   }
 
+  function getCurrentSimulatorResumeState() {
+    return {
+      selectedDeckId,
+      selectedOpponentDeckId,
+      opponentDifficulty,
+      victoryTarget,
+      foundationDeck,
+      palsDeck,
+      hand,
+      playerCorals,
+      playerHabitatInstances,
+      playerReefCreatureInstances,
+      playerOrphanCreatureInstances,
+      opponent,
+      floatingCardOffsets,
+      ecosystemZoom,
+      ecosystemOffset,
+      opponentEcosystemZoom,
+      opponentEcosystemOffset,
+      playerViewportTouched,
+      opponentViewportTouched,
+      mobileBoardView,
+      mobileReefSplit,
+      discardPile,
+      lostZone,
+      conditionDeck,
+      activeConditionId,
+      persistentConditionIds,
+      conditionDensityUses,
+      schoolDensityCommitmentsByInstanceId,
+      blueCrabRecycleUsedTurn,
+      resilienceUsedCardIds,
+      round,
+      gamePhase,
+      startingPlayer,
+      openingOpponentTurn,
+      turn,
+      rp,
+      hasDrawnThisTurn,
+      turnDrawSelection,
+      turnDrawResult,
+      usedAttackers,
+      actionCooldowns,
+      usedCreatureActions,
+      creatureStatuses,
+      poisonImmunityNextPredatorAttack,
+      rovLightsActive,
+      nextOnPlayAttackBonus,
+      flashingAlarmAttackBonus,
+      supportLockSourceId,
+      supportBlockedUntilRound,
+      cardsBlockedFromPlayThisTurn,
+      log,
+      turnLog,
+      gameResult,
+    };
+  }
+
+  function resolveResumeDecision() {
+    setResumeCheckpoint(null);
+    resumeDecisionResolvedRef.current = true;
+    resumeSaveSuppressedRef.current = false;
+    setResumeDecisionResolved(true);
+  }
+
+  function startNewGameFromResumePrompt() {
+    if (simulatorResumeEnabled) clearSimulatorResumeCheckpoint(window.localStorage);
+    resolveResumeDecision();
+  }
+
+  function restoreSimulatorResumeCheckpoint(checkpoint = resumeCheckpoint) {
+    const saved = checkpoint?.state;
+    if (!saved) return;
+    cancelOpeningCoinFlip();
+    cancelCardCoinFlipPresentation();
+    clearMobileDrawFlightSequence();
+    clearCompactTurnPresentation();
+    clearCompactOpponentPlayback();
+    combatResultCheckpointRef.current = null;
+    combatResultReturnFocusRef.current = null;
+    setCombatResultCheckpoint(null);
+    clearConsumedAttackFlight();
+    if (opponentThinkingTimerRef.current) window.clearTimeout(opponentThinkingTimerRef.current);
+    opponentThinkingTimerRef.current = null;
+    if (faceoffLockTimerRef.current) window.clearTimeout(faceoffLockTimerRef.current);
+    faceoffLockTimerRef.current = null;
+    faceoffRollCommitRef.current = false;
+    opponentCombatCheckpointIdRef.current += 1;
+    for (const timer of bubbleBurstTimersRef.current) window.clearTimeout(timer);
+    bubbleBurstTimersRef.current.clear();
+
+    const restoredDifficulty = normalizeOpponentDifficulty(saved.opponentDifficulty);
+    setSelectedDeckId(saved.selectedDeckId);
+    setSelectedOpponentDeckId(saved.selectedOpponentDeckId);
+    setOpponentDifficulty(restoredDifficulty);
+    setPendingOpponentDifficulty(restoredDifficulty);
+    setVictoryTarget(saved.victoryTarget);
+    setPendingVictoryTarget(saved.victoryTarget);
+    setFoundationDeck(saved.foundationDeck);
+    setPalsDeck(saved.palsDeck);
+    setHand(saved.hand);
+    setPlayerCorals(saved.playerCorals);
+    setPlayerHabitatInstances(saved.playerHabitatInstances);
+    setPlayerReefCreatureInstances(saved.playerReefCreatureInstances);
+    setPlayerOrphanCreatureInstances(saved.playerOrphanCreatureInstances);
+    setOpponentState((current) => reconcileOpponentInstances(current, saved.opponent));
+    setDiscardPile(saved.discardPile);
+    setLostZone(saved.lostZone);
+    setConditionDeck(saved.conditionDeck);
+    setActiveConditionId(saved.activeConditionId ?? null);
+    setPersistentConditionIds(saved.persistentConditionIds ?? []);
+    setConditionDensityUses(saved.conditionDensityUses ?? {});
+    setSchoolDensityCommitmentsByInstanceId(saved.schoolDensityCommitmentsByInstanceId ?? {});
+    setBlueCrabRecycleUsedTurn(saved.blueCrabRecycleUsedTurn ?? null);
+    setResilienceUsedCardIds(saved.resilienceUsedCardIds ?? []);
+    setRound(saved.round);
+    setGamePhase(saved.gamePhase);
+    setStartingPlayer(saved.startingPlayer);
+    setOpeningOpponentTurn(Boolean(saved.openingOpponentTurn));
+    setTurn(saved.turn);
+    setRp(saved.rp);
+    setHasDrawnThisTurn(Boolean(saved.hasDrawnThisTurn));
+    setTurnDrawSelection(saved.turnDrawSelection ?? null);
+    setTurnDrawResult(saved.turnDrawResult ?? null);
+    setUsedAttackers(saved.usedAttackers ?? []);
+    setActionCooldowns(saved.actionCooldowns ?? {});
+    setUsedCreatureActions(saved.usedCreatureActions ?? []);
+    setCreatureStatuses(saved.creatureStatuses ?? {});
+    setPoisonImmunityNextPredatorAttack(Boolean(saved.poisonImmunityNextPredatorAttack));
+    setRovLightsActive(Boolean(saved.rovLightsActive));
+    setNextOnPlayAttackBonus(saved.nextOnPlayAttackBonus ?? null);
+    setFlashingAlarmAttackBonus(saved.flashingAlarmAttackBonus ?? null);
+    setSupportLockSourceId(saved.supportLockSourceId ?? null);
+    setSupportBlockedUntilRound(Number(saved.supportBlockedUntilRound) || 0);
+    setCardsBlockedFromPlayThisTurn(saved.cardsBlockedFromPlayThisTurn ?? []);
+    setLog(saved.log ?? []);
+    setTurnLog(saved.turnLog ?? []);
+    setGameResult(null);
+
+    setBubbleBursts([]);
+    setOpponentThinking(false);
+    setRoundFlash(false);
+    setEventOverlay(null);
+    pendingEventsRef.current = [];
+    setPendingEvents([]);
+    setFaceoffRolling(false);
+    setFaceoffPreview(null);
+    setFaceoffLocked(false);
+    setModal(
+      saved.gamePhase === "draw"
+      && !saved.hasDrawnThisTurn
+      && Number(saved.turnDrawSelection?.target) > 0
+        ? "turn-draw"
+        : null,
+    );
+    setSelectedHandCard(null);
+    setMobileSelectedHandIndex(null);
+    setHandPopoverCardId(null);
+    setMobileHandDrag(null);
+    setPlayingCardId(null);
+    setPlayError("");
+    setPendingCreatureAction(null);
+    setAttackContext(null);
+    setSearchContext(null);
+    setInspectedCard(null);
+    setHandLimitDiscardSelection([]);
+    setMobileHudPanel(null);
+    setMobileDrawTrayOpen(false);
+    setMobileDrawAnnouncement("Previous game resumed.");
+    setSetupOpeningHandVisibleCount(null);
+    setDraggingCoralId(null);
+    setSlotDragStart(null);
+    setCoralDragStart(null);
+    setFloatingCardDrag(null);
+    setIsPanning(false);
+    setPanStart(null);
+    setIsOpponentPanning(false);
+    setOpponentPanStart(null);
+    setReefDividerDragging(false);
+    setSimulatorExitConfirmationOpen(false);
+    setBugReportOpen(false);
+
+    setFloatingCardOffsets(saved.floatingCardOffsets ?? {});
+    setMobileBoardView(saved.mobileBoardView === "opponent" ? "opponent" : "player");
+    setMobileReefSplit(clampMobileReefSplit(saved.mobileReefSplit ?? MOBILE_REEF_SPLIT_DEFAULT));
+    commitBoardCamera("player", {
+      zoom: saved.ecosystemZoom ?? initialEcosystemZoom,
+      offset: saved.ecosystemOffset ?? { x: 0, y: 0 },
+    });
+    commitBoardCamera("opponent", {
+      zoom: saved.opponentEcosystemZoom ?? initialEcosystemZoom,
+      offset: saved.opponentEcosystemOffset ?? { x: 0, y: 0 },
+    });
+    setPlayerViewportTouched(Boolean(saved.playerViewportTouched));
+    setOpponentViewportTouched(Boolean(saved.opponentViewportTouched));
+    playerGestureRef.current = createEcosystemGestureState();
+    opponentGestureRef.current = createEcosystemGestureState();
+    boardClickSuppressionRef.current = { player: 0, opponent: 0 };
+    resolveResumeDecision();
+  }
+
   function restartGame(deckId = selectedDeckId, opponentDeckId = selectedOpponentDeckId, nextVictoryTarget = pendingVictoryTarget, nextOpponentDifficulty = pendingOpponentDifficulty) {
+    if (simulatorResumeEnabled) clearSimulatorResumeCheckpoint(window.localStorage);
+    resolveResumeDecision();
     cancelOpeningCoinFlip();
     cancelCardCoinFlipPresentation();
     clearMobileDrawFlightSequence();
@@ -15799,6 +16037,10 @@ export default function Simulator({
       exitStoryMode();
       return;
     }
+    if (simulatorResumeEnabled) {
+      resumeSaveSuppressedRef.current = true;
+      clearSimulatorResumeCheckpoint(window.localStorage);
+    }
     window.location.assign("/");
   }
 
@@ -15855,6 +16097,7 @@ export default function Simulator({
   const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "opponent-discard" ? "Opponent Discard Pile" : modal === "opponent-lost" ? "Opponent Lost Zone" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "lost-recover" ? "Recover from the Lost Zone" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Fish" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
   const isDarkZoneModal = Boolean(modal);
   const fullPageModalOpen = Boolean(modal && !compactTurnSequence && (!previewDrawTrayEnabled || !["turn-draw", "draw-result"].includes(modal)));
+  const resumeHydrationPending = simulatorResumeEnabled && !resumeCheckpointReady;
   const boardFaceoffActive = Boolean(
     previewExperience
     && ["faceoff-ready", "school-attack-ready", "opponent-roll-ready"].includes(eventOverlay?.type),
@@ -15862,7 +16105,7 @@ export default function Simulator({
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
   const openingCoinBoardActive = Boolean(previewExperience && isOpeningCoinEvent);
   const cardCoinBoardActive = Boolean(previewExperience && cardCoinFlip);
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || Boolean(combatResultCheckpoint);
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || Boolean(combatResultCheckpoint) || Boolean(resumeCheckpoint);
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -15876,9 +16119,78 @@ export default function Simulator({
     || boardFaceoffActive
     || openingCoinBoardActive
     || cardCoinBoardActive
+    || resumeHydrationPending
+    || resumeCheckpoint
     || simulatorExitConfirmationOpen
     || tutorialExitConfirmationOpen
   ));
+  const simulatorResumeCheckpointStable = simulatorResumeEnabled && isSimulatorResumeCheckpointStable({
+    resumeCheckpointReady,
+    resumeDecisionResolved: resumeDecisionResolved && resumeDecisionResolvedRef.current,
+    resumePromptOpen: Boolean(resumeCheckpoint),
+    gameResult,
+    startingPlayer,
+    gamePhase,
+    hasDrawnThisTurn,
+    turnDrawSelection,
+    modal,
+    opponentThinking,
+    eventOverlay,
+    pendingEvents,
+    compactTurnSequence,
+    compactRpFlights,
+    opponentPlacementFlight,
+    compactOpponentCardReader,
+    compactOpponentPlaybackLocked,
+    combatResultCheckpoint,
+    consumedAttackFlight,
+    cardCoinFlip,
+    faceoffRolling,
+    playingCardId,
+    pendingCreatureAction,
+    attackContext,
+    searchContext,
+    mobileDrawFlights,
+    mobileHandDrag,
+    floatingCardDrag,
+    draggingCoralId,
+    slotDragStart,
+    coralDragStart,
+    setupOpeningHandVisibleCount,
+    roundFlash,
+    reefDividerDragging,
+    isPanning,
+    isOpponentPanning,
+    simulatorExitConfirmationOpen,
+  });
+  useEffect(() => {
+    if (!simulatorResumeCheckpointStable) return undefined;
+    const saveCheckpoint = () => {
+      if (resumeSaveSuppressedRef.current) return;
+      writeSimulatorResumeCheckpoint(window.localStorage, getCurrentSimulatorResumeState());
+    };
+    const saveWhenHidden = () => {
+      if (document.visibilityState === "hidden") saveCheckpoint();
+    };
+    const saveTimer = window.setTimeout(saveCheckpoint, 240);
+    window.addEventListener("pagehide", saveCheckpoint);
+    document.addEventListener("visibilitychange", saveWhenHidden);
+    return () => {
+      window.clearTimeout(saveTimer);
+      window.removeEventListener("pagehide", saveCheckpoint);
+      document.removeEventListener("visibilitychange", saveWhenHidden);
+    };
+  });
+  useEffect(() => {
+    if (!simulatorResumeEnabled || !resumeCheckpointReady || !gameResult) return;
+    resumeSaveSuppressedRef.current = true;
+    clearSimulatorResumeCheckpoint(window.localStorage);
+  }, [gameResult, resumeCheckpointReady, simulatorResumeEnabled]);
+  const resumeCheckpointPhaseLabel = resumeCheckpoint?.state.gamePhase === "setup"
+    ? "Setup round"
+    : resumeCheckpoint?.state.gamePhase === "draw"
+      ? `Round ${resumeCheckpoint.state.round} · Choose your draw`
+      : `Round ${resumeCheckpoint?.state.round ?? 1} · Your turn`;
   const presentedPlayerRp = compactDisplayedRp.player ?? rp;
   const presentedOpponentRp = compactDisplayedRp.opponent ?? opponent.rp;
   const setupOpeningHandPresentedCount = setupOpeningHandVisibleCount == null
@@ -18662,7 +18974,7 @@ export default function Simulator({
           }
         }
       `}</style>
-      <section className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)_9rem_auto]">
+      <section className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)_9rem_auto]" aria-hidden={resumeHydrationPending || resumeCheckpoint ? "true" : undefined} inert={resumeHydrationPending || Boolean(resumeCheckpoint) || undefined}>
         <div className="seapals-hud-panel seapals-arena-frame relative flex h-full min-h-0 flex-col rounded-2xl border border-cyan-400/25 p-3 shadow-2xl xl:col-start-1 xl:row-span-3 xl:row-start-1">
           {!v2TopChromeHidden ? (
           <div className="seapals-simulator-header mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between" data-mobile-overlay-header={previewExperience ? "true" : undefined}>
@@ -20364,6 +20676,41 @@ export default function Simulator({
         </div>
       ) : null}
 
+      {resumeHydrationPending ? (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-[#061522] p-4" role="status" aria-live="polite" aria-label="Checking for a saved game">
+          <div className="flex items-center gap-3 rounded-full border border-cyan-300/25 bg-cyan-950/70 px-5 py-3 text-sm font-bold text-cyan-50 shadow-2xl">
+            <span className="h-3 w-3 animate-pulse rounded-full bg-cyan-300" aria-hidden="true" />
+            Checking for a saved game…
+          </div>
+        </div>
+      ) : null}
+
+      {resumeCheckpointReady && resumeCheckpoint ? (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="simulator-resume-title" aria-describedby="simulator-resume-description">
+          <div className="w-full max-w-md rounded-[2rem] border border-cyan-300/50 bg-gradient-to-br from-cyan-950 via-slate-900 to-emerald-950 p-6 text-white shadow-[0_24px_90px_rgba(8,145,178,.35)] sm:p-8">
+            <div className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">Game Saved</div>
+            <h2 id="simulator-resume-title" className="mt-2 text-2xl font-black sm:text-3xl">Resume your previous game?</h2>
+            <p id="simulator-resume-description" className="mt-4 text-base leading-relaxed text-slate-200">
+              Continue the unfinished match saved in this browser, or clear it and return to game setup.
+            </p>
+            <div className="mt-5 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-3">
+              <strong className="block text-base text-emerald-100">{resumeCheckpointPhaseLabel}</strong>
+              <span className="mt-1 block text-sm text-cyan-50/75">
+                {getPlayableDeckById(resumeCheckpoint.state.selectedDeckId)?.name ?? "Your deck"} vs. {getPlayableDeckById(resumeCheckpoint.state.selectedOpponentDeckId)?.name ?? "opponent deck"} · {resumeCheckpoint.state.rp} RP
+              </span>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={startNewGameFromResumePrompt} className="min-h-11 rounded-full border border-slate-400/60 px-6 py-2.5 text-sm font-black text-slate-100 transition hover:bg-white/10">
+                Start New Game
+              </button>
+              <button type="button" autoFocus onClick={() => restoreSimulatorResumeCheckpoint(resumeCheckpoint)} className="min-h-11 rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105">
+                Resume Game
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {tutorialExitConfirmationOpen ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="tutorial-exit-title" aria-describedby="tutorial-exit-description">
           <div className="w-full max-w-lg rounded-[2rem] border border-cyan-300/45 bg-slate-900 p-6 text-white shadow-2xl sm:p-8">
@@ -20409,8 +20756,8 @@ export default function Simulator({
           className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5"
           role="dialog"
           aria-modal="true"
-          aria-hidden={inspectedCardData ? "true" : undefined}
-          inert={inspectedCardData || undefined}
+          aria-hidden={inspectedCardData || resumeCheckpoint || resumeHydrationPending ? "true" : undefined}
+          inert={inspectedCardData || resumeCheckpoint || resumeHydrationPending || undefined}
           aria-labelledby="seapals-event-title"
           aria-describedby={eventOverlay.message && !["condition-reveal", "opponent-status"].includes(eventOverlay.type) ? "seapals-event-message" : undefined}
         >

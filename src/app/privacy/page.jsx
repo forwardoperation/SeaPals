@@ -235,6 +235,12 @@ export default function PrivacyPage() {
             Supabase until the relevant profile or account is deleted.
           </li>
           <li>
+            <strong>An unfinished Simulator V2 match</strong> may remain in
+            local browser storage so the player can resume after refreshing.
+            It is removed when the match ends, the player quits or starts a
+            new game, or site data is cleared.
+          </li>
+          <li>
             <strong>The shopping cart</strong> may remain in local browser
             storage until checkout, removal, or clearing site data.
           </li>
