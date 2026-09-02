@@ -70,6 +70,7 @@ export const supportCards = [
         targetKind: CardKind.CORAL,
         amount: 1,
         destination: Zone.HAND,
+        revealToOpponent: true,
         shuffleAfterwards: true,
       },
     ],

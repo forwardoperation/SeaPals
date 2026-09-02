@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
+const supportCardsSource = await readFile(new URL("../../data/cards/support.js", import.meta.url), "utf8");
 
 function sourceSection(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
@@ -151,10 +152,17 @@ test("opponent search readers show a left-to-right source, arrow, and revealed r
     /(?:\u2192|&rarr;|&#8594;|&#x2192;|ArrowRight|data-direction="right")/,
     "The relationship needs a visible, decorative right-pointing arrow.",
   );
+  const resultMarkup = reader.slice(resultIndex);
   assert.match(
-    reader.slice(resultIndex),
+    resultMarkup,
     /revealedCards/,
     "The right card must come from the opponent event's revealed search result.",
+  );
+  assert.match(resultMarkup, /const card = cardsById\[cardId\]/);
+  assert.match(
+    resultMarkup,
+    /src=\{card\?\.image\}/,
+    "The found card's face art must render on the right rather than a generic card back.",
   );
   const usesThreeColumnGrid = /display:\s*grid;/.test(flowStyles)
     && /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto\s+minmax\(0,\s*1fr\);/.test(flowStyles);
@@ -164,6 +172,33 @@ test("opponent search readers show a left-to-right source, arrow, and revealed r
     usesThreeColumnGrid || usesHorizontalFlex,
     "The source and result should share one bounded horizontal row.",
   );
+});
+
+test("Coral Gardener sends its found Coral through the shared search-result reader", () => {
+  const coralGardener = sourceSection(
+    supportCardsSource,
+    'id: "coral-gardener"',
+    'id: "coral-heal"',
+  );
+  const searchEffect = sourceSection(
+    coralGardener,
+    "type: EffectType.SEARCH_DECK",
+    "shuffleAfterwards: true",
+  );
+  const opponentSupportResolution = sourceSection(
+    simulatorSource,
+    "function runOpponentSupports(",
+    "function runOpponentTurn(",
+  );
+
+  assert.match(searchEffect, /targetKind:\s*CardKind\.CORAL/);
+  assert.match(searchEffect, /revealToOpponent:\s*true/);
+  assert.match(
+    opponentSupportResolution,
+    /searchEffect\.revealToOpponent[\s\S]*?revealedCardIds\s*=\s*candidates/,
+    "Opponent Coral searches must attach their result to the event consumed by the two-card reader.",
+  );
+  assert.match(opponentSupportResolution, /revealedCards:\s*revealedCardIds/);
 });
 
 test("revealed opponent search readers keep concise copy and Continue visible without internal scrolling", () => {
