@@ -236,18 +236,21 @@ function measureAttackTargets(root) {
       const rect = element.getBoundingClientRect();
       if (!rect.width || !rect.height) return null;
       if (rect.right <= rootRect.left || rect.left >= rootRect.right || rect.bottom <= rootRect.top || rect.top >= rootRect.bottom) return null;
-      const size = Math.max(42, Math.min(88, Math.max(rect.width, rect.height) * 0.76));
-      const halfSize = size / 2;
-      const x = Math.max(rootRect.left + halfSize, Math.min(rootRect.right - halfSize, rect.left + rect.width / 2));
-      const y = Math.max(rootRect.top + halfSize, Math.min(rootRect.bottom - halfSize, rect.top + rect.height / 2));
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const arrowSize = Math.max(28, Math.min(42, Math.min(rect.width, rect.height) * 0.36));
+      const arrowGap = Math.max(7, Math.min(11, arrowSize * 0.26));
       return {
         key: `${element.dataset.attackTargetInstance}-${index}`,
         instanceId: element.dataset.attackTargetInstance,
-        x,
-        y,
-        fromX: viewportCenterX - x,
-        fromY: viewportCenterY - y,
-        size,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        fromX: viewportCenterX - centerX,
+        fromY: viewportCenterY - centerY,
+        arrowSize,
+        arrowGap,
         delay: index * 55,
       };
     })
@@ -305,20 +308,29 @@ export function AttackTargetLayer({ active, rootRef, measureKey, reducedMotion =
           data-attack-reticle
           data-target-instance={target.instanceId}
           style={{
-            left: target.x,
-            top: target.y,
-            width: target.size,
-            height: target.size,
+            left: target.left,
+            top: target.top,
+            width: target.width,
+            height: target.height,
             "--seapals-reticle-from-x": `${target.fromX}px`,
             "--seapals-reticle-from-y": `${target.fromY}px`,
             "--seapals-reticle-delay": `${target.delay}ms`,
+            "--seapals-reticle-arrow-size": `${target.arrowSize}px`,
+            "--seapals-reticle-arrow-half-size": `${target.arrowSize / 2}px`,
+            "--seapals-reticle-arrow-gap": `${target.arrowGap}px`,
           }}
         >
-          <svg className="seapals-attack-reticle-glyph" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-            <path d="M32 3v22M21 14l11 11 11-11" />
-            <path d="M61 32H39M50 21 39 32l11 11" />
-            <path d="M32 61V39M43 50 32 39 21 50" />
-            <path d="M3 32h22M14 43l11-11-11-11" />
+          <svg className="seapals-attack-reticle-glyph is-top" data-reticle-arrow="top" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M16 3v21M7 15l9 9 9-9" />
+          </svg>
+          <svg className="seapals-attack-reticle-glyph is-right" data-reticle-arrow="right" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M29 16H8M17 7l-9 9 9 9" />
+          </svg>
+          <svg className="seapals-attack-reticle-glyph is-bottom" data-reticle-arrow="bottom" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M16 29V8M25 17l-9-9-9 9" />
+          </svg>
+          <svg className="seapals-attack-reticle-glyph is-left" data-reticle-arrow="left" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M3 16h21M15 7l9 9-9 9" />
           </svg>
         </span>
       ))}

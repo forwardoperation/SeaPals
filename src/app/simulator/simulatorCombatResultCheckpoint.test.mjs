@@ -40,7 +40,11 @@ test("combat results use a compact, explicit checkpoint instead of immediately d
   assert.match(checkpointMarkup, /role="dialog"/);
   assert.match(checkpointMarkup, /aria-modal="true"/);
   assert.match(checkpointMarkup, /combatResultCheckpoint\.event\.title/);
-  assert.match(checkpointMarkup, /combatResultCheckpoint\.event\.message/);
+  assert.match(
+    checkpointMarkup,
+    /combatResultCheckpoint\.event\.checkpointMessage \?\? combatResultCheckpoint\.event\.message/,
+    "The compact result may remove redundant copy without weakening the full combat log",
+  );
   const continueButton = checkpointMarkup.match(/<button[\s\S]*?>\s*Continue\s*<\/button>/)?.[0] ?? "";
   assert.match(continueButton, /data-combat-result-continue/);
   assert.match(continueButton, /onClick=\{continueCombatResultCheckpoint\}/);
@@ -235,6 +239,23 @@ test("player attacks checkpoint both the success and defense result before any r
     /queueConsumedAttackFlight\(/,
     "Player attack resolution should defer discard travel to the checkpoint's Continue handler",
   );
+  assert.match(
+    ordinarySuccess,
+    /const matchupSentence = `[\s\S]*?used \$\{attack\.actionName\} on \$\{targetEntry\.card\.name\}: \$\{rolls\.join\(", "\)\}\.``?;/,
+    "The compact result should retain the attacker, action, defender, and final roll",
+  );
+  assert.match(
+    ordinarySuccess,
+    /const supplementalResultMessage = `[\s\S]*?\$\{defenderKept \? survivalMessage : ""\}/,
+    "Removal boilerplate should be omitted when the separate discard consequence already explains it",
+  );
+  assert.match(ordinarySuccess, /const checkpointMessage = `\$\{matchupSentence\}\$\{supplementalResultMessage\}`/);
+  assert.match(
+    ordinarySuccess,
+    /const message = `\$\{matchupSentence\} The attack succeeded\.\$\{ensnareSummary\}\$\{survivalMessage\}/,
+    "The detailed activity log should retain the complete resolution",
+  );
+  assert.match(ordinarySuccess, /resultOverlay = \{[\s\S]*?message, checkpointMessage,/);
 
   assert.match(
     defendedResult,

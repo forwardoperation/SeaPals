@@ -51,7 +51,7 @@ test("V2 attack targeting enters the reef directly without the old pre-attack ev
   assert.doesNotMatch(onPlayAttack.slice(0, previewGate), /targetPromptEvent|onplay-target-prompt/);
 });
 
-test("every legal target receives a red inward-arrow reticle that travels from viewport center", () => {
+test("every legal target receives four red inward arrows outside the card bounds", () => {
   assert.match(simulatorSource, /data-v2-attack-mode=\{previewExperience\s*&&\s*attackContext/);
   assert.match(presentationSource, /querySelectorAll\([\s\S]{0,240}data-attack-target(?:=|\\\")/);
   assert.match(
@@ -63,12 +63,35 @@ test("every legal target receives a red inward-arrow reticle that travels from v
   assert.match(presentationSource, /data-attack-target-layer/);
   assert.match(presentationSource, /data-attack-reticle/);
   assert.match(presentationSource, /data-target-instance=\{[^}]*instanceId/);
-  assert.match(presentationSource, /<svg[^>]*seapals-attack-reticle-glyph/);
-  assert.match(
-    presentationSource,
-    /<svg[^>]*seapals-attack-reticle-glyph[\s\S]*?(?:<path|<polyline)[\s\S]*?(?:<path|<polyline)[\s\S]*?(?:<path|<polyline)[\s\S]*?(?:<path|<polyline)/,
-    "The reticle should be a code-native four-arrow glyph, rather than the old circular crosshair",
+  const targetMeasurement = sourceSection(
+    boardCombatSource,
+    "function measureAttackTargets(",
+    "export function AttackTargetLayer(",
   );
+  assert.match(targetMeasurement, /left:\s*rect\.left/);
+  assert.match(targetMeasurement, /top:\s*rect\.top/);
+  assert.match(targetMeasurement, /width:\s*rect\.width/);
+  assert.match(targetMeasurement, /height:\s*rect\.height/);
+  assert.doesNotMatch(
+    targetMeasurement,
+    /const size\s*=|halfSize/,
+    "Target geometry must retain the card rectangle instead of collapsing it into an artwork-covering square",
+  );
+  assert.match(boardCombatSource, /width:\s*target\.width/);
+  assert.match(boardCombatSource, /height:\s*target\.height/);
+  assert.match(presentationSource, /<svg[^>]*seapals-attack-reticle-glyph/);
+  for (const direction of ["top", "right", "bottom", "left"]) {
+    assert.match(
+      boardCombatSource,
+      new RegExp(`data-reticle-arrow="${direction}"`),
+      `The reticle needs a dedicated ${direction} arrow`,
+    );
+    assert.match(
+      presentationSource,
+      new RegExp(`\\.seapals-attack-reticle-glyph\\.is-${direction}\\s*\\{[\\s\\S]*?(?:top|right|bottom|left):\\s*calc\\(0px - var\\(--seapals-reticle-arrow-size`),
+      `The ${direction} arrow must be offset beyond its matching card edge`,
+    );
+  }
   assert.match(presentationSource, /@keyframes\s+seapalsAttackReticleLand/i);
   assert.match(presentationSource, /@keyframes\s+seapalsAttackReticlePulse/i);
   assert.match(

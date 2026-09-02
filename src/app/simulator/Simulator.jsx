@@ -7233,9 +7233,12 @@ export default function Simulator({
       const survivalMessage = resilienceTriggered ? ` Ancient Resilience kept ${targetEntry.card.name} in play and is now used for this game.` : regenerateTriggered ? ` The opponent automatically paid 1 RP for Regenerate to keep ${targetEntry.card.name} in play.` : destroyedCardGoesToLostZone(targetEntry.card) ? ` The destroyed defender was placed in the opponent's Lost Zone.` : ` The defender was discarded.`;
       const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: defenderKept ? "survived" : "discarded" }, { attackerSurvives: !attackerDiscardedAfterConsume, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
       const collapseMessage = getContinuousHealthCollapseMessage(nextOpponentProjection.collateral);
-      const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The attack succeeded.${ensnareSummary}${survivalMessage}${toxicMessage}${selfDiscardMessage}${recycleMessage}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
+      const matchupSentence = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}.`;
+      const supplementalResultMessage = `${ensnareSummary}${defenderKept ? survivalMessage : ""}${toxicMessage}${selfDiscardMessage}${recycleMessage}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
+      const checkpointMessage = `${matchupSentence}${supplementalResultMessage}`;
+      const message = `${matchupSentence} The attack succeeded.${ensnareSummary}${survivalMessage}${toxicMessage}${selfDiscardMessage}${recycleMessage}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
-      const resultOverlay = { type: "faceoff-result", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: defenderKept ? "Attack Landed — Defender Survived" : "Successful Attack!", message, success: true, combatOutcome: "attack-succeeded", attackTotal, defenseTotal, continueAttackSequence: sequenceResult.continues };
+      const resultOverlay = { type: "faceoff-result", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: defenderKept ? "Attack Landed — Defender Survived" : "Successful Attack!", message, checkpointMessage, success: true, combatOutcome: "attack-succeeded", attackTotal, defenseTotal, continueAttackSequence: sequenceResult.continues };
       if (compactTurnPresentationEnabled) {
         beginCombatResultCheckpoint(resultOverlay, {
           playerRole: "attacker",
@@ -16064,14 +16067,14 @@ export default function Simulator({
         @keyframes seapalsAttackReticleLand {
           0% {
             opacity: 0;
-            transform: translate3d(calc(-50% + var(--seapals-reticle-from-x)), calc(-50% + var(--seapals-reticle-from-y)), 0) scale(1.5) rotate(-14deg);
+            transform: translate3d(var(--seapals-reticle-from-x), var(--seapals-reticle-from-y), 0) scale(1.5) rotate(-14deg);
           }
           62% {
             opacity: 1;
-            transform: translate3d(-50%, -50%, 0) scale(.9) rotate(2deg);
+            transform: translate3d(0, 0, 0) scale(1) rotate(2deg);
           }
-          82% { transform: translate3d(-50%, -50%, 0) scale(1.08) rotate(0deg); }
-          100% { opacity: 1; transform: translate3d(-50%, -50%, 0) scale(1) rotate(0deg); }
+          82% { transform: translate3d(0, 0, 0) scale(1.08) rotate(0deg); }
+          100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
         }
         @keyframes seapalsAttackReticlePulse {
           0%, 100% { opacity: .86; transform: scale(.96); }
@@ -17569,24 +17572,40 @@ export default function Simulator({
         }
         .seapals-attack-reticle {
           position: fixed;
-          display: grid;
-          place-items: center;
           color: #ef4444;
           filter: drop-shadow(0 0 4px rgba(254, 226, 226, .98)) drop-shadow(0 0 13px rgba(220, 38, 38, .95));
-          transform: translate3d(-50%, -50%, 0);
+          overflow: visible;
+          transform: translate3d(0, 0, 0);
           animation: seapalsAttackReticleLand 640ms cubic-bezier(.16,.82,.2,1) var(--seapals-reticle-delay) both;
           will-change: transform, opacity;
         }
         .seapals-attack-reticle-glyph {
-          width: 100%;
-          height: 100%;
+          position: absolute;
+          width: var(--seapals-reticle-arrow-size, 34px);
+          height: var(--seapals-reticle-arrow-size, 34px);
           overflow: visible;
           stroke: currentColor;
-          stroke-width: 7;
+          stroke-width: 5.5;
           stroke-linecap: round;
           stroke-linejoin: round;
           animation: seapalsAttackReticlePulse 1.35s ease-in-out calc(640ms + var(--seapals-reticle-delay)) infinite;
           transform-origin: center;
+        }
+        .seapals-attack-reticle-glyph.is-top {
+          top: calc(0px - var(--seapals-reticle-arrow-size, 34px) - var(--seapals-reticle-arrow-gap, 9px));
+          left: calc(50% - var(--seapals-reticle-arrow-half-size, 17px));
+        }
+        .seapals-attack-reticle-glyph.is-right {
+          top: calc(50% - var(--seapals-reticle-arrow-half-size, 17px));
+          right: calc(0px - var(--seapals-reticle-arrow-size, 34px) - var(--seapals-reticle-arrow-gap, 9px));
+        }
+        .seapals-attack-reticle-glyph.is-bottom {
+          bottom: calc(0px - var(--seapals-reticle-arrow-size, 34px) - var(--seapals-reticle-arrow-gap, 9px));
+          left: calc(50% - var(--seapals-reticle-arrow-half-size, 17px));
+        }
+        .seapals-attack-reticle-glyph.is-left {
+          top: calc(50% - var(--seapals-reticle-arrow-half-size, 17px));
+          left: calc(0px - var(--seapals-reticle-arrow-size, 34px) - var(--seapals-reticle-arrow-gap, 9px));
         }
         .seapals-combat-dice-layer {
           position: absolute;
@@ -17917,7 +17936,7 @@ export default function Simulator({
         .seapals-reduced-motion .seapals-attack-reticle,
         .seapals-reduced-motion .seapals-attack-reticle-glyph,
         .seapals-reduced-motion .seapals-combat-die { animation: none !important; }
-        .seapals-reduced-motion .seapals-attack-reticle { opacity: 1; transform: translate3d(-50%, -50%, 0); }
+        .seapals-reduced-motion .seapals-attack-reticle { opacity: 1; transform: translate3d(0, 0, 0); }
         @media (prefers-reduced-motion: reduce) {
           .seapals-opponent-placement-flight { animation: none !important; }
           .seapals-opponent-card-reader { animation: none !important; }
@@ -17931,7 +17950,7 @@ export default function Simulator({
           .seapals-attack-reticle,
           .seapals-attack-reticle-glyph,
           .seapals-combat-die { animation: none !important; }
-          .seapals-attack-reticle { opacity: 1; transform: translate3d(-50%, -50%, 0); }
+          .seapals-attack-reticle { opacity: 1; transform: translate3d(0, 0, 0); }
         }
         .seapals-mobile-draw-flight {
           position: fixed;
@@ -20181,7 +20200,7 @@ export default function Simulator({
               <span className="seapals-combat-result-card-name">{combatCheckpointDefenderCard?.name ?? "Defender"}</span>
             </div>
             <div className="seapals-combat-result-copy" id={`seapals-combat-result-message-${combatResultCheckpoint.id}`}>
-              <p>{combatResultCheckpoint.event.message}</p>
+              <p>{combatResultCheckpoint.event.checkpointMessage ?? combatResultCheckpoint.event.message}</p>
               <strong>{combatCheckpointConsequence}</strong>
             </div>
             <button
