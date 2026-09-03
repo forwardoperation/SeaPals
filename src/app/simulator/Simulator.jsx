@@ -9,10 +9,12 @@ import MobileHandDock from "./MobileHandDock";
 import MobileHandCardPopover from "./MobileHandCardPopover";
 import MobileEdgeZones from "./MobileEdgeZones";
 import MobileDrawTray from "./MobileDrawTray";
+import CardActionProxyOverlay from "./CardActionProxyOverlay";
 import { AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
 import CardCoinBoardPresentation from "./CardCoinBoardPresentation";
 import OpeningCoinBoardPresentation, { OpeningCoinVisual } from "./OpeningCoinBoardPresentation";
 import VictoryCelebration from "./VictoryCelebration";
+import { evaluateCardActionAvailability } from "./cardActionAvailability.mjs";
 import {
   CardCoinPhase,
   cancelCardCoinFlip,
@@ -6720,15 +6722,15 @@ export default function Simulator({
     const attackerSlot = playerCorals.find((coral) => coral.id === coralId)?.slots.find((slot) => slot.id === slotId);
     if (attackerSlot?.invasiveOwner === "opponent") {
       pushLog(`${cardsById[attackerSlot.cardId]?.name ?? "That invader"} belongs to the opponent, so you cannot use its actions.`);
-      return;
+      return false;
     }
     const attackerActionKey = attackerSlot ? getSlotActionKey(attackerSlot) : slotId;
-    if (gameResult || gamePhase !== "main" || playingCardId || searchContext || pendingCreatureAction || usedAttackers.includes(attackerActionKey) || turn < Number(actionCooldowns[attackerActionKey] ?? 0)) return;
+    if (gameResult || gamePhase !== "main" || attackContext || playingCardId || searchContext || pendingCreatureAction || usedAttackers.includes(attackerActionKey) || turn < Number(actionCooldowns[attackerActionKey] ?? 0)) return false;
     const attackerReefIndex = coralId == null && String(slotId).startsWith("reef-") ? findZoneIndexBySlotId(playerReefCreatureInstances, slotId, "reef-") : -1;
     const attackerOrphanIndex = coralId == null && String(slotId).startsWith("orphan-") ? findZoneIndexBySlotId(playerOrphanCreatures, slotId, "orphan-") : -1;
     if (attackerOrphanIndex >= 0 && !getLocallyControlledOrphans([playerOrphanCreatures[attackerOrphanIndex]], "player").length) {
       pushLog(`${cardsById[playerOrphanCreatures[attackerOrphanIndex]?.cardId]?.name ?? "That invader"} belongs to the opponent, so you cannot use its actions.`);
-      return;
+      return false;
     }
     const attackerCardId = attackerReefIndex >= 0 ? playerReefCreatures[attackerReefIndex] : attackerOrphanIndex >= 0 ? playerOrphanCreatures[attackerOrphanIndex]?.cardId : attackerSlot?.cardId;
     const attacker = cardsById[attackerCardId];
@@ -6743,24 +6745,25 @@ export default function Simulator({
       setTutorialHelpDismissedId(null);
       setPlayError(academyBlock);
       pushLog(academyBlock);
-      return;
+      return false;
     }
     const attack = getBasicAttackEffect(attacker);
     if (!attack) {
       pushLog(`${attacker?.name ?? "This creature"} has no supported basic attack action.`);
-      return;
+      return false;
     }
     if (rp < attack.actionCost) {
       pushLog(`${attacker.name}'s ${attack.actionName} costs ${attack.actionCost} RP, but you only have ${rp} RP.`);
-      return;
+      return false;
     }
     const targets = getPlayerAttackTargets(attacker, attack);
     if (!targets.length) {
       pushLog(`${attacker.name} has no legal opponent creature target for ${attack.actionName}.`);
-      return;
+      return false;
     }
     setAttackContext(createPlayerAttackContext({ attackerCoralId: coralId, attackerSlotId: slotId, attackerActionKey, attackerCardId, attackerReefIndex, attackerOrphanIndex }, attacker, attack, targets));
     pushLog(`Choose a highlighted opponent creature for ${attacker.name}'s ${attack.actionName}, or cancel the attack.`);
+    return true;
   }
 
   function beginOnPlayAttack(card, coralId, slotId, reefIndex = -1, forcePending = false, opponentState = opponent) {
@@ -16270,6 +16273,281 @@ export default function Simulator({
     JSON.stringify(floatingCardOffsets),
   ].join(":") : "inactive";
 
+  function getInspectedUtilitySpecificBlock(action, effect, actionName) {
+    if (!effect) {
+      return {
+        blockType: "unsupported",
+        status: "Not interactive yet",
+        reason: `${actionName} is printed on this card, but its interactive resolution is not implemented yet.`,
+      };
+    }
+    if ((effect.type === EffectType.STUN_CORAL || effect.type === EffectType.FLIP_COIN) && !opponentCoralCards.length) {
+      return {
+        blockType: "targets",
+        status: "No valid targets",
+        reason: `${actionName} has no opponent coral to target.`,
+      };
+    }
+    if (effect.type === "reorderTopDeck" && !foundationDeck.length && !palsDeck.length) {
+      return {
+        blockType: "cards",
+        status: "Decks empty",
+        reason: `${actionName} needs at least one card in a personal deck.`,
+      };
+    }
+    if (effect.type === EffectType.DRAW_CARDS && !foundationDeck.length && !palsDeck.length) {
+      return {
+        blockType: "cards",
+        status: "Decks empty",
+        reason: `${actionName} cannot draw from empty personal decks.`,
+      };
+    }
+    if (effect.type === EffectType.SEARCH_DECK) {
+      const hasMatchingCard = [...foundationDeck, ...palsDeck].some((cardId) => {
+        const candidate = cardsById[cardId];
+        if (!candidate || candidate.kind !== effect.targetKind) return false;
+        if (effect.targetCardId && candidate.id !== effect.targetCardId) return false;
+        if (effect.targetCategories?.length && !effect.targetCategories.includes(candidate.category)) return false;
+        if (effect.targetTags?.some((tag) => !candidate.tags?.includes(tag))) return false;
+        if (effect.targetStages?.length && !effect.targetStages.map(Number).includes(Number(candidate.stage ?? 0))) return false;
+        if (effect.requiredStage !== undefined && Number(candidate.stage ?? 0) !== Number(effect.requiredStage)) return false;
+        if (effect.targetNameIncludes && !candidate.name?.toLowerCase().includes(effect.targetNameIncludes.toLowerCase())) return false;
+        return !effect.targetZone || candidate.zone === effect.targetZone;
+      });
+      if (!hasMatchingCard) {
+        return {
+          blockType: "cards",
+          status: "No matching card",
+          reason: `${actionName} has no matching card remaining in your personal decks.`,
+        };
+      }
+    }
+    if ((effect.type === EffectType.RECOVER_CARD_FROM_DISCARD || effect.type === "recoverCardFromDiscard") && !discardPile.length) {
+      return {
+        blockType: "cards",
+        status: "Discard empty",
+        reason: `${actionName} needs at least one card in your discard pile.`,
+      };
+    }
+    if (effect.type === "discardThenSearchDeck" || effect.type === "discardThenDraw") {
+      const discardCount = Math.max(0, Number(effect.discard?.amount ?? effect.discard?.min ?? 0));
+      if (hand.length < discardCount || (!foundationDeck.length && !palsDeck.length)) {
+        return {
+          blockType: "cards",
+          status: "Cards unavailable",
+          reason: `${actionName} needs ${discardCount} card(s) in your hand and at least one card in a personal deck.`,
+        };
+      }
+    }
+    if (effect.type === "modifyDefenseRoll" || effect.type === EffectType.GRANT_DEFENSE_ADVANTAGE) {
+      const categories = action.target?.categories ?? [];
+      const matchesTarget = (cardId) => cardId && (!categories.length || categories.includes(cardsById[cardId]?.category));
+      const hasFriendlyTarget = playerCorals.some((coral) => coral.slots.some((slot) => (
+        matchesTarget(slot.cardId) || (slot.hostedCardIds ?? []).some(matchesTarget)
+      ))) || playerReefCreatures.some(matchesTarget) || getLocallyControlledOrphans(playerOrphanCreatures, "player").some((candidate) => matchesTarget(candidate.cardId));
+      if (!hasFriendlyTarget) {
+        return {
+          blockType: "targets",
+          status: "No valid targets",
+          reason: `${actionName} has no legal friendly target.`,
+        };
+      }
+    }
+    return null;
+  }
+
+  const inspectedActionProxies = (() => {
+    if (
+      !previewExperience
+      || !inspectedCardData
+      || inspectedCard?.owner !== "player"
+      || inspectedCard.reference
+    ) return [];
+
+    const proxies = [];
+    const interactionBlocked = Boolean(
+      playingCardId
+      || attackContext
+      || searchContext
+      || pendingCreatureAction
+      || eventOverlay
+      || opponentThinking
+    );
+    const sourceStunned = Boolean(inspectedCard.foundation && inspectedFoundationIsStunned);
+    const getTutorialSpecificBlock = (actionKey, target) => {
+      const reason = getAcademyActionBlock({
+        route: scriptedFinishRoute,
+        help: tutorialHelp,
+        actionKey,
+        target,
+        guideName: tutorialGuide.name,
+      });
+      return reason ? {
+        blockType: "academy",
+        status: "Follow the lesson",
+        reason,
+      } : null;
+    };
+    const createAvailability = ({
+      actionName,
+      actionCost = 0,
+      usedThisTurn = false,
+      cooldownUntil = 0,
+      specificBlock = null,
+    }) => evaluateCardActionAvailability({
+      actionName,
+      actionCost,
+      availableRp: rp,
+      gamePhase,
+      gameOver: Boolean(gameResult),
+      interactionBlocked,
+      sourceStunned,
+      usedThisTurn,
+      currentTurn: turn,
+      cooldownUntil,
+      specificBlock,
+    });
+
+    for (const [index, passive] of (inspectedCardData.passives ?? []).entries()) {
+      const passiveText = typeof passive === "string" ? passive : passive.text ?? "";
+      const passiveName = typeof passive === "object" ? passive.name : passiveText.split(":")[0];
+      const heal = getPassiveCoralHeal(passive);
+      const damageCounterMove = getDamageCounterMove(passive);
+      const jointedStructureMove = getJointedStructureMove(passive);
+      if (!heal && !damageCounterMove && !jointedStructureMove) continue;
+
+      const label = heal?.actionName ?? damageCounterMove?.actionName ?? jointedStructureMove.actionName;
+      const actionKey = heal
+        ? `${inspectedActionKey}:${typeof passive === "object" ? passive.id ?? passiveName : label}`
+        : jointedStructureMove
+          ? `${inspectedActionKey}:${jointedStructureMove.actionName}`
+          : `${inspectedActionKey}:${typeof passive === "object" ? passive.id ?? passiveName : label}`;
+      let specificBlock = null;
+      if (heal && !playerCoralCards.some((coral) => coral.health < coral.maxHealth)) {
+        specificBlock = {
+          blockType: "targets",
+          status: "Nothing to heal",
+          reason: `${label} has no damaged coral to heal.`,
+        };
+      } else if (jointedStructureMove && !getJointedStructureSources().length) {
+        specificBlock = {
+          blockType: "targets",
+          status: "No valid move",
+          reason: playerCoralCards.length < 2
+            ? "Jointed Structure needs two different corals in your ecosystem."
+            : "No slotted creature has a compatible empty slot on another coral.",
+        };
+      } else if (damageCounterMove) {
+        const availability = getDamageCounterMoveAvailability(passive, inspectedCard.coralId);
+        if (availability?.reason && gamePhase === "main" && !sourceStunned) {
+          specificBlock = {
+            blockType: "targets",
+            status: "No valid move",
+            reason: availability.reason,
+          };
+        }
+      }
+      const usedThisTurn = (heal || jointedStructureMove) && usedCreatureActions.includes(actionKey);
+      const availability = createAvailability({
+        actionName: label,
+        usedThisTurn,
+        specificBlock: getTutorialSpecificBlock(actionKey, "utility-action-button") ?? specificBlock,
+      });
+      proxies.push({
+        id: `passive:${passive.id ?? index}`,
+        label,
+        text: passiveText.includes(":") ? passiveText.slice(passiveText.indexOf(":") + 1).trim() : passiveText,
+        cost: 0,
+        kind: "utility",
+        availability,
+        tutorialTarget: "utility-action-button",
+        tutorialActionKey: actionKey,
+        tutorialClassName: tutorialActionTargetClass(actionKey),
+        onActivate: () => {
+          if (!availability.ready) return;
+          if (heal) beginPassiveCoralHeal(passive);
+          else if (damageCounterMove) beginDamageCounterMove(passive);
+          else beginJointedStructureMove(passive);
+        },
+      });
+    }
+
+    let attackAdded = false;
+    const basicAttack = getBasicAttackEffect(inspectedCardData);
+    for (const [index, action] of (inspectedCardData.actions ?? []).entries()) {
+      const actionName = getActionName(action);
+      const actionText = typeof action === "string"
+        ? action.slice(action.indexOf(":") + 1).trim()
+        : action.text ?? "Action ability";
+      const actionKey = `${inspectedActionKey}:${action.id ?? actionName}`;
+      const isAttack = Boolean(
+        parseLegacyAttackAction(action)
+        || getActionEffects(action).some((effect) => effect.type === EffectType.ATTACK)
+      );
+
+      if (isAttack && basicAttack && !attackAdded) {
+        attackAdded = true;
+        const targetCount = getPlayerAttackTargets(inspectedCardData, basicAttack).length;
+        const tutorialBlock = getTutorialSpecificBlock(inspectedActionKey, "attack-button");
+        const availability = createAvailability({
+          actionName: basicAttack.actionName,
+          actionCost: basicAttack.actionCost,
+          usedThisTurn: usedAttackers.includes(inspectedActionKey),
+          cooldownUntil: Number(actionCooldowns[inspectedActionKey] ?? 0),
+          specificBlock: tutorialBlock ?? (targetCount ? null : {
+            blockType: "targets",
+            status: "No valid targets",
+            reason: `${basicAttack.actionName} has no compatible target in the opponent's ecosystem.`,
+          }),
+        });
+        proxies.push({
+          id: `attack:${action.id ?? index}`,
+          label: basicAttack.actionName,
+          text: actionText,
+          cost: Number(basicAttack.actionCost ?? 0),
+          kind: "attack",
+          availability,
+          tutorialTarget: "attack-button",
+          tutorialActionKey: inspectedActionKey,
+          tutorialClassName: tutorialTargetClass("attack-button"),
+          onActivate: () => {
+            if (!availability.ready) return;
+            if (attackWithCreature(inspectedCard.coralId, inspectedCard.slotId)) {
+              setInspectedCard(null);
+            }
+          },
+        });
+        continue;
+      }
+
+      const utilityEffect = getSupportedUtilityEffect(action);
+      const cost = getActionCost(action);
+      const tutorialBlock = getTutorialSpecificBlock(actionKey, "utility-action-button");
+      const availability = createAvailability({
+        actionName,
+        actionCost: cost,
+        usedThisTurn: actionIsOncePerTurn(action) && usedCreatureActions.includes(actionKey),
+        specificBlock: tutorialBlock ?? getInspectedUtilitySpecificBlock(action, utilityEffect, actionName),
+      });
+      proxies.push({
+        id: `action:${action.id ?? index}`,
+        label: actionName,
+        text: actionText,
+        cost,
+        kind: "utility",
+        availability,
+        tutorialTarget: utilityEffect ? "utility-action-button" : undefined,
+        tutorialActionKey: utilityEffect ? actionKey : undefined,
+        tutorialClassName: utilityEffect ? tutorialActionTargetClass(actionKey) : "",
+        onActivate: () => {
+          if (availability.ready && utilityEffect) beginCreatureUtilityAction(action);
+        },
+      });
+    }
+
+    return proxies;
+  })();
+
   function stopBoardFaceoff() {
     if (!boardFaceoffActive || !faceoffPreview || faceoffRollCommitRef.current) return;
     faceoffRollCommitRef.current = true;
@@ -18709,8 +18987,8 @@ export default function Simulator({
             line-height: 1;
           }
           .seapals-simulator-preview .seapals-card-inspector-image {
-            height: min(62dvh, 42rem);
-            min-height: 21rem;
+            height: auto;
+            min-height: 0;
             animation: seapalsCardInspectorIn 360ms cubic-bezier(.18, .86, .24, 1);
           }
         }
@@ -20190,7 +20468,15 @@ export default function Simulator({
                 <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
               </div>
             ) : null}
-            <img src={inspectedCardData.image} alt={inspectedCardData.name} className="seapals-card-inspector-image mt-5 h-96 w-full rounded-3xl border border-white/10 bg-slate-950/45 object-contain" />
+            {previewExperience ? (
+              <CardActionProxyOverlay
+                cardName={inspectedCardData.name}
+                image={inspectedCardData.image}
+                actions={inspectedActionProxies}
+              />
+            ) : (
+              <img src={inspectedCardData.image} alt={inspectedCardData.name} className="seapals-card-inspector-image mt-5 h-96 w-full rounded-3xl border border-white/10 bg-slate-950/45 object-contain" />
+            )}
             <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold">
               <span className="rounded-full bg-cyan-400/15 px-3 py-1 text-cyan-200">{getCardClassLabel(inspectedCardData)}</span>
               <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-200">{getPlayerCardPlayCost(inspectedCardData)} RP</span>
@@ -20237,12 +20523,12 @@ export default function Simulator({
                       <div key={passive.id ?? index} className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-slate-300">
                         <strong>{passiveName ? `${passiveName}: ` : ""}</strong>
                         {typeof passive === "string" && passiveText.includes(":") ? passiveText.slice(passiveText.indexOf(":") + 1).trim() : passiveText}
-                        {inspectedCard.owner === "player" && heal ? (
+                        {!previewExperience && inspectedCard.owner === "player" && heal ? (
                           <button type="button" disabled={gamePhase !== "main" || alreadyUsed} onClick={() => beginPassiveCoralHeal(passive)} className="mt-3 w-full rounded-full bg-emerald-600 px-4 py-2 font-bold text-white disabled:bg-slate-400">
                             {alreadyUsed ? "Used This Turn" : `Use ${heal.actionName}`}
                           </button>
                         ) : null}
-                        {inspectedCard.owner === "player" && damageCounterMove ? (
+                        {!previewExperience && inspectedCard.owner === "player" && damageCounterMove ? (
                           <>
                             <button type="button" disabled={Boolean(damageCounterAvailability?.reason)} onClick={() => beginDamageCounterMove(passive)} className="mt-3 w-full rounded-full bg-violet-600 px-4 py-2 font-bold text-white disabled:bg-slate-400">
                               Use {damageCounterMove.actionName}
@@ -20250,7 +20536,7 @@ export default function Simulator({
                             {damageCounterAvailability?.reason ? <div className="mt-2 rounded-xl bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-200">{damageCounterAvailability.reason}</div> : null}
                           </>
                         ) : null}
-                        {inspectedCard.owner === "player" && jointedStructureMove ? (
+                        {!previewExperience && inspectedCard.owner === "player" && jointedStructureMove ? (
                           <button type="button" disabled={gamePhase !== "main" || alreadyUsed} onClick={() => beginJointedStructureMove(passive)} className="mt-3 w-full rounded-full bg-cyan-600 px-4 py-2 font-bold text-white disabled:bg-slate-400">
                             {alreadyUsed ? "Used This Turn" : `Use ${jointedStructureMove.actionName}`}
                           </button>
@@ -20281,7 +20567,7 @@ export default function Simulator({
                   return (
                     <div key={action.id ?? index} className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-slate-300">
                       <strong>{actionName}: </strong>{actionText}
-                      {inspectedCard.owner === "player" && utilityEffect ? (
+                      {!previewExperience && inspectedCard.owner === "player" && utilityEffect ? (
                         <button
                           type="button"
                           disabled={gamePhase !== "main" || rp < cost || alreadyUsed || inspectedFoundationIsStunned}
@@ -20302,13 +20588,14 @@ export default function Simulator({
             {tutorialHelpInline && ["attack-button", "utility-action-button"].includes(tutorialHelp.target) ? (
               <ProfessorGuideCard guide={tutorialGuide} help={tutorialHelp} step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)} total={tutorialContract.checkpoints.length} inline onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} />
             ) : null}
-            {inspectedCard.owner === "player" && getBasicAttackEffect(inspectedCardData) ? (
+            {!previewExperience && inspectedCard.owner === "player" && getBasicAttackEffect(inspectedCardData) ? (
               <button
                 type="button"
                 disabled={gamePhase !== "main" || usedAttackers.includes(inspectedActionKey) || turn < Number(actionCooldowns[inspectedActionKey] ?? 0) || rp < getBasicAttackEffect(inspectedCardData).actionCost}
                 onClick={() => {
-                  attackWithCreature(inspectedCard.coralId, inspectedCard.slotId);
-                  setInspectedCard(null);
+                  if (attackWithCreature(inspectedCard.coralId, inspectedCard.slotId)) {
+                    setInspectedCard(null);
+                  }
                 }}
                 className={`mt-6 w-full rounded-full bg-rose-600 px-6 py-3 font-black text-white disabled:bg-slate-400${tutorialTargetClass("attack-button")}`}
                 data-tutorial-target="attack-button"

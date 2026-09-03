@@ -987,7 +987,7 @@ test("V2 card inspection fills the viewport with an animated card and a simple x
   assert.match(simulatorSource, /@keyframes seapalsCardInspectorIn[\s\S]*?scale\(\.94\)[\s\S]*?scale\(1\)/);
   assert.match(responsiveStyles, /\.seapals-simulator-preview \.seapals-card-drawer\s*\{[\s\S]*?inset:\s*0;[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*none;[\s\S]*?animation:\s*seapalsCardInspectorIn/);
   assert.match(responsiveStyles, /\.seapals-simulator-preview \.seapals-card-inspector-close\s*\{[\s\S]*?width:\s*2\.75rem;[\s\S]*?height:\s*2\.75rem;/);
-  assert.match(responsiveStyles, /\.seapals-simulator-preview \.seapals-card-inspector-image\s*\{[\s\S]*?height:\s*min\(62dvh, 42rem\);[\s\S]*?animation:\s*seapalsCardInspectorIn/);
+  assert.match(responsiveStyles, /\.seapals-simulator-preview \.seapals-card-inspector-image\s*\{[\s\S]*?height:\s*auto;[\s\S]*?min-height:\s*0;[\s\S]*?animation:\s*seapalsCardInspectorIn/);
   assert.match(inspector, /role="dialog"[\s\S]*?aria-modal="true"/);
   assert.match(inspector, /aria-label="Close card inspector"[\s\S]*?seapals-card-inspector-close[\s\S]*?<span aria-hidden="true">×<\/span>/);
 });

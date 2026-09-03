@@ -1,0 +1,198 @@
+.stage {
+  position: relative;
+  width: min(100%, 17.5rem);
+  margin: 1.25rem auto 0;
+  isolation: isolate;
+}
+
+.cardImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 7;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.5rem;
+  background: rgba(2, 6, 23, 0.45);
+  object-fit: contain;
+  animation: seapalsCardInspectorIn 360ms cubic-bezier(0.18, 0.86, 0.24, 1);
+}
+
+.proxyRail {
+  position: absolute;
+  z-index: 2;
+  right: -7%;
+  bottom: 7.5%;
+  left: -7%;
+  display: grid;
+  gap: 0.38rem;
+  pointer-events: none;
+}
+
+.proxy {
+  position: relative;
+  display: grid;
+  min-height: 3.75rem;
+  width: 100%;
+  padding: 0.48rem 0.72rem 0.52rem;
+  overflow: hidden;
+  border: 2px solid rgba(103, 232, 249, 0.8);
+  border-radius: 0.8rem 0.35rem 0.8rem 0.35rem;
+  color: #082f49;
+  background:
+    linear-gradient(100deg, rgba(236, 254, 255, 0.98), rgba(207, 250, 254, 0.97) 64%, rgba(167, 243, 208, 0.97));
+  box-shadow:
+    0 0.55rem 1.4rem rgba(2, 6, 23, 0.58),
+    inset 0 1px rgba(255, 255, 255, 0.9);
+  text-align: left;
+  touch-action: manipulation;
+  pointer-events: auto;
+  transform: translateZ(0);
+  transition: filter 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+
+.proxy::before {
+  position: absolute;
+  top: 50%;
+  left: -0.08rem;
+  width: 0.48rem;
+  height: 1.6rem;
+  border-radius: 0 999px 999px 0;
+  background: #06b6d4;
+  box-shadow: 0 0 0.75rem rgba(6, 182, 212, 0.85);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.proxy:hover,
+.proxy:focus-visible {
+  filter: brightness(1.06);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.proxy:focus-visible {
+  outline: 3px solid #fde68a;
+  outline-offset: 2px;
+}
+
+.attack {
+  border-color: rgba(251, 113, 133, 0.9);
+  background:
+    linear-gradient(100deg, rgba(255, 241, 242, 0.98), rgba(254, 205, 211, 0.97) 66%, rgba(253, 186, 116, 0.97));
+}
+
+.attack::before {
+  background: #f43f5e;
+  box-shadow: 0 0 0.75rem rgba(244, 63, 94, 0.9);
+}
+
+.ready {
+  cursor: pointer;
+  animation: actionProxyReadyPulse 1800ms ease-in-out infinite;
+}
+
+.unavailable {
+  cursor: not-allowed;
+  border-color: rgba(148, 163, 184, 0.72);
+  color: #dbeafe;
+  background: linear-gradient(105deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.96));
+  box-shadow: 0 0.45rem 1.1rem rgba(2, 6, 23, 0.55);
+}
+
+.unavailable::before {
+  background: #94a3b8;
+  box-shadow: none;
+}
+
+.topline,
+.nameRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.kind,
+.status {
+  font-size: 0.6rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.status {
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nameRow {
+  margin-top: 0.15rem;
+  font-size: 0.92rem;
+  line-height: 1.05;
+}
+
+.nameRow strong {
+  font-weight: 950;
+}
+
+.nameRow > span {
+  flex: 0 0 auto;
+  font-weight: 950;
+}
+
+.description {
+  display: -webkit-box;
+  margin-top: 0.18rem;
+  overflow: hidden;
+  font-size: 0.7rem;
+  font-weight: 750;
+  line-height: 1.2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+@keyframes actionProxyReadyPulse {
+  0%,
+  100% {
+    box-shadow: 0 0.55rem 1.4rem rgba(2, 6, 23, 0.58), 0 0 0 rgba(34, 211, 238, 0);
+  }
+  50% {
+    box-shadow: 0 0.55rem 1.4rem rgba(2, 6, 23, 0.58), 0 0 1.15rem rgba(34, 211, 238, 0.42);
+  }
+}
+
+@media (max-width: 1279px) {
+  .stage {
+    width: min(100%, calc(min(62dvh, 42rem) * 5 / 7));
+    margin-top: 0.8rem;
+  }
+
+  .proxyRail {
+    right: -3%;
+    left: -3%;
+  }
+
+  .proxy {
+    min-height: 3.5rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .proxyRail {
+    right: -0.2rem;
+    left: -0.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardImage,
+  .ready {
+    animation: none;
+  }
+
+  .proxy {
+    transition: none;
+  }
+}
