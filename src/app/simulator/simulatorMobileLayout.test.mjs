@@ -565,15 +565,15 @@ test("V2 puts available SD beside the number-only VP and RP badges at the right 
   assert.match(opponentScore, /data-tutorial-coach-anchor="opponent-board-tab"/);
   assert.match(opponentScore, /data-school-density-owner="opponent"[\s\S]*?<small>SD<\/small><strong>\{opponentSchoolDensityState\.available\}<\/strong>/);
   assert.match(opponentScore, /opponentSchoolDensityState\.committed[\s\S]*?opponentSchoolDensityState\.capacity[\s\S]*?committed/);
-  assert.match(opponentScore, /is-sd[\s\S]*?is-vp[\s\S]*?data-rp-bank-target="opponent"/);
-  assert.match(opponentScore, /is-vp"><small>VP<\/small><strong>\{opponentVp\}<\/strong>/);
+  assert.match(opponentScore, /is-sd[\s\S]*?<AnimatedVpBadge[\s\S]*?owner="opponent"[\s\S]*?data-rp-bank-target="opponent"/);
+  assert.match(opponentScore, /<AnimatedVpBadge[\s\S]*?value=\{opponentVp\}[\s\S]*?owner="opponent"/);
   assert.match(opponentScore, /data-rp-bank-target="opponent"[\s\S]*?<small>RP<\/small><strong>\{presentedOpponentRp\}<\/strong>/);
   assert.doesNotMatch(opponentScore, /victoryTarget|opponentRpCap|\/\{/);
   assert.match(playerScore, /data-tutorial-coach-anchor="player-board-tab"/);
   assert.match(playerScore, /data-school-density-owner="player"[\s\S]*?<small>SD<\/small><strong>\{playerSchoolDensityState\.available\}<\/strong>/);
   assert.match(playerScore, /playerSchoolDensityState\.committed[\s\S]*?playerSchoolDensityState\.capacity[\s\S]*?committed/);
-  assert.match(playerScore, /is-sd[\s\S]*?data-tutorial-target="vp-score"[\s\S]*?data-rp-bank-target="player"/);
-  assert.match(playerScore, /data-tutorial-target="vp-score"[\s\S]*?<strong>\{playerVp\}<\/strong>/);
+  assert.match(playerScore, /is-sd[\s\S]*?<AnimatedVpBadge[\s\S]*?tutorialTarget="vp-score"[\s\S]*?data-rp-bank-target="player"/);
+  assert.match(playerScore, /<AnimatedVpBadge[\s\S]*?value=\{playerVp\}[\s\S]*?owner="player"/);
   assert.match(playerScore, /data-rp-bank-target="player"[\s\S]*?data-tutorial-target="rp-bank"[\s\S]*?<strong>\{presentedPlayerRp\}<\/strong>/);
   assert.doesNotMatch(playerScore, /victoryTarget|playerRpCap|\/\{/);
   assert.match(responsiveStyles, /\.seapals-reef-score\s*\{[\s\S]*?right:\s*\.45rem;/);
@@ -582,9 +582,12 @@ test("V2 puts available SD beside the number-only VP and RP badges at the right 
   assert.match(responsiveStyles, /\.seapals-reef-score-card\.is-sd\s*\{[\s\S]*?border-color:[\s\S]*?color:/);
   assert.match(
     responsiveStyles,
-    /\.seapals-simulator-preview :is\(\.seapals-player-open-water, \.seapals-player-orphans\)\s*\{\s*right:\s*8\.25rem;/,
-    "the player card lanes should clear the full SD, VP, and RP badge row",
+    /\.seapals-simulator-preview \.seapals-player-orphans\s*\{\s*right:\s*8\.25rem;/,
+    "the player orphan-card lane should clear the full SD, VP, and RP badge row",
   );
+  assert.match(simulatorSource, /seapals-player-floating-row[^"\n]*inset-x-0[^"\n]*flex-wrap[^"\n]*justify-center/);
+  assert.match(simulatorSource, /seapals-player-habitats contents/);
+  assert.match(simulatorSource, /seapals-player-open-water contents/);
 });
 
 test("V2 keeps vertical camera controls left and above the hand except on short screens", () => {
@@ -862,8 +865,9 @@ test("V2 uses a hybrid inverted rival perspective while keeping peripheral zones
 
   assert.match(opponentPane, /style=\{\{ transform: `translate[\s\S]*?seapals-opponent-ecosystem-content/);
   assert.match(opponentPane, /data-opponent-orientation=\{previewExperience \? "inverted" : "standard"\}/);
-  assert.match(opponentPane, /seapals-opponent-habitats absolute left-4 top-4/);
-  assert.match(opponentPane, /seapals-opponent-open-water absolute left-1\/2 top-4/);
+  assert.match(opponentPane, /seapals-opponent-floating-row[^"\n]*absolute[^"\n]*inset-x-0[^"\n]*top-4[^"\n]*flex-wrap[^"\n]*justify-center/);
+  assert.match(opponentPane, /seapals-opponent-habitats contents/);
+  assert.match(opponentPane, /seapals-opponent-open-water contents/);
   assert.match(opponentPane, /seapals-opponent-orphans absolute right-4 top-4/);
   assert.match(opponentPane, /getOpponentSlotPositions\(coral\.slots\.length, previewExperience\)/);
   assert.match(opponentPane, /getOpponentCoralGridOffset\(coralIndex, opponentCorals\.length, previewExperience\)/);

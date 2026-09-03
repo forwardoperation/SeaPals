@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./BoardCombatPresentation.module.css";
+import {
+  createAttackVectorGeometry,
+  getAttackIntentWindupDuration,
+} from "./attackIntentPresentation.mjs";
 
 function getDieKind(expression) {
   const match = String(expression ?? "").toUpperCase().match(/D(\d+)/);
@@ -230,6 +234,267 @@ export function BoardCombatDice({
       </div>
       <span className="sr-only" aria-live="polite" aria-atomic="true">{lockedAnnouncement}</span>
     </div>
+  );
+}
+
+function findCombatAnchorNode(root, { instanceId, boardOwner = null, preferTarget = false } = {}) {
+  if (!root || !instanceId) return null;
+  const ownerRoot = boardOwner
+    ? root.querySelector(`[data-board-owner="${boardOwner}"]`) ?? root
+    : root;
+  const candidates = [...ownerRoot.querySelectorAll(
+    "[data-attack-target-instance], [data-combat-target-id], [data-card-instance-id], [data-combat-anchor-ids]",
+  )];
+  const matching = candidates.filter((node) => (
+    node.dataset.attackTargetInstance === instanceId
+    || node.dataset.combatTargetId === instanceId
+    || node.dataset.cardInstanceId === instanceId
+    || String(node.dataset.combatAnchorIds ?? "").split(/\s+/).includes(instanceId)
+  ));
+  if (!matching.length) return null;
+  if (preferTarget) {
+    return matching.find((node) => node.dataset.attackTargetInstance === instanceId)
+      ?? matching.find((node) => node.dataset.combatTargetId === instanceId)
+      ?? matching.find((node) => String(node.dataset.combatAnchorIds ?? "").split(/\s+/).includes(instanceId))
+      ?? matching[0];
+  }
+  return matching.find((node) => node.dataset.cardInstanceId === instanceId)
+    ?? matching.find((node) => node.dataset.combatTargetId === instanceId)
+    ?? matching.find((node) => String(node.dataset.combatAnchorIds ?? "").split(/\s+/).includes(instanceId))
+    ?? matching[0];
+}
+
+function measureAttackIntent(root, anchorOptions) {
+  if (!root) return { geometry: null, attackerNode: null, targetNode: null };
+  const candidateAttackerNode = findCombatAnchorNode(root, {
+    instanceId: anchorOptions.attackerInstanceId,
+    boardOwner: anchorOptions.attackerBoardOwner,
+  });
+  const candidateTargetNode = findCombatAnchorNode(root, {
+    instanceId: anchorOptions.targetInstanceId,
+    boardOwner: anchorOptions.targetBoardOwner,
+    preferTarget: true,
+  });
+  const rootRect = root.getBoundingClientRect();
+  const isVisibleInRoot = (node) => {
+    const rect = node?.getBoundingClientRect();
+    const clipNode = node?.closest?.(".seapals-ecosystem-ocean")
+      ?? node?.closest?.("[data-board-owner]");
+    const clipRect = clipNode?.getBoundingClientRect?.() ?? rootRect;
+    const visibleLeft = Math.max(rootRect.left, clipRect.left);
+    const visibleRight = Math.min(rootRect.right, clipRect.right);
+    const visibleTop = Math.max(rootRect.top, clipRect.top);
+    const visibleBottom = Math.min(rootRect.bottom, clipRect.bottom);
+    return Boolean(
+      rect?.width
+      && rect?.height
+      && rect.right > visibleLeft
+      && rect.left < visibleRight
+      && rect.bottom > visibleTop
+      && rect.top < visibleBottom,
+    );
+  };
+  const attackerNode = isVisibleInRoot(candidateAttackerNode) ? candidateAttackerNode : null;
+  const targetNode = isVisibleInRoot(candidateTargetNode) ? candidateTargetNode : null;
+  const geometry = attackerNode && targetNode
+    ? createAttackVectorGeometry({
+        rootRect,
+        attackerRect: attackerNode.getBoundingClientRect(),
+        targetRect: targetNode.getBoundingClientRect(),
+      })
+    : null;
+  return { geometry, attackerNode, targetNode };
+}
+
+export function AttackIntentLayer({
+  active,
+  windup,
+  presentationKey,
+  rootRef,
+  attackerInstanceId,
+  targetInstanceId,
+  attackerBoardOwner = null,
+  targetBoardOwner = null,
+  attackerName = "Attacker",
+  targetName = "target",
+  reducedMotion = false,
+  onWindupComplete,
+}) {
+  const [geometry, setGeometry] = useState(null);
+  const scheduleRef = useRef(0);
+  const windupTimerRef = useRef(null);
+  const windupFrameRef = useRef(0);
+  const settleFrameRef = useRef(0);
+  const attackerNodeRef = useRef(null);
+  const completeRef = useRef(onWindupComplete);
+  completeRef.current = onWindupComplete;
+
+  useEffect(() => {
+    const clearAttackerWindup = () => {
+      attackerNodeRef.current?.removeAttribute("data-combat-attacker-windup");
+      attackerNodeRef.current = null;
+    };
+    if (!active) {
+      clearAttackerWindup();
+      setGeometry(null);
+      return undefined;
+    }
+
+    let disposed = false;
+    const anchorOptions = {
+      attackerInstanceId,
+      targetInstanceId,
+      attackerBoardOwner,
+      targetBoardOwner,
+    };
+    const measure = () => {
+      window.cancelAnimationFrame(scheduleRef.current);
+      scheduleRef.current = window.requestAnimationFrame(() => {
+        if (disposed) return;
+        const result = measureAttackIntent(rootRef?.current, anchorOptions);
+        setGeometry(result.geometry);
+        if (attackerNodeRef.current !== result.attackerNode) clearAttackerWindup();
+        attackerNodeRef.current = result.attackerNode;
+        if (result.attackerNode && windup && !reducedMotion) {
+          result.attackerNode.setAttribute("data-combat-attacker-windup", "true");
+        } else {
+          result.attackerNode?.removeAttribute("data-combat-attacker-windup");
+        }
+      });
+    };
+
+    measure();
+    settleFrameRef.current = window.requestAnimationFrame(measure);
+    const resizeObserver = typeof ResizeObserver === "function"
+      ? new ResizeObserver(measure)
+      : null;
+    if (rootRef?.current) resizeObserver?.observe(rootRef.current);
+    window.addEventListener("resize", measure);
+    window.visualViewport?.addEventListener("resize", measure);
+    window.visualViewport?.addEventListener("scroll", measure);
+    return () => {
+      disposed = true;
+      window.cancelAnimationFrame(scheduleRef.current);
+      window.cancelAnimationFrame(settleFrameRef.current);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", measure);
+      window.visualViewport?.removeEventListener("resize", measure);
+      window.visualViewport?.removeEventListener("scroll", measure);
+      clearAttackerWindup();
+    };
+  }, [
+    active,
+    attackerBoardOwner,
+    attackerInstanceId,
+    presentationKey,
+    reducedMotion,
+    rootRef,
+    targetBoardOwner,
+    targetInstanceId,
+    windup,
+  ]);
+
+  useEffect(() => {
+    if (!active || !windup || !presentationKey) return undefined;
+    window.clearTimeout(windupTimerRef.current);
+    window.cancelAnimationFrame(windupFrameRef.current);
+    let cancelled = false;
+    windupFrameRef.current = window.requestAnimationFrame(() => {
+      windupFrameRef.current = window.requestAnimationFrame(() => {
+        if (cancelled) return;
+        const measured = measureAttackIntent(rootRef?.current, {
+          attackerInstanceId,
+          targetInstanceId,
+          attackerBoardOwner,
+          targetBoardOwner,
+        });
+        const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+        const delay = getAttackIntentWindupDuration({
+          reducedMotion: reducedMotion || systemReducedMotion,
+          anchorsAvailable: Boolean(measured.attackerNode && measured.targetNode),
+        });
+        windupTimerRef.current = window.setTimeout(() => {
+          windupTimerRef.current = null;
+          if (!cancelled) completeRef.current?.(presentationKey);
+        }, delay);
+      });
+    });
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(windupFrameRef.current);
+      window.clearTimeout(windupTimerRef.current);
+      windupTimerRef.current = null;
+    };
+  }, [
+    active,
+    attackerBoardOwner,
+    attackerInstanceId,
+    presentationKey,
+    reducedMotion,
+    rootRef,
+    targetBoardOwner,
+    targetInstanceId,
+    windup,
+  ]);
+
+  if (!active) return null;
+  const viewportWidth = typeof window === "undefined" ? 1 : Math.max(1, window.innerWidth);
+  const viewportHeight = typeof window === "undefined" ? 1 : Math.max(1, window.innerHeight);
+  const phase = windup ? "windup" : "rolling";
+
+  return (
+    <>
+      <div
+        className={`seapals-combat-attack-intent is-${phase}${reducedMotion ? " is-reduced-motion" : ""}`}
+        data-combat-attack-intent
+        data-combat-intent-phase={phase}
+        data-combat-presentation-key={presentationKey}
+        aria-hidden="true"
+      >
+        {geometry ? (
+          <>
+            <svg
+              className="seapals-combat-attack-vector"
+              data-combat-attack-vector
+              viewBox={`0 0 ${viewportWidth} ${viewportHeight}`}
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id="seapals-combat-vector-gradient" gradientUnits="userSpaceOnUse" x1={geometry.start.x} y1={geometry.start.y} x2={geometry.end.x} y2={geometry.end.y}>
+                  <stop offset="0" stopColor="#fbbf24" />
+                  <stop offset="0.42" stopColor="#fb7185" />
+                  <stop offset="1" stopColor="#ef4444" />
+                </linearGradient>
+                <marker
+                  id="seapals-combat-vector-arrowhead"
+                  viewBox="0 0 14 14"
+                  refX="11"
+                  refY="7"
+                  markerUnits="userSpaceOnUse"
+                  markerWidth="20"
+                  markerHeight="20"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 1 1 L 13 7 L 1 13 L 4.2 7 Z" fill="#ef4444" stroke="#fff7ed" strokeWidth="1" />
+                </marker>
+              </defs>
+              <path className="seapals-combat-attack-vector-shadow" d={geometry.path} pathLength="1" />
+              <path
+                className="seapals-combat-attack-vector-path"
+                data-combat-vector-path
+                d={geometry.path}
+                pathLength="1"
+                markerEnd="url(#seapals-combat-vector-arrowhead)"
+              />
+              <circle className="seapals-combat-attack-vector-origin" cx={geometry.start.x} cy={geometry.start.y} r="8" />
+            </svg>
+          </>
+        ) : null}
+      </div>
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {attackerName} attacks {targetName}.
+      </span>
+    </>
   );
 }
 

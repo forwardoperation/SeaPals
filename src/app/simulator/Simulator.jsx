@@ -9,8 +9,9 @@ import MobileHandDock from "./MobileHandDock";
 import MobileHandCardPopover from "./MobileHandCardPopover";
 import MobileEdgeZones from "./MobileEdgeZones";
 import MobileDrawTray from "./MobileDrawTray";
+import AnimatedVpBadge from "./AnimatedVpBadge";
 import CardActionProxyOverlay from "./CardActionProxyOverlay";
-import { AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
+import { AttackIntentLayer, AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
 import CardCoinBoardPresentation from "./CardCoinBoardPresentation";
 import OpeningCoinBoardPresentation, { OpeningCoinVisual } from "./OpeningCoinBoardPresentation";
 import VictoryCelebration from "./VictoryCelebration";
@@ -1129,9 +1130,11 @@ function resolveHostTurnLionfishInvaders({
     const plan = {
       invaderInstanceId: invader.instanceId,
       invaderController: invader.controller,
+      invaderPhysicalController: hostController,
       coinResult,
       targetController,
       targetInstanceId: target?.instanceId ?? null,
+      targetPhysicalController: target?.physicalController ?? null,
       avoidanceCoin: forcedPlan?.avoidanceCoin ?? null,
     };
     plans.push(plan);
@@ -1871,6 +1874,12 @@ function getSlotActionKey(slot) {
 
 function getSlotTargetInstanceId(slot) {
   return getSlotCardInstanceId(slot) ? `slot-card:${getSlotCardInstanceId(slot)}` : `slot:${slot?.id}`;
+}
+
+function getCombatIntentPresentationKey(event) {
+  if (!event || !["faceoff-ready", "school-attack-ready", "opponent-roll-ready"].includes(event.type)) return null;
+  return event.rollCheckpointId
+    ?? `${event.type}:${event.attackerInstanceId ?? event.sourceCardId ?? "attacker"}:${event.targetInstanceId ?? event.targetSlotId ?? event.defenderCardId ?? "target"}`;
 }
 
 function getHostedDefenseBonusDice(hostCard, hostedCard) {
@@ -3485,6 +3494,7 @@ export default function Simulator({
   const [playerReefCreatureInstances, setPlayerReefCreatureInstances] = useState([]);
   const [playerOrphanCreatureInstances, setPlayerOrphanCreatureInstances] = useState([]);
   const [bubbleBursts, setBubbleBursts] = useState([]);
+  const [ecosystemPerimeterFlash, setEcosystemPerimeterFlash] = useState(null);
   const [opponent, setOpponentState] = useState(() => reconcileOpponentInstances(initialGame.opponent, initialGame.opponent));
   const [opponentThinking, setOpponentThinking] = useState(false);
   const opponentThinkingTimerRef = useRef(null);
@@ -3520,6 +3530,8 @@ export default function Simulator({
   const slotDragStartRef = useRef(null);
   const bubbleBurstIdRef = useRef(0);
   const bubbleBurstTimersRef = useRef(new Set());
+  const ecosystemPerimeterFlashIdRef = useRef(0);
+  const ecosystemPerimeterFlashTimerRef = useRef(null);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState(null);
   const [isOpponentPanning, setIsOpponentPanning] = useState(false);
@@ -3693,14 +3705,17 @@ export default function Simulator({
   const [faceoffRolling, setFaceoffRolling] = useState(false);
   const [faceoffPreview, setFaceoffPreview] = useState(null);
   const [faceoffLocked, setFaceoffLocked] = useState(false);
+  const [faceoffIntentReadyKey, setFaceoffIntentReadyKey] = useState(null);
   const faceoffRollCommitRef = useRef(false);
   const faceoffLockTimerRef = useRef(null);
+  const faceoffIntentKeyRef = useRef(null);
   const [effectRollRolling, setEffectRollRolling] = useState(false);
   const [effectRollPreview, setEffectRollPreview] = useState(null);
   const [effectRollLocked, setEffectRollLocked] = useState(false);
   const effectRollCommitRef = useRef(false);
   const effectRollLockTimerRef = useRef(null);
   const opponentCombatCheckpointIdRef = useRef(0);
+  const playerCombatCheckpointIdRef = useRef(0);
   const [log, setLog] = useState([
     `New ${initialPlayerDeckName} game started. Setup: play a base Coral or Creature School using your 3 RP.`,
   ]);
@@ -3789,6 +3804,20 @@ export default function Simulator({
     bubbleBurstTimersRef.current.add(timer);
   }
 
+  function flashPlayerEcosystemPerimeter(tone) {
+    const id = ++ecosystemPerimeterFlashIdRef.current;
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    window.clearTimeout(ecosystemPerimeterFlashTimerRef.current);
+    setEcosystemPerimeterFlash({
+      id,
+      tone: tone === "habitat" ? "habitat" : "open-water",
+    });
+    ecosystemPerimeterFlashTimerRef.current = window.setTimeout(() => {
+      ecosystemPerimeterFlashTimerRef.current = null;
+      setEcosystemPerimeterFlash((current) => current?.id === id ? null : current);
+    }, accessibilityReducedMotion || systemReducedMotion ? 480 : 1700);
+  }
+
   function queueBubbleBurstAtClientPoint(clientX, clientY) {
     const ecosystem = ecosystemRef.current;
     if (!ecosystem) return;
@@ -3817,6 +3846,8 @@ export default function Simulator({
   useEffect(() => () => {
     bubbleBurstTimersRef.current.forEach((timer) => window.clearTimeout(timer));
     bubbleBurstTimersRef.current.clear();
+    window.clearTimeout(ecosystemPerimeterFlashTimerRef.current);
+    ecosystemPerimeterFlashTimerRef.current = null;
   }, []);
 
   function projectNormalizedPlayerState(projectedState) {
@@ -3990,6 +4021,7 @@ export default function Simulator({
   const persistentConditions = persistentConditionIds.map((conditionId) => cardsById[conditionId]).filter(Boolean);
   const unsupportedConditionEffects = getUnsupportedConditionEffects(activeCondition);
   const isSetup = gamePhase === "setup";
+  const opponentSetupConcealed = previewExperience && isSetup;
   const isStartOfTurn = gamePhase === "draw" && !hasDrawnThisTurn;
   const hasCoralInPlay = playerCorals.length > 0;
   const turnControlLabel = opponentThinking ? "Opponent Turn" : isSetup ? "Begin Round" : "Next Round";
@@ -4016,12 +4048,14 @@ export default function Simulator({
     ...playerReefCreatureInstances.map((instance) => `reef:${instance.instanceId}`),
     ...playerOrphanCreatureInstances.map((instance) => `orphan:${instance.instanceId}:${(instance.hostedCardIds ?? []).filter(Boolean).join(",")}`),
   ].join("|");
-  const opponentLayoutSignature = [
-    ...opponentCorals.map((coral) => `${coral.id}:${coral.slots.map((slot) => `${slot.cardId ?? "_"}:${(slot.hostedCardIds ?? []).filter(Boolean).join(",")}`).join(";")}`),
-    ...opponent.habitatInstances.map((instance) => `habitat:${instance.instanceId}`),
-    ...(opponent.reefCreatureInstances ?? []).map((instance) => `reef:${instance.instanceId}`),
-    ...(opponent.orphanCreatures ?? []).map((instance) => `orphan:${instance.instanceId}:${(instance.hostedCardIds ?? []).filter(Boolean).join(",")}`),
-  ].join("|");
+  const opponentLayoutSignature = opponentSetupConcealed
+    ? "concealed-setup"
+    : [
+        ...opponentCorals.map((coral) => `${coral.id}:${coral.slots.map((slot) => `${slot.cardId ?? "_"}:${(slot.hostedCardIds ?? []).filter(Boolean).join(",")}`).join(";")}`),
+        ...opponent.habitatInstances.map((instance) => `habitat:${instance.instanceId}`),
+        ...(opponent.reefCreatureInstances ?? []).map((instance) => `reef:${instance.instanceId}`),
+        ...(opponent.orphanCreatures ?? []).map((instance) => `orphan:${instance.instanceId}:${(instance.hostedCardIds ?? []).filter(Boolean).join(",")}`),
+      ].join("|");
   const opponentVp = getEcosystemVictoryPoints(opponentCorals, opponent.habitats, opponent.reefCreatures, {
     controller: "opponent",
     localOrphans: opponent.orphanCreatures,
@@ -5961,11 +5995,22 @@ export default function Simulator({
   useEffect(() => {
     const boardFaceoffReady = previewExperience
       && ["faceoff-ready", "school-attack-ready", "opponent-roll-ready"].includes(eventOverlay?.type);
-    if (!boardFaceoffReady) return undefined;
+    if (!boardFaceoffReady) {
+      faceoffIntentKeyRef.current = null;
+      faceoffRollCommitRef.current = false;
+      setFaceoffIntentReadyKey(null);
+      setFaceoffLocked(false);
+      setFaceoffPreview(null);
+      setFaceoffRolling(false);
+      return undefined;
+    }
+    const presentationKey = getCombatIntentPresentationKey(eventOverlay);
+    faceoffIntentKeyRef.current = presentationKey;
     faceoffRollCommitRef.current = false;
     setFaceoffLocked(false);
     setFaceoffPreview(null);
-    setFaceoffRolling(true);
+    setFaceoffRolling(false);
+    setFaceoffIntentReadyKey(null);
     return () => {
       if (faceoffLockTimerRef.current !== null) {
         window.clearTimeout(faceoffLockTimerRef.current);
@@ -5974,8 +6019,10 @@ export default function Simulator({
     };
   }, [
     eventOverlay?.attackDice,
+    eventOverlay?.attackerInstanceId,
     eventOverlay?.defenseDice,
     eventOverlay?.rollCheckpointId,
+    eventOverlay?.targetInstanceId,
     eventOverlay?.targetCoralId,
     eventOverlay?.targetSlotId,
     eventOverlay?.type,
@@ -6347,6 +6394,9 @@ export default function Simulator({
     const floatingCardsPresent = isOpponent
       ? opponent.habitats.length || opponent.reefCreatures.length || (opponent.orphanCreatures?.length ?? 0)
       : playerHabitats.length || playerReefCreatures.length || playerOrphanCreatures.length;
+    const floatingTopRowCount = isOpponent
+      ? opponent.habitats.length + opponent.reefCreatures.length
+      : playerHabitats.length + playerReefCreatures.length;
     const invertOpponentSlots = isOpponent && previewExperience;
     const positions = corals.map((coral, index) => {
       if (!isOpponent) return { x: coral.x, y: coral.y, absolute: false };
@@ -6375,7 +6425,15 @@ export default function Simulator({
       });
       return cardBounds;
     });
-    if (floatingCardsPresent) bounds.push({ minX: 0, maxX: rect.width, minY: 0, maxY: 330 });
+    if (floatingCardsPresent) {
+      const floatingCardWidth = isOpponent ? 120 : 180;
+      const floatingCardHeight = isOpponent ? 150 : 220;
+      const floatingCardGap = isOpponent ? 8 : 12;
+      const floatingCardsPerRow = Math.max(1, Math.floor((rect.width + floatingCardGap) / (floatingCardWidth + floatingCardGap)));
+      const floatingRowCount = Math.max(1, Math.ceil(floatingTopRowCount / floatingCardsPerRow));
+      const floatingTopRowHeight = 24 + floatingRowCount * floatingCardHeight + Math.max(0, floatingRowCount - 1) * floatingCardGap;
+      bounds.push({ minX: 0, maxX: rect.width, minY: 0, maxY: Math.max(330, floatingTopRowHeight) });
+    }
     const padding = 36;
     const minX = Math.min(...bounds.map((entry) => entry.minX)) - padding;
     const maxX = Math.max(...bounds.map((entry) => entry.maxX)) + padding;
@@ -6866,7 +6924,7 @@ export default function Simulator({
     return true;
   }
 
-  function beginOnPlayAttack(card, coralId, slotId, reefIndex = -1, forcePending = false, opponentState = opponent) {
+  function beginOnPlayAttack(card, coralId, slotId, reefIndex = -1, forcePending = false, opponentState = opponent, attackerInstanceId = null) {
     let attack = getOnPlayAttackEffect(card);
     if (!attack) return false;
     const ensnare = getOnPlayEnsnare(card);
@@ -6886,7 +6944,7 @@ export default function Simulator({
       else queueEvents([noTargetEvent]);
       return true;
     }
-    setAttackContext(createPlayerAttackContext({ attackerCoralId: coralId, attackerSlotId: slotId, attackerCardId: card.id, attackerReefIndex: reefIndex, attackOverride: attack, onPlay: true }, card, attack, targets));
+    setAttackContext(createPlayerAttackContext({ attackerCoralId: coralId, attackerSlotId: slotId, attackerCardId: card.id, attackerInstanceId, attackerReefIndex: reefIndex, attackOverride: attack, onPlay: true }, card, attack, targets));
     const message = `${card.name}'s On Play ability ${attack.actionName} triggered automatically. Choose one of the marked legal targets in the opponent's ecosystem. This mandatory attack must finish before your next main-phase action.`;
     pushLog(message);
     if (!previewExperience) {
@@ -6900,7 +6958,8 @@ export default function Simulator({
   function resolvePlayerAttack(targetCoralId, targetSlotId, rollNow = false, stoppedRoll = null) {
     const selectedTarget = attackContext?.targets.find((target) => target.coralId === targetCoralId && target.slotId === targetSlotId);
     if (!selectedTarget || !canTargetInAttackSequence(attackContext.sequence, selectedTarget.instanceId)) return;
-    const attackerSlot = playerCorals.find((coral) => coral.id === attackContext.attackerCoralId)?.slots.find((slot) => slot.id === attackContext.attackerSlotId);
+    const attackerCoral = playerCorals.find((coral) => coral.id === attackContext.attackerCoralId);
+    const attackerSlot = attackerCoral?.slots.find((slot) => slot.id === attackContext.attackerSlotId);
     const attacker = cardsById[attackContext.attackerCardId ?? attackerSlot?.cardId];
     let attack = attackContext.attackOverride ?? getBasicAttackEffect(attacker);
     const combatRandom = stoppedRoll ? createCombatResolutionRandom(stoppedRoll) : Math.random;
@@ -6960,6 +7019,24 @@ export default function Simulator({
       pushLog("The selected attack target is no longer valid.");
       return;
     }
+    const attackerInstanceId = attackContext.attackerInstanceId ?? (attackerSlot
+      ? getLionfishSlotInstanceId(attackerCoral, attackerSlot)
+      : Number(attackContext.attackerReefIndex) >= 0
+        ? playerReefCreatureInstances[attackContext.attackerReefIndex]?.instanceId ?? null
+        : Number(attackContext.attackerOrphanIndex) >= 0
+          ? playerOrphanCreatures[attackContext.attackerOrphanIndex]?.instanceId ?? null
+          : null);
+    const createPlayerCombatPresentation = () => ({
+      rollCheckpointId: `player-combat-${++playerCombatCheckpointIdRef.current}`,
+      attackerInstanceId,
+      targetInstanceId: selectedTarget.instanceId,
+      attackerBoardOwner: "player",
+      targetBoardOwner: targetsOwnInvader ? "player" : "opponent",
+      attackerOwner: "player",
+      defenderOwner: "opponent",
+      attackerName: attacker.name,
+      defenderName: targetEntry.card.name,
+    });
     const flashingAlarmBonus = getFlashingAlarmAttackBonus(flashingAlarmAttackBonus);
     const opponentFlashingAlarmAfterAttack = rollNow
       ? triggerFlashingAlarm(opponent.flashingAlarmAttackBonus, targetEntry.card)
@@ -6996,7 +7073,17 @@ export default function Simulator({
     }
     if (targetSlotId === "__foundation__" && isCreatureSchool(targetEntry.card)) {
       if (!rollNow) {
-        setEventOverlay({ type: "school-attack-ready", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: `${attacker.name} attacks ${targetEntry.card.name}`, message: `${targetEntry.card.name} has no defense roll. Stop the ${attack.attackDice} attack roll; its result deals ×10 damage.`, targetCoralId, targetSlotId, attackDice: attack.attackDice });
+        setEventOverlay({
+          type: "school-attack-ready",
+          sourceCardId: attacker.id,
+          defenderCardId: targetEntry.card.id,
+          title: `${attacker.name} attacks ${targetEntry.card.name}`,
+          message: `${targetEntry.card.name} has no defense roll. Stop the ${attack.attackDice} attack roll; its result deals ×10 damage.`,
+          targetCoralId,
+          targetSlotId,
+          attackDice: attack.attackDice,
+          ...createPlayerCombatPresentation(),
+        });
         setFaceoffPreview(null);
         return;
       }
@@ -7119,6 +7206,7 @@ export default function Simulator({
         targetSlotId,
         attackDice: attack.attackDice,
         defenseDice,
+        ...createPlayerCombatPresentation(),
       });
       setFaceoffPreview(null);
       return;
@@ -7601,6 +7689,9 @@ export default function Simulator({
           hostedCardId === cardId && slot.hostedCardIds?.[index] !== hostedCardId
         ))
       : -1;
+    const placedAttackerInstanceId = isHostedPlacement
+      ? `hosted:${slot.id}:${hostedIndex}`
+      : cardInstanceId;
     const hostedSchoolDensityRequirements = isHostedPlacement
       ? [...(slot.hostedSchoolDensityRequirements ?? [])]
       : null;
@@ -7644,7 +7735,7 @@ export default function Simulator({
     const hasOnPlayAttack = Boolean(getOnPlayAttackEffect(card));
     const deckDiscardAbility = getOnPlayOpponentDeckDiscard(card);
     const onPlayDrawCount = getOnPlayDrawCount(card);
-    if (!onPlayDamage && !deckDiscardAbility && !onPlayDrawCount) beginOnPlayAttack(card, coral.id, slotId);
+    if (!onPlayDamage && !deckDiscardAbility && !onPlayDrawCount) beginOnPlayAttack(card, coral.id, slotId, -1, false, opponent, placedAttackerInstanceId);
     beginPlayerOnPlaySearch(card, slotId);
     const onPlayHeal = getOnPlayCoralHeal(card);
     const onPlayReorder = getOnPlayReorder(card);
@@ -7666,7 +7757,7 @@ export default function Simulator({
       // Resolve the visible deck-discard event first, then present the mandatory
       // attack target prompt. This keeps multi-part On Play cards from replacing
       // their own event popup before the player can read it.
-      beginOnPlayAttack(card, coral.id, slotId, -1, appliedDeckDiscard);
+      beginOnPlayAttack(card, coral.id, slotId, -1, appliedDeckDiscard, opponent, placedAttackerInstanceId);
     }
     if (randomDiscard && opponent.hand.length) {
       const discardedIds = shuffle(opponent.hand).slice(0, randomDiscard.amount);
@@ -7696,7 +7787,7 @@ export default function Simulator({
       const message = `${card.name}'s ${onPlayDamage.actionName} had no legal opponent ${onPlayDamage.targetType === "creature-school" ? "Creature School" : "coral"} target.`;
       pushLog(message);
       setEventOverlay({ type: "utility-result", sourceCardId: card.id, title: `Player's ${card.name} used ${onPlayDamage.actionName}`, message, success: false });
-      if (hasOnPlayAttack) beginOnPlayAttack(card, coral.id, slotId, -1, true);
+      if (hasOnPlayAttack) beginOnPlayAttack(card, coral.id, slotId, -1, true, opponent, placedAttackerInstanceId);
     } else if (onPlayHeal) {
       const candidates = playerCoralCards.filter((candidate) => Number(candidate.health ?? candidate.maxHealth) < Number(candidate.maxHealth)).map((candidate) => candidate.id);
       if (candidates.length) {
@@ -7709,7 +7800,7 @@ export default function Simulator({
       }
     } else if (onPlayDrawCount) {
       beginPlayerOnPlayDraw(card, slotId);
-      if (hasOnPlayAttack && foundationDeck.length + palsDeck.length >= onPlayDrawCount) beginOnPlayAttack(card, coral.id, slotId, -1, true);
+      if (hasOnPlayAttack && foundationDeck.length + palsDeck.length >= onPlayDrawCount) beginOnPlayAttack(card, coral.id, slotId, -1, true, opponent, placedAttackerInstanceId);
     }
     else if (onPlayReorder) beginPlayerOnPlayReorder(card, slotId);
     if (onPlayResourceGain && !getOnPlayAttackEffect(card) && !getOnPlayUtilitySearch(card) && !onPlayDamage && !onPlayHeal && !onPlayDrawCount && !onPlayReorder && !randomDiscard && !cardHasSymbiosis(card) && !appliedDeckDiscard && !appliedSupportBlock) {
@@ -9666,6 +9757,7 @@ export default function Simulator({
     const message = `${card.name} entered your open-water ecosystem for ${playCost} RP and committed ${densityRequirementAtPlay} School Density (${committedAfterPlay}/${playerSchoolDensity} now used).${sacrificeMessage}${territorialMessage}${resourceMessage}`;
     pushLog(message);
     emitPlayerBuild(card, playCost, "open-water");
+    if (previewExperience) flashPlayerEcosystemPerimeter("open-water");
     const playedSlotId = `reef-${playedInstance.instanceId}`;
     const onPlayDamage = getOnPlayFoundationDamage(card, [...playerHabitats, ...nextPlayerCorals.map((foundation) => foundation.cardId)]);
     const onPlayDamageTargets = onPlayDamage?.targetType === "creature-school"
@@ -9677,7 +9769,7 @@ export default function Simulator({
     const beganOnPlaySearch = beginPlayerOnPlaySearch(card, playedSlotId);
     const beganOnPlayAttack = onPlayDamage
       ? false
-      : beginOnPlayAttack(card, null, playedSlotId, nextReefInstances.length - 1, discardedOpponentDeck || blockedOpponentSupports);
+      : beginOnPlayAttack(card, null, playedSlotId, nextReefInstances.length - 1, discardedOpponentDeck || blockedOpponentSupports, opponent, nextReefInstances.at(-1)?.instanceId ?? null);
     let beganOnPlayDamage = false;
     if (onPlayDamage && onPlayDamageTargets.length) {
       beganOnPlayDamage = true;
@@ -9698,7 +9790,7 @@ export default function Simulator({
       const noTargetMessage = `${card.name}'s ${onPlayDamage.actionName} had no legal opponent ${onPlayDamage.targetType === "creature-school" ? "Creature School" : "coral"} target.`;
       pushLog(noTargetMessage);
       setEventOverlay({ type: "utility-result", sourceCardId: card.id, title: `Player's ${card.name} used ${onPlayDamage.actionName}`, message: noTargetMessage, success: false });
-      if (hasOnPlayAttack) beginOnPlayAttack(card, null, playedSlotId, nextReefInstances.length - 1, true);
+      if (hasOnPlayAttack) beginOnPlayAttack(card, null, playedSlotId, nextReefInstances.length - 1, true, opponent, nextReefInstances.at(-1)?.instanceId ?? null);
     }
     const beganOnPlayDraw = !beganOnPlayDamage && !beganOnPlayAttack && !beganOnPlaySearch && !discardedOpponentDeck && !blockedOpponentSupports
       ? beginPlayerOnPlayDraw(card, playedSlotId)
@@ -9721,13 +9813,23 @@ export default function Simulator({
         cardId: card.id,
         finishPlan: scriptedFinishPlan,
       });
-      setEventOverlay(finalRoundMilestone ?? {
-        type: "utility-result",
-        sourceCardId: card.id,
-        title: `Player played ${card.name}`,
-        message,
-        success: true,
-      });
+      if (finalRoundMilestone) {
+        setEventOverlay(finalRoundMilestone);
+      } else if (
+        previewExperience
+        && card.category === CardCategory.FILTER_FEEDER
+        && (card.onPlay ?? []).length === 0
+      ) {
+        setEventOverlay(null);
+      } else {
+        setEventOverlay({
+          type: "utility-result",
+          sourceCardId: card.id,
+          title: `Player played ${card.name}`,
+          message,
+          success: true,
+        });
+      }
     }
   }
 
@@ -9804,6 +9906,7 @@ export default function Simulator({
       setPlayError("");
       pushLog(`Played ${card.name} as a habitat for ${playCost} RP.`);
       emitPlayerBuild(card, playCost, "habitat");
+      if (previewExperience) flashPlayerEcosystemPerimeter("habitat");
       return;
     }
     if (card.kind === CardKind.SUPPORT) {
@@ -12818,6 +12921,7 @@ export default function Simulator({
       }).map((slot) => ({
         coral,
         slot,
+        instanceId: getLionfishSlotInstanceId(coral, slot),
         locationKey: getSlotActionKey(slot),
         card: cardsById[slot.cardId],
         attack: onPlayAttack?.coralId === coral.id && onPlayAttack?.slotId === slot.id ? onPlayAttack.attack : getBasicAttackEffect(cardsById[slot.cardId]),
@@ -13040,7 +13144,10 @@ export default function Simulator({
         orphanInstanceId: attackerEntry.orphanIndex >= 0 ? attackerEntry.instanceId : null,
         attack: attackerEntry.attack,
       },
+      attackerInstanceId: attackerEntry.instanceId,
       targetInstanceId: targetEntry.instanceId,
+      attackerBoardOwner: "opponent",
+      targetBoardOwner: targetEntry.onOpponentBoard ? "opponent" : "player",
       attackDice: attackerEntry.attack.attackDice,
       defenseDice: targetEntry.school
         ? null
@@ -14115,6 +14222,14 @@ export default function Simulator({
         : "Tap the board to stop the Lionfish attack die.",
       sourceCardId: "lionfish",
       defenderCardId: plannedEvent.defenderCardId ?? null,
+      attackerInstanceId: plan.invaderInstanceId,
+      targetInstanceId: plan.targetInstanceId,
+      attackerBoardOwner: plan.invaderPhysicalController ?? hostController,
+      targetBoardOwner: plan.targetPhysicalController ?? null,
+      attackerOwner: plannedEvent.combatAttackerOwner ?? plan.invaderController,
+      defenderOwner: plannedEvent.combatDefenderOwner ?? plan.targetController,
+      attackerName: cardsById.lionfish?.name ?? "Lionfish",
+      defenderName: cardsById[plannedEvent.defenderCardId]?.name ?? "target",
       attackDice: plannedEvent.attackDice,
       defenseDice: plannedEvent.defenseDice ?? null,
       opponentSequence: true,
@@ -14222,6 +14337,14 @@ export default function Simulator({
         : "Tap the board to stop the opponent's attack die.",
       sourceCardId: plannedStep.attackerCardId,
       defenderCardId: plannedStep.defenderCardId,
+      attackerInstanceId: plannedCombat.attackerInstanceId,
+      targetInstanceId: plannedCombat.targetInstanceId,
+      attackerBoardOwner: plannedCombat.attackerBoardOwner,
+      targetBoardOwner: plannedCombat.targetBoardOwner,
+      attackerOwner: "opponent",
+      defenderOwner: "player",
+      attackerName: cardsById[plannedStep.attackerCardId]?.name ?? "Opponent creature",
+      defenderName: cardsById[plannedStep.defenderCardId]?.name ?? "target",
       attackDice: plannedCombat.attackDice,
       defenseDice: plannedCombat.defenseDice,
       opponentSequence: true,
@@ -15844,8 +15967,12 @@ export default function Simulator({
     effectRollLockTimerRef.current = null;
     effectRollCommitRef.current = false;
     opponentCombatCheckpointIdRef.current += 1;
+    playerCombatCheckpointIdRef.current += 1;
+    faceoffIntentKeyRef.current = null;
     for (const timer of bubbleBurstTimersRef.current) window.clearTimeout(timer);
     bubbleBurstTimersRef.current.clear();
+    window.clearTimeout(ecosystemPerimeterFlashTimerRef.current);
+    ecosystemPerimeterFlashTimerRef.current = null;
 
     const restoredDifficulty = normalizeOpponentDifficulty(saved.opponentDifficulty);
     setSelectedDeckId(saved.selectedDeckId);
@@ -15896,6 +16023,7 @@ export default function Simulator({
     setGameResult(null);
 
     setBubbleBursts([]);
+    setEcosystemPerimeterFlash(null);
     setOpponentThinking(false);
     setRoundFlash(false);
     setEventOverlay(null);
@@ -15904,6 +16032,7 @@ export default function Simulator({
     setFaceoffRolling(false);
     setFaceoffPreview(null);
     setFaceoffLocked(false);
+    setFaceoffIntentReadyKey(null);
     setEffectRollRolling(false);
     setEffectRollPreview(null);
     setEffectRollLocked(false);
@@ -16005,6 +16134,9 @@ export default function Simulator({
     setHand(nextGame.hand);
     setPlayerCorals([]);
     setBubbleBursts([]);
+    window.clearTimeout(ecosystemPerimeterFlashTimerRef.current);
+    ecosystemPerimeterFlashTimerRef.current = null;
+    setEcosystemPerimeterFlash(null);
     setPlayerHabitats([]);
     setPlayerReefCreatures([]);
     setPlayerOrphanCreatures([]);
@@ -16254,6 +16386,13 @@ export default function Simulator({
   const combatBoardFaceoffActive = Boolean(
     previewExperience
     && ["faceoff-ready", "school-attack-ready", "opponent-roll-ready"].includes(eventOverlay?.type),
+  );
+  const combatIntentPresentationKey = combatBoardFaceoffActive
+    ? getCombatIntentPresentationKey(eventOverlay)
+    : null;
+  const combatIntentReady = Boolean(
+    combatIntentPresentationKey
+    && faceoffIntentReadyKey === combatIntentPresentationKey,
   );
   const boardEffectRollActive = Boolean(eventOverlay?.type === EFFECT_ROLL_READY_TYPE);
   const boardFaceoffActive = combatBoardFaceoffActive || boardEffectRollActive;
@@ -16766,6 +16905,12 @@ export default function Simulator({
     }, lockDelay);
   }
 
+  function completeBoardAttackIntent(presentationKey) {
+    if (!combatBoardFaceoffActive || faceoffIntentKeyRef.current !== presentationKey) return;
+    setFaceoffIntentReadyKey(presentationKey);
+    setFaceoffRolling(true);
+  }
+
   function stopBoardFaceoff() {
     if (!combatBoardFaceoffActive || !faceoffPreview || faceoffRollCommitRef.current) return;
     faceoffRollCommitRef.current = true;
@@ -16892,6 +17037,28 @@ export default function Simulator({
           0%, 100% { filter: saturate(1.08) brightness(1); }
           50% { filter: saturate(1.28) brightness(1.12); }
         }
+        @keyframes seapalsCombatAttackerWindup {
+          0% { rotate: 0deg; scale: 1; filter: brightness(1); }
+          16% { rotate: -5deg; scale: 1.025; }
+          32% { rotate: 5deg; scale: 1.045; }
+          48% { rotate: -4deg; scale: 1.055; }
+          64% { rotate: 4deg; scale: 1.065; filter: brightness(1.18) saturate(1.2); }
+          80% { rotate: -2deg; scale: 1.04; }
+          100% { rotate: 0deg; scale: 1; filter: brightness(1); }
+        }
+        @keyframes seapalsCombatVectorDraw {
+          0% { opacity: 0; stroke-dashoffset: 1; }
+          20% { opacity: 1; }
+          100% { opacity: 1; stroke-dashoffset: 0; }
+        }
+        @keyframes seapalsCombatVectorPulse {
+          0%, 100% { opacity: .78; stroke-width: 5.5; }
+          50% { opacity: 1; stroke-width: 7; }
+        }
+        @keyframes seapalsCombatVectorOriginPulse {
+          0%, 100% { opacity: .78; scale: .82; }
+          50% { opacity: 1; scale: 1.2; }
+        }
         @keyframes seapalsCombatDieFloat {
           0%, 100% { transform: translateY(-3px) scale(.98); filter: brightness(.96); }
           50% { transform: translateY(3px) scale(1.035); filter: brightness(1.12); }
@@ -16941,6 +17108,29 @@ export default function Simulator({
         @keyframes seapalsRpBankCollect {
           0%, 100% { transform: scale(1); filter: brightness(1); }
           48% { transform: scale(1.16); filter: brightness(1.45); box-shadow: 0 0 0 4px rgba(253, 230, 138, .24), 0 0 28px rgba(110, 231, 183, .9); }
+        }
+        @keyframes seapalsEcosystemPerimeterFlash {
+          0% { opacity: 0; }
+          12%, 72% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        @keyframes seapalsVpGainGlow {
+          0% { box-shadow: 0 0 0 rgba(250, 204, 21, 0); }
+          42% { box-shadow: 0 0 0 3px rgba(250, 204, 21, .2), 0 0 24px rgba(250, 204, 21, .82); }
+          100% { box-shadow: 0 0 14px rgba(250, 204, 21, .28); }
+        }
+        @keyframes seapalsVpLossGlow {
+          0% { box-shadow: 0 0 0 rgba(248, 113, 113, 0); }
+          42% { box-shadow: 0 0 0 3px rgba(248, 113, 113, .2), 0 0 24px rgba(239, 68, 68, .82); }
+          100% { box-shadow: 0 0 14px rgba(239, 68, 68, .28); }
+        }
+        @keyframes seapalsVpDigitUp {
+          from { opacity: .25; transform: translateY(.38rem) scale(.82); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes seapalsVpDigitDown {
+          from { opacity: .25; transform: translateY(-.38rem) scale(.82); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes seapalsEventPop { 0% { transform: scale(.88); opacity: 0; } 65% { transform: scale(1.025); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes seapalsCoinReady {
@@ -18415,6 +18605,62 @@ export default function Simulator({
           top: calc(50% - var(--seapals-reticle-arrow-half-size, 17px));
           left: calc(0px - var(--seapals-reticle-arrow-size, 34px) - var(--seapals-reticle-arrow-gap, 9px));
         }
+        [data-combat-attacker-windup="true"] {
+          z-index: 84 !important;
+          transform-origin: center;
+          animation: seapalsCombatAttackerWindup 720ms cubic-bezier(.22,.72,.2,1) both !important;
+          will-change: rotate, scale, filter;
+        }
+        .seapals-combat-attack-intent {
+          position: fixed;
+          z-index: 85;
+          inset: 0;
+          overflow: hidden;
+          pointer-events: none;
+        }
+        .seapals-combat-attack-vector {
+          position: fixed;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: visible;
+          pointer-events: none;
+        }
+        .seapals-combat-attack-vector-shadow,
+        .seapals-combat-attack-vector-path {
+          fill: none;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .seapals-combat-attack-vector-shadow {
+          stroke: rgba(2, 8, 23, .9);
+          stroke-width: 11;
+          stroke-dasharray: 1;
+          stroke-dashoffset: 0;
+        }
+        .seapals-combat-attack-vector-path {
+          stroke: url(#seapals-combat-vector-gradient);
+          stroke-width: 6;
+          stroke-dasharray: 1;
+          stroke-dashoffset: 0;
+          filter: drop-shadow(0 0 4px rgba(255, 247, 237, .95)) drop-shadow(0 0 12px rgba(239, 68, 68, .92));
+        }
+        .seapals-combat-attack-intent.is-windup .seapals-combat-attack-vector-shadow,
+        .seapals-combat-attack-intent.is-windup .seapals-combat-attack-vector-path {
+          animation: seapalsCombatVectorDraw 560ms cubic-bezier(.16,.84,.2,1) 90ms both;
+        }
+        .seapals-combat-attack-intent.is-rolling .seapals-combat-attack-vector-path {
+          animation: seapalsCombatVectorPulse 1.15s ease-in-out infinite;
+        }
+        .seapals-combat-attack-vector-origin {
+          fill: #fbbf24;
+          stroke: #fff7ed;
+          stroke-width: 3;
+          filter: drop-shadow(0 0 10px rgba(251, 191, 36, .95));
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: seapalsCombatVectorOriginPulse .7s ease-in-out infinite;
+        }
         .seapals-combat-dice-layer {
           position: absolute;
           z-index: 86;
@@ -18744,6 +18990,9 @@ export default function Simulator({
         .seapals-reduced-motion .seapals-attack-reticle,
         .seapals-reduced-motion .seapals-attack-reticle-glyph,
         .seapals-reduced-motion .seapals-combat-die { animation: none !important; }
+        .seapals-reduced-motion [data-combat-attacker-windup="true"],
+        .seapals-reduced-motion .seapals-combat-attack-vector-path,
+        .seapals-reduced-motion .seapals-combat-attack-vector-origin { animation: none !important; }
         .seapals-reduced-motion .seapals-attack-reticle { opacity: 1; transform: translate3d(0, 0, 0); }
         @media (prefers-reduced-motion: reduce) {
           .seapals-opponent-placement-flight { animation: none !important; }
@@ -18757,7 +19006,10 @@ export default function Simulator({
           [data-v2-attack-mode="true"] [data-attack-target="true"],
           .seapals-attack-reticle,
           .seapals-attack-reticle-glyph,
-          .seapals-combat-die { animation: none !important; }
+          .seapals-combat-die,
+          [data-combat-attacker-windup="true"],
+          .seapals-combat-attack-vector-path,
+          .seapals-combat-attack-vector-origin { animation: none !important; }
           .seapals-attack-reticle { opacity: 1; transform: translate3d(0, 0, 0); }
         }
         .seapals-mobile-draw-flight {
@@ -18870,6 +19122,27 @@ export default function Simulator({
           transform: scaleY(-1);
           pointer-events: none;
         }
+        .seapals-ecosystem-perimeter-flash {
+          position: absolute;
+          z-index: 35;
+          inset: 2px;
+          border: 3px solid var(--seapals-ecosystem-flash-color);
+          border-radius: .9rem;
+          box-shadow:
+            inset 0 0 28px var(--seapals-ecosystem-flash-soft),
+            0 0 22px var(--seapals-ecosystem-flash-color);
+          opacity: 1;
+          pointer-events: none;
+          animation: seapalsEcosystemPerimeterFlash 1700ms ease-out both;
+        }
+        .seapals-ecosystem-perimeter-flash.is-open-water {
+          --seapals-ecosystem-flash-color: rgba(56, 189, 248, .98);
+          --seapals-ecosystem-flash-soft: rgba(14, 165, 233, .34);
+        }
+        .seapals-ecosystem-perimeter-flash.is-habitat {
+          --seapals-ecosystem-flash-color: rgba(255, 255, 255, .98);
+          --seapals-ecosystem-flash-soft: rgba(255, 255, 255, .3);
+        }
         .seapals-simulator-preview .seapals-board-pane-header {
           position: absolute;
           z-index: 45;
@@ -18943,6 +19216,60 @@ export default function Simulator({
           color: #94a3b8;
           font-size: .75rem;
           font-weight: 800;
+        }
+        .seapals-vp-value {
+          position: relative;
+          display: inline-flex;
+          min-width: 1ch;
+          align-items: baseline;
+          justify-content: center;
+          color: inherit;
+        }
+        .seapals-vp-value > strong { color: inherit; font: inherit; }
+        .seapals-vp-value.is-vp-gain {
+          color: #fbbf24;
+          animation: seapalsVpGainGlow 520ms ease-out both;
+        }
+        .seapals-vp-value.is-vp-loss {
+          color: #f87171;
+          animation: seapalsVpLossGlow 520ms ease-out both;
+        }
+        .seapals-vp-value.is-vp-gain > strong { animation: seapalsVpDigitUp 86ms ease-out both; }
+        .seapals-vp-value.is-vp-loss > strong { animation: seapalsVpDigitDown 86ms ease-out both; }
+        .seapals-vp-value .seapals-vp-delta {
+          position: absolute;
+          z-index: 2;
+          top: -.65rem;
+          right: -1rem;
+          display: grid;
+          min-width: 1.15rem;
+          height: 1.15rem;
+          place-items: center;
+          padding: 0 .2rem;
+          border: 1px solid currentColor;
+          border-radius: 999px;
+          background: rgba(2, 8, 23, .94);
+          color: inherit;
+          font-size: .5rem;
+          font-weight: 950;
+          line-height: 1;
+          box-shadow: 0 4px 12px rgba(2, 8, 23, .5);
+        }
+        :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-reduced-motion,
+        .seapals-reduced-motion :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-gain,
+        .seapals-reduced-motion :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-loss,
+        .seapals-reduced-motion .seapals-ecosystem-perimeter-flash {
+          animation: none !important;
+        }
+        :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-reduced-motion > strong {
+          animation: none !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-gain,
+          :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-loss,
+          .seapals-ecosystem-perimeter-flash {
+            animation: none !important;
+          }
         }
         .seapals-mobile-hud-panel { bottom: 15.1rem; }
         @media (max-width: 1279px) {
@@ -19138,7 +19465,32 @@ export default function Simulator({
             font-weight: 950;
             line-height: 1;
           }
-          .seapals-reef-score-card.is-vp { border-color: rgba(253, 230, 138, .72); color: #fef3c7; }
+          .seapals-reef-score-card.is-vp {
+            position: relative;
+            border-color: rgba(253, 230, 138, .72);
+            color: #fef3c7;
+          }
+          .seapals-vp-value {
+            position: relative;
+            display: inline-flex;
+            min-width: 1ch;
+            align-items: baseline;
+            justify-content: center;
+            color: inherit;
+          }
+          .seapals-vp-value > strong { color: inherit; font: inherit; }
+          :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-gain {
+            color: #fbbf24;
+            animation: seapalsVpGainGlow 520ms ease-out both;
+          }
+          :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-loss {
+            color: #f87171;
+            animation: seapalsVpLossGlow 520ms ease-out both;
+          }
+          .seapals-reef-score-card.is-vp-gain { border-color: rgba(253, 224, 71, .98); }
+          .seapals-reef-score-card.is-vp-loss { border-color: rgba(248, 113, 113, .98); }
+          .is-vp-gain > strong { animation: seapalsVpDigitUp 86ms ease-out both; }
+          .is-vp-loss > strong { animation: seapalsVpDigitDown 86ms ease-out both; }
           .seapals-reef-score-card.is-rp { border-color: rgba(110, 231, 183, .68); color: #d1fae5; }
           .seapals-reef-score-card.is-sd { border-color: rgba(103, 232, 249, .7); color: #cffafe; }
           .seapals-reef-score-card.is-sd strong { font-size: .92rem; letter-spacing: -.03em; }
@@ -19146,8 +19498,8 @@ export default function Simulator({
             padding-right: 5.75rem;
             padding-left: 3.75rem;
           }
-          .seapals-simulator-preview .seapals-player-habitats { left: 4rem; }
-          .seapals-simulator-preview :is(.seapals-player-open-water, .seapals-player-orphans) { right: 8.25rem; }
+          .seapals-simulator-preview .seapals-player-floating-row { padding-inline: 0; }
+          .seapals-simulator-preview .seapals-player-orphans { right: 8.25rem; }
           .seapals-simulator-preview [data-board-owner="opponent"] .seapals-board-camera-controls {
             z-index: 65;
             top: auto;
@@ -19760,7 +20112,7 @@ export default function Simulator({
               <div id="simulator-opponent-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" onClickCapture={(event) => suppressBoardGestureClick("opponent", event)} aria-label="Rival reef" inert={boardInteractionOverlayActive ? true : undefined}>
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-rose-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-200"><span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,.8)]" /> {isStoryMode ? `${storyOpponentName}'s Ecosystem` : "Rival Ecosystem"}</div>
-                  {attackContext ? (
+                  {attackContext && !boardFaceoffActive ? (
                     <div className="flex items-center gap-2" role="status">
                       {previewExperience ? <span className="sr-only">Choose a card marked by a red target reticle.</span> : <div className="rounded-full bg-emerald-400 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-950 shadow-lg">Choose a highlighted target</div>}
                       {!attackContext.costCommitted && !attackContext.onPlay ? <button type="button" onClick={() => setAttackContext(null)} className={`rounded-full border px-3 py-1 text-[10px] font-bold hover:bg-white/10 ${previewExperience ? "border-rose-200/70 bg-rose-950/70 text-rose-50" : "border-white/15 bg-white/5 text-slate-200"}`}>Cancel</button> : !previewExperience ? <span className="text-[10px] font-bold text-emerald-200">Finish each repeated attack</span> : null}
@@ -19768,10 +20120,31 @@ export default function Simulator({
                   ) : null}
                 </div>
                 {previewExperience ? (
-                  <div className="seapals-reef-score seapals-reef-score-opponent" data-tutorial-coach-anchor="opponent-board-tab" aria-label={`${opponentHudLabel}: ${opponentVp} Victory Points, ${presentedOpponentRp} Resource Points, and ${opponentSchoolDensityState.available} School Density available; ${opponentSchoolDensityState.committed} of ${opponentSchoolDensityState.capacity} committed`}>
-                    <span className="seapals-reef-score-card is-sd" data-school-density-owner="opponent" title={`${opponentSchoolDensityState.available} School Density available; ${opponentSchoolDensityState.committed} of ${opponentSchoolDensityState.capacity} committed`}><small>SD</small><strong>{opponentSchoolDensityState.available}</strong></span>
-                    <span className="seapals-reef-score-card is-vp"><small>VP</small><strong>{opponentVp}</strong></span>
-                    <span key={`opponent-rp-${compactRpPulseOwner === "opponent" ? compactRpPulseVersion : 0}`} data-rp-bank-target="opponent" className={`seapals-reef-score-card is-rp${compactRpPulseOwner === "opponent" ? " is-collecting" : ""}`}><small>RP</small><strong>{presentedOpponentRp}</strong></span>
+                  <div
+                    className="seapals-reef-score seapals-reef-score-opponent"
+                    data-tutorial-coach-anchor="opponent-board-tab"
+                    aria-label={opponentSetupConcealed
+                      ? "Opponent setup values hidden until Round 1 begins."
+                      : `${opponentHudLabel}: ${opponentVp} Victory Points, ${presentedOpponentRp} Resource Points, and ${opponentSchoolDensityState.available} School Density available; ${opponentSchoolDensityState.committed} of ${opponentSchoolDensityState.capacity} committed`}
+                  >
+                    {opponentSetupConcealed ? (
+                      <>
+                        <span className="seapals-reef-score-card is-sd" title="Opponent setup values hidden until Round 1 begins."><small>SD</small><strong aria-hidden="true">?</strong></span>
+                        <span className="seapals-reef-score-card is-vp" title="Opponent setup values hidden until Round 1 begins."><small>VP</small><strong aria-hidden="true">?</strong></span>
+                        <span className="seapals-reef-score-card is-rp" title="Opponent setup values hidden until Round 1 begins."><small>RP</small><strong aria-hidden="true">?</strong></span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="seapals-reef-score-card is-sd" data-school-density-owner="opponent" title={`${opponentSchoolDensityState.available} School Density available; ${opponentSchoolDensityState.committed} of ${opponentSchoolDensityState.capacity} committed`}><small>SD</small><strong>{opponentSchoolDensityState.available}</strong></span>
+                        <AnimatedVpBadge
+                          value={opponentVp}
+                          owner="opponent"
+                          label={opponentHudLabel}
+                          reducedMotion={accessibilityReducedMotion}
+                        />
+                        <span key={`opponent-rp-${compactRpPulseOwner === "opponent" ? compactRpPulseVersion : 0}`} data-rp-bank-target="opponent" className={`seapals-reef-score-card is-rp${compactRpPulseOwner === "opponent" ? " is-collecting" : ""}`}><small>RP</small><strong>{presentedOpponentRp}</strong></span>
+                      </>
+                    )}
                   </div>
                 ) : null}
                 {previewExperience && mobileHandDockVisible ? (
@@ -19809,56 +20182,58 @@ export default function Simulator({
                   </div>
                   <div className="absolute inset-0" style={{ transform: `translate(${opponentEcosystemOffset.x}px, ${opponentEcosystemOffset.y}px) scale(${opponentEcosystemZoom})`, transformOrigin: "center center" }}>
                     <div className="seapals-opponent-ecosystem-content absolute inset-0" data-opponent-orientation={previewExperience ? "inverted" : "standard"}>
-                      {opponent.habitats.length ? (
-                        <div className="seapals-opponent-habitats absolute left-4 top-4 z-30 flex max-w-[30%] flex-wrap gap-2">
-                          {opponent.habitatInstances.map((habitatInstance) => {
-                            const cardId = habitatInstance.cardId;
-                            const card = cardsById[cardId];
-                            const key = `opponent-habitat-${habitatInstance.instanceId}`;
-                            const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
-                            return (
-                              <button key={habitatInstance.instanceId} type="button" data-card-id={cardId} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId, foundation: true, zone: "habitat", currentHealth: habitatInstance.currentHealth, maxHealth: habitatInstance.maxHealth })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card relative w-[120px] cursor-grab rounded-xl text-center active:cursor-grabbing">
-                                <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
-                                <img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-xl bg-white object-contain shadow-lg" />
-                                <span className="block truncate text-[9px] font-bold text-amber-950">{card?.name}</span>
-                                {habitatInstance.maxHealth ? <span className="block text-[8px] font-black text-rose-700">{habitatInstance.currentHealth}/{habitatInstance.maxHealth} HP</span> : null}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : null}
-                      {(opponent.reefCreatures ?? []).length ? (
-                        <div className="seapals-opponent-open-water absolute left-1/2 top-4 z-30 flex max-w-[34%] -translate-x-1/2 flex-wrap justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50/95 p-2 shadow-lg">
-                          {opponent.reefCreatures.map((cardId, index) => {
-                            const card = cardsById[cardId];
-                            const targetSlotId = getOpponentReefSlotId(index);
-                            const attackTarget = attackContext?.targets.find((target) => target.coralId === "__reef__" && target.slotId === targetSlotId);
-                            const isTarget = Boolean(attackTarget);
-                            const key = `opponent-${targetSlotId}`;
-                            const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
-                            return (
-                              <button
-                                key={opponent.reefCreatureInstances?.[index]?.instanceId ?? `${cardId}-${index}`}
-                                type="button"
-                                data-card-id={cardId}
-                                data-card-instance-id={opponent.reefCreatureInstances?.[index]?.instanceId}
-                                data-attack-target={isTarget ? "true" : undefined}
-                                data-attack-target-instance={attackTarget?.instanceId}
-                                data-tutorial-target={isTarget ? "opponent-board" : undefined}
-                                aria-label={isTarget ? `Attack ${card?.name}` : `Inspect ${card?.name}`}
-                                onPointerDown={(event) => handleFloatingCardPointerDown(key, event)}
-                                onPointerMove={handleFloatingCardPointerMove}
-                                onPointerUp={handleFloatingCardPointerUp}
-                                onClick={() => isTarget ? resolvePlayerAttack("__reef__", targetSlotId) : inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key })}
-                                style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
-                                className={`seapals-in-play-card relative w-[120px] cursor-grab rounded-lg text-center active:cursor-grabbing ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}
-                              >
-                                <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
-                                <img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-lg bg-white object-contain" />
-                                <span className="block truncate text-[9px] font-bold text-violet-950">{card?.name}</span>
-                              </button>
-                            );
-                          })}
+                      {opponent.habitats.length || (opponent.reefCreatures ?? []).length ? (
+                        <div className="seapals-opponent-floating-row pointer-events-none absolute inset-x-0 top-4 z-30 flex flex-wrap items-start justify-center gap-2">
+                          {opponent.habitats.length ? (
+                            <div className="seapals-opponent-habitats contents">
+                              {opponent.habitatInstances.map((habitatInstance) => {
+                                const cardId = habitatInstance.cardId;
+                                const card = cardsById[cardId];
+                                const key = `opponent-habitat-${habitatInstance.instanceId}`;
+                                const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
+                                return (
+                                  <button key={habitatInstance.instanceId} type="button" data-card-id={cardId} data-card-instance-id={`habitat:${habitatInstance.instanceId}`} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId, foundation: true, zone: "habitat", currentHealth: habitatInstance.currentHealth, maxHealth: habitatInstance.maxHealth })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card pointer-events-auto relative h-[150px] w-[120px] cursor-grab rounded-xl text-center active:cursor-grabbing">
+                                    <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
+                                    <img src={card?.image} alt={card?.name} className="h-full w-full rounded-xl object-contain shadow-lg" />
+                                    {habitatInstance.maxHealth ? <span className="pointer-events-none absolute inset-x-1 bottom-1 rounded-full bg-slate-950/85 px-1 py-0.5 text-[8px] font-black text-rose-100 shadow">{habitatInstance.currentHealth}/{habitatInstance.maxHealth} HP</span> : null}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : null}
+                          {(opponent.reefCreatures ?? []).length ? (
+                            <div className="seapals-opponent-open-water contents">
+                              {opponent.reefCreatures.map((cardId, index) => {
+                                const card = cardsById[cardId];
+                                const targetSlotId = getOpponentReefSlotId(index);
+                                const attackTarget = attackContext?.targets.find((target) => target.coralId === "__reef__" && target.slotId === targetSlotId);
+                                const isTarget = Boolean(attackTarget) && !boardFaceoffActive;
+                                const key = `opponent-${targetSlotId}`;
+                                const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
+                                return (
+                                  <button
+                                    key={opponent.reefCreatureInstances?.[index]?.instanceId ?? `${cardId}-${index}`}
+                                    type="button"
+                                    data-card-id={cardId}
+                                    data-card-instance-id={opponent.reefCreatureInstances?.[index]?.instanceId}
+                                    data-attack-target={isTarget ? "true" : undefined}
+                                    data-attack-target-instance={attackTarget?.instanceId}
+                                    data-tutorial-target={isTarget ? "opponent-board" : undefined}
+                                    aria-label={isTarget ? `Attack ${card?.name}` : `Inspect ${card?.name}`}
+                                    onPointerDown={(event) => handleFloatingCardPointerDown(key, event)}
+                                    onPointerMove={handleFloatingCardPointerMove}
+                                    onPointerUp={handleFloatingCardPointerUp}
+                                    onClick={() => isTarget ? resolvePlayerAttack("__reef__", targetSlotId) : inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key })}
+                                    style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+                                    className={`seapals-in-play-card pointer-events-auto relative h-[150px] w-[120px] cursor-grab rounded-lg text-center active:cursor-grabbing ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}
+                                  >
+                                    <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
+                                    <img src={card?.image} alt={card?.name} className="h-full w-full rounded-lg object-contain" />
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : null}
                         </div>
                       ) : null}
                       {(opponent.orphanCreatures ?? []).length ? (
@@ -19868,7 +20243,7 @@ export default function Simulator({
                             const card = cardsById[entry.cardId];
                             const targetSlotId = getOpponentOrphanSlotId(index);
                             const attackTarget = attackContext?.targets.find((target) => target.coralId === "__orphan__" && target.slotId === targetSlotId);
-                            const isTarget = Boolean(attackTarget);
+                            const isTarget = Boolean(attackTarget) && !boardFaceoffActive;
                             return (
                               <div key={entry.instanceId ?? `${entry.cardId}-${index}`} className="rounded-lg bg-orange-100/90 p-1 text-center">
                                 <button type="button" data-card-id={entry.cardId} data-card-instance-id={entry.instanceId} data-attack-target={isTarget ? "true" : undefined} data-attack-target-instance={attackTarget?.instanceId} data-tutorial-target={isTarget ? "opponent-board" : undefined} aria-label={isTarget ? `Attack ${card?.name}` : `Inspect ${card?.name}`} onPointerDown={(event) => event.stopPropagation()} onClick={() => isTarget ? resolvePlayerAttack("__orphan__", targetSlotId) : setInspectedCard({ owner: "opponent", cardId: entry.cardId, coralId: null, slotId: `opponent-${targetSlotId}`, orphanIndex: index })} className={`seapals-in-play-card relative w-14 rounded-lg text-center ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}>
@@ -19883,9 +20258,9 @@ export default function Simulator({
                                       const hostedCard = cardsById[hostedCardId];
                                       const hostedSlotId = getOrphanHostedTargetSlotId(entry.instanceId ?? `legacy-${index}`, hostedIndex);
                                       const hostedAttackTarget = attackContext?.targets.find((target) => target.coralId === "__orphan__" && target.slotId === hostedSlotId);
-                                      const hostedIsTarget = Boolean(hostedAttackTarget);
+                                      const hostedIsTarget = Boolean(hostedAttackTarget) && !boardFaceoffActive;
                                       return (
-                                        <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${entry.instanceId}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedSlotId}`} data-attack-target={hostedIsTarget ? "true" : undefined} data-attack-target-instance={hostedAttackTarget?.instanceId} data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} aria-label={hostedIsTarget ? `Attack ${hostedCard?.name}` : `Inspect ${hostedCard?.name}`} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack("__orphan__", hostedSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: null, slotId: `opponent-${hostedSlotId}`, orphanIndex: index, hostedIndex })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded ring-4 ring-emerald-400" : "rounded"}`} title={`Hosted by ${card?.name}`}>
+                                        <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${entry.instanceId}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedSlotId}`} data-combat-anchor-ids={`${hostedSlotId} hosted:${hostedSlotId}`} data-attack-target={hostedIsTarget ? "true" : undefined} data-attack-target-instance={hostedAttackTarget?.instanceId} data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} aria-label={hostedIsTarget ? `Attack ${hostedCard?.name}` : `Inspect ${hostedCard?.name}`} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack("__orphan__", hostedSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: null, slotId: `opponent-${hostedSlotId}`, orphanIndex: index, hostedIndex })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded ring-4 ring-emerald-400" : "rounded"}`} title={`Hosted by ${card?.name}`}>
                                           <InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} />
                                           <img src={hostedCard?.image} alt={hostedCard?.name} className="h-12 w-9 rounded bg-white object-contain" />
                                         </button>
@@ -19903,26 +20278,38 @@ export default function Simulator({
                         const densityBucket = opponentSchoolDensityState.byFoundationId[coral.id] ?? null;
                         const anchorPositions = getOpponentSlotPositions(coral.slots.length, previewExperience);
                         const foundationAttackTarget = attackContext?.targets.find((target) => target.coralId === coral.id && target.slotId === "__foundation__");
-                        const isFoundationTarget = Boolean(foundationAttackTarget);
+                        const isFoundationTarget = Boolean(foundationAttackTarget) && !boardFaceoffActive;
                         const gridOffset = getOpponentCoralGridOffset(coralIndex, opponentCorals.length, previewExperience);
                         const hasFloatingOpponentCards = opponent.habitats.length || opponent.reefCreatures.length || (opponent.orphanCreatures?.length ?? 0);
                         const opponentFloatingOffset = hasFloatingOpponentCards ? 360 : 0;
                         return (
                           <div key={coral.id} className="absolute h-[210px] w-[180px] -translate-x-1/2 -translate-y-1/2" style={{ left: `calc(50% + ${gridOffset.x}px)`, top: `calc(50% + ${gridOffset.y + opponentFloatingOffset}px)` }}>
-                            <button type="button" data-card-id={coral.cardId} data-card-instance-id={`foundation:${coral.id}`} data-rp-source-key={`foundation:${coral.id}`} data-attack-target={isFoundationTarget ? "true" : undefined} data-attack-target-instance={foundationAttackTarget?.instanceId} aria-label={isFoundationTarget ? `Attack ${card?.name}. ${coral.health} of ${coral.maxHealth} HP.` : `Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[200px] w-[160px] rounded-[1.25rem] border-4 bg-white/95 p-2 shadow-2xl ${isFoundationTarget ? "animate-pulse border-emerald-400 ring-4 ring-emerald-300" : "border-rose-300"}`}>
-                              <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
-                              <img src={card?.image} alt={card?.name} className="h-[160px] w-full rounded-xl object-contain" />
-                              <span className="absolute inset-x-2 bottom-1">
-                                <FoundationVitals foundation={coral} densityBucket={densityBucket} owner="opponent" compact />
-                              </span>
-                              {(coral.statuses ?? []).length ? <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-1 text-[9px] font-black uppercase text-slate-950 shadow-lg">{coral.statuses.map((status) => status.type).join(", ")}</div> : null}
-                              {coral.rpPenaltyNextTurn ? <div className="mt-1 rounded-full bg-cyan-100 px-2 py-0.5 text-center text-[9px] font-black text-cyan-800">−{coral.rpPenaltyNextTurn} RP next collection</div> : null}
-                            </button>
-                            {coral.slots.map((slot, slotIndex) => {
+                            {opponentSetupConcealed ? (
+                              <div
+                                data-opponent-setup-concealed
+                                role="img"
+                                aria-label="Face-down opponent setup card. Hidden until Round 1 begins."
+                                className="relative z-20 mx-auto h-[150px] w-[120px] overflow-hidden rounded-[1.25rem] border-2 border-amber-200/75 bg-slate-950 shadow-2xl"
+                              >
+                                <img src="/images/brand/SeaPalsTCGLogoWhite.svg" alt="" aria-hidden="true" className="h-full w-full rounded-[1.05rem] object-contain" />
+                                <span aria-hidden="true" className="pointer-events-none absolute inset-x-2 bottom-2 rounded-full border border-white/15 bg-slate-950/85 px-1.5 py-1 text-center text-[7px] font-black uppercase tracking-[.14em] text-cyan-100">Reveals in Round 1</span>
+                              </div>
+                            ) : (
+                              <button type="button" data-card-id={coral.cardId} data-card-instance-id={`foundation:${coral.id}`} data-rp-source-key={`foundation:${coral.id}`} data-attack-target={isFoundationTarget ? "true" : undefined} data-attack-target-instance={foundationAttackTarget?.instanceId} aria-label={isFoundationTarget ? `Attack ${card?.name}. ${coral.health} of ${coral.maxHealth} HP.` : `Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[150px] w-[120px] rounded-[1.25rem] shadow-2xl ${isFoundationTarget ? "animate-pulse ring-4 ring-emerald-300" : ""}`}>
+                                <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
+                                <img src={card?.image} alt={card?.name} className="h-full w-full rounded-xl object-contain" />
+                                <span className="pointer-events-none absolute inset-x-1 bottom-1">
+                                  <FoundationVitals foundation={coral} densityBucket={densityBucket} owner="opponent" compact />
+                                </span>
+                                {(coral.statuses ?? []).length ? <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-1 text-[9px] font-black uppercase text-slate-950 shadow-lg">{coral.statuses.map((status) => status.type).join(", ")}</div> : null}
+                                {coral.rpPenaltyNextTurn ? <div className="mt-1 rounded-full bg-cyan-100 px-2 py-0.5 text-center text-[9px] font-black text-cyan-800">−{coral.rpPenaltyNextTurn} RP next collection</div> : null}
+                              </button>
+                            )}
+                            {opponentSetupConcealed ? null : coral.slots.map((slot, slotIndex) => {
                               const position = getOpponentSlotPosition(slot.position, previewExperience) ?? anchorPositions[slotIndex];
                               const slotCard = cardsById[slot.cardId];
                               const attackTarget = attackContext?.targets.find((target) => target.coralId === coral.id && target.slotId === slot.id);
-                              const isTarget = Boolean(attackTarget);
+                              const isTarget = Boolean(attackTarget) && !boardFaceoffActive;
                               return (
                                 <div key={slot.id} className="absolute inset-0">
                                   <div className="pointer-events-none absolute bg-slate-400 opacity-70" style={getSlotConnectorStyle(position)} />
@@ -19951,7 +20338,7 @@ export default function Simulator({
                                   >
                                     {slotCard ? <><InPlayHoverLabel card={slotCard} zoom={opponentEcosystemZoom} /><img src={slotCard.image} alt={slotCard.name} className="h-full w-full rounded-[1.15rem] object-contain" /></> : <><EmptySlotHoverLabel slot={slot} zoom={opponentEcosystemZoom} position={position} /><img src={getSlotIconPath(slot)} alt={`${getCreatureSlotLabel(slot)} empty slot`} className="h-28 w-28 max-w-none object-contain opacity-90" /></>}
                                   </button>
-                                  {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute z-30 flex gap-1 rounded-lg border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg" style={{ left: `calc(${position.left} ${previewExperience ? "-" : "+"} 48px)`, top: `calc(${position.top} ${previewExperience ? "+" : "-"} 68px)` }}>{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); const hostedAttackTarget = attackContext?.targets.find((target) => target.coralId === coral.id && target.slotId === hostedTargetSlotId); const hostedIsTarget = Boolean(hostedAttackTarget); return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${slot.id}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedTargetSlotId}`} data-attack-target={hostedIsTarget ? "true" : undefined} data-attack-target-instance={hostedAttackTarget?.instanceId} data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} aria-label={hostedIsTarget ? `Attack ${hostedCard?.name}` : `Inspect ${hostedCard?.name}`} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack(coral.id, hostedTargetSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: coral.id, slotId: hostedTargetSlotId, hostedBySlotId: slot.id })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded-md ring-4 ring-emerald-400" : "rounded-md"}`} title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-16 w-11 rounded-md bg-white object-contain" /></button>; })}</div> : null}
+                                  {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute z-30 flex gap-1 rounded-lg border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg" style={{ left: `calc(${position.left} ${previewExperience ? "-" : "+"} 48px)`, top: `calc(${position.top} ${previewExperience ? "+" : "-"} 68px)` }}>{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); const hostedAttackTarget = attackContext?.targets.find((target) => target.coralId === coral.id && target.slotId === hostedTargetSlotId); const hostedIsTarget = Boolean(hostedAttackTarget) && !boardFaceoffActive; return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${slot.id}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedTargetSlotId}`} data-combat-anchor-ids={`${hostedTargetSlotId} hosted:${hostedTargetSlotId}`} data-attack-target={hostedIsTarget ? "true" : undefined} data-attack-target-instance={hostedAttackTarget?.instanceId} data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} aria-label={hostedIsTarget ? `Attack ${hostedCard?.name}` : `Inspect ${hostedCard?.name}`} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack(coral.id, hostedTargetSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: coral.id, slotId: hostedTargetSlotId, hostedBySlotId: slot.id })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded-md ring-4 ring-emerald-400" : "rounded-md"}`} title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-16 w-11 rounded-md bg-white object-contain" /></button>; })}</div> : null}
                                 </div>
                               );
                             })}
@@ -20033,7 +20420,14 @@ export default function Simulator({
                 {previewExperience ? (
                   <div className="seapals-reef-score seapals-reef-score-player" data-tutorial-coach-anchor="player-board-tab" aria-label={`Your Reef: ${playerVp} Victory Points, ${presentedPlayerRp} Resource Points, and ${playerSchoolDensityState.available} School Density available; ${playerSchoolDensityState.committed} of ${playerSchoolDensityState.capacity} committed`}>
                     <span className="seapals-reef-score-card is-sd" data-school-density-owner="player" title={`${playerSchoolDensityState.available} School Density available; ${playerSchoolDensityState.committed} of ${playerSchoolDensityState.capacity} committed`}><small>SD</small><strong>{playerSchoolDensityState.available}</strong></span>
-                    <span className={`seapals-reef-score-card is-vp${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score"><small>VP</small><strong>{playerVp}</strong></span>
+                    <AnimatedVpBadge
+                      value={playerVp}
+                      owner="player"
+                      label="Your Reef"
+                      reducedMotion={accessibilityReducedMotion}
+                      className={tutorialTargetClass("vp-score")}
+                      tutorialTarget="vp-score"
+                    />
                     <span key={`player-rp-${compactRpPulseOwner === "player" ? compactRpPulseVersion : 0}`} data-rp-bank-target="player" className={`seapals-reef-score-card is-rp${compactRpPulseOwner === "player" ? " is-collecting" : ""}${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><small>RP</small><strong>{presentedPlayerRp}</strong></span>
                   </div>
                 ) : null}
@@ -20082,6 +20476,14 @@ export default function Simulator({
                   onLostPointerCapture={(event) => handleBoardLostPointerCapture("player", event)}
                   style={{ touchAction: "none", overscrollBehavior: "contain", userSelect: "none" }}
                 >
+                  {previewExperience && ecosystemPerimeterFlash ? (
+                    <div
+                      key={ecosystemPerimeterFlash.id}
+                      className={`seapals-ecosystem-perimeter-flash is-${ecosystemPerimeterFlash.tone}`}
+                      data-ecosystem-perimeter-flash={ecosystemPerimeterFlash.tone}
+                      aria-hidden="true"
+                    />
+                  ) : null}
                   {!isPlacingCoral && !isUpgradingCoral ? (
                     <div className="seapals-board-camera-controls absolute right-2 top-1/2 z-40 flex -translate-y-1/2 flex-col overflow-hidden rounded-full border border-emerald-300/25 bg-slate-950/85 text-white shadow-xl backdrop-blur" aria-label="Your ecosystem zoom controls">
                       <button
@@ -20132,34 +20534,36 @@ export default function Simulator({
                         userSelect: "none",
                       }}
                     >
-                      {playerHabitats.length ? (
-                        <div className="seapals-player-habitats absolute left-6 top-6 z-30 flex max-w-[70%] gap-3">
-                          {playerHabitatInstances.map((habitatInstance, index) => {
-                            const cardId = habitatInstance.cardId;
-                            const habitat = cardsById[cardId];
-                            const key = `player-habitat-${habitatInstance.instanceId}`;
-                            const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
-                            return (
-                              <button key={habitatInstance.instanceId} type="button" onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card relative w-[120px] cursor-grab text-center active:cursor-grabbing">
-                                <InPlayHoverLabel card={habitat} zoom={ecosystemZoom} />
-                                <img src={habitat?.image} alt={habitat?.name} className="h-[150px] w-[120px] rounded-xl bg-white object-contain shadow-lg" />
-                                <span className="mt-1 block truncate text-[10px] font-bold text-amber-950">{habitat?.name}</span>
-                                {habitatInstance.maxHealth ? <span className="block text-[9px] font-black text-rose-700">{habitatInstance.currentHealth}/{habitatInstance.maxHealth} HP</span> : null}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : null}
-                      {playerReefCreatures.length ? (
-                        <div className="seapals-player-open-water absolute right-6 top-6 z-30 flex gap-3 rounded-2xl border border-violet-300 bg-violet-50/95 p-3 shadow-lg">
-                          <div className="absolute -top-3 right-3 rounded-full bg-violet-700 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-white">Open Water</div>
-                          {playerReefCreatures.map((cardId, index) => {
-                            const card = cardsById[cardId];
-                            const targetSlotId = getPlayerReefSlotId(index);
-                            const key = `player-${targetSlotId}`;
-                            const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
-                            return <button key={playerReefCreatureInstances[index]?.instanceId ?? `${cardId}-${index}`} type="button" data-card-id={cardId} data-card-instance-id={playerReefCreatureInstances[index]?.instanceId} data-tutorial-action-key={targetSlotId} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: targetSlotId })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card relative w-[120px] cursor-grab text-center active:cursor-grabbing${tutorialActionTargetClass(targetSlotId)}`}><InPlayHoverLabel card={card} zoom={ecosystemZoom} /><img src={card?.image} alt={card?.name} className="h-[150px] w-[120px] rounded-xl bg-white object-contain" /><span className="mt-1 block truncate text-[10px] font-bold text-violet-950">{card?.name}</span></button>;
-                          })}
+                      {playerHabitats.length || playerReefCreatures.length ? (
+                        <div className="seapals-player-floating-row pointer-events-none absolute inset-x-0 top-6 z-30 flex flex-wrap items-start justify-center gap-3">
+                          {playerHabitats.length ? (
+                            <div className="seapals-player-habitats contents">
+                              {playerHabitatInstances.map((habitatInstance, index) => {
+                                const cardId = habitatInstance.cardId;
+                                const habitat = cardsById[cardId];
+                                const key = `player-habitat-${habitatInstance.instanceId}`;
+                                const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
+                                return (
+                                  <button key={habitatInstance.instanceId} type="button" data-card-id={cardId} data-card-instance-id={`habitat:${habitatInstance.instanceId}`} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card pointer-events-auto relative h-[220px] w-[180px] cursor-grab rounded-[1.5rem] text-center active:cursor-grabbing">
+                                    <InPlayHoverLabel card={habitat} zoom={ecosystemZoom} />
+                                    <img src={habitat?.image} alt={habitat?.name} className="h-full w-full rounded-[1.5rem] object-contain shadow-lg" />
+                                    {habitatInstance.maxHealth ? <span className="pointer-events-none absolute inset-x-2 bottom-2 rounded-full bg-slate-950/85 px-2 py-1 text-[9px] font-black text-rose-100 shadow">{habitatInstance.currentHealth}/{habitatInstance.maxHealth} HP</span> : null}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : null}
+                          {playerReefCreatures.length ? (
+                            <div className="seapals-player-open-water contents">
+                              {playerReefCreatures.map((cardId, index) => {
+                                const card = cardsById[cardId];
+                                const targetSlotId = getPlayerReefSlotId(index);
+                                const key = `player-${targetSlotId}`;
+                                const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
+                                return <button key={playerReefCreatureInstances[index]?.instanceId ?? `${cardId}-${index}`} type="button" data-card-id={cardId} data-card-instance-id={playerReefCreatureInstances[index]?.instanceId} data-tutorial-action-key={targetSlotId} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: targetSlotId })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card pointer-events-auto relative h-[220px] w-[180px] cursor-grab rounded-[1.5rem] text-center active:cursor-grabbing${tutorialActionTargetClass(targetSlotId)}`}><InPlayHoverLabel card={card} zoom={ecosystemZoom} /><img src={card?.image} alt={card?.name} className="h-full w-full rounded-[1.5rem] object-contain" /></button>;
+                              })}
+                            </div>
+                          ) : null}
                         </div>
                       ) : null}
                       {playerOrphanCreatures.length ? (
@@ -20168,16 +20572,23 @@ export default function Simulator({
                           {playerOrphanCreatures.map((entry, index) => {
                             const card = cardsById[entry.cardId];
                             const hostedCount = (entry.hostedCardIds ?? []).filter(Boolean).length;
+                            const orphanInstanceId = entry.instanceId ?? `legacy-${index}`;
+                            const hostedCombatAnchorIds = (entry.hostedCardIds ?? []).flatMap((hostedCardId, hostedIndex) => {
+                              if (!hostedCardId) return [];
+                              const hostedSlotId = getOrphanHostedTargetSlotId(orphanInstanceId, hostedIndex);
+                              return [hostedSlotId, `hosted:${hostedSlotId}`];
+                            }).join(" ");
                             const targetSlotId = getPlayerOrphanSlotId(index);
                             const isForeignInvader = entry.invasiveOwner === "opponent";
                             const invaderAttackTarget = attackContext?.targets.find((target) => target.coralId === "__own_invader_orphan__" && target.instanceId === entry.instanceId);
-                            const isInvaderTarget = Boolean(invaderAttackTarget);
+                            const isInvaderTarget = Boolean(invaderAttackTarget) && !boardFaceoffActive;
                             return (
                               <button
                                 key={entry.instanceId ?? `${entry.cardId}-${index}`}
                                 type="button"
                                 data-card-id={entry.cardId}
                                 data-card-instance-id={entry.instanceId}
+                                data-combat-anchor-ids={hostedCombatAnchorIds || undefined}
                                 data-tutorial-action-key={!isForeignInvader ? targetSlotId : undefined}
                                 data-attack-target={isInvaderTarget ? "true" : undefined}
                                 data-attack-target-instance={invaderAttackTarget?.instanceId}
@@ -20212,8 +20623,6 @@ export default function Simulator({
                           <div
                             key={coral.id}
                             data-coral
-                            data-card-id={coral.cardId}
-                            data-card-instance-id={`foundation:${coral.id}`}
                             className="absolute -translate-x-1/2 -translate-y-1/2"
                             style={{ top: `${coral.y}%`, left: `${coral.x}%`, width: "240px", height: "280px" }}
                           >
@@ -20223,7 +20632,9 @@ export default function Simulator({
                                  data-hand-drop-coral-id={coral.id}
                                  data-hand-drop-foundation-id={coral.id}
                                  data-rp-source-key={`foundation:${coral.id}`}
-                                 data-hand-drop-valid={canUpgradeThisCoral ? "true" : undefined}
+                                  data-hand-drop-valid={canUpgradeThisCoral ? "true" : undefined}
+                                  data-card-id={coral.cardId}
+                                  data-card-instance-id={`foundation:${coral.id}`}
                                  data-tutorial-target={canUpgradeThisCoral
                                    ? "placement"
                                    : isLayoutFoundationTarget
@@ -20232,7 +20643,7 @@ export default function Simulator({
                                  role="button"
                                  tabIndex={0}
                                  aria-label={`Inspect ${coral.name}. ${coral.health ?? coral.maxHealth} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`}
-                                 className={`seapals-in-play-card relative z-20 mx-auto h-[260px] w-[220px] rounded-[1.5rem] bg-slate-100 shadow-xl${canUpgradeThisCoral ? " seapals-hand-drop-valid" : ""}${mobileHandDrag?.target?.kind === "coral" && mobileHandDrag.target.coralId === coral.id ? " is-hand-drag-target" : ""} ${
+                                  className={`seapals-in-play-card relative z-20 mx-auto h-[220px] w-[180px] rounded-[1.5rem] shadow-xl${canUpgradeThisCoral ? " seapals-hand-drop-valid" : ""}${mobileHandDrag?.target?.kind === "coral" && mobileHandDrag.target.coralId === coral.id ? " is-hand-drag-target" : ""} ${
                                    draggingCoralId === coral.id ? "ring-2 ring-emerald-300" : ""
                                  } ${
                                    canUpgradeThisCoral ? "cursor-pointer" : ""
@@ -20248,7 +20659,7 @@ export default function Simulator({
                                   src={coral.image}
                                   alt={coral.name}
                                   onDragStart={(event) => event.preventDefault()}
-                                  className={`absolute inset-x-0 top-4 mx-auto h-[220px] w-[180px] rounded-[1.5rem] object-contain ${
+                                  className={`absolute inset-0 h-full w-full rounded-[1.5rem] object-contain ${
                                     canUpgradeThisCoral
                                       ? "cursor-pointer"
                                       : draggingCoralId === coral.id
@@ -20256,8 +20667,8 @@ export default function Simulator({
                                         : "cursor-grab"
                                   }`}
                                 />
-                                <span className="absolute inset-x-4 bottom-3">
-                                  <FoundationVitals foundation={coral} densityBucket={densityBucket} />
+                                <span className="pointer-events-none absolute inset-x-2 bottom-2">
+                                  <FoundationVitals foundation={coral} densityBucket={densityBucket} compact />
                                 </span>
                                 {(coral.statuses ?? []).length ? <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-1 text-[9px] font-black uppercase text-slate-950 shadow-lg">{coral.statuses.map((status) => status.type).join(", ")}</div> : null}
                               </div>
@@ -20266,7 +20677,7 @@ export default function Simulator({
                                 const slotFilled = Boolean(slot.cardId);
                                 const slotCard = slotFilled ? cardsById[slot.cardId] : null;
                                 const invaderAttackTarget = attackContext?.targets.find((target) => target.coralId === "__own_invader__" && target.hostCoralId === coral.id && target.slotId === slot.id);
-                                const isInvaderTarget = Boolean(invaderAttackTarget);
+                                const isInvaderTarget = Boolean(invaderAttackTarget) && !boardFaceoffActive;
                                 const validHostTarget = Boolean(slotFilled && activePlacementCardId && canHostCardInSlot(slot, activePlacementCardId));
                                 const academyPlacementAllowed = !activePlacementCardId || isAcademyPlacementAllowed({
                                   route: scriptedFinishRoute,
@@ -20387,7 +20798,7 @@ export default function Simulator({
                                           <span className="sr-only">{slot.type}</span>
                                         </button>
                                       )}
-                                      {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute -right-12 top-2 z-30 flex flex-col gap-1 rounded-xl border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg">{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${slot.id}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedTargetSlotId}`} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); setInspectedCard({ owner: "player", cardId: hostedCardId, coralId: coral.id, slotId: `${slot.id}:hosted:${hostedIndex}`, hostedBySlotId: slot.id }); }} className="seapals-in-play-card relative rounded-lg ring-fuchsia-400 hover:ring-2" title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={ecosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-20 w-14 rounded-lg bg-white object-contain" /></button>; })}</div> : null}
+                                      {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute -right-12 top-2 z-30 flex flex-col gap-1 rounded-xl border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg">{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${slot.id}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedTargetSlotId}`} data-combat-anchor-ids={`${hostedTargetSlotId} hosted:${hostedTargetSlotId}`} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); setInspectedCard({ owner: "player", cardId: hostedCardId, coralId: coral.id, slotId: `${slot.id}:hosted:${hostedIndex}`, hostedBySlotId: slot.id }); }} className="seapals-in-play-card relative rounded-lg ring-fuchsia-400 hover:ring-2" title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={ecosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-20 w-14 rounded-lg bg-white object-contain" /></button>; })}</div> : null}
                                     </div>
                                   </div>
                                 );
@@ -20431,13 +20842,30 @@ export default function Simulator({
                 </div>
               </div>
               {previewExperience ? (
-                <BoardCombatDice
+                <AttackIntentLayer
+                  key={combatIntentPresentationKey ?? "inactive-combat-intent"}
                   active={combatBoardFaceoffActive}
+                  windup={!combatIntentReady}
+                  presentationKey={combatIntentPresentationKey}
+                  rootRef={mobileBoardStackRef}
+                  attackerInstanceId={eventOverlay?.attackerInstanceId}
+                  targetInstanceId={eventOverlay?.targetInstanceId}
+                  attackerBoardOwner={eventOverlay?.attackerBoardOwner}
+                  targetBoardOwner={eventOverlay?.targetBoardOwner}
+                  attackerName={eventOverlay?.attackerName ?? cardsById[eventOverlay?.sourceCardId]?.name}
+                  targetName={eventOverlay?.defenderName ?? cardsById[eventOverlay?.defenderCardId]?.name}
+                  reducedMotion={accessibilityReducedMotion}
+                  onWindupComplete={completeBoardAttackIntent}
+                />
+              ) : null}
+              {previewExperience ? (
+                <BoardCombatDice
+                  active={combatBoardFaceoffActive && combatIntentReady}
                   attackExpression={eventOverlay?.attackDice}
                   defenseExpression={eventOverlay?.type === "school-attack-ready" ? null : eventOverlay?.defenseDice}
                   preview={faceoffPreview}
-                  attackerOwner={eventOverlay?.combatResume?.attackerOwner ?? "player"}
-                  defenderOwner={eventOverlay?.combatResume?.defenderOwner ?? "opponent"}
+                  attackerOwner={eventOverlay?.attackerOwner ?? eventOverlay?.combatResume?.attackerOwner ?? "player"}
+                  defenderOwner={eventOverlay?.defenderOwner ?? eventOverlay?.combatResume?.defenderOwner ?? "opponent"}
                   locked={faceoffLocked}
                   onStop={stopBoardFaceoff}
                   reducedMotion={accessibilityReducedMotion}
@@ -20587,8 +21015,21 @@ export default function Simulator({
 
         <div className="seapals-hud-panel hidden min-h-0 overflow-y-auto rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-1 xl:flex xl:flex-col">
           <div className={`grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950/45${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score">
-            <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{playerVp}<span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensityState.committed}/{playerSchoolDensity} SD used{playerSchoolDensityState.overCapacity ? ` · ${playerSchoolDensityState.overCapacity} over capacity` : ` · ${playerSchoolDensityState.available} open`}</div></div>
-            <div className="p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white">{opponentVp}<span className="text-sm text-rose-300">/{victoryTarget} VP</span></div><div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensityState.committed}/{opponentSchoolDensity} SD used{opponentSchoolDensityState.overCapacity ? ` · ${opponentSchoolDensityState.overCapacity} over capacity` : ` · ${opponentSchoolDensityState.available} open`}</div></div>
+            <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white"><AnimatedVpBadge value={playerVp} owner="player-wide" label="Your Reef" reducedMotion={accessibilityReducedMotion} variant="inline" /><span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensityState.committed}/{playerSchoolDensity} SD used{playerSchoolDensityState.overCapacity ? ` · ${playerSchoolDensityState.overCapacity} over capacity` : ` · ${playerSchoolDensityState.available} open`}</div></div>
+            <div className="p-3 text-center" aria-label={opponentSetupConcealed ? "Opponent setup values hidden until Round 1 begins." : undefined}>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div>
+              {opponentSetupConcealed ? (
+                <>
+                  <div aria-hidden="true" className="mt-0.5 text-2xl font-black tabular-nums text-white">?<span className="text-sm text-rose-300"> VP</span></div>
+                  <div aria-hidden="true" className="text-xs text-rose-200/65">? RP · ? SD</div>
+                </>
+              ) : (
+                <>
+                  <div className="mt-0.5 text-2xl font-black tabular-nums text-white"><AnimatedVpBadge value={opponentVp} owner="opponent-wide" label={opponentHudLabel} reducedMotion={accessibilityReducedMotion} variant="inline" /><span className="text-sm text-rose-300">/{victoryTarget} VP</span></div>
+                  <div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensityState.committed}/{opponentSchoolDensity} SD used{opponentSchoolDensityState.overCapacity ? ` · ${opponentSchoolDensityState.overCapacity} over capacity` : ` · ${opponentSchoolDensityState.available} open`}</div>
+                </>
+              )}
+            </div>
           </div>
 
           <button type="button" disabled={!activeCondition} onClick={() => activeCondition && setEventOverlay({ type: "condition-detail", sourceCardId: activeCondition.id, title: activeCondition.name, message: activeCondition.text, success: true })} className={`mt-2 w-full rounded-xl border border-violet-300/20 bg-violet-400/10 p-3 text-left transition hover:border-violet-300/40 disabled:cursor-default${tutorialTargetClass("condition-panel")}`} data-tutorial-target="condition-panel">
