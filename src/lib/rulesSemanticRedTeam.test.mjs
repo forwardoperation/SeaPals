@@ -253,7 +253,7 @@ test("Finn survives a broad semantic red-team interrogation", (t) => {
   }
   add("Can a Reef Shark be played on a Clubfinger Stage 1 Coral?", {
     starts: "No",
-    includes: ["Reef Predator", "2 Reef Fish slots", "do not accept", "Reef Predator", "Reef Apex"],
+    includes: ["Reef Predator", "3 Reef Fish slots", "do not accept", "Reef Predator", "Reef Apex"],
     sourceIds: ["card:reef-shark", "card:clubfinger-coral-stage-1", "knowledge:habitat-and-class-matching-for-reef-fish-and-deep-slots"],
   });
 

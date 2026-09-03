@@ -132,7 +132,7 @@ export const coralCards = [
       Weakness.DISEASE,
     ],
     slots: [
-      slot(SlotType.FISH, 2),
+      slot(SlotType.FISH, 1),
       slot(SlotType.INVERTEBRATE, 2),
       slot(SlotType.PREDATOR, 1),
     ],
@@ -341,7 +341,11 @@ export const coralCards = [
       weight: "925 lbs",
     },
     weaknesses: [Weakness.DISEASE],
-    slots: [slot(SlotType.PREDATOR, 2), slot(SlotType.APEX, 1), slot(SlotType.INVERTEBRATE, 3)],
+    slots: [
+      slot(SlotType.PREDATOR, 2),
+      slot(SlotType.APEX, 2),
+      slot(SlotType.INVERTEBRATE, 3),
+    ],
     upgrade: noUpgrade,
     passives: [
       {
@@ -769,7 +773,10 @@ export const coralCards = [
       Weakness.STORM,
       Weakness.HIGH_TEMPERATURE,
     ],
-    slots: [slot(SlotType.FISH, 2)],
+    slots: [
+      slot(SlotType.FISH, 3),
+      slot(SlotType.INVERTEBRATE, 3),
+    ],
     upgrade: noUpgrade,
     passives: [photosynthesis(2)],
     onPlay: [],
