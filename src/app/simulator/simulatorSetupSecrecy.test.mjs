@@ -54,33 +54,38 @@ test("the scripted V2 tutorial opening toss cannot bypass setup secrecy", () => 
   );
 });
 
-test("the concealed rival foundation is an identity-free, non-interactive card back", () => {
-  const opponentFoundationBoard = sourceSection(
+test("V2 setup leaves the rival ecosystem completely blank until Round 1", () => {
+  const opponentEcosystem = sourceSection(
     simulatorSource,
-    "{opponentCorals.length ? opponentCorals.map((coral, coralIndex) => {",
-    ") : <div className=\"absolute inset-0 flex items-center justify-center\">",
+    '<div className="seapals-opponent-ecosystem-content',
+    "<BoardBubbleBursts",
   );
-  const concealedBranch = sourceSection(
-    opponentFoundationBoard,
-    "opponentSetupConcealed ? (",
-    ") : (",
-  );
-
-  assert.match(concealedBranch, /data-opponent-setup-concealed/);
-  assert.match(concealedBranch, /src=\{CARD_ART_FALLBACK\}|src=\"\/images\/brand\/SeaPalsTCGLogoWhite\.svg\"/);
-  assert.match(simulatorSource, /const CARD_ART_FALLBACK = \"\/images\/brand\/SeaPalsTCGLogoWhite\.svg\";/);
-  assert.match(concealedBranch, /aria-label=\"[^\"]*(?:face[- ]down|hidden)[^\"]*\"/i);
-  assert.doesNotMatch(concealedBranch, /<button|onClick=|setInspectedCard/);
-  assert.doesNotMatch(concealedBranch, /data-card-id|data-card-instance-id|data-rp-source-key|data-attack-target/);
-  assert.doesNotMatch(concealedBranch, /card\?*\.(?:image|name)|FoundationVitals/);
 
   assert.match(
-    opponentFoundationBoard,
-    /(?:opponentSetupConcealed\s*\?\s*null\s*:\s*|!opponentSetupConcealed\s*&&\s*)coral\.slots\.map/,
-    "slot count and slot types must not reveal which setup foundation is face down",
+    opponentEcosystem,
+    /\{opponentSetupConcealed \? null : \(\s*<>/,
+    "one setup guard should remove the entire rival in-play surface instead of substituting a card back",
   );
-  assert.match(opponentFoundationBoard, /data-card-id=\{coral\.cardId\}/);
-  assert.match(opponentFoundationBoard, /setInspectedCard\(\{ owner: "opponent"/);
+
+  const revealedSurface = sourceSection(
+    opponentEcosystem,
+    "{opponentSetupConcealed ? null : (\n                        <>",
+    "                        </>\n                      )}",
+  );
+
+  assert.match(revealedSurface, /opponent\.habitatInstances\.map/, "habitats should return after setup");
+  assert.match(revealedSurface, /opponent\.reefCreatures\.map/, "open-water creatures should return after setup");
+  assert.match(revealedSurface, /opponent\.orphanCreatures\.map/, "orphan creatures should return after setup");
+  assert.match(revealedSurface, /opponentCorals\.map/, "foundations should return after setup");
+  assert.match(revealedSurface, /coral\.slots\.map/, "foundation slots should return after setup");
+  assert.match(revealedSurface, /data-card-id=\{coral\.cardId\}/);
+  assert.match(revealedSurface, /setInspectedCard\(\{ owner: "opponent"/);
+
+  assert.doesNotMatch(
+    opponentEcosystem,
+    /data-opponent-setup-concealed|Face-down opponent setup card|Reveals in Round 1/,
+    "setup should show open water rather than a card-back or explanatory placeholder",
+  );
 });
 
 function assertConcealedOpponentScoreSurface(surfaceSource, surfaceName) {

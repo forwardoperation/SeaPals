@@ -20182,6 +20182,8 @@ export default function Simulator({
                   </div>
                   <div className="absolute inset-0" style={{ transform: `translate(${opponentEcosystemOffset.x}px, ${opponentEcosystemOffset.y}px) scale(${opponentEcosystemZoom})`, transformOrigin: "center center" }}>
                     <div className="seapals-opponent-ecosystem-content absolute inset-0" data-opponent-orientation={previewExperience ? "inverted" : "standard"}>
+                      {opponentSetupConcealed ? null : (
+                        <>
                       {opponent.habitats.length || (opponent.reefCreatures ?? []).length ? (
                         <div className="seapals-opponent-floating-row pointer-events-none absolute inset-x-0 top-4 z-30 flex flex-wrap items-start justify-center gap-2">
                           {opponent.habitats.length ? (
@@ -20284,28 +20286,16 @@ export default function Simulator({
                         const opponentFloatingOffset = hasFloatingOpponentCards ? 360 : 0;
                         return (
                           <div key={coral.id} className="absolute h-[210px] w-[180px] -translate-x-1/2 -translate-y-1/2" style={{ left: `calc(50% + ${gridOffset.x}px)`, top: `calc(50% + ${gridOffset.y + opponentFloatingOffset}px)` }}>
-                            {opponentSetupConcealed ? (
-                              <div
-                                data-opponent-setup-concealed
-                                role="img"
-                                aria-label="Face-down opponent setup card. Hidden until Round 1 begins."
-                                className="relative z-20 mx-auto h-[150px] w-[120px] overflow-hidden rounded-[1.25rem] border-2 border-amber-200/75 bg-slate-950 shadow-2xl"
-                              >
-                                <img src="/images/brand/SeaPalsTCGLogoWhite.svg" alt="" aria-hidden="true" className="h-full w-full rounded-[1.05rem] object-contain" />
-                                <span aria-hidden="true" className="pointer-events-none absolute inset-x-2 bottom-2 rounded-full border border-white/15 bg-slate-950/85 px-1.5 py-1 text-center text-[7px] font-black uppercase tracking-[.14em] text-cyan-100">Reveals in Round 1</span>
-                              </div>
-                            ) : (
-                              <button type="button" data-card-id={coral.cardId} data-card-instance-id={`foundation:${coral.id}`} data-rp-source-key={`foundation:${coral.id}`} data-attack-target={isFoundationTarget ? "true" : undefined} data-attack-target-instance={foundationAttackTarget?.instanceId} aria-label={isFoundationTarget ? `Attack ${card?.name}. ${coral.health} of ${coral.maxHealth} HP.` : `Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[150px] w-[120px] rounded-[1.25rem] shadow-2xl ${isFoundationTarget ? "animate-pulse ring-4 ring-emerald-300" : ""}`}>
-                                <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
-                                <img src={card?.image} alt={card?.name} className="h-full w-full rounded-xl object-contain" />
-                                <span className="pointer-events-none absolute inset-x-1 bottom-1">
-                                  <FoundationVitals foundation={coral} densityBucket={densityBucket} owner="opponent" compact />
-                                </span>
-                                {(coral.statuses ?? []).length ? <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-1 text-[9px] font-black uppercase text-slate-950 shadow-lg">{coral.statuses.map((status) => status.type).join(", ")}</div> : null}
-                                {coral.rpPenaltyNextTurn ? <div className="mt-1 rounded-full bg-cyan-100 px-2 py-0.5 text-center text-[9px] font-black text-cyan-800">−{coral.rpPenaltyNextTurn} RP next collection</div> : null}
-                              </button>
-                            )}
-                            {opponentSetupConcealed ? null : coral.slots.map((slot, slotIndex) => {
+                            <button type="button" data-card-id={coral.cardId} data-card-instance-id={`foundation:${coral.id}`} data-rp-source-key={`foundation:${coral.id}`} data-attack-target={isFoundationTarget ? "true" : undefined} data-attack-target-instance={foundationAttackTarget?.instanceId} aria-label={isFoundationTarget ? `Attack ${card?.name}. ${coral.health} of ${coral.maxHealth} HP.` : `Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[150px] w-[120px] rounded-[1.25rem] shadow-2xl ${isFoundationTarget ? "animate-pulse ring-4 ring-emerald-300" : ""}`}>
+                              <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
+                              <img src={card?.image} alt={card?.name} className="h-full w-full rounded-xl object-contain" />
+                              <span className="pointer-events-none absolute inset-x-1 bottom-1">
+                                <FoundationVitals foundation={coral} densityBucket={densityBucket} owner="opponent" compact />
+                              </span>
+                              {(coral.statuses ?? []).length ? <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-1 text-[9px] font-black uppercase text-slate-950 shadow-lg">{coral.statuses.map((status) => status.type).join(", ")}</div> : null}
+                              {coral.rpPenaltyNextTurn ? <div className="mt-1 rounded-full bg-cyan-100 px-2 py-0.5 text-center text-[9px] font-black text-cyan-800">−{coral.rpPenaltyNextTurn} RP next collection</div> : null}
+                            </button>
+                            {coral.slots.map((slot, slotIndex) => {
                               const position = getOpponentSlotPosition(slot.position, previewExperience) ?? anchorPositions[slotIndex];
                               const slotCard = cardsById[slot.cardId];
                               const attackTarget = attackContext?.targets.find((target) => target.coralId === coral.id && target.slotId === slot.id);
@@ -20345,6 +20335,8 @@ export default function Simulator({
                           </div>
                         );
                       }) : <div className="absolute inset-0 flex items-center justify-center"><div className="rounded-2xl border border-rose-200 bg-white/90 px-6 py-4 font-semibold text-rose-700">The opponent has no coral in play.</div></div>}
+                        </>
+                      )}
                     </div>
                   </div>
                   <BoardBubbleBursts
