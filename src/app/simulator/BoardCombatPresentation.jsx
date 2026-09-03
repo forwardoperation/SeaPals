@@ -85,6 +85,10 @@ export function BoardCombatDice({
   onStop,
   reducedMotion = false,
   tutorialClass = "",
+  mode = "combat",
+  prompt = null,
+  lockedPrompt = null,
+  ariaLabel = null,
 }) {
   const stopButtonRef = useRef(null);
   const previousFocusRef = useRef(null);
@@ -135,13 +139,14 @@ export function BoardCombatDice({
     player: [],
     opponent: [],
   };
+  const isEffectRoll = mode === "effect";
   diceByOwner[attackerOwner]?.push(
     <CombatDie
       key="attack"
       expression={attackExpression}
       value={preview?.attack}
       owner={attackerOwner}
-      purpose="attack"
+      purpose={isEffectRoll ? "effect" : "attack"}
       locked={locked}
     />,
   );
@@ -159,34 +164,41 @@ export function BoardCombatDice({
   }
 
   const lockedAnnouncement = locked && preview
-    ? `Rolls locked. Attack ${preview.attack}${defenseExpression ? `, defense ${preview.defense}` : ""}.`
+    ? isEffectRoll
+      ? `Roll locked at ${preview.attack}.`
+      : `Rolls locked. Attack ${preview.attack}${defenseExpression ? `, defense ${preview.defense}` : ""}.`
     : "";
-  const playerRollIntent = attackerOwner === "player"
-    ? "attack"
-    : defenderOwner === "player"
-      ? "defend"
-      : "resolve";
+  const playerRollIntent = isEffectRoll
+    ? "roll"
+    : attackerOwner === "player"
+      ? "attack"
+      : defenderOwner === "player"
+        ? "defend"
+        : "resolve";
   const rollPrompt = locked
-    ? "Resolving attack…"
-    : `Tap to ${playerRollIntent}`;
+    ? lockedPrompt ?? (isEffectRoll ? "Resolving roll…" : "Resolving attack…")
+    : prompt ?? `Tap to ${playerRollIntent}`;
   const rollControlLabel = locked
-    ? "Attack resolving"
-    : `${rollPrompt}. Stop the dice and resolve the attack.`;
+    ? isEffectRoll ? "Card effect roll resolving" : "Attack resolving"
+    : `${rollPrompt}. Stop the ${String(attackExpression ?? "die").toUpperCase()} and resolve ${isEffectRoll ? "the card effect" : "the attack"}.`;
 
   return (
     <div
       className={`seapals-combat-dice-layer${reducedMotion ? " is-reduced-motion" : ""}`}
       data-board-faceoff
       data-combat-dice-layer
+      data-effect-dice-layer={isEffectRoll ? "true" : undefined}
+      data-effect-roll-layer={isEffectRoll ? "true" : undefined}
       role="dialog"
       aria-modal="true"
-      aria-label="Attack roll off"
+      aria-label={ariaLabel ?? (isEffectRoll ? "Card effect die roll" : "Attack roll off")}
     >
       <button
         ref={stopButtonRef}
         type="button"
         className={`seapals-combat-roll-catcher${tutorialClass}`}
         data-stop-combat-roll
+        data-stop-effect-roll={isEffectRoll ? "true" : undefined}
         data-tutorial-target="faceoff-action"
         aria-label={rollControlLabel}
         disabled={!preview || locked}
@@ -199,8 +211,8 @@ export function BoardCombatDice({
         }}
       >
         <span className="sr-only">
-          Tap anywhere on the board to stop {String(attackExpression ?? "the attack die").toUpperCase()}
-          {defenseExpression ? ` and ${String(defenseExpression).toUpperCase()}` : ""} and resolve the attack.
+          Tap anywhere on the board to stop {String(attackExpression ?? (isEffectRoll ? "the effect die" : "the attack die")).toUpperCase()}
+          {defenseExpression ? ` and ${String(defenseExpression).toUpperCase()}` : ""} and resolve {isEffectRoll ? "the card effect" : "the attack"}.
         </span>
       </button>
       <span

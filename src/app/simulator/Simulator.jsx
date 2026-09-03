@@ -26,6 +26,12 @@ import {
 } from "./cardCoinFlip.mjs";
 import { createCombatResolutionRandom, createCombatRollPacket } from "./combatRollPresentation.mjs";
 import {
+  EFFECT_ROLL_READY_TYPE,
+  EffectRollKind,
+  createEffectRollReadyEvent,
+  resolveEffectRollEvent,
+} from "./effectRollPresentation.mjs";
+import {
   CompactTurnStage,
   allocateCollectedRpSources,
   createCompactTurnStages,
@@ -41,7 +47,7 @@ import {
   updatePinchCamera,
   zoomCameraAtPoint,
 } from "./ecosystemCamera.mjs";
-import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveBlueCrabRecycle, resolveConditionalDiceDamage, resolveOpposedRoll, rollDie } from "./gameRules.mjs";
+import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveBlueCrabRecycle, resolveOpposedRoll, rollDie } from "./gameRules.mjs";
 import { createHabitatInstance, evaluateHabitatComposition, getHabitatRequirementError, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
 import { createHandLimitChoice, resolveHandLimitChoice, selectAutomatedHandLimitDiscards } from "./handLimitRules.mjs";
 import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstance, getOceanicApexSacrificeChoices, getPersonalDeckType, getRequiredOceanicPredatorCount, getSpecialPlacementHostTags, moveSlottedCreatureBetweenFoundations, placeCardInSpecialHost, removeCreatureInstances, resolveDestructionRecoveryWaves } from "./zoneRules.mjs";
@@ -1639,24 +1645,34 @@ function createScriptedTutorialOpponentCorals(tableau = []) {
 }
 
 function getOnPlayCoralDamage(card, controllerCardIds = []) {
-  const visitEffects = (effects = [], allowConditionalDice = true, inferredCoralTarget = false) => effects.reduce((total, effect) => {
+  const result = { found: false, flatAmount: 0, dice: null, multiplier: 1 };
+  const visitEffects = (effects = [], allowConditionalDice = true, inferredCoralTarget = false) => effects.forEach((effect) => {
     const targetsCoral = effect.type === EffectType.DAMAGE && (effect.target?.kind === CardKind.CORAL || inferredCoralTarget);
-    let amount = typeof effect.amount === "number" ? effect.amount : Number(effect.amount?.value ?? 0);
-    if (effect.amount?.type === "dice") {
-      amount = resolveConditionalDiceDamage({ dice: effect.amount.dice, multiplier: effect.amount.multiplier, fallbackAmount: effect.amount.fallbackAmount, conditionMet: allowConditionalDice }).damage;
+    if (targetsCoral) {
+      result.found = true;
+      if (effect.amount?.type === "dice" && allowConditionalDice && !result.dice) {
+        result.dice = effect.amount.dice;
+        result.multiplier = Math.max(0, Number(effect.amount.multiplier ?? 1));
+      } else if (effect.amount?.type === "dice") {
+        result.flatAmount += Math.max(0, Number(effect.amount.fallbackAmount ?? 0));
+      } else {
+        result.flatAmount += Math.max(0, typeof effect.amount === "number" ? effect.amount : Number(effect.amount?.value ?? 0));
+      }
     }
-    return total + (targetsCoral ? amount : 0) + visitEffects(effect.effects, allowConditionalDice, inferredCoralTarget) + visitEffects(effect.then ? [effect.then] : [], allowConditionalDice, inferredCoralTarget);
-  }, 0);
-  return (card?.onPlay ?? []).reduce((total, action) => {
+    visitEffects(effect.effects, allowConditionalDice, inferredCoralTarget);
+    visitEffects(effect.then ? [effect.then] : [], allowConditionalDice, inferredCoralTarget);
+  });
+  (card?.onPlay ?? []).forEach((action) => {
     const diceCondition = (action.conditionalModifiers ?? []).find((modifier) => modifier.modifier?.type === "useDiceDamage")?.condition;
     const conditionMet = !diceCondition?.cardId || controllerCardIds.includes(diceCondition.cardId);
-    return total + visitEffects(action.effects, conditionMet, /damage[^.]*coral/i.test(action.text ?? ""));
-  }, 0);
+    visitEffects(action.effects, conditionMet, /damage[^.]*coral/i.test(action.text ?? ""));
+  });
+  return result.found ? result : null;
 }
 
 function getOnPlayFoundationDamage(card, controllerCardIds = []) {
   const coralDamage = getOnPlayCoralDamage(card, controllerCardIds);
-  if (coralDamage) return { amount: coralDamage, targetType: "coral", actionName: getOnPlayAbilityName(card) };
+  if (coralDamage) return { amount: coralDamage.flatAmount, dice: coralDamage.dice, multiplier: coralDamage.multiplier, targetType: "coral", actionName: getOnPlayAbilityName(card) };
   for (const action of card?.onPlay ?? []) {
     const legacyEffect = parseLegacyUtilityText(typeof action === "string" ? action : action?.text);
     if (legacyEffect?.type === "damageFoundation") {
@@ -1666,13 +1682,20 @@ function getOnPlayFoundationDamage(card, controllerCardIds = []) {
   return null;
 }
 
+function describeFoundationDamageChoice(effect) {
+  if (!effect?.dice) return `${effect?.amount ?? 0} damage`;
+  const flatAmount = Number(effect.amount ?? 0);
+  const rolledDamage = `${String(effect.dice).toUpperCase()}${Number(effect.multiplier ?? 1) === 1 ? "" : ` × ${Number(effect.multiplier)}`}`;
+  return `${rolledDamage}${flatAmount ? ` + ${flatAmount}` : ""} damage after you roll`;
+}
+
 function getOnPlayCoralHeal(card) {
   for (const action of card?.onPlay ?? []) {
     for (const effect of action.effects ?? []) {
       if ((effect.type === "heal" || effect.type === EffectType.MODIFY_HEALTH) && effect.target?.kind === CardKind.CORAL && effect.target?.controller === "you") {
-        const roll = effect.amount?.type === "dice" ? rollDie(effect.amount.dice) : null;
-        const amount = roll ? roll.total * Number(effect.amount.multiplier ?? 1) : Number(effect.amount?.value ?? effect.amount ?? 0);
-        return { amount, actionName: action.name ?? "Coral Heal", roll: roll?.total ?? null };
+        const dice = effect.amount?.type === "dice" ? effect.amount.dice : null;
+        const amount = dice ? 0 : Number(effect.amount?.value ?? effect.amount ?? 0);
+        return { amount, dice, multiplier: Number(effect.amount?.multiplier ?? 1), actionName: action.name ?? "Coral Heal" };
       }
     }
   }
@@ -3672,6 +3695,11 @@ export default function Simulator({
   const [faceoffLocked, setFaceoffLocked] = useState(false);
   const faceoffRollCommitRef = useRef(false);
   const faceoffLockTimerRef = useRef(null);
+  const [effectRollRolling, setEffectRollRolling] = useState(false);
+  const [effectRollPreview, setEffectRollPreview] = useState(null);
+  const [effectRollLocked, setEffectRollLocked] = useState(false);
+  const effectRollCommitRef = useRef(false);
+  const effectRollLockTimerRef = useRef(null);
   const opponentCombatCheckpointIdRef = useRef(0);
   const [log, setLog] = useState([
     `New ${initialPlayerDeckName} game started. Setup: play a base Coral or Creature School using your 3 RP.`,
@@ -5878,15 +5906,15 @@ export default function Simulator({
     if (["setup", "opponent", "transition"].includes(gamePhase) || opponentThinking || eventOverlay?.opponentSequence || pendingEvents.some((event) => event.opponentSequence)) return;
     if (eventOverlay?.type === "choose-regenerate" || pendingEvents.some((event) => event.type === "choose-regenerate")) return;
     const eventRequiresResolution = String(eventOverlay?.type ?? "").startsWith("choose-")
-      || ["onplay-target-prompt", "faceoff-ready", "school-attack-ready"].includes(eventOverlay?.type);
-    if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || consumedAttackFlight || eventRequiresResolution) return;
+      || ["onplay-target-prompt", "faceoff-ready", "school-attack-ready", EFFECT_ROLL_READY_TYPE].includes(eventOverlay?.type);
+    if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || consumedAttackFlight || eventRequiresResolution || effectRollRolling) return;
     const result = determineVictoryResult(playerVp, opponentVp, victoryTarget);
     if (!result) return;
     setGameResult((current) => {
       if (current) return current;
       return result.message;
     });
-  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, consumedAttackFlight]);
+  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, effectRollRolling, consumedAttackFlight]);
 
   useEffect(() => {
     if (!isStoryMode || storyResultRecordedRef.current || !gameResult) return;
@@ -5953,6 +5981,39 @@ export default function Simulator({
     eventOverlay?.type,
     previewExperience,
   ]);
+
+  useEffect(() => {
+    if (!effectRollRolling || eventOverlay?.type !== EFFECT_ROLL_READY_TYPE) return undefined;
+    const updatePreview = () => {
+      const packet = createCombatRollPacket(eventOverlay.dice, null);
+      if (packet) setEffectRollPreview(packet);
+    };
+    updatePreview();
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    if (accessibilityReducedMotion || systemReducedMotion) return undefined;
+    const interval = setInterval(updatePreview, 90);
+    return () => clearInterval(interval);
+  }, [accessibilityReducedMotion, effectRollRolling, eventOverlay]);
+
+  useEffect(() => {
+    const effectRollReady = eventOverlay?.type === EFFECT_ROLL_READY_TYPE;
+    if (!effectRollReady) {
+      setEffectRollRolling(false);
+      setEffectRollPreview(null);
+      setEffectRollLocked(false);
+      return undefined;
+    }
+    effectRollCommitRef.current = false;
+    setEffectRollLocked(false);
+    setEffectRollPreview(null);
+    setEffectRollRolling(true);
+    return () => {
+      if (effectRollLockTimerRef.current !== null) {
+        window.clearTimeout(effectRollLockTimerRef.current);
+        effectRollLockTimerRef.current = null;
+      }
+    };
+  }, [eventOverlay?.dice, eventOverlay?.rollCheckpointId, eventOverlay?.type, previewExperience]);
 
   useEffect(() => {
     if (round === 0 || compactTurnPresentationEnabled) return;
@@ -6669,15 +6730,54 @@ export default function Simulator({
     return "";
   }
 
-  function damageOpponentFoundation(coralId, amount, sourceCard) {
+  function beginPlayerEffectRoll(options) {
+    const rollEvent = createEffectRollReadyEvent({
+      ...options,
+      rollCheckpointId: createStableInstanceId("effect-roll"),
+      owner: "player",
+      prompt: options?.prompt ?? "Tap to roll",
+    });
+    if (!rollEvent) return false;
+    setEventOverlay(rollEvent);
+    return true;
+  }
+
+  function beginPlayerFoundationDamageEffectRoll(coralId, effectContext = eventOverlay) {
+    if (!effectContext?.targetCoralIds?.includes(coralId)) return;
+    const sourceCard = cardsById[effectContext.sourceCardId];
+    if (!sourceCard) return;
+    if (!effectContext.dice) {
+      damageOpponentFoundation(coralId, effectContext.amount, sourceCard, effectContext);
+      return;
+    }
+    beginPlayerEffectRoll({
+      kind: EffectRollKind.FOUNDATION_DAMAGE,
+      dice: effectContext.dice,
+      sourceCardId: sourceCard.id,
+      sourceCardName: sourceCard.name,
+      actionName: effectContext.actionName ?? getOnPlayAbilityName(sourceCard),
+      multiplier: effectContext.multiplier,
+      flatAmount: effectContext.amount,
+      targetCoralId: coralId,
+      targetCoralIds: effectContext.targetCoralIds,
+      followupOnPlayAttack: effectContext.followupOnPlayAttack ?? null,
+      title: `${sourceCard.name} rolls ${String(effectContext.dice).toUpperCase()}`,
+      message: `Tap to stop the ${String(effectContext.dice).toUpperCase()} and resolve ${effectContext.actionName ?? getOnPlayAbilityName(sourceCard)}.`,
+    });
+  }
+
+  function damageOpponentFoundation(coralId, amount, sourceCard, effectContext = eventOverlay, rollOutcome = null) {
     if (!amount || !opponentCorals.length) return;
     const target = opponentCorals.find((coral) => coral.id === coralId);
     const targetCard = cardsById[target?.cardId];
     if (!target || (targetCard?.kind !== CardKind.CORAL && !isCreatureSchool(targetCard))) return;
     const sourceName = sourceCard?.name ?? "Card effect";
     const abilityName = getOnPlayAbilityName(sourceCard);
-    const followupOnPlayAttack = eventOverlay?.followupOnPlayAttack ?? null;
+    const followupOnPlayAttack = effectContext?.followupOnPlayAttack ?? null;
     const result = applyDamage(target.health, amount);
+    const resolutionLead = rollOutcome
+      ? `${sourceName} rolled ${rollOutcome.roll} on ${effectContext.dice} and dealt`
+      : `${sourceName} dealt`;
     let opponentStateAfterDamage = opponent;
     let message;
     if (result.destroyed) {
@@ -6702,14 +6802,14 @@ export default function Simulator({
             : ` Fragment triggered but found no ${cardsById[fragmentTrigger.targetCardId]?.name ?? "matching card"}.`
         : "";
       const collapseMessage = getContinuousHealthCollapseMessage(nextOpponentProjection.collateral);
-      message = `${sourceName} dealt ${result.appliedDamage} damage and destroyed the opponent's ${targetCard?.name ?? "foundation"}. The foundation was discarded; its creatures filled compatible slots or remained orphaned on the opponent's reef.${fragmentMessage}${collapseMessage ? ` ${collapseMessage}` : ""}`;
+      message = `${resolutionLead} ${result.appliedDamage} damage and destroyed the opponent's ${targetCard?.name ?? "foundation"}. The foundation was discarded; its creatures filled compatible slots or remained orphaned on the opponent's reef.${fragmentMessage}${collapseMessage ? ` ${collapseMessage}` : ""}`;
     } else {
       opponentStateAfterDamage = {
         ...opponent,
         corals: opponent.corals.map((coral) => coral.id === target.id ? { ...coral, health: result.remainingHealth } : coral),
       };
       setOpponent(opponentStateAfterDamage);
-      message = `${sourceName} dealt ${result.appliedDamage} damage to the opponent's ${cardsById[target.cardId]?.name}. ${result.remainingHealth}/${target.maxHealth} HP remains.`;
+      message = `${resolutionLead} ${result.appliedDamage} damage to the opponent's ${cardsById[target.cardId]?.name}. ${result.remainingHealth}/${target.maxHealth} HP remains.`;
     }
     pushLog(message);
     setEventOverlay({ type: "impact-result", sourceCardId: sourceCard?.id, title: `Player's ${sourceName} used ${abilityName}`, message, success: result.destroyed });
@@ -7584,8 +7684,11 @@ export default function Simulator({
         type: "choose-impact-target",
         sourceCardId: card.id,
         title: `Player's ${card.name} used ${onPlayDamage.actionName}`,
-        message: `Choose an opponent ${onPlayDamage.targetType === "creature-school" ? "Creature School" : "coral"} to receive ${onPlayDamage.amount} damage.`,
+        message: `Choose an opponent ${onPlayDamage.targetType === "creature-school" ? "Creature School" : "coral"} to receive ${describeFoundationDamageChoice(onPlayDamage)}.`,
         amount: onPlayDamage.amount,
+        dice: onPlayDamage.dice,
+        multiplier: onPlayDamage.multiplier,
+        actionName: onPlayDamage.actionName,
         targetCoralIds: onPlayDamageTargets.map((coral) => coral.id),
         followupOnPlayAttack: hasOnPlayAttack ? { coralId: coral.id, slotId, reefIndex: -1 } : null,
       });
@@ -7597,8 +7700,8 @@ export default function Simulator({
     } else if (onPlayHeal) {
       const candidates = playerCoralCards.filter((candidate) => Number(candidate.health ?? candidate.maxHealth) < Number(candidate.maxHealth)).map((candidate) => candidate.id);
       if (candidates.length) {
-        setSearchContext({ mode: "onplay-heal", sourceCardId: card.id, candidates, amount: onPlayHeal.amount, actionName: onPlayHeal.actionName, roll: onPlayHeal.roll });
-        setEventOverlay({ type: "choose-onplay-heal-target", sourceCardId: card.id, title: `Player's ${card.name} used ${onPlayHeal.actionName}`, message: `Choose one of your damaged corals to restore ${onPlayHeal.amount} HP${onPlayHeal.roll != null ? ` (rolled ${onPlayHeal.roll})` : ""}.` });
+        setSearchContext({ mode: "onplay-heal", sourceCardId: card.id, candidates, amount: onPlayHeal.amount, dice: onPlayHeal.dice, multiplier: onPlayHeal.multiplier, actionName: onPlayHeal.actionName });
+        setEventOverlay({ type: "choose-onplay-heal-target", sourceCardId: card.id, title: `Player's ${card.name} used ${onPlayHeal.actionName}`, message: onPlayHeal.dice ? `Choose one of your damaged corals, then roll ${String(onPlayHeal.dice).toUpperCase()} to determine the healing.` : `Choose one of your damaged corals to restore ${onPlayHeal.amount} HP.` });
       } else {
         const message = `${card.name}'s ${onPlayHeal.actionName} had no damaged coral to heal.`;
         pushLog(message);
@@ -9582,8 +9685,11 @@ export default function Simulator({
         type: "choose-impact-target",
         sourceCardId: card.id,
         title: `Player's ${card.name} used ${onPlayDamage.actionName}`,
-        message: `Choose an opponent ${onPlayDamage.targetType === "creature-school" ? "Creature School" : "coral"} to receive ${onPlayDamage.amount} damage.`,
+        message: `Choose an opponent ${onPlayDamage.targetType === "creature-school" ? "Creature School" : "coral"} to receive ${describeFoundationDamageChoice(onPlayDamage)}.`,
         amount: onPlayDamage.amount,
+        dice: onPlayDamage.dice,
+        multiplier: onPlayDamage.multiplier,
+        actionName: onPlayDamage.actionName,
         targetCoralIds: onPlayDamageTargets.map((foundation) => foundation.id),
         followupOnPlayAttack: hasOnPlayAttack ? { coralId: null, slotId: playedSlotId, reefIndex: nextReefInstances.length - 1 } : null,
       });
@@ -10264,18 +10370,41 @@ export default function Simulator({
   }
 
   function completeOnPlayCoralHeal(coralId) {
-    if (!["onplay-heal", "passive-heal"].includes(searchContext?.mode) || !searchContext.candidates.includes(coralId)) return;
+    completeOnPlayCoralHealResolution(coralId, null, searchContext);
+  }
+
+  function completeOnPlayCoralHealResolution(coralId, resolvedRoll = null, effectContext = searchContext) {
+    if (!["onplay-heal", "passive-heal"].includes(effectContext?.mode) || !effectContext.candidates.includes(coralId)) return;
     const target = playerCorals.find((coral) => coral.id === coralId);
-    const sourceCard = cardsById[searchContext.sourceCardId];
+    const sourceCard = cardsById[effectContext.sourceCardId];
     if (!target || !sourceCard) return;
+    if (effectContext.dice && resolvedRoll == null) {
+      beginPlayerEffectRoll({
+        kind: EffectRollKind.FOUNDATION_HEAL,
+        dice: effectContext.dice,
+        sourceCardId: sourceCard.id,
+        sourceCardName: sourceCard.name,
+        actionName: effectContext.actionName,
+        multiplier: effectContext.multiplier,
+        flatAmount: effectContext.amount,
+        targetCoralId: coralId,
+        healContext: effectContext,
+        title: `${sourceCard.name} rolls ${String(effectContext.dice).toUpperCase()}`,
+        message: `Tap to stop the ${String(effectContext.dice).toUpperCase()} and determine how much HP ${effectContext.actionName} restores.`,
+      });
+      return;
+    }
+    const amount = resolvedRoll == null
+      ? Number(effectContext.amount ?? 0)
+      : Number(effectContext.amount ?? 0) + Number(resolvedRoll) * Number(effectContext.multiplier ?? 1);
     const previousHealth = Number(target.health ?? target.maxHealth);
-    const healedHealth = Math.min(Number(target.maxHealth), previousHealth + Number(searchContext.amount ?? 0));
+    const healedHealth = Math.min(Number(target.maxHealth), previousHealth + amount);
     setPlayerCorals((current) => current.map((coral) => coral.id === coralId ? { ...coral, health: healedHealth } : coral));
-    if (searchContext.mode === "passive-heal" && searchContext.actionKey) setUsedCreatureActions((current) => [...current, searchContext.actionKey]);
-    const message = `${sourceCard.name}'s ${searchContext.actionName} restored ${healedHealth - previousHealth} HP to ${cardsById[target.cardId]?.name}.${searchContext.roll != null ? ` The healing roll was ${searchContext.roll}.` : ""}`;
+    if (effectContext.mode === "passive-heal" && effectContext.actionKey) setUsedCreatureActions((current) => [...current, effectContext.actionKey]);
+    const message = `${sourceCard.name}'s ${effectContext.actionName} restored ${healedHealth - previousHealth} HP to ${cardsById[target.cardId]?.name}.${resolvedRoll != null ? ` The ${String(effectContext.dice).toUpperCase()} roll was ${resolvedRoll}.` : ""}`;
     pushLog(message);
     setSearchContext(null);
-    setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: target.cardId, title: `Player's ${sourceCard.name} used ${searchContext.actionName}`, message, success: healedHealth > previousHealth });
+    setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: target.cardId, title: `Player's ${sourceCard.name} used ${effectContext.actionName}`, message, success: healedHealth > previousHealth });
   }
 
   function beginPassiveCoralHeal(passive) {
@@ -10744,16 +10873,21 @@ export default function Simulator({
       return;
     }
     if (effect.type === "rollDiceForResource") {
-      const roll = rollDie(effect.dice);
-      if (!roll) return;
-      const success = effect.successValues?.includes(roll.total);
-      const reward = success ? Number(effect.onSuccess?.amount ?? 0) : 0;
-      setRp((current) => addResourceWithinCap(Math.max(0, current - cost), reward, playerRpCap));
-      if (actionIsOncePerTurn(action)) setUsedCreatureActions((current) => [...current, actionKey]);
-      const message = `${sourceCard.name} rolled ${roll.total} on ${effect.dice}.${success ? ` Gained ${reward} RP.` : " The action did not succeed."}`;
-      pushLog(message);
       setInspectedCard(null);
-      setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${action.name}`, message, success });
+      beginPlayerEffectRoll({
+        kind: EffectRollKind.RESOURCE_CHECK,
+        dice: effect.dice,
+        sourceCardId: sourceCard.id,
+        sourceCardName: sourceCard.name,
+        actionName,
+        successValues: effect.successValues,
+        reward: Number(effect.onSuccess?.amount ?? 0),
+        actionKey,
+        actionCost: cost,
+        oncePerTurn: actionIsOncePerTurn(action),
+        title: `${sourceCard.name} rolls ${String(effect.dice).toUpperCase()}`,
+        message: `Tap to stop the ${String(effect.dice).toUpperCase()} and resolve ${actionName}.`,
+      });
     }
   }
 
@@ -11920,13 +12054,15 @@ export default function Simulator({
     let onPlayHealSummary = "";
     const onPlayHeal = getOnPlayCoralHeal(card);
     if (onPlayHeal) {
-      const healResult = healMostDamagedCoral(next.corals, onPlayHeal.amount, cardsById);
+      const onPlayHealRoll = onPlayHeal.dice ? rollDie(onPlayHeal.dice) : null;
+      const onPlayHealAmount = Number(onPlayHeal.amount ?? 0) + Number(onPlayHealRoll?.total ?? 0) * Number(onPlayHeal.multiplier ?? 1);
+      const healResult = healMostDamagedCoral(next.corals, onPlayHealAmount, cardsById);
       next = { ...next, corals: healResult.foundations };
       const target = healResult.targetFoundationId
         ? next.corals.find((foundation) => foundation.id === healResult.targetFoundationId)
         : null;
       onPlayHealSummary = target
-        ? ` ${onPlayHeal.actionName} restored ${healResult.appliedHealing} HP to ${cardsById[target.cardId]?.name}${onPlayHeal.roll != null ? ` after rolling ${onPlayHeal.roll}` : ""}.`
+        ? ` ${onPlayHeal.actionName} restored ${healResult.appliedHealing} HP to ${cardsById[target.cardId]?.name}${onPlayHealRoll ? ` after rolling ${onPlayHealRoll.total}` : ""}.`
         : ` ${onPlayHeal.actionName} found no damaged Coral to heal.`;
     }
     let momentumSummary = "";
@@ -12257,7 +12393,9 @@ export default function Simulator({
   }
 
   function applyOpponentFoundationDamage(currentPlayerCorals, currentOrphans, damageEffect, sourceName, currentHand = hand, availableDiscard = discardPile, handLimit = Infinity) {
-    const amount = Number(damageEffect?.amount ?? 0);
+    const damageRoll = damageEffect?.dice ? rollDie(damageEffect.dice) : null;
+    const amount = Number(damageEffect?.amount ?? 0) + Number(damageRoll?.total ?? 0) * Number(damageEffect?.multiplier ?? 1);
+    const rollSummary = damageRoll ? ` rolled ${damageRoll.total} on ${String(damageEffect.dice).toUpperCase()} and` : "";
     if (!amount || !currentPlayerCorals.length) return null;
     const target = currentPlayerCorals.find((foundation) => damageEffect.targetType === "creature-school"
       ? isCreatureSchool(cardsById[foundation.cardId])
@@ -12269,7 +12407,7 @@ export default function Simulator({
         corals: currentPlayerCorals.map((coral) => coral.id === target.id ? { ...coral, health: result.remainingHealth } : coral),
         orphanCreatures: currentOrphans,
         discardedCardIds: [],
-        summary: `Opponent's ${sourceName} dealt ${result.appliedDamage} damage to your ${cardsById[target.cardId]?.name}. ${result.remainingHealth}/${target.maxHealth} HP remains.`,
+        summary: `Opponent's ${sourceName}${rollSummary} dealt ${result.appliedDamage} damage to your ${cardsById[target.cardId]?.name}. ${result.remainingHealth}/${target.maxHealth} HP remains.`,
       };
     }
     const redistributed = redistributeOrphanCreatures(currentPlayerCorals.filter((coral) => coral.id !== target.id), [...currentOrphans, ...getOrphanEntriesFromFoundation(target)]);
@@ -12289,7 +12427,7 @@ export default function Simulator({
       hand: triggerResult.hand,
       discardPile: triggerResult.discardPile,
       fragmentTriggers: triggerResult.triggers,
-      summary: `Opponent's ${sourceName} dealt ${result.appliedDamage} damage and destroyed your ${cardsById[target.cardId]?.name}. Its creatures filled compatible slots; ${redistributed.orphans.length} remain orphaned on your reef.${fragmentSummary}`,
+      summary: `Opponent's ${sourceName}${rollSummary} dealt ${result.appliedDamage} damage and destroyed your ${cardsById[target.cardId]?.name}. Its creatures filled compatible slots; ${redistributed.orphans.length} remain orphaned on your reef.${fragmentSummary}`,
     };
   }
 
@@ -15702,6 +15840,9 @@ export default function Simulator({
     if (faceoffLockTimerRef.current) window.clearTimeout(faceoffLockTimerRef.current);
     faceoffLockTimerRef.current = null;
     faceoffRollCommitRef.current = false;
+    if (effectRollLockTimerRef.current) window.clearTimeout(effectRollLockTimerRef.current);
+    effectRollLockTimerRef.current = null;
+    effectRollCommitRef.current = false;
     opponentCombatCheckpointIdRef.current += 1;
     for (const timer of bubbleBurstTimersRef.current) window.clearTimeout(timer);
     bubbleBurstTimersRef.current.clear();
@@ -15763,6 +15904,9 @@ export default function Simulator({
     setFaceoffRolling(false);
     setFaceoffPreview(null);
     setFaceoffLocked(false);
+    setEffectRollRolling(false);
+    setEffectRollPreview(null);
+    setEffectRollLocked(false);
     setModal(
       saved.gamePhase === "draw"
       && !saved.hasDrawnThisTurn
@@ -15828,6 +15972,9 @@ export default function Simulator({
     combatResultReturnFocusRef.current = null;
     setCombatResultCheckpoint(null);
     clearConsumedAttackFlight();
+    if (effectRollLockTimerRef.current) window.clearTimeout(effectRollLockTimerRef.current);
+    effectRollLockTimerRef.current = null;
+    effectRollCommitRef.current = false;
     setMobileDrawTrayOpen(false);
     setMobileDrawAnnouncement("");
     setSetupOpeningHandVisibleCount(null);
@@ -15927,6 +16074,9 @@ export default function Simulator({
     setPendingEvents([]);
     setFaceoffRolling(false);
     setFaceoffPreview(null);
+    setEffectRollRolling(false);
+    setEffectRollPreview(null);
+    setEffectRollLocked(false);
     setTurnLog(tutorialUsesScriptedScenario
       ? [previewExperience
         ? `${tutorialGuide.name} is ready to guide the opening coin flip and first legal play.`
@@ -16101,10 +16251,12 @@ export default function Simulator({
   const isDarkZoneModal = Boolean(modal);
   const fullPageModalOpen = Boolean(modal && !compactTurnSequence && (!previewDrawTrayEnabled || !["turn-draw", "draw-result"].includes(modal)));
   const resumeHydrationPending = simulatorResumeEnabled && !resumeCheckpointReady;
-  const boardFaceoffActive = Boolean(
+  const combatBoardFaceoffActive = Boolean(
     previewExperience
     && ["faceoff-ready", "school-attack-ready", "opponent-roll-ready"].includes(eventOverlay?.type),
   );
+  const boardEffectRollActive = Boolean(eventOverlay?.type === EFFECT_ROLL_READY_TYPE);
+  const boardFaceoffActive = combatBoardFaceoffActive || boardEffectRollActive;
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
   const openingCoinBoardActive = Boolean(previewExperience && isOpeningCoinEvent);
   const cardCoinBoardActive = Boolean(previewExperience && cardCoinFlip);
@@ -16120,6 +16272,7 @@ export default function Simulator({
     || bugReportOpen
     || eventOverlay?.type === "new-game-setup"
     || boardFaceoffActive
+    || boardEffectRollActive
     || openingCoinBoardActive
     || cardCoinBoardActive
     || resumeHydrationPending
@@ -16548,8 +16701,73 @@ export default function Simulator({
     return proxies;
   })();
 
+  function resolvePlayerEffectRoll(readyEvent, stoppedRoll) {
+    const outcome = resolveEffectRollEvent(readyEvent, stoppedRoll);
+    if (!outcome) {
+      setEventOverlay({
+        type: "utility-result",
+        sourceCardId: readyEvent?.sourceCardId,
+        title: "Roll Could Not Resolve",
+        message: "The stopped die value was invalid, so no card effect was applied.",
+        success: false,
+      });
+      return;
+    }
+
+    if (readyEvent.effectRollKind === EffectRollKind.FOUNDATION_DAMAGE) {
+      damageOpponentFoundation(
+        readyEvent.targetCoralId,
+        outcome.amount,
+        cardsById[readyEvent.sourceCardId],
+        readyEvent,
+        outcome,
+      );
+      return;
+    }
+
+    if (readyEvent.effectRollKind === EffectRollKind.FOUNDATION_HEAL) {
+      completeOnPlayCoralHealResolution(readyEvent.targetCoralId, outcome.roll, readyEvent.healContext);
+      return;
+    }
+
+    if (readyEvent.effectRollKind === EffectRollKind.RESOURCE_CHECK) {
+      setRp((current) => addResourceWithinCap(
+        Math.max(0, current - Number(readyEvent.actionCost ?? 0)),
+        outcome.reward,
+        playerRpCap,
+      ));
+      if (readyEvent.oncePerTurn && readyEvent.actionKey) {
+        setUsedCreatureActions((current) => current.includes(readyEvent.actionKey) ? current : [...current, readyEvent.actionKey]);
+      }
+      const message = `${readyEvent.sourceCardName} rolled ${outcome.roll} on ${readyEvent.dice}.${outcome.success ? ` Gained ${outcome.reward} RP.` : " The action did not succeed."}`;
+      pushLog(message);
+      setEventOverlay({
+        type: "utility-result",
+        sourceCardId: readyEvent.sourceCardId,
+        title: `Player's ${readyEvent.sourceCardName} used ${readyEvent.actionName}`,
+        message,
+        success: outcome.success,
+      });
+    }
+  }
+
+  function stopBoardEffectRoll() {
+    if (!boardEffectRollActive || !effectRollPreview || effectRollCommitRef.current) return;
+    effectRollCommitRef.current = true;
+    const readyEvent = eventOverlay;
+    const stoppedPacket = { ...effectRollPreview };
+    setEffectRollRolling(false);
+    setEffectRollLocked(true);
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    const lockDelay = accessibilityReducedMotion || systemReducedMotion ? 80 : 420;
+    effectRollLockTimerRef.current = window.setTimeout(() => {
+      effectRollLockTimerRef.current = null;
+      resolvePlayerEffectRoll(readyEvent, stoppedPacket.attack);
+    }, lockDelay);
+  }
+
   function stopBoardFaceoff() {
-    if (!boardFaceoffActive || !faceoffPreview || faceoffRollCommitRef.current) return;
+    if (!combatBoardFaceoffActive || !faceoffPreview || faceoffRollCommitRef.current) return;
     faceoffRollCommitRef.current = true;
     const readyEvent = eventOverlay;
     const stoppedPacket = { ...faceoffPreview };
@@ -20214,7 +20432,7 @@ export default function Simulator({
               </div>
               {previewExperience ? (
                 <BoardCombatDice
-                  active={boardFaceoffActive}
+                  active={combatBoardFaceoffActive}
                   attackExpression={eventOverlay?.attackDice}
                   defenseExpression={eventOverlay?.type === "school-attack-ready" ? null : eventOverlay?.defenseDice}
                   preview={faceoffPreview}
@@ -20226,6 +20444,21 @@ export default function Simulator({
                   tutorialClass={tutorialFaceoffHelpOpen ? " seapals-tutorial-target" : ""}
                 />
               ) : null}
+              <BoardCombatDice
+                active={boardEffectRollActive}
+                mode="effect"
+                attackExpression={eventOverlay?.dice}
+                defenseExpression={null}
+                preview={effectRollPreview}
+                attackerOwner={eventOverlay?.owner ?? "player"}
+                defenderOwner="opponent"
+                locked={effectRollLocked}
+                onStop={stopBoardEffectRoll}
+                prompt={eventOverlay?.prompt ?? "Tap to roll"}
+                lockedPrompt="Resolving roll…"
+                ariaLabel={`${eventOverlay?.sourceCardName ?? "Card effect"} ${eventOverlay?.dice ?? "die"} roll`}
+                reducedMotion={accessibilityReducedMotion}
+              />
               {previewExperience ? (
                 <OpeningCoinBoardPresentation
                   active={openingCoinBoardActive}
@@ -21379,7 +21612,7 @@ export default function Simulator({
                     {opponentCorals.filter((coral) => eventOverlay.targetCoralIds.includes(coral.id)).map((coral) => {
                       const card = cardsById[coral.cardId];
                       return (
-                        <button key={coral.id} type="button" data-tutorial-target={scriptedImpactTargetHelp ? "impact-target" : undefined} onClick={() => damageOpponentFoundation(coral.id, eventOverlay.amount, cardsById[eventOverlay.sourceCardId])} className={`flex items-center gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-3 text-left transition hover:bg-emerald-400/25${scriptedImpactTargetHelp ? " seapals-tutorial-target" : ""}`}>
+                        <button key={coral.id} type="button" data-tutorial-target={scriptedImpactTargetHelp ? "impact-target" : undefined} onClick={() => beginPlayerFoundationDamageEffectRoll(coral.id, eventOverlay)} className={`flex items-center gap-3 rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 p-3 text-left transition hover:bg-emerald-400/25${scriptedImpactTargetHelp ? " seapals-tutorial-target" : ""}`}>
                           <img src={card?.image} alt={card?.name} className="h-28 w-20 rounded-xl bg-white object-contain" />
                           <span><strong className="block">{card?.name}</strong><span className="text-sm text-emerald-200">{coral.health}/{coral.maxHealth} HP</span></span>
                         </button>

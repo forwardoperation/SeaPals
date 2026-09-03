@@ -124,14 +124,14 @@ test("combat dice are a transparent board-context dialog, not the full-page even
   assert.match(presentationSource, /data-combat-dice-layer/);
   assert.match(presentationSource, /data-combat-die/);
   assert.match(presentationSource, /data-purpose=\{purpose\}/);
-  assert.match(presentationSource, /purpose="attack"/);
+  assert.match(presentationSource, /purpose=\{isEffectRoll \? "effect" : "attack"\}/);
   assert.match(presentationSource, /purpose="defense"/);
   assert.match(presentationSource, /data-owner=\{owner\}/);
   assert.match(presentationSource, /owner=\{attackerOwner\}/);
   assert.match(presentationSource, /owner=\{defenderOwner\}/);
   assert.match(presentationSource, /data-stop-combat-roll/);
   assert.match(presentationSource, /aria-label=\{rollControlLabel\}/i);
-  assert.match(boardCombatSource, /role="dialog"[\s\S]{0,120}aria-modal="true"[\s\S]{0,120}aria-label="Attack roll off"/);
+  assert.match(boardCombatSource, /role="dialog"[\s\S]{0,120}aria-modal="true"[\s\S]{0,180}aria-label=\{ariaLabel \?\? \(isEffectRoll \? "Card effect die roll" : "Attack roll off"\)\}/);
   assert.match(presentationSource, /aria-live="polite"/);
   assert.match(
     presentationSource,
@@ -169,7 +169,10 @@ test("the board roll gives the local player a centered attack or defense tap pro
     "The visual prompt should not duplicate the accessible full-board control",
   );
   assert.match(boardCombatSource, /aria-label=\{rollControlLabel\}/);
-  assert.match(boardCombatSource, /\$\{rollPrompt\}\. Stop the dice and resolve the attack\./);
+  assert.match(
+    boardCombatSource,
+    /\$\{rollPrompt\}\. Stop the \$\{String\(attackExpression \?\? "die"\)\.toUpperCase\(\)\} and resolve \$\{isEffectRoll \? "the card effect" : "the attack"\}\./,
+  );
 
   assert.match(
     presentationSource,
@@ -331,7 +334,7 @@ test("one defensive-roll tap freezes the visible packet and passes it to the liv
 
   assert.match(
     faceoffCommit,
-    /if \(!boardFaceoffActive \|\| !faceoffPreview \|\| faceoffRollCommitRef\.current\) return;[\s\S]*?faceoffRollCommitRef\.current = true;/,
+    /if \(!combatBoardFaceoffActive \|\| !faceoffPreview \|\| faceoffRollCommitRef\.current\) return;[\s\S]*?faceoffRollCommitRef\.current = true;/,
     "The board tap must be guarded before any delayed resolution is scheduled",
   );
   assert.match(
