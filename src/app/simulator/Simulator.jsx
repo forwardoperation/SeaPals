@@ -11,6 +11,7 @@ import MobileEdgeZones from "./MobileEdgeZones";
 import MobileDrawTray from "./MobileDrawTray";
 import AnimatedVpBadge from "./AnimatedVpBadge";
 import CardActionProxyOverlay from "./CardActionProxyOverlay";
+import SimulatorV2NewGameSetup from "./SimulatorV2NewGameSetup";
 import { AttackIntentLayer, AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
 import CardCoinBoardPresentation from "./CardCoinBoardPresentation";
 import OpeningCoinBoardPresentation, { OpeningCoinVisual } from "./OpeningCoinBoardPresentation";
@@ -16399,7 +16400,14 @@ export default function Simulator({
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
   const openingCoinBoardActive = Boolean(previewExperience && isOpeningCoinEvent);
   const cardCoinBoardActive = Boolean(previewExperience && cardCoinFlip);
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || Boolean(combatResultCheckpoint) || Boolean(resumeCheckpoint);
+  const v2NewGameSetupActive = Boolean(
+    previewExperience
+    && !isStoryMode
+    && eventOverlay?.type === "new-game-setup"
+    && !resumeHydrationPending
+    && !resumeCheckpoint
+  );
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || Boolean(combatResultCheckpoint) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -21704,9 +21712,26 @@ export default function Simulator({
         </div>
       ) : null}
 
+      {v2NewGameSetupActive ? (
+        <SimulatorV2NewGameSetup
+          decks={prebuiltDecks}
+          initialPlayerDeckId={selectedDeckId}
+          initialOpponentDeckId={selectedOpponentDeckId}
+          initialDifficulty={pendingOpponentDifficulty}
+          difficultyOptions={OPPONENT_DIFFICULTY_OPTIONS}
+          reducedMotion={accessibilityReducedMotion}
+          onCancel={eventOverlay.initial ? null : closeEventOverlay}
+          onStart={(playerDeckId, opponentDeckId, difficulty) => (
+            restartGame(playerDeckId, opponentDeckId, pendingVictoryTarget, difficulty)
+          )}
+        />
+      ) : null}
+
       {eventOverlay && !boardFaceoffActive && !openingCoinBoardActive ? (
         <div
           className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5"
+          hidden={v2NewGameSetupActive || resumeHydrationPending || Boolean(resumeCheckpoint)}
+          style={v2NewGameSetupActive || resumeHydrationPending || resumeCheckpoint ? { display: "none" } : undefined}
           role="dialog"
           aria-modal="true"
           aria-hidden={inspectedCardData || resumeCheckpoint || resumeHydrationPending ? "true" : undefined}
