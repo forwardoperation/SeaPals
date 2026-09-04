@@ -15,7 +15,7 @@ function sourceBetween(startMarker, endMarker) {
 test("the mobile hand button blinks only until setup has a starting Foundation", () => {
   const mobileDock = sourceBetween(
     'aria-label="Mobile game command dock"',
-    '<div className="seapals-hud-panel hidden min-h-0',
+    '<div className="seapals-hud-panel hidden min-h-0 overflow-y-auto',
   );
 
   assert.match(
@@ -27,7 +27,7 @@ test("the mobile hand button blinks only until setup has a starting Foundation",
 test("setup hand guidance respects both reduced-motion paths", () => {
   const simulatorStyles = sourceBetween(
     "@keyframes seapalsPlayableCard",
-    '<section className="grid h-full',
+    '<section className={`grid h-full',
   );
 
   assert.match(simulatorStyles, /\.seapals-setup-playable-card \{ animation: seapalsPlayableCard/);

@@ -141,7 +141,7 @@ test("card results stay reachable at extreme mobile splits and failed flips rest
   );
   assert.match(
     openingCoinStylesSource,
-    /@media \(max-width: 1279px\)[\s\S]*?\.cardCoinResultZone\s*\{[\s\S]*?inset-block-start:\s*min\([\s\S]*?50%\);/,
+    /@media \(min-width: 0px\)[\s\S]*?\.cardCoinResultZone\s*\{[\s\S]*?inset-block-start:\s*min\([\s\S]*?50%\);/,
     "a high divider split must leave the result at least half of the board height",
   );
   assert.match(simulatorSource, /function focusBoardAfterCardCoinResult\(\)/);

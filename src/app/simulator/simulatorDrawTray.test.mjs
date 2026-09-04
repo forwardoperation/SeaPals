@@ -64,7 +64,8 @@ test("V2 replaces the blocking turn-draw pages with a tray anchored beside the p
   // The old interface still relies on these dialogs, so this change must remain V2-only.
   assert.match(simulatorSource, /modal === "turn-draw"[\s\S]*?data-tutorial-target="draw-controls"/);
   assert.match(simulatorSource, /modal === "draw-result"[\s\S]*?data-tutorial-target="continue-actions"/);
-  assert.match(simulatorSource, /window\.matchMedia\("\(max-width: 1279px\)"\)/);
+  assert.doesNotMatch(simulatorSource, /window\.matchMedia\("\(max-width: 1279px\)"\)/);
+  assert.match(simulatorSource, /compactDrawViewportRef\.current = true;\s*setCompactDrawViewport\(true\)/);
   assert.match(simulatorSource, /const previewDrawTrayEnabled = Boolean\(previewExperience && compactDrawViewport\)/);
 });
 

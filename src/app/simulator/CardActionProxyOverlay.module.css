@@ -163,7 +163,7 @@
   }
 }
 
-@media (max-width: 1279px) {
+@media (min-width: 0px) {
   .stage {
     width: min(100%, calc(min(62dvh, 42rem) * 5 / 7));
     margin-top: 0.8rem;

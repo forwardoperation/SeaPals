@@ -170,18 +170,15 @@ test("Nerve Agent chooses a legal Coral before committing and flipping", () => {
     "function completeSymbiosis",
   );
   const targetValidation = completeAction.indexOf("pendingCreatureAction?.candidates?.includes(coralId)");
-  const coinFlip = completeAction.indexOf("resolveTargetedCoinFlip({");
-  const costCommit = completeAction.indexOf("commitCostAndActionUse");
-  assert.ok(targetValidation >= 0 && coinFlip > targetValidation, "the selected Coral must be validated before the flip");
-  assert.ok(costCommit > coinFlip, "RP and once-per-turn use must be committed only after a target is selected");
+  const boardFlip = completeAction.indexOf("beginCardCoinFlipPresentation({");
+  const legacyCoinFlip = completeAction.indexOf("resolveTargetedCoinFlip({");
+  const costCommit = completeAction.indexOf("commitCostAndActionUse()", completeAction.indexOf("if (isTargetedCoinAction && previewExperience"));
+  assert.ok(targetValidation >= 0 && costCommit > targetValidation && boardFlip > costCommit, "the selected Coral must be validated and committed before its board flip");
+  assert.ok(legacyCoinFlip > boardFlip, "the immediate resolver must remain behind the V2 presentation's early return");
+  assert.match(completeAction, /type: "targeted-coral-action"[\s\S]*?coralId[\s\S]*?actionKey: pendingAction\.actionKey/);
   assert.match(completeAction, /coinResolution && !coinResolution\.success[\s\S]*commitCostAndActionUse\(\)/);
   assert.match(completeAction, /effect\.type === EffectType\.STUN_CORAL[\s\S]*createStunnedStatus\(sourceCard\.id\)/);
-
-  assert.equal(
-    simulatorSource.match(/resolveTargetedCoinFlip\(\{/g)?.length,
-    2,
-    "player and opponent targeted coin actions should share one resolver",
-  );
+  assert.match(simulatorSource, /continuation(?:\?)?\.type === "targeted-coral-action"[\s\S]*?completeCoinCoralEffect\(continuation\.coralId, outcome\)/);
 });
 
 test("Momentum may find another Creature School with the same name", () => {

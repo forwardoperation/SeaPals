@@ -464,7 +464,7 @@ test("drag and drop preserves the existing tap and keyboard Play Card fallback",
 test("V2 keeps both reefs mounted around an accessible 24-to-68 percent divider", () => {
   const responsiveStyles = sourceSection(
     simulatorSource,
-    "@media (max-width: 1279px)",
+    "@media (min-width: 0px)",
     "@media (max-width: 767px)",
   );
 
@@ -474,11 +474,11 @@ test("V2 keeps both reefs mounted around an accessible 24-to-68 percent divider"
   assert.match(simulatorSource, /const \[mobileReefSplit, setMobileReefSplit\] = useState\(MOBILE_REEF_SPLIT_DEFAULT\)/);
   assert.match(
     simulatorSource,
-    /id="simulator-opponent-reef"[\s\S]*?previewExperience \? "block" : mobileBoardView === "opponent" \? "h-full" : "hidden"/,
+    /id="simulator-opponent-reef"[\s\S]*?previewExperience \? "block" : `\$\{mobileBoardView === "opponent" \? "h-full" : "hidden"\} xl:block xl:h-\[45%\]`/,
   );
   assert.match(
     simulatorSource,
-    /id="simulator-player-reef"[\s\S]*?previewExperience \? "block" : mobileBoardView === "player" \? "h-full" : "hidden"/,
+    /id="simulator-player-reef"[\s\S]*?previewExperience \? "block" : `\$\{mobileBoardView === "player" \? "h-full" : "hidden"\} xl:block xl:h-\[55%\]`/,
   );
   assert.match(simulatorSource, /"--seapals-mobile-reef-split": `\$\{mobileReefSplit\}%`/);
   assert.match(
@@ -558,7 +558,7 @@ test("V2 puts used/capacity SD beside the number-only VP and RP badges at the ri
   );
   const responsiveStyles = sourceSection(
     simulatorSource,
-    "@media (max-width: 1279px)",
+    "@media (min-width: 0px)",
     "@media (max-width: 767px)",
   );
 
@@ -593,12 +593,12 @@ test("V2 puts used/capacity SD beside the number-only VP and RP badges at the ri
 test("V2 keeps vertical camera controls left and above the hand except on short screens", () => {
   const responsiveStyles = sourceSection(
     simulatorSource,
-    "@media (max-width: 1279px)",
-    "@media (max-width: 1279px) and (max-height: 650px)",
+    "@media (min-width: 0px)",
+    "@media (max-height: 650px)",
   );
   const shortStyles = sourceSection(
     simulatorSource,
-    "@media (max-width: 1279px) and (max-height: 650px)",
+    "@media (max-height: 650px)",
     "@media (max-width: 767px)",
   );
 
@@ -639,12 +639,12 @@ test("V2 marks every legal setup card in the persistent mobile hand", () => {
 test("the hand rail reserves reachable left and right gutters around board controls", () => {
   const responsiveStyles = sourceSection(
     simulatorSource,
-    "@media (max-width: 1279px)",
-    "@media (max-width: 1279px) and (max-height: 650px)",
+    "@media (min-width: 0px)",
+    "@media (max-height: 650px)",
   );
   const shortStyles = sourceSection(
     simulatorSource,
-    "@media (max-width: 1279px) and (max-height: 650px)",
+    "@media (max-height: 650px)",
     "@media (max-width: 767px)",
   );
 
@@ -658,8 +658,8 @@ test("the hand rail reserves reachable left and right gutters around board contr
 test("the V2 hand tray is transparent and compact enough to return space to the reef", () => {
   const responsiveStyles = sourceSection(
     simulatorSource,
-    "@media (max-width: 1279px)",
-    "@media (max-width: 1279px) and (max-height: 650px)",
+    "@media (min-width: 0px)",
+    "@media (max-height: 650px)",
   );
   const mobileStyles = sourceSection(
     simulatorSource,
@@ -979,7 +979,7 @@ test("the player reef starts fitted and stops auto-fitting after manual camera i
 test("V2 card inspection fills the viewport with an animated card and a simple x", () => {
   const responsiveStyles = sourceSection(
     simulatorSource,
-    "@media (max-width: 1279px)",
+    "@media (min-width: 0px)",
     "@media (max-width: 767px)",
   );
   const inspector = sourceSection(
@@ -1004,8 +1004,8 @@ test("V2 removes Finn from its header while legacy still renders the guide", () 
 test("V2 overlays a compact back-and-menu header without consuming board height", () => {
   const responsiveStyles = sourceSection(
     simulatorSource,
-    "@media (max-width: 1279px)",
-    "@media (max-width: 1279px) and (max-height: 650px)",
+    "@media (min-width: 0px)",
+    "@media (max-height: 650px)",
   );
   const overlayControlsRule = responsiveStyles.match(/\.seapals-simulator-preview \.seapals-back-control,\s*\.seapals-simulator-preview \.seapals-menu-control\s*\{([^}]*)\}/)?.[1] ?? "";
   const overlayBackRule = responsiveStyles.match(/\.seapals-simulator-preview \.seapals-back-control\s*\{([^}]*)\}/)?.[1] ?? "";

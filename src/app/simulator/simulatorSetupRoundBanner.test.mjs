@@ -463,12 +463,13 @@ test("setup cards overlap into a roughly twice-fast deal without shortening ordi
   assert.match(simulatorSource, /setProperty\("--seapals-draw-play-state", "running"\)/);
 });
 
-test("a viewport change before or during the deal fast-forwards safely to RP", () => {
-  assert.match(simulatorSource, /compactDrawViewportRef\.current = viewportQuery\.matches/);
+test("V2 keeps the opening deal active when the viewport reaches desktop width", () => {
+  assert.doesNotMatch(simulatorSource, /window\.matchMedia\("\(max-width: 1279px\)"\)/);
+  assert.match(simulatorSource, /compactDrawViewportRef\.current = true;\s*setCompactDrawViewport\(true\)/);
   assert.match(
     simulatorSource,
     /!previewDrawTrayEnabled[\s\S]*?\|\| !compactDrawViewportRef\.current[\s\S]*?return false/,
   );
-  assert.match(simulatorSource, /clearMobileDrawFlightSequence\(\{ notifyCancel: true \}\)/);
+  assert.doesNotMatch(simulatorSource, /viewportQuery\.addEventListener|viewportQuery\.removeEventListener/);
   assert.match(simulatorSource, /onCancel: completeOpeningDeal/);
 });

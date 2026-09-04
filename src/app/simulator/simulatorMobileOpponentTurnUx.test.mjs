@@ -46,11 +46,11 @@ test("legacy mobile tabs follow turn boundaries while V2 keeps the manual split"
   );
   assert.match(
     simulatorSource,
-    /previewExperience \? "block" : mobileBoardView === "opponent" \? "h-full" : "hidden"[\s\S]*xl:block xl:h-\[45%\]/
+    /previewExperience \? "block" : `\$\{mobileBoardView === "opponent" \? "h-full" : "hidden"\} xl:block xl:h-\[45%\]`/
   );
   assert.match(
     simulatorSource,
-    /previewExperience \? "block" : mobileBoardView === "player" \? "h-full" : "hidden"[\s\S]*xl:block xl:h-\[55%\]/
+    /previewExperience \? "block" : `\$\{mobileBoardView === "player" \? "h-full" : "hidden"\} xl:block xl:h-\[55%\]`/
   );
   assert.doesNotMatch(phaseEffect, /if \(!previewExperience\)[\s\S]*?setMobileReefSplit/);
 });

@@ -35,7 +35,7 @@ export default function MobileHandCardPopover({
   }
 
   return (
-    <div className="seapals-hand-card-popover-layer xl:hidden" data-hand-card-popover>
+    <div className="seapals-hand-card-popover-layer" data-hand-card-popover>
       <button
         type="button"
         tabIndex={-1}

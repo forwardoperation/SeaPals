@@ -33,7 +33,7 @@ export default function MobileEdgeZones({
 
   return (
     <aside
-      className={`seapals-mobile-edge-zones is-${owner} xl:hidden${tutorialTargetClass}`}
+      className={`seapals-mobile-edge-zones is-${owner}${tutorialTargetClass}`}
       aria-label={`${ownerLabel} deck, discard pile, and Lost Zone`}
       data-mobile-edge-zones
       data-zone-owner={owner}

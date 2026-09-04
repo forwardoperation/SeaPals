@@ -4506,14 +4506,9 @@ export default function Simulator({
 
   useEffect(() => {
     if (!previewExperience) return undefined;
-    const viewportQuery = window.matchMedia("(max-width: 1279px)");
-    const updateCompactDrawViewport = () => {
-      compactDrawViewportRef.current = viewportQuery.matches;
-      setCompactDrawViewport(viewportQuery.matches);
-    };
-    updateCompactDrawViewport();
-    viewportQuery.addEventListener?.("change", updateCompactDrawViewport);
-    return () => viewportQuery.removeEventListener?.("change", updateCompactDrawViewport);
+    compactDrawViewportRef.current = true;
+    setCompactDrawViewport(true);
+    return undefined;
   }, [previewExperience]);
 
   useEffect(() => {
@@ -9584,7 +9579,13 @@ export default function Simulator({
   function beginFirstRound() {
     if (!hasCoralInPlay) {
       setPlayError("Play a base Coral or Creature School before beginning round 1.");
-      setModal("hand");
+      if (!previewExperience) {
+        setModal("hand");
+      } else if (typeof document !== "undefined") {
+        window.requestAnimationFrame(() => {
+          document.querySelector('[data-mobile-hand-dock] [data-setup-playable="true"]')?.focus?.();
+        });
+      }
       return;
     }
     emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.MATCH_READY, {
@@ -11603,21 +11604,13 @@ export default function Simulator({
     setEventOverlay({ type: "utility-result", sourceCardId, defenderCardId: targetCard.id, title: `Player's ${sourceCard.name} used ${action.name}`, message, success: true });
   }
 
-  function completeCoinCoralEffect(coralId) {
+  function completeCoinCoralEffect(coralId, presentedOutcome = null) {
     if (!pendingCreatureAction?.candidates?.includes(coralId)) return;
     const pendingAction = pendingCreatureAction;
     const target = opponentCorals.find((coral) => coral.id === coralId);
     const sourceCard = cardsById[pendingAction.sourceCardId];
     if (!target || !sourceCard) return;
     const isTargetedCoinAction = pendingAction.effect.type === EffectType.FLIP_COIN;
-    const coinResolution = isTargetedCoinAction
-      ? resolveTargetedCoinFlip({
-          candidateIds: pendingAction.candidates,
-          targetId: coralId,
-          successResult: pendingAction.effect.successResult ?? "heads",
-        })
-      : null;
-    if (isTargetedCoinAction && !coinResolution?.resolved) return;
     const effect = pendingAction.effect.onSuccess ?? pendingAction.effect;
     if (!effect) return;
     const actionName = pendingAction.actionName ?? getActionName(pendingAction.action);
@@ -11631,13 +11624,76 @@ export default function Simulator({
       }
       return cost;
     };
+    const targetName = cardsById[target.cardId]?.name ?? "Coral";
+    const successResult = pendingAction.effect.successResult ?? "heads";
+    if (isTargetedCoinAction && previewExperience && !presentedOutcome) {
+      const cost = commitCostAndActionUse();
+      const effectMessage = effect.type === EffectType.DAMAGE
+        ? `${targetName} will take ${Number(effect.amount?.value ?? effect.amount ?? 0)} damage.`
+        : effect.type === EffectType.STUN_CORAL
+          ? `${targetName} will be Stunned.`
+          : effect.type === EffectType.MODIFY_RP_GENERATION || effect.type === "modifyRpGeneration"
+            ? `${targetName} will produce ${Math.abs(Number(effect.amount ?? 0))} less RP during its next collection.`
+            : `${targetName} will receive the effect.`;
+      const copyForResult = (result) => result === successResult
+        ? {
+            title: `${result === "heads" ? "Heads" : "Tails"}! ${actionName} succeeds.`,
+            message: effectMessage,
+          }
+        : {
+            title: `${result === "heads" ? "Heads" : "Tails"}. ${actionName} misses.`,
+            message: `${sourceCard.name}'s ${actionName} has no effect on ${targetName}.`,
+          };
+      setPendingCreatureAction((current) => current?.actionKey === pendingAction.actionKey
+        ? { ...current, costCommitted: true, selectedCoralId: coralId }
+        : current);
+      beginCardCoinFlipPresentation({
+        owner: "player",
+        sourceCardId: sourceCard.id,
+        sourceCardName: sourceCard.name,
+        successResult,
+        eyebrow: actionName,
+        title: `Flip for ${actionName}`,
+        message: `${sourceCard.name} targeted ${targetName} for ${cost} RP. Tap anywhere to flip.`,
+        outcomes: {
+          heads: copyForResult("heads"),
+          tails: copyForResult("tails"),
+        },
+        continuation: {
+          type: "targeted-coral-action",
+          coralId,
+          sourceCardId: sourceCard.id,
+          actionKey: pendingAction.actionKey,
+        },
+      });
+      return;
+    }
+    const coinResolution = isTargetedCoinAction
+      ? presentedOutcome
+        ? {
+            resolved: true,
+            targetId: coralId,
+            coinResult: presentedOutcome.result,
+            success: presentedOutcome.success,
+          }
+        : resolveTargetedCoinFlip({
+            candidateIds: pendingAction.candidates,
+            targetId: coralId,
+            successResult,
+          })
+      : null;
+    if (isTargetedCoinAction && !coinResolution?.resolved) return;
     if (coinResolution && !coinResolution.success) {
       const cost = commitCostAndActionUse();
-      const targetName = cardsById[target.cardId]?.name ?? "Coral";
       const message = `${sourceCard.name} targeted the opponent's ${targetName} with ${actionName}, paid ${cost} RP, and flipped ${coinResolution.coinResult}. The effect did not succeed.`;
       pushLog(message);
       setPendingCreatureAction(null);
-      setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: target.cardId, title: `Player's ${sourceCard.name} used ${actionName}`, message, success: false });
+      if (previewExperience) {
+        setEventOverlay(null);
+        focusBoardAfterCardCoinResult();
+      } else {
+        setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: target.cardId, title: `Player's ${sourceCard.name} used ${actionName}`, message, success: false });
+      }
       return;
     }
     let message = "";
@@ -11683,7 +11739,12 @@ export default function Simulator({
     commitCostAndActionUse();
     pushLog(message);
     setPendingCreatureAction(null);
-    setEventOverlay({ type: "impact-result", sourceCardId: sourceCard.id, defenderCardId: target.cardId, title: `Player's ${sourceCard.name} used ${actionName}`, message, success: true });
+    if (previewExperience) {
+      setEventOverlay(null);
+      focusBoardAfterCardCoinResult();
+    } else {
+      setEventOverlay({ type: "impact-result", sourceCardId: sourceCard.id, defenderCardId: target.cardId, title: `Player's ${sourceCard.name} used ${actionName}`, message, success: true });
+    }
   }
 
   function completeSymbiosis(cardId = null) {
@@ -16180,6 +16241,13 @@ export default function Simulator({
         focusBoardAfterCardCoinResult();
         pushLog("Recovery coin flip: tails. No card was recovered, and Recovery was discarded.");
       }
+    } else if (
+      continuation?.type === "targeted-coral-action"
+      && continuation.sourceCardId === outcome.sourceCardId
+      && pendingCreatureAction?.actionKey === continuation.actionKey
+      && pendingCreatureAction?.selectedCoralId === continuation.coralId
+    ) {
+      completeCoinCoralEffect(continuation.coralId, outcome);
     }
   }
 
@@ -17666,7 +17734,7 @@ export default function Simulator({
         }
         .seapals-game-shell.seapals-simulator-preview {
           --seapals-edge-card-width: 2.75rem;
-          --seapals-mobile-hand-height: 7.5rem;
+          --seapals-mobile-hand-height: clamp(7.5rem, 17dvh, 11rem);
           --seapals-mobile-hand-bottom: .2rem;
           --seapals-mobile-dock-clearance: calc(var(--seapals-mobile-hand-height) + var(--seapals-mobile-hand-bottom));
         }
@@ -18344,7 +18412,6 @@ export default function Simulator({
           pointer-events: none;
         }
         .seapals-mobile-edge-zones {
-          --seapals-edge-card-width: 2.75rem;
           position: absolute;
           z-index: 59;
           right: .25rem;
@@ -19190,11 +19257,6 @@ export default function Simulator({
         }
         .seapals-combat-dice-divider-space { flex: 0 0 2.75rem; }
         .seapals-combat-dice-zone.is-player { flex: 1 1 0; }
-        @media (min-width: 1280px) {
-          .seapals-combat-dice-zone.is-opponent { flex-basis: 45%; }
-          .seapals-combat-dice-divider-space { display: none; }
-          .seapals-combat-dice-zone.is-player { flex: 0 0 55%; }
-        }
         .seapals-combat-die {
           position: relative;
           width: clamp(5.2rem, 19vw, 8.5rem);
@@ -19591,12 +19653,6 @@ export default function Simulator({
             animation: none !important;
           }
         }
-        @media (min-width: 1280px) {
-          .seapals-mobile-draw-tray,
-          .seapals-mobile-draw-flight {
-            display: none !important;
-          }
-        }
         .seapals-mobile-hand-drag-ghost {
           position: fixed;
           z-index: 120;
@@ -19800,7 +19856,7 @@ export default function Simulator({
           }
         }
         .seapals-mobile-hud-panel { bottom: 15.1rem; }
-        @media (max-width: 1279px) {
+        @media (min-width: 0px) {
           .seapals-mobile-edge-zones { display: flex; }
           .seapals-simulator-preview .seapals-arena-frame { padding: 0; }
           .seapals-simulator-preview .seapals-simulator-header {
@@ -20092,7 +20148,7 @@ export default function Simulator({
             animation: seapalsCardInspectorIn 360ms cubic-bezier(.18, .86, .24, 1);
           }
         }
-        @media (max-width: 1279px) and (max-height: 650px) {
+        @media (max-height: 650px) {
           .seapals-simulator-preview [data-board-owner] .seapals-board-camera-controls {
             flex-direction: row;
           }
@@ -20103,6 +20159,13 @@ export default function Simulator({
             border-left: 1px solid rgba(255, 255, 255, .1);
           }
           .seapals-simulator-preview .seapals-mobile-hand-list { padding-left: 9rem; }
+        }
+        @media (min-width: 768px) {
+          .seapals-simulator-preview .seapals-mobile-hand-card {
+            width: clamp(5.15rem, min(6vw, 11.5dvh), 7.25rem);
+            height: auto;
+            aspect-ratio: 63 / 88;
+          }
         }
         @media (max-width: 767px) {
           .seapals-game-shell.seapals-simulator-preview {
@@ -20352,8 +20415,8 @@ export default function Simulator({
           }
         }
       `}</style>
-      <section className="grid h-full min-h-0 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)_9rem_auto]" aria-hidden={resumeHydrationPending || resumeCheckpoint ? "true" : undefined} inert={resumeHydrationPending || Boolean(resumeCheckpoint) || undefined}>
-        <div className="seapals-hud-panel seapals-arena-frame relative flex h-full min-h-0 flex-col rounded-2xl border border-cyan-400/25 p-3 shadow-2xl xl:col-start-1 xl:row-span-3 xl:row-start-1">
+      <section className={`grid h-full min-h-0 gap-3${previewExperience ? "" : " xl:grid-cols-[minmax(0,1fr)_20rem] xl:grid-rows-[minmax(0,1fr)_9rem_auto]"}`} aria-hidden={resumeHydrationPending || resumeCheckpoint ? "true" : undefined} inert={resumeHydrationPending || Boolean(resumeCheckpoint) || undefined}>
+        <div className={`seapals-hud-panel seapals-arena-frame relative flex h-full min-h-0 flex-col rounded-2xl border border-cyan-400/25 p-3 shadow-2xl${previewExperience ? "" : " xl:col-start-1 xl:row-span-3 xl:row-start-1"}`}>
           {!v2TopChromeHidden ? (
           <div className="seapals-simulator-header mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between" data-mobile-overlay-header={previewExperience ? "true" : undefined}>
             <div className="seapals-simulator-brand min-w-0">
@@ -20639,7 +20702,7 @@ export default function Simulator({
               inert={consumedAttackFlight || combatResultCheckpoint ? true : undefined}
               style={previewExperience ? { "--seapals-mobile-reef-split": `${mobileReefSplit}%` } : undefined}
             >
-              <div id="simulator-opponent-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" onClickCapture={(event) => suppressBoardGestureClick("opponent", event)} aria-label="Rival reef" inert={boardInteractionOverlayActive ? true : undefined}>
+              <div id="simulator-opponent-reef" className={`seapals-board-pane ${previewExperience ? "block" : `${mobileBoardView === "opponent" ? "h-full" : "hidden"} xl:block xl:h-[45%]`} border-b border-cyan-300/20 bg-slate-900`} data-board-owner="opponent" onClickCapture={(event) => suppressBoardGestureClick("opponent", event)} aria-label="Rival reef" inert={boardInteractionOverlayActive ? true : undefined}>
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-rose-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-200"><span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,.8)]" /> {isStoryMode ? `${storyOpponentName}'s Ecosystem` : "Rival Ecosystem"}</div>
                   {attackContext && boardTargetingPresentationActive ? (
@@ -20918,7 +20981,7 @@ export default function Simulator({
                 </div>
               ) : null}
 
-              <div id="simulator-player-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "player" ? "h-full" : "hidden"} bg-slate-900 xl:block xl:h-[55%]`} data-board-owner="player" onClickCapture={(event) => suppressBoardGestureClick("player", event)} aria-label="Your reef" inert={boardInteractionOverlayActive ? true : undefined}>
+              <div id="simulator-player-reef" className={`seapals-board-pane ${previewExperience ? "block" : `${mobileBoardView === "player" ? "h-full" : "hidden"} xl:block xl:h-[55%]`} bg-slate-900`} data-board-owner="player" onClickCapture={(event) => suppressBoardGestureClick("player", event)} aria-label="Your reef" inert={boardInteractionOverlayActive ? true : undefined}>
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-200"><span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]" /> Your Ecosystem</div>
                   {isPlacingCoral && (
@@ -21537,6 +21600,7 @@ export default function Simulator({
           </div> : null}
         </div>
 
+        {!previewExperience ? (
         <div className="seapals-hud-panel hidden min-h-0 overflow-y-auto rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-1 xl:flex xl:flex-col">
           <div className={`grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950/45${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score">
             <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white" data-vp-bank-target="player"><AnimatedVpBadge value={presentedPlayerVp} owner="player-wide" label="Your Reef" reducedMotion={accessibilityReducedMotion || boardStatPresentationActive} variant="inline" /><span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65" data-school-density-target="player">{presentedPlayerSchoolDensity.committed}/{presentedPlayerSchoolDensity.capacity} SD used{presentedPlayerSchoolDensity.overCapacity ? ` · ${presentedPlayerSchoolDensity.overCapacity} over capacity` : ` · ${presentedPlayerSchoolDensity.available} open`}</div></div>
@@ -21578,6 +21642,7 @@ export default function Simulator({
             </div>
           </section>
         </div>
+        ) : null}
 
         {handPopoverCard ? (
           <>
@@ -21603,6 +21668,8 @@ export default function Simulator({
                 onPlay={playHandPopoverCard}
               />
             ) : null}
+            {!previewExperience ? (
+            <>
             <button type="button" aria-label="Close hand card details" onClick={closeHandCardPopover} className="fixed inset-0 z-40 hidden bg-slate-950/25 xl:block" />
             <aside className="seapals-hud-panel fixed right-[21.5rem] top-1/2 z-50 hidden max-h-[calc(100dvh-1rem)] w-[24rem] max-w-[calc(100vw-23rem)] -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-cyan-300/30 p-4 shadow-[0_28px_90px_rgba(0,0,0,.65)] xl:flex" aria-label={`${handPopoverCard.name} details`}>
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
@@ -21620,9 +21687,12 @@ export default function Simulator({
               </div>
               <button type="button" disabled={Boolean(handPopoverPlayError)} onClick={playHandPopoverCard} className={`mt-3 w-full shrink-0 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-950 shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-600 disabled:to-slate-600 disabled:text-slate-300${tutorialTargetClass("play-card")}`} data-tutorial-target="play-card">Play card</button>
             </aside>
+            </>
+            ) : null}
           </>
         ) : null}
 
+        {!previewExperience ? (
         <div className={`seapals-hud-panel hidden rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-2 xl:flex xl:min-h-0 xl:flex-col${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
@@ -21639,10 +21709,13 @@ export default function Simulator({
             ))}
           </ol>
         </div>
+        ) : null}
 
+        {!previewExperience ? (
         <div className="hidden xl:col-start-2 xl:row-start-3 xl:block">
           <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || boardStatPresentationActive || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
         </div>
+        ) : null}
       </section>
 
       {inspectedCardData ? (

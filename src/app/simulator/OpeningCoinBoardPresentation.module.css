@@ -375,7 +375,7 @@
   display: none;
 }
 
-@media (max-width: 1279px) {
+@media (min-width: 0px) {
   .playerZone {
     inset-block-start: calc(var(--seapals-mobile-reef-split, 50%) + 1.375rem);
   }

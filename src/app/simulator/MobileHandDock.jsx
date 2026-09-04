@@ -20,6 +20,7 @@ export default function MobileHandDock({
   onDragCancel,
 }) {
   const placementPending = Boolean(playingCardId || interactionDisabled);
+  const handRailRef = useRef(null);
   const gestureRef = useRef(null);
   const suppressDragClickRef = useRef(null);
   const callbacksRef = useRef({ onDragStart, onDragMove, onDragEnd, onDragCancel });
@@ -56,6 +57,43 @@ export default function MobileHandDock({
     suppressDragClickRef.current = { index, expiresAt: Date.now() + 700 };
   }
 
+  function captureGesturePointer(gesture, event) {
+    try {
+      if (!gesture.sourceElement.hasPointerCapture?.(event.pointerId)) {
+        gesture.sourceElement.setPointerCapture?.(event.pointerId);
+      }
+    } catch (error) {
+      // Continue without capture if the platform rejects it.
+    }
+  }
+
+  function scrollMouseGesture(gesture, deltaX) {
+    const rail = gesture.railElement;
+    if (!rail) return;
+    const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    rail.scrollLeft = Math.max(0, Math.min(maxScrollLeft, gesture.originScrollLeft - deltaX));
+  }
+
+  function handleHandWheel(event) {
+    const rail = handRailRef.current;
+    if (!rail || event.ctrlKey) return;
+
+    const rawDelta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    if (!rawDelta) return;
+
+    const deltaScale = event.deltaMode === 1
+      ? 20
+      : event.deltaMode === 2
+        ? Math.max(rail.clientWidth, 1)
+        : 1;
+    const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, rail.scrollLeft + rawDelta * deltaScale));
+    if (Math.abs(nextScrollLeft - rail.scrollLeft) < 0.5) return;
+
+    event.preventDefault();
+    rail.scrollLeft = nextScrollLeft;
+  }
+
   useEffect(() => {
     return () => clearHandDragGesture({ cancel: true });
   }, []);
@@ -75,6 +113,9 @@ export default function MobileHandDock({
       originY: event.clientY,
       clientX: event.clientX,
       clientY: event.clientY,
+      pointerType: event.pointerType,
+      railElement: handRailRef.current,
+      originScrollLeft: handRailRef.current?.scrollLeft ?? 0,
       sourceElement: event.target,
     };
   }
@@ -94,6 +135,11 @@ export default function MobileHandDock({
       if (absX >= MOBILE_HAND_DRAG_THRESHOLD && absX > absY) {
         gesture.phase = "scrolling";
         suppressNextDragClick(entry.index);
+        if (gesture.pointerType === "mouse") {
+          event.preventDefault();
+          captureGesturePointer(gesture, event);
+          scrollMouseGesture(gesture, dx);
+        }
         return;
       }
       if (dy <= -MOBILE_HAND_DRAG_THRESHOLD && absY >= absX * MOBILE_HAND_DRAG_AXIS_RATIO) {
@@ -132,6 +178,14 @@ export default function MobileHandDock({
       return;
     }
 
+    if (gesture.phase === "scrolling") {
+      if (gesture.pointerType === "mouse") {
+        event.preventDefault();
+        scrollMouseGesture(gesture, dx);
+      }
+      return;
+    }
+
     if (gesture.phase === "dragging") {
       event.preventDefault();
       callbacksRef.current.onDragMove?.({
@@ -147,7 +201,8 @@ export default function MobileHandDock({
   function handleCardPointerUp(entry, event) {
     const gesture = gestureRef.current;
     if (!gesture || gesture.pointerId !== event.pointerId || gesture.index !== entry.index) return;
-    const wasDragging = gesture.phase === "dragging";
+    const completedPhase = gesture.phase;
+    const wasDragging = completedPhase === "dragging";
     const payload = {
       cardId: gesture.cardId,
       index: gesture.index,
@@ -156,6 +211,7 @@ export default function MobileHandDock({
       clientY: event.clientY,
     };
     clearHandDragGesture();
+    if (completedPhase !== "candidate") suppressNextDragClick(entry.index);
     if (wasDragging) {
       event.preventDefault();
       callbacksRef.current.onDragEnd?.(payload);
@@ -188,7 +244,7 @@ export default function MobileHandDock({
 
   return (
     <section
-      className={`seapals-mobile-hand-dock xl:hidden${interactionDisabled ? " is-draw-sequencing" : ""}${tutorialTargetClass}`}
+      className={`seapals-mobile-hand-dock${interactionDisabled ? " is-draw-sequencing" : ""}${tutorialTargetClass}`}
       aria-label="Your hand"
       aria-busy={interactionDisabled || undefined}
       inert={interactionDisabled ? true : undefined}
@@ -197,9 +253,11 @@ export default function MobileHandDock({
     >
       <div className="seapals-mobile-hand-panel">
         <div
+          ref={handRailRef}
           className="seapals-mobile-hand-rail"
           data-simulator-hand-card-rail
-          aria-label={`${entries.length} cards in your hand. Drag upward to play, or press Enter to inspect.`}
+          aria-label={`${entries.length} cards in your hand. Drag upward to play, scroll sideways to browse, or press Enter to inspect.`}
+          onWheel={handleHandWheel}
         >
           {entries.length ? (
             <ul className="seapals-mobile-hand-list" role="list">
