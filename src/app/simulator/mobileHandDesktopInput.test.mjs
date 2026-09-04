@@ -12,6 +12,21 @@ function functionSource(name, nextName) {
   return handDockSource.slice(start, end);
 }
 
+const interactionScaleSource = functionSource(
+  "getDesktopHandInteractionScale",
+  "getCurrentHandInteractionScale",
+);
+const getDesktopHandInteractionScale = Function(`return (${interactionScaleSource})`)();
+
+test("desktop hand interactions smoothly follow the enlarged visual scale", () => {
+  assert.equal(getDesktopHandInteractionScale(1279, 1120), 1, "mobile and tablet widths stay unchanged");
+  assert.equal(getDesktopHandInteractionScale(1280, 640), 1);
+  assert.equal(getDesktopHandInteractionScale(1280, 880), 1.375);
+  assert.equal(getDesktopHandInteractionScale(1280, 1120), 1.75);
+  assert.equal(getDesktopHandInteractionScale(1920, 1440), 1.75, "the scale caps on tall desktops");
+  assert.equal(getDesktopHandInteractionScale(1920, 480), 1, "short desktop viewports do not shrink controls");
+});
+
 test("the unified hand rail converts vertical desktop wheel input into bounded horizontal browsing", () => {
   const wheelHandler = functionSource("handleHandWheel", "handleCardPointerDown");
 
@@ -24,6 +39,11 @@ test("the unified hand rail converts vertical desktop wheel input into bounded h
     "trackpad horizontal deltas and ordinary mouse-wheel vertical deltas should both browse the hand",
   );
   assert.match(wheelHandler, /event\.deltaMode === 1[\s\S]*?event\.deltaMode === 2/);
+  assert.match(
+    wheelHandler,
+    /const interactionScale = getCurrentHandInteractionScale\(\)[\s\S]*?\? 20 \* interactionScale/,
+    "line-based mouse wheels should browse proportionally with the enlarged desktop hand",
+  );
   assert.match(wheelHandler, /rail\.scrollWidth - rail\.clientWidth/);
   assert.match(wheelHandler, /Math\.max\(0, Math\.min\(maxScrollLeft, rail\.scrollLeft \+ rawDelta \* deltaScale\)\)/);
 
@@ -44,8 +64,12 @@ test("a primary mouse drag pans the hand rail after horizontal intent wins", () 
   assert.match(pointerDown, /railElement: handRailRef\.current/);
   assert.match(pointerDown, /originScrollLeft: handRailRef\.current\?\.scrollLeft \?\? 0/);
   assert.match(
+    pointerDown,
+    /dragThreshold: MOBILE_HAND_DRAG_THRESHOLD \* getCurrentHandInteractionScale\(\)/,
+  );
+  assert.match(
     pointerMove,
-    /absX >= MOBILE_HAND_DRAG_THRESHOLD && absX > absY[\s\S]*?gesture\.phase = "scrolling"[\s\S]*?gesture\.pointerType === "mouse"[\s\S]*?event\.preventDefault\(\)[\s\S]*?captureGesturePointer\(gesture, event\)[\s\S]*?scrollMouseGesture\(gesture, dx\)/,
+    /absX >= dragThreshold && absX > absY[\s\S]*?gesture\.phase = "scrolling"[\s\S]*?gesture\.pointerType === "mouse"[\s\S]*?event\.preventDefault\(\)[\s\S]*?captureGesturePointer\(gesture, event\)[\s\S]*?scrollMouseGesture\(gesture, dx\)/,
   );
   assert.match(
     pointerMove,
@@ -63,8 +87,8 @@ test("desktop browsing does not change touch pan or upward drag-to-play semantic
   const pointerDown = functionSource("handleCardPointerDown", "handleCardPointerMove");
   const pointerMove = functionSource("handleCardPointerMove", "handleCardPointerUp");
   const horizontalBranch = pointerMove.slice(
-    pointerMove.indexOf("if (absX >= MOBILE_HAND_DRAG_THRESHOLD"),
-    pointerMove.indexOf("if (dy <= -MOBILE_HAND_DRAG_THRESHOLD"),
+    pointerMove.indexOf("if (absX >= dragThreshold"),
+    pointerMove.indexOf("if (dy <= -dragThreshold"),
   );
 
   assert.doesNotMatch(pointerDown, /preventDefault|setPointerCapture/);
@@ -75,7 +99,7 @@ test("desktop browsing does not change touch pan or upward drag-to-play semantic
   );
   assert.match(
     pointerMove,
-    /dy <= -MOBILE_HAND_DRAG_THRESHOLD && absY >= absX \* MOBILE_HAND_DRAG_AXIS_RATIO[\s\S]*?sourceElement\.setPointerCapture\?\.\(event\.pointerId\)[\s\S]*?onDragStart/,
+    /dy <= -dragThreshold && absY >= absX \* MOBILE_HAND_DRAG_AXIS_RATIO[\s\S]*?sourceElement\.setPointerCapture\?\.\(event\.pointerId\)[\s\S]*?onDragStart/,
     "upward pointer intent should still enter the existing placement lifecycle on every pointer type",
   );
   assert.match(

@@ -5,6 +5,19 @@ import { useEffect, useRef } from "react";
 const MOBILE_HAND_DRAG_THRESHOLD = 10;
 const MOBILE_HAND_DRAG_AXIS_RATIO = 1.15;
 
+export function getDesktopHandInteractionScale(viewportWidth, viewportHeight) {
+  if (!Number.isFinite(viewportWidth) || viewportWidth < 1280) return 1;
+  if (!Number.isFinite(viewportHeight)) return 1;
+
+  const heightProgress = Math.max(0, Math.min(1, (viewportHeight - 640) / (1120 - 640)));
+  return 1 + heightProgress * 0.75;
+}
+
+function getCurrentHandInteractionScale() {
+  if (typeof window === "undefined") return 1;
+  return getDesktopHandInteractionScale(window.innerWidth, window.innerHeight);
+}
+
 export default function MobileHandDock({
   entries,
   selectedIndex,
@@ -81,8 +94,9 @@ export default function MobileHandDock({
     const rawDelta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
     if (!rawDelta) return;
 
+    const interactionScale = getCurrentHandInteractionScale();
     const deltaScale = event.deltaMode === 1
-      ? 20
+      ? 20 * interactionScale
       : event.deltaMode === 2
         ? Math.max(rail.clientWidth, 1)
         : 1;
@@ -117,6 +131,7 @@ export default function MobileHandDock({
       railElement: handRailRef.current,
       originScrollLeft: handRailRef.current?.scrollLeft ?? 0,
       sourceElement: event.target,
+      dragThreshold: MOBILE_HAND_DRAG_THRESHOLD * getCurrentHandInteractionScale(),
     };
   }
 
@@ -128,11 +143,12 @@ export default function MobileHandDock({
     const dy = event.clientY - gesture.originY;
     const absX = Math.abs(dx);
     const absY = Math.abs(dy);
+    const dragThreshold = gesture.dragThreshold ?? MOBILE_HAND_DRAG_THRESHOLD;
     gesture.clientX = event.clientX;
     gesture.clientY = event.clientY;
 
     if (gesture.phase === "candidate") {
-      if (absX >= MOBILE_HAND_DRAG_THRESHOLD && absX > absY) {
+      if (absX >= dragThreshold && absX > absY) {
         gesture.phase = "scrolling";
         suppressNextDragClick(entry.index);
         if (gesture.pointerType === "mouse") {
@@ -142,7 +158,7 @@ export default function MobileHandDock({
         }
         return;
       }
-      if (dy <= -MOBILE_HAND_DRAG_THRESHOLD && absY >= absX * MOBILE_HAND_DRAG_AXIS_RATIO) {
+      if (dy <= -dragThreshold && absY >= absX * MOBILE_HAND_DRAG_AXIS_RATIO) {
         event.preventDefault();
         try {
           if (!gesture.sourceElement.hasPointerCapture?.(event.pointerId)) {
@@ -171,7 +187,7 @@ export default function MobileHandDock({
           clientX: event.clientX,
           clientY: event.clientY,
         });
-      } else if (absY >= MOBILE_HAND_DRAG_THRESHOLD) {
+      } else if (absY >= dragThreshold) {
         gesture.phase = "blocked";
         suppressNextDragClick(entry.index);
       }

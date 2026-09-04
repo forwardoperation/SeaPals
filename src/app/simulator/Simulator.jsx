@@ -188,6 +188,12 @@ const CARD_ART_FALLBACK = "/images/brand/SeaPalsTCGLogoWhite.svg";
 const TUTORIAL_HISTORY_GUARD_STATE_KEY = "__reefboundTutorialGuard";
 let tutorialHistoryGuardSequence = 0;
 
+export function getSimulatorDesktopUiScale(viewportWidth, viewportHeight) {
+  if (!Number.isFinite(viewportWidth) || viewportWidth < 1280) return 1;
+  const safeHeight = Number.isFinite(viewportHeight) ? viewportHeight : 640;
+  return Math.min(1.75, Math.max(1, safeHeight / 640));
+}
+
 function createTutorialHistoryGuardState(state, token) {
   const preservedState = state && typeof state === "object" && !Array.isArray(state)
     ? state
@@ -9729,7 +9735,10 @@ export default function Simulator({
       return;
     }
     const endX = targetRect.left + (targetRect.width - flight.width) / 2;
-    const endY = targetRect.top + Math.min(10, Math.max(0, (targetRect.height - (flight.width * 88) / 63) / 2));
+    const endY = targetRect.top + Math.min(
+      10 * (flight.uiScale ?? 1),
+      Math.max(0, (targetRect.height - (flight.width * 88) / 63) / 2),
+    );
     setMobileDrawFlightGeometry(flightElement, getMobileDrawFlightGeometry({
       sourceRect,
       endX,
@@ -9898,13 +9907,14 @@ export default function Simulator({
     const handRect = handElement?.getBoundingClientRect();
     const viewportWidth = Math.max(320, window.innerWidth || 0);
     const viewportHeight = Math.max(480, window.innerHeight || 0);
-    const flightWidth = Math.min(84, Math.max(64, viewportWidth * 0.2));
+    const uiScale = getSimulatorDesktopUiScale(viewportWidth, viewportHeight);
+    const flightWidth = Math.min(84 * uiScale, Math.max(64 * uiScale, viewportWidth * 0.2));
     const flightHeight = flightWidth * (88 / 63);
     const endX = handRect?.width
-      ? Math.max(handRect.left + 12, handRect.right - flightWidth - 18)
+      ? Math.max(handRect.left + 12 * uiScale, handRect.right - flightWidth - 18 * uiScale)
       : viewportWidth * 0.56;
     const endY = handRect?.height
-      ? handRect.top + Math.min(20, handRect.height * 0.12)
+      ? handRect.top + Math.min(20 * uiScale, handRect.height * 0.12)
       : viewportHeight - flightHeight * 0.82;
     const geometry = getMobileDrawFlightGeometry({
       sourceRect,
@@ -9923,6 +9933,7 @@ export default function Simulator({
       source: String(entry.source || "deck").toLowerCase(),
       handIndex: baseHandLength + index,
       reducedMotion,
+      uiScale,
       ...geometry,
       width: flightWidth,
       duration,
@@ -19694,7 +19705,11 @@ export default function Simulator({
           outline-offset: 2px;
         }
         .seapals-board-pane { min-height: 0; }
-        .seapals-simulator-preview .seapals-board-pane { position: relative; }
+        .seapals-simulator-preview .seapals-board-pane {
+          position: relative;
+          container-type: size;
+          container-name: seapals-reef-pane;
+        }
         .seapals-reef-divider,
         .seapals-reef-score { display: none; }
         .seapals-opponent-ocean-backdrop {
@@ -20165,6 +20180,215 @@ export default function Simulator({
             width: clamp(5.15rem, min(6vw, 11.5dvh), 7.25rem);
             height: auto;
             aspect-ratio: 63 / 88;
+          }
+        }
+        @media (min-width: 1280px) {
+          .seapals-game-shell.seapals-simulator-preview {
+            --seapals-desktop-control-size: clamp(2.75rem, 6.875dvh, 4.8125rem);
+            --seapals-desktop-edge-gap: clamp(.25rem, .625dvh, .4375rem);
+            --seapals-desktop-header-inset: clamp(.75rem, 1.875dvh, 1.3125rem);
+            --seapals-desktop-score-height: clamp(2.7rem, 6.75dvh, 4.725rem);
+            --seapals-desktop-score-inset: clamp(.45rem, 1.125dvh, .7875rem);
+            --seapals-desktop-score-width: clamp(2.35rem, 5.875dvh, 4.1125rem);
+            --seapals-desktop-hand-card-min: clamp(5.15rem, 12.875dvh, 9.0125rem);
+            --seapals-desktop-hand-card-max: clamp(7.25rem, 18.125dvh, 12.6875rem);
+            --seapals-edge-card-width: var(--seapals-desktop-control-size);
+            --seapals-mobile-hand-height: min(19.25rem, max(17dvh, clamp(7.5rem, 18.75dvh, 13.125rem)));
+            --seapals-mobile-hand-bottom: clamp(.2rem, .5dvh, .35rem);
+            --seapals-mobile-dock-clearance: calc(var(--seapals-mobile-hand-height) + var(--seapals-mobile-hand-bottom));
+          }
+          .seapals-simulator-preview .seapals-back-control,
+          .seapals-simulator-preview .seapals-menu-control {
+            top: var(--seapals-desktop-header-inset);
+          }
+          .seapals-simulator-preview .seapals-back-control { left: var(--seapals-desktop-header-inset); }
+          .seapals-simulator-preview .seapals-menu-control { right: var(--seapals-desktop-header-inset); }
+          .seapals-simulator-preview .seapals-back-control,
+          .seapals-simulator-preview .seapals-menu-control > summary {
+            width: var(--seapals-desktop-control-size);
+            height: var(--seapals-desktop-control-size);
+            min-height: var(--seapals-desktop-control-size);
+            border-radius: clamp(.75rem, 1.875dvh, 1.3125rem);
+          }
+          .seapals-simulator-preview .seapals-back-control > span:first-child {
+            font-size: clamp(1.125rem, 2.8125dvh, 1.96875rem);
+          }
+          .seapals-simulator-preview .seapals-menu-icon {
+            font-size: clamp(.75rem, 1.875dvh, 1.3125rem);
+          }
+          .seapals-simulator-preview .seapals-menu-control > div { top: var(--seapals-desktop-control-size); }
+          .seapals-simulator-preview .seapals-mobile-edge-zones {
+            right: var(--seapals-desktop-edge-gap);
+            gap: var(--seapals-desktop-edge-gap);
+          }
+          .seapals-simulator-preview .seapals-mobile-edge-zones.is-player {
+            top: calc(var(--seapals-desktop-score-inset) + var(--seapals-desktop-score-height) + var(--seapals-desktop-edge-gap));
+          }
+          .seapals-simulator-preview .seapals-mobile-edge-zones.is-opponent {
+            bottom: calc(var(--seapals-desktop-score-inset) + var(--seapals-desktop-score-height) + var(--seapals-desktop-edge-gap));
+          }
+          .seapals-simulator-preview .seapals-mobile-draw-tray {
+            --seapals-mobile-draw-tray-top: calc(var(--seapals-desktop-score-inset) + var(--seapals-desktop-score-height) + var(--seapals-desktop-edge-gap));
+            right: calc(var(--seapals-edge-card-width) + clamp(.65rem, 1.625dvh, 1.1375rem));
+          }
+          .seapals-simulator-preview .seapals-mobile-edge-zone {
+            min-width: var(--seapals-desktop-control-size);
+            min-height: var(--seapals-desktop-control-size);
+            border-width: clamp(2px, .26786dvh, 3px);
+            border-radius: clamp(.58rem, 1.45dvh, 1.015625rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-edge-zone.is-lost {
+            width: var(--seapals-desktop-control-size);
+            height: var(--seapals-desktop-control-size);
+            min-height: var(--seapals-desktop-control-size);
+          }
+          .seapals-simulator-preview .seapals-mobile-edge-zone-art {
+            inset: clamp(.18rem, .45dvh, .315rem);
+            border-radius: clamp(.42rem, 1.05dvh, .735rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-deck-back {
+            padding: clamp(.65rem, 1.625dvh, 1.1375rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-edge-zone.is-lost .seapals-mobile-edge-zone-art {
+            inset: clamp(.52rem, 1.3dvh, .91rem);
+            border-width: clamp(2px, .26786dvh, 3px);
+            border-radius: clamp(.28rem, .7dvh, .49rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-edge-zone-count {
+            top: var(--seapals-desktop-edge-gap);
+            left: var(--seapals-desktop-edge-gap);
+            min-width: clamp(1.65rem, 4.125dvh, 2.8875rem);
+            height: clamp(1.65rem, 4.125dvh, 2.8875rem);
+            padding: 0 clamp(.3rem, .75dvh, .525rem);
+            border-width: clamp(2px, .26786dvh, 3px);
+            font-size: clamp(.72rem, 1.8dvh, 1.26rem);
+          }
+          .seapals-simulator-preview .seapals-reef-score {
+            right: var(--seapals-desktop-score-inset);
+            gap: var(--seapals-desktop-edge-gap);
+          }
+          .seapals-simulator-preview .seapals-reef-score-opponent { bottom: var(--seapals-desktop-score-inset); }
+          .seapals-simulator-preview .seapals-reef-score-player { top: var(--seapals-desktop-score-inset); }
+          .seapals-simulator-preview .seapals-reef-score-card {
+            width: var(--seapals-desktop-score-width);
+            height: var(--seapals-desktop-score-height);
+            border-width: clamp(1px, .17858dvh, 2px);
+            border-radius: clamp(.6rem, 1.5dvh, 1.05rem);
+          }
+          .seapals-simulator-preview .seapals-reef-score-card small {
+            font-size: clamp(.46rem, 1.15dvh, .805rem);
+          }
+          .seapals-simulator-preview .seapals-reef-score-card strong {
+            margin-top: clamp(.22rem, .55dvh, .385rem);
+            font-size: clamp(1.1rem, 2.75dvh, 1.925rem);
+          }
+          .seapals-simulator-preview .seapals-reef-score-card.is-sd {
+            width: auto;
+            min-width: clamp(2.85rem, 7.125dvh, 4.9875rem);
+            padding-inline: clamp(.2rem, .5dvh, .35rem);
+          }
+          .seapals-simulator-preview .seapals-reef-score-card.is-sd strong {
+            font-size: clamp(.68rem, 1.7dvh, 1.19rem);
+          }
+          .seapals-simulator-preview [data-board-owner="opponent"] .seapals-board-camera-controls {
+            bottom: clamp(.5rem, 1.25dvh, .875rem);
+            left: clamp(.5rem, 1.25dvh, .875rem);
+          }
+          .seapals-simulator-preview [data-board-owner="player"] .seapals-board-camera-controls {
+            top: clamp(.5rem, 1.25dvh, .875rem);
+            left: clamp(.5rem, 1.25dvh, .875rem);
+          }
+          .seapals-simulator-preview .seapals-board-camera-controls > button {
+            width: var(--seapals-desktop-control-size);
+            height: var(--seapals-desktop-control-size);
+            min-height: var(--seapals-desktop-control-size);
+          }
+          .seapals-simulator-preview .seapals-board-camera-controls > button:not(:nth-child(2)) {
+            font-size: clamp(1.25rem, 3.125dvh, 2.1875rem);
+          }
+          .seapals-simulator-preview .seapals-board-camera-controls > button:nth-child(2) {
+            font-size: clamp(.5625rem, 1.40625dvh, .984375rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-dock {
+            right: var(--seapals-desktop-header-inset);
+            bottom: var(--seapals-mobile-hand-bottom);
+            left: var(--seapals-desktop-header-inset);
+          }
+          .seapals-simulator-preview .seapals-mobile-hud-panel {
+            bottom: var(--seapals-mobile-dock-clearance);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-list {
+            padding-top: clamp(.2rem, .5dvh, .35rem);
+            padding-right: clamp(5.75rem, 14.375dvh, 10.0625rem);
+            padding-left: clamp(3.75rem, 9.375dvh, 6.5625rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-list > li + li {
+            margin-left: clamp(-1.8375rem, -2.625dvh, -1.05rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-card {
+            width: clamp(var(--seapals-desktop-hand-card-min), min(6vw, 11.5dvh), var(--seapals-desktop-hand-card-max));
+            height: auto;
+            aspect-ratio: 63 / 88;
+            border-width: clamp(2px, .26786dvh, 3px);
+            border-radius: clamp(.72rem, 1.8dvh, 1.26rem);
+            transform: translateY(clamp(.5rem, 1.25dvh, .875rem)) rotate(-1deg);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card {
+            transform: translateY(clamp(.5rem, 1.25dvh, .875rem)) rotate(1deg);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-card.is-selected,
+          .seapals-simulator-preview .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card.is-selected {
+            transform: translateY(0) rotate(0deg) scale(1.02);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-card.is-dragging,
+          .seapals-simulator-preview .seapals-mobile-hand-list > li:nth-child(even) .seapals-mobile-hand-card.is-dragging {
+            transform: translateY(clamp(.35rem, .875dvh, .6125rem)) rotate(0deg) scale(.94);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-card-name,
+          .seapals-simulator-preview .seapals-mobile-hand-card-cost {
+            font-size: clamp(.48rem, 1.2dvh, .84rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-card-name {
+            right: clamp(.2rem, .5dvh, .35rem);
+            bottom: clamp(.2rem, .5dvh, .35rem);
+            left: clamp(.2rem, .5dvh, .35rem);
+            padding: clamp(.22rem, .55dvh, .385rem) clamp(.3rem, .75dvh, .525rem);
+            border-radius: clamp(.35rem, .875dvh, .6125rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-card-cost {
+            top: var(--seapals-desktop-edge-gap);
+            right: var(--seapals-desktop-edge-gap);
+            padding: clamp(.22rem, .55dvh, .385rem) clamp(.28rem, .7dvh, .49rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-card-setup-badge {
+            top: var(--seapals-desktop-edge-gap);
+            left: var(--seapals-desktop-edge-gap);
+            padding: clamp(.22rem, .55dvh, .385rem) clamp(.32rem, .8dvh, .56rem);
+            font-size: clamp(.46rem, 1.15dvh, .805rem);
+          }
+          .seapals-simulator-preview .seapals-mobile-hand-drag-ghost {
+            width: clamp(clamp(6.4rem, 12.875dvh, 9.0125rem), min(20vw, 11.5dvh), clamp(8rem, 18.125dvh, 13rem));
+          }
+          .seapals-simulator-preview .seapals-player-orphans {
+            right: clamp(8.75rem, 21.875dvh, 15.3125rem);
+          }
+          @container seapals-reef-pane (max-height: 31.25rem) {
+            .seapals-simulator-preview .seapals-mobile-edge-zones,
+            .seapals-simulator-preview .seapals-mobile-edge-zones.is-opponent {
+              width: max-content;
+              flex-direction: row-reverse;
+            }
+            .seapals-simulator-preview .seapals-mobile-draw-tray {
+              right: calc(
+                var(--seapals-edge-card-width)
+                + var(--seapals-edge-card-width)
+                + var(--seapals-edge-card-width)
+                + var(--seapals-desktop-edge-gap)
+                + var(--seapals-desktop-edge-gap)
+                + clamp(.65rem, 1.625dvh, 1.1375rem)
+              );
+              max-height: calc(100% - var(--seapals-mobile-draw-tray-top) - .2rem);
+            }
           }
         }
         @media (max-width: 767px) {
@@ -21581,7 +21805,7 @@ export default function Simulator({
               : playError || ""}
           </span>
           {mobileHudPanel ? (
-            <div className="seapals-mobile-hud-panel absolute inset-x-3 bottom-[4.75rem] z-[60] max-h-[45dvh] overflow-y-auto rounded-2xl border border-cyan-300/25 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-xl xl:hidden">
+            <div className="seapals-mobile-hud-panel absolute inset-x-3 bottom-[4.75rem] z-[60] max-h-[45dvh] overflow-y-auto rounded-2xl border border-cyan-300/25 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-xl">
               <div className="mb-3 flex items-center justify-between"><h2 className="font-black text-white">{mobileHudPanel === "zones" ? "Game Zones" : mobileHudPanel === "decks" ? "Personal Decks" : "Mission Feed"}</h2><button type="button" onClick={() => setMobileHudPanel(null)} className="rounded-lg border border-white/10 px-3 py-1 text-xs font-bold text-slate-200">Close</button></div>
               {mobileHudPanel === "zones" ? (
                 <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => { setMobileHudPanel(null); setModal("discard"); }} className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 font-bold text-cyan-100">Discard Pile<span className="mt-1 block text-2xl font-black">{discardPile.length}</span></button><button type="button" onClick={() => { setMobileHudPanel(null); setModal("lost"); }} className="rounded-xl border border-violet-300/20 bg-violet-400/10 p-4 font-bold text-violet-100">Lost Zone<span className="mt-1 block text-2xl font-black">{lostZone.length}</span></button></div>
