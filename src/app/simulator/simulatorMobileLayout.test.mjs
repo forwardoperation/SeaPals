@@ -545,7 +545,7 @@ test("V2 removes its reef switcher while legacy retains explicit reef tabs", () 
   assert.doesNotMatch(simulatorSource, /focusMobileBoard|MobileScoreControl/);
 });
 
-test("V2 puts available SD beside the number-only VP and RP badges at the right edge", () => {
+test("V2 puts used/capacity SD beside the number-only VP and RP badges at the right edge", () => {
   const opponentScore = sourceSection(
     simulatorSource,
     'className="seapals-reef-score seapals-reef-score-opponent"',
@@ -563,26 +563,26 @@ test("V2 puts available SD beside the number-only VP and RP badges at the right 
   );
 
   assert.match(opponentScore, /data-tutorial-coach-anchor="opponent-board-tab"/);
-  assert.match(opponentScore, /data-school-density-owner="opponent"[\s\S]*?<small>SD<\/small><strong>\{opponentSchoolDensityState\.available\}<\/strong>/);
-  assert.match(opponentScore, /opponentSchoolDensityState\.committed[\s\S]*?opponentSchoolDensityState\.capacity[\s\S]*?committed/);
+  assert.match(opponentScore, /data-school-density-target="opponent"[\s\S]*?<small>SD<\/small><strong>\{presentedOpponentSchoolDensity\.committed\}\s*\/\s*\{presentedOpponentSchoolDensity\.capacity\}<\/strong>/);
+  assert.match(opponentScore, /presentedOpponentSchoolDensity\.committed[\s\S]*?presentedOpponentSchoolDensity\.capacity[\s\S]*?(?:committed|used)/);
   assert.match(opponentScore, /is-sd[\s\S]*?<AnimatedVpBadge[\s\S]*?owner="opponent"[\s\S]*?data-rp-bank-target="opponent"/);
-  assert.match(opponentScore, /<AnimatedVpBadge[\s\S]*?value=\{opponentVp\}[\s\S]*?owner="opponent"/);
+  assert.match(opponentScore, /<AnimatedVpBadge[\s\S]*?value=\{presentedOpponentVp\}[\s\S]*?owner="opponent"/);
   assert.match(opponentScore, /data-rp-bank-target="opponent"[\s\S]*?<small>RP<\/small><strong>\{presentedOpponentRp\}<\/strong>/);
-  assert.doesNotMatch(opponentScore, /victoryTarget|opponentRpCap|\/\{/);
+  assert.doesNotMatch(opponentScore, /victoryTarget|opponentRpCap/);
   assert.match(playerScore, /data-tutorial-coach-anchor="player-board-tab"/);
-  assert.match(playerScore, /data-school-density-owner="player"[\s\S]*?<small>SD<\/small><strong>\{playerSchoolDensityState\.available\}<\/strong>/);
-  assert.match(playerScore, /playerSchoolDensityState\.committed[\s\S]*?playerSchoolDensityState\.capacity[\s\S]*?committed/);
+  assert.match(playerScore, /data-school-density-target="player"[\s\S]*?<small>SD<\/small><strong>\{presentedPlayerSchoolDensity\.committed\}\s*\/\s*\{presentedPlayerSchoolDensity\.capacity\}<\/strong>/);
+  assert.match(playerScore, /presentedPlayerSchoolDensity\.committed[\s\S]*?presentedPlayerSchoolDensity\.capacity[\s\S]*?(?:committed|used)/);
   assert.match(playerScore, /is-sd[\s\S]*?<AnimatedVpBadge[\s\S]*?tutorialTarget="vp-score"[\s\S]*?data-rp-bank-target="player"/);
-  assert.match(playerScore, /<AnimatedVpBadge[\s\S]*?value=\{playerVp\}[\s\S]*?owner="player"/);
+  assert.match(playerScore, /<AnimatedVpBadge[\s\S]*?value=\{presentedPlayerVp\}[\s\S]*?owner="player"/);
   assert.match(playerScore, /data-rp-bank-target="player"[\s\S]*?data-tutorial-target="rp-bank"[\s\S]*?<strong>\{presentedPlayerRp\}<\/strong>/);
-  assert.doesNotMatch(playerScore, /victoryTarget|playerRpCap|\/\{/);
+  assert.doesNotMatch(playerScore, /victoryTarget|playerRpCap/);
   assert.match(responsiveStyles, /\.seapals-reef-score\s*\{[\s\S]*?right:\s*\.45rem;/);
   assert.match(responsiveStyles, /\.seapals-reef-score-opponent\s*\{\s*bottom:\s*\.45rem;/);
   assert.match(responsiveStyles, /\.seapals-reef-score-player\s*\{\s*top:\s*\.45rem;/);
   assert.match(responsiveStyles, /\.seapals-reef-score-card\.is-sd\s*\{[\s\S]*?border-color:[\s\S]*?color:/);
   assert.match(
     responsiveStyles,
-    /\.seapals-simulator-preview \.seapals-player-orphans\s*\{\s*right:\s*8\.25rem;/,
+    /\.seapals-simulator-preview \.seapals-player-orphans\s*\{\s*right:\s*8\.75rem;/,
     "the player orphan-card lane should clear the full SD, VP, and RP badge row",
   );
   assert.match(simulatorSource, /seapals-player-floating-row[^"\n]*inset-x-0[^"\n]*flex-wrap[^"\n]*justify-center/);
@@ -985,7 +985,7 @@ test("V2 card inspection fills the viewport with an animated card and a simple x
   const inspector = sourceSection(
     simulatorSource,
     "{inspectedCardData ? (",
-    "{eventOverlay && !boardFaceoffActive && !openingCoinBoardActive ? (",
+    "{eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive ? (",
   );
 
   assert.match(simulatorSource, /@keyframes seapalsCardInspectorIn[\s\S]*?scale\(\.94\)[\s\S]*?scale\(1\)/);
@@ -1066,7 +1066,7 @@ test("every simulator exit asks for confirmation before leaving the game", () =>
   const exitDialog = sourceSection(
     simulatorSource,
     "{simulatorExitConfirmationOpen ? (",
-    "{eventOverlay && !boardFaceoffActive && !openingCoinBoardActive ? (",
+    "{eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive ? (",
   );
 
   assert.equal((headerBackControls.match(/onClick=\{requestSimulatorExit\}/g) ?? []).length, 2, "both header back branches must request confirmation");

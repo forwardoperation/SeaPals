@@ -348,6 +348,44 @@ test("every in-flight interaction keeps the previous known-good checkpoint untou
   }
   assert.equal(isSimulatorResumeCheckpointStable({ ...base, faceoffLocked: true }), true);
   assert.equal(isSimulatorResumeCheckpointStable({ ...base, faceoffPreview: { attack: 4 } }), true);
+  assert.equal(
+    isSimulatorResumeCheckpointStable({
+      ...base,
+      eventOverlay: {
+        type: "utility-result",
+        sourceCardId: "crevalle-jack",
+        title: "Player's Crevalle Jack gained RP",
+        message: "Crevalle Jack's On Play ability gained 1 RP.",
+        success: true,
+      },
+    }),
+    true,
+    "a display-only result must not roll a completed play back on refresh",
+  );
+  assert.equal(
+    isSimulatorResumeCheckpointStable({
+      ...base,
+      eventOverlay: {
+        type: "utility-result",
+        title: "Continue the turn",
+        continueToEndTurn: true,
+      },
+    }),
+    false,
+    "an overlay whose Continue button advances gameplay must remain checkpoint-blocking",
+  );
+  assert.equal(
+    isSimulatorResumeCheckpointStable({
+      ...base,
+      eventOverlay: {
+        type: "utility-result",
+        title: "Pending state",
+        playerStateAfter: { rp: 4 },
+      },
+    }),
+    false,
+    "an overlay carrying deferred state must remain checkpoint-blocking",
+  );
 
   const storage = new MemoryStorage();
   writeSimulatorResumeCheckpoint(storage, createDurableGame(), { now: 10 });
@@ -356,6 +394,82 @@ test("every in-flight interaction keeps the previous known-good checkpoint untou
     writeSimulatorResumeCheckpoint(storage, createDurableGame({ rp: 99 }), { now: 20 });
   }
   assert.equal(storage.getItem(SIMULATOR_RESUME_STORAGE_KEY), knownGood);
+});
+
+test("cosmetic board-stat flights save the canonical completed play before a refresh", () => {
+  const stableBoundary = {
+    resumeCheckpointReady: true,
+    resumeDecisionResolved: true,
+    resumePromptOpen: false,
+    gameResult: null,
+    startingPlayer: "player",
+    gamePhase: "main",
+    hasDrawnThisTurn: true,
+    turnDrawSelection: null,
+    modal: null,
+    boardStatPresentationActive: true,
+    boardStatFlights: [{ id: "vp-flight", kind: "vp", amount: 1 }],
+  };
+  assert.equal(
+    isSimulatorResumeCheckpointStable(stableBoundary),
+    true,
+    "cosmetic score flights must not leave the last durable checkpoint stuck before the completed card play",
+  );
+
+  const beforePlay = createDurableGame({ hand: ["market-squid"], rp: 6 });
+  const completedPlay = createDurableGame({
+    hand: [],
+    rp: 4,
+    playerReefCreatureInstances: [
+      ...beforePlay.playerReefCreatureInstances,
+      {
+        instanceId: "player-market-squid-1",
+        cardId: "market-squid",
+        hostedCardIds: [],
+        schoolDensityRequirementAtPlay: 20,
+      },
+    ],
+    schoolDensityCommitmentsByInstanceId: {
+      ...beforePlay.schoolDensityCommitmentsByInstanceId,
+      "player-market-squid-1": 20,
+    },
+    boardStatPresentationActive: true,
+    boardStatFlights: [{ id: "sd-flight", kind: "sd", amount: 10 }],
+    presentedBoardStats: {
+      player: { committed: 0, capacity: 30, vp: 1 },
+      opponent: null,
+    },
+  });
+
+  const storage = new MemoryStorage();
+  assert.equal(writeSimulatorResumeCheckpoint(storage, beforePlay, { now: 10 }), true);
+  if (isSimulatorResumeCheckpointStable(stableBoundary)) {
+    assert.equal(writeSimulatorResumeCheckpoint(storage, completedPlay, { now: 20 }), true);
+  }
+
+  const restored = readSimulatorResumeCheckpoint(storage);
+  assert.equal(restored.savedAt, 20);
+  assert.equal(restored.state.rp, 4);
+  assert.deepEqual(restored.state.hand, []);
+  assert.equal(restored.state.playerReefCreatureInstances.at(-1).instanceId, "player-market-squid-1");
+  assert.equal(restored.state.schoolDensityCommitmentsByInstanceId["player-market-squid-1"], 20);
+  assert.equal("boardStatFlights" in restored.state, false);
+  assert.equal("boardStatPresentationActive" in restored.state, false);
+  assert.equal("presentedBoardStats" in restored.state, false);
+});
+
+test("victory waits for readable card feedback after the stat-token sequence", () => {
+  const victoryCheck = sourceSection(
+    simulatorSource,
+    "useEffect(() => {\n    if ([\"setup\", \"opponent\", \"transition\"].includes(gamePhase)",
+    "useEffect(() => {\n    if (!isStoryMode || storyResultRecordedRef.current || !gameResult)",
+  );
+  assert.match(victoryCheck, /const eventRequiresResolution = Boolean\(eventOverlay\)/);
+  assert.match(
+    victoryCheck,
+    /boardStatPresentationActive \|\| eventRequiresResolution/,
+    "Victory must wait first for score flights and then for any readable result overlay",
+  );
 });
 
 test("Simulator gates normal V2 hydration, restores durable state, and derives only the mandatory draw UI", () => {

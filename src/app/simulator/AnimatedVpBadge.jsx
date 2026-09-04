@@ -17,6 +17,7 @@ export default function AnimatedVpBadge({
   className = "",
   tutorialTarget,
   variant = "badge",
+  ...rootProps
 }) {
   const targetValue = normalizeVpCounterValue(value);
   const [displayValue, setDisplayValue] = useState(targetValue);
@@ -122,6 +123,7 @@ export default function AnimatedVpBadge({
 
   return (
     <span
+      {...rootProps}
       className={rootClassName}
       data-vp-counter={owner}
       data-vp-direction={direction ?? "steady"}

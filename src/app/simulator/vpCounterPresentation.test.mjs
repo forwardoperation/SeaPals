@@ -119,14 +119,14 @@ test("animated VP is wired to both reefs in compact V2 and XL score views", () =
     "seapals-reef-score seapals-reef-score-player",
     "{previewExperience && mobileHandDockVisible ? (",
   );
-  assert.match(v2Opponent, /<AnimatedVpBadge[\s\S]*?value=\{opponentVp\}/);
+  assert.match(v2Opponent, /<AnimatedVpBadge[\s\S]*?value=\{presentedOpponentVp\}/);
   assert.match(v2Opponent, /owner="opponent[^"]*"/);
   assert.match(v2Opponent, /label=\{opponentHudLabel\}/);
-  assert.match(v2Opponent, /reducedMotion=\{accessibilityReducedMotion\}/);
-  assert.match(v2Player, /<AnimatedVpBadge[\s\S]*?value=\{playerVp\}/);
+  assert.match(v2Opponent, /reducedMotion=\{accessibilityReducedMotion \|\| boardStatPresentationActive\}/);
+  assert.match(v2Player, /<AnimatedVpBadge[\s\S]*?value=\{presentedPlayerVp\}/);
   assert.match(v2Player, /owner="player[^"]*"/);
   assert.match(v2Player, /label="Your Reef"/);
-  assert.match(v2Player, /reducedMotion=\{accessibilityReducedMotion\}/);
+  assert.match(v2Player, /reducedMotion=\{accessibilityReducedMotion \|\| boardStatPresentationActive\}/);
   assert.match(v2Player, /tutorialTarget="vp-score"/);
 
   const xlScore = sourceSection(
@@ -134,8 +134,8 @@ test("animated VP is wired to both reefs in compact V2 and XL score views", () =
     '<div className={`grid grid-cols-2 overflow-hidden rounded-xl',
     "<button type=\"button\" disabled={!activeCondition}",
   );
-  assert.match(xlScore, /<AnimatedVpBadge[\s\S]*?value=\{playerVp\}[\s\S]*?owner="player[^"]*"[\s\S]*?variant="inline"/);
-  assert.match(xlScore, /<AnimatedVpBadge[\s\S]*?value=\{opponentVp\}[\s\S]*?owner="opponent[^"]*"[\s\S]*?variant="inline"/);
+  assert.match(xlScore, /<AnimatedVpBadge[\s\S]*?value=\{presentedPlayerVp\}[\s\S]*?owner="player[^"]*"[\s\S]*?variant="inline"/);
+  assert.match(xlScore, /<AnimatedVpBadge[\s\S]*?value=\{presentedOpponentVp\}[\s\S]*?owner="opponent[^"]*"[\s\S]*?variant="inline"/);
 
   const badgeUses = simulatorSource.match(/<AnimatedVpBadge\b/g) ?? [];
   assert.ok(badgeUses.length >= 4, "Both compact-board and XL player/opponent VP totals should share the animated counter");

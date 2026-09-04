@@ -38,7 +38,7 @@ test("the V2 opening flip remains a board-native, one-tap interaction in the pla
   assert.match(simulatorSource, /active=\{openingCoinBoardActive\}/);
   assert.match(simulatorSource, /onStop=\{flipForOpeningTurn\}/);
   assert.match(simulatorSource, /onLanded=\{completeOpeningCoinFlip\}/);
-  assert.match(simulatorSource, /eventOverlay && !boardFaceoffActive && !openingCoinBoardActive/);
+  assert.match(simulatorSource, /eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive/);
   assert.match(boardPresentationSource, /data-opening-coin-layer/);
   assert.match(boardPresentationSource, /data-opening-coin-player-zone/);
   assert.match(boardPresentationSource, /data-flip-opening-coin/);
@@ -122,7 +122,7 @@ test("coin toss blocks rerolls and locks the rest of the board while active", ()
   assert.match(simulatorSource, /OpeningCoinPhase\.FLIPPING/);
   assert.match(simulatorSource, /const boardInteractionOverlayActive = boardFaceoffActive \|\| openingCoinBoardActive/);
   assert.match(simulatorSource, /data-opening-coin-active=\{openingCoinBoardActive \? "true" : undefined\}/);
-  assert.match(simulatorSource, /attackContext && !boardFaceoffActive && !openingCoinBoardActive/);
+  assert.match(simulatorSource, /attackContext && boardTargetingPresentationActive && !openingCoinBoardActive/);
   assert.equal((simulatorSource.match(/inert=\{boardInteractionOverlayActive \? true : undefined\}/g) ?? []).length, 3);
   assert.match(simulatorSource, /interactionDisabled=\{boardInteractionOverlayActive \|\|/);
   assert.match(simulatorSource, /\|\| openingCoinBoardActive[\s\S]*\|\| simulatorExitConfirmationOpen/);

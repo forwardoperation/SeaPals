@@ -3586,6 +3586,16 @@ export default function Simulator({
   const compactTurnFlightIdRef = useRef(0);
   const compactTurnTimersRef = useRef(new Set());
   const compactTurnFrameIdsRef = useRef(new Set());
+  const [boardStatFlights, setBoardStatFlights] = useState([]);
+  const [presentedBoardStats, setPresentedBoardStats] = useState({ player: null, opponent: null });
+  const [boardStatPulse, setBoardStatPulse] = useState(null);
+  const [boardStatAnnouncement, setBoardStatAnnouncement] = useState("");
+  const [boardStatPresentationActive, setBoardStatPresentationActive] = useState(false);
+  const boardStatSequenceRef = useRef(null);
+  const boardStatSequenceIdRef = useRef(0);
+  const boardStatFlightIdRef = useRef(0);
+  const boardStatTimerIdsRef = useRef(new Set());
+  const boardStatFrameIdsRef = useRef(new Set());
   const [opponentPlacementFlight, setOpponentPlacementFlight] = useState(null);
   const [compactOpponentCardReader, setCompactOpponentCardReader] = useState(null);
   const [compactOpponentPlaybackLocked, setCompactOpponentPlaybackLocked] = useState(false);
@@ -3819,6 +3829,269 @@ export default function Simulator({
     }, accessibilityReducedMotion || systemReducedMotion ? 480 : 1700);
   }
 
+  function scheduleBoardStatTimeout(callback, delay) {
+    const timerId = window.setTimeout(() => {
+      boardStatTimerIdsRef.current.delete(timerId);
+      callback();
+    }, delay);
+    boardStatTimerIdsRef.current.add(timerId);
+    return timerId;
+  }
+
+  function scheduleBoardStatFrame(callback, framesRemaining = 1) {
+    const frameId = window.requestAnimationFrame(() => {
+      boardStatFrameIdsRef.current.delete(frameId);
+      if (framesRemaining > 1) {
+        scheduleBoardStatFrame(callback, framesRemaining - 1);
+        return;
+      }
+      callback();
+    });
+    boardStatFrameIdsRef.current.add(frameId);
+    return frameId;
+  }
+
+  function clearBoardStatAsyncHandles({ updateState = true } = {}) {
+    boardStatTimerIdsRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    boardStatTimerIdsRef.current.clear();
+    boardStatFrameIdsRef.current.forEach((frameId) => window.cancelAnimationFrame(frameId));
+    boardStatFrameIdsRef.current.clear();
+    boardStatSequenceRef.current = null;
+    boardStatSequenceIdRef.current += 1;
+    if (!updateState) return;
+    setBoardStatFlights([]);
+    setPresentedBoardStats({ player: null, opponent: null });
+    setBoardStatPulse(null);
+    setBoardStatAnnouncement("");
+    setBoardStatPresentationActive(false);
+  }
+
+  function splitBoardStatTokenAmounts(total, preferredUnit, maximumTokens = 6) {
+    const normalizedTotal = Math.max(0, Number(total) || 0);
+    if (!normalizedTotal) return [];
+    const tokenCount = Math.max(1, Math.min(
+      maximumTokens,
+      Math.ceil(normalizedTotal / Math.max(1, Number(preferredUnit) || 1)),
+    ));
+    const baseAmount = Math.floor(normalizedTotal / tokenCount);
+    const remainder = normalizedTotal % tokenCount;
+    return Array.from({ length: tokenCount }, (_, index) => baseAmount + (index < remainder ? 1 : 0));
+  }
+
+  function completeBoardStatFlight(sequenceId, flight) {
+    const sequence = boardStatSequenceRef.current;
+    if (!sequence || sequence.id !== sequenceId) return;
+    setBoardStatFlights((current) => current.filter((entry) => entry.id !== flight.id));
+    setPresentedBoardStats((current) => {
+      const ownerStats = current[sequence.owner] ?? sequence.before;
+      const nextValue = Math.min(
+        sequence.after[flight.field],
+        Number(ownerStats[flight.field] ?? sequence.before[flight.field]) + flight.amount,
+      );
+      return {
+        ...current,
+        [sequence.owner]: { ...ownerStats, [flight.field]: nextValue },
+      };
+    });
+    setBoardStatPulse({ owner: sequence.owner, kind: flight.kind, id: flight.id });
+    scheduleBoardStatTimeout(() => {
+      setBoardStatPulse((current) => current?.id === flight.id ? null : current);
+    }, 260);
+  }
+
+  function finishBoardStatSequence(sequenceId) {
+    const sequence = boardStatSequenceRef.current;
+    if (!sequence || sequence.id !== sequenceId) return;
+    setPresentedBoardStats((current) => ({ ...current, [sequence.owner]: sequence.after }));
+    setBoardStatAnnouncement(sequence.announcement);
+    scheduleBoardStatTimeout(() => {
+      if (boardStatSequenceRef.current?.id !== sequenceId) return;
+      boardStatSequenceRef.current = null;
+      setPresentedBoardStats((current) => ({ ...current, [sequence.owner]: null }));
+      setBoardStatPresentationActive(false);
+    }, 220);
+  }
+
+  function launchBoardStatFlights(sequence) {
+    if (boardStatSequenceRef.current?.id !== sequence.id) return;
+    const { owner, cardInstanceId } = sequence;
+    const boardOwner = sequence.cardBoardOwner ?? owner;
+    const cardElement = document.querySelector(`[data-board-owner="${boardOwner}"] [data-card-instance-id="${cardInstanceId}"]`);
+    const schoolDensitySelector = `[data-school-density-target="${owner}"]`;
+    const vpSelector = `[data-vp-bank-target="${owner}"]`;
+    const firstSchoolDensityTarget = document.querySelector(`[data-school-density-target="${owner}"]`);
+    const firstVpTarget = document.querySelector(`[data-vp-bank-target="${owner}"]`);
+    const firstVisibleTarget = (firstTarget, selector) => [
+      firstTarget,
+      ...document.querySelectorAll(selector),
+    ].filter(Boolean).find((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    }) ?? firstTarget;
+    const schoolDensityTarget = firstVisibleTarget(firstSchoolDensityTarget, schoolDensitySelector);
+    const vpTarget = firstVisibleTarget(firstVpTarget, vpSelector);
+    const boardElement = document.querySelector(`[data-board-owner="${boardOwner}"]`);
+    const boardRect = boardElement?.getBoundingClientRect();
+    const fallbackRect = boardRect?.width && boardRect?.height
+      ? boardRect
+      : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+    const cardRect = cardElement?.getBoundingClientRect();
+    const densityRect = schoolDensityTarget?.getBoundingClientRect();
+    const victoryRect = vpTarget?.getBoundingClientRect();
+    const centerOf = (rect, fallbackX, fallbackY) => rect?.width && rect?.height
+      ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+      : { x: fallbackX, y: fallbackY };
+    const cardCenter = centerOf(
+      cardRect,
+      fallbackRect.left + fallbackRect.width / 2,
+      fallbackRect.top + fallbackRect.height / 2,
+    );
+    const densityCenter = centerOf(
+      densityRect,
+      fallbackRect.left + fallbackRect.width - 92,
+      fallbackRect.top + 34,
+    );
+    const victoryCenter = centerOf(
+      victoryRect,
+      fallbackRect.left + fallbackRect.width - 54,
+      fallbackRect.top + 34,
+    );
+    const tokenOffset = 18;
+    const flights = sequence.blueprints.map((blueprint, index) => {
+      const sourceCenter = blueprint.from === "card"
+        ? cardCenter
+        : blueprint.from === "school-density"
+          ? densityCenter
+          : victoryCenter;
+      const targetCenter = blueprint.to === "card"
+        ? cardCenter
+        : blueprint.to === "school-density"
+          ? densityCenter
+          : victoryCenter;
+      const startX = sourceCenter.x - tokenOffset;
+      const startY = sourceCenter.y - tokenOffset;
+      const endX = targetCenter.x - tokenOffset;
+      const endY = targetCenter.y - tokenOffset;
+      return {
+        ...blueprint,
+        id: `board-stat-flight-${++boardStatFlightIdRef.current}`,
+        cardInstanceId,
+        startX,
+        startY,
+        midX: startX + (endX - startX) * 0.5 + (index % 2 ? 24 : -24),
+        midY: Math.min(startY, endY) - 38 - (index % 3) * 5,
+        endX,
+        endY,
+        duration: 650,
+      };
+    });
+
+    setBoardStatFlights(flights);
+    flights.forEach((flight) => {
+      scheduleBoardStatTimeout(
+        () => completeBoardStatFlight(sequence.id, flight),
+        flight.delay + flight.duration,
+      );
+    });
+    const finishDelay = Math.max(...flights.map((flight) => flight.delay + flight.duration), 0) + 40;
+    scheduleBoardStatTimeout(() => finishBoardStatSequence(sequence.id), finishDelay);
+  }
+
+  function beginBoardStatPresentation({
+    owner = "player",
+    cardBoardOwner = owner,
+    cardInstanceId,
+    cardName,
+    densityCommitmentAmount = null,
+    before,
+    after,
+  }) {
+    if (!previewExperience || !cardInstanceId) return false;
+    const normalizedBefore = {
+      committed: Math.max(0, Number(before?.committed) || 0),
+      capacity: Math.max(0, Number(before?.capacity) || 0),
+      vp: Math.max(0, Number(before?.vp) || 0),
+    };
+    const normalizedAfter = {
+      committed: Math.max(0, Number(after?.committed) || 0),
+      capacity: Math.max(0, Number(after?.capacity) || 0),
+      vp: Math.max(0, Number(after?.vp) || 0),
+    };
+    const committedGain = Math.max(
+      0,
+      densityCommitmentAmount == null
+        ? normalizedAfter.committed - normalizedBefore.committed
+        : Number(densityCommitmentAmount) || 0,
+    );
+    const capacityGain = Math.max(0, normalizedAfter.capacity - normalizedBefore.capacity);
+    const vpGain = Math.max(0, normalizedAfter.vp - normalizedBefore.vp);
+    if (!committedGain && !capacityGain && !vpGain) return false;
+
+    clearBoardStatAsyncHandles();
+    const blueprints = [];
+    let nextDelay = 0;
+    const capacityTokens = splitBoardStatTokenAmounts(capacityGain, 10, 5);
+    capacityTokens.forEach((amount, index) => blueprints.push({
+      kind: "sd",
+      from: "card",
+      to: "school-density",
+      field: "capacity",
+      amount,
+      delay: nextDelay + index * 105,
+    }));
+    if (capacityTokens.length) nextDelay += (capacityTokens.length - 1) * 105 + 190;
+    const committedTokens = splitBoardStatTokenAmounts(committedGain, 10, 5);
+    committedTokens.forEach((amount, index) => blueprints.push({
+      kind: "sd",
+      from: "school-density",
+      to: "card",
+      field: "committed",
+      amount,
+      delay: nextDelay + index * 105,
+    }));
+    if (committedTokens.length) nextDelay += (committedTokens.length - 1) * 105 + 230;
+    const vpTokens = splitBoardStatTokenAmounts(vpGain, 1, 6);
+    vpTokens.forEach((amount, index) => blueprints.push({
+      kind: "vp",
+      from: "card",
+      to: "vp",
+      field: "vp",
+      amount,
+      delay: nextDelay + index * 95,
+    }));
+
+    const sequence = {
+      id: ++boardStatSequenceIdRef.current,
+      owner,
+      cardBoardOwner,
+      cardInstanceId,
+      cardName,
+      before: normalizedBefore,
+      after: normalizedAfter,
+      blueprints,
+      announcement: `${cardName} updated ${[
+        committedGain ? `School Density used to ${normalizedAfter.committed} of ${normalizedAfter.capacity}` : null,
+        capacityGain ? `School Density capacity to ${normalizedAfter.capacity}` : null,
+        vpGain ? `Victory Points to ${normalizedAfter.vp}` : null,
+      ].filter(Boolean).join(" and ")}.`,
+    };
+    boardStatSequenceRef.current = sequence;
+    setPresentedBoardStats((current) => ({ ...current, [owner]: normalizedBefore }));
+    setBoardStatPresentationActive(true);
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    if (accessibilityReducedMotion || systemReducedMotion) {
+      setPresentedBoardStats((current) => ({ ...current, [owner]: normalizedAfter }));
+      setBoardStatAnnouncement(sequence.announcement);
+      scheduleBoardStatTimeout(() => finishBoardStatSequence(sequence.id), 80);
+      return true;
+    }
+
+    // Placement can trigger an ecosystem auto-fit in its own effect/animation frame.
+    // Let that camera update settle before measuring the card and HUD endpoints.
+    scheduleBoardStatFrame(() => launchBoardStatFlights(sequence), 4);
+    return true;
+  }
+
   function queueBubbleBurstAtClientPoint(clientX, clientY) {
     const ecosystem = ecosystemRef.current;
     if (!ecosystem) return;
@@ -3849,6 +4122,10 @@ export default function Simulator({
     bubbleBurstTimersRef.current.clear();
     window.clearTimeout(ecosystemPerimeterFlashTimerRef.current);
     ecosystemPerimeterFlashTimerRef.current = null;
+  }, []);
+
+  useEffect(() => () => {
+    clearBoardStatAsyncHandles({ updateState: false });
   }, []);
 
   function projectNormalizedPlayerState(projectedState) {
@@ -5940,16 +6217,17 @@ export default function Simulator({
   useEffect(() => {
     if (["setup", "opponent", "transition"].includes(gamePhase) || opponentThinking || eventOverlay?.opponentSequence || pendingEvents.some((event) => event.opponentSequence)) return;
     if (eventOverlay?.type === "choose-regenerate" || pendingEvents.some((event) => event.type === "choose-regenerate")) return;
-    const eventRequiresResolution = String(eventOverlay?.type ?? "").startsWith("choose-")
+    const eventRequiresResolution = Boolean(eventOverlay)
+      || String(eventOverlay?.type ?? "").startsWith("choose-")
       || ["onplay-target-prompt", "faceoff-ready", "school-attack-ready", EFFECT_ROLL_READY_TYPE].includes(eventOverlay?.type);
-    if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || consumedAttackFlight || eventRequiresResolution || effectRollRolling) return;
+    if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || consumedAttackFlight || boardStatPresentationActive || eventRequiresResolution || effectRollRolling) return;
     const result = determineVictoryResult(playerVp, opponentVp, victoryTarget);
     if (!result) return;
     setGameResult((current) => {
       if (current) return current;
       return result.message;
     });
-  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, effectRollRolling, consumedAttackFlight]);
+  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, effectRollRolling, consumedAttackFlight, boardStatPresentationActive]);
 
   useEffect(() => {
     if (!isStoryMode || storyResultRecordedRef.current || !gameResult) return;
@@ -6139,6 +6417,49 @@ export default function Simulator({
     }));
   }
 
+  function getPlayerBoardStatSnapshot({
+    corals = playerCorals,
+    habitats = playerHabitats,
+    reefCreatureInstances = playerReefCreatureInstances,
+    orphanCreatureInstances = playerOrphanCreatureInstances,
+    rivalCorals = opponentCorals,
+    rivalOrphans = opponent.orphanCreatures,
+    commitmentsByInstanceId = schoolDensityCommitmentsByInstanceId,
+  } = {}) {
+    const committed = getEcosystemSchoolDensityCommitted({
+      foundations: corals,
+      invasiveFoundations: rivalCorals,
+      reefCreatureInstances,
+      orphanCreatureInstances,
+      invasiveOrphanCreatureInstances: rivalOrphans,
+      commitmentsByInstanceId,
+    }, cardsById, "player");
+    const densityState = createSchoolDensityBucketState(corals, committed, cardsById);
+    return {
+      committed: densityState.committed,
+      capacity: densityState.capacity,
+      vp: getEcosystemVictoryPoints(
+        corals,
+        habitats,
+        reefCreatureInstances.map((instance) => instance.cardId),
+        {
+          controller: "player",
+          localOrphans: orphanCreatureInstances,
+          rivalCorals,
+          rivalOrphans,
+        },
+      ),
+    };
+  }
+
+  function getCurrentPlayerBoardStats() {
+    return {
+      committed: playerSchoolDensityState.committed,
+      capacity: playerSchoolDensityState.capacity,
+      vp: playerVp,
+    };
+  }
+
   function getDensityFreedBySacrificeChoice(choice) {
     return (choice?.candidates ?? []).reduce((total, entry) => {
       const densityInstanceId = entry.densityInstanceId ?? entry.instanceId;
@@ -6171,6 +6492,7 @@ export default function Simulator({
   function getPlayError(card, { allowUpcomingMain = false } = {}) {
     if (!card) return "Select a card first.";
     if (gameResult) return "This game has ended. Start a new game to continue playing.";
+    if (boardStatSequenceRef.current) return "Wait for the score tokens to finish before playing another card.";
     if (compactTurnSequenceRef.current) return "Wait for the board sequence to finish before playing a card.";
     if (attackContext) return "Finish or cancel the current attack before playing another card.";
     if (!isSetup && gamePhase !== "main" && !allowUpcomingMain) return "Cards can only be played during your action phase.";
@@ -7709,6 +8031,24 @@ export default function Simulator({
             }
           : c,
       );
+    const nextSchoolDensityCommitments = cardInstanceId
+      ? {
+          ...schoolDensityCommitmentsByInstanceId,
+          [cardInstanceId]: densityRequirementAtPlay,
+        }
+      : schoolDensityCommitmentsByInstanceId;
+    const nextBoardStats = getPlayerBoardStatSnapshot({
+      corals: nextPlayerCorals,
+      commitmentsByInstanceId: nextSchoolDensityCommitments,
+    });
+    beginBoardStatPresentation({
+      owner: "player",
+      cardInstanceId: placedAttackerInstanceId,
+      cardName: card.name,
+      densityCommitmentAmount: densityRequirementAtPlay,
+      before: getCurrentPlayerBoardStats(),
+      after: nextBoardStats,
+    });
     setPlayerCorals(nextPlayerCorals);
     if (cardInstanceId) commitPlayerSchoolDensity(cardInstanceId, densityRequirementAtPlay);
     queueBubbleBurstForSlot(slotId);
@@ -7832,6 +8172,17 @@ export default function Simulator({
         stageEnteredTurn: turn,
       },
     ], playerOrphanCreatures);
+    const nextBoardStats = getPlayerBoardStatSnapshot({
+      corals: redistributed.corals,
+      orphanCreatureInstances: redistributed.orphans,
+    });
+    beginBoardStatPresentation({
+      owner: "player",
+      cardInstanceId: `foundation:${coralId}`,
+      cardName: card.name,
+      before: getCurrentPlayerBoardStats(),
+      after: nextBoardStats,
+    });
     setPlayerCorals(redistributed.corals);
     setPlayerOrphanCreatures(redistributed.orphans);
     const playCost = getPlayerCardPlayCost(card);
@@ -7879,6 +8230,17 @@ export default function Simulator({
           : candidate,
       );
     const redistributed = redistributeOrphanCreatures(upgradedCorals, playerOrphanCreatures);
+    const nextBoardStats = getPlayerBoardStatSnapshot({
+      corals: redistributed.corals,
+      orphanCreatureInstances: redistributed.orphans,
+    });
+    beginBoardStatPresentation({
+      owner: "player",
+      cardInstanceId: `foundation:${coralId}`,
+      cardName: nextCard.name,
+      before: getCurrentPlayerBoardStats(),
+      after: nextBoardStats,
+    });
     setPlayerCorals(redistributed.corals);
     setPlayerOrphanCreatures(redistributed.orphans);
     setHand((current) => removeOneCard(current, nextCard.id));
@@ -9725,6 +10087,24 @@ export default function Simulator({
     const nextOrphanInstances = sacrificedOrphanIds.length || freedHostedCardIds.length
       ? [...remainingOrphans, ...freedHostedCardIds.map((hostedCardId) => createCreatureInstance(hostedCardId, createStableInstanceId(`player-orphan-${hostedCardId}`)))]
       : playerOrphanCreatureInstances;
+    const nextSchoolDensityCommitments = {
+      ...schoolDensityCommitmentsByInstanceId,
+      [playedInstance.instanceId]: densityRequirementAtPlay,
+    };
+    const nextBoardStats = getPlayerBoardStatSnapshot({
+      corals: nextPlayerCorals,
+      reefCreatureInstances: nextReefInstances,
+      orphanCreatureInstances: nextOrphanInstances,
+      commitmentsByInstanceId: nextSchoolDensityCommitments,
+    });
+    const boardStatPresentationStarted = beginBoardStatPresentation({
+      owner: "player",
+      cardInstanceId: playedInstance.instanceId,
+      cardName: card.name,
+      densityCommitmentAmount: densityRequirementAtPlay,
+      before: getCurrentPlayerBoardStats(),
+      after: nextBoardStats,
+    });
     if (sacrificedOrphanIds.length || freedHostedCardIds.length) setPlayerOrphanCreatureInstances(nextOrphanInstances);
     if (sacrifices.length) setDiscardPile((current) => [...sacrifices.map((entry) => entry.cardId), ...current]);
     const playCost = getPlayerCardPlayCost(card);
@@ -9818,7 +10198,7 @@ export default function Simulator({
         setEventOverlay(finalRoundMilestone);
       } else if (
         previewExperience
-        && card.category === CardCategory.FILTER_FEEDER
+        && boardStatPresentationStarted
         && (card.onPlay ?? []).length === 0
       ) {
         setEventOverlay(null);
@@ -9900,7 +10280,23 @@ export default function Simulator({
     }
     if (card.kind === CardKind.HABITAT) {
       const playCost = getPlayerCardPlayCost(card);
-      setPlayerHabitats((current) => [...current, card.id]);
+      const habitatInstance = createHabitatInstance(
+        card.id,
+        createStableInstanceId(`habitat-${card.id}`),
+        cardsById,
+      );
+      const nextHabitatInstances = [...playerHabitatInstances, habitatInstance];
+      const nextBoardStats = getPlayerBoardStatSnapshot({
+        habitats: nextHabitatInstances.map((instance) => instance.cardId),
+      });
+      beginBoardStatPresentation({
+        owner: "player",
+        cardInstanceId: `habitat:${habitatInstance.instanceId}`,
+        cardName: card.name,
+        before: getCurrentPlayerBoardStats(),
+        after: nextBoardStats,
+      });
+      setPlayerHabitatInstances(nextHabitatInstances);
       setHand((current) => removeOneCard(current, card.id));
       setRp((current) => Math.max(0, current - playCost));
       setSelectedHandCard(null);
@@ -10106,15 +10502,33 @@ export default function Simulator({
     }
     const densityRequirementAtPlay = getPlayerSchoolDensityRequirement(card).effectiveRequirement;
     const cardInstanceId = createStableInstanceId(`player-invader-${card.id}`);
+    const nextOpponentCorals = placeInvasiveCreature(opponent.corals, {
+      coralId,
+      slotId,
+      cardId: card.id,
+      cardInstanceId,
+      controller: "player",
+    }).foundations;
+    const nextSchoolDensityCommitments = {
+      ...schoolDensityCommitmentsByInstanceId,
+      [cardInstanceId]: densityRequirementAtPlay,
+    };
+    const nextBoardStats = getPlayerBoardStatSnapshot({
+      rivalCorals: nextOpponentCorals,
+      commitmentsByInstanceId: nextSchoolDensityCommitments,
+    });
+    beginBoardStatPresentation({
+      owner: "player",
+      cardBoardOwner: "opponent",
+      cardInstanceId,
+      cardName: card.name,
+      densityCommitmentAmount: densityRequirementAtPlay,
+      before: getCurrentPlayerBoardStats(),
+      after: nextBoardStats,
+    });
     setOpponent((current) => ({
       ...current,
-      corals: placeInvasiveCreature(current.corals, {
-        coralId,
-        slotId,
-        cardId: card.id,
-        cardInstanceId,
-        controller: "player",
-      }).foundations,
+      corals: nextOpponentCorals,
     }));
     setHand((current) => removeOneCard(current, card.id));
     setRp((current) => Math.max(0, current - cost));
@@ -11281,12 +11695,36 @@ export default function Simulator({
       ? placeCardInSpecialHost(sourceCard, cardsById[cardId], sourceSlot.hostedCardIds, cardId)
       : null;
     if (cardId && searchContext.candidates.includes(cardId) && hand.includes(cardId) && nextHostedCardIds) {
-      setPlayerCorals((current) => current.map((coral) => coral.id === searchContext.coralId ? { ...coral, slots: coral.slots.map((slot) => slot.id === searchContext.slotId && slot.cardId === sourceCard.id ? { ...slot, hostedCardIds: nextHostedCardIds } : slot) } : coral));
+      const hostedIndex = nextHostedCardIds.findIndex((hostedCardId, index) => (
+        hostedCardId === cardId && sourceSlot.hostedCardIds?.[index] !== hostedCardId
+      ));
+      const hostedSchoolDensityRequirements = [...(sourceSlot.hostedSchoolDensityRequirements ?? [])];
+      const densityRequirementAtPlay = getPlayerSchoolDensityRequirement(cardsById[cardId]).effectiveRequirement;
+      if (hostedIndex >= 0) hostedSchoolDensityRequirements[hostedIndex] = densityRequirementAtPlay;
+      const nextPlayerCorals = playerCorals.map((coral) => coral.id === searchContext.coralId
+        ? {
+            ...coral,
+            slots: coral.slots.map((slot) => slot.id === searchContext.slotId && slot.cardId === sourceCard.id
+              ? { ...slot, hostedCardIds: nextHostedCardIds, hostedSchoolDensityRequirements }
+              : slot),
+          }
+        : coral);
+      const hostedCard = cardsById[cardId];
+      const nextBoardStats = getPlayerBoardStatSnapshot({ corals: nextPlayerCorals });
+      beginBoardStatPresentation({
+        owner: "player",
+        cardInstanceId: `hosted:${sourceSlot.id}:${hostedIndex}`,
+        cardName: hostedCard.name,
+        densityCommitmentAmount: densityRequirementAtPlay,
+        before: getCurrentPlayerBoardStats(),
+        after: nextBoardStats,
+      });
+      setPlayerCorals(nextPlayerCorals);
       setHand((current) => removeOneCard(current, cardId));
-      const message = `${sourceCard.name}'s Symbiosis hosted ${cardsById[cardId]?.name} from your hand. The hosted card counts toward VP and receives the Anemone's defensive protection.`;
+      const message = `${sourceCard.name}'s Symbiosis hosted ${hostedCard.name} from your hand. The hosted card counts toward VP and receives the Anemone's defensive protection.`;
       pushLog(message);
       setSearchContext(null);
-      setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: cardId, title: `Player's ${sourceCard.name} used Symbiosis`, message, success: true });
+      setEventOverlay(null);
       return;
     }
     const message = cardId
@@ -15120,7 +15558,7 @@ export default function Simulator({
   }
 
   function endTurn() {
-    if (compactTurnSequenceRef.current || compactOpponentPresentationRef.current) return;
+    if (compactTurnSequenceRef.current || compactOpponentPresentationRef.current || boardStatSequenceRef.current) return;
     if (isSetup) {
       const academyBlock = getAcademyEndTurnBlock({
         route: scriptedFinishRoute,
@@ -15955,6 +16393,7 @@ export default function Simulator({
     clearMobileDrawFlightSequence();
     clearCompactTurnPresentation();
     clearCompactOpponentPlayback();
+    clearBoardStatAsyncHandles();
     combatResultCheckpointRef.current = null;
     combatResultReturnFocusRef.current = null;
     setCombatResultCheckpoint(null);
@@ -16098,6 +16537,7 @@ export default function Simulator({
     clearMobileDrawFlightSequence();
     clearCompactTurnPresentation();
     clearCompactOpponentPlayback();
+    clearBoardStatAsyncHandles();
     combatResultCheckpointRef.current = null;
     combatResultReturnFocusRef.current = null;
     setCombatResultCheckpoint(null);
@@ -16397,6 +16837,7 @@ export default function Simulator({
   );
   const boardEffectRollActive = Boolean(eventOverlay?.type === EFFECT_ROLL_READY_TYPE);
   const boardFaceoffActive = combatBoardFaceoffActive || boardEffectRollActive;
+  const boardTargetingPresentationActive = !boardFaceoffActive && !boardStatPresentationActive;
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
   const openingCoinBoardActive = Boolean(previewExperience && isOpeningCoinEvent);
   const cardCoinBoardActive = Boolean(previewExperience && cardCoinFlip);
@@ -16407,7 +16848,7 @@ export default function Simulator({
     && !resumeHydrationPending
     && !resumeCheckpoint
   );
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || Boolean(combatResultCheckpoint) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || boardStatPresentationActive || Boolean(combatResultCheckpoint) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -16422,6 +16863,7 @@ export default function Simulator({
     || boardEffectRollActive
     || openingCoinBoardActive
     || cardCoinBoardActive
+    || boardStatPresentationActive
     || resumeHydrationPending
     || resumeCheckpoint
     || simulatorExitConfirmationOpen
@@ -16496,6 +16938,24 @@ export default function Simulator({
       : `Round ${resumeCheckpoint?.state.round ?? 1} · Your turn`;
   const presentedPlayerRp = compactDisplayedRp.player ?? rp;
   const presentedOpponentRp = compactDisplayedRp.opponent ?? opponent.rp;
+  const presentedPlayerSchoolDensity = presentedBoardStats.player
+    ? {
+        committed: presentedBoardStats.player.committed,
+        capacity: presentedBoardStats.player.capacity,
+        available: Math.max(0, presentedBoardStats.player.capacity - presentedBoardStats.player.committed),
+        overCapacity: Math.max(0, presentedBoardStats.player.committed - presentedBoardStats.player.capacity),
+      }
+    : playerSchoolDensityState;
+  const presentedOpponentSchoolDensity = presentedBoardStats.opponent
+    ? {
+        committed: presentedBoardStats.opponent.committed,
+        capacity: presentedBoardStats.opponent.capacity,
+        available: Math.max(0, presentedBoardStats.opponent.capacity - presentedBoardStats.opponent.committed),
+        overCapacity: Math.max(0, presentedBoardStats.opponent.committed - presentedBoardStats.opponent.capacity),
+      }
+    : opponentSchoolDensityState;
+  const presentedPlayerVp = presentedBoardStats.player?.vp ?? playerVp;
+  const presentedOpponentVp = presentedBoardStats.opponent?.vp ?? opponentVp;
   const setupOpeningHandPresentedCount = setupOpeningHandVisibleCount == null
     ? hand.length
     : Math.min(hand.length, Math.max(0, Number(setupOpeningHandVisibleCount) || 0));
@@ -17112,6 +17572,26 @@ export default function Simulator({
             opacity: 0;
             transform: translate3d(var(--seapals-rp-end-x), var(--seapals-rp-end-y), 0) scale(.62) rotate(36deg);
           }
+        }
+        @keyframes seapalsBoardStatFlight {
+          0% {
+            opacity: 0;
+            transform: translate3d(var(--seapals-stat-start-x), var(--seapals-stat-start-y), 0) scale(.45) rotate(-18deg);
+          }
+          12% { opacity: 1; }
+          48% {
+            opacity: 1;
+            transform: translate3d(var(--seapals-stat-mid-x), var(--seapals-stat-mid-y), 0) scale(1.16) rotate(12deg);
+          }
+          86% { opacity: 1; }
+          100% {
+            opacity: 0;
+            transform: translate3d(var(--seapals-stat-end-x), var(--seapals-stat-end-y), 0) scale(.6) rotate(30deg);
+          }
+        }
+        @keyframes seapalsBoardStatCounterPulse {
+          0%, 100% { transform: scale(1); filter: brightness(1); }
+          48% { transform: scale(1.16); filter: brightness(1.45); }
         }
         @keyframes seapalsRpBankCollect {
           0%, 100% { transform: scale(1); filter: brightness(1); }
@@ -18989,6 +19469,45 @@ export default function Simulator({
           letter-spacing: -.02em;
           text-shadow: 0 1px 2px rgba(2, 8, 23, .75);
         }
+        .seapals-board-stat-flight-layer { pointer-events: none; }
+        .seapals-board-stat-flight {
+          position: fixed;
+          top: 0;
+          left: 0;
+          display: grid;
+          width: 2.25rem;
+          height: 2.25rem;
+          place-items: center;
+          border: 3px solid rgba(255, 255, 255, .9);
+          border-radius: 999px;
+          color: #fff;
+          opacity: 0;
+          box-shadow: 0 8px 20px rgba(2, 8, 23, .58), 0 0 22px var(--seapals-stat-glow);
+          animation: seapalsBoardStatFlight 650ms cubic-bezier(.18,.74,.2,1) both;
+          will-change: transform, opacity;
+        }
+        .seapals-board-stat-flight.is-sd {
+          --seapals-stat-glow: rgba(34, 211, 238, .92);
+          background: radial-gradient(circle at 34% 26%, #ecfeff 0 10%, #22d3ee 13% 52%, #0e7490 55% 100%);
+        }
+        .seapals-board-stat-flight.is-vp {
+          --seapals-stat-glow: rgba(250, 204, 21, .92);
+          border-color: #fef3c7;
+          background: radial-gradient(circle at 34% 26%, #fffbeb 0 10%, #fbbf24 13% 52%, #b45309 55% 100%);
+        }
+        .seapals-board-stat-flight b {
+          font-size: .62rem;
+          font-weight: 950;
+          line-height: .8;
+          text-shadow: 0 1px 2px rgba(2, 8, 23, .8);
+        }
+        .seapals-board-stat-flight small {
+          display: block;
+          margin-top: -.2rem;
+          font-size: .45rem;
+          font-weight: 950;
+          line-height: .7;
+        }
         .seapals-reef-score-card.is-rp.is-collecting { animation: seapalsRpBankCollect 220ms ease-out both; }
         .seapals-reef-divider-handle[aria-disabled="true"] { pointer-events: none; }
         .seapals-reduced-motion .seapals-compact-turn-banner,
@@ -19273,6 +19792,7 @@ export default function Simulator({
           animation: none !important;
         }
         @media (prefers-reduced-motion: reduce) {
+          .seapals-board-stat-flight { animation-duration: 1ms !important; }
           :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-gain,
           :is(.seapals-reef-score-card, .seapals-vp-value).is-vp-loss,
           .seapals-ecosystem-perimeter-flash {
@@ -19501,13 +20021,15 @@ export default function Simulator({
           .is-vp-loss > strong { animation: seapalsVpDigitDown 86ms ease-out both; }
           .seapals-reef-score-card.is-rp { border-color: rgba(110, 231, 183, .68); color: #d1fae5; }
           .seapals-reef-score-card.is-sd { border-color: rgba(103, 232, 249, .7); color: #cffafe; }
-          .seapals-reef-score-card.is-sd strong { font-size: .92rem; letter-spacing: -.03em; }
+          .seapals-reef-score-card.is-sd { width: auto; min-width: 2.85rem; padding-inline: .2rem; }
+          .seapals-reef-score-card.is-sd strong { font-size: .68rem; letter-spacing: -.045em; white-space: nowrap; }
+          .seapals-reef-score-card.is-sd.is-stat-updating { animation: seapalsBoardStatCounterPulse 260ms ease-out both; }
           .seapals-simulator-preview .seapals-mobile-hand-list {
             padding-right: 5.75rem;
             padding-left: 3.75rem;
           }
           .seapals-simulator-preview .seapals-player-floating-row { padding-inline: 0; }
-          .seapals-simulator-preview .seapals-player-orphans { right: 8.25rem; }
+          .seapals-simulator-preview .seapals-player-orphans { right: 8.75rem; }
           .seapals-simulator-preview [data-board-owner="opponent"] .seapals-board-camera-controls {
             z-index: 65;
             top: auto;
@@ -19932,7 +20454,7 @@ export default function Simulator({
                 <button type="button" onClick={() => setModal("discard")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Discard</button>
                 <button type="button" onClick={() => setModal("lost")} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 sm:block">Lost</button>
                 <button type="button" onClick={openNewGameSetup} className="hidden rounded-lg px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 xl:block">{isStoryMode ? "Restart Duel" : "New Game"}</button>
-                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
+                <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || boardStatPresentationActive || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-2 text-xs font-black text-slate-950 shadow-lg disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">
                   {turnControlLabel}
                 </button>
               </div>
@@ -20108,7 +20630,7 @@ export default function Simulator({
             <div
               ref={mobileBoardStackRef}
               className="seapals-board-stack relative h-full min-h-0 overflow-hidden rounded-2xl bg-[#071724]"
-              data-v2-attack-mode={previewExperience && attackContext && !boardFaceoffActive && !openingCoinBoardActive ? "true" : undefined}
+              data-v2-attack-mode={previewExperience && attackContext && boardTargetingPresentationActive && !openingCoinBoardActive ? "true" : undefined}
               data-opening-coin-active={openingCoinBoardActive ? "true" : undefined}
               data-card-coin-active={cardCoinBoardActive ? "true" : undefined}
               data-combat-flight-active={consumedAttackFlight ? "true" : undefined}
@@ -20120,7 +20642,7 @@ export default function Simulator({
               <div id="simulator-opponent-reef" className={`seapals-board-pane ${previewExperience ? "block" : mobileBoardView === "opponent" ? "h-full" : "hidden"} border-b border-cyan-300/20 bg-slate-900 xl:block xl:h-[45%]`} data-board-owner="opponent" onClickCapture={(event) => suppressBoardGestureClick("opponent", event)} aria-label="Rival reef" inert={boardInteractionOverlayActive ? true : undefined}>
                 <div className="seapals-board-pane-header flex h-10 items-center justify-between gap-4 border-b border-white/5 bg-gradient-to-r from-rose-500/10 via-slate-900 to-slate-900 px-4">
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-200"><span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_12px_rgba(251,113,133,.8)]" /> {isStoryMode ? `${storyOpponentName}'s Ecosystem` : "Rival Ecosystem"}</div>
-                  {attackContext && !boardFaceoffActive ? (
+                  {attackContext && boardTargetingPresentationActive ? (
                     <div className="flex items-center gap-2" role="status">
                       {previewExperience ? <span className="sr-only">Choose a card marked by a red target reticle.</span> : <div className="rounded-full bg-emerald-400 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-950 shadow-lg">Choose a highlighted target</div>}
                       {!attackContext.costCommitted && !attackContext.onPlay ? <button type="button" onClick={() => setAttackContext(null)} className={`rounded-full border px-3 py-1 text-[10px] font-bold hover:bg-white/10 ${previewExperience ? "border-rose-200/70 bg-rose-950/70 text-rose-50" : "border-white/15 bg-white/5 text-slate-200"}`}>Cancel</button> : !previewExperience ? <span className="text-[10px] font-bold text-emerald-200">Finish each repeated attack</span> : null}
@@ -20133,7 +20655,7 @@ export default function Simulator({
                     data-tutorial-coach-anchor="opponent-board-tab"
                     aria-label={opponentSetupConcealed
                       ? "Opponent setup values hidden until Round 1 begins."
-                      : `${opponentHudLabel}: ${opponentVp} Victory Points, ${presentedOpponentRp} Resource Points, and ${opponentSchoolDensityState.available} School Density available; ${opponentSchoolDensityState.committed} of ${opponentSchoolDensityState.capacity} committed`}
+                      : `${opponentHudLabel}: ${presentedOpponentVp} Victory Points, ${presentedOpponentRp} Resource Points, and ${presentedOpponentSchoolDensity.committed} of ${presentedOpponentSchoolDensity.capacity} School Density used`}
                   >
                     {opponentSetupConcealed ? (
                       <>
@@ -20143,12 +20665,13 @@ export default function Simulator({
                       </>
                     ) : (
                       <>
-                        <span className="seapals-reef-score-card is-sd" data-school-density-owner="opponent" title={`${opponentSchoolDensityState.available} School Density available; ${opponentSchoolDensityState.committed} of ${opponentSchoolDensityState.capacity} committed`}><small>SD</small><strong>{opponentSchoolDensityState.available}</strong></span>
+                        <span key={`opponent-sd-${boardStatPulse?.owner === "opponent" && boardStatPulse.kind === "sd" ? boardStatPulse.id : "steady"}`} className={`seapals-reef-score-card is-sd${boardStatPulse?.owner === "opponent" && boardStatPulse.kind === "sd" ? " is-stat-updating" : ""}`} data-school-density-target="opponent" title={`${presentedOpponentSchoolDensity.committed} of ${presentedOpponentSchoolDensity.capacity} School Density used`}><small>SD</small><strong>{presentedOpponentSchoolDensity.committed}/{presentedOpponentSchoolDensity.capacity}</strong></span>
                         <AnimatedVpBadge
-                          value={opponentVp}
+                          value={presentedOpponentVp}
                           owner="opponent"
                           label={opponentHudLabel}
-                          reducedMotion={accessibilityReducedMotion}
+                          reducedMotion={accessibilityReducedMotion || boardStatPresentationActive}
+                          data-vp-bank-target="opponent"
                         />
                         <span key={`opponent-rp-${compactRpPulseOwner === "opponent" ? compactRpPulseVersion : 0}`} data-rp-bank-target="opponent" className={`seapals-reef-score-card is-rp${compactRpPulseOwner === "opponent" ? " is-collecting" : ""}`}><small>RP</small><strong>{presentedOpponentRp}</strong></span>
                       </>
@@ -20217,7 +20740,7 @@ export default function Simulator({
                                 const card = cardsById[cardId];
                                 const targetSlotId = getOpponentReefSlotId(index);
                                 const attackTarget = attackContext?.targets.find((target) => target.coralId === "__reef__" && target.slotId === targetSlotId);
-                                const isTarget = Boolean(attackTarget) && !boardFaceoffActive;
+                                const isTarget = Boolean(attackTarget) && boardTargetingPresentationActive;
                                 const key = `opponent-${targetSlotId}`;
                                 const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
                                 return (
@@ -20253,7 +20776,7 @@ export default function Simulator({
                             const card = cardsById[entry.cardId];
                             const targetSlotId = getOpponentOrphanSlotId(index);
                             const attackTarget = attackContext?.targets.find((target) => target.coralId === "__orphan__" && target.slotId === targetSlotId);
-                            const isTarget = Boolean(attackTarget) && !boardFaceoffActive;
+                            const isTarget = Boolean(attackTarget) && boardTargetingPresentationActive;
                             return (
                               <div key={entry.instanceId ?? `${entry.cardId}-${index}`} className="rounded-lg bg-orange-100/90 p-1 text-center">
                                 <button type="button" data-card-id={entry.cardId} data-card-instance-id={entry.instanceId} data-attack-target={isTarget ? "true" : undefined} data-attack-target-instance={attackTarget?.instanceId} data-tutorial-target={isTarget ? "opponent-board" : undefined} aria-label={isTarget ? `Attack ${card?.name}` : `Inspect ${card?.name}`} onPointerDown={(event) => event.stopPropagation()} onClick={() => isTarget ? resolvePlayerAttack("__orphan__", targetSlotId) : setInspectedCard({ owner: "opponent", cardId: entry.cardId, coralId: null, slotId: `opponent-${targetSlotId}`, orphanIndex: index })} className={`seapals-in-play-card relative w-14 rounded-lg text-center ${isTarget ? "animate-pulse ring-4 ring-emerald-400" : ""}`}>
@@ -20268,7 +20791,7 @@ export default function Simulator({
                                       const hostedCard = cardsById[hostedCardId];
                                       const hostedSlotId = getOrphanHostedTargetSlotId(entry.instanceId ?? `legacy-${index}`, hostedIndex);
                                       const hostedAttackTarget = attackContext?.targets.find((target) => target.coralId === "__orphan__" && target.slotId === hostedSlotId);
-                                      const hostedIsTarget = Boolean(hostedAttackTarget) && !boardFaceoffActive;
+                                      const hostedIsTarget = Boolean(hostedAttackTarget) && boardTargetingPresentationActive;
                                       return (
                                         <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${entry.instanceId}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedSlotId}`} data-combat-anchor-ids={`${hostedSlotId} hosted:${hostedSlotId}`} data-attack-target={hostedIsTarget ? "true" : undefined} data-attack-target-instance={hostedAttackTarget?.instanceId} data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} aria-label={hostedIsTarget ? `Attack ${hostedCard?.name}` : `Inspect ${hostedCard?.name}`} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack("__orphan__", hostedSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: null, slotId: `opponent-${hostedSlotId}`, orphanIndex: index, hostedIndex })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded ring-4 ring-emerald-400" : "rounded"}`} title={`Hosted by ${card?.name}`}>
                                           <InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} />
@@ -20288,7 +20811,7 @@ export default function Simulator({
                         const densityBucket = opponentSchoolDensityState.byFoundationId[coral.id] ?? null;
                         const anchorPositions = getOpponentSlotPositions(coral.slots.length, previewExperience);
                         const foundationAttackTarget = attackContext?.targets.find((target) => target.coralId === coral.id && target.slotId === "__foundation__");
-                        const isFoundationTarget = Boolean(foundationAttackTarget) && !boardFaceoffActive;
+                        const isFoundationTarget = Boolean(foundationAttackTarget) && boardTargetingPresentationActive;
                         const gridOffset = getOpponentCoralGridOffset(coralIndex, opponentCorals.length, previewExperience);
                         const hasFloatingOpponentCards = opponent.habitats.length || opponent.reefCreatures.length || (opponent.orphanCreatures?.length ?? 0);
                         const opponentFloatingOffset = hasFloatingOpponentCards ? 360 : 0;
@@ -20307,7 +20830,7 @@ export default function Simulator({
                               const position = getOpponentSlotPosition(slot.position, previewExperience) ?? anchorPositions[slotIndex];
                               const slotCard = cardsById[slot.cardId];
                               const attackTarget = attackContext?.targets.find((target) => target.coralId === coral.id && target.slotId === slot.id);
-                              const isTarget = Boolean(attackTarget) && !boardFaceoffActive;
+                              const isTarget = Boolean(attackTarget) && boardTargetingPresentationActive;
                               return (
                                 <div key={slot.id} className="absolute inset-0">
                                   <div className="pointer-events-none absolute bg-slate-400 opacity-70" style={getSlotConnectorStyle(position)} />
@@ -20336,7 +20859,7 @@ export default function Simulator({
                                   >
                                     {slotCard ? <><InPlayHoverLabel card={slotCard} zoom={opponentEcosystemZoom} /><img src={slotCard.image} alt={slotCard.name} className="h-full w-full rounded-[1.15rem] object-contain" /></> : <><EmptySlotHoverLabel slot={slot} zoom={opponentEcosystemZoom} position={position} /><img src={getSlotIconPath(slot)} alt={`${getCreatureSlotLabel(slot)} empty slot`} className="h-28 w-28 max-w-none object-contain opacity-90" /></>}
                                   </button>
-                                  {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute z-30 flex gap-1 rounded-lg border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg" style={{ left: `calc(${position.left} ${previewExperience ? "-" : "+"} 48px)`, top: `calc(${position.top} ${previewExperience ? "+" : "-"} 68px)` }}>{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); const hostedAttackTarget = attackContext?.targets.find((target) => target.coralId === coral.id && target.slotId === hostedTargetSlotId); const hostedIsTarget = Boolean(hostedAttackTarget) && !boardFaceoffActive; return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${slot.id}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedTargetSlotId}`} data-combat-anchor-ids={`${hostedTargetSlotId} hosted:${hostedTargetSlotId}`} data-attack-target={hostedIsTarget ? "true" : undefined} data-attack-target-instance={hostedAttackTarget?.instanceId} data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} aria-label={hostedIsTarget ? `Attack ${hostedCard?.name}` : `Inspect ${hostedCard?.name}`} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack(coral.id, hostedTargetSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: coral.id, slotId: hostedTargetSlotId, hostedBySlotId: slot.id })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded-md ring-4 ring-emerald-400" : "rounded-md"}`} title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-16 w-11 rounded-md bg-white object-contain" /></button>; })}</div> : null}
+                                  {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute z-30 flex gap-1 rounded-lg border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg" style={{ left: `calc(${position.left} ${previewExperience ? "-" : "+"} 48px)`, top: `calc(${position.top} ${previewExperience ? "+" : "-"} 68px)` }}>{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); const hostedAttackTarget = attackContext?.targets.find((target) => target.coralId === coral.id && target.slotId === hostedTargetSlotId); const hostedIsTarget = Boolean(hostedAttackTarget) && boardTargetingPresentationActive; return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${slot.id}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedTargetSlotId}`} data-combat-anchor-ids={`${hostedTargetSlotId} hosted:${hostedTargetSlotId}`} data-attack-target={hostedIsTarget ? "true" : undefined} data-attack-target-instance={hostedAttackTarget?.instanceId} data-tutorial-target={hostedIsTarget ? "opponent-board" : undefined} aria-label={hostedIsTarget ? `Attack ${hostedCard?.name}` : `Inspect ${hostedCard?.name}`} onPointerDown={(event) => event.stopPropagation()} onClick={() => hostedIsTarget ? resolvePlayerAttack(coral.id, hostedTargetSlotId) : setInspectedCard({ owner: "opponent", cardId: hostedCardId, coralId: coral.id, slotId: hostedTargetSlotId, hostedBySlotId: slot.id })} className={`seapals-in-play-card relative ${hostedIsTarget ? "animate-pulse rounded-md ring-4 ring-emerald-400" : "rounded-md"}`} title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={opponentEcosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-16 w-11 rounded-md bg-white object-contain" /></button>; })}</div> : null}
                                 </div>
                               );
                             })}
@@ -20418,15 +20941,16 @@ export default function Simulator({
                   )}
                 </div>
                 {previewExperience ? (
-                  <div className="seapals-reef-score seapals-reef-score-player" data-tutorial-coach-anchor="player-board-tab" aria-label={`Your Reef: ${playerVp} Victory Points, ${presentedPlayerRp} Resource Points, and ${playerSchoolDensityState.available} School Density available; ${playerSchoolDensityState.committed} of ${playerSchoolDensityState.capacity} committed`}>
-                    <span className="seapals-reef-score-card is-sd" data-school-density-owner="player" title={`${playerSchoolDensityState.available} School Density available; ${playerSchoolDensityState.committed} of ${playerSchoolDensityState.capacity} committed`}><small>SD</small><strong>{playerSchoolDensityState.available}</strong></span>
+                  <div className="seapals-reef-score seapals-reef-score-player" data-tutorial-coach-anchor="player-board-tab" aria-label={`Your Reef: ${presentedPlayerVp} Victory Points, ${presentedPlayerRp} Resource Points, and ${presentedPlayerSchoolDensity.committed} of ${presentedPlayerSchoolDensity.capacity} School Density used`}>
+                    <span key={`player-sd-${boardStatPulse?.owner === "player" && boardStatPulse.kind === "sd" ? boardStatPulse.id : "steady"}`} className={`seapals-reef-score-card is-sd${boardStatPulse?.owner === "player" && boardStatPulse.kind === "sd" ? " is-stat-updating" : ""}`} data-school-density-target="player" title={`${presentedPlayerSchoolDensity.committed} of ${presentedPlayerSchoolDensity.capacity} School Density used`}><small>SD</small><strong>{presentedPlayerSchoolDensity.committed}/{presentedPlayerSchoolDensity.capacity}</strong></span>
                     <AnimatedVpBadge
-                      value={playerVp}
+                      value={presentedPlayerVp}
                       owner="player"
                       label="Your Reef"
-                      reducedMotion={accessibilityReducedMotion}
+                      reducedMotion={accessibilityReducedMotion || boardStatPresentationActive}
                       className={tutorialTargetClass("vp-score")}
                       tutorialTarget="vp-score"
+                      data-vp-bank-target="player"
                     />
                     <span key={`player-rp-${compactRpPulseOwner === "player" ? compactRpPulseVersion : 0}`} data-rp-bank-target="player" className={`seapals-reef-score-card is-rp${compactRpPulseOwner === "player" ? " is-collecting" : ""}${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><small>RP</small><strong>{presentedPlayerRp}</strong></span>
                   </div>
@@ -20581,7 +21105,7 @@ export default function Simulator({
                             const targetSlotId = getPlayerOrphanSlotId(index);
                             const isForeignInvader = entry.invasiveOwner === "opponent";
                             const invaderAttackTarget = attackContext?.targets.find((target) => target.coralId === "__own_invader_orphan__" && target.instanceId === entry.instanceId);
-                            const isInvaderTarget = Boolean(invaderAttackTarget) && !boardFaceoffActive;
+                            const isInvaderTarget = Boolean(invaderAttackTarget) && boardTargetingPresentationActive;
                             return (
                               <button
                                 key={entry.instanceId ?? `${entry.cardId}-${index}`}
@@ -20677,7 +21201,7 @@ export default function Simulator({
                                 const slotFilled = Boolean(slot.cardId);
                                 const slotCard = slotFilled ? cardsById[slot.cardId] : null;
                                 const invaderAttackTarget = attackContext?.targets.find((target) => target.coralId === "__own_invader__" && target.hostCoralId === coral.id && target.slotId === slot.id);
-                                const isInvaderTarget = Boolean(invaderAttackTarget) && !boardFaceoffActive;
+                                const isInvaderTarget = Boolean(invaderAttackTarget) && boardTargetingPresentationActive;
                                 const validHostTarget = Boolean(slotFilled && activePlacementCardId && canHostCardInSlot(slot, activePlacementCardId));
                                 const academyPlacementAllowed = !activePlacementCardId || isAcademyPlacementAllowed({
                                   route: scriptedFinishRoute,
@@ -20844,7 +21368,7 @@ export default function Simulator({
               {previewExperience ? (
                 <AttackIntentLayer
                   key={combatIntentPresentationKey ?? "inactive-combat-intent"}
-                  active={combatBoardFaceoffActive}
+                  active={combatBoardFaceoffActive && !boardStatPresentationActive}
                   windup={!combatIntentReady}
                   presentationKey={combatIntentPresentationKey}
                   rootRef={mobileBoardStackRef}
@@ -20860,7 +21384,7 @@ export default function Simulator({
               ) : null}
               {previewExperience ? (
                 <BoardCombatDice
-                  active={combatBoardFaceoffActive && combatIntentReady}
+                  active={combatBoardFaceoffActive && combatIntentReady && !boardStatPresentationActive}
                   attackExpression={eventOverlay?.attackDice}
                   defenseExpression={eventOverlay?.type === "school-attack-ready" ? null : eventOverlay?.defenseDice}
                   preview={faceoffPreview}
@@ -20873,7 +21397,7 @@ export default function Simulator({
                 />
               ) : null}
               <BoardCombatDice
-                active={boardEffectRollActive}
+                active={boardEffectRollActive && !boardStatPresentationActive}
                 mode="effect"
                 attackExpression={eventOverlay?.dice}
                 defenseExpression={null}
@@ -20899,7 +21423,7 @@ export default function Simulator({
               ) : null}
               {previewExperience ? (
                 <CardCoinBoardPresentation
-                  active={cardCoinBoardActive}
+                  active={cardCoinBoardActive && !boardStatPresentationActive}
                   event={cardCoinFlip}
                   reducedMotion={accessibilityReducedMotion}
                   restoreFocus={false}
@@ -20911,7 +21435,7 @@ export default function Simulator({
             </div>
           </div>
           <AttackTargetLayer
-            active={Boolean(previewExperience && attackContext && !boardFaceoffActive && !openingCoinBoardActive)}
+            active={Boolean(previewExperience && attackContext && boardTargetingPresentationActive && !openingCoinBoardActive)}
             rootRef={mobileBoardStackRef}
             measureKey={attackTargetMeasureKey}
             reducedMotion={accessibilityReducedMotion}
@@ -21009,13 +21533,13 @@ export default function Simulator({
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "zones" ? null : "zones")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("zones")}`} data-tutorial-target="zones">Zones<br /><span className="text-cyan-300">{discardPile.length + lostZone.length}</span></button>
             <button type="button" onClick={() => setMobileHudPanel((current) => current === "feed" ? null : "feed")} className={`rounded-xl border border-white/10 bg-white/5 px-1 text-[10px] font-bold text-slate-200${tutorialTargetClass("event-feed")}`} data-tutorial-target="event-feed">Guide<br /><span className="text-violet-300">Feed</span></button>
             <button type="button" onClick={() => { if (!playingCardId) setModal("hand"); }} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish or cancel this card placement first." : undefined} className={`rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 text-sm font-black text-cyan-50 shadow-lg disabled:cursor-not-allowed disabled:opacity-45${isSetup && !hasCoralInPlay && !playingCardId ? " seapals-setup-playable-card" : ""}${tutorialTargetClass("hand")}`} data-tutorial-target="hand">Open Hand <span className="text-cyan-300">({hand.length})</span><span className={`block text-[10px] font-semibold text-emerald-300${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank">{playingCardId ? "Place card first" : `${rp} RP ready`}</span></button>
-            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
+            <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || boardStatPresentationActive || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-2 text-xs font-black text-slate-950 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
           </div> : null}
         </div>
 
         <div className="seapals-hud-panel hidden min-h-0 overflow-y-auto rounded-2xl border border-cyan-400/20 p-3 shadow-xl xl:col-start-2 xl:row-start-1 xl:flex xl:flex-col">
           <div className={`grid grid-cols-2 overflow-hidden rounded-xl border border-white/10 bg-slate-950/45${tutorialTargetClass("vp-score")}`} data-tutorial-target="vp-score">
-            <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white"><AnimatedVpBadge value={playerVp} owner="player-wide" label="Your Reef" reducedMotion={accessibilityReducedMotion} variant="inline" /><span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65">{playerSchoolDensityState.committed}/{playerSchoolDensity} SD used{playerSchoolDensityState.overCapacity ? ` · ${playerSchoolDensityState.overCapacity} over capacity` : ` · ${playerSchoolDensityState.available} open`}</div></div>
+            <div className="border-r border-white/10 p-3 text-center"><div className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">Your Reef</div><div className="mt-0.5 text-2xl font-black tabular-nums text-white" data-vp-bank-target="player"><AnimatedVpBadge value={presentedPlayerVp} owner="player-wide" label="Your Reef" reducedMotion={accessibilityReducedMotion || boardStatPresentationActive} variant="inline" /><span className="text-sm text-emerald-300">/{victoryTarget} VP</span></div><div className="text-xs text-cyan-200/65" data-school-density-target="player">{presentedPlayerSchoolDensity.committed}/{presentedPlayerSchoolDensity.capacity} SD used{presentedPlayerSchoolDensity.overCapacity ? ` · ${presentedPlayerSchoolDensity.overCapacity} over capacity` : ` · ${presentedPlayerSchoolDensity.available} open`}</div></div>
             <div className="p-3 text-center" aria-label={opponentSetupConcealed ? "Opponent setup values hidden until Round 1 begins." : undefined}>
               <div className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-300">{opponentHudLabel} · {opponentDifficultyProfile.label}</div>
               {opponentSetupConcealed ? (
@@ -21025,8 +21549,8 @@ export default function Simulator({
                 </>
               ) : (
                 <>
-                  <div className="mt-0.5 text-2xl font-black tabular-nums text-white"><AnimatedVpBadge value={opponentVp} owner="opponent-wide" label={opponentHudLabel} reducedMotion={accessibilityReducedMotion} variant="inline" /><span className="text-sm text-rose-300">/{victoryTarget} VP</span></div>
-                  <div className="text-xs text-rose-200/65">{opponent.rp}/{opponentRpCap} RP · {opponentSchoolDensityState.committed}/{opponentSchoolDensity} SD used{opponentSchoolDensityState.overCapacity ? ` · ${opponentSchoolDensityState.overCapacity} over capacity` : ` · ${opponentSchoolDensityState.available} open`}</div>
+                  <div className="mt-0.5 text-2xl font-black tabular-nums text-white" data-vp-bank-target="opponent"><AnimatedVpBadge value={presentedOpponentVp} owner="opponent-wide" label={opponentHudLabel} reducedMotion={accessibilityReducedMotion || boardStatPresentationActive} variant="inline" /><span className="text-sm text-rose-300">/{victoryTarget} VP</span></div>
+                  <div className="text-xs text-rose-200/65" data-school-density-target="opponent">{opponent.rp}/{opponentRpCap} RP · {presentedOpponentSchoolDensity.committed}/{presentedOpponentSchoolDensity.capacity} SD used{presentedOpponentSchoolDensity.overCapacity ? ` · ${presentedOpponentSchoolDensity.overCapacity} over capacity` : ` · ${presentedOpponentSchoolDensity.available} open`}</div>
                 </>
               )}
             </div>
@@ -21117,7 +21641,7 @@ export default function Simulator({
         </div>
 
         <div className="hidden xl:col-start-2 xl:row-start-3 xl:block">
-          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
+          <button type="button" onClick={endTurn} disabled={Boolean(gameResult) || opponentThinking || boardStatPresentationActive || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked || (isSetup && !hasCoralInPlay) || isStartOfTurn} title={turnControlDescription} aria-busy={opponentThinking || undefined} className={`seapals-turn-button w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 px-4 py-4 text-base font-black text-slate-950 shadow-xl transition hover:brightness-110 disabled:cursor-not-allowed disabled:grayscale disabled:opacity-40${tutorialTargetClass("turn-button")}`} data-tutorial-target="turn-button">{turnControlLabel}</button>
         </div>
       </section>
 
@@ -21489,6 +22013,38 @@ export default function Simulator({
         </>
       ) : null}
 
+      {boardStatFlights.length ? (
+        <div className="seapals-board-stat-flight-layer pointer-events-none fixed inset-0 z-[96]" aria-hidden="true" data-board-stat-flight-layer>
+          {boardStatFlights.map((flight) => (
+            <span
+              key={flight.id}
+              className={`seapals-board-stat-flight is-${flight.kind}`}
+              data-board-stat-flight
+              data-stat-kind={flight.kind}
+              data-flight-from={flight.from}
+              data-flight-to={flight.to}
+              data-flight-card-instance={flight.cardInstanceId}
+              style={{
+                "--seapals-stat-start-x": `${flight.startX}px`,
+                "--seapals-stat-start-y": `${flight.startY}px`,
+                "--seapals-stat-mid-x": `${flight.midX}px`,
+                "--seapals-stat-mid-y": `${flight.midY}px`,
+                "--seapals-stat-end-x": `${flight.endX}px`,
+                "--seapals-stat-end-y": `${flight.endY}px`,
+                animationDelay: `${flight.delay}ms`,
+                animationDuration: `${flight.duration}ms`,
+              }}
+            >
+              <b>{flight.kind.toUpperCase()}</b>
+              <small>{flight.amount}</small>
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {boardStatAnnouncement}
+      </span>
+
       {opponentPlacementFlight ? (
         <div data-opponent-placement-flight className="seapals-opponent-placement-layer fixed inset-0 z-[84]" aria-hidden="true">
           <img
@@ -21727,7 +22283,7 @@ export default function Simulator({
         />
       ) : null}
 
-      {eventOverlay && !boardFaceoffActive && !openingCoinBoardActive ? (
+      {eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive ? (
         <div
           className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5"
           hidden={v2NewGameSetupActive || resumeHydrationPending || Boolean(resumeCheckpoint)}

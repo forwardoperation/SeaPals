@@ -126,9 +126,9 @@ function assertConcealedOpponentScoreSurface(surfaceSource, surfaceName) {
     `${surfaceName} must not mount the animated VP value while setup totals are concealed`,
   );
 
-  assert.match(surfaceSource, /<AnimatedVpBadge\s+value=\{opponentVp\}/);
+  assert.match(surfaceSource, /<AnimatedVpBadge\s+value=\{(?:presentedOpponentVp|opponentVp)\}/);
   assert.match(surfaceSource, /presentedOpponentRp|opponent\.rp/);
-  assert.match(surfaceSource, /opponentSchoolDensity/);
+  assert.match(surfaceSource, /presentedOpponentSchoolDensity|opponentSchoolDensity/);
 }
 
 test("standalone V2 masks rival setup SD, VP, and RP in the compact reef score", () => {

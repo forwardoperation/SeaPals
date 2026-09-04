@@ -120,6 +120,22 @@ test("the normal V2 opening screen contains only the two deck choices, difficult
   assert.doesNotMatch(landing, /aria-pressed=/, "difficulty should not fall back to a wall of option buttons");
 });
 
+test("the streamlined V2 opening names decks directly and keeps difficulty labels free of explanatory copy", () => {
+  const landing = elementContainingDataAttribute("data-v2-new-game-setup");
+
+  assert.match(
+    landing,
+    /<h2\b[^>]*>\s*Choose your Decks\s*<\/h2>/,
+    "the launch title should use the requested deck language exactly",
+  );
+  assert.doesNotMatch(landing, /Choose your reefs/i);
+  assert.doesNotMatch(
+    landing,
+    /selectedDifficulty\?\.description|difficultyDescription|seapals-v2-difficulty-description/,
+    "Easy, Medium, and Hard should stand on their own without adjacent descriptive prose",
+  );
+});
+
 test("the V2 difficulty control is a labelled, keyboard-native three-step slider", () => {
   const landing = elementContainingDataAttribute("data-v2-new-game-setup");
   const slider = jsxOpeningTagContaining(landing, "data-v2-difficulty-slider");
@@ -174,7 +190,7 @@ test("the landing redesign is isolated to normal V2 games and preserves story, t
   const v2Mount = sourceSection(
     simulatorSource,
     "{v2NewGameSetupActive ? (",
-    "{eventOverlay && !boardFaceoffActive",
+    "{eventOverlay && boardTargetingPresentationActive",
   );
   assert.match(activeDefinition, /previewExperience/);
   assert.match(activeDefinition, /&&\s*!isStoryMode/);

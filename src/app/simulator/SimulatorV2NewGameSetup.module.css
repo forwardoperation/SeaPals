@@ -343,16 +343,6 @@
   font-weight: 950;
 }
 
-.difficultyDescription {
-  min-width: 0;
-  overflow: hidden;
-  color: rgba(226, 249, 252, 0.64);
-  font-size: 0.74rem;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .sliderRow {
   display: flex;
   min-height: 2.75rem;

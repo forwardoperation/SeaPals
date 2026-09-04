@@ -274,7 +274,7 @@ test("the V2 board presents one transparent die and a single tap-to-roll control
   );
   assert.match(
     simulatorSource,
-    /<BoardCombatDice[\s\S]{0,900}?active=\{boardEffectRollActive\}[\s\S]{0,900}?mode="effect"[\s\S]{0,900}?defenseExpression=\{null\}/,
+    /<BoardCombatDice[\s\S]{0,900}?active=\{boardEffectRollActive && !boardStatPresentationActive\}[\s\S]{0,900}?mode="effect"[\s\S]{0,900}?defenseExpression=\{null\}/,
     "A non-attack effect should render one die rather than an opposed roll",
   );
 });

@@ -28,7 +28,7 @@ function assertTransparentZoneWrapper(tag, label) {
   assert.doesNotMatch(tag, /(?:^|\s)shadow(?:-(?!none(?:\s|$))|\s|$)/, `${label} must not draw a panel shadow`);
 }
 
-test("routine V2 Filter Feeder placement stays on the board without masking meaningful On Play flows", () => {
+test("routine V2 density placement stays on the board without masking meaningful On Play flows", () => {
   const oceanicPlay = sourceSection(
     simulatorSource,
     "function completePlayerOceanicPlay(",
@@ -38,8 +38,8 @@ test("routine V2 Filter Feeder placement stays on the board without masking mean
   assert.match(oceanicPlay, /emitPlayerBuild\(card,\s*playCost,\s*"open-water"\)/);
   assert.match(
     oceanicPlay,
-    /if \(finalRoundMilestone\)\s*\{[\s\S]*?setEventOverlay\(finalRoundMilestone\)[\s\S]*?else if \([\s\S]*?previewExperience[\s\S]*?card\.category === CardCategory\.FILTER_FEEDER[\s\S]*?\(card\.onPlay \?\? \[\]\)\.length === 0[\s\S]*?setEventOverlay\(null\)/,
-    "Only a routine Filter Feeder result should disappear; tutorial milestones and printed On Play effects remain presentable",
+    /if \(finalRoundMilestone\)\s*\{[\s\S]*?setEventOverlay\(finalRoundMilestone\)[\s\S]*?else if \([\s\S]*?previewExperience[\s\S]*?boardStatPresentationStarted[\s\S]*?\(card\.onPlay \?\? \[\]\)\.length === 0[\s\S]*?setEventOverlay\(null\)/,
+    "Only a routine density result should disappear; tutorial milestones and printed On Play effects remain presentable",
   );
   assert.match(
     oceanicPlay,
@@ -47,12 +47,12 @@ test("routine V2 Filter Feeder placement stays on the board without masking mean
     "The routine-result branch must run only after all interactive and readable On Play paths decline the event",
   );
   assert.ok(
-    oceanicPlay.indexOf("beginPlayerOnPlaySearch") < oceanicPlay.indexOf("card.category === CardCategory.FILTER_FEEDER"),
-    "On Play search must be offered before the routine Filter Feeder overlay is suppressed",
+    oceanicPlay.indexOf("beginPlayerOnPlaySearch") < oceanicPlay.lastIndexOf("boardStatPresentationStarted"),
+    "On Play search must be offered before the routine density overlay is suppressed",
   );
   assert.ok(
-    oceanicPlay.indexOf("beginOnPlayAttack") < oceanicPlay.indexOf("card.category === CardCategory.FILTER_FEEDER"),
-    "On Play attacks must be offered before the routine Filter Feeder overlay is suppressed",
+    oceanicPlay.indexOf("beginOnPlayAttack") < oceanicPlay.lastIndexOf("boardStatPresentationStarted"),
+    "On Play attacks must be offered before the routine density overlay is suppressed",
   );
 });
 

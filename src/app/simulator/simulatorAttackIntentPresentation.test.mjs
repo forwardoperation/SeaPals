@@ -196,7 +196,7 @@ test("each ready checkpoint gets a keyed pre-roll wind-up before combat dice bec
   );
   assert.match(
     simulatorSource,
-    /<BoardCombatDice[\s\S]{0,180}?active=\{combatBoardFaceoffActive\s*&&\s*combatIntentReady\}/,
+    /<BoardCombatDice[\s\S]{0,220}?active=\{combatBoardFaceoffActive\s*&&\s*combatIntentReady\s*&&\s*!boardStatPresentationActive\}/,
     "The full-board roll catcher must not activate until the wind-up has completed",
   );
   assert.match(
@@ -263,12 +263,12 @@ test("a directional SVG arrow connects attacker to target and remains visible wh
   );
   assert.match(
     simulatorSource,
-    /<AttackIntentLayer[\s\S]{0,180}active=\{combatBoardFaceoffActive\}[\s\S]{0,180}windup=\{!combatIntentReady\}/,
+    /<AttackIntentLayer[\s\S]{0,220}active=\{combatBoardFaceoffActive && !boardStatPresentationActive\}[\s\S]{0,180}windup=\{!combatIntentReady\}/,
     "The relationship layer should stay mounted through the rolling phase, not vanish when the wobble ends",
   );
   assert.match(boardCombatSource, /const phase = windup \? "windup" : "rolling"/);
   const gatedSelectionMarkers = simulatorSource.match(
-    /const (?:isTarget|hostedIsTarget|isFoundationTarget|isInvaderTarget) = Boolean\([^;]+\) && !boardFaceoffActive;/g,
+    /const (?:isTarget|hostedIsTarget|isFoundationTarget|isInvaderTarget) = Boolean\([^;]+\) && boardTargetingPresentationActive;/g,
   ) ?? [];
   assert.ok(
     gatedSelectionMarkers.length >= 8,
@@ -323,7 +323,7 @@ test("leaving an attack checkpoint clears every pre-roll and dice presentation f
   assert.match(faceoffLifecycle, /setFaceoffRolling\(false\)/);
   assert.match(
     simulatorSource,
-    /\{attackContext && !boardFaceoffActive \? \([\s\S]{0,300}Choose a card marked by a red target reticle/,
+    /\{attackContext && boardTargetingPresentationActive \? \([\s\S]{0,300}Choose a card marked by a red target reticle/,
     "Target-selection instructions should leave with the target-selection phase",
   );
 });

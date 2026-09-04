@@ -164,7 +164,7 @@ test("the committed card coin locks every V2 board surface until its continuatio
     /const boardInteractionOverlayActive = boardFaceoffActive \|\| openingCoinBoardActive \|\| cardCoinBoardActive/,
   );
   assert.match(simulatorSource, /data-card-coin-active=\{cardCoinBoardActive \? "true" : undefined\}/);
-  assert.match(simulatorSource, /active=\{cardCoinBoardActive\}[\s\S]{0,500}?(?:event|coin|state)=\{cardCoinFlip\}/);
+  assert.match(simulatorSource, /active=\{cardCoinBoardActive && !boardStatPresentationActive\}[\s\S]{0,500}?(?:event|coin|state)=\{cardCoinFlip\}/);
   assert.match(simulatorSource, /v2TopChromeHidden[\s\S]{0,700}?\|\| cardCoinBoardActive/);
   assert.equal(
     countMatches(simulatorSource, /inert=\{boardInteractionOverlayActive \? true : undefined\}/g),

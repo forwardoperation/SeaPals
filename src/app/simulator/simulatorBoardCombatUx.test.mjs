@@ -149,7 +149,7 @@ test("combat dice are a transparent board-context dialog, not the full-page even
 
   assert.match(
     simulatorSource,
-    /\{eventOverlay\s*&&\s*!boardFaceoffActive\s*&&\s*!openingCoinBoardActive\s*\?\s*\(/,
+    /\{eventOverlay\s*&&\s*boardTargetingPresentationActive\s*&&\s*!openingCoinBoardActive\s*\?\s*\(/,
     "V2 faceoffs must be excluded from the generic fixed, aria-modal event overlay",
   );
 });

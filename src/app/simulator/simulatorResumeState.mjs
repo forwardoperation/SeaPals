@@ -3,6 +3,19 @@ export const SIMULATOR_RESUME_STORAGE_KEY = "seapals.simulator-v2.resume.v1";
 
 const RESTORABLE_GAME_PHASES = new Set(["setup", "draw", "main"]);
 const RESTORABLE_STARTING_PLAYERS = new Set(["player", "opponent"]);
+const RESUME_SAFE_EVENT_OVERLAY_TYPES = new Set(["utility-result"]);
+const EVENT_OVERLAY_CONTINUATION_KEYS = [
+  "playerStateAfter",
+  "opponentStateAfter",
+  "gameResultAfter",
+  "continueToEndTurn",
+  "continueAttackSequence",
+  "beginOpponentAfterClose",
+  "advanceRoundAfterClose",
+  "startOpeningPlayerTurnAfterClose",
+  "continueLiveLionfish",
+  "opponentSequence",
+];
 
 export const SIMULATOR_RESUME_STATE_KEYS = Object.freeze([
   "selectedDeckId",
@@ -62,6 +75,14 @@ export const SIMULATOR_RESUME_STATE_KEYS = Object.freeze([
 
 function isObject(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isResumeSafeEventOverlay(value) {
+  if (value == null) return true;
+  if (!isObject(value) || !RESUME_SAFE_EVENT_OVERLAY_TYPES.has(value.type)) return false;
+  return !EVENT_OVERLAY_CONTINUATION_KEYS.some((key) => (
+    Object.prototype.hasOwnProperty.call(value, key)
+  ));
 }
 
 function isNonEmptyString(value) {
@@ -363,8 +384,8 @@ export function isSimulatorResumeCheckpointStable(state) {
     "simulatorExitConfirmationOpen",
   ];
   if (blockingBooleans.some((key) => Boolean(state[key]))) return false;
+  if (!isResumeSafeEventOverlay(state.eventOverlay)) return false;
   const blockingValues = [
-    "eventOverlay",
     "compactTurnSequence",
     "opponentPlacementFlight",
     "compactOpponentCardReader",

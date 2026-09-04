@@ -122,7 +122,7 @@ export default function SimulatorV2NewGameSetup({
               className={styles.logo}
             />
             <p className={styles.eyebrow}>SeaPals Simulator</p>
-            <h2 id="seapals-v2-setup-title" className={styles.title}>Choose your reefs</h2>
+            <h2 id="seapals-v2-setup-title" className={styles.title}>Choose your Decks</h2>
             <p id="seapals-v2-setup-description" className={styles.subtitle}>
               Pick both decks, set the challenge, and dive in.
             </p>
@@ -177,9 +177,6 @@ export default function SimulatorV2NewGameSetup({
                 >
                   {selectedDifficulty?.label}
                 </output>
-                <span id="seapals-v2-difficulty-description" className={styles.difficultyDescription}>
-                  {selectedDifficulty?.description}
-                </span>
               </div>
               <div className={styles.sliderRow}>
                 <input
@@ -191,7 +188,6 @@ export default function SimulatorV2NewGameSetup({
                   value={difficultyIndex}
                   onChange={(event) => setDifficultyIndex(Number(event.currentTarget.value))}
                   aria-labelledby="seapals-v2-difficulty-label"
-                  aria-describedby="seapals-v2-difficulty-description"
                   aria-valuetext={selectedDifficulty?.label}
                   className={styles.slider}
                   style={{ "--difficulty-progress": `${difficultyProgress}%` }}

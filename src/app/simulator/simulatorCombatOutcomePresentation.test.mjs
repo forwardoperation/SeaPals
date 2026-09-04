@@ -76,7 +76,7 @@ test("discard travel can locate a card on either reef before state mutation", ()
   assert.match(queuedFlight, /(?:flightPlan|sourceGeometry) \?\? createConsumedAttackFlightPlan\(/);
   assert.match(
     simulatorSource,
-    /faceoffRolling \|\| consumedAttackFlight \|\| eventRequiresResolution/,
+    /faceoffRolling \|\| consumedAttackFlight \|\| boardStatPresentationActive \|\| eventRequiresResolution/,
     "A terminal victory should wait until the consumed card visibly reaches its pile",
   );
 });
