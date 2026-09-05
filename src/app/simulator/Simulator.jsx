@@ -17739,6 +17739,19 @@ export default function Simulator({
     mobileReefSplit,
     JSON.stringify(floatingCardOffsets),
   ].join(":") : "inactive";
+  const combatIntentMeasureKey = combatBoardFaceoffActive ? [
+    combatIntentPresentationKey,
+    eventOverlay?.attackerInstanceId,
+    eventOverlay?.targetInstanceId,
+    ecosystemZoom,
+    ecosystemOffset.x,
+    ecosystemOffset.y,
+    opponentEcosystemZoom,
+    opponentEcosystemOffset.x,
+    opponentEcosystemOffset.y,
+    mobileReefSplit,
+    JSON.stringify(floatingCardOffsets),
+  ].join(":") : "inactive";
 
   function getInspectedUtilitySpecificBlock(action, effect, actionName) {
     if (!effect) {
@@ -22432,23 +22445,6 @@ export default function Simulator({
                 </div>
               </div>
               {previewExperience ? (
-                <AttackIntentLayer
-                  key={combatIntentPresentationKey ?? "inactive-combat-intent"}
-                  active={combatBoardFaceoffActive && !boardStatPresentationActive}
-                  windup={!combatIntentReady}
-                  presentationKey={combatIntentPresentationKey}
-                  rootRef={mobileBoardStackRef}
-                  attackerInstanceId={eventOverlay?.attackerInstanceId}
-                  targetInstanceId={eventOverlay?.targetInstanceId}
-                  attackerBoardOwner={eventOverlay?.attackerBoardOwner}
-                  targetBoardOwner={eventOverlay?.targetBoardOwner}
-                  attackerName={eventOverlay?.attackerName ?? cardsById[eventOverlay?.sourceCardId]?.name}
-                  targetName={eventOverlay?.defenderName ?? cardsById[eventOverlay?.defenderCardId]?.name}
-                  reducedMotion={accessibilityReducedMotion}
-                  onWindupComplete={completeBoardAttackIntent}
-                />
-              ) : null}
-              {previewExperience ? (
                 <BoardCombatDice
                   active={combatBoardFaceoffActive && combatIntentReady && !boardStatPresentationActive}
                   attackExpression={eventOverlay?.attackDice}
@@ -22500,6 +22496,26 @@ export default function Simulator({
               ) : null}
             </div>
           </div>
+          {previewExperience ? (
+            <AttackIntentLayer
+              key={combatIntentPresentationKey ?? "inactive-combat-intent"}
+              active={combatBoardFaceoffActive && !boardStatPresentationActive}
+              windup={!combatIntentReady}
+              presentationKey={combatIntentPresentationKey}
+              rootRef={mobileBoardStackRef}
+              attackerInstanceId={eventOverlay?.attackerInstanceId}
+              targetInstanceId={eventOverlay?.targetInstanceId}
+              attackerCardId={eventOverlay?.sourceCardId}
+              targetCardId={eventOverlay?.defenderCardId}
+              attackerBoardOwner={eventOverlay?.attackerBoardOwner}
+              targetBoardOwner={eventOverlay?.targetBoardOwner}
+              attackerName={eventOverlay?.attackerName ?? cardsById[eventOverlay?.sourceCardId]?.name}
+              targetName={eventOverlay?.defenderName ?? cardsById[eventOverlay?.defenderCardId]?.name}
+              reducedMotion={accessibilityReducedMotion}
+              measureKey={combatIntentMeasureKey}
+              onWindupComplete={completeBoardAttackIntent}
+            />
+          ) : null}
           <AttackTargetLayer
             active={Boolean(previewExperience && attackContext && boardTargetingPresentationActive && !openingCoinBoardActive)}
             rootRef={mobileBoardStackRef}

@@ -237,44 +237,55 @@ export function BoardCombatDice({
   );
 }
 
-function findCombatAnchorNode(root, { instanceId, boardOwner = null, preferTarget = false } = {}) {
-  if (!root || !instanceId) return null;
+function findCombatAnchorNode(root, {
+  instanceId,
+  cardId = null,
+  boardOwner = null,
+  preferTarget = false,
+  isVisible = () => true,
+} = {}) {
+  if (!root || (!instanceId && !cardId)) return null;
   const ownerRoot = boardOwner
-    ? root.querySelector(`[data-board-owner="${boardOwner}"]`) ?? root
+    ? root.querySelector(`[data-board-owner="${boardOwner}"]`)
     : root;
+  if (!ownerRoot) return null;
   const candidates = [...ownerRoot.querySelectorAll(
-    "[data-attack-target-instance], [data-combat-target-id], [data-card-instance-id], [data-combat-anchor-ids]",
+    "[data-attack-target-instance], [data-combat-target-id], [data-card-instance-id], [data-combat-anchor-ids], [data-card-id]",
   )];
-  const matching = candidates.filter((node) => (
+  const chooseMatch = (matches) => {
+    const visibleMatches = matches.filter(isVisible);
+    if (!visibleMatches.length) return null;
+    if (preferTarget) {
+      return visibleMatches.find((node) => node.dataset.attackTargetInstance === instanceId)
+        ?? visibleMatches.find((node) => node.dataset.combatTargetId === instanceId)
+        ?? visibleMatches.find((node) => String(node.dataset.combatAnchorIds ?? "").split(/\s+/).includes(instanceId))
+        ?? visibleMatches[0];
+    }
+    return visibleMatches.find((node) => node.dataset.cardInstanceId === instanceId)
+      ?? visibleMatches.find((node) => node.dataset.combatTargetId === instanceId)
+      ?? visibleMatches.find((node) => String(node.dataset.combatAnchorIds ?? "").split(/\s+/).includes(instanceId))
+      ?? visibleMatches[0];
+  };
+  const matching = instanceId ? candidates.filter((node) => (
     node.dataset.attackTargetInstance === instanceId
     || node.dataset.combatTargetId === instanceId
     || node.dataset.cardInstanceId === instanceId
     || String(node.dataset.combatAnchorIds ?? "").split(/\s+/).includes(instanceId)
-  ));
-  if (!matching.length) return null;
-  if (preferTarget) {
-    return matching.find((node) => node.dataset.attackTargetInstance === instanceId)
-      ?? matching.find((node) => node.dataset.combatTargetId === instanceId)
-      ?? matching.find((node) => String(node.dataset.combatAnchorIds ?? "").split(/\s+/).includes(instanceId))
-      ?? matching[0];
-  }
-  return matching.find((node) => node.dataset.cardInstanceId === instanceId)
-    ?? matching.find((node) => node.dataset.combatTargetId === instanceId)
-    ?? matching.find((node) => String(node.dataset.combatAnchorIds ?? "").split(/\s+/).includes(instanceId))
-    ?? matching[0];
+  )) : [];
+  const exactMatch = chooseMatch(matching);
+  if (exactMatch) return exactMatch;
+
+  // Resumed games can carry a legacy or stale instance identity. Keep the
+  // fallback inside the known physical reef so duplicate cards on the other
+  // side cannot reverse the attack direction.
+  const cardMatches = cardId
+    ? candidates.filter((node) => node.dataset.cardId === cardId)
+    : [];
+  return chooseMatch(cardMatches);
 }
 
 function measureAttackIntent(root, anchorOptions) {
   if (!root) return { geometry: null, attackerNode: null, targetNode: null };
-  const candidateAttackerNode = findCombatAnchorNode(root, {
-    instanceId: anchorOptions.attackerInstanceId,
-    boardOwner: anchorOptions.attackerBoardOwner,
-  });
-  const candidateTargetNode = findCombatAnchorNode(root, {
-    instanceId: anchorOptions.targetInstanceId,
-    boardOwner: anchorOptions.targetBoardOwner,
-    preferTarget: true,
-  });
   const rootRect = root.getBoundingClientRect();
   const isVisibleInRoot = (node) => {
     const rect = node?.getBoundingClientRect();
@@ -294,6 +305,19 @@ function measureAttackIntent(root, anchorOptions) {
       && rect.top < visibleBottom,
     );
   };
+  const candidateAttackerNode = findCombatAnchorNode(root, {
+    instanceId: anchorOptions.attackerInstanceId,
+    cardId: anchorOptions.attackerCardId,
+    boardOwner: anchorOptions.attackerBoardOwner,
+    isVisible: isVisibleInRoot,
+  });
+  const candidateTargetNode = findCombatAnchorNode(root, {
+    instanceId: anchorOptions.targetInstanceId,
+    cardId: anchorOptions.targetCardId,
+    boardOwner: anchorOptions.targetBoardOwner,
+    preferTarget: true,
+    isVisible: isVisibleInRoot,
+  });
   const attackerNode = isVisibleInRoot(candidateAttackerNode) ? candidateAttackerNode : null;
   const targetNode = isVisibleInRoot(candidateTargetNode) ? candidateTargetNode : null;
   const geometry = attackerNode && targetNode
@@ -313,11 +337,14 @@ export function AttackIntentLayer({
   rootRef,
   attackerInstanceId,
   targetInstanceId,
+  attackerCardId = null,
+  targetCardId = null,
   attackerBoardOwner = null,
   targetBoardOwner = null,
   attackerName = "Attacker",
   targetName = "target",
   reducedMotion = false,
+  measureKey = null,
   onWindupComplete,
 }) {
   const [geometry, setGeometry] = useState(null);
@@ -344,6 +371,8 @@ export function AttackIntentLayer({
     const anchorOptions = {
       attackerInstanceId,
       targetInstanceId,
+      attackerCardId,
+      targetCardId,
       attackerBoardOwner,
       targetBoardOwner,
     };
@@ -385,11 +414,14 @@ export function AttackIntentLayer({
   }, [
     active,
     attackerBoardOwner,
+    attackerCardId,
     attackerInstanceId,
+    measureKey,
     presentationKey,
     reducedMotion,
     rootRef,
     targetBoardOwner,
+    targetCardId,
     targetInstanceId,
     windup,
   ]);
@@ -405,6 +437,8 @@ export function AttackIntentLayer({
         const measured = measureAttackIntent(rootRef?.current, {
           attackerInstanceId,
           targetInstanceId,
+          attackerCardId,
+          targetCardId,
           attackerBoardOwner,
           targetBoardOwner,
         });
@@ -428,11 +462,13 @@ export function AttackIntentLayer({
   }, [
     active,
     attackerBoardOwner,
+    attackerCardId,
     attackerInstanceId,
     presentationKey,
     reducedMotion,
     rootRef,
     targetBoardOwner,
+    targetCardId,
     targetInstanceId,
     windup,
   ]);

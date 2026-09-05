@@ -332,7 +332,7 @@ test("wind-up and vector motion honor reduced motion without hiding attack direc
   const intentMount = sourceSection(
     simulatorSource,
     "<AttackIntentLayer",
-    "<BoardCombatDice",
+    "<AttackTargetLayer",
   );
   assert.match(
     intentMount,
