@@ -151,7 +151,7 @@ test("only committed permanent placements create AI placement cues", () => {
   );
   assert.match(
     simulatorSource,
-    /permanentPlacementCue:\s*play\.permanentPlacementCue \?\?/
+    /const permanentPlacementCue = play\.permanentPlacementCue\s*\?\?[\s\S]{0,220}turnEvents\.push\(\{[\s\S]{0,500}permanentPlacementCue,/
   );
   assert.match(
     commitEventState,
