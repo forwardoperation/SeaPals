@@ -7282,7 +7282,6 @@ export default function Simulator({
           instanceId: target.instanceId,
         });
       }
-      if (card.id === "ocean-jake") return lostZone.length ? "" : "Ocean Jake needs a card in your Lost Zone to recover.";
     });
     getInvasiveOrphanTargets(ownOrphans, "opponent").forEach((target) => {
       const targetCard = cardsById[target.cardId];
