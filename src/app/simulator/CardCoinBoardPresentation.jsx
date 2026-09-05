@@ -23,7 +23,34 @@ export default function CardCoinBoardPresentation({
   const layerRef = useRef(null);
   const previousFocusRef = useRef(null);
   const restoreFocusFrameRef = useRef(0);
+  const onStopRef = useRef(onStop);
+  const onContinueRef = useRef(onContinue);
   const phase = event?.phase;
+  const isAutomatic = event?.automatic === true;
+
+  useEffect(() => {
+    onStopRef.current = onStop;
+    onContinueRef.current = onContinue;
+  }, [onContinue, onStop]);
+
+  useEffect(() => {
+    if (!active || !isAutomatic) return undefined;
+    if (phase === CardCoinPhase.READY) {
+      const timer = window.setTimeout(
+        () => onStopRef.current?.(),
+        Math.max(0, Number(event.autoStartDelay) || 0),
+      );
+      return () => window.clearTimeout(timer);
+    }
+    if (phase === CardCoinPhase.RESULT) {
+      const timer = window.setTimeout(
+        () => onContinueRef.current?.(),
+        Math.max(0, Number(event.autoContinueDelay) || 0),
+      );
+      return () => window.clearTimeout(timer);
+    }
+    return undefined;
+  }, [active, event?.autoContinueDelay, event?.autoStartDelay, event?.id, isAutomatic, phase]);
 
   useEffect(() => {
     window.cancelAnimationFrame(restoreFocusFrameRef.current);
@@ -48,7 +75,7 @@ export default function CardCoinBoardPresentation({
   }, [active, restoreFocus]);
 
   useEffect(() => {
-    if (!active) return undefined;
+    if (!active || isAutomatic) return undefined;
     const focusFrame = window.requestAnimationFrame(() => {
       const primaryControl = layerRef.current?.querySelector("[data-card-coin-primary]");
       const focusTarget = primaryControl ?? layerRef.current;
@@ -58,7 +85,7 @@ export default function CardCoinBoardPresentation({
       }
     });
     return () => window.cancelAnimationFrame(focusFrame);
-  }, [active, phase]);
+  }, [active, isAutomatic, phase]);
 
   if (!active || !event) return null;
 
@@ -72,6 +99,7 @@ export default function CardCoinBoardPresentation({
   const readyMessage = event.message || "Tap anywhere to flip. Reef Fish counts as heads; blank counts as tails.";
 
   function trapFocus(keyEvent) {
+    if (isAutomatic) return;
     if (keyEvent.key !== "Tab") return;
     const controls = [...(layerRef.current?.querySelectorAll(
       'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
@@ -109,15 +137,18 @@ export default function CardCoinBoardPresentation({
       data-card-coin-phase={phase}
       data-card-coin-id={event.id}
       data-card-coin-owner={event.owner || "player"}
-      role="dialog"
-      aria-modal="true"
+      data-card-coin-automatic={isAutomatic ? "true" : undefined}
+      role={isAutomatic ? "status" : "dialog"}
+      aria-modal={isAutomatic ? undefined : "true"}
+      aria-live={isAutomatic ? "polite" : undefined}
+      aria-atomic={isAutomatic ? "true" : undefined}
       aria-labelledby="card-coin-board-title"
       aria-describedby="card-coin-board-message"
       tabIndex={-1}
       onKeyDown={trapFocus}
     >
-      {!isWaiting ? <div className={styles.screenBlocker} aria-hidden="true" /> : null}
-      {isWaiting ? (
+      {!isWaiting || isAutomatic ? <div className={styles.screenBlocker} aria-hidden="true" /> : null}
+      {isWaiting && !isAutomatic ? (
         <button
           type="button"
           className={styles.tapCatcher}
@@ -132,7 +163,7 @@ export default function CardCoinBoardPresentation({
       ) : null}
 
       <div
-        className={`${styles.playerZone} ${styles.cardCoinZone}${isResult ? ` ${styles.cardCoinResultZone}` : ""}`}
+        className={`${styles.playerZone}${event.owner === "opponent" ? ` ${styles.opponentZone}` : ""} ${styles.cardCoinZone}${isResult ? ` ${styles.cardCoinResultZone}` : ""}`}
         data-board-coin-player-zone
         data-card-coin-player-zone
       >
@@ -145,9 +176,9 @@ export default function CardCoinBoardPresentation({
               <h2 id="card-coin-board-title" className="sr-only">{readyTitle}</h2>
               <p id="card-coin-board-message" className="sr-only">{readyMessage}</p>
               <div className={styles.visual} data-card-coin-visual>
-                <OpeningCoinVisual mode={reducedMotion ? "ready" : "spinning"} side={visualSide} />
+                <OpeningCoinVisual mode={reducedMotion || isAutomatic ? "ready" : "spinning"} side={visualSide} />
               </div>
-              <strong className={styles.tapPrompt} aria-hidden="true">Tap to flip</strong>
+              <strong className={styles.tapPrompt} aria-hidden="true">{isAutomatic ? "Opponent flip" : "Tap to flip"}</strong>
             </>
           ) : null}
 
@@ -177,22 +208,26 @@ export default function CardCoinBoardPresentation({
                   mode="landed"
                   side={event.side}
                   label={`Coin landed ${landedLabel}`}
-                  celebrate={event.success === true}
+                  celebrate={event.success === true && event.owner !== "opponent"}
                 />
               </div>
               <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
                 {event.title} {event.message} The coin landed {landedLabel}.
               </p>
-              <button
-                type="button"
-                data-board-coin-primary
-                data-card-coin-primary
-                data-continue-card-coin
-                onClick={onContinue}
-                className={event.success === true ? styles.primaryAction : styles.opponentAction}
-              >
-                {event.continueLabel || "Continue"}
-              </button>
+              {isAutomatic ? (
+                <span className={styles.autoContinueStatus} aria-hidden="true">Resolving&hellip;</span>
+              ) : (
+                <button
+                  type="button"
+                  data-board-coin-primary
+                  data-card-coin-primary
+                  data-continue-card-coin
+                  onClick={onContinue}
+                  className={event.success === true ? styles.primaryAction : styles.opponentAction}
+                >
+                  {event.continueLabel || "Continue"}
+                </button>
+              )}
             </>
           ) : null}
         </section>

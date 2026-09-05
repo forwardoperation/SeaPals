@@ -121,15 +121,15 @@ test("Recovery heads resumes its original picker while tails returns to the V2 r
 test("the generic card presentation reuses the opening coin visual as one accessible board tap", () => {
   assert.match(cardCoinPresentationSource, /import \{ OpeningCoinVisual \} from "\.\/OpeningCoinBoardPresentation"/);
   assert.match(cardCoinPresentationSource, /data-card-coin-layer/);
-  assert.match(cardCoinPresentationSource, /role="dialog"/);
-  assert.match(cardCoinPresentationSource, /aria-modal="true"/);
+  assert.match(cardCoinPresentationSource, /role=\{isAutomatic \? "status" : "dialog"\}/);
+  assert.match(cardCoinPresentationSource, /aria-modal=\{isAutomatic \? undefined : "true"\}/);
   assert.match(cardCoinPresentationSource, /data-flip-card-coin/);
   assert.match(cardCoinPresentationSource, /onClick=\{onStop\}/);
   assert.match(cardCoinPresentationSource, /Tap anywhere on the board, or press Enter or Space/);
   assert.match(cardCoinPresentationSource, /onAnimationEnd=\{\(\) => onLanded\?\.\(event\.id\)\}/);
   assert.match(cardCoinPresentationSource, /data-continue-card-coin[\s\S]*onClick=\{onContinue\}/);
   assert.match(cardCoinPresentationSource, /role="status" aria-live="polite" aria-atomic="true"/);
-  assert.match(cardCoinPresentationSource, /reducedMotion \? "ready" : "spinning"/);
+  assert.match(cardCoinPresentationSource, /reducedMotion \|\| isAutomatic \? "ready" : "spinning"/);
   assert.doesNotMatch(cardCoinPresentationSource, /onCancel|Cancel Flip/);
 });
 

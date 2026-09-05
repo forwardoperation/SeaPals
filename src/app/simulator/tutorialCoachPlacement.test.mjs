@@ -210,7 +210,7 @@ test("blocking simulator layers and the tutorial stay above Ask Finn", async () 
     simulatorSource.match(/\{fullPageModalOpen \? \(\s*<div\s*className=\{`fixed inset-0 z-\[(\d+)\]/)?.[1],
   );
   const eventOverlayZIndex = Number(
-    simulatorSource.match(/\{eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive \? \(\s*<div\s*className="fixed inset-0 z-\[(\d+)\]/)?.[1],
+    simulatorSource.match(/\{eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive \? \(\s*<div\s*className=\{?["`]fixed inset-0 z-\[(\d+)\]/)?.[1],
   );
   const combatTargetLayerZIndex = Number(
     simulatorSource.match(/\.seapals-attack-target-layer\s*\{[\s\S]*?z-index:\s*(\d+);/)?.[1],

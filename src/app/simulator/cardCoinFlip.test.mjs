@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   CARD_COIN_FLIP_FALLBACK_MS,
   CARD_COIN_REDUCED_MOTION_MS,
+  OPPONENT_CARD_COIN_AUTO_CONTINUE_MS,
+  OPPONENT_CARD_COIN_AUTO_START_MS,
   CardCoinPhase,
   CardCoinSide,
   cancelCardCoinFlip,
@@ -173,4 +175,34 @@ test("reduced motion shortens landing without bypassing the ready or result phas
   assert.equal(ready.phase, CardCoinPhase.READY);
   assert.equal(flipping.phase, CardCoinPhase.FLIPPING);
   assert.equal(landed.phase, CardCoinPhase.RESULT);
+});
+
+test("an automatic opponent flip preserves its timing and replays a forced result without sampling", () => {
+  const ready = createCardCoinReadyState({
+    id: 144,
+    owner: "opponent",
+    sourceCardId: "recovery",
+    sourceCardName: "Recovery",
+    successResult: "heads",
+    automatic: true,
+    forcedResult: "tails",
+    continuation: { type: "resume-opponent-event", event: { type: "opponent-play" } },
+  });
+  let randomCalls = 0;
+  const flipping = startCardCoinFlip(ready, {
+    random: () => {
+      randomCalls += 1;
+      return 0.1;
+    },
+    forcedResult: ready.forcedResult,
+  });
+
+  assert.equal(ready.owner, "opponent");
+  assert.equal(ready.automatic, true);
+  assert.equal(ready.autoStartDelay, OPPONENT_CARD_COIN_AUTO_START_MS);
+  assert.equal(ready.autoContinueDelay, OPPONENT_CARD_COIN_AUTO_CONTINUE_MS);
+  assert.equal(flipping.result, "tails");
+  assert.equal(flipping.side, CardCoinSide.BLANK);
+  assert.equal(flipping.success, false);
+  assert.equal(randomCalls, 0, "presentation must replay the opponent's resolved result without rerolling");
 });

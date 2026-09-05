@@ -55,6 +55,12 @@
   overflow: visible;
 }
 
+.playerZone.opponentZone {
+  inset: 0 0 auto;
+  height: calc(var(--seapals-mobile-reef-split, 50%) - 1.375rem);
+  background: radial-gradient(circle at center, rgba(76, 5, 25, 0.34), rgba(8, 47, 73, 0.2) 58%, transparent 80%);
+}
+
 .cardCoinResultZone {
   display: flex;
   align-items: flex-start;
@@ -138,6 +144,15 @@
   font-size: clamp(0.72rem, 3vw, 0.88rem);
   font-weight: 950;
   transition: filter 150ms ease, transform 150ms ease, background-color 150ms ease;
+}
+
+.autoContinueStatus {
+  margin-top: 0.55rem;
+  color: rgba(226, 232, 240, 0.72);
+  font-size: clamp(0.62rem, 2.5vw, 0.76rem);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .primaryAction {
@@ -380,8 +395,17 @@
     inset-block-start: calc(var(--seapals-mobile-reef-split, 50%) + 1.375rem);
   }
 
+  .playerZone.opponentZone {
+    inset-block-start: 0;
+    height: calc(var(--seapals-mobile-reef-split, 50%) - 1.375rem);
+  }
+
   .cardCoinResultZone {
     inset-block-start: min(calc(var(--seapals-mobile-reef-split, 50%) + 1.375rem), 50%);
+  }
+
+  .opponentZone.cardCoinResultZone {
+    inset-block-start: 0;
   }
 }
 

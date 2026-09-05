@@ -458,7 +458,7 @@ test("events appended while a checkpoint is open survive completion through the 
 
   assert.match(
     queueEvents,
-    /eventOverlay \|\| combatResultCheckpointRef\.current \|\| compactTurnSequenceRef\.current \|\| compactOpponentPresentationRef\.current/,
+    /eventOverlay \|\| cardCoinFlip \|\| combatResultCheckpointRef\.current \|\| compactTurnSequenceRef\.current \|\| compactOpponentPresentationRef\.current/,
     "An open combat checkpoint must append rather than present over the held result",
   );
   assert.match(

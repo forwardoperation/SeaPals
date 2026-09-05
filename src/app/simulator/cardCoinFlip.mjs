@@ -11,6 +11,8 @@ export const CardCoinSide = Object.freeze({
 
 export const CARD_COIN_FLIP_FALLBACK_MS = 1550;
 export const CARD_COIN_REDUCED_MOTION_MS = 120;
+export const OPPONENT_CARD_COIN_AUTO_START_MS = 1000;
+export const OPPONENT_CARD_COIN_AUTO_CONTINUE_MS = 1400;
 
 function normalizeCoinResult(value) {
   return value === "tails" ? "tails" : "heads";
@@ -45,6 +47,10 @@ export function createCardCoinReadyState({
   message = "Tap anywhere to flip. Reef Fish counts as heads; blank counts as tails.",
   outcomes = null,
   continuation = null,
+  automatic = false,
+  forcedResult = null,
+  autoStartDelay = OPPONENT_CARD_COIN_AUTO_START_MS,
+  autoContinueDelay = OPPONENT_CARD_COIN_AUTO_CONTINUE_MS,
 } = {}) {
   return Object.freeze({
     id,
@@ -58,6 +64,10 @@ export function createCardCoinReadyState({
     message,
     outcomes,
     continuation,
+    automatic: Boolean(automatic),
+    forcedResult: forcedResult === "heads" || forcedResult === "tails" ? forcedResult : null,
+    autoStartDelay: Math.max(0, Number(autoStartDelay) || 0),
+    autoContinueDelay: Math.max(0, Number(autoContinueDelay) || 0),
     result: null,
     side: CardCoinSide.FISH,
     success: null,

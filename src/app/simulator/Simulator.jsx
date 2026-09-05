@@ -3639,6 +3639,7 @@ export default function Simulator({
   const [actionBlinkOn, setActionBlinkOn] = useState(true);
   const [modal, setModal] = useState(null);
   const modalScrollRef = useRef(null);
+  const compactDrawRailRef = useRef(null);
   const [selectedHandCard, setSelectedHandCard] = useState(null);
   const [mobileSelectedHandIndex, setMobileSelectedHandIndex] = useState(null);
   const [handPopoverCardId, setHandPopoverCardId] = useState(null);
@@ -9342,7 +9343,7 @@ export default function Simulator({
 
   function queueEvents(eventsToAdd) {
     if (!eventsToAdd.length) return;
-    if (eventOverlay || combatResultCheckpointRef.current || compactTurnSequenceRef.current || compactOpponentPresentationRef.current) {
+    if (eventOverlay || cardCoinFlip || combatResultCheckpointRef.current || compactTurnSequenceRef.current || compactOpponentPresentationRef.current) {
       setPendingEvents((events) => {
         const nextEvents = [...events, ...eventsToAdd];
         pendingEventsRef.current = nextEvents;
@@ -9462,6 +9463,38 @@ export default function Simulator({
     presentQueuedEvent(nextEvent ?? null, remaining, { delayForOpponent: Boolean(nextEvent?.opponentSequence) });
   }
 
+  function beginQueuedOpponentCoinPresentation(event) {
+    const presentation = event?.opponentCoinFlip;
+    if (!presentation || !["heads", "tails"].includes(presentation.result)) return false;
+    const sourceCardName = cardsById[event.sourceCardId]?.name ?? "Opponent card";
+    const actionName = presentation.actionName ?? sourceCardName;
+    const resultLabel = presentation.result === "heads" ? "Heads" : "Tails";
+    const success = presentation.success ?? presentation.result === (presentation.successResult ?? "heads");
+    const resumedEvent = { ...event, opponentCoinFlipPresented: true };
+    beginCardCoinFlipPresentation({
+      owner: "opponent",
+      sourceCardId: event.sourceCardId,
+      sourceCardName,
+      successResult: presentation.successResult ?? "heads",
+      eyebrow: `${sourceCardName} · Opponent flip`,
+      title: `Opponent flips for ${actionName}`,
+      message: "The coin will flip automatically.",
+      automatic: true,
+      forcedResult: presentation.result,
+      outcomes: {
+        [presentation.result]: {
+          title: presentation.title ?? `${resultLabel} — ${success ? "effect succeeds" : "no effect"}`,
+          message: presentation.message ?? (success ? `${actionName} takes effect.` : `${actionName} has no effect.`),
+        },
+      },
+      continuation: {
+        type: "resume-opponent-event",
+        event: resumedEvent,
+      },
+    });
+    return true;
+  }
+
   function presentQueuedEvent(event, remainingEvents = [], { delayForOpponent = false } = {}) {
     pendingEventsRef.current = remainingEvents;
     setPendingEvents(remainingEvents);
@@ -9476,6 +9509,15 @@ export default function Simulator({
         commitEventState(event);
         setEventOverlay(null);
         window.setTimeout(() => event.continueLiveLionfish?.(), 0);
+        return;
+      }
+      if (
+        compactTurnPresentationEnabled
+        && event.opponentSequence
+        && event.opponentCoinFlip
+        && !event.opponentCoinFlipPresented
+        && beginQueuedOpponentCoinPresentation(event)
+      ) {
         return;
       }
       if (
@@ -9567,6 +9609,7 @@ export default function Simulator({
       !delayForOpponent
       || event.type === "opponent-roll-ready"
       || (compactTurnPresentationEnabled && event.type === "opponent-status")
+      || (compactTurnPresentationEnabled && Boolean(event.opponentCoinFlip))
     ) {
       present();
       return;
@@ -9587,6 +9630,16 @@ export default function Simulator({
     const closingEvent = eventOverlay;
     commitEventState(closingEvent);
     continueAfterPresentedEvent(closingEvent, pendingEvents);
+  }
+
+  function scrollCompactDrawRail(direction) {
+    const rail = compactDrawRailRef.current;
+    if (!rail) return;
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    rail.scrollBy({
+      left: direction * Math.max(144, rail.clientWidth * 0.72),
+      behavior: accessibilityReducedMotion || systemReducedMotion ? "auto" : "smooth",
+    });
   }
 
   function drawNextCondition() {
@@ -11590,14 +11643,30 @@ export default function Simulator({
     setModal(null);
     setSelectedHandCard(drawResult.cardsToHand[0] ?? null);
     const message = `Dr. Evans discarded ${discardedHand.length} card(s) from your hand and drew ${foundationCards.length} from Foundation plus ${palsCards.length} from Pals.${shortfall ? ` The mandatory seven-card draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
+    const handLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
+    const pendingHandLimitDiscardCount = Number.isFinite(handLimit)
+      ? Math.max(0, drawResult.cardsToHand.length - handLimit)
+      : 0;
     pushLog(message);
     if (shortfall) setGameResult((current) => current ?? `Defeat: Dr. Evans required seven cards, but your personal decks contained only ${drawnCards.length}.`);
     setEventOverlay({
       type: "utility-result",
       sourceCardId: supportCard.id,
-      title: "Player used Dr. Evans",
-      message,
+      title: "Dr. Evans refreshed your hand",
+      message: shortfall
+        ? `Drew ${drawnCards.length} of ${turnDrawSelection.requested} cards before your decks ran out.`
+        : "Review the cards drawn into your new hand.",
       success: !shortfall,
+      compactDrawResult: {
+        discardedHandCount: discardedHand.length,
+        requested: turnDrawSelection.requested,
+        drawnCount: drawnCards.length,
+        foundationDrawn: foundationCards.length,
+        palsDrawn: palsCards.length,
+        shortfall,
+        handLimit: Number.isFinite(handLimit) ? handLimit : null,
+        pendingHandLimitDiscardCount,
+      },
       drawnCards: drawnCards.map((cardId, index) => ({ cardId, source: index < foundationCards.length ? "Foundation" : "Pals", discarded: index >= drawResult.cardsToHand.length })),
     });
   }
@@ -12466,6 +12535,7 @@ export default function Simulator({
         rp: Math.max(0, next.rp - cost),
       };
       const details = [];
+      let opponentCoinFlip = null;
       let revealedCardIds = [];
       const scientistJesChoosesSearch = card.id === "scientist-jes"
         && !next.habitats.length
@@ -12549,7 +12619,25 @@ export default function Simulator({
           const recoveredId = recoverableDiscard[0];
           if (recoveredId) next = { ...next, hand: [...next.hand, recoveredId], discardPile: [playedRecoveryId, ...removeOneCard(recoverableDiscard, recoveredId)] };
           details.push(recoveredId ? `flipped heads and recovered ${cardsById[recoveredId]?.name}` : "flipped heads but had no other card to recover");
-        } else details.push("flipped tails and recovered nothing");
+          opponentCoinFlip = {
+            result: coin,
+            successResult: "heads",
+            success: true,
+            actionName: card.name,
+            title: recoveredId ? "Heads — card recovered" : "Heads — nothing to recover",
+            message: recoveredId ? `Recovered ${cardsById[recoveredId]?.name}.` : "There was no eligible card to recover.",
+          };
+        } else {
+          details.push("flipped tails and recovered nothing");
+          opponentCoinFlip = {
+            result: coin,
+            successResult: "heads",
+            success: false,
+            actionName: card.name,
+            title: "Tails — no recovery",
+            message: "No card was recovered.",
+          };
+        }
       } else if (card.id === "ocean-jake") {
         const recoveredId = (next.lostZone ?? [])[0];
         const lostAfterRecovery = recoveredId ? removeOneCard(next.lostZone, recoveredId) : [...(next.lostZone ?? [])];
@@ -12628,6 +12716,7 @@ export default function Simulator({
         title: revealedCardIds.length ? `Opponent played ${card.name} and revealed ${revealedCardIds.length === 1 ? cardsById[revealedCardIds[0]]?.name : `${revealedCardIds.length} cards`}` : `Opponent played ${card.name}`,
         message: `${card.name}${cost ? ` cost ${cost} RP` : " cost 0 RP"}.${details.length ? ` It ${details.join(", ")}.` : ""}${revealedCardIds.length ? " The searched card selection is revealed below." : ""}`,
         revealedCards: revealedCardIds,
+        opponentCoinFlip,
         success: true,
         opponentStateAfter: reconcileOpponentInstances(opponentState, next),
         rpSpend: cost > 0 ? {
@@ -13660,15 +13749,54 @@ export default function Simulator({
         if (effect.type === EffectType.FLIP_COIN) {
           const target = currentPlayerFoundations.find((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL);
           if (!target) continue;
+          const actionName = getActionName(action);
+          const targetName = cardsById[target.cardId]?.name ?? "Coral";
+          const successResult = effect.successResult ?? "heads";
           const coinResolution = resolveTargetedCoinFlip({
             candidateIds: [target.id],
             targetId: target.id,
-            successResult: effect.successResult ?? "heads",
+            successResult,
           });
           const committedState = commitAction(opponentState, actionKey, cost, oncePerTurn);
-          if (!coinResolution.success) return { state: committedState, playerState: currentPlayerState, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, defenderCardId: target.cardId, actionName: getActionName(action), actionCost: cost, success: false, summary: `Opponent's ${entry.card.name} targeted your ${cardsById[target.cardId]?.name ?? "Coral"} with ${getActionName(action)} for ${cost} RP and flipped ${coinResolution.coinResult}, so it had no effect.` };
+          if (!coinResolution.success) return {
+            state: committedState,
+            playerState: currentPlayerState,
+            sourceCardId: entry.card.id,
+            sourceCardInstanceId: entry.sourceCardInstanceId,
+            defenderCardId: target.cardId,
+            actionName,
+            actionCost: cost,
+            success: false,
+            coinFlip: {
+              result: coinResolution.coinResult,
+              successResult,
+              success: false,
+              actionName,
+              title: `${coinResolution.coinResult === "heads" ? "Heads" : "Tails"} — no effect`,
+              message: `${actionName} did not affect ${targetName}.`,
+            },
+            summary: `Opponent's ${entry.card.name} targeted your ${targetName} with ${actionName} for ${cost} RP and flipped ${coinResolution.coinResult}, so it had no effect.`,
+          };
           const playerEffect = applyPlayerCoralEffect(effect.onSuccess, target, entry.card.id);
-          return { state: committedState, playerState: playerEffect.state, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, defenderCardId: target.cardId, actionName: getActionName(action), actionCost: cost, success: playerEffect.success, summary: `Opponent's ${entry.card.name} targeted your ${cardsById[target.cardId]?.name ?? "Coral"} with ${getActionName(action)} for ${cost} RP, flipped ${coinResolution.coinResult}, and ${playerEffect.summary}.` };
+          return {
+            state: committedState,
+            playerState: playerEffect.state,
+            sourceCardId: entry.card.id,
+            sourceCardInstanceId: entry.sourceCardInstanceId,
+            defenderCardId: target.cardId,
+            actionName,
+            actionCost: cost,
+            success: playerEffect.success,
+            coinFlip: {
+              result: coinResolution.coinResult,
+              successResult,
+              success: true,
+              actionName,
+              title: `${coinResolution.coinResult === "heads" ? "Heads" : "Tails"} — effect succeeds`,
+              message: playerEffect.summary,
+            },
+            summary: `Opponent's ${entry.card.name} targeted your ${targetName} with ${actionName} for ${cost} RP, flipped ${coinResolution.coinResult}, and ${playerEffect.summary}.`,
+          };
         }
         if (effect.type === "grantNextOnPlayAttackBonus") {
           if (opponentState.nextOnPlayAttackBonus) continue;
@@ -14852,6 +14980,7 @@ export default function Simulator({
         title: `Opponent's ${cardsById[opponentUtility.sourceCardId]?.name} used ${opponentUtility.actionName}`,
         message,
         revealedCards: opponentUtility.revealedCards ?? [],
+        opponentCoinFlip: opponentUtility.coinFlip ?? null,
         success: opponentUtility.success !== false,
         opponentStateAfter: opponentUtility.state,
         playerStateAfter: opponentUtility.playerState,
@@ -16689,7 +16818,10 @@ export default function Simulator({
     if (cardCoinFlip?.phase !== CardCoinPhase.READY || cardCoinFlipActiveRef.current) return;
     cardCoinFlipActiveRef.current = true;
     const flipId = cardCoinFlip.id;
-    const flippingState = startCardCoinFlip(cardCoinFlip, { random: Math.random });
+    const flippingState = startCardCoinFlip(cardCoinFlip, {
+      random: Math.random,
+      forcedResult: cardCoinFlip.forcedResult,
+    });
     setCardCoinFlip((currentFlip) => (
       currentFlip?.phase === CardCoinPhase.READY && currentFlip.id === flipId
         ? flippingState
@@ -16738,6 +16870,10 @@ export default function Simulator({
       && pendingCreatureAction?.selectedCoralId === continuation.coralId
     ) {
       completeCoinCoralEffect(continuation.coralId, outcome);
+    } else if (continuation?.type === "resume-opponent-event" && continuation.event) {
+      window.setTimeout(() => {
+        presentQueuedEvent(continuation.event, pendingEventsRef.current, { delayForOpponent: false });
+      }, 0);
     }
   }
 
@@ -17401,6 +17537,7 @@ export default function Simulator({
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
   const openingCoinBoardActive = Boolean(previewExperience && isOpeningCoinEvent);
   const cardCoinBoardActive = Boolean(previewExperience && cardCoinFlip);
+  const compactDrawResultEvent = Boolean(previewExperience && eventOverlay?.compactDrawResult);
   const v2NewGameSetupActive = Boolean(
     previewExperience
     && !isStoryMode
@@ -17408,7 +17545,7 @@ export default function Simulator({
     && !resumeHydrationPending
     && !resumeCheckpoint
   );
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || boardStatPresentationActive || Boolean(combatResultCheckpoint) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || compactDrawResultEvent || boardStatPresentationActive || Boolean(combatResultCheckpoint) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -17423,6 +17560,7 @@ export default function Simulator({
     || boardEffectRollActive
     || openingCoinBoardActive
     || cardCoinBoardActive
+    || compactDrawResultEvent
     || boardStatPresentationActive
     || resumeHydrationPending
     || resumeCheckpoint
@@ -18792,6 +18930,57 @@ export default function Simulator({
         }
         .seapals-card-drawer { animation: seapalsDrawerIn 260ms ease-out; }
         .seapals-event-card { animation: seapalsEventPop 320ms ease-out; }
+        .seapals-event-card.seapals-compact-draw-event {
+          display: flex;
+          height: min(40rem, calc(100dvh - 1.5rem));
+          max-height: calc(100dvh - 1.5rem);
+          overflow: hidden;
+          padding: .75rem;
+        }
+        .seapals-compact-draw-layout,
+        .seapals-compact-draw-body {
+          display: flex;
+          min-height: 0;
+          flex: 1 1 auto;
+          flex-direction: column;
+        }
+        .seapals-compact-draw-heading,
+        .seapals-compact-draw-summary,
+        .seapals-compact-draw-rail-heading,
+        .seapals-compact-draw-continue {
+          flex: 0 0 auto;
+        }
+        .seapals-compact-draw-rail {
+          min-height: 5.75rem;
+          flex: 1 1 auto;
+        }
+        .seapals-compact-draw-card {
+          display: grid;
+          height: 100%;
+          max-height: 13.5rem;
+          min-height: 5.25rem;
+          grid-template-rows: minmax(0, 1fr) auto auto;
+          row-gap: .125rem;
+        }
+        .seapals-compact-draw-card-image {
+          height: 100%;
+          min-height: 0;
+        }
+        @media (min-width: 640px) {
+          .seapals-event-card.seapals-compact-draw-event {
+            height: min(40rem, calc(100dvh - 2.5rem));
+            max-height: calc(100dvh - 2.5rem);
+            padding: 1.25rem;
+          }
+        }
+        @media (max-height: 31rem) {
+          .seapals-compact-draw-copy { display: none; }
+          .seapals-compact-draw-heading { font-size: 1.25rem; line-height: 1.1; margin-top: .125rem; }
+          .seapals-compact-draw-body { margin-top: .35rem; }
+          .seapals-compact-draw-summary { gap: .25rem; font-size: .6rem; }
+          .seapals-compact-draw-summary > span { padding: .25rem .55rem; }
+          .seapals-compact-draw-rail-heading { margin-top: .3rem; }
+        }
         .seapals-hand-card-popover-layer {
           position: fixed;
           z-index: 100;
@@ -23195,7 +23384,7 @@ export default function Simulator({
 
       {eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive ? (
         <div
-          className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5"
+          className={`fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5 ${compactDrawResultEvent ? "overflow-hidden" : "overflow-y-auto"}`}
           hidden={v2NewGameSetupActive || resumeHydrationPending || Boolean(resumeCheckpoint)}
           style={v2NewGameSetupActive || resumeHydrationPending || resumeCheckpoint ? { display: "none" } : undefined}
           role="dialog"
@@ -23204,18 +23393,113 @@ export default function Simulator({
           inert={inspectedCardData || resumeCheckpoint || resumeHydrationPending || undefined}
           aria-labelledby="seapals-event-title"
           aria-describedby={eventOverlay.message && !["condition-reveal", "opponent-status"].includes(eventOverlay.type) ? "seapals-event-message" : undefined}
+          onKeyDown={(keyboardEvent) => {
+            if (!compactDrawResultEvent || keyboardEvent.key !== "Tab") return;
+            const controls = [...keyboardEvent.currentTarget.querySelectorAll(
+              '[data-compact-draw-control], [data-compact-draw-rail], [data-compact-draw-continue]',
+            )];
+            if (!controls.length) return;
+            const first = controls[0];
+            const last = controls[controls.length - 1];
+            if (keyboardEvent.shiftKey && document.activeElement === first) {
+              keyboardEvent.preventDefault();
+              last.focus();
+            } else if (!keyboardEvent.shiftKey && document.activeElement === last) {
+              keyboardEvent.preventDefault();
+              first.focus();
+            }
+          }}
         >
-          <div className="seapals-event-card my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl overflow-y-auto rounded-[1.5rem] border border-cyan-300/50 bg-slate-900 p-4 text-white shadow-2xl sm:max-h-[calc(100dvh-2.5rem)] sm:rounded-[2rem] sm:p-6">
-            <div className={eventOverlay.sourceCardId ? "grid gap-6 md:grid-cols-[260px_1fr]" : "mx-auto max-w-3xl text-center"}>
-              {eventOverlay.sourceCardId ? <div className={`rounded-3xl bg-white/10 p-4 ${eventOverlay.defenderCardId ? "grid grid-cols-2 gap-2 md:grid-cols-1" : ""}`}>
+          <div
+            className={`seapals-event-card my-auto w-full rounded-[1.5rem] border border-cyan-300/50 bg-slate-900 text-white shadow-2xl sm:rounded-[2rem] ${compactDrawResultEvent ? "seapals-compact-draw-event max-w-3xl" : "max-h-[calc(100dvh-1.5rem)] max-w-5xl overflow-y-auto p-4 sm:max-h-[calc(100dvh-2.5rem)] sm:p-6"}`}
+            data-compact-draw-result={compactDrawResultEvent ? "true" : undefined}
+          >
+            <div className={compactDrawResultEvent ? "seapals-compact-draw-layout mx-auto min-w-0 max-w-3xl" : eventOverlay.sourceCardId ? "grid gap-6 md:grid-cols-[260px_1fr]" : "mx-auto max-w-3xl text-center"}>
+              {eventOverlay.sourceCardId && !compactDrawResultEvent ? <div className={`rounded-3xl bg-white/10 p-4 ${eventOverlay.defenderCardId ? "grid grid-cols-2 gap-2 md:grid-cols-1" : ""}`}>
                 {eventOverlay.sourceCardId ? <img src={cardsById[eventOverlay.sourceCardId]?.image} alt={cardsById[eventOverlay.sourceCardId]?.name} className="h-80 w-full rounded-2xl bg-white object-contain" /> : null}
                 {eventOverlay.defenderCardId ? <img src={cardsById[eventOverlay.defenderCardId]?.image} alt={cardsById[eventOverlay.defenderCardId]?.name} className="h-80 w-full rounded-2xl bg-white object-contain" /> : null}
               </div> : null}
-              <div className="flex flex-col justify-center">
-                <div className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">{eventOverlay.type === "tutorial-final-round-milestone" ? "Aquarium Lesson Milestone" : isOpeningCoinEvent ? "Opening Flip" : "Game Event"}</div>
-                <h2 id="seapals-event-title" className="mt-2 text-3xl font-black md:text-4xl">{eventOverlay.title}</h2>
-                {!["condition-reveal", "opponent-status"].includes(eventOverlay.type) && eventOverlay.message ? <p id="seapals-event-message" className="mt-4 text-lg text-slate-200">{eventOverlay.message}</p> : null}
-                {eventOverlay.type === OpeningCoinPhase.READY ? (
+              <div className={`flex flex-col justify-center ${compactDrawResultEvent ? "min-h-0 flex-1" : ""}`}>
+                <div className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">{compactDrawResultEvent ? "Support result" : eventOverlay.type === "tutorial-final-round-milestone" ? "Aquarium Lesson Milestone" : isOpeningCoinEvent ? "Opening Flip" : "Game Event"}</div>
+                <h2 id="seapals-event-title" className={`mt-2 font-black ${compactDrawResultEvent ? "seapals-compact-draw-heading text-2xl sm:text-3xl" : "text-3xl md:text-4xl"}`}>{eventOverlay.title}</h2>
+                {!["condition-reveal", "opponent-status"].includes(eventOverlay.type) && eventOverlay.message ? <p id="seapals-event-message" className={`${compactDrawResultEvent ? "seapals-compact-draw-copy mt-1 text-sm" : "mt-4 text-lg"} text-slate-200`}>{eventOverlay.message}</p> : null}
+                {compactDrawResultEvent ? (
+                  <div className="seapals-compact-draw-body mt-2 min-w-0">
+                    <div className="seapals-compact-draw-summary flex flex-wrap gap-2 text-xs font-black uppercase tracking-[0.08em]">
+                      <span className="rounded-full border border-rose-300/35 bg-rose-400/10 px-3 py-1.5 text-rose-100">
+                        {eventOverlay.compactDrawResult.discardedHandCount} discarded
+                      </span>
+                      <span className="rounded-full border border-cyan-300/35 bg-cyan-400/10 px-3 py-1.5 text-cyan-100">
+                        {eventOverlay.compactDrawResult.drawnCount} drawn
+                      </span>
+                      <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-slate-200">
+                        {eventOverlay.compactDrawResult.foundationDrawn} Foundation · {eventOverlay.compactDrawResult.palsDrawn} Pals
+                      </span>
+                    </div>
+                    {eventOverlay.compactDrawResult.shortfall ? (
+                      <p className="mt-2 text-sm font-bold text-rose-200" role="alert">
+                        Drew {eventOverlay.compactDrawResult.drawnCount} of {eventOverlay.compactDrawResult.requested} — deck depleted.
+                      </p>
+                    ) : eventOverlay.compactDrawResult.pendingHandLimitDiscardCount ? (
+                      <p className="mt-2 text-xs font-bold text-amber-200">
+                        Hand limit {eventOverlay.compactDrawResult.handLimit} · choose {eventOverlay.compactDrawResult.pendingHandLimitDiscardCount} to discard next.
+                      </p>
+                    ) : null}
+                    <div className="seapals-compact-draw-rail-heading mt-2 flex items-center justify-between gap-3">
+                      <strong className="text-xs uppercase tracking-[0.18em] text-cyan-200">Cards drawn</strong>
+                      <div className="flex items-center gap-1.5">
+                        <span className="mr-1 hidden text-[11px] text-slate-400 sm:inline">Scroll left or right</span>
+                        <button
+                          type="button"
+                          data-compact-draw-control
+                          aria-label="Show previous drawn cards"
+                          onClick={() => scrollCompactDrawRail(-1)}
+                          className="grid size-8 place-items-center rounded-full border border-cyan-300/35 bg-cyan-400/10 text-lg font-black leading-none text-cyan-100 transition hover:bg-cyan-300/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                        >
+                          ←
+                        </button>
+                        <button
+                          type="button"
+                          data-compact-draw-control
+                          aria-label="Show next drawn cards"
+                          onClick={() => scrollCompactDrawRail(1)}
+                          className="grid size-8 place-items-center rounded-full border border-cyan-300/35 bg-cyan-400/10 text-lg font-black leading-none text-cyan-100 transition hover:bg-cyan-300/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                        >
+                          →
+                        </button>
+                      </div>
+                    </div>
+                    <ol
+                      ref={compactDrawRailRef}
+                      className="seapals-compact-draw-rail mt-1.5 flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-2 pr-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                      data-compact-draw-rail
+                      aria-label={`${eventOverlay.drawnCards?.length ?? 0} cards drawn by Dr. Evans. Scroll horizontally to review.`}
+                      tabIndex={0}
+                    >
+                      {(eventOverlay.drawnCards ?? []).map((entry, index) => {
+                        const card = cardsById[entry.cardId];
+                        return (
+                          <li key={`${entry.cardId}-${index}`} className={`seapals-compact-draw-card w-28 shrink-0 snap-start rounded-xl border p-2 text-center sm:w-36 ${entry.discarded ? "border-rose-400 bg-rose-500/10" : "border-cyan-400 bg-cyan-500/10"}`}>
+                            <img src={card?.image} alt={card?.name} className="seapals-compact-draw-card-image w-full rounded-lg bg-white object-contain" />
+                            <div className="truncate text-xs font-bold">{card?.name}</div>
+                            <div className="text-[10px] font-bold uppercase text-slate-300">
+                              {index + 1}/{eventOverlay.drawnCards.length} · {entry.source}{entry.discarded ? " · Discarded" : ""}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                    <button
+                      type="button"
+                      autoFocus
+                      data-compact-draw-continue
+                      onClick={closeEventOverlay}
+                      className={`seapals-compact-draw-continue mt-1 w-full rounded-full px-7 py-3 font-black text-white ${eventOverlay.success ? "bg-emerald-500" : "bg-cyan-600"}`}
+                    >
+                      {eventOverlay.continueLabel ?? "Continue"}
+                    </button>
+                  </div>
+                ) : eventOverlay.type === OpeningCoinPhase.READY ? (
                   <div className="mt-6">
                     <button
                       type="button"
