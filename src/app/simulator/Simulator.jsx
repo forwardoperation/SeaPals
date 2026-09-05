@@ -2275,14 +2275,14 @@ function getInPlayStageLabel(card) {
   return String(card.stage);
 }
 
-function InPlayHoverLabel({ card, zoom = 1 }) {
+function InPlayHoverLabel({ card, zoom = 1, placement = "above" }) {
   if (!card) return null;
   const stageLabel = getInPlayStageLabel(card);
   const inverseZoom = Math.min(2.5, Math.max(0.7, 1 / Math.max(0.2, Number(zoom) || 1)));
 
   return (
     <span
-      className="seapals-in-play-hover-label"
+      className={`seapals-in-play-hover-label${placement === "below" ? " seapals-in-play-hover-label--below" : ""}`}
       style={{ "--seapals-hover-label-scale": inverseZoom }}
       aria-hidden="true"
     >
@@ -3336,6 +3336,7 @@ const MOBILE_REEF_SPLIT_DEFAULT = 40;
 const PREVIEW_ECOSYSTEM_INITIAL_ZOOM = 0.72;
 const MOBILE_REEF_ZOOM_FACTOR_MIN = 0.75;
 const MOBILE_REEF_ZOOM_FACTOR_MAX = 1.25;
+const BOARD_FOUNDATION_VITALS_CLEARANCE = 60;
 
 function clampMobileReefSplit(value) {
   return Math.min(MOBILE_REEF_SPLIT_MAX, Math.max(MOBILE_REEF_SPLIT_MIN, Number(value) || 0));
@@ -6959,6 +6960,9 @@ export default function Simulator({
     const floatingTopRowCount = isOpponent
       ? opponent.habitats.length + opponent.reefCreatures.length
       : playerHabitats.length + playerReefCreatures.length;
+    const floatingTopClearance = isOpponent
+      ? opponent.habitats.length ? 40 : 16
+      : playerHabitats.length ? 48 : 24;
     const invertOpponentSlots = isOpponent && previewExperience;
     const positions = corals.map((coral, index) => {
       if (!isOpponent) return { x: coral.x, y: coral.y, absolute: false };
@@ -6976,7 +6980,12 @@ export default function Simulator({
       const centerX = positions[coralIndex].absolute ? positions[coralIndex].x : (positions[coralIndex].x / 100) * rect.width;
       const centerY = positions[coralIndex].absolute ? positions[coralIndex].y : (positions[coralIndex].y / 100) * rect.height;
       const anchors = isOpponent ? getOpponentSlotPositions(coral.slots.length, invertOpponentSlots) : getBracketSlotPositions(coral.slots.length);
-      const cardBounds = [{ minX: centerX - coralWidth / 2, maxX: centerX + coralWidth / 2, minY: centerY - coralHeight / 2, maxY: centerY + coralHeight / 2 }];
+      const cardBounds = [{
+        minX: centerX - coralWidth / 2,
+        maxX: centerX + coralWidth / 2,
+        minY: centerY - coralHeight / 2 - BOARD_FOUNDATION_VITALS_CLEARANCE,
+        maxY: centerY + coralHeight / 2,
+      }];
       coral.slots.forEach((slot, slotIndex) => {
         const position = isOpponent
           ? getOpponentSlotPosition(slot.position, invertOpponentSlots) ?? anchors[slotIndex]
@@ -6993,7 +7002,7 @@ export default function Simulator({
       const floatingCardGap = isOpponent ? 8 : 12;
       const floatingCardsPerRow = Math.max(1, Math.floor((rect.width + floatingCardGap) / (floatingCardWidth + floatingCardGap)));
       const floatingRowCount = Math.max(1, Math.ceil(floatingTopRowCount / floatingCardsPerRow));
-      const floatingTopRowHeight = 24 + floatingRowCount * floatingCardHeight + Math.max(0, floatingRowCount - 1) * floatingCardGap;
+      const floatingTopRowHeight = floatingTopClearance + floatingRowCount * floatingCardHeight + Math.max(0, floatingRowCount - 1) * floatingCardGap;
       bounds.push({ minX: 0, maxX: rect.width, minY: 0, maxY: Math.max(330, floatingTopRowHeight) });
     }
     const padding = 36;
@@ -21773,7 +21782,7 @@ export default function Simulator({
                       {opponentSetupConcealed ? null : (
                         <>
                       {opponent.habitats.length || (opponent.reefCreatures ?? []).length ? (
-                        <div className="seapals-opponent-floating-row pointer-events-none absolute inset-x-0 top-4 z-30 flex flex-wrap items-start justify-center gap-2">
+                        <div className={`seapals-opponent-floating-row pointer-events-none absolute inset-x-0 z-30 flex flex-wrap items-start justify-center gap-2 ${opponent.habitats.length ? "top-10" : "top-4"}`}>
                           {opponent.habitats.length ? (
                             <div className="seapals-opponent-habitats contents">
                               {opponent.habitatInstances.map((habitatInstance) => {
@@ -21783,9 +21792,9 @@ export default function Simulator({
                                 const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
                                 return (
                                   <button key={habitatInstance.instanceId} type="button" data-card-id={cardId} data-card-instance-id={`habitat:${habitatInstance.instanceId}`} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "opponent", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId, foundation: true, zone: "habitat", currentHealth: habitatInstance.currentHealth, maxHealth: habitatInstance.maxHealth })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card pointer-events-auto relative h-[150px] w-[120px] cursor-grab rounded-xl text-center active:cursor-grabbing">
-                                    <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
+                                    <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} placement="below" />
                                     <img src={card?.image} alt={card?.name} className="h-full w-full rounded-xl object-contain shadow-lg" />
-                                    {habitatInstance.maxHealth ? <span className="pointer-events-none absolute inset-x-1 bottom-1 rounded-full bg-slate-950/85 px-1 py-0.5 text-[8px] font-black text-rose-100 shadow">{habitatInstance.currentHealth}/{habitatInstance.maxHealth} HP</span> : null}
+                                    {habitatInstance.maxHealth ? <span data-board-card-vitals="above" className="pointer-events-none absolute inset-x-1 z-50 rounded-full bg-slate-950/85 px-1 py-0.5 text-[8px] font-black text-rose-100 shadow">{habitatInstance.currentHealth}/{habitatInstance.maxHealth} HP</span> : null}
                                   </button>
                                 );
                               })}
@@ -21875,9 +21884,9 @@ export default function Simulator({
                         return (
                           <div key={coral.id} className="absolute h-[210px] w-[180px] -translate-x-1/2 -translate-y-1/2" style={{ left: `calc(50% + ${gridOffset.x}px)`, top: `calc(50% + ${gridOffset.y + opponentFloatingOffset}px)` }}>
                             <button type="button" data-card-id={coral.cardId} data-card-instance-id={`foundation:${coral.id}`} data-rp-source-key={`foundation:${coral.id}`} data-attack-target={isFoundationTarget ? "true" : undefined} data-attack-target-instance={foundationAttackTarget?.instanceId} aria-label={isFoundationTarget ? `Attack ${card?.name}. ${coral.health} of ${coral.maxHealth} HP.` : `Inspect ${card?.name}. ${coral.health} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`} data-tutorial-target={isFoundationTarget ? "opponent-board" : undefined} onPointerDown={(event) => event.stopPropagation()} onClick={() => isFoundationTarget ? resolvePlayerAttack(coral.id, "__foundation__") : setInspectedCard({ owner: "opponent", cardId: coral.cardId, coralId: coral.id, slotId: `opponent-foundation-${coral.id}`, foundation: true })} className={`seapals-in-play-card relative z-20 mx-auto block h-[150px] w-[120px] rounded-[1.25rem] shadow-2xl ${isFoundationTarget ? "animate-pulse ring-4 ring-emerald-300" : ""}`}>
-                              <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} />
+                              <InPlayHoverLabel card={card} zoom={opponentEcosystemZoom} placement="below" />
                               <img src={card?.image} alt={card?.name} className="h-full w-full rounded-xl object-contain" />
-                              <span className="pointer-events-none absolute inset-x-1 bottom-1">
+                              <span data-board-card-vitals="above" className="pointer-events-none absolute inset-x-1 z-50">
                                 <FoundationVitals foundation={coral} densityBucket={densityBucket} owner="opponent" compact />
                               </span>
                               {(coral.statuses ?? []).length ? <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-1 text-[9px] font-black uppercase text-slate-950 shadow-lg">{coral.statuses.map((status) => status.type).join(", ")}</div> : null}
@@ -22116,7 +22125,7 @@ export default function Simulator({
                       }}
                     >
                       {playerHabitats.length || playerReefCreatures.length ? (
-                        <div className="seapals-player-floating-row pointer-events-none absolute inset-x-0 top-6 z-30 flex flex-wrap items-start justify-center gap-3">
+                        <div className={`seapals-player-floating-row pointer-events-none absolute inset-x-0 z-30 flex flex-wrap items-start justify-center gap-3 ${playerHabitats.length ? "top-12" : "top-6"}`}>
                           {playerHabitats.length ? (
                             <div className="seapals-player-habitats contents">
                               {playerHabitatInstances.map((habitatInstance, index) => {
@@ -22126,9 +22135,9 @@ export default function Simulator({
                                 const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
                                 return (
                                   <button key={habitatInstance.instanceId} type="button" data-card-id={cardId} data-card-instance-id={`habitat:${habitatInstance.instanceId}`} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card pointer-events-auto relative h-[220px] w-[180px] cursor-grab rounded-[1.5rem] text-center active:cursor-grabbing">
-                                    <InPlayHoverLabel card={habitat} zoom={ecosystemZoom} />
+                                    <InPlayHoverLabel card={habitat} zoom={ecosystemZoom} placement="below" />
                                     <img src={habitat?.image} alt={habitat?.name} className="h-full w-full rounded-[1.5rem] object-contain shadow-lg" />
-                                    {habitatInstance.maxHealth ? <span className="pointer-events-none absolute inset-x-2 bottom-2 rounded-full bg-slate-950/85 px-2 py-1 text-[9px] font-black text-rose-100 shadow">{habitatInstance.currentHealth}/{habitatInstance.maxHealth} HP</span> : null}
+                                    {habitatInstance.maxHealth ? <span data-board-card-vitals="above" className="pointer-events-none absolute inset-x-2 z-50 rounded-full bg-slate-950/85 px-2 py-1 text-[9px] font-black text-rose-100 shadow">{habitatInstance.currentHealth}/{habitatInstance.maxHealth} HP</span> : null}
                                   </button>
                                 );
                               })}
@@ -22235,7 +22244,7 @@ export default function Simulator({
                                    if (event.key === "Enter" || event.key === " ") handleCoralClick(coral.id, event);
                                  }}
                                 >
-                                <InPlayHoverLabel card={cardsById[coral.cardId]} zoom={ecosystemZoom} />
+                                <InPlayHoverLabel card={cardsById[coral.cardId]} zoom={ecosystemZoom} placement="below" />
                                 <img
                                   src={coral.image}
                                   alt={coral.name}
@@ -22248,7 +22257,7 @@ export default function Simulator({
                                         : "cursor-grab"
                                   }`}
                                 />
-                                <span className="pointer-events-none absolute inset-x-2 bottom-2">
+                                <span data-board-card-vitals="above" className="pointer-events-none absolute inset-x-2 z-50">
                                   <FoundationVitals foundation={coral} densityBucket={densityBucket} compact />
                                 </span>
                                 {(coral.statuses ?? []).length ? <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-2 py-1 text-[9px] font-black uppercase text-slate-950 shadow-lg">{coral.statuses.map((status) => status.type).join(", ")}</div> : null}

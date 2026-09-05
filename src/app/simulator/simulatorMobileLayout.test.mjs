@@ -865,7 +865,12 @@ test("V2 uses a hybrid inverted rival perspective while keeping peripheral zones
 
   assert.match(opponentPane, /style=\{\{ transform: `translate[\s\S]*?seapals-opponent-ecosystem-content/);
   assert.match(opponentPane, /data-opponent-orientation=\{previewExperience \? "inverted" : "standard"\}/);
-  assert.match(opponentPane, /seapals-opponent-floating-row[^"\n]*absolute[^"\n]*inset-x-0[^"\n]*top-4[^"\n]*flex-wrap[^"\n]*justify-center/);
+  assert.match(opponentPane, /seapals-opponent-floating-row[^"\n]*absolute[^"\n]*inset-x-0[^"\n]*flex-wrap[^"\n]*justify-center/);
+  assert.match(
+    opponentPane,
+    /opponent\.habitats\.length \? "top-10" : "top-4"/,
+    "health-bearing Habitats should get extra top clearance without moving ordinary Open Water cards",
+  );
   assert.match(opponentPane, /seapals-opponent-habitats contents/);
   assert.match(opponentPane, /seapals-opponent-open-water contents/);
   assert.match(opponentPane, /seapals-opponent-orphans absolute right-4 top-4/);

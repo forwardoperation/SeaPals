@@ -205,6 +205,14 @@ body {
   isolation: isolate;
 }
 
+.seapals-game-shell [data-board-card-vitals="above"] {
+  position: absolute;
+  top: auto !important;
+  bottom: calc(100% + 0.5rem) !important;
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
 .seapals-in-play-card:hover,
 .seapals-in-play-card:focus-visible,
 .seapals-in-play-card:focus-within {
