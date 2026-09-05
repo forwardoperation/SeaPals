@@ -448,6 +448,57 @@
   background: rgba(3, 32, 44, 0.72);
 }
 
+.tutorialChoice {
+  display: flex;
+  min-height: 2.85rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding-top: 0.1rem;
+}
+
+.tutorialQuestion {
+  color: rgba(224, 251, 255, 0.72);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.tutorialButton {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid rgba(143, 245, 239, 0.48);
+  border-radius: 999px;
+  color: #dffefd;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-decoration: none;
+  background: rgba(45, 212, 191, 0.1);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.tutorialButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(207, 250, 254, 0.82);
+  background: rgba(45, 212, 191, 0.2);
+}
+
+.tutorialButton:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.tutorialButton:active { transform: translateY(0); }
+
+.tutorialIcon {
+  color: #8ff5ef;
+  font-size: 1rem;
+}
+
 @keyframes oceanRaysDrift {
   to { transform: skewX(-12deg) translate3d(3%, 1%, 0); }
 }
@@ -473,6 +524,10 @@
   animation: none;
 }
 
+.reducedMotion :is(.startButton, .tutorialButton) {
+  transition: none;
+}
+
 @media (max-width: 36rem) {
   .layout {
     align-items: center;
@@ -489,6 +544,7 @@
   .difficultyField { padding: 0.62rem 0.72rem 0.55rem; }
   .difficultySummary { gap: 0.55rem; }
   .startButton { min-height: 3.2rem; }
+  .tutorialChoice { gap: 0.55rem; }
 }
 
 @media (max-height: 42rem) and (orientation: landscape) {
@@ -513,6 +569,8 @@
   .difficultyValue { font-size: 0.95rem; }
   .sliderRow { min-height: 2.05rem; }
   .startButton { min-height: 2.8rem; }
+  .tutorialChoice { min-height: 2.35rem; }
+  .tutorialButton { padding-block: 0.35rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -520,7 +578,8 @@
   .caustics,
   .bubble,
   .fish,
-  .startButton {
+  .startButton,
+  .tutorialButton {
     animation: none;
     transition: none;
   }
@@ -540,4 +599,10 @@
   border: 3px solid #fff;
   color: #000;
   background: #67e8f9;
+}
+
+:global(.seapals-high-contrast) .tutorialButton {
+  border: 2px solid #fff;
+  color: #fff;
+  background: #000;
 }

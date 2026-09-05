@@ -373,7 +373,7 @@ test("compact opponent playback preserves queue order and terminal continuations
 test("compact playback synchronizes queued events and targets a newly rendered duplicate", () => {
   const queue = sourceSection(
     simulatorSource,
-    "function queueEvents(eventsToAdd)",
+    "function queueEvents(eventsToAdd, { forcePresent = false } = {})",
     "function commitEventState(event)",
   );
   const geometry = sourceSection(

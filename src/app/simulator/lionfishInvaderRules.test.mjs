@@ -5,6 +5,7 @@ import {
   collectHostTurnLionfishInvaders,
   getLionfishInvaderTargetCandidates,
   getLionfishInvaderTargetController,
+  hasAnyLionfishInvaderTarget,
   planLionfishInvaderTrigger,
   resolveLionfishInvaderCoin,
   resolveLionfishInvaderOpposedRoll,
@@ -107,7 +108,7 @@ test("Invader coin and branch controller mapping are deterministic", () => {
   assert.equal(getLionfishInvaderTargetController({ invaderController: "player", coinResult: "edge" }), null);
 });
 
-test("planning flips first, keeps stable controller-aware Fish candidates, and excludes the source", () => {
+test("planning preflights once, then keeps stable controller-aware Fish candidates and excludes the source", () => {
   const order = [];
   const invader = { instanceId: "lionfish-source", controller: "player" };
   const targets = [
@@ -129,7 +130,9 @@ test("planning flips first, keeps stable controller-aware Fish candidates, and e
     },
   });
 
-  assert.equal(order[0], "coin", "the branch is chosen before legal targets are evaluated");
+  const coinIndex = order.indexOf("coin");
+  assert.ok(coinIndex > 0, "target availability is checked before the coin is consumed");
+  assert.equal(order.filter((entry) => entry === "coin").length, 1, "an eligible Invader consumes one coin");
   assert.equal(plan.coinResult, "heads");
   assert.equal(plan.targetController, "opponent");
   assert.deepEqual(plan.candidates.map((target) => target.instanceId), ["rival-fish-a", "rival-school"]);
@@ -179,6 +182,29 @@ test("a selected branch with no legal target does not fall back or consume comba
   assert.equal(coinCalls, 1);
   assert.equal(attackCalls, 0);
   assert.equal(defenseCalls, 0);
+});
+
+test("Invader skips its coin entirely when neither ecosystem has another legal Fish", () => {
+  let coinCalls = 0;
+  const invader = { instanceId: "lionfish-source", controller: "player" };
+  const targets = [
+    { instanceId: "lionfish-source", controller: "player", category: "fish" },
+    { instanceId: "rival-predator", controller: "opponent", category: "predator" },
+  ];
+
+  assert.equal(hasAnyLionfishInvaderTarget({ invader, targets }), false);
+  assert.deepEqual(planLionfishInvaderTrigger({
+    invader,
+    targets,
+    random: () => { coinCalls += 1; return 0.1; },
+  }), {
+    resolved: false,
+    coinResult: null,
+    targetController: null,
+    candidates: [],
+    noLegalTarget: true,
+  });
+  assert.equal(coinCalls, 0, "a skipped Lionfish check must not sample the coin");
 });
 
 test("candidate filtering preserves first occurrence and supports normal legality callbacks", () => {

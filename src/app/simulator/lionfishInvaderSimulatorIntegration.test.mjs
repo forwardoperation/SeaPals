@@ -32,7 +32,7 @@ test("Lionfish Invader resolves exactly once before player turn collection and p
   assert.match(startRound, /setDiscardPile\(playerAtTurnStart\.discardPile\)/);
   assert.match(startRound, /setLostZone\(playerAtTurnStart\.lostZone\)/);
   assert.match(startRound, /setOpponent\(opponentHandLimitResult\.state\)/);
-  assert.match(startRound, /previewExperience && playerHostedInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
+  assert.match(startRound, /previewExperience && playerTriggerableInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
   assert.match(startRound, /startRoundRef\.current\?\.\(nextRound,[\s\S]*skipLionfish: true/);
   assert.match(startRound, /presentQueuedEvent\(firstLionfishEvent, remainingLionfishEvents/);
   assert.doesNotMatch(startRound, /insertOpponentRollCheckpoints\(lionfishResolution\.events/);
@@ -51,7 +51,7 @@ test("Lionfish Invader resolves exactly once before opponent Parasite and automa
   assert.match(opponentTurn, /playerStateAfter: stagedPlayerState/);
   assert.match(opponentTurn, /opponentStateAfter: opponentAtTurnStart/);
   assert.match(opponentTurn, /runOpponentTurn\(opponentForTurn, \{ startTurnAlreadyBegun: true \}\)/);
-  assert.match(opponentTurn, /previewExperience && opponentHostedInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
+  assert.match(opponentTurn, /previewExperience && opponentTriggerableInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
   assert.match(opponentTurn, /resolveOpponentTurnRef\.current\?\.\(\{[\s\S]*skipLionfish: true/);
   assert.doesNotMatch(opponentTurn, /insertOpponentRollCheckpoints\(lionfishTurnEvents/);
 
@@ -62,7 +62,7 @@ test("Lionfish Invader resolves exactly once before opponent Parasite and automa
 test("Invader controller branches, source exclusion, fizzle, and owner-zone routing stay explicit", () => {
   const resolver = sourceBetween("function resolveHostTurnLionfishInvaders({", "function createDeck(");
 
-  assert.match(resolver, /collectHostTurnLionfishInvaders\(\{/);
+  assert.match(resolver, /collectTriggerableHostTurnLionfishInvaders\(/);
   assert.match(resolver, /const coinResult = forcedPlan\?\.coinResult \?\? resolveLionfishInvaderCoin\(random\)/);
   assert.match(resolver, /getLionfishInvaderTargetController\(\{/);
   assert.match(resolver, /selectLionfishInvaderTarget\(candidates, \{[\s\S]*sourceInstanceId: invader\.instanceId/);
@@ -117,4 +117,58 @@ test("preview Lionfish combat resolves one invader at a time from the board dice
   assert.match(liveResolver, /forcedPlans: \[plan\]/);
   assert.match(liveResolver, /\.\.\.createLiveLionfishTurnEvents\(\{/);
   assert.match(liveResolver, /type: "live-lionfish-continuation"/);
+});
+
+test("preview Lionfish uses a live ecosystem-owned coin before any attack dice", () => {
+  const liveResolver = sourceBetween(
+    "  function createLiveLionfishTurnEvents({",
+    "  function createLiveOpponentAttackStepEvents({",
+  );
+  const coinCheckpoint = liveResolver.indexOf('type: "live-lionfish-coin"');
+  const plannedResolution = liveResolver.indexOf("const plannedResolution = resolveHostTurnLionfishInvaders({");
+  const diceCheckpoint = liveResolver.indexOf('type: "opponent-roll-ready"');
+
+  assert.ok(coinCheckpoint >= 0 && coinCheckpoint < plannedResolution && plannedResolution < diceCheckpoint);
+  assert.match(liveResolver, /sourceCardName: cardsById\.lionfish\?\.name \?\? "Lionfish"/);
+  assert.match(liveResolver, /actionName: "Invader"/);
+  assert.match(liveResolver, /hostController,[\s\S]*invaderPhysicalController: hostController/);
+  assert.match(liveResolver, /resolveCoin: \(coinResult\) => createLiveLionfishTurnEvents\(\{[\s\S]*forcedCoinResult: coinResult/);
+  assert.match(liveResolver, /forcedPlans: \[\{[\s\S]*invaderInstanceId: nextInvader\.instanceId,[\s\S]*coinResult: forcedCoinResult/);
+  assert.doesNotMatch(
+    liveResolver.slice(0, plannedResolution),
+    /resolveLionfishInvaderCoin|forcedResult/,
+    "the tap or AI timer, not event planning, must sample the Lionfish coin",
+  );
+
+  const presenter = sourceBetween(
+    "  function beginLiveLionfishCoinPresentation(",
+    "  function beginDeferredOpponentToxicCoinPresentation(",
+  );
+  assert.match(presenter, /owner: hostController/);
+  assert.match(presenter, /const automatic = hostController === "opponent"/);
+  assert.match(presenter, /automatic,/);
+  assert.match(presenter, /sourceCardName,[\s\S]*actionName,/);
+  assert.match(presenter, /neutral: true/);
+  assert.doesNotMatch(presenter, /forcedResult/);
+
+  const continuation = sourceBetween("  function continueCardCoinFlip()", "  function cancelOpeningCoinFlip()");
+  assert.match(continuation, /continuation\?\.type === "resolve-live-lionfish-coin"/);
+  assert.match(continuation, /continuation\.resolve\(outcome\.result\)/);
+  assert.match(continuation, /\[\.\.\.lionfishEvents, \.\.\.pendingEventsRef\.current\]/);
+});
+
+test("Lionfish no-target preflight excludes the source and runs before coin RNG", () => {
+  const collector = sourceBetween(
+    "function collectTriggerableHostTurnLionfishInvaders(",
+    "function emptyLionfishOccupiedSlot(",
+  );
+  assert.match(collector, /getLionfishOwnedFishTargets\(states, "player"\)/);
+  assert.match(collector, /getLionfishOwnedFishTargets\(states, "opponent"\)/);
+  assert.match(collector, /hasAnyLionfishInvaderTarget\(\{ invader, targets: allLegalFishTargets \}\)/);
+
+  const resolver = sourceBetween("function resolveHostTurnLionfishInvaders({", "function createDeck(");
+  const preflight = resolver.indexOf("hasAnyLionfishInvaderTarget({ invader, targets: allLegalFishTargets })");
+  const trigger = resolver.indexOf("triggeredCount += 1");
+  const coin = resolver.indexOf("resolveLionfishInvaderCoin(random)");
+  assert.ok(preflight >= 0 && preflight < trigger && trigger < coin);
 });

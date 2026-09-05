@@ -20,6 +20,8 @@ function createRecoveryFlip(id = 17) {
   return createCardCoinReadyState({
     id,
     sourceCardId: "recovery",
+    sourceCardName: "Recovery",
+    actionName: "Recover from Discard",
     successResult: "heads",
     title: "Recovery",
     message: "Tap anywhere to flip.",
@@ -52,6 +54,24 @@ test("card coin maps Reef Fish to heads and blank to tails with one random sampl
     assert.equal(flipping.result, expected.result);
     assert.equal(flipping.success, expected.success);
     assert.equal(randomCalls, 1);
+  }
+});
+
+test("card and action context survives every coin phase", () => {
+  const ready = createCardCoinReadyState({
+    id: 9,
+    sourceCardId: "lionfish",
+    sourceCardName: "Lionfish",
+    actionName: "Invader",
+    neutral: true,
+  });
+  const flipping = startCardCoinFlip(ready, { random: () => 0.25 });
+  const result = completeCardCoinFlip(flipping, ready.id);
+
+  for (const state of [ready, flipping, result]) {
+    assert.equal(state.sourceCardName, "Lionfish");
+    assert.equal(state.actionName, "Invader");
+    assert.equal(state.neutral, true);
   }
 });
 

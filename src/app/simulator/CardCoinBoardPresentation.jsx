@@ -27,6 +27,7 @@ export default function CardCoinBoardPresentation({
   const onContinueRef = useRef(onContinue);
   const phase = event?.phase;
   const isAutomatic = event?.automatic === true;
+  const isNeutral = event?.neutral === true;
 
   useEffect(() => {
     onStopRef.current = onStop;
@@ -93,6 +94,8 @@ export default function CardCoinBoardPresentation({
   const isLanding = phase === CardCoinPhase.FLIPPING;
   const isResult = phase === CardCoinPhase.RESULT;
   const eyebrow = event.eyebrow || event.sourceCardName || "Coin flip";
+  const sourceCardName = event.sourceCardName || "Card effect";
+  const actionName = event.actionName || (eyebrow !== sourceCardName ? eyebrow : "Coin Flip");
   const visualSide = isLanding || isResult ? event.side : CardCoinSide.FISH;
   const landedLabel = formatCardCoinSide(event.side);
   const readyTitle = event.title || `Flip for ${event.sourceCardName || "this card"}`;
@@ -142,7 +145,7 @@ export default function CardCoinBoardPresentation({
       aria-modal={isAutomatic ? undefined : "true"}
       aria-live={isAutomatic ? "polite" : undefined}
       aria-atomic={isAutomatic ? "true" : undefined}
-      aria-labelledby="card-coin-board-title"
+      aria-labelledby="card-coin-board-context card-coin-board-title"
       aria-describedby="card-coin-board-message"
       tabIndex={-1}
       onKeyDown={trapFocus}
@@ -155,7 +158,7 @@ export default function CardCoinBoardPresentation({
           data-board-coin-primary
           data-card-coin-primary
           data-flip-card-coin
-          aria-label={`${readyTitle}. ${readyMessage}`}
+          aria-label={`${sourceCardName}, ${actionName}. ${readyTitle}. ${readyMessage}`}
           onClick={onStop}
         >
           <span className="sr-only">Tap anywhere on the board, or press Enter or Space, to flip the coin.</span>
@@ -170,9 +173,13 @@ export default function CardCoinBoardPresentation({
         <section
           className={`${styles.panel}${isWaiting ? ` ${styles.passThroughPanel}` : ""}${isWaiting || isLanding ? ` ${styles.motionPanel}` : ""}${isResult ? ` ${styles.resultPanel}` : ""}`}
         >
+          <p id="card-coin-board-context" className={styles.cardCoinContext} data-card-coin-context>
+            <span className={styles.cardCoinSource} data-card-coin-source>{sourceCardName}</span>
+            <span className={styles.cardCoinContextDivider} aria-hidden="true">&bull;</span>
+            <strong className={styles.cardCoinAction} data-card-coin-action>{actionName}</strong>
+          </p>
           {isWaiting ? (
             <>
-              <span className={styles.eyebrow}>{eyebrow}</span>
               <h2 id="card-coin-board-title" className="sr-only">{readyTitle}</h2>
               <p id="card-coin-board-message" className="sr-only">{readyMessage}</p>
               <div className={styles.visual} data-card-coin-visual>
@@ -184,8 +191,7 @@ export default function CardCoinBoardPresentation({
 
           {isLanding ? (
             <>
-              <span className={styles.eyebrow}>{eyebrow}</span>
-              <h2 id="card-coin-board-title" className="sr-only">{eyebrow} coin landing</h2>
+              <h2 id="card-coin-board-title" className="sr-only">{sourceCardName} {actionName} coin landing</h2>
               <p id="card-coin-board-message" className="sr-only">The coin is landing. Reef Fish counts as heads; blank counts as tails.</p>
               <div className={styles.visual} data-card-coin-visual>
                 <OpeningCoinVisual
@@ -200,7 +206,6 @@ export default function CardCoinBoardPresentation({
 
           {isResult ? (
             <>
-              <span className={styles.eyebrow}>{eyebrow}</span>
               <h2 id="card-coin-board-title" className={styles.title}>{event.title}</h2>
               <p id="card-coin-board-message" className={`${styles.message} ${styles.cardResultMessage}`}>{event.message}</p>
               <div className={styles.resultVisual} data-card-coin-visual>
@@ -208,11 +213,11 @@ export default function CardCoinBoardPresentation({
                   mode="landed"
                   side={event.side}
                   label={`Coin landed ${landedLabel}`}
-                  celebrate={event.success === true && event.owner !== "opponent"}
+                  celebrate={!isNeutral && event.success === true && event.owner !== "opponent"}
                 />
               </div>
               <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-                {event.title} {event.message} The coin landed {landedLabel}.
+                {sourceCardName}, {actionName}. {event.title} {event.message} The coin landed {landedLabel}.
               </p>
               {isAutomatic ? (
                 <span className={styles.autoContinueStatus} aria-hidden="true">Resolving&hellip;</span>
@@ -223,7 +228,7 @@ export default function CardCoinBoardPresentation({
                   data-card-coin-primary
                   data-continue-card-coin
                   onClick={onContinue}
-                  className={event.success === true ? styles.primaryAction : styles.opponentAction}
+                  className={isNeutral ? styles.neutralAction : event.success === true ? styles.primaryAction : styles.opponentAction}
                 >
                   {event.continueLabel || "Continue"}
                 </button>

@@ -93,11 +93,12 @@ const newGameBranch = sourceSection(
   ') : eventOverlay.type === "opponent-thinking"',
 );
 
-test("the normal V2 opening screen contains only the two deck choices, difficulty, and one start action", () => {
+test("the normal V2 opening screen keeps deck setup primary and offers a guided tutorial", () => {
   const landing = elementContainingDataAttribute("data-v2-new-game-setup");
   const playerSelect = jsxOpeningTagContaining(landing, "data-v2-player-deck");
   const opponentSelect = jsxOpeningTagContaining(landing, "data-v2-opponent-deck");
   const startAction = jsxOpeningTagContaining(landing, "data-v2-start-game");
+  const tutorialAction = jsxOpeningTagContaining(landing, "data-v2-tutorial-link");
 
   assert.equal((landing.match(/<select\b/g) ?? []).length, 2, "the landing should expose exactly two deck selectors");
   assert.ok(playerSelect, "the player deck selector needs a stable semantic hook");
@@ -115,7 +116,24 @@ test("the normal V2 opening screen contains only the two deck choices, difficult
     /function startMatch\([^)]*\)[\s\S]*?onStart\(playerDeckId,\s*opponentDeckId,\s*selectedDifficulty\.id\)/,
   );
 
-  assert.doesNotMatch(landing, /Victory Target|How a turn works|New to SeaPals|Start guided tutorial/i);
+  assert.match(landing, /New to SeaPals\?/);
+  assert.match(landing, /Try the Tutorial/);
+  assert.match(tutorialAction, /^<Link\b/);
+  assert.match(tutorialAction, /pathname:\s*"\/instructions\/tutorial-v2"/);
+  assert.match(tutorialAction, /query:\s*\{\s*returnDeck:\s*playerDeckId\s*\}/);
+  assert.doesNotMatch(tutorialAction, /type="submit"/);
+  assert.equal(
+    (landing.match(/data-v2-tutorial-link/g) ?? []).length,
+    1,
+    "the landing should expose one secondary tutorial action",
+  );
+  assert.match(
+    landingComponentSource,
+    /const focusSelector = "a\[href\],[^"]+"/,
+    "the dialog focus trap should include the tutorial link",
+  );
+
+  assert.doesNotMatch(landing, /Victory Target|How a turn works|Start guided tutorial/i);
   assert.doesNotMatch(landing, /four Foundation|four Pals|Every illegal play|choose an opponent deck and victory target/i);
   assert.doesNotMatch(landing, /aria-pressed=/, "difficulty should not fall back to a wall of option buttons");
 });

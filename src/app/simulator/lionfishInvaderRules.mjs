@@ -121,8 +121,27 @@ export function getLionfishInvaderTargetCandidates({
 }
 
 /**
- * Plans one trigger. The coin is consumed before candidate filtering, even
- * when the selected branch has no legal target.
+ * Checks both coin branches before beginning Invader. The Lionfish itself is
+ * never enough to trigger its own mandatory coin flip.
+ */
+export function hasAnyLionfishInvaderTarget({
+  invader,
+  targets = [],
+  isLegalFishTarget,
+} = {}) {
+  if (!invader?.instanceId || !isController(invader?.controller)) return false;
+  return ["player", "opponent"].some((targetController) => getLionfishInvaderTargetCandidates({
+    targets,
+    targetController,
+    sourceInstanceId: invader.instanceId,
+    ...(isLegalFishTarget ? { isLegalFishTarget } : {}),
+  }).length > 0);
+}
+
+/**
+ * Plans one trigger. A coin is consumed only when at least one branch has a
+ * legal Fish target. After the flip, an empty selected branch still fizzles
+ * without falling back to the other ecosystem.
  */
 export function planLionfishInvaderTrigger({
   invader,
@@ -131,6 +150,9 @@ export function planLionfishInvaderTrigger({
   isLegalFishTarget,
 } = {}) {
   if (!invader?.instanceId || !isController(invader?.controller)) {
+    return { resolved: false, coinResult: null, targetController: null, candidates: [], noLegalTarget: true };
+  }
+  if (!hasAnyLionfishInvaderTarget({ invader, targets, isLegalFishTarget })) {
     return { resolved: false, coinResult: null, targetController: null, candidates: [], noLegalTarget: true };
   }
   const coinResult = resolveLionfishInvaderCoin(random);

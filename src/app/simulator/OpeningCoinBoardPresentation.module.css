@@ -120,6 +120,40 @@
   text-transform: uppercase;
 }
 
+.cardCoinContext {
+  display: flex;
+  max-width: 100%;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.42rem;
+  margin: 0;
+  color: #cffafe;
+  font-size: clamp(0.62rem, 2.6vw, 0.78rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.cardCoinSource,
+.cardCoinAction {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cardCoinSource {
+  color: #fff;
+}
+
+.cardCoinAction {
+  color: #fde68a;
+}
+
+.cardCoinContextDivider {
+  flex: 0 0 auto;
+  color: rgba(165, 243, 252, 0.58);
+}
+
 .title {
   margin-top: 0.35rem;
   font-size: clamp(1.15rem, 5vw, 1.7rem);
@@ -136,7 +170,8 @@
 }
 
 .primaryAction,
-.opponentAction {
+.opponentAction,
+.neutralAction {
   min-height: 2.75rem;
   margin-top: 0.75rem;
   padding: 0.65rem clamp(1rem, 4vw, 1.55rem);
@@ -161,6 +196,12 @@
   box-shadow: 0 8px 24px rgba(16, 185, 129, 0.28);
 }
 
+.neutralAction {
+  color: #082f49;
+  background: linear-gradient(135deg, #67e8f9, #a7f3d0);
+  box-shadow: 0 8px 24px rgba(34, 211, 238, 0.24);
+}
+
 .opponentAction {
   color: #4c0519;
   background: linear-gradient(135deg, #fda4af, #fb7185);
@@ -168,13 +209,15 @@
 }
 
 .primaryAction:hover,
-.opponentAction:hover {
+.opponentAction:hover,
+.neutralAction:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
 }
 
 .primaryAction:focus-visible,
-.opponentAction:focus-visible {
+.opponentAction:focus-visible,
+.neutralAction:focus-visible {
   outline: 3px solid #fef3c7;
   outline-offset: 3px;
 }

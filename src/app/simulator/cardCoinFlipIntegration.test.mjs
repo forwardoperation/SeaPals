@@ -172,7 +172,11 @@ test("the committed card coin locks every V2 board surface until its continuatio
     "opponent reef, divider, and player reef stay inert",
   );
   assert.match(simulatorSource, /interactionDisabled=\{boardInteractionOverlayActive \|\|/);
-  assert.match(simulatorSource, /disabled=\{boardInteractionOverlayActive \|\| Boolean\(gameResult\)/);
+  assert.match(
+    simulatorSource,
+    /disabled=\{boardInteractionOverlayActive \|\| turnControlDisabled\}/,
+    "the divider turn control should combine modal locking with the shared phase-safe round lock",
+  );
 });
 
 test("restart cancellation invalidates a card toss, while legacy Recovery and opening tutorial behavior remain", () => {

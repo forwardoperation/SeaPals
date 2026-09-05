@@ -810,11 +810,13 @@ test("V2 keeps only the draggable divider and round action while the old footer 
   assert.match(divider, /seapals-reef-divider-handle[\s\S]*?role="separator"/);
   assert.match(divider, /data-mobile-turn-control/);
   assert.match(divider, /onClick=\{endTurn\}/);
-  assert.match(divider, /disabled=\{boardInteractionOverlayActive \|\| Boolean\(gameResult\) \|\| opponentThinking \|\| Boolean\(compactTurnSequence\) \|\| compactOpponentPlaybackLocked \|\| \(isSetup && !hasCoralInPlay\) \|\| isStartOfTurn\}/);
+  assert.match(divider, /disabled=\{boardInteractionOverlayActive \|\| turnControlDisabled\}/);
   assert.match(divider, /data-tutorial-target="turn-button"/);
   assert.match(divider, /\{turnControlLabel\}/);
   assert.doesNotMatch(divider, /Opponent First|Round 1|End Turn/);
-  assert.match(simulatorSource, /const turnControlLabel = opponentThinking \? "Opponent Turn" : isSetup \? "Begin Round" : "Next Round";/);
+  assert.match(simulatorSource, /const opponentTurnInProgress = opponentThinking \|\| gamePhase === "transition" \|\| gamePhase === "opponent";/);
+  assert.match(simulatorSource, /const turnControlPhaseLocked = gamePhase !== "setup" && gamePhase !== "main";/);
+  assert.match(simulatorSource, /const turnControlLabel = opponentTurnInProgress[\s\S]*?\? "Opponent Turn"[\s\S]*?: "Next Round";/);
   assert.match(
     simulatorSource,
     /\.seapals-reef-divider-control\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*50%;[\s\S]*?height:\s*calc\(100% - \.5rem\);[\s\S]*?min-height:\s*2\.25rem;[\s\S]*?transform:\s*translateY\(-50%\);/,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import styles from "./SimulatorV2NewGameSetup.module.css";
 
 function getDifficultyIndex(options, difficultyId) {
@@ -38,7 +39,7 @@ export default function SimulatorV2NewGameSetup({
   useEffect(() => {
     const screen = screenRef.current;
     const previousFocus = document.activeElement;
-    const focusSelector = "button:not([disabled]), select:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex='-1'])";
+    const focusSelector = "a[href], button:not([disabled]), select:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex='-1'])";
     const focusFrame = window.requestAnimationFrame(() => {
       screen?.querySelector("[data-v2-player-deck]")?.focus({ preventScroll: true });
     });
@@ -210,6 +211,21 @@ export default function SimulatorV2NewGameSetup({
               <span>Start Match</span>
               <span className={styles.startIcon} aria-hidden="true">&#8594;</span>
             </button>
+
+            <div className={styles.tutorialChoice}>
+              <span className={styles.tutorialQuestion}>New to SeaPals?</span>
+              <Link
+                href={{
+                  pathname: "/instructions/tutorial-v2",
+                  query: { returnDeck: playerDeckId },
+                }}
+                className={styles.tutorialButton}
+                data-v2-tutorial-link
+              >
+                <span>Try the Tutorial</span>
+                <span className={styles.tutorialIcon} aria-hidden="true">&#8594;</span>
+              </Link>
+            </div>
           </form>
         </section>
       </div>
