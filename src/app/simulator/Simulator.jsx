@@ -1483,6 +1483,8 @@ function resolveHostTurnLionfishInvaders({
     const attackerWins = attackTotal > defenseTotal;
     let combatDiscardCue = null;
     const combatConsequences = [];
+    let regenerateResolution = null;
+    let regenerateTriggered = false;
     let resolutionMessage = " The defender won; ties defend.";
     if (attackerWins) {
       const defenderState = states[target.controller];
@@ -1494,10 +1496,10 @@ function resolveHostTurnLionfishInvaders({
         controllerRp: defenderState.rp,
         survivalAlreadyApplied: resilienceTriggered,
       });
-      const regenerateResolution = regenerateDecision.available
+      regenerateResolution = regenerateDecision.available
         ? resolveRegenerateDecision(regenerateDecision, "regenerate")
         : null;
-      const regenerateTriggered = Boolean(regenerateResolution?.keepDefender);
+      regenerateTriggered = Boolean(regenerateResolution?.keepDefender);
       const defenderKept = resilienceTriggered || regenerateTriggered;
       if (defenderKept) {
         states[target.controller] = {
