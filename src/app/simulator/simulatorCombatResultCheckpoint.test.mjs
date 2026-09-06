@@ -40,10 +40,64 @@ test("combat results use a compact, explicit checkpoint instead of immediately d
   assert.match(checkpointMarkup, /role="dialog"/);
   assert.match(checkpointMarkup, /aria-modal="true"/);
   assert.match(checkpointMarkup, /combatResultCheckpoint\.event\.title/);
+  assert.match(checkpointMarkup, /combatCheckpointBreakdown/);
+  assert.match(checkpointMarkup, /data-combat-breakdown-side="attack"/);
+  assert.match(checkpointMarkup, /data-combat-breakdown-side="defense"/);
   assert.match(
     checkpointMarkup,
-    /combatResultCheckpoint\.event\.checkpointMessage \?\? combatResultCheckpoint\.event\.message/,
-    "The compact result may remove redundant copy without weakening the full combat log",
+    /Number\(combatResultCheckpoint\.event\.attackCount\) > 1[\s\S]*?Attack \$\{combatResultCheckpoint\.event\.attackNumber\} of \$\{combatResultCheckpoint\.event\.attackCount\}/,
+    "Repeat attacks need a glanceable ordinal after the detailed sentence is removed",
+  );
+  assert.match(
+    checkpointMarkup,
+    /combatCheckpointBreakdown\.attack\.actionName[\s\S]*?<span>\{combatCheckpointBreakdown\.attack\.actionName\}<\/span>/,
+    "The attack action must remain visible after the prose sentence is removed",
+  );
+  assert.equal(
+    (checkpointMarkup.match(/data-combat-breakdown-side=/g) ?? []).length,
+    2,
+    "Opposed results should present one attack column and one defense column",
+  );
+  assert.equal(
+    (checkpointMarkup.match(/data-combat-contributor/g) ?? []).length,
+    2,
+    "Each side should render its structured contributor rows",
+  );
+  assert.equal(
+    (checkpointMarkup.match(/data-combat-total/g) ?? []).length,
+    2,
+    "Each side should end with its explicit total",
+  );
+  assert.match(
+    checkpointMarkup,
+    /data-combat-breakdown-side="attack"[\s\S]*?data-combat-contributor[\s\S]*?data-combat-total[\s\S]*?data-combat-breakdown-side="defense"[\s\S]*?data-combat-contributor[\s\S]*?data-combat-total/,
+    "Contributor rows must precede the total at the bottom of each column",
+  );
+  assert.match(checkpointMarkup, /formatCombatContributorValue\(contributor\)/);
+  assert.doesNotMatch(
+    checkpointMarkup,
+    /checkpointMessage|combatResultCheckpoint\.event\.message|seapals-combat-result-copy/,
+    "The glanceable checkpoint should not render the explanatory result paragraph",
+  );
+  assert.match(
+    checkpointMarkup,
+    /className="sr-only"[\s\S]*?combatCheckpointAccessibleSummary/,
+    "Assistive technology should receive a concise summary derived from the structured rows",
+  );
+  const checkpointStyles = sourceSection(
+    simulatorSource,
+    ".seapals-combat-result-breakdown {",
+    ".seapals-opponent-placement-layer {",
+  );
+  assert.match(
+    checkpointStyles,
+    /\.seapals-combat-result-breakdown \{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
+    "Attack and defense should remain two side-by-side columns",
+  );
+  assert.match(
+    checkpointStyles,
+    /\.seapals-combat-result-side \{[\s\S]*?grid-template-rows:\s*auto 1fr auto/,
+    "Each column should hold its total at the bottom after all contributors",
   );
   const continueButton = checkpointMarkup.match(/<button[\s\S]*?>\s*Continue\s*<\/button>/)?.[0] ?? "";
   assert.match(continueButton, /data-combat-result-continue/);
@@ -80,6 +134,39 @@ test("Continue is the only gateway from a result into state mutation and discard
     continueCheckpoint.indexOf("queueConsumedAttackFlight(")
       < continueCheckpoint.indexOf("checkpoint.commit?.()"),
     "Continue must capture the defeated card's geometry before committing the board removal",
+  );
+});
+
+test("checkpoint identity and accessible copy come from the normalized breakdown", () => {
+  const presentationModel = sourceSection(
+    simulatorSource,
+    "const combatCheckpointBreakdown =",
+    "const selectedHandPlayError =",
+  );
+
+  assert.match(
+    presentationModel,
+    /buildCombatResultBreakdown\(combatResultCheckpoint\.event\)/,
+  );
+  assert.match(
+    presentationModel,
+    /cardsById\[combatCheckpointBreakdown\.attack\?\.cardId \?\? combatResultCheckpoint\.event\.sourceCardId\]/,
+    "Structured attack identity must win over legacy event identity",
+  );
+  assert.match(
+    presentationModel,
+    /cardsById\[combatCheckpointBreakdown\.defense\?\.cardId \?\? combatResultCheckpoint\.event\.defenderCardId\]/,
+    "Structured defense identity must win over legacy event identity",
+  );
+  assert.match(presentationModel, /combatCheckpointSourceName = combatCheckpointBreakdown\.attack\?\.name \|\| combatCheckpointSourceCard\?\.name/);
+  assert.match(presentationModel, /combatCheckpointDefenderName = combatCheckpointBreakdown\.defense\?\.name \|\| combatCheckpointDefenderCard\?\.name/);
+  assert.match(presentationModel, /combatCheckpointBreakdown\.attack\.actionName/);
+  assert.match(presentationModel, /combatCheckpointBreakdown\.attack\.contributors\.map/);
+  assert.match(presentationModel, /combatCheckpointBreakdown\.defense\.contributors\.map/);
+  assert.doesNotMatch(
+    presentationModel,
+    /event\.checkpointMessage|event\.message/,
+    "The accessible summary should describe the same structured rows instead of reviving the long paragraph",
   );
 });
 
@@ -241,27 +328,134 @@ test("player attacks checkpoint both the success and defense result before any r
   );
   assert.match(
     ordinarySuccess,
-    /const matchupSentence = `[\s\S]*?used \$\{attack\.actionName\} on \$\{targetEntry\.card\.name\}: \$\{rolls\.join\(", "\)\}\.``?;/,
-    "The compact result should retain the attacker, action, defender, and final roll",
-  );
-  assert.match(
-    ordinarySuccess,
-    /const supplementalResultMessage = `[\s\S]*?\$\{defenderKept \? survivalMessage : ""\}/,
-    "Removal boilerplate should be omitted when the separate discard consequence already explains it",
-  );
-  assert.match(ordinarySuccess, /const checkpointMessage = `\$\{matchupSentence\}\$\{supplementalResultMessage\}`/);
-  assert.match(
-    ordinarySuccess,
     /const message = `\$\{matchupSentence\} The attack succeeded\.\$\{ensnareSummary\}\$\{survivalMessage\}/,
     "The detailed activity log should retain the complete resolution",
   );
-  assert.match(ordinarySuccess, /resultOverlay = \{[\s\S]*?message, checkpointMessage,/);
+  assert.match(ordinarySuccess, /pushLog\(message\)/);
+  assert.match(
+    ordinarySuccess,
+    /resultOverlay = \{[\s\S]*?message,[\s\S]*?combatBreakdown,/,
+    "The held result should carry structured arithmetic while the activity log keeps its detailed sentence",
+  );
 
   assert.match(
     defendedResult,
     /beginCombatResultCheckpoint\(resultOverlay,\s*\{[\s\S]*?playerRole:\s*"attacker"[\s\S]*?discardCue:\s*counterSucceeded\s*\?[\s\S]*?commit:\s*commitResolution/,
     "A failed player attack needs the same checkpoint, with any Bite Back removal deferred behind Continue",
   );
+});
+
+test("player combat exposes every applied contributor and rebuilds attack arithmetic after Scatter", () => {
+  const attackResolution = sourceSection(
+    simulatorSource,
+    "function resolvePlayerAttack(",
+    "function applyPlayerOnPlayDeckDiscard(",
+  );
+  const schoolBranch = sourceSection(
+    attackResolution,
+    'if (targetSlotId === "__foundation__" && isCreatureSchool(targetEntry.card))',
+    "const defenseDice = targetEntry.card.defense?.dice ?? targetEntry.card.defense;",
+  );
+  assert.match(
+    schoolBranch,
+    /contributors:\s*\[[\s\S]*?id:\s*"attack-roll"[\s\S]*?combatContributorsFromDetails\([\s\S]*?total:\s*attackRolls\.reduce\([\s\S]*?defense:\s*null/,
+    "Creature School results should retain the roll and each attack modifier without inventing defense",
+  );
+
+  const opposedBranch = attackResolution.slice(
+    attackResolution.indexOf("const defenseDice = targetEntry.card.defense?.dice ?? targetEntry.card.defense;"),
+  );
+  assert.match(opposedBranch, /let appliedAttackRoll = chosenAttackRoll/);
+  assert.match(opposedBranch, /let appliedAttackDetails = \[\.\.\.modifier\.details, rolledBonus\.detail\]\.filter\(Boolean\)/);
+  assert.match(
+    opposedBranch,
+    /if \(attackTotal > defenseTotal && cardHasScatter\(targetEntry\.card\)\)[\s\S]*?attackTotal = scatterBase \+ scatterModifier\.flat \+ scatterRolledBonus\.flat \+ rovLightsBonus \+ flashingAlarmBonus;[\s\S]*?appliedAttackRoll = scatterBase;[\s\S]*?appliedAttackDetails = \[\.\.\.scatterModifier\.details, scatterRolledBonus\.detail\]\.filter\(Boolean\)/,
+    "A Scatter reroll must replace the original roll and modifier rows rather than showing stale arithmetic",
+  );
+  const combatBreakdown = sourceSection(opposedBranch, "const combatBreakdown = {", "const rolls = [");
+  assert.match(combatBreakdown, /attack:\s*\{[\s\S]*?cardId:\s*attacker\.id[\s\S]*?actionName:\s*attack\.actionName/);
+  assert.match(combatBreakdown, /id:\s*"attack-roll"/);
+  assert.match(combatBreakdown, /combatContributorsFromDetails\(/);
+  assert.match(combatBreakdown, /ROV Lights/);
+  assert.match(combatBreakdown, /Flashing Alarm/);
+  assert.match(combatBreakdown, /total:\s*attackTotal/);
+  assert.match(combatBreakdown, /defense:\s*\{[\s\S]*?cardId:\s*targetEntry\.card\.id/);
+  assert.match(combatBreakdown, /\.\.\.\(defenseAdjustment\.contributors \?\? \[\]\)/);
+  for (const contributor of [
+    "defense-roll",
+    "Cloak",
+    "Darkness Shroud",
+    "Shelter",
+    "Stinging Fortress",
+  ]) {
+    assert.match(combatBreakdown, new RegExp(contributor), `Missing player-combat contributor: ${contributor}`);
+  }
+  assert.match(combatBreakdown, /statusDefenseRolls\.map/);
+  assert.match(combatBreakdown, /total:\s*defenseTotal/);
+  assert.equal(
+    (opposedBranch.match(/\bcombatBreakdown,\s*attackNumber:\s*sequenceResult\.resolvedCount,\s*attackCount:\s*sequenceResult\.requiredCount/g) ?? []).length,
+    3,
+    "Own-invader removal, ordinary success, and defended/Bite Back results must share the final breakdown and attack ordinal",
+  );
+});
+
+test("opponent combat carries its structured breakdown through Regenerate and ordinary result events", () => {
+  const resolver = sourceSection(
+    simulatorSource,
+    "function runOpponentAttackStep(",
+    "function runOpponentAttack(",
+  );
+  const defenseContributors = sourceSection(
+    resolver,
+    "const defenseContributors = [{",
+    "const advantageRoll =",
+  );
+  for (const contributor of [
+    "defense-roll",
+    "Cloak",
+    "Darkness Shroud",
+    "Shelter",
+    "Stinging Fortress",
+    "defense-action-",
+  ]) {
+    assert.match(defenseContributors, new RegExp(contributor), `Missing opponent-combat contributor: ${contributor}`);
+  }
+  assert.match(defenseContributors, /defenseAdjustment\.contributors/);
+  assert.match(
+    defenseContributors,
+    /\.forEach\(\(status, statusIndex\)[\s\S]*?id:\s*`defense-action-\$\{status\.sourceCardId \?\? status\.dice\}-\$\{statusIndex\}`/,
+    "Repeated defense statuses need unique row keys",
+  );
+  const defenseAdjustment = sourceSection(
+    simulatorSource,
+    "function getDefenseAdjustment(",
+    "function getRolledAttackBonus(",
+  );
+  for (const contributor of ["Fish penalty", "Ensnare", "Attack effect"]) {
+    assert.match(defenseAdjustment, new RegExp(contributor), `Missing defense-penalty contributor: ${contributor}`);
+  }
+  assert.match(
+    resolver,
+    /if \(attackTotal > defenseTotal && cardHasScatter\(targetEntry\.card\)\)[\s\S]*?appliedAttackRoll = scatterBase;[\s\S]*?appliedAttackDetails = \[\.\.\.scatterModifier\.details, scatterRolledBonus\.detail\]\.filter\(Boolean\)/,
+  );
+  assert.match(
+    resolver,
+    /combatRollSummary = \{[\s\S]*?combatBreakdown:\s*\{[\s\S]*?cardId:\s*attackerEntry\.card\.id[\s\S]*?actionName:\s*attackerEntry\.attack\.actionName[\s\S]*?contributors:\s*attackContributors[\s\S]*?cardId:\s*targetEntry\.card\.id[\s\S]*?contributors:\s*defenseContributors/,
+    "The opponent resolver should return structured arithmetic with the projected combat result",
+  );
+
+  const eventBuilder = sourceSection(
+    simulatorSource,
+    "function buildOpponentAttackEventSequence(",
+    "function preserveOpponentNormalActionsAfterOnPlay(",
+  );
+  assert.equal(
+    (eventBuilder.match(/combatBreakdown:\s*step\.combatBreakdown \?\? null/g) ?? []).length,
+    2,
+    "Both choose-Regenerate and faceoff-result events must retain the same breakdown",
+  );
+  assert.match(eventBuilder, /type:\s*"choose-regenerate"[\s\S]*?combatBreakdown:\s*step\.combatBreakdown \?\? null/);
+  assert.match(eventBuilder, /type:\s*step\.noLegalTarget \? "opponent-impact" : "faceoff-result"[\s\S]*?combatBreakdown:\s*step\.combatBreakdown \?\? null/);
 });
 
 test("queued combat consumes explicit player role and outcome before committing projected state", () => {
@@ -337,6 +531,11 @@ test("Lionfish result events expose perspective, final totals, and an exact disc
   );
   assert.match(
     schoolResult,
+    /combatBreakdown:\s*\{[\s\S]*?attack:\s*\{[\s\S]*?cardId:\s*"lionfish"[\s\S]*?actionName:\s*"Invader"[\s\S]*?contributors:\s*\[[\s\S]*?value:\s*attackRoll\.total[\s\S]*?total:\s*attackRoll\.total[\s\S]*?defense:\s*null/,
+    "Creature School invader results should show a single attack column",
+  );
+  assert.match(
+    schoolResult,
     /combatDiscardCue:\s*schoolRemoved \? \{[\s\S]*?cardId:\s*target\.cardId[\s\S]*?targetInstanceId:\s*target\.instanceId[\s\S]*?sourceOwner:\s*target\.physicalController[\s\S]*?destinationOwner:\s*target\.controller[\s\S]*?destinationZone:\s*destroyedCardGoesToLostZone\(target\.card\) \? "lost" : "discard"[\s\S]*?\}\s*:\s*null/,
   );
 
@@ -346,6 +545,11 @@ test("Lionfish result events expose perspective, final totals, and an exact disc
     opposedResult,
     /primaryAttackRoll:\s*opposed\.attack\.total[\s\S]*?primaryDefenseRoll:\s*opposed\.defense\.total[\s\S]*?attackTotal,[\s\S]*?defenseTotal,/,
     "The banner must receive the modified final totals, not just the primary dice",
+  );
+  assert.match(
+    opposedResult,
+    /combatBreakdown:\s*\{[\s\S]*?attack:\s*\{[\s\S]*?cardId:\s*"lionfish"[\s\S]*?value:\s*attackTotal[\s\S]*?total:\s*attackTotal[\s\S]*?defense:\s*\{[\s\S]*?cardId:\s*target\.cardId[\s\S]*?value:\s*baseDefenseTotal[\s\S]*?Shelter[\s\S]*?Stinging Fortress[\s\S]*?statusDefenseRolls\.map[\s\S]*?Cloak[\s\S]*?Darkness Shroud[\s\S]*?total:\s*defenseTotal/,
+    "Lionfish opposed results should identify both sides and every applied defense source",
   );
   assert.match(opposedResult, /combatOutcome:\s*getCombatOutcome\(attackerWins\)[\s\S]*?combatDiscardCue,/);
 

@@ -109,3 +109,31 @@ test("player- and opponent-hosted Lionfish coin paths each resume their turn pip
     "the resolved Lionfish step must be presented once",
   );
 });
+
+test("a Lionfish heads result promotes its resolved attack checkpoint without an async queue gap", () => {
+  const coinContinuation = sourceBetween(
+    'continuation?.type === "resolve-live-lionfish-coin"',
+    'continuation?.type === "resolve-opponent-toxic"',
+  );
+
+  const tailSnapshot = coinContinuation.indexOf("const existingTail = [...pendingEventsRef.current];");
+  const resolveFromLandedSide = coinContinuation.indexOf("continuation.resolve(outcome.result)");
+  const atomicPresentation = coinContinuation.indexOf(
+    "presentQueuedEvent(nextEvent ?? null, remainingEvents, { delayForOpponent: false });",
+  );
+
+  assert.ok(
+    tailSnapshot >= 0 && tailSnapshot < resolveFromLandedSide && resolveFromLandedSide < atomicPresentation,
+    "the landed side and existing queue tail must be captured before the next Lionfish event is presented",
+  );
+  assert.doesNotMatch(
+    coinContinuation,
+    /setPendingEvents\(queuedEvents\)|window\.setTimeout/,
+    "the resolved heads branch must not be parked in shared state or a timer before presentation",
+  );
+  assert.doesNotMatch(
+    coinContinuation,
+    /continuation\.resolve\(outcome\.success\)/,
+    "heads is a routing result, not a failed-effect boolean",
+  );
+});

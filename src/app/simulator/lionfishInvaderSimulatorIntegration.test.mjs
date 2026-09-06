@@ -154,7 +154,14 @@ test("preview Lionfish uses a live ecosystem-owned coin before any attack dice",
   const continuation = sourceBetween("  function continueCardCoinFlip()", "  function cancelOpeningCoinFlip()");
   assert.match(continuation, /continuation\?\.type === "resolve-live-lionfish-coin"/);
   assert.match(continuation, /continuation\.resolve\(outcome\.result\)/);
-  assert.match(continuation, /\[\.\.\.lionfishEvents, \.\.\.pendingEventsRef\.current\]/);
+  assert.match(continuation, /const existingTail = \[\.\.\.pendingEventsRef\.current\]/);
+  assert.match(continuation, /\[\.\.\.lionfishEvents, \.\.\.existingTail\]/);
+  assert.match(continuation, /presentQueuedEvent\(nextEvent \?\? null, remainingEvents, \{ delayForOpponent: false \}\)/);
+  assert.doesNotMatch(
+    continuation,
+    /setPendingEvents\(queuedEvents\)[\s\S]*?window\.setTimeout\([\s\S]*?presentQueuedEvent\(nextEvent/,
+    "the completed Lionfish coin must promote its result without an async shared-queue gap",
+  );
 });
 
 test("Lionfish no-target preflight excludes the source and runs before coin RNG", () => {

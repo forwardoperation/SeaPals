@@ -29,6 +29,12 @@ import {
 } from "./cardCoinFlip.mjs";
 import { createCombatResolutionRandom, createCombatRollPacket } from "./combatRollPresentation.mjs";
 import {
+  buildCombatResultBreakdown,
+  buildCombatResultConsequences,
+  combatContributorsFromDetails,
+  formatCombatContributorValue,
+} from "./combatResultBreakdown.mjs";
+import {
   EFFECT_ROLL_READY_TYPE,
   EffectRollKind,
   createEffectRollReadyEvent,
@@ -1324,6 +1330,19 @@ function resolveHostTurnLionfishInvaders({
         primaryDefenseRoll: null,
         attackTotal: attackRoll.total,
         defenseTotal: null,
+        combatBreakdown: {
+          attack: {
+            cardId: "lionfish",
+            actionName: "Invader",
+            contributors: [{ id: "attack-roll", label: "Attack roll", value: attackRoll.total, kind: "roll", detail: "D4-1" }],
+            total: attackRoll.total,
+          },
+          defense: null,
+        },
+        damage,
+        resultNote: damageResult.destroyed
+          ? `${target.card.name} → ${destroyedCardGoesToLostZone(target.card) ? "Lost Zone" : "Discard pile"}`
+          : `${target.card.name} · ${damageResult.remainingHealth}/${school.maxHealth} HP`,
         combatAttackerOwner: invader.controller,
         combatDefenderOwner: target.controller,
         combatPlayerRole,
@@ -1437,8 +1456,8 @@ function resolveHostTurnLionfishInvaders({
     const hostedDefenseRoll = hostedDefenseBonusDice ? rollDie(hostedDefenseBonusDice, resolutionRandom) : null;
     const statusDefenseRolls = defenseStatuses
       .filter((status) => status.type === "defenseBonusDice")
-      .map((status) => rollDie(status.dice, resolutionRandom))
-      .filter(Boolean);
+      .map((status) => ({ status, roll: rollDie(status.dice, resolutionRandom) }))
+      .filter((entry) => entry.roll);
     const cloakDefenseBonus = getCloakDefenseBonus(target.card);
     const darknessShroudDefenseBonus = getDarknessShroudDefenseBonus(
       target.card,
@@ -1449,7 +1468,7 @@ function resolveHostTurnLionfishInvaders({
       baseDefenseTotal
         + attachedDefenseBonus
         + Number(hostedDefenseRoll?.total ?? 0)
-        + statusDefenseRolls.reduce((total, roll) => total + roll.total, 0)
+        + statusDefenseRolls.reduce((total, entry) => total + entry.roll.total, 0)
         + cloakDefenseBonus
         + darknessShroudDefenseBonus,
     );
@@ -1457,12 +1476,13 @@ function resolveHostTurnLionfishInvaders({
       secondDefenseRoll ? `defense advantage ${opposed.defense.total}/${secondDefenseRoll.total}` : null,
       attachedDefenseBonus ? `+${attachedDefenseBonus} Shelter` : null,
       hostedDefenseRoll ? `+${hostedDefenseRoll.total} ${hostedDefenseBonusDice}` : null,
-      ...statusDefenseRolls.map((roll) => `+${roll.total} action defense`),
+      ...statusDefenseRolls.map((entry) => `+${entry.roll.total} action defense`),
       cloakDefenseBonus ? `+${cloakDefenseBonus} Cloak` : null,
       darknessShroudDefenseBonus ? `+${darknessShroudDefenseBonus} Darkness Shroud` : null,
     ].filter(Boolean);
     const attackerWins = attackTotal > defenseTotal;
     let combatDiscardCue = null;
+    const combatConsequences = [];
     let resolutionMessage = " The defender won; ties defend.";
     if (attackerWins) {
       const defenderState = states[target.controller];
@@ -1520,6 +1540,13 @@ function resolveHostTurnLionfishInvaders({
             physicalController: hostController,
           });
           if (sourceRemoval.removed) routeLionfishDestroyedCard(states, invader.controller, invader.cardId);
+          if (sourceRemoval.removed) {
+            combatConsequences.push({
+              id: "lionfish-discarded",
+              label: "Lionfish",
+              detail: `→ ${destroyedCardGoesToLostZone(cardsById.lionfish) ? "Lost Zone" : "Discard pile"}`,
+            });
+          }
         }
         const targetDestination = destroyedCardGoesToLostZone(target.card) ? "Lost Zone" : "discard pile";
         resolutionMessage = ` The attack succeeded, so ${target.card.name} went to its owner's ${targetDestination}.`;
@@ -1549,6 +1576,48 @@ function resolveHostTurnLionfishInvaders({
       primaryDefenseRoll: opposed.defense.total,
       attackTotal,
       defenseTotal,
+      combatBreakdown: {
+        attack: {
+          cardId: "lionfish",
+          actionName: "Invader",
+          contributors: [{
+            id: "attack-roll",
+            label: "Attack roll",
+            value: attackTotal,
+            kind: "roll",
+            detail: secondAttackRoll
+              ? `D4-1 · ${opposed.attack.total} / ${secondAttackRoll.total}, lower roll`
+              : "D4-1",
+          }],
+          total: attackTotal,
+        },
+        defense: {
+          cardId: target.cardId,
+          contributors: [
+            {
+              id: "defense-roll",
+              label: "Defense roll",
+              value: baseDefenseTotal,
+              kind: "roll",
+              detail: secondDefenseRoll
+                ? `${defenseDice} · ${opposed.defense.total} / ${secondDefenseRoll.total}, higher roll`
+                : defenseDice,
+            },
+            ...(attachedDefenseBonus ? [{ id: "shelter", label: "Shelter", value: attachedDefenseBonus }] : []),
+            ...(hostedDefenseRoll ? [{ id: "stinging-fortress", label: "Stinging Fortress", value: hostedDefenseRoll.total, detail: hostedDefenseBonusDice }] : []),
+            ...statusDefenseRolls.map(({ status, roll }, index) => ({
+              id: `defense-action-${status.sourceCardId ?? status.dice}-${index}`,
+              label: cardsById[status.sourceCardId]?.name ?? "Action bonus",
+              value: roll.total,
+              detail: status.dice,
+            })),
+            ...(cloakDefenseBonus ? [{ id: "cloak", label: "Cloak", value: cloakDefenseBonus }] : []),
+            ...(darknessShroudDefenseBonus ? [{ id: "darkness-shroud", label: "Darkness Shroud", value: darknessShroudDefenseBonus }] : []),
+          ],
+          total: defenseTotal,
+        },
+      },
+      combatConsequences,
       combatAttackerOwner: invader.controller,
       combatDefenderOwner: target.controller,
       combatPlayerRole,
@@ -2051,9 +2120,16 @@ function getDefenseAdjustment(attack, targetCard, habitats = []) {
   const text = attack?.text ?? "";
   const fishPenalty = targetCard?.category === CardCategory.FISH ? text.match(/defending fish have\s*-(\d+)\s*defense/i) : null;
   const conditionalPenalty = attack?.conditionalDefensePenalty && (!attack.conditionalDefensePenalty.requiredCardId || habitats.includes(attack.conditionalDefensePenalty.requiredCardId)) ? Number(attack.conditionalDefensePenalty.amount ?? 0) : 0;
+  const fishPenaltyAmount = fishPenalty ? Number(fishPenalty[1]) : 0;
+  const ensnarePenalty = Number(attack?.ensnarePenalty ?? 0);
   return {
-    flat: (fishPenalty ? -Number(fishPenalty[1]) : 0) - Number(attack?.ensnarePenalty ?? 0) - conditionalPenalty,
+    flat: -fishPenaltyAmount - ensnarePenalty - conditionalPenalty,
     ignoresBonuses: /ignore defensive bonuses/i.test(text),
+    contributors: [
+      fishPenaltyAmount ? { id: "fish-defense-penalty", label: "Fish penalty", value: -fishPenaltyAmount } : null,
+      ensnarePenalty ? { id: "ensnare", label: "Ensnare", value: -ensnarePenalty } : null,
+      conditionalPenalty ? { id: "conditional-defense-penalty", label: attack?.actionName ?? "Attack effect", value: -conditionalPenalty } : null,
+    ].filter(Boolean),
   };
 }
 
@@ -7838,7 +7914,7 @@ export default function Simulator({
         setFaceoffPreview(null);
         const message = `${targetEntry.card.name} used ${targetAvoidance.abilityName} and flipped ${coinResult}, so ${attacker.name}'s ${attack.actionName} failed before dice were rolled.${ensnareSummary}${flashingAlarmTriggerMessage}${getAttackSequenceContinuationMessage(sequenceResult)}`;
         pushLog(message);
-        const resultOverlay = { type: "faceoff-result", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: `${targetAvoidance.abilityName} Evaded the Attack`, message, success: false, combatOutcome: "attack-blocked", continueAttackSequence: sequenceResult.continues };
+        const resultOverlay = { type: "faceoff-result", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: `${targetAvoidance.abilityName} Evaded the Attack`, message, success: false, combatOutcome: "attack-blocked", attackNumber: sequenceResult.resolvedCount, attackCount: sequenceResult.requiredCount, continueAttackSequence: sequenceResult.continues };
         if (compactTurnPresentationEnabled) {
           beginCombatResultCheckpoint(resultOverlay, {
             playerRole: "attacker",
@@ -7875,7 +7951,28 @@ export default function Simulator({
         const baseTotal = second ? (useAdvantage ? Math.max(first.total, second.total) : Math.min(first.total, second.total)) : first?.total;
         const rolledBonus = getRolledAttackBonus(attack, baseTotal, playerHabitats);
         const rovLightsBonus = getRovLightsAttackBonus(rovLightsActive, targetEntry.card);
-        return first ? { total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus, detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}` } : null;
+        return first ? {
+          total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus,
+          primaryRoll: first.total,
+          contributors: [
+            {
+              id: "attack-roll",
+              label: "Attack roll",
+              value: baseTotal,
+              kind: "roll",
+              detail: second
+                ? `${attack.attackDice} · ${first.total} / ${second.total}, ${useAdvantage ? "higher" : "lower"} roll`
+                : attack.attackDice,
+            },
+            ...combatContributorsFromDetails([
+              ...modifier.details,
+              rolledBonus.detail,
+              rovLightsBonus ? `+${rovLightsBonus} ROV Lights` : null,
+              flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null,
+            ].filter(Boolean)),
+          ],
+          detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}`,
+        } : null;
       })()].filter(Boolean);
       const rolledDamage = attackRolls.reduce((total, roll) => total + roll.total * 10, 0);
       const result = applyDamage(targetCoral.health ?? targetCoral.maxHealth, rolledDamage);
@@ -7911,8 +8008,24 @@ export default function Simulator({
         message,
         success: true,
         combatOutcome: "attack-succeeded",
+        primaryAttackRoll: attackRolls[0]?.primaryRoll ?? null,
         attackTotal: attackRolls.reduce((total, roll) => total + roll.total, 0),
+        defenseTotal: null,
+        combatBreakdown: {
+          attack: {
+            cardId: attacker.id,
+            actionName: attack.actionName,
+            contributors: attackRolls.flatMap((roll) => roll.contributors ?? []),
+            total: attackRolls.reduce((total, roll) => total + roll.total, 0),
+          },
+          defense: null,
+        },
+        resultNote: result.destroyed
+          ? `${targetEntry.card.name} → Discard pile`
+          : `${targetEntry.card.name} · ${result.remainingHealth}/${targetCoral.maxHealth} HP`,
         damage: result.appliedDamage,
+        attackNumber: sequenceResult.resolvedCount,
+        attackCount: sequenceResult.requiredCount,
         continueAttackSequence: sequenceResult.continues,
       };
       const discardCue = result.destroyed ? {
@@ -8008,6 +8121,11 @@ export default function Simulator({
     const statusDefenseRolls = (!defenseAdjustment.ignoresBonuses ? activeOpponentDefenseStatuses : []).filter((status) => status.type === "defenseBonusDice").map((status) => ({ status, roll: rollDie(status.dice, combatRandom) })).filter((entry) => entry.roll);
     const statusDefenseBonus = statusDefenseRolls.reduce((total, entry) => total + entry.roll.total, 0);
     const defenseTotal = Math.max(0, chosenDefenseRoll + defenseAdjustment.flat + cloakDefenseBonus + darknessShroudDefenseBonus + attachedDefenseBonus + Number(hostedDefenseRoll?.total ?? 0) + statusDefenseBonus);
+    let appliedAttackRoll = chosenAttackRoll;
+    let appliedAttackRollDetail = secondAttackRoll
+      ? `${attack.attackDice} · ${result.attack.total} / ${secondAttackRoll.total}, ${useAttackAdvantage ? "higher" : "lower"} roll`
+      : attack.attackDice;
+    let appliedAttackDetails = [...modifier.details, rolledBonus.detail].filter(Boolean);
     let scatterDetail = "";
     if (attackTotal > defenseTotal && cardHasScatter(targetEntry.card)) {
       const scatterFirst = rollDie(attack.attackDice, combatRandom);
@@ -8016,9 +8134,55 @@ export default function Simulator({
       const scatterModifier = getAttackConditionalModifier(attacker, targetEntry.card, playerHabitats, playerCorals, playerReefCreatures, attack, playerOrphanCreatures, { rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
       const scatterRolledBonus = getRolledAttackBonus(attack, scatterBase, playerHabitats);
       attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
+      appliedAttackRoll = scatterBase;
+      appliedAttackRollDetail = scatterSecond
+        ? `${attack.attackDice} Scatter · ${scatterFirst.total} / ${scatterSecond.total}, ${useAttackAdvantage ? "higher" : "lower"} roll`
+        : `${attack.attackDice} Scatter reroll`;
+      appliedAttackDetails = [...scatterModifier.details, scatterRolledBonus.detail].filter(Boolean);
       scatterDetail = `; Scatter reroll ${attackTotal}`;
     }
     const attackerWins = attackTotal > defenseTotal;
+    const combatBreakdown = {
+      attack: {
+        cardId: attacker.id,
+        actionName: attack.actionName,
+        contributors: [
+          { id: "attack-roll", label: "Attack roll", value: appliedAttackRoll, kind: "roll", detail: appliedAttackRollDetail },
+          ...combatContributorsFromDetails([
+            ...appliedAttackDetails,
+            rovLightsBonus ? `+${rovLightsBonus} ROV Lights` : null,
+            flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null,
+          ].filter(Boolean)),
+        ],
+        total: attackTotal,
+      },
+      defense: {
+        cardId: targetEntry.card.id,
+        contributors: [
+          {
+            id: "defense-roll",
+            label: "Defense roll",
+            value: chosenDefenseRoll,
+            kind: "roll",
+            detail: secondDefenseRoll
+              ? `${defenseDice} · ${result.defense.total} / ${secondDefenseRoll.total}, higher roll`
+              : defenseDice,
+          },
+          ...(defenseAdjustment.contributors ?? []),
+          ...(cloakDefenseBonus ? [{ id: "cloak", label: "Cloak", value: cloakDefenseBonus }] : []),
+          ...(darknessShroudDefenseBonus ? [{ id: "darkness-shroud", label: "Darkness Shroud", value: darknessShroudDefenseBonus }] : []),
+          ...(attachedDefenseBonus ? [{ id: "shelter", label: "Shelter", value: attachedDefenseBonus }] : []),
+          ...(hostedDefenseRoll ? [{ id: "stinging-fortress", label: "Stinging Fortress", value: hostedDefenseRoll.total, detail: hostedDefenseBonusDice }] : []),
+          ...statusDefenseRolls.map(({ status, roll }, index) => ({
+            id: `defense-action-${status.sourceCardId ?? status.dice}-${index}`,
+            label: cardsById[status.sourceCardId]?.name ?? "Action bonus",
+            value: roll.total,
+            detail: status.dice,
+          })),
+        ],
+        total: defenseTotal,
+      },
+    };
     const rolls = [`${attackTotal}${secondAttackRoll ? ` (${result.attack.total}/${secondAttackRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${secondDefenseRoll ? ` (${result.defense.total}/${secondDefenseRoll.total} defense advantage)` : ""}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${cloakDefenseBonus ? ` (+${cloakDefenseBonus} Cloak)` : ""}${darknessShroudDefenseBonus ? ` (+${darknessShroudDefenseBonus} Darkness Shroud)` : ""}${attachedDefenseBonus ? ` (+${attachedDefenseBonus} Shelter)` : ""}${hostedDefenseRoll ? ` (+${hostedDefenseRoll.total} Stinging Fortress)` : ""}${statusDefenseRolls.length ? ` (${statusDefenseRolls.map((entry) => `+${entry.roll.total} ${entry.status.dice}`).join(", ")} action defense)` : ""}${scatterDetail}`];
     commitPlayerAttackCost(attackContext, attacker, attack);
     setFaceoffRolling(false);
@@ -8111,7 +8275,28 @@ export default function Simulator({
           : "";
         const message = `${attacker.name} used ${attack.actionName} on the opponent's invading ${targetEntry.card.name}: ${rolls.join(", ")}. The attack succeeded, so the invader left your reef and went to its owner's ${destroyedCardGoesToLostZone(targetEntry.card) ? "Lost Zone" : "discard pile"}.${ensnareSummary}${toxicMessage}${selfDiscardMessage}${recycleMessage}${flashingAlarmTriggerMessage}${getAttackSequenceContinuationMessage(sequenceResult)}`;
         pushLog(message);
-        const resultOverlay = { type: "faceoff-result", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: "Invader Removed!", message, success: true, combatOutcome: "attack-succeeded", attackTotal, defenseTotal, continueAttackSequence: sequenceResult.continues };
+        const combatConsequences = [
+          attackerDiscardedAfterConsume ? { id: "attacker-discarded", label: attacker.name, detail: "→ Discard pile" } : null,
+          blueCrabRecycle.recoveredRp > 0 ? { id: "blue-crab-recycle", label: "Blue Crab", detail: `+${blueCrabRecycle.recoveredRp} RP` } : null,
+        ].filter(Boolean);
+        const resultOverlay = {
+          type: "faceoff-result",
+          sourceCardId: attacker.id,
+          defenderCardId: targetEntry.card.id,
+          title: "Invader Removed!",
+          message,
+          success: true,
+          combatOutcome: "attack-succeeded",
+          primaryAttackRoll: result.attack.total,
+          primaryDefenseRoll: result.defense.total,
+          attackTotal,
+          defenseTotal,
+          combatBreakdown,
+          attackNumber: sequenceResult.resolvedCount,
+          attackCount: sequenceResult.requiredCount,
+          combatConsequences,
+          continueAttackSequence: sequenceResult.continues,
+        };
         const discardCue = {
           cardId: targetEntry.card.id,
           targetInstanceId: selectedTarget.instanceId,
@@ -8234,7 +8419,35 @@ export default function Simulator({
       const checkpointMessage = `${matchupSentence}${supplementalResultMessage}`;
       const message = `${matchupSentence} The attack succeeded.${ensnareSummary}${survivalMessage}${toxicMessage}${selfDiscardMessage}${recycleMessage}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
-      const resultOverlay = { type: "faceoff-result", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: defenderKept ? "Attack Landed — Defender Survived" : "Successful Attack!", message, checkpointMessage, success: true, combatOutcome: "attack-succeeded", attackTotal, defenseTotal, continueAttackSequence: sequenceResult.continues };
+      const combatConsequences = [
+        defenderKept ? {
+          id: "defender-survived",
+          label: resilienceTriggered ? "Ancient Resilience" : "Regenerate",
+          detail: `${targetEntry.card.name} stays in play`,
+        } : null,
+        attackerDiscardedAfterConsume ? { id: "attacker-discarded", label: attacker.name, detail: "→ Discard pile" } : null,
+        opponentActualRecycleRp > 0 ? { id: "blue-crab-recycle", label: "Blue Crab", detail: `+${opponentActualRecycleRp} RP` } : null,
+        collapseMessage ? { id: "ecosystem-update", label: "Ecosystem update", detail: collapseMessage } : null,
+      ].filter(Boolean);
+      const resultOverlay = {
+        type: "faceoff-result",
+        sourceCardId: attacker.id,
+        defenderCardId: targetEntry.card.id,
+        title: defenderKept ? "Attack Landed — Defender Survived" : "Successful Attack!",
+        message,
+        checkpointMessage,
+        success: true,
+        combatOutcome: "attack-succeeded",
+        primaryAttackRoll: result.attack.total,
+        primaryDefenseRoll: result.defense.total,
+        attackTotal,
+        defenseTotal,
+        combatBreakdown,
+        attackNumber: sequenceResult.resolvedCount,
+        attackCount: sequenceResult.requiredCount,
+        combatConsequences,
+        continueAttackSequence: sequenceResult.continues,
+      };
       const presentOpponentRegenerateSpend = () => {
         if (!regenerateTriggered) return;
         queueRpSpendPresentation({
@@ -8304,7 +8517,29 @@ export default function Simulator({
       const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "defended", biteBack: counterSucceeded }, { attackerSurvives: !counterSucceeded });
       const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The defender won.${ensnareSummary}${counterMessage}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
-      const resultOverlay = { type: "faceoff-result", sourceCardId: attacker.id, defenderCardId: targetEntry.card.id, title: counterSucceeded ? "Bite Back Counterattack!" : "Successful Defense!", message, success: false, combatOutcome: "attack-blocked", attackTotal, defenseTotal, continueAttackSequence: sequenceResult.continues };
+      const combatConsequences = counter?.resolved ? [{
+        id: "bite-back",
+        label: "Bite Back",
+        detail: `${counter.attack.total} vs ${counter.defense.total} · ${counterSucceeded ? "counterattack succeeded" : "counterattack blocked"}`,
+      }] : [];
+      const resultOverlay = {
+        type: "faceoff-result",
+        sourceCardId: attacker.id,
+        defenderCardId: targetEntry.card.id,
+        title: "Successful Defense!",
+        message,
+        success: false,
+        combatOutcome: "attack-blocked",
+        primaryAttackRoll: result.attack.total,
+        primaryDefenseRoll: result.defense.total,
+        attackTotal,
+        defenseTotal,
+        combatBreakdown,
+        attackNumber: sequenceResult.resolvedCount,
+        attackCount: sequenceResult.requiredCount,
+        combatConsequences,
+        continueAttackSequence: sequenceResult.continues,
+      };
       const commitResolution = () => {
         if (flashingAlarmTriggered) {
           setOpponent((current) => ({
@@ -14589,12 +14824,33 @@ export default function Simulator({
         const baseTotal = second ? (useAdvantage ? Math.max(first.total, second.total) : Math.min(first.total, second.total)) : first?.total;
         const rolledBonus = getRolledAttackBonus(attackerEntry.attack, baseTotal, opponentState.habitats);
         const rovLightsBonus = getRovLightsAttackBonus(opponentState.rovLightsActive, targetEntry.card);
-        return first ? { total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus, detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}` } : null;
+        return first ? {
+          total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus,
+          primaryRoll: first.total,
+          contributors: [
+            {
+              id: "attack-roll",
+              label: "Attack roll",
+              value: baseTotal,
+              kind: "roll",
+              detail: second
+                ? `${attackerEntry.attack.attackDice} · ${first.total} / ${second.total}, ${useAdvantage ? "higher" : "lower"} roll`
+                : attackerEntry.attack.attackDice,
+            },
+            ...combatContributorsFromDetails([
+              ...modifier.details,
+              rolledBonus.detail,
+              rovLightsBonus ? `+${rovLightsBonus} ROV Lights` : null,
+              flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null,
+            ].filter(Boolean)),
+          ],
+          detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}`,
+        } : null;
       }).filter(Boolean);
       if (!rolls.length) return null;
       const result = applyDamage(targetEntry.coral.health ?? targetEntry.coral.maxHealth, rolls.reduce((total, roll) => total + roll.total * 10, 0));
       const redistributed = result.destroyed ? redistributeOrphanCreatures(currentPlayerCorals.filter((foundation) => foundation.id !== targetEntry.coral.id), [...currentPlayerOrphans, ...getOrphanEntriesFromFoundation(targetEntry.coral)]) : { corals: currentPlayerCorals.map((foundation) => foundation.id === targetEntry.coral.id ? { ...foundation, health: result.remainingHealth } : foundation), orphans: currentPlayerOrphans };
-      return { corals: redistributed.corals, orphanCreatures: redistributed.orphans, reefCreatures: currentPlayerReefCreatures, reefCreatureInstances: currentPlayerReefInstances, discardedCardId: result.destroyed ? targetEntry.card.id : null, attackerCardId: attackerEntry.card.id, defenderCardId: targetEntry.card.id, targetInstanceId: targetEntry.instanceId, attackerWins: true, attackDice: attackerEntry.attack.attackDice, defenseDice: null, primaryAttackRoll: Number(combatRollPacket?.attack ?? rolls[0]?.total ?? 0), primaryDefenseRoll: null, attackTotal: Number(rolls[0]?.total ?? 0), defenseTotal: null, actionCost: attackerEntry.attack.actionCost, opponentCooldownKey, opponentAttackActionKey, summary: `Opponent's ${attackerEntry.card.name}${onPlayAttack ? ` used ${attackerEntry.attack.actionName} on` : " attacked"} ${targetEntry.card.name}, rolled ${rolls.map((roll) => roll.detail).join(", ")}, and dealt ${result.appliedDamage} damage.${result.destroyed ? ` Your Creature School was discarded; ${redistributed.orphans.length} creature group(s) remain orphaned after redistribution.` : ` ${result.remainingHealth}/${targetEntry.coral.maxHealth} HP remains.`}` };
+      return { corals: redistributed.corals, orphanCreatures: redistributed.orphans, reefCreatures: currentPlayerReefCreatures, reefCreatureInstances: currentPlayerReefInstances, discardedCardId: result.destroyed ? targetEntry.card.id : null, attackerCardId: attackerEntry.card.id, defenderCardId: targetEntry.card.id, targetInstanceId: targetEntry.instanceId, attackerWins: true, attackDice: attackerEntry.attack.attackDice, defenseDice: null, primaryAttackRoll: Number(combatRollPacket?.attack ?? rolls[0]?.primaryRoll ?? 0), primaryDefenseRoll: null, attackTotal: Number(rolls[0]?.total ?? 0), defenseTotal: null, combatBreakdown: { attack: { cardId: attackerEntry.card.id, actionName: attackerEntry.attack.actionName, contributors: rolls.flatMap((roll) => roll.contributors ?? []), total: Number(rolls[0]?.total ?? 0) }, defense: null }, damage: result.appliedDamage, resultNote: result.destroyed ? `${targetEntry.card.name} → Discard pile` : `${targetEntry.card.name} · ${result.remainingHealth}/${targetEntry.coral.maxHealth} HP`, actionCost: attackerEntry.attack.actionCost, opponentCooldownKey, opponentAttackActionKey, summary: `Opponent's ${attackerEntry.card.name}${onPlayAttack ? ` used ${attackerEntry.attack.actionName} on` : " attacked"} ${targetEntry.card.name}, rolled ${rolls.map((roll) => roll.detail).join(", ")}, and dealt ${result.appliedDamage} damage.${result.destroyed ? ` Your Creature School was discarded; ${redistributed.orphans.length} creature group(s) remain orphaned after redistribution.` : ` ${result.remainingHealth}/${targetEntry.coral.maxHealth} HP remains.`}` };
     }
     const defenseDice = targetEntry.card.defense?.dice ?? targetEntry.card.defense;
     if (!defenseDice) return {
@@ -14651,21 +14907,47 @@ export default function Simulator({
       const secondDefenseRoll = defenseAdvantage ? rollDie(defenseDice, combatRandom) : null;
       const chosenDefenseRoll = secondDefenseRoll ? Math.max(result.defense.total, secondDefenseRoll.total) : result.defense.total;
       let defenseTotal = Math.max(0, chosenDefenseRoll + defenseAdjustment.flat + cloakDefenseBonus + darknessShroudDefenseBonus + attachedDefenseBonus);
+      const defenseContributors = [{
+        id: "defense-roll",
+        label: "Defense roll",
+        value: chosenDefenseRoll,
+        kind: "roll",
+        detail: secondDefenseRoll
+          ? `${defenseDice} · ${result.defense.total} / ${secondDefenseRoll.total}, higher roll`
+          : defenseDice,
+      }];
+      defenseContributors.push(...(defenseAdjustment.contributors ?? []));
       const rollDetails = [];
       if (secondDefenseRoll) rollDetails.push(`Massive/defense advantage ${result.defense.total}/${secondDefenseRoll.total}`);
-      if (cloakDefenseBonus) rollDetails.push(`+${cloakDefenseBonus} Cloak`);
-      if (darknessShroudDefenseBonus) rollDetails.push(`+${darknessShroudDefenseBonus} Darkness Shroud`);
-      if (attachedDefenseBonus) rollDetails.push(`+${attachedDefenseBonus} Shelter`);
+      if (cloakDefenseBonus) {
+        rollDetails.push(`+${cloakDefenseBonus} Cloak`);
+        defenseContributors.push({ id: "cloak", label: "Cloak", value: cloakDefenseBonus });
+      }
+      if (darknessShroudDefenseBonus) {
+        rollDetails.push(`+${darknessShroudDefenseBonus} Darkness Shroud`);
+        defenseContributors.push({ id: "darkness-shroud", label: "Darkness Shroud", value: darknessShroudDefenseBonus });
+      }
+      if (attachedDefenseBonus) {
+        rollDetails.push(`+${attachedDefenseBonus} Shelter`);
+        defenseContributors.push({ id: "shelter", label: "Shelter", value: attachedDefenseBonus });
+      }
       const hostedDefenseRoll = hostedDefenseBonusDice ? rollDie(hostedDefenseBonusDice, combatRandom) : null;
       if (hostedDefenseRoll) {
         defenseTotal += hostedDefenseRoll.total;
         rollDetails.push(`+${hostedDefenseRoll.total} Stinging Fortress`);
+        defenseContributors.push({ id: "stinging-fortress", label: "Stinging Fortress", value: hostedDefenseRoll.total, detail: hostedDefenseBonusDice });
       }
-      (!defenseAdjustment.ignoresBonuses ? activeDefenseStatuses : []).filter((status) => status.type === "defenseBonusDice").forEach((status) => {
+      (!defenseAdjustment.ignoresBonuses ? activeDefenseStatuses : []).filter((status) => status.type === "defenseBonusDice").forEach((status, statusIndex) => {
         const bonusRoll = rollDie(status.dice, combatRandom);
         if (bonusRoll) {
           defenseTotal += bonusRoll.total;
           rollDetails.push(`+${bonusRoll.total} from ${status.dice}`);
+          defenseContributors.push({
+            id: `defense-action-${status.sourceCardId ?? status.dice}-${statusIndex}`,
+            label: cardsById[status.sourceCardId]?.name ?? "Action bonus",
+            value: bonusRoll.total,
+            detail: status.dice,
+          });
         }
       });
       const advantageRoll = useAttackAdvantage || useAttackDisadvantage ? rollDie(attackerEntry.attack.attackDice, combatRandom) : null;
@@ -14673,6 +14955,11 @@ export default function Simulator({
       const chosenAttackRoll = advantageRoll ? (useAttackAdvantage ? Math.max(result.attack.total, advantageRoll.total) : Math.min(result.attack.total, advantageRoll.total)) : result.attack.total;
       const rolledBonus = getRolledAttackBonus(attackerEntry.attack, chosenAttackRoll, opponentState.habitats);
       let attackTotal = chosenAttackRoll + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
+      let appliedAttackRoll = chosenAttackRoll;
+      let appliedAttackRollDetail = advantageRoll
+        ? `${attackerEntry.attack.attackDice} · ${result.attack.total} / ${advantageRoll.total}, ${useAttackAdvantage ? "higher" : "lower"} roll`
+        : attackerEntry.attack.attackDice;
+      let appliedAttackDetails = [...modifier.details, rolledBonus.detail].filter(Boolean);
       let scatterDetail = "";
       if (attackTotal > defenseTotal && cardHasScatter(targetEntry.card)) {
         const scatterFirst = rollDie(attackerEntry.attack.attackDice, combatRandom);
@@ -14681,9 +14968,39 @@ export default function Simulator({
         const scatterModifier = getAttackConditionalModifier(attackerEntry.card, targetEntry.card, opponentState.habitats, opponentState.corals, opponentState.reefCreatures, attackerEntry.attack, opponentState.orphanCreatures, { rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
         const scatterRolledBonus = getRolledAttackBonus(attackerEntry.attack, scatterBase, opponentState.habitats);
         attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
+        appliedAttackRoll = scatterBase;
+        appliedAttackRollDetail = scatterSecond
+          ? `${attackerEntry.attack.attackDice} Scatter · ${scatterFirst.total} / ${scatterSecond.total}, ${useAttackAdvantage ? "higher" : "lower"} roll`
+          : `${attackerEntry.attack.attackDice} Scatter reroll`;
+        appliedAttackDetails = [...scatterModifier.details, scatterRolledBonus.detail].filter(Boolean);
         scatterDetail = `; Scatter reroll ${attackTotal}`;
       }
-      combatRollSummary = { ...combatRollSummary, attackTotal, defenseTotal };
+      const attackContributors = [
+        { id: "attack-roll", label: "Attack roll", value: appliedAttackRoll, kind: "roll", detail: appliedAttackRollDetail },
+        ...combatContributorsFromDetails([
+          ...appliedAttackDetails,
+          rovLightsBonus ? `+${rovLightsBonus} ROV Lights` : null,
+          flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null,
+        ].filter(Boolean)),
+      ];
+      combatRollSummary = {
+        ...combatRollSummary,
+        attackTotal,
+        defenseTotal,
+        combatBreakdown: {
+          attack: {
+            cardId: attackerEntry.card.id,
+            actionName: attackerEntry.attack.actionName,
+            contributors: attackContributors,
+            total: attackTotal,
+          },
+          defense: {
+            cardId: targetEntry.card.id,
+            contributors: defenseContributors,
+            total: defenseTotal,
+          },
+        },
+      };
       rolls.push(`${attackTotal}${advantageRoll ? ` (${result.attack.total}/${advantageRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${defenseAdjustment.ignoresBonuses ? " (defensive bonuses ignored)" : rollDetails.length ? ` (${rollDetails.join(", ")})` : ""}${scatterDetail}`);
       attackerWins = attackTotal > defenseTotal;
     }
@@ -14721,6 +15038,11 @@ export default function Simulator({
         counterCardId: counter?.resolved ? targetEntry.card.id : null,
         counterSucceeded,
         attackerWins: false,
+        combatConsequences: counter?.resolved ? [{
+          id: "bite-back",
+          label: "Bite Back",
+          detail: `${counter.attack.total} vs ${counter.defense.total} · ${counterSucceeded ? "counterattack succeeded" : "counterattack blocked"}`,
+        }] : [],
         actionCost: attackerEntry.attack.actionCost,
         opponentCooldownKey,
         opponentAttackActionKey,
@@ -14804,6 +15126,11 @@ export default function Simulator({
         targetInstanceId: targetEntry.instanceId,
         deferredToxic,
         attackerWins: true,
+        combatConsequences: attackerDiscardedAfterConsume ? [{
+          id: "attacker-discarded",
+          label: attackerEntry.card.name,
+          detail: "→ Discard pile",
+        }] : [],
         actionCost: attackerEntry.attack.actionCost,
         opponentCooldownKey,
         opponentAttackActionKey,
@@ -14912,6 +15239,11 @@ export default function Simulator({
       targetInstanceId: targetEntry.instanceId,
       deferredToxic,
       attackerWins: true,
+      combatConsequences: attackerDiscardedAfterConsume ? [{
+        id: "attacker-discarded",
+        label: attackerEntry.card.name,
+        detail: "→ Discard pile",
+      }] : [],
       actionCost: attackerEntry.attack.actionCost,
       opponentCooldownKey,
       opponentAttackActionKey,
@@ -15131,6 +15463,7 @@ export default function Simulator({
       let nextFoundationDeck = nextPlayer.foundationDeck;
       const stepExtras = [];
       const discardedIds = step.discardedCardIds ?? (step.discardedCardId ? [step.discardedCardId] : []);
+      let plenteousRecycled = false;
       if (discardedIds.length) {
         const primaryDefeatedCard = cardsById[step.discardedCardId];
         if (step.discardedCardId && destroyedCardGoesToLostZone(primaryDefeatedCard)) {
@@ -15143,6 +15476,7 @@ export default function Simulator({
         if (cardHasPlenteous(primaryDefeatedCard) && nextDiscardPile.includes("krill-bloom-base")) {
           nextDiscardPile = removeOneCard(nextDiscardPile, "krill-bloom-base");
           nextFoundationDeck = shuffle([...nextFoundationDeck, "krill-bloom-base"]);
+          plenteousRecycled = true;
           stepExtras.push("Plenteous recycled a base Krill Bloom into your Foundation deck.");
         }
       }
@@ -15237,6 +15571,12 @@ export default function Simulator({
         sourceCardId: step.attackerCardId,
         label: `${cardsById[step.attackerCardId]?.name ?? "Opponent creature"} attack`,
       } : null;
+      const combatConsequences = [
+        ...(step.combatConsequences ?? []),
+        plenteousRecycled ? { id: "plenteous", label: "Plenteous", detail: "Krill Bloom → Foundation deck" } : null,
+        step.playerBlueCrabRecoveredRp > 0 ? { id: "blue-crab-recycle", label: "Blue Crab", detail: `+${step.playerBlueCrabRecoveredRp} RP` } : null,
+        step.playerRpCapOverflowLost > 0 ? { id: "rp-cap-overflow", label: "RP bank", detail: `−${step.playerRpCapOverflowLost} overflow RP` } : null,
+      ].filter(Boolean);
 
       const message = `${step.summary}${stepExtras.length ? ` ${stepExtras.join(" ")}` : ""}`;
       summaryParts.push(message);
@@ -15253,6 +15593,12 @@ export default function Simulator({
           primaryDefenseRoll: step.primaryDefenseRoll,
           attackTotal: step.attackTotal ?? step.primaryAttackRoll,
           defenseTotal: step.defenseTotal ?? step.primaryDefenseRoll,
+          combatBreakdown: step.combatBreakdown ?? null,
+          damage: step.damage ?? null,
+          resultNote: step.resultNote ?? null,
+          combatConsequences,
+          attackNumber: step.attackNumber,
+          attackCount: step.requiredAttacks,
           combatAttackerOwner: "opponent",
           combatDefenderOwner: "player",
           regenerate: step.pendingRegenerate,
@@ -15270,7 +15616,7 @@ export default function Simulator({
           type: step.noLegalTarget ? "opponent-impact" : "faceoff-result",
           sourceCardId: step.counterCardId ?? step.eventSourceCardId ?? step.attackerCardId,
           defenderCardId: step.counterCardId ? step.attackerCardId : step.defenderCardId,
-          title: step.resolutionUnsupported ? "Opponent Attack Could Not Resolve" : step.noLegalTarget ? `${cardsById[step.attackerCardId]?.name ?? "On Play Attack"} Found No Valid Target` : step.defenderEvaded ? "Your Creature Evaded" : step.counterSucceeded ? "Bite Back Counterattack!" : step.defenderSurvived ? "Your Defender Survived" : step.attackerWins ? `Opponent Attack ${step.attackNumber ?? 1} Succeeded` : `Your Creature Defended Attack ${step.attackNumber ?? 1}`,
+          title: step.resolutionUnsupported ? "Opponent Attack Could Not Resolve" : step.noLegalTarget ? `${cardsById[step.attackerCardId]?.name ?? "On Play Attack"} Found No Valid Target` : step.defenderEvaded ? "Your Creature Evaded" : step.defenderSurvived ? "Your Defender Survived" : step.attackerWins ? `Opponent Attack ${step.attackNumber ?? 1} Succeeded` : `Your Creature Defended Attack ${step.attackNumber ?? 1}`,
           message,
           attackDice: step.attackDice,
           defenseDice: step.defenseDice,
@@ -15278,6 +15624,12 @@ export default function Simulator({
           primaryDefenseRoll: step.primaryDefenseRoll,
           attackTotal: step.attackTotal ?? step.primaryAttackRoll,
           defenseTotal: step.defenseTotal ?? step.primaryDefenseRoll,
+          combatBreakdown: step.combatBreakdown ?? null,
+          damage: step.damage ?? null,
+          resultNote: step.resultNote ?? null,
+          combatConsequences,
+          attackNumber: step.attackNumber,
+          attackCount: step.requiredAttacks,
           combatAttackerOwner: "opponent",
           combatDefenderOwner: "player",
           attackerWins: Boolean(step.attackerWins),
@@ -16359,6 +16711,8 @@ export default function Simulator({
     let selfDiscardMessage = "";
     let attackerDiscardedAfterConsume = false;
     let recycleMessage = "";
+    let recycledKrill = false;
+    let blueCrabRecoveredRp = 0;
     let regeneratePlayerCollateral = null;
     let regenerateOpponentCollateral = null;
     if (!resolution.keepDefender) {
@@ -16421,6 +16775,7 @@ export default function Simulator({
 
       const recycleKrill = cardHasPlenteous(defender) && nextPlayerDiscardPile.includes("krill-bloom-base");
       if (recycleKrill) {
+        recycledKrill = true;
         nextPlayerDiscardPile = removeOneCard(nextPlayerDiscardPile, "krill-bloom-base");
         nextPlayerFoundationDeck = shuffle([...nextPlayerFoundationDeck, "krill-bloom-base"]);
         recycleMessage += " Plenteous recycled a base Krill Bloom into your Foundation deck.";
@@ -16462,6 +16817,7 @@ export default function Simulator({
         const rpBeforeRecycle = nextPlayerRp;
         nextPlayerRp = addResourceWithinCap(nextPlayerRp, nominalRecoveredRp, cap);
         const actualRecoveredRp = nextPlayerRp - rpBeforeRecycle;
+        blueCrabRecoveredRp = actualRecoveredRp;
         nextBlueCrabRecycleUsedTurn = turn;
         recycleMessage += actualRecoveredRp > 0
           ? ` Blue Crab recycled ${actualRecoveredRp} RP before the bank cap.`
@@ -16603,6 +16959,12 @@ export default function Simulator({
       message,
       success: resolution.keepDefender,
       combatOutcome: resolution.keepDefender ? "defense-held" : "defense-broken",
+      combatConsequences: [
+        resolution.keepDefender ? { id: "defender-survived", label: defender.name, detail: "stays in play" } : null,
+        attackerDiscardedAfterConsume ? { id: "attacker-discarded", label: attacker.name, detail: "→ Discard pile" } : null,
+        recycledKrill ? { id: "plenteous", label: "Plenteous", detail: "Krill Bloom → Foundation deck" } : null,
+        blueCrabRecoveredRp > 0 ? { id: "blue-crab-recycle", label: "Blue Crab", detail: `+${blueCrabRecoveredRp} RP` } : null,
+      ].filter(Boolean),
       regenerate: null,
       playerStateAfter: choicePlayerState,
       opponentStateAfter: choiceOpponentState,
@@ -17380,14 +17742,10 @@ export default function Simulator({
       continuation?.type === "resolve-live-lionfish-coin"
       && typeof continuation.resolve === "function"
     ) {
+      const existingTail = [...pendingEventsRef.current];
       const lionfishEvents = continuation.resolve(outcome.result) ?? [];
-      const queuedEvents = [...lionfishEvents, ...pendingEventsRef.current];
-      pendingEventsRef.current = queuedEvents;
-      setPendingEvents(queuedEvents);
-      const [nextEvent, ...remainingEvents] = queuedEvents;
-      window.setTimeout(() => {
-        presentQueuedEvent(nextEvent ?? null, remainingEvents, { delayForOpponent: false });
-      }, 0);
+      const [nextEvent, ...remainingEvents] = [...lionfishEvents, ...existingTail];
+      presentQueuedEvent(nextEvent ?? null, remainingEvents, { delayForOpponent: false });
     } else if (
       continuation?.type === "resolve-opponent-toxic"
       && typeof continuation.event?.resolveToxic === "function"
@@ -18234,18 +18592,19 @@ export default function Simulator({
   const compactOpponentReaderSummary = compactOpponentReaderHasReveal
     ? `The opponent used ${compactOpponentReaderSourceCard?.name ?? "this card"} to find ${compactOpponentReaderRevealedNames}.`
     : compactOpponentReaderEvent?.message ?? compactOpponentReaderEvent?.title ?? "";
+  const combatCheckpointBreakdown = combatResultCheckpoint
+    ? buildCombatResultBreakdown(combatResultCheckpoint.event)
+    : { attack: null, defense: null };
   const combatCheckpointSourceCard = combatResultCheckpoint
-    ? cardsById[combatResultCheckpoint.event.sourceCardId]
+    ? cardsById[combatCheckpointBreakdown.attack?.cardId ?? combatResultCheckpoint.event.sourceCardId]
     : null;
   const combatCheckpointDefenderCard = combatResultCheckpoint
-    ? cardsById[combatResultCheckpoint.event.defenderCardId]
+    ? cardsById[combatCheckpointBreakdown.defense?.cardId ?? combatResultCheckpoint.event.defenderCardId]
     : null;
-  const combatCheckpointAttackTotal = combatResultCheckpoint
-    ? combatResultCheckpoint.event.attackTotal ?? combatResultCheckpoint.event.primaryAttackRoll ?? null
-    : null;
-  const combatCheckpointDefenseTotal = combatResultCheckpoint
-    ? combatResultCheckpoint.event.defenseTotal ?? combatResultCheckpoint.event.primaryDefenseRoll ?? null
-    : null;
+  const combatCheckpointSourceName = combatCheckpointBreakdown.attack?.name || combatCheckpointSourceCard?.name || "Attacker";
+  const combatCheckpointDefenderName = combatCheckpointBreakdown.defense?.name || combatCheckpointDefenderCard?.name || "Defender";
+  const combatCheckpointAttackTotal = combatCheckpointBreakdown.attack?.total ?? null;
+  const combatCheckpointDefenseTotal = combatCheckpointBreakdown.defense?.total ?? null;
   const combatCheckpointOutcomeLabel = combatResultCheckpoint ? ({
     "attack-succeeded": "Attack succeeded",
     "attack-blocked": "Attack blocked",
@@ -18256,9 +18615,50 @@ export default function Simulator({
   const combatCheckpointDiscardCard = combatResultCheckpoint?.discardCue
     ? cardsById[combatResultCheckpoint.discardCue.cardId]
     : null;
-  const combatCheckpointConsequence = combatResultCheckpoint?.discardCue
-    ? `${combatCheckpointDiscardCard?.name ?? "The defeated card"} will move to its owner's ${combatResultCheckpoint.discardCue.destinationZone === "lost" ? "Lost Zone" : "discard pile"} after you continue.`
-    : combatResultCheckpoint ? "No cards leave play from this result." : "";
+  const combatCheckpointVerdict = combatCheckpointAttackTotal != null && combatCheckpointDefenseTotal != null
+    ? combatCheckpointAttackTotal > combatCheckpointDefenseTotal
+      ? `Attack wins by ${combatCheckpointAttackTotal - combatCheckpointDefenseTotal}`
+      : combatCheckpointAttackTotal === combatCheckpointDefenseTotal
+        ? "Tie — defense holds"
+        : `Defense wins by ${combatCheckpointDefenseTotal - combatCheckpointAttackTotal}`
+    : combatCheckpointAttackTotal != null && combatResultCheckpoint?.event.damage != null
+      ? `${combatCheckpointAttackTotal} × 10 = ${combatResultCheckpoint.event.damage} damage`
+      : "";
+  const combatCheckpointHasExplicitPrimaryConsequence = Boolean(
+    combatResultCheckpoint?.event.resultNote
+      || combatResultCheckpoint?.event.combatConsequences?.some((consequence) => consequence?.id === "defender-survived"),
+  );
+  const combatCheckpointDefaultConsequence = !combatResultCheckpoint || combatCheckpointHasExplicitPrimaryConsequence
+    ? null
+    : combatResultCheckpoint.discardCue
+      ? {
+          id: "primary-card-movement",
+          label: combatCheckpointDiscardCard?.name ?? "Defeated card",
+          detail: `→ ${combatResultCheckpoint.discardCue.destinationZone === "lost" ? "Lost Zone" : "Discard pile"}`,
+        }
+      : combatCheckpointBreakdown.attack && (combatCheckpointDefenderCard || combatCheckpointBreakdown.defense?.name)
+        ? { id: "defender-stays", label: combatCheckpointDefenderName, detail: "stays in play" }
+        : null;
+  const combatCheckpointConsequences = combatResultCheckpoint
+    ? buildCombatResultConsequences(combatResultCheckpoint.event, {
+        defaultConsequence: combatCheckpointDefaultConsequence,
+      })
+    : [];
+  const combatCheckpointAccessibleSummary = combatResultCheckpoint
+    ? [
+        combatCheckpointBreakdown.attack
+          ? `Attack: ${combatCheckpointSourceName}${combatCheckpointBreakdown.attack.actionName ? `, ${combatCheckpointBreakdown.attack.actionName}` : ""}. ${combatCheckpointBreakdown.attack.contributors.map((contributor) => `${contributor.label}${contributor.count > 1 ? ` times ${contributor.count}` : ""} ${formatCombatContributorValue(contributor)}`).join(", ")}. Total ${combatCheckpointAttackTotal}.`
+          : null,
+        combatCheckpointBreakdown.defense
+          ? `Defense: ${combatCheckpointDefenderName}. ${combatCheckpointBreakdown.defense.contributors.map((contributor) => `${contributor.label}${contributor.count > 1 ? ` times ${contributor.count}` : ""} ${formatCombatContributorValue(contributor)}`).join(", ")}. Total ${combatCheckpointDefenseTotal}.`
+          : null,
+        combatCheckpointVerdict,
+        ...combatCheckpointConsequences.map((consequence) => [consequence.label, consequence.detail].filter(Boolean).join(" ")),
+        !combatCheckpointBreakdown.attack && !combatCheckpointConsequences.length
+          ? combatCheckpointOutcomeLabel
+          : null,
+      ].filter(Boolean).join(" ")
+    : "";
   const selectedHandPlayError =
     modal === "hand" && selectedHandCard ? getPlayError(cardsById[selectedHandCard]) : "";
   const handPopoverCard = handPopoverCardId && hand.includes(handPopoverCardId) ? cardsById[handPopoverCardId] : null;
@@ -20232,11 +20632,13 @@ export default function Simulator({
           top: 50vh;
           top: 50dvh;
           display: flex;
-          width: min(calc(100vw - 1rem), 28rem);
-          max-height: min(56dvh, 18rem);
+          width: min(calc(100vw - 1rem), 34rem);
+          max-height: calc(100dvh - 1rem);
           flex-direction: column;
-          gap: .55rem;
-          overflow: hidden;
+          gap: .5rem;
+          overflow-x: hidden;
+          overflow-y: auto;
+          overscroll-behavior: contain;
           border: 1px solid rgba(251, 113, 133, .58);
           border-radius: 1.15rem;
           background: linear-gradient(150deg, rgba(3, 16, 29, .985), rgba(30, 41, 59, .98));
@@ -20252,7 +20654,7 @@ export default function Simulator({
         }
         .seapals-combat-result-eyebrow {
           color: #fda4af;
-          font-size: .58rem;
+          font-size: .7rem;
           font-weight: 950;
           letter-spacing: .2em;
           text-align: center;
@@ -20260,87 +20662,147 @@ export default function Simulator({
         }
         [data-player-role="defender"] .seapals-combat-result-eyebrow { color: #67e8f9; }
         .seapals-combat-result-title {
-          font-size: clamp(1rem, 4vw, 1.3rem);
+          font-size: clamp(1.05rem, 4vw, 1.4rem);
           font-weight: 950;
           line-height: 1.1;
           text-align: center;
         }
-        .seapals-combat-result-outcome {
-          align-self: center;
-          border: 1px solid rgba(253, 164, 175, .5);
-          border-radius: 9999px;
-          background: rgba(190, 24, 93, .18);
-          color: #ffe4e6;
-          padding: .28rem .7rem;
-          font-size: .68rem;
+        .seapals-combat-result-breakdown {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-items: stretch;
+          gap: .5rem;
+        }
+        .seapals-combat-result-side {
+          display: grid;
+          min-width: 0;
+          grid-template-rows: auto 1fr auto;
+          border: 1px solid rgba(251, 113, 133, .34);
+          border-radius: .85rem;
+          background: rgba(76, 5, 25, .14);
+          padding: .6rem;
+        }
+        .seapals-combat-result-side.is-defense {
+          border-color: rgba(103, 232, 249, .34);
+          background: rgba(8, 47, 73, .2);
+        }
+        .seapals-combat-result-side-header {
+          display: grid;
+          min-width: 0;
+          gap: .08rem;
+          padding-bottom: .45rem;
+        }
+        .seapals-combat-result-side-header > small {
+          color: #fda4af;
+          font-size: .7rem;
           font-weight: 950;
+          letter-spacing: .13em;
+          text-transform: uppercase;
         }
-        [data-combat-outcome="defense-held"] .seapals-combat-result-outcome,
-        [data-combat-outcome="attack-blocked"] .seapals-combat-result-outcome {
-          border-color: rgba(103, 232, 249, .5);
-          background: rgba(14, 116, 144, .18);
-          color: #cffafe;
+        .seapals-combat-result-side.is-defense .seapals-combat-result-side-header > small { color: #67e8f9; }
+        .seapals-combat-result-side-header > strong {
+          color: #f8fafc;
+          font-size: clamp(.78rem, 3vw, .92rem);
+          font-weight: 950;
+          line-height: 1.15;
+          overflow-wrap: anywhere;
         }
-        .seapals-combat-result-matchup {
+        .seapals-combat-result-side-header > span {
+          color: #fda4af;
+          font-size: .72rem;
+          font-weight: 800;
+          line-height: 1.2;
+        }
+        .seapals-combat-result-contributors {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-          align-items: center;
-          gap: .35rem;
+          min-height: 0;
+          align-content: start;
+          gap: .22rem;
+          margin: 0;
+          padding: .35rem 0 0;
+          border-top: 1px solid rgba(255,255,255,.09);
         }
-        .seapals-combat-result-card-name {
-          overflow: hidden;
-          color: #e2e8f0;
-          font-size: .68rem;
-          font-weight: 850;
-          text-align: center;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .seapals-combat-result-rolls {
-          display: flex;
-          align-items: center;
-          gap: .25rem;
-        }
-        .seapals-combat-result-roll {
+        .seapals-combat-result-contributor {
           display: grid;
-          min-width: 3.1rem;
-          border: 1px solid rgba(255,255,255,.14);
-          border-radius: .7rem;
-          background: rgba(15, 23, 42, .72);
-          padding: .3rem .4rem;
-          text-align: center;
+          min-width: 0;
+          grid-template-columns: minmax(0, 1fr) max-content;
+          align-items: baseline;
+          gap: .4rem;
+          color: #dbeafe;
+          font-size: clamp(.72rem, 2.7vw, .82rem);
+          line-height: 1.15;
         }
-        .seapals-combat-result-roll small {
+        .seapals-combat-result-contributor dt { min-width: 0; overflow-wrap: anywhere; }
+        .seapals-combat-result-contributor dt > small {
+          display: block;
+          margin-top: .08rem;
           color: #94a3b8;
-          font-size: .48rem;
+          font-size: .7rem;
+          font-weight: 650;
+          line-height: 1.15;
+        }
+        .seapals-combat-result-contributor dd {
+          margin: 0;
+          color: #f8fafc;
+          font-weight: 950;
+          font-variant-numeric: tabular-nums;
+        }
+        .seapals-combat-result-total {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: .5rem;
+          margin-top: .45rem;
+          border-top: 1px solid rgba(255,255,255,.18);
+          padding-top: .4rem;
+          color: #cbd5e1;
+          font-size: .7rem;
           font-weight: 900;
           letter-spacing: .08em;
           text-transform: uppercase;
         }
-        .seapals-combat-result-roll strong { font-size: 1rem; font-weight: 950; }
-        .seapals-combat-result-roll.is-attack strong { color: #fda4af; }
-        .seapals-combat-result-roll.is-defense strong { color: #67e8f9; }
-        .seapals-combat-result-versus { color: #64748b; font-size: .65rem; font-weight: 950; }
-        .seapals-combat-result-copy {
-          min-height: 0;
-          overflow-y: auto;
-          overscroll-behavior: contain;
-          border-top: 1px solid rgba(255,255,255,.08);
-          padding: .5rem .15rem 0;
+        .seapals-combat-result-total strong {
+          color: #fda4af;
+          font-size: 1.55rem;
+          font-weight: 950;
+          line-height: 1;
+          font-variant-numeric: tabular-nums;
         }
-        .seapals-combat-result-copy p {
-          margin: 0;
-          color: #cbd5e1;
+        .seapals-combat-result-side.is-defense .seapals-combat-result-total strong { color: #67e8f9; }
+        .seapals-combat-result-no-roll {
+          display: grid;
+          min-height: 2.5rem;
+          place-items: center;
+          border-top: 1px solid rgba(255,255,255,.09);
+          color: #94a3b8;
           font-size: .72rem;
-          line-height: 1.35;
+          font-weight: 800;
         }
-        .seapals-combat-result-copy strong {
-          display: block;
-          margin-top: .35rem;
-          color: #fef3c7;
-          font-size: .72rem;
-          line-height: 1.3;
+        .seapals-combat-result-summary {
+          display: grid;
+          min-height: 2rem;
+          gap: .3rem;
+          border-radius: .7rem;
+          background: rgba(15, 23, 42, .68);
+          padding: .38rem .65rem;
+          text-align: center;
+          font-size: .76rem;
+          line-height: 1.2;
         }
+        .seapals-combat-result-verdict { color: #f8fafc; font-weight: 950; }
+        .seapals-combat-result-consequences {
+          display: grid;
+          gap: .2rem;
+        }
+        .seapals-combat-result-consequence {
+          display: flex;
+          min-width: 0;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: .15rem .35rem;
+        }
+        .seapals-combat-result-consequence strong { color: #fef3c7; font-weight: 950; }
+        .seapals-combat-result-consequence span { color: #fde68a; font-weight: 800; overflow-wrap: anywhere; }
         .seapals-combat-result-continue {
           min-height: 2.75rem;
           flex: 0 0 auto;
@@ -20358,13 +20820,24 @@ export default function Simulator({
         }
         @media (max-height: 34rem) {
           .seapals-combat-result-checkpoint {
-            max-height: min(64dvh, 15rem);
-            gap: .35rem;
+            max-height: calc(100dvh - .5rem);
+            gap: .3rem;
             padding: .55rem;
           }
-          .seapals-combat-result-matchup { gap: .2rem; }
-          .seapals-combat-result-copy { padding-top: .35rem; }
+          .seapals-combat-result-breakdown { gap: .3rem; }
+          .seapals-combat-result-side { padding: .42rem; }
+          .seapals-combat-result-side-header { padding-bottom: .25rem; }
+          .seapals-combat-result-contributors { gap: .12rem; padding-top: .22rem; }
+          .seapals-combat-result-contributor dt > small { display: none; }
+          .seapals-combat-result-total { margin-top: .25rem; padding-top: .25rem; }
+          .seapals-combat-result-summary { min-height: 1.6rem; padding-block: .25rem; }
           .seapals-combat-result-continue { min-height: 2.75rem; padding: .5rem 1rem; }
+        }
+        @media (max-width: 22.5rem) {
+          .seapals-combat-result-breakdown { gap: .3rem; }
+          .seapals-combat-result-side { padding: .42rem; }
+          .seapals-combat-result-contributor { gap: .2rem; }
+          .seapals-combat-result-summary { padding-inline: .4rem; }
         }
         .seapals-opponent-placement-layer { pointer-events: none; }
         .seapals-opponent-placement-flight {
@@ -23648,24 +24121,82 @@ export default function Simulator({
                 : combatResultCheckpoint.playerRole === "attacker"
                   ? "Your attack"
                   : "Combat result"}
+              {Number(combatResultCheckpoint.event.attackCount) > 1
+                ? ` · Attack ${combatResultCheckpoint.event.attackNumber} of ${combatResultCheckpoint.event.attackCount}`
+                : ""}
             </span>
             <h2 id={`seapals-combat-result-title-${combatResultCheckpoint.id}`} className="seapals-combat-result-title">
               {combatResultCheckpoint.event.title}
             </h2>
-            <span className="seapals-combat-result-outcome">{combatCheckpointOutcomeLabel}</span>
-            <div className="seapals-combat-result-matchup" aria-label={`${combatCheckpointSourceCard?.name ?? "Attacker"} against ${combatCheckpointDefenderCard?.name ?? "defender"}`}>
-              <span className="seapals-combat-result-card-name">{combatCheckpointSourceCard?.name ?? "Attacker"}</span>
-              <div className="seapals-combat-result-rolls">
-                {combatCheckpointAttackTotal != null ? <span className="seapals-combat-result-roll is-attack"><small>Attack</small><strong>{combatCheckpointAttackTotal}</strong></span> : null}
-                {combatCheckpointAttackTotal != null && combatCheckpointDefenseTotal != null ? <span className="seapals-combat-result-versus" aria-hidden="true">vs</span> : null}
-                {combatCheckpointDefenseTotal != null ? <span className="seapals-combat-result-roll is-defense"><small>Defense</small><strong>{combatCheckpointDefenseTotal}</strong></span> : null}
+            {combatCheckpointBreakdown.attack ? (
+              <div
+                className="seapals-combat-result-breakdown"
+                role="group"
+                aria-label={`${combatCheckpointSourceName} attack ${combatCheckpointAttackTotal}${combatCheckpointDefenseTotal != null ? ` versus ${combatCheckpointDefenderName} defense ${combatCheckpointDefenseTotal}` : ""}`}
+              >
+                <section className="seapals-combat-result-side is-attack" data-combat-breakdown-side="attack">
+                  <header className="seapals-combat-result-side-header">
+                    <small>Attack</small>
+                    <strong>{combatCheckpointSourceName}</strong>
+                    {combatCheckpointBreakdown.attack.actionName ? <span>{combatCheckpointBreakdown.attack.actionName}</span> : null}
+                  </header>
+                  <dl className="seapals-combat-result-contributors">
+                    {combatCheckpointBreakdown.attack.contributors.map((contributor) => (
+                      <div className="seapals-combat-result-contributor" data-combat-contributor key={contributor.id}>
+                        <dt>
+                          {contributor.label}{contributor.count > 1 ? ` ×${contributor.count}` : ""}
+                          {contributor.detail ? <small>{contributor.detail}</small> : null}
+                        </dt>
+                        <dd>{formatCombatContributorValue(contributor)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <footer className="seapals-combat-result-total">
+                    <span>Total</span>
+                    <strong data-combat-total>{combatCheckpointAttackTotal}</strong>
+                  </footer>
+                </section>
+                <section className={`seapals-combat-result-side is-defense${combatCheckpointBreakdown.defense ? "" : " is-empty"}`} data-combat-breakdown-side="defense">
+                  <header className="seapals-combat-result-side-header">
+                    <small>Defense</small>
+                    <strong>{combatCheckpointDefenderName}</strong>
+                  </header>
+                  {combatCheckpointBreakdown.defense ? (
+                    <dl className="seapals-combat-result-contributors">
+                      {combatCheckpointBreakdown.defense.contributors.map((contributor) => (
+                        <div className="seapals-combat-result-contributor" data-combat-contributor key={contributor.id}>
+                          <dt>
+                            {contributor.label}{contributor.count > 1 ? ` ×${contributor.count}` : ""}
+                            {contributor.detail ? <small>{contributor.detail}</small> : null}
+                          </dt>
+                          <dd>{formatCombatContributorValue(contributor)}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : <span className="seapals-combat-result-no-roll">No defense roll</span>}
+                  <footer className="seapals-combat-result-total">
+                    <span>Total</span>
+                    <strong data-combat-total>{combatCheckpointDefenseTotal ?? "—"}</strong>
+                  </footer>
+                </section>
               </div>
-              <span className="seapals-combat-result-card-name">{combatCheckpointDefenderCard?.name ?? "Defender"}</span>
-            </div>
-            <div className="seapals-combat-result-copy" id={`seapals-combat-result-message-${combatResultCheckpoint.id}`}>
-              <p>{combatResultCheckpoint.event.checkpointMessage ?? combatResultCheckpoint.event.message}</p>
-              <strong>{combatCheckpointConsequence}</strong>
-            </div>
+            ) : null}
+            {combatCheckpointVerdict || combatCheckpointConsequences.length ? (
+              <div className="seapals-combat-result-summary" aria-hidden="true">
+                {combatCheckpointVerdict ? <strong className="seapals-combat-result-verdict">{combatCheckpointVerdict}</strong> : null}
+                {combatCheckpointConsequences.length ? (
+                  <div className="seapals-combat-result-consequences" data-combat-consequences>
+                    {combatCheckpointConsequences.map((consequence) => (
+                      <div className="seapals-combat-result-consequence" data-combat-consequence key={consequence.id}>
+                        {consequence.label ? <strong>{consequence.label}</strong> : null}
+                        {consequence.detail ? <span>{consequence.detail}</span> : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            <p className="sr-only" id={`seapals-combat-result-message-${combatResultCheckpoint.id}`}>{combatCheckpointAccessibleSummary}</p>
             <button
               type="button"
               className="seapals-combat-result-continue"

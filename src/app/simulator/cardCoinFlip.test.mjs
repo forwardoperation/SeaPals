@@ -75,6 +75,27 @@ test("card and action context survives every coin phase", () => {
   }
 });
 
+test("Lionfish heads preserves its routing continuation even when tails is the success side", () => {
+  const ready = createCardCoinReadyState({
+    id: 29,
+    sourceCardId: "lionfish",
+    sourceCardName: "Lionfish",
+    actionName: "Invader",
+    successResult: "tails",
+    neutral: true,
+    automatic: true,
+    continuation: { type: "resolve-live-lionfish-coin" },
+  });
+  const flipping = startCardCoinFlip(ready, { forcedResult: "heads" });
+  const landed = completeCardCoinFlip(flipping, ready.id);
+  const consumed = consumeCardCoinContinuation(landed, ready.id);
+
+  assert.equal(flipping.result, "heads");
+  assert.equal(flipping.success, false);
+  assert.equal(consumed.outcome.result, "heads");
+  assert.deepEqual(consumed.continuation, { type: "resolve-live-lionfish-coin" });
+});
+
 test("repeated taps cannot reroll a card coin that has already started", () => {
   let randomCalls = 0;
   const random = () => {
