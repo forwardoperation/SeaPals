@@ -19,7 +19,7 @@ test("opponent Recovery and targeted coin actions retain their already-resolved 
   const recoveryStart = supports.indexOf('} else if (card.id === "recovery") {');
   const recoveryEnd = supports.indexOf('} else if (card.id === "ocean-jake") {', recoveryStart);
   const recovery = supports.slice(recoveryStart, recoveryEnd);
-  assert.match(recovery, /const coin = Math\.random\(\) < 0\.5 \? "heads" : "tails"/);
+  assert.match(recovery, /const coin = nextGameplayRandom\(\) < 0\.5 \? "heads" : "tails"/);
   assert.match(recovery, /opponentCoinFlip = \{[\s\S]*?result: coin[\s\S]*?successResult: "heads"/);
   assert.match(supports, /type: "opponent-play"[\s\S]*?opponentCoinFlip,/);
 

@@ -181,6 +181,11 @@ import {
   readSimulatorResumeCheckpoint,
   writeSimulatorResumeCheckpoint,
 } from "./simulatorResumeState.mjs";
+import {
+  createSimulatorRandomSeed,
+  createSimulatorRandomStream,
+  sampleSimulatorRandom,
+} from "./simulatorRandomStream.mjs";
 
 function shuffle(arr, random = Math.random) {
   const result = arr.slice();
@@ -3643,6 +3648,10 @@ export default function Simulator({
       playerDeckSnapshot: isStoryMode ? storyPlayerDeckSnapshot : null,
     },
   ));
+  const [gameplayRandomState, setGameplayRandomState] = useState(() => (
+    createSimulatorRandomStream(0x5EA9A15)
+  ));
+  const gameplayRandomStateRef = useRef(gameplayRandomState);
   const [scriptedTutorialScenario, setScriptedTutorialScenario] = useState(
     initialGame.scriptedTutorialScenario,
   );
@@ -3912,12 +3921,14 @@ export default function Simulator({
   const [faceoffLocked, setFaceoffLocked] = useState(false);
   const [faceoffIntentReadyKey, setFaceoffIntentReadyKey] = useState(null);
   const faceoffRollCommitRef = useRef(false);
+  const faceoffCommittedPacketRef = useRef(null);
   const faceoffLockTimerRef = useRef(null);
   const faceoffIntentKeyRef = useRef(null);
   const [effectRollRolling, setEffectRollRolling] = useState(false);
   const [effectRollPreview, setEffectRollPreview] = useState(null);
   const [effectRollLocked, setEffectRollLocked] = useState(false);
   const effectRollCommitRef = useRef(false);
+  const effectRollCommittedPacketRef = useRef(null);
   const effectRollLockTimerRef = useRef(null);
   const opponentCombatCheckpointIdRef = useRef(0);
   const playerCombatCheckpointIdRef = useRef(0);
@@ -3925,6 +3936,29 @@ export default function Simulator({
     `New ${initialPlayerDeckName} game started. Setup: play a base Coral or Creature School using your 3 RP.`,
   ]);
   const [turnLog, setTurnLog] = useState(["Setup began with 3 RP and an eight-card hand."]);
+
+  function replaceGameplayRandomState(nextState) {
+    const normalized = createSimulatorRandomStream(nextState?.seed, nextState?.cursor);
+    gameplayRandomStateRef.current = normalized;
+    setGameplayRandomState(normalized);
+    return normalized;
+  }
+
+  function nextGameplayRandom() {
+    const sampled = sampleSimulatorRandom(gameplayRandomStateRef.current);
+    gameplayRandomStateRef.current = sampled.state;
+    setGameplayRandomState(sampled.state);
+    return sampled.value;
+  }
+
+  function beginGameplayRandomStream() {
+    return replaceGameplayRandomState(createSimulatorRandomStream(
+      tutorialUsesScriptedScenario
+        ? 0x5EA9A15
+        : createSimulatorRandomSeed(),
+    ));
+  }
+
   useEffect(() => {
     if (!simulatorResumeEnabled) return;
     let checkpoint = readSimulatorResumeCheckpoint(window.localStorage, {
@@ -6790,6 +6824,7 @@ export default function Simulator({
     if (!boardFaceoffReady) {
       faceoffIntentKeyRef.current = null;
       faceoffRollCommitRef.current = false;
+      faceoffCommittedPacketRef.current = null;
       setFaceoffIntentReadyKey(null);
       setFaceoffLocked(false);
       setFaceoffPreview(null);
@@ -6797,6 +6832,19 @@ export default function Simulator({
       return undefined;
     }
     const presentationKey = getCombatIntentPresentationKey(eventOverlay);
+    if (faceoffCommittedPacketRef.current?.key !== presentationKey) {
+      const defenseExpression = eventOverlay.type === "school-attack-ready"
+        ? null
+        : eventOverlay.defenseDice;
+      faceoffCommittedPacketRef.current = {
+        key: presentationKey,
+        packet: createCombatRollPacket(
+          eventOverlay.attackDice,
+          defenseExpression,
+          nextGameplayRandom,
+        ),
+      };
+    }
     faceoffIntentKeyRef.current = presentationKey;
     faceoffRollCommitRef.current = false;
     setFaceoffLocked(false);
@@ -6837,10 +6885,18 @@ export default function Simulator({
   useEffect(() => {
     const effectRollReady = eventOverlay?.type === EFFECT_ROLL_READY_TYPE;
     if (!effectRollReady) {
+      effectRollCommittedPacketRef.current = null;
       setEffectRollRolling(false);
       setEffectRollPreview(null);
       setEffectRollLocked(false);
       return undefined;
+    }
+    const presentationKey = eventOverlay.rollCheckpointId;
+    if (effectRollCommittedPacketRef.current?.key !== presentationKey) {
+      effectRollCommittedPacketRef.current = {
+        key: presentationKey,
+        packet: createCombatRollPacket(eventOverlay.dice, null, nextGameplayRandom),
+      };
     }
     effectRollCommitRef.current = false;
     setEffectRollLocked(false);
@@ -7817,7 +7873,7 @@ export default function Simulator({
     const attackerSlot = attackerCoral?.slots.find((slot) => slot.id === attackContext.attackerSlotId);
     const attacker = cardsById[attackContext.attackerCardId ?? attackerSlot?.cardId];
     let attack = attackContext.attackOverride ?? getBasicAttackEffect(attacker);
-    const combatRandom = stoppedRoll ? createCombatResolutionRandom(stoppedRoll) : Math.random;
+    const combatRandom = stoppedRoll ? createCombatResolutionRandom(stoppedRoll) : nextGameplayRandom;
     let ensnareSummary = "";
     if (rollNow && attack?.ensnare) {
       const ensnareResolution = resolveEnsnareForAttack(attack, combatRandom);
@@ -7995,7 +8051,7 @@ export default function Simulator({
         corals: redistributed.corals,
         orphanCreatures: redistributed.orphans,
         discardPile: recycleId ? removeOneCard(nextDiscard, recycleId) : nextDiscard,
-        foundationDeck: recycleId ? shuffle([...opponent.foundationDeck, recycleId]) : opponent.foundationDeck,
+        foundationDeck: recycleId ? shuffle([...opponent.foundationDeck, recycleId], nextGameplayRandom) : opponent.foundationDeck,
       }));
       const nextOpponentState = nextOpponentProjection.state;
       const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: result.destroyed ? "destroyed" : "damaged", damage: result.appliedDamage }, { nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
@@ -8105,7 +8161,7 @@ export default function Simulator({
     }
     const result = stoppedRoll
       ? { resolved: true, attack: { total: stoppedRoll.attack }, defense: { total: stoppedRoll.defense } }
-      : resolveOpposedRoll(attack.attackDice, defenseDice);
+      : resolveOpposedRoll(attack.attackDice, defenseDice, combatRandom);
     if (!result.resolved) {
       pushLog(`Could not parse the dice for ${attacker.name}'s attack.`);
       return;
@@ -8196,7 +8252,7 @@ export default function Simulator({
     const playerToxicRandom = tutorialUsesScriptedScenario && shouldForceScriptedTutorialToxicSurvival({
       attackerCardId: attacker.id,
       toxicSourceCardId: targetEntry.card.id,
-    }) ? () => 0.75 : Math.random;
+    }) ? () => 0.75 : combatRandom;
     if (attackerWins) {
       if (targetEntry.targetsOwnInvader) {
         const invasiveRemoval = targetEntry.targetsOwnOrphanInvader
@@ -8810,7 +8866,7 @@ export default function Simulator({
       beginOnPlayAttack(card, coral.id, slotId, -1, appliedDeckDiscard, opponent, placedAttackerInstanceId);
     }
     if (randomDiscard && opponent.hand.length) {
-      const discardedIds = shuffle(opponent.hand).slice(0, randomDiscard.amount);
+      const discardedIds = shuffle(opponent.hand, nextGameplayRandom).slice(0, randomDiscard.amount);
       setOpponent((current) => ({ ...current, hand: discardedIds.reduce((cards, cardId) => removeOneCard(cards, cardId), current.hand), discardPile: [...discardedIds, ...current.discardPile] }));
       const discardedNames = discardedIds.map((cardId) => cardsById[cardId]?.name ?? cardId).join(", ");
       const message = `${card.name} discarded ${discardedNames} at random from the opponent's hand.`;
@@ -10180,7 +10236,7 @@ export default function Simulator({
 
   function drawNextCondition() {
     const availableConditionIds = conditionCards.map((card) => card.id).filter((conditionId) => !persistentConditionIds.includes(conditionId));
-    const source = conditionDeck.length ? conditionDeck : shuffle(availableConditionIds);
+    const source = conditionDeck.length ? conditionDeck : shuffle(availableConditionIds, nextGameplayRandom);
     const conditionId = source[0] ?? null;
     setConditionDeck(source.slice(1));
     setActiveConditionId(conditionId);
@@ -10269,6 +10325,7 @@ export default function Simulator({
           opponentState: opponentAtBoundary,
           hostController: "player",
           transactionScope: `lionfish-player-turn-${nextRound}`,
+          random: nextGameplayRandom,
         });
     const condition = reuseConditionId ? cardsById[reuseConditionId] : drawNextCondition();
     const playerAtTurnStart = normalizeProjectedPlayerState(lionfishResolution.player);
@@ -11366,7 +11423,7 @@ export default function Simulator({
           });
           return;
         }
-        if (Math.random() < 0.5) {
+        if (nextGameplayRandom() < 0.5) {
           setSearchContext({ mode: "recover", supportCardId: card.id, candidates: recoveredCandidates });
           setModal("recover");
           pushLog("Recovery coin flip: heads. Choose a card that was already in your discard pile.");
@@ -11601,8 +11658,8 @@ export default function Simulator({
       || !isCreatureSchool(foundCard)
       || !cardIsStillInDeck
     ) return;
-    setFoundationDeck((current) => shuffle(removeOneCard(current, cardId)));
-    setPalsDeck((current) => shuffle(removeOneCard(current, cardId)));
+    setFoundationDeck(shuffle(removeOneCard(foundationDeck, cardId), nextGameplayRandom));
+    setPalsDeck(shuffle(removeOneCard(palsDeck, cardId), nextGameplayRandom));
     const handResult = addCardsToHandWithLimit(hand, [cardId], discardPile, Infinity);
     setHand(handResult.hand);
     setDiscardPile(handResult.discardPile);
@@ -11658,7 +11715,7 @@ export default function Simulator({
     if (searchContext.mode === "reorder-deck") replacementTop = searchContext.topCards;
     else {
       if (selectedCardId && !searchContext.candidates.includes(selectedCardId)) return;
-      replacementTop = shuffle(selectedCardId ? removeOneCard(searchContext.topCards, selectedCardId) : searchContext.topCards);
+      replacementTop = shuffle(selectedCardId ? removeOneCard(searchContext.topCards, selectedCardId) : searchContext.topCards, nextGameplayRandom);
     }
     const nextDeck = [...replacementTop, ...deck.slice(searchContext.topCards.length)];
     if (searchContext.deckType === "foundation") setFoundationDeck(nextDeck);
@@ -11692,8 +11749,8 @@ export default function Simulator({
     if (!supportCard || !hand.includes(supportCard.id)) return;
     let nextFoundation = removeOneCard(foundationDeck, cardId);
     let nextPals = removeOneCard(palsDeck, cardId);
-    setFoundationDeck(shuffle(nextFoundation));
-    setPalsDeck(shuffle(nextPals));
+    setFoundationDeck(shuffle(nextFoundation, nextGameplayRandom));
+    setPalsDeck(shuffle(nextPals, nextGameplayRandom));
     setHand((current) => [...removeOneCard(current, supportCard.id), cardId]);
     setDiscardPile((current) => [supportCard.id, ...current]);
     const cost = getPlayerCardPlayCost(supportCard);
@@ -11745,8 +11802,8 @@ export default function Simulator({
       if (nextFoundation.includes(cardId)) nextFoundation = removeOneCard(nextFoundation, cardId);
       else nextPals = removeOneCard(nextPals, cardId);
     });
-    setFoundationDeck(shuffle(nextFoundation));
-    setPalsDeck(shuffle(nextPals));
+    setFoundationDeck(shuffle(nextFoundation, nextGameplayRandom));
+    setPalsDeck(shuffle(nextPals, nextGameplayRandom));
     const handWithoutSupport = removeOneCard(hand, supportCard.id);
     const handResult = applyCurrentHandLimit(searchContext.selected, handWithoutSupport.length);
     setHand([...handWithoutSupport, ...handResult.cardsToHand]);
@@ -12147,8 +12204,8 @@ export default function Simulator({
     const foundationCards = selectedCards.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "foundation");
     const palsCards = selectedCards.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "pals");
     setDiscardPile((current) => [supportCard.id, ...selectedCards.reduce((pile, cardId) => removeOneCard(pile, cardId), current)]);
-    if (foundationCards.length) setFoundationDeck((current) => shuffle([...current, ...foundationCards]));
-    if (palsCards.length) setPalsDeck((current) => shuffle([...current, ...palsCards]));
+    if (foundationCards.length) setFoundationDeck(shuffle([...foundationDeck, ...foundationCards], nextGameplayRandom));
+    if (palsCards.length) setPalsDeck(shuffle([...palsDeck, ...palsCards], nextGameplayRandom));
     setHand((current) => removeOneCard(current, supportCard.id));
     setRp(
       (current) => Math.max(0, current - getPlayerCardPlayCost(supportCard)),
@@ -12442,8 +12499,8 @@ export default function Simulator({
     const handResult = pendingCreatureAction.effect.destination === "deck" ? null : applyCurrentHandLimit([cardId]);
     setDiscardPile((current) => handResult?.cardsToDiscard.length ? [cardId, ...removeOneCard(current, cardId)] : removeOneCard(current, cardId));
     const recoveredDeckType = getPersonalDeckType(cardsById[cardId]);
-    if (pendingCreatureAction.effect.destination === "deck" && recoveredDeckType === "foundation") setFoundationDeck((current) => shuffle([...current, cardId]));
-    else if (pendingCreatureAction.effect.destination === "deck") setPalsDeck((current) => shuffle([...current, cardId]));
+    if (pendingCreatureAction.effect.destination === "deck" && recoveredDeckType === "foundation") setFoundationDeck(shuffle([...foundationDeck, cardId], nextGameplayRandom));
+    else if (pendingCreatureAction.effect.destination === "deck") setPalsDeck(shuffle([...palsDeck, cardId], nextGameplayRandom));
     else if (handResult.cardsToHand.length) setHand((current) => [...current, cardId]);
     setRp((current) => Math.max(0, current - cost), getPendingCreatureActionRpSpendPresentation(pendingCreatureAction, cost));
     if (actionIsOncePerTurn(pendingCreatureAction.action)) setUsedCreatureActions((current) => [...current, pendingCreatureAction.actionKey]);
@@ -12459,8 +12516,8 @@ export default function Simulator({
     const sourceCard = cardsById[pendingCreatureAction.sourceCardId];
     if (!sourceCard) return;
     const cost = pendingCreatureAction.cost ?? getActionCost(pendingCreatureAction.action);
-    setFoundationDeck((current) => shuffle(removeOneCard(current, cardId)));
-    setPalsDeck((current) => shuffle(removeOneCard(current, cardId)));
+    setFoundationDeck(shuffle(removeOneCard(foundationDeck, cardId), nextGameplayRandom));
+    setPalsDeck(shuffle(removeOneCard(palsDeck, cardId), nextGameplayRandom));
     const handResult = applyCurrentHandLimit([cardId]);
     if (handResult.cardsToHand.length) setHand((current) => [...current, cardId]);
     if (handResult.cardsToDiscard.length) setDiscardPile((current) => [cardId, ...current]);
@@ -12574,8 +12631,8 @@ export default function Simulator({
     if (!pendingCreatureAction?.searchCandidates?.includes(cardId)) return;
     const sourceCard = cardsById[pendingCreatureAction.sourceCardId];
     if (!sourceCard) return;
-    setFoundationDeck((current) => shuffle(removeOneCard(current, cardId)));
-    setPalsDeck((current) => shuffle(removeOneCard(current, cardId)));
+    setFoundationDeck(shuffle(removeOneCard(foundationDeck, cardId), nextGameplayRandom));
+    setPalsDeck(shuffle(removeOneCard(palsDeck, cardId), nextGameplayRandom));
     const handResult = applyCurrentHandLimit([cardId]);
     if (handResult.cardsToHand.length) setHand((current) => [...current, cardId]);
     if (handResult.cardsToDiscard.length) setDiscardPile((current) => [cardId, ...current]);
@@ -12686,6 +12743,7 @@ export default function Simulator({
             candidateIds: pendingAction.candidates,
             targetId: coralId,
             successResult,
+            random: nextGameplayRandom,
           })
       : null;
     if (isTargetedCoinAction && !coinResolution?.resolved) return;
@@ -12836,8 +12894,16 @@ export default function Simulator({
   function completeOnPlayMultiSearch(selectedOverride = null) {
     if (searchContext?.mode !== "onplay-multi-search") return;
     const selected = selectedOverride ?? searchContext.selected;
-    setFoundationDeck((current) => shuffle(selected.reduce((deck, cardId) => removeOneCard(deck, cardId), current)));
-    setPalsDeck((current) => shuffle(selected.reduce((deck, cardId) => removeOneCard(deck, cardId), current)));
+    const nextFoundationDeck = shuffle(
+      selected.reduce((deck, cardId) => removeOneCard(deck, cardId), foundationDeck),
+      nextGameplayRandom,
+    );
+    const nextPalsDeck = shuffle(
+      selected.reduce((deck, cardId) => removeOneCard(deck, cardId), palsDeck),
+      nextGameplayRandom,
+    );
+    setFoundationDeck(nextFoundationDeck);
+    setPalsDeck(nextPalsDeck);
     if (selected.length) setHand((current) => [...current, ...selected]);
     const sourceCard = cardsById[searchContext.sourceCardId];
     const message = selected.length ? `${sourceCard.name}'s ${searchContext.actionName} revealed ${selected.map((cardId) => cardsById[cardId]?.name).join(" and ")} and added ${selected.length === 1 ? "it" : "them"} to your hand.` : `${sourceCard.name}'s optional search selected no cards.`;
@@ -13087,7 +13153,7 @@ export default function Simulator({
         && Boolean(searchEffect && [...next.palsDeck, ...next.foundationDeck].some((candidateId) => cardMatchesSearchCriteria(cardsById[candidateId], searchEffect)));
       if (searchEffect && (card.id !== "scientist-jes" || scientistJesChoosesSearch)) {
         const candidates = [...next.palsDeck, ...next.foundationDeck].filter((candidateId) => cardMatchesSearchCriteria(cardsById[candidateId], searchEffect)).slice(0, Math.max(1, Number(searchEffect.amount ?? 1)));
-        next = { ...next, palsDeck: shuffle(candidates.reduce((deck, cardId) => removeOneCard(deck, cardId), next.palsDeck)), foundationDeck: shuffle(candidates.reduce((deck, cardId) => removeOneCard(deck, cardId), next.foundationDeck)), hand: [...next.hand, ...candidates] };
+        next = { ...next, palsDeck: shuffle(candidates.reduce((deck, cardId) => removeOneCard(deck, cardId), next.palsDeck), nextGameplayRandom), foundationDeck: shuffle(candidates.reduce((deck, cardId) => removeOneCard(deck, cardId), next.foundationDeck), nextGameplayRandom), hand: [...next.hand, ...candidates] };
         details.push(`found ${candidates.map((cardId) => cardsById[cardId]?.name).join(" and ")}`);
         if (searchEffect.revealToOpponent || /show (?:it|them) to your opponent/i.test(card.text ?? "")) revealedCardIds = candidates;
       }
@@ -13102,7 +13168,7 @@ export default function Simulator({
         }));
         const choice = deckOptions.flatMap((option) => option.candidates.map((cardId) => ({ deckKey: option.deckKey, cardId, score: Number(cardsById[cardId]?.victoryPoints?.value ?? cardsById[cardId]?.victoryPoints ?? cardsById[cardId]?.vp ?? 0) * 10 + (cardsById[cardId]?.actions?.length ?? 0) * 3 }))).sort((left, right) => right.score - left.score)[0];
         if (choice) {
-          next = { ...next, [choice.deckKey]: shuffle(removeOneCard(next[choice.deckKey], choice.cardId)), hand: [...next.hand, choice.cardId] };
+          next = { ...next, [choice.deckKey]: shuffle(removeOneCard(next[choice.deckKey], choice.cardId), nextGameplayRandom), hand: [...next.hand, choice.cardId] };
           details.push(`inspected the top cards and added ${cardsById[choice.cardId]?.name} to its hand`);
           if (chooseTopEffect.revealToOpponent) revealedCardIds = [choice.cardId];
         } else details.push("inspected the top cards but found no matching creature");
@@ -13156,7 +13222,7 @@ export default function Simulator({
         }) };
         if (target) details.push(`removed all effects from ${cardsById[target.cardId]?.name}`);
       } else if (card.id === "recovery") {
-        const coin = Math.random() < 0.5 ? "heads" : "tails";
+        const coin = nextGameplayRandom() < 0.5 ? "heads" : "tails";
         if (coin === "heads") {
           const playedRecoveryId = next.discardPile[0];
           const recoverableDiscard = next.discardPile.slice(1);
@@ -13203,7 +13269,7 @@ export default function Simulator({
         const recoveredIds = next.discardPile.filter((cardId) => cardsById[cardId]?.category === CardCategory.FISH).slice(0, 3);
         const recoveredFoundationIds = recoveredIds.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "foundation");
         const recoveredPalsIds = recoveredIds.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "pals");
-        next = { ...next, discardPile: recoveredIds.reduce((pile, cardId) => removeOneCard(pile, cardId), next.discardPile), foundationDeck: shuffle([...next.foundationDeck, ...recoveredFoundationIds]), palsDeck: shuffle([...next.palsDeck, ...recoveredPalsIds]) };
+        next = { ...next, discardPile: recoveredIds.reduce((pile, cardId) => removeOneCard(pile, cardId), next.discardPile), foundationDeck: shuffle([...next.foundationDeck, ...recoveredFoundationIds], nextGameplayRandom), palsDeck: shuffle([...next.palsDeck, ...recoveredPalsIds], nextGameplayRandom) };
         details.push(`restocked ${recoveredIds.length} Fish`);
       } else if (card.id === "spearfishing") {
         const spearfishingTargets = [
@@ -13713,7 +13779,7 @@ export default function Simulator({
     let onPlayHealSummary = "";
     const onPlayHeal = getOnPlayCoralHeal(card);
     if (onPlayHeal) {
-      const onPlayHealRoll = onPlayHeal.dice ? rollDie(onPlayHeal.dice) : null;
+      const onPlayHealRoll = onPlayHeal.dice ? rollDie(onPlayHeal.dice, nextGameplayRandom) : null;
       const onPlayHealAmount = Number(onPlayHeal.amount ?? 0) + Number(onPlayHealRoll?.total ?? 0) * Number(onPlayHeal.multiplier ?? 1);
       const healResult = healMostDamagedCoral(next.corals, onPlayHealAmount, cardsById);
       next = { ...next, corals: healResult.foundations };
@@ -13728,7 +13794,7 @@ export default function Simulator({
     if (cardHasSchoolMomentum(card)) {
       const momentumCardId = [...next.foundationDeck, ...next.palsDeck].find((cardId) => isCreatureSchool(cardsById[cardId]));
       if (momentumCardId) {
-        next = { ...next, foundationDeck: shuffle(removeOneCard(next.foundationDeck, momentumCardId)), palsDeck: shuffle(removeOneCard(next.palsDeck, momentumCardId)), hand: [...next.hand, momentumCardId] };
+        next = { ...next, foundationDeck: shuffle(removeOneCard(next.foundationDeck, momentumCardId), nextGameplayRandom), palsDeck: shuffle(removeOneCard(next.palsDeck, momentumCardId), nextGameplayRandom), hand: [...next.hand, momentumCardId] };
         momentumSummary = ` Momentum found ${cardsById[momentumCardId]?.name} and added it to the opponent's hand.`;
       } else momentumSummary = " Momentum found no Creature School.";
     }
@@ -13781,7 +13847,7 @@ export default function Simulator({
         return !onPlaySearch.effect.targetNameIncludes || candidate.name?.toLowerCase().includes(onPlaySearch.effect.targetNameIncludes.toLowerCase());
       }).slice(0, Math.max(1, Number(onPlaySearch.effect.amount ?? 1)));
       if (targetIds.length) {
-        next = { ...next, palsDeck: shuffle(targetIds.reduce((deck, cardId) => removeOneCard(deck, cardId), next.palsDeck)), foundationDeck: shuffle(targetIds.reduce((deck, cardId) => removeOneCard(deck, cardId), next.foundationDeck)), hand: [...next.hand, ...targetIds] };
+        next = { ...next, palsDeck: shuffle(targetIds.reduce((deck, cardId) => removeOneCard(deck, cardId), next.palsDeck), nextGameplayRandom), foundationDeck: shuffle(targetIds.reduce((deck, cardId) => removeOneCard(deck, cardId), next.foundationDeck), nextGameplayRandom), hand: [...next.hand, ...targetIds] };
         onPlaySearchSummary = ` ${onPlaySearch.actionName} found ${targetIds.map((cardId) => cardsById[cardId]?.name).join(" and ")}, revealed them, and added them to the opponent's hand.`;
         onPlayRevealedCardIds = targetIds;
       } else onPlaySearchSummary = ` ${onPlaySearch.actionName} found no matching card.`;
@@ -14087,7 +14153,7 @@ export default function Simulator({
   }
 
   function applyOpponentFoundationDamage(currentPlayerCorals, currentOrphans, damageEffect, sourceName, currentHand = hand, availableDiscard = discardPile, handLimit = Infinity) {
-    const damageRoll = damageEffect?.dice ? rollDie(damageEffect.dice) : null;
+    const damageRoll = damageEffect?.dice ? rollDie(damageEffect.dice, nextGameplayRandom) : null;
     const amount = Number(damageEffect?.amount ?? 0) + Number(damageRoll?.total ?? 0) * Number(damageEffect?.multiplier ?? 1);
     const rollSummary = damageRoll ? ` rolled ${damageRoll.total} on ${String(damageEffect.dice).toUpperCase()} and` : "";
     if (!amount || !currentPlayerCorals.length) return null;
@@ -14318,6 +14384,7 @@ export default function Simulator({
             candidateIds: [target.id],
             targetId: target.id,
             successResult,
+            random: nextGameplayRandom,
           });
           const committedState = commitAction(opponentState, actionKey, cost, oncePerTurn);
           if (!coinResolution.success) return {
@@ -14414,8 +14481,8 @@ export default function Simulator({
           if (!targetId) continue;
           const handResult = applyAutomatedHandLimitToState({
             ...opponentState,
-            palsDeck: shuffle(removeOneCard(opponentState.palsDeck, targetId)),
-            foundationDeck: shuffle(removeOneCard(opponentState.foundationDeck, targetId)),
+            palsDeck: shuffle(removeOneCard(opponentState.palsDeck, targetId), nextGameplayRandom),
+            foundationDeck: shuffle(removeOneCard(opponentState.foundationDeck, targetId), nextGameplayRandom),
           }, handLimit, { round }, [targetId]);
           const next = commitAction(handResult.state, actionKey, cost, oncePerTurn);
           return { state: next, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, actionName: getActionName(action), actionCost: cost, revealedCards: [targetId], success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and found ${cardsById[targetId]?.name}.${handResult.cardsToDiscard.length ? ` It chose ${handResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : " It was revealed and added to the opponent's hand."}` };
@@ -14431,8 +14498,8 @@ export default function Simulator({
             ? {
                 ...opponentState,
                 discardPile: removeOneCard(opponentState.discardPile, targetId),
-                foundationDeck: recoveredDeckType === "foundation" ? shuffle([...opponentState.foundationDeck, targetId]) : opponentState.foundationDeck,
-                palsDeck: recoveredDeckType === "pals" ? shuffle([...opponentState.palsDeck, targetId]) : opponentState.palsDeck,
+                foundationDeck: recoveredDeckType === "foundation" ? shuffle([...opponentState.foundationDeck, targetId], nextGameplayRandom) : opponentState.foundationDeck,
+                palsDeck: recoveredDeckType === "pals" ? shuffle([...opponentState.palsDeck, targetId], nextGameplayRandom) : opponentState.palsDeck,
               }
             : handResult.state;
           const committed = commitAction(next, actionKey, cost, oncePerTurn);
@@ -14450,8 +14517,8 @@ export default function Simulator({
             ...opponentState,
             hand: remainingHand,
             discardPile: [...discardedIds, ...opponentState.discardPile],
-            palsDeck: shuffle(removeOneCard(opponentState.palsDeck, targetId)),
-            foundationDeck: shuffle(removeOneCard(opponentState.foundationDeck, targetId)),
+            palsDeck: shuffle(removeOneCard(opponentState.palsDeck, targetId), nextGameplayRandom),
+            foundationDeck: shuffle(removeOneCard(opponentState.foundationDeck, targetId), nextGameplayRandom),
           }, handLimit, { round }, [targetId]);
           const next = commitAction(handResult.state, actionKey, cost, oncePerTurn);
           return { state: next, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, actionName: getActionName(action), actionCost: cost, revealedCards: [targetId], success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP, discarded ${discardedIds.map((cardId) => cardsById[cardId]?.name).join(" and ")}, and revealed ${cardsById[targetId]?.name}.${handResult.cardsToDiscard.length ? ` It then chose ${handResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : " It was added to the opponent's hand."}` };
@@ -14490,7 +14557,7 @@ export default function Simulator({
           return { state: next, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, defenderCardId: target.card.id, actionName: getActionName(action), actionCost: cost, success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and gave ${target.card.name} ${status.type === "defenseAdvantage" ? "advantage on defense rolls" : `+${status.dice} to defense rolls`} until its next turn.` };
         }
         if (effect.type === "rollDiceForResource") {
-          const roll = rollDie(effect.dice);
+          const roll = rollDie(effect.dice, nextGameplayRandom);
           if (!roll) continue;
           const success = (effect.successValues ?? []).includes(roll.total);
           const gained = success ? Number(effect.onSuccess?.amount ?? 0) : 0;
@@ -14788,7 +14855,7 @@ export default function Simulator({
         ? null
         : targetEntry.card.defense?.dice ?? targetEntry.card.defense ?? null,
     });
-    const combatRandom = combatRollPacket ? createCombatResolutionRandom(combatRollPacket) : Math.random;
+    const combatRandom = combatRollPacket ? createCombatResolutionRandom(combatRollPacket) : nextGameplayRandom;
     const targetAvoidance = getTargetAvoidance(targetEntry.card);
     if (targetAvoidance) {
       const coinResult = controllerState.forcedAvoidanceCoinResult
@@ -14898,7 +14965,7 @@ export default function Simulator({
             attack: { total: Number(combatRollPacket.attack) },
             defense: { total: Number(combatRollPacket.defense) },
           }
-        : resolveOpposedRoll(attackerEntry.attack.attackDice, defenseDice);
+        : resolveOpposedRoll(attackerEntry.attack.attackDice, defenseDice, combatRandom);
       if (!result.resolved) return null;
       combatRollSummary = {
         attackDice: attackerEntry.attack.attackDice,
@@ -15075,7 +15142,7 @@ export default function Simulator({
         && !opponentState.poisonImmunityNextPredatorAttack;
       const toxicResult = shouldDeferToxicCoin
         ? { triggered: true, protected: false, protectionSource: null, coinResult: null, discardAttacker: false }
-        : resolveToxicConsumption({ attackerCard: attackerEntry.card, toxicSourceCard: targetEntry.card, consumed: true, poisonHealActive: opponentState.poisonImmunityNextPredatorAttack });
+        : resolveToxicConsumption({ attackerCard: attackerEntry.card, toxicSourceCard: targetEntry.card, consumed: true, poisonHealActive: opponentState.poisonImmunityNextPredatorAttack }, combatRandom);
       const attackerDiscardedAfterConsume = shouldDeferToxicCoin
         ? false
         : toxicResult.discardAttacker || selfDiscardedAttacker;
@@ -15203,7 +15270,7 @@ export default function Simulator({
       && !opponentState.poisonImmunityNextPredatorAttack;
     const toxicResult = shouldDeferToxicCoin
       ? { triggered: true, protected: false, protectionSource: null, coinResult: null, discardAttacker: false }
-      : resolveToxicConsumption({ attackerCard: attackerEntry.card, toxicSourceCard: targetEntry.card, consumed: true, poisonHealActive: opponentState.poisonImmunityNextPredatorAttack });
+      : resolveToxicConsumption({ attackerCard: attackerEntry.card, toxicSourceCard: targetEntry.card, consumed: true, poisonHealActive: opponentState.poisonImmunityNextPredatorAttack }, combatRandom);
     const toxicDiscardedAttacker = toxicResult.discardAttacker;
     const attackerDiscardedAfterConsume = shouldDeferToxicCoin
       ? false
@@ -15286,7 +15353,7 @@ export default function Simulator({
       let ensnareForStep = null;
       if (onPlayAttack?.attack?.ensnare) {
         ensnareForStep = controllerState.forcedEnsnareResult
-          ?? resolveEnsnareForAttack(onPlayAttack.attack, Math.random);
+          ?? resolveEnsnareForAttack(onPlayAttack.attack, nextGameplayRandom);
         attackForStep = { ...onPlayAttack, attack: ensnareForStep.attack };
       }
       let capturedCombatPlan = null;
@@ -15477,7 +15544,7 @@ export default function Simulator({
         }
         if (cardHasPlenteous(primaryDefeatedCard) && nextDiscardPile.includes("krill-bloom-base")) {
           nextDiscardPile = removeOneCard(nextDiscardPile, "krill-bloom-base");
-          nextFoundationDeck = shuffle([...nextFoundationDeck, "krill-bloom-base"]);
+          nextFoundationDeck = shuffle([...nextFoundationDeck, "krill-bloom-base"], nextGameplayRandom);
           plenteousRecycled = true;
           stepExtras.push("Plenteous recycled a base Krill Bloom into your Foundation deck.");
         }
@@ -16021,6 +16088,7 @@ export default function Simulator({
       opponentState: normalizedOpponentState,
       hostController,
       transactionScope: checkpointPrefix,
+      random: nextGameplayRandom,
       maxInvaders: 1,
       excludedInvaderInstanceIds: processedInvaderInstanceIds,
       forcedPlans: [{
@@ -16125,6 +16193,7 @@ export default function Simulator({
             opponentState: normalizedOpponentState,
             hostController,
             transactionScope: checkpointPrefix,
+            random: nextGameplayRandom,
             combatRollPackets: [stoppedPacket],
             maxInvaders: 1,
             excludedInvaderInstanceIds: processedInvaderInstanceIds,
@@ -16749,7 +16818,7 @@ export default function Simulator({
       } else {
         nextPlayerDiscardPile = [...defeatedIds, ...nextPlayerDiscardPile];
       }
-      toxicResult = resolveToxicConsumption({ attackerCard: attacker, toxicSourceCard: defender, consumed: true, poisonHealActive: pending.opponentPoisonHealActive });
+      toxicResult = resolveToxicConsumption({ attackerCard: attacker, toxicSourceCard: defender, consumed: true, poisonHealActive: pending.opponentPoisonHealActive }, nextGameplayRandom);
       const selfDiscardedAttacker = shouldSelfDiscardAfterConsume({ attackerCard: attacker, defenderCard: defender, consumed: true });
       attackerDiscardedAfterConsume = toxicResult.discardAttacker || selfDiscardedAttacker;
       if (toxicResult.triggered) {
@@ -16779,7 +16848,7 @@ export default function Simulator({
       if (recycleKrill) {
         recycledKrill = true;
         nextPlayerDiscardPile = removeOneCard(nextPlayerDiscardPile, "krill-bloom-base");
-        nextPlayerFoundationDeck = shuffle([...nextPlayerFoundationDeck, "krill-bloom-base"]);
+        nextPlayerFoundationDeck = shuffle([...nextPlayerFoundationDeck, "krill-bloom-base"], nextGameplayRandom);
         recycleMessage += " Plenteous recycled a base Krill Bloom into your Foundation deck.";
       }
       const stateBeforeBlueCrabProjection = projectNormalizedPlayerState({
@@ -17252,6 +17321,7 @@ export default function Simulator({
           opponentState: opponentAtLionfishBoundary,
           hostController: "opponent",
           transactionScope: `lionfish-opponent-turn-${round}`,
+          random: nextGameplayRandom,
         });
     stagedPlayerState = normalizeProjectedPlayerState(lionfishResolution.player);
     const opponentAtTurnStart = normalizeProjectedOpponentState(
@@ -17327,7 +17397,7 @@ export default function Simulator({
         logMessage: opponentResult.startOfTurnSummary,
       });
     }
-    const opponentRandomDiscardIds = opponentResult.randomDiscard ? shuffle(hand).slice(0, opponentResult.randomDiscard.amount) : [];
+    const opponentRandomDiscardIds = opponentResult.randomDiscard ? shuffle(hand, nextGameplayRandom).slice(0, opponentResult.randomDiscard.amount) : [];
     const opponentDeckDiscardIds = opponentResult.deckDiscard ? [...palsDeck, ...foundationDeck].slice(0, opponentResult.deckDiscard.amount) : [];
     const supportTargetCoral = playerCoralCards[0] ?? null;
     const supportImpactStages = [];
@@ -17689,7 +17759,7 @@ export default function Simulator({
     cardCoinFlipActiveRef.current = true;
     const flipId = cardCoinFlip.id;
     const flippingState = startCardCoinFlip(cardCoinFlip, {
-      random: Math.random,
+      random: nextGameplayRandom,
       forcedResult: cardCoinFlip.forcedResult,
     });
     setCardCoinFlip((currentFlip) => (
@@ -17798,7 +17868,7 @@ export default function Simulator({
     const flipId = openingCoinFlipIdRef.current + 1;
     openingCoinFlipIdRef.current = flipId;
     const result = resolveOpeningCoinFlip({
-      random: Math.random,
+      random: nextGameplayRandom,
       forcedWinner: tutorialUsesScriptedScenario ? OpeningPlayer.PLAYER : null,
     });
     setEventOverlay(createOpeningCoinFlippingOverlay({
@@ -17971,6 +18041,7 @@ export default function Simulator({
       supportLockSourceId,
       supportBlockedUntilRound,
       cardsBlockedFromPlayThisTurn,
+      gameplayRandomState,
       log,
       turnLog,
       gameResult,
@@ -18009,9 +18080,11 @@ export default function Simulator({
     if (faceoffLockTimerRef.current) window.clearTimeout(faceoffLockTimerRef.current);
     faceoffLockTimerRef.current = null;
     faceoffRollCommitRef.current = false;
+    faceoffCommittedPacketRef.current = null;
     if (effectRollLockTimerRef.current) window.clearTimeout(effectRollLockTimerRef.current);
     effectRollLockTimerRef.current = null;
     effectRollCommitRef.current = false;
+    effectRollCommittedPacketRef.current = null;
     opponentCombatCheckpointIdRef.current += 1;
     playerCombatCheckpointIdRef.current += 1;
     faceoffIntentKeyRef.current = null;
@@ -18065,6 +18138,9 @@ export default function Simulator({
     setSupportLockSourceId(saved.supportLockSourceId ?? null);
     setSupportBlockedUntilRound(Number(saved.supportBlockedUntilRound) || 0);
     setCardsBlockedFromPlayThisTurn(saved.cardsBlockedFromPlayThisTurn ?? []);
+    replaceGameplayRandomState(saved.gameplayRandomState ?? createSimulatorRandomStream(
+      (Math.trunc(Number(checkpoint?.savedAt) || 0) ^ 0xA511E9B3) >>> 0,
+    ));
     setLog(saved.log ?? []);
     setTurnLog(saved.turnLog ?? []);
     setGameResult(null);
@@ -18073,7 +18149,11 @@ export default function Simulator({
     setEcosystemPerimeterFlash(null);
     setOpponentThinking(false);
     setRoundFlash(false);
-    setEventOverlay(null);
+    setEventOverlay(
+      saved.gamePhase === "setup" && saved.startingPlayer == null
+        ? createOpeningCoinReadyOverlay()
+        : null,
+    );
     pendingEventsRef.current = [];
     setPendingEvents([]);
     setFaceoffRolling(false);
@@ -18154,13 +18234,19 @@ export default function Simulator({
     if (effectRollLockTimerRef.current) window.clearTimeout(effectRollLockTimerRef.current);
     effectRollLockTimerRef.current = null;
     effectRollCommitRef.current = false;
+    effectRollCommittedPacketRef.current = null;
+    if (faceoffLockTimerRef.current) window.clearTimeout(faceoffLockTimerRef.current);
+    faceoffLockTimerRef.current = null;
+    faceoffRollCommitRef.current = false;
+    faceoffCommittedPacketRef.current = null;
     setMobileDrawTrayOpen(false);
     setMobileDrawAnnouncement("");
     setSetupOpeningHandVisibleCount(null);
+    beginGameplayRandomStream();
     const nextGame = createInitialGameState(
       deckId,
       opponentDeckId,
-      tutorialUsesScriptedScenario ? createSeededRandom(0x5ea9a15) : Math.random,
+      tutorialUsesScriptedScenario ? createSeededRandom(0x5ea9a15) : nextGameplayRandom,
       {
         scriptedTutorial: tutorialUsesScriptedScenario,
         playerDeckSnapshot: isStoryMode ? storyPlayerDeckSnapshot : null,
@@ -18488,6 +18574,7 @@ export default function Simulator({
     gameResult,
     startingPlayer,
     gamePhase,
+    round,
     hasDrawnThisTurn,
     turnDrawSelection,
     modal,
@@ -18529,6 +18616,7 @@ export default function Simulator({
     const saveWhenHidden = () => {
       if (document.visibilityState === "hidden") saveCheckpoint();
     };
+    saveCheckpoint();
     const saveTimer = window.setTimeout(saveCheckpoint, 240);
     window.addEventListener("pagehide", saveCheckpoint);
     document.addEventListener("visibilitychange", saveWhenHidden);
@@ -19029,10 +19117,17 @@ export default function Simulator({
   }
 
   function stopBoardEffectRoll() {
-    if (!boardEffectRollActive || !effectRollPreview || effectRollCommitRef.current) return;
+    const committedRoll = effectRollCommittedPacketRef.current;
+    if (
+      !boardEffectRollActive
+      || committedRoll?.key !== eventOverlay?.rollCheckpointId
+      || !committedRoll.packet
+      || effectRollCommitRef.current
+    ) return;
     effectRollCommitRef.current = true;
     const readyEvent = eventOverlay;
-    const stoppedPacket = { ...effectRollPreview };
+    const stoppedPacket = { ...committedRoll.packet };
+    setEffectRollPreview(stoppedPacket);
     setEffectRollRolling(false);
     setEffectRollLocked(true);
     const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
@@ -19050,10 +19145,17 @@ export default function Simulator({
   }
 
   function stopBoardFaceoff() {
-    if (!combatBoardFaceoffActive || !faceoffPreview || faceoffRollCommitRef.current) return;
+    const committedRoll = faceoffCommittedPacketRef.current;
+    if (
+      !combatBoardFaceoffActive
+      || committedRoll?.key !== faceoffIntentKeyRef.current
+      || !committedRoll.packet
+      || faceoffRollCommitRef.current
+    ) return;
     faceoffRollCommitRef.current = true;
     const readyEvent = eventOverlay;
-    const stoppedPacket = { ...faceoffPreview };
+    const stoppedPacket = { ...committedRoll.packet };
+    setFaceoffPreview(stoppedPacket);
     setFaceoffRolling(false);
     setFaceoffLocked(true);
     const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
@@ -20654,15 +20756,6 @@ export default function Simulator({
           border-color: rgba(103, 232, 249, .7);
           box-shadow: 0 24px 70px rgba(2, 8, 23, .72), 0 0 28px rgba(34, 211, 238, .2), inset 0 1px rgba(255,255,255,.08);
         }
-        .seapals-combat-result-eyebrow {
-          color: #fda4af;
-          font-size: .7rem;
-          font-weight: 950;
-          letter-spacing: .2em;
-          text-align: center;
-          text-transform: uppercase;
-        }
-        [data-player-role="defender"] .seapals-combat-result-eyebrow { color: #67e8f9; }
         .seapals-combat-result-title {
           font-size: clamp(1.05rem, 4vw, 1.4rem);
           font-weight: 950;
@@ -23488,6 +23581,8 @@ export default function Simulator({
                   attackExpression={eventOverlay?.attackDice}
                   defenseExpression={eventOverlay?.type === "school-attack-ready" ? null : eventOverlay?.defenseDice}
                   preview={faceoffPreview}
+                  attackerName={eventOverlay?.attackerName ?? cardsById[eventOverlay?.sourceCardId]?.name ?? "Attacker"}
+                  defenderName={eventOverlay?.defenderName ?? cardsById[eventOverlay?.defenderCardId]?.name ?? "Defender"}
                   attackerOwner={eventOverlay?.attackerOwner ?? eventOverlay?.combatResume?.attackerOwner ?? "player"}
                   defenderOwner={eventOverlay?.defenderOwner ?? eventOverlay?.combatResume?.defenderOwner ?? "opponent"}
                   locked={faceoffLocked}
@@ -24117,18 +24212,8 @@ export default function Simulator({
               event.currentTarget.querySelector("button")?.focus();
             }}
           >
-            <span className="seapals-combat-result-eyebrow">
-              {combatResultCheckpoint.playerRole === "defender"
-                ? "Your defense"
-                : combatResultCheckpoint.playerRole === "attacker"
-                  ? "Your attack"
-                  : "Combat result"}
-              {Number(combatResultCheckpoint.event.attackCount) > 1
-                ? ` · Attack ${combatResultCheckpoint.event.attackNumber} of ${combatResultCheckpoint.event.attackCount}`
-                : ""}
-            </span>
             <h2 id={`seapals-combat-result-title-${combatResultCheckpoint.id}`} className="seapals-combat-result-title">
-              {combatResultCheckpoint.event.title}
+              Results
             </h2>
             {combatCheckpointBreakdown.attack ? (
               <div

@@ -39,15 +39,19 @@ test("combat results use a compact, explicit checkpoint instead of immediately d
   assert.match(checkpointMarkup, /data-player-role=\{combatResultCheckpoint\.playerRole\}/);
   assert.match(checkpointMarkup, /role="dialog"/);
   assert.match(checkpointMarkup, /aria-modal="true"/);
-  assert.match(checkpointMarkup, /combatResultCheckpoint\.event\.title/);
+  assert.match(
+    checkpointMarkup,
+    /className="seapals-combat-result-title">\s*Results\s*<\/h2>/,
+    "The result checkpoint should use one plain, stable heading",
+  );
+  assert.doesNotMatch(
+    checkpointMarkup,
+    /seapals-combat-result-eyebrow|combatResultCheckpoint\.event\.title|Your defense|Your attack/,
+    "Perspective and generated event titles should not compete with the glanceable result",
+  );
   assert.match(checkpointMarkup, /combatCheckpointBreakdown/);
   assert.match(checkpointMarkup, /data-combat-breakdown-side="attack"/);
   assert.match(checkpointMarkup, /data-combat-breakdown-side="defense"/);
-  assert.match(
-    checkpointMarkup,
-    /Number\(combatResultCheckpoint\.event\.attackCount\) > 1[\s\S]*?Attack \$\{combatResultCheckpoint\.event\.attackNumber\} of \$\{combatResultCheckpoint\.event\.attackCount\}/,
-    "Repeat attacks need a glanceable ordinal after the detailed sentence is removed",
-  );
   assert.match(
     checkpointMarkup,
     /combatCheckpointBreakdown\.attack\.actionName[\s\S]*?<span>\{combatCheckpointBreakdown\.attack\.actionName\}<\/span>/,

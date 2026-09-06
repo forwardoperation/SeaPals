@@ -187,7 +187,7 @@ test("a successful attack does not lose a second card movement behind its defaul
   );
 });
 
-test("every repeated opponent combat result carries its ordinal through the event boundary", () => {
+test("every repeated opponent combat result retains its ordinal without cluttering the result heading", () => {
   const eventBuilder = sourceSection(
     simulatorSource,
     "function buildOpponentAttackEventSequence(",
@@ -202,10 +202,16 @@ test("every repeated opponent combat result carries its ordinal through the even
     (eventBuilder.match(/attackCount:\s*step\.requiredAttacks/g) ?? []).length >= 2,
     "Regenerate and ordinary opponent combat events should both retain the total attack count",
   );
-  assert.match(
+  const checkpointMarkup = sourceSection(
     simulatorSource,
-    /Number\(combatResultCheckpoint\.event\.attackCount\) > 1[\s\S]*?Attack \$\{combatResultCheckpoint\.event\.attackNumber\} of \$\{combatResultCheckpoint\.event\.attackCount\}/,
-    "The compact checkpoint should expose the propagated ordinal at a glance",
+    "{combatResultCheckpoint ? (",
+    "{opponentPlacementFlight ? (",
+  );
+  assert.match(checkpointMarkup, />\s*Results\s*<\/h2>/);
+  assert.doesNotMatch(
+    checkpointMarkup,
+    /combatResultCheckpoint\.event\.attack(?:Number|Count)/,
+    "Sequence metadata should remain on the event without competing with the plain Results heading",
   );
 });
 

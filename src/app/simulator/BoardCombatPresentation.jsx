@@ -83,6 +83,8 @@ export function BoardCombatDice({
   attackExpression,
   defenseExpression,
   preview,
+  attackerName = null,
+  defenderName = null,
   attackerOwner = "player",
   defenderOwner = "opponent",
   locked = false,
@@ -144,6 +146,9 @@ export function BoardCombatDice({
     opponent: [],
   };
   const isEffectRoll = mode === "effect";
+  const combatMatchup = !isEffectRoll && attackerName && defenderName
+    ? { attacker: String(attackerName), defender: String(defenderName) }
+    : null;
   diceByOwner[attackerOwner]?.push(
     <CombatDie
       key="attack"
@@ -182,9 +187,14 @@ export function BoardCombatDice({
   const rollPrompt = locked
     ? lockedPrompt ?? (isEffectRoll ? "Resolving roll…" : "Resolving attack…")
     : prompt ?? `Tap to ${playerRollIntent}`;
-  const rollControlLabel = locked
+  const rollControlInstruction = locked
     ? isEffectRoll ? "Card effect roll resolving" : "Attack resolving"
     : `${rollPrompt}. Stop the ${String(attackExpression ?? "die").toUpperCase()} and resolve ${isEffectRoll ? "the card effect" : "the attack"}.`;
+  const rollControlLabel = `${combatMatchup ? `${combatMatchup.attacker} versus ${combatMatchup.defender}. ` : ""}${rollControlInstruction}`;
+  const dialogLabel = ariaLabel
+    ?? (combatMatchup
+      ? `${combatMatchup.attacker} versus ${combatMatchup.defender} attack roll`
+      : isEffectRoll ? "Card effect die roll" : "Attack roll off");
 
   return (
     <div
@@ -195,7 +205,7 @@ export function BoardCombatDice({
       data-effect-roll-layer={isEffectRoll ? "true" : undefined}
       role="dialog"
       aria-modal="true"
-      aria-label={ariaLabel ?? (isEffectRoll ? "Card effect die roll" : "Attack roll off")}
+      aria-label={dialogLabel}
     >
       <button
         ref={stopButtonRef}
@@ -219,6 +229,17 @@ export function BoardCombatDice({
           {defenseExpression ? ` and ${String(defenseExpression).toUpperCase()}` : ""} and resolve {isEffectRoll ? "the card effect" : "the attack"}.
         </span>
       </button>
+      {combatMatchup ? (
+        <div className={styles.matchup} data-combat-matchup aria-hidden="true">
+          <span className={styles.matchupName} data-combat-attacker-name>
+            {combatMatchup.attacker}
+          </span>
+          <span className={styles.matchupVersus}>vs</span>
+          <span className={styles.matchupName} data-combat-defender-name>
+            {combatMatchup.defender}
+          </span>
+        </div>
+      ) : null}
       <span
         className={`${styles.rollPrompt}${reducedMotion ? ` ${styles.rollPromptReduced}` : ""}${locked ? ` ${styles.rollPromptLocked}` : ""}`}
         data-combat-roll-prompt

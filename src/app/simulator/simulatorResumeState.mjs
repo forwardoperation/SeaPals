@@ -1,9 +1,11 @@
+import { isSimulatorRandomStreamState } from "./simulatorRandomStream.mjs";
+
 export const SIMULATOR_RESUME_SCHEMA_VERSION = 1;
 export const SIMULATOR_RESUME_STORAGE_KEY = "seapals.simulator-v2.resume.v1";
 
 const RESTORABLE_GAME_PHASES = new Set(["setup", "draw", "main"]);
 const RESTORABLE_STARTING_PLAYERS = new Set(["player", "opponent"]);
-const RESUME_SAFE_EVENT_OVERLAY_TYPES = new Set(["utility-result"]);
+const RESUME_SAFE_EVENT_OVERLAY_TYPES = new Set(["utility-result", "opening-coin-ready"]);
 const EVENT_OVERLAY_CONTINUATION_KEYS = [
   "playerStateAfter",
   "opponentStateAfter",
@@ -68,6 +70,7 @@ export const SIMULATOR_RESUME_STATE_KEYS = Object.freeze([
   "supportLockSourceId",
   "supportBlockedUntilRound",
   "cardsBlockedFromPlayThisTurn",
+  "gameplayRandomState",
   "log",
   "turnLog",
   "gameResult",
@@ -87,6 +90,15 @@ function isResumeSafeEventOverlay(value) {
 
 function isNonEmptyString(value) {
   return typeof value === "string" && value.length > 0;
+}
+
+function hasRestorableStartingPlayer(state) {
+  return RESTORABLE_STARTING_PLAYERS.has(state?.startingPlayer)
+    || (
+      state?.startingPlayer == null
+      && state?.gamePhase === "setup"
+      && state?.round === 0
+    );
 }
 
 function isStringArray(value) {
@@ -305,7 +317,7 @@ function getReferencedCardIds(state) {
 export function isSimulatorResumeStateEligible(state) {
   if (!isObject(state) || state.gameResult) return false;
   if (!RESTORABLE_GAME_PHASES.has(state.gamePhase)) return false;
-  if (!RESTORABLE_STARTING_PLAYERS.has(state.startingPlayer)) return false;
+  if (!hasRestorableStartingPlayer(state)) return false;
   if (!isNonEmptyString(state.selectedDeckId) || !isNonEmptyString(state.selectedOpponentDeckId)) return false;
   if (!isNonEmptyString(state.opponentDifficulty)) return false;
   if (!Number.isFinite(state.victoryTarget) || state.victoryTarget <= 0) return false;
@@ -340,6 +352,7 @@ export function isSimulatorResumeStateEligible(state) {
     || !isStringArray(state.usedCreatureActions)
     || !isStatusRecord(state.creatureStatuses)
     || !isStringArray(state.cardsBlockedFromPlayThisTurn)
+    || !(state.gameplayRandomState == null || isSimulatorRandomStreamState(state.gameplayRandomState))
     || !(state.turnDrawResult == null || (
       Array.isArray(state.turnDrawResult)
       && state.turnDrawResult.every(isTurnDrawResultEntry)
@@ -369,7 +382,7 @@ export function isSimulatorResumeStateEligible(state) {
 export function isSimulatorResumeCheckpointStable(state) {
   if (!isObject(state)) return false;
   if (!state.resumeCheckpointReady || !state.resumeDecisionResolved || state.resumePromptOpen) return false;
-  if (state.gameResult || !RESTORABLE_STARTING_PLAYERS.has(state.startingPlayer)) return false;
+  if (state.gameResult || !hasRestorableStartingPlayer(state)) return false;
   if (!RESTORABLE_GAME_PHASES.has(state.gamePhase)) return false;
   if (state.modal && state.modal !== "turn-draw") return false;
   if (state.gamePhase === "draw" && (state.hasDrawnThisTurn || !isObject(state.turnDrawSelection))) return false;
@@ -412,7 +425,10 @@ export function isSimulatorResumeCheckpointStable(state) {
 
 export function createSimulatorResumeCheckpoint(state, { now = Date.now() } = {}) {
   const restorableState = pickRestorableState(state);
-  if (!isSimulatorResumeStateEligible(restorableState)) return null;
+  if (
+    !isSimulatorRandomStreamState(restorableState?.gameplayRandomState)
+    || !isSimulatorResumeStateEligible(restorableState)
+  ) return null;
   const savedAt = Number(now);
   if (!Number.isFinite(savedAt) || savedAt <= 0) return null;
   return {

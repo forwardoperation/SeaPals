@@ -280,7 +280,7 @@ test("Ensnare resolves inside each real player and opponent attack step", () => 
     "function applyPlayerOnPlayDeckDiscard",
   );
   assert.match(playerAttack, /if \(rollNow && attack\?\.ensnare\)/);
-  assert.match(playerAttack, /const combatRandom = stoppedRoll \? createCombatResolutionRandom\(stoppedRoll\) : Math\.random/);
+  assert.match(playerAttack, /const combatRandom = stoppedRoll \? createCombatResolutionRandom\(stoppedRoll\) : nextGameplayRandom/);
   assert.match(playerAttack, /resolveEnsnareForAttack\(attack, combatRandom\)/);
 
   const opponentSequence = sourceBetween(
@@ -288,7 +288,7 @@ test("Ensnare resolves inside each real player and opponent attack step", () => 
     "function buildOpponentAttackEventSequence",
   );
   assert.match(opponentSequence, /if \(onPlayAttack\?\.attack\?\.ensnare\)/);
-  assert.match(opponentSequence, /resolveEnsnareForAttack\(onPlayAttack\.attack, Math\.random\)/);
+  assert.match(opponentSequence, /resolveEnsnareForAttack\(onPlayAttack\.attack, nextGameplayRandom\)/);
 });
 
 test("an On Play attack targets the reconciled reef after its foundation damage", () => {

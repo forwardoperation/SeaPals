@@ -26,7 +26,7 @@ test("opening coin flow starts ready and needs only one player-triggered toss", 
   assert.match(flow, /function flipForOpeningTurn\(\)/);
   assert.match(flow, /eventOverlay\?\.type !== OpeningCoinPhase\.READY/);
   assert.match(flow, /openingCoinFlipActiveRef\.current/);
-  assert.match(flow, /resolveOpeningCoinFlip\(\{[\s\S]*?random: Math\.random,[\s\S]*?forcedWinner:/);
+  assert.match(flow, /resolveOpeningCoinFlip\(\{[\s\S]*?random: nextGameplayRandom,[\s\S]*?forcedWinner:/);
   assert.doesNotMatch(flow, /call:|coinCall/);
   assert.match(flow, /createOpeningCoinFlippingOverlay/);
   assert.match(openFlow, /createOpeningCoinReadyOverlay\(\)/);

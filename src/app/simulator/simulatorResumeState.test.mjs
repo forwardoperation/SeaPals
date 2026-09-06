@@ -160,6 +160,7 @@ function createDurableGame(overrides = {}) {
     supportLockSourceId: null,
     supportBlockedUntilRound: 0,
     cardsBlockedFromPlayThisTurn: [],
+    gameplayRandomState: { seed: 0x1234ABCD, cursor: 7 },
     log: ["A previous action"],
     turnLog: ["Drew one card"],
     gameResult: null,
@@ -186,6 +187,7 @@ test("a versioned checkpoint round-trips every durable board identity and strips
   assert.deepEqual(checkpoint.state.playerOrphanCreatureInstances[0].hostedCardIds, [null, "mantis-shrimp"]);
   assert.equal(checkpoint.state.playerOrphanCreatureInstances[0].invasiveOwner, "opponent");
   assert.equal(checkpoint.state.opponent.reefCreatureInstances[0].instanceId, "opponent-reef-1");
+  assert.deepEqual(checkpoint.state.gameplayRandomState, { seed: 0x1234ABCD, cursor: 7 });
   assert.equal("eventOverlay" in checkpoint.state, false);
   assert.equal("pendingEvents" in checkpoint.state, false);
   assert.equal("attackContext" in checkpoint.state, false);
@@ -208,6 +210,7 @@ test("malformed, completed, unsafe-phase, future-version, and duplicate-instance
   assert.equal(createSimulatorResumeCheckpoint(createDurableGame({ log: {} })), null);
   assert.equal(createSimulatorResumeCheckpoint(createDurableGame({ turnLog: {} })), null);
   assert.equal(createSimulatorResumeCheckpoint(createDurableGame({ hasDrawnThisTurn: "yes" })), null);
+  assert.equal(createSimulatorResumeCheckpoint(createDurableGame({ gameplayRandomState: { seed: -1, cursor: 0 } })), null);
   assert.equal(createSimulatorResumeCheckpoint(createDurableGame({
     playerCorals: [{ ...createDurableGame().playerCorals[0], statuses: "stunned" }],
   })), null);
@@ -396,6 +399,43 @@ test("every in-flight interaction keeps the previous known-good checkpoint untou
   assert.equal(storage.getItem(SIMULATOR_RESUME_STORAGE_KEY), knownGood);
 });
 
+test("the pre-flip opening setup is a stable resumable checkpoint", () => {
+  const openingState = createDurableGame({
+    round: 0,
+    gamePhase: "setup",
+    startingPlayer: null,
+    hasDrawnThisTurn: false,
+    turnDrawSelection: null,
+    turnDrawResult: null,
+  });
+  assert.ok(createSimulatorResumeCheckpoint(openingState));
+  assert.equal(isSimulatorResumeCheckpointStable({
+    resumeCheckpointReady: true,
+    resumeDecisionResolved: true,
+    resumePromptOpen: false,
+    gameResult: null,
+    startingPlayer: null,
+    gamePhase: "setup",
+    round: 0,
+    hasDrawnThisTurn: false,
+    turnDrawSelection: null,
+    modal: null,
+    eventOverlay: { type: "opening-coin-ready" },
+  }), true);
+  assert.equal(isSimulatorResumeCheckpointStable({
+    resumeCheckpointReady: true,
+    resumeDecisionResolved: true,
+    resumePromptOpen: false,
+    gameResult: null,
+    startingPlayer: null,
+    gamePhase: "setup",
+    round: 1,
+    hasDrawnThisTurn: false,
+    modal: null,
+    eventOverlay: { type: "opening-coin-ready" },
+  }), false);
+});
+
 test("cosmetic board-stat flights save the canonical completed play before a refresh", () => {
   const stableBoundary = {
     resumeCheckpointReady: true,
@@ -500,7 +540,8 @@ test("Simulator gates normal V2 hydration, restores durable state, and derives o
   assert.match(restore, /setPlayerOrphanCreatureInstances\(saved\.playerOrphanCreatureInstances\)/);
   assert.match(restore, /setOpponentState\(\(current\) => reconcileOpponentInstances\(current, saved\.opponent\)\)/);
   assert.match(restore, /saved\.gamePhase === "draw"[\s\S]*?\? "turn-draw"[\s\S]*?: null/);
-  assert.match(restore, /setEventOverlay\(null\)/);
+  assert.match(restore, /saved\.gamePhase === "setup" && saved\.startingPlayer == null[\s\S]*?\? createOpeningCoinReadyOverlay\(\)[\s\S]*?: null/);
+  assert.match(restore, /replaceGameplayRandomState\(saved\.gameplayRandomState/);
   assert.match(restore, /pendingEventsRef\.current = \[\]/);
   assert.match(restore, /setAttackContext\(null\)/);
   assert.match(restore, /setSearchContext\(null\)/);

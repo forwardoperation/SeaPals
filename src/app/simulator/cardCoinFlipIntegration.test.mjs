@@ -42,8 +42,8 @@ test("card flips use dedicated state without replacing the opening event-overlay
 test("one V2 card tap samples once and reduced motion still lands through an ID-guarded fallback", () => {
   assert.match(
     simulatorSource,
-    /startCardCoinFlip\([\s\S]{0,350}?random:\s*Math\.random/,
-    "the player tap, rather than render or Support selection, should supply randomness",
+    /startCardCoinFlip\([\s\S]{0,350}?random:\s*nextGameplayRandom/,
+    "the player tap should consume the persisted gameplay stream rather than ambient randomness",
   );
   assert.match(simulatorSource, /cardCoinFlip\?\.phase !== CardCoinPhase\.FLIPPING/);
   assert.match(simulatorSource, /const (?:flipId|cardCoinFlipId) = cardCoinFlip\.id/);
@@ -83,11 +83,11 @@ test("Recovery commits once, snapshots the old discard pile, and defers only the
   assert.match(recovery, /\(card\.effects \?\? \[\]\)\.find\([^\n]*EffectType\.FLIP_COIN/);
   assert.match(
     recovery,
-    /if \(previewExperience\) \{[\s\S]*?beginCardCoinFlipPresentation\(\{[\s\S]*?sourceCardId:\s*card\.id[\s\S]*?successResult:[\s\S]*?continuation:\s*\{[\s\S]*?type:\s*"recover-from-discard"[\s\S]*?candidates:\s*recoveredCandidates[\s\S]*?\}\)[\s\S]*?return;[\s\S]*?\}\s*if \(Math\.random\(\) < 0\.5\)/,
-    "V2 should stage the board toss without sampling; the old immediate RNG remains only after its early return",
+    /if \(previewExperience\) \{[\s\S]*?beginCardCoinFlipPresentation\(\{[\s\S]*?sourceCardId:\s*card\.id[\s\S]*?successResult:[\s\S]*?continuation:\s*\{[\s\S]*?type:\s*"recover-from-discard"[\s\S]*?candidates:\s*recoveredCandidates[\s\S]*?\}\)[\s\S]*?return;[\s\S]*?\}\s*if \(nextGameplayRandom\(\) < 0\.5\)/,
+    "V2 should stage the board toss without sampling; the legacy presentation path still consumes the persisted stream",
   );
   assert.doesNotMatch(
-    recovery.slice(recovery.indexOf("if (previewExperience)"), recovery.indexOf("if (Math.random()")),
+    recovery.slice(recovery.indexOf("if (previewExperience)"), recovery.indexOf("if (nextGameplayRandom()")),
     /Math\.random/,
   );
 });
@@ -192,7 +192,7 @@ test("restart cancellation invalidates a card toss, while legacy Recovery and op
     playCard.indexOf('if (card.id === "recovery")'),
     playCard.indexOf('if (card.id === "scientist-jes")'),
   );
-  assert.match(recovery, /if \(Math\.random\(\) < 0\.5\)[\s\S]*?setModal\("recover"\)/);
+  assert.match(recovery, /if \(nextGameplayRandom\(\) < 0\.5\)[\s\S]*?setModal\("recover"\)/);
   assert.match(recovery, /else \{[\s\S]*?returnFromSupportFlowToBoard\(\)/);
 
   const openingFlip = sourceBetween("function flipForOpeningTurn", "function completeOpeningCoinFlip");

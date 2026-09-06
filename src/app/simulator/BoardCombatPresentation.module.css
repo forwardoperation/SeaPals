@@ -1,3 +1,46 @@
+.matchup {
+  position: absolute;
+  z-index: 4;
+  inset-block-start: calc(50% - clamp(3.25rem, 8vw, 4.4rem));
+  inset-inline-start: 50%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(0.45rem, 1.5vw, 0.8rem);
+  box-sizing: border-box;
+  width: min(34rem, calc(100% - 2rem));
+  padding: 0.48rem clamp(0.7rem, 2.5vw, 1rem);
+  border: 1px solid rgba(165, 243, 252, 0.62);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(8, 47, 73, 0.9), rgba(15, 23, 42, 0.88));
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.24), 0 10px 24px rgba(2, 8, 23, 0.36);
+  color: #ecfeff;
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0);
+}
+
+.matchupName {
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.matchupVersus {
+  color: #fcd34d;
+  font-size: clamp(0.66rem, 2vw, 0.78rem);
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .rollPrompt {
   position: absolute;
   z-index: 4;
@@ -81,6 +124,13 @@
 }
 
 @media (max-width: 640px) {
+  .matchup {
+    inset-block-start: calc(50% - 3.4rem);
+    width: calc(100% - max(1.25rem, env(safe-area-inset-left)) - max(1.25rem, env(safe-area-inset-right)));
+    gap: 0.45rem;
+    padding-inline: 0.7rem;
+  }
+
   .rollPrompt {
     max-width: calc(100% - max(1.5rem, env(safe-area-inset-left)) - max(1.5rem, env(safe-area-inset-right)));
     padding-inline: clamp(1rem, 5vw, 1.55rem);

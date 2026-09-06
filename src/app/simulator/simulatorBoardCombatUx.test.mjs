@@ -131,7 +131,12 @@ test("combat dice are a transparent board-context dialog, not the full-page even
   assert.match(presentationSource, /owner=\{defenderOwner\}/);
   assert.match(presentationSource, /data-stop-combat-roll/);
   assert.match(presentationSource, /aria-label=\{rollControlLabel\}/i);
-  assert.match(boardCombatSource, /role="dialog"[\s\S]{0,120}aria-modal="true"[\s\S]{0,180}aria-label=\{ariaLabel \?\? \(isEffectRoll \? "Card effect die roll" : "Attack roll off"\)\}/);
+  assert.match(boardCombatSource, /role="dialog"[\s\S]{0,120}aria-modal="true"[\s\S]{0,180}aria-label=\{dialogLabel\}/);
+  assert.match(
+    boardCombatSource,
+    /const dialogLabel = ariaLabel[\s\S]{0,240}?combatMatchup\.attacker[\s\S]{0,120}?combatMatchup\.defender[\s\S]{0,120}?attack roll/,
+    "The dialog name should identify the two cards whose roll is being resolved",
+  );
   assert.match(presentationSource, /aria-live="polite"/);
   assert.match(
     presentationSource,
@@ -182,6 +187,30 @@ test("the board roll gives the local player a centered attack or defense tap pro
   assert.match(presentationSource, /@media \(max-width:\s*640px\)[\s\S]*?\.rollPrompt/);
   assert.match(presentationSource, /\.rollPromptReduced\s*\{[\s\S]*?animation:\s*none;/);
   assert.match(presentationSource, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.rollPrompt[\s\S]*?animation:\s*none;/);
+});
+
+test("combat rolls plainly identify the attacking and defending cards", () => {
+  assert.match(
+    simulatorSource,
+    /<BoardCombatDice[\s\S]{0,700}?attackerName=\{eventOverlay\?\.attackerName[\s\S]{0,300}?defenderName=\{eventOverlay\?\.defenderName/,
+    "The board presentation must receive both combatant names",
+  );
+  assert.match(
+    boardCombatSource,
+    /const combatMatchup = !isEffectRoll && attackerName && defenderName/,
+    "Effect-only rolls should not show a false attacker-versus-defender label",
+  );
+  assert.match(boardCombatSource, /data-combat-matchup/);
+  assert.match(boardCombatSource, /data-combat-attacker-name[\s\S]{0,180}?\{combatMatchup\.attacker\}/);
+  assert.match(boardCombatSource, /className=\{styles\.matchupVersus\}>vs</);
+  assert.match(boardCombatSource, /data-combat-defender-name[\s\S]{0,180}?\{combatMatchup\.defender\}/);
+  assert.match(
+    boardCombatSource,
+    /const rollControlLabel = `\$\{combatMatchup \? `\$\{combatMatchup\.attacker\} versus \$\{combatMatchup\.defender\}/,
+    "The full-board tap control must announce the same matchup",
+  );
+  assert.match(presentationSource, /\.matchup\s*\{[\s\S]*?inset-inline-start:\s*50%;[\s\S]*?pointer-events:\s*none;[\s\S]*?translate3d\(-50%,\s*-50%,\s*0\)/);
+  assert.match(presentationSource, /\.matchupName\s*\{[\s\S]*?-webkit-line-clamp:\s*2;[\s\S]*?overflow-wrap:\s*anywhere;/);
 });
 
 test("the board roll dialog focuses after dice exist and isolates reef and hand controls", () => {
@@ -332,15 +361,16 @@ test("one defensive-roll tap freezes the visible packet and passes it to the liv
     "  return (",
   );
 
+  assert.match(faceoffCommit, /const committedRoll = faceoffCommittedPacketRef\.current;/);
   assert.match(
     faceoffCommit,
-    /if \(!combatBoardFaceoffActive \|\| !faceoffPreview \|\| faceoffRollCommitRef\.current\) return;[\s\S]*?faceoffRollCommitRef\.current = true;/,
-    "The board tap must be guarded before any delayed resolution is scheduled",
+    /committedRoll\?\.key !== faceoffIntentKeyRef\.current[\s\S]*?!committedRoll\.packet[\s\S]*?faceoffRollCommitRef\.current[\s\S]*?\) return;[\s\S]*?faceoffRollCommitRef\.current = true;/,
+    "The board tap must validate and one-shot guard the precommitted result",
   );
   assert.match(
     faceoffCommit,
-    /const readyEvent = eventOverlay;[\s\S]*?const stoppedPacket = \{ \.\.\.faceoffPreview \};[\s\S]*?window\.setTimeout\(\(\) => \{/,
-    "The ready checkpoint and exact visible packet must be captured before the lock animation",
+    /const readyEvent = eventOverlay;[\s\S]*?const stoppedPacket = \{ \.\.\.committedRoll\.packet \};[\s\S]*?setFaceoffPreview\(stoppedPacket\);[\s\S]*?window\.setTimeout\(\(\) => \{/,
+    "The committed packet must be revealed and captured before the lock animation",
   );
   assert.match(
     faceoffCommit,
