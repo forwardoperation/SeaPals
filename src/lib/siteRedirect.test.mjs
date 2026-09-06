@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  canonicalSiteRedirectLocation,
+  canonicalSiteRedirectPolicy,
   legacySiteRedirectLocation,
   legacySiteRedirectPolicy,
 } from "./siteRedirect.mjs";
@@ -17,6 +20,87 @@ const CUTOVER_ENVIRONMENT = Object.freeze({
 function request(url, method = "GET") {
   return { url, method };
 }
+
+test("canonical redirect upgrades HTTP and removes www in one hop", () => {
+  const environment = { SITE_URL: "https://seapalstcg.com" };
+
+  for (const candidate of [
+    request("http://seapalstcg.com/decks/reef?source=http&card=1"),
+    request("https://www.seapalstcg.com/decks/reef?source=www&card=1"),
+    request("http://www.seapalstcg.com/decks/reef?source=both&card=1"),
+  ]) {
+    const expectedQuery = new URL(candidate.url).search;
+    assert.equal(
+      canonicalSiteRedirectLocation(candidate, environment),
+      `https://seapalstcg.com/decks/reef${expectedQuery}`,
+    );
+  }
+});
+
+test("canonical redirect is permanent and preserves mutation methods", () => {
+  assert.deepEqual(canonicalSiteRedirectPolicy(), {
+    status: 308,
+    cacheControl: "public, max-age=3600",
+  });
+  assert.equal(
+    canonicalSiteRedirectLocation(
+      request("http://seapalstcg.com/api/store/checkout", "POST"),
+      { SITE_URL: "https://seapalstcg.com" },
+    ),
+    "https://seapalstcg.com/api/store/checkout",
+  );
+});
+
+test("canonical redirect is inert for canonical HTTPS and unrelated hosts", () => {
+  const environment = { SITE_URL: "https://seapalstcg.com" };
+
+  for (const candidate of [
+    request("https://seapalstcg.com/store"),
+    request("https://preview.example/store"),
+    request("http://seapals.example.workers.dev/store"),
+    request("ftp://seapalstcg.com/store"),
+    request("https://owner:secret@www.seapalstcg.com/store"),
+  ]) {
+    assert.equal(
+      canonicalSiteRedirectLocation(candidate, environment),
+      null,
+    );
+  }
+
+  assert.equal(
+    canonicalSiteRedirectLocation(request("http://seapalstcg.com/store"), {
+      SITE_URL: "http://seapalstcg.com",
+    }),
+    null,
+  );
+});
+
+test("Cloudflare routes send the apex and www alias through canonical handling", () => {
+  const wranglerConfig = readFileSync(
+    new URL("../../wrangler.jsonc", import.meta.url),
+    "utf8",
+  );
+  const workerSource = readFileSync(
+    new URL("../../custom-worker.mjs", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    wranglerConfig,
+    /"pattern": "seapalstcg\.com"[\s\S]{0,80}"custom_domain": true/,
+  );
+  assert.match(
+    wranglerConfig,
+    /"pattern": "www\.seapalstcg\.com\/\*"[\s\S]{0,120}"zone_name": "seapalstcg\.com"/,
+  );
+  assert.match(wranglerConfig, /"workers_dev": true/);
+  assert.match(wranglerConfig, /"preview_urls": true/);
+  assert.ok(
+    workerSource.indexOf("canonicalSiteRedirectLocation(") <
+      workerSource.indexOf("legacySiteRedirectLocation("),
+    "canonical redirects must run before cross-domain cutover redirects",
+  );
+});
 
 test("legacy redirect preserves the complete path and query", () => {
   assert.equal(

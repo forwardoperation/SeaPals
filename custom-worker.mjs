@@ -2,6 +2,8 @@
 // @ts-ignore
 import openNextWorker from "./.open-next/worker.js";
 import {
+  canonicalSiteRedirectLocation,
+  canonicalSiteRedirectPolicy,
   legacySiteRedirectLocation,
   legacySiteRedirectPolicy,
 } from "./src/lib/siteRedirect.mjs";
@@ -19,6 +21,19 @@ export {
 
 export const STORE_NOTIFICATION_CRON = "*/5 * * * *";
 
+function redirectResponse(location, policy) {
+  return new Response(null, {
+    status: policy.status,
+    headers: {
+      "Cache-Control": policy.cacheControl,
+      Location: location,
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Strict-Transport-Security": "max-age=31536000",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
 function safeErrorCode(error) {
   const code = typeof error?.code === "string" ? error.code : "unknown";
   return /^[A-Za-z0-9_-]{1,100}$/.test(code) ? code : "unknown";
@@ -26,19 +41,23 @@ function safeErrorCode(error) {
 
 export default {
   async fetch(request, environment, context) {
+    const canonicalRedirectLocation = canonicalSiteRedirectLocation(
+      request,
+      environment,
+    );
+    if (canonicalRedirectLocation) {
+      return redirectResponse(
+        canonicalRedirectLocation,
+        canonicalSiteRedirectPolicy(),
+      );
+    }
+
     const redirectLocation = legacySiteRedirectLocation(request, environment);
     if (redirectLocation) {
-      const redirectPolicy = legacySiteRedirectPolicy(environment);
-      return new Response(null, {
-        status: redirectPolicy.status,
-        headers: {
-          "Cache-Control": redirectPolicy.cacheControl,
-          Location: redirectLocation,
-          "Referrer-Policy": "strict-origin-when-cross-origin",
-          "Strict-Transport-Security": "max-age=31536000",
-          "X-Content-Type-Options": "nosniff",
-        },
-      });
+      return redirectResponse(
+        redirectLocation,
+        legacySiteRedirectPolicy(environment),
+      );
     }
 
     const blockedResponse = await enforceStoreCheckoutRateLimit({

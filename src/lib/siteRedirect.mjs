@@ -1,6 +1,10 @@
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
 const REDIRECT_METHODS = new Set(["GET", "HEAD"]);
 const PASSTHROUGH_PATHS = Object.freeze(["/api", "/auth"]);
+const CANONICAL_REDIRECT_POLICY = Object.freeze({
+  status: 308,
+  cacheControl: "public, max-age=3600",
+});
 const TEMPORARY_REDIRECT_POLICY = Object.freeze({
   status: 302,
   cacheControl: "no-store",
@@ -66,6 +70,52 @@ function isPassthroughPath(pathname) {
   return PASSTHROUGH_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
+}
+
+export function canonicalSiteRedirectPolicy() {
+  return CANONICAL_REDIRECT_POLICY;
+}
+
+/**
+ * Upgrades the canonical hostname to HTTPS and collapses its www alias in one
+ * method-preserving hop. Other hostnames fail closed so preview and workers.dev
+ * URLs cannot become open redirects merely because they reach this Worker.
+ */
+export function canonicalSiteRedirectLocation(request, environment = {}) {
+  let requestUrl;
+  let canonicalOrigin;
+  try {
+    requestUrl = new URL(request.url);
+    canonicalOrigin = httpsOrigin(environment.SITE_URL);
+  } catch {
+    return null;
+  }
+
+  if (
+    !canonicalOrigin ||
+    !["http:", "https:"].includes(requestUrl.protocol) ||
+    requestUrl.username ||
+    requestUrl.password
+  ) {
+    return null;
+  }
+
+  const canonicalUrl = new URL(canonicalOrigin);
+  const requestHostname = requestUrl.hostname.toLowerCase();
+  const canonicalHostname = canonicalUrl.hostname.toLowerCase();
+  const isCanonicalHostname = requestHostname === canonicalHostname;
+  const isWwwAlias = requestHostname === `www.${canonicalHostname}`;
+
+  if (
+    (!isCanonicalHostname && !isWwwAlias) ||
+    (isCanonicalHostname && requestUrl.protocol === "https:")
+  ) {
+    return null;
+  }
+
+  canonicalUrl.pathname = requestUrl.pathname;
+  canonicalUrl.search = requestUrl.search;
+  return canonicalUrl.toString();
 }
 
 export function legacySiteRedirectPolicy(environment = {}) {

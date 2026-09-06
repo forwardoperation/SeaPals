@@ -7,6 +7,22 @@
 		"nodejs_compat",
 		"global_fetch_strictly_public"
 	],
+	// Preserve the currently enabled workers.dev and version-preview URLs when
+	// routes are declared below; Wrangler otherwise disables workers.dev.
+	"workers_dev": true,
+	"preview_urls": true,
+	"routes": [
+		{
+			"pattern": "seapalstcg.com",
+			"custom_domain": true
+		},
+		{
+			// The proxied www DNS record reaches the Worker only to perform the
+			// canonical redirect; the application never renders on this hostname.
+			"pattern": "www.seapalstcg.com/*",
+			"zone_name": "seapalstcg.com"
+		}
+	],
 	"vars": {
 		"SITE_URL": "https://seapalstcg.com",
 		// During validation, checkout may originate on either exact app hostname.

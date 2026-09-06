@@ -44,6 +44,9 @@ hosts should redirect before the application renders.
 5. Keep the SeaPals apex attached to the Worker. Ensure its `www` alias either
    reaches the tested legacy redirect or uses its own path-preserving edge rule.
    The final application redirect can only answer for hostnames routed to it.
+   The current SeaPals configuration routes `www.seapalstcg.com/*` to the Worker
+   solely for this canonical redirect; it must remain out of checkout and auth
+   allowlists and must never render as an application origin.
 6. Duplicate hostname-specific Cloudflare controls for SeaRealm, especially
    Access coverage for `/admin/*` and `/api/admin/*`, plus any dashboard WAF or
    rate-limit rules. The checkout rate-limit binding in `wrangler.jsonc` follows
