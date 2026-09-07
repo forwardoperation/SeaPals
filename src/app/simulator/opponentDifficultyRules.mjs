@@ -87,12 +87,26 @@ export function chooseOpponentPreferredDeck({
   emptySlotCount = 0,
   foundationCardsInHand = 0,
   creaturesInHand = 0,
+  targetableAttackCardsInHand = 0,
+  legalAttackCardsInHand = 0,
+  placementBlockedAttackCardsInHand = 0,
+  visibleAttackTargetCount = 0,
   threatLevel = "setup",
 } = {}) {
   const fallback = Number(round) % 2 === 1 ? "palsDeck" : "foundationDeck";
   if (normalizeOpponentDifficulty(difficulty) !== OpponentDifficulty.HARD) return fallback;
   if (coralCount < 2 && foundationCardsInHand === 0) return "foundationDeck";
   if (emptySlotCount === 0 && foundationCardsInHand === 0) return "foundationDeck";
+  // Attack-heavy decks often carry one-shot On Play attacks rather than
+  // reusable attack actions. A hand full of passive or currently untargeted
+  // creatures is not a real combat line, so draw from Pals while the rival has
+  // exposed creatures instead of blindly alternating back to Foundation.
+  if (visibleAttackTargetCount > 0 && legalAttackCardsInHand === 0) {
+    if (placementBlockedAttackCardsInHand > 0) {
+      return "foundationDeck";
+    }
+    if (targetableAttackCardsInHand === 0) return "palsDeck";
+  }
   if (["pressure", "critical"].includes(threatLevel) && creaturesInHand < 2 && coralCount > 0) return "palsDeck";
   if (emptySlotCount <= 1 && foundationCardsInHand === 0) return "foundationDeck";
   if (emptySlotCount > 0 && creaturesInHand === 0) return "palsDeck";

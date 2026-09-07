@@ -10,6 +10,8 @@ import {
   getPreferredOpponentPermanentPlayPool,
   preferOpponentPlaysWithResolvableOnPlayAttacks,
   scoreHardOpponentPermanentPlay,
+  scoreHardOpponentSearchCandidate,
+  selectBestOpponentCreatureSlot,
   selectHardOpponentAttackPlan,
   shouldOpponentAttackBeforeUtility,
 } from "./opponentPlayRules.mjs";
@@ -56,6 +58,44 @@ test("opponent play pool preserves non-attacking plays and handles an empty pool
     ["coral-reef", "open-ocean"],
   );
   assert.deepEqual(getPreferredOpponentPermanentPlayPool(), []);
+});
+
+test("Hard searches for an affordable live attack instead of a locked high-VP card", () => {
+  const livePredator = scoreHardOpponentSearchCandidate({
+    baseScore: 70,
+    playCost: 5,
+    availableRp: 5,
+    hasAttack: true,
+    hasLegalAttack: true,
+    meetsRequirements: true,
+    hasPlacement: true,
+  });
+  const lockedApex = scoreHardOpponentSearchCandidate({
+    baseScore: 196,
+    playCost: 14,
+    availableRp: 5,
+    hasAttack: true,
+    hasLegalAttack: true,
+    meetsRequirements: false,
+    hasPlacement: false,
+  });
+
+  assert.ok(livePredator > lockedApex);
+});
+
+test("Hard keeps flexible predator and apex slots open when a fish slot is available", () => {
+  const predatorSlot = { id: "predator", slotClass: "predator", accepts: ["fish", "predator"] };
+  const apexSlot = { id: "apex", slotClass: "apex", accepts: ["fish", "predator", "apex"] };
+  const fishSlot = { id: "fish", slotClass: "fish", accepts: ["fish"] };
+
+  assert.equal(
+    selectBestOpponentCreatureSlot([predatorSlot, apexSlot, fishSlot], "fish"),
+    fishSlot,
+  );
+  assert.equal(
+    selectBestOpponentCreatureSlot([apexSlot, predatorSlot], "predator"),
+    predatorSlot,
+  );
 });
 
 test("a runaway visible engine creates critical urgency before it reaches match point", () => {

@@ -8,6 +8,9 @@ import { parseLegacyAttackText } from "./gameRules.mjs";
 import {
   OpponentThreatLevel,
   scoreHardOpponentPermanentPlay,
+  scoreHardOpponentSearchCandidate,
+  selectBestOpponentCreatureSlot,
+  selectProductiveOpponentSearchTargets,
 } from "./opponentPlayRules.mjs";
 
 const require = createRequire(import.meta.url);
@@ -78,4 +81,42 @@ test("Hard scores the actual Open Ocean attack line above another passive school
   });
 
   assert.ok(attackScore > upgradeScore);
+});
+
+test("Hard Darkness Shroud searches for an affordable school attacker instead of Colossal Squid", () => {
+  const darknessCards = uniqueDeckCards("darkness-shroud");
+  const school = cardsById["herring-ball-base"];
+  const predatorAndApexIds = darknessCards
+    .filter((card) => ["predator", "apex"].includes(card.category))
+    .map((card) => card.id);
+  const selected = selectProductiveOpponentSearchTargets(predatorAndApexIds, {
+    amount: 1,
+    scoreCandidate: (cardId) => {
+      const candidate = cardsById[cardId];
+      const attack = getOnPlayAttacks(candidate)[0] ?? null;
+      const cost = Number(candidate.cost?.rp ?? 0);
+      const printedVp = Number(candidate.victoryPoints?.value ?? candidate.victoryPoints ?? 0);
+      const needsAbyss = (candidate.specialRules ?? []).some((rule) => /requires?.*abyss|only be played if abyss/i.test(typeof rule === "string" ? rule : rule?.text ?? ""));
+      return scoreHardOpponentSearchCandidate({
+        baseScore: printedVp * 15 - cost,
+        playCost: cost,
+        availableRp: 3,
+        hasAttack: Boolean(attack),
+        hasLegalAttack: Boolean(attack && attackCanTargetCard(school, attack)),
+        meetsRequirements: !needsAbyss,
+        hasPlacement: candidate.category !== "apex",
+      });
+    },
+  });
+
+  assert.deepEqual(selected, ["chimera"]);
+  assert.notDeepEqual(selected, ["colossal-squid"]);
+});
+
+test("Hard Darkness Shroud puts Fish in its dedicated slot before flexible attack slots", () => {
+  const stageOneSlots = cardsById["bamboo_coral_stage1"].slots;
+  const fish = cardsById.bristlemouth;
+  const compatible = stageOneSlots.filter((slot) => slot.accepts.includes(fish.class));
+
+  assert.equal(selectBestOpponentCreatureSlot(compatible, fish.class)?.slotClass, "fish");
 });

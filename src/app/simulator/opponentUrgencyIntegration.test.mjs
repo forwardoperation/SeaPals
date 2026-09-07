@@ -23,6 +23,25 @@ test("Hard permanent scoring consumes the public threat profile", () => {
   assert.match(opponentTurn, /canAffordAttackAfterPlay/);
 });
 
+test("Hard draw planning distinguishes legal attack cards from passive creatures", () => {
+  const opponentTurn = sourceBetween(
+    "function runOpponentTurn",
+    "function applyOpponentFoundationDamage",
+  );
+  const drawChoiceStart = opponentTurn.indexOf("const preferredDeck = chooseOpponentPreferredDeck({");
+  const drawChoiceEnd = opponentTurn.indexOf("});", drawChoiceStart);
+  assert.ok(drawChoiceStart >= 0 && drawChoiceEnd > drawChoiceStart, "missing opponent draw choice");
+  const drawChoice = opponentTurn.slice(drawChoiceStart, drawChoiceEnd);
+
+  assert.match(drawChoice, /targetableAttackCardsInHand/);
+  assert.match(drawChoice, /legalAttackCardsInHand/);
+  assert.match(drawChoice, /placementBlockedAttackCardsInHand/);
+  assert.match(drawChoice, /visibleAttackTargetCount/);
+  assert.match(opponentTurn, /getOnPlayAttackEffect/);
+  assert.match(opponentTurn, /getBasicAttackEffect/);
+  assert.match(opponentTurn, /opponentAttackHasVisibleTarget/);
+});
+
 test("Hard can spend surplus RP on several straightforward permanent cards", () => {
   const opponentTurn = sourceBetween(
     "function runOpponentTurn",

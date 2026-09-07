@@ -98,6 +98,60 @@ export function selectProductiveOpponentSearchTargets(
 }
 
 /**
+ * Rank a Hard opponent's search result by how quickly it can affect the
+ * current board. This keeps high-VP but locked cards from crowding an
+ * affordable attack out of the hand when the rival has a legal target.
+ */
+export function scoreHardOpponentSearchCandidate({
+  baseScore = 0,
+  playCost = 0,
+  availableRp = 0,
+  hasAttack = false,
+  hasLegalAttack = false,
+  meetsRequirements = true,
+  hasPlacement = true,
+} = {}) {
+  const cost = toFiniteNonNegative(playCost);
+  const bank = toFiniteNonNegative(availableRp);
+  const costGap = Math.max(0, cost - bank);
+  const canPlayNow = Boolean(meetsRequirements && hasPlacement && costGap === 0);
+  const attackTempo = hasLegalAttack
+    ? (canPlayNow ? 320 : 140)
+    : hasAttack && canPlayNow
+      ? 30
+      : 0;
+  const immediatePlayValue = canPlayNow ? 60 : 0;
+  const requirementPenalty = meetsRequirements ? 0 : 120;
+  const placementPenalty = hasPlacement ? 0 : 100;
+
+  return Number(baseScore || 0)
+    + attackTempo
+    + immediatePlayValue
+    - costGap * 35
+    - requirementPenalty
+    - placementPenalty;
+}
+
+/**
+ * Preserve flexible Predator and Apex slots for cards that actually need
+ * them. Callers pass only empty compatible slots; ties retain board order so
+ * seeded games remain deterministic.
+ */
+export function selectBestOpponentCreatureSlot(candidates = [], creatureClass = null) {
+  const entries = [...(candidates ?? [])];
+  if (!entries.length) return null;
+  const rank = (entry) => {
+    const slot = entry?.slot ?? entry;
+    const exactPenalty = slot?.slotClass === creatureClass ? 0 : 1;
+    const flexibility = Array.isArray(slot?.accepts) ? slot.accepts.length : Number.MAX_SAFE_INTEGER;
+    return exactPenalty * 100 + flexibility;
+  };
+  return entries.reduce((best, candidate) => (
+    rank(candidate) < rank(best) ? candidate : best
+  ), entries[0]);
+}
+
+/**
  * Prices hazards that can waste an attack or remove the attacker. The result
  * is a penalty, not a legality filter: Hard can still take a calculated risk
  * when a Toxic target is important enough or is the only legal target.
