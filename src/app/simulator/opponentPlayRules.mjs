@@ -56,6 +56,95 @@ function clamp01(value) {
 }
 
 /**
+ * Keep automated deck searches productive. A search card may be allowed by
+ * the tabletop rules to find another copy of itself, but doing so provides no
+ * new option and can make an automated turn cycle through every copy. The
+ * human search UI remains unrestricted; this is only an AI choice policy.
+ *
+ * A scorer is optional. When supplied, higher-scoring cards are preferred and
+ * equal scores retain deck order so seeded games stay deterministic.
+ */
+export function selectProductiveOpponentSearchTargets(
+  candidateIds = [],
+  {
+    sourceCardId = null,
+    amount = 1,
+    isCandidateProductive = () => true,
+    scoreCandidate = null,
+  } = {},
+) {
+  const requestedAmount = Math.max(0, Math.floor(Number(amount) || 0));
+  if (!requestedAmount) return [];
+
+  const candidates = (candidateIds ?? [])
+    .map((cardId, index) => ({ cardId, index }))
+    .filter(({ cardId }) => (
+      Boolean(cardId)
+      && cardId !== sourceCardId
+      && isCandidateProductive(cardId)
+    ));
+
+  if (typeof scoreCandidate === "function") {
+    candidates.sort((left, right) => {
+      const leftScore = Number(scoreCandidate(left.cardId));
+      const rightScore = Number(scoreCandidate(right.cardId));
+      const normalizedLeft = Number.isFinite(leftScore) ? leftScore : -Infinity;
+      const normalizedRight = Number.isFinite(rightScore) ? rightScore : -Infinity;
+      return normalizedRight - normalizedLeft || left.index - right.index;
+    });
+  }
+
+  return candidates.slice(0, requestedAmount).map(({ cardId }) => cardId);
+}
+
+/**
+ * Prices hazards that can waste an attack or remove the attacker. The result
+ * is a penalty, not a legality filter: Hard can still take a calculated risk
+ * when a Toxic target is important enough or is the only legal target.
+ */
+export function getHardOpponentAttackRiskPenalty({
+  targetIsToxic = false,
+  attackerHasToxicProtection = false,
+  attackerSelfDiscardsAfterConsume = false,
+  attackerRetentionValue = 0,
+  consumeSuccessProbability = 1,
+  targetAvoidanceProbability = 0,
+  actionOpportunityValue = 0,
+} = {}) {
+  const avoidanceProbability = clamp01(targetAvoidanceProbability);
+  const successfulConsumeProbability = clamp01(consumeSuccessProbability)
+    * (1 - avoidanceProbability);
+  const retentionValue = toFiniteNonNegative(attackerRetentionValue);
+  const opportunityValue = toFiniteNonNegative(actionOpportunityValue);
+
+  let penalty = avoidanceProbability * opportunityValue;
+  if (attackerSelfDiscardsAfterConsume) {
+    penalty += successfulConsumeProbability * retentionValue;
+  } else if (targetIsToxic && !attackerHasToxicProtection) {
+    // Toxic discards the consuming attacker on one of the two coin faces.
+    penalty += successfulConsumeProbability * 0.5 * retentionValue;
+  }
+  return penalty;
+}
+
+/**
+ * Scores an automatic attack from the attacker's point of view. Enemy losses
+ * are upside, friendly losses are downside, and both are weighted by how
+ * likely the attack is to resolve. Attacker hazards always remain downside.
+ */
+export function scoreAutomatedAttackTargetOutcome({
+  targetValue = 0,
+  targetBelongsToAttacker = false,
+  resolutionProbability = 1,
+  attackerRiskPenalty = 0,
+} = {}) {
+  const signedTargetValue = (targetBelongsToAttacker ? -1 : 1)
+    * toFiniteNonNegative(targetValue)
+    * clamp01(resolutionProbability);
+  return signedTargetValue - toFiniteNonNegative(attackerRiskPenalty);
+}
+
+/**
  * Estimate how urgently the opponent needs to disrupt the visible player
  * engine. This deliberately uses only public board information: VP, RP
  * production, School Density capacity, board size, and the current round.

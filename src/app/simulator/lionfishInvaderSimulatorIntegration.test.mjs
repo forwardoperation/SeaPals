@@ -66,7 +66,9 @@ test("Invader controller branches, source exclusion, fizzle, and owner-zone rout
   assert.match(resolver, /const coinResult = forcedPlan\?\.coinResult \?\? resolveLionfishInvaderCoin\(random\)/);
   assert.match(resolver, /getLionfishInvaderTargetController\(\{/);
   assert.match(resolver, /selectLionfishInvaderTarget\(candidates, \{[\s\S]*sourceInstanceId: invader\.instanceId/);
-  assert.match(resolver, /targetController === invader\.controller \? -1 : 1/);
+  assert.match(resolver, /scoreAutomatedAttackTargetOutcome\(\{/);
+  assert.match(resolver, /targetBelongsToAttacker: targetController === invader\.controller/);
+  assert.match(resolver, /resolutionProbability: targetResolutionProbability/);
   assert.match(resolver, /no other legal Fish[\s\S]*mandatory attack fizzled/);
   assert.match(resolver, /stoppedPrimaryRolls \?\? resolveOpposedRoll\("D4-1", defenseDice, random\)/);
   assert.match(resolver, /const attackerWins = attackTotal > defenseTotal/);

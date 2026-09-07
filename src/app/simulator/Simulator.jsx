@@ -69,12 +69,15 @@ import {
   OpponentThreatLevel,
   canOpponentSpendSupportWithoutBreakingHardPlan,
   filterOpponentAttackersWithLegalTargets,
+  getHardOpponentAttackRiskPenalty,
   getHardOpponentSupportRpReserve,
   getOpponentNormalAttackLimit,
   getOpponentThreatProfile,
   preferOpponentPlaysWithResolvableOnPlayAttacks,
+  scoreAutomatedAttackTargetOutcome,
   scoreHardOpponentPermanentPlay,
   selectHardOpponentAttackPlan,
+  selectProductiveOpponentSearchTargets,
   shouldOpponentAttackBeforeUtility,
 } from "./opponentPlayRules.mjs";
 import {
@@ -1224,10 +1227,53 @@ function resolveHostTurnLionfishInvaders({
           sourceInstanceId: invader.instanceId,
           scoreTarget: (candidate) => {
             const defenseDice = candidate.card?.defense?.dice ?? candidate.card?.defense ?? "";
-            const targetValue = Number(candidate.card?.victoryPoints ?? 0) * 100
+            const defenseMatch = String(defenseDice).match(/D(\d+)(?:\s*([+-])\s*(\d+))?/i);
+            const defenseSides = Number(defenseMatch?.[1] ?? 0);
+            const defenseModifier = defenseMatch?.[2]
+              ? Number(`${defenseMatch[2]}${defenseMatch[3]}`)
+              : 0;
+            const expectedDefense = Math.max(0, (defenseSides + 1) / 2 + defenseModifier);
+            const expectedLionfishAttack = 1.5;
+            const consumeSuccessProbability = Math.min(
+              0.95,
+              Math.max(0.05, 0.42 + (expectedLionfishAttack - expectedDefense) * 0.1),
+            );
+            const lionfishCard = cardsById.lionfish;
+            const targetAvoidanceProbability = getTargetAvoidance(candidate.card) ? 0.5 : 0;
+            const isCreatureSchoolTarget = isCreatureSchool(candidate.card);
+            const targetResolutionProbability = isCreatureSchoolTarget
+              ? 1
+              : consumeSuccessProbability * (1 - targetAvoidanceProbability);
+            const targetValue = 20 + Number(
+              candidate.card?.victoryPoints?.value
+                ?? candidate.card?.victoryPoints
+                ?? candidate.card?.vp
+                ?? 0,
+            ) * 100
               + Number(candidate.card?.cost?.rp ?? 0) * 10
-              + Number(String(defenseDice).match(/D(\d+)/i)?.[1] ?? 0);
-            return (targetController === invader.controller ? -1 : 1) * targetValue;
+              + Number(candidate.card?.actions?.length ?? 0) * 10;
+            const attackRiskPenalty = getHardOpponentAttackRiskPenalty({
+              targetIsToxic: isToxicWhenConsumed(candidate.card),
+              attackerHasToxicProtection: Boolean(
+                states[invader.controller].poisonImmunityNextPredatorAttack
+                  || hasExplicitToxicImmunity(lionfishCard, candidate.card),
+              ),
+              attackerSelfDiscardsAfterConsume: shouldSelfDiscardAfterConsume({
+                attackerCard: lionfishCard,
+                defenderCard: candidate.card,
+                consumed: true,
+              }),
+              attackerRetentionValue: 80 + Number(lionfishCard?.cost?.rp ?? 0) * 6,
+              consumeSuccessProbability: isCreatureSchoolTarget ? 0 : consumeSuccessProbability,
+              targetAvoidanceProbability,
+              actionOpportunityValue: 0,
+            });
+            return scoreAutomatedAttackTargetOutcome({
+              targetValue,
+              targetBelongsToAttacker: targetController === invader.controller,
+              resolutionProbability: targetResolutionProbability,
+              attackerRiskPenalty: attackRiskPenalty,
+            });
           },
         });
     const plan = {
@@ -13109,6 +13155,76 @@ export default function Simulator({
         if (card.id === "spearfishing") return 25;
         return 45;
       };
+      const hasCurrentSpearfishingTarget = () => (
+        (next.reefCreatures ?? []).some((candidateId) => (
+          [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[candidateId]?.category)
+        ))
+        || (next.orphanCreatures ?? []).some((entry) => (
+          cardCanBeSpearfished(cardsById[entry.cardId], entry, "opponent")
+        ))
+        || next.corals.some((coral) => coral.slots.some((slot) => (
+          cardCanBeSpearfished(cardsById[slot.cardId], slot, "opponent")
+        )))
+      );
+      const supportIsImmediatelyUseful = (candidate, sourceCardId = null) => {
+        if (candidate?.kind !== CardKind.SUPPORT) return true;
+        if (candidate.id === "coral-cement") {
+          return next.corals.some((coral) => (
+            cardsById[coral.cardId]?.kind === CardKind.CORAL
+            && coral.health < coral.maxHealth
+          ));
+        }
+        if (candidate.id === "coral-heal") {
+          return next.corals.some((coral) => (
+            cardsById[coral.cardId]?.kind === CardKind.CORAL
+            && (coral.statuses?.length || Number(coral.rpPenaltyNextTurn ?? 0) > 0)
+          ));
+        }
+        if (candidate.id === "recovery") {
+          return next.discardPile.some((cardId) => cardId !== sourceCardId);
+        }
+        if (candidate.id === "ocean-jake") return (next.lostZone ?? []).length > 0;
+        if (candidate.id === "restocking") {
+          return next.discardPile.some((cardId) => cardsById[cardId]?.category === CardCategory.FISH);
+        }
+        if (candidate.id === "spearfishing") return hasCurrentSpearfishingTarget();
+        if (["whirlpool", "super-whirlpool"].includes(candidate.id)) return playerCoralCards.length > 0;
+        if (candidate.id === "poison-heal") return !next.poisonImmunityNextPredatorAttack;
+        return true;
+      };
+      const scoreSearchCandidate = (cardId) => {
+        const candidate = cardsById[cardId];
+        if (!candidate) return -Infinity;
+        if (candidate.kind === CardKind.SUPPORT) {
+          return scoreSupport(cardId) - (supportIsImmediatelyUseful(candidate) ? 0 : 80);
+        }
+        const printedVp = Number(
+          candidate.victoryPoints?.value
+            ?? candidate.victoryPoints
+            ?? candidate.vp
+            ?? 0,
+        );
+        return printedVp * 15
+          + getCardStartTurnRp(candidate) * 10
+          + Number(candidate.actions?.length ?? 0) * 5
+          - Number(candidate.cost?.rp ?? 0);
+      };
+      const getProductiveSearchTargets = (sourceCard, searchEffect) => {
+        if (!sourceCard || !searchEffect) return [];
+        const matchingCards = [...next.palsDeck, ...next.foundationDeck]
+          .filter((candidateId) => cardMatchesSearchCriteria(cardsById[candidateId], searchEffect));
+        return selectProductiveOpponentSearchTargets(matchingCards, {
+          sourceCardId: sourceCard.id,
+          amount: Math.max(1, Number(searchEffect.amount) || 1),
+          isCandidateProductive: opponentDifficulty === OpponentDifficulty.HARD
+            ? (candidateId) => supportIsImmediatelyUseful(cardsById[candidateId], sourceCard.id)
+              || cardsById[candidateId]?.id !== "recovery"
+            : undefined,
+          scoreCandidate: opponentDifficulty === OpponentDifficulty.HARD
+            ? scoreSearchCandidate
+            : null,
+        });
+      };
       for (const cardId of orderOpponentChoices(next.hand, opponentDifficulty, scoreSupport)) {
         const card = cardsById[cardId];
         if (card?.kind !== CardKind.SUPPORT || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition)) continue;
@@ -13125,19 +13241,16 @@ export default function Simulator({
         const searchEffect = effects.find((effect) => effect.type === EffectType.SEARCH_DECK);
         const chooseTopEffect = effects.find((effect) => effect.type === "chooseFromTopDeck");
         const reorderEffect = effects.find((effect) => effect.type === "peekAndReorderDeck");
-        const hasSearchTarget = searchEffect && [...next.palsDeck, ...next.foundationDeck].some((candidateId) => cardMatchesSearchCriteria(cardsById[candidateId], searchEffect));
-        const hasSpearfishingTarget = card.id === "spearfishing" && (
-          (next.reefCreatures ?? []).some((candidateId) => [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[candidateId]?.category))
-          || (next.orphanCreatures ?? []).some((entry) => cardCanBeSpearfished(cardsById[entry.cardId], entry, "opponent"))
-          || next.corals.some((coral) => coral.slots.some((slot) => cardCanBeSpearfished(cardsById[slot.cardId], slot, "opponent")))
-        );
+        const searchCandidates = getProductiveSearchTargets(card, searchEffect);
+        const hasSearchTarget = searchCandidates.length > 0;
+        const hasSpearfishingTarget = card.id === "spearfishing" && hasCurrentSpearfishingTarget();
         const canUseScientistJesDraw = card.id === "scientist-jes" && Boolean(next.palsDeck.length || next.foundationDeck.length);
         const hasTopDeckCards = Boolean(next.palsDeck.length || next.foundationDeck.length);
         const usable = hasSearchTarget || (chooseTopEffect && hasTopDeckCards) || (reorderEffect && hasTopDeckCards) || canUseScientistJesDraw || (card.id === "dr-evans" && next.hand.length <= 3) || (card.id === "coral-cement" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && coral.health < coral.maxHealth)) || (card.id === "coral-heal" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && (coral.statuses?.length || Number(coral.rpPenaltyNextTurn ?? 0) > 0))) || (card.id === "recovery" && next.discardPile.length) || (card.id === "ocean-jake" && (next.lostZone ?? []).length) || (card.id === "restocking" && next.discardPile.some((candidateId) => cardsById[candidateId]?.category === CardCategory.FISH)) || card.id === "poison-heal" || card.id === "rov-lights" || hasSpearfishingTarget || (["whirlpool", "super-whirlpool"].includes(card.id) && playerCoralCards.length);
-        if (usable) { chosen = { card, cost, effects, searchEffect, chooseTopEffect, reorderEffect }; break; }
+        if (usable) { chosen = { card, cost, effects, searchEffect, searchCandidates, chooseTopEffect, reorderEffect }; break; }
       }
       if (!chosen) break;
-      const { card, cost, effects, searchEffect, chooseTopEffect, reorderEffect } = chosen;
+      const { card, cost, effects, searchEffect, searchCandidates, chooseTopEffect, reorderEffect } = chosen;
       next = {
         ...next,
         hand: removeOneCard(next.hand, card.id),
@@ -13150,9 +13263,9 @@ export default function Simulator({
       const scientistJesChoosesSearch = card.id === "scientist-jes"
         && !next.habitats.length
         && !next.hand.some((cardId) => cardsById[cardId]?.kind === CardKind.HABITAT)
-        && Boolean(searchEffect && [...next.palsDeck, ...next.foundationDeck].some((candidateId) => cardMatchesSearchCriteria(cardsById[candidateId], searchEffect)));
+        && searchCandidates.length > 0;
       if (searchEffect && (card.id !== "scientist-jes" || scientistJesChoosesSearch)) {
-        const candidates = [...next.palsDeck, ...next.foundationDeck].filter((candidateId) => cardMatchesSearchCriteria(cardsById[candidateId], searchEffect)).slice(0, Math.max(1, Number(searchEffect.amount ?? 1)));
+        const candidates = searchCandidates;
         next = { ...next, palsDeck: shuffle(candidates.reduce((deck, cardId) => removeOneCard(deck, cardId), next.palsDeck), nextGameplayRandom), foundationDeck: shuffle(candidates.reduce((deck, cardId) => removeOneCard(deck, cardId), next.foundationDeck), nextGameplayRandom), hand: [...next.hand, ...candidates] };
         details.push(`found ${candidates.map((cardId) => cardsById[cardId]?.name).join(" and ")}`);
         if (searchEffect.revealToOpponent || /show (?:it|them) to your opponent/i.test(card.text ?? "")) revealedCardIds = candidates;
@@ -14775,17 +14888,57 @@ export default function Simulator({
       const expectedAttackTotal = Math.max(0, expectedAttackRoll + attackModifier + flashingAlarmBonus);
       const repeats = candidateAttacker ? getExpectedRepeatCount(candidateAttacker) : 1;
       let matchupValue = 0;
+      let expectedDefense = 0;
       if (entry.school) {
         const remainingHealth = Math.max(1, Number(entry.coral?.health ?? entry.coral?.maxHealth ?? entry.card?.health ?? 1));
         const expectedDamage = expectedAttackTotal * 10;
         const damageProgress = Math.min(1, expectedDamage / remainingHealth);
         matchupValue = damageProgress * 90 + (expectedDamage >= remainingHealth ? 150 : 0);
       } else {
-        const expectedDefense = getExpectedDieValue(entry.card?.defense?.dice ?? entry.card?.defense, {
+        expectedDefense = getExpectedDieValue(entry.card?.defense?.dice ?? entry.card?.defense, {
           advantage: hasDefenseAdvantage({ targetCard: entry.card, statuses: [] }),
         });
         matchupValue = (expectedAttackTotal - expectedDefense) * 9;
       }
+      const targetAvoidanceProbability = getTargetAvoidance(entry.card) ? 0.5 : 0;
+      const singleAttackWinProbability = entry.school
+        ? 0
+        : Math.min(0.95, Math.max(0.05, 0.42 + (expectedAttackTotal - expectedDefense) * 0.1));
+      const consumeSuccessProbability = singleAttackWinProbability;
+      const attackerPrintedVp = Number(
+        candidateAttacker?.card?.victoryPoints?.value
+          ?? candidateAttacker?.card?.victoryPoints
+          ?? candidateAttacker?.card?.vp
+          ?? 0,
+      );
+      const attackerRetentionValue = candidateAttacker
+        ? 24
+          + Number(candidateAttacker.card?.cost?.rp ?? 0) * 6
+          + attackerPrintedVp * 12
+          + Number(candidateAttacker.card?.actions?.length ?? 0) * 5
+          + Math.max(0, scoreAttacker(candidateAttacker)) * 2
+        : 0;
+      const attackRiskPenalty = candidateAttacker && !entry.school
+        ? getHardOpponentAttackRiskPenalty({
+            targetIsToxic: isToxicWhenConsumed(entry.card),
+            attackerHasToxicProtection: Boolean(
+              opponentState.poisonImmunityNextPredatorAttack
+                || hasExplicitToxicImmunity(candidateAttacker.card, entry.card),
+            ),
+            attackerSelfDiscardsAfterConsume: shouldSelfDiscardAfterConsume({
+              attackerCard: candidateAttacker.card,
+              defenderCard: entry.card,
+              consumed: true,
+            }),
+            attackerRetentionValue,
+            consumeSuccessProbability,
+            targetAvoidanceProbability,
+            actionOpportunityValue: Math.max(
+              10,
+              Number(candidateAttacker.attack?.actionCost ?? 0) * 8 + expectedAttackTotal * 3,
+            ),
+          })
+        : 0;
       return printedVp * 15
         + income * 10
         + Number(entry.card?.cost?.rp ?? 0) * 2
@@ -14794,7 +14947,8 @@ export default function Simulator({
         + damagedSchoolValue
         + engineDisruption
         + matchupValue
-        + Math.max(0, repeats - 1) * 18;
+        + Math.max(0, repeats - 1) * 18
+        - attackRiskPenalty;
     };
     const hardAttackPlan = opponentDifficulty === OpponentDifficulty.HARD && !onPlayAttack
       ? selectHardOpponentAttackPlan(selectableAttackers, collectAvailableTargets, {
