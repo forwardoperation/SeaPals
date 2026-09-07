@@ -20559,6 +20559,9 @@ export default function Simulator({
         .seapals-event-card.seapals-compact-search-event,
         .seapals-compact-search-modal {
           display: flex;
+          width: 100%;
+          min-width: 0;
+          max-width: min(48rem, 100%);
           height: min(34rem, calc(100dvh - 1.5rem));
           max-height: calc(100dvh - 1.5rem);
           overflow: hidden;
@@ -20569,6 +20572,9 @@ export default function Simulator({
         .seapals-compact-search-content,
         .seapals-compact-search-body {
           display: flex;
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
           min-height: 0;
           flex: 1 1 auto;
           flex-direction: column;
@@ -20590,18 +20596,41 @@ export default function Simulator({
           white-space: nowrap;
         }
         .seapals-compact-search-facts,
-        .seapals-compact-search-toolbar,
-        .seapals-compact-search-footer {
+        .seapals-compact-search-toolbar {
           flex: 0 0 auto;
         }
+        .seapals-compact-search-toolbar {
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+        }
+        .seapals-compact-search-footer {
+          display: flex;
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          flex: 0 0 auto;
+          flex-wrap: wrap;
+        }
+        .seapals-compact-search-footer > [data-compact-search-control] {
+          min-width: 0;
+          max-width: 100%;
+          overflow-wrap: anywhere;
+          white-space: normal;
+        }
         .seapals-compact-search-rail {
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
           min-height: 0;
           flex: 1 1 auto;
+          -webkit-overflow-scrolling: touch;
           scrollbar-width: thin;
           scrollbar-color: rgba(103, 232, 249, .7) rgba(15, 23, 42, .55);
         }
         .seapals-compact-search-choice {
           min-height: 0;
+          max-width: calc(100% - .75rem);
           max-height: 22rem;
         }
         .seapals-compact-search-choice-image {

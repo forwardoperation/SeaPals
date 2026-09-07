@@ -165,6 +165,72 @@ test("the choice rail is horizontal-only, touch friendly, and keeps a 44px short
   assert.match(shortViewportCss, /\.seapals-compact-search-content > \.seapals-compact-search-body/);
 });
 
+test("narrow compact searches contain the horizontal rail and keep footer actions on screen", () => {
+  const compactCss = sourceBetween(
+    simulatorSource,
+    "        .seapals-event-card.seapals-compact-search-event,",
+    "        .seapals-hand-card-popover-layer",
+  );
+  const layoutRule = sourceBetween(
+    compactCss,
+    "        .seapals-compact-search-layout,",
+    "        .seapals-compact-search-context",
+  );
+  const railRule = sourceBetween(
+    compactCss,
+    "        .seapals-compact-search-rail {",
+    "        .seapals-compact-search-choice {",
+  );
+  const choiceRule = sourceBetween(
+    compactCss,
+    "        .seapals-compact-search-choice {",
+    "        .seapals-compact-search-choice-image",
+  );
+
+  assert.match(
+    layoutRule,
+    /min-width:\s*0;/,
+    "search layout, content, and body must be allowed to shrink below the rail's min-content width",
+  );
+  assert.match(
+    layoutRule,
+    /width:\s*100%;/,
+    "search layout, content, and body should be bounded to the dialog width",
+  );
+  assert.match(railRule, /min-width:\s*0;/, "the rail should shrink with its dialog");
+  assert.match(railRule, /width:\s*100%;/, "the rail viewport should match the available dialog width");
+  assert.match(railRule, /max-width:\s*100%;/, "cards must not widen the rail viewport");
+  assert.match(
+    choiceRule,
+    /max-width:\s*(?:min\([^;]+\)|calc\([^;]+\)|100%);/,
+    "an individual card should remain narrower than the available narrow-screen viewport",
+  );
+
+  const rail = sourceBetween(
+    simulatorSource,
+    "function CompactSearchRail({",
+    "function isFoundationCard",
+  );
+  assert.match(rail, /overflow-x-auto overflow-y-hidden/);
+  assert.match(rail, /overscroll-x-contain/);
+  assert.match(rail, /touch-pan-x/);
+
+  const footerRule = compactCss.match(/\.seapals-compact-search-footer\s*\{([^}]*)\}/);
+  assert.ok(footerRule, "compact search should define a shared footer containment rule");
+  assert.match(footerRule[1], /min-width:\s*0;/, "the footer must shrink with the dialog");
+  assert.match(footerRule[1], /width:\s*100%;/, "the footer should stay within the dialog width");
+  assert.match(footerRule[1], /max-width:\s*100%;/, "the footer must not extend past the viewport");
+  assert.match(footerRule[1], /flex-wrap:\s*wrap;/, "multiple footer actions should wrap on narrow screens");
+
+  const footerControlRule = compactCss.match(
+    /\.seapals-compact-search-footer\s+(?:>\s+)?(?:button|\[data-compact-search-control\])\s*\{([^}]*)\}/,
+  );
+  assert.ok(footerControlRule, "footer controls should have an explicit narrow-screen containment rule");
+  assert.match(footerControlRule[1], /min-width:\s*0;/);
+  assert.match(footerControlRule[1], /max-width:\s*100%;/);
+  assert.match(footerControlRule[1], /white-space:\s*normal;/, "long labels such as Cancel Action should wrap instead of clipping");
+});
+
 test("every compact search keeps inspection separate from choosing or resolving", () => {
   const branchSpecs = [
     ["choose-onplay-multi-search", "choose-school-momentum", /onChoose=\{\(\) => toggleOnPlaySearchCard\(cardId\)\}/],
