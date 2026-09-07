@@ -2423,6 +2423,100 @@ function getCardClassLabel(card) {
   return classLabel;
 }
 
+function formatSearchTargetWords(value) {
+  return String(value ?? "")
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function pluralizeSearchTarget(label) {
+  if (label.endsWith("Fish")) return label;
+  if (label.endsWith("Support")) return `${label} cards`;
+  if (label.endsWith("School")) return `${label}s`;
+  if (label.endsWith("Predator")) return `${label}s`;
+  if (label.endsWith("Feeder")) return `${label}s`;
+  if (label.endsWith("y")) return `${label.slice(0, -1)}ies`;
+  return `${label}s`;
+}
+
+function getSearchTargetNouns(cardIds = [], effect = null) {
+  const candidateCards = [...new Set(cardIds)].map((cardId) => cardsById[cardId]).filter(Boolean);
+  const useCandidateInference = !effect;
+  const targetCard = effect?.targetCardId ? cardsById[effect.targetCardId] : null;
+  if (targetCard) return { singular: targetCard.name, plural: `${targetCard.name} cards` };
+  if (effect?.targetNameIncludes) {
+    const label = formatSearchTargetWords(effect.targetNameIncludes);
+    return { singular: `${label} card`, plural: `${label} cards` };
+  }
+
+  const targetStages = effect?.requiredStage !== undefined
+    ? [Number(effect.requiredStage)]
+    : (effect?.targetStages ?? []).map(Number);
+  const stagePrefix = targetStages.length === 1 && Number.isFinite(targetStages[0])
+    ? targetStages[0] > 0 ? `Stage ${targetStages[0]}` : "Base"
+    : "";
+  const targetTags = effect?.targetTags ?? [];
+  const allSchools = targetTags.includes("creature-school")
+    || (useCandidateInference && candidateCards.length > 0 && candidateCards.every(isCreatureSchool));
+  if (allSchools) {
+    const singular = [stagePrefix, "Creature School"].filter(Boolean).join(" ");
+    return { singular, plural: `${singular}s` };
+  }
+  if (targetTags.length) {
+    const label = [stagePrefix, targetTags.map(formatSearchTargetWords).join(" + ")].filter(Boolean).join(" ");
+    return { singular: `${label} card`, plural: `${label} cards` };
+  }
+
+  const effectCategories = effect?.targetCategories ?? [];
+  const inferredCategories = [...new Set(candidateCards.map((card) => card.category).filter(Boolean))];
+  const categories = useCandidateInference ? inferredCategories : effectCategories;
+  const effectKind = effect?.targetKind;
+  const inferredKinds = [...new Set(candidateCards.map((card) => card.kind).filter(Boolean))];
+  const targetKind = useCandidateInference
+    ? (inferredKinds.length === 1 ? inferredKinds[0] : null)
+    : effectKind;
+  const zone = useCandidateInference
+    ? ([...new Set(candidateCards.map((card) => card.zone).filter(Boolean))].length === 1
+      ? candidateCards[0]?.zone
+      : null)
+    : effect?.targetZone;
+  const zoneLabel = zone === CreatureZone.OCEAN ? "Oceanic" : zone === CreatureZone.DEEP ? "Deep" : zone === CreatureZone.REEF ? "Reef" : "";
+
+  const categoryLabel = (category) => {
+    if (category === CardCategory.APEX) return "Apex Predator";
+    return formatSearchTargetWords(category);
+  };
+  const excludedTags = effect?.excludeTags ?? [];
+  const exclusionPrefix = excludedTags.length
+    ? `non-${excludedTags.map(formatSearchTargetWords).join("/non-")}`
+    : "";
+  if (targetKind === CardKind.CREATURE && categories.length) {
+    const singular = [stagePrefix, exclusionPrefix, categories.map(categoryLabel).join(" or ")].filter(Boolean).join(" ");
+    const plural = [stagePrefix, exclusionPrefix, categories.map((category) => pluralizeSearchTarget(categoryLabel(category))).join(" or ")].filter(Boolean).join(" ");
+    return {
+      singular: [zoneLabel, singular].filter(Boolean).join(" "),
+      plural: [zoneLabel, plural].filter(Boolean).join(" "),
+    };
+  }
+
+  const baseLabel = targetKind === CardKind.CREATURE
+    ? "Creature"
+    : targetKind === CardKind.CORAL
+    ? "Coral"
+    : targetKind === CardKind.HABITAT
+    ? "Habitat"
+    : targetKind === CardKind.SUPPORT
+    ? "Support card"
+    : "matching card";
+  if (baseLabel === "matching card") return { singular: baseLabel, plural: "matching cards" };
+  const singular = [stagePrefix, exclusionPrefix, targetKind === CardKind.CREATURE || targetKind === CardKind.CORAL || targetKind === CardKind.HABITAT ? zoneLabel : "", baseLabel]
+    .filter(Boolean)
+    .join(" ");
+  return { singular, plural: pluralizeSearchTarget(singular) };
+}
+
 function DeckSearchChoice({
   card,
   onInspect,
@@ -2434,11 +2528,57 @@ function DeckSearchChoice({
   tutorialTarget,
   tutorialSearchCardId,
   className = "",
+  compact = false,
+  autoFocus = false,
 }) {
   if (!card) return null;
   const selectionState = chosen === true
     ? "border-emerald-400 bg-emerald-400/20"
     : "border-cyan-300/25 bg-white/5";
+
+  if (compact) {
+    return (
+      <article
+        data-search-choice-card
+        role="listitem"
+        data-tutorial-search-card-id={tutorialSearchCardId}
+        data-tutorial-target={tutorialTarget}
+        className={`seapals-compact-search-choice flex h-full w-[9.5rem] shrink-0 snap-start flex-col rounded-2xl border p-2 transition sm:w-[10.5rem] ${selectionState} ${className}`}
+      >
+        <button
+          type="button"
+          data-compact-search-control
+          aria-haspopup="dialog"
+          aria-label={`Inspect ${card.name} details`}
+          onClick={(event) => onInspect(card.id, event)}
+          className="group flex min-h-0 flex-1 flex-col rounded-xl text-left outline-none transition hover:bg-cyan-300/10 focus-visible:ring-2 focus-visible:ring-cyan-300"
+        >
+          <img src={card.image} alt="" className="seapals-compact-search-choice-image min-h-0 w-full rounded-lg bg-white object-contain" />
+          <span className="min-w-0 px-1 pb-1 pt-2">
+            <strong className="seapals-compact-search-choice-name block text-sm leading-tight text-white">{card.name}</strong>
+            {meta ? <span className="seapals-compact-search-choice-meta mt-1 block text-[11px] leading-tight text-cyan-100/70">{meta}</span> : null}
+            <span className="seapals-compact-search-details mt-1 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-cyan-300 group-hover:text-cyan-200" aria-hidden="true">
+              <span className="grid size-4 place-items-center rounded-full border border-current text-[9px]">i</span>
+              <span className="seapals-compact-search-details-label">Details</span>
+            </span>
+            <span className="sr-only">Open full card details</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          data-compact-search-control
+          autoFocus={autoFocus}
+          disabled={chooseDisabled}
+          aria-pressed={typeof chosen === "boolean" ? chosen : undefined}
+          aria-label={`${chooseLabel} ${card.name}`}
+          onClick={onChoose}
+          className={`mt-2 min-h-11 w-full shrink-0 rounded-xl px-3 py-2 text-xs font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${chosen ? "bg-emerald-600 hover:bg-emerald-500" : "bg-cyan-600 hover:bg-cyan-500"}`}
+        >
+          {chooseLabel}
+        </button>
+      </article>
+    );
+  }
 
   return (
     <div
@@ -2472,6 +2612,127 @@ function DeckSearchChoice({
       </button>
     </div>
   );
+}
+
+function CompactSearchToolbar({ count, onScroll, railRef }) {
+  const [edges, setEdges] = useState({ start: true, end: count <= 1 });
+
+  useEffect(() => {
+    const rail = railRef?.current;
+    if (!rail) {
+      setEdges({ start: true, end: count <= 1 });
+      return undefined;
+    }
+    const updateEdges = () => {
+      const maximum = Math.max(0, rail.scrollWidth - rail.clientWidth);
+      setEdges({
+        start: rail.scrollLeft <= 2,
+        end: rail.scrollLeft >= maximum - 2,
+      });
+    };
+    updateEdges();
+    rail.addEventListener("scroll", updateEdges, { passive: true });
+    window.addEventListener("resize", updateEdges);
+    return () => {
+      rail.removeEventListener("scroll", updateEdges);
+      window.removeEventListener("resize", updateEdges);
+    };
+  }, [count, railRef]);
+
+  return (
+    <div className="seapals-compact-search-toolbar mt-2 flex items-center justify-between gap-3">
+      <strong className="text-[11px] uppercase tracking-[0.16em] text-cyan-200">
+        {count} {count === 1 ? "choice" : "choices"}
+      </strong>
+      {count > 1 ? (
+        <div className="flex items-center gap-1.5">
+          <span className="mr-1 hidden text-[11px] text-slate-400 sm:inline">More choices</span>
+          <button
+            type="button"
+            data-compact-search-control
+            aria-label="Show previous search choices"
+            disabled={edges.start}
+            onClick={() => onScroll(-1)}
+            className="grid size-11 place-items-center rounded-full border border-cyan-300/35 bg-cyan-400/10 text-lg font-black leading-none text-cyan-100 transition hover:bg-cyan-300/20 disabled:cursor-default disabled:opacity-30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            data-compact-search-control
+            aria-label="Show next search choices"
+            disabled={edges.end}
+            onClick={() => onScroll(1)}
+            className="grid size-11 place-items-center rounded-full border border-cyan-300/35 bg-cyan-400/10 text-lg font-black leading-none text-cyan-100 transition hover:bg-cyan-300/20 disabled:cursor-default disabled:opacity-30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+          >
+            →
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function CompactSearchRail({ railRef, label, children }) {
+  return (
+    <div
+      ref={railRef}
+      data-compact-search-rail
+      role="list"
+      aria-label={label}
+      tabIndex={0}
+      onKeyDown={(keyboardEvent) => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(keyboardEvent.key)) return;
+        const choices = [...keyboardEvent.currentTarget.querySelectorAll("[data-search-choice-card]")];
+        if (!choices.length) return;
+        const activeChoice = document.activeElement?.closest?.("[data-search-choice-card]");
+        const activeIndex = Math.max(0, choices.indexOf(activeChoice));
+        const nextIndex = keyboardEvent.key === "Home"
+          ? 0
+          : keyboardEvent.key === "End"
+          ? choices.length - 1
+          : Math.min(choices.length - 1, Math.max(0, activeIndex + (keyboardEvent.key === "ArrowRight" ? 1 : -1)));
+        const controls = choices[nextIndex].querySelectorAll("[data-compact-search-control]:not(:disabled)");
+        const target = controls[controls.length - 1] ?? choices[nextIndex];
+        keyboardEvent.preventDefault();
+        target.focus();
+        choices[nextIndex].scrollIntoView({ block: "nearest", inline: "nearest" });
+      }}
+      className="seapals-compact-search-rail mt-1.5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-2 pr-8 touch-pan-x focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+    >
+      {children}
+    </div>
+  );
+}
+
+function CompactSearchEmpty({ detail, actionLabel, onAction }) {
+  return (
+    <div className="seapals-compact-search-empty my-auto rounded-2xl border border-dashed border-cyan-300/25 bg-white/5 p-4 text-center" role="status">
+      <strong className="block text-base text-white">No eligible cards remain</strong>
+      <span className="mt-1 block text-sm text-cyan-100/65">{detail}</span>
+      {actionLabel && onAction ? (
+        <button
+          type="button"
+          data-compact-search-control
+          autoFocus
+          onClick={onAction}
+          className="mt-3 min-h-11 w-full rounded-xl bg-cyan-600 px-4 py-2 text-sm font-black text-white hover:bg-cyan-500"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function getCompactDialogFocusableControls(container) {
+  if (!container) return [];
+  return [...container.querySelectorAll(
+    'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+  )].filter((element) => (
+    element.getClientRects().length > 0
+    && !element.closest('[hidden], [aria-hidden="true"], [inert]')
+  ));
 }
 
 function isFoundationCard(card) {
@@ -3863,6 +4124,7 @@ export default function Simulator({
   const [modal, setModal] = useState(null);
   const modalScrollRef = useRef(null);
   const compactDrawRailRef = useRef(null);
+  const compactSearchRailRef = useRef(null);
   const [selectedHandCard, setSelectedHandCard] = useState(null);
   const [mobileSelectedHandIndex, setMobileSelectedHandIndex] = useState(null);
   const [handPopoverCardId, setHandPopoverCardId] = useState(null);
@@ -8733,7 +8995,7 @@ export default function Simulator({
     }
     const amount = Math.max(1, Number(search.effect.amount ?? 1));
     if (amount > 1) {
-      setSearchContext({ mode: "onplay-multi-search", sourceCardId: card.id, actionName: search.actionName, candidates, selected: [], max: amount });
+      setSearchContext({ mode: "onplay-multi-search", sourceCardId: card.id, actionName: search.actionName, effect: search.effect, candidates, selected: [], max: amount });
       setEventOverlay({ type: "choose-onplay-multi-search", sourceCardId: card.id, title: `Player's ${card.name} used ${search.actionName}`, message: `Choose up to ${amount} matching cards to reveal and add to your hand.` });
       return true;
     }
@@ -10280,6 +10542,16 @@ export default function Simulator({
     });
   }
 
+  function scrollCompactSearchRail(direction) {
+    const rail = compactSearchRailRef.current;
+    if (!rail) return;
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    rail.scrollBy({
+      left: direction * Math.max(160, rail.clientWidth * 0.72),
+      behavior: accessibilityReducedMotion || systemReducedMotion ? "auto" : "smooth",
+    });
+  }
+
   function drawNextCondition() {
     const availableConditionIds = conditionCards.map((card) => card.id).filter((conditionId) => !persistentConditionIds.includes(conditionId));
     const source = conditionDeck.length ? conditionDeck : shuffle(availableConditionIds, nextGameplayRandom);
@@ -11495,7 +11767,7 @@ export default function Simulator({
         if (searchEffect.targetTags?.some((tag) => !candidate.tags?.includes(tag))) return false;
         return !searchEffect.excludeTags?.some((tag) => candidate.tags?.includes(tag));
       }))];
-      setSearchContext({ mode: "deck", supportCardId: card.id, candidates, maxSelect: Math.max(1, Number(searchEffect?.amount ?? 1)), selected: [] });
+      setSearchContext({ mode: "deck", supportCardId: card.id, effect: searchEffect, candidates, maxSelect: Math.max(1, Number(searchEffect?.amount ?? 1)), selected: [] });
       setModal("search");
       setSelectedHandCard(null);
       setPlayError("");
@@ -11582,7 +11854,7 @@ export default function Simulator({
         setEventOverlay({ type: "choose-scientist-jes", sourceCardId: supportCard.id, title: "Scientist Jes", message: "There is no Habitat left to search for. Choose Draw Two or cancel without spending the card." });
         return;
       }
-      setSearchContext({ mode: "deck", supportCardId: supportCard.id, candidates, maxSelect: 1, selected: [], scientistJesChoice: "search" });
+      setSearchContext({ mode: "deck", supportCardId: supportCard.id, effect: searchEffect, candidates, maxSelect: 1, selected: [], scientistJesChoice: "search" });
       setModal("search");
       setEventOverlay(null);
       return;
@@ -11690,6 +11962,21 @@ export default function Simulator({
     const message = `${supportCard.name} targeted ${cardsById[target.cardId]?.name}. It will produce ${amount} less RP during the opponent's next collection.`;
     pushLog(message);
     setEventOverlay({ type: "impact-result", sourceCardId: supportCard.id, defenderCardId: target.cardId, title: `Player used ${supportCard.name}`, message, success: true });
+  }
+
+  function completeEmptySchoolMomentumSearch() {
+    if (eventOverlay?.type !== "choose-school-momentum") return;
+    const sourceCard = cardsById[searchContext?.sourceCardId ?? eventOverlay.sourceCardId];
+    const message = `${sourceCard?.name ?? "Momentum"} found no Creature School remaining in your personal decks.`;
+    setSearchContext(null);
+    pushLog(message);
+    setEventOverlay({
+      type: "utility-result",
+      sourceCardId: sourceCard?.id,
+      title: `${sourceCard?.name ?? "Momentum"} search complete`,
+      message,
+      success: false,
+    });
   }
 
   function completeSchoolMomentum(cardId) {
@@ -12669,7 +12956,7 @@ export default function Simulator({
     );
     if (actionIsOncePerTurn(pendingCreatureAction.action)) setUsedCreatureActions((current) => [...current, pendingCreatureAction.actionKey]);
     const candidates = [...new Set([...foundationDeck, ...palsDeck])];
-    setPendingCreatureAction((current) => ({ ...current, discardedCards: selectedCards, searchCandidates: candidates }));
+    setPendingCreatureAction((current) => ({ ...current, discardedCards: selectedCards, searchCandidates: candidates, committed: true }));
     setEventOverlay({ type: "choose-action-search-card", sourceCardId: pendingCreatureAction.sourceCardId, title: `Player's ${cardsById[pendingCreatureAction.sourceCardId]?.name} used ${pendingCreatureAction.action.name}`, message: "Choose any card from either personal deck. The discarded cards and RP cost are now committed." });
   }
 
@@ -12687,6 +12974,22 @@ export default function Simulator({
     pushLog(message);
     setPendingCreatureAction(null);
     setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: cardId, title: `Player's ${sourceCard.name} completed Scavenge`, message, success: true });
+  }
+
+  function completeEmptyCommittedActionSearch() {
+    if (eventOverlay?.type !== "choose-action-search-card") return;
+    const sourceCard = cardsById[pendingCreatureAction?.sourceCardId ?? eventOverlay.sourceCardId];
+    const actionName = pendingCreatureAction?.actionName ?? getActionName(pendingCreatureAction?.action) ?? "Search";
+    const message = `${sourceCard?.name ?? "This card"}'s ${actionName} found no card remaining to add. Its committed cost and discarded cards remain spent.`;
+    setPendingCreatureAction(null);
+    pushLog(message);
+    setEventOverlay({
+      type: "utility-result",
+      sourceCardId: sourceCard?.id,
+      title: `${actionName} complete`,
+      message,
+      success: false,
+    });
   }
 
   function completeDefensiveBuff(slotId) {
@@ -12938,7 +13241,10 @@ export default function Simulator({
   }
 
   function completeOnPlayMultiSearch(selectedOverride = null) {
-    if (searchContext?.mode !== "onplay-multi-search") return;
+    if (searchContext?.mode !== "onplay-multi-search") {
+      if (eventOverlay?.type === "choose-onplay-multi-search") setEventOverlay(null);
+      return;
+    }
     const selected = selectedOverride ?? searchContext.selected;
     const nextFoundationDeck = shuffle(
       selected.reduce((deck, cardId) => removeOneCard(deck, cardId), foundationDeck),
@@ -18669,6 +18975,9 @@ export default function Simulator({
     if (modal === "search" || modal === "recover" || modal === "lost-recover" || modal === "coral-target" || modal === "restock") return searchContext?.candidates ?? [];
     return [];
   }, [modal, hand, discardPile, lostZone, opponent.discardPile, opponent.lostZone, searchContext]);
+  const modalSearchTargetNouns = modal === "search"
+    ? getSearchTargetNouns(modalCards, searchContext?.effect)
+    : null;
 
   const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "opponent-discard" ? "Opponent Discard Pile" : modal === "opponent-lost" ? "Opponent Lost Zone" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "lost-recover" ? "Recover from the Lost Zone" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Fish" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
   const isDarkZoneModal = Boolean(modal);
@@ -18692,6 +19001,61 @@ export default function Simulator({
   const openingCoinBoardActive = Boolean(previewExperience && isOpeningCoinEvent);
   const cardCoinBoardActive = Boolean(previewExperience && cardCoinFlip);
   const compactDrawResultEvent = Boolean(previewExperience && eventOverlay?.compactDrawResult);
+  const compactDeckSearchEvent = Boolean(previewExperience && [
+    "choose-onplay-multi-search",
+    "choose-school-momentum",
+    "choose-explorer-card",
+    "choose-action-search-card",
+    "choose-creature-action-search",
+  ].includes(eventOverlay?.type));
+  const compactDeckSearchSourceCard = compactDeckSearchEvent ? cardsById[eventOverlay?.sourceCardId] : null;
+  const compactDeckSearchPresentation = compactDeckSearchEvent ? (() => {
+    const actionName = eventOverlay.type === "choose-school-momentum"
+      ? "Momentum"
+      : eventOverlay.type === "choose-explorer-card"
+      ? "Explore"
+      : searchContext?.actionName
+        ?? pendingCreatureAction?.actionName
+        ?? pendingCreatureAction?.action?.name
+        ?? "Search";
+    if (eventOverlay.type === "choose-school-momentum") {
+      return {
+        title: "Choose a Creature School",
+        context: `${compactDeckSearchSourceCard?.name ?? "Card"} · ${actionName}`,
+        facts: ["Choose 1", "Adds to hand", "Decks shuffle"],
+      };
+    }
+    if (eventOverlay.type === "choose-onplay-multi-search") {
+      const maximum = Number(searchContext?.max ?? 0);
+      const targetNouns = getSearchTargetNouns(searchContext?.candidates ?? [], searchContext?.effect);
+      return {
+        title: `Choose up to ${maximum} ${maximum === 1 ? targetNouns.singular : targetNouns.plural}`,
+        context: `${compactDeckSearchSourceCard?.name ?? "Card"} · ${actionName}`,
+        facts: ["Optional", "Adds to hand", "Decks shuffle"],
+      };
+    }
+    if (eventOverlay.type === "choose-explorer-card") {
+      return {
+        title: "Choose a Creature",
+        context: `${compactDeckSearchSourceCard?.name ?? "Card"} · ${actionName}`,
+        facts: ["Choose 1 or none", "Top 5", "Deck shuffles"],
+      };
+    }
+    if (eventOverlay.type === "choose-action-search-card") {
+      return {
+        title: "Choose any card",
+        context: `${compactDeckSearchSourceCard?.name ?? "Card"} · ${actionName}`,
+        facts: ["Adds to hand", "Decks shuffle", "Cost committed"],
+      };
+    }
+    const actionCost = Number(pendingCreatureAction?.cost ?? 0);
+    const targetNouns = getSearchTargetNouns(pendingCreatureAction?.candidates ?? [], pendingCreatureAction?.effect);
+    return {
+      title: `Choose one ${targetNouns.singular}`,
+      context: `${compactDeckSearchSourceCard?.name ?? "Card"} · ${actionName}`,
+      facts: ["Choose 1", "Adds to hand", actionCost > 0 ? `${actionCost} RP when chosen` : "Decks shuffle"],
+    };
+  })() : null;
   const v2NewGameSetupActive = Boolean(
     previewExperience
     && !isStoryMode
@@ -18699,7 +19063,7 @@ export default function Simulator({
     && !resumeHydrationPending
     && !resumeCheckpoint
   );
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || compactDrawResultEvent || boardStatPresentationActive || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || compactDrawResultEvent || compactDeckSearchEvent || boardStatPresentationActive || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -18715,6 +19079,7 @@ export default function Simulator({
     || openingCoinBoardActive
     || cardCoinBoardActive
     || compactDrawResultEvent
+    || compactDeckSearchEvent
     || boardStatPresentationActive
     || resumeHydrationPending
     || resumeCheckpoint
@@ -20191,9 +20556,80 @@ export default function Simulator({
           height: 100%;
           min-height: 0;
         }
+        .seapals-event-card.seapals-compact-search-event,
+        .seapals-compact-search-modal {
+          display: flex;
+          height: min(34rem, calc(100dvh - 1.5rem));
+          max-height: calc(100dvh - 1.5rem);
+          overflow: hidden;
+          flex-direction: column;
+          padding: .75rem;
+        }
+        .seapals-compact-search-layout,
+        .seapals-compact-search-content,
+        .seapals-compact-search-body {
+          display: flex;
+          min-height: 0;
+          flex: 1 1 auto;
+          flex-direction: column;
+        }
+        .seapals-compact-search-context {
+          display: grid;
+          flex: 0 0 auto;
+          grid-template-columns: 3.35rem minmax(0, 1fr);
+          align-items: center;
+          gap: .75rem;
+        }
+        .seapals-compact-search-source {
+          width: 3.35rem;
+          height: 4.7rem;
+        }
+        .seapals-compact-search-context-line {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .seapals-compact-search-facts,
+        .seapals-compact-search-toolbar,
+        .seapals-compact-search-footer {
+          flex: 0 0 auto;
+        }
+        .seapals-compact-search-rail {
+          min-height: 0;
+          flex: 1 1 auto;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(103, 232, 249, .7) rgba(15, 23, 42, .55);
+        }
+        .seapals-compact-search-choice {
+          min-height: 0;
+          max-height: 22rem;
+        }
+        .seapals-compact-search-choice-image {
+          height: auto;
+          max-height: 15rem;
+          flex: 1 1 auto;
+        }
+        .seapals-compact-search-choice-name {
+          display: -webkit-box;
+          overflow: hidden;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+        }
+        .seapals-compact-search-tip > span {
+          display: -webkit-box;
+          overflow: hidden;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+        }
         @media (min-width: 640px) {
           .seapals-event-card.seapals-compact-draw-event {
             height: min(40rem, calc(100dvh - 2.5rem));
+            max-height: calc(100dvh - 2.5rem);
+            padding: 1.25rem;
+          }
+          .seapals-event-card.seapals-compact-search-event,
+          .seapals-compact-search-modal {
+            height: min(34rem, calc(100dvh - 2.5rem));
             max-height: calc(100dvh - 2.5rem);
             padding: 1.25rem;
           }
@@ -20205,6 +20641,88 @@ export default function Simulator({
           .seapals-compact-draw-summary { gap: .25rem; font-size: .6rem; }
           .seapals-compact-draw-summary > span { padding: .25rem .55rem; }
           .seapals-compact-draw-rail-heading { margin-top: .3rem; }
+          .seapals-compact-search-source { width: 2.7rem; height: 3.78rem; }
+          .seapals-compact-search-context { grid-template-columns: 2.7rem minmax(0, 1fr); gap: .55rem; }
+          .seapals-compact-search-heading { font-size: 1.15rem; line-height: 1.1; }
+          .seapals-compact-search-facts { gap: .2rem; margin-top: .3rem; }
+          .seapals-compact-search-facts > span { padding: .2rem .45rem; font-size: .625rem; }
+          .seapals-compact-search-toolbar { margin-top: .25rem; }
+          .seapals-compact-search-tip > span { -webkit-line-clamp: 1; }
+          .seapals-compact-search-choice { min-height: 0; max-height: 100%; }
+          .seapals-compact-search-choice-image { max-height: 9rem; }
+          .seapals-compact-search-choice [data-compact-search-control]:last-child { min-height: 2.75rem; margin-top: .25rem; padding-top: .35rem; padding-bottom: .35rem; }
+        }
+        @media (max-height: 31rem) and (min-aspect-ratio: 6 / 5) {
+          .seapals-event-card.seapals-compact-search-event,
+          .seapals-compact-search-modal {
+            padding: .5rem;
+          }
+          .seapals-compact-search-content {
+            display: grid;
+            grid-template-columns: minmax(11rem, .72fr) minmax(0, 1.28fr);
+            grid-template-rows: auto auto minmax(0, 1fr);
+            column-gap: .75rem;
+            row-gap: .35rem;
+          }
+          .seapals-compact-search-content > .seapals-compact-search-context {
+            grid-column: 1;
+            grid-row: 1;
+          }
+          .seapals-compact-search-content > .seapals-compact-search-facts {
+            grid-column: 1;
+            grid-row: 2;
+            align-content: start;
+          }
+          .seapals-compact-search-content > .seapals-compact-search-tip {
+            grid-column: 1;
+            grid-row: 3;
+            min-height: 0;
+            margin-top: 0;
+            overflow-y: auto;
+            align-self: start;
+          }
+          .seapals-compact-search-content > .seapals-compact-search-body {
+            grid-column: 2;
+            grid-row: 1 / span 3;
+          }
+          .seapals-compact-search-context-line {
+            display: -webkit-box;
+            white-space: normal;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+          }
+          .seapals-compact-search-modal {
+            display: grid;
+            grid-template-columns: minmax(13rem, .78fr) minmax(0, 1.22fr);
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: .75rem;
+          }
+          .seapals-compact-search-modal > .seapals-compact-search-modal-header {
+            grid-column: 1;
+            min-width: 0;
+            margin-bottom: 0;
+            align-self: start;
+            grid-row: 1;
+          }
+          .seapals-compact-search-modal > .seapals-compact-search-tip {
+            grid-column: 1;
+            grid-row: 2;
+            min-height: 0;
+            margin-bottom: 0;
+            overflow-y: auto;
+            align-self: start;
+          }
+          .seapals-compact-search-modal > .seapals-compact-search-body {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            min-height: 0;
+          }
+        }
+        @media (max-height: 22rem) {
+          .seapals-compact-search-choice-image { display: none; }
+          .seapals-compact-search-choice-meta,
+          .seapals-compact-search-details-label { display: none; }
+          .seapals-compact-search-choice { width: 12rem; }
         }
         .seapals-hand-card-popover-layer {
           position: fixed;
@@ -24755,7 +25273,7 @@ export default function Simulator({
 
       {eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive ? (
         <div
-          className={`fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5 ${compactDrawResultEvent ? "overflow-hidden" : "overflow-y-auto"}`}
+          className={`fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5 ${compactDrawResultEvent || compactDeckSearchEvent ? "overflow-hidden" : "overflow-y-auto"}`}
           hidden={v2NewGameSetupActive || resumeHydrationPending || Boolean(resumeCheckpoint)}
           style={v2NewGameSetupActive || resumeHydrationPending || resumeCheckpoint ? { display: "none" } : undefined}
           role="dialog"
@@ -24765,10 +25283,8 @@ export default function Simulator({
           aria-labelledby="seapals-event-title"
           aria-describedby={eventOverlay.message && !["condition-reveal", "opponent-status"].includes(eventOverlay.type) ? "seapals-event-message" : undefined}
           onKeyDown={(keyboardEvent) => {
-            if (!compactDrawResultEvent || keyboardEvent.key !== "Tab") return;
-            const controls = [...keyboardEvent.currentTarget.querySelectorAll(
-              '[data-compact-draw-control], [data-compact-draw-rail], [data-compact-draw-continue]',
-            )];
+            if ((!compactDrawResultEvent && !compactDeckSearchEvent) || keyboardEvent.key !== "Tab") return;
+            const controls = getCompactDialogFocusableControls(keyboardEvent.currentTarget);
             if (!controls.length) return;
             const first = controls[0];
             const last = controls[controls.length - 1];
@@ -24782,18 +25298,44 @@ export default function Simulator({
           }}
         >
           <div
-            className={`seapals-event-card my-auto w-full rounded-[1.5rem] border border-cyan-300/50 bg-slate-900 text-white shadow-2xl sm:rounded-[2rem] ${compactDrawResultEvent ? "seapals-compact-draw-event max-w-3xl" : "max-h-[calc(100dvh-1.5rem)] max-w-5xl overflow-y-auto p-4 sm:max-h-[calc(100dvh-2.5rem)] sm:p-6"}`}
+            className={`seapals-event-card my-auto w-full rounded-[1.5rem] border border-cyan-300/50 bg-slate-900 text-white shadow-2xl sm:rounded-[2rem] ${compactDrawResultEvent ? "seapals-compact-draw-event max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-event max-w-3xl" : "max-h-[calc(100dvh-1.5rem)] max-w-5xl overflow-y-auto p-4 sm:max-h-[calc(100dvh-2.5rem)] sm:p-6"}`}
             data-compact-draw-result={compactDrawResultEvent ? "true" : undefined}
+            data-compact-deck-search={compactDeckSearchEvent ? eventOverlay.type : undefined}
           >
-            <div className={compactDrawResultEvent ? "seapals-compact-draw-layout mx-auto min-w-0 max-w-3xl" : eventOverlay.sourceCardId ? "grid gap-6 md:grid-cols-[260px_1fr]" : "mx-auto max-w-3xl text-center"}>
-              {eventOverlay.sourceCardId && !compactDrawResultEvent ? <div className={`rounded-3xl bg-white/10 p-4 ${eventOverlay.defenderCardId ? "grid grid-cols-2 gap-2 md:grid-cols-1" : ""}`}>
+            <div className={compactDrawResultEvent ? "seapals-compact-draw-layout mx-auto min-w-0 max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-layout mx-auto min-w-0 max-w-3xl" : eventOverlay.sourceCardId ? "grid gap-6 md:grid-cols-[260px_1fr]" : "mx-auto max-w-3xl text-center"}>
+              {eventOverlay.sourceCardId && !compactDrawResultEvent && !compactDeckSearchEvent ? <div className={`rounded-3xl bg-white/10 p-4 ${eventOverlay.defenderCardId ? "grid grid-cols-2 gap-2 md:grid-cols-1" : ""}`}>
                 {eventOverlay.sourceCardId ? <img src={cardsById[eventOverlay.sourceCardId]?.image} alt={cardsById[eventOverlay.sourceCardId]?.name} className="h-80 w-full rounded-2xl bg-white object-contain" /> : null}
                 {eventOverlay.defenderCardId ? <img src={cardsById[eventOverlay.defenderCardId]?.image} alt={cardsById[eventOverlay.defenderCardId]?.name} className="h-80 w-full rounded-2xl bg-white object-contain" /> : null}
               </div> : null}
-              <div className={`flex flex-col justify-center ${compactDrawResultEvent ? "min-h-0 flex-1" : ""}`}>
-                <div className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">{compactDrawResultEvent ? "Support result" : eventOverlay.type === "tutorial-final-round-milestone" ? "Aquarium Lesson Milestone" : isOpeningCoinEvent ? "Opening Flip" : "Game Event"}</div>
-                <h2 id="seapals-event-title" className={`mt-2 font-black ${compactDrawResultEvent ? "seapals-compact-draw-heading text-2xl sm:text-3xl" : "text-3xl md:text-4xl"}`}>{eventOverlay.title}</h2>
-                {!["condition-reveal", "opponent-status"].includes(eventOverlay.type) && eventOverlay.message ? <p id="seapals-event-message" className={`${compactDrawResultEvent ? "seapals-compact-draw-copy mt-1 text-sm" : "mt-4 text-lg"} text-slate-200`}>{eventOverlay.message}</p> : null}
+              <div className={`flex flex-col justify-center ${compactDrawResultEvent || compactDeckSearchEvent ? "min-h-0 flex-1" : ""} ${compactDeckSearchEvent ? "seapals-compact-search-content" : ""}`}>
+                {compactDeckSearchEvent ? (
+                  <>
+                    <header className="seapals-compact-search-context">
+                      <img src={compactDeckSearchSourceCard?.image} alt="" className="seapals-compact-search-source rounded-lg bg-white object-contain" />
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-300">Search</div>
+                        <h2 id="seapals-event-title" className="seapals-compact-search-heading mt-0.5 text-xl font-black sm:text-2xl">{compactDeckSearchPresentation.title}</h2>
+                        <p className="seapals-compact-search-context-line text-xs font-bold text-cyan-100/70 sm:text-sm">{compactDeckSearchPresentation.context}</p>
+                      </div>
+                    </header>
+                    <div className="seapals-compact-search-facts mt-2 flex flex-wrap gap-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-cyan-100" role={eventOverlay.type === "choose-onplay-multi-search" ? "status" : undefined} aria-live={eventOverlay.type === "choose-onplay-multi-search" ? "polite" : undefined}>
+                      {compactDeckSearchPresentation.facts.map((fact) => <span key={fact} className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1">{fact}</span>)}
+                    </div>
+                    {eventOverlay.type === "choose-action-search-card" && scriptedTutorialOverlayHelpOpen ? (
+                      <div className="seapals-compact-search-tip mt-2 flex shrink-0 items-center gap-2 rounded-xl border border-amber-300/45 bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-950" role="note" aria-label={`${tutorialGuide.name} search guidance`}>
+                        <span className="min-w-0 flex-1"><strong>{tutorialGuide.name}:</strong> {scriptedTutorialOverlayHelp.action}</span>
+                        <button type="button" data-compact-search-control onClick={() => setTutorialHelpDismissedId(scriptedTutorialOverlayHelpKey)} className="min-h-11 shrink-0 rounded-lg border border-amber-800/20 px-3 text-xs font-black">Hide</button>
+                      </div>
+                    ) : null}
+                    {eventOverlay.message ? <p id="seapals-event-message" className="sr-only">{eventOverlay.message}</p> : null}
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">{compactDrawResultEvent ? "Support result" : eventOverlay.type === "tutorial-final-round-milestone" ? "Aquarium Lesson Milestone" : isOpeningCoinEvent ? "Opening Flip" : "Game Event"}</div>
+                    <h2 id="seapals-event-title" className={`mt-2 font-black ${compactDrawResultEvent ? "seapals-compact-draw-heading text-2xl sm:text-3xl" : "text-3xl md:text-4xl"}`}>{eventOverlay.title}</h2>
+                    {!["condition-reveal", "opponent-status"].includes(eventOverlay.type) && eventOverlay.message ? <p id="seapals-event-message" className={`${compactDrawResultEvent ? "seapals-compact-draw-copy mt-1 text-sm" : "mt-4 text-lg"} text-slate-200`}>{eventOverlay.message}</p> : null}
+                  </>
+                )}
                 {compactDrawResultEvent ? (
                   <div className="seapals-compact-draw-body mt-2 min-w-0">
                     <div className="seapals-compact-draw-summary flex flex-wrap gap-2 text-xs font-black uppercase tracking-[0.08em]">
@@ -25239,33 +25781,47 @@ export default function Simulator({
                     {(searchContext?.candidates ?? []).map((cardId, index) => { const card = cardsById[cardId]; return <button key={`${cardId}-${index}`} type="button" onClick={() => completeSymbiosis(cardId)} className="flex items-center gap-3 rounded-2xl border-2 border-fuchsia-400 bg-fuchsia-400/10 p-3 text-left hover:bg-fuchsia-400/25"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}</strong><span className="text-sm text-fuchsia-200">Host inside Anemone</span></span></button>; })}
                   </div>
                 ) : eventOverlay.type === "choose-onplay-multi-search" ? (
-                  <div className="mt-6">
-                    <div className="grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
-                      {(searchContext?.candidates ?? []).map((cardId) => {
-                        const card = cardsById[cardId];
-                        const selectedCopies = searchContext.selected.filter((selectedId) => selectedId === cardId).length;
-                        const availableCopies = [...foundationDeck, ...palsDeck].filter((candidateId) => candidateId === cardId).length;
-                        return (
-                          <DeckSearchChoice
-                            key={cardId}
-                            card={card}
-                            onInspect={() => inspectSearchResult(cardId)}
-                            onChoose={() => toggleOnPlaySearchCard(cardId)}
-                            chooseLabel={selectedCopies ? `Selected ${selectedCopies}/${Math.min(availableCopies, searchContext.max)}` : "Select"}
-                            chosen={selectedCopies > 0}
-                            meta={availableCopies > 1 ? `${availableCopies} copies available` : getCardClassLabel(card)}
-                          />
-                        );
-                      })}
-                    </div>
-                    <div className="mt-4 flex gap-3"><button type="button" onClick={() => completeOnPlayMultiSearch()} className="rounded-full bg-emerald-500 px-6 py-3 font-black">Confirm {searchContext?.selected.length ?? 0}/{searchContext?.max ?? 0}</button><button type="button" onClick={() => completeOnPlayMultiSearch([])} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Choose No Cards</button></div>
+                  <div className="seapals-compact-search-body">
+                    <CompactSearchToolbar count={searchContext?.candidates?.length ?? 0} onScroll={scrollCompactSearchRail} railRef={compactSearchRailRef} />
+                    {searchContext?.candidates?.length ? (
+                      <CompactSearchRail railRef={compactSearchRailRef} label={`${searchContext.candidates.length} eligible choices. Choose up to ${searchContext?.max ?? 0}.`}>
+                        {searchContext.candidates.map((cardId, index) => {
+                          const card = cardsById[cardId];
+                          const selectedCopies = searchContext.selected.filter((selectedId) => selectedId === cardId).length;
+                          const availableCopies = [...foundationDeck, ...palsDeck].filter((candidateId) => candidateId === cardId).length;
+                          return (
+                            <DeckSearchChoice
+                              key={cardId}
+                              card={card}
+                              onInspect={() => inspectSearchResult(cardId)}
+                              onChoose={() => toggleOnPlaySearchCard(cardId)}
+                              chooseLabel={selectedCopies ? `Selected ${selectedCopies}/${Math.min(availableCopies, searchContext.max)}` : "Select"}
+                              chosen={selectedCopies > 0}
+                              meta={availableCopies > 1 ? `${availableCopies} copies available` : getCardClassLabel(card)}
+                              compact
+                              autoFocus={index === 0}
+                            />
+                          );
+                        })}
+                      </CompactSearchRail>
+                    ) : (
+                      <CompactSearchEmpty detail="Use Choose None to finish this optional search." />
+                    )}
+                    <div className="seapals-compact-search-footer flex shrink-0 gap-2 pt-2"><button type="button" data-compact-search-control disabled={!searchContext?.selected.length} onClick={() => completeOnPlayMultiSearch()} aria-label={`Confirm ${searchContext?.selected.length ?? 0} of ${searchContext?.max ?? 0} selected cards`} className="min-h-11 flex-1 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-black disabled:cursor-not-allowed disabled:opacity-40">Confirm {searchContext?.selected.length ?? 0}/{searchContext?.max ?? 0}</button><button type="button" data-compact-search-control autoFocus={!searchContext?.candidates?.length} onClick={() => completeOnPlayMultiSearch([])} className="min-h-11 rounded-xl border border-slate-500 px-4 py-2 text-sm font-bold">Choose None</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-school-momentum" ? (
-                  <div className="mt-6 grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
-                    {(searchContext?.candidates ?? []).map((cardId) => {
-                      const card = cardsById[cardId];
-                      return <DeckSearchChoice key={cardId} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => completeSchoolMomentum(cardId)} meta={card?.stageLabel ?? getCardClassLabel(card)} />;
-                    })}
+                  <div className="seapals-compact-search-body">
+                    <CompactSearchToolbar count={searchContext?.candidates?.length ?? 0} onScroll={scrollCompactSearchRail} railRef={compactSearchRailRef} />
+                    {searchContext?.candidates?.length ? (
+                      <CompactSearchRail railRef={compactSearchRailRef} label={`${searchContext.candidates.length} Creature School choices. Choose one to add to your hand.`}>
+                        {searchContext.candidates.map((cardId, index) => {
+                          const card = cardsById[cardId];
+                          return <DeckSearchChoice key={cardId} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => completeSchoolMomentum(cardId)} meta={card?.stageLabel ?? getCardClassLabel(card)} compact autoFocus={index === 0} />;
+                        })}
+                      </CompactSearchRail>
+                    ) : (
+                      <CompactSearchEmpty detail="Momentum can finish without adding a card." actionLabel="Continue" onAction={completeEmptySchoolMomentumSearch} />
+                    )}
                   </div>
                 ) : eventOverlay.type === "choose-inspection-deck" ? (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -25278,14 +25834,20 @@ export default function Simulator({
                     <div className="mt-4 flex gap-3"><button type="button" onClick={() => commitDeckInspection()} className="rounded-full bg-emerald-500 px-6 py-3 font-black">Confirm Order</button><button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-explorer-card" ? (
-                  <div className="mt-6">
-                    <div className="grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
-                      {(searchContext?.candidates ?? []).map((cardId, index) => {
-                        const card = cardsById[cardId];
-                        return <DeckSearchChoice key={`${cardId}-${index}`} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => commitDeckInspection(cardId)} meta={getCardClassLabel(card)} />;
-                      })}
-                    </div>
-                    <div className="mt-4 flex gap-3"><button type="button" onClick={() => commitDeckInspection()} className="rounded-full bg-cyan-600 px-6 py-3 font-black">Choose No Card</button><button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel</button></div>
+                  <div className="seapals-compact-search-body">
+                    <CompactSearchToolbar count={[...new Set(searchContext?.candidates ?? [])].length} onScroll={scrollCompactSearchRail} railRef={compactSearchRailRef} />
+                    {searchContext?.candidates?.length ? (
+                      <CompactSearchRail railRef={compactSearchRailRef} label={`${[...new Set(searchContext.candidates)].length} Creature choices from the top five cards. Choose one or choose none.`}>
+                        {[...new Set(searchContext.candidates)].map((cardId, index) => {
+                          const card = cardsById[cardId];
+                          const availableCopies = searchContext.candidates.filter((candidateId) => candidateId === cardId).length;
+                          return <DeckSearchChoice key={cardId} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => commitDeckInspection(cardId)} meta={availableCopies > 1 ? `${availableCopies} copies in the top 5` : getCardClassLabel(card)} compact autoFocus={index === 0} />;
+                        })}
+                      </CompactSearchRail>
+                    ) : (
+                      <CompactSearchEmpty detail="No Creatures were found in the top five. Choose None to shuffle them back." />
+                    )}
+                    <div className="seapals-compact-search-footer flex shrink-0 gap-2 pt-2"><button type="button" data-compact-search-control autoFocus={!searchContext?.candidates?.length} onClick={() => commitDeckInspection()} className="min-h-11 flex-1 rounded-xl bg-cyan-600 px-4 py-2 text-sm font-black">Choose None</button><button type="button" data-compact-search-control onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="min-h-11 rounded-xl border border-slate-500 px-4 py-2 text-sm font-bold">Cancel</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-clear-status-target" ? (
                   <div className="mt-6 grid max-h-80 gap-3 overflow-y-auto sm:grid-cols-2">
@@ -25365,42 +25927,46 @@ export default function Simulator({
                     <div className="flex flex-wrap gap-3 pt-3"><button type="button" disabled={(pendingCreatureAction?.selectedIndices.length ?? 0) < (pendingCreatureAction?.minDiscard ?? Number(pendingCreatureAction?.effect.discard?.amount ?? 0)) || (pendingCreatureAction?.selectedIndices.length ?? 0) > (pendingCreatureAction?.maxDiscard ?? Number(pendingCreatureAction?.effect.discard?.amount ?? 0))} onClick={confirmActionHandDiscard} data-tutorial-target="script-discard-confirm" className={`rounded-full bg-rose-500 px-6 py-3 font-black disabled:opacity-40${scriptedDiscardReady && scriptedTutorialOverlayHelpOpen ? " seapals-tutorial-target" : ""}`}>Discard &amp; Continue</button><button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-action-search-card" ? (
-                  <div className="mt-6">
-                    {scriptedTutorialOverlayHelpOpen ? (
-                      <ProfessorGuideCard
-                        guide={tutorialGuide}
-                        help={scriptedTutorialOverlayHelp}
-                        step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
-                        total={tutorialContract.checkpoints.length}
-                        inline
-                        onDismiss={() => setTutorialHelpDismissedId(scriptedTutorialOverlayHelpKey)}
-                      />
-                    ) : null}
-                    <div className="mt-4 grid max-h-[30rem] gap-3 overflow-y-auto p-1 sm:grid-cols-2">
-                      {(pendingCreatureAction?.searchCandidates ?? []).map((cardId) => {
-                        const card = cardsById[cardId];
-                        const scriptedChoice = scriptedTutorialOverlayHelpOpen && cardId === scriptedSearchTargetCardId;
-                        return (
-                          <DeckSearchChoice
-                            key={cardId}
-                            card={card}
-                            onInspect={() => inspectSearchResult(cardId)}
-                            onChoose={() => completeActionDeckSearch(cardId)}
-                            meta={`${foundationDeck.includes(cardId) ? "Foundation" : "Pals"} Deck${scriptedChoice ? ` · ${tutorialGuide.name}'s lesson target` : ""}`}
-                            tutorialTarget={scriptedChoice ? "script-search-card" : undefined}
-                            className={scriptedChoice ? "seapals-tutorial-target" : ""}
-                          />
-                        );
-                      })}
-                    </div>
+                  <div className="seapals-compact-search-body">
+                    <CompactSearchToolbar count={pendingCreatureAction?.searchCandidates?.length ?? 0} onScroll={scrollCompactSearchRail} railRef={compactSearchRailRef} />
+                    {pendingCreatureAction?.searchCandidates?.length ? (
+                      <CompactSearchRail railRef={compactSearchRailRef} label={`${pendingCreatureAction.searchCandidates.length} cards from your personal decks. Choose one to add to your hand.`}>
+                        {pendingCreatureAction.searchCandidates.map((cardId, index) => {
+                          const card = cardsById[cardId];
+                          const scriptedChoice = scriptedTutorialOverlayHelpOpen && cardId === scriptedSearchTargetCardId;
+                          return (
+                            <DeckSearchChoice
+                              key={cardId}
+                              card={card}
+                              onInspect={() => inspectSearchResult(cardId)}
+                              onChoose={() => completeActionDeckSearch(cardId)}
+                              meta={`${foundationDeck.includes(cardId) ? "Foundation" : "Pals"} Deck${scriptedChoice ? ` · ${tutorialGuide.name}'s lesson target` : ""}`}
+                              tutorialTarget={scriptedChoice ? "script-search-card" : undefined}
+                              className={scriptedChoice ? "seapals-tutorial-target" : ""}
+                              compact
+                              autoFocus={index === 0}
+                            />
+                          );
+                        })}
+                      </CompactSearchRail>
+                    ) : (
+                      <CompactSearchEmpty detail="The cost and discarded cards were already committed." actionLabel="Continue" onAction={completeEmptyCommittedActionSearch} />
+                    )}
                   </div>
                 ) : eventOverlay.type === "choose-creature-action-search" ? (
-                  <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
-                    {(pendingCreatureAction?.candidates ?? []).map((cardId) => {
-                      const card = cardsById[cardId];
-                      return <DeckSearchChoice key={cardId} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => completeCreatureActionSearch(cardId)} meta={getCardClassLabel(card)} />;
-                    })}
-                    <button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button>
+                  <div className="seapals-compact-search-body">
+                    <CompactSearchToolbar count={pendingCreatureAction?.candidates?.length ?? 0} onScroll={scrollCompactSearchRail} railRef={compactSearchRailRef} />
+                    {pendingCreatureAction?.candidates?.length ? (
+                      <CompactSearchRail railRef={compactSearchRailRef} label={`${pendingCreatureAction.candidates.length} eligible choices. Choose one to add to your hand.`}>
+                        {pendingCreatureAction.candidates.map((cardId, index) => {
+                          const card = cardsById[cardId];
+                          return <DeckSearchChoice key={cardId} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => completeCreatureActionSearch(cardId)} meta={getCardClassLabel(card)} compact autoFocus={index === 0} />;
+                        })}
+                      </CompactSearchRail>
+                    ) : (
+                      <CompactSearchEmpty detail="Cancel the action to return without spending RP." />
+                    )}
+                    <div className="seapals-compact-search-footer shrink-0 pt-2"><button type="button" data-compact-search-control autoFocus={!pendingCreatureAction?.candidates?.length} onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="min-h-11 w-full rounded-xl border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button></div>
                   </div>
                 ) : eventOverlay.type === "choose-action-discard" ? (
                   <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
@@ -25538,14 +26104,33 @@ export default function Simulator({
       {fullPageModalOpen ? (
         <div
           className={`fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-2 backdrop-blur-sm sm:p-4 ${modal === "hand" ? "xl:hidden" : ""}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="seapals-modal-title"
+          aria-describedby="seapals-modal-description"
           aria-hidden={inspectedCardData ? "true" : undefined}
           inert={inspectedCardData || undefined}
+          onKeyDown={(keyboardEvent) => {
+            if (modal !== "search" || keyboardEvent.key !== "Tab") return;
+            const controls = getCompactDialogFocusableControls(keyboardEvent.currentTarget);
+            if (!controls.length) return;
+            const first = controls[0];
+            const last = controls[controls.length - 1];
+            if (keyboardEvent.shiftKey && document.activeElement === first) {
+              keyboardEvent.preventDefault();
+              last.focus();
+            } else if (!keyboardEvent.shiftKey && document.activeElement === last) {
+              keyboardEvent.preventDefault();
+              first.focus();
+            }
+          }}
         >
-          <div ref={modalScrollRef} data-simulator-modal-scroll className={`max-h-[calc(100dvh-1rem)] max-w-[56rem] w-full overflow-y-auto rounded-[2rem] border p-4 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-6 ${isDarkZoneModal ? "seapals-hud-panel border-cyan-300/25 text-slate-100" : "border-transparent bg-white text-slate-900"}`}>
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div ref={modalScrollRef} data-simulator-modal-scroll data-compact-deck-search={modal === "search" ? "support" : undefined} className={`w-full rounded-[2rem] border shadow-2xl ${modal === "search" ? "seapals-compact-search-modal max-w-3xl" : "max-h-[calc(100dvh-1rem)] max-w-[56rem] overflow-y-auto p-4 sm:max-h-[calc(100dvh-2rem)] sm:p-6"} ${isDarkZoneModal ? "seapals-hud-panel border-cyan-300/25 text-slate-100" : "border-transparent bg-white text-slate-900"}`}>
+            <div className={`${modal === "search" ? "seapals-compact-search-modal-header mb-2" : "mb-6"} flex shrink-0 items-start justify-between gap-3 sm:items-center`}>
               <div>
-                <h3 className="text-xl font-bold">{modalTitle}</h3>
-                <p className={`text-sm ${isDarkZoneModal ? "text-cyan-100/60" : "text-slate-600"}`}>
+                {modal === "search" ? <div className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-300">Search</div> : null}
+                <h3 id="seapals-modal-title" className="text-xl font-bold">{modal === "search" ? (searchContext?.maxSelect > 1 ? `Choose up to ${searchContext.maxSelect} ${modalSearchTargetNouns?.plural ?? "cards"}` : `Choose one ${modalSearchTargetNouns?.singular ?? "card"}`) : modalTitle}</h3>
+                <p id="seapals-modal-description" className={`text-sm ${isDarkZoneModal ? "text-cyan-100/60" : "text-slate-600"}`}>
                   {modal === "hand"
                     ? "Review the cards in your hand. Discard or lose them from here."
                     : modal === "discard"
@@ -25555,7 +26140,7 @@ export default function Simulator({
                     : modal === "opponent-lost"
                     ? "Public cards in the opponent's Lost Zone are shown here."
                     : modal === "search"
-                    ? `Select a card's artwork or name to read its full details. Use Add to Hand only after you have chosen a card for ${cardsById[searchContext?.supportCardId]?.name}. You may cancel without spending the card or RP.`
+                    ? `${cardsById[searchContext?.supportCardId]?.name ?? "Support"} · Nothing is spent until you confirm a choice.`
                     : modal === "recover"
                     ? "Heads! Choose one card that was in your discard pile before Recovery resolved."
                     : modal === "lost-recover"
@@ -25581,7 +26166,8 @@ export default function Simulator({
                 )}
                 {modal !== "turn-draw" ? <button
                   type="button"
-                  autoFocus={modal === "recover" && !modalCards.length}
+                  data-compact-search-control={modal === "search" ? true : undefined}
+                  autoFocus={(modal === "recover" && !modalCards.length) || (modal === "search" && !modalCards.length)}
                   onClick={() => {
                     if (modal === "search" || modal === "lost-recover" || modal === "coral-target" || modal === "restock" || modal === "support-draw") cancelSupportSearch();
                     else {
@@ -25591,7 +26177,7 @@ export default function Simulator({
                       } else setModal(null);
                     }
                   }}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold ${isDarkZoneModal ? "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-300 bg-slate-100 text-slate-700"}${tutorialTargetClass("close-modal")}`}
+                  className={`min-h-11 min-w-11 rounded-full border px-4 py-2 text-sm font-semibold ${isDarkZoneModal ? "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-300 bg-slate-100 text-slate-700"}${tutorialTargetClass("close-modal")}`}
                   data-tutorial-target="close-modal"
                 >
                   Close
@@ -25599,7 +26185,7 @@ export default function Simulator({
               </div>
             </div>
 
-            {tutorialHelpInline && modal ? (
+            {tutorialHelpInline && modal && modal !== "search" ? (
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={tutorialHelp}
@@ -25610,6 +26196,12 @@ export default function Simulator({
                 onRevealTarget={tutorialHandRevealLabel ? revealHandTutorialTarget : null}
                 revealTargetLabel={tutorialHandRevealLabel ?? undefined}
               />
+            ) : null}
+            {tutorialHelpInline && modal === "search" ? (
+              <div className="seapals-compact-search-tip mb-2 flex shrink-0 items-center gap-2 rounded-xl border border-amber-300/45 bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-950" role="note" aria-label={`${tutorialGuide.name} search guidance`}>
+                <span className="min-w-0 flex-1"><strong>{tutorialGuide.name}:</strong> {tutorialHelp.action}</span>
+                <button type="button" data-compact-search-control onClick={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} className="min-h-11 shrink-0 rounded-lg border border-amber-800/20 px-3 text-xs font-black">Hide</button>
+              </div>
             ) : null}
 
             {modal === "turn-draw" ? (
@@ -25761,6 +26353,50 @@ export default function Simulator({
                     </div>
                   )}
                 </div>
+              </div>
+            ) : modal === "search" ? (
+              <div className="seapals-compact-search-body">
+                <div className="seapals-compact-search-facts flex shrink-0 flex-wrap gap-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-cyan-100">
+                  <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1">{searchContext?.maxSelect > 1 ? `Choose up to ${searchContext.maxSelect}` : "Choose 1"}</span>
+                  <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1">Adds to hand</span>
+                  <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1">Decks shuffle</span>
+                </div>
+                <CompactSearchToolbar count={modalCards.length} onScroll={scrollCompactSearchRail} railRef={compactSearchRailRef} />
+                {modalCards.length ? (
+                  <CompactSearchRail railRef={compactSearchRailRef} label={`${modalCards.length} eligible choices for ${cardsById[searchContext?.supportCardId]?.name ?? "this Support"}.`}>
+                    {modalCards.map((cardId, cardIndex) => {
+                      const card = cardsById[cardId] || { name: cardId };
+                      const selectedCopies = searchContext?.selected?.filter((selectedId) => selectedId === cardId).length ?? 0;
+                      const availableCopies = [...foundationDeck, ...palsDeck].filter((candidateId) => candidateId === cardId).length;
+                      const tutorialChoice = tutorialHelpTargetActive && tutorialHelp?.targetSearchCardId === cardId;
+                      return (
+                        <DeckSearchChoice
+                          key={cardId}
+                          card={card}
+                          onInspect={() => inspectSearchResult(cardId)}
+                          onChoose={() => searchContext?.maxSelect > 1 ? toggleSupportSearchCard(cardId) : completeSupportSearch(cardId)}
+                          chooseLabel={searchContext?.maxSelect > 1 ? (selectedCopies ? `Selected ${selectedCopies}/${Math.min(availableCopies, searchContext.maxSelect)}` : "Select") : "Add to Hand"}
+                          chosen={searchContext?.maxSelect > 1 ? selectedCopies > 0 : undefined}
+                          chooseDisabled={Boolean(tutorialUsesScriptedScenario && scriptedFinishRoute?.searchTargetCardId && scriptedFinishRoute.searchTargetCardId !== cardId)}
+                          meta={availableCopies > 1 ? `${availableCopies} copies available` : getCardClassLabel(card)}
+                          tutorialTarget={tutorialChoice ? "search-card" : undefined}
+                          tutorialSearchCardId={cardId}
+                          className={tutorialChoice ? "seapals-tutorial-target" : ""}
+                          compact
+                          autoFocus={cardIndex === 0}
+                        />
+                      );
+                    })}
+                  </CompactSearchRail>
+                ) : (
+                  <CompactSearchEmpty detail="Close this search to return to your turn. Nothing will be spent." />
+                )}
+                {searchContext?.maxSelect > 1 ? (
+                  <div className="seapals-compact-search-footer flex shrink-0 items-center justify-between gap-3 pt-2">
+                    <span className="text-sm font-bold text-cyan-200" role="status" aria-live="polite">{searchContext.selected.length}/{searchContext.maxSelect} selected</span>
+                    <button type="button" data-compact-search-control disabled={!searchContext.selected.length} onClick={completeMultipleSupportSearch} className="min-h-11 rounded-xl bg-cyan-600 px-5 py-2 text-sm font-black text-white disabled:opacity-40">Add Selected</button>
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="space-y-3">
