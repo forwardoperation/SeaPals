@@ -8,7 +8,9 @@ import {
   getOpponentNormalAttackLimit,
   getOpponentThreatProfile,
   getPreferredOpponentPermanentPlayPool,
+  preferOpponentWinningPlays,
   preferOpponentPlaysWithResolvableOnPlayAttacks,
+  scoreOpponentPermanentPlay,
   scoreHardOpponentPermanentPlay,
   scoreHardOpponentSearchCandidate,
   selectBestOpponentCreatureSlot,
@@ -28,7 +30,7 @@ test("opponent play pool excludes mandatory On Play attacks without a legal targ
   assert.deepEqual(result, ["brain-coral", "goblin-shark"]);
 });
 
-test("opponent play pool retains a targeted attacker and a VP-winning attacker", () => {
+test("opponent play pool takes the VP win before any nonwinning attack", () => {
   const result = getPreferredOpponentPermanentPlayPool(
     ["targeted-attacker", "winning-attacker", "fizzling-attacker"],
     {
@@ -38,7 +40,7 @@ test("opponent play pool retains a targeted attacker and a VP-winning attacker",
     },
   );
 
-  assert.deepEqual(result, ["targeted-attacker", "winning-attacker"]);
+  assert.deepEqual(result, ["winning-attacker"]);
 });
 
 test("opponent play pool falls back to all legal plays when every attack would fizzle", () => {
@@ -134,6 +136,16 @@ test("an even early board remains in setup mode", () => {
   assert.equal(threat.level, OpponentThreatLevel.SETUP);
 });
 
+test("a rival close to victory is critical even when the AI is narrowly ahead", () => {
+  const threat = getOpponentThreatProfile({
+    playerVp: 27, opponentVp: 28, victoryTarget: 30,
+    playerIncome: 2, opponentIncome: 8,
+    playerBoardCards: 6, opponentBoardCards: 8,
+    round: 4,
+  });
+  assert.equal(threat.level, OpponentThreatLevel.CRITICAL);
+});
+
 test("critical Hard AI values a legal attack over another slow coral upgrade", () => {
   const attackScore = scoreHardOpponentPermanentPlay({
     baseScore: 55,
@@ -177,7 +189,7 @@ test("Hard AI values an immediate attack during setup instead of goldfishing an 
   assert.ok(openOceanAttacker > schoolUpgrade);
 });
 
-test("Hard AI protects combat RP before utility at every threat level", () => {
+test("Medium and Hard protect combat RP before utility and use all normal attacks", () => {
   assert.equal(
     shouldOpponentAttackBeforeUtility("hard", OpponentThreatLevel.CRITICAL),
     true,
@@ -192,10 +204,11 @@ test("Hard AI protects combat RP before utility at every threat level", () => {
   );
   assert.equal(
     shouldOpponentAttackBeforeUtility("medium", OpponentThreatLevel.CRITICAL),
-    false,
+    true,
   );
   assert.equal(getOpponentNormalAttackLimit("hard"), Infinity);
-  assert.equal(getOpponentNormalAttackLimit("medium"), 1);
+  assert.equal(getOpponentNormalAttackLimit("medium"), Infinity);
+  assert.equal(getOpponentNormalAttackLimit("easy"), 1);
 });
 
 test("Hard support sequencing preserves an affordable Open Ocean attack during setup and pressure", () => {
@@ -214,7 +227,7 @@ test("Hard support sequencing preserves an affordable Open Ocean attack during s
     difficulty: "medium",
     availableRp: 5,
     permanentPlays: [{ cost: 4, hasLegalAttack: true }],
-  }), 0);
+  }), 4);
 });
 
 test("Hard reserves a board-building permanent when no combat card is currently affordable", () => {
@@ -352,4 +365,124 @@ test("normal attack selection drops a stronger attacker with no target instead o
     ),
     [attackers[0]],
   );
+});
+
+test("every difficulty chooses a winning permanent despite higher-scoring distractions", () => {
+  const cards = ["economy-upgrade", "finishing-fish", "huge-predator"];
+  for (const difficulty of ["easy", "medium", "hard"]) {
+    const preferred = preferOpponentWinningPlays(cards, {
+      reachesVictory: (cardId) => cardId === "finishing-fish",
+    });
+    assert.deepEqual(preferred, ["finishing-fish"], difficulty);
+    assert.ok(scoreOpponentPermanentPlay({ difficulty, vpGain: 1, reachesVictory: true })
+      > scoreOpponentPermanentPlay({ difficulty, vpGain: 12, incomeGain: 5, hasLegalAttack: true }));
+  }
+  assert.deepEqual(preferOpponentWinningPlays(cards), cards);
+});
+
+test("upgrade scoring uses net gains rather than scoring the replaced school again", () => {
+  for (const difficulty of ["easy", "medium", "hard"]) {
+    // Upgrading a 4 VP, 3 RP school to 5 VP, 4 RP produces only +1/+1.
+    const upgrade = scoreOpponentPermanentPlay({ difficulty, vpGain: 1, incomeGain: 1, cost: 4 });
+    const newFish = scoreOpponentPermanentPlay({ difficulty, vpGain: 3, cost: 2 });
+    assert.ok(newFish > upgrade, difficulty);
+    const sacrificialApex = scoreOpponentPermanentPlay({ difficulty, vpGain: -2, incomeGain: -1, cost: 6 });
+    assert.ok(newFish > sacrificialApex, `${difficulty} should account for sacrificed value`);
+  }
+});
+
+test("an occupied reef prioritizes space for its hand over a redundant capacity upgrade", () => {
+  const openingFoundation = scoreOpponentPermanentPlay({
+    difficulty: "hard", cost: 2, incomeGain: 1,
+    slotGain: 3, openSlots: 0, creaturesInHand: 3,
+    unlocksCards: 3, affordableUnlocks: 2,
+  });
+  const redundantSchool = scoreOpponentPermanentPlay({
+    difficulty: "hard", cost: 3, incomeGain: 1,
+    schoolDensityGain: 100, schoolDensityNeeded: 0,
+  });
+  assert.ok(openingFoundation > redundantSchool);
+  assert.equal(
+    scoreOpponentPermanentPlay({ schoolDensityGain: 100, schoolDensityNeeded: 0 }),
+    scoreOpponentPermanentPlay({ schoolDensityGain: 0 }),
+  );
+});
+
+test("density and habitat prerequisites gain value when they unlock affordable cards", () => {
+  const neededSchool = scoreOpponentPermanentPlay({
+    difficulty: "hard", cost: 3, schoolDensityGain: 100, schoolDensityNeeded: 70,
+    unlocksCards: 2, affordableUnlocks: 1,
+  });
+  const spareSchool = scoreOpponentPermanentPlay({
+    difficulty: "hard", cost: 3, schoolDensityGain: 100,
+  });
+  const neededHabitat = scoreOpponentPermanentPlay({
+    difficulty: "hard", cost: 3, unlocksCards: 2, affordableUnlocks: 1,
+  });
+  const duplicateHabitat = scoreOpponentPermanentPlay({ difficulty: "hard", cost: 3 });
+  assert.ok(neededSchool > spareSchool);
+  assert.ok(neededHabitat > duplicateHabitat);
+});
+
+test("critical opponents prefer immediate disruption over an income-only investment", () => {
+  for (const difficulty of ["easy", "medium", "hard"]) {
+    const attack = scoreOpponentPermanentPlay({
+      difficulty, threatLevel: OpponentThreatLevel.CRITICAL,
+      vpGain: 2, cost: 3, hasAttack: true, hasLegalAttack: true,
+    });
+    const slowUpgrade = scoreOpponentPermanentPlay({
+      difficulty, threatLevel: OpponentThreatLevel.CRITICAL,
+      incomeGain: 3, cost: 3,
+    });
+    assert.ok(attack > slowUpgrade, difficulty);
+  }
+});
+
+test("a known poor attack does not receive the bonus for merely having a legal target", () => {
+  const losingAttack = scoreOpponentPermanentPlay({
+    difficulty: "hard", vpGain: 2, cost: 3, hasAttack: true, hasLegalAttack: true,
+    attackValue: -40,
+  });
+  const liveAttack = scoreOpponentPermanentPlay({
+    difficulty: "hard", vpGain: 2, cost: 3, hasAttack: true, hasLegalAttack: true,
+    attackValue: 60,
+  });
+  const usefulFish = scoreOpponentPermanentPlay({ difficulty: "hard", vpGain: 2, cost: 3 });
+  assert.ok(liveAttack > usefulFish);
+  assert.ok(usefulFish > losingAttack);
+});
+
+test("all difficulties preserve RP for a win ahead of optional attacks and supports", () => {
+  for (const difficulty of ["easy", "medium", "hard"]) {
+    const reserve = getHardOpponentSupportRpReserve({
+      difficulty, availableRp: 6,
+      existingBoardAttacks: [{ cost: 2 }, { cost: 2 }],
+      permanentPlays: [{ cost: 5, reachesVictory: true }],
+    });
+    assert.equal(reserve, 5, difficulty);
+    assert.equal(canOpponentSpendSupportWithoutBreakingHardPlan({
+      difficulty, availableRp: 6, supportCost: 2, reservedRp: reserve,
+    }), false, difficulty);
+  }
+});
+
+test("reserve keeps the best available board development, not a distracting cheap play", () => {
+  for (const difficulty of ["easy", "medium", "hard"]) {
+    assert.equal(getHardOpponentSupportRpReserve({
+      difficulty, availableRp: 5,
+      permanentPlays: [
+        { cost: 1, priority: 5 },
+        { cost: 4, priority: 90 },
+      ],
+    }), 4, difficulty);
+  }
+});
+
+test("Easy reserves one useful normal attack while Medium budgets all deployed attacks", () => {
+  const situation = {
+    availableRp: 5,
+    existingBoardAttacks: [{ cost: 1, priority: 10 }, { cost: 2, priority: 80 }],
+  };
+  assert.equal(getHardOpponentSupportRpReserve({ ...situation, difficulty: "easy" }), 2);
+  assert.equal(getHardOpponentSupportRpReserve({ ...situation, difficulty: "medium" }), 3);
 });

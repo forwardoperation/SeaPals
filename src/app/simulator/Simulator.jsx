@@ -65,6 +65,8 @@ import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingA
 import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
 import { createSchoolDensityBucketState, getEcosystemSchoolDensityCommitted } from "./schoolDensityRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
+import { estimateOpponentCombatOutcome, scoreOpponentCombatOutcome, selectOpponentCombatPlan } from "./opponentCombatRules.mjs";
+import { getOpponentOwnedBoardCardIds, projectOpponentPermanentVp, selectOpponentFoundationEffectTarget } from "./opponentBoardEvaluation.mjs";
 import { OPPONENT_DIFFICULTY_OPTIONS, OpponentDifficulty, chooseOpponentPreferredDeck, getOpponentDifficultyProfile, limitOpponentOptionalActions, normalizeOpponentDifficulty, orderOpponentChoices, scaleOpponentThinkingDelay, selectOpponentChoice } from "./opponentDifficultyRules.mjs";
 import {
   OpponentThreatLevel,
@@ -76,10 +78,10 @@ import {
   getOpponentThreatProfile,
   preferOpponentPlaysWithResolvableOnPlayAttacks,
   scoreAutomatedAttackTargetOutcome,
-  scoreHardOpponentPermanentPlay,
   scoreHardOpponentSearchCandidate,
+  scoreOpponentPermanentPlay,
+  preferOpponentWinningPlays,
   selectBestOpponentCreatureSlot,
-  selectHardOpponentAttackPlan,
   selectProductiveOpponentSearchTargets,
   shouldOpponentAttackBeforeUtility,
 } from "./opponentPlayRules.mjs";
@@ -2145,7 +2147,7 @@ function getTargetAvoidance(card) {
 }
 
 function cardHasScatter(card) {
-  return (card?.passives ?? []).some((passive) => /opponent rerolls successful attacks/i.test(typeof passive === "string" ? passive : passive?.text ?? ""));
+  return (card?.passives ?? []).some((passive) => /opponent re-?rolls? (?:their |the )?(?:first )?successful attacks?/i.test(typeof passive === "string" ? passive : passive?.text ?? ""));
 }
 
 function getDynamicAttackRepeat(card, attack, friendlyCorals, friendlyOpenWater, habitats = []) {
@@ -13503,9 +13505,10 @@ export default function Simulator({
   function runOpponentSupports(opponentState) {
     if (opponentState.supportBlockedUntilRound >= round) return { state: opponentState, summaries: [], impacts: [], events: [], lost: false, lossSummary: "" };
     let next = opponentState;
-    const hardTurn = opponentDifficulty === OpponentDifficulty.HARD;
+    let reservedPlanState = null;
+    let reservedPlanRp = 0;
     const getReservedHardPlayRp = (state) => {
-      if (!hardTurn) return 0;
+      if (state === reservedPlanState) return reservedPlanRp;
       const committedDensity = getEcosystemSchoolDensityCommitted({
         foundations: state.corals,
         invasiveFoundations: playerCorals,
@@ -13576,42 +13579,57 @@ export default function Simulator({
         const attackDieSides = Number(String(attack?.attackDice ?? "").match(/D(\d+)/i)?.[1] ?? 0);
         const attackRepeats = Math.max(1, Number(attack?.repeat ?? 1));
         const printedVp = Number(candidate.victoryPoints?.value ?? candidate.victoryPoints ?? candidate.vp ?? 0);
+        const replacedVp = upgradeTarget
+          ? Number(cardsById[upgradeTarget.cardId]?.victoryPoints?.value ?? cardsById[upgradeTarget.cardId]?.victoryPoints ?? cardsById[upgradeTarget.cardId]?.vp ?? 0)
+          : 0;
+        const reachesVictory = opponentVp + printedVp - replacedVp >= victoryTarget;
         return [{
           cardId,
-          cost: playCost + attackCost,
+          cost: playCost + (reachesVictory ? 0 : attackCost),
           hasLegalAttack,
-          priority: printedVp * 20 + attackDieSides * attackRepeats * 4 - playCost - attackCost,
+          reachesVictory,
+          priority: (printedVp - replacedVp) * 20 + attackDieSides * attackRepeats * 4 - playCost - attackCost,
         }];
       });
-      const existingAttackPlays = [
-        ...state.corals.flatMap((foundation) => foundation.slots.flatMap((slot) => [
-          ...(slot.cardId && slot.invasiveOwner !== "player" ? [{ cardId: slot.cardId, locationKey: getSlotActionKey(slot) }] : []),
-          ...(slot.hostedCardIds ?? []).flatMap((hostedCardId, hostedIndex) => hostedCardId ? [{ cardId: hostedCardId, locationKey: getHostedTargetSlotId(slot.id, hostedIndex) }] : []),
-        ])),
-        ...(state.reefCreatureInstances ?? []).map((instance, reefIndex) => ({ cardId: instance.cardId, locationKey: `reef-${instance.instanceId ?? reefIndex}` })),
-        ...getLocallyControlledOrphans(state.orphanCreatures, "opponent").map((instance, orphanIndex) => ({ cardId: instance.cardId, locationKey: `orphan-${instance.instanceId ?? orphanIndex}` })),
-      ].flatMap((entry) => {
-        const attacker = cardsById[entry.cardId];
-        const attack = getBasicAttackEffect(attacker);
-        if (!attack || !opponentAttackHasVisibleTarget(attacker, attack, state)) return [];
-        const actionCost = Number(attack.actionCost ?? 0);
-        if (actionCost > state.rp) return [];
-        const actionKey = getOpponentActionUseKey(entry.locationKey, attack);
-        if (wasOpponentActionUsedThisTurn(state.actionUses, actionKey, turn)) return [];
-        if (turn < Number(state.actionCooldowns?.[entry.locationKey] ?? 0)) return [];
-        return [{ ...entry, cost: actionCost, hasLegalAttack: true }];
-      });
-      return getHardOpponentSupportRpReserve({
+      const existingAttackPlays = (runOpponentAttackStep(
+        state,
+        playerCorals,
+        playerReefCreatureInstances,
+        playerOrphanCreatureInstances,
+        null,
+        [],
+        { planOnly: true },
+      )?.profitableAttacks ?? []).map((attack) => ({
+        cost: attack.actionCost,
+        priority: attack.value,
+        hasLegalAttack: true,
+      }));
+      reservedPlanState = state;
+      reservedPlanRp = getHardOpponentSupportRpReserve({
         difficulty: opponentDifficulty,
         availableRp: state.rp,
         existingBoardAttacks: existingAttackPlays,
         permanentPlays,
       });
+      return reservedPlanRp;
     };
     const summaries = [];
     const impacts = [];
     const events = [];
     let lossSummary = "";
+    const getSupportDrawDeck = (targetKind = null) => {
+      const preferred = targetKind === CardKind.CREATURE
+        ? "palsDeck"
+        : chooseOpponentPreferredDeck({
+        difficulty: opponentDifficulty,
+        round,
+        coralCount: next.corals.length,
+        emptySlotCount: next.corals.reduce((total, foundation) => total + foundation.slots.filter((slot) => !slot.cardId).length, 0),
+        foundationCardsInHand: next.hand.filter((cardId) => isFoundationCard(cardsById[cardId])).length,
+        creaturesInHand: next.hand.filter((cardId) => cardsById[cardId]?.kind === CardKind.CREATURE && !isCreatureSchool(cardsById[cardId])).length,
+      });
+      return next[preferred].length ? preferred : preferred === "palsDeck" ? "foundationDeck" : "palsDeck";
+    };
     // A non-locking search can find another Support, which is also legal to play
     // this turn. Use the finite cards in the opponent's zones as a safety bound
     // instead of freezing the count to Supports that began in hand.
@@ -13637,18 +13655,24 @@ export default function Simulator({
         return 45;
       };
       const hasCurrentSpearfishingTarget = () => (
-        (next.reefCreatures ?? []).some((candidateId) => (
-          [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[candidateId]?.category)
-        ))
-        || (next.orphanCreatures ?? []).some((entry) => (
+        (next.orphanCreatures ?? []).some((entry) => (
+          getReefCardOwner(entry, "opponent") === "player"
+          &&
           cardCanBeSpearfished(cardsById[entry.cardId], entry, "opponent")
         ))
         || next.corals.some((coral) => coral.slots.some((slot) => (
+          getReefCardOwner(slot, "opponent") === "player"
+          &&
           cardCanBeSpearfished(cardsById[slot.cardId], slot, "opponent")
         )))
       );
-      const supportIsImmediatelyUseful = (candidate, sourceCardId = null) => {
+      const supportIsImmediatelyUseful = (candidate, sourceCardId = null, evaluatingIds = []) => {
+        if (!candidate) return false;
         if (candidate?.kind !== CardKind.SUPPORT) return true;
+        if (evaluatingIds.includes(candidate.id)) return false;
+        const nextEvaluatingIds = [...evaluatingIds, candidate.id];
+        const isUsefulRecovery = (cardId) => cardId !== sourceCardId
+          && supportIsImmediatelyUseful(cardsById[cardId], sourceCardId, nextEvaluatingIds);
         if (candidate.id === "coral-cement") {
           return next.corals.some((coral) => (
             cardsById[coral.cardId]?.kind === CardKind.CORAL
@@ -13662,28 +13686,49 @@ export default function Simulator({
           ));
         }
         if (candidate.id === "recovery") {
-          return next.discardPile.some((cardId) => cardId !== sourceCardId);
+          return next.discardPile.some(isUsefulRecovery);
         }
-        if (candidate.id === "ocean-jake") return (next.lostZone ?? []).length > 0;
+        if (candidate.id === "ocean-jake") return (next.lostZone ?? []).some(isUsefulRecovery);
         if (candidate.id === "restocking") {
           return next.discardPile.some((cardId) => cardsById[cardId]?.category === CardCategory.FISH);
         }
         if (candidate.id === "spearfishing") return hasCurrentSpearfishingTarget();
         if (["whirlpool", "super-whirlpool"].includes(candidate.id)) return playerCoralCards.length > 0;
         if (candidate.id === "poison-heal") return !next.poisonImmunityNextPredatorAttack;
+        if (candidate.id === "rov-lights") return !next.rovLightsActive;
+        const drawEffect = (candidate.effects ?? []).find((effect) => effect.type === EffectType.DRAW_CARDS);
+        const requestedDraws = candidate.id === "dr-evans" ? 7 : Number(drawEffect?.amount ?? 0);
+        if (requestedDraws > next.palsDeck.length + next.foundationDeck.length) {
+          return candidate.id === "scientist-jes"
+            && [...next.palsDeck, ...next.foundationDeck].some((cardId) => (
+              cardsById[cardId]?.kind === CardKind.HABITAT
+            ));
+        }
         return true;
       };
       const getHardSearchCandidateReadiness = (candidate, sourceCard) => {
         const availableRp = Math.max(
           0,
-          Number(next.rp ?? 0) - getCardPlayCost(sourceCard, activeCondition),
+          Number(next.rp ?? 0) - (sourceCard ? getCardPlayCost(sourceCard, activeCondition) : 0),
         );
+        const upgradeTarget = isFoundationCard(candidate) && Number(candidate.stage ?? 0) > 0
+          ? next.corals.find((foundation) => {
+              const currentCard = cardsById[foundation.cardId];
+              return currentCard?.upgrade?.canUpgrade
+                && currentCard.upgrade.nextCardId === candidate.id
+                && !coralIsStunned(foundation)
+                && turn > Number(foundation.stageEnteredTurn ?? foundation.playedTurn ?? turn);
+            })
+          : null;
         const playCost = Math.max(
           0,
-          getCardPlayCost(candidate, activeCondition)
+          (upgradeTarget
+            ? Number(cardsById[upgradeTarget.cardId]?.upgrade?.cost?.rp ?? candidate.cost?.rp ?? 0)
+            : getCardPlayCost(candidate, activeCondition))
             + getOpposingPlayCostModifier(candidate, playerCorals, playerReefCreatures, playerOrphanCreatures),
         );
-        let meetsRequirements = !getConditionPlayRestriction(candidate, activeCondition);
+        let meetsRequirements = !getConditionPlayRestriction(candidate, activeCondition)
+          && !cardIsBlockedFromPlayThisTurn(next, candidate.id);
         let hasPlacement = true;
 
         if (candidate.kind === CardKind.HABITAT) {
@@ -13694,13 +13739,7 @@ export default function Simulator({
               ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
             ]);
         } else if (isFoundationCard(candidate)) {
-          hasPlacement = Number(candidate.stage ?? 0) === 0 || next.corals.some((foundation) => {
-            const currentCard = cardsById[foundation.cardId];
-            return currentCard?.upgrade?.canUpgrade
-              && currentCard.upgrade.nextCardId === candidate.id
-              && !coralIsStunned(foundation)
-              && turn > Number(foundation.stageEnteredTurn ?? foundation.playedTurn ?? turn);
-          });
+          hasPlacement = Number(candidate.stage ?? 0) === 0 || Boolean(upgradeTarget);
         } else if (candidate.kind === CardKind.CREATURE) {
           const ecosystemCreatureIds = [
             ...next.reefCreatures,
@@ -13744,7 +13783,7 @@ export default function Simulator({
               )));
         }
 
-        return { availableRp, playCost, meetsRequirements, hasPlacement };
+        return { availableRp, playCost, meetsRequirements, hasPlacement, upgradeTarget };
       };
       const scoreSearchCandidate = (cardId, sourceCard = null) => {
         const candidate = cardsById[cardId];
@@ -13762,13 +13801,23 @@ export default function Simulator({
           + getCardStartTurnRp(candidate) * 10
           + Number(candidate.actions?.length ?? 0) * 5
           - Number(candidate.cost?.rp ?? 0);
-        if (opponentDifficulty !== OpponentDifficulty.HARD || !sourceCard) return baseScore;
         const onPlayAttack = getOnPlayAttackEffect(candidate);
         const attack = onPlayAttack ?? getBasicAttackEffect(candidate);
         const readiness = getHardSearchCandidateReadiness(candidate, sourceCard);
         const attackCost = onPlayAttack ? 0 : Number(attack?.actionCost ?? 0);
+        const replacedVp = readiness.upgradeTarget
+          ? Number(cardsById[readiness.upgradeTarget.cardId]?.victoryPoints?.value ?? cardsById[readiness.upgradeTarget.cardId]?.victoryPoints ?? cardsById[readiness.upgradeTarget.cardId]?.vp ?? 0)
+          : 0;
+        const canPlayNow = readiness.meetsRequirements && readiness.hasPlacement && readiness.playCost <= readiness.availableRp;
+        const winningBonus = canPlayNow && opponentVp + printedVp - replacedVp >= victoryTarget ? 10000 : 0;
+        if (opponentDifficulty !== OpponentDifficulty.HARD) {
+          return baseScore - replacedVp * 15 + winningBonus + (canPlayNow ? 75 : 0)
+            - Math.max(0, readiness.playCost - readiness.availableRp) * 15
+            - (readiness.meetsRequirements ? 0 : 80)
+            - (readiness.hasPlacement ? 0 : 80);
+        }
         return scoreHardOpponentSearchCandidate({
-          baseScore,
+          baseScore: baseScore - replacedVp * 15 + winningBonus,
           playCost: readiness.playCost + attackCost,
           availableRp: readiness.availableRp,
           hasAttack: Boolean(attack),
@@ -13784,18 +13833,13 @@ export default function Simulator({
         return selectProductiveOpponentSearchTargets(matchingCards, {
           sourceCardId: sourceCard.id,
           amount: Math.max(1, Number(searchEffect.amount) || 1),
-          isCandidateProductive: opponentDifficulty === OpponentDifficulty.HARD
-            ? (candidateId) => supportIsImmediatelyUseful(cardsById[candidateId], sourceCard.id)
-              || cardsById[candidateId]?.id !== "recovery"
-            : undefined,
-          scoreCandidate: opponentDifficulty === OpponentDifficulty.HARD
-            ? (candidateId) => scoreSearchCandidate(candidateId, sourceCard)
-            : null,
+          isCandidateProductive: (candidateId) => supportIsImmediatelyUseful(cardsById[candidateId], sourceCard.id),
+          scoreCandidate: (candidateId) => scoreSearchCandidate(candidateId, sourceCard),
         });
       };
       for (const cardId of orderOpponentChoices(next.hand, opponentDifficulty, scoreSupport)) {
         const card = cardsById[cardId];
-        if (card?.kind !== CardKind.SUPPORT || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition)) continue;
+        if (card?.kind !== CardKind.SUPPORT || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition) || !supportIsImmediatelyUseful(card)) continue;
         const cost = getCardPlayCost(card, activeCondition);
         if (cost > next.rp) continue;
         const reservedHardPlayRp = getReservedHardPlayRp(next);
@@ -13812,7 +13856,8 @@ export default function Simulator({
         const searchCandidates = getProductiveSearchTargets(card, searchEffect);
         const hasSearchTarget = searchCandidates.length > 0;
         const hasSpearfishingTarget = card.id === "spearfishing" && hasCurrentSpearfishingTarget();
-        const canUseScientistJesDraw = card.id === "scientist-jes" && Boolean(next.palsDeck.length || next.foundationDeck.length);
+        const requestedDraws = Number(effects.find((effect) => effect.type === EffectType.DRAW_CARDS)?.amount ?? 0);
+        const canUseScientistJesDraw = card.id === "scientist-jes" && next.palsDeck.length + next.foundationDeck.length >= requestedDraws;
         const hasTopDeckCards = Boolean(next.palsDeck.length || next.foundationDeck.length);
         const usable = hasSearchTarget || (chooseTopEffect && hasTopDeckCards) || (reorderEffect && hasTopDeckCards) || canUseScientistJesDraw || (card.id === "dr-evans" && next.hand.length <= 3) || (card.id === "coral-cement" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && coral.health < coral.maxHealth)) || (card.id === "coral-heal" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && (coral.statuses?.length || Number(coral.rpPenaltyNextTurn ?? 0) > 0))) || (card.id === "recovery" && next.discardPile.length) || (card.id === "ocean-jake" && (next.lostZone ?? []).length) || (card.id === "restocking" && next.discardPile.some((candidateId) => cardsById[candidateId]?.category === CardCategory.FISH)) || card.id === "poison-heal" || card.id === "rov-lights" || hasSpearfishingTarget || (["whirlpool", "super-whirlpool"].includes(card.id) && playerCoralCards.length);
         if (usable) { chosen = { card, cost, effects, searchEffect, searchCandidates, chooseTopEffect, reorderEffect }; break; }
@@ -13829,8 +13874,8 @@ export default function Simulator({
       let opponentCoinFlip = null;
       let revealedCardIds = [];
       const scientistJesChoosesSearch = card.id === "scientist-jes"
-        && !next.habitats.length
-        && !next.hand.some((cardId) => cardsById[cardId]?.kind === CardKind.HABITAT)
+        && ((!next.habitats.length && !next.hand.some((cardId) => cardsById[cardId]?.kind === CardKind.HABITAT))
+          || next.palsDeck.length + next.foundationDeck.length < Number(effects.find((effect) => effect.type === EffectType.DRAW_CARDS)?.amount ?? 0))
         && searchCandidates.length > 0;
       if (searchEffect && (card.id !== "scientist-jes" || scientistJesChoosesSearch)) {
         const candidates = searchCandidates;
@@ -13840,14 +13885,16 @@ export default function Simulator({
       }
       if (chooseTopEffect) {
         const amount = Math.max(1, Number(chooseTopEffect.amount ?? 5));
-        const deckOptions = ["palsDeck", "foundationDeck"].map((deckKey) => ({
+        // Choose the deck before inspecting its hidden top cards, just as the
+        // player must; only the chosen deck's revealed cards can inform rank.
+        const deckOptions = [getSupportDrawDeck(chooseTopEffect.targetKind)].map((deckKey) => ({
           deckKey,
           candidates: next[deckKey].slice(0, amount).filter((cardId) => {
             const candidate = cardsById[cardId];
             return candidate && (!chooseTopEffect.targetKind || candidate.kind === chooseTopEffect.targetKind);
           }),
         }));
-        const choice = deckOptions.flatMap((option) => option.candidates.map((cardId) => ({ deckKey: option.deckKey, cardId, score: Number(cardsById[cardId]?.victoryPoints?.value ?? cardsById[cardId]?.victoryPoints ?? cardsById[cardId]?.vp ?? 0) * 10 + (cardsById[cardId]?.actions?.length ?? 0) * 3 }))).sort((left, right) => right.score - left.score)[0];
+        const choice = deckOptions.flatMap((option) => option.candidates.map((cardId) => ({ deckKey: option.deckKey, cardId, score: scoreSearchCandidate(cardId) }))).sort((left, right) => right.score - left.score)[0];
         if (choice) {
           next = { ...next, [choice.deckKey]: shuffle(removeOneCard(next[choice.deckKey], choice.cardId), nextGameplayRandom), hand: [...next.hand, choice.cardId] };
           details.push(`inspected the top cards and added ${cardsById[choice.cardId]?.name} to its hand`);
@@ -13855,13 +13902,8 @@ export default function Simulator({
         } else details.push("inspected the top cards but found no matching creature");
       } else if (reorderEffect) {
         const amount = Math.max(1, Number(reorderEffect.amount ?? 5));
-        const deckKey = next.palsDeck.length ? "palsDeck" : "foundationDeck";
-        const top = next[deckKey].slice(0, amount).sort((leftId, rightId) => {
-          const left = cardsById[leftId];
-          const right = cardsById[rightId];
-          const score = (candidate) => Number(candidate?.victoryPoints?.value ?? candidate?.victoryPoints ?? candidate?.vp ?? 0) * 10 + getCardStartTurnRp(candidate) * 8 + (candidate?.actions?.length ?? 0) * 3 - Number(candidate?.cost?.rp ?? 0);
-          return score(right) - score(left);
-        });
+        const deckKey = getSupportDrawDeck();
+        const top = orderOpponentChoices(next[deckKey].slice(0, amount), opponentDifficulty, (cardId) => scoreSearchCandidate(cardId));
         next = { ...next, [deckKey]: [...top, ...next[deckKey].slice(top.length)] };
         details.push(`reordered the top ${top.length} cards of its ${deckKey === "palsDeck" ? "Pals" : "Foundation"} deck`);
       }
@@ -13871,7 +13913,7 @@ export default function Simulator({
         next = { ...next, hand: [], discardPile: [...oldHand, ...next.discardPile] };
         let drawn = 0;
         while (drawn < 7 && (next.palsDeck.length || next.foundationDeck.length)) {
-          const deckKey = drawn % 2 === 0 && next.palsDeck.length ? "palsDeck" : next.foundationDeck.length ? "foundationDeck" : "palsDeck";
+          const deckKey = getSupportDrawDeck();
           next = { ...next, hand: [...next.hand, next[deckKey][0]], [deckKey]: next[deckKey].slice(1) };
           drawn += 1;
         }
@@ -13882,7 +13924,7 @@ export default function Simulator({
         const requested = Math.max(0, Number(drawEffect.amount ?? 0));
         let drawn = 0;
         while (drawn < requested && (next.palsDeck.length || next.foundationDeck.length)) {
-          const deckKey = drawn % 2 === 0 && next.palsDeck.length ? "palsDeck" : next.foundationDeck.length ? "foundationDeck" : "palsDeck";
+          const deckKey = getSupportDrawDeck();
           next = { ...next, hand: [...next.hand, next[deckKey][0]], [deckKey]: next[deckKey].slice(1) };
           drawn += 1;
         }
@@ -13907,7 +13949,12 @@ export default function Simulator({
         if (coin === "heads") {
           const playedRecoveryId = next.discardPile[0];
           const recoverableDiscard = next.discardPile.slice(1);
-          const recoveredId = recoverableDiscard[0];
+          const recoveredId = selectProductiveOpponentSearchTargets(recoverableDiscard, {
+            sourceCardId: card.id,
+            amount: 1,
+            isCandidateProductive: (cardId) => supportIsImmediatelyUseful(cardsById[cardId], card.id),
+            scoreCandidate: (cardId) => scoreSearchCandidate(cardId),
+          })[0];
           if (recoveredId) next = { ...next, hand: [...next.hand, recoveredId], discardPile: [playedRecoveryId, ...removeOneCard(recoverableDiscard, recoveredId)] };
           details.push(recoveredId ? `flipped heads and recovered ${cardsById[recoveredId]?.name}` : "flipped heads but had no other card to recover");
           opponentCoinFlip = {
@@ -13930,7 +13977,12 @@ export default function Simulator({
           };
         }
       } else if (card.id === "ocean-jake") {
-        const recoveredId = (next.lostZone ?? [])[0];
+        const recoveredId = selectProductiveOpponentSearchTargets(next.lostZone ?? [], {
+          sourceCardId: card.id,
+          amount: 1,
+          isCandidateProductive: (cardId) => supportIsImmediatelyUseful(cardsById[cardId], card.id),
+          scoreCandidate: (cardId) => scoreSearchCandidate(cardId),
+        })[0];
         const lostAfterRecovery = recoveredId ? removeOneCard(next.lostZone, recoveredId) : [...(next.lostZone ?? [])];
         const currentHandLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
         const handResult = recoveredId
@@ -13947,7 +13999,7 @@ export default function Simulator({
           ? `recovered ${cardsById[recoveredId]?.name} from its Lost Zone; that card cannot be played this turn, and Ocean Jake moved to the Lost Zone`
           : `moved Ocean Jake to the Lost Zone${recoveredId ? `; it chose ${handResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit` : ""}`);
       } else if (card.id === "restocking") {
-        const recoveredIds = next.discardPile.filter((cardId) => cardsById[cardId]?.category === CardCategory.FISH).slice(0, 3);
+        const recoveredIds = orderOpponentChoices(next.discardPile.filter((cardId) => cardsById[cardId]?.category === CardCategory.FISH), opponentDifficulty, (cardId) => scoreSearchCandidate(cardId)).slice(0, 3);
         const recoveredFoundationIds = recoveredIds.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "foundation");
         const recoveredPalsIds = recoveredIds.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "pals");
         next = { ...next, discardPile: recoveredIds.reduce((pile, cardId) => removeOneCard(pile, cardId), next.discardPile), foundationDeck: shuffle([...next.foundationDeck, ...recoveredFoundationIds], nextGameplayRandom), palsDeck: shuffle([...next.palsDeck, ...recoveredPalsIds], nextGameplayRandom) };
@@ -13958,7 +14010,9 @@ export default function Simulator({
           ...(next.orphanCreatures ?? []).flatMap((entry, orphanIndex) => cardCanBeSpearfished(cardsById[entry.cardId], entry, "opponent") ? [{ location: "orphan", orphanIndex, instanceId: entry.instanceId, cardId: entry.cardId, hostedCardIds: [...(entry.hostedCardIds ?? [])], owner: getReefCardOwner(entry, "opponent") }] : []),
           ...(next.reefCreatureInstances ?? []).flatMap((entry, reefIndex) => [CardCategory.FISH, CardCategory.PREDATOR].includes(cardsById[entry.cardId]?.category) ? [{ location: "reef", reefIndex, instanceId: entry.instanceId, cardId: entry.cardId, hostedCardIds: [], owner: "opponent" }] : []),
         ];
-        const target = spearfishingTargets.find((candidate) => candidate.owner === "player") ?? spearfishingTargets[0];
+        const target = selectOpponentChoice(spearfishingTargets.filter((candidate) => candidate.owner === "player"), opponentDifficulty, {
+          mediumScore: (candidate) => scoreSearchCandidate(candidate.cardId),
+        });
         const targetId = target?.cardId;
         const recoveredRp = Number(cardsById[targetId]?.cost?.rp ?? 0);
         const removesPlayerInvader = target?.owner === "player";
@@ -14144,7 +14198,43 @@ export default function Simulator({
       coralCount: next.corals.length,
       emptySlotCount: next.corals.reduce((total, coral) => total + coral.slots.filter((slot) => !slot.cardId).length, 0),
       foundationCardsInHand: next.hand.filter((cardId) => isFoundationCard(cardsById[cardId])).length,
+      usableFoundationCardsInHand: next.hand.filter((cardId) => {
+        const candidate = cardsById[cardId];
+        return isFoundationCard(candidate) && (Number(candidate.stage ?? 0) === 0 || next.corals.some((foundation) => (
+          cardsById[foundation.cardId]?.upgrade?.nextCardId === candidate.id
+          && !coralIsStunned(foundation)
+          && turn > Number(foundation.stageEnteredTurn ?? foundation.playedTurn ?? turn)
+        )));
+      }).length,
       creaturesInHand: next.hand.filter((cardId) => cardsById[cardId]?.kind === CardKind.CREATURE && !isCreatureSchool(cardsById[cardId])).length,
+      placementBlockedCreaturesInHand: next.hand.filter((cardId) => {
+        const candidate = cardsById[cardId];
+        return candidate?.kind === CardKind.CREATURE && !isCreatureSchool(candidate)
+          && !cardUsesOpponentReef(candidate) && candidate.zone !== CreatureZone.OCEAN
+          && !next.corals.some((foundation) => foundation.slots.some((slot) => (
+            (!slot.cardId && canCardOccupySlot(candidate, slot))
+            || (slot.cardId && canHostSpecialPlacement(cardsById[slot.cardId], candidate, slot.hostedCardIds))
+          )));
+      }).length,
+      densityBlockedCreaturesInHand: next.hand.filter((cardId) => {
+        const candidate = cardsById[cardId];
+        return candidate?.kind === CardKind.CREATURE && !isCreatureSchool(candidate)
+          && getEffectiveSchoolDensityRequirement(candidate, schoolDensityConditionIds, next.conditionDensityUses ?? {}).effectiveRequirement > opponentDensityAtDraw.available;
+      }).length,
+      deployedLegalAttackCount: [
+        ...next.corals.flatMap((foundation) => foundation.slots.flatMap((slot) => slot.invasiveOwner === "player" ? [] : [
+          { cardId: slot.cardId, key: getSlotActionKey(slot) },
+          ...(slot.hostedCardIds ?? []).map((cardId, index) => ({ cardId, key: getHostedTargetSlotId(slot.id, index) })),
+        ])),
+        ...(next.reefCreatureInstances ?? []).map((entry, index) => ({ cardId: entry.cardId, key: `reef-${entry.instanceId ?? index}` })),
+        ...getLocallyControlledOrphans(next.orphanCreatures, "opponent").map((entry, index) => ({ cardId: entry.cardId, key: `orphan-${entry.instanceId ?? index}` })),
+      ].filter(({ cardId, key }) => {
+        const attack = getBasicAttackEffect(cardsById[cardId]);
+        return attack && Number(attack.actionCost ?? 0) <= next.rp
+          && turn >= Number(next.actionCooldowns?.[key] ?? 0)
+          && !wasOpponentActionUsedThisTurn(next.actionUses, getOpponentActionUseKey(key, attack), turn)
+          && opponentAttackHasVisibleTarget(cardsById[cardId], attack, next);
+      }).length,
       targetableAttackCardsInHand,
       legalAttackCardsInHand,
       placementBlockedAttackCardsInHand,
@@ -14247,10 +14337,27 @@ export default function Simulator({
         );
       }, 0)
     );
+    let reservedAttackState = null;
+    let reservedAttackRp = 0;
+    const getAttackRpReserve = (state) => {
+      if (state === reservedAttackState) return reservedAttackRp;
+      const plannedAttacks = runOpponentAttackStep(
+        state, playerCorals, playerReefCreatureInstances, playerOrphanCreatureInstances,
+        null, [], { planOnly: true },
+      )?.profitableAttacks ?? [];
+      reservedAttackState = state;
+      reservedAttackRp = getHardOpponentSupportRpReserve({
+        difficulty: opponentDifficulty,
+        availableRp: state.rp,
+        existingBoardAttacks: plannedAttacks.map((attack) => ({ cost: attack.actionCost, priority: attack.value })),
+      });
+      return reservedAttackRp;
+    };
     const opponentDensityBeforePlay = getOpponentSchoolDensityState(next);
     const playableCards = next.hand.filter((cardId) => {
       const card = cardsById[cardId];
       if (!card || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition) || getOpponentPlayCost(card) > next.rp) return false;
+      if (getOnPlayDrawCount(card) > next.foundationDeck.length + next.palsDeck.length) return false;
       if (card.kind === CardKind.HABITAT) {
         if (getHabitatRequirementError(card, next.habitats)) return false;
         return !getCompositionRequirementError(card, next.corals, [...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])]);
@@ -14285,55 +14392,118 @@ export default function Simulator({
     const opponentAttackHasLegalTarget = (attackerCard, attack) => {
       return opponentAttackHasVisibleTarget(attackerCard, attack, next);
     };
-    const scoreOpponentPlay = (cardId) => {
-      const card = cardsById[cardId];
-      const cost = getOpponentPlayCost(card);
-      const printedVp = Number(card?.victoryPoints?.value ?? card?.victoryPoints ?? card?.vp ?? 0);
-      const income = getCardStartTurnRp(card);
-      const actionable = (card?.actions ?? []).length + (card?.onPlay ?? []).length;
-      if (isFoundationCard(card) && Number(card.stage ?? 0) > 0 && findUpgradeTarget(card)) return 120 + printedVp * 5 + income * 8 - cost;
-      if (isFoundationCard(card) && Number(card.stage ?? 0) === 0) return (next.corals.length ? 35 : 100) + printedVp * 5 + income * 10 - cost;
-      if (card.kind === CardKind.HABITAT) {
-        const unlocksCards = next.hand.filter((candidateId) => getHabitatRequirementError(cardsById[candidateId], [...next.habitats, card.id]) === "" && getHabitatRequirementError(cardsById[candidateId], next.habitats)).length;
-        return 30 + unlocksCards * 18 + printedVp * 5 - (next.habitats.includes(card.id) ? 20 : 0) - cost;
-      }
-      return 25 + printedVp * 7 + income * 8 + actionable * 6 - cost;
-    };
     const threatProfile = assessCurrentOpponentThreat(next);
-    const scoreHardOpponentPlay = (cardId) => {
+    const getPermanentPlayMetrics = (cardId) => {
       const card = cardsById[cardId];
-      const printedVp = Number(card?.victoryPoints?.value ?? card?.victoryPoints ?? card?.vp ?? 0);
-      const income = getCardStartTurnRp(card);
       const cost = getOpponentPlayCost(card);
-      const reachesVictory = opponentVp + printedVp >= victoryTarget;
+      const upgradeTarget = isFoundationCard(card) && Number(card.stage ?? 0) > 0 ? findUpgradeTarget(card) : null;
+      const previousCard = cardsById[upgradeTarget?.cardId];
+      const sacrifices = getOceanicPlaySacrifices(card, next.corals, next.reefCreatures, next.orphanCreatures);
+      const symbiosisCardId = cardHasSymbiosis(card)
+        ? next.hand.find((id) => cardsById[id]?.tags?.includes("clownfish")) : null;
+      const vp = projectOpponentPermanentVp({
+        boardCardIds: getOpponentOwnedBoardCardIds(next, playerCorals, playerOrphanCreatures),
+        cardId,
+        replacedCardId: upgradeTarget?.cardId,
+        sacrificedCardIds: sacrifices.map((entry) => entry.cardId),
+        attachedCardIds: symbiosisCardId && placeCardInSpecialHost(card, cardsById[symbiosisCardId], [], symbiosisCardId) ? [symbiosisCardId] : [],
+        cardsById,
+        victoryTarget,
+      });
+      const densityState = getOpponentSchoolDensityState(next);
+      const schoolDensityGain = isFoundationCard(card)
+        ? Number(card.schoolDensity ?? 0) - Number(previousCard?.schoolDensity ?? 0) : 0;
+      const creaturePlay = card.kind === CardKind.CREATURE && !isFoundationCard(card);
+      const projectedDensityAvailable = densityState.available + schoolDensityGain
+        + getOpponentDensityFreedByRequiredSacrifices(card, next)
+        - (creaturePlay ? getEffectiveSchoolDensityRequirement(card, schoolDensityConditionIds, next.conditionDensityUses ?? {}).effectiveRequirement : 0);
+      const projectedConditionUses = creaturePlay
+        ? consumeSchoolDensityConditionDiscount(card, schoolDensityConditionIds, next.conditionDensityUses ?? {}).usedByCondition
+        : next.conditionDensityUses ?? {};
+      const projectedFoundations = isFoundationCard(card)
+        ? upgradeTarget
+          ? next.corals.map((foundation) => foundation.id === upgradeTarget.id
+            ? { ...foundation, cardId, slots: mergeUpgradedCoralSlots(foundation.slots, card, foundation.id) }
+            : foundation)
+          : [...next.corals, { id: "ai-projection", cardId, slots: createCoralSlots(card, "ai-projection") }]
+        : next.corals;
+      const projectedHabitats = card.kind === CardKind.HABITAT ? [...next.habitats, cardId] : next.habitats;
+      const ecosystemCreatures = [...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])];
+      const projectedCreatures = card.kind === CardKind.CREATURE && !isFoundationCard(card)
+        ? [...sacrifices.reduce((ids, entry) => removeOneCard(ids, entry.cardId), ecosystemCreatures), cardId]
+        : ecosystemCreatures;
+      const hasPlacement = (candidate, foundations) => cardUsesOpponentReef(candidate)
+        ? playerCorals.some((foundation) => foundation.slots.some((slot) => !slot.cardId))
+        : candidate.zone === CreatureZone.OCEAN || foundations.some((foundation) => foundation.slots.some((slot) => (
+          (!slot.cardId && canCardOccupySlot(candidate, slot))
+          || (slot.cardId && canHostSpecialPlacement(cardsById[slot.cardId], candidate, slot.hostedCardIds))
+        )));
+      let unlocksCards = 0;
+      let affordableUnlocks = 0;
+      let schoolDensityNeeded = 0;
+      const remainingHand = symbiosisCardId ? removeOneCard(removeOneCard(next.hand, cardId), symbiosisCardId) : removeOneCard(next.hand, cardId);
+      for (const candidateId of remainingHand) {
+        const candidate = cardsById[candidateId];
+        if (!candidate || candidate.kind === CardKind.SUPPORT || getConditionPlayRestriction(candidate, activeCondition)) continue;
+        const creature = candidate.kind === CardKind.CREATURE && !isCreatureSchool(candidate);
+        const requirement = creature ? getEffectiveSchoolDensityRequirement(candidate, schoolDensityConditionIds, next.conditionDensityUses ?? {}).effectiveRequirement : 0;
+        const projectedRequirement = creature ? getEffectiveSchoolDensityRequirement(candidate, schoolDensityConditionIds, projectedConditionUses).effectiveRequirement : 0;
+        schoolDensityNeeded = Math.max(schoolDensityNeeded, requirement - densityState.available);
+        const wasReady = !getHabitatRequirementError(candidate, next.habitats)
+          && !getCompositionRequirementError(candidate, next.corals, ecosystemCreatures)
+          && (!creature || (hasPlacement(candidate, next.corals) && requirement <= densityState.available));
+        const becomesReady = !getHabitatRequirementError(candidate, projectedHabitats)
+          && !getCompositionRequirementError(candidate, projectedFoundations, projectedCreatures)
+          && (!creature || (hasPlacement(candidate, projectedFoundations) && projectedRequirement <= projectedDensityAvailable));
+        if (!wasReady && becomesReady) {
+          unlocksCards += 1;
+          if (cost + getOpponentPlayCost(candidate) <= next.rp) affordableUnlocks += 1;
+        }
+      }
       const onPlayAttack = getOnPlayAttackEffect(card);
       const normalAttack = getBasicAttackEffect(card);
       const immediateAttack = onPlayAttack ?? normalAttack;
-      const createsAttack = Boolean(immediateAttack);
       const canAffordAttackAfterPlay = Boolean(onPlayAttack)
-        || cost + Number(normalAttack?.actionCost ?? 0) <= next.rp;
-      const hasPlayerTarget = canAffordAttackAfterPlay
-        && opponentAttackHasLegalTarget(card, immediateAttack);
-      return scoreHardOpponentPermanentPlay({
-        baseScore: scoreOpponentPlay(cardId),
+        || cost + getAttackRpReserve(next) + Number(normalAttack?.actionCost ?? 0) <= next.rp;
+      return {
+        ...vp,
         threatLevel: threatProfile.level,
-        printedVp,
-        income,
+        incomeGain: getCardStartTurnRp(card) - getCardStartTurnRp(previousCard)
+          - sacrifices.reduce((total, entry) => total + getCardStartTurnRp(entry.card), 0),
         cost,
-        hasLegalAttack: createsAttack && hasPlayerTarget,
-        hasAttack: createsAttack,
-        isFoundation: isFoundationCard(card),
-        isUpgrade: isFoundationCard(card) && Number(card.stage ?? 0) > 0,
-        reachesVictory,
-      });
+        rpGain: getResourceGainFromActions(card.onPlay, "rp"),
+        slotGain: projectedFoundations.reduce((total, foundation) => total + foundation.slots.length, 0)
+          - next.corals.reduce((total, foundation) => total + foundation.slots.length, 0),
+        openSlots: next.corals.reduce((total, foundation) => total + foundation.slots.filter((slot) => !slot.cardId).length, 0),
+        creaturesInHand: remainingHand.filter((id) => cardsById[id]?.kind === CardKind.CREATURE
+          && !isCreatureSchool(cardsById[id]) && cardsById[id].zone !== CreatureZone.OCEAN && !cardUsesOpponentReef(cardsById[id])).length,
+        schoolDensityGain,
+        schoolDensityNeeded,
+        unlocksCards,
+        affordableUnlocks,
+        actionCount: (card.actions ?? []).length + (card.onPlay ?? []).length
+          + (card.kind === CardKind.HABITAT && !next.habitats.includes(card.id) ? 3 : 0),
+        hasLegalAttack: Boolean(immediateAttack && canAffordAttackAfterPlay && opponentAttackHasLegalTarget(card, immediateAttack)),
+        hasAttack: Boolean(immediateAttack),
+        isFirstFoundation: isFoundationCard(card) && next.corals.length === 0,
+      };
     };
-    const preferredPlayableCards = preferOpponentPlaysWithResolvableOnPlayAttacks(playableCards, {
+    const scoreOpponentPlay = (cardId) => scoreOpponentPermanentPlay({
+      ...getPermanentPlayMetrics(cardId), difficulty: opponentDifficulty,
+    });
+    const scoreHardOpponentPlay = scoreOpponentPlay;
+    const attackRpReserve = getAttackRpReserve(next);
+    const plannedPlayableCards = playableCards.filter((cardId) => {
+      const metrics = getPermanentPlayMetrics(cardId);
+      return metrics.reachesVictory || (metrics.cost + attackRpReserve <= next.rp && scoreOpponentPlay(cardId) > 0);
+    });
+    const preferredPlayableCards = preferOpponentPlaysWithResolvableOnPlayAttacks(plannedPlayableCards, {
       hasOnPlayAttack: (cardId) => Boolean(getOnPlayAttackEffect(cardsById[cardId])),
       hasLegalTarget: (cardId) => {
         const candidate = cardsById[cardId];
         return opponentAttackHasLegalTarget(candidate, getOnPlayAttackEffect(candidate));
       },
-      reachesVictory: (cardId) => opponentVp + Number(cardsById[cardId]?.victoryPoints?.value ?? cardsById[cardId]?.victoryPoints ?? cardsById[cardId]?.vp ?? 0) >= victoryTarget,
+      reachesVictory: (cardId) => getPermanentPlayMetrics(cardId).reachesVictory,
     });
     const playable = selectOpponentChoice(preferredPlayableCards, opponentDifficulty, {
       mediumScore: scoreOpponentPlay,
@@ -14348,7 +14518,7 @@ export default function Simulator({
         startOfTurnDetails,
         supportImpacts: supportResult.impacts,
         supportPlays: supportResult.events,
-        summary: `${collectionSummary} Opponent drew ${drawSummaryText}.${supportSummary} It then passed with no legal affordable permanent card.${handLimitSummary}`,
+        summary: `${collectionSummary} Opponent drew ${drawSummaryText}.${supportSummary} It saved its remaining RP for useful actions or a later play.${handLimitSummary}`,
       };
     }
 
@@ -14665,29 +14835,10 @@ export default function Simulator({
     }];
 
     // Players may spend RP on several permanent cards in one action phase.
-    // Hard opponents do the same with straightforward follow-up plays after
+    // Medium and Hard opponents do the same with straightforward follow-up plays after
     // their primary, fully-resolved play. Complex On Play effects remain the
     // primary play so their event sequence is never silently skipped.
-    if (opponentDifficulty === OpponentDifficulty.HARD && !onPlayDrawLossSummary && !opponentOnPlayAttack) {
-      const getAttackRpReserve = (state) => {
-        const attackEntries = [
-          ...state.corals.flatMap((foundation) => foundation.slots.flatMap((slot) => [
-            ...(slot.cardId && slot.invasiveOwner !== "player" ? [{ cardId: slot.cardId, locationKey: getSlotActionKey(slot) }] : []),
-            ...(slot.hostedCardIds ?? []).flatMap((hostedCardId, hostedIndex) => hostedCardId ? [{ cardId: hostedCardId, locationKey: getHostedTargetSlotId(slot.id, hostedIndex) }] : []),
-          ])),
-          ...(state.reefCreatureInstances ?? []).map((instance, reefIndex) => ({ cardId: instance.cardId, locationKey: `reef-${instance.instanceId ?? reefIndex}` })),
-          ...getLocallyControlledOrphans(state.orphanCreatures, "opponent").map((instance, orphanIndex) => ({ cardId: instance.cardId, locationKey: `orphan-${instance.instanceId ?? orphanIndex}` })),
-        ];
-        return attackEntries.reduce((total, entry) => {
-          const attacker = cardsById[entry.cardId];
-          const attack = getBasicAttackEffect(attacker);
-          if (!attack || !opponentAttackHasVisibleTarget(attacker, attack, state)) return total;
-          const actionKey = getOpponentActionUseKey(entry.locationKey, attack);
-          if (wasOpponentActionUsedThisTurn(state.actionUses, actionKey, turn)) return total;
-          if (turn < Number(state.actionCooldowns?.[entry.locationKey] ?? 0)) return total;
-          return total + Number(attack.actionCost ?? 0);
-        }, 0);
-      };
+    if (opponentDifficulty !== OpponentDifficulty.EASY && !onPlayDrawLossSummary && !opponentOnPlayAttack) {
       const isSafeFollowUp = (candidate) => (
         candidate
         && candidate.kind !== CardKind.SUPPORT
@@ -14698,8 +14849,12 @@ export default function Simulator({
         // attacker before its deferred effect has resolved.
         && !(candidate.specialRules ?? []).some((rule) => /discard one oceanic predator or two oceanic fish/i.test(typeof rule === "string" ? rule : rule?.text ?? ""))
       );
-      const safetyLimit = next.hand.length;
+      const safetyLimit = opponentDifficulty === OpponentDifficulty.HARD ? next.hand.length : Math.min(1, next.hand.length);
       for (let playIndex = 0; playIndex < safetyLimit; playIndex += 1) {
+        const currentVp = getEcosystemVictoryPoints(next.corals, next.habitats, next.reefCreatures, {
+          controller: "opponent", localOrphans: next.orphanCreatures, rivalCorals: playerCorals, rivalOrphans: playerOrphanCreatures,
+        });
+        if (currentVp >= victoryTarget) break;
         const densityState = getOpponentSchoolDensityState(next);
         const reserveBeforePlay = getAttackRpReserve(next);
         const candidates = next.hand.filter((candidateId) => {
@@ -14710,7 +14865,8 @@ export default function Simulator({
           const candidateAttackReserve = candidateAttack && opponentAttackHasVisibleTarget(candidate, candidateAttack, next)
             ? Number(candidateAttack.actionCost ?? 0)
             : 0;
-          if (candidateCost + reserveBeforePlay + candidateAttackReserve > next.rp) return false;
+          if (candidateCost > next.rp) return false;
+          if (!getPermanentPlayMetrics(candidateId).reachesVictory && candidateCost + reserveBeforePlay + candidateAttackReserve > next.rp) return false;
           if (candidate.kind === CardKind.HABITAT) {
             return !getHabitatRequirementError(candidate, next.habitats)
               && !getCompositionRequirementError(candidate, next.corals, [...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])]);
@@ -14725,7 +14881,10 @@ export default function Simulator({
           if (candidate.zone === CreatureZone.OCEAN) return true;
           return next.corals.some((foundation) => foundation.slots.some((slot) => !slot.cardId && canCardOccupySlot(candidate, slot)));
         });
-        const candidateId = selectOpponentChoice(candidates, opponentDifficulty, {
+        const winningCandidates = preferOpponentWinningPlays(candidates.filter((id) => scoreOpponentPlay(id) > 0), {
+          reachesVictory: (id) => getPermanentPlayMetrics(id).reachesVictory,
+        });
+        const candidateId = selectOpponentChoice(winningCandidates, opponentDifficulty, {
           mediumScore: scoreOpponentPlay,
           hardScore: scoreHardOpponentPlay,
         });
@@ -14928,9 +15087,12 @@ export default function Simulator({
     const amount = Number(damageEffect?.amount ?? 0) + Number(damageRoll?.total ?? 0) * Number(damageEffect?.multiplier ?? 1);
     const rollSummary = damageRoll ? ` rolled ${damageRoll.total} on ${String(damageEffect.dice).toUpperCase()} and` : "";
     if (!amount || !currentPlayerCorals.length) return null;
-    const target = currentPlayerCorals.find((foundation) => damageEffect.targetType === "creature-school"
+    const candidates = currentPlayerCorals.filter((foundation) => damageEffect.targetType === "creature-school"
       ? isCreatureSchool(cardsById[foundation.cardId])
       : cardsById[foundation.cardId]?.kind === CardKind.CORAL);
+    const target = selectOpponentFoundationEffectTarget(candidates, {
+      amount, cardsById, getIncome: (foundation) => getCardStartTurnRp(cardsById[foundation.cardId]),
+    });
     if (!target) return null;
     const result = applyDamage(target.health ?? target.maxHealth ?? cardsById[target.cardId]?.health, amount);
     if (!result.destroyed) {
@@ -14964,6 +15126,16 @@ export default function Simulator({
 
   function runOpponentUtilityAction(opponentState, currentPlayerState) {
     const currentPlayerFoundations = currentPlayerState?.corals ?? [];
+    const selectCoralTarget = (effect) => selectOpponentFoundationEffectTarget(
+      currentPlayerFoundations.filter((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL),
+      {
+        effect: effect?.type === EffectType.STUN_CORAL ? "stun" : effect?.type === EffectType.DAMAGE ? "damage" : "income",
+        amount: Number(effect?.amount?.value ?? effect?.amount ?? 0),
+        cardsById,
+        getIncome: (foundation) => getCardStartTurnRp(cardsById[foundation.cardId]),
+        isStunned: coralIsStunned,
+      },
+    );
     const handLimit = Number((activeCondition?.effects ?? []).find((candidate) => candidate.type === "setHandLimit")?.amount ?? Infinity);
     const entries = [
       ...opponentState.corals.flatMap((coral) => coral.slots.flatMap((slot) => slot.invasiveOwner === "player" ? [] : [
@@ -15130,7 +15302,7 @@ export default function Simulator({
         const oncePerTurn = actionIsOncePerTurn(action);
         if (!effect || cost > opponentState.rp || (oncePerTurn && wasOpponentActionUsedThisTurn(opponentState.actionUses, actionKey, turn))) continue;
         if (effect.type === EffectType.STUN_CORAL) {
-          const target = currentPlayerFoundations.find((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL);
+          const target = selectCoralTarget(effect);
           if (!target) continue;
           const playerEffect = applyPlayerCoralEffect(effect, target, entry.card.id);
           return {
@@ -15146,7 +15318,7 @@ export default function Simulator({
           };
         }
         if (effect.type === EffectType.FLIP_COIN) {
-          const target = currentPlayerFoundations.find((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL);
+          const target = selectCoralTarget(effect.onSuccess);
           if (!target) continue;
           const actionName = getActionName(action);
           const targetName = cardsById[target.cardId]?.name ?? "Coral";
@@ -15213,7 +15385,8 @@ export default function Simulator({
         }
         if (effect.type === EffectType.DRAW_CARDS) {
           const amount = Math.max(0, Number(effect.amount ?? 0));
-          if (!amount || (!opponentState.foundationDeck.length && !opponentState.palsDeck.length)) continue;
+          if (!amount || amount > opponentState.foundationDeck.length + opponentState.palsDeck.length) continue;
+          if (Number.isFinite(handLimit) && opponentState.hand.length >= handLimit) continue;
           let next = commitAction(opponentState, actionKey, cost, oncePerTurn);
           const drawn = [];
           for (let index = 0; index < amount; index += 1) {
@@ -15282,6 +15455,7 @@ export default function Simulator({
           if (!discardCount || opponentState.hand.length < discardCount || !deckCards.length) continue;
           const discardedIds = [...opponentState.hand].sort((leftId, rightId) => scoreCard(leftId) - scoreCard(rightId)).slice(0, discardCount);
           const targetId = [...deckCards].sort((leftId, rightId) => scoreCard(rightId) - scoreCard(leftId))[0];
+          if (scoreCard(targetId) <= discardedIds.reduce((total, id) => total + Math.max(0, scoreCard(id)), 0) + cost * 4) continue;
           let remainingHand = opponentState.hand;
           discardedIds.forEach((cardId) => { remainingHand = removeOneCard(remainingHand, cardId); });
           const handResult = applyAutomatedHandLimitToState({
@@ -15297,9 +15471,10 @@ export default function Simulator({
         if (effect.type === "discardThenDraw") {
           const minimum = Math.max(0, Number(effect.discard?.min ?? effect.discard?.amount ?? 0));
           const maximum = Math.max(minimum, Number(effect.discard?.max ?? minimum));
-          const discardCount = Math.min(maximum, opponentState.hand.length, opponentState.palsDeck.length + opponentState.foundationDeck.length);
+          const expendableCards = opponentState.hand.filter((cardId) => scoreCard(cardId) <= 15);
+          const discardCount = Math.min(maximum, expendableCards.length, opponentState.palsDeck.length + opponentState.foundationDeck.length);
           if (!discardCount || discardCount < minimum) continue;
-          const discardedIds = [...opponentState.hand].sort((leftId, rightId) => scoreCard(leftId) - scoreCard(rightId)).slice(0, discardCount);
+          const discardedIds = [...expendableCards].sort((leftId, rightId) => scoreCard(leftId) - scoreCard(rightId)).slice(0, discardCount);
           let remainingHand = opponentState.hand;
           discardedIds.forEach((cardId) => { remainingHand = removeOneCard(remainingHand, cardId); });
           let next = { ...opponentState, hand: remainingHand, discardPile: [...discardedIds, ...opponentState.discardPile] };
@@ -15318,7 +15493,13 @@ export default function Simulator({
         }
         if (effect.type === "modifyDefenseRoll" || effect.type === EffectType.GRANT_DEFENSE_ADVANTAGE) {
           const categories = action?.target?.categories ?? [];
-          const target = entries.find((candidate) => candidate.card && (!categories.length || categories.includes(candidate.card.category)));
+          const targets = entries.filter((candidate) => candidate.card
+            && (!categories.length || categories.includes(candidate.card.category))
+            && !(opponentState.creatureStatuses?.[candidate.statusKey] ?? []).some((status) => (
+              status.sourceCardId === entry.card.id && Number(status.expiresTurn ?? Infinity) > turn
+              && status.type === (effect.type === EffectType.GRANT_DEFENSE_ADVANTAGE ? "defenseAdvantage" : "defenseBonusDice")
+            )));
+          const target = selectOpponentChoice(targets, opponentDifficulty, { mediumScore: (candidate) => scoreCard(candidate.card.id) });
           if (!target) continue;
           const status = effect.type === EffectType.GRANT_DEFENSE_ADVANTAGE
             ? { type: "defenseAdvantage", expiresTurn: turn + 1, sourceCardId: entry.card.id }
@@ -15372,7 +15553,13 @@ export default function Simulator({
   }
 
   function runOpponentAttackStep(opponentState, currentPlayerCorals, currentPlayerReefEntries, currentPlayerOrphans, onPlayAttack = null, excludedTargetInstanceIds = [], controllerState = {}, combatRollPacket = null) {
-    const currentPlayerReefInstances = reconcileCreatureZone(currentPlayerReefEntries, currentPlayerReefEntries, "player-reef");
+    const currentPlayerReefInstances = controllerState.planOnly
+      ? (currentPlayerReefEntries ?? []).map((entry, index) => entry?.instanceId ? entry : {
+          ...(typeof entry === "object" ? entry : {}),
+          cardId: typeof entry === "string" ? entry : entry.cardId,
+          instanceId: `planning-player-reef-${index}`,
+        })
+      : reconcileCreatureZone(currentPlayerReefEntries, currentPlayerReefEntries, "player-reef");
     const currentPlayerReefCreatures = currentPlayerReefInstances.map((instance) => instance.cardId);
     const controllerRp = Number(controllerState.rp ?? rp);
     const controllerCreatureStatuses = controllerState.creatureStatuses ?? creatureStatuses;
@@ -15476,31 +15663,13 @@ export default function Simulator({
       });
       return targetEntries.filter((entry) => entry.instanceId && !excludedTargets.has(entry.instanceId));
     };
-    const getExpectedDieValue = (expression, { advantage = false, disadvantage = false } = {}) => {
-      const match = String(expression ?? "").trim().match(/^D(\d+)(?:\s*([+-])\s*(\d+))?$/i);
-      if (!match) return 0;
-      const sides = Number(match[1]);
-      const modifier = match[2] ? Number(`${match[2]}${match[3]}`) : 0;
-      const naturalAverage = advantage && !disadvantage
-        ? ((sides + 1) * (4 * sides - 1)) / (6 * sides)
-        : disadvantage && !advantage
-          ? ((sides + 1) * (2 * sides + 1)) / (6 * sides)
-          : (sides + 1) / 2;
-      return Math.max(0, naturalAverage + modifier);
-    };
-    const getExpectedRepeatCount = (entry) => getDynamicAttackRepeat(
+    const getExpectedRepeatCount = (entry) => Math.max(1, Number(controllerState.remainingAttacks ?? getDynamicAttackRepeat(
       entry.card,
       entry.attack,
       opponentState.corals,
       opponentState.reefCreatures,
       opponentState.habitats,
-    );
-    const scoreAttacker = (entry) => {
-      const expectedRoll = getExpectedDieValue(entry.attack?.attackDice);
-      const repeatAttacks = getExpectedRepeatCount(entry);
-      const printedVp = Number(entry.card?.victoryPoints?.value ?? entry.card?.victoryPoints ?? entry.card?.vp ?? 0);
-      return expectedRoll * repeatAttacks * 3 + printedVp * 2 - Number(entry.attack?.actionCost ?? 0);
-    };
+    )));
     const selectableAttackers = filterOpponentAttackersWithLegalTargets(
       attackerEntries,
       collectAvailableTargets,
@@ -15508,118 +15677,136 @@ export default function Simulator({
     );
     const flashingAlarmBonus = getFlashingAlarmAttackBonus(opponentState.flashingAlarmAttackBonus);
     const attackThreatProfile = assessCurrentOpponentThreat(opponentState);
-    const scoreTarget = (entry, candidateAttacker) => {
+    const pairEvaluations = new Map();
+    const evaluateCombatPair = (candidateAttacker, entry) => {
+      const pairKey = `${candidateAttacker.locationKey}:${entry.instanceId}`;
+      if (pairEvaluations.has(pairKey)) return pairEvaluations.get(pairKey);
       const printedVp = Number(entry.card?.victoryPoints?.value ?? entry.card?.victoryPoints ?? entry.card?.vp ?? 0);
       const income = getCardStartTurnRp(entry.card);
-      const actionValue = Number(entry.card?.actions?.length ?? 0) * 5;
-      const damagedSchoolValue = entry.school ? Math.max(0, Number(entry.coral?.maxHealth ?? 0) - Number(entry.coral?.health ?? entry.coral?.maxHealth ?? 0)) / 5 : 0;
+      const hard = opponentDifficulty === OpponentDifficulty.HARD;
+      const easy = opponentDifficulty === OpponentDifficulty.EASY;
+      const threatened = attackThreatProfile.level !== OpponentThreatLevel.SETUP;
       const schoolDensityCapacity = entry.school ? Number(entry.card?.schoolDensity ?? 0) : 0;
-      const engineDisruption = schoolDensityCapacity * (
-        attackThreatProfile.level === OpponentThreatLevel.CRITICAL
-          ? 0.8
-          : attackThreatProfile.level === OpponentThreatLevel.PRESSURE
-            ? 0.45
-            : 0.2
-      );
-      const hasAttackAdvantage = candidateAttacker
-        ? cardHasAttackAdvantage(candidateAttacker.card, entry.card, opponentState.habitats, candidateAttacker.attack)
-        : false;
-      const hasAttackDisadvantage = candidateAttacker ? attackerHasDisadvantageFromMassive(entry.card) : false;
-      const expectedAttackRoll = getExpectedDieValue(candidateAttacker?.attack?.attackDice, {
-        advantage: hasAttackAdvantage,
-        disadvantage: hasAttackDisadvantage,
-      });
-      const attackModifier = candidateAttacker
-        ? getAttackConditionalModifier(
-            candidateAttacker.card,
-            entry.school
-              ? { ...entry.card, health: entry.coral?.health, maxHealth: entry.coral?.maxHealth }
-              : entry.card,
-            opponentState.habitats,
-            opponentState.corals,
-            opponentState.reefCreatures,
-            candidateAttacker.attack,
-            opponentState.orphanCreatures,
-            { rollConditionalDie: (expression) => ({ total: getExpectedDieValue(expression) }) },
-          ).flat
-        : 0;
-      const expectedAttackTotal = Math.max(0, expectedAttackRoll + attackModifier + flashingAlarmBonus);
-      const repeats = candidateAttacker ? getExpectedRepeatCount(candidateAttacker) : 1;
-      let matchupValue = 0;
-      let expectedDefense = 0;
-      if (entry.school) {
-        const remainingHealth = Math.max(1, Number(entry.coral?.health ?? entry.coral?.maxHealth ?? entry.card?.health ?? 1));
-        const expectedDamage = expectedAttackTotal * 10;
-        const damageProgress = Math.min(1, expectedDamage / remainingHealth);
-        matchupValue = damageProgress * 90 + (expectedDamage >= remainingHealth ? 150 : 0);
-      } else {
-        expectedDefense = getExpectedDieValue(entry.card?.defense?.dice ?? entry.card?.defense, {
-          advantage: hasDefenseAdvantage({ targetCard: entry.card, statuses: [] }),
-        });
-        matchupValue = (expectedAttackTotal - expectedDefense) * 9;
-      }
-      const targetAvoidanceProbability = getTargetAvoidance(entry.card) ? 0.5 : 0;
-      const singleAttackWinProbability = entry.school
-        ? 0
-        : Math.min(0.95, Math.max(0.05, 0.42 + (expectedAttackTotal - expectedDefense) * 0.1));
-      const consumeSuccessProbability = singleAttackWinProbability;
-      const attackerPrintedVp = Number(
-        candidateAttacker?.card?.victoryPoints?.value
-          ?? candidateAttacker?.card?.victoryPoints
-          ?? candidateAttacker?.card?.vp
-          ?? 0,
-      );
-      const attackerRetentionValue = candidateAttacker
-        ? 24
-          + Number(candidateAttacker.card?.cost?.rp ?? 0) * 6
-          + attackerPrintedVp * 12
-          + Number(candidateAttacker.card?.actions?.length ?? 0) * 5
-          + Math.max(0, scoreAttacker(candidateAttacker)) * 2
-        : 0;
-      const attackRiskPenalty = candidateAttacker && !entry.school
-        ? getHardOpponentAttackRiskPenalty({
-            targetIsToxic: isToxicWhenConsumed(entry.card),
-            attackerHasToxicProtection: Boolean(
-              opponentState.poisonImmunityNextPredatorAttack
-                || hasExplicitToxicImmunity(candidateAttacker.card, entry.card),
-            ),
-            attackerSelfDiscardsAfterConsume: shouldSelfDiscardAfterConsume({
-              attackerCard: candidateAttacker.card,
-              defenderCard: entry.card,
-              consumed: true,
-            }),
-            attackerRetentionValue,
-            consumeSuccessProbability,
-            targetAvoidanceProbability,
-            actionOpportunityValue: Math.max(
-              10,
-              Number(candidateAttacker.attack?.actionCost ?? 0) * 8 + expectedAttackTotal * 3,
-            ),
-          })
-        : 0;
-      return printedVp * 15
-        + income * 10
+      const targetValue = 12
+        + printedVp * (hard && threatened ? 19 : 15)
+        + income * (easy ? 6 : hard ? 16 : 12)
         + Number(entry.card?.cost?.rp ?? 0) * 2
-        + actionValue
-        + (entry.school ? 18 : 0)
-        + damagedSchoolValue
-        + engineDisruption
-        + matchupValue
-        + Math.max(0, repeats - 1) * 18
-        - attackRiskPenalty;
+        + Number(entry.card?.actions?.length ?? 0) * 5
+        + (hard ? schoolDensityCapacity * (threatened ? 0.8 : 0.25) : 0)
+        + (entry.onOpponentBoard ? 18 : 0)
+        + (entry.hostedIndex >= 0 || entry.orphanIndex >= 0 ? 0 : (entry.slot?.hostedCardIds ?? []).reduce((value, cardId) => {
+          const hosted = cardsById[cardId];
+          return value + Number(hosted?.victoryPoints?.value ?? hosted?.victoryPoints ?? hosted?.vp ?? 0) * 15 + getCardStartTurnRp(hosted) * 12;
+        }, 0));
+      const targetStatusKey = entry.hostedIndex >= 0
+        ? entry.orphanIndex >= 0
+          ? getOrphanHostedTargetSlotId(entry.orphanInstanceId, entry.hostedIndex)
+          : getHostedTargetSlotId(entry.slot?.id, entry.hostedIndex)
+        : entry.slot ? getSlotActionKey(entry.slot) : entry.reefIndex >= 0 ? `reef-${entry.instanceId ?? entry.reefIndex}` : entry.orphanIndex >= 0 ? `orphan-${entry.instanceId ?? entry.orphanIndex}` : null;
+      const statuses = controllerCreatureStatuses[targetStatusKey] ?? [];
+      const defenseAdjustment = getDefenseAdjustment(candidateAttacker.attack, entry.card, opponentState.habitats);
+      const defenseBonusDice = defenseAdjustment.ignoresBonuses ? [] : statuses.filter((status) => status.type === "defenseBonusDice").map((status) => status.dice);
+      if (!defenseAdjustment.ignoresBonuses && entry.hostedIndex >= 0) {
+        const hostedDice = getHostedDefenseBonusDice(cardsById[entry.hostCardId ?? entry.slot?.cardId], entry.card);
+        if (hostedDice) defenseBonusDice.push(hostedDice);
+      }
+      // Collect conditional dice as distributions. Zero keeps the deterministic
+      // portion separate and never advances the game's random stream.
+      const attackBonusDice = [];
+      const modifier = getAttackConditionalModifier(
+        candidateAttacker.card,
+        entry.school ? { ...entry.card, health: entry.coral?.health, maxHealth: entry.coral?.maxHealth } : entry.card,
+        opponentState.habitats,
+        opponentState.corals,
+        opponentState.reefCreatures,
+        candidateAttacker.attack,
+        opponentState.orphanCreatures,
+        { rollConditionalDie: (expression) => { attackBonusDice.push(expression); return { total: 0 }; } },
+      );
+      const resilience = !entry.school && !entry.onOpponentBoard && cardHasAncientResilience(entry.card) && !controllerResilienceUsedCardIds.includes(entry.instanceId);
+      const regenerate = !entry.school && !entry.onOpponentBoard && createRegenerateDecision({
+        defenderCard: entry.card,
+        defenderWasDefeated: true,
+        controllerRp,
+        survivalAlreadyApplied: resilience,
+      }).available;
+      const outcome = estimateOpponentCombatOutcome({
+        attackDice: candidateAttacker.attack.attackDice,
+        attackAdvantage: cardHasAttackAdvantage(candidateAttacker.card, entry.card, opponentState.habitats, candidateAttacker.attack),
+        attackDisadvantage: attackerHasDisadvantageFromMassive(entry.card),
+        attackFlat: modifier.flat + flashingAlarmBonus + getRovLightsAttackBonus(opponentState.rovLightsActive, entry.card),
+        attackBonusDice,
+        attackRollBonus: (roll) => getRolledAttackBonus(candidateAttacker.attack, roll, opponentState.habitats).flat,
+        defenseDice: entry.card?.defense?.dice ?? entry.card?.defense,
+        defenseAdvantage: hasDefenseAdvantage({ targetCard: entry.card, statuses, ignoreDefensiveBonuses: defenseAdjustment.ignoresBonuses }),
+        defenseFlat: defenseAdjustment.flat + (defenseAdjustment.ignoresBonuses ? 0
+          : getCloakDefenseBonus(entry.card)
+            + getDarknessShroudDefenseBonus(entry.card, playerHabitats)
+            + (entry.coral && !coralIsStunned(entry.coral) ? calculateAttachedCreatureDefenseBonus(cardsById[entry.coral.cardId]) : 0)),
+        defenseBonusDice,
+        avoidanceProbability: getTargetAvoidance(entry.card) ? 0.5 : 0,
+        scatter: cardHasScatter(entry.card),
+        schoolHealth: entry.school ? entry.coral?.health ?? entry.coral?.maxHealth ?? entry.card?.health ?? 1 : null,
+        targetSurvives: resilience || regenerate,
+        counterAttackDice: getBiteBackAttack(entry.card)?.attackDice,
+        attackerDefenseDice: candidateAttacker.card?.defense?.dice ?? candidateAttacker.card?.defense,
+      });
+      const attackerRetentionValue = 16
+        + Number(candidateAttacker.card?.cost?.rp ?? 0) * 6
+        + Number(candidateAttacker.card?.victoryPoints?.value ?? candidateAttacker.card?.victoryPoints ?? candidateAttacker.card?.vp ?? 0) * 15
+        + getCardStartTurnRp(candidateAttacker.card) * 14
+        + Number(candidateAttacker.card?.actions?.length ?? 0) * 8;
+      const selfDiscards = shouldSelfDiscardAfterConsume({ attackerCard: candidateAttacker.card, defenderCard: entry.card, consumed: true });
+      const toxicProtected = Boolean(opponentState.poisonImmunityNextPredatorAttack || hasExplicitToxicImmunity(candidateAttacker.card, entry.card));
+      const attackRiskPenalty = getHardOpponentAttackRiskPenalty({
+        targetIsToxic: isToxicWhenConsumed(entry.card),
+        attackerHasToxicProtection: toxicProtected,
+        attackerSelfDiscardsAfterConsume: selfDiscards,
+        attackerRetentionValue,
+        consumeSuccessProbability: outcome.consumeProbability,
+        // Avoidance already discounts the expected outcome and consumption odds.
+        targetAvoidanceProbability: 0,
+        actionOpportunityValue: 0,
+      });
+      const evaluation = {
+        value: scoreOpponentCombatOutcome({
+          outcome,
+          targetValue,
+          survivalBreakValue: resilience ? targetValue * 0.3 : regenerate ? 8 : 0,
+          schoolMaxHealth: entry.school ? entry.coral?.maxHealth ?? entry.card?.health ?? 1 : null,
+          attackerRetentionValue,
+          attackRiskPenalty,
+        }),
+        survivalProbability: 1 - outcome.counterLossProbability - outcome.consumeProbability * (selfDiscards ? 1 : isToxicWhenConsumed(entry.card) && !toxicProtected ? 0.5 : 0),
+      };
+      pairEvaluations.set(pairKey, evaluation);
+      return evaluation;
     };
-    const hardAttackPlan = opponentDifficulty === OpponentDifficulty.HARD && !onPlayAttack
-      ? selectHardOpponentAttackPlan(selectableAttackers, collectAvailableTargets, {
-          scorePair: (candidateAttacker, candidateTarget) => (
-            scoreAttacker(candidateAttacker) * 0.35
-            + scoreTarget(candidateTarget, candidateAttacker)
-          ),
-        })
-      : null;
-    const attackerEntry = hardAttackPlan?.attacker
-      ?? (opponentDifficulty === OpponentDifficulty.HARD
-        ? selectOpponentChoice(selectableAttackers, opponentDifficulty, { mediumScore: scoreAttacker, hardScore: scoreAttacker })
-        : selectableAttackers[0]);
+    const combatPlanOptions = {
+      difficulty: opponentDifficulty,
+      evaluatePair: evaluateCombatPair,
+      getRepeatCount: getExpectedRepeatCount,
+      getActionCost: (entry) => Number(entry.attack?.actionCost ?? 0) * 8 + (entry.attack?.skipNextTurn ? 2 : 0),
+      mandatory: Boolean(onPlayAttack) || actionCostAlreadyPaid,
+    };
+    if (controllerState.planOnly) {
+      return {
+        profitableAttacks: selectableAttackers.flatMap((entry) => {
+          const plan = selectOpponentCombatPlan([entry], collectAvailableTargets, { ...combatPlanOptions, mandatory: false });
+          return plan ? [{
+            cardId: entry.card.id,
+            instanceId: entry.instanceId,
+            locationKey: entry.locationKey,
+            attack: entry.attack,
+            actionCost: Number(entry.attack?.actionCost ?? 0),
+            value: plan.value,
+            targetInstanceId: plan.target.instanceId,
+          }] : [];
+        }),
+      };
+    }
+    const combatPlan = selectOpponentCombatPlan(selectableAttackers, collectAvailableTargets, combatPlanOptions);
+    const attackerEntry = combatPlan?.attacker ?? (onPlayAttack ? selectableAttackers[0] : null);
     if (!attackerEntry) return null;
     const opponentAttackActionKey = onPlayAttack ? null : getOpponentActionUseKey(attackerEntry.locationKey, attackerEntry.attack);
     const opponentCooldownKey = !onPlayAttack && attackerEntry.attack.skipNextTurn ? (attackerEntry.slot ? getSlotActionKey(attackerEntry.slot) : attackerEntry.orphanIndex >= 0 ? `orphan-${attackerEntry.instanceId ?? attackerEntry.orphanIndex}` : `reef-${attackerEntry.instanceId ?? attackerEntry.reefIndex}`) : null;
@@ -15627,11 +15814,7 @@ export default function Simulator({
     const forcedTargetEntry = controllerState.forcedTargetInstanceId
       ? availableTargetEntries.find((entry) => entry.instanceId === controllerState.forcedTargetInstanceId)
       : null;
-    const targetEntry = forcedTargetEntry
-      ?? hardAttackPlan?.target
-      ?? (opponentDifficulty === OpponentDifficulty.HARD
-        ? selectOpponentChoice(availableTargetEntries, opponentDifficulty, { mediumScore: (entry) => scoreTarget(entry, attackerEntry), hardScore: (entry) => scoreTarget(entry, attackerEntry) })
-        : availableTargetEntries[0]);
+    const targetEntry = forcedTargetEntry ?? combatPlan?.target ?? availableTargetEntries[0];
     if (!targetEntry) {
       if (!onPlayAttack) return null;
       const targetFamilies = formatAttackTargetFamilies(attackerEntry.attack);
@@ -16161,19 +16344,24 @@ export default function Simulator({
     const maxAttackSteps = Math.max(1, Number(controllerState.maxAttackSteps ?? Infinity));
 
     for (let attackNumber = 0; attackNumber < requiredAttacks && steps.length < maxAttackSteps; attackNumber += 1) {
-      let attackForStep = onPlayAttack;
+      // A repeated action belongs to one instance even after its best target
+      // disappears. Live-roll continuations carry the same locked attacker.
+      let attackForStep = attackNumber > 0
+        ? steps[0]?.combatPlan?.forcedAttack ?? onPlayAttack
+        : continuation?.forcedAttack ?? onPlayAttack;
       let ensnareForStep = null;
-      if (onPlayAttack?.attack?.ensnare) {
+      if (attackForStep?.attack?.ensnare) {
         ensnareForStep = controllerState.forcedEnsnareResult
-          ?? resolveEnsnareForAttack(onPlayAttack.attack, nextGameplayRandom);
-        attackForStep = { ...onPlayAttack, attack: ensnareForStep.attack };
+          ?? resolveEnsnareForAttack(attackForStep.attack, nextGameplayRandom);
+        attackForStep = { ...attackForStep, attack: ensnareForStep.attack };
       }
       let capturedCombatPlan = null;
       let step = runOpponentAttackStep(workingOpponent, workingCorals, workingReefInstances, workingOrphans, attackForStep, excludedTargetIds, {
         rp: workingControllerRp,
         creatureStatuses: workingCreatureStatuses,
         resilienceUsedCardIds: [...new Set([...baseResilienceUsedCardIds, ...playerResilienceUsedCardIds])],
-        actionCostAlreadyPaid: Boolean(continuation),
+        actionCostAlreadyPaid: Boolean(continuation) || attackNumber > 0,
+        remainingAttacks: attackNumber > 0 || continuation ? requiredAttacks - attackNumber : null,
         deferToxicResolution: Boolean(controllerState.deferToxicResolution),
         forcedTargetInstanceId: controllerState.forcedTargetInstanceId ?? null,
         forcedAvoidanceCoinResult: controllerState.forcedAvoidanceCoinResult ?? null,

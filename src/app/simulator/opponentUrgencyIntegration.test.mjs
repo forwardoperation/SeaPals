@@ -18,7 +18,9 @@ test("Hard permanent scoring consumes the public threat profile", () => {
     "function applyOpponentFoundationDamage",
   );
   assert.match(opponentTurn, /const threatProfile = assessCurrentOpponentThreat\(next\)/);
-  assert.match(opponentTurn, /scoreHardOpponentPermanentPlay\(\{/);
+  assert.match(opponentTurn, /scoreOpponentPermanentPlay\(\{/);
+  assert.match(opponentTurn, /projectOpponentPermanentVp\(\{/);
+  assert.match(opponentTurn, /replacedCardId: upgradeTarget\?\.cardId/);
   assert.match(opponentTurn, /threatLevel: threatProfile\.level/);
   assert.match(opponentTurn, /canAffordAttackAfterPlay/);
 });
@@ -66,7 +68,9 @@ test("Hard support play preserves a legal attack or permanent before spending RP
   assert.match(supports, /getReservedHardPlayRp/);
   assert.match(supports, /getHardOpponentSupportRpReserve\(\{/);
   assert.match(supports, /existingAttackPlays/);
-  assert.match(supports, /if \(actionCost > state\.rp\) return \[\]/);
+  assert.match(supports, /planOnly: true/);
+  assert.match(supports, /profitableAttacks/);
+  assert.match(supports, /cost: attack\.actionCost/);
   assert.match(supports, /existingBoardAttacks: existingAttackPlays/);
   assert.match(supports, /canOpponentSpendSupportWithoutBreakingHardPlan\(\{/);
 });
@@ -90,10 +94,14 @@ test("normal attacks filter out attackers without targets and Hard can continue 
 
 test("Hard attack planning uses expected values without consuming combat RNG", () => {
   const targetPlanning = sourceBetween(
-    "const scoreTarget = (entry, candidateAttacker)",
-    "const hardAttackPlan",
+    "const evaluateCombatPair = (candidateAttacker, entry)",
+    "const attackerEntry = combatPlan?.attacker",
   );
-  assert.match(targetPlanning, /rollConditionalDie: \(expression\) => \(\{ total: getExpectedDieValue\(expression\) \}\)/);
+  assert.match(targetPlanning, /estimateOpponentCombatOutcome\(\{/);
+  assert.match(targetPlanning, /attackBonusDice\.push\(expression\); return \{ total: 0 \}/);
+  assert.match(targetPlanning, /selectOpponentCombatPlan\(/);
+  assert.match(targetPlanning, /getDefenseAdjustment/);
+  assert.match(targetPlanning, /defenseBonusDice/);
   assert.match(targetPlanning, /cardHasAttackAdvantage/);
   assert.match(targetPlanning, /attackerHasDisadvantageFromMassive/);
   assert.match(targetPlanning, /getExpectedRepeatCount/);

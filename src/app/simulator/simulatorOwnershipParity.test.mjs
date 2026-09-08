@@ -120,7 +120,7 @@ test("Spearfishing removes a foreign Lionfish from either physical reef and retu
     "function runOpponentTurn",
   );
   assert.match(opponentResolution, /owner: getReefCardOwner\(slot, "opponent"\)/);
-  assert.match(opponentResolution, /find\(\(candidate\) => candidate\.owner === "player"\)/);
+  assert.match(opponentResolution, /spearfishingTargets\.filter\(\(candidate\) => candidate\.owner === "player"\)/);
   assert.match(opponentResolution, /resolveSpearfishingInvaderRemoval\([\s\S]*invaderController: "player"/);
   assert.match(opponentResolution, /discardPile: removesPlayerInvader \? invaderRemoval\.actorDiscardPile/);
   assert.match(opponentResolution, /type: "spearfishing-owner-discard"/);

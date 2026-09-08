@@ -287,8 +287,8 @@ test("Ensnare resolves inside each real player and opponent attack step", () => 
     "function runOpponentAttack(opponentState",
     "function buildOpponentAttackEventSequence",
   );
-  assert.match(opponentSequence, /if \(onPlayAttack\?\.attack\?\.ensnare\)/);
-  assert.match(opponentSequence, /resolveEnsnareForAttack\(onPlayAttack\.attack, nextGameplayRandom\)/);
+  assert.match(opponentSequence, /if \(attackForStep\?\.attack\?\.ensnare\)/);
+  assert.match(opponentSequence, /resolveEnsnareForAttack\(attackForStep\.attack, nextGameplayRandom\)/);
 });
 
 test("an On Play attack targets the reconciled reef after its foundation damage", () => {

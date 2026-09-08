@@ -1,9 +1,9 @@
 /**
  * Prefer permanent plays whose mandatory On Play attacks can resolve.
  *
- * A fizzling attacker may still be the correct play when it immediately wins
- * on VP, and the original pool remains available when every option would
- * fizzle so callers never lose an otherwise legal play.
+ * An immediate VP win takes precedence at every difficulty. The original
+ * pool remains available when every option would fizzle so callers never
+ * lose an otherwise legal play.
  */
 export function getPreferredOpponentPermanentPlayPool(
   playableCardIds = [],
@@ -16,13 +16,25 @@ export function getPreferredOpponentPermanentPlayPool(
   const originalPool = [...(playableCardIds ?? [])];
   if (!originalPool.length) return originalPool;
 
+  const winningPool = originalPool.filter(isVpWinningPlay);
+  if (winningPool.length) return winningPool;
+
   const preferredPool = originalPool.filter((cardId) => (
-    isVpWinningPlay(cardId)
-    || !isMandatoryOnPlayAttack(cardId)
+    !isMandatoryOnPlayAttack(cardId)
     || hasLegalOnPlayTarget(cardId)
   ));
 
   return preferredPool.length ? preferredPool : originalPool;
+}
+
+/** Immediate wins are a basic rule-aware decision, including on Easy. */
+export function preferOpponentWinningPlays(
+  playableCardIds = [],
+  { reachesVictory = () => false } = {},
+) {
+  const candidates = [...(playableCardIds ?? [])];
+  const winning = candidates.filter(reachesVictory);
+  return winning.length ? winning : candidates;
 }
 
 export function preferOpponentPlaysWithResolvableOnPlayAttacks(
@@ -49,6 +61,11 @@ export const OpponentThreatLevel = Object.freeze({
 function toFiniteNonNegative(value) {
   const number = Number(value);
   return Number.isFinite(number) ? Math.max(0, number) : 0;
+}
+
+function toFiniteNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
 }
 
 function clamp01(value) {
@@ -242,7 +259,10 @@ export function getOpponentThreatProfile({
     + (victoryDistance <= Math.max(3, target * 0.15) ? 18 : 0)
   ) * 10) / 10;
 
-  const level = score >= 68
+  // A player one ordinary scoring play from winning is urgent even when
+  // both boards are even or the AI currently has a small lead.
+  const playerNearVictory = victoryDistance <= Math.max(3, target * 0.15);
+  const level = playerNearVictory || score >= 68
     ? OpponentThreatLevel.CRITICAL
     : score >= 42
       ? OpponentThreatLevel.PRESSURE
@@ -303,22 +323,87 @@ export function scoreHardOpponentPermanentPlay({
     - normalizedCost;
 }
 
+/**
+ * Evaluate what this play adds to the current board, rather than valuing an
+ * upgrade's entire printed card a second time. Net VP includes replaced or
+ * sacrificed cards and conditional ecosystem scoring, supplied by the caller.
+ * Extra slots and density matter most when they unlock cards already in hand.
+ * Easy weighs immediate gains; Medium and Hard also plan their next plays.
+ */
+export function scoreOpponentPermanentPlay({
+  difficulty = "medium",
+  threatLevel = OpponentThreatLevel.SETUP,
+  vpGain = 0,
+  incomeGain = 0,
+  cost = 0,
+  rpGain = 0,
+  slotGain = 0,
+  openSlots = 0,
+  creaturesInHand = 0,
+  schoolDensityGain = 0,
+  schoolDensityNeeded = 0,
+  unlocksCards = 0,
+  affordableUnlocks = 0,
+  actionCount = 0,
+  hasAttack = false,
+  hasLegalAttack = false,
+  attackValue = null,
+  isFirstFoundation = false,
+  reachesVictory = false,
+} = {}) {
+  const easy = difficulty === "easy";
+  const hard = difficulty === "hard";
+  const critical = threatLevel === OpponentThreatLevel.CRITICAL;
+  const pressure = threatLevel === OpponentThreatLevel.PRESSURE;
+  const planningWeight = easy ? 0.45 : hard ? 1.25 : 1;
+  const economyWeight = critical ? 5 : pressure ? 12 : 22;
+  const vpWeight = critical ? 28 : pressure ? 21 : 16;
+  const attackWeight = critical ? 135 : pressure ? 90 : 55;
+  const usefulSlots = Math.min(
+    toFiniteNonNegative(slotGain),
+    Math.max(0, toFiniteNonNegative(creaturesInHand) - toFiniteNonNegative(openSlots)),
+  );
+  const usefulDensity = Math.min(
+    toFiniteNonNegative(schoolDensityGain),
+    toFiniteNonNegative(schoolDensityNeeded),
+  );
+  const infrastructureValue = usefulSlots * 18
+    + Math.min(120, usefulDensity) * 0.35
+    + Math.min(4, toFiniteNonNegative(unlocksCards)) * 14
+    + Math.min(3, toFiniteNonNegative(affordableUnlocks)) * 32;
+  const immediateAttackValue = hasLegalAttack
+    ? attackValue == null
+      ? attackWeight
+      : Math.max(-attackWeight, Math.min(attackWeight * 2, toFiniteNumber(attackValue)))
+    : hasAttack ? -12 : 0;
+
+  return (reachesVictory ? 100000 : 0)
+    + toFiniteNumber(vpGain) * (easy ? 14 : vpWeight)
+    + toFiniteNumber(incomeGain) * (easy ? 12 : economyWeight)
+    + toFiniteNonNegative(rpGain) * 8
+    + infrastructureValue * planningWeight
+    + immediateAttackValue * (easy ? 0.55 : hard ? 1.15 : 1)
+    + Math.min(3, toFiniteNonNegative(actionCount)) * (easy ? 2 : 4)
+    + (isFirstFoundation ? 55 : 0)
+    - toFiniteNonNegative(cost) * (easy ? 3 : 4);
+}
+
 export function shouldOpponentAttackBeforeUtility(difficulty, threatLevel) {
-  return difficulty === "hard" && Object.values(OpponentThreatLevel).includes(threatLevel);
+  return difficulty !== "easy" && Object.values(OpponentThreatLevel).includes(threatLevel);
 }
 
 export function getOpponentNormalAttackLimit(difficulty) {
-  return difficulty === "hard" ? Infinity : 1;
+  return difficulty === "easy" ? 1 : Infinity;
 }
 
 /**
- * Supports resolve before permanent cards in the automated turn. Hard must
- * reserve the cumulative cost of every currently legal deployed attack,
- * otherwise one paid search can silently remove a later attack from Hard's
+ * Supports resolve before permanent cards in the automated turn. Reserve
+ * the cumulative cost of currently legal deployed attacks,
+ * otherwise one paid search can silently remove a later attack from the AI's
  * turn. Hand cards are alternative primary lines, so reserve only the highest
  * priority affordable combat permanent in addition to those board attacks.
- * If none is available, keep the cheapest legal permanent so Hard still
- * advances its board.
+ * Immediate wins override the attack budget. Easy budgets one normal attack;
+ * Medium and Hard budget all of them. The legacy export name is retained.
  */
 export function getHardOpponentSupportRpReserve({
   difficulty,
@@ -328,13 +413,25 @@ export function getHardOpponentSupportRpReserve({
   getCost = (play) => play?.cost,
   isCombatPlay = (play) => Boolean(play?.hasLegalAttack),
   getPriority = (play) => play?.priority,
+  isWinningPlay = (play) => Boolean(play?.reachesVictory),
 } = {}) {
-  if (difficulty !== "hard") return 0;
-  const bank = Math.max(0, Number(availableRp) || 0);
-  const normalizeCost = (play) => Math.max(0, Number(getCost(play)) || 0);
+  const bank = toFiniteNonNegative(availableRp);
+  const normalizeCost = (play) => toFiniteNonNegative(getCost(play));
+  const winningPlays = (permanentPlays ?? []).filter((play) => (
+    isWinningPlay(play) && normalizeCost(play) <= bank
+  ));
+  if (winningPlays.length) return Math.min(...winningPlays.map(normalizeCost));
+  const attacks = [...(existingBoardAttacks ?? [])];
+  if (difficulty === "easy") {
+    attacks.sort((left, right) => (
+      toFiniteNumber(getPriority(right)) - toFiniteNumber(getPriority(left))
+      || normalizeCost(left) - normalizeCost(right)
+    ));
+  }
   const boardAttackReserve = Math.min(
     bank,
-    (existingBoardAttacks ?? []).reduce((total, attack) => total + normalizeCost(attack), 0),
+    attacks.slice(0, getOpponentNormalAttackLimit(difficulty))
+      .reduce((total, attack) => total + normalizeCost(attack), 0),
   );
   const remainingForPermanent = Math.max(0, bank - boardAttackReserve);
   const affordable = (permanentPlays ?? []).map((play, index) => ({
@@ -358,6 +455,13 @@ export function getHardOpponentSupportRpReserve({
     }, combat[0]);
     return boardAttackReserve + selectedCombatLine.cost;
   }
+  const rankedPermanents = affordable.filter(({ play }) => Number.isFinite(Number(getPriority(play))));
+  if (rankedPermanents.length) {
+    const bestPermanent = rankedPermanents.reduce((best, candidate) => (
+      Number(getPriority(candidate.play)) > Number(getPriority(best.play)) ? candidate : best
+    ));
+    return boardAttackReserve + bestPermanent.cost;
+  }
   return boardAttackReserve + Math.min(...affordable.map(({ cost }) => cost));
 }
 
@@ -367,11 +471,11 @@ export function canOpponentSpendSupportWithoutBreakingHardPlan({
   supportCost = 0,
   reservedRp = 0,
 } = {}) {
-  const bank = Math.max(0, Number(availableRp) || 0);
-  const cost = Math.max(0, Number(supportCost) || 0);
+  const bank = toFiniteNonNegative(availableRp);
+  const cost = toFiniteNonNegative(supportCost);
   if (cost > bank) return false;
-  if (difficulty !== "hard" || cost === 0) return true;
-  return bank - cost >= Math.max(0, Number(reservedRp) || 0);
+  if (cost === 0) return true;
+  return bank - cost >= toFiniteNonNegative(reservedRp);
 }
 
 /**

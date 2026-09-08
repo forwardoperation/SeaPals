@@ -55,18 +55,41 @@ export function getOpponentDifficultyProfile(value) {
   };
 }
 
-export function selectOpponentChoice(items, difficulty, { mediumScore, hardScore = mediumScore } = {}) {
+function normalizeChoiceScore(value) {
+  const score = Number(value);
+  return value != null && Number.isFinite(score) ? score : -Infinity;
+}
+
+export function selectOpponentChoice(items, difficulty, { easyScore, mediumScore, hardScore } = {}) {
   if (!items?.length) return null;
   const normalized = normalizeOpponentDifficulty(difficulty);
-  if (normalized === OpponentDifficulty.EASY || typeof mediumScore !== "function") return items[0];
-  const score = normalized === OpponentDifficulty.HARD && typeof hardScore === "function" ? hardScore : mediumScore;
-  return items.reduce((best, candidate) => score(candidate) > score(best) ? candidate : best, items[0]);
+  // Easy still recognizes direct value. Its smaller action budget and simpler
+  // scoring keep it approachable without making hand order its strategy.
+  const score = normalized === OpponentDifficulty.HARD
+    ? hardScore ?? mediumScore ?? easyScore
+    : normalized === OpponentDifficulty.EASY
+      ? easyScore ?? mediumScore
+      : mediumScore ?? easyScore;
+  if (typeof score !== "function") return items[0];
+  let best = items[0];
+  let bestScore = normalizeChoiceScore(score(best));
+  for (const candidate of items.slice(1)) {
+    const candidateScore = normalizeChoiceScore(score(candidate));
+    if (candidateScore > bestScore) {
+      best = candidate;
+      bestScore = candidateScore;
+    }
+  }
+  return best;
 }
 
 export function orderOpponentChoices(items, difficulty, score) {
   const choices = [...(items ?? [])];
-  if (normalizeOpponentDifficulty(difficulty) === OpponentDifficulty.EASY || typeof score !== "function") return choices;
-  return choices.sort((left, right) => score(right) - score(left));
+  if (typeof score !== "function") return choices;
+  return choices
+    .map((item, index) => ({ item, index, score: normalizeChoiceScore(score(item)) }))
+    .sort((left, right) => right.score - left.score || left.index - right.index)
+    .map(({ item }) => item);
 }
 
 export function limitOpponentOptionalActions(available, difficulty, actionType) {
@@ -86,29 +109,45 @@ export function chooseOpponentPreferredDeck({
   coralCount = 0,
   emptySlotCount = 0,
   foundationCardsInHand = 0,
+  usableFoundationCardsInHand,
   creaturesInHand = 0,
+  placementBlockedCreaturesInHand,
+  densityBlockedCreaturesInHand = 0,
   targetableAttackCardsInHand = 0,
   legalAttackCardsInHand = 0,
   placementBlockedAttackCardsInHand = 0,
   visibleAttackTargetCount = 0,
+  deployedLegalAttackCount = 0,
   threatLevel = "setup",
 } = {}) {
   const fallback = Number(round) % 2 === 1 ? "palsDeck" : "foundationDeck";
-  if (normalizeOpponentDifficulty(difficulty) !== OpponentDifficulty.HARD) return fallback;
-  if (coralCount < 2 && foundationCardsInHand === 0) return "foundationDeck";
-  if (emptySlotCount === 0 && foundationCardsInHand === 0) return "foundationDeck";
+  const normalized = normalizeOpponentDifficulty(difficulty);
+  // Upgrade cards without their previous stage cannot solve a missing reef.
+  const usableFoundations = Math.max(0, Number(usableFoundationCardsInHand ?? foundationCardsInHand) || 0);
+  // Callers with full placement information include Oceanic and hosted cards,
+  // which may be playable even when every ordinary slot is occupied.
+  const placementBlockedCreatures = Math.max(0, Number(
+    placementBlockedCreaturesInHand ?? (emptySlotCount === 0 ? creaturesInHand : 0),
+  ) || 0);
+  if (coralCount === 0 && usableFoundations === 0) return "foundationDeck";
+  if (placementBlockedCreatures > 0 && usableFoundations === 0) return "foundationDeck";
+  if (creaturesInHand === 0 && (emptySlotCount > 0 || usableFoundations > 0)) return "palsDeck";
+  if (coralCount < 2 && usableFoundations === 0) return "foundationDeck";
+  if (normalized === OpponentDifficulty.EASY) return fallback;
+  if (densityBlockedCreaturesInHand > 0 && usableFoundations === 0) return "foundationDeck";
   // Attack-heavy decks often carry one-shot On Play attacks rather than
   // reusable attack actions. A hand full of passive or currently untargeted
   // creatures is not a real combat line, so draw from Pals while the rival has
   // exposed creatures instead of blindly alternating back to Foundation.
-  if (visibleAttackTargetCount > 0 && legalAttackCardsInHand === 0) {
+  if (normalized === OpponentDifficulty.HARD && visibleAttackTargetCount > 0 && legalAttackCardsInHand === 0 && deployedLegalAttackCount === 0) {
     if (placementBlockedAttackCardsInHand > 0) {
       return "foundationDeck";
     }
     if (targetableAttackCardsInHand === 0) return "palsDeck";
   }
   if (["pressure", "critical"].includes(threatLevel) && creaturesInHand < 2 && coralCount > 0) return "palsDeck";
-  if (emptySlotCount <= 1 && foundationCardsInHand === 0) return "foundationDeck";
+  if (emptySlotCount <= 1 && usableFoundations === 0) return "foundationDeck";
   if (emptySlotCount > 0 && creaturesInHand === 0) return "palsDeck";
+  if (usableFoundations >= Math.max(2, creaturesInHand)) return "palsDeck";
   return fallback;
 }

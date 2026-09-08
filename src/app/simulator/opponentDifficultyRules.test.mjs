@@ -16,17 +16,18 @@ test("unknown opponent difficulty safely falls back to medium", () => {
   assert.equal(getOpponentDifficultyProfile().label, "Medium");
 });
 
-test("easy uses the first legal choice while medium and hard use their scores", () => {
+test("all levels recognize direct value while hard can prefer its stronger tactical score", () => {
   const choices = ["simple", "balanced", "finisher"];
   const mediumScores = { simple: 1, balanced: 8, finisher: 5 };
   const hardScores = { simple: 1, balanced: 8, finisher: 50 };
-  assert.equal(selectOpponentChoice(choices, "easy", { mediumScore: (id) => mediumScores[id] }), "simple");
+  assert.equal(selectOpponentChoice(choices, "easy", { mediumScore: (id) => mediumScores[id] }), "balanced");
+  assert.equal(selectOpponentChoice(choices, "easy", { easyScore: (id) => id === "simple" ? 5 : 0, mediumScore: (id) => mediumScores[id] }), "simple");
   assert.equal(selectOpponentChoice(choices, "medium", { mediumScore: (id) => mediumScores[id] }), "balanced");
   assert.equal(selectOpponentChoice(choices, "hard", { mediumScore: (id) => mediumScores[id], hardScore: (id) => hardScores[id] }), "finisher");
 });
 
-test("easy preserves hand order and limits optional action volume", () => {
-  assert.deepEqual(orderOpponentChoices(["a", "b", "c"], "easy", (id) => ({ a: 1, b: 9, c: 4 })[id]), ["a", "b", "c"]);
+test("easy spends its smaller optional action budget on useful choices", () => {
+  assert.deepEqual(orderOpponentChoices(["a", "b", "c"], "easy", (id) => ({ a: 1, b: 9, c: 4 })[id]), ["b", "c", "a"]);
   assert.deepEqual(orderOpponentChoices(["a", "b", "c"], "medium", (id) => ({ a: 1, b: 9, c: 4 })[id]), ["b", "c", "a"]);
   assert.equal(limitOpponentOptionalActions(7, "easy", "support"), 1);
   assert.equal(limitOpponentOptionalActions(7, "easy", "utility"), 1);
@@ -38,7 +39,49 @@ test("hard strategically chooses a deck without inspecting its top card", () => 
   assert.equal(chooseOpponentPreferredDeck({ difficulty: "hard", round: 1, coralCount: 1, emptySlotCount: 0, foundationCardsInHand: 0, creaturesInHand: 2 }), "foundationDeck");
   assert.equal(chooseOpponentPreferredDeck({ difficulty: "hard", round: 2, coralCount: 2, emptySlotCount: 4, foundationCardsInHand: 1, creaturesInHand: 0 }), "palsDeck");
   assert.equal(chooseOpponentPreferredDeck({ difficulty: "hard", round: 8, coralCount: 3, emptySlotCount: 2, foundationCardsInHand: 3, creaturesInHand: 0, threatLevel: "critical" }), "palsDeck");
-  assert.equal(chooseOpponentPreferredDeck({ difficulty: "medium", round: 1, coralCount: 1, emptySlotCount: 0, foundationCardsInHand: 0, creaturesInHand: 2 }), "palsDeck");
+  assert.equal(chooseOpponentPreferredDeck({ difficulty: "medium", round: 1, coralCount: 1, emptySlotCount: 0, foundationCardsInHand: 0, creaturesInHand: 2 }), "foundationDeck");
+});
+
+test("choice scores are evaluated once, reject invalid values, and retain stable ties", () => {
+  for (const difficulty of Object.values(OpponentDifficulty)) {
+    const choices = ["invalid", "valuable", "tied", "negative"];
+    const calls = [];
+    const score = (id) => {
+      calls.push(id);
+      return { invalid: NaN, valuable: 4, tied: 4, negative: -1 }[id];
+    };
+    assert.equal(selectOpponentChoice(choices, difficulty, { mediumScore: score }), "valuable");
+    assert.deepEqual(calls, choices);
+    calls.length = 0;
+    assert.deepEqual(orderOpponentChoices(choices, difficulty, score), ["valuable", "tied", "negative", "invalid"]);
+    assert.deepEqual(calls, choices);
+    assert.deepEqual(choices, ["invalid", "valuable", "tied", "negative"]);
+  }
+  assert.equal(selectOpponentChoice(["a", "b"], "hard", { hardScore: (id) => id === "b" ? 1 : 0 }), "b");
+  assert.equal(selectOpponentChoice([], "hard"), null);
+  assert.equal(selectOpponentChoice(["a", "b"], "medium"), "a");
+});
+
+test("all levels draw missing foundations and creatures instead of following round parity", () => {
+  for (const difficulty of Object.values(OpponentDifficulty)) {
+    assert.equal(chooseOpponentPreferredDeck({ difficulty, round: 1, coralCount: 0, foundationCardsInHand: 1, usableFoundationCardsInHand: 0, creaturesInHand: 2 }), "foundationDeck", `${difficulty}: locked upgrade does not create a reef`);
+    assert.equal(chooseOpponentPreferredDeck({ difficulty, round: 1, coralCount: 3, emptySlotCount: 2, creaturesInHand: 1, placementBlockedCreaturesInHand: 1 }), "foundationDeck", `${difficulty}: unsuitable slots do not house its creature`);
+    assert.equal(chooseOpponentPreferredDeck({ difficulty, round: 2, coralCount: 3, emptySlotCount: 2, creaturesInHand: 0 }), "palsDeck", `${difficulty}: fill existing reef space`);
+    assert.equal(chooseOpponentPreferredDeck({ difficulty, round: 2, coralCount: 0, foundationCardsInHand: 2, usableFoundationCardsInHand: 2, creaturesInHand: 0 }), "palsDeck", `${difficulty}: foundation supply is already in hand`);
+  }
+});
+
+test("medium and hard recognize a density bottleneck and avoid excess foundations", () => {
+  for (const difficulty of [OpponentDifficulty.MEDIUM, OpponentDifficulty.HARD]) {
+    assert.equal(chooseOpponentPreferredDeck({ difficulty, round: 1, coralCount: 3, emptySlotCount: 3, creaturesInHand: 2, densityBlockedCreaturesInHand: 2 }), "foundationDeck");
+    assert.equal(chooseOpponentPreferredDeck({ difficulty, round: 2, coralCount: 3, emptySlotCount: 3, foundationCardsInHand: 3, creaturesInHand: 2 }), "palsDeck");
+  }
+});
+
+test("hard distinguishes deployed combat from a missing attack in hand", () => {
+  const situation = { difficulty: "hard", round: 2, coralCount: 3, emptySlotCount: 3, foundationCardsInHand: 1, creaturesInHand: 3, visibleAttackTargetCount: 2 };
+  assert.equal(chooseOpponentPreferredDeck(situation), "palsDeck");
+  assert.equal(chooseOpponentPreferredDeck({ ...situation, deployedLegalAttackCount: 1 }), "foundationDeck");
 });
 
 test("hard draws toward an attack when public targets are exposed but its creature hand has no legal attack", () => {
