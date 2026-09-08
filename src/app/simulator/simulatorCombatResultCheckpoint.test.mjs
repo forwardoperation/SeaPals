@@ -274,7 +274,7 @@ test("reef, orphan, and slot cards expose stable physical instance geometry on b
   );
   assert.match(
     playerBoard,
-    /playerReefCreatures\.map\([\s\S]*?data-card-instance-id=\{playerReefCreatureInstances\[index\]\?\.instanceId\}/,
+    /playerReefCreatureInstances\.map\(\(instance, index\)[\s\S]*?data-card-instance-id=\{instance\.instanceId\}/,
     "Player open-water cards need their persistent reef occurrence ID",
   );
   assert.match(

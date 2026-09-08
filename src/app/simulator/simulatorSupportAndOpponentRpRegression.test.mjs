@@ -16,7 +16,7 @@ test("V2 Support completion returns to the reef while legacy Simulator may retur
   const returnToBoard = sourceSection(
     simulatorSource,
     "function returnFromSupportFlowToBoard(selectedCardId = null)",
-    "function playCardFromHand(cardId)",
+    "function playCardFromHand(",
   );
 
   assert.match(returnToBoard, /setModal\(previewExperience \? null : "hand"\)/);
@@ -27,7 +27,7 @@ test("V2 Support completion returns to the reef while legacy Simulator may retur
 test("every Support path that formerly reopened the legacy hand sheet uses the V2-aware reef return", () => {
   const playCard = sourceSection(
     simulatorSource,
-    "function playCardFromHand(cardId)",
+    "function playCardFromHand(",
     "function completeInvasivePlacement",
   );
   const recovery = sourceSection(
@@ -71,7 +71,7 @@ test("every Support path that formerly reopened the legacy hand sheet uses the V
 test("Support targeting and mandatory choice surfaces remain intact", () => {
   const playCard = sourceSection(
     simulatorSource,
-    "function playCardFromHand(cardId)",
+    "function playCardFromHand(",
     "function completeInvasivePlacement",
   );
 

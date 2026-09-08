@@ -145,7 +145,7 @@ test("the guided hand keeps new copy at the top and offers a direct jump to its 
 test("pending placement cannot reopen the mobile hand or replay the same card", () => {
   const playCard = sourceSection(
     simulatorSource,
-    "function playCardFromHand(cardId)",
+    "function playCardFromHand(",
     "function completeInvasivePlacement",
   );
   assert.ok(
@@ -413,7 +413,7 @@ test("mobile hand drops reuse the normal ecosystem, foundation, and slot placeme
   assert.match(dragDrop, /placeCardToSlot\([^,]+,\s*cardId\)/, "slot drops should commit the exact dragged occurrence through existing slot validation");
   assert.match(dragDrop, /upgradeCoral\([^,]+,\s*cardId\)/, "upgrade drops should reuse normal foundation upgrade rules");
   assert.match(dragDrop, /placeCoralInEcosystem\([^,]+,\s*[^,]+,\s*cardId\)/, "base foundations should use the board placement path with the dragged card id");
-  assert.match(dragDrop, /playCardFromHand\(cardId\)/, "general ecosystem drops should preserve support, habitat, ocean, and targeted-card rules");
+  assert.match(dragDrop, /playCardFromHand\(cardId,\s*\{\s*placementPosition\s*\}\)/, "general ecosystem drops should preserve support, habitat, ocean, and targeted-card rules while carrying spatial placement");
 });
 
 test("invalid, canceled, and interrupted mobile hand drops share one complete cleanup path", () => {

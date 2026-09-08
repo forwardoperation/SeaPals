@@ -69,7 +69,11 @@ test("Fit reserves space for external foundation and Habitat vitals", () => {
   assert.match(fit, /const floatingTopClearance = isOpponent[\s\S]*?opponent\.habitats\.length \? 40 : 16[\s\S]*?playerHabitats\.length \? 48 : 24/);
   assert.match(fit, /const floatingTopRowHeight = floatingTopClearance \+ floatingRowCount \* floatingCardHeight/);
   assert.match(simulatorSource, /opponent\.habitats\.length \? "top-10" : "top-4"/);
-  assert.match(simulatorSource, /playerHabitats\.length \? "top-12" : "top-6"/);
+  assert.match(
+    simulatorSource,
+    /seapals-player-floating-row[^"\n]*bottom-0[^"\n]*top-0[\s\S]*?playerHabitats\.length \? "pt-12" : "pt-6"/,
+    "the player row should keep Habitat clearance while spanning the board for positioned Open Water cards",
+  );
 });
 
 test("the card inspector keeps its vitals in normal document flow", () => {

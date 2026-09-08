@@ -64,7 +64,7 @@ test("one V2 card tap samples once and reduced motion still lands through an ID-
 });
 
 test("Recovery commits once, snapshots the old discard pile, and defers only the V2 outcome", () => {
-  const playCard = sourceBetween("function playCardFromHand(cardId)", "function completeInvasivePlacement");
+  const playCard = sourceBetween("function playCardFromHand(", "function completeInvasivePlacement");
   const recovery = playCard.slice(
     playCard.indexOf('if (card.id === "recovery")'),
     playCard.indexOf('if (card.id === "scientist-jes")'),
@@ -187,7 +187,7 @@ test("restart cancellation invalidates a card toss, while legacy Recovery and op
   assert.match(cancellation, /cardCoinFlipActiveRef\.current = false/);
   assert.match(cancellation, /setCardCoinFlip\(cancelCardCoinFlip\(\)\)/);
 
-  const playCard = sourceBetween("function playCardFromHand(cardId)", "function completeInvasivePlacement");
+  const playCard = sourceBetween("function playCardFromHand(", "function completeInvasivePlacement");
   const recovery = playCard.slice(
     playCard.indexOf('if (card.id === "recovery")'),
     playCard.indexOf('if (card.id === "scientist-jes")'),

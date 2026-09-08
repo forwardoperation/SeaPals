@@ -65,7 +65,7 @@ test("Open Water cards float in transparent player and opponent groups without z
   const playerLeadIn = sourceSection(
     simulatorSource,
     '<div className="seapals-player-open-water',
-    "{playerReefCreatures.map((cardId, index) => {",
+    "{playerReefCreatureInstances.map((instance, index) => {",
   );
   const opponentLeadIn = sourceSection(
     simulatorSource,
@@ -107,11 +107,11 @@ test("floating Habitat and Open Water art matches each owner's ordinary visible 
   const playerHabitats = sourceSection(
     simulatorSource,
     "{playerHabitats.length ? (",
-    "{playerReefCreatures.length ? (",
+    "{playerReefCreatureInstances.length ? (",
   );
   const playerOpenWater = sourceSection(
     simulatorSource,
-    "{playerReefCreatures.length ? (",
+    "{playerReefCreatureInstances.length ? (",
     "{playerOrphanCreatures.length ? (",
   );
   const playerFoundations = sourceSection(
@@ -136,7 +136,7 @@ test("placing Open Water and Habitat cards briefly flashes the owning ecosystem 
   );
   const cardPlay = sourceSection(
     simulatorSource,
-    "function playCardFromHand(cardId)",
+    "function playCardFromHand(",
     "function completeInvasivePlacement",
   );
   const flashController = sourceSection(

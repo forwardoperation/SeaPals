@@ -19,6 +19,7 @@ import OpeningCoinBoardPresentation, { OpeningCoinVisual } from "./OpeningCoinBo
 import VictoryCelebration from "./VictoryCelebration";
 import { evaluateCardActionAvailability } from "./cardActionAvailability.mjs";
 import { getDeckOrderDestinationIndex, moveDeckOrderItem } from "./deckOrderRules.mjs";
+import { getOpenWaterCardLayoutStyle, normalizeOpenWaterPlacementPosition } from "./openWaterPlacementRules.mjs";
 import {
   CardCoinPhase,
   cancelCardCoinFlip,
@@ -3922,6 +3923,24 @@ function getPlacementCoordinates(event, zoom, offset) {
   );
 }
 
+function getViewportCoordinatesForPlacement(element, position, camera) {
+  const normalizedPosition = normalizeOpenWaterPlacementPosition(position);
+  if (!element || !normalizedPosition) return null;
+  const rect = element.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+  const zoom = Number.isFinite(camera?.zoom) ? camera.zoom : 1;
+  const offsetX = Number.isFinite(camera?.offset?.x) ? camera.offset.x : 0;
+  const offsetY = Number.isFinite(camera?.offset?.y) ? camera.offset.y : 0;
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+  const worldX = (normalizedPosition.x / 100) * rect.width;
+  const worldY = (normalizedPosition.y / 100) * rect.height;
+  return {
+    x: ((centerX + (worldX - centerX) * zoom + offsetX) / rect.width) * 100,
+    y: ((centerY + (worldY - centerY) * zoom + offsetY) / rect.height) * 100,
+  };
+}
+
 function roundLayoutNumber(value, precision = 4) {
   return Number(Number(value).toFixed(precision));
 }
@@ -7771,9 +7790,16 @@ export default function Simulator({
     const floatingCardsPresent = isOpponent
       ? opponent.habitats.length || opponent.reefCreatures.length || (opponent.orphanCreatures?.length ?? 0)
       : playerHabitats.length || playerReefCreatures.length || playerOrphanCreatures.length;
+    const positionedPlayerOpenWater = isOpponent ? [] : playerReefCreatureInstances.flatMap((instance) => {
+      const position = normalizeOpenWaterPlacementPosition(instance.position);
+      return position ? [{ instance, position }] : [];
+    });
+    const centeredPlayerOpenWaterCount = isOpponent
+      ? 0
+      : playerReefCreatureInstances.length - positionedPlayerOpenWater.length;
     const floatingTopRowCount = isOpponent
       ? opponent.habitats.length + opponent.reefCreatures.length
-      : playerHabitats.length + playerReefCreatures.length;
+      : playerHabitats.length + centeredPlayerOpenWaterCount;
     const floatingTopClearance = isOpponent
       ? opponent.habitats.length ? 40 : 16
       : playerHabitats.length ? 48 : 24;
@@ -7810,7 +7836,10 @@ export default function Simulator({
       });
       return cardBounds;
     });
-    if (floatingCardsPresent) {
+    const floatingTopRegionPresent = isOpponent
+      ? floatingCardsPresent
+      : floatingTopRowCount > 0 || playerOrphanCreatures.length > 0;
+    if (floatingTopRegionPresent) {
       const floatingCardWidth = isOpponent ? 120 : 180;
       const floatingCardHeight = isOpponent ? 150 : 220;
       const floatingCardGap = isOpponent ? 8 : 12;
@@ -7819,6 +7848,17 @@ export default function Simulator({
       const floatingTopRowHeight = floatingTopClearance + floatingRowCount * floatingCardHeight + Math.max(0, floatingRowCount - 1) * floatingCardGap;
       bounds.push({ minX: 0, maxX: rect.width, minY: 0, maxY: Math.max(330, floatingTopRowHeight) });
     }
+    positionedPlayerOpenWater.forEach(({ instance, position }) => {
+      const offset = floatingCardOffsets[`player-reef-${instance.instanceId}`] ?? { x: 0, y: 0 };
+      const centerX = (position.x / 100) * rect.width + Number(offset.x ?? 0);
+      const centerY = (position.y / 100) * rect.height + Number(offset.y ?? 0);
+      bounds.push({
+        minX: centerX - 90,
+        maxX: centerX + 90,
+        minY: centerY - 110,
+        maxY: centerY + 110,
+      });
+    });
     const padding = 36;
     const minX = Math.min(...bounds.map((entry) => entry.minX)) - padding;
     const maxX = Math.max(...bounds.map((entry) => entry.maxX)) + padding;
@@ -9685,7 +9725,18 @@ export default function Simulator({
       placeCoralInEcosystem(coordinates.x, coordinates.y, cardId);
       queueBubbleBurstAtClientPoint(clientX, clientY);
     } else {
-      playCardFromHand(cardId);
+      const placementPosition = card.kind === CardKind.CREATURE
+        && card.zone === CreatureZone.OCEAN
+        && !isCreatureSchool(card)
+        ? normalizeOpenWaterPlacementPosition(getPlacementCoordinatesFromPoint(
+            ecosystemRef.current,
+            clientX,
+            clientY,
+            playerCameraRef.current.zoom,
+            playerCameraRef.current.offset,
+          ))
+        : null;
+      playCardFromHand(cardId, { placementPosition });
     }
     return target;
   }
@@ -11487,9 +11538,15 @@ export default function Simulator({
     return getOceanicApexSacrificeChoices(candidates, cardsById);
   }
 
-  function completePlayerOceanicPlay(cardId, choiceId = null) {
+  function completePlayerOceanicPlay(cardId, choiceId = null, requestedPlacementPosition = null) {
     const card = cardsById[cardId];
     if (!card || !hand.includes(cardId)) return;
+    const placementPosition = normalizeOpenWaterPlacementPosition(requestedPlacementPosition);
+    const placementBurstPosition = getViewportCoordinatesForPlacement(
+      ecosystemRef.current,
+      placementPosition,
+      playerCameraRef.current,
+    );
     const choices = getPlayerOceanicSacrificeChoices(card);
     const requiresSacrifice = (card.specialRules ?? []).some((rule) => /discard one oceanic predator or two oceanic fish/i.test(typeof rule === "string" ? rule : rule?.text ?? ""));
     const choice = requiresSacrifice ? choices.find((candidate) => candidate.id === choiceId) : { candidates: [] };
@@ -11511,6 +11568,7 @@ export default function Simulator({
       setPlayError(`${card.name} still needs ${densityRequirementAtPlay} available School Density after that sacrifice, but the choice would open only ${densityAvailableAfterSacrifice}.`);
       return;
     }
+    if (placementPosition) setPlayerViewportTouched(true);
     const sacrificedSlotIds = new Set(sacrifices.filter((entry) => entry.location === "slot").map((entry) => entry.slotId));
     const sacrificedReefIds = sacrifices.filter((entry) => entry.location === "reef").map((entry) => entry.instanceId);
     const sacrificedOrphanIds = sacrifices.filter((entry) => entry.location === "orphan").map((entry) => entry.instanceId);
@@ -11526,11 +11584,12 @@ export default function Simulator({
     const playedInstance = createCreatureInstance(card.id, createStableInstanceId(`player-reef-${card.id}`), {
       territorialTargetFoundationId: null,
       schoolDensityRequirementAtPlay: densityRequirementAtPlay,
+      position: placementPosition,
     });
     const nextReefInstances = [...remainingReefInstances, playedInstance];
     setPlayerReefCreatureInstances(nextReefInstances);
     commitPlayerSchoolDensity(playedInstance.instanceId, densityRequirementAtPlay);
-    queueBubbleBurst(76, 24);
+    queueBubbleBurst(placementBurstPosition?.x ?? 76, placementBurstPosition?.y ?? 24);
     const remainingOrphans = removeCreatureInstances(playerOrphanCreatureInstances, sacrificedOrphanIds).instances;
     const nextOrphanInstances = sacrificedOrphanIds.length || freedHostedCardIds.length
       ? [...remainingOrphans, ...freedHostedCardIds.map((hostedCardId) => createCreatureInstance(hostedCardId, createStableInstanceId(`player-orphan-${hostedCardId}`)))]
@@ -11672,7 +11731,7 @@ export default function Simulator({
     setSelectedHandCard(previewExperience ? null : selectedCardId);
   }
 
-  function playCardFromHand(cardId) {
+  function playCardFromHand(cardId, { placementPosition = null } = {}) {
     const card = cardsById[cardId];
     if (!card) {
       setPlayError("Select a card first.");
@@ -11717,13 +11776,14 @@ export default function Simulator({
         return;
       }
       if (card.zone === CreatureZone.OCEAN && !isCreatureSchool(card)) {
+        const normalizedPlacementPosition = normalizeOpenWaterPlacementPosition(placementPosition);
         const choices = getPlayerOceanicSacrificeChoices(card);
         if (choices.length) {
-          setSearchContext({ mode: "oceanic-sacrifice", cardId: card.id, choices });
+          setSearchContext({ mode: "oceanic-sacrifice", cardId: card.id, choices, placementPosition: normalizedPlacementPosition });
           setEventOverlay({ type: "choose-oceanic-sacrifice", sourceCardId: card.id, title: `Choose ${card.name}'s Sacrifice`, message: "Choose one Oceanic Predator or two Oceanic Fish. No card or RP is spent until you confirm a choice." });
           return;
         }
-        completePlayerOceanicPlay(card.id);
+        completePlayerOceanicPlay(card.id, null, normalizedPlacementPosition);
         return;
       }
       setPlayingCardId(cardId);
@@ -24686,7 +24746,7 @@ export default function Simulator({
                       }}
                     >
                       {playerHabitats.length || playerReefCreatures.length ? (
-                        <div className={`seapals-player-floating-row pointer-events-none absolute inset-x-0 z-30 flex flex-wrap items-start justify-center gap-3 ${playerHabitats.length ? "top-12" : "top-6"}`}>
+                        <div className={`seapals-player-floating-row pointer-events-none absolute inset-x-0 bottom-0 top-0 z-30 flex flex-wrap content-start items-start justify-center gap-3 ${playerHabitats.length ? "pt-12" : "pt-6"}`}>
                           {playerHabitats.length ? (
                             <div className="seapals-player-habitats contents">
                               {playerHabitatInstances.map((habitatInstance, index) => {
@@ -24704,14 +24764,34 @@ export default function Simulator({
                               })}
                             </div>
                           ) : null}
-                          {playerReefCreatures.length ? (
+                          {playerReefCreatureInstances.length ? (
                             <div className="seapals-player-open-water contents">
-                              {playerReefCreatures.map((cardId, index) => {
+                              {playerReefCreatureInstances.map((instance, index) => {
+                                const cardId = instance.cardId;
                                 const card = cardsById[cardId];
                                 const targetSlotId = getPlayerReefSlotId(index);
                                 const key = `player-${targetSlotId}`;
                                 const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
-                                return <button key={playerReefCreatureInstances[index]?.instanceId ?? `${cardId}-${index}`} type="button" data-card-id={cardId} data-card-instance-id={playerReefCreatureInstances[index]?.instanceId} data-tutorial-action-key={targetSlotId} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: targetSlotId })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className={`seapals-in-play-card pointer-events-auto relative h-[220px] w-[180px] cursor-grab rounded-[1.5rem] text-center active:cursor-grabbing${tutorialActionTargetClass(targetSlotId)}`}><InPlayHoverLabel card={card} zoom={ecosystemZoom} /><img src={card?.image} alt={card?.name} className="h-full w-full rounded-[1.5rem] object-contain" /></button>;
+                                const placementPosition = normalizeOpenWaterPlacementPosition(instance.position);
+                                return (
+                                  <button
+                                    key={instance.instanceId ?? `${cardId}-${index}`}
+                                    type="button"
+                                    data-card-id={cardId}
+                                    data-card-instance-id={instance.instanceId}
+                                    data-open-water-positioned={placementPosition ? "true" : undefined}
+                                    data-tutorial-action-key={targetSlotId}
+                                    onPointerDown={(event) => handleFloatingCardPointerDown(key, event)}
+                                    onPointerMove={handleFloatingCardPointerMove}
+                                    onPointerUp={handleFloatingCardPointerUp}
+                                    onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: targetSlotId })}
+                                    style={getOpenWaterCardLayoutStyle(placementPosition, offset)}
+                                    className={`seapals-in-play-card pointer-events-auto ${placementPosition ? "absolute" : "relative"} h-[220px] w-[180px] cursor-grab rounded-[1.5rem] text-center active:cursor-grabbing${tutorialActionTargetClass(targetSlotId)}`}
+                                  >
+                                    <InPlayHoverLabel card={card} zoom={ecosystemZoom} />
+                                    <img src={card?.image} alt={card?.name} className="h-full w-full rounded-[1.5rem] object-contain" />
+                                  </button>
+                                );
                               })}
                             </div>
                           ) : null}
@@ -26452,7 +26532,7 @@ export default function Simulator({
                         const opened = Math.max(0, playerSchoolDensity - playerSchoolDensityState.committed + getDensityFreedBySacrificeChoice(choice));
                         const densityLegal = required <= opened;
                         return (
-                          <button key={choice.id} type="button" disabled={!densityLegal} onClick={() => completePlayerOceanicPlay(searchContext.cardId, choice.id)} className="rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-4 text-left transition hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:border-slate-600 disabled:opacity-45">
+                          <button key={choice.id} type="button" disabled={!densityLegal} onClick={() => completePlayerOceanicPlay(searchContext.cardId, choice.id, searchContext.placementPosition)} className="rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-4 text-left transition hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:border-slate-600 disabled:opacity-45">
                             <span className="mb-3 block text-xs font-black uppercase tracking-widest text-rose-200">{choice.kind === "predator" ? "Sacrifice one Predator" : "Sacrifice two Fish"}</span>
                             <span className="flex gap-3">{choice.candidates.map((candidate) => <span key={candidate.instanceId} className="min-w-0 flex-1"><img src={candidate.card?.image} alt={candidate.card?.name} className="h-32 w-full rounded-xl bg-white object-contain" /><strong className="mt-2 block truncate text-sm">{candidate.card?.name}</strong></span>)}</span>
                             <span className={`mt-3 block text-xs font-bold ${densityLegal ? "text-cyan-200" : "text-rose-200"}`}>{opened} School Density would be open; {required} needed.</span>
