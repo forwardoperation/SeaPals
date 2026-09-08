@@ -57,7 +57,7 @@ test("Dr. Evans uses concise structured copy and a horizontal, non-wrapping card
   assert.match(completion, /pendingHandLimitDiscardCount/);
   assert.match(completion, /pushLog\(message\)/, "the detailed resolution remains available in history");
 
-  assert.match(simulatorSource, /eventOverlay\.sourceCardId && !compactDrawResultEvent/);
+  assert.match(simulatorSource, /eventOverlay\.sourceCardId && !compactDialogEvent/);
   assert.match(simulatorSource, /data-compact-draw-result/);
   assert.match(simulatorSource, /<ol[\s\S]*?data-compact-draw-rail[\s\S]*?overflow-x-auto overflow-y-hidden/);
   assert.match(simulatorSource, /shrink-0 snap-start/);

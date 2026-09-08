@@ -26,7 +26,7 @@ test("all five event searches and the generic Support search use the compact she
   const routing = sourceBetween(
     simulatorSource,
     "  const compactDeckSearchEvent = Boolean(previewExperience && [",
-    "  const compactDeckSearchSourceCard =",
+    "  const compactDeckOrderEvent =",
   );
   const routedTypes = [...routing.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
 
@@ -64,7 +64,7 @@ test("compact search omits full-size source art and locks chrome around the choi
   );
   assert.match(
     eventDialog,
-    /eventOverlay\.sourceCardId && !compactDrawResultEvent && !compactDeckSearchEvent \? <div/,
+    /eventOverlay\.sourceCardId && !compactDialogEvent \? <div/,
     "full-size source art must be gated off for compact deck searches",
   );
 

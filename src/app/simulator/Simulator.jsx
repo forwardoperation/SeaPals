@@ -18,6 +18,7 @@ import CoralUpgradeCelebration from "./CoralUpgradeCelebration";
 import OpeningCoinBoardPresentation, { OpeningCoinVisual } from "./OpeningCoinBoardPresentation";
 import VictoryCelebration from "./VictoryCelebration";
 import { evaluateCardActionAvailability } from "./cardActionAvailability.mjs";
+import { getDeckOrderDestinationIndex, moveDeckOrderItem } from "./deckOrderRules.mjs";
 import {
   CardCoinPhase,
   cancelCardCoinFlip,
@@ -2612,6 +2613,178 @@ function DeckSearchChoice({
       >
         {chooseLabel}
       </button>
+    </div>
+  );
+}
+
+function getDeckOrderOccurrenceKey(cardIds, index) {
+  const cardId = cardIds[index];
+  let occurrence = 0;
+  for (let candidateIndex = 0; candidateIndex < index; candidateIndex += 1) {
+    if (cardIds[candidateIndex] === cardId) occurrence += 1;
+  }
+  return `${cardId}:${occurrence}`;
+}
+
+function CompactDeckOrderList({ cardIds = [], onMove, label = "Top-to-bottom deck order" }) {
+  const listRef = useRef(null);
+  const dragRef = useRef(null);
+  const [dragState, setDragState] = useState(null);
+  const [announcement, setAnnouncement] = useState("");
+
+  const setActiveDrag = (nextDrag) => {
+    dragRef.current = nextDrag;
+    setDragState(nextDrag);
+  };
+
+  const getDropSlot = (clientY) => {
+    const rows = [...(listRef.current?.querySelectorAll("[data-deck-order-index]") ?? [])];
+    if (!rows.length) return null;
+    for (const row of rows) {
+      const bounds = row.getBoundingClientRect();
+      if (clientY < bounds.top + (bounds.height / 2)) {
+        return Number(row.dataset.deckOrderIndex);
+      }
+    }
+    return rows.length;
+  };
+
+  const updateDropTarget = (clientY) => {
+    const current = dragRef.current;
+    if (!current) return;
+    const insertionSlot = getDropSlot(clientY);
+    if (!Number.isInteger(insertionSlot) || insertionSlot === current.insertionSlot) return;
+    setActiveDrag({ ...current, insertionSlot });
+  };
+
+  const beginDrag = (fromIndex, mode, pointerId = null) => {
+    setAnnouncement("");
+    setActiveDrag({ fromIndex, insertionSlot: fromIndex, mode, pointerId });
+  };
+
+  const finishDrag = (commit) => {
+    const completedDrag = dragRef.current;
+    setActiveDrag(null);
+    if (!commit || !completedDrag) return;
+    const toIndex = getDeckOrderDestinationIndex(
+      cardIds.length,
+      completedDrag.fromIndex,
+      completedDrag.insertionSlot,
+    );
+    if (completedDrag.fromIndex === toIndex) return;
+    const cardName = cardsById[cardIds[completedDrag.fromIndex]]?.name ?? "Card";
+    onMove?.(completedDrag.fromIndex, toIndex);
+    setAnnouncement(`${cardName} moved to position ${toIndex + 1} of ${cardIds.length}.`);
+  };
+
+  const moveWithButton = (fromIndex, toIndex) => {
+    if (toIndex < 0 || toIndex >= cardIds.length || fromIndex === toIndex) return;
+    const cardName = cardsById[cardIds[fromIndex]]?.name ?? "Card";
+    onMove?.(fromIndex, toIndex);
+    setAnnouncement(`${cardName} moved to position ${toIndex + 1} of ${cardIds.length}.`);
+  };
+
+  return (
+    <div className="seapals-deck-order">
+      <ol
+        ref={listRef}
+        role="list"
+        aria-label={label}
+        className="seapals-deck-order-list"
+        onDragOver={(event) => {
+          if (dragRef.current?.mode !== "mouse") return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          updateDropTarget(event.clientY);
+        }}
+        onDrop={(event) => {
+          if (dragRef.current?.mode !== "mouse") return;
+          event.preventDefault();
+          finishDrag(true);
+        }}
+      >
+        {cardIds.map((cardId, index) => {
+          const card = cardsById[cardId];
+          const cardName = card?.name ?? "Unknown card";
+          const dragging = dragState?.fromIndex === index;
+          const dropTarget = dragState && dragState.insertionSlot === index && !dragging;
+          const dropTargetAfter = dragState
+            && dragState.insertionSlot === cardIds.length
+            && index === cardIds.length - 1
+            && !dragging;
+          return (
+            <li
+              key={getDeckOrderOccurrenceKey(cardIds, index)}
+              role="listitem"
+              data-deck-order-index={index}
+              draggable
+              className={`seapals-deck-order-row${dragging ? " is-dragging" : ""}${dropTarget ? " is-drop-target" : ""}${dropTargetAfter ? " is-drop-target-after" : ""}`}
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", String(index));
+                beginDrag(index, "mouse");
+              }}
+              onDragEnd={() => finishDrag(false)}
+            >
+              <span className="seapals-deck-order-position" aria-hidden="true">{index + 1}</span>
+              <strong className="seapals-deck-order-name">{cardName}</strong>
+              <span
+                className="seapals-deck-order-handle"
+                aria-hidden="true"
+                data-deck-order-drag-handle
+                onPointerDown={(event) => {
+                  if (event.pointerType === "mouse" || !event.isPrimary || event.button > 0) return;
+                  event.preventDefault();
+                  beginDrag(index, "pointer", event.pointerId);
+                  try {
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                  } catch {
+                    // Pointer capture is an enhancement; the handle still receives ordinary pointer events.
+                  }
+                }}
+                onPointerMove={(event) => {
+                  if (dragRef.current?.mode !== "pointer" || dragRef.current.pointerId !== event.pointerId) return;
+                  event.preventDefault();
+                  updateDropTarget(event.clientY);
+                }}
+                onPointerUp={(event) => {
+                  if (dragRef.current?.mode !== "pointer" || dragRef.current.pointerId !== event.pointerId) return;
+                  if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+                    event.currentTarget.releasePointerCapture(event.pointerId);
+                  }
+                  finishDrag(true);
+                }}
+                onPointerCancel={() => finishDrag(false)}
+              >
+                <span className="seapals-deck-order-grip" />
+              </span>
+              <span className="seapals-deck-order-buttons">
+                <button
+                  type="button"
+                  data-compact-order-control
+                  aria-label={`Move ${cardName} earlier toward the top`}
+                  title="Move earlier"
+                  disabled={index === 0}
+                  onClick={() => moveWithButton(index, index - 1)}
+                >
+                  &uarr;
+                </button>
+                <button
+                  type="button"
+                  data-compact-order-control
+                  aria-label={`Move ${cardName} later toward the bottom`}
+                  title="Move later"
+                  disabled={index === cardIds.length - 1}
+                  onClick={() => moveWithButton(index, index + 1)}
+                >
+                  &darr;
+                </button>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="sr-only" role="status" aria-live="polite">{announcement}</p>
     </div>
   );
 }
@@ -12030,13 +12203,11 @@ export default function Simulator({
     setEventOverlay({ type: "choose-explorer-card", sourceCardId: supportCard.id, title: `Player used ${supportCard.name}`, message: candidates.length ? "Choose one Creature from the top five to add to your hand, or choose no card and shuffle all five back." : "There were no Creatures in the top five. Confirm to shuffle them back." });
   }
 
-  function moveInspectedDeckCard(index, delta) {
-    if (searchContext?.mode !== "reorder-deck") return;
-    const nextIndex = index + delta;
-    if (nextIndex < 0 || nextIndex >= searchContext.topCards.length) return;
+  function moveInspectedDeckCard(fromIndex, toIndex) {
     setSearchContext((current) => {
-      const topCards = [...current.topCards];
-      [topCards[index], topCards[nextIndex]] = [topCards[nextIndex], topCards[index]];
+      if (current?.mode !== "reorder-deck") return current;
+      const topCards = moveDeckOrderItem(current.topCards, fromIndex, toIndex);
+      if (topCards === current.topCards) return current;
       return { ...current, topCards };
     });
   }
@@ -12872,11 +13043,13 @@ export default function Simulator({
     setEventOverlay({ type: "reorder-creature-action-deck", sourceCardId: pendingCreatureAction.sourceCardId, title: `Player's ${cardsById[pendingCreatureAction.sourceCardId]?.name} used ${pendingCreatureAction.actionName}`, message: `Set the new top-to-bottom order for your ${deckType} deck.` });
   }
 
-  function moveCreatureActionDeckCard(index, delta) {
-    if (!pendingCreatureAction?.topCards) return;
-    const nextIndex = index + delta;
-    if (nextIndex < 0 || nextIndex >= pendingCreatureAction.topCards.length) return;
-    setPendingCreatureAction((current) => { const topCards = [...current.topCards]; [topCards[index], topCards[nextIndex]] = [topCards[nextIndex], topCards[index]]; return { ...current, topCards }; });
+  function moveCreatureActionDeckCard(fromIndex, toIndex) {
+    setPendingCreatureAction((current) => {
+      if (!current?.topCards) return current;
+      const topCards = moveDeckOrderItem(current.topCards, fromIndex, toIndex);
+      if (topCards === current.topCards) return current;
+      return { ...current, topCards };
+    });
   }
 
   function commitCreatureActionReorder() {
@@ -19187,6 +19360,10 @@ export default function Simulator({
     "choose-action-search-card",
     "choose-creature-action-search",
   ].includes(eventOverlay?.type));
+  const compactDeckOrderEvent = Boolean([
+    "reorder-deck",
+    "reorder-creature-action-deck",
+  ].includes(eventOverlay?.type));
   const compactDeckSearchSourceCard = compactDeckSearchEvent ? cardsById[eventOverlay?.sourceCardId] : null;
   const compactDeckSearchPresentation = compactDeckSearchEvent ? (() => {
     const actionName = eventOverlay.type === "choose-school-momentum"
@@ -19235,6 +19412,24 @@ export default function Simulator({
       facts: ["Choose 1", "Adds to hand", actionCost > 0 ? `${actionCost} RP when chosen` : "Decks shuffle"],
     };
   })() : null;
+  const compactDeckOrderCards = compactDeckOrderEvent
+    ? eventOverlay.type === "reorder-deck"
+      ? searchContext?.topCards ?? []
+      : pendingCreatureAction?.topCards ?? []
+    : [];
+  const compactDeckOrderSourceCard = compactDeckOrderEvent ? cardsById[eventOverlay?.sourceCardId] : null;
+  const compactDeckOrderActionName = compactDeckOrderEvent
+    ? pendingCreatureAction?.actionName
+      ?? pendingCreatureAction?.action?.name
+      ?? (compactDeckOrderSourceCard?.id === "robotic-survey" ? "Survey" : "Reorder")
+    : null;
+  const compactDeckOrderDeckType = compactDeckOrderEvent
+    ? eventOverlay.type === "reorder-deck"
+      ? searchContext?.deckType
+      : pendingCreatureAction?.deckType
+    : null;
+  const compactDeckOrderDeckLabel = compactDeckOrderDeckType === "foundation" ? "Foundation" : "Pals";
+  const compactDialogEvent = compactDrawResultEvent || compactDeckSearchEvent || compactDeckOrderEvent;
   const v2NewGameSetupActive = Boolean(
     previewExperience
     && !isStoryMode
@@ -19242,7 +19437,7 @@ export default function Simulator({
     && !resumeHydrationPending
     && !resumeCheckpoint
   );
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || compactDrawResultEvent || compactDeckSearchEvent || boardStatPresentationActive || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || compactDialogEvent || boardStatPresentationActive || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -19259,6 +19454,7 @@ export default function Simulator({
     || cardCoinBoardActive
     || compactDrawResultEvent
     || compactDeckSearchEvent
+    || compactDeckOrderEvent
     || boardStatPresentationActive
     || resumeHydrationPending
     || resumeCheckpoint
@@ -20735,6 +20931,160 @@ export default function Simulator({
           height: 100%;
           min-height: 0;
         }
+        .seapals-event-card.seapals-compact-order-event {
+          display: flex;
+          width: 100%;
+          min-width: 0;
+          max-width: min(36rem, 100%);
+          height: min(31rem, calc(100dvh - 1.5rem));
+          max-height: calc(100dvh - 1.5rem);
+          overflow: hidden;
+          flex-direction: column;
+          padding: .75rem;
+        }
+        .seapals-compact-order-layout,
+        .seapals-compact-order-content,
+        .seapals-compact-order-body,
+        .seapals-deck-order {
+          display: flex;
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          min-height: 0;
+          flex: 1 1 auto;
+          flex-direction: column;
+        }
+        .seapals-compact-order-context,
+        .seapals-compact-order-footer {
+          flex: 0 0 auto;
+        }
+        .seapals-compact-order-body {
+          margin-top: .75rem;
+        }
+        .seapals-deck-order-list {
+          display: flex;
+          min-height: 0;
+          flex: 1 1 auto;
+          flex-direction: column;
+          gap: .4rem;
+          margin: 0;
+          padding: .125rem .2rem .125rem 0;
+          overflow-x: hidden;
+          overflow-y: auto;
+          list-style: none;
+          overscroll-behavior: contain;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(103, 232, 249, .65) rgba(15, 23, 42, .55);
+        }
+        .seapals-deck-order-row {
+          display: grid;
+          min-width: 0;
+          min-height: 3.35rem;
+          flex: 0 0 auto;
+          grid-template-columns: 2rem minmax(0, 1fr) 2.75rem auto;
+          align-items: center;
+          gap: .4rem;
+          border: 1px solid rgba(103, 232, 249, .28);
+          border-radius: .8rem;
+          background: rgba(15, 23, 42, .72);
+          padding: .2rem .35rem .2rem .55rem;
+          cursor: grab;
+          transition: border-color 150ms ease, background-color 150ms ease, opacity 150ms ease, transform 150ms ease;
+        }
+        .seapals-deck-order-row:active { cursor: grabbing; }
+        .seapals-deck-order-row.is-dragging {
+          border-color: rgba(251, 191, 36, .75);
+          background: rgba(120, 53, 15, .32);
+          opacity: .58;
+          transform: scale(.985);
+        }
+        .seapals-deck-order-row.is-drop-target {
+          border-color: rgba(103, 232, 249, .9);
+          background: rgba(8, 145, 178, .2);
+          box-shadow: inset 0 2px 0 rgba(103, 232, 249, .9);
+        }
+        .seapals-deck-order-row.is-drop-target-after {
+          border-color: rgba(103, 232, 249, .9);
+          background: rgba(8, 145, 178, .2);
+          box-shadow: inset 0 -2px 0 rgba(103, 232, 249, .9);
+        }
+        .seapals-deck-order-position {
+          display: grid;
+          width: 1.7rem;
+          height: 1.7rem;
+          place-items: center;
+          border-radius: 999px;
+          background: rgba(34, 211, 238, .13);
+          color: #a5f3fc;
+          font-size: .72rem;
+          font-weight: 900;
+        }
+        .seapals-deck-order-name {
+          min-width: 0;
+          overflow: hidden;
+          color: #fff;
+          font-size: .95rem;
+          line-height: 1.2;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .seapals-deck-order-handle {
+          display: grid;
+          width: 2.75rem;
+          height: 2.75rem;
+          place-items: center;
+          border-radius: .65rem;
+          cursor: grab;
+          touch-action: none;
+        }
+        .seapals-deck-order-handle:active { cursor: grabbing; }
+        .seapals-deck-order-grip {
+          width: 1rem;
+          height: 1.35rem;
+          opacity: .7;
+          background-image: radial-gradient(circle, #a5f3fc 1.5px, transparent 1.8px);
+          background-position: 0 0;
+          background-size: .5rem .45rem;
+        }
+        .seapals-deck-order-buttons {
+          display: flex;
+          gap: .25rem;
+        }
+        .seapals-deck-order-buttons button {
+          display: grid;
+          width: 2.75rem;
+          height: 2.75rem;
+          place-items: center;
+          border: 1px solid rgba(103, 232, 249, .25);
+          border-radius: .65rem;
+          background: rgba(8, 145, 178, .1);
+          color: #cffafe;
+          font-size: 1rem;
+          font-weight: 900;
+          transition: background-color 150ms ease, border-color 150ms ease;
+        }
+        .seapals-deck-order-buttons button:hover:not(:disabled),
+        .seapals-deck-order-buttons button:focus-visible {
+          border-color: rgba(103, 232, 249, .75);
+          background: rgba(8, 145, 178, .28);
+          outline: none;
+        }
+        .seapals-deck-order-buttons button:disabled {
+          cursor: default;
+          opacity: .22;
+        }
+        .seapals-compact-order-footer {
+          display: flex;
+          width: 100%;
+          min-width: 0;
+          gap: .5rem;
+          padding-top: .75rem;
+        }
+        .seapals-compact-order-footer > button {
+          min-width: 0;
+          max-width: 100%;
+          white-space: normal;
+        }
         .seapals-event-card.seapals-compact-search-event,
         .seapals-compact-search-modal {
           display: flex;
@@ -20841,6 +21191,11 @@ export default function Simulator({
             max-height: calc(100dvh - 2.5rem);
             padding: 1.25rem;
           }
+          .seapals-event-card.seapals-compact-order-event {
+            height: min(31rem, calc(100dvh - 2.5rem));
+            max-height: calc(100dvh - 2.5rem);
+            padding: 1.1rem;
+          }
         }
         @media (max-height: 31rem) {
           .seapals-compact-draw-copy { display: none; }
@@ -20859,6 +21214,10 @@ export default function Simulator({
           .seapals-compact-search-choice { min-height: 0; max-height: 100%; }
           .seapals-compact-search-choice-image { max-height: 9rem; }
           .seapals-compact-search-choice [data-compact-search-control]:last-child { min-height: 2.75rem; margin-top: .25rem; padding-top: .35rem; padding-bottom: .35rem; }
+          .seapals-compact-order-body { margin-top: .4rem; }
+          .seapals-deck-order-list { gap: .25rem; }
+          .seapals-deck-order-row { min-height: 3rem; }
+          .seapals-compact-order-footer { padding-top: .4rem; }
         }
         @media (max-height: 31rem) and (min-aspect-ratio: 6 / 5) {
           .seapals-event-card.seapals-compact-search-event,
@@ -25481,7 +25840,7 @@ export default function Simulator({
 
       {eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive ? (
         <div
-          className={`fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5 ${compactDrawResultEvent || compactDeckSearchEvent ? "overflow-hidden" : "overflow-y-auto"}`}
+          className={`fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5 ${compactDialogEvent ? "overflow-hidden" : "overflow-y-auto"}`}
           hidden={v2NewGameSetupActive || resumeHydrationPending || Boolean(resumeCheckpoint)}
           style={v2NewGameSetupActive || resumeHydrationPending || resumeCheckpoint ? { display: "none" } : undefined}
           role="dialog"
@@ -25491,7 +25850,7 @@ export default function Simulator({
           aria-labelledby="seapals-event-title"
           aria-describedby={eventOverlay.message && !["condition-reveal", "opponent-status"].includes(eventOverlay.type) ? "seapals-event-message" : undefined}
           onKeyDown={(keyboardEvent) => {
-            if ((!compactDrawResultEvent && !compactDeckSearchEvent) || keyboardEvent.key !== "Tab") return;
+            if (!compactDialogEvent || keyboardEvent.key !== "Tab") return;
             const controls = getCompactDialogFocusableControls(keyboardEvent.currentTarget);
             if (!controls.length) return;
             const first = controls[0];
@@ -25506,16 +25865,17 @@ export default function Simulator({
           }}
         >
           <div
-            className={`seapals-event-card my-auto w-full rounded-[1.5rem] border border-cyan-300/50 bg-slate-900 text-white shadow-2xl sm:rounded-[2rem] ${compactDrawResultEvent ? "seapals-compact-draw-event max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-event max-w-3xl" : "max-h-[calc(100dvh-1.5rem)] max-w-5xl overflow-y-auto p-4 sm:max-h-[calc(100dvh-2.5rem)] sm:p-6"}`}
+            className={`seapals-event-card my-auto w-full rounded-[1.5rem] border border-cyan-300/50 bg-slate-900 text-white shadow-2xl sm:rounded-[2rem] ${compactDrawResultEvent ? "seapals-compact-draw-event max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-event max-w-3xl" : compactDeckOrderEvent ? "seapals-compact-order-event max-w-xl" : "max-h-[calc(100dvh-1.5rem)] max-w-5xl overflow-y-auto p-4 sm:max-h-[calc(100dvh-2.5rem)] sm:p-6"}`}
             data-compact-draw-result={compactDrawResultEvent ? "true" : undefined}
             data-compact-deck-search={compactDeckSearchEvent ? eventOverlay.type : undefined}
+            data-compact-deck-order={compactDeckOrderEvent ? eventOverlay.type : undefined}
           >
-            <div className={compactDrawResultEvent ? "seapals-compact-draw-layout mx-auto min-w-0 max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-layout mx-auto min-w-0 max-w-3xl" : eventOverlay.sourceCardId ? "grid gap-6 md:grid-cols-[260px_1fr]" : "mx-auto max-w-3xl text-center"}>
-              {eventOverlay.sourceCardId && !compactDrawResultEvent && !compactDeckSearchEvent ? <div className={`rounded-3xl bg-white/10 p-4 ${eventOverlay.defenderCardId ? "grid grid-cols-2 gap-2 md:grid-cols-1" : ""}`}>
+            <div className={compactDrawResultEvent ? "seapals-compact-draw-layout mx-auto min-w-0 max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-layout mx-auto min-w-0 max-w-3xl" : compactDeckOrderEvent ? "seapals-compact-order-layout mx-auto min-w-0 max-w-xl" : eventOverlay.sourceCardId ? "grid gap-6 md:grid-cols-[260px_1fr]" : "mx-auto max-w-3xl text-center"}>
+              {eventOverlay.sourceCardId && !compactDialogEvent ? <div className={`rounded-3xl bg-white/10 p-4 ${eventOverlay.defenderCardId ? "grid grid-cols-2 gap-2 md:grid-cols-1" : ""}`}>
                 {eventOverlay.sourceCardId ? <img src={cardsById[eventOverlay.sourceCardId]?.image} alt={cardsById[eventOverlay.sourceCardId]?.name} className="h-80 w-full rounded-2xl bg-white object-contain" /> : null}
                 {eventOverlay.defenderCardId ? <img src={cardsById[eventOverlay.defenderCardId]?.image} alt={cardsById[eventOverlay.defenderCardId]?.name} className="h-80 w-full rounded-2xl bg-white object-contain" /> : null}
               </div> : null}
-              <div className={`flex flex-col justify-center ${compactDrawResultEvent || compactDeckSearchEvent ? "min-h-0 flex-1" : ""} ${compactDeckSearchEvent ? "seapals-compact-search-content" : ""}`}>
+              <div className={`flex flex-col justify-center ${compactDialogEvent ? "min-h-0 flex-1" : ""} ${compactDeckSearchEvent ? "seapals-compact-search-content" : compactDeckOrderEvent ? "seapals-compact-order-content" : ""}`}>
                 {compactDeckSearchEvent ? (
                   <>
                     <header className="seapals-compact-search-context">
@@ -25535,6 +25895,21 @@ export default function Simulator({
                         <button type="button" data-compact-search-control onClick={() => setTutorialHelpDismissedId(scriptedTutorialOverlayHelpKey)} className="min-h-11 shrink-0 rounded-lg border border-amber-800/20 px-3 text-xs font-black">Hide</button>
                       </div>
                     ) : null}
+                    {eventOverlay.message ? <p id="seapals-event-message" className="sr-only">{eventOverlay.message}</p> : null}
+                  </>
+                ) : compactDeckOrderEvent ? (
+                  <>
+                    <header className="seapals-compact-order-context">
+                      <div className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-300">Deck order</div>
+                      <div className="mt-1 flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h2 id="seapals-event-title" className="text-xl font-black leading-tight sm:text-2xl">Reorder top {compactDeckOrderCards.length}</h2>
+                          <p className="mt-0.5 truncate text-xs font-bold text-cyan-100/65 sm:text-sm">{compactDeckOrderSourceCard?.name ?? "Card"} · {compactDeckOrderActionName}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full border border-cyan-300/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-cyan-100">{compactDeckOrderDeckLabel}</span>
+                      </div>
+                      <p className="mt-2 text-xs font-bold text-amber-200">Top card draws first · Drag a row to reorder</p>
+                    </header>
                     {eventOverlay.message ? <p id="seapals-event-message" className="sr-only">{eventOverlay.message}</p> : null}
                   </>
                 ) : (
@@ -26037,9 +26412,16 @@ export default function Simulator({
                     <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">Cancel Inspection</button>
                   </div>
                 ) : eventOverlay.type === "reorder-deck" ? (
-                  <div className="mt-6">
-                    <div className="grid max-h-96 gap-3 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">{(searchContext?.topCards ?? []).map((cardId, index) => { const card = cardsById[cardId]; return <div key={`${cardId}-${index}`} className="rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-center"><img src={card?.image} alt={card?.name} className="h-40 w-full rounded-xl bg-white object-contain" /><strong className="mt-2 block truncate">{index + 1}. {card?.name}</strong><div className="mt-2 flex justify-center gap-2"><button type="button" disabled={!index} onClick={() => moveInspectedDeckCard(index, -1)} className="rounded-full border border-cyan-300 px-3 py-1 disabled:opacity-30">Earlier</button><button type="button" disabled={index === searchContext.topCards.length - 1} onClick={() => moveInspectedDeckCard(index, 1)} className="rounded-full border border-cyan-300 px-3 py-1 disabled:opacity-30">Later</button></div></div>; })}</div>
-                    <div className="mt-4 flex gap-3"><button type="button" onClick={() => commitDeckInspection()} className="rounded-full bg-emerald-500 px-6 py-3 font-black">Confirm Order</button><button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel</button></div>
+                  <div className="seapals-compact-order-body">
+                    <CompactDeckOrderList
+                      cardIds={searchContext?.topCards ?? []}
+                      onMove={moveInspectedDeckCard}
+                      label={`Top-to-bottom order of the ${compactDeckOrderDeckLabel} deck`}
+                    />
+                    <div className="seapals-compact-order-footer">
+                      <button type="button" data-compact-order-control onClick={() => commitDeckInspection()} className="min-h-11 flex-1 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-black text-slate-950">Confirm Order</button>
+                      <button type="button" data-compact-order-control onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="min-h-11 rounded-xl border border-slate-500 px-5 py-2.5 text-sm font-bold">Cancel</button>
+                    </div>
                   </div>
                 ) : eventOverlay.type === "choose-explorer-card" ? (
                   <div className="seapals-compact-search-body">
@@ -26190,7 +26572,17 @@ export default function Simulator({
                     <button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">{pendingCreatureAction?.committed ? "Skip Optional Reorder" : "Cancel Action"}</button>
                   </div>
                 ) : eventOverlay.type === "reorder-creature-action-deck" ? (
-                  <div className="mt-6"><div className="grid max-h-96 gap-3 overflow-y-auto sm:grid-cols-3">{(pendingCreatureAction?.topCards ?? []).map((cardId, index) => { const card = cardsById[cardId]; return <div key={`${cardId}-${index}`} className="rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-center"><img src={card?.image} alt={card?.name} className="h-40 w-full rounded-xl bg-white object-contain" /><strong className="mt-2 block truncate">{index + 1}. {card?.name}</strong><div className="mt-2 flex justify-center gap-2"><button type="button" disabled={!index} onClick={() => moveCreatureActionDeckCard(index, -1)} className="rounded-full border px-3 py-1 disabled:opacity-30">Earlier</button><button type="button" disabled={index === pendingCreatureAction.topCards.length - 1} onClick={() => moveCreatureActionDeckCard(index, 1)} className="rounded-full border px-3 py-1 disabled:opacity-30">Later</button></div></div>; })}</div><div className="mt-4 flex gap-3"><button type="button" onClick={commitCreatureActionReorder} className="rounded-full bg-emerald-500 px-6 py-3 font-black">Confirm Order</button><button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">{pendingCreatureAction?.committed ? "Skip Optional Reorder" : "Cancel"}</button></div></div>
+                  <div className="seapals-compact-order-body">
+                    <CompactDeckOrderList
+                      cardIds={pendingCreatureAction?.topCards ?? []}
+                      onMove={moveCreatureActionDeckCard}
+                      label={`Top-to-bottom order of the ${compactDeckOrderDeckLabel} deck`}
+                    />
+                    <div className="seapals-compact-order-footer">
+                      <button type="button" data-compact-order-control onClick={commitCreatureActionReorder} className="min-h-11 flex-1 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-black text-slate-950">Confirm Order</button>
+                      <button type="button" data-compact-order-control onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="min-h-11 rounded-xl border border-slate-500 px-4 py-2.5 text-sm font-bold">{pendingCreatureAction?.committed ? "Skip Reorder" : "Cancel"}</button>
+                    </div>
+                  </div>
                 ) : eventOverlay.type === "choose-action-deck" ? (
                   <div className="mt-6">
                     <div className="grid gap-3 sm:grid-cols-2">
