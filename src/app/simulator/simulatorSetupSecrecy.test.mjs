@@ -6,6 +6,8 @@ const simulatorSource = (await readFile(new URL("./Simulator.jsx", import.meta.u
   .replaceAll("\r\n", "\n");
 const tutorialV2PageSource = (await readFile(new URL("../instructions/tutorial-v2/page.jsx", import.meta.url), "utf8"))
   .replaceAll("\r\n", "\n");
+const simulatorV2ExperienceSource = (await readFile(new URL("./SimulatorV2Experience.jsx", import.meta.url), "utf8"))
+  .replaceAll("\r\n", "\n");
 const standaloneTutorialConfigSource = (await readFile(new URL("../instructions/tutorial/standaloneTutorialConfig.mjs", import.meta.url), "utf8"))
   .replaceAll("\r\n", "\n");
 
@@ -30,11 +32,16 @@ test("every V2 match conceals the rival setup card for the entire setup phase", 
   );
 });
 
-test("the scripted V2 tutorial opening toss cannot bypass setup secrecy", () => {
+test("V2 tutorial entry keeps the real preview board covered by setup secrecy", () => {
   assert.match(
     tutorialV2PageSource,
-    /<StandaloneTutorial[\s\S]*?previewExperience[\s\S]*?\/>/,
-    "the tutorial-v2 route should be covered because it mounts the preview board",
+    /redirect\(`\/simulator-v2\?tutorial=1/,
+    "the former tutorial-v2 route should enter lessons on the simulator-v2 route",
+  );
+  assert.match(
+    simulatorV2ExperienceSource,
+    /<Simulator\b[\s\S]*?previewExperience[\s\S]*?tutorial:\s*runtime/,
+    "the lesson runtime should use the real preview board with its setup secrecy guard",
   );
   assert.match(
     standaloneTutorialConfigSource,

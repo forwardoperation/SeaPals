@@ -502,7 +502,7 @@ test("victory waits for readable card feedback after the stat-token sequence", (
   const victoryCheck = sourceSection(
     simulatorSource,
     "useEffect(() => {\n    if ([\"setup\", \"opponent\", \"transition\"].includes(gamePhase)",
-    "useEffect(() => {\n    if (!isStoryMode || storyResultRecordedRef.current || !gameResult)",
+    "useEffect(() => {\n    if (!isStoryMode || embeddedLesson || storyResultRecordedRef.current || !gameResult)",
   );
   assert.match(victoryCheck, /const eventRequiresResolution = Boolean\(eventOverlay\)/);
   assert.match(

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./SimulatorV2NewGameSetup.module.css";
+import { SIMULATOR_V2_LESSONS } from "./simulatorV2Lessons.mjs";
 
 function getDifficultyIndex(options, difficultyId) {
   const index = options.findIndex((option) => option.id === difficultyId);
@@ -18,6 +19,7 @@ export default function SimulatorV2NewGameSetup({
   reducedMotion = false,
   onStart,
   onCancel = null,
+  onTutorial = null,
 }) {
   const screenRef = useRef(null);
   const restoreFocusRef = useRef(false);
@@ -214,17 +216,22 @@ export default function SimulatorV2NewGameSetup({
 
             <div className={styles.tutorialChoice}>
               <span className={styles.tutorialQuestion}>New to SeaPals?</span>
-              <Link
+              {onTutorial ? (
+                <button type="button" onClick={() => onTutorial(playerDeckId)} className={styles.tutorialButton} data-v2-tutorial-link>
+                  <span>Learn to play · {SIMULATOR_V2_LESSONS.length} lessons</span>
+                  <span className={styles.tutorialIcon} aria-hidden="true">&#8594;</span>
+                </button>
+              ) : <Link
                 href={{
-                  pathname: "/instructions/tutorial-v2",
-                  query: { returnDeck: playerDeckId },
+                  pathname: "/simulator-v2",
+                  query: { deck: playerDeckId, tutorial: "1" },
                 }}
                 className={styles.tutorialButton}
                 data-v2-tutorial-link
               >
-                <span>Try the Tutorial</span>
+                <span>Learn to play · {SIMULATOR_V2_LESSONS.length} lessons</span>
                 <span className={styles.tutorialIcon} aria-hidden="true">&#8594;</span>
-              </Link>
+              </Link>}
             </div>
           </form>
           <p className={styles.analyticsLink}>

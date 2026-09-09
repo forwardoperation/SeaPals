@@ -8,6 +8,7 @@ const [simulatorSource, sequenceSource] = await Promise.all([
 ]);
 
 function sourceSection(source, startMarker, endMarker) {
+  source = source.replaceAll("\r\n", "\n");
   const start = source.indexOf(startMarker);
   assert.ok(start >= 0, `Missing source marker: ${startMarker}`);
   const end = source.indexOf(endMarker, start + startMarker.length);

@@ -5,6 +5,8 @@ import test from "node:test";
 const componentSource = await readFile(new URL("./VictoryCelebration.jsx", import.meta.url), "utf8");
 const styleSource = await readFile(new URL("./VictoryCelebration.module.css", import.meta.url), "utf8");
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
+const experienceSource = await readFile(new URL("./SimulatorV2Experience.jsx", import.meta.url), "utf8");
+const lessonPanelSource = await readFile(new URL("./SimulatorV2LessonPanel.jsx", import.meta.url), "utf8");
 
 test("victory celebration is a focused accessible dialog with an action slot", () => {
   assert.match(componentSource, /data-victory-celebration/);
@@ -56,13 +58,15 @@ test("victory celebration fits mobile safe areas and honors both motion controls
   assert.match(styleSource, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?animation:\s*none\s*!important/);
 });
 
-test("the simulator reserves the victory celebration for wins and routes defeats separately", () => {
+test("the simulator celebrates both match wins and completed embedded VP lessons while routing defeats separately", () => {
   assert.match(simulatorSource, /import VictoryCelebration from "\.\/VictoryCelebration";/);
   assert.match(
     simulatorSource,
-    /gameResult && !tutorialLessonWon && \/\^Victory\\b\/i\.test\(gameResult\)[\s\S]*?<VictoryCelebration/,
+    /gameResult && \(!tutorialLessonWon \|\| \(embeddedLesson && tutorialProgress\?\.status === "complete"\)\) && \/\^Victory\\b\/i\.test\(gameResult\)[\s\S]*?<VictoryCelebration/,
   );
-  assert.match(simulatorSource, /<VictoryCelebration[\s\S]*?message=\{gameResult\}/);
+  assert.match(simulatorSource, /<VictoryCelebration[\s\S]*?embeddedLesson\.celebration[\s\S]*?VP goal reached/);
+  assert.match(simulatorSource, /embeddedLesson \? "Replay Lesson" : "Retry Practice Duel"/);
+  assert.match(simulatorSource, /embeddedLesson \? "Continue to Lessons" : `Return to \$\{storyReturnLabel\}`/);
   assert.match(simulatorSource, /data-victory-primary-action[\s\S]*?Play Again/);
   assert.doesNotMatch(
     simulatorSource,
@@ -73,4 +77,21 @@ test("the simulator reserves the victory celebration for wins and routes defeats
     simulatorSource,
     /gameResult && !tutorialLessonWon && \/\^Defeat\\b\/i\.test\(gameResult\)[\s\S]*?<DefeatPresentation/,
   );
+});
+
+test("embedded lesson progress is saved at the real VP victory and the chooser exposes every goal", () => {
+  assert.match(
+    simulatorSource,
+    /const embeddedLessonReadyToComplete = Boolean\([\s\S]*?tutorialProgress\?\.status === "complete"[\s\S]*?playerVp >= victoryTarget[\s\S]*?\^Victory\\b[\s\S]*?\);/,
+  );
+  assert.match(
+    simulatorSource,
+    /if \(!embeddedLessonReadyToComplete \|\| embeddedLessonCompletedRef\.current\) return;[\s\S]*?notifyTutorialCallback\("onComplete"\)/,
+  );
+  const completionCallback = experienceSource.match(/const completeLesson = useCallback\(\(\) => \{[\s\S]*?\n  \}, \[lessonId\]\);/)?.[0] ?? "";
+  assert.match(completionCallback, /recordSimulatorV2LessonCompletion/);
+  assert.doesNotMatch(completionCallback, /setPanel\("complete"\)/, "saving progress must leave the victory celebration visible");
+  assert.match(lessonPanelSource, /data-v2-lesson-goal=\{lesson\.victoryTarget\}/);
+  assert.match(lessonPanelSource, /Goal \{lesson\.victoryTarget\} VP/);
+  assert.match(lessonPanelSource, /data-v2-lesson-vp-target=\{activeLesson\?\.victoryTarget \|\| undefined\}/);
 });

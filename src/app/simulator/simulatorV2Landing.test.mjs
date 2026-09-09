@@ -18,6 +18,9 @@ const landingComponentSource = presentationSources.find(({ source }) => (
 const landingStyleSource = presentationSources.find(({ name }) => (
   name === "SimulatorV2NewGameSetup.module.css"
 ))?.source ?? "";
+const lessonPanelSource = presentationSources.find(({ name }) => (
+  name === "SimulatorV2LessonPanel.jsx"
+))?.source ?? "";
 
 function sourceSection(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
@@ -99,6 +102,10 @@ test("the normal V2 opening screen keeps deck setup primary and offers a guided 
   const opponentSelect = jsxOpeningTagContaining(landing, "data-v2-opponent-deck");
   const startAction = jsxOpeningTagContaining(landing, "data-v2-start-game");
   const tutorialAction = jsxOpeningTagContaining(landing, "data-v2-tutorial-link");
+  const tutorialFallback = jsxOpeningTagContaining(
+    sourceSection(landing, ") : <Link", "</Link>}"),
+    "data-v2-tutorial-link",
+  );
 
   assert.equal((landing.match(/<select\b/g) ?? []).length, 2, "the landing should expose exactly two deck selectors");
   assert.ok(playerSelect, "the player deck selector needs a stable semantic hook");
@@ -117,15 +124,26 @@ test("the normal V2 opening screen keeps deck setup primary and offers a guided 
   );
 
   assert.match(landing, /New to SeaPals\?/);
-  assert.match(landing, /Try the Tutorial/);
-  assert.match(tutorialAction, /^<Link\b/);
-  assert.match(tutorialAction, /pathname:\s*"\/instructions\/tutorial-v2"/);
-  assert.match(tutorialAction, /query:\s*\{\s*returnDeck:\s*playerDeckId\s*\}/);
+  assert.match(landingComponentSource, /import \{ SIMULATOR_V2_LESSONS \} from "\.\/simulatorV2Lessons\.mjs";/);
+  assert.equal(
+    (landing.match(/Learn to play · \{SIMULATOR_V2_LESSONS\.length\} lessons/g) ?? []).length,
+    2,
+    "both tutorial entry branches should derive their lesson count from the curriculum",
+  );
+  assert.doesNotMatch(landing, /Learn to play · \d+ lessons/, "the lesson count should grow with the curriculum data");
+  assert.match(landing, /\{onTutorial \? \(/);
+  assert.match(tutorialAction, /^<button\b/);
+  assert.match(tutorialAction, /type="button"/);
+  assert.match(tutorialAction, /onClick=\{\(\) => onTutorial\(playerDeckId\)\}/);
+  assert.match(tutorialFallback, /^<Link\b/);
+  assert.match(tutorialFallback, /pathname:\s*"\/simulator-v2"/);
+  assert.match(tutorialFallback, /query:\s*\{\s*deck:\s*playerDeckId,\s*tutorial:\s*"1"\s*\}/);
   assert.doesNotMatch(tutorialAction, /type="submit"/);
+  assert.doesNotMatch(tutorialFallback, /type="submit"/);
   assert.equal(
     (landing.match(/data-v2-tutorial-link/g) ?? []).length,
-    1,
-    "the landing should expose one secondary tutorial action",
+    2,
+    "the mutually exclusive callback and link branches should each expose the secondary tutorial action",
   );
   assert.match(
     landingComponentSource,
@@ -136,6 +154,27 @@ test("the normal V2 opening screen keeps deck setup primary and offers a guided 
   assert.doesNotMatch(landing, /Victory Target|How a turn works|Start guided tutorial/i);
   assert.doesNotMatch(landing, /four Foundation|four Pals|Every illegal play|choose an opponent deck and victory target/i);
   assert.doesNotMatch(landing, /aria-pressed=/, "difficulty should not fall back to a wall of option buttons");
+});
+
+test("the lesson chooser scales through accessible modules and compact progress", () => {
+  assert.match(lessonPanelSource, /description=\{`\$\{lessons\.length\} short lesson/);
+  assert.doesNotMatch(lessonPanelSource, /Four short lessons/);
+  assert.match(lessonPanelSource, /data-v2-curriculum-progress/);
+  assert.match(lessonPanelSource, /role="progressbar"/);
+  assert.match(lessonPanelSource, /aria-valuenow=\{completedCount\}/);
+  assert.match(lessonPanelSource, /aria-valuetext=\{`\$\{completedCount\} of \$\{lessons\.length\} lessons complete`\}/);
+  assert.match(lessonPanelSource, /data-v2-lesson-modules/);
+  assert.match(lessonPanelSource, /<details[\s\S]*?open=\{module\.id === openModuleId \|\| undefined\}[\s\S]*?data-v2-lesson-module=\{module\.id\}/);
+  assert.match(lessonPanelSource, /<summary className=\{styles\.moduleSummary\}>/);
+  assert.match(lessonPanelSource, /aria-current=\{active \? "step" : undefined\}/);
+  assert.match(lessonPanelSource, /lesson\.goalLabel \|\| <>Goal \{lesson\.victoryTarget\} VP<\/>/);
+  assert.match(lessonPanelSource, /description:\s*module\.description \?\? module\.summary \?\? ""/);
+  assert.match(lessonPanelSource, /data-v2-completion-progress/);
+  assert.doesNotMatch(
+    lessonPanelSource,
+    /<ol className=\{styles\.completionProgress\}/,
+    "completion should summarize a large curriculum without rendering one circle per lesson",
+  );
 });
 
 test("the streamlined V2 opening names decks directly and keeps difficulty labels free of explanatory copy", () => {
@@ -215,6 +254,7 @@ test("the landing redesign is isolated to normal V2 games and preserves story, t
   assert.match(activeDefinition, /&&\s*eventOverlay\?\.type\s*===\s*"new-game-setup"/);
   assert.match(v2Mount, /<SimulatorV2NewGameSetup/);
   assert.match(v2Mount, /reducedMotion=\{accessibilityReducedMotion\}/);
+  assert.match(v2Mount, /onTutorial=\{onStartTutorial\}/);
   assert.match(v2Mount, /onStart=\{\(playerDeckId, opponentDeckId, difficulty\) =>[\s\S]*?restartGame\(playerDeckId, opponentDeckId, pendingVictoryTarget, difficulty\)/);
 
   assert.match(newGameBranch, /isStoryMode \? \(/, "story mode should retain its dedicated setup branch");

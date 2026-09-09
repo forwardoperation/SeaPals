@@ -75,17 +75,24 @@ test("standalone tutorial is isolated from adventure saves and only adds a retur
   assert.equal(STANDALONE_TUTORIAL_RETURN_PATH, "/instructions#learn-by-doing");
 });
 
-test("V2 preview routes opt into the new shell without changing canonical routes", async () => {
-  const [simulatorPreview, tutorialPreview, tutorialClient, canonicalSimulator] = await Promise.all([
+test("V2 tutorial entry uses the real simulator preview without changing canonical routes", async () => {
+  const [simulatorPreview, simulatorExperience, tutorialPreview, tutorialClient, canonicalSimulator] = await Promise.all([
     readAppSource("simulator-v2", "page.jsx"),
+    readAppSource("simulator", "SimulatorV2Experience.jsx"),
     readAppSource("instructions", "tutorial-v2", "page.jsx"),
     readAppSource("instructions", "tutorial", "StandaloneTutorial.jsx"),
     readAppSource("simulator", "page.jsx"),
   ]);
 
-  assert.match(simulatorPreview, /<Simulator[\s\S]*previewExperience/);
-  assert.match(tutorialPreview, /<StandaloneTutorial[\s\S]*previewExperience/);
-  assert.match(tutorialPreview, /\/simulator-v2/);
+  assert.match(simulatorPreview, /<SimulatorV2Experience[\s\S]*initialDeckId=\{initialDeckId\}/);
+  assert.match(simulatorPreview, /initialTutorial=\{params\?\.tutorial === "1"\}/);
+  assert.match(simulatorExperience, /<Simulator\b[\s\S]*previewExperience/);
+  assert.match(simulatorExperience, /createSimulatorV2LessonRuntime\(lesson\.id\)/);
+  assert.match(simulatorExperience, /tutorial:\s*runtime/);
+  assert.match(tutorialPreview, /getValidSimulatorDeck\(params\?\.returnDeck\)/);
+  assert.match(tutorialPreview, /redirect\(`\/simulator-v2\?tutorial=1/);
+  assert.match(tutorialPreview, /&deck=\$\{encodeURIComponent\(deck\.id\)\}/);
+  assert.doesNotMatch(tutorialPreview, /<StandaloneTutorial|<TutorialV2Course/);
   assert.match(tutorialClient, /<Simulator storyMode=\{storyMode\} previewExperience=\{previewExperience\}/);
   assert.doesNotMatch(canonicalSimulator, /previewExperience/);
 });

@@ -103,6 +103,12 @@ test("bundled costs animate their gross spend even when the same resolution also
 });
 
 test("opponent Supports, permanents, utilities, attacks, and Regenerate carry one gross-cost transaction", () => {
+  const committedEvent = sourceSection(
+    simulatorSource,
+    "function commitEventState(event)",
+    "function presentQueuedEvent(event, remainingEvents = [], { delayForOpponent = false } = {})",
+  );
+
   for (const marker of [
     "opponent-support:",
     "opponent-permanent:",
@@ -118,7 +124,12 @@ test("opponent Supports, permanents, utilities, attacks, and Regenerate carry on
   assert.match(simulatorSource, /transactionScope:\s*`lionfish-(?:player|opponent)-turn-\$\{/);
   assert.match(simulatorSource, /opponent-regenerate:\$\{round\}:\$\{turn\}:\$\{attackerInstanceId/);
   assert.match(simulatorSource, /player-regenerate:\$\{round\}:\$\{turn\}:\$\{pending\.attackerLocation/);
-  assert.match(simulatorSource, /commitEventState\(event\)[\s\S]{0,180}event\?\.rpSpend|event\?\.rpSpend[\s\S]{0,220}commitEventState/);
+  assert.match(committedEvent, /trackCommittedSimulatorEvent\(event\)/);
+  assert.match(committedEvent, /if \(event\?\.rpSpend\)/);
+  assert.ok(
+    committedEvent.indexOf("trackCommittedSimulatorEvent(event)") < committedEvent.indexOf("if (event?.rpSpend)"),
+    "the event should commit before its RP spend presentation is queued",
+  );
 });
 
 test("player utility RP spends follow the exact inspected card instance through deferred resolution", () => {

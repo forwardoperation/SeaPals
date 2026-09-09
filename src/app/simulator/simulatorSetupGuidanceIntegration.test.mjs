@@ -38,10 +38,34 @@ test("setup hand guidance respects both reduced-motion paths", () => {
   );
 });
 
-test("setup guidance anchors the full prompt beside its highlighted hand target", () => {
+test("embedded lessons expose each action immediately with target-aware teacher guidance", () => {
   assert.match(
     simulatorSource,
-    /const tutorialSetupHelpAnchored = Boolean\([\s\S]*?tutorialHelpFloating[\s\S]*?isSetup[\s\S]*?tutorialHelp\?\.target === "hand"[\s\S]*?tutorialHelp\.targetCardId/,
+    /const embeddedLessonActionReady = Boolean\(\s*embeddedLesson\s*&& tutorialHelpOpen\s*&& tutorialHelpDismissalKey\s*\);/,
+  );
+  assert.match(
+    simulatorSource,
+    /const embeddedLessonCoachOpen = Boolean\(\s*embeddedLessonActionReady\s*&& !embeddedLessonPresentationBlocked\s*\);/,
+  );
+  const embeddedCoach = sourceBetween(
+    "{embeddedLessonCoachOpen ? (",
+    ") : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (",
+  );
+  assert.match(embeddedCoach, /<ProfessorCoachOverlay help=\{tutorialHelp\}>[\s\S]*?<ProfessorGuideCard/);
+  assert.doesNotMatch(embeddedCoach, /onAdvance|advanceLabel|Show me/);
+  assert.doesNotMatch(simulatorSource, /embeddedLessonActionCueIds|beginEmbeddedLessonAction|data-v2-lesson-dialogue/);
+  assert.match(
+    simulatorSource,
+    /if \(!embeddedLessonCoachOpen \|\| !tutorialTargetBeaconOpen\) return undefined;[\s\S]*?findTutorialTarget\(tutorialHelp, \{ includeOffscreen: true \}\)[\s\S]*?\[data-simulator-hand-card-rail\][\s\S]*?scrollTutorialTargetWithinContainer/,
+  );
+  assert.match(simulatorSource, /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}/);
+  assert.match(simulatorSource, /\.seapals-v2-action-cue \{[\s\S]*?pointer-events: none;/);
+});
+
+test("legacy setup guidance keeps its target-aware coach and beacon", () => {
+  assert.match(
+    simulatorSource,
+    /const tutorialSetupHelpAnchored = Boolean\(\s*tutorialHelpFloating\s*&& isSetup\s*&& tutorialHelp\?\.target === "hand"\s*&& tutorialHelp\.targetCardId,\s*\);/,
   );
   assert.match(
     simulatorSource,
@@ -49,7 +73,7 @@ test("setup guidance anchors the full prompt beside its highlighted hand target"
   );
   assert.match(
     simulatorSource,
-    /active=\{tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
+    /active=\{!embeddedLesson && tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
   );
   assert.match(simulatorSource, /window\.addEventListener\("scroll", requestUpdate, true\)/);
   assert.match(simulatorSource, /window\.removeEventListener\("scroll", requestUpdate, true\)/);

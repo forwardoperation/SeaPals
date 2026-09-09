@@ -12,6 +12,13 @@ import MobileDrawTray from "./MobileDrawTray";
 import AnimatedVpBadge from "./AnimatedVpBadge";
 import CardActionProxyOverlay from "./CardActionProxyOverlay";
 import SimulatorV2NewGameSetup from "./SimulatorV2NewGameSetup";
+import SimulatorV2LessonPanel from "./SimulatorV2LessonPanel";
+import {
+  SIMULATOR_V2_LESSONS,
+  getSimulatorV2LessonHelp,
+  getSimulatorV2LessonActionBlock,
+  getSimulatorV2ExpectedDraw,
+} from "./simulatorV2Lessons.mjs";
 import { AttackIntentLayer, AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
 import CardCoinBoardPresentation from "./CardCoinBoardPresentation";
 import CoralUpgradeCelebration from "./CoralUpgradeCelebration";
@@ -389,6 +396,23 @@ function ProfessorGuideCard({
   onRevealTarget = null,
   revealTargetLabel = "Show highlighted action",
 }) {
+  if (guide.lesson) {
+    return (
+      <SimulatorV2LessonPanel
+        key={help.cueId ?? help.id}
+        mode="coach"
+        lessons={SIMULATOR_V2_LESSONS}
+        activeLesson={guide.lesson}
+        progress={{ stepIndex: Math.max(0, step - 1), stepCount: total }}
+        instruction={help.action}
+        interaction={help.interaction}
+        explanation={help.message}
+        hint={help.hint}
+        onAdvance={onAdvance}
+        advanceLabel={advanceLabel}
+      />
+    );
+  }
   const professorMessage = createProfessorSpokenMessage(help);
   const speechKey = createProfessorSpeechKey(help.cueId ?? help.id, professorMessage);
   return (
@@ -661,6 +685,109 @@ function ProfessorTargetBeacon({ guide, help, active }) {
   );
 }
 
+function sameEmbeddedLessonTargetRect(left, right) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return Math.abs(left.left - right.left) < 1
+    && Math.abs(left.top - right.top) < 1
+    && Math.abs(left.width - right.width) < 1
+    && Math.abs(left.height - right.height) < 1;
+}
+
+function EmbeddedLessonHandIcon() {
+  return (
+    <svg viewBox="0 0 76 94" role="presentation" focusable="false">
+      <path
+        d="M29.4 51.8V13.9c0-4.6 3.2-8.1 7.5-8.1s7.5 3.5 7.5 8.1v26.7-13c0-4.4 3-7.6 7.1-7.6 4.2 0 7.1 3.2 7.1 7.6v16.1-8.8c0-4 2.9-7 6.7-7 3.9 0 6.7 3 6.7 7v23.7c0 18.1-11.2 29.6-28.3 29.6H33.3c-9.2 0-16-3.8-21.2-11.9L3.7 63.2c-2.5-4-1.6-8.6 2-11.2 3.3-2.5 7.8-1.7 10.8 1.8l12.9 14.8V51.8Z"
+        fill="white"
+        stroke="#334155"
+        strokeWidth="3.2"
+        strokeLinejoin="round"
+      />
+      <path d="M44.4 40.6v14.1M58.6 43.7v12.8M29.4 51.8v15.9" fill="none" stroke="#cbd5e1" strokeWidth="2.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function EmbeddedLessonActionCue({ help, active }) {
+  const [targetRect, setTargetRect] = useState(null);
+
+  useEffect(() => {
+    if (!active || !help?.target || !TUTORIAL_POINTER_TARGETS.has(help.target)) {
+      setTargetRect(null);
+      return undefined;
+    }
+
+    let animationFrame = null;
+    let delayedUpdate = null;
+    let resizeObserver = null;
+    let observedElement = null;
+    const updateTargetRect = () => {
+      animationFrame = null;
+      const target = findTutorialTarget(help);
+      if (!target) {
+        setTargetRect((current) => current == null ? current : null);
+        return;
+      }
+      const nextRect = {
+        left: target.rect.left,
+        top: target.rect.top,
+        width: target.rect.width,
+        height: target.rect.height,
+      };
+      setTargetRect((current) => sameEmbeddedLessonTargetRect(current, nextRect) ? current : nextRect);
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObserver ??= new ResizeObserver(requestUpdate);
+        if (observedElement !== target.element) {
+          resizeObserver.disconnect();
+          resizeObserver.observe(target.element);
+          observedElement = target.element;
+        }
+      }
+    };
+    const requestUpdate = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(updateTargetRect);
+    };
+
+    requestUpdate();
+    delayedUpdate = window.setTimeout(requestUpdate, 240);
+    window.addEventListener("resize", requestUpdate);
+    window.addEventListener("scroll", requestUpdate, true);
+    window.visualViewport?.addEventListener("resize", requestUpdate);
+    window.visualViewport?.addEventListener("scroll", requestUpdate);
+    return () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      if (delayedUpdate) window.clearTimeout(delayedUpdate);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", requestUpdate);
+      window.removeEventListener("scroll", requestUpdate, true);
+      window.visualViewport?.removeEventListener("resize", requestUpdate);
+      window.visualViewport?.removeEventListener("scroll", requestUpdate);
+    };
+  }, [active, help?.cueId, help?.target, help?.coachAnchor, help?.targetActionKey, help?.targetCardId, help?.targetSearchCardId, help?.targetDeck, help?.targetDrawAction]);
+
+  if (!active || !targetRect || !help) return null;
+  const gesture = help.interaction === "drag" ? "drag" : "tap";
+  return (
+    <div
+      className={`seapals-v2-action-cue is-${gesture}`}
+      style={{
+        left: `${targetRect.left}px`,
+        top: `${targetRect.top}px`,
+        width: `${targetRect.width}px`,
+        height: `${targetRect.height}px`,
+      }}
+      data-v2-target-gesture={gesture}
+      aria-hidden="true"
+    >
+      <span className="seapals-v2-action-cue-halo" />
+      {gesture === "drag" ? <span className="seapals-v2-action-cue-trail" /> : null}
+      <span className="seapals-v2-action-cue-hand"><EmbeddedLessonHandIcon /></span>
+    </div>
+  );
+}
+
 const PROFESSOR_COACH_ARROW = Object.freeze({
   above: "↓",
   below: "↑",
@@ -778,11 +905,14 @@ function ProfessorCoachOverlay({ help, children }) {
     <div
       ref={coachRef}
       className={`seapals-professor-coach-wrap${placement ? ` seapals-professor-coach-wrap-anchored seapals-professor-coach-side-${placement.side}` : ""}`}
-      style={placement ? {
-        left: `${placement.left}px`,
-        top: `${placement.top}px`,
-        "--seapals-coach-arrow-offset": `${placement.arrowOffset}px`,
-      } : undefined}
+      style={{
+        width: help?.lessonStep ? "min(23rem, calc(100vw - 24px))" : undefined,
+        ...(placement ? {
+          left: `${placement.left}px`,
+          top: `${placement.top}px`,
+          "--seapals-coach-arrow-offset": `${placement.arrowOffset}px`,
+        } : {}),
+      }}
       data-tutorial-coach-side={placement?.side}
       data-tutorial-coach-constrained={placement?.constrained ? "true" : undefined}
     >
@@ -1787,7 +1917,7 @@ function createFoundationOpening(deckId, random = Math.random, playerDeckSnapsho
   return foundationCards;
 }
 
-function createInitialGameState(deckId = defaultDeckId, opponentDeckId = deckId, random = Math.random, { scriptedTutorial = false, playerDeckSnapshot = null } = {}) {
+function createInitialGameState(deckId = defaultDeckId, opponentDeckId = deckId, random = Math.random, { scriptedTutorial = false, preparedLesson = null, playerDeckSnapshot = null } = {}) {
   let foundationCards = createFoundationOpening(deckId, random, playerDeckSnapshot);
   let palsCards = createDeck("pals", deckId, random, playerDeckSnapshot);
   const opponentFoundationCards = createFoundationOpening(opponentDeckId, random);
@@ -1812,7 +1942,7 @@ function createInitialGameState(deckId = defaultDeckId, opponentDeckId = deckId,
     ? createScriptedTutorialOpponentCorals(scriptedScenario.opponentStartingTableau)
     : createOpponentStartingCorals(opponentBaseCoralId);
   const opponentSetupCost = Number(cardsById[opponentBaseCoralId]?.cost?.rp ?? 0);
-  return {
+  const game = {
     scriptedTutorialScenario: scriptedScenario,
     foundationDeck: foundationCards.slice(4),
     palsDeck: palsCards.slice(4),
@@ -1842,6 +1972,50 @@ function createInitialGameState(deckId = defaultDeckId, opponentDeckId = deckId,
       rp: Math.max(0, 3 - opponentSetupCost),
     },
   };
+  if (!preparedLesson) return game;
+  const seed = preparedLesson.seed;
+  const seededHabitats = (seed.playerHabitats ?? []).map((entry, habitatIndex) => {
+    const cardId = typeof entry === "string" ? entry : entry?.cardId;
+    const card = cardsById[cardId];
+    if (!card || card.kind !== CardKind.HABITAT) {
+      throw new RangeError(`Unknown prepared lesson Habitat: ${cardId || "missing"}.`);
+    }
+    const maxHealth = Math.max(0, Number(entry?.maxHealth ?? card.health) || 0);
+    return {
+      instanceId: entry?.instanceId ?? `tutorial-player-habitat-${habitatIndex + 1}-${cardId}`,
+      cardId,
+      currentHealth: Math.max(0, Number(entry?.currentHealth ?? maxHealth) || 0),
+      maxHealth,
+    };
+  });
+  const opponentSeed = seed.opponent ?? {};
+  return {
+    ...game,
+    ...seed,
+    scriptedTutorialScenario: null,
+    foundationDeck: [...seed.foundationDeck],
+    palsDeck: [...seed.palsDeck],
+    hand: [...seed.hand],
+    conditionDeck: [...seed.conditionDeck],
+    playerCorals: createScriptedTutorialOpponentCorals(seed.playerTableau, "player"),
+    playerHabitatInstances: seededHabitats,
+    playerReefCreatureInstances: [],
+    playerOrphanCreatureInstances: [],
+    opponent: {
+      ...game.opponent,
+      ...opponentSeed,
+      foundationDeck: [...(opponentSeed.foundationDeck ?? game.opponent.foundationDeck)],
+      palsDeck: [...(opponentSeed.palsDeck ?? game.opponent.palsDeck)],
+      hand: [...(opponentSeed.hand ?? [])],
+      corals: createScriptedTutorialOpponentCorals(seed.opponentTableau),
+      habitats: [...(opponentSeed.habitats ?? game.opponent.habitats)],
+      habitatInstances: [...(opponentSeed.habitatInstances ?? game.opponent.habitatInstances)],
+      reefCreatures: [...(opponentSeed.reefCreatures ?? game.opponent.reefCreatures)],
+      reefCreatureInstances: [...(opponentSeed.reefCreatureInstances ?? game.opponent.reefCreatureInstances)],
+      orphanCreatures: [...(opponentSeed.orphanCreatures ?? game.opponent.orphanCreatures)],
+      rp: Number.isFinite(opponentSeed.rp) ? opponentSeed.rp : 3,
+    },
+  };
 }
 
 function createOpponentStartingCorals(baseCoralId) {
@@ -1859,14 +2033,14 @@ function createOpponentStartingCorals(baseCoralId) {
   }];
 }
 
-function createScriptedTutorialOpponentCorals(tableau = []) {
+function createScriptedTutorialOpponentCorals(tableau = [], owner = "opponent") {
   return tableau.map((definition, foundationIndex) => {
     const foundationCardId = String(definition?.foundationCardId ?? "").trim();
     const foundation = cardsById[foundationCardId];
     if (!foundation || !isFoundationCard(foundation)) {
       throw new RangeError(`Unknown Academy opponent foundation: ${foundationCardId || "missing"}.`);
     }
-    const instanceId = `tutorial-opponent-foundation-${foundationIndex + 1}-${foundationCardId}`;
+    const instanceId = `tutorial-${owner}-foundation-${foundationIndex + 1}-${foundationCardId}`;
     const slots = createCoralSlots(foundation, instanceId);
     for (const [placementIndex, placement] of (definition.placements ?? []).entries()) {
       const cardId = String(placement?.cardId ?? "").trim();
@@ -1882,17 +2056,27 @@ function createScriptedTutorialOpponentCorals(tableau = []) {
       slots[slotIndex] = {
         ...slots[slotIndex],
         cardId,
-        cardInstanceId: `tutorial-opponent-${cardId}-${foundationIndex + 1}-${placementIndex + 1}`,
+        cardInstanceId: `tutorial-${owner}-${cardId}-${foundationIndex + 1}-${placementIndex + 1}`,
       };
     }
     return {
       id: instanceId,
       cardId: foundationCardId,
-      health: Number(foundation.health ?? 0),
-      maxHealth: Number(foundation.health ?? 0),
+      ...(owner === "player" ? {
+        name: foundation.name,
+        image: foundation.image,
+        x: tableau.length === 1 ? 50 : 20 + (60 * foundationIndex / (tableau.length - 1)),
+        y: 50,
+      } : {}),
+      health: Math.max(0, Number(definition?.health ?? foundation.health) || 0),
+      maxHealth: Math.max(0, Number(definition?.maxHealth ?? foundation.health) || 0),
       slots,
-      playedTurn: 0,
-      stageEnteredTurn: 0,
+      statuses: Array.isArray(definition?.statuses)
+        ? definition.statuses.map((status) => ({ ...status }))
+        : [],
+      rpPenaltyNextTurn: Math.max(0, Number(definition?.rpPenaltyNextTurn) || 0),
+      playedTurn: Number.isFinite(definition?.playedTurn) ? definition.playedTurn : 0,
+      stageEnteredTurn: Number.isFinite(definition?.stageEnteredTurn) ? definition.stageEnteredTurn : 0,
     };
   });
 }
@@ -4096,9 +4280,11 @@ export default function Simulator({
   previewExperience = false,
   accessibilitySettings = null,
   onOpenAccessibilitySettings = null,
+  onStartTutorial = null,
 } = {}) {
   const isStoryMode = Boolean(storyMode);
   const tutorialRuntime = storyMode?.tutorial ?? null;
+  const embeddedLesson = previewExperience ? tutorialRuntime?.lesson ?? null : null;
   const accessibilityTextSpeed = ["slow", "normal", "fast", "instant"].includes(accessibilitySettings?.textSpeed)
     ? accessibilitySettings.textSpeed
     : "normal";
@@ -4150,6 +4336,7 @@ export default function Simulator({
     ? createSimulatorTutorialProgress(tutorialContract, tutorialRuntime?.initialProgress ?? {})
     : null);
   const tutorialGuide = {
+    lesson: embeddedLesson,
     name: String(tutorialRuntime?.guide?.name ?? "").trim() || "Mr. Easterling",
     role: String(tutorialRuntime?.guide?.role ?? "").trim() || "Aquarium Project Lead",
     portraitSrc: String(tutorialRuntime?.guide?.portraitSrc ?? "").trim() || "/images/adventure/mr-easterling-portrait-v2.webp",
@@ -4174,6 +4361,7 @@ export default function Simulator({
     createSeededRandom(0x5ea9a15),
     {
       scriptedTutorial: tutorialUsesScriptedScenario,
+      preparedLesson: embeddedLesson,
       playerDeckSnapshot: isStoryMode ? storyPlayerDeckSnapshot : null,
     },
   ));
@@ -4185,7 +4373,11 @@ export default function Simulator({
     initialGame.scriptedTutorialScenario,
   );
   const tutorialVpRef = useRef({
-    player: 0,
+    player: getEcosystemVictoryPoints(
+      initialGame.playerCorals ?? [],
+      (initialGame.playerHabitatInstances ?? []).map((instance) => instance.cardId),
+      (initialGame.playerReefCreatureInstances ?? []).map((instance) => instance.cardId),
+    ),
     opponent: getEcosystemVictoryPoints(
       initialGame.opponent.corals,
       initialGame.opponent.habitats,
@@ -4207,10 +4399,10 @@ export default function Simulator({
   const [foundationDeck, setFoundationDeck] = useState(initialGame.foundationDeck);
   const [palsDeck, setPalsDeck] = useState(initialGame.palsDeck);
   const [hand, setHand] = useState(initialGame.hand);
-  const [playerCorals, setPlayerCorals] = useState([]);
-  const [playerHabitatInstances, setPlayerHabitatInstances] = useState([]);
-  const [playerReefCreatureInstances, setPlayerReefCreatureInstances] = useState([]);
-  const [playerOrphanCreatureInstances, setPlayerOrphanCreatureInstances] = useState([]);
+  const [playerCorals, setPlayerCorals] = useState(initialGame.playerCorals ?? []);
+  const [playerHabitatInstances, setPlayerHabitatInstances] = useState(initialGame.playerHabitatInstances ?? []);
+  const [playerReefCreatureInstances, setPlayerReefCreatureInstances] = useState(initialGame.playerReefCreatureInstances ?? []);
+  const [playerOrphanCreatureInstances, setPlayerOrphanCreatureInstances] = useState(initialGame.playerOrphanCreatureInstances ?? []);
   const [bubbleBursts, setBubbleBursts] = useState([]);
   const [coralUpgradeCelebrations, setCoralUpgradeCelebrations] = useState([]);
   const [coralUpgradeAnnouncement, setCoralUpgradeAnnouncement] = useState(null);
@@ -4262,20 +4454,20 @@ export default function Simulator({
   const [discardPile, setDiscardPile] = useState([]);
   const [lostZone, setLostZone] = useState([]);
   const [conditionDeck, setConditionDeck] = useState(initialGame.conditionDeck);
-  const [activeConditionId, setActiveConditionId] = useState(null);
+  const [activeConditionId, setActiveConditionId] = useState(initialGame.activeConditionId ?? null);
   const [persistentConditionIds, setPersistentConditionIds] = useState([]);
   const [conditionDensityUses, setConditionDensityUses] = useState({});
   const [schoolDensityCommitmentsByInstanceId, setSchoolDensityCommitmentsByInstanceId] = useState({});
   const [blueCrabRecycleUsedTurn, setBlueCrabRecycleUsedTurn] = useState(null);
   const [resilienceUsedCardIds, setResilienceUsedCardIds] = useState([]);
-  const [round, setRound] = useState(0);
-  const [gamePhase, setGamePhase] = useState("setup");
-  const [startingPlayer, setStartingPlayer] = useState(null);
+  const [round, setRound] = useState(initialGame.round ?? 0);
+  const [gamePhase, setGamePhase] = useState(initialGame.gamePhase ?? "setup");
+  const [startingPlayer, setStartingPlayer] = useState(initialGame.startingPlayer ?? null);
   const [openingOpponentTurn, setOpeningOpponentTurn] = useState(false);
   const [roundFlash, setRoundFlash] = useState(false);
-  const [turn, setTurn] = useState(1);
-  const [rp, setRpState] = useState(3);
-  const [hasDrawnThisTurn, setHasDrawnThisTurn] = useState(false);
+  const [turn, setTurn] = useState(initialGame.turn ?? 1);
+  const [rp, setRpState] = useState(initialGame.rp ?? 3);
+  const [hasDrawnThisTurn, setHasDrawnThisTurn] = useState(initialGame.hasDrawnThisTurn ?? false);
   const [turnDrawSelection, setTurnDrawSelection] = useState(null);
   const [turnDrawResult, setTurnDrawResult] = useState(null);
   const [compactDrawViewport, setCompactDrawViewport] = useState(true);
@@ -4386,7 +4578,7 @@ export default function Simulator({
   const [inspectedCard, setInspectedCard] = useState(null);
   const handLimitChoiceIdRef = useRef(0);
   const [handLimitDiscardSelection, setHandLimitDiscardSelection] = useState([]);
-  const [eventOverlay, setEventOverlay] = useState(() => ({
+  const [eventOverlay, setEventOverlay] = useState(() => embeddedLesson ? null : ({
     type: "new-game-setup",
     initial: true,
     title: previewExperience && tutorialUsesScriptedScenario
@@ -5564,6 +5756,13 @@ export default function Simulator({
     }
   }, [activeCondition?.id, activeHandLimit, eventOverlay, gamePhase, hand, pendingEvents]);
 
+  function getEmbeddedLessonBlock(action, details = {}) {
+    return getSimulatorV2LessonActionBlock({
+      lesson: embeddedLesson, checkpoint: tutorialCurrentCheckpoint,
+      action, gamePhase, ...details,
+    });
+  }
+
   function notifyTutorialCallback(name, ...args) {
     const callback = tutorialCallbacksRef.current?.[name];
     if (typeof callback !== "function") return;
@@ -6350,7 +6549,8 @@ export default function Simulator({
     victoryTarget,
   });
   const tutorialCompletionDialogOpen = Boolean(
-    tutorialLessonWon
+    !embeddedLesson
+    && tutorialLessonWon
     && !eventOverlay
     && !modal
     && !inspectedCardData
@@ -6364,6 +6564,20 @@ export default function Simulator({
     gameResult,
     initialOverlay: eventOverlay?.initial === true,
   });
+  const embeddedLessonCompletedRef = useRef(false);
+  const embeddedLessonReadyToComplete = Boolean(
+    embeddedLesson && tutorialProgress?.status === "complete"
+    && playerVp >= victoryTarget && /^Victory\b/i.test(String(gameResult ?? ""))
+    && !eventOverlay && !pendingEvents.length && !modal && !inspectedCardData
+    && !playingCardId && !attackContext && !searchContext && !pendingCreatureAction
+    && !boardStatPresentationActive && !consumedAttackFlight && !combatResultCheckpoint
+    && !faceoffRolling && !effectRollRolling && !mobileDrawFlights.length
+  );
+  useEffect(() => {
+    if (!embeddedLessonReadyToComplete || embeddedLessonCompletedRef.current) return;
+    embeddedLessonCompletedRef.current = true;
+    notifyTutorialCallback("onComplete");
+  }, [embeddedLessonReadyToComplete]);
   useEffect(() => {
     if (!tutorialExitRequiresConfirmation) return undefined;
     const warnBeforeLeaving = (event) => {
@@ -6824,8 +7038,11 @@ export default function Simulator({
       finishAttackTargetInPlay: scriptedOpponentCardIdsInPlay.includes(scriptedFinishPlan.finishAttackTargetCardId),
     };
   })() : null;
-  const tutorialHelp = tutorialContract ? getSimulatorTutorialHelp(tutorialCurrentCheckpoint, {
+  const tutorialHelp = tutorialContract ? (embeddedLesson
+    ? (checkpoint, uiState) => getSimulatorV2LessonHelp(embeddedLesson, checkpoint, uiState)
+    : getSimulatorTutorialHelp)(tutorialCurrentCheckpoint, {
     guideName: tutorialGuide.name,
+    hand,
     victoryPending: tutorialVictoryPending,
     playerVp,
     opponentVp,
@@ -6836,8 +7053,8 @@ export default function Simulator({
     scriptedSetupCardName: tutorialUsesScriptedScenario ? cardsById["mustard-hill-coral-base"]?.name : null,
     scriptedBuildCardId: scriptedFoundationLessonCardId,
     scriptedBuildCardName: scriptedFoundationLessonCardId ? cardsById[scriptedFoundationLessonCardId]?.name : null,
-    playingCardId,
-    playingCardName: playingCard?.name,
+    playingCardId: embeddedLesson ? activePlacementCardId : playingCardId,
+    playingCardName: embeddedLesson ? activePlacementCard?.name : playingCard?.name,
     modal,
     selectedHandCard: selectedTutorialHandCardId,
     selectedCardIsSupport: selectedTutorialCard?.kind === CardKind.SUPPORT,
@@ -7035,7 +7252,31 @@ export default function Simulator({
   );
   const tutorialHelpDismissalKey = tutorialHelp?.cueId ?? tutorialHelp?.id ?? null;
   const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelpDismissalKey);
+  const embeddedLessonPresentationBlocked = Boolean(
+    tutorialIntroductionOpen
+    || tutorialCardLesson
+    || tutorialBoardTourOpen
+    || eventOverlay
+    || roundFlash
+    || opponentThinking
+    || mobileHudPanel
+    || mobileHandDrag
+    || simulatorExitConfirmationOpen
+    || tutorialExitConfirmationOpen
+    || gameResult
+  );
+  const embeddedLessonActionReady = Boolean(
+    embeddedLesson
+    && tutorialHelpOpen
+    && tutorialHelpDismissalKey
+  );
+  const embeddedLessonCoachOpen = Boolean(
+    embeddedLessonActionReady
+    && !embeddedLessonPresentationBlocked
+  );
   const tutorialDrawTrayHelpAnchored = Boolean(
+    !embeddedLesson
+    &&
     previewDrawTrayEnabled
     && modal === "turn-draw"
     && mobileDrawTrayOpen
@@ -7096,7 +7337,8 @@ export default function Simulator({
     scriptedTutorialOverlayHelp && (scriptedTutorialOverlayHelpOpen || keepAcademyPointer),
   );
   const tutorialHelpInline = Boolean(
-    tutorialHelpOpen
+    !embeddedLesson
+    && tutorialHelpOpen
     && !tutorialDrawTrayHelpAnchored
     && !eventOverlay
     && (
@@ -7108,7 +7350,8 @@ export default function Simulator({
     ),
   );
   const tutorialHelpFloating = Boolean(
-    tutorialHelpOpen
+    !embeddedLesson
+    && tutorialHelpOpen
     && !tutorialBoardTourOpen
     && !tutorialIntroductionOpen
     && !tutorialCardLessonOpen
@@ -7118,6 +7361,9 @@ export default function Simulator({
     && !roundFlash
     && !opponentThinking
     && !mobileHudPanel
+    && !mobileHandDrag
+    && !simulatorExitConfirmationOpen
+    && !tutorialExitConfirmationOpen
     && !inspectedCardData
     && !handPopoverCardId
     && !gameResult,
@@ -7125,8 +7371,8 @@ export default function Simulator({
   const tutorialSetupHelpAnchored = Boolean(
     tutorialHelpFloating
     && isSetup
-    && tutorialHelp?.target === "hand"
-    && tutorialHelp.targetCardId,
+      && tutorialHelp?.target === "hand"
+      && tutorialHelp.targetCardId,
   );
   const tutorialHandRevealLabel = modal === "hand" && tutorialHelpInline
     ? tutorialHelp?.target === "hand" && tutorialHelp.targetCardId
@@ -7166,6 +7412,43 @@ export default function Simulator({
     && !gameResult
     && !opponentThinking,
   );
+
+  useEffect(() => {
+    if (!embeddedLessonCoachOpen || !tutorialTargetBeaconOpen) return undefined;
+
+    let secondFrame = null;
+    let firstFrame = window.requestAnimationFrame(() => {
+      firstFrame = null;
+      secondFrame = window.requestAnimationFrame(() => {
+        secondFrame = null;
+        const target = findTutorialTarget(tutorialHelp, { includeOffscreen: true });
+        if (!target) return;
+        const behavior = getTutorialScrollBehavior(accessibilityReducedMotion);
+        const scrollContainer = target.element.closest("[data-simulator-hand-card-rail]");
+        if (scrollContainer) scrollTutorialTargetWithinContainer(scrollContainer, target.element, behavior);
+        else target.element.scrollIntoView({ block: "nearest", inline: "nearest", behavior });
+        if (target.element.matches("button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])")) {
+          target.element.focus?.({ preventScroll: true });
+        }
+      });
+    });
+    return () => {
+      if (firstFrame != null) window.cancelAnimationFrame(firstFrame);
+      if (secondFrame != null) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [
+    accessibilityReducedMotion,
+    embeddedLessonCoachOpen,
+    tutorialHelp?.coachAnchor,
+    tutorialHelp?.cueId,
+    tutorialHelp?.target,
+    tutorialHelp?.targetActionKey,
+    tutorialHelp?.targetCardId,
+    tutorialHelp?.targetDeck,
+    tutorialHelp?.targetDrawAction,
+    tutorialHelp?.targetSearchCardId,
+    tutorialTargetBeaconOpen,
+  ]);
   const tutorialAnnouncement = tutorialTargetBeaconHelp
     ? createProfessorAnnouncement({
         guideName: tutorialGuide.name,
@@ -7184,13 +7467,14 @@ export default function Simulator({
     tutorialVisualHelp
       && tutorialVisualHelp.target === target
       && !(target === "player-board" && tutorialVisualHelp.targetActionKey)
+      && !(embeddedLesson && target === "hand" && tutorialVisualHelp.targetCardId)
       ? " seapals-tutorial-target"
       : ""
   );
   const tutorialCardTargetClass = (cardId) => (
     tutorialHelpTargetActive
     && tutorialHelp?.target === "hand"
-    && tutorialHelp.targetCardId === cardId
+    && (tutorialHelp.targetCardIds ?? [tutorialHelp.targetCardId]).includes(cardId)
       ? " seapals-tutorial-target"
       : ""
   );
@@ -7447,7 +7731,7 @@ export default function Simulator({
   }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, effectRollRolling, consumedAttackFlight, boardStatPresentationActive]);
 
   useEffect(() => {
-    if (!isStoryMode || storyResultRecordedRef.current || !gameResult) return;
+    if (!isStoryMode || embeddedLesson || storyResultRecordedRef.current || !gameResult) return;
     const result = createStoryDuelResult({
       encounterId: storyMode?.encounterId ?? `story:${storyOpponentDeckId}`,
       opponentId: storyMode?.opponentId ?? storyMode?.encounterId ?? storyOpponentDeckId,
@@ -7472,7 +7756,7 @@ export default function Simulator({
     storyMode?.onResult?.(result);
     if (result.outcome === "victory") storyMode?.onVictory?.(result);
     else storyMode?.onDefeat?.(result);
-  }, [gameResult, isStoryMode, opponentVp, playerVp, round, storyDifficulty, storyMode, storyOpponentDeckId, storyOpponentName, storyPlayerDeckId, storyPlayerDeckSnapshot, storyVictoryTarget, turn]);
+  }, [embeddedLesson, gameResult, isStoryMode, opponentVp, playerVp, round, storyDifficulty, storyMode, storyOpponentDeckId, storyOpponentName, storyPlayerDeckId, storyPlayerDeckSnapshot, storyVictoryTarget, turn]);
 
   useEffect(() => {
     if (!faceoffRolling || !["faceoff-ready", "school-attack-ready", "opponent-roll-ready"].includes(eventOverlay?.type)) return undefined;
@@ -8497,7 +8781,7 @@ export default function Simulator({
           ? playerOrphanCreatures[attackerOrphanIndex]?.instanceId ?? null
           : null;
     const attacker = cardsById[attackerCardId];
-    const academyBlock = getAcademyActionBlock({
+    const academyBlock = getEmbeddedLessonBlock("attack", { cardId: attackerCardId }) || getAcademyActionBlock({
       route: scriptedFinishRoute,
       help: tutorialHelp,
       actionKey: attackerActionKey,
@@ -9863,7 +10147,7 @@ export default function Simulator({
       cancelMobileHandDrag("That card moved in your hand. Try dragging it again.");
       return { ...target, valid: false };
     }
-    const academyBlock = getAcademyCardPlayBlock({
+    const academyBlock = getEmbeddedLessonBlock("play-card", { cardId }) || getAcademyCardPlayBlock({
       route: scriptedFinishRoute,
       help: tutorialHelp,
       cardId,
@@ -9919,7 +10203,7 @@ export default function Simulator({
   function handleMobileHandDragStart({ cardId, index, pointerId, clientX, clientY }) {
     const card = cardsById[cardId];
     if (!card || hand[index] !== cardId || playingCardId) return false;
-    const academyBlock = getAcademyCardPlayBlock({
+    const academyBlock = getEmbeddedLessonBlock("play-card", { cardId }) || getAcademyCardPlayBlock({
       route: scriptedFinishRoute,
       help: tutorialHelp,
       cardId,
@@ -10572,6 +10856,23 @@ export default function Simulator({
 
   function commitEventState(event) {
     trackCommittedSimulatorEvent(event);
+    if (embeddedLesson && event?.type === "faceoff-result" && event.combatAttackerOwner === "opponent") {
+      emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.ATTACK_RESOLVED, {
+        accepted: true,
+        attackerCardId: event.attackerCardId ?? event.sourceCardId ?? null,
+        defenderCardId: event.defenderCardId ?? null,
+        targetInstanceId: event.targetInstanceId ?? null,
+        outcome: event.combatOutcome ?? null,
+        resolution: {
+          attackerWins: Boolean(event.attackerWins),
+          attackTotal: event.attackTotal ?? null,
+          defenseTotal: event.defenseTotal ?? null,
+        },
+        resolvedCount: event.attackNumber ?? 1,
+        requiredCount: event.attackCount ?? 1,
+        onPlay: event.analyticsAbility?.counter === "onPlay",
+      }, { actor: "opponent", phase: "opponent" });
+    }
     if (event?.rpSpend) {
       queueRpSpendPresentation({
         owner: event.rpSpend.owner,
@@ -11278,9 +11579,11 @@ export default function Simulator({
   function adjustTurnDraw(deckType, delta) {
     setTurnDrawSelection((current) => {
       if (!current) return current;
-      const authoredDraw = tutorialUsesScriptedScenario && !current.mode
-        ? getScriptedTutorialTurnDraw({ round })
-        : null;
+      const authoredDraw = embeddedLesson
+        ? getSimulatorV2ExpectedDraw(embeddedLesson)
+        : tutorialUsesScriptedScenario && !current.mode
+          ? getScriptedTutorialTurnDraw({ round })
+          : null;
       if (authoredDraw && delta > 0 && deckType !== authoredDraw.deckType) return current;
       const nextAmount = current[deckType] + delta;
       const available = deckType === "foundation" ? foundationDeck.length : palsDeck.length;
@@ -11627,9 +11930,12 @@ export default function Simulator({
 
   function confirmTurnDraw() {
     if (!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target) return;
-    const authoredDraw = tutorialUsesScriptedScenario && !turnDrawSelection.mode
-      ? getScriptedTutorialTurnDraw({ round })
-      : null;
+    const authoredDraw = embeddedLesson
+      ? getSimulatorV2ExpectedDraw(embeddedLesson)
+      : tutorialUsesScriptedScenario && !turnDrawSelection.mode
+        ? getScriptedTutorialTurnDraw({ round })
+        : null;
+    if (authoredDraw && embeddedLesson && turnDrawSelection[authoredDraw.deckType] !== turnDrawSelection.target) return;
     const chooseCards = (deck, deckType, amount) => {
       if (!amount) return [];
       if (!authoredDraw || authoredDraw.deckType !== deckType || !deck.includes(authoredDraw.cardId)) {
@@ -11923,7 +12229,7 @@ export default function Simulator({
       setPlayError("");
       return;
     }
-    const academyBlock = getAcademyCardPlayBlock({
+    const academyBlock = getEmbeddedLessonBlock("play-card", { cardId }) || getAcademyCardPlayBlock({
       route: scriptedFinishRoute,
       help: tutorialHelp,
       cardId,
@@ -12260,6 +12566,14 @@ export default function Simulator({
   function applyExplicitSupportLock(card) {
     trackSimulatorAnalytics({ counter: "cards", key: card.id });
     if (supportExplicitlyLocksFurtherSupports(card)) setSupportLockSourceId(card.id);
+    emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.SUPPORT_PLAYED, {
+      accepted: true,
+      cardId: card.id,
+      supportCardId: card.id,
+      cardName: card.name,
+      cardKind: card.kind,
+      locksFurtherSupports: supportExplicitlyLocksFurtherSupports(card),
+    }, { phase: "main" });
   }
 
   function chooseScientistJes(mode) {
@@ -13068,7 +13382,7 @@ export default function Simulator({
     const actionKey = `${inspectedActionKey}:${action.id ?? actionName}`;
     const cost = getActionCost(action);
     if (!effect || gameResult || gamePhase !== "main" || attackContext || playingCardId || rp < cost || (actionIsOncePerTurn(action) && usedCreatureActions.includes(actionKey))) return;
-    const academyBlock = getAcademyActionBlock({
+    const academyBlock = getEmbeddedLessonBlock("utility") || getAcademyActionBlock({
       route: scriptedFinishRoute,
       help: tutorialHelp,
       actionKey,
@@ -16944,6 +17258,8 @@ export default function Simulator({
         events.push({
           ...analyticsEvent,
           type: "choose-regenerate",
+          attackerCardId: step.attackerCardId,
+          targetInstanceId: step.targetInstanceId ?? null,
           sourceCardId: step.attackerCardId,
           defenderCardId: step.defenderCardId,
           title: `${cardsById[step.defenderCardId]?.name} Can Regenerate`,
@@ -16976,6 +17292,8 @@ export default function Simulator({
         events.push({
           ...analyticsEvent,
           type: step.noLegalTarget ? "opponent-impact" : "faceoff-result",
+          attackerCardId: step.attackerCardId,
+          targetInstanceId: step.targetInstanceId ?? null,
           sourceCardId: step.counterCardId ?? step.eventSourceCardId ?? step.attackerCardId,
           defenderCardId: step.counterCardId ? step.attackerCardId : step.defenderCardId,
           title: step.resolutionUnsupported ? "Opponent Attack Could Not Resolve" : step.noLegalTarget ? `${cardsById[step.attackerCardId]?.name ?? "On Play Attack"} Found No Valid Target` : step.defenderEvaded ? "Your Creature Evaded" : step.defenderSurvived ? "Your Defender Survived" : step.attackerWins ? `Opponent Attack ${step.attackNumber ?? 1} Succeeded` : `Your Creature Defended Attack ${step.attackNumber ?? 1}`,
@@ -18453,7 +18771,7 @@ export default function Simulator({
     if (turnAdvanceRequestedRef.current) return;
     if (compactTurnSequenceRef.current || compactOpponentPresentationRef.current || boardStatSequenceRef.current) return;
     if (isSetup) {
-      const academyBlock = getAcademyEndTurnBlock({
+      const academyBlock = getEmbeddedLessonBlock("end-turn") || getAcademyEndTurnBlock({
         route: scriptedFinishRoute,
         help: tutorialHelp,
         guideName: tutorialGuide.name,
@@ -18476,7 +18794,7 @@ export default function Simulator({
       pushLog("Finish or cancel your current placement, attack, or card effect before ending your turn.");
       return;
     }
-    const academyBlock = getAcademyEndTurnBlock({
+    const academyBlock = getEmbeddedLessonBlock("end-turn") || getAcademyEndTurnBlock({
       route: scriptedFinishRoute,
       help: tutorialHelp,
       guideName: tutorialGuide.name,
@@ -18490,7 +18808,8 @@ export default function Simulator({
     turnAdvanceRequestedRef.current = true;
     const boardComplexity = playerCorals.length + opponentCorals.length + playerReefCreatures.length + opponent.reefCreatures.length + playerOrphanCreatures.length + (opponent.orphanCreatures?.length ?? 0);
     const endgameDecision = playerVp >= victoryTarget - 8 || opponentVp >= victoryTarget - 8;
-    const thinkingDelay = scriptedTutorialScenario?.opponentTurnMode === "observe"
+    const opponentTurnMode = embeddedLesson?.seed?.opponentTurnMode ?? scriptedTutorialScenario?.opponentTurnMode;
+    const thinkingDelay = opponentTurnMode === "observe"
       ? 350
       : Math.min(5200, 1100 + boardComplexity * 140 + (endgameDecision ? 1400 : 0));
     const habitatMaintenance = resolvePlayerEndOfTurnHabitats();
@@ -18542,7 +18861,7 @@ export default function Simulator({
   } = {}) {
     setOpponentThinking(false);
     setEventOverlay(null);
-    if (scriptedTutorialScenario?.opponentTurnMode === "observe") {
+    if ((embeddedLesson?.seed?.opponentTurnMode ?? scriptedTutorialScenario?.opponentTurnMode) === "observe") {
       const observerState = normalizeProjectedOpponentState(reconcileOpponentInstances(opponent, opponent));
       const message = `${tutorialGuide.name} keeps the practice reef unchanged and watches how you apply the lesson.`;
       queueEvents([{
@@ -19695,6 +20014,10 @@ export default function Simulator({
   }
 
   function restartStoryGame(reason = eventOverlay?.initial ? "begin" : "retry") {
+    if (embeddedLesson) {
+      notifyTutorialCallback("onReplay");
+      return;
+    }
     storyResultRecordedRef.current = false;
     setTutorialExitConfirmationOpen(false);
     setTutorialHelpDismissedId(null);
@@ -20573,7 +20896,7 @@ export default function Simulator({
   }
 
   return (
-    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
+    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${embeddedLesson ? " seapals-embedded-lesson" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
         @keyframes seapalsDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes seapalsCardInspectorIn {
@@ -20965,6 +21288,76 @@ export default function Simulator({
           outline: 3px solid #fbbf24 !important;
           outline-offset: 3px;
           animation: seapalsTutorialFocus 1.15s ease-in-out infinite !important;
+        }
+        .seapals-embedded-lesson .seapals-tutorial-target {
+          outline-color: #67e8f9 !important;
+          outline-offset: 4px;
+          box-shadow: 0 0 0 2px rgba(236, 254, 255, .9), 0 0 20px 7px rgba(34, 211, 238, .58), 0 0 46px 15px rgba(14, 165, 233, .25) !important;
+          animation: seapalsV2TargetGlow 1.3s ease-in-out infinite !important;
+        }
+        .seapals-v2-action-cue {
+          position: fixed;
+          z-index: 195;
+          overflow: visible;
+          border-radius: 1rem;
+          pointer-events: none;
+        }
+        .seapals-v2-action-cue-halo {
+          position: absolute;
+          inset: -7px;
+          border: 3px solid #a5f3fc;
+          border-radius: inherit;
+          box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 0 22px 8px rgba(34, 211, 238, .72), 0 0 52px 18px rgba(14, 165, 233, .32);
+          animation: seapalsV2CueHalo 1.3s ease-in-out infinite;
+        }
+        .seapals-v2-action-cue-hand {
+          position: absolute;
+          z-index: 2;
+          top: 48%;
+          left: 50%;
+          display: block;
+          width: clamp(3.75rem, 8vw, 5.25rem);
+          height: auto;
+          filter: drop-shadow(0 3px 1px rgba(15, 23, 42, .72)) drop-shadow(0 8px 14px rgba(2, 8, 23, .5));
+          transform: translate(-39%, -8%);
+          transform-origin: 38% 6%;
+        }
+        .seapals-v2-action-cue-hand svg { display: block; width: 100%; height: auto; overflow: visible; }
+        .seapals-v2-action-cue.is-tap .seapals-v2-action-cue-hand { animation: seapalsV2HandTap 1.35s ease-in-out infinite; }
+        .seapals-v2-action-cue.is-drag .seapals-v2-action-cue-hand { animation: seapalsV2HandDrag 1.65s ease-in-out infinite; }
+        .seapals-v2-action-cue-trail {
+          position: absolute;
+          z-index: 1;
+          bottom: 46%;
+          left: 50%;
+          width: 3px;
+          height: clamp(2.25rem, 12vh, 5rem);
+          border-radius: 999px;
+          background: linear-gradient(to top, transparent, rgba(255,255,255,.9), #67e8f9);
+          box-shadow: 0 0 8px #22d3ee;
+          transform: translateX(-50%);
+          transform-origin: bottom;
+          animation: seapalsV2DragTrail 1.65s ease-in-out infinite;
+        }
+        @keyframes seapalsV2TargetGlow {
+          0%, 100% { outline-color: #67e8f9; }
+          50% { outline-color: #ecfeff; }
+        }
+        @keyframes seapalsV2CueHalo {
+          0%, 100% { opacity: .76; transform: scale(.98); }
+          50% { opacity: 1; transform: scale(1.025); }
+        }
+        @keyframes seapalsV2HandTap {
+          0%, 45%, 100% { transform: translate(-39%, -8%) scale(1); }
+          58%, 70% { transform: translate(-39%, -3%) scale(.92); }
+        }
+        @keyframes seapalsV2HandDrag {
+          0%, 15%, 100% { opacity: .9; transform: translate(-39%, 10%) scale(.96); }
+          48%, 72% { opacity: 1; transform: translate(-39%, -36%) scale(1.04); }
+        }
+        @keyframes seapalsV2DragTrail {
+          0%, 18%, 100% { opacity: 0; transform: translateX(-50%) scaleY(.2); }
+          42%, 70% { opacity: .82; transform: translateX(-50%) scaleY(1); }
         }
         .seapals-professor-coach-wrap {
           position: absolute;
@@ -23348,6 +23741,26 @@ export default function Simulator({
           outline-offset: 5px;
           filter: drop-shadow(0 0 22px rgba(52, 211, 153, .95));
         }
+        .seapals-embedded-lesson .seapals-setup-playable-card {
+          border-color: rgba(103, 232, 249, .9) !important;
+          background-color: rgba(14, 165, 233, .16) !important;
+          box-shadow: 0 0 24px rgba(34, 211, 238, .42);
+        }
+        .seapals-embedded-lesson .seapals-mobile-hand-drag-ghost.is-valid {
+          filter: drop-shadow(0 0 18px rgba(34, 211, 238, .95)) drop-shadow(0 18px 22px rgba(2, 8, 23, .68));
+        }
+        .seapals-embedded-lesson .seapals-mobile-hand-drag-ghost.is-valid img { border-color: #a5f3fc; }
+        .seapals-embedded-lesson .seapals-hand-drop-valid:not(.seapals-ecosystem-ocean) {
+          filter: drop-shadow(0 0 15px rgba(34, 211, 238, .72));
+        }
+        .seapals-embedded-lesson .seapals-ecosystem-ocean.seapals-hand-drop-valid {
+          box-shadow: inset 0 0 0 4px rgba(103, 232, 249, .86), inset 0 0 46px rgba(14, 165, 233, .24);
+        }
+        .seapals-embedded-lesson .seapals-hand-drop-valid.is-hand-drag-target,
+        .seapals-embedded-lesson .is-hand-drag-target.seapals-hand-drop-valid {
+          outline-color: rgba(165, 243, 252, .98);
+          filter: drop-shadow(0 0 24px rgba(34, 211, 238, .98));
+        }
         .seapals-mobile-hand-card:focus-visible {
           z-index: 6;
           outline: 3px solid #fde68a;
@@ -24489,7 +24902,16 @@ export default function Simulator({
             </ProfessorCoachOverlay>
           ) : null}
 
-          {tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (
+          {embeddedLessonCoachOpen ? (
+            <ProfessorCoachOverlay help={tutorialHelp}>
+              <ProfessorGuideCard
+                guide={tutorialGuide}
+                help={tutorialHelp}
+                step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                total={tutorialContract.checkpoints.length}
+              />
+            </ProfessorCoachOverlay>
+          ) : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (
             <ProfessorCoachOverlay help={tutorialHelp}>
               <ProfessorGuideCard
                 guide={tutorialGuide}
@@ -24514,8 +24936,18 @@ export default function Simulator({
           <ProfessorTargetBeacon
             guide={tutorialGuide}
             help={tutorialTargetBeaconHelp}
-            active={tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored}
+            active={!embeddedLesson && tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored}
           />
+
+          <EmbeddedLessonActionCue
+            help={tutorialHelp}
+            active={embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen}
+          />
+          {embeddedLessonActionReady && !embeddedLessonPresentationBlocked ? (
+            <p key={`embedded-action:${tutorialHelpDismissalKey}`} className="sr-only" role="status" aria-live="assertive" aria-atomic="true">
+              {tutorialHelp?.action}
+            </p>
+          ) : null}
 
           {tutorialHelp && !tutorialHelpOpen && !tutorialIntroductionOpen && !tutorialCardLessonOpen && !eventOverlay && !modal && !roundFlash && !gameResult ? (
             <button
@@ -24867,7 +25299,7 @@ export default function Simulator({
                   <div className="seapals-board-pane-label flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-emerald-200"><span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]" /> Your Ecosystem</div>
                   {isPlacingCoral && (
                     <div className="flex items-center gap-2" role="status">
-                      <div className="rounded-full bg-emerald-400 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-950 shadow-lg">Click to place your {isCreatureSchool(playingCard) ? "Creature School" : "Coral"}</div>
+                      <div className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-950 shadow-lg ${embeddedLesson ? "bg-cyan-300" : "bg-emerald-400"}`}>{embeddedLesson ? "Place" : "Click to place"} your {isCreatureSchool(playingCard) ? "Creature School" : "Coral"}</div>
                       <button type="button" onClick={cancelCardPlay} className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-bold text-slate-200 hover:bg-white/10">Cancel</button>
                     </div>
                   )}
@@ -25279,6 +25711,7 @@ export default function Simulator({
                                         <button
                                           type="button"
                                           disabled={!validTarget}
+                                          aria-label={`${validTarget ? "Place creature in" : "Empty"} ${getCreatureSlotLabel(slot)} slot on ${cardsById[coral.cardId]?.name}`}
                                           onPointerDown={(event) => event.stopPropagation()}
                                           onClick={(event) => {
                                             event.stopPropagation();
@@ -25292,8 +25725,7 @@ export default function Simulator({
                                                 : "pointer-events-none rounded-full border-0 bg-transparent"
                                           }`}
                                         >
-                                          <img src={getSlotIconPath(slot)} alt={slot.type} className={`pointer-events-none max-w-none select-none object-contain ${validTarget ? "h-44 w-44" : emptyPlacementMode ? "h-28 w-28 opacity-60" : "h-32 w-32 opacity-90"}`} />
-                                          <span className="sr-only">{slot.type}</span>
+                                          <img src={getSlotIconPath(slot)} alt="" className={`pointer-events-none max-w-none select-none object-contain ${validTarget ? "h-44 w-44" : emptyPlacementMode ? "h-28 w-28 opacity-60" : "h-32 w-32 opacity-90"}`} />
                                         </button>
                                       )}
                                       {(slot.hostedCardIds ?? []).some(Boolean) ? <div className="absolute -right-12 top-2 z-30 flex flex-col gap-1 rounded-xl border border-fuchsia-300 bg-fuchsia-50/95 p-1 shadow-lg">{slot.hostedCardIds.map((hostedCardId, hostedIndex) => { if (!hostedCardId) return null; const hostedCard = cardsById[hostedCardId]; const hostedTargetSlotId = getHostedTargetSlotId(slot.id, hostedIndex); return <button key={`${hostedCardId}-${hostedIndex}`} type="button" data-card-id={hostedCardId} data-card-instance-id={`hosted:${slot.id}:${hostedIndex}`} data-combat-target-id={`hosted:${hostedTargetSlotId}`} data-combat-anchor-ids={`${hostedTargetSlotId} hosted:${hostedTargetSlotId}`} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); setInspectedCard({ owner: "player", cardId: hostedCardId, coralId: coral.id, slotId: `${slot.id}:hosted:${hostedIndex}`, hostedBySlotId: slot.id }); }} className="seapals-in-play-card relative rounded-lg ring-fuchsia-400 hover:ring-2" title={`Hosted by ${slotCard?.name}`}><InPlayHoverLabel card={hostedCard} zoom={ecosystemZoom} /><img src={hostedCard?.image} alt={hostedCard?.name} className="h-20 w-14 rounded-lg bg-white object-contain" /></button>; })}</div> : null}
@@ -25318,7 +25750,7 @@ export default function Simulator({
                     >
                       <span
                         aria-hidden="true"
-                        className={`pointer-events-none absolute inset-0 border-4 border-emerald-400 transition-opacity duration-100 ${
+                        className={`pointer-events-none absolute inset-0 border-4 ${embeddedLesson ? "border-cyan-300" : "border-emerald-400"} transition-opacity duration-100 ${
                           actionBlinkOn ? "opacity-100" : "opacity-0"
                         }`}
                       />
@@ -26216,19 +26648,21 @@ export default function Simulator({
         </div>
       ) : null}
 
-      {gameResult && !tutorialLessonWon && /^Victory\b/i.test(gameResult) ? (
+      {gameResult && (!tutorialLessonWon || (embeddedLesson && tutorialProgress?.status === "complete")) && /^Victory\b/i.test(gameResult) ? (
         <VictoryCelebration
-          message={gameResult}
+          message={embeddedLesson
+            ? `Victory: ${embeddedLesson.celebration ?? embeddedLesson.completion} ${playerVp}/${victoryTarget} VP goal reached.`
+            : gameResult}
           reducedMotion={accessibilityReducedMotion}
           actions={isStoryMode ? (
             <>
               {tutorialContract ? (
                 <button type="button" onClick={() => restartStoryGame("result-retry")} className="rounded-full border-2 border-amber-100/85 bg-slate-950/45 px-6 py-2.5 text-sm font-black text-amber-50 transition hover:bg-amber-100/15">
-                  Retry Practice Duel
+                  {embeddedLesson ? "Replay Lesson" : "Retry Practice Duel"}
                 </button>
               ) : null}
-              <button type="button" data-victory-primary-action onClick={() => returnToStoryTown("duel-complete")} className="rounded-full bg-gradient-to-r from-amber-300 to-emerald-300 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105">
-                Return to {storyReturnLabel}
+              <button type="button" data-victory-primary-action onClick={() => returnToStoryTown("duel-complete")} className={`rounded-full bg-gradient-to-r ${embeddedLesson ? "from-cyan-200 to-amber-300" : "from-amber-300 to-emerald-300"} px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105`}>
+                {embeddedLesson ? "Continue to Lessons" : `Return to ${storyReturnLabel}`}
               </button>
             </>
           ) : (
@@ -26394,6 +26828,7 @@ export default function Simulator({
           initialDifficulty={pendingOpponentDifficulty}
           difficultyOptions={OPPONENT_DIFFICULTY_OPTIONS}
           reducedMotion={accessibilityReducedMotion}
+          onTutorial={onStartTutorial}
           onCancel={eventOverlay.initial ? null : closeEventOverlay}
           onStart={(playerDeckId, opponentDeckId, difficulty) => (
             restartGame(playerDeckId, opponentDeckId, pendingVictoryTarget, difficulty)

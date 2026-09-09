@@ -6,6 +6,7 @@ const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.ur
 const mobileEdgeZonesSource = await readFile(new URL("./MobileEdgeZones.jsx", import.meta.url), "utf8");
 
 function sourceSection(source, startMarker, endMarker) {
+  source = source.replaceAll("\r\n", "\n");
   const start = source.indexOf(startMarker);
   assert.ok(start >= 0, `Missing source marker: ${startMarker}`);
   const end = source.indexOf(endMarker, start + startMarker.length);

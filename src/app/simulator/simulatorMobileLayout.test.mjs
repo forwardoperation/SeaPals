@@ -94,7 +94,7 @@ test("desktop board-tour progress and Skip Tour keep separate header space", () 
   );
 });
 
-test("mobile guidance keeps one target arrow while the full setup coach is anchored", () => {
+test("mobile guidance keeps the legacy arrow and gives embedded lessons target-aware guidance without a reveal gate", () => {
   assert.match(simulatorSource, /tutorialHelpFloating \? " seapals-tutorial-help-floating"/);
   assert.match(simulatorSource, /tutorialHelpInline \? " seapals-tutorial-help-inline"/);
   assert.match(
@@ -108,8 +108,13 @@ test("mobile guidance keeps one target arrow while the full setup coach is ancho
   assert.match(simulatorSource, /className="seapals-target-beacon-arrow"/);
   assert.match(
     simulatorSource,
-    /active=\{tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
+    /active=\{!embeddedLesson && tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
   );
+  assert.match(simulatorSource, /embeddedLessonCoachOpen \? \([\s\S]*?<ProfessorCoachOverlay help=\{tutorialHelp\}>/);
+  assert.doesNotMatch(simulatorSource, /data-v2-lesson-dialogue|advanceLabel="Show me"|beginEmbeddedLessonAction/);
+  assert.match(simulatorSource, /data-v2-target-gesture=\{gesture\}/);
+  assert.match(simulatorSource, /\.seapals-professor-coach-wrap,[\s\S]*?bottom: calc\(var\(--seapals-mobile-dock-clearance\) \+ env\(safe-area-inset-bottom\)\);/);
+  assert.match(simulatorSource, /\.seapals-v2-action-cue \{[\s\S]*?pointer-events: none;/);
 });
 
 test("the guided hand keeps new copy at the top and offers a direct jump to its target", () => {
@@ -148,10 +153,16 @@ test("pending placement cannot reopen the mobile hand or replay the same card", 
     "function playCardFromHand(",
     "function completeInvasivePlacement",
   );
-  assert.ok(
-    playCard.indexOf("if (playingCardId === cardId)") < playCard.indexOf("const academyBlock = getAcademyCardPlayBlock"),
-    "the already-pending card should return to placement before the tutorial guard runs",
-  );
+  const pendingPlacementIndex = playCard.indexOf("if (playingCardId === cardId)");
+  assert.ok(pendingPlacementIndex >= 0, "the pending-card placement shortcut must remain present");
+  for (const guard of ["getEmbeddedLessonBlock(\"play-card\"", "getAcademyCardPlayBlock("]) {
+    const guardIndex = playCard.indexOf(guard);
+    assert.ok(guardIndex >= 0, `Missing tutorial play guard: ${guard}`);
+    assert.ok(
+      pendingPlacementIndex < guardIndex,
+      "the already-pending card should return to placement before either tutorial guard runs",
+    );
+  }
   assert.match(simulatorSource, /if \(playingCardId && modal === "hand"\)[\s\S]*?setModal\(null\)/);
   assert.match(
     simulatorSource,

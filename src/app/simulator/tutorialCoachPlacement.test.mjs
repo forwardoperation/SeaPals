@@ -179,7 +179,7 @@ test("the board tour wires its full Next card to the target-aware coach and one 
   assert.match(simulatorSource, /--seapals-target-arrow-length/);
   assert.match(
     simulatorSource,
-    /<ProfessorTargetBeacon[\s\S]*?active=\{tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
+    /<ProfessorTargetBeacon[\s\S]*?active=\{!embeddedLesson && tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
   );
   const coachAnchorSelector = simulatorSource.indexOf("[data-tutorial-coach-anchor=");
   const genericTargetSelector = simulatorSource.indexOf("[data-tutorial-target=", coachAnchorSelector);
