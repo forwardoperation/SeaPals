@@ -93,8 +93,9 @@ export default function VictoryCelebration({
   useEffect(() => {
     const previouslyFocused = document.activeElement;
     const focusFrame = window.requestAnimationFrame(() => {
-      const firstAction = dialogRef.current?.querySelector(
-        "[data-victory-primary-action], button:not([disabled]), [href], [tabindex]:not([tabindex='-1'])",
+      const primaryAction = dialogRef.current?.querySelector("[data-victory-primary-action]");
+      const firstAction = primaryAction ?? dialogRef.current?.querySelector(
+        "button:not([disabled]), [href], [tabindex]:not([tabindex='-1'])",
       );
       (firstAction ?? dialogRef.current)?.focus?.({ preventScroll: true });
     });

@@ -16,6 +16,8 @@ test("victory celebration is a focused accessible dialog with an action slot", (
   assert.match(componentSource, /actions\s*\?\?\s*children/);
   assert.match(componentSource, /data-victory-actions/);
   assert.match(componentSource, /keepFocusInDialog/);
+  assert.match(componentSource, /const primaryAction = [^;]*querySelector\("\[data-victory-primary-action\]"\)/);
+  assert.match(componentSource, /const firstAction = primaryAction \?\?/);
 });
 
 test("victory presentation uses a native SeaPals reef crest without borrowed image assets", () => {
@@ -54,7 +56,7 @@ test("victory celebration fits mobile safe areas and honors both motion controls
   assert.match(styleSource, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?animation:\s*none\s*!important/);
 });
 
-test("the simulator reserves the celebration for wins and keeps a primary exit action", () => {
+test("the simulator reserves the victory celebration for wins and routes defeats separately", () => {
   assert.match(simulatorSource, /import VictoryCelebration from "\.\/VictoryCelebration";/);
   assert.match(
     simulatorSource,
@@ -62,9 +64,13 @@ test("the simulator reserves the celebration for wins and keeps a primary exit a
   );
   assert.match(simulatorSource, /<VictoryCelebration[\s\S]*?message=\{gameResult\}/);
   assert.match(simulatorSource, /data-victory-primary-action[\s\S]*?Play Again/);
+  assert.doesNotMatch(
+    simulatorSource,
+    /gameResult && !tutorialLessonWon && !\/\^Victory\\b\/i\.test\(gameResult\)\s*\?\s*\(/,
+    "Defeats should no longer use the compact non-victory alert",
+  );
   assert.match(
     simulatorSource,
-    /gameResult && !tutorialLessonWon && !\/\^Victory\\b\/i\.test\(gameResult\)/,
-    "Defeat and draw results should retain the existing compact alert rather than the victory spectacle",
+    /gameResult && !tutorialLessonWon && \/\^Defeat\\b\/i\.test\(gameResult\)[\s\S]*?<DefeatPresentation/,
   );
 });

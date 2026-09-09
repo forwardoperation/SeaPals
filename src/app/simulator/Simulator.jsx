@@ -15,6 +15,7 @@ import SimulatorV2NewGameSetup from "./SimulatorV2NewGameSetup";
 import { AttackIntentLayer, AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
 import CardCoinBoardPresentation from "./CardCoinBoardPresentation";
 import CoralUpgradeCelebration from "./CoralUpgradeCelebration";
+import DefeatPresentation from "./DefeatPresentation";
 import OpeningCoinBoardPresentation, { OpeningCoinVisual } from "./OpeningCoinBoardPresentation";
 import VictoryCelebration from "./VictoryCelebration";
 import { evaluateCardActionAvailability } from "./cardActionAvailability.mjs";
@@ -24270,7 +24271,7 @@ export default function Simulator({
             </button>
           ) : null}
 
-          {gameResult && !tutorialLessonWon && !/^Victory\b/i.test(gameResult) ? (
+          {gameResult && !tutorialLessonWon && !/^Victory\b/i.test(gameResult) && !/^Defeat\b/i.test(gameResult) ? (
             <div className="mb-4 rounded-2xl border-2 border-amber-400 bg-amber-100 px-6 py-4 text-center text-lg font-black text-amber-950" role="alert">
               <div>{gameResult}</div>
               {isStoryMode ? (
@@ -25989,6 +25990,44 @@ export default function Simulator({
                 data-victory-primary-action
                 onClick={() => restartGame(selectedDeckId, selectedOpponentDeckId, victoryTarget, opponentDifficulty)}
                 className="rounded-full bg-gradient-to-r from-amber-300 to-emerald-300 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105"
+              >
+                Play Again
+              </button>
+            </>
+          )}
+        />
+      ) : null}
+
+      {gameResult && !tutorialLessonWon && /^Defeat\b/i.test(gameResult) ? (
+        <DefeatPresentation
+          message={gameResult}
+          reducedMotion={accessibilityReducedMotion}
+          actions={isStoryMode ? (
+            <>
+              {tutorialContract ? (
+                <button type="button" onClick={() => restartStoryGame("result-retry")} className="rounded-full border-2 border-cyan-100/75 bg-slate-950/45 px-6 py-2.5 text-sm font-black text-cyan-50 transition hover:bg-cyan-100/10">
+                  Retry Practice Duel
+                </button>
+              ) : null}
+              <button type="button" data-defeat-primary-action onClick={() => returnToStoryTown("duel-complete")} className="rounded-full bg-gradient-to-r from-cyan-200 to-rose-300 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105">
+                Return to {storyReturnLabel}
+              </button>
+            </>
+          ) : (
+            <>
+              {selectedPlayerDeck ? (
+                <Link
+                  href={{ pathname: "/store", query: { deck: selectedPlayerDeck.id } }}
+                  className="rounded-full border-2 border-cyan-100/75 bg-slate-950/45 px-6 py-2.5 text-sm font-black text-cyan-50 transition hover:bg-cyan-100/10"
+                >
+                  Shop {selectedPlayerDeck.name}
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                data-defeat-primary-action
+                onClick={() => restartGame(selectedDeckId, selectedOpponentDeckId, victoryTarget, opponentDifficulty)}
+                className="rounded-full bg-gradient-to-r from-cyan-200 to-rose-300 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105"
               >
                 Play Again
               </button>
