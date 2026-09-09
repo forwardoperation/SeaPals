@@ -214,34 +214,6 @@
 .advanceButton .actionMarker { position: static; color: #d95750; filter: none; }
 .advanceLabel { font-size: 0.61rem; font-weight: 850; letter-spacing: 0.045em; text-transform: uppercase; }
 
-.dragDiagram { display: grid; grid-template-columns: 4.15rem minmax(2rem, 1fr) 4.35rem; align-items: center; gap: 0.25rem; margin-top: 0.45rem; padding: 0.15rem 0 0; overflow: visible; pointer-events: none; user-select: none; }
-.dragSource,
-.dragDestination { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 0.18rem; color: #617086; font-size: 0.55rem; font-weight: 800; line-height: 1.2; text-align: center; }
-.dragCardStack { position: relative; display: block; width: 2.8rem; height: 2.45rem; }
-.dragCardBack,
-.dragCardFront { position: absolute; top: 0.2rem; left: 0.62rem; width: 1.48rem; height: 2rem; border: 1px solid #64758b; border-radius: 0.16rem; background: #f8faff; }
-.dragCardBack { top: 0.38rem; left: 0.3rem; transform: rotate(-12deg); background: #cde9f1; }
-.dragCardFront { transform: rotate(5deg); box-shadow: 0 2px 4px #52617645; }
-.dragCardFront::before,
-.dragCardMotion::before { position: absolute; inset: 0.2rem 0.17rem; border: 1px solid #74a9ba; border-radius: 0.1rem; background: linear-gradient(180deg, #d8f5fa 0 47%, #f17a70 48% 60%, #ffffff 61%); content: ""; }
-.dragCardFront::after { position: absolute; top: 0.43rem; left: 0.5rem; width: 0.46rem; height: 0.46rem; border: 2px solid #178cab; border-radius: 50%; content: ""; }
-.dragPath { position: relative; display: block; min-width: 0; height: 2.8rem; margin-bottom: 0.75rem; }
-.dragTrail { position: absolute; top: 0.35rem; right: -0.05rem; left: -0.05rem; height: 1.85rem; border-top: 2px dashed #189fbd; border-radius: 50% 50% 0 0; transform: rotate(-2deg); }
-.dragArrow { position: absolute; top: 0.08rem; right: -0.08rem; color: #d95750; font-size: 0.9rem; line-height: 1; transform: rotate(16deg); filter: drop-shadow(0 1px #ffffff); }
-.dragCardMotion { position: absolute; z-index: 1; top: 0.1rem; left: -0.05rem; display: block; width: 1.35rem; height: 1.82rem; border: 1px solid #61758c; border-radius: 0.16rem; background: #ffffff; box-shadow: 0 0 0 2px #ffffffb8, 0 3px 6px #35445c52; animation: tutorialCardDrag 2.8s ease-in-out infinite; }
-.dragPointer { position: absolute; z-index: 2; right: -0.66rem; bottom: -0.78rem; display: block; color: #ffffff; font-family: "Segoe UI Symbol", sans-serif; font-size: 1.45rem; font-weight: 700; line-height: 1; text-shadow: -1px -1px 0 #48576c, 1px -1px 0 #48576c, -1px 1px 0 #48576c, 1px 1px 0 #48576c, 0 2px 2px #4a5878; transform: rotate(-18deg); }
-.dragSlots { position: relative; display: flex; align-items: center; gap: 0.16rem; height: 2.45rem; padding: 0.24rem; border: 1px solid #398ba4; border-radius: 0.35rem 0.35rem 0.62rem 0.62rem; background: linear-gradient(180deg, #bceaf1, #65bfd0); box-shadow: inset 0 -3px #2c91a6, 0 2px 3px #63728640; }
-.dragSlots::after { position: absolute; right: 0.22rem; bottom: 0.15rem; left: 0.22rem; height: 0.2rem; border-radius: 50%; background: #ffffff80; content: ""; }
-.dragSlots > span { display: block; width: 0.9rem; height: 1.65rem; border: 1px dashed #3d8196; border-radius: 0.13rem; background: #f6fcfd99; }
-.dragSlots > span:first-child { border: 2px solid #d95750; background: #ffffff; box-shadow: 0 0 0 2px #ffffff99, 0 0 0 4px #ef756b52; }
-
-@keyframes tutorialCardDrag {
-  0%, 10% { left: -0.05rem; opacity: 0; transform: translateY(0.38rem) rotate(-9deg) scale(0.92); }
-  18% { opacity: 1; }
-  62%, 78% { left: calc(100% - 1.08rem); opacity: 1; transform: translateY(-0.04rem) rotate(2deg) scale(1); }
-  90%, 100% { left: calc(100% - 1.08rem); opacity: 0; transform: translateY(0.25rem) rotate(1deg) scale(0.94); }
-}
-
 @keyframes tutorialActionNudge {
   0%, 55%, 100% { transform: translateX(0); opacity: 0.72; }
   72% { transform: translateX(0.18rem); opacity: 1; }
@@ -305,12 +277,6 @@
   .advanceButton { min-height: 2rem; margin-top: 0.25rem; }
   .advanceButton .actionMarker { position: static; }
   .advanceLabel { font-size: 0.55rem; }
-  .dragDiagram { grid-template-columns: 3.45rem minmax(1.5rem, 1fr) 3.55rem; gap: 0.12rem; margin-top: 0.35rem; }
-  .dragSource,
-  .dragDestination { font-size: 0.49rem; }
-  .dragCardStack { transform: scale(0.86); }
-  .dragSlots { transform: scale(0.86); }
-  .dragPointer { font-size: 1.25rem; }
   .helpDetail summary { min-height: 2.35rem; font-size: 0.61rem; }
   .helpDetail p { font-size: 0.64rem; }
   .collapsed { padding-bottom: 0.75rem; }
@@ -331,11 +297,9 @@
   .lessonButton,
   .moduleChevron,
   .progressFill { transition: none; }
-  .dragCardMotion { left: 38%; opacity: 1; animation: none; transform: translateY(-0.05rem); }
   .actionMarker { animation: none; }
 }
 
-:global(.seapals-reduced-motion) .dragCardMotion { left: 38%; opacity: 1; animation: none; transform: translateY(-0.05rem); }
 :global(.seapals-reduced-motion) .actionMarker { animation: none; }
 
 @media (forced-colors: active) {
@@ -350,17 +314,8 @@
   .progressTrack { border-color: CanvasText; color: CanvasText; background: Canvas; box-shadow: none; }
   .activeLesson { outline: 2px solid Highlight; }
   .progressFill { background: Highlight; }
-  .portrait,
-  .dragCardBack,
-  .dragCardFront,
-  .dragCardMotion,
-  .dragSlots,
-  .dragSlots > span { border-color: CanvasText; background: Canvas; box-shadow: none; }
+  .portrait { border-color: CanvasText; background: Canvas; box-shadow: none; }
   .coachBubble::before { border-top-color: CanvasText; }
   .coachBubble::after { border-top-color: Canvas; }
-  .dragTrail,
-  .dragSlots > span:first-child { border-color: Highlight; }
-  .dragArrow,
   .actionMarker { color: Highlight; }
-  .dragPointer { color: CanvasText; text-shadow: none; }
 }

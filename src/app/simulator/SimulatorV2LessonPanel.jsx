@@ -17,31 +17,6 @@ function TeacherPortrait({ large = false }) {
   );
 }
 
-function DragInstruction() {
-  return (
-    <div className={styles.dragDiagram} data-v2-drag-instruction aria-hidden="true">
-      <span className={styles.dragSource} data-v2-drag-source="hand">
-        <span className={styles.dragCardStack}>
-          <span className={styles.dragCardBack} />
-          <span className={styles.dragCardFront} />
-        </span>
-        <span>From your hand</span>
-      </span>
-      <span className={styles.dragPath} data-v2-drag-path>
-        <span className={styles.dragTrail} />
-        <span className={styles.dragArrow}>{"\u25B6"}</span>
-        <span className={styles.dragCardMotion}>
-          <span className={styles.dragPointer}>{"\u261D"}</span>
-        </span>
-      </span>
-      <span className={styles.dragDestination} data-v2-drag-destination="ecosystem">
-        <span className={styles.dragSlots}><span /><span /><span /></span>
-        <span>Into your reef</span>
-      </span>
-    </div>
-  );
-}
-
 function readableModuleTitle(moduleId) {
   if (!moduleId || moduleId === "core") return "Core lessons";
   return String(moduleId)
@@ -134,7 +109,7 @@ function LessonModal({ mode, title, description, children, onExit, className }) 
 
 /**
  * Presentation for the real simulator board. stepIndex is zero-based.
- * interaction="drag" adds a visual Hand-to-Reef gesture cue.
+ * interaction="drag" lets the board present its gesture cue beside this compact guidance.
  * The caller owns lesson state, game actions, and panel placement.
  */
 export default function SimulatorV2LessonPanel({
@@ -366,7 +341,6 @@ export default function SimulatorV2LessonPanel({
             )}
             {message ? <p className={styles.feedback} data-tone={feedback?.tone || "success"}>{message}</p> : null}
           </div>
-          {!onAdvance && interaction === "drag" ? <DragInstruction /> : null}
           {!onAdvance && (explanation || hint) ? (
             <div className={styles.helpOptions} key={`${activeLesson?.id}-${progress?.stepIndex}-${currentInstruction}`}>
               {explanation ? <details className={styles.helpDetail}><summary>Why?</summary><p>{explanation}</p></details> : null}

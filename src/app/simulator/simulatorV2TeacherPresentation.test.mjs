@@ -37,3 +37,11 @@ test("the teacher card stays compact and positionable beside the current board t
   assert.match(styleSource, /\.coachBubble::before,\s*\.coachBubble::after/);
   assert.match(styleSource, /@media \(max-width: 600px\)[\s\S]*?\.coach \{ max-width: 100%; padding: 0 0 0\.9rem 3rem; \}/);
 });
+
+test("drag steps keep the teacher card concise and leave the gesture to the board", () => {
+  assert.match(panelSource, /data-v2-lesson-interaction=\{interaction \|\| undefined\}/);
+  assert.match(panelSource, /\{explanation \? <details[\s\S]*?<summary>Why\?<\/summary>/);
+  assert.match(panelSource, /\{hint \? <details[\s\S]*?<summary>Hint<\/summary>/);
+  assert.doesNotMatch(panelSource, /DragInstruction|data-v2-drag-(?:instruction|source|path|destination)/);
+  assert.doesNotMatch(styleSource, /\.drag(?:Diagram|Source|Destination|CardStack|CardMotion|Pointer|Slots|Trail|Arrow)\b|@keyframes tutorialCardDrag/);
+});

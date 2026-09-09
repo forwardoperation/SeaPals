@@ -694,6 +694,86 @@ function sameEmbeddedLessonTargetRect(left, right) {
     && Math.abs(left.height - right.height) < 1;
 }
 
+function sameEmbeddedLessonActionCueLayout(left, right) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return sameEmbeddedLessonTargetRect(left.sourceRect, right.sourceRect)
+    && sameEmbeddedLessonTargetRect(left.destinationRect, right.destinationRect)
+    && left.viewportWidth === right.viewportWidth
+    && left.viewportHeight === right.viewportHeight;
+}
+
+function findEmbeddedLessonDragDestination(help, sourceRect) {
+  const cardIds = [...new Set(
+    (help?.targetCardIds ?? [help?.targetCardId])
+      .map((cardId) => String(cardId ?? "").trim())
+      .filter(Boolean),
+  )];
+  if (!cardIds.length) return null;
+
+  const entries = cardIds.flatMap((cardId) => getVisibleTutorialTargets(
+    `[data-v2-lesson-drop-cards~="${escapeTutorialSelectorValue(cardId)}"]`,
+  ));
+  if (!entries.length) return null;
+  const sourceCenter = {
+    x: sourceRect.left + (sourceRect.width / 2),
+    y: sourceRect.top + (sourceRect.height / 2),
+  };
+  return [...new Map(entries.map((entry) => [entry.element, entry])).values()]
+    .sort((left, right) => {
+      const leftX = left.rect.left + (left.rect.width / 2);
+      const leftY = left.rect.top + (left.rect.height / 2);
+      const rightX = right.rect.left + (right.rect.width / 2);
+      const rightY = right.rect.top + (right.rect.height / 2);
+      return Math.hypot(leftX - sourceCenter.x, leftY - sourceCenter.y)
+        - Math.hypot(rightX - sourceCenter.x, rightY - sourceCenter.y);
+    })[0] ?? null;
+}
+
+function getEmbeddedLessonDragPath(sourceRect, destinationRect) {
+  const start = {
+    x: sourceRect.left + (sourceRect.width / 2),
+    y: sourceRect.top + (sourceRect.height * .48),
+  };
+  const end = {
+    x: destinationRect.left + (destinationRect.width / 2),
+    y: destinationRect.top + (destinationRect.height / 2),
+  };
+  const deltaX = end.x - start.x;
+  const deltaY = end.y - start.y;
+  const sidewaysBend = Math.min(80, Math.max(24, Math.abs(deltaY) * .12));
+  const bendDirection = Math.abs(deltaX) < 44 ? 1 : Math.sign(deltaX);
+  const control1 = {
+    x: start.x + (deltaX * .22) + (sidewaysBend * bendDirection),
+    y: start.y + (deltaY * .32),
+  };
+  const control2 = {
+    x: start.x + (deltaX * .78) - (sidewaysBend * bendDirection * .35),
+    y: start.y + (deltaY * .72),
+  };
+  const pointAt = (progress) => {
+    const inverse = 1 - progress;
+    return {
+      x: (inverse ** 3 * start.x)
+        + (3 * inverse ** 2 * progress * control1.x)
+        + (3 * inverse * progress ** 2 * control2.x)
+        + (progress ** 3 * end.x),
+      y: (inverse ** 3 * start.y)
+        + (3 * inverse ** 2 * progress * control1.y)
+        + (3 * inverse * progress ** 2 * control2.y)
+        + (progress ** 3 * end.y),
+    };
+  };
+  return {
+    start,
+    first: pointAt(.34),
+    middle: pointAt(.58),
+    last: pointAt(.8),
+    end,
+    path: `M ${start.x} ${start.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${end.x} ${end.y}`,
+  };
+}
+
 function EmbeddedLessonHandIcon() {
   return (
     <svg viewBox="0 0 76 94" role="presentation" focusable="false">
@@ -709,45 +789,61 @@ function EmbeddedLessonHandIcon() {
   );
 }
 
-function EmbeddedLessonActionCue({ help, active }) {
-  const [targetRect, setTargetRect] = useState(null);
+function EmbeddedLessonActionCue({ help, active, measureKey = "" }) {
+  const [layout, setLayout] = useState(null);
+  const targetCardKey = (help?.targetCardIds ?? [help?.targetCardId])
+    .map((cardId) => String(cardId ?? ""))
+    .join(":");
 
   useEffect(() => {
     if (!active || !help?.target || !TUTORIAL_POINTER_TARGETS.has(help.target)) {
-      setTargetRect(null);
+      setLayout(null);
       return undefined;
     }
 
     let animationFrame = null;
     let delayedUpdate = null;
     let resizeObserver = null;
-    let observedElement = null;
-    const updateTargetRect = () => {
+    const observedElements = new Set();
+    const updateLayout = () => {
       animationFrame = null;
-      const target = findTutorialTarget(help);
-      if (!target) {
-        setTargetRect((current) => current == null ? current : null);
+      const source = findTutorialTarget(help);
+      if (!source) {
+        setLayout((current) => current == null ? current : null);
         return;
       }
-      const nextRect = {
-        left: target.rect.left,
-        top: target.rect.top,
-        width: target.rect.width,
-        height: target.rect.height,
+      const destination = help.interaction === "drag"
+        ? findEmbeddedLessonDragDestination(help, source.rect)
+        : null;
+      if (help.interaction === "drag" && !destination) {
+        setLayout((current) => current == null ? current : null);
+        return;
+      }
+      const toRect = (entry) => entry ? {
+        left: entry.rect.left,
+        top: entry.rect.top,
+        width: entry.rect.width,
+        height: entry.rect.height,
+      } : null;
+      const nextLayout = {
+        sourceRect: toRect(source),
+        destinationRect: toRect(destination),
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
       };
-      setTargetRect((current) => sameEmbeddedLessonTargetRect(current, nextRect) ? current : nextRect);
+      setLayout((current) => sameEmbeddedLessonActionCueLayout(current, nextLayout) ? current : nextLayout);
       if (typeof ResizeObserver !== "undefined") {
         resizeObserver ??= new ResizeObserver(requestUpdate);
-        if (observedElement !== target.element) {
-          resizeObserver.disconnect();
-          resizeObserver.observe(target.element);
-          observedElement = target.element;
-        }
+        [source.element, destination?.element].filter(Boolean).forEach((element) => {
+          if (observedElements.has(element)) return;
+          resizeObserver.observe(element);
+          observedElements.add(element);
+        });
       }
     };
     const requestUpdate = () => {
       if (animationFrame) cancelAnimationFrame(animationFrame);
-      animationFrame = requestAnimationFrame(updateTargetRect);
+      animationFrame = requestAnimationFrame(updateLayout);
     };
 
     requestUpdate();
@@ -765,10 +861,69 @@ function EmbeddedLessonActionCue({ help, active }) {
       window.visualViewport?.removeEventListener("resize", requestUpdate);
       window.visualViewport?.removeEventListener("scroll", requestUpdate);
     };
-  }, [active, help?.cueId, help?.target, help?.coachAnchor, help?.targetActionKey, help?.targetCardId, help?.targetSearchCardId, help?.targetDeck, help?.targetDrawAction]);
+  }, [active, help?.cueId, help?.interaction, help?.target, help?.coachAnchor, help?.targetActionKey, targetCardKey, help?.targetSearchCardId, help?.targetDeck, help?.targetDrawAction, measureKey]);
 
-  if (!active || !targetRect || !help) return null;
+  if (!active || !layout?.sourceRect || !help) return null;
   const gesture = help.interaction === "drag" ? "drag" : "tap";
+  if (gesture === "drag") {
+    if (!layout.destinationRect) return null;
+    const dragPath = getEmbeddedLessonDragPath(layout.sourceRect, layout.destinationRect);
+    return (
+      <div
+        className="seapals-v2-action-cue is-drag is-path"
+        data-v2-target-gesture="drag"
+        aria-hidden="true"
+      >
+        <svg
+          className="seapals-v2-action-cue-path"
+          viewBox={`0 0 ${layout.viewportWidth} ${layout.viewportHeight}`}
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <marker id="seapals-v2-drag-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="strokeWidth">
+              <path d="M 0 0 L 8 4 L 0 8 z" />
+            </marker>
+          </defs>
+          <path className="seapals-v2-action-cue-path-glow" d={dragPath.path} />
+          <path className="seapals-v2-action-cue-path-line" d={dragPath.path} markerEnd="url(#seapals-v2-drag-arrow)" />
+        </svg>
+        <span
+          className="seapals-v2-action-cue-source"
+          style={{
+            left: `${layout.sourceRect.left}px`,
+            top: `${layout.sourceRect.top}px`,
+            width: `${layout.sourceRect.width}px`,
+            height: `${layout.sourceRect.height}px`,
+          }}
+        />
+        <span
+          className="seapals-v2-action-cue-destination"
+          style={{
+            left: `${layout.destinationRect.left}px`,
+            top: `${layout.destinationRect.top}px`,
+            width: `${layout.destinationRect.width}px`,
+            height: `${layout.destinationRect.height}px`,
+          }}
+        />
+        <span
+          className="seapals-v2-action-cue-hand"
+          style={{
+            "--seapals-drag-start-x": `${dragPath.start.x}px`,
+            "--seapals-drag-start-y": `${dragPath.start.y}px`,
+            "--seapals-drag-first-x": `${dragPath.first.x}px`,
+            "--seapals-drag-first-y": `${dragPath.first.y}px`,
+            "--seapals-drag-middle-x": `${dragPath.middle.x}px`,
+            "--seapals-drag-middle-y": `${dragPath.middle.y}px`,
+            "--seapals-drag-last-x": `${dragPath.last.x}px`,
+            "--seapals-drag-last-y": `${dragPath.last.y}px`,
+            "--seapals-drag-end-x": `${dragPath.end.x}px`,
+            "--seapals-drag-end-y": `${dragPath.end.y}px`,
+          }}
+        ><EmbeddedLessonHandIcon /></span>
+      </div>
+    );
+  }
+  const targetRect = layout.sourceRect;
   return (
     <div
       className={`seapals-v2-action-cue is-${gesture}`}
@@ -782,7 +937,6 @@ function EmbeddedLessonActionCue({ help, active }) {
       aria-hidden="true"
     >
       <span className="seapals-v2-action-cue-halo" />
-      {gesture === "drag" ? <span className="seapals-v2-action-cue-trail" /> : null}
       <span className="seapals-v2-action-cue-hand"><EmbeddedLessonHandIcon /></span>
     </div>
   );
@@ -805,9 +959,28 @@ function sameProfessorCoachPlacement(left, right) {
     && left.constrained === right.constrained;
 }
 
+function getEmbeddedLessonDragCoachPlacement({ coachRect, viewportWidth }) {
+  const edgeMargin = 12;
+  const boardControlClearance = viewportWidth >= 720 ? 88 : edgeMargin;
+  return {
+    side: "above",
+    left: Math.min(
+      Math.max(edgeMargin, boardControlClearance),
+      Math.max(edgeMargin, viewportWidth - coachRect.width - edgeMargin),
+    ),
+    top: edgeMargin,
+    arrowOffset: coachRect.width / 2,
+    constrained: false,
+  };
+}
+
 function ProfessorCoachOverlay({ help, children }) {
   const coachRef = useRef(null);
   const [placement, setPlacement] = useState(null);
+  const targetCardKey = (help?.targetCardIds ?? [help?.targetCardId])
+    .map((cardId) => String(cardId ?? ""))
+    .join(":");
+  const usesDragCorridor = help?.interaction === "drag" && Number.isInteger(help?.lessonStep);
 
   useEffect(() => {
     if (!help?.target || !TUTORIAL_POINTER_TARGETS.has(help.target)) {
@@ -847,12 +1020,14 @@ function ProfessorCoachOverlay({ help, children }) {
         right: target.rect.right - viewportLeft,
         bottom: target.rect.bottom - viewportTop,
       };
-      const nextPlacement = getTutorialCoachPlacement({
-        targetRect: relativeTargetRect,
-        coachRect,
-        viewportWidth,
-        viewportHeight,
-      });
+      const nextPlacement = usesDragCorridor
+        ? getEmbeddedLessonDragCoachPlacement({ coachRect, viewportWidth, viewportHeight })
+        : getTutorialCoachPlacement({
+            targetRect: relativeTargetRect,
+            coachRect,
+            viewportWidth,
+            viewportHeight,
+          });
       const viewportPlacement = nextPlacement
         ? {
             ...nextPlacement,
@@ -895,16 +1070,17 @@ function ProfessorCoachOverlay({ help, children }) {
     help?.target,
     help?.coachAnchor,
     help?.targetActionKey,
-    help?.targetCardId,
+    targetCardKey,
     help?.targetSearchCardId,
     help?.targetDeck,
     help?.targetDrawAction,
+    usesDragCorridor,
   ]);
 
   return (
     <div
       ref={coachRef}
-      className={`seapals-professor-coach-wrap${placement ? ` seapals-professor-coach-wrap-anchored seapals-professor-coach-side-${placement.side}` : ""}`}
+      className={`seapals-professor-coach-wrap${usesDragCorridor ? " seapals-professor-coach-wrap-drag" : ""}${placement ? ` seapals-professor-coach-wrap-anchored seapals-professor-coach-side-${placement.side}` : ""}`}
       style={{
         width: help?.lessonStep ? "min(23rem, calc(100vw - 24px))" : undefined,
         ...(placement ? {
@@ -917,7 +1093,7 @@ function ProfessorCoachOverlay({ help, children }) {
       data-tutorial-coach-constrained={placement?.constrained ? "true" : undefined}
     >
       {children}
-      {placement ? (
+      {placement && !usesDragCorridor ? (
         <span className="seapals-professor-coach-arrow" aria-hidden="true">
           {PROFESSOR_COACH_ARROW[placement.side]}
         </span>
@@ -7481,6 +7657,26 @@ export default function Simulator({
   const tutorialActionTargetClass = (actionKey) => (
     tutorialHelpTargetActive && tutorialHelp?.targetActionKey === actionKey ? " seapals-tutorial-target" : ""
   );
+  const embeddedLessonDragCardIds = embeddedLesson
+    && tutorialHelpTargetActive
+    && tutorialHelp?.interaction === "drag"
+      ? [...new Set(
+          (tutorialHelp.targetCardIds ?? [tutorialHelp.targetCardId])
+            .filter((cardId) => Boolean(cardId && cardsById[cardId] && hand.includes(cardId))),
+        )]
+      : [];
+  const embeddedLessonEcosystemDropCardIds = embeddedLessonDragCardIds.filter((cardId) => {
+    const card = cardsById[cardId];
+    if (isFoundationCard(card)) return Number(card.stage ?? 0) === 0;
+    return card?.kind !== CardKind.CREATURE
+      || card.zone === CreatureZone.OCEAN
+      || cardUsesOpponentReef(card);
+  });
+  const embeddedLessonEcosystemDropPosition = embeddedLessonEcosystemDropCardIds.length
+    ? embeddedLessonEcosystemDropCardIds.some((cardId) => isFoundationCard(cardsById[cardId]))
+      ? getGuidedAcademyFoundationPlacementTarget(playerCorals.length)
+      : { x: 72, y: 38 }
+    : null;
   const isPlacingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) === 0);
   const isUpgradingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) > 0);
   const isPreviewingCoralUpgrade = Boolean(
@@ -20483,6 +20679,25 @@ export default function Simulator({
     && !combatResultCheckpoint
     && !modal
     && !faceoffRolling;
+  const embeddedLessonActionCueMeasureKey = embeddedLesson && tutorialHelp?.interaction === "drag" ? [
+    tutorialHelp.cueId,
+    ecosystemZoom,
+    ecosystemOffset.x,
+    ecosystemOffset.y,
+    mobileReefSplit,
+    hand.join(","),
+    JSON.stringify(playerCorals.map((coral) => ({
+      id: coral.id,
+      cardId: coral.cardId,
+      x: coral.x,
+      y: coral.y,
+      slots: coral.slots.map((slot) => ({
+        id: slot.id,
+        cardId: slot.cardId,
+        position: slot.position,
+      })),
+    }))),
+  ].join(":") : "inactive";
   const attackTargetMeasureKey = attackContext ? [
     attackContext.attackerCardId,
     ...(attackContext.targets ?? []).map((target) => target.instanceId),
@@ -21297,7 +21512,7 @@ export default function Simulator({
         }
         .seapals-v2-action-cue {
           position: fixed;
-          z-index: 195;
+          z-index: 159;
           overflow: visible;
           border-radius: 1rem;
           pointer-events: none;
@@ -21324,20 +21539,65 @@ export default function Simulator({
         }
         .seapals-v2-action-cue-hand svg { display: block; width: 100%; height: auto; overflow: visible; }
         .seapals-v2-action-cue.is-tap .seapals-v2-action-cue-hand { animation: seapalsV2HandTap 1.35s ease-in-out infinite; }
-        .seapals-v2-action-cue.is-drag .seapals-v2-action-cue-hand { animation: seapalsV2HandDrag 1.65s ease-in-out infinite; }
-        .seapals-v2-action-cue-trail {
+        .seapals-v2-action-cue.is-path {
+          inset: 0;
+          width: 100vw;
+          height: 100dvh;
+          border-radius: 0;
+        }
+        .seapals-v2-action-cue-path {
           position: absolute;
-          z-index: 1;
-          bottom: 46%;
-          left: 50%;
-          width: 3px;
-          height: clamp(2.25rem, 12vh, 5rem);
+          inset: 0;
+          display: block;
+          width: 100%;
+          height: 100%;
+          overflow: visible;
+          pointer-events: none;
+        }
+        .seapals-v2-action-cue-path-glow,
+        .seapals-v2-action-cue-path-line {
+          fill: none;
           border-radius: 999px;
-          background: linear-gradient(to top, transparent, rgba(255,255,255,.9), #67e8f9);
-          box-shadow: 0 0 8px #22d3ee;
-          transform: translateX(-50%);
-          transform-origin: bottom;
-          animation: seapalsV2DragTrail 1.65s ease-in-out infinite;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          vector-effect: non-scaling-stroke;
+        }
+        .seapals-v2-action-cue-path-glow {
+          stroke: rgba(8, 145, 178, .2);
+          stroke-width: 22;
+        }
+        .seapals-v2-action-cue-path-line {
+          stroke: rgba(207, 250, 254, .82);
+          stroke-width: 5;
+          stroke-dasharray: 9 11;
+          animation: seapalsV2DragPathFlow 1.15s linear infinite;
+          filter: drop-shadow(0 0 5px rgba(6, 182, 212, .85));
+        }
+        #seapals-v2-drag-arrow path { fill: rgba(207, 250, 254, .92); }
+        .seapals-v2-action-cue-source,
+        .seapals-v2-action-cue-destination {
+          position: absolute;
+          display: block;
+          pointer-events: none;
+        }
+        .seapals-v2-action-cue-source {
+          border: 3px solid rgba(165, 243, 252, .94);
+          border-radius: 1rem;
+          box-shadow: 0 0 0 3px rgba(236, 254, 255, .58), 0 0 26px 8px rgba(34, 211, 238, .58);
+          animation: seapalsV2CueHalo 1.3s ease-in-out infinite;
+        }
+        .seapals-v2-action-cue-destination {
+          border: 4px solid rgba(207, 250, 254, .9);
+          border-radius: 999px;
+          background: rgba(34, 211, 238, .08);
+          box-shadow: 0 0 0 4px rgba(8, 145, 178, .18), inset 0 0 24px rgba(103, 232, 249, .18), 0 0 28px rgba(34, 211, 238, .55);
+          animation: seapalsV2DropTarget 1.3s ease-in-out infinite;
+        }
+        .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand {
+          top: 0;
+          left: 0;
+          width: clamp(3.35rem, 7vw, 4.8rem);
+          animation: seapalsV2HandDragPath 2.25s ease-in-out infinite;
         }
         @keyframes seapalsV2TargetGlow {
           0%, 100% { outline-color: #67e8f9; }
@@ -21351,13 +21611,46 @@ export default function Simulator({
           0%, 45%, 100% { transform: translate(-39%, -8%) scale(1); }
           58%, 70% { transform: translate(-39%, -3%) scale(.92); }
         }
-        @keyframes seapalsV2HandDrag {
-          0%, 15%, 100% { opacity: .9; transform: translate(-39%, 10%) scale(.96); }
-          48%, 72% { opacity: 1; transform: translate(-39%, -36%) scale(1.04); }
+        @keyframes seapalsV2DragPathFlow {
+          to { stroke-dashoffset: -40; }
         }
-        @keyframes seapalsV2DragTrail {
-          0%, 18%, 100% { opacity: 0; transform: translateX(-50%) scaleY(.2); }
-          42%, 70% { opacity: .82; transform: translateX(-50%) scaleY(1); }
+        @keyframes seapalsV2DropTarget {
+          0%, 100% { opacity: .72; transform: scale(.92); }
+          50% { opacity: 1; transform: scale(1.04); }
+        }
+        @keyframes seapalsV2HandDragPath {
+          0% { opacity: 0; transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 8%)) scale(1); }
+          6%, 14% { opacity: 1; transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 8%)) scale(1); }
+          20% { opacity: 1; transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 2%)) scale(.9); }
+          38% { opacity: 1; transform: translate(calc(var(--seapals-drag-first-x) - 39%), calc(var(--seapals-drag-first-y) - 8%)) scale(.96); }
+          56% { opacity: 1; transform: translate(calc(var(--seapals-drag-middle-x) - 39%), calc(var(--seapals-drag-middle-y) - 8%)) scale(.98); }
+          72% { opacity: 1; transform: translate(calc(var(--seapals-drag-last-x) - 39%), calc(var(--seapals-drag-last-y) - 8%)) scale(1); }
+          80%, 87% { opacity: 1; transform: translate(calc(var(--seapals-drag-end-x) - 39%), calc(var(--seapals-drag-end-y) - 8%)) scale(.92); }
+          94% { opacity: 0; transform: translate(calc(var(--seapals-drag-end-x) - 39%), calc(var(--seapals-drag-end-y) - 8%)) scale(.92); }
+          95%, 100% { opacity: 0; transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 8%)) scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .seapals-v2-action-cue-path-line,
+          .seapals-v2-action-cue-source,
+          .seapals-v2-action-cue-destination,
+          .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand { animation: none; }
+          .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand {
+            opacity: .94;
+            transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 8%));
+          }
+        }
+        @media (forced-colors: active) {
+          .seapals-v2-action-cue-path-glow { display: none; }
+          .seapals-v2-action-cue-path-line { stroke: Highlight; filter: none; }
+          #seapals-v2-drag-arrow path { fill: Highlight; }
+          .seapals-v2-action-cue-source,
+          .seapals-v2-action-cue-destination {
+            border-color: Highlight;
+            background: Canvas;
+            box-shadow: none;
+            forced-color-adjust: auto;
+          }
+          .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand { filter: none; }
         }
         .seapals-professor-coach-wrap {
           position: absolute;
@@ -24941,7 +25234,8 @@ export default function Simulator({
 
           <EmbeddedLessonActionCue
             help={tutorialHelp}
-            active={embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen}
+            active={embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen && !mobileHandDrag}
+            measureKey={embeddedLessonActionCueMeasureKey}
           />
           {embeddedLessonActionReady && !embeddedLessonPresentationBlocked ? (
             <p key={`embedded-action:${tutorialHelpDismissalKey}`} className="sr-only" role="status" aria-live="assertive" aria-atomic="true">
@@ -25434,6 +25728,17 @@ export default function Simulator({
                         userSelect: "none",
                       }}
                     >
+                      {embeddedLessonEcosystemDropPosition ? (
+                        <span
+                          className="pointer-events-none absolute z-20 h-24 w-24 -translate-x-1/2 -translate-y-1/2"
+                          data-v2-lesson-drop-cards={embeddedLessonEcosystemDropCardIds.join(" ")}
+                          data-v2-lesson-drop-kind="ecosystem"
+                          style={{
+                            left: `${embeddedLessonEcosystemDropPosition.x}%`,
+                            top: `${embeddedLessonEcosystemDropPosition.y}%`,
+                          }}
+                        />
+                      ) : null}
                       {playerHabitats.length || playerReefCreatures.length ? (
                         <div className={`seapals-player-floating-row pointer-events-none absolute inset-x-0 bottom-0 top-0 z-30 flex flex-wrap content-start items-start justify-center gap-3 ${playerHabitats.length ? "pt-12" : "pt-6"}`}>
                           {playerHabitats.length ? (
@@ -25542,6 +25847,20 @@ export default function Simulator({
                         const upgradeCelebration = coralUpgradeCelebrations.find((entry) => (
                           entry.owner === "player" && entry.cardInstanceId === `foundation:${coral.id}`
                         ));
+                        const embeddedLessonUpgradeDropCardIds = embeddedLessonDragCardIds.filter((cardId) => {
+                          const candidate = cardsById[cardId];
+                          const currentCard = cardsById[coral.cardId];
+                          const upgradeCost = Number(currentCard?.upgrade?.cost?.rp ?? candidate?.cost?.rp ?? 0);
+                          return Boolean(
+                            isFoundationCard(candidate)
+                            && Number(candidate.stage ?? 0) > 0
+                            && currentCard?.upgrade?.canUpgrade
+                            && currentCard.upgrade.nextCardId === cardId
+                            && !coralIsStunned(coral)
+                            && turn > (coral.stageEnteredTurn ?? coral.playedTurn ?? turn)
+                            && rp >= upgradeCost
+                          );
+                        });
                         return (
                           <div
                             key={coral.id}
@@ -25554,6 +25873,8 @@ export default function Simulator({
                                  data-upgrade-target={canUpgradeThisCoral ? "true" : undefined}
                                  data-hand-drop-coral-id={coral.id}
                                  data-hand-drop-foundation-id={coral.id}
+                                 data-v2-lesson-drop-cards={embeddedLessonUpgradeDropCardIds.join(" ") || undefined}
+                                 data-v2-lesson-drop-kind={embeddedLessonUpgradeDropCardIds.length ? "coral-upgrade" : undefined}
                                  data-rp-source-key={`foundation:${coral.id}`}
                                   data-hand-drop-valid={canUpgradeThisCoral ? "true" : undefined}
                                   data-card-id={coral.cardId}
@@ -25620,6 +25941,22 @@ export default function Simulator({
                                   && academyPlacementAllowed
                                   && (canUseSlotWithCard(slot, activePlacementCardId) || validHostTarget)
                                 );
+                                const embeddedLessonSlotDropCardIds = embeddedLessonDragCardIds.filter((cardId) => {
+                                  const candidate = cardsById[cardId];
+                                  return Boolean(
+                                    candidate?.kind === CardKind.CREATURE
+                                    && candidate.zone !== CreatureZone.OCEAN
+                                    && !isFoundationCard(candidate)
+                                    && !cardUsesOpponentReef(candidate)
+                                    && isAcademyPlacementAllowed({
+                                      route: scriptedFinishRoute,
+                                      cardId,
+                                      foundationCardId: coral.cardId,
+                                      slotClass: slot.slotClass ?? slot.slotType ?? slot.class,
+                                    })
+                                    && (canUseSlotWithCard(slot, cardId) || canHostCardInSlot(slot, cardId))
+                                  );
+                                });
                                 const emptyPlacementMode = Boolean(!slotFilled && activePlacementCardId && !isPreviewingCoralUpgrade);
                                 const isLayoutSlotTarget = Boolean(
                                   tutorialHelpTargetActive
@@ -25637,6 +25974,8 @@ export default function Simulator({
                                        data-slot-drag-handle
                                        data-slot-id={slot.id}
                                        data-hand-drop-slot-id={slot.id}
+                                       data-v2-lesson-drop-cards={embeddedLessonSlotDropCardIds.join(" ") || undefined}
+                                       data-v2-lesson-drop-kind={embeddedLessonSlotDropCardIds.length ? "slot" : undefined}
                                        data-hand-drop-valid={validTarget ? "true" : undefined}
                                        data-tutorial-target={validTarget
                                          ? "placement"

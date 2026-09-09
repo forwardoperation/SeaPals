@@ -58,7 +58,7 @@ test("embedded lessons expose each action immediately with target-aware teacher 
     simulatorSource,
     /if \(!embeddedLessonCoachOpen \|\| !tutorialTargetBeaconOpen\) return undefined;[\s\S]*?findTutorialTarget\(tutorialHelp, \{ includeOffscreen: true \}\)[\s\S]*?\[data-simulator-hand-card-rail\][\s\S]*?scrollTutorialTargetWithinContainer/,
   );
-  assert.match(simulatorSource, /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}/);
+  assert.match(simulatorSource, /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen && !mobileHandDrag\}/);
   assert.match(simulatorSource, /\.seapals-v2-action-cue \{[\s\S]*?pointer-events: none;/);
 });
 
