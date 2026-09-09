@@ -227,6 +227,10 @@ export default function SimulatorV2NewGameSetup({
               </Link>
             </div>
           </form>
+          <p className={styles.analyticsLink}>
+            Completed matches contribute anonymous game statistics.
+            {" "}<Link href="/simulator-v2/analytics">Explore simulator analytics &#8599;</Link>
+          </p>
         </section>
       </div>
     </div>

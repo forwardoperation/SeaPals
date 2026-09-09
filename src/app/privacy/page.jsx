@@ -26,7 +26,7 @@ export const metadata = {
 const providerRows = [
   [
     "Supabase",
-    "Account authentication, adult account email, authorization records, synchronized Reefbound saves, surveys, private bug reports, and order records.",
+    "Account authentication, adult account email, authorization records, synchronized Reefbound saves, surveys, private bug reports, anonymous simulator match counters, and order records.",
     "Account access, cross-device save synchronization and recovery, database hosting, security, and administration.",
   ],
   [
@@ -204,6 +204,18 @@ export default function PrivacyPage() {
         </p>
 
         <h3>Website analytics, logs, and support</h3>
+        <p>
+          Completed Simulator V2 matches contribute anonymous game counters to
+          public, combined statistics about cards, decks, abilities, resources,
+          and outcomes. Match reports contain a random match identifier, timing,
+          deck identifiers, AI difficulty, and game totals. They do not contain
+          player names, account identifiers, or replay logs. Pending reports are
+          kept in local browser storage for retry. Submission limits use a
+          separate, daily rotating hash of the request address, which is not
+          linked to match reports; expired limit records are cleared during
+          subsequent submissions. Tutorials and Reefbound adventure games do
+          not contribute to these reports.
+        </p>
         <p>
           On general site pages, Google Analytics may receive page, device,
           browser, approximate location, referral, cookie, and usage

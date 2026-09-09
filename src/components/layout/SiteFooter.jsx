@@ -36,6 +36,12 @@ export default function SiteFooter() {
             Try a Deck
           </Link>
           <Link
+            href="/simulator-v2/analytics"
+            className="rounded text-cyan-800 underline-offset-4 hover:underline focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+          >
+            Simulator Analytics
+          </Link>
+          <Link
             href="/privacy"
             className="rounded text-cyan-800 underline-offset-4 hover:underline focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
           >

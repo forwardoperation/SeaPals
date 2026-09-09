@@ -1,4 +1,5 @@
 import { isSimulatorRandomStreamState } from "./simulatorRandomStream.mjs";
+import { isSimulatorAnalyticsMatch } from "./simulatorAnalytics.mjs";
 
 export const SIMULATOR_RESUME_SCHEMA_VERSION = 1;
 export const SIMULATOR_RESUME_STORAGE_KEY = "seapals.simulator-v2.resume.v1";
@@ -71,6 +72,7 @@ export const SIMULATOR_RESUME_STATE_KEYS = Object.freeze([
   "supportBlockedUntilRound",
   "cardsBlockedFromPlayThisTurn",
   "gameplayRandomState",
+  "simulatorAnalytics",
   "log",
   "turnLog",
   "gameResult",
@@ -353,6 +355,7 @@ export function isSimulatorResumeStateEligible(state) {
     || !isStatusRecord(state.creatureStatuses)
     || !isStringArray(state.cardsBlockedFromPlayThisTurn)
     || !(state.gameplayRandomState == null || isSimulatorRandomStreamState(state.gameplayRandomState))
+    || !(state.simulatorAnalytics == null || isSimulatorAnalyticsMatch(state.simulatorAnalytics))
     || !(state.turnDrawResult == null || (
       Array.isArray(state.turnDrawResult)
       && state.turnDrawResult.every(isTurnDrawResultEntry)

@@ -12,6 +12,7 @@ const PUBLIC_PATHS = Object.freeze([
   "/instructions/tutorial",
   "/privacy",
   "/simulator",
+  "/simulator-v2/analytics",
   "/store",
   "/surveys",
   "/terms",

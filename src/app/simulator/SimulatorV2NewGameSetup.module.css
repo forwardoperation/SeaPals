@@ -524,6 +524,21 @@
   animation: none;
 }
 
+.analyticsLink {
+  margin: 0.85rem 0 0;
+  text-align: center;
+  font-size: 0.68rem;
+  line-height: 1.6;
+  color: #b8dce2;
+}
+
+.analyticsLink a {
+  display: inline-block;
+  color: #d9f99d;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .reducedMotion :is(.startButton, .tutorialButton) {
   transition: none;
 }
