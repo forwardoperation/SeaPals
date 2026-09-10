@@ -7,6 +7,7 @@ export const TUTORIAL_COACH_SIDES = Object.freeze({
 
 const DEFAULT_MARGIN = 12;
 const DEFAULT_GAP = 36;
+const DEFAULT_DIVIDER_GAP = 6;
 const DEFAULT_ARROW_INSET = 32;
 const DEFAULT_BEACON_ARROW_LENGTH = 24;
 
@@ -161,6 +162,78 @@ export function getTutorialCoachPlacement({
     height: coachHeight,
     arrowOffset,
     constrained: spaces[side] < required[side],
+  });
+}
+
+/**
+ * Keeps the embedded-lesson Professor card centered on the reef divider.
+ * The card prefers the open space immediately above the divider, then moves
+ * below it when its measured height will not fit above the viewport margin.
+ */
+export function getTutorialDividerCoachPlacement({
+  dividerRect,
+  coachRect,
+  viewportWidth,
+  viewportHeight,
+  margin = DEFAULT_MARGIN,
+  gap = DEFAULT_DIVIDER_GAP,
+} = {}) {
+  const divider = normalizeRect(dividerRect);
+  const coach = normalizeRect(coachRect);
+  const width = finiteNumber(viewportWidth);
+  const height = finiteNumber(viewportHeight);
+  const safeMargin = Math.max(0, finiteNumber(margin) ?? DEFAULT_MARGIN);
+  const safeGap = Math.max(0, finiteNumber(gap) ?? DEFAULT_DIVIDER_GAP);
+  if (!divider || !coach || !width || !height || width <= 0 || height <= 0) return null;
+
+  const visibleDivider = {
+    left: clamp(divider.left, 0, width),
+    top: clamp(divider.top, 0, height),
+    right: clamp(divider.right, 0, width),
+    bottom: clamp(divider.bottom, 0, height),
+  };
+  visibleDivider.width = visibleDivider.right - visibleDivider.left;
+  visibleDivider.height = visibleDivider.bottom - visibleDivider.top;
+  if (visibleDivider.width <= 0 || visibleDivider.height <= 0) return null;
+
+  const coachWidth = Math.min(coach.width, Math.max(1, width - safeMargin * 2));
+  const coachHeight = Math.min(coach.height, Math.max(1, height - safeMargin * 2));
+  const spaceAbove = Math.max(0, visibleDivider.top - safeGap - safeMargin);
+  const spaceBelow = Math.max(0, height - safeMargin - visibleDivider.bottom - safeGap);
+  const side = spaceAbove >= coachHeight
+    ? TUTORIAL_COACH_SIDES.ABOVE
+    : spaceBelow >= coachHeight
+      ? TUTORIAL_COACH_SIDES.BELOW
+      : spaceAbove >= spaceBelow
+        ? TUTORIAL_COACH_SIDES.ABOVE
+        : TUTORIAL_COACH_SIDES.BELOW;
+  const availableHeight = side === TUTORIAL_COACH_SIDES.ABOVE ? spaceAbove : spaceBelow;
+  const placedHeight = Math.min(coachHeight, Math.max(1, availableHeight));
+  const dividerCenterX = visibleDivider.left + visibleDivider.width / 2;
+  const left = clamp(
+    dividerCenterX - coachWidth / 2,
+    safeMargin,
+    width - safeMargin - coachWidth,
+  );
+  const desiredTop = side === TUTORIAL_COACH_SIDES.ABOVE
+    ? visibleDivider.top - safeGap - placedHeight
+    : visibleDivider.bottom + safeGap;
+  const top = clamp(
+    desiredTop,
+    safeMargin,
+    height - safeMargin - placedHeight,
+  );
+
+  return Object.freeze({
+    side,
+    left,
+    top,
+    width: coachWidth,
+    height: placedHeight,
+    availableHeight,
+    spaceAbove,
+    spaceBelow,
+    constrained: availableHeight < coachHeight,
   });
 }
 

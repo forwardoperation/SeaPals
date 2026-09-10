@@ -27,7 +27,7 @@ test("compact turn presentation is limited to the V2 board without replacing scr
   );
 });
 
-test("turn notices stay transient while round conditions wait in a compact board-visible reader", () => {
+test("turn notices stay transient while nonlesson conditions use the compact board reader", () => {
   const compactOverlay = sourceSection(
     simulatorSource,
     "{compactTurnSequence ? <div className=\"seapals-compact-turn-guard",
@@ -35,6 +35,10 @@ test("turn notices stay transient while round conditions wait in a compact board
   );
 
   assert.match(compactOverlay, /data-compact-turn-banner=\{compactTurnStage\.kind\}/);
+  assert.match(
+    compactOverlay,
+    /compactTurnStage\?\.kind === CompactTurnStage\.CONDITION && !embeddedCompactConditionHelp/,
+  );
   assert.match(compactOverlay, /aria-hidden="true"/);
   assert.match(compactOverlay, /<strong>\{compactTurnSequence\.turnLabel\}<\/strong>/);
   assert.match(compactOverlay, /Round \{compactTurnSequence\.roundNumber\} condition/);
@@ -54,10 +58,57 @@ test("turn notices stay transient while round conditions wait in a compact board
   assert.match(simulatorSource, /\.seapals-compact-turn-banner\.is-condition[\s\S]*?pointer-events: auto;/);
 });
 
-test("new-round sequencing orders turn, condition, then RP and preserves every continuation", () => {
+test("embedded condition teaching derives from the compact stage and owns the only Continue action", () => {
+  const conditionHelp = sourceSection(
+    simulatorSource,
+    "const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;",
+    "const tutorialFaceoffHelp =",
+  );
+  const embeddedCompactCoach = sourceSection(
+    simulatorSource,
+    "{embeddedCompactCoachOpen ? (",
+    ") : embeddedLessonCoachOpen ? (",
+  );
+
+  assert.match(conditionHelp, /compactTurnStage\?\.kind === CompactTurnStage\.CONDITION/);
+  assert.match(
+    conditionHelp,
+    /compactTutorialConditionActive[\s\S]*?compactTurnSequence\?\.condition/,
+  );
+  assert.match(
+    conditionHelp,
+    /At the start of each round, one Condition changes the rules for both players\.[\s\S]*?change costs, draws, limits, or which cards are legal,[\s\S]*?This round's Condition is/,
+  );
+  assert.match(conditionHelp, /const embeddedCompactCoachHelp = embeddedCompactConditionHelp \?\? embeddedCompactRpHelp/);
+  assert.match(
+    conditionHelp,
+    /const embeddedCompactCoachOpen = Boolean\([\s\S]*?embeddedCompactCoachHelp[\s\S]*?!simulatorExitConfirmationOpen[\s\S]*?!tutorialExitConfirmationOpen[\s\S]*?!gameResult/,
+  );
+  assert.match(
+    embeddedCompactCoach,
+    /<ProfessorCoachOverlay help=\{embeddedCompactCoachHelp\} placementMode="reef-divider" measureKey=\{`\$\{mobileReefSplit\}:\$\{compactTurnSequence\.stageIndex\}`\}>/,
+  );
+  assert.match(
+    embeddedCompactCoach,
+    /onAdvance=\{compactTurnStage\?\.kind === CompactTurnStage\.CONDITION[\s\S]*?\? continueCompactCondition[\s\S]*?: continueCompactRpSummary\}/,
+  );
+  assert.match(
+    embeddedCompactCoach,
+    /advanceLabel=\{compactTurnStage\?\.kind === CompactTurnStage\.CONDITION \? "Continue" : "Continue to draw"\}/,
+  );
+  assert.equal((embeddedCompactCoach.match(/\bonAdvance=/g) ?? []).length, 1);
+  assert.doesNotMatch(embeddedCompactCoach, /data-compact-condition-continue|seapals-compact-turn-banner/);
+  assert.match(
+    simulatorSource,
+    /const tutorialAnnouncementHelp = embeddedCompactCoachOpen[\s\S]*?\? embeddedCompactCoachHelp[\s\S]*?: tutorialTargetBeaconHelp;[\s\S]*?help: tutorialAnnouncementHelp/,
+  );
+  assert.match(simulatorSource, /\{embeddedCompactCoachOpen \? \(/);
+});
+
+test("new-round sequencing orders turn, condition, RP, then an optional lesson summary", () => {
   assert.match(
     sequenceSource,
-    /return \[[\s\S]*?turnLabel \? \{ kind: CompactTurnStage\.TURN \}[\s\S]*?includeCondition && condition \? \{ kind: CompactTurnStage\.CONDITION \}[\s\S]*?includeRp \? \{ kind: CompactTurnStage\.RP \}/,
+    /return \[[\s\S]*?turnLabel \? \{ kind: CompactTurnStage\.TURN \}[\s\S]*?includeCondition && condition \? \{ kind: CompactTurnStage\.CONDITION \}[\s\S]*?includeRp \? \{ kind: CompactTurnStage\.RP \}[\s\S]*?includeRp && includeRpSummary \? \{ kind: CompactTurnStage\.RP_SUMMARY \}/,
   );
 
   const startRound = sourceSection(
@@ -68,6 +119,7 @@ test("new-round sequencing orders turn, condition, then RP and preserves every c
   assert.match(startRound, /turnLabel: skipTurnBanner \? null : "Your Turn"/);
   assert.match(startRound, /includeCondition: Boolean\(condition && !reuseConditionId\)/);
   assert.match(startRound, /includeRp: true/);
+  assert.match(startRound, /includeRpSummary: explainTutorialRpCollection/);
 
   const continuation = sourceSection(
     simulatorSource,
@@ -79,6 +131,46 @@ test("new-round sequencing orders turn, condition, then RP and preserves every c
   assert.match(continuation, /if \(event\?\.startOpeningPlayerTurnAfterClose\)/);
   assert.match(continuation, /skipTurnBanner: compactTurnPresentationEnabled/);
   assert.match(continuation, /opponentStateOverride: event\.opponentStateAfter \?\? null/);
+});
+
+test("embedded RP teaching defers tutorial progress until its teacher summary is continued", () => {
+  const startRound = sourceSection(
+    simulatorSource,
+    "function startRound(nextRound,",
+    "function beginOpeningOpponentTurn()",
+  );
+  const rpSummaryContinue = sourceSection(
+    simulatorSource,
+    "function continueCompactRpSummary()",
+    "function beginCompactTurnSequence({",
+  );
+
+  assert.match(startRound, /const tutorialRpEvent = \{[\s\S]*?details:[\s\S]*?context:/);
+  assert.match(
+    startRound,
+    /tutorialCheckpointBeforeCollection\?\.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES\.RP_COLLECTED/,
+  );
+  assert.match(
+    startRound,
+    /if \(!explainTutorialRpCollection\) \{[\s\S]*?emitTutorialEvent\([\s\S]*?SIMULATOR_TUTORIAL_ACTION_TYPES\.RP_COLLECTED/,
+  );
+  assert.match(startRound, /includeRpSummary: explainTutorialRpCollection/);
+  assert.match(startRound, /tutorialRpEvent: explainTutorialRpCollection \? tutorialRpEvent : null/);
+
+  assert.match(rpSummaryContinue, /stage\?\.kind !== CompactTurnStage\.RP_SUMMARY/);
+  assert.match(rpSummaryContinue, /!sequence \|\| sequence\.finishing/);
+  assert.match(
+    rpSummaryContinue,
+    /const lockedSequence = \{[\s\S]*?finishing: true,[\s\S]*?tutorialRpEvent: null,[\s\S]*?compactTurnSequenceRef\.current = lockedSequence;[\s\S]*?setCompactTurnSequence\(lockedSequence\);/,
+  );
+  assert.match(
+    rpSummaryContinue,
+    /emitTutorialEvent\([\s\S]*?SIMULATOR_TUTORIAL_ACTION_TYPES\.RP_COLLECTED,[\s\S]*?tutorialRpEvent\.details,[\s\S]*?tutorialRpEvent\.context/,
+  );
+  assert.ok(
+    rpSummaryContinue.indexOf("emitTutorialEvent(") < rpSummaryContinue.indexOf("advanceCompactTurnSequence(sequence.id)"),
+    "RP progress must be emitted before the teacher advances past the summary.",
+  );
 });
 
 test("both controllers collect RP from stable board sources into a counting RP bank", () => {

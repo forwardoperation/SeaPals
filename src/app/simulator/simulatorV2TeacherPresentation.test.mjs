@@ -45,3 +45,15 @@ test("drag steps keep the teacher card concise and leave the gesture to the boar
   assert.doesNotMatch(panelSource, /DragInstruction|data-v2-drag-(?:instruction|source|path|destination)/);
   assert.doesNotMatch(styleSource, /\.drag(?:Diagram|Source|Destination|CardStack|CardMotion|Pointer|Slots|Trail|Arrow)\b|@keyframes tutorialCardDrag/);
 });
+
+test("blocking teacher checkpoints receive focus and keep keyboard navigation on Continue", () => {
+  assert.match(panelSource, /const advanceRef = useRef\(null\)/);
+  assert.match(
+    panelSource,
+    /onKeyDown=\{onAdvance \? \(event\) => \{[\s\S]*?event\.key !== "Tab"[\s\S]*?event\.preventDefault\(\);[\s\S]*?advanceRef\.current\?\.focus\(\)/,
+  );
+  assert.match(
+    panelSource,
+    /<button\s+ref=\{advanceRef\}[\s\S]*?autoFocus[\s\S]*?data-v2-lesson-advance/,
+  );
+});

@@ -21,7 +21,7 @@ test("the compact round-condition banner waits for an explicit Continue", () => 
   );
   const compactBanner = sourceSection(
     simulatorSource,
-    "{compactTurnSequence && [CompactTurnStage.TURN, CompactTurnStage.CONDITION]",
+    "{compactTurnSequence && (",
     "{compactRpFlights.length ? (",
   );
 
@@ -30,6 +30,10 @@ test("the compact round-condition banner waits for an explicit Continue", () => 
     conditionBranch,
     /scheduleCompactTurnTimer\(/,
     "Reading time must be controlled by the player, not a timeout.",
+  );
+  assert.match(
+    compactBanner,
+    /compactTurnStage\?\.kind === CompactTurnStage\.CONDITION && !embeddedCompactConditionHelp/,
   );
   assert.match(compactBanner, /data-compact-condition-continue/);
   assert.match(compactBanner, /type="button"/);
@@ -422,7 +426,7 @@ test("reduced motion skips opponent travel and flip motion without skipping read
 
   const compactBanner = sourceSection(
     simulatorSource,
-    "{compactTurnSequence && [CompactTurnStage.TURN, CompactTurnStage.CONDITION]",
+    "{compactTurnSequence && (",
     "{compactRpFlights.length ? (",
   );
   assert.match(compactBanner, /data-compact-condition-continue/);

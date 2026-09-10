@@ -5,6 +5,7 @@ import {
   TUTORIAL_COACH_SIDES,
   getTutorialBeaconAnchor,
   getTutorialCoachPlacement,
+  getTutorialDividerCoachPlacement,
 } from "./tutorialCoachPlacement.mjs";
 
 const desktopViewport = { viewportWidth: 1200, viewportHeight: 800 };
@@ -130,6 +131,87 @@ test("missing, zero-sized, and fully offscreen targets retain the stable fallbac
     ...desktopViewport,
     coachRect,
     targetRect: { left: 1300, top: 50, right: 1400, bottom: 100 },
+  }), null);
+});
+
+test("divider placement centers the Professor card directly above the middle bar", () => {
+  const placement = getTutorialDividerCoachPlacement({
+    ...desktopViewport,
+    coachRect,
+    dividerRect: { left: 0, top: 400, right: 1200, bottom: 444 },
+  });
+
+  assert.equal(placement.side, TUTORIAL_COACH_SIDES.ABOVE);
+  assert.equal(placement.left, 400);
+  assert.equal(placement.top, 154);
+  assert.equal(placement.top + placement.height + 6, 400);
+  assert.equal(placement.availableHeight, 382);
+  assert.equal(placement.constrained, false);
+  assertInsideViewport(placement, 1200, 800);
+});
+
+test("divider placement moves below when the coach does not fit above", () => {
+  const placement = getTutorialDividerCoachPlacement({
+    ...desktopViewport,
+    coachRect,
+    dividerRect: { left: 0, top: 100, right: 1200, bottom: 144 },
+  });
+
+  assert.equal(placement.side, TUTORIAL_COACH_SIDES.BELOW);
+  assert.equal(placement.left, 400);
+  assert.equal(placement.top, 150);
+  assert.equal(placement.spaceAbove, 82);
+  assert.equal(placement.spaceBelow, 638);
+  assert.equal(placement.availableHeight, placement.spaceBelow);
+  assert.equal(placement.constrained, false);
+  assertInsideViewport(placement, 1200, 800);
+});
+
+test("divider placement clamps a wide coach to visual viewport margins", () => {
+  const placement = getTutorialDividerCoachPlacement({
+    viewportWidth: 360,
+    viewportHeight: 640,
+    coachRect: { left: 0, top: 0, right: 520, bottom: 240 },
+    dividerRect: { left: 0, top: 300, right: 360, bottom: 344 },
+  });
+
+  assert.equal(placement.side, TUTORIAL_COACH_SIDES.ABOVE);
+  assert.equal(placement.left, 12);
+  assert.equal(placement.top, 54);
+  assert.equal(placement.width, 336);
+  assert.equal(placement.height, 240);
+  assert.equal(placement.constrained, false);
+  assertInsideViewport(placement, 360, 640);
+});
+
+test("divider placement uses the larger band and constrains tall coaching in short landscape", () => {
+  const placement = getTutorialDividerCoachPlacement({
+    viewportWidth: 844,
+    viewportHeight: 390,
+    coachRect: { left: 0, top: 0, right: 360, bottom: 300 },
+    dividerRect: { left: 0, top: 180, right: 844, bottom: 224 },
+  });
+
+  assert.equal(placement.side, TUTORIAL_COACH_SIDES.ABOVE);
+  assert.equal(placement.availableHeight, 162);
+  assert.equal(placement.height, 162);
+  assert.equal(placement.top, 12);
+  assert.equal(placement.top + placement.height + 6, 180);
+  assert.equal(placement.constrained, true);
+  assertInsideViewport(placement, 844, 390);
+});
+
+test("divider placement rejects missing, zero-sized, and fully offscreen dividers", () => {
+  assert.equal(getTutorialDividerCoachPlacement(), null);
+  assert.equal(getTutorialDividerCoachPlacement({
+    ...desktopViewport,
+    coachRect,
+    dividerRect: { left: 0, top: 400, right: 1200, bottom: 400 },
+  }), null);
+  assert.equal(getTutorialDividerCoachPlacement({
+    ...desktopViewport,
+    coachRect,
+    dividerRect: { left: 0, top: 900, right: 1200, bottom: 944 },
   }), null);
 });
 

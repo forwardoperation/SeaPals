@@ -45,6 +45,10 @@ test("the pointer hand has a natural silhouette and a calibrated fingertip", () 
   assert.match(icon, /M8\.5 4\.466V1\.75/);
   assert.match(simulatorSource, /offset-anchor:\s*42\.1875% 0;/);
   assert.match(simulatorSource, /transform-origin:\s*42\.1875% 0;/);
+  assert.match(
+    simulatorSource,
+    /\.seapals-v2-action-cue-hand-glyph \{[\s\S]*?opacity:\s*\.75;[\s\S]*?transform-origin:\s*42\.1875% 0;/,
+  );
 });
 
 test("the board exposes prepared ecosystem, matching Coral, and compatible slot destinations before dragging", () => {
@@ -82,16 +86,32 @@ test("the board-native overlay stays noninteractive, below the coach, and disapp
   assert.match(simulatorSource, /const embeddedLessonActionCueMeasureKey = [\s\S]*?ecosystemZoom[\s\S]*?ecosystemOffset\.x[\s\S]*?mobileReefSplit[\s\S]*?playerCorals\.map/);
 });
 
-test("drag-step coaching moves to the clear top edge instead of covering the gesture corridor", () => {
+test("embedded coaching stays centered on the reef divider while the hand points to the action", () => {
   const coach = sourceSection(
     "function ProfessorCoachOverlay(",
     "function destroyedCardGoesToLostZone(",
   );
 
-  assert.match(simulatorSource, /function getEmbeddedLessonDragCoachPlacement\([\s\S]*?boardControlClearance[\s\S]*?top: edgeMargin/);
-  assert.match(coach, /const usesDragCorridor = help\?\.interaction === "drag" && Number\.isInteger\(help\?\.lessonStep\)/);
-  assert.match(coach, /usesDragCorridor[\s\S]*?getEmbeddedLessonDragCoachPlacement/);
-  assert.match(coach, /placement && !usesDragCorridor/);
+  assert.match(coach, /placementMode = "target", measureKey = null/);
+  assert.match(coach, /const usesDividerAnchor = placementMode === "reef-divider"/);
+  assert.match(coach, /document\.querySelector\('\[data-tutorial-coach-anchor="reef-divider"\]'\)/);
+  assert.match(coach, /usesDividerAnchor[\s\S]*?getTutorialDividerCoachPlacement\(\{/);
+  assert.match(coach, /viewportPlacement = nextPlacement[\s\S]*?viewportWidth,/);
+  assert.match(coach, /usesDividerAnchor,[\s\S]*?measureKey,/);
+  assert.match(
+    coach,
+    /width: usesDividerAnchor[\s\S]*?`min\(23rem, calc\(100vw - 24px\), \$\{Math\.max\(1, placement\.viewportWidth - 24\)\}px\)`/,
+  );
+  assert.match(coach, /data-tutorial-coach-placement=\{placementMode\}/);
+  assert.match(coach, /placement && !usesDividerAnchor/);
+  assert.match(
+    simulatorSource,
+    /<ProfessorCoachOverlay help=\{tutorialHelp\} placementMode="reef-divider" measureKey=\{mobileReefSplit\}>/,
+  );
+  assert.match(
+    simulatorSource,
+    /className=\{`seapals-reef-divider-handle[\s\S]*?data-tutorial-coach-anchor="reef-divider"[\s\S]*?role="separator"/,
+  );
 });
 
 test("tap cues remain target-local and the hand travels smoothly along the exact path", () => {
@@ -113,10 +133,10 @@ test("tap cues remain target-local and the hand travels smoothly along the exact
   assert.match(simulatorSource, /@keyframes seapalsV2HandDragPress[\s\S]*?20%, 80% \{ transform: scale\(\.9\); \}/);
   assert.match(
     simulatorSource,
-    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.seapals-v2-action-cue-path-line,[\s\S]*?animation:\s*none;/,
+    /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.seapals-v2-action-cue-path-line,[\s\S]*?animation:\s*none;[\s\S]*?\.seapals-v2-action-cue\.is-path \.seapals-v2-action-cue-hand \{[\s\S]*?opacity:\s*1;/,
   );
   assert.match(
     simulatorSource,
-    /@media \(forced-colors: active\) \{[\s\S]*?\.seapals-v2-action-cue-path-line \{ stroke: Highlight;/,
+    /@media \(forced-colors: active\) \{[\s\S]*?\.seapals-v2-action-cue-path-line \{ stroke: Highlight;[\s\S]*?\.seapals-v2-action-cue-hand-glyph \{ opacity:\s*1; \}/,
   );
 });

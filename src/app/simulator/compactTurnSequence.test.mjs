@@ -55,6 +55,36 @@ test("setup deals the opening hand before filling the RP bank", () => {
   );
 });
 
+test("an optional RP summary follows the RP presentation", () => {
+  assert.deepEqual(
+    createCompactTurnStages({
+      turnLabel: "Your Turn",
+      condition: { id: "current-condition" },
+      includeCondition: true,
+      includeRp: true,
+      includeRpSummary: true,
+    }).map((stage) => stage.kind),
+    [
+      CompactTurnStage.TURN,
+      CompactTurnStage.CONDITION,
+      CompactTurnStage.RP,
+      CompactTurnStage.RP_SUMMARY,
+    ],
+  );
+});
+
+test("an RP summary is omitted when the RP presentation is omitted", () => {
+  assert.deepEqual(
+    createCompactTurnStages({
+      turnLabel: "Your Turn",
+      includeCondition: false,
+      includeRp: false,
+      includeRpSummary: true,
+    }).map((stage) => stage.kind),
+    [CompactTurnStage.TURN],
+  );
+});
+
 test("RP allocation emits one coin per accepted point and never animates cap overflow", () => {
   assert.deepEqual(
     allocateCollectedRpSources([

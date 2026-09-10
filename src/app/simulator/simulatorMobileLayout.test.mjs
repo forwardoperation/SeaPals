@@ -94,7 +94,7 @@ test("desktop board-tour progress and Skip Tour keep separate header space", () 
   );
 });
 
-test("mobile guidance keeps the legacy arrow and gives embedded lessons target-aware guidance without a reveal gate", () => {
+test("mobile guidance keeps the legacy arrow and anchors embedded lessons to the reef divider", () => {
   assert.match(simulatorSource, /tutorialHelpFloating \? " seapals-tutorial-help-floating"/);
   assert.match(simulatorSource, /tutorialHelpInline \? " seapals-tutorial-help-inline"/);
   assert.match(
@@ -110,7 +110,10 @@ test("mobile guidance keeps the legacy arrow and gives embedded lessons target-a
     simulatorSource,
     /active=\{!embeddedLesson && tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
   );
-  assert.match(simulatorSource, /embeddedLessonCoachOpen \? \([\s\S]*?<ProfessorCoachOverlay help=\{tutorialHelp\}>/);
+  assert.match(
+    simulatorSource,
+    /embeddedLessonCoachOpen \? \([\s\S]*?<ProfessorCoachOverlay help=\{tutorialHelp\} placementMode="reef-divider" measureKey=\{mobileReefSplit\}>/,
+  );
   assert.doesNotMatch(simulatorSource, /data-v2-lesson-dialogue|advanceLabel="Show me"|beginEmbeddedLessonAction/);
   assert.match(simulatorSource, /data-v2-target-gesture=\{gesture\}/);
   assert.match(simulatorSource, /\.seapals-professor-coach-wrap,[\s\S]*?bottom: calc\(var\(--seapals-mobile-dock-clearance\) \+ env\(safe-area-inset-bottom\)\);/);

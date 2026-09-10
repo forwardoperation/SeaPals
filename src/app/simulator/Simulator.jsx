@@ -152,6 +152,7 @@ import {
 import {
   getTutorialBeaconAnchor,
   getTutorialCoachPlacement,
+  getTutorialDividerCoachPlacement,
 } from "./tutorialCoachPlacement.mjs";
 import {
   GUIDED_ACADEMY_LAYOUT_ACTIONS,
@@ -931,35 +932,23 @@ function sameProfessorCoachPlacement(left, right) {
   return left.side === right.side
     && Math.abs(left.left - right.left) < 1
     && Math.abs(left.top - right.top) < 1
-    && Math.abs(left.arrowOffset - right.arrowOffset) < 1
+    && Math.abs(Number(left.arrowOffset ?? 0) - Number(right.arrowOffset ?? 0)) < 1
+    && Math.abs(Number(left.width ?? 0) - Number(right.width ?? 0)) < 1
+    && Math.abs(Number(left.availableHeight ?? 0) - Number(right.availableHeight ?? 0)) < 1
+    && Math.abs(Number(left.viewportWidth ?? 0) - Number(right.viewportWidth ?? 0)) < 1
     && left.constrained === right.constrained;
 }
 
-function getEmbeddedLessonDragCoachPlacement({ coachRect, viewportWidth }) {
-  const edgeMargin = 12;
-  const boardControlClearance = viewportWidth >= 720 ? 88 : edgeMargin;
-  return {
-    side: "above",
-    left: Math.min(
-      Math.max(edgeMargin, boardControlClearance),
-      Math.max(edgeMargin, viewportWidth - coachRect.width - edgeMargin),
-    ),
-    top: edgeMargin,
-    arrowOffset: coachRect.width / 2,
-    constrained: false,
-  };
-}
-
-function ProfessorCoachOverlay({ help, children }) {
+function ProfessorCoachOverlay({ help, children, placementMode = "target", measureKey = null }) {
   const coachRef = useRef(null);
   const [placement, setPlacement] = useState(null);
   const targetCardKey = (help?.targetCardIds ?? [help?.targetCardId])
     .map((cardId) => String(cardId ?? ""))
     .join(":");
-  const usesDragCorridor = help?.interaction === "drag" && Number.isInteger(help?.lessonStep);
+  const usesDividerAnchor = placementMode === "reef-divider";
 
   useEffect(() => {
-    if (!help?.target || !TUTORIAL_POINTER_TARGETS.has(help.target)) {
+    if (!usesDividerAnchor && (!help?.target || !TUTORIAL_POINTER_TARGETS.has(help.target))) {
       setPlacement(null);
       return undefined;
     }
@@ -974,7 +963,12 @@ function ProfessorCoachOverlay({ help, children }) {
     };
     const updatePlacement = () => {
       animationFrame = null;
-      const target = findTutorialTarget(help);
+      const target = usesDividerAnchor
+        ? (() => {
+            const element = document.querySelector('[data-tutorial-coach-anchor="reef-divider"]');
+            return element ? { element, rect: element.getBoundingClientRect() } : null;
+          })()
+        : findTutorialTarget(help);
       const coachElement = coachRef.current;
       if (!target || !coachElement) {
         setPlacement((current) => current == null ? current : null);
@@ -985,6 +979,17 @@ function ProfessorCoachOverlay({ help, children }) {
         setPlacement((current) => current == null ? current : null);
         return;
       }
+      const intrinsicCoachHeight = usesDividerAnchor
+        ? Math.max(coachRect.height, Number(coachElement.firstElementChild?.scrollHeight) || 0)
+        : coachRect.height;
+      const measuredCoachRect = usesDividerAnchor
+        ? {
+            left: coachRect.left,
+            top: coachRect.top,
+            right: coachRect.right,
+            bottom: coachRect.top + intrinsicCoachHeight,
+          }
+        : coachRect;
       const visualViewport = window.visualViewport;
       const viewportLeft = visualViewport?.offsetLeft ?? 0;
       const viewportTop = visualViewport?.offsetTop ?? 0;
@@ -996,8 +1001,13 @@ function ProfessorCoachOverlay({ help, children }) {
         right: target.rect.right - viewportLeft,
         bottom: target.rect.bottom - viewportTop,
       };
-      const nextPlacement = usesDragCorridor
-        ? getEmbeddedLessonDragCoachPlacement({ coachRect, viewportWidth, viewportHeight })
+      const nextPlacement = usesDividerAnchor
+        ? getTutorialDividerCoachPlacement({
+            dividerRect: relativeTargetRect,
+            coachRect: measuredCoachRect,
+            viewportWidth,
+            viewportHeight,
+          })
         : getTutorialCoachPlacement({
             targetRect: relativeTargetRect,
             coachRect,
@@ -1009,6 +1019,7 @@ function ProfessorCoachOverlay({ help, children }) {
             ...nextPlacement,
             left: nextPlacement.left + viewportLeft,
             top: nextPlacement.top + viewportTop,
+            viewportWidth,
           }
         : null;
       setPlacement((current) => (
@@ -1050,26 +1061,35 @@ function ProfessorCoachOverlay({ help, children }) {
     help?.targetSearchCardId,
     help?.targetDeck,
     help?.targetDrawAction,
-    usesDragCorridor,
+    usesDividerAnchor,
+    measureKey,
   ]);
 
   return (
     <div
       ref={coachRef}
-      className={`seapals-professor-coach-wrap${usesDragCorridor ? " seapals-professor-coach-wrap-drag" : ""}${placement ? ` seapals-professor-coach-wrap-anchored seapals-professor-coach-side-${placement.side}` : ""}`}
+      className={`seapals-professor-coach-wrap${usesDividerAnchor ? " seapals-professor-coach-wrap-divider" : ""}${placement ? ` seapals-professor-coach-wrap-anchored seapals-professor-coach-side-${placement.side}` : ""}`}
       style={{
-        width: help?.lessonStep ? "min(23rem, calc(100vw - 24px))" : undefined,
+        width: usesDividerAnchor
+          ? placement?.viewportWidth
+            ? `min(23rem, calc(100vw - 24px), ${Math.max(1, placement.viewportWidth - 24)}px)`
+            : "min(23rem, calc(100vw - 24px))"
+          : help?.lessonStep ? "min(23rem, calc(100vw - 24px))" : undefined,
         ...(placement ? {
           left: `${placement.left}px`,
           top: `${placement.top}px`,
-          "--seapals-coach-arrow-offset": `${placement.arrowOffset}px`,
+          ...(placement.arrowOffset != null ? { "--seapals-coach-arrow-offset": `${placement.arrowOffset}px` } : {}),
+          ...(usesDividerAnchor && placement.availableHeight != null
+            ? { "--seapals-coach-available-height": `${Math.max(1, placement.availableHeight)}px` }
+            : {}),
         } : {}),
       }}
+      data-tutorial-coach-placement={placementMode}
       data-tutorial-coach-side={placement?.side}
       data-tutorial-coach-constrained={placement?.constrained ? "true" : undefined}
     >
       {children}
-      {placement && !usesDragCorridor ? (
+      {placement && !usesDividerAnchor ? (
         <span className="seapals-professor-coach-arrow" aria-hidden="true">
           {PROFESSOR_COACH_ARROW[placement.side]}
         </span>
@@ -6179,6 +6199,29 @@ export default function Simulator({
     advanceCompactTurnSequence(sequence.id);
   }
 
+  function continueCompactRpSummary() {
+    const sequence = compactTurnSequenceRef.current;
+    if (!sequence || sequence.finishing) return;
+    const stage = sequence.stages[sequence.stageIndex];
+    if (stage?.kind !== CompactTurnStage.RP_SUMMARY) return;
+    const tutorialRpEvent = sequence.tutorialRpEvent;
+    const lockedSequence = {
+      ...sequence,
+      finishing: true,
+      tutorialRpEvent: null,
+    };
+    compactTurnSequenceRef.current = lockedSequence;
+    setCompactTurnSequence(lockedSequence);
+    if (tutorialRpEvent) {
+      emitTutorialEvent(
+        SIMULATOR_TUTORIAL_ACTION_TYPES.RP_COLLECTED,
+        tutorialRpEvent.details,
+        tutorialRpEvent.context,
+      );
+    }
+    advanceCompactTurnSequence(sequence.id);
+  }
+
   function beginCompactTurnSequence({
     owner,
     turnLabel = null,
@@ -6188,11 +6231,13 @@ export default function Simulator({
     includeOpeningHand = false,
     openingHand = [],
     includeRp = true,
+    includeRpSummary = false,
     rpBefore = 0,
     rpAfter = 0,
     collectedRp = 0,
     cappedRp = 0,
     rpSources = [],
+    tutorialRpEvent = null,
   }, completion = null) {
     clearCompactTurnAsyncHandles();
     const id = compactTurnSequenceIdRef.current + 1;
@@ -6203,6 +6248,7 @@ export default function Simulator({
       includeCondition,
       includeOpeningHand,
       includeRp,
+      includeRpSummary,
     });
     if (!stages.length) {
       completion?.();
@@ -6222,6 +6268,7 @@ export default function Simulator({
       collectedRp,
       cappedRp,
       rpSources,
+      tutorialRpEvent,
     };
     compactTurnSequenceRef.current = sequence;
     compactTurnCompletionRef.current = completion;
@@ -6663,6 +6710,14 @@ export default function Simulator({
         }
       };
     }
+
+    if (stage.kind === CompactTurnStage.RP_SUMMARY) {
+      setCompactTurnAnnouncement(
+        `You collected ${sequence.collectedRp} RP and now have ${sequence.rpAfter} RP. Review the RP lesson before continuing.`,
+      );
+      return undefined;
+    }
+    if (stage.kind !== CompactTurnStage.RP) return undefined;
 
     let cancelled = false;
     let secondFrame = null;
@@ -7259,15 +7314,55 @@ export default function Simulator({
     foundationDeckCount: foundationDeck.length,
     palsDeckCount: palsDeck.length,
   }) : null;
+  const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;
   const tutorialFinalProgressLabel = tutorialCurrentCheckpoint === null && tutorialContract
     ? `Final goal • ${playerVp}/${victoryTarget} VP`
     : null;
-  const tutorialConditionHelp = tutorialContract && eventOverlay?.type === "condition-reveal"
+  const compactTutorialConditionActive = compactTurnStage?.kind === CompactTurnStage.CONDITION;
+  const tutorialConditionCard = eventOverlay?.type === "condition-reveal"
+    ? cardsById[eventOverlay.sourceCardId]
+    : compactTutorialConditionActive
+      ? compactTurnSequence?.condition
+      : null;
+  const tutorialConditionRound = eventOverlay?.type === "condition-reveal"
+    ? eventOverlay.round ?? round
+    : compactTurnSequence?.roundNumber ?? round;
+  const tutorialConditionHelp = tutorialContract && tutorialConditionCard
     ? {
-        ...getSimulatorTutorialConditionHelp(cardsById[eventOverlay.sourceCardId], eventOverlay.round ?? round),
+        ...getSimulatorTutorialConditionHelp(tutorialConditionCard, tutorialConditionRound),
         ...(tutorialFinalProgressLabel ? { progressLabel: tutorialFinalProgressLabel } : {}),
       }
     : null;
+  const embeddedCompactConditionHelp = embeddedLesson && compactTutorialConditionActive && tutorialConditionHelp
+    ? {
+        ...tutorialConditionHelp,
+        id: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
+        cueId: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
+        title: `${tutorialConditionCard.name} changes this round`,
+        message: `At the start of each round, one Condition changes the rules for both players. It may change costs, draws, limits, or which cards are legal, so check it before spending RP. This round's Condition is ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
+        action: "Read the Condition, then continue.",
+        interaction: "tap",
+        lessonStep: tutorialStepNumber,
+      }
+    : null;
+  const embeddedCompactRpHelp = embeddedLesson && compactTurnStage?.kind === CompactTurnStage.RP_SUMMARY
+    ? {
+        id: `embedded-rp-summary:${compactTurnSequence.id}`,
+        cueId: `embedded-rp-summary:${compactTurnSequence.id}`,
+        title: "Your RP bank is ready",
+        message: `RP pays for cards and abilities. Every round gives you 1 RP, and cards in your ecosystem can add more. You collected ${compactTurnSequence.collectedRp} RP, so your bank now holds ${compactTurnSequence.rpAfter} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP could not fit under the cap` : ""}. Unspent RP stays in your bank for later rounds.`,
+        action: "Continue, then choose your card draw.",
+        interaction: "tap",
+        lessonStep: tutorialStepNumber,
+      }
+    : null;
+  const embeddedCompactCoachHelp = embeddedCompactConditionHelp ?? embeddedCompactRpHelp;
+  const embeddedCompactCoachOpen = Boolean(
+    embeddedCompactCoachHelp
+    && !simulatorExitConfirmationOpen
+    && !tutorialExitConfirmationOpen
+    && !gameResult
+  );
   const tutorialFaceoffHelp = tutorialContract && ["faceoff-ready", "school-attack-ready"].includes(eventOverlay?.type)
       ? {
         id: "tutorial-faceoff",
@@ -7409,6 +7504,7 @@ export default function Simulator({
     || tutorialCardLesson
     || tutorialBoardTourOpen
     || eventOverlay
+    || compactTurnSequence
     || roundFlash
     || opponentThinking
     || mobileHudPanel
@@ -7601,13 +7697,16 @@ export default function Simulator({
     tutorialHelp?.targetSearchCardId,
     tutorialTargetBeaconOpen,
   ]);
-  const tutorialAnnouncement = tutorialTargetBeaconHelp
+  const tutorialAnnouncementHelp = embeddedCompactCoachOpen
+    ? embeddedCompactCoachHelp
+    : tutorialTargetBeaconHelp;
+  const tutorialAnnouncement = tutorialAnnouncementHelp
     ? createProfessorAnnouncement({
         guideName: tutorialGuide.name,
-        help: tutorialTargetBeaconHelp,
+        help: tutorialAnnouncementHelp,
         step: Math.min(tutorialStepNumber, tutorialContract?.checkpoints.length ?? 1),
         total: tutorialContract?.checkpoints.length ?? 1,
-        message: createProfessorSpokenMessage(tutorialTargetBeaconHelp),
+        message: createProfessorSpokenMessage(tutorialAnnouncementHelp),
       })
     : "";
   const tutorialVisualHelp = tutorialBoardTourOpen
@@ -11559,14 +11658,32 @@ export default function Simulator({
       isBlocked: (foundation) => coralIsStunned(foundation) || conditionPreventsCoralIncome(cardsById[foundation.cardId], condition),
     })) trackSimulatorAbility("player", "passives", passive.cardId, passive.name, passive.id);
     const cappedRp = Math.max(0, rpBeforeCollection + collectedRp - rpAfterCollection);
-    emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.RP_COLLECTED, {
-      collected: actualCollectedRp,
-      available: collectedRp,
-      bankBefore: rpBeforeCollection,
-      bankAfter: rpAfterCollection,
-      cap: roundRpCap,
-      capped: cappedRp,
-    }, { phase: "draw", round: nextRound, turn: advanceTurn ? turn + 1 : turn });
+    const tutorialRpEvent = {
+      details: {
+        collected: actualCollectedRp,
+        available: collectedRp,
+        bankBefore: rpBeforeCollection,
+        bankAfter: rpAfterCollection,
+        cap: roundRpCap,
+        capped: cappedRp,
+      },
+      context: { phase: "draw", round: nextRound, turn: advanceTurn ? turn + 1 : turn },
+    };
+    const tutorialCheckpointBeforeCollection = tutorialContract && tutorialProgressRef.current
+      ? getSimulatorTutorialCurrentCheckpoint(tutorialContract, tutorialProgressRef.current)
+      : null;
+    const explainTutorialRpCollection = Boolean(
+      compactTurnPresentationEnabled
+      && embeddedLesson
+      && tutorialCheckpointBeforeCollection?.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES.RP_COLLECTED
+    );
+    if (!explainTutorialRpCollection) {
+      emitTutorialEvent(
+        SIMULATOR_TUTORIAL_ACTION_TYPES.RP_COLLECTED,
+        tutorialRpEvent.details,
+        tutorialRpEvent.context,
+      );
+    }
     setRp(rpAfterCollection);
     setPlayerCorals(playerCoralsAtTurnStart.map(({ rpPenaltyNextTurn, ...coral }) => coral));
     setPlayerReefCreatureInstances(playerReefInstancesAtTurnStart);
@@ -11664,11 +11781,13 @@ export default function Simulator({
         condition,
         includeCondition: Boolean(condition && !reuseConditionId),
         includeRp: true,
+        includeRpSummary: explainTutorialRpCollection,
         rpBefore: rpBeforeCollection,
         rpAfter: rpAfterCollection,
         collectedRp: actualCollectedRp,
         cappedRp,
         rpSources,
+        tutorialRpEvent: explainTutorialRpCollection ? tutorialRpEvent : null,
       }, () => queueEvents(startTurnEvents));
     } else {
       setPendingEvents(startTurnEvents);
@@ -20560,7 +20679,6 @@ export default function Simulator({
     ...setupOpeningHandConcealedIndexes,
     ...mobileDrawFlights.map((flight) => flight.handIndex),
   ])];
-  const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;
   const compactOpponentReaderEvent = compactOpponentCardReader?.event ?? null;
   const compactOpponentReaderSourceCard = compactOpponentReaderEvent
     ? cardsById[compactOpponentReaderEvent.sourceCardId]
@@ -21515,6 +21633,7 @@ export default function Simulator({
         .seapals-v2-action-cue-hand-glyph {
           display: block;
           width: 100%;
+          opacity: .75;
           transform-origin: 42.1875% 0;
         }
         .seapals-v2-action-cue-hand svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -21630,7 +21749,7 @@ export default function Simulator({
           .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand,
           .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand-glyph { animation: none; }
           .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand {
-            opacity: .94;
+            opacity: 1;
             offset-distance: 0%;
           }
         }
@@ -21646,6 +21765,7 @@ export default function Simulator({
             forced-color-adjust: auto;
           }
           .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand { filter: none; }
+          .seapals-v2-action-cue-hand-glyph { opacity: 1; }
           .seapals-v2-action-cue-hand svg path { fill: Canvas; stroke: CanvasText; }
         }
         .seapals-professor-coach-wrap {
@@ -21668,6 +21788,15 @@ export default function Simulator({
           left: auto;
           width: min(32rem, calc(100vw - 1.5rem));
           transition: left 240ms ease-out, top 240ms ease-out;
+        }
+        .seapals-professor-coach-wrap-divider {
+          max-height: var(--seapals-coach-available-height, calc(100dvh - 1.5rem));
+          transition: none;
+        }
+        .seapals-professor-coach-wrap-divider[data-tutorial-coach-constrained="true"] > [data-v2-lesson-panel="coach"] {
+          max-height: inherit;
+          overflow-y: auto;
+          overscroll-behavior: contain;
         }
         .seapals-professor-coach-arrow {
           position: absolute;
@@ -25191,8 +25320,21 @@ export default function Simulator({
             </ProfessorCoachOverlay>
           ) : null}
 
-          {embeddedLessonCoachOpen ? (
-            <ProfessorCoachOverlay help={tutorialHelp}>
+          {embeddedCompactCoachOpen ? (
+            <ProfessorCoachOverlay help={embeddedCompactCoachHelp} placementMode="reef-divider" measureKey={`${mobileReefSplit}:${compactTurnSequence.stageIndex}`}>
+              <ProfessorGuideCard
+                guide={tutorialGuide}
+                help={embeddedCompactCoachHelp}
+                step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                total={tutorialContract.checkpoints.length}
+                onAdvance={compactTurnStage?.kind === CompactTurnStage.CONDITION
+                  ? continueCompactCondition
+                  : continueCompactRpSummary}
+                advanceLabel={compactTurnStage?.kind === CompactTurnStage.CONDITION ? "Continue" : "Continue to draw"}
+              />
+            </ProfessorCoachOverlay>
+          ) : embeddedLessonCoachOpen ? (
+            <ProfessorCoachOverlay help={tutorialHelp} placementMode="reef-divider" measureKey={mobileReefSplit}>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={tutorialHelp}
@@ -25547,6 +25689,7 @@ export default function Simulator({
                 <div className="seapals-reef-divider">
                   <div
                     className={`seapals-reef-divider-handle${reefDividerDragging ? " is-dragging" : ""}`}
+                    data-tutorial-coach-anchor="reef-divider"
                     role="separator"
                     aria-label="Resize rival and player reef views"
                     aria-orientation="horizontal"
@@ -26576,7 +26719,10 @@ export default function Simulator({
 
       {compactOpponentPlaybackLocked ? <div className="fixed inset-0 z-[83]" aria-hidden="true" data-compact-opponent-guard /> : null}
 
-      {compactTurnSequence && [CompactTurnStage.TURN, CompactTurnStage.CONDITION].includes(compactTurnStage?.kind) ? (
+      {compactTurnSequence && (
+        compactTurnStage?.kind === CompactTurnStage.TURN
+        || (compactTurnStage?.kind === CompactTurnStage.CONDITION && !embeddedCompactConditionHelp)
+      ) ? (
         compactTurnStage.kind === CompactTurnStage.TURN ? (
           <div
             className="seapals-compact-turn-banner is-turn z-[82]"

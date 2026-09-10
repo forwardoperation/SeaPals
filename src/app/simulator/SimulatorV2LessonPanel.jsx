@@ -134,6 +134,7 @@ export default function SimulatorV2LessonPanel({
   className = "",
 }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const advanceRef = useRef(null);
   const bodyId = useId();
   const teacherTitleId = useId();
   const completed = Array.isArray(progress?.completedLessonIds) ? progress.completedLessonIds : [];
@@ -306,6 +307,11 @@ export default function SimulatorV2LessonPanel({
     <aside
       className={`${styles.coach}${collapsed ? ` ${styles.collapsed}` : ""} ${className}`}
       aria-labelledby={teacherTitleId}
+      onKeyDown={onAdvance ? (event) => {
+        if (event.key !== "Tab") return;
+        event.preventDefault();
+        advanceRef.current?.focus();
+      } : undefined}
       data-v2-lesson-panel="coach"
       data-v2-lesson-interaction={interaction || undefined}
       data-v2-lesson-vp-target={activeLesson?.victoryTarget || undefined}
@@ -349,7 +355,9 @@ export default function SimulatorV2LessonPanel({
           ) : null}
           {onAdvance ? (
             <button
+              ref={advanceRef}
               type="button"
+              autoFocus
               className={styles.advanceButton}
               onClick={onAdvance}
               aria-label={`${advanceLabel}: ${currentInstruction}`}

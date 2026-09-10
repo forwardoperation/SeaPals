@@ -38,7 +38,7 @@ test("setup hand guidance respects both reduced-motion paths", () => {
   );
 });
 
-test("embedded lessons expose each action immediately with target-aware teacher guidance", () => {
+test("embedded lessons expose each action with divider-anchored teacher guidance", () => {
   assert.match(
     simulatorSource,
     /const embeddedLessonActionReady = Boolean\(\s*embeddedLesson\s*&& tutorialHelpOpen\s*&& tutorialHelpDismissalKey\s*\);/,
@@ -48,10 +48,13 @@ test("embedded lessons expose each action immediately with target-aware teacher 
     /const embeddedLessonCoachOpen = Boolean\(\s*embeddedLessonActionReady\s*&& !embeddedLessonPresentationBlocked\s*\);/,
   );
   const embeddedCoach = sourceBetween(
-    "{embeddedLessonCoachOpen ? (",
+    ") : embeddedLessonCoachOpen ? (",
     ") : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (",
   );
-  assert.match(embeddedCoach, /<ProfessorCoachOverlay help=\{tutorialHelp\}>[\s\S]*?<ProfessorGuideCard/);
+  assert.match(
+    embeddedCoach,
+    /<ProfessorCoachOverlay help=\{tutorialHelp\} placementMode="reef-divider" measureKey=\{mobileReefSplit\}>[\s\S]*?<ProfessorGuideCard/,
+  );
   assert.doesNotMatch(embeddedCoach, /onAdvance|advanceLabel|Show me/);
   assert.doesNotMatch(simulatorSource, /embeddedLessonActionCueIds|beginEmbeddedLessonAction|data-v2-lesson-dialogue/);
   assert.match(
@@ -60,6 +63,20 @@ test("embedded lessons expose each action immediately with target-aware teacher 
   );
   assert.match(simulatorSource, /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen && !mobileHandDrag\}/);
   assert.match(simulatorSource, /\.seapals-v2-action-cue \{[\s\S]*?pointer-events: none;/);
+});
+
+test("compact turn teaching blocks the stale lesson coach and hand cue", () => {
+  const presentationGate = sourceBetween(
+    "const embeddedLessonPresentationBlocked = Boolean(",
+    "const tutorialDrawTrayHelpAnchored = Boolean(",
+  );
+
+  assert.match(presentationGate, /\|\| compactTurnSequence/);
+  assert.match(presentationGate, /embeddedLessonActionReady[\s\S]*?&& !embeddedLessonPresentationBlocked/);
+  assert.match(
+    simulatorSource,
+    /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen && !mobileHandDrag\}/,
+  );
 });
 
 test("legacy setup guidance keeps its target-aware coach and beacon", () => {
