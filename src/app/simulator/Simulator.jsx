@@ -414,6 +414,9 @@ function ProfessorGuideCard({
         onAdvance={onAdvance}
         advanceLabel={advanceLabel}
         dragPassive={dragPassive}
+        messageKey={help.cueId ?? help.id}
+        textSpeed={guide.textSpeed}
+        reducedMotion={guide.reducedMotion}
       />
     );
   }
@@ -4503,6 +4506,9 @@ export default function Simulator({
     ? createSimulatorTutorialContract(tutorialRuntime.contract ?? tutorialRuntime)
     : null);
   const tutorialUsesScriptedScenario = Boolean(tutorialRuntime && tutorialRuntime.scriptedDecks !== false);
+  const tutorialGameplayRandomSeed = Number.isInteger(embeddedLesson?.randomSeed)
+    ? embeddedLesson.randomSeed >>> 0
+    : 0x5EA9A15;
   const simulatorResumeEnabled = Boolean(previewExperience && !isStoryMode && !tutorialRuntime);
   const simulatorAnalyticsEnabled = Boolean(previewExperience && !isStoryMode && !tutorialRuntime);
   const simulatorAnalyticsRef = useRef(null);
@@ -4543,7 +4549,7 @@ export default function Simulator({
   const [initialGame] = useState(() => createInitialGameState(
     initialPlayerDeckId,
     initialOpponentDeckId,
-    createSeededRandom(0x5ea9a15),
+    createSeededRandom(tutorialGameplayRandomSeed),
     {
       scriptedTutorial: tutorialUsesScriptedScenario,
       preparedLesson: embeddedLesson,
@@ -4551,7 +4557,7 @@ export default function Simulator({
     },
   ));
   const [gameplayRandomState, setGameplayRandomState] = useState(() => (
-    createSimulatorRandomStream(0x5EA9A15)
+    createSimulatorRandomStream(tutorialGameplayRandomSeed)
   ));
   const gameplayRandomStateRef = useRef(gameplayRandomState);
   const [scriptedTutorialScenario, setScriptedTutorialScenario] = useState(
@@ -4954,8 +4960,8 @@ export default function Simulator({
 
   function beginGameplayRandomStream() {
     return replaceGameplayRandomState(createSimulatorRandomStream(
-      tutorialUsesScriptedScenario
-        ? 0x5EA9A15
+      tutorialRuntime
+        ? tutorialGameplayRandomSeed
         : createSimulatorRandomSeed(),
     ));
   }
@@ -20213,9 +20219,10 @@ export default function Simulator({
     const nextGame = createInitialGameState(
       deckId,
       opponentDeckId,
-      tutorialUsesScriptedScenario ? createSeededRandom(0x5ea9a15) : nextGameplayRandom,
+      tutorialRuntime ? createSeededRandom(tutorialGameplayRandomSeed) : nextGameplayRandom,
       {
         scriptedTutorial: tutorialUsesScriptedScenario,
+        preparedLesson: embeddedLesson,
         playerDeckSnapshot: isStoryMode ? storyPlayerDeckSnapshot : null,
       },
     );

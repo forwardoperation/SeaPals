@@ -134,7 +134,7 @@ test("missing, zero-sized, and fully offscreen targets retain the stable fallbac
   }), null);
 });
 
-test("divider placement centers the Professor card directly above the middle bar", () => {
+test("divider placement anchors the Professor card to the left above the middle bar", () => {
   const placement = getTutorialDividerCoachPlacement({
     ...desktopViewport,
     coachRect,
@@ -142,7 +142,7 @@ test("divider placement centers the Professor card directly above the middle bar
   });
 
   assert.equal(placement.side, TUTORIAL_COACH_SIDES.ABOVE);
-  assert.equal(placement.left, 400);
+  assert.equal(placement.left, 12);
   assert.equal(placement.top, 154);
   assert.equal(placement.top + placement.height + 6, 400);
   assert.equal(placement.availableHeight, 382);
@@ -158,7 +158,7 @@ test("divider placement moves below when the coach does not fit above", () => {
   });
 
   assert.equal(placement.side, TUTORIAL_COACH_SIDES.BELOW);
-  assert.equal(placement.left, 400);
+  assert.equal(placement.left, 12);
   assert.equal(placement.top, 150);
   assert.equal(placement.spaceAbove, 82);
   assert.equal(placement.spaceBelow, 638);
@@ -195,6 +195,7 @@ test("divider placement uses the larger band and constrains tall coaching in sho
   assert.equal(placement.side, TUTORIAL_COACH_SIDES.ABOVE);
   assert.equal(placement.availableHeight, 162);
   assert.equal(placement.height, 162);
+  assert.equal(placement.left, 12);
   assert.equal(placement.top, 12);
   assert.equal(placement.top + placement.height + 6, 180);
   assert.equal(placement.constrained, true);

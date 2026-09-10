@@ -186,6 +186,12 @@
 .currentMove { width: 100%; padding-top: 0.48rem; }
 .dialogue { margin: 0 0 0.38rem; color: #536278; font-size: 0.75rem; font-weight: 600; line-height: 1.45; text-align: left; text-wrap: pretty; }
 .instruction { width: 100%; margin: 0; color: #19253a; font-size: 0.84rem; font-weight: 800; letter-spacing: 0.01em; line-height: 1.48; text-align: left; text-wrap: pretty; overflow-wrap: anywhere; }
+.typewriterFrame { display: grid; width: 100%; min-width: 0; pointer-events: none; }
+.typewriterMeasure,
+.typewriterVisible { grid-area: 1 / 1; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.typewriterMeasure { visibility: hidden; }
+.typewriterVisible { align-self: start; }
+.typewriterCursor { display: inline-block; width: 0.12rem; height: 1em; margin-left: 0.08rem; border-radius: 999px; vertical-align: -0.12em; background: #0f9fc2; pointer-events: none; animation: lessonTypewriterCursor 0.7s step-end infinite; }
 .feedback { margin: 0.48rem 0 0; color: #087e9c; font-size: 0.7rem; font-weight: 700; line-height: 1.5; text-align: left; text-wrap: pretty; }
 .feedback[data-tone="hint"],
 .feedback[data-tone="error"] { color: #b34a48; }
@@ -226,6 +232,11 @@
 @keyframes tutorialActionNudge {
   0%, 55%, 100% { transform: translateX(0); opacity: 0.72; }
   72% { transform: translateX(0.18rem); opacity: 1; }
+}
+
+@keyframes lessonTypewriterCursor {
+  0%, 48% { opacity: 1; }
+  49%, 100% { opacity: 0; }
 }
 
 .helpOptions { display: flex; flex-wrap: wrap; gap: 0.1rem 0.65rem; margin-top: 0.2rem; }
@@ -306,10 +317,12 @@
   .lessonButton,
   .moduleChevron,
   .progressFill { transition: none; }
-  .actionMarker { animation: none; }
+  .actionMarker,
+  .typewriterCursor { animation: none; }
 }
 
-:global(.seapals-reduced-motion) .actionMarker { animation: none; }
+:global(.seapals-reduced-motion) .actionMarker,
+:global(.seapals-reduced-motion) .typewriterCursor { animation: none; }
 
 @media (forced-colors: active) {
   .modal,

@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  createProfessorSpeechKey,
+  getProfessorSpeechDuration,
+  getProfessorVisibleGraphemeCount,
+  segmentProfessorMessage,
+} from "./tutorialDialogue.mjs";
 import styles from "./SimulatorV2LessonPanel.module.css";
 
 const PORTRAIT = "/images/adventure/mr-easterling-portrait-v2.webp";
@@ -14,6 +20,90 @@ function TeacherPortrait({ large = false }) {
       height="48"
       className={`${styles.portrait}${large ? ` ${styles.largePortrait}` : ""}`}
     />
+  );
+}
+
+const TEXT_SPEED_MULTIPLIER = Object.freeze({
+  slow: 1.5,
+  normal: 1,
+  fast: 0.55,
+  instant: 0,
+});
+
+function LessonDialogueMessage({ message, textSpeed = "normal", reducedMotion = false }) {
+  const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
+  const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? 1;
+  const duration = useMemo(
+    () => getProfessorSpeechDuration(graphemes.length) * speedMultiplier,
+    [graphemes.length, speedMultiplier],
+  );
+  const [visibleCount, setVisibleCount] = useState(0);
+  const animationRef = useRef({ frameId: null, generation: 0 });
+  const visibleMessage = graphemes.slice(0, visibleCount).join("");
+  const isComplete = visibleCount >= graphemes.length;
+
+  useEffect(() => {
+    const animation = animationRef.current;
+    const generation = animation.generation + 1;
+    animation.generation = generation;
+    if (animation.frameId != null) window.cancelAnimationFrame(animation.frameId);
+    animation.frameId = null;
+
+    const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)") ?? null;
+    const finish = () => {
+      if (animationRef.current.generation !== generation) return;
+      if (animationRef.current.frameId != null) window.cancelAnimationFrame(animationRef.current.frameId);
+      animationRef.current.frameId = null;
+      setVisibleCount(graphemes.length);
+    };
+    const handleMotionPreference = (event) => {
+      if (event.matches) finish();
+    };
+
+    if (!graphemes.length || reducedMotion || textSpeed === "instant" || motionPreference?.matches) {
+      setVisibleCount(graphemes.length);
+    } else {
+      setVisibleCount(0);
+      const startsAt = window.performance.now() + 120;
+      const tick = (now) => {
+        if (animationRef.current.generation !== generation) return;
+        const nextCount = getProfessorVisibleGraphemeCount({
+          graphemeCount: graphemes.length,
+          elapsedMs: Math.max(0, now - startsAt),
+          durationMs: duration,
+        });
+        setVisibleCount(nextCount);
+        if (nextCount >= graphemes.length) {
+          animationRef.current.frameId = null;
+          return;
+        }
+        animationRef.current.frameId = window.requestAnimationFrame(tick);
+      };
+      animation.frameId = window.requestAnimationFrame(tick);
+    }
+
+    if (motionPreference?.addEventListener) motionPreference.addEventListener("change", handleMotionPreference);
+    else motionPreference?.addListener?.(handleMotionPreference);
+    return () => {
+      if (animationRef.current.generation === generation) animationRef.current.generation += 1;
+      if (animationRef.current.frameId != null) window.cancelAnimationFrame(animationRef.current.frameId);
+      animationRef.current.frameId = null;
+      if (motionPreference?.removeEventListener) motionPreference.removeEventListener("change", handleMotionPreference);
+      else motionPreference?.removeListener?.(handleMotionPreference);
+    };
+  }, [duration, graphemes.length, message, reducedMotion, textSpeed]);
+
+  return (
+    <p className={styles.instruction} data-v2-lesson-instruction>
+      <span className={styles.typewriterFrame} aria-hidden="true">
+        <span className={styles.typewriterMeasure}>{message}</span>
+        <span className={styles.typewriterVisible}>
+          {visibleMessage}
+          {!isComplete ? <span className={styles.typewriterCursor} /> : null}
+        </span>
+      </span>
+      <span className={styles.srOnly}>{message}</span>
+    </p>
   );
 }
 
@@ -133,6 +223,9 @@ export default function SimulatorV2LessonPanel({
   initialCollapsed = false,
   className = "",
   dragPassive = false,
+  messageKey = "",
+  textSpeed = "normal",
+  reducedMotion = false,
 }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const advanceRef = useRef(null);
@@ -150,6 +243,11 @@ export default function SimulatorV2LessonPanel({
   const currentInstruction = instruction || (interaction === "drag"
     ? "Drag the highlighted card into your ecosystem."
     : activeLesson?.description || activeLesson?.summary || "Follow the highlighted move on the board.");
+  const dialogueMessage = onAdvance ? explanation || currentInstruction : currentInstruction;
+  const dialogueKey = createProfessorSpeechKey(
+    messageKey || `${activeLesson?.id ?? "lesson"}:${progress?.stepIndex ?? 0}`,
+    dialogueMessage,
+  );
 
   if (mode === "chooser") {
     const firstIncompleteModule = lessonGroups.find((module) => (
@@ -341,13 +439,14 @@ export default function SimulatorV2LessonPanel({
           ) : null}
         </div>
         <div id={bodyId} className={styles.coachBody} hidden={collapsed}>
-          <div className={styles.currentMove} aria-live="polite" aria-atomic="true">
-            {onAdvance ? (
-              <p className={styles.instruction} data-v2-lesson-instruction>{explanation || currentInstruction}</p>
-            ) : (
-              <p className={styles.instruction} data-v2-lesson-instruction>{currentInstruction}</p>
-            )}
-            {message ? <p className={styles.feedback} data-tone={feedback?.tone || "success"}>{message}</p> : null}
+          <div className={styles.currentMove}>
+            <LessonDialogueMessage
+              key={dialogueKey}
+              message={dialogueMessage}
+              textSpeed={textSpeed}
+              reducedMotion={reducedMotion}
+            />
+            {message ? <p className={styles.feedback} data-tone={feedback?.tone || "success"} role="status" aria-live="polite" aria-atomic="true">{message}</p> : null}
           </div>
           {!onAdvance && (explanation || hint) ? (
             <div className={styles.helpOptions} key={`${activeLesson?.id}-${progress?.stepIndex}-${currentInstruction}`}>

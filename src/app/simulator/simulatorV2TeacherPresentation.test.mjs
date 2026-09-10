@@ -75,6 +75,42 @@ test("Mr. Easterling's message reads like left-to-right dialogue", () => {
   assert.match(cssRules(".passiveAdvance").join("\n"), /justify-content:\s*flex-end/);
 });
 
+test("Mr. Easterling's lesson dialogue uses a stable accessible typewriter reveal", () => {
+  assert.match(panelSource, /segmentProfessorMessage\(message\)/);
+  assert.match(panelSource, /getProfessorSpeechDuration\(graphemes\.length\)/);
+  assert.match(panelSource, /getProfessorVisibleGraphemeCount\(\{/);
+  assert.match(panelSource, /key=\{dialogueKey\}[\s\S]*?message=\{dialogueMessage\}/);
+  assert.match(panelSource, /className=\{styles\.typewriterFrame\} aria-hidden="true"/);
+  assert.match(panelSource, /className=\{styles\.typewriterMeasure\}>\{message\}<\/span>/);
+  assert.match(panelSource, /className=\{styles\.typewriterVisible\}[\s\S]*?\{visibleMessage\}/);
+  assert.match(panelSource, /className=\{styles\.srOnly\}>\{message\}<\/span>/);
+  assert.doesNotMatch(panelSource, /className=\{styles\.currentMove\} aria-live/);
+  assert.doesNotMatch(panelSource, /className=\{styles\.srOnly\} role="status"/);
+  assert.match(
+    simulatorSource,
+    /<p className="sr-only" role="status" aria-live="polite" aria-atomic="true">\s*\{tutorialAnnouncement\}/,
+  );
+
+  const frameRule = cssRules(".typewriterFrame").join("\n");
+  assert.match(frameRule, /display:\s*grid/);
+  assert.match(frameRule, /pointer-events:\s*none/);
+  assert.match(cssRules(".typewriterMeasure").join("\n"), /visibility:\s*hidden/);
+  assert.match(styleSource, /\.typewriterMeasure,\s*\.typewriterVisible\s*\{[^}]*grid-area:\s*1 \/ 1/);
+});
+
+test("lesson dialogue honors motion settings without delaying board actions", () => {
+  assert.match(panelSource, /reducedMotion \|\| textSpeed === "instant" \|\| motionPreference\?\.matches/);
+  assert.match(panelSource, /window\.matchMedia\?\.\("\(prefers-reduced-motion: reduce\)"\)/);
+  assert.match(panelSource, /window\.requestAnimationFrame\(tick\)/);
+  assert.match(panelSource, /window\.cancelAnimationFrame\(animationRef\.current\.frameId\)/);
+  assert.match(
+    simulatorSource,
+    /<SimulatorV2LessonPanel[\s\S]*?messageKey=\{help\.cueId \?\? help\.id\}[\s\S]*?textSpeed=\{guide\.textSpeed\}[\s\S]*?reducedMotion=\{guide\.reducedMotion\}/,
+  );
+  assert.doesNotMatch(panelSource, /disabled=\{!?isComplete\}|disabled=\{visibleCount/);
+  assert.match(cssRules(".dragPassive .coachBubble").join("\n"), /pointer-events:\s*none/);
+});
+
 test("blocking teacher checkpoints receive focus and keep keyboard navigation on Continue", () => {
   assert.match(panelSource, /const advanceRef = useRef\(null\)/);
   assert.match(

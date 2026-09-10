@@ -166,7 +166,7 @@ export function getTutorialCoachPlacement({
 }
 
 /**
- * Keeps the embedded-lesson Professor card centered on the reef divider.
+ * Keeps the embedded-lesson Professor card anchored to the divider's left edge.
  * The card prefers the open space immediately above the divider, then moves
  * below it when its measured height will not fit above the viewport margin.
  */
@@ -209,9 +209,8 @@ export function getTutorialDividerCoachPlacement({
         : TUTORIAL_COACH_SIDES.BELOW;
   const availableHeight = side === TUTORIAL_COACH_SIDES.ABOVE ? spaceAbove : spaceBelow;
   const placedHeight = Math.min(coachHeight, Math.max(1, availableHeight));
-  const dividerCenterX = visibleDivider.left + visibleDivider.width / 2;
   const left = clamp(
-    dividerCenterX - coachWidth / 2,
+    visibleDivider.left,
     safeMargin,
     width - safeMargin - coachWidth,
   );

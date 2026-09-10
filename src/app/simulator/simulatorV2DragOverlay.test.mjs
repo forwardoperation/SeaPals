@@ -129,7 +129,7 @@ test("the board-native overlay keeps the drop circle and teacher visible during 
   assert.match(simulatorSource, /const embeddedLessonActionCueMeasureKey = [\s\S]*?ecosystemZoom[\s\S]*?ecosystemOffset\.x[\s\S]*?mobileReefSplit[\s\S]*?playerCorals\.map/);
 });
 
-test("embedded coaching stays centered on the reef divider while the hand points to the action", () => {
+test("embedded coaching stays left-anchored on the reef divider while the hand points to the action", () => {
   const coach = sourceSection(
     "function ProfessorCoachOverlay(",
     "function destroyedCardGoesToLostZone(",

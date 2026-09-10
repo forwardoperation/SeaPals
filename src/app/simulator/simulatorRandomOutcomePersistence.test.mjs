@@ -41,6 +41,33 @@ test("the simulator persists a coherent gameplay random-stream checkpoint", () =
   assert.match(restart, /createInitialGameState\([\s\S]{0,220}?nextGameplayRandom/);
 });
 
+test("embedded lessons replay from their authored random seed", () => {
+  assert.match(
+    simulatorSource,
+    /const tutorialGameplayRandomSeed = Number\.isInteger\(embeddedLesson\?\.randomSeed\)[\s\S]{0,120}?embeddedLesson\.randomSeed >>> 0[\s\S]{0,80}?0x5EA9A15/,
+  );
+  assert.match(
+    simulatorSource,
+    /const \[initialGame\][\s\S]{0,260}?createSeededRandom\(tutorialGameplayRandomSeed\)/,
+    "the prepared boards and opponent defaults must use the same lesson seed on every mount",
+  );
+  assert.match(
+    simulatorSource,
+    /const \[gameplayRandomState[\s\S]{0,180}?createSimulatorRandomStream\(tutorialGameplayRandomSeed\)/,
+  );
+
+  const streamReset = sourceSection(
+    simulatorSource,
+    "function beginGameplayRandomStream()",
+    "  useEffect(() => {\n    if (!simulatorResumeEnabled)",
+  );
+  assert.match(streamReset, /tutorialRuntime[\s\S]{0,80}?tutorialGameplayRandomSeed[\s\S]{0,80}?createSimulatorRandomSeed/);
+
+  const restart = sourceSection(simulatorSource, "function restartGame(", "function restartStoryGame(");
+  assert.match(restart, /tutorialRuntime \? createSeededRandom\(tutorialGameplayRandomSeed\) : nextGameplayRandom/);
+  assert.match(restart, /preparedLesson: embeddedLesson/);
+});
+
 test("cosmetic dice cycling cannot choose the committed gameplay packet", () => {
   const faceoffReady = sourceSection(
     simulatorSource,

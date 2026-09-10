@@ -3,9 +3,10 @@ import {
   SIMULATOR_TUTORIAL_ACTION_TYPES as ACTION,
 } from "./tutorialContract.mjs";
 
-export const SIMULATOR_V2_LESSON_PROGRESS_KEY = "seapals-simulator-v2-lessons-v1";
+export const SIMULATOR_V2_LESSON_PROGRESS_KEY = "seapals-simulator-v2-lessons-v2";
 
 const MAIN_REQUIREMENT = { path: "phase", operator: "equals", value: "main" };
+const LESSON_RANDOM_SEED_BASE = 0x5EA90000;
 const atLeast = (path, value) => ({ path, operator: "at-least", value });
 const equals = (path, value) => ({ path, operator: "equals", value });
 const truthy = (path) => ({ path, operator: "truthy" });
@@ -63,6 +64,11 @@ function tableau(foundationCardId, placements = [], options = {}) {
   };
 }
 
+const homeReef = () => tableau("mustard-hill-coral-base", [
+  ["sea-urchin", "invertebrate"],
+  ["clownfish", "fish"],
+]);
+
 function seed(overrides = {}) {
   return {
     hand: [],
@@ -98,6 +104,7 @@ function lesson(definition) {
     buildCards: {},
     supportCards: {},
     ...definition,
+    randomSeed: (LESSON_RANDOM_SEED_BASE + definition.number) >>> 0,
     contract: createSimulatorTutorialContract({
       id: "simulator-v2-" + definition.id,
       title: definition.title,
@@ -107,7 +114,7 @@ function lesson(definition) {
 }
 
 export const SIMULATOR_V2_LESSON_MODULES = deepFreeze([
-  { id: "reef-basics", title: "Reef Basics", summary: "Build a home and welcome your first SeaPals.", lessonIds: ["first-reef", "reef-pals"] },
+  { id: "reef-basics", title: "Reef Basics", summary: "Build a home and welcome your first SeaPals.", lessonIds: ["first-reef"] },
   { id: "battle-basics", title: "Battle Basics", summary: "Attack, defend, and keep building after a faceoff.", lessonIds: ["first-attack", "under-attack"] },
   { id: "smart-plays", title: "Smart Plays", summary: "Use Support cards and recover from harmful conditions.", lessonIds: ["support-search", "clear-stun"] },
   { id: "build-to-victory", title: "Build to Victory", summary: "Master School Density, Filter Feeders, Apex cards, and winning turns.", lessonIds: ["school-density", "filter-feeder", "apex-predators", "winning-turn"] },
@@ -117,17 +124,17 @@ export const SIMULATOR_V2_LESSON_MODULES = deepFreeze([
 export const SIMULATOR_V2_LESSONS = Object.freeze([
   lesson({
     id: "first-reef", moduleId: "reef-basics", number: 1,
-    title: "Build your first reef", duration: "2 min", goalLabel: "Build a 1 VP reef",
-    summary: "Place a Coral, collect RP, draw, and build your reef to 1 VP.",
-    introduction: "I'll help you build a small reef using the same cards and controls as a match. First, choose Mustard Hill Coral in your hand.",
-    completion: "You built a home, collected RP, drew a card, and reached your first VP goal.",
+    title: "Build your first reef", duration: "4 min", goalLabel: "Build a 3 VP reef",
+    summary: "Place a Coral, collect RP, draw, and match two SeaPals to their slots.",
+    introduction: "I'll help you build a small reef using the same cards and controls as a match. Start with Mustard Hill Coral, then give Sea Urchin and Clownfish the right homes.",
+    completion: "You built a home, collected RP, drew a card, and matched an Invertebrate and a Fish to reach 3 VP.",
     celebration: "Your first reef is thriving!",
-    skills: ["Corals", "Resource Points", "Drawing"],
-    focusCardId: "mustard-hill-coral-base", victoryTarget: 1,
+    skills: ["Corals", "Resource Points", "Drawing", "Creature slots", "Victory Points"],
+    focusCardId: "mustard-hill-coral-base", victoryTarget: 3,
     setupCardId: "mustard-hill-coral-base",
     expectedDraw: { deckType: "pals", cardId: "sea-urchin" },
     seed: seed({
-      hand: ["mustard-hill-coral-base"],
+      hand: ["mustard-hill-coral-base", "clownfish"],
       palsDeck: ["sea-urchin"],
       gamePhase: "setup",
       round: 0,
@@ -138,48 +145,32 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       checkpoint("tutorial-setup", ACTION.MATCH_READY, "Give your reef a home", "Place Mustard Hill Coral, then press Begin Round.", [atLeast("details.foundationCount", 1)]),
       collectCheckpoint(),
       drawCheckpoint(),
-      buildCheckpoint("tutorial-build-card", "Welcome Sea Urchin", "sea-urchin"),
-      victoryCheckpoint(1),
-    ],
-    buildCards: { "tutorial-build-card": ["sea-urchin"] },
-  }),
-  lesson({
-    id: "reef-pals", moduleId: "reef-basics", number: 2,
-    title: "Give your SeaPals a home", duration: "2 min", goalLabel: "Match slots for 3 VP",
-    summary: "Match two creatures to their slots and see your VP grow.",
-    introduction: "I've prepared a Coral and 3 RP. Your hand has an Invertebrate and a Fish. Let's find each one a home.",
-    completion: "You matched an Invertebrate and a Fish to their slots. Together, Sea Urchin and Clownfish give your reef 3 VP.",
-    celebration: "Every SeaPal has a home!",
-    skills: ["Creature slots", "Playing cards", "Victory Points"],
-    focusCardId: "clownfish", victoryTarget: 3,
-    seed: seed({
-      hand: ["sea-urchin", "clownfish"],
-      playerTableau: [tableau("mustard-hill-coral-base")],
-    }),
-    checkpoints: [
-      buildCheckpoint("v2-place-invertebrate", "Match the Invertebrate slot", "sea-urchin"),
+      buildCheckpoint("tutorial-build-card", "Match the Invertebrate slot", "sea-urchin"),
       buildCheckpoint("v2-place-fish", "Match the Fish slot", "clownfish"),
       victoryCheckpoint(3),
     ],
     buildCards: {
-      "v2-place-invertebrate": ["sea-urchin"],
+      "tutorial-build-card": ["sea-urchin"],
       "v2-place-fish": ["clownfish"],
     },
   }),
   lesson({
-    id: "first-attack", moduleId: "battle-basics", number: 3,
-    title: "Try your first attack", duration: "3 min", goalLabel: "Attack and reach 3 VP",
-    summary: "Resolve a real faceoff, then finish your reef at 3 VP.",
-    introduction: "Your Porcupine Fish is ready to use Crunch. Resolve the normal dice roll, then welcome Sea Urchin to reach the 3 VP goal. A hit or miss both teach the attack.",
-    completion: "You resolved a faceoff, then added Sea Urchin to reach 3 VP. The attacker must roll higher; a tie favors the defender.",
+    id: "first-attack", moduleId: "battle-basics", number: 2,
+    title: "Try your first attack", duration: "3 min", goalLabel: "Attack and reach 6 VP",
+    summary: "Resolve a real faceoff, then grow your familiar reef to 6 VP.",
+    introduction: "Your first reef is still here, and Porcupine Fish is ready to use Crunch from a second Coral. Resolve the faceoff, then welcome another Sea Urchin. A hit or miss both teach the attack.",
+    completion: "You resolved a faceoff, then added another Sea Urchin to reach 6 VP. The attacker must roll higher; a tie favors the defender.",
     celebration: "Your first faceoff is complete!",
     skills: ["Attack costs", "Legal targets", "Faceoffs"],
-    focusCardId: "porcupine-fish", victoryTarget: 3,
+    focusCardId: "porcupine-fish", victoryTarget: 6,
     attackCardId: "porcupine-fish", attackTargetCardId: "sea-urchin",
     seed: seed({
       hand: ["sea-urchin"],
       rp: 2,
-      playerTableau: [tableau("mustard-hill-coral-base", [["porcupine-fish", "fish"]])],
+      playerTableau: [
+        homeReef(),
+        tableau("brain-coral-base", [["porcupine-fish", "fish"]]),
+      ],
       opponentTableau: [tableau("mustard-hill-coral-base", [["sea-urchin", "invertebrate"]])],
     }),
     checkpoints: [
@@ -188,27 +179,30 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
         equals("details.attackerCardId", "porcupine-fish"),
         equals("details.onPlay", false),
       ]),
-      buildCheckpoint("v2-attack-finish", "Reach 3 VP", "sea-urchin"),
-      victoryCheckpoint(3),
+      buildCheckpoint("v2-attack-finish", "Grow the familiar reef", "sea-urchin"),
+      victoryCheckpoint(6),
     ],
     buildCards: { "v2-attack-finish": ["sea-urchin"] },
   }),
   lesson({
-    id: "under-attack", moduleId: "battle-basics", number: 4,
-    title: "Defend your reef", duration: "3 min", goalLabel: "Survive and rebuild to 3 VP",
-    summary: "End your turn, face an opponent attack, then answer with a scoring play.",
-    introduction: "A rival Spanish Hogfish is ready to attack your Arrow Crab. End your turn, watch the faceoff, then rebuild with the card waiting on top of your Pals Deck.",
-    completion: "You let the opponent act, saw defense resolve, and kept building. A strong turn can continue even after a creature is defeated.",
+    id: "under-attack", moduleId: "battle-basics", number: 3,
+    title: "Defend your reef", duration: "3 min", goalLabel: "Defend and reach at least 4 VP",
+    summary: "End your turn, defend a familiar SeaPal, then reinforce the reef.",
+    introduction: "A rival Spanish Hogfish is ready to attack the Sea Urchin in your first reef. End your turn, watch the faceoff, then draw another Clownfish so your reef reaches at least 4 VP either way.",
+    completion: "You let the opponent act, saw Sea Urchin defend, and reinforced the reef with another Clownfish. A strong turn can continue even after a creature is defeated.",
     celebration: "Your reef weathered the attack!",
     skills: ["Opponent turns", "Defending", "Recovering"],
-    focusCardId: "spanish-hogfish", attackCardId: "spanish-hogfish", attackTargetCardId: "arrow-crab", victoryTarget: 3,
-    expectedDraw: { deckType: "pals", cardId: "flounder" },
+    focusCardId: "spanish-hogfish", attackCardId: "spanish-hogfish", attackTargetCardId: "sea-urchin", victoryTarget: 4,
+    expectedDraw: { deckType: "pals", cardId: "clownfish" },
     seed: seed({
       hand: [],
       foundationDeck: ["brain-coral-stage-2"],
-      palsDeck: ["flounder"],
+      palsDeck: ["clownfish"],
       rp: 0,
-      playerTableau: [tableau("mustard-hill-coral-base", [["arrow-crab", "invertebrate"]])],
+      playerTableau: [
+        homeReef(),
+        tableau("brain-coral-base"),
+      ],
       opponentTableau: [tableau("mustard-hill-coral-base", [["spanish-hogfish", "fish"]])],
       opponentTurnMode: "play",
       opponent: {
@@ -220,36 +214,36 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     }),
     checkpoints: [
       checkpoint("v2-pass-to-opponent", ACTION.TURN_ENDED, "Let the rival act", "End your turn and watch the opponent's play."),
-      checkpoint("v2-defend-attack", ACTION.ATTACK_RESOLVED, "Defend the faceoff", "Watch the rival's Crunch resolve against your Arrow Crab.", [
+      checkpoint("v2-defend-attack", ACTION.ATTACK_RESOLVED, "Defend the faceoff", "Watch the rival's Crunch resolve against your Sea Urchin.", [
         truthy("details.accepted"),
         equals("details.attackerCardId", "spanish-hogfish"),
       ], { actor: "opponent" }),
       drawCheckpoint(),
-      buildCheckpoint("v2-rebuild-after-attack", "Answer with Southern Flounder", "flounder"),
-      victoryCheckpoint(3),
+      buildCheckpoint("v2-rebuild-after-attack", "Reinforce with Clownfish", "clownfish"),
+      victoryCheckpoint(4),
     ],
-    buildCards: { "v2-rebuild-after-attack": ["flounder"] },
+    buildCards: { "v2-rebuild-after-attack": ["clownfish"] },
   }),
   lesson({
-    id: "support-search", moduleId: "smart-plays", number: 5,
-    title: "Call in Support", duration: "3 min", goalLabel: "Search, build, and reach 1 VP",
-    summary: "Use Coral Gardener to find the exact Coral your reef needs.",
-    introduction: "Support cards resolve once and go to the discard pile. Use Coral Gardener to search for Brain Coral, then build a home and add Sea Urchin.",
-    completion: "Coral Gardener found a Coral, revealed it, and moved to the discard pile. You turned that one-time effect into a lasting reef.",
+    id: "support-search", moduleId: "smart-plays", number: 4,
+    title: "Call in Support", duration: "3 min", goalLabel: "Search, build, and reach 4 VP",
+    summary: "Use Coral Gardener to expand your familiar reef with the exact Coral it needs.",
+    introduction: "Support cards resolve once and go to the discard pile. Keep your first reef in view while Coral Gardener finds Brain Coral, then build the new home and add another Sea Urchin.",
+    completion: "Coral Gardener found a Coral, revealed it, and moved to the discard pile. You turned that one-time effect into a lasting 4 VP reef.",
     celebration: "A smart search grew your reef!",
     skills: ["Support cards", "Searching decks", "Discard pile"],
-    focusCardId: "coral-gardener", searchCardId: "brain-coral-base", victoryTarget: 1,
+    focusCardId: "coral-gardener", searchCardId: "brain-coral-base", victoryTarget: 4,
     seed: seed({
       hand: ["coral-gardener", "sea-urchin"],
       foundationDeck: ["brain-coral-base"],
-      playerTableau: [tableau("mustard-hill-coral-base")],
+      playerTableau: [homeReef()],
       rp: 2,
     }),
     checkpoints: [
       supportCheckpoint("v2-play-coral-gardener", "Search with Coral Gardener", "coral-gardener"),
       buildCheckpoint("v2-build-searched-coral", "Build the Coral you found", "brain-coral-base", { cardKind: "coral", placement: "foundation" }),
       buildCheckpoint("v2-support-finish", "Welcome Sea Urchin", "sea-urchin"),
-      victoryCheckpoint(1),
+      victoryCheckpoint(4),
     ],
     supportCards: { "v2-play-coral-gardener": ["coral-gardener"] },
     buildCards: {
@@ -258,26 +252,29 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "clear-stun", moduleId: "smart-plays", number: 6,
-    title: "Clear Stunned", duration: "3 min", goalLabel: "Recover and reach 1 VP",
-    summary: "Clear Stunned with Coral Heal, then upgrade and keep building.",
-    introduction: "This Brain Coral is Stunned, so it cannot produce RP, use its abilities, or upgrade. Play Coral Heal to clear the condition early, then level it up.",
-    completion: "Coral Heal removed Stunned, letting Brain Coral upgrade normally. Stunned also clears after the affected controller finishes their next turn.",
+    id: "clear-stun", moduleId: "smart-plays", number: 5,
+    title: "Clear Stunned", duration: "3 min", goalLabel: "Recover and reach 4 VP",
+    summary: "Clear Stunned with Coral Heal, then upgrade beside your familiar reef.",
+    introduction: "Your first reef is safe, but this Brain Coral is Stunned, so it cannot produce RP, use its abilities, or upgrade. Play Coral Heal to clear the condition early, then level it up.",
+    completion: "Coral Heal removed Stunned, letting Brain Coral upgrade and welcome another Sea Urchin. Stunned also clears after the affected controller finishes their next turn.",
     celebration: "Your Coral is back in action!",
     skills: ["Stunned", "Coral Heal", "Status recovery"],
-    focusCardId: "coral-heal", victoryTarget: 1,
+    focusCardId: "coral-heal", victoryTarget: 4,
     seed: seed({
       hand: ["coral-heal", "brain-coral-stage-1", "sea-urchin"],
-      playerTableau: [tableau("brain-coral-base", [], {
-        statuses: [{ type: "stunned", sourceCardId: "crown-of-thorns" }],
-      })],
+      playerTableau: [
+        homeReef(),
+        tableau("brain-coral-base", [], {
+          statuses: [{ type: "stunned", sourceCardId: "crown-of-thorns" }],
+        }),
+      ],
       rp: 3,
     }),
     checkpoints: [
       supportCheckpoint("v2-clear-stunned", "Use Coral Heal", "coral-heal"),
       buildCheckpoint("v2-upgrade-after-stun", "Upgrade the recovered Coral", "brain-coral-stage-1", { cardKind: "coral", placement: "foundation-upgrade" }),
       buildCheckpoint("v2-stun-finish", "Use the open Invertebrate slot", "sea-urchin"),
-      victoryCheckpoint(1),
+      victoryCheckpoint(4),
     ],
     supportCards: { "v2-clear-stunned": ["coral-heal"] },
     buildCards: {
@@ -286,23 +283,23 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "school-density", moduleId: "build-to-victory", number: 7,
-    title: "Supply School Density", duration: "3 min", goalLabel: "Supply 10, spend 10, earn 1 VP",
-    summary: "Build a Creature School, then spend its School Density on an Oceanic Fish.",
-    introduction: "Oceanic creatures live in open water. First build Sardine Ball as a Creature School. Its 10 School Density can support Halfbeak.",
-    completion: "Sardine Ball supplied 10 School Density and Halfbeak committed all 10. The density meter tracks what is supplied and what is already in use.",
+    id: "school-density", moduleId: "build-to-victory", number: 6,
+    title: "Supply School Density", duration: "3 min", goalLabel: "Supply 10, spend 10, reach 4 VP",
+    summary: "Grow beyond your reef by building a Creature School and an Oceanic Fish.",
+    introduction: "Your first reef remains in place while you expand into open water. Build Sardine Ball as a Creature School; its 10 School Density can support Halfbeak.",
+    completion: "Sardine Ball supplied 10 School Density and Halfbeak committed all 10, growing your ecosystem to 4 VP. The density meter tracks what is supplied and what is already in use.",
     celebration: "Your open-water ecosystem is growing!",
     skills: ["Creature Schools", "School Density", "Open water"],
-    focusCardId: "sardine-ball-base", victoryTarget: 1,
+    focusCardId: "sardine-ball-base", victoryTarget: 4,
     seed: seed({
       hand: ["sardine-ball-base", "halfbeak"],
-      playerTableau: [],
+      playerTableau: [homeReef()],
       rp: 3,
     }),
     checkpoints: [
       buildCheckpoint("v2-build-density-source", "Build Sardine Ball", "sardine-ball-base", { placement: "foundation" }),
       buildCheckpoint("v2-spend-density", "Play Halfbeak in open water", "halfbeak", { placement: "open-water" }),
-      victoryCheckpoint(1),
+      victoryCheckpoint(4),
     ],
     buildCards: {
       "v2-build-density-source": ["sardine-ball-base"],
@@ -310,42 +307,42 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "filter-feeder", moduleId: "build-to-victory", number: 8,
-    title: "Welcome a Filter Feeder", duration: "2 min", goalLabel: "Commit 150 Density for 8 VP",
-    summary: "Use a Habitat and available School Density to play Ocean Sunfish.",
-    introduction: "Filter Feeders need a matching Habitat and a large amount of free School Density. Open Ocean is ready, and your two Schools supply 170. Play Ocean Sunfish to commit 150.",
-    completion: "Ocean Sunfish entered open water because you had a matching Habitat, 8 RP, and at least 150 available School Density.",
+    id: "filter-feeder", moduleId: "build-to-victory", number: 7,
+    title: "Welcome a Filter Feeder", duration: "2 min", goalLabel: "Commit 150 Density for 11 VP",
+    summary: "Use a Habitat and available School Density to add Ocean Sunfish beside your reef.",
+    introduction: "Your reef now anchors a larger open-water ecosystem. Open Ocean is ready, and two advanced Schools supply 170 School Density. Play Ocean Sunfish to commit 150.",
+    completion: "Ocean Sunfish joined your 3 VP reef because you had a matching Habitat, 8 RP, and at least 150 available School Density.",
     celebration: "A Filter Feeder joins the ecosystem!",
     skills: ["Filter Feeders", "Habitats", "Density commitments"],
-    focusCardId: "ocean-sunfish", victoryTarget: 8,
+    focusCardId: "ocean-sunfish", victoryTarget: 11,
     seed: seed({
       hand: ["ocean-sunfish"],
-      playerTableau: [tableau("sardine-ball-stage2"), tableau("anchovy-ball-stage1")],
+      playerTableau: [homeReef(), tableau("sardine-ball-stage2"), tableau("anchovy-ball-stage1")],
       playerHabitats: ["open-ocean"],
       rp: 8,
     }),
     checkpoints: [
       buildCheckpoint("v2-play-filter-feeder", "Play Ocean Sunfish", "ocean-sunfish", { placement: "open-water" }),
-      victoryCheckpoint(8),
+      victoryCheckpoint(11),
     ],
     buildCards: { "v2-play-filter-feeder": ["ocean-sunfish"] },
   }),
   lesson({
-    id: "apex-predators", moduleId: "build-to-victory", number: 9,
-    title: "Level up to an Apex", duration: "4 min", goalLabel: "Upgrade, play an Apex, reach 13 VP",
+    id: "apex-predators", moduleId: "build-to-victory", number: 8,
+    title: "Level up to an Apex", duration: "4 min", goalLabel: "Upgrade, play an Apex, reach 14 VP",
     summary: "Upgrade Brain Coral to Stage 2, unlock its Apex slot, and resolve Ravage.",
     introduction: "Brain Coral has been in play long enough to level up. Upgrade it to Stage 2, then use the new Apex slot and your Coral Reef Habitat to play Hammerhead.",
     completion: "Stage 2 unlocked an Apex slot. Hammerhead met its Habitat, slot, and RP requirements, then resolved both attacks from Ravage.",
     celebration: "Your Apex has arrived!",
     skills: ["Coral upgrades", "Apex slots", "Multi-attack abilities"],
-    focusCardId: "hammerhead", attackCardId: "hammerhead", victoryTarget: 13,
+    focusCardId: "hammerhead", attackCardId: "hammerhead", victoryTarget: 14,
     seed: seed({
       hand: ["brain-coral-stage-2", "hammerhead"],
       playerTableau: [
         tableau("brain-coral-stage-1"),
-        tableau("mustard-hill-coral-base", [["clownfish", "fish"], ["arrow-crab", "invertebrate"]]),
+        homeReef(),
         tableau("pillar-coral-base", [["fairy-parrotfish", "fish"], ["arrow-crab", "invertebrate"], ["arrow-crab", "invertebrate"]]),
-        tableau("lettuce-coral-base"),
+        tableau("lettuce-coral-base", [["arrow-crab", "invertebrate"]]),
       ],
       playerHabitats: ["coral-reef"],
       opponentTableau: [tableau("boulder-star-coral-stage-2", [["clownfish", "predator"], ["clownfish", "predator"]])],
@@ -355,7 +352,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     checkpoints: [
       buildCheckpoint("v2-upgrade-apex-coral", "Upgrade Brain Coral to Stage 2", "brain-coral-stage-2", { cardKind: "coral", placement: "foundation-upgrade" }),
       buildCheckpoint("v2-play-apex", "Play Hammerhead", "hammerhead"),
-      victoryCheckpoint(13),
+      victoryCheckpoint(14),
       checkpoint("v2-resolve-ravage", ACTION.ATTACK_RESOLVED, "Resolve both Ravage attacks", "Choose two different legal targets and resolve both faceoffs.", [
         truthy("details.accepted"),
         equals("details.attackerCardId", "hammerhead"),
@@ -369,7 +366,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "winning-turn", moduleId: "build-to-victory", number: 10,
+    id: "winning-turn", moduleId: "build-to-victory", number: 9,
     title: "Find your winning play", duration: "3 min", goalLabel: "Plan a full turn to reach 5 VP",
     summary: "Use a full turn to grow from 1 VP to a short practice goal of 5.",
     introduction: "You have 1 VP, two open Fish slots, and 1 RP saved. This practice has a 5 VP goal. Use what you learned: begin your turn, draw, then decide what to play.",
@@ -582,7 +579,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const drawMessage = selected.id === "winning-turn"
       ? "You need 4 more VP. Your Pals Deck contains a creature that can fill an empty Fish slot."
       : selected.id === "under-attack"
-        ? "You collected enough RP to answer the attack. Southern Flounder is waiting on top of your Pals Deck."
+        ? "You collected enough RP to reinforce the reef. Another Clownfish is waiting on top of your Pals Deck."
         : "Choose the Pals Deck when you want creatures and other Pals cards.";
     return help(
       "draw-controls",
@@ -662,7 +659,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (opponentAttack) {
       return help(
         "opponent-board",
-        "The rival pays the attack cost and chooses a legal target. Your Arrow Crab rolls its defense die automatically.",
+        "The rival pays the attack cost and chooses a legal target. Your Sea Urchin rolls its defense die automatically.",
         "Watch the opponent's attack resolve.",
         { targetCardId: selected.attackCardId },
       );
@@ -766,7 +763,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   }
   if (current.actionType === ACTION.TURN_ENDED) {
     const message = selected.id === "under-attack"
-      ? "Ending your turn lets the rival collect, draw, play, and attack. Your Arrow Crab will defend itself in the faceoff."
+      ? "Ending your turn lets the rival collect, draw, play, and attack. Your Sea Urchin will defend itself in the faceoff."
       : "You can save your remaining RP for a later turn.";
     return help("turn-button", message, "End your turn when you are ready.");
   }
