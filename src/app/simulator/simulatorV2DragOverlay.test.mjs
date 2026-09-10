@@ -30,7 +30,21 @@ test("drag lessons connect the exact hand card to the nearest visible legal dest
   assert.match(cue, /className="seapals-v2-action-cue-path-line"/);
   assert.match(cue, /className="seapals-v2-action-cue-destination"/);
   assert.match(cue, /--seapals-drag-start-x/);
-  assert.match(cue, /--seapals-drag-end-y/);
+  assert.match(cue, /--seapals-drag-motion-path/);
+  assert.match(cue, /className="seapals-v2-action-cue-hand-glyph"/);
+  assert.doesNotMatch(cue, /--seapals-drag-(?:first|middle|last)-[xy]/);
+});
+
+test("the pointer hand has a natural silhouette and a calibrated fingertip", () => {
+  const icon = sourceSection(
+    "function EmbeddedLessonHandIcon(",
+    "function EmbeddedLessonActionCue(",
+  );
+
+  assert.match(icon, /viewBox="0 0 16 16"/);
+  assert.match(icon, /M8\.5 4\.466V1\.75/);
+  assert.match(simulatorSource, /offset-anchor:\s*42\.1875% 0;/);
+  assert.match(simulatorSource, /transform-origin:\s*42\.1875% 0;/);
 });
 
 test("the board exposes prepared ecosystem, matching Coral, and compatible slot destinations before dragging", () => {
@@ -80,7 +94,7 @@ test("drag-step coaching moves to the clear top edge instead of covering the ges
   assert.match(coach, /placement && !usesDragCorridor/);
 });
 
-test("tap cues remain target-local and motion preferences retain a static drag path", () => {
+test("tap cues remain target-local and the hand travels smoothly along the exact path", () => {
   const cue = sourceSection(
     "function EmbeddedLessonActionCue(",
     "const PROFESSOR_COACH_ARROW",
@@ -88,6 +102,15 @@ test("tap cues remain target-local and motion preferences retain a static drag p
 
   assert.match(cue, /const targetRect = layout\.sourceRect;[\s\S]*?data-v2-target-gesture=\{gesture\}/);
   assert.match(cue, /left: `\$\{targetRect\.left\}px`/);
+  assert.match(
+    simulatorSource,
+    /@supports \(offset-path: path\("M 0 0 L 1 1"\)\)[\s\S]*?offset-path:\s*var\(--seapals-drag-motion-path\);[\s\S]*?offset-rotate:\s*0deg;[\s\S]*?animation:\s*seapalsV2HandDragPath 2\.4s linear infinite;/,
+  );
+  assert.match(
+    simulatorSource,
+    /@keyframes seapalsV2HandDragPath[\s\S]*?20% \{ opacity: 1; offset-distance: 0%; \}[\s\S]*?80%, 92% \{ opacity: 1; offset-distance: 100%; \}/,
+  );
+  assert.match(simulatorSource, /@keyframes seapalsV2HandDragPress[\s\S]*?20%, 80% \{ transform: scale\(\.9\); \}/);
   assert.match(
     simulatorSource,
     /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.seapals-v2-action-cue-path-line,[\s\S]*?animation:\s*none;/,

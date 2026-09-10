@@ -751,24 +751,8 @@ function getEmbeddedLessonDragPath(sourceRect, destinationRect) {
     x: start.x + (deltaX * .78) - (sidewaysBend * bendDirection * .35),
     y: start.y + (deltaY * .72),
   };
-  const pointAt = (progress) => {
-    const inverse = 1 - progress;
-    return {
-      x: (inverse ** 3 * start.x)
-        + (3 * inverse ** 2 * progress * control1.x)
-        + (3 * inverse * progress ** 2 * control2.x)
-        + (progress ** 3 * end.x),
-      y: (inverse ** 3 * start.y)
-        + (3 * inverse ** 2 * progress * control1.y)
-        + (3 * inverse * progress ** 2 * control2.y)
-        + (progress ** 3 * end.y),
-    };
-  };
   return {
     start,
-    first: pointAt(.34),
-    middle: pointAt(.58),
-    last: pointAt(.8),
     end,
     path: `M ${start.x} ${start.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${end.x} ${end.y}`,
   };
@@ -776,15 +760,14 @@ function getEmbeddedLessonDragPath(sourceRect, destinationRect) {
 
 function EmbeddedLessonHandIcon() {
   return (
-    <svg viewBox="0 0 76 94" role="presentation" focusable="false">
+    <svg viewBox="0 0 16 16" role="presentation" focusable="false">
       <path
-        d="M29.4 51.8V13.9c0-4.6 3.2-8.1 7.5-8.1s7.5 3.5 7.5 8.1v26.7-13c0-4.4 3-7.6 7.1-7.6 4.2 0 7.1 3.2 7.1 7.6v16.1-8.8c0-4 2.9-7 6.7-7 3.9 0 6.7 3 6.7 7v23.7c0 18.1-11.2 29.6-28.3 29.6H33.3c-9.2 0-16-3.8-21.2-11.9L3.7 63.2c-2.5-4-1.6-8.6 2-11.2 3.3-2.5 7.8-1.7 10.8 1.8l12.9 14.8V51.8Z"
-        fill="white"
+        d="M8.5 4.466V1.75a1.75 1.75 0 1 0-3.5 0v5.34l-1.2.24a1.5 1.5 0 0 0-1.196 1.636l.345 3.106a2.5 2.5 0 0 0 .405 1.11l1.433 2.15A1.5 1.5 0 0 0 6.035 16h6.385a1.5 1.5 0 0 0 1.302-.756l1.395-2.441a3.5 3.5 0 0 0 .444-1.389l.271-2.715a2 2 0 0 0-1.99-2.199h-.581a5 5 0 0 0-.195-.248c-.191-.229-.51-.568-.88-.716-.364-.146-.846-.132-1.158-.108l-.132.012a1.26 1.26 0 0 0-.56-.642 2.6 2.6 0 0 0-.738-.288c-.31-.062-.739-.058-1.05-.046Z"
+        fill="#fff"
         stroke="#334155"
-        strokeWidth="3.2"
+        strokeWidth=".75"
         strokeLinejoin="round"
       />
-      <path d="M44.4 40.6v14.1M58.6 43.7v12.8M29.4 51.8v15.9" fill="none" stroke="#cbd5e1" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -910,16 +893,9 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "" }) {
           style={{
             "--seapals-drag-start-x": `${dragPath.start.x}px`,
             "--seapals-drag-start-y": `${dragPath.start.y}px`,
-            "--seapals-drag-first-x": `${dragPath.first.x}px`,
-            "--seapals-drag-first-y": `${dragPath.first.y}px`,
-            "--seapals-drag-middle-x": `${dragPath.middle.x}px`,
-            "--seapals-drag-middle-y": `${dragPath.middle.y}px`,
-            "--seapals-drag-last-x": `${dragPath.last.x}px`,
-            "--seapals-drag-last-y": `${dragPath.last.y}px`,
-            "--seapals-drag-end-x": `${dragPath.end.x}px`,
-            "--seapals-drag-end-y": `${dragPath.end.y}px`,
+            "--seapals-drag-motion-path": `path("${dragPath.path}")`,
           }}
-        ><EmbeddedLessonHandIcon /></span>
+        ><span className="seapals-v2-action-cue-hand-glyph"><EmbeddedLessonHandIcon /></span></span>
       </div>
     );
   }
@@ -937,7 +913,7 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "" }) {
       aria-hidden="true"
     >
       <span className="seapals-v2-action-cue-halo" />
-      <span className="seapals-v2-action-cue-hand"><EmbeddedLessonHandIcon /></span>
+      <span className="seapals-v2-action-cue-hand"><span className="seapals-v2-action-cue-hand-glyph"><EmbeddedLessonHandIcon /></span></span>
     </div>
   );
 }
@@ -21534,11 +21510,15 @@ export default function Simulator({
           width: clamp(3.75rem, 8vw, 5.25rem);
           height: auto;
           filter: drop-shadow(0 3px 1px rgba(15, 23, 42, .72)) drop-shadow(0 8px 14px rgba(2, 8, 23, .5));
-          transform: translate(-39%, -8%);
-          transform-origin: 38% 6%;
+          transform: translate(-42.1875%, 0);
+        }
+        .seapals-v2-action-cue-hand-glyph {
+          display: block;
+          width: 100%;
+          transform-origin: 42.1875% 0;
         }
         .seapals-v2-action-cue-hand svg { display: block; width: 100%; height: auto; overflow: visible; }
-        .seapals-v2-action-cue.is-tap .seapals-v2-action-cue-hand { animation: seapalsV2HandTap 1.35s ease-in-out infinite; }
+        .seapals-v2-action-cue.is-tap .seapals-v2-action-cue-hand-glyph { animation: seapalsV2HandTap 1.35s ease-in-out infinite; }
         .seapals-v2-action-cue.is-path {
           inset: 0;
           width: 100vw;
@@ -21594,10 +21574,24 @@ export default function Simulator({
           animation: seapalsV2DropTarget 1.3s ease-in-out infinite;
         }
         .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand {
-          top: 0;
-          left: 0;
-          width: clamp(3.35rem, 7vw, 4.8rem);
-          animation: seapalsV2HandDragPath 2.25s ease-in-out infinite;
+          top: var(--seapals-drag-start-y);
+          left: var(--seapals-drag-start-x);
+          width: clamp(2.9rem, 6vw, 4.25rem);
+        }
+        .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand-glyph {
+          animation: seapalsV2HandDragPress 2.4s ease-in-out infinite;
+        }
+        @supports (offset-path: path("M 0 0 L 1 1")) {
+          .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand {
+            top: 0;
+            left: 0;
+            offset-path: var(--seapals-drag-motion-path);
+            offset-distance: 0%;
+            offset-rotate: 0deg;
+            offset-anchor: 42.1875% 0;
+            transform: none;
+            animation: seapalsV2HandDragPath 2.4s linear infinite;
+          }
         }
         @keyframes seapalsV2TargetGlow {
           0%, 100% { outline-color: #67e8f9; }
@@ -21608,8 +21602,8 @@ export default function Simulator({
           50% { opacity: 1; transform: scale(1.025); }
         }
         @keyframes seapalsV2HandTap {
-          0%, 45%, 100% { transform: translate(-39%, -8%) scale(1); }
-          58%, 70% { transform: translate(-39%, -3%) scale(.92); }
+          0%, 45%, 100% { transform: scale(1); }
+          58%, 70% { transform: scale(.9); }
         }
         @keyframes seapalsV2DragPathFlow {
           to { stroke-dashoffset: -40; }
@@ -21619,24 +21613,25 @@ export default function Simulator({
           50% { opacity: 1; transform: scale(1.04); }
         }
         @keyframes seapalsV2HandDragPath {
-          0% { opacity: 0; transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 8%)) scale(1); }
-          6%, 14% { opacity: 1; transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 8%)) scale(1); }
-          20% { opacity: 1; transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 2%)) scale(.9); }
-          38% { opacity: 1; transform: translate(calc(var(--seapals-drag-first-x) - 39%), calc(var(--seapals-drag-first-y) - 8%)) scale(.96); }
-          56% { opacity: 1; transform: translate(calc(var(--seapals-drag-middle-x) - 39%), calc(var(--seapals-drag-middle-y) - 8%)) scale(.98); }
-          72% { opacity: 1; transform: translate(calc(var(--seapals-drag-last-x) - 39%), calc(var(--seapals-drag-last-y) - 8%)) scale(1); }
-          80%, 87% { opacity: 1; transform: translate(calc(var(--seapals-drag-end-x) - 39%), calc(var(--seapals-drag-end-y) - 8%)) scale(.92); }
-          94% { opacity: 0; transform: translate(calc(var(--seapals-drag-end-x) - 39%), calc(var(--seapals-drag-end-y) - 8%)) scale(.92); }
-          95%, 100% { opacity: 0; transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 8%)) scale(1); }
+          0% { opacity: 0; offset-distance: 0%; }
+          6%, 20% { opacity: 1; offset-distance: 0%; }
+          80%, 92% { opacity: 1; offset-distance: 100%; }
+          100% { opacity: 0; offset-distance: 100%; }
+        }
+        @keyframes seapalsV2HandDragPress {
+          0%, 12%, 100% { transform: scale(1); }
+          20%, 80% { transform: scale(.9); }
+          88%, 94% { transform: scale(1); }
         }
         @media (prefers-reduced-motion: reduce) {
           .seapals-v2-action-cue-path-line,
           .seapals-v2-action-cue-source,
           .seapals-v2-action-cue-destination,
-          .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand { animation: none; }
+          .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand,
+          .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand-glyph { animation: none; }
           .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand {
             opacity: .94;
-            transform: translate(calc(var(--seapals-drag-start-x) - 39%), calc(var(--seapals-drag-start-y) - 8%));
+            offset-distance: 0%;
           }
         }
         @media (forced-colors: active) {
@@ -21651,6 +21646,7 @@ export default function Simulator({
             forced-color-adjust: auto;
           }
           .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand { filter: none; }
+          .seapals-v2-action-cue-hand svg path { fill: Canvas; stroke: CanvasText; }
         }
         .seapals-professor-coach-wrap {
           position: absolute;
