@@ -36,7 +36,7 @@ const interactionScaleSource = functionSource(
 );
 const getDesktopHandInteractionScale = Function(`return (${interactionScaleSource})`)();
 
-function createGestureHarness(pointerType = "mouse") {
+function createGestureHarness(pointerType = "mouse", { dragPreferred = false, cardId = "mustard-hill-coral" } = {}) {
   const source = [
     functionSource("releaseGestureCapture", "clearHandDragGesture"),
     functionSource("clearHandDragGesture", "suppressNextDragClick"),
@@ -74,7 +74,7 @@ function createGestureHarness(pointerType = "mouse") {
       setPointerCapture(pointerId) { captureCalls.push(pointerId); capturedPointers.add(pointerId); },
       releasePointerCapture(pointerId) { releaseCalls.push(pointerId); capturedPointers.delete(pointerId); },
     };
-    const entry = { cardId: "mustard-hill-coral", index: 0 };
+    const entry = { cardId: ${JSON.stringify(cardId)}, index: 0, dragPreferred: ${JSON.stringify(dragPreferred)} };
     const makeEvent = (clientX, clientY) => ({
       pointerId: 7,
       pointerType: ${JSON.stringify(pointerType)},
@@ -211,6 +211,51 @@ test("the first diagonal mouse pull completes one card drag without another pres
   assert.deepEqual(harness.calls.map(([kind]) => kind), ["start", "move", "end"]);
   assert.equal(harness.gestureRef.current, null);
   assert.deepEqual(harness.releaseCalls, [7]);
+});
+
+test("a highlighted lesson card starts dragging along a shallow path to its real slot", () => {
+  const harness = createGestureHarness("mouse", { dragPreferred: true, cardId: "sea-urchin" });
+
+  harness.press();
+  const moveEvent = harness.move(155, 90);
+  harness.release(600, 5);
+
+  assert.equal(moveEvent.defaultPrevented, true);
+  assert.deepEqual(harness.calls.map(([kind]) => kind), ["start", "move", "end"]);
+});
+
+test("a shallow touch swipe still browses past a highlighted lesson card", () => {
+  const harness = createGestureHarness("touch", { dragPreferred: true, cardId: "sea-urchin" });
+
+  harness.press();
+  const moveEvent = harness.move(145, 98);
+
+  assert.equal(moveEvent.defaultPrevented, false);
+  assert.deepEqual(harness.captureCalls, []);
+  assert.deepEqual(harness.calls, []);
+  assert.equal(harness.gestureRef.current?.phase, "scrolling");
+});
+
+test("a deliberate horizontal mouse pull can still browse from a highlighted lesson card", () => {
+  const harness = createGestureHarness("mouse", { dragPreferred: true, cardId: "sea-urchin" });
+
+  harness.press();
+  const moveEvent = harness.move(145, 100);
+
+  assert.equal(moveEvent.defaultPrevented, true);
+  assert.deepEqual(harness.calls, []);
+  assert.equal(harness.gestureRef.current?.phase, "scrolling");
+});
+
+test("minor upward mouse jitter still browses instead of lifting the highlighted card", () => {
+  const harness = createGestureHarness("mouse", { dragPreferred: true, cardId: "sea-urchin" });
+
+  harness.press();
+  const moveEvent = harness.move(145, 99);
+
+  assert.equal(moveEvent.defaultPrevented, true);
+  assert.deepEqual(harness.calls, []);
+  assert.equal(harness.gestureRef.current?.phase, "scrolling");
 });
 
 test("touch waits for upward intent before explicitly capturing", () => {

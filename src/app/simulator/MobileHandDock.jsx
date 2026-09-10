@@ -152,7 +152,15 @@ export default function MobileHandDock({
 
     if (gesture.phase === "candidate") {
       if (Math.max(absX, absY) >= dragThreshold) gesture.movedBeyondThreshold = true;
-      if (dy <= -dragThreshold && absY >= absX * MOBILE_HAND_DRAG_AXIS_RATIO) {
+      const prefersTutorialMouseDrag = Boolean(entry.dragPreferred && gesture.pointerType === "mouse");
+      const preferredMinimumLift = Math.min(8, dragThreshold / 2);
+      const preferredDragIntent = Boolean(
+        prefersTutorialMouseDrag
+        && dy <= -preferredMinimumLift
+        && gesture.movedBeyondThreshold
+      );
+      const upwardDragIntent = dy <= -dragThreshold && absY >= absX * MOBILE_HAND_DRAG_AXIS_RATIO;
+      if (preferredDragIntent || upwardDragIntent) {
         event.preventDefault();
         captureGesturePointer(gesture, event);
         const accepted = callbacksRef.current.onDragStart?.({
@@ -177,7 +185,13 @@ export default function MobileHandDock({
         });
         return;
       }
-      if (absX >= dragThreshold && absX >= absY * MOBILE_HAND_SCROLL_AXIS_RATIO) {
+      const horizontalScrollIntent = absX >= dragThreshold && absX >= absY * MOBILE_HAND_SCROLL_AXIS_RATIO;
+      const deliberateTutorialMouseScroll = Boolean(
+        prefersTutorialMouseDrag
+        && absX >= dragThreshold * 4
+        && horizontalScrollIntent
+      );
+      if ((!prefersTutorialMouseDrag && horizontalScrollIntent) || deliberateTutorialMouseScroll) {
         gesture.phase = "scrolling";
         suppressNextDragClick(entry.index);
         if (gesture.pointerType === "mouse") {

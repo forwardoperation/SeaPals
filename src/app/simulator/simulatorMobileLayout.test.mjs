@@ -394,6 +394,7 @@ test("a mobile hand drag starts direct placement without opening the tap popover
   assert.match(mobileHandDock, /onDragMove=\{[A-Za-z_$][\w$]*\}/);
   assert.match(mobileHandDock, /onDragEnd=\{[A-Za-z_$][\w$]*\}/);
   assert.match(mobileHandDock, /onDragCancel=\{[A-Za-z_$][\w$]*\}/);
+  assert.match(mobileHandDock, /dragPreferred:\s*embeddedLessonDragCardIds\.includes\(cardId\)/);
 
   const dragStart = functionSectionContaining(
     simulatorSource,
@@ -421,6 +422,7 @@ test("mobile hand drops reuse the normal ecosystem, foundation, and slot placeme
     [/document\.elementsFromPoint\(/, /closest\("\[data-hand-drop-/, /placeCardToSlot\(/, /placeCoralInEcosystem\(/, /upgradeCoral\(/, /playCardFromHand\(/],
     "mobile hand drop resolver",
   );
+  assert.match(dragDrop, /findNearestHandDropElement\([\s\S]*?isEligible\(element\)/, "small zoomed slots should get a screen-space release margin that filters incompatible slots");
   assert.match(dragDrop, /placeCardToSlot\([^,]+,\s*cardId\)/, "slot drops should commit the exact dragged occurrence through existing slot validation");
   assert.match(dragDrop, /upgradeCoral\([^,]+,\s*cardId\)/, "upgrade drops should reuse normal foundation upgrade rules");
   assert.match(dragDrop, /placeCoralInEcosystem\([^,]+,\s*[^,]+,\s*cardId\)/, "base foundations should use the board placement path with the dragged card id");

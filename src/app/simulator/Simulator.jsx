@@ -6,6 +6,7 @@ import Link from "next/link";
 import RulesChat from "@/components/rules/RulesChat";
 import BugReportDialog from "@/components/feedback/BugReportDialog";
 import MobileHandDock from "./MobileHandDock";
+import { findNearestHandDropElement } from "./mobileHandDrop.mjs";
 import MobileHandCardPopover from "./MobileHandCardPopover";
 import MobileEdgeZones from "./MobileEdgeZones";
 import MobileDrawTray from "./MobileDrawTray";
@@ -10336,9 +10337,36 @@ export default function Simulator({
     const elements = typeof document === "undefined" || !document.elementsFromPoint
       ? []
       : document.elementsFromPoint(clientX, clientY);
-    const slotElement = elements
+    const directSlotElement = elements
       .map((element) => element.closest("[data-hand-drop-slot-id]"))
       .find(Boolean);
+    const nearbySlotElement = !directSlotElement && card?.kind === CardKind.CREATURE
+      ? findNearestHandDropElement(
+          typeof document === "undefined"
+            ? []
+            : document.querySelectorAll("[data-hand-drop-slot-id]"),
+          clientX,
+          clientY,
+          {
+            isEligible(element) {
+              const candidateSlotId = element?.dataset?.handDropSlotId ?? null;
+              const candidateCoral = candidateSlotId ? findCoralBySlotId(candidateSlotId) : null;
+              const candidateSlot = candidateCoral?.slots.find(({ id }) => id === candidateSlotId) ?? null;
+              return Boolean(
+                candidateSlot
+                && isAcademyPlacementAllowed({
+                  route: scriptedFinishRoute,
+                  cardId,
+                  foundationCardId: candidateCoral.cardId,
+                  slotClass: candidateSlot.slotClass ?? candidateSlot.slotType ?? candidateSlot.class,
+                })
+                && (canUseSlotWithCard(candidateSlot, cardId) || canHostCardInSlot(candidateSlot, cardId))
+              );
+            },
+          },
+        )
+      : null;
+    const slotElement = directSlotElement ?? nearbySlotElement;
     const coralElement = elements
       .map((element) => element.closest("[data-hand-drop-coral-id]"))
       .find(Boolean);
@@ -26357,6 +26385,7 @@ export default function Simulator({
                 playError,
                 setupPlayable: isSetup && !playingCardId && !playError,
                 tutorialClass: tutorialCardTargetClass(cardId),
+                dragPreferred: embeddedLessonDragCardIds.includes(cardId),
               };
             })}
             selectedIndex={mobileSelectedHandIndex}
