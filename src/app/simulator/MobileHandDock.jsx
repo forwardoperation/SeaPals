@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 
 const MOBILE_HAND_DRAG_THRESHOLD = 10;
-const MOBILE_HAND_DRAG_AXIS_RATIO = 1.15;
+const MOBILE_HAND_DRAG_AXIS_RATIO = 0.45;
+const MOBILE_HAND_SCROLL_AXIS_RATIO = 1.4;
 
 export function getDesktopHandInteractionScale(viewportWidth, viewportHeight) {
   if (!Number.isFinite(viewportWidth) || viewportWidth < 1280) return 1;
@@ -118,7 +119,7 @@ export default function MobileHandDock({
       return;
     }
     if (placementPending || gestureRef.current || event.button !== 0 || event.isPrimary === false) return;
-    gestureRef.current = {
+    const gesture = {
       phase: "candidate",
       pointerId: event.pointerId,
       cardId: entry.cardId,
@@ -133,6 +134,8 @@ export default function MobileHandDock({
       sourceElement: event.target,
       dragThreshold: MOBILE_HAND_DRAG_THRESHOLD * getCurrentHandInteractionScale(),
     };
+    gestureRef.current = gesture;
+    if (gesture.pointerType === "mouse") captureGesturePointer(gesture, event);
   }
 
   function handleCardPointerMove(entry, event) {
@@ -148,25 +151,10 @@ export default function MobileHandDock({
     gesture.clientY = event.clientY;
 
     if (gesture.phase === "candidate") {
-      if (absX >= dragThreshold && absX > absY) {
-        gesture.phase = "scrolling";
-        suppressNextDragClick(entry.index);
-        if (gesture.pointerType === "mouse") {
-          event.preventDefault();
-          captureGesturePointer(gesture, event);
-          scrollMouseGesture(gesture, dx);
-        }
-        return;
-      }
+      if (Math.max(absX, absY) >= dragThreshold) gesture.movedBeyondThreshold = true;
       if (dy <= -dragThreshold && absY >= absX * MOBILE_HAND_DRAG_AXIS_RATIO) {
         event.preventDefault();
-        try {
-          if (!gesture.sourceElement.hasPointerCapture?.(event.pointerId)) {
-            gesture.sourceElement.setPointerCapture?.(event.pointerId);
-          }
-        } catch (error) {
-          // Continue without capture if the platform rejects it.
-        }
+        captureGesturePointer(gesture, event);
         const accepted = callbacksRef.current.onDragStart?.({
           cardId: entry.cardId,
           index: entry.index,
@@ -187,9 +175,17 @@ export default function MobileHandDock({
           clientX: event.clientX,
           clientY: event.clientY,
         });
-      } else if (absY >= dragThreshold) {
-        gesture.phase = "blocked";
+        return;
+      }
+      if (absX >= dragThreshold && absX >= absY * MOBILE_HAND_SCROLL_AXIS_RATIO) {
+        gesture.phase = "scrolling";
         suppressNextDragClick(entry.index);
+        if (gesture.pointerType === "mouse") {
+          event.preventDefault();
+          captureGesturePointer(gesture, event);
+          scrollMouseGesture(gesture, dx);
+        }
+        return;
       }
       return;
     }
@@ -227,7 +223,7 @@ export default function MobileHandDock({
       clientY: event.clientY,
     };
     clearHandDragGesture();
-    if (completedPhase !== "candidate") suppressNextDragClick(entry.index);
+    if (completedPhase !== "candidate" || gesture.movedBeyondThreshold) suppressNextDragClick(entry.index);
     if (wasDragging) {
       event.preventDefault();
       callbacksRef.current.onDragEnd?.(payload);

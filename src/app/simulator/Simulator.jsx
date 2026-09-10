@@ -744,9 +744,10 @@ function getEmbeddedLessonDragPath(sourceRect, destinationRect) {
   const deltaY = end.y - start.y;
   const sidewaysBend = Math.min(80, Math.max(24, Math.abs(deltaY) * .12));
   const bendDirection = Math.abs(deltaX) < 44 ? 1 : Math.sign(deltaX);
+  const verticalLift = Math.min(88, Math.max(36, Math.abs(deltaY) * .22));
   const control1 = {
-    x: start.x + (deltaX * .22) + (sidewaysBend * bendDirection),
-    y: start.y + (deltaY * .32),
+    x: start.x,
+    y: start.y - verticalLift,
   };
   const control2 = {
     x: start.x + (deltaX * .78) - (sidewaysBend * bendDirection * .35),
@@ -755,6 +756,8 @@ function getEmbeddedLessonDragPath(sourceRect, destinationRect) {
   return {
     start,
     end,
+    control1,
+    control2,
     path: `M ${start.x} ${start.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${end.x} ${end.y}`,
   };
 }
@@ -7505,6 +7508,9 @@ export default function Simulator({
     || tutorialBoardTourOpen
     || eventOverlay
     || compactTurnSequence
+    || mobileDrawFlights.length > 0
+    || compactOpponentPlaybackLocked
+    || boardStatPresentationActive
     || roundFlash
     || opponentThinking
     || mobileHudPanel

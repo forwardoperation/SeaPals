@@ -115,7 +115,7 @@
   max-width: 32rem;
   padding: 0 0 1.2rem 3.7rem;
   color: var(--ink);
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .coachBubble {
@@ -126,6 +126,7 @@
   border-radius: 0.75rem;
   background: linear-gradient(180deg, #ffffff 0%, #f6f8fc 58%, #e7ecf4 100%);
   box-shadow: 0 0.45rem 1.15rem #06152b3d, inset 0 1px #ffffff, inset 0 -2px #d4dce8;
+  pointer-events: auto;
 }
 
 .coachBubble::before,

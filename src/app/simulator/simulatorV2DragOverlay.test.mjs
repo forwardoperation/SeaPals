@@ -35,6 +35,22 @@ test("drag lessons connect the exact hand card to the nearest visible legal dest
   assert.doesNotMatch(cue, /--seapals-drag-(?:first|middle|last)-[xy]/);
 });
 
+test("the animated drag path begins with the same upward lift accepted by the hand", () => {
+  const pathSource = sourceSection(
+    "function getEmbeddedLessonDragPath(",
+    "function EmbeddedLessonHandIcon(",
+  );
+  const getEmbeddedLessonDragPath = Function(`return (${pathSource})`)();
+  const path = getEmbeddedLessonDragPath(
+    { left: 80, top: 600, width: 120, height: 160 },
+    { left: 560, top: 280, width: 180, height: 220 },
+  );
+
+  assert.equal(path.control1.x, path.start.x);
+  assert.ok(path.control1.y < path.start.y);
+  assert.ok(path.end.x > path.start.x, "the cue should curve toward the real destination after lifting");
+});
+
 test("the pointer hand has a natural silhouette and a calibrated fingertip", () => {
   const icon = sourceSection(
     "function EmbeddedLessonHandIcon(",

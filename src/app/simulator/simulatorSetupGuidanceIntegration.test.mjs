@@ -72,6 +72,9 @@ test("compact turn teaching blocks the stale lesson coach and hand cue", () => {
   );
 
   assert.match(presentationGate, /\|\| compactTurnSequence/);
+  assert.match(presentationGate, /\|\| mobileDrawFlights\.length > 0/);
+  assert.match(presentationGate, /\|\| compactOpponentPlaybackLocked/);
+  assert.match(presentationGate, /\|\| boardStatPresentationActive/);
   assert.match(presentationGate, /embeddedLessonActionReady[\s\S]*?&& !embeddedLessonPresentationBlocked/);
   assert.match(
     simulatorSource,

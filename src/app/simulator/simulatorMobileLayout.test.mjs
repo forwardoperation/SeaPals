@@ -275,10 +275,11 @@ test("mobile hand cards distinguish an upward placement drag from horizontal han
     [/pointerId/, /clientX/, /clientY/, /candidate|origin/i],
     "mobile hand drag candidate",
   );
-  assert.doesNotMatch(
+  assert.doesNotMatch(pointerStart, /preventDefault\(\)/);
+  assert.match(
     pointerStart,
-    /preventDefault\(\)|setPointerCapture/,
-    "pointerdown must leave native horizontal rail scrolling available",
+    /gesture\.pointerType === "mouse"[\s\S]*?captureGesturePointer\(gesture, event\)/,
+    "mouse should capture immediately while touch leaves native horizontal rail scrolling available",
   );
 
   const pointerMove = functionSectionContaining(
@@ -287,12 +288,8 @@ test("mobile hand cards distinguish an upward placement drag from horizontal han
     "mobile hand axis-lock",
   );
   assert.match(pointerMove, /(?:dy|deltaY)\s*<=?\s*-\s*(?:[A-Z_$][\w$]*|\d+)/i, "only an upward gesture should promote the candidate to a card drag");
-  assert.match(
-    pointerMove,
-    /(?:absY|verticalDistance)[\s\S]{0,100}(?:absX|horizontalDistance)[\s\S]{0,60}(?:1\.1[5-9]|[A-Z_$][\w$]*)/i,
-    "vertical intent should dominate horizontal movement before placement begins",
-  );
-  assert.match(pointerMove, /setPointerCapture/);
+  assert.match(pointerMove, /absY >= absX \* MOBILE_HAND_DRAG_AXIS_RATIO/);
+  assert.match(pointerMove, /captureGesturePointer\(gesture, event\)/);
   assert.match(simulatorSource, /\.seapals-mobile-hand-rail\s*\{[\s\S]*?touch-action:\s*pan-x;/);
 });
 
@@ -323,10 +320,10 @@ test("the touched hand-card source owns the pan-x policy instead of relying on a
 test("pointer capture is established before drag-start state causes a parent rerender", () => {
   const pointerMove = functionSectionContaining(
     handDockSource,
-    [/onDragStart/, /setPointerCapture/, /phase\s*=\s*"dragging"/],
+    [/onDragStart/, /captureGesturePointer/, /phase\s*=\s*"dragging"/],
     "mobile hand drag promotion",
   );
-  const captureIndex = pointerMove.indexOf("setPointerCapture");
+  const captureIndex = pointerMove.indexOf("captureGesturePointer");
   const dragStartIndex = pointerMove.indexOf("onDragStart");
 
   assert.ok(captureIndex >= 0 && dragStartIndex >= 0);
@@ -336,8 +333,8 @@ test("pointer capture is established before drag-start state causes a parent rer
   );
   assert.match(
     pointerMove,
-    /sourceElement\.setPointerCapture\?\.\(event\.pointerId\)/,
-    "capture must stay attached to the exact element Safari implicitly captured on pointerdown",
+    /captureGesturePointer\(gesture, event\)/,
+    "drag promotion must preserve capture before a parent rerender",
   );
   const pointerStart = functionSectionContaining(
     handDockSource,

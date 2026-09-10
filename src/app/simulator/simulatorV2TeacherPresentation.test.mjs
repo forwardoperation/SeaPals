@@ -32,6 +32,8 @@ test("the teacher card stays compact and positionable beside the current board t
   assert.doesNotMatch(coachRule, /position:\s*(?:fixed|absolute)/);
   assert.match(coachRule, /max-width:\s*32rem/);
   assert.match(coachRule, /padding:\s*0 0 1\.2rem 3\.7rem/);
+  assert.match(coachRule, /pointer-events:\s*none/);
+  assert.match(cssRules(".coachBubble").join("\n"), /pointer-events:\s*auto/);
   assert.match(portraitRule, /width:\s*4\.25rem/);
   assert.match(portraitRule, /height:\s*4\.9rem/);
   assert.match(styleSource, /\.coachBubble::before,\s*\.coachBubble::after/);
