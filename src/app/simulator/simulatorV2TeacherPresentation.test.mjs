@@ -4,6 +4,7 @@ import test from "node:test";
 
 const panelSource = await readFile(new URL("./SimulatorV2LessonPanel.jsx", import.meta.url), "utf8");
 const styleSource = await readFile(new URL("./SimulatorV2LessonPanel.module.css", import.meta.url), "utf8");
+const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
 
 function cssRules(selector) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -34,6 +35,15 @@ test("the teacher card stays compact and positionable beside the current board t
   assert.match(coachRule, /padding:\s*0 0 1\.2rem 3\.7rem/);
   assert.match(coachRule, /pointer-events:\s*none/);
   assert.match(cssRules(".coachBubble").join("\n"), /pointer-events:\s*auto/);
+  assert.match(cssRules(".dragPassive .coachBubble").join("\n"), /pointer-events:\s*none/);
+  assert.match(
+    simulatorSource,
+    /function ProfessorGuideCard\(\{[\s\S]*?dragPassive = false,[\s\S]*?<SimulatorV2LessonPanel[\s\S]*?dragPassive=\{dragPassive\}/,
+  );
+  assert.match(
+    panelSource,
+    /className=\{`\$\{styles\.coach\}[\s\S]*?\$\{dragPassive \? ` \$\{styles\.dragPassive\}` : ""\}/,
+  );
   assert.match(portraitRule, /width:\s*4\.25rem/);
   assert.match(portraitRule, /height:\s*4\.9rem/);
   assert.match(styleSource, /\.coachBubble::before,\s*\.coachBubble::after/);
@@ -46,6 +56,23 @@ test("drag steps keep the teacher card concise and leave the gesture to the boar
   assert.match(panelSource, /\{hint \? <details[\s\S]*?<summary>Hint<\/summary>/);
   assert.doesNotMatch(panelSource, /DragInstruction|data-v2-drag-(?:instruction|source|path|destination)/);
   assert.doesNotMatch(styleSource, /\.drag(?:Diagram|Source|Destination|CardStack|CardMotion|Pointer|Slots|Trail|Arrow)\b|@keyframes tutorialCardDrag/);
+});
+
+test("Mr. Easterling's message reads like left-to-right dialogue", () => {
+  const instructionRule = cssRules(".instruction").join("\n");
+  const feedbackRule = cssRules(".feedback").join("\n");
+
+  assert.match(instructionRule, /width:\s*100%/);
+  assert.match(instructionRule, /text-align:\s*left/);
+  assert.match(instructionRule, /text-wrap:\s*pretty/);
+  assert.doesNotMatch(instructionRule, /text-wrap:\s*balance/);
+  assert.match(feedbackRule, /text-align:\s*left/);
+  assert.match(cssRules(".currentMove").join("\n"), /width:\s*100%/);
+  assert.match(cssRules(".coachBody").join("\n"), /padding:\s*0\.05rem 0\.9rem 0\.55rem/);
+  assert.match(panelSource, /className=\{styles\.advanceButton\}[\s\S]*?<span className=\{styles\.advanceLabel\}>\{advanceLabel\}<\/span>/);
+  assert.match(cssRules(".advanceButton").join("\n"), /margin:\s*0\.35rem 0 -0\.18rem auto/);
+  assert.match(panelSource, /className=\{styles\.passiveAdvance\}[\s\S]*?className=\{styles\.actionMarker\}/);
+  assert.match(cssRules(".passiveAdvance").join("\n"), /justify-content:\s*flex-end/);
 });
 
 test("blocking teacher checkpoints receive focus and keep keyboard navigation on Continue", () => {

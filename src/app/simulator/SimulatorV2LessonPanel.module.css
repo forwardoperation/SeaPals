@@ -129,6 +129,8 @@
   pointer-events: auto;
 }
 
+.dragPassive .coachBubble { pointer-events: none; }
+
 .coachBubble::before,
 .coachBubble::after {
   position: absolute;
@@ -179,24 +181,30 @@
 .coachIdentity > span { display: block; min-width: 0; color: #68768a; font-size: 0.61rem; font-weight: 700; line-height: 1.35; }
 .collapseButton { display: grid; width: 2.75rem; height: 2.75rem; flex: 0 0 2.75rem; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 50%; color: #5c6a7f; background: transparent; font-size: 1.15rem; font-weight: 600; line-height: 1; }
 .collapseButton:hover { border-color: #a7b1c0; color: var(--ink); background: #e5eaf2; }
-.coachBody { position: relative; padding: 0.05rem 1.85rem 0.55rem 0.9rem; border-top: 1px solid #c8d0dc; }
+.coachBody { position: relative; padding: 0.05rem 0.9rem 0.55rem; border-top: 1px solid #c8d0dc; }
 .coachBody[hidden] { display: none; }
-.currentMove { padding-top: 0.48rem; }
-.dialogue { margin: 0 0 0.38rem; color: #536278; font-size: 0.75rem; font-weight: 600; line-height: 1.45; text-align: center; text-wrap: balance; }
-.instruction { margin: 0; color: #19253a; font-size: 0.84rem; font-weight: 800; letter-spacing: 0.01em; line-height: 1.38; text-align: center; text-wrap: balance; overflow-wrap: anywhere; }
-.feedback { margin: 0.48rem 0 0; color: #087e9c; font-size: 0.7rem; font-weight: 700; line-height: 1.5; text-align: center; }
+.currentMove { width: 100%; padding-top: 0.48rem; }
+.dialogue { margin: 0 0 0.38rem; color: #536278; font-size: 0.75rem; font-weight: 600; line-height: 1.45; text-align: left; text-wrap: pretty; }
+.instruction { width: 100%; margin: 0; color: #19253a; font-size: 0.84rem; font-weight: 800; letter-spacing: 0.01em; line-height: 1.48; text-align: left; text-wrap: pretty; overflow-wrap: anywhere; }
+.feedback { margin: 0.48rem 0 0; color: #087e9c; font-size: 0.7rem; font-weight: 700; line-height: 1.5; text-align: left; text-wrap: pretty; }
 .feedback[data-tone="hint"],
 .feedback[data-tone="error"] { color: #b34a48; }
 
 .actionMarker {
-  position: absolute;
-  right: 0.68rem;
-  bottom: 0.62rem;
+  display: inline-block;
   color: #56667c;
   font-size: 1rem;
   line-height: 1;
   filter: drop-shadow(0 1px 0 #ffffff);
   animation: tutorialActionNudge 1.4s ease-in-out infinite;
+}
+
+.passiveAdvance {
+  display: flex;
+  min-height: 1rem;
+  align-items: end;
+  justify-content: flex-end;
+  margin-top: 0.12rem;
 }
 
 .advanceButton {
@@ -269,12 +277,12 @@
   .coachIdentity strong { font-size: 0.65rem; }
   .coachIdentity > span { font-size: 0.65rem; }
   .collapseButton { width: 2.75rem; height: 2.75rem; flex-basis: 2.75rem; }
-  .coachBody { padding: 0.08rem 1.75rem 0.58rem 0.8rem; }
+  .coachBody { padding: 0.08rem 0.8rem 0.58rem; }
   .currentMove { padding-top: 0.52rem; }
   .dialogue { margin-bottom: 0.28rem; font-size: 0.67rem; }
   .instruction { font-size: 0.78rem; line-height: 1.36; }
   .feedback { margin-top: 0.35rem; font-size: 0.64rem; }
-  .actionMarker { right: 0.5rem; bottom: 0.5rem; font-size: 0.86rem; }
+  .actionMarker { font-size: 0.86rem; }
   .advanceButton { min-height: 2rem; margin-top: 0.25rem; }
   .advanceButton .actionMarker { position: static; }
   .advanceLabel { font-size: 0.55rem; }

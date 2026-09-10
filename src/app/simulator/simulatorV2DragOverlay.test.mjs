@@ -26,7 +26,7 @@ test("drag lessons connect the exact hand card to the nearest visible legal dest
   assert.match(finder, /Math\.hypot/);
   assert.match(cue, /const source = findTutorialTarget\(help\)/);
   assert.match(cue, /findEmbeddedLessonDragDestination\(help, source\.rect\)/);
-  assert.match(cue, /className="seapals-v2-action-cue is-drag is-path"/);
+  assert.match(cue, /className=\{`seapals-v2-action-cue is-drag is-path\$\{dragging/);
   assert.match(cue, /className="seapals-v2-action-cue-path-line"/);
   assert.match(cue, /className="seapals-v2-action-cue-destination"/);
   assert.match(cue, /--seapals-drag-start-x/);
@@ -86,11 +86,38 @@ test("the board exposes prepared ecosystem, matching Coral, and compatible slot 
   );
 });
 
-test("the board-native overlay stays noninteractive, below the coach, and disappears during the real drag", () => {
+test("the board-native overlay keeps the drop circle and teacher visible during the real drag", () => {
+  const cue = sourceSection(
+    "function EmbeddedLessonActionCue(",
+    "const PROFESSOR_COACH_ARROW",
+  );
+  const presentationGate = sourceSection(
+    "const embeddedLessonPresentationBlocked = Boolean(",
+    "const tutorialDrawTrayHelpAnchored = Boolean(",
+  );
+  const dragAnchorPipeline = sourceSection(
+    "const embeddedLessonDragCardIds =",
+    "const embeddedLessonEcosystemDropPosition =",
+  );
+
   assert.match(
     simulatorSource,
-    /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen && !mobileHandDrag\}[\s\S]*?measureKey=\{embeddedLessonActionCueMeasureKey\}/,
+    /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?measureKey=\{embeddedLessonActionCueMeasureKey\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag\)\}/,
   );
+  const helpState = sourceSection(
+    "const tutorialHelp = tutorialContract ?",
+    "const tutorialConditionHelp =",
+  );
+  assert.doesNotMatch(presentationGate, /\|\| mobileHandDrag/);
+  assert.doesNotMatch(dragAnchorPipeline, /mobileHandDrag/);
+  assert.match(dragAnchorPipeline, /tutorialHelpTargetActive[\s\S]*?tutorialHelp\?\.interaction === "drag"/);
+  assert.match(dragAnchorPipeline, /hand\.includes\(cardId\)/);
+  assert.match(simulatorSource, /data-v2-lesson-drop-cards=\{embeddedLessonEcosystemDropCardIds\.join\(" "\)\}/);
+  assert.match(helpState, /playingCardId,\s*playingCardName: playingCard\?\.name/);
+  assert.doesNotMatch(helpState, /playingCardId:\s*embeddedLesson \? activePlacementCardId/);
+  assert.match(cue, /\{!dragging \? \([\s\S]*?className="seapals-v2-action-cue-path"[\s\S]*?className="seapals-v2-action-cue-source"[\s\S]*?\) : null\}[\s\S]*?className="seapals-v2-action-cue-destination"[\s\S]*?\{!dragging \? \([\s\S]*?className="seapals-v2-action-cue-hand"/);
+  assert.match(cue, /data-v2-user-dragging=\{dragging \? "true" : undefined\}/);
+  assert.match(simulatorSource, /<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}[\s\S]*?dragPassive=\{Boolean\(mobileHandDrag\)\}/);
   assert.match(
     simulatorSource,
     /\.seapals-v2-action-cue \{[\s\S]*?z-index:\s*159;[\s\S]*?pointer-events:\s*none;/,

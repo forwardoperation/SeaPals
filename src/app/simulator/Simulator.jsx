@@ -396,6 +396,7 @@ function ProfessorGuideCard({
   onBack = null,
   onRevealTarget = null,
   revealTargetLabel = "Show highlighted action",
+  dragPassive = false,
 }) {
   if (guide.lesson) {
     return (
@@ -411,6 +412,7 @@ function ProfessorGuideCard({
         hint={help.hint}
         onAdvance={onAdvance}
         advanceLabel={advanceLabel}
+        dragPassive={dragPassive}
       />
     );
   }
@@ -776,7 +778,7 @@ function EmbeddedLessonHandIcon() {
   );
 }
 
-function EmbeddedLessonActionCue({ help, active, measureKey = "" }) {
+function EmbeddedLessonActionCue({ help, active, measureKey = "", dragging = false }) {
   const [layout, setLayout] = useState(null);
   const targetCardKey = (help?.targetCardIds ?? [help?.targetCardId])
     .map((cardId) => String(cardId ?? ""))
@@ -857,32 +859,37 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "" }) {
     const dragPath = getEmbeddedLessonDragPath(layout.sourceRect, layout.destinationRect);
     return (
       <div
-        className="seapals-v2-action-cue is-drag is-path"
+        className={`seapals-v2-action-cue is-drag is-path${dragging ? " is-user-dragging" : ""}`}
         data-v2-target-gesture="drag"
+        data-v2-user-dragging={dragging ? "true" : undefined}
         aria-hidden="true"
       >
-        <svg
-          className="seapals-v2-action-cue-path"
-          viewBox={`0 0 ${layout.viewportWidth} ${layout.viewportHeight}`}
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <marker id="seapals-v2-drag-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="strokeWidth">
-              <path d="M 0 0 L 8 4 L 0 8 z" />
-            </marker>
-          </defs>
-          <path className="seapals-v2-action-cue-path-glow" d={dragPath.path} />
-          <path className="seapals-v2-action-cue-path-line" d={dragPath.path} markerEnd="url(#seapals-v2-drag-arrow)" />
-        </svg>
-        <span
-          className="seapals-v2-action-cue-source"
-          style={{
-            left: `${layout.sourceRect.left}px`,
-            top: `${layout.sourceRect.top}px`,
-            width: `${layout.sourceRect.width}px`,
-            height: `${layout.sourceRect.height}px`,
-          }}
-        />
+        {!dragging ? (
+          <>
+            <svg
+              className="seapals-v2-action-cue-path"
+              viewBox={`0 0 ${layout.viewportWidth} ${layout.viewportHeight}`}
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <marker id="seapals-v2-drag-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="strokeWidth">
+                  <path d="M 0 0 L 8 4 L 0 8 z" />
+                </marker>
+              </defs>
+              <path className="seapals-v2-action-cue-path-glow" d={dragPath.path} />
+              <path className="seapals-v2-action-cue-path-line" d={dragPath.path} markerEnd="url(#seapals-v2-drag-arrow)" />
+            </svg>
+            <span
+              className="seapals-v2-action-cue-source"
+              style={{
+                left: `${layout.sourceRect.left}px`,
+                top: `${layout.sourceRect.top}px`,
+                width: `${layout.sourceRect.width}px`,
+                height: `${layout.sourceRect.height}px`,
+              }}
+            />
+          </>
+        ) : null}
         <span
           className="seapals-v2-action-cue-destination"
           style={{
@@ -892,14 +899,16 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "" }) {
             height: `${layout.destinationRect.height}px`,
           }}
         />
-        <span
-          className="seapals-v2-action-cue-hand"
-          style={{
-            "--seapals-drag-start-x": `${dragPath.start.x}px`,
-            "--seapals-drag-start-y": `${dragPath.start.y}px`,
-            "--seapals-drag-motion-path": `path("${dragPath.path}")`,
-          }}
-        ><span className="seapals-v2-action-cue-hand-glyph"><EmbeddedLessonHandIcon /></span></span>
+        {!dragging ? (
+          <span
+            className="seapals-v2-action-cue-hand"
+            style={{
+              "--seapals-drag-start-x": `${dragPath.start.x}px`,
+              "--seapals-drag-start-y": `${dragPath.start.y}px`,
+              "--seapals-drag-motion-path": `path("${dragPath.path}")`,
+            }}
+          ><span className="seapals-v2-action-cue-hand-glyph"><EmbeddedLessonHandIcon /></span></span>
+        ) : null}
       </div>
     );
   }
@@ -7263,8 +7272,8 @@ export default function Simulator({
     scriptedSetupCardName: tutorialUsesScriptedScenario ? cardsById["mustard-hill-coral-base"]?.name : null,
     scriptedBuildCardId: scriptedFoundationLessonCardId,
     scriptedBuildCardName: scriptedFoundationLessonCardId ? cardsById[scriptedFoundationLessonCardId]?.name : null,
-    playingCardId: embeddedLesson ? activePlacementCardId : playingCardId,
-    playingCardName: embeddedLesson ? activePlacementCard?.name : playingCard?.name,
+    playingCardId,
+    playingCardName: playingCard?.name,
     modal,
     selectedHandCard: selectedTutorialHandCardId,
     selectedCardIsSupport: selectedTutorialCard?.kind === CardKind.SUPPORT,
@@ -7514,7 +7523,6 @@ export default function Simulator({
     || roundFlash
     || opponentThinking
     || mobileHudPanel
-    || mobileHandDrag
     || simulatorExitConfirmationOpen
     || tutorialExitConfirmationOpen
     || gameResult
@@ -25346,6 +25354,7 @@ export default function Simulator({
                 help={tutorialHelp}
                 step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
                 total={tutorialContract.checkpoints.length}
+                dragPassive={Boolean(mobileHandDrag)}
               />
             </ProfessorCoachOverlay>
           ) : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (
@@ -25378,8 +25387,9 @@ export default function Simulator({
 
           <EmbeddedLessonActionCue
             help={tutorialHelp}
-            active={embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen && !mobileHandDrag}
+            active={embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen}
             measureKey={embeddedLessonActionCueMeasureKey}
+            dragging={Boolean(mobileHandDrag)}
           />
           {embeddedLessonActionReady && !embeddedLessonPresentationBlocked ? (
             <p key={`embedded-action:${tutorialHelpDismissalKey}`} className="sr-only" role="status" aria-live="assertive" aria-atomic="true">

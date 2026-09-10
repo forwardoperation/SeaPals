@@ -132,6 +132,7 @@ export default function SimulatorV2LessonPanel({
   onReplay,
   initialCollapsed = false,
   className = "",
+  dragPassive = false,
 }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const advanceRef = useRef(null);
@@ -305,7 +306,7 @@ export default function SimulatorV2LessonPanel({
 
   return (
     <aside
-      className={`${styles.coach}${collapsed ? ` ${styles.collapsed}` : ""} ${className}`}
+      className={`${styles.coach}${collapsed ? ` ${styles.collapsed}` : ""}${dragPassive ? ` ${styles.dragPassive}` : ""} ${className}`}
       aria-labelledby={teacherTitleId}
       onKeyDown={onAdvance ? (event) => {
         if (event.key !== "Tab") return;
@@ -315,6 +316,7 @@ export default function SimulatorV2LessonPanel({
       data-v2-lesson-panel="coach"
       data-v2-lesson-interaction={interaction || undefined}
       data-v2-lesson-vp-target={activeLesson?.victoryTarget || undefined}
+      data-v2-lesson-drag-passive={dragPassive ? "true" : undefined}
     >
       <div className={styles.coachPortrait} aria-hidden="true">
         <TeacherPortrait />
@@ -366,7 +368,11 @@ export default function SimulatorV2LessonPanel({
               <span className={styles.advanceLabel}>{advanceLabel}</span>
               <span className={styles.actionMarker} aria-hidden="true">{"\u25B6"}</span>
             </button>
-          ) : <span className={styles.actionMarker} aria-hidden="true">{"\u25B6"}</span>}
+          ) : (
+            <span className={styles.passiveAdvance} aria-hidden="true">
+              <span className={styles.actionMarker}>{"\u25B6"}</span>
+            </span>
+          )}
         </div>
       </div>
       {collapsed ? <span className={styles.srOnly} aria-live="polite">{currentInstruction}</span> : null}

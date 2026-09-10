@@ -61,7 +61,7 @@ test("embedded lessons expose each action with divider-anchored teacher guidance
     simulatorSource,
     /if \(!embeddedLessonCoachOpen \|\| !tutorialTargetBeaconOpen\) return undefined;[\s\S]*?findTutorialTarget\(tutorialHelp, \{ includeOffscreen: true \}\)[\s\S]*?\[data-simulator-hand-card-rail\][\s\S]*?scrollTutorialTargetWithinContainer/,
   );
-  assert.match(simulatorSource, /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen && !mobileHandDrag\}/);
+  assert.match(simulatorSource, /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag\)\}/);
   assert.match(simulatorSource, /\.seapals-v2-action-cue \{[\s\S]*?pointer-events: none;/);
 });
 
@@ -75,10 +75,11 @@ test("compact turn teaching blocks the stale lesson coach and hand cue", () => {
   assert.match(presentationGate, /\|\| mobileDrawFlights\.length > 0/);
   assert.match(presentationGate, /\|\| compactOpponentPlaybackLocked/);
   assert.match(presentationGate, /\|\| boardStatPresentationActive/);
+  assert.doesNotMatch(presentationGate, /\|\| mobileHandDrag/);
   assert.match(presentationGate, /embeddedLessonActionReady[\s\S]*?&& !embeddedLessonPresentationBlocked/);
   assert.match(
     simulatorSource,
-    /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen && !mobileHandDrag\}/,
+    /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag\)\}/,
   );
 });
 
