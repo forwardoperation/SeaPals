@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import {
+  SIMULATOR_V2_LESSON_CONCEPTS,
   SIMULATOR_V2_LESSON_PROGRESS_KEY,
   SIMULATOR_V2_LESSON_MODULES,
   SIMULATOR_V2_LESSONS,
@@ -14,8 +15,10 @@ import {
   getSimulatorV2ExpectedDraw,
   getSimulatorV2LessonHelp,
   getSimulatorV2LessonActionBlock,
+  getSimulatorV2PreviouslyTaughtConcepts,
   parseSimulatorV2LessonProgress,
   recordSimulatorV2LessonCompletion,
+  simulatorV2LessonIntroduces,
 } from "./simulatorV2Lessons.mjs";
 import {
   createSimulatorTutorialProgress,
@@ -100,6 +103,59 @@ const attackReefDefinition = () => [
   },
 ];
 
+test("each concept is introduced once and familiar turn steps remain sequencing checkpoints", () => {
+  const owners = new Map();
+  for (const selected of SIMULATOR_V2_LESSONS) {
+    assert.equal(
+      new Set(selected.introducedConcepts).size,
+      selected.introducedConcepts.length,
+      `${selected.id} does not repeat its own concept metadata`,
+    );
+    for (const concept of selected.introducedConcepts) {
+      assert.equal(owners.has(concept), false, `${concept} is introduced by only one lesson`);
+      owners.set(concept, selected.id);
+    }
+  }
+
+  assert.deepEqual(
+    [...owners.keys()].sort(),
+    Object.values(SIMULATOR_V2_LESSON_CONCEPTS).sort(),
+    "every authored concept has exactly one teaching lesson",
+  );
+  assert.equal(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS), "first-reef");
+  assert.equal(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS), "first-reef");
+  assert.equal(simulatorV2LessonIntroduces("first-reef", SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS), true);
+  assert.equal(simulatorV2LessonIntroduces("first-attack", SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS), false);
+  assert.equal(simulatorV2LessonIntroduces("missing", SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS), false);
+  assert.deepEqual(getSimulatorV2PreviouslyTaughtConcepts("first-attack", []), []);
+  assert.deepEqual(
+    new Set(getSimulatorV2PreviouslyTaughtConcepts("first-attack", ["first-reef"])),
+    new Set(getSimulatorV2Lesson("first-reef").introducedConcepts),
+  );
+  assert.deepEqual(
+    getSimulatorV2PreviouslyTaughtConcepts("first-attack", ["winning-turn"]),
+    [],
+    "out-of-order later lessons do not count as prior teaching",
+  );
+
+  assert.deepEqual(
+    SIMULATOR_V2_LESSONS
+      .filter((selected) => selected.contract.checkpoints.some(({ actionType }) => actionType === "rp-collected"))
+      .map(({ id }) => id),
+    ["first-reef", "first-attack", "winning-turn"],
+    "later RP checkpoints still sequence the real round without reteaching RP",
+  );
+
+  for (const lessonId of ["first-attack", "winning-turn"]) {
+    const { contract, progress } = observe(lessonId, [rp]);
+    assert.equal(
+      getSimulatorTutorialCurrentCheckpoint(contract, progress).actionType,
+      "card-drawn",
+      `${lessonId} advances from the familiar RP collection directly to its draw`,
+    );
+  }
+});
+
 test("nine continuous lessons form four ordered modules and supply legal deterministic real-engine seeds", () => {
   assert.equal(SIMULATOR_V2_LESSON_PROGRESS_KEY, "seapals-simulator-v2-lessons-v2");
   assert.equal(SIMULATOR_V2_LESSONS.length, 9);
@@ -144,6 +200,7 @@ test("nine continuous lessons form four ordered modules and supply legal determi
     assert.equal(runtime.lesson.randomSeed, selected.randomSeed);
     assert.equal(JSON.parse(JSON.stringify(selected)).randomSeed, selected.randomSeed);
     assert.equal(runtime.contract, selected.contract);
+    assert.deepEqual(runtime.previouslyTaughtConcepts, []);
     assert.equal(runtime.guide.name, "Mr. Easterling");
     assert.match(selected.celebration, /!$/);
     assert.match(selected.introduction, /^In this lesson, you’ll learn\b/, `${selected.id} opens in Mr. Easterling's teaching voice`);
@@ -675,6 +732,92 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
     "Stunned pauses Brain Coral. Coral Heal clears the Condition so it can upgrade again.",
   );
   assert.equal(getSimulatorV2LessonHelp(first, null, {}), null);
+});
+
+test("later lessons direct familiar actions without repeating their introductory explanations", () => {
+  const first = getSimulatorV2Lesson("first-reef");
+  const firstVp = first.contract.checkpoints.find(({ actionType }) => actionType === "vp-earned");
+  assert.match(getSimulatorV2LessonHelp(first, firstVp, {}).message, /Victory Points come from cards/);
+
+  const attack = getSimulatorV2Lesson("first-attack");
+  const attackCollect = attack.contract.checkpoints.find(({ actionType }) => actionType === "rp-collected");
+  const attackBuild = attack.contract.checkpoints.find(({ id }) => id === "v2-build-attacker-coral");
+  const attackVp = attack.contract.checkpoints.find(({ actionType }) => actionType === "vp-earned");
+  const previouslyTaughtConcepts = getSimulatorV2PreviouslyTaughtConcepts(attack, ["first-reef"]);
+  const beginRound = getSimulatorV2LessonHelp(attack, attackCollect, {
+    gamePhase: "setup",
+    hasCoralInPlay: true,
+    previouslyTaughtConcepts,
+  });
+  assert.equal(beginRound.action, "Press Begin Round.");
+  assert.equal(beginRound.message, "");
+
+  const familiarFoundation = getSimulatorV2LessonHelp(attack, attackBuild, {
+    gamePhase: "main",
+    hand: ["brain-coral-base"],
+    previouslyTaughtConcepts,
+  });
+  assert.equal(familiarFoundation.target, "hand");
+  assert.equal(familiarFoundation.action, "Drag Brain Coral from your hand into a highlighted open ecosystem space.");
+  assert.equal(familiarFoundation.message, "");
+  assert.equal(
+    getSimulatorV2LessonHelp(attack, attackBuild, {
+      gamePhase: "main",
+      playingCardId: "brain-coral-base",
+      previouslyTaughtConcepts,
+    }).message,
+    "",
+  );
+  assert.equal(getSimulatorV2LessonHelp(attack, attackVp, { previouslyTaughtConcepts }).message, "");
+
+  const attackDraw = attack.contract.checkpoints.find(({ actionType }) => actionType === "card-drawn");
+  const drawHelp = getSimulatorV2LessonHelp(attack, attackDraw, {
+    gamePhase: "draw",
+    drawSelected: 0,
+    drawTarget: 1,
+    previouslyTaughtConcepts,
+  });
+  assert.match(drawHelp.message, /Porcupine Fish/, "the later lesson keeps scenario-specific direction");
+  assert.doesNotMatch(drawHelp.message, /holds creatures and other Pals cards/i);
+
+  const directBeginRound = getSimulatorV2LessonHelp(attack, attackCollect, {
+    gamePhase: "setup",
+    hasCoralInPlay: true,
+    previouslyTaughtConcepts: [],
+  });
+  assert.match(directBeginRound.message, /Begin Round adds 1 RP/);
+  assert.match(directBeginRound.action, /watch your RP bank/);
+  assert.match(
+    getSimulatorV2LessonHelp(attack, attackDraw, {
+      gamePhase: "draw",
+      drawSelected: 0,
+      drawTarget: 1,
+      previouslyTaughtConcepts: [],
+    }).message,
+    /Pals Deck holds creatures and other Pals cards/,
+  );
+  assert.match(
+    getSimulatorV2LessonHelp(attack, attackBuild, {
+      gamePhase: "main",
+      hand: ["brain-coral-base"],
+      previouslyTaughtConcepts: [],
+    }).message,
+    /Foundations create homes and produce RP/,
+    "a player who starts out of order still receives the prerequisite explanation",
+  );
+
+  const sequentialRuntime = createSimulatorV2LessonRuntime("first-attack", {
+    completedLessonIds: ["first-reef"],
+  });
+  assert.deepEqual(new Set(sequentialRuntime.previouslyTaughtConcepts), new Set(previouslyTaughtConcepts));
+
+  const support = getSimulatorV2Lesson("support-search");
+  const searchedCoral = support.contract.checkpoints.find(({ id }) => id === "v2-build-searched-coral");
+  assert.match(
+    getSimulatorV2LessonHelp(support, searchedCoral, { gamePhase: "main", hand: ["brain-coral-base"] }).message,
+    /searched Brain Coral/,
+    "new search follow-through keeps its lesson-specific explanation",
+  );
 });
 
 test("final coaching tracks either selection and the remaining real card after a placement", () => {

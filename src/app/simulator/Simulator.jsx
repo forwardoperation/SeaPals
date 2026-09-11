@@ -15,6 +15,7 @@ import CardActionProxyOverlay from "./CardActionProxyOverlay";
 import SimulatorV2NewGameSetup from "./SimulatorV2NewGameSetup";
 import SimulatorV2LessonPanel from "./SimulatorV2LessonPanel";
 import {
+  SIMULATOR_V2_LESSON_CONCEPTS,
   SIMULATOR_V2_LESSONS,
   getSimulatorV2LessonHelp,
   getSimulatorV2LessonActionBlock,
@@ -4473,6 +4474,9 @@ export default function Simulator({
   const isStoryMode = Boolean(storyMode);
   const tutorialRuntime = storyMode?.tutorial ?? null;
   const embeddedLesson = previewExperience ? tutorialRuntime?.lesson ?? null : null;
+  const tutorialPreviouslyTaughtConcepts = Array.isArray(tutorialRuntime?.previouslyTaughtConcepts)
+    ? tutorialRuntime.previouslyTaughtConcepts
+    : [];
   const accessibilityTextSpeed = ["slow", "normal", "fast", "instant"].includes(accessibilitySettings?.textSpeed)
     ? accessibilitySettings.textSpeed
     : "normal";
@@ -7268,6 +7272,7 @@ export default function Simulator({
     ? (checkpoint, uiState) => getSimulatorV2LessonHelp(embeddedLesson, checkpoint, uiState)
     : getSimulatorTutorialHelp)(tutorialCurrentCheckpoint, {
     guideName: tutorialGuide.name,
+    previouslyTaughtConcepts: tutorialPreviouslyTaughtConcepts,
     hand,
     victoryPending: tutorialVictoryPending,
     playerVp,
@@ -7352,13 +7357,16 @@ export default function Simulator({
         ...(tutorialFinalProgressLabel ? { progressLabel: tutorialFinalProgressLabel } : {}),
       }
     : null;
-  const embeddedCompactConditionHelp = embeddedLesson && compactTutorialConditionActive && tutorialConditionHelp
+  const embeddedCompactConditionHelp = embeddedLesson
+    && !tutorialPreviouslyTaughtConcepts.includes(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS)
+    && compactTutorialConditionActive
+    && tutorialConditionHelp
     ? {
         ...tutorialConditionHelp,
         id: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         cueId: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         title: `${tutorialConditionCard.name} changes this round`,
-        message: `Each round has one Condition that affects both reefs. Check it before you spend RP. ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
+        message: `A Condition changes the rules for both reefs each round. ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
         action: "Read the Condition, then continue.",
         interaction: "tap",
         lessonStep: tutorialStepNumber,
@@ -11729,6 +11737,7 @@ export default function Simulator({
     const explainTutorialRpCollection = Boolean(
       compactTurnPresentationEnabled
       && embeddedLesson
+      && !tutorialPreviouslyTaughtConcepts.includes(SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS)
       && tutorialCheckpointBeforeCollection?.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES.RP_COLLECTED
     );
     if (!explainTutorialRpCollection) {

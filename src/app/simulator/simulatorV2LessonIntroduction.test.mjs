@@ -22,6 +22,11 @@ test("selecting any lesson opens its teacher introduction before the board becom
   assert.match(panelSource, /data-v2-lesson-introduction=\{activeLesson\?\.id \|\| undefined\}/);
   assert.match(panelSource, /<LessonDialogueMessage[\s\S]*?message=\{introduction\}/);
   assert.match(panelSource, /data-v2-start-lesson/);
+  assert.match(
+    experienceSource,
+    /createSimulatorV2LessonRuntime\(lesson\.id, \{ completedLessonIds \}\)/,
+    "the board receives concepts taught by completed earlier lessons",
+  );
 });
 
 test("every lesson opens with a short, authored Mr. Easterling learning promise", () => {

@@ -87,7 +87,7 @@ test("V2 tutorial entry uses the real simulator preview without changing canonic
   assert.match(simulatorPreview, /<SimulatorV2Experience[\s\S]*initialDeckId=\{initialDeckId\}/);
   assert.match(simulatorPreview, /initialTutorial=\{params\?\.tutorial === "1"\}/);
   assert.match(simulatorExperience, /<Simulator\b[\s\S]*previewExperience/);
-  assert.match(simulatorExperience, /createSimulatorV2LessonRuntime\(lesson\.id\)/);
+  assert.match(simulatorExperience, /createSimulatorV2LessonRuntime\(lesson\.id, \{ completedLessonIds \}\)/);
   assert.match(simulatorExperience, /tutorial:\s*runtime/);
   assert.match(tutorialPreview, /getValidSimulatorDeck\(params\?\.returnDeck\)/);
   assert.match(tutorialPreview, /redirect\(`\/simulator-v2\?tutorial=1/);

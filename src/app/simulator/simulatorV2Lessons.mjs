@@ -5,6 +5,29 @@ import {
 
 export const SIMULATOR_V2_LESSON_PROGRESS_KEY = "seapals-simulator-v2-lessons-v2";
 
+export const SIMULATOR_V2_LESSON_CONCEPTS = Object.freeze({
+  ROUND_CONDITIONS: "round-conditions",
+  CORALS: "corals",
+  RESOURCE_POINTS: "resource-points",
+  DRAWING: "drawing",
+  CREATURE_SLOTS: "creature-slots",
+  VICTORY_POINTS: "victory-points",
+  ATTACKING: "attacking",
+  OPPONENT_TURNS: "opponent-turns",
+  DEFENDING: "defending",
+  SUPPORT_CARDS: "support-cards",
+  DECK_SEARCH: "deck-search",
+  STATUS_EFFECTS: "status-effects",
+  CORAL_UPGRADES: "coral-upgrades",
+  SCHOOL_DENSITY: "school-density",
+  OPEN_WATER: "open-water",
+  HABITATS: "habitats",
+  FILTER_FEEDERS: "filter-feeders",
+  APEX: "apex",
+  MULTI_ATTACK: "multi-attack",
+  TURN_PLANNING: "turn-planning",
+});
+
 const MAIN_REQUIREMENT = { path: "phase", operator: "equals", value: "main" };
 const LESSON_RANDOM_SEED_BASE = 0x5EA90000;
 const atLeast = (path, value) => ({ path, operator: "at-least", value });
@@ -111,6 +134,7 @@ function lesson(definition) {
   return deepFreeze({
     buildCards: {},
     supportCards: {},
+    introducedConcepts: [],
     ...definition,
     randomSeed: (LESSON_RANDOM_SEED_BASE + definition.number) >>> 0,
     contract: createSimulatorTutorialContract({
@@ -137,7 +161,15 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     introduction: "In this lesson, you’ll learn how every lively reef begins. Build Mustard Hill Coral, then help Sea Urchin and Clownfish settle into the right homes.",
     completion: "You built a home, collected RP, drew a card, and matched an Invertebrate and a Fish to reach 3 VP.",
     celebration: "Your first reef is thriving!",
-    skills: ["Corals", "Resource Points", "Drawing", "Creature slots", "Victory Points"],
+    skills: ["Conditions", "Corals", "Resource Points", "Drawing", "Creature slots", "Victory Points"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS,
+      SIMULATOR_V2_LESSON_CONCEPTS.CORALS,
+      SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS,
+      SIMULATOR_V2_LESSON_CONCEPTS.DRAWING,
+      SIMULATOR_V2_LESSON_CONCEPTS.CREATURE_SLOTS,
+      SIMULATOR_V2_LESSON_CONCEPTS.VICTORY_POINTS,
+    ],
     focusCardId: "mustard-hill-coral-base", victoryTarget: 3,
     setupCardId: "mustard-hill-coral-base",
     expectedDraw: { deckType: "pals", cardId: "sea-urchin" },
@@ -170,6 +202,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     completion: "You expanded your first reef, drew and placed Porcupine Fish, resolved its faceoff, then reached 6 VP. An attacker must roll higher; a tie favors the defender.",
     celebration: "Your first faceoff is complete!",
     skills: ["Attack costs", "Legal targets", "Faceoffs"],
+    introducedConcepts: [SIMULATOR_V2_LESSON_CONCEPTS.ATTACKING],
     focusCardId: "porcupine-fish", victoryTarget: 6,
     attackCardId: "porcupine-fish", attackTargetCardId: "sea-urchin",
     expectedDraw: { deckType: "pals", cardId: "porcupine-fish" },
@@ -211,6 +244,10 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     completion: "You watched Spanish Hogfish enter play, saw Sea Urchin defend, and reinforced the reef with a new Coral and Clownfish. A strong turn can continue after a creature is defeated.",
     celebration: "Your reef weathered the attack!",
     skills: ["Opponent turns", "Defending", "Recovering"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.OPPONENT_TURNS,
+      SIMULATOR_V2_LESSON_CONCEPTS.DEFENDING,
+    ],
     focusCardId: "spanish-hogfish", attackCardId: "spanish-hogfish", attackTargetCardId: "sea-urchin", victoryTarget: 7,
     expectedDraw: { deckType: "pals", cardId: "clownfish" },
     seed: seed({
@@ -252,6 +289,10 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     completion: "Coral Gardener found a Coral, revealed it, and moved to the discard pile. You turned that one-time effect into a lasting 4 VP reef.",
     celebration: "A smart search grew your reef!",
     skills: ["Support cards", "Searching decks", "Discard pile"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.SUPPORT_CARDS,
+      SIMULATOR_V2_LESSON_CONCEPTS.DECK_SEARCH,
+    ],
     focusCardId: "coral-gardener", searchCardId: "brain-coral-base", victoryTarget: 4,
     seed: seed({
       hand: ["coral-gardener", "sea-urchin"],
@@ -279,6 +320,10 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     completion: "Coral Heal cleared Stunned, so Brain Coral could upgrade and welcome another Sea Urchin.",
     celebration: "Your Coral is back in action!",
     skills: ["Stunned", "Coral Heal", "Status recovery"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.STATUS_EFFECTS,
+      SIMULATOR_V2_LESSON_CONCEPTS.CORAL_UPGRADES,
+    ],
     focusCardId: "coral-heal", victoryTarget: 4,
     seed: seed({
       hand: ["coral-heal", "brain-coral-stage-1", "sea-urchin"],
@@ -310,6 +355,10 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     completion: "Sardine Ball supplied 10 School Density and Halfbeak committed all 10, growing your ecosystem to 4 VP. The density meter tracks what is supplied and what is already in use.",
     celebration: "Your open-water ecosystem is growing!",
     skills: ["Creature Schools", "School Density", "Open water"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY,
+      SIMULATOR_V2_LESSON_CONCEPTS.OPEN_WATER,
+    ],
     focusCardId: "sardine-ball-base", victoryTarget: 4,
     seed: seed({
       hand: ["sardine-ball-base", "halfbeak"],
@@ -334,6 +383,10 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     completion: "Ocean Sunfish joined your 3 VP reef because you had a matching Habitat, 8 RP, and at least 150 available School Density.",
     celebration: "A Filter Feeder joins the ecosystem!",
     skills: ["Filter Feeders", "Habitats", "Density commitments"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.HABITATS,
+      SIMULATOR_V2_LESSON_CONCEPTS.FILTER_FEEDERS,
+    ],
     focusCardId: "ocean-sunfish", victoryTarget: 11,
     seed: seed({
       hand: ["ocean-sunfish"],
@@ -355,6 +408,10 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     completion: "Stage 2 unlocked an Apex slot. Hammerhead met its Habitat, slot, and RP requirements, then resolved both attacks from Ravage.",
     celebration: "Your Apex has arrived!",
     skills: ["Coral upgrades", "Apex slots", "Multi-attack abilities"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.APEX,
+      SIMULATOR_V2_LESSON_CONCEPTS.MULTI_ATTACK,
+    ],
     focusCardId: "hammerhead", attackCardId: "hammerhead", victoryTarget: 14,
     seed: seed({
       hand: ["brain-coral-stage-2", "hammerhead"],
@@ -393,6 +450,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     completion: "You reached 5 VP by collecting, drawing, and building your ecosystem. You are ready to try a match with the simulator's usual VP goal.",
     celebration: "You found the winning play!",
     skills: ["Turn order", "Choosing plays", "Winning"],
+    introducedConcepts: [SIMULATOR_V2_LESSON_CONCEPTS.TURN_PLANNING],
     focusCardId: "clownfish", victoryTarget: 5,
     expectedDraw: { deckType: "pals", cardId: "clownfish" },
     seed: seed({
@@ -426,13 +484,28 @@ export function getSimulatorV2Lesson(value) {
   return SIMULATOR_V2_LESSONS.find((entry) => entry.id === id) ?? null;
 }
 
-export function createSimulatorV2LessonRuntime(lessonId) {
+export function simulatorV2LessonIntroduces(value, concept) {
+  const selected = getSimulatorV2Lesson(value);
+  return Boolean(selected?.introducedConcepts?.includes(concept));
+}
+
+export function getSimulatorV2PreviouslyTaughtConcepts(value, completedLessonIds = []) {
+  const selected = getSimulatorV2Lesson(value);
+  if (!selected) return [];
+  const completed = new Set(Array.isArray(completedLessonIds) ? completedLessonIds : []);
+  return [...new Set(SIMULATOR_V2_LESSONS
+    .filter((entry) => entry.number < selected.number && completed.has(entry.id))
+    .flatMap((entry) => entry.introducedConcepts))];
+}
+
+export function createSimulatorV2LessonRuntime(lessonId, { completedLessonIds = [] } = {}) {
   const selected = getSimulatorV2Lesson(lessonId);
   if (!selected) throw new RangeError("Unknown Simulator V2 lesson: " + String(lessonId) + ".");
   return {
     lesson: selected,
     scriptedDecks: false,
     contract: selected.contract,
+    previouslyTaughtConcepts: getSimulatorV2PreviouslyTaughtConcepts(selected, completedLessonIds),
     guide: {
       name: "Mr. Easterling",
       role: "Your SeaPals teacher",
@@ -478,6 +551,25 @@ const FOUNDATION_CARD_IDS = new Set([
 const UPGRADE_CARD_IDS = new Set(["brain-coral-stage-1", "brain-coral-stage-2"]);
 const OPEN_WATER_CARD_IDS = new Set(["halfbeak", "ocean-sunfish"]);
 const name = (cardId) => CARD_NAMES[cardId] ?? cardId ?? "the highlighted card";
+
+function conceptWasPreviouslyTaught(uiState, concept) {
+  return Array.isArray(uiState.previouslyTaughtConcepts)
+    && uiState.previouslyTaughtConcepts.includes(concept);
+}
+
+function conceptCopy(uiState, concept, teachingCopy, practiceCopy = "") {
+  return conceptWasPreviouslyTaught(uiState, concept) ? practiceCopy : teachingCopy;
+}
+
+function placementConcept(cardId) {
+  if (cardId === "sardine-ball-base") return SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY;
+  if (FOUNDATION_CARD_IDS.has(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.CORALS;
+  if (UPGRADE_CARD_IDS.has(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.CORAL_UPGRADES;
+  if (cardId === "halfbeak") return SIMULATOR_V2_LESSON_CONCEPTS.OPEN_WATER;
+  if (cardId === "ocean-sunfish") return SIMULATOR_V2_LESSON_CONCEPTS.FILTER_FEEDERS;
+  if (cardId === "hammerhead") return SIMULATOR_V2_LESSON_CONCEPTS.APEX;
+  return SIMULATOR_V2_LESSON_CONCEPTS.CREATURE_SLOTS;
+}
 
 function helpFor(selected, current, target, message, action, extra = {}) {
   const checkpointIndex = selected.contract.checkpoints.findIndex(({ id }) => id === current?.id);
@@ -596,13 +688,18 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         "Confirm selection to draw your card.",
       );
     }
-    const drawMessage = selected.id === "winning-turn"
+    const scenarioDrawMessage = selected.id === "winning-turn"
       ? "You need 4 more VP. Your Pals Deck contains a creature that can fill an empty Fish slot."
       : selected.id === "first-attack"
         ? "Porcupine Fish is waiting on top of your Pals Deck. Draw it before you prepare the attack."
         : selected.id === "under-attack"
           ? "You collected enough RP to reinforce the reef. Another Clownfish is waiting on top of your Pals Deck."
           : "Choose the Pals Deck when you want creatures and other Pals cards.";
+    const drawMessage = conceptWasPreviouslyTaught(uiState, SIMULATOR_V2_LESSON_CONCEPTS.DRAWING)
+      ? scenarioDrawMessage
+      : selected.id === "first-reef"
+        ? scenarioDrawMessage
+        : `The Pals Deck holds creatures and other Pals cards. ${scenarioDrawMessage}`;
     return help(
       "draw-controls",
       drawMessage,
@@ -613,7 +710,12 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
 
   if (uiState.playingCardId) {
     const copy = placementCopy(uiState.playingCardId);
-    return help("placement", copy.message, copy.action, { cue: "placement:" + uiState.playingCardId });
+    return help(
+      "placement",
+      conceptCopy(uiState, placementConcept(uiState.playingCardId), copy.message),
+      copy.action,
+      { cue: "placement:" + uiState.playingCardId },
+    );
   }
 
   if (uiState.gamePhase === "setup") {
@@ -640,9 +742,19 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       return help("close-modal", "Your reef is ready. Close your hand to begin the round.", "Close the card panel, then press Begin Round.");
     }
     const message = selected.id === "winning-turn"
-      ? "Begin the round to collect RP. You saved 1; your turn and two Corals will add 4 more."
-      : "Your Coral is ready. Begin Round adds 1 RP for the turn plus 2 from Mustard Hill Coral.";
-    return help("turn-button", message, "Press Begin Round and watch your RP bank.");
+      ? "Your reef needs two more Fish to reach the target. Start the round to find the second one."
+      : conceptCopy(
+          uiState,
+          SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS,
+          "Your Coral is ready. Begin Round adds 1 RP for the turn plus 2 from Mustard Hill Coral.",
+        );
+    return help(
+      "turn-button",
+      message,
+      conceptWasPreviouslyTaught(uiState, SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS)
+        ? "Press Begin Round."
+        : "Press Begin Round and watch your RP bank.",
+    );
   }
 
   if (current.actionType === ACTION.SUPPORT_PLAYED) {
@@ -743,12 +855,12 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     }
     const selectedCard = uiState.selectedHandCard === cardId
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
-    let message = placementCopy(cardId).message;
+    let message = conceptCopy(uiState, placementConcept(cardId), placementCopy(cardId).message);
     if (selected.id === "winning-turn") {
       message = current.id === "v2-first-winning-fish"
         ? "You have 5 RP and two open Fish slots. Each Fish in your hand costs 2 RP and gives 2 VP. Choose which to play first."
         : "Your reef has " + (uiState.playerVp ?? 3) + " VP. One more 2 VP Fish reaches the 5 VP practice goal.";
-    } else if (cardId === "brain-coral-base") {
+    } else if (cardId === "brain-coral-base" && selected.id === "support-search") {
       message = "The searched Brain Coral costs 1 RP and adds another Foundation with Fish and Invertebrate slots.";
     } else if (cardId === "brain-coral-stage-1") {
       message = "Coral Heal cleared Stunned. Brain Coral can now upgrade to Stage 1 for 2 RP.";
@@ -781,7 +893,11 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   if (current.actionType === ACTION.VP_EARNED) {
     return help(
       "vp-score",
-      "Victory Points come from cards in your ecosystem. Reach " + selected.victoryTarget + " VP to finish this lesson.",
+      conceptCopy(
+        uiState,
+        SIMULATOR_V2_LESSON_CONCEPTS.VICTORY_POINTS,
+        "Victory Points come from cards in your ecosystem. Reach " + selected.victoryTarget + " VP to finish this lesson.",
+      ),
       "Watch your VP total.",
     );
   }

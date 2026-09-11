@@ -57,7 +57,7 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
   }
 
   const runtime = lesson ? {
-    ...createSimulatorV2LessonRuntime(lesson.id),
+    ...createSimulatorV2LessonRuntime(lesson.id, { completedLessonIds }),
     onComplete: completeLesson,
     onReplay: () => selectLesson(lesson.id),
   } : null;

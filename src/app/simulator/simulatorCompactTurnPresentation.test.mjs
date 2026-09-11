@@ -25,6 +25,10 @@ test("compact turn presentation is limited to the V2 board without replacing scr
     simulatorSource,
     /import \{[\s\S]*?CompactTurnStage,[\s\S]*?allocateCollectedRpSources,[\s\S]*?createCompactTurnStages,[\s\S]*?\} from "\.\/compactTurnSequence\.mjs";/,
   );
+  assert.match(
+    simulatorSource,
+    /import \{[\s\S]*?SIMULATOR_V2_LESSON_CONCEPTS,[\s\S]*?\} from "\.\/simulatorV2Lessons\.mjs";/,
+  );
 });
 
 test("turn notices stay transient while nonlesson conditions use the compact board reader", () => {
@@ -58,7 +62,7 @@ test("turn notices stay transient while nonlesson conditions use the compact boa
   assert.match(simulatorSource, /\.seapals-compact-turn-banner\.is-condition[\s\S]*?pointer-events: auto;/);
 });
 
-test("embedded condition teaching derives from the compact stage and owns the only Continue action", () => {
+test("Condition teacher dialogue appears only when earlier completed lessons have not taught it", () => {
   const conditionHelp = sourceSection(
     simulatorSource,
     "const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;",
@@ -77,7 +81,11 @@ test("embedded condition teaching derives from the compact stage and owns the on
   );
   assert.match(
     conditionHelp,
-    /Each round has one Condition that affects both reefs\.[\s\S]*?Check it before you spend RP\.[\s\S]*?tutorialConditionCard\.name/,
+    /embeddedLesson[\s\S]*?!tutorialPreviouslyTaughtConcepts\.includes\(SIMULATOR_V2_LESSON_CONCEPTS\.ROUND_CONDITIONS\)[\s\S]*?compactTutorialConditionActive/,
+  );
+  assert.match(
+    conditionHelp,
+    /A Condition changes the rules for both reefs each round\.[\s\S]*?tutorialConditionCard\.name/,
   );
   assert.match(conditionHelp, /const embeddedCompactCoachHelp = embeddedCompactConditionHelp \?\? embeddedCompactRpHelp/);
   assert.match(
@@ -133,7 +141,7 @@ test("new-round sequencing orders turn, condition, RP, then an optional lesson s
   assert.match(continuation, /opponentStateOverride: event\.opponentStateAfter \?\? null/);
 });
 
-test("embedded RP teaching defers tutorial progress until its teacher summary is continued", () => {
+test("RP defers progress for a teacher summary only when earlier lessons have not taught it", () => {
   const startRound = sourceSection(
     simulatorSource,
     "function startRound(nextRound,",
@@ -148,7 +156,7 @@ test("embedded RP teaching defers tutorial progress until its teacher summary is
   assert.match(startRound, /const tutorialRpEvent = \{[\s\S]*?details:[\s\S]*?context:/);
   assert.match(
     startRound,
-    /tutorialCheckpointBeforeCollection\?\.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES\.RP_COLLECTED/,
+    /!tutorialPreviouslyTaughtConcepts\.includes\(SIMULATOR_V2_LESSON_CONCEPTS\.RESOURCE_POINTS\)[\s\S]*?tutorialCheckpointBeforeCollection\?\.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES\.RP_COLLECTED/,
   );
   assert.match(
     startRound,
