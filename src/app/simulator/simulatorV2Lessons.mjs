@@ -199,7 +199,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     title: "Try your first attack", duration: "4 min", goalLabel: "Build an attacker and reach 6 VP",
     summary: "Draw and place Porcupine Fish, resolve a real faceoff, then grow your reef.",
     introduction: "In this lesson, you’ll learn how to prepare an attacker, step by step. Your first reef is back: draw Porcupine Fish, give it a home, then let Crunch introduce itself.",
-    completion: "You expanded your first reef, drew and placed Porcupine Fish, resolved its faceoff, then reached 6 VP. An attacker must roll higher; a tie favors the defender.",
+    completion: "You built an attacker, read the faceoff, and grew the reef to 6 VP. Nice work. Crunch officially introduced itself.",
     celebration: "Your first faceoff is complete!",
     skills: ["Attack costs", "Legal targets", "Faceoffs"],
     introducedConcepts: [SIMULATOR_V2_LESSON_CONCEPTS.ATTACKING],
@@ -822,7 +822,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (uiState.attackContext) {
       return help(
         "opponent-board",
-        "Crunch targets an opposing Invertebrate. Sea Urchin is legal and defends with a D6.",
+        "Crunch can only target an opposing Invertebrate. Sea Urchin is the legal target glowing above.",
         "Choose the glowing Sea Urchin in the opposing reef.",
       );
     }
@@ -833,7 +833,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const target = uiState.inspectedAttack?.ready ? "attack-button" : "player-board";
     return help(
       target,
-      "Crunch costs 1 RP and rolls a D4 against an Invertebrate. An attack must roll higher to win; a tie favors the defender.",
+      "Crunch costs 1 RP and targets an opposing Invertebrate.",
       target === "attack-button" ? "Use Crunch, then choose a legal target." : "Select Porcupine Fish, then use Crunch.",
       { targetCardId: selected.attackCardId, targetActionKey: attack?.actionKey ?? null },
     );

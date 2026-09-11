@@ -103,9 +103,18 @@ test("combat results use a compact, explicit checkpoint instead of immediately d
     /\.seapals-combat-result-side \{[\s\S]*?grid-template-rows:\s*auto 1fr auto/,
     "Each column should hold its total at the bottom after all contributors",
   );
-  const continueButton = checkpointMarkup.match(/<button[\s\S]*?>\s*Continue\s*<\/button>/)?.[0] ?? "";
+  const continueButton = checkpointMarkup.match(/<button[\s\S]*?data-combat-result-continue[\s\S]*?<\/button>/)?.[0] ?? "";
   assert.match(continueButton, /data-combat-result-continue/);
-  assert.match(continueButton, /onClick=\{continueCombatResultCheckpoint\}/);
+  assert.match(
+    continueButton,
+    /onClick=\{combatCheckpointTeachingHasNext \? advanceCombatResultTeaching : continueCombatResultCheckpoint\}/,
+    "Tutorial teaching may claim the first advances, while every ordinary and final result still uses the real checkpoint continuation",
+  );
+  assert.match(
+    continueButton,
+    /\{combatCheckpointTeachingHasNext \? "Next" : "Continue"\}/,
+    "Only an unfinished teaching walkthrough should relabel the generic Continue action",
+  );
   assert.match(continueButton, /autoFocus/);
 
   const boardInteractionGate = sourceSection(
@@ -117,6 +126,147 @@ test("combat results use a compact, explicit checkpoint instead of immediately d
     boardInteractionGate,
     /combatResultCheckpoint/,
     "Repeat targets and board controls must remain inert while the result awaits Continue",
+  );
+});
+
+test("the first opposed tutorial result teaches attack, defense, and outcome on the real result card", () => {
+  assert.match(
+    simulatorSource,
+    /import \{[\s\S]*?buildSimulatorV2CombatResultTeachingSteps[\s\S]*?shouldTeachSimulatorV2CombatResult[\s\S]*?\} from "\.\/simulatorV2CombatResultTeaching\.mjs";/,
+    "The Simulator should use the tested curriculum helper instead of embedding an unrelated combat lesson in JSX",
+  );
+
+  const presentationModel = sourceSection(
+    simulatorSource,
+    "const combatCheckpointBreakdown =",
+    "const selectedHandPlayError =",
+  );
+  const beginCheckpoint = namedFunctionSection(simulatorSource, "beginCombatResultCheckpoint");
+  assert.match(
+    beginCheckpoint,
+    /shouldTeachSimulatorV2CombatResult\(\{[\s\S]*?lesson:\s*embeddedLesson[\s\S]*?previouslyTaughtConcepts:\s*tutorialPreviouslyTaughtConcepts[\s\S]*?alreadyExplained:\s*tutorialCombatResultExplainedRef\.current[\s\S]*?eventType:\s*event\?\.type[\s\S]*?breakdown,[\s\S]*?\}\)/,
+    "The walkthrough must be scoped by the active lesson, learned concepts, this attempt, and a real opposed faceoff",
+  );
+  assert.match(
+    beginCheckpoint,
+    /if \(showTutorialTeaching\) tutorialCombatResultExplainedRef\.current = true/,
+    "A second faceoff in the same lesson attempt must not repeat the walkthrough",
+  );
+  assert.match(
+    simulatorSource,
+    /const tutorialCombatResultExplainedRef = useRef\(false\)[\s\S]*?useEffect\(\(\) => \{[\s\S]*?tutorialCombatResultExplainedRef\.current = false[\s\S]*?\}, \[embeddedLesson\?\.id\]\)/,
+    "Changing lessons should reset attempt-local teaching without leaking suppression across the curriculum",
+  );
+  const teachingStepsCall = presentationModel.match(
+    /buildSimulatorV2CombatResultTeachingSteps\(\{([\s\S]*?)\}\)/,
+  )?.[1] ?? "";
+  assert.match(teachingStepsCall, /combatCheckpointBreakdown/);
+  assert.match(
+    teachingStepsCall,
+    /combatCheckpointSourceName/,
+    "Real normalized attack breakdowns carry a card ID, so the walkthrough must hydrate the resolved attacker name",
+  );
+  assert.match(
+    teachingStepsCall,
+    /combatCheckpointDefenderName/,
+    "Real normalized defense breakdowns carry a card ID, so the walkthrough must hydrate the resolved defender name",
+  );
+  assert.match(teachingStepsCall, /combatCheckpointConsequences/);
+
+  const checkpointMarkup = sourceSection(
+    simulatorSource,
+    "{combatResultCheckpoint ? (",
+    "{opponentPlacementFlight ? (",
+  );
+  assert.match(checkpointMarkup, /data-v2-combat-result-teaching/);
+  assert.match(
+    checkpointMarkup,
+    /data-v2-combat-result-teaching[\s\S]*?data-combat-teaching-focus=\{[^}]+\.focus\}/,
+    "The teacher callout should expose which part of the held result it is explaining",
+  );
+  assert.match(checkpointMarkup, /data-combat-teaching-hand/);
+  assert.equal(
+    (checkpointMarkup.match(/data-combat-teaching-target=/g) ?? []).length,
+    3,
+    "The walkthrough should focus the existing attack, defense, and outcome regions rather than duplicate their data",
+  );
+  assert.match(
+    checkpointMarkup,
+    /data-combat-breakdown-side="attack"[\s\S]*?data-combat-teaching-target="attack"/,
+  );
+  assert.match(
+    checkpointMarkup,
+    /data-combat-breakdown-side="defense"[\s\S]*?data-combat-teaching-target="defense"/,
+  );
+  assert.match(
+    checkpointMarkup,
+    /seapals-combat-result-summary[\s\S]*?data-combat-teaching-target="outcome"/,
+  );
+  assert.doesNotMatch(
+    checkpointMarkup,
+    /data-combat-teaching-target[\s\S]*?combatResultCheckpoint\.event\.(?:message|checkpointMessage)/,
+    "Teaching should point at normalized result data instead of reviving generated combat prose",
+  );
+});
+
+test("two teaching advances cannot commit combat, and the final Continue retains the generic gateway", () => {
+  const teachingAdvance = namedFunctionSection(simulatorSource, "advanceCombatResultTeaching");
+  assert.match(
+    teachingAdvance,
+    /const nextStep = checkpoint\.tutorialTeachingStep \+ 1[\s\S]*?if \(nextStep >= SIMULATOR_V2_COMBAT_TEACHING_STEP_COUNT\) return[\s\S]*?tutorialTeachingStep:\s*nextStep[\s\S]*?setCombatResultCheckpoint\(nextCheckpoint\)/,
+    "Each teaching advance should move only to the next of the three authored teaching steps",
+  );
+  assert.doesNotMatch(
+    teachingAdvance,
+    /continueCombatResultCheckpoint\(|combatResultCheckpointRef\.current\s*=\s*null|queueConsumedAttackFlight\(|\.commit\?\.\(/,
+    "Neither of the first two Next actions may mutate, discard, or advance the held combat result",
+  );
+
+  const checkpointMarkup = sourceSection(
+    simulatorSource,
+    "{combatResultCheckpoint ? (",
+    "{opponentPlacementFlight ? (",
+  );
+  const resultButton = checkpointMarkup.match(
+    /<button[\s\S]*?data-combat-result-continue[\s\S]*?<\/button>/,
+  )?.[0] ?? "";
+  assert.match(
+    resultButton,
+    /onClick=\{combatCheckpointTeachingHasNext \? advanceCombatResultTeaching : continueCombatResultCheckpoint\}/,
+    "After two Next actions, the third step must hand the same button back to the real Continue gateway",
+  );
+
+  const continueCheckpoint = namedFunctionSection(simulatorSource, "continueCombatResultCheckpoint");
+  assert.match(continueCheckpoint, /combatResultCheckpointRef\.current\s*=\s*null/);
+  assert.match(continueCheckpoint, /checkpoint\.commit\?\.\(\)/);
+  assert.match(continueCheckpoint, /continueAfterPresentedEvent\(checkpoint\.event, pendingEventsRef\.current\)/);
+});
+
+test("tutorial result focus and its hand cue respect reduced motion", () => {
+  const checkpointStyles = sourceSection(
+    simulatorSource,
+    ".seapals-combat-result-breakdown {",
+    ".seapals-opponent-placement-layer {",
+  );
+  assert.match(
+    checkpointStyles,
+    /\.seapals-combat-result-side\.is-teaching-focus,\s*\.seapals-combat-result-summary\.is-teaching-focus\s*\{[\s\S]*?outline:[\s\S]*?animation:\s*seapalsCombatTeachingFocus[^;]*linear/,
+    "The three marked result regions need a visible focus treatment",
+  );
+  assert.match(
+    checkpointStyles,
+    /\.seapals-combat-result-teaching-hand\s*\{[\s\S]*?opacity:\s*(?:0?\.75|75%)/,
+    "The tutorial hand should retain the requested 75% opacity",
+  );
+  assert.match(
+    checkpointStyles,
+    /\.seapals-combat-result-teaching-hand\s*\{[\s\S]*?animation:\s*seapalsCombatTeachingHand[^;]*linear/,
+    "The hand should direct attention between the three result regions",
+  );
+  assert.match(
+    checkpointStyles,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.seapals-combat-result-teaching-hand\s*\{\s*animation:\s*none\s*!important/,
+    "Reduced motion should keep the hand visible without moving it",
   );
 });
 

@@ -47,6 +47,11 @@ import {
   formatCombatContributorValue,
 } from "./combatResultBreakdown.mjs";
 import {
+  SIMULATOR_V2_COMBAT_TEACHING_STEP_COUNT,
+  buildSimulatorV2CombatResultTeachingSteps,
+  shouldTeachSimulatorV2CombatResult,
+} from "./simulatorV2CombatResultTeaching.mjs";
+import {
   EFFECT_ROLL_READY_TYPE,
   EffectRollKind,
   createEffectRollReadyEvent,
@@ -4726,6 +4731,10 @@ export default function Simulator({
   const combatResultCheckpointRef = useRef(null);
   const combatResultCheckpointIdRef = useRef(0);
   const combatResultReturnFocusRef = useRef(null);
+  const tutorialCombatResultExplainedRef = useRef(false);
+  useEffect(() => {
+    tutorialCombatResultExplainedRef.current = false;
+  }, [embeddedLesson?.id]);
   const [consumedAttackFlight, setConsumedAttackFlight] = useState(null);
   const consumedAttackFlightTimerRef = useRef(null);
   const consumedAttackFlightIdRef = useRef(0);
@@ -8740,6 +8749,15 @@ export default function Simulator({
     const resolvedOutcome = outcome ?? (playerRole === "defender"
       ? event.success ? "defense-held" : "defense-broken"
       : event.success ? "attack-succeeded" : "attack-blocked");
+    const breakdown = buildCombatResultBreakdown(event);
+    const showTutorialTeaching = shouldTeachSimulatorV2CombatResult({
+      lesson: embeddedLesson,
+      previouslyTaughtConcepts: tutorialPreviouslyTaughtConcepts,
+      alreadyExplained: tutorialCombatResultExplainedRef.current,
+      eventType: event?.type,
+      breakdown,
+    });
+    if (showTutorialTeaching) tutorialCombatResultExplainedRef.current = true;
     const checkpoint = {
       id,
       event,
@@ -8749,6 +8767,7 @@ export default function Simulator({
       sourceGeometry: discardCue ? createConsumedAttackFlightPlan(discardCue) : null,
       commit,
       remainingEvents,
+      tutorialTeachingStep: showTutorialTeaching ? 0 : null,
     };
     combatResultReturnFocusRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
@@ -8758,6 +8777,16 @@ export default function Simulator({
     combatResultCheckpointRef.current = checkpoint;
     setEventOverlay(null);
     setCombatResultCheckpoint(checkpoint);
+  }
+
+  function advanceCombatResultTeaching() {
+    const checkpoint = combatResultCheckpointRef.current;
+    if (!checkpoint || checkpoint.tutorialTeachingStep == null) return;
+    const nextStep = checkpoint.tutorialTeachingStep + 1;
+    if (nextStep >= SIMULATOR_V2_COMBAT_TEACHING_STEP_COUNT) return;
+    const nextCheckpoint = { ...checkpoint, tutorialTeachingStep: nextStep };
+    combatResultCheckpointRef.current = nextCheckpoint;
+    setCombatResultCheckpoint(nextCheckpoint);
   }
 
   function continueCombatResultCheckpoint() {
@@ -20809,6 +20838,21 @@ export default function Simulator({
         defaultConsequence: combatCheckpointDefaultConsequence,
       })
     : [];
+  const combatCheckpointTeachingSteps = combatResultCheckpoint?.tutorialTeachingStep != null
+    ? buildSimulatorV2CombatResultTeachingSteps({
+        breakdown: combatCheckpointBreakdown,
+        consequences: combatCheckpointConsequences,
+        attackName: combatCheckpointSourceName,
+        defenseName: combatCheckpointDefenderName,
+      })
+    : [];
+  const combatCheckpointTeachingStep = combatCheckpointTeachingSteps[
+    combatResultCheckpoint?.tutorialTeachingStep ?? -1
+  ] ?? null;
+  const combatCheckpointTeachingHasNext = Boolean(
+    combatCheckpointTeachingStep
+      && combatResultCheckpoint.tutorialTeachingStep + 1 < combatCheckpointTeachingSteps.length,
+  );
   const combatCheckpointAccessibleSummary = combatResultCheckpoint
     ? [
         combatCheckpointBreakdown.attack
@@ -23388,6 +23432,58 @@ export default function Simulator({
           line-height: 1.1;
           text-align: center;
         }
+        .seapals-combat-result-teaching {
+          display: grid;
+          min-height: 6rem;
+          grid-template-columns: 2.75rem minmax(0, 1fr);
+          align-items: center;
+          gap: .55rem;
+          border: 1px solid rgba(125, 211, 252, .42);
+          border-radius: .82rem;
+          background: linear-gradient(135deg, rgba(8, 47, 73, .92), rgba(30, 41, 59, .92));
+          padding: .48rem .58rem;
+          box-shadow: inset 0 1px rgba(255,255,255,.08);
+        }
+        .seapals-combat-result-teaching .seapals-professor-portrait {
+          width: 2.75rem;
+          height: 2.75rem;
+          border-color: rgba(125, 211, 252, .58);
+          border-radius: .72rem;
+          background: linear-gradient(145deg, #e0f2fe, #bae6fd);
+        }
+        .seapals-combat-result-teaching-copy {
+          display: grid;
+          min-width: 0;
+          gap: .16rem;
+        }
+        .seapals-combat-result-teaching-header {
+          display: flex;
+          min-width: 0;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: .5rem;
+        }
+        .seapals-combat-result-teaching-header strong {
+          color: #fda4af;
+          font-size: .67rem;
+          font-weight: 950;
+          letter-spacing: .06em;
+          text-transform: uppercase;
+        }
+        .seapals-combat-result-teaching-header span {
+          flex: 0 0 auto;
+          color: #bae6fd;
+          font-size: .65rem;
+          font-weight: 850;
+        }
+        .seapals-combat-result-teaching p {
+          margin: 0;
+          color: #f8fafc;
+          font-size: clamp(.72rem, 2.65vw, .8rem);
+          font-weight: 720;
+          line-height: 1.3;
+          text-align: left;
+        }
         .seapals-combat-result-breakdown {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -23395,6 +23491,7 @@ export default function Simulator({
           gap: .5rem;
         }
         .seapals-combat-result-side {
+          position: relative;
           display: grid;
           min-width: 0;
           grid-template-rows: auto 1fr auto;
@@ -23406,6 +23503,12 @@ export default function Simulator({
         .seapals-combat-result-side.is-defense {
           border-color: rgba(103, 232, 249, .34);
           background: rgba(8, 47, 73, .2);
+        }
+        .seapals-combat-result-side.is-teaching-focus,
+        .seapals-combat-result-summary.is-teaching-focus {
+          outline: 2px solid rgba(186, 230, 253, .94);
+          outline-offset: 2px;
+          animation: seapalsCombatTeachingFocus 1.8s linear infinite;
         }
         .seapals-combat-result-side-header {
           display: grid;
@@ -23500,6 +23603,7 @@ export default function Simulator({
           font-weight: 800;
         }
         .seapals-combat-result-summary {
+          position: relative;
           display: grid;
           min-height: 2rem;
           gap: .3rem;
@@ -23509,6 +23613,32 @@ export default function Simulator({
           text-align: center;
           font-size: .76rem;
           line-height: 1.2;
+        }
+        .seapals-combat-result-teaching-hand {
+          position: absolute;
+          z-index: 3;
+          bottom: .08rem;
+          display: block;
+          width: 1.85rem;
+          height: 1.85rem;
+          opacity: .75;
+          pointer-events: none;
+          filter: drop-shadow(0 2px 2px rgba(2, 8, 23, .75));
+          animation: seapalsCombatTeachingHand 1.4s linear infinite;
+        }
+        .seapals-combat-result-teaching-hand svg {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+        .seapals-combat-result-side .seapals-combat-result-teaching-hand {
+          left: 50%;
+          margin-left: -.925rem;
+        }
+        .seapals-combat-result-summary .seapals-combat-result-teaching-hand {
+          top: calc(50% - .925rem);
+          bottom: auto;
+          left: .4rem;
         }
         .seapals-combat-result-verdict { color: #f8fafc; font-weight: 950; }
         .seapals-combat-result-consequences {
@@ -23539,12 +23669,38 @@ export default function Simulator({
           background: linear-gradient(90deg, #67e8f9, #6ee7b7);
           color: #052e3a;
         }
+        @keyframes seapalsCombatTeachingFocus {
+          0%, 100% { box-shadow: 0 0 0 rgba(125, 211, 252, 0); }
+          50% { box-shadow: 0 0 20px rgba(125, 211, 252, .34); }
+        }
+        @keyframes seapalsCombatTeachingHand {
+          0%, 100% { transform: translateY(.18rem); }
+          50% { transform: translateY(-.12rem); }
+        }
+        .seapals-reduced-motion .seapals-combat-result-side.is-teaching-focus,
+        .seapals-reduced-motion .seapals-combat-result-summary.is-teaching-focus,
+        .seapals-reduced-motion .seapals-combat-result-teaching-hand {
+          animation: none !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .seapals-combat-result-side.is-teaching-focus,
+          .seapals-combat-result-summary.is-teaching-focus,
+          .seapals-combat-result-teaching-hand { animation: none !important; }
+        }
         @media (max-height: 34rem) {
           .seapals-combat-result-checkpoint {
             max-height: calc(100dvh - .5rem);
             gap: .3rem;
             padding: .55rem;
           }
+          .seapals-combat-result-teaching {
+            min-height: 4.75rem;
+            grid-template-columns: 2.25rem minmax(0, 1fr);
+            gap: .4rem;
+            padding: .35rem .45rem;
+          }
+          .seapals-combat-result-teaching .seapals-professor-portrait { width: 2.25rem; height: 2.25rem; }
+          .seapals-combat-result-teaching p { font-size: .69rem; line-height: 1.22; }
           .seapals-combat-result-breakdown { gap: .3rem; }
           .seapals-combat-result-side { padding: .42rem; }
           .seapals-combat-result-side-header { padding-bottom: .25rem; }
@@ -26953,10 +27109,15 @@ export default function Simulator({
             data-combat-result-checkpoint
             data-combat-outcome={combatResultCheckpoint.outcome}
             data-player-role={combatResultCheckpoint.playerRole}
+            data-combat-result-teaching={combatCheckpointTeachingStep ? "true" : undefined}
+            data-combat-teaching-step={combatCheckpointTeachingStep?.id}
             role="dialog"
             aria-modal="true"
             aria-labelledby={`seapals-combat-result-title-${combatResultCheckpoint.id}`}
-            aria-describedby={`seapals-combat-result-message-${combatResultCheckpoint.id}`}
+            aria-describedby={[
+              combatCheckpointTeachingStep ? `seapals-combat-result-teaching-${combatResultCheckpoint.id}` : null,
+              `seapals-combat-result-message-${combatResultCheckpoint.id}`,
+            ].filter(Boolean).join(" ")}
             onKeyDown={(event) => {
               if (event.key !== "Tab") return;
               event.preventDefault();
@@ -26966,13 +27127,42 @@ export default function Simulator({
             <h2 id={`seapals-combat-result-title-${combatResultCheckpoint.id}`} className="seapals-combat-result-title">
               Results
             </h2>
+            {combatCheckpointTeachingStep ? (
+              <aside
+                className="seapals-combat-result-teaching"
+                data-v2-combat-result-teaching
+                data-combat-teaching-focus={combatCheckpointTeachingStep.focus}
+                aria-label={`${tutorialGuide.name} explains the result`}
+              >
+                <ProfessorGuidePortrait guide={tutorialGuide} compact />
+                <div className="seapals-combat-result-teaching-copy">
+                  <div className="seapals-combat-result-teaching-header">
+                    <strong>{tutorialGuide.name}</strong>
+                    <span>{combatResultCheckpoint.tutorialTeachingStep + 1} of {combatCheckpointTeachingSteps.length}</span>
+                  </div>
+                  <p
+                    id={`seapals-combat-result-teaching-${combatResultCheckpoint.id}`}
+                    key={combatCheckpointTeachingStep.id}
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
+                    {combatCheckpointTeachingStep.message}
+                  </p>
+                </div>
+              </aside>
+            ) : null}
             {combatCheckpointBreakdown.attack ? (
               <div
                 className="seapals-combat-result-breakdown"
                 role="group"
                 aria-label={`${combatCheckpointSourceName} attack ${combatCheckpointAttackTotal}${combatCheckpointDefenseTotal != null ? ` versus ${combatCheckpointDefenderName} defense ${combatCheckpointDefenseTotal}` : ""}`}
               >
-                <section className="seapals-combat-result-side is-attack" data-combat-breakdown-side="attack">
+                <section
+                  className={`seapals-combat-result-side is-attack${combatCheckpointTeachingStep?.focus === "attack" ? " is-teaching-focus" : ""}`}
+                  data-combat-breakdown-side="attack"
+                  data-combat-teaching-target="attack"
+                >
                   <header className="seapals-combat-result-side-header">
                     <small>Attack</small>
                     <strong>{combatCheckpointSourceName}</strong>
@@ -26993,8 +27183,15 @@ export default function Simulator({
                     <span>Total</span>
                     <strong data-combat-total>{combatCheckpointAttackTotal}</strong>
                   </footer>
+                  {combatCheckpointTeachingStep?.focus === "attack" ? (
+                    <span className="seapals-combat-result-teaching-hand" data-combat-teaching-hand aria-hidden="true"><EmbeddedLessonHandIcon /></span>
+                  ) : null}
                 </section>
-                <section className={`seapals-combat-result-side is-defense${combatCheckpointBreakdown.defense ? "" : " is-empty"}`} data-combat-breakdown-side="defense">
+                <section
+                  className={`seapals-combat-result-side is-defense${combatCheckpointBreakdown.defense ? "" : " is-empty"}${combatCheckpointTeachingStep?.focus === "defense" ? " is-teaching-focus" : ""}`}
+                  data-combat-breakdown-side="defense"
+                  data-combat-teaching-target="defense"
+                >
                   <header className="seapals-combat-result-side-header">
                     <small>Defense</small>
                     <strong>{combatCheckpointDefenderName}</strong>
@@ -27016,11 +27213,18 @@ export default function Simulator({
                     <span>Total</span>
                     <strong data-combat-total>{combatCheckpointDefenseTotal ?? "—"}</strong>
                   </footer>
+                  {combatCheckpointTeachingStep?.focus === "defense" ? (
+                    <span className="seapals-combat-result-teaching-hand" data-combat-teaching-hand aria-hidden="true"><EmbeddedLessonHandIcon /></span>
+                  ) : null}
                 </section>
               </div>
             ) : null}
             {combatCheckpointVerdict || combatCheckpointConsequences.length ? (
-              <div className="seapals-combat-result-summary" aria-hidden="true">
+              <div
+                className={`seapals-combat-result-summary${combatCheckpointTeachingStep?.focus === "outcome" ? " is-teaching-focus" : ""}`}
+                data-combat-teaching-target="outcome"
+                aria-hidden="true"
+              >
                 {combatCheckpointVerdict ? <strong className="seapals-combat-result-verdict">{combatCheckpointVerdict}</strong> : null}
                 {combatCheckpointConsequences.length ? (
                   <div className="seapals-combat-result-consequences" data-combat-consequences>
@@ -27032,6 +27236,9 @@ export default function Simulator({
                     ))}
                   </div>
                 ) : null}
+                {combatCheckpointTeachingStep?.focus === "outcome" ? (
+                  <span className="seapals-combat-result-teaching-hand" data-combat-teaching-hand aria-hidden="true"><EmbeddedLessonHandIcon /></span>
+                ) : null}
               </div>
             ) : null}
             <p className="sr-only" id={`seapals-combat-result-message-${combatResultCheckpoint.id}`}>{combatCheckpointAccessibleSummary}</p>
@@ -27039,10 +27246,10 @@ export default function Simulator({
               type="button"
               className="seapals-combat-result-continue"
               data-combat-result-continue
-              onClick={continueCombatResultCheckpoint}
+              onClick={combatCheckpointTeachingHasNext ? advanceCombatResultTeaching : continueCombatResultCheckpoint}
               autoFocus
             >
-              Continue
+              {combatCheckpointTeachingHasNext ? "Next" : "Continue"}
             </button>
           </section>
         </>
