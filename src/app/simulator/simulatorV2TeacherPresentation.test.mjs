@@ -64,8 +64,8 @@ test("Mr. Easterling's message reads like left-to-right dialogue", () => {
 
   assert.match(instructionRule, /width:\s*100%/);
   assert.match(instructionRule, /text-align:\s*left/);
-  assert.match(instructionRule, /text-wrap:\s*pretty/);
-  assert.doesNotMatch(instructionRule, /text-wrap:\s*balance/);
+  assert.match(instructionRule, /text-wrap:\s*wrap/);
+  assert.doesNotMatch(instructionRule, /text-wrap:\s*(?:pretty|balance)/);
   assert.match(feedbackRule, /text-align:\s*left/);
   assert.match(cssRules(".currentMove").join("\n"), /width:\s*100%/);
   assert.match(cssRules(".coachBody").join("\n"), /padding:\s*0\.05rem 0\.9rem 0\.55rem/);
@@ -81,8 +81,11 @@ test("Mr. Easterling's lesson dialogue uses a stable accessible typewriter revea
   assert.match(panelSource, /getProfessorVisibleGraphemeCount\(\{/);
   assert.match(panelSource, /key=\{dialogueKey\}[\s\S]*?message=\{dialogueMessage\}/);
   assert.match(panelSource, /className=\{styles\.typewriterFrame\} aria-hidden="true"/);
-  assert.match(panelSource, /className=\{styles\.typewriterMeasure\}>\{message\}<\/span>/);
-  assert.match(panelSource, /className=\{styles\.typewriterVisible\}[\s\S]*?\{visibleMessage\}/);
+  assert.match(panelSource, /const pendingMessage = graphemes\.slice\(visibleCount\)\.join\(""\)/);
+  assert.match(
+    panelSource,
+    /\{visibleMessage\}[\s\S]*?className=\{styles\.typewriterCursor\}[\s\S]*?className=\{styles\.typewriterPending\}>\{pendingMessage\}/,
+  );
   assert.match(panelSource, /className=\{styles\.srOnly\}>\{message\}<\/span>/);
   assert.doesNotMatch(panelSource, /className=\{styles\.currentMove\} aria-live/);
   assert.doesNotMatch(panelSource, /className=\{styles\.srOnly\} role="status"/);
@@ -92,10 +95,15 @@ test("Mr. Easterling's lesson dialogue uses a stable accessible typewriter revea
   );
 
   const frameRule = cssRules(".typewriterFrame").join("\n");
-  assert.match(frameRule, /display:\s*grid/);
+  assert.match(frameRule, /display:\s*block/);
+  assert.match(frameRule, /white-space:\s*pre-wrap/);
   assert.match(frameRule, /pointer-events:\s*none/);
-  assert.match(cssRules(".typewriterMeasure").join("\n"), /visibility:\s*hidden/);
-  assert.match(styleSource, /\.typewriterMeasure,\s*\.typewriterVisible\s*\{[^}]*grid-area:\s*1 \/ 1/);
+  const pendingRule = cssRules(".typewriterPending").join("\n");
+  const cursorRule = cssRules(".typewriterCursor").join("\n");
+  assert.match(pendingRule, /visibility:\s*hidden/);
+  assert.doesNotMatch(pendingRule, /display:\s*none/);
+  assert.match(cursorRule, /position:\s*absolute/);
+  assert.doesNotMatch(styleSource, /\.typewriterMeasure|\.typewriterVisible/);
 });
 
 test("lesson dialogue honors motion settings without delaying board actions", () => {

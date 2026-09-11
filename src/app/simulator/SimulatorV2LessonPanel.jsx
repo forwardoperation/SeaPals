@@ -40,6 +40,7 @@ function LessonDialogueMessage({ message, textSpeed = "normal", reducedMotion = 
   const [visibleCount, setVisibleCount] = useState(0);
   const animationRef = useRef({ frameId: null, generation: 0 });
   const visibleMessage = graphemes.slice(0, visibleCount).join("");
+  const pendingMessage = graphemes.slice(visibleCount).join("");
   const isComplete = visibleCount >= graphemes.length;
 
   useEffect(() => {
@@ -96,11 +97,9 @@ function LessonDialogueMessage({ message, textSpeed = "normal", reducedMotion = 
   return (
     <p className={styles.instruction} data-v2-lesson-instruction>
       <span className={styles.typewriterFrame} aria-hidden="true">
-        <span className={styles.typewriterMeasure}>{message}</span>
-        <span className={styles.typewriterVisible}>
-          {visibleMessage}
-          {!isComplete ? <span className={styles.typewriterCursor} /> : null}
-        </span>
+        {visibleMessage}
+        {!isComplete ? <span className={styles.typewriterCursor} /> : null}
+        <span className={styles.typewriterPending}>{pendingMessage}</span>
       </span>
       <span className={styles.srOnly}>{message}</span>
     </p>
