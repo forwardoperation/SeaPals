@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import RulesChat from "@/components/rules/RulesChat";
@@ -963,7 +963,7 @@ function ProfessorCoachOverlay({ help, children, placementMode = "target", measu
     .join(":");
   const usesDividerAnchor = placementMode === "reef-divider";
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!usesDividerAnchor && (!help?.target || !TUTORIAL_POINTER_TARGETS.has(help.target))) {
       setPlacement(null);
       return undefined;
@@ -1053,7 +1053,7 @@ function ProfessorCoachOverlay({ help, children, placementMode = "target", measu
       }
     };
 
-    requestUpdate();
+    updatePlacement();
     delayedUpdate = window.setTimeout(requestUpdate, 240);
     window.addEventListener("resize", requestUpdate);
     window.addEventListener("scroll", requestUpdate, true);
@@ -7358,7 +7358,7 @@ export default function Simulator({
         id: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         cueId: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         title: `${tutorialConditionCard.name} changes this round`,
-        message: `At the start of each round, one Condition changes the rules for both players. It may change costs, draws, limits, or which cards are legal, so check it before spending RP. This round's Condition is ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
+        message: `Each round has one Condition that affects both reefs. Check it before you spend RP. ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
         action: "Read the Condition, then continue.",
         interaction: "tap",
         lessonStep: tutorialStepNumber,
@@ -7532,6 +7532,7 @@ export default function Simulator({
     || mobileHudPanel
     || simulatorExitConfirmationOpen
     || tutorialExitConfirmationOpen
+    || combatResultCheckpoint
     || gameResult
   );
   const embeddedLessonActionReady = Boolean(
@@ -7539,9 +7540,14 @@ export default function Simulator({
     && tutorialHelpOpen
     && tutorialHelpDismissalKey
   );
+  const embeddedLessonAttackControlsOpen = Boolean(
+    tutorialCurrentCheckpoint?.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES.ATTACK_RESOLVED
+    && (inspectedCardData || attackContext)
+  );
   const embeddedLessonCoachOpen = Boolean(
     embeddedLessonActionReady
     && !embeddedLessonPresentationBlocked
+    && !embeddedLessonAttackControlsOpen
   );
   const tutorialDrawTrayHelpAnchored = Boolean(
     !embeddedLesson
@@ -21842,6 +21848,9 @@ export default function Simulator({
           max-height: var(--seapals-coach-available-height, calc(100dvh - 1.5rem));
           transition: none;
         }
+        .seapals-professor-coach-wrap-divider:not(.seapals-professor-coach-wrap-anchored) {
+          visibility: hidden;
+        }
         .seapals-professor-coach-wrap-divider[data-tutorial-coach-constrained="true"] > [data-v2-lesson-panel="coach"] {
           max-height: inherit;
           overflow-y: auto;
@@ -23202,6 +23211,10 @@ export default function Simulator({
           user-select: none;
         }
         .seapals-mobile-hand-list > li.is-arriving { opacity: 0; }
+        .seapals-mobile-hand-list > li.is-drag-preferred,
+        .seapals-mobile-hand-list > li.is-drag-preferred > .seapals-mobile-hand-card {
+          touch-action: none;
+        }
         .seapals-mobile-hand-dock.is-draw-sequencing .seapals-mobile-hand-rail {
           pointer-events: none;
         }

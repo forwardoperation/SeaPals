@@ -45,7 +45,7 @@ test("embedded lessons expose each action with divider-anchored teacher guidance
   );
   assert.match(
     simulatorSource,
-    /const embeddedLessonCoachOpen = Boolean\(\s*embeddedLessonActionReady\s*&& !embeddedLessonPresentationBlocked\s*\);/,
+    /const embeddedLessonAttackControlsOpen = Boolean\([\s\S]*?ATTACK_RESOLVED[\s\S]*?inspectedCardData \|\| attackContext[\s\S]*?\);[\s\S]*?const embeddedLessonCoachOpen = Boolean\(\s*embeddedLessonActionReady\s*&& !embeddedLessonPresentationBlocked\s*&& !embeddedLessonAttackControlsOpen\s*\);/,
   );
   const embeddedCoach = sourceBetween(
     ") : embeddedLessonCoachOpen ? (",
@@ -75,8 +75,10 @@ test("compact turn teaching blocks the stale lesson coach and hand cue", () => {
   assert.match(presentationGate, /\|\| mobileDrawFlights\.length > 0/);
   assert.match(presentationGate, /\|\| compactOpponentPlaybackLocked/);
   assert.match(presentationGate, /\|\| boardStatPresentationActive/);
+  assert.match(presentationGate, /\|\| combatResultCheckpoint/);
   assert.doesNotMatch(presentationGate, /\|\| mobileHandDrag/);
   assert.match(presentationGate, /embeddedLessonActionReady[\s\S]*?&& !embeddedLessonPresentationBlocked/);
+  assert.match(presentationGate, /&& !embeddedLessonAttackControlsOpen/);
   assert.match(
     simulatorSource,
     /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag\)\}/,

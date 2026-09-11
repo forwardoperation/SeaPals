@@ -131,11 +131,11 @@ export default function MobileHandDock({
       pointerType: event.pointerType,
       railElement: handRailRef.current,
       originScrollLeft: handRailRef.current?.scrollLeft ?? 0,
-      sourceElement: event.target,
+      sourceElement: event.currentTarget,
       dragThreshold: MOBILE_HAND_DRAG_THRESHOLD * getCurrentHandInteractionScale(),
     };
     gestureRef.current = gesture;
-    if (gesture.pointerType === "mouse") captureGesturePointer(gesture, event);
+    if (gesture.pointerType === "mouse" || entry.dragPreferred) captureGesturePointer(gesture, event);
   }
 
   function handleCardPointerMove(entry, event) {
@@ -152,10 +152,10 @@ export default function MobileHandDock({
 
     if (gesture.phase === "candidate") {
       if (Math.max(absX, absY) >= dragThreshold) gesture.movedBeyondThreshold = true;
-      const prefersTutorialMouseDrag = Boolean(entry.dragPreferred && gesture.pointerType === "mouse");
+      const prefersTutorialDrag = Boolean(entry.dragPreferred);
       const preferredMinimumLift = Math.min(8, dragThreshold / 2);
       const preferredDragIntent = Boolean(
-        prefersTutorialMouseDrag
+        prefersTutorialDrag
         && dy <= -preferredMinimumLift
         && gesture.movedBeyondThreshold
       );
@@ -187,11 +187,12 @@ export default function MobileHandDock({
       }
       const horizontalScrollIntent = absX >= dragThreshold && absX >= absY * MOBILE_HAND_SCROLL_AXIS_RATIO;
       const deliberateTutorialMouseScroll = Boolean(
-        prefersTutorialMouseDrag
+        prefersTutorialDrag
+        && gesture.pointerType === "mouse"
         && absX >= dragThreshold * 4
         && horizontalScrollIntent
       );
-      if ((!prefersTutorialMouseDrag && horizontalScrollIntent) || deliberateTutorialMouseScroll) {
+      if ((!prefersTutorialDrag && horizontalScrollIntent) || deliberateTutorialMouseScroll) {
         gesture.phase = "scrolling";
         suppressNextDragClick(entry.index);
         if (gesture.pointerType === "mouse") {
@@ -294,8 +295,12 @@ export default function MobileHandDock({
                 return (
                   <li
                     key={`${entry.cardId}-${entry.index}`}
-                    className={arriving ? "is-arriving" : undefined}
+                    className={[
+                      arriving ? "is-arriving" : "",
+                      entry.dragPreferred ? "is-drag-preferred" : "",
+                    ].filter(Boolean).join(" ") || undefined}
                     data-mobile-hand-card-index={entry.index}
+                    data-drag-preferred={entry.dragPreferred ? "true" : undefined}
                     onPointerDown={(event) => handleCardPointerDown(entry, event)}
                     onPointerMove={(event) => handleCardPointerMove(entry, event)}
                     onPointerUp={(event) => handleCardPointerUp(entry, event)}

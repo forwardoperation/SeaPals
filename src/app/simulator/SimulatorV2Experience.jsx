@@ -34,7 +34,7 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
     if (!getSimulatorV2Lesson(id)) return;
     setLessonId(id);
     setAttempt((current) => current + 1);
-    setPanel(null);
+    setPanel("intro");
   }, []);
 
   const completeLesson = useCallback(() => {
@@ -45,6 +45,11 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
       return next.completedLessonIds;
     });
   }, [lessonId]);
+
+  const beginLesson = useCallback(() => {
+    setAttempt((current) => current + 1);
+    setPanel(null);
+  }, []);
 
   function returnToSimulator() {
     setLessonId(null);
@@ -87,10 +92,14 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
           feedback={lesson?.completion}
           progress={{ completedLessonIds }}
           onSelect={selectLesson}
-          onExit={returnToSimulator}
+          onExit={panel === "intro" ? () => setPanel("chooser") : returnToSimulator}
           onReplay={lesson ? () => selectLesson(lesson.id) : null}
-          onNext={nextLesson ? () => selectLesson(nextLesson.id) : returnToSimulator}
-          nextLabel={nextLesson ? "Next lesson" : "Start a match"}
+          onNext={panel === "intro"
+            ? beginLesson
+            : nextLesson
+              ? () => selectLesson(nextLesson.id)
+              : returnToSimulator}
+          nextLabel={panel === "intro" ? "Start lesson" : nextLesson ? "Next lesson" : "Start a match"}
         />
       ) : null}
     </>

@@ -136,11 +136,13 @@ test("embedded coaching stays left-anchored on the reef divider while the hand p
   );
 
   assert.match(coach, /placementMode = "target", measureKey = null/);
+  assert.match(coach, /useLayoutEffect\(\(\) => \{/);
   assert.match(coach, /const usesDividerAnchor = placementMode === "reef-divider"/);
   assert.match(coach, /document\.querySelector\('\[data-tutorial-coach-anchor="reef-divider"\]'\)/);
   assert.match(coach, /usesDividerAnchor[\s\S]*?getTutorialDividerCoachPlacement\(\{/);
   assert.match(coach, /viewportPlacement = nextPlacement[\s\S]*?viewportWidth,/);
   assert.match(coach, /usesDividerAnchor,[\s\S]*?measureKey,/);
+  assert.match(coach, /\n\s*updatePlacement\(\);\s*\n\s*delayedUpdate = window\.setTimeout\(requestUpdate, 240\)/);
   assert.match(
     coach,
     /width: usesDividerAnchor[\s\S]*?`min\(23rem, calc\(100vw - 24px\), \$\{Math\.max\(1, placement\.viewportWidth - 24\)\}px\)`/,
@@ -154,6 +156,10 @@ test("embedded coaching stays left-anchored on the reef divider while the hand p
   assert.match(
     simulatorSource,
     /className=\{`seapals-reef-divider-handle[\s\S]*?data-tutorial-coach-anchor="reef-divider"[\s\S]*?role="separator"/,
+  );
+  assert.match(
+    simulatorSource,
+    /\.seapals-professor-coach-wrap-divider:not\(\.seapals-professor-coach-wrap-anchored\)\s*\{[\s\S]*?visibility:\s*hidden;/,
   );
 });
 

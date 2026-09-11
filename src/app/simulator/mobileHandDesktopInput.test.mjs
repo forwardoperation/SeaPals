@@ -155,7 +155,7 @@ test("a primary mouse drag pans the hand rail after horizontal intent wins", () 
   );
   assert.match(
     pointerDown,
-    /gestureRef\.current = gesture;[\s\S]*?gesture\.pointerType === "mouse"[\s\S]*?captureGesturePointer\(gesture, event\)/,
+    /sourceElement: event\.currentTarget[\s\S]*?gestureRef\.current = gesture;[\s\S]*?gesture\.pointerType === "mouse" \|\| entry\.dragPreferred[\s\S]*?captureGesturePointer\(gesture, event\)/,
     "mouse input must be captured on its first press so a fast pull cannot leave a stale candidate",
   );
   assert.match(
@@ -179,7 +179,7 @@ test("desktop capture leaves touch pan native until upward drag intent wins", ()
   const pointerMove = functionSource("handleCardPointerMove", "handleCardPointerUp");
 
   assert.doesNotMatch(pointerDown, /preventDefault/);
-  assert.match(pointerDown, /if \(gesture\.pointerType === "mouse"\) captureGesturePointer\(gesture, event\)/);
+  assert.match(pointerDown, /if \(gesture\.pointerType === "mouse" \|\| entry\.dragPreferred\) captureGesturePointer\(gesture, event\)/);
   assert.match(
     pointerMove,
     /absX >= dragThreshold && absX >= absY \* MOBILE_HAND_SCROLL_AXIS_RATIO[\s\S]*?if \(gesture\.pointerType === "mouse"\) \{\s*event\.preventDefault\(\)/,
@@ -224,16 +224,22 @@ test("a highlighted lesson card starts dragging along a shallow path to its real
   assert.deepEqual(harness.calls.map(([kind]) => kind), ["start", "move", "end"]);
 });
 
-test("a shallow touch swipe still browses past a highlighted lesson card", () => {
+test("a highlighted lesson card claims the first touch and starts its diagonal drag", () => {
   const harness = createGestureHarness("touch", { dragPreferred: true, cardId: "sea-urchin" });
 
   harness.press();
-  const moveEvent = harness.move(145, 98);
+  assert.deepEqual(harness.captureCalls, [7]);
+  const moveEvent = harness.move(155, 90);
+  harness.release(600, 5);
 
-  assert.equal(moveEvent.defaultPrevented, false);
-  assert.deepEqual(harness.captureCalls, []);
-  assert.deepEqual(harness.calls, []);
-  assert.equal(harness.gestureRef.current?.phase, "scrolling");
+  assert.equal(moveEvent.defaultPrevented, true);
+  assert.deepEqual(harness.calls.map(([kind]) => kind), ["start", "move", "end"]);
+  assert.equal(harness.gestureRef.current, null);
+});
+
+test("the exact guided hand card exposes a pre-contact drag preference hook", () => {
+  assert.match(handDockSource, /entry\.dragPreferred \? "is-drag-preferred" : ""/);
+  assert.match(handDockSource, /data-drag-preferred=\{entry\.dragPreferred \? "true" : undefined\}/);
 });
 
 test("a deliberate horizontal mouse pull can still browse from a highlighted lesson card", () => {

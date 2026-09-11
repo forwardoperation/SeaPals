@@ -77,7 +77,7 @@ test("embedded condition teaching derives from the compact stage and owns the on
   );
   assert.match(
     conditionHelp,
-    /At the start of each round, one Condition changes the rules for both players\.[\s\S]*?change costs, draws, limits, or which cards are legal,[\s\S]*?This round's Condition is/,
+    /Each round has one Condition that affects both reefs\.[\s\S]*?Check it before you spend RP\.[\s\S]*?tutorialConditionCard\.name/,
   );
   assert.match(conditionHelp, /const embeddedCompactCoachHelp = embeddedCompactConditionHelp \?\? embeddedCompactRpHelp/);
   assert.match(

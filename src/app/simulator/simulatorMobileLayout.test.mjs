@@ -315,6 +315,11 @@ test("the touched hand-card source owns the pan-x policy instead of relying on a
     /touch-action:\s*pan-x;/,
     "the touched button must advertise the same horizontal-only gesture policy before Safari chooses implicit capture",
   );
+  assert.match(
+    handListItemStyles,
+    /li\.is-drag-preferred[\s\S]*?touch-action:\s*none;/,
+    "the exact guided card must reserve its first touch for the tutorial drag",
+  );
 });
 
 test("pointer capture is established before drag-start state causes a parent rerender", () => {
@@ -338,10 +343,10 @@ test("pointer capture is established before drag-start state causes a parent rer
   );
   const pointerStart = functionSectionContaining(
     handDockSource,
-    [/handleCardPointerDown/, /sourceElement/, /event\.target/],
+    [/handleCardPointerDown/, /sourceElement/, /event\.currentTarget/],
     "exact mobile hand pointer source",
   );
-  assert.match(pointerStart, /sourceElement:\s*event\.target/);
+  assert.match(pointerStart, /sourceElement:\s*event\.currentTarget/);
 });
 
 test("pointercancel is terminal but bubbled lost-capture from a different element cannot snap back the drag", () => {
