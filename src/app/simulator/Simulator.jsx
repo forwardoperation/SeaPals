@@ -4637,6 +4637,7 @@ export default function Simulator({
   const opponentEcosystemRef = useRef(null);
   const mobileBoardStackRef = useRef(null);
   const reefDividerPointerIdRef = useRef(null);
+  const conditionDetailTriggerRef = useRef(null);
   const coralWasDraggedRef = useRef(false);
   const slotWasDraggedRef = useRef(false);
   const slotDragStartRef = useRef(null);
@@ -11985,6 +11986,22 @@ export default function Simulator({
       return;
     }
     setMobileHudPanel((current) => current === "decks" ? null : "decks");
+  }
+
+  function openActiveConditionDetails() {
+    if (!activeCondition) return;
+    setEventOverlay({
+      type: "condition-detail",
+      sourceCardId: activeCondition.id,
+      title: activeCondition.name,
+      message: activeCondition.text,
+      success: true,
+    });
+  }
+
+  function closeConditionDetails() {
+    setEventOverlay(null);
+    requestAnimationFrame(() => conditionDetailTriggerRef.current?.focus());
   }
 
   function getMobileDrawFlightGeometry({
@@ -20563,6 +20580,16 @@ export default function Simulator({
   const isOpeningCoinEvent = eventOverlay?.type?.startsWith("opening-coin-") === true;
   const openingCoinBoardActive = Boolean(previewExperience && isOpeningCoinEvent);
   const cardCoinBoardActive = Boolean(previewExperience && cardCoinFlip);
+  const conditionDetailEvent = eventOverlay?.type === "condition-detail";
+  const conditionDetailCard = conditionDetailEvent ? cardsById[eventOverlay?.sourceCardId] : null;
+  const conditionDetailAppliesToBothReefs = Boolean(
+    conditionDetailCard?.effects?.length
+    && conditionDetailCard.effects.every((effect) => effect.affectedPlayers === "all"),
+  );
+  const conditionDetailIsPersistent = Boolean(
+    conditionDetailCard?.timing === "persistent"
+    || conditionDetailCard?.tags?.includes("persistent"),
+  );
   const compactDrawResultEvent = Boolean(previewExperience && eventOverlay?.compactDrawResult);
   const compactDeckSearchEvent = Boolean(previewExperience && [
     "choose-onplay-multi-search",
@@ -20648,7 +20675,7 @@ export default function Simulator({
     && !resumeHydrationPending
     && !resumeCheckpoint
   );
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || compactDialogEvent || boardStatPresentationActive || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || conditionDetailEvent || compactDialogEvent || boardStatPresentationActive || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -20666,6 +20693,7 @@ export default function Simulator({
     || compactDrawResultEvent
     || compactDeckSearchEvent
     || compactDeckOrderEvent
+    || conditionDetailEvent
     || boardStatPresentationActive
     || resumeHydrationPending
     || resumeCheckpoint
@@ -24264,6 +24292,7 @@ export default function Simulator({
           animation-name: seapalsRpSpendDeltaUp;
         }
         .seapals-reef-divider-handle[aria-disabled="true"] { pointer-events: none; }
+        .seapals-condition-detail-layer { z-index: 170 !important; }
         .seapals-reduced-motion .seapals-compact-turn-banner,
         .seapals-reduced-motion .seapals-combat-result-checkpoint { animation: none !important; }
         .seapals-reduced-motion .seapals-opponent-placement-flight,
@@ -24676,8 +24705,10 @@ export default function Simulator({
             touch-action: none;
           }
           .seapals-reef-divider-handle > span {
+            position: absolute;
+            left: .5rem;
             display: flex;
-            min-width: 4.5rem;
+            min-width: 2.75rem;
             height: 1.65rem;
             align-items: center;
             justify-content: center;
@@ -24726,6 +24757,42 @@ export default function Simulator({
             background: linear-gradient(135deg, #67e8f9, #34d399);
             box-shadow: -5px 0 16px rgba(16, 185, 129, .22);
             white-space: nowrap;
+          }
+          .seapals-reef-divider-condition {
+            left: 50%;
+            width: clamp(7.5rem, 34vw, 14rem);
+            max-width: calc(100% - 11rem);
+            min-width: 0;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: .35rem;
+            overflow: hidden;
+            border: 1px solid rgba(196, 181, 253, .65);
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(49, 46, 129, .96), rgba(88, 28, 135, .94));
+            box-shadow: 0 4px 14px rgba(2, 8, 23, .55), 0 0 15px rgba(167, 139, 250, .2);
+            text-transform: none;
+            transform: translate(-50%, -50%);
+          }
+          .seapals-reef-divider-condition-label {
+            color: #c4b5fd;
+            font-size: .48rem;
+            font-weight: 950;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+          }
+          .seapals-reef-divider-condition [data-v2-condition-name] {
+            min-width: 0;
+            overflow: hidden;
+            color: #f5f3ff;
+            font-size: .64rem;
+            font-weight: 950;
+            letter-spacing: 0;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .seapals-reef-divider-condition:hover:not(:disabled) {
+            border-color: rgba(224, 231, 255, .9);
+            background: linear-gradient(135deg, #4338ca, #7e22ce);
           }
           .seapals-reef-divider-control:focus-visible {
             outline: 3px solid #fde68a;
@@ -25407,7 +25474,7 @@ export default function Simulator({
                 />
               </div> : null}
               <details className="seapals-menu-control relative" data-simulator-menu-control>
-                <summary aria-label={previewExperience ? "Open simulator menu and review the current Condition" : "Open simulator menu"} data-tutorial-target={previewExperience ? "condition-panel" : undefined} className={`flex min-h-11 cursor-pointer list-none items-center justify-center rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden${previewExperience ? tutorialTargetClass("condition-panel") : ""}`}><span className="seapals-menu-label">Menu</span><span className="seapals-menu-icon hidden" aria-hidden="true">•••</span></summary>
+                <summary aria-label={previewExperience ? "Open simulator menu and review the current Condition" : "Open simulator menu"} data-tutorial-target={!previewExperience ? "condition-panel" : undefined} className={`flex min-h-11 cursor-pointer list-none items-center justify-center rounded-xl border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-black uppercase tracking-wider text-slate-200 transition hover:bg-white/10 [&::-webkit-details-marker]:hidden${!previewExperience ? tutorialTargetClass("condition-panel") : ""}`}><span className="seapals-menu-label">Menu</span><span className="seapals-menu-icon hidden" aria-hidden="true">•••</span></summary>
                 <div className="absolute right-0 top-11 z-[70] w-48 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-2 shadow-2xl backdrop-blur-xl">
                   {previewExperience ? (
                     <div className="mb-2 rounded-lg border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-left normal-case tracking-normal">
@@ -25940,6 +26007,22 @@ export default function Simulator({
                   >
                     <span aria-hidden="true"><i /><i /><i /></span>
                   </div>
+                  <button
+                    ref={conditionDetailTriggerRef}
+                    type="button"
+                    data-v2-condition-control
+                    data-tutorial-target="condition-panel"
+                    className={`seapals-reef-divider-control seapals-reef-divider-condition${tutorialTargetClass("condition-panel")}`}
+                    aria-haspopup="dialog"
+                    aria-controls="seapals-event-dialog"
+                    aria-label={activeCondition ? `Review ${activeCondition.name} Condition details` : "No active Condition"}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={openActiveConditionDetails}
+                    disabled={!activeCondition}
+                  >
+                    <span className="seapals-reef-divider-condition-label" aria-hidden="true">Condition</span>
+                    <span data-v2-condition-name>{activeCondition?.name ?? "No active Condition"}</span>
+                  </button>
                   <button
                     type="button"
                     className={`seapals-reef-divider-control seapals-reef-divider-turn seapals-turn-button${tutorialTargetClass("turn-button")}`}
@@ -27600,17 +27683,24 @@ export default function Simulator({
 
       {eventOverlay && boardTargetingPresentationActive && !openingCoinBoardActive ? (
         <div
-          className={`fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5 ${compactDialogEvent ? "overflow-hidden" : "overflow-y-auto"}`}
+          className={`fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:items-center sm:p-5 ${conditionDetailEvent ? "seapals-condition-detail-layer" : ""} ${compactDialogEvent ? "overflow-hidden" : "overflow-y-auto"}`}
+          id="seapals-event-dialog"
           hidden={v2NewGameSetupActive || resumeHydrationPending || Boolean(resumeCheckpoint)}
           style={v2NewGameSetupActive || resumeHydrationPending || resumeCheckpoint ? { display: "none" } : undefined}
           role="dialog"
+          data-v2-condition-details={eventOverlay.type === "condition-detail" ? "true" : undefined}
           aria-modal="true"
           aria-hidden={inspectedCardData || resumeCheckpoint || resumeHydrationPending ? "true" : undefined}
           inert={inspectedCardData || resumeCheckpoint || resumeHydrationPending || undefined}
           aria-labelledby="seapals-event-title"
           aria-describedby={eventOverlay.message && !["condition-reveal", "opponent-status"].includes(eventOverlay.type) ? "seapals-event-message" : undefined}
           onKeyDown={(keyboardEvent) => {
-            if (!compactDialogEvent || keyboardEvent.key !== "Tab") return;
+            if (conditionDetailEvent && keyboardEvent.key === "Escape") {
+              keyboardEvent.preventDefault();
+              closeConditionDetails();
+              return;
+            }
+            if (!(compactDialogEvent || conditionDetailEvent) || keyboardEvent.key !== "Tab") return;
             const controls = getCompactDialogFocusableControls(keyboardEvent.currentTarget);
             if (!controls.length) return;
             const first = controls[0];
@@ -27625,13 +27715,13 @@ export default function Simulator({
           }}
         >
           <div
-            className={`seapals-event-card my-auto w-full rounded-[1.5rem] border border-cyan-300/50 bg-slate-900 text-white shadow-2xl sm:rounded-[2rem] ${compactDrawResultEvent ? "seapals-compact-draw-event max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-event max-w-3xl" : compactDeckOrderEvent ? "seapals-compact-order-event max-w-xl" : "max-h-[calc(100dvh-1.5rem)] max-w-5xl overflow-y-auto p-4 sm:max-h-[calc(100dvh-2.5rem)] sm:p-6"}`}
+            className={`seapals-event-card my-auto w-full rounded-[1.5rem] border border-cyan-300/50 bg-slate-900 text-white shadow-2xl sm:rounded-[2rem] ${compactDrawResultEvent ? "seapals-compact-draw-event max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-event max-w-3xl" : compactDeckOrderEvent ? "seapals-compact-order-event max-w-xl" : conditionDetailEvent ? "max-h-[calc(100dvh-1.5rem)] max-w-lg overflow-y-auto border-violet-300/55 p-5 sm:max-h-[calc(100dvh-2.5rem)] sm:p-7" : "max-h-[calc(100dvh-1.5rem)] max-w-5xl overflow-y-auto p-4 sm:max-h-[calc(100dvh-2.5rem)] sm:p-6"}`}
             data-compact-draw-result={compactDrawResultEvent ? "true" : undefined}
             data-compact-deck-search={compactDeckSearchEvent ? eventOverlay.type : undefined}
             data-compact-deck-order={compactDeckOrderEvent ? eventOverlay.type : undefined}
           >
-            <div className={compactDrawResultEvent ? "seapals-compact-draw-layout mx-auto min-w-0 max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-layout mx-auto min-w-0 max-w-3xl" : compactDeckOrderEvent ? "seapals-compact-order-layout mx-auto min-w-0 max-w-xl" : eventOverlay.sourceCardId ? "grid gap-6 md:grid-cols-[260px_1fr]" : "mx-auto max-w-3xl text-center"}>
-              {eventOverlay.sourceCardId && !compactDialogEvent ? <div className={`rounded-3xl bg-white/10 p-4 ${eventOverlay.defenderCardId ? "grid grid-cols-2 gap-2 md:grid-cols-1" : ""}`}>
+            <div className={compactDrawResultEvent ? "seapals-compact-draw-layout mx-auto min-w-0 max-w-3xl" : compactDeckSearchEvent ? "seapals-compact-search-layout mx-auto min-w-0 max-w-3xl" : compactDeckOrderEvent ? "seapals-compact-order-layout mx-auto min-w-0 max-w-xl" : conditionDetailEvent ? "mx-auto max-w-lg text-left" : eventOverlay.sourceCardId ? "grid gap-6 md:grid-cols-[260px_1fr]" : "mx-auto max-w-3xl text-center"}>
+              {eventOverlay.sourceCardId && !compactDialogEvent ? <div hidden={conditionDetailEvent} className={`rounded-3xl bg-white/10 p-4 ${eventOverlay.defenderCardId ? "grid grid-cols-2 gap-2 md:grid-cols-1" : ""}`}>
                 {eventOverlay.sourceCardId ? <img src={cardsById[eventOverlay.sourceCardId]?.image} alt={cardsById[eventOverlay.sourceCardId]?.name} className="h-80 w-full rounded-2xl bg-white object-contain" /> : null}
                 {eventOverlay.defenderCardId ? <img src={cardsById[eventOverlay.defenderCardId]?.image} alt={cardsById[eventOverlay.defenderCardId]?.name} className="h-80 w-full rounded-2xl bg-white object-contain" /> : null}
               </div> : null}
@@ -27671,6 +27761,19 @@ export default function Simulator({
                       <p className="mt-2 text-xs font-bold text-amber-200">Top card draws first · Drag a row to reorder</p>
                     </header>
                     {eventOverlay.message ? <p id="seapals-event-message" className="sr-only">{eventOverlay.message}</p> : null}
+                  </>
+                ) : conditionDetailEvent ? (
+                  <>
+                    <div className="text-[10px] font-black uppercase tracking-[0.22em] text-violet-300">Round {round} Condition</div>
+                    <h2 id="seapals-event-title" className="mt-1 text-2xl font-black sm:text-3xl">{eventOverlay.title}</h2>
+                    <div className="mt-4 rounded-2xl border border-violet-300/30 bg-violet-400/10 p-4">
+                      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-200/75">Rule</div>
+                      <p id="seapals-event-message" className="mt-1 text-base font-bold leading-relaxed text-violet-50 sm:text-lg">{eventOverlay.message}</p>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.12em] text-cyan-100">
+                      {conditionDetailAppliesToBothReefs ? <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1.5">Both reefs</span> : null}
+                      <span className="rounded-full border border-violet-300/25 bg-violet-400/10 px-3 py-1.5">{conditionDetailIsPersistent ? "Persistent" : "This round"}</span>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -28379,12 +28482,12 @@ export default function Simulator({
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-7">
+                  <div className={conditionDetailEvent ? "mt-5" : "mt-7"}>
                     {eventOverlay.revealedCards?.length ? <div className="mb-5"><div className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-amber-300">Revealed to You</div><div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">{eventOverlay.revealedCards.map((cardId, index) => { const card = cardsById[cardId]; return <div key={`${cardId}-${index}`} className="rounded-xl border-2 border-amber-400 bg-amber-400/10 p-2 text-center"><img src={card?.image} alt={card?.name} className="h-40 w-full rounded-lg bg-white object-contain" /><div className="mt-1 truncate text-xs font-black text-amber-100">{card?.name}</div><div className="text-[10px] font-bold uppercase text-amber-300">Revealed by opponent</div></div>; })}</div></div> : null}
                     {eventOverlay.drawnCards?.length ? <div className="mb-5 grid max-h-64 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">{eventOverlay.drawnCards.map((entry, index) => { const card = cardsById[entry.cardId]; return <div key={`${entry.cardId}-${index}`} className={`rounded-xl border p-2 text-center ${entry.discarded ? "border-rose-400 bg-rose-500/10" : "border-cyan-400 bg-cyan-500/10"}`}><img src={card?.image} alt={card?.name} className="h-32 w-full rounded-lg bg-white object-contain" /><div className="mt-1 truncate text-xs font-bold">{card?.name}</div><div className="text-[10px] uppercase text-slate-300">{entry.source}{entry.discarded ? " • discarded" : ""}</div></div>; })}</div> : null}
                     {eventOverlay.repeatDamageCounterAbilityId ? <button type="button" onClick={() => repeatDamageCounterMove(eventOverlay.repeatDamageCounterAbilityId)} className="mr-3 rounded-full bg-violet-600 px-7 py-3 font-black text-white">Move Another Counter</button> : null}
-                    <button type="button" onClick={closeEventOverlay} className={`rounded-full px-7 py-3 font-black text-white ${eventOverlay.sourceCardId ? "self-start" : "self-center"} ${eventOverlay.success ? "bg-emerald-500" : "bg-cyan-600"}`}>
-                      {eventOverlay.continueLabel ?? "Continue"}
+                    <button type="button" autoFocus={conditionDetailEvent || undefined} onClick={conditionDetailEvent ? closeConditionDetails : closeEventOverlay} className={`rounded-full px-7 py-3 font-black text-white ${conditionDetailEvent || eventOverlay.sourceCardId ? "self-start" : "self-center"} ${conditionDetailEvent ? "bg-violet-600 hover:bg-violet-500" : eventOverlay.success ? "bg-emerald-500" : "bg-cyan-600"}`}>
+                      {eventOverlay.continueLabel ?? (conditionDetailEvent ? "Close" : "Continue")}
                     </button>
                   </div>
                 )}

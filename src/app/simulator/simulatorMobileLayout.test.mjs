@@ -853,6 +853,47 @@ test("V2 keeps only the draggable divider and round action while the old footer 
   assert.equal((legacyDock.match(/previewExperience \?/g) ?? []).length, 1, "only the legacy wrapper should branch on previewExperience");
 });
 
+test("V2 names the current Condition in the divider with a separate accessible details button", () => {
+  const divider = sourceSection(
+    simulatorSource,
+    '<div className="seapals-reef-divider">',
+    'id="simulator-player-reef"',
+  );
+
+  assert.match(divider, /<div[\s\S]*?className=\{`seapals-reef-divider-handle[\s\S]*?role="separator"/);
+  assert.match(divider, /<button[\s\S]*?type="button"[\s\S]*?data-v2-condition-control/);
+  assert.match(divider, /data-v2-condition-control[\s\S]*?aria-haspopup="dialog"/);
+  assert.match(divider, /data-v2-condition-control[\s\S]*?aria-controls="seapals-event-dialog"/);
+  assert.match(
+    divider,
+    /aria-label=\{activeCondition \? `Review \$\{activeCondition\.name\} Condition details` : "No active Condition"\}/,
+  );
+  assert.match(divider, /onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/);
+  assert.match(divider, /onClick=\{openActiveConditionDetails\}/);
+  assert.match(divider, /disabled=\{!activeCondition\}/);
+  assert.match(
+    divider,
+    /<span data-v2-condition-name>\{activeCondition\?\.name \?\? "No active Condition"\}<\/span>/,
+  );
+});
+
+test("the V2 Condition button opens the exact active card specifics and safely handles no Condition", () => {
+  const openConditionDetails = functionSectionContaining(
+    simulatorSource,
+    [/openActiveConditionDetails/, /type:\s*"condition-detail"/, /activeCondition\.text/],
+    "active Condition details opener",
+  );
+
+  assert.match(openConditionDetails, /if \(!activeCondition\) return;/);
+  assert.match(openConditionDetails, /sourceCardId:\s*activeCondition\.id/);
+  assert.match(openConditionDetails, /title:\s*activeCondition\.name/);
+  assert.match(openConditionDetails, /message:\s*activeCondition\.text/);
+  assert.match(
+    simulatorSource,
+    /id="seapals-event-dialog"[\s\S]*?role="dialog"[\s\S]*?data-v2-condition-details=\{eventOverlay\.type === "condition-detail" \? "true" : undefined\}/,
+  );
+});
+
 test("V2 removes both ecosystem label rows while preserving action overlays", () => {
   const labels = simulatorSource.match(/className="seapals-board-pane-label/g) ?? [];
   const fullHeightOceans = simulatorSource.match(/previewExperience \? "h-full" : "h-\[calc\(100%-40px\)\]"/g) ?? [];
@@ -1041,7 +1082,6 @@ test("V2 overlays a compact back-and-menu header without consuming board height"
   assert.match(simulatorSource, /data-mobile-overlay-header=\{previewExperience \? "true" : undefined\}/);
   assert.equal((simulatorSource.match(/data-simulator-back-control/g) ?? []).length, 2);
   assert.match(simulatorSource, /data-simulator-menu-control/);
-  assert.match(simulatorSource, /<summary[^>]*data-tutorial-target={previewExperience \? "condition-panel" : undefined}/);
   assert.match(simulatorSource, /data-tutorial-target={!previewExperience \? "condition-panel" : undefined}/);
   assert.match(
     responsiveStyles,
