@@ -519,7 +519,19 @@ export function getSimulatorV2ExpectedDraw(value, checkpoint = null) {
   const selected = getSimulatorV2Lesson(value);
   if (!selected) return null;
   const checkpointId = typeof checkpoint === "string" ? checkpoint : checkpoint?.id;
-  return (checkpointId ? selected.expectedDraws?.[checkpointId] : null) ?? selected.expectedDraw ?? null;
+  const checkpointDraw = checkpointId ? selected.expectedDraws?.[checkpointId] : null;
+  if (checkpointDraw || selected.expectedDraw) return checkpointDraw ?? selected.expectedDraw;
+  if (!checkpointId || !selected.expectedDraws) return null;
+
+  // A new-round draw can open while the observer is still finishing the prior
+  // checkpoint. Keep the controls and coaching on the next authored draw.
+  const checkpointIndex = selected.contract.checkpoints.findIndex(({ id }) => id === checkpointId);
+  if (checkpointIndex < 0) return null;
+  for (const upcoming of selected.contract.checkpoints.slice(checkpointIndex + 1)) {
+    const upcomingDraw = selected.expectedDraws[upcoming.id];
+    if (upcomingDraw) return upcomingDraw;
+  }
+  return null;
 }
 
 const CARD_NAMES = Object.freeze({
@@ -701,7 +713,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         "Confirm selection to draw your card.",
       );
     }
-    const firstAttackUpgradeDraw = selected.id === "first-attack" && current.id === "v2-draw-predator-upgrade";
+    const firstAttackUpgradeDraw = selected.id === "first-attack" && expectedDraw?.cardId === "brain-coral-stage-1";
     const seaUrchinWasDefeated = Array.isArray(uiState.discardPileCardIds)
       && uiState.discardPileCardIds.includes("sea-urchin");
     const scenarioDrawMessage = selected.id === "winning-turn"

@@ -431,6 +431,11 @@ test("lesson two merges attacking, defending, defeat, upgrading, and a D6 answer
     getSimulatorV2ExpectedDraw(selected, "v2-draw-predator-upgrade"),
     { deckType: "foundation", cardId: upgrade.id },
   );
+  assert.deepEqual(
+    getSimulatorV2ExpectedDraw(selected, "v2-defend-attack"),
+    { deckType: "foundation", cardId: upgrade.id },
+    "the next-round draw stays authored while the prior checkpoint finishes",
+  );
   assert.equal(getSimulatorV2ExpectedDraw(selected), null, "the required deck is checkpoint-specific in the merged lesson");
   assert.equal(attackAction.cost.rp, 1);
   assert.equal(opponentAction.cost.rp, 1);
@@ -823,6 +828,16 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
   const defenseStep = attack.contract.checkpoints.find(({ id }) => id === "v2-defend-attack");
   assert.equal(getSimulatorV2LessonHelp(attack, defenseStep, {}), null, "the teacher stays off the live opponent attack and dice");
   const upgradeDraw = attack.contract.checkpoints.find(({ id }) => id === "v2-draw-predator-upgrade");
+  const transitioningUpgradeDrawHelp = getSimulatorV2LessonHelp(attack, defenseStep, {
+    gamePhase: "draw",
+    modal: "turn-draw",
+    drawSelected: 0,
+    drawTarget: 1,
+    discardPileCardIds: ["sea-urchin"],
+  });
+  assert.equal(transitioningUpgradeDrawHelp.targetDeck, "foundation");
+  assert.equal(transitioningUpgradeDrawHelp.action, "Choose one card from the Foundation Deck.");
+  assert.match(transitioningUpgradeDrawHelp.message, /Brain Coral Stage 1.*Foundation Deck/is);
   const upgradeDrawHelp = getSimulatorV2LessonHelp(attack, upgradeDraw, {
     gamePhase: "draw",
     drawSelected: 0,
@@ -830,6 +845,7 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
     discardPileCardIds: ["sea-urchin"],
   });
   assert.equal(upgradeDrawHelp.targetDeck, "foundation");
+  assert.equal(upgradeDrawHelp.action, "Choose one card from the Foundation Deck.");
   assert.match(upgradeDrawHelp.message, /Sea Urchin lost.*discard pile.*1 VP left.*Brain Coral Stage 1/is);
   const upgradeStep = attack.contract.checkpoints.find(({ id }) => id === "v2-upgrade-predator-coral");
   assert.match(getSimulatorV2LessonHelp(attack, upgradeStep, { hand: ["brain-coral-stage-1"] }).message, /resilience doubles from 10 to 20 HP.*Predator slot/s);
