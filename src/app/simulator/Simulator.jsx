@@ -24719,10 +24719,8 @@ export default function Simulator({
             touch-action: none;
           }
           .seapals-reef-divider-handle > span {
-            position: absolute;
-            left: .5rem;
             display: flex;
-            min-width: 2.75rem;
+            min-width: 4.5rem;
             height: 1.65rem;
             align-items: center;
             justify-content: center;
@@ -24773,26 +24771,18 @@ export default function Simulator({
             white-space: nowrap;
           }
           .seapals-reef-divider-condition {
-            left: 50%;
+            right: calc(50% + 2.75rem);
             width: clamp(7.5rem, 34vw, 14rem);
-            max-width: calc(100% - 11rem);
+            max-width: calc(50% - 3rem);
             min-width: 0;
-            grid-template-columns: auto minmax(0, 1fr);
-            gap: .35rem;
+            grid-template-columns: minmax(0, 1fr);
             overflow: hidden;
             border: 1px solid rgba(196, 181, 253, .65);
             border-radius: 999px;
             background: linear-gradient(135deg, rgba(49, 46, 129, .96), rgba(88, 28, 135, .94));
             box-shadow: 0 4px 14px rgba(2, 8, 23, .55), 0 0 15px rgba(167, 139, 250, .2);
             text-transform: none;
-            transform: translate(-50%, -50%);
-          }
-          .seapals-reef-divider-condition-label {
-            color: #c4b5fd;
-            font-size: .48rem;
-            font-weight: 950;
-            letter-spacing: .08em;
-            text-transform: uppercase;
+            transform: translateY(-50%);
           }
           .seapals-reef-divider-condition [data-v2-condition-name] {
             min-width: 0;
@@ -26034,8 +26024,7 @@ export default function Simulator({
                     onClick={openActiveConditionDetails}
                     disabled={!activeCondition}
                   >
-                    <span className="seapals-reef-divider-condition-label" aria-hidden="true">Condition</span>
-                    <span data-v2-condition-name>{activeCondition?.name ?? "No active Condition"}</span>
+                    <span data-v2-condition-name>{activeCondition?.name ?? "—"}</span>
                   </button>
                   <button
                     type="button"

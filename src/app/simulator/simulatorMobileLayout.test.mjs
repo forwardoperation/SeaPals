@@ -861,6 +861,7 @@ test("V2 names the current Condition in the divider with a separate accessible d
   );
 
   assert.match(divider, /<div[\s\S]*?className=\{`seapals-reef-divider-handle[\s\S]*?role="separator"/);
+  assert.match(divider, /<span aria-hidden="true"><i \/><i \/><i \/><\/span>/);
   assert.match(divider, /<button[\s\S]*?type="button"[\s\S]*?data-v2-condition-control/);
   assert.match(divider, /data-v2-condition-control[\s\S]*?aria-haspopup="dialog"/);
   assert.match(divider, /data-v2-condition-control[\s\S]*?aria-controls="seapals-event-dialog"/);
@@ -871,9 +872,20 @@ test("V2 names the current Condition in the divider with a separate accessible d
   assert.match(divider, /onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/);
   assert.match(divider, /onClick=\{openActiveConditionDetails\}/);
   assert.match(divider, /disabled=\{!activeCondition\}/);
+  assert.doesNotMatch(divider, /seapals-reef-divider-condition-label|>\s*Condition\s*</);
   assert.match(
     divider,
-    /<span data-v2-condition-name>\{activeCondition\?\.name \?\? "No active Condition"\}<\/span>/,
+    /<span data-v2-condition-name>\{activeCondition\?\.name \?\? "—"\}<\/span>/,
+  );
+  assert.match(
+    simulatorSource,
+    /\.seapals-reef-divider-handle\s*\{[\s\S]*?justify-content:\s*center;[\s\S]*?\.seapals-reef-divider-handle > span\s*\{[\s\S]*?min-width:\s*4\.5rem;/,
+  );
+  const handlePillRule = simulatorSource.match(/\.seapals-reef-divider-handle > span\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.doesNotMatch(handlePillRule, /(?:^|\s)left:|translateX/);
+  assert.match(
+    simulatorSource,
+    /\.seapals-reef-divider-condition\s*\{[\s\S]*?right:\s*calc\(50% \+ 2\.75rem\);[\s\S]*?max-width:\s*calc\(50% - 3rem\);[\s\S]*?transform:\s*translateY\(-50%\);/,
   );
 });
 
