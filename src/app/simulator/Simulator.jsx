@@ -7380,7 +7380,9 @@ export default function Simulator({
         cueId: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         title: `${tutorialConditionCard.name} changes this round`,
         message: `A Condition changes the rules for both reefs each round. ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
-        action: "Read the Condition, then continue.",
+        action: `Tap ${tutorialConditionCard.name} for its details, then continue.`,
+        target: "condition-panel",
+        targetLabel: "the active Condition name in the middle bar",
         interaction: "tap",
         lessonStep: tutorialStepNumber,
       }
@@ -21355,7 +21357,7 @@ export default function Simulator({
   }
 
   return (
-    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${embeddedLesson ? " seapals-embedded-lesson" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
+    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${embeddedLesson ? " seapals-embedded-lesson" : ""}${embeddedCompactConditionHelp && embeddedCompactCoachOpen ? " seapals-condition-teaching" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
         @keyframes seapalsDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes seapalsCardInspectorIn {
@@ -24708,6 +24710,13 @@ export default function Simulator({
             background: linear-gradient(90deg, #06111d, #164e63 50%, #06111d);
             box-shadow: 0 0 18px rgba(34, 211, 238, .28);
           }
+          .seapals-game-shell.seapals-condition-teaching .seapals-reef-divider {
+            z-index: 76;
+            pointer-events: none;
+          }
+          .seapals-game-shell.seapals-condition-teaching .seapals-reef-divider-condition {
+            pointer-events: auto;
+          }
           .seapals-reef-divider-handle {
             position: absolute;
             z-index: 0;
@@ -25669,6 +25678,11 @@ export default function Simulator({
             active={!embeddedLesson && tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored}
           />
 
+          <EmbeddedLessonActionCue
+            help={embeddedCompactConditionHelp}
+            active={Boolean(embeddedCompactConditionHelp && embeddedCompactCoachOpen)}
+            measureKey={`embedded-condition:${mobileReefSplit}:${compactTurnSequence?.stageIndex ?? ""}`}
+          />
           <EmbeddedLessonActionCue
             help={tutorialHelp}
             active={embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen}

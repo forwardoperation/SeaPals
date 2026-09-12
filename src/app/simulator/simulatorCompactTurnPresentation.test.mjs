@@ -87,6 +87,9 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
     conditionHelp,
     /A Condition changes the rules for both reefs each round\.[\s\S]*?tutorialConditionCard\.name/,
   );
+  assert.match(conditionHelp, /target:\s*"condition-panel"/);
+  assert.match(conditionHelp, /targetLabel:\s*"the active Condition name in the middle bar"/);
+  assert.match(conditionHelp, /Tap \$\{tutorialConditionCard\.name\} for its details, then continue\./);
   assert.match(conditionHelp, /const embeddedCompactCoachHelp = embeddedCompactConditionHelp \?\? embeddedCompactRpHelp/);
   assert.match(
     conditionHelp,
@@ -106,6 +109,18 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
   );
   assert.equal((embeddedCompactCoach.match(/\bonAdvance=/g) ?? []).length, 1);
   assert.doesNotMatch(embeddedCompactCoach, /data-compact-condition-continue|seapals-compact-turn-banner/);
+  assert.match(
+    simulatorSource,
+    /<EmbeddedLessonActionCue[\s\S]*?help=\{embeddedCompactConditionHelp\}[\s\S]*?active=\{Boolean\(embeddedCompactConditionHelp && embeddedCompactCoachOpen\)\}[\s\S]*?measureKey=\{`embedded-condition:/,
+  );
+  assert.match(
+    simulatorSource,
+    /embeddedCompactConditionHelp && embeddedCompactCoachOpen \? " seapals-condition-teaching" : ""/,
+  );
+  assert.match(
+    simulatorSource,
+    /\.seapals-game-shell\.seapals-condition-teaching \.seapals-reef-divider \{[\s\S]*?z-index: 76;[\s\S]*?pointer-events: none;[\s\S]*?\.seapals-game-shell\.seapals-condition-teaching \.seapals-reef-divider-condition \{[\s\S]*?pointer-events: auto;/,
+  );
   assert.match(
     simulatorSource,
     /const tutorialAnnouncementHelp = embeddedCompactCoachOpen[\s\S]*?\? embeddedCompactCoachHelp[\s\S]*?: tutorialTargetBeaconHelp;[\s\S]*?help: tutorialAnnouncementHelp/,
