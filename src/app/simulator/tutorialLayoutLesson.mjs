@@ -64,6 +64,19 @@ const GUIDED_FOUNDATION_POSITIONS = Object.freeze([
   Object.freeze({ x: 86, y: 24 }),
 ]);
 
+const COLLISION_AWARE_FOUNDATION_POSITIONS = Object.freeze([
+  Object.freeze({ x: 50, y: 24 }),
+  Object.freeze({ x: 18, y: 72 }),
+  Object.freeze({ x: 82, y: 72 }),
+  Object.freeze({ x: 16, y: 20 }),
+  Object.freeze({ x: 84, y: 20 }),
+  Object.freeze({ x: 50, y: 12 }),
+  Object.freeze({ x: 16, y: 84 }),
+  Object.freeze({ x: 84, y: 84 }),
+]);
+
+const FOUNDATION_CLEARANCE = Object.freeze({ x: 30, y: 38 });
+
 export function createGuidedAcademyLayoutProgress(source = {}) {
   return Object.freeze(Object.fromEntries(
     Object.values(GUIDED_ACADEMY_LAYOUT_ACTIONS).map((actionId) => [actionId, source?.[actionId] === true]),
@@ -106,8 +119,29 @@ export function getGuidedAcademyLayoutLessonStep(
   });
 }
 
-export function getGuidedAcademyFoundationPlacementTarget(existingFoundationCount) {
-  const index = Number(existingFoundationCount);
+export function getGuidedAcademyFoundationPlacementTarget(existingFoundations) {
+  if (Array.isArray(existingFoundations)) {
+    const occupied = existingFoundations
+      .map(({ x, y }) => ({ x: Number(x), y: Number(y) }))
+      .filter(({ x, y }) => Number.isFinite(x) && Number.isFinite(y));
+    const isClear = (candidate) => occupied.every((foundation) => (
+      Math.abs(candidate.x - foundation.x) >= FOUNDATION_CLEARANCE.x
+      || Math.abs(candidate.y - foundation.y) >= FOUNDATION_CLEARANCE.y
+    ));
+    const clearTarget = COLLISION_AWARE_FOUNDATION_POSITIONS.find(isClear);
+    if (clearTarget) return clearTarget;
+
+    const separationScore = (candidate) => occupied.reduce((minimum, foundation) => {
+      const horizontal = Math.abs(candidate.x - foundation.x) / FOUNDATION_CLEARANCE.x;
+      const vertical = Math.abs(candidate.y - foundation.y) / FOUNDATION_CLEARANCE.y;
+      return Math.min(minimum, Math.hypot(horizontal, vertical));
+    }, Infinity);
+    return COLLISION_AWARE_FOUNDATION_POSITIONS.reduce((best, candidate) => (
+      separationScore(candidate) > separationScore(best) ? candidate : best
+    ));
+  }
+
+  const index = Number(existingFoundations);
   if (!Number.isSafeInteger(index) || index < 0) {
     throw new RangeError("Existing foundation count must be a non-negative safe integer.");
   }

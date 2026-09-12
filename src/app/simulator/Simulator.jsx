@@ -5964,7 +5964,7 @@ export default function Simulator({
   function getEmbeddedLessonBlock(action, details = {}) {
     return getSimulatorV2LessonActionBlock({
       lesson: embeddedLesson, checkpoint: tutorialCurrentCheckpoint,
-      action, gamePhase, ...details,
+      action, gamePhase, layoutLessonProgress: tutorialLayoutProgress, ...details,
     });
   }
 
@@ -7347,6 +7347,7 @@ export default function Simulator({
     drawTarget: Number(turnDrawSelection?.target ?? 0),
     foundationDeckCount: foundationDeck.length,
     palsDeckCount: palsDeck.length,
+    discardPileCardIds: discardPile,
   }) : null;
   const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;
   const tutorialFinalProgressLabel = tutorialCurrentCheckpoint === null && tutorialContract
@@ -7361,7 +7362,9 @@ export default function Simulator({
   const tutorialConditionRound = eventOverlay?.type === "condition-reveal"
     ? eventOverlay.round ?? round
     : compactTurnSequence?.roundNumber ?? round;
-  const tutorialConditionHelp = tutorialContract && tutorialConditionCard
+  const tutorialConditionHelp = tutorialContract
+    && tutorialConditionCard
+    && (!embeddedLesson || !tutorialPreviouslyTaughtConcepts.includes(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS))
     ? {
         ...getSimulatorTutorialConditionHelp(tutorialConditionCard, tutorialConditionRound),
         ...(tutorialFinalProgressLabel ? { progressLabel: tutorialFinalProgressLabel } : {}),
@@ -7794,7 +7797,7 @@ export default function Simulator({
   });
   const embeddedLessonEcosystemDropPosition = embeddedLessonEcosystemDropCardIds.length
     ? embeddedLessonEcosystemDropCardIds.some((cardId) => isFoundationCard(cardsById[cardId]))
-      ? getGuidedAcademyFoundationPlacementTarget(playerCorals.length)
+      ? getGuidedAcademyFoundationPlacementTarget(playerCorals)
       : { x: 72, y: 38 }
     : null;
   const isPlacingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) === 0);
@@ -7802,10 +7805,10 @@ export default function Simulator({
   const isPreviewingCoralUpgrade = Boolean(
     isFoundationCard(activePlacementCard) && Number(activePlacementCard.stage ?? 0) > 0
   );
-  const guidedFoundationPlacementTarget = tutorialUsesScriptedScenario
+  const guidedFoundationPlacementTarget = (tutorialUsesScriptedScenario || embeddedLesson)
     && isPlacingCoral
     && tutorialHelp?.target === "placement"
-      ? getGuidedAcademyFoundationPlacementTarget(playerCorals.length)
+      ? getGuidedAcademyFoundationPlacementTarget(playerCorals)
       : null;
   const upgradeableCoralIds = new Set(
     isPreviewingCoralUpgrade
@@ -8758,6 +8761,14 @@ export default function Simulator({
       eventType: event?.type,
       breakdown,
     });
+    const showTutorialDefeatOutcome = Boolean(
+      !showTutorialTeaching
+      && embeddedLesson?.defeatTeachingCardId
+      && event?.type === "faceoff-result"
+      && playerRole === "defender"
+      && discardCue?.sourceOwner === "player"
+      && discardCue.cardId === embeddedLesson.defeatTeachingCardId
+    );
     if (showTutorialTeaching) tutorialCombatResultExplainedRef.current = true;
     const checkpoint = {
       id,
@@ -8768,7 +8779,8 @@ export default function Simulator({
       sourceGeometry: discardCue ? createConsumedAttackFlightPlan(discardCue) : null,
       commit,
       remainingEvents,
-      tutorialTeachingStep: showTutorialTeaching ? 0 : null,
+      tutorialTeachingStep: showTutorialTeaching ? 0 : showTutorialDefeatOutcome ? 2 : null,
+      tutorialTeachingOutcomeOnly: showTutorialDefeatOutcome,
     };
     combatResultReturnFocusRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
@@ -10534,8 +10546,8 @@ export default function Simulator({
       upgradeCoral(target.coralId, cardId);
     } else if (isFoundationCard(card) && Number(card.stage ?? 0) === 0) {
       const coordinates = (
-        tutorialUsesScriptedScenario && tutorialHelp?.target === "placement"
-          ? getGuidedAcademyFoundationPlacementTarget(playerCorals.length)
+        (tutorialUsesScriptedScenario || embeddedLesson) && tutorialHelp?.target === "placement"
+          ? embeddedLessonEcosystemDropPosition ?? getGuidedAcademyFoundationPlacementTarget(playerCorals)
           : null
       ) ?? getPlacementCoordinatesFromPoint(
         ecosystemRef.current,
@@ -10612,7 +10624,7 @@ export default function Simulator({
 
   function completeTutorialLayoutLessonAction(actionId) {
     if (
-      !tutorialUsesScriptedScenario
+      !(tutorialUsesScriptedScenario || embeddedLesson)
       || gamePhase !== "setup"
       || !playerCorals.length
       || tutorialHelp?.actionId !== actionId
@@ -11226,6 +11238,8 @@ export default function Simulator({
         defenderCardId: event.defenderCardId ?? null,
         targetInstanceId: event.targetInstanceId ?? null,
         outcome: event.combatOutcome ?? null,
+        discardedCardId: event.combatDiscardCue?.cardId ?? null,
+        destinationZone: event.combatDiscardCue?.destinationZone ?? null,
         resolution: {
           attackerWins: Boolean(event.attackerWins),
           attackTotal: event.attackTotal ?? null,
@@ -11964,7 +11978,7 @@ export default function Simulator({
     setTurnDrawSelection((current) => {
       if (!current) return current;
       const authoredDraw = embeddedLesson
-        ? getSimulatorV2ExpectedDraw(embeddedLesson)
+        ? getSimulatorV2ExpectedDraw(embeddedLesson, tutorialCurrentCheckpoint)
         : tutorialUsesScriptedScenario && !current.mode
           ? getScriptedTutorialTurnDraw({ round })
           : null;
@@ -12331,7 +12345,7 @@ export default function Simulator({
   function confirmTurnDraw() {
     if (!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target) return;
     const authoredDraw = embeddedLesson
-      ? getSimulatorV2ExpectedDraw(embeddedLesson)
+      ? getSimulatorV2ExpectedDraw(embeddedLesson, tutorialCurrentCheckpoint)
       : tutorialUsesScriptedScenario && !turnDrawSelection.mode
         ? getScriptedTutorialTurnDraw({ round })
         : null;
@@ -26098,7 +26112,11 @@ export default function Simulator({
                     selection={turnDrawSelection}
                     foundationCount={foundationDeck.length}
                     palsCount={palsDeck.length}
-                    allowedDeckType={tutorialUsesScriptedScenario && !turnDrawSelection?.mode ? getScriptedTutorialTurnDraw({ round })?.deckType ?? null : null}
+                    allowedDeckType={embeddedLesson
+                      ? getSimulatorV2ExpectedDraw(embeddedLesson, tutorialCurrentCheckpoint)?.deckType ?? null
+                      : tutorialUsesScriptedScenario && !turnDrawSelection?.mode
+                        ? getScriptedTutorialTurnDraw({ round })?.deckType ?? null
+                        : null}
                     tutorialTargetClass={tutorialTargetClass("draw-controls")}
                     onAdjust={adjustTurnDraw}
                     onConfirm={confirmTurnDraw}
@@ -26293,7 +26311,7 @@ export default function Simulator({
                         const isLayoutFoundationTarget = Boolean(
                           tutorialHelpTargetActive
                           && tutorialHelp?.target === "foundation-drag"
-                          && coral.cardId === scriptedFinishPlan?.setupCardId
+                          && coral.cardId === (embeddedLesson?.setupCardId ?? scriptedFinishPlan?.setupCardId)
                         );
                         const upgradeCelebration = coralUpgradeCelebrations.find((entry) => (
                           entry.owner === "player" && entry.cardInstanceId === `foundation:${coral.id}`
@@ -26412,7 +26430,7 @@ export default function Simulator({
                                 const isLayoutSlotTarget = Boolean(
                                   tutorialHelpTargetActive
                                   && tutorialHelp?.target === "slot-drag"
-                                  && coral.cardId === scriptedFinishPlan?.setupCardId
+                                  && coral.cardId === (embeddedLesson?.setupCardId ?? scriptedFinishPlan?.setupCardId)
                                   && index === 0
                                 );
                                 return (
@@ -27221,7 +27239,9 @@ export default function Simulator({
                 <div className="seapals-combat-result-teaching-copy">
                   <div className="seapals-combat-result-teaching-header">
                     <strong>{tutorialGuide.name}</strong>
-                    <span>{combatResultCheckpoint.tutorialTeachingStep + 1} of {combatCheckpointTeachingSteps.length}</span>
+                    <span>{combatResultCheckpoint.tutorialTeachingOutcomeOnly
+                      ? "What happened"
+                      : `${combatResultCheckpoint.tutorialTeachingStep + 1} of ${combatCheckpointTeachingSteps.length}`}</span>
                   </div>
                   <p
                     id={`seapals-combat-result-teaching-${combatResultCheckpoint.id}`}

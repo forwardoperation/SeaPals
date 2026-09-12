@@ -26,10 +26,12 @@ import {
   observeSimulatorTutorialEvent,
   getSimulatorTutorialCurrentCheckpoint,
 } from "./tutorialContract.mjs";
-import { addResourceWithinCap, calculateRpBankCap, calculateVictoryPoints, determineVictoryResult, resolveOpposedRoll } from "./gameRules.mjs";
+import { addResourceWithinCap, calculateRpBankCap, calculateVictoryPoints, determineVictoryResult } from "./gameRules.mjs";
 import { attackCanTargetCard } from "./combatRules.mjs";
+import { createCombatRollPacket } from "./combatRollPresentation.mjs";
 import { getHabitatRequirementError } from "./habitatRules.mjs";
 import { createSchoolDensityBucketState } from "./schoolDensityRules.mjs";
+import { createSimulatorRandomStream, sampleSimulatorRandom } from "./simulatorRandomStream.mjs";
 import { getPersonalDeckType } from "./zoneRules.mjs";
 
 const require = createRequire(import.meta.url);
@@ -92,18 +94,7 @@ const homeReefDefinition = () => ({
   ],
 });
 
-const attackReefDefinition = () => [
-  homeReefDefinition(),
-  {
-    foundationCardId: "brain-coral-base",
-    placements: [
-      { cardId: "porcupine-fish", slotClass: "fish" },
-      { cardId: "sea-urchin", slotClass: "invertebrate" },
-    ],
-  },
-];
-
-test("each concept is introduced once and familiar turn steps remain sequencing checkpoints", () => {
+test("each concept has a teaching lesson and familiar turn steps remain sequencing checkpoints", () => {
   const owners = new Map();
   for (const selected of SIMULATOR_V2_LESSONS) {
     assert.equal(
@@ -112,8 +103,7 @@ test("each concept is introduced once and familiar turn steps remain sequencing 
       `${selected.id} does not repeat its own concept metadata`,
     );
     for (const concept of selected.introducedConcepts) {
-      assert.equal(owners.has(concept), false, `${concept} is introduced by only one lesson`);
-      owners.set(concept, selected.id);
+      owners.set(concept, [...(owners.get(concept) ?? []), selected.id]);
     }
   }
 
@@ -122,8 +112,12 @@ test("each concept is introduced once and familiar turn steps remain sequencing 
     Object.values(SIMULATOR_V2_LESSON_CONCEPTS).sort(),
     "every authored concept has exactly one teaching lesson",
   );
-  assert.equal(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS), "first-reef");
-  assert.equal(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS), "first-reef");
+  assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS), ["first-reef"]);
+  assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS), ["first-reef"]);
+  for (const [concept, lessonIds] of owners) {
+    assert.equal(lessonIds.length, 1, `${concept} has one teaching owner`);
+  }
+  assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.CORAL_UPGRADES), ["first-attack"]);
   assert.equal(simulatorV2LessonIntroduces("first-reef", SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS), true);
   assert.equal(simulatorV2LessonIntroduces("first-attack", SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS), false);
   assert.equal(simulatorV2LessonIntroduces("missing", SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS), false);
@@ -156,15 +150,14 @@ test("each concept is introduced once and familiar turn steps remain sequencing 
   }
 });
 
-test("nine continuous lessons form four ordered modules and supply legal deterministic real-engine seeds", () => {
+test("eight continuous lessons form four ordered modules and supply legal deterministic real-engine seeds", () => {
   assert.equal(SIMULATOR_V2_LESSON_PROGRESS_KEY, "seapals-simulator-v2-lessons-v2");
-  assert.equal(SIMULATOR_V2_LESSONS.length, 9);
+  assert.equal(SIMULATOR_V2_LESSONS.length, 8);
   assert.deepEqual(
     Object.fromEntries(SIMULATOR_V2_LESSONS.map(({ id, victoryTarget }) => [id, victoryTarget])),
     {
       "first-reef": 3,
-      "first-attack": 6,
-      "under-attack": 7,
+      "first-attack": 7,
       "support-search": 4,
       "clear-stun": 4,
       "school-density": 4,
@@ -177,7 +170,7 @@ test("nine continuous lessons form four ordered modules and supply legal determi
     SIMULATOR_V2_LESSON_MODULES.map(({ id, lessonIds }) => ({ id, lessonIds })),
     [
       { id: "reef-basics", lessonIds: ["first-reef"] },
-      { id: "battle-basics", lessonIds: ["first-attack", "under-attack"] },
+      { id: "battle-basics", lessonIds: ["first-attack"] },
       { id: "smart-plays", lessonIds: ["support-search", "clear-stun"] },
       { id: "build-to-victory", lessonIds: ["school-density", "filter-feeder", "apex-predators", "winning-turn"] },
     ],
@@ -216,7 +209,9 @@ test("nine continuous lessons form four ordered modules and supply legal determi
     );
     assert.equal(
       victoryCheckpointIndex,
-      selected.id === "apex-predators" ? selected.contract.checkpoints.length - 2 : selected.contract.checkpoints.length - 1,
+      selected.id === "apex-predators"
+        ? selected.contract.checkpoints.length - 2
+        : selected.contract.checkpoints.length - 1,
       `${selected.id} celebrates only after the scoring play and any mandatory on-play resolution`,
     );
     const module = SIMULATOR_V2_LESSON_MODULES.find(({ id }) => id === selected.moduleId);
@@ -245,7 +240,7 @@ test("nine continuous lessons form four ordered modules and supply legal determi
       }
     }
     assert.equal(seed.startingPlayer, "player");
-    assert.equal(seed.opponentTurnMode, selected.id === "under-attack" ? "play" : "observe");
+    assert.equal(seed.opponentTurnMode, selected.id === "first-attack" ? "play" : "observe");
     assert.equal(Object.hasOwn(seed, "forcedWinner"), false);
     assert.equal(Object.hasOwn(seed, "combatRolls"), false);
     const condition = cardsById[seed.activeConditionId];
@@ -255,6 +250,7 @@ test("nine continuous lessons form four ordered modules and supply legal determi
     }
   }
   assert.equal(randomSeeds.size, SIMULATOR_V2_LESSONS.length);
+  assert.equal(getSimulatorV2Lesson("first-attack").randomSeed, 0x5EA910CC);
 });
 
 test("Simulator's actual prepared-foundation factory supplies visible player artwork, finite camera coordinates and distinct live identities", () => {
@@ -406,81 +402,156 @@ test("first lesson combines setup, collection, a Pals draw, both slot classes, a
   assert.equal(observe(selected.id, [build("clownfish"), vp(2, 2)]).progress.completedCheckpointIds.length, 0, "Clownfish cannot skip the earlier setup and Invertebrate steps");
 });
 
-test("lesson two resumes the first reef, draws and places Porcupine Fish, then attacks before reaching 6 VP", () => {
+test("lesson two merges attacking, defending, defeat, upgrading, and a D6 answer into one deterministic route", () => {
   const selected = getSimulatorV2Lesson("first-attack");
   const attacker = cardsById[selected.attackCardId];
   const defender = cardsById[selected.attackTargetCardId];
-  const finisher = cardsById["sea-urchin"];
-  const action = attacker.actions.find((entry) => entry.effect?.type === "attack");
+  const attackAction = attacker.actions.find((entry) => entry.effect?.type === "attack");
+  const opponentAttacker = cardsById["spanish-hogfish"];
+  const opponentAction = opponentAttacker.actions.find((entry) => entry.effect?.type === "attack");
+  const upgrade = cardsById["brain-coral-stage-1"];
+  const predator = cardsById["great-barracuda"];
+  const quickStrike = predator.onPlay.flatMap((entry) => entry.effects ?? []).find((effect) => effect.type === "attack");
   assert.deepEqual(selected.seed.playerTableau, [homeReefDefinition()]);
   assert.equal(selected.seed.gamePhase, "setup");
   assert.equal(selected.seed.hasDrawnThisTurn, false);
-  assert.deepEqual(selected.seed.hand, ["brain-coral-base", finisher.id]);
-  assert.deepEqual(getSimulatorV2ExpectedDraw(selected), { deckType: "pals", cardId: attacker.id });
-  assert.equal(action.cost.rp, 1);
-  assert.equal(attackCanTargetCard(defender, action.effect), true);
+  assert.equal(selected.randomSeed, 0x5EA910CC, "the merged lesson owns a unique replay seed");
+  assert.deepEqual(selected.seed.conditionDeck, ["clear-water", "abundant-sunlight"]);
+  assert.deepEqual(selected.seed.hand, ["brain-coral-base", predator.id]);
+  assert.deepEqual(selected.seed.foundationDeck, [upgrade.id]);
+  assert.deepEqual(selected.seed.palsDeck, [attacker.id]);
+  assert.equal(selected.seed.opponentTurnMode, "play");
+  assert.equal(selected.seed.opponent.rp, 0);
+  assert.deepEqual(selected.seed.opponent.hand, [opponentAttacker.id], "Spanish Hogfish is shown entering play before its attack");
+  assert.deepEqual(
+    getSimulatorV2ExpectedDraw(selected, "tutorial-draw-card"),
+    { deckType: "pals", cardId: attacker.id },
+  );
+  assert.deepEqual(
+    getSimulatorV2ExpectedDraw(selected, "v2-draw-predator-upgrade"),
+    { deckType: "foundation", cardId: upgrade.id },
+  );
+  assert.equal(getSimulatorV2ExpectedDraw(selected), null, "the required deck is checkpoint-specific in the merged lesson");
+  assert.equal(attackAction.cost.rp, 1);
+  assert.equal(opponentAction.cost.rp, 1);
+  assert.equal(attackAction.effect.attackDice, "D4");
+  assert.equal(opponentAction.effect.attackDice, "D6");
+  assert.equal(quickStrike.attackDice, "D6");
+  assert.equal(attackCanTargetCard(defender, attackAction.effect), true);
+  assert.equal(attackCanTargetCard(defender, opponentAction.effect), true);
+  assert.equal(attackCanTargetCard(opponentAttacker, quickStrike), true);
+
+  let randomStream = createSimulatorRandomStream(selected.randomSeed);
+  const nextCombatRandom = () => {
+    const sample = sampleSimulatorRandom(randomStream);
+    randomStream = sample.state;
+    return sample.value;
+  };
+  const combatPackets = [
+    createCombatRollPacket(attackAction.effect.attackDice, defender.defense.dice, nextCombatRandom),
+    createCombatRollPacket(opponentAction.effect.attackDice, defender.defense.dice, nextCombatRandom),
+    createCombatRollPacket(quickStrike.attackDice, opponentAttacker.defense.dice, nextCombatRandom),
+  ];
+  assert.deepEqual(
+    combatPackets.map(({ attack, defense }) => [attack, defense]),
+    [[3, 3], [5, 1], [6, 1]],
+    "the replay seed fixes the opening tie, Sea Urchin's defeat, and Barracuda's answer",
+  );
+
+  const clearWaterCostEffect = cardsById["clear-water"].effects.find((effect) => effect.type === "modifyPlayCost");
+  assert.equal(clearWaterCostEffect.targetCategories.includes("predator"), true);
+  assert.equal(clearWaterCostEffect.amount, 1, "Round 1 makes an early Predator cost one more RP");
+  const sunlightCapEffect = cardsById["abundant-sunlight"].effects.find((effect) => effect.type === "modifyRpBankCap");
+  assert.equal(sunlightCapEffect.amount, 2, "Round 2 expands the bank before the planned upgrade and Predator play");
+
   const openingReef = materializeTableau(selected.seed.playerTableau);
   assert.equal(calculateVictoryPoints(allCardsInPlay(openingReef)), 3);
   const afterCollection = addResourceWithinCap(selected.seed.rp, income(openingReef), calculateRpBankCap(allCardsInPlay(openingReef)));
   assert.equal(afterCollection, 5);
   assert.equal(
-    afterCollection - cardsById["brain-coral-base"].cost.rp - attacker.cost.rp - action.cost.rp - finisher.cost.rp,
-    0,
-    "the prepared turn affords the new Coral, attacker, Crunch, and final Sea Urchin",
+    afterCollection - cardsById["brain-coral-base"].cost.rp - attacker.cost.rp - attackAction.cost.rp,
+    1,
+    "Round 1 affords Brain Coral, Porcupine Fish, and Crunch while banking one RP",
   );
-  const completedReef = materializeTableau(attackReefDefinition());
-  assert.equal(calculateVictoryPoints(allCardsInPlay(completedReef)), 6);
-  assert.equal(determineVictoryResult(5, 1, selected.victoryTarget), null, "the lesson cannot win before the attack");
-  for (const [attackRandom, defenseRandom] of [[0.999, 0], [0, 0.999], [0, 0]]) {
-    const sequence = [attackRandom, defenseRandom];
-    const resolution = resolveOpposedRoll(action.effect.attackDice, defender.defense.dice, () => sequence.shift());
-    assert.equal(resolution.resolved, true);
-    const event = { actionType: "attack-resolved", details: { accepted: true, attackerCardId: attacker.id, onPlay: false, resolution } };
-    const setup = [rp, draw, build("brain-coral-base", "foundation"), build(attacker.id), vp(5, 2)];
-    assert.equal(observe(selected.id, setup).progress.status, "active", "placing Porcupine Fish stays below the goal and leaves the attack usable");
-    assert.equal(observe(selected.id, [...setup, event]).progress.status, "active", "the faceoff unlocks the scoring play but does not skip it");
-    assert.equal(observe(selected.id, [...setup, event, build(finisher.id)]).progress.status, "active", "placing the card still waits for the real VP update");
-    assert.equal(observe(selected.id, [...setup, event, build(finisher.id), vp(6, 1)]).progress.status, "complete");
-    assert.equal(observe(selected.id, [...setup, { ...event, actor: "opponent" }]).progress.completedCheckpointIds.length, 4);
-    assert.equal(observe(selected.id, [...setup, { ...event, details: { ...event.details, accepted: false } }]).progress.completedCheckpointIds.length, 4);
-  }
-});
-
-test("lesson three resumes lesson two's reef, has the opponent play Spanish Hogfish, and rebuilds to at least 7 VP", () => {
-  const selected = getSimulatorV2Lesson("under-attack");
-  const attacker = cardsById["spanish-hogfish"];
-  const defender = cardsById["sea-urchin"];
-  const action = attacker.actions.find((entry) => entry.effect?.type === "attack");
-  assert.equal(selected.seed.opponentTurnMode, "play");
-  assert.equal(selected.seed.opponent.rp, 0);
-  assert.deepEqual(selected.seed.playerTableau, attackReefDefinition(), "the defense lesson starts from lesson two's completed player board");
-  assert.deepEqual(selected.seed.opponentTableau, [{ foundationCardId: "mustard-hill-coral-base", placements: [] }]);
-  assert.deepEqual(selected.seed.opponent.hand, [attacker.id], "Spanish Hogfish begins in hand so its play is shown before Crunch");
-  assert.deepEqual(getSimulatorV2ExpectedDraw(selected), { deckType: "pals", cardId: "clownfish" });
-  assert.equal(attackCanTargetCard(defender, action.effect), true);
-  const prepared = materializeTableau(selected.seed.playerTableau);
-  assert.equal(calculateVictoryPoints(allCardsInPlay(prepared)), 6);
-  assert.equal(determineVictoryResult(6, 0, selected.victoryTarget), null, "the prepared reef must not win before the opponent acts");
   const opponentReef = materializeTableau(selected.seed.opponentTableau);
-  assert.equal(income(opponentReef), attacker.cost.rp + action.cost.rp, "the rival can play Spanish Hogfish and immediately pay for Crunch");
-  const finisher = cardsById["clownfish"];
-  assert.deepEqual(selected.seed.hand, ["brain-coral-base"]);
-  const rebuilt = materializeTableau([...selected.seed.playerTableau, { foundationCardId: "brain-coral-base", placements: [] }]);
-  assert.ok(rebuilt[2].slots.some((slot) => !slot.cardId && canCardOccupySlot(finisher, slot)));
-  assert.equal(finisher.victoryPoints, 2);
+  assert.equal(
+    income(opponentReef),
+    opponentAttacker.cost.rp + opponentAction.cost.rp,
+    "the rival can play Spanish Hogfish and immediately pay for its D6 Crunch",
+  );
+  const secondRoundReef = materializeTableau([
+    homeReefDefinition(),
+    { foundationCardId: "brain-coral-base", placements: [{ cardId: attacker.id, slotClass: "fish" }] },
+  ]);
+  const secondRoundBank = addResourceWithinCap(1, income(secondRoundReef), calculateRpBankCap(allCardsInPlay(secondRoundReef)) + sunlightCapEffect.amount);
+  assert.equal(secondRoundBank, 5);
+  assert.equal(secondRoundBank - cardsById["brain-coral-base"].upgrade.cost.rp - predator.cost.rp, 0);
+  assert.ok(upgrade.slots.some((slot) => slot.slotClass === "predator" && canCardOccupySlot(predator, slot)));
+  const completedReef = materializeTableau([
+    {
+      foundationCardId: "mustard-hill-coral-base",
+      placements: [{ cardId: "clownfish", slotClass: "fish" }],
+    },
+    {
+      foundationCardId: upgrade.id,
+      placements: [
+        { cardId: attacker.id, slotClass: "fish" },
+        { cardId: predator.id, slotClass: "predator" },
+      ],
+    },
+  ]);
+  assert.equal(calculateVictoryPoints(allCardsInPlay(completedReef)), 7, "the deterministic defeat and Predator play land exactly on the lesson goal");
 
+  const firstAttack = { actionType: "attack-resolved", details: { accepted: true, attackerCardId: attacker.id, onPlay: false } };
   const pass = { actionType: "turn-ended", details: {} };
   const opponentAttack = {
     actionType: "attack-resolved",
     actor: "opponent",
-    details: { accepted: true, attackerCardId: attacker.id, onPlay: false },
+    phase: "opponent",
+    details: {
+      accepted: true,
+      attackerCardId: opponentAttacker.id,
+      defenderCardId: defender.id,
+      onPlay: false,
+      outcome: "defense-broken",
+      resolution: { attackerWins: true },
+      discardedCardId: defender.id,
+      destinationZone: "discard",
+    },
   };
-  const route = [pass, opponentAttack, draw, build("brain-coral-base", "foundation"), build("clownfish"), vp(7, 2)];
+  const foundationDraw = { actionType: "card-drawn", phase: "draw", details: { count: 1, foundationCount: 1 } };
+  const finalAttack = { actionType: "attack-resolved", details: { accepted: true, attackerCardId: predator.id, onPlay: true } };
+  const throughFirstAttack = [rp, draw, build("brain-coral-base", "foundation"), build(attacker.id), firstAttack];
+  const throughDefense = [...throughFirstAttack, pass, opponentAttack];
+  const throughPredatorBuild = [
+    ...throughDefense,
+    foundationDraw,
+    build(upgrade.id, "foundation-upgrade"),
+    build(predator.id),
+  ];
+  const deferredGoal = vp(7, predator.victoryPoints);
+  const throughDeferredGoal = [...throughPredatorBuild, deferredGoal];
+  const route = [...throughDeferredGoal, finalAttack];
   assert.equal(observe(selected.id, route).progress.status, "complete");
-  assert.equal(observe(selected.id, [pass, opponentAttack, draw, build("brain-coral-base", "foundation"), build("clownfish"), vp(8, 2)]).progress.status, "complete", "the goal also completes when both Sea Urchins survive");
-  assert.equal(observe(selected.id, [pass, { ...opponentAttack, actor: "player" }, draw, build("brain-coral-base", "foundation"), build("clownfish"), vp(7, 2)]).progress.completedCheckpointIds.length, 1);
-  assert.equal(observe(selected.id, [pass, { ...opponentAttack, details: { ...opponentAttack.details, accepted: false } }]).progress.completedCheckpointIds.length, 1);
-  assert.equal(observe(selected.id, route.slice(0, -1)).progress.status, "active");
+  const beforeFinalAttack = observe(selected.id, throughDeferredGoal);
+  assert.equal(beforeFinalAttack.progress.status, "active", "the real VP gain waits for the mandatory on-play attack before celebration");
+  assert.equal(getSimulatorTutorialCurrentCheckpoint(beforeFinalAttack.contract, beforeFinalAttack.progress).id, "v2-predator-attack");
+  assert.equal(beforeFinalAttack.progress.deferredCheckpointEvents["tutorial-earn-vp"].details.to, 7);
+  assert.equal(observe(selected.id, [...throughDeferredGoal, { ...finalAttack, details: { ...finalAttack.details, onPlay: false } }]).progress.status, "active");
+  assert.equal(observe(selected.id, [...throughFirstAttack, pass, { ...opponentAttack, actor: "player" }]).progress.completedCheckpointIds.length, 6);
+  assert.equal(observe(selected.id, [...throughDefense, { ...foundationDraw, details: { count: 1, palsCount: 1 } }]).progress.completedCheckpointIds.length, 7);
+  assert.equal(observe(selected.id, [
+    ...throughFirstAttack,
+    pass,
+    { ...opponentAttack, details: { ...opponentAttack.details, discardedCardId: null } },
+  ]).progress.completedCheckpointIds.length, 6, "the defense step requires Sea Urchin to reach the discard pile");
+
+  const upgradeCheckpoint = selected.contract.checkpoints.find(({ id }) => id === "v2-upgrade-predator-coral");
+  assert.equal(
+    getSimulatorV2LessonHelp(selected, upgradeCheckpoint, { gamePhase: "main", hand: [upgrade.id] }).message,
+    "Brain Coral has weathered a full turn, so it can level up now. Spend 2 RP for Stage 1. Here’s the payoff: its resilience doubles from 10 to 20 HP, it produces 2 RP instead of 1 each round, and it gains a Predator slot plus a second Invertebrate slot. Porcupine Fish stays safely in its Fish slot.",
+    "the coach names every concrete benefit of the required upgrade",
+  );
 });
 
 test("the Support search lesson resolves the real one-time search before building its result", () => {
@@ -528,6 +599,9 @@ test("the Stunned lesson clears the seeded status before a legal paid upgrade", 
   const upgradeSlot = (cardsById["brain-coral-stage-1"].slots ?? []).find((slot) => slot.slotClass === "invertebrate");
   assert.equal(canCardOccupySlot(cardsById["sea-urchin"], upgradeSlot), true);
   assert.equal(calculateVictoryPoints(allCardsInPlay(materializeTableau(selected.seed.playerTableau))), 3);
+  const upgradeCheckpoint = selected.contract.checkpoints.find(({ id }) => id === "v2-upgrade-after-stun");
+  const upgradeHelp = getSimulatorV2LessonHelp(selected, upgradeCheckpoint, { hand: ["brain-coral-stage-1"] });
+  assert.match(upgradeHelp.message, /20 HP of resilience.*2 RP each round.*Predator slot.*Invertebrate slot/s);
 
   const support = { actionType: "support-played", details: { accepted: true, cardId: heal.id } };
   const route = [
@@ -626,6 +700,9 @@ test("the Apex lesson keeps the home reef, legally upgrades, opens an Apex slot,
   assert.equal(attackEffect.repeat, 2);
   assert.equal(materializeTableau(selected.seed.opponentTableau)[0].slots.filter(({ cardId }) => cardId === "clownfish").length, 2);
   assert.equal(calculateVictoryPoints([...startingCards, hammerhead]), selected.victoryTarget);
+  const upgradeCheckpoint = selected.contract.checkpoints.find(({ id }) => id === "v2-upgrade-apex-coral");
+  const upgradeHelp = getSimulatorV2LessonHelp(selected, upgradeCheckpoint, { hand: [upgrade.id] });
+  assert.match(upgradeHelp.message, /5 RP.*resilience rises from 20 to 60 HP.*2 to 5 RP each round.*two Predator.*one Apex.*three Invertebrate.*no Fish slot/s);
 
   const upgradeEvent = build(upgrade.id, "foundation-upgrade");
   const apexEvent = build(hammerhead.id);
@@ -672,6 +749,15 @@ test("sequencing gates block spending or passing out of order while leaving actu
   const block = (lesson, checkpoint, action, details) => getSimulatorV2LessonActionBlock({ lesson, checkpoint, action, ...details });
   assert.equal(block(setupLesson, setupCheckpoint, "play-card", { cardId: setupLesson.setupCardId, gamePhase: "setup" }), "");
   assert.ok(block(setupLesson, setupCheckpoint, "play-card", { cardId: "clownfish", gamePhase: "setup" }));
+  assert.ok(block(setupLesson, setupCheckpoint, "end-turn", { gamePhase: "setup" }), "layout practice comes before Begin Round");
+  assert.ok(block(setupLesson, setupCheckpoint, "end-turn", {
+    gamePhase: "setup",
+    layoutLessonProgress: { "move-foundation": true },
+  }), "both layout gestures are required");
+  assert.equal(block(setupLesson, setupCheckpoint, "end-turn", {
+    gamePhase: "setup",
+    layoutLessonProgress: { "move-foundation": true, "move-slot": true },
+  }), "");
   const invertebrateStep = setupLesson.contract.checkpoints[3];
   assert.equal(block(setupLesson, invertebrateStep, "play-card", { cardId: "sea-urchin", gamePhase: "main" }), "");
   assert.ok(block(setupLesson, invertebrateStep, "play-card", { cardId: "clownfish", gamePhase: "main" }));
@@ -690,6 +776,12 @@ test("sequencing gates block spending or passing out of order while leaving actu
   assert.equal(block(attackLesson, attackLesson.contract.checkpoints[3], "play-card", { cardId: "porcupine-fish", gamePhase: "main" }), "");
   assert.ok(block(attackLesson, attackLesson.contract.checkpoints[3], "attack", { cardId: "porcupine-fish", gamePhase: "main" }));
   assert.equal(block(attackLesson, attackLesson.contract.checkpoints[4], "attack", { cardId: "porcupine-fish", gamePhase: "main" }), "");
+  const upgradeDraw = attackLesson.contract.checkpoints.find(({ id }) => id === "v2-draw-predator-upgrade");
+  assert.equal(block(attackLesson, upgradeDraw, "draw", { deckType: "foundation" }), "");
+  assert.ok(block(attackLesson, upgradeDraw, "draw", { deckType: "pals" }));
+  const predatorAttack = attackLesson.contract.checkpoints.find(({ id }) => id === "v2-predator-attack");
+  assert.equal(block(attackLesson, predatorAttack, "attack", { cardId: "great-barracuda", gamePhase: "main" }), "");
+  assert.ok(block(attackLesson, predatorAttack, "attack", { cardId: "porcupine-fish", gamePhase: "main" }));
   const final = getSimulatorV2Lesson("winning-turn");
   assert.equal(block(final, final.contract.checkpoints[0], "end-turn", { gamePhase: "setup" }), "");
   assert.ok(block(final, final.contract.checkpoints[1], "draw", { deckType: "foundation" }));
@@ -704,7 +796,17 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
   assert.equal(help(setup, { gamePhase: "setup", hasCoralInPlay: false }).target, "hand");
   assert.equal(help(setup, { gamePhase: "setup", selectedHandCard: first.setupCardId, handPopoverOpen: true }).target, "play-card");
   assert.equal(help(setup, { gamePhase: "setup", playingCardId: first.setupCardId }).target, "placement");
-  assert.equal(help(setup, { gamePhase: "setup", hasCoralInPlay: true }).target, "turn-button");
+  assert.equal(help(setup, { gamePhase: "setup", hasCoralInPlay: true }).target, "foundation-drag");
+  assert.equal(help(setup, {
+    gamePhase: "setup",
+    hasCoralInPlay: true,
+    layoutLessonProgress: { "move-foundation": true },
+  }).target, "slot-drag");
+  assert.equal(help(setup, {
+    gamePhase: "setup",
+    hasCoralInPlay: true,
+    layoutLessonProgress: { "move-foundation": true, "move-slot": true },
+  }).target, "turn-button");
   const drawStep = first.contract.checkpoints[2];
   assert.equal(help(drawStep, { gamePhase: "draw", modal: "turn-draw", drawSelected: 0, drawTarget: 1 }).targetDeck, "pals");
   assert.equal(help(drawStep, { gamePhase: "draw", modal: "turn-draw", drawSelected: 1, drawTarget: 1 }).target, "confirm-draw");
@@ -718,13 +820,27 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
   assert.equal(getSimulatorV2LessonHelp(attack, attackStep, { inspectedAttack: { ready: true, actionKey: "live-crunch" }, inspectedPlayerCard: true }).target, "attack-button");
   assert.equal(getSimulatorV2LessonHelp(attack, attackStep, { attackContext: true }).target, "opponent-board");
   assert.equal(getSimulatorV2LessonHelp(attack, attackStep, { attackContext: true, inspectedCardOpen: true }).target, "close-modal");
-  const scoreStep = attack.contract.checkpoints.find(({ id }) => id === "v2-attack-finish");
-  const scoreHelp = getSimulatorV2LessonHelp(attack, scoreStep, { gamePhase: "main", hand: ["sea-urchin"] });
-  assert.equal(scoreHelp.targetCardId, "sea-urchin");
-  assert.equal(scoreHelp.interaction, "drag");
-  const defense = getSimulatorV2Lesson("under-attack");
-  const defenseStep = defense.contract.checkpoints.find(({ id }) => id === "v2-defend-attack");
-  assert.match(getSimulatorV2LessonHelp(defense, defenseStep, {}).message, /play Spanish Hogfish/);
+  const defenseStep = attack.contract.checkpoints.find(({ id }) => id === "v2-defend-attack");
+  assert.equal(getSimulatorV2LessonHelp(attack, defenseStep, {}), null, "the teacher stays off the live opponent attack and dice");
+  const upgradeDraw = attack.contract.checkpoints.find(({ id }) => id === "v2-draw-predator-upgrade");
+  const upgradeDrawHelp = getSimulatorV2LessonHelp(attack, upgradeDraw, {
+    gamePhase: "draw",
+    drawSelected: 0,
+    drawTarget: 1,
+    discardPileCardIds: ["sea-urchin"],
+  });
+  assert.equal(upgradeDrawHelp.targetDeck, "foundation");
+  assert.match(upgradeDrawHelp.message, /Sea Urchin lost.*discard pile.*1 VP left.*Brain Coral Stage 1/is);
+  const upgradeStep = attack.contract.checkpoints.find(({ id }) => id === "v2-upgrade-predator-coral");
+  assert.match(getSimulatorV2LessonHelp(attack, upgradeStep, { hand: ["brain-coral-stage-1"] }).message, /resilience doubles from 10 to 20 HP.*Predator slot/s);
+  const predatorBuildStep = attack.contract.checkpoints.find(({ id }) => id === "v2-place-predator");
+  assert.equal(getSimulatorV2LessonHelp(attack, predatorBuildStep, { hand: ["great-barracuda"] }).targetCardId, "great-barracuda");
+  const predatorAttackStep = attack.contract.checkpoints.find(({ id }) => id === "v2-predator-attack");
+  const predatorAttackHelp = getSimulatorV2LessonHelp(attack, predatorAttackStep, {});
+  assert.equal(predatorAttackHelp.target, "opponent-board");
+  assert.match(predatorAttackHelp.message, /Bite uses a D6.*Crunch used a D4/s);
+  const scoreStep = attack.contract.checkpoints.find(({ actionType }) => actionType === "vp-earned");
+  assert.equal(getSimulatorV2LessonHelp(attack, scoreStep, {}).target, "vp-score");
   const condition = getSimulatorV2Lesson("clear-stun");
   const conditionStep = condition.contract.checkpoints.find(({ id }) => id === "v2-clear-stunned");
   assert.equal(

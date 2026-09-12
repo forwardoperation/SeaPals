@@ -267,9 +267,26 @@ test("committing an opponent faceoff emits an opponent-scoped attack lesson even
   assert.match(commitEvent, /attackerCardId:\s*event\.attackerCardId \?\? event\.sourceCardId \?\? null/);
   assert.match(commitEvent, /defenderCardId:\s*event\.defenderCardId \?\? null/);
   assert.match(commitEvent, /targetInstanceId:\s*event\.targetInstanceId \?\? null/);
+  assert.match(commitEvent, /outcome:\s*event\.combatOutcome \?\? null/);
+  assert.match(commitEvent, /discardedCardId:\s*event\.combatDiscardCue\?\.cardId \?\? null/);
+  assert.match(commitEvent, /destinationZone:\s*event\.combatDiscardCue\?\.destinationZone \?\? null/);
+  assert.match(commitEvent, /attackerWins:\s*Boolean\(event\.attackerWins\)/);
   assert.match(commitEvent, /resolvedCount:\s*event\.attackNumber \?\? 1/);
   assert.match(commitEvent, /requiredCount:\s*event\.attackCount \?\? 1/);
   assert.match(commitEvent, /\}, \{ actor: "opponent", phase: "opponent" \}\)/);
+});
+
+test("embedded lesson wiring follows the live checkpoint for layout, draws, and defeat coaching", () => {
+  const lessonBlock = sourceSection(
+    "function getEmbeddedLessonBlock(action, details = {})",
+    "function notifyTutorialCallback(name, ...args)",
+  );
+  assert.match(lessonBlock, /layoutLessonProgress:\s*tutorialLayoutProgress/);
+  assert.match(simulatorSource, /discardPileCardIds:\s*discardPile/);
+  assert.ok(
+    [...simulatorSource.matchAll(/getSimulatorV2ExpectedDraw\(embeddedLesson, tutorialCurrentCheckpoint\)/g)].length >= 3,
+    "desktop adjustment, draw confirmation, and the mobile tray use the active authored draw checkpoint",
+  );
 });
 
 test("each embedded lesson chooses observation or a real opponent turn from its own seed", () => {

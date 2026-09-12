@@ -70,7 +70,7 @@ test("the pointer hand has a natural silhouette and a calibrated fingertip", () 
 test("the board exposes prepared ecosystem, matching Coral, and compatible slot destinations before dragging", () => {
   assert.match(
     simulatorSource,
-    /embeddedLessonEcosystemDropPosition[\s\S]*?getGuidedAcademyFoundationPlacementTarget\(playerCorals\.length\)[\s\S]*?\{ x: 72, y: 38 \}/,
+    /embeddedLessonEcosystemDropPosition[\s\S]*?getGuidedAcademyFoundationPlacementTarget\(playerCorals\)[\s\S]*?\{ x: 72, y: 38 \}/,
   );
   assert.match(
     simulatorSource,

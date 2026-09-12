@@ -64,19 +64,17 @@ test("a tied faceoff explains that Defense holds", () => {
   assert.match(outcome.message, /both totals are 4.*defense holds the tie/i);
 });
 
-test("combat teaching appears only when an embedded lesson still needs the attacking concept", () => {
+test("the merged battle lesson teaches its first faceoff once", () => {
   const firstAttack = getSimulatorV2Lesson("first-attack");
-  const underAttack = getSimulatorV2Lesson("under-attack");
   const base = { eventType: "faceoff-result", breakdown, alreadyExplained: false };
 
   assert.equal(shouldTeachSimulatorV2CombatResult({ ...base, lesson: firstAttack }), true);
-  assert.equal(shouldTeachSimulatorV2CombatResult({ ...base, lesson: underAttack }), true, "a direct Lesson 3 start still needs the prerequisite");
   assert.equal(shouldTeachSimulatorV2CombatResult({ ...base, lesson: null }), false);
   assert.equal(shouldTeachSimulatorV2CombatResult({ ...base, lesson: getSimulatorV2Lesson("first-reef") }), false);
   assert.equal(shouldTeachSimulatorV2CombatResult({ ...base, lesson: firstAttack, alreadyExplained: true }), false);
   assert.equal(shouldTeachSimulatorV2CombatResult({
     ...base,
-    lesson: underAttack,
+    lesson: firstAttack,
     previouslyTaughtConcepts: [SIMULATOR_V2_LESSON_CONCEPTS.ATTACKING],
   }), false);
   assert.equal(shouldTeachSimulatorV2CombatResult({

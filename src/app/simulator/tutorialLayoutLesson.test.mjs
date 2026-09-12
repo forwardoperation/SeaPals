@@ -78,6 +78,25 @@ test("guided foundation targets spread early tutorial cards across distinct open
   assert.throws(() => getGuidedAcademyFoundationPlacementTarget(-1), /non-negative/);
 });
 
+test("guided foundation targets avoid Coral cards already on the live board", () => {
+  const target = getGuidedAcademyFoundationPlacementTarget([
+    { cardId: "mustard-hill-coral-base", x: 50, y: 50 },
+  ]);
+
+  assert.deepEqual(target, { x: 18, y: 72 });
+  assert.ok(
+    Math.abs(target.x - 50) >= 30 || Math.abs(target.y - 50) >= 38,
+    "the drop target must clear the existing Coral card",
+  );
+
+  const crowdedTarget = getGuidedAcademyFoundationPlacementTarget([
+    { x: 20, y: 50 },
+    { x: 50, y: 50 },
+    { x: 80, y: 50 },
+  ]);
+  assert.ok(crowdedTarget.y <= 24, "a crowded middle row should send the player to open water above it");
+});
+
 test("the live simulator wires each lesson to its real control and a precise placement marker", () => {
   const simulator = readFileSync(new URL("./Simulator.jsx", import.meta.url), "utf8");
   assert.match(simulator, /data-tutorial-target="player-zoom-in"[\s\S]{0,700}GUIDED_ACADEMY_LAYOUT_ACTIONS\.ZOOM_IN/);

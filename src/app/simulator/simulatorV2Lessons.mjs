@@ -11,6 +11,7 @@ export const SIMULATOR_V2_LESSON_CONCEPTS = Object.freeze({
   RESOURCE_POINTS: "resource-points",
   DRAWING: "drawing",
   CREATURE_SLOTS: "creature-slots",
+  REEF_LAYOUT: "reef-layout",
   VICTORY_POINTS: "victory-points",
   ATTACKING: "attacking",
   OPPONENT_TURNS: "opponent-turns",
@@ -50,10 +51,14 @@ const collectCheckpoint = () => checkpoint(
   [atLeast("details.collected", 1)],
 );
 
-const drawCheckpoint = () => checkpoint(
-  "tutorial-draw-card", ACTION.CARD_DRAWN, "Choose your draw",
-  "Draw one card from the Pals Deck.",
-  [atLeast("details.count", 1), atLeast("details.palsCount", 1)],
+const drawCheckpoint = ({
+  id = "tutorial-draw-card",
+  title = "Choose your draw",
+  deckType = "pals",
+  instruction = `Draw one card from the ${deckType === "foundation" ? "Foundation" : "Pals"} Deck.`,
+} = {}) => checkpoint(
+  id, ACTION.CARD_DRAWN, title, instruction,
+  [atLeast("details.count", 1), atLeast(`details.${deckType}Count`, 1)],
 );
 
 const buildCheckpoint = (id, title, cardId = null, { cardKind = "creature", placement = null } = {}) => checkpoint(
@@ -92,14 +97,6 @@ const homeReef = () => tableau("mustard-hill-coral-base", [
   ["clownfish", "fish"],
 ]);
 
-const attackReef = () => [
-  homeReef(),
-  tableau("brain-coral-base", [
-    ["porcupine-fish", "fish"],
-    ["sea-urchin", "invertebrate"],
-  ]),
-];
-
 function seed(overrides = {}) {
   return {
     hand: [],
@@ -136,7 +133,9 @@ function lesson(definition) {
     supportCards: {},
     introducedConcepts: [],
     ...definition,
-    randomSeed: (LESSON_RANDOM_SEED_BASE + definition.number) >>> 0,
+    randomSeed: Number.isInteger(definition.randomSeed)
+      ? definition.randomSeed >>> 0
+      : (LESSON_RANDOM_SEED_BASE + definition.number) >>> 0,
     contract: createSimulatorTutorialContract({
       id: "simulator-v2-" + definition.id,
       title: definition.title,
@@ -147,7 +146,7 @@ function lesson(definition) {
 
 export const SIMULATOR_V2_LESSON_MODULES = deepFreeze([
   { id: "reef-basics", title: "Reef Basics", summary: "Build a home and welcome your first SeaPals.", lessonIds: ["first-reef"] },
-  { id: "battle-basics", title: "Battle Basics", summary: "Attack, defend, and keep building after a faceoff.", lessonIds: ["first-attack", "under-attack"] },
+  { id: "battle-basics", title: "Battle Basics", summary: "Attack, defend, and answer with a stronger attacker.", lessonIds: ["first-attack"] },
   { id: "smart-plays", title: "Smart Plays", summary: "Use Support cards and clear a Condition.", lessonIds: ["support-search", "clear-stun"] },
   { id: "build-to-victory", title: "Build to Victory", summary: "Master School Density, Filter Feeders, Apex cards, and winning turns.", lessonIds: ["school-density", "filter-feeder", "apex-predators", "winning-turn"] },
 ]);
@@ -161,13 +160,14 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     introduction: "In this lesson, you’ll learn how every lively reef begins. Build Mustard Hill Coral, then help Sea Urchin and Clownfish settle into the right homes.",
     completion: "You built a home, collected RP, drew a card, and matched an Invertebrate and a Fish to reach 3 VP.",
     celebration: "Your first reef is thriving!",
-    skills: ["Conditions", "Corals", "Resource Points", "Drawing", "Creature slots", "Victory Points"],
+    skills: ["Conditions", "Corals", "Reef layout", "Resource Points", "Drawing", "Creature slots", "Victory Points"],
     introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS,
       SIMULATOR_V2_LESSON_CONCEPTS.CORALS,
       SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS,
       SIMULATOR_V2_LESSON_CONCEPTS.DRAWING,
       SIMULATOR_V2_LESSON_CONCEPTS.CREATURE_SLOTS,
+      SIMULATOR_V2_LESSON_CONCEPTS.REEF_LAYOUT,
       SIMULATOR_V2_LESSON_CONCEPTS.VICTORY_POINTS,
     ],
     focusCardId: "mustard-hill-coral-base", victoryTarget: 3,
@@ -196,26 +196,45 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
   }),
   lesson({
     id: "first-attack", moduleId: "battle-basics", number: 2,
-    title: "Try your first attack", duration: "4 min", goalLabel: "Build an attacker and reach 6 VP",
-    summary: "Draw and place Porcupine Fish, resolve a real faceoff, then grow your reef.",
-    introduction: "In this lesson, you’ll learn how to prepare an attacker, step by step. Your first reef is back: draw Porcupine Fish, give it a home, then let Crunch introduce itself.",
-    completion: "You built an attacker, read the faceoff, and grew the reef to 6 VP. Nice work. Crunch officially introduced itself.",
-    celebration: "Your first faceoff is complete!",
-    skills: ["Attack costs", "Legal targets", "Faceoffs"],
-    introducedConcepts: [SIMULATOR_V2_LESSON_CONCEPTS.ATTACKING],
-    focusCardId: "porcupine-fish", victoryTarget: 6,
+    title: "Attack and defend", duration: "7 min", goalLabel: "Trade attacks and reach 7 VP",
+    summary: "Attack with a Fish, defend the counterattack, then answer with a Predator.",
+    introduction: "In this lesson, you’ll learn both sides of a faceoff. Start with Porcupine Fish, face my Spanish Hogfish's counterattack, then upgrade your Coral and answer with a Predator.",
+    completion: "You attacked with a D4, saw a defeated creature move to the discard pile, then built Great Barracuda and answered with a D6 Bite.",
+    celebration: "You commanded both sides of the battle!",
+    skills: ["Attack costs", "Legal targets", "Defending", "Defeat", "Attack dice"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.ATTACKING,
+      SIMULATOR_V2_LESSON_CONCEPTS.OPPONENT_TURNS,
+      SIMULATOR_V2_LESSON_CONCEPTS.DEFENDING,
+      SIMULATOR_V2_LESSON_CONCEPTS.CORAL_UPGRADES,
+    ],
+    focusCardId: "porcupine-fish", victoryTarget: 7,
+    randomSeed: 0x5EA910CC,
     attackCardId: "porcupine-fish", attackTargetCardId: "sea-urchin",
-    expectedDraw: { deckType: "pals", cardId: "porcupine-fish" },
+    defeatTeachingCardId: "sea-urchin",
+    expectedDraws: {
+      "tutorial-draw-card": { deckType: "pals", cardId: "porcupine-fish" },
+      "v2-draw-predator-upgrade": { deckType: "foundation", cardId: "brain-coral-stage-1" },
+    },
     seed: seed({
-      hand: ["brain-coral-base", "sea-urchin"],
+      hand: ["brain-coral-base", "great-barracuda"],
+      foundationDeck: ["brain-coral-stage-1"],
       palsDeck: ["porcupine-fish"],
       rp: 2,
+      conditionDeck: ["clear-water", "abundant-sunlight"],
       gamePhase: "setup",
       round: 0,
       hasDrawnThisTurn: false,
       activeConditionId: null,
       playerTableau: [homeReef()],
       opponentTableau: [tableau("mustard-hill-coral-base", [["sea-urchin", "invertebrate"]])],
+      opponentTurnMode: "play",
+      opponent: {
+        hand: ["spanish-hogfish"],
+        foundationDeck: ["brain-coral-stage-2"],
+        palsDeck: ["blue-whale"],
+        rp: 0,
+      },
     }),
     checkpoints: [
       collectCheckpoint(),
@@ -227,62 +246,39 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
         equals("details.attackerCardId", "porcupine-fish"),
         equals("details.onPlay", false),
       ]),
-      buildCheckpoint("v2-attack-finish", "Grow the familiar reef", "sea-urchin"),
-      victoryCheckpoint(6),
+      checkpoint("v2-pass-to-opponent", ACTION.TURN_ENDED, "Let the rival answer", "End your turn and watch the opponent build and attack."),
+      checkpoint("v2-defend-attack", ACTION.ATTACK_RESOLVED, "Defend the counterattack", "Watch Spanish Hogfish attack your Sea Urchin.", [
+        truthy("details.accepted"),
+        equals("details.attackerCardId", "spanish-hogfish"),
+        equals("details.defenderCardId", "sea-urchin"),
+        equals("details.outcome", "defense-broken"),
+        truthy("details.resolution.attackerWins"),
+        equals("details.discardedCardId", "sea-urchin"),
+        equals("details.destinationZone", "discard"),
+      ], { actor: "opponent" }),
+      drawCheckpoint({
+        id: "v2-draw-predator-upgrade",
+        title: "Draw the next Coral stage",
+        deckType: "foundation",
+      }),
+      buildCheckpoint("v2-upgrade-predator-coral", "Open a Predator slot", "brain-coral-stage-1", { cardKind: "coral", placement: "foundation-upgrade" }),
+      buildCheckpoint("v2-place-predator", "Play Great Barracuda", "great-barracuda"),
+      checkpoint("v2-predator-attack", ACTION.ATTACK_RESOLVED, "Resolve the D6 Bite", "Use Great Barracuda's Quick Strike against the opposing Spanish Hogfish.", [
+        truthy("details.accepted"),
+        equals("details.attackerCardId", "great-barracuda"),
+        truthy("details.onPlay"),
+      ]),
+      victoryCheckpoint(7),
     ],
     buildCards: {
       "v2-build-attacker-coral": ["brain-coral-base"],
       "v2-place-attacker": ["porcupine-fish"],
-      "v2-attack-finish": ["sea-urchin"],
+      "v2-upgrade-predator-coral": ["brain-coral-stage-1"],
+      "v2-place-predator": ["great-barracuda"],
     },
   }),
   lesson({
-    id: "under-attack", moduleId: "battle-basics", number: 3,
-    title: "Defend your reef", duration: "4 min", goalLabel: "Defend and reach at least 7 VP",
-    summary: "Watch the rival build an attacker, defend the faceoff, then reinforce your reef.",
-    introduction: "In this lesson, you’ll learn to hold steady when the rival moves first. I’ll play Spanish Hogfish and send it after one of your Sea Urchins; then you’ll rebuild.",
-    completion: "You watched Spanish Hogfish enter play, saw Sea Urchin defend, and reinforced the reef with a new Coral and Clownfish. A strong turn can continue after a creature is defeated.",
-    celebration: "Your reef weathered the attack!",
-    skills: ["Opponent turns", "Defending", "Recovering"],
-    introducedConcepts: [
-      SIMULATOR_V2_LESSON_CONCEPTS.OPPONENT_TURNS,
-      SIMULATOR_V2_LESSON_CONCEPTS.DEFENDING,
-    ],
-    focusCardId: "spanish-hogfish", attackCardId: "spanish-hogfish", attackTargetCardId: "sea-urchin", victoryTarget: 7,
-    expectedDraw: { deckType: "pals", cardId: "clownfish" },
-    seed: seed({
-      hand: ["brain-coral-base"],
-      foundationDeck: ["brain-coral-stage-2"],
-      palsDeck: ["clownfish"],
-      rp: 0,
-      playerTableau: attackReef(),
-      opponentTableau: [tableau("mustard-hill-coral-base")],
-      opponentTurnMode: "play",
-      opponent: {
-        hand: ["spanish-hogfish"],
-        foundationDeck: ["brain-coral-stage-2"],
-        palsDeck: ["blue-whale"],
-        rp: 0,
-      },
-    }),
-    checkpoints: [
-      checkpoint("v2-pass-to-opponent", ACTION.TURN_ENDED, "Let the rival act", "End your turn and watch the opponent's play."),
-      checkpoint("v2-defend-attack", ACTION.ATTACK_RESOLVED, "Defend the faceoff", "Watch the rival's Crunch resolve against your Sea Urchin.", [
-        truthy("details.accepted"),
-        equals("details.attackerCardId", "spanish-hogfish"),
-      ], { actor: "opponent" }),
-      drawCheckpoint(),
-      buildCheckpoint("v2-rebuild-coral", "Make room to rebuild", "brain-coral-base", { cardKind: "coral", placement: "foundation" }),
-      buildCheckpoint("v2-rebuild-after-attack", "Reinforce with Clownfish", "clownfish"),
-      victoryCheckpoint(7),
-    ],
-    buildCards: {
-      "v2-rebuild-coral": ["brain-coral-base"],
-      "v2-rebuild-after-attack": ["clownfish"],
-    },
-  }),
-  lesson({
-    id: "support-search", moduleId: "smart-plays", number: 4,
+    id: "support-search", moduleId: "smart-plays", number: 3,
     title: "Call in Support", duration: "3 min", goalLabel: "Search, build, and reach 4 VP",
     summary: "Use Coral Gardener to expand your familiar reef with the exact Coral it needs.",
     introduction: "In this lesson, you’ll learn to call for the right help at the right time. Coral Gardener can find Brain Coral; build it, then welcome another Sea Urchin.",
@@ -313,7 +309,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "clear-stun", moduleId: "smart-plays", number: 5,
+    id: "clear-stun", moduleId: "smart-plays", number: 4,
     title: "Clear Stunned", duration: "3 min", goalLabel: "Recover and reach 4 VP",
     summary: "Clear a Condition with Coral Heal, then upgrade and rebuild.",
     introduction: "In this lesson, you’ll learn to clear a Condition. Brain Coral is Stunned, so use Coral Heal, upgrade it, and give Sea Urchin a home.",
@@ -322,7 +318,6 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     skills: ["Stunned", "Coral Heal", "Status recovery"],
     introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.STATUS_EFFECTS,
-      SIMULATOR_V2_LESSON_CONCEPTS.CORAL_UPGRADES,
     ],
     focusCardId: "coral-heal", victoryTarget: 4,
     seed: seed({
@@ -348,7 +343,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "school-density", moduleId: "build-to-victory", number: 6,
+    id: "school-density", moduleId: "build-to-victory", number: 5,
     title: "Supply School Density", duration: "3 min", goalLabel: "Supply 10, spend 10, reach 4 VP",
     summary: "Grow beyond your reef by building a Creature School and an Oceanic Fish.",
     introduction: "In this lesson, you’ll learn to grow beyond the reef. Build Sardine Ball, then use its 10 School Density to support Halfbeak in open water.",
@@ -376,7 +371,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "filter-feeder", moduleId: "build-to-victory", number: 7,
+    id: "filter-feeder", moduleId: "build-to-victory", number: 6,
     title: "Welcome a Filter Feeder", duration: "2 min", goalLabel: "Commit 150 Density for 11 VP",
     summary: "Use a Habitat and available School Density to add Ocean Sunfish beside your reef.",
     introduction: "In this lesson, you’ll learn what a giant Filter Feeder needs. Open Ocean and two Schools are ready for Ocean Sunfish—if you can make the numbers work.",
@@ -401,7 +396,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     buildCards: { "v2-play-filter-feeder": ["ocean-sunfish"] },
   }),
   lesson({
-    id: "apex-predators", moduleId: "build-to-victory", number: 8,
+    id: "apex-predators", moduleId: "build-to-victory", number: 7,
     title: "Level up to an Apex", duration: "4 min", goalLabel: "Upgrade, play an Apex, reach 14 VP",
     summary: "Upgrade Brain Coral to Stage 2, unlock its Apex slot, and resolve Ravage.",
     introduction: "In this lesson, you’ll learn how upgrades welcome Apex predators. Level Brain Coral to Stage 2, play Hammerhead, and guide both Ravage attacks.",
@@ -443,7 +438,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "winning-turn", moduleId: "build-to-victory", number: 9,
+    id: "winning-turn", moduleId: "build-to-victory", number: 8,
     title: "Find your winning play", duration: "3 min", goalLabel: "Plan a full turn to reach 5 VP",
     summary: "Use a full turn to grow from 1 VP to a short practice goal of 5.",
     introduction: "In this lesson, you’ll learn to spot the winning line for yourself. Begin the round, draw wisely, and fill both Fish slots to reach 5 VP.",
@@ -520,8 +515,11 @@ export function createSimulatorV2LessonSeed(value) {
   return JSON.parse(JSON.stringify(selected.seed));
 }
 
-export function getSimulatorV2ExpectedDraw(value) {
-  return getSimulatorV2Lesson(value)?.expectedDraw ?? null;
+export function getSimulatorV2ExpectedDraw(value, checkpoint = null) {
+  const selected = getSimulatorV2Lesson(value);
+  if (!selected) return null;
+  const checkpointId = typeof checkpoint === "string" ? checkpoint : checkpoint?.id;
+  return (checkpointId ? selected.expectedDraws?.[checkpointId] : null) ?? selected.expectedDraw ?? null;
 }
 
 const CARD_NAMES = Object.freeze({
@@ -533,6 +531,7 @@ const CARD_NAMES = Object.freeze({
   clownfish: "Clownfish",
   "porcupine-fish": "Porcupine Fish",
   "spanish-hogfish": "Spanish Hogfish",
+  "great-barracuda": "Great Barracuda",
   "arrow-crab": "Arrow Crab",
   flounder: "Southern Flounder",
   "coral-gardener": "Coral Gardener",
@@ -631,7 +630,11 @@ function placementCopy(cardId) {
       action: "Choose the glowing Apex slot on Brain Coral.",
     };
   }
-  const slot = cardId === "sea-urchin" ? "Invertebrate" : "Fish";
+  const slot = cardId === "sea-urchin"
+    ? "Invertebrate"
+    : cardId === "great-barracuda"
+      ? "Predator"
+      : "Fish";
   return {
     message: name(cardId) + " needs a compatible " + slot + " slot. The simulator highlights legal homes.",
     action: "Choose a glowing " + slot + " slot.",
@@ -658,7 +661,11 @@ function dragActionCopy(cardId, candidates, selected, current) {
   if (cardId === "hammerhead") {
     return "Drag Hammerhead from your hand into the highlighted Apex slot.";
   }
-  const slot = cardId === "sea-urchin" ? "Invertebrate" : "Fish";
+  const slot = cardId === "sea-urchin"
+    ? "Invertebrate"
+    : cardId === "great-barracuda"
+      ? "Predator"
+      : "Fish";
   return "Drag " + name(cardId) + " from your hand into the highlighted " + slot + " slot.";
 }
 
@@ -667,18 +674,24 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   const selected = getSimulatorV2Lesson(value);
   if (!selected || !current) return null;
   const help = (target, message, action, extra) => helpFor(selected, current, target, message, action, extra);
-  const expectedDraw = getSimulatorV2ExpectedDraw(selected);
+  const expectedDraw = getSimulatorV2ExpectedDraw(selected, current);
 
   if (uiState.modal === "draw-result") {
     return help("continue-actions", "Your draw is ready. Next you can play cards and use actions.", "Continue to Actions.");
   }
   if (uiState.modal === "turn-draw" || uiState.gamePhase === "draw") {
-    if (expectedDraw && Number(uiState.drawFoundationSelected ?? 0) > 0) {
+    const wrongDeck = expectedDraw?.deckType === "foundation" ? "pals" : "foundation";
+    const wrongDeckSelected = Number(
+      wrongDeck === "foundation" ? uiState.drawFoundationSelected : uiState.drawPalsSelected,
+    ) > 0;
+    if (expectedDraw && wrongDeckSelected) {
+      const expectedDeckName = expectedDraw.deckType === "foundation" ? "Foundation" : "Pals";
+      const wrongDeckName = wrongDeck === "foundation" ? "Foundation" : "Pals";
       return help(
         "draw-controls",
-        "For this lesson, draw a creature from the Pals Deck.",
-        "Remove the Foundation draw, then choose Pals.",
-        { targetDeck: "foundation", targetDrawAction: "remove" },
+        `For this step, draw from the ${expectedDeckName} Deck.`,
+        `Remove the ${wrongDeckName} draw, then choose ${expectedDeckName}.`,
+        { targetDeck: wrongDeck, targetDrawAction: "remove" },
       );
     }
     if (Number(uiState.drawSelected ?? 0) >= Number(uiState.drawTarget ?? 1) && Number(uiState.drawTarget ?? 1) > 0) {
@@ -688,13 +701,19 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         "Confirm selection to draw your card.",
       );
     }
+    const firstAttackUpgradeDraw = selected.id === "first-attack" && current.id === "v2-draw-predator-upgrade";
+    const seaUrchinWasDefeated = Array.isArray(uiState.discardPileCardIds)
+      && uiState.discardPileCardIds.includes("sea-urchin");
     const scenarioDrawMessage = selected.id === "winning-turn"
       ? "You need 4 more VP. Your Pals Deck contains a creature that can fill an empty Fish slot."
+      : firstAttackUpgradeDraw
+        ? `${seaUrchinWasDefeated
+          ? "Sea Urchin lost that faceoff, so it moved to your discard pile and its 1 VP left your total."
+          : "That counterattack is over, and your reef is ready to answer."
+        } Brain Coral Stage 1 is on top of your Foundation Deck; draw it to open a Predator slot.`
       : selected.id === "first-attack"
         ? "Porcupine Fish is waiting on top of your Pals Deck. Draw it before you prepare the attack."
-        : selected.id === "under-attack"
-          ? "You collected enough RP to reinforce the reef. Another Clownfish is waiting on top of your Pals Deck."
-          : "Choose the Pals Deck when you want creatures and other Pals cards.";
+        : "Choose the Pals Deck when you want creatures and other Pals cards.";
     const drawMessage = conceptWasPreviouslyTaught(uiState, SIMULATOR_V2_LESSON_CONCEPTS.DRAWING)
       ? scenarioDrawMessage
       : selected.id === "first-reef"
@@ -703,7 +722,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     return help(
       "draw-controls",
       drawMessage,
-      "Choose one card from the Pals Deck.",
+      `Choose one card from the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Pals"} Deck.`,
       { targetDeck: expectedDraw?.deckType ?? "pals", targetDrawAction: "add" },
     );
   }
@@ -740,6 +759,38 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     }
     if (uiState.handPopoverOpen || uiState.modal === "hand") {
       return help("close-modal", "Your reef is ready. Close your hand to begin the round.", "Close the card panel, then press Begin Round.");
+    }
+    if (
+      selected.id === "first-reef"
+      && uiState.hasCoralInPlay
+      && uiState.layoutLessonProgress?.["move-foundation"] !== true
+    ) {
+      return help(
+        "foundation-drag",
+        "Your reef layout is flexible. Drag Mustard Hill Coral and its whole branch moves with it. You can also drag an individual slot when you need more room; moving either one never changes the rules.",
+        "Drag Mustard Hill Coral a short distance into open water.",
+        {
+          actionId: "move-foundation",
+          targetCardId: "mustard-hill-coral-base",
+          hint: "Move the Coral by its card body. Its slots and attached creatures stay connected.",
+        },
+      );
+    }
+    if (
+      selected.id === "first-reef"
+      && uiState.hasCoralInPlay
+      && uiState.layoutLessonProgress?.["move-slot"] !== true
+    ) {
+      return help(
+        "slot-drag",
+        "Each slot can move around its Coral too. This only organizes your reef; the slot still accepts the same kind of creature and remains connected to the same Coral.",
+        "Drag the highlighted empty slot a short distance into clear water.",
+        {
+          actionId: "move-slot",
+          targetCardId: "mustard-hill-coral-base",
+          hint: "Drag the round slot marker. Its connector follows while the Coral stays in place.",
+        },
+      );
     }
     const message = selected.id === "winning-turn"
       ? "Your reef needs two more Fish to reach the target. Start the round to find the second one."
@@ -790,16 +841,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const opponentAttack = current.requirements.some(
       (requirement) => requirement.path === "actor" && requirement.value === "opponent",
     );
-    if (opponentAttack) {
-      return help(
-        "opponent-board",
-        selected.id === "under-attack"
-          ? "I’ll play Spanish Hogfish, pay for Crunch, and choose one of your Sea Urchins. Its defense die rolls automatically."
-          : "The rival pays the attack cost and chooses a legal target. Your Sea Urchin rolls its defense die automatically.",
-        "Watch the opponent's attack resolve.",
-        { targetCardId: selected.attackCardId },
-      );
-    }
+    if (opponentAttack) return null;
     if (uiState.inspectedCardOpen && (uiState.attackContext || !uiState.inspectedPlayerCard)) {
       return help("close-modal", "Close these details so you can reach the live attack controls.", "Close the card details.");
     }
@@ -817,6 +859,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         "Hammerhead's Ravage begins with Coral damage, then performs two attacks.",
         "Finish Ravage and resolve both faceoffs.",
         { targetCardId: "hammerhead" },
+      );
+    }
+    if (selected.id === "first-attack" && current.id === "v2-predator-attack") {
+      return help(
+        "opponent-board",
+        "Quick Strike triggers as Great Barracuda enters play. Each attack tells you which die to roll: its Bite uses a D6 (1–6), while Porcupine Fish's Crunch used a D4 (1–4).",
+        "Choose the glowing Spanish Hogfish and resolve the D6 faceoff.",
+        { targetCardId: "great-barracuda" },
       );
     }
     if (uiState.attackContext) {
@@ -863,9 +913,11 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (cardId === "brain-coral-base" && selected.id === "support-search") {
       message = "The searched Brain Coral costs 1 RP and adds another Foundation with Fish and Invertebrate slots.";
     } else if (cardId === "brain-coral-stage-1") {
-      message = "Coral Heal cleared Stunned. Brain Coral can now upgrade to Stage 1 for 2 RP.";
+      message = selected.id === "first-attack"
+        ? "Brain Coral has weathered a full turn, so it can level up now. Spend 2 RP for Stage 1. Here’s the payoff: its resilience doubles from 10 to 20 HP, it produces 2 RP instead of 1 each round, and it gains a Predator slot plus a second Invertebrate slot. Porcupine Fish stays safely in its Fish slot."
+        : "Coral Heal cleared Stunned, so Brain Coral can upgrade for 2 RP. You’ve seen the payoff: 20 HP of resilience, 2 RP each round, a Predator slot, and another Invertebrate slot.";
     } else if (cardId === "brain-coral-stage-2") {
-      message = "Upgrading costs 5 RP. Stage 2 keeps compatible creatures, produces more RP, and opens an Apex slot.";
+      message = "Upgrade Brain Coral to Stage 2 for 5 RP. The payoff is huge: resilience rises from 20 to 60 HP, production grows from 2 to 5 RP each round, and its reef opens two Predator, one Apex, and three Invertebrate slots. Stage 2 has no Fish slot, so check attached creatures first.";
     } else if (cardId === "sardine-ball-base") {
       message = "Sardine Ball costs 1 RP. As a Creature School it acts as a Foundation and supplies 10 School Density.";
     } else if (cardId === "halfbeak") {
@@ -874,6 +926,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       message = "Ocean Sunfish needs 8 RP, a Coral Reef or Open Ocean Habitat, and 150 available School Density. All three are ready.";
     } else if (cardId === "hammerhead") {
       message = "Hammerhead costs 6 RP, needs Coral Reef, and must occupy an Apex slot. Stage 2 Brain Coral supplies that slot.";
+    } else if (cardId === "great-barracuda") {
+      message = "Each attack tells you which die to roll. Porcupine Fish's Crunch uses a D4 (1–4); Great Barracuda's Bite uses a D6 (1–6), giving it a wider possible range.";
     }
     return help(
       selectedCard ? "play-card" : "hand",
@@ -902,8 +956,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     );
   }
   if (current.actionType === ACTION.TURN_ENDED) {
-    const message = selected.id === "under-attack"
-      ? "Ending your turn lets the rival collect, draw, play, and attack. Your Sea Urchin will defend itself in the faceoff."
+    const message = selected.id === "first-attack"
+      ? "Brain Coral needs a turn in play before it can level up. End your turn; while it settles, I’ll play Spanish Hogfish and attack your Sea Urchin."
       : "You can save your remaining RP for a later turn.";
     return help("turn-button", message, "End your turn when you are ready.");
   }
@@ -922,6 +976,7 @@ export function getSimulatorV2LessonActionBlock({
   cardId,
   deckType,
   gamePhase,
+  layoutLessonProgress,
 } = {}) {
   const selected = getSimulatorV2Lesson(value);
   if (!selected) return "";
@@ -933,7 +988,7 @@ export function getSimulatorV2LessonActionBlock({
     return "Complete the highlighted step before playing another card.";
   }
   if (action === "draw") {
-    const expected = getSimulatorV2ExpectedDraw(selected);
+    const expected = getSimulatorV2ExpectedDraw(selected, current);
     if (current.actionType === ACTION.CARD_DRAWN && expected && (!deckType || deckType === expected.deckType)) return "";
     return expected
       ? "Choose the " + (expected.deckType === "pals" ? "Pals" : "Foundation") + " Deck for this lesson's draw."
@@ -943,13 +998,25 @@ export function getSimulatorV2LessonActionBlock({
     const isPlayerCheckpoint = current.requirements.some(
       (requirement) => requirement.path === "actor" && requirement.value === "player",
     );
-    if (isPlayerCheckpoint && current.actionType === ACTION.ATTACK_RESOLVED && (!cardId || cardId === selected.attackCardId)) return "";
+    const expectedAttackerId = current.requirements.find((requirement) => (
+      requirement.path === "details.attackerCardId" && requirement.operator === "equals"
+    ))?.value ?? selected.attackCardId;
+    if (isPlayerCheckpoint && current.actionType === ACTION.ATTACK_RESOLVED && (!cardId || cardId === expectedAttackerId)) return "";
     return "Follow the highlighted lesson step before using an attack.";
   }
   if (action === "utility") {
     return "This lesson focuses on the highlighted play. Try other abilities in a full match.";
   }
   if (action === "end-turn") {
+    if (
+      selected.id === "first-reef"
+      && gamePhase === "setup"
+      && current.actionType === ACTION.MATCH_READY
+      && (
+        layoutLessonProgress?.["move-foundation"] !== true
+        || layoutLessonProgress?.["move-slot"] !== true
+      )
+    ) return "Move Mustard Hill Coral and one of its slots before beginning the round.";
     if (gamePhase === "setup" && [ACTION.MATCH_READY, ACTION.RP_COLLECTED].includes(current.actionType)) return "";
     if (current.actionType === ACTION.TURN_ENDED) return "";
     return "Finish this lesson's highlighted play before ending the turn.";
