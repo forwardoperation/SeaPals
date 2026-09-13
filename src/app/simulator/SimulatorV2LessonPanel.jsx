@@ -349,26 +349,21 @@ export default function SimulatorV2LessonPanel({
   }
 
   if (mode === "intro") {
-    const skills = Array.isArray(activeLesson?.skills) ? activeLesson.skills : [];
     const introduction = activeLesson?.introduction
       || `In this lesson, you'll learn ${activeLesson?.description || activeLesson?.summary || "your next Reefkeeper skill"}.`;
-    const introLessonNumber = lessonIndex >= 0 ? lessonIndex + 1 : 1;
 
     return (
       <LessonModal
         mode={mode}
         title={activeLesson?.title || "Your next lesson"}
-        description={`Lesson ${introLessonNumber} of ${lessons.length}${activeLesson?.duration ? ` · ${activeLesson.duration}` : ""}`}
         onExit={onExit}
         className={className}
       >
         <div
           className={styles.lessonIntro}
           data-v2-lesson-introduction={activeLesson?.id || undefined}
-          data-v2-lesson-vp-target={activeLesson?.victoryTarget || undefined}
         >
           <div className={styles.introDialogue}>
-            <span className={styles.introSpeaker}>Mr. Easterling says</span>
             <LessonDialogueMessage
               key={createProfessorSpeechKey(`${activeLesson?.id ?? "lesson"}:intro`, introduction)}
               message={introduction}
@@ -376,20 +371,12 @@ export default function SimulatorV2LessonPanel({
               reducedMotion={reducedMotion}
             />
           </div>
-          <div className={styles.introGoalRow}>
-            <span className={styles.lessonGoal}>{lessonGoal(activeLesson)}</span>
-            {skills.length ? (
-              <ul className={styles.introSkills} aria-label="Skills in this lesson">
-                {skills.map((skill) => <li key={skill}>{skill}</li>)}
-              </ul>
-            ) : null}
-          </div>
         </div>
         <div className={styles.introActions}>
           <button type="button" className={styles.primaryButton} onClick={onNext} data-v2-start-lesson>
-            {nextLabel || "Start lesson"}<span aria-hidden="true">→</span>
+            Start Lesson<span aria-hidden="true">→</span>
           </button>
-          {onExit ? <button type="button" className={styles.textButton} onClick={onExit}>Choose another lesson</button> : null}
+          {onExit ? <button type="button" className={styles.textButton} onClick={onExit}>Choose Another Lesson</button> : null}
         </div>
       </LessonModal>
     );

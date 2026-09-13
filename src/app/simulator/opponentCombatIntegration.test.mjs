@@ -15,7 +15,7 @@ function simulatorFunction(name, nextName, context) {
   return new Function(...Object.keys(context), `return (${source.slice(start, end).trim()});`)(...Object.values(context));
 }
 
-function decide({ difficulty = "hard", cards, attackers, targets, statuses = {}, rp = 4, actionUses = {}, onPlayAttack = null, planOnly = false }) {
+function decide({ difficulty = "hard", cards, attackers, targets, statuses = {}, rp = 4, actionUses = {}, onPlayAttack = null, planOnly = false, planCombatOnly = false, random = () => 0.5 }) {
   const stopAfterSelection = {};
   let captured = null;
   const context = {
@@ -32,7 +32,7 @@ function decide({ difficulty = "hard", cards, attackers, targets, statuses = {},
     resilienceUsedCardIds: [],
     playerHabitats: [],
     reconcileCreatureZone: (entries) => {
-      assert.equal(planOnly, false, "read-only planning must not allocate random legacy instance IDs");
+      assert.equal(planOnly || planCombatOnly, false, "read-only planning must not allocate random legacy instance IDs");
       return entries;
     },
     getBasicAttackEffect: (card) => card?.attack,
@@ -61,6 +61,7 @@ function decide({ difficulty = "hard", cards, attackers, targets, statuses = {},
     cardHasScatter: () => false,
     getBiteBackAttack: (card) => card.counter,
     formatAttackTargetFamilies: () => "",
+    nextGameplayRandom: random,
   };
   const run = simulatorFunction("runOpponentAttackStep", "runOpponentAttack", context);
   const state = {
@@ -77,12 +78,20 @@ function decide({ difficulty = "hard", cards, attackers, targets, statuses = {},
     const result = run(state, [], targets.map((cardId, index) => ({ cardId, instanceId: `target-${index}` })), [], onPlayAttack, [], {
       creatureStatuses: statuses,
       planOnly,
-      captureCombatPlan: (plan) => { captured = plan; throw stopAfterSelection; },
+      planCombatOnly,
+      captureCombatPlan: (plan) => {
+        captured = plan;
+        if (!planCombatOnly) throw stopAfterSelection;
+      },
     });
     if (planOnly) {
       assert.equal(captured, null);
       assert.deepEqual(state, originalState, "planning must leave the board and RP unchanged");
       return result;
+    }
+    if (planCombatOnly) {
+      assert.deepEqual(state, originalState, "combat planning must leave the board and RP unchanged");
+      return { result, captured };
     }
     assert.equal(result, null, "unselected optional combat should pass");
   } catch (error) {
@@ -157,7 +166,7 @@ test("Scatter recognizes both printed re-roll wording and the legacy wording", (
   assert.equal(hasScatter({ passives: ["Massive: Gain advantage on defense."] }), false);
 });
 
-function runSequence({ maxAttackSteps = Infinity, continuation = null } = {}) {
+function runSequence({ maxAttackSteps = Infinity, continuation = null, planCombatOnly = false } = {}) {
   const calls = [];
   const attack = { attackDice: "D6", actionName: "Group Hunt", actionCost: 2, repeat: 3 };
   const forcedAttack = { cardId: "tuna", reefInstanceId: "original-tuna", attack };
@@ -178,15 +187,42 @@ function runSequence({ maxAttackSteps = Infinity, continuation = null } = {}) {
     getDynamicAttackRepeat: () => 3,
     getBasicAttackEffect: () => attack,
     runOpponentAttackStep: (_opponent, corals, reef, orphans, forced, excluded, controller) => {
-      calls.push({ forced, prepaid: controller.actionCostAlreadyPaid, excluded: [...excluded], remaining: controller.remainingAttacks });
+      calls.push({ forced, prepaid: controller.actionCostAlreadyPaid, excluded: [...excluded], remaining: controller.remainingAttacks, planCombatOnly: controller.planCombatOnly });
       controller.captureCombatPlan({ forcedAttack });
       return { corals, reefCreatureInstances: reef, orphanCreatures: orphans, attackerCardId: "tuna", targetInstanceId: `target-${calls.length}`, actionCost: 2, opponentAttackActionKey: calls.length === 1 ? "original-tuna:group-hunt" : null, summary: "Attack resolved." };
     },
   };
   const run = simulatorFunction("runOpponentAttack", "buildOpponentAttackEventSequence", context);
-  const result = run({ corals: [], reefCreatureInstances: [], orphanCreatures: [], habitats: [] }, [], [], [], null, continuation, { maxAttackSteps });
+  const result = run({ corals: [], reefCreatureInstances: [], orphanCreatures: [], habitats: [] }, [], [], [], null, continuation, { maxAttackSteps, planCombatOnly });
   return { calls, result, forcedAttack };
 }
+
+test("live opponent planning propagates a pure plan-only pass before combat rolls", () => {
+  const plannedSequence = runSequence({ planCombatOnly: true });
+  assert.equal(plannedSequence.calls.length, 1);
+  assert.equal(plannedSequence.calls[0].planCombatOnly, true);
+  assert.equal(plannedSequence.result.targetInstanceId, "target-1");
+  assert.equal(plannedSequence.result.steps, undefined, "planning returns before aggregating a resolved combat sequence");
+
+  let randomCalls = 0;
+  const cards = { hunter: attacker("hunter", "D6"), fish: target("fish", { defense: "D6" }) };
+  const { result, captured } = decide({
+    cards,
+    attackers: ["hunter"],
+    targets: ["fish"],
+    planCombatOnly: true,
+    random: () => {
+      randomCalls += 1;
+      return 0.5;
+    },
+  });
+  assert.equal(captured.attackDice, "D6");
+  assert.equal(captured.defenseDice, "D6");
+  assert.equal(result.attackerCardId, "hunter");
+  assert.equal(result.defenderCardId, "fish");
+  assert.equal(result.attackerWins, undefined, "planning returns before attack and defense resolution");
+  assert.equal(randomCalls, 0, "planning must not advance the gameplay random stream");
+});
 
 test("actual repeated attack controller locks attacker, pays once, and excludes used targets", () => {
   const { calls, result, forcedAttack } = runSequence();

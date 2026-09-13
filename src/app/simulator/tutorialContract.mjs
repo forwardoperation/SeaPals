@@ -6,6 +6,7 @@ export const SIMULATOR_TUTORIAL_ACTION_TYPES = Object.freeze({
   CARD_DRAWN: "card-drawn",
   CARD_BUILT: "card-built",
   SUPPORT_PLAYED: "support-played",
+  ABILITY_RESOLVED: "ability-resolved",
   ATTACK_RESOLVED: "attack-resolved",
   TURN_ENDED: "turn-ended",
   VP_EARNED: "vp-earned",
@@ -44,6 +45,11 @@ const DEFAULT_REQUIREMENTS = Object.freeze({
     { path: "phase", operator: "equals", value: "main" },
   ],
   [SIMULATOR_TUTORIAL_ACTION_TYPES.SUPPORT_PLAYED]: [
+    { path: "actor", operator: "equals", value: "player" },
+    { path: "phase", operator: "equals", value: "main" },
+    { path: "details.accepted", operator: "truthy" },
+  ],
+  [SIMULATOR_TUTORIAL_ACTION_TYPES.ABILITY_RESOLVED]: [
     { path: "actor", operator: "equals", value: "player" },
     { path: "phase", operator: "equals", value: "main" },
     { path: "details.accepted", operator: "truthy" },

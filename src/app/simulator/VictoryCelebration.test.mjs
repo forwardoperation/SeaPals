@@ -7,6 +7,7 @@ const styleSource = await readFile(new URL("./VictoryCelebration.module.css", im
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
 const experienceSource = await readFile(new URL("./SimulatorV2Experience.jsx", import.meta.url), "utf8");
 const lessonPanelSource = await readFile(new URL("./SimulatorV2LessonPanel.jsx", import.meta.url), "utf8");
+const lessonsSource = await readFile(new URL("./simulatorV2Lessons.mjs", import.meta.url), "utf8");
 
 test("victory celebration is a focused accessible dialog with an action slot", () => {
   assert.match(componentSource, /data-victory-celebration/);
@@ -77,6 +78,52 @@ test("the simulator celebrates both match wins and completed embedded VP lessons
     simulatorSource,
     /gameResult && !tutorialLessonWon && \/\^Defeat\\b\/i\.test\(gameResult\)[\s\S]*?<DefeatPresentation/,
   );
+});
+
+test("Lesson 1 pauses on Mr. Easterling's exact momentum line before opening its victory celebration", () => {
+  assert.ok(
+    lessonsSource.includes('preVictoryMessage: "Excellent! Your ecosystem is really starting to build momentum."'),
+  );
+  assert.match(
+    simulatorSource,
+    /const \[embeddedLessonPreVictoryAcknowledged, setEmbeddedLessonPreVictoryAcknowledged\] = useState\(false\);/,
+  );
+  assert.match(
+    simulatorSource,
+    /const embeddedLessonVictoryGateOpen = Boolean\([\s\S]*?!embeddedLesson[\s\S]*?tutorialProgress\?\.status === "complete"[\s\S]*?!embeddedLesson\.preVictoryMessage \|\| embeddedLessonPreVictoryAcknowledged[\s\S]*?\);/,
+  );
+  assert.match(
+    simulatorSource,
+    /const getResolvedVictoryResult = \(nextPlayerVp, nextOpponentVp\) => \([\s\S]*?embeddedLessonVictoryGateOpen[\s\S]*?determineVictoryResult\(nextPlayerVp, nextOpponentVp, victoryTarget\)[\s\S]*?: null/,
+  );
+  assert.equal(
+    [...simulatorSource.matchAll(/determineVictoryResult\(/g)].length,
+    1,
+    "every live victory path should pass through the embedded lesson acknowledgement gate",
+  );
+  assert.ok(
+    [...simulatorSource.matchAll(/getResolvedVictoryResult\(/g)].length >= 5,
+    "the regular effect and projected combat paths should all use the gated resolver",
+  );
+  assert.match(
+    simulatorSource,
+    /const tutorialNeedsExistingVpCredit = Boolean\([\s\S]*?tutorialCurrentCheckpoint\?\.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES\.VP_EARNED[\s\S]*?playerVp >= victoryTarget[\s\S]*?playerVpDelta <= 0[\s\S]*?creditedExistingTotal: tutorialNeedsExistingVpCredit/,
+    "a lesson that reaches its VP goal before its final authored step must credit that existing total when the victory checkpoint becomes active",
+  );
+  assert.match(
+    simulatorSource,
+    /\[playerVp, opponentVp, tutorialContract, tutorialCurrentCheckpoint\?\.id, victoryTarget\]/,
+    "the VP observer must rerun when a deferred victory checkpoint becomes active",
+  );
+
+  const preVictoryBranch = simulatorSource.slice(
+    simulatorSource.indexOf("{embeddedLessonPreVictoryOpen ? ("),
+    simulatorSource.indexOf(") : embeddedLessonCoachOpen ? ("),
+  );
+  assert.match(preVictoryBranch, /<ProfessorGuideCard/);
+  assert.match(preVictoryBranch, /help=\{embeddedLessonPreVictoryHelp\}/);
+  assert.match(preVictoryBranch, /onAdvance=\{\(\) => setEmbeddedLessonPreVictoryAcknowledged\(true\)\}/);
+  assert.match(preVictoryBranch, /advanceLabel="Celebrate"/);
 });
 
 test("embedded lesson progress is saved at the real VP victory and the chooser exposes every goal", () => {

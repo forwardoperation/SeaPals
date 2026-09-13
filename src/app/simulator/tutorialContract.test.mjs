@@ -70,6 +70,51 @@ test("content-shaped checkpoints receive serializable default evidence requireme
   assert.ok(draw.requirements.some((requirement) => requirement.path === "details.count"));
 });
 
+test("ability checkpoints require an accepted player action in the main phase", () => {
+  const contract = createSimulatorTutorialContract({
+    id: "tutorial-ability",
+    checkpoints: [{
+      id: "use-scavenge",
+      actionType: SIMULATOR_TUTORIAL_ACTION_TYPES.ABILITY_RESOLVED,
+      instruction: "Use Scavenge.",
+    }],
+  });
+  const [checkpoint] = contract.checkpoints;
+  assert.deepEqual(checkpoint.requirements, [
+    { path: "actor", operator: "equals", value: "player" },
+    { path: "phase", operator: "equals", value: "main" },
+    { path: "details.accepted", operator: "truthy" },
+  ]);
+
+  const initial = createSimulatorTutorialProgress(contract);
+  const rejected = observeSimulatorTutorialEvent(
+    contract,
+    initial,
+    event(contract, 1, SIMULATOR_TUTORIAL_ACTION_TYPES.ABILITY_RESOLVED, {
+      sourceCardId: "blue-crab",
+      actionId: "scavenge",
+      actionName: "Scavenge",
+      accepted: false,
+    }),
+  );
+  assert.equal(rejected.checkpointEvent, null);
+  assert.equal(rejected.progress.nextCheckpointId, "use-scavenge");
+
+  const resolved = observeSimulatorTutorialEvent(
+    contract,
+    rejected.progress,
+    event(contract, 2, SIMULATOR_TUTORIAL_ACTION_TYPES.ABILITY_RESOLVED, {
+      sourceCardId: "blue-crab",
+      actionId: "scavenge",
+      actionName: "Scavenge",
+      targetCardId: "sea-urchin",
+      accepted: true,
+    }),
+  );
+  assert.equal(resolved.checkpointEvent.checkpointId, "use-scavenge");
+  assert.equal(resolved.progress.status, "complete");
+});
+
 test("observer accepts only the current ordered checkpoint with actual action evidence", () => {
   const contract = createSimulatorTutorialContract({});
   let progress = createSimulatorTutorialProgress(contract);

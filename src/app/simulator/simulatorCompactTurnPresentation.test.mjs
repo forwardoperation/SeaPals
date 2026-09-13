@@ -70,7 +70,7 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
   );
   const embeddedCompactCoach = sourceSection(
     simulatorSource,
-    "{embeddedCompactCoachOpen ? (",
+    ") : embeddedCompactCoachOpen ? (",
     ") : embeddedLessonCoachOpen ? (",
   );
 
@@ -86,6 +86,14 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
   assert.match(
     conditionHelp,
     /A Condition changes the rules for both reefs each round\.[\s\S]*?tutorialConditionCard\.name/,
+  );
+  assert.match(
+    conditionHelp,
+    /Clear Water makes Predator and Apex cards cost 1 more RP\./,
+  );
+  assert.match(
+    conditionHelp,
+    /Coral Disease stops RP from Corals with the Disease weakness\. Brain Coral is vulnerable; Mustard Hill Coral is not\./,
   );
   assert.match(conditionHelp, /target:\s*"condition-panel"/);
   assert.match(conditionHelp, /targetLabel:\s*"the active Condition name in the middle bar"/);
@@ -125,7 +133,7 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
     simulatorSource,
     /const tutorialAnnouncementHelp = embeddedCompactCoachOpen[\s\S]*?\? embeddedCompactCoachHelp[\s\S]*?: tutorialTargetBeaconHelp;[\s\S]*?help: tutorialAnnouncementHelp/,
   );
-  assert.match(simulatorSource, /\{embeddedCompactCoachOpen \? \(/);
+  assert.match(simulatorSource, /\) : embeddedCompactCoachOpen \? \(/);
 });
 
 test("new-round sequencing orders turn, condition, RP, then an optional lesson summary", () => {
@@ -179,6 +187,19 @@ test("RP defers progress for a teacher summary only when earlier lessons have no
   );
   assert.match(startRound, /includeRpSummary: explainTutorialRpCollection/);
   assert.match(startRound, /tutorialRpEvent: explainTutorialRpCollection \? tutorialRpEvent : null/);
+  assert.match(startRound, /conditionId:\s*condition\?\.id \?\? null/);
+  assert.match(startRound, /blockedFoundationCount/);
+  assert.match(startRound, /producingFoundationCount/);
+
+  const conditionCopy = sourceSection(
+    simulatorSource,
+    "const embeddedCompactConditionHelp = embeddedLesson",
+    "const tutorialFaceoffHelp =",
+  );
+  assert.match(
+    conditionCopy,
+    /Coral Disease stopped Brain Coral's 1 RP\. Mustard Hill Coral has no Disease weakness, so it still produced 2 RP\. You also collected 1 RP for the round\./,
+  );
 
   assert.match(rpSummaryContinue, /stage\?\.kind !== CompactTurnStage\.RP_SUMMARY/);
   assert.match(rpSummaryContinue, /!sequence \|\| sequence\.finishing/);

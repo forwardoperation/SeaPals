@@ -287,7 +287,7 @@ test("Ensnare resolves inside each real player and opponent attack step", () => 
     "function runOpponentAttack(opponentState",
     "function buildOpponentAttackEventSequence",
   );
-  assert.match(opponentSequence, /if \(attackForStep\?\.attack\?\.ensnare\)/);
+  assert.match(opponentSequence, /if \(attackForStep\?\.attack\?\.ensnare && !controllerState\.planCombatOnly\)/);
   assert.match(opponentSequence, /resolveEnsnareForAttack\(attackForStep\.attack, nextGameplayRandom\)/);
 });
 

@@ -59,11 +59,7 @@
 .lessonIntro { display: grid; gap: 0.85rem; }
 .introDialogue { position: relative; padding: 1rem 1.05rem 1.05rem; border: 1px solid #9ca9ba; border-radius: 0.75rem; background: #ffffffd9; box-shadow: inset 0 -2px #d7dee9; }
 .introDialogue::before { position: absolute; top: -0.45rem; left: 1.25rem; width: 0.78rem; height: 0.78rem; border-top: 1px solid #9ca9ba; border-left: 1px solid #9ca9ba; background: #ffffff; content: ""; transform: rotate(45deg); }
-.introSpeaker { display: block; margin-bottom: 0.5rem; color: #c94946; font-size: 0.64rem; font-weight: 900; letter-spacing: 0.055em; text-transform: uppercase; }
 .introDialogue .instruction { font-size: 0.94rem; line-height: 1.6; }
-.introGoalRow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem 0.7rem; }
-.introSkills { display: flex; flex: 1 1 18rem; flex-wrap: wrap; gap: 0.35rem; margin: 0; padding: 0; list-style: none; }
-.introSkills li { padding: 0.25rem 0.5rem; border: 1px solid #b2bdcb; border-radius: 999px; color: #536278; background: #f8faff; font-size: 0.65rem; font-weight: 750; line-height: 1.15; }
 .introActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem 1rem; margin-top: 1rem; }
 .curriculumProgress { margin-bottom: 0.8rem; padding: 0.72rem 0.8rem; border: 1px solid #aab5c4; border-radius: 0.7rem; background: #ffffffb8; }
 .progressCopy { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem 1rem; }
@@ -270,7 +266,6 @@
   .modalDescription { margin-block: 0.8rem 1rem; font-size: 0.77rem; }
   .introDialogue { padding: 0.85rem 0.9rem 0.9rem; }
   .introDialogue .instruction { font-size: 0.84rem; line-height: 1.5; }
-  .introSkills { flex-basis: 100%; }
   .introActions .primaryButton { flex: 1 1 auto; }
   .lessonList { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
   .lessonButton { padding: 0.75rem; }

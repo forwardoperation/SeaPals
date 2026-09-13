@@ -4544,6 +4544,7 @@ export default function Simulator({
     reducedMotion: accessibilityReducedMotion,
   };
   const [tutorialHelpDismissedId, setTutorialHelpDismissedId] = useState(null);
+  const [embeddedLessonPreVictoryAcknowledged, setEmbeddedLessonPreVictoryAcknowledged] = useState(false);
   const [tutorialIntroductionStep, setTutorialIntroductionStep] = useState(null);
   const [tutorialCardLesson, setTutorialCardLesson] = useState(null);
   const [tutorialSeenCardConceptKeys, setTutorialSeenCardConceptKeys] = useState([]);
@@ -5906,6 +5907,18 @@ export default function Simulator({
     ? getSimulatorTutorialCurrentCheckpoint(tutorialContract, tutorialProgress)
     : null;
   const tutorialStepNumber = tutorialProgress ? tutorialProgress.completedCheckpointIds.length + 1 : 0;
+  const embeddedLessonVictoryGateOpen = Boolean(
+    !embeddedLesson
+    || (
+      tutorialProgress?.status === "complete"
+      && (!embeddedLesson.preVictoryMessage || embeddedLessonPreVictoryAcknowledged)
+    )
+  );
+  const getResolvedVictoryResult = (nextPlayerVp, nextOpponentVp) => (
+    embeddedLessonVictoryGateOpen
+      ? determineVictoryResult(nextPlayerVp, nextOpponentVp, victoryTarget)
+      : null
+  );
   const tutorialVictoryPending = Boolean(
     tutorialContract
     && tutorialProgress
@@ -7379,7 +7392,11 @@ export default function Simulator({
         id: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         cueId: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         title: `${tutorialConditionCard.name} changes this round`,
-        message: `A Condition changes the rules for both reefs each round. ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
+        message: embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "clear-water"
+          ? "Conditions change the rules for both ecosystems for one round. Clear Water makes Predator and Apex cards cost 1 more RP."
+          : embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "coral-disease"
+            ? "Coral Disease stops RP from Corals with the Disease weakness. Brain Coral is vulnerable; Mustard Hill Coral is not."
+            : `A Condition changes the rules for both reefs each round. ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
         action: `Tap ${tutorialConditionCard.name} for its details, then continue.`,
         target: "condition-panel",
         targetLabel: "the active Condition name in the middle bar",
@@ -7392,7 +7409,9 @@ export default function Simulator({
         id: `embedded-rp-summary:${compactTurnSequence.id}`,
         cueId: `embedded-rp-summary:${compactTurnSequence.id}`,
         title: "Your RP bank is ready",
-        message: `RP pays for cards and abilities. Every round gives you 1 RP, and cards in your ecosystem can add more. You collected ${compactTurnSequence.collectedRp} RP, so your bank now holds ${compactTurnSequence.rpAfter} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP could not fit under the cap` : ""}. Unspent RP stays in your bank for later rounds.`,
+        message: embeddedLesson.id === "first-reef" && compactTurnSequence.condition?.id === "coral-disease"
+          ? "Coral Disease stopped Brain Coral's 1 RP. Mustard Hill Coral has no Disease weakness, so it still produced 2 RP. You also collected 1 RP for the round."
+          : `RP pays for cards and abilities. Every round gives you 1 RP, and cards in your ecosystem can add more. You collected ${compactTurnSequence.collectedRp} RP, so your bank now holds ${compactTurnSequence.rpAfter} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP could not fit under the cap` : ""}. Unspent RP stays in your bank for later rounds.`,
         action: "Continue, then choose your card draw.",
         interaction: "tap",
         lessonStep: tutorialStepNumber,
@@ -7558,6 +7577,36 @@ export default function Simulator({
     || combatResultCheckpoint
     || gameResult
   );
+  const embeddedLessonPreVictoryHelp = embeddedLesson?.preVictoryMessage
+    && tutorialProgress?.status === "complete"
+    && playerVp >= victoryTarget
+    && !embeddedLessonPreVictoryAcknowledged
+    && !gameResult
+    ? {
+        id: `embedded-pre-victory:${embeddedLesson.id}`,
+        cueId: `embedded-pre-victory:${embeddedLesson.id}`,
+        title: "Lesson complete",
+        message: embeddedLesson.preVictoryMessage,
+        action: "Continue to celebrate.",
+        target: "vp-score",
+        targetLabel: "your completed VP goal",
+      }
+    : null;
+  const embeddedLessonPreVictoryOpen = Boolean(
+    embeddedLessonPreVictoryHelp && !embeddedLessonPresentationBlocked
+  );
+  const embeddedLessonRecoveryTargetId = eventOverlay?.type === "choose-action-discard"
+    ? embeddedLesson?.abilityRecoveryTargets?.[tutorialCurrentCheckpoint?.id] ?? null
+    : null;
+  const embeddedLessonRecoveryChoiceHelp = embeddedLessonRecoveryTargetId
+    ? {
+        id: `embedded-recovery:${tutorialCurrentCheckpoint.id}:${embeddedLessonRecoveryTargetId}`,
+        cueId: `embedded-recovery:${tutorialCurrentCheckpoint.id}:${embeddedLessonRecoveryTargetId}`,
+        target: "search-card",
+        targetSearchCardId: embeddedLessonRecoveryTargetId,
+        interaction: "tap",
+      }
+    : null;
   const embeddedLessonActionReady = Boolean(
     embeddedLesson
     && tutorialHelpOpen
@@ -7896,11 +7945,18 @@ export default function Simulator({
   useEffect(() => {
     if (!tutorialContract) return;
     const previous = tutorialVpRef.current;
-    if (playerVp > previous.player) {
+    const playerVpDelta = playerVp - previous.player;
+    const tutorialNeedsExistingVpCredit = Boolean(
+      tutorialCurrentCheckpoint?.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES.VP_EARNED
+      && playerVp >= victoryTarget
+      && playerVpDelta <= 0
+    );
+    if (playerVpDelta > 0 || tutorialNeedsExistingVpCredit) {
       emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.VP_EARNED, {
-        from: previous.player,
+        from: tutorialNeedsExistingVpCredit ? 0 : previous.player,
         to: playerVp,
-        delta: playerVp - previous.player,
+        delta: tutorialNeedsExistingVpCredit ? playerVp : playerVpDelta,
+        creditedExistingTotal: tutorialNeedsExistingVpCredit,
       });
     }
     if (opponentVp > previous.opponent) {
@@ -7911,7 +7967,7 @@ export default function Simulator({
       }, { actor: "opponent" });
     }
     tutorialVpRef.current = { player: playerVp, opponent: opponentVp };
-  }, [playerVp, opponentVp, tutorialContract]);
+  }, [playerVp, opponentVp, tutorialContract, tutorialCurrentCheckpoint?.id, victoryTarget]);
 
   useEffect(() => {
     if (!simulatorAnalyticsEnabled || !resumeCheckpointReady || !resumeDecisionResolved || simulatorAnalyticsLegacyResumeRef.current) return;
@@ -8043,13 +8099,13 @@ export default function Simulator({
       || String(eventOverlay?.type ?? "").startsWith("choose-")
       || ["onplay-target-prompt", "faceoff-ready", "school-attack-ready", EFFECT_ROLL_READY_TYPE].includes(eventOverlay?.type);
     if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || consumedAttackFlight || boardStatPresentationActive || eventRequiresResolution || effectRollRolling) return;
-    const result = determineVictoryResult(playerVp, opponentVp, victoryTarget);
+    const result = getResolvedVictoryResult(playerVp, opponentVp);
     if (!result) return;
     setGameResult((current) => {
       if (current) return current;
       return result.message;
     });
-  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, effectRollRolling, consumedAttackFlight, boardStatPresentationActive]);
+  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, effectRollRolling, consumedAttackFlight, boardStatPresentationActive, embeddedLessonVictoryGateOpen]);
 
   useEffect(() => {
     if (!isStoryMode || embeddedLesson || storyResultRecordedRef.current || !gameResult) return;
@@ -8978,7 +9034,7 @@ export default function Simulator({
     if (poisonImmunityNextPredatorAttack) setPoisonImmunityNextPredatorAttack(false);
   }
 
-  function completePlayerAttackStep(targetInstanceId, resolution, { attackerSurvives = true, invalidTargetInstanceIds = [], nextTargets = null } = {}) {
+  function completePlayerAttackStep(targetInstanceId, resolution, { attackerSurvives = true, defenderCardId = null, invalidTargetInstanceIds = [], nextTargets = null } = {}) {
     const recorded = recordAttackResolution(attackContext?.sequence ?? createAttackSequence(1), { targetInstanceId, resolution });
     if (!recorded.accepted) {
       pushLog(recorded.error);
@@ -8991,6 +9047,7 @@ export default function Simulator({
     emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.ATTACK_RESOLVED, {
       accepted: true,
       attackerCardId: attackContext?.attackerCardId ?? null,
+      defenderCardId,
       targetInstanceId,
       resolution,
       resolvedCount: recorded.sequence.resolutions.length,
@@ -9295,7 +9352,7 @@ export default function Simulator({
             flashingAlarmAttackBonus: triggerFlashingAlarm(current.flashingAlarmAttackBonus, targetEntry.card),
           }));
         }
-        const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "avoided", abilityName: targetAvoidance.abilityName });
+        const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "avoided", abilityName: targetAvoidance.abilityName }, { defenderCardId: targetEntry.card.id });
         setFaceoffRolling(false);
         setFaceoffPreview(null);
         const message = `${targetEntry.card.name} used ${targetAvoidance.abilityName} and flipped ${coinResult}, so ${attacker.name}'s ${attack.actionName} failed before dice were rolled.${ensnareSummary}${flashingAlarmTriggerMessage}${getAttackSequenceContinuationMessage(sequenceResult)}`;
@@ -9383,7 +9440,7 @@ export default function Simulator({
         foundationDeck: recycleId ? shuffle([...opponent.foundationDeck, recycleId], nextGameplayRandom) : opponent.foundationDeck,
       }));
       const nextOpponentState = nextOpponentProjection.state;
-      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: result.destroyed ? "destroyed" : "damaged", damage: result.appliedDamage }, { nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
+      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: result.destroyed ? "destroyed" : "damaged", damage: result.appliedDamage }, { defenderCardId: targetEntry.card.id, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
       const collapseMessage = getContinuousHealthCollapseMessage(nextOpponentProjection.collateral);
       const message = `${attacker.name} rolled ${attackRolls.map((roll) => roll.detail).join(", ")} and dealt ${result.appliedDamage} damage to ${targetEntry.card.name}.${ensnareSummary}${result.destroyed ? " The Creature School was discarded and its creatures redistributed." : ` ${result.remainingHealth}/${targetCoral.maxHealth} HP remains.`}${recyclesKrill ? " Plenteous recycled a base Krill Bloom into the opponent's Foundation deck when available." : ""}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
@@ -9646,6 +9703,7 @@ export default function Simulator({
         };
         const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "removed-invader" }, {
           attackerSurvives: !attackerDiscardedAfterConsume,
+          defenderCardId: targetEntry.card.id,
           nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState, nextPlayerCorals, nextPlayerOrphans),
         });
         const toxicMessage = toxicResult.triggered
@@ -9802,7 +9860,7 @@ export default function Simulator({
           : " Opponent's Blue Crab triggered, but its RP bank was already at its cap."
         : "";
       const survivalMessage = resilienceTriggered ? ` Ancient Resilience kept ${targetEntry.card.name} in play and is now used for this game.` : regenerateTriggered ? ` The opponent automatically paid 1 RP for Regenerate to keep ${targetEntry.card.name} in play.` : destroyedCardGoesToLostZone(targetEntry.card) ? ` The destroyed defender was placed in the opponent's Lost Zone.` : ` The defender was discarded.`;
-      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: defenderKept ? "survived" : "discarded" }, { attackerSurvives: !attackerDiscardedAfterConsume, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
+      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: defenderKept ? "survived" : "discarded" }, { attackerSurvives: !attackerDiscardedAfterConsume, defenderCardId: targetEntry.card.id, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
       const collapseMessage = getContinuousHealthCollapseMessage(nextOpponentProjection.collateral);
       const matchupSentence = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}.`;
       const supplementalResultMessage = `${ensnareSummary}${defenderKept ? survivalMessage : ""}${toxicMessage}${selfDiscardMessage}${recycleMessage}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
@@ -9904,7 +9962,7 @@ export default function Simulator({
         ? playerOrphanCreatures[attackerOrphanIndex]?.instanceId
         : null;
       const counterMessage = counter?.resolved ? ` ${targetEntry.card.name} triggered Bite Back: ${counter.attack.total} vs ${counter.defense.total}.${counterSucceeded ? destroyedCardGoesToLostZone(attacker) ? ` ${attacker.name} was destroyed and placed in your Lost Zone.` : ` ${attacker.name} was discarded.` : ` ${attacker.name} defended successfully.`}` : "";
-      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "defended", biteBack: counterSucceeded }, { attackerSurvives: !counterSucceeded });
+      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "defended", biteBack: counterSucceeded }, { attackerSurvives: !counterSucceeded, defenderCardId: targetEntry.card.id });
       const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The defender won.${ensnareSummary}${counterMessage}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
       const combatConsequences = counter?.resolved ? [{
@@ -11766,6 +11824,14 @@ export default function Simulator({
       isBlocked: (foundation) => coralIsStunned(foundation) || conditionPreventsCoralIncome(cardsById[foundation.cardId], condition),
     })) trackSimulatorAbility("player", "passives", passive.cardId, passive.name, passive.id);
     const cappedRp = Math.max(0, rpBeforeCollection + collectedRp - rpAfterCollection);
+    const blockedFoundationCount = playerCoralsAtTurnStart.filter((foundation) => (
+      conditionPreventsCoralIncome(cardsById[foundation.cardId], condition)
+    )).length;
+    const producingFoundationCount = playerCoralsAtTurnStart.filter((foundation) => (
+      !coralIsStunned(foundation)
+      && !conditionPreventsCoralIncome(cardsById[foundation.cardId], condition)
+      && getCardStartTurnRp(cardsById[foundation.cardId]) > 0
+    )).length;
     const tutorialRpEvent = {
       details: {
         collected: actualCollectedRp,
@@ -11774,6 +11840,9 @@ export default function Simulator({
         bankAfter: rpAfterCollection,
         cap: roundRpCap,
         capped: cappedRp,
+        conditionId: condition?.id ?? null,
+        blockedFoundationCount,
+        producingFoundationCount,
       },
       context: { phase: "draw", round: nextRound, turn: advanceTurn ? turn + 1 : turn },
     };
@@ -13798,7 +13867,11 @@ export default function Simulator({
     const actionKey = `${inspectedActionKey}:${action.id ?? actionName}`;
     const cost = getActionCost(action);
     if (!effect || gameResult || gamePhase !== "main" || attackContext || playingCardId || rp < cost || (actionIsOncePerTurn(action) && usedCreatureActions.includes(actionKey))) return;
-    const academyBlock = getEmbeddedLessonBlock("utility") || getAcademyActionBlock({
+    const academyBlock = getEmbeddedLessonBlock("utility", {
+      cardId: sourceCard.id,
+      actionId: action.id ?? null,
+      actionName,
+    }) || getAcademyActionBlock({
       route: scriptedFinishRoute,
       help: tutorialHelp,
       actionKey,
@@ -13979,21 +14052,36 @@ export default function Simulator({
 
   function completeCreatureRecovery(cardId) {
     if (!pendingCreatureAction || !discardPile.includes(cardId)) return;
-    const cost = pendingCreatureAction.cost ?? getActionCost(pendingCreatureAction.action);
-    const sourceCard = cardsById[pendingCreatureAction.sourceCardId];
-    const handResult = pendingCreatureAction.effect.destination === "deck" ? null : applyCurrentHandLimit([cardId]);
+    const pendingAction = pendingCreatureAction;
+    const expectedTutorialTarget = embeddedLesson?.abilityRecoveryTargets?.[tutorialCurrentCheckpoint?.id] ?? null;
+    if (expectedTutorialTarget && cardId !== expectedTutorialTarget) return;
+    const cost = pendingAction.cost ?? getActionCost(pendingAction.action);
+    const sourceCard = cardsById[pendingAction.sourceCardId];
+    const handResult = pendingAction.effect.destination === "deck" ? null : applyCurrentHandLimit([cardId]);
     setDiscardPile((current) => handResult?.cardsToDiscard.length ? [cardId, ...removeOneCard(current, cardId)] : removeOneCard(current, cardId));
     const recoveredDeckType = getPersonalDeckType(cardsById[cardId]);
-    if (pendingCreatureAction.effect.destination === "deck" && recoveredDeckType === "foundation") setFoundationDeck(shuffle([...foundationDeck, cardId], nextGameplayRandom));
-    else if (pendingCreatureAction.effect.destination === "deck") setPalsDeck(shuffle([...palsDeck, cardId], nextGameplayRandom));
+    if (pendingAction.effect.destination === "deck" && recoveredDeckType === "foundation") setFoundationDeck(shuffle([...foundationDeck, cardId], nextGameplayRandom));
+    else if (pendingAction.effect.destination === "deck") setPalsDeck(shuffle([...palsDeck, cardId], nextGameplayRandom));
     else if (handResult.cardsToHand.length) setHand((current) => [...current, cardId]);
-    setRp((current) => Math.max(0, current - cost), getPendingCreatureActionRpSpendPresentation(pendingCreatureAction, cost));
-    if (actionIsOncePerTurn(pendingCreatureAction.action)) setUsedCreatureActions((current) => [...current, pendingCreatureAction.actionKey]);
-    const destination = pendingCreatureAction.effect.destination === "deck" ? `your ${recoveredDeckType === "foundation" ? "Foundation" : "Pals"} deck` : "your hand";
+    setRp((current) => Math.max(0, current - cost), getPendingCreatureActionRpSpendPresentation(pendingAction, cost));
+    if (actionIsOncePerTurn(pendingAction.action)) setUsedCreatureActions((current) => [...current, pendingAction.actionKey]);
+    const destinationZone = pendingAction.effect.destination === "deck" ? "deck" : "hand";
+    const destination = destinationZone === "deck" ? `your ${recoveredDeckType === "foundation" ? "Foundation" : "Pals"} deck` : "your hand";
     const message = `${sourceCard.name} moved ${cardsById[cardId]?.name ?? cardId} from your discard pile to ${destination} for ${cost} RP.`;
     pushLog(message);
+    emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.ABILITY_RESOLVED, {
+      sourceCardId: sourceCard.id,
+      actionId: pendingAction.action?.id ?? null,
+      actionName: pendingAction.actionName ?? getActionName(pendingAction.action),
+      targetCardId: cardId,
+      recoveredCardId: cardId,
+      fromZone: "discard",
+      destinationZone,
+      cost,
+      accepted: true,
+    }, { phase: "main" });
     setPendingCreatureAction(null);
-    setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${pendingCreatureAction.actionName ?? getActionName(pendingCreatureAction.action)}`, message, success: true });
+    setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${pendingAction.actionName ?? getActionName(pendingAction.action)}`, message, success: true });
   }
 
   function completeCreatureActionSearch(cardId) {
@@ -16551,7 +16639,7 @@ export default function Simulator({
   }
 
   function runOpponentAttackStep(opponentState, currentPlayerCorals, currentPlayerReefEntries, currentPlayerOrphans, onPlayAttack = null, excludedTargetInstanceIds = [], controllerState = {}, combatRollPacket = null) {
-    const currentPlayerReefInstances = controllerState.planOnly
+    const currentPlayerReefInstances = controllerState.planOnly || controllerState.planCombatOnly
       ? (currentPlayerReefEntries ?? []).map((entry, index) => entry?.instanceId ? entry : {
           ...(typeof entry === "object" ? entry : {}),
           cardId: typeof entry === "string" ? entry : entry.cardId,
@@ -16830,6 +16918,9 @@ export default function Simulator({
           : `Opponent's ${attackerEntry.card.name} used ${attackerEntry.attack.actionName}, but there was no legal target.`,
       };
     }
+    const plannedDefenseDice = targetEntry.school
+      ? null
+      : targetEntry.card.defense?.dice ?? targetEntry.card.defense ?? null;
     controllerState.captureCombatPlan?.({
       forcedAttack: {
         cardId: attackerEntry.card.id,
@@ -16844,10 +16935,41 @@ export default function Simulator({
       attackerBoardOwner: "opponent",
       targetBoardOwner: targetEntry.onOpponentBoard ? "opponent" : "player",
       attackDice: attackerEntry.attack.attackDice,
-      defenseDice: targetEntry.school
-        ? null
-        : targetEntry.card.defense?.dice ?? targetEntry.card.defense ?? null,
+      defenseDice: plannedDefenseDice,
     });
+    if (controllerState.planCombatOnly && !targetEntry.school && !plannedDefenseDice) {
+      return {
+        corals: currentPlayerCorals,
+        reefCreatures: currentPlayerReefCreatures,
+        reefCreatureInstances: currentPlayerReefInstances,
+        orphanCreatures: currentPlayerOrphans,
+        opponentCorals: opponentState.corals,
+        opponentReefCreatures: opponentState.reefCreatures,
+        opponentOrphanCreatures: opponentState.orphanCreatures,
+        attackerCardId: attackerEntry.card.id,
+        defenderCardId: targetEntry.card.id,
+        targetInstanceId: targetEntry.instanceId,
+        eventSourceCardId: attackerEntry.card.id,
+        actionCost: 0,
+        noLegalTarget: true,
+        resolutionUnsupported: true,
+        summary: `Opponent's ${attackerEntry.card.name} could not resolve its attack against ${targetEntry.card.name} because that card has no defense die in the current data. No RP was spent and neither card moved.`,
+      };
+    }
+    if (controllerState.planCombatOnly) {
+      return {
+        corals: currentPlayerCorals,
+        reefCreatures: currentPlayerReefCreatures,
+        reefCreatureInstances: currentPlayerReefInstances,
+        orphanCreatures: currentPlayerOrphans,
+        attackerCardId: attackerEntry.card.id,
+        defenderCardId: targetEntry.card.id,
+        targetInstanceId: targetEntry.instanceId,
+        actionCost: attackerEntry.attack.actionCost,
+        opponentCooldownKey,
+        opponentAttackActionKey,
+      };
+    }
     const combatRandom = combatRollPacket ? createCombatResolutionRandom(combatRollPacket) : nextGameplayRandom;
     const targetAvoidance = getTargetAvoidance(targetEntry.card);
     if (targetAvoidance) {
@@ -16914,7 +17036,7 @@ export default function Simulator({
       const redistributed = result.destroyed ? redistributeOrphanCreatures(currentPlayerCorals.filter((foundation) => foundation.id !== targetEntry.coral.id), [...currentPlayerOrphans, ...getOrphanEntriesFromFoundation(targetEntry.coral)]) : { corals: currentPlayerCorals.map((foundation) => foundation.id === targetEntry.coral.id ? { ...foundation, health: result.remainingHealth } : foundation), orphans: currentPlayerOrphans };
       return { corals: redistributed.corals, orphanCreatures: redistributed.orphans, reefCreatures: currentPlayerReefCreatures, reefCreatureInstances: currentPlayerReefInstances, discardedCardId: result.destroyed ? targetEntry.card.id : null, attackerCardId: attackerEntry.card.id, defenderCardId: targetEntry.card.id, targetInstanceId: targetEntry.instanceId, attackerWins: true, attackDice: attackerEntry.attack.attackDice, defenseDice: null, primaryAttackRoll: Number(combatRollPacket?.attack ?? rolls[0]?.primaryRoll ?? 0), primaryDefenseRoll: null, attackTotal: Number(rolls[0]?.total ?? 0), defenseTotal: null, combatBreakdown: { attack: { cardId: attackerEntry.card.id, actionName: attackerEntry.attack.actionName, contributors: rolls.flatMap((roll) => roll.contributors ?? []), total: Number(rolls[0]?.total ?? 0) }, defense: null }, damage: result.appliedDamage, resultNote: result.destroyed ? `${targetEntry.card.name} → Discard pile` : `${targetEntry.card.name} · ${result.remainingHealth}/${targetEntry.coral.maxHealth} HP`, actionCost: attackerEntry.attack.actionCost, opponentCooldownKey, opponentAttackActionKey, summary: `Opponent's ${attackerEntry.card.name}${onPlayAttack ? ` used ${attackerEntry.attack.actionName} on` : " attacked"} ${targetEntry.card.name}, rolled ${rolls.map((roll) => roll.detail).join(", ")}, and dealt ${result.appliedDamage} damage.${result.destroyed ? ` Your Creature School was discarded; ${redistributed.orphans.length} creature group(s) remain orphaned after redistribution.` : ` ${result.remainingHealth}/${targetEntry.coral.maxHealth} HP remains.`}` };
     }
-    const defenseDice = targetEntry.card.defense?.dice ?? targetEntry.card.defense;
+    const defenseDice = plannedDefenseDice;
     if (!defenseDice) return {
       corals: currentPlayerCorals,
       reefCreatures: currentPlayerReefCreatures,
@@ -17350,7 +17472,7 @@ export default function Simulator({
         ? steps[0]?.combatPlan?.forcedAttack ?? onPlayAttack
         : continuation?.forcedAttack ?? onPlayAttack;
       let ensnareForStep = null;
-      if (attackForStep?.attack?.ensnare) {
+      if (attackForStep?.attack?.ensnare && !controllerState.planCombatOnly) {
         ensnareForStep = controllerState.forcedEnsnareResult
           ?? resolveEnsnareForAttack(attackForStep.attack, nextGameplayRandom);
         attackForStep = { ...attackForStep, attack: ensnareForStep.attack };
@@ -17363,6 +17485,7 @@ export default function Simulator({
         actionCostAlreadyPaid: Boolean(continuation) || attackNumber > 0,
         remainingAttacks: attackNumber > 0 || continuation ? requiredAttacks - attackNumber : null,
         deferToxicResolution: Boolean(controllerState.deferToxicResolution),
+        planCombatOnly: Boolean(controllerState.planCombatOnly),
         forcedTargetInstanceId: controllerState.forcedTargetInstanceId ?? null,
         forcedAvoidanceCoinResult: controllerState.forcedAvoidanceCoinResult ?? null,
         captureCombatPlan: (plan) => {
@@ -17379,6 +17502,7 @@ export default function Simulator({
           ? { ...capturedCombatPlan, ensnareResult: ensnareForStep }
           : null,
       };
+      if (controllerState.planCombatOnly) return step;
       if (ensnareForStep) {
         const ensnareMessage = `Ensnare attack ${attackOffset + attackNumber + 1}: ${ensnareForStep.coinResult}.${ensnareForStep.applied ? ` Your defender had -${ensnareForStep.penalty} defense for this attack.` : " No defense penalty was applied."}`;
         step = { ...step, summary: `${ensnareMessage} ${step.summary}` };
@@ -18027,7 +18151,7 @@ export default function Simulator({
         rivalOrphans: finalPlayerState.orphanCreatureInstances,
       },
     );
-    const victoryResult = determineVictoryResult(finalPlayerVp, finalOpponentVp, victoryTarget);
+    const victoryResult = getResolvedVictoryResult(finalPlayerVp, finalOpponentVp);
     const summary = [
       ...summaryParts,
       ...maintenanceEvents.map((event) => event.message),
@@ -18247,7 +18371,7 @@ export default function Simulator({
     const normalizedPlayerState = normalizeProjectedPlayerState(playerState);
     const normalizedOpponentState = normalizeProjectedOpponentState(opponentState);
     const attackForStep = continuation?.forcedAttack ?? onPlayAttack;
-    const runSingleStep = (packet = null, forcedCombatPlan = null) => runOpponentAttack(
+    const runSingleStep = (packet = null, forcedCombatPlan = null, planCombatOnly = false) => runOpponentAttack(
       normalizedOpponentState,
       normalizedPlayerState.corals,
       normalizedPlayerState.reefCreatureInstances,
@@ -18264,10 +18388,11 @@ export default function Simulator({
         forcedTargetInstanceId: forcedCombatPlan?.targetInstanceId ?? null,
         forcedAvoidanceCoinResult: forcedCombatPlan?.avoidanceCoinResult ?? null,
         forcedEnsnareResult: forcedCombatPlan?.ensnareResult ?? null,
+        planCombatOnly,
       },
       packet,
     );
-    const plannedAttack = runSingleStep();
+    const plannedAttack = runSingleStep(null, null, true);
     if (!plannedAttack) {
       return afterAction(
         normalizedPlayerState,
@@ -18756,7 +18881,7 @@ export default function Simulator({
     );
     const victoryResult = hasPendingRegenerate
       ? null
-      : determineVictoryResult(finalPlayerVp, finalOpponentVp, victoryTarget);
+      : getResolvedVictoryResult(finalPlayerVp, finalOpponentVp);
     const summary = [
       resume.summaryPrefix,
       normalResult.summary,
@@ -19140,7 +19265,7 @@ export default function Simulator({
       rivalCorals: postChoicePlayerState.corals,
       rivalOrphans: postChoicePlayerState.orphanCreatureInstances,
     });
-    const postChoiceVictoryResult = remainingRegenerate ? null : determineVictoryResult(postChoicePlayerVp, postChoiceOpponentVp, victoryTarget);
+    const postChoiceVictoryResult = remainingRegenerate ? null : getResolvedVictoryResult(postChoicePlayerVp, postChoiceOpponentVp);
     const postChoiceGameResult = opponentLostAfterFollowup
       ? "Victory: the opponent could not complete a required draw from its personal decks."
       : postChoiceVictoryResult?.message ?? null;
@@ -19745,7 +19870,7 @@ export default function Simulator({
       rivalCorals: normalizedFinalPlayerState.corals,
       rivalOrphans: normalizedFinalPlayerState.orphanCreatureInstances,
     });
-    const stagedVictoryResult = hasPendingRegenerate ? null : determineVictoryResult(finalPlayerVp, finalOpponentVp, victoryTarget);
+    const stagedVictoryResult = hasPendingRegenerate ? null : getResolvedVictoryResult(finalPlayerVp, finalOpponentVp);
     turnEvents.push({
       type: "turn-transition",
       title: "Your Turn",
@@ -25627,7 +25752,18 @@ export default function Simulator({
             </ProfessorCoachOverlay>
           ) : null}
 
-          {embeddedCompactCoachOpen ? (
+          {embeddedLessonPreVictoryOpen ? (
+            <ProfessorCoachOverlay help={embeddedLessonPreVictoryHelp} placementMode="reef-divider" measureKey={`pre-victory:${mobileReefSplit}`}>
+              <ProfessorGuideCard
+                guide={tutorialGuide}
+                help={embeddedLessonPreVictoryHelp}
+                step={tutorialContract.checkpoints.length}
+                total={tutorialContract.checkpoints.length}
+                onAdvance={() => setEmbeddedLessonPreVictoryAcknowledged(true)}
+                advanceLabel="Celebrate"
+              />
+            </ProfessorCoachOverlay>
+          ) : embeddedCompactCoachOpen ? (
             <ProfessorCoachOverlay help={embeddedCompactCoachHelp} placementMode="reef-divider" measureKey={`${mobileReefSplit}:${compactTurnSequence.stageIndex}`}>
               <ProfessorGuideCard
                 guide={tutorialGuide}
@@ -25688,6 +25824,11 @@ export default function Simulator({
             active={embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen}
             measureKey={embeddedLessonActionCueMeasureKey}
             dragging={Boolean(mobileHandDrag)}
+          />
+          <EmbeddedLessonActionCue
+            help={embeddedLessonRecoveryChoiceHelp}
+            active={Boolean(embeddedLessonRecoveryChoiceHelp)}
+            measureKey={eventOverlay?.type ?? ""}
           />
           {embeddedLessonActionReady && !embeddedLessonPresentationBlocked ? (
             <p key={`embedded-action:${tutorialHelpDismissalKey}`} className="sr-only" role="status" aria-live="assertive" aria-atomic="true">
@@ -28446,9 +28587,13 @@ export default function Simulator({
                   </div>
                 ) : eventOverlay.type === "choose-action-discard" ? (
                   <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
-                    {[...new Set(discardPile)].map((cardId) => {
+                    {[...new Set(discardPile)].filter((cardId) => {
+                      const expectedTarget = embeddedLesson?.abilityRecoveryTargets?.[tutorialCurrentCheckpoint?.id] ?? null;
+                      return !expectedTarget || cardId === expectedTarget;
+                    }).map((cardId) => {
                       const card = cardsById[cardId];
-                      return <button key={cardId} type="button" onClick={() => completeCreatureRecovery(cardId)} className="flex w-full items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/20"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span className="font-black">{card?.name}</span></button>;
+                      const tutorialTarget = embeddedLesson?.abilityRecoveryTargets?.[tutorialCurrentCheckpoint?.id] === cardId;
+                      return <button key={cardId} type="button" onClick={() => completeCreatureRecovery(cardId)} data-tutorial-search-card-id={tutorialTarget ? cardId : undefined} data-tutorial-target={tutorialTarget ? "search-card" : undefined} className={`flex w-full items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/20${tutorialTarget ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span className="font-black">{card?.name}</span></button>;
                     })}
                     <button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button>
                   </div>

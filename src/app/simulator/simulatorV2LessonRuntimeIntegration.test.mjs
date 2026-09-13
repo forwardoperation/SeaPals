@@ -4,6 +4,10 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import {
+  getSimulatorV2Lesson,
+  getSimulatorV2LessonActionBlock,
+} from "./simulatorV2Lessons.mjs";
 
 const require = createRequire(import.meta.url);
 const { createJiti } = require("jiti");
@@ -276,6 +280,25 @@ test("committing an opponent faceoff emits an opponent-scoped attack lesson even
   assert.match(commitEvent, /\}, \{ actor: "opponent", phase: "opponent" \}\)/);
 });
 
+test("resolving a player attack reports the defender identity required by lesson checkpoints", () => {
+  const completion = sourceSection(
+    "function completePlayerAttackStep(",
+    "function getAttackSequenceContinuationMessage(",
+  );
+  assert.match(completion, /defenderCardId\s*=\s*null/);
+  assert.match(completion, /attackerCardId:\s*attackContext\?\.attackerCardId \?\? null,[\s\S]*?defenderCardId,[\s\S]*?targetInstanceId/);
+
+  const attackResolution = sourceSection(
+    "function resolvePlayerAttack(",
+    "function applyPlayerOnPlayDeckDiscard(",
+  );
+  const completedSteps = attackResolution.match(/completePlayerAttackStep\([\s\S]*?\);/g) ?? [];
+  assert.equal(completedSteps.length, 5, "every player attack resolution path should complete through one telemetry helper");
+  for (const completedStep of completedSteps) {
+    assert.match(completedStep, /defenderCardId:\s*targetEntry\.card\.id/);
+  }
+});
+
 test("embedded lesson wiring follows the live checkpoint for layout, draws, and defeat coaching", () => {
   const lessonBlock = sourceSection(
     "function getEmbeddedLessonBlock(action, details = {})",
@@ -304,4 +327,60 @@ test("each embedded lesson chooses observation or a real opponent turn from its 
   assert.match(opponentTurn, /\(embeddedLesson\?\.seed\?\.opponentTurnMode \?\? scriptedTutorialScenario\?\.opponentTurnMode\) === "observe"/);
   assert.match(opponentTurn, /queueEvents\(\[\{[\s\S]*?title:\s*"Your Turn"[\s\S]*?advanceRoundAfterClose:\s*true/);
   assert.match(opponentTurn, /if \([\s\S]*?=== "observe"\)[\s\S]*?return;[\s\S]*?const turnEvents = \[\]/);
+});
+
+test("round collection reports the Condition and which Corals were blocked or produced RP", () => {
+  const startRound = sourceSection(
+    "function startRound(nextRound,",
+    "function beginOpeningOpponentTurn()",
+  );
+
+  assert.match(startRound, /const blockedFoundationCount = playerCoralsAtTurnStart\.filter\([\s\S]*?conditionPreventsCoralIncome/);
+  assert.match(startRound, /const producingFoundationCount = playerCoralsAtTurnStart\.filter\([\s\S]*?!coralIsStunned[\s\S]*?!conditionPreventsCoralIncome[\s\S]*?getCardStartTurnRp/);
+  assert.match(startRound, /details:\s*\{[\s\S]*?conditionId:\s*condition\?\.id \?\? null,[\s\S]*?blockedFoundationCount,[\s\S]*?producingFoundationCount/);
+  assert.match(startRound, /emitTutorialEvent\([\s\S]*?SIMULATOR_TUTORIAL_ACTION_TYPES\.RP_COLLECTED,[\s\S]*?tutorialRpEvent\.details/);
+});
+
+test("Blue Crab Scavenge is gated to its authored lesson step and emits committed recovery evidence", () => {
+  const lesson = getSimulatorV2Lesson("first-attack");
+  const checkpoint = lesson.contract.checkpoints.find(({ id }) => id === "v2-recover-sea-urchin");
+  assert.ok(checkpoint);
+
+  const gate = (details) => getSimulatorV2LessonActionBlock({
+    lesson,
+    checkpoint,
+    action: "utility",
+    gamePhase: "main",
+    ...details,
+  });
+  assert.equal(gate({ cardId: "blue-crab", actionId: "scavenge", actionName: "Scavenge" }), "");
+  assert.match(gate({ cardId: "porcupine-fish", actionId: "scavenge", actionName: "Scavenge" }), /highlighted lesson step/);
+  assert.match(gate({ cardId: "blue-crab", actionId: "invented", actionName: "Scavenge" }), /highlighted lesson step/);
+  assert.match(gate({ cardId: "blue-crab", actionId: "scavenge", actionName: "Search" }), /highlighted lesson step/);
+
+  const beginAbility = sourceSection(
+    "function beginCreatureUtilityAction(action)",
+    "function completeCreatureRecovery(cardId)",
+  );
+  assert.match(beginAbility, /getEmbeddedLessonBlock\("utility", \{[\s\S]*?cardId:\s*sourceCard\.id,[\s\S]*?actionId:\s*action\.id \?\? null,[\s\S]*?actionName/);
+
+  const completeRecovery = sourceSection(
+    "function completeCreatureRecovery(cardId)",
+    "function completeCreatureActionSearch(cardId)",
+  );
+  assert.match(completeRecovery, /abilityRecoveryTargets\?\.\[tutorialCurrentCheckpoint\?\.id\]/);
+  assert.match(completeRecovery, /if \(expectedTutorialTarget && cardId !== expectedTutorialTarget\) return;/);
+  const eventIndex = completeRecovery.indexOf("SIMULATOR_TUTORIAL_ACTION_TYPES.ABILITY_RESOLVED");
+  assert.ok(eventIndex > completeRecovery.indexOf("setDiscardPile("));
+  assert.ok(eventIndex > completeRecovery.indexOf("setHand("));
+  assert.ok(eventIndex > completeRecovery.indexOf("setRp("));
+  assert.match(completeRecovery, /sourceCardId:\s*sourceCard\.id/);
+  assert.match(completeRecovery, /actionId:\s*pendingAction\.action\?\.id \?\? null/);
+  assert.match(completeRecovery, /actionName:\s*pendingAction\.actionName \?\? getActionName\(pendingAction\.action\)/);
+  assert.match(completeRecovery, /targetCardId:\s*cardId/);
+  assert.match(completeRecovery, /recoveredCardId:\s*cardId/);
+  assert.match(completeRecovery, /fromZone:\s*"discard"/);
+  assert.match(completeRecovery, /destinationZone,/);
+  assert.match(completeRecovery, /accepted:\s*true/);
+  assert.match(completeRecovery, /\}, \{ phase: "main" \}\)/);
 });
