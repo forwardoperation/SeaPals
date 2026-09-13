@@ -36,6 +36,11 @@ test("selecting any lesson opens its teacher introduction before the board becom
     /createSimulatorV2LessonRuntime\(lesson\.id, \{ completedLessonIds \}\)/,
     "the board receives concepts taught by completed earlier lessons",
   );
+  assert.match(
+    experienceSource,
+    /lessonStarted:\s*panel === null/,
+    "the embedded runtime distinguishes the visible introduction from a started lesson",
+  );
 });
 
 test("the lesson start overlay keeps only the guide, title, short dialogue, and its two actions", () => {

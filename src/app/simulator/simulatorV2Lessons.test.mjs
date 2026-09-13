@@ -1080,9 +1080,10 @@ test("Lesson 2 repairs a Porcupine Fish that already occupies Great Barracuda's 
 
 test("Lesson 2 introduces its food-chain scene and distinguishes Action from On Play abilities", () => {
   const lesson = getSimulatorV2Lesson("first-attack");
+  assert.equal(lesson.autoEndOpeningTurn, true);
   assert.match(
     lesson.introduction,
-    /food chain.*attack.*Passive.*Action.*On Play.*Let.s dive in/is,
+    /food chain.*Spanish Hogfish.*eats Invertebrates.*Sea Urchin.*prepare to defend.*Action.*Passive.*On Play/is,
   );
 
   const counterattack = lesson.contract.checkpoints.find(({ id }) => id === "v2-pass-to-counterattack");
@@ -1091,6 +1092,18 @@ test("Lesson 2 introduces its food-chain scene and distinguishes Action from On 
   assert.match(
     counterattackHelp.message,
     /food chain.*Spanish Hogfish.*eat Invertebrates.*Sea Urchin.*prepare to defend/is,
+  );
+
+  const crunch = lesson.contract.checkpoints.find(({ id }) => id === "tutorial-attack");
+  const crunchHelp = getSimulatorV2LessonHelp(lesson, crunch, {});
+  assert.equal(crunchHelp.target, "player-board");
+  assert.equal(
+    crunchHelp.message,
+    "Crunch costs 1 RP and targets an opposing Invertebrate.",
+  );
+  assert.equal(
+    crunchHelp.action,
+    "Now it’s your turn to hit back. Certain creatures have abilities they can perform once per turn throughout the game. These are called Actions. Let’s explore one by using Porcupine Fish’s Action, Crunch, to target your opponent’s Sea Urchin.",
   );
 
   const recovery = lesson.contract.checkpoints.find(({ id }) => id === "v2-recover-sea-urchin");

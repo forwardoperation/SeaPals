@@ -250,9 +250,10 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     id: "first-attack", moduleId: "battle-basics", number: 2,
     title: "Put abilities to work", duration: "9 min", goalLabel: "Use four abilities and reach 7 VP",
     summary: "Attack and defend, trigger a passive, recover a card with an action, and unleash an On Play attack.",
-    introduction: "In this lesson, you’ll learn how abilities shape the food chain: defend an attack, watch a Passive work, choose an Action, and trigger an On Play surprise. Let’s dive in!",
+    introduction: "In this lesson, you’ll learn how abilities shape the food chain. Spanish Hogfish eats Invertebrates and has its eye on your Sea Urchin—prepare to defend! Then you’ll use Action, Passive, and On Play abilities.",
     completion: "You resolved both sides of a faceoff, saw a passive work automatically, recovered a card with a non-attack action, and triggered a Predator's On Play attack.",
     celebration: "Every ability had a job to do!",
+    autoEndOpeningTurn: true,
     skills: ["Attack actions", "Offense and defense", "Passive abilities", "Recovery actions", "On Play abilities"],
     introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.ATTACKING,
@@ -1093,10 +1094,17 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     }
     const attack = uiState.inspectedAttack?.ready ? uiState.inspectedAttack : uiState.readyAttack;
     const target = uiState.inspectedAttack?.ready ? "attack-button" : "player-board";
+    const introduceActions = selected.id === "first-attack"
+      && current.id === "tutorial-attack"
+      && target === "player-board";
     return help(
       target,
       "Crunch costs 1 RP and targets an opposing Invertebrate.",
-      target === "attack-button" ? "Use Crunch, then choose a legal target." : "Select Porcupine Fish, then use Crunch.",
+      target === "attack-button"
+        ? "Use Crunch, then choose a legal target."
+        : introduceActions
+          ? "Now it’s your turn to hit back. Certain creatures have abilities they can perform once per turn throughout the game. These are called Actions. Let’s explore one by using Porcupine Fish’s Action, Crunch, to target your opponent’s Sea Urchin."
+          : "Select Porcupine Fish, then use Crunch.",
       { targetCardId: selected.attackCardId, targetActionKey: attack?.actionKey ?? null },
     );
   }

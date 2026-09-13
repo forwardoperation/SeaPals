@@ -107,7 +107,7 @@ test("the board-native overlay keeps the drop circle and teacher visible during 
     /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?measureKey=\{embeddedLessonActionCueMeasureKey\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag \|\| draggingCoralId \|\| slotDragStart\)\}/,
   );
   const helpState = sourceSection(
-    "const tutorialHelp = tutorialContract ?",
+    "const tutorialHelp = tutorialContract && !embeddedLessonAutoEndingOpeningTurn ?",
     "const tutorialConditionHelp =",
   );
   assert.doesNotMatch(presentationGate, /\|\| mobileHandDrag/);

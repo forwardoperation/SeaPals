@@ -215,6 +215,32 @@ test("Simulator starts an embedded lesson from the hydrated board and scores its
   assert.match(turnInitialization, /useState\(initialGame\.hasDrawnThisTurn \?\? false\)/);
 });
 
+test("Lesson 2 automatically enters the existing opponent-turn pipeline after its introduction", () => {
+  const automaticOpening = sourceSection(
+    "tutorialRuntime?.lessonStarted === true",
+    "if (!embeddedLesson || !tutorialCurrentCheckpoint) return;",
+  );
+
+  assert.match(automaticOpening, /embeddedLesson\?\.autoEndOpeningTurn === true/);
+  assert.match(automaticOpening, /tutorialCurrentCheckpoint\?\.id === "v2-pass-to-counterattack"/);
+  assert.match(automaticOpening, /gamePhase === "main"/);
+  assert.match(automaticOpening, /eventOverlay/);
+  assert.match(automaticOpening, /modal/);
+  assert.match(automaticOpening, /gameResult/);
+  assert.match(automaticOpening, /autoEndedEmbeddedOpeningTurnRef\.current/);
+  assert.match(automaticOpening, /window\.queueMicrotask/);
+  assert.ok(
+    automaticOpening.indexOf("autoEndedEmbeddedOpeningTurnRef.current = true")
+      < automaticOpening.indexOf("endTurn();"),
+    "the per-mount guard is committed before the automatic turn request",
+  );
+
+  const endTurnFlow = extractFunction("endTurn", "resolveOpponentTurn");
+  assert.match(endTurnFlow, /SIMULATOR_TUTORIAL_ACTION_TYPES\.TURN_ENDED/);
+  assert.match(endTurnFlow, /beginCompactTurnSequence\(/);
+  assert.match(endTurnFlow, /continueAfterPresentedEvent\(opponentTurnEvent, \[\]\)/);
+});
+
 test("a resolved Support emits the lesson event only after its committed game updates", () => {
   const supportEvent = sourceSection(
     "function applyExplicitSupportLock(card)",
