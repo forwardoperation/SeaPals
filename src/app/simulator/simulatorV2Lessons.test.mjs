@@ -982,12 +982,18 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
   assert.equal(help(setup, { gamePhase: "setup", hasCoralInPlay: false }).target, "hand");
   assert.equal(help(setup, { gamePhase: "setup", selectedHandCard: first.setupCardId, handPopoverOpen: true }).target, "play-card");
   assert.equal(help(setup, { gamePhase: "setup", playingCardId: first.setupCardId }).target, "placement");
-  assert.equal(help(setup, { gamePhase: "setup", hasCoralInPlay: true }).target, "foundation-drag");
-  assert.equal(help(setup, {
+  const foundationMoveHelp = help(setup, { gamePhase: "setup", hasCoralInPlay: true });
+  assert.equal(foundationMoveHelp.target, "foundation-drag");
+  assert.equal(foundationMoveHelp.interaction, "drag");
+  assert.equal(foundationMoveHelp.dragDestination, "clear-water");
+  const slotMoveHelp = help(setup, {
     gamePhase: "setup",
     hasCoralInPlay: true,
     layoutLessonProgress: { "move-foundation": true },
-  }).target, "slot-drag");
+  });
+  assert.equal(slotMoveHelp.target, "slot-drag");
+  assert.equal(slotMoveHelp.interaction, "drag");
+  assert.equal(slotMoveHelp.dragDestination, "clear-water");
   assert.equal(help(setup, {
     gamePhase: "setup",
     hasCoralInPlay: true,

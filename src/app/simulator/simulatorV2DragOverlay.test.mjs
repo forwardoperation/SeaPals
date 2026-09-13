@@ -23,6 +23,8 @@ test("drag lessons connect the exact hand card to the nearest visible legal dest
   );
 
   assert.match(finder, /data-v2-lesson-drop-cards~/);
+  assert.match(finder, /help\?\.dragDestination === "clear-water"/);
+  assert.match(finder, /data-v2-lesson-clear-water-destination/);
   assert.match(finder, /Math\.hypot/);
   assert.match(cue, /const source = findTutorialTarget\(help\)/);
   assert.match(cue, /findEmbeddedLessonDragDestination\(help, source\.rect\)/);
@@ -102,7 +104,7 @@ test("the board-native overlay keeps the drop circle and teacher visible during 
 
   assert.match(
     simulatorSource,
-    /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?measureKey=\{embeddedLessonActionCueMeasureKey\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag\)\}/,
+    /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?measureKey=\{embeddedLessonActionCueMeasureKey\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag \|\| draggingCoralId \|\| slotDragStart\)\}/,
   );
   const helpState = sourceSection(
     "const tutorialHelp = tutorialContract ?",
@@ -117,7 +119,11 @@ test("the board-native overlay keeps the drop circle and teacher visible during 
   assert.doesNotMatch(helpState, /playingCardId:\s*embeddedLesson \? activePlacementCardId/);
   assert.match(cue, /\{!dragging \? \([\s\S]*?className="seapals-v2-action-cue-path"[\s\S]*?className="seapals-v2-action-cue-source"[\s\S]*?\) : null\}[\s\S]*?className="seapals-v2-action-cue-destination"[\s\S]*?\{!dragging \? \([\s\S]*?className="seapals-v2-action-cue-hand"/);
   assert.match(cue, /data-v2-user-dragging=\{dragging \? "true" : undefined\}/);
-  assert.match(simulatorSource, /<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}[\s\S]*?dragPassive=\{Boolean\(mobileHandDrag\)\}/);
+  assert.match(simulatorSource, /<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}[\s\S]*?dragPassive=\{Boolean\(mobileHandDrag \|\| draggingCoralId \|\| slotDragStart\)\}/);
+  assert.match(
+    simulatorSource,
+    /EMBEDDED_LESSON_CLEAR_WATER_DESTINATIONS[\s\S]*?"move-foundation"[\s\S]*?"move-slot"[\s\S]*?data-v2-lesson-clear-water-destination=\{tutorialHelp\.actionId\}/,
+  );
   assert.match(
     simulatorSource,
     /\.seapals-v2-action-cue \{[\s\S]*?z-index:\s*159;[\s\S]*?pointer-events:\s*none;/,

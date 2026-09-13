@@ -863,6 +863,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         `Drag ${name(selected.setupCardId)} a short distance into open water.`,
         {
           actionId: "move-foundation",
+          interaction: "drag",
+          dragDestination: "clear-water",
           targetCardId: selected.setupCardId,
           hint: "Move the Coral by its card body. Its slots and attached creatures stay connected.",
         },
@@ -879,6 +881,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         "Drag the highlighted empty slot a short distance into clear water.",
         {
           actionId: "move-slot",
+          interaction: "drag",
+          dragDestination: "clear-water",
           targetCardId: selected.setupCardId,
           hint: "Drag the round slot marker. Its connector follows while the Coral stays in place.",
         },

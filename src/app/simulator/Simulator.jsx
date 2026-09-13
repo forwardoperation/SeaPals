@@ -523,6 +523,11 @@ const TUTORIAL_POINTER_TARGETS = new Set([
   "slot-drag",
 ]);
 
+const EMBEDDED_LESSON_CLEAR_WATER_DESTINATIONS = Object.freeze({
+  "move-foundation": Object.freeze({ x: 28, y: 58 }),
+  "move-slot": Object.freeze({ x: 62, y: 62 }),
+});
+
 function getTutorialPointerPrompt(help) {
   const pointerPrompt = String(help?.pointerPrompt ?? "").trim();
   if (pointerPrompt) return pointerPrompt;
@@ -717,6 +722,13 @@ function sameEmbeddedLessonActionCueLayout(left, right) {
 }
 
 function findEmbeddedLessonDragDestination(help, sourceRect) {
+  if (help?.dragDestination === "clear-water" && help.actionId) {
+    const marker = chooseTutorialTarget(getVisibleTutorialTargets(
+      `[data-v2-lesson-clear-water-destination="${escapeTutorialSelectorValue(help.actionId)}"]`,
+    ), help);
+    if (marker) return marker;
+  }
+
   const cardIds = [...new Set(
     (help?.targetCardIds ?? [help?.targetCardId])
       .map((cardId) => String(cardId ?? "").trim())
@@ -7851,6 +7863,12 @@ export default function Simulator({
       ? getGuidedAcademyFoundationPlacementTarget(playerCorals)
       : { x: 72, y: 38 }
     : null;
+  const embeddedLessonClearWaterDragPosition = embeddedLesson
+    && tutorialHelpTargetActive
+    && tutorialHelp?.interaction === "drag"
+    && tutorialHelp?.dragDestination === "clear-water"
+      ? EMBEDDED_LESSON_CLEAR_WATER_DESTINATIONS[tutorialHelp.actionId] ?? null
+      : null;
   const isPlacingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) === 0);
   const isUpgradingCoral = Boolean(isFoundationCard(playingCard) && Number(playingCard.stage ?? 0) > 0);
   const isPreviewingCoralUpgrade = Boolean(
@@ -25783,7 +25801,7 @@ export default function Simulator({
                 help={tutorialHelp}
                 step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
                 total={tutorialContract.checkpoints.length}
-                dragPassive={Boolean(mobileHandDrag)}
+                dragPassive={Boolean(mobileHandDrag || draggingCoralId || slotDragStart)}
               />
             </ProfessorCoachOverlay>
           ) : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (
@@ -25823,7 +25841,7 @@ export default function Simulator({
             help={tutorialHelp}
             active={embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen}
             measureKey={embeddedLessonActionCueMeasureKey}
-            dragging={Boolean(mobileHandDrag)}
+            dragging={Boolean(mobileHandDrag || draggingCoralId || slotDragStart)}
           />
           <EmbeddedLessonActionCue
             help={embeddedLessonRecoveryChoiceHelp}
@@ -26349,6 +26367,17 @@ export default function Simulator({
                           style={{
                             left: `${embeddedLessonEcosystemDropPosition.x}%`,
                             top: `${embeddedLessonEcosystemDropPosition.y}%`,
+                          }}
+                        />
+                      ) : null}
+                      {embeddedLessonClearWaterDragPosition ? (
+                        <span
+                          className="pointer-events-none absolute z-20 h-24 w-24 -translate-x-1/2 -translate-y-1/2"
+                          data-v2-lesson-clear-water-destination={tutorialHelp.actionId}
+                          data-v2-lesson-drop-kind="clear-water"
+                          style={{
+                            left: `${embeddedLessonClearWaterDragPosition.x}%`,
+                            top: `${embeddedLessonClearWaterDragPosition.y}%`,
                           }}
                         />
                       ) : null}
