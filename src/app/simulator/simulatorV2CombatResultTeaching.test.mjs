@@ -64,6 +64,49 @@ test("a tied faceoff explains that Defense holds", () => {
   assert.match(outcome.message, /both totals are 4.*defense holds the tie/i);
 });
 
+test("Lesson 2 dynamically coaches Spanish Hogfish consuming Sea Urchin", () => {
+  const consumedSeaUrchin = {
+    attack: {
+      cardId: "spanish-hogfish",
+      actionName: "Crunch",
+      total: 4,
+      contributors: [{ id: "attack-roll", kind: "roll", label: "Attack roll", value: 4, detail: "D6" }],
+    },
+    defense: {
+      cardId: "sea-urchin",
+      total: 3,
+      contributors: [{ id: "defense-roll", kind: "roll", label: "Defense roll", value: 3, detail: "D6" }],
+    },
+  };
+  const steps = buildSimulatorV2CombatResultTeachingSteps({
+    breakdown: consumedSeaUrchin,
+    attackName: "Spanish Hogfish",
+    defenseName: "Sea Urchin",
+  });
+
+  assert.equal(steps.length, SIMULATOR_V2_COMBAT_TEACHING_STEP_COUNT);
+  assert.deepEqual(steps.map(({ focus }) => focus), ["attack", "defense", "outcome"]);
+  assert.match(steps[0].message, /Sea Urchin was consumed.*recover discarded cards soon.*break down what happened/is);
+  assert.match(steps[1].message, /rolled a 4.*Spanish Hogfish.*Crunch.*Sea Urchin rolled a 3/is);
+  assert.match(steps[2].message, /4 is higher than.*3.*consumed.*discard pile.*ties go to the defender/is);
+
+  const defenseHolds = buildSimulatorV2CombatResultTeachingSteps({
+    breakdown: {
+      ...consumedSeaUrchin,
+      defense: {
+        ...consumedSeaUrchin.defense,
+        total: 5,
+        contributors: [{ ...consumedSeaUrchin.defense.contributors[0], value: 5 }],
+      },
+    },
+    attackName: "Spanish Hogfish",
+    defenseName: "Sea Urchin",
+    consequences: [{ id: "defender-stays", label: "Sea Urchin", detail: "stays in play" }],
+  });
+  assert.doesNotMatch(defenseHolds[0].message, /Sea Urchin was consumed/i);
+  assert.match(defenseHolds[2].message, /attack is blocked.*Sea Urchin stays in play/is);
+});
+
 test("the merged battle lesson teaches its first faceoff once", () => {
   const firstAttack = getSimulatorV2Lesson("first-attack");
   const base = { eventType: "faceoff-result", breakdown, alreadyExplained: false };

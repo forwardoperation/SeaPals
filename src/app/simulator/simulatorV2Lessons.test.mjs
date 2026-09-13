@@ -1078,6 +1078,43 @@ test("Lesson 2 repairs a Porcupine Fish that already occupies Great Barracuda's 
   );
 });
 
+test("Lesson 2 introduces its food-chain scene and distinguishes Action from On Play abilities", () => {
+  const lesson = getSimulatorV2Lesson("first-attack");
+  assert.match(
+    lesson.introduction,
+    /food chain.*attack.*Passive.*Action.*On Play.*Let.s dive in/is,
+  );
+
+  const counterattack = lesson.contract.checkpoints.find(({ id }) => id === "v2-pass-to-counterattack");
+  const counterattackHelp = getSimulatorV2LessonHelp(lesson, counterattack, {});
+  assert.equal(counterattackHelp.target, "turn-button");
+  assert.match(
+    counterattackHelp.message,
+    /food chain.*Spanish Hogfish.*eat Invertebrates.*Sea Urchin.*prepare to defend/is,
+  );
+
+  const recovery = lesson.contract.checkpoints.find(({ id }) => id === "v2-recover-sea-urchin");
+  const recoveryHelp = getSimulatorV2LessonHelp(lesson, recovery, {});
+  assert.match(
+    recoveryHelp.message,
+    /not every ability is an attack.*Action.*waits for your command.*decide when to use it.*pay any RP cost.*Scavenge costs 2 RP.*Sea Urchin.*discard pile.*bring it home/is,
+  );
+
+  const predatorBuild = lesson.contract.checkpoints.find(({ id }) => id === "v2-place-predator");
+  const predatorBuildHelp = getSimulatorV2LessonHelp(lesson, predatorBuild, { hand: ["great-barracuda"] });
+  assert.match(
+    predatorBuildHelp.message,
+    /On Play ability triggers.*no separate Action button.*additional RP cost.*Quick Strike.*D6 Bite.*moment you place/is,
+  );
+
+  const predatorAttack = lesson.contract.checkpoints.find(({ id }) => id === "v2-predator-attack");
+  const predatorAttackHelp = getSimulatorV2LessonHelp(lesson, predatorAttack, {});
+  assert.match(
+    predatorAttackHelp.message,
+    /Unlike an Action.*On Play ability.*automatically.*D6.*Porcupine Fish.*D4 Crunch/is,
+  );
+});
+
 test("live coaching follows hand, placement, draw confirmation, result and active attack controls", () => {
   const first = getSimulatorV2Lesson("first-reef");
   const setup = first.contract.checkpoints[0];
@@ -1143,7 +1180,7 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
   const recoveryHelp = getSimulatorV2LessonHelp(attack, recoveryStep, {});
   assert.equal(recoveryHelp.target, "player-board");
   assert.equal(recoveryHelp.targetCardId, "blue-crab");
-  assert.match(recoveryHelp.message, /Action rather than an attack.*recover the defeated Sea Urchin.*next round/s);
+  assert.match(recoveryHelp.message, /Action.*waits for your command.*decide when to use it.*Scavenge costs 2 RP.*Sea Urchin.*discard pile/is);
   const inspectedRecoveryHelp = getSimulatorV2LessonHelp(attack, recoveryStep, {
     inspectedUtilityAction: { cardId: "blue-crab", actionKey: "blue-crab:scavenge" },
   });
@@ -1163,7 +1200,7 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
   const predatorAttackStep = attack.contract.checkpoints.find(({ id }) => id === "v2-predator-attack");
   const predatorAttackHelp = getSimulatorV2LessonHelp(attack, predatorAttackStep, {});
   assert.equal(predatorAttackHelp.target, "opponent-board");
-  assert.match(predatorAttackHelp.message, /Bite uses a D6.*Crunch used a D4/s);
+  assert.match(predatorAttackHelp.message, /Bite uses a D6.*Porcupine Fish.*D4 Crunch/is);
   const scoreStep = attack.contract.checkpoints.find(({ actionType }) => actionType === "vp-earned");
   assert.equal(getSimulatorV2LessonHelp(attack, scoreStep, {}).target, "vp-score");
   const condition = getSimulatorV2Lesson("clear-stun");

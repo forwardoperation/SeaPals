@@ -233,6 +233,11 @@ test("setup completion preserves its landing rail position instead of applying t
 });
 
 test("opening-hand cards lift from the visible player's top deck card instead of a viewport-center fallback", () => {
+  const sourceHelper = sourceSection(
+    simulatorSource,
+    'function getMobileDrawFlightSourceElement(sourceZone = "deck")',
+    "function prepareMobileDrawFlight(flight, flightElement)",
+  );
   const startDrawFlights = sourceSection(
     simulatorSource,
     "function startMobileDrawFlights(revealed, baseHandLength, {",
@@ -245,10 +250,17 @@ test("opening-hand cards lift from the visible player's top deck card instead of
   );
 
   assert.match(
-    startDrawFlights,
-    /document\.querySelector\([\s\S]*?\[data-mobile-edge-zones\]\[data-zone-owner="player"\] \[data-mobile-zone="deck"\] \[data-mobile-deck-flight-origin\]/,
+    sourceHelper,
+    /\[data-mobile-edge-zones\]\[data-zone-owner="player"\] \[data-mobile-zone="\$\{sourceZone\}"\]/,
+    "flight origins should be resolved from the requested visible player zone",
+  );
+  assert.match(
+    sourceHelper,
+    /sourceZone === "deck"[\s\S]*?querySelector\("\[data-mobile-deck-flight-origin\]"\)/,
     "setup deal geometry should be measured from the visible player deck",
   );
+  assert.match(startDrawFlights, /sourceZone = "deck"/);
+  assert.match(startDrawFlights, /initialSourceElement \?\? getMobileDrawFlightSourceElement\(sourceZone\)/);
   assert.match(
     mobileEdgeZonesSource,
     /className="seapals-mobile-edge-zone-art seapals-mobile-deck-back"[\s\S]*?data-mobile-deck-flight-origin/,
@@ -272,6 +284,39 @@ test("opening-hand cards lift from the visible player's top deck card instead of
     /viewport(?:Width|Height)\s*\*\s*0\.5\d*/,
     "opening cards must not fall back to the middle of the viewport",
   );
+});
+
+test("discard recovery remeasures its visible source while ordinary draw flights default to deck", () => {
+  const sourceHelper = sourceSection(
+    simulatorSource,
+    'function getMobileDrawFlightSourceElement(sourceZone = "deck")',
+    "function prepareMobileDrawFlight(flight, flightElement)",
+  );
+  const prepareFlight = sourceSection(
+    simulatorSource,
+    "function prepareMobileDrawFlight(flight, flightElement)",
+    "function finishMobileDrawFlight",
+  );
+  const startDrawFlights = sourceSection(
+    simulatorSource,
+    "function startMobileDrawFlights(revealed, baseHandLength, {",
+    "function confirmTurnDraw()",
+  );
+
+  assert.match(sourceHelper, /sourceZone = "deck"/);
+  assert.match(
+    sourceHelper,
+    /return zoneElement\?\.querySelector\("\.seapals-mobile-edge-zone-art"\) \?\? zoneElement/,
+    "discard recovery should begin at the visible discard artwork",
+  );
+  assert.match(prepareFlight, /\["opening-hand", "discard-recovery"\]\.includes\(flight\?\.kind\)/);
+  const remeasureIndex = prepareFlight.indexOf("getMobileDrawFlightSourceElement(flight.sourceZone)");
+  const sourceRectIndex = prepareFlight.indexOf("sourceElement?.getBoundingClientRect()");
+  assert.ok(remeasureIndex >= 0 && sourceRectIndex > remeasureIndex, "the current zone geometry is measured again when each recovery flight starts");
+  assert.match(startDrawFlights, /kind = "turn-draw",[\s\S]*?sourceZone = "deck"/);
+  assert.match(startDrawFlights, /sourceElement: initialSourceElement = null/);
+  assert.match(startDrawFlights, /const sourceElement = initialSourceElement \?\? getMobileDrawFlightSourceElement\(sourceZone\)/);
+  assert.match(startDrawFlights, /cardsToHand\.map[\s\S]*?kind,[\s\S]*?sourceZone,[\s\S]*?cardId:/);
 });
 
 test("the first visible opening-hand pose is held on the player deck before the card starts moving", () => {

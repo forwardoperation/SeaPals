@@ -12204,12 +12204,20 @@ export default function Simulator({
     flightElement.style.setProperty("--seapals-draw-end-scale", geometry.endScale);
   }
 
-  function prepareMobileDrawFlight(flight, flightElement) {
-    if (flight?.kind !== "opening-hand" || !flightElement) return;
-    if (!mobileDrawFlightTimersRef.current.has(flight.id)) return;
-    const sourceElement = document.querySelector(
-      '[data-mobile-edge-zones][data-zone-owner="player"] [data-mobile-zone="deck"] [data-mobile-deck-flight-origin]',
+  function getMobileDrawFlightSourceElement(sourceZone = "deck") {
+    const zoneElement = document.querySelector(
+      `[data-mobile-edge-zones][data-zone-owner="player"] [data-mobile-zone="${sourceZone}"]`,
     );
+    if (sourceZone === "deck") {
+      return zoneElement?.querySelector("[data-mobile-deck-flight-origin]") ?? zoneElement;
+    }
+    return zoneElement?.querySelector(".seapals-mobile-edge-zone-art") ?? zoneElement;
+  }
+
+  function prepareMobileDrawFlight(flight, flightElement) {
+    if (!["opening-hand", "discard-recovery"].includes(flight?.kind) || !flightElement) return;
+    if (!mobileDrawFlightTimersRef.current.has(flight.id)) return;
+    const sourceElement = getMobileDrawFlightSourceElement(flight.sourceZone);
     const handRail = document.querySelector("[data-simulator-hand-card-rail]");
     const targetItem = document.querySelector(`[data-mobile-hand-card-index="${flight.handIndex}"]`);
     const sourceRect = sourceElement?.getBoundingClientRect();
@@ -12386,6 +12394,8 @@ export default function Simulator({
 
   function startMobileDrawFlights(revealed, baseHandLength, {
     kind = "turn-draw",
+    sourceZone = "deck",
+    sourceElement: initialSourceElement = null,
     focusOnComplete = true,
     announcement = null,
     onCardLanded = null,
@@ -12401,9 +12411,7 @@ export default function Simulator({
       || typeof document === "undefined"
     ) return false;
 
-    const sourceElement = document.querySelector(
-      '[data-mobile-edge-zones][data-zone-owner="player"] [data-mobile-zone="deck"] [data-mobile-deck-flight-origin]',
-    );
+    const sourceElement = initialSourceElement ?? getMobileDrawFlightSourceElement(sourceZone);
     const handElement = document.querySelector("[data-mobile-hand-dock]");
     const handRail = document.querySelector("[data-simulator-hand-card-rail]");
     if (kind === "opening-hand") handRail?.scrollTo?.({ left: 0, behavior: "auto" });
@@ -12438,6 +12446,7 @@ export default function Simulator({
     const flights = cardsToHand.map((entry, index) => ({
       id: `mobile-draw-flight-${++mobileDrawFlightIdRef.current}`,
       kind,
+      sourceZone,
       cardId: entry.cardId,
       source: String(entry.source || "deck").toLowerCase(),
       handIndex: baseHandLength + index,
@@ -14103,7 +14112,7 @@ export default function Simulator({
     setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${pendingCreatureAction.actionName ?? getActionName(pendingCreatureAction.action)}`, message, success: shortfall === 0, drawnCards: revealed });
   }
 
-  function completeCreatureRecovery(cardId) {
+  function completeCreatureRecovery(cardId, sourceElement = null) {
     if (!pendingCreatureAction || !discardPile.includes(cardId)) return;
     const pendingAction = pendingCreatureAction;
     const expectedTutorialTarget = embeddedLesson?.abilityRecoveryTargets?.[tutorialCurrentCheckpoint?.id] ?? null;
@@ -14111,6 +14120,14 @@ export default function Simulator({
     const cost = pendingAction.cost ?? getActionCost(pendingAction.action);
     const sourceCard = cardsById[pendingAction.sourceCardId];
     const handResult = pendingAction.effect.destination === "deck" ? null : applyCurrentHandLimit([cardId]);
+    const destinationZone = pendingAction.effect.destination === "deck" ? "deck" : "hand";
+    const animateTutorialRecovery = Boolean(
+      embeddedLesson?.id === "first-attack"
+      && tutorialCurrentCheckpoint?.id === "v2-recover-sea-urchin"
+      && expectedTutorialTarget === cardId
+      && destinationZone === "hand"
+      && handResult?.cardsToHand.length,
+    );
     setDiscardPile((current) => handResult?.cardsToDiscard.length ? [cardId, ...removeOneCard(current, cardId)] : removeOneCard(current, cardId));
     const recoveredDeckType = getPersonalDeckType(cardsById[cardId]);
     if (pendingAction.effect.destination === "deck" && recoveredDeckType === "foundation") setFoundationDeck(shuffle([...foundationDeck, cardId], nextGameplayRandom));
@@ -14118,7 +14135,6 @@ export default function Simulator({
     else if (handResult.cardsToHand.length) setHand((current) => [...current, cardId]);
     setRp((current) => Math.max(0, current - cost), getPendingCreatureActionRpSpendPresentation(pendingAction, cost));
     if (actionIsOncePerTurn(pendingAction.action)) setUsedCreatureActions((current) => [...current, pendingAction.actionKey]);
-    const destinationZone = pendingAction.effect.destination === "deck" ? "deck" : "hand";
     const destination = destinationZone === "deck" ? `your ${recoveredDeckType === "foundation" ? "Foundation" : "Pals"} deck` : "your hand";
     const message = `${sourceCard.name} moved ${cardsById[cardId]?.name ?? cardId} from your discard pile to ${destination} for ${cost} RP.`;
     pushLog(message);
@@ -14134,7 +14150,25 @@ export default function Simulator({
       accepted: true,
     }, { phase: "main" });
     setPendingCreatureAction(null);
-    setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${pendingAction.actionName ?? getActionName(pendingAction.action)}`, message, success: true });
+    if (animateTutorialRecovery) {
+      const recoveryFlightStarted = startMobileDrawFlights(
+        [{ cardId, source: "discard", discarded: false }],
+        hand.length,
+        {
+          kind: "discard-recovery",
+          sourceZone: "discard",
+          sourceElement,
+          focusOnComplete: false,
+          announcement: `${cardsById[cardId]?.name ?? cardId} returned from your discard pile to your hand.`,
+        },
+      );
+      if (!recoveryFlightStarted) {
+        setMobileDrawAnnouncement(`${cardsById[cardId]?.name ?? cardId} returned from your discard pile to your hand.`);
+      }
+      setEventOverlay(null);
+    } else {
+      setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${pendingAction.actionName ?? getActionName(pendingAction.action)}`, message, success: true });
+    }
   }
 
   function completeCreatureActionSearch(cardId) {
@@ -28661,7 +28695,7 @@ export default function Simulator({
                     }).map((cardId) => {
                       const card = cardsById[cardId];
                       const tutorialTarget = embeddedLesson?.abilityRecoveryTargets?.[tutorialCurrentCheckpoint?.id] === cardId;
-                      return <button key={cardId} type="button" onClick={() => completeCreatureRecovery(cardId)} data-tutorial-search-card-id={tutorialTarget ? cardId : undefined} data-tutorial-target={tutorialTarget ? "search-card" : undefined} className={`flex w-full items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/20${tutorialTarget ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span className="font-black">{card?.name}</span></button>;
+                      return <button key={cardId} type="button" onClick={(event) => completeCreatureRecovery(cardId, event.currentTarget.querySelector("img") ?? event.currentTarget)} data-tutorial-search-card-id={tutorialTarget ? cardId : undefined} data-tutorial-target={tutorialTarget ? "search-card" : undefined} className={`flex w-full items-center gap-3 rounded-2xl border border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/20${tutorialTarget ? " seapals-tutorial-target" : ""}`}><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span className="font-black">{card?.name}</span></button>;
                     })}
                     <button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button>
                   </div>

@@ -383,12 +383,12 @@ test("Blue Crab Scavenge is gated to its authored lesson step and emits committe
 
   const beginAbility = sourceSection(
     "function beginCreatureUtilityAction(action)",
-    "function completeCreatureRecovery(cardId)",
+    "function completeCreatureRecovery(cardId, sourceElement = null)",
   );
   assert.match(beginAbility, /getEmbeddedLessonBlock\("utility", \{[\s\S]*?cardId:\s*sourceCard\.id,[\s\S]*?actionId:\s*action\.id \?\? null,[\s\S]*?actionName/);
 
   const completeRecovery = sourceSection(
-    "function completeCreatureRecovery(cardId)",
+    "function completeCreatureRecovery(cardId, sourceElement = null)",
     "function completeCreatureActionSearch(cardId)",
   );
   assert.match(completeRecovery, /abilityRecoveryTargets\?\.\[tutorialCurrentCheckpoint\?\.id\]/);
@@ -406,4 +406,37 @@ test("Blue Crab Scavenge is gated to its authored lesson step and emits committe
   assert.match(completeRecovery, /destinationZone,/);
   assert.match(completeRecovery, /accepted:\s*true/);
   assert.match(completeRecovery, /\}, \{ phase: "main" \}\)/);
+});
+
+test("Lesson 2 Scavenge flies the recovered card from discard without opening the utility result", () => {
+  const completeRecovery = sourceSection(
+    "function completeCreatureRecovery(cardId, sourceElement = null)",
+    "function completeCreatureActionSearch(cardId)",
+  );
+
+  assert.match(
+    completeRecovery,
+    /const animateTutorialRecovery = Boolean\([\s\S]*?embeddedLesson\?\.id === "first-attack"[\s\S]*?tutorialCurrentCheckpoint\?\.id === "v2-recover-sea-urchin"[\s\S]*?expectedTutorialTarget === cardId[\s\S]*?destinationZone === "hand"[\s\S]*?handResult\?\.cardsToHand\.length[\s\S]*?\);/,
+    "the presentation override must remain scoped to the authored successful hand recovery",
+  );
+  assert.match(
+    completeRecovery,
+    /if \(animateTutorialRecovery\) \{[\s\S]*?startMobileDrawFlights\([\s\S]*?\[\{ cardId, source: "discard", discarded: false \}\][\s\S]*?kind: "discard-recovery"[\s\S]*?sourceZone: "discard"[\s\S]*?sourceElement,[\s\S]*?focusOnComplete: false[\s\S]*?setEventOverlay\(null\);[\s\S]*?\} else \{[\s\S]*?setEventOverlay\(\{ type: "utility-result"/,
+    "the tutorial recovery should use the discard flight while an ordinary recovery keeps its result overlay",
+  );
+  assert.match(
+    simulatorSource,
+    /onClick=\{\(event\) => completeCreatureRecovery\(cardId, event\.currentTarget\.querySelector\("img"\) \?\? event\.currentTarget\)\}/,
+    "the visible recovery choice supplies initial geometry before its overlay closes",
+  );
+  assert.match(
+    completeRecovery,
+    /if \(!recoveryFlightStarted\) \{[\s\S]*?setMobileDrawAnnouncement\(/,
+    "the recovered-card announcement must survive when compact flight geometry is unavailable",
+  );
+  assert.equal(
+    (completeRecovery.match(/type: "utility-result"/g) ?? []).length,
+    1,
+    "the utility result belongs only to the ordinary recovery branch",
+  );
 });

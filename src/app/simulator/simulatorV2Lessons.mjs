@@ -250,7 +250,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     id: "first-attack", moduleId: "battle-basics", number: 2,
     title: "Put abilities to work", duration: "9 min", goalLabel: "Use four abilities and reach 7 VP",
     summary: "Attack and defend, trigger a passive, recover a card with an action, and unleash an On Play attack.",
-    introduction: "In this lesson, you’ll learn how four kinds of abilities shape a turn. We’ll defend, attack, use a passive, and prepare a Predator’s On Play attack. Let’s make every card count!",
+    introduction: "In this lesson, you’ll learn how abilities shape the food chain: defend an attack, watch a Passive work, choose an Action, and trigger an On Play surprise. Let’s dive in!",
     completion: "You resolved both sides of a faceoff, saw a passive work automatically, recovered a card with a non-attack action, and triggered a Predator's On Play attack.",
     celebration: "Every ability had a job to do!",
     skills: ["Attack actions", "Offense and defense", "Passive abilities", "Recovery actions", "On Play abilities"],
@@ -294,7 +294,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       },
     }),
     checkpoints: [
-      checkpoint("v2-pass-to-counterattack", ACTION.TURN_ENDED, "Let the rival answer", "End your turn; the opponent will play Spanish Hogfish and attack Sea Urchin."),
+      checkpoint("v2-pass-to-counterattack", ACTION.TURN_ENDED, "Explore the food chain", "End your turn; the opponent will play Spanish Hogfish and attack Sea Urchin."),
       checkpoint("v2-defend-attack", ACTION.ATTACK_RESOLVED, "Defend the counterattack", "Watch Spanish Hogfish attack your Sea Urchin and compare its roll with Sea Urchin's defense.", [
         truthy("details.accepted"),
         equals("details.attackerCardId", "spanish-hogfish"),
@@ -808,7 +808,7 @@ function placementCopy(cardId) {
       action: "Choose the glowing Apex slot on Brain Coral.",
     };
   }
-  const slot = cardId === "sea-urchin"
+  const slot = ["sea-urchin", "blue-crab"].includes(cardId)
     ? "Invertebrate"
     : cardId === "great-barracuda"
       ? "Predator"
@@ -839,7 +839,7 @@ function dragActionCopy(cardId, candidates, selected, current) {
   if (cardId === "hammerhead") {
     return "Drag Hammerhead from your hand into the highlighted Apex slot.";
   }
-  const slot = cardId === "sea-urchin"
+  const slot = ["sea-urchin", "blue-crab"].includes(cardId)
     ? "Invertebrate"
     : cardId === "great-barracuda"
       ? "Predator"
@@ -1038,7 +1038,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       : "player-board";
     return help(
       target,
-      "Scavenge is an Action rather than an attack. Pay 2 RP to recover the defeated Sea Urchin from your discard pile, setting up your next round.",
+      "Not every ability is an attack! An Action waits for your command during your turn. You decide when to use it and pay any RP cost shown beside it. Blue Crab’s Scavenge costs 2 RP to recover the defeated Sea Urchin from your discard pile and set up your next round. Let’s bring it home!",
       target === "utility-action-button"
         ? "Use Scavenge, then choose Sea Urchin."
         : "Select Blue Crab, then use Scavenge.",
@@ -1076,7 +1076,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (selected.id === "first-attack" && current.id === "v2-predator-attack") {
       return help(
         "opponent-board",
-        "Quick Strike triggers as Great Barracuda enters play. Each attack tells you which die to roll: its Bite uses a D6 (1–6), while Porcupine Fish's Crunch used a D4 (1–4).",
+        "Quick Strike has triggered! Unlike an Action, this On Play ability began automatically when Great Barracuda entered your ecosystem. Its Bite uses a D6, giving it a wider possible roll than Porcupine Fish’s D4 Crunch.",
         "Choose the glowing Spanish Hogfish and resolve the D6 faceoff.",
         { targetCardId: "great-barracuda" },
       );
@@ -1129,7 +1129,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (cardId === "porcupine-fish" && selected.id === "first-attack") {
       message = "Place Porcupine Fish in Brain Coral's Fish slot. Its Crunch action uses a D4 attack die against an opposing Invertebrate's defense die.";
     } else if (cardId === "blue-crab" && selected.id === "first-attack") {
-      message = "Blue Crab's Eco Boost is a Passive ability: it works automatically while Blue Crab is in play, raising your maximum RP bank by 1.";
+      message = "Some abilities help without waiting for a command. Blue Crab’s Eco Boost is a Passive ability, so it works automatically while Blue Crab remains in your ecosystem and raises your maximum RP bank by 1.";
     } else if (cardId === "sea-urchin" && selected.id === "first-attack") {
       message = "Scavenge recovered Sea Urchin instead of attacking. Return it to Brain Coral now, and its Spines passive will again add 20 HP to that Coral.";
     } else if (cardId === "brain-coral-stage-1") {
@@ -1148,7 +1148,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       message = "Hammerhead costs 6 RP, needs Coral Reef, and must occupy an Apex slot. Stage 2 Brain Coral supplies that slot.";
     } else if (cardId === "great-barracuda") {
       message = selected.id === "first-attack"
-        ? "Great Barracuda fits the Predator slot you opened last lesson. Quick Strike is an On Play ability, so its D6 Bite begins as soon as the card enters your ecosystem; Porcupine Fish's regular Crunch used a D4."
+        ? "Now for a different kind of ability! An On Play ability triggers as soon as its card enters your ecosystem. There’s no separate Action button or additional RP cost for Great Barracuda’s Quick Strike—its D6 Bite begins the moment you place it."
         : "Each attack tells you which die to roll. Porcupine Fish's Crunch uses a D4 (1–4); Great Barracuda's Bite uses a D6 (1–6), giving it a wider possible range.";
     }
     return help(
@@ -1182,7 +1182,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       ? "Your two Corals are ready for a test. End the turn to reveal Coral Disease and compare which Coral can still generate RP."
       : selected.id === "first-attack"
         ? current.id === "v2-pass-to-counterattack"
-          ? "This lesson continues with the ecosystem you just built. End your turn; I’ll play Spanish Hogfish and attack Sea Urchin so you can see what happens when defense is broken."
+          ? "In the ocean, there is a very important food chain that keeps ecosystems in balance. We will explore how creatures eat in this lesson. To start, your opponent will play a Spanish Hogfish, which can eat Invertebrates. It’s got its eye on your Sea Urchin—prepare to defend!"
           : "Sea Urchin is back in your hand. End the turn and carry that non-attack action's setup into the next round."
       : "You can save your remaining RP for a later turn.";
     return help("turn-button", message, "End your turn when you are ready.");

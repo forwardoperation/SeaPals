@@ -91,6 +91,33 @@ export function buildSimulatorV2CombatResultTeachingSteps({
   const attackTotal = finiteNumber(attack.total);
   const defenseTotal = finiteNumber(defense.total);
 
+  const seaUrchinWasConsumed = attack.cardId === "spanish-hogfish"
+    && defense.cardId === "sea-urchin"
+    && attackTotal != null
+    && defenseTotal != null
+    && attackTotal > defenseTotal;
+  if (seaUrchinWasConsumed) {
+    const opponentRoll = attackRoll?.value ?? attackTotal;
+    const playerRoll = defenseRoll?.value ?? defenseTotal;
+    return [
+      {
+        id: "attack",
+        focus: "attack",
+        message: "Oh no! Your Sea Urchin was consumed! No need to fret—we’ll teach you how to recover discarded cards soon. But first, let’s break down what happened.",
+      },
+      {
+        id: "defense",
+        focus: "defense",
+        message: `Your opponent rolled a ${opponentRoll} with Spanish Hogfish’s Crunch. Your Sea Urchin rolled a ${playerRoll} for defense.`,
+      },
+      {
+        id: "outcome",
+        focus: "outcome",
+        message: `Your opponent’s ${attackTotal} is higher than your ${defenseTotal}, so Sea Urchin was consumed and moved to your discard pile. Remember, ties go to the defender.`,
+      },
+    ];
+  }
+
   const attackMessage = attackRoll?.value != null
     ? `${attackAction} rolled ${attackRoll.value}${attackRoll.die ? ` on a ${attackRoll.die}${dieDescription(attackRoll)}` : ""}.`
     : `${resolvedAttackName}'s final attack total is ${attackTotal ?? "shown below"}.`;
