@@ -151,6 +151,7 @@ function deepFreeze(value) {
 function lesson(definition) {
   return deepFreeze({
     buildCards: {},
+    placementTargets: {},
     supportCards: {},
     introducedConcepts: [],
     ...definition,
@@ -349,6 +350,21 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       "v2-place-passive": ["blue-crab"],
       "v2-replay-sea-urchin": ["sea-urchin"],
       "v2-place-predator": ["great-barracuda"],
+    },
+    placementTargets: {
+      "v2-place-attacker": {
+        cardId: "porcupine-fish",
+        foundationCardId: "brain-coral-stage-1",
+        slotClass: "fish",
+        slotOrdinal: 0,
+        blockMessage: "Place Porcupine Fish in Brain Coral's highlighted Fish slot. Keep the Predator slot open for Great Barracuda later.",
+      },
+      "v2-place-predator": {
+        cardId: "great-barracuda",
+        foundationCardId: "brain-coral-stage-1",
+        slotClass: "predator",
+        slotOrdinal: 0,
+      },
     },
   }),
   lesson({
@@ -551,6 +567,82 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
 export function getSimulatorV2Lesson(value) {
   const id = typeof value === "string" ? value : value?.id;
   return SIMULATOR_V2_LESSONS.find((entry) => entry.id === id) ?? null;
+}
+
+export function getSimulatorV2LessonPlacementTarget(value, checkpoint = null, cardId = null) {
+  const selected = getSimulatorV2Lesson(value);
+  const checkpointId = typeof checkpoint === "string" ? checkpoint : checkpoint?.id;
+  const target = checkpointId ? selected?.placementTargets?.[checkpointId] ?? null : null;
+  if (!target || (cardId && target.cardId !== cardId)) return null;
+  return target;
+}
+
+/**
+ * Older in-progress Lesson 2 sessions may already have Porcupine Fish in the
+ * Predator slot. Repair that one authored deadlock without restarting the
+ * lesson or changing the normal rule that lets Fish use Predator slots.
+ */
+export function repairSimulatorV2LessonPlacementConflict({
+  lesson: value,
+  checkpoint = null,
+  foundations = [],
+} = {}) {
+  const selected = getSimulatorV2Lesson(value);
+  const checkpointId = typeof checkpoint === "string" ? checkpoint : checkpoint?.id;
+  if (selected?.id !== "first-attack" || checkpointId !== "v2-place-predator") return foundations;
+
+  const foundationIndex = foundations.findIndex(({ cardId }) => cardId === "brain-coral-stage-1");
+  if (foundationIndex < 0) return foundations;
+  const foundation = foundations[foundationIndex];
+  const sourceIndex = foundation.slots.findIndex((slot) => (
+    (slot.slotClass ?? slot.slotType ?? slot.class) === "predator"
+    && slot.cardId === "porcupine-fish"
+  ));
+  const destinationIndex = foundation.slots.findIndex((slot) => (
+    (slot.slotClass ?? slot.slotType ?? slot.class) === "fish"
+    && !slot.cardId
+  ));
+  if (sourceIndex < 0 || destinationIndex < 0) return foundations;
+
+  const source = foundation.slots[sourceIndex];
+  const destination = foundation.slots[destinationIndex];
+  const {
+    cardId,
+    cardInstanceId,
+    hostedCardIds,
+    hostedSchoolDensityRequirements,
+    controller,
+    invasiveOwner,
+    territorialTargetFoundationId,
+    ...sourceLayout
+  } = source;
+  const clearedSource = {
+    ...sourceLayout,
+    cardId: null,
+    cardInstanceId: null,
+    hostedCardIds: [],
+    hostedSchoolDensityRequirements: [],
+  };
+  const filledDestination = {
+    ...destination,
+    cardId,
+    cardInstanceId: cardInstanceId ?? null,
+    hostedCardIds: [...(hostedCardIds ?? [])],
+    hostedSchoolDensityRequirements: [...(hostedSchoolDensityRequirements ?? [])],
+    ...(Object.prototype.hasOwnProperty.call(source, "controller") ? { controller } : {}),
+    ...(Object.prototype.hasOwnProperty.call(source, "invasiveOwner") ? { invasiveOwner } : {}),
+    ...(Object.prototype.hasOwnProperty.call(source, "territorialTargetFoundationId")
+      ? { territorialTargetFoundationId }
+      : {}),
+  };
+  const slots = foundation.slots.map((slot, index) => (
+    index === sourceIndex
+      ? clearedSource
+      : index === destinationIndex
+        ? filledDestination
+        : slot
+  ));
+  return foundations.map((entry, index) => index === foundationIndex ? { ...entry, slots } : entry);
 }
 
 export function simulatorV2LessonIntroduces(value, concept) {
@@ -1112,6 +1204,9 @@ export function getSimulatorV2LessonActionBlock({
   actionName,
   deckType,
   gamePhase,
+  foundationCardId,
+  slotClass,
+  slotOrdinal,
   layoutLessonProgress,
 } = {}) {
   const selected = getSimulatorV2Lesson(value);
@@ -1122,6 +1217,19 @@ export function getSimulatorV2LessonActionBlock({
     if (current.actionType === ACTION.CARD_BUILT && selected.buildCards?.[current.id]?.includes(cardId)) return "";
     if (current.actionType === ACTION.SUPPORT_PLAYED && selected.supportCards?.[current.id]?.includes(cardId)) return "";
     return "Complete the highlighted step before playing another card.";
+  }
+  if (action === "place-card") {
+    const target = getSimulatorV2LessonPlacementTarget(selected, current, cardId);
+    if (!target) return "";
+    const matches = (
+      (!target.foundationCardId || target.foundationCardId === foundationCardId)
+      && (!target.slotClass || target.slotClass === slotClass)
+      && (!Number.isInteger(target.slotOrdinal) || target.slotOrdinal === slotOrdinal)
+    );
+    if (matches) return "";
+    if (target.blockMessage) return target.blockMessage;
+    const targetSlotName = String(target.slotClass ?? "prepared").replace(/-/g, " ");
+    return `Place ${name(target.cardId)} in ${name(target.foundationCardId)}'s highlighted ${targetSlotName} slot.`;
   }
   if (action === "draw") {
     const expected = getSimulatorV2ExpectedDraw(selected, current);

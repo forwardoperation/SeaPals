@@ -312,6 +312,29 @@ test("embedded lesson wiring follows the live checkpoint for layout, draws, and 
   );
 });
 
+test("embedded lesson slot targets gate click, drag, highlighting, and repair stale placements", () => {
+  const slotGate = extractFunction("getEmbeddedLessonPlacementBlock", "createConsumedAttackFlightPlan");
+  assert.match(slotGate, /getEmbeddedLessonBlock\("place-card"/);
+  assert.match(slotGate, /foundationCardId:\s*coral\.cardId/);
+  assert.match(slotGate, /slotClass/);
+  assert.match(slotGate, /slotOrdinal/);
+
+  const placementCommit = extractFunction("placeCardToSlot", "placeCoralInEcosystem");
+  const blockIndex = placementCommit.indexOf("getEmbeddedLessonPlacementBlock(slot, cardId)");
+  assert.ok(blockIndex >= 0, "the authoritative placement handler checks the V2 target");
+  assert.ok(blockIndex < placementCommit.indexOf("getPlayError(card)"));
+  assert.ok(blockIndex < placementCommit.indexOf("setPlayerCorals(nextPlayerCorals)"));
+
+  const mobileDrop = extractFunction("resolveMobileHandDrop", "handleMobileHandDragStart");
+  assert.ok(
+    [...mobileDrop.matchAll(/getEmbeddedLessonPlacementBlock\(/g)].length >= 2,
+    "direct and nearby mobile drops use the same V2 placement target",
+  );
+  assert.match(simulatorSource, /const embeddedLessonPlacementAllowed = !activePlacementCardId[\s\S]*?getEmbeddedLessonPlacementBlock\(slot, activePlacementCardId\)[\s\S]*?const validTarget = Boolean\([\s\S]*?embeddedLessonPlacementAllowed/);
+  assert.match(simulatorSource, /embeddedLessonDragCardIds\.filter[\s\S]*?!getEmbeddedLessonPlacementBlock\(slot, cardId\)[\s\S]*?data-v2-lesson-drop-cards/);
+  assert.match(simulatorSource, /useLayoutEffect\(\(\) => \{[\s\S]*?repairSimulatorV2LessonPlacementConflict\([\s\S]*?foundations:\s*current/);
+});
+
 test("each embedded lesson chooses observation or a real opponent turn from its own seed", () => {
   const endTurn = sourceSection(
     "function endTurn()",

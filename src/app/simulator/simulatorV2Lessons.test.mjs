@@ -15,8 +15,10 @@ import {
   getSimulatorV2ExpectedDraw,
   getSimulatorV2LessonHelp,
   getSimulatorV2LessonActionBlock,
+  getSimulatorV2LessonPlacementTarget,
   getSimulatorV2PreviouslyTaughtConcepts,
   parseSimulatorV2LessonProgress,
+  repairSimulatorV2LessonPlacementConflict,
   recordSimulatorV2LessonCompletion,
   simulatorV2LessonIntroduces,
 } from "./simulatorV2Lessons.mjs";
@@ -953,6 +955,28 @@ test("sequencing gates block spending or passing out of order while leaving actu
   assert.equal(block(attackLesson, abilityDraw, "draw", { deckType: "pals" }), "");
   assert.ok(block(attackLesson, abilityDraw, "draw", { deckType: "foundation" }));
   assert.equal(block(attackLesson, lessonStep(attackLesson, "v2-place-attacker"), "play-card", { cardId: "porcupine-fish", gamePhase: "main" }), "");
+  const attackerPlacement = lessonStep(attackLesson, "v2-place-attacker");
+  assert.deepEqual(getSimulatorV2LessonPlacementTarget(attackLesson, attackerPlacement, "porcupine-fish"), {
+    cardId: "porcupine-fish",
+    foundationCardId: "brain-coral-stage-1",
+    slotClass: "fish",
+    slotOrdinal: 0,
+    blockMessage: "Place Porcupine Fish in Brain Coral's highlighted Fish slot. Keep the Predator slot open for Great Barracuda later.",
+  });
+  assert.equal(block(attackLesson, attackerPlacement, "place-card", {
+    cardId: "porcupine-fish",
+    foundationCardId: "brain-coral-stage-1",
+    slotClass: "fish",
+    slotOrdinal: 0,
+  }), "");
+  assert.match(block(attackLesson, attackerPlacement, "place-card", {
+    cardId: "porcupine-fish",
+    foundationCardId: "brain-coral-stage-1",
+    slotClass: "predator",
+    slotOrdinal: 0,
+  }), /Fish slot.*Predator slot.*Great Barracuda/i);
+  const brainPredatorSlot = cardsById["brain-coral-stage-1"].slots.find((slot) => slot.slotClass === "predator");
+  assert.equal(canCardOccupySlot(cardsById["porcupine-fish"], brainPredatorSlot), true, "ordinary matches still allow Fish in Predator slots");
   assert.equal(block(attackLesson, lessonStep(attackLesson, "v2-place-passive"), "play-card", { cardId: "blue-crab", gamePhase: "main" }), "");
   const playerAttack = lessonStep(attackLesson, "tutorial-attack");
   assert.equal(block(attackLesson, playerAttack, "attack", { cardId: "porcupine-fish", gamePhase: "main" }), "");
@@ -965,6 +989,12 @@ test("sequencing gates block spending or passing out of order while leaving actu
   assert.ok(block(attackLesson, predatorDraw, "draw", { deckType: "foundation" }));
   assert.equal(block(attackLesson, lessonStep(attackLesson, "v2-replay-sea-urchin"), "play-card", { cardId: "sea-urchin", gamePhase: "main" }), "");
   assert.equal(block(attackLesson, lessonStep(attackLesson, "v2-place-predator"), "play-card", { cardId: "great-barracuda", gamePhase: "main" }), "");
+  assert.equal(block(attackLesson, lessonStep(attackLesson, "v2-place-predator"), "place-card", {
+    cardId: "great-barracuda",
+    foundationCardId: "brain-coral-stage-1",
+    slotClass: "predator",
+    slotOrdinal: 0,
+  }), "");
   const predatorAttack = lessonStep(attackLesson, "v2-predator-attack");
   assert.equal(block(attackLesson, predatorAttack, "attack", { cardId: "great-barracuda", gamePhase: "main" }), "");
   assert.ok(block(attackLesson, predatorAttack, "attack", { cardId: "porcupine-fish", gamePhase: "main" }));
@@ -973,6 +1003,79 @@ test("sequencing gates block spending or passing out of order while leaving actu
   assert.ok(block(final, final.contract.checkpoints[1], "draw", { deckType: "foundation" }));
   assert.equal(block(final, final.contract.checkpoints[1], "draw", { deckType: "pals" }), "");
   assert.equal(block(null, null, "play-card", { cardId: "anything" }), "", "regular matches are unaffected");
+});
+
+test("Lesson 2 repairs a Porcupine Fish that already occupies Great Barracuda's slot", () => {
+  const fishSlot = {
+    id: "brain-fish",
+    slotClass: "fish",
+    cardId: null,
+    cardInstanceId: null,
+    hostedCardIds: [],
+    position: { left: "20%", top: "30%" },
+  };
+  const predatorSlot = {
+    id: "brain-predator",
+    slotClass: "predator",
+    cardId: "porcupine-fish",
+    cardInstanceId: "porcupine-instance",
+    hostedCardIds: ["hosted-test-card"],
+    hostedSchoolDensityRequirements: [3],
+    controller: "player",
+    position: { left: "70%", top: "40%" },
+  };
+  const otherFoundation = { id: "mustard", cardId: "mustard-hill-coral-base", slots: [] };
+  const broken = [{
+    id: "brain",
+    cardId: "brain-coral-stage-1",
+    slots: [fishSlot, predatorSlot],
+  }, otherFoundation];
+  const lesson = getSimulatorV2Lesson("first-attack");
+  const checkpoint = lesson.contract.checkpoints.find(({ id }) => id === "v2-place-predator");
+
+  const repaired = repairSimulatorV2LessonPlacementConflict({ lesson, checkpoint, foundations: broken });
+  assert.notEqual(repaired, broken);
+  assert.equal(repaired[1], otherFoundation, "unrelated foundations keep their identity");
+  assert.deepEqual(repaired[0].slots[0], {
+    ...fishSlot,
+    cardId: "porcupine-fish",
+    cardInstanceId: "porcupine-instance",
+    hostedCardIds: ["hosted-test-card"],
+    hostedSchoolDensityRequirements: [3],
+    controller: "player",
+  });
+  assert.deepEqual(repaired[0].slots[1], {
+    id: "brain-predator",
+    slotClass: "predator",
+    cardId: null,
+    cardInstanceId: null,
+    hostedCardIds: [],
+    hostedSchoolDensityRequirements: [],
+    position: { left: "70%", top: "40%" },
+  });
+  assert.equal(
+    repairSimulatorV2LessonPlacementConflict({ lesson, checkpoint, foundations: repaired }),
+    repaired,
+    "repair is idempotent",
+  );
+  assert.equal(
+    repairSimulatorV2LessonPlacementConflict({
+      lesson,
+      checkpoint: lesson.contract.checkpoints.find(({ id }) => id === "v2-replay-sea-urchin"),
+      foundations: broken,
+    }),
+    broken,
+    "other checkpoints are untouched",
+  );
+  const noOpenFishSlot = [{
+    ...broken[0],
+    slots: [{ ...fishSlot, cardId: "clownfish" }, predatorSlot],
+  }];
+  assert.equal(
+    repairSimulatorV2LessonPlacementConflict({ lesson, checkpoint, foundations: noOpenFishSlot }),
+    noOpenFishSlot,
+    "repair never displaces a legitimate Fish-slot occupant",
+  );
 });
 
 test("live coaching follows hand, placement, draw confirmation, result and active attack controls", () => {

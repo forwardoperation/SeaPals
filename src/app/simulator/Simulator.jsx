@@ -20,6 +20,7 @@ import {
   getSimulatorV2LessonHelp,
   getSimulatorV2LessonActionBlock,
   getSimulatorV2ExpectedDraw,
+  repairSimulatorV2LessonPlacementConflict,
 } from "./simulatorV2Lessons.mjs";
 import { AttackIntentLayer, AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
 import CardCoinBoardPresentation from "./CardCoinBoardPresentation";
@@ -5918,6 +5919,14 @@ export default function Simulator({
   const tutorialCurrentCheckpoint = tutorialContract && tutorialProgress
     ? getSimulatorTutorialCurrentCheckpoint(tutorialContract, tutorialProgress)
     : null;
+  useLayoutEffect(() => {
+    if (!embeddedLesson || !tutorialCurrentCheckpoint) return;
+    setPlayerCorals((current) => repairSimulatorV2LessonPlacementConflict({
+      lesson: embeddedLesson,
+      checkpoint: tutorialCurrentCheckpoint,
+      foundations: current,
+    }));
+  }, [embeddedLesson?.id, tutorialCurrentCheckpoint?.id, playerLayoutSignature]);
   const tutorialStepNumber = tutorialProgress ? tutorialProgress.completedCheckpointIds.length + 1 : 0;
   const embeddedLessonVictoryGateOpen = Boolean(
     !embeddedLesson
@@ -8748,6 +8757,25 @@ export default function Simulator({
     return playerCorals.find((coral) => coral.slots.some((slot) => slot.id === slotId));
   }
 
+  function getEmbeddedLessonPlacementBlock(slot, cardId) {
+    if (!slot) return "";
+    const coral = findCoralBySlotId(slot.id);
+    if (!coral) return "";
+    const slotClass = slot.slotClass ?? slot.slotType ?? slot.class;
+    const slotIndex = coral.slots.findIndex((candidate) => candidate.id === slot.id);
+    const slotOrdinal = slotIndex < 0
+      ? null
+      : coral.slots.slice(0, slotIndex + 1).filter((candidate) => (
+          (candidate.slotClass ?? candidate.slotType ?? candidate.class) === slotClass
+        )).length - 1;
+    return getEmbeddedLessonBlock("place-card", {
+      cardId,
+      foundationCardId: coral.cardId,
+      slotClass,
+      slotOrdinal,
+    });
+  }
+
   function createConsumedAttackFlightPlan({
     cardId,
     targetInstanceId,
@@ -10148,16 +10176,18 @@ export default function Simulator({
     if (!coral) return;
     const slot = coral.slots.find((s) => s.id === slotId);
     if (!slot) return;
+    const embeddedLessonPlacementBlock = getEmbeddedLessonPlacementBlock(slot, cardId);
     const academyPlacementBlock = getAcademyPlacementBlock({
       route: scriptedFinishRoute,
       cardId,
       foundationCardId: coral.cardId,
       slotClass: slot.slotClass ?? slot.slotType ?? slot.class,
     });
-    if (academyPlacementBlock) {
+    const placementBlock = embeddedLessonPlacementBlock || academyPlacementBlock;
+    if (placementBlock) {
       setTutorialHelpDismissedId(null);
-      setPlayError(academyPlacementBlock);
-      pushLog(academyPlacementBlock);
+      setPlayError(placementBlock);
+      pushLog(placementBlock);
       return;
     }
     const error = getPlayError(card);
@@ -10494,6 +10524,7 @@ export default function Simulator({
               const candidateSlot = candidateCoral?.slots.find(({ id }) => id === candidateSlotId) ?? null;
               return Boolean(
                 candidateSlot
+                && !getEmbeddedLessonPlacementBlock(candidateSlot, cardId)
                 && isAcademyPlacementAllowed({
                   route: scriptedFinishRoute,
                   cardId,
@@ -10564,6 +10595,9 @@ export default function Simulator({
       const slotId = slotElement?.dataset.handDropSlotId ?? null;
       const coral = slotId ? findCoralBySlotId(slotId) : null;
       const slot = coral?.slots.find((candidate) => candidate.id === slotId) ?? null;
+      const embeddedLessonPlacementAllowed = Boolean(
+        slot && !getEmbeddedLessonPlacementBlock(slot, cardId)
+      );
       const academyPlacementAllowed = Boolean(slot && isAcademyPlacementAllowed({
         route: scriptedFinishRoute,
         cardId,
@@ -10573,6 +10607,7 @@ export default function Simulator({
       const valid = Boolean(
         ecosystemSurfaceAvailable
         && slot
+        && embeddedLessonPlacementAllowed
         && academyPlacementAllowed
         && (canUseSlotWithCard(slot, cardId) || canHostCardInSlot(slot, cardId))
       );
@@ -26572,6 +26607,8 @@ export default function Simulator({
                                 const invaderAttackTarget = attackContext?.targets.find((target) => target.coralId === "__own_invader__" && target.hostCoralId === coral.id && target.slotId === slot.id);
                                 const isInvaderTarget = Boolean(invaderAttackTarget) && boardTargetingPresentationActive;
                                 const validHostTarget = Boolean(slotFilled && activePlacementCardId && canHostCardInSlot(slot, activePlacementCardId));
+                                const embeddedLessonPlacementAllowed = !activePlacementCardId
+                                  || !getEmbeddedLessonPlacementBlock(slot, activePlacementCardId);
                                 const academyPlacementAllowed = !activePlacementCardId || isAcademyPlacementAllowed({
                                   route: scriptedFinishRoute,
                                   cardId: activePlacementCardId,
@@ -26580,6 +26617,7 @@ export default function Simulator({
                                 });
                                 const validTarget = Boolean(
                                   activePlacementCardId
+                                  && embeddedLessonPlacementAllowed
                                   && academyPlacementAllowed
                                   && (canUseSlotWithCard(slot, activePlacementCardId) || validHostTarget)
                                 );
@@ -26590,6 +26628,7 @@ export default function Simulator({
                                     && candidate.zone !== CreatureZone.OCEAN
                                     && !isFoundationCard(candidate)
                                     && !cardUsesOpponentReef(candidate)
+                                    && !getEmbeddedLessonPlacementBlock(slot, cardId)
                                     && isAcademyPlacementAllowed({
                                       route: scriptedFinishRoute,
                                       cardId,
