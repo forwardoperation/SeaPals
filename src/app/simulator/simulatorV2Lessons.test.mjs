@@ -1128,6 +1128,102 @@ test("Lesson 2 introduces its food-chain scene and distinguishes Action from On 
   );
 });
 
+test("Lesson 1 speaks the new-player mental model before asking for each action", () => {
+  const lesson = getSimulatorV2Lesson("first-reef");
+  const step = (id) => lesson.contract.checkpoints.find((checkpoint) => checkpoint.id === id);
+  const setup = step("tutorial-setup");
+  const initial = getSimulatorV2LessonHelp(lesson, setup, {
+    gamePhase: "setup",
+    hasCoralInPlay: false,
+  });
+  assert.match(initial.action, /ecosystem.*Corals are Foundations.*Resource Points \(RP\).*creature slots.*Base Coral.*costs 1 RP.*new Foundation branch.*highlighted open water/is);
+  assert.equal(initial.pointerPrompt, "Drag Brain Coral into the highlighted open water.");
+
+  const selectedInitial = getSimulatorV2LessonHelp(lesson, setup, {
+    gamePhase: "setup",
+    hasCoralInPlay: false,
+    selectedHandCard: "brain-coral-base",
+    handPopoverOpen: true,
+  });
+  const placingInitial = getSimulatorV2LessonHelp(lesson, setup, {
+    gamePhase: "setup",
+    playingCardId: "brain-coral-base",
+  });
+  assert.equal(selectedInitial.action, initial.action, "selection should not replace the teaching with generic copy");
+  assert.equal(placingInitial.action, initial.action, "placement should preserve the same spoken explanation");
+  assert.equal(selectedInitial.cueId, initial.cueId, "the dialogue should not restart when the pointer changes target");
+  assert.equal(placingInitial.cueId, initial.cueId);
+
+  const moveFoundation = getSimulatorV2LessonHelp(lesson, setup, {
+    gamePhase: "setup",
+    hasCoralInPlay: true,
+  });
+  assert.match(moveFoundation.action, /connected circles.*creature slots.*only organizes.*Press and hold Brain Coral.*MOVE HERE.*release/is);
+  const moveSlot = getSimulatorV2LessonHelp(lesson, setup, {
+    gamePhase: "setup",
+    hasCoralInPlay: true,
+    layoutLessonProgress: { "move-foundation": true },
+  });
+  assert.match(moveSlot.action, /move a creature slot by itself.*same Coral.*Press and hold.*MOVE HERE.*release/is);
+  const beginRound = getSimulatorV2LessonHelp(lesson, setup, {
+    gamePhase: "setup",
+    hasCoralInPlay: true,
+    layoutLessonProgress: { "move-foundation": true, "move-slot": true },
+  });
+  assert.match(beginRound.action, /start of every round.*Condition.*both ecosystems.*collect RP.*draw.*Press Begin Round/is);
+
+  const seaUrchinDraw = getSimulatorV2LessonHelp(lesson, step("tutorial-draw-card"), {
+    gamePhase: "draw",
+    modal: "turn-draw",
+    drawSelected: 0,
+    drawTarget: 1,
+  });
+  assert.match(seaUrchinDraw.action, /Foundation Deck.*Corals.*upgrades.*Pals Deck.*creatures.*Habitats.*Support cards.*Sea Urchin.*Pals Deck/is);
+  const confirmSeaUrchin = getSimulatorV2LessonHelp(lesson, step("tutorial-draw-card"), {
+    gamePhase: "draw",
+    modal: "turn-draw",
+    drawSelected: 1,
+    drawTarget: 1,
+  });
+  assert.equal(confirmSeaUrchin.action, seaUrchinDraw.action);
+  assert.equal(confirmSeaUrchin.cueId, seaUrchinDraw.cueId);
+
+  const seaUrchin = getSimulatorV2LessonHelp(lesson, step("tutorial-build-card"), {
+    hand: ["sea-urchin"],
+  });
+  assert.match(seaUrchin.action, /round symbols.*inherits its Coral's habitat.*icon shows the creature class.*match both.*Fish slots accept Fish.*Predator slots accept Fish or Predators.*Predators cannot use Fish slots.*Apex slots accept Fish, Predators, or Apex creatures.*Invertebrate and Filter Feeder slots.*matching class/is);
+  assert.match(seaUrchin.action, /Sea Urchin is a Reef Invertebrate.*printed 1 VP.*stays in your ecosystem.*glowing Reef Invertebrate slot/is);
+  const placingSeaUrchin = getSimulatorV2LessonHelp(lesson, step("tutorial-build-card"), {
+    playingCardId: "sea-urchin",
+  });
+  assert.equal(placingSeaUrchin.action, seaUrchin.action);
+  assert.equal(placingSeaUrchin.cueId, seaUrchin.cueId);
+
+  const secondCoral = getSimulatorV2LessonHelp(lesson, step("v2-place-resistant-coral"), {
+    hand: ["mustard-hill-coral-base"],
+  });
+  assert.match(secondCoral.action, /Base Coral.*separate Foundation.*Stage card upgrades.*beside Brain Coral.*instead of on top.*2 RP.*no Disease weakness/is);
+  const disease = getSimulatorV2LessonHelp(lesson, step("v2-watch-coral-disease"), {});
+  assert.match(disease.action, /Weaknesses.*Condition matches.*stays in play.*produces no RP.*Brain Coral.*Mustard Hill.*End your turn/is);
+
+  const upgradeDraw = getSimulatorV2LessonHelp(lesson, step("v2-draw-first-upgrade"), {
+    gamePhase: "draw",
+    modal: "turn-draw",
+    drawSelected: 0,
+    drawTarget: 1,
+  });
+  assert.match(upgradeDraw.action, /Coral stages.*Foundation Deck.*matching next Stage.*survived a full turn/is);
+  const upgrade = getSimulatorV2LessonHelp(lesson, step("v2-upgrade-first-coral"), {
+    hand: ["brain-coral-stage-1"],
+  });
+  assert.match(upgrade.action, /matching next Stage.*existing damage.*compatible residents.*10 to 20 HP.*withstand more damage.*1 to 2 RP.*Predator slot.*second Invertebrate slot.*more creatures can live there/is);
+  const placingUpgrade = getSimulatorV2LessonHelp(lesson, step("v2-upgrade-first-coral"), {
+    playingCardId: "brain-coral-stage-1",
+  });
+  assert.equal(placingUpgrade.action, upgrade.action);
+  assert.equal(placingUpgrade.cueId, upgrade.cueId);
+});
+
 test("live coaching follows hand, placement, draw confirmation, result and active attack controls", () => {
   const first = getSimulatorV2Lesson("first-reef");
   const setup = first.contract.checkpoints[0];
@@ -1183,7 +1279,7 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
     drawTarget: 1,
   });
   assert.equal(upgradeDrawHelp.targetDeck, "foundation");
-  assert.equal(upgradeDrawHelp.action, "Choose one card from the Foundation Deck.");
+  assert.match(upgradeDrawHelp.action, /Coral stages live in the Foundation Deck.*matching next Stage.*survived a full turn.*confirm your draw/is);
   assert.match(upgradeDrawHelp.message, /Brain Coral Stage 1.*Foundation Deck/is);
   const upgradeStep = first.contract.checkpoints.find(({ id }) => id === "v2-upgrade-first-coral");
   assert.match(getSimulatorV2LessonHelp(first, upgradeStep, { hand: ["brain-coral-stage-1"] }).message, /resilience rises from 10 to 20 HP.*2 RP instead of 1.*Predator slot.*another Invertebrate slot/s);
@@ -1297,33 +1393,36 @@ test("hand play guidance teaches the real upward drag and matching drop destinat
   assert.equal(initial.target, "hand");
   assert.equal(initial.targetCardId, "brain-coral-base");
   assert.equal(initial.interaction, "drag");
-  assert.match(initial.action, /Drag Brain Coral from your hand into your ecosystem/);
+  assert.match(initial.action, /Brain Coral is a Base Coral.*Drag it from your hand into the highlighted open water/is);
   assert.match(initial.hint, /upward.*release/);
   assert.match(initial.hint, /select (?:it|the card), choose Play/);
   const inspected = getSimulatorV2LessonHelp(first, setup, { gamePhase: "setup", selectedHandCard: first.setupCardId, handPopoverOpen: true });
   assert.equal(inspected.interaction, "tap", "the gesture follows the actual Play Card control once details are open");
   assert.equal(inspected.target, "play-card", "the inspector retains the accessible Play control");
-  assert.match(inspected.action, /Choose Play Card/);
+  assert.match(inspected.action, /choose Play Card/i);
+  assert.equal(inspected.action, initial.action, "opening the card should not replace or restart the spoken lesson");
   assert.match(inspected.hint, /choose a compatible|choose open water/i);
   const clickPlacement = getSimulatorV2LessonHelp(first, setup, { gamePhase: "setup", playingCardId: first.setupCardId });
   assert.equal(clickPlacement.target, "placement");
   assert.notEqual(clickPlacement.interaction, "drag");
-  assert.match(clickPlacement.action, /Choose an open space/);
+  assert.equal(clickPlacement.action, initial.action);
+  assert.equal(clickPlacement.pointerPrompt, "Choose the highlighted open water.");
 
   const creatureStep = first.contract.checkpoints.find(({ id }) => id === "tutorial-build-card");
   const creatureInstruction = getSimulatorV2LessonHelp(first, creatureStep, { gamePhase: "main", hand: ["sea-urchin"] });
   assert.equal(creatureInstruction.interaction, "drag");
   assert.equal(creatureInstruction.targetCardId, "sea-urchin");
-  assert.match(creatureInstruction.action, /Drag Sea Urchin from your hand into the highlighted Invertebrate slot/);
+  assert.match(creatureInstruction.action, /Sea Urchin is a Reef Invertebrate.*drag it into the glowing Reef Invertebrate slot/is);
   const creaturePlacement = getSimulatorV2LessonHelp(first, creatureStep, { gamePhase: "main", playingCardId: "sea-urchin" });
   assert.equal(creaturePlacement.target, "placement");
   assert.notEqual(creaturePlacement.interaction, "drag");
-  assert.match(creaturePlacement.action, /Choose a glowing Invertebrate slot/);
+  assert.equal(creaturePlacement.action, creatureInstruction.action);
+  assert.equal(creaturePlacement.pointerPrompt, "Choose the glowing Reef Invertebrate slot.");
   const secondCoralStep = first.contract.checkpoints.find(({ id }) => id === "v2-place-resistant-coral");
   const secondCoralInstruction = getSimulatorV2LessonHelp(first, secondCoralStep, { gamePhase: "main", hand: ["mustard-hill-coral-base"] });
   assert.equal(secondCoralInstruction.interaction, "drag");
   assert.equal(secondCoralInstruction.targetCardId, "mustard-hill-coral-base");
-  assert.match(secondCoralInstruction.action, /Drag Mustard Hill Coral from your hand into a highlighted open ecosystem space/);
+  assert.match(secondCoralInstruction.action, /Base Coral begins a separate Foundation.*place it in empty water beside Brain Coral.*Drag it into the highlighted open water/is);
   assert.match(secondCoralInstruction.message, /no Disease weakness.*2 RP production/s);
   const final = getSimulatorV2Lesson("winning-turn");
   const chooseEither = getSimulatorV2LessonHelp(final, final.contract.checkpoints[2], { gamePhase: "main", hand: ["clownfish", "porcupine-fish"] });

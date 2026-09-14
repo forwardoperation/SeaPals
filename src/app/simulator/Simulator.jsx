@@ -756,7 +756,75 @@ function findEmbeddedLessonDragDestination(help, sourceRect) {
     })[0] ?? null;
 }
 
-function getEmbeddedLessonDragPath(sourceRect, destinationRect) {
+function getEmbeddedLessonClearWaterCueRect({ sourceRect, hintRect, boardRect }) {
+  const boardWidth = Math.max(1, Number(boardRect?.width ?? 0));
+  const boardHeight = Math.max(1, Number(boardRect?.height ?? 0));
+  const inset = Math.min(20, boardWidth / 8, boardHeight / 8);
+  const availableDiameter = Math.min(boardWidth - (inset * 2), boardHeight - (inset * 2));
+  const diameter = Math.max(24, Math.min(64, availableDiameter));
+  const sourceCenter = {
+    x: Number(sourceRect?.left ?? 0) + (Number(sourceRect?.width ?? 0) / 2),
+    y: Number(sourceRect?.top ?? 0) + (Number(sourceRect?.height ?? 0) / 2),
+  };
+  const hintCenter = {
+    x: Number(hintRect?.left ?? sourceCenter.x) + (Number(hintRect?.width ?? 0) / 2),
+    y: Number(hintRect?.top ?? sourceCenter.y) + (Number(hintRect?.height ?? 0) / 2),
+  };
+  let deltaX = hintCenter.x - sourceCenter.x;
+  let deltaY = hintCenter.y - sourceCenter.y;
+  let directionLength = Math.hypot(deltaX, deltaY);
+  if (directionLength < 1) {
+    deltaX = sourceCenter.x < Number(boardRect?.left ?? 0) + (boardWidth / 2) ? 1 : -1;
+    deltaY = 0;
+    directionLength = 1;
+  }
+  const direction = { x: deltaX / directionLength, y: deltaY / directionLength };
+  const desiredDistance = Math.max(
+    144,
+    Number(sourceRect?.width ?? 0) * 2.5,
+    Number(sourceRect?.height ?? 0) * 1.75,
+  );
+  const boardLeft = Number(boardRect?.left ?? 0);
+  const boardTop = Number(boardRect?.top ?? 0);
+  const minCenterX = boardLeft + inset + (diameter / 2);
+  const maxCenterX = boardLeft + boardWidth - inset - (diameter / 2);
+  const minCenterY = boardTop + inset + (diameter / 2);
+  const maxCenterY = boardTop + boardHeight - inset - (diameter / 2);
+  const clamp = (value, min, max) => Math.min(Math.max(value, Math.min(min, max)), Math.max(min, max));
+  const candidate = (sign) => ({
+    x: clamp(sourceCenter.x + (direction.x * desiredDistance * sign), minCenterX, maxCenterX),
+    y: clamp(sourceCenter.y + (direction.y * desiredDistance * sign), minCenterY, maxCenterY),
+  });
+  const forward = candidate(1);
+  const reverse = candidate(-1);
+  const distanceFromSource = (point) => Math.hypot(point.x - sourceCenter.x, point.y - sourceCenter.y);
+  const directionDot = (point) => ((point.x - sourceCenter.x) * direction.x)
+    + ((point.y - sourceCenter.y) * direction.y);
+  const directionalAlternatives = [
+    { x: minCenterX, y: minCenterY },
+    { x: minCenterX, y: maxCenterY },
+    { x: maxCenterX, y: minCenterY },
+    { x: maxCenterX, y: maxCenterY },
+  ]
+    .filter((point) => directionDot(point) > 0 && distanceFromSource(point) >= 140)
+    .sort((left, right) => (
+      Math.abs(distanceFromSource(left) - desiredDistance)
+      - Math.abs(distanceFromSource(right) - desiredDistance)
+    ));
+  const center = distanceFromSource(forward) >= 140
+    ? forward
+    : directionalAlternatives[0]
+      ?? (distanceFromSource(forward) >= distanceFromSource(reverse) ? forward : reverse);
+
+  return {
+    left: center.x - (diameter / 2),
+    top: center.y - (diameter / 2),
+    width: diameter,
+    height: diameter,
+  };
+}
+
+function getEmbeddedLessonDragPath(sourceRect, destinationRect, { layoutMove = false } = {}) {
   const start = {
     x: sourceRect.left + (sourceRect.width / 2),
     y: sourceRect.top + (sourceRect.height * .48),
@@ -767,6 +835,23 @@ function getEmbeddedLessonDragPath(sourceRect, destinationRect) {
   };
   const deltaX = end.x - start.x;
   const deltaY = end.y - start.y;
+  if (layoutMove) {
+    const control1 = {
+      x: start.x + (deltaX * .3),
+      y: start.y + (deltaY * .3),
+    };
+    const control2 = {
+      x: start.x + (deltaX * .7),
+      y: start.y + (deltaY * .7),
+    };
+    return {
+      start,
+      end,
+      control1,
+      control2,
+      path: `M ${start.x} ${start.y} C ${control1.x} ${control1.y}, ${control2.x} ${control2.y}, ${end.x} ${end.y}`,
+    };
+  }
   const sidewaysBend = Math.min(80, Math.max(24, Math.abs(deltaY) * .12));
   const bendDirection = Math.abs(deltaX) < 44 ? 1 : Math.sign(deltaX);
   const verticalLift = Math.min(88, Math.max(36, Math.abs(deltaY) * .22));
@@ -837,9 +922,28 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "", dragging = fal
         width: entry.rect.width,
         height: entry.rect.height,
       } : null;
+      const sourceRect = toRect(source);
+      const hintedDestinationRect = toRect(destination);
+      const boardElement = help.dragDestination === "clear-water"
+        ? destination?.element.closest('[data-hand-drop-zone="ecosystem"]')
+          ?? source.element.closest('[data-hand-drop-zone="ecosystem"]')
+        : null;
+      const boardBounds = boardElement?.getBoundingClientRect();
+      const destinationRect = help.dragDestination === "clear-water" && boardBounds
+        ? getEmbeddedLessonClearWaterCueRect({
+            sourceRect,
+            hintRect: hintedDestinationRect,
+            boardRect: {
+              left: boardBounds.left,
+              top: boardBounds.top,
+              width: boardBounds.width,
+              height: boardBounds.height,
+            },
+          })
+        : hintedDestinationRect;
       const nextLayout = {
-        sourceRect: toRect(source),
-        destinationRect: toRect(destination),
+        sourceRect,
+        destinationRect,
         viewportWidth: window.innerWidth,
         viewportHeight: window.innerHeight,
       };
@@ -879,10 +983,11 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "", dragging = fal
   const gesture = help.interaction === "drag" ? "drag" : "tap";
   if (gesture === "drag") {
     if (!layout.destinationRect) return null;
-    const dragPath = getEmbeddedLessonDragPath(layout.sourceRect, layout.destinationRect);
+    const layoutMove = help.dragDestination === "clear-water";
+    const dragPath = getEmbeddedLessonDragPath(layout.sourceRect, layout.destinationRect, { layoutMove });
     return (
       <div
-        className={`seapals-v2-action-cue is-drag is-path${dragging ? " is-user-dragging" : ""}`}
+        className={`seapals-v2-action-cue is-drag is-path${layoutMove ? " is-layout-move" : ""}${dragging ? " is-user-dragging" : ""}`}
         data-v2-target-gesture="drag"
         data-v2-user-dragging={dragging ? "true" : undefined}
         aria-hidden="true"
@@ -910,18 +1015,19 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "", dragging = fal
                 width: `${layout.sourceRect.width}px`,
                 height: `${layout.sourceRect.height}px`,
               }}
-            />
+            >{layoutMove ? <span className="seapals-v2-action-cue-source-label">HOLD</span> : null}</span>
           </>
         ) : null}
         <span
           className="seapals-v2-action-cue-destination"
+          data-v2-clear-water-cue={layoutMove ? "true" : undefined}
           style={{
             left: `${layout.destinationRect.left}px`,
             top: `${layout.destinationRect.top}px`,
             width: `${layout.destinationRect.width}px`,
             height: `${layout.destinationRect.height}px`,
           }}
-        />
+        >{layoutMove ? <span className="seapals-v2-action-cue-destination-label">MOVE HERE</span> : null}</span>
         {!dragging ? (
           <span
             className="seapals-v2-action-cue-hand"
@@ -7442,11 +7548,15 @@ export default function Simulator({
         cueId: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         title: `${tutorialConditionCard.name} changes this round`,
         message: embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "clear-water"
-          ? "Conditions change the rules for both ecosystems for one round. Clear Water makes Predator and Apex cards cost 1 more RP."
+          ? "Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar whenever you want to read its exact rule, then continue."
           : embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "coral-disease"
-            ? "Coral Disease stops RP from Corals with the Disease weakness. Brain Coral is vulnerable; Mustard Hill Coral is not."
+            ? "This round's Condition is Coral Disease. It blocks RP from Corals with the Disease weakness. Brain Coral is vulnerable, while Mustard Hill Coral is not. Tap Coral Disease in the middle bar to read its exact rule, then continue."
             : `A Condition changes the rules for both reefs each round. ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
-        action: `Tap ${tutorialConditionCard.name} for its details, then continue.`,
+        action: embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "clear-water"
+          ? "Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar whenever you want to read its exact rule, then continue."
+          : embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "coral-disease"
+            ? "This round's Condition is Coral Disease. It blocks RP from Corals with the Disease weakness. Brain Coral is vulnerable, while Mustard Hill Coral is not. Tap Coral Disease in the middle bar to read its exact rule, then continue."
+            : `Tap ${tutorialConditionCard.name} for its details, then continue.`,
         target: "condition-panel",
         targetLabel: "the active Condition name in the middle bar",
         interaction: "tap",
@@ -7459,9 +7569,15 @@ export default function Simulator({
         cueId: `embedded-rp-summary:${compactTurnSequence.id}`,
         title: "Your RP bank is ready",
         message: embeddedLesson.id === "first-reef" && compactTurnSequence.condition?.id === "coral-disease"
-          ? "Coral Disease stopped Brain Coral's 1 RP. Mustard Hill Coral has no Disease weakness, so it still produced 2 RP. You also collected 1 RP for the round."
-          : `RP pays for cards and abilities. Every round gives you 1 RP, and cards in your ecosystem can add more. You collected ${compactTurnSequence.collectedRp} RP, so your bank now holds ${compactTurnSequence.rpAfter} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP could not fit under the cap` : ""}. Unspent RP stays in your bank for later rounds.`,
-        action: "Continue, then choose your card draw.",
+          ? "Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
+          : embeddedLesson.id === "first-reef"
+            ? `RP pays for cards and abilities. You gained 1 RP for the round, and Brain Coral added its printed 1 RP, taking your bank from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
+            : `RP pays for cards and abilities. Every round gives you 1 RP, and cards in your ecosystem can add more. You collected ${compactTurnSequence.collectedRp} RP, so your bank now holds ${compactTurnSequence.rpAfter} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP could not fit under the cap` : ""}. Unspent RP stays in your bank for later rounds.`,
+        action: embeddedLesson.id === "first-reef" && compactTurnSequence.condition?.id === "coral-disease"
+          ? "Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
+          : embeddedLesson.id === "first-reef"
+            ? `RP pays for cards and abilities. You gained 1 RP for the round, and Brain Coral added its printed 1 RP, taking your bank from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
+            : "Continue, then choose your card draw.",
         interaction: "tap",
         lessonStep: tutorialStepNumber,
       }
@@ -22077,12 +22193,42 @@ export default function Simulator({
           box-shadow: 0 0 0 3px rgba(236, 254, 255, .58), 0 0 26px 8px rgba(34, 211, 238, .58);
           animation: seapalsV2CueHalo 1.3s ease-in-out infinite;
         }
+        .seapals-v2-action-cue-source-label {
+          position: absolute;
+          bottom: calc(100% + .45rem);
+          left: 50%;
+          width: max-content;
+          transform: translateX(-50%);
+          border: 1px solid rgba(207, 250, 254, .8);
+          border-radius: 999px;
+          background: rgba(8, 47, 73, .9);
+          padding: .22rem .45rem;
+          color: #ecfeff;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: .1em;
+          line-height: 1;
+          text-shadow: 0 1px 2px rgba(2, 8, 23, .95);
+        }
         .seapals-v2-action-cue-destination {
           border: 4px solid rgba(207, 250, 254, .9);
           border-radius: 999px;
           background: rgba(34, 211, 238, .08);
           box-shadow: 0 0 0 4px rgba(8, 145, 178, .18), inset 0 0 24px rgba(103, 232, 249, .18), 0 0 28px rgba(34, 211, 238, .55);
           animation: seapalsV2DropTarget 1.3s ease-in-out infinite;
+        }
+        .seapals-v2-action-cue-destination-label {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: max-content;
+          transform: translate(-50%, -50%);
+          color: #ecfeff;
+          font-size: 9px;
+          font-weight: 950;
+          letter-spacing: .08em;
+          line-height: 1;
+          text-shadow: 0 1px 2px rgba(2, 8, 23, .95), 0 0 8px rgba(8, 145, 178, .95);
         }
         .seapals-v2-action-cue.is-path .seapals-v2-action-cue-hand {
           top: var(--seapals-drag-start-y);

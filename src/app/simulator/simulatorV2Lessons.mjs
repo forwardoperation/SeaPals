@@ -730,6 +730,39 @@ const UPGRADE_CARD_IDS = new Set(["brain-coral-stage-1", "brain-coral-stage-2"])
 const OPEN_WATER_CARD_IDS = new Set(["halfbeak", "ocean-sunfish"]);
 const name = (cardId) => CARD_NAMES[cardId] ?? cardId ?? "the highlighted card";
 
+const FIRST_REEF_VISIBLE_COPY = Object.freeze({
+  "brain-coral-base": "Your ecosystem is everything you build on your side. Corals are Foundations: anchors that produce Resource Points (RP) and provide connected homes called creature slots. Brain Coral is a Base Coral, so it costs 1 RP and starts a new Foundation branch. Drag it from your hand into the highlighted open water. You can also tap the card, choose Play Card, and then choose the highlighted water.",
+  "sea-urchin": "Creature slots are the round symbols connected to a Coral. Each slot inherits its Coral's habitat, and its icon shows the creature class it accepts. A creature must match both. Fish slots accept Fish. Predator slots accept Fish or Predators, but Predators cannot use Fish slots. Apex slots accept Fish, Predators, or Apex creatures. Invertebrate and Filter Feeder slots accept only their matching class. Sea Urchin is a Reef Invertebrate, and its printed 1 VP counts while it stays in your ecosystem. Drag it into the glowing Reef Invertebrate slot.",
+  "mustard-hill-coral-base": "A Base Coral begins a separate Foundation, while a Stage card upgrades an existing Coral. Mustard Hill is a Base Coral, so place it in empty water beside Brain Coral instead of on top of it. It produces 2 RP and has no Disease weakness. Drag it into the highlighted open water.",
+  "brain-coral-stage-1": "A Coral can upgrade after its current stage has survived a full turn. Put the matching next Stage on that Coral; its position, existing damage, and compatible residents remain. Brain Coral Stage 1 costs 2 RP. It raises health from 10 to 20 HP so it can withstand more damage, raises production from 1 to 2 RP each round, and adds a Predator slot plus a second Invertebrate slot so more creatures can live there. Drag Stage 1 onto the glowing Brain Coral.",
+});
+
+function firstReefVisiblePlacementCopy(cardId) {
+  return FIRST_REEF_VISIBLE_COPY[cardId] ?? null;
+}
+
+function firstReefPlacementPointerPrompt(cardId, state = "hand") {
+  if (state === "selected") return "Choose Play Card.";
+  if (state === "placement") {
+    if (cardId === "brain-coral-stage-1") return "Choose the glowing Brain Coral.";
+    if (["brain-coral-base", "mustard-hill-coral-base"].includes(cardId)) return "Choose the highlighted open water.";
+    return "Choose the glowing Reef Invertebrate slot.";
+  }
+  if (cardId === "brain-coral-stage-1") return "Drag Stage 1 onto Brain Coral.";
+  if (["brain-coral-base", "mustard-hill-coral-base"].includes(cardId)) return `Drag ${name(cardId)} into the highlighted open water.`;
+  return "Drag Sea Urchin into the glowing Reef Invertebrate slot.";
+}
+
+function firstReefDrawVisibleCopy(expectedDraw) {
+  if (expectedDraw?.cardId === "brain-coral-stage-1") {
+    return "Coral stages live in the Foundation Deck. To upgrade, you need the matching next Stage in your hand, and the current stage must have survived a full turn. Choose one card from the Foundation Deck, then confirm your draw.";
+  }
+  if (expectedDraw?.cardId === "sea-urchin") {
+    return "Each round, you choose which deck to draw from. The Foundation Deck holds Corals and Coral upgrades. The Pals Deck holds creatures, Habitats, and Support cards. Sea Urchin is a creature, so choose one card from the Pals Deck, then confirm your draw.";
+  }
+  return null;
+}
+
 function conceptWasPreviouslyTaught(uiState, concept) {
   return Array.isArray(uiState.previouslyTaughtConcepts)
     && uiState.previouslyTaughtConcepts.includes(concept);
@@ -859,6 +892,12 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     return help("continue-actions", "Your draw is ready. Next you can play cards and use actions.", "Continue to Actions.");
   }
   if (uiState.modal === "turn-draw" || uiState.gamePhase === "draw") {
+    const firstReefDrawCopy = selected.id === "first-reef"
+      ? firstReefDrawVisibleCopy(expectedDraw)
+      : null;
+    const firstReefDrawCue = expectedDraw?.cardId
+      ? `first-reef-draw:${expectedDraw.cardId}`
+      : "first-reef-draw";
     const wrongDeck = expectedDraw?.deckType === "foundation" ? "pals" : "foundation";
     const wrongDeckSelected = Number(
       wrongDeck === "foundation" ? uiState.drawFoundationSelected : uiState.drawPalsSelected,
@@ -877,7 +916,12 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       return help(
         "confirm-draw",
         "Your deck choice is ready. Draw the card to add it to your hand.",
-        "Confirm selection to draw your card.",
+        firstReefDrawCopy ?? "Confirm selection to draw your card.",
+        firstReefDrawCopy ? {
+          cue: firstReefDrawCue,
+          pointerPrompt: "Confirm your draw.",
+          targetLabel: "the Confirm Selection button",
+        } : undefined,
       );
     }
     const firstReefUpgradeDraw = selected.id === "first-reef" && expectedDraw?.cardId === "brain-coral-stage-1";
@@ -907,18 +951,40 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     return help(
       "draw-controls",
       drawMessage,
-      `Choose ${drawCount === 1 ? "one card" : `${drawCount} cards`} from the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Pals"} Deck.`,
-      { targetDeck: expectedDraw?.deckType ?? "pals", targetDrawAction: "add" },
+      firstReefDrawCopy
+        ?? `Choose ${drawCount === 1 ? "one card" : `${drawCount} cards`} from the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Pals"} Deck.`,
+      {
+        targetDeck: expectedDraw?.deckType ?? "pals",
+        targetDrawAction: "add",
+        ...(firstReefDrawCopy ? {
+          cue: firstReefDrawCue,
+          pointerPrompt: `Add one card from the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Pals"} Deck.`,
+          targetLabel: `the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Pals"} Deck control`,
+        } : {}),
+      },
     );
   }
 
   if (uiState.playingCardId) {
     const copy = placementCopy(uiState.playingCardId);
+    const firstReefCopy = selected.id === "first-reef"
+      ? firstReefVisiblePlacementCopy(uiState.playingCardId)
+      : null;
     return help(
       "placement",
       conceptCopy(uiState, placementConcept(uiState.playingCardId), copy.message),
-      copy.action,
-      { cue: "placement:" + uiState.playingCardId },
+      firstReefCopy ?? copy.action,
+      {
+        cue: firstReefCopy ? `first-reef-place:${uiState.playingCardId}` : "placement:" + uiState.playingCardId,
+        ...(firstReefCopy ? {
+          pointerPrompt: firstReefPlacementPointerPrompt(uiState.playingCardId, "placement"),
+          targetLabel: uiState.playingCardId === "brain-coral-stage-1"
+            ? "the glowing Brain Coral"
+            : uiState.playingCardId === "sea-urchin"
+              ? "the glowing Reef Invertebrate slot"
+              : "the highlighted open water",
+        } : {}),
+      },
     );
   }
 
@@ -927,15 +993,23 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       const cardId = selected.setupCardId;
       const selectedCard = uiState.selectedHandCard === cardId
         && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
+      const firstReefCopy = selected.id === "first-reef"
+        ? firstReefVisiblePlacementCopy(cardId)
+        : null;
       return help(
         selectedCard ? "play-card" : "hand",
         selectedCard
           ? "Card details are open. Play Card will let you choose its place in the reef."
           : `You start with 3 RP. ${name(cardId)} costs ${cardId === "brain-coral-base" ? 1 : 2} and creates a home for creatures.`,
-        selectedCard ? "Choose Play Card." : `Drag ${name(cardId)} from your hand into your ecosystem.`,
+        firstReefCopy ?? (selectedCard ? "Choose Play Card." : `Drag ${name(cardId)} from your hand into your ecosystem.`),
         {
+          cue: firstReefCopy ? `first-reef-place:${cardId}` : undefined,
           interaction: selectedCard ? "tap" : "drag",
           targetCardId: cardId,
+          ...(firstReefCopy ? {
+            pointerPrompt: firstReefPlacementPointerPrompt(cardId, selectedCard ? "selected" : "hand"),
+            targetLabel: selectedCard ? "the Play Card button" : "Brain Coral in your hand",
+          } : {}),
           hint: selectedCard
             ? "Choose Play Card, then choose open water in your reef."
             : "Lift the card upward, then release over open water. You can also select it, choose Play, then choose an open space.",
@@ -953,12 +1027,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       return help(
         "foundation-drag",
         `Your reef layout is flexible. Drag ${name(selected.setupCardId)} and its whole branch moves with it. You can also drag an individual slot when you need more room; moving either one never changes the rules.`,
-        `Drag ${name(selected.setupCardId)} a short distance into open water.`,
+        "The connected circles are creature slots: the homes this Coral provides. Moving cards only organizes your board; it never changes their rules. Press and hold Brain Coral, then drag its whole branch along the dotted path into the large MOVE HERE circle and release.",
         {
           actionId: "move-foundation",
           interaction: "drag",
           dragDestination: "clear-water",
           targetCardId: selected.setupCardId,
+          pointerPrompt: "Hold Brain Coral and drag it into MOVE HERE.",
+          targetLabel: "Brain Coral and the MOVE HERE circle",
           hint: "Move the Coral by its card body. Its slots and attached creatures stay connected.",
         },
       );
@@ -971,12 +1047,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       return help(
         "slot-drag",
         "Each slot can move around its Coral too. This only organizes your reef; the slot still accepts the same kind of creature and remains connected to the same Coral.",
-        "Drag the highlighted empty slot a short distance into clear water.",
+        "You can also move a creature slot by itself while it stays connected to the same Coral. Press and hold the highlighted round slot, then drag it along the dotted path into the large MOVE HERE circle and release.",
         {
           actionId: "move-slot",
           interaction: "drag",
           dragDestination: "clear-water",
           targetCardId: selected.setupCardId,
+          pointerPrompt: "Hold the round slot and drag it into MOVE HERE.",
+          targetLabel: "the highlighted slot and MOVE HERE circle",
           hint: "Drag the round slot marker. Its connector follows while the Coral stays in place.",
         },
       );
@@ -995,7 +1073,13 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       message,
       conceptWasPreviouslyTaught(uiState, SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS)
         ? "Press Begin Round."
-        : "Press Begin Round and watch your RP bank.",
+        : selected.id === "first-reef"
+          ? "Your first Foundation is arranged. At the start of every round, a Condition changes the rules for both ecosystems, then you collect RP and draw. Press Begin Round to see the sequence."
+          : "Press Begin Round and watch your RP bank.",
+      selected.id === "first-reef" ? {
+        pointerPrompt: "Press Begin Round.",
+        targetLabel: "the Begin Round button",
+      } : undefined,
     );
   }
 
@@ -1125,6 +1209,9 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     }
     const selectedCard = uiState.selectedHandCard === cardId
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
+    const firstReefCopy = selected.id === "first-reef"
+      ? firstReefVisiblePlacementCopy(cardId)
+      : null;
     let message = conceptCopy(uiState, placementConcept(cardId), placementCopy(cardId).message);
     if (selected.id === "winning-turn") {
       message = current.id === "v2-first-winning-fish"
@@ -1162,11 +1249,16 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     return help(
       selectedCard ? "play-card" : "hand",
       selectedCard ? name(cardId) + " is selected. Play Card will show its legal placement." : message,
-      selectedCard ? "Choose Play Card." : dragActionCopy(cardId, candidates, selected, current),
+      firstReefCopy ?? (selectedCard ? "Choose Play Card." : dragActionCopy(cardId, candidates, selected, current)),
       {
+        cue: firstReefCopy ? `first-reef-place:${cardId}` : undefined,
         interaction: selectedCard ? "tap" : "drag",
         targetCardId: cardId,
         targetCardIds: candidates,
+        ...(firstReefCopy ? {
+          pointerPrompt: firstReefPlacementPointerPrompt(cardId, selectedCard ? "selected" : "hand"),
+          targetLabel: selectedCard ? "the Play Card button" : `${name(cardId)} in your hand`,
+        } : {}),
         hint: selectedCard
           ? "Choose Play Card, then choose the highlighted legal placement."
           : "Lift the card upward to reveal legal placements, then release over one. You can also select the card and choose Play.",
@@ -1187,13 +1279,36 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   }
   if (current.actionType === ACTION.TURN_ENDED) {
     const message = selected.id === "first-reef"
-      ? "Your two Corals are ready for a test. End the turn to reveal Coral Disease and compare which Coral can still generate RP."
+      ? "Weaknesses are printed on Corals. When the active Condition matches one, that Coral stays in play but produces no RP that round. Brain Coral is weak to Disease; Mustard Hill Coral is not. End your turn to reveal Coral Disease and compare them."
       : selected.id === "first-attack"
         ? current.id === "v2-pass-to-counterattack"
           ? "In the ocean, there is a very important food chain that keeps ecosystems in balance. We will explore how creatures eat in this lesson. To start, your opponent will play a Spanish Hogfish, which can eat Invertebrates. It’s got its eye on your Sea Urchin—prepare to defend!"
           : "Sea Urchin is back in your hand. End the turn and carry that non-attack action's setup into the next round."
       : "You can save your remaining RP for a later turn.";
-    return help("turn-button", message, "End your turn when you are ready.");
+    return help(
+      "turn-button",
+      message,
+      selected.id === "first-reef" ? message : "End your turn when you are ready.",
+      selected.id === "first-reef" ? {
+        pointerPrompt: "End the turn to reveal Coral Disease.",
+        targetLabel: "the End Turn button",
+      } : undefined,
+    );
+  }
+  if (selected.id === "first-reef" && current.actionType === ACTION.RP_COLLECTED) {
+    const diseaseRound = current.id === "v2-collect-under-coral-disease";
+    const action = diseaseRound
+      ? "Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
+      : "RP pays for cards and abilities. You gained 1 RP for the round, and Brain Coral added its printed 1 RP, taking your bank from 2 RP to 4 RP. Continue to your draw.";
+    return help(
+      "rp-bank",
+      action,
+      action,
+      {
+        pointerPrompt: "Review your RP bank, then continue.",
+        targetLabel: "your RP bank",
+      },
+    );
   }
   return help(
     "rp-bank",

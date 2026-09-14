@@ -28,7 +28,7 @@ test("drag lessons connect the exact hand card to the nearest visible legal dest
   assert.match(finder, /Math\.hypot/);
   assert.match(cue, /const source = findTutorialTarget\(help\)/);
   assert.match(cue, /findEmbeddedLessonDragDestination\(help, source\.rect\)/);
-  assert.match(cue, /className=\{`seapals-v2-action-cue is-drag is-path\$\{dragging/);
+  assert.match(cue, /className=\{`seapals-v2-action-cue is-drag is-path\$\{layoutMove[\s\S]*?\$\{dragging/);
   assert.match(cue, /className="seapals-v2-action-cue-path-line"/);
   assert.match(cue, /className="seapals-v2-action-cue-destination"/);
   assert.match(cue, /--seapals-drag-start-x/);
@@ -51,6 +51,64 @@ test("the animated drag path begins with the same upward lift accepted by the ha
   assert.equal(path.control1.x, path.start.x);
   assert.ok(path.control1.y < path.start.y);
   assert.ok(path.end.x > path.start.x, "the cue should curve toward the real destination after lifting");
+});
+
+test("clear-water layout moves keep a large, distant target at fitted board zoom", () => {
+  const helperSource = sourceSection(
+    "function getEmbeddedLessonClearWaterCueRect(",
+    "function getEmbeddedLessonDragPath(",
+  );
+  const getCueRect = Function(`return (${helperSource})`)();
+  const center = (rect) => ({
+    x: rect.left + (rect.width / 2),
+    y: rect.top + (rect.height / 2),
+  });
+  const assertLegibleCue = ({ sourceRect, hintRect, boardRect }) => {
+    const cue = getCueRect({ sourceRect, hintRect, boardRect });
+    const sourceCenter = center(sourceRect);
+    const hintCenter = center(hintRect);
+    const cueCenter = center(cue);
+    const directionDot = ((hintCenter.x - sourceCenter.x) * (cueCenter.x - sourceCenter.x))
+      + ((hintCenter.y - sourceCenter.y) * (cueCenter.y - sourceCenter.y));
+
+    assert.ok(cue.width >= 56, `expected a readable target, received ${cue.width}px`);
+    assert.equal(cue.width, cue.height);
+    assert.ok(Math.hypot(cueCenter.x - sourceCenter.x, cueCenter.y - sourceCenter.y) >= 140);
+    assert.ok(directionDot > 0, "the enlarged cue should preserve the authored move direction when space permits");
+    assert.ok(cue.left >= boardRect.left + 19);
+    assert.ok(cue.top >= boardRect.top + 19);
+    assert.ok(cue.left + cue.width <= boardRect.left + boardRect.width - 19);
+    assert.ok(cue.top + cue.height <= boardRect.top + boardRect.height - 19);
+  };
+
+  assertLegibleCue({
+    sourceRect: { left: 610, top: 470, width: 38, height: 46 },
+    hintRect: { left: 515, top: 440, width: 18, height: 18 },
+    boardRect: { left: 20, top: 360, width: 1240, height: 340 },
+  });
+  assertLegibleCue({
+    sourceRect: { left: 184, top: 590, width: 44, height: 54 },
+    hintRect: { left: 275, top: 625, width: 24, height: 24 },
+    boardRect: { left: 16, top: 470, width: 358, height: 350 },
+  });
+});
+
+test("layout movement uses a direct path while hand-card drags retain their upward lift", () => {
+  const pathSource = sourceSection(
+    "function getEmbeddedLessonDragPath(",
+    "function EmbeddedLessonHandIcon(",
+  );
+  const getEmbeddedLessonDragPath = Function(`return (${pathSource})`)();
+  const source = { left: 300, top: 520, width: 40, height: 48 };
+  const destination = { left: 100, top: 430, width: 64, height: 64 };
+  const layoutPath = getEmbeddedLessonDragPath(source, destination, { layoutMove: true });
+  const cardPath = getEmbeddedLessonDragPath(source, destination);
+
+  const expectedControl1X = layoutPath.start.x + ((layoutPath.end.x - layoutPath.start.x) * .3);
+  const expectedControl1Y = layoutPath.start.y + ((layoutPath.end.y - layoutPath.start.y) * .3);
+  assert.equal(layoutPath.control1.x, expectedControl1X);
+  assert.equal(layoutPath.control1.y, expectedControl1Y);
+  assert.ok(cardPath.control1.y < cardPath.start.y);
 });
 
 test("the pointer hand has a natural silhouette and a calibrated fingertip", () => {
@@ -119,6 +177,11 @@ test("the board-native overlay keeps the drop circle and teacher visible during 
   assert.doesNotMatch(helpState, /playingCardId:\s*embeddedLesson \? activePlacementCardId/);
   assert.match(cue, /\{!dragging \? \([\s\S]*?className="seapals-v2-action-cue-path"[\s\S]*?className="seapals-v2-action-cue-source"[\s\S]*?\) : null\}[\s\S]*?className="seapals-v2-action-cue-destination"[\s\S]*?\{!dragging \? \([\s\S]*?className="seapals-v2-action-cue-hand"/);
   assert.match(cue, /data-v2-user-dragging=\{dragging \? "true" : undefined\}/);
+  assert.match(cue, /getEmbeddedLessonClearWaterCueRect\(\{/);
+  assert.match(cue, /getEmbeddedLessonDragPath\(layout\.sourceRect, layout\.destinationRect, \{ layoutMove \}\)/);
+  assert.match(cue, /data-v2-clear-water-cue=\{layoutMove \? "true" : undefined\}/);
+  assert.match(cue, /seapals-v2-action-cue-source-label">HOLD/);
+  assert.match(cue, /seapals-v2-action-cue-destination-label">MOVE HERE/);
   assert.match(simulatorSource, /<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}[\s\S]*?dragPassive=\{Boolean\(mobileHandDrag \|\| draggingCoralId \|\| slotDragStart\)\}/);
   assert.match(
     simulatorSource,

@@ -93,11 +93,23 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
   );
   assert.match(
     conditionHelp,
-    /Coral Disease stops RP from Corals with the Disease weakness\. Brain Coral is vulnerable; Mustard Hill Coral is not\./,
+    /Every round begins with one card from the shared Condition Deck\.[\s\S]*?both ecosystems[\s\S]*?Tap Clear Water in the middle bar/,
+  );
+  assert.match(
+    conditionHelp,
+    /This round's Condition is Coral Disease\. It blocks RP from Corals with the Disease weakness\. Brain Coral is vulnerable, while Mustard Hill Coral is not\./,
   );
   assert.match(conditionHelp, /target:\s*"condition-panel"/);
   assert.match(conditionHelp, /targetLabel:\s*"the active Condition name in the middle bar"/);
   assert.match(conditionHelp, /Tap \$\{tutorialConditionCard\.name\} for its details, then continue\./);
+  assert.match(
+    conditionHelp,
+    /RP pays for cards and abilities\.[\s\S]*?Brain Coral added its printed 1 RP[\s\S]*?Unspent RP stays in your bank/,
+  );
+  assert.match(
+    conditionHelp,
+    /Coral Disease blocked Brain Coral's 1 RP\.[\s\S]*?Mustard Hill still produced 2 RP[\s\S]*?varied ecosystem/,
+  );
   assert.match(conditionHelp, /const embeddedCompactCoachHelp = embeddedCompactConditionHelp \?\? embeddedCompactRpHelp/);
   assert.match(
     conditionHelp,
@@ -198,7 +210,7 @@ test("RP defers progress for a teacher summary only when earlier lessons have no
   );
   assert.match(
     conditionCopy,
-    /Coral Disease stopped Brain Coral's 1 RP\. Mustard Hill Coral has no Disease weakness, so it still produced 2 RP\. You also collected 1 RP for the round\./,
+    /Coral Disease blocked Brain Coral's 1 RP\. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP\.[\s\S]*?varied ecosystem/,
   );
 
   assert.match(rpSummaryContinue, /stage\?\.kind !== CompactTurnStage\.RP_SUMMARY/);
