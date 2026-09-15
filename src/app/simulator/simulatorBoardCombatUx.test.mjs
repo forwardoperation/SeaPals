@@ -241,7 +241,7 @@ test("the board roll dialog focuses after dice exist and isolates reef and hand 
   assert.equal(inertReefs.length, 2, "Both reef panes must be inert while the roll dialog owns interaction");
   assert.match(
     simulatorSource,
-    /interactionDisabled=\{boardInteractionOverlayActive \|\| mobileDrawFlights\.length > 0/,
+    /interactionDisabled=\{boardInteractionOverlayActive \|\| Boolean\(pendingHandRefreshFlight\) \|\| mobileDrawFlights\.length > 0/,
     "The hand must receive the same isolation signal as the board",
   );
   assert.match(

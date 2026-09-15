@@ -871,7 +871,7 @@ test("V2 names the current Condition in the divider with a separate accessible d
   );
   assert.match(divider, /onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/);
   assert.match(divider, /onClick=\{openActiveConditionDetails\}/);
-  assert.match(divider, /disabled=\{!activeCondition\}/);
+  assert.match(divider, /disabled=\{!activeCondition \|\| boardInteractionOverlayActive\}/);
   assert.doesNotMatch(divider, /seapals-reef-divider-condition-label|>\s*Condition\s*</);
   assert.match(
     divider,

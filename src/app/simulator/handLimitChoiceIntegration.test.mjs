@@ -14,7 +14,7 @@ function sourceBetween(startMarker, endMarker) {
 
 test("Algae Bloom queues a mandatory whole-hand discard choice", () => {
   const choiceEffect = sourceBetween(
-    'if (!["draw", "main"].includes(gamePhase) || !Number.isFinite(activeHandLimit)) return;',
+    'if (gameResult || !["draw", "main"].includes(gamePhase) || !Number.isFinite(activeHandLimit)) return;',
     "  function notifyTutorialCallback",
   );
   assert.match(choiceEffect, /createHandLimitChoice\(\{ hand, handLimit: activeHandLimit \}\)/);

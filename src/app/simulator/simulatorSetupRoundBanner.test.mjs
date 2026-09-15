@@ -215,7 +215,7 @@ test("setup completion preserves its landing rail position instead of applying t
   const drawSequenceEffect = sourceSection(
     simulatorSource,
     "useEffect(() => {\n    if (!mobileDrawSequenceActiveRef.current) return undefined;",
-    "useEffect(() => () => {\n    for (const timerId of mobileDrawFlightTimersRef.current.values())",
+    "useEffect(() => () => {\n    if (mobileDrawFallbackFocusFrameRef.current) window.cancelAnimationFrame(mobileDrawFallbackFocusFrameRef.current);",
   );
   const completionBranch = sourceSection(
     drawSequenceEffect,
@@ -309,7 +309,7 @@ test("discard recovery remeasures its visible source while ordinary draw flights
     /return zoneElement\?\.querySelector\("\.seapals-mobile-edge-zone-art"\) \?\? zoneElement/,
     "discard recovery should begin at the visible discard artwork",
   );
-  assert.match(prepareFlight, /\["opening-hand", "discard-recovery"\]\.includes\(flight\?\.kind\)/);
+  assert.match(prepareFlight, /\["opening-hand", "discard-recovery", "dr-evans-refresh"\]\.includes\(flight\?\.kind\)/);
   const remeasureIndex = prepareFlight.indexOf("getMobileDrawFlightSourceElement(flight.sourceZone)");
   const sourceRectIndex = prepareFlight.indexOf("sourceElement?.getBoundingClientRect()");
   assert.ok(remeasureIndex >= 0 && sourceRectIndex > remeasureIndex, "the current zone geometry is measured again when each recovery flight starts");
