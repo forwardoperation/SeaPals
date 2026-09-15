@@ -30,7 +30,12 @@ const TEXT_SPEED_MULTIPLIER = Object.freeze({
   instant: 0,
 });
 
-function LessonDialogueMessage({ message, textSpeed = "normal", reducedMotion = false }) {
+function LessonDialogueMessage({
+  message,
+  textSpeed = "normal",
+  reducedMotion = false,
+  scrollable = false,
+}) {
   const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
   const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? 1;
   const duration = useMemo(
@@ -38,7 +43,9 @@ function LessonDialogueMessage({ message, textSpeed = "normal", reducedMotion = 
     [graphemes.length, speedMultiplier],
   );
   const [visibleCount, setVisibleCount] = useState(0);
+  const [scrollState, setScrollState] = useState({ canScroll: false, atEnd: true });
   const animationRef = useRef({ frameId: null, generation: 0 });
+  const scrollRef = useRef(null);
   const visibleMessage = graphemes.slice(0, visibleCount).join("");
   const pendingMessage = graphemes.slice(visibleCount).join("");
   const isComplete = visibleCount >= graphemes.length;
@@ -94,8 +101,51 @@ function LessonDialogueMessage({ message, textSpeed = "normal", reducedMotion = 
     };
   }, [duration, graphemes.length, message, reducedMotion, textSpeed]);
 
-  return (
-    <p className={styles.instruction} data-v2-lesson-instruction>
+  useEffect(() => {
+    if (!scrollable) return undefined;
+    const viewport = scrollRef.current;
+    if (!viewport) return undefined;
+
+    viewport.scrollTop = 0;
+    const updateScrollState = () => {
+      const canScroll = viewport.scrollHeight > viewport.clientHeight + 1;
+      const atEnd = !canScroll
+        || viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2;
+      setScrollState((current) => (
+        current.canScroll === canScroll && current.atEnd === atEnd
+          ? current
+          : { canScroll, atEnd }
+      ));
+    };
+    const frameId = window.requestAnimationFrame(updateScrollState);
+    const resizeObserver = typeof window.ResizeObserver === "function"
+      ? new window.ResizeObserver(updateScrollState)
+      : null;
+    resizeObserver?.observe(viewport);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver?.disconnect();
+    };
+  }, [message, scrollable]);
+
+  const messageContent = (
+    <p
+      ref={scrollable ? scrollRef : undefined}
+      className={`${styles.instruction}${scrollable ? ` ${styles.messageViewport}` : ""}`}
+      tabIndex={scrollable && scrollState.canScroll ? 0 : undefined}
+      role={scrollable && scrollState.canScroll ? "region" : undefined}
+      aria-label={scrollable && scrollState.canScroll ? "Scrollable message from Mr. Easterling" : undefined}
+      data-v2-lesson-instruction
+      data-v2-lesson-message-scroll={scrollable && scrollState.canScroll ? "true" : undefined}
+      onScroll={scrollable ? () => {
+        const viewport = scrollRef.current;
+        if (!viewport) return;
+        const atEnd = viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2;
+        setScrollState((current) => (
+          current.atEnd === atEnd ? current : { ...current, atEnd }
+        ));
+      } : undefined}
+    >
       <span className={styles.typewriterFrame} aria-hidden="true">
         {visibleMessage}
         {!isComplete ? <span className={styles.typewriterCursor} /> : null}
@@ -103,6 +153,19 @@ function LessonDialogueMessage({ message, textSpeed = "normal", reducedMotion = 
       </span>
       <span className={styles.srOnly}>{message}</span>
     </p>
+  );
+
+  if (!scrollable) return messageContent;
+
+  return (
+    <div className={styles.messageViewportFrame}>
+      {messageContent}
+      {scrollState.canScroll && isComplete && !scrollState.atEnd ? (
+        <span className={styles.scrollHint} aria-hidden="true">
+          Scroll <span>↓</span>
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -441,7 +504,12 @@ export default function SimulatorV2LessonPanel({
       aria-labelledby={teacherTitleId}
       onKeyDown={onAdvance ? (event) => {
         if (event.key !== "Tab") return;
+        const messageViewport = event.currentTarget.querySelector('[data-v2-lesson-message-scroll="true"]');
         event.preventDefault();
+        if (event.shiftKey && event.target === advanceRef.current && messageViewport instanceof HTMLElement) {
+          messageViewport.focus();
+          return;
+        }
         advanceRef.current?.focus();
       } : undefined}
       data-v2-lesson-panel="coach"
@@ -478,6 +546,7 @@ export default function SimulatorV2LessonPanel({
               message={dialogueMessage}
               textSpeed={textSpeed}
               reducedMotion={reducedMotion}
+              scrollable
             />
             {message ? <p className={styles.feedback} data-tone={feedback?.tone || "success"} role="status" aria-live="polite" aria-atomic="true">{message}</p> : null}
           </div>

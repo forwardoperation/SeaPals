@@ -75,12 +75,36 @@ test("Mr. Easterling's message reads like left-to-right dialogue", () => {
   assert.match(cssRules(".passiveAdvance").join("\n"), /justify-content:\s*flex-end/);
 });
 
+test("the lesson message uses a compact three-line scroll viewport", () => {
+  const viewportRule = cssRules(".messageViewport").join("\n");
+  const introDialogue = panelSource.match(/<div className=\{styles\.introDialogue\}>([\s\S]*?)<\/div>/)?.[1] ?? "";
+
+  assert.match(panelSource, /<div className=\{styles\.currentMove\}>[\s\S]*?<LessonDialogueMessage[\s\S]*?scrollable\s*\/>/);
+  assert.doesNotMatch(introDialogue, /\bscrollable\b/);
+  assert.match(
+    panelSource,
+    /className=\{`\$\{styles\.instruction\}\$\{scrollable \? ` \$\{styles\.messageViewport\}` : ""\}`\}/,
+  );
+  assert.match(panelSource, /tabIndex=\{scrollable && scrollState\.canScroll \? 0 : undefined\}/);
+  assert.match(panelSource, /role=\{scrollable && scrollState\.canScroll \? "region" : undefined\}/);
+  assert.match(panelSource, /data-v2-lesson-message-scroll=\{scrollable && scrollState\.canScroll \? "true" : undefined\}/);
+  assert.match(panelSource, /scrollState\.canScroll && isComplete && !scrollState\.atEnd[\s\S]*?className=\{styles\.scrollHint\}[\s\S]*?Scroll[\s\S]*?↓/);
+  assert.match(panelSource, /viewport\.scrollHeight > viewport\.clientHeight \+ 1/);
+  assert.match(viewportRule, /max-block-size:\s*3lh/);
+  assert.match(viewportRule, /overflow-y:\s*auto/);
+  assert.match(viewportRule, /overscroll-behavior:\s*contain/);
+  assert.match(viewportRule, /touch-action:\s*pan-y pinch-zoom/);
+  assert.match(viewportRule, /scrollbar-gutter:\s*stable/);
+  assert.doesNotMatch(viewportRule, /line-clamp|text-overflow:\s*ellipsis|overflow:\s*hidden/);
+});
+
 test("Mr. Easterling's lesson dialogue uses a stable accessible typewriter reveal", () => {
   assert.match(panelSource, /segmentProfessorMessage\(message\)/);
   assert.match(panelSource, /getProfessorSpeechDuration\(graphemes\.length\)/);
   assert.match(panelSource, /getProfessorVisibleGraphemeCount\(\{/);
   assert.match(panelSource, /key=\{dialogueKey\}[\s\S]*?message=\{dialogueMessage\}/);
   assert.match(panelSource, /className=\{styles\.typewriterFrame\} aria-hidden="true"/);
+  assert.match(panelSource, /const visibleMessage = graphemes\.slice\(0, visibleCount\)\.join\(""\)/);
   assert.match(panelSource, /const pendingMessage = graphemes\.slice\(visibleCount\)\.join\(""\)/);
   assert.match(
     panelSource,
@@ -123,7 +147,7 @@ test("blocking teacher checkpoints receive focus and keep keyboard navigation on
   assert.match(panelSource, /const advanceRef = useRef\(null\)/);
   assert.match(
     panelSource,
-    /onKeyDown=\{onAdvance \? \(event\) => \{[\s\S]*?event\.key !== "Tab"[\s\S]*?event\.preventDefault\(\);[\s\S]*?advanceRef\.current\?\.focus\(\)/,
+    /onKeyDown=\{onAdvance \? \(event\) => \{[\s\S]*?event\.key !== "Tab"[\s\S]*?data-v2-lesson-message-scroll[\s\S]*?event\.preventDefault\(\);[\s\S]*?event\.shiftKey[\s\S]*?messageViewport\.focus\(\)[\s\S]*?advanceRef\.current\?\.focus\(\)/,
   );
   assert.match(
     panelSource,

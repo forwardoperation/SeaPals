@@ -191,6 +191,40 @@
 .currentMove { width: 100%; padding-top: 0.48rem; }
 .dialogue { margin: 0 0 0.38rem; color: #536278; font-size: 0.75rem; font-weight: 600; line-height: 1.45; text-align: left; text-wrap: pretty; }
 .instruction { width: 100%; margin: 0; color: #19253a; font-size: 0.84rem; font-weight: 800; letter-spacing: 0.01em; line-height: 1.48; text-align: left; text-wrap: wrap; overflow-wrap: anywhere; }
+.messageViewportFrame { position: relative; width: 100%; }
+.messageViewport {
+  max-block-size: 3lh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.35rem;
+  touch-action: pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #1599b8 #d8e0ea;
+}
+.messageViewport:focus-visible { outline: 2px solid #0f9fc2; outline-offset: 2px; }
+.messageViewport::-webkit-scrollbar { width: 0.48rem; }
+.messageViewport::-webkit-scrollbar-track { border-radius: 999px; background: #d8e0ea; }
+.messageViewport::-webkit-scrollbar-thumb { border: 2px solid #d8e0ea; border-radius: 999px; background: #1599b8; }
+.scrollHint {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.22rem;
+  margin: 0.12rem 0 0 auto;
+  padding: 0.06rem 0.2rem;
+  border-radius: 999px;
+  color: #075f78;
+  background: #e2f4f7;
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.scrollHint span { font-size: 0.72rem; }
 .typewriterFrame { position: relative; display: block; width: 100%; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none; }
 .typewriterPending { visibility: hidden; }
 .typewriterCursor { position: absolute; width: 0.12rem; height: 1em; margin-left: 0.08rem; border-radius: 999px; transform: translateY(0.12em); background: #0f9fc2; pointer-events: none; animation: lessonTypewriterCursor 0.7s step-end infinite; }
