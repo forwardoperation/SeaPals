@@ -79,7 +79,7 @@ test("Dr. Evans preserves its resolution and defers a successful refresh until t
 
   assert.match(
     completion,
-    /setPendingHandRefreshFlight\(shortfall > 0 \? null : \{[\s\S]*?revealed,[\s\S]*?announcement: `Dr\. Evans drew \$\{drawResult\.cardsToHand\.length\} new cards into your hand\.`/,
+    /setPendingHandArrivalFlight\(shortfall > 0 \? null : \{[\s\S]*?revealed,[\s\S]*?baseHandLength: 0,[\s\S]*?kind: "dr-evans-refresh",[\s\S]*?announcement: `Dr\. Evans drew \$\{drawResult\.cardsToHand\.length\} new cards into your hand\.`/,
     "only a successful seven-card refresh should enqueue the post-layout presentation",
   );
   assert.doesNotMatch(completion, /startMobileDrawFlights\(/, "the picker commit cannot measure an unmounted hand");
@@ -87,20 +87,22 @@ test("Dr. Evans preserves its resolution and defers a successful refresh until t
   assert.doesNotMatch(completion, /type:\s*"utility-result"/);
   assert.doesNotMatch(completion, /compactDrawResult|drawnCards:\s*drawnCards\.map/);
 
-  const refreshLayoutEffect = sourceBetween(
-    "if (!pendingHandRefreshFlight || modal || eventOverlay || gameResult) return;",
-    "}, [eventOverlay, gameResult, modal, pendingHandRefreshFlight]);",
+  const arrivalLayoutEffect = sourceBetween(
+    "if (!pendingHandArrivalFlight || modal || eventOverlay || gameResult) return;",
+    "}, [eventOverlay, gameResult, modal, pendingHandArrivalFlight]);",
   );
-  assert.match(refreshLayoutEffect, /const \{ revealed, announcement \} = pendingHandRefreshFlight/);
+  assert.match(arrivalLayoutEffect, /\} = pendingHandArrivalFlight/);
+  assert.match(arrivalLayoutEffect, /baseHandLength = 0/);
+  assert.match(arrivalLayoutEffect, /kind = "turn-draw"/);
   assert.match(
-    refreshLayoutEffect,
-    /startMobileDrawFlights\(revealed, 0, \{[\s\S]*?kind: "dr-evans-refresh"[\s\S]*?announcement/,
-    "the mounted seven-card hand starts its dedicated flight at index zero",
+    arrivalLayoutEffect,
+    /startMobileDrawFlights\(revealed, baseHandLength, \{[\s\S]*?kind,[\s\S]*?sourceZone,[\s\S]*?focusOnComplete,[\s\S]*?announcement/,
+    "a pending arrival starts only after the mounted hand can provide its exact destination",
   );
-  assert.match(refreshLayoutEffect, /setPendingHandRefreshFlight\(null\)/);
+  assert.match(arrivalLayoutEffect, /setPendingHandArrivalFlight\(null\)/);
   assert.match(
-    refreshLayoutEffect,
-    /if \(!refreshFlightsStarted\) \{[\s\S]*?setMobileDrawAnnouncement\(announcement\);[\s\S]*?mobileDrawFallbackFocusFrameRef\.current = window\.requestAnimationFrame[\s\S]*?data-mobile-hand-card-index="0"[\s\S]*?data-tutorial-target="turn-button"/,
+    arrivalLayoutEffect,
+    /if \(!arrivalFlightsStarted\) \{[\s\S]*?setMobileDrawAnnouncement\(announcement\);[\s\S]*?mobileDrawFallbackFocusFrameRef\.current = window\.requestAnimationFrame[\s\S]*?data-mobile-hand-card-index="\$\{baseHandLength\}"[\s\S]*?data-tutorial-target="turn-button"/,
     "a readable announcement and surviving focus target must replace the animation when flight geometry is unavailable",
   );
 
@@ -126,21 +128,21 @@ test("Dr. Evans preserves its resolution and defers a successful refresh until t
   );
   assert.match(
     handLimitEffect,
-    /if \(pendingHandRefreshFlight \|\| mobileDrawFlights\.length\) return/,
+    /if \(pendingHandArrivalFlight \|\| mobileDrawFlights\.length\) return/,
     "the Condition hand-limit picker must wait for the pending plan and all live arrival flights",
   );
-  assert.match(handLimitEffect, /mobileDrawFlights\.length[\s\S]*?pendingHandRefreshFlight\]\);/);
+  assert.match(handLimitEffect, /mobileDrawFlights\.length[\s\S]*?pendingHandArrivalFlight\]\);/);
 
   const turnControlLock = sourceBetween("const turnControlDisabled =", "const turnControlLabel =");
   assert.match(
     turnControlLock,
-    /Boolean\(pendingHandRefreshFlight\)[\s\S]*?mobileDrawFlights\.length > 0/,
+    /Boolean\(pendingHandArrivalFlight\)[\s\S]*?mobileDrawFlights\.length > 0/,
     "turn controls stay locked from the pending refresh through the final live flight",
   );
   const reefControlLock = sourceBetween("const boardInteractionOverlayActive =", "const v2TopChromeHidden =");
   assert.match(
     reefControlLock,
-    /Boolean\(pendingHandRefreshFlight\)[\s\S]*?mobileDrawFlights\.length > 0/,
+    /Boolean\(pendingHandArrivalFlight\)[\s\S]*?mobileDrawFlights\.length > 0/,
     "reef controls stay locked from the pending refresh through the final live flight",
   );
 
@@ -150,15 +152,15 @@ test("Dr. Evans preserves its resolution and defers a successful refresh until t
   );
   assert.match(
     arrivingIndexes,
-    /pendingHandRefreshFlight\?\.revealed[\s\S]*?filter\(\(entry\) => !entry\.discarded\)[\s\S]*?map\(\(_,[ ]*index\) => index\)/,
-    "the pending seven-card plan conceals hand positions zero through N minus one until flight handoff",
+    /pendingHandArrivalFlight\?\.revealed[\s\S]*?filter\(\(entry\) => !entry\.discarded\)[\s\S]*?map\(\(_,[ ]*index\) => pendingHandArrivalFlight\.baseHandLength \+ index\)/,
+    "a pending plan conceals its exact appended hand positions until flight handoff",
   );
   assert.match(arrivingIndexes, /mobileDrawFlights\.map\(\(flight\) => flight\.handIndex\)/);
 
   const prepareFlight = sourceBetween("function prepareMobileDrawFlight", "function finishMobileDrawFlight");
   assert.match(
     prepareFlight,
-    /\["opening-hand", "discard-recovery", "dr-evans-refresh"\]\.includes\(flight\?\.kind\)/,
+    /\["opening-hand", "discard-recovery", "dr-evans-refresh", "deck-search"\]\.includes\(flight\?\.kind\)/,
   );
 
   const ordinaryRecovery = sourceBetween("function completeCreatureRecovery", "function completeCreatureActionSearch");

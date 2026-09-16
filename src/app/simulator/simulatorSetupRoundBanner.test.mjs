@@ -309,7 +309,7 @@ test("discard recovery remeasures its visible source while ordinary draw flights
     /return zoneElement\?\.querySelector\("\.seapals-mobile-edge-zone-art"\) \?\? zoneElement/,
     "discard recovery should begin at the visible discard artwork",
   );
-  assert.match(prepareFlight, /\["opening-hand", "discard-recovery", "dr-evans-refresh"\]\.includes\(flight\?\.kind\)/);
+  assert.match(prepareFlight, /\["opening-hand", "discard-recovery", "dr-evans-refresh", "deck-search"\]\.includes\(flight\?\.kind\)/);
   const remeasureIndex = prepareFlight.indexOf("getMobileDrawFlightSourceElement(flight.sourceZone)");
   const sourceRectIndex = prepareFlight.indexOf("sourceElement?.getBoundingClientRect()");
   assert.ok(remeasureIndex >= 0 && sourceRectIndex > remeasureIndex, "the current zone geometry is measured again when each recovery flight starts");

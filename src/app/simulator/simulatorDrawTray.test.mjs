@@ -214,7 +214,7 @@ test("confirmed V2 draws animate each real card continuously from the deck rail 
   assert.match(simulatorSource, /"--seapals-draw-play-state":\s*"running"/);
   assert.match(simulatorSource, /onAnimationEnd=\{\(\) => finishMobileDrawFlight\(flight\)\}/);
   assert.match(simulatorSource, /data-mobile-hand-dock/);
-  assert.match(simulatorSource, /interactionDisabled=\{boardInteractionOverlayActive \|\| Boolean\(pendingHandRefreshFlight\) \|\| mobileDrawFlights\.length > 0 \|\| Boolean\(compactTurnSequence\) \|\| compactOpponentPlaybackLocked\}/);
+  assert.match(simulatorSource, /interactionDisabled=\{boardInteractionOverlayActive \|\| Boolean\(pendingHandArrivalFlight\) \|\| mobileDrawFlights\.length > 0 \|\| Boolean\(compactTurnSequence\) \|\| compactOpponentPlaybackLocked\}/);
 
   assert.match(
     simulatorSource,

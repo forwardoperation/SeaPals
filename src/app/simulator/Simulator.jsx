@@ -4796,7 +4796,7 @@ export default function Simulator({
   const [mobileDrawTrayOpen, setMobileDrawTrayOpen] = useState(false);
   const [mobileDrawFlights, setMobileDrawFlights] = useState([]);
   const [mobileDrawAnnouncement, setMobileDrawAnnouncement] = useState("");
-  const [pendingHandRefreshFlight, setPendingHandRefreshFlight] = useState(null);
+  const [pendingHandArrivalFlight, setPendingHandArrivalFlight] = useState(null);
   const [setupOpeningHandVisibleCount, setSetupOpeningHandVisibleCount] = useState(null);
   const mobileDrawFlightIdRef = useRef(0);
   const mobileDrawFlightTimersRef = useRef(new Map());
@@ -5974,7 +5974,7 @@ export default function Simulator({
   const turnControlDisabled = Boolean(gameResult)
     || opponentTurnInProgress
     || turnControlPhaseLocked
-    || Boolean(pendingHandRefreshFlight)
+    || Boolean(pendingHandArrivalFlight)
     || mobileDrawFlights.length > 0
     || boardStatPresentationActive
     || Boolean(compactTurnSequence)
@@ -6110,7 +6110,7 @@ export default function Simulator({
 
   useEffect(() => {
     if (gameResult || !["draw", "main"].includes(gamePhase) || !Number.isFinite(activeHandLimit)) return;
-    if (pendingHandRefreshFlight || mobileDrawFlights.length) return;
+    if (pendingHandArrivalFlight || mobileDrawFlights.length) return;
     const choice = createHandLimitChoice({ hand, handLimit: activeHandLimit });
     if (!choice.requiredDiscardCount) return;
     if (eventOverlay?.type === "choose-hand-limit-discard" || pendingEvents.some((event) => event.type === "choose-hand-limit-discard")) return;
@@ -6132,7 +6132,7 @@ export default function Simulator({
     } else {
       setEventOverlay(choiceEvent);
     }
-  }, [activeCondition?.id, activeHandLimit, eventOverlay, gamePhase, gameResult, hand, mobileDrawFlights.length, pendingEvents, pendingHandRefreshFlight]);
+  }, [activeCondition?.id, activeHandLimit, eventOverlay, gamePhase, gameResult, hand, mobileDrawFlights.length, pendingEvents, pendingHandArrivalFlight]);
 
   function getEmbeddedLessonBlock(action, details = {}) {
     return getSimulatorV2LessonActionBlock({
@@ -6258,26 +6258,38 @@ export default function Simulator({
   }, [previewExperience]);
 
   useLayoutEffect(() => {
-    if (!pendingHandRefreshFlight || modal || eventOverlay || gameResult) return;
-    const { revealed, announcement } = pendingHandRefreshFlight;
-    const refreshFlightsStarted = startMobileDrawFlights(revealed, 0, {
-      kind: "dr-evans-refresh",
+    if (!pendingHandArrivalFlight || modal || eventOverlay || gameResult) return;
+    const {
+      revealed,
+      baseHandLength = 0,
+      kind = "turn-draw",
+      sourceZone = "deck",
+      focusOnComplete = true,
+      announcement,
+    } = pendingHandArrivalFlight;
+    const arrivalFlightsStarted = startMobileDrawFlights(revealed, baseHandLength, {
+      kind,
+      sourceZone,
+      focusOnComplete,
       announcement,
     });
-    setPendingHandRefreshFlight(null);
-    if (!refreshFlightsStarted) {
+    setPendingHandArrivalFlight(null);
+    if (!arrivalFlightsStarted) {
       setMobileDrawAnnouncement(announcement);
       if (mobileDrawFallbackFocusFrameRef.current) {
         window.cancelAnimationFrame(mobileDrawFallbackFocusFrameRef.current);
       }
       mobileDrawFallbackFocusFrameRef.current = window.requestAnimationFrame(() => {
         mobileDrawFallbackFocusFrameRef.current = 0;
-        const focusTarget = document.querySelector('[data-mobile-hand-card-index="0"] button:not([disabled])')
+        const focusTarget = focusOnComplete
+          ? document.querySelector(`[data-mobile-hand-card-index="${baseHandLength}"] button:not([disabled])`)
+          : null;
+        const survivingFocusTarget = focusTarget
           ?? document.querySelector('[data-tutorial-target="turn-button"]:not([disabled])');
-        focusTarget?.focus?.({ preventScroll: true });
+        survivingFocusTarget?.focus?.({ preventScroll: true });
       });
     }
-  }, [eventOverlay, gameResult, modal, pendingHandRefreshFlight]);
+  }, [eventOverlay, gameResult, modal, pendingHandArrivalFlight]);
 
   useEffect(() => {
     if (!previewDrawTrayEnabled) {
@@ -7767,7 +7779,7 @@ export default function Simulator({
     || tutorialBoardTourOpen
     || eventOverlay
     || compactTurnSequence
-    || pendingHandRefreshFlight
+    || pendingHandArrivalFlight
     || mobileDrawFlights.length > 0
     || compactOpponentPlaybackLocked
     || boardStatPresentationActive
@@ -7847,7 +7859,7 @@ export default function Simulator({
       || modal
       || handPopoverCardId
       || inspectedCardData
-      || pendingHandRefreshFlight
+      || pendingHandArrivalFlight
       || mobileDrawFlights.length
       || roundFlash
       || gameResult
@@ -7865,7 +7877,7 @@ export default function Simulator({
     inspectedCardData,
     modal,
     mobileDrawFlights.length,
-    pendingHandRefreshFlight,
+    pendingHandArrivalFlight,
     roundFlash,
     tutorialBoardTourOpen,
     tutorialCardLesson,
@@ -12400,7 +12412,7 @@ export default function Simulator({
   }
 
   function prepareMobileDrawFlight(flight, flightElement) {
-    if (!["opening-hand", "discard-recovery", "dr-evans-refresh"].includes(flight?.kind) || !flightElement) return;
+    if (!["opening-hand", "discard-recovery", "dr-evans-refresh", "deck-search"].includes(flight?.kind) || !flightElement) return;
     if (!mobileDrawFlightTimersRef.current.has(flight.id)) return;
     const sourceElement = getMobileDrawFlightSourceElement(flight.sourceZone);
     const handRail = document.querySelector("[data-simulator-hand-card-rail]");
@@ -14054,8 +14066,10 @@ export default function Simulator({
     pushLog(message);
     if (shortfall) setGameResult((current) => current ?? `Defeat: Dr. Evans required seven cards, but your personal decks contained only ${drawnCards.length}.`);
     setEventOverlay(null);
-    setPendingHandRefreshFlight(shortfall > 0 ? null : {
+    setPendingHandArrivalFlight(shortfall > 0 ? null : {
       revealed,
+      baseHandLength: 0,
+      kind: "dr-evans-refresh",
       announcement: `Dr. Evans drew ${drawResult.cardsToHand.length} new cards into your hand.`,
     });
   }
@@ -14468,16 +14482,28 @@ export default function Simulator({
     if (!pendingCreatureAction?.searchCandidates?.includes(cardId)) return;
     const sourceCard = cardsById[pendingCreatureAction.sourceCardId];
     if (!sourceCard) return;
+    const foundCard = cardsById[cardId];
+    const foundDeckType = getPersonalDeckType(foundCard);
     setFoundationDeck(shuffle(removeOneCard(foundationDeck, cardId), nextGameplayRandom));
     setPalsDeck(shuffle(removeOneCard(palsDeck, cardId), nextGameplayRandom));
     const handResult = applyCurrentHandLimit([cardId]);
     if (handResult.cardsToHand.length) setHand((current) => [...current, cardId]);
     if (handResult.cardsToDiscard.length) setDiscardPile((current) => [cardId, ...current]);
     const discardedNames = (pendingCreatureAction.discardedCards ?? []).map((discardedId) => cardsById[discardedId]?.name ?? discardedId).join(", ");
-    const message = `${sourceCard.name} discarded ${discardedNames}, found ${cardsById[cardId]?.name}, added it to your hand, revealed it, and shuffled both personal decks.`;
+    const message = `${sourceCard.name} discarded ${discardedNames}, found ${foundCard?.name}, added it to your hand, revealed it, and shuffled both personal decks.`;
     pushLog(message);
     setPendingCreatureAction(null);
-    setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, defenderCardId: cardId, title: `Player's ${sourceCard.name} completed Scavenge`, message, success: true });
+    setEventOverlay(null);
+    setPendingHandArrivalFlight(handResult.cardsToHand.length ? {
+      revealed: [{
+        cardId,
+        source: foundDeckType === "foundation" ? "Foundation" : "Pals",
+        discarded: false,
+      }],
+      baseHandLength: hand.length,
+      kind: "deck-search",
+      announcement: `${foundCard?.name ?? cardId} was added to your hand.`,
+    } : null);
   }
 
   function completeEmptyCommittedActionSearch() {
@@ -20504,7 +20530,7 @@ export default function Simulator({
     cancelOpeningCoinFlip();
     cancelCardCoinFlipPresentation();
     clearMobileDrawFlightSequence();
-    setPendingHandRefreshFlight(null);
+    setPendingHandArrivalFlight(null);
     clearCompactTurnPresentation();
     clearCompactOpponentPlayback();
     clearBoardStatAsyncHandles();
@@ -20661,7 +20687,7 @@ export default function Simulator({
     cancelOpeningCoinFlip();
     cancelCardCoinFlipPresentation();
     clearMobileDrawFlightSequence();
-    setPendingHandRefreshFlight(null);
+    setPendingHandArrivalFlight(null);
     clearCompactTurnPresentation();
     clearCompactOpponentPlayback();
     clearBoardStatAsyncHandles();
@@ -21080,7 +21106,7 @@ export default function Simulator({
     && !resumeHydrationPending
     && !resumeCheckpoint
   );
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || conditionDetailEvent || compactDialogEvent || boardStatPresentationActive || Boolean(pendingHandRefreshFlight) || mobileDrawFlights.length > 0 || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || conditionDetailEvent || compactDialogEvent || boardStatPresentationActive || Boolean(pendingHandArrivalFlight) || mobileDrawFlights.length > 0 || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -21203,9 +21229,9 @@ export default function Simulator({
     : hand.map((_, index) => index).filter((index) => index >= setupOpeningHandPresentedCount);
   const mobileHandArrivingIndexes = [...new Set([
     ...setupOpeningHandConcealedIndexes,
-    ...(pendingHandRefreshFlight?.revealed ?? [])
+    ...(pendingHandArrivalFlight?.revealed ?? [])
       .filter((entry) => !entry.discarded)
-      .map((_, index) => index),
+      .map((_, index) => pendingHandArrivalFlight.baseHandLength + index),
     ...mobileDrawFlights.map((flight) => flight.handIndex),
   ])];
   const compactOpponentReaderEvent = compactOpponentCardReader?.event ?? null;
@@ -26237,7 +26263,7 @@ export default function Simulator({
                     discardCount={opponent.discardPile.length}
                     lostCount={(opponent.lostZone ?? []).length}
                     discardCard={cardsById[opponent.discardPile[0]] ?? null}
-                    disabled={Boolean(playingCardId) || Boolean(pendingHandRefreshFlight) || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence)}
+                    disabled={Boolean(playingCardId) || Boolean(pendingHandArrivalFlight) || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence)}
                     onOpenDiscard={() => setModal("opponent-discard")}
                     onOpenLost={() => setModal("opponent-lost")}
                   />
@@ -26538,7 +26564,7 @@ export default function Simulator({
                     discardCount={discardPile.length}
                     lostCount={lostZone.length}
                     discardCard={cardsById[discardPile[0]] ?? null}
-                    disabled={Boolean(playingCardId) || Boolean(pendingHandRefreshFlight) || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence)}
+                    disabled={Boolean(playingCardId) || Boolean(pendingHandArrivalFlight) || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence)}
                     deckActionLabel={gamePhase === "draw" && turnDrawSelection ? "Open draw options" : "Open your deck summary"}
                     deckExpanded={mobileDrawTrayOpen && modal === "turn-draw" && !eventOverlay && !compactTurnSequence}
                     tutorialTargetClass={tutorialTargetClass("zones")}
@@ -27133,7 +27159,7 @@ export default function Simulator({
             selectedIndex={mobileSelectedHandIndex}
             draggingIndex={mobileHandDrag?.index ?? null}
             arrivingIndexes={mobileHandArrivingIndexes}
-            interactionDisabled={boardInteractionOverlayActive || Boolean(pendingHandRefreshFlight) || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked}
+            interactionDisabled={boardInteractionOverlayActive || Boolean(pendingHandArrivalFlight) || mobileDrawFlights.length > 0 || Boolean(compactTurnSequence) || compactOpponentPlaybackLocked}
             playingCardId={playingCardId}
             tutorialTargetClass={tutorialTargetClass("hand")}
             onInspect={openHandCardPopover}
