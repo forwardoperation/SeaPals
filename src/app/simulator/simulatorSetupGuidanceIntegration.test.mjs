@@ -38,7 +38,7 @@ test("setup hand guidance respects both reduced-motion paths", () => {
   );
 });
 
-test("embedded lessons expose each action with divider-anchored teacher guidance", () => {
+test("embedded lessons expose each action with screen-left teacher guidance", () => {
   assert.match(
     simulatorSource,
     /const embeddedLessonActionReady = Boolean\(\s*embeddedLesson\s*&& tutorialHelpOpen\s*&& tutorialHelpDismissalKey\s*\);/,
@@ -53,7 +53,7 @@ test("embedded lessons expose each action with divider-anchored teacher guidance
   );
   assert.match(
     embeddedCoach,
-    /<ProfessorCoachOverlay help=\{tutorialHelp\} placementMode="reef-divider" measureKey=\{mobileReefSplit\}>[\s\S]*?<ProfessorGuideCard/,
+    /<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/,
   );
   assert.doesNotMatch(embeddedCoach, /Show me/);
   assert.match(embeddedCoach, /onAdvance=\{weaknessFocusActive \? \(\) => setWeaknessTourAcknowledged\(true\) : null\}/);
@@ -86,14 +86,14 @@ test("compact turn teaching blocks the stale lesson coach and hand cue", () => {
   );
 });
 
-test("legacy setup guidance keeps its target-aware coach and beacon", () => {
+test("legacy setup guidance uses the shared coach and keeps its target beacon", () => {
   assert.match(
     simulatorSource,
     /const tutorialSetupHelpAnchored = Boolean\(\s*tutorialHelpFloating\s*&& isSetup\s*&& tutorialHelp\?\.target === "hand"\s*&& tutorialHelp\.targetCardId,\s*\);/,
   );
   assert.match(
     simulatorSource,
-    /tutorialSetupHelpAnchored \|\| tutorialDrawTrayHelpAnchored \? \([\s\S]*?<ProfessorCoachOverlay help=\{tutorialHelp\}>[\s\S]*?<ProfessorGuideCard/,
+    /tutorialSetupHelpAnchored \|\| tutorialDrawTrayHelpAnchored \? \([\s\S]*?<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/,
   );
   assert.match(
     simulatorSource,

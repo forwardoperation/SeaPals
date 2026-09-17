@@ -249,25 +249,20 @@ test("compact cue arrow tips stop at the referenced button edge", () => {
   assert.equal(lowerButton.top + lowerButton.arrowLength, 334);
 });
 
-test("the board tour wires its full Next card to the target-aware coach and one arrow", async () => {
+test("the board tour keeps its Next card in the shared screen-left coach", async () => {
   const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
 
   assert.match(
     simulatorSource,
-    /<ProfessorCoachOverlay help=\{tutorialBoardTourHelp\}>[\s\S]*?<ProfessorGuideCard[\s\S]*?onAdvance=\{advanceTutorialBoardTour\}[\s\S]*?<\/ProfessorCoachOverlay>/,
+    /<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialBoardTourHelp\}[\s\S]*?onAdvance=\{advanceTutorialBoardTour\}[\s\S]*?<\/ProfessorCoachOverlay>/,
   );
-  assert.match(simulatorSource, /data-tutorial-coach-side=\{placement\?\.side\}/);
-  assert.match(simulatorSource, /className="seapals-professor-coach-arrow"/);
+  assert.match(simulatorSource, /data-tutorial-coach-placement="screen-left"/);
   assert.match(simulatorSource, /--seapals-target-arrow-shift/);
   assert.match(simulatorSource, /--seapals-target-arrow-length/);
   assert.match(
     simulatorSource,
     /<ProfessorTargetBeacon[\s\S]*?active=\{!embeddedLesson && tutorialTargetBeaconOpen && !tutorialBoardTourOpen && !tutorialSetupHelpAnchored\}/,
   );
-  const coachAnchorSelector = simulatorSource.indexOf("[data-tutorial-coach-anchor=");
-  const genericTargetSelector = simulatorSource.indexOf("[data-tutorial-target=", coachAnchorSelector);
-  assert.ok(coachAnchorSelector >= 0);
-  assert.ok(genericTargetSelector > coachAnchorSelector);
   assert.match(simulatorSource, /data-tutorial-coach-anchor="player-board-tab"/);
   assert.match(simulatorSource, /data-tutorial-coach-anchor="opponent-board-tab"/);
 });

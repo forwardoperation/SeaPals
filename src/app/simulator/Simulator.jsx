@@ -157,11 +157,7 @@ import {
   getTutorialCardReferenceRules,
   mergeTutorialSeenConcepts,
 } from "./tutorialCardLessons.mjs";
-import {
-  getTutorialBeaconAnchor,
-  getTutorialCoachPlacement,
-  getTutorialDividerCoachPlacement,
-} from "./tutorialCoachPlacement.mjs";
+import { getTutorialBeaconAnchor } from "./tutorialCoachPlacement.mjs";
 import {
   GUIDED_ACADEMY_LAYOUT_ACTIONS,
   completeGuidedAcademyLayoutAction,
@@ -1060,181 +1056,13 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "", dragging = fal
   );
 }
 
-const PROFESSOR_COACH_ARROW = Object.freeze({
-  above: "↓",
-  below: "↑",
-  left: "→",
-  right: "←",
-});
-
-function sameProfessorCoachPlacement(left, right) {
-  if (left === right) return true;
-  if (!left || !right) return false;
-  return left.side === right.side
-    && Math.abs(left.left - right.left) < 1
-    && Math.abs(left.top - right.top) < 1
-    && Math.abs(Number(left.arrowOffset ?? 0) - Number(right.arrowOffset ?? 0)) < 1
-    && Math.abs(Number(left.width ?? 0) - Number(right.width ?? 0)) < 1
-    && Math.abs(Number(left.availableHeight ?? 0) - Number(right.availableHeight ?? 0)) < 1
-    && Math.abs(Number(left.viewportWidth ?? 0) - Number(right.viewportWidth ?? 0)) < 1
-    && left.constrained === right.constrained;
-}
-
-function ProfessorCoachOverlay({ help, children, placementMode = "target", measureKey = null }) {
-  const coachRef = useRef(null);
-  const [placement, setPlacement] = useState(null);
-  const targetCardKey = (help?.targetCardIds ?? [help?.targetCardId])
-    .map((cardId) => String(cardId ?? ""))
-    .join(":");
-  const usesDividerAnchor = placementMode === "reef-divider";
-
-  useLayoutEffect(() => {
-    if (!usesDividerAnchor && (!help?.target || !TUTORIAL_POINTER_TARGETS.has(help.target))) {
-      setPlacement(null);
-      return undefined;
-    }
-
-    let animationFrame = null;
-    let delayedUpdate = null;
-    let resizeObserver = null;
-    let observedTarget = null;
-    const requestUpdate = () => {
-      if (animationFrame) cancelAnimationFrame(animationFrame);
-      animationFrame = requestAnimationFrame(updatePlacement);
-    };
-    const updatePlacement = () => {
-      animationFrame = null;
-      const target = usesDividerAnchor
-        ? (() => {
-            const element = document.querySelector('[data-tutorial-coach-anchor="reef-divider"]');
-            return element ? { element, rect: element.getBoundingClientRect() } : null;
-          })()
-        : findTutorialTarget(help);
-      const coachElement = coachRef.current;
-      if (!target || !coachElement) {
-        setPlacement((current) => current == null ? current : null);
-        return;
-      }
-      const coachRect = coachElement.getBoundingClientRect();
-      if (coachRect.width < 4 || coachRect.height < 4) {
-        setPlacement((current) => current == null ? current : null);
-        return;
-      }
-      const intrinsicCoachHeight = usesDividerAnchor
-        ? Math.max(coachRect.height, Number(coachElement.firstElementChild?.scrollHeight) || 0)
-        : coachRect.height;
-      const measuredCoachRect = usesDividerAnchor
-        ? {
-            left: coachRect.left,
-            top: coachRect.top,
-            right: coachRect.right,
-            bottom: coachRect.top + intrinsicCoachHeight,
-          }
-        : coachRect;
-      const visualViewport = window.visualViewport;
-      const viewportLeft = visualViewport?.offsetLeft ?? 0;
-      const viewportTop = visualViewport?.offsetTop ?? 0;
-      const viewportWidth = visualViewport?.width ?? window.innerWidth;
-      const viewportHeight = visualViewport?.height ?? window.innerHeight;
-      const relativeTargetRect = {
-        left: target.rect.left - viewportLeft,
-        top: target.rect.top - viewportTop,
-        right: target.rect.right - viewportLeft,
-        bottom: target.rect.bottom - viewportTop,
-      };
-      const nextPlacement = usesDividerAnchor
-        ? getTutorialDividerCoachPlacement({
-            dividerRect: relativeTargetRect,
-            coachRect: measuredCoachRect,
-            viewportWidth,
-            viewportHeight,
-          })
-        : getTutorialCoachPlacement({
-            targetRect: relativeTargetRect,
-            coachRect,
-            viewportWidth,
-            viewportHeight,
-          });
-      const viewportPlacement = nextPlacement
-        ? {
-            ...nextPlacement,
-            left: nextPlacement.left + viewportLeft,
-            top: nextPlacement.top + viewportTop,
-            viewportWidth,
-          }
-        : null;
-      setPlacement((current) => (
-        sameProfessorCoachPlacement(current, viewportPlacement) ? current : viewportPlacement
-      ));
-
-      if (typeof ResizeObserver !== "undefined") {
-        resizeObserver ??= new ResizeObserver(requestUpdate);
-        if (observedTarget !== target.element) {
-          resizeObserver.disconnect();
-          resizeObserver.observe(coachElement);
-          resizeObserver.observe(target.element);
-          observedTarget = target.element;
-        }
-      }
-    };
-
-    updatePlacement();
-    delayedUpdate = window.setTimeout(requestUpdate, 240);
-    window.addEventListener("resize", requestUpdate);
-    window.addEventListener("scroll", requestUpdate, true);
-    window.visualViewport?.addEventListener("resize", requestUpdate);
-    window.visualViewport?.addEventListener("scroll", requestUpdate);
-    return () => {
-      if (animationFrame) cancelAnimationFrame(animationFrame);
-      if (delayedUpdate) window.clearTimeout(delayedUpdate);
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", requestUpdate);
-      window.removeEventListener("scroll", requestUpdate, true);
-      window.visualViewport?.removeEventListener("resize", requestUpdate);
-      window.visualViewport?.removeEventListener("scroll", requestUpdate);
-    };
-  }, [
-    help?.cueId,
-    help?.target,
-    help?.coachAnchor,
-    help?.targetActionKey,
-    targetCardKey,
-    help?.targetSearchCardId,
-    help?.targetDeck,
-    help?.targetDrawAction,
-    usesDividerAnchor,
-    measureKey,
-  ]);
-
+function ProfessorCoachOverlay({ children }) {
   return (
     <div
-      ref={coachRef}
-      className={`seapals-professor-coach-wrap${usesDividerAnchor ? " seapals-professor-coach-wrap-divider" : ""}${placement ? ` seapals-professor-coach-wrap-anchored seapals-professor-coach-side-${placement.side}` : ""}`}
-      style={{
-        width: usesDividerAnchor
-          ? placement?.viewportWidth
-            ? `min(23rem, calc(100vw - 24px), ${Math.max(1, placement.viewportWidth - 24)}px)`
-            : "min(23rem, calc(100vw - 24px))"
-          : help?.lessonStep ? "min(23rem, calc(100vw - 24px))" : undefined,
-        ...(placement ? {
-          left: `${placement.left}px`,
-          top: `${placement.top}px`,
-          ...(placement.arrowOffset != null ? { "--seapals-coach-arrow-offset": `${placement.arrowOffset}px` } : {}),
-          ...(usesDividerAnchor && placement.availableHeight != null
-            ? { "--seapals-coach-available-height": `${Math.max(1, placement.availableHeight)}px` }
-            : {}),
-        } : {}),
-      }}
-      data-tutorial-coach-placement={placementMode}
-      data-tutorial-coach-side={placement?.side}
-      data-tutorial-coach-constrained={placement?.constrained ? "true" : undefined}
+      className="seapals-professor-coach-wrap"
+      data-tutorial-coach-placement="screen-left"
     >
       {children}
-      {placement && !usesDividerAnchor ? (
-        <span className="seapals-professor-coach-arrow" aria-hidden="true">
-          {PROFESSOR_COACH_ARROW[placement.side]}
-        </span>
-      ) : null}
     </div>
   );
 }
@@ -22439,73 +22267,21 @@ export default function Simulator({
           .seapals-v2-action-cue-hand svg path { fill: Canvas; stroke: CanvasText; }
         }
         .seapals-professor-coach-wrap {
-          position: absolute;
-          z-index: 160;
-          top: 5.25rem;
-          left: 1rem;
-          width: min(32rem, calc(100% - 2rem));
-          pointer-events: none;
-        }
-        .seapals-professor-coach-wrap-low {
-          top: auto;
-          bottom: 1rem;
-        }
-        .seapals-professor-coach-wrap-anchored {
           position: fixed;
-          top: auto;
+          z-index: 160;
+          top: 50%;
           right: auto;
           bottom: auto;
-          left: auto;
-          width: min(32rem, calc(100vw - 1.5rem));
-          transition: left 240ms ease-out, top 240ms ease-out;
+          left: 1rem;
+          width: min(23rem, calc(100vw - 2rem));
+          max-height: calc(100dvh - 1.5rem);
+          pointer-events: none;
+          transform: translateY(-50%);
         }
-        .seapals-professor-coach-wrap-divider {
-          max-height: var(--seapals-coach-available-height, calc(100dvh - 1.5rem));
-          transition: none;
-        }
-        .seapals-professor-coach-wrap-divider:not(.seapals-professor-coach-wrap-anchored) {
-          visibility: hidden;
-        }
-        .seapals-professor-coach-wrap-divider[data-tutorial-coach-constrained="true"] > [data-v2-lesson-panel="coach"] {
+        .seapals-professor-coach-wrap > [data-v2-lesson-panel="coach"] {
           max-height: inherit;
           overflow-y: auto;
           overscroll-behavior: contain;
-        }
-        .seapals-professor-coach-arrow {
-          position: absolute;
-          z-index: 3;
-          display: grid;
-          width: 2.75rem;
-          height: 2.75rem;
-          place-items: center;
-          color: #fbbf24;
-          font-size: 2.6rem;
-          font-weight: 950;
-          line-height: 1;
-          pointer-events: none;
-          filter: drop-shadow(0 3px 2px rgba(2, 8, 23, .72));
-        }
-        .seapals-professor-coach-side-above .seapals-professor-coach-arrow,
-        .seapals-professor-coach-side-below .seapals-professor-coach-arrow {
-          left: var(--seapals-coach-arrow-offset);
-          transform: translateX(-50%);
-        }
-        .seapals-professor-coach-side-above .seapals-professor-coach-arrow {
-          top: calc(100% - .2rem);
-        }
-        .seapals-professor-coach-side-below .seapals-professor-coach-arrow {
-          bottom: calc(100% - .2rem);
-        }
-        .seapals-professor-coach-side-left .seapals-professor-coach-arrow,
-        .seapals-professor-coach-side-right .seapals-professor-coach-arrow {
-          top: var(--seapals-coach-arrow-offset);
-          transform: translateY(-50%);
-        }
-        .seapals-professor-coach-side-left .seapals-professor-coach-arrow {
-          left: calc(100% - .2rem);
-        }
-        .seapals-professor-coach-side-right .seapals-professor-coach-arrow {
-          right: calc(100% - .2rem);
         }
         .seapals-professor-card {
           position: relative;
@@ -22854,7 +22630,7 @@ export default function Simulator({
           border-color: #fff !important;
           box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff !important;
         }
-        .seapals-reduced-motion :is(.seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-professor-coach-wrap-anchored, .seapals-professor-coach-arrow, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-card-drawer, .seapals-hand-card-popover, .seapals-event-card, .seapals-turn-button) {
+        .seapals-reduced-motion :is(.seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-card-drawer, .seapals-hand-card-popover, .seapals-event-card, .seapals-turn-button) {
           animation: none !important;
           transition: none !important;
         }
@@ -22876,7 +22652,7 @@ export default function Simulator({
             animation: none !important;
             transition: none !important;
           }
-          .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-professor-coach-wrap-anchored, .seapals-professor-coach-arrow, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-hand-card-popover { animation: none !important; opacity: 1 !important; transition: none !important; }
+          .seapals-setup-playable-card, .seapals-slot-target, .seapals-tutorial-target, .seapals-professor-turn, .seapals-professor-next, .seapals-target-beacon, .seapals-target-beacon-arrow, .seapals-professor-type-cursor, .seapals-hand-card-popover { animation: none !important; opacity: 1 !important; transition: none !important; }
           .seapals-professor-type-cursor { display: none; }
           .seapals-setup-playable-card { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); }
           .seapals-slot-target { background-color: rgba(52,211,153,.2); border-color: rgba(167,243,208,.9); box-shadow: 0 0 30px rgba(52,211,153,.45); }
@@ -25848,20 +25624,6 @@ export default function Simulator({
           .seapals-tutorial-help-floating .seapals-target-beacon-copy,
           .seapals-tutorial-help-inline .seapals-target-beacon > .seapals-professor-portrait,
           .seapals-tutorial-help-inline .seapals-target-beacon-copy { display: none; }
-          .seapals-professor-coach-wrap,
-          .seapals-professor-coach-wrap-low {
-            position: fixed;
-            top: auto;
-            right: .5rem;
-            bottom: calc(var(--seapals-mobile-dock-clearance) + env(safe-area-inset-bottom));
-            left: .5rem;
-            width: auto;
-          }
-          .seapals-professor-coach-wrap-anchored {
-            right: auto;
-            bottom: auto;
-            width: min(32rem, calc(100vw - 1.5rem));
-          }
           .seapals-professor-card {
             max-height: min(34dvh, 15rem);
             gap: .4rem;
@@ -26130,7 +25892,7 @@ export default function Simulator({
           {tutorialBoardTourOpen ? <div className="fixed inset-0 z-[159]" aria-hidden="true" /> : null}
 
           {tutorialBoardTourOpen ? (
-            <ProfessorCoachOverlay help={tutorialBoardTourHelp}>
+            <ProfessorCoachOverlay>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={tutorialBoardTourHelp}
@@ -26146,7 +25908,7 @@ export default function Simulator({
           ) : null}
 
           {embeddedLessonPreVictoryOpen ? (
-            <ProfessorCoachOverlay help={embeddedLessonPreVictoryHelp} placementMode="reef-divider" measureKey={`pre-victory:${mobileReefSplit}`}>
+            <ProfessorCoachOverlay>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={embeddedLessonPreVictoryHelp}
@@ -26157,7 +25919,7 @@ export default function Simulator({
               />
             </ProfessorCoachOverlay>
           ) : embeddedCompactCoachOpen ? (
-            <ProfessorCoachOverlay help={embeddedCompactCoachHelp} placementMode="reef-divider" measureKey={`${mobileReefSplit}:${compactTurnSequence.stageIndex}`}>
+            <ProfessorCoachOverlay>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={embeddedCompactCoachHelp}
@@ -26170,7 +25932,7 @@ export default function Simulator({
               />
             </ProfessorCoachOverlay>
           ) : embeddedLessonCoachOpen ? (
-            <ProfessorCoachOverlay help={tutorialHelp} placementMode="reef-divider" measureKey={mobileReefSplit}>
+            <ProfessorCoachOverlay>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={tutorialHelp}
@@ -26182,7 +25944,7 @@ export default function Simulator({
               />
             </ProfessorCoachOverlay>
           ) : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (
-            <ProfessorCoachOverlay help={tutorialHelp}>
+            <ProfessorCoachOverlay>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={tutorialHelp}
@@ -26192,7 +25954,7 @@ export default function Simulator({
               />
             </ProfessorCoachOverlay>
           ) : tutorialHelpFloating ? (
-            <div className={`seapals-professor-coach-wrap${tutorialHelp.target === "opponent-board" ? " seapals-professor-coach-wrap-low" : ""}`}>
+            <ProfessorCoachOverlay>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={tutorialHelp}
@@ -26200,7 +25962,7 @@ export default function Simulator({
                 total={tutorialContract.checkpoints.length}
                 onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)}
               />
-            </div>
+            </ProfessorCoachOverlay>
           ) : null}
 
           <ProfessorTargetBeacon

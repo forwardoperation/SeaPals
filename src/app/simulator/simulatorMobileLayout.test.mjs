@@ -94,7 +94,7 @@ test("desktop board-tour progress and Skip Tour keep separate header space", () 
   );
 });
 
-test("mobile guidance keeps the legacy arrow and anchors embedded lessons to the reef divider", () => {
+test("mobile guidance keeps the hand cue while the teacher stays at screen-left", () => {
   assert.match(simulatorSource, /tutorialHelpFloating \? " seapals-tutorial-help-floating"/);
   assert.match(simulatorSource, /tutorialHelpInline \? " seapals-tutorial-help-inline"/);
   assert.match(
@@ -112,11 +112,12 @@ test("mobile guidance keeps the legacy arrow and anchors embedded lessons to the
   );
   assert.match(
     simulatorSource,
-    /embeddedLessonCoachOpen \? \([\s\S]*?<ProfessorCoachOverlay help=\{tutorialHelp\} placementMode="reef-divider" measureKey=\{mobileReefSplit\}>/,
+    /embeddedLessonCoachOpen \? \([\s\S]*?<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/,
   );
   assert.doesNotMatch(simulatorSource, /data-v2-lesson-dialogue|advanceLabel="Show me"|beginEmbeddedLessonAction/);
   assert.match(simulatorSource, /data-v2-target-gesture=\{gesture\}/);
-  assert.match(simulatorSource, /\.seapals-professor-coach-wrap,[\s\S]*?bottom: calc\(var\(--seapals-mobile-dock-clearance\) \+ env\(safe-area-inset-bottom\)\);/);
+  assert.match(simulatorSource, /\.seapals-professor-coach-wrap\s*\{[^}]*position:\s*fixed;[^}]*top:\s*50%;/);
+  assert.doesNotMatch(simulatorSource, /\.seapals-professor-coach-wrap[^}]*bottom:\s*calc\(var\(--seapals-mobile-dock-clearance\)/);
   assert.match(simulatorSource, /\.seapals-v2-action-cue \{[\s\S]*?pointer-events: none;/);
 });
 

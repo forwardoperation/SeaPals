@@ -36,7 +36,7 @@ function extractFunction(functionName, followingFunctionName) {
 test("Lesson 1 teaches Coral weaknesses on the board without a generic hand over the print", () => {
   const genericCue = sourceSection(
     "function EmbeddedLessonActionCue(",
-    "const PROFESSOR_COACH_ARROW",
+    "function ProfessorCoachOverlay(",
   );
   assert.match(
     genericCue,

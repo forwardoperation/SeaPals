@@ -19,7 +19,7 @@ test("drag lessons connect the exact hand card to the nearest visible legal dest
   );
   const cue = sourceSection(
     "function EmbeddedLessonActionCue(",
-    "const PROFESSOR_COACH_ARROW",
+    "function ProfessorCoachOverlay(",
   );
 
   assert.match(finder, /data-v2-lesson-drop-cards~/);
@@ -149,7 +149,7 @@ test("the board exposes prepared ecosystem, matching Coral, and compatible slot 
 test("the board-native overlay keeps the drop circle and teacher visible during the real drag", () => {
   const cue = sourceSection(
     "function EmbeddedLessonActionCue(",
-    "const PROFESSOR_COACH_ARROW",
+    "function ProfessorCoachOverlay(",
   );
   const presentationGate = sourceSection(
     "const embeddedLessonPresentationBlocked = Boolean(",
@@ -198,44 +198,36 @@ test("the board-native overlay keeps the drop circle and teacher visible during 
   assert.match(simulatorSource, /const embeddedLessonActionCueMeasureKey = [\s\S]*?ecosystemZoom[\s\S]*?ecosystemOffset\.x[\s\S]*?mobileReefSplit[\s\S]*?playerCorals\.map/);
 });
 
-test("embedded coaching stays left-anchored on the reef divider while the hand points to the action", () => {
+test("all in-board coaching stays fixed at screen-left while the hand points to the action", () => {
   const coach = sourceSection(
     "function ProfessorCoachOverlay(",
     "function destroyedCardGoesToLostZone(",
   );
 
-  assert.match(coach, /placementMode = "target", measureKey = null/);
-  assert.match(coach, /useLayoutEffect\(\(\) => \{/);
-  assert.match(coach, /const usesDividerAnchor = placementMode === "reef-divider"/);
-  assert.match(coach, /document\.querySelector\('\[data-tutorial-coach-anchor="reef-divider"\]'\)/);
-  assert.match(coach, /usesDividerAnchor[\s\S]*?getTutorialDividerCoachPlacement\(\{/);
-  assert.match(coach, /viewportPlacement = nextPlacement[\s\S]*?viewportWidth,/);
-  assert.match(coach, /usesDividerAnchor,[\s\S]*?measureKey,/);
-  assert.match(coach, /\n\s*updatePlacement\(\);\s*\n\s*delayedUpdate = window\.setTimeout\(requestUpdate, 240\)/);
-  assert.match(
-    coach,
-    /width: usesDividerAnchor[\s\S]*?`min\(23rem, calc\(100vw - 24px\), \$\{Math\.max\(1, placement\.viewportWidth - 24\)\}px\)`/,
-  );
-  assert.match(coach, /data-tutorial-coach-placement=\{placementMode\}/);
-  assert.match(coach, /placement && !usesDividerAnchor/);
-  assert.match(
-    simulatorSource,
-    /<ProfessorCoachOverlay help=\{tutorialHelp\} placementMode="reef-divider" measureKey=\{mobileReefSplit\}>/,
-  );
-  assert.match(
-    simulatorSource,
-    /className=\{`seapals-reef-divider-handle[\s\S]*?data-tutorial-coach-anchor="reef-divider"[\s\S]*?role="separator"/,
-  );
-  assert.match(
-    simulatorSource,
-    /\.seapals-professor-coach-wrap-divider:not\(\.seapals-professor-coach-wrap-anchored\)\s*\{[\s\S]*?visibility:\s*hidden;/,
-  );
+  assert.match(coach, /data-tutorial-coach-placement="screen-left"/);
+  assert.doesNotMatch(coach, /getTutorialCoachPlacement|getTutorialDividerCoachPlacement|findTutorialTarget|ResizeObserver/);
+  const coachCss = simulatorSource.match(/\.seapals-professor-coach-wrap\s*\{([^}]+)\}/)?.[1];
+  assert.ok(coachCss, "missing shared coach wrapper style");
+  assert.match(coachCss, /position:\s*fixed/);
+  assert.match(coachCss, /top:\s*50%/);
+  assert.match(coachCss, /left:\s*(?:1rem|12px)/);
+  assert.match(coachCss, /width:\s*min\(23rem, calc\(100vw - 2rem\)\)/);
+  assert.match(coachCss, /max-height:\s*calc\(100dvh - 1\.5rem\)/);
+  assert.match(coachCss, /transform:\s*translateY\(-50%\)/);
+  assert.doesNotMatch(coachCss, /transition:\s*(?:left|top)/);
+  assert.match(simulatorSource, /\.seapals-professor-coach-wrap > \[data-v2-lesson-panel="coach"\]\s*\{[^}]*overflow-y:\s*auto/);
+
+  for (const help of ["embeddedLessonPreVictoryHelp", "embeddedCompactCoachHelp", "tutorialHelp", "tutorialBoardTourHelp"]) {
+    assert.match(simulatorSource, new RegExp(`<ProfessorGuideCard[\\s\\S]{0,400}?help=\\{${help}\\}`));
+  }
+  assert.match(simulatorSource, /\) : tutorialHelpFloating \? \(\s*<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/);
+  assert.match(simulatorSource, /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}/);
 });
 
 test("tap cues remain target-local and the hand travels smoothly along the exact path", () => {
   const cue = sourceSection(
     "function EmbeddedLessonActionCue(",
-    "const PROFESSOR_COACH_ARROW",
+    "function ProfessorCoachOverlay(",
   );
 
   assert.match(cue, /const targetRect = layout\.sourceRect;[\s\S]*?data-v2-target-gesture=\{gesture\}/);
