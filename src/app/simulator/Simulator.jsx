@@ -571,6 +571,9 @@ function findTutorialTarget(help, { includeOffscreen = false } = {}) {
   if (help.target === "hand" && help.targetCardId) {
     selectors.push(`[data-tutorial-hand-card-id="${escapeTutorialSelectorValue(help.targetCardId)}"]`);
   }
+  if (help.target === "search-card" && help.targetSearchCardId) {
+    selectors.push(`[data-tutorial-search-action-card-id="${escapeTutorialSelectorValue(help.targetSearchCardId)}"]`);
+  }
   if (help.targetSearchCardId) {
     selectors.push(`[data-tutorial-search-card-id="${escapeTutorialSelectorValue(help.targetSearchCardId)}"]`);
   }
@@ -2920,11 +2923,12 @@ function DeckSearchChoice({
           type="button"
           data-compact-search-control
           autoFocus={autoFocus}
+          data-tutorial-search-action-card-id={tutorialSearchCardId}
           disabled={chooseDisabled}
           aria-pressed={typeof chosen === "boolean" ? chosen : undefined}
           aria-label={`${chooseLabel} ${card.name}`}
           onClick={onChoose}
-          className={`mt-2 min-h-11 w-full shrink-0 rounded-xl px-3 py-2 text-xs font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${chosen ? "bg-emerald-600 hover:bg-emerald-500" : "bg-cyan-600 hover:bg-cyan-500"}`}
+          className={`mt-2 min-h-11 w-full shrink-0 rounded-xl px-3 py-2 text-xs font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${chosen ? "bg-emerald-600 hover:bg-emerald-500" : "bg-cyan-600 hover:bg-cyan-500"}${tutorialTarget === "search-card" ? " seapals-tutorial-target" : ""}`}
         >
           {chooseLabel}
         </button>
@@ -2954,11 +2958,12 @@ function DeckSearchChoice({
       </button>
       <button
         type="button"
+        data-tutorial-search-action-card-id={tutorialSearchCardId}
         disabled={chooseDisabled}
         aria-pressed={typeof chosen === "boolean" ? chosen : undefined}
         aria-label={`${chooseLabel} ${card.name}`}
         onClick={onChoose}
-        className={`shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${chosen ? "bg-emerald-600 hover:bg-emerald-500" : "bg-cyan-600 hover:bg-cyan-500"}`}
+        className={`shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:bg-slate-500 disabled:opacity-45 ${chosen ? "bg-emerald-600 hover:bg-emerald-500" : "bg-cyan-600 hover:bg-cyan-500"}${tutorialTarget === "search-card" ? " seapals-tutorial-target" : ""}`}
       >
         {chooseLabel}
       </button>
@@ -7668,10 +7673,16 @@ export default function Simulator({
     tutorialCurrentCheckpoint?.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES.ATTACK_RESOLVED
     && (inspectedCardData || attackContext)
   );
+  const embeddedLessonSearchChoiceOpen = Boolean(
+    embeddedLesson
+    && modal === "search"
+    && tutorialHelp?.target === "search-card"
+  );
   const embeddedLessonCoachOpen = Boolean(
     embeddedLessonActionReady
     && !embeddedLessonPresentationBlocked
     && !embeddedLessonAttackControlsOpen
+    && !embeddedLessonSearchChoiceOpen
   );
   const tutorialDrawTrayHelpAnchored = Boolean(
     !embeddedLesson
@@ -7817,7 +7828,7 @@ export default function Simulator({
   );
 
   useEffect(() => {
-    if (!embeddedLessonCoachOpen || !tutorialTargetBeaconOpen) return undefined;
+    if (!(embeddedLessonCoachOpen || embeddedLessonSearchChoiceOpen) || !tutorialTargetBeaconOpen) return undefined;
 
     let secondFrame = null;
     let firstFrame = window.requestAnimationFrame(() => {
@@ -7842,6 +7853,7 @@ export default function Simulator({
   }, [
     accessibilityReducedMotion,
     embeddedLessonCoachOpen,
+    embeddedLessonSearchChoiceOpen,
     tutorialHelp?.coachAnchor,
     tutorialHelp?.cueId,
     tutorialHelp?.target,
@@ -29202,7 +29214,6 @@ export default function Simulator({
                           meta={availableCopies > 1 ? `${availableCopies} copies available` : getCardClassLabel(card)}
                           tutorialTarget={tutorialChoice ? "search-card" : undefined}
                           tutorialSearchCardId={cardId}
-                          className={tutorialChoice ? "seapals-tutorial-target" : ""}
                           compact
                           autoFocus={cardIndex === 0}
                         />

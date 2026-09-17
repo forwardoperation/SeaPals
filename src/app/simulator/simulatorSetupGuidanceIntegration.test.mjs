@@ -45,7 +45,7 @@ test("embedded lessons expose each action with screen-left teacher guidance", ()
   );
   assert.match(
     simulatorSource,
-    /const embeddedLessonAttackControlsOpen = Boolean\([\s\S]*?ATTACK_RESOLVED[\s\S]*?inspectedCardData \|\| attackContext[\s\S]*?\);[\s\S]*?const embeddedLessonCoachOpen = Boolean\(\s*embeddedLessonActionReady\s*&& !embeddedLessonPresentationBlocked\s*&& !embeddedLessonAttackControlsOpen\s*\);/,
+    /const embeddedLessonAttackControlsOpen = Boolean\([\s\S]*?ATTACK_RESOLVED[\s\S]*?inspectedCardData \|\| attackContext[\s\S]*?\);[\s\S]*?const embeddedLessonSearchChoiceOpen = Boolean\([\s\S]*?modal === "search"[\s\S]*?tutorialHelp\?\.target === "search-card"[\s\S]*?\);[\s\S]*?const embeddedLessonCoachOpen = Boolean\(\s*embeddedLessonActionReady\s*&& !embeddedLessonPresentationBlocked\s*&& !embeddedLessonAttackControlsOpen\s*&& !embeddedLessonSearchChoiceOpen\s*\);/,
   );
   const embeddedCoach = sourceBetween(
     ") : embeddedLessonCoachOpen ? (",
@@ -60,7 +60,7 @@ test("embedded lessons expose each action with screen-left teacher guidance", ()
   assert.doesNotMatch(simulatorSource, /embeddedLessonActionCueIds|beginEmbeddedLessonAction|data-v2-lesson-dialogue/);
   assert.match(
     simulatorSource,
-    /if \(!embeddedLessonCoachOpen \|\| !tutorialTargetBeaconOpen\) return undefined;[\s\S]*?findTutorialTarget\(tutorialHelp, \{ includeOffscreen: true \}\)[\s\S]*?\[data-simulator-hand-card-rail\][\s\S]*?scrollTutorialTargetWithinContainer/,
+    /if \(!\(embeddedLessonCoachOpen \|\| embeddedLessonSearchChoiceOpen\) \|\| !tutorialTargetBeaconOpen\) return undefined;[\s\S]*?findTutorialTarget\(tutorialHelp, \{ includeOffscreen: true \}\)[\s\S]*?\[data-simulator-hand-card-rail\][\s\S]*?scrollTutorialTargetWithinContainer/,
   );
   assert.match(simulatorSource, /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag \|\| draggingCoralId \|\| slotDragStart\)\}/);
   assert.match(simulatorSource, /\.seapals-v2-action-cue \{[\s\S]*?pointer-events: none;/);

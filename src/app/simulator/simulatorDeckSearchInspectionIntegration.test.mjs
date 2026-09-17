@@ -117,3 +117,50 @@ test("all seven deck-search resolution paths split inspection from add or select
     assertSplitSearchResultControls(path);
   }
 });
+
+test("guided lesson searches use the Add to Hand button as the hand cue and hide the coach bubble", () => {
+  const coachGate = sourceBetween(
+    "  const embeddedLessonSearchChoiceOpen = Boolean(",
+    "  const tutorialDrawTrayHelpAnchored = Boolean(",
+  );
+  assert.match(coachGate, /embeddedLesson\s*&& modal === "search"\s*&& tutorialHelp\?\.target === "search-card"/);
+  assert.match(coachGate, /!embeddedLessonPresentationBlocked/);
+  assert.match(coachGate, /!embeddedLessonAttackControlsOpen/);
+  assert.match(coachGate, /&& !embeddedLessonSearchChoiceOpen/);
+
+  const guidedSearch = sourceBetween(
+    '            ) : modal === "search" ? (',
+    '            ) : (\n              <div className="space-y-3">',
+  );
+  assert.match(guidedSearch, /tutorialTarget=\{tutorialChoice \? "search-card" : undefined\}/);
+  assert.match(guidedSearch, /chooseLabel=\{searchContext\?\.maxSelect > 1 \?[^\n]+: "Add to Hand"\}/);
+
+  const targetFinder = sourceBetween("function findTutorialTarget(", "function scrollTutorialTargetWithinContainer(");
+  const guidedButtonSelector = targetFinder.indexOf("data-tutorial-search-action-card-id");
+  const cardFallbackSelector = targetFinder.indexOf("data-tutorial-search-card-id");
+  assert.ok(guidedButtonSelector >= 0 && guidedButtonSelector < cardFallbackSelector, "guided search must find Add to Hand before the card wrapper");
+  assert.match(targetFinder, /help\.target === "search-card"/);
+
+  const searchChoice = sourceBetween("function DeckSearchChoice({", "function getDeckOrderOccurrenceKey(");
+  const compactChoice = searchChoice.slice(searchChoice.indexOf("  if (compact) {"), searchChoice.indexOf("  return (\n    <div"));
+  const regularChoice = searchChoice.slice(searchChoice.indexOf("  return (\n    <div"));
+  for (const [label, choice] of [["compact", compactChoice], ["regular", regularChoice]]) {
+    const wrapper = choice.slice(0, choice.indexOf("<button"));
+    const chooseButtonStart = choice.lastIndexOf("<button");
+    const chooseButton = choice.slice(chooseButtonStart, choice.indexOf("</button>", chooseButtonStart));
+    assert.match(wrapper, /data-tutorial-target=\{tutorialTarget\}/, `${label} wrapper keeps scripted search targeting`);
+    assert.match(wrapper, /data-tutorial-search-card-id=\{tutorialSearchCardId\}/);
+    assert.match(chooseButton, /data-tutorial-search-action-card-id=\{[^}]*tutorialSearchCardId[^}]*\}/);
+    assert.match(chooseButton, /aria-label=\{`\$\{chooseLabel\} \$\{card\.name\}`\}/);
+    assert.match(chooseButton, /onClick=\{onChoose\}/);
+  }
+
+  const handCue = sourceBetween("          <EmbeddedLessonActionCue\n            help={tutorialHelp}", "          {embeddedLessonActionReady && !embeddedLessonPresentationBlocked ? (");
+  assert.match(handCue, /active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}/);
+  const targetFocus = sourceBetween(
+    "  useEffect(() => {\n    if (!(embeddedLessonCoachOpen || embeddedLessonSearchChoiceOpen)",
+    "  const tutorialAnnouncementHelp =",
+  );
+  assert.match(targetFocus, /findTutorialTarget\(tutorialHelp, \{ includeOffscreen: true \}\)/);
+  assert.match(targetFocus, /target\.element\.focus\?\.\(\{ preventScroll: true \}\)/);
+});
