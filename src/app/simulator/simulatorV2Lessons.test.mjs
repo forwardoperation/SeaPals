@@ -923,7 +923,7 @@ test("sequencing gates block spending or passing out of order while leaving actu
   assert.ok(block(setupLesson, setupCheckpoint, "end-turn", { gamePhase: "setup" }), "layout practice comes before Begin Round");
   assert.ok(block(setupLesson, setupCheckpoint, "end-turn", {
     gamePhase: "setup",
-    layoutLessonProgress: { "move-foundation": true },
+    layoutLessonProgress: { "move-slot": true },
   }), "both layout gestures are required");
   assert.equal(block(setupLesson, setupCheckpoint, "end-turn", {
     gamePhase: "setup",
@@ -1154,17 +1154,24 @@ test("Lesson 1 speaks the new-player mental model before asking for each action"
   assert.equal(selectedInitial.cueId, initial.cueId, "the dialogue should not restart when the pointer changes target");
   assert.equal(placingInitial.cueId, initial.cueId);
 
-  const moveFoundation = getSimulatorV2LessonHelp(lesson, setup, {
-    gamePhase: "setup",
-    hasCoralInPlay: true,
-  });
-  assert.match(moveFoundation.action, /connected circles.*creature slots.*only organizes.*Press and hold Brain Coral.*MOVE HERE.*release/is);
   const moveSlot = getSimulatorV2LessonHelp(lesson, setup, {
     gamePhase: "setup",
     hasCoralInPlay: true,
-    layoutLessonProgress: { "move-foundation": true },
   });
-  assert.match(moveSlot.action, /move a creature slot by itself.*same Coral.*Press and hold.*MOVE HERE.*release/is);
+  assert.equal(moveSlot.target, "slot-drag", "the finger starts on a connected slot while slots are introduced");
+  assert.equal(moveSlot.actionId, "move-slot");
+  assert.match(moveSlot.action, /^The connected circles are creature slots.*Press and hold.*slot.*MOVE HERE.*release/is);
+  assert.match(moveSlot.pointerPrompt, /slot.*MOVE HERE/i);
+  const moveFoundation = getSimulatorV2LessonHelp(lesson, setup, {
+    gamePhase: "setup",
+    hasCoralInPlay: true,
+    layoutLessonProgress: { "move-slot": true },
+  });
+  assert.equal(moveFoundation.target, "foundation-drag", "the finger moves to Brain Coral when its branch is explained");
+  assert.equal(moveFoundation.actionId, "move-foundation");
+  assert.match(moveFoundation.action, /^Brain Coral.*whole branch.*Press and hold Brain Coral.*MOVE HERE.*release.*connected slots move with it/is);
+  assert.match(moveFoundation.pointerPrompt, /Brain Coral.*MOVE HERE/i);
+  assert.notEqual(moveFoundation.cueId, moveSlot.cueId, "the new instruction starts a new cue");
   const beginRound = getSimulatorV2LessonHelp(lesson, setup, {
     gamePhase: "setup",
     hasCoralInPlay: true,
@@ -1231,18 +1238,18 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
   assert.equal(help(setup, { gamePhase: "setup", hasCoralInPlay: false }).target, "hand");
   assert.equal(help(setup, { gamePhase: "setup", selectedHandCard: first.setupCardId, handPopoverOpen: true }).target, "play-card");
   assert.equal(help(setup, { gamePhase: "setup", playingCardId: first.setupCardId }).target, "placement");
-  const foundationMoveHelp = help(setup, { gamePhase: "setup", hasCoralInPlay: true });
-  assert.equal(foundationMoveHelp.target, "foundation-drag");
-  assert.equal(foundationMoveHelp.interaction, "drag");
-  assert.equal(foundationMoveHelp.dragDestination, "clear-water");
-  const slotMoveHelp = help(setup, {
-    gamePhase: "setup",
-    hasCoralInPlay: true,
-    layoutLessonProgress: { "move-foundation": true },
-  });
+  const slotMoveHelp = help(setup, { gamePhase: "setup", hasCoralInPlay: true });
   assert.equal(slotMoveHelp.target, "slot-drag");
   assert.equal(slotMoveHelp.interaction, "drag");
   assert.equal(slotMoveHelp.dragDestination, "clear-water");
+  const foundationMoveHelp = help(setup, {
+    gamePhase: "setup",
+    hasCoralInPlay: true,
+    layoutLessonProgress: { "move-slot": true },
+  });
+  assert.equal(foundationMoveHelp.target, "foundation-drag");
+  assert.equal(foundationMoveHelp.interaction, "drag");
+  assert.equal(foundationMoveHelp.dragDestination, "clear-water");
   assert.equal(help(setup, {
     gamePhase: "setup",
     hasCoralInPlay: true,

@@ -1022,32 +1022,12 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (
       selected.id === "first-reef"
       && uiState.hasCoralInPlay
-      && uiState.layoutLessonProgress?.["move-foundation"] !== true
-    ) {
-      return help(
-        "foundation-drag",
-        `Your reef layout is flexible. Drag ${name(selected.setupCardId)} and its whole branch moves with it. You can also drag an individual slot when you need more room; moving either one never changes the rules.`,
-        "The connected circles are creature slots: the homes this Coral provides. Moving cards only organizes your board; it never changes their rules. Press and hold Brain Coral, then drag its whole branch along the dotted path into the large MOVE HERE circle and release.",
-        {
-          actionId: "move-foundation",
-          interaction: "drag",
-          dragDestination: "clear-water",
-          targetCardId: selected.setupCardId,
-          pointerPrompt: "Hold Brain Coral and drag it into MOVE HERE.",
-          targetLabel: "Brain Coral and the MOVE HERE circle",
-          hint: "Move the Coral by its card body. Its slots and attached creatures stay connected.",
-        },
-      );
-    }
-    if (
-      selected.id === "first-reef"
-      && uiState.hasCoralInPlay
       && uiState.layoutLessonProgress?.["move-slot"] !== true
     ) {
       return help(
         "slot-drag",
-        "Each slot can move around its Coral too. This only organizes your reef; the slot still accepts the same kind of creature and remains connected to the same Coral.",
-        "You can also move a creature slot by itself while it stays connected to the same Coral. Press and hold the highlighted round slot, then drag it along the dotted path into the large MOVE HERE circle and release.",
+        "The connected circles are creature slots: homes for the creatures you will play. A slot can move around its Coral without changing which creatures fit there.",
+        "The connected circles are creature slots: homes for the creatures you will play. Press and hold the highlighted round slot, then drag it along the dotted path into MOVE HERE and release. It stays connected to Brain Coral and accepts the same kind of creature.",
         {
           actionId: "move-slot",
           interaction: "drag",
@@ -1056,6 +1036,26 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
           pointerPrompt: "Hold the round slot and drag it into MOVE HERE.",
           targetLabel: "the highlighted slot and MOVE HERE circle",
           hint: "Drag the round slot marker. Its connector follows while the Coral stays in place.",
+        },
+      );
+    }
+    if (
+      selected.id === "first-reef"
+      && uiState.hasCoralInPlay
+      && uiState.layoutLessonProgress?.["move-foundation"] !== true
+    ) {
+      return help(
+        "foundation-drag",
+        `Your reef layout is flexible. Drag ${name(selected.setupCardId)} and its whole branch moves with it. Moving cards only organizes your board; it never changes their rules.`,
+        "Brain Coral and its whole branch can move together. Press and hold Brain Coral by its card, then drag it along the dotted path into MOVE HERE and release. Its connected slots move with it; only the layout changes.",
+        {
+          actionId: "move-foundation",
+          interaction: "drag",
+          dragDestination: "clear-water",
+          targetCardId: selected.setupCardId,
+          pointerPrompt: "Hold Brain Coral and drag it into MOVE HERE.",
+          targetLabel: "Brain Coral and the MOVE HERE circle",
+          hint: "Move the Coral by its card body. Its slots and attached creatures stay connected.",
         },
       );
     }
