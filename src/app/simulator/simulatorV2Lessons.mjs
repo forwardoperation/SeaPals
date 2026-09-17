@@ -169,8 +169,9 @@ function lesson(definition) {
 export const SIMULATOR_V2_LESSON_MODULES = deepFreeze([
   { id: "reef-basics", title: "Reef Basics", summary: "Build a home and welcome your first SeaPals.", lessonIds: ["first-reef"] },
   { id: "battle-basics", title: "Ability Basics", summary: "Use attacks, passive abilities, and a planned recovery action.", lessonIds: ["first-attack"] },
-  { id: "smart-plays", title: "Smart Plays", summary: "Use Support cards and clear a Condition.", lessonIds: ["support-search", "clear-stun"] },
-  { id: "build-to-victory", title: "Build to Victory", summary: "Master School Density, Filter Feeders, Apex cards, and winning turns.", lessonIds: ["school-density", "filter-feeder", "apex-predators", "winning-turn"] },
+  { id: "support-recovery", title: "Recover and Rebuild", summary: "Clear a harmful status, search for the right upgrade, and rebuild your reef.", lessonIds: ["support-search"] },
+  { id: "habitat-apex", title: "Build a Habitat", summary: "Meet Coral Reef's creature requirements, then unlock an Apex predator.", lessonIds: ["apex-predators"] },
+  { id: "open-water", title: "Grow into Open Water", summary: "Expand School Density before committing it to a giant Filter Feeder.", lessonIds: ["filter-feeder"] },
 ]);
 
 /** Short positions prepared inside the real Simulator. */
@@ -369,50 +370,22 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "support-search", moduleId: "smart-plays", number: 3,
-    title: "Call in Support", duration: "3 min", goalLabel: "Search, build, and reach 4 VP",
-    summary: "Use Coral Gardener to expand your familiar reef with the exact Coral it needs.",
-    introduction: "In this lesson, you’ll learn to call for the right help at the right time. Coral Gardener can find Brain Coral; build it, then welcome another Sea Urchin.",
-    completion: "Coral Gardener found a Coral, revealed it, and moved to the discard pile. You turned that one-time effect into a lasting 4 VP reef.",
-    celebration: "A smart search grew your reef!",
-    skills: ["Support cards", "Searching decks", "Discard pile"],
+    id: "support-search", moduleId: "support-recovery", number: 3,
+    title: "Recover and rebuild", duration: "5 min", goalLabel: "Clear Stunned, find an upgrade, reach 4 VP",
+    summary: "Use one-time Support cards in the right order to restore Brain Coral and grow your reef.",
+    introduction: "In this lesson, you will learn how to recover from a setback. Brain Coral is Stunned, so clear it first. Then search for its upgrade and turn that recovery into room for another creature.",
+    completion: "You cleared Stunned before Coral Gardener locked further Supports, found Brain Coral's upgrade, and turned two one-time effects into a stronger reef.",
+    celebration: "Your reef bounced back stronger!",
+    skills: ["Support timing", "Status recovery", "Deck search", "Coral upgrades"],
     introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.SUPPORT_CARDS,
       SIMULATOR_V2_LESSON_CONCEPTS.DECK_SEARCH,
-    ],
-    focusCardId: "coral-gardener", searchCardId: "brain-coral-base", victoryTarget: 4,
-    seed: seed({
-      hand: ["coral-gardener", "sea-urchin"],
-      foundationDeck: ["brain-coral-base"],
-      playerTableau: [homeReef()],
-      rp: 2,
-    }),
-    checkpoints: [
-      supportCheckpoint("v2-play-coral-gardener", "Search with Coral Gardener", "coral-gardener"),
-      buildCheckpoint("v2-build-searched-coral", "Build the Coral you found", "brain-coral-base", { cardKind: "coral", placement: "foundation" }),
-      buildCheckpoint("v2-support-finish", "Welcome Sea Urchin", "sea-urchin"),
-      victoryCheckpoint(4),
-    ],
-    supportCards: { "v2-play-coral-gardener": ["coral-gardener"] },
-    buildCards: {
-      "v2-build-searched-coral": ["brain-coral-base"],
-      "v2-support-finish": ["sea-urchin"],
-    },
-  }),
-  lesson({
-    id: "clear-stun", moduleId: "smart-plays", number: 4,
-    title: "Clear Stunned", duration: "3 min", goalLabel: "Recover and reach 4 VP",
-    summary: "Clear a Condition with Coral Heal, then upgrade and rebuild.",
-    introduction: "In this lesson, you’ll learn to clear a Condition. Brain Coral is Stunned, so use Coral Heal, upgrade it, and give Sea Urchin a home.",
-    completion: "Coral Heal cleared Stunned, so Brain Coral could upgrade and welcome another Sea Urchin.",
-    celebration: "Your Coral is back in action!",
-    skills: ["Stunned", "Coral Heal", "Status recovery"],
-    introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.STATUS_EFFECTS,
     ],
-    focusCardId: "coral-heal", victoryTarget: 4,
+    focusCardId: "coral-heal", searchCardId: "brain-coral-stage-1", victoryTarget: 4,
     seed: seed({
-      hand: ["coral-heal", "brain-coral-stage-1", "sea-urchin"],
+      hand: ["coral-heal", "coral-gardener", "sea-urchin"],
+      foundationDeck: ["brain-coral-stage-1"],
       playerTableau: [
         homeReef(),
         tableau("brain-coral-base", [], {
@@ -422,100 +395,65 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       rp: 3,
     }),
     checkpoints: [
-      supportCheckpoint("v2-clear-stunned", "Use Coral Heal", "coral-heal"),
+      supportCheckpoint("v2-clear-stunned", "Clear Stunned before searching", "coral-heal"),
+      supportCheckpoint("v2-play-coral-gardener", "Find the right upgrade", "coral-gardener"),
       buildCheckpoint("v2-upgrade-after-stun", "Upgrade the recovered Coral", "brain-coral-stage-1", { cardKind: "coral", placement: "foundation-upgrade" }),
-      buildCheckpoint("v2-stun-finish", "Use the open Invertebrate slot", "sea-urchin"),
+      buildCheckpoint("v2-stun-finish", "Use the new Invertebrate slot", "sea-urchin"),
       victoryCheckpoint(4),
     ],
-    supportCards: { "v2-clear-stunned": ["coral-heal"] },
+    supportCards: {
+      "v2-clear-stunned": ["coral-heal"],
+      "v2-play-coral-gardener": ["coral-gardener"],
+    },
     buildCards: {
       "v2-upgrade-after-stun": ["brain-coral-stage-1"],
       "v2-stun-finish": ["sea-urchin"],
     },
   }),
   lesson({
-    id: "school-density", moduleId: "build-to-victory", number: 5,
-    title: "Supply School Density", duration: "3 min", goalLabel: "Supply 10, spend 10, reach 4 VP",
-    summary: "Grow beyond your reef by building a Creature School and an Oceanic Fish.",
-    introduction: "In this lesson, you’ll learn to grow beyond the reef. Build Sardine Ball, then use its 10 School Density to support Halfbeak in open water.",
-    completion: "Sardine Ball supplied 10 School Density and Halfbeak committed all 10, growing your ecosystem to 4 VP. The density meter tracks what is supplied and what is already in use.",
-    celebration: "Your open-water ecosystem is growing!",
-    skills: ["Creature Schools", "School Density", "Open water"],
-    introducedConcepts: [
-      SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY,
-      SIMULATOR_V2_LESSON_CONCEPTS.OPEN_WATER,
-    ],
-    focusCardId: "sardine-ball-base", victoryTarget: 4,
-    seed: seed({
-      hand: ["sardine-ball-base", "halfbeak"],
-      playerTableau: [homeReef()],
-      rp: 3,
-    }),
-    checkpoints: [
-      buildCheckpoint("v2-build-density-source", "Build Sardine Ball", "sardine-ball-base", { placement: "foundation" }),
-      buildCheckpoint("v2-spend-density", "Play Halfbeak in open water", "halfbeak", { placement: "open-water" }),
-      victoryCheckpoint(4),
-    ],
-    buildCards: {
-      "v2-build-density-source": ["sardine-ball-base"],
-      "v2-spend-density": ["halfbeak"],
-    },
-  }),
-  lesson({
-    id: "filter-feeder", moduleId: "build-to-victory", number: 6,
-    title: "Welcome a Filter Feeder", duration: "2 min", goalLabel: "Commit 150 Density for 11 VP",
-    summary: "Use a Habitat and available School Density to add Ocean Sunfish beside your reef.",
-    introduction: "In this lesson, you’ll learn what a giant Filter Feeder needs. Open Ocean and two Schools are ready for Ocean Sunfish—if you can make the numbers work.",
-    completion: "Ocean Sunfish joined your 3 VP reef because you had a matching Habitat, 8 RP, and at least 150 available School Density.",
-    celebration: "A Filter Feeder joins the ecosystem!",
-    skills: ["Filter Feeders", "Habitats", "Density commitments"],
+    id: "apex-predators", moduleId: "habitat-apex", number: 4,
+    title: "Build a Habitat for an Apex", duration: "7 min", goalLabel: "Complete Coral Reef and reach 12 VP",
+    summary: "Meet Coral Reef's creature requirements, play the Habitat, upgrade a Coral, and welcome Hammerhead.",
+    introduction: "In this lesson, you will learn why a Habitat is more than another card. Complete your reef's Fish and Invertebrate counts, place Coral Reef, and prepare an Apex slot for Hammerhead.",
+    completion: "You supplied four Reef Corals, two Reef Fish, and two Reef Invertebrates to sustain Coral Reef. That Habitat and a Stage 2 Apex slot let Hammerhead enter and use Ravage.",
+    celebration: "Your thriving reef welcomed an Apex!",
+    skills: ["Habitat requirements", "Maintaining a Habitat", "Apex slots", "Multi-attack abilities", "Turn planning"],
     introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.HABITATS,
-      SIMULATOR_V2_LESSON_CONCEPTS.FILTER_FEEDERS,
-    ],
-    focusCardId: "ocean-sunfish", victoryTarget: 11,
-    seed: seed({
-      hand: ["ocean-sunfish"],
-      playerTableau: [homeReef(), tableau("sardine-ball-stage2"), tableau("anchovy-ball-stage1")],
-      playerHabitats: ["open-ocean"],
-      rp: 8,
-    }),
-    checkpoints: [
-      buildCheckpoint("v2-play-filter-feeder", "Play Ocean Sunfish", "ocean-sunfish", { placement: "open-water" }),
-      victoryCheckpoint(11),
-    ],
-    buildCards: { "v2-play-filter-feeder": ["ocean-sunfish"] },
-  }),
-  lesson({
-    id: "apex-predators", moduleId: "build-to-victory", number: 7,
-    title: "Level up to an Apex", duration: "4 min", goalLabel: "Upgrade, play an Apex, reach 14 VP",
-    summary: "Upgrade Brain Coral to Stage 2, unlock its Apex slot, and resolve Ravage.",
-    introduction: "In this lesson, you’ll learn how upgrades welcome Apex predators. Level Brain Coral to Stage 2, play Hammerhead, and guide both Ravage attacks.",
-    completion: "Stage 2 unlocked an Apex slot. Hammerhead met its Habitat, slot, and RP requirements, then resolved both attacks from Ravage.",
-    celebration: "Your Apex has arrived!",
-    skills: ["Coral upgrades", "Apex slots", "Multi-attack abilities"],
-    introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.APEX,
       SIMULATOR_V2_LESSON_CONCEPTS.MULTI_ATTACK,
+      SIMULATOR_V2_LESSON_CONCEPTS.TURN_PLANNING,
     ],
-    focusCardId: "hammerhead", attackCardId: "hammerhead", victoryTarget: 14,
+    focusCardId: "coral-reef", attackCardId: "hammerhead", victoryTarget: 12,
+    expectedDraws: {
+      "v2-draw-hammerhead": { deckType: "pals", cardId: "hammerhead" },
+    },
     seed: seed({
-      hand: ["brain-coral-stage-2", "hammerhead"],
+      hand: ["clownfish", "arrow-crab", "coral-reef", "brain-coral-stage-2"],
+      foundationDeck: [],
+      palsDeck: ["hammerhead"],
       playerTableau: [
         tableau("brain-coral-stage-1"),
         homeReef(),
-        tableau("pillar-coral-base", [["fairy-parrotfish", "fish"], ["arrow-crab", "invertebrate"], ["arrow-crab", "invertebrate"]]),
-        tableau("lettuce-coral-base", [["arrow-crab", "invertebrate"]]),
+        tableau("pillar-coral-base"),
+        tableau("lettuce-coral-base"),
       ],
-      playerHabitats: ["coral-reef"],
+      playerHabitats: [],
       opponentTableau: [tableau("boulder-star-coral-stage-2", [["clownfish", "predator"], ["clownfish", "predator"]])],
-      rp: 11,
+      rp: 8,
       activeConditionId: null,
+      conditionDeck: ["abundant-sunlight"],
     }),
     checkpoints: [
-      buildCheckpoint("v2-upgrade-apex-coral", "Upgrade Brain Coral to Stage 2", "brain-coral-stage-2", { cardKind: "coral", placement: "foundation-upgrade" }),
+      buildCheckpoint("v2-add-habitat-fish", "Add the second Reef Fish", "clownfish"),
+      buildCheckpoint("v2-add-habitat-invertebrate", "Add the second Reef Invertebrate", "arrow-crab"),
+      buildCheckpoint("v2-play-coral-reef", "Establish Coral Reef", "coral-reef", { cardKind: "habitat", placement: "habitat" }),
+      buildCheckpoint("v2-upgrade-apex-coral", "Open an Apex slot", "brain-coral-stage-2", { cardKind: "coral", placement: "foundation-upgrade" }),
+      checkpoint("v2-save-for-apex", ACTION.TURN_ENDED, "Plan the Apex turn", "End the turn with a healthy Habitat and collect enough RP next round for Hammerhead."),
+      collectCheckpoint(),
+      drawCheckpoint({ id: "v2-draw-hammerhead", title: "Draw the Apex", deckType: "pals" }),
       buildCheckpoint("v2-play-apex", "Play Hammerhead", "hammerhead"),
-      victoryCheckpoint(14),
+      victoryCheckpoint(12),
       checkpoint("v2-resolve-ravage", ACTION.ATTACK_RESOLVED, "Resolve both Ravage attacks", "Choose two different legal targets and resolve both faceoffs.", [
         truthy("details.accepted"),
         equals("details.attackerCardId", "hammerhead"),
@@ -524,43 +462,68 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       ]),
     ],
     buildCards: {
+      "v2-add-habitat-fish": ["clownfish"],
+      "v2-add-habitat-invertebrate": ["arrow-crab"],
+      "v2-play-coral-reef": ["coral-reef"],
       "v2-upgrade-apex-coral": ["brain-coral-stage-2"],
       "v2-play-apex": ["hammerhead"],
     },
+    placementTargets: {
+      "v2-add-habitat-fish": {
+        cardId: "clownfish", foundationCardId: "pillar-coral-base", slotClass: "fish", slotOrdinal: 0,
+      },
+      "v2-add-habitat-invertebrate": {
+        cardId: "arrow-crab", foundationCardId: "pillar-coral-base", slotClass: "invertebrate", slotOrdinal: 0,
+      },
+    },
   }),
   lesson({
-    id: "winning-turn", moduleId: "build-to-victory", number: 8,
-    title: "Find your winning play", duration: "3 min", goalLabel: "Plan a full turn to reach 5 VP",
-    summary: "Use a full turn to grow from 1 VP to a short practice goal of 5.",
-    introduction: "In this lesson, you’ll learn to spot the winning line for yourself. Begin the round, draw wisely, and fill both Fish slots to reach 5 VP.",
-    completion: "You reached 5 VP by collecting, drawing, and building your ecosystem. You are ready to try a match with the simulator's usual VP goal.",
-    celebration: "You found the winning play!",
-    skills: ["Turn order", "Choosing plays", "Winning"],
-    introducedConcepts: [SIMULATOR_V2_LESSON_CONCEPTS.TURN_PLANNING],
-    focusCardId: "clownfish", victoryTarget: 5,
-    expectedDraw: { deckType: "pals", cardId: "clownfish" },
+    id: "filter-feeder", moduleId: "open-water", number: 5,
+    title: "Make room for a giant", duration: "5 min", goalLabel: "Balance School Density and reach 21 VP",
+    summary: "Commit a little School Density, expand its supply, and then bring in an Ocean Sunfish.",
+    introduction: "In this lesson, you will learn how Creature Schools supply School Density. I've prepared two beside your Coral Reef. Halfbeak uses a little; Ocean Sunfish needs much more, so let's expand a School.",
+    completion: "Your Coral Reef and Hammerhead stayed in play. Halfbeak used 10 School Density, then Anchovy Ball's upgrade left enough free for Ocean Sunfish to push the ecosystem to 21 VP.",
+    celebration: "Your ecosystem made room for a giant!",
+    skills: ["Creature Schools", "School Density", "Open water", "Filter Feeders"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY,
+      SIMULATOR_V2_LESSON_CONCEPTS.OPEN_WATER,
+      SIMULATOR_V2_LESSON_CONCEPTS.FILTER_FEEDERS,
+    ],
+    focusCardId: "ocean-sunfish", victoryTarget: 21,
+    expectedDraws: {
+      "v2-draw-filter-feeder": { deckType: "pals", cardId: "ocean-sunfish" },
+    },
     seed: seed({
-      hand: ["porcupine-fish"],
-      rp: 1,
-      gamePhase: "setup",
-      round: 0,
-      hasDrawnThisTurn: false,
-      activeConditionId: null,
+      hand: ["halfbeak", "anchovy-ball-stage1"],
+      foundationDeck: [],
+      palsDeck: ["ocean-sunfish"],
       playerTableau: [
-        tableau("mustard-hill-coral-base", [["sea-urchin", "invertebrate"]]),
-        tableau("brain-coral-base"),
+        tableau("brain-coral-stage-2", [["hammerhead", "apex"]]),
+        homeReef(),
+        tableau("pillar-coral-base", [["clownfish", "fish"], ["arrow-crab", "invertebrate"]]),
+        tableau("lettuce-coral-base"),
+        tableau("sardine-ball-stage2"),
+        tableau("anchovy-ball-base"),
       ],
+      playerHabitats: ["coral-reef"],
+      rp: 8,
+      activeConditionId: null,
+      conditionDeck: ["abundant-sunlight"],
     }),
     checkpoints: [
+      buildCheckpoint("v2-spend-density", "See how a small Fish uses Density", "halfbeak", { placement: "open-water" }),
+      buildCheckpoint("v2-expand-density", "Upgrade Anchovy Ball", "anchovy-ball-stage1", { placement: "foundation-upgrade" }),
+      checkpoint("v2-fund-filter-feeder", ACTION.TURN_ENDED, "Prepare the next round", "End your turn so the reef can fund your giant Filter Feeder."),
       collectCheckpoint(),
-      drawCheckpoint(),
-      buildCheckpoint("v2-first-winning-fish", "Choose your first Fish"),
-      buildCheckpoint("v2-second-winning-fish", "Reach the practice goal"),
-      victoryCheckpoint(5),
+      drawCheckpoint({ id: "v2-draw-filter-feeder", title: "Draw Ocean Sunfish", deckType: "pals" }),
+      buildCheckpoint("v2-play-filter-feeder", "Welcome Ocean Sunfish", "ocean-sunfish", { placement: "open-water" }),
+      victoryCheckpoint(21),
     ],
     buildCards: {
-      "v2-first-winning-fish": ["porcupine-fish", "clownfish"],
-      "v2-second-winning-fish": ["porcupine-fish", "clownfish"],
+      "v2-spend-density": ["halfbeak"],
+      "v2-expand-density": ["anchovy-ball-stage1"],
+      "v2-play-filter-feeder": ["ocean-sunfish"],
     },
   }),
 ]);
@@ -715,7 +678,9 @@ const CARD_NAMES = Object.freeze({
   flounder: "Southern Flounder",
   "coral-gardener": "Coral Gardener",
   "coral-heal": "Coral Heal",
+  "coral-reef": "Coral Reef",
   "sardine-ball-base": "Sardine Ball",
+  "anchovy-ball-stage1": "Anchovy Ball Stage 1",
   halfbeak: "Halfbeak",
   "ocean-sunfish": "Ocean Sunfish",
   hammerhead: "Hammerhead",
@@ -727,6 +692,7 @@ const FOUNDATION_CARD_IDS = new Set([
   "sardine-ball-base",
 ]);
 const UPGRADE_CARD_IDS = new Set(["brain-coral-stage-1", "brain-coral-stage-2"]);
+const SCHOOL_UPGRADE_CARD_IDS = new Set(["anchovy-ball-stage1"]);
 const OPEN_WATER_CARD_IDS = new Set(["halfbeak", "ocean-sunfish"]);
 const name = (cardId) => CARD_NAMES[cardId] ?? cardId ?? "the highlighted card";
 
@@ -773,6 +739,8 @@ function conceptCopy(uiState, concept, teachingCopy, practiceCopy = "") {
 }
 
 function placementConcept(cardId) {
+  if (cardId === "coral-reef") return SIMULATOR_V2_LESSON_CONCEPTS.HABITATS;
+  if (SCHOOL_UPGRADE_CARD_IDS.has(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY;
   if (cardId === "sardine-ball-base") return SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY;
   if (FOUNDATION_CARD_IDS.has(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.CORALS;
   if (UPGRADE_CARD_IDS.has(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.CORAL_UPGRADES;
@@ -815,6 +783,18 @@ function allowedBuildCards(selected, current, uiState) {
 }
 
 function placementCopy(cardId) {
+  if (cardId === "coral-reef") {
+    return {
+      message: "Coral Reef is a Habitat: it stays in its own zone and unlocks creatures that require it. It needs four Reef Corals, two Reef Fish, and two Reef Invertebrates in play; if those counts later fall short, it takes 10 HP damage at the end of each turn.",
+      action: "Choose Play Card to establish Coral Reef in your Habitat zone.",
+    };
+  }
+  if (SCHOOL_UPGRADE_CARD_IDS.has(cardId)) {
+    return {
+      message: "Anchovy Ball Stage 1 replaces the matching Base School. Its supply rises from 10 to 50 School Density, making more room for open-water creatures.",
+      action: "Choose the glowing Anchovy Ball School to upgrade it.",
+    };
+  }
   if (UPGRADE_CARD_IDS.has(cardId)) {
     return {
       message: name(cardId) + " levels up the matching Coral while preserving its position and compatible creatures.",
@@ -854,12 +834,11 @@ function placementCopy(cardId) {
 }
 
 function dragActionCopy(cardId, candidates, selected, current) {
-  if (
-    selected.id === "winning-turn"
-    && current?.id === "v2-first-winning-fish"
-    && candidates.length > 1
-  ) {
-    return "Drag either Fish from your hand into a highlighted Fish slot.";
+  if (cardId === "coral-reef") {
+    return "Select Coral Reef in your hand, then choose Play Card to put it in the Habitat zone.";
+  }
+  if (SCHOOL_UPGRADE_CARD_IDS.has(cardId)) {
+    return "Drag Anchovy Ball Stage 1 from your hand onto the highlighted Anchovy Ball School.";
   }
   if (UPGRADE_CARD_IDS.has(cardId)) {
     return "Drag " + name(cardId) + " from your hand onto the highlighted matching Coral.";
@@ -928,8 +907,10 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const firstAttackPredatorDraw = selected.id === "first-attack" && expectedDraw?.cardId === "great-barracuda";
     const seaUrchinWasDefeated = Array.isArray(uiState.discardPileCardIds)
       && uiState.discardPileCardIds.includes("sea-urchin");
-    const scenarioDrawMessage = selected.id === "winning-turn"
-      ? "You need 4 more VP. Your Pals Deck contains a creature that can fill an empty Fish slot."
+    const scenarioDrawMessage = selected.id === "apex-predators"
+      ? "Your Coral Reef is established and Brain Coral has an Apex slot. Draw Hammerhead from the Pals Deck so you can use the RP you collected for the final play."
+      : selected.id === "filter-feeder"
+      ? "You expanded School Density for a giant creature. Draw Ocean Sunfish from the Pals Deck; your Coral Reef Habitat and 160 free Density are ready."
       : firstReefUpgradeDraw
         ? "Brain Coral Stage 1 is on top of your Foundation Deck. Draw it so you can level up the Coral you placed last round."
       : firstAttackPredatorDraw
@@ -1059,9 +1040,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         },
       );
     }
-    const message = selected.id === "winning-turn"
-      ? "Your reef needs two more Fish to reach the target. Start the round to find the second one."
-      : conceptCopy(
+    const message = conceptCopy(
           uiState,
           SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS,
           selected.id === "first-reef"
@@ -1096,8 +1075,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const selectedCard = uiState.selectedHandCard === cardId
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
     const message = cardId === "coral-heal"
-      ? "Stunned pauses Brain Coral. Coral Heal clears the Condition so it can upgrade again."
-      : "Support cards resolve once, then move to the discard pile. Coral Gardener searches your Foundation Deck for a Coral.";
+      ? "Stunned is a status on Brain Coral, separate from the round's shared Condition. It blocks upgrading. Play Coral Heal first: Coral Gardener prevents more Supports this turn after its search."
+      : "Coral Heal has removed Stunned. Now Coral Gardener can search your Foundation Deck for the matching Stage 1 upgrade. Supports resolve once, then go to the discard pile.";
     return help(
       selectedCard ? "play-card" : "hand",
       selectedCard ? name(cardId) + " is selected and ready to resolve." : message,
@@ -1107,7 +1086,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         targetCardId: cardId,
         hint: cardId === "coral-heal"
           ? "After playing it, choose the Brain Coral marked Stunned."
-          : "After playing it, choose Brain Coral in the deck search.",
+          : "After playing it, choose Brain Coral Stage 1 in the deck search.",
       },
     );
   }
@@ -1213,12 +1192,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       ? firstReefVisiblePlacementCopy(cardId)
       : null;
     let message = conceptCopy(uiState, placementConcept(cardId), placementCopy(cardId).message);
-    if (selected.id === "winning-turn") {
-      message = current.id === "v2-first-winning-fish"
-        ? "You have 5 RP and two open Fish slots. Each Fish in your hand costs 2 RP and gives 2 VP. Choose which to play first."
-        : "Your reef has " + (uiState.playerVp ?? 3) + " VP. One more 2 VP Fish reaches the 5 VP practice goal.";
-    } else if (cardId === "brain-coral-base" && selected.id === "support-search") {
-      message = "The searched Brain Coral costs 1 RP and adds another Foundation with Fish and Invertebrate slots.";
+    if (selected.id === "apex-predators" && cardId === "clownfish") {
+      message = "A Habitat needs a living ecosystem, not just RP. Your four Reef Corals are ready, but Coral Reef still needs two Fish and two Invertebrates. Right now each creature count is one short. Give Clownfish the highlighted Fish slot to reach two Reef Fish.";
+    } else if (selected.id === "apex-predators" && cardId === "arrow-crab") {
+      message = "Now your Fish count is ready. Sea Urchin is the only Reef Invertebrate so far. Add Arrow Crab to reach the second one; then your reef will meet Coral Reef's full 4 Coral, 2 Fish, 2 Invertebrate requirement.";
+    } else if (selected.id === "apex-predators" && cardId === "coral-reef") {
+      message = "All three Coral Reef counts are met: four Reef Corals, two Reef Fish, and two Reef Invertebrates. This zero-RP Habitat stays in its own zone and unlocks Hammerhead. Keep those creatures in play: if a count falls short, the Habitat takes 10 HP each turn.";
+    } else if (selected.id === "filter-feeder" && cardId === "anchovy-ball-stage1") {
+      message = "Halfbeak committed 10 School Density. Your Schools now supply 130, leaving only 120 free: not enough for Ocean Sunfish's 150. Upgrade Anchovy Ball for 3 RP to raise its supply from 10 to 50. That leaves 160 free.";
     } else if (cardId === "mustard-hill-coral-base" && selected.id === "first-reef") {
       message = "Build Mustard Hill Coral as a second Foundation. It has no Disease weakness, so Coral Disease will not stop its 2 RP production next round.";
     } else if (cardId === "porcupine-fish" && selected.id === "first-attack") {
@@ -1236,9 +1217,9 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (cardId === "sardine-ball-base") {
       message = "Sardine Ball costs 1 RP. As a Creature School it acts as a Foundation and supplies 10 School Density.";
     } else if (cardId === "halfbeak") {
-      message = "Halfbeak costs 2 RP and commits the 10 School Density Sardine Ball supplies.";
+      message = "I've added two Creature Schools to your reef: Sardine Ball supplies 120 School Density and Anchovy Ball supplies 10. Halfbeak costs 2 RP and commits 10 of that 130. Afterward, only 120 is free, which is too little for Ocean Sunfish's 150.";
     } else if (cardId === "ocean-sunfish") {
-      message = "Ocean Sunfish needs 8 RP, a Coral Reef or Open Ocean Habitat, and 150 available School Density. All three are ready.";
+      message = "Ocean Sunfish needs 8 RP, Coral Reef or Open Ocean, and 150 free School Density. Your Anchovy Ball upgrade raised supply to 170; with 10 used by Halfbeak, 160 remains. Play Sunfish to commit 150 and score 8 VP.";
     } else if (cardId === "hammerhead") {
       message = "Hammerhead costs 6 RP, needs Coral Reef, and must occupy an Apex slot. Stage 2 Brain Coral supplies that slot.";
     } else if (cardId === "great-barracuda") {
@@ -1252,7 +1233,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       firstReefCopy ?? (selectedCard ? "Choose Play Card." : dragActionCopy(cardId, candidates, selected, current)),
       {
         cue: firstReefCopy ? `first-reef-place:${cardId}` : undefined,
-        interaction: selectedCard ? "tap" : "drag",
+        interaction: selectedCard || cardId === "coral-reef" ? "tap" : "drag",
         targetCardId: cardId,
         targetCardIds: candidates,
         ...(firstReefCopy ? {
@@ -1293,7 +1274,11 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         targetLabel: "the End Turn button",
       });
     }
-    const message = selected.id === "first-attack"
+    const message = selected.id === "apex-predators"
+      ? "Coral Reef is healthy because all four Corals, two Fish, and two Invertebrates are still here. Brain Coral's new Apex slot is ready; end the turn and refill your RP bank so Hammerhead can enter next round."
+      : selected.id === "filter-feeder"
+      ? "Your upgraded Schools now supply 170 Density. Halfbeak uses 10, leaving 160 free for Ocean Sunfish. End the turn to collect the RP needed for its 8 RP cost."
+      : selected.id === "first-attack"
         ? current.id === "v2-pass-to-counterattack"
           ? "In the ocean, there is a very important food chain that keeps ecosystems in balance. We will explore how creatures eat in this lesson. To start, your opponent will play a Spanish Hogfish, which can eat Invertebrates. It’s got its eye on your Sea Urchin—prepare to defend!"
           : "Sea Urchin is back in your hand. End the turn and carry that non-attack action's setup into the next round."
@@ -1317,6 +1302,20 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         pointerPrompt: "Review your RP bank, then continue.",
         targetLabel: "your RP bank",
       },
+    );
+  }
+  if (current.actionType === ACTION.RP_COLLECTED && selected.id === "apex-predators") {
+    return help(
+      "rp-bank",
+      "Your four Corals are producing again, and Arrow Crab raises your RP bank limit. This next turn gives you enough RP to pay Hammerhead's 6 RP cost while Coral Reef and the Apex slot stay ready.",
+      "Continue to draw Hammerhead from the Pals Deck.",
+    );
+  }
+  if (current.actionType === ACTION.RP_COLLECTED && selected.id === "filter-feeder") {
+    return help(
+      "rp-bank",
+      "You made room in School Density last turn. Now the Foundations' RP production refills your bank, so you can afford the 8 RP Ocean Sunfish without giving up Halfbeak.",
+      "Continue to draw Ocean Sunfish from the Pals Deck.",
     );
   }
   return help(
@@ -1430,11 +1429,18 @@ export function parseSimulatorV2LessonProgress(raw) {
       value = null;
     }
   }
-  const completed = value?.version === 1 && Array.isArray(value.completedLessonIds)
-    ? value.completedLessonIds
-    : [];
+  const savedIds = Array.isArray(value?.completedLessonIds) ? value.completedLessonIds : [];
+  const completed = value?.version === 2
+    ? savedIds
+    : value?.version === 1
+      ? [
+          ...savedIds.filter((id) => id === "first-reef" || id === "first-attack"),
+          ...(savedIds.includes("support-search") && savedIds.includes("clear-stun") ? ["support-search"] : []),
+          ...(savedIds.includes("school-density") && savedIds.includes("filter-feeder") ? ["filter-feeder"] : []),
+        ]
+      : [];
   return {
-    version: 1,
+    version: 2,
     completedLessonIds: SIMULATOR_V2_LESSONS
       .map(({ id }) => id)
       .filter((id) => completed.includes(id)),

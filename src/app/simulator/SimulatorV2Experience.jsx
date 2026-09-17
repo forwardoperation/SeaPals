@@ -40,7 +40,7 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
   const completeLesson = useCallback(() => {
     if (!lessonId) return;
     setCompletedLessonIds((current) => {
-      const next = recordSimulatorV2LessonCompletion({ version: 1, completedLessonIds: current }, lessonId);
+      const next = recordSimulatorV2LessonCompletion({ version: 2, completedLessonIds: current }, lessonId);
       try { window.localStorage.setItem(SIMULATOR_V2_LESSON_PROGRESS_KEY, JSON.stringify(next)); } catch { /* Optional persistence. */ }
       return next.completedLessonIds;
     });
