@@ -275,15 +275,6 @@
   49%, 100% { opacity: 0; }
 }
 
-.helpOptions { display: flex; flex-wrap: wrap; gap: 0.1rem 0.65rem; margin-top: 0.2rem; }
-.helpDetail { min-width: 0; max-width: 100%; }
-.helpDetail[open] { flex: 1 0 100%; }
-.helpDetail summary { display: inline-flex; min-height: 2rem; align-items: center; gap: 0.35rem; padding: 0.22rem 0.08rem; border-radius: 0.25rem; color: #68768a; font-size: 0.64rem; font-weight: 750; list-style: none; }
-.helpDetail summary::-webkit-details-marker { display: none; }
-.helpDetail summary::after { color: #7a8799; font-size: 0.8rem; font-weight: 500; content: "+"; }
-.helpDetail[open] summary::after { content: "−"; }
-.helpDetail summary:hover { color: #087e9c; }
-.helpDetail p { margin: 0.05rem 0 0.3rem; padding: 0.48rem 0.58rem; border-left: 2px solid #1599b8; border-radius: 0 0.3rem 0.3rem 0; color: #526177; background: #ffffffa8; font-size: 0.68rem; line-height: 1.55; }
 .collapsed { padding-bottom: 1rem; }
 .collapsed .coachPortrait { width: 3.65rem; height: 4.2rem; }
 .collapsed .coachHeader { min-height: 2.15rem; padding-block: 0.28rem; }
@@ -336,8 +327,6 @@
   .advanceButton { min-height: 2rem; margin-top: 0.25rem; }
   .advanceButton .actionMarker { position: static; }
   .advanceLabel { font-size: 0.55rem; }
-  .helpDetail summary { min-height: 2.35rem; font-size: 0.61rem; }
-  .helpDetail p { font-size: 0.64rem; }
   .collapsed { padding-bottom: 0.75rem; }
   .collapsed .coachPortrait { width: 3.1rem; height: 3.6rem; }
 }

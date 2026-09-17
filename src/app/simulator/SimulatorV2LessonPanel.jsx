@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   createProfessorSpeechKey,
   getProfessorSpeechDuration,
@@ -24,9 +24,9 @@ function TeacherPortrait({ large = false }) {
 }
 
 const TEXT_SPEED_MULTIPLIER = Object.freeze({
-  slow: 1.5,
-  normal: 1,
-  fast: 0.55,
+  slow: 3,
+  normal: 2,
+  fast: 1.1,
   instant: 0,
 });
 
@@ -37,7 +37,7 @@ function LessonDialogueMessage({
   scrollable = false,
 }) {
   const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
-  const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? 1;
+  const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? 2;
   const duration = useMemo(
     () => getProfessorSpeechDuration(graphemes.length) * speedMultiplier,
     [graphemes.length, speedMultiplier],
@@ -46,6 +46,7 @@ function LessonDialogueMessage({
   const [scrollState, setScrollState] = useState({ canScroll: false, atEnd: true });
   const animationRef = useRef({ frameId: null, generation: 0 });
   const scrollRef = useRef(null);
+  const cursorRef = useRef(null);
   const visibleMessage = graphemes.slice(0, visibleCount).join("");
   const pendingMessage = graphemes.slice(visibleCount).join("");
   const isComplete = visibleCount >= graphemes.length;
@@ -128,6 +129,30 @@ function LessonDialogueMessage({
     };
   }, [message, scrollable]);
 
+  useLayoutEffect(() => {
+    if (!scrollable) return;
+    const viewport = scrollRef.current;
+    if (!viewport) return;
+
+    if (isComplete) {
+      viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
+    } else {
+      const cursor = cursorRef.current;
+      if (!cursor) return;
+      const overflow = cursor.getBoundingClientRect().bottom - viewport.getBoundingClientRect().bottom;
+      if (overflow > 0) viewport.scrollTop += Math.ceil(overflow);
+    }
+
+    const canScroll = viewport.scrollHeight > viewport.clientHeight + 1;
+    const atEnd = !canScroll
+      || viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2;
+    setScrollState((current) => (
+      current.canScroll === canScroll && current.atEnd === atEnd
+        ? current
+        : { canScroll, atEnd }
+    ));
+  }, [isComplete, scrollable, visibleCount]);
+
   const messageContent = (
     <p
       ref={scrollable ? scrollRef : undefined}
@@ -148,7 +173,7 @@ function LessonDialogueMessage({
     >
       <span className={styles.typewriterFrame} aria-hidden="true">
         {visibleMessage}
-        {!isComplete ? <span className={styles.typewriterCursor} /> : null}
+        {!isComplete ? <span ref={cursorRef} className={styles.typewriterCursor} /> : null}
         <span className={styles.typewriterPending}>{pendingMessage}</span>
       </span>
       <span className={styles.srOnly}>{message}</span>
@@ -273,7 +298,6 @@ export default function SimulatorV2LessonPanel({
   instruction = "",
   interaction = null,
   explanation = "",
-  hint = "",
   feedback = "",
   onSelect,
   onExit,
@@ -550,12 +574,6 @@ export default function SimulatorV2LessonPanel({
             />
             {message ? <p className={styles.feedback} data-tone={feedback?.tone || "success"} role="status" aria-live="polite" aria-atomic="true">{message}</p> : null}
           </div>
-          {!onAdvance && (explanation || hint) ? (
-            <div className={styles.helpOptions} key={`${activeLesson?.id}-${progress?.stepIndex}-${currentInstruction}`}>
-              {explanation ? <details className={styles.helpDetail}><summary>Why?</summary><p>{explanation}</p></details> : null}
-              {hint ? <details className={styles.helpDetail}><summary>Hint</summary><p>{hint}</p></details> : null}
-            </div>
-          ) : null}
           {onAdvance ? (
             <button
               ref={advanceRef}

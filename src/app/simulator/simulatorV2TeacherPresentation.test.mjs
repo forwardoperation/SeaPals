@@ -52,8 +52,7 @@ test("the teacher card stays compact and positionable beside the current board t
 
 test("drag steps keep the teacher card concise and leave the gesture to the board", () => {
   assert.match(panelSource, /data-v2-lesson-interaction=\{interaction \|\| undefined\}/);
-  assert.match(panelSource, /\{explanation \? <details[\s\S]*?<summary>Why\?<\/summary>/);
-  assert.match(panelSource, /\{hint \? <details[\s\S]*?<summary>Hint<\/summary>/);
+  assert.doesNotMatch(panelSource, /<summary>Why\?<\/summary>|<summary>Hint<\/summary>|styles\.helpOptions|styles\.helpDetail/);
   assert.doesNotMatch(panelSource, /DragInstruction|data-v2-drag-(?:instruction|source|path|destination)/);
   assert.doesNotMatch(styleSource, /\.drag(?:Diagram|Source|Destination|CardStack|CardMotion|Pointer|Slots|Trail|Arrow)\b|@keyframes tutorialCardDrag/);
 });
@@ -96,6 +95,21 @@ test("the lesson message uses a compact three-line scroll viewport", () => {
   assert.match(viewportRule, /touch-action:\s*pan-y pinch-zoom/);
   assert.match(viewportRule, /scrollbar-gutter:\s*stable/);
   assert.doesNotMatch(viewportRule, /line-clamp|text-overflow:\s*ellipsis|overflow:\s*hidden/);
+});
+
+test("the lesson message follows the newest spoken line as it is typed", () => {
+  assert.match(panelSource, /const cursorRef = useRef\(null\)/);
+  assert.match(panelSource, /<span ref=\{cursorRef\} className=\{styles\.typewriterCursor\}/);
+  assert.match(panelSource, /useLayoutEffect\(\(\) => \{[\s\S]*?if \(isComplete\) \{\s*viewport\.scrollTop = viewport\.scrollHeight - viewport\.clientHeight;\s*\} else \{\s*const cursor = cursorRef\.current;/);
+  assert.match(panelSource, /cursor\.getBoundingClientRect\(\)\.bottom - viewport\.getBoundingClientRect\(\)\.bottom/);
+  assert.match(panelSource, /if \(overflow > 0\) viewport\.scrollTop \+= Math\.ceil\(overflow\)/);
+  assert.match(panelSource, /\}, \[isComplete, scrollable, visibleCount\]\)/);
+});
+
+test("V2 lesson speech runs at half the prior text rate", () => {
+  assert.match(panelSource, /const TEXT_SPEED_MULTIPLIER = Object\.freeze\(\{\s*slow:\s*3,\s*normal:\s*2,\s*fast:\s*1\.1,\s*instant:\s*0,/);
+  assert.match(panelSource, /getProfessorSpeechDuration\(graphemes\.length\) \* speedMultiplier/);
+  assert.match(panelSource, /TEXT_SPEED_MULTIPLIER\[textSpeed\] \?\? 2/);
 });
 
 test("Mr. Easterling's lesson dialogue uses a stable accessible typewriter reveal", () => {

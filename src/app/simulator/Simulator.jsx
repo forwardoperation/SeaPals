@@ -417,7 +417,6 @@ function ProfessorGuideCard({
         instruction={help.action}
         interaction={help.interaction}
         explanation={help.message}
-        hint={help.hint}
         onAdvance={onAdvance}
         advanceLabel={advanceLabel}
         dragPassive={dragPassive}
