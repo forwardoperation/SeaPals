@@ -1278,9 +1278,22 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     );
   }
   if (current.actionType === ACTION.TURN_ENDED) {
-    const message = selected.id === "first-reef"
-      ? "Weaknesses are printed on Corals. When the active Condition matches one, that Coral stays in play but produces no RP that round. Brain Coral is weak to Disease; Mustard Hill Coral is not. End your turn to reveal Coral Disease and compare them."
-      : selected.id === "first-attack"
+    if (selected.id === "first-reef") {
+      if (current.id === "v2-watch-coral-disease" && !uiState.weaknessTourAcknowledged) {
+        const explanation = "See the germ icon under Brain Coral's Weaknesses? That means Disease. Coral Disease stops its RP for one round, but the Coral stays in play. The other weakness types are Storm (swirl) and High Temperature (thermometer). Hurricane and Severe Coral Bleaching pause RP from Corals with those matching symbols. Mustard Hill has no weakness icon, so its 2 RP is safe from these Conditions.";
+        return help("coral-weakness", explanation, explanation, {
+          cue: "first-reef:weakness-tour",
+          targetCardId: "brain-coral-base",
+          targetLabel: "Brain Coral's printed Disease weakness",
+        });
+      }
+      const message = "Now end your turn. Coral Disease will appear next round, and you can compare RP from Brain Coral and Mustard Hill.";
+      return help("turn-button", message, message, {
+        pointerPrompt: "End the turn to reveal Coral Disease.",
+        targetLabel: "the End Turn button",
+      });
+    }
+    const message = selected.id === "first-attack"
         ? current.id === "v2-pass-to-counterattack"
           ? "In the ocean, there is a very important food chain that keeps ecosystems in balance. We will explore how creatures eat in this lesson. To start, your opponent will play a Spanish Hogfish, which can eat Invertebrates. It’s got its eye on your Sea Urchin—prepare to defend!"
           : "Sea Urchin is back in your hand. End the turn and carry that non-attack action's setup into the next round."
@@ -1288,11 +1301,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     return help(
       "turn-button",
       message,
-      selected.id === "first-reef" ? message : "End your turn when you are ready.",
-      selected.id === "first-reef" ? {
-        pointerPrompt: "End the turn to reveal Coral Disease.",
-        targetLabel: "the End Turn button",
-      } : undefined,
+      "End your turn when you are ready.",
     );
   }
   if (selected.id === "first-reef" && current.actionType === ACTION.RP_COLLECTED) {
@@ -1331,6 +1340,7 @@ export function getSimulatorV2LessonActionBlock({
   slotClass,
   slotOrdinal,
   layoutLessonProgress,
+  weaknessTourAcknowledged,
 } = {}) {
   const selected = getSimulatorV2Lesson(value);
   if (!selected) return "";
@@ -1390,6 +1400,11 @@ export function getSimulatorV2LessonActionBlock({
     return "Complete the highlighted lesson step before using another ability.";
   }
   if (action === "end-turn") {
+    if (
+      selected.id === "first-reef"
+      && current.id === "v2-watch-coral-disease"
+      && weaknessTourAcknowledged !== true
+    ) return "Read Brain Coral's weaknesses with Mr. Easterling before ending the turn.";
     if (
       selected.id === "first-reef"
       && gamePhase === "setup"

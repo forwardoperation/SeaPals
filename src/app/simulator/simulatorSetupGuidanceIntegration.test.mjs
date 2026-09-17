@@ -55,7 +55,8 @@ test("embedded lessons expose each action with divider-anchored teacher guidance
     embeddedCoach,
     /<ProfessorCoachOverlay help=\{tutorialHelp\} placementMode="reef-divider" measureKey=\{mobileReefSplit\}>[\s\S]*?<ProfessorGuideCard/,
   );
-  assert.doesNotMatch(embeddedCoach, /onAdvance|advanceLabel|Show me/);
+  assert.doesNotMatch(embeddedCoach, /Show me/);
+  assert.match(embeddedCoach, /onAdvance=\{weaknessFocusActive \? \(\) => setWeaknessTourAcknowledged\(true\) : null\}/);
   assert.doesNotMatch(simulatorSource, /embeddedLessonActionCueIds|beginEmbeddedLessonAction|data-v2-lesson-dialogue/);
   assert.match(
     simulatorSource,

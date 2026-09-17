@@ -33,6 +33,34 @@ function extractFunction(functionName, followingFunctionName) {
   return sourceSection(`function ${functionName}(`, `function ${followingFunctionName}(`);
 }
 
+test("Lesson 1 teaches Coral weaknesses on the board without a generic hand over the print", () => {
+  const genericCue = sourceSection(
+    "function EmbeddedLessonActionCue(",
+    "const PROFESSOR_COACH_ARROW",
+  );
+  assert.match(
+    genericCue,
+    /help\.target === "coral-weakness"\) return null/,
+    "the small printed weakness area needs its own arrow rather than the tap-hand halo",
+  );
+  assert.match(
+    simulatorSource,
+    /data-v2-coral-weakness-arrow/,
+    "Brain Coral's in-play card should expose a dedicated weakness callout",
+  );
+  const boardCard = sourceSection("{playerCorals.map((coral) => {", "{guidedFoundationPlacementTarget ? (");
+  assert.match(boardCard, /coral\.cardId === "brain-coral-base"[\s\S]*?data-v2-coral-weakness-arrow|data-v2-coral-weakness-arrow[\s\S]*?coral\.cardId === "brain-coral-base"/);
+  assert.match(boardCard, /data-v2-coral-weakness-arrow[\s\S]*?role="img"[\s\S]*?aria-label="Brain Coral weakness: Disease"/);
+  const cameraFocus = sourceSection(
+    "if (!weaknessFocusActive) return undefined;",
+    "if (!playerLayoutSignature || playerViewportTouched || weaknessFocusActive) return undefined;",
+  );
+  assert.match(cameraFocus, /playerCorals\.find\(\(coral\) => coral\.cardId === "brain-coral-base"\)/);
+  assert.match(cameraFocus, /setInspectedCard\(null\)/, "a previously opened card inspector must clear before the board close-up");
+  assert.match(cameraFocus, /commitBoardCamera\("player", \{[\s\S]*?zoom,[\s\S]*?getVisibleAreaFitOffset/);
+  assert.match(cameraFocus, /commitBoardCamera\("player", weaknessCameraBeforeRef\.current\)/, "Continue should restore the prior view");
+});
+
 function createProductionInitialGameFactory() {
   return new Function("cardsById", "CardKind", "canCardOccupySlot", "dependencies", [
     "const { createFoundationOpening, createDeck, shuffle, conditionCards, removeOneCard } = dependencies;",

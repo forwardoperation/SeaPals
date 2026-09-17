@@ -1014,11 +1014,11 @@ test("the player reef starts fitted and stops auto-fitting after manual camera i
   assert.match(simulatorSource, /const playerLayoutSignature = \[/);
   assert.match(
     simulatorSource,
-    /if \(!playerLayoutSignature \|\| playerViewportTouched\) return undefined;[\s\S]*?new ResizeObserver\(fitPlayerBoard\)[\s\S]*?zoomEcosystemToFit\("player"\)/,
+    /if \(!playerLayoutSignature \|\| playerViewportTouched \|\| weaknessFocusActive\) return undefined;[\s\S]*?new ResizeObserver\(fitPlayerBoard\)[\s\S]*?zoomEcosystemToFit\("player"\)/,
   );
   assert.match(
     simulatorSource,
-    /\[playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible\]/,
+    /\[playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, weaknessFocusActive\]/,
   );
   const fitFunction = sourceSection(
     simulatorSource,

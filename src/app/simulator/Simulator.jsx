@@ -521,6 +521,7 @@ const TUTORIAL_POINTER_TARGETS = new Set([
   "player-zoom-fit",
   "foundation-drag",
   "slot-drag",
+  "coral-weakness",
 ]);
 
 const EMBEDDED_LESSON_CLEAR_WATER_DESTINATIONS = Object.freeze({
@@ -978,7 +979,7 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "", dragging = fal
     };
   }, [active, help?.cueId, help?.interaction, help?.target, help?.coachAnchor, help?.targetActionKey, targetCardKey, help?.targetSearchCardId, help?.targetDeck, help?.targetDrawAction, measureKey]);
 
-  if (!active || !layout?.sourceRect || !help) return null;
+  if (!active || !layout?.sourceRect || !help || help.target === "coral-weakness") return null;
   const gesture = help.interaction === "drag" ? "drag" : "tap";
   if (gesture === "drag") {
     if (!layout.destinationRect) return null;
@@ -4663,6 +4664,7 @@ export default function Simulator({
   };
   const [tutorialHelpDismissedId, setTutorialHelpDismissedId] = useState(null);
   const [embeddedLessonPreVictoryAcknowledged, setEmbeddedLessonPreVictoryAcknowledged] = useState(false);
+  const [weaknessTourAcknowledged, setWeaknessTourAcknowledged] = useState(false);
   const [tutorialIntroductionStep, setTutorialIntroductionStep] = useState(null);
   const [tutorialCardLesson, setTutorialCardLesson] = useState(null);
   const [tutorialSeenCardConceptKeys, setTutorialSeenCardConceptKeys] = useState([]);
@@ -4743,6 +4745,7 @@ export default function Simulator({
   const [opponentEcosystemOffset, setOpponentEcosystemOffset] = useState({ x: 0, y: 0 });
   const playerCameraRef = useRef({ zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
   const opponentCameraRef = useRef({ zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
+  const weaknessCameraBeforeRef = useRef(null);
   const playerGestureRef = useRef(createEcosystemGestureState());
   const opponentGestureRef = useRef(createEcosystemGestureState());
   const boardClickSuppressionRef = useRef({ player: 0, opponent: 0 });
@@ -6136,7 +6139,8 @@ export default function Simulator({
   function getEmbeddedLessonBlock(action, details = {}) {
     return getSimulatorV2LessonActionBlock({
       lesson: embeddedLesson, checkpoint: tutorialCurrentCheckpoint,
-      action, gamePhase, layoutLessonProgress: tutorialLayoutProgress, ...details,
+      action, gamePhase, layoutLessonProgress: tutorialLayoutProgress,
+      weaknessTourAcknowledged, ...details,
     });
   }
 
@@ -7551,6 +7555,7 @@ export default function Simulator({
     scriptedLesson: tutorialUsesScriptedScenario,
     scriptedFinishRoute,
     layoutLessonProgress: tutorialLayoutProgress,
+    weaknessTourAcknowledged,
     scriptedAttackCardInHand: tutorialUsesScriptedScenario && hand.includes(scriptedAttackCardId),
     scriptedAttackCardCost: getPlayerCardPlayCost(cardsById[scriptedAttackCardId]),
     scriptedAttackActionCost: Number(getBasicAttackEffect(cardsById[scriptedAttackCardId])?.actionCost ?? 0),
@@ -7564,6 +7569,11 @@ export default function Simulator({
     palsDeckCount: palsDeck.length,
     discardPileCardIds: discardPile,
   }) : null;
+  const weaknessLessonStepActive = Boolean(
+    embeddedLesson?.id === "first-reef"
+    && tutorialCurrentCheckpoint?.id === "v2-watch-coral-disease"
+  );
+  const weaknessFocusActive = weaknessLessonStepActive && !weaknessTourAcknowledged;
   const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;
   const tutorialFinalProgressLabel = tutorialCurrentCheckpoint === null && tutorialContract
     ? `Final goal • ${playerVp}/${victoryTarget} VP`
@@ -7788,6 +7798,7 @@ export default function Simulator({
     || simulatorExitConfirmationOpen
     || tutorialExitConfirmationOpen
     || combatResultCheckpoint
+    || (weaknessFocusActive && inspectedCardData)
     || gameResult
   );
   const embeddedLessonPreVictoryHelp = embeddedLesson?.preVictoryMessage
@@ -8235,7 +8246,59 @@ export default function Simulator({
   }, [opponentRpCap]);
 
   useEffect(() => {
-    if (!playerLayoutSignature || playerViewportTouched) return undefined;
+    if (!weaknessFocusActive) return undefined;
+    const brainCoral = playerCorals.find((coral) => coral.cardId === "brain-coral-base");
+    const element = ecosystemRef.current;
+    if (!brainCoral || !element) return undefined;
+
+    weaknessCameraBeforeRef.current = playerCameraRef.current;
+    setInspectedCard(null);
+    setMobileBoardView("player");
+    let frame = null;
+    const focusBrainCoral = () => {
+      if (frame != null) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const rect = element.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return;
+        const visibleHeight = Math.max(96, rect.height - getBoardBottomOcclusion("player", rect));
+        const zoom = clampZoom(Math.max(
+          weaknessCameraBeforeRef.current?.zoom ?? 1,
+          Math.min(1.85, (rect.width * .78) / 180, (visibleHeight * .76) / 220),
+        ));
+        commitBoardCamera("player", {
+          zoom,
+          offset: getVisibleAreaFitOffset({
+            viewport: { width: rect.width, height: rect.height },
+            contentCenter: {
+              x: rect.width * brainCoral.x / 100,
+              y: rect.height * brainCoral.y / 100,
+            },
+            zoom,
+            bottomOcclusion: getBoardBottomOcclusion("player", rect),
+            verticalAlign: .43,
+          }),
+        });
+      });
+    };
+    focusBrainCoral();
+    const resizeObserver = typeof ResizeObserver === "function"
+      ? new ResizeObserver(focusBrainCoral)
+      : null;
+    resizeObserver?.observe(element);
+    window.addEventListener("resize", focusBrainCoral);
+    return () => {
+      if (frame != null) cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", focusBrainCoral);
+      if (weaknessCameraBeforeRef.current) {
+        commitBoardCamera("player", weaknessCameraBeforeRef.current);
+        weaknessCameraBeforeRef.current = null;
+      }
+    };
+  }, [weaknessFocusActive, playerCorals.find((coral) => coral.cardId === "brain-coral-base")?.id]);
+
+  useEffect(() => {
+    if (!playerLayoutSignature || playerViewportTouched || weaknessFocusActive) return undefined;
     const element = ecosystemRef.current;
     if (!element) return undefined;
     let frame = null;
@@ -8254,7 +8317,7 @@ export default function Simulator({
       resizeObserver?.disconnect();
       window.removeEventListener("resize", fitPlayerBoard);
     };
-  }, [playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible]);
+  }, [playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, weaknessFocusActive]);
 
   useEffect(() => {
     if (!opponentLayoutSignature || opponentViewportTouched) return undefined;
@@ -8282,10 +8345,10 @@ export default function Simulator({
     if (!previewExperience) return undefined;
     const frame = requestAnimationFrame(() => {
       zoomEcosystemToFit("opponent");
-      zoomEcosystemToFit("player");
+      if (!weaknessFocusActive) zoomEcosystemToFit("player");
     });
     return () => cancelAnimationFrame(frame);
-  }, [previewExperience, mobileReefSplit]);
+  }, [previewExperience, mobileReefSplit, weaknessFocusActive]);
 
   useEffect(() => {
     const result = reconcileFoundationHealthToFixedPoint(playerCorals, playerReefCreatureInstances, playerOrphanCreatures);
@@ -10982,7 +11045,7 @@ export default function Simulator({
   function handleCoralPointerDown(coralId, event) {
     event.preventDefault();
     event.stopPropagation();
-    if (isUpgradingCoral) return;
+    if (isUpgradingCoral || weaknessFocusActive) return;
     const coral = playerCorals.find((c) => c.id === coralId);
     if (!coral) return;
     coralWasDraggedRef.current = false;
@@ -11007,6 +11070,7 @@ export default function Simulator({
   function handleCoralClick(coralId, event) {
     event.preventDefault();
     event.stopPropagation();
+    if (weaknessFocusActive) return;
     if (coralWasDraggedRef.current) {
       coralWasDraggedRef.current = false;
       return;
@@ -20819,6 +20883,7 @@ export default function Simulator({
       : ["The opening coin flip will decide who takes the first turn."]);
     setPlayError("");
     setTutorialLayoutProgress(createGuidedAcademyLayoutProgress());
+    setWeaknessTourAcknowledged(false);
     commitBoardCamera("player", { zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
     commitBoardCamera("opponent", { zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
     playerGestureRef.current = createEcosystemGestureState();
@@ -21776,6 +21841,12 @@ export default function Simulator({
   return (
     <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${embeddedLesson ? " seapals-embedded-lesson" : ""}${embeddedCompactConditionHelp && embeddedCompactCoachOpen ? " seapals-condition-teaching" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
+        .seapals-weakness-camera-focus {
+          transition: transform 480ms cubic-bezier(.2, .8, .2, 1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .seapals-weakness-camera-focus { transition: none; }
+        }
         @keyframes seapalsDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes seapalsCardInspectorIn {
           0% { opacity: 0; transform: translateY(2.25rem) scale(.94); }
@@ -26106,6 +26177,8 @@ export default function Simulator({
                 step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
                 total={tutorialContract.checkpoints.length}
                 dragPassive={Boolean(mobileHandDrag || draggingCoralId || slotDragStart)}
+                onAdvance={weaknessFocusActive ? () => setWeaknessTourAcknowledged(true) : null}
+                advanceLabel={weaknessFocusActive ? "Continue" : undefined}
               />
             </ProfessorCoachOverlay>
           ) : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (
@@ -26655,7 +26728,7 @@ export default function Simulator({
                   ) : null}
                   <div className="absolute inset-0 overflow-hidden">
                     <div
-                      className="absolute inset-0 h-full w-full"
+                      className={`absolute inset-0 h-full w-full${weaknessLessonStepActive && !accessibilityReducedMotion ? " seapals-weakness-camera-focus" : ""}`}
                       style={{
                         transform: `translate(${ecosystemOffset.x}px, ${ecosystemOffset.y}px) scale(${ecosystemZoom})`,
                         transformOrigin: "center center",
@@ -26790,6 +26863,7 @@ export default function Simulator({
                           && tutorialHelp?.target === "foundation-drag"
                           && coral.cardId === (embeddedLesson?.setupCardId ?? scriptedFinishPlan?.setupCardId)
                         );
+                        const isWeaknessFocusTarget = weaknessFocusActive && coral.cardId === "brain-coral-base";
                         const upgradeCelebration = coralUpgradeCelebrations.find((entry) => (
                           entry.owner === "player" && entry.cardInstanceId === `foundation:${coral.id}`
                         ));
@@ -26859,6 +26933,23 @@ export default function Simulator({
                                         : "cursor-grab"
                                   }`}
                                 />
+                                {isWeaknessFocusTarget ? (
+                                  <span
+                                    data-tutorial-target="coral-weakness"
+                                    data-v2-coral-weakness-arrow="true"
+                                    role="img"
+                                    aria-label="Brain Coral weakness: Disease"
+                                    className="pointer-events-none absolute z-[65]"
+                                    style={{ left: "41%", top: "85%", width: "27%", height: "13%" }}
+                                  >
+                                    <span className="absolute inset-0 rounded-lg border-2 border-amber-300 bg-amber-200/15 shadow-[0_0_14px_4px_rgba(251,191,36,.85)]" />
+                                    <svg className="absolute bottom-[80%] left-[28%] h-16 w-20 overflow-visible drop-shadow-[0_2px_3px_rgba(0,0,0,.85)]" viewBox="0 0 80 64" aria-hidden="true">
+                                      <path d="M 70 4 C 60 5 50 18 39 48" fill="none" stroke="#fde047" strokeWidth="5" strokeLinecap="round" />
+                                      <path d="M 27 41 L 39 59 L 48 40" fill="#fde047" stroke="#713f12" strokeWidth="2" strokeLinejoin="round" />
+                                    </svg>
+                                    <span className="absolute bottom-[250%] left-[46%] whitespace-nowrap rounded-full border border-amber-200 bg-slate-950/95 px-2 py-1 text-[10px] font-black text-amber-100 shadow-lg">Disease weakness</span>
+                                  </span>
+                                ) : null}
                                 <CoralUpgradeCelebration
                                   celebration={upgradeCelebration}
                                   reducedMotion={accessibilityReducedMotion}
