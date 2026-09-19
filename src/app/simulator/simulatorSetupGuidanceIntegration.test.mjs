@@ -41,7 +41,7 @@ test("setup hand guidance respects both reduced-motion paths", () => {
 test("embedded lessons expose each action with divider-anchored teacher guidance", () => {
   assert.match(
     simulatorSource,
-    /const embeddedLessonActionReady = Boolean\(\s*embeddedLesson\s*&& tutorialHelpOpen\s*&& tutorialHelpDismissalKey\s*\);/,
+    /const embeddedLessonActionReady = Boolean\(\s*embeddedLessonPresentationStarted\s*&& embeddedLesson\s*&& tutorialHelpOpen\s*&& tutorialHelpDismissalKey\s*\);/,
   );
   assert.match(
     simulatorSource,

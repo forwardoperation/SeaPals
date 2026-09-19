@@ -4564,6 +4564,7 @@ export default function Simulator({
   const isStoryMode = Boolean(storyMode);
   const tutorialRuntime = storyMode?.tutorial ?? null;
   const embeddedLesson = previewExperience ? tutorialRuntime?.lesson ?? null : null;
+  const embeddedLessonPresentationStarted = !embeddedLesson || tutorialRuntime?.lessonStarted === true;
   const tutorialPreviouslyTaughtConcepts = Array.isArray(tutorialRuntime?.previouslyTaughtConcepts)
     ? tutorialRuntime.previouslyTaughtConcepts
     : [];
@@ -7468,7 +7469,7 @@ export default function Simulator({
       finishAttackTargetInPlay: scriptedOpponentCardIdsInPlay.includes(scriptedFinishPlan.finishAttackTargetCardId),
     };
   })() : null;
-  const tutorialHelp = tutorialContract && !embeddedLessonAutoEndingOpeningTurn ? (embeddedLesson
+  const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted && !embeddedLessonAutoEndingOpeningTurn ? (embeddedLesson
     ? (checkpoint, uiState) => getSimulatorV2LessonHelp(embeddedLesson, checkpoint, uiState)
     : getSimulatorTutorialHelp)(tutorialCurrentCheckpoint, {
     guideName: tutorialGuide.name,
@@ -7559,6 +7560,7 @@ export default function Simulator({
     ? eventOverlay.round ?? round
     : compactTurnSequence?.roundNumber ?? round;
   const tutorialConditionHelp = tutorialContract
+    && embeddedLessonPresentationStarted
     && tutorialConditionCard
     && (!embeddedLesson || !tutorialPreviouslyTaughtConcepts.includes(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS))
     ? {
@@ -7612,7 +7614,9 @@ export default function Simulator({
     : null;
   const embeddedCompactCoachHelp = embeddedCompactConditionHelp ?? embeddedCompactRpHelp;
   const embeddedCompactCoachOpen = Boolean(
-    embeddedCompactCoachHelp
+    embeddedLessonPresentationStarted
+    && embeddedCompactCoachHelp
+    && !eventOverlay
     && !simulatorExitConfirmationOpen
     && !tutorialExitConfirmationOpen
     && !gameResult
@@ -7754,7 +7758,8 @@ export default function Simulator({
   const tutorialHelpDismissalKey = tutorialHelp?.cueId ?? tutorialHelp?.id ?? null;
   const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelpDismissalKey);
   const embeddedLessonPresentationBlocked = Boolean(
-    tutorialIntroductionOpen
+    !embeddedLessonPresentationStarted
+    || tutorialIntroductionOpen
     || tutorialCardLesson
     || tutorialBoardTourOpen
     || eventOverlay
@@ -7803,7 +7808,8 @@ export default function Simulator({
       }
     : null;
   const embeddedLessonActionReady = Boolean(
-    embeddedLesson
+    embeddedLessonPresentationStarted
+    && embeddedLesson
     && tutorialHelpOpen
     && tutorialHelpDismissalKey
   );
@@ -12392,17 +12398,26 @@ export default function Simulator({
 
   function openActiveConditionDetails() {
     if (!activeCondition) return;
+    const continueCompactConditionOnClose = Boolean(
+      embeddedLessonPresentationStarted
+      && embeddedCompactConditionHelp
+      && compactTurnStage?.kind === CompactTurnStage.CONDITION
+    );
     setEventOverlay({
       type: "condition-detail",
       sourceCardId: activeCondition.id,
       title: activeCondition.name,
       message: activeCondition.text,
       success: true,
+      continueCompactConditionOnClose,
+      continueLabel: continueCompactConditionOnClose ? "Continue" : undefined,
     });
   }
 
   function closeConditionDetails() {
+    const continueCompactConditionOnClose = Boolean(eventOverlay?.continueCompactConditionOnClose);
     setEventOverlay(null);
+    if (continueCompactConditionOnClose) continueCompactCondition();
     requestAnimationFrame(() => conditionDetailTriggerRef.current?.focus());
   }
 
@@ -26111,9 +26126,9 @@ export default function Simulator({
                 step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
                 total={tutorialContract.checkpoints.length}
                 onAdvance={compactTurnStage?.kind === CompactTurnStage.CONDITION
-                  ? continueCompactCondition
+                  ? null
                   : continueCompactRpSummary}
-                advanceLabel={compactTurnStage?.kind === CompactTurnStage.CONDITION ? "Continue" : "Continue to draw"}
+                advanceLabel="Continue to draw"
               />
             </ProfessorCoachOverlay>
           ) : embeddedLessonCoachOpen ? (

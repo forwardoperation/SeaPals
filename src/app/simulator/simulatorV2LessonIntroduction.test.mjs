@@ -5,6 +5,7 @@ import test from "node:test";
 import { SIMULATOR_V2_LESSONS } from "./simulatorV2Lessons.mjs";
 
 const experienceSource = await readFile(new URL("./SimulatorV2Experience.jsx", import.meta.url), "utf8");
+const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
 const panelSource = await readFile(new URL("./SimulatorV2LessonPanel.jsx", import.meta.url), "utf8");
 const panelStyleSource = await readFile(new URL("./SimulatorV2LessonPanel.module.css", import.meta.url), "utf8");
 
@@ -40,6 +41,32 @@ test("selecting any lesson opens its teacher introduction before the board becom
     experienceSource,
     /lessonStarted:\s*panel === null/,
     "the embedded runtime distinguishes the visible introduction from a started lesson",
+  );
+});
+
+test("the board teacher stays unmounted until Start Lesson is pressed", () => {
+  assert.match(
+    simulatorSource,
+    /const embeddedLessonPresentationStarted = !embeddedLesson \|\| tutorialRuntime\?\.lessonStarted === true;/,
+  );
+  assert.match(
+    simulatorSource,
+    /const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted && !embeddedLessonAutoEndingOpeningTurn/,
+    "the background coach must not create a message before the lesson starts",
+  );
+  assert.match(
+    simulatorSource,
+    /const embeddedCompactCoachOpen = Boolean\([\s\S]*?embeddedLessonPresentationStarted[\s\S]*?&& !eventOverlay/,
+    "round and Condition coaching must wait too",
+  );
+  assert.match(
+    simulatorSource,
+    /const embeddedLessonPresentationBlocked = Boolean\([\s\S]*?!embeddedLessonPresentationStarted/,
+  );
+  assert.match(
+    simulatorSource,
+    /const embeddedLessonActionReady = Boolean\([\s\S]*?embeddedLessonPresentationStarted[\s\S]*?&& embeddedLesson/,
+    "the coach, its pointer, and its live announcement share the start gate",
   );
 });
 

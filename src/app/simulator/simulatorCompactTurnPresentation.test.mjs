@@ -121,11 +121,11 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
   );
   assert.match(
     embeddedCompactCoach,
-    /onAdvance=\{compactTurnStage\?\.kind === CompactTurnStage\.CONDITION[\s\S]*?\? continueCompactCondition[\s\S]*?: continueCompactRpSummary\}/,
+    /onAdvance=\{compactTurnStage\?\.kind === CompactTurnStage\.CONDITION[\s\S]*?\? null[\s\S]*?: continueCompactRpSummary\}/,
   );
   assert.match(
     embeddedCompactCoach,
-    /advanceLabel=\{compactTurnStage\?\.kind === CompactTurnStage\.CONDITION \? "Continue" : "Continue to draw"\}/,
+    /advanceLabel="Continue to draw"/,
   );
   assert.equal((embeddedCompactCoach.match(/\bonAdvance=/g) ?? []).length, 1);
   assert.doesNotMatch(embeddedCompactCoach, /data-compact-condition-continue|seapals-compact-turn-banner/);
@@ -146,6 +146,41 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
     /const tutorialAnnouncementHelp = embeddedCompactCoachOpen[\s\S]*?\? embeddedCompactCoachHelp[\s\S]*?: tutorialTargetBeaconHelp;[\s\S]*?help: tutorialAnnouncementHelp/,
   );
   assert.match(simulatorSource, /\) : embeddedCompactCoachOpen \? \(/);
+});
+
+test("reviewing the highlighted Condition continues its embedded lesson after the rule closes", () => {
+  const openDetails = sourceSection(
+    simulatorSource,
+    "function openActiveConditionDetails()",
+    "function closeConditionDetails()",
+  );
+  const closeDetails = sourceSection(
+    simulatorSource,
+    "function closeConditionDetails()",
+    "function getMobileDrawFlightGeometry(",
+  );
+
+  assert.match(openDetails, /if \(!activeCondition\) return/);
+  assert.match(
+    openDetails,
+    /const continueCompactConditionOnClose = Boolean\([\s\S]*?embeddedLessonPresentationStarted[\s\S]*?embeddedCompactConditionHelp[\s\S]*?compactTurnStage\?\.kind === CompactTurnStage\.CONDITION/,
+    "only the live embedded Condition teaching step should advance",
+  );
+  assert.match(openDetails, /type: "condition-detail"/);
+  assert.match(openDetails, /continueCompactConditionOnClose,/);
+  assert.match(openDetails, /continueLabel: continueCompactConditionOnClose \? "Continue" : undefined/);
+
+  assert.match(closeDetails, /Boolean\(eventOverlay\?\.continueCompactConditionOnClose\)/);
+  assert.ok(
+    closeDetails.indexOf("setEventOverlay(null)") < closeDetails.indexOf("continueCompactCondition()"),
+    "the rule dialog closes before the next compact stage starts",
+  );
+  assert.match(closeDetails, /if \(continueCompactConditionOnClose\) continueCompactCondition\(\)/);
+  assert.match(
+    simulatorSource,
+    /onClick=\{openActiveConditionDetails\}/,
+    "the active Condition pill owns the guided interaction",
+  );
 });
 
 test("new-round sequencing orders turn, condition, RP, then an optional lesson summary", () => {
