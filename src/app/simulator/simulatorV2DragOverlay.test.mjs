@@ -198,28 +198,36 @@ test("the board-native overlay keeps the drop circle and teacher visible during 
   assert.match(simulatorSource, /const embeddedLessonActionCueMeasureKey = [\s\S]*?ecosystemZoom[\s\S]*?ecosystemOffset\.x[\s\S]*?mobileReefSplit[\s\S]*?playerCorals\.map/);
 });
 
-test("all in-board coaching stays fixed at screen-left while the hand points to the action", () => {
+test("embedded coaching stays centered above the reef divider while the hand points to the action", () => {
   const coach = sourceSection(
     "function ProfessorCoachOverlay(",
     "function destroyedCardGoesToLostZone(",
   );
 
-  assert.match(coach, /data-tutorial-coach-placement="screen-left"/);
-  assert.doesNotMatch(coach, /getTutorialCoachPlacement|getTutorialDividerCoachPlacement|findTutorialTarget|ResizeObserver/);
+  assert.match(coach, /placementMode = "screen-left", measureKey = null/);
+  assert.match(coach, /const usesDividerAnchor = placementMode === "reef-divider"/);
+  assert.match(coach, /document\.querySelector\('\[data-tutorial-coach-anchor="reef-divider"\]'\)/);
+  assert.match(coach, /getTutorialDividerCoachPlacement\(\{/);
+  assert.match(coach, /resizeObserver\.observe\(coachElement\)[\s\S]*?resizeObserver\.observe\(dividerElement\)/);
+  assert.match(coach, /window\.visualViewport\?\.addEventListener\("resize", requestUpdate\)/);
+  assert.match(coach, /data-tutorial-coach-placement=\{placementMode\}/);
   const coachCss = simulatorSource.match(/\.seapals-professor-coach-wrap\s*\{([^}]+)\}/)?.[1];
   assert.ok(coachCss, "missing shared coach wrapper style");
   assert.match(coachCss, /position:\s*fixed/);
-  assert.match(coachCss, /top:\s*50%/);
-  assert.match(coachCss, /left:\s*(?:1rem|12px)/);
-  assert.match(coachCss, /width:\s*min\(23rem, calc\(100vw - 2rem\)\)/);
-  assert.match(coachCss, /max-height:\s*calc\(100dvh - 1\.5rem\)/);
-  assert.match(coachCss, /transform:\s*translateY\(-50%\)/);
-  assert.doesNotMatch(coachCss, /transition:\s*(?:left|top)/);
+  assert.match(
+    simulatorSource,
+    /\.seapals-professor-coach-wrap-divider\s*\{[^}]*top:\s*auto;[^}]*left:\s*auto;[^}]*max-height:\s*var\(--seapals-coach-available-height,[^}]*transform:\s*none;/,
+  );
+  assert.match(
+    simulatorSource,
+    /\.seapals-professor-coach-wrap-divider:not\(\.seapals-professor-coach-wrap-anchored\)\s*\{[^}]*visibility:\s*hidden;/,
+  );
   assert.match(simulatorSource, /\.seapals-professor-coach-wrap > \[data-v2-lesson-panel="coach"\]\s*\{[^}]*overflow-y:\s*auto/);
 
-  for (const help of ["embeddedLessonPreVictoryHelp", "embeddedCompactCoachHelp", "tutorialHelp", "tutorialBoardTourHelp"]) {
-    assert.match(simulatorSource, new RegExp(`<ProfessorGuideCard[\\s\\S]{0,400}?help=\\{${help}\\}`));
-  }
+  assert.match(simulatorSource, /<ProfessorCoachOverlay placementMode="reef-divider" measureKey=\{`pre-victory:\$\{mobileReefSplit\}`\}>[\s\S]*?help=\{embeddedLessonPreVictoryHelp\}/);
+  assert.match(simulatorSource, /<ProfessorCoachOverlay placementMode="reef-divider" measureKey=\{`\$\{mobileReefSplit\}:\$\{compactTurnSequence\.stageIndex\}`\}>[\s\S]*?help=\{embeddedCompactCoachHelp\}/);
+  assert.match(simulatorSource, /<ProfessorCoachOverlay placementMode="reef-divider" measureKey=\{`\$\{mobileReefSplit\}:\$\{tutorialHelpDismissalKey\}`\}>[\s\S]*?help=\{tutorialHelp\}/);
+  assert.match(simulatorSource, /data-tutorial-coach-anchor="reef-divider"/);
   assert.match(simulatorSource, /\) : tutorialHelpFloating \? \(\s*<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/);
   assert.match(simulatorSource, /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}/);
 });

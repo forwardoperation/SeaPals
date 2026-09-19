@@ -134,7 +134,7 @@ test("missing, zero-sized, and fully offscreen targets retain the stable fallbac
   }), null);
 });
 
-test("divider placement anchors the Professor card to the left above the middle bar", () => {
+test("divider placement centers the Professor card above the middle bar", () => {
   const placement = getTutorialDividerCoachPlacement({
     ...desktopViewport,
     coachRect,
@@ -142,7 +142,8 @@ test("divider placement anchors the Professor card to the left above the middle 
   });
 
   assert.equal(placement.side, TUTORIAL_COACH_SIDES.ABOVE);
-  assert.equal(placement.left, 12);
+  assert.equal(placement.left, 400);
+  assert.equal(placement.left + placement.width / 2, 600);
   assert.equal(placement.top, 154);
   assert.equal(placement.top + placement.height + 6, 400);
   assert.equal(placement.availableHeight, 382);
@@ -150,21 +151,48 @@ test("divider placement anchors the Professor card to the left above the middle 
   assertInsideViewport(placement, 1200, 800);
 });
 
-test("divider placement moves below when the coach does not fit above", () => {
+test("divider placement constrains the coach above rather than covering the player reef", () => {
   const placement = getTutorialDividerCoachPlacement({
     ...desktopViewport,
     coachRect,
     dividerRect: { left: 0, top: 100, right: 1200, bottom: 144 },
   });
 
-  assert.equal(placement.side, TUTORIAL_COACH_SIDES.BELOW);
-  assert.equal(placement.left, 12);
-  assert.equal(placement.top, 150);
+  assert.equal(placement.side, TUTORIAL_COACH_SIDES.ABOVE);
+  assert.equal(placement.left, 400);
+  assert.equal(placement.top, 12);
+  assert.equal(placement.height, 82);
+  assert.equal(placement.top + placement.height + 6, 100);
   assert.equal(placement.spaceAbove, 82);
   assert.equal(placement.spaceBelow, 638);
-  assert.equal(placement.availableHeight, placement.spaceBelow);
-  assert.equal(placement.constrained, false);
+  assert.equal(placement.availableHeight, placement.spaceAbove);
+  assert.equal(placement.constrained, true);
   assertInsideViewport(placement, 1200, 800);
+});
+
+test("portrait placement keeps expanded and collapsed coaching centered above the divider", () => {
+  const dividerRect = { left: 0, top: 338, right: 390, bottom: 382 };
+  const scenarios = [
+    { label: "expanded", height: 228, expectedTop: 104 },
+    { label: "collapsed", height: 80, expectedTop: 252 },
+  ];
+
+  for (const scenario of scenarios) {
+    const placement = getTutorialDividerCoachPlacement({
+      viewportWidth: 390,
+      viewportHeight: 844,
+      coachRect: { left: 0, top: 0, right: 358, bottom: scenario.height },
+      dividerRect,
+    });
+
+    assert.equal(placement.side, TUTORIAL_COACH_SIDES.ABOVE, scenario.label);
+    assert.equal(placement.left, 16, scenario.label);
+    assert.equal(placement.left + placement.width / 2, 195, scenario.label);
+    assert.equal(placement.top, scenario.expectedTop, scenario.label);
+    assert.equal(placement.top + placement.height + 6, dividerRect.top, scenario.label);
+    assert.equal(placement.constrained, false, scenario.label);
+    assertInsideViewport(placement, 390, 844);
+  }
 });
 
 test("divider placement clamps a wide coach to visual viewport margins", () => {
@@ -184,7 +212,7 @@ test("divider placement clamps a wide coach to visual viewport margins", () => {
   assertInsideViewport(placement, 360, 640);
 });
 
-test("divider placement uses the larger band and constrains tall coaching in short landscape", () => {
+test("divider placement stays centered above and constrains tall coaching in short landscape", () => {
   const placement = getTutorialDividerCoachPlacement({
     viewportWidth: 844,
     viewportHeight: 390,
@@ -195,7 +223,8 @@ test("divider placement uses the larger band and constrains tall coaching in sho
   assert.equal(placement.side, TUTORIAL_COACH_SIDES.ABOVE);
   assert.equal(placement.availableHeight, 162);
   assert.equal(placement.height, 162);
-  assert.equal(placement.left, 12);
+  assert.equal(placement.left, 242);
+  assert.equal(placement.left + placement.width / 2, 422);
   assert.equal(placement.top, 12);
   assert.equal(placement.top + placement.height + 6, 180);
   assert.equal(placement.constrained, true);
@@ -213,6 +242,11 @@ test("divider placement rejects missing, zero-sized, and fully offscreen divider
     ...desktopViewport,
     coachRect,
     dividerRect: { left: 0, top: 900, right: 1200, bottom: 944 },
+  }), null);
+  assert.equal(getTutorialDividerCoachPlacement({
+    ...desktopViewport,
+    coachRect,
+    dividerRect: { left: 0, top: 18, right: 1200, bottom: 62 },
   }), null);
 });
 
@@ -256,7 +290,8 @@ test("the board tour keeps its Next card in the shared screen-left coach", async
     simulatorSource,
     /<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialBoardTourHelp\}[\s\S]*?onAdvance=\{advanceTutorialBoardTour\}[\s\S]*?<\/ProfessorCoachOverlay>/,
   );
-  assert.match(simulatorSource, /data-tutorial-coach-placement="screen-left"/);
+  assert.match(simulatorSource, /function ProfessorCoachOverlay\(\{ children, placementMode = "screen-left", measureKey = null \}\)/);
+  assert.match(simulatorSource, /data-tutorial-coach-placement=\{placementMode\}/);
   assert.match(simulatorSource, /--seapals-target-arrow-shift/);
   assert.match(simulatorSource, /--seapals-target-arrow-length/);
   assert.match(

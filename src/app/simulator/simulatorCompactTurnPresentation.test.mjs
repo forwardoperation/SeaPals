@@ -117,7 +117,7 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
   );
   assert.match(
     embeddedCompactCoach,
-    /<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{embeddedCompactCoachHelp\}/,
+    /<ProfessorCoachOverlay placementMode="reef-divider" measureKey=\{`\$\{mobileReefSplit\}:\$\{compactTurnSequence\.stageIndex\}`\}>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{embeddedCompactCoachHelp\}/,
   );
   assert.match(
     embeddedCompactCoach,

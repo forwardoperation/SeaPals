@@ -157,7 +157,10 @@ import {
   getTutorialCardReferenceRules,
   mergeTutorialSeenConcepts,
 } from "./tutorialCardLessons.mjs";
-import { getTutorialBeaconAnchor } from "./tutorialCoachPlacement.mjs";
+import {
+  getTutorialBeaconAnchor,
+  getTutorialDividerCoachPlacement,
+} from "./tutorialCoachPlacement.mjs";
 import {
   GUIDED_ACADEMY_LAYOUT_ACTIONS,
   completeGuidedAcademyLayoutAction,
@@ -1059,11 +1062,135 @@ function EmbeddedLessonActionCue({ help, active, measureKey = "", dragging = fal
   );
 }
 
-function ProfessorCoachOverlay({ children }) {
+function sameProfessorCoachPlacement(left, right) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return left.side === right.side
+    && Math.abs(left.left - right.left) < 1
+    && Math.abs(left.top - right.top) < 1
+    && Math.abs(Number(left.width ?? 0) - Number(right.width ?? 0)) < 1
+    && Math.abs(Number(left.height ?? 0) - Number(right.height ?? 0)) < 1
+    && Math.abs(Number(left.availableHeight ?? 0) - Number(right.availableHeight ?? 0)) < 1
+    && Math.abs(Number(left.viewportWidth ?? 0) - Number(right.viewportWidth ?? 0)) < 1
+    && left.constrained === right.constrained;
+}
+
+function ProfessorCoachOverlay({ children, placementMode = "screen-left", measureKey = null }) {
+  const coachRef = useRef(null);
+  const [placement, setPlacement] = useState(null);
+  const usesDividerAnchor = placementMode === "reef-divider";
+
+  useLayoutEffect(() => {
+    if (!usesDividerAnchor) {
+      setPlacement(null);
+      return undefined;
+    }
+
+    let animationFrame = null;
+    let delayedUpdate = null;
+    let resizeObserver = null;
+    let observedDivider = null;
+    const requestUpdate = () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(updatePlacement);
+    };
+    const updatePlacement = () => {
+      animationFrame = null;
+      const dividerElement = document.querySelector('[data-tutorial-coach-anchor="reef-divider"]');
+      const coachElement = coachRef.current;
+      if (!dividerElement || !coachElement) {
+        setPlacement((current) => current == null ? current : null);
+        return;
+      }
+
+      const coachRect = coachElement.getBoundingClientRect();
+      if (coachRect.width < 4 || coachRect.height < 4) {
+        setPlacement((current) => current == null ? current : null);
+        return;
+      }
+      const intrinsicCoachHeight = Math.max(
+        coachRect.height,
+        Number(coachElement.firstElementChild?.scrollHeight) || 0,
+      );
+      const visualViewport = window.visualViewport;
+      const viewportLeft = visualViewport?.offsetLeft ?? 0;
+      const viewportTop = visualViewport?.offsetTop ?? 0;
+      const viewportWidth = visualViewport?.width ?? window.innerWidth;
+      const viewportHeight = visualViewport?.height ?? window.innerHeight;
+      const dividerRect = dividerElement.getBoundingClientRect();
+      const nextPlacement = getTutorialDividerCoachPlacement({
+        dividerRect: {
+          left: dividerRect.left - viewportLeft,
+          top: dividerRect.top - viewportTop,
+          right: dividerRect.right - viewportLeft,
+          bottom: dividerRect.bottom - viewportTop,
+        },
+        coachRect: {
+          left: coachRect.left,
+          top: coachRect.top,
+          right: coachRect.right,
+          bottom: coachRect.top + intrinsicCoachHeight,
+        },
+        viewportWidth,
+        viewportHeight,
+      });
+      const viewportPlacement = nextPlacement
+        ? {
+            ...nextPlacement,
+            left: nextPlacement.left + viewportLeft,
+            top: nextPlacement.top + viewportTop,
+            viewportWidth,
+          }
+        : null;
+      setPlacement((current) => (
+        sameProfessorCoachPlacement(current, viewportPlacement) ? current : viewportPlacement
+      ));
+
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObserver ??= new ResizeObserver(requestUpdate);
+        if (observedDivider !== dividerElement) {
+          resizeObserver.disconnect();
+          resizeObserver.observe(coachElement);
+          resizeObserver.observe(dividerElement);
+          observedDivider = dividerElement;
+        }
+      }
+    };
+
+    updatePlacement();
+    delayedUpdate = window.setTimeout(requestUpdate, 240);
+    window.addEventListener("resize", requestUpdate);
+    window.addEventListener("scroll", requestUpdate, true);
+    window.visualViewport?.addEventListener("resize", requestUpdate);
+    window.visualViewport?.addEventListener("scroll", requestUpdate);
+    return () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      if (delayedUpdate) window.clearTimeout(delayedUpdate);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", requestUpdate);
+      window.removeEventListener("scroll", requestUpdate, true);
+      window.visualViewport?.removeEventListener("resize", requestUpdate);
+      window.visualViewport?.removeEventListener("scroll", requestUpdate);
+    };
+  }, [usesDividerAnchor, measureKey]);
+
   return (
     <div
-      className="seapals-professor-coach-wrap"
-      data-tutorial-coach-placement="screen-left"
+      ref={coachRef}
+      className={`seapals-professor-coach-wrap${usesDividerAnchor ? " seapals-professor-coach-wrap-divider" : ""}${placement ? " seapals-professor-coach-wrap-anchored" : ""}`}
+      style={usesDividerAnchor ? {
+        width: placement?.viewportWidth
+          ? `min(23rem, calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)), ${Math.max(1, placement.viewportWidth - 24)}px)`
+          : "min(23rem, calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)))",
+        ...(placement ? {
+          left: `${placement.left}px`,
+          top: `${placement.top}px`,
+          "--seapals-coach-available-height": `${Math.max(1, placement.availableHeight)}px`,
+        } : {}),
+      } : undefined}
+      data-tutorial-coach-placement={placementMode}
+      data-tutorial-coach-side={placement?.side}
+      data-tutorial-coach-constrained={placement?.constrained ? "true" : undefined}
     >
       {children}
     </div>
@@ -22290,6 +22417,15 @@ export default function Simulator({
           pointer-events: none;
           transform: translateY(-50%);
         }
+        .seapals-professor-coach-wrap-divider {
+          top: auto;
+          left: auto;
+          max-height: var(--seapals-coach-available-height, calc(50dvh - 1rem));
+          transform: none;
+        }
+        .seapals-professor-coach-wrap-divider:not(.seapals-professor-coach-wrap-anchored) {
+          visibility: hidden;
+        }
         .seapals-professor-coach-wrap > [data-v2-lesson-panel="coach"] {
           max-height: inherit;
           overflow-y: auto;
@@ -25920,7 +26056,7 @@ export default function Simulator({
           ) : null}
 
           {embeddedLessonPreVictoryOpen ? (
-            <ProfessorCoachOverlay>
+            <ProfessorCoachOverlay placementMode="reef-divider" measureKey={`pre-victory:${mobileReefSplit}`}>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={embeddedLessonPreVictoryHelp}
@@ -25931,7 +26067,7 @@ export default function Simulator({
               />
             </ProfessorCoachOverlay>
           ) : embeddedCompactCoachOpen ? (
-            <ProfessorCoachOverlay>
+            <ProfessorCoachOverlay placementMode="reef-divider" measureKey={`${mobileReefSplit}:${compactTurnSequence.stageIndex}`}>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={embeddedCompactCoachHelp}
@@ -25944,7 +26080,7 @@ export default function Simulator({
               />
             </ProfessorCoachOverlay>
           ) : embeddedLessonCoachOpen ? (
-            <ProfessorCoachOverlay>
+            <ProfessorCoachOverlay placementMode="reef-divider" measureKey={`${mobileReefSplit}:${tutorialHelpDismissalKey}`}>
               <ProfessorGuideCard
                 guide={tutorialGuide}
                 help={tutorialHelp}

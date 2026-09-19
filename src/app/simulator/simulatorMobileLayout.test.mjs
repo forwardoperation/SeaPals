@@ -94,7 +94,7 @@ test("desktop board-tour progress and Skip Tour keep separate header space", () 
   );
 });
 
-test("mobile guidance keeps the hand cue while the teacher stays at screen-left", () => {
+test("mobile guidance keeps the hand cue while embedded teaching stays above the reef divider", () => {
   assert.match(simulatorSource, /tutorialHelpFloating \? " seapals-tutorial-help-floating"/);
   assert.match(simulatorSource, /tutorialHelpInline \? " seapals-tutorial-help-inline"/);
   assert.match(
@@ -112,11 +112,14 @@ test("mobile guidance keeps the hand cue while the teacher stays at screen-left"
   );
   assert.match(
     simulatorSource,
-    /embeddedLessonCoachOpen \? \([\s\S]*?<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/,
+    /embeddedLessonCoachOpen \? \([\s\S]*?<ProfessorCoachOverlay placementMode="reef-divider" measureKey=\{`\$\{mobileReefSplit\}:\$\{tutorialHelpDismissalKey\}`\}>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/,
   );
   assert.doesNotMatch(simulatorSource, /data-v2-lesson-dialogue|advanceLabel="Show me"|beginEmbeddedLessonAction/);
   assert.match(simulatorSource, /data-v2-target-gesture=\{gesture\}/);
-  assert.match(simulatorSource, /\.seapals-professor-coach-wrap\s*\{[^}]*position:\s*fixed;[^}]*top:\s*50%;/);
+  assert.match(simulatorSource, /getTutorialDividerCoachPlacement\(\{[\s\S]*?dividerRect:[\s\S]*?viewportWidth,[\s\S]*?viewportHeight,/);
+  assert.match(simulatorSource, /\.seapals-professor-coach-wrap-divider\s*\{[^}]*top:\s*auto;[^}]*left:\s*auto;[^}]*transform:\s*none;/);
+  assert.match(simulatorSource, /--seapals-coach-available-height/);
+  assert.match(simulatorSource, /\.seapals-professor-coach-wrap-divider:not\(\.seapals-professor-coach-wrap-anchored\)[^}]*\{[^}]*visibility:\s*hidden;/);
   assert.doesNotMatch(simulatorSource, /\.seapals-professor-coach-wrap[^}]*bottom:\s*calc\(var\(--seapals-mobile-dock-clearance\)/);
   assert.match(simulatorSource, /\.seapals-v2-action-cue \{[\s\S]*?pointer-events: none;/);
 });

@@ -38,7 +38,7 @@ test("setup hand guidance respects both reduced-motion paths", () => {
   );
 });
 
-test("embedded lessons expose each action with screen-left teacher guidance", () => {
+test("embedded lessons expose each action with divider-anchored teacher guidance", () => {
   assert.match(
     simulatorSource,
     /const embeddedLessonActionReady = Boolean\(\s*embeddedLesson\s*&& tutorialHelpOpen\s*&& tutorialHelpDismissalKey\s*\);/,
@@ -53,7 +53,7 @@ test("embedded lessons expose each action with screen-left teacher guidance", ()
   );
   assert.match(
     embeddedCoach,
-    /<ProfessorCoachOverlay>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/,
+    /<ProfessorCoachOverlay placementMode="reef-divider" measureKey=\{`\$\{mobileReefSplit\}:\$\{tutorialHelpDismissalKey\}`\}>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/,
   );
   assert.doesNotMatch(embeddedCoach, /Show me/);
   assert.match(embeddedCoach, /onAdvance=\{weaknessFocusActive \? \(\) => setWeaknessTourAcknowledged\(true\) : null\}/);

@@ -166,9 +166,9 @@ export function getTutorialCoachPlacement({
 }
 
 /**
- * Keeps the embedded-lesson Professor card anchored to the divider's left edge.
- * The card prefers the open space immediately above the divider, then moves
- * below it when its measured height will not fit above the viewport margin.
+ * Keeps the embedded-lesson Professor card centered above the reef divider.
+ * Its height contracts when the upper band is short so the card never covers
+ * the player's ecosystem below the divider.
  */
 export function getTutorialDividerCoachPlacement({
   dividerRect,
@@ -200,23 +200,18 @@ export function getTutorialDividerCoachPlacement({
   const coachHeight = Math.min(coach.height, Math.max(1, height - safeMargin * 2));
   const spaceAbove = Math.max(0, visibleDivider.top - safeGap - safeMargin);
   const spaceBelow = Math.max(0, height - safeMargin - visibleDivider.bottom - safeGap);
-  const side = spaceAbove >= coachHeight
-    ? TUTORIAL_COACH_SIDES.ABOVE
-    : spaceBelow >= coachHeight
-      ? TUTORIAL_COACH_SIDES.BELOW
-      : spaceAbove >= spaceBelow
-        ? TUTORIAL_COACH_SIDES.ABOVE
-        : TUTORIAL_COACH_SIDES.BELOW;
-  const availableHeight = side === TUTORIAL_COACH_SIDES.ABOVE ? spaceAbove : spaceBelow;
-  const placedHeight = Math.min(coachHeight, Math.max(1, availableHeight));
+  if (spaceAbove <= 0) return null;
+
+  const side = TUTORIAL_COACH_SIDES.ABOVE;
+  const availableHeight = spaceAbove;
+  const placedHeight = Math.min(coachHeight, availableHeight);
+  const dividerCenterX = visibleDivider.left + visibleDivider.width / 2;
   const left = clamp(
-    visibleDivider.left,
+    dividerCenterX - coachWidth / 2,
     safeMargin,
     width - safeMargin - coachWidth,
   );
-  const desiredTop = side === TUTORIAL_COACH_SIDES.ABOVE
-    ? visibleDivider.top - safeGap - placedHeight
-    : visibleDivider.bottom + safeGap;
+  const desiredTop = visibleDivider.top - safeGap - placedHeight;
   const top = clamp(
     desiredTop,
     safeMargin,
