@@ -20,6 +20,7 @@ import {
   getSimulatorV2LessonHelp,
   getSimulatorV2LessonActionBlock,
   getSimulatorV2ExpectedDraw,
+  getSimulatorV2LessonPlacementTarget,
   repairSimulatorV2LessonPlacementConflict,
 } from "./simulatorV2Lessons.mjs";
 import { AttackIntentLayer, AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
@@ -166,6 +167,7 @@ import {
   completeGuidedAcademyLayoutAction,
   createGuidedAcademyLayoutProgress,
   getGuidedAcademyFoundationPlacementTarget,
+  getPreparedTutorialFoundationPlacement,
 } from "./tutorialLayoutLesson.mjs";
 import { createProfessorAnnouncement, createProfessorSpeechKey, createProfessorSpokenMessage, getProfessorSpeechDuration, getProfessorVisibleGraphemeCount, segmentProfessorMessage } from "./tutorialDialogue.mjs";
 import {
@@ -2330,14 +2332,17 @@ function createScriptedTutorialOpponentCorals(tableau = [], owner = "opponent") 
         cardInstanceId: `tutorial-${owner}-${cardId}-${foundationIndex + 1}-${placementIndex + 1}`,
       };
     }
+    const preparedPosition = owner === "player"
+      ? getPreparedTutorialFoundationPlacement(foundationIndex, tableau.length)
+      : null;
     return {
       id: instanceId,
       cardId: foundationCardId,
       ...(owner === "player" ? {
         name: foundation.name,
         image: foundation.image,
-        x: tableau.length === 1 ? 50 : 20 + (60 * foundationIndex / (tableau.length - 1)),
-        y: 50,
+        x: Number.isFinite(definition?.x) ? definition.x : preparedPosition.x,
+        y: Number.isFinite(definition?.y) ? definition.y : preparedPosition.y,
       } : {}),
       health: Math.max(0, Number(definition?.health ?? foundation.health) || 0),
       maxHealth: Math.max(0, Number(definition?.maxHealth ?? foundation.health) || 0),
@@ -4423,10 +4428,11 @@ function roundLayoutNumber(value, precision = 4) {
   return Number(Number(value).toFixed(precision));
 }
 
-function getBracketSlotPositions(count) {
+const PREPARED_LESSON_SLOT_RADIUS = 92;
+
+function getBracketSlotPositions(count, radiusBase = 150) {
   // place anchors evenly around the coral in a circle to avoid overlap
   const positions = [];
-  const radiusBase = 150; // percent of the coral box, larger to keep anchors outside the card frame
   const radius = radiusBase + Math.max(0, count - 4) * 10;
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2 - Math.PI / 2; // start at top
@@ -5969,6 +5975,11 @@ export default function Simulator({
   const opponentCorals = opponent.corals;
   const playerCoralCards = playerCorals.filter((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL);
   const opponentCoralCards = opponentCorals.filter((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL);
+  const preparedPlayerReefLayout = Boolean(
+    embeddedLesson
+    && playerCorals.length > 1
+    && playerCorals.every((coral) => coral.id.startsWith("tutorial-player-foundation-"))
+  );
   const playerLayoutSignature = [
     ...playerCorals.map((coral) => `${coral.id}:${coral.slots.map((slot) => `${slot.cardId ?? "_"}:${(slot.hostedCardIds ?? []).filter(Boolean).join(",")}`).join(";")}`),
     ...playerHabitatInstances.map((instance) => `habitat:${instance.instanceId}`),
@@ -8271,7 +8282,9 @@ export default function Simulator({
     let frame = null;
     const fitPlayerBoard = () => {
       if (frame != null) cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => zoomEcosystemToFit("player"));
+      frame = requestAnimationFrame(() => zoomEcosystemToFit("player", {
+        includeAllSlots: !preparedPlayerReefLayout,
+      }));
     };
     fitPlayerBoard();
     const resizeObserver = typeof ResizeObserver === "function"
@@ -8284,7 +8297,7 @@ export default function Simulator({
       resizeObserver?.disconnect();
       window.removeEventListener("resize", fitPlayerBoard);
     };
-  }, [playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, weaknessFocusActive]);
+  }, [playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, weaknessFocusActive, preparedPlayerReefLayout]);
 
   useEffect(() => {
     if (!opponentLayoutSignature || opponentViewportTouched) return undefined;
@@ -8312,10 +8325,12 @@ export default function Simulator({
     if (!previewExperience) return undefined;
     const frame = requestAnimationFrame(() => {
       zoomEcosystemToFit("opponent");
-      if (!weaknessFocusActive) zoomEcosystemToFit("player");
+      if (!weaknessFocusActive) zoomEcosystemToFit("player", {
+        includeAllSlots: !preparedPlayerReefLayout,
+      });
     });
     return () => cancelAnimationFrame(frame);
-  }, [previewExperience, mobileReefSplit, weaknessFocusActive]);
+  }, [previewExperience, mobileReefSplit, weaknessFocusActive, preparedPlayerReefLayout]);
 
   useEffect(() => {
     const result = reconcileFoundationHealthToFixedPoint(playerCorals, playerReefCreatureInstances, playerOrphanCreatures);
@@ -8858,7 +8873,7 @@ export default function Simulator({
     ));
   }
 
-  function zoomEcosystemToFit(owner) {
+  function zoomEcosystemToFit(owner, { includeAllSlots = true } = {}) {
     const isOpponent = owner === "opponent";
     const element = isOpponent ? opponentEcosystemRef.current : ecosystemRef.current;
     if (!element) return;
@@ -8884,6 +8899,9 @@ export default function Simulator({
       ? opponent.habitats.length ? 40 : 16
       : playerHabitats.length ? 48 : 24;
     const invertOpponentSlots = isOpponent && previewExperience;
+    const lessonPlacementTarget = !isOpponent && !includeAllSlots && embeddedLesson && tutorialCurrentCheckpoint
+      ? getSimulatorV2LessonPlacementTarget(embeddedLesson, tutorialCurrentCheckpoint)
+      : null;
     const positions = corals.map((coral, index) => {
       if (!isOpponent) return { x: coral.x, y: coral.y, absolute: false };
       const offset = getOpponentCoralGridOffset(index, corals.length, invertOpponentSlots);
@@ -8899,7 +8917,12 @@ export default function Simulator({
     const bounds = corals.flatMap((coral, coralIndex) => {
       const centerX = positions[coralIndex].absolute ? positions[coralIndex].x : (positions[coralIndex].x / 100) * rect.width;
       const centerY = positions[coralIndex].absolute ? positions[coralIndex].y : (positions[coralIndex].y / 100) * rect.height;
-      const anchors = isOpponent ? getOpponentSlotPositions(coral.slots.length, invertOpponentSlots) : getBracketSlotPositions(coral.slots.length);
+      const anchors = isOpponent
+        ? getOpponentSlotPositions(coral.slots.length, invertOpponentSlots)
+        : getBracketSlotPositions(
+            coral.slots.length,
+            preparedPlayerReefLayout ? PREPARED_LESSON_SLOT_RADIUS : 150,
+          );
       const cardBounds = [{
         minX: centerX - coralWidth / 2,
         maxX: centerX + coralWidth / 2,
@@ -8907,6 +8930,20 @@ export default function Simulator({
         maxY: centerY + coralHeight / 2,
       }];
       coral.slots.forEach((slot, slotIndex) => {
+        const slotClass = slot.slotClass ?? slot.slotType ?? slot.class;
+        const slotOrdinal = coral.slots.slice(0, slotIndex + 1).filter((candidate) => (
+          (candidate.slotClass ?? candidate.slotType ?? candidate.class) === slotClass
+        )).length - 1;
+        const isLessonPlacementTarget = Boolean(
+          lessonPlacementTarget
+          && lessonPlacementTarget.foundationCardId === coral.cardId
+          && lessonPlacementTarget.slotClass === slotClass
+          && (
+            !Number.isInteger(lessonPlacementTarget.slotOrdinal)
+            || lessonPlacementTarget.slotOrdinal === slotOrdinal
+          )
+        );
+        if (!includeAllSlots && !slot.cardId && !isLessonPlacementTarget) return;
         const position = isOpponent
           ? getOpponentSlotPosition(slot.position, invertOpponentSlots) ?? anchors[slotIndex]
           : slot.position ?? anchors[slotIndex];
@@ -26766,7 +26803,10 @@ export default function Simulator({
                       ) : null}
                       {playerCorals.map((coral) => {
                         const densityBucket = playerSchoolDensityState.byFoundationId[coral.id] ?? null;
-                        const anchorPositions = getBracketSlotPositions(coral.slots.length);
+                        const anchorPositions = getBracketSlotPositions(
+                          coral.slots.length,
+                          preparedPlayerReefLayout ? PREPARED_LESSON_SLOT_RADIUS : 150,
+                        );
                         const canUpgradeThisCoral = upgradeableCoralIds.has(coral.id);
                         const isLayoutFoundationTarget = Boolean(
                           tutorialHelpTargetActive

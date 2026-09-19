@@ -59,7 +59,7 @@ test("health-bearing cards place hover names below, away from their vitals rail"
 });
 
 test("Fit reserves space for external foundation and Habitat vitals", () => {
-  const fit = sourceSection("function zoomEcosystemToFit(owner)", "function canUseSlotWithCard");
+  const fit = sourceSection("function zoomEcosystemToFit(owner, { includeAllSlots = true } = {})", "function canUseSlotWithCard");
 
   assert.match(simulatorSource, /const BOARD_FOUNDATION_VITALS_CLEARANCE = 60/);
   assert.match(

@@ -34,6 +34,7 @@ import { createCombatRollPacket } from "./combatRollPresentation.mjs";
 import { evaluateCoralReefComposition, getHabitatRequirementError } from "./habitatRules.mjs";
 import { createSchoolDensityBucketState } from "./schoolDensityRules.mjs";
 import { createSimulatorRandomStream, sampleSimulatorRandom } from "./simulatorRandomStream.mjs";
+import { getPreparedTutorialFoundationPlacement } from "./tutorialLayoutLesson.mjs";
 import { getPersonalDeckType } from "./zoneRules.mjs";
 
 const require = createRequire(import.meta.url);
@@ -267,12 +268,12 @@ test("Simulator's actual prepared-foundation factory supplies visible player art
   // Execute the production factory and production slot expansion with the
   // actual card catalog and validator. This catches missing player-only fields
   // that a separately reconstructed scenario fixture would silently hide.
-  const createPreparedFoundations = new Function("cardsById", "canCardOccupySlot", "getPersonalDeckType", [
+  const createPreparedFoundations = new Function("cardsById", "canCardOccupySlot", "getPersonalDeckType", "getPreparedTutorialFoundationPlacement", [
     "const isFoundationCard = (card) => getPersonalDeckType(card) === 'foundation';",
     extractFunction("createCoralSlots", "getSlotIdentity"),
     extractFunction("createScriptedTutorialOpponentCorals", "getOnPlayCoralDamage"),
     "return createScriptedTutorialOpponentCorals;",
-  ].join("\n"))(cardsById, canCardOccupySlot, getPersonalDeckType);
+  ].join("\n"))(cardsById, canCardOccupySlot, getPersonalDeckType, getPreparedTutorialFoundationPlacement);
 
   for (const lesson of SIMULATOR_V2_LESSONS) {
     const player = createPreparedFoundations(lesson.seed.playerTableau, "player");
@@ -291,6 +292,17 @@ test("Simulator's actual prepared-foundation factory supplies visible player art
       `${lesson.id}: prepared statuses survive hydration`,
     );
     if (player.length > 1) assert.equal(new Set(player.map((foundation) => `${foundation.x}:${foundation.y}`)).size, player.length, "prepared Corals occupy distinct locations");
+    if (player.length >= 3) assert.ok(new Set(player.map(({ y }) => y)).size > 1, `${lesson.id}: prepared Corals use more than one row`);
+    for (let left = 0; left < player.length; left += 1) {
+      for (let right = left + 1; right < player.length; right += 1) {
+        const horizontal = Math.abs(player[left].x - player[right].x) / 100 * 375;
+        const vertical = Math.abs(player[left].y - player[right].y) / 100 * 350;
+        assert.ok(
+          horizontal >= 240 || vertical >= 280,
+          `${lesson.id}: prepared Foundation ${left + 1} clears Foundation ${right + 1} on a narrow board`,
+        );
+      }
+    }
     for (const foundation of [...player, ...opponent]) {
       identities.push(foundation.id);
       for (const slot of foundation.slots) {
@@ -320,7 +332,7 @@ test("actual prepared initial games preserve every normal opponent default outsi
   // Only deck sampling is stubbed. Initial-game defaults and both foundation
   // factories are the production implementations, so new normal-game defaults
   // must automatically survive lesson preparation too.
-  const createInitialGame = new Function("cardsById", "canCardOccupySlot", "CardKind", "getPersonalDeckType", "dependencies", [
+  const createInitialGame = new Function("cardsById", "canCardOccupySlot", "CardKind", "getPersonalDeckType", "getPreparedTutorialFoundationPlacement", "dependencies", [
     "const { createFoundationOpening, createDeck, shuffle, conditionCards, removeOneCard } = dependencies;",
     "const defaultDeckId = 'audit-deck';",
     "const isFoundationCard = (card) => getPersonalDeckType(card) === 'foundation';",
@@ -330,7 +342,7 @@ test("actual prepared initial games preserve every normal opponent default outsi
     extract("createScriptedTutorialOpponentCorals", "getOnPlayCoralDamage"),
     extract("createInitialGameState", "createOpponentStartingCorals"),
     "return createInitialGameState;",
-  ].join("\n"))(cardsById, canCardOccupySlot, CardKind, getPersonalDeckType, {
+  ].join("\n"))(cardsById, canCardOccupySlot, CardKind, getPersonalDeckType, getPreparedTutorialFoundationPlacement, {
     createFoundationOpening: () => [...openingFoundationCards],
     createDeck: () => [...openingPalsCards],
     shuffle: (cards) => [...cards],

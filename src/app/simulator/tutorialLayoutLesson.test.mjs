@@ -6,6 +6,7 @@ import {
   completeGuidedAcademyLayoutAction,
   createGuidedAcademyLayoutProgress,
   getGuidedAcademyFoundationPlacementTarget,
+  getPreparedTutorialFoundationPlacement,
   getGuidedAcademyLayoutLessonStep,
 } from "./tutorialLayoutLesson.mjs";
 
@@ -76,6 +77,34 @@ test("guided foundation targets spread early tutorial cards across distinct open
     }
   }
   assert.throws(() => getGuidedAcademyFoundationPlacementTarget(-1), /non-negative/);
+});
+
+test("prepared lesson foundations open in a mobile-clear two-dimensional grid", () => {
+  const mobileBoard = { width: 375, height: 350 };
+  const foundationFootprint = { width: 240, height: 280 };
+
+  for (let total = 1; total <= 6; total += 1) {
+    const positions = Array.from({ length: total }, (_, index) => (
+      getPreparedTutorialFoundationPlacement(index, total)
+    ));
+    assert.equal(new Set(positions.map(({ x, y }) => `${x}:${y}`)).size, total);
+    if (total >= 3) {
+      assert.ok(new Set(positions.map(({ y }) => y)).size > 1, `${total} prepared Foundations use more than one row`);
+    }
+    for (let left = 0; left < positions.length; left += 1) {
+      for (let right = left + 1; right < positions.length; right += 1) {
+        const horizontal = Math.abs(positions[left].x - positions[right].x) / 100 * mobileBoard.width;
+        const vertical = Math.abs(positions[left].y - positions[right].y) / 100 * mobileBoard.height;
+        assert.ok(
+          horizontal >= foundationFootprint.width || vertical >= foundationFootprint.height,
+          `prepared Foundation ${left + 1} must clear Foundation ${right + 1} on a narrow board`,
+        );
+      }
+    }
+  }
+
+  assert.throws(() => getPreparedTutorialFoundationPlacement(2, 2), /valid index/);
+  assert.throws(() => getPreparedTutorialFoundationPlacement(0, 0), /positive total/);
 });
 
 test("guided foundation targets avoid Coral cards already on the live board", () => {

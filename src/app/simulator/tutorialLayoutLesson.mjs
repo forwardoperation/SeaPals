@@ -76,6 +76,43 @@ const COLLISION_AWARE_FOUNDATION_POSITIONS = Object.freeze([
 ]);
 
 const FOUNDATION_CLEARANCE = Object.freeze({ x: 30, y: 38 });
+const PREPARED_FOUNDATION_COLUMN_POSITIONS = Object.freeze({
+  one: Object.freeze([50]),
+  two: Object.freeze([14, 86]),
+});
+const PREPARED_FOUNDATION_ROW_GAP = 82;
+
+/**
+ * Spreads a prepared lesson reef across two columns and as many rows as it
+ * needs. Later rows may sit outside 0–100 board space; the camera's Fit pass
+ * measures those coordinates and brings the complete authored reef onscreen.
+ */
+export function getPreparedTutorialFoundationPlacement(index, total) {
+  const normalizedIndex = Number(index);
+  const normalizedTotal = Number(total);
+  if (
+    !Number.isSafeInteger(normalizedIndex)
+    || !Number.isSafeInteger(normalizedTotal)
+    || normalizedIndex < 0
+    || normalizedTotal < 1
+    || normalizedIndex >= normalizedTotal
+  ) {
+    throw new RangeError("Prepared foundation placement requires a valid index and positive total.");
+  }
+
+  const rowCount = Math.ceil(normalizedTotal / 2);
+  const row = Math.floor(normalizedIndex / 2);
+  const rowStartIndex = row * 2;
+  const itemsInRow = Math.min(2, normalizedTotal - rowStartIndex);
+  const column = normalizedIndex - rowStartIndex;
+  const columns = itemsInRow === 1
+    ? PREPARED_FOUNDATION_COLUMN_POSITIONS.one
+    : PREPARED_FOUNDATION_COLUMN_POSITIONS.two;
+  return Object.freeze({
+    x: columns[column],
+    y: 50 + (row - (rowCount - 1) / 2) * PREPARED_FOUNDATION_ROW_GAP,
+  });
+}
 
 export function createGuidedAcademyLayoutProgress(source = {}) {
   return Object.freeze(Object.fromEntries(

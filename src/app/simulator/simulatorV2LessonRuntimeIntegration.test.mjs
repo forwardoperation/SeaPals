@@ -8,6 +8,7 @@ import {
   getSimulatorV2Lesson,
   getSimulatorV2LessonActionBlock,
 } from "./simulatorV2Lessons.mjs";
+import { getPreparedTutorialFoundationPlacement } from "./tutorialLayoutLesson.mjs";
 
 const require = createRequire(import.meta.url);
 const { createJiti } = require("jiti");
@@ -62,7 +63,7 @@ test("Lesson 1 teaches Coral weaknesses on the board without a generic hand over
 });
 
 function createProductionInitialGameFactory() {
-  return new Function("cardsById", "CardKind", "canCardOccupySlot", "dependencies", [
+  return new Function("cardsById", "CardKind", "canCardOccupySlot", "getPreparedTutorialFoundationPlacement", "dependencies", [
     "const { createFoundationOpening, createDeck, shuffle, conditionCards, removeOneCard } = dependencies;",
     "const defaultDeckId = 'runtime-integration-deck';",
     "const isFoundationCard = (card) => card?.kind === CardKind.CORAL;",
@@ -72,7 +73,7 @@ function createProductionInitialGameFactory() {
     extractFunction("createOpponentStartingCorals", "createScriptedTutorialOpponentCorals"),
     extractFunction("createScriptedTutorialOpponentCorals", "getOnPlayCoralDamage"),
     "return createInitialGameState;",
-  ].join("\n"))(cardsById, CardKind, canCardOccupySlot, {
+  ].join("\n"))(cardsById, CardKind, canCardOccupySlot, getPreparedTutorialFoundationPlacement, {
     createFoundationOpening: () => Array.from({ length: 8 }, () => "mustard-hill-coral-base"),
     createDeck: () => Array.from({ length: 8 }, () => "clownfish"),
     shuffle: (cards) => [...cards],
