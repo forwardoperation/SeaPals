@@ -107,6 +107,67 @@ test("prepared lesson foundations open in a mobile-clear two-dimensional grid", 
   assert.throws(() => getPreparedTutorialFoundationPlacement(0, 0), /positive total/);
 });
 
+test("the prepared Habitat lesson clears attached cards and neighboring slot markers", () => {
+  const portraitBoard = { width: 750, height: 747 };
+  const foundationSize = { width: 180, height: 220 };
+  const foundationWrapper = { width: 240, height: 280 };
+  const slotRadius = 92 / 100;
+  const branches = [
+    { slotCount: 4, filledSlots: new Set() },
+    { slotCount: 2, filledSlots: new Set([0, 1]) },
+    { slotCount: 4, filledSlots: new Set() },
+    { slotCount: 2, filledSlots: new Set() },
+  ];
+  const rectangle = (centerX, centerY, width, height, label) => ({
+    label,
+    left: centerX - width / 2,
+    right: centerX + width / 2,
+    top: centerY - height / 2,
+    bottom: centerY + height / 2,
+  });
+  const cardsByBranch = branches.map((branch, branchIndex) => {
+    const placement = getPreparedTutorialFoundationPlacement(branchIndex, branches.length);
+    const centerX = placement.x / 100 * portraitBoard.width;
+    const centerY = placement.y / 100 * portraitBoard.height;
+    const cards = [rectangle(
+      centerX,
+      centerY - (foundationWrapper.height - foundationSize.height) / 2,
+      foundationSize.width,
+      foundationSize.height,
+      `Foundation ${branchIndex + 1}`,
+    )];
+    for (let slotIndex = 0; slotIndex < branch.slotCount; slotIndex += 1) {
+      const angle = slotIndex / branch.slotCount * Math.PI * 2 - Math.PI / 2;
+      const slotCenterX = centerX + Math.cos(angle) * slotRadius * foundationWrapper.width;
+      const slotCenterY = centerY + Math.sin(angle) * slotRadius * foundationWrapper.height;
+      const filled = branch.filledSlots.has(slotIndex);
+      cards.push(rectangle(
+        slotCenterX,
+        slotCenterY,
+        filled ? 180 : 112,
+        filled ? 220 : 112,
+        `${filled ? "Card" : "Slot"} ${branchIndex + 1}.${slotIndex + 1}`,
+      ));
+    }
+    return cards;
+  });
+
+  for (let leftBranch = 0; leftBranch < cardsByBranch.length; leftBranch += 1) {
+    for (let rightBranch = leftBranch + 1; rightBranch < cardsByBranch.length; rightBranch += 1) {
+      for (const left of cardsByBranch[leftBranch]) {
+        for (const right of cardsByBranch[rightBranch]) {
+          const horizontalOverlap = Math.min(left.right, right.right) - Math.max(left.left, right.left);
+          const verticalOverlap = Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top);
+          assert.ok(
+            horizontalOverlap <= 0 || verticalOverlap <= 0,
+            `${left.label} must clear ${right.label}`,
+          );
+        }
+      }
+    }
+  }
+});
+
 test("guided foundation targets avoid Coral cards already on the live board", () => {
   const target = getGuidedAcademyFoundationPlacementTarget([
     { cardId: "mustard-hill-coral-base", x: 50, y: 50 },

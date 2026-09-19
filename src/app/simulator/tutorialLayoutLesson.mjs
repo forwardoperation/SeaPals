@@ -78,9 +78,9 @@ const COLLISION_AWARE_FOUNDATION_POSITIONS = Object.freeze([
 const FOUNDATION_CLEARANCE = Object.freeze({ x: 30, y: 38 });
 const PREPARED_FOUNDATION_COLUMN_POSITIONS = Object.freeze({
   one: Object.freeze([50]),
-  two: Object.freeze([14, 86]),
+  two: Object.freeze([8, 92]),
 });
-const PREPARED_FOUNDATION_ROW_GAP = 82;
+const PREPARED_FOUNDATION_ROW_GAP = 140;
 
 /**
  * Spreads a prepared lesson reef across two columns and as many rows as it

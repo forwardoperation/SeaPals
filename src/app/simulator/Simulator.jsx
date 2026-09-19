@@ -23794,7 +23794,7 @@ export default function Simulator({
         .seapals-mobile-hand-dock.is-draw-sequencing .seapals-mobile-hand-rail {
           pointer-events: none;
         }
-        .seapals-mobile-hand-list > li + li { margin-left: -1.05rem; }
+        .seapals-mobile-hand-list > li + li { margin-left: .65rem; }
         .seapals-mobile-hand-card {
           position: relative;
           display: block;
@@ -25589,7 +25589,7 @@ export default function Simulator({
             padding-left: clamp(3.75rem, 9.375dvh, 6.5625rem);
           }
           .seapals-simulator-preview .seapals-mobile-hand-list > li + li {
-            margin-left: clamp(-1.8375rem, -2.625dvh, -1.05rem);
+            margin-left: clamp(.65rem, 1.625dvh, 1.1375rem);
           }
           .seapals-simulator-preview .seapals-mobile-hand-card {
             width: clamp(var(--seapals-desktop-hand-card-min), min(6vw, 11.5dvh), var(--seapals-desktop-hand-card-max));

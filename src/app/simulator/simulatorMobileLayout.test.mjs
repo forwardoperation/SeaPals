@@ -326,6 +326,19 @@ test("the touched hand-card source owns the pan-x policy instead of relying on a
   );
 });
 
+test("the hand rail gives every card positive separation instead of stacking their artwork", () => {
+  assert.match(
+    simulatorSource,
+    /\.seapals-mobile-hand-list > li \+ li \{ margin-left:\s*\.65rem; \}/,
+    "portrait hand cards should have a visible gap",
+  );
+  assert.match(
+    simulatorSource,
+    /@media \(min-width: 1280px\)[\s\S]*?\.seapals-simulator-preview \.seapals-mobile-hand-list > li \+ li\s*\{[\s\S]*?margin-left:\s*clamp\(\.65rem, 1\.625dvh, 1\.1375rem\);/,
+    "the fluid desktop hand should preserve positive separation",
+  );
+});
+
 test("pointer capture is established before drag-start state causes a parent rerender", () => {
   const pointerMove = functionSectionContaining(
     handDockSource,
