@@ -152,6 +152,7 @@ import {
   GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS,
   GUIDED_ACADEMY_INTRO_CARD_ID,
   createGuidedAcademyCardLesson,
+  createGuidedFoundationCardLesson,
   getGuidedAcademyIntroductionStep,
   getNextGuidedAcademyIntroductionStep,
   getTutorialCardFocusRegion,
@@ -4633,7 +4634,14 @@ export default function Simulator({
   const [embeddedLessonPreVictoryAcknowledged, setEmbeddedLessonPreVictoryAcknowledged] = useState(false);
   const [weaknessTourAcknowledged, setWeaknessTourAcknowledged] = useState(false);
   const [tutorialIntroductionStep, setTutorialIntroductionStep] = useState(null);
-  const [tutorialCardLesson, setTutorialCardLesson] = useState(null);
+  const [tutorialCardLesson, setTutorialCardLesson] = useState(() => {
+    const openingCardTourId = embeddedLessonPresentationStarted
+      ? embeddedLesson?.openingCardTourId
+      : null;
+    return openingCardTourId
+      ? createGuidedFoundationCardLesson(cardsById[openingCardTourId])
+      : null;
+  });
   const [tutorialSeenCardConceptKeys, setTutorialSeenCardConceptKeys] = useState([]);
   const [tutorialBoardTourStep, setTutorialBoardTourStep] = useState(null);
   const [tutorialLayoutProgress, setTutorialLayoutProgress] = useState(

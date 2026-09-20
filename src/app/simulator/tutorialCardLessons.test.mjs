@@ -5,6 +5,7 @@ import {
   GUIDED_ACADEMY_INTRO_CARD_ID,
   TUTORIAL_CARD_FOCUS_REGIONS,
   createGuidedAcademyCardLesson,
+  createGuidedFoundationCardLesson,
   getGuidedAcademyIntroductionStep,
   getNextGuidedAcademyIntroductionStep,
   getTutorialCardConcepts,
@@ -28,6 +29,22 @@ const mustardHillCoral = {
   bio: { role: "Reef Builder" },
   weaknesses: [],
   passives: [{ name: "Photosynthesis", text: "Collect 2 RP at the start of your turn." }],
+};
+
+const brainCoral = {
+  id: "brain-coral-base",
+  name: "Brain Coral",
+  kind: "coral",
+  stage: 0,
+  stageLabel: "Base",
+  cost: { rp: 1 },
+  health: 10,
+  slots: [
+    { slotType: "fish", count: 1 },
+    { slotType: "invertebrate", count: 1 },
+  ],
+  weaknesses: ["disease"],
+  passives: [{ name: "Photosynthesis", text: "Collect 1 RP at the start of your turn." }],
 };
 
 test("guided Academy opens with a welcome, then teaches the real first card top to bottom", () => {
@@ -71,6 +88,28 @@ test("guided Academy introduction rejects missing and invalid steps", () => {
   assert.equal(getGuidedAcademyIntroductionStep(-1), null);
   assert.equal(getGuidedAcademyIntroductionStep(9), null);
   assert.equal(getGuidedAcademyIntroductionStep(1.5), null);
+});
+
+test("the first embedded lesson tours every printed part of Brain Coral before board play", () => {
+  const lesson = createGuidedFoundationCardLesson(brainCoral);
+
+  assert.equal(lesson.cardId, "brain-coral-base");
+  assert.equal(lesson.referenceMode, "printed");
+  assert.equal(lesson.eyebrow, "Foundation card tour");
+  assert.deepEqual(
+    lesson.segments.map((segment) => segment.focus),
+    ["identity", "name", "cost", "species", "rules", "health", "weaknesses", "slots"],
+  );
+  assert.match(lesson.segments[0].message, /Base Coral Foundation.*new branch.*Stage cards upgrade/i);
+  assert.match(lesson.segments[2].message, /Brain Coral costs 1 RP.*RP bank/i);
+  assert.match(lesson.segments[4].message, /Passive.*Photosynthesis.*Collect 1 RP/i);
+  assert.match(lesson.segments[5].message, /10 HP.*destroyed/i);
+  assert.match(lesson.segments[6].message, /Disease.*Condition.*stays in play.*RP production/i);
+  assert.match(lesson.segments[7].message, /1 Fish and 1 Invertebrate.*one home.*match an open slot/i);
+  assert.equal(lesson.advanceLabel, "Place Brain Coral");
+  assert.deepEqual(lesson.conceptKeys, GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS);
+  assert.equal(createGuidedFoundationCardLesson({ ...brainCoral, stage: 1 }), null);
+  assert.equal(createGuidedFoundationCardLesson({ ...brainCoral, kind: "creature" }), null);
 });
 
 test("every card cue maps to printed and normalized regions with one straight arrow", () => {

@@ -19,6 +19,22 @@ test("later card lessons derive only from an authored hand target and preserve t
   assert.doesNotMatch(simulatorSource, /finishTutorialCardLesson\(\)[\s\S]{0,500}setTutorialHelpDismissedId/);
 });
 
+test("Lesson 1 opens its authored Foundation card tour only after Start Lesson", () => {
+  assert.match(
+    simulatorSource,
+    /const \[tutorialCardLesson, setTutorialCardLesson\] = useState\(\(\) => \{[\s\S]*?embeddedLessonPresentationStarted[\s\S]*?embeddedLesson\?\.openingCardTourId[\s\S]*?createGuidedFoundationCardLesson\(cardsById\[openingCardTourId\]\)/,
+  );
+  assert.match(
+    simulatorSource,
+    /tutorialCardLessonOpen \? \([\s\S]*?<TutorialCardLessonOverlay[\s\S]*?lesson=\{tutorialCardLesson\}[\s\S]*?card=\{tutorialCardLessonCard\}/,
+  );
+  assert.match(
+    simulatorSource,
+    /embeddedLessonPresentationBlocked = Boolean\([\s\S]*?\|\| tutorialCardLesson/,
+    "the board coach waits until the full-screen card tour ends",
+  );
+});
+
 test("fullscreen lesson keeps the card clear and docks the coach and navigation below it", () => {
   assert.match(simulatorSource, /className="fixed inset-0 z-\[180\] flex min-h-0 flex-col overflow-hidden/);
   assert.match(simulatorSource, /data-card-lesson-stage[\s\S]*data-card-lesson-coach/);

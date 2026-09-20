@@ -1133,7 +1133,8 @@ test("Lesson 1 speaks the new-player mental model before asking for each action"
     gamePhase: "setup",
     hasCoralInPlay: false,
   });
-  assert.match(initial.action, /ecosystem.*Corals are Foundations.*Resource Points \(RP\).*creature slots.*Base Coral.*costs 1 RP.*new Foundation branch.*highlighted open water/is);
+  assert.equal(lesson.openingCardTourId, "brain-coral-base");
+  assert.equal(initial.action, "Now that we know how to read foundation cards, drag this brain coral into your ecosystem for a cost of 1RP.");
   assert.equal(initial.pointerPrompt, "Drag Brain Coral into the highlighted open water.");
 
   const selectedInitial = getSimulatorV2LessonHelp(lesson, setup, {
@@ -1413,13 +1414,13 @@ test("hand play guidance teaches the real upward drag and matching drop destinat
   assert.equal(initial.target, "hand");
   assert.equal(initial.targetCardId, "brain-coral-base");
   assert.equal(initial.interaction, "drag");
-  assert.match(initial.action, /Brain Coral is a Base Coral.*Drag it from your hand into the highlighted open water/is);
+  assert.equal(initial.action, "Now that we know how to read foundation cards, drag this brain coral into your ecosystem for a cost of 1RP.");
   assert.match(initial.hint, /upward.*release/);
   assert.match(initial.hint, /select (?:it|the card), choose Play/);
   const inspected = getSimulatorV2LessonHelp(first, setup, { gamePhase: "setup", selectedHandCard: first.setupCardId, handPopoverOpen: true });
   assert.equal(inspected.interaction, "tap", "the gesture follows the actual Play Card control once details are open");
   assert.equal(inspected.target, "play-card", "the inspector retains the accessible Play control");
-  assert.match(inspected.action, /choose Play Card/i);
+  assert.equal(inspected.pointerPrompt, "Choose Play Card.");
   assert.equal(inspected.action, initial.action, "opening the card should not replace or restart the spoken lesson");
   assert.match(inspected.hint, /choose a compatible|choose open water/i);
   const clickPlacement = getSimulatorV2LessonHelp(first, setup, { gamePhase: "setup", playingCardId: first.setupCardId });

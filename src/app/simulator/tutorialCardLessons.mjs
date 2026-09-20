@@ -317,6 +317,79 @@ export function getNextGuidedAcademyIntroductionStep(step) {
   return step + 1;
 }
 
+export function createGuidedFoundationCardLesson(card) {
+  if (!card?.id || normalizeToken(card.kind) !== "coral" || Number(card.stage ?? 0) !== 0) return null;
+  const cost = getCardRp(card);
+  const passive = getCardPassive(card);
+  const passiveName = getPassiveName(passive) || "Passive";
+  const passiveText = getPassiveText(passive) || "Read the printed ability for its ongoing effect.";
+  const health = Number(card.health ?? 0);
+  const weaknessSummary = getWeaknessSummary(card) || "None printed";
+  const slotSummary = getSlotSummary(card) || "No creature slots";
+
+  return {
+    id: `guided-foundation-card-lesson:${card.id}`,
+    cueId: `guided-foundation-card-lesson:${card.id}`,
+    cardId: card.id,
+    conceptKeys: [...GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS],
+    title: `How to read ${card.name}`,
+    eyebrow: "Foundation card tour",
+    referenceMode: "printed",
+    message: `Read each highlighted part of ${card.name}, then place it in your ecosystem.`,
+    segments: [
+      {
+        id: "foundation-identity",
+        title: "Start with the Foundation header",
+        message: "The header identifies this as a Base Coral Foundation. Base Corals can begin a new branch of your ecosystem; later Stage cards upgrade that same Coral.",
+        focus: "identity",
+      },
+      {
+        id: "card-name",
+        title: "Find the card's name",
+        message: `The large text at the top is the card's name: ${card.name}. Card names matter whenever another rule tells you what to find, play, or upgrade.`,
+        focus: "name",
+      },
+      {
+        id: "play-cost",
+        title: "Check the RP cost",
+        message: `The top-right number is the play cost. ${card.name} costs ${cost} RP, which comes out of your RP bank when you place it in your ecosystem.`,
+        focus: "cost",
+      },
+      {
+        id: "species-profile",
+        title: "Meet the real coral",
+        message: "The picture and species strip identify the real organism, including its coral group, size, weight, and region. These science facts matter to play only when a rule refers to them.",
+        focus: "species",
+      },
+      {
+        id: "passive-ability",
+        title: `Read ${passiveName}`,
+        message: `Passive means this ability stays active while the Coral remains in your ecosystem. ${passiveName} says: ${passiveText}`,
+        focus: "rules",
+      },
+      {
+        id: "health",
+        title: "Health shows what it can survive",
+        message: `${health} HP is how much damage this Coral can take. If its remaining Health reaches zero, it is destroyed and leaves your ecosystem.`,
+        focus: "health",
+      },
+      {
+        id: "weaknesses",
+        title: "Conditions can check Weaknesses",
+        message: `${weaknessSummary} is printed in the Weaknesses area. When a round's Condition matches a Coral's weakness, that Coral stays in play but may lose its RP production for that round.`,
+        focus: "weaknesses",
+      },
+      {
+        id: "creature-slots",
+        title: "Slots show what can live here",
+        message: `The printed icons give ${card.name} ${slotSummary} slots. Each icon is one home, and a creature must match an open slot before you can place it on this Coral.`,
+        focus: "slots",
+      },
+    ],
+    advanceLabel: "Place Brain Coral",
+  };
+}
+
 export function getTutorialCardConcepts(card) {
   if (!card?.id) return [];
   const concepts = [];

@@ -196,6 +196,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       SIMULATOR_V2_LESSON_CONCEPTS.VICTORY_POINTS,
     ],
     focusCardId: "brain-coral-base", victoryTarget: 1,
+    openingCardTourId: "brain-coral-base",
     setupCardId: "brain-coral-base",
     expectedDraws: {
       "tutorial-draw-card": { deckType: "pals", cardId: "sea-urchin" },
@@ -697,7 +698,7 @@ const OPEN_WATER_CARD_IDS = new Set(["halfbeak", "ocean-sunfish"]);
 const name = (cardId) => CARD_NAMES[cardId] ?? cardId ?? "the highlighted card";
 
 const FIRST_REEF_VISIBLE_COPY = Object.freeze({
-  "brain-coral-base": "Your ecosystem is everything you build on your side. Corals are Foundations: anchors that produce Resource Points (RP) and provide connected homes called creature slots. Brain Coral is a Base Coral, so it costs 1 RP and starts a new Foundation branch. Drag it from your hand into the highlighted open water. You can also tap the card, choose Play Card, and then choose the highlighted water.",
+  "brain-coral-base": "Now that we know how to read foundation cards, drag this brain coral into your ecosystem for a cost of 1RP.",
   "sea-urchin": "Creature slots are the round symbols connected to a Coral. Each slot inherits its Coral's habitat, and its icon shows the creature class it accepts. A creature must match both. Fish slots accept Fish. Predator slots accept Fish or Predators, but Predators cannot use Fish slots. Apex slots accept Fish, Predators, or Apex creatures. Invertebrate and Filter Feeder slots accept only their matching class. Sea Urchin is a Reef Invertebrate, and its printed 1 VP counts while it stays in your ecosystem. Drag it into the glowing Reef Invertebrate slot.",
   "mustard-hill-coral-base": "A Base Coral begins a separate Foundation, while a Stage card upgrades an existing Coral. Mustard Hill is a Base Coral, so place it in empty water beside Brain Coral instead of on top of it. It produces 2 RP and has no Disease weakness. Drag it into the highlighted open water.",
   "brain-coral-stage-1": "A Coral can upgrade after its current stage has survived a full turn. Put the matching next Stage on that Coral; its position, existing damage, and compatible residents remain. Brain Coral Stage 1 costs 2 RP. It raises health from 10 to 20 HP so it can withstand more damage, raises production from 1 to 2 RP each round, and adds a Predator slot plus a second Invertebrate slot so more creatures can live there. Drag Stage 1 onto the glowing Brain Coral.",
