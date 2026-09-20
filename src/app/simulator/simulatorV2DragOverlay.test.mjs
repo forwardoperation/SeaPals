@@ -28,7 +28,7 @@ test("drag lessons connect the exact hand card to the nearest visible legal dest
   assert.match(finder, /Math\.hypot/);
   assert.match(cue, /const source = findTutorialTarget\(help\)/);
   assert.match(cue, /findEmbeddedLessonDragDestination\(help, source\.rect\)/);
-  assert.match(cue, /className=\{`seapals-v2-action-cue is-drag is-path\$\{layoutMove[\s\S]*?\$\{dragging/);
+  assert.match(cue, /className=\{`seapals-v2-action-cue is-drag is-path\$\{dragging/);
   assert.match(cue, /className="seapals-v2-action-cue-path-line"/);
   assert.match(cue, /className="seapals-v2-action-cue-destination"/);
   assert.match(cue, /--seapals-drag-start-x/);
@@ -146,7 +146,7 @@ test("the board exposes prepared ecosystem, matching Coral, and compatible slot 
   );
 });
 
-test("the board-native overlay keeps the drop circle and teacher visible during the real drag", () => {
+test("the board-native overlay uses bidirectional movement arrows for layout demos", () => {
   const cue = sourceSection(
     "function EmbeddedLessonActionCue(",
     "function ProfessorCoachOverlay(",
@@ -175,13 +175,13 @@ test("the board-native overlay keeps the drop circle and teacher visible during 
   assert.match(simulatorSource, /data-v2-lesson-drop-cards=\{embeddedLessonEcosystemDropCardIds\.join\(" "\)\}/);
   assert.match(helpState, /playingCardId,\s*playingCardName: playingCard\?\.name/);
   assert.doesNotMatch(helpState, /playingCardId:\s*embeddedLesson \? activePlacementCardId/);
+  assert.match(cue, /if \(layoutMove\) \{[\s\S]*?className="seapals-v2-action-cue-source"[\s\S]*?data-v2-layout-movement-cue="horizontal"[\s\S]*?is-left[\s\S]*?is-right[\s\S]*?seapals-v2-action-cue-layout-hand/);
   assert.match(cue, /\{!dragging \? \([\s\S]*?className="seapals-v2-action-cue-path"[\s\S]*?className="seapals-v2-action-cue-source"[\s\S]*?\) : null\}[\s\S]*?className="seapals-v2-action-cue-destination"[\s\S]*?\{!dragging \? \([\s\S]*?className="seapals-v2-action-cue-hand"/);
   assert.match(cue, /data-v2-user-dragging=\{dragging \? "true" : undefined\}/);
   assert.match(cue, /getEmbeddedLessonClearWaterCueRect\(\{/);
   assert.match(cue, /getEmbeddedLessonDragPath\(layout\.sourceRect, layout\.destinationRect, \{ layoutMove \}\)/);
-  assert.match(cue, /data-v2-clear-water-cue=\{layoutMove \? "true" : undefined\}/);
   assert.match(cue, /seapals-v2-action-cue-source-label">HOLD/);
-  assert.match(cue, /seapals-v2-action-cue-destination-label">MOVE HERE/);
+  assert.doesNotMatch(cue, /MOVE HERE|seapals-v2-action-cue-destination-label/);
   assert.match(simulatorSource, /<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}[\s\S]*?dragPassive=\{Boolean\(mobileHandDrag \|\| draggingCoralId \|\| slotDragStart\)\}/);
   assert.match(
     simulatorSource,
@@ -195,6 +195,9 @@ test("the board-native overlay keeps the drop circle and teacher visible during 
     simulatorSource,
     /\.seapals-v2-action-cue-path \{[\s\S]*?pointer-events:\s*none;/,
   );
+  assert.match(simulatorSource, /\.seapals-v2-action-cue-layout-arrow\.is-left[\s\S]*?seapalsV2LayoutArrowLeft/);
+  assert.match(simulatorSource, /\.seapals-v2-action-cue-layout-arrow\.is-right[\s\S]*?seapalsV2LayoutArrowRight/);
+  assert.match(simulatorSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.seapals-v2-action-cue-layout-arrow[\s\S]*?animation:\s*none/);
   assert.match(simulatorSource, /const embeddedLessonActionCueMeasureKey = [\s\S]*?ecosystemZoom[\s\S]*?ecosystemOffset\.x[\s\S]*?mobileReefSplit[\s\S]*?playerCorals\.map/);
 });
 

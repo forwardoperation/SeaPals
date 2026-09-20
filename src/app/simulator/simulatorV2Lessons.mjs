@@ -1009,14 +1009,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       return help(
         "slot-drag",
         "The connected circles are creature slots: homes for the creatures you will play. A slot can move around its Coral without changing which creatures fit there.",
-        "The connected circles are creature slots: homes for the creatures you will play. Press and hold the highlighted round slot, then drag it along the dotted path into MOVE HERE and release. It stays connected to Brain Coral and accepts the same kind of creature.",
+        "The connected circles are creature slots: homes for the creatures you will play. Press and hold the highlighted round slot, then drag it left or right and release in open water. It stays connected to Brain Coral and accepts the same kind of creature.",
         {
           actionId: "move-slot",
           interaction: "drag",
           dragDestination: "clear-water",
           targetCardId: selected.setupCardId,
-          pointerPrompt: "Hold the round slot and drag it into MOVE HERE.",
-          targetLabel: "the highlighted slot and MOVE HERE circle",
+          pointerPrompt: "Hold the round slot and drag it left or right.",
+          targetLabel: "the highlighted slot",
           hint: "Drag the round slot marker. Its connector follows while the Coral stays in place.",
         },
       );
@@ -1029,14 +1029,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       return help(
         "foundation-drag",
         `Your reef layout is flexible. Drag ${name(selected.setupCardId)} and its whole branch moves with it. Moving cards only organizes your board; it never changes their rules.`,
-        "Brain Coral and its whole branch can move together. Press and hold Brain Coral by its card, then drag it along the dotted path into MOVE HERE and release. Its connected slots move with it; only the layout changes.",
+        "Brain Coral and its whole branch can move together. Press and hold Brain Coral by its card, then drag it left or right and release in open water. Its connected slots move with it; only the layout changes.",
         {
           actionId: "move-foundation",
           interaction: "drag",
           dragDestination: "clear-water",
           targetCardId: selected.setupCardId,
-          pointerPrompt: "Hold Brain Coral and drag it into MOVE HERE.",
-          targetLabel: "Brain Coral and the MOVE HERE circle",
+          pointerPrompt: "Hold Brain Coral and drag it left or right.",
+          targetLabel: "Brain Coral",
           hint: "Move the Coral by its card body. Its slots and attached creatures stay connected.",
         },
       );

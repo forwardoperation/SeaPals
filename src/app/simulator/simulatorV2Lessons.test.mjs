@@ -1158,8 +1158,9 @@ test("Lesson 1 speaks the new-player mental model before asking for each action"
   });
   assert.equal(moveSlot.target, "slot-drag", "the finger starts on a connected slot while slots are introduced");
   assert.equal(moveSlot.actionId, "move-slot");
-  assert.match(moveSlot.action, /^The connected circles are creature slots.*Press and hold.*slot.*MOVE HERE.*release/is);
-  assert.match(moveSlot.pointerPrompt, /slot.*MOVE HERE/i);
+  assert.match(moveSlot.action, /^The connected circles are creature slots.*Press and hold.*slot.*left or right.*release in open water/is);
+  assert.match(moveSlot.pointerPrompt, /slot.*left or right/i);
+  assert.doesNotMatch(`${moveSlot.action} ${moveSlot.pointerPrompt} ${moveSlot.targetLabel}`, /MOVE HERE|dotted path/i);
   const moveFoundation = getSimulatorV2LessonHelp(lesson, setup, {
     gamePhase: "setup",
     hasCoralInPlay: true,
@@ -1167,8 +1168,9 @@ test("Lesson 1 speaks the new-player mental model before asking for each action"
   });
   assert.equal(moveFoundation.target, "foundation-drag", "the finger moves to Brain Coral when its branch is explained");
   assert.equal(moveFoundation.actionId, "move-foundation");
-  assert.match(moveFoundation.action, /^Brain Coral.*whole branch.*Press and hold Brain Coral.*MOVE HERE.*release.*connected slots move with it/is);
-  assert.match(moveFoundation.pointerPrompt, /Brain Coral.*MOVE HERE/i);
+  assert.match(moveFoundation.action, /^Brain Coral.*whole branch.*Press and hold Brain Coral.*left or right.*release in open water.*connected slots move with it/is);
+  assert.match(moveFoundation.pointerPrompt, /Brain Coral.*left or right/i);
+  assert.doesNotMatch(`${moveFoundation.action} ${moveFoundation.pointerPrompt} ${moveFoundation.targetLabel}`, /MOVE HERE|dotted path/i);
   assert.notEqual(moveFoundation.cueId, moveSlot.cueId, "the new instruction starts a new cue");
   const beginRound = getSimulatorV2LessonHelp(lesson, setup, {
     gamePhase: "setup",
