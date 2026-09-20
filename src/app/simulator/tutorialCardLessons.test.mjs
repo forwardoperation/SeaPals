@@ -98,14 +98,17 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
   assert.equal(lesson.eyebrow, "Foundation card tour");
   assert.deepEqual(
     lesson.segments.map((segment) => segment.focus),
-    ["identity", "name", "cost", "rules", "health", "weaknesses", "slots"],
+    [undefined, "identity", "name", "cost", "rules", "health", "weaknesses", "slots"],
   );
-  assert.match(lesson.segments[0].message, /Base Coral Foundation.*new branch.*Stage cards upgrade/i);
-  assert.match(lesson.segments[2].message, /Brain Coral costs 1 RP.*RP bank/i);
-  assert.match(lesson.segments[3].message, /Passive.*Photosynthesis.*Collect 1 RP/i);
-  assert.match(lesson.segments[4].message, /10 HP.*destroyed/i);
-  assert.match(lesson.segments[5].message, /Disease.*Condition.*stays in play.*RP production/i);
-  assert.match(lesson.segments[6].message, /1 Fish and 1 Invertebrate.*one home.*match an open slot/i);
+  assert.equal(lesson.segments[0].title, "Corals are foundations for life");
+  assert.match(lesson.segments[0].message, /ocean.*many corals.*foundations for life.*generate Resource Points \(RP\).*homes for sea creatures.*Brain Coral/i);
+  assert.equal(lesson.segments[0].focus, undefined);
+  assert.match(lesson.segments[1].message, /Base Coral Foundation.*new branch.*Stage cards upgrade/i);
+  assert.match(lesson.segments[3].message, /Brain Coral costs 1 RP.*RP bank/i);
+  assert.match(lesson.segments[4].message, /Passive.*Photosynthesis.*Collect 1 RP/i);
+  assert.match(lesson.segments[5].message, /10 HP.*destroyed/i);
+  assert.match(lesson.segments[6].message, /Disease.*Condition.*stays in play.*RP production/i);
+  assert.match(lesson.segments[7].message, /1 Fish and 1 Invertebrate.*one home.*match an open slot/i);
   assert.doesNotMatch(lesson.segments.map((segment) => `${segment.title} ${segment.message}`).join(" "), /species strip|ocean science|Meet the real coral/i);
   assert.equal(lesson.advanceLabel, "Place Brain Coral");
   assert.deepEqual(lesson.conceptKeys, GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS);
@@ -113,7 +116,7 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
   assert.equal(createGuidedFoundationCardLesson({ ...brainCoral, kind: "creature" }), null);
 });
 
-test("every card cue maps to printed and normalized regions with one straight arrow", () => {
+test("every card cue uses a short pointer that lands on its highlighted field", () => {
   const focusKeys = ["type", "identity", "name", "cost", "rules", "health", "weaknesses", "slots", "stats"];
   for (const key of focusKeys) {
     for (const referenceMode of ["printed", "normalized"]) {
@@ -123,18 +126,22 @@ test("every card cue maps to printed and normalized regions with one straight ar
       assert.ok(region.width > 0 && region.height > 0);
       assert.ok(region.x + region.width <= 375);
       assert.ok(region.y + region.height <= 525);
-      assert.ok(region.targetX >= 0 && region.targetX <= 375);
-      assert.ok(region.targetY >= 0 && region.targetY <= 525);
-      const straightPath = /^M(-?\d+) (-?\d+) L(-?\d+) (-?\d+)$/.exec(region.path);
-      assert.ok(straightPath, `${referenceMode} ${key} should use one direct line`);
-      assert.equal(Number(straightPath[3]), region.targetX);
-      assert.equal(Number(straightPath[4]), region.targetY);
-      assert.doesNotMatch(region.path, /[CQSA]/);
-      const targetCoversText = region.targetX >= region.x
-        && region.targetX <= region.x + region.width
-        && region.targetY >= region.y
-        && region.targetY <= region.y + region.height;
-      assert.equal(targetCoversText, false, `${referenceMode} ${key} arrow should stop outside its text region`);
+      for (const coordinate of [region.tailX, region.tipX]) assert.ok(coordinate >= 0 && coordinate <= 375);
+      for (const coordinate of [region.tailY, region.tipY]) assert.ok(coordinate >= 0 && coordinate <= 525);
+      assert.ok(["up", "down", "left", "right"].includes(region.direction));
+      const length = Math.hypot(region.tipX - region.tailX, region.tipY - region.tailY);
+      assert.ok(length >= 34 && length <= 42, `${referenceMode} ${key} pointer should stay short and consistent`);
+      const tipOnHorizontalBorder = (
+        (region.tipY === region.y || region.tipY === region.y + region.height)
+        && region.tipX >= region.x
+        && region.tipX <= region.x + region.width
+      );
+      const tipOnVerticalBorder = (
+        (region.tipX === region.x || region.tipX === region.x + region.width)
+        && region.tipY >= region.y
+        && region.tipY <= region.y + region.height
+      );
+      assert.equal(tipOnHorizontalBorder || tipOnVerticalBorder, true, `${referenceMode} ${key} pointer should touch its highlight`);
     }
   }
   assert.equal(getTutorialCardFocusRegion("missing"), null);

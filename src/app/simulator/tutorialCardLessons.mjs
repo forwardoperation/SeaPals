@@ -16,26 +16,26 @@ function freezeRegion(region) {
 
 export const TUTORIAL_CARD_FOCUS_REGIONS = Object.freeze({
   printed: Object.freeze({
-    type: freezeRegion({ x: 11, y: 42, width: 94, height: 20, path: "M122 125 L108 68", targetX: 108, targetY: 68 }),
-    identity: freezeRegion({ x: 9, y: 7, width: 357, height: 55, path: "M188 126 L188 68", targetX: 188, targetY: 68 }),
-    name: freezeRegion({ x: 82, y: 8, width: 203, height: 34, path: "M188 126 L188 48", targetX: 188, targetY: 48 }),
-    cost: freezeRegion({ x: 284, y: 7, width: 79, height: 36, path: "M300 116 L320 49", targetX: 320, targetY: 49 }),
-    rules: freezeRegion({ x: 10, y: 273, width: 355, height: 47, path: "M292 235 L155 267", targetX: 155, targetY: 267 }),
-    health: freezeRegion({ x: 10, y: 465, width: 104, height: 37, path: "M90 410 L55 459", targetX: 55, targetY: 459 }),
-    weaknesses: freezeRegion({ x: 110, y: 465, width: 158, height: 37, path: "M190 410 L190 459", targetX: 190, targetY: 459 }),
-    slots: freezeRegion({ x: 268, y: 422, width: 98, height: 78, path: "M245 390 L316 416", targetX: 316, targetY: 416 }),
-    stats: freezeRegion({ x: 10, y: 422, width: 356, height: 80, path: "M188 386 L188 416", targetX: 188, targetY: 416 }),
+    type: freezeRegion({ x: 11, y: 42, width: 94, height: 20, tailX: 140, tailY: 52, tipX: 105, tipY: 52, direction: "left" }),
+    identity: freezeRegion({ x: 9, y: 7, width: 357, height: 55, tailX: 118, tailY: 104, tipX: 118, tipY: 62, direction: "up" }),
+    name: freezeRegion({ x: 82, y: 8, width: 203, height: 34, tailX: 190, tailY: 84, tipX: 190, tipY: 42, direction: "up" }),
+    cost: freezeRegion({ x: 284, y: 7, width: 79, height: 36, tailX: 324, tailY: 83, tipX: 324, tipY: 43, direction: "up" }),
+    rules: freezeRegion({ x: 10, y: 273, width: 355, height: 47, tailX: 330, tailY: 235, tipX: 330, tipY: 273, direction: "down" }),
+    health: freezeRegion({ x: 10, y: 465, width: 104, height: 37, tailX: 64, tailY: 425, tipX: 64, tipY: 465, direction: "down" }),
+    weaknesses: freezeRegion({ x: 110, y: 465, width: 158, height: 37, tailX: 190, tailY: 425, tipX: 190, tipY: 465, direction: "down" }),
+    slots: freezeRegion({ x: 268, y: 422, width: 98, height: 78, tailX: 318, tailY: 382, tipX: 318, tipY: 422, direction: "down" }),
+    stats: freezeRegion({ x: 10, y: 422, width: 356, height: 80, tailX: 188, tailY: 382, tipX: 188, tipY: 422, direction: "down" }),
   }),
   normalized: Object.freeze({
-    type: freezeRegion({ x: 16, y: 12, width: 116, height: 18, path: "M170 115 L138 21", targetX: 138, targetY: 21 }),
-    identity: freezeRegion({ x: 12, y: 10, width: 351, height: 70, path: "M188 145 L188 86", targetX: 188, targetY: 86 }),
-    name: freezeRegion({ x: 16, y: 34, width: 250, height: 34, path: "M188 145 L154 74", targetX: 154, targetY: 74 }),
-    cost: freezeRegion({ x: 285, y: 16, width: 74, height: 42, path: "M300 140 L320 64", targetX: 320, targetY: 64 }),
-    rules: freezeRegion({ x: 16, y: 280, width: 343, height: 168, path: "M365 245 L292 274", targetX: 292, targetY: 274 }),
-    health: freezeRegion({ x: 16, y: 460, width: 105, height: 50, path: "M90 420 L56 454", targetX: 56, targetY: 454 }),
-    weaknesses: freezeRegion({ x: 126, y: 460, width: 125, height: 50, path: "M190 420 L190 454", targetX: 190, targetY: 454 }),
-    slots: freezeRegion({ x: 256, y: 460, width: 103, height: 50, path: "M245 420 L316 454", targetX: 316, targetY: 454 }),
-    stats: freezeRegion({ x: 16, y: 460, width: 343, height: 50, path: "M188 410 L188 454", targetX: 188, targetY: 454 }),
+    type: freezeRegion({ x: 16, y: 12, width: 116, height: 18, tailX: 170, tailY: 21, tipX: 132, tipY: 21, direction: "left" }),
+    identity: freezeRegion({ x: 12, y: 10, width: 351, height: 70, tailX: 118, tailY: 120, tipX: 118, tipY: 80, direction: "up" }),
+    name: freezeRegion({ x: 16, y: 34, width: 250, height: 34, tailX: 154, tailY: 108, tipX: 154, tipY: 68, direction: "up" }),
+    cost: freezeRegion({ x: 285, y: 16, width: 74, height: 42, tailX: 320, tailY: 98, tipX: 320, tipY: 58, direction: "up" }),
+    rules: freezeRegion({ x: 16, y: 280, width: 343, height: 168, tailX: 330, tailY: 240, tipX: 330, tipY: 280, direction: "down" }),
+    health: freezeRegion({ x: 16, y: 460, width: 105, height: 50, tailX: 56, tailY: 420, tipX: 56, tipY: 460, direction: "down" }),
+    weaknesses: freezeRegion({ x: 126, y: 460, width: 125, height: 50, tailX: 190, tailY: 420, tipX: 190, tipY: 460, direction: "down" }),
+    slots: freezeRegion({ x: 256, y: 460, width: 103, height: 50, tailX: 316, tailY: 420, tipX: 316, tipY: 460, direction: "down" }),
+    stats: freezeRegion({ x: 16, y: 460, width: 343, height: 50, tailX: 188, tailY: 420, tipX: 188, tipY: 460, direction: "down" }),
   }),
 });
 
@@ -322,6 +322,11 @@ export function createGuidedFoundationCardLesson(card) {
     referenceMode: "printed",
     message: `Read each highlighted part of ${card.name}, then place it in your ecosystem.`,
     segments: [
+      {
+        id: "foundation-introduction",
+        title: "Corals are foundations for life",
+        message: `In the ocean, there are many corals. They are one of the foundations for life in the sea. In Sea Realm, Corals generate Resource Points (RP) and provide homes for sea creatures. Let’s walk through an example with this ${card.name}.`,
+      },
       {
         id: "foundation-identity",
         title: "Start with the Foundation header",

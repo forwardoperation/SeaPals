@@ -3648,6 +3648,15 @@ function BubbleBurst({ x, y }) {
 function TutorialCardCueOverlay({ focus, referenceMode }) {
   const region = getTutorialCardFocusRegion(focus, { referenceMode });
   if (!region) return null;
+  const shaftPath = `M${region.tailX} ${region.tailY} L${region.tipX} ${region.tipY}`;
+  const chevronSize = 9;
+  const chevronPath = region.direction === "up"
+    ? `M${region.tipX - chevronSize} ${region.tipY + chevronSize} L${region.tipX} ${region.tipY} L${region.tipX + chevronSize} ${region.tipY + chevronSize}`
+    : region.direction === "down"
+      ? `M${region.tipX - chevronSize} ${region.tipY - chevronSize} L${region.tipX} ${region.tipY} L${region.tipX + chevronSize} ${region.tipY - chevronSize}`
+      : region.direction === "left"
+        ? `M${region.tipX + chevronSize} ${region.tipY - chevronSize} L${region.tipX} ${region.tipY} L${region.tipX + chevronSize} ${region.tipY + chevronSize}`
+        : `M${region.tipX - chevronSize} ${region.tipY - chevronSize} L${region.tipX} ${region.tipY} L${region.tipX - chevronSize} ${region.tipY + chevronSize}`;
   return (
     <svg
       viewBox="0 0 375 525"
@@ -3656,11 +3665,6 @@ function TutorialCardCueOverlay({ focus, referenceMode }) {
       data-card-cue-region={focus}
       aria-hidden="true"
     >
-      <defs>
-        <marker id="seapals-card-cue-arrowhead" viewBox="0 0 12 12" refX="11" refY="6" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">
-          <path d="M 0 0 L 12 6 L 0 12 z" fill="#fbbf24" />
-        </marker>
-      </defs>
       <rect
         x={region.x}
         y={region.y}
@@ -3673,9 +3677,11 @@ function TutorialCardCueOverlay({ focus, referenceMode }) {
         vectorEffect="non-scaling-stroke"
         className="seapals-card-cue-region"
       />
-      <g>
-        <path d={region.path} fill="none" stroke="#071827" strokeWidth="10" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-        <path d={region.path} fill="none" stroke="#fbbf24" strokeWidth="5" strokeLinecap="round" markerEnd="url(#seapals-card-cue-arrowhead)" vectorEffect="non-scaling-stroke" />
+      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <path d={shaftPath} stroke="#071827" strokeWidth="9" vectorEffect="non-scaling-stroke" />
+        <path d={shaftPath} stroke="#fbbf24" strokeWidth="4" vectorEffect="non-scaling-stroke" />
+        <path d={chevronPath} stroke="#071827" strokeWidth="9" vectorEffect="non-scaling-stroke" />
+        <path d={chevronPath} stroke="#fbbf24" strokeWidth="4" vectorEffect="non-scaling-stroke" />
       </g>
     </svg>
   );

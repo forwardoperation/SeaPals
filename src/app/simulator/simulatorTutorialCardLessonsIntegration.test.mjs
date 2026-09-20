@@ -47,16 +47,23 @@ test("fullscreen lesson keeps the card clear and docks the coach and navigation 
   assert.match(simulatorSource, /isolatedElements[\s\S]*sibling\.inert = true[\s\S]*element\.inert = inert/);
 });
 
-test("card cues use card-native regions, one larger static arrow, and no text over the artwork", () => {
+test("card cues use short consistently outlined chevrons without covering the artwork", () => {
+  const cueSource = simulatorSource.slice(
+    simulatorSource.indexOf("function TutorialCardCueOverlay"),
+    simulatorSource.indexOf("function TutorialCardReference"),
+  );
   assert.match(simulatorSource, /viewBox="0 0 375 525"/);
   assert.match(simulatorSource, /data-card-cue-region=\{focus\}/);
   assert.match(simulatorSource, /className="pointer-events-none absolute inset-0[^"]*overflow-visible"/);
   assert.match(simulatorSource, /<rect[\s\S]*x=\{region\.x\}[\s\S]*width=\{region\.width\}/);
-  assert.match(simulatorSource, /<path d=\{region\.path\}[\s\S]*markerEnd="url\(#seapals-card-cue-arrowhead\)"/);
-  assert.match(simulatorSource, /markerUnits="userSpaceOnUse"/);
-  assert.match(simulatorSource, /markerWidth="14" markerHeight="14"/);
-  assert.match(simulatorSource, /stroke="#071827" strokeWidth="10"/);
-  assert.match(simulatorSource, /stroke="#fbbf24" strokeWidth="5"/);
+  assert.match(simulatorSource, /const shaftPath = `M\$\{region\.tailX\}[\s\S]*L\$\{region\.tipX\}/);
+  assert.match(simulatorSource, /const chevronPath = region\.direction === "up"[\s\S]*region\.direction === "left"/);
+  assert.match(simulatorSource, /strokeLinecap="round" strokeLinejoin="round"/);
+  assert.match(simulatorSource, /d=\{shaftPath\} stroke="#071827" strokeWidth="9"/);
+  assert.match(simulatorSource, /d=\{shaftPath\} stroke="#fbbf24" strokeWidth="4"/);
+  assert.match(simulatorSource, /d=\{chevronPath\} stroke="#071827" strokeWidth="9"/);
+  assert.match(simulatorSource, /d=\{chevronPath\} stroke="#fbbf24" strokeWidth="4"/);
+  assert.doesNotMatch(cueSource, /<marker|markerEnd=|seapals-card-cue-arrowhead/);
   assert.doesNotMatch(simulatorSource, /seapals-card-cue-pulse|seapalsCardCuePulse/);
   assert.doesNotMatch(simulatorSource, /seapals-card-cue-float|seapalsCardCueFloat|const float[XY]/);
   assert.doesNotMatch(simulatorSource, /focusLabel|top-3 h-\[18%\]|top-\[45%\] h-\[28%\]/);
