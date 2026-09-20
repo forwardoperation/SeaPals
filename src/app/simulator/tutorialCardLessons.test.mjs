@@ -47,11 +47,11 @@ const brainCoral = {
   passives: [{ name: "Photosynthesis", text: "Collect 1 RP at the start of your turn." }],
 };
 
-test("guided Academy opens with a welcome, then teaches the real first card top to bottom", () => {
-  const steps = Array.from({ length: 9 }, (_, index) => (
+test("guided Academy opens with a welcome, then teaches the gameplay parts of the first card", () => {
+  const steps = Array.from({ length: 8 }, (_, index) => (
     getGuidedAcademyIntroductionStep(index, { card: mustardHillCoral })
   ));
-  const [welcome, coralRole, name, cost, species, rules, health, weaknesses, slots] = steps;
+  const [welcome, coralRole, name, cost, rules, health, weaknesses, slots] = steps;
 
   assert.equal(welcome.title, "Welcome to Sea Realm!");
   assert.equal(welcome.cardVisible, false);
@@ -60,14 +60,13 @@ test("guided Academy opens with a welcome, then teaches the real first card top 
   assert.match(welcome.message, /living ocean ecosystem.*read your first card/i);
   assert.equal(coralRole.cardVisible, true);
   assert.equal(coralRole.focus, "type");
-  assert.match(coralRole.message, /card is one playable game piece.*Coral card.*foundations that stay in Your Reef.*provide homes for compatible creatures/i);
+  assert.match(coralRole.message, /Coral card.*foundations that stay in Your Reef.*provide homes for compatible creatures/i);
+  assert.doesNotMatch(coralRole.message, /colonies|tiny animals|ocean science/i);
   assert.match(coralRole.message, /Base.*begin a new foundation.*no VP.*later cards/i);
   assert.equal(name.focus, "name");
   assert.match(name.message, /card's name.*Mustard Hill Coral/i);
   assert.equal(cost.focus, "cost");
   assert.match(cost.message, /cost to play.*2 Resource Points.*RP bank/i);
-  assert.equal(species.focus, "species");
-  assert.match(species.message, /real organism.*Coral group.*size.*weight.*region/i);
   assert.equal(rules.focus, "rules");
   assert.match(rules.message, /Passive.*Photosynthesis/i);
   assert.equal(health.focus, "health");
@@ -78,19 +77,20 @@ test("guided Academy opens with a welcome, then teaches the real first card top 
   assert.equal(slots.focus, "slots");
   assert.match(slots.message, /1 Fish and 1 Invertebrate.*match an open slot/i);
   assert.equal(slots.advanceLabel, "Start the board tour");
-  assert.deepEqual(steps.slice(1).map((step) => step.focus), ["type", "name", "cost", "species", "rules", "health", "weaknesses", "slots"]);
+  assert.deepEqual(steps.slice(1).map((step) => step.focus), ["type", "name", "cost", "rules", "health", "weaknesses", "slots"]);
+  assert.doesNotMatch(steps.map((step) => `${step.title} ${step.message}`).join(" "), /species strip|ocean science|Meet the real coral/i);
   assert.equal(getNextGuidedAcademyIntroductionStep(0), 1);
-  assert.equal(getNextGuidedAcademyIntroductionStep(8), null);
+  assert.equal(getNextGuidedAcademyIntroductionStep(7), null);
 });
 
 test("guided Academy introduction rejects missing and invalid steps", () => {
   assert.equal(getGuidedAcademyIntroductionStep(null), null);
   assert.equal(getGuidedAcademyIntroductionStep(-1), null);
-  assert.equal(getGuidedAcademyIntroductionStep(9), null);
+  assert.equal(getGuidedAcademyIntroductionStep(8), null);
   assert.equal(getGuidedAcademyIntroductionStep(1.5), null);
 });
 
-test("the first embedded lesson tours every printed part of Brain Coral before board play", () => {
+test("the first embedded lesson tours every gameplay-relevant part of Brain Coral before board play", () => {
   const lesson = createGuidedFoundationCardLesson(brainCoral);
 
   assert.equal(lesson.cardId, "brain-coral-base");
@@ -98,14 +98,15 @@ test("the first embedded lesson tours every printed part of Brain Coral before b
   assert.equal(lesson.eyebrow, "Foundation card tour");
   assert.deepEqual(
     lesson.segments.map((segment) => segment.focus),
-    ["identity", "name", "cost", "species", "rules", "health", "weaknesses", "slots"],
+    ["identity", "name", "cost", "rules", "health", "weaknesses", "slots"],
   );
   assert.match(lesson.segments[0].message, /Base Coral Foundation.*new branch.*Stage cards upgrade/i);
   assert.match(lesson.segments[2].message, /Brain Coral costs 1 RP.*RP bank/i);
-  assert.match(lesson.segments[4].message, /Passive.*Photosynthesis.*Collect 1 RP/i);
-  assert.match(lesson.segments[5].message, /10 HP.*destroyed/i);
-  assert.match(lesson.segments[6].message, /Disease.*Condition.*stays in play.*RP production/i);
-  assert.match(lesson.segments[7].message, /1 Fish and 1 Invertebrate.*one home.*match an open slot/i);
+  assert.match(lesson.segments[3].message, /Passive.*Photosynthesis.*Collect 1 RP/i);
+  assert.match(lesson.segments[4].message, /10 HP.*destroyed/i);
+  assert.match(lesson.segments[5].message, /Disease.*Condition.*stays in play.*RP production/i);
+  assert.match(lesson.segments[6].message, /1 Fish and 1 Invertebrate.*one home.*match an open slot/i);
+  assert.doesNotMatch(lesson.segments.map((segment) => `${segment.title} ${segment.message}`).join(" "), /species strip|ocean science|Meet the real coral/i);
   assert.equal(lesson.advanceLabel, "Place Brain Coral");
   assert.deepEqual(lesson.conceptKeys, GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS);
   assert.equal(createGuidedFoundationCardLesson({ ...brainCoral, stage: 1 }), null);
@@ -113,7 +114,7 @@ test("the first embedded lesson tours every printed part of Brain Coral before b
 });
 
 test("every card cue maps to printed and normalized regions with one straight arrow", () => {
-  const focusKeys = ["type", "identity", "name", "cost", "species", "rules", "health", "weaknesses", "slots", "stats"];
+  const focusKeys = ["type", "identity", "name", "cost", "rules", "health", "weaknesses", "slots", "stats"];
   for (const key of focusKeys) {
     for (const referenceMode of ["printed", "normalized"]) {
       const region = getTutorialCardFocusRegion(key, { referenceMode });

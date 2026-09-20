@@ -4,7 +4,6 @@ export const GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS = Object.freeze([
   "kind:coral",
   "stage:base-coral",
   "label:cost",
-  "label:species-profile",
   "label:passive",
   "stat:health",
   "stat:slots",
@@ -21,7 +20,6 @@ export const TUTORIAL_CARD_FOCUS_REGIONS = Object.freeze({
     identity: freezeRegion({ x: 9, y: 7, width: 357, height: 55, path: "M188 126 L188 68", targetX: 188, targetY: 68 }),
     name: freezeRegion({ x: 82, y: 8, width: 203, height: 34, path: "M188 126 L188 48", targetX: 188, targetY: 48 }),
     cost: freezeRegion({ x: 284, y: 7, width: 79, height: 36, path: "M300 116 L320 49", targetX: 320, targetY: 49 }),
-    species: freezeRegion({ x: 16, y: 232, width: 343, height: 31, path: "M300 190 L188 226", targetX: 188, targetY: 226 }),
     rules: freezeRegion({ x: 10, y: 273, width: 355, height: 47, path: "M292 235 L155 267", targetX: 155, targetY: 267 }),
     health: freezeRegion({ x: 10, y: 465, width: 104, height: 37, path: "M90 410 L55 459", targetX: 55, targetY: 459 }),
     weaknesses: freezeRegion({ x: 110, y: 465, width: 158, height: 37, path: "M190 410 L190 459", targetX: 190, targetY: 459 }),
@@ -33,7 +31,6 @@ export const TUTORIAL_CARD_FOCUS_REGIONS = Object.freeze({
     identity: freezeRegion({ x: 12, y: 10, width: 351, height: 70, path: "M188 145 L188 86", targetX: 188, targetY: 86 }),
     name: freezeRegion({ x: 16, y: 34, width: 250, height: 34, path: "M188 145 L154 74", targetX: 154, targetY: 74 }),
     cost: freezeRegion({ x: 285, y: 16, width: 74, height: 42, path: "M300 140 L320 64", targetX: 320, targetY: 64 }),
-    species: freezeRegion({ x: 16, y: 88, width: 343, height: 180, path: "M300 310 L188 274", targetX: 188, targetY: 274 }),
     rules: freezeRegion({ x: 16, y: 280, width: 343, height: 168, path: "M365 245 L292 274", targetX: 292, targetY: 274 }),
     health: freezeRegion({ x: 16, y: 460, width: 105, height: 50, path: "M90 420 L56 454", targetX: 56, targetY: 454 }),
     weaknesses: freezeRegion({ x: 126, y: 460, width: 125, height: 50, path: "M190 420 L190 454", targetX: 190, targetY: 454 }),
@@ -47,7 +44,7 @@ export function getTutorialCardFocusRegion(focus, { referenceMode = "printed" } 
   return TUTORIAL_CARD_FOCUS_REGIONS[referenceMode]?.[focus] ?? null;
 }
 
-const INTRO_STEP_COUNT = 9;
+const INTRO_STEP_COUNT = 8;
 
 function normalizeToken(value) {
   return String(value ?? "")
@@ -215,7 +212,7 @@ export function getGuidedAcademyIntroductionStep(step, { guideName = "Mr. Easter
     return {
       ...shared,
       title: "What is a Coral card?",
-      message: `A card is one playable game piece. This is a Coral card. Real corals are colonies of tiny animals that build reef habitat; in Sea Realm, Coral cards are foundations that stay in Your Reef, produce resources, and provide homes for compatible creatures. Base means this Coral can begin a new foundation. ${cardName} scores no VP itself; its role is to make later cards possible.`,
+      message: `This is a Coral card. Coral cards are foundations that stay in Your Reef, produce resources, and provide homes for compatible creatures. Base means this Coral can begin a new foundation. ${cardName} scores no VP itself; its role is to make later cards possible.`,
       cardVisible: true,
       focus: "type",
       callouts: [
@@ -247,23 +244,11 @@ export function getGuidedAcademyIntroductionStep(step, { guideName = "Mr. Easter
       cardVisible: true,
       focus: "cost",
       callouts: [{ title: "Play cost", text: `${cost} RP` }],
-      advanceLabel: "Meet the real coral",
-    };
-  }
-
-  if (step === 4) {
-    return {
-      ...shared,
-      title: "Meet the real coral",
-      message: "The picture and species strip identify the real organism - its Coral group, size, weight, and region. These facts connect the game to ocean science; they affect play only when a rule specifically refers to them.",
-      cardVisible: true,
-      focus: "species",
-      callouts: [{ title: "Species profile", text: "Stony Coral - 8 inches - 4 pounds - Caribbean" }],
       advanceLabel: "Read its ability",
     };
   }
 
-  if (step === 5) {
+  if (step === 4) {
     return {
       ...shared,
       title: `Read ${passiveName}`,
@@ -275,7 +260,7 @@ export function getGuidedAcademyIntroductionStep(step, { guideName = "Mr. Easter
     };
   }
 
-  if (step === 6) {
+  if (step === 5) {
     return {
       ...shared,
       title: "Health shows what it can survive",
@@ -287,7 +272,7 @@ export function getGuidedAcademyIntroductionStep(step, { guideName = "Mr. Easter
     };
   }
 
-  if (step === 7) {
+  if (step === 6) {
     return {
       ...shared,
       title: "Check for Weaknesses",
@@ -354,12 +339,6 @@ export function createGuidedFoundationCardLesson(card) {
         title: "Check the RP cost",
         message: `The top-right number is the play cost. ${card.name} costs ${cost} RP, which comes out of your RP bank when you place it in your ecosystem.`,
         focus: "cost",
-      },
-      {
-        id: "species-profile",
-        title: "Meet the real coral",
-        message: "The picture and species strip identify the real organism, including its coral group, size, weight, and region. These science facts matter to play only when a rule refers to them.",
-        focus: "species",
       },
       {
         id: "passive-ability",
