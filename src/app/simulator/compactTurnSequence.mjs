@@ -2,6 +2,7 @@ export const CompactTurnStage = Object.freeze({
   TURN: "turn",
   CONDITION: "condition",
   OPENING_HAND: "opening-hand",
+  RP_SOURCE_FOCUS: "rp-source-focus",
   RP: "rp",
   RP_SUMMARY: "rp-summary",
 });
@@ -11,6 +12,7 @@ export function createCompactTurnStages({
   condition = null,
   includeCondition = true,
   includeOpeningHand = false,
+  includeRpSourceFocus = false,
   includeRp = true,
   includeRpSummary = false,
 } = {}) {
@@ -18,6 +20,7 @@ export function createCompactTurnStages({
     turnLabel ? { kind: CompactTurnStage.TURN } : null,
     includeCondition && condition ? { kind: CompactTurnStage.CONDITION } : null,
     includeOpeningHand ? { kind: CompactTurnStage.OPENING_HAND } : null,
+    includeRp && includeRpSourceFocus ? { kind: CompactTurnStage.RP_SOURCE_FOCUS } : null,
     includeRp ? { kind: CompactTurnStage.RP } : null,
     includeRp && includeRpSummary ? { kind: CompactTurnStage.RP_SUMMARY } : null,
   ].filter(Boolean);

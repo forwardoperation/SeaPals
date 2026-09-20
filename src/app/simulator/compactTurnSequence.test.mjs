@@ -55,29 +55,32 @@ test("setup deals the opening hand before filling the RP bank", () => {
   );
 });
 
-test("an optional RP summary follows the RP presentation", () => {
+test("an optional RP source lesson precedes collection and its summary", () => {
   assert.deepEqual(
     createCompactTurnStages({
       turnLabel: "Your Turn",
       condition: { id: "current-condition" },
       includeCondition: true,
+      includeRpSourceFocus: true,
       includeRp: true,
       includeRpSummary: true,
     }).map((stage) => stage.kind),
     [
       CompactTurnStage.TURN,
       CompactTurnStage.CONDITION,
+      CompactTurnStage.RP_SOURCE_FOCUS,
       CompactTurnStage.RP,
       CompactTurnStage.RP_SUMMARY,
     ],
   );
 });
 
-test("an RP summary is omitted when the RP presentation is omitted", () => {
+test("RP source teaching and summary are omitted when collection is omitted", () => {
   assert.deepEqual(
     createCompactTurnStages({
       turnLabel: "Your Turn",
       includeCondition: false,
+      includeRpSourceFocus: true,
       includeRp: false,
       includeRpSummary: true,
     }).map((stage) => stage.kind),

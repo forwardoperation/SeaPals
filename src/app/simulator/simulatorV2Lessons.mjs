@@ -1294,7 +1294,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const diseaseRound = current.id === "v2-collect-under-coral-disease";
     const action = diseaseRound
       ? "Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
-      : "RP pays for cards and abilities. You gained 1 RP for the round, and Brain Coral added its printed 1 RP, taking your bank from 2 RP to 4 RP. Continue to your draw.";
+      : "Your bank increased from 2 RP to 4 RP. Unspent RP stays in your bank for later rounds. Continue to your draw.";
     return help(
       "rp-bank",
       action,

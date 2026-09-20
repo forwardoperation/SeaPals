@@ -4787,6 +4787,7 @@ export default function Simulator({
   const playerCameraRef = useRef({ zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
   const opponentCameraRef = useRef({ zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
   const weaknessCameraBeforeRef = useRef(null);
+  const rpSourceCameraBeforeRef = useRef(null);
   const playerGestureRef = useRef(createEcosystemGestureState());
   const opponentGestureRef = useRef(createEcosystemGestureState());
   const boardClickSuppressionRef = useRef({ player: 0, opponent: 0 });
@@ -6497,6 +6498,23 @@ export default function Simulator({
     advanceCompactTurnSequence(sequence.id);
   }
 
+  function continueCompactRpSourceFocus() {
+    const sequence = compactTurnSequenceRef.current;
+    if (!sequence || sequence.rpSourceReturning) return;
+    const stage = sequence.stages[sequence.stageIndex];
+    if (stage?.kind !== CompactTurnStage.RP_SOURCE_FOCUS) return;
+    const returningSequence = { ...sequence, rpSourceReturning: true };
+    compactTurnSequenceRef.current = returningSequence;
+    setCompactTurnSequence(returningSequence);
+    setCompactTurnAnnouncement("Returning to your ecosystem before collecting 2 RP.");
+    const systemReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    scheduleCompactTurnTimer(
+      sequence.id,
+      () => advanceCompactTurnSequence(sequence.id),
+      accessibilityReducedMotion || systemReducedMotion ? 80 : 520,
+    );
+  }
+
   function continueCompactRpSummary() {
     const sequence = compactTurnSequenceRef.current;
     if (!sequence || sequence.finishing) return;
@@ -6527,6 +6545,7 @@ export default function Simulator({
     condition = null,
     includeCondition = true,
     includeOpeningHand = false,
+    includeRpSourceFocus = false,
     openingHand = [],
     includeRp = true,
     includeRpSummary = false,
@@ -6535,6 +6554,7 @@ export default function Simulator({
     collectedRp = 0,
     cappedRp = 0,
     rpSources = [],
+    rpSourceFocus = null,
     tutorialRpEvent = null,
   }, completion = null) {
     clearCompactTurnAsyncHandles();
@@ -6545,6 +6565,7 @@ export default function Simulator({
       condition,
       includeCondition,
       includeOpeningHand,
+      includeRpSourceFocus,
       includeRp,
       includeRpSummary,
     });
@@ -6566,6 +6587,8 @@ export default function Simulator({
       collectedRp,
       cappedRp,
       rpSources,
+      rpSourceFocus,
+      rpSourceReturning: false,
       tutorialRpEvent,
     };
     compactTurnSequenceRef.current = sequence;
@@ -7012,6 +7035,12 @@ export default function Simulator({
     if (stage.kind === CompactTurnStage.RP_SUMMARY) {
       setCompactTurnAnnouncement(
         `You collected ${sequence.collectedRp} RP and now have ${sequence.rpAfter} RP. Review the RP lesson before continuing.`,
+      );
+      return undefined;
+    }
+    if (stage.kind === CompactTurnStage.RP_SOURCE_FOCUS) {
+      setCompactTurnAnnouncement(
+        "Every round gives you 1 RP. Brain Coral's Photosynthesis adds 1 more RP at the start of your turn, so you will collect 2 RP.",
       );
       return undefined;
     }
@@ -7621,6 +7650,15 @@ export default function Simulator({
   );
   const weaknessFocusActive = weaknessLessonStepActive && !weaknessTourAcknowledged;
   const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;
+  const compactRpSourcePresentationActive = Boolean(
+    embeddedLesson?.id === "first-reef"
+    && compactTurnStage?.kind === CompactTurnStage.RP_SOURCE_FOCUS
+  );
+  const compactRpSourceZoomActive = Boolean(
+    compactRpSourcePresentationActive
+    && !compactTurnSequence?.rpSourceReturning
+  );
+  const tutorialBoardCardFocusActive = weaknessFocusActive || compactRpSourcePresentationActive;
   const tutorialFinalProgressLabel = tutorialCurrentCheckpoint === null && tutorialContract
     ? `Final goal • ${playerVp}/${victoryTarget} VP`
     : null;
@@ -7667,6 +7705,19 @@ export default function Simulator({
         lessonStep: tutorialStepNumber,
       }
     : null;
+  const embeddedCompactRpSourceHelp = compactRpSourceZoomActive
+    ? {
+        id: `embedded-rp-source:${compactTurnSequence.id}`,
+        cueId: `embedded-rp-source:${compactTurnSequence.id}`,
+        title: "Brain Coral makes the second RP",
+        message: "Every round gives you 1 RP. Brain Coral's Passive ability, Photosynthesis, gives you 1 more RP at the start of your turn. Together, you will collect 2 RP this round.",
+        action: "Read Brain Coral's highlighted Photosynthesis ability, then collect 2 RP.",
+        target: "coral-rp-source",
+        targetLabel: "Brain Coral's Photosynthesis ability",
+        interaction: "tap",
+        lessonStep: tutorialStepNumber,
+      }
+    : null;
   const embeddedCompactRpHelp = embeddedLesson && compactTurnStage?.kind === CompactTurnStage.RP_SUMMARY
     ? {
         id: `embedded-rp-summary:${compactTurnSequence.id}`,
@@ -7675,18 +7726,18 @@ export default function Simulator({
         message: embeddedLesson.id === "first-reef" && compactTurnSequence.condition?.id === "coral-disease"
           ? "Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
           : embeddedLesson.id === "first-reef"
-            ? `RP pays for cards and abilities. You gained 1 RP for the round, and Brain Coral added its printed 1 RP, taking your bank from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
+            ? `Your bank increased from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
             : `RP pays for cards and abilities. Every round gives you 1 RP, and cards in your ecosystem can add more. You collected ${compactTurnSequence.collectedRp} RP, so your bank now holds ${compactTurnSequence.rpAfter} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP could not fit under the cap` : ""}. Unspent RP stays in your bank for later rounds.`,
         action: embeddedLesson.id === "first-reef" && compactTurnSequence.condition?.id === "coral-disease"
           ? "Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
           : embeddedLesson.id === "first-reef"
-            ? `RP pays for cards and abilities. You gained 1 RP for the round, and Brain Coral added its printed 1 RP, taking your bank from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
+            ? `Your bank increased from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
             : "Continue, then choose your card draw.",
         interaction: "tap",
         lessonStep: tutorialStepNumber,
       }
     : null;
-  const embeddedCompactCoachHelp = embeddedCompactConditionHelp ?? embeddedCompactRpHelp;
+  const embeddedCompactCoachHelp = embeddedCompactConditionHelp ?? embeddedCompactRpSourceHelp ?? embeddedCompactRpHelp;
   const embeddedCompactCoachOpen = Boolean(
     embeddedLessonPresentationStarted
     && embeddedCompactCoachHelp
@@ -8356,7 +8407,62 @@ export default function Simulator({
   }, [weaknessFocusActive, playerCorals.find((coral) => coral.cardId === "brain-coral-base")?.id]);
 
   useEffect(() => {
-    if (!playerLayoutSignature || playerViewportTouched || weaknessFocusActive) return undefined;
+    if (!compactRpSourceZoomActive) return undefined;
+    const sourceFoundationId = compactTurnSequence?.rpSourceFocus?.foundationId;
+    const brainCoral = playerCorals.find((coral) => (
+      coral.id === sourceFoundationId || (!sourceFoundationId && coral.cardId === "brain-coral-base")
+    ));
+    const element = ecosystemRef.current;
+    if (!brainCoral || !element) return undefined;
+
+    rpSourceCameraBeforeRef.current = playerCameraRef.current;
+    setInspectedCard(null);
+    setMobileBoardView("player");
+    let frame = null;
+    const focusPhotosynthesis = () => {
+      if (frame != null) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const rect = element.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return;
+        const visibleHeight = Math.max(96, rect.height - getBoardBottomOcclusion("player", rect));
+        const zoom = clampZoom(Math.max(
+          rpSourceCameraBeforeRef.current?.zoom ?? 1,
+          Math.min(2.15, (rect.width * .82) / 180, (visibleHeight * .86) / 220),
+        ));
+        commitBoardCamera("player", {
+          zoom,
+          offset: getVisibleAreaFitOffset({
+            viewport: { width: rect.width, height: rect.height },
+            contentCenter: {
+              x: rect.width * brainCoral.x / 100,
+              y: rect.height * brainCoral.y / 100,
+            },
+            zoom,
+            bottomOcclusion: getBoardBottomOcclusion("player", rect),
+            verticalAlign: .48,
+          }),
+        });
+      });
+    };
+    focusPhotosynthesis();
+    const resizeObserver = typeof ResizeObserver === "function"
+      ? new ResizeObserver(focusPhotosynthesis)
+      : null;
+    resizeObserver?.observe(element);
+    window.addEventListener("resize", focusPhotosynthesis);
+    return () => {
+      if (frame != null) cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", focusPhotosynthesis);
+      if (rpSourceCameraBeforeRef.current) {
+        commitBoardCamera("player", rpSourceCameraBeforeRef.current);
+        rpSourceCameraBeforeRef.current = null;
+      }
+    };
+  }, [compactRpSourceZoomActive, compactTurnSequence?.rpSourceFocus?.foundationId]);
+
+  useEffect(() => {
+    if (!playerLayoutSignature || playerViewportTouched || tutorialBoardCardFocusActive) return undefined;
     const element = ecosystemRef.current;
     if (!element) return undefined;
     let frame = null;
@@ -8377,7 +8483,7 @@ export default function Simulator({
       resizeObserver?.disconnect();
       window.removeEventListener("resize", fitPlayerBoard);
     };
-  }, [playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, weaknessFocusActive, preparedPlayerReefLayout]);
+  }, [playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, tutorialBoardCardFocusActive, preparedPlayerReefLayout]);
 
   useEffect(() => {
     if (!opponentLayoutSignature || opponentViewportTouched) return undefined;
@@ -8405,12 +8511,12 @@ export default function Simulator({
     if (!previewExperience) return undefined;
     const frame = requestAnimationFrame(() => {
       zoomEcosystemToFit("opponent");
-      if (!weaknessFocusActive) zoomEcosystemToFit("player", {
+      if (!tutorialBoardCardFocusActive) zoomEcosystemToFit("player", {
         includeAllSlots: !preparedPlayerReefLayout,
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [previewExperience, mobileReefSplit, weaknessFocusActive, preparedPlayerReefLayout]);
+  }, [previewExperience, mobileReefSplit, tutorialBoardCardFocusActive, preparedPlayerReefLayout]);
 
   useEffect(() => {
     const result = reconcileFoundationHealthToFixedPoint(playerCorals, playerReefCreatureInstances, playerOrphanCreatures);
@@ -11129,7 +11235,7 @@ export default function Simulator({
   function handleCoralPointerDown(coralId, event) {
     event.preventDefault();
     event.stopPropagation();
-    if (isUpgradingCoral || weaknessFocusActive) return;
+    if (isUpgradingCoral || tutorialBoardCardFocusActive) return;
     const coral = playerCorals.find((c) => c.id === coralId);
     if (!coral) return;
     coralWasDraggedRef.current = false;
@@ -11154,7 +11260,7 @@ export default function Simulator({
   function handleCoralClick(coralId, event) {
     event.preventDefault();
     event.stopPropagation();
-    if (weaknessFocusActive) return;
+    if (tutorialBoardCardFocusActive) return;
     if (coralWasDraggedRef.current) {
       coralWasDraggedRef.current = false;
       return;
@@ -12252,6 +12358,19 @@ export default function Simulator({
       && !tutorialPreviouslyTaughtConcepts.includes(SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS)
       && tutorialCheckpointBeforeCollection?.actionType === SIMULATOR_TUTORIAL_ACTION_TYPES.RP_COLLECTED
     );
+    const brainCoralRpFoundation = playerCoralsAtTurnStart.find((coral) => coral.cardId === "brain-coral-base");
+    const brainCoralRpSource = brainCoralRpFoundation
+      ? rpSources.find((source) => source.key === `foundation:${brainCoralRpFoundation.id}` && source.amount > 0)
+      : null;
+    const explainTutorialBrainCoralRpSource = Boolean(
+      explainTutorialRpCollection
+      && embeddedLesson.id === "first-reef"
+      && tutorialCheckpointBeforeCollection?.id === "tutorial-collect-rp"
+      && condition?.id === "clear-water"
+      && brainCoralRpFoundation
+      && brainCoralRpSource
+      && actualCollectedRp === 2
+    );
     if (!explainTutorialRpCollection) {
       emitTutorialEvent(
         SIMULATOR_TUTORIAL_ACTION_TYPES.RP_COLLECTED,
@@ -12355,6 +12474,7 @@ export default function Simulator({
         roundNumber: nextRound,
         condition,
         includeCondition: Boolean(condition && !reuseConditionId),
+        includeRpSourceFocus: explainTutorialBrainCoralRpSource,
         includeRp: true,
         includeRpSummary: explainTutorialRpCollection,
         rpBefore: rpBeforeCollection,
@@ -12362,6 +12482,13 @@ export default function Simulator({
         collectedRp: actualCollectedRp,
         cappedRp,
         rpSources,
+        rpSourceFocus: explainTutorialBrainCoralRpSource ? {
+          cardId: brainCoralRpFoundation.cardId,
+          foundationId: brainCoralRpFoundation.id,
+          sourceKey: brainCoralRpSource.key,
+          amount: brainCoralRpSource.amount,
+          abilityName: "Photosynthesis",
+        } : null,
         tutorialRpEvent: explainTutorialRpCollection ? tutorialRpEvent : null,
       }, () => queueEvents(startTurnEvents));
     } else {
@@ -21932,7 +22059,7 @@ export default function Simulator({
   }
 
   return (
-    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${embeddedLesson ? " seapals-embedded-lesson" : ""}${embeddedCompactConditionHelp && embeddedCompactCoachOpen ? " seapals-condition-teaching" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
+    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${embeddedLesson ? " seapals-embedded-lesson" : ""}${embeddedCompactConditionHelp && embeddedCompactCoachOpen ? " seapals-condition-teaching" : ""}${compactRpSourcePresentationActive ? " seapals-rp-source-focus" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
         .seapals-weakness-camera-focus {
           transition: transform 480ms cubic-bezier(.2, .8, .2, 1);
@@ -26234,8 +26361,12 @@ export default function Simulator({
                 total={tutorialContract.checkpoints.length}
                 onAdvance={compactTurnStage?.kind === CompactTurnStage.CONDITION
                   ? null
-                  : continueCompactRpSummary}
-                advanceLabel="Continue to draw"
+                  : compactTurnStage?.kind === CompactTurnStage.RP_SOURCE_FOCUS
+                    ? continueCompactRpSourceFocus
+                    : continueCompactRpSummary}
+                advanceLabel={compactTurnStage?.kind === CompactTurnStage.RP_SOURCE_FOCUS
+                  ? "Collect 2 RP"
+                  : "Continue to draw"}
               />
             </ProfessorCoachOverlay>
           ) : embeddedLessonCoachOpen ? (
@@ -26797,7 +26928,7 @@ export default function Simulator({
                   ) : null}
                   <div className="absolute inset-0 overflow-hidden">
                     <div
-                      className={`absolute inset-0 h-full w-full${weaknessLessonStepActive && !accessibilityReducedMotion ? " seapals-weakness-camera-focus" : ""}`}
+                      className={`absolute inset-0 h-full w-full${tutorialBoardCardFocusActive && !accessibilityReducedMotion ? " seapals-weakness-camera-focus" : ""}`}
                       style={{
                         transform: `translate(${ecosystemOffset.x}px, ${ecosystemOffset.y}px) scale(${ecosystemZoom})`,
                         transformOrigin: "center center",
@@ -26936,6 +27067,10 @@ export default function Simulator({
                           && coral.cardId === (embeddedLesson?.setupCardId ?? scriptedFinishPlan?.setupCardId)
                         );
                         const isWeaknessFocusTarget = weaknessFocusActive && coral.cardId === "brain-coral-base";
+                        const isRpSourceFocusTarget = compactRpSourcePresentationActive && (
+                          coral.id === compactTurnSequence?.rpSourceFocus?.foundationId
+                          || (!compactTurnSequence?.rpSourceFocus?.foundationId && coral.cardId === "brain-coral-base")
+                        );
                         const upgradeCelebration = coralUpgradeCelebrations.find((entry) => (
                           entry.owner === "player" && entry.cardInstanceId === `foundation:${coral.id}`
                         ));
@@ -27020,6 +27155,23 @@ export default function Simulator({
                                       <path d="M 27 41 L 39 59 L 48 40" fill="#fde047" stroke="#713f12" strokeWidth="2" strokeLinejoin="round" />
                                     </svg>
                                     <span className="absolute bottom-[250%] left-[46%] whitespace-nowrap rounded-full border border-amber-200 bg-slate-950/95 px-2 py-1 text-[10px] font-black text-amber-100 shadow-lg">Disease weakness</span>
+                                  </span>
+                                ) : null}
+                                {isRpSourceFocusTarget ? (
+                                  <span
+                                    data-tutorial-target="coral-rp-source"
+                                    data-v2-coral-rp-source-arrow="true"
+                                    role="img"
+                                    aria-label="Brain Coral Photosynthesis: collect 1 RP at the start of your turn."
+                                    className="pointer-events-none absolute z-[66]"
+                                    style={{ left: "8.5%", top: "52%", width: "83%", height: "9%" }}
+                                  >
+                                    <span className="absolute inset-0 rounded-lg border-2 border-amber-300 bg-amber-200/15 shadow-[0_0_16px_5px_rgba(251,191,36,.9)]" />
+                                    <svg className="absolute bottom-[82%] right-[8%] h-16 w-24 overflow-visible drop-shadow-[0_2px_3px_rgba(0,0,0,.85)]" viewBox="0 0 96 64" aria-hidden="true">
+                                      <path d="M 90 5 C 76 7 58 20 43 48" fill="none" stroke="#fde047" strokeWidth="5" strokeLinecap="round" />
+                                      <path d="M 31 40 L 42 59 L 53 40" fill="#fde047" stroke="#713f12" strokeWidth="2" strokeLinejoin="round" />
+                                    </svg>
+                                    <span className="absolute bottom-[230%] right-[-2%] whitespace-nowrap rounded-full border border-amber-200 bg-slate-950/95 px-2 py-1 text-[10px] font-black text-amber-100 shadow-lg">Photosynthesis · +1 RP</span>
                                   </span>
                                 ) : null}
                                 <CoralUpgradeCelebration

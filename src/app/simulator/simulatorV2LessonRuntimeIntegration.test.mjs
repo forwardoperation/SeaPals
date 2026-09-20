@@ -54,12 +54,28 @@ test("Lesson 1 teaches Coral weaknesses on the board without a generic hand over
   assert.match(boardCard, /data-v2-coral-weakness-arrow[\s\S]*?role="img"[\s\S]*?aria-label="Brain Coral weakness: Disease"/);
   const cameraFocus = sourceSection(
     "if (!weaknessFocusActive) return undefined;",
-    "if (!playerLayoutSignature || playerViewportTouched || weaknessFocusActive) return undefined;",
+    "if (!compactRpSourceZoomActive) return undefined;",
   );
   assert.match(cameraFocus, /playerCorals\.find\(\(coral\) => coral\.cardId === "brain-coral-base"\)/);
   assert.match(cameraFocus, /setInspectedCard\(null\)/, "a previously opened card inspector must clear before the board close-up");
   assert.match(cameraFocus, /commitBoardCamera\("player", \{[\s\S]*?zoom,[\s\S]*?getVisibleAreaFitOffset/);
   assert.match(cameraFocus, /commitBoardCamera\("player", weaknessCameraBeforeRef\.current\)/, "Continue should restore the prior view");
+});
+
+test("Lesson 1 teaches Brain Coral's Photosynthesis before the RP flight", () => {
+  const cameraFocus = sourceSection(
+    "if (!compactRpSourceZoomActive) return undefined;",
+    "if (!playerLayoutSignature || playerViewportTouched || tutorialBoardCardFocusActive) return undefined;",
+  );
+  const boardCard = sourceSection("{playerCorals.map((coral) => {", "{guidedFoundationPlacementTarget ? (");
+
+  assert.match(cameraFocus, /rpSourceCameraBeforeRef\.current = playerCameraRef\.current/);
+  assert.match(cameraFocus, /Math\.min\(2\.15/);
+  assert.match(cameraFocus, /commitBoardCamera\("player", rpSourceCameraBeforeRef\.current\)/);
+  assert.match(boardCard, /data-v2-coral-rp-source-arrow="true"/);
+  assert.match(boardCard, /aria-label="Brain Coral Photosynthesis: collect 1 RP at the start of your turn\."/);
+  assert.match(boardCard, /Photosynthesis · \+1 RP/);
+  assert.match(simulatorSource, /const tutorialBoardCardFocusActive = weaknessFocusActive \|\| compactRpSourcePresentationActive/);
 });
 
 function createProductionInitialGameFactory() {

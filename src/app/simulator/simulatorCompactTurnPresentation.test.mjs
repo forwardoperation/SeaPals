@@ -62,7 +62,7 @@ test("turn notices stay transient while nonlesson conditions use the compact boa
   assert.match(simulatorSource, /\.seapals-compact-turn-banner\.is-condition[\s\S]*?pointer-events: auto;/);
 });
 
-test("Condition teacher dialogue appears only when earlier completed lessons have not taught it", () => {
+test("Condition and RP-source teaching use the embedded coach only when needed", () => {
   const conditionHelp = sourceSection(
     simulatorSource,
     "const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;",
@@ -104,13 +104,17 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
   assert.match(conditionHelp, /Tap \$\{tutorialConditionCard\.name\} for its details, then continue\./);
   assert.match(
     conditionHelp,
-    /RP pays for cards and abilities\.[\s\S]*?Brain Coral added its printed 1 RP[\s\S]*?Unspent RP stays in your bank/,
+    /const embeddedCompactRpSourceHelp = compactRpSourceZoomActive[\s\S]*?Every round gives you 1 RP\.[\s\S]*?Photosynthesis[\s\S]*?collect 2 RP this round/,
+  );
+  assert.match(
+    conditionHelp,
+    /Your bank increased from \$\{compactTurnSequence\.rpBefore\} RP to \$\{compactTurnSequence\.rpAfter\} RP\.[\s\S]*?Unspent RP stays in your bank/,
   );
   assert.match(
     conditionHelp,
     /Coral Disease blocked Brain Coral's 1 RP\.[\s\S]*?Mustard Hill still produced 2 RP[\s\S]*?varied ecosystem/,
   );
-  assert.match(conditionHelp, /const embeddedCompactCoachHelp = embeddedCompactConditionHelp \?\? embeddedCompactRpHelp/);
+  assert.match(conditionHelp, /const embeddedCompactCoachHelp = embeddedCompactConditionHelp \?\? embeddedCompactRpSourceHelp \?\? embeddedCompactRpHelp/);
   assert.match(
     conditionHelp,
     /const embeddedCompactCoachOpen = Boolean\([\s\S]*?embeddedCompactCoachHelp[\s\S]*?!simulatorExitConfirmationOpen[\s\S]*?!tutorialExitConfirmationOpen[\s\S]*?!gameResult/,
@@ -121,11 +125,11 @@ test("Condition teacher dialogue appears only when earlier completed lessons hav
   );
   assert.match(
     embeddedCompactCoach,
-    /onAdvance=\{compactTurnStage\?\.kind === CompactTurnStage\.CONDITION[\s\S]*?\? null[\s\S]*?: continueCompactRpSummary\}/,
+    /onAdvance=\{compactTurnStage\?\.kind === CompactTurnStage\.CONDITION[\s\S]*?\? null[\s\S]*?: compactTurnStage\?\.kind === CompactTurnStage\.RP_SOURCE_FOCUS[\s\S]*?\? continueCompactRpSourceFocus[\s\S]*?: continueCompactRpSummary\}/,
   );
   assert.match(
     embeddedCompactCoach,
-    /advanceLabel="Continue to draw"/,
+    /advanceLabel=\{compactTurnStage\?\.kind === CompactTurnStage\.RP_SOURCE_FOCUS[\s\S]*?\? "Collect 2 RP"[\s\S]*?: "Continue to draw"\}/,
   );
   assert.equal((embeddedCompactCoach.match(/\bonAdvance=/g) ?? []).length, 1);
   assert.doesNotMatch(embeddedCompactCoach, /data-compact-condition-continue|seapals-compact-turn-banner/);
@@ -183,10 +187,10 @@ test("reviewing the highlighted Condition continues its embedded lesson after th
   );
 });
 
-test("new-round sequencing orders turn, condition, RP, then an optional lesson summary", () => {
+test("new-round sequencing can teach an RP source before collection and its summary", () => {
   assert.match(
     sequenceSource,
-    /return \[[\s\S]*?turnLabel \? \{ kind: CompactTurnStage\.TURN \}[\s\S]*?includeCondition && condition \? \{ kind: CompactTurnStage\.CONDITION \}[\s\S]*?includeRp \? \{ kind: CompactTurnStage\.RP \}[\s\S]*?includeRp && includeRpSummary \? \{ kind: CompactTurnStage\.RP_SUMMARY \}/,
+    /return \[[\s\S]*?turnLabel \? \{ kind: CompactTurnStage\.TURN \}[\s\S]*?includeCondition && condition \? \{ kind: CompactTurnStage\.CONDITION \}[\s\S]*?includeRp && includeRpSourceFocus \? \{ kind: CompactTurnStage\.RP_SOURCE_FOCUS \}[\s\S]*?includeRp \? \{ kind: CompactTurnStage\.RP \}[\s\S]*?includeRp && includeRpSummary \? \{ kind: CompactTurnStage\.RP_SUMMARY \}/,
   );
 
   const startRound = sourceSection(
@@ -196,6 +200,7 @@ test("new-round sequencing orders turn, condition, RP, then an optional lesson s
   );
   assert.match(startRound, /turnLabel: skipTurnBanner \? null : "Your Turn"/);
   assert.match(startRound, /includeCondition: Boolean\(condition && !reuseConditionId\)/);
+  assert.match(startRound, /includeRpSourceFocus: explainTutorialBrainCoralRpSource/);
   assert.match(startRound, /includeRp: true/);
   assert.match(startRound, /includeRpSummary: explainTutorialRpCollection/);
 
@@ -262,6 +267,58 @@ test("RP defers progress for a teacher summary only when earlier lessons have no
     rpSummaryContinue.indexOf("emitTutorialEvent(") < rpSummaryContinue.indexOf("advanceCompactTurnSequence(sequence.id)"),
     "RP progress must be emitted before the teacher advances past the summary.",
   );
+});
+
+test("the first RP lesson focuses Photosynthesis, restores the camera, then starts collection", () => {
+  const startRound = sourceSection(
+    simulatorSource,
+    "function startRound(nextRound,",
+    "function beginOpeningOpponentTurn()",
+  );
+  const sourceContinue = sourceSection(
+    simulatorSource,
+    "function continueCompactRpSourceFocus()",
+    "function continueCompactRpSummary()",
+  );
+  const sourceCamera = sourceSection(
+    simulatorSource,
+    "if (!compactRpSourceZoomActive) return undefined;",
+    "if (!playerLayoutSignature || playerViewportTouched || tutorialBoardCardFocusActive) return undefined;",
+  );
+
+  assert.match(
+    startRound,
+    /embeddedLesson\.id === "first-reef"[\s\S]*?tutorialCheckpointBeforeCollection\?\.id === "tutorial-collect-rp"[\s\S]*?condition\?\.id === "clear-water"[\s\S]*?actualCollectedRp === 2/,
+  );
+  assert.match(startRound, /rpSources\.find\(\(source\) => source\.key === `foundation:\$\{brainCoralRpFoundation\.id\}` && source\.amount > 0\)/);
+  assert.match(startRound, /rpSourceFocus: explainTutorialBrainCoralRpSource \? \{[\s\S]*?abilityName: "Photosynthesis"/);
+
+  assert.match(sourceContinue, /stage\?\.kind !== CompactTurnStage\.RP_SOURCE_FOCUS/);
+  assert.match(sourceContinue, /rpSourceReturning: true/);
+  assert.match(sourceContinue, /accessibilityReducedMotion \|\| systemReducedMotion \? 80 : 520/);
+  assert.ok(
+    sourceContinue.indexOf("rpSourceReturning: true") < sourceContinue.indexOf("advanceCompactTurnSequence(sequence.id)"),
+    "the camera return state must render before collection advances",
+  );
+
+  assert.match(sourceCamera, /rpSourceCameraBeforeRef\.current = playerCameraRef\.current/);
+  assert.match(sourceCamera, /Math\.min\(2\.15/);
+  assert.match(sourceCamera, /commitBoardCamera\("player", rpSourceCameraBeforeRef\.current\)/);
+  assert.match(simulatorSource, /const tutorialBoardCardFocusActive = weaknessFocusActive \|\| compactRpSourcePresentationActive/);
+  assert.match(simulatorSource, /data-v2-coral-rp-source-arrow="true"/);
+  assert.match(simulatorSource, /Brain Coral Photosynthesis: collect 1 RP at the start of your turn\./);
+  assert.match(simulatorSource, /Photosynthesis · \+1 RP/);
+
+  const stageEffect = sourceSection(
+    simulatorSource,
+    "useEffect(() => {\n    const sequence = compactTurnSequence;",
+    "useEffect(() => () => {\n    clearCompactTurnAsyncHandles();",
+  );
+  assert.ok(
+    stageEffect.indexOf("CompactTurnStage.RP_SOURCE_FOCUS") < stageEffect.indexOf("stage.kind !== CompactTurnStage.RP"),
+    "source teaching must finish before the RP flight stage",
+  );
+  assert.match(stageEffect, /stage\.kind !== CompactTurnStage\.RP[\s\S]*?launchCompactRpFlights\(sequence\)/);
 });
 
 test("both controllers collect RP from stable board sources into a counting RP bank", () => {
