@@ -251,9 +251,9 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
   lesson({
     id: "first-attack", moduleId: "battle-basics", number: 2,
     title: "Put abilities to work", duration: "9 min", goalLabel: "Use four abilities and reach 7 VP",
-    summary: "Attack and defend, trigger a passive, recover a card with an action, and unleash an On Play attack.",
-    introduction: "In this lesson, you’ll learn how abilities shape the food chain. Spanish Hogfish eats Invertebrates and has its eye on your Sea Urchin—prepare to defend! Then you’ll use Action, Passive, and On Play abilities.",
-    completion: "You resolved both sides of a faceoff, saw a passive work automatically, recovered a card with a non-attack action, and triggered a Predator's On Play attack.",
+    summary: "Lead an attack, defend a counterattack, trigger a passive, recover a card, and unleash an On Play ability.",
+    introduction: "In this lesson, you’ll learn to lead an attack with Porcupine Fish’s Crunch! I’ll guide you through choosing a target, rolling both dice, and reading the result before your opponent strikes back.",
+    completion: "You led and read a full faceoff, defended a counterattack, saw a passive work automatically, recovered a card with a non-attack action, and triggered a Predator's On Play attack.",
     celebration: "Every ability had a job to do!",
     autoEndOpeningTurn: true,
     skills: ["Attack actions", "Offense and defense", "Passive abilities", "Recovery actions", "On Play abilities"],
@@ -266,27 +266,33 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       SIMULATOR_V2_LESSON_CONCEPTS.NON_ATTACK_ACTIONS,
     ],
     focusCardId: "porcupine-fish", victoryTarget: 7,
-    randomSeed: 0x5EA910CC,
+    randomSeed: 0x5EA9101C,
     attackCardId: "porcupine-fish", attackTargetCardId: "sea-urchin",
     defeatTeachingCardId: "sea-urchin",
     abilityCardId: "blue-crab",
     abilityRecoveryTargets: { "v2-recover-sea-urchin": "sea-urchin" },
     expectedDraws: {
-      "tutorial-draw-card": { deckType: "pals", cardId: "porcupine-fish" },
+      "tutorial-draw-card": { deckType: "pals", cardId: "blue-crab" },
       "v2-draw-predator": { deckType: "pals", cardId: "great-barracuda" },
     },
     seed: seed({
       hand: [],
       foundationDeck: [],
-      palsDeck: ["porcupine-fish", "blue-crab", "great-barracuda"],
+      palsDeck: ["blue-crab", "great-barracuda"],
       rp: 2,
-      conditionDeck: ["undertow", "murky-water"],
+      conditionDeck: ["clear-water", "murky-water"],
       gamePhase: "main",
       round: 2,
       turn: 2,
       hasDrawnThisTurn: true,
       activeConditionId: "coral-disease",
-      playerTableau: firstLessonReef(),
+      playerTableau: [
+        tableau("brain-coral-stage-1", [
+          ["sea-urchin", "invertebrate"],
+          ["porcupine-fish", "fish"],
+        ]),
+        tableau("mustard-hill-coral-base"),
+      ],
       opponentTableau: [tableau("mustard-hill-coral-base", [["sea-urchin", "invertebrate"]])],
       opponentTurnMode: "play",
       opponent: {
@@ -297,6 +303,12 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       },
     }),
     checkpoints: [
+      checkpoint("tutorial-attack", ACTION.ATTACK_RESOLVED, "Lead your first attack", "Use Porcupine Fish's Crunch on the opposing Sea Urchin, roll both dice, and read the result.", [
+        truthy("details.accepted"),
+        equals("details.attackerCardId", "porcupine-fish"),
+        equals("details.defenderCardId", "sea-urchin"),
+        equals("details.onPlay", false),
+      ]),
       checkpoint("v2-pass-to-counterattack", ACTION.TURN_ENDED, "Explore the food chain", "End your turn; the opponent will play Spanish Hogfish and attack Sea Urchin."),
       checkpoint("v2-defend-attack", ACTION.ATTACK_RESOLVED, "Defend the counterattack", "Watch Spanish Hogfish attack your Sea Urchin and compare its roll with Sea Urchin's defense.", [
         truthy("details.accepted"),
@@ -310,30 +322,23 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       checkpoint("tutorial-collect-rp", ACTION.RP_COLLECTED, "Collect for the next plan", "Begin the new round and collect RP from both Corals.", [
         equals("round", 3),
         equals("details.collected", 5),
-        equals("details.bankBefore", 2),
-        equals("details.bankAfter", 7),
+        equals("details.bankBefore", 1),
+        equals("details.bankAfter", 6),
         equals("details.cap", 8),
-        equals("details.conditionId", "undertow"),
+        equals("details.conditionId", "clear-water"),
       ]),
-      checkpoint("tutorial-draw-card", ACTION.CARD_DRAWN, "Draw two with Undertow", "Choose two cards from the Pals Deck.", [
-        equals("details.count", 2),
-        equals("details.palsCount", 2),
+      checkpoint("tutorial-draw-card", ACTION.CARD_DRAWN, "Draw Blue Crab", "Choose one card from the Pals Deck.", [
+        equals("details.count", 1),
+        equals("details.palsCount", 1),
       ]),
-      buildCheckpoint("v2-place-attacker", "Give Porcupine Fish a home", "porcupine-fish"),
       buildCheckpoint("v2-place-passive", "Put a passive to work", "blue-crab"),
-      checkpoint("tutorial-attack", ACTION.ATTACK_RESOLVED, "Resolve an attack action", "Use Porcupine Fish's Crunch on the opposing Sea Urchin and compare offense with defense.", [
-        truthy("details.accepted"),
-        equals("details.attackerCardId", "porcupine-fish"),
-        equals("details.defenderCardId", "sea-urchin"),
-        equals("details.onPlay", false),
-      ]),
       abilityCheckpoint("v2-recover-sea-urchin", "Use a non-attack action", "blue-crab", "Scavenge", "sea-urchin"),
       checkpoint("v2-pass-to-predator", ACTION.TURN_ENDED, "Carry the plan forward", "End your turn with Sea Urchin recovered for the next round."),
       checkpoint("v2-collect-for-predator", ACTION.RP_COLLECTED, "Fund the planned plays", "Collect the RP saved and produced for this round.", [
         equals("round", 4),
         equals("details.collected", 5),
-        equals("details.bankBefore", 0),
-        equals("details.bankAfter", 5),
+        equals("details.bankBefore", 2),
+        equals("details.bankAfter", 7),
         equals("details.cap", 9),
         equals("details.conditionId", "murky-water"),
       ]),
@@ -349,19 +354,11 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       victoryCheckpoint(7),
     ],
     buildCards: {
-      "v2-place-attacker": ["porcupine-fish"],
       "v2-place-passive": ["blue-crab"],
       "v2-replay-sea-urchin": ["sea-urchin"],
       "v2-place-predator": ["great-barracuda"],
     },
     placementTargets: {
-      "v2-place-attacker": {
-        cardId: "porcupine-fish",
-        foundationCardId: "brain-coral-stage-1",
-        slotClass: "fish",
-        slotOrdinal: 0,
-        blockMessage: "Place Porcupine Fish in Brain Coral's highlighted Fish slot. Keep the Predator slot open for Great Barracuda later.",
-      },
       "v2-place-predator": {
         cardId: "great-barracuda",
         foundationCardId: "brain-coral-stage-1",
@@ -941,7 +938,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
           : "Your reef is ready for its next play."
         } Great Barracuda is on top of your Pals Deck. Draw it to prepare its On Play attack.`
       : selected.id === "first-attack"
-        ? "Undertow lets you draw two cards this round. Porcupine Fish will demonstrate an attack, and Blue Crab will demonstrate a passive and a non-attack action."
+        ? "Blue Crab is on top of your Pals Deck. Draw it to see how a Passive works automatically, then use its non-attack Scavenge Action."
         : selected.id === "first-reef"
           ? "Sea Urchin is waiting on top of your Pals Deck. Draw it so you can place your first creature."
         : "Choose the Pals Deck when you want creatures and other Pals cards.";
@@ -1173,10 +1170,16 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       );
     }
     if (uiState.attackContext) {
+      const choosingFirstTarget = selected.id === "first-attack" && current.id === "tutorial-attack";
       return help(
         "opponent-board",
-        "Crunch can only target an opposing Invertebrate. Sea Urchin is the legal target glowing above.",
-        "Choose the glowing Sea Urchin in the opposing reef.",
+        choosingFirstTarget
+          ? "Crunch can attack only an opposing Invertebrate. The highlighted Sea Urchin is legal, so selecting it makes Sea Urchin the defender."
+          : "Crunch can only target an opposing Invertebrate. Sea Urchin is the legal target glowing above.",
+        choosingFirstTarget
+          ? "Now choose the target! Select the highlighted Sea Urchin. Crunch will roll Porcupine Fish’s D4 attack die against Sea Urchin’s printed D6 defense die; then you’ll tap the board to lock both results."
+          : "Choose the glowing Sea Urchin in the opposing reef.",
+        choosingFirstTarget ? { targetCardId: selected.attackTargetCardId } : undefined,
       );
     }
     if (uiState.handPopoverOpen || uiState.modal === "hand") {
@@ -1187,13 +1190,20 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const introduceActions = selected.id === "first-attack"
       && current.id === "tutorial-attack"
       && target === "player-board";
+    const chooseFirstAttack = selected.id === "first-attack"
+      && current.id === "tutorial-attack"
+      && target === "attack-button";
     return help(
       target,
-      "Crunch costs 1 RP and targets an opposing Invertebrate.",
-      target === "attack-button"
-        ? "Use Crunch, then choose a legal target."
+      introduceActions
+        ? "Crunch is an Action: an ability you choose during your turn, up to once each turn."
+        : chooseFirstAttack
+          ? "Porcupine Fish is your attacker. Crunch costs 1 RP, targets an opposing Invertebrate, and uses a D4 attack die."
+          : "Crunch costs 1 RP and targets an opposing Invertebrate.",
+      chooseFirstAttack
+        ? "Great—Porcupine Fish is selected! Choose Crunch to commit 1 RP and begin the attack."
         : introduceActions
-          ? "Now it’s your turn to hit back! Certain creatures have abilities they can perform once per turn throughout the game. These are called Actions. Let’s explore one by using Porcupine Fish’s Action, Crunch, to target your opponent’s Sea Urchin."
+          ? "Your turn to attack! Crunch is an Action—an ability you choose during your turn. Actions can be used once per turn. Select Porcupine Fish to begin!"
           : "Select Porcupine Fish, then use Crunch.",
       { targetCardId: selected.attackCardId, targetActionKey: attack?.actionKey ?? null },
     );
@@ -1307,7 +1317,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       ? "Your upgraded Schools now supply 170 Density. Halfbeak uses 10, leaving 160 free for Ocean Sunfish. End the turn to collect the RP needed for its 8 RP cost."
       : selected.id === "first-attack"
         ? current.id === "v2-pass-to-counterattack"
-          ? "In the ocean, there is a very important food chain that keeps ecosystems in balance. We will explore how creatures eat in this lesson. To start, your opponent will play a Spanish Hogfish, which can eat Invertebrates. It’s got its eye on your Sea Urchin—prepare to defend!"
+          ? "Excellent—you completed every step of an attack! Your opponent will now play Spanish Hogfish and use Crunch on your Sea Urchin, so you can watch the same faceoff from the defender’s side."
           : "Sea Urchin is back in your hand. End the turn and carry that non-attack action's setup into the next round."
       : "You can save your remaining RP for a later turn.";
     return help(

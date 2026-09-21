@@ -147,7 +147,7 @@ test("each concept has one teaching owner and the first two lessons own their ex
   );
 
   const firstAttack = getSimulatorV2Lesson("first-attack");
-  assert.equal(firstAttack.contract.checkpoints[0].actionType, "turn-ended", "the continuation begins from Lesson 1's live board");
+  assert.equal(firstAttack.contract.checkpoints[0].actionType, "attack-resolved", "Lesson 2 begins with the player's attack");
   const { contract, progress } = observe("apex-predators", [build("fairy-parrotfish"), build("arrow-crab")]);
   assert.equal(
     getSimulatorTutorialCurrentCheckpoint(contract, progress).actionType,
@@ -254,7 +254,7 @@ test("five continuous lessons form ordered modules and supply legal deterministi
     }
   }
   assert.equal(randomSeeds.size, SIMULATOR_V2_LESSONS.length);
-  assert.equal(getSimulatorV2Lesson("first-attack").randomSeed, 0x5EA910CC);
+  assert.equal(getSimulatorV2Lesson("first-attack").randomSeed, 0x5EA9101C);
 });
 
 test("Simulator's actual prepared-foundation factory supplies visible player artwork, finite camera coordinates and distinct live identities", () => {
@@ -498,7 +498,7 @@ test("lesson one builds, tests, and upgrades a two-Coral ecosystem before releas
   assert.equal(observe(selected.id, [build(mustard.id, "foundation"), vp(1, 1)]).progress.completedCheckpointIds.length, 0, "later cards and VP cannot skip first-Coral setup");
 });
 
-test("lesson two continues Lesson 1 and deterministically teaches defense, attack, passive, recovery, and On Play", () => {
+test("lesson two opens with the player's attack, then teaches defense, passive, recovery, and On Play", () => {
   const selected = getSimulatorV2Lesson("first-attack");
   const porcupine = cardsById["porcupine-fish"];
   const seaUrchin = cardsById["sea-urchin"];
@@ -522,13 +522,12 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
     SIMULATOR_V2_LESSON_CONCEPTS.NON_ATTACK_ACTIONS,
   ]);
   assert.deepEqual(checkpointIds, [
+    "tutorial-attack",
     "v2-pass-to-counterattack",
     "v2-defend-attack",
     "tutorial-collect-rp",
     "tutorial-draw-card",
-    "v2-place-attacker",
     "v2-place-passive",
-    "tutorial-attack",
     "v2-recover-sea-urchin",
     "v2-pass-to-predator",
     "v2-collect-for-predator",
@@ -538,7 +537,7 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
     "v2-predator-attack",
     "tutorial-earn-vp",
   ]);
-  assert.equal(selected.randomSeed, 0x5EA910CC);
+  assert.equal(selected.randomSeed, 0x5EA9101C);
   assert.equal(selected.victoryTarget, 7);
   assert.equal(selected.seed.gamePhase, "main");
   assert.equal(selected.seed.round, 2);
@@ -548,12 +547,18 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
   assert.equal(selected.seed.rp, 2);
   assert.deepEqual(selected.seed.hand, []);
   assert.deepEqual(selected.seed.foundationDeck, []);
-  assert.deepEqual(selected.seed.palsDeck, [porcupine.id, blueCrab.id, barracuda.id]);
-  assert.deepEqual(selected.seed.conditionDeck, ["undertow", "murky-water"]);
+  assert.deepEqual(selected.seed.palsDeck, [blueCrab.id, barracuda.id]);
+  assert.deepEqual(selected.seed.conditionDeck, ["clear-water", "murky-water"]);
   assert.deepEqual(selected.seed.playerTableau, [
-    { foundationCardId: "brain-coral-stage-1", placements: [{ cardId: seaUrchin.id, slotClass: "invertebrate" }] },
+    {
+      foundationCardId: "brain-coral-stage-1",
+      placements: [
+        { cardId: seaUrchin.id, slotClass: "invertebrate" },
+        { cardId: porcupine.id, slotClass: "fish" },
+      ],
+    },
     { foundationCardId: "mustard-hill-coral-base", placements: [] },
-  ], "Lesson 2 starts from Lesson 1's exact finished board");
+  ], "Lesson 2 carries Lesson 1's reef forward and stages Porcupine Fish for the opening attack");
   assert.deepEqual(selected.seed.opponentTableau, [
     { foundationCardId: "mustard-hill-coral-base", placements: [{ cardId: seaUrchin.id, slotClass: "invertebrate" }] },
   ]);
@@ -564,8 +569,8 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
     palsDeck: ["blue-whale", "blue-whale"],
     rp: 0,
   });
-  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-defend-attack"), { deckType: "pals", cardId: porcupine.id });
-  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "tutorial-draw-card"), { deckType: "pals", cardId: porcupine.id });
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-defend-attack"), { deckType: "pals", cardId: blueCrab.id });
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "tutorial-draw-card"), { deckType: "pals", cardId: blueCrab.id });
   assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-pass-to-predator"), { deckType: "pals", cardId: barracuda.id });
   assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-predator"), { deckType: "pals", cardId: barracuda.id });
 
@@ -583,19 +588,17 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
   assert.equal(selected.abilityCardId, blueCrab.id);
   assert.deepEqual(selected.abilityRecoveryTargets, { "v2-recover-sea-urchin": seaUrchin.id });
 
-  const undertow = cardsById["undertow"].effects.find(({ type }) => type === "modifyTurnDraw");
   const murkyDiscount = cardsById["murky-water"].effects.find(({ type }) => type === "modifyPlayCost");
-  assert.equal(undertow.amount, 1, "Undertow makes the authored two-card draw legal");
   assert.equal(murkyDiscount.amount, -1);
   assert.equal(murkyDiscount.targetCategories.includes("predator"), true);
 
   const openingReef = materializeTableau(selected.seed.playerTableau);
-  assert.equal(calculateVictoryPoints(allCardsInPlay(openingReef)), 1);
+  assert.equal(calculateVictoryPoints(allCardsInPlay(openingReef)), 3);
   assert.equal(income(openingReef), 5);
-  assert.equal(calculateRpBankCap(allCardsInPlay(openingReef), cardsById["undertow"]), 8);
-  const roundThreeBank = addResourceWithinCap(selected.seed.rp, income(openingReef), 8);
-  assert.equal(roundThreeBank, 7);
-  assert.equal(roundThreeBank - porcupine.cost.rp - blueCrab.cost.rp - porcupineAttack.cost.rp - scavenge.cost.rp, 0);
+  assert.equal(calculateRpBankCap(allCardsInPlay(openingReef), cardsById["clear-water"]), 8);
+  const roundThreeBank = addResourceWithinCap(selected.seed.rp - porcupineAttack.cost.rp, income(openingReef), 8);
+  assert.equal(roundThreeBank, 6);
+  assert.equal(roundThreeBank - blueCrab.cost.rp - scavenge.cost.rp, 2);
   const plannedReef = materializeTableau([
     {
       foundationCardId: "brain-coral-stage-1",
@@ -608,9 +611,9 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
   ]);
   assert.equal(calculateVictoryPoints(allCardsInPlay(plannedReef)), 3);
   assert.equal(calculateRpBankCap(allCardsInPlay(plannedReef), cardsById["murky-water"]), 9);
-  const roundFourBank = addResourceWithinCap(0, income(plannedReef), 9);
-  assert.equal(roundFourBank, 5);
-  assert.equal(roundFourBank - seaUrchin.cost.rp - (barracuda.cost.rp + murkyDiscount.amount), 2);
+  const roundFourBank = addResourceWithinCap(2, income(plannedReef), 9);
+  assert.equal(roundFourBank, 7);
+  assert.equal(roundFourBank - seaUrchin.cost.rp - (barracuda.cost.rp + murkyDiscount.amount), 4);
   const completedReef = materializeTableau([
     {
       foundationCardId: "brain-coral-stage-1",
@@ -631,14 +634,14 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
     return sample.value;
   };
   const combatPackets = [
-    createCombatRollPacket(hogfishAttack.effect.attackDice, seaUrchin.defense.dice, nextCombatRandom),
     createCombatRollPacket(porcupineAttack.effect.attackDice, seaUrchin.defense.dice, nextCombatRandom),
+    createCombatRollPacket(hogfishAttack.effect.attackDice, seaUrchin.defense.dice, nextCombatRandom),
     createCombatRollPacket(quickStrikeAttack.attackDice, hogfish.defense.dice, nextCombatRandom),
   ];
   assert.deepEqual(
     combatPackets.map(({ attack, defense }) => [attack, defense]),
-    [[4, 3], [4, 1], [6, 1]],
-    "the replay seed guarantees Sea Urchin's defeat and both player attack wins",
+    [[4, 3], [5, 2], [6, 1]],
+    "the replay seed guarantees the player's opening win, Sea Urchin's later defeat, and the On Play win",
   );
 
   const opponentAttack = {
@@ -659,9 +662,9 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
     actionType: "rp-collected",
     phase: "draw",
     round: 3,
-    details: { collected: 5, bankBefore: 2, bankAfter: 7, cap: 8, conditionId: "undertow" },
+    details: { collected: 5, bankBefore: 1, bankAfter: 6, cap: 8, conditionId: "clear-water" },
   };
-  const drawPair = { actionType: "card-drawn", phase: "draw", details: { count: 2, palsCount: 2 } };
+  const drawBlueCrab = { actionType: "card-drawn", phase: "draw", details: { count: 1, palsCount: 1 } };
   const porcupineResolved = {
     actionType: "attack-resolved",
     details: { accepted: true, attackerCardId: porcupine.id, defenderCardId: seaUrchin.id, onPlay: false },
@@ -680,7 +683,7 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
     actionType: "rp-collected",
     phase: "draw",
     round: 4,
-    details: { collected: 5, bankBefore: 0, bankAfter: 5, cap: 9, conditionId: "murky-water" },
+    details: { collected: 5, bankBefore: 2, bankAfter: 7, cap: 9, conditionId: "murky-water" },
   };
   const predatorDraw = { actionType: "card-drawn", phase: "draw", details: { count: 1, palsCount: 1 } };
   const predatorResolved = {
@@ -688,15 +691,13 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
     details: { accepted: true, attackerCardId: barracuda.id, defenderCardId: hogfish.id, onPlay: true },
   };
   const throughPredatorBuild = [
+    porcupineResolved,
     { actionType: "turn-ended", details: {} },
     opponentAttack,
     collectRoundThree,
-    drawPair,
-    build(porcupine.id),
-    vp(2, 2),
+    drawBlueCrab,
     build(blueCrab.id),
     vp(3, 1),
-    porcupineResolved,
     scavengeResolved,
     { actionType: "turn-ended", details: {} },
     collectRoundFour,
@@ -713,20 +714,39 @@ test("lesson two continues Lesson 1 and deterministically teaches defense, attac
   const complete = observe(selected.id, [...throughPredatorBuild, predatorResolved]);
   assert.equal(complete.progress.status, "complete");
   assert.deepEqual(complete.progress.completedCheckpointIds, checkpointIds);
+  assert.equal(
+    observe(selected.id, [{ actionType: "turn-ended", details: {} }]).progress.completedCheckpointIds.length,
+    0,
+    "the player must resolve Crunch before the opponent turn begins",
+  );
+  assert.equal(observe(selected.id, [{
+    ...porcupineResolved,
+    details: { ...porcupineResolved.details, attackerCardId: barracuda.id },
+  }]).progress.completedCheckpointIds.length, 0, "only Porcupine Fish can complete the opening attack");
+  assert.equal(observe(selected.id, [{
+    ...porcupineResolved,
+    details: { ...porcupineResolved.details, defenderCardId: hogfish.id },
+  }]).progress.completedCheckpointIds.length, 0, "the opening attack must target the opposing Sea Urchin");
+  assert.equal(observe(selected.id, [{
+    ...porcupineResolved,
+    details: { ...porcupineResolved.details, onPlay: true },
+  }]).progress.completedCheckpointIds.length, 0, "an On Play attack cannot replace the opening Action");
   assert.equal(observe(selected.id, [
+    porcupineResolved,
     { actionType: "turn-ended", details: {} },
     { ...opponentAttack, actor: "player" },
-  ]).progress.completedCheckpointIds.length, 1, "the defense checkpoint requires the opponent's attack");
+  ]).progress.completedCheckpointIds.length, 2, "the defense checkpoint requires the opponent's attack");
   assert.equal(observe(selected.id, [
+    porcupineResolved,
     { actionType: "turn-ended", details: {} },
     opponentAttack,
-    { ...collectRoundThree, details: { ...collectRoundThree.details, bankAfter: 6 } },
-  ]).progress.completedCheckpointIds.length, 2, "the first collection records its exact deterministic economy");
-  const throughAttack = throughPredatorBuild.slice(0, 9);
-  assert.equal(observe(selected.id, [...throughAttack, {
+    { ...collectRoundThree, details: { ...collectRoundThree.details, bankAfter: 5 } },
+  ]).progress.completedCheckpointIds.length, 3, "the first collection records its exact deterministic economy");
+  const throughPassive = throughPredatorBuild.slice(0, 7);
+  assert.equal(observe(selected.id, [...throughPassive, {
     ...scavengeResolved,
     details: { ...scavengeResolved.details, targetCardId: "clownfish" },
-  }]).progress.completedCheckpointIds.length, 7, "Scavenge must recover the defeated Sea Urchin");
+  }]).progress.completedCheckpointIds.length, 6, "Scavenge must recover the defeated Sea Urchin");
   assert.equal(observe(selected.id, [...throughPredatorBuild, {
     ...predatorResolved,
     details: { ...predatorResolved.details, onPlay: false },
@@ -945,38 +965,17 @@ test("sequencing gates block spending or passing out of order while leaving actu
   assert.ok(block(setupLesson, null, "play-card", { cardId: "clownfish" }));
 
   const attackLesson = getSimulatorV2Lesson("first-attack");
+  const playerAttack = lessonStep(attackLesson, "tutorial-attack");
+  assert.ok(block(attackLesson, playerAttack, "end-turn", { gamePhase: "main" }), "the opening attack comes before the opponent turn");
+  assert.equal(block(attackLesson, playerAttack, "attack", { cardId: "porcupine-fish", gamePhase: "main" }), "");
+  assert.ok(block(attackLesson, playerAttack, "attack", { cardId: "great-barracuda", gamePhase: "main" }));
+  assert.ok(block(attackLesson, playerAttack, "play-card", { cardId: "blue-crab", gamePhase: "main" }));
   assert.equal(block(attackLesson, lessonStep(attackLesson, "v2-pass-to-counterattack"), "end-turn", { gamePhase: "main" }), "");
   assert.ok(block(attackLesson, lessonStep(attackLesson, "v2-defend-attack"), "attack", { cardId: "spanish-hogfish" }), "the opponent owns the defense demonstration");
   const abilityDraw = lessonStep(attackLesson, "tutorial-draw-card");
   assert.equal(block(attackLesson, abilityDraw, "draw", { deckType: "pals" }), "");
   assert.ok(block(attackLesson, abilityDraw, "draw", { deckType: "foundation" }));
-  assert.equal(block(attackLesson, lessonStep(attackLesson, "v2-place-attacker"), "play-card", { cardId: "porcupine-fish", gamePhase: "main" }), "");
-  const attackerPlacement = lessonStep(attackLesson, "v2-place-attacker");
-  assert.deepEqual(getSimulatorV2LessonPlacementTarget(attackLesson, attackerPlacement, "porcupine-fish"), {
-    cardId: "porcupine-fish",
-    foundationCardId: "brain-coral-stage-1",
-    slotClass: "fish",
-    slotOrdinal: 0,
-    blockMessage: "Place Porcupine Fish in Brain Coral's highlighted Fish slot. Keep the Predator slot open for Great Barracuda later.",
-  });
-  assert.equal(block(attackLesson, attackerPlacement, "place-card", {
-    cardId: "porcupine-fish",
-    foundationCardId: "brain-coral-stage-1",
-    slotClass: "fish",
-    slotOrdinal: 0,
-  }), "");
-  assert.match(block(attackLesson, attackerPlacement, "place-card", {
-    cardId: "porcupine-fish",
-    foundationCardId: "brain-coral-stage-1",
-    slotClass: "predator",
-    slotOrdinal: 0,
-  }), /Fish slot.*Predator slot.*Great Barracuda/i);
-  const brainPredatorSlot = cardsById["brain-coral-stage-1"].slots.find((slot) => slot.slotClass === "predator");
-  assert.equal(canCardOccupySlot(cardsById["porcupine-fish"], brainPredatorSlot), true, "ordinary matches still allow Fish in Predator slots");
   assert.equal(block(attackLesson, lessonStep(attackLesson, "v2-place-passive"), "play-card", { cardId: "blue-crab", gamePhase: "main" }), "");
-  const playerAttack = lessonStep(attackLesson, "tutorial-attack");
-  assert.equal(block(attackLesson, playerAttack, "attack", { cardId: "porcupine-fish", gamePhase: "main" }), "");
-  assert.ok(block(attackLesson, playerAttack, "attack", { cardId: "great-barracuda", gamePhase: "main" }));
   const recovery = lessonStep(attackLesson, "v2-recover-sea-urchin");
   assert.equal(block(attackLesson, recovery, "utility", { cardId: "blue-crab", actionId: "scavenge", actionName: "Scavenge" }), "");
   assert.ok(block(attackLesson, recovery, "utility", { cardId: "blue-crab", actionId: "recycle", actionName: "Recycle" }));
@@ -1075,12 +1074,12 @@ test("Lesson 2 repairs a Porcupine Fish that already occupies Great Barracuda's 
   );
 });
 
-test("Lesson 2 introduces its food-chain scene and distinguishes Action from On Play abilities", () => {
+test("Lesson 2 walks through the player's opening attack before the counterattack and other abilities", () => {
   const lesson = getSimulatorV2Lesson("first-attack");
   assert.equal(lesson.autoEndOpeningTurn, true);
   assert.match(
     lesson.introduction,
-    /food chain.*Spanish Hogfish.*eats Invertebrates.*Sea Urchin.*prepare to defend.*Action.*Passive.*On Play/is,
+    /lead an attack with Porcupine Fish.*Crunch.*choosing a target.*rolling both dice.*reading the result.*opponent strikes back/is,
   );
 
   const counterattack = lesson.contract.checkpoints.find(({ id }) => id === "v2-pass-to-counterattack");
@@ -1088,20 +1087,29 @@ test("Lesson 2 introduces its food-chain scene and distinguishes Action from On 
   assert.equal(counterattackHelp.target, "turn-button");
   assert.match(
     counterattackHelp.message,
-    /food chain.*Spanish Hogfish.*eat Invertebrates.*Sea Urchin.*prepare to defend/is,
+    /completed every step of an attack.*opponent.*Spanish Hogfish.*Crunch.*Sea Urchin.*defender.*side/is,
   );
 
   const crunch = lesson.contract.checkpoints.find(({ id }) => id === "tutorial-attack");
   const crunchHelp = getSimulatorV2LessonHelp(lesson, crunch, {});
   assert.equal(crunchHelp.target, "player-board");
-  assert.equal(
-    crunchHelp.message,
-    "Crunch costs 1 RP and targets an opposing Invertebrate.",
-  );
-  assert.equal(
-    crunchHelp.action,
-    "Now it’s your turn to hit back! Certain creatures have abilities they can perform once per turn throughout the game. These are called Actions. Let’s explore one by using Porcupine Fish’s Action, Crunch, to target your opponent’s Sea Urchin.",
-  );
+  assert.match(crunchHelp.message, /Crunch is an Action.*choose during your turn.*once each turn/is);
+  assert.match(crunchHelp.action, /Your turn to attack.*Action.*once per turn.*Select Porcupine Fish/is);
+
+  const selectedCrunchHelp = getSimulatorV2LessonHelp(lesson, crunch, {
+    inspectedAttack: { ready: true, actionKey: "live-crunch" },
+    inspectedPlayerCard: true,
+  });
+  assert.equal(selectedCrunchHelp.target, "attack-button");
+  assert.equal(selectedCrunchHelp.targetActionKey, "live-crunch");
+  assert.match(selectedCrunchHelp.message, /Porcupine Fish is your attacker.*costs 1 RP.*opposing Invertebrate.*D4 attack die/is);
+  assert.match(selectedCrunchHelp.action, /Porcupine Fish is selected.*Choose Crunch.*commit 1 RP.*begin the attack/is);
+
+  const targetCrunchHelp = getSimulatorV2LessonHelp(lesson, crunch, { attackContext: true });
+  assert.equal(targetCrunchHelp.target, "opponent-board");
+  assert.equal(targetCrunchHelp.targetCardId, "sea-urchin");
+  assert.match(targetCrunchHelp.message, /opposing Invertebrate.*Sea Urchin is legal.*defender/is);
+  assert.match(targetCrunchHelp.action, /choose the target.*Sea Urchin.*D4 attack die.*D6 defense die.*lock both results/is);
 
   const recovery = lesson.contract.checkpoints.find(({ id }) => id === "v2-recover-sea-urchin");
   const recoveryHelp = getSimulatorV2LessonHelp(lesson, recovery, {});
@@ -1280,7 +1288,7 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
   assert.equal(help(first.contract.checkpoints[3], { playingCardId: "sea-urchin" }).target, "placement");
   const attack = getSimulatorV2Lesson("first-attack");
   const attackDrawStep = attack.contract.checkpoints.find(({ id }) => id === "tutorial-draw-card");
-  assert.match(getSimulatorV2LessonHelp(attack, attackDrawStep, { gamePhase: "draw", drawSelected: 0, drawTarget: 1 }).message, /Porcupine Fish/);
+  assert.match(getSimulatorV2LessonHelp(attack, attackDrawStep, { gamePhase: "draw", drawSelected: 0, drawTarget: 1 }).message, /Blue Crab.*Passive.*Scavenge/is);
   const attackStep = attack.contract.checkpoints.find(({ id }) => id === "tutorial-attack");
   assert.equal(getSimulatorV2LessonHelp(attack, attackStep, { readyAttack: { actionKey: "live-crunch" } }).targetActionKey, "live-crunch");
   assert.equal(getSimulatorV2LessonHelp(attack, attackStep, { inspectedAttack: { ready: true, actionKey: "live-crunch" }, inspectedPlayerCard: true }).target, "attack-button");
@@ -1292,11 +1300,11 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
     gamePhase: "draw",
     modal: "turn-draw",
     drawSelected: 0,
-    drawTarget: 2,
+    drawTarget: 1,
     discardPileCardIds: ["sea-urchin"],
   });
   assert.equal(transitioningUpgradeDrawHelp.targetDeck, "pals");
-  assert.match(transitioningUpgradeDrawHelp.message, /Undertow lets you draw two cards.*Porcupine Fish.*Blue Crab/is);
+  assert.match(transitioningUpgradeDrawHelp.message, /Blue Crab.*Passive.*Scavenge/is);
   const upgradeDraw = first.contract.checkpoints.find(({ id }) => id === "v2-draw-first-upgrade");
   const upgradeDrawHelp = getSimulatorV2LessonHelp(first, upgradeDraw, {
     gamePhase: "draw",
@@ -1360,17 +1368,17 @@ test("later lessons direct familiar actions without repeating their introductory
   const drawHelp = getSimulatorV2LessonHelp(attack, attackDraw, {
     gamePhase: "draw",
     drawSelected: 0,
-    drawTarget: 2,
+    drawTarget: 1,
     previouslyTaughtConcepts,
   });
-  assert.match(drawHelp.message, /Undertow lets you draw two cards.*Porcupine Fish.*Blue Crab/s, "the later lesson keeps scenario-specific direction");
+  assert.match(drawHelp.message, /Blue Crab.*Passive.*Scavenge/is, "the later lesson keeps scenario-specific direction");
   assert.doesNotMatch(drawHelp.message, /holds creatures and other Pals cards/i);
 
   assert.match(
     getSimulatorV2LessonHelp(attack, attackDraw, {
       gamePhase: "draw",
       drawSelected: 0,
-      drawTarget: 2,
+      drawTarget: 1,
       previouslyTaughtConcepts: [],
     }).message,
     /Pals Deck holds creatures and other Pals cards/,

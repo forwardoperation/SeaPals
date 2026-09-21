@@ -282,7 +282,12 @@ test("Simulator starts an embedded lesson from the hydrated board and scores its
   assert.match(turnInitialization, /useState\(initialGame\.hasDrawnThisTurn \?\? false\)/);
 });
 
-test("Lesson 2 automatically enters the existing opponent-turn pipeline after its introduction", () => {
+test("Lesson 2 enters the opponent-turn pipeline only after the player's opening attack", () => {
+  const lesson = getSimulatorV2Lesson("first-attack");
+  assert.equal(lesson.autoEndOpeningTurn, true);
+  assert.equal(lesson.checkpoints[0]?.id, "tutorial-attack");
+  assert.equal(lesson.checkpoints[1]?.id, "v2-pass-to-counterattack");
+
   const automaticOpening = sourceSection(
     "tutorialRuntime?.lessonStarted === true",
     "if (!embeddedLesson || !tutorialCurrentCheckpoint) return;",
@@ -290,8 +295,15 @@ test("Lesson 2 automatically enters the existing opponent-turn pipeline after it
 
   assert.match(automaticOpening, /embeddedLesson\?\.autoEndOpeningTurn === true/);
   assert.match(automaticOpening, /tutorialCurrentCheckpoint\?\.id === "v2-pass-to-counterattack"/);
+  assert.doesNotMatch(
+    automaticOpening,
+    /tutorialCurrentCheckpoint\?\.id === "tutorial-attack"/,
+    "starting Lesson 2 must leave the player in control until the opening attack resolves",
+  );
   assert.match(automaticOpening, /gamePhase === "main"/);
   assert.match(automaticOpening, /eventOverlay/);
+  assert.match(automaticOpening, /!combatResultCheckpoint/);
+  assert.match(automaticOpening, /!consumedAttackFlight/);
   assert.match(automaticOpening, /modal/);
   assert.match(automaticOpening, /gameResult/);
   assert.match(automaticOpening, /autoEndedEmbeddedOpeningTurnRef\.current/);
@@ -306,6 +318,20 @@ test("Lesson 2 automatically enters the existing opponent-turn pipeline after it
   assert.match(endTurnFlow, /SIMULATOR_TUTORIAL_ACTION_TYPES\.TURN_ENDED/);
   assert.match(endTurnFlow, /beginCompactTurnSequence\(/);
   assert.match(endTurnFlow, /continueAfterPresentedEvent\(opponentTurnEvent, \[\]\)/);
+});
+
+test("Lesson 2 explains both dice and the defender's tie advantage before the opening faceoff", () => {
+  const openingFaceoff = sourceSection(
+    "const lessonTwoOpeningFaceoff = Boolean(",
+    "const scriptedScavengeInteraction =",
+  );
+
+  assert.match(openingFaceoff, /embeddedLesson\?\.id === "first-attack"/);
+  assert.match(openingFaceoff, /tutorialCurrentCheckpoint\?\.id === "tutorial-attack"/);
+  assert.match(openingFaceoff, /eventOverlay\?\.type === "faceoff-ready"/);
+  assert.match(openingFaceoff, /Porcupine Fish uses Crunch.s D4 attack die/);
+  assert.match(openingFaceoff, /Sea Urchin uses its printed D6 defense die/);
+  assert.match(openingFaceoff, /a tie goes to Sea Urchin as the defender/);
 });
 
 test("a resolved Support emits the lesson event only after its committed game updates", () => {

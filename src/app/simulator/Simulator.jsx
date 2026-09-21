@@ -6091,6 +6091,8 @@ export default function Simulator({
     && tutorialCurrentCheckpoint?.id === "v2-pass-to-counterattack"
     && gamePhase === "main"
     && !eventOverlay
+    && !combatResultCheckpoint
+    && !consumedAttackFlight
     && !modal
     && !gameResult
   );
@@ -6109,6 +6111,8 @@ export default function Simulator({
     embeddedLessonAutoEndingOpeningTurn,
     embeddedLesson?.autoEndOpeningTurn,
     embeddedLesson?.id,
+    combatResultCheckpoint,
+    consumedAttackFlight,
     tutorialCurrentCheckpoint?.id,
     tutorialRuntime?.lessonStarted,
   ]);
@@ -7752,17 +7756,27 @@ export default function Simulator({
     && !tutorialExitConfirmationOpen
     && !gameResult
   );
+  const lessonTwoOpeningFaceoff = Boolean(
+    embeddedLesson?.id === "first-attack"
+    && tutorialCurrentCheckpoint?.id === "tutorial-attack"
+    && eventOverlay?.type === "faceoff-ready"
+  );
+  const lessonTwoOpeningFaceoffMessage = "Choose Start Rolling. Both dice move together: Porcupine Fish uses Crunch’s D4 attack die, while Sea Urchin uses its printed D6 defense die. When you’re ready, choose Stop & Resolve to lock both results. Crunch succeeds only if the attack finishes higher; a tie goes to Sea Urchin as the defender.";
   const tutorialFaceoffHelp = tutorialContract && ["faceoff-ready", "school-attack-ready"].includes(eventOverlay?.type)
       ? {
         id: "tutorial-faceoff",
         cueId: "tutorial-faceoff:tap-to-lock",
         ...(tutorialFinalProgressLabel ? { progressLabel: tutorialFinalProgressLabel } : {}),
-        title: "Tap to lock the faceoff",
+        title: lessonTwoOpeningFaceoff ? "Roll attack and defense" : "Tap to lock the faceoff",
         lead: "The dice are rolling directly over both ecosystems. ",
-        message: eventOverlay.type === "faceoff-ready"
+        message: lessonTwoOpeningFaceoff
+          ? lessonTwoOpeningFaceoffMessage
+          : eventOverlay.type === "faceoff-ready"
           ? "Your attack die and the opponent's defense die keep changing together. Tap anywhere on the board to lock both results; your final attack total must beat the defender's total."
           : "Your Creature School attack die keeps changing over your ecosystem. Tap anywhere on the board to lock its damage roll.",
-        action: "Tap the board to stop the dice and resolve the attack.",
+        action: lessonTwoOpeningFaceoff
+          ? lessonTwoOpeningFaceoffMessage
+          : "Tap the board to stop the dice and resolve the attack.",
         target: "faceoff-action",
         targetLabel: "the rolling dice on the board",
       }
