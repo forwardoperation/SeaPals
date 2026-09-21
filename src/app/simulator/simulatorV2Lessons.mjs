@@ -374,7 +374,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     id: "support-search", moduleId: "support-recovery", number: 3,
     title: "Recover and rebuild", duration: "5 min", goalLabel: "Clear Stunned, find an upgrade, reach 4 VP",
     summary: "Use one-time Support cards in the right order to restore Brain Coral and grow your reef.",
-    introduction: "In this lesson, you will learn how to recover from a setback. Brain Coral is Stunned, so clear it first. Then search for its upgrade and turn that recovery into room for another creature.",
+    introduction: "In this lesson, you’ll learn how to recover from a setback. Brain Coral is Stunned, so let’s get it back in action! Then search for its upgrade and turn that recovery into room for another creature.",
     completion: "You cleared Stunned before Coral Gardener locked further Supports, found Brain Coral's upgrade, and turned two one-time effects into a stronger reef.",
     celebration: "Your reef bounced back stronger!",
     skills: ["Support timing", "Status recovery", "Deck search", "Coral upgrades"],
@@ -415,7 +415,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     id: "apex-predators", moduleId: "habitat-apex", number: 4,
     title: "Build a Habitat for an Apex", duration: "7 min", goalLabel: "Complete Coral Reef and reach 12 VP",
     summary: "Meet Coral Reef's creature requirements, play the Habitat, upgrade a Coral, and welcome Hammerhead.",
-    introduction: "In this lesson, you will learn why a Habitat is more than another card. Complete your reef's Fish and Invertebrate counts, place Coral Reef, and prepare an Apex slot for Hammerhead.",
+    introduction: "In this lesson, you’ll learn how a thriving Habitat unlocks powerful creatures! Complete the required Fish and Invertebrate counts, place Coral Reef, and prepare an Apex slot for Hammerhead.",
     completion: "You supplied four Reef Corals, two Reef Fish, and two Reef Invertebrates to sustain Coral Reef. That Habitat and a Stage 2 Apex slot let Hammerhead enter and use Ravage.",
     celebration: "Your thriving reef welcomed an Apex!",
     skills: ["Habitat requirements", "Maintaining a Habitat", "Apex slots", "Multi-attack abilities", "Turn planning"],
@@ -482,7 +482,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     id: "filter-feeder", moduleId: "open-water", number: 5,
     title: "Make room for a giant", duration: "5 min", goalLabel: "Balance School Density and reach 21 VP",
     summary: "Commit a little School Density, expand its supply, and then bring in an Ocean Sunfish.",
-    introduction: "In this lesson, you will learn how Creature Schools supply School Density. I've prepared two beside your Coral Reef. Halfbeak uses a little; Ocean Sunfish needs much more, so let's expand a School.",
+    introduction: "In this lesson, you’ll learn how to make room for a giant! I’ve prepared two Creature Schools beside your Coral Reef. Halfbeak uses a little Density; Ocean Sunfish needs much more, so let’s expand a School.",
     completion: "Your Coral Reef and Hammerhead stayed in play. Halfbeak used 10 School Density, then Anchovy Ball's upgrade left enough free for Ocean Sunfish to push the ecosystem to 21 VP.",
     celebration: "Your ecosystem made room for a giant!",
     skills: ["Creature Schools", "School Density", "Open water", "Filter Feeders"],
@@ -698,10 +698,10 @@ const OPEN_WATER_CARD_IDS = new Set(["halfbeak", "ocean-sunfish"]);
 const name = (cardId) => CARD_NAMES[cardId] ?? cardId ?? "the highlighted card";
 
 const FIRST_REEF_VISIBLE_COPY = Object.freeze({
-  "brain-coral-base": "Now that we know how to read foundation cards, drag this brain coral into your ecosystem for a cost of 1RP.",
-  "sea-urchin": "Creature slots are the round symbols connected to a Coral. Each slot inherits its Coral's habitat, and its icon shows the creature class it accepts. A creature must match both. Fish slots accept Fish. Predator slots accept Fish or Predators, but Predators cannot use Fish slots. Apex slots accept Fish, Predators, or Apex creatures. Invertebrate and Filter Feeder slots accept only their matching class. Sea Urchin is a Reef Invertebrate, and its printed 1 VP counts while it stays in your ecosystem. Drag it into the glowing Reef Invertebrate slot.",
-  "mustard-hill-coral-base": "A Base Coral begins a separate Foundation, while a Stage card upgrades an existing Coral. Mustard Hill is a Base Coral, so place it in empty water beside Brain Coral instead of on top of it. It produces 2 RP and has no Disease weakness. Drag it into the highlighted open water.",
-  "brain-coral-stage-1": "A Coral can upgrade after its current stage has survived a full turn. Put the matching next Stage on that Coral; its position, existing damage, and compatible residents remain. Brain Coral Stage 1 costs 2 RP. It raises health from 10 to 20 HP so it can withstand more damage, raises production from 1 to 2 RP each round, and adds a Predator slot plus a second Invertebrate slot so more creatures can live there. Drag Stage 1 onto the glowing Brain Coral.",
+  "brain-coral-base": "Great! Now that we know how to read Foundation cards, drag Brain Coral into your ecosystem for a cost of 1 RP.",
+  "sea-urchin": "Sea Urchin is ready for a home! Creature slots are the round symbols connected to a Coral. Each slot inherits its Coral's habitat, and its icon shows the creature class it accepts. A creature must match both. Fish slots accept Fish. Predator slots accept Fish or Predators, but Predators cannot use Fish slots. Apex slots accept Fish, Predators, or Apex creatures. Invertebrate and Filter Feeder slots accept only their matching class. Sea Urchin is a Reef Invertebrate, and its printed 1 VP counts while it stays in your ecosystem. Drag it into the glowing Reef Invertebrate slot.",
+  "mustard-hill-coral-base": "Great—your first creature is home! A Base Coral begins a separate Foundation, while a Stage card upgrades an existing Coral. Mustard Hill is a Base Coral, so place it in empty water beside Brain Coral instead of on top of it. It produces 2 RP and has no Disease weakness. Drag it into the highlighted open water.",
+  "brain-coral-stage-1": "Time to level up your reef! A Coral can upgrade after its current stage has survived a full turn. Put the matching next Stage on that Coral; its position, existing damage, and compatible residents remain. Brain Coral Stage 1 costs 2 RP. It raises health from 10 to 20 HP so it can withstand more damage, raises production from 1 to 2 RP each round, and adds a Predator slot plus a second Invertebrate slot so more creatures can live there. Drag Stage 1 onto the glowing Brain Coral.",
 });
 
 function firstReefVisiblePlacementCopy(cardId) {
@@ -722,10 +722,10 @@ function firstReefPlacementPointerPrompt(cardId, state = "hand") {
 
 function firstReefDrawVisibleCopy(expectedDraw) {
   if (expectedDraw?.cardId === "brain-coral-stage-1") {
-    return "Coral stages live in the Foundation Deck. To upgrade, you need the matching next Stage in your hand, and the current stage must have survived a full turn. Choose one card from the Foundation Deck, then confirm your draw.";
+    return "Your first Coral upgrade is ready! Coral stages live in the Foundation Deck. To upgrade, you need the matching next Stage in your hand, and the current stage must have survived a full turn. Choose one card from the Foundation Deck, then confirm your draw.";
   }
   if (expectedDraw?.cardId === "sea-urchin") {
-    return "Each round, you choose which deck to draw from. The Foundation Deck holds Corals and Coral upgrades. The Pals Deck holds creatures, Habitats, and Support cards. Sea Urchin is a creature, so choose one card from the Pals Deck, then confirm your draw.";
+    return "Time to welcome your first creature! Each round, you choose which deck to draw from. The Foundation Deck holds Corals and Coral upgrades. The Pals Deck holds creatures, Habitats, and Support cards. Sea Urchin is a creature, so choose one card from the Pals Deck, then confirm your draw.";
   }
   return null;
 }
@@ -835,6 +835,27 @@ function placementCopy(cardId) {
 }
 
 function dragActionCopy(cardId, candidates, selected, current) {
+  if (selected?.id === "apex-predators" && cardId === "clownfish") {
+    return "Let’s bring this Habitat to life! Drag Clownfish from your hand into the highlighted Fish slot.";
+  }
+  if (selected?.id === "apex-predators" && cardId === "arrow-crab") {
+    return "Great—your Fish count is ready! Drag Arrow Crab from your hand into the highlighted Invertebrate slot.";
+  }
+  if (selected?.id === "apex-predators" && cardId === "coral-reef") {
+    return "All the requirements are met! Select Coral Reef, then choose Play Card.";
+  }
+  if (selected?.id === "apex-predators" && cardId === "hammerhead") {
+    return "Here comes Hammerhead! Drag it from your hand into the highlighted Apex slot.";
+  }
+  if (selected?.id === "filter-feeder" && cardId === "halfbeak") {
+    return "Let’s see School Density in action! Drag Halfbeak from your hand into the highlighted open-water area.";
+  }
+  if (selected?.id === "filter-feeder" && cardId === "anchovy-ball-stage1") {
+    return "Ocean Sunfish needs more room—let’s make it! Drag Anchovy Ball Stage 1 onto the highlighted School.";
+  }
+  if (selected?.id === "filter-feeder" && cardId === "ocean-sunfish") {
+    return "You made enough room—now welcome a giant! Drag Ocean Sunfish from your hand into the highlighted open-water area.";
+  }
   if (cardId === "coral-reef") {
     return "Select Coral Reef in your hand, then choose Play Card to put it in the Habitat zone.";
   }
@@ -1009,7 +1030,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       return help(
         "slot-drag",
         "The connected circles are creature slots: homes for the creatures you will play. A slot can move around its Coral without changing which creatures fit there.",
-        "The connected circles are creature slots: homes for the creatures you will play. Press and hold the highlighted round slot, then drag it left or right and release in open water. It stays connected to Brain Coral and accepts the same kind of creature.",
+        "Nice work! The connected circles are creature slots: homes for the creatures you will play. Press and hold the highlighted round slot, then drag it left or right and release in open water. It stays connected to Brain Coral and accepts the same kind of creature.",
         {
           actionId: "move-slot",
           interaction: "drag",
@@ -1054,7 +1075,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       conceptWasPreviouslyTaught(uiState, SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS)
         ? "Press Begin Round."
         : selected.id === "first-reef"
-          ? "Your first Foundation is arranged. At the start of every round, a Condition changes the rules for both ecosystems, then you collect RP and draw. Press Begin Round to see the sequence."
+          ? "Your first Foundation is ready! At the start of every round, a Condition changes the rules for both ecosystems, then you collect RP and draw. Press Begin Round to see the sequence."
           : "Press Begin Round and watch your RP bank.",
       selected.id === "first-reef" ? {
         pointerPrompt: "Press Begin Round.",
@@ -1077,11 +1098,16 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
     const message = cardId === "coral-heal"
       ? "Stunned is a status on Brain Coral, separate from the round's shared Condition. It blocks upgrading. Play Coral Heal first: Coral Gardener prevents more Supports this turn after its search."
-      : "Coral Heal has removed Stunned. Now Coral Gardener can search your Foundation Deck for the matching Stage 1 upgrade. Supports resolve once, then go to the discard pile.";
+      : "Brain Coral is clear of Stunned! Now Coral Gardener can search your Foundation Deck for the matching Stage 1 upgrade. Supports resolve once, then go to the discard pile.";
+    const action = selectedCard
+      ? "Choose Play Card."
+      : cardId === "coral-heal"
+        ? "Brain Coral is Stunned, but we can fix that! Select Coral Heal in your hand."
+        : "Great—Brain Coral is clear! Now select Coral Gardener to find its Stage 1 upgrade.";
     return help(
       selectedCard ? "play-card" : "hand",
       selectedCard ? name(cardId) + " is selected and ready to resolve." : message,
-      selectedCard ? "Choose Play Card." : "Select " + name(cardId) + " in your hand.",
+      action,
       {
         interaction: "tap",
         targetCardId: cardId,
@@ -1167,7 +1193,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       target === "attack-button"
         ? "Use Crunch, then choose a legal target."
         : introduceActions
-          ? "Now it’s your turn to hit back. Certain creatures have abilities they can perform once per turn throughout the game. These are called Actions. Let’s explore one by using Porcupine Fish’s Action, Crunch, to target your opponent’s Sea Urchin."
+          ? "Now it’s your turn to hit back! Certain creatures have abilities they can perform once per turn throughout the game. These are called Actions. Let’s explore one by using Porcupine Fish’s Action, Crunch, to target your opponent’s Sea Urchin."
           : "Select Porcupine Fish, then use Crunch.",
       { targetCardId: selected.attackCardId, targetActionKey: attack?.actionKey ?? null },
     );
@@ -1196,11 +1222,11 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (selected.id === "apex-predators" && cardId === "clownfish") {
       message = "A Habitat needs a living ecosystem, not just RP. Your four Reef Corals are ready, but Coral Reef still needs two Fish and two Invertebrates. Right now each creature count is one short. Give Clownfish the highlighted Fish slot to reach two Reef Fish.";
     } else if (selected.id === "apex-predators" && cardId === "arrow-crab") {
-      message = "Now your Fish count is ready. Sea Urchin is the only Reef Invertebrate so far. Add Arrow Crab to reach the second one; then your reef will meet Coral Reef's full 4 Coral, 2 Fish, 2 Invertebrate requirement.";
+      message = "Great—your Fish count is ready! Sea Urchin is the only Reef Invertebrate so far. Add Arrow Crab to reach the second one; then your reef will meet Coral Reef's full 4 Coral, 2 Fish, 2 Invertebrate requirement.";
     } else if (selected.id === "apex-predators" && cardId === "coral-reef") {
-      message = "All three Coral Reef counts are met: four Reef Corals, two Reef Fish, and two Reef Invertebrates. This zero-RP Habitat stays in its own zone and unlocks Hammerhead. Keep those creatures in play: if a count falls short, the Habitat takes 10 HP each turn.";
+      message = "You did it—all three Coral Reef counts are met! Four Reef Corals, two Reef Fish, and two Reef Invertebrates now sustain this zero-RP Habitat and unlock Hammerhead. Keep those creatures in play: if a count falls short, the Habitat takes 10 HP each turn.";
     } else if (selected.id === "filter-feeder" && cardId === "anchovy-ball-stage1") {
-      message = "Halfbeak committed 10 School Density. Your Schools now supply 130, leaving only 120 free: not enough for Ocean Sunfish's 150. Upgrade Anchovy Ball for 3 RP to raise its supply from 10 to 50. That leaves 160 free.";
+      message = "Halfbeak committed 10 School Density. Your Schools now supply 130, leaving only 120 free: not enough for Ocean Sunfish's 150. Upgrade Anchovy Ball for 3 RP to raise its supply from 10 to 50. That leaves 160 free—enough room for Ocean Sunfish!";
     } else if (cardId === "mustard-hill-coral-base" && selected.id === "first-reef") {
       message = "Build Mustard Hill Coral as a second Foundation. It has no Disease weakness, so Coral Disease will not stop its 2 RP production next round.";
     } else if (cardId === "porcupine-fish" && selected.id === "first-attack") {
@@ -1262,21 +1288,21 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   if (current.actionType === ACTION.TURN_ENDED) {
     if (selected.id === "first-reef") {
       if (current.id === "v2-watch-coral-disease" && !uiState.weaknessTourAcknowledged) {
-        const explanation = "See the germ icon under Brain Coral's Weaknesses? That means Disease. Coral Disease stops its RP for one round, but the Coral stays in play. The other weakness types are Storm (swirl) and High Temperature (thermometer). Hurricane and Severe Coral Bleaching pause RP from Corals with those matching symbols. Mustard Hill has no weakness icon, so its 2 RP is safe from these Conditions.";
+        const explanation = "Here’s why that second Coral matters! See the germ icon under Brain Coral's Weaknesses? That means Disease. Coral Disease stops its RP for one round, but the Coral stays in play. The other weakness types are Storm (swirl) and High Temperature (thermometer). Hurricane and Severe Coral Bleaching pause RP from Corals with those matching symbols. Mustard Hill has no weakness icon, so its 2 RP is safe from these Conditions.";
         return help("coral-weakness", explanation, explanation, {
           cue: "first-reef:weakness-tour",
           targetCardId: "brain-coral-base",
           targetLabel: "Brain Coral's printed Disease weakness",
         });
       }
-      const message = "Now end your turn. Coral Disease will appear next round, and you can compare RP from Brain Coral and Mustard Hill.";
+      const message = "Ready to test your reef? End your turn. Coral Disease will appear next round, and you can compare RP from Brain Coral and Mustard Hill.";
       return help("turn-button", message, message, {
         pointerPrompt: "End the turn to reveal Coral Disease.",
         targetLabel: "the End Turn button",
       });
     }
     const message = selected.id === "apex-predators"
-      ? "Coral Reef is healthy because all four Corals, two Fish, and two Invertebrates are still here. Brain Coral's new Apex slot is ready; end the turn and refill your RP bank so Hammerhead can enter next round."
+      ? "Your Coral Reef is thriving! All four Corals, two Fish, and two Invertebrates are still here. Brain Coral's new Apex slot is ready; end the turn and refill your RP bank so Hammerhead can enter next round."
       : selected.id === "filter-feeder"
       ? "Your upgraded Schools now supply 170 Density. Halfbeak uses 10, leaving 160 free for Ocean Sunfish. End the turn to collect the RP needed for its 8 RP cost."
       : selected.id === "first-attack"
@@ -1293,8 +1319,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   if (selected.id === "first-reef" && current.actionType === ACTION.RP_COLLECTED) {
     const diseaseRound = current.id === "v2-collect-under-coral-disease";
     const action = diseaseRound
-      ? "Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
-      : "Your bank increased from 2 RP to 4 RP. Unspent RP stays in your bank for later rounds. Continue to your draw.";
+      ? "That’s resilience in action! Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
+      : "Nice! Your bank increased from 2 RP to 4 RP. Unspent RP stays in your bank for later rounds. Continue to your draw.";
     return help(
       "rp-bank",
       action,
@@ -1315,7 +1341,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   if (current.actionType === ACTION.RP_COLLECTED && selected.id === "filter-feeder") {
     return help(
       "rp-bank",
-      "You made room in School Density last turn. Now the Foundations' RP production refills your bank, so you can afford the 8 RP Ocean Sunfish without giving up Halfbeak.",
+      "Your plan worked! You made room in School Density last turn. Now the Foundations' RP production refills your bank, so you can afford the 8 RP Ocean Sunfish without giving up Halfbeak.",
       "Continue to draw Ocean Sunfish from the Pals Deck.",
     );
   }

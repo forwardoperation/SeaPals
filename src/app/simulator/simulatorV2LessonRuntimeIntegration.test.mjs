@@ -84,6 +84,15 @@ test("Lesson 1 teaches Brain Coral's Photosynthesis before the RP flight", () =>
   assert.match(boardCard, /data-v2-coral-rp-source-arrow="true"/);
   assert.match(boardCard, /aria-label="Brain Coral Photosynthesis: collect 1 RP at the start of your turn\."/);
   assert.match(boardCard, /Photosynthesis · \+1 RP/);
+  const rpSourceCallout = sourceSection(
+    'data-v2-coral-rp-source-arrow="true"',
+    "<CoralUpgradeCelebration",
+  );
+  assert.match(rpSourceCallout, /data-v2-coral-rp-source-pointer="true"/);
+  assert.match(rpSourceCallout, /left-1\/2[\s\S]*?-translate-x-1\/2/);
+  assert.equal((rpSourceCallout.match(/M 28 2 L 28 44 L 18 34 M 28 44 L 38 34/g) ?? []).length, 2);
+  assert.match(rpSourceCallout, /fill="none"[\s\S]*?stroke="#071827" strokeWidth="9"[\s\S]*?stroke="#fde047" strokeWidth="4"/);
+  assert.doesNotMatch(rpSourceCallout, /right-\[8%\]|fill="#fde047"|M 31 40 L 42 59 L 53 40/);
   assert.match(simulatorSource, /const tutorialBoardCardFocusActive = weaknessFocusActive \|\| compactRpSourcePresentationActive/);
 });
 

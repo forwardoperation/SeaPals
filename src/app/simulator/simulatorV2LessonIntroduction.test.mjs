@@ -96,6 +96,8 @@ test("the lesson start overlay keeps only the guide, title, short dialogue, and 
 test("every lesson opens with a short, authored Mr. Easterling learning promise", () => {
   for (const lesson of SIMULATOR_V2_LESSONS) {
     assert.match(lesson.introduction, /^In this lesson, you(?:(?:'|’|â€™)ll| will) learn\b/);
+    assert.match(lesson.introduction, /!/, `${lesson.id} intro should include one upbeat beat`);
+    assert.ok((lesson.introduction.match(/!/g) ?? []).length <= 2, `${lesson.id} intro should stay enthusiastic without shouting`);
     assert.ok(lesson.introduction.length <= 210, `${lesson.id} intro should stay brief`);
   }
 });

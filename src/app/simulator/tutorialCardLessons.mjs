@@ -325,7 +325,7 @@ export function createGuidedFoundationCardLesson(card) {
       {
         id: "foundation-introduction",
         title: "Corals are foundations for life",
-        message: `In the ocean, there are many corals. They are one of the foundations for life in the sea. In Sea Realm, Corals generate Resource Points (RP) and provide homes for sea creatures. Let’s walk through an example with this ${card.name}.`,
+        message: `In the ocean, there are many corals! They are one of the foundations for life in the sea. In Sea Realm, Corals generate Resource Points (RP) and provide homes for sea creatures. Let’s dive into an example with this ${card.name}!`,
       },
       {
         id: "foundation-identity",

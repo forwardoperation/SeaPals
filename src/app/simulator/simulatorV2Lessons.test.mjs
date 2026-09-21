@@ -1100,7 +1100,7 @@ test("Lesson 2 introduces its food-chain scene and distinguishes Action from On 
   );
   assert.equal(
     crunchHelp.action,
-    "Now it’s your turn to hit back. Certain creatures have abilities they can perform once per turn throughout the game. These are called Actions. Let’s explore one by using Porcupine Fish’s Action, Crunch, to target your opponent’s Sea Urchin.",
+    "Now it’s your turn to hit back! Certain creatures have abilities they can perform once per turn throughout the game. These are called Actions. Let’s explore one by using Porcupine Fish’s Action, Crunch, to target your opponent’s Sea Urchin.",
   );
 
   const recovery = lesson.contract.checkpoints.find(({ id }) => id === "v2-recover-sea-urchin");
@@ -1134,7 +1134,7 @@ test("Lesson 1 speaks the new-player mental model before asking for each action"
     hasCoralInPlay: false,
   });
   assert.equal(lesson.openingCardTourId, "brain-coral-base");
-  assert.equal(initial.action, "Now that we know how to read foundation cards, drag this brain coral into your ecosystem for a cost of 1RP.");
+  assert.equal(initial.action, "Great! Now that we know how to read Foundation cards, drag Brain Coral into your ecosystem for a cost of 1 RP.");
   assert.equal(initial.pointerPrompt, "Drag Brain Coral into the highlighted open water.");
 
   const selectedInitial = getSimulatorV2LessonHelp(lesson, setup, {
@@ -1158,7 +1158,7 @@ test("Lesson 1 speaks the new-player mental model before asking for each action"
   });
   assert.equal(moveSlot.target, "slot-drag", "the finger starts on a connected slot while slots are introduced");
   assert.equal(moveSlot.actionId, "move-slot");
-  assert.match(moveSlot.action, /^The connected circles are creature slots.*Press and hold.*slot.*left or right.*release in open water/is);
+  assert.match(moveSlot.action, /^Nice work! The connected circles are creature slots.*Press and hold.*slot.*left or right.*release in open water/is);
   assert.match(moveSlot.pointerPrompt, /slot.*left or right/i);
   assert.doesNotMatch(`${moveSlot.action} ${moveSlot.pointerPrompt} ${moveSlot.targetLabel}`, /MOVE HERE|dotted path/i);
   const moveFoundation = getSimulatorV2LessonHelp(lesson, setup, {
@@ -1416,7 +1416,7 @@ test("hand play guidance teaches the real upward drag and matching drop destinat
   assert.equal(initial.target, "hand");
   assert.equal(initial.targetCardId, "brain-coral-base");
   assert.equal(initial.interaction, "drag");
-  assert.equal(initial.action, "Now that we know how to read foundation cards, drag this brain coral into your ecosystem for a cost of 1RP.");
+  assert.equal(initial.action, "Great! Now that we know how to read Foundation cards, drag Brain Coral into your ecosystem for a cost of 1 RP.");
   assert.match(initial.hint, /upward.*release/);
   assert.match(initial.hint, /select (?:it|the card), choose Play/);
   const inspected = getSimulatorV2LessonHelp(first, setup, { gamePhase: "setup", selectedHandCard: first.setupCardId, handPopoverOpen: true });

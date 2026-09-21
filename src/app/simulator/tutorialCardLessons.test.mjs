@@ -102,6 +102,7 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
   );
   assert.equal(lesson.segments[0].title, "Corals are foundations for life");
   assert.match(lesson.segments[0].message, /ocean.*many corals.*foundations for life.*generate Resource Points \(RP\).*homes for sea creatures.*Brain Coral/i);
+  assert.ok((lesson.segments[0].message.match(/!/g) ?? []).length >= 1, "Mr. Easterling should open the tour with energy");
   assert.equal(lesson.segments[0].focus, undefined);
   assert.match(lesson.segments[1].message, /Base Coral Foundation.*new branch.*Stage cards upgrade/i);
   assert.match(lesson.segments[3].message, /Brain Coral costs 1 RP.*RP bank/i);

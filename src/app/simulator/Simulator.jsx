@@ -7696,14 +7696,14 @@ export default function Simulator({
         cueId: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         title: `${tutorialConditionCard.name} changes this round`,
         message: embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "clear-water"
-          ? "Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar whenever you want to read its exact rule, then continue."
+          ? "Here comes your first Condition! Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar whenever you want to read its exact rule, then continue."
           : embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "coral-disease"
-            ? "This round's Condition is Coral Disease. It blocks RP from Corals with the Disease weakness. Brain Coral is vulnerable, while Mustard Hill Coral is not. Tap Coral Disease in the middle bar to read its exact rule, then continue."
+            ? "Your reef's next test is here! This round's Condition is Coral Disease. It blocks RP from Corals with the Disease weakness. Brain Coral is vulnerable, while Mustard Hill Coral is not. Tap Coral Disease in the middle bar to read its exact rule, then continue."
             : `A Condition changes the rules for both reefs each round. ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
         action: embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "clear-water"
-          ? "Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar whenever you want to read its exact rule, then continue."
+          ? "Here comes your first Condition! Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar whenever you want to read its exact rule, then continue."
           : embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "coral-disease"
-            ? "This round's Condition is Coral Disease. It blocks RP from Corals with the Disease weakness. Brain Coral is vulnerable, while Mustard Hill Coral is not. Tap Coral Disease in the middle bar to read its exact rule, then continue."
+            ? "Your reef's next test is here! This round's Condition is Coral Disease. It blocks RP from Corals with the Disease weakness. Brain Coral is vulnerable, while Mustard Hill Coral is not. Tap Coral Disease in the middle bar to read its exact rule, then continue."
             : `Tap ${tutorialConditionCard.name} for its details, then continue.`,
         target: "condition-panel",
         targetLabel: "the active Condition name in the middle bar",
@@ -7716,7 +7716,7 @@ export default function Simulator({
         id: `embedded-rp-source:${compactTurnSequence.id}`,
         cueId: `embedded-rp-source:${compactTurnSequence.id}`,
         title: "Brain Coral makes the second RP",
-        message: "Every round gives you 1 RP. Brain Coral's Passive ability, Photosynthesis, gives you 1 more RP at the start of your turn. Together, you will collect 2 RP this round.",
+        message: "Brain Coral is already helping! Every round gives you 1 RP. Its Passive ability, Photosynthesis, gives you 1 more RP at the start of your turn. Together, you will collect 2 RP this round!",
         action: "Read Brain Coral's highlighted Photosynthesis ability, then collect 2 RP.",
         target: "coral-rp-source",
         targetLabel: "Brain Coral's Photosynthesis ability",
@@ -7730,14 +7730,14 @@ export default function Simulator({
         cueId: `embedded-rp-summary:${compactTurnSequence.id}`,
         title: "Your RP bank is ready",
         message: embeddedLesson.id === "first-reef" && compactTurnSequence.condition?.id === "coral-disease"
-          ? "Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
+          ? "That's resilience in action! Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
           : embeddedLesson.id === "first-reef"
-            ? `Your bank increased from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
+            ? `Nice! Your bank increased from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
             : `RP pays for cards and abilities. Every round gives you 1 RP, and cards in your ecosystem can add more. You collected ${compactTurnSequence.collectedRp} RP, so your bank now holds ${compactTurnSequence.rpAfter} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP could not fit under the cap` : ""}. Unspent RP stays in your bank for later rounds.`,
         action: embeddedLesson.id === "first-reef" && compactTurnSequence.condition?.id === "coral-disease"
-          ? "Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
+          ? "That's resilience in action! Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
           : embeddedLesson.id === "first-reef"
-            ? `Your bank increased from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
+            ? `Nice! Your bank increased from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
             : "Continue, then choose your card draw.",
         interaction: "tap",
         lessonStep: tutorialStepNumber,
@@ -27182,11 +27182,18 @@ export default function Simulator({
                                     style={{ left: "8.5%", top: "52%", width: "83%", height: "9%" }}
                                   >
                                     <span className="absolute inset-0 rounded-lg border-2 border-amber-300 bg-amber-200/15 shadow-[0_0_16px_5px_rgba(251,191,36,.9)]" />
-                                    <svg className="absolute bottom-[82%] right-[8%] h-16 w-24 overflow-visible drop-shadow-[0_2px_3px_rgba(0,0,0,.85)]" viewBox="0 0 96 64" aria-hidden="true">
-                                      <path d="M 90 5 C 76 7 58 20 43 48" fill="none" stroke="#fde047" strokeWidth="5" strokeLinecap="round" />
-                                      <path d="M 31 40 L 42 59 L 53 40" fill="#fde047" stroke="#713f12" strokeWidth="2" strokeLinejoin="round" />
+                                    <svg
+                                      data-v2-coral-rp-source-pointer="true"
+                                      className="absolute bottom-[-5%] left-1/2 h-14 w-14 -translate-x-1/2 overflow-visible drop-shadow-[0_2px_3px_rgba(0,0,0,.85)]"
+                                      viewBox="0 0 56 56"
+                                      aria-hidden="true"
+                                    >
+                                      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M 28 2 L 28 44 L 18 34 M 28 44 L 38 34" stroke="#071827" strokeWidth="9" vectorEffect="non-scaling-stroke" />
+                                        <path d="M 28 2 L 28 44 L 18 34 M 28 44 L 38 34" stroke="#fde047" strokeWidth="4" vectorEffect="non-scaling-stroke" />
+                                      </g>
                                     </svg>
-                                    <span className="absolute bottom-[230%] right-[-2%] whitespace-nowrap rounded-full border border-amber-200 bg-slate-950/95 px-2 py-1 text-[10px] font-black text-amber-100 shadow-lg">Photosynthesis · +1 RP</span>
+                                    <span className="absolute bottom-[190%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-200 bg-slate-950/95 px-2 py-1 text-[10px] font-black text-amber-100 shadow-lg">Photosynthesis · +1 RP</span>
                                   </span>
                                 ) : null}
                                 <CoralUpgradeCelebration

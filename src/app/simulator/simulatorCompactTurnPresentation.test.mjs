@@ -104,7 +104,7 @@ test("Condition and RP-source teaching use the embedded coach only when needed",
   assert.match(conditionHelp, /Tap \$\{tutorialConditionCard\.name\} for its details, then continue\./);
   assert.match(
     conditionHelp,
-    /const embeddedCompactRpSourceHelp = compactRpSourceZoomActive[\s\S]*?Every round gives you 1 RP\.[\s\S]*?Photosynthesis[\s\S]*?collect 2 RP this round/,
+    /const embeddedCompactRpSourceHelp = compactRpSourceZoomActive[\s\S]*?Brain Coral is already helping![\s\S]*?Every round gives you 1 RP\.[\s\S]*?Photosynthesis[\s\S]*?collect 2 RP this round!/,
   );
   assert.match(
     conditionHelp,
