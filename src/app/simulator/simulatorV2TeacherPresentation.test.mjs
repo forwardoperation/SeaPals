@@ -98,6 +98,17 @@ test("the lesson message uses a compact three-line scroll viewport", () => {
   assert.doesNotMatch(viewportRule, /line-clamp|text-overflow:\s*ellipsis|overflow:\s*hidden/);
 });
 
+test("the completed-message scroll hint overlays the viewport without changing dialogue height", () => {
+  const frameRule = cssRules(".messageViewportFrame").join("\n");
+  const hintRule = cssRules(".scrollHint").join("\n");
+
+  assert.match(frameRule, /position:\s*relative/);
+  assert.match(hintRule, /position:\s*absolute/);
+  assert.match(hintRule, /(?:inset-inline-end|right):\s*[^;]+/);
+  assert.match(hintRule, /(?:inset-block-end|bottom):\s*[^;]+/);
+  assert.doesNotMatch(hintRule, /margin(?:-(?:top|right|bottom|left|block|inline)(?:-(?:start|end))?)?:/);
+});
+
 test("the lesson message follows the newest spoken line as it is typed", () => {
   assert.match(panelSource, /const cursorRef = useRef\(null\)/);
   assert.match(panelSource, /<span ref=\{cursorRef\} className=\{styles\.typewriterCursor\}/);

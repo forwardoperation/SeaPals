@@ -193,10 +193,11 @@
 .instruction { width: 100%; margin: 0; color: #19253a; font-size: 0.84rem; font-weight: 800; letter-spacing: 0.01em; line-height: 1.48; text-align: left; text-wrap: wrap; overflow-wrap: anywhere; }
 .messageViewportFrame { position: relative; width: 100%; }
 .messageViewport {
+  box-sizing: border-box;
   max-block-size: 3lh;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-right: 0.35rem;
+  padding-inline-end: 4rem;
   touch-action: pan-y pinch-zoom;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
@@ -208,11 +209,14 @@
 .messageViewport::-webkit-scrollbar-track { border-radius: 999px; background: #d8e0ea; }
 .messageViewport::-webkit-scrollbar-thumb { border: 2px solid #d8e0ea; border-radius: 999px; background: #1599b8; }
 .scrollHint {
+  position: absolute;
+  z-index: 1;
+  inset-inline-end: 0.55rem;
+  inset-block-end: 0.16rem;
   display: flex;
   width: fit-content;
   align-items: center;
   gap: 0.22rem;
-  margin: 0.12rem 0 0 auto;
   padding: 0.06rem 0.2rem;
   border-radius: 999px;
   color: #075f78;
