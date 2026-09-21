@@ -27158,15 +27158,13 @@ export default function Simulator({
                                     <span className="absolute inset-0 rounded-lg border-2 border-amber-300 bg-amber-200/15 shadow-[0_0_14px_4px_rgba(251,191,36,.85)]" />
                                     <svg
                                       data-v2-coral-weakness-pointer="true"
-                                      className="absolute bottom-[10%] left-1/2 h-10 w-12 -translate-x-1/2 overflow-visible drop-shadow-[0_2px_3px_rgba(0,0,0,.85)]"
-                                      viewBox="0 0 48 40"
+                                      className="absolute bottom-full left-1/2 h-8 w-10 -translate-x-1/2 overflow-visible drop-shadow-[0_2px_3px_rgba(0,0,0,.85)]"
+                                      viewBox="0 0 40 32"
                                       aria-hidden="true"
                                     >
                                       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M 24 2 L 24 31" stroke="#071827" strokeWidth="9" vectorEffect="non-scaling-stroke" />
-                                        <path d="M 24 2 L 24 31" stroke="#fde047" strokeWidth="4" vectorEffect="non-scaling-stroke" />
-                                        <path d="M 16 23 L 24 31 L 32 23" stroke="#071827" strokeWidth="9" vectorEffect="non-scaling-stroke" />
-                                        <path d="M 16 23 L 24 31 L 32 23" stroke="#fde047" strokeWidth="4" vectorEffect="non-scaling-stroke" />
+                                        <path d="M 20 2 L 20 24 L 13 17 M 20 24 L 27 17" stroke="#071827" strokeWidth="9" vectorEffect="non-scaling-stroke" />
+                                        <path d="M 20 2 L 20 24 L 13 17 M 20 24 L 27 17" stroke="#fde047" strokeWidth="4" vectorEffect="non-scaling-stroke" />
                                       </g>
                                     </svg>
                                     <span className="absolute bottom-[175%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-200 bg-slate-950/95 px-2 py-1 text-[10px] font-black text-amber-100 shadow-lg">Disease weakness</span>

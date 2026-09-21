@@ -57,10 +57,14 @@ test("Lesson 1 teaches Coral weaknesses on the board without a generic hand over
     "{isRpSourceFocusTarget ? (",
   );
   assert.match(weaknessCallout, /data-v2-coral-weakness-pointer="true"/);
-  assert.match(weaknessCallout, /left-1\/2[\s\S]*?-translate-x-1\/2/);
-  assert.match(weaknessCallout, /stroke="#071827" strokeWidth="9"/);
-  assert.match(weaknessCallout, /stroke="#fde047" strokeWidth="4"/);
-  assert.doesNotMatch(weaknessCallout, /left-\[28%\]|M 70 4 C 60 5 50 18 39 48|fill="#fde047"/);
+  assert.match(
+    weaknessCallout,
+    /data-v2-coral-weakness-pointer="true"\s+className="[^"]*\bbottom-full\b[^"]*left-1\/2[^"]*h-8 w-10[^"]*-translate-x-1\/2[^"]*"/,
+    "the pointer must stop above the highlighted Weakness area instead of covering its icon",
+  );
+  assert.equal((weaknessCallout.match(/M 20 2 L 20 24 L 13 17 M 20 24 L 27 17/g) ?? []).length, 2);
+  assert.match(weaknessCallout, /fill="none"[\s\S]*?stroke="#071827" strokeWidth="9"[\s\S]*?stroke="#fde047" strokeWidth="4"/);
+  assert.doesNotMatch(weaknessCallout, /bottom-\[10%\]|left-\[28%\]|M 70 4 C 60 5 50 18 39 48|fill="#fde047"/);
   const cameraFocus = sourceSection(
     "if (!weaknessFocusActive) return undefined;",
     "if (!compactRpSourceZoomActive) return undefined;",
