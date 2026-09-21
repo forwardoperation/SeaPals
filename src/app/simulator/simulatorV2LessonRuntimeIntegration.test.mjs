@@ -52,6 +52,15 @@ test("Lesson 1 teaches Coral weaknesses on the board without a generic hand over
   const boardCard = sourceSection("{playerCorals.map((coral) => {", "{guidedFoundationPlacementTarget ? (");
   assert.match(boardCard, /coral\.cardId === "brain-coral-base"[\s\S]*?data-v2-coral-weakness-arrow|data-v2-coral-weakness-arrow[\s\S]*?coral\.cardId === "brain-coral-base"/);
   assert.match(boardCard, /data-v2-coral-weakness-arrow[\s\S]*?role="img"[\s\S]*?aria-label="Brain Coral weakness: Disease"/);
+  const weaknessCallout = sourceSection(
+    'data-v2-coral-weakness-arrow="true"',
+    "{isRpSourceFocusTarget ? (",
+  );
+  assert.match(weaknessCallout, /data-v2-coral-weakness-pointer="true"/);
+  assert.match(weaknessCallout, /left-1\/2[\s\S]*?-translate-x-1\/2/);
+  assert.match(weaknessCallout, /stroke="#071827" strokeWidth="9"/);
+  assert.match(weaknessCallout, /stroke="#fde047" strokeWidth="4"/);
+  assert.doesNotMatch(weaknessCallout, /left-\[28%\]|M 70 4 C 60 5 50 18 39 48|fill="#fde047"/);
   const cameraFocus = sourceSection(
     "if (!weaknessFocusActive) return undefined;",
     "if (!compactRpSourceZoomActive) return undefined;",
