@@ -1,5 +1,3 @@
-const MIN_SPEECH_DURATION_MS = 700;
-const MAX_SPEECH_DURATION_MS = 3800;
 const MS_PER_GRAPHEME = 16;
 
 const PROFESSOR_LEAD_BY_TARGET = Object.freeze({
@@ -46,9 +44,9 @@ export function segmentProfessorMessage(message) {
 }
 
 export function getProfessorSpeechDuration(graphemeCount) {
-  const count = Math.max(0, Number(graphemeCount) || 0);
+  const count = Math.max(0, Math.floor(Number(graphemeCount) || 0));
   if (!count) return 0;
-  return Math.min(MAX_SPEECH_DURATION_MS, Math.max(MIN_SPEECH_DURATION_MS, count * MS_PER_GRAPHEME));
+  return count * MS_PER_GRAPHEME;
 }
 
 export function getProfessorVisibleGraphemeCount({

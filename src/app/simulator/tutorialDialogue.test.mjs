@@ -18,11 +18,18 @@ test("Professor speech segmentation preserves complete Unicode graphemes", () =>
   assert.ok(graphemes.includes("e\u0301"));
 });
 
-test("Professor speech duration stays useful for short and verbose lessons", () => {
+test("Professor speech duration uses one constant rate for every message length", () => {
   assert.equal(getProfessorSpeechDuration(0), 0);
-  assert.equal(getProfessorSpeechDuration(1), 700);
-  assert.equal(getProfessorSpeechDuration(1000), 3800);
-  assert.ok(getProfessorSpeechDuration(100) > getProfessorSpeechDuration(10));
+  assert.equal(getProfessorSpeechDuration(1), 16);
+  assert.equal(getProfessorSpeechDuration(10), 160);
+  assert.equal(getProfessorSpeechDuration(1000), 16000);
+  assert.equal(getProfessorSpeechDuration(10) / 10, getProfessorSpeechDuration(1000) / 1000);
+});
+
+test("the same elapsed time reveals the same number of graphemes in short and long messages", () => {
+  const elapsedMs = 160;
+  assert.equal(getProfessorVisibleGraphemeCount({ graphemeCount: 20, elapsedMs }), 10);
+  assert.equal(getProfessorVisibleGraphemeCount({ graphemeCount: 1000, elapsedMs }), 10);
 });
 
 test("Professor speech progresses monotonically and completes exactly", () => {
