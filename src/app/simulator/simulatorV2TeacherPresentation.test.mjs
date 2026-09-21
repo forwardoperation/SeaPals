@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { getProfessorSpeechDuration } from "./tutorialDialogue.mjs";
 
 const panelSource = await readFile(new URL("./SimulatorV2LessonPanel.jsx", import.meta.url), "utf8");
 const styleSource = await readFile(new URL("./SimulatorV2LessonPanel.module.css", import.meta.url), "utf8");
@@ -106,16 +107,29 @@ test("the lesson message follows the newest spoken line as it is typed", () => {
   assert.match(panelSource, /\}, \[isComplete, scrollable, visibleCount\]\)/);
 });
 
-test("V2 lesson speech runs at half the prior text rate", () => {
-  assert.match(panelSource, /const TEXT_SPEED_MULTIPLIER = Object\.freeze\(\{\s*slow:\s*3,\s*normal:\s*2,\s*fast:\s*1\.1,\s*instant:\s*0,/);
+test("V2 lesson speech uses the slower constant 48 ms normal cadence", () => {
+  assert.match(panelSource, /const TEXT_SPEED_MULTIPLIER = Object\.freeze\(\{\s*slow:\s*4,\s*normal:\s*3,\s*fast:\s*1\.5,\s*instant:\s*0,/);
   assert.match(panelSource, /getProfessorSpeechDuration\(graphemes\.length\) \* speedMultiplier/);
-  assert.match(panelSource, /TEXT_SPEED_MULTIPLIER\[textSpeed\] \?\? 2/);
+  assert.match(panelSource, /TEXT_SPEED_MULTIPLIER\[textSpeed\] \?\? 3/);
+
+  const normalMultiplier = Number(panelSource.match(/normal:\s*([\d.]+)/)?.[1]);
+  assert.equal(getProfessorSpeechDuration(1) * normalMultiplier, 48);
+  assert.equal(getProfessorSpeechDuration(20) * normalMultiplier, 960);
+  assert.equal(getProfessorSpeechDuration(1000) * normalMultiplier, 48000);
+});
+
+test("V2 lesson speech never catches up by revealing several graphemes in one frame", () => {
+  assert.match(panelSource, /const msPerGrapheme = duration \/ graphemes\.length/);
+  assert.match(panelSource, /let nextVisibleCount = 0/);
+  assert.match(panelSource, /nextVisibleCount = Math\.min\(graphemes\.length, nextVisibleCount \+ 1\)/);
+  assert.match(panelSource, /nextRevealAt = now \+ msPerGrapheme/);
+  assert.doesNotMatch(panelSource, /getProfessorVisibleGraphemeCount/);
 });
 
 test("Mr. Easterling's lesson dialogue uses a stable accessible typewriter reveal", () => {
   assert.match(panelSource, /segmentProfessorMessage\(message\)/);
   assert.match(panelSource, /getProfessorSpeechDuration\(graphemes\.length\)/);
-  assert.match(panelSource, /getProfessorVisibleGraphemeCount\(\{/);
+  assert.match(panelSource, /nextVisibleCount = Math\.min\(graphemes\.length, nextVisibleCount \+ 1\)/);
   assert.match(panelSource, /key=\{dialogueKey\}[\s\S]*?message=\{dialogueMessage\}/);
   assert.match(panelSource, /className=\{styles\.typewriterFrame\} aria-hidden="true"/);
   assert.match(panelSource, /const visibleMessage = graphemes\.slice\(0, visibleCount\)\.join\(""\)/);

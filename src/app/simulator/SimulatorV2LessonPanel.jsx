@@ -4,7 +4,6 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "re
 import {
   createProfessorSpeechKey,
   getProfessorSpeechDuration,
-  getProfessorVisibleGraphemeCount,
   segmentProfessorMessage,
 } from "./tutorialDialogue.mjs";
 import styles from "./SimulatorV2LessonPanel.module.css";
@@ -24,9 +23,9 @@ function TeacherPortrait({ large = false }) {
 }
 
 const TEXT_SPEED_MULTIPLIER = Object.freeze({
-  slow: 3,
-  normal: 2,
-  fast: 1.1,
+  slow: 4,
+  normal: 3,
+  fast: 1.5,
   instant: 0,
 });
 
@@ -37,7 +36,7 @@ function LessonDialogueMessage({
   scrollable = false,
 }) {
   const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
-  const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? 2;
+  const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? 3;
   const duration = useMemo(
     () => getProfessorSpeechDuration(graphemes.length) * speedMultiplier,
     [graphemes.length, speedMultiplier],
@@ -73,16 +72,17 @@ function LessonDialogueMessage({
       setVisibleCount(graphemes.length);
     } else {
       setVisibleCount(0);
-      const startsAt = window.performance.now() + 120;
+      const msPerGrapheme = duration / graphemes.length;
+      let nextVisibleCount = 0;
+      let nextRevealAt = window.performance.now() + 120 + msPerGrapheme;
       const tick = (now) => {
         if (animationRef.current.generation !== generation) return;
-        const nextCount = getProfessorVisibleGraphemeCount({
-          graphemeCount: graphemes.length,
-          elapsedMs: Math.max(0, now - startsAt),
-          durationMs: duration,
-        });
-        setVisibleCount(nextCount);
-        if (nextCount >= graphemes.length) {
+        if (now >= nextRevealAt) {
+          nextVisibleCount = Math.min(graphemes.length, nextVisibleCount + 1);
+          setVisibleCount(nextVisibleCount);
+          nextRevealAt = now + msPerGrapheme;
+        }
+        if (nextVisibleCount >= graphemes.length) {
           animationRef.current.frameId = null;
           return;
         }
