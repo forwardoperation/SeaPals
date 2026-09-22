@@ -118,15 +118,15 @@ test("the lesson message follows the newest spoken line as it is typed", () => {
   assert.match(panelSource, /\}, \[isComplete, scrollable, visibleCount\]\)/);
 });
 
-test("V2 lesson speech uses the slower constant 48 ms normal cadence", () => {
-  assert.match(panelSource, /const TEXT_SPEED_MULTIPLIER = Object\.freeze\(\{\s*slow:\s*4,\s*normal:\s*3,\s*fast:\s*1\.5,\s*instant:\s*0,/);
+test("V2 lesson speech uses a constant 40 ms normal cadence", () => {
+  assert.match(panelSource, /const TEXT_SPEED_MULTIPLIER = Object\.freeze\(\{\s*slow:\s*4,\s*normal:\s*2\.5,\s*fast:\s*1\.5,\s*instant:\s*0,/);
   assert.match(panelSource, /getProfessorSpeechDuration\(graphemes\.length\) \* speedMultiplier/);
-  assert.match(panelSource, /TEXT_SPEED_MULTIPLIER\[textSpeed\] \?\? 3/);
+  assert.match(panelSource, /TEXT_SPEED_MULTIPLIER\[textSpeed\] \?\? 2\.5/);
 
   const normalMultiplier = Number(panelSource.match(/normal:\s*([\d.]+)/)?.[1]);
-  assert.equal(getProfessorSpeechDuration(1) * normalMultiplier, 48);
-  assert.equal(getProfessorSpeechDuration(20) * normalMultiplier, 960);
-  assert.equal(getProfessorSpeechDuration(1000) * normalMultiplier, 48000);
+  assert.equal(getProfessorSpeechDuration(1) * normalMultiplier, 40);
+  assert.equal(getProfessorSpeechDuration(20) * normalMultiplier, 800);
+  assert.equal(getProfessorSpeechDuration(1000) * normalMultiplier, 40000);
 });
 
 test("V2 lesson speech never catches up by revealing several graphemes in one frame", () => {

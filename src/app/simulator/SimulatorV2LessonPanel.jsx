@@ -24,7 +24,7 @@ function TeacherPortrait({ large = false }) {
 
 const TEXT_SPEED_MULTIPLIER = Object.freeze({
   slow: 4,
-  normal: 3,
+  normal: 2.5,
   fast: 1.5,
   instant: 0,
 });
@@ -36,7 +36,7 @@ function LessonDialogueMessage({
   scrollable = false,
 }) {
   const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
-  const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? 3;
+  const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? 2.5;
   const duration = useMemo(
     () => getProfessorSpeechDuration(graphemes.length) * speedMultiplier,
     [graphemes.length, speedMultiplier],
