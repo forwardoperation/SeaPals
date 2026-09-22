@@ -250,9 +250,9 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
   }),
   lesson({
     id: "first-attack", moduleId: "battle-basics", number: 2,
-    title: "Put abilities to work", duration: "9 min", goalLabel: "Use four abilities and reach 7 VP",
+    title: "Interactions", duration: "9 min", goalLabel: "Use four abilities and reach 7 VP",
     summary: "Lead an attack, defend a counterattack, trigger a passive, recover a card, and unleash an On Play ability.",
-    introduction: "In this lesson, you’ll learn to lead an attack with Porcupine Fish’s Crunch! I’ll guide you through choosing a target, rolling both dice, and reading the result before your opponent strikes back.",
+    introduction: "In our next lesson, we will learn about the relationships between different sea creatures. In each ecosystem, there is a well defined food web which tells what creatures prey on other creatures. Certain fish may hunt invertebrates, while predators may consume both. Beware, there’s always a bigger fish! Let’s get started!",
     completion: "You led and read a full faceoff, defended a counterattack, saw a passive work automatically, recovered a card with a non-attack action, and triggered a Predator's On Play attack.",
     celebration: "Every ability had a job to do!",
     autoEndOpeningTurn: true,

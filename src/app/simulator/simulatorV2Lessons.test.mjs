@@ -200,8 +200,8 @@ test("five continuous lessons form ordered modules and supply legal deterministi
     assert.deepEqual(runtime.previouslyTaughtConcepts, []);
     assert.equal(runtime.guide.name, "Mr. Easterling");
     assert.match(selected.celebration, /!$/);
-    assert.match(selected.introduction, /^In this lesson, you(?: will|[’']ll) learn\b/, `${selected.id} opens in Mr. Easterling's teaching voice`);
-    assert.ok(selected.introduction.length < 240, `${selected.id} keeps its introduction brief`);
+    assert.match(selected.introduction, /^In (?:this|our next) lesson, (?:you|we)(?: will|[’']ll) learn\b/, `${selected.id} opens in Mr. Easterling's teaching voice`);
+    assert.ok(selected.introduction.length <= 340, `${selected.id} keeps its introduction focused`);
     const victoryCheckpointIndex = selected.contract.checkpoints.findIndex(({ actionType }) => actionType === "vp-earned");
     assert.ok(victoryCheckpointIndex >= 0, `${selected.id} has a real VP checkpoint`);
     assert.equal(
@@ -1079,7 +1079,7 @@ test("Lesson 2 walks through the player's opening attack before the counterattac
   assert.equal(lesson.autoEndOpeningTurn, true);
   assert.match(
     lesson.introduction,
-    /lead an attack with Porcupine Fish.*Crunch.*choosing a target.*rolling both dice.*reading the result.*opponent strikes back/is,
+    /relationships between different sea creatures.*well defined food web.*fish may hunt invertebrates.*predators may consume both.*always a bigger fish.*get started/is,
   );
 
   const counterattack = lesson.contract.checkpoints.find(({ id }) => id === "v2-pass-to-counterattack");

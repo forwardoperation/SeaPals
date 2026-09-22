@@ -93,12 +93,12 @@ test("the lesson start overlay keeps only the guide, title, short dialogue, and 
   assert.doesNotMatch(panelStyleSource, /\.introSpeaker\b|\.introGoalRow\b|\.introSkills\b/);
 });
 
-test("every lesson opens with a short, authored Mr. Easterling learning promise", () => {
+test("every lesson opens with an authored Mr. Easterling learning promise", () => {
   for (const lesson of SIMULATOR_V2_LESSONS) {
-    assert.match(lesson.introduction, /^In this lesson, you(?:(?:'|’|â€™)ll| will) learn\b/);
+    assert.match(lesson.introduction, /^In (?:this|our next) lesson, (?:you|we)(?:(?:'|’|â€™)ll| will) learn\b/);
     assert.match(lesson.introduction, /!/, `${lesson.id} intro should include one upbeat beat`);
     assert.ok((lesson.introduction.match(/!/g) ?? []).length <= 2, `${lesson.id} intro should stay enthusiastic without shouting`);
-    assert.ok(lesson.introduction.length <= 210, `${lesson.id} intro should stay brief`);
+    assert.ok(lesson.introduction.length <= 340, `${lesson.id} intro should stay focused`);
   }
 });
 
@@ -106,5 +106,13 @@ test("the first lesson uses the requested concise setup promise", () => {
   assert.equal(
     SIMULATOR_V2_LESSONS[0].introduction,
     "In this lesson, you will learn the basics of setting up your ecosystem. Let’s get started!",
+  );
+});
+
+test("the second lesson introduces creature interactions and food webs", () => {
+  assert.equal(SIMULATOR_V2_LESSONS[1].title, "Interactions");
+  assert.equal(
+    SIMULATOR_V2_LESSONS[1].introduction,
+    "In our next lesson, we will learn about the relationships between different sea creatures. In each ecosystem, there is a well defined food web which tells what creatures prey on other creatures. Certain fish may hunt invertebrates, while predators may consume both. Beware, there’s always a bigger fish! Let’s get started!",
   );
 });
