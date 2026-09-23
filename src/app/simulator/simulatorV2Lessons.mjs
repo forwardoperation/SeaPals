@@ -254,6 +254,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     summary: "Lead an attack, defend a counterattack, trigger a passive, recover a card, and unleash an On Play ability.",
     introduction: "In our next lesson, we will learn about the relationships between different sea creatures. In each ecosystem, there is a well defined food web which tells what creatures prey on other creatures. Certain fish may hunt invertebrates, while predators may consume both. Beware, there’s always a bigger fish! Let’s get started!",
     completion: "You led and read a full faceoff, defended a counterattack, saw a passive work automatically, recovered a card with a non-attack action, and triggered a Predator's On Play attack.",
+    preVictoryMessage: "Excellent work! You followed the food web from Fish to Predator, used an Action, defended a faceoff, saw a Passive ability work, recovered a discarded creature, and triggered an On Play attack. Great Barracuda showed how a creature’s class controls both where it lives and what it can hunt. You’re ready for the next lesson!",
     celebration: "Every ability had a job to do!",
     autoEndOpeningTurn: true,
     skills: ["Attack actions", "Offense and defense", "Passive abilities", "Recovery actions", "On Play abilities"],
@@ -409,6 +410,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
         foundationCardId: "brain-coral-stage-1",
         slotClass: "predator",
         slotOrdinal: 0,
+        blockMessage: "Great Barracuda is a Reef Predator, so it cannot use a Fish slot. Place it in Brain Coral's highlighted Predator slot.",
       },
     },
   }),
@@ -984,7 +986,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         ? `${seaUrchinWasDefeated
           ? "Scavenge brought Sea Urchin back to your hand for this round."
           : "Your reef is ready for its next play."
-        } Great Barracuda is on top of your Pals Deck. Draw it to prepare its On Play attack.`
+        } Great Barracuda is on top of your Pals Deck. Its type line says Reef Predator: Reef tells you which ecosystem zone and slots it uses, while Predator is its creature class. Draw it now so we can see how class controls placement and targeting.`
       : selected.id === "first-attack"
         ? "Blue Crab is on top of your Pals Deck. Draw it to see how a Passive works automatically, then use its non-attack Scavenge Action."
         : selected.id === "first-reef"
@@ -1212,8 +1214,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (selected.id === "first-attack" && current.id === "v2-predator-attack") {
       return help(
         "opponent-board",
-        "Quick Strike has triggered! Unlike an Action, this On Play ability began automatically when Great Barracuda entered your ecosystem. Its Bite uses a D6, giving it a wider possible roll than Porcupine Fish’s D4 Crunch.",
-        "Choose the glowing Spanish Hogfish and resolve the D6 faceoff.",
+        "Quick Strike has triggered! Unlike an Action, this On Play ability began automatically when Great Barracuda entered your ecosystem. Bite can target an opposing Fish or Predator, but not an Invertebrate or Apex. Spanish Hogfish's type line says Reef Fish, so it is legal; Sea Urchin would not be.",
+        "Choose the glowing Spanish Hogfish and resolve Great Barracuda’s D6 Bite.",
         { targetCardId: "great-barracuda" },
       );
     }
@@ -1309,7 +1311,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       message = "Hammerhead costs 6 RP, needs Coral Reef, and must occupy an Apex slot. Stage 2 Brain Coral supplies that slot.";
     } else if (cardId === "great-barracuda") {
       message = selected.id === "first-attack"
-        ? "Now for a different kind of ability! An On Play ability triggers as soon as its card enters your ecosystem. There’s no separate Action button or additional RP cost for Great Barracuda’s Quick Strike—its D6 Bite begins the moment you place it."
+        ? "Great Barracuda’s type line identifies it as a Reef Predator. A Reef Predator slot can house a Reef Fish or Reef Predator, and an Apex slot can house either class too. A Reef Predator cannot use a Fish slot. Place it in Brain Coral's highlighted Predator slot for 3 RP. Its Quick Strike On Play ability will immediately begin one D6 Bite against an opposing Fish or Predator—there is no separate Action button or extra RP cost."
         : "Each attack tells you which die to roll. Porcupine Fish's Crunch uses a D4 (1–4); Great Barracuda's Bite uses a D6 (1–6), giving it a wider possible range.";
     }
     return help(

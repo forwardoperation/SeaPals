@@ -507,6 +507,8 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
   const blueCrab = cardsById["blue-crab"];
   const hogfish = cardsById["spanish-hogfish"];
   const barracuda = cardsById["great-barracuda"];
+  const brainStageOne = cardsById["brain-coral-stage-1"];
+  const brainStageTwo = cardsById["brain-coral-stage-2"];
   const porcupineAttack = porcupine.actions.find(({ id }) => id === "crunch");
   const hogfishAttack = hogfish.actions.find(({ id }) => id === "crunch");
   const scavenge = blueCrab.actions.find(({ id }) => id === "scavenge");
@@ -543,6 +545,10 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
   ]);
   assert.equal(selected.randomSeed, 0x5EA9101C);
   assert.equal(selected.victoryTarget, 7);
+  assert.equal(
+    selected.preVictoryMessage,
+    "Excellent work! You followed the food web from Fish to Predator, used an Action, defended a faceoff, saw a Passive ability work, recovered a discarded creature, and triggered an On Play attack. Great Barracuda showed how a creature’s class controls both where it lives and what it can hunt. You’re ready for the next lesson!",
+  );
   assert.equal(selected.seed.gamePhase, "draw");
   assert.equal(selected.seed.round, 2);
   assert.equal(selected.seed.turn, 2);
@@ -592,6 +598,13 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
     slotOrdinal: 0,
     blockMessage: "Place Porcupine Fish in Brain Coral's highlighted Fish slot so the Predator slot stays open for Great Barracuda later.",
   });
+  assert.deepEqual(getSimulatorV2LessonPlacementTarget(selected, "v2-place-predator", barracuda.id), {
+    cardId: barracuda.id,
+    foundationCardId: brainStageOne.id,
+    slotClass: "predator",
+    slotOrdinal: 0,
+    blockMessage: "Great Barracuda is a Reef Predator, so it cannot use a Fish slot. Place it in Brain Coral's highlighted Predator slot.",
+  });
 
   assert.equal(selected.preFaceoffPrimer.checkpointId, "tutorial-attack");
   assert.equal(selected.preFaceoffPrimer.steps.length, 3, "the player gets three paced explanations before the first faceoff");
@@ -608,9 +621,21 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
   assert.equal(porcupineAttack.effect.attackDice, "D4");
   assert.equal(porcupineAttack.cost.rp, 1);
   assert.equal(quickStrikeAttack.attackDice, "D6");
+  assert.equal(barracuda.zone, "reef");
+  assert.equal(barracuda.class, "predator", "Great Barracuda's printed type is Reef Predator");
+  const fishSlot = brainStageOne.slots.find(({ slotClass }) => slotClass === "fish");
+  const predatorSlot = brainStageOne.slots.find(({ slotClass }) => slotClass === "predator");
+  const apexSlot = brainStageTwo.slots.find(({ slotClass }) => slotClass === "apex");
+  assert.equal(canCardOccupySlot(porcupine, predatorSlot), true, "a Predator slot accepts a Reef Fish");
+  assert.equal(canCardOccupySlot(barracuda, predatorSlot), true, "a Predator slot accepts a Reef Predator");
+  assert.equal(canCardOccupySlot(barracuda, fishSlot), false, "a Fish slot does not accept a Reef Predator");
+  assert.equal(canCardOccupySlot(barracuda, apexSlot), true, "an Apex slot accepts a Reef Predator");
+  assert.deepEqual(quickStrikeAttack.target.categories, ["fish", "predator"]);
   assert.equal(attackCanTargetCard(seaUrchin, hogfishAttack.effect), true);
   assert.equal(attackCanTargetCard(seaUrchin, porcupineAttack.effect), true);
   assert.equal(attackCanTargetCard(hogfish, quickStrikeAttack), true);
+  assert.equal(attackCanTargetCard(barracuda, quickStrikeAttack), true, "Bite can target Predators");
+  assert.equal(attackCanTargetCard(seaUrchin, quickStrikeAttack), false, "Bite cannot target Invertebrates");
   assert.equal(ecoBoost.effect.amount, 1, "Blue Crab's passive raises the next round's bank cap without an action");
   assert.equal(scavenge.cost.rp, 2);
   assert.deepEqual(scavenge.effect, { type: "recoverCardFromDiscard", controller: "you", destination: "hand", amount: 1 });
@@ -1215,19 +1240,33 @@ test("Lesson 2 coaches the opening draw, placement, dice primer, and attack befo
     /not every ability is an attack.*Action.*waits for your command.*decide when to use it.*pay any RP cost.*Scavenge costs 2 RP.*Sea Urchin.*discard pile.*bring it home/is,
   );
 
+  const predatorDraw = lesson.contract.checkpoints.find(({ id }) => id === "v2-draw-predator");
+  const predatorDrawHelp = getSimulatorV2LessonHelp(lesson, predatorDraw, {
+    gamePhase: "draw",
+    drawSelected: 0,
+    drawTarget: 1,
+    discardPileCardIds: ["sea-urchin"],
+  });
+  assert.equal(predatorDrawHelp.targetDeck, "pals");
+  assert.match(
+    predatorDrawHelp.message,
+    /Great Barracuda.*type line says Reef Predator.*Reef tells.*ecosystem zone and slots.*Predator.*creature class.*class controls placement and targeting/is,
+  );
+
   const predatorBuild = lesson.contract.checkpoints.find(({ id }) => id === "v2-place-predator");
   const predatorBuildHelp = getSimulatorV2LessonHelp(lesson, predatorBuild, { hand: ["great-barracuda"] });
   assert.match(
     predatorBuildHelp.message,
-    /On Play ability triggers.*no separate Action button.*additional RP cost.*Quick Strike.*D6 Bite.*moment you place/is,
+    /type line identifies.*Reef Predator.*Predator slot can house a Reef Fish or Reef Predator.*Reef Predator cannot use a Fish slot.*highlighted Predator slot.*3 RP.*Quick Strike.*D6 Bite.*opposing Fish or Predator.*no separate Action button.*extra RP cost/is,
   );
 
   const predatorAttack = lesson.contract.checkpoints.find(({ id }) => id === "v2-predator-attack");
   const predatorAttackHelp = getSimulatorV2LessonHelp(lesson, predatorAttack, {});
   assert.match(
     predatorAttackHelp.message,
-    /Unlike an Action.*On Play ability.*automatically.*D6.*Porcupine Fish.*D4 Crunch/is,
+    /Quick Strike.*Unlike an Action.*On Play ability.*automatically.*Bite can target an opposing Fish or Predator.*not an Invertebrate or Apex.*Spanish Hogfish.*Reef Fish.*legal.*Sea Urchin would not/is,
   );
+  assert.match(predatorAttackHelp.action, /Spanish Hogfish.*Great Barracuda.*D6 Bite/is);
 });
 
 test("Lesson 1 speaks the new-player mental model before asking for each action", () => {
@@ -1433,13 +1472,15 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
     discardPileCardIds: ["sea-urchin"],
   });
   assert.equal(predatorDrawHelp.targetDeck, "pals");
-  assert.match(predatorDrawHelp.message, /Scavenge brought Sea Urchin back.*Great Barracuda.*On Play attack/s);
+  assert.match(predatorDrawHelp.message, /Scavenge brought Sea Urchin back.*Great Barracuda.*Reef Predator.*ecosystem zone and slots.*creature class.*placement and targeting/is);
   const predatorBuildStep = attack.contract.checkpoints.find(({ id }) => id === "v2-place-predator");
-  assert.equal(getSimulatorV2LessonHelp(attack, predatorBuildStep, { hand: ["great-barracuda"] }).targetCardId, "great-barracuda");
+  const predatorBuildHelp = getSimulatorV2LessonHelp(attack, predatorBuildStep, { hand: ["great-barracuda"] });
+  assert.equal(predatorBuildHelp.targetCardId, "great-barracuda");
+  assert.match(predatorBuildHelp.message, /Reef Predator.*Reef Fish or Reef Predator.*cannot use a Fish slot.*Predator slot.*Quick Strike.*D6 Bite.*Fish or Predator/is);
   const predatorAttackStep = attack.contract.checkpoints.find(({ id }) => id === "v2-predator-attack");
   const predatorAttackHelp = getSimulatorV2LessonHelp(attack, predatorAttackStep, {});
   assert.equal(predatorAttackHelp.target, "opponent-board");
-  assert.match(predatorAttackHelp.message, /Bite uses a D6.*Porcupine Fish.*D4 Crunch/is);
+  assert.match(predatorAttackHelp.message, /Quick Strike.*On Play.*Bite can target.*Fish or Predator.*not an Invertebrate or Apex.*Spanish Hogfish.*Reef Fish.*legal.*Sea Urchin would not/is);
   const scoreStep = attack.contract.checkpoints.find(({ actionType }) => actionType === "vp-earned");
   assert.equal(getSimulatorV2LessonHelp(attack, scoreStep, {}).target, "vp-score");
   const condition = getSimulatorV2Lesson("support-search");

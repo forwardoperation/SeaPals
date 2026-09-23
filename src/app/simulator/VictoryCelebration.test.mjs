@@ -80,9 +80,12 @@ test("the simulator celebrates both match wins and completed embedded VP lessons
   );
 });
 
-test("Lesson 1 pauses on Mr. Easterling's exact momentum line before opening its victory celebration", () => {
+test("embedded lessons pause on Mr. Easterling's authored exit dialogue before opening their victory celebration", () => {
   assert.ok(
     lessonsSource.includes('preVictoryMessage: "Excellent! Your ecosystem is really starting to build momentum."'),
+  );
+  assert.ok(
+    lessonsSource.includes('preVictoryMessage: "Excellent work! You followed the food web from Fish to Predator, used an Action, defended a faceoff, saw a Passive ability work, recovered a discarded creature, and triggered an On Play attack. Great Barracuda showed how a creature’s class controls both where it lives and what it can hunt. You’re ready for the next lesson!"'),
   );
   assert.match(
     simulatorSource,
