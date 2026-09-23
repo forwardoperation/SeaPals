@@ -22,9 +22,11 @@ function TeacherPortrait({ large = false }) {
   );
 }
 
+const NORMAL_TEXT_SPEED_MULTIPLIER = 25 / 12;
+
 const TEXT_SPEED_MULTIPLIER = Object.freeze({
   slow: 4,
-  normal: 2.5,
+  normal: NORMAL_TEXT_SPEED_MULTIPLIER,
   fast: 1.5,
   instant: 0,
 });
@@ -36,7 +38,7 @@ function LessonDialogueMessage({
   scrollable = false,
 }) {
   const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
-  const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? 2.5;
+  const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? NORMAL_TEXT_SPEED_MULTIPLIER;
   const duration = useMemo(
     () => getProfessorSpeechDuration(graphemes.length) * speedMultiplier,
     [graphemes.length, speedMultiplier],
@@ -194,6 +196,49 @@ function LessonDialogueMessage({
   );
 }
 
+const FACE_OFF_DICE = Object.freeze([
+  { label: "D4", sides: 4, points: "22,3 41,39 3,39" },
+  { label: "D6", sides: 6, points: "5,5 39,5 39,39 5,39" },
+  { label: "D8", sides: 8, points: "22,2 41,22 22,42 3,22" },
+  { label: "D10", sides: 10, points: "22,2 34.3,6.2 41.8,19.8 37,34.8 22,42.2 7,34.8 2.2,19.8 9.7,6.2" },
+  { label: "D12", sides: 12, points: "22,2 32,4 40,12 42,22 40,32 32,40 22,42 12,40 4,32 2,22 4,12 12,4" },
+  { label: "D20", sides: 20, points: "22,1.5 38.3,8.8 42.7,25.5 31.7,40.5 12.3,40.5 1.3,25.5 5.7,8.8" },
+]);
+
+function DiceLadderVisualAid({ visualAid }) {
+  if (visualAid?.kind !== "dice-ladder") return null;
+
+  const requestedDice = Array.isArray(visualAid.dice) ? new Set(visualAid.dice) : null;
+  const dice = requestedDice?.size
+    ? FACE_OFF_DICE.filter((die) => requestedDice.has(die.label))
+    : FACE_OFF_DICE;
+
+  return (
+    <div
+      className={styles.diceLadder}
+      role="group"
+      aria-label="Faceoff dice and their roll ranges"
+      data-v2-dice-primer
+    >
+      {dice.map((die) => (
+        <div
+          key={die.label}
+          className={styles.dieReference}
+          role="img"
+          aria-label={`${die.label} rolls from 1 to ${die.sides}`}
+          data-v2-die={die.label}
+        >
+          <svg className={styles.dieShape} viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+            <polygon points={die.points} />
+          </svg>
+          <strong>{die.label}</strong>
+          <span>{`1–${die.sides}`}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function readableModuleTitle(moduleId) {
   if (!moduleId || moduleId === "core") return "Core lessons";
   return String(moduleId)
@@ -312,6 +357,7 @@ export default function SimulatorV2LessonPanel({
   messageKey = "",
   textSpeed = "normal",
   reducedMotion = false,
+  visualAid = null,
 }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const advanceRef = useRef(null);
@@ -572,6 +618,7 @@ export default function SimulatorV2LessonPanel({
               reducedMotion={reducedMotion}
               scrollable
             />
+            <DiceLadderVisualAid visualAid={visualAid} />
             {message ? <p className={styles.feedback} data-tone={feedback?.tone || "success"} role="status" aria-live="polite" aria-atomic="true">{message}</p> : null}
           </div>
           {onAdvance ? (

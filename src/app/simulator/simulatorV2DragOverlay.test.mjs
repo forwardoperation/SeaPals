@@ -165,7 +165,7 @@ test("the board-native overlay uses bidirectional movement arrows for layout dem
     /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?measureKey=\{embeddedLessonActionCueMeasureKey\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag \|\| draggingCoralId \|\| slotDragStart\)\}/,
   );
   const helpState = sourceSection(
-    "const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted && !embeddedLessonAutoEndingOpeningTurn ?",
+    "const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted && !embeddedLessonAutoEndingOpeningTurn",
     "const tutorialConditionHelp =",
   );
   assert.doesNotMatch(presentationGate, /\|\| mobileHandDrag/);
@@ -173,6 +173,7 @@ test("the board-native overlay uses bidirectional movement arrows for layout dem
   assert.match(dragAnchorPipeline, /tutorialHelpTargetActive[\s\S]*?tutorialHelp\?\.interaction === "drag"/);
   assert.match(dragAnchorPipeline, /hand\.includes\(cardId\)/);
   assert.match(simulatorSource, /data-v2-lesson-drop-cards=\{embeddedLessonEcosystemDropCardIds\.join\(" "\)\}/);
+  assert.match(helpState, /\? embeddedLessonPrimerHelp \?\? \(embeddedLesson/);
   assert.match(helpState, /playingCardId,\s*playingCardName: playingCard\?\.name/);
   assert.doesNotMatch(helpState, /playingCardId:\s*embeddedLesson \? activePlacementCardId/);
   assert.match(cue, /if \(layoutMove\) \{[\s\S]*?className="seapals-v2-action-cue-source"[\s\S]*?data-v2-layout-movement-cue="horizontal"[\s\S]*?is-left[\s\S]*?is-right[\s\S]*?seapals-v2-action-cue-layout-hand/);

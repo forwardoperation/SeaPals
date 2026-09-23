@@ -56,7 +56,14 @@ test("embedded lessons expose each action with divider-anchored teacher guidance
     /<ProfessorCoachOverlay placementMode="reef-divider" measureKey=\{`\$\{mobileReefSplit\}:\$\{tutorialHelpDismissalKey\}`\}>[\s\S]*?<ProfessorGuideCard[\s\S]*?help=\{tutorialHelp\}/,
   );
   assert.doesNotMatch(embeddedCoach, /Show me/);
-  assert.match(embeddedCoach, /onAdvance=\{weaknessFocusActive \? \(\) => setWeaknessTourAcknowledged\(true\) : null\}/);
+  assert.match(
+    embeddedCoach,
+    /onAdvance=\{embeddedLessonPrimerActive[\s\S]*?setEmbeddedLessonPrimerStep\(\(current\) => Math\.min\(embeddedLessonPrimerSteps\.length, current \+ 1\)\)[\s\S]*?: weaknessFocusActive[\s\S]*?setWeaknessTourAcknowledged\(true\)[\s\S]*?: null\}/,
+  );
+  assert.match(
+    embeddedCoach,
+    /advanceLabel=\{embeddedLessonPrimerActive[\s\S]*?embeddedLessonPrimerStep === embeddedLessonPrimerSteps\.length - 1[\s\S]*?"Start attack"[\s\S]*?: "Next"[\s\S]*?: weaknessFocusActive[\s\S]*?"Continue"/,
+  );
   assert.doesNotMatch(simulatorSource, /embeddedLessonActionCueIds|beginEmbeddedLessonAction|data-v2-lesson-dialogue/);
   assert.match(
     simulatorSource,

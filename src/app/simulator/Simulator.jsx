@@ -419,6 +419,7 @@ function ProfessorGuideCard({
         instruction={help.action}
         interaction={help.interaction}
         explanation={help.message}
+        visualAid={help.visualAid}
         onAdvance={onAdvance}
         advanceLabel={advanceLabel}
         dragPassive={dragPassive}
@@ -4705,6 +4706,10 @@ export default function Simulator({
   const [tutorialHelpDismissedId, setTutorialHelpDismissedId] = useState(null);
   const [embeddedLessonPreVictoryAcknowledged, setEmbeddedLessonPreVictoryAcknowledged] = useState(false);
   const [weaknessTourAcknowledged, setWeaknessTourAcknowledged] = useState(false);
+  const [embeddedLessonPrimerStep, setEmbeddedLessonPrimerStep] = useState(0);
+  useEffect(() => {
+    setEmbeddedLessonPrimerStep(0);
+  }, [embeddedLesson?.id]);
   const [tutorialIntroductionStep, setTutorialIntroductionStep] = useState(null);
   const [tutorialCardLesson, setTutorialCardLesson] = useState(() => {
     const openingCardTourId = embeddedLessonPresentationStarted
@@ -4839,7 +4844,7 @@ export default function Simulator({
   const [turn, setTurn] = useState(initialGame.turn ?? 1);
   const [rp, setRpState] = useState(initialGame.rp ?? 3);
   const [hasDrawnThisTurn, setHasDrawnThisTurn] = useState(initialGame.hasDrawnThisTurn ?? false);
-  const [turnDrawSelection, setTurnDrawSelection] = useState(null);
+  const [turnDrawSelection, setTurnDrawSelection] = useState(initialGame.turnDrawSelection ?? null);
   const [turnDrawResult, setTurnDrawResult] = useState(null);
   const [compactDrawViewport, setCompactDrawViewport] = useState(true);
   const compactDrawViewportRef = useRef(true);
@@ -6085,6 +6090,30 @@ export default function Simulator({
   const tutorialCurrentCheckpoint = tutorialContract && tutorialProgress
     ? getSimulatorTutorialCurrentCheckpoint(tutorialContract, tutorialProgress)
     : null;
+  const embeddedLessonPrimerSteps = Array.isArray(embeddedLesson?.preFaceoffPrimer?.steps)
+    ? embeddedLesson.preFaceoffPrimer.steps
+    : [];
+  const embeddedLessonPrimerAcknowledged = embeddedLessonPrimerStep >= embeddedLessonPrimerSteps.length;
+  const embeddedLessonPrimerActive = Boolean(
+    embeddedLessonPresentationStarted
+    && embeddedLessonPrimerSteps.length > 0
+    && embeddedLesson?.preFaceoffPrimer?.checkpointId === tutorialCurrentCheckpoint?.id
+    && !embeddedLessonPrimerAcknowledged
+  );
+  const embeddedLessonPrimerDefinition = embeddedLessonPrimerActive
+    ? embeddedLessonPrimerSteps[embeddedLessonPrimerStep]
+    : null;
+  const embeddedLessonPrimerHelp = embeddedLessonPrimerDefinition
+    ? {
+        id: `embedded-primer:${embeddedLesson.id}:${embeddedLessonPrimerStep}`,
+        cueId: `embedded-primer:${embeddedLesson.id}:${embeddedLessonPrimerStep}`,
+        title: embeddedLessonPrimerDefinition.title,
+        message: embeddedLessonPrimerDefinition.message,
+        action: embeddedLessonPrimerDefinition.action,
+        target: null,
+        visualAid: embeddedLessonPrimerDefinition.visualAid ?? null,
+      }
+    : null;
   const embeddedLessonAutoEndingOpeningTurn = Boolean(
     tutorialRuntime?.lessonStarted === true
     && embeddedLesson?.autoEndOpeningTurn === true
@@ -6197,7 +6226,9 @@ export default function Simulator({
     return getSimulatorV2LessonActionBlock({
       lesson: embeddedLesson, checkpoint: tutorialCurrentCheckpoint,
       action, gamePhase, layoutLessonProgress: tutorialLayoutProgress,
-      weaknessTourAcknowledged, ...details,
+      weaknessTourAcknowledged,
+      preFaceoffPrimerAcknowledged: embeddedLessonPrimerAcknowledged,
+      ...details,
     });
   }
 
@@ -7582,9 +7613,10 @@ export default function Simulator({
       finishAttackTargetInPlay: scriptedOpponentCardIdsInPlay.includes(scriptedFinishPlan.finishAttackTargetCardId),
     };
   })() : null;
-  const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted && !embeddedLessonAutoEndingOpeningTurn ? (embeddedLesson
-    ? (checkpoint, uiState) => getSimulatorV2LessonHelp(embeddedLesson, checkpoint, uiState)
-    : getSimulatorTutorialHelp)(tutorialCurrentCheckpoint, {
+  const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted && !embeddedLessonAutoEndingOpeningTurn
+    ? embeddedLessonPrimerHelp ?? (embeddedLesson
+      ? (checkpoint, uiState) => getSimulatorV2LessonHelp(embeddedLesson, checkpoint, uiState)
+      : getSimulatorTutorialHelp)(tutorialCurrentCheckpoint, {
     guideName: tutorialGuide.name,
     previouslyTaughtConcepts: tutorialPreviouslyTaughtConcepts,
     hand,
@@ -7652,8 +7684,9 @@ export default function Simulator({
     drawTarget: Number(turnDrawSelection?.target ?? 0),
     foundationDeckCount: foundationDeck.length,
     palsDeckCount: palsDeck.length,
-    discardPileCardIds: discardPile,
-  }) : null;
+        discardPileCardIds: discardPile,
+      })
+    : null;
   const weaknessLessonStepActive = Boolean(
     embeddedLesson?.id === "first-reef"
     && tutorialCurrentCheckpoint?.id === "v2-watch-coral-disease"
@@ -7761,7 +7794,7 @@ export default function Simulator({
     && tutorialCurrentCheckpoint?.id === "tutorial-attack"
     && eventOverlay?.type === "faceoff-ready"
   );
-  const lessonTwoOpeningFaceoffMessage = "Choose Start Rolling. Both dice move together: Porcupine Fish uses Crunch’s D4 attack die, while Sea Urchin uses its printed D6 defense die. When you’re ready, choose Stop & Resolve to lock both results. Crunch succeeds only if the attack finishes higher; a tie goes to Sea Urchin as the defender.";
+  const lessonTwoOpeningFaceoffMessage = "Everything is set! Choose Start Rolling, then Stop & Resolve when you’re ready to lock both dice.";
   const tutorialFaceoffHelp = tutorialContract && ["faceoff-ready", "school-attack-ready"].includes(eventOverlay?.type)
       ? {
         id: "tutorial-faceoff",
@@ -21124,6 +21157,7 @@ export default function Simulator({
     setPlayError("");
     setTutorialLayoutProgress(createGuidedAcademyLayoutProgress());
     setWeaknessTourAcknowledged(false);
+    setEmbeddedLessonPrimerStep(0);
     commitBoardCamera("player", { zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
     commitBoardCamera("opponent", { zoom: initialEcosystemZoom, offset: { x: 0, y: 0 } });
     playerGestureRef.current = createEcosystemGestureState();
@@ -21410,7 +21444,7 @@ export default function Simulator({
     && !resumeHydrationPending
     && !resumeCheckpoint
   );
-  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || conditionDetailEvent || compactDialogEvent || boardStatPresentationActive || Boolean(pendingHandArrivalFlight) || mobileDrawFlights.length > 0 || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
+  const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || conditionDetailEvent || compactDialogEvent || boardStatPresentationActive || embeddedLessonPrimerActive || Boolean(pendingHandArrivalFlight) || mobileDrawFlights.length > 0 || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -26344,6 +26378,7 @@ export default function Simulator({
           ) : null}
 
           {tutorialBoardTourOpen ? <div className="fixed inset-0 z-[159]" aria-hidden="true" /> : null}
+          {embeddedLessonPrimerActive ? <div className="fixed inset-0 z-[159]" aria-hidden="true" data-v2-lesson-primer-shield /> : null}
 
           {tutorialBoardTourOpen ? (
             <ProfessorCoachOverlay>
@@ -26397,8 +26432,18 @@ export default function Simulator({
                 step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
                 total={tutorialContract.checkpoints.length}
                 dragPassive={Boolean(mobileHandDrag || draggingCoralId || slotDragStart)}
-                onAdvance={weaknessFocusActive ? () => setWeaknessTourAcknowledged(true) : null}
-                advanceLabel={weaknessFocusActive ? "Continue" : undefined}
+                onAdvance={embeddedLessonPrimerActive
+                  ? () => setEmbeddedLessonPrimerStep((current) => Math.min(embeddedLessonPrimerSteps.length, current + 1))
+                  : weaknessFocusActive
+                    ? () => setWeaknessTourAcknowledged(true)
+                    : null}
+                advanceLabel={embeddedLessonPrimerActive
+                  ? embeddedLessonPrimerStep === embeddedLessonPrimerSteps.length - 1
+                    ? "Start attack"
+                    : "Next"
+                  : weaknessFocusActive
+                    ? "Continue"
+                    : undefined}
               />
             </ProfessorCoachOverlay>
           ) : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (

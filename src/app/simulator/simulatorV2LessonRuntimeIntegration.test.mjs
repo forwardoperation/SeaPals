@@ -15,6 +15,7 @@ const { createJiti } = require("jiti");
 const filename = fileURLToPath(import.meta.url);
 const projectRoot = path.resolve(path.dirname(filename), "../../..");
 const simulatorSource = readFileSync(path.join(projectRoot, "src/app/simulator/Simulator.jsx"), "utf8");
+const lessonPanelSource = readFileSync(path.join(projectRoot, "src/app/simulator/SimulatorV2LessonPanel.jsx"), "utf8");
 const jiti = createJiti(filename, {
   fsCache: false,
   alias: { "@": path.join(projectRoot, "src") },
@@ -169,6 +170,13 @@ test("prepared V2 lessons hydrate authored player, Habitat, and opponent state t
     turn: 2,
     startingPlayer: "player",
     hasDrawnThisTurn: true,
+    turnDrawSelection: {
+      requested: 1,
+      target: 1,
+      shortfall: 0,
+      foundation: 0,
+      pals: 0,
+    },
     activeConditionId: "clear-water",
     opponentTurnMode: "play",
   };
@@ -185,6 +193,7 @@ test("prepared V2 lessons hydrate authored player, Habitat, and opponent state t
   for (const key of ["rp", "gamePhase", "round", "turn", "startingPlayer", "hasDrawnThisTurn", "activeConditionId", "opponentTurnMode"]) {
     assert.equal(prepared[key], seed[key]);
   }
+  assert.deepEqual(prepared.turnDrawSelection, seed.turnDrawSelection);
 
   assert.equal(prepared.playerCorals.length, 1);
   const [playerFoundation] = prepared.playerCorals;
@@ -280,13 +289,39 @@ test("Simulator starts an embedded lesson from the hydrated board and scores its
   assert.match(turnInitialization, /useState\(initialGame\.turn \?\? 1\)/);
   assert.match(turnInitialization, /useState\(initialGame\.rp \?\? 3\)/);
   assert.match(turnInitialization, /useState\(initialGame\.hasDrawnThisTurn \?\? false\)/);
+  assert.match(
+    simulatorSource,
+    /const \[turnDrawSelection, setTurnDrawSelection\] = useState\(initialGame\.turnDrawSelection \?\? null\)/,
+    "a prepared lesson that begins in the draw phase must hydrate its authored draw target",
+  );
 });
 
-test("Lesson 2 enters the opponent-turn pipeline only after the player's opening attack", () => {
+test("Lesson 2 begins with a Pals draw and placement before the player's opening attack", () => {
   const lesson = getSimulatorV2Lesson("first-attack");
   assert.equal(lesson.autoEndOpeningTurn, true);
-  assert.equal(lesson.checkpoints[0]?.id, "tutorial-attack");
-  assert.equal(lesson.checkpoints[1]?.id, "v2-pass-to-counterattack");
+  assert.deepEqual(
+    lesson.checkpoints.slice(0, 4).map(({ id }) => id),
+    ["v2-draw-opening-attacker", "v2-place-opening-attacker", "tutorial-attack", "v2-pass-to-counterattack"],
+  );
+  assert.equal(lesson.seed.gamePhase, "draw");
+  assert.equal(lesson.seed.hasDrawnThisTurn, false);
+  assert.deepEqual(lesson.seed.turnDrawSelection, {
+    requested: 1,
+    target: 1,
+    shortfall: 0,
+    foundation: 0,
+    pals: 0,
+  });
+  assert.deepEqual(lesson.expectedDraws["v2-draw-opening-attacker"], {
+    deckType: "pals",
+    cardId: "porcupine-fish",
+  });
+  assert.equal(lesson.seed.palsDeck[0], "porcupine-fish");
+  assert.equal(
+    lesson.seed.playerTableau.some(({ placements = [] }) => placements.some(({ cardId }) => cardId === "porcupine-fish")),
+    false,
+    "Porcupine Fish should be drawn and played by the learner instead of starting on the board",
+  );
 
   const automaticOpening = sourceSection(
     "tutorialRuntime?.lessonStarted === true",
@@ -320,7 +355,119 @@ test("Lesson 2 enters the opponent-turn pipeline only after the player's opening
   assert.match(endTurnFlow, /continueAfterPresentedEvent\(opponentTurnEvent, \[\]\)/);
 });
 
-test("Lesson 2 explains both dice and the defender's tie advantage before the opening faceoff", () => {
+test("Lesson 2 blocks the opening attack behind a three-step dice and food-web primer", () => {
+  const lesson = getSimulatorV2Lesson("first-attack");
+  const primer = lesson.preFaceoffPrimer;
+  assert.equal(primer?.checkpointId, "tutorial-attack");
+  assert.equal(primer?.steps?.length, 3);
+
+  const diceStep = primer.steps[0];
+  assert.match(diceStep.message, /D4, D6, D8, D10, D12, and D20/);
+  assert.match(diceStep.message, /number tells you how many sides the die has and its possible range/i);
+  assert.match(diceStep.message, /D4 rolls 1[–-]4/);
+  assert.match(diceStep.message, /D20 rolls 1[–-]20/);
+  assert.deepEqual(diceStep.visualAid, {
+    kind: "dice-ladder",
+    dice: ["D4", "D6", "D8", "D10", "D12", "D20"],
+  });
+
+  const rulesStep = primer.steps[1];
+  assert.match(rulesStep.message, /attacker rolls the die named by its ability/i);
+  assert.match(rulesStep.message, /defender rolls the Defense die printed on its card/i);
+  assert.match(rulesStep.message, /higher total wins/i);
+  assert.match(rulesStep.message, /tie, the defender wins/i);
+
+  const ecologyStep = primer.steps[2];
+  assert.match(ecologyStep.message, /fused teeth form a powerful beak/i);
+  assert.match(ecologyStep.message, /crack shells/i);
+  assert.match(ecologyStep.message, /can target an opposing Invertebrate/i);
+  assert.match(ecologyStep.message, /Sea Urchin.s type line identifies it as an Invertebrate/i);
+
+  const primerRuntime = sourceSection(
+    "const embeddedLessonPrimerSteps =",
+    "const embeddedLessonAutoEndingOpeningTurn =",
+  );
+  assert.match(primerRuntime, /embeddedLesson\?\.preFaceoffPrimer\?\.steps/);
+  assert.match(primerRuntime, /embeddedLesson\?\.preFaceoffPrimer\?\.checkpointId === tutorialCurrentCheckpoint\?\.id/);
+  assert.match(primerRuntime, /!embeddedLessonPrimerAcknowledged/);
+  assert.match(primerRuntime, /embeddedLessonPrimerSteps\[embeddedLessonPrimerStep\]/);
+  assert.match(primerRuntime, /visualAid: embeddedLessonPrimerDefinition\.visualAid \?\? null/);
+
+  const tutorialHelpRuntime = sourceSection(
+    "const tutorialHelp = tutorialContract",
+    "const weaknessLessonStepActive =",
+  );
+  assert.match(
+    tutorialHelpRuntime,
+    /embeddedLessonPrimerHelp \?\? \(embeddedLesson/,
+    "the primer must replace ordinary attack coaching until all three steps are acknowledged",
+  );
+  assert.match(
+    simulatorSource,
+    /visualAid=\{help\.visualAid\}/,
+    "the coach must pass authored dice visuals into the lesson panel",
+  );
+
+  const dieDefinitions = [
+    ["D4", 4],
+    ["D6", 6],
+    ["D8", 8],
+    ["D10", 10],
+    ["D12", 12],
+    ["D20", 20],
+  ];
+  for (const [label, sides] of dieDefinitions) {
+    assert.match(lessonPanelSource, new RegExp(`label: "${label}", sides: ${sides}`));
+  }
+  assert.match(lessonPanelSource, /aria-label=\{`\$\{die\.label\} rolls from 1 to \$\{die\.sides\}`\}/);
+  assert.match(lessonPanelSource, /data-v2-dice-primer/);
+
+  assert.match(
+    simulatorSource,
+    /const boardInteractionOverlayActive = [^;]*embeddedLessonPrimerActive/,
+    "the board must be inert while Mr. Easterling presents the primer",
+  );
+  assert.match(
+    simulatorSource,
+    /embeddedLessonPrimerActive \? <div className="fixed inset-0 z-\[159\]"[^>]*data-v2-lesson-primer-shield/,
+    "a blocking shield must keep board controls behind the primer",
+  );
+  const embeddedCoach = sourceSection(
+    "{embeddedLessonPrimerActive ? <div",
+    ") : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (",
+  );
+  assert.match(embeddedCoach, /onAdvance=\{embeddedLessonPrimerActive/);
+  assert.match(embeddedCoach, /setEmbeddedLessonPrimerStep/);
+  assert.match(embeddedCoach, /embeddedLessonPrimerSteps\.length/);
+
+  const lessonBlock = sourceSection(
+    "function getEmbeddedLessonBlock(action, details = {})",
+    "function notifyTutorialCallback(name, ...args)",
+  );
+  assert.match(lessonBlock, /preFaceoffPrimerAcknowledged: embeddedLessonPrimerAcknowledged/);
+  const openingAttack = lesson.contract.checkpoints.find(({ id }) => id === "tutorial-attack");
+  assert.match(
+    getSimulatorV2LessonActionBlock({
+      lesson,
+      checkpoint: openingAttack,
+      action: "attack",
+      cardId: "porcupine-fish",
+      gamePhase: "main",
+      preFaceoffPrimerAcknowledged: false,
+    }),
+    /Review the faceoff dice and rules/,
+  );
+  assert.equal(getSimulatorV2LessonActionBlock({
+    lesson,
+    checkpoint: openingAttack,
+    action: "attack",
+    cardId: "porcupine-fish",
+    gamePhase: "main",
+    preFaceoffPrimerAcknowledged: true,
+  }), "");
+});
+
+test("Lesson 2 faceoff-ready coaching is a short operational instruction after the primer", () => {
   const openingFaceoff = sourceSection(
     "const lessonTwoOpeningFaceoff = Boolean(",
     "const scriptedScavengeInteraction =",
@@ -329,9 +476,8 @@ test("Lesson 2 explains both dice and the defender's tie advantage before the op
   assert.match(openingFaceoff, /embeddedLesson\?\.id === "first-attack"/);
   assert.match(openingFaceoff, /tutorialCurrentCheckpoint\?\.id === "tutorial-attack"/);
   assert.match(openingFaceoff, /eventOverlay\?\.type === "faceoff-ready"/);
-  assert.match(openingFaceoff, /Porcupine Fish uses Crunch.s D4 attack die/);
-  assert.match(openingFaceoff, /Sea Urchin uses its printed D6 defense die/);
-  assert.match(openingFaceoff, /a tie goes to Sea Urchin as the defender/);
+  assert.match(openingFaceoff, /Everything is set! Choose Start Rolling, then Stop & Resolve when you.re ready to lock both dice\./);
+  assert.doesNotMatch(openingFaceoff, /D4|D6|higher|tie goes to/);
 });
 
 test("a resolved Support emits the lesson event only after its committed game updates", () => {

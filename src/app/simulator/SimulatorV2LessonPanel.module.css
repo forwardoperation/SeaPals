@@ -232,6 +232,31 @@
 .typewriterFrame { position: relative; display: block; width: 100%; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none; }
 .typewriterPending { visibility: hidden; }
 .typewriterCursor { position: absolute; width: 0.12rem; height: 1em; margin-left: 0.08rem; border-radius: 999px; transform: translateY(0.12em); background: #0f9fc2; pointer-events: none; animation: lessonTypewriterCursor 0.7s step-end infinite; }
+.diceLadder {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.28rem;
+  margin-top: 0.52rem;
+  padding: 0.38rem;
+  border: 1px solid #aab6c6;
+  border-radius: 0.55rem;
+  background: #e7f5f8;
+}
+.dieReference {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  padding: 0.24rem 0.08rem 0.22rem;
+  border: 1px solid #91a4b8;
+  border-radius: 0.42rem;
+  color: #17314c;
+  background: #f8fcfd;
+  line-height: 1;
+}
+.dieShape { width: 1.55rem; height: 1.55rem; margin-bottom: 0.12rem; overflow: visible; }
+.dieShape polygon { fill: #17314c; stroke: #22b6d0; stroke-width: 2.2; stroke-linejoin: round; }
+.dieReference strong { font-size: 0.58rem; font-weight: 900; letter-spacing: 0.02em; }
+.dieReference span { margin-top: 0.13rem; color: #52657a; font-size: 0.48rem; font-weight: 800; }
 .feedback { margin: 0.48rem 0 0; color: #087e9c; font-size: 0.7rem; font-weight: 700; line-height: 1.5; text-align: left; text-wrap: pretty; }
 .feedback[data-tone="hint"],
 .feedback[data-tone="error"] { color: #b34a48; }
@@ -326,6 +351,8 @@
   .currentMove { padding-top: 0.52rem; }
   .dialogue { margin-bottom: 0.28rem; font-size: 0.67rem; }
   .instruction { font-size: 0.78rem; line-height: 1.36; }
+  .diceLadder { gap: 0.2rem; padding: 0.3rem; }
+  .dieShape { width: 1.35rem; height: 1.35rem; }
   .feedback { margin-top: 0.35rem; font-size: 0.64rem; }
   .actionMarker { font-size: 0.86rem; }
   .advanceButton { min-height: 2rem; margin-top: 0.25rem; }
@@ -365,11 +392,14 @@
   .completionMessage,
   .completionGoal,
   .completionProgress,
-  .progressTrack { border-color: CanvasText; color: CanvasText; background: Canvas; box-shadow: none; }
+  .progressTrack,
+  .diceLadder,
+  .dieReference { border-color: CanvasText; color: CanvasText; background: Canvas; box-shadow: none; }
   .activeLesson { outline: 2px solid Highlight; }
   .progressFill { background: Highlight; }
   .portrait { border-color: CanvasText; background: Canvas; box-shadow: none; }
   .coachBubble::before { border-top-color: CanvasText; }
   .coachBubble::after { border-top-color: Canvas; }
   .actionMarker { color: Highlight; }
+  .dieShape polygon { fill: Canvas; stroke: CanvasText; }
 }

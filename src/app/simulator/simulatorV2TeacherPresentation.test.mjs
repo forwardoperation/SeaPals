@@ -118,15 +118,34 @@ test("the lesson message follows the newest spoken line as it is typed", () => {
   assert.match(panelSource, /\}, \[isComplete, scrollable, visibleCount\]\)/);
 });
 
-test("V2 lesson speech uses a constant 40 ms normal cadence", () => {
-  assert.match(panelSource, /const TEXT_SPEED_MULTIPLIER = Object\.freeze\(\{\s*slow:\s*4,\s*normal:\s*2\.5,\s*fast:\s*1\.5,\s*instant:\s*0,/);
+test("V2 lesson speech uses a constant 33 1/3 ms normal cadence", () => {
+  assert.match(panelSource, /const NORMAL_TEXT_SPEED_MULTIPLIER = 25 \/ 12/);
+  assert.match(panelSource, /const TEXT_SPEED_MULTIPLIER = Object\.freeze\(\{\s*slow:\s*4,\s*normal:\s*NORMAL_TEXT_SPEED_MULTIPLIER,\s*fast:\s*1\.5,\s*instant:\s*0,/);
   assert.match(panelSource, /getProfessorSpeechDuration\(graphemes\.length\) \* speedMultiplier/);
-  assert.match(panelSource, /TEXT_SPEED_MULTIPLIER\[textSpeed\] \?\? 2\.5/);
+  assert.match(panelSource, /TEXT_SPEED_MULTIPLIER\[textSpeed\] \?\? NORMAL_TEXT_SPEED_MULTIPLIER/);
 
-  const normalMultiplier = Number(panelSource.match(/normal:\s*([\d.]+)/)?.[1]);
-  assert.equal(getProfessorSpeechDuration(1) * normalMultiplier, 40);
-  assert.equal(getProfessorSpeechDuration(20) * normalMultiplier, 800);
-  assert.equal(getProfessorSpeechDuration(1000) * normalMultiplier, 40000);
+  const normalMultiplier = 25 / 12;
+  assert.equal(Math.round(getProfessorSpeechDuration(3) * normalMultiplier), 100);
+  assert.equal(Math.round(getProfessorSpeechDuration(30) * normalMultiplier), 1000);
+  assert.equal(Math.round(getProfessorSpeechDuration(300) * normalMultiplier), 10000);
+});
+
+test("the dice primer presents every faceoff die and its range in a compact accessible gallery", () => {
+  assert.match(panelSource, /visualAid = null/);
+  assert.match(panelSource, /visualAid\?\.kind !== "dice-ladder"/);
+  assert.match(panelSource, /role="group"\s+aria-label="Faceoff dice and their roll ranges"\s+data-v2-dice-primer/);
+  assert.match(panelSource, /aria-label=\{`\$\{die\.label\} rolls from 1 to \$\{die\.sides\}`\}/);
+  assert.match(panelSource, /<DiceLadderVisualAid visualAid=\{visualAid\} \/>/);
+
+  for (const [label, sides] of [["D4", 4], ["D6", 6], ["D8", 8], ["D10", 10], ["D12", 12], ["D20", 20]]) {
+    assert.match(panelSource, new RegExp(`label: "${label}", sides: ${sides}`));
+  }
+
+  const ladderRule = cssRules(".diceLadder").join("\n");
+  assert.match(ladderRule, /display:\s*grid/);
+  assert.match(ladderRule, /grid-template-columns:\s*repeat\(6, minmax\(0, 1fr\)\)/);
+  assert.match(cssRules(".dieReference").join("\n"), /place-items:\s*center/);
+  assert.match(cssRules(".dieShape").join("\n"), /width:\s*1\.55rem/);
 });
 
 test("V2 lesson speech never catches up by revealing several graphemes in one frame", () => {

@@ -270,26 +270,57 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     attackCardId: "porcupine-fish", attackTargetCardId: "sea-urchin",
     defeatTeachingCardId: "sea-urchin",
     abilityCardId: "blue-crab",
+    preFaceoffPrimer: {
+      checkpointId: "tutorial-attack",
+      steps: [
+        {
+          title: "Meet the faceoff dice!",
+          message: "Sea Realm uses six dice: D4, D6, D8, D10, D12, and D20. The number tells you how many sides the die has and its possible range. A D4 rolls 1–4, while a D20 rolls 1–20. A larger die can roll higher, but every result still depends on the roll!",
+          action: "Review each die and its range, then continue.",
+          visualAid: {
+            kind: "dice-ladder",
+            dice: ["D4", "D6", "D8", "D10", "D12", "D20"],
+          },
+        },
+        {
+          title: "How a faceoff is decided",
+          message: "In a faceoff, the attacker rolls the die named by its ability and the defender rolls the Defense die printed on its card. After any modifiers, the higher total wins. If the totals tie, the defender wins and stays safe. That defender advantage makes choosing the right target important!",
+          action: "Remember: higher wins, and ties go to the defender.",
+        },
+        {
+          title: "Why Porcupine Fish targets Invertebrates",
+          message: "Real porcupinefish hunt hard-shelled animals such as snails, crabs, and sea urchins. Their fused teeth form a powerful beak that can crack shells! Crunch reflects that food-web relationship: it can target an opposing Invertebrate. Sea Urchin's type line identifies it as an Invertebrate, so it is a legal target.",
+          action: "Continue, then select Porcupine Fish to begin Crunch.",
+        },
+      ],
+    },
     abilityRecoveryTargets: { "v2-recover-sea-urchin": "sea-urchin" },
     expectedDraws: {
+      "v2-draw-opening-attacker": { deckType: "pals", cardId: "porcupine-fish" },
       "tutorial-draw-card": { deckType: "pals", cardId: "blue-crab" },
       "v2-draw-predator": { deckType: "pals", cardId: "great-barracuda" },
     },
     seed: seed({
       hand: [],
       foundationDeck: [],
-      palsDeck: ["blue-crab", "great-barracuda"],
-      rp: 2,
+      palsDeck: ["porcupine-fish", "blue-crab", "great-barracuda"],
+      rp: 4,
       conditionDeck: ["clear-water", "murky-water"],
-      gamePhase: "main",
+      gamePhase: "draw",
       round: 2,
       turn: 2,
-      hasDrawnThisTurn: true,
+      hasDrawnThisTurn: false,
+      turnDrawSelection: {
+        requested: 1,
+        target: 1,
+        shortfall: 0,
+        foundation: 0,
+        pals: 0,
+      },
       activeConditionId: "coral-disease",
       playerTableau: [
         tableau("brain-coral-stage-1", [
           ["sea-urchin", "invertebrate"],
-          ["porcupine-fish", "fish"],
         ]),
         tableau("mustard-hill-coral-base"),
       ],
@@ -303,6 +334,12 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       },
     }),
     checkpoints: [
+      drawCheckpoint({
+        id: "v2-draw-opening-attacker",
+        title: "Begin your turn with a Pals draw",
+        deckType: "pals",
+      }),
+      buildCheckpoint("v2-place-opening-attacker", "Play Porcupine Fish", "porcupine-fish"),
       checkpoint("tutorial-attack", ACTION.ATTACK_RESOLVED, "Lead your first attack", "Use Porcupine Fish's Crunch on the opposing Sea Urchin, roll both dice, and read the result.", [
         truthy("details.accepted"),
         equals("details.attackerCardId", "porcupine-fish"),
@@ -354,11 +391,19 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       victoryCheckpoint(7),
     ],
     buildCards: {
+      "v2-place-opening-attacker": ["porcupine-fish"],
       "v2-place-passive": ["blue-crab"],
       "v2-replay-sea-urchin": ["sea-urchin"],
       "v2-place-predator": ["great-barracuda"],
     },
     placementTargets: {
+      "v2-place-opening-attacker": {
+        cardId: "porcupine-fish",
+        foundationCardId: "brain-coral-stage-1",
+        slotClass: "fish",
+        slotOrdinal: 0,
+        blockMessage: "Place Porcupine Fish in Brain Coral's highlighted Fish slot so the Predator slot stays open for Great Barracuda later.",
+      },
       "v2-place-predator": {
         cardId: "great-barracuda",
         foundationCardId: "brain-coral-stage-1",
@@ -923,6 +968,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       );
     }
     const firstReefUpgradeDraw = selected.id === "first-reef" && expectedDraw?.cardId === "brain-coral-stage-1";
+    const firstAttackOpeningDraw = selected.id === "first-attack" && expectedDraw?.cardId === "porcupine-fish";
     const firstAttackPredatorDraw = selected.id === "first-attack" && expectedDraw?.cardId === "great-barracuda";
     const seaUrchinWasDefeated = Array.isArray(uiState.discardPileCardIds)
       && uiState.discardPileCardIds.includes("sea-urchin");
@@ -932,6 +978,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       ? "You expanded School Density for a giant creature. Draw Ocean Sunfish from the Pals Deck; your Coral Reef Habitat and 160 free Density are ready."
       : firstReefUpgradeDraw
         ? "Brain Coral Stage 1 is on top of your Foundation Deck. Draw it so you can level up the Coral you placed last round."
+      : firstAttackOpeningDraw
+        ? "A turn begins with its required draw. Porcupine Fish is on top of your Pals Deck; draw it now so we can explore how creatures interact through the food web."
       : firstAttackPredatorDraw
         ? `${seaUrchinWasDefeated
           ? "Scavenge brought Sea Urchin back to your hand for this round."
@@ -1174,7 +1222,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       return help(
         "opponent-board",
         choosingFirstTarget
-          ? "Crunch can attack only an opposing Invertebrate. The highlighted Sea Urchin is legal, so selecting it makes Sea Urchin the defender."
+          ? "Sea Urchin is glowing because its type line identifies it as an opposing Invertebrate, making it a legal target for Crunch. Selecting it makes Sea Urchin the defender."
           : "Crunch can only target an opposing Invertebrate. Sea Urchin is the legal target glowing above.",
         choosingFirstTarget
           ? "Now choose the target! Select the highlighted Sea Urchin. Crunch will roll Porcupine Fish’s D4 attack die against Sea Urchin’s printed D6 defense die; then you’ll tap the board to lock both results."
@@ -1196,14 +1244,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     return help(
       target,
       introduceActions
-        ? "Crunch is an Action: an ability you choose during your turn, up to once each turn."
+        ? "Porcupine Fish is ready! Crunch is an Action: an ability you choose during your turn, up to once each turn."
         : chooseFirstAttack
-          ? "Porcupine Fish is your attacker. Crunch costs 1 RP, targets an opposing Invertebrate, and uses a D4 attack die."
+          ? "Porcupine Fish is your attacker. Crunch costs 1 RP and can target an opposing Invertebrate."
           : "Crunch costs 1 RP and targets an opposing Invertebrate.",
       chooseFirstAttack
         ? "Great—Porcupine Fish is selected! Choose Crunch to commit 1 RP and begin the attack."
         : introduceActions
-          ? "Your turn to attack! Crunch is an Action—an ability you choose during your turn. Actions can be used once per turn. Select Porcupine Fish to begin!"
+          ? "Now it’s your turn to attack! Select Porcupine Fish to begin."
           : "Select Porcupine Fish, then use Crunch.",
       { targetCardId: selected.attackCardId, targetActionKey: attack?.actionKey ?? null },
     );
@@ -1240,7 +1288,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (cardId === "mustard-hill-coral-base" && selected.id === "first-reef") {
       message = "Build Mustard Hill Coral as a second Foundation. It has no Disease weakness, so Coral Disease will not stop its 2 RP production next round.";
     } else if (cardId === "porcupine-fish" && selected.id === "first-attack") {
-      message = "Place Porcupine Fish in Brain Coral's Fish slot. Its Crunch action uses a D4 attack die against an opposing Invertebrate's defense die.";
+      message = "Porcupine Fish is a Reef Fish, so it fits Brain Coral's open Fish slot. Play it for 2 RP. Once it is settled, we’ll learn how its Crunch Action chooses prey and how every faceoff die works.";
     } else if (cardId === "blue-crab" && selected.id === "first-attack") {
       message = "Some abilities help without waiting for a command. Blue Crab’s Eco Boost is a Passive ability, so it works automatically while Blue Crab remains in your ecosystem and raises your maximum RP bank by 1.";
     } else if (cardId === "sea-urchin" && selected.id === "first-attack") {
@@ -1377,6 +1425,7 @@ export function getSimulatorV2LessonActionBlock({
   slotOrdinal,
   layoutLessonProgress,
   weaknessTourAcknowledged,
+  preFaceoffPrimerAcknowledged,
 } = {}) {
   const selected = getSimulatorV2Lesson(value);
   if (!selected) return "";
@@ -1408,6 +1457,10 @@ export function getSimulatorV2LessonActionBlock({
       : "This practice board is already ready for its next action.";
   }
   if (action === "attack") {
+    if (
+      selected.preFaceoffPrimer?.checkpointId === current.id
+      && preFaceoffPrimerAcknowledged !== true
+    ) return "Review the faceoff dice and rules with Mr. Easterling before beginning the attack.";
     const isPlayerCheckpoint = current.requirements.some(
       (requirement) => requirement.path === "actor" && requirement.value === "player",
     );
