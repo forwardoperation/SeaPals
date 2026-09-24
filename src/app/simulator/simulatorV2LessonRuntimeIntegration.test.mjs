@@ -322,6 +322,16 @@ test("Lesson 2 begins with a Pals draw and placement before the player's opening
     false,
     "Porcupine Fish should be drawn and played by the learner instead of starting on the board",
   );
+  const createInitialGameState = createProductionInitialGameFactory();
+  const prepared = createInitialGameState("player-deck", "opponent-deck", () => 0.5, { preparedLesson: lesson });
+  assert.deepEqual(
+    prepared.playerCorals.map(({ cardId, x, y }) => ({ cardId, x, y })),
+    [
+      { cardId: "brain-coral-stage-1", x: -10, y: 50 },
+      { cardId: "mustard-hill-coral-base", x: 110, y: 50 },
+    ],
+    "the prepared Interactions reef gives both Foundation branches and their slots room at the default Fit",
+  );
 
   const automaticOpening = sourceSection(
     "tutorialRuntime?.lessonStarted === true",
@@ -362,6 +372,10 @@ test("Lesson 2 blocks the opening attack behind a three-step dice and food-web p
   assert.equal(primer?.steps?.length, 3);
 
   const diceStep = primer.steps[0];
+  assert.match(diceStep.message, /just played Porcupine Fish/i);
+  assert.match(diceStep.message, /Crunch Action can attack your opponent.s Sea Urchin because Sea Urchin is an Invertebrate/i);
+  assert.match(diceStep.message, /Porcupine Fish attacks with a D4/i);
+  assert.match(diceStep.message, /Sea Urchin defends with a D6/i);
   assert.match(diceStep.message, /D4, D6, D8, D10, D12, and D20/);
   assert.match(diceStep.message, /number tells you how many sides the die has and its possible range/i);
   assert.match(diceStep.message, /D4 rolls 1[–-]4/);

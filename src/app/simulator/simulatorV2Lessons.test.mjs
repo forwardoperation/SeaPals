@@ -545,6 +545,7 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
   ]);
   assert.equal(selected.randomSeed, 0x5EA9101C);
   assert.equal(selected.victoryTarget, 7);
+  assert.equal(selected.fitAllPlayerSlots, true, "Interactions opens with both complete Foundation branches visible");
   assert.equal(
     selected.preVictoryMessage,
     "Excellent work! You followed the food web from Fish to Predator, used an Action, defended a faceoff, saw a Passive ability work, recovered a discarded creature, and triggered an On Play attack. Great Barracuda showed how a creature’s class controls both where it lives and what it can hunt. You’re ready for the next lesson!",
@@ -572,8 +573,10 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
       placements: [
         { cardId: seaUrchin.id, slotClass: "invertebrate" },
       ],
+      x: -10,
+      y: 50,
     },
-    { foundationCardId: "mustard-hill-coral-base", placements: [] },
+    { foundationCardId: "mustard-hill-coral-base", placements: [], x: 110, y: 50 },
   ], "Lesson 2 carries Lesson 1's reef forward with an open Fish slot for the card drawn this turn");
   assert.deepEqual(selected.seed.opponentTableau, [
     { foundationCardId: "mustard-hill-coral-base", placements: [{ cardId: seaUrchin.id, slotClass: "invertebrate" }] },
@@ -612,7 +615,7 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
     kind: "dice-ladder",
     dice: ["D4", "D6", "D8", "D10", "D12", "D20"],
   });
-  assert.match(selected.preFaceoffPrimer.steps[0].message, /six dice.*D4.*D6.*D8.*D10.*D12.*D20.*number.*sides.*range.*D4 rolls 1.4.*D20 rolls 1.20.*larger die can roll higher/is);
+  assert.match(selected.preFaceoffPrimer.steps[0].message, /just played Porcupine Fish.*Crunch Action.*opponent's Sea Urchin.*Invertebrate.*Porcupine Fish attacks with a D4.*Sea Urchin defends with a D6.*six faceoff dice.*D4.*D6.*D8.*D10.*D12.*D20.*number.*sides.*range.*D4 rolls 1.4.*D20 rolls 1.20.*larger die can roll higher/is);
   assert.match(selected.preFaceoffPrimer.steps[1].message, /attacker rolls.*ability.*defender rolls.*Defense die.*higher total wins.*tie.*defender wins/is);
   assert.match(selected.preFaceoffPrimer.steps[2].message, /porcupinefish hunt hard-shelled.*snails.*crabs.*sea urchins.*fused teeth.*beak.*crack shells.*Crunch.*opposing Invertebrate.*Sea Urchin.*legal target/is);
 

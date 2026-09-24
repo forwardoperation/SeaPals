@@ -111,7 +111,7 @@ test("the prepared Habitat lesson clears attached cards and neighboring slot mar
   const portraitBoard = { width: 750, height: 747 };
   const foundationSize = { width: 180, height: 220 };
   const foundationWrapper = { width: 240, height: 280 };
-  const slotRadius = 92 / 100;
+  const slotRadius = { horizontal: 92 / 100, vertical: 104 / 100 };
   const branches = [
     { slotCount: 4, filledSlots: new Set() },
     { slotCount: 2, filledSlots: new Set([0, 1]) },
@@ -138,8 +138,8 @@ test("the prepared Habitat lesson clears attached cards and neighboring slot mar
     )];
     for (let slotIndex = 0; slotIndex < branch.slotCount; slotIndex += 1) {
       const angle = slotIndex / branch.slotCount * Math.PI * 2 - Math.PI / 2;
-      const slotCenterX = centerX + Math.cos(angle) * slotRadius * foundationWrapper.width;
-      const slotCenterY = centerY + Math.sin(angle) * slotRadius * foundationWrapper.height;
+      const slotCenterX = centerX + Math.cos(angle) * slotRadius.horizontal * foundationWrapper.width;
+      const slotCenterY = centerY + Math.sin(angle) * slotRadius.vertical * foundationWrapper.height;
       const filled = branch.filledSlots.has(slotIndex);
       cards.push(rectangle(
         slotCenterX,

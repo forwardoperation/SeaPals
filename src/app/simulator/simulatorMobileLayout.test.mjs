@@ -545,7 +545,7 @@ test("moving the V2 divider continuously refits both reef cameras to their new a
   assert.match(splitFitEffect, /if \(!previewExperience\) return undefined;/);
   assert.match(splitFitEffect, /requestAnimationFrame\(\(\) => \{/);
   assert.match(splitFitEffect, /zoomEcosystemToFit\("opponent"\)/);
-  assert.match(splitFitEffect, /zoomEcosystemToFit\("player", \{[\s\S]*?includeAllSlots: !preparedPlayerReefLayout/);
+  assert.match(splitFitEffect, /zoomEcosystemToFit\("player", \{[\s\S]*?includeAllSlots: autoFitPlayerIncludesAllSlots/);
   assert.match(splitDependency[1], /previewExperience/);
   assert.match(splitDependency[1], /mobileReefSplit/);
   assert.doesNotMatch(splitFitEffect, /playerViewportTouched|opponentViewportTouched/);
@@ -1035,7 +1035,12 @@ test("the player reef starts fitted and stops auto-fitting after manual camera i
   );
   assert.match(
     simulatorSource,
-    /\[playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, tutorialBoardCardFocusActive, preparedPlayerReefLayout\]/,
+    /\[playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, tutorialBoardCardFocusActive, autoFitPlayerIncludesAllSlots\]/,
+  );
+  assert.match(
+    simulatorSource,
+    /const autoFitPlayerIncludesAllSlots = !preparedPlayerReefLayout \|\| embeddedLesson\?\.fitAllPlayerSlots === true;/,
+    "a prepared lesson can request that its complete slot network be visible on the initial Fit",
   );
   const fitFunction = sourceSection(
     simulatorSource,
@@ -1052,8 +1057,10 @@ test("the player reef starts fitted and stops auto-fitting after manual camera i
     /setPlayerViewportTouched\(true\);[\s\S]{0,120}zoomEcosystemToFit\("player"\);/,
     "the player's explicit Fit control should still reveal the complete slot network",
   );
-  const preparedSlotRadius = Number(simulatorSource.match(/const PREPARED_LESSON_SLOT_RADIUS = (\d+);/)?.[1]);
-  assert.ok(preparedSlotRadius >= 80 && preparedSlotRadius <= 100, "prepared slot branches stay outside their cards without overwhelming the opening camera");
+  const preparedHorizontalRadius = Number(simulatorSource.match(/const PREPARED_LESSON_SLOT_HORIZONTAL_RADIUS = (\d+);/)?.[1]);
+  const preparedVerticalRadius = Number(simulatorSource.match(/const PREPARED_LESSON_SLOT_VERTICAL_RADIUS = (\d+);/)?.[1]);
+  assert.ok(preparedHorizontalRadius >= 80 && preparedHorizontalRadius <= 100, "prepared side slots stay clear without crowding neighboring Foundation branches");
+  assert.ok(preparedVerticalRadius > preparedHorizontalRadius && preparedVerticalRadius <= 120, "prepared top and bottom cards clear their Foundation card and HP rail");
   const sparseRatioToken = fitFunction.match(/const sparsePlayerBoardMaxZoom = !isOpponent && corals\.length === 1 && !floatingCardsPresent[\s\S]*?rect\.width \* ([A-Za-z_$][\w$]*|(?:0?\.)?\d+)/)?.[1];
   assert.ok(sparseRatioToken, "a sparse player reef should have an explicit width cap");
   const sparseRatio = Number.isFinite(Number(sparseRatioToken))

@@ -4502,16 +4502,20 @@ function roundLayoutNumber(value, precision = 4) {
   return Number(Number(value).toFixed(precision));
 }
 
-const PREPARED_LESSON_SLOT_RADIUS = 92;
+const PREPARED_LESSON_SLOT_HORIZONTAL_RADIUS = 92;
+const PREPARED_LESSON_SLOT_VERTICAL_RADIUS = 104;
 
-function getBracketSlotPositions(count, radiusBase = 150) {
-  // place anchors evenly around the coral in a circle to avoid overlap
+function getBracketSlotPositions(count, horizontalRadiusBase = 150, verticalRadiusBase = horizontalRadiusBase) {
+  // Place anchors evenly around the Coral, with extra prepared-layout height
+  // so occupied top and bottom slots clear the card and its vitals rail.
   const positions = [];
-  const radius = radiusBase + Math.max(0, count - 4) * 10;
+  const radiusGrowth = Math.max(0, count - 4) * 10;
+  const horizontalRadius = horizontalRadiusBase + radiusGrowth;
+  const verticalRadius = verticalRadiusBase + radiusGrowth;
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2 - Math.PI / 2; // start at top
-    const left = 50 + Math.cos(angle) * radius;
-    const top = 50 + Math.sin(angle) * radius;
+    const left = 50 + Math.cos(angle) * horizontalRadius;
+    const top = 50 + Math.sin(angle) * verticalRadius;
     positions.push({ top: `${roundLayoutNumber(top)}%`, left: `${roundLayoutNumber(left)}%` });
   }
   return positions;
@@ -6067,6 +6071,7 @@ export default function Simulator({
     && playerCorals.length > 1
     && playerCorals.every((coral) => coral.id.startsWith("tutorial-player-foundation-"))
   );
+  const autoFitPlayerIncludesAllSlots = !preparedPlayerReefLayout || embeddedLesson?.fitAllPlayerSlots === true;
   const playerLayoutSignature = [
     ...playerCorals.map((coral) => `${coral.id}:${coral.slots.map((slot) => `${slot.cardId ?? "_"}:${(slot.hostedCardIds ?? []).filter(Boolean).join(",")}`).join(";")}`),
     ...playerHabitatInstances.map((instance) => `habitat:${instance.instanceId}`),
@@ -8522,7 +8527,7 @@ export default function Simulator({
     const fitPlayerBoard = () => {
       if (frame != null) cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => zoomEcosystemToFit("player", {
-        includeAllSlots: !preparedPlayerReefLayout,
+        includeAllSlots: autoFitPlayerIncludesAllSlots,
       }));
     };
     fitPlayerBoard();
@@ -8536,7 +8541,7 @@ export default function Simulator({
       resizeObserver?.disconnect();
       window.removeEventListener("resize", fitPlayerBoard);
     };
-  }, [playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, tutorialBoardCardFocusActive, preparedPlayerReefLayout]);
+  }, [playerLayoutSignature, playerViewportTouched, mobileBoardView, mobileHandDockVisible, tutorialBoardCardFocusActive, autoFitPlayerIncludesAllSlots]);
 
   useEffect(() => {
     if (!opponentLayoutSignature || opponentViewportTouched) return undefined;
@@ -8565,11 +8570,11 @@ export default function Simulator({
     const frame = requestAnimationFrame(() => {
       zoomEcosystemToFit("opponent");
       if (!tutorialBoardCardFocusActive) zoomEcosystemToFit("player", {
-        includeAllSlots: !preparedPlayerReefLayout,
+        includeAllSlots: autoFitPlayerIncludesAllSlots,
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [previewExperience, mobileReefSplit, tutorialBoardCardFocusActive, preparedPlayerReefLayout]);
+  }, [previewExperience, mobileReefSplit, tutorialBoardCardFocusActive, autoFitPlayerIncludesAllSlots]);
 
   useEffect(() => {
     const result = reconcileFoundationHealthToFixedPoint(playerCorals, playerReefCreatureInstances, playerOrphanCreatures);
@@ -9160,7 +9165,8 @@ export default function Simulator({
         ? getOpponentSlotPositions(coral.slots.length, invertOpponentSlots)
         : getBracketSlotPositions(
             coral.slots.length,
-            preparedPlayerReefLayout ? PREPARED_LESSON_SLOT_RADIUS : 150,
+            preparedPlayerReefLayout ? PREPARED_LESSON_SLOT_HORIZONTAL_RADIUS : 150,
+            preparedPlayerReefLayout ? PREPARED_LESSON_SLOT_VERTICAL_RADIUS : 150,
           );
       const cardBounds = [{
         minX: centerX - coralWidth / 2,
@@ -27123,7 +27129,8 @@ export default function Simulator({
                         const densityBucket = playerSchoolDensityState.byFoundationId[coral.id] ?? null;
                         const anchorPositions = getBracketSlotPositions(
                           coral.slots.length,
-                          preparedPlayerReefLayout ? PREPARED_LESSON_SLOT_RADIUS : 150,
+                          preparedPlayerReefLayout ? PREPARED_LESSON_SLOT_HORIZONTAL_RADIUS : 150,
+                          preparedPlayerReefLayout ? PREPARED_LESSON_SLOT_VERTICAL_RADIUS : 150,
                         );
                         const canUpgradeThisCoral = upgradeableCoralIds.has(coral.id);
                         const isLayoutFoundationTarget = Boolean(

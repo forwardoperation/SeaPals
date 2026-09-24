@@ -257,6 +257,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     preVictoryMessage: "Excellent work! You followed the food web from Fish to Predator, used an Action, defended a faceoff, saw a Passive ability work, recovered a discarded creature, and triggered an On Play attack. Great Barracuda showed how a creature’s class controls both where it lives and what it can hunt. You’re ready for the next lesson!",
     celebration: "Every ability had a job to do!",
     autoEndOpeningTurn: true,
+    fitAllPlayerSlots: true,
     skills: ["Attack actions", "Offense and defense", "Passive abilities", "Recovery actions", "On Play abilities"],
     introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.ATTACKING,
@@ -275,9 +276,9 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       checkpointId: "tutorial-attack",
       steps: [
         {
-          title: "Meet the faceoff dice!",
-          message: "Sea Realm uses six dice: D4, D6, D8, D10, D12, and D20. The number tells you how many sides the die has and its possible range. A D4 rolls 1–4, while a D20 rolls 1–20. A larger die can roll higher, but every result still depends on the roll!",
-          action: "Review each die and its range, then continue.",
+          title: "Crunch starts a dice faceoff!",
+          message: "You just played Porcupine Fish! Its Crunch Action can attack your opponent's Sea Urchin because Sea Urchin is an Invertebrate. Crunch starts a faceoff: Porcupine Fish attacks with a D4, and Sea Urchin defends with a D6. Before we roll, meet all six faceoff dice: D4, D6, D8, D10, D12, and D20. The number tells you how many sides the die has and its possible range. A D4 rolls 1–4, while a D20 rolls 1–20. A larger die can roll higher, but every result still depends on the roll!",
+          action: "Review the dice and their ranges, then learn how this faceoff works.",
           visualAid: {
             kind: "dice-ladder",
             dice: ["D4", "D6", "D8", "D10", "D12", "D20"],
@@ -322,8 +323,8 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       playerTableau: [
         tableau("brain-coral-stage-1", [
           ["sea-urchin", "invertebrate"],
-        ]),
-        tableau("mustard-hill-coral-base"),
+        ], { x: -10, y: 50 }),
+        tableau("mustard-hill-coral-base", [], { x: 110, y: 50 }),
       ],
       opponentTableau: [tableau("mustard-hill-coral-base", [["sea-urchin", "invertebrate"]])],
       opponentTurnMode: "play",
