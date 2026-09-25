@@ -75,7 +75,8 @@ test("the lesson start overlay keeps only the guide, title, short dialogue, and 
   const intro = sourceSection(panelSource, 'if (mode === "intro") {', 'if (mode === "complete") {');
 
   assert.match(lessonModal, /<TeacherPortrait large \/>/);
-  assert.match(lessonModal, /Mr\. Easterling[^<]*Your guide/);
+  assert.match(lessonModal, /<span className=\{styles\.kicker\}>Mr\. Easterling<\/span>/);
+  assert.doesNotMatch(lessonModal, /Your guide/i);
   assert.match(lessonModal, /<h2 ref=\{headingRef\} tabIndex=\{-1\} id=\{titleId\}>\{title\}<\/h2>/);
   assert.match(lessonModal, /className=\{styles\.closeButton\}[\s\S]*?aria-label=\{mode === "intro" \? "Return to the lesson list"/);
 
