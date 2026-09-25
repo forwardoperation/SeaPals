@@ -104,7 +104,8 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
   assert.match(lesson.segments[0].message, /ocean.*many corals.*foundations for life.*generate Resource Points \(RP\).*homes for sea creatures.*Brain Coral/i);
   assert.ok((lesson.segments[0].message.match(/!/g) ?? []).length >= 1, "Mr. Easterling should open the tour with energy");
   assert.equal(lesson.segments[0].focus, undefined);
-  assert.match(lesson.segments[1].message, /Base Coral Foundation.*new branch.*Stage cards upgrade/i);
+  assert.equal(lesson.segments[1].title, "Base begins a Foundation");
+  assert.match(lesson.segments[1].message, /Base means.*new Foundation branch.*Stage cards upgrade/i);
   assert.match(lesson.segments[3].message, /Brain Coral costs 1 RP.*RP bank/i);
   assert.match(lesson.segments[4].message, /Passive.*Photosynthesis.*Collect 1 RP/i);
   assert.match(lesson.segments[5].message, /10 HP.*destroyed/i);
@@ -117,7 +118,7 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
   assert.equal(createGuidedFoundationCardLesson({ ...brainCoral, kind: "creature" }), null);
 });
 
-test("every card cue uses a short pointer that lands on its highlighted field", () => {
+test("every card cue uses a short pointer that lands on its printed field", () => {
   const focusKeys = ["type", "identity", "name", "cost", "rules", "health", "weaknesses", "slots", "stats"];
   for (const key of focusKeys) {
     for (const referenceMode of ["printed", "normalized"]) {
@@ -145,6 +146,17 @@ test("every card cue uses a short pointer that lands on its highlighted field", 
       assert.equal(tipOnHorizontalBorder || tipOnVerticalBorder, true, `${referenceMode} ${key} pointer should touch its highlight`);
     }
   }
+  const printedIdentity = TUTORIAL_CARD_FOCUS_REGIONS.printed.identity;
+  const printedName = TUTORIAL_CARD_FOCUS_REGIONS.printed.name;
+  const printedRules = TUTORIAL_CARD_FOCUS_REGIONS.printed.rules;
+  assert.ok(
+    printedIdentity.x + printedIdentity.width <= printedName.x,
+    "the Base pointer should target only the Base label rather than the full header",
+  );
+  assert.ok(
+    printedRules.tipX < printedRules.x + (printedRules.width / 3),
+    "the rules pointer should identify the Passive label rather than empty space at the right edge",
+  );
   assert.equal(getTutorialCardFocusRegion("missing"), null);
   assert.equal(getTutorialCardFocusRegion("rules", { referenceMode: "missing" }), null);
   assert.equal(new Set(Object.keys(TUTORIAL_CARD_FOCUS_REGIONS.printed)).size, Object.keys(TUTORIAL_CARD_FOCUS_REGIONS.printed).length);

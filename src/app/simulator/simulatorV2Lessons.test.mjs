@@ -1281,7 +1281,7 @@ test("Lesson 1 speaks the new-player mental model before asking for each action"
     hasCoralInPlay: false,
   });
   assert.equal(lesson.openingCardTourId, "brain-coral-base");
-  assert.equal(initial.action, "Great! Now that we know how to read Foundation cards, drag Brain Coral into your ecosystem for a cost of 1 RP.");
+  assert.equal(initial.action, "Let's begin your ecosystem by playing Brain Coral! This Base Coral costs 1 RP and provides your first homes for sea creatures. Drag it from your hand into the highlighted open water.");
   assert.equal(initial.pointerPrompt, "Drag Brain Coral into the highlighted open water.");
 
   const selectedInitial = getSimulatorV2LessonHelp(lesson, setup, {
@@ -1565,7 +1565,7 @@ test("hand play guidance teaches the real upward drag and matching drop destinat
   assert.equal(initial.target, "hand");
   assert.equal(initial.targetCardId, "brain-coral-base");
   assert.equal(initial.interaction, "drag");
-  assert.equal(initial.action, "Great! Now that we know how to read Foundation cards, drag Brain Coral into your ecosystem for a cost of 1 RP.");
+  assert.equal(initial.action, "Let's begin your ecosystem by playing Brain Coral! This Base Coral costs 1 RP and provides your first homes for sea creatures. Drag it from your hand into the highlighted open water.");
   assert.match(initial.hint, /upward.*release/);
   assert.match(initial.hint, /select (?:it|the card), choose Play/);
   const inspected = getSimulatorV2LessonHelp(first, setup, { gamePhase: "setup", selectedHandCard: first.setupCardId, handPopoverOpen: true });

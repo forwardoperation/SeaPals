@@ -17,10 +17,10 @@ function freezeRegion(region) {
 export const TUTORIAL_CARD_FOCUS_REGIONS = Object.freeze({
   printed: Object.freeze({
     type: freezeRegion({ x: 11, y: 42, width: 94, height: 20, tailX: 140, tailY: 52, tipX: 105, tipY: 52, direction: "left" }),
-    identity: freezeRegion({ x: 9, y: 7, width: 357, height: 55, tailX: 118, tailY: 104, tipX: 118, tipY: 62, direction: "up" }),
+    identity: freezeRegion({ x: 9, y: 7, width: 73, height: 38, tailX: 45, tailY: 85, tipX: 45, tipY: 45, direction: "up" }),
     name: freezeRegion({ x: 82, y: 8, width: 203, height: 34, tailX: 190, tailY: 84, tipX: 190, tipY: 42, direction: "up" }),
     cost: freezeRegion({ x: 284, y: 7, width: 79, height: 36, tailX: 324, tailY: 83, tipX: 324, tipY: 43, direction: "up" }),
-    rules: freezeRegion({ x: 10, y: 273, width: 355, height: 47, tailX: 330, tailY: 235, tipX: 330, tipY: 273, direction: "down" }),
+    rules: freezeRegion({ x: 10, y: 273, width: 355, height: 47, tailX: 45, tailY: 233, tipX: 45, tipY: 273, direction: "down" }),
     health: freezeRegion({ x: 10, y: 465, width: 104, height: 37, tailX: 64, tailY: 425, tipX: 64, tipY: 465, direction: "down" }),
     weaknesses: freezeRegion({ x: 110, y: 465, width: 158, height: 37, tailX: 190, tailY: 425, tipX: 190, tipY: 465, direction: "down" }),
     slots: freezeRegion({ x: 268, y: 422, width: 98, height: 78, tailX: 318, tailY: 382, tipX: 318, tipY: 422, direction: "down" }),
@@ -28,7 +28,7 @@ export const TUTORIAL_CARD_FOCUS_REGIONS = Object.freeze({
   }),
   normalized: Object.freeze({
     type: freezeRegion({ x: 16, y: 12, width: 116, height: 18, tailX: 170, tailY: 21, tipX: 132, tipY: 21, direction: "left" }),
-    identity: freezeRegion({ x: 12, y: 10, width: 351, height: 70, tailX: 118, tailY: 120, tipX: 118, tipY: 80, direction: "up" }),
+    identity: freezeRegion({ x: 16, y: 12, width: 116, height: 18, tailX: 58, tailY: 70, tipX: 58, tipY: 30, direction: "up" }),
     name: freezeRegion({ x: 16, y: 34, width: 250, height: 34, tailX: 154, tailY: 108, tipX: 154, tipY: 68, direction: "up" }),
     cost: freezeRegion({ x: 285, y: 16, width: 74, height: 42, tailX: 320, tailY: 98, tipX: 320, tipY: 58, direction: "up" }),
     rules: freezeRegion({ x: 16, y: 280, width: 343, height: 168, tailX: 330, tailY: 240, tipX: 330, tipY: 280, direction: "down" }),
@@ -329,8 +329,8 @@ export function createGuidedFoundationCardLesson(card) {
       },
       {
         id: "foundation-identity",
-        title: "Start with the Foundation header",
-        message: "The header identifies this as a Base Coral Foundation. Base Corals can begin a new branch of your ecosystem; later Stage cards upgrade that same Coral.",
+        title: "Base begins a Foundation",
+        message: "Base means this Coral can begin a new Foundation branch in your ecosystem. Later Stage cards upgrade that same Coral.",
         focus: "identity",
       },
       {

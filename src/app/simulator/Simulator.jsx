@@ -3666,19 +3666,7 @@ function TutorialCardCueOverlay({ focus, referenceMode }) {
       data-card-cue-region={focus}
       aria-hidden="true"
     >
-      <rect
-        x={region.x}
-        y={region.y}
-        width={region.width}
-        height={region.height}
-        rx="6"
-        fill="none"
-        stroke="#fde68a"
-        strokeWidth="3"
-        vectorEffect="non-scaling-stroke"
-        className="seapals-card-cue-region"
-      />
-      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g className="seapals-card-cue-arrow" fill="none" strokeLinecap="round" strokeLinejoin="round">
         <path d={shaftPath} stroke="#071827" strokeWidth="9" vectorEffect="non-scaling-stroke" />
         <path d={shaftPath} stroke="#fbbf24" strokeWidth="4" vectorEffect="non-scaling-stroke" />
         <path d={chevronPath} stroke="#071827" strokeWidth="9" vectorEffect="non-scaling-stroke" />
@@ -3792,9 +3780,6 @@ function TutorialCardLessonOverlay({
   const activeTitle = activeSegment?.title ?? lesson.title;
   const activeMessage = activeSegment?.message ?? lesson.message;
   const activeFocus = activeSegment?.focus ?? lesson.focus ?? null;
-  const segmentProgressLabel = segments.length > 1
-    ? `${lesson.eyebrow ?? "Card lesson"} - ${safeSegmentIndex + 1}/${segments.length}`
-    : lesson.progressLabel ?? lesson.eyebrow ?? "Card lesson";
   const hasNextSegment = segments.length > 0 && safeSegmentIndex < segments.length - 1;
   const canGoBack = safeSegmentIndex > 0 || Boolean(onBack);
 
@@ -3875,19 +3860,6 @@ function TutorialCardLessonOverlay({
         }
       }}
     >
-      <header className="shrink-0 border-b border-cyan-200/15 bg-slate-950/65 px-3 py-2 backdrop-blur sm:px-6 sm:py-3">
-        <div className="mx-auto flex max-w-6xl items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">{lesson.eyebrow ?? "Sea Realm Academy"}</span>
-            <strong className="block truncate text-sm font-black text-white">{segmentProgressLabel}</strong>
-          </div>
-          <button type="button" onClick={onSkip} className="min-h-11 shrink-0 rounded-full border border-cyan-100/25 bg-white/5 px-4 py-2 text-xs font-black text-cyan-50 hover:bg-white/10">
-            <span className="hidden sm:inline">{introduction ? "Skip introduction" : "Skip card lesson"}</span>
-            <span className="sm:hidden">Skip</span>
-          </button>
-        </div>
-      </header>
-
       <div className="seapals-card-lesson-stage min-h-0 flex-1 overflow-hidden px-3 py-2 sm:px-6 sm:py-4" data-card-lesson-stage>
         <div className="flex h-full min-h-0 items-center justify-center">
           {lesson.cardVisible === false || !card ? (
@@ -3905,20 +3877,30 @@ function TutorialCardLessonOverlay({
         </div>
       </div>
 
-      <aside className="shrink-0 border-t-4 border-cyan-400/60 bg-[#f4fbf8] text-slate-950 shadow-[0_-16px_50px_rgba(0,0,0,0.3)]" data-card-lesson-coach data-card-cue-region={activeFocus ?? undefined}>
-        <div ref={scrollRef} className="max-h-[25dvh] overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4" aria-live="polite" aria-atomic="true">
+      <aside className="flex h-[clamp(12rem,34dvh,22rem)] min-h-0 shrink-0 flex-col border-t-4 border-cyan-400/60 bg-[#f4fbf8] text-slate-950 shadow-[0_-16px_50px_rgba(0,0,0,0.3)]" data-card-lesson-coach data-card-cue-region={activeFocus ?? undefined}>
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4"
+          role="region"
+          aria-label="Lesson narration"
+          aria-live="polite"
+          aria-atomic="true"
+          tabIndex={0}
+        >
           <div className="mx-auto flex max-w-6xl items-start gap-3 sm:gap-4">
             <ProfessorGuidePortrait guide={guide} compact />
             <div className="min-w-0 flex-1">
-              <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-cyan-800">{guide.name} - {segmentProgressLabel}</span>
-              <h2 id="seapals-card-lesson-title" className="mt-1 text-lg font-black leading-tight text-slate-950 sm:text-2xl">{activeTitle}</h2>
+              <h2 id="seapals-card-lesson-title" className="text-lg font-black leading-tight text-slate-950 sm:text-2xl">{activeTitle}</h2>
               <p id="seapals-card-lesson-description" className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-700 sm:text-base">{activeMessage}</p>
             </div>
           </div>
         </div>
-        <footer className="border-t border-cyan-900/10 bg-white/75 px-4 pt-2 sm:px-6 sm:pt-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+        <footer className="shrink-0 bg-[#f4fbf8] px-4 pt-2 sm:px-6 sm:pt-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-            {canGoBack ? <button type="button" onClick={goBack} className="min-h-11 rounded-full border border-cyan-900/20 bg-white px-5 py-2 text-sm font-black text-cyan-950 hover:bg-cyan-50">Back</button> : <span />}
+            <div className="flex min-w-0 items-center gap-2">
+              {canGoBack ? <button type="button" onClick={goBack} className="min-h-11 rounded-full border border-cyan-900/20 bg-white px-5 py-2 text-sm font-black text-cyan-950 hover:bg-cyan-50">Back</button> : null}
+              <button type="button" onClick={onSkip} className="min-h-11 rounded-full px-3 py-2 text-sm font-black text-cyan-900 hover:bg-cyan-50" aria-label={introduction ? "Skip introduction" : "Skip card lesson"}>Skip</button>
+            </div>
             <button type="button" onClick={goForward} className="min-h-11 rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_10px_30px_rgba(16,185,129,0.25)] hover:brightness-105">
               {hasNextSegment ? "Next detail" : lesson.advanceLabel ?? "Continue"}
             </button>
@@ -22792,7 +22774,20 @@ export default function Simulator({
           box-shadow: 0 20px 56px rgba(2, 8, 23, .42), 0 0 0 5px rgba(103, 232, 249, .08);
           pointer-events: auto;
         }
-        .seapals-card-cue-region { filter: drop-shadow(0 0 6px rgba(251, 191, 36, .9)); }
+        .seapals-card-cue-arrow {
+          animation: seapals-card-cue-bob 1.15s ease-in-out infinite;
+          filter: drop-shadow(0 0 5px rgba(251, 191, 36, .72));
+          transform-origin: center;
+          transform-box: fill-box;
+        }
+        @keyframes seapals-card-cue-bob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .seapals-card-cue-arrow { animation: none; }
+        }
+        .seapals-reduced-motion .seapals-card-cue-arrow { animation: none; }
         .seapals-card-lesson-stage { container-type: size; }
         .seapals-card-reference { container-type: inline-size; width: min(100%, 34.25rem); }
         @supports (width: 1cqw) {
