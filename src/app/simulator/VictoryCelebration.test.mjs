@@ -129,7 +129,7 @@ test("embedded lessons pause on Mr. Easterling's authored exit dialogue before o
   assert.match(preVictoryBranch, /advanceLabel="Celebrate"/);
 });
 
-test("embedded lesson progress is saved at the real VP victory and the chooser exposes every goal", () => {
+test("embedded lesson progress is saved at the real VP victory", () => {
   assert.match(
     simulatorSource,
     /const embeddedLessonReadyToComplete = Boolean\([\s\S]*?tutorialProgress\?\.status === "complete"[\s\S]*?playerVp >= victoryTarget[\s\S]*?\^Victory\\b[\s\S]*?!combatResultCheckpoint[\s\S]*?\);/,
@@ -151,7 +151,5 @@ test("embedded lesson progress is saved at the real VP victory and the chooser e
   const completionCallback = experienceSource.match(/const completeLesson = useCallback\(\(\) => \{[\s\S]*?\n  \}, \[lessonId\]\);/)?.[0] ?? "";
   assert.match(completionCallback, /recordSimulatorV2LessonCompletion/);
   assert.doesNotMatch(completionCallback, /setPanel\("complete"\)/, "saving progress must leave the victory celebration visible");
-  assert.match(lessonPanelSource, /data-v2-lesson-goal=\{lesson\.victoryTarget\}/);
-  assert.match(lessonPanelSource, /Goal \{lesson\.victoryTarget\} VP/);
   assert.match(lessonPanelSource, /data-v2-lesson-vp-target=\{activeLesson\?\.victoryTarget \|\| undefined\}/);
 });

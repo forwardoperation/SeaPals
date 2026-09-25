@@ -365,7 +365,6 @@ export default function SimulatorV2LessonPanel({
   const teacherTitleId = useId();
   const completed = Array.isArray(progress?.completedLessonIds) ? progress.completedLessonIds : [];
   const completedSet = new Set(completed);
-  const completedCount = lessons.filter((lesson) => completedSet.has(lesson.id)).length;
   const lessonGroups = groupLessonsByModule(lessons, lessonModules);
   const lessonIndex = lessons.findIndex((lesson) => lesson.id === activeLesson?.id);
   const activeModule = lessonGroups.find((module) => module.lessons.some((lesson) => lesson.id === activeLesson?.id));
@@ -382,101 +381,35 @@ export default function SimulatorV2LessonPanel({
   );
 
   if (mode === "chooser") {
-    const firstIncompleteModule = lessonGroups.find((module) => (
-      module.lessons.some((lesson) => !completedSet.has(lesson.id))
-    ));
-    const openModuleId = activeModule?.id ?? firstIncompleteModule?.id ?? lessonGroups[0]?.id;
-    const progressPercent = lessons.length ? (completedCount / lessons.length) * 100 : 0;
-
     return (
       <LessonModal
         mode={mode}
         title="Learn by playing"
-        description={`${lessons.length} short lesson${lessons.length === 1 ? "" : "s"} on the game board. I’ll guide you through each move.`}
         onExit={onExit}
-        className={className}
+        className={`${styles.chooserModal} ${className}`.trim()}
       >
-        <div className={styles.curriculumProgress} data-v2-curriculum-progress>
-          <div className={styles.progressCopy}>
-            <strong>{completedCount} of {lessons.length} complete</strong>
-            <span>{completedCount === lessons.length && lessons.length ? "All lessons complete" : "Continue at your own pace"}</span>
-          </div>
-          <div
-            className={styles.progressTrack}
-            role="progressbar"
-            aria-label="Overall tutorial progress"
-            aria-valuemin="0"
-            aria-valuemax={Math.max(1, lessons.length)}
-            aria-valuenow={completedCount}
-            aria-valuetext={`${completedCount} of ${lessons.length} lessons complete`}
-          >
-            <span className={styles.progressFill} style={{ "--lesson-progress": `${progressPercent}%` }} />
-          </div>
-        </div>
-        <div className={styles.moduleList} data-v2-lesson-modules>
-          {lessonGroups.map((module) => {
-            const moduleCompleted = module.lessons.filter((lesson) => completedSet.has(lesson.id)).length;
+        <ol className={styles.lessonList} aria-label="Tutorial lessons" data-v2-lesson-list>
+          {lessons.map((lesson, index) => {
+            const done = completedSet.has(lesson.id);
+            const active = activeLesson?.id === lesson.id;
             return (
-              <details
-                key={module.id}
-                className={styles.moduleGroup}
-                open={module.id === openModuleId || undefined}
-                data-v2-lesson-module={module.id}
-              >
-                <summary className={styles.moduleSummary}>
-                  <span className={styles.moduleHeading}>
-                    <strong>{module.title}</strong>
-                    {module.description ? <span>{module.description}</span> : null}
-                  </span>
-                  <span className={styles.moduleProgress}>{moduleCompleted}/{module.lessons.length} complete</span>
-                  <span className={styles.moduleChevron} aria-hidden="true" />
-                </summary>
-                <ol
-                  className={styles.lessonList}
-                  aria-label={`${module.title} lessons`}
-                  start={Math.max(1, lessons.findIndex((lesson) => lesson.id === module.lessons[0]?.id) + 1)}
+              <li key={lesson.id}>
+                <button
+                  type="button"
+                  className={`${styles.lessonButton}${done ? ` ${styles.completedLesson}` : ""}${active ? ` ${styles.activeLesson}` : ""}`}
+                  onClick={() => onSelect?.(lesson.id)}
+                  aria-label={`${done ? "Replay completed" : active ? "Restart" : "Start"} lesson ${index + 1}: ${lesson.title}`}
+                  aria-current={active ? "step" : undefined}
+                  data-completed={done || undefined}
+                  data-v2-select-lesson={lesson.id}
                 >
-                  {module.lessons.map((lesson) => {
-                    const index = lessons.findIndex((entry) => entry.id === lesson.id);
-                    const done = completedSet.has(lesson.id);
-                    const active = activeLesson?.id === lesson.id;
-                    const goal = lessonGoal(lesson);
-                    return (
-                      <li key={lesson.id}>
-                        <button
-                          type="button"
-                          className={`${styles.lessonButton}${active ? ` ${styles.activeLesson}` : ""}`}
-                          onClick={() => onSelect?.(lesson.id)}
-                          aria-label={`${done ? "Replay" : active ? "Restart" : "Start"} lesson ${index + 1}: ${lesson.title}. ${goal}.${lesson.duration ? ` ${lesson.duration}.` : ""}`}
-                          aria-current={active ? "step" : undefined}
-                          data-v2-select-lesson={lesson.id}
-                        >
-                          <span className={`${styles.lessonNumber}${done ? ` ${styles.doneNumber}` : ""}`} aria-hidden="true">{done ? "✓" : index + 1}</span>
-                          <span className={styles.lessonCopy}>
-                            <strong>{lesson.title}</strong>
-                            <span className={styles.lessonSummary}>{lesson.description || lesson.summary}</span>
-                            <span className={styles.lessonMeta}>
-                              <span className={styles.lessonGoal} data-v2-lesson-goal={lesson.victoryTarget}>
-                                {lesson.goalLabel || <>Goal {lesson.victoryTarget} VP</>}
-                              </span>
-                              {lesson.duration ? <span>{lesson.duration}</span> : null}
-                              <small>{done ? "Complete · Play again" : active ? "In progress · Restart" : "Start lesson"}</small>
-                            </span>
-                          </span>
-                          <span className={styles.lessonArrow} aria-hidden="true">→</span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </details>
+                  <span className={styles.lessonNumber} aria-hidden="true">{index + 1}</span>
+                  <strong>{lesson.title}</strong>
+                </button>
+              </li>
             );
           })}
-        </div>
-        <div className={styles.modalFooter}>
-          <span>{completedCount === lessons.length && lessons.length ? "You can replay any lesson." : "One idea at a time. Your progress is saved."}</span>
-          {onExit ? <button type="button" className={styles.textButton} onClick={onExit}>Back to game</button> : null}
-        </div>
+        </ol>
       </LessonModal>
     );
   }

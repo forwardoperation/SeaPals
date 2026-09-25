@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { SIMULATOR_V2_LESSONS } from "./simulatorV2Lessons.mjs";
+
 const simulatorDirectory = new URL("./", import.meta.url);
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
 const presentationFiles = (await readdir(simulatorDirectory, { withFileTypes: true }))
@@ -156,25 +158,44 @@ test("the normal V2 opening screen keeps deck setup primary and offers a guided 
   assert.doesNotMatch(landing, /aria-pressed=/, "difficulty should not fall back to a wall of option buttons");
 });
 
-test("the lesson chooser scales through accessible modules and compact progress", () => {
-  assert.match(lessonPanelSource, /description=\{`\$\{lessons\.length\} short lesson/);
-  assert.doesNotMatch(lessonPanelSource, /Four short lessons/);
-  assert.match(lessonPanelSource, /data-v2-curriculum-progress/);
-  assert.match(lessonPanelSource, /role="progressbar"/);
-  assert.match(lessonPanelSource, /aria-valuenow=\{completedCount\}/);
-  assert.match(lessonPanelSource, /aria-valuetext=\{`\$\{completedCount\} of \$\{lessons\.length\} lessons complete`\}/);
-  assert.match(lessonPanelSource, /data-v2-lesson-modules/);
-  assert.match(lessonPanelSource, /<details[\s\S]*?open=\{module\.id === openModuleId \|\| undefined\}[\s\S]*?data-v2-lesson-module=\{module\.id\}/);
-  assert.match(lessonPanelSource, /<summary className=\{styles\.moduleSummary\}>/);
-  assert.match(lessonPanelSource, /aria-current=\{active \? "step" : undefined\}/);
-  assert.match(lessonPanelSource, /lesson\.goalLabel \|\| <>Goal \{lesson\.victoryTarget\} VP<\/>/);
-  assert.match(lessonPanelSource, /description:\s*module\.description \?\? module\.summary \?\? ""/);
-  assert.match(lessonPanelSource, /data-v2-completion-progress/);
-  assert.doesNotMatch(
+test("the lesson chooser is a clean direct list of four numbered title-only buttons", () => {
+  const chooser = sourceSection(
     lessonPanelSource,
-    /<ol className=\{styles\.completionProgress\}/,
-    "completion should summarize a large curriculum without rendering one circle per lesson",
+    'if (mode === "chooser") {',
+    'if (mode === "intro") {',
   );
+  const lessonList = jsxOpeningTagContaining(chooser, "data-v2-lesson-list");
+  const lessonButton = jsxOpeningTagContaining(chooser, "data-v2-select-lesson");
+
+  assert.deepEqual(
+    SIMULATOR_V2_LESSONS.map(({ number, title }) => ({ number, title })),
+    [
+      { number: 1, title: "Build your first reef" },
+      { number: 2, title: "Interactions" },
+      { number: 3, title: "Build a Habitat for an Apex" },
+      { number: 4, title: "Make room for a giant" },
+    ],
+  );
+  assert.match(lessonList, /^<ol\b/);
+  assert.match(chooser, /<ol\b[^>]*data-v2-lesson-list[\s\S]*?\{lessons\.map\(\(lesson, index\) =>/);
+  assert.match(lessonButton, /^<button\b/);
+  assert.match(lessonButton, /type="button"/);
+  assert.match(lessonButton, /onClick=\{\(\) => onSelect\?\.\(lesson\.id\)\}/);
+  assert.match(lessonButton, /aria-current=\{active \? "step" : undefined\}/);
+  assert.match(lessonButton, /data-v2-select-lesson=\{lesson\.id\}/);
+  assert.match(lessonButton, /data-completed=\{done \|\| undefined\}/);
+  assert.match(lessonButton, /styles\.completedLesson/);
+  assert.match(lessonButton, /styles\.activeLesson/);
+  assert.match(lessonButton, /aria-label=\{`\$\{done \? "Replay completed" : active \? "Restart" : "Start"\} lesson \$\{index \+ 1\}: \$\{lesson\.title\}`\}/);
+  assert.match(chooser, /className=\{styles\.lessonNumber\}[^>]*>\{index \+ 1\}<\/span>/);
+  assert.match(chooser, /<strong>\{lesson\.title\}<\/strong>/);
+
+  assert.doesNotMatch(chooser, /<details\b|<summary\b|module\.title|module\.description/);
+  assert.doesNotMatch(chooser, /curriculumProgress|progressTrack|role="progressbar"/);
+  assert.doesNotMatch(chooser, /lesson\.description|lesson\.summary|lesson\.goalLabel|lesson\.victoryTarget|lesson\.duration/);
+  assert.doesNotMatch(chooser, /lessonSummary|lessonMeta|lessonGoal|lessonArrow|doneNumber/);
+  assert.doesNotMatch(chooser, /modalFooter|textButton|Back to game/);
+  assert.doesNotMatch(chooser, /\bdescription=/);
 });
 
 test("the streamlined V2 opening names decks directly and keeps difficulty labels free of explanatory copy", () => {
