@@ -113,11 +113,30 @@ test("proxy descriptors retain card-specific reasons and exact action identity",
   assert.match(derivation, /specificBlock/);
   assert.match(derivation, /utilityActionKey|actionKey/);
   assert.match(derivation, /targetCount|no compatible target|no legal target/i);
+  assert.match(derivation, /attackDice:\s*basicAttack\.attackDice/);
+  assert.match(derivation, /targetCategories:\s*basicAttack\.target\?\.categories\s*\?\?\s*basicAttack\.targetCategories\s*\?\?\s*\[\]/);
+  assert.match(derivation, /targetTags:\s*basicAttack\.targetTags\s*\?\?\s*basicAttack\.target\?\.tags/);
   assert.match(availabilitySource, /discardPile\.length/);
   assert.match(availabilitySource, /foundationDeck\.length[\s\S]*?palsDeck\.length/);
   assert.match(availabilitySource, /effect\.targetTags/);
   assert.match(availabilitySource, /effect\.targetStages|effect\.requiredStage/);
   assert.match(availabilitySource, /getAcademyActionBlock/);
+});
+
+test("ready attacks replace truncated prose with die and target symbols", () => {
+  assert.match(proxySource, /getAttackActionPresentation/);
+  assert.match(proxySource, /className=\{styles\.attackDie\}/);
+  assert.match(proxySource, /className=\{styles\.targetIcons\}/);
+  assert.match(proxySource, /src=\{target\.icon\}/);
+  assert.match(proxySource, /alt=""/);
+  assert.match(proxySource, /aria-hidden="true"/);
+  assert.match(proxySource, /attackPresentation\.restrictionSummary/);
+  assert.match(
+    proxySource,
+    /ready && attackPresentation[\s\S]*?styles\.attackFacts[\s\S]*?:\s*\([\s\S]*?styles\.description/,
+    "utility actions and unavailable attacks should retain their explanatory description",
+  );
+  assert.match(proxyStyles, /\.targetIconChip\s*\{[\s\S]*?width:\s*1\.35rem;[\s\S]*?height:\s*1\.35rem;/);
 });
 
 test("the proxy keeps tutorial hooks while opponent and reference previews stay read-only", () => {

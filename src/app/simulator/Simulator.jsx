@@ -2784,7 +2784,7 @@ function getBasicAttackEffect(card) {
         text: action.text ?? effect.text ?? "",
         actionCost: Number(action.cost?.rp ?? 0),
         skipNextTurn: /cannot (?:use|be performed).*next turn/i.test(action.text ?? ""),
-        targetTags: effect.targetTags ?? action.targetTags ?? [],
+        targetTags: effect.targetTags ?? effect.target?.tags ?? action.targetTags ?? [],
         unsupportedDetails: hasCompanionEffects
           ? "This action has additional effects that are not implemented; only its opposed attack resolved."
           : "",
@@ -21947,6 +21947,10 @@ export default function Simulator({
           text: actionText,
           cost: Number(basicAttack.actionCost ?? 0),
           kind: "attack",
+          attackDice: basicAttack.attackDice,
+          targetCategories: basicAttack.target?.categories ?? basicAttack.targetCategories ?? [],
+          targetTags: basicAttack.targetTags ?? basicAttack.target?.tags ?? [],
+          targetZone: basicAttack.targetZone ?? basicAttack.target?.zone ?? null,
           availability,
           tutorialTarget: "attack-button",
           tutorialActionKey: inspectedActionKey,

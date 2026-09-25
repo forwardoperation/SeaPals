@@ -1,15 +1,10 @@
 "use client";
 
+import {
+  getActionAccessibleLabel,
+  getAttackActionPresentation,
+} from "./attackActionPresentation.mjs";
 import styles from "./CardActionProxyOverlay.module.css";
-
-function actionAccessibleLabel(action) {
-  const cost = Number(action.cost ?? 0);
-  const costLabel = cost > 0 ? `, costs ${cost} RP` : "";
-  const stateLabel = action.availability.ready
-    ? ", ready to use"
-    : `, unavailable: ${action.availability.reason}`;
-  return `${action.label}${costLabel}${stateLabel}`;
-}
 
 export default function CardActionProxyOverlay({
   cardName,
@@ -31,12 +26,15 @@ export default function CardActionProxyOverlay({
         >
           {actions.map((action) => {
             const ready = action.availability.ready;
+            const attackPresentation = action.kind === "attack"
+              ? getAttackActionPresentation(action)
+              : null;
             return (
               <button
                 key={action.id}
                 type="button"
                 aria-disabled={!ready}
-                aria-label={actionAccessibleLabel(action)}
+                aria-label={getActionAccessibleLabel(action, attackPresentation)}
                 className={`${styles.proxy} ${ready ? styles.ready : styles.unavailable} ${action.kind === "attack" ? styles.attack : styles.utility}${action.tutorialClassName ?? ""}`}
                 data-card-action-proxy={action.id}
                 data-card-action-state={ready ? "ready" : action.availability.blockType}
@@ -54,9 +52,43 @@ export default function CardActionProxyOverlay({
                   <strong>{action.label}</strong>
                   {Number(action.cost ?? 0) > 0 ? <span>{action.cost} RP</span> : null}
                 </span>
-                <span className={styles.description}>
-                  {ready ? action.text : action.availability.reason}
-                </span>
+                {ready && attackPresentation ? (
+                  <span className={styles.attackFacts} aria-hidden="true">
+                    <span className={styles.attackDie}>{attackPresentation.attackDice}</span>
+                    <span className={styles.targetConnector}>→</span>
+                    <span
+                      className={styles.targetGroup}
+                      title={`Can target ${attackPresentation.accessibleTargetSummary}`}
+                    >
+                      <span className={styles.targetCaption}>Can target</span>
+                      <span className={styles.targetIcons}>
+                        {attackPresentation.targets.map((target) => (
+                          <span
+                            key={target.category}
+                            className={styles.targetIconChip}
+                            title={target.label}
+                          >
+                            <img
+                              src={target.icon}
+                              alt=""
+                              aria-hidden="true"
+                              className={styles.targetIcon}
+                            />
+                          </span>
+                        ))}
+                      </span>
+                      {attackPresentation.restrictionSummary ? (
+                        <span className={styles.targetRestriction}>
+                          {attackPresentation.restrictionSummary}
+                        </span>
+                      ) : null}
+                    </span>
+                  </span>
+                ) : (
+                  <span className={styles.description}>
+                    {ready ? action.text : action.availability.reason}
+                  </span>
+                )}
               </button>
             );
           })}
