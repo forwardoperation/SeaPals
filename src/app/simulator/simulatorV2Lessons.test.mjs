@@ -216,9 +216,7 @@ test("five continuous lessons form ordered modules and supply legal deterministi
     );
     assert.equal(
       victoryCheckpointIndex,
-      selected.id === "apex-predators"
-        ? selected.contract.checkpoints.length - 2
-        : selected.contract.checkpoints.length - 1,
+      selected.contract.checkpoints.length - 1,
       `${selected.id} celebrates only after the scoring play and any mandatory on-play resolution`,
     );
     const module = SIMULATOR_V2_LESSON_MODULES.find(({ id }) => id === selected.moduleId);
@@ -1021,11 +1019,33 @@ test("the Apex lesson completes a Coral Reef Habitat before upgrading, funding, 
     details: { accepted: true, attackerCardId: hammerhead.id, onPlay: true, resolvedCount: 2 },
   };
   const route = [fishEvent, invertEvent, habitatEvent, upgradeEvent, turnEvent, collectEvent, drawEvent, apexEvent, vp(12, 6), ravageEvent];
-  assert.equal(observe(selected.id, route).progress.status, "complete");
+  const beforeRavage = observe(selected.id, route.slice(0, -1));
+  assert.equal(beforeRavage.progress.status, "active");
+  assert.equal(beforeRavage.progress.completedCheckpointIds.length, 8);
+  assert.equal(getSimulatorTutorialCurrentCheckpoint(beforeRavage.contract, beforeRavage.progress).id, "v2-resolve-ravage");
+  assert.equal(
+    beforeRavage.progress.deferredCheckpointEvents["tutorial-earn-vp"].details.to,
+    12,
+    "Hammerhead's winning VP waits until both mandatory Ravage attacks resolve",
+  );
+  const afterFirstRavage = observe(selected.id, [
+    ...route.slice(0, -1),
+    { ...ravageEvent, details: { ...ravageEvent.details, resolvedCount: 1 } },
+  ]);
+  assert.equal(afterFirstRavage.progress.status, "active");
+  assert.equal(afterFirstRavage.progress.completedCheckpointIds.length, 8);
+  assert.equal(getSimulatorTutorialCurrentCheckpoint(afterFirstRavage.contract, afterFirstRavage.progress).id, "v2-resolve-ravage");
+  const complete = observe(selected.id, route);
+  assert.equal(complete.progress.status, "complete");
+  assert.deepEqual(
+    complete.progress.completedCheckpointIds.slice(-2),
+    ["v2-resolve-ravage", "tutorial-earn-vp"],
+    "the final Ravage attack finishes before the deferred victory checkpoint",
+  );
+  assert.deepEqual(complete.progress.deferredCheckpointEvents, {});
   assert.equal(observe(selected.id, [habitatEvent]).progress.completedCheckpointIds.length, 0, "Habitat cannot skip the composition steps");
   assert.equal(observe(selected.id, [fishEvent, invertEvent, upgradeEvent]).progress.completedCheckpointIds.length, 2, "an Apex upgrade cannot skip the Habitat placement");
-  assert.equal(observe(selected.id, [...route.slice(0, -1), { ...ravageEvent, details: { ...ravageEvent.details, resolvedCount: 1 } }]).progress.completedCheckpointIds.length, 9);
-  assert.equal(observe(selected.id, [...route.slice(0, -1), { ...ravageEvent, details: { ...ravageEvent.details, onPlay: false } }]).progress.completedCheckpointIds.length, 9);
+  assert.equal(observe(selected.id, [...route.slice(0, -1), { ...ravageEvent, details: { ...ravageEvent.details, onPlay: false } }]).progress.completedCheckpointIds.length, 8);
   assert.equal(observe(selected.id, route.slice(0, -1)).progress.status, "active");
 });
 

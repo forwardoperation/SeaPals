@@ -508,13 +508,13 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       collectCheckpoint(),
       drawCheckpoint({ id: "v2-draw-hammerhead", title: "Draw the Apex", deckType: "pals" }),
       buildCheckpoint("v2-play-apex", "Play Hammerhead", "hammerhead"),
-      victoryCheckpoint(12),
       checkpoint("v2-resolve-ravage", ACTION.ATTACK_RESOLVED, "Resolve both Ravage attacks", "Choose two different legal targets and resolve both faceoffs.", [
         truthy("details.accepted"),
         equals("details.attackerCardId", "hammerhead"),
         truthy("details.onPlay"),
         atLeast("details.resolvedCount", 2),
       ]),
+      victoryCheckpoint(12),
     ],
     buildCards: {
       "v2-add-habitat-fish": ["clownfish"],

@@ -8585,14 +8585,14 @@ export default function Simulator({
     const eventRequiresResolution = Boolean(eventOverlay)
       || String(eventOverlay?.type ?? "").startsWith("choose-")
       || ["onplay-target-prompt", "faceoff-ready", "school-attack-ready", EFFECT_ROLL_READY_TYPE].includes(eventOverlay?.type);
-    if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || consumedAttackFlight || boardStatPresentationActive || eventRequiresResolution || effectRollRolling) return;
+    if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || consumedAttackFlight || combatResultCheckpoint || boardStatPresentationActive || eventRequiresResolution || effectRollRolling) return;
     const result = getResolvedVictoryResult(playerVp, opponentVp);
     if (!result) return;
     setGameResult((current) => {
       if (current) return current;
       return result.message;
     });
-  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, effectRollRolling, consumedAttackFlight, boardStatPresentationActive, embeddedLessonVictoryGateOpen]);
+  }, [gamePhase, playerVp, opponentVp, victoryTarget, opponentThinking, eventOverlay?.type, eventOverlay?.opponentSequence, pendingEvents, playingCardId, attackContext, searchContext, pendingCreatureAction, faceoffRolling, effectRollRolling, consumedAttackFlight, combatResultCheckpoint, boardStatPresentationActive, embeddedLessonVictoryGateOpen]);
 
   useEffect(() => {
     if (!isStoryMode || embeddedLesson || storyResultRecordedRef.current || !gameResult) return;
@@ -28427,7 +28427,7 @@ export default function Simulator({
         </div>
       ) : null}
 
-      {gameResult && (!tutorialLessonWon || (embeddedLesson && tutorialProgress?.status === "complete")) && /^Victory\b/i.test(gameResult) ? (
+      {gameResult && (!tutorialLessonWon || (embeddedLesson && embeddedLessonReadyToComplete)) && /^Victory\b/i.test(gameResult) ? (
         <VictoryCelebration
           message={embeddedLesson
             ? `Victory: ${embeddedLesson.celebration ?? embeddedLesson.completion} ${playerVp}/${victoryTarget} VP goal reached.`

@@ -63,7 +63,7 @@ test("the simulator celebrates both match wins and completed embedded VP lessons
   assert.match(simulatorSource, /import VictoryCelebration from "\.\/VictoryCelebration";/);
   assert.match(
     simulatorSource,
-    /gameResult && \(!tutorialLessonWon \|\| \(embeddedLesson && tutorialProgress\?\.status === "complete"\)\) && \/\^Victory\\b\/i\.test\(gameResult\)[\s\S]*?<VictoryCelebration/,
+    /gameResult && \(!tutorialLessonWon \|\| \(embeddedLesson && embeddedLessonReadyToComplete\)\) && \/\^Victory\\b\/i\.test\(gameResult\)[\s\S]*?<VictoryCelebration/,
   );
   assert.match(simulatorSource, /<VictoryCelebration[\s\S]*?embeddedLesson\.celebration[\s\S]*?VP goal reached/);
   assert.match(simulatorSource, /embeddedLesson \? "Replay Lesson" : "Retry Practice Duel"/);
@@ -132,7 +132,17 @@ test("embedded lessons pause on Mr. Easterling's authored exit dialogue before o
 test("embedded lesson progress is saved at the real VP victory and the chooser exposes every goal", () => {
   assert.match(
     simulatorSource,
-    /const embeddedLessonReadyToComplete = Boolean\([\s\S]*?tutorialProgress\?\.status === "complete"[\s\S]*?playerVp >= victoryTarget[\s\S]*?\^Victory\\b[\s\S]*?\);/,
+    /const embeddedLessonReadyToComplete = Boolean\([\s\S]*?tutorialProgress\?\.status === "complete"[\s\S]*?playerVp >= victoryTarget[\s\S]*?\^Victory\\b[\s\S]*?!combatResultCheckpoint[\s\S]*?\);/,
+  );
+  assert.match(
+    simulatorSource,
+    /if \(playingCardId \|\| attackContext \|\| searchContext \|\| pendingCreatureAction \|\| faceoffRolling \|\| consumedAttackFlight \|\| combatResultCheckpoint \|\| boardStatPresentationActive \|\| eventRequiresResolution \|\| effectRollRolling\) return;/,
+    "the victory resolver must wait for the final combat result dialog to close",
+  );
+  assert.match(
+    simulatorSource,
+    /\[gamePhase, playerVp, opponentVp, victoryTarget,[^\]]*combatResultCheckpoint,[^\]]*embeddedLessonVictoryGateOpen\]/,
+    "closing the final combat result must rerun victory resolution",
   );
   assert.match(
     simulatorSource,
