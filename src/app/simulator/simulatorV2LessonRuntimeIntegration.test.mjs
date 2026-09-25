@@ -296,9 +296,9 @@ test("Simulator starts an embedded lesson from the hydrated board and scores its
   );
 });
 
-test("Lesson 2 begins with a Pals draw and placement before the player's opening attack", () => {
+test("Lesson 2 begins with a Pals draw and waits for the player's explicit turn end", () => {
   const lesson = getSimulatorV2Lesson("first-attack");
-  assert.equal(lesson.autoEndOpeningTurn, true);
+  assert.equal(lesson.autoEndOpeningTurn, undefined);
   assert.deepEqual(
     lesson.checkpoints.slice(0, 4).map(({ id }) => id),
     ["v2-draw-opening-attacker", "v2-place-opening-attacker", "tutorial-attack", "v2-pass-to-counterattack"],
@@ -333,30 +333,33 @@ test("Lesson 2 begins with a Pals draw and placement before the player's opening
     "the prepared Interactions reef gives both Foundation branches and their slots room at the default Fit",
   );
 
-  const automaticOpening = sourceSection(
-    "tutorialRuntime?.lessonStarted === true",
-    "if (!embeddedLesson || !tutorialCurrentCheckpoint) return;",
+  assert.doesNotMatch(
+    simulatorSource,
+    /autoEndOpeningTurn|autoEndedEmbeddedOpeningTurnRef|embeddedLessonAutoEndingOpeningTurn/,
+    "Lesson 2 must never end the player's turn from a render or presentation effect",
   );
 
-  assert.match(automaticOpening, /embeddedLesson\?\.autoEndOpeningTurn === true/);
-  assert.match(automaticOpening, /tutorialCurrentCheckpoint\?\.id === "v2-pass-to-counterattack"/);
+  const layoutCompletion = extractFunction("completeTutorialLayoutLessonAction", "handleEcosystemClick");
+  assert.match(layoutCompletion, /gamePhase !== "setup"/);
   assert.doesNotMatch(
-    automaticOpening,
-    /tutorialCurrentCheckpoint\?\.id === "tutorial-attack"/,
-    "starting Lesson 2 must leave the player in control until the opening attack resolves",
+    layoutCompletion,
+    /endTurn\s*\(|TURN_ENDED|emitTutorialEvent/,
+    "moving, fitting, or resizing an ecosystem must not participate in turn progression",
   );
-  assert.match(automaticOpening, /gamePhase === "main"/);
-  assert.match(automaticOpening, /eventOverlay/);
-  assert.match(automaticOpening, /!combatResultCheckpoint/);
-  assert.match(automaticOpening, /!consumedAttackFlight/);
-  assert.match(automaticOpening, /modal/);
-  assert.match(automaticOpening, /gameResult/);
-  assert.match(automaticOpening, /autoEndedEmbeddedOpeningTurnRef\.current/);
-  assert.match(automaticOpening, /window\.queueMicrotask/);
+
+  const cueMeasureKey = sourceSection(
+    "const embeddedLessonActionCueMeasureKey =",
+    "const attackTargetMeasureKey =",
+  );
+  assert.match(cueMeasureKey, /embeddedLesson && tutorialHelp/);
+  assert.match(
+    cueMeasureKey,
+    /tutorialHelp\.cueId,[\s\S]*?mobileReefSplit/,
+    "the Next Round cue must remeasure after the ecosystem divider moves",
+  );
   assert.ok(
-    automaticOpening.indexOf("autoEndedEmbeddedOpeningTurnRef.current = true")
-      < automaticOpening.indexOf("endTurn();"),
-    "the per-mount guard is committed before the automatic turn request",
+    cueMeasureKey.indexOf("mobileReefSplit") < cueMeasureKey.indexOf('tutorialHelp.interaction === "drag"'),
+    "tap cues must track divider movement rather than limiting remeasurement to drag lessons",
   );
 
   const endTurnFlow = extractFunction("endTurn", "resolveOpponentTurn");
@@ -399,7 +402,7 @@ test("Lesson 2 blocks the opening attack behind a three-step dice and food-web p
 
   const primerRuntime = sourceSection(
     "const embeddedLessonPrimerSteps =",
-    "const embeddedLessonAutoEndingOpeningTurn =",
+    "const tutorialStepNumber =",
   );
   assert.match(primerRuntime, /embeddedLesson\?\.preFaceoffPrimer\?\.steps/);
   assert.match(primerRuntime, /embeddedLesson\?\.preFaceoffPrimer\?\.checkpointId === tutorialCurrentCheckpoint\?\.id/);

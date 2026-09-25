@@ -4941,7 +4941,6 @@ export default function Simulator({
   const [cardCoinFlip, setCardCoinFlip] = useState(null);
   const startRoundRef = useRef(null);
   const turnAdvanceRequestedRef = useRef(false);
-  const autoEndedEmbeddedOpeningTurnRef = useRef(false);
   const inspectorReturnFocusRef = useRef(null);
   const handPopoverReturnFocusRef = useRef(null);
   const [inspectedCard, setInspectedCard] = useState(null);
@@ -6101,37 +6100,6 @@ export default function Simulator({
         visualAid: embeddedLessonPrimerDefinition.visualAid ?? null,
       }
     : null;
-  const embeddedLessonAutoEndingOpeningTurn = Boolean(
-    tutorialRuntime?.lessonStarted === true
-    && embeddedLesson?.autoEndOpeningTurn === true
-    && tutorialCurrentCheckpoint?.id === "v2-pass-to-counterattack"
-    && gamePhase === "main"
-    && !eventOverlay
-    && !combatResultCheckpoint
-    && !consumedAttackFlight
-    && !modal
-    && !gameResult
-  );
-  useEffect(() => {
-    if (!embeddedLessonAutoEndingOpeningTurn || autoEndedEmbeddedOpeningTurnRef.current) return undefined;
-    let cancelled = false;
-    window.queueMicrotask(() => {
-      if (cancelled || autoEndedEmbeddedOpeningTurnRef.current) return;
-      autoEndedEmbeddedOpeningTurnRef.current = true;
-      endTurn();
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    embeddedLessonAutoEndingOpeningTurn,
-    embeddedLesson?.autoEndOpeningTurn,
-    embeddedLesson?.id,
-    combatResultCheckpoint,
-    consumedAttackFlight,
-    tutorialCurrentCheckpoint?.id,
-    tutorialRuntime?.lessonStarted,
-  ]);
   useLayoutEffect(() => {
     if (!embeddedLesson || !tutorialCurrentCheckpoint) return;
     setPlayerCorals((current) => repairSimulatorV2LessonPlacementConflict({
@@ -7600,7 +7568,7 @@ export default function Simulator({
       finishAttackTargetInPlay: scriptedOpponentCardIdsInPlay.includes(scriptedFinishPlan.finishAttackTargetCardId),
     };
   })() : null;
-  const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted && !embeddedLessonAutoEndingOpeningTurn
+  const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted
     ? embeddedLessonPrimerHelp ?? (embeddedLesson
       ? (checkpoint, uiState) => getSimulatorV2LessonHelp(embeddedLesson, checkpoint, uiState)
       : getSimulatorTutorialHelp)(tutorialCurrentCheckpoint, {
@@ -21669,24 +21637,30 @@ export default function Simulator({
     && !combatResultCheckpoint
     && !modal
     && !faceoffRolling;
-  const embeddedLessonActionCueMeasureKey = embeddedLesson && tutorialHelp?.interaction === "drag" ? [
+  const embeddedLessonActionCueMeasureKey = embeddedLesson && tutorialHelp ? [
     tutorialHelp.cueId,
+    mobileReefSplit,
     ecosystemZoom,
     ecosystemOffset.x,
     ecosystemOffset.y,
-    mobileReefSplit,
-    hand.join(","),
-    JSON.stringify(playerCorals.map((coral) => ({
-      id: coral.id,
-      cardId: coral.cardId,
-      x: coral.x,
-      y: coral.y,
-      slots: coral.slots.map((slot) => ({
-        id: slot.id,
-        cardId: slot.cardId,
-        position: slot.position,
-      })),
-    }))),
+    opponentEcosystemZoom,
+    opponentEcosystemOffset.x,
+    opponentEcosystemOffset.y,
+    JSON.stringify(floatingCardOffsets),
+    ...(tutorialHelp.interaction === "drag" ? [
+      hand.join(","),
+      JSON.stringify(playerCorals.map((coral) => ({
+        id: coral.id,
+        cardId: coral.cardId,
+        x: coral.x,
+        y: coral.y,
+        slots: coral.slots.map((slot) => ({
+          id: slot.id,
+          cardId: slot.cardId,
+          position: slot.position,
+        })),
+      }))),
+    ] : []),
   ].join(":") : "inactive";
   const attackTargetMeasureKey = attackContext ? [
     attackContext.attackerCardId,

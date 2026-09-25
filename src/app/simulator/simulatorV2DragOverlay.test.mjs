@@ -165,7 +165,7 @@ test("the board-native overlay uses bidirectional movement arrows for layout dem
     /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?measureKey=\{embeddedLessonActionCueMeasureKey\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag \|\| draggingCoralId \|\| slotDragStart\)\}/,
   );
   const helpState = sourceSection(
-    "const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted && !embeddedLessonAutoEndingOpeningTurn",
+    "const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted",
     "const tutorialConditionHelp =",
   );
   assert.doesNotMatch(presentationGate, /\|\| mobileHandDrag/);
@@ -199,7 +199,18 @@ test("the board-native overlay uses bidirectional movement arrows for layout dem
   assert.match(simulatorSource, /\.seapals-v2-action-cue-layout-arrow\.is-left[\s\S]*?seapalsV2LayoutArrowLeft/);
   assert.match(simulatorSource, /\.seapals-v2-action-cue-layout-arrow\.is-right[\s\S]*?seapalsV2LayoutArrowRight/);
   assert.match(simulatorSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.seapals-v2-action-cue-layout-arrow[\s\S]*?animation:\s*none/);
-  assert.match(simulatorSource, /const embeddedLessonActionCueMeasureKey = [\s\S]*?ecosystemZoom[\s\S]*?ecosystemOffset\.x[\s\S]*?mobileReefSplit[\s\S]*?playerCorals\.map/);
+  const cueMeasureKey = sourceSection(
+    "const embeddedLessonActionCueMeasureKey =",
+    "const attackTargetMeasureKey =",
+  );
+  assert.match(cueMeasureKey, /embeddedLesson && tutorialHelp/);
+  assert.match(cueMeasureKey, /tutorialHelp\.cueId,[\s\S]*?mobileReefSplit/);
+  assert.match(cueMeasureKey, /ecosystemZoom[\s\S]*?ecosystemOffset\.x[\s\S]*?opponentEcosystemZoom[\s\S]*?opponentEcosystemOffset\.x/);
+  assert.match(cueMeasureKey, /tutorialHelp\.interaction === "drag"[\s\S]*?hand\.join\(","\)[\s\S]*?playerCorals\.map/);
+  assert.ok(
+    cueMeasureKey.indexOf("mobileReefSplit") < cueMeasureKey.indexOf('tutorialHelp.interaction === "drag"'),
+    "tap cues must remeasure when the reef divider moves",
+  );
 });
 
 test("embedded coaching stays centered above the reef divider while the hand points to the action", () => {

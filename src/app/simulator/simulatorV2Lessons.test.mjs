@@ -748,6 +748,34 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
     vp(3, 2),
     porcupineResolved,
   ];
+  const waitingToPass = observe(selected.id, throughOpeningAttack);
+  assert.equal(
+    getSimulatorTutorialCurrentCheckpoint(waitingToPass.contract, waitingToPass.progress).id,
+    "v2-pass-to-counterattack",
+    "the completed attack must wait for the player to end their turn",
+  );
+  assert.deepEqual(waitingToPass.progress.completedCheckpointIds, [
+    "v2-draw-opening-attacker",
+    "v2-place-opening-attacker",
+    "tutorial-attack",
+  ]);
+  const afterOpponentTurnSignal = observe(selected.id, [
+    ...throughOpeningAttack,
+    { actionType: "turn-ended", actor: "opponent", details: { accepted: true } },
+  ]);
+  assert.equal(
+    getSimulatorTutorialCurrentCheckpoint(afterOpponentTurnSignal.contract, afterOpponentTurnSignal.progress).id,
+    "v2-pass-to-counterattack",
+    "only the player's Next Round action may advance the handoff",
+  );
+  const afterManualNextRound = observe(selected.id, [
+    ...throughOpeningAttack,
+    { actionType: "turn-ended", actor: "player", details: { accepted: true } },
+  ]);
+  assert.equal(
+    getSimulatorTutorialCurrentCheckpoint(afterManualNextRound.contract, afterManualNextRound.progress).id,
+    "v2-defend-attack",
+  );
   const scavengeResolved = {
     actionType: "ability-resolved",
     details: {
@@ -1066,7 +1094,20 @@ test("sequencing gates block spending or passing out of order while leaving actu
   }), "");
   assert.ok(block(attackLesson, playerAttack, "attack", { cardId: "great-barracuda", gamePhase: "main" }));
   assert.ok(block(attackLesson, playerAttack, "play-card", { cardId: "blue-crab", gamePhase: "main" }));
-  assert.equal(block(attackLesson, lessonStep(attackLesson, "v2-pass-to-counterattack"), "end-turn", { gamePhase: "main" }), "");
+  const passToCounterattack = lessonStep(attackLesson, "v2-pass-to-counterattack");
+  for (const layoutLessonProgress of [
+    {},
+    { "move-foundation": true },
+    { "move-slot": true },
+    { "zoom-in": true, "zoom-out": true, fit: true },
+    { "move-foundation": true, "move-slot": true, fit: true },
+  ]) {
+    assert.equal(
+      block(attackLesson, passToCounterattack, "end-turn", { gamePhase: "main", layoutLessonProgress }),
+      "",
+      "ecosystem view and layout state must never block the real Next Round action",
+    );
+  }
   assert.ok(block(attackLesson, lessonStep(attackLesson, "v2-defend-attack"), "attack", { cardId: "spanish-hogfish" }), "the opponent owns the defense demonstration");
   const abilityDraw = lessonStep(attackLesson, "tutorial-draw-card");
   assert.equal(block(attackLesson, abilityDraw, "draw", { deckType: "pals" }), "");
@@ -1172,7 +1213,7 @@ test("Lesson 2 repairs a Porcupine Fish that already occupies Great Barracuda's 
 
 test("Lesson 2 coaches the opening draw, placement, dice primer, and attack before later abilities", () => {
   const lesson = getSimulatorV2Lesson("first-attack");
-  assert.equal(lesson.autoEndOpeningTurn, true);
+  assert.equal(lesson.autoEndOpeningTurn, undefined);
   assert.match(
     lesson.introduction,
     /relationships between different sea creatures.*well defined food web.*fish may hunt invertebrates.*predators may consume both.*always a bigger fish.*get started/is,

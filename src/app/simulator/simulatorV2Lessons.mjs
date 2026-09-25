@@ -256,7 +256,6 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     completion: "You led and read a full faceoff, defended a counterattack, saw a passive work automatically, recovered a card with a non-attack action, and triggered a Predator's On Play attack.",
     preVictoryMessage: "Excellent work! You followed the food web from Fish to Predator, used an Action, defended a faceoff, saw a Passive ability work, recovered a discarded creature, and triggered an On Play attack. Great Barracuda showed how a creature’s class controls both where it lives and what it can hunt. You’re ready for the next lesson!",
     celebration: "Every ability had a job to do!",
-    autoEndOpeningTurn: true,
     fitAllPlayerSlots: true,
     skills: ["Attack actions", "Offense and defense", "Passive abilities", "Recovery actions", "On Play abilities"],
     introducedConcepts: [
