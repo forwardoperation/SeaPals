@@ -165,7 +165,7 @@ test("the board-native overlay uses bidirectional movement arrows for layout dem
     /<EmbeddedLessonActionCue[\s\S]*?active=\{embeddedLessonActionReady && !embeddedLessonPresentationBlocked && tutorialTargetBeaconOpen\}[\s\S]*?measureKey=\{embeddedLessonActionCueMeasureKey\}[\s\S]*?dragging=\{Boolean\(mobileHandDrag \|\| draggingCoralId \|\| slotDragStart\)\}/,
   );
   const helpState = sourceSection(
-    "const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted",
+    "const checkpointTutorialHelp = tutorialContract && embeddedLessonPresentationStarted",
     "const tutorialConditionHelp =",
   );
   assert.doesNotMatch(presentationGate, /\|\| mobileHandDrag/);

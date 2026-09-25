@@ -51,7 +51,7 @@ test("the board teacher stays unmounted until Start Lesson is pressed", () => {
   );
   assert.match(
     simulatorSource,
-    /const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted/,
+    /const checkpointTutorialHelp = tutorialContract && embeddedLessonPresentationStarted/,
     "the background coach must not create a message before the lesson starts",
   );
   assert.match(

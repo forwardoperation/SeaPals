@@ -6,11 +6,13 @@ import {
   TUTORIAL_CARD_FOCUS_REGIONS,
   createGuidedAcademyCardLesson,
   createGuidedFoundationCardLesson,
+  getNewTutorialHandCardIds,
   getGuidedAcademyIntroductionStep,
   getNextGuidedAcademyIntroductionStep,
   getTutorialCardConcepts,
   getTutorialCardFocusRegion,
   getTutorialCardReferenceRules,
+  mergeTutorialSeenCardIds,
   mergeTutorialSeenConcepts,
 } from "./tutorialCardLessons.mjs";
 
@@ -163,7 +165,7 @@ test("every card cue uses a short pointer that lands on its printed field", () =
   assert.deepEqual(Object.keys(TUTORIAL_CARD_FOCUS_REGIONS.normalized), Object.keys(TUTORIAL_CARD_FOCUS_REGIONS.printed));
 });
 
-test("a first Support card creates one fullscreen lesson and does not repeat learned basics", () => {
+test("every new Support gets a card-specific fullscreen lesson even after its generic type is known", () => {
   const card = {
     id: "coral-gardener",
     name: "Coral Gardener",
@@ -179,15 +181,15 @@ test("a first Support card creates one fullscreen lesson and does not repeat lea
   assert.equal(lesson.referenceMode, "normalized");
   assert.deepEqual(lesson.conceptKeys, ["kind:support"]);
   assert.match(lesson.callouts[0].text, /resolve once.*Discard pile.*never take a space/i);
-  assert.deepEqual(lesson.segments, [{
-    id: "kind:support",
-    title: "New card type: Support",
-    message: lesson.callouts[0].text,
-    focus: "type",
-  }]);
-  assert.equal(createGuidedAcademyCardLesson(card, {
+  assert.deepEqual(lesson.segments.map((segment) => segment.focus), ["type", "cost", "rules"]);
+  assert.match(lesson.segments[0].message, /Support Action.*resolves once.*discard pile/i);
+  assert.match(lesson.segments[2].message, /Search your deck for a Coral/i);
+  const knownType = createGuidedAcademyCardLesson(card, {
     seenConceptKeys: [...GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS, "kind:support"],
-  }), null);
+  });
+  assert.ok(knownType, "generic concept deduplication must not suppress this card's own rules");
+  assert.deepEqual(knownType.conceptKeys, []);
+  assert.equal(createGuidedAcademyCardLesson(card, { seenCardIds: [card.id] }), null);
 });
 
 test("new concepts on one creature are bundled and deduplicated", () => {
@@ -219,7 +221,7 @@ test("new concepts on one creature are bundled and deduplicated", () => {
     "label:action",
     "stat:victory-points",
   ]);
-  assert.deepEqual(partlySeen.segments.map((segment) => segment.focus), ["type", "rules", "stats"]);
+  assert.deepEqual(partlySeen.segments.map((segment) => segment.focus), ["type", "cost", "rules", "stats", "stats"]);
 });
 
 test("Porcupine Fish teaches Toxic separately from its paid Crunch attack", () => {
@@ -238,9 +240,69 @@ test("Porcupine Fish teaches Toxic separately from its paid Crunch attack", () =
   assert.ok(lesson.conceptKeys.includes("mechanic:toxic"));
   assert.ok(lesson.conceptKeys.includes("label:action"));
   assert.ok(lesson.conceptKeys.includes("label:attack"));
-  const toxic = lesson.segments.find((segment) => segment.id === "mechanic:toxic");
+  const toxic = lesson.segments.find((segment) => segment.title === "Passive: Toxic");
   assert.equal(toxic.focus, "rules");
-  assert.match(toxic.message, /stays active.*If eaten.*Crunch is a separate paid attack/i);
+  assert.match(toxic.message, /Passive.*stays active.*If eaten/i);
+  const crunch = lesson.segments.find((segment) => segment.title === "Action: Crunch");
+  assert.match(crunch.message, /costs 1 RP.*D4.*Invertebrate/i);
+  assert.match(lesson.segments.find((segment) => segment.title === "Defense: D4").message, /tie goes to the defender/i);
+  assert.match(lesson.segments.find((segment) => segment.title === "Victory Points: 2").message, /2 VP/i);
+});
+
+test("Blue Crab and Great Barracuda keep every named ability after generic concepts are learned", () => {
+  const allGenericConcepts = [
+    "kind:creature",
+    "class:invertebrate",
+    "class:predator",
+    "label:passive",
+    "label:action",
+    "label:on-play",
+    "label:attack",
+    "stat:defense",
+    "stat:victory-points",
+  ];
+  const blueCrab = createGuidedAcademyCardLesson({
+    id: "blue-crab",
+    name: "Blue Crab",
+    kind: "creature",
+    category: "invertebrate",
+    cost: { rp: 2 },
+    victoryPoints: 1,
+    passives: [
+      { id: "eco-boost", name: "Eco Boost", text: "Increase your maximum RP bank by 1." },
+      { id: "recycle", name: "Recycle", text: "When one of your fish is eaten, collect half its cost rounded up." },
+    ],
+    actions: [{ id: "scavenge", name: "Scavenge", text: "Choose a card from your discard and put it into your hand.", cost: { rp: 2 } }],
+    defense: { dice: "D4" },
+  }, { seenConceptKeys: allGenericConcepts, cardClassLabel: "Reef Invertebrate" });
+  assert.deepEqual(
+    blueCrab.segments.filter((segment) => /^(Passive|Action):/.test(segment.title)).map((segment) => segment.title),
+    ["Passive: Eco Boost", "Passive: Recycle", "Action: Scavenge"],
+  );
+  assert.match(blueCrab.segments.find((segment) => segment.title === "Action: Scavenge").message, /costs 2 RP.*discard.*hand/i);
+  assert.ok(blueCrab.segments.some((segment) => segment.title === "Defense: D4"));
+  assert.ok(blueCrab.segments.some((segment) => segment.title === "Victory Points: 1"));
+
+  const barracuda = createGuidedAcademyCardLesson({
+    id: "great-barracuda",
+    name: "Great Barracuda",
+    kind: "creature",
+    category: "predator",
+    cost: { rp: 3 },
+    victoryPoints: 3,
+    onPlay: [{
+      id: "quick-strike",
+      name: "Quick Strike",
+      text: "1 Bite. If Coral Reef is in play, perform a second Bite.",
+      effects: [{ type: "attack", attackDice: "D6", target: { categories: ["fish", "predator"] } }],
+    }],
+    defense: { dice: "D6" },
+  }, { seenConceptKeys: allGenericConcepts, cardClassLabel: "Reef Predator" });
+  const quickStrike = barracuda.segments.find((segment) => segment.title === "On Play: Quick Strike");
+  assert.match(quickStrike.message, /immediately.*second Bite/i);
+  assert.match(quickStrike.message, /D6.*Fish or Predator/i);
+  assert.ok(barracuda.segments.some((segment) => segment.title === "Defense: D6"));
+  assert.ok(barracuda.segments.some((segment) => segment.title === "Victory Points: 3"));
 });
 
 test("placeholder card references show every rule the lesson marks as learned", () => {
@@ -252,6 +314,53 @@ test("placeholder card references show every rule the lesson marks as learned", 
   });
   assert.deepEqual(rules.map((rule) => rule.label), ["Rules", "Passive", "On Play", "Action"]);
   assert.match(rules.find((rule) => rule.name === "Scavenge").text, /discard two.*search/i);
+});
+
+test("upgrade costs and structured placement or removal rules are included in new-card tours", () => {
+  const brainLesson = createGuidedAcademyCardLesson({
+    id: "brain-coral-base",
+    name: "Brain Coral",
+    kind: "coral",
+    cost: { rp: 1 },
+    upgrade: {
+      nextCardId: "brain-coral-stage-1",
+      cost: { rp: 2 },
+      text: "Upgrade to Brain Coral Stage 1.",
+    },
+  }, { cardClassLabel: "Base Reef Coral" });
+  assert.match(
+    brainLesson.segments.find((segment) => segment.title === "Upgrade").message,
+    /upgrade costs 2 RP.*Brain Coral Stage 1/i,
+  );
+
+  const lionfish = {
+    id: "lionfish",
+    name: "Lionfish",
+    kind: "creature",
+    category: "fish",
+    specialPlacement: {
+      controller: "opponent",
+      zone: "opponent-reef",
+      acceptsAnyCoralSlot: true,
+    },
+    removalRules: {
+      methods: ["specializedSupport", "successfulAttack"],
+      specializedSupportCardIds: ["spearfishing"],
+    },
+  };
+  const lionfishLesson = createGuidedAcademyCardLesson(lionfish, { cardClassLabel: "Reef Fish" });
+  assert.match(
+    lionfishLesson.segments.find((segment) => segment.title === "Special Placement").message,
+    /opponent's ecosystem.*any open Coral slot/i,
+  );
+  assert.match(
+    lionfishLesson.segments.find((segment) => segment.title === "Removal").message,
+    /successful legal attack.*Spearfishing/i,
+  );
+  assert.deepEqual(
+    getTutorialCardReferenceRules(lionfish).map((rule) => rule.label),
+    ["Special Placement", "Removal"],
+  );
 });
 
 test("Creature Schools bundle their foundation placement and School Density rules", () => {
@@ -267,13 +376,35 @@ test("Creature Schools bundle their foundation placement and School Density rule
   assert.ok(concepts.some((entry) => entry.key === "mechanic:school-density"));
 });
 
-test("Mustard Hill does not reopen as a later first-encounter lesson", () => {
-  assert.equal(createGuidedAcademyCardLesson(mustardHillCoral), null);
+test("Mustard Hill is toured when it is new and duplicate copies do not repeat", () => {
+  assert.ok(createGuidedAcademyCardLesson(mustardHillCoral));
+  assert.equal(createGuidedAcademyCardLesson(mustardHillCoral, {
+    seenCardIds: [mustardHillCoral.id],
+  }), null);
 });
 
 test("seen concept merging is stable and unique", () => {
   assert.deepEqual(
     mergeTutorialSeenConcepts(["kind:coral", "label:passive"], ["label:passive", "kind:support"]),
     ["kind:coral", "label:passive", "kind:support"],
+  );
+  assert.deepEqual(
+    mergeTutorialSeenCardIds(["sea-urchin", "blue-crab"], ["blue-crab", "great-barracuda"]),
+    ["sea-urchin", "blue-crab", "great-barracuda"],
+  );
+});
+
+test("new hand cards queue once in arrival order and ignore known or pending copies", () => {
+  assert.deepEqual(
+    getNewTutorialHandCardIds(
+      ["sea-urchin"],
+      ["sea-urchin", "porcupine-fish", "blue-crab", "porcupine-fish"],
+      { seenCardIds: ["sea-urchin"], pendingCardIds: ["blue-crab"] },
+    ),
+    ["porcupine-fish"],
+  );
+  assert.deepEqual(
+    getNewTutorialHandCardIds([], ["porcupine-fish", "blue-crab", "great-barracuda"]),
+    ["porcupine-fish", "blue-crab", "great-barracuda"],
   );
 });

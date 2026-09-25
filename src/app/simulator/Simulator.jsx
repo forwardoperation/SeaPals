@@ -155,8 +155,10 @@ import {
   createGuidedFoundationCardLesson,
   getGuidedAcademyIntroductionStep,
   getNextGuidedAcademyIntroductionStep,
+  getNewTutorialHandCardIds,
   getTutorialCardFocusRegion,
   getTutorialCardReferenceRules,
+  mergeTutorialSeenCardIds,
   mergeTutorialSeenConcepts,
 } from "./tutorialCardLessons.mjs";
 import {
@@ -3730,7 +3732,7 @@ function TutorialCardReference({ card, classLabel, focus = null, referenceMode =
                 className={`h-full w-full ${placeholderArt ? "object-contain p-5 opacity-80" : "object-cover object-center"}`}
               />
               <span className="seapals-normalized-card-caption absolute inset-x-0 bottom-0 truncate bg-slate-950/80 font-black uppercase tracking-wide text-cyan-100">
-                {card.bio?.role ?? card.bio?.species ?? classLabel}
+                {classLabel}
               </span>
             </div>
             <div className="seapals-normalized-card-rules absolute left-[4.27%] top-[53.33%] h-[32%] w-[91.47%] space-y-1.5 overflow-y-auto rounded-xl border border-cyan-100/15 bg-white/10 text-slate-100">
@@ -3767,7 +3769,7 @@ function TutorialCardLessonOverlay({
   card = null,
   onBack = null,
   onAdvance,
-  onSkip,
+  onSkip = null,
   introduction = false,
 }) {
   const dialogRef = useRef(null);
@@ -3840,7 +3842,7 @@ function TutorialCardLessonOverlay({
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
-          onSkip();
+          onSkip?.();
           return;
         }
         if (event.key !== "Tab") return;
@@ -3899,7 +3901,7 @@ function TutorialCardLessonOverlay({
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
               {canGoBack ? <button type="button" onClick={goBack} className="min-h-11 rounded-full border border-cyan-900/20 bg-white px-5 py-2 text-sm font-black text-cyan-950 hover:bg-cyan-50">Back</button> : null}
-              <button type="button" onClick={onSkip} className="min-h-11 rounded-full px-3 py-2 text-sm font-black text-cyan-900 hover:bg-cyan-50" aria-label={introduction ? "Skip introduction" : "Skip card lesson"}>Skip</button>
+              {onSkip ? <button type="button" onClick={onSkip} className="min-h-11 rounded-full px-3 py-2 text-sm font-black text-cyan-900 hover:bg-cyan-50" aria-label={introduction ? "Skip introduction" : "Skip card lesson"}>Skip</button> : null}
             </div>
             <button type="button" onClick={goForward} className="min-h-11 rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-2 text-sm font-black text-slate-950 shadow-[0_10px_30px_rgba(16,185,129,0.25)] hover:brightness-105">
               {hasNextSegment ? "Next detail" : lesson.advanceLabel ?? "Continue"}
@@ -4706,6 +4708,13 @@ export default function Simulator({
       : null;
   });
   const [tutorialSeenCardConceptKeys, setTutorialSeenCardConceptKeys] = useState([]);
+  const [tutorialSeenCardIds, setTutorialSeenCardIds] = useState(() => (
+    Array.isArray(tutorialRuntime?.previouslySeenCardIds)
+      ? tutorialRuntime.previouslySeenCardIds
+      : []
+  ));
+  const [tutorialPendingCardIds, setTutorialPendingCardIds] = useState([]);
+  const tutorialPreviousHandRef = useRef(null);
   const [tutorialBoardTourStep, setTutorialBoardTourStep] = useState(null);
   const [tutorialLayoutProgress, setTutorialLayoutProgress] = useState(
     createGuidedAcademyLayoutProgress,
@@ -4758,6 +4767,26 @@ export default function Simulator({
   const [foundationDeck, setFoundationDeck] = useState(initialGame.foundationDeck);
   const [palsDeck, setPalsDeck] = useState(initialGame.palsDeck);
   const [hand, setHand] = useState(initialGame.hand);
+  useEffect(() => {
+    const previousHand = tutorialPreviousHandRef.current;
+    tutorialPreviousHandRef.current = [...hand];
+    if (!tutorialContract || !embeddedLessonPresentationStarted || !previousHand) return;
+    setTutorialPendingCardIds((current) => {
+      const retained = current.filter((cardId) => (
+        hand.includes(cardId) && !tutorialSeenCardIds.includes(cardId)
+      ));
+      const additions = getNewTutorialHandCardIds(previousHand, hand, {
+        seenCardIds: tutorialSeenCardIds,
+        pendingCardIds: retained,
+      });
+      return mergeTutorialSeenCardIds(retained, additions);
+    });
+  }, [
+    embeddedLessonPresentationStarted,
+    hand,
+    tutorialContract,
+    tutorialSeenCardIds,
+  ]);
   const [playerCorals, setPlayerCorals] = useState(initialGame.playerCorals ?? []);
   const [playerHabitatInstances, setPlayerHabitatInstances] = useState(initialGame.playerHabitatInstances ?? []);
   const [playerReefCreatureInstances, setPlayerReefCreatureInstances] = useState(initialGame.playerReefCreatureInstances ?? []);
@@ -6154,6 +6183,11 @@ export default function Simulator({
   useEffect(() => {
     if (gameResult || !["draw", "main"].includes(gamePhase) || !Number.isFinite(activeHandLimit)) return;
     if (pendingHandArrivalFlight || mobileDrawFlights.length) return;
+    if (
+      tutorialContract
+      && embeddedLessonPresentationStarted
+      && hand.some((cardId) => !tutorialSeenCardIds.includes(cardId))
+    ) return;
     const choice = createHandLimitChoice({ hand, handLimit: activeHandLimit });
     if (!choice.requiredDiscardCount) return;
     if (eventOverlay?.type === "choose-hand-limit-discard" || pendingEvents.some((event) => event.type === "choose-hand-limit-discard")) return;
@@ -6175,9 +6209,13 @@ export default function Simulator({
     } else {
       setEventOverlay(choiceEvent);
     }
-  }, [activeCondition?.id, activeHandLimit, eventOverlay, gamePhase, gameResult, hand, mobileDrawFlights.length, pendingEvents, pendingHandArrivalFlight]);
+  }, [activeCondition?.id, activeHandLimit, embeddedLessonPresentationStarted, eventOverlay, gamePhase, gameResult, hand, pendingEvents, tutorialContract, tutorialSeenCardIds, mobileDrawFlights.length, pendingHandArrivalFlight]);
 
   function getEmbeddedLessonBlock(action, details = {}) {
+    if (tutorialRequiredCardReviewId) {
+      const cardName = cardsById[tutorialRequiredCardReviewId]?.name ?? "the new card";
+      return `Tap ${cardName} in your hand and finish its card tour before continuing.`;
+    }
     return getSimulatorV2LessonActionBlock({
       lesson: embeddedLesson, checkpoint: tutorialCurrentCheckpoint,
       action, gamePhase, layoutLessonProgress: tutorialLayoutProgress,
@@ -7568,7 +7606,7 @@ export default function Simulator({
       finishAttackTargetInPlay: scriptedOpponentCardIdsInPlay.includes(scriptedFinishPlan.finishAttackTargetCardId),
     };
   })() : null;
-  const tutorialHelp = tutorialContract && embeddedLessonPresentationStarted
+  const checkpointTutorialHelp = tutorialContract && embeddedLessonPresentationStarted
     ? embeddedLessonPrimerHelp ?? (embeddedLesson
       ? (checkpoint, uiState) => getSimulatorV2LessonHelp(embeddedLesson, checkpoint, uiState)
       : getSimulatorTutorialHelp)(tutorialCurrentCheckpoint, {
@@ -7642,6 +7680,38 @@ export default function Simulator({
         discardPileCardIds: discardPile,
       })
     : null;
+  const pendingTutorialCardReviewId = tutorialPendingCardIds.find((cardId) => (
+    hand.includes(cardId) && !tutorialSeenCardIds.includes(cardId)
+  )) ?? null;
+  const authoredTutorialCardReviewId = checkpointTutorialHelp?.target === "hand"
+    && checkpointTutorialHelp.targetCardId
+    && hand.includes(checkpointTutorialHelp.targetCardId)
+    && !tutorialSeenCardIds.includes(checkpointTutorialHelp.targetCardId)
+    ? checkpointTutorialHelp.targetCardId
+    : null;
+  const tutorialRequiredCardReviewId = pendingTutorialCardReviewId ?? authoredTutorialCardReviewId;
+  const tutorialRequiredCardReview = tutorialRequiredCardReviewId
+    ? cardsById[tutorialRequiredCardReviewId]
+    : null;
+  const tutorialHelp = tutorialRequiredCardReview
+    ? {
+        ...(checkpointTutorialHelp ?? {}),
+        id: `tutorial-card-review:${tutorialRequiredCardReview.id}`,
+        cueId: `tutorial-card-review:${tutorialRequiredCardReview.id}`,
+        title: `Meet ${tutorialRequiredCardReview.name}`,
+        lead: "",
+        message: pendingTutorialCardReviewId
+          ? `You drew ${tutorialRequiredCardReview.name}! Open it before continuing so we can walk through its type, cost, abilities, and stats.`
+          : `${tutorialRequiredCardReview.name} is new to this lesson. Open it before using it so we can read every gameplay detail together.`,
+        action: `Tap ${tutorialRequiredCardReview.name} in your hand to begin its card tour.`,
+        target: "hand",
+        interaction: "tap",
+        targetCardId: tutorialRequiredCardReview.id,
+        targetCardIds: [tutorialRequiredCardReview.id],
+        pointerPrompt: `Tap ${tutorialRequiredCardReview.name} to read it.`,
+        targetLabel: `${tutorialRequiredCardReview.name} in your hand`,
+      }
+    : checkpointTutorialHelp;
   const weaknessLessonStepActive = Boolean(
     embeddedLesson?.id === "first-reef"
     && tutorialCurrentCheckpoint?.id === "v2-watch-coral-disease"
@@ -7970,51 +8040,6 @@ export default function Simulator({
     && !eventOverlay
     && tutorialHelpOpen,
   );
-
-  useEffect(() => {
-    if (
-      !tutorialContract
-      || !tutorialUsesScriptedScenario
-      || tutorialIntroductionOpen
-      || tutorialBoardTourOpen
-      || tutorialCardLesson
-      || !tutorialHelpOpen
-      || tutorialHelp?.target !== "hand"
-      || !tutorialHelp.targetCardId
-      || eventOverlay
-      || modal
-      || handPopoverCardId
-      || inspectedCardData
-      || pendingHandArrivalFlight
-      || mobileDrawFlights.length
-      || roundFlash
-      || gameResult
-    ) return;
-    const card = cardsById[tutorialHelp.targetCardId];
-    const lesson = createGuidedAcademyCardLesson(card, {
-      seenConceptKeys: tutorialSeenCardConceptKeys,
-      cardClassLabel: getCardClassLabel(card),
-    });
-    if (lesson) setTutorialCardLesson(lesson);
-  }, [
-    eventOverlay,
-    gameResult,
-    handPopoverCardId,
-    inspectedCardData,
-    modal,
-    mobileDrawFlights.length,
-    pendingHandArrivalFlight,
-    roundFlash,
-    tutorialBoardTourOpen,
-    tutorialCardLesson,
-    tutorialContract,
-    tutorialHelp?.target,
-    tutorialHelp?.targetCardId,
-    tutorialHelpOpen,
-    tutorialIntroductionOpen,
-    tutorialSeenCardConceptKeys,
-    tutorialUsesScriptedScenario,
-  ]);
 
   const keepAcademyPointer = Boolean(tutorialUsesScriptedScenario && scriptedFinishRoute?.active);
   const tutorialHelpTargetActive = Boolean(tutorialHelp && (tutorialHelpOpen || keepAcademyPointer));
@@ -11656,7 +11681,8 @@ export default function Simulator({
   }
 
   function openHandCardPopover(cardId, index = null, returnTarget = null) {
-    if (!cardsById[cardId] || playingCardId) return;
+    const card = cardsById[cardId];
+    if (!card || playingCardId) return;
     if (Number.isInteger(index) && hand[index] !== cardId) return;
     if (returnTarget instanceof HTMLElement) {
       handPopoverReturnFocusRef.current = returnTarget;
@@ -11665,6 +11691,23 @@ export default function Simulator({
     }
     setMobileSelectedHandIndex(Number.isInteger(index) ? index : null);
     setSelectedHandCard(cardId);
+    if (
+      tutorialContract
+      && embeddedLessonPresentationStarted
+      && !tutorialSeenCardIds.includes(cardId)
+    ) {
+      const lesson = createGuidedAcademyCardLesson(card, {
+        seenConceptKeys: tutorialSeenCardConceptKeys,
+        seenCardIds: tutorialSeenCardIds,
+        cardClassLabel: getCardClassLabel(card),
+      });
+      if (lesson) {
+        setHandPopoverCardId(null);
+        setTutorialCardLesson({ ...lesson, requiredReview: true });
+        setPlayError("");
+        return;
+      }
+    }
     setHandPopoverCardId(cardId);
     setPlayError("");
   }
@@ -20718,11 +20761,20 @@ export default function Simulator({
   }
 
   function finishTutorialCardLesson() {
+    const completedCardId = tutorialCardLesson?.cardId ?? null;
     setTutorialSeenCardConceptKeys((current) => mergeTutorialSeenConcepts(
       current,
       tutorialCardLesson?.conceptKeys ?? [],
     ));
+    if (completedCardId) {
+      setTutorialSeenCardIds((current) => mergeTutorialSeenCardIds(current, [completedCardId]));
+      setTutorialPendingCardIds((current) => current.filter((cardId) => cardId !== completedCardId));
+    }
     setTutorialCardLesson(null);
+    setTutorialHelpDismissedId(null);
+    setSelectedHandCard(null);
+    setMobileSelectedHandIndex(null);
+    setPlayError("");
   }
 
   function finishTutorialBoardTour() {
@@ -21027,6 +21079,8 @@ export default function Simulator({
     setFoundationDeck(nextGame.foundationDeck);
     setPalsDeck(nextGame.palsDeck);
     setHand(nextGame.hand);
+    tutorialPreviousHandRef.current = [...nextGame.hand];
+    setTutorialPendingCardIds([]);
     setPlayerCorals([]);
     setBubbleBursts([]);
     clearCoralUpgradeCelebrations({ clearSeen: true });
@@ -21150,6 +21204,11 @@ export default function Simulator({
     setTutorialIntroductionStep(tutorialContract && tutorialUsesScriptedScenario && !previewExperience ? 0 : null);
     setTutorialCardLesson(null);
     setTutorialSeenCardConceptKeys([]);
+    setTutorialSeenCardIds(Array.isArray(tutorialRuntime?.previouslySeenCardIds)
+      ? tutorialRuntime.previouslySeenCardIds
+      : []);
+    setTutorialPendingCardIds([]);
+    tutorialPreviousHandRef.current = null;
     setTutorialBoardTourStep(null);
     if (tutorialContract) {
       if (reason === "begin") {
@@ -26352,7 +26411,7 @@ export default function Simulator({
               lesson={tutorialCardLesson}
               card={tutorialCardLessonCard}
               onAdvance={finishTutorialCardLesson}
-              onSkip={finishTutorialCardLesson}
+              onSkip={tutorialCardLesson.requiredReview ? null : finishTutorialCardLesson}
             />
           ) : null}
 

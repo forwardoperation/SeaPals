@@ -411,7 +411,7 @@ test("Lesson 2 blocks the opening attack behind a three-step dice and food-web p
   assert.match(primerRuntime, /visualAid: embeddedLessonPrimerDefinition\.visualAid \?\? null/);
 
   const tutorialHelpRuntime = sourceSection(
-    "const tutorialHelp = tutorialContract",
+    "const checkpointTutorialHelp = tutorialContract",
     "const weaknessLessonStepActive =",
   );
   assert.match(

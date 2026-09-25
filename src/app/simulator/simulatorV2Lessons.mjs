@@ -154,6 +154,7 @@ function lesson(definition) {
     placementTargets: {},
     supportCards: {},
     introducedConcepts: [],
+    introducedCardIds: [],
     ...definition,
     randomSeed: Number.isInteger(definition.randomSeed)
       ? definition.randomSeed >>> 0
@@ -194,6 +195,12 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       SIMULATOR_V2_LESSON_CONCEPTS.REEF_LAYOUT,
       SIMULATOR_V2_LESSON_CONCEPTS.CORAL_UPGRADES,
       SIMULATOR_V2_LESSON_CONCEPTS.VICTORY_POINTS,
+    ],
+    introducedCardIds: [
+      "brain-coral-base",
+      "mustard-hill-coral-base",
+      "sea-urchin",
+      "brain-coral-stage-1",
     ],
     focusCardId: "brain-coral-base", victoryTarget: 1,
     openingCardTourId: "brain-coral-base",
@@ -266,6 +273,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       SIMULATOR_V2_LESSON_CONCEPTS.ON_PLAY_ABILITIES,
       SIMULATOR_V2_LESSON_CONCEPTS.NON_ATTACK_ACTIONS,
     ],
+    introducedCardIds: ["porcupine-fish", "blue-crab", "great-barracuda"],
     focusCardId: "porcupine-fish", victoryTarget: 7,
     randomSeed: 0x5EA9101C,
     attackCardId: "porcupine-fish", attackTargetCardId: "sea-urchin",
@@ -427,6 +435,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       SIMULATOR_V2_LESSON_CONCEPTS.DECK_SEARCH,
       SIMULATOR_V2_LESSON_CONCEPTS.STATUS_EFFECTS,
     ],
+    introducedCardIds: ["coral-heal", "coral-gardener", "brain-coral-stage-1", "sea-urchin"],
     focusCardId: "coral-heal", searchCardId: "brain-coral-stage-1", victoryTarget: 4,
     seed: seed({
       hand: ["coral-heal", "coral-gardener", "sea-urchin"],
@@ -469,6 +478,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       SIMULATOR_V2_LESSON_CONCEPTS.MULTI_ATTACK,
       SIMULATOR_V2_LESSON_CONCEPTS.TURN_PLANNING,
     ],
+    introducedCardIds: ["clownfish", "arrow-crab", "coral-reef", "brain-coral-stage-2", "hammerhead"],
     focusCardId: "coral-reef", attackCardId: "hammerhead", victoryTarget: 12,
     expectedDraws: {
       "v2-draw-hammerhead": { deckType: "pals", cardId: "hammerhead" },
@@ -535,6 +545,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       SIMULATOR_V2_LESSON_CONCEPTS.OPEN_WATER,
       SIMULATOR_V2_LESSON_CONCEPTS.FILTER_FEEDERS,
     ],
+    introducedCardIds: ["halfbeak", "anchovy-ball-stage1", "ocean-sunfish"],
     focusCardId: "ocean-sunfish", victoryTarget: 21,
     expectedDraws: {
       "v2-draw-filter-feeder": { deckType: "pals", cardId: "ocean-sunfish" },
@@ -668,6 +679,15 @@ export function getSimulatorV2PreviouslyTaughtConcepts(value, completedLessonIds
     .flatMap((entry) => entry.introducedConcepts))];
 }
 
+export function getSimulatorV2PreviouslySeenCardIds(value, completedLessonIds = []) {
+  const selected = getSimulatorV2Lesson(value);
+  if (!selected) return [];
+  const completed = new Set(Array.isArray(completedLessonIds) ? completedLessonIds : []);
+  return [...new Set(SIMULATOR_V2_LESSONS
+    .filter((entry) => entry.number < selected.number && completed.has(entry.id))
+    .flatMap((entry) => entry.introducedCardIds ?? []))];
+}
+
 export function createSimulatorV2LessonRuntime(lessonId, { completedLessonIds = [] } = {}) {
   const selected = getSimulatorV2Lesson(lessonId);
   if (!selected) throw new RangeError("Unknown Simulator V2 lesson: " + String(lessonId) + ".");
@@ -676,6 +696,7 @@ export function createSimulatorV2LessonRuntime(lessonId, { completedLessonIds = 
     scriptedDecks: false,
     contract: selected.contract,
     previouslyTaughtConcepts: getSimulatorV2PreviouslyTaughtConcepts(selected, completedLessonIds),
+    previouslySeenCardIds: getSimulatorV2PreviouslySeenCardIds(selected, completedLessonIds),
     guide: {
       name: "Mr. Easterling",
       role: "Your SeaPals teacher",

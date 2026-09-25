@@ -12,11 +12,26 @@ test("legacy tutorial keeps its introduction while V2 hands off directly to the 
   assert.match(simulatorSource, /function finishTutorialBoardTour\(\)[\s\S]*openOpeningCoinFlip\(\)/);
 });
 
-test("later card lessons derive only from an authored hand target and preserve the pending action", () => {
-  assert.match(simulatorSource, /tutorialHelp\?\.target !== "hand"/);
-  assert.match(simulatorSource, /createGuidedAcademyCardLesson\(card, \{[\s\S]*seenConceptKeys: tutorialSeenCardConceptKeys/);
-  assert.match(simulatorSource, /function finishTutorialCardLesson\(\)[\s\S]*mergeTutorialSeenConcepts[\s\S]*setTutorialCardLesson\(null\)/);
-  assert.doesNotMatch(simulatorSource, /finishTutorialCardLesson\(\)[\s\S]{0,500}setTutorialHelpDismissedId/);
+test("new hand cards wait for a click, keep draw order, and cannot be played before their tour", () => {
+  assert.match(simulatorSource, /getNewTutorialHandCardIds\(previousHand, hand, \{[\s\S]*seenCardIds: tutorialSeenCardIds[\s\S]*pendingCardIds: retained/);
+  assert.match(simulatorSource, /pendingTutorialCardReviewId = tutorialPendingCardIds\.find/);
+  assert.match(simulatorSource, /tutorialRequiredCardReviewId = pendingTutorialCardReviewId \?\? authoredTutorialCardReviewId/);
+  assert.match(simulatorSource, /action: `Tap \$\{tutorialRequiredCardReview\.name\} in your hand to begin its card tour\.`/);
+  const handClick = simulatorSource.slice(
+    simulatorSource.indexOf("function openHandCardPopover"),
+    simulatorSource.indexOf("function closeHandCardPopover"),
+  );
+  assert.match(handClick, /!tutorialSeenCardIds\.includes\(cardId\)[\s\S]*createGuidedAcademyCardLesson\(card, \{[\s\S]*setTutorialCardLesson\(\{ \.\.\.lesson, requiredReview: true \}\)/);
+  assert.doesNotMatch(simulatorSource, /tutorialHelp\?\.target !== "hand"/);
+  assert.match(simulatorSource, /function getEmbeddedLessonBlock\(action, details = \{\}\) \{[\s\S]*tutorialRequiredCardReviewId[\s\S]*finish its card tour before continuing/);
+  assert.match(simulatorSource, /function finishTutorialCardLesson\(\)[\s\S]*mergeTutorialSeenCardIds[\s\S]*setTutorialPendingCardIds[\s\S]*setTutorialCardLesson\(null\)/);
+});
+
+test("hand-limit choices wait until every newly drawn tutorial card has been reviewed", () => {
+  assert.match(
+    simulatorSource,
+    /tutorialContract[\s\S]*?embeddedLessonPresentationStarted[\s\S]*?hand\.some\(\(cardId\) => !tutorialSeenCardIds\.includes\(cardId\)\)[\s\S]*?return;[\s\S]*?createHandLimitChoice/,
+  );
 });
 
 test("Lesson 1 opens its authored Foundation card tour only after Start Lesson", () => {
@@ -48,7 +63,9 @@ test("fullscreen lesson keeps the card clear and docks the coach and navigation 
   assert.match(simulatorSource, /data-card-lesson-coach[\s\S]*<footer className="shrink-0/);
   assert.match(simulatorSource, /ProfessorGuidePortrait guide=\{guide\} compact[\s\S]*\{activeTitle\}[\s\S]*\{activeMessage\}/);
   assert.doesNotMatch(overlaySource, /<header\b|segmentProgressLabel|\{guide\.name\}/);
-  assert.match(overlaySource, /aria-label=\{introduction \? "Skip introduction" : "Skip card lesson"\}>Skip/);
+  assert.match(overlaySource, /\{onSkip \? <button[^>]*onClick=\{onSkip\}[\s\S]*aria-label=\{introduction \? "Skip introduction" : "Skip card lesson"\}>Skip<\/button> : null\}/);
+  assert.match(overlaySource, /if \(event\.key === "Escape"\)[\s\S]*onSkip\?\.\(\)/);
+  assert.match(simulatorSource, /onSkip=\{tutorialCardLesson\.requiredReview \? null : finishTutorialCardLesson\}/);
   assert.match(simulatorSource, /role="dialog"[\s\S]*aria-modal="true"/);
   assert.match(simulatorSource, /env\(safe-area-inset-bottom\)/);
   assert.match(simulatorSource, /event\.key !== "Tab"[\s\S]*button:not\(\[disabled\]\)[\s\S]*last\.focus\(\)/);

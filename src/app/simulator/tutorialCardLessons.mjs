@@ -144,15 +144,266 @@ function toCardReferenceRule(rule, label, index) {
   };
 }
 
+function describeSpecialPlacement(rule) {
+  if (!rule || typeof rule !== "object") return "";
+  if (rule.text) return rule.text;
+  const parts = [];
+  if (normalizeToken(rule.controller) === "opponent" || normalizeToken(rule.zone) === "opponent-reef") {
+    parts.push("Place this card in your opponent's ecosystem.");
+  } else if (rule.zone) {
+    parts.push(`Place this card in the ${formatToken(rule.zone)} zone.`);
+  }
+  if (rule.acceptsAnyCoralSlot === true) {
+    parts.push("It may use any open Coral slot type.");
+  }
+  const hostTags = formatList(asList(rule.allowedHostTags));
+  if (hostTags) {
+    parts.push(`It may be placed in an open slot provided by a ${hostTags} host.`);
+  }
+  return parts.join(" ") || "Follow this card's special placement rule instead of ordinary slot placement.";
+}
+
+function describeRemovalRules(rule) {
+  if (!rule || typeof rule !== "object") return "";
+  if (rule.text) return rule.text;
+  const methods = asList(rule.methods).map(normalizeToken);
+  const parts = [];
+  if (methods.includes("successfulattack")) {
+    parts.push("A successful legal attack can remove this card.");
+  }
+  if (methods.includes("specializedsupport")) {
+    const supportNames = formatList(asList(rule.specializedSupportCardIds));
+    parts.push(supportNames
+      ? `${supportNames} can also remove it.`
+      : "A specialized Support card can also remove it.");
+  }
+  return parts.join(" ") || "Only the removal methods printed for this card can remove it from play.";
+}
+
+function structuredRule(rule, describe) {
+  if (!rule) return null;
+  if (typeof rule === "string") return rule;
+  return { ...rule, text: describe(rule) };
+}
+
 export function getTutorialCardReferenceRules(card) {
   if (!card) return [];
   return [
     ...(card.text ? [{ key: "card-text", label: "Rules", name: "", text: card.text }] : []),
     ...asList(card.playRequirements ?? card.requirements).map((rule, index) => toCardReferenceRule(rule, "Requirement", index)),
+    ...asList(card.playRestrictions).map((rule, index) => toCardReferenceRule(rule, "Restriction", index)),
+    ...asList(structuredRule(card.specialPlacement, describeSpecialPlacement)).map((rule, index) => toCardReferenceRule(rule, "Special Placement", index)),
+    ...asList(card.specialRules).map((rule, index) => toCardReferenceRule(rule, "Special Rule", index)),
+    ...asList(structuredRule(card.removalRules, describeRemovalRules)).map((rule, index) => toCardReferenceRule(rule, "Removal", index)),
+    ...asList(card.maintenance).map((rule, index) => toCardReferenceRule(rule, "Maintenance", index)),
+    ...(card.upgrade?.text ? [toCardReferenceRule(card.upgrade, "Upgrade", 0)] : []),
     ...asList(card.passives).map((rule, index) => toCardReferenceRule(rule, "Passive", index)),
     ...asList(card.onPlay).map((rule, index) => toCardReferenceRule(rule, "On Play", index)),
     ...asList(card.actions).map((rule, index) => toCardReferenceRule(rule, "Action", index)),
   ].filter(Boolean);
+}
+
+function formatList(values = []) {
+  const filtered = values.map(formatToken).filter(Boolean);
+  if (filtered.length <= 1) return filtered[0] ?? "";
+  if (filtered.length === 2) return `${filtered[0]} or ${filtered[1]}`;
+  return `${filtered.slice(0, -1).join(", ")}, or ${filtered.at(-1)}`;
+}
+
+function collectAttackEffects(value, seen = new Set()) {
+  if (!value || typeof value !== "object" || seen.has(value)) return [];
+  seen.add(value);
+  const matches = normalizeToken(value.type) === "attack" ? [value] : [];
+  return [
+    ...matches,
+    ...Object.values(value).flatMap((entry) => (
+      Array.isArray(entry)
+        ? entry.flatMap((item) => collectAttackEffects(item, seen))
+        : collectAttackEffects(entry, seen)
+    )),
+  ];
+}
+
+function getRuleCost(rule) {
+  if (!rule || typeof rule !== "object") return 0;
+  return Math.max(0, Number(rule.cost?.rp ?? rule.actionCost ?? rule.effect?.actionCost ?? 0));
+}
+
+function getAttackRuleSummary(rule) {
+  const effects = collectAttackEffects(rule);
+  if (!effects.length) return "";
+  return effects.map((effect) => {
+    const dice = String(effect.attackDice ?? effect.dice ?? "").trim().toUpperCase();
+    const categories = effect.target?.categories ?? effect.targetCategories ?? [];
+    const targets = formatList(categories);
+    const repeat = Math.max(1, Number(effect.repeat ?? effect.count ?? 1));
+    const parts = [
+      dice ? `rolls ${dice}` : "starts an attack",
+      targets ? `can target an opposing ${targets}` : "can target an opposing creature",
+      repeat > 1 ? `resolves ${repeat} attacks` : "",
+    ].filter(Boolean);
+    return `This attack ${parts.join(", ")}.`;
+  }).join(" ");
+}
+
+function cardIdentityMessage(card, cardClassLabel) {
+  const kind = normalizeToken(card.kind);
+  const isSchool = asList(card.tags).map(normalizeToken).includes("creature-school");
+  if (isSchool) {
+    return `${card.name} is a ${cardClassLabel}. Creature Schools are Foundations that supply School Density; they do not use a Coral's creature slot.`;
+  }
+  if (kind === "creature") {
+    return `${card.name} is a ${cardClassLabel}. Its zone and class determine which open slot can house it and which rules can target it.`;
+  }
+  if (kind === "coral") {
+    const stage = Number(card.stage ?? 0);
+    return stage > 0
+      ? `${card.name} is a ${cardClassLabel}. A Stage ${stage} Coral upgrades the matching earlier stage in the same Foundation.`
+      : `${card.name} is a ${cardClassLabel}. A Base Coral begins a Foundation and provides the printed homes for creatures.`;
+  }
+  if (kind === "support") {
+    return `${card.name} is a Support Action. It resolves once from your hand, then goes to your discard pile instead of staying in your ecosystem.`;
+  }
+  if (kind === "habitat") {
+    return `${card.name} is a ${cardClassLabel}. A Habitat stays in your ecosystem after its play requirements are met.`;
+  }
+  return `${card.name} is a ${cardClassLabel}. Its type determines how it enters play and which rules can interact with it.`;
+}
+
+function createRuleSegment(card, rule, label, index) {
+  const normalized = toCardReferenceRule(rule, label, index);
+  if (!normalized) return null;
+  const cost = getRuleCost(rule);
+  const attackSummary = getAttackRuleSummary(rule);
+  const name = normalized.name || label;
+  const timingCopy = label === "Passive"
+    ? `${name} is a Passive, so it stays active while ${card.name} remains in your ecosystem.`
+    : label === "On Play"
+      ? `${name} is an On Play ability, so it resolves immediately after ${card.name} enters play.`
+      : label === "Action"
+        ? `${name} is an Action you choose during your turn.${cost > 0 ? ` It costs ${cost} RP to use.` : ""}`
+        : label === "Requirement"
+          ? `This requirement must be true before you can play ${card.name}.`
+          : label === "Restriction"
+            ? `This restriction limits when or how ${card.name} can be played.`
+            : label === "Maintenance"
+              ? `Maintenance is checked after ${card.name} enters your ecosystem.`
+              : label === "Upgrade"
+                ? `${cost > 0 ? `This upgrade costs ${cost} RP. ` : ""}This tells you the next stage available from ${card.name}.`
+                : label === "Special Placement"
+                  ? `This card uses a special placement rule instead of ordinary slot placement.`
+                  : label === "Removal"
+                    ? `This explains how ${card.name} can be removed from play.`
+                    : label === "Rules"
+                      ? `This printed rule explains what ${card.name} does.`
+                      : `Read this ${label.toLowerCase()} before using ${card.name}.`;
+  return {
+    id: `card:${card.id}:${normalizeToken(label)}:${normalizeToken(normalized.key)}`,
+    title: normalized.name ? `${label}: ${normalized.name}` : label,
+    message: [timingCopy, normalized.text, attackSummary].filter(Boolean).join(" "),
+    focus: "rules",
+  };
+}
+
+function getCardSpecificLessonSegments(card, cardClassLabel) {
+  const cost = getCardRp(card);
+  const vp = getCardVp(card);
+  const defense = getCardDefense(card);
+  const health = Math.max(0, Number(card.health ?? 0));
+  const weaknesses = getWeaknessSummary(card);
+  const slots = getSlotSummary(card);
+  const schoolDensity = Math.max(0, Number(card.schoolDensity ?? card.schoolDensityRequirement ?? 0));
+  const segments = [
+    {
+      id: `card:${card.id}:identity`,
+      title: `Meet ${card.name}`,
+      message: cardIdentityMessage(card, cardClassLabel),
+      focus: "type",
+    },
+    {
+      id: `card:${card.id}:cost`,
+      title: cost > 0 ? `Play cost: ${cost} RP` : "No RP play cost",
+      message: cost > 0
+        ? `Playing ${card.name} costs ${cost} RP from your bank. Ability costs are separate and appear with the ability that uses them.`
+        : `${card.name} costs 0 RP to play, but every printed requirement must still be met.`,
+      focus: "cost",
+    },
+  ];
+
+  const ruleGroups = [
+    ["Rules", card.text ? [card.text] : []],
+    ["Requirement", asList(card.playRequirements ?? card.requirements)],
+    ["Restriction", asList(card.playRestrictions)],
+    ["Special Placement", asList(structuredRule(card.specialPlacement, describeSpecialPlacement))],
+    ["Special Rule", asList(card.specialRules)],
+    ["Removal", asList(structuredRule(card.removalRules, describeRemovalRules))],
+    ["Maintenance", asList(card.maintenance)],
+    ["Upgrade", card.upgrade?.text ? [card.upgrade] : []],
+    ["Passive", asList(card.passives)],
+    ["On Play", asList(card.onPlay)],
+    ["Action", asList(card.actions)],
+  ];
+  ruleGroups.forEach(([label, rules]) => {
+    rules.forEach((rule, index) => {
+      const segment = createRuleSegment(card, rule, label, index);
+      if (segment) segments.push(segment);
+    });
+  });
+
+  if (defense) {
+    segments.push({
+      id: `card:${card.id}:defense`,
+      title: `Defense: ${defense}`,
+      message: `${defense} is ${card.name}'s defense die when an opposing attack legally targets it. The higher final roll wins; a tie goes to the defender.`,
+      focus: "stats",
+    });
+  }
+  if (vp > 0) {
+    segments.push({
+      id: `card:${card.id}:victory-points`,
+      title: `Victory Points: ${vp}`,
+      message: `${card.name} contributes ${vp} VP toward your goal while it remains in your ecosystem.`,
+      focus: "stats",
+    });
+  }
+  if (health > 0) {
+    segments.push({
+      id: `card:${card.id}:health`,
+      title: `Health: ${health} HP`,
+      message: `${card.name} can take ${health} damage before it is destroyed. Track damage against this printed Health value.`,
+      focus: "health",
+    });
+  }
+  if (Object.prototype.hasOwnProperty.call(card, "weaknesses")) {
+    segments.push({
+      id: `card:${card.id}:weaknesses`,
+      title: "Weaknesses",
+      message: weaknesses
+        ? `${card.name} has ${weaknesses} printed as a weakness. Conditions and other effects can check these symbols.`
+        : `${card.name} has no printed weakness.`,
+      focus: "weaknesses",
+    });
+  }
+  if (slots) {
+    segments.push({
+      id: `card:${card.id}:slots`,
+      title: "Creature homes",
+      message: `${card.name} provides ${slots} slots. Each creature needs an open, compatible home before it can be placed.`,
+      focus: "slots",
+    });
+  }
+  if (schoolDensity > 0) {
+    const suppliesDensity = Number(card.schoolDensity ?? 0) > 0;
+    segments.push({
+      id: `card:${card.id}:school-density`,
+      title: `School Density: ${schoolDensity}`,
+      message: suppliesDensity
+        ? `${card.name} supplies ${schoolDensity} School Density for open-water creatures.`
+        : `${card.name} commits ${schoolDensity} available School Density while it remains in play.`,
+      focus: "stats",
+    });
+  }
+  return segments;
 }
 
 function classConcept(card, cardClass) {
@@ -508,33 +759,53 @@ export function getTutorialCardConcepts(card) {
 
 export function createGuidedAcademyCardLesson(card, {
   seenConceptKeys = [],
+  seenCardIds = [],
   cardClassLabel = "Card",
 } = {}) {
-  if (!card?.id || card.id === GUIDED_ACADEMY_INTRO_CARD_ID) return null;
+  if (!card?.id || seenCardIds.includes(card.id)) return null;
   const seen = new Set(seenConceptKeys);
   const callouts = getTutorialCardConcepts(card).filter((entry) => !seen.has(entry.key));
-  if (!callouts.length) return null;
+  const segments = getCardSpecificLessonSegments(card, cardClassLabel);
   return {
     id: `guided-academy-card-lesson:${card.id}`,
-    cueId: `guided-academy-card-lesson:${card.id}:${callouts.map((entry) => entry.key).join("|")}`,
+    cueId: `guided-academy-card-lesson:${card.id}`,
     cardId: card.id,
     conceptKeys: callouts.map((entry) => entry.key),
     title: `Meet ${card.name}`,
     eyebrow: "New card lesson",
     cardClassLabel,
     referenceMode: "normalized",
-    message: `Before you use ${card.name}, read the parts this card introduces. You will return to the highlighted tutorial action when you continue.`,
+    message: `Before you use ${card.name}, read its gameplay type, cost, abilities, and stats. You will return to the same tutorial step when you finish.`,
     callouts,
-    segments: callouts.map((entry) => ({
-      id: entry.key,
-      title: entry.title,
-      message: entry.text,
-      focus: entry.focus,
-    })),
+    segments,
     advanceLabel: `Continue with ${card.name}`,
   };
 }
 
 export function mergeTutorialSeenConcepts(seenConceptKeys = [], addedConceptKeys = []) {
   return [...new Set([...seenConceptKeys, ...addedConceptKeys])];
+}
+
+export function mergeTutorialSeenCardIds(seenCardIds = [], addedCardIds = []) {
+  return [...new Set([...seenCardIds, ...addedCardIds].filter(Boolean))];
+}
+
+export function getNewTutorialHandCardIds(
+  previousHand = [],
+  nextHand = [],
+  { seenCardIds = [], pendingCardIds = [] } = {},
+) {
+  const previousCounts = new Map();
+  previousHand.forEach((cardId) => previousCounts.set(cardId, (previousCounts.get(cardId) ?? 0) + 1));
+  const nextCounts = new Map();
+  const excluded = new Set([...seenCardIds, ...pendingCardIds]);
+  const additions = [];
+  nextHand.forEach((cardId) => {
+    const occurrence = (nextCounts.get(cardId) ?? 0) + 1;
+    nextCounts.set(cardId, occurrence);
+    if (occurrence <= (previousCounts.get(cardId) ?? 0) || excluded.has(cardId)) return;
+    excluded.add(cardId);
+    additions.push(cardId);
+  });
+  return additions;
 }

@@ -16,6 +16,7 @@ import {
   getSimulatorV2LessonHelp,
   getSimulatorV2LessonActionBlock,
   getSimulatorV2LessonPlacementTarget,
+  getSimulatorV2PreviouslySeenCardIds,
   getSimulatorV2PreviouslyTaughtConcepts,
   parseSimulatorV2LessonProgress,
   repairSimulatorV2LessonPlacementConflict,
@@ -1577,6 +1578,22 @@ test("later lessons direct familiar actions without repeating their introductory
     completedLessonIds: ["first-reef"],
   });
   assert.deepEqual(new Set(sequentialRuntime.previouslyTaughtConcepts), new Set(previouslyTaughtConcepts));
+  assert.deepEqual(sequentialRuntime.previouslySeenCardIds, [
+    "brain-coral-base",
+    "mustard-hill-coral-base",
+    "sea-urchin",
+    "brain-coral-stage-1",
+  ]);
+  assert.deepEqual(
+    getSimulatorV2PreviouslySeenCardIds("first-attack", ["first-reef", "first-attack"]),
+    [
+      "brain-coral-base",
+      "mustard-hill-coral-base",
+      "sea-urchin",
+      "brain-coral-stage-1",
+    ],
+    "replaying a lesson should replay its own card explanations while retaining earlier lessons",
+  );
 
   const support = getSimulatorV2Lesson("support-search");
   const searchedCoral = support.contract.checkpoints.find(({ id }) => id === "v2-upgrade-after-stun");
