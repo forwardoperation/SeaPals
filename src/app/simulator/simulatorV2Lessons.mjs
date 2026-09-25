@@ -21,7 +21,6 @@ export const SIMULATOR_V2_LESSON_CONCEPTS = Object.freeze({
   NON_ATTACK_ACTIONS: "non-attack-actions",
   SUPPORT_CARDS: "support-cards",
   DECK_SEARCH: "deck-search",
-  STATUS_EFFECTS: "status-effects",
   CORAL_UPGRADES: "coral-upgrades",
   SCHOOL_DENSITY: "school-density",
   OPEN_WATER: "open-water",
@@ -170,9 +169,8 @@ function lesson(definition) {
 export const SIMULATOR_V2_LESSON_MODULES = deepFreeze([
   { id: "reef-basics", title: "Reef Basics", summary: "Build a home and welcome your first SeaPals.", lessonIds: ["first-reef"] },
   { id: "battle-basics", title: "Ability Basics", summary: "Use attacks, passive abilities, and a planned recovery action.", lessonIds: ["first-attack"] },
-  { id: "support-recovery", title: "Recover and Rebuild", summary: "Clear a harmful status, search for the right upgrade, and rebuild your reef.", lessonIds: ["support-search"] },
   { id: "habitat-apex", title: "Build a Habitat", summary: "Meet Coral Reef's creature requirements, then unlock an Apex predator.", lessonIds: ["apex-predators"] },
-  { id: "open-water", title: "Grow into Open Water", summary: "Expand School Density before committing it to a giant Filter Feeder.", lessonIds: ["filter-feeder"] },
+  { id: "open-water", title: "Grow into Open Water", summary: "Make room for a giant Filter Feeder, then use a one-time Support to find it.", lessonIds: ["filter-feeder"] },
 ]);
 
 /** Short positions prepared inside the real Simulator. */
@@ -423,49 +421,8 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "support-search", moduleId: "support-recovery", number: 3,
-    title: "Recover and rebuild", duration: "5 min", goalLabel: "Clear Stunned, find an upgrade, reach 4 VP",
-    summary: "Use one-time Support cards in the right order to restore Brain Coral and grow your reef.",
-    introduction: "In this lesson, you’ll learn how to recover from a setback. Brain Coral is Stunned, so let’s get it back in action! Then search for its upgrade and turn that recovery into room for another creature.",
-    completion: "You cleared Stunned before Coral Gardener locked further Supports, found Brain Coral's upgrade, and turned two one-time effects into a stronger reef.",
-    celebration: "Your reef bounced back stronger!",
-    skills: ["Support timing", "Status recovery", "Deck search", "Coral upgrades"],
-    introducedConcepts: [
-      SIMULATOR_V2_LESSON_CONCEPTS.SUPPORT_CARDS,
-      SIMULATOR_V2_LESSON_CONCEPTS.DECK_SEARCH,
-      SIMULATOR_V2_LESSON_CONCEPTS.STATUS_EFFECTS,
-    ],
-    introducedCardIds: ["coral-heal", "coral-gardener", "brain-coral-stage-1", "sea-urchin"],
-    focusCardId: "coral-heal", searchCardId: "brain-coral-stage-1", victoryTarget: 4,
-    seed: seed({
-      hand: ["coral-heal", "coral-gardener", "sea-urchin"],
-      foundationDeck: ["brain-coral-stage-1"],
-      playerTableau: [
-        homeReef(),
-        tableau("brain-coral-base", [], {
-          statuses: [{ type: "stunned", sourceCardId: "crown-of-thorns" }],
-        }),
-      ],
-      rp: 3,
-    }),
-    checkpoints: [
-      supportCheckpoint("v2-clear-stunned", "Clear Stunned before searching", "coral-heal"),
-      supportCheckpoint("v2-play-coral-gardener", "Find the right upgrade", "coral-gardener"),
-      buildCheckpoint("v2-upgrade-after-stun", "Upgrade the recovered Coral", "brain-coral-stage-1", { cardKind: "coral", placement: "foundation-upgrade" }),
-      buildCheckpoint("v2-stun-finish", "Use the new Invertebrate slot", "sea-urchin"),
-      victoryCheckpoint(4),
-    ],
-    supportCards: {
-      "v2-clear-stunned": ["coral-heal"],
-      "v2-play-coral-gardener": ["coral-gardener"],
-    },
-    buildCards: {
-      "v2-upgrade-after-stun": ["brain-coral-stage-1"],
-      "v2-stun-finish": ["sea-urchin"],
-    },
-  }),
-  lesson({
-    id: "apex-predators", moduleId: "habitat-apex", number: 4,
+    id: "apex-predators", moduleId: "habitat-apex", number: 3,
+    randomSeed: (LESSON_RANDOM_SEED_BASE + 4) >>> 0,
     title: "Build a Habitat for an Apex", duration: "7 min", goalLabel: "Complete Coral Reef and reach 12 VP",
     summary: "Meet Coral Reef's creature requirements, play the Habitat, upgrade a Coral, and welcome Hammerhead.",
     introduction: "In this lesson, you’ll learn how a thriving Habitat unlocks powerful creatures! Complete the required Fish and Invertebrate counts, place Coral Reef, and prepare an Apex slot for Hammerhead.",
@@ -533,27 +490,30 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "filter-feeder", moduleId: "open-water", number: 5,
-    title: "Make room for a giant", duration: "5 min", goalLabel: "Balance School Density and reach 21 VP",
-    summary: "Commit a little School Density, expand its supply, and then bring in an Ocean Sunfish.",
-    introduction: "In this lesson, you’ll learn how to make room for a giant! I’ve prepared two Creature Schools beside your Coral Reef. Halfbeak uses a little Density; Ocean Sunfish needs much more, so let’s expand a School.",
-    completion: "Your Coral Reef and Hammerhead stayed in play. Halfbeak used 10 School Density, then Anchovy Ball's upgrade left enough free for Ocean Sunfish to push the ecosystem to 21 VP.",
-    celebration: "Your ecosystem made room for a giant!",
-    skills: ["Creature Schools", "School Density", "Open water", "Filter Feeders"],
+    id: "filter-feeder", moduleId: "open-water", number: 4,
+    randomSeed: (LESSON_RANDOM_SEED_BASE + 5) >>> 0,
+    title: "Make room for a giant", duration: "6 min", goalLabel: "Use Support, balance School Density, and reach 21 VP",
+    summary: "Expand School Density, then use Capt. Dani to find the giant Filter Feeder your plan needs.",
+    introduction: "In this lesson, you’ll learn how Support cards can complete a bigger plan! First, make room by balancing and expanding School Density. Then use Capt. Dani as a one-time Support to find Ocean Sunfish and welcome this giant Filter Feeder.",
+    completion: "You balanced School Density, used Capt. Dani as a one-time Support to search for Ocean Sunfish, and brought the giant Filter Feeder into open water without removing Halfbeak.",
+    celebration: "Your Support play made room for a giant!",
+    skills: ["Creature Schools", "School Density", "Support cards", "Deck search", "Open water", "Filter Feeders"],
     introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY,
+      SIMULATOR_V2_LESSON_CONCEPTS.SUPPORT_CARDS,
+      SIMULATOR_V2_LESSON_CONCEPTS.DECK_SEARCH,
       SIMULATOR_V2_LESSON_CONCEPTS.OPEN_WATER,
       SIMULATOR_V2_LESSON_CONCEPTS.FILTER_FEEDERS,
     ],
-    introducedCardIds: ["halfbeak", "anchovy-ball-stage1", "ocean-sunfish"],
-    focusCardId: "ocean-sunfish", victoryTarget: 21,
+    introducedCardIds: ["halfbeak", "anchovy-ball-stage1", "capt-dani", "ocean-sunfish"],
+    focusCardId: "ocean-sunfish", searchCardId: "ocean-sunfish", victoryTarget: 21,
     expectedDraws: {
-      "v2-draw-filter-feeder": { deckType: "pals", cardId: "ocean-sunfish" },
+      "v2-draw-filter-support": { deckType: "pals", cardId: "capt-dani" },
     },
     seed: seed({
       hand: ["halfbeak", "anchovy-ball-stage1"],
       foundationDeck: [],
-      palsDeck: ["ocean-sunfish"],
+      palsDeck: ["capt-dani", "ocean-sunfish"],
       playerTableau: [
         tableau("brain-coral-stage-2", [["hammerhead", "apex"]]),
         homeReef(),
@@ -572,10 +532,14 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       buildCheckpoint("v2-expand-density", "Upgrade Anchovy Ball", "anchovy-ball-stage1", { placement: "foundation-upgrade" }),
       checkpoint("v2-fund-filter-feeder", ACTION.TURN_ENDED, "Prepare the next round", "End your turn so the reef can fund your giant Filter Feeder."),
       collectCheckpoint(),
-      drawCheckpoint({ id: "v2-draw-filter-feeder", title: "Draw Ocean Sunfish", deckType: "pals" }),
+      drawCheckpoint({ id: "v2-draw-filter-support", title: "Draw Capt. Dani", deckType: "pals" }),
+      supportCheckpoint("v2-search-filter-feeder", "Search for Ocean Sunfish", "capt-dani"),
       buildCheckpoint("v2-play-filter-feeder", "Welcome Ocean Sunfish", "ocean-sunfish", { placement: "open-water" }),
       victoryCheckpoint(21),
     ],
+    supportCards: {
+      "v2-search-filter-feeder": ["capt-dani"],
+    },
     buildCards: {
       "v2-spend-density": ["halfbeak"],
       "v2-expand-density": ["anchovy-ball-stage1"],
@@ -744,6 +708,7 @@ const CARD_NAMES = Object.freeze({
   flounder: "Southern Flounder",
   "coral-gardener": "Coral Gardener",
   "coral-heal": "Coral Heal",
+  "capt-dani": "Capt. Dani",
   "coral-reef": "Coral Reef",
   "sardine-ball-base": "Sardine Ball",
   "anchovy-ball-stage1": "Anchovy Ball Stage 1",
@@ -998,7 +963,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const scenarioDrawMessage = selected.id === "apex-predators"
       ? "Your Coral Reef is established and Brain Coral has an Apex slot. Draw Hammerhead from the Pals Deck so you can use the RP you collected for the final play."
       : selected.id === "filter-feeder"
-      ? "You expanded School Density for a giant creature. Draw Ocean Sunfish from the Pals Deck; your Coral Reef Habitat and 160 free Density are ready."
+      ? "You expanded School Density and saved enough RP for a giant creature. Ocean Sunfish is still in your deck, so draw Capt. Dani from the Pals Deck and use her Support effect to find it."
       : firstReefUpgradeDraw
         ? "Brain Coral Stage 1 is on top of your Foundation Deck. Draw it so you can level up the Coral you placed last round."
       : firstAttackOpeningDraw
@@ -1157,31 +1122,25 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (uiState.modal === "search" && selected.searchCardId) {
       return help(
         "search-card",
-        name(cardId) + " found the eligible Corals in your Foundation Deck. Choose the one this lesson needs.",
+        name(cardId) + " found the eligible Filter Feeders in your Pals Deck. Choose the creature that completes this plan.",
         "Choose " + name(selected.searchCardId) + ".",
         { targetSearchCardId: selected.searchCardId },
       );
     }
     const selectedCard = uiState.selectedHandCard === cardId
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
-    const message = cardId === "coral-heal"
-      ? "Stunned is a status on Brain Coral, separate from the round's shared Condition. It blocks upgrading. Play Coral Heal first: Coral Gardener prevents more Supports this turn after its search."
-      : "Brain Coral is clear of Stunned! Now Coral Gardener can search your Foundation Deck for the matching Stage 1 upgrade. Supports resolve once, then go to the discard pile.";
+    const message = "Support cards create one-time effects during your main phase, then go to the discard pile. Capt. Dani searches your Pals Deck for a Filter Feeder. Her text also prevents another Support this turn, so play her when you are ready to find Ocean Sunfish!";
     const action = selectedCard
       ? "Choose Play Card."
-      : cardId === "coral-heal"
-        ? "Brain Coral is Stunned, but we can fix that! Select Coral Heal in your hand."
-        : "Great—Brain Coral is clear! Now select Coral Gardener to find its Stage 1 upgrade.";
+      : "Select Capt. Dani in your hand, then play her to begin the search.";
     return help(
       selectedCard ? "play-card" : "hand",
-      selectedCard ? name(cardId) + " is selected and ready to resolve." : message,
+      selectedCard ? message + " Capt. Dani is selected and ready to resolve." : message,
       action,
       {
         interaction: "tap",
         targetCardId: cardId,
-        hint: cardId === "coral-heal"
-          ? "After playing it, choose the Brain Coral marked Stunned."
-          : "After playing it, choose Brain Coral Stage 1 in the deck search.",
+        hint: "After playing her, choose Ocean Sunfish in the deck search.",
       },
     );
   }
@@ -1327,7 +1286,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (cardId === "halfbeak") {
       message = "I've added two Creature Schools to your reef: Sardine Ball supplies 120 School Density and Anchovy Ball supplies 10. Halfbeak costs 2 RP and commits 10 of that 130. Afterward, only 120 is free, which is too little for Ocean Sunfish's 150.";
     } else if (cardId === "ocean-sunfish") {
-      message = "Ocean Sunfish needs 8 RP, Coral Reef or Open Ocean, and 150 free School Density. Your Anchovy Ball upgrade raised supply to 170; with 10 used by Halfbeak, 160 remains. Play Sunfish to commit 150 and score 8 VP.";
+      message = "Capt. Dani found the Filter Feeder your plan needed! Ocean Sunfish costs 8 RP, needs Coral Reef or Open Ocean, and commits 150 School Density. Your Anchovy Ball upgrade raised supply to 170; with 10 used by Halfbeak, 160 remains. Play Sunfish to commit 150 and score 8 VP.";
     } else if (cardId === "hammerhead") {
       message = "Hammerhead costs 6 RP, needs Coral Reef, and must occupy an Apex slot. Stage 2 Brain Coral supplies that slot.";
     } else if (cardId === "great-barracuda") {
@@ -1422,8 +1381,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   if (current.actionType === ACTION.RP_COLLECTED && selected.id === "filter-feeder") {
     return help(
       "rp-bank",
-      "Your plan worked! You made room in School Density last turn. Now the Foundations' RP production refills your bank, so you can afford the 8 RP Ocean Sunfish without giving up Halfbeak.",
-      "Continue to draw Ocean Sunfish from the Pals Deck.",
+      "Your plan worked! You made room in School Density last turn, and your Foundations refilled the RP needed for Ocean Sunfish. First, draw Capt. Dani and use her one-time Support effect to search for that Filter Feeder.",
+      "Continue to draw Capt. Dani from the Pals Deck.",
     );
   }
   return help(
@@ -1543,17 +1502,28 @@ export function parseSimulatorV2LessonProgress(raw) {
     }
   }
   const savedIds = Array.isArray(value?.completedLessonIds) ? value.completedLessonIds : [];
-  const completed = value?.version === 2
+  const completed = value?.version === 3
     ? savedIds
+    : value?.version === 2
+      ? [
+          ...savedIds.filter((id) => id === "first-reef" || id === "first-attack" || id === "apex-predators"),
+          ...(savedIds.includes("support-search") && savedIds.includes("filter-feeder") ? ["filter-feeder"] : []),
+        ]
     : value?.version === 1
       ? [
           ...savedIds.filter((id) => id === "first-reef" || id === "first-attack"),
-          ...(savedIds.includes("support-search") && savedIds.includes("clear-stun") ? ["support-search"] : []),
-          ...(savedIds.includes("school-density") && savedIds.includes("filter-feeder") ? ["filter-feeder"] : []),
+          ...(
+            savedIds.includes("support-search")
+            && savedIds.includes("clear-stun")
+            && savedIds.includes("school-density")
+            && savedIds.includes("filter-feeder")
+              ? ["filter-feeder"]
+              : []
+          ),
         ]
       : [];
   return {
-    version: 2,
+    version: 3,
     completedLessonIds: SIMULATOR_V2_LESSONS
       .map(({ id }) => id)
       .filter((id) => completed.includes(id)),
