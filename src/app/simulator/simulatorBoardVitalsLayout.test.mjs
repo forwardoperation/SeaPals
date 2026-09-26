@@ -71,8 +71,8 @@ test("Fit reserves space for external foundation and Habitat vitals", () => {
   assert.match(simulatorSource, /opponent\.habitats\.length \? "top-10" : "top-4"/);
   assert.match(
     simulatorSource,
-    /seapals-player-floating-row[^"\n]*bottom-0[^"\n]*top-0[\s\S]*?playerHabitats\.length \? "pt-12" : "pt-6"/,
-    "the player row should keep Habitat clearance while spanning the board for positioned Open Water cards",
+    /seapals-player-floating-row[^"\n]*bottom-0[^"\n]*top-0[\s\S]*?playerHabitats\.length \? preparedPlayerReefLayout \? "pt-24" : "pt-12" : "pt-6"/,
+    "the player row should add prepared-lesson Habitat clearance while retaining the normal Habitat offset",
   );
 });
 

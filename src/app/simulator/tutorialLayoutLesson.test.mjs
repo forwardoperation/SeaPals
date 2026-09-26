@@ -79,93 +79,26 @@ test("guided foundation targets spread early tutorial cards across distinct open
   assert.throws(() => getGuidedAcademyFoundationPlacementTarget(-1), /non-negative/);
 });
 
-test("prepared lesson foundations open in a mobile-clear two-dimensional grid", () => {
-  const mobileBoard = { width: 375, height: 350 };
-  const foundationFootprint = { width: 240, height: 280 };
+test("prepared lesson foundations open in centered rows with room for their slot networks", () => {
+  const expected = new Map([
+    [1, [{ x: 50, y: 50 }]],
+    [2, [{ x: -20, y: 50 }, { x: 120, y: 50 }]],
+    [3, [{ x: -20, y: -70 }, { x: 120, y: -70 }, { x: 50, y: 170 }]],
+    [4, [{ x: -20, y: -70 }, { x: 120, y: -70 }, { x: -20, y: 170 }, { x: 120, y: 170 }]],
+    [5, [{ x: -90, y: -70 }, { x: 50, y: -70 }, { x: 190, y: -70 }, { x: -20, y: 170 }, { x: 120, y: 170 }]],
+    [6, [{ x: -90, y: -70 }, { x: 50, y: -70 }, { x: 190, y: -70 }, { x: -90, y: 170 }, { x: 50, y: 170 }, { x: 190, y: 170 }]],
+  ]);
 
-  for (let total = 1; total <= 6; total += 1) {
+  for (const [total, expectedPositions] of expected) {
     const positions = Array.from({ length: total }, (_, index) => (
       getPreparedTutorialFoundationPlacement(index, total)
     ));
+    assert.deepEqual(positions, expectedPositions, `${total} prepared Foundations use the intended centered grid`);
     assert.equal(new Set(positions.map(({ x, y }) => `${x}:${y}`)).size, total);
-    if (total >= 3) {
-      assert.ok(new Set(positions.map(({ y }) => y)).size > 1, `${total} prepared Foundations use more than one row`);
-    }
-    for (let left = 0; left < positions.length; left += 1) {
-      for (let right = left + 1; right < positions.length; right += 1) {
-        const horizontal = Math.abs(positions[left].x - positions[right].x) / 100 * mobileBoard.width;
-        const vertical = Math.abs(positions[left].y - positions[right].y) / 100 * mobileBoard.height;
-        assert.ok(
-          horizontal >= foundationFootprint.width || vertical >= foundationFootprint.height,
-          `prepared Foundation ${left + 1} must clear Foundation ${right + 1} on a narrow board`,
-        );
-      }
-    }
   }
 
   assert.throws(() => getPreparedTutorialFoundationPlacement(2, 2), /valid index/);
   assert.throws(() => getPreparedTutorialFoundationPlacement(0, 0), /positive total/);
-});
-
-test("the prepared Habitat lesson clears attached cards and neighboring slot markers", () => {
-  const portraitBoard = { width: 750, height: 747 };
-  const foundationSize = { width: 180, height: 220 };
-  const foundationWrapper = { width: 240, height: 280 };
-  const slotRadius = { horizontal: 92 / 100, vertical: 104 / 100 };
-  const branches = [
-    { slotCount: 4, filledSlots: new Set() },
-    { slotCount: 2, filledSlots: new Set([0, 1]) },
-    { slotCount: 4, filledSlots: new Set() },
-    { slotCount: 2, filledSlots: new Set() },
-  ];
-  const rectangle = (centerX, centerY, width, height, label) => ({
-    label,
-    left: centerX - width / 2,
-    right: centerX + width / 2,
-    top: centerY - height / 2,
-    bottom: centerY + height / 2,
-  });
-  const cardsByBranch = branches.map((branch, branchIndex) => {
-    const placement = getPreparedTutorialFoundationPlacement(branchIndex, branches.length);
-    const centerX = placement.x / 100 * portraitBoard.width;
-    const centerY = placement.y / 100 * portraitBoard.height;
-    const cards = [rectangle(
-      centerX,
-      centerY - (foundationWrapper.height - foundationSize.height) / 2,
-      foundationSize.width,
-      foundationSize.height,
-      `Foundation ${branchIndex + 1}`,
-    )];
-    for (let slotIndex = 0; slotIndex < branch.slotCount; slotIndex += 1) {
-      const angle = slotIndex / branch.slotCount * Math.PI * 2 - Math.PI / 2;
-      const slotCenterX = centerX + Math.cos(angle) * slotRadius.horizontal * foundationWrapper.width;
-      const slotCenterY = centerY + Math.sin(angle) * slotRadius.vertical * foundationWrapper.height;
-      const filled = branch.filledSlots.has(slotIndex);
-      cards.push(rectangle(
-        slotCenterX,
-        slotCenterY,
-        filled ? 180 : 112,
-        filled ? 220 : 112,
-        `${filled ? "Card" : "Slot"} ${branchIndex + 1}.${slotIndex + 1}`,
-      ));
-    }
-    return cards;
-  });
-
-  for (let leftBranch = 0; leftBranch < cardsByBranch.length; leftBranch += 1) {
-    for (let rightBranch = leftBranch + 1; rightBranch < cardsByBranch.length; rightBranch += 1) {
-      for (const left of cardsByBranch[leftBranch]) {
-        for (const right of cardsByBranch[rightBranch]) {
-          const horizontalOverlap = Math.min(left.right, right.right) - Math.max(left.left, right.left);
-          const verticalOverlap = Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top);
-          assert.ok(
-            horizontalOverlap <= 0 || verticalOverlap <= 0,
-            `${left.label} must clear ${right.label}`,
-          );
-        }
-      }
-    }
-  }
 });
 
 test("guided foundation targets avoid Coral cards already on the live board", () => {

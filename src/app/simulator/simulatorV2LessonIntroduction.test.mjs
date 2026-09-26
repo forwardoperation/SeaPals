@@ -10,6 +10,7 @@ const panelSource = await readFile(new URL("./SimulatorV2LessonPanel.jsx", impor
 const panelStyleSource = await readFile(new URL("./SimulatorV2LessonPanel.module.css", import.meta.url), "utf8");
 
 function sourceSection(source, startMarker, endMarker) {
+  source = source.replaceAll("\r\n", "\n");
   const start = source.indexOf(startMarker);
   assert.ok(start >= 0, `Missing source marker: ${startMarker}`);
   const end = source.indexOf(endMarker, start + startMarker.length);
@@ -67,6 +68,85 @@ test("the board teacher stays unmounted until Start Lesson is pressed", () => {
     simulatorSource,
     /const embeddedLessonActionReady = Boolean\([\s\S]*?embeddedLessonPresentationStarted[\s\S]*?&& embeddedLesson/,
     "the coach, its pointer, and its live announcement share the start gate",
+  );
+});
+
+test("Start Lesson remounts the prepared board before its seeded hand deal begins", () => {
+  assert.match(
+    experienceSource,
+    /const beginLesson = useCallback\(\(\) => \{[\s\S]*?setAttempt\(\(current\) => current \+ 1\);[\s\S]*?setPanel\(null\)/,
+  );
+  assert.match(
+    experienceSource,
+    /key=\{lesson \? `\$\{lesson\.id\}:\$\{attempt\}` : `match:\$\{returnDeckId \?\? "default"\}`\}/,
+    "pressing Start Lesson must create a fresh simulator instance for the authored opening deal",
+  );
+  assert.match(experienceSource, /lessonStarted: panel === null/);
+});
+
+test("a prepared lesson hand is concealed until its one-shot deck deal reveals it", () => {
+  const lessonDealEffect = sourceSection(
+    simulatorSource,
+    "useLayoutEffect(() => {\n    const openingHand = initialGame.hand ?? [];",
+    "function scheduleCompactOpponentTimer",
+  );
+
+  assert.match(
+    simulatorSource,
+    /const \[setupOpeningHandVisibleCount, setSetupOpeningHandVisibleCount\] = useState\(\(\) => \([\s\S]*?initialGame\.hand\.length[\s\S]*?\? 0[\s\S]*?: null[\s\S]*?\)\)/,
+    "authored hand cards must reserve their hand slots without painting before the lesson deal",
+  );
+  assert.match(simulatorSource, /const lessonOpeningHandSequenceStartedRef = useRef\(false\)/);
+  assert.match(
+    lessonDealEffect,
+    /const openingHand = initialGame\.hand \?\? \[\];[\s\S]*?if \([\s\S]*?!tutorialContract[\s\S]*?\|\| !embeddedLessonPresentationStarted[\s\S]*?\|\| !openingHand\.length[\s\S]*?\|\| lessonOpeningHandSequenceStartedRef\.current[\s\S]*?\) return/,
+    "the lesson deal must wait for Start Lesson, require cards, and run once per mounted attempt",
+  );
+  assert.match(
+    lessonDealEffect,
+    /lessonOpeningHandSequenceStartedRef\.current = true;[\s\S]*?setSetupOpeningHandVisibleCount\(0\);[\s\S]*?beginCompactTurnSequence\(\{[\s\S]*?includeOpeningHand: true,[\s\S]*?openingHandKind: "lesson-opening-hand",[\s\S]*?openingHand: \[\.\.\.openingHand\]/,
+  );
+  assert.match(
+    lessonDealEffect,
+    /return \(\) => \{[\s\S]*?lessonOpeningHandSequenceStartedRef\.current = false;[\s\S]*?\};/,
+    "effect cleanup must release the one-shot guard so React Strict Mode can run the real mount",
+  );
+});
+
+test("the lesson deal reveals reserved slots on landing and fully cleans up on completion or fallback", () => {
+  const openingHandLauncher = sourceSection(
+    simulatorSource,
+    "function launchCompactOpeningHandDeal(sequence)",
+    "useLayoutEffect(() => {\n    const sequence = compactTurnSequence;",
+  );
+  const lessonStageLauncher = sourceSection(
+    simulatorSource,
+    "useLayoutEffect(() => {\n    const sequence = compactTurnSequence;",
+    "useEffect(() => {\n    const sequence = compactTurnSequence;",
+  );
+  const lessonDealEffect = sourceSection(
+    simulatorSource,
+    "useLayoutEffect(() => {\n    const openingHand = initialGame.hand ?? [];",
+    "function scheduleCompactOpponentTimer",
+  );
+
+  assert.match(openingHandLauncher, /const landedIndexes = new Set\(\)/);
+  assert.match(openingHandLauncher, /onCardLanded: \(flight\) => \{[\s\S]*?landedIndexes\.add\(flight\.handIndex\)/);
+  assert.match(openingHandLauncher, /while \(landedIndexes\.has\(next\)\) next \+= 1/);
+  assert.match(openingHandLauncher, /return Math\.min\(next, openingCards\.length\)/);
+  assert.match(openingHandLauncher, /const completeOpeningDeal = \(\) => \{[\s\S]*?setSetupOpeningHandVisibleCount\(openingCards\.length\);[\s\S]*?advanceCompactTurnSequence\(sequence\.id\)/);
+  assert.match(openingHandLauncher, /if \(!started\) \{[\s\S]*?setSetupOpeningHandVisibleCount\(openingCards\.length\);[\s\S]*?scheduleCompactTurnTimer/);
+  assert.match(openingHandLauncher, /onComplete: completeOpeningDeal/);
+  assert.match(openingHandLauncher, /onCancel: completeOpeningDeal/);
+  assert.match(
+    lessonStageLauncher,
+    /stage\?\.kind !== CompactTurnStage\.OPENING_HAND[\s\S]*?sequence\.openingHandKind !== "lesson-opening-hand"[\s\S]*?launchCompactOpeningHandDeal\(sequence\)/,
+    "the lesson-specific layout effect launches as soon as its reserved slots are committed",
+  );
+  assert.match(
+    lessonDealEffect,
+    /beginCompactTurnSequence\(\{[\s\S]*?openingHandKind: "lesson-opening-hand"[\s\S]*?\}, \(\) => \{[\s\S]*?setSetupOpeningHandVisibleCount\(null\)/,
+    "after the sequence, the ordinary hand renderer must own all seeded cards again",
   );
 });
 

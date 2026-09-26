@@ -4700,7 +4700,12 @@ export default function Simulator({
   }, [embeddedLesson?.id]);
   const [tutorialIntroductionStep, setTutorialIntroductionStep] = useState(null);
   const [tutorialCardLesson, setTutorialCardLesson] = useState(() => {
-    const openingCardTourId = embeddedLessonPresentationStarted
+    const preparedOpeningHandPending = Boolean(
+      embeddedLessonPresentationStarted
+      && Array.isArray(embeddedLesson?.seed?.hand)
+      && embeddedLesson.seed.hand.length > 0
+    );
+    const openingCardTourId = embeddedLessonPresentationStarted && !preparedOpeningHandPending
       ? embeddedLesson?.openingCardTourId
       : null;
     return openingCardTourId
@@ -4867,7 +4872,12 @@ export default function Simulator({
   const [mobileDrawFlights, setMobileDrawFlights] = useState([]);
   const [mobileDrawAnnouncement, setMobileDrawAnnouncement] = useState("");
   const [pendingHandArrivalFlight, setPendingHandArrivalFlight] = useState(null);
-  const [setupOpeningHandVisibleCount, setSetupOpeningHandVisibleCount] = useState(null);
+  const [setupOpeningHandVisibleCount, setSetupOpeningHandVisibleCount] = useState(() => (
+    embeddedLesson && tutorialContract && embeddedLessonPresentationStarted && initialGame.hand.length > 0
+      ? 0
+      : null
+  ));
+  const lessonOpeningHandSequenceStartedRef = useRef(false);
   const mobileDrawFlightIdRef = useRef(0);
   const mobileDrawFlightTimersRef = useRef(new Map());
   const mobileDrawHandoffFramesRef = useRef(new Map());
@@ -6579,6 +6589,7 @@ export default function Simulator({
     condition = null,
     includeCondition = true,
     includeOpeningHand = false,
+    openingHandKind = "opening-hand",
     includeRpSourceFocus = false,
     openingHand = [],
     includeRp = true,
@@ -6614,6 +6625,7 @@ export default function Simulator({
       roundNumber,
       condition,
       openingHand,
+      openingHandKind,
       stages,
       stageIndex: 0,
       rpBefore,
@@ -6635,6 +6647,38 @@ export default function Simulator({
     }));
     setCompactTurnSequence(sequence);
   }
+
+  useLayoutEffect(() => {
+    const openingHand = initialGame.hand ?? [];
+    if (
+      !embeddedLesson
+      || !tutorialContract
+      || !embeddedLessonPresentationStarted
+      || !openingHand.length
+      || lessonOpeningHandSequenceStartedRef.current
+    ) return;
+
+    lessonOpeningHandSequenceStartedRef.current = true;
+    setSetupOpeningHandVisibleCount(0);
+    beginCompactTurnSequence({
+      owner: "player",
+      includeCondition: false,
+      includeOpeningHand: true,
+      openingHandKind: "lesson-opening-hand",
+      openingHand: [...openingHand],
+      includeRp: false,
+    }, () => {
+      setSetupOpeningHandVisibleCount(null);
+      setMobileDrawAnnouncement("Your lesson hand is ready.");
+      const openingCardTourId = embeddedLesson?.openingCardTourId;
+      if (openingCardTourId) {
+        setTutorialCardLesson(createGuidedFoundationCardLesson(cardsById[openingCardTourId]));
+      }
+    });
+    return () => {
+      lessonOpeningHandSequenceStartedRef.current = false;
+    };
+  }, [embeddedLesson?.id, embeddedLessonPresentationStarted, tutorialContract]);
 
   function scheduleCompactOpponentTimer(presentationId, callback, delay) {
     const timerId = window.setTimeout(() => {
@@ -6990,6 +7034,56 @@ export default function Simulator({
     );
   }
 
+  function launchCompactOpeningHandDeal(sequence) {
+    if (compactTurnSequenceIdRef.current !== sequence.id) return false;
+    const openingCards = (sequence.openingHand ?? []).map((cardId) => ({
+      cardId,
+      source: isFoundationCard(cardsById[cardId]) ? "Foundation" : "Pals",
+      discarded: false,
+    }));
+    const landedIndexes = new Set();
+    const completeOpeningDeal = () => {
+      const current = compactTurnSequenceRef.current;
+      if (!current || current.id !== sequence.id || current.stageIndex !== sequence.stageIndex) return;
+      setSetupOpeningHandVisibleCount(openingCards.length);
+      advanceCompactTurnSequence(sequence.id);
+    };
+    const started = startMobileDrawFlights(openingCards, 0, {
+      kind: sequence.openingHandKind ?? "opening-hand",
+      focusOnComplete: false,
+      announcement: "Dealing your opening hand.",
+      onCardLanded: (flight) => {
+        landedIndexes.add(flight.handIndex);
+        setSetupOpeningHandVisibleCount((current) => {
+          let next = Math.max(0, Number(current) || 0);
+          while (landedIndexes.has(next)) next += 1;
+          return Math.min(next, openingCards.length);
+        });
+      },
+      onComplete: completeOpeningDeal,
+      onCancel: completeOpeningDeal,
+    });
+    if (!started) {
+      setSetupOpeningHandVisibleCount(openingCards.length);
+      scheduleCompactTurnTimer(
+        sequence.id,
+        () => advanceCompactTurnSequence(sequence.id),
+        accessibilityReducedMotion ? 80 : 220,
+      );
+    }
+    return started;
+  }
+
+  useLayoutEffect(() => {
+    const sequence = compactTurnSequence;
+    const stage = sequence?.stages?.[sequence.stageIndex];
+    if (
+      stage?.kind !== CompactTurnStage.OPENING_HAND
+      || sequence.openingHandKind !== "lesson-opening-hand"
+    ) return;
+    launchCompactOpeningHandDeal(sequence);
+  }, [compactTurnSequence?.id, compactTurnSequence?.stageIndex, compactTurnSequence?.openingHandKind]);
+
   useEffect(() => {
     const sequence = compactTurnSequence;
     if (!sequence) return undefined;
@@ -7009,56 +7103,25 @@ export default function Simulator({
     }
 
     if (stage.kind === CompactTurnStage.OPENING_HAND) {
+      if (sequence.openingHandKind === "lesson-opening-hand") return undefined;
       let cancelled = false;
       let secondFrame = null;
-      const firstFrame = window.requestAnimationFrame(() => {
+      let firstFrame = null;
+      firstFrame = window.requestAnimationFrame(() => {
         compactTurnFrameIdsRef.current.delete(firstFrame);
         secondFrame = window.requestAnimationFrame(() => {
           compactTurnFrameIdsRef.current.delete(secondFrame);
-          if (cancelled || compactTurnSequenceIdRef.current !== sequence.id) return;
-
-          const openingCards = (sequence.openingHand ?? []).map((cardId) => ({
-            cardId,
-            source: isFoundationCard(cardsById[cardId]) ? "Foundation" : "Pals",
-            discarded: false,
-          }));
-          const landedIndexes = new Set();
-          const completeOpeningDeal = () => {
-            if (cancelled || compactTurnSequenceIdRef.current !== sequence.id) return;
-            setSetupOpeningHandVisibleCount(openingCards.length);
-            advanceCompactTurnSequence(sequence.id);
-          };
-          const started = startMobileDrawFlights(openingCards, 0, {
-            kind: "opening-hand",
-            focusOnComplete: false,
-            announcement: "Dealing your opening hand.",
-            onCardLanded: (flight) => {
-              landedIndexes.add(flight.handIndex);
-              setSetupOpeningHandVisibleCount((current) => {
-                let next = Math.max(0, Number(current) || 0);
-                while (landedIndexes.has(next)) next += 1;
-                return Math.min(next, openingCards.length);
-              });
-            },
-            onComplete: completeOpeningDeal,
-            onCancel: completeOpeningDeal,
-          });
-          if (!started) {
-            setSetupOpeningHandVisibleCount(openingCards.length);
-            scheduleCompactTurnTimer(
-              sequence.id,
-              () => advanceCompactTurnSequence(sequence.id),
-              accessibilityReducedMotion ? 80 : 220,
-            );
-          }
+          if (!cancelled) launchCompactOpeningHandDeal(sequence);
         });
         compactTurnFrameIdsRef.current.add(secondFrame);
       });
       compactTurnFrameIdsRef.current.add(firstFrame);
       return () => {
         cancelled = true;
-        window.cancelAnimationFrame(firstFrame);
-        compactTurnFrameIdsRef.current.delete(firstFrame);
+        if (firstFrame !== null) {
+          window.cancelAnimationFrame(firstFrame);
+          compactTurnFrameIdsRef.current.delete(firstFrame);
+        }
         if (secondFrame !== null) {
           window.cancelAnimationFrame(secondFrame);
           compactTurnFrameIdsRef.current.delete(secondFrame);
@@ -12736,20 +12799,30 @@ export default function Simulator({
     flightElement.style.setProperty("--seapals-draw-end-scale", geometry.endScale);
   }
 
-  function getMobileDrawFlightSourceElement(sourceZone = "deck") {
+  function getMobileDrawFlightSourceElement(sourceZone = "deck", sourceDeck = null) {
     const zoneElement = document.querySelector(
       `[data-mobile-edge-zones][data-zone-owner="player"] [data-mobile-zone="${sourceZone}"]`,
     );
     if (sourceZone === "deck") {
-      return zoneElement?.querySelector("[data-mobile-deck-flight-origin]") ?? zoneElement;
+      const normalizedSourceDeck = sourceDeck === "foundation" || sourceDeck === "pals"
+        ? sourceDeck
+        : null;
+      return (
+        (normalizedSourceDeck
+          ? zoneElement?.querySelector(`[data-mobile-deck-flight-origin="${normalizedSourceDeck}"]`)
+          : null)
+        ?? zoneElement?.querySelector('[data-mobile-deck-flight-origin="pals"]')
+        ?? zoneElement?.querySelector("[data-mobile-deck-flight-origin]")
+        ?? zoneElement
+      );
     }
     return zoneElement?.querySelector(".seapals-mobile-edge-zone-art") ?? zoneElement;
   }
 
   function prepareMobileDrawFlight(flight, flightElement) {
-    if (!["opening-hand", "discard-recovery", "dr-evans-refresh", "deck-search"].includes(flight?.kind) || !flightElement) return;
+    if (!["opening-hand", "lesson-opening-hand", "discard-recovery", "dr-evans-refresh", "deck-search"].includes(flight?.kind) || !flightElement) return;
     if (!mobileDrawFlightTimersRef.current.has(flight.id)) return;
-    const sourceElement = getMobileDrawFlightSourceElement(flight.sourceZone);
+    const sourceElement = getMobileDrawFlightSourceElement(flight.sourceZone, flight.sourceDeck);
     const handRail = document.querySelector("[data-simulator-hand-card-rail]");
     const targetItem = document.querySelector(`[data-mobile-hand-card-index="${flight.handIndex}"]`);
     const sourceRect = sourceElement?.getBoundingClientRect();
@@ -12840,6 +12913,11 @@ export default function Simulator({
         onComplete?.();
       }
     };
+
+    if (flightOrId?.kind === "lesson-opening-hand") {
+      retireFlight();
+      return;
+    }
 
     const handoffFrames = { first: null, second: null };
     handoffFrames.first = window.requestAnimationFrame(() => {
@@ -12939,7 +13017,7 @@ export default function Simulator({
     onCancel = null,
   } = {}) {
     const cardsToHand = revealed.filter((entry) => !entry.discarded);
-    const openingHandDeal = kind === "opening-hand";
+    const openingHandDeal = ["opening-hand", "lesson-opening-hand"].includes(kind);
     if (
       !previewDrawTrayEnabled
       || !compactDrawViewportRef.current
@@ -12947,12 +13025,12 @@ export default function Simulator({
       || typeof document === "undefined"
     ) return false;
 
-    const sourceElement = initialSourceElement ?? getMobileDrawFlightSourceElement(sourceZone);
+    const fallbackSourceElement = initialSourceElement ?? getMobileDrawFlightSourceElement(sourceZone);
     const handElement = document.querySelector("[data-mobile-hand-dock]");
     const handRail = document.querySelector("[data-simulator-hand-card-rail]");
-    if (kind === "opening-hand") handRail?.scrollTo?.({ left: 0, behavior: "auto" });
-    const sourceRect = sourceElement?.getBoundingClientRect();
-    if (!sourceRect?.width || !sourceRect.height) return false;
+    if (openingHandDeal) handRail?.scrollTo?.({ left: 0, behavior: "auto" });
+    const fallbackSourceRect = fallbackSourceElement?.getBoundingClientRect();
+    if (!fallbackSourceRect?.width || !fallbackSourceRect.height) return false;
 
     clearMobileDrawFlightSequence();
     mobileDrawSequenceCallbacksRef.current = { onCardLanded, onComplete, onCancel };
@@ -12969,30 +13047,38 @@ export default function Simulator({
     const endY = handRect?.height
       ? handRect.top + Math.min(20 * uiScale, handRect.height * 0.12)
       : viewportHeight - flightHeight * 0.82;
-    const geometry = getMobileDrawFlightGeometry({
-      sourceRect,
-      endX,
-      endY,
-      flightWidth,
-      viewportHeight,
-    });
     const reducedMotion = accessibilityReducedMotion || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
     const duration = reducedMotion ? 140 : openingHandDeal ? 520 : 680;
     const stagger = reducedMotion ? openingHandDeal ? 80 : 20 : 150;
-    const flights = cardsToHand.map((entry, index) => ({
-      id: `mobile-draw-flight-${++mobileDrawFlightIdRef.current}`,
-      kind,
-      sourceZone,
-      cardId: entry.cardId,
-      source: String(entry.source || "deck").toLowerCase(),
-      handIndex: baseHandLength + index,
-      reducedMotion,
-      uiScale,
-      ...geometry,
-      width: flightWidth,
-      duration,
-      delay: index * stagger,
-    }));
+    const flights = cardsToHand.map((entry, index) => {
+      const sourceDeck = getPersonalDeckType(cardsById[entry.cardId]);
+      const sourceElement = initialSourceElement
+        ?? getMobileDrawFlightSourceElement(sourceZone, sourceDeck)
+        ?? fallbackSourceElement;
+      const sourceRect = sourceElement?.getBoundingClientRect();
+      const geometry = getMobileDrawFlightGeometry({
+        sourceRect: sourceRect?.width && sourceRect.height ? sourceRect : fallbackSourceRect,
+        endX,
+        endY,
+        flightWidth,
+        viewportHeight,
+      });
+      return {
+        id: `mobile-draw-flight-${++mobileDrawFlightIdRef.current}`,
+        kind,
+        sourceZone,
+        sourceDeck,
+        cardId: entry.cardId,
+        source: String(entry.source || "deck").toLowerCase(),
+        handIndex: baseHandLength + index,
+        reducedMotion,
+        uiScale,
+        ...geometry,
+        width: flightWidth,
+        duration,
+        delay: index * stagger,
+      };
+    });
 
     mobileDrawSequenceActiveRef.current = true;
     mobileDrawFocusIndexRef.current = focusOnComplete ? baseHandLength : null;
@@ -23937,14 +24023,22 @@ export default function Simulator({
           height: 100%;
           object-fit: contain;
         }
+        .seapals-mobile-deck-backs {
+          background: transparent;
+        }
         .seapals-mobile-deck-back {
+          position: absolute;
+          inset: 0;
           display: grid;
           place-items: center;
           padding: .65rem;
+          border-radius: inherit;
           background:
             radial-gradient(circle at 28% 24%, rgba(34, 211, 238, .32), transparent 34%),
             linear-gradient(145deg, #0e7490, #082f49 48%, #020617);
         }
+        .seapals-mobile-deck-back.is-foundation { z-index: 0; }
+        .seapals-mobile-deck-back.is-pals { z-index: 1; }
         .seapals-mobile-deck-back > img {
           width: 100%;
           height: auto;
@@ -27062,7 +27156,7 @@ export default function Simulator({
                         />
                       ) : null}
                       {playerHabitats.length || playerReefCreatures.length ? (
-                        <div className={`seapals-player-floating-row pointer-events-none absolute inset-x-0 bottom-0 top-0 z-30 flex flex-wrap content-start items-start justify-center gap-3 ${playerHabitats.length ? "pt-12" : "pt-6"}`}>
+                        <div className={`seapals-player-floating-row pointer-events-none absolute inset-x-0 bottom-0 top-0 z-30 flex flex-wrap content-start items-start justify-center gap-3 ${playerHabitats.length ? preparedPlayerReefLayout ? "pt-24" : "pt-12" : "pt-6"}`}>
                           {playerHabitats.length ? (
                             <div className="seapals-player-habitats contents">
                               {playerHabitatInstances.map((habitatInstance, index) => {
@@ -27608,6 +27702,7 @@ export default function Simulator({
               data-mobile-draw-flight-id={flight.id}
               data-draw-kind={flight.kind}
               data-draw-source={flight.source}
+              data-draw-source-deck={flight.sourceDeck ?? undefined}
               aria-hidden="true"
               onAnimationStart={(event) => prepareMobileDrawFlight(flight, event.currentTarget)}
               onAnimationEnd={() => finishMobileDrawFlight(flight)}

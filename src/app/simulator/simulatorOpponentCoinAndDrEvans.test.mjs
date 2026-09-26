@@ -160,7 +160,7 @@ test("Dr. Evans preserves its resolution and defers a successful refresh until t
   const prepareFlight = sourceBetween("function prepareMobileDrawFlight", "function finishMobileDrawFlight");
   assert.match(
     prepareFlight,
-    /\["opening-hand", "discard-recovery", "dr-evans-refresh", "deck-search"\]\.includes\(flight\?\.kind\)/,
+    /\["opening-hand", "lesson-opening-hand", "discard-recovery", "dr-evans-refresh", "deck-search"\]\.includes\(flight\?\.kind\)/,
   );
 
   const ordinaryRecovery = sourceBetween("function completeCreatureRecovery", "function completeCreatureActionSearch");

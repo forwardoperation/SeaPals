@@ -497,6 +497,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     introduction: "In this lesson, you’ll learn how Support cards can complete a bigger plan! First, make room by balancing and expanding School Density. Then use Capt. Dani as a one-time Support to find Ocean Sunfish and welcome this giant Filter Feeder.",
     completion: "You balanced School Density, used Capt. Dani as a one-time Support to search for Ocean Sunfish, and brought the giant Filter Feeder into open water without removing Halfbeak.",
     celebration: "Your Support play made room for a giant!",
+    fitAllPlayerSlots: true,
     skills: ["Creature Schools", "School Density", "Support cards", "Deck search", "Open water", "Filter Feeders"],
     introducedConcepts: [
       SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY,

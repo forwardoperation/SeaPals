@@ -281,6 +281,57 @@ test("Simulator's actual prepared-foundation factory supplies visible player art
     extractFunction("createScriptedTutorialOpponentCorals", "getOnPlayCoralDamage"),
     "return createScriptedTutorialOpponentCorals;",
   ].join("\n"))(cardsById, canCardOccupySlot, getPersonalDeckType, getPreparedTutorialFoundationPlacement);
+  const mobileBoard = { width: 375, height: 350 };
+  const foundationWrapper = { width: 240, height: 280 };
+  const cardSize = { width: 180, height: 220 };
+  const emptySlotSize = { width: 128, height: 128 };
+  const requiredGap = 8;
+  const rectangle = (centerX, centerY, size, label) => ({
+    label,
+    left: centerX - size.width / 2,
+    right: centerX + size.width / 2,
+    top: centerY - size.height / 2,
+    bottom: centerY + size.height / 2,
+  });
+  const branchVisuals = (foundation, branchIndex) => {
+    const centerX = foundation.x / 100 * mobileBoard.width;
+    const centerY = foundation.y / 100 * mobileBoard.height;
+    const visuals = [rectangle(
+      centerX,
+      centerY - (foundationWrapper.height - cardSize.height) / 2,
+      cardSize,
+      `${foundation.name} Foundation`,
+    )];
+    const radiusGrowth = Math.max(0, foundation.slots.length - 4) * 10;
+    const horizontalRadius = (92 + radiusGrowth) / 100 * foundationWrapper.width;
+    const verticalRadius = (104 + radiusGrowth) / 100 * foundationWrapper.height;
+    for (const [slotIndex, slot] of foundation.slots.entries()) {
+      const angle = slotIndex / foundation.slots.length * Math.PI * 2 - Math.PI / 2;
+      const slotCenterX = centerX + Math.cos(angle) * horizontalRadius;
+      const slotCenterY = centerY + Math.sin(angle) * verticalRadius;
+      visuals.push(rectangle(
+        slotCenterX,
+        slotCenterY,
+        slot.cardId ? cardSize : emptySlotSize,
+        slot.cardId
+          ? `${cardsById[slot.cardId].name} on branch ${branchIndex + 1}`
+          : `empty ${slot.slotClass} slot on ${foundation.name}`,
+      ));
+    }
+    return visuals;
+  };
+  const assertSeparated = (left, right, lessonId) => {
+    const separated = (
+      left.right + requiredGap <= right.left
+      || right.right + requiredGap <= left.left
+      || left.bottom + requiredGap <= right.top
+      || right.bottom + requiredGap <= left.top
+    );
+    assert.ok(
+      separated,
+      `${lessonId}: ${left.label} must remain at least ${requiredGap}px clear of ${right.label} at 375x350`,
+    );
+  };
 
   for (const lesson of SIMULATOR_V2_LESSONS) {
     const player = createPreparedFoundations(lesson.seed.playerTableau, "player");
@@ -308,6 +359,16 @@ test("Simulator's actual prepared-foundation factory supplies visible player art
           horizontal >= 240 || vertical >= 280,
           `${lesson.id}: prepared Foundation ${left + 1} clears Foundation ${right + 1} on a narrow board`,
         );
+      }
+    }
+    const visualsByBranch = player.map(branchVisuals);
+    for (let leftBranch = 0; leftBranch < visualsByBranch.length; leftBranch += 1) {
+      for (let rightBranch = leftBranch + 1; rightBranch < visualsByBranch.length; rightBranch += 1) {
+        for (const leftVisual of visualsByBranch[leftBranch]) {
+          for (const rightVisual of visualsByBranch[rightBranch]) {
+            assertSeparated(leftVisual, rightVisual, lesson.id);
+          }
+        }
       }
     }
     for (const foundation of [...player, ...opponent]) {

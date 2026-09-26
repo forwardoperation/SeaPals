@@ -76,16 +76,15 @@ const COLLISION_AWARE_FOUNDATION_POSITIONS = Object.freeze([
 ]);
 
 const FOUNDATION_CLEARANCE = Object.freeze({ x: 30, y: 38 });
-const PREPARED_FOUNDATION_COLUMN_POSITIONS = Object.freeze({
-  one: Object.freeze([50]),
-  two: Object.freeze([8, 92]),
-});
-const PREPARED_FOUNDATION_ROW_GAP = 140;
+const PREPARED_FOUNDATION_COLUMN_GAP = 140;
+const PREPARED_FOUNDATION_ROW_GAP = 240;
 
 /**
- * Spreads a prepared lesson reef across two columns and as many rows as it
- * needs. Later rows may sit outside 0–100 board space; the camera's Fit pass
- * measures those coordinates and brings the complete authored reef onscreen.
+ * Spreads a prepared lesson reef into roomy, centered rows. Four-foundation
+ * lessons use two columns; larger reefs use three so their cards remain
+ * readable without letting neighboring cards and slot markers collide. Rows
+ * and columns may sit outside 0–100 board space; Fit measures the complete
+ * authored reef and brings it onscreen.
  */
 export function getPreparedTutorialFoundationPlacement(index, total) {
   const normalizedIndex = Number(index);
@@ -100,16 +99,16 @@ export function getPreparedTutorialFoundationPlacement(index, total) {
     throw new RangeError("Prepared foundation placement requires a valid index and positive total.");
   }
 
-  const rowCount = Math.ceil(normalizedTotal / 2);
-  const row = Math.floor(normalizedIndex / 2);
-  const rowStartIndex = row * 2;
-  const itemsInRow = Math.min(2, normalizedTotal - rowStartIndex);
+  const columnCount = normalizedTotal <= 4
+    ? Math.min(2, normalizedTotal)
+    : Math.min(3, normalizedTotal);
+  const rowCount = Math.ceil(normalizedTotal / columnCount);
+  const row = Math.floor(normalizedIndex / columnCount);
+  const rowStartIndex = row * columnCount;
+  const itemsInRow = Math.min(columnCount, normalizedTotal - rowStartIndex);
   const column = normalizedIndex - rowStartIndex;
-  const columns = itemsInRow === 1
-    ? PREPARED_FOUNDATION_COLUMN_POSITIONS.one
-    : PREPARED_FOUNDATION_COLUMN_POSITIONS.two;
   return Object.freeze({
-    x: columns[column],
+    x: 50 + (column - (itemsInRow - 1) / 2) * PREPARED_FOUNDATION_COLUMN_GAP,
     y: 50 + (row - (rowCount - 1) / 2) * PREPARED_FOUNDATION_ROW_GAP,
   });
 }

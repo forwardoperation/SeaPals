@@ -63,20 +63,38 @@ test("V2 sequences the setup banner, opening-hand deal, and three RP while legac
 });
 
 test("the setup deal reveals committed hand cards by landing index before advancing to RP", () => {
+  const beginCompactSequence = sourceSection(
+    simulatorSource,
+    "function beginCompactTurnSequence({",
+    "useLayoutEffect(() => {",
+  );
   const compactStagePlayback = sourceSection(
     simulatorSource,
     "useEffect(() => {\n    const sequence = compactTurnSequence;",
     "useEffect(() => () => {\n    clearCompactTurnAsyncHandles();",
   );
+  const openingHandLauncher = sourceSection(
+    simulatorSource,
+    "function launchCompactOpeningHandDeal(sequence)",
+    "useLayoutEffect(() => {\n    const sequence = compactTurnSequence;",
+  );
 
   assert.match(compactStagePlayback, /stage\.kind === CompactTurnStage\.OPENING_HAND/);
-  assert.match(compactStagePlayback, /startMobileDrawFlights\(openingCards, 0, \{/);
-  assert.match(compactStagePlayback, /kind: "opening-hand"/);
-  assert.match(compactStagePlayback, /landedIndexes\.add\(flight\.handIndex\)/);
-  assert.match(compactStagePlayback, /while \(landedIndexes\.has\(next\)\) next \+= 1/);
-  assert.match(compactStagePlayback, /onComplete: completeOpeningDeal/);
-  assert.match(compactStagePlayback, /onCancel: completeOpeningDeal/);
-  assert.match(compactStagePlayback, /advanceCompactTurnSequence\(sequence\.id\)/);
+  assert.match(beginCompactSequence, /openingHandKind = "opening-hand"/);
+  assert.match(beginCompactSequence, /openingHandKind,[\s\S]*?stages,/);
+  assert.match(openingHandLauncher, /startMobileDrawFlights\(openingCards, 0, \{/);
+  assert.match(openingHandLauncher, /kind: sequence\.openingHandKind \?\? "opening-hand"/);
+  assert.match(openingHandLauncher, /landedIndexes\.add\(flight\.handIndex\)/);
+  assert.match(openingHandLauncher, /while \(landedIndexes\.has\(next\)\) next \+= 1/);
+  assert.match(openingHandLauncher, /onComplete: completeOpeningDeal/);
+  assert.match(openingHandLauncher, /onCancel: completeOpeningDeal/);
+  assert.match(openingHandLauncher, /advanceCompactTurnSequence\(sequence\.id\)/);
+  assert.match(compactStagePlayback, /if \(sequence\.openingHandKind === "lesson-opening-hand"\) return undefined/);
+  assert.match(
+    compactStagePlayback,
+    /firstFrame = window\.requestAnimationFrame[\s\S]*?secondFrame = window\.requestAnimationFrame[\s\S]*?launchCompactOpeningHandDeal\(sequence\)/,
+    "ordinary setup hands retain the two-frame hand-slot measurement delay",
+  );
 });
 
 test("the concealed hand restores the presented deck count and remains unplayable until setup completes", () => {
@@ -235,7 +253,7 @@ test("setup completion preserves its landing rail position instead of applying t
 test("opening-hand cards lift from the visible player's top deck card instead of a viewport-center fallback", () => {
   const sourceHelper = sourceSection(
     simulatorSource,
-    'function getMobileDrawFlightSourceElement(sourceZone = "deck")',
+    'function getMobileDrawFlightSourceElement(sourceZone = "deck", sourceDeck = null)',
     "function prepareMobileDrawFlight(flight, flightElement)",
   );
   const startDrawFlights = sourceSection(
@@ -256,14 +274,14 @@ test("opening-hand cards lift from the visible player's top deck card instead of
   );
   assert.match(
     sourceHelper,
-    /sourceZone === "deck"[\s\S]*?querySelector\("\[data-mobile-deck-flight-origin\]"\)/,
+    /sourceZone === "deck"[\s\S]*?querySelector\(`\[data-mobile-deck-flight-origin="\$\{normalizedSourceDeck\}"\]`\)/,
     "setup deal geometry should be measured from the visible player deck",
   );
   assert.match(startDrawFlights, /sourceZone = "deck"/);
   assert.match(startDrawFlights, /initialSourceElement \?\? getMobileDrawFlightSourceElement\(sourceZone\)/);
   assert.match(
     mobileEdgeZonesSource,
-    /className="seapals-mobile-edge-zone-art seapals-mobile-deck-back"[\s\S]*?data-mobile-deck-flight-origin/,
+    /className="seapals-mobile-edge-zone-art seapals-mobile-deck-backs"[\s\S]*?data-mobile-deck-flight-origin="foundation"[\s\S]*?data-mobile-deck-flight-origin="pals"/,
     "the measured origin must be the visible top-card artwork, not the whole edge-zone button",
   );
   assert.match(
@@ -277,7 +295,7 @@ test("opening-hand cards lift from the visible player's top deck card instead of
   );
   assert.match(
     startDrawFlights,
-    /getMobileDrawFlightGeometry\(\{[\s\S]*?sourceRect,[\s\S]*?flightWidth,[\s\S]*?viewportHeight,[\s\S]*?\}\)/,
+    /getMobileDrawFlightGeometry\(\{[\s\S]*?sourceRect:[\s\S]*?flightWidth,[\s\S]*?viewportHeight,[\s\S]*?\}\)/,
   );
   assert.doesNotMatch(
     flightGeometry,
@@ -289,7 +307,7 @@ test("opening-hand cards lift from the visible player's top deck card instead of
 test("discard recovery remeasures its visible source while ordinary draw flights default to deck", () => {
   const sourceHelper = sourceSection(
     simulatorSource,
-    'function getMobileDrawFlightSourceElement(sourceZone = "deck")',
+    'function getMobileDrawFlightSourceElement(sourceZone = "deck", sourceDeck = null)',
     "function prepareMobileDrawFlight(flight, flightElement)",
   );
   const prepareFlight = sourceSection(
@@ -309,14 +327,63 @@ test("discard recovery remeasures its visible source while ordinary draw flights
     /return zoneElement\?\.querySelector\("\.seapals-mobile-edge-zone-art"\) \?\? zoneElement/,
     "discard recovery should begin at the visible discard artwork",
   );
-  assert.match(prepareFlight, /\["opening-hand", "discard-recovery", "dr-evans-refresh", "deck-search"\]\.includes\(flight\?\.kind\)/);
-  const remeasureIndex = prepareFlight.indexOf("getMobileDrawFlightSourceElement(flight.sourceZone)");
+  assert.match(prepareFlight, /\["opening-hand", "lesson-opening-hand", "discard-recovery", "dr-evans-refresh", "deck-search"\]\.includes\(flight\?\.kind\)/);
+  const remeasureIndex = prepareFlight.indexOf("getMobileDrawFlightSourceElement(flight.sourceZone, flight.sourceDeck)");
   const sourceRectIndex = prepareFlight.indexOf("sourceElement?.getBoundingClientRect()");
   assert.ok(remeasureIndex >= 0 && sourceRectIndex > remeasureIndex, "the current zone geometry is measured again when each recovery flight starts");
   assert.match(startDrawFlights, /kind = "turn-draw",[\s\S]*?sourceZone = "deck"/);
   assert.match(startDrawFlights, /sourceElement: initialSourceElement = null/);
-  assert.match(startDrawFlights, /const sourceElement = initialSourceElement \?\? getMobileDrawFlightSourceElement\(sourceZone\)/);
-  assert.match(startDrawFlights, /cardsToHand\.map[\s\S]*?kind,[\s\S]*?sourceZone,[\s\S]*?cardId:/);
+  assert.match(startDrawFlights, /const fallbackSourceElement = initialSourceElement \?\? getMobileDrawFlightSourceElement\(sourceZone\)/);
+  assert.match(startDrawFlights, /cardsToHand\.map[\s\S]*?kind,[\s\S]*?sourceZone,[\s\S]*?sourceDeck,[\s\S]*?cardId:/);
+});
+
+test("lesson opening-hand flights use each card's personal deck and preserve normal setup behavior", () => {
+  const sourceHelper = sourceSection(
+    simulatorSource,
+    'function getMobileDrawFlightSourceElement(sourceZone = "deck", sourceDeck = null)',
+    "function prepareMobileDrawFlight(flight, flightElement)",
+  );
+  const prepareFlight = sourceSection(
+    simulatorSource,
+    "function prepareMobileDrawFlight(flight, flightElement)",
+    "function finishMobileDrawFlight",
+  );
+  const startDrawFlights = sourceSection(
+    simulatorSource,
+    "function startMobileDrawFlights(revealed, baseHandLength, {",
+    "function confirmTurnDraw()",
+  );
+  const drawFlightMarkup = sourceSection(
+    simulatorSource,
+    "{mobileDrawFlights.map((flight) => (",
+    "))}",
+  );
+  const finishFlight = sourceSection(
+    simulatorSource,
+    "function finishMobileDrawFlight(flightOrId)",
+    "function clearMobileDrawFlightSequence",
+  );
+
+  assert.match(startDrawFlights, /const openingHandDeal = \["opening-hand", "lesson-opening-hand"\]\.includes\(kind\)/);
+  assert.match(startDrawFlights, /const sourceDeck = getPersonalDeckType\(cardsById\[entry\.cardId\]\)/);
+  assert.match(startDrawFlights, /getMobileDrawFlightSourceElement\(sourceZone, sourceDeck\)/);
+  assert.match(startDrawFlights, /sourceDeck,[\s\S]*?cardId: entry\.cardId/);
+  assert.match(sourceHelper, /sourceDeck === "foundation" \|\| sourceDeck === "pals"/);
+  assert.match(sourceHelper, /data-mobile-deck-flight-origin="\$\{normalizedSourceDeck\}"/);
+  assert.match(prepareFlight, /getMobileDrawFlightSourceElement\(flight\.sourceZone, flight\.sourceDeck\)/);
+  assert.match(drawFlightMarkup, /data-draw-source-deck=\{flight\.sourceDeck \?\? undefined\}/);
+  assert.match(
+    finishFlight,
+    /if \(flightOrId\?\.kind === "lesson-opening-hand"\) \{[\s\S]*?retireFlight\(\);[\s\S]*?return;/,
+    "lesson cards should hand off immediately after their real reserved hand slot is revealed",
+  );
+
+  const foundationOriginMatches = mobileEdgeZonesSource.match(/data-mobile-deck-flight-origin="foundation"/g) ?? [];
+  const palsOriginMatches = mobileEdgeZonesSource.match(/data-mobile-deck-flight-origin="pals"/g) ?? [];
+  assert.equal(foundationOriginMatches.length, 1, "the shared deck control exposes one Foundation launch point");
+  assert.equal(palsOriginMatches.length, 1, "the shared deck control exposes one Pals launch point");
+  assert.match(mobileEdgeZonesSource, /className="seapals-mobile-deck-back is-foundation"/);
+  assert.match(mobileEdgeZonesSource, /className="seapals-mobile-deck-back is-pals"/);
 });
 
 test("the first visible opening-hand pose is held on the player deck before the card starts moving", () => {
@@ -435,7 +502,7 @@ test("every opening-hand flight resolves its own indexed hand-slot endpoint", ()
     "function finishMobileDrawFlight",
   );
 
-  assert.match(startDrawFlights, /cardsToHand\.map\(\(entry, index\) => \(\{/);
+  assert.match(startDrawFlights, /cardsToHand\.map\(\(entry, index\) => \{/);
   assert.match(startDrawFlights, /handIndex: baseHandLength \+ index/);
   assert.match(prepareFlight, /data-mobile-hand-card-index="\$\{flight\.handIndex\}"/);
   assert.match(prepareFlight, /const endX = targetRect\.left \+ \(targetRect\.width - flight\.width\) \/ 2;/);
