@@ -157,7 +157,6 @@ import {
   getNextGuidedAcademyIntroductionStep,
   getNewTutorialHandCardIds,
   getTutorialCardFocusRegion,
-  getTutorialCardReferenceRules,
   mergeTutorialSeenCardIds,
   mergeTutorialSeenConcepts,
 } from "./tutorialCardLessons.mjs";
@@ -3648,8 +3647,8 @@ function BubbleBurst({ x, y }) {
   );
 }
 
-function TutorialCardCueOverlay({ focus, referenceMode }) {
-  const region = getTutorialCardFocusRegion(focus, { referenceMode });
+function TutorialCardCueOverlay({ focus }) {
+  const region = getTutorialCardFocusRegion(focus);
   if (!region) return null;
   const shaftPath = `M${region.tailX} ${region.tailY} L${region.tipX} ${region.tipY}`;
   const chevronSize = 9;
@@ -3678,39 +3677,8 @@ function TutorialCardCueOverlay({ focus, referenceMode }) {
   );
 }
 
-function TutorialCardReference({ card, classLabel, focus = null, referenceMode = "printed" }) {
+function TutorialCardReference({ card, focus = null }) {
   if (!card) return null;
-  const placeholderArt = /SeaPalsTCGLogoWhite\.svg$/i.test(card.image ?? "");
-  const effectiveReferenceMode = referenceMode === "normalized" || placeholderArt ? "normalized" : "printed";
-  const cost = Number(card.cost?.rp ?? card.rp ?? 0);
-  const victoryPoints = Number(card.victoryPoints ?? card.vp ?? 0);
-  const defense = card.defense?.dice ?? card.defense ?? null;
-  const health = Number(card.health ?? 0);
-  const schoolDensity = Number(card.schoolDensity ?? card.schoolDensityRequirement ?? 0);
-  const referenceRules = getTutorialCardReferenceRules(card);
-  const weaknesses = (Array.isArray(card.weaknesses) ? card.weaknesses : card.weaknesses ? [card.weaknesses] : [])
-    .map((value) => String(value).replaceAll("-", " "))
-    .filter(Boolean)
-    .join(" / ");
-  const slotSummary = (Array.isArray(card.slots) ? card.slots : [])
-    .map((slot) => `${Math.max(1, Number(slot?.count ?? 1))} ${String(slot?.slotType ?? slot?.class ?? slot?.type ?? "creature").replaceAll("-", " ")}`)
-    .join(" / ");
-  const normalizedFacts = [
-    health > 0 ? { label: "Health", value: `${health} HP` } : defense ? { label: "Defense", value: String(defense) } : null,
-    Object.prototype.hasOwnProperty.call(card, "weaknesses")
-      ? { label: "Weakness", value: weaknesses || "None" }
-      : victoryPoints > 0 ? { label: "Victory", value: `${victoryPoints} VP` } : null,
-    slotSummary
-      ? { label: "Slots", value: slotSummary }
-      : schoolDensity > 0 ? { label: "School Density", value: String(schoolDensity) }
-        : null,
-  ];
-  const fallbackFacts = [
-    { label: "Card type", value: classLabel },
-    { label: "Play cost", value: `${cost} RP` },
-    { label: "Board role", value: card.kind === CardKind.SUPPORT ? "Resolve, then discard" : "Stays in play" },
-  ];
-  const visibleFacts = normalizedFacts.map((fact, index) => fact ?? fallbackFacts[index]);
 
   return (
     <div
@@ -3718,47 +3686,9 @@ function TutorialCardReference({ card, classLabel, focus = null, referenceMode =
       data-card-reference
     >
       <div className="absolute inset-0 overflow-hidden rounded-[1.35rem] border-2 border-cyan-200/35 bg-slate-950 shadow-[0_22px_64px_rgba(0,0,0,0.42)] sm:rounded-[1.75rem]">
-        {effectiveReferenceMode === "normalized" ? (
-          <div className="relative h-full bg-gradient-to-b from-cyan-950 via-slate-950 to-emerald-950 text-left text-white">
-            <div className="absolute left-[3.2%] top-[1.9%] h-[11.5%] w-[93.6%] border-b border-cyan-200/20">
-              <span className="seapals-normalized-card-type absolute left-[1.2%] top-[2%] max-w-[70%] truncate font-black uppercase tracking-[0.16em] text-cyan-300">{classLabel}</span>
-              <strong className="seapals-normalized-card-name absolute bottom-[5%] left-[1.2%] max-w-[72%] truncate font-black leading-none">{card.name}</strong>
-              <span className="seapals-normalized-card-cost absolute right-[1%] top-[8%] rounded-full bg-emerald-300 font-black text-emerald-950">{cost} RP</span>
-            </div>
-            <div className="absolute left-[4.27%] top-[16.76%] h-[34.29%] w-[91.47%] overflow-hidden rounded-xl border border-white/10 bg-black/20">
-              <img
-                src={card.image || CARD_ART_FALLBACK}
-                alt=""
-                className={`h-full w-full ${placeholderArt ? "object-contain p-5 opacity-80" : "object-cover object-center"}`}
-              />
-              <span className="seapals-normalized-card-caption absolute inset-x-0 bottom-0 truncate bg-slate-950/80 font-black uppercase tracking-wide text-cyan-100">
-                {classLabel}
-              </span>
-            </div>
-            <div className="seapals-normalized-card-rules absolute left-[4.27%] top-[53.33%] h-[32%] w-[91.47%] space-y-1.5 overflow-y-auto rounded-xl border border-cyan-100/15 bg-white/10 text-slate-100">
-              {referenceRules.length ? referenceRules.map((rule) => (
-                <p key={rule.key}>
-                  <strong className="text-emerald-300">{rule.label}{rule.name ? ` - ${rule.name}` : ""}: </strong>
-                  <span className="font-semibold">{rule.text}</span>
-                </p>
-              )) : (
-                <p className="font-semibold text-cyan-50/75">This card has no additional rules text. Its type, cost, and printed stats explain how it enters play.</p>
-              )}
-            </div>
-            <div className="absolute left-[4.27%] top-[87.62%] grid h-[9.52%] w-[91.47%] grid-cols-3 gap-1 text-center">
-              {visibleFacts.map((fact, index) => (
-                <div key={`${fact.label}-${index}`} className="flex min-w-0 flex-col items-center justify-center rounded-lg bg-cyan-400/10 px-1">
-                  <span className="seapals-normalized-card-stat-label font-black uppercase tracking-wide text-cyan-300">{fact.label}</span>
-                  <strong className="seapals-normalized-card-stat-value mt-0.5 max-w-full truncate font-black text-white">{fact.value}</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <img src={card.image || CARD_ART_FALLBACK} alt={`${card.name} card`} className="h-full w-full bg-slate-950/70 object-contain" />
-        )}
+        <img src={card.image || CARD_ART_FALLBACK} alt={`${card.name} card`} className="h-full w-full bg-slate-950/70 object-contain" />
       </div>
-      <TutorialCardCueOverlay focus={focus} referenceMode={effectiveReferenceMode} />
+      <TutorialCardCueOverlay focus={focus} />
     </div>
   );
 }
@@ -3775,7 +3705,6 @@ function TutorialCardLessonOverlay({
   const dialogRef = useRef(null);
   const scrollRef = useRef(null);
   const [segmentIndex, setSegmentIndex] = useState(0);
-  const classLabel = card ? getCardClassLabel(card) : "Card";
   const segments = Array.isArray(lesson.segments) ? lesson.segments : [];
   const safeSegmentIndex = Math.min(segmentIndex, Math.max(0, segments.length - 1));
   const activeSegment = segments[safeSegmentIndex] ?? null;
@@ -3874,7 +3803,7 @@ function TutorialCardLessonOverlay({
               </div>
             </div>
           ) : (
-            <TutorialCardReference card={card} classLabel={classLabel} focus={activeFocus} referenceMode={lesson.referenceMode} />
+            <TutorialCardReference card={card} focus={activeFocus} />
           )}
         </div>
       </div>
@@ -22916,25 +22845,6 @@ export default function Simulator({
         @supports (width: 1cqw) {
           .seapals-card-reference { width: min(100cqw, 71.4286cqh, 34.25rem); }
         }
-        .seapals-normalized-card-type { font-size: clamp(6px, 2.6cqw, 10px); line-height: 1; }
-        .seapals-normalized-card-name { font-size: clamp(10px, 5.1cqw, 20px); }
-        .seapals-normalized-card-cost {
-          font-size: clamp(8px, 3.6cqw, 14px);
-          line-height: 1;
-          padding: clamp(2px, .8cqw, 4px) clamp(4px, 2.1cqw, 12px);
-        }
-        .seapals-normalized-card-caption {
-          font-size: clamp(6px, 2.4cqw, 10px);
-          line-height: 1;
-          padding: clamp(2px, .8cqw, 4px) clamp(4px, 2.1cqw, 8px);
-        }
-        .seapals-normalized-card-rules {
-          font-size: clamp(7px, 3cqw, 12px);
-          line-height: 1.25;
-          padding: clamp(4px, 2.5cqw, 12px);
-        }
-        .seapals-normalized-card-stat-label { font-size: clamp(5px, 2.1cqw, 8px); line-height: 1; }
-        .seapals-normalized-card-stat-value { font-size: clamp(6px, 2.7cqw, 10px); line-height: 1; }
         .seapals-professor-card-header {
           display: flex;
           flex: 0 0 auto;

@@ -15,33 +15,21 @@ function freezeRegion(region) {
 }
 
 export const TUTORIAL_CARD_FOCUS_REGIONS = Object.freeze({
-  printed: Object.freeze({
-    type: freezeRegion({ x: 11, y: 42, width: 94, height: 20, tailX: 140, tailY: 52, tipX: 105, tipY: 52, direction: "left" }),
-    identity: freezeRegion({ x: 9, y: 7, width: 73, height: 38, tailX: 45, tailY: 85, tipX: 45, tipY: 45, direction: "up" }),
-    name: freezeRegion({ x: 82, y: 8, width: 203, height: 34, tailX: 190, tailY: 84, tipX: 190, tipY: 42, direction: "up" }),
-    cost: freezeRegion({ x: 284, y: 7, width: 79, height: 36, tailX: 324, tailY: 83, tipX: 324, tipY: 43, direction: "up" }),
-    rules: freezeRegion({ x: 10, y: 273, width: 355, height: 47, tailX: 45, tailY: 233, tipX: 45, tipY: 273, direction: "down" }),
-    health: freezeRegion({ x: 10, y: 465, width: 104, height: 37, tailX: 64, tailY: 425, tipX: 64, tipY: 465, direction: "down" }),
-    weaknesses: freezeRegion({ x: 110, y: 465, width: 158, height: 37, tailX: 190, tailY: 425, tipX: 190, tipY: 465, direction: "down" }),
-    slots: freezeRegion({ x: 268, y: 422, width: 98, height: 78, tailX: 318, tailY: 382, tipX: 318, tipY: 422, direction: "down" }),
-    stats: freezeRegion({ x: 10, y: 422, width: 356, height: 80, tailX: 188, tailY: 382, tipX: 188, tipY: 422, direction: "down" }),
-  }),
-  normalized: Object.freeze({
-    type: freezeRegion({ x: 16, y: 12, width: 116, height: 18, tailX: 170, tailY: 21, tipX: 132, tipY: 21, direction: "left" }),
-    identity: freezeRegion({ x: 16, y: 12, width: 116, height: 18, tailX: 58, tailY: 70, tipX: 58, tipY: 30, direction: "up" }),
-    name: freezeRegion({ x: 16, y: 34, width: 250, height: 34, tailX: 154, tailY: 108, tipX: 154, tipY: 68, direction: "up" }),
-    cost: freezeRegion({ x: 285, y: 16, width: 74, height: 42, tailX: 320, tailY: 98, tipX: 320, tipY: 58, direction: "up" }),
-    rules: freezeRegion({ x: 16, y: 280, width: 343, height: 168, tailX: 330, tailY: 240, tipX: 330, tipY: 280, direction: "down" }),
-    health: freezeRegion({ x: 16, y: 460, width: 105, height: 50, tailX: 56, tailY: 420, tipX: 56, tipY: 460, direction: "down" }),
-    weaknesses: freezeRegion({ x: 126, y: 460, width: 125, height: 50, tailX: 190, tailY: 420, tipX: 190, tipY: 460, direction: "down" }),
-    slots: freezeRegion({ x: 256, y: 460, width: 103, height: 50, tailX: 316, tailY: 420, tipX: 316, tipY: 460, direction: "down" }),
-    stats: freezeRegion({ x: 16, y: 460, width: 343, height: 50, tailX: 188, tailY: 420, tipX: 188, tipY: 460, direction: "down" }),
-  }),
+  type: freezeRegion({ x: 11, y: 42, width: 94, height: 20, tailX: 140, tailY: 52, tipX: 105, tipY: 52, direction: "left" }),
+  identity: freezeRegion({ x: 9, y: 7, width: 73, height: 38, tailX: 45, tailY: 85, tipX: 45, tipY: 45, direction: "up" }),
+  victory: freezeRegion({ x: 9, y: 7, width: 73, height: 38, tailX: 45, tailY: 85, tipX: 45, tipY: 45, direction: "up" }),
+  name: freezeRegion({ x: 82, y: 8, width: 203, height: 34, tailX: 190, tailY: 84, tipX: 190, tipY: 42, direction: "up" }),
+  cost: freezeRegion({ x: 284, y: 7, width: 79, height: 36, tailX: 324, tailY: 83, tipX: 324, tipY: 43, direction: "up" }),
+  rules: freezeRegion({ x: 10, y: 273, width: 355, height: 47, tailX: 45, tailY: 233, tipX: 45, tipY: 273, direction: "down" }),
+  health: freezeRegion({ x: 10, y: 465, width: 104, height: 37, tailX: 64, tailY: 425, tipX: 64, tipY: 465, direction: "down" }),
+  weaknesses: freezeRegion({ x: 110, y: 465, width: 158, height: 37, tailX: 190, tailY: 425, tipX: 190, tipY: 465, direction: "down" }),
+  slots: freezeRegion({ x: 268, y: 422, width: 98, height: 78, tailX: 318, tailY: 382, tipX: 318, tipY: 422, direction: "down" }),
+  stats: freezeRegion({ x: 10, y: 422, width: 356, height: 80, tailX: 188, tailY: 382, tipX: 188, tipY: 422, direction: "down" }),
 });
 
-export function getTutorialCardFocusRegion(focus, { referenceMode = "printed" } = {}) {
+export function getTutorialCardFocusRegion(focus) {
   if (!focus) return null;
-  return TUTORIAL_CARD_FOCUS_REGIONS[referenceMode]?.[focus] ?? null;
+  return TUTORIAL_CARD_FOCUS_REGIONS[focus] ?? null;
 }
 
 const INTRO_STEP_COUNT = 8;
@@ -363,7 +351,7 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
       id: `card:${card.id}:victory-points`,
       title: `Victory Points: ${vp}`,
       message: `${card.name} contributes ${vp} VP toward your goal while it remains in your ecosystem.`,
-      focus: "stats",
+      focus: "victory",
     });
   }
   if (health > 0) {
@@ -748,7 +736,7 @@ export function getTutorialCardConcepts(card) {
       "stat:victory-points",
       "Victory Points",
       `${vp} VP counts toward your match goal while this card remains in your ecosystem.`,
-      "stats",
+      "victory",
     ));
   }
 
@@ -774,7 +762,7 @@ export function createGuidedAcademyCardLesson(card, {
     title: `Meet ${card.name}`,
     eyebrow: "New card lesson",
     cardClassLabel,
-    referenceMode: "normalized",
+    referenceMode: "printed",
     message: `Before you use ${card.name}, read its gameplay type, cost, abilities, and stats. You will return to the same tutorial step when you finish.`,
     callouts,
     segments,

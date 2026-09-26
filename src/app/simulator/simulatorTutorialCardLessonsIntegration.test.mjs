@@ -97,20 +97,28 @@ test("card cues use an animated outlined arrow without drawing a box over the ca
   assert.doesNotMatch(simulatorSource, /focusLabel|top-3 h-\[18%\]|top-\[45%\] h-\[28%\]/);
 });
 
-test("later card templates use one normalized reference instead of Mustard-specific artwork coordinates", () => {
-  assert.match(simulatorSource, /effectiveReferenceMode = referenceMode === "normalized" \|\| placeholderArt \? "normalized" : "printed"/);
-  assert.match(simulatorSource, /referenceMode=\{lesson\.referenceMode\}/);
-  assert.match(simulatorSource, /effectiveReferenceMode === "normalized"[\s\S]*referenceRules\.map/);
-  assert.match(simulatorSource, /TutorialCardCueOverlay focus=\{focus\} referenceMode=\{effectiveReferenceMode\}/);
-  assert.match(simulatorSource, /slotSummary[\s\S]{0,350}schoolDensity > 0[\s\S]{0,180}: null/);
+test("every card tour layers its cue over one complete printed card in the same 5:7 frame", () => {
+  const referenceSource = simulatorSource.slice(
+    simulatorSource.indexOf("function TutorialCardReference"),
+    simulatorSource.indexOf("function TutorialCardLessonOverlay"),
+  );
+  assert.match(
+    referenceSource,
+    /className="[^"]*relative[^\"]*aspect-\[5\/7\][^"]*"[\s\S]*?<img[\s\S]*?src=\{card\.image \|\| CARD_ART_FALLBACK\}[\s\S]*?alt=\{`\$\{card\.name\} card`\}[\s\S]*?className="[^"]*h-full[^"]*w-full[^"]*object-contain[^"]*"[\s\S]*?<TutorialCardCueOverlay focus=\{focus\} \/>[\s\S]*?<\/div>/,
+  );
+  assert.equal((referenceSource.match(/<img\b/g) ?? []).length, 1, "the tour should render exactly one card image");
+  assert.equal((referenceSource.match(/<TutorialCardCueOverlay\b/g) ?? []).length, 1, "the card frame should contain exactly one cue overlay");
 });
 
-test("normalized card text scales with the lesson card instead of the viewport", () => {
-  assert.match(simulatorSource, /\.seapals-card-reference \{ container-type: inline-size/);
-  assert.match(simulatorSource, /font-size: clamp\(6px, 2\.6cqw, 10px\)/);
-  assert.match(simulatorSource, /font-size: clamp\(7px, 3cqw, 12px\)/);
-  assert.match(simulatorSource, /font-size: clamp\(5px, 2\.1cqw, 8px\)/);
-  assert.doesNotMatch(simulatorSource, /seapals-normalized-card-(?:type|name|cost|caption|rules|stat)[^\n]*sm:/);
+test("card tours do not reconstruct normalized card panels from gameplay metadata", () => {
+  const referenceSource = simulatorSource.slice(
+    simulatorSource.indexOf("function TutorialCardReference"),
+    simulatorSource.indexOf("function TutorialCardLessonOverlay"),
+  );
+  assert.doesNotMatch(
+    referenceSource,
+    /effectiveReferenceMode|placeholderArt|normalizedFacts|fallbackFacts|visibleFacts|referenceRules|seapals-normalized-card-|Card type|Play cost|Board role/,
+  );
 });
 
 test("multi-concept cards advance one arrow and one coach explanation at a time", () => {

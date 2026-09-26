@@ -121,36 +121,37 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
 });
 
 test("every card cue uses a short pointer that lands on its printed field", () => {
-  const focusKeys = ["type", "identity", "name", "cost", "rules", "health", "weaknesses", "slots", "stats"];
+  const focusKeys = ["type", "identity", "victory", "name", "cost", "rules", "health", "weaknesses", "slots", "stats"];
   for (const key of focusKeys) {
-    for (const referenceMode of ["printed", "normalized"]) {
-      const region = getTutorialCardFocusRegion(key, { referenceMode });
-      assert.ok(region, `${key} should map for ${referenceMode} cards`);
-      assert.ok(region.x >= 0 && region.y >= 0);
-      assert.ok(region.width > 0 && region.height > 0);
-      assert.ok(region.x + region.width <= 375);
-      assert.ok(region.y + region.height <= 525);
-      for (const coordinate of [region.tailX, region.tipX]) assert.ok(coordinate >= 0 && coordinate <= 375);
-      for (const coordinate of [region.tailY, region.tipY]) assert.ok(coordinate >= 0 && coordinate <= 525);
-      assert.ok(["up", "down", "left", "right"].includes(region.direction));
-      const length = Math.hypot(region.tipX - region.tailX, region.tipY - region.tailY);
-      assert.ok(length >= 34 && length <= 42, `${referenceMode} ${key} pointer should stay short and consistent`);
-      const tipOnHorizontalBorder = (
-        (region.tipY === region.y || region.tipY === region.y + region.height)
-        && region.tipX >= region.x
-        && region.tipX <= region.x + region.width
-      );
-      const tipOnVerticalBorder = (
-        (region.tipX === region.x || region.tipX === region.x + region.width)
-        && region.tipY >= region.y
-        && region.tipY <= region.y + region.height
-      );
-      assert.equal(tipOnHorizontalBorder || tipOnVerticalBorder, true, `${referenceMode} ${key} pointer should touch its highlight`);
-    }
+    const region = getTutorialCardFocusRegion(key);
+    assert.ok(region, `${key} should map to the printed card`);
+    assert.ok(region.x >= 0 && region.y >= 0);
+    assert.ok(region.width > 0 && region.height > 0);
+    assert.ok(region.x + region.width <= 375);
+    assert.ok(region.y + region.height <= 525);
+    for (const coordinate of [region.tailX, region.tipX]) assert.ok(coordinate >= 0 && coordinate <= 375);
+    for (const coordinate of [region.tailY, region.tipY]) assert.ok(coordinate >= 0 && coordinate <= 525);
+    assert.ok(["up", "down", "left", "right"].includes(region.direction));
+    const length = Math.hypot(region.tipX - region.tailX, region.tipY - region.tailY);
+    assert.ok(length >= 34 && length <= 42, `${key} pointer should stay short and consistent`);
+    const tipOnHorizontalBorder = (
+      (region.tipY === region.y || region.tipY === region.y + region.height)
+      && region.tipX >= region.x
+      && region.tipX <= region.x + region.width
+    );
+    const tipOnVerticalBorder = (
+      (region.tipX === region.x || region.tipX === region.x + region.width)
+      && region.tipY >= region.y
+      && region.tipY <= region.y + region.height
+    );
+    assert.equal(tipOnHorizontalBorder || tipOnVerticalBorder, true, `${key} pointer should touch its printed field`);
   }
-  const printedIdentity = TUTORIAL_CARD_FOCUS_REGIONS.printed.identity;
-  const printedName = TUTORIAL_CARD_FOCUS_REGIONS.printed.name;
-  const printedRules = TUTORIAL_CARD_FOCUS_REGIONS.printed.rules;
+  const printedIdentity = TUTORIAL_CARD_FOCUS_REGIONS.identity;
+  const printedVictory = TUTORIAL_CARD_FOCUS_REGIONS.victory;
+  const printedName = TUTORIAL_CARD_FOCUS_REGIONS.name;
+  const printedRules = TUTORIAL_CARD_FOCUS_REGIONS.rules;
+  assert.notStrictEqual(printedVictory, printedIdentity, "Victory Points should have their own focus-region entry");
+  assert.deepEqual(printedVictory, printedIdentity, "Victory Points should point to the printed upper-left header");
   assert.ok(
     printedIdentity.x + printedIdentity.width <= printedName.x,
     "the Base pointer should target only the Base label rather than the full header",
@@ -160,9 +161,8 @@ test("every card cue uses a short pointer that lands on its printed field", () =
     "the rules pointer should identify the Passive label rather than empty space at the right edge",
   );
   assert.equal(getTutorialCardFocusRegion("missing"), null);
-  assert.equal(getTutorialCardFocusRegion("rules", { referenceMode: "missing" }), null);
-  assert.equal(new Set(Object.keys(TUTORIAL_CARD_FOCUS_REGIONS.printed)).size, Object.keys(TUTORIAL_CARD_FOCUS_REGIONS.printed).length);
-  assert.deepEqual(Object.keys(TUTORIAL_CARD_FOCUS_REGIONS.normalized), Object.keys(TUTORIAL_CARD_FOCUS_REGIONS.printed));
+  assert.deepEqual(Object.keys(TUTORIAL_CARD_FOCUS_REGIONS), focusKeys);
+  assert.equal(new Set(Object.keys(TUTORIAL_CARD_FOCUS_REGIONS)).size, Object.keys(TUTORIAL_CARD_FOCUS_REGIONS).length);
 });
 
 test("every new Support gets a card-specific fullscreen lesson even after its generic type is known", () => {
@@ -178,7 +178,7 @@ test("every new Support gets a card-specific fullscreen lesson even after its ge
   });
 
   assert.equal(lesson.cardId, card.id);
-  assert.equal(lesson.referenceMode, "normalized");
+  assert.equal(lesson.referenceMode, "printed");
   assert.deepEqual(lesson.conceptKeys, ["kind:support"]);
   assert.match(lesson.callouts[0].text, /resolve once.*Discard pile.*never take a space/i);
   assert.deepEqual(lesson.segments.map((segment) => segment.focus), ["type", "cost", "rules"]);
@@ -221,7 +221,8 @@ test("new concepts on one creature are bundled and deduplicated", () => {
     "label:action",
     "stat:victory-points",
   ]);
-  assert.deepEqual(partlySeen.segments.map((segment) => segment.focus), ["type", "cost", "rules", "stats", "stats"]);
+  assert.equal(concepts.find((entry) => entry.key === "stat:victory-points").focus, "victory");
+  assert.deepEqual(partlySeen.segments.map((segment) => segment.focus), ["type", "cost", "rules", "stats", "victory"]);
 });
 
 test("Porcupine Fish teaches Toxic separately from its paid Crunch attack", () => {
@@ -246,7 +247,9 @@ test("Porcupine Fish teaches Toxic separately from its paid Crunch attack", () =
   const crunch = lesson.segments.find((segment) => segment.title === "Action: Crunch");
   assert.match(crunch.message, /costs 1 RP.*D4.*Invertebrate/i);
   assert.match(lesson.segments.find((segment) => segment.title === "Defense: D4").message, /tie goes to the defender/i);
-  assert.match(lesson.segments.find((segment) => segment.title === "Victory Points: 2").message, /2 VP/i);
+  const victoryPoints = lesson.segments.find((segment) => segment.title === "Victory Points: 2");
+  assert.equal(victoryPoints.focus, "victory");
+  assert.match(victoryPoints.message, /2 VP/i);
 });
 
 test("Blue Crab and Great Barracuda keep every named ability after generic concepts are learned", () => {
