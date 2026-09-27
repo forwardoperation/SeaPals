@@ -15,20 +15,141 @@ function freezeRegion(region) {
 }
 
 export const TUTORIAL_CARD_FOCUS_REGIONS = Object.freeze({
-  type: freezeRegion({ x: 11, y: 42, width: 94, height: 20, tailX: 140, tailY: 52, tipX: 105, tipY: 52, direction: "left" }),
-  identity: freezeRegion({ x: 9, y: 7, width: 73, height: 38, tailX: 45, tailY: 85, tipX: 45, tipY: 45, direction: "up" }),
-  victory: freezeRegion({ x: 9, y: 7, width: 73, height: 38, tailX: 45, tailY: 85, tipX: 45, tipY: 45, direction: "up" }),
-  name: freezeRegion({ x: 82, y: 8, width: 203, height: 34, tailX: 190, tailY: 84, tipX: 190, tipY: 42, direction: "up" }),
-  cost: freezeRegion({ x: 284, y: 7, width: 79, height: 36, tailX: 324, tailY: 83, tipX: 324, tipY: 43, direction: "up" }),
-  rules: freezeRegion({ x: 10, y: 273, width: 355, height: 47, tailX: 45, tailY: 233, tipX: 45, tipY: 273, direction: "down" }),
-  health: freezeRegion({ x: 10, y: 465, width: 104, height: 37, tailX: 64, tailY: 425, tipX: 64, tipY: 465, direction: "down" }),
-  weaknesses: freezeRegion({ x: 110, y: 465, width: 158, height: 37, tailX: 190, tailY: 425, tipX: 190, tipY: 465, direction: "down" }),
-  slots: freezeRegion({ x: 268, y: 422, width: 98, height: 78, tailX: 318, tailY: 382, tipX: 318, tipY: 422, direction: "down" }),
-  stats: freezeRegion({ x: 10, y: 422, width: 356, height: 80, tailX: 188, tailY: 382, tipX: 188, tipY: 422, direction: "down" }),
+  type: freezeRegion({ x: 12, y: 44, width: 105, height: 18, tailX: 55, tailY: 101, tipX: 55, tipY: 62, direction: "up" }),
+  identity: freezeRegion({ x: 10, y: 6, width: 70, height: 39, tailX: 45, tailY: 84, tipX: 45, tipY: 45, direction: "up" }),
+  victory: freezeRegion({ x: 10, y: 6, width: 70, height: 39, tailX: 45, tailY: 84, tipX: 45, tipY: 45, direction: "up" }),
+  name: freezeRegion({ x: 80, y: 6, width: 205, height: 39, tailX: 182, tailY: 84, tipX: 182, tipY: 45, direction: "up" }),
+  cost: freezeRegion({ x: 285, y: 6, width: 80, height: 39, tailX: 325, tailY: 84, tipX: 325, tipY: 45, direction: "up" }),
+  rules: freezeRegion({ x: 14, y: 271, width: 347, height: 65, tailX: 45, tailY: 233, tipX: 45, tipY: 271, direction: "down" }),
+  "rules-secondary": freezeRegion({ x: 14, y: 338, width: 347, height: 58, tailX: 45, tailY: 300, tipX: 45, tipY: 338, direction: "down" }),
+  "rules-tertiary": freezeRegion({ x: 14, y: 405, width: 347, height: 58, tailX: 45, tailY: 367, tipX: 45, tipY: 405, direction: "down" }),
+  maintenance: freezeRegion({ x: 14, y: 338, width: 347, height: 58, tailX: 45, tailY: 300, tipX: 45, tipY: 338, direction: "down" }),
+  health: freezeRegion({ x: 10, y: 465, width: 82, height: 41, tailX: 51, tailY: 425, tipX: 51, tipY: 465, direction: "down" }),
+  defense: freezeRegion({ x: 10, y: 465, width: 82, height: 41, tailX: 51, tailY: 425, tipX: 51, tipY: 465, direction: "down" }),
+  weaknesses: freezeRegion({ x: 110, y: 465, width: 158, height: 41, tailX: 189, tailY: 425, tipX: 189, tipY: 465, direction: "down" }),
+  slots: freezeRegion({ x: 268, y: 425, width: 97, height: 80, tailX: 317, tailY: 385, tipX: 317, tipY: 425, direction: "down" }),
+  "density-supply": freezeRegion({ x: 286, y: 465, width: 76, height: 41, tailX: 324, tailY: 425, tipX: 324, tipY: 465, direction: "down" }),
+  "density-requirement": freezeRegion({ x: 286, y: 24, width: 76, height: 21, tailX: 324, tailY: 84, tipX: 324, tipY: 45, direction: "up" }),
 });
 
-export function getTutorialCardFocusRegion(focus) {
+const STACKED_DENSITY_COST_FOCUS_REGION = freezeRegion({
+  x: 285,
+  y: 5,
+  width: 80,
+  height: 19,
+  tailX: 405,
+  tailY: 15,
+  tipX: 365,
+  tipY: 15,
+  direction: "left",
+});
+
+const TUTORIAL_CARD_TEMPLATE_FOCUS_OVERRIDES = Object.freeze({
+  support: Object.freeze({
+    type: freezeRegion({ x: 12, y: 9, width: 228, height: 33, tailX: 126, tailY: 81, tipX: 126, tipY: 42, direction: "up" }),
+    name: freezeRegion({ x: 13, y: 43, width: 348, height: 32, tailX: 187, tailY: 114, tipX: 187, tipY: 75, direction: "up" }),
+    cost: null,
+    rules: freezeRegion({ x: 20, y: 374, width: 338, height: 82, tailX: 49, tailY: 335, tipX: 49, tipY: 374, direction: "down" }),
+    "rules-secondary": null,
+    "rules-tertiary": null,
+  }),
+  habitat: Object.freeze({
+    type: freezeRegion({ x: 326, y: 14, width: 40, height: 43, tailX: 346, tailY: 95, tipX: 346, tipY: 57, direction: "up" }),
+    name: freezeRegion({ x: 18, y: 17, width: 284, height: 40, tailX: 160, tailY: 95, tipX: 160, tipY: 57, direction: "up" }),
+    cost: null,
+    rules: freezeRegion({ x: 20, y: 70, width: 337, height: 177, tailX: 71, tailY: 31, tipX: 71, tipY: 70, direction: "down" }),
+    "rules-secondary": null,
+    "rules-tertiary": null,
+    maintenance: freezeRegion({ x: 20, y: 255, width: 337, height: 57, tailX: 45, tailY: 216, tipX: 45, tipY: 255, direction: "down" }),
+    health: freezeRegion({ x: 17, y: 465, width: 82, height: 42, tailX: 58, tailY: 425, tipX: 58, tipY: 465, direction: "down" }),
+  }),
+  "filter-feeder": Object.freeze({
+    type: null,
+    rules: freezeRegion({ x: 14, y: 65, width: 347, height: 75, tailX: 55, tailY: 26, tipX: 55, tipY: 65, direction: "down" }),
+    "rules-secondary": null,
+    "rules-tertiary": null,
+  }),
+});
+
+const CARD_RULE_FOCUS_OVERRIDES = Object.freeze({
+  "brain-coral-stage-2": Object.freeze([
+    TUTORIAL_CARD_FOCUS_REGIONS.rules,
+    freezeRegion({ x: 14, y: 315, width: 347, height: 58, tailX: 45, tailY: 277, tipX: 45, tipY: 315, direction: "down" }),
+  ]),
+  "porcupine-fish": Object.freeze([
+    TUTORIAL_CARD_FOCUS_REGIONS.rules,
+    freezeRegion({ x: 14, y: 341, width: 347, height: 58, tailX: 45, tailY: 303, tipX: 45, tipY: 341, direction: "down" }),
+  ]),
+  halfbeak: Object.freeze([
+    TUTORIAL_CARD_FOCUS_REGIONS.rules,
+    freezeRegion({ x: 14, y: 340, width: 347, height: 58, tailX: 45, tailY: 302, tipX: 45, tipY: 340, direction: "down" }),
+    freezeRegion({ x: 14, y: 405, width: 347, height: 58, tailX: 45, tailY: 367, tipX: 45, tipY: 405, direction: "down" }),
+  ]),
+  "anchovy-ball-stage1": Object.freeze([
+    freezeRegion({ x: 14, y: 275, width: 347, height: 70, tailX: 45, tailY: 237, tipX: 45, tipY: 275, direction: "down" }),
+    freezeRegion({ x: 14, y: 350, width: 347, height: 50, tailX: 45, tailY: 312, tipX: 45, tipY: 350, direction: "down" }),
+    freezeRegion({ x: 14, y: 405, width: 347, height: 58, tailX: 45, tailY: 367, tipX: 45, tipY: 405, direction: "down" }),
+  ]),
+  hammerhead: Object.freeze([
+    TUTORIAL_CARD_FOCUS_REGIONS.rules,
+    TUTORIAL_CARD_FOCUS_REGIONS["rules-secondary"],
+    freezeRegion({ x: 14, y: 386, width: 347, height: 77, tailX: 45, tailY: 348, tipX: 45, tipY: 386, direction: "down" }),
+  ]),
+});
+
+const CARD_RULE_FOCUS_PLANS = Object.freeze({
+  hammerhead: Object.freeze({
+    Requirement: Object.freeze([{ focus: "rules", advance: true }]),
+    "Special Rule": Object.freeze([{ focus: "rules", advance: false }]),
+    Passive: Object.freeze([{ focus: "rules-secondary", advance: true }]),
+    "On Play": Object.freeze([{ focus: "rules-tertiary", advance: true }]),
+  }),
+  halfbeak: Object.freeze({
+    Requirement: Object.freeze([{ focus: "density-requirement", advance: false }]),
+    Passive: Object.freeze([
+      { focus: "rules", advance: true },
+      { focus: "rules-secondary", advance: true },
+    ]),
+    Action: Object.freeze([{ focus: "rules-tertiary", advance: true }]),
+  }),
+  "anchovy-ball-stage1": Object.freeze({
+    "Special Rule": Object.freeze([{ focus: "rules", advance: true }]),
+    Upgrade: Object.freeze([{ focus: "identity", advance: false }]),
+    Passive: Object.freeze([{ focus: "rules-secondary", advance: true }]),
+    "On Play": Object.freeze([{ focus: "rules-tertiary", advance: true }]),
+  }),
+  "ocean-sunfish": Object.freeze({
+    Requirement: Object.freeze([
+      { focus: "density-requirement", advance: false },
+      { focus: "rules", advance: true },
+    ]),
+    "Special Rule": Object.freeze([{ focus: "rules", advance: false }]),
+  }),
+});
+
+function getTutorialCardTemplate(card) {
+  const kind = normalizeToken(card?.kind);
+  if (kind === "support") return "support";
+  if (kind === "habitat") return "habitat";
+  const category = normalizeToken(card?.category ?? card?.class);
+  return category === "filter-feeder" ? "filter-feeder" : "standard";
+}
+
+export function getTutorialCardFocusRegion(focus, card = null) {
   if (!focus) return null;
+  if (/SeaPalsTCGLogoWhite\.svg$/i.test(String(card?.image ?? ""))) return null;
+  if (focus === "cost" && Number(card?.schoolDensityRequirement ?? 0) > 0) {
+    return STACKED_DENSITY_COST_FOCUS_REGION;
+  }
+  const ruleIndex = focus === "rules" ? 0 : focus === "rules-secondary" ? 1 : focus === "rules-tertiary" ? 2 : null;
+  if (ruleIndex != null) {
+    const override = CARD_RULE_FOCUS_OVERRIDES[card?.id]?.[ruleIndex];
+    if (override) return override;
+  }
+  const templateOverrides = TUTORIAL_CARD_TEMPLATE_FOCUS_OVERRIDES[getTutorialCardTemplate(card)];
+  if (templateOverrides && Object.prototype.hasOwnProperty.call(templateOverrides, focus)) {
+    return templateOverrides[focus];
+  }
   return TUTORIAL_CARD_FOCUS_REGIONS[focus] ?? null;
 }
 
@@ -234,14 +355,38 @@ function getAttackRuleSummary(rule) {
   }).join(" ");
 }
 
+function withIndefiniteArticle(value) {
+  const noun = String(value ?? "").trim().toLowerCase();
+  if (!noun) return "a creature";
+  return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
+}
+
+function getCreatureCommonNoun(card) {
+  return withIndefiniteArticle(card?.bio?.commonName ?? card?.name ?? "creature");
+}
+
+export function getTutorialCardLessonSubject(card) {
+  return normalizeToken(card?.kind) === "creature"
+    ? getCreatureCommonNoun(card)
+    : card?.name ?? "this card";
+}
+
+function capitalizeFirst(value) {
+  return String(value ?? "").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function getCardLessonTitle(card) {
+  return `Meet ${getTutorialCardLessonSubject(card)}`;
+}
+
 function cardIdentityMessage(card, cardClassLabel) {
   const kind = normalizeToken(card.kind);
   const isSchool = asList(card.tags).map(normalizeToken).includes("creature-school");
   if (isSchool) {
-    return `${card.name} is a ${cardClassLabel}. Creature Schools are Foundations that supply School Density; they do not use a Coral's creature slot.`;
+    return `${capitalizeFirst(getCreatureCommonNoun(card))} is a ${cardClassLabel}. Creature Schools are Foundations that supply School Density; they do not use a Coral's creature slot.`;
   }
   if (kind === "creature") {
-    return `${card.name} is a ${cardClassLabel}. Its zone and class determine which open slot can house it and which rules can target it.`;
+    return `${capitalizeFirst(getCreatureCommonNoun(card))} is a ${cardClassLabel}. Its zone and class determine which open slot can house it and which rules can target it.`;
   }
   if (kind === "coral") {
     const stage = Number(card.stage ?? 0);
@@ -258,12 +403,40 @@ function cardIdentityMessage(card, cardClassLabel) {
   return `${card.name} is a ${cardClassLabel}. Its type determines how it enters play and which rules can interact with it.`;
 }
 
-function createRuleSegment(card, rule, label, index) {
+function cardTypeMessage(card, cardClassLabel) {
+  const kind = normalizeToken(card.kind);
+  const isSchool = asList(card.tags).map(normalizeToken).includes("creature-school");
+  if (isSchool) {
+    return `The printed Creature School label identifies this as a Foundation that supplies School Density instead of using a Coral's creature slot.`;
+  }
+  if (kind === "creature") {
+    if (getTutorialCardTemplate(card) === "filter-feeder") {
+      return `${card.name} belongs to the ${cardClassLabel} class. That class determines its open-water placement and which rules can target it.`;
+    }
+    return `The printed ${cardClassLabel} label identifies this card's zone and class. That determines which open space can house it and which rules can target it.`;
+  }
+  if (kind === "coral") {
+    return "The printed Reef Coral strip identifies this as a Coral Foundation and determines which Coral rules interact with it.";
+  }
+  if (kind === "support") {
+    return "The SUPPORT header identifies a one-use card that resolves from your hand and then goes to your discard pile.";
+  }
+  if (kind === "habitat") {
+    return "The Habitat icon identifies an environment card that stays in your ecosystem after its play requirements are met.";
+  }
+  return `The printed ${cardClassLabel} label determines how this card enters play and which rules can interact with it.`;
+}
+
+function createRuleSegment(card, rule, label, index, focus = "rules") {
   const normalized = toCardReferenceRule(rule, label, index);
   if (!normalized) return null;
   const cost = getRuleCost(rule);
   const attackSummary = getAttackRuleSummary(rule);
   const name = normalized.name || label;
+  const stageLabel = String(card.stageLabel ?? "Current stage").trim();
+  const nextUpgradeName = label === "Upgrade"
+    ? normalized.text.match(/^Upgrade to (.+?)\.?$/i)?.[1] ?? "the next card"
+    : "";
   const timingCopy = label === "Passive"
     ? `${name} is a Passive, so it stays active while ${card.name} remains in your ecosystem.`
     : label === "On Play"
@@ -277,7 +450,7 @@ function createRuleSegment(card, rule, label, index) {
             : label === "Maintenance"
               ? `Maintenance is checked after ${card.name} enters your ecosystem.`
               : label === "Upgrade"
-                ? `${cost > 0 ? `This upgrade costs ${cost} RP. ` : ""}This tells you the next stage available from ${card.name}.`
+                ? `${stageLabel} in the top-left shows this card's current place in its upgrade chain.${cost > 0 ? ` Moving to the next stage costs ${cost} RP.` : ""} ${nextUpgradeName} is the next card in that chain.`
                 : label === "Special Placement"
                   ? `This card uses a special placement rule instead of ordinary slot placement.`
                   : label === "Removal"
@@ -287,9 +460,11 @@ function createRuleSegment(card, rule, label, index) {
                       : `Read this ${label.toLowerCase()} before using ${card.name}.`;
   return {
     id: `card:${card.id}:${normalizeToken(label)}:${normalizeToken(normalized.key)}`,
-    title: normalized.name ? `${label}: ${normalized.name}` : label,
-    message: [timingCopy, normalized.text, attackSummary].filter(Boolean).join(" "),
-    focus: "rules",
+    title: label === "Upgrade"
+      ? `Current stage: ${stageLabel}`
+      : normalized.name ? `${label}: ${normalized.name}` : label,
+    message: [timingCopy, label === "Upgrade" ? "" : normalized.text, attackSummary].filter(Boolean).join(" "),
+    focus,
   };
 }
 
@@ -303,9 +478,19 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
   const schoolDensity = Math.max(0, Number(card.schoolDensity ?? card.schoolDensityRequirement ?? 0));
   const segments = [
     {
-      id: `card:${card.id}:identity`,
-      title: `Meet ${card.name}`,
+      id: `card:${card.id}:name`,
+      title: getCardLessonTitle(card),
       message: cardIdentityMessage(card, cardClassLabel),
+      focus: "name",
+    },
+    {
+      id: `card:${card.id}:identity`,
+      title: getTutorialCardTemplate(card) === "filter-feeder"
+        ? `Know the ${cardClassLabel} class`
+        : normalizeToken(card.kind) === "coral"
+          ? "Read the Reef Coral label"
+          : `Read the ${cardClassLabel} label`,
+      message: cardTypeMessage(card, cardClassLabel),
       focus: "type",
     },
     {
@@ -331,10 +516,27 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
     ["On Play", asList(card.onPlay)],
     ["Action", asList(card.actions)],
   ];
+  let printedRuleIndex = 0;
   ruleGroups.forEach(([label, rules]) => {
     rules.forEach((rule, index) => {
-      const segment = createRuleSegment(card, rule, label, index);
+      const isUnprintedSupportRestriction = normalizeToken(card.kind) === "support" && label === "Restriction";
+      const plannedFocus = CARD_RULE_FOCUS_PLANS[card.id]?.[label]?.[index];
+      const focus = plannedFocus?.focus ?? (label === "Maintenance"
+        ? "maintenance"
+        : label === "Upgrade"
+          ? "identity"
+          : isUnprintedSupportRestriction
+            ? null
+            : printedRuleIndex === 0
+              ? "rules"
+              : printedRuleIndex === 1
+                ? "rules-secondary"
+                : "rules-tertiary");
+      const segment = createRuleSegment(card, rule, label, index, focus);
       if (segment) segments.push(segment);
+      const advancesPrintedRule = plannedFocus?.advance
+        ?? (!isUnprintedSupportRestriction && label !== "Maintenance" && label !== "Upgrade");
+      if (advancesPrintedRule) printedRuleIndex += 1;
     });
   });
 
@@ -343,7 +545,7 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
       id: `card:${card.id}:defense`,
       title: `Defense: ${defense}`,
       message: `${defense} is ${card.name}'s defense die when an opposing attack legally targets it. The higher final roll wins; a tie goes to the defender.`,
-      focus: "stats",
+      focus: "defense",
     });
   }
   if (vp > 0) {
@@ -388,7 +590,7 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
       message: suppliesDensity
         ? `${card.name} supplies ${schoolDensity} School Density for open-water creatures.`
         : `${card.name} commits ${schoolDensity} available School Density while it remains in play.`,
-      focus: "stats",
+      focus: suppliesDensity ? "density-supply" : "density-requirement",
     });
   }
   return segments;
@@ -453,7 +655,7 @@ export function getGuidedAcademyIntroductionStep(step, { guideName = "Mr. Easter
       title: "What is a Coral card?",
       message: `This is a Coral card. Coral cards are foundations that stay in Your Reef, produce resources, and provide homes for compatible creatures. Base means this Coral can begin a new foundation. ${cardName} scores no VP itself; its role is to make later cards possible.`,
       cardVisible: true,
-      focus: "type",
+      focus: "identity",
       callouts: [
         { title: "Coral foundation", text: "A Base Coral stays in Your Reef and supports the ecosystem you build around it." },
       ],
@@ -714,13 +916,14 @@ export function getTutorialCardConcepts(card) {
     ));
   }
   if (Number(card.schoolDensity ?? 0) > 0 || Number(card.schoolDensityRequirement ?? 0) > 0) {
+    const suppliesDensity = Number(card.schoolDensity ?? 0) > 0;
     concepts.push(concept(
       "mechanic:school-density",
       "New resource: School Density",
-      Number(card.schoolDensity ?? 0) > 0
+      suppliesDensity
         ? "This foundation supplies School Density for larger open-water creatures."
         : "This creature commits the printed amount of open School Density while it remains in play.",
-      "stats",
+      suppliesDensity ? "density-supply" : "density-requirement",
     ));
   }
   if (defense) {
@@ -728,7 +931,7 @@ export function getTutorialCardConcepts(card) {
       "stat:defense",
       "Defense die",
       `${defense} is this card's defense die when an opposing attack targets it.`,
-      "stats",
+      "defense",
     ));
   }
   if (vp > 0) {
@@ -759,7 +962,7 @@ export function createGuidedAcademyCardLesson(card, {
     cueId: `guided-academy-card-lesson:${card.id}`,
     cardId: card.id,
     conceptKeys: callouts.map((entry) => entry.key),
-    title: `Meet ${card.name}`,
+    title: getCardLessonTitle(card),
     eyebrow: "New card lesson",
     cardClassLabel,
     referenceMode: "printed",

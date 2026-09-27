@@ -16,6 +16,8 @@ test("new hand cards wait for a click, keep draw order, and cannot be played bef
   assert.match(simulatorSource, /getNewTutorialHandCardIds\(previousHand, hand, \{[\s\S]*seenCardIds: tutorialSeenCardIds[\s\S]*pendingCardIds: retained/);
   assert.match(simulatorSource, /pendingTutorialCardReviewId = tutorialPendingCardIds\.find/);
   assert.match(simulatorSource, /tutorialRequiredCardReviewId = pendingTutorialCardReviewId \?\? authoredTutorialCardReviewId/);
+  assert.match(simulatorSource, /tutorialRequiredCardReviewSubject = tutorialRequiredCardReview[\s\S]*getTutorialCardLessonSubject\(tutorialRequiredCardReview\)/);
+  assert.match(simulatorSource, /title: `Meet \$\{tutorialRequiredCardReviewSubject\}`/);
   assert.match(simulatorSource, /action: `Tap \$\{tutorialRequiredCardReview\.name\} in your hand to begin its card tour\.`/);
   const handClick = simulatorSource.slice(
     simulatorSource.indexOf("function openHandCardPopover"),
@@ -95,6 +97,8 @@ test("card cues use an animated outlined arrow without drawing a box over the ca
   assert.doesNotMatch(cueSource, /<marker|markerEnd=|seapals-card-cue-arrowhead/);
   assert.doesNotMatch(simulatorSource, /seapals-card-cue-pulse|seapalsCardCuePulse/);
   assert.doesNotMatch(simulatorSource, /focusLabel|top-3 h-\[18%\]|top-\[45%\] h-\[28%\]/);
+  assert.match(cueSource, /function TutorialCardCueOverlay\(\{ (?:focus, card|card, focus) \}\)/);
+  assert.match(cueSource, /getTutorialCardFocusRegion\(focus, card\)/);
 });
 
 test("every card tour layers its cue over one complete printed card in the same 5:7 frame", () => {
@@ -104,7 +108,7 @@ test("every card tour layers its cue over one complete printed card in the same 
   );
   assert.match(
     referenceSource,
-    /className="[^"]*relative[^\"]*aspect-\[5\/7\][^"]*"[\s\S]*?<img[\s\S]*?src=\{card\.image \|\| CARD_ART_FALLBACK\}[\s\S]*?alt=\{`\$\{card\.name\} card`\}[\s\S]*?className="[^"]*h-full[^"]*w-full[^"]*object-contain[^"]*"[\s\S]*?<TutorialCardCueOverlay focus=\{focus\} \/>[\s\S]*?<\/div>/,
+    /className="[^"]*relative[^\"]*aspect-\[5\/7\][^"]*"[\s\S]*?<img[\s\S]*?src=\{card\.image \|\| CARD_ART_FALLBACK\}[\s\S]*?alt=\{`\$\{card\.name\} card`\}[\s\S]*?className="[^"]*h-full[^"]*w-full[^"]*object-contain[^"]*"[\s\S]*?<TutorialCardCueOverlay (?=[^>]*focus=\{focus\})(?=[^>]*card=\{card\})[^>]*\/>[\s\S]*?<\/div>/,
   );
   assert.equal((referenceSource.match(/<img\b/g) ?? []).length, 1, "the tour should render exactly one card image");
   assert.equal((referenceSource.match(/<TutorialCardCueOverlay\b/g) ?? []).length, 1, "the card frame should contain exactly one cue overlay");

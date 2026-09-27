@@ -11,6 +11,7 @@ import {
   getNextGuidedAcademyIntroductionStep,
   getTutorialCardConcepts,
   getTutorialCardFocusRegion,
+  getTutorialCardLessonSubject,
   getTutorialCardReferenceRules,
   mergeTutorialSeenCardIds,
   mergeTutorialSeenConcepts,
@@ -49,6 +50,31 @@ const brainCoral = {
   passives: [{ name: "Photosynthesis", text: "Collect 1 RP at the start of your turn." }],
 };
 
+const clownfish = {
+  id: "clownfish",
+  name: "Clownfish",
+  kind: "creature",
+  category: "fish",
+  cost: { rp: 2 },
+  victoryPoints: 2,
+  defense: { dice: "D4" },
+  passives: [{ name: "Symbiosis", text: "Can be placed inside an anemone's slots." }],
+};
+
+const supportCard = {
+  id: "remote-search",
+  name: "Remote Search",
+  kind: "support",
+  text: "Search your deck for a card.",
+};
+
+const habitatCard = {
+  id: "coral-reef",
+  name: "Coral Reef",
+  kind: "habitat",
+  text: "Meet the printed ecosystem requirements before playing this Habitat.",
+};
+
 test("guided Academy opens with a welcome, then teaches the gameplay parts of the first card", () => {
   const steps = Array.from({ length: 8 }, (_, index) => (
     getGuidedAcademyIntroductionStep(index, { card: mustardHillCoral })
@@ -61,7 +87,7 @@ test("guided Academy opens with a welcome, then teaches the gameplay parts of th
   assert.equal(welcome.referenceMode, "printed");
   assert.match(welcome.message, /living ocean ecosystem.*read your first card/i);
   assert.equal(coralRole.cardVisible, true);
-  assert.equal(coralRole.focus, "type");
+  assert.equal(coralRole.focus, "identity");
   assert.match(coralRole.message, /Coral card.*foundations that stay in Your Reef.*provide homes for compatible creatures/i);
   assert.doesNotMatch(coralRole.message, /colonies|tiny animals|ocean science/i);
   assert.match(coralRole.message, /Base.*begin a new foundation.*no VP.*later cards/i);
@@ -79,7 +105,7 @@ test("guided Academy opens with a welcome, then teaches the gameplay parts of th
   assert.equal(slots.focus, "slots");
   assert.match(slots.message, /1 Fish and 1 Invertebrate.*match an open slot/i);
   assert.equal(slots.advanceLabel, "Start the board tour");
-  assert.deepEqual(steps.slice(1).map((step) => step.focus), ["type", "name", "cost", "rules", "health", "weaknesses", "slots"]);
+  assert.deepEqual(steps.slice(1).map((step) => step.focus), ["identity", "name", "cost", "rules", "health", "weaknesses", "slots"]);
   assert.doesNotMatch(steps.map((step) => `${step.title} ${step.message}`).join(" "), /species strip|ocean science|Meet the real coral/i);
   assert.equal(getNextGuidedAcademyIntroductionStep(0), 1);
   assert.equal(getNextGuidedAcademyIntroductionStep(7), null);
@@ -120,10 +146,26 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
   assert.equal(createGuidedFoundationCardLesson({ ...brainCoral, kind: "creature" }), null);
 });
 
-test("every card cue uses a short pointer that lands on its printed field", () => {
-  const focusKeys = ["type", "identity", "victory", "name", "cost", "rules", "health", "weaknesses", "slots", "stats"];
+test("every standard-card cue uses a short pointer that lands on its printed field", () => {
+  const requiredFocusKeys = [
+    "type",
+    "identity",
+    "victory",
+    "name",
+    "cost",
+    "rules",
+    "health",
+    "weaknesses",
+    "slots",
+    "defense",
+    "density-supply",
+    "density-requirement",
+  ];
+  const focusKeys = Object.keys(TUTORIAL_CARD_FOCUS_REGIONS);
+  requiredFocusKeys.forEach((key) => assert.ok(focusKeys.includes(key), `${key} should have a dedicated focus region`));
+  assert.equal(focusKeys.includes("stats"), false, "the map should not retain an ambiguous all-purpose stats region");
   for (const key of focusKeys) {
-    const region = getTutorialCardFocusRegion(key);
+    const region = getTutorialCardFocusRegion(key, clownfish);
     assert.ok(region, `${key} should map to the printed card`);
     assert.ok(region.x >= 0 && region.y >= 0);
     assert.ok(region.width > 0 && region.height > 0);
@@ -161,8 +203,68 @@ test("every card cue uses a short pointer that lands on its printed field", () =
     "the rules pointer should identify the Passive label rather than empty space at the right edge",
   );
   assert.equal(getTutorialCardFocusRegion("missing"), null);
-  assert.deepEqual(Object.keys(TUTORIAL_CARD_FOCUS_REGIONS), focusKeys);
+  assert.equal(getTutorialCardFocusRegion("stats", clownfish), null, "ambiguous stats cues should not survive the printed-card audit");
   assert.equal(new Set(Object.keys(TUTORIAL_CARD_FOCUS_REGIONS)).size, Object.keys(TUTORIAL_CARD_FOCUS_REGIONS).length);
+});
+
+test("card cue coordinates follow each printed card template", () => {
+  const standardName = getTutorialCardFocusRegion("name", clownfish);
+  const standardRules = getTutorialCardFocusRegion("rules", clownfish);
+  const standardDefense = getTutorialCardFocusRegion("defense", clownfish);
+  assert.ok(standardName.y < standardRules.y, "the creature name belongs in the top header");
+  assert.ok(standardDefense.y > standardRules.y, "the creature defense die belongs at the bottom of the card");
+  assert.ok(standardDefense.x + standardDefense.width < 150, "the defense cue should land on the bottom-left defense field");
+
+  const supportName = getTutorialCardFocusRegion("name", supportCard);
+  const supportRules = getTutorialCardFocusRegion("rules", supportCard);
+  assert.ok(supportName);
+  assert.ok(supportRules);
+  assert.notDeepEqual(supportName, standardName, "Support names use a different printed position");
+  assert.notDeepEqual(supportRules, standardRules, "Support rules use a different printed position");
+  assert.equal(getTutorialCardFocusRegion("cost", supportCard), null, "Support cards have no printed RP play-cost field");
+
+  const habitatName = getTutorialCardFocusRegion("name", habitatCard);
+  const habitatType = getTutorialCardFocusRegion("type", habitatCard);
+  const habitatRules = getTutorialCardFocusRegion("rules", habitatCard);
+  assert.ok(habitatName);
+  assert.ok(habitatType);
+  assert.ok(habitatRules);
+  assert.notDeepEqual(habitatName, standardName, "Habitat names use a different printed position");
+  assert.notDeepEqual(habitatType, getTutorialCardFocusRegion("type", clownfish), "Habitat type labels use a different printed position");
+  assert.notDeepEqual(habitatRules, standardRules, "Habitat rules use a different printed position");
+  assert.equal(getTutorialCardFocusRegion("cost", habitatCard), null, "Habitat cards have no printed RP play-cost field");
+
+  const stackedCost = getTutorialCardFocusRegion("cost", { ...clownfish, schoolDensityRequirement: 10 });
+  const stackedDensity = getTutorialCardFocusRegion("density-requirement", { ...clownfish, schoolDensityRequirement: 10 });
+  assert.deepEqual([stackedCost.tipX, stackedCost.tipY], [365, 15]);
+  assert.notDeepEqual(
+    [stackedCost.tipX, stackedCost.tipY],
+    [stackedDensity.tipX, stackedDensity.tipY],
+    "RP cost and School Density need separate targets when both are stacked in the header",
+  );
+
+  const placeholderCard = { ...clownfish, image: "/images/brand/SeaPalsTCGLogoWhite.svg" };
+  assert.equal(getTutorialCardFocusRegion("name", placeholderCard), null);
+  assert.equal(getTutorialCardFocusRegion("defense", placeholderCard), null);
+});
+
+test("creature tours introduce the printed name before the class and use grammatical common nouns", () => {
+  assert.equal(getTutorialCardLessonSubject(clownfish), "a clownfish");
+  const clownfishLesson = createGuidedAcademyCardLesson(clownfish, { cardClassLabel: "Reef Fish" });
+  assert.equal(clownfishLesson.segments[0].title, "Meet a clownfish");
+  assert.match(clownfishLesson.segments[0].message, /^A clownfish is a Reef Fish\./);
+  assert.equal(clownfishLesson.segments[0].focus, "name");
+  assert.equal(clownfishLesson.segments[1].focus, "type");
+
+  const arrowCrabLesson = createGuidedAcademyCardLesson({
+    id: "arrow-crab",
+    name: "Arrow Crab",
+    kind: "creature",
+    category: "invertebrate",
+  }, { cardClassLabel: "Reef Invertebrate" });
+  assert.equal(getTutorialCardLessonSubject({ name: "Arrow Crab", kind: "creature" }), "an arrow crab");
+  assert.equal(arrowCrabLesson.segments[0].title, "Meet an arrow crab");
+  assert.match(arrowCrabLesson.segments[0].message, /^An arrow crab is a Reef Invertebrate\./);
 });
 
 test("every new Support gets a card-specific fullscreen lesson even after its generic type is known", () => {
@@ -181,9 +283,9 @@ test("every new Support gets a card-specific fullscreen lesson even after its ge
   assert.equal(lesson.referenceMode, "printed");
   assert.deepEqual(lesson.conceptKeys, ["kind:support"]);
   assert.match(lesson.callouts[0].text, /resolve once.*Discard pile.*never take a space/i);
-  assert.deepEqual(lesson.segments.map((segment) => segment.focus), ["type", "cost", "rules"]);
+  assert.deepEqual(lesson.segments.map((segment) => segment.focus), ["name", "type", "cost", "rules"]);
   assert.match(lesson.segments[0].message, /Support Action.*resolves once.*discard pile/i);
-  assert.match(lesson.segments[2].message, /Search your deck for a Coral/i);
+  assert.match(lesson.segments.find((segment) => segment.focus === "rules").message, /Search your deck for a Coral/i);
   const knownType = createGuidedAcademyCardLesson(card, {
     seenConceptKeys: [...GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS, "kind:support"],
   });
@@ -222,7 +324,7 @@ test("new concepts on one creature are bundled and deduplicated", () => {
     "stat:victory-points",
   ]);
   assert.equal(concepts.find((entry) => entry.key === "stat:victory-points").focus, "victory");
-  assert.deepEqual(partlySeen.segments.map((segment) => segment.focus), ["type", "cost", "rules", "stats", "victory"]);
+  assert.deepEqual(partlySeen.segments.map((segment) => segment.focus), ["name", "type", "cost", "rules", "defense", "victory"]);
 });
 
 test("Porcupine Fish teaches Toxic separately from its paid Crunch attack", () => {
@@ -245,8 +347,11 @@ test("Porcupine Fish teaches Toxic separately from its paid Crunch attack", () =
   assert.equal(toxic.focus, "rules");
   assert.match(toxic.message, /Passive.*stays active.*If eaten/i);
   const crunch = lesson.segments.find((segment) => segment.title === "Action: Crunch");
+  assert.equal(crunch.focus, "rules-secondary");
   assert.match(crunch.message, /costs 1 RP.*D4.*Invertebrate/i);
-  assert.match(lesson.segments.find((segment) => segment.title === "Defense: D4").message, /tie goes to the defender/i);
+  const defense = lesson.segments.find((segment) => segment.title === "Defense: D4");
+  assert.equal(defense.focus, "defense");
+  assert.match(defense.message, /tie goes to the defender/i);
   const victoryPoints = lesson.segments.find((segment) => segment.title === "Victory Points: 2");
   assert.equal(victoryPoints.focus, "victory");
   assert.match(victoryPoints.message, /2 VP/i);
@@ -324,6 +429,7 @@ test("upgrade costs and structured placement or removal rules are included in ne
     id: "brain-coral-base",
     name: "Brain Coral",
     kind: "coral",
+    stageLabel: "Base",
     cost: { rp: 1 },
     upgrade: {
       nextCardId: "brain-coral-stage-1",
@@ -331,10 +437,17 @@ test("upgrade costs and structured placement or removal rules are included in ne
       text: "Upgrade to Brain Coral Stage 1.",
     },
   }, { cardClassLabel: "Base Reef Coral" });
+  const upgradeSegment = brainLesson.segments.find((segment) => segment.title === "Current stage: Base");
+  assert.equal(upgradeSegment.focus, "identity");
   assert.match(
-    brainLesson.segments.find((segment) => segment.title === "Upgrade").message,
-    /upgrade costs 2 RP.*Brain Coral Stage 1/i,
+    upgradeSegment.message,
+    /Base.*current place.*next stage costs 2 RP.*Brain Coral Stage 1.*next card/i,
   );
+  const coralTypeSegment = brainLesson.segments.find((segment) => segment.id === "card:brain-coral-base:identity");
+  assert.equal(coralTypeSegment.title, "Read the Reef Coral label");
+  assert.equal(coralTypeSegment.focus, "type");
+  assert.match(coralTypeSegment.message, /printed Reef Coral strip.*Coral Foundation/i);
+  assert.doesNotMatch(coralTypeSegment.message, /Base.*header/i);
 
   const lionfish = {
     id: "lionfish",
@@ -366,17 +479,131 @@ test("upgrade costs and structured placement or removal rules are included in ne
   );
 });
 
-test("Creature Schools bundle their foundation placement and School Density rules", () => {
-  const concepts = getTutorialCardConcepts({
+test("Creature Schools distinguish School Density supply from creature requirements", () => {
+  const supplyCard = {
     id: "white-grunt",
     name: "White Grunt",
     kind: "creature",
     category: "fish",
     tags: ["creature-school"],
     schoolDensity: 30,
-  });
-  assert.ok(concepts.some((entry) => entry.key === "structure:creature-school"));
-  assert.ok(concepts.some((entry) => entry.key === "mechanic:school-density"));
+  };
+  const supplyConcepts = getTutorialCardConcepts(supplyCard);
+  assert.ok(supplyConcepts.some((entry) => entry.key === "structure:creature-school"));
+  assert.equal(supplyConcepts.find((entry) => entry.key === "mechanic:school-density").focus, "density-supply");
+  assert.equal(
+    createGuidedAcademyCardLesson(supplyCard).segments.find((segment) => segment.title === "School Density: 30").focus,
+    "density-supply",
+  );
+
+  const requirementCard = {
+    id: "ocean-sunfish",
+    name: "Ocean Sunfish",
+    kind: "creature",
+    category: "filter-feeder",
+    schoolDensityRequirement: 20,
+  };
+  assert.equal(
+    getTutorialCardConcepts(requirementCard).find((entry) => entry.key === "mechanic:school-density").focus,
+    "density-requirement",
+  );
+  assert.equal(
+    createGuidedAcademyCardLesson(requirementCard).segments.find((segment) => segment.title === "School Density: 20").focus,
+    "density-requirement",
+  );
+});
+
+test("authored rule cues stay on the printed block when one block explains several data rules", () => {
+  const brainCoralStageOne = {
+    id: "brain-coral-stage-1",
+    name: "Brain Coral",
+    kind: "coral",
+    category: "coral",
+    stage: 1,
+    stageLabel: "Stage 1",
+    upgrade: { text: "Upgrade to Brain Coral Stage 2.", cost: { rp: 5 } },
+    passives: [{ name: "Photosynthesis", text: "Collect 2 RP at the start of your turn." }],
+  };
+  const brainStageOneLesson = createGuidedAcademyCardLesson(brainCoralStageOne, { cardClassLabel: "Stage 1 - Reef Coral" });
+  assert.deepEqual(
+    brainStageOneLesson.segments.slice(3).map((segment) => segment.focus),
+    ["identity", "rules"],
+    "unprinted upgrade metadata belongs on the Stage 1 header and must not shift Photosynthesis",
+  );
+
+  const hammerhead = {
+    id: "hammerhead",
+    name: "Hammerhead",
+    kind: "creature",
+    category: "apex",
+    playRequirements: ["Requires Coral Reef."],
+    specialRules: ["If destroyed, place this card in your Lost Zone."],
+    passives: [{ name: "Intimidation", text: "Opponent's fish cost +1 RP." }],
+    onPlay: [{ name: "Ravage", text: "Attack twice." }],
+  };
+  const hammerheadLesson = createGuidedAcademyCardLesson(hammerhead, { cardClassLabel: "Reef Apex Predator" });
+  assert.deepEqual(
+    hammerheadLesson.segments.slice(3).map((segment) => segment.focus),
+    ["rules", "rules", "rules-secondary", "rules-tertiary"],
+    "both Special Rules explanations should point to the same printed block before Passive and On Play",
+  );
+  assert.equal(getTutorialCardFocusRegion("rules-tertiary", hammerhead).tipY, 386);
+
+  const halfbeak = {
+    id: "halfbeak",
+    name: "Halfbeak",
+    kind: "creature",
+    category: "fish",
+    playRequirements: ["Requires 10 School Density."],
+    schoolDensityRequirement: 10,
+    passives: ["Take to the Skies: Avoid an attack on heads.", "EcoBoost: +1 RP to your bank cap."],
+    actions: [{ name: "Call for Family", text: "Search for a Creature School." }],
+  };
+  const halfbeakLesson = createGuidedAcademyCardLesson(halfbeak, { cardClassLabel: "Oceanic Fish" });
+  assert.deepEqual(
+    halfbeakLesson.segments.slice(3, 7).map((segment) => segment.focus),
+    ["density-requirement", "rules", "rules-secondary", "rules-tertiary"],
+    "the density requirement belongs in the header and must not shift the three printed abilities",
+  );
+
+  const anchovyBall = {
+    id: "anchovy-ball-stage1",
+    name: "Anchovy Ball",
+    kind: "creature",
+    category: "fish",
+    tags: ["creature-school"],
+    specialRules: ["Creature Schools can be attacked as fish."],
+    upgrade: { text: "Upgrade to Anchovy Ball Stage 2." },
+    passives: ["Eco Foundation: Collect 3 RP."],
+    onPlay: ["Momentum: Search for a Creature School."],
+  };
+  const anchovyLesson = createGuidedAcademyCardLesson(anchovyBall, { cardClassLabel: "Creature School" });
+  assert.deepEqual(
+    anchovyLesson.segments.slice(3).map((segment) => segment.focus),
+    ["rules", "identity", "rules-secondary", "rules-tertiary"],
+    "the upgrade cue belongs on Stage 1 in the header and must not shift the printed abilities",
+  );
+
+  const oceanSunfish = {
+    id: "ocean-sunfish",
+    name: "Ocean Sunfish",
+    kind: "creature",
+    category: "filter-feeder",
+    playRequirements: [
+      "Requires 150 School Density.",
+      "Requires Open Ocean or Coral Reef Habitat.",
+    ],
+    specialRules: ["If destroyed, place this card in your Lost Zone."],
+    schoolDensityRequirement: 150,
+  };
+  const sunfishLesson = createGuidedAcademyCardLesson(oceanSunfish, { cardClassLabel: "Filter Feeder" });
+  assert.equal(sunfishLesson.segments[1].title, "Know the Filter Feeder class");
+  assert.equal(getTutorialCardFocusRegion(sunfishLesson.segments[1].focus, oceanSunfish), null);
+  assert.deepEqual(
+    sunfishLesson.segments.slice(3, 6).map((segment) => segment.focus),
+    ["density-requirement", "rules", "rules"],
+    "School Density belongs in the header while both full-art Special Rules explanations share their printed block",
+  );
 });
 
 test("Mustard Hill is toured when it is new and duplicate copies do not repeat", () => {

@@ -156,6 +156,7 @@ import {
   getGuidedAcademyIntroductionStep,
   getNextGuidedAcademyIntroductionStep,
   getNewTutorialHandCardIds,
+  getTutorialCardLessonSubject,
   getTutorialCardFocusRegion,
   mergeTutorialSeenCardIds,
   mergeTutorialSeenConcepts,
@@ -3647,8 +3648,8 @@ function BubbleBurst({ x, y }) {
   );
 }
 
-function TutorialCardCueOverlay({ focus }) {
-  const region = getTutorialCardFocusRegion(focus);
+function TutorialCardCueOverlay({ focus, card }) {
+  const region = getTutorialCardFocusRegion(focus, card);
   if (!region) return null;
   const shaftPath = `M${region.tailX} ${region.tailY} L${region.tipX} ${region.tipY}`;
   const chevronSize = 9;
@@ -3688,7 +3689,7 @@ function TutorialCardReference({ card, focus = null }) {
       <div className="absolute inset-0 overflow-hidden rounded-[1.35rem] border-2 border-cyan-200/35 bg-slate-950 shadow-[0_22px_64px_rgba(0,0,0,0.42)] sm:rounded-[1.75rem]">
         <img src={card.image || CARD_ART_FALLBACK} alt={`${card.name} card`} className="h-full w-full bg-slate-950/70 object-contain" />
       </div>
-      <TutorialCardCueOverlay focus={focus} />
+      <TutorialCardCueOverlay focus={focus} card={card} />
     </div>
   );
 }
@@ -7685,16 +7686,21 @@ export default function Simulator({
   const tutorialRequiredCardReview = tutorialRequiredCardReviewId
     ? cardsById[tutorialRequiredCardReviewId]
     : null;
+  const tutorialRequiredCardReviewSubject = tutorialRequiredCardReview
+    ? getTutorialCardLessonSubject(tutorialRequiredCardReview)
+    : "the new card";
+  const tutorialRequiredCardReviewSubjectAtSentenceStart = tutorialRequiredCardReviewSubject
+    .replace(/^./, (letter) => letter.toUpperCase());
   const tutorialHelp = tutorialRequiredCardReview
     ? {
         ...(checkpointTutorialHelp ?? {}),
         id: `tutorial-card-review:${tutorialRequiredCardReview.id}`,
         cueId: `tutorial-card-review:${tutorialRequiredCardReview.id}`,
-        title: `Meet ${tutorialRequiredCardReview.name}`,
+        title: `Meet ${tutorialRequiredCardReviewSubject}`,
         lead: "",
         message: pendingTutorialCardReviewId
-          ? `You drew ${tutorialRequiredCardReview.name}! Open it before continuing so we can walk through its type, cost, abilities, and stats.`
-          : `${tutorialRequiredCardReview.name} is new to this lesson. Open it before using it so we can read every gameplay detail together.`,
+          ? `You drew ${tutorialRequiredCardReviewSubject}! Open it before continuing so we can walk through its type, cost, abilities, and stats.`
+          : `${tutorialRequiredCardReviewSubjectAtSentenceStart} is new to this lesson. Open it before using it so we can read every gameplay detail together.`,
         action: `Tap ${tutorialRequiredCardReview.name} in your hand to begin its card tour.`,
         target: "hand",
         interaction: "tap",
