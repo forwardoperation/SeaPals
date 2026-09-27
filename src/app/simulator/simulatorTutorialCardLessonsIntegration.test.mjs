@@ -18,14 +18,16 @@ test("new hand cards wait for a click, keep draw order, and cannot be played bef
   assert.match(simulatorSource, /tutorialRequiredCardReviewId = pendingTutorialCardReviewId \?\? authoredTutorialCardReviewId/);
   assert.match(simulatorSource, /tutorialRequiredCardReviewSubject = tutorialRequiredCardReview[\s\S]*getTutorialCardLessonSubject\(tutorialRequiredCardReview\)/);
   assert.match(simulatorSource, /title: `Meet \$\{tutorialRequiredCardReviewSubject\}`/);
-  assert.match(simulatorSource, /action: `Tap \$\{tutorialRequiredCardReview\.name\} in your hand to begin its card tour\.`/);
+  assert.match(simulatorSource, /action: `Tap on your \$\{tutorialRequiredCardReview\.name\}\.`/);
+  assert.match(simulatorSource, /pointerPrompt: `Tap on your \$\{tutorialRequiredCardReview\.name\}\.`/);
+  assert.doesNotMatch(simulatorSource, /in your hand to begin its card tour/);
   const handClick = simulatorSource.slice(
     simulatorSource.indexOf("function openHandCardPopover"),
     simulatorSource.indexOf("function closeHandCardPopover"),
   );
   assert.match(handClick, /!tutorialSeenCardIds\.includes\(cardId\)[\s\S]*createGuidedAcademyCardLesson\(card, \{[\s\S]*setTutorialCardLesson\(\{ \.\.\.lesson, requiredReview: true \}\)/);
   assert.doesNotMatch(simulatorSource, /tutorialHelp\?\.target !== "hand"/);
-  assert.match(simulatorSource, /function getEmbeddedLessonBlock\(action, details = \{\}\) \{[\s\S]*tutorialRequiredCardReviewId[\s\S]*finish its card tour before continuing/);
+  assert.match(simulatorSource, /function getEmbeddedLessonBlock\(action, details = \{\}\) \{[\s\S]*tutorialRequiredCardReviewId[\s\S]*Tap on your \$\{cardName\} and finish its card tour before continuing/);
   assert.match(simulatorSource, /function finishTutorialCardLesson\(\)[\s\S]*mergeTutorialSeenCardIds[\s\S]*setTutorialPendingCardIds[\s\S]*setTutorialCardLesson\(null\)/);
 });
 

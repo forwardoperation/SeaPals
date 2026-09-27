@@ -371,10 +371,7 @@ export default function SimulatorV2LessonPanel({
   const completed = Array.isArray(progress?.completedLessonIds) ? progress.completedLessonIds : [];
   const completedSet = new Set(completed);
   const lessonGroups = groupLessonsByModule(lessons, lessonModules);
-  const lessonIndex = lessons.findIndex((lesson) => lesson.id === activeLesson?.id);
   const activeModule = lessonGroups.find((module) => module.lessons.some((lesson) => lesson.id === activeLesson?.id));
-  const stepCount = Number.isFinite(progress?.stepCount) ? Math.max(0, progress.stepCount) : 0;
-  const stepNumber = stepCount ? Math.min(stepCount, Math.max(1, (progress?.stepIndex ?? 0) + 1)) : 0;
   const message = typeof feedback === "string" ? feedback : feedback?.message;
   const currentInstruction = instruction || (interaction === "drag"
     ? "Drag the highlighted card into your ecosystem."
@@ -532,7 +529,6 @@ export default function SimulatorV2LessonPanel({
         <div className={styles.coachHeader}>
           <div className={styles.coachIdentity}>
             <strong id={teacherTitleId}>Mr. Easterling</strong>
-            <span>{lessonIndex >= 0 ? `Lesson ${lessonIndex + 1} of ${lessons.length}` : activeLesson?.title || "Your reef guide"}{stepCount ? ` · Step ${stepNumber} of ${stepCount}` : ""}{activeLesson?.victoryTarget ? ` · Goal ${activeLesson.victoryTarget} VP` : ""}</span>
           </div>
           {!onAdvance ? (
             <button

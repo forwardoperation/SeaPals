@@ -248,13 +248,52 @@ test("card cue coordinates follow each printed card template", () => {
   assert.equal(getTutorialCardFocusRegion("defense", placeholderCard), null);
 });
 
+test("the Clownfish tour points to each printed field on the 375 by 525 card", () => {
+  const lesson = createGuidedAcademyCardLesson(clownfish, { cardClassLabel: "Reef Fish" });
+  const expectedTargets = [
+    { title: "Meet the clownfish", focus: "name", tip: [182, 45], bounds: [80, 285, 6, 45] },
+    { title: "Read the Reef Fish label", focus: "type", tip: [55, 62], bounds: [12, 117, 44, 62] },
+    { title: "Play cost: 2 RP", focus: "cost", tip: [325, 45], bounds: [285, 365, 6, 45] },
+    { title: "Passive: Symbiosis", focus: "rules", tip: [45, 271], bounds: [14, 361, 271, 336] },
+    { title: "Defense: D4", focus: "defense", tip: [51, 465], bounds: [10, 92, 465, 506] },
+    { title: "Victory Points: 2", focus: "victory", tip: [45, 45], bounds: [10, 80, 6, 45] },
+  ];
+
+  for (const expected of expectedTargets) {
+    const segment = lesson.segments.find((candidate) => candidate.title === expected.title);
+    assert.equal(segment?.focus, expected.focus, `${expected.title} should use its dedicated cue`);
+    const region = getTutorialCardFocusRegion(segment.focus, clownfish);
+    assert.deepEqual([region.tipX, region.tipY], expected.tip);
+    const [minX, maxX, minY, maxY] = expected.bounds;
+    assert.ok(region.tipX >= minX && region.tipX <= maxX, `${expected.title} should land inside its printed horizontal bounds`);
+    assert.ok(region.tipY >= minY && region.tipY <= maxY, `${expected.title} should land inside its printed vertical bounds`);
+  }
+
+  const defense = lesson.segments.find((segment) => segment.title === "Defense: D4");
+  const defenseRegion = getTutorialCardFocusRegion(defense.focus, clownfish);
+  assert.equal(defenseRegion.direction, "down");
+  assert.notDeepEqual([defenseRegion.tipX, defenseRegion.tipY], [188, 422], "Defense must never fall back to the old centered stats cue");
+});
+
 test("creature tours introduce the printed name before the class and use grammatical common nouns", () => {
-  assert.equal(getTutorialCardLessonSubject(clownfish), "a clownfish");
+  assert.equal(getTutorialCardLessonSubject(clownfish), "the clownfish");
   const clownfishLesson = createGuidedAcademyCardLesson(clownfish, { cardClassLabel: "Reef Fish" });
-  assert.equal(clownfishLesson.segments[0].title, "Meet a clownfish");
-  assert.match(clownfishLesson.segments[0].message, /^A clownfish is a Reef Fish\./);
+  assert.equal(clownfishLesson.title, "Meet the clownfish");
+  assert.equal(clownfishLesson.segments[0].title, "Meet the clownfish");
+  assert.match(clownfishLesson.message, /^Before you use the clownfish,/);
+  assert.match(clownfishLesson.segments[0].message, /^The clownfish is a Reef Fish\./);
   assert.equal(clownfishLesson.segments[0].focus, "name");
   assert.equal(clownfishLesson.segments[1].focus, "type");
+  assert.match(clownfishLesson.segments.find((segment) => segment.title === "Play cost: 2 RP").message, /^Playing the clownfish costs 2 RP/);
+  assert.match(clownfishLesson.segments.find((segment) => segment.title === "Passive: Symbiosis").message, /while the clownfish remains/);
+  assert.match(clownfishLesson.segments.find((segment) => segment.title === "Defense: D4").message, /^D4 is the defense die for the clownfish/);
+  assert.match(clownfishLesson.segments.find((segment) => segment.title === "Victory Points: 2").message, /^The clownfish contributes 2 VP/);
+  assert.equal(clownfishLesson.advanceLabel, "Continue with the clownfish");
+  const clownfishNarration = [
+    clownfishLesson.message,
+    ...clownfishLesson.segments.map((segment) => segment.message),
+  ].join(" ");
+  assert.doesNotMatch(clownfishNarration, /\bClownfish(?:['’]s|\s+(?:is|costs|contributes|remains))/);
 
   const arrowCrabLesson = createGuidedAcademyCardLesson({
     id: "arrow-crab",
@@ -262,9 +301,9 @@ test("creature tours introduce the printed name before the class and use grammat
     kind: "creature",
     category: "invertebrate",
   }, { cardClassLabel: "Reef Invertebrate" });
-  assert.equal(getTutorialCardLessonSubject({ name: "Arrow Crab", kind: "creature" }), "an arrow crab");
-  assert.equal(arrowCrabLesson.segments[0].title, "Meet an arrow crab");
-  assert.match(arrowCrabLesson.segments[0].message, /^An arrow crab is a Reef Invertebrate\./);
+  assert.equal(getTutorialCardLessonSubject({ name: "Arrow Crab", kind: "creature" }), "the arrow crab");
+  assert.equal(arrowCrabLesson.segments[0].title, "Meet the arrow crab");
+  assert.match(arrowCrabLesson.segments[0].message, /^The arrow crab is a Reef Invertebrate\./);
 });
 
 test("every new Support gets a card-specific fullscreen lesson even after its generic type is known", () => {

@@ -24,6 +24,17 @@ test("Mr. Easterling uses his transparent portrait without a decorative backing 
   assert.match(cssRules(".coachPortrait .portrait").join("\n"), /background:\s*transparent/);
 });
 
+test("the in-game coach header shows only Mr. Easterling", () => {
+  const identityStart = panelSource.indexOf('<div className={styles.coachIdentity}>');
+  const identityEnd = panelSource.indexOf("</div>", identityStart);
+  const identitySource = panelSource.slice(identityStart, identityEnd);
+
+  assert.match(identitySource, /<strong id=\{teacherTitleId\}>Mr\. Easterling<\/strong>/);
+  assert.doesNotMatch(identitySource, /<span|Lesson \$\{|Step \$\{|Goal \$\{|lessonIndex|stepCount|stepNumber/);
+  assert.doesNotMatch(panelSource, /const lessonIndex|const stepCount|const stepNumber/);
+  assert.doesNotMatch(styleSource, /\.coachIdentity\s*>\s*span/);
+});
+
 test("the teacher card stays compact and positionable beside the current board target", () => {
   const coachRule = cssRules(".coach").find((rule) => /position:\s*relative/.test(rule));
   const portraitRule = cssRules(".coachPortrait").find((rule) => /position:\s*absolute/.test(rule));

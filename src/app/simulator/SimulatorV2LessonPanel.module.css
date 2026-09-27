@@ -189,7 +189,6 @@
 .coachHeader { display: flex; min-height: 2.15rem; align-items: center; gap: 0.5rem; padding: 0.3rem 0.38rem 0.18rem 0.72rem; }
 .coachIdentity { display: flex; min-width: 0; flex: 1; align-items: baseline; gap: 0.55rem; }
 .coachIdentity strong { display: block; flex: 0 0 auto; color: #c94946; font-size: 0.61rem; font-weight: 900; letter-spacing: 0.055em; line-height: 1.3; text-transform: uppercase; }
-.coachIdentity > span { display: block; min-width: 0; color: #68768a; font-size: 0.61rem; font-weight: 700; line-height: 1.35; }
 .collapseButton { display: grid; width: 2.75rem; height: 2.75rem; flex: 0 0 2.75rem; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 50%; color: #5c6a7f; background: transparent; font-size: 1.15rem; font-weight: 600; line-height: 1; }
 .collapseButton:hover { border-color: #a7b1c0; color: var(--ink); background: #e5eaf2; }
 .coachBody { position: relative; padding: 0.05rem 0.9rem 0.55rem; border-top: 1px solid #c8d0dc; }
@@ -341,7 +340,6 @@
   .coachHeader { min-height: 2.25rem; gap: 0.4rem; padding: 0.32rem 0.38rem 0.2rem 0.65rem; }
   .coachIdentity { gap: 0.36rem; }
   .coachIdentity strong { font-size: 0.65rem; }
-  .coachIdentity > span { font-size: 0.65rem; }
   .collapseButton { width: 2.75rem; height: 2.75rem; flex-basis: 2.75rem; }
   .coachBody { padding: 0.08rem 0.8rem 0.58rem; }
   .currentMove { padding-top: 0.52rem; }

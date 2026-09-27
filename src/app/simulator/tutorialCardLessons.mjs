@@ -336,20 +336,18 @@ function getAttackRuleSummary(rule) {
   }).join(" ");
 }
 
-function withIndefiniteArticle(value) {
-  const noun = String(value ?? "").trim().toLowerCase();
-  if (!noun) return "a creature";
-  return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
+function getCreatureCommonName(card) {
+  return String(card?.bio?.commonName ?? card?.name ?? "creature").trim().toLowerCase() || "creature";
 }
 
-function getCreatureCommonNoun(card) {
-  return withIndefiniteArticle(card?.bio?.commonName ?? card?.name ?? "creature");
+function getCardNarrativeSubject(card) {
+  return normalizeToken(card?.kind) === "creature"
+    ? `the ${getCreatureCommonName(card)}`
+    : card?.name ?? "this card";
 }
 
 export function getTutorialCardLessonSubject(card) {
-  return normalizeToken(card?.kind) === "creature"
-    ? getCreatureCommonNoun(card)
-    : card?.name ?? "this card";
+  return getCardNarrativeSubject(card);
 }
 
 function capitalizeFirst(value) {
@@ -363,11 +361,12 @@ function getCardLessonTitle(card) {
 function cardIdentityMessage(card, cardClassLabel) {
   const kind = normalizeToken(card.kind);
   const isSchool = asList(card.tags).map(normalizeToken).includes("creature-school");
+  const sentenceSubject = capitalizeFirst(getCardNarrativeSubject(card));
   if (isSchool) {
-    return `${capitalizeFirst(getCreatureCommonNoun(card))} is a ${cardClassLabel}. Creature Schools are Foundations that supply School Density; they do not use a Coral's creature slot.`;
+    return `${sentenceSubject} is a ${cardClassLabel}. Creature Schools are Foundations that supply School Density; they do not use a Coral's creature slot.`;
   }
   if (kind === "creature") {
-    return `${capitalizeFirst(getCreatureCommonNoun(card))} is a ${cardClassLabel}. Its zone and class determine which open slot can house it and which rules can target it.`;
+    return `${sentenceSubject} is a ${cardClassLabel}. Its zone and class determine which open slot can house it and which rules can target it.`;
   }
   if (kind === "coral") {
     const stage = Number(card.stage ?? 0);
@@ -392,7 +391,7 @@ function cardTypeMessage(card, cardClassLabel) {
   }
   if (kind === "creature") {
     if (getTutorialCardTemplate(card) === "filter-feeder") {
-      return `${card.name} belongs to the ${cardClassLabel} class. That class determines its open-water placement and which rules can target it.`;
+      return `${capitalizeFirst(getCardNarrativeSubject(card))} belongs to the ${cardClassLabel} class. That class determines its open-water placement and which rules can target it.`;
     }
     return `The printed ${cardClassLabel} label identifies this card's zone and class. That determines which open space can house it and which rules can target it.`;
   }
@@ -418,27 +417,28 @@ function createRuleSegment(card, rule, label, index, focus = "rules") {
   const nextUpgradeName = label === "Upgrade"
     ? normalized.text.match(/^Upgrade to (.+?)\.?$/i)?.[1] ?? "the next card"
     : "";
+  const subject = getCardNarrativeSubject(card);
   const timingCopy = label === "Passive"
-    ? `${name} is a Passive, so it stays active while ${card.name} remains in your ecosystem.`
+    ? `${name} is a Passive, so it stays active while ${subject} remains in your ecosystem.`
     : label === "On Play"
-      ? `${name} is an On Play ability, so it resolves immediately after ${card.name} enters play.`
+      ? `${name} is an On Play ability, so it resolves immediately after ${subject} enters play.`
       : label === "Action"
         ? `${name} is an Action you choose during your turn.${cost > 0 ? ` It costs ${cost} RP to use.` : ""}`
         : label === "Requirement"
-          ? `This requirement must be true before you can play ${card.name}.`
+          ? `This requirement must be true before you can play ${subject}.`
           : label === "Restriction"
-            ? `This restriction limits when or how ${card.name} can be played.`
+            ? `This restriction limits when or how ${subject} can be played.`
             : label === "Maintenance"
-              ? `Maintenance is checked after ${card.name} enters your ecosystem.`
+              ? `Maintenance is checked after ${subject} enters your ecosystem.`
               : label === "Upgrade"
                 ? `${stageLabel} in the top-left shows this card's current place in its upgrade chain.${cost > 0 ? ` Moving to the next stage costs ${cost} RP.` : ""} ${nextUpgradeName} is the next card in that chain.`
                 : label === "Special Placement"
                   ? `This card uses a special placement rule instead of ordinary slot placement.`
                   : label === "Removal"
-                    ? `This explains how ${card.name} can be removed from play.`
+                    ? `This explains how ${subject} can be removed from play.`
                     : label === "Rules"
-                      ? `This printed rule explains what ${card.name} does.`
-                      : `Read this ${label.toLowerCase()} before using ${card.name}.`;
+                      ? `This printed rule explains what ${subject} does.`
+                      : `Read this ${label.toLowerCase()} before using ${subject}.`;
   return {
     id: `card:${card.id}:${normalizeToken(label)}:${normalizeToken(normalized.key)}`,
     title: label === "Upgrade"
@@ -457,6 +457,8 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
   const weaknesses = getWeaknessSummary(card);
   const slots = getSlotSummary(card);
   const schoolDensity = Math.max(0, Number(card.schoolDensity ?? card.schoolDensityRequirement ?? 0));
+  const subject = getCardNarrativeSubject(card);
+  const sentenceSubject = capitalizeFirst(subject);
   const segments = [
     {
       id: `card:${card.id}:name`,
@@ -478,8 +480,8 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
       id: `card:${card.id}:cost`,
       title: cost > 0 ? `Play cost: ${cost} RP` : "No RP play cost",
       message: cost > 0
-        ? `Playing ${card.name} costs ${cost} RP from your bank. Ability costs are separate and appear with the ability that uses them.`
-        : `${card.name} costs 0 RP to play, but every printed requirement must still be met.`,
+        ? `Playing ${subject} costs ${cost} RP from your bank. Ability costs are separate and appear with the ability that uses them.`
+        : `${sentenceSubject} costs 0 RP to play, but every printed requirement must still be met.`,
       focus: "cost",
     },
   ];
@@ -552,7 +554,7 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
     segments.push({
       id: `card:${card.id}:defense`,
       title: `Defense: ${defense}`,
-      message: `${defense} is ${card.name}'s defense die when an opposing attack legally targets it. The higher final roll wins; a tie goes to the defender.`,
+      message: `${defense} is the defense die for ${subject} when an opposing attack legally targets it. The higher final roll wins; a tie goes to the defender.`,
       focus: "defense",
     });
   }
@@ -560,7 +562,7 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
     segments.push({
       id: `card:${card.id}:victory-points`,
       title: `Victory Points: ${vp}`,
-      message: `${card.name} contributes ${vp} VP toward your goal while it remains in your ecosystem.`,
+      message: `${sentenceSubject} contributes ${vp} VP toward your goal while it remains in your ecosystem.`,
       focus: "victory",
     });
   }
@@ -568,7 +570,7 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
     segments.push({
       id: `card:${card.id}:health`,
       title: `Health: ${health} HP`,
-      message: `${card.name} can take ${health} damage before it is destroyed. Track damage against this printed Health value.`,
+      message: `${sentenceSubject} can take ${health} damage before it is destroyed. Track damage against this printed Health value.`,
       focus: "health",
     });
   }
@@ -577,8 +579,8 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
       id: `card:${card.id}:weaknesses`,
       title: "Weaknesses",
       message: weaknesses
-        ? `${card.name} has ${weaknesses} printed as a weakness. Conditions and other effects can check these symbols.`
-        : `${card.name} has no printed weakness.`,
+        ? `${sentenceSubject} has ${weaknesses} printed as a weakness. Conditions and other effects can check these symbols.`
+        : `${sentenceSubject} has no printed weakness.`,
       focus: "weaknesses",
     });
   }
@@ -586,7 +588,7 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
     segments.push({
       id: `card:${card.id}:slots`,
       title: "Creature homes",
-      message: `${card.name} provides ${slots} slots. Each creature needs an open, compatible home before it can be placed.`,
+      message: `${sentenceSubject} provides ${slots} slots. Each creature needs an open, compatible home before it can be placed.`,
       focus: "slots",
     });
   }
@@ -596,8 +598,8 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
       id: `card:${card.id}:school-density`,
       title: `School Density: ${schoolDensity}`,
       message: suppliesDensity
-        ? `${card.name} supplies ${schoolDensity} School Density for open-water creatures.`
-        : `${card.name} commits ${schoolDensity} available School Density while it remains in play.`,
+        ? `${sentenceSubject} supplies ${schoolDensity} School Density for open-water creatures.`
+        : `${sentenceSubject} commits ${schoolDensity} available School Density while it remains in play.`,
       focus: suppliesDensity ? "density-supply" : "density-requirement",
     });
   }
@@ -965,6 +967,7 @@ export function createGuidedAcademyCardLesson(card, {
   const seen = new Set(seenConceptKeys);
   const callouts = getTutorialCardConcepts(card).filter((entry) => !seen.has(entry.key));
   const segments = getCardSpecificLessonSegments(card, cardClassLabel);
+  const subject = getCardNarrativeSubject(card);
   return {
     id: `guided-academy-card-lesson:${card.id}`,
     cueId: `guided-academy-card-lesson:${card.id}`,
@@ -974,10 +977,10 @@ export function createGuidedAcademyCardLesson(card, {
     eyebrow: "New card lesson",
     cardClassLabel,
     referenceMode: "printed",
-    message: `Before you use ${card.name}, read its gameplay type, cost, abilities, and stats. You will return to the same tutorial step when you finish.`,
+    message: `Before you use ${subject}, read its gameplay type, cost, abilities, and stats. You will return to the same tutorial step when you finish.`,
     callouts,
     segments,
-    advanceLabel: `Continue with ${card.name}`,
+    advanceLabel: `Continue with ${subject}`,
   };
 }
 

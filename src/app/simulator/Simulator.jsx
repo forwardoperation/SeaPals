@@ -6169,7 +6169,7 @@ export default function Simulator({
   function getEmbeddedLessonBlock(action, details = {}) {
     if (tutorialRequiredCardReviewId) {
       const cardName = cardsById[tutorialRequiredCardReviewId]?.name ?? "the new card";
-      return `Tap ${cardName} in your hand and finish its card tour before continuing.`;
+      return `Tap on your ${cardName} and finish its card tour before continuing.`;
     }
     return getSimulatorV2LessonActionBlock({
       lesson: embeddedLesson, checkpoint: tutorialCurrentCheckpoint,
@@ -7716,12 +7716,12 @@ export default function Simulator({
         message: pendingTutorialCardReviewId
           ? `You drew ${tutorialRequiredCardReviewSubject}! Open it before continuing so we can walk through its type, cost, abilities, and stats.`
           : `${tutorialRequiredCardReviewSubjectAtSentenceStart} is new to this lesson. Open it before using it so we can read every gameplay detail together.`,
-        action: `Tap ${tutorialRequiredCardReview.name} in your hand to begin its card tour.`,
+        action: `Tap on your ${tutorialRequiredCardReview.name}.`,
         target: "hand",
         interaction: "tap",
         targetCardId: tutorialRequiredCardReview.id,
         targetCardIds: [tutorialRequiredCardReview.id],
-        pointerPrompt: `Tap ${tutorialRequiredCardReview.name} to read it.`,
+        pointerPrompt: `Tap on your ${tutorialRequiredCardReview.name}.`,
         targetLabel: `${tutorialRequiredCardReview.name} in your hand`,
       }
     : checkpointTutorialHelp;
