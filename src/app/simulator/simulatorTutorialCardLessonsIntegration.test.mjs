@@ -62,7 +62,12 @@ test("fullscreen lesson keeps the card clear and docks the coach and navigation 
   assert.match(simulatorSource, /className="fixed inset-0 z-\[180\] flex min-h-0 flex-col overflow-hidden/);
   assert.match(simulatorSource, /data-card-lesson-stage[\s\S]*data-card-lesson-coach/);
   assert.match(simulatorSource, /className="flex h-\[clamp\(12rem,34dvh,22rem\)\] min-h-0 shrink-0 flex-col[^"]*" data-card-lesson-coach/);
-  assert.match(overlaySource, /ref=\{coachScrollRef\}[\s\S]*className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4"[\s\S]*role="region"[\s\S]*aria-label="Lesson narration"[\s\S]*tabIndex=\{0\}/);
+  assert.match(overlaySource, /ref=\{coachScrollRef\}[\s\S]*className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4"[\s\S]*role="region"[\s\S]*aria-label="Lesson narration"[\s\S]*tabIndex=\{0\}/);
+  assert.match(
+    overlaySource,
+    /className="mx-auto my-auto flex w-full max-w-6xl shrink-0 items-start gap-3 sm:gap-4"/,
+    "short narration should sit lower in the reserved panel while tall content keeps a top scroll origin",
+  );
   assert.match(overlaySource, /if \(coachScrollRef\.current\) coachScrollRef\.current\.scrollTop = 0/);
   assert.match(simulatorSource, /data-card-lesson-coach[\s\S]*<footer className="shrink-0/);
   assert.match(overlaySource, /ProfessorGuidePortrait guide=\{guide\} compact[\s\S]*\{activeTitle\}[\s\S]*<LessonDialogueMessage[\s\S]*message=\{activeMessage\}/);

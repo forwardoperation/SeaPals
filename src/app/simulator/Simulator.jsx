@@ -3812,14 +3812,14 @@ function TutorialCardLessonOverlay({
       <aside className="flex h-[clamp(12rem,34dvh,22rem)] min-h-0 shrink-0 flex-col border-t-4 border-cyan-400/60 bg-[#f4fbf8] text-slate-950 shadow-[0_-16px_50px_rgba(0,0,0,0.3)]" data-card-lesson-coach data-card-cue-region={activeFocus ?? undefined}>
         <div
           ref={coachScrollRef}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4"
           role="region"
           aria-label="Lesson narration"
           aria-live="polite"
           aria-atomic="true"
           tabIndex={0}
         >
-          <div className="mx-auto flex max-w-6xl items-start gap-3 sm:gap-4">
+          <div className="mx-auto my-auto flex w-full max-w-6xl shrink-0 items-start gap-3 sm:gap-4">
             <ProfessorGuidePortrait guide={guide} compact />
             <div className="min-w-0 flex-1">
               <h2 id="seapals-card-lesson-title" className="text-lg font-black leading-tight text-slate-950 sm:text-2xl">{activeTitle}</h2>

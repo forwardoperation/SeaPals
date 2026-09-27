@@ -55,6 +55,7 @@ const clownfish = {
   name: "Clownfish",
   kind: "creature",
   category: "fish",
+  image: "/images/cards/fish/Reef/Clownfish.png",
   cost: { rp: 2 },
   victoryPoints: 2,
   defense: { dice: "D4" },
@@ -153,6 +154,7 @@ test("every standard-card cue uses a short pointer that lands on its printed fie
     "victory",
     "name",
     "cost",
+    "class-icon",
     "rules",
     "health",
     "weaknesses",
@@ -236,7 +238,8 @@ test("card cue coordinates follow each printed card template", () => {
 
   const stackedCost = getTutorialCardFocusRegion("cost", { ...clownfish, schoolDensityRequirement: 10 });
   const stackedDensity = getTutorialCardFocusRegion("density-requirement", { ...clownfish, schoolDensityRequirement: 10 });
-  assert.deepEqual([stackedCost.tipX, stackedCost.tipY], [365, 15]);
+  assert.deepEqual([stackedCost.tipX, stackedCost.tipY], [285, 15]);
+  assert.equal(stackedCost.direction, "right", "the RP cue should approach from the name side instead of covering the class icon");
   assert.notDeepEqual(
     [stackedCost.tipX, stackedCost.tipY],
     [stackedDensity.tipX, stackedDensity.tipY],
@@ -253,6 +256,7 @@ test("the Clownfish tour points to each printed field on the 375 by 525 card", (
   const expectedTargets = [
     { title: "Meet the clownfish", focus: "name", tip: [182, 45], bounds: [80, 285, 6, 45] },
     { title: "Read the Reef Fish label", focus: "type", tip: [55, 62], bounds: [12, 117, 44, 62] },
+    { title: "Match the Reef Fish icon", focus: "class-icon", tip: [348, 43], bounds: [334, 365, 7, 43] },
     { title: "Play cost: 2 RP", focus: "cost", tip: [325, 45], bounds: [285, 365, 6, 45] },
     { title: "Passive: Symbiosis", focus: "rules", tip: [45, 271], bounds: [14, 361, 271, 336] },
     { title: "Defense: D4", focus: "defense", tip: [51, 465], bounds: [10, 92, 465, 506] },
@@ -284,6 +288,9 @@ test("creature tours introduce the printed name before the class and use grammat
   assert.match(clownfishLesson.segments[0].message, /^The clownfish is a Reef Fish\./);
   assert.equal(clownfishLesson.segments[0].focus, "name");
   assert.equal(clownfishLesson.segments[1].focus, "type");
+  assert.equal(clownfishLesson.segments[2].focus, "class-icon");
+  assert.match(clownfishLesson.segments[1].message, /Reef is the zone.*Fish is the class/i);
+  assert.match(clownfishLesson.segments[2].message, /matching Reef Fish icon.*top-right.*open creature slots.*targeting rules/i);
   assert.match(clownfishLesson.segments.find((segment) => segment.title === "Play cost: 2 RP").message, /^Playing the clownfish costs 2 RP/);
   assert.match(clownfishLesson.segments.find((segment) => segment.title === "Passive: Symbiosis").message, /while the clownfish remains/);
   assert.match(clownfishLesson.segments.find((segment) => segment.title === "Defense: D4").message, /^D4 is the defense die for the clownfish/);
@@ -372,16 +379,22 @@ test("Porcupine Fish teaches Toxic separately from its paid Crunch attack", () =
     name: "Porcupine Fish",
     kind: "creature",
     category: "fish",
+    image: "/images/cards/fish/Reef/Porcupinefish.png",
     cost: { rp: 2 },
     victoryPoints: 2,
     defense: { dice: "D4" },
     passives: [{ id: "toxic", name: "Toxic", text: "If eaten, flip a coin; on tails, discard the consuming card." }],
     actions: [{ id: "crunch", name: "Crunch", text: "Perform a D4 attack against an Invertebrate.", cost: { rp: 1 }, effect: { type: "attack" } }],
-  }, { seenConceptKeys: GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS });
+  }, { seenConceptKeys: GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS, cardClassLabel: "Reef Fish" });
 
   assert.ok(lesson.conceptKeys.includes("mechanic:toxic"));
   assert.ok(lesson.conceptKeys.includes("label:action"));
   assert.ok(lesson.conceptKeys.includes("label:attack"));
+  const typeLabel = lesson.segments.find((segment) => segment.focus === "type");
+  assert.match(typeLabel.message, /Reef is the zone.*Fish is the class/i);
+  const classIcon = lesson.segments.find((segment) => segment.focus === "class-icon");
+  assert.equal(classIcon.title, "Match the Reef Fish icon");
+  assert.match(classIcon.message, /top-right.*open creature slots.*targeting rules/i);
   const toxic = lesson.segments.find((segment) => segment.title === "Passive: Toxic");
   assert.equal(toxic.focus, "rules");
   assert.match(toxic.message, /Passive.*stays active.*If eaten/i);

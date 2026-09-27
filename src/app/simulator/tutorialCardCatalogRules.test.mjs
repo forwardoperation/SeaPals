@@ -59,7 +59,9 @@ function getRuleTour(card) {
   const referenceRules = getTutorialCardReferenceRules(card);
   const lesson = createGuidedAcademyCardLesson(card);
   assert.ok(lesson, `${card.id} should create a card lesson`);
-  const segments = lesson.segments.slice(3, 3 + referenceRules.length);
+  const costIndex = lesson.segments.findIndex((segment) => segment.id === `card:${card.id}:cost`);
+  assert.ok(costIndex >= 0, `${card.id} should teach its play cost before its printed rules`);
+  const segments = lesson.segments.slice(costIndex + 1, costIndex + 1 + referenceRules.length);
   assert.equal(
     segments.length,
     referenceRules.length,
@@ -67,6 +69,33 @@ function getRuleTour(card) {
   );
   return segments;
 }
+
+test("every printed creature tour links its class label or class explanation to the top-right icon", () => {
+  const printedCreatures = allCards.filter((card) => (
+    String(card.kind).toLowerCase() === "creature"
+    && card.image
+    && !/SeaPalsTCGLogoWhite\.svg$/i.test(String(card.image))
+  ));
+  assert.ok(printedCreatures.length > 0);
+
+  for (const card of printedCreatures) {
+    const lesson = createGuidedAcademyCardLesson(card, { cardClassLabel: "Creature class" });
+    const iconSegments = lesson.segments.filter((segment) => segment.focus === "class-icon");
+    assert.equal(iconSegments.length, 1, `${card.id} should teach its printed class icon exactly once`);
+    assert.match(iconSegments[0].message, /top-right/i, `${card.id} should explain where the matching icon is printed`);
+    const region = getTutorialCardFocusRegion("class-icon", card);
+    assert.ok(region, `${card.id} should resolve its upper-right icon cue`);
+    assert.ok(region.tipX > 320 && region.tipY < 70, `${card.id} should point inside the upper-right header`);
+
+    if (String(card.category ?? card.class).toLowerCase() === "filter-feeder") {
+      assert.equal(lesson.segments[1].focus, "class-icon", `${card.id} has no separate printed type strip`);
+    } else {
+      const typeIndex = lesson.segments.findIndex((segment) => segment.focus === "type");
+      assert.ok(typeIndex >= 0, `${card.id} should first teach its printed class label`);
+      assert.equal(lesson.segments[typeIndex + 1].focus, "class-icon", `${card.id} should connect the label to its matching icon next`);
+    }
+  }
+});
 
 function getTipPositions(card, segments) {
   return segments.map((segment) => {

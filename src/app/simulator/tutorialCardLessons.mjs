@@ -20,6 +20,7 @@ export const TUTORIAL_CARD_FOCUS_REGIONS = Object.freeze({
   victory: freezeRegion({ x: 10, y: 6, width: 70, height: 39, tailX: 45, tailY: 84, tipX: 45, tipY: 45, direction: "up" }),
   name: freezeRegion({ x: 80, y: 6, width: 205, height: 39, tailX: 182, tailY: 84, tipX: 182, tipY: 45, direction: "up" }),
   cost: freezeRegion({ x: 285, y: 6, width: 80, height: 39, tailX: 325, tailY: 84, tipX: 325, tipY: 45, direction: "up" }),
+  "class-icon": freezeRegion({ x: 334, y: 7, width: 31, height: 36, tailX: 348, tailY: 82, tipX: 348, tipY: 43, direction: "up" }),
   rules: freezeRegion({ x: 14, y: 271, width: 347, height: 65, tailX: 45, tailY: 233, tipX: 45, tipY: 271, direction: "down" }),
   "rules-secondary": freezeRegion({ x: 14, y: 338, width: 347, height: 58, tailX: 45, tailY: 300, tipX: 45, tipY: 338, direction: "down" }),
   "rules-tertiary": freezeRegion({ x: 14, y: 405, width: 347, height: 58, tailX: 45, tailY: 367, tipX: 45, tipY: 405, direction: "down" }),
@@ -35,13 +36,13 @@ export const TUTORIAL_CARD_FOCUS_REGIONS = Object.freeze({
 const STACKED_DENSITY_COST_FOCUS_REGION = freezeRegion({
   x: 285,
   y: 5,
-  width: 80,
+  width: 48,
   height: 19,
-  tailX: 405,
+  tailX: 245,
   tailY: 15,
-  tipX: 365,
+  tipX: 285,
   tipY: 15,
-  direction: "left",
+  direction: "right",
 });
 
 const TUTORIAL_CARD_TEMPLATE_FOCUS_OVERRIDES = Object.freeze({
@@ -391,9 +392,13 @@ function cardTypeMessage(card, cardClassLabel) {
   }
   if (kind === "creature") {
     if (getTutorialCardTemplate(card) === "filter-feeder") {
-      return `${capitalizeFirst(getCardNarrativeSubject(card))} belongs to the ${cardClassLabel} class. That class determines its open-water placement and which rules can target it.`;
+      return `${capitalizeFirst(getCardNarrativeSubject(card))} belongs to the ${cardClassLabel} class. The matching icon in the top-right identifies that class for placement and targeting rules.`;
     }
-    return `The printed ${cardClassLabel} label identifies this card's zone and class. That determines which open space can house it and which rules can target it.`;
+    const classParts = String(cardClassLabel).match(/^(Reef|Oceanic|Deep)\s+(.+)$/i);
+    if (classParts) {
+      return `The printed ${cardClassLabel} label identifies its ecosystem zone and creature class: ${classParts[1]} is the zone, and ${classParts[2]} is the class. Together, they determine which open space can house it and which rules can target it.`;
+    }
+    return `The printed ${cardClassLabel} label identifies this card's creature class. That determines which open space can house it and which rules can target it.`;
   }
   if (kind === "coral") {
     return "The printed Reef Coral strip identifies this as a Coral Foundation and determines which Coral rules interact with it.";
@@ -405,6 +410,30 @@ function cardTypeMessage(card, cardClassLabel) {
     return "The Habitat icon identifies an environment card that stays in your ecosystem after its play requirements are met.";
   }
   return `The printed ${cardClassLabel} label determines how this card enters play and which rules can interact with it.`;
+}
+
+function hasTutorialClassIcon(card) {
+  const kind = normalizeToken(card?.kind);
+  if (!["creature", "coral"].includes(kind)) return false;
+  const image = String(card?.image ?? "");
+  return Boolean(image) && !/SeaPalsTCGLogoWhite\.svg$/i.test(image);
+}
+
+function getTutorialClassIconLabel(card, cardClassLabel) {
+  const isSchool = asList(card?.tags).map(normalizeToken).includes("creature-school");
+  if (isSchool) return "Creature School";
+  if (normalizeToken(card?.kind) === "coral") {
+    return String(cardClassLabel).replace(/^(?:Base|Stage\s+\d+)\s*-\s*/i, "") || "Coral";
+  }
+  return cardClassLabel;
+}
+
+function cardClassIconMessage(card, cardClassLabel) {
+  const iconLabel = getTutorialClassIconLabel(card, cardClassLabel);
+  if (normalizeToken(card?.kind) === "coral") {
+    return `The matching ${iconLabel} icon in the top-right repeats the card's Coral type. Other cards use this symbol when their rules refer to ${iconLabel} cards.`;
+  }
+  return `The matching ${iconLabel} icon in the top-right repeats the same zone and class. Compare this symbol with open creature slots and targeting rules.`;
 }
 
 function createRuleSegment(card, rule, label, index, focus = "rules") {
@@ -459,6 +488,9 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
   const schoolDensity = Math.max(0, Number(card.schoolDensity ?? card.schoolDensityRequirement ?? 0));
   const subject = getCardNarrativeSubject(card);
   const sentenceSubject = capitalizeFirst(subject);
+  const cardTemplate = getTutorialCardTemplate(card);
+  const showsClassIcon = hasTutorialClassIcon(card);
+  const filterFeederUsesIcon = cardTemplate === "filter-feeder" && showsClassIcon;
   const segments = [
     {
       id: `card:${card.id}:name`,
@@ -468,23 +500,38 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
     },
     {
       id: `card:${card.id}:identity`,
-      title: getTutorialCardTemplate(card) === "filter-feeder"
-        ? `Know the ${cardClassLabel} class`
+      title: cardTemplate === "filter-feeder"
+        ? filterFeederUsesIcon
+          ? `Find the ${cardClassLabel} icon`
+          : `Know the ${cardClassLabel} class`
         : normalizeToken(card.kind) === "coral"
           ? "Read the Reef Coral label"
           : `Read the ${cardClassLabel} label`,
-      message: cardTypeMessage(card, cardClassLabel),
-      focus: "type",
+      message: filterFeederUsesIcon
+        ? cardClassIconMessage(card, cardClassLabel)
+        : cardTypeMessage(card, cardClassLabel),
+      focus: filterFeederUsesIcon ? "class-icon" : "type",
     },
-    {
+  ];
+
+  if (showsClassIcon && cardTemplate !== "filter-feeder") {
+    const iconLabel = getTutorialClassIconLabel(card, cardClassLabel);
+    segments.push({
+      id: `card:${card.id}:class-icon`,
+      title: `Match the ${iconLabel} icon`,
+      message: cardClassIconMessage(card, cardClassLabel),
+      focus: "class-icon",
+    });
+  }
+
+  segments.push({
       id: `card:${card.id}:cost`,
       title: cost > 0 ? `Play cost: ${cost} RP` : "No RP play cost",
       message: cost > 0
         ? `Playing ${subject} costs ${cost} RP from your bank. Ability costs are separate and appear with the ability that uses them.`
         : `${sentenceSubject} costs 0 RP to play, but every printed requirement must still be met.`,
       focus: "cost",
-    },
-  ];
+    });
 
   const ruleGroups = [
     ["Rules", card.text ? [card.text] : []],
