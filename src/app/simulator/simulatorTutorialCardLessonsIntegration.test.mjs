@@ -70,7 +70,10 @@ test("fullscreen lesson keeps the card clear and docks the coach and navigation 
   );
   assert.match(overlaySource, /if \(coachScrollRef\.current\) coachScrollRef\.current\.scrollTop = 0/);
   assert.match(simulatorSource, /data-card-lesson-coach[\s\S]*<footer className="shrink-0/);
-  assert.match(overlaySource, /ProfessorGuidePortrait guide=\{guide\} compact[\s\S]*\{activeTitle\}[\s\S]*<LessonDialogueMessage[\s\S]*message=\{activeMessage\}/);
+  assert.match(overlaySource, /ProfessorGuidePortrait guide=\{guide\} compact[\s\S]*\{activeTitle \? \([\s\S]*seapals-card-lesson-title[\s\S]*\) : null\}[\s\S]*<LessonDialogueMessage[\s\S]*message=\{activeMessage\}/);
+  assert.match(overlaySource, /const activeTitle = activeSegment\?\.hideTitle[\s\S]*\? null[\s\S]*activeSegment\?\.title \?\? lesson\.title/);
+  assert.match(overlaySource, /aria-labelledby=\{activeTitle \? "seapals-card-lesson-title" : undefined\}/);
+  assert.match(overlaySource, /aria-label=\{activeTitle \? undefined : lesson\.title \|\| "Card lesson"\}/);
   assert.doesNotMatch(overlaySource, /<header\b|segmentProgressLabel|\{guide\.name\}/);
   assert.match(overlaySource, /\{onSkip \? <button[^>]*onClick=\{onSkip\}[\s\S]*aria-label=\{introduction \? "Skip introduction" : "Skip card lesson"\}>Skip<\/button> : null\}/);
   assert.match(overlaySource, /if \(event\.key === "Escape"\)[\s\S]*onSkip\?\.\(\)/);

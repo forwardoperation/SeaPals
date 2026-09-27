@@ -3709,7 +3709,9 @@ function TutorialCardLessonOverlay({
   const segments = Array.isArray(lesson.segments) ? lesson.segments : [];
   const safeSegmentIndex = Math.min(segmentIndex, Math.max(0, segments.length - 1));
   const activeSegment = segments[safeSegmentIndex] ?? null;
-  const activeTitle = activeSegment?.title ?? lesson.title;
+  const activeTitle = activeSegment?.hideTitle
+    ? null
+    : (activeSegment?.title ?? lesson.title);
   const activeMessage = activeSegment?.message ?? lesson.message;
   const activeFocus = activeSegment?.focus ?? lesson.focus ?? null;
   const hasNextSegment = segments.length > 0 && safeSegmentIndex < segments.length - 1;
@@ -3766,7 +3768,8 @@ function TutorialCardLessonOverlay({
       className="fixed inset-0 z-[180] flex min-h-0 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_#0d5770_0%,_#071c2d_42%,_#030b14_100%)] text-white"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="seapals-card-lesson-title"
+      aria-labelledby={activeTitle ? "seapals-card-lesson-title" : undefined}
+      aria-label={activeTitle ? undefined : lesson.title || "Card lesson"}
       aria-describedby="seapals-card-lesson-description"
       tabIndex={-1}
       onKeyDown={(event) => {
@@ -3822,7 +3825,9 @@ function TutorialCardLessonOverlay({
           <div className="mx-auto my-auto flex w-full max-w-6xl shrink-0 items-start gap-3 sm:gap-4">
             <ProfessorGuidePortrait guide={guide} compact />
             <div className="min-w-0 flex-1">
-              <h2 id="seapals-card-lesson-title" className="text-lg font-black leading-tight text-slate-950 sm:text-2xl">{activeTitle}</h2>
+              {activeTitle ? (
+                <h2 id="seapals-card-lesson-title" className="text-lg font-black leading-tight text-slate-950 sm:text-2xl">{activeTitle}</h2>
+              ) : null}
               <LessonDialogueMessage
                 key={createProfessorSpeechKey(`${lesson.cueId}:${activeSegment?.id ?? safeSegmentIndex}`, activeMessage)}
                 id="seapals-card-lesson-description"

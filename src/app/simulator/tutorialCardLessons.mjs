@@ -840,6 +840,7 @@ export function createGuidedFoundationCardLesson(card) {
       {
         id: "play-cost",
         title: "Check the RP cost",
+        hideTitle: true,
         message: `The top-right number is the play cost. ${card.name} costs ${cost} RP, which comes out of your RP bank when you place it in your ecosystem.`,
         focus: "cost",
       },
