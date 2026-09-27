@@ -888,7 +888,7 @@ test("V2 names the current Condition in the divider with a separate accessible d
   );
   assert.match(divider, /onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/);
   assert.match(divider, /onClick=\{openActiveConditionDetails\}/);
-  assert.match(divider, /disabled=\{!activeCondition \|\| boardInteractionOverlayActive\}/);
+  assert.match(divider, /disabled=\{!activeCondition \|\| boardInteractionOverlayActive \|\| weaknessFocusActive\}/);
   assert.doesNotMatch(divider, /seapals-reef-divider-condition-label|>\s*Condition\s*</);
   assert.match(
     divider,
@@ -913,7 +913,7 @@ test("the V2 Condition button opens the exact active card specifics and safely h
     "active Condition details opener",
   );
 
-  assert.match(openConditionDetails, /if \(!activeCondition\) return;/);
+  assert.match(openConditionDetails, /if \(!activeCondition \|\| weaknessFocusActive\) return;/);
   assert.match(openConditionDetails, /sourceCardId:\s*activeCondition\.id/);
   assert.match(openConditionDetails, /title:\s*activeCondition\.name/);
   assert.match(openConditionDetails, /message:\s*activeCondition\.text/);

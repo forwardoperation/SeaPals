@@ -81,7 +81,7 @@ test("Condition and RP-source teaching use the embedded coach only when needed",
   );
   assert.match(
     conditionHelp,
-    /embeddedLesson[\s\S]*?!tutorialPreviouslyTaughtConcepts\.includes\(SIMULATOR_V2_LESSON_CONCEPTS\.ROUND_CONDITIONS\)[\s\S]*?compactTutorialConditionActive/,
+    /const coralDiseaseLessonConditionActive = Boolean\([\s\S]*?embeddedLesson\?\.id === "first-reef"[\s\S]*?compactTutorialConditionActive[\s\S]*?compactTurnSequence\?\.condition\?\.id === "coral-disease"/,
   );
   assert.match(
     conditionHelp,
@@ -114,7 +114,15 @@ test("Condition and RP-source teaching use the embedded coach only when needed",
     conditionHelp,
     /Coral Disease blocked Brain Coral's 1 RP\.[\s\S]*?Mustard Hill still produced 2 RP[\s\S]*?varied ecosystem/,
   );
-  assert.match(conditionHelp, /const embeddedCompactCoachHelp = embeddedCompactConditionHelp \?\? embeddedCompactRpSourceHelp \?\? embeddedCompactRpHelp/);
+  assert.match(
+    conditionHelp,
+    /const embeddedCoralDiseaseWeaknessHelp = weaknessFocusActive[\s\S]*?getSimulatorV2CoralDiseaseWeaknessHelp\(\)[\s\S]*?const embeddedCompactCoachHelp = embeddedCoralDiseaseWeaknessHelp[\s\S]*?\?\? embeddedCompactConditionHelp[\s\S]*?\?\? embeddedCompactRpSourceHelp[\s\S]*?\?\? embeddedCompactRpHelp/,
+  );
+  assert.match(
+    conditionHelp,
+    /!tutorialPreviouslyTaughtConcepts\.includes\(SIMULATOR_V2_LESSON_CONCEPTS\.ROUND_CONDITIONS\)[\s\S]*?\|\| coralDiseaseLessonConditionActive/,
+    "the authored Coral Disease impact remains teachable after the general Condition concept",
+  );
   assert.match(
     conditionHelp,
     /const embeddedCompactCoachOpen = Boolean\([\s\S]*?embeddedCompactCoachHelp[\s\S]*?!simulatorExitConfirmationOpen[\s\S]*?!tutorialExitConfirmationOpen[\s\S]*?!gameResult/,
@@ -125,21 +133,21 @@ test("Condition and RP-source teaching use the embedded coach only when needed",
   );
   assert.match(
     embeddedCompactCoach,
-    /onAdvance=\{compactTurnStage\?\.kind === CompactTurnStage\.CONDITION[\s\S]*?\? null[\s\S]*?: compactTurnStage\?\.kind === CompactTurnStage\.RP_SOURCE_FOCUS[\s\S]*?\? continueCompactRpSourceFocus[\s\S]*?: continueCompactRpSummary\}/,
+    /onAdvance=\{weaknessFocusActive[\s\S]*?setWeaknessTourAcknowledged\(true\)[\s\S]*?: compactTurnStage\?\.kind === CompactTurnStage\.CONDITION[\s\S]*?\? null[\s\S]*?: compactTurnStage\?\.kind === CompactTurnStage\.RP_SOURCE_FOCUS[\s\S]*?\? continueCompactRpSourceFocus[\s\S]*?: continueCompactRpSummary\}/,
   );
   assert.match(
     embeddedCompactCoach,
-    /advanceLabel=\{compactTurnStage\?\.kind === CompactTurnStage\.RP_SOURCE_FOCUS[\s\S]*?\? "Collect 2 RP"[\s\S]*?: "Continue to draw"\}/,
+    /advanceLabel=\{weaknessFocusActive[\s\S]*?\? "Continue"[\s\S]*?: compactTurnStage\?\.kind === CompactTurnStage\.RP_SOURCE_FOCUS[\s\S]*?\? "Collect 2 RP"[\s\S]*?: "Continue to draw"\}/,
   );
   assert.equal((embeddedCompactCoach.match(/\bonAdvance=/g) ?? []).length, 1);
   assert.doesNotMatch(embeddedCompactCoach, /data-compact-condition-continue|seapals-compact-turn-banner/);
   assert.match(
     simulatorSource,
-    /<EmbeddedLessonActionCue[\s\S]*?help=\{embeddedCompactConditionHelp\}[\s\S]*?active=\{Boolean\(embeddedCompactConditionHelp && embeddedCompactCoachOpen\)\}[\s\S]*?measureKey=\{`embedded-condition:/,
+    /<EmbeddedLessonActionCue[\s\S]*?help=\{embeddedCompactConditionHelp\}[\s\S]*?active=\{embeddedCompactConditionPanelTeaching\}[\s\S]*?measureKey=\{`embedded-condition:/,
   );
   assert.match(
     simulatorSource,
-    /embeddedCompactConditionHelp && embeddedCompactCoachOpen \? " seapals-condition-teaching" : ""/,
+    /embeddedCompactConditionPanelTeaching \? " seapals-condition-teaching" : ""/,
   );
   assert.match(
     simulatorSource,
@@ -164,10 +172,10 @@ test("reviewing the highlighted Condition continues its embedded lesson after th
     "function getMobileDrawFlightGeometry(",
   );
 
-  assert.match(openDetails, /if \(!activeCondition\) return/);
+  assert.match(openDetails, /if \(!activeCondition \|\| weaknessFocusActive\) return/);
   assert.match(
     openDetails,
-    /const continueCompactConditionOnClose = Boolean\([\s\S]*?embeddedLessonPresentationStarted[\s\S]*?embeddedCompactConditionHelp[\s\S]*?compactTurnStage\?\.kind === CompactTurnStage\.CONDITION/,
+    /const continueCompactConditionOnClose = Boolean\([\s\S]*?embeddedLessonPresentationStarted[\s\S]*?embeddedCompactConditionPanelTeaching[\s\S]*?compactTurnStage\?\.kind === CompactTurnStage\.CONDITION/,
     "only the live embedded Condition teaching step should advance",
   );
   assert.match(openDetails, /type: "condition-detail"/);
@@ -184,6 +192,11 @@ test("reviewing the highlighted Condition continues its embedded lesson after th
     simulatorSource,
     /onClick=\{openActiveConditionDetails\}/,
     "the active Condition pill owns the guided interaction",
+  );
+  assert.match(
+    simulatorSource,
+    /disabled=\{!activeCondition \|\| boardInteractionOverlayActive \|\| weaknessFocusActive\}/,
+    "the Condition pill waits for the active weakness explanation to finish",
   );
 });
 

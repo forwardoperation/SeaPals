@@ -804,6 +804,33 @@ function helpFor(selected, current, target, message, action, extra = {}) {
   };
 }
 
+const FIRST_REEF_CORAL_DISEASE_WEAKNESS_COPY = "Coral Disease is active this round! The germ icon under Brain Coral's Weaknesses matches this Condition, so Brain Coral produces no RP this round but stays in play. Mustard Hill has no Disease weakness, so its 2 RP is safe. Other Conditions can check the Storm (swirl) or High Temperature (thermometer) icons the same way: Hurricane and Severe Coral Bleaching pause RP from Corals with their matching symbols.";
+
+/** Reusable guidance for the first lesson's active Coral Disease presentation. */
+export function getSimulatorV2CoralDiseaseWeaknessHelp() {
+  return {
+    target: "coral-weakness",
+    message: FIRST_REEF_CORAL_DISEASE_WEAKNESS_COPY,
+    action: FIRST_REEF_CORAL_DISEASE_WEAKNESS_COPY,
+    cue: "first-reef:coral-disease-weakness",
+    targetCardId: "brain-coral-base",
+    targetLabel: "Brain Coral's printed Disease weakness",
+  };
+}
+
+/** True only while the first lesson is presenting the active Coral Disease Condition. */
+export function shouldTeachSimulatorV2CoralDiseaseWeakness({
+  lessonId,
+  stageKind,
+  conditionId,
+  acknowledged,
+} = {}) {
+  return lessonId === "first-reef"
+    && stageKind === "condition"
+    && conditionId === "coral-disease"
+    && acknowledged !== true;
+}
+
 function allowedBuildCards(selected, current, uiState) {
   const ids = selected.buildCards?.[current?.id] ?? [];
   if (Array.isArray(uiState.hand)) return ids.filter((id) => uiState.hand.includes(id));
@@ -1328,14 +1355,6 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   }
   if (current.actionType === ACTION.TURN_ENDED) {
     if (selected.id === "first-reef") {
-      if (current.id === "v2-watch-coral-disease" && !uiState.weaknessTourAcknowledged) {
-        const explanation = "Here’s why that second Coral matters! See the germ icon under Brain Coral's Weaknesses? That means Disease. Coral Disease stops its RP for one round, but the Coral stays in play. The other weakness types are Storm (swirl) and High Temperature (thermometer). Hurricane and Severe Coral Bleaching pause RP from Corals with those matching symbols. Mustard Hill has no weakness icon, so its 2 RP is safe from these Conditions.";
-        return help("coral-weakness", explanation, explanation, {
-          cue: "first-reef:weakness-tour",
-          targetCardId: "brain-coral-base",
-          targetLabel: "Brain Coral's printed Disease weakness",
-        });
-      }
       const message = "Ready to test your reef? End your turn. Coral Disease will appear next round, and you can compare RP from Brain Coral and Mustard Hill.";
       return help("turn-button", message, message, {
         pointerPrompt: "End the turn to reveal Coral Disease.",
@@ -1407,7 +1426,6 @@ export function getSimulatorV2LessonActionBlock({
   slotClass,
   slotOrdinal,
   layoutLessonProgress,
-  weaknessTourAcknowledged,
   preFaceoffPrimerAcknowledged,
 } = {}) {
   const selected = getSimulatorV2Lesson(value);
@@ -1472,11 +1490,6 @@ export function getSimulatorV2LessonActionBlock({
     return "Complete the highlighted lesson step before using another ability.";
   }
   if (action === "end-turn") {
-    if (
-      selected.id === "first-reef"
-      && current.id === "v2-watch-coral-disease"
-      && weaknessTourAcknowledged !== true
-    ) return "Read Brain Coral's weaknesses with Mr. Easterling before ending the turn.";
     if (
       selected.id === "first-reef"
       && gamePhase === "setup"

@@ -11,6 +11,7 @@ import {
   SIMULATOR_V2_LESSONS,
   createSimulatorV2LessonRuntime,
   createSimulatorV2LessonSeed,
+  getSimulatorV2CoralDiseaseWeaknessHelp,
   getSimulatorV2Lesson,
   getSimulatorV2ExpectedDraw,
   getSimulatorV2LessonHelp,
@@ -21,6 +22,7 @@ import {
   parseSimulatorV2LessonProgress,
   repairSimulatorV2LessonPlacementConflict,
   recordSimulatorV2LessonCompletion,
+  shouldTeachSimulatorV2CoralDiseaseWeakness,
   simulatorV2LessonIntroduces,
 } from "./simulatorV2Lessons.mjs";
 import {
@@ -1161,15 +1163,11 @@ test("sequencing gates block spending or passing out of order while leaving actu
   assert.equal(block(setupLesson, resistantCoral, "play-card", { cardId: "mustard-hill-coral-base", gamePhase: "main" }), "");
   assert.ok(block(setupLesson, resistantCoral, "play-card", { cardId: "clownfish", gamePhase: "main" }));
   const weaknessStep = lessonStep(setupLesson, "v2-watch-coral-disease");
-  assert.match(
+  assert.equal(
     block(setupLesson, weaknessStep, "end-turn", { gamePhase: "main" }),
-    /Read Brain Coral's weaknesses/i,
-    "the Condition should not advance before its weakness close-up",
+    "",
+    "the player can end Clear Water and reveal Coral Disease without an early weakness close-up",
   );
-  assert.equal(block(setupLesson, weaknessStep, "end-turn", {
-    gamePhase: "main",
-    weaknessTourAcknowledged: true,
-  }), "");
   const firstUpgradeDraw = lessonStep(setupLesson, "v2-draw-first-upgrade");
   assert.equal(block(setupLesson, firstUpgradeDraw, "draw", { deckType: "foundation" }), "");
   assert.ok(block(setupLesson, firstUpgradeDraw, "draw", { deckType: "pals" }));
@@ -1515,26 +1513,42 @@ test("Lesson 1 speaks the new-player mental model before asking for each action"
     hand: ["mustard-hill-coral-base"],
   });
   assert.match(secondCoral.action, /Base Coral.*separate Foundation.*Stage card upgrades.*beside Brain Coral.*instead of on top.*2 RP.*no Disease weakness/is);
-  const disease = getSimulatorV2LessonHelp(lesson, step("v2-watch-coral-disease"), {});
-  assert.match(disease.action, /Brain Coral.*Weaknesses.*Disease.*Coral Disease.*stops its RP.*Coral stays in play/is);
+  const disease = getSimulatorV2CoralDiseaseWeaknessHelp();
+  assert.match(disease.action, /Coral Disease is active this round.*germ icon.*Brain Coral's Weaknesses.*produces no RP.*stays in play/is);
   assert.match(disease.action, /Storm.*swirl.*High Temperature.*thermometer.*Hurricane.*Severe Coral Bleaching.*matching symbols/is);
-  assert.match(disease.action, /Mustard Hill.*no weakness icon.*2 RP.*safe/is);
+  assert.match(disease.action, /Mustard Hill.*no Disease weakness.*2 RP.*safe/is);
   for (const weaknessType of ["Storm", "High Temperature", "Disease"]) {
     assert.match(disease.action, new RegExp(weaknessType, "i"), `${weaknessType} should be explained`);
   }
   assert.equal(disease.target, "coral-weakness", "the finger should point to the weakness print on the in-play Coral");
   assert.equal(disease.targetCardId, "brain-coral-base", "the explanation should focus Brain Coral rather than an unrelated card");
+  const revealDisease = getSimulatorV2LessonHelp(lesson, step("v2-watch-coral-disease"), {});
+  assert.equal(revealDisease.target, "turn-button", "Clear Water should point straight to End Turn");
+  assert.match(revealDisease.action, /End (?:your )?turn.*Coral Disease will appear next round/is);
   assert.equal(
     getSimulatorV2LessonHelp(lesson, step("v2-watch-coral-disease"), { inspectedCardOpen: true }).target,
-    "coral-weakness",
-    "clicking a card must not move the teaching cue to an unrelated inspector control",
+    "turn-button",
+    "opening a card must not replace the End Turn cue before Coral Disease appears",
   );
-  const afterWeaknessTour = getSimulatorV2LessonHelp(lesson, step("v2-watch-coral-disease"), {
-    weaknessTourAcknowledged: true,
-  });
-  assert.equal(afterWeaknessTour.target, "turn-button", "End Turn becomes the target only after the weakness close-up");
-  assert.match(afterWeaknessTour.action, /End (?:your )?turn/i);
-  assert.notEqual(afterWeaknessTour.cueId, disease.cueId, "advancing the dialogue should start a new finger cue");
+
+  assert.equal(shouldTeachSimulatorV2CoralDiseaseWeakness({
+    lessonId: "first-reef",
+    stageKind: "condition",
+    conditionId: "coral-disease",
+    acknowledged: false,
+  }), true);
+  assert.equal(shouldTeachSimulatorV2CoralDiseaseWeakness({
+    lessonId: "first-reef",
+    stageKind: "condition",
+    conditionId: "clear-water",
+    acknowledged: false,
+  }), false);
+  assert.equal(shouldTeachSimulatorV2CoralDiseaseWeakness({
+    lessonId: "first-reef",
+    stageKind: "condition",
+    conditionId: "coral-disease",
+    acknowledged: true,
+  }), false);
 
   const upgradeDraw = getSimulatorV2LessonHelp(lesson, step("v2-draw-first-upgrade"), {
     gamePhase: "draw",

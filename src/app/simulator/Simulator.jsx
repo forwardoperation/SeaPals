@@ -19,9 +19,11 @@ import {
   SIMULATOR_V2_LESSONS,
   getSimulatorV2LessonHelp,
   getSimulatorV2LessonActionBlock,
+  getSimulatorV2CoralDiseaseWeaknessHelp,
   getSimulatorV2ExpectedDraw,
   getSimulatorV2LessonPlacementTarget,
   repairSimulatorV2LessonPlacementConflict,
+  shouldTeachSimulatorV2CoralDiseaseWeakness,
 } from "./simulatorV2Lessons.mjs";
 import { AttackIntentLayer, AttackTargetLayer, BoardCombatDice } from "./BoardCombatPresentation";
 import CardCoinBoardPresentation from "./CardCoinBoardPresentation";
@@ -7725,12 +7727,13 @@ export default function Simulator({
         targetLabel: `${tutorialRequiredCardReview.name} in your hand`,
       }
     : checkpointTutorialHelp;
-  const weaknessLessonStepActive = Boolean(
-    embeddedLesson?.id === "first-reef"
-    && tutorialCurrentCheckpoint?.id === "v2-watch-coral-disease"
-  );
-  const weaknessFocusActive = weaknessLessonStepActive && !weaknessTourAcknowledged;
   const compactTurnStage = compactTurnSequence?.stages?.[compactTurnSequence.stageIndex] ?? null;
+  const weaknessFocusActive = shouldTeachSimulatorV2CoralDiseaseWeakness({
+    lessonId: embeddedLesson?.id,
+    stageKind: compactTurnStage?.kind,
+    conditionId: compactTurnSequence?.condition?.id,
+    acknowledged: weaknessTourAcknowledged,
+  });
   const compactRpSourcePresentationActive = Boolean(
     embeddedLesson?.id === "first-reef"
     && compactTurnStage?.kind === CompactTurnStage.RP_SOURCE_FOCUS
@@ -7744,6 +7747,11 @@ export default function Simulator({
     ? `Final goal • ${playerVp}/${victoryTarget} VP`
     : null;
   const compactTutorialConditionActive = compactTurnStage?.kind === CompactTurnStage.CONDITION;
+  const coralDiseaseLessonConditionActive = Boolean(
+    embeddedLesson?.id === "first-reef"
+    && compactTutorialConditionActive
+    && compactTurnSequence?.condition?.id === "coral-disease"
+  );
   const tutorialConditionCard = eventOverlay?.type === "condition-reveal"
     ? cardsById[eventOverlay.sourceCardId]
     : compactTutorialConditionActive
@@ -7755,14 +7763,27 @@ export default function Simulator({
   const tutorialConditionHelp = tutorialContract
     && embeddedLessonPresentationStarted
     && tutorialConditionCard
-    && (!embeddedLesson || !tutorialPreviouslyTaughtConcepts.includes(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS))
+    && (
+      !embeddedLesson
+      || !tutorialPreviouslyTaughtConcepts.includes(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS)
+      || coralDiseaseLessonConditionActive
+    )
     ? {
         ...getSimulatorTutorialConditionHelp(tutorialConditionCard, tutorialConditionRound),
         ...(tutorialFinalProgressLabel ? { progressLabel: tutorialFinalProgressLabel } : {}),
       }
     : null;
+  const embeddedCoralDiseaseWeaknessHelp = weaknessFocusActive
+    ? {
+        ...getSimulatorV2CoralDiseaseWeaknessHelp(),
+        lessonStep: tutorialStepNumber,
+      }
+    : null;
   const embeddedCompactConditionHelp = embeddedLesson
-    && !tutorialPreviouslyTaughtConcepts.includes(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS)
+    && (
+      !tutorialPreviouslyTaughtConcepts.includes(SIMULATOR_V2_LESSON_CONCEPTS.ROUND_CONDITIONS)
+      || coralDiseaseLessonConditionActive
+    )
     && compactTutorialConditionActive
     && tutorialConditionHelp
     ? {
@@ -7818,7 +7839,10 @@ export default function Simulator({
         lessonStep: tutorialStepNumber,
       }
     : null;
-  const embeddedCompactCoachHelp = embeddedCompactConditionHelp ?? embeddedCompactRpSourceHelp ?? embeddedCompactRpHelp;
+  const embeddedCompactCoachHelp = embeddedCoralDiseaseWeaknessHelp
+    ?? embeddedCompactConditionHelp
+    ?? embeddedCompactRpSourceHelp
+    ?? embeddedCompactRpHelp;
   const embeddedCompactCoachOpen = Boolean(
     embeddedLessonPresentationStarted
     && embeddedCompactCoachHelp
@@ -7826,6 +7850,11 @@ export default function Simulator({
     && !simulatorExitConfirmationOpen
     && !tutorialExitConfirmationOpen
     && !gameResult
+  );
+  const embeddedCompactConditionPanelTeaching = Boolean(
+    embeddedCompactCoachOpen
+    && embeddedCompactConditionHelp
+    && embeddedCompactCoachHelp === embeddedCompactConditionHelp
   );
   const lessonTwoOpeningFaceoff = Boolean(
     embeddedLesson?.id === "first-attack"
@@ -12663,10 +12692,10 @@ export default function Simulator({
   }
 
   function openActiveConditionDetails() {
-    if (!activeCondition) return;
+    if (!activeCondition || weaknessFocusActive) return;
     const continueCompactConditionOnClose = Boolean(
       embeddedLessonPresentationStarted
-      && embeddedCompactConditionHelp
+      && embeddedCompactConditionPanelTeaching
       && compactTurnStage?.kind === CompactTurnStage.CONDITION
     );
     setEventOverlay({
@@ -22174,7 +22203,7 @@ export default function Simulator({
   }
 
   return (
-    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${embeddedLesson ? " seapals-embedded-lesson" : ""}${embeddedCompactConditionHelp && embeddedCompactCoachOpen ? " seapals-condition-teaching" : ""}${compactRpSourcePresentationActive ? " seapals-rp-source-focus" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
+    <main className={`seapals-game-shell fixed inset-0 z-30 overflow-hidden bg-[#061522] p-2 text-slate-100 sm:p-3${previewExperience ? " seapals-simulator-preview" : ""}${embeddedLesson ? " seapals-embedded-lesson" : ""}${embeddedCompactConditionPanelTeaching ? " seapals-condition-teaching" : ""}${compactRpSourcePresentationActive ? " seapals-rp-source-focus" : ""}${tutorialHelpFloating ? " seapals-tutorial-help-floating" : ""}${tutorialHelpInline ? " seapals-tutorial-help-inline" : ""}${accessibilityReducedMotion ? " seapals-reduced-motion" : ""}${accessibilityHighContrast ? " seapals-high-contrast" : ""}`}>
       <style jsx global>{`
         .seapals-weakness-camera-focus {
           transition: transform 480ms cubic-bezier(.2, .8, .2, 1);
@@ -26477,14 +26506,18 @@ export default function Simulator({
                 help={embeddedCompactCoachHelp}
                 step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
                 total={tutorialContract.checkpoints.length}
-                onAdvance={compactTurnStage?.kind === CompactTurnStage.CONDITION
-                  ? null
+                onAdvance={weaknessFocusActive
+                  ? () => setWeaknessTourAcknowledged(true)
+                  : compactTurnStage?.kind === CompactTurnStage.CONDITION
+                    ? null
                   : compactTurnStage?.kind === CompactTurnStage.RP_SOURCE_FOCUS
                     ? continueCompactRpSourceFocus
                     : continueCompactRpSummary}
-                advanceLabel={compactTurnStage?.kind === CompactTurnStage.RP_SOURCE_FOCUS
-                  ? "Collect 2 RP"
-                  : "Continue to draw"}
+                advanceLabel={weaknessFocusActive
+                  ? "Continue"
+                  : compactTurnStage?.kind === CompactTurnStage.RP_SOURCE_FOCUS
+                    ? "Collect 2 RP"
+                    : "Continue to draw"}
               />
             </ProfessorCoachOverlay>
           ) : embeddedLessonCoachOpen ? (
@@ -26497,16 +26530,12 @@ export default function Simulator({
                 dragPassive={Boolean(mobileHandDrag || draggingCoralId || slotDragStart)}
                 onAdvance={embeddedLessonPrimerActive
                   ? () => setEmbeddedLessonPrimerStep((current) => Math.min(embeddedLessonPrimerSteps.length, current + 1))
-                  : weaknessFocusActive
-                    ? () => setWeaknessTourAcknowledged(true)
-                    : null}
+                  : null}
                 advanceLabel={embeddedLessonPrimerActive
                   ? embeddedLessonPrimerStep === embeddedLessonPrimerSteps.length - 1
                     ? "Start attack"
                     : "Next"
-                  : weaknessFocusActive
-                    ? "Continue"
-                    : undefined}
+                  : undefined}
               />
             </ProfessorCoachOverlay>
           ) : tutorialSetupHelpAnchored || tutorialDrawTrayHelpAnchored ? (
@@ -26539,7 +26568,7 @@ export default function Simulator({
 
           <EmbeddedLessonActionCue
             help={embeddedCompactConditionHelp}
-            active={Boolean(embeddedCompactConditionHelp && embeddedCompactCoachOpen)}
+            active={embeddedCompactConditionPanelTeaching}
             measureKey={`embedded-condition:${mobileReefSplit}:${compactTurnSequence?.stageIndex ?? ""}`}
           />
           <EmbeddedLessonActionCue
@@ -26900,7 +26929,7 @@ export default function Simulator({
                     aria-label={activeCondition ? `Review ${activeCondition.name} Condition details` : "No active Condition"}
                     onPointerDown={(event) => event.stopPropagation()}
                     onClick={openActiveConditionDetails}
-                    disabled={!activeCondition || boardInteractionOverlayActive}
+                    disabled={!activeCondition || boardInteractionOverlayActive || weaknessFocusActive}
                   >
                     <span data-v2-condition-name>{activeCondition?.name ?? "—"}</span>
                   </button>

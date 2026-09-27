@@ -47,6 +47,16 @@ test("Lesson 1 teaches Coral weaknesses on the board without a generic hand over
   );
   assert.match(
     simulatorSource,
+    /const weaknessFocusActive = shouldTeachSimulatorV2CoralDiseaseWeakness\(\{[\s\S]*?lessonId: embeddedLesson\?\.id,[\s\S]*?stageKind: compactTurnStage\?\.kind,[\s\S]*?conditionId: compactTurnSequence\?\.condition\?\.id,[\s\S]*?acknowledged: weaknessTourAcknowledged/,
+    "the weakness close-up belongs to the active Coral Disease condition stage",
+  );
+  assert.doesNotMatch(
+    simulatorSource,
+    /weaknessLessonStepActive[\s\S]*?v2-watch-coral-disease/,
+    "the Clear Water End Turn checkpoint must not trigger Disease teaching",
+  );
+  assert.match(
+    simulatorSource,
     /data-v2-coral-weakness-arrow/,
     "Brain Coral's in-play card should expose a dedicated weakness callout",
   );
@@ -412,7 +422,7 @@ test("Lesson 2 blocks the opening attack behind a three-step dice and food-web p
 
   const tutorialHelpRuntime = sourceSection(
     "const checkpointTutorialHelp = tutorialContract",
-    "const weaknessLessonStepActive =",
+    "const compactTurnStage =",
   );
   assert.match(
     tutorialHelpRuntime,

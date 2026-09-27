@@ -58,12 +58,17 @@ test("embedded lessons expose each action with divider-anchored teacher guidance
   assert.doesNotMatch(embeddedCoach, /Show me/);
   assert.match(
     embeddedCoach,
-    /onAdvance=\{embeddedLessonPrimerActive[\s\S]*?setEmbeddedLessonPrimerStep\(\(current\) => Math\.min\(embeddedLessonPrimerSteps\.length, current \+ 1\)\)[\s\S]*?: weaknessFocusActive[\s\S]*?setWeaknessTourAcknowledged\(true\)[\s\S]*?: null\}/,
+    /onAdvance=\{embeddedLessonPrimerActive[\s\S]*?setEmbeddedLessonPrimerStep\(\(current\) => Math\.min\(embeddedLessonPrimerSteps\.length, current \+ 1\)\)[\s\S]*?: null\}/,
   );
   assert.match(
     embeddedCoach,
-    /advanceLabel=\{embeddedLessonPrimerActive[\s\S]*?embeddedLessonPrimerStep === embeddedLessonPrimerSteps\.length - 1[\s\S]*?"Start attack"[\s\S]*?: "Next"[\s\S]*?: weaknessFocusActive[\s\S]*?"Continue"/,
+    /advanceLabel=\{embeddedLessonPrimerActive[\s\S]*?embeddedLessonPrimerStep === embeddedLessonPrimerSteps\.length - 1[\s\S]*?"Start attack"[\s\S]*?: "Next"[\s\S]*?: undefined\}/,
   );
+  const compactCoach = sourceBetween(
+    ") : embeddedCompactCoachOpen ? (",
+    ") : embeddedLessonCoachOpen ? (",
+  );
+  assert.match(compactCoach, /weaknessFocusActive[\s\S]*?setWeaknessTourAcknowledged\(true\)/);
   assert.doesNotMatch(simulatorSource, /embeddedLessonActionCueIds|beginEmbeddedLessonAction|data-v2-lesson-dialogue/);
   assert.match(
     simulatorSource,
