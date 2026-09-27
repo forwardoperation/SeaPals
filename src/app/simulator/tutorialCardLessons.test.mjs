@@ -136,14 +136,9 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
   assert.equal(lesson.segments[1].title, "Base begins a Foundation");
   assert.match(lesson.segments[1].message, /Base means.*new Foundation branch.*Stage cards upgrade/i);
   const playCost = lesson.segments.find((segment) => segment.id === "play-cost");
-  assert.equal(playCost.hideTitle, true, "the RP-cost explanation should begin directly with its narration");
+  assert.equal(playCost.title, "Check the RP cost", "step titles remain available as accessible labels");
   assert.equal(playCost.focus, "cost");
   assert.match(playCost.message, /Brain Coral costs 1 RP.*RP bank/i);
-  assert.deepEqual(
-    lesson.segments.filter((segment) => segment.hideTitle).map((segment) => segment.id),
-    ["play-cost"],
-    "only the requested Foundation RP-cost header should be hidden",
-  );
   assert.match(lesson.segments[4].message, /Passive.*Photosynthesis.*Collect 1 RP/i);
   assert.match(lesson.segments[5].message, /10 HP.*destroyed/i);
   assert.match(lesson.segments[6].message, /Disease.*Condition.*stays in play.*RP production/i);
@@ -283,7 +278,6 @@ test("the Clownfish tour points to each printed field on the 375 by 525 card", (
 
   const genericCost = lesson.segments.find((segment) => segment.focus === "cost");
   assert.equal(genericCost.title, "Play cost: 2 RP");
-  assert.notEqual(genericCost.hideTitle, true, "other card tours should keep their useful cost heading");
 
   const defense = lesson.segments.find((segment) => segment.title === "Defense: D4");
   const defenseRegion = getTutorialCardFocusRegion(defense.focus, clownfish);

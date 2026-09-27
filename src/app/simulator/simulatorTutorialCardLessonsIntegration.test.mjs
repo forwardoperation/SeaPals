@@ -70,10 +70,14 @@ test("fullscreen lesson keeps the card clear and docks the coach and navigation 
   );
   assert.match(overlaySource, /if \(coachScrollRef\.current\) coachScrollRef\.current\.scrollTop = 0/);
   assert.match(simulatorSource, /data-card-lesson-coach[\s\S]*<footer className="shrink-0/);
-  assert.match(overlaySource, /ProfessorGuidePortrait guide=\{guide\} compact[\s\S]*\{activeTitle \? \([\s\S]*seapals-card-lesson-title[\s\S]*\) : null\}[\s\S]*<LessonDialogueMessage[\s\S]*message=\{activeMessage\}/);
-  assert.match(overlaySource, /const activeTitle = activeSegment\?\.hideTitle[\s\S]*\? null[\s\S]*activeSegment\?\.title \?\? lesson\.title/);
-  assert.match(overlaySource, /aria-labelledby=\{activeTitle \? "seapals-card-lesson-title" : undefined\}/);
-  assert.match(overlaySource, /aria-label=\{activeTitle \? undefined : lesson\.title \|\| "Card lesson"\}/);
+  assert.match(overlaySource, /ProfessorGuidePortrait guide=\{guide\} compact[\s\S]*<h2 id="seapals-card-lesson-title" className="sr-only">\{activeTitle\}<\/h2>[\s\S]*<LessonDialogueMessage[\s\S]*message=\{activeMessage\}/);
+  assert.match(overlaySource, /const activeTitle = activeSegment\?\.title \?\? lesson\.title \?\? "Card lesson"/);
+  assert.match(overlaySource, /aria-labelledby="seapals-card-lesson-title"/);
+  assert.doesNotMatch(overlaySource, /className="text-lg font-black leading-tight text-slate-950 sm:text-2xl"/);
+  assert.equal((overlaySource.match(/<h[1-6]\b/g) ?? []).length, 1, "the ribbon should have no visible duplicate heading");
+  assert.equal((overlaySource.match(/\{activeTitle\}/g) ?? []).length, 1, "the title should appear only in the screen-reader heading");
+  assert.doesNotMatch(overlaySource, /\bhideTitle\b/, "all card-tour ribbons should use the same title-free presentation");
+  assert.match(overlaySource, /className="seapals-card-lesson-narration"[\s\S]*marginTop: 0/);
   assert.doesNotMatch(overlaySource, /<header\b|segmentProgressLabel|\{guide\.name\}/);
   assert.match(overlaySource, /\{onSkip \? <button[^>]*onClick=\{onSkip\}[\s\S]*aria-label=\{introduction \? "Skip introduction" : "Skip card lesson"\}>Skip<\/button> : null\}/);
   assert.match(overlaySource, /if \(event\.key === "Escape"\)[\s\S]*onSkip\?\.\(\)/);
