@@ -127,7 +127,7 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
   assert.equal(lesson.eyebrow, "Foundation card tour");
   assert.deepEqual(
     lesson.segments.map((segment) => segment.focus),
-    [undefined, "identity", "name", "cost", "rules", "health", "weaknesses", "slots"],
+    [undefined, "identity", "name", "class-icon", "cost", "rules", "health", "weaknesses", "slots"],
   );
   assert.equal(lesson.segments[0].title, "Corals are foundations for life");
   assert.match(lesson.segments[0].message, /ocean.*many corals.*foundations for life.*generate Resource Points \(RP\).*homes for sea creatures.*Brain Coral/i);
@@ -135,14 +135,20 @@ test("the first embedded lesson tours every gameplay-relevant part of Brain Cora
   assert.equal(lesson.segments[0].focus, undefined);
   assert.equal(lesson.segments[1].title, "Base begins a Foundation");
   assert.match(lesson.segments[1].message, /Base means.*new Foundation branch.*Stage cards upgrade/i);
+  const reefCoralIcon = lesson.segments.find((segment) => segment.id === "reef-coral-type-icon");
+  assert.equal(reefCoralIcon.title, "Match the Reef Coral icon");
+  assert.equal(reefCoralIcon.focus, "class-icon");
+  assert.match(reefCoralIcon.message, /Coral icon.*top-right.*Reef Coral label.*rule refers to a Reef Coral.*Brain Coral qualifies/i);
+  const iconRegion = getTutorialCardFocusRegion(reefCoralIcon.focus, brainCoral);
+  assert.deepEqual([iconRegion.tipX, iconRegion.tipY], [348, 43]);
   const playCost = lesson.segments.find((segment) => segment.id === "play-cost");
   assert.equal(playCost.title, "Check the RP cost", "step titles remain available as accessible labels");
   assert.equal(playCost.focus, "cost");
   assert.match(playCost.message, /Brain Coral costs 1 RP.*RP bank/i);
-  assert.match(lesson.segments[4].message, /Passive.*Photosynthesis.*Collect 1 RP/i);
-  assert.match(lesson.segments[5].message, /10 HP.*destroyed/i);
-  assert.match(lesson.segments[6].message, /Disease.*Condition.*stays in play.*RP production/i);
-  assert.match(lesson.segments[7].message, /1 Fish and 1 Invertebrate.*one home.*match an open slot/i);
+  assert.match(lesson.segments[5].message, /Passive.*Photosynthesis.*Collect 1 RP/i);
+  assert.match(lesson.segments[6].message, /10 HP.*destroyed/i);
+  assert.match(lesson.segments[7].message, /Disease.*Condition.*stays in play.*RP production/i);
+  assert.match(lesson.segments[8].message, /1 Fish and 1 Invertebrate.*one home.*match an open slot/i);
   assert.doesNotMatch(lesson.segments.map((segment) => `${segment.title} ${segment.message}`).join(" "), /species strip|ocean science|Meet the real coral/i);
   assert.equal(lesson.advanceLabel, "Place Brain Coral");
   assert.deepEqual(lesson.conceptKeys, GUIDED_ACADEMY_INTRO_BASELINE_CONCEPT_KEYS);

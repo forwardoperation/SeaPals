@@ -838,6 +838,12 @@ export function createGuidedFoundationCardLesson(card) {
         focus: "name",
       },
       {
+        id: "reef-coral-type-icon",
+        title: "Match the Reef Coral icon",
+        message: `The Coral icon in the top-right matches the Reef Coral label beneath the header. When a rule refers to a Reef Coral, this symbol shows that ${card.name} qualifies.`,
+        focus: "class-icon",
+      },
+      {
         id: "play-cost",
         title: "Check the RP cost",
         message: `The top-right number is the play cost. ${card.name} costs ${cost} RP, which comes out of your RP bank when you place it in your ecosystem.`,
