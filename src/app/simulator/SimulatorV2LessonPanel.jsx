@@ -22,7 +22,7 @@ function TeacherPortrait({ large = false }) {
   );
 }
 
-const NORMAL_TEXT_SPEED_MULTIPLIER = 25 / 12;
+const NORMAL_TEXT_SPEED_MULTIPLIER = 125 / 72;
 
 const TEXT_SPEED_MULTIPLIER = Object.freeze({
   slow: 4,

@@ -129,16 +129,18 @@ test("the lesson message follows the newest spoken line as it is typed", () => {
   assert.match(panelSource, /\}, \[isComplete, scrollable, visibleCount\]\)/);
 });
 
-test("V2 lesson speech uses a constant 33 1/3 ms normal cadence", () => {
-  assert.match(panelSource, /const NORMAL_TEXT_SPEED_MULTIPLIER = 25 \/ 12/);
+test("V2 lesson speech is 20 percent faster at a constant normal cadence", () => {
+  assert.match(panelSource, /const NORMAL_TEXT_SPEED_MULTIPLIER = 125 \/ 72/);
   assert.match(panelSource, /const TEXT_SPEED_MULTIPLIER = Object\.freeze\(\{\s*slow:\s*4,\s*normal:\s*NORMAL_TEXT_SPEED_MULTIPLIER,\s*fast:\s*1\.5,\s*instant:\s*0,/);
   assert.match(panelSource, /getProfessorSpeechDuration\(graphemes\.length\) \* speedMultiplier/);
   assert.match(panelSource, /TEXT_SPEED_MULTIPLIER\[textSpeed\] \?\? NORMAL_TEXT_SPEED_MULTIPLIER/);
 
-  const normalMultiplier = 25 / 12;
-  assert.equal(Math.round(getProfessorSpeechDuration(3) * normalMultiplier), 100);
-  assert.equal(Math.round(getProfessorSpeechDuration(30) * normalMultiplier), 1000);
-  assert.equal(Math.round(getProfessorSpeechDuration(300) * normalMultiplier), 10000);
+  const previousNormalMultiplier = 25 / 12;
+  const normalMultiplier = 125 / 72;
+  assert.ok(Math.abs((previousNormalMultiplier / normalMultiplier) - 1.2) < Number.EPSILON * 2);
+  assert.equal(Math.round(getProfessorSpeechDuration(3) * normalMultiplier), 83);
+  assert.equal(Math.round(getProfessorSpeechDuration(36) * normalMultiplier), 1000);
+  assert.equal(Math.round(getProfessorSpeechDuration(360) * normalMultiplier), 10000);
 });
 
 test("the dice primer presents every faceoff die and its range in a compact accessible gallery", () => {
