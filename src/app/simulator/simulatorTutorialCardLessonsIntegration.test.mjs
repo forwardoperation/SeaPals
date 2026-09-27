@@ -60,10 +60,10 @@ test("fullscreen lesson keeps the card clear and docks the coach and navigation 
   assert.match(simulatorSource, /className="fixed inset-0 z-\[180\] flex min-h-0 flex-col overflow-hidden/);
   assert.match(simulatorSource, /data-card-lesson-stage[\s\S]*data-card-lesson-coach/);
   assert.match(simulatorSource, /className="flex h-\[clamp\(12rem,34dvh,22rem\)\] min-h-0 shrink-0 flex-col[^"]*" data-card-lesson-coach/);
-  assert.match(simulatorSource, /ref=\{scrollRef\}[\s\S]*className="min-h-0 flex-1 overflow-y-auto overscroll-contain/);
-  assert.match(simulatorSource, /role="region"[\s\S]*aria-label="Lesson narration"[\s\S]*tabIndex=\{0\}/);
+  assert.match(overlaySource, /ref=\{coachScrollRef\}[\s\S]*className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4"[\s\S]*role="region"[\s\S]*aria-label="Lesson narration"[\s\S]*tabIndex=\{0\}/);
+  assert.match(overlaySource, /if \(coachScrollRef\.current\) coachScrollRef\.current\.scrollTop = 0/);
   assert.match(simulatorSource, /data-card-lesson-coach[\s\S]*<footer className="shrink-0/);
-  assert.match(simulatorSource, /ProfessorGuidePortrait guide=\{guide\} compact[\s\S]*\{activeTitle\}[\s\S]*\{activeMessage\}/);
+  assert.match(overlaySource, /ProfessorGuidePortrait guide=\{guide\} compact[\s\S]*\{activeTitle\}[\s\S]*<LessonDialogueMessage[\s\S]*message=\{activeMessage\}/);
   assert.doesNotMatch(overlaySource, /<header\b|segmentProgressLabel|\{guide\.name\}/);
   assert.match(overlaySource, /\{onSkip \? <button[^>]*onClick=\{onSkip\}[\s\S]*aria-label=\{introduction \? "Skip introduction" : "Skip card lesson"\}>Skip<\/button> : null\}/);
   assert.match(overlaySource, /if \(event\.key === "Escape"\)[\s\S]*onSkip\?\.\(\)/);
@@ -126,11 +126,31 @@ test("card tours do not reconstruct normalized card panels from gameplay metadat
 });
 
 test("multi-concept cards advance one arrow and one coach explanation at a time", () => {
+  const overlaySource = simulatorSource.slice(
+    simulatorSource.indexOf("function TutorialCardLessonOverlay"),
+    simulatorSource.indexOf("function BoardBubbleBursts"),
+  );
   assert.match(simulatorSource, /const \[segmentIndex, setSegmentIndex\] = useState\(0\)/);
   assert.match(simulatorSource, /activeSegment\?\.focus \?\? lesson\.focus/);
   assert.match(simulatorSource, /if \(hasNextSegment\)[\s\S]*setSegmentIndex/);
   assert.match(simulatorSource, /data-card-cue-region=\{activeFocus \?\? undefined\}/);
   assert.match(simulatorSource, /aria-live="polite"/);
+  assert.match(simulatorSource, /<TutorialCardCueOverlay key=\{`\$\{card\.id\}:\$\{focus \?\? "none"\}`\} focus=\{focus\} card=\{card\} \/>/);
+  assert.match(overlaySource, /key=\{createProfessorSpeechKey\(`\$\{lesson\.cueId\}:\$\{activeSegment\?\.id \?\? safeSegmentIndex\}`,[\s\S]*?activeMessage\)\}/);
+});
+
+test("card-tour narration uses the shared typewriter speed and scroll behavior", () => {
+  const overlaySource = simulatorSource.slice(
+    simulatorSource.indexOf("function TutorialCardLessonOverlay"),
+    simulatorSource.indexOf("function BoardBubbleBursts"),
+  );
+
+  assert.match(simulatorSource, /import SimulatorV2LessonPanel, \{ LessonDialogueMessage \} from "\.\/SimulatorV2LessonPanel"/);
+  assert.match(
+    overlaySource,
+    /<LessonDialogueMessage[\s\S]*?id="seapals-card-lesson-description"[\s\S]*?message=\{activeMessage\}[\s\S]*?textSpeed=\{guide\.textSpeed\}[\s\S]*?reducedMotion=\{guide\.reducedMotion\}[\s\S]*?scrollable\s*\/>/,
+  );
+  assert.doesNotMatch(overlaySource, /<p[^>]*>\{activeMessage\}<\/p>/);
 });
 
 test("the full-screen lesson suppresses competing coach and target surfaces", () => {

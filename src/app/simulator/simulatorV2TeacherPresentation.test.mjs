@@ -83,7 +83,7 @@ test("the lesson message uses a compact three-line scroll viewport", () => {
   assert.doesNotMatch(introDialogue, /\bscrollable\b/);
   assert.match(
     panelSource,
-    /className=\{`\$\{styles\.instruction\}\$\{scrollable \? ` \$\{styles\.messageViewport\}` : ""\}`\}/,
+    /className=\{\[styles\.instruction, scrollable \? styles\.messageViewport : "", className\]\.filter\(Boolean\)\.join\(" "\)\}/,
   );
   assert.match(panelSource, /tabIndex=\{scrollable && scrollState\.canScroll \? 0 : undefined\}/);
   assert.match(panelSource, /role=\{scrollable && scrollState\.canScroll \? "region" : undefined\}/);

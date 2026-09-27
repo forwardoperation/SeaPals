@@ -13,7 +13,7 @@ import MobileDrawTray from "./MobileDrawTray";
 import AnimatedVpBadge from "./AnimatedVpBadge";
 import CardActionProxyOverlay from "./CardActionProxyOverlay";
 import SimulatorV2NewGameSetup from "./SimulatorV2NewGameSetup";
-import SimulatorV2LessonPanel from "./SimulatorV2LessonPanel";
+import SimulatorV2LessonPanel, { LessonDialogueMessage } from "./SimulatorV2LessonPanel";
 import {
   SIMULATOR_V2_LESSON_CONCEPTS,
   SIMULATOR_V2_LESSONS,
@@ -3689,7 +3689,7 @@ function TutorialCardReference({ card, focus = null }) {
       <div className="absolute inset-0 overflow-hidden rounded-[1.35rem] border-2 border-cyan-200/35 bg-slate-950 shadow-[0_22px_64px_rgba(0,0,0,0.42)] sm:rounded-[1.75rem]">
         <img src={card.image || CARD_ART_FALLBACK} alt={`${card.name} card`} className="h-full w-full bg-slate-950/70 object-contain" />
       </div>
-      <TutorialCardCueOverlay focus={focus} card={card} />
+      <TutorialCardCueOverlay key={`${card.id}:${focus ?? "none"}`} focus={focus} card={card} />
     </div>
   );
 }
@@ -3704,7 +3704,7 @@ function TutorialCardLessonOverlay({
   introduction = false,
 }) {
   const dialogRef = useRef(null);
-  const scrollRef = useRef(null);
+  const coachScrollRef = useRef(null);
   const [segmentIndex, setSegmentIndex] = useState(0);
   const segments = Array.isArray(lesson.segments) ? lesson.segments : [];
   const safeSegmentIndex = Math.min(segmentIndex, Math.max(0, segments.length - 1));
@@ -3757,7 +3757,7 @@ function TutorialCardLessonOverlay({
 
   useEffect(() => {
     dialogRef.current?.focus({ preventScroll: true });
-    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    if (coachScrollRef.current) coachScrollRef.current.scrollTop = 0;
   }, [lesson.cueId, safeSegmentIndex]);
 
   return (
@@ -3811,7 +3811,7 @@ function TutorialCardLessonOverlay({
 
       <aside className="flex h-[clamp(12rem,34dvh,22rem)] min-h-0 shrink-0 flex-col border-t-4 border-cyan-400/60 bg-[#f4fbf8] text-slate-950 shadow-[0_-16px_50px_rgba(0,0,0,0.3)]" data-card-lesson-coach data-card-cue-region={activeFocus ?? undefined}>
         <div
-          ref={scrollRef}
+          ref={coachScrollRef}
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-6 sm:py-4"
           role="region"
           aria-label="Lesson narration"
@@ -3823,7 +3823,22 @@ function TutorialCardLessonOverlay({
             <ProfessorGuidePortrait guide={guide} compact />
             <div className="min-w-0 flex-1">
               <h2 id="seapals-card-lesson-title" className="text-lg font-black leading-tight text-slate-950 sm:text-2xl">{activeTitle}</h2>
-              <p id="seapals-card-lesson-description" className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-700 sm:text-base">{activeMessage}</p>
+              <LessonDialogueMessage
+                key={createProfessorSpeechKey(`${lesson.cueId}:${activeSegment?.id ?? safeSegmentIndex}`, activeMessage)}
+                id="seapals-card-lesson-description"
+                className="seapals-card-lesson-narration"
+                style={{
+                  marginTop: "0.375rem",
+                  color: "#334155",
+                  fontSize: "clamp(0.875rem, 1.6vw, 1rem)",
+                  fontWeight: 600,
+                  lineHeight: 1.625,
+                }}
+                message={activeMessage}
+                textSpeed={guide.textSpeed}
+                reducedMotion={guide.reducedMotion}
+                scrollable
+              />
             </div>
           </div>
         </div>

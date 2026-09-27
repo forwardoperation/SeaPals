@@ -580,8 +580,8 @@ test("authored rule cues stay on the printed block when one block explains sever
   const anchovyLesson = createGuidedAcademyCardLesson(anchovyBall, { cardClassLabel: "Creature School" });
   assert.deepEqual(
     anchovyLesson.segments.slice(3).map((segment) => segment.focus),
-    ["rules", "identity", "rules-secondary", "rules-tertiary"],
-    "the upgrade cue belongs on Stage 1 in the header and must not shift the printed abilities",
+    ["identity", "rules", "rules-secondary", "rules-tertiary"],
+    "the header upgrade is taught first before the arrow walks down the printed abilities",
   );
 
   const oceanSunfish = {
@@ -604,6 +604,36 @@ test("authored rule cues stay on the printed block when one block explains sever
     ["density-requirement", "rules", "rules"],
     "School Density belongs in the header while both full-art Special Rules explanations share their printed block",
   );
+});
+
+test("Hammerhead's printed abilities move the arrow down the card in order", () => {
+  const hammerhead = {
+    id: "hammerhead",
+    name: "Hammerhead",
+    kind: "creature",
+    category: "apex",
+    cost: { rp: 6 },
+    victoryPoints: 6,
+    playRequirements: [{ type: "cardInPlay", cardId: "coral-reef", text: "Requires Coral Reef." }],
+    passives: [{ name: "Intimidation", text: "Opponent's fish cost +1 RP to play." }],
+    onPlay: [{ name: "Ravage", text: "Inflict 1D4 x 10 damage to coral. Then perform a D8 attack twice." }],
+    defense: { dice: "D12" },
+  };
+  const lesson = createGuidedAcademyCardLesson(hammerhead, { cardClassLabel: "Reef Apex Predator" });
+  const abilitySegments = lesson.segments.filter((segment) => (
+    segment.title === "Requirement"
+      || segment.title === "Passive: Intimidation"
+      || segment.title === "On Play: Ravage"
+  ));
+
+  assert.deepEqual(
+    abilitySegments.map((segment) => segment.focus),
+    ["rules", "rules-secondary", "rules-tertiary"],
+  );
+  const tipPositions = abilitySegments.map((segment) => getTutorialCardFocusRegion(segment.focus, hammerhead).tipY);
+  assert.deepEqual(tipPositions, [271, 338, 386]);
+  assert.equal(new Set(tipPositions).size, 3, "each printed ability needs its own arrow landing point");
+  assert.ok(tipPositions.every((position, index) => index === 0 || position > tipPositions[index - 1]));
 });
 
 test("Mustard Hill is toured when it is new and duplicate copies do not repeat", () => {

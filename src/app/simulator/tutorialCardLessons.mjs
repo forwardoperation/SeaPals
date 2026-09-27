@@ -66,10 +66,16 @@ const TUTORIAL_CARD_TEMPLATE_FOCUS_OVERRIDES = Object.freeze({
   "filter-feeder": Object.freeze({
     type: null,
     rules: freezeRegion({ x: 14, y: 65, width: 347, height: 75, tailX: 55, tailY: 26, tipX: 55, tipY: 65, direction: "down" }),
-    "rules-secondary": null,
+    "rules-secondary": freezeRegion({ x: 14, y: 142, width: 347, height: 50, tailX: -26, tailY: 152, tipX: 14, tipY: 152, direction: "right" }),
     "rules-tertiary": null,
   }),
 });
+
+const REEF_APEX_RULE_FOCUS_REGIONS = Object.freeze([
+  TUTORIAL_CARD_FOCUS_REGIONS.rules,
+  TUTORIAL_CARD_FOCUS_REGIONS["rules-secondary"],
+  freezeRegion({ x: 14, y: 386, width: 347, height: 77, tailX: 45, tailY: 348, tipX: 45, tipY: 386, direction: "down" }),
+]);
 
 const CARD_RULE_FOCUS_OVERRIDES = Object.freeze({
   "brain-coral-stage-2": Object.freeze([
@@ -90,41 +96,16 @@ const CARD_RULE_FOCUS_OVERRIDES = Object.freeze({
     freezeRegion({ x: 14, y: 350, width: 347, height: 50, tailX: 45, tailY: 312, tipX: 45, tipY: 350, direction: "down" }),
     freezeRegion({ x: 14, y: 405, width: 347, height: 58, tailX: 45, tailY: 367, tipX: 45, tipY: 405, direction: "down" }),
   ]),
-  hammerhead: Object.freeze([
-    TUTORIAL_CARD_FOCUS_REGIONS.rules,
-    TUTORIAL_CARD_FOCUS_REGIONS["rules-secondary"],
-    freezeRegion({ x: 14, y: 386, width: 347, height: 77, tailX: 45, tailY: 348, tipX: 45, tipY: 386, direction: "down" }),
-  ]),
+  "great-white": REEF_APEX_RULE_FOCUS_REGIONS,
+  "tiger-shark": REEF_APEX_RULE_FOCUS_REGIONS,
+  hammerhead: REEF_APEX_RULE_FOCUS_REGIONS,
+  "bull-shark": REEF_APEX_RULE_FOCUS_REGIONS,
+  "bottlenose-dolphin": REEF_APEX_RULE_FOCUS_REGIONS,
 });
 
-const CARD_RULE_FOCUS_PLANS = Object.freeze({
-  hammerhead: Object.freeze({
-    Requirement: Object.freeze([{ focus: "rules", advance: true }]),
-    "Special Rule": Object.freeze([{ focus: "rules", advance: false }]),
-    Passive: Object.freeze([{ focus: "rules-secondary", advance: true }]),
-    "On Play": Object.freeze([{ focus: "rules-tertiary", advance: true }]),
-  }),
-  halfbeak: Object.freeze({
-    Requirement: Object.freeze([{ focus: "density-requirement", advance: false }]),
-    Passive: Object.freeze([
-      { focus: "rules", advance: true },
-      { focus: "rules-secondary", advance: true },
-    ]),
-    Action: Object.freeze([{ focus: "rules-tertiary", advance: true }]),
-  }),
-  "anchovy-ball-stage1": Object.freeze({
-    "Special Rule": Object.freeze([{ focus: "rules", advance: true }]),
-    Upgrade: Object.freeze([{ focus: "identity", advance: false }]),
-    Passive: Object.freeze([{ focus: "rules-secondary", advance: true }]),
-    "On Play": Object.freeze([{ focus: "rules-tertiary", advance: true }]),
-  }),
-  "ocean-sunfish": Object.freeze({
-    Requirement: Object.freeze([
-      { focus: "density-requirement", advance: false },
-      { focus: "rules", advance: true },
-    ]),
-    "Special Rule": Object.freeze([{ focus: "rules", advance: false }]),
-  }),
+const CARD_RULE_ORDER_OVERRIDES = Object.freeze({
+  "blue-sea-dragon": Object.freeze(["Requirement:0", "Passive:1", "Passive:0", "Action:0"]),
+  "giant-phantom-jelly": Object.freeze(["Special Rule:0", "Special Rule:1", "Action:0", "Passive:0"]),
 });
 
 function getTutorialCardTemplate(card) {
@@ -516,28 +497,55 @@ function getCardSpecificLessonSegments(card, cardClassLabel) {
     ["On Play", asList(card.onPlay)],
     ["Action", asList(card.actions)],
   ];
+  const ruleEntries = ruleGroups.flatMap(([label, rules]) => (
+    rules.map((rule, index) => ({ label, rule, index }))
+  ));
+  const printedOrder = CARD_RULE_ORDER_OVERRIDES[card.id];
+  const rank = new Map((printedOrder ?? []).map((entry, index) => [entry, index]));
+  const getRuleOrder = (entry) => {
+    const explicitOrder = rank.get(`${entry.label}:${entry.index}`);
+    if (explicitOrder != null) return explicitOrder;
+    // Stage/Upgrade lives in the printed header, so teach it before moving the
+    // pointer down through the card's rule rows.
+    if (entry.label === "Upgrade") return -1;
+    return Number.MAX_SAFE_INTEGER;
+  };
+  ruleEntries.sort((left, right) => getRuleOrder(left) - getRuleOrder(right));
   let printedRuleIndex = 0;
-  ruleGroups.forEach(([label, rules]) => {
-    rules.forEach((rule, index) => {
-      const isUnprintedSupportRestriction = normalizeToken(card.kind) === "support" && label === "Restriction";
-      const plannedFocus = CARD_RULE_FOCUS_PLANS[card.id]?.[label]?.[index];
-      const focus = plannedFocus?.focus ?? (label === "Maintenance"
+  let sharedSpecialRulesBlockAssigned = false;
+  ruleEntries.forEach(({ label, rule, index }) => {
+    const isUnprintedSupportRestriction = normalizeToken(card.kind) === "support" && label === "Restriction";
+    const normalizedRule = toCardReferenceRule(rule, label, index);
+    const isDensityRequirement = label === "Requirement"
+      && Number(card.schoolDensityRequirement ?? 0) > 0
+      && /school density/i.test(normalizedRule?.text ?? "");
+    const sharesSpecialRulesBlock = !isDensityRequirement
+      && !isUnprintedSupportRestriction
+      && ["Requirement", "Restriction", "Special Placement", "Special Rule", "Removal"].includes(label);
+    const focus = isDensityRequirement
+      ? "density-requirement"
+      : label === "Maintenance"
         ? "maintenance"
         : label === "Upgrade"
           ? "identity"
           : isUnprintedSupportRestriction
             ? null
-            : printedRuleIndex === 0
+            : sharesSpecialRulesBlock
               ? "rules"
-              : printedRuleIndex === 1
-                ? "rules-secondary"
-                : "rules-tertiary");
-      const segment = createRuleSegment(card, rule, label, index, focus);
-      if (segment) segments.push(segment);
-      const advancesPrintedRule = plannedFocus?.advance
-        ?? (!isUnprintedSupportRestriction && label !== "Maintenance" && label !== "Upgrade");
-      if (advancesPrintedRule) printedRuleIndex += 1;
-    });
+              : printedRuleIndex === 0
+                ? "rules"
+                : printedRuleIndex === 1
+                  ? "rules-secondary"
+                  : "rules-tertiary";
+    const segment = createRuleSegment(card, rule, label, index, focus);
+    if (segment) segments.push(segment);
+    const advancesPrintedRule = isDensityRequirement
+      ? false
+      : sharesSpecialRulesBlock
+        ? !sharedSpecialRulesBlockAssigned
+        : !isUnprintedSupportRestriction && label !== "Maintenance" && label !== "Upgrade";
+    if (sharesSpecialRulesBlock) sharedSpecialRulesBlockAssigned = true;
+    if (advancesPrintedRule) printedRuleIndex += 1;
   });
 
   if (defense) {

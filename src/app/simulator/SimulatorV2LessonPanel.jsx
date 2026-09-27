@@ -31,11 +31,14 @@ const TEXT_SPEED_MULTIPLIER = Object.freeze({
   instant: 0,
 });
 
-function LessonDialogueMessage({
+export function LessonDialogueMessage({
   message,
   textSpeed = "normal",
   reducedMotion = false,
   scrollable = false,
+  id = undefined,
+  className = "",
+  style = undefined,
 }) {
   const graphemes = useMemo(() => segmentProfessorMessage(message), [message]);
   const speedMultiplier = TEXT_SPEED_MULTIPLIER[textSpeed] ?? NORMAL_TEXT_SPEED_MULTIPLIER;
@@ -157,8 +160,10 @@ function LessonDialogueMessage({
 
   const messageContent = (
     <p
+      id={id}
       ref={scrollable ? scrollRef : undefined}
-      className={`${styles.instruction}${scrollable ? ` ${styles.messageViewport}` : ""}`}
+      className={[styles.instruction, scrollable ? styles.messageViewport : "", className].filter(Boolean).join(" ")}
+      style={style}
       tabIndex={scrollable && scrollState.canScroll ? 0 : undefined}
       role={scrollable && scrollState.canScroll ? "region" : undefined}
       aria-label={scrollable && scrollState.canScroll ? "Scrollable message from Mr. Easterling" : undefined}
