@@ -1342,8 +1342,8 @@ test("Lesson 2 coaches the opening draw, placement, dice primer, and attack befo
   });
   assert.equal(openingDrawHelp.target, "draw-controls");
   assert.equal(openingDrawHelp.targetDeck, "pals");
-  assert.match(openingDrawHelp.message, /turn begins.*required draw.*Porcupine Fish.*Pals Deck.*food web/is);
-  assert.match(openingDrawHelp.action, /Choose one card from the Pals Deck/i);
+  assert.match(openingDrawHelp.message, /turn begins.*required draw.*Porcupine Fish.*Main Deck.*food web/is);
+  assert.match(openingDrawHelp.action, /Choose one card from the Main Deck/i);
 
   const openingBuild = lesson.contract.checkpoints.find(({ id }) => id === "v2-place-opening-attacker");
   const openingBuildHelp = getSimulatorV2LessonHelp(lesson, openingBuild, { hand: ["porcupine-fish"] });
@@ -1488,7 +1488,7 @@ test("Lesson 1 speaks the new-player mental model before asking for each action"
     drawSelected: 0,
     drawTarget: 1,
   });
-  assert.match(seaUrchinDraw.action, /Foundation Deck.*Corals.*upgrades.*Pals Deck.*creatures.*Habitats.*Support cards.*Sea Urchin.*Pals Deck/is);
+  assert.match(seaUrchinDraw.action, /Foundation Deck.*Corals.*upgrades.*Main Deck.*creatures.*Habitats.*Support cards.*Sea Urchin.*Main Deck/is);
   const confirmSeaUrchin = getSimulatorV2LessonHelp(lesson, step("tutorial-draw-card"), {
     gamePhase: "draw",
     modal: "turn-draw",
@@ -1679,7 +1679,7 @@ test("later lessons direct familiar actions without repeating their introductory
     previouslyTaughtConcepts,
   });
   assert.match(drawHelp.message, /Blue Crab.*Passive.*Scavenge/is, "the later lesson keeps scenario-specific direction");
-  assert.doesNotMatch(drawHelp.message, /holds creatures and other Pals cards/i);
+  assert.doesNotMatch(drawHelp.message, /holds creatures, Habitats, and Support cards/i);
 
   assert.match(
     getSimulatorV2LessonHelp(attack, attackDraw, {
@@ -1688,7 +1688,7 @@ test("later lessons direct familiar actions without repeating their introductory
       drawTarget: 1,
       previouslyTaughtConcepts: [],
     }).message,
-    /Pals Deck holds creatures and other Pals cards/,
+    /Main Deck holds creatures, Habitats, and Support cards/,
   );
   const replaySeaUrchin = attack.contract.checkpoints.find(({ id }) => id === "v2-replay-sea-urchin");
   const replayHelp = getSimulatorV2LessonHelp(attack, replaySeaUrchin, {
@@ -1734,7 +1734,7 @@ test("later lessons direct familiar actions without repeating their introductory
   });
   assert.match(supportDrawHelp.message, /Capt\. Dani.*Support/is);
   assert.match(supportDrawHelp.message, /Ocean Sunfish/i);
-  assert.doesNotMatch(supportDrawHelp.message, /Pals Deck holds creatures and other Pals cards/i);
+  assert.doesNotMatch(supportDrawHelp.message, /Main Deck holds creatures, Habitats, and Support cards/i);
 });
 
 test("Apex coaching points to the Habitat prerequisites before inviting an Apex play", () => {

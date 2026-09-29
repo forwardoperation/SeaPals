@@ -30,8 +30,8 @@ const scenes = [
   },
   {
     phase: "Opening Setup",
-    text: "First, separate your deck into a Foundation Deck and a Pals Deck. In this lesson, I will choose the cards for you.",
-    menu: ["Foundation Deck: coral and upgrades.", "Pals Deck: creatures and support.", "Win this lesson at 10 VP."],
+    text: "First, separate your deck into a Foundation Deck and a Main Deck. In this lesson, I will choose the cards for you.",
+    menu: ["Foundation Deck: coral and upgrades.", "Main Deck: creatures and support.", "Win this lesson at 10 VP."],
     prompt: "Next",
   },
   {
@@ -42,10 +42,10 @@ const scenes = [
   },
   {
     phase: "Draw Step",
-    text: "Now draw four cards from the Pals Deck. These cards will score VP and make attacks.",
-    menu: ["Choose Pals Deck.", "Draw four cards.", "Keep Blue Tang ready."],
+    text: "Now draw four cards from the Main Deck. These cards will score VP and make attacks.",
+    menu: ["Choose Main Deck.", "Draw four cards.", "Keep Blue Tang ready."],
     foundationDrawn: true,
-    prompt: "Draw Pals",
+    prompt: "Draw Main Deck",
   },
   {
     phase: "Play Foundation",
@@ -91,8 +91,8 @@ const scenes = [
   },
   {
     phase: "Your Turn 1",
-    text: "A turn begins with Collect and Choose. Gain 1 turn RP, collect 1 RP from Brain Coral, apply your RP bank cap, then draw from the Pals Deck.",
-    menu: ["Gain 1 turn RP.", "Collect 1 RP from coral.", "Apply the RP bank cap.", "Choose Pals Deck and draw."],
+    text: "A turn begins with Collect and Choose. Gain 1 turn RP, collect 1 RP from Brain Coral, apply your RP bank cap, then draw from the Main Deck.",
+    menu: ["Gain 1 turn RP.", "Collect 1 RP from coral.", "Apply the RP bank cap.", "Choose Main Deck and draw."],
     foundationDrawn: true,
     palsDrawn: true,
     handExtra: [ids.blueCrab],
@@ -313,7 +313,7 @@ const sceneActions = [
   { type: "menu", label: "Click the practice checklist to begin." },
   { type: "deck", deck: "foundation", label: "Click the Foundation Deck to set it up." },
   { type: "deck", deck: "foundation", label: "Click the Foundation Deck to draw four cards." },
-  { type: "deck", deck: "pals", label: "Click the Pals Deck to draw four cards." },
+  { type: "deck", deck: "pals", label: "Click the Main Deck to draw four cards." },
   { type: "hand", cardId: ids.brainBase, label: "Click Brain Coral Base in your hand." },
   { type: "board", owner: "Opponent", cardId: ids.triggerfish, label: "Click the opponent's Triggerfish." },
   { type: "condition", label: "Click the condition box." },
@@ -640,7 +640,7 @@ function DecksPanel({ scene, index, action }) {
           action={action}
         />
         <DeckStack
-          title="Pals Deck"
+          title="Main Deck"
           caption="Fish, invertebrates, predators, and support."
           deck="pals"
           scene={scene}

@@ -5,6 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   createGuidedAcademyCardLesson,
+  getCreatureGameplayIntroduction,
   getTutorialCardFocusRegion,
   getTutorialCardReferenceRules,
 } from "./tutorialCardLessons.mjs";
@@ -93,6 +94,50 @@ test("every printed creature tour links its class label or class explanation to 
       const typeIndex = lesson.segments.findIndex((segment) => segment.focus === "type");
       assert.ok(typeIndex >= 0, `${card.id} should first teach its printed class label`);
       assert.equal(lesson.segments[typeIndex + 1].focus, "class-icon", `${card.id} should connect the label to its matching icon next`);
+    }
+  }
+});
+
+test("every production creature opens with a data-backed role and a reason to play it", () => {
+  const creatures = allCards.filter((card) => String(card.kind).toLowerCase() === "creature");
+  assert.ok(creatures.length > 0);
+
+  for (const card of creatures) {
+    const introduction = getCreatureGameplayIntroduction(card);
+    const lesson = createGuidedAcademyCardLesson(card);
+    assert.equal(lesson.segments[0].message, introduction, `${card.id} should use the shared introduction builder`);
+    assert.match(introduction, /^The /, `${card.id} should introduce the creature as a common noun`);
+    assert.match(introduction, /Choose it when [^.]+\.$/, `${card.id} should end with a reason to play it`);
+
+    const abilityNames = [card.onPlay, card.actions, card.passives]
+      .flatMap((rules) => rules ?? [])
+      .map((rule) => {
+        if (typeof rule === "string") return rule.includes(":") ? rule.slice(0, rule.indexOf(":")) : "";
+        return rule?.name ?? "";
+      })
+      .filter(Boolean);
+    const isSchool = card.tags?.includes("creature-school");
+    const isFilterFeeder = String(card.class ?? card.category).replaceAll("_", "-") === "filter-feeder";
+    if (abilityNames.length) {
+      assert.ok(
+        abilityNames.some((name) => introduction.includes(name)),
+        `${card.id} should name at least one printed ability`,
+      );
+    } else if (isSchool) {
+      assert.match(introduction, new RegExp(`${card.schoolDensity} School Density`));
+    } else if (isFilterFeeder) {
+      assert.match(introduction, new RegExp(`${card.victoryPoints} VP`));
+      assert.match(introduction, new RegExp(`${card.schoolDensityRequirement} School Density`));
+    } else {
+      const statMarkers = [
+        card.victoryPoints != null ? `${card.victoryPoints} VP` : "",
+        card.defense?.dice ? `${card.defense.dice} defense` : "",
+        card.cost?.rp != null ? `${card.cost.rp} RP` : "",
+      ].filter(Boolean);
+      assert.ok(
+        statMarkers.some((marker) => introduction.includes(marker)),
+        `${card.id} should explain its printed gameplay value`,
+      );
     }
   }
 });

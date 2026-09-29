@@ -6,6 +6,7 @@ import {
   TUTORIAL_CARD_FOCUS_REGIONS,
   createGuidedAcademyCardLesson,
   createGuidedFoundationCardLesson,
+  getCreatureGameplayIntroduction,
   getNewTutorialHandCardIds,
   getGuidedAcademyIntroductionStep,
   getNextGuidedAcademyIntroductionStep,
@@ -323,6 +324,107 @@ test("creature tours introduce the printed name before the class and use grammat
   assert.equal(getTutorialCardLessonSubject({ name: "Arrow Crab", kind: "creature" }), "the arrow crab");
   assert.equal(arrowCrabLesson.segments[0].title, "Meet the arrow crab");
   assert.match(arrowCrabLesson.segments[0].message, /^The arrow crab is a Reef Invertebrate\./);
+});
+
+test("creature introductions explain each card's gameplay role and why a player might choose it", () => {
+  const examples = [
+    {
+      label: "Reef Fish",
+      card: clownfish,
+      expected: [/Symbiosis.*anemone/i, /2 VP creature/i],
+    },
+    {
+      label: "Reef Invertebrate",
+      card: {
+        id: "blue-crab",
+        name: "Blue Crab",
+        kind: "creature",
+        category: "invertebrate",
+        cost: { rp: 2 },
+        victoryPoints: 1,
+        defense: { dice: "D4" },
+        passives: [{ name: "Eco Boost", text: "Add +1 to your max resource bank while this card is in play." }],
+        actions: [{ name: "Scavenge", text: "Choose a card from your discard and put it into your hand.", cost: { rp: 2 } }],
+      },
+      expected: [/Scavenge.*discard.*hand/i, /Eco Boost.*resource bank/i],
+    },
+    {
+      label: "Reef Predator",
+      card: {
+        id: "great-barracuda",
+        name: "Great Barracuda",
+        kind: "creature",
+        category: "predator",
+        cost: { rp: 3 },
+        victoryPoints: 3,
+        defense: { dice: "D6" },
+        onPlay: [{
+          name: "Quick Strike",
+          text: "Perform one Bite. If Coral Reef is in play, perform a second Bite.",
+          effects: [{ type: "attack", attackDice: "D6", target: { categories: ["fish", "predator"] } }],
+        }],
+      },
+      expected: [/Quick Strike.*enters play/i, /D6.*Fish or Predator/i],
+    },
+    {
+      label: "Reef Apex",
+      card: {
+        id: "hammerhead",
+        name: "Hammerhead",
+        kind: "creature",
+        category: "apex",
+        cost: { rp: 6 },
+        victoryPoints: 6,
+        defense: { dice: "D12" },
+        playRequirements: [{ text: "Can only be played if a Coral Reef Habitat is in your ecosystem." }],
+        passives: [{ name: "Intimidation", text: "Opponent's fish cost +1 RP to play." }],
+        onPlay: [{ name: "Ravage", text: "Damage a Coral, then perform a D8 attack twice." }],
+      },
+      expected: [/Coral Reef Habitat.*ecosystem/i, /Ravage.*D8 attack twice/i, /Intimidation.*cost \+1 RP/i],
+    },
+    {
+      label: "Oceanic Filter Feeder",
+      card: {
+        id: "ocean-sunfish",
+        name: "Ocean Sunfish",
+        kind: "creature",
+        category: "filter-feeder",
+        class: "filter_feeder",
+        cost: { rp: 8 },
+        victoryPoints: 8,
+        defense: { dice: "D8" },
+        schoolDensityRequirement: 150,
+        playRequirements: [
+          "Requires 150 School Density.",
+          "Requires Open Ocean or Coral Reef Habitat in your ecosystem.",
+        ],
+      },
+      expected: [/gameplay role is scoring.*8 VP.*D8 defense/i, /150 School Density.*Open Ocean or Coral Reef Habitat/i],
+    },
+    {
+      label: "Oceanic Creature School",
+      card: {
+        id: "anchovy-ball-stage1",
+        name: "Anchovy Ball",
+        kind: "creature",
+        category: "fish",
+        tags: ["creature-school"],
+        schoolDensity: 50,
+        passives: ["Eco Foundation: Collect 3 RP at the start of your turn."],
+        onPlay: ["Momentum: Search your deck for a Creature School."],
+      },
+      expected: [/Foundation.*50 School Density.*without using a Coral's creature slot/i, /Eco Foundation.*Collect 3 RP/i, /Momentum.*Search your deck/i],
+    },
+  ];
+
+  for (const { card, label, expected } of examples) {
+    const introduction = getCreatureGameplayIntroduction(card, label);
+    for (const pattern of expected) assert.match(introduction, pattern, `${card.id} should describe its printed role`);
+    assert.match(introduction, /Choose it when [^.]+\.$/, `${card.id} should end with a reason to play it`);
+    assert.doesNotMatch(introduction, /\ba Oceanic\b/, `${card.id} should use a grammatical article`);
+  }
+
+  assert.equal(getCreatureGameplayIntroduction(supportCard, "Support Action"), "");
 });
 
 test("every new Support gets a card-specific fullscreen lesson even after its generic type is known", () => {

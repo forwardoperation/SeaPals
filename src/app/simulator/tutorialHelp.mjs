@@ -1,5 +1,17 @@
 import { getGuidedAcademyLayoutLessonStep } from "./tutorialLayoutLesson.mjs";
 
+function personalDeckDisplayLabel(deck) {
+  const normalized = String(deck ?? "personal").trim().toLowerCase();
+  if (normalized === "pals" || normalized === "pals deck" || normalized === "main" || normalized === "main deck") return "Main";
+  if (normalized === "foundation" || normalized === "foundation deck") return "Foundation";
+  return String(deck ?? "personal");
+}
+
+function personalDeckDisplayName(deck) {
+  const label = personalDeckDisplayLabel(deck);
+  return label.toLowerCase() === "personal" ? "personal deck" : `${label} Deck`;
+}
+
 const TARGET_LABELS = Object.freeze({
   hand: "a glowing card in your hand",
   placement: "the highlighted placement area",
@@ -43,8 +55,8 @@ const HELP_BY_CHECKPOINT = Object.freeze({
   }),
   "tutorial-draw-card": Object.freeze({
     title: "Choose a deck with a plan",
-    message: "The Foundation Deck grows your economy with Corals and Creature Schools, so it is usually the best early-game draw. Choose the Pals Deck when you need creatures, habitats, support effects, or more ways to earn VP.",
-    playerThought: "Early on I want the economy to support several future turns. Later I can choose Pals when I know which creature or tactic my board needs.",
+    message: "The Foundation Deck grows your economy with Corals and Creature Schools, so it is usually the best early-game draw. Choose the Main Deck when you need creatures, habitats, support effects, or more ways to earn VP.",
+    playerThought: "Early on I want the economy to support several future turns. Later I can choose the Main Deck when I know which creature or tactic my board needs.",
     encouragement: "Precisely. Drawing is a decision about your next problem, not merely taking the most exciting card on top.",
     action: "For this early draw, start with the Foundation Deck, then confirm your choice.",
   }),
@@ -139,7 +151,7 @@ function withTarget(help, target, cue = target) {
 function describeDrawnCard(card) {
   const name = String(card?.name ?? "This card");
   if (card?.discarded) {
-    return `${name} came from the ${card.source ?? "personal"} Deck. This draw put your hand over the limit, so choose which card or cards from your entire hand to discard until you meet it.`;
+    return `${name} came from the ${personalDeckDisplayName(card.source)}. This draw put your hand over the limit, so choose which card or cards from your entire hand to discard until you meet it.`;
   }
 
   const hasCost = card?.cost != null && Number.isFinite(Number(card.cost));
@@ -157,7 +169,7 @@ function describeDrawnCard(card) {
       ? ` Its ${card.attack.name} attack costs ${Number(card.attack.cost ?? 0)} RP and currently has ${Number(card.attack.targetCount)} legal ${Number(card.attack.targetCount) === 1 ? "target" : "targets"}.`
       : ` Its ${card.attack.name} attack costs ${Number(card.attack.cost ?? 0)} RP, but it has no legal target on my board right now.`
     : "";
-  return `${name} came from the ${card?.source ?? "personal"} Deck${typeAndCost ? `. It is ${typeAndCost}` : ""}.${vp}${legality}${attack}`;
+  return `${name} came from the ${personalDeckDisplayName(card?.source)}${typeAndCost ? `. It is ${typeAndCost}` : ""}.${vp}${legality}${attack}`;
 }
 
 function getAttackRecovery(uiState) {
@@ -177,12 +189,12 @@ function getAttackRecovery(uiState) {
   if (type === "targets") {
     return {
       preferredDeck: "Pals",
-      action: "End the turn after any useful builds. A Pals draw can find a creature whose attack matches the cards on my board.",
+      action: "End the turn after any useful builds. A Main Deck draw can find a creature whose attack matches the cards on my board.",
     };
   }
   return {
     preferredDeck: "Pals",
-    action: "End the turn after any useful builds, then choose the Pals Deck next round to look for a legal attacker.",
+    action: "End the turn after any useful builds, then choose the Main Deck next round to look for a legal attacker.",
   };
 }
 
@@ -273,14 +285,14 @@ function getTurnDrawHelp(checkpointId, uiState, authored, checkpoint) {
       id: checkpointId,
       title: "Draw the prepared Arrow Crab",
       lead: "",
-      message: "Welcome back. Our first turn built the economy; this turn will show why a card action, not an attack, can be the useful move. I placed Arrow Crab next in your Pals Deck so we can practice its Scavenge action deliberately.",
-      playerThought: "I know the lesson card I need and which personal deck holds it, so this is a planned Pals draw rather than a guess.",
+      message: "Welcome back. Our first turn built the economy; this turn will show why a card action, not an attack, can be the useful move. I placed Arrow Crab next in your Main Deck so we can practice its Scavenge action deliberately.",
+      playerThought: "I know the lesson card I need and which personal deck holds it, so this is a planned Main Deck draw rather than a guess.",
       encouragement: "Exactly. After the draw, we will play Arrow Crab, inspect the whole card, and use Scavenge to search for a legal attacker.",
       action: drawReady
         ? palsSelected
           ? "Press Draw Selected Cards, review Arrow Crab, then continue to the action phase."
-          : "Your draw is complete, but switch it to the Pals Deck to follow the prepared lesson."
-        : "Choose one card from the Pals Deck, then confirm the draw.",
+          : "Your draw is complete, but switch it to the Main Deck to follow the prepared lesson."
+        : "Choose one card from the Main Deck, then confirm the draw.",
       targetDeck: scriptedTarget === "draw-controls" ? "pals" : null,
     }, scriptedTarget, `turn-draw:scripted-arrow-crab:${drawReady ? palsSelected ? "ready" : "switch" : "choose"}`);
   }
@@ -298,16 +310,16 @@ function getTurnDrawHelp(checkpointId, uiState, authored, checkpoint) {
     const action = drawReady
       ? selectedPreferred || !preferredAvailable
         ? `Press Draw Selected Cards. After the draw, I will check the actual card and your board for a legal path to an attack.`
-        : `Your selection is valid, but the ${recovery.preferredDeck} Deck better addresses the current blocker. Switch if you want the guided route, or confirm your plan.`
+        : `Your selection is valid, but the ${personalDeckDisplayName(recovery.preferredDeck)} better addresses the current blocker. Switch if you want the guided route, or confirm your plan.`
       : recommendedDeck
-        ? `Choose at least one card from the ${recommendedDeck} Deck${recommendedDeck === "Pals" ? " to look for a creature that can attack my current board" : " to strengthen the economy supporting your existing attacker"}.`
+        ? `Choose at least one card from the ${personalDeckDisplayName(recommendedDeck)}${recommendedDeck === "Pals" ? " to look for a creature that can attack my current board" : " to strengthen the economy supporting your existing attacker"}.`
         : "Both personal decks are empty, so no draw can be completed.";
     return withTarget({
       id: checkpointId,
       title: "Draw toward a legal attack",
       message: recovery.preferredDeck === "Foundation"
         ? "You cannot attack during the draw step. Your current blocker calls for more economy or another round, so Foundation is the more useful draw; I will still evaluate the revealed card before your next action."
-        : "You cannot attack during the draw step. The Pals Deck holds creatures and tactical cards; after the cards are revealed, I will compare them with your RP, open spaces, and my legal targets.",
+        : "You cannot attack during the draw step. The Main Deck holds creatures and tactical cards; after the cards are revealed, I will compare them with your RP, open spaces, and my legal targets.",
       action,
       targetDeck: recoveryTarget === "draw-controls" ? recommendedDeck?.toLowerCase() ?? null : null,
     }, recoveryTarget, `turn-draw:attack:${drawReady ? selectedPreferred ? "ready" : "switch" : "choose"}`);
@@ -321,8 +333,8 @@ function getTurnDrawHelp(checkpointId, uiState, authored, checkpoint) {
     action = "Good early-game choice. Press Draw Selected Cards to reveal the Foundation card and see whether you can play it now.";
   } else if (drawReady && Number(uiState.drawPalsSelected ?? 0) > 0) {
     action = foundationAvailable
-      ? "For this guided first draw, remove the Pals choice and add one Foundation card so we can build your economy."
-      : "Foundation is empty, so keep the Pals choice and confirm the draw.";
+      ? "For this guided first draw, remove the Main Deck choice and add one Foundation card so we can build your economy."
+      : "Foundation is empty, so keep the Main Deck choice and confirm the draw.";
   } else if (checkpointId !== "tutorial-draw-card") {
     action = "Finish choosing this round's required draw. I will evaluate the revealed card before suggesting your next action.";
   }
@@ -332,7 +344,7 @@ function getTurnDrawHelp(checkpointId, uiState, authored, checkpoint) {
     title: checkpointId === "tutorial-draw-card" ? authored.title : "Choose this round's draw",
     message: checkpointId === "tutorial-draw-card"
       ? authored.message
-      : "Foundation cards build RP income and play spaces. Pals cards provide creatures, habitats, Support effects, and more ways to earn VP.",
+      : "Foundation cards build RP income and play spaces. The Main Deck provides creatures, Habitats, Support effects, and more ways to earn VP.",
     action,
     targetDeck: guidedTarget === "draw-controls" ? (foundationAvailable ? "foundation" : palsAvailable ? "pals" : null) : null,
   }, guidedTarget, `turn-draw:${drawReady ? palsSelected && foundationAvailable ? "switch" : "ready" : "choose"}`);
@@ -383,9 +395,9 @@ function getFinishDuelDrawHelp(uiState) {
   const action = drawReady
     ? preferredSelected || !preferredDeck
       ? "Press Draw Selected Cards, review what you drew, then continue to your actions."
-      : `Your draw is valid, but switch it to the ${preferredDeck} Deck for the guided route toward more VP options.`
+      : `Your draw is valid, but switch it to the ${personalDeckDisplayName(preferredDeck)} for the guided route toward more VP options.`
     : preferredDeck
-      ? `Choose ${drawTarget || 1} card${drawTarget === 1 ? "" : "s"} from the ${preferredDeck} Deck, then confirm the draw.`
+      ? `Choose ${drawTarget || 1} card${drawTarget === 1 ? "" : "s"} from the ${personalDeckDisplayName(preferredDeck)}, then confirm the draw.`
       : "Both personal decks are empty, so no draw can be selected.";
 
   return withTarget({
@@ -393,7 +405,7 @@ function getFinishDuelDrawHelp(uiState) {
     title: `Build the next ${context.remainingVp} VP`,
     lead: "",
     message: palsAvailable
-      ? `You have completed the lesson steps and reached ${context.playerVp}/${context.targetVp} VP. The Pals Deck is the strongest guided draw now because it contains more creatures, habitats, and effects that can grow or protect your score.`
+      ? `You have completed the lesson steps and reached ${context.playerVp}/${context.targetVp} VP. The Main Deck is the strongest guided draw now because it contains more creatures, habitats, and effects that can grow or protect your score.`
       : `You have completed the lesson steps and reached ${context.playerVp}/${context.targetVp} VP. The Foundation Deck is the remaining draw source, so use it to expand your economy and legal play spaces.`,
     action,
     targetDeck: target === "draw-controls" ? preferredDeck?.toLowerCase() ?? null : null,
@@ -465,18 +477,19 @@ function getScriptedFinishDrawHelp(uiState, preferredDeck, reason) {
   const target = drawReady && routeSelected ? "confirm-draw" : "draw-controls";
   const preferredDeckKey = preferredDeck.toLowerCase();
   const otherDeckKey = preferredDeck === "Foundation" ? "pals" : "foundation";
-  const otherDeckLabel = preferredDeck === "Foundation" ? "Pals" : "Foundation";
+  const otherDeckLabel = preferredDeck === "Foundation" ? "Main" : "Foundation";
+  const preferredDeckLabel = personalDeckDisplayLabel(preferredDeck);
   const correctingWrongDeck = drawReady && !routeSelected;
   return decorateFinishDuelHelp(withTarget({
     id: FINISH_DUEL_HELP_ID,
-    title: `Choose the ${preferredDeck} Deck for this step`,
+    title: `Choose the ${preferredDeckLabel} Deck for this step`,
     lead: "",
-    message: `${reason} This tutorial uses a prepared card order, so choose the ${preferredDeck} Deck to reveal the next lesson card.`,
+    message: `${reason} This tutorial uses a prepared card order, so choose the ${preferredDeckLabel} Deck to reveal the next lesson card.`,
     action: drawReady
       ? routeSelected
         ? "Press Draw Selected Cards, review the reveal, then continue to the prepared action."
-        : `Press minus on the ${otherDeckLabel} Deck, then add that draw to the ${preferredDeck} Deck and confirm it.`
-      : `Choose ${drawTarget || 1} card${drawTarget === 1 ? "" : "s"} from the ${preferredDeck} Deck, then confirm the draw.`,
+        : `Press minus on the ${otherDeckLabel} Deck, then add that draw to the ${preferredDeckLabel} Deck and confirm it.`
+      : `Choose ${drawTarget || 1} card${drawTarget === 1 ? "" : "s"} from the ${preferredDeckLabel} Deck, then confirm the draw.`,
     targetDeck: target === "draw-controls"
       ? correctingWrongDeck ? otherDeckKey : preferredDeckKey
       : null,
@@ -557,17 +570,17 @@ function getAcademyDrawResultLesson(round, cards, drawnCards) {
     },
     2: {
       cardId: cards.firstFish?.cardId,
-      message: `${cards.firstFish?.cardName ?? primaryCard.name} came from the Pals Deck. Coral Reef needs any two regular Fish; this card can fill one of those spots and later teach its Crunch attack. Keep it in hand for now; first use ${cards.coralSupport?.cardName ?? "Coral Gardener"} to find ${cards.searchedCoral?.cardName ?? "Lettuce Coral"} and complete the four-Coral economy.`,
+      message: `${cards.firstFish?.cardName ?? primaryCard.name} came from the Main Deck. Coral Reef needs any two regular Fish; this card can fill one of those spots and later teach its Crunch attack. Keep it in hand for now; first use ${cards.coralSupport?.cardName ?? "Coral Gardener"} to find ${cards.searchedCoral?.cardName ?? "Lettuce Coral"} and complete the four-Coral economy.`,
       action: `Press Continue to Actions, then choose ${cards.coralSupport?.cardName ?? "Coral Gardener"}. Keep ${cards.firstFish?.cardName ?? primaryCard.name} in hand for Round 3.`,
     },
     3: {
       cardId: cards.secondFish?.cardId,
-      message: `${cards.secondFish?.cardName ?? primaryCard.name} came from the Pals Deck. Coral Reef accepts any two regular Fish; ${cards.firstFish?.cardName ?? "Porcupine Fish"} can fill one spot and this card can fill the other. It can wait in hand until the Habitat turn. First establish ${cards.bankBoost?.cardName ?? "Arrow Crab"} and ${cards.utility?.cardName ?? "Nudibranch"}, use Munch, and attack with ${cards.firstFish?.cardName ?? "Porcupine Fish"}.`,
+      message: `${cards.secondFish?.cardName ?? primaryCard.name} came from the Main Deck. Coral Reef accepts any two regular Fish; ${cards.firstFish?.cardName ?? "Porcupine Fish"} can fill one spot and this card can fill the other. It can wait in hand until the Habitat turn. First establish ${cards.bankBoost?.cardName ?? "Arrow Crab"} and ${cards.utility?.cardName ?? "Nudibranch"}, use Munch, and attack with ${cards.firstFish?.cardName ?? "Porcupine Fish"}.`,
       action: `Press Continue to Actions, then choose ${cards.bankBoost?.cardName ?? "Arrow Crab"}. Keep ${cards.secondFish?.cardName ?? primaryCard.name} in hand for Round 4.`,
     },
     4: {
       cardId: cards.predator?.cardId,
-      message: `${cards.predator?.cardName ?? primaryCard.name} came from the Pals Deck. This Predator is useful now because my reef has legal targets and your ${cards.habitat?.cardName ?? "Coral Reef"} Habitat can grant its second Bite. First play ${cards.secondFish?.cardName ?? "Parrotfish"} and establish ${cards.habitat?.cardName ?? "Coral Reef"}; then play the Predator.`,
+      message: `${cards.predator?.cardName ?? primaryCard.name} came from the Main Deck. This Predator is useful now because my reef has legal targets and your ${cards.habitat?.cardName ?? "Coral Reef"} Habitat can grant its second Bite. First play ${cards.secondFish?.cardName ?? "Parrotfish"} and establish ${cards.habitat?.cardName ?? "Coral Reef"}; then play the Predator.`,
       action: `Press Continue to Actions, then play ${cards.secondFish?.cardName ?? "Parrotfish"}. We will establish ${cards.habitat?.cardName ?? "Coral Reef"} before using ${cards.predator?.cardName ?? primaryCard.name}.`,
     },
     5: {
@@ -577,12 +590,12 @@ function getAcademyDrawResultLesson(round, cards, drawnCards) {
     },
     6: {
       cardId: cards.filterFeeder?.cardId,
-      message: `${cards.filterFeeder?.cardName ?? primaryCard.name} came from the Pals Deck. This Filter Feeder normally needs 180 School Density, but Krill Bloom lowers the requirement by 150. ${cards.creatureSchool?.cardName ?? "White Grunt"} has 30 open points, and this play will commit all of them. ${cards.habitat?.cardName ?? "Coral Reef"} meets its separate Habitat requirement, so the play is legal now.`,
+      message: `${cards.filterFeeder?.cardName ?? primaryCard.name} came from the Main Deck. This Filter Feeder normally needs 180 School Density, but Krill Bloom lowers the requirement by 150. ${cards.creatureSchool?.cardName ?? "White Grunt"} has 30 open points, and this play will commit all of them. ${cards.habitat?.cardName ?? "Coral Reef"} meets its separate Habitat requirement, so the play is legal now.`,
       action: `Press Continue to Actions, then play ${cards.filterFeeder?.cardName ?? primaryCard.name} in open water.`,
     },
     7: {
       cardId: cards.apexSupport?.cardId,
-      message: `${cards.apexSupport?.cardName ?? primaryCard.name} came from the Pals Deck. It is a zero-cost, one-shot Support that searches for a Predator or Apex and then goes to the discard pile. Your ${cards.habitat?.cardName ?? "Coral Reef"} and Apex slot are ready, so use it to find ${cards.apex?.cardName ?? "Hammerhead"} and finish the lesson.`,
+      message: `${cards.apexSupport?.cardName ?? primaryCard.name} came from the Main Deck. It is a zero-cost, one-shot Support that searches for a Predator or Apex and then goes to the discard pile. Your ${cards.habitat?.cardName ?? "Coral Reef"} and Apex slot are ready, so use it to find ${cards.apex?.cardName ?? "Hammerhead"} and finish the lesson.`,
       action: `Press Continue to Actions, then play ${cards.apexSupport?.cardName ?? primaryCard.name} and choose ${cards.apex?.cardName ?? "Hammerhead"} from the search results.`,
     },
   };
@@ -744,8 +757,8 @@ function getAcademyCurriculumHelp(uiState) {
     if (cards.filterFeeder.inPalsDeck) {
       return help({
         title: `Return to the ${cards.filterFeeder.cardName} lesson`,
-        message: `${cards.filterFeeder.cardName} is still in the Pals Deck, so the reef is missing its planned ${cards.filterFeeder.victoryPoints} VP Filter Feeder step.`,
-        action: `Press Next Round, then draw from the Pals Deck next round so we can play ${cards.filterFeeder.cardName}.`,
+        message: `${cards.filterFeeder.cardName} is still in the Main Deck, so the reef is missing its planned ${cards.filterFeeder.victoryPoints} VP Filter Feeder step.`,
+        action: `Press Next Round, then draw from the Main Deck next round so we can play ${cards.filterFeeder.cardName}.`,
       }, "turn-button", "recover-filter-feeder-draw");
     }
   }
@@ -975,7 +988,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
       uiState,
       "Foundation",
       round === 3
-        ? `Keep ${cards.finishSearch.cardName} inside the Pals Deck so ${cards.utility.cardName} can search for it deliberately this round.`
+        ? `Keep ${cards.finishSearch.cardName} inside the Main Deck so ${cards.utility.cardName} can search for it deliberately this round.`
         : `${cards.finishSearch.cardName} and ${cards.heldFinish.cardName} are already reserved for the finish, so draw from the Foundation Deck without disturbing that pair.`,
     );
   }
@@ -1021,7 +1034,7 @@ function getLegacyScriptedFinishDuelHelp(uiState) {
       id: FINISH_DUEL_HELP_ID,
       title: "Let the economy collect once",
       message: `${cards.economy.cardName} is in place. End this turn so both foundations can collect before the Scavenge lesson.`,
-      action: `Press Next Round. In Round 2, draw one card from the Pals Deck to reveal ${cards.utility.cardName}.`,
+      action: `Press Next Round. In Round 2, draw one card from the Main Deck to reveal ${cards.utility.cardName}.`,
     }, "turn-button", "scripted-end-round-one"), uiState, "scripted-end-round-one");
   }
 
@@ -1746,9 +1759,9 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
     ) {
       title = "Let the first reef settle";
       lead = "";
-      message = "That is a fine first turn: you established a foundation and grew the economy that will pay for our next lesson. I arranged Arrow Crab as the next card in your Pals Deck, so there is no need to spend RP on an unrelated play now.";
+      message = "That is a fine first turn: you established a foundation and grew the economy that will pay for our next lesson. I arranged Arrow Crab as the next card in your Main Deck, so there is no need to spend RP on an unrelated play now.";
       target = "turn-button";
-      action = "End your turn. At the start of Round 2, draw one card from the Pals Deck to reveal Arrow Crab.";
+      action = "End your turn. At the start of Round 2, draw one card from the Main Deck to reveal Arrow Crab.";
       playerThought = "My first turn already achieved its purpose: two foundations will collect enough RP to support a more interesting card action next round.";
       encouragement = "Exactly. There is a quiet skill in recognizing when a turn has done its job. We will let this reef collect, then use that economy with intention.";
       cue = "scripted:end-round-one";

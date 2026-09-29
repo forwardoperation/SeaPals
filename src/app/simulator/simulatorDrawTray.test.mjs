@@ -5,6 +5,7 @@ import test from "node:test";
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
 const edgeZonesSource = await readFile(new URL("./MobileEdgeZones.jsx", import.meta.url), "utf8");
 const drawTraySource = await readFile(new URL("./MobileDrawTray.jsx", import.meta.url), "utf8").catch(() => "");
+const mainDeckArt = await readFile(new URL("./images/main-deck.svg", import.meta.url), "utf8");
 
 function sourceSection(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
@@ -73,6 +74,13 @@ test("the anchored draw tray preserves both personal-deck choices and the existi
   assert.ok(drawTraySource.length > 0, "MobileDrawTray.jsx should provide the V2 draw controls");
   assert.match(drawTraySource, /foundation/);
   assert.match(drawTraySource, /pals/);
+  assert.match(
+    drawTraySource,
+    /id:\s*"pals"[\s\S]*?label:\s*"Main"[\s\S]*?count:\s*palsCount/,
+    "the persisted pals deck key should be presented to players as the Main deck",
+  );
+  assert.match(drawTraySource, /\{deck\.count\}\s*card\{deck\.count === 1 \? "" : "s"\}\s*remaining/);
+  assert.doesNotMatch(drawTraySource, /\bdetail:\s*|deck\.detail|Corals & schools|Creatures & tools|left\s*[·Â]/);
   assert.match(drawTraySource, /data-tutorial-target="draw-controls"/);
   assert.match(drawTraySource, /data-tutorial-draw-deck=\{deck\.id\}/);
   assert.match(drawTraySource, /data-tutorial-draw-remove=\{deck\.id\}/);
@@ -85,6 +93,11 @@ test("the anchored draw tray preserves both personal-deck choices and the existi
   assert.match(drawTraySource, /data-tutorial-target="confirm-draw"/);
   assert.match(drawTraySource, /onClick=\{onConfirm\}/);
   assert.match(drawTraySource, /selection\?\.shortfall\s*>\s*0[\s\S]*?role="alert"/);
+  assert.match(simulatorSource, /import mainDeckImg from "\.\/images\/main-deck\.svg";/);
+  assert.doesNotMatch(simulatorSource, /import palsDeckImg from "\.\/images\/pals-deck\.png";/);
+  assert.match(mainDeckArt, />MAIN</);
+  assert.match(mainDeckArt, />DECK</);
+  assert.doesNotMatch(mainDeckArt, />PALS</i);
 
   const adjustDraw = functionSectionContaining(
     simulatorSource,
@@ -93,6 +106,15 @@ test("the anchored draw tray preserves both personal-deck choices and the existi
   );
   assert.match(adjustDraw, /tutorialUsesScriptedScenario/);
   assert.match(adjustDraw, /getScriptedTutorialTurnDraw/);
+});
+
+test("all simulator deck presentation maps the legacy pals key to Main", () => {
+  assert.doesNotMatch(simulatorSource, /\bPals Deck\b|\bPals decks\b|\bfrom Pals\b|\band Pals\b|\bPals first\b/);
+  assert.doesNotMatch(simulatorSource, /\{entry\.source\}(?: Deck)?/);
+  assert.doesNotMatch(simulatorSource, /\{deck\.(?:type|id)\} Deck/);
+  assert.match(simulatorSource, /getPersonalDeckDisplayLabel\(entry\.source\)/);
+  assert.match(simulatorSource, /getPersonalDeckDisplayName\(entry\.source\)/);
+  assert.match(simulatorSource, /getPersonalDeckDisplayName\(deck\.(?:type|id)\)/);
 });
 
 test("the mandatory compact draw step has no dismissible status chrome", () => {
@@ -154,6 +176,16 @@ test("the mandatory draw confirmation stays visible while only the choices scrol
     ".seapals-mobile-draw-option {",
     ".seapals-mobile-draw-option.is-pals",
   );
+  const optionCopyStyles = sourceSection(
+    simulatorSource,
+    ".seapals-mobile-draw-option-copy {",
+    ".seapals-mobile-draw-option-copy strong {",
+  );
+  const optionSubtitleStyles = sourceSection(
+    simulatorSource,
+    ".seapals-mobile-draw-option-copy span {",
+    ".seapals-mobile-draw-stepper {",
+  );
   const confirmStyles = sourceSection(
     simulatorSource,
     ".seapals-mobile-draw-confirm {",
@@ -167,7 +199,13 @@ test("the mandatory draw confirmation stays visible while only the choices scrol
   assert.match(bodyStyles, /flex:\s*1\s+1\s+auto;/);
   assert.match(bodyStyles, /min-height:\s*0;/);
   assert.match(bodyStyles, /overflow-y:\s*auto;/);
+  assert.match(optionStyles, /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto;/);
   assert.match(optionStyles, /min-height:\s*2\.75rem;/);
+  assert.match(optionCopyStyles, /min-width:\s*0;/);
+  assert.match(optionCopyStyles, /overflow:\s*hidden;/);
+  assert.match(optionSubtitleStyles, /max-width:\s*100%;/);
+  assert.match(optionSubtitleStyles, /overflow:\s*hidden;/);
+  assert.match(optionSubtitleStyles, /text-overflow:\s*ellipsis;/);
   assert.match(confirmStyles, /flex:\s*0\s+0\s+auto;/);
   assert.doesNotMatch(confirmStyles, /position:\s*(?:absolute|fixed|sticky)|margin-(?:top|bottom):\s*-/);
 

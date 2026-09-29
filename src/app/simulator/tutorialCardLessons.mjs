@@ -359,15 +359,209 @@ function getCardLessonTitle(card) {
   return `Meet ${getTutorialCardLessonSubject(card)}`;
 }
 
+function joinNaturalLanguage(values = []) {
+  const filtered = values.map((value) => String(value ?? "").trim()).filter(Boolean);
+  if (filtered.length <= 1) return filtered[0] ?? "";
+  if (filtered.length === 2) return `${filtered[0]} and ${filtered[1]}`;
+  return `${filtered.slice(0, -1).join(", ")}, and ${filtered.at(-1)}`;
+}
+
+function withIndefiniteArticle(value) {
+  const label = String(value ?? "").trim();
+  return `${/^[aeiou]/i.test(label) ? "an" : "a"} ${label}`;
+}
+
+function getCreatureIntroductionClassLabel(card, cardClassLabel) {
+  const supplied = String(cardClassLabel ?? "").trim();
+  if (supplied && !["card", "creature"].includes(normalizeToken(supplied))) return supplied;
+  const zone = normalizeToken(card?.zone) === "ocean"
+    ? "Oceanic"
+    : formatToken(card?.zone || "reef");
+  const isSchool = asList(card?.tags).map(normalizeToken).includes("creature-school");
+  const cardClass = isSchool
+    ? "Creature School"
+    : formatToken(card?.class ?? card?.category ?? "creature");
+  return [zone, cardClass].filter(Boolean).join(" ");
+}
+
+function getCreatureIntroductionRules(card) {
+  const groups = [
+    ["On Play", asList(card?.onPlay)],
+    ["Action", asList(card?.actions)],
+    ["Passive", asList(card?.passives)],
+  ].map(([label, rules]) => rules.map((rule, index) => ({ label, rule, index })));
+  const firstFromEachGroup = groups.map((rules) => rules[0]).filter(Boolean);
+  const remaining = groups.flat().filter((entry) => !firstFromEachGroup.includes(entry));
+  return [...firstFromEachGroup, ...remaining].slice(0, 2);
+}
+
+function getCreatureIntroductionEffectText(rule) {
+  if (!rule || typeof rule !== "object") return "";
+  const effects = [...asList(rule.effects), ...asList(rule.effect)];
+  return effects.map((effect) => {
+    const type = normalizeToken(effect?.type);
+    if (type === "drawcards") {
+      const amount = Math.max(1, Number(effect?.amount ?? 1));
+      return `Draw ${amount} ${amount === 1 ? "card" : "cards"}.`;
+    }
+    if (type === "grantadvantage") {
+      const targets = formatList(asList(effect?.targetCategories));
+      return targets ? `Gain advantage against ${targets}.` : "Gain advantage.";
+    }
+    return "";
+  }).filter(Boolean).join(" ");
+}
+
+function getCreatureIntroductionRuleSentence(card, entry) {
+  const normalized = toCardReferenceRule(entry.rule, entry.label, entry.index);
+  if (!normalized) return "";
+  const name = normalized.name || entry.label;
+  const fallbackText = "Read the highlighted lesson for this rule's timing and effect.";
+  const printedText = normalized.text === fallbackText ? "" : normalized.text;
+  const effectText = printedText ? "" : getCreatureIntroductionEffectText(entry.rule);
+  const attackText = [...new Set(
+    (getAttackRuleSummary(entry.rule).match(/[^.!?]+[.!?]/g) ?? []).map((sentence) => sentence.trim()),
+  )].join(" ");
+  const details = [printedText, effectText, attackText].filter(Boolean).join(" ");
+  if (entry.label === "On Play") {
+    return `${name} is an On Play ability, so it resolves when ${getCardNarrativeSubject(card)} enters play.${details ? ` ${details}` : ""}`;
+  }
+  if (entry.label === "Action") {
+    const cost = getRuleCost(entry.rule);
+    return `${name} is an Action you can choose during your turn.${cost > 0 ? ` It costs ${cost} RP.` : ""}${details ? ` ${details}` : ""}`;
+  }
+  return `${name} is a Passive that remains available while ${getCardNarrativeSubject(card)} is in play.${details ? ` ${details}` : ""}`;
+}
+
+function getCreatureIntroductionChoice(card, entries, cardClassLabel, { specialPlacement = false } = {}) {
+  const vp = getCardVp(card);
+  const defense = getCardDefense(card);
+  const cost = getCardRp(card);
+  const names = entries.map((entry) => (
+    toCardReferenceRule(entry.rule, entry.label, entry.index)?.name || entry.label
+  ));
+  const creatureLabel = vp > 0 ? `a ${vp} VP creature` : `this ${cardClassLabel}`;
+
+  if (specialPlacement) {
+    const abilities = names.length ? ` and use ${joinNaturalLanguage(names)}` : "";
+    return `Choose it when you want to place a creature in your opponent's ecosystem${abilities}.`;
+  }
+  if (entries.length > 1) {
+    return `Choose it when you want ${creatureLabel} that combines ${joinNaturalLanguage(names)}.`;
+  }
+  if (entries.length === 1) {
+    const [entry] = entries;
+    const name = names[0];
+    if (entry.label === "On Play") {
+      return `Choose it when you want ${creatureLabel} whose ${name} ability resolves as it enters play.`;
+    }
+    if (entry.label === "Action") {
+      return `Choose it when you want ${creatureLabel} with access to ${name} during your turns.`;
+    }
+    return `Choose it when you want ${creatureLabel} with ${name} available while it remains in play.`;
+  }
+  if (vp > 0 && defense && cost > 0) {
+    return `Choose it when you want ${vp} VP and ${defense} defense for ${cost} RP.`;
+  }
+  if (vp > 0 && defense) {
+    return `Choose it when you want a creature worth ${vp} VP with ${defense} defense.`;
+  }
+  return `Choose it when you want ${withIndefiniteArticle(cardClassLabel)} with the printed cost and stats shown on this card.`;
+}
+
+function getRequirementPhrase(rule, index) {
+  const text = toCardReferenceRule(rule, "Requirement", index)?.text ?? "";
+  return text
+    .trim()
+    .replace(/[.!]+$/, "")
+    .replace(/^requires\s+/i, "")
+    .replace(/^can only be played if\s+/i, "");
+}
+
+export function getCreatureGameplayIntroduction(card, cardClassLabel = "") {
+  if (!card || normalizeToken(card.kind) !== "creature") return "";
+  const subject = getCardNarrativeSubject(card);
+  const sentenceSubject = capitalizeFirst(subject);
+  const effectiveClassLabel = getCreatureIntroductionClassLabel(card, cardClassLabel);
+  const tags = asList(card.tags).map(normalizeToken);
+  const isSchool = tags.includes("creature-school");
+  const schoolDensity = Math.max(0, Number(card.schoolDensity ?? 0));
+
+  if (isSchool) {
+    const ecoFoundation = asList(card.passives).find((passive) => {
+      const normalized = toCardReferenceRule(passive, "Passive", 0);
+      return normalizeToken(normalized?.name).includes("eco-foundation")
+        || /collect\s+\d+\s+RP/i.test(normalized?.text ?? "")
+        || normalizeToken(passive?.effect?.type) === "gainresource";
+    });
+    const normalizedPassive = ecoFoundation
+      ? toCardReferenceRule(ecoFoundation, "Passive", 0)
+      : null;
+    const densitySentence = schoolDensity > 0
+      ? `${sentenceSubject} is ${withIndefiniteArticle(effectiveClassLabel)} that acts as a Foundation and supplies ${schoolDensity} School Density without using a Coral's creature slot.`
+      : `${sentenceSubject} is ${withIndefiniteArticle(effectiveClassLabel)} that acts as a Foundation without using a Coral's creature slot.`;
+    const economySentence = normalizedPassive
+      ? `Its ${normalizedPassive.name || "Passive"} ability says: ${normalizedPassive.text}`
+      : "";
+    const onPlayEntry = asList(card.onPlay).length
+      ? { label: "On Play", rule: asList(card.onPlay)[0], index: 0 }
+      : null;
+    return [
+      densitySentence,
+      economySentence,
+      onPlayEntry ? getCreatureIntroductionRuleSentence(card, onPlayEntry) : "",
+      "Choose it when you are building toward cards with a School Density requirement.",
+    ].filter(Boolean).join(" ");
+  }
+
+  const isFilterFeeder = normalizeToken(card.class ?? card.category) === "filter-feeder";
+  if (isFilterFeeder) {
+    const vp = getCardVp(card);
+    const defense = getCardDefense(card);
+    const densityRequirement = Math.max(0, Number(card.schoolDensityRequirement ?? 0));
+    const otherRequirements = asList(card.playRequirements ?? card.requirements)
+      .map(getRequirementPhrase)
+      .filter((text) => text && !/school density/i.test(text));
+    const requirementParts = [
+      densityRequirement > 0 ? `${densityRequirement} School Density` : "",
+      ...otherRequirements,
+    ].filter(Boolean);
+    const passiveEntry = asList(card.passives).length
+      ? { label: "Passive", rule: asList(card.passives)[0], index: 0 }
+      : null;
+    return [
+      `${sentenceSubject} is ${withIndefiniteArticle(effectiveClassLabel)} whose gameplay role is scoring: it contributes ${vp > 0 ? `${vp} VP` : "its printed VP"}${defense ? ` and uses ${defense} defense` : ""}.`,
+      requirementParts.length ? `It requires ${joinNaturalLanguage(requirementParts)}.` : "",
+      passiveEntry ? getCreatureIntroductionRuleSentence(card, passiveEntry) : "",
+      `Choose it when you can meet its printed requirements and want ${vp > 0 ? `a creature worth ${vp} VP` : "its printed VP payoff"}${defense ? ` with ${defense} defense` : ""}.`,
+    ].filter(Boolean).join(" ");
+  }
+
+  const entries = getCreatureIntroductionRules(card);
+  const requirements = asList(card.playRequirements ?? card.requirements)
+    .map(getRequirementPhrase)
+    .filter(Boolean);
+  const specialPlacement = card.specialPlacement
+    && (normalizeToken(card.specialPlacement.controller) === "opponent"
+      || ["opponent-reef", "opponentreef"].includes(normalizeToken(card.specialPlacement.zone)));
+  const placementSentence = specialPlacement
+    ? `It uses special placement. ${describeSpecialPlacement(card.specialPlacement)}`
+    : "";
+  const ruleSentences = entries.map((entry) => getCreatureIntroductionRuleSentence(card, entry)).filter(Boolean);
+  return [
+    `${sentenceSubject} is ${withIndefiniteArticle(effectiveClassLabel)}.`,
+    placementSentence,
+    requirements.length ? `Before you play it, meet ${requirements.length === 1 ? "this printed requirement" : "these printed requirements"}: ${joinNaturalLanguage(requirements)}.` : "",
+    ...ruleSentences,
+    getCreatureIntroductionChoice(card, entries, effectiveClassLabel, { specialPlacement }),
+  ].filter(Boolean).join(" ");
+}
+
 function cardIdentityMessage(card, cardClassLabel) {
   const kind = normalizeToken(card.kind);
-  const isSchool = asList(card.tags).map(normalizeToken).includes("creature-school");
   const sentenceSubject = capitalizeFirst(getCardNarrativeSubject(card));
-  if (isSchool) {
-    return `${sentenceSubject} is a ${cardClassLabel}. Creature Schools are Foundations that supply School Density; they do not use a Coral's creature slot.`;
-  }
   if (kind === "creature") {
-    return `${sentenceSubject} is a ${cardClassLabel}. Its zone and class determine which open slot can house it and which rules can target it.`;
+    return getCreatureGameplayIntroduction(card, cardClassLabel);
   }
   if (kind === "coral") {
     const stage = Number(card.stage ?? 0);

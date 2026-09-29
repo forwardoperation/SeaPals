@@ -22,7 +22,7 @@ const turnSteps = [
     name: "Choose",
     prompt: "Which deck helps me most?",
     description:
-      "Draw 1 card from either your Foundation Deck or your Pals Deck. You do not draw from both unless a card effect says so.",
+      "Draw 1 card from either your Foundation Deck or your Main Deck. You do not draw from both unless a card effect says so.",
     color: "border-blue-200 bg-blue-50 text-blue-950",
   },
   {
@@ -75,7 +75,7 @@ const faqQuestions = [
   {
     question: "What do we need for a first game?",
     answer:
-      "SeaPals is for 2–4 players. Each player needs a legal 60-card deck separated into Foundation and Pals decks. Share one Conditions Deck, and gather RP counters, damage or HP counters, and the dice named on your cards (D4, D6, D8, D10, D12, and D20).",
+      "SeaPals is for 2–4 players. Each player needs a legal 60-card deck separated into a Foundation Deck and a Main Deck. Share one Conditions Deck, and gather RP counters, damage or HP counters, and the dice named on your cards (D4, D6, D8, D10, D12, and D20).",
   },
   {
     question: "Should beginners play to 10 VP or 30 VP?",
@@ -90,7 +90,7 @@ const faqQuestions = [
   {
     question: "Which deck do I draw from?",
     answer:
-      "During Choose, draw 1 card from either your Foundation Deck or your Pals Deck. Choose only one of those decks unless a card or Condition grants another draw.",
+      "During Choose, draw 1 card from either your Foundation Deck or your Main Deck. Choose only one of those decks unless a card or Condition grants another draw.",
   },
   {
     question: "How much RP do I collect, and how much can I keep?",
@@ -160,7 +160,7 @@ const faqQuestions = [
   {
     question: "What happens when both of my decks are empty?",
     answer:
-      "You lose when you must draw and both your Foundation Deck and Pals Deck are depleted. Simply having an empty deck is not the loss trigger if no draw is currently required.",
+      "You lose when you must draw and both your Foundation Deck and Main Deck are depleted. Simply having an empty deck is not the loss trigger if no draw is currently required.",
   },
   {
     question: "Do Conditions affect everyone?",
@@ -510,7 +510,7 @@ export default function InstructionsPage() {
               <div className="grid gap-4 md:grid-cols-3">
                 {[
                   ["Foundation Deck", "Coral, Creature Schools, and their stages", "bg-amber-100 text-amber-950"],
-                  ["Pals Deck", "Creatures, Support cards, and Habitat cards", "bg-cyan-100 text-cyan-950"],
+                  ["Main Deck", "Creatures, Support cards, and Habitat cards", "bg-cyan-100 text-cyan-950"],
                   ["Conditions Deck", "One separate shared deck; affects everybody", "bg-violet-100 text-violet-950"],
                 ].map(([name, description, color]) => (
                   <div key={name} className={`rounded-2xl p-5 ${color}`}>
@@ -525,7 +525,7 @@ export default function InstructionsPage() {
                 <div className="mt-4 grid gap-3 text-center text-xs font-bold uppercase tracking-[0.12em] text-slate-700 sm:grid-cols-[0.7fr_1.6fr_0.7fr]">
                   <div className="rounded-xl border-2 border-dashed border-amber-300 bg-white px-3 py-5">Foundation Deck</div>
                   <div className="rounded-xl border-2 border-cyan-300 bg-white px-3 py-5">Your ecosystem</div>
-                  <div className="rounded-xl border-2 border-dashed border-blue-300 bg-white px-3 py-5">Pals Deck</div>
+                  <div className="rounded-xl border-2 border-dashed border-blue-300 bg-white px-3 py-5">Main Deck</div>
                 </div>
                 <div className="mt-3 grid gap-3 text-center text-xs font-bold uppercase tracking-[0.12em] text-slate-700 sm:grid-cols-3">
                   <div className="rounded-xl bg-amber-100 px-3 py-3">RP bank</div>
@@ -551,7 +551,7 @@ export default function InstructionsPage() {
                 <ol className="mt-5 space-y-4 text-sm leading-6 text-cyan-50">
                   {[
                     "Draw 4 cards from your Foundation Deck.",
-                    "Draw 4 cards from your Pals Deck. You now have 8 cards.",
+                    "Draw 4 cards from your Main Deck. You now have 8 cards.",
                     "Place 3 RP in your RP bank.",
                     "Spend setup RP to play a valid base Foundation.",
                     "If your Foundation hand cannot play one, redraw that Foundation hand.",
@@ -887,7 +887,7 @@ export default function InstructionsPage() {
                   <li>• A standard personal deck contains exactly <strong>60 cards</strong>, no more than <strong>4 copies</strong> of one card, at least one base Foundation, and at least <strong>30 total printed VP</strong>.</li>
                   <li>• “30 printed VP in your deck” is a construction rule. “30 current VP in play” is the recommended full-game win target.</li>
                   <li>• Coral, Creature Schools, and their stages go in the Foundation Deck.</li>
-                  <li>• Regular creatures, Support cards, and playable Habitat cards go in the Pals Deck.</li>
+                  <li>• Regular creatures, Support cards, and playable Habitat cards go in the Main Deck.</li>
                   <li>• Conditions use a separate shared deck and are not part of either player’s 60 cards.</li>
                 </ul>
               </RuleDetails>
@@ -984,7 +984,7 @@ export default function InstructionsPage() {
                 summary="Persistent Habitats, attachments, capacity, and health bonuses"
               >
                 <ul className="space-y-2">
-                  <li>• Habitat cards are played from the Pals Deck and remain as independent cards in the ecosystem. Each physical copy tracks its own HP and effects.</li>
+                  <li>• Habitat cards are played from the Main Deck and remain as independent cards in the ecosystem. Each physical copy tracks its own HP and effects.</li>
                   <li>• Every current Habitat has 40 HP. Check each copy at the end of its controller&apos;s turn; a copy whose full composition is not met takes 10 HP of damage and is destroyed at 0 HP.</li>
                   <li>• Coral Reef requires 4 Reef Corals, 2 Reef Fish, and 2 Reef Invertebrates.</li>
                   <li>• Open Ocean requires 4 Creature Schools, 2 Oceanic Fish, and 2 Oceanic Invertebrates.</li>

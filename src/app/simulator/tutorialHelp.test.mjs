@@ -216,7 +216,7 @@ test("turn draw cues always point inside the blocking draw modal", () => {
   assert.equal(drawChoice.target, "draw-controls");
   assert.equal(drawChoice.targetDeck, "foundation");
   assert.match(drawChoice.message, /Foundation Deck.*economy.*best early-game draw/i);
-  assert.match(drawChoice.message, /Pals Deck.*creatures.*habitats.*support.*VP/i);
+  assert.match(drawChoice.message, /Main Deck.*creatures.*habitats.*support.*VP/i);
 
   const foundationChoice = getSimulatorTutorialHelp(draw, {
     modal: "turn-draw",
@@ -241,7 +241,7 @@ test("turn draw cues always point inside the blocking draw modal", () => {
   assert.equal(attackDraw.title, "Draw toward a legal attack");
   assert.equal(attackDraw.target, "draw-controls");
   assert.equal(attackDraw.targetDeck, "pals");
-  assert.match(attackDraw.action, /Pals Deck.*creature.*attack/i);
+  assert.match(attackDraw.action, /Main Deck.*creature.*attack/i);
   assert.notEqual(attackDraw.target, "player-board");
 
   const plannedAttackDraw = getSimulatorTutorialHelp(attack, {
@@ -293,8 +293,8 @@ test("scripted lesson deliberately bridges the economy turn into Arrow Crab", ()
   assert.equal(firstTurn.lead, "");
   assert.equal(firstTurn.target, "turn-button");
   assert.match(firstTurn.message, /established a foundation.*economy/i);
-  assert.match(firstTurn.message, /Arrow Crab.*next card.*Pals Deck/i);
-  assert.match(firstTurn.action, /End your turn.*Round 2.*Pals Deck/i);
+  assert.match(firstTurn.message, /Arrow Crab.*next card.*Main Deck/i);
+  assert.match(firstTurn.action, /End your turn.*Round 2.*Main Deck/i);
 
   const preparedDraw = getSimulatorTutorialHelp(checkpoint, {
     scriptedLesson: true,
@@ -312,7 +312,7 @@ test("scripted lesson deliberately bridges the economy turn into Arrow Crab", ()
   assert.equal(preparedDraw.targetDeck, "pals");
   assert.match(preparedDraw.message, /card action, not an attack/i);
   assert.match(preparedDraw.message, /Scavenge action deliberately/i);
-  assert.match(preparedDraw.action, /Pals Deck/i);
+  assert.match(preparedDraw.action, /Main Deck/i);
   assert.match(preparedDraw.cueId, /scripted-arrow-crab/);
 
   const selectedDraw = getSimulatorTutorialHelp(checkpoint, {
@@ -344,7 +344,7 @@ test("scripted lesson deliberately bridges the economy turn into Arrow Crab", ()
   });
   assert.equal(wrongDeckSelected.target, "draw-controls");
   assert.equal(wrongDeckSelected.targetDeck, "pals");
-  assert.match(wrongDeckSelected.action, /switch.*Pals Deck/i);
+  assert.match(wrongDeckSelected.action, /switch.*Main Deck/i);
 
   const restoredArrowInHand = getSimulatorTutorialHelp(checkpoint, {
     scriptedLesson: true,
@@ -432,7 +432,7 @@ test("draw-result cue names the actual card and bridges to the next legal action
 
   assert.equal(help.title, "You drew Leather Starfish");
   assert.equal(help.target, "continue-actions");
-  assert.match(help.message, /Pals Deck.*Reef Invertebrate.*1 RP/i);
+  assert.match(help.message, /Main Deck.*Reef Invertebrate.*1 RP/i);
   assert.match(help.message, /1 VP/i);
   assert.match(help.message, /Slow Eat.*no legal target/i);
   assert.match(help.action, /cannot make a legal attack yet.*play Leather Starfish/i);
@@ -671,7 +671,7 @@ test("attack help gives a feasible setup or end-turn fallback", () => {
   assert.equal(blocked.title, "No legal attack yet");
   assert.equal(blocked.target, "turn-button");
   assert.match(blocked.message, /Leather Starfish.*no compatible target/i);
-  assert.match(blocked.action, /Pals Deck/i);
+  assert.match(blocked.action, /Main Deck/i);
 
   const needsRp = getSimulatorTutorialHelp(checkpoint, {
     attackBlock: { blockType: "rp" },
@@ -788,7 +788,7 @@ test("post-checklist help preserves draw, result, and placement prerequisites", 
   });
   assert.equal(draw.target, "draw-controls");
   assert.equal(draw.targetDeck, "pals");
-  assert.match(draw.action, /Pals Deck/i);
+  assert.match(draw.action, /Main Deck/i);
 
   const result = getSimulatorTutorialHelp(null, {
     ...FINISH_DUEL_STATE,
@@ -959,7 +959,7 @@ test("scripted post-checklist draws preserve the authored economy and Scavenge r
   assert.equal(wrongEconomyDraw.target, "draw-controls");
   assert.equal(wrongEconomyDraw.targetDeck, "pals");
   assert.equal(wrongEconomyDraw.targetDrawAction, "remove");
-  assert.match(wrongEconomyDraw.action, /minus.*Pals Deck.*Foundation Deck/i);
+  assert.match(wrongEconomyDraw.action, /minus.*Main Deck.*Foundation Deck/i);
 
   const roundTwoRoute = scriptedFinishRoute({
     cards: {
@@ -1007,7 +1007,7 @@ test("Round 3 explicitly draws Foundation, Scavenges Spinner Dolphins, and banks
     scriptedFinishRoute: route,
   });
   assert.equal(draw.targetDeck, "foundation");
-  assert.match(draw.message, /Keep Spinner Dolphins inside the Pals Deck/i);
+  assert.match(draw.message, /Keep Spinner Dolphins inside the Main Deck/i);
 
   const scavenge = getSimulatorTutorialHelp(null, {
     ...FINISH_DUEL_STATE,
@@ -1285,7 +1285,7 @@ test("every authored draw result explains the actual card and its concrete next 
       cardId: "porcupine-fish",
       name: "Porcupine Fish",
       source: "Pals",
-      message: /Pals Deck.*any two regular Fish.*one of those spots.*Crunch.*Keep it in hand.*Coral Gardener.*Lettuce Coral/i,
+      message: /Main Deck.*any two regular Fish.*one of those spots.*Crunch.*Keep it in hand.*Coral Gardener.*Lettuce Coral/i,
       action: /Continue to Actions.*Coral Gardener.*Round 3/i,
     },
     {
@@ -1293,7 +1293,7 @@ test("every authored draw result explains the actual card and its concrete next 
       cardId: "fairy-parrotfish",
       name: "Parrotfish",
       source: "Pals",
-      message: /Pals Deck.*any two regular Fish.*Porcupine Fish.*one spot.*fill the other.*wait in hand.*Arrow Crab.*Nudibranch.*Munch/i,
+      message: /Main Deck.*any two regular Fish.*Porcupine Fish.*one spot.*fill the other.*wait in hand.*Arrow Crab.*Nudibranch.*Munch/i,
       action: /Continue to Actions.*Arrow Crab.*Round 4/i,
     },
     {
@@ -1301,7 +1301,7 @@ test("every authored draw result explains the actual card and its concrete next 
       cardId: "great-barracuda",
       name: "Great Barracuda",
       source: "Pals",
-      message: /Pals Deck.*Predator.*my reef.*legal targets.*Coral Reef.*second Bite.*First play Parrotfish/i,
+      message: /Main Deck.*Predator.*my reef.*legal targets.*Coral Reef.*second Bite.*First play Parrotfish/i,
       action: /Continue to Actions.*Parrotfish.*Coral Reef.*Great Barracuda/i,
     },
     {
@@ -1317,7 +1317,7 @@ test("every authored draw result explains the actual card and its concrete next 
       cardId: "whale-shark",
       name: "Whale Shark",
       source: "Pals",
-      message: /Pals Deck.*Filter Feeder.*180.*Krill Bloom.*150.*White Grunt.*30.*Coral Reef.*Habitat.*legal now/i,
+      message: /Main Deck.*Filter Feeder.*180.*Krill Bloom.*150.*White Grunt.*30.*Coral Reef.*Habitat.*legal now/i,
       action: /Continue to Actions.*Whale Shark.*open water/i,
     },
     {
@@ -1325,7 +1325,7 @@ test("every authored draw result explains the actual card and its concrete next 
       cardId: "deep-sea-fishing",
       name: "Deep Sea Fishing",
       source: "Pals",
-      message: /Pals Deck.*zero-cost.*one-shot Support.*Predator or Apex.*discard pile.*Hammerhead/i,
+      message: /Main Deck.*zero-cost.*one-shot Support.*Predator or Apex.*discard pile.*Hammerhead/i,
       action: /Continue to Actions.*Deep Sea Fishing.*Hammerhead.*search results/i,
     },
   ];
@@ -1407,7 +1407,7 @@ test("late authored draws explain the School Density chain before the Apex searc
       round: 6,
       expectedDraw: { deckType: "pals", cardId: "whale-shark" },
       targetDeck: "pals",
-      pattern: /Whale Shark.*180.*Krill Bloom.*150.*White Grunt.*30.*11 VP.*Pals Deck/i,
+      pattern: /Whale Shark.*180.*Krill Bloom.*150.*White Grunt.*30.*11 VP.*Main Deck/i,
     },
     {
       round: 7,

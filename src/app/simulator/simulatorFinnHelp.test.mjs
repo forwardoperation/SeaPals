@@ -57,7 +57,7 @@ test("Finn explains pan, zoom, Fit, Coral dragging, and slot dragging together",
 
 test("Finn gives phase-aware fallback help when no tutorial cue is active", () => {
   const result = resolveSimulatorFinnQuestion("What's next?", { gamePhase: "draw" });
-  assert.match(result.answer.text, /Foundation and Pals decks/i);
+  assert.match(result.answer.text, /Foundation and Main decks/i);
   assert.match(result.answer.text, /confirm the draw.*review/i);
 });
 
@@ -76,5 +76,5 @@ test("general card questions are expanded and delegated to the existing rules en
 test("Finn explains the strategic difference between the two personal decks", () => {
   const result = resolveSimulatorFinnQuestion("Which deck should I draw from?");
   assert.match(result.answer.text, /Foundation Deck.*Corals.*Creature Schools.*RP/i);
-  assert.match(result.answer.text, /Pals Deck.*creatures.*Habitats.*Support/i);
+  assert.match(result.answer.text, /Main Deck.*creatures.*Habitats.*Support/i);
 });

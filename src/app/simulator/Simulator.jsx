@@ -202,7 +202,7 @@ import {
   resolveTargetedCoinFlip,
 } from "./specialCardRules.mjs";
 import foundationDeckImg from "./images/foundation-deck.png";
-import palsDeckImg from "./images/pals-deck.png";
+import mainDeckImg from "./images/main-deck.svg";
 import {
   DEFAULT_SIMULATOR_DECK_ID,
   resolveSimulatorDeckId,
@@ -244,6 +244,18 @@ function shuffle(arr, random = Math.random) {
 
 const defaultDeckId = DEFAULT_SIMULATOR_DECK_ID;
 const CARD_ART_FALLBACK = "/images/brand/SeaPalsTCGLogoWhite.svg";
+
+function getPersonalDeckDisplayLabel(value) {
+  const normalized = String(value ?? "").trim().toLowerCase().replaceAll(" ", "");
+  if (normalized === "pals" || normalized === "palsdeck" || normalized === "main" || normalized === "maindeck") return "Main";
+  if (normalized === "foundation" || normalized === "foundationdeck") return "Foundation";
+  return String(value ?? "");
+}
+
+function getPersonalDeckDisplayName(value) {
+  const label = getPersonalDeckDisplayLabel(value);
+  return label ? `${label} Deck` : "personal deck";
+}
 const TUTORIAL_HISTORY_GUARD_STATE_KEY = "__reefboundTutorialGuard";
 let tutorialHistoryGuardSequence = 0;
 
@@ -4942,7 +4954,7 @@ export default function Simulator({
       ? previewExperience && tutorialUsesScriptedScenario
         ? `${tutorialGuide.name} will stay with you on the board and point to one legal action at a time.`
         : `${storyOpponentName} is ready for a SeaPals duel. Build your ecosystem and be the first to reach ${storyVictoryTarget} VP.`
-      : `Your ${initialPlayerDeckName} is selected. Choose an opponent deck and victory target, then begin the setup round with four Foundation and four Pals cards.`,
+      : `Your ${initialPlayerDeckName} is selected. Choose an opponent deck and victory target, then begin the setup round with four Foundation and four Main Deck cards.`,
   }));
   useEffect(() => () => {
     if (consumedAttackFlightTimerRef.current !== null) {
@@ -10614,7 +10626,7 @@ export default function Simulator({
       return { ...current, palsDeck: current.palsDeck.slice(palsCount), foundationDeck: current.foundationDeck.slice(foundationCount), discardPile: [...current.palsDeck.slice(0, palsCount), ...current.foundationDeck.slice(0, foundationCount), ...current.discardPile] };
     });
     const discardedNames = discardedIds.map((cardId) => cardsById[cardId]?.name ?? cardId).join(", ");
-    const message = `${card.name} discarded ${discardedNames} from the top of the opponent's personal decks (Pals first).`;
+    const message = `${card.name} discarded ${discardedNames} from the top of the opponent's personal decks (Main first).`;
     pushLog(message);
     setEventOverlay({ type: "impact-result", sourceCardId: card.id, defenderCardId: discardedIds[0], title: `Player's ${card.name} used ${deckDiscard.actionName}`, message, success: true });
     return true;
@@ -13129,7 +13141,7 @@ export default function Simulator({
     setMobileDrawTrayOpen(false);
     setModal(previewDrawTrayEnabled ? null : "draw-result");
     if (previewDrawTrayEnabled && !mobileFlightsStarted) setMobileDrawAnnouncement("Your draw is complete.");
-    pushLog(`Drew ${foundationCards.length} from Foundation and ${palsCards.length} from Pals.${turnDrawSelection.shortfall > 0 ? " The required draw could not be completed, so you lose by deck depletion." : ""}`);
+    pushLog(`Drew ${foundationCards.length} from Foundation and ${palsCards.length} from Main.${turnDrawSelection.shortfall > 0 ? " The required draw could not be completed, so you lose by deck depletion." : ""}`);
     if (turnDrawSelection.shortfall > 0) {
       setGameResult((current) => current ?? `Defeat: you were required to draw ${turnDrawSelection.requested} cards, but your personal decks contained only ${turnDrawSelection.target}.`);
     }
@@ -13628,7 +13640,7 @@ export default function Simulator({
         setSelectedHandCard(null);
         setModal(null);
         setPlayError("");
-        setEventOverlay({ type: "choose-scientist-jes", sourceCardId: card.id, title: "Player used Scientist Jes", message: "Choose one effect: search your personal decks for a Habitat, or draw two cards split however you like between Foundation and Pals." });
+        setEventOverlay({ type: "choose-scientist-jes", sourceCardId: card.id, title: "Player used Scientist Jes", message: "Choose one effect: search your personal decks for a Habitat, or draw two cards split however you like between Foundation and Main." });
         return;
       }
       const searchEffect = (card.effects ?? []).find((effect) => effect.type === EffectType.SEARCH_DECK);
@@ -13901,7 +13913,7 @@ export default function Simulator({
     const topCards = deck.slice(0, 5);
     if (supportCard?.id === "robotic-survey") {
       setSearchContext({ mode: "reorder-deck", supportCardId: supportCard.id, deckType, topCards });
-      setEventOverlay({ type: "reorder-deck", sourceCardId: supportCard.id, title: `Player used ${supportCard.name}`, message: `Reorder the top ${topCards.length} cards of your ${deckType} deck, then confirm.` });
+      setEventOverlay({ type: "reorder-deck", sourceCardId: supportCard.id, title: `Player used ${supportCard.name}`, message: `Reorder the top ${topCards.length} cards of your ${getPersonalDeckDisplayName(deckType)}, then confirm.` });
       return;
     }
     const candidates = topCards.filter((cardId) => cardsById[cardId]?.kind === CardKind.CREATURE);
@@ -13940,7 +13952,7 @@ export default function Simulator({
     );
     applyExplicitSupportLock(supportCard);
     const message = searchContext.mode === "reorder-deck"
-      ? `${supportCard.name} rearranged the top ${searchContext.topCards.length} cards of your ${searchContext.deckType} deck.`
+      ? `${supportCard.name} rearranged the top ${searchContext.topCards.length} cards of your ${getPersonalDeckDisplayName(searchContext.deckType)}.`
       : selectedCardId ? `${supportCard.name} added ${cardsById[selectedCardId]?.name} to your hand and shuffled the other inspected cards.` : `${supportCard.name} found no chosen Creature and shuffled the inspected cards back.`;
     setSearchContext(null);
     pushLog(message);
@@ -14431,7 +14443,7 @@ export default function Simulator({
     setSearchContext(null);
     setModal(null);
     setSelectedHandCard(null);
-    pushLog(`Restocking shuffled ${names} into ${foundationCards.length && palsCards.length ? "their correct Foundation and Pals decks" : foundationCards.length ? "your Foundation deck" : "your Pals deck"} and was discarded.`);
+    pushLog(`Restocking shuffled ${names} into ${foundationCards.length && palsCards.length ? "their correct Foundation and Main decks" : foundationCards.length ? "your Foundation Deck" : "your Main Deck"} and was discarded.`);
   }
 
   function completeDrEvans() {
@@ -14457,7 +14469,7 @@ export default function Simulator({
     setTurnDrawSelection(null);
     setModal(null);
     setSelectedHandCard(null);
-    const message = `Dr. Evans discarded ${discardedHand.length} card(s) from your hand and drew ${foundationCards.length} from Foundation plus ${palsCards.length} from Pals.${shortfall ? ` The mandatory seven-card draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
+    const message = `Dr. Evans discarded ${discardedHand.length} card(s) from your hand and drew ${foundationCards.length} from Foundation plus ${palsCards.length} from Main.${shortfall ? ` The mandatory seven-card draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
     const revealed = drawnCards.map((cardId, index) => ({
       cardId,
       source: index < foundationCards.length ? "Foundation" : "Pals",
@@ -14603,7 +14615,7 @@ export default function Simulator({
       }
       setPendingCreatureAction({ action, effect, actionKey, sourceCardId: sourceCard.id, sourceCardInstanceId, actionName, cost });
       setInspectedCard(null);
-      setEventOverlay({ type: "choose-action-discard", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${actionName}`, message: effect.destination === "deck" ? "Choose a discarded card to shuffle into its correct personal deck: Corals and Creature Schools return to Foundation; all other cards return to Pals." : "Choose a card from your discard pile to return to your hand." });
+      setEventOverlay({ type: "choose-action-discard", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${actionName}`, message: effect.destination === "deck" ? "Choose a discarded card to shuffle into its correct personal deck: Corals and Creature Schools return to Foundation; all other cards return to Main." : "Choose a card from your discard pile to return to your hand." });
       return;
     }
     if (effect.type === "discardThenSearchDeck" || effect.type === "discardThenDraw") {
@@ -14688,7 +14700,7 @@ export default function Simulator({
     if (actionIsOncePerTurn(pendingCreatureAction.action)) setUsedCreatureActions((current) => [...current, pendingCreatureAction.actionKey]);
     const sourceCard = cardsById[pendingCreatureAction.sourceCardId];
     const shortfall = Number(turnDrawSelection.shortfall ?? getRequiredDrawShortfall(turnDrawSelection.requested, selectedCards.length));
-    const message = `${sourceCard.name} drew ${foundationCards.length} from Foundation and ${palsCards.length} from Pals.${shortfall ? ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
+    const message = `${sourceCard.name} drew ${foundationCards.length} from Foundation and ${palsCards.length} from Main.${shortfall ? ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
     const revealed = selectedCards.map((cardId, index) => ({ cardId, source: index < foundationCards.length ? "Foundation" : "Pals", discarded: index >= drawResult.cardsToHand.length }));
     pushLog(message);
     setPendingCreatureAction(null);
@@ -14724,7 +14736,7 @@ export default function Simulator({
     else if (handResult.cardsToHand.length) setHand((current) => [...current, cardId]);
     setRp((current) => Math.max(0, current - cost), getPendingCreatureActionRpSpendPresentation(pendingAction, cost));
     if (actionIsOncePerTurn(pendingAction.action)) setUsedCreatureActions((current) => [...current, pendingAction.actionKey]);
-    const destination = destinationZone === "deck" ? `your ${recoveredDeckType === "foundation" ? "Foundation" : "Pals"} deck` : "your hand";
+    const destination = destinationZone === "deck" ? `your ${getPersonalDeckDisplayName(recoveredDeckType)}` : "your hand";
     const message = `${sourceCard.name} moved ${cardsById[cardId]?.name ?? cardId} from your discard pile to ${destination} for ${cost} RP.`;
     pushLog(message);
     emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.ABILITY_RESOLVED, {
@@ -14783,7 +14795,7 @@ export default function Simulator({
     const deck = deckType === "foundation" ? foundationDeck : palsDeck;
     if (!deck.length) return;
     setPendingCreatureAction((current) => ({ ...current, deckType, topCards: deck.slice(0, Number(current.effect.amount ?? 3)) }));
-    setEventOverlay({ type: "reorder-creature-action-deck", sourceCardId: pendingCreatureAction.sourceCardId, title: `Player's ${cardsById[pendingCreatureAction.sourceCardId]?.name} used ${pendingCreatureAction.actionName}`, message: `Set the new top-to-bottom order for your ${deckType} deck.` });
+    setEventOverlay({ type: "reorder-creature-action-deck", sourceCardId: pendingCreatureAction.sourceCardId, title: `Player's ${cardsById[pendingCreatureAction.sourceCardId]?.name} used ${pendingCreatureAction.actionName}`, message: `Set the new top-to-bottom order for your ${getPersonalDeckDisplayName(deckType)}.` });
   }
 
   function moveCreatureActionDeckCard(fromIndex, toIndex) {
@@ -14807,7 +14819,7 @@ export default function Simulator({
       getPendingCreatureActionRpSpendPresentation(pendingCreatureAction, pendingCreatureAction.cost),
     );
     if (actionIsOncePerTurn(pendingCreatureAction.action)) setUsedCreatureActions((current) => [...current, pendingCreatureAction.actionKey]);
-    const message = `${sourceCard.name}'s ${pendingCreatureAction.actionName} rearranged the top ${pendingCreatureAction.topCards.length} cards of your ${pendingCreatureAction.deckType} deck for ${pendingCreatureAction.cost} RP.`;
+    const message = `${sourceCard.name}'s ${pendingCreatureAction.actionName} rearranged the top ${pendingCreatureAction.topCards.length} cards of your ${getPersonalDeckDisplayName(pendingCreatureAction.deckType)} for ${pendingCreatureAction.cost} RP.`;
     pushLog(message);
     setPendingCreatureAction(null);
     setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} completed deck rearrangement`, message, success: true });
@@ -15661,7 +15673,7 @@ export default function Simulator({
         const deckKey = getSupportDrawDeck();
         const top = orderOpponentChoices(next[deckKey].slice(0, amount), opponentDifficulty, (cardId) => scoreSearchCandidate(cardId));
         next = { ...next, [deckKey]: [...top, ...next[deckKey].slice(top.length)] };
-        details.push(`reordered the top ${top.length} cards of its ${deckKey === "palsDeck" ? "Pals" : "Foundation"} deck`);
+        details.push(`reordered the top ${top.length} cards of its ${getPersonalDeckDisplayName(deckKey === "palsDeck" ? "Pals" : "Foundation")}`);
       }
       const drawEffect = effects.find((effect) => effect.type === EffectType.DRAW_CARDS);
       if (card.id === "dr-evans") {
@@ -16016,7 +16028,7 @@ export default function Simulator({
       next = { ...next, [deckKey]: next[deckKey].slice(1), hand: [...next.hand, cardId] };
     }
     const drawSummary = drawnFrom.reduce((counts, deckName) => ({ ...counts, [deckName]: (counts[deckName] ?? 0) + 1 }), {});
-    const drawSummaryText = Object.entries(drawSummary).map(([deckName, count]) => `${count} from ${deckName}`).join(" and ");
+    const drawSummaryText = Object.entries(drawSummary).map(([deckName, count]) => `${count} from ${getPersonalDeckDisplayLabel(deckName)}`).join(" and ");
     if (getRequiredDrawShortfall(requestedDraws, drawnFrom.length) > 0) {
       const summary = `Opponent was required to draw ${requestedDraws} cards, but its personal decks contained only ${drawnFrom.length}. The opponent loses by deck depletion.`;
       return {
@@ -16513,7 +16525,7 @@ export default function Simulator({
       const postDrawExcess = postDrawHandLimitResult.cardsToDiscard;
       next = postDrawHandLimitResult.state;
       const shortfall = getRequiredDrawShortfall(onPlayDrawCount, drawnIds.length);
-      onPlayDrawSummary = ` ${getOnPlayAbilityName(card)} drew ${drawnIds.length} card(s)${drawnSources.length ? ` (${drawnSources.join(", ")})` : ""}.${postDrawExcess.length ? ` The opponent chose ${postDrawExcess.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : ""}`;
+      onPlayDrawSummary = ` ${getOnPlayAbilityName(card)} drew ${drawnIds.length} card(s)${drawnSources.length ? ` (${drawnSources.map(getPersonalDeckDisplayLabel).join(", ")})` : ""}.${postDrawExcess.length ? ` The opponent chose ${postDrawExcess.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : ""}`;
       if (shortfall) onPlayDrawLossSummary = ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so the opponent loses by deck depletion.`;
     }
     let onPlayReorderSummary = "";
@@ -16528,7 +16540,7 @@ export default function Simulator({
         };
         const topCards = next[deckKey].slice(0, amount).sort((leftId, rightId) => scoreCard(rightId) - scoreCard(leftId));
         next = { ...next, [deckKey]: [...topCards, ...next[deckKey].slice(topCards.length)] };
-        onPlayReorderSummary = ` ${onPlayReorder.actionName} reordered the top ${topCards.length} cards of the opponent's ${deckKey === "palsDeck" ? "Pals" : "Foundation"} deck.`;
+        onPlayReorderSummary = ` ${onPlayReorder.actionName} reordered the top ${topCards.length} cards of the opponent's ${getPersonalDeckDisplayName(deckKey === "palsDeck" ? "Pals" : "Foundation")}.`;
       } else onPlayReorderSummary = ` ${onPlayReorder.actionName} found both personal decks empty.`;
     }
     let onPlaySearchSummary = "";
@@ -17155,7 +17167,7 @@ export default function Simulator({
           const amount = Math.max(1, Number(effect.amount ?? 3));
           const top = opponentState[deckKey].slice(0, amount).sort((leftId, rightId) => scoreCard(rightId) - scoreCard(leftId));
           const next = commitAction({ ...opponentState, [deckKey]: [...top, ...opponentState[deckKey].slice(top.length)] }, actionKey, cost, oncePerTurn);
-          return { state: next, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, actionName: getActionName(action), actionCost: cost, success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and reordered the top ${top.length} cards of its ${deckKey === "palsDeck" ? "Pals" : "Foundation"} deck.` };
+          return { state: next, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, actionName: getActionName(action), actionCost: cost, success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and reordered the top ${top.length} cards of its ${getPersonalDeckDisplayName(deckKey === "palsDeck" ? "Pals" : "Foundation")}.` };
         }
         if (effect.type === EffectType.DRAW_CARDS) {
           const amount = Math.max(0, Number(effect.amount ?? 0));
@@ -17182,7 +17194,7 @@ export default function Simulator({
             actionCost: cost,
             success: shortfall === 0,
             lost: shortfall > 0,
-            summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and drew ${drawn.length} card(s)${drawn.length ? ` (${drawn.map((card) => card.source).join(", ")})` : ""}.${excess.length ? ` The opponent chose ${excess.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : ""}${shortfall ? ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so the opponent loses by deck depletion.` : ""}`,
+            summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP and drew ${drawn.length} card(s)${drawn.length ? ` (${drawn.map((card) => getPersonalDeckDisplayLabel(card.source)).join(", ")})` : ""}.${excess.length ? ` The opponent chose ${excess.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.` : ""}${shortfall ? ` The mandatory draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so the opponent loses by deck depletion.` : ""}`,
           };
         }
         if (effect.type === EffectType.SEARCH_DECK) {
@@ -17209,7 +17221,7 @@ export default function Simulator({
           const targetId = opponentState.discardPile[0];
           if (!targetId) continue;
           const recoveredDeckType = getPersonalDeckType(cardsById[targetId]);
-          const destination = effect.destination === "deck" ? `${recoveredDeckType === "foundation" ? "Foundation" : "Pals"} deck` : "hand";
+          const destination = effect.destination === "deck" ? getPersonalDeckDisplayName(recoveredDeckType) : "hand";
           const recoveredPile = removeOneCard(opponentState.discardPile, targetId);
           const handResult = applyAutomatedHandLimitToState({ ...opponentState, discardPile: recoveredPile }, handLimit, { round }, [targetId]);
           const next = effect.destination === "deck"
@@ -20486,7 +20498,7 @@ export default function Simulator({
     }
     if (opponentDeckDiscardIds.length) {
       const names = opponentDeckDiscardIds.map((cardId) => cardsById[cardId]?.name ?? cardId).join(", ");
-      const message = `Opponent's ${opponentResult.damageSourceName} discarded ${names} from the top of your personal decks (Pals first).`;
+      const message = `Opponent's ${opponentResult.damageSourceName} discarded ${names} from the top of your personal decks (Main first).`;
       turnEvents.push({ type: "opponent-impact", sourceCardId: opponentResult.damageSourceCardId, defenderCardId: opponentDeckDiscardIds[0], title: `Opponent's ${opponentResult.damageSourceName} used ${opponentResult.deckDiscard.actionName}`, message, success: true, playerStateAfter: playerStateAfterDeckDiscard, logMessage: message });
     }
     if (opponentRandomDiscardIds.length) {
@@ -21391,7 +21403,7 @@ export default function Simulator({
     setEventOverlay({
       type: "new-game-setup",
       title: "Start a New SeaPals Game",
-      message: "Choose a deck for each side. You will open with four Foundation and four Pals cards, play a base Coral or Creature School during setup, then race to the selected VP target.",
+      message: "Choose a deck for each side. You will open with four Foundation and four Main Deck cards, play a base Coral or Creature School during setup, then race to the selected VP target.",
     });
   }
 
@@ -21515,7 +21527,7 @@ export default function Simulator({
       ? searchContext?.deckType
       : pendingCreatureAction?.deckType
     : null;
-  const compactDeckOrderDeckLabel = compactDeckOrderDeckType === "foundation" ? "Foundation" : "Pals";
+  const compactDeckOrderDeckLabel = getPersonalDeckDisplayLabel(compactDeckOrderDeckType);
   const compactDialogEvent = compactDrawResultEvent || compactDeckSearchEvent || compactDeckOrderEvent;
   const v2NewGameSetupActive = Boolean(
     previewExperience
@@ -23847,7 +23859,10 @@ export default function Simulator({
           background: rgba(8, 47, 73, .7);
         }
         .seapals-mobile-draw-option.is-pals { border-color: rgba(110, 231, 183, .3); }
-        .seapals-mobile-draw-option-copy { min-width: 0; }
+        .seapals-mobile-draw-option-copy {
+          min-width: 0;
+          overflow: hidden;
+        }
         .seapals-mobile-draw-option-copy strong {
           display: block;
           overflow: hidden;
@@ -23860,10 +23875,12 @@ export default function Simulator({
         .seapals-mobile-draw-option-copy span {
           display: block;
           overflow: hidden;
+          max-width: 100%;
           margin-top: .1rem;
           color: rgba(207, 250, 254, .62);
           font-size: .55rem;
           font-weight: 700;
+          line-height: 1.15;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
@@ -27723,7 +27740,7 @@ export default function Simulator({
               {mobileHudPanel === "zones" ? (
                 <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => { setMobileHudPanel(null); setModal("discard"); }} className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 font-bold text-cyan-100">Discard Pile<span className="mt-1 block text-2xl font-black">{discardPile.length}</span></button><button type="button" onClick={() => { setMobileHudPanel(null); setModal("lost"); }} className="rounded-xl border border-violet-300/20 bg-violet-400/10 p-4 font-bold text-violet-100">Lost Zone<span className="mt-1 block text-2xl font-black">{lostZone.length}</span></button></div>
               ) : mobileHudPanel === "decks" ? (
-                <div className="grid grid-cols-2 gap-2" data-mobile-deck-summary><div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 text-center font-bold text-cyan-100">Foundation<span className="mt-1 block text-2xl font-black">{foundationDeck.length}</span></div><div className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 p-4 text-center font-bold text-emerald-100">Pals<span className="mt-1 block text-2xl font-black">{palsDeck.length}</span></div><p className="col-span-2 text-center text-xs text-slate-400">Deck contents stay hidden until a card effect reveals them.</p></div>
+                <div className="grid grid-cols-2 gap-2" data-mobile-deck-summary><div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-4 text-center font-bold text-cyan-100">Foundation<span className="mt-1 block text-2xl font-black">{foundationDeck.length}</span></div><div className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 p-4 text-center font-bold text-emerald-100">Main<span className="mt-1 block text-2xl font-black">{palsDeck.length}</span></div><p className="col-span-2 text-center text-xs text-slate-400">Deck contents stay hidden until a card effect reveals them.</p></div>
               ) : (
                 <div><div className="rounded-xl border border-cyan-300/20 bg-cyan-400/10 p-3 text-sm font-semibold text-cyan-50">{isSetup ? "Setup: play a base Coral or Creature School, then begin round 1." : isStartOfTurn ? "Choose cards from your personal decks for this turn." : "Play cards, use abilities, and attack in any legal order."}</div><div className="mt-2 rounded-xl border border-violet-300/20 bg-violet-400/10 p-3 text-sm text-violet-100"><strong>{activeCondition?.name ?? "No active condition"}</strong>{activeCondition?.text ? <span className="mt-1 block text-xs text-violet-100/70">{activeCondition.text}</span> : null}</div><ol className="mt-2 space-y-2 rounded-xl bg-slate-900 p-3 text-xs">{log.slice(0, 8).map((entry, index) => <li key={`${entry}-${index}`} className={index === 0 ? "font-bold text-cyan-300" : "text-slate-300"}>{entry}</li>)}</ol></div>
               )}
@@ -28781,7 +28798,7 @@ export default function Simulator({
                         {eventOverlay.compactDrawResult.drawnCount} drawn
                       </span>
                       <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-slate-200">
-                        {eventOverlay.compactDrawResult.foundationDrawn} Foundation · {eventOverlay.compactDrawResult.palsDrawn} Pals
+                        {eventOverlay.compactDrawResult.foundationDrawn} Foundation · {eventOverlay.compactDrawResult.palsDrawn} Main
                       </span>
                     </div>
                     {eventOverlay.compactDrawResult.shortfall ? (
@@ -28831,7 +28848,7 @@ export default function Simulator({
                             <img src={card?.image} alt={card?.name} className="seapals-compact-draw-card-image w-full rounded-lg bg-white object-contain" />
                             <div className="truncate text-xs font-bold">{card?.name}</div>
                             <div className="text-[10px] font-bold uppercase text-slate-300">
-                              {index + 1}/{eventOverlay.drawnCards.length} · {entry.source}{entry.discarded ? " · Discarded" : ""}
+                              {index + 1}/{eventOverlay.drawnCards.length} · {getPersonalDeckDisplayLabel(entry.source)}{entry.discarded ? " · Discarded" : ""}
                             </div>
                           </li>
                         );
@@ -29147,7 +29164,7 @@ export default function Simulator({
                 ) : eventOverlay.type === "choose-scientist-jes" ? (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
                     <button type="button" onClick={() => chooseScientistJes("search")} className="rounded-2xl border-2 border-amber-400 bg-amber-400/10 p-5 text-left hover:bg-amber-400/25"><strong className="block text-lg">Search for a Habitat</strong><span className="mt-1 block text-sm text-amber-100">Reveal one Habitat from either personal deck and add it to your hand.</span></button>
-                    <button type="button" onClick={() => chooseScientistJes("draw")} className="rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-5 text-left hover:bg-cyan-400/25"><strong className="block text-lg">Draw Two Cards</strong><span className="mt-1 block text-sm text-cyan-100">Allocate both draws between Foundation and Pals.</span></button>
+                    <button type="button" onClick={() => chooseScientistJes("draw")} className="rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-5 text-left hover:bg-cyan-400/25"><strong className="block text-lg">Draw Two Cards</strong><span className="mt-1 block text-sm text-cyan-100">Allocate both draws between Foundation and Main.</span></button>
                     <button type="button" onClick={() => chooseScientistJes("cancel")} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">Cancel — Spend Nothing</button>
                   </div>
                 ) : eventOverlay.type === "choose-impact-target" ? (
@@ -29260,7 +29277,7 @@ export default function Simulator({
                   </div>
                 ) : eventOverlay.type === "choose-inspection-deck" ? (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    {[{ type: "foundation", count: foundationDeck.length }, { type: "pals", count: palsDeck.length }].map((deck) => <button key={deck.type} type="button" disabled={!deck.count} onClick={() => chooseInspectionDeck(deck.type)} className="rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-5 text-center font-black capitalize hover:bg-cyan-400/25 disabled:opacity-35">{deck.type} Deck<span className="mt-1 block text-sm font-semibold text-cyan-200">{deck.count} cards</span></button>)}
+                    {[{ type: "foundation", count: foundationDeck.length }, { type: "pals", count: palsDeck.length }].map((deck) => <button key={deck.type} type="button" disabled={!deck.count} onClick={() => chooseInspectionDeck(deck.type)} className="rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-5 text-center font-black hover:bg-cyan-400/25 disabled:opacity-35">{getPersonalDeckDisplayName(deck.type)}<span className="mt-1 block text-sm font-semibold text-cyan-200">{deck.count} cards</span></button>)}
                     <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">Cancel Inspection</button>
                   </div>
                 ) : eventOverlay.type === "reorder-deck" ? (
@@ -29382,7 +29399,7 @@ export default function Simulator({
                               card={card}
                               onInspect={() => inspectSearchResult(cardId)}
                               onChoose={() => completeActionDeckSearch(cardId)}
-                              meta={`${foundationDeck.includes(cardId) ? "Foundation" : "Pals"} Deck${scriptedChoice ? ` · ${tutorialGuide.name}'s lesson target` : ""}`}
+                              meta={`${getPersonalDeckDisplayName(foundationDeck.includes(cardId) ? "Foundation" : "Pals")}${scriptedChoice ? ` · ${tutorialGuide.name}'s lesson target` : ""}`}
                               tutorialTarget={scriptedChoice ? "script-search-card" : undefined}
                               className={scriptedChoice ? "seapals-tutorial-target" : ""}
                               compact
@@ -29424,7 +29441,7 @@ export default function Simulator({
                   </div>
                 ) : eventOverlay.type === "choose-action-reorder-source" ? (
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    {[{ type: "foundation", count: foundationDeck.length }, { type: "pals", count: palsDeck.length }].map((deck) => <button key={deck.type} type="button" disabled={!deck.count} onClick={() => chooseCreatureActionReorderDeck(deck.type)} className="rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-5 text-center font-black capitalize hover:bg-cyan-400/25 disabled:opacity-30">{deck.type} Deck<span className="block text-sm text-cyan-200">{deck.count} cards</span></button>)}
+                    {[{ type: "foundation", count: foundationDeck.length }, { type: "pals", count: palsDeck.length }].map((deck) => <button key={deck.type} type="button" disabled={!deck.count} onClick={() => chooseCreatureActionReorderDeck(deck.type)} className="rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-5 text-center font-black hover:bg-cyan-400/25 disabled:opacity-30">{getPersonalDeckDisplayName(deck.type)}<span className="block text-sm text-cyan-200">{deck.count} cards</span></button>)}
                     <button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold sm:col-span-2">{pendingCreatureAction?.committed ? "Skip Optional Reorder" : "Cancel Action"}</button>
                   </div>
                 ) : eventOverlay.type === "reorder-creature-action-deck" ? (
@@ -29442,7 +29459,7 @@ export default function Simulator({
                 ) : eventOverlay.type === "choose-action-deck" ? (
                   <div className="mt-6">
                     <div className="grid gap-3 sm:grid-cols-2">
-                      {[{ id: "foundation", count: foundationDeck.length }, { id: "pals", count: palsDeck.length }].map((deck) => <div key={deck.id} className="rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-5 text-center"><div className="font-black capitalize">{deck.id} Deck</div><div className="text-sm text-cyan-200">{deck.count} remaining</div><div className="mt-3 flex items-center justify-center gap-3"><button type="button" disabled={!turnDrawSelection?.[deck.id]} onClick={() => adjustTurnDraw(deck.id, -1)} className="h-9 w-9 rounded-full border border-cyan-300 disabled:opacity-30">−</button><span className="text-3xl font-black">{turnDrawSelection?.[deck.id] ?? 0}</span><button type="button" disabled={(turnDrawSelection?.[deck.id] ?? 0) >= deck.count || (turnDrawSelection?.foundation ?? 0) + (turnDrawSelection?.pals ?? 0) >= (turnDrawSelection?.target ?? 0)} onClick={() => adjustTurnDraw(deck.id, 1)} className="h-9 w-9 rounded-full bg-cyan-500 font-black disabled:opacity-30">+</button></div></div>)}
+                      {[{ id: "foundation", count: foundationDeck.length }, { id: "pals", count: palsDeck.length }].map((deck) => <div key={deck.id} className="rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-5 text-center"><div className="font-black">{getPersonalDeckDisplayName(deck.id)}</div><div className="text-sm text-cyan-200">{deck.count} remaining</div><div className="mt-3 flex items-center justify-center gap-3"><button type="button" disabled={!turnDrawSelection?.[deck.id]} onClick={() => adjustTurnDraw(deck.id, -1)} className="h-9 w-9 rounded-full border border-cyan-300 disabled:opacity-30">−</button><span className="text-3xl font-black">{turnDrawSelection?.[deck.id] ?? 0}</span><button type="button" disabled={(turnDrawSelection?.[deck.id] ?? 0) >= deck.count || (turnDrawSelection?.foundation ?? 0) + (turnDrawSelection?.pals ?? 0) >= (turnDrawSelection?.target ?? 0)} onClick={() => adjustTurnDraw(deck.id, 1)} className="h-9 w-9 rounded-full bg-cyan-500 font-black disabled:opacity-30">+</button></div></div>)}
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
                       <button type="button" disabled={!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target} onClick={completeCreatureDrawAction} className="rounded-full bg-emerald-500 px-6 py-3 font-black disabled:opacity-40">Draw Selected Cards</button>
@@ -29477,7 +29494,7 @@ export default function Simulator({
                 ) : (
                   <div className={conditionDetailEvent ? "mt-5" : "mt-7"}>
                     {eventOverlay.revealedCards?.length ? <div className="mb-5"><div className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-amber-300">Revealed to You</div><div className="grid max-h-72 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">{eventOverlay.revealedCards.map((cardId, index) => { const card = cardsById[cardId]; return <div key={`${cardId}-${index}`} className="rounded-xl border-2 border-amber-400 bg-amber-400/10 p-2 text-center"><img src={card?.image} alt={card?.name} className="h-40 w-full rounded-lg bg-white object-contain" /><div className="mt-1 truncate text-xs font-black text-amber-100">{card?.name}</div><div className="text-[10px] font-bold uppercase text-amber-300">Revealed by opponent</div></div>; })}</div></div> : null}
-                    {eventOverlay.drawnCards?.length ? <div className="mb-5 grid max-h-64 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">{eventOverlay.drawnCards.map((entry, index) => { const card = cardsById[entry.cardId]; return <div key={`${entry.cardId}-${index}`} className={`rounded-xl border p-2 text-center ${entry.discarded ? "border-rose-400 bg-rose-500/10" : "border-cyan-400 bg-cyan-500/10"}`}><img src={card?.image} alt={card?.name} className="h-32 w-full rounded-lg bg-white object-contain" /><div className="mt-1 truncate text-xs font-bold">{card?.name}</div><div className="text-[10px] uppercase text-slate-300">{entry.source}{entry.discarded ? " • discarded" : ""}</div></div>; })}</div> : null}
+                    {eventOverlay.drawnCards?.length ? <div className="mb-5 grid max-h-64 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3">{eventOverlay.drawnCards.map((entry, index) => { const card = cardsById[entry.cardId]; return <div key={`${entry.cardId}-${index}`} className={`rounded-xl border p-2 text-center ${entry.discarded ? "border-rose-400 bg-rose-500/10" : "border-cyan-400 bg-cyan-500/10"}`}><img src={card?.image} alt={card?.name} className="h-32 w-full rounded-lg bg-white object-contain" /><div className="mt-1 truncate text-xs font-bold">{card?.name}</div><div className="text-[10px] uppercase text-slate-300">{getPersonalDeckDisplayLabel(entry.source)}{entry.discarded ? " • discarded" : ""}</div></div>; })}</div> : null}
                     {eventOverlay.repeatDamageCounterAbilityId ? <button type="button" onClick={() => repeatDamageCounterMove(eventOverlay.repeatDamageCounterAbilityId)} className="mr-3 rounded-full bg-violet-600 px-7 py-3 font-black text-white">Move Another Counter</button> : null}
                     <button type="button" autoFocus={conditionDetailEvent || undefined} onClick={conditionDetailEvent ? closeConditionDetails : closeEventOverlay} className={`rounded-full px-7 py-3 font-black text-white ${conditionDetailEvent || eventOverlay.sourceCardId ? "self-start" : "self-center"} ${conditionDetailEvent ? "bg-violet-600 hover:bg-violet-500" : eventOverlay.success ? "bg-emerald-500" : "bg-cyan-600"}`}>
                       {eventOverlay.continueLabel ?? (conditionDetailEvent ? "Close" : "Continue")}
@@ -29604,9 +29621,9 @@ export default function Simulator({
                     : modal === "coral-target"
                     ? "Choose a damaged coral to heal. You may cancel without spending the Support card."
                     : modal === "restock"
-                    ? "Select one to three Fish. Creature Schools return to Foundation; other Fish return to Pals."
+                    ? "Select one to three Fish. Creature Schools return to Foundation; other Fish return to Main."
                     : modal === "support-draw"
-                    ? "Split the replacement draw between your Foundation and Pals decks. Your current hand is discarded only after you confirm."
+                    ? "Split the replacement draw between your Foundation and Main decks. Your current hand is discarded only after you confirm."
                     : modal === "turn-draw"
                     ? `Choose where to draw ${turnDrawSelection?.target ?? 0} card(s). You may split them between both personal decks.`
                     : modal === "draw-result"
@@ -29676,10 +29693,10 @@ export default function Simulator({
                     },
                     {
                       id: "pals",
-                      label: "Pals",
+                      label: "Main",
                       count: palsDeck.length,
                       selected: turnDrawSelection?.pals ?? 0,
-                      image: palsDeckImg,
+                      image: mainDeckImg,
                       purpose: "Creatures & tactical tools",
                       guidance: "Creatures, Habitats, and Support. Stronger once your economy is established.",
                     },
@@ -29707,7 +29724,7 @@ export default function Simulator({
                 <div className="grid max-h-[620px] gap-4 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
                   {(turnDrawResult ?? []).map((entry, index) => {
                     const card = cardsById[entry.cardId];
-                    return <div key={`${entry.cardId}-${index}`} className={`rounded-3xl border-2 p-3 text-center ${entry.discarded ? "border-rose-300/50 bg-rose-400/10" : "border-cyan-300/50 bg-cyan-400/10"}`}><img src={card?.image} alt={card?.name} className="h-72 w-full rounded-2xl bg-slate-950/45 object-contain" /><div className="mt-2 font-black text-white">{card?.name}</div><div className="text-xs font-bold uppercase tracking-wider text-cyan-100/60">{entry.source} Deck</div>{entry.discarded ? <div className="mt-1 text-xs font-bold text-rose-200">Discarded by hand limit</div> : null}</div>;
+                    return <div key={`${entry.cardId}-${index}`} className={`rounded-3xl border-2 p-3 text-center ${entry.discarded ? "border-rose-300/50 bg-rose-400/10" : "border-cyan-300/50 bg-cyan-400/10"}`}><img src={card?.image} alt={card?.name} className="h-72 w-full rounded-2xl bg-slate-950/45 object-contain" /><div className="mt-2 font-black text-white">{card?.name}</div><div className="text-xs font-bold uppercase tracking-wider text-cyan-100/60">{getPersonalDeckDisplayName(entry.source)}</div>{entry.discarded ? <div className="mt-1 text-xs font-bold text-rose-200">Discarded by hand limit</div> : null}</div>;
                   })}
                 </div>
                 <button type="button" onClick={() => setModal(null)} className={`mt-5 w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950${tutorialTargetClass("continue-actions")}`} data-tutorial-target="continue-actions">Continue to Actions</button>
@@ -29718,7 +29735,7 @@ export default function Simulator({
                 <div className="grid gap-4 sm:grid-cols-2">
                   {[
                     { id: "foundation", label: "Foundation Deck", count: foundationDeck.length, image: foundationDeckImg },
-                    { id: "pals", label: "Pals Deck", count: palsDeck.length, image: palsDeckImg },
+                    { id: "pals", label: "Main Deck", count: palsDeck.length, image: mainDeckImg },
                   ].map((deck) => (
                     <div key={deck.id} className="rounded-3xl border border-cyan-300/20 bg-white/5 p-5 text-center shadow-inner">
                       <div className="mx-auto flex h-32 w-28 items-center justify-center rounded-2xl border border-white/10 bg-slate-950/45"><Image src={deck.image} alt={deck.label} width={112} height={112} className="object-contain" /></div>

@@ -34,14 +34,12 @@ export default function MobileDrawTray({
       label: "Foundation",
       count: foundationCount,
       selected: selection.foundation,
-      detail: "Corals & schools",
     },
     {
       id: "pals",
-      label: "Pals",
+      label: "Main",
       count: palsCount,
       selected: selection.pals,
-      detail: "Creatures & tools",
     },
   ];
 
@@ -69,7 +67,7 @@ export default function MobileDrawTray({
               <div key={deck.id} className={`seapals-mobile-draw-option is-${deck.id}`} data-tutorial-draw-deck={deck.id}>
                 <div className="seapals-mobile-draw-option-copy">
                   <strong>{deck.label}</strong>
-                  <span>{deck.count} left · {deck.detail}</span>
+                  <span>{deck.count} card{deck.count === 1 ? "" : "s"} remaining</span>
                 </div>
                 <div className="seapals-mobile-draw-stepper" aria-label={`${deck.label} cards selected: ${deck.selected}`}>
                   <button

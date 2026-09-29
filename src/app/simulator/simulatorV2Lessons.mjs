@@ -57,7 +57,7 @@ const drawCheckpoint = ({
   id = "tutorial-draw-card",
   title = "Choose your draw",
   deckType = "pals",
-  instruction = `Draw one card from the ${deckType === "foundation" ? "Foundation" : "Pals"} Deck.`,
+  instruction = `Draw one card from the ${deckType === "foundation" ? "Foundation" : "Main"} Deck.`,
 } = {}) => checkpoint(
   id, ACTION.CARD_DRAWN, title, instruction,
   [atLeast("details.count", 1), atLeast(`details.${deckType}Count`, 1)],
@@ -343,7 +343,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     checkpoints: [
       drawCheckpoint({
         id: "v2-draw-opening-attacker",
-        title: "Begin your turn with a Pals draw",
+        title: "Begin your turn with a Main Deck draw",
         deckType: "pals",
       }),
       buildCheckpoint("v2-place-opening-attacker", "Play Porcupine Fish", "porcupine-fish"),
@@ -371,7 +371,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
         equals("details.cap", 8),
         equals("details.conditionId", "clear-water"),
       ]),
-      checkpoint("tutorial-draw-card", ACTION.CARD_DRAWN, "Draw Blue Crab", "Choose one card from the Pals Deck.", [
+      checkpoint("tutorial-draw-card", ACTION.CARD_DRAWN, "Draw Blue Crab", "Choose one card from the Main Deck.", [
         equals("details.count", 1),
         equals("details.palsCount", 1),
       ]),
@@ -756,7 +756,7 @@ function firstReefDrawVisibleCopy(expectedDraw) {
     return "Your first Coral upgrade is ready! Coral stages live in the Foundation Deck. To upgrade, you need the matching next Stage in your hand, and the current stage must have survived a full turn. Choose one card from the Foundation Deck, then confirm your draw.";
   }
   if (expectedDraw?.cardId === "sea-urchin") {
-    return "Time to welcome your first creature! Each round, you choose which deck to draw from. The Foundation Deck holds Corals and Coral upgrades. The Pals Deck holds creatures, Habitats, and Support cards. Sea Urchin is a creature, so choose one card from the Pals Deck, then confirm your draw.";
+    return "Time to welcome your first creature! Each round, you choose which deck to draw from. The Foundation Deck holds Corals and Coral upgrades. The Main Deck holds creatures, Habitats, and Support cards. Sea Urchin is a creature, so choose one card from the Main Deck, then confirm your draw.";
   }
   return null;
 }
@@ -962,8 +962,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       wrongDeck === "foundation" ? uiState.drawFoundationSelected : uiState.drawPalsSelected,
     ) > 0;
     if (expectedDraw && wrongDeckSelected) {
-      const expectedDeckName = expectedDraw.deckType === "foundation" ? "Foundation" : "Pals";
-      const wrongDeckName = wrongDeck === "foundation" ? "Foundation" : "Pals";
+      const expectedDeckName = expectedDraw.deckType === "foundation" ? "Foundation" : "Main";
+      const wrongDeckName = wrongDeck === "foundation" ? "Foundation" : "Main";
       return help(
         "draw-controls",
         `For this step, draw from the ${expectedDeckName} Deck.`,
@@ -989,41 +989,41 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const seaUrchinWasDefeated = Array.isArray(uiState.discardPileCardIds)
       && uiState.discardPileCardIds.includes("sea-urchin");
     const scenarioDrawMessage = selected.id === "apex-predators"
-      ? "Your Coral Reef is established and Brain Coral has an Apex slot. Draw Hammerhead from the Pals Deck so you can use the RP you collected for the final play."
+      ? "Your Coral Reef is established and Brain Coral has an Apex slot. Draw Hammerhead from the Main Deck so you can use the RP you collected for the final play."
       : selected.id === "filter-feeder"
-      ? "You expanded School Density and saved enough RP for a giant creature. Ocean Sunfish is still in your deck, so draw Capt. Dani from the Pals Deck and use her Support effect to find it."
+      ? "You expanded School Density and saved enough RP for a giant creature. Ocean Sunfish is still in your deck, so draw Capt. Dani from the Main Deck and use her Support effect to find it."
       : firstReefUpgradeDraw
         ? "Brain Coral Stage 1 is on top of your Foundation Deck. Draw it so you can level up the Coral you placed last round."
       : firstAttackOpeningDraw
-        ? "A turn begins with its required draw. Porcupine Fish is on top of your Pals Deck; draw it now so we can explore how creatures interact through the food web."
+        ? "A turn begins with its required draw. Porcupine Fish is on top of your Main Deck; draw it now so we can explore how creatures interact through the food web."
       : firstAttackPredatorDraw
         ? `${seaUrchinWasDefeated
           ? "Scavenge brought Sea Urchin back to your hand for this round."
           : "Your reef is ready for its next play."
-        } Great Barracuda is on top of your Pals Deck. Its type line says Reef Predator: Reef tells you which ecosystem zone and slots it uses, while Predator is its creature class. Draw it now so we can see how class controls placement and targeting.`
+        } Great Barracuda is on top of your Main Deck. Its type line says Reef Predator: Reef tells you which ecosystem zone and slots it uses, while Predator is its creature class. Draw it now so we can see how class controls placement and targeting.`
       : selected.id === "first-attack"
-        ? "Blue Crab is on top of your Pals Deck. Draw it to see how a Passive works automatically, then use its non-attack Scavenge Action."
+        ? "Blue Crab is on top of your Main Deck. Draw it to see how a Passive works automatically, then use its non-attack Scavenge Action."
         : selected.id === "first-reef"
-          ? "Sea Urchin is waiting on top of your Pals Deck. Draw it so you can place your first creature."
-        : "Choose the Pals Deck when you want creatures and other Pals cards.";
+          ? "Sea Urchin is waiting on top of your Main Deck. Draw it so you can place your first creature."
+        : "Choose the Main Deck when you want creatures, Habitats, and Support cards.";
     const drawMessage = conceptWasPreviouslyTaught(uiState, SIMULATOR_V2_LESSON_CONCEPTS.DRAWING)
       ? scenarioDrawMessage
       : selected.id === "first-reef"
         ? scenarioDrawMessage
-        : `The Pals Deck holds creatures and other Pals cards. ${scenarioDrawMessage}`;
+        : `The Main Deck holds creatures, Habitats, and Support cards. ${scenarioDrawMessage}`;
     const drawCount = Math.max(1, Number(uiState.drawTarget ?? 1));
     return help(
       "draw-controls",
       drawMessage,
       firstReefDrawCopy
-        ?? `Choose ${drawCount === 1 ? "one card" : `${drawCount} cards`} from the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Pals"} Deck.`,
+        ?? `Choose ${drawCount === 1 ? "one card" : `${drawCount} cards`} from the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Main"} Deck.`,
       {
         targetDeck: expectedDraw?.deckType ?? "pals",
         targetDrawAction: "add",
         ...(firstReefDrawCopy ? {
           cue: firstReefDrawCue,
-          pointerPrompt: `Add one card from the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Pals"} Deck.`,
-          targetLabel: `the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Pals"} Deck control`,
+          pointerPrompt: `Add one card from the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Main"} Deck.`,
+          targetLabel: `the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Main"} Deck control`,
         } : {}),
       },
     );
@@ -1150,14 +1150,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (uiState.modal === "search" && selected.searchCardId) {
       return help(
         "search-card",
-        name(cardId) + " found the eligible Filter Feeders in your Pals Deck. Choose the creature that completes this plan.",
+        name(cardId) + " found the eligible Filter Feeders in your Main Deck. Choose the creature that completes this plan.",
         "Choose " + name(selected.searchCardId) + ".",
         { targetSearchCardId: selected.searchCardId },
       );
     }
     const selectedCard = uiState.selectedHandCard === cardId
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
-    const message = "Support cards create one-time effects during your main phase, then go to the discard pile. Capt. Dani searches your Pals Deck for a Filter Feeder. Her text also prevents another Support this turn, so play her when you are ready to find Ocean Sunfish!";
+    const message = "Support cards create one-time effects during your main phase, then go to the discard pile. Capt. Dani searches your Main Deck for a Filter Feeder. Her text also prevents another Support this turn, so play her when you are ready to find Ocean Sunfish!";
     const action = selectedCard
       ? "Choose Play Card."
       : "Select Capt. Dani in your hand, then play her to begin the search.";
@@ -1395,14 +1395,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     return help(
       "rp-bank",
       "Your four Corals are producing again, and Arrow Crab raises your RP bank limit. This next turn gives you enough RP to pay Hammerhead's 6 RP cost while Coral Reef and the Apex slot stay ready.",
-      "Continue to draw Hammerhead from the Pals Deck.",
+      "Continue to draw Hammerhead from the Main Deck.",
     );
   }
   if (current.actionType === ACTION.RP_COLLECTED && selected.id === "filter-feeder") {
     return help(
       "rp-bank",
       "Your plan worked! You made room in School Density last turn, and your Foundations refilled the RP needed for Ocean Sunfish. First, draw Capt. Dani and use her one-time Support effect to search for that Filter Feeder.",
-      "Continue to draw Capt. Dani from the Pals Deck.",
+      "Continue to draw Capt. Dani from the Main Deck.",
     );
   }
   return help(
@@ -1454,7 +1454,7 @@ export function getSimulatorV2LessonActionBlock({
     const expected = getSimulatorV2ExpectedDraw(selected, current);
     if (current.actionType === ACTION.CARD_DRAWN && expected && (!deckType || deckType === expected.deckType)) return "";
     return expected
-      ? "Choose the " + (expected.deckType === "pals" ? "Pals" : "Foundation") + " Deck for this lesson's draw."
+      ? "Choose the " + (expected.deckType === "pals" ? "Main" : "Foundation") + " Deck for this lesson's draw."
       : "This practice board is already ready for its next action.";
   }
   if (action === "attack") {

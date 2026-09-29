@@ -20,7 +20,7 @@ function isBoardLayoutQuestion(question) {
 }
 
 function isDeckChoiceQuestion(question) {
-  return /\b(?:which|what) deck (?:should|do) i draw|foundation (?:deck )?or pals|draw from (?:the )?(?:foundation|pals)\b/i.test(question);
+  return /\b(?:which|what) deck (?:should|do) i draw|foundation (?:deck )?or (?:main|pals)|draw from (?:the )?(?:foundation|main|pals)\b/i.test(question);
 }
 
 function phaseHelp(context) {
@@ -29,7 +29,7 @@ function phaseHelp(context) {
     return "Choose a legal Base Coral or Creature School from your opening hand, play it into the foundation area, then begin Round 1.";
   }
   if (phase === "draw") {
-    return "Choose the required number of cards from your Foundation and Pals decks, confirm the draw, review the cards, and continue to actions.";
+    return "Choose the required number of cards from your Foundation and Main decks, confirm the draw, review the cards, and continue to actions.";
   }
   if (phase === "main") {
     return "During your action phase, you may play affordable legal cards, use available card actions, and make legal attacks in any order. Check your RP before ending the turn.";
@@ -120,7 +120,7 @@ export function resolveSimulatorFinnQuestion(rawQuestion, context = {}) {
       delegatedQuestion,
       answer: Object.freeze({
         title: "Choose the deck that answers your next need",
-        text: "The Foundation Deck contains Corals and Creature Schools that grow RP income and legal play spaces, so it is usually strongest early. The Pals Deck contains creatures, Habitats, and Support cards; choose it once your foundation can support the tactic or card type you need.",
+        text: "The Foundation Deck contains Corals and Creature Schools that grow RP income and legal play spaces, so it is usually strongest early. The Main Deck contains creatures, Habitats, and Support cards; choose it once your foundation can support the tactic or card type you need.",
       }),
     });
   }
