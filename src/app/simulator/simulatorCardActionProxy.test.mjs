@@ -139,6 +139,30 @@ test("ready attacks replace truncated prose with die and target symbols", () => 
   assert.match(proxyStyles, /\.targetIconChip\s*\{[\s\S]*?width:\s*1\.35rem;[\s\S]*?height:\s*1\.35rem;/);
 });
 
+test("ready utility actions point to the full description below instead of truncating it", () => {
+  assert.match(
+    proxySource,
+    /<span className=\{styles\.description\}>[\s\S]*?\{ready \? "See description below" : action\.availability\.reason\}[\s\S]*?<\/span>/,
+    "a ready action proxy should show a stable cue instead of a clipped rule excerpt",
+  );
+  assert.doesNotMatch(
+    proxySource,
+    /\{ready \? action\.text : action\.availability\.reason\}/,
+    "the action proxy must not repeat the printed rule text",
+  );
+
+  const inspector = sourceSection(
+    simulatorSource,
+    "{(inspectedCardData.actions ?? []).length ? (",
+    "{tutorialHelpInline && [\"attack-button\", \"utility-action-button\"].includes(tutorialHelp.target) ? (",
+  );
+  assert.match(
+    inspector,
+    /<strong>\{actionName\}: <\/strong>\{actionText\}/,
+    "the complete printed rule should remain available in the Actions details section",
+  );
+});
+
 test("the proxy keeps tutorial hooks while opponent and reference previews stay read-only", () => {
   assert.match(proxySource, /data-tutorial-target=\{/);
   assert.match(proxySource, /data-tutorial-action-key=\{/);

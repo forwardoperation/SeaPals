@@ -86,7 +86,7 @@ export default function CardActionProxyOverlay({
                   </span>
                 ) : (
                   <span className={styles.description}>
-                    {ready ? action.text : action.availability.reason}
+                    {ready ? "See description below" : action.availability.reason}
                   </span>
                 )}
               </button>
