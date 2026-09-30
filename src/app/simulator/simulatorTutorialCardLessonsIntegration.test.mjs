@@ -78,6 +78,11 @@ test("fullscreen lesson keeps the card clear and docks the coach and navigation 
   assert.equal((overlaySource.match(/\{activeTitle\}/g) ?? []).length, 1, "the title should appear only in the screen-reader heading");
   assert.doesNotMatch(overlaySource, /\bhideTitle\b/, "all card-tour ribbons should use the same title-free presentation");
   assert.match(overlaySource, /className="seapals-card-lesson-narration"[\s\S]*marginTop: 0/);
+  assert.match(
+    overlaySource,
+    /className="seapals-card-lesson-narration"[\s\S]*maxBlockSize: "min\(7lh, 20dvh\)"/,
+    "the full-screen card tour should use the available narration space while preserving room for its fixed controls",
+  );
   assert.doesNotMatch(overlaySource, /<header\b|segmentProgressLabel|\{guide\.name\}/);
   assert.match(overlaySource, /\{onSkip \? <button[^>]*onClick=\{onSkip\}[\s\S]*aria-label=\{introduction \? "Skip introduction" : "Skip card lesson"\}>Skip<\/button> : null\}/);
   assert.match(overlaySource, /if \(event\.key === "Escape"\)[\s\S]*onSkip\?\.\(\)/);
@@ -153,7 +158,7 @@ test("multi-concept cards advance one arrow and one coach explanation at a time"
   assert.match(overlaySource, /key=\{createProfessorSpeechKey\(`\$\{lesson\.cueId\}:\$\{activeSegment\?\.id \?\? safeSegmentIndex\}`,[\s\S]*?activeMessage\)\}/);
 });
 
-test("card-tour narration uses the shared typewriter speed and scroll behavior", () => {
+test("card-tour narration uses the shared typewriter speed with a taller responsive scroll viewport", () => {
   const overlaySource = simulatorSource.slice(
     simulatorSource.indexOf("function TutorialCardLessonOverlay"),
     simulatorSource.indexOf("function BoardBubbleBursts"),

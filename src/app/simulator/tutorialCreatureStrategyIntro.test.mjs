@@ -20,6 +20,7 @@ const jiti = createJiti(filename, {
 
 const { allCards } = jiti(path.join(projectRoot, "src/data/cards/index.js"));
 const creatures = allCards.filter((card) => String(card.kind).toLowerCase() === "creature");
+const creatureById = new Map(creatures.map((card) => [card.id, card]));
 const QUANTITY_WORDS = [
   "zero",
   "one",
@@ -47,6 +48,12 @@ function comparableText(value) {
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getProductionCreatureIntroduction(id) {
+  const card = creatureById.get(id);
+  assert.ok(card, `${id} should exist in the production creature catalog`);
+  return getCreatureGameplayIntroduction(card);
 }
 
 function getExactSpecPatterns(card) {
@@ -189,4 +196,204 @@ test("the porcupine fish pitch explains its control role before Crunch and Toxic
   assert.ok(crunch, "Crunch should retain its own rules step");
   assert.match(toxic.message, /coin.*tails.*discard the consuming card/i);
   assert.match(crunch.message, /costs 1 RP.*D4.*Invertebrate/i);
+});
+
+test("defensive reactions and Toxic Immunity are pitched as survival tools", () => {
+  const expectations = [
+    ["flying-fish", /Take to the Skies.*incoming attack miss/i],
+    ["bluefin-tuna", /Agility.*stop an incoming attack/i],
+    ["african-pompano", /Fierce Fighter.*reroll.*successful attack/i],
+    ["peacock-squid", /Transparency.*screens out attacks/i],
+    ["frogfish", /Toxic Immunity.*hunt Toxic prey.*retaliation/i],
+  ];
+
+  for (const [id, pattern] of expectations) {
+    const introduction = getCreatureGameplayIntroduction(creatureById.get(id));
+    assert.match(introduction, pattern, `${id} should explain its actual defensive strategy`);
+    assert.doesNotMatch(
+      introduction,
+      /(?:Take to the Skies|Agility|Fierce Fighter|Transparency|Toxic Immunity).*proactive way to pressure/i,
+      `${id} should not present a defensive rule as an attack`,
+    );
+  }
+});
+
+test("card disruption, Coral pressure, and hand shaping receive distinct strategic pitches", () => {
+  assert.match(
+    getCreatureGameplayIntroduction(creatureById.get("picasso-triggerfish")),
+    /Target.*strips an option.*opponent's hand/i,
+  );
+  const arrowCrab = getCreatureGameplayIntroduction(creatureById.get("arrow-crab"));
+  assert.match(arrowCrab, /Scavenge.*trades spare cards.*specific card/i);
+  assert.doesNotMatch(arrowCrab, /Scavenge.*recovers.*spent/i);
+  assert.match(
+    getCreatureGameplayIntroduction(creatureById.get("fairy-parrotfish")),
+    /foundation saboteur.*Eat.*Coral foundations/i,
+  );
+  assert.match(
+    getCreatureGameplayIntroduction(creatureById.get("bottlenose-dolphin")),
+    /refills your hand.*targeted pressure.*Echo Locate.*refills your hand/i,
+  );
+  assert.match(
+    getCreatureGameplayIntroduction(creatureById.get("cookie-cutter-shark")),
+    /resource thief.*Parasite.*siphons RP/i,
+  );
+});
+
+test("plural creatures and Coral Reef payoff cards read naturally", () => {
+  assert.match(getCreatureGameplayIntroduction(creatureById.get("oysters")), /^The oysters are\b/i);
+  assert.match(getCreatureGameplayIntroduction(creatureById.get("spinner-dolphins")), /^The spinner dolphins are\b/i);
+  assert.match(
+    getCreatureGameplayIntroduction(creatureById.get("french-angelfish")),
+    /scoring specialist.*Coral Reef.*extra scoring value/i,
+  );
+  assert.match(
+    getCreatureGameplayIntroduction(creatureById.get("blue-tang")),
+    /Habitat-gated scoring.*Coral Reef.*immediate scoring value/i,
+  );
+});
+
+test("Scavenge pitches preserve each card's actual card-flow role", async (t) => {
+  const drawScavengers = ["emerald-crab", "bonito-tuna", "deep-cucumber"];
+  for (const id of drawScavengers) {
+    await t.test(`${id} draws fresh cards`, () => {
+      const introduction = getProductionCreatureIntroduction(id);
+      assert.match(introduction, /Scavenge(?=[^.]*\b(?:draw|fresh|new)\w*\b)(?=[^.]*\b(?:cards?|options)\b)/i);
+      assert.doesNotMatch(introduction, /Scavenge[^.]*\b(?:recover|return|recycle|specific card)\b/i);
+    });
+  }
+
+  for (const id of ["blue-crab", "market-squid"]) {
+    await t.test(`${id} recovers a discard into hand`, () => {
+      const introduction = getProductionCreatureIntroduction(id);
+      assert.match(
+        introduction,
+        /Scavenge(?=[^.]*\b(?:recover|return|move)\w*\b)(?=[^.]*\b(?:discard|spent)\b)(?=[^.]*\bhand\b)/i,
+      );
+      assert.doesNotMatch(introduction, /Scavenge[^.]*\bdeck\b/i);
+    });
+  }
+
+  await t.test("arrow-crab trades hand cards for a chosen deck card", () => {
+    const introduction = getProductionCreatureIntroduction("arrow-crab");
+    assert.match(
+      introduction,
+      /Scavenge(?=[^.]*\b(?:discard|spare|expendable|trade)\w*\b)(?=[^.]*\b(?:search|specific|needed?)\b)(?=[^.]*\b(?:deck|card)\b)/i,
+    );
+  });
+
+  await t.test("giant-isopod returns a discard to the deck", () => {
+    const introduction = getProductionCreatureIntroduction("giant-isopod");
+    assert.match(
+      introduction,
+      /Scavenge(?=[^.]*\b(?:recover|return|recycle)\w*\b)(?=[^.]*\b(?:discard|spent)\b)(?=[^.]*\bdeck\b)/i,
+    );
+    assert.doesNotMatch(introduction, /Scavenge[^.]*\bhand\b/i);
+  });
+});
+
+test("Blue Sea Dragon describes its own Munch attack and defensive Toxic rule", () => {
+  const introduction = getProductionCreatureIntroduction("blue-sea-dragon");
+
+  assert.match(introduction, /Munch(?=[^.]*\bInvertebrates?\b)(?=[^.]*\bMan O['’] War\b)/i);
+  assert.match(introduction, /Toxic[^.]*(?:incoming attack|targeted|attack fail|deter)/i);
+  assert.doesNotMatch(introduction, /Munch[^.]*(?:Coral|RP production)/i);
+  assert.doesNotMatch(introduction, /Toxic[^.]*(?:consum|eaten|usual retaliation)/i);
+});
+
+test("attached-Coral protection and source-specific Toxic Immunity stay precise", () => {
+  const sargeantMajor = getProductionCreatureIntroduction("sargeant-major");
+  assert.match(
+    sargeantMajor,
+    /Coral Protector(?=[^.]*\bCoral\b)(?=[^.]*\b(?:host|attach)\w*\b)(?=[^.]*\b(?:durab|protect|reinforc|harder to destroy)\w*\b)/i,
+  );
+  assert.doesNotMatch(sargeantMajor, /Coral Protector[^.]*flexible placement/i);
+
+  const giantTriton = getProductionCreatureIntroduction("giant-triton");
+  assert.match(giantTriton, /Toxic Immunity[^.]*Crown of Thorns/i);
+  assert.doesNotMatch(giantTriton, /Toxic Immunity[^.]*Toxic prey/i);
+  assert.doesNotMatch(giantTriton, /Starfish Hunt[^,.]*Starfish[^,.]*(?:Toxic|retaliation)/i);
+});
+
+test("one-time and triggered economy effects are not pitched as generic long-term engines", async (t) => {
+  await t.test("Crevalle Jack presents Nutrient Rich as an immediate play-time boost", () => {
+    const introduction = getProductionCreatureIntroduction("crevalle-jack");
+    assert.match(introduction, /Nutrient Rich[^.]*\b(?:immediate|on play|enters play|one-time|burst)\b/i);
+    assert.match(introduction, /Nutrient Rich[^.]*\b(?:RP|resource)\b/i);
+    assert.doesNotMatch(introduction, /\b(?:long-term|investing early|economy engine)\b/i);
+  });
+
+  for (const id of ["krill-bloom-base", "krill-bloom-stage1", "krill-bloom-stage2"]) {
+    await t.test(`${id} keeps Plenteous tied to Krill Bloom's destruction recovery`, () => {
+      const introduction = getProductionCreatureIntroduction(id);
+      const plenteousIndex = introduction.indexOf("Plenteous");
+      assert.notEqual(plenteousIndex, -1, "the introduction should explain Plenteous");
+      const plenteousPitch = introduction.slice(plenteousIndex);
+      assert.match(plenteousPitch, /\b(?:destroyed|falls|removed)\b/i);
+      assert.match(plenteousPitch, /\bKrill Bloom\b/i);
+      assert.match(plenteousPitch, /\bdiscard\b[^.]*\bdeck\b|\bdeck\b[^.]*\bdiscard\b/i);
+      assert.doesNotMatch(plenteousPitch, /recovers value from cards? that (?:has|have) already been spent/i);
+    });
+  }
+});
+
+test("Deep-only attacks retain their zone restriction in the strategic pitch", () => {
+  assert.match(
+    getProductionCreatureIntroduction("dumbo-octopus"),
+    /Hover Strike(?=[^.]*\bDeep Fish\b)(?=[^.]*\bDeep Invertebrates?\b)/i,
+  );
+  assert.match(
+    getProductionCreatureIntroduction("peacock-squid"),
+    /Quick Grab[^.]*\bDeep Invertebrates?\b/i,
+  );
+});
+
+test("conditional attack bonuses name the Habitat that actually enables them", async (t) => {
+  const expectations = [
+    ["great-barracuda", "Quick Strike", "Coral Reef"],
+    ["goliath-grouper", "Ambush Hunt", "Coral Reef"],
+    ["blue-shark-oceanic", "Tireless Pursuit", "Open Ocean"],
+    ["galapagos-shark", "Frenzied Attack", "Open Ocean"],
+    ["pacific-grenadier", "Bite", "Abyss"],
+    ["humpback-anglerfish", "Lure", "Abyss"],
+    ["chimera", "Bite", "Abyss"],
+    ["deep-sea-skate", "Crunch", "Abyss"],
+    ["goblin-shark", "Terror Strike", "Abyss"],
+  ];
+
+  for (const [id, ability, habitat] of expectations) {
+    await t.test(`${id} names ${habitat}`, () => {
+      const introduction = getProductionCreatureIntroduction(id);
+      assert.match(
+        introduction,
+        new RegExp(`${escapeRegExp(ability)}[^.]*\\b${escapeRegExp(habitat)}\\b`, "i"),
+      );
+    });
+  }
+});
+
+test("ordinary attacks do not make false tempo claims", async (t) => {
+  const expectations = [
+    ["spanish-hogfish", /Crunch[^.]*\bInvertebrates?\b/i],
+    ["mantis-shrimp", /Shatter[^.]*\bInvertebrates?\b/i],
+    ["thresher-shark", /Stun Strike[^.]*(?:Apex|Predator|Fish)/i],
+    ["loggerhead-sea-turtle", /Ram(?=[^.]*\b(?:creatures?|Invertebrates?)\b)(?=[^.]*\b(?:Coral|foundation)\w*\b)/i],
+  ];
+
+  for (const [id, rolePattern] of expectations) {
+    await t.test(id, () => {
+      const introduction = getProductionCreatureIntroduction(id);
+      assert.match(introduction, rolePattern);
+      assert.doesNotMatch(
+        introduction,
+        /tempo attacker|limit(?:s|ing)? (?:the )?opponent['’]s response|constrain(?:s|ing)? (?:the )?opponent/i,
+      );
+    });
+  }
+});
+
+test("Giant Tube Worm is pitched as simple board development rather than invented utility", () => {
+  const introduction = getProductionCreatureIntroduction("giant-tube-worm");
+  assert.match(introduction, /(?:board (?:piece|presence|development)[^.]*scor|scor[^.]*board (?:piece|presence|development))/i);
+  assert.doesNotMatch(introduction, /\b(?:utility|flexible)\b/i);
 });

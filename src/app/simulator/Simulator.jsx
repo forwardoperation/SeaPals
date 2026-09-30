@@ -3847,6 +3847,7 @@ function TutorialCardLessonOverlay({
                   fontSize: "clamp(0.875rem, 1.6vw, 1rem)",
                   fontWeight: 600,
                   lineHeight: 1.625,
+                  maxBlockSize: "min(7lh, 20dvh)",
                 }}
                 message={activeMessage}
                 textSpeed={guide.textSpeed}

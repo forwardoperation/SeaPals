@@ -292,13 +292,16 @@ test("the Clownfish tour points to each printed field on the 375 by 525 card", (
   assert.notDeepEqual([defenseRegion.tipX, defenseRegion.tipY], [188, 422], "Defense must never fall back to the old centered stats cue");
 });
 
-test("creature tours introduce the printed name before the class and use grammatical common nouns", () => {
+test("creature tours introduce the printed name with strategy before teaching the class", () => {
   assert.equal(getTutorialCardLessonSubject(clownfish), "the clownfish");
   const clownfishLesson = createGuidedAcademyCardLesson(clownfish, { cardClassLabel: "Reef Fish" });
   assert.equal(clownfishLesson.title, "Meet the clownfish");
   assert.equal(clownfishLesson.segments[0].title, "Meet the clownfish");
   assert.match(clownfishLesson.message, /^Before you use the clownfish,/);
-  assert.match(clownfishLesson.segments[0].message, /^The clownfish is a Reef Fish\./);
+  assert.match(clownfishLesson.segments[0].message, /^The clownfish is .*ecosystem/i);
+  assert.match(clownfishLesson.segments[0].message, /Symbiosis.*Anemone.*partnership/i);
+  assert.match(clownfishLesson.segments[0].message, /Choose it when/i);
+  assert.doesNotMatch(clownfishLesson.segments[0].message, /Reef Fish|\b2\s*(?:RP|VP)\b|\bD4\b/i);
   assert.equal(clownfishLesson.segments[0].focus, "name");
   assert.equal(clownfishLesson.segments[1].focus, "type");
   assert.equal(clownfishLesson.segments[2].focus, "class-icon");
@@ -323,15 +326,16 @@ test("creature tours introduce the printed name before the class and use grammat
   }, { cardClassLabel: "Reef Invertebrate" });
   assert.equal(getTutorialCardLessonSubject({ name: "Arrow Crab", kind: "creature" }), "the arrow crab");
   assert.equal(arrowCrabLesson.segments[0].title, "Meet the arrow crab");
-  assert.match(arrowCrabLesson.segments[0].message, /^The arrow crab is a Reef Invertebrate\./);
+  assert.match(arrowCrabLesson.segments[0].message, /^The arrow crab is a utility piece/i);
+  assert.doesNotMatch(arrowCrabLesson.segments[0].message, /Reef Invertebrate/i);
 });
 
-test("creature introductions explain each card's gameplay role and why a player might choose it", () => {
+test("creature introductions pitch strategy while leaving exact specs for later steps", () => {
   const examples = [
     {
       label: "Reef Fish",
       card: clownfish,
-      expected: [/Symbiosis.*anemone/i, /2 VP creature/i],
+      expected: [/ecosystem builder/i, /Symbiosis.*Anemone.*partnership/i],
     },
     {
       label: "Reef Invertebrate",
@@ -346,7 +350,7 @@ test("creature introductions explain each card's gameplay role and why a player 
         passives: [{ name: "Eco Boost", text: "Add +1 to your max resource bank while this card is in play." }],
         actions: [{ name: "Scavenge", text: "Choose a card from your discard and put it into your hand.", cost: { rp: 2 } }],
       },
-      expected: [/Scavenge.*discard.*hand/i, /Eco Boost.*resource bank/i],
+      expected: [/utility engine.*resources.*right cards/i, /Scavenge.*recovers.*card.*hand/i, /Eco Boost.*RP engine/i],
     },
     {
       label: "Reef Predator",
@@ -364,7 +368,7 @@ test("creature introductions explain each card's gameplay role and why a player 
           effects: [{ type: "attack", attackDice: "D6", target: { categories: ["fish", "predator"] } }],
         }],
       },
-      expected: [/Quick Strike.*enters play/i, /D6.*Fish or Predator/i],
+      expected: [/proactive hunter/i, /Quick Strike.*pressure.*Fish.*Predators/i],
     },
     {
       label: "Reef Apex",
@@ -380,7 +384,7 @@ test("creature introductions explain each card's gameplay role and why a player 
         passives: [{ name: "Intimidation", text: "Opponent's fish cost +1 RP to play." }],
         onPlay: [{ name: "Ravage", text: "Damage a Coral, then perform a D8 attack twice." }],
       },
-      expected: [/Coral Reef Habitat.*ecosystem/i, /Ravage.*D8 attack twice/i, /Intimidation.*cost \+1 RP/i],
+      expected: [/sturdy finisher/i, /Ravage.*foundations.*creatures/i, /Intimidation.*Fish more expensive/i],
     },
     {
       label: "Oceanic Filter Feeder",
@@ -399,7 +403,7 @@ test("creature introductions explain each card's gameplay role and why a player 
           "Requires Open Ocean or Coral Reef Habitat in your ecosystem.",
         ],
       },
-      expected: [/gameplay role is scoring.*8 VP.*D8 defense/i, /150 School Density.*Open Ocean or Coral Reef Habitat/i],
+      expected: [/late-game scoring payoff/i, /ocean engine.*major scoring play/i],
     },
     {
       label: "Oceanic Creature School",
@@ -413,16 +417,85 @@ test("creature introductions explain each card's gameplay role and why a player 
         passives: ["Eco Foundation: Collect 3 RP at the start of your turn."],
         onPlay: ["Momentum: Search your deck for a Creature School."],
       },
-      expected: [/Foundation.*50 School Density.*without using a Coral's creature slot/i, /Eco Foundation.*Collect 3 RP/i, /Momentum.*Search your deck/i],
+      expected: [/foundation engine.*ocean ecosystem/i, /Momentum.*consistency/i, /Eco Foundation.*RP engine/i],
     },
   ];
 
   for (const { card, label, expected } of examples) {
     const introduction = getCreatureGameplayIntroduction(card, label);
-    for (const pattern of expected) assert.match(introduction, pattern, `${card.id} should describe its printed role`);
+    for (const pattern of expected) assert.match(introduction, pattern, `${card.id} should explain its strategic role`);
     assert.match(introduction, /Choose it when [^.]+\.$/, `${card.id} should end with a reason to play it`);
-    assert.doesNotMatch(introduction, /\ba Oceanic\b/, `${card.id} should use a grammatical article`);
+    assert.doesNotMatch(introduction, /\d|\bD(?:4|6|8|10|12|20)\b/i, `${card.id} should reserve exact specs for later steps`);
   }
+
+  const porcupineIntroduction = getCreatureGameplayIntroduction({
+    id: "porcupine-fish",
+    name: "Porcupine Fish",
+    kind: "creature",
+    category: "fish",
+    cost: { rp: 2 },
+    victoryPoints: 2,
+    defense: { dice: "D4" },
+    passives: [{ name: "Toxic", text: "If eaten, flip a coin; on tails, discard the consuming card." }],
+    actions: [{
+      name: "Crunch",
+      text: "Perform a D4 attack against an Invertebrate.",
+      cost: { rp: 1 },
+      effect: { type: "attack", attackDice: "D4", target: { categories: ["invertebrate"] } },
+    }],
+  }, "Reef Fish");
+  assert.match(porcupineIntroduction, /Crunch.*Invertebrates/i);
+  assert.match(porcupineIntroduction, /Invertebrates.*search.*recovery/i);
+  assert.match(porcupineIntroduction, /Toxic.*consum.*(?:risky|dangerous)/i);
+  assert.doesNotMatch(porcupineIntroduction, /\d|\bRP\b|\bVP\b|\bD4\b/i);
+
+  const anemoneIntroduction = getCreatureGameplayIntroduction({
+    id: "anemone",
+    name: "Anemone",
+    kind: "creature",
+    category: "invertebrate",
+    onPlay: [{ name: "Symbiosis", text: "Search your hand for a Clownfish and attach it inside this Anemone." }],
+    passives: [{ name: "Stinging Fortress", text: "Adds defensive protection to any Clownfish inside the Anemone." }],
+  }, "Reef Invertebrate");
+  assert.match(anemoneIntroduction, /Symbiosis.*recruits a clownfish.*hosts it inside the anemone/i);
+  assert.match(anemoneIntroduction, /Stinging Fortress.*adds protection.*clownfish/i);
+
+  const blueCrabIntroduction = getCreatureGameplayIntroduction({
+    id: "blue-crab",
+    name: "Blue Crab",
+    kind: "creature",
+    category: "invertebrate",
+    passives: [
+      { name: "Eco Boost", text: "Add +1 to your max resource bank while this card is in play." },
+      { name: "Recycle", text: "When one of your fish is eaten, collect half its cost rounded up." },
+    ],
+    actions: [{ name: "Scavenge", text: "Choose a card from your discard and put it into your hand." }],
+  }, "Reef Invertebrate");
+  assert.match(blueCrabIntroduction, /Recycle.*loss.*Fish.*economy/i);
+  assert.match(blueCrabIntroduction, /Scavenge.*recovers.*card.*hand/i);
+
+  const flyingFishIntroduction = getCreatureGameplayIntroduction({
+    id: "flying-fish",
+    name: "Flying Fish",
+    kind: "creature",
+    category: "fish",
+    passives: [
+      "Take to the Skies: If being targeted, flip a coin. If heads, the attack fails.",
+      "EcoBoost: +1 RP to your bank cap.",
+    ],
+  }, "Oceanic Fish");
+  assert.match(flyingFishIntroduction, /Take to the Skies.*incoming attack miss/i);
+  assert.doesNotMatch(flyingFishIntroduction, /proactive hunter|pressure opposing/i);
+
+  const blackMarlinIntroduction = getCreatureGameplayIntroduction({
+    id: "black-marlin",
+    name: "Black Marlin",
+    kind: "creature",
+    category: "apex",
+    onPlay: ["Quick Strikes: Perform 4 D6 attacks targeting fish."],
+  }, "Oceanic Apex");
+  assert.match(blackMarlinIntroduction, /Quick Strikes.*(?:pressure|overwhelm).*Fish/i);
+  assert.doesNotMatch(blackMarlinIntroduction, /Quick Strikes.*immediate value/i);
 
   assert.equal(getCreatureGameplayIntroduction(supportCard, "Support Action"), "");
 });

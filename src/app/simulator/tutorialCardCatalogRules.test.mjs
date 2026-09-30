@@ -98,7 +98,7 @@ test("every printed creature tour links its class label or class explanation to 
   }
 });
 
-test("every production creature opens with a data-backed role and a reason to play it", () => {
+test("every production creature opens with a strategic role and a reason to play it", () => {
   const creatures = allCards.filter((card) => String(card.kind).toLowerCase() === "creature");
   assert.ok(creatures.length > 0);
 
@@ -116,27 +116,16 @@ test("every production creature opens with a data-backed role and a reason to pl
         return rule?.name ?? "";
       })
       .filter(Boolean);
-    const isSchool = card.tags?.includes("creature-school");
-    const isFilterFeeder = String(card.class ?? card.category).replaceAll("_", "-") === "filter-feeder";
     if (abilityNames.length) {
       assert.ok(
         abilityNames.some((name) => introduction.includes(name)),
-        `${card.id} should name at least one printed ability`,
+        `${card.id} should connect its strategy to at least one printed ability`,
       );
-    } else if (isSchool) {
-      assert.match(introduction, new RegExp(`${card.schoolDensity} School Density`));
-    } else if (isFilterFeeder) {
-      assert.match(introduction, new RegExp(`${card.victoryPoints} VP`));
-      assert.match(introduction, new RegExp(`${card.schoolDensityRequirement} School Density`));
     } else {
-      const statMarkers = [
-        card.victoryPoints != null ? `${card.victoryPoints} VP` : "",
-        card.defense?.dice ? `${card.defense.dice} defense` : "",
-        card.cost?.rp != null ? `${card.cost.rp} RP` : "",
-      ].filter(Boolean);
-      assert.ok(
-        statMarkers.some((marker) => introduction.includes(marker)),
-        `${card.id} should explain its printed gameplay value`,
+      assert.match(
+        introduction,
+        /ecosystem|board|scoring|game plan/i,
+        `${card.id} should explain its strategic purpose even without a printed ability`,
       );
     }
   }

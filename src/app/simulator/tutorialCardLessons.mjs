@@ -366,194 +366,424 @@ function joinNaturalLanguage(values = []) {
   return `${filtered.slice(0, -1).join(", ")}, and ${filtered.at(-1)}`;
 }
 
-function withIndefiniteArticle(value) {
-  const label = String(value ?? "").trim();
-  return `${/^[aeiou]/i.test(label) ? "an" : "a"} ${label}`;
-}
-
-function getCreatureIntroductionClassLabel(card, cardClassLabel) {
-  const supplied = String(cardClassLabel ?? "").trim();
-  if (supplied && !["card", "creature"].includes(normalizeToken(supplied))) return supplied;
-  const zone = normalizeToken(card?.zone) === "ocean"
-    ? "Oceanic"
-    : formatToken(card?.zone || "reef");
-  const isSchool = asList(card?.tags).map(normalizeToken).includes("creature-school");
-  const cardClass = isSchool
-    ? "Creature School"
-    : formatToken(card?.class ?? card?.category ?? "creature");
-  return [zone, cardClass].filter(Boolean).join(" ");
-}
-
-function getCreatureIntroductionRules(card) {
-  const groups = [
+function getCreatureStrategicEntries(card) {
+  return [
     ["On Play", asList(card?.onPlay)],
     ["Action", asList(card?.actions)],
     ["Passive", asList(card?.passives)],
-  ].map(([label, rules]) => rules.map((rule, index) => ({ label, rule, index })));
-  const firstFromEachGroup = groups.map((rules) => rules[0]).filter(Boolean);
-  const remaining = groups.flat().filter((entry) => !firstFromEachGroup.includes(entry));
-  return [...firstFromEachGroup, ...remaining].slice(0, 2);
+  ].flatMap(([label, rules]) => rules.map((rule, index) => ({ label, rule, index })));
 }
 
-function getCreatureIntroductionEffectText(rule) {
-  if (!rule || typeof rule !== "object") return "";
-  const effects = [...asList(rule.effects), ...asList(rule.effect)];
-  return effects.map((effect) => {
-    const type = normalizeToken(effect?.type);
-    if (type === "drawcards") {
-      const amount = Math.max(1, Number(effect?.amount ?? 1));
-      return `Draw ${amount} ${amount === 1 ? "card" : "cards"}.`;
-    }
-    if (type === "grantadvantage") {
-      const targets = formatList(asList(effect?.targetCategories));
-      return targets ? `Gain advantage against ${targets}.` : "Gain advantage.";
-    }
-    return "";
-  }).filter(Boolean).join(" ");
+function getStrategicRuleCorpus(rule) {
+  if (!rule) return "";
+  if (typeof rule === "string") return rule.toLowerCase();
+  return [
+    rule.name,
+    rule.text,
+    JSON.stringify(rule.effect ?? ""),
+    JSON.stringify(rule.effects ?? ""),
+  ].filter(Boolean).join(" ").toLowerCase();
 }
 
-function getCreatureIntroductionRuleSentence(card, entry) {
+const PLURAL_CREATURE_IDS = new Set(["oysters", "spinner-dolphins"]);
+
+const CREATURE_STRATEGY_OVERVIEWS = {
+  "great-white": "is a decisive finisher built to hit the opponent's foundations and creatures in one heavy assault",
+  "tiger-shark": "is a durable finisher that combines repeated pressure with strong staying power",
+  hammerhead: "is a sturdy finisher that disrupts the opponent's economy while threatening several creature classes",
+  "bull-shark": "is an aggressive finisher that turns a prepared reef into immediate mixed pressure",
+  "bottlenose-dolphin": "is a flexible apex play that refills your hand before applying targeted pressure",
+  "cookie-cutter-shark": "is a resource thief that turns the opponent's large hunters into income for your own turns",
+  "deep-sea-jelly": "is a combat setup piece that improves future attacks instead of fighting immediately",
+  oysters: "are a Habitat payoff that greatly expands your economy after the ecosystem is established",
+  "green-sea-turtle": "is a reef stabilizer that repairs a damaged foundation as it enters play",
+  "spinner-dolphins": "are coordinated hunters that become more accurate beside Coral Reef",
+  "blue-tang": "is a Habitat-gated scoring piece that rewards you for establishing Coral Reef",
+  brittlestar: "is a resilient economy engine that can survive removal while expanding future turns",
+  "cleaner-wrasse": "is a defensive support creature that protects a key Fish or Predator through the opponent's turn",
+  "cleaner-shrimp": "is a hybrid support piece that protects an allied hunter while expanding your RP engine",
+  "sargeant-major": "is a defensive reef builder that reinforces the Coral hosting it",
+  "sea-urchin": "is a fortification piece that makes its host Coral harder to destroy",
+  nudibranch: "is an economy disruptor that can temporarily weaken an opposing Coral's RP output",
+  "ocean-triggerfish": "is a school guardian that reinforces the capacity already built into your ocean ecosystem",
+  "sperm-whale": "is a matchup finisher built to challenge the opponent's largest creatures, especially giant squids",
+  "pilot-whale-oceanic": "is a control finisher that blocks the opponent's Support plan before launching a broad hunt",
+  "killer-whale-oceanic": "is an apex hunter focused on repeated assaults against the opponent's largest creatures",
+  "black-swallower": "is a risky hunter that can challenge oversized prey but may be lost after a successful meal",
+  "giant-squid": "is a finisher that softens a defender before launching a broad repeated assault",
+  "colossal-squid": "is a high-commitment finisher that pairs defensive setup with heavy pressure across the board",
+  "crevalle-jack": "is a burst-economy play that adds resources immediately to extend the current turn",
+  "giant-tube-worm": "is a low-commitment board piece that turns an open Deep Invertebrate space into steady scoring",
+};
+
+const CREATURE_STRATEGY_CHOICES = {
+  "great-white": "Choose it when you are ready for a decisive assault on both the opponent's foundations and board.",
+  "tiger-shark": "Choose it when you want repeated pressure from a finisher that is difficult to answer cleanly.",
+  hammerhead: "Choose it when staying power and broad board pressure matter more than one all-or-nothing strike.",
+  "bull-shark": "Choose it when you want an aggressive finisher that pressures both foundations and creatures.",
+  "bottlenose-dolphin": "Choose it when you need to refill your hand and challenge a dangerous opposing creature in the same play.",
+  "cookie-cutter-shark": "Choose it when the opponent has invested in large hunters and you want their board to fund your turns.",
+  "deep-sea-jelly": "Choose it when you are planning an attack sequence and want several ways to improve its odds.",
+  oysters: "Choose it when a Habitat is established and a larger RP bank will unlock more ambitious turns.",
+  "green-sea-turtle": "Choose it when Coral Reef is established and a damaged foundation needs meaningful repair.",
+  "spinner-dolphins": "Choose it when Coral Reef is established and you want coordinated pressure against opposing hunters.",
+  "blue-tang": "Choose it when Coral Reef is established and you want to turn that Habitat into immediate scoring value.",
+  brittlestar: "Choose it when you want an RP engine that can spend part of its value to stay on the board.",
+  "cleaner-wrasse": "Choose it when an important Fish or Predator needs help surviving the opponent's next attack.",
+  "cleaner-shrimp": "Choose it when you want defensive support now and a larger RP bank for later turns.",
+  "sargeant-major": "Choose it when an important Coral needs more durability while you continue developing its branch.",
+  "sea-urchin": "Choose it when an important Coral needs more durability against sustained pressure.",
+  nudibranch: "Choose it when slowing the opponent's resource engine will delay their next major play.",
+  "ocean-triggerfish": "Choose it when a key Creature School needs extra durability to keep your larger plays online.",
+  "sperm-whale": "Choose it when the opponent's largest creatures demand a dedicated answer, especially a Giant or Colossal Squid.",
+  "pilot-whale-oceanic": "Choose it when stopping the opponent's Support cards will create a safe opening for a broad attack.",
+  "killer-whale-oceanic": "Choose it when the opponent has committed major creatures and you need repeated apex pressure.",
+  "black-swallower": "Choose it when removing a major threat is worth accepting the risk of losing the attacker afterward.",
+  "giant-squid": "Choose it when you want to weaken a defender and follow immediately with broad repeated pressure.",
+  "colossal-squid": "Choose it when your deep ecosystem is ready to commit to a heavy finishing assault.",
+  "crevalle-jack": "Choose it when an immediate RP boost will unlock another important play this turn.",
+  "giant-tube-worm": "Choose it when you want simple, low-commitment scoring in an open Deep Invertebrate space.",
+};
+
+function getCreatureStrategicGrammar(card) {
+  const plural = PLURAL_CREATURE_IDS.has(normalizeToken(card?.id));
+  return {
+    subject: capitalizeFirst(getCardNarrativeSubject(card)),
+    be: plural ? "are" : "is",
+    object: plural ? "them" : "it",
+    possessive: plural ? "their" : "its",
+  };
+}
+
+function hasCoralReefScoring(card) {
+  return normalizeToken(card?.bonusVictoryPoints?.condition?.cardId) === "coral-reef";
+}
+
+function hasHabitatRequirement(card) {
+  return asList(card?.playRequirements ?? card?.requirements).some((requirement) => {
+    const corpus = typeof requirement === "string" ? requirement : JSON.stringify(requirement ?? "");
+    return /habitat|coral reef|open ocean|drop off|abyss/i.test(corpus);
+  });
+}
+
+function getStrategicAttackTargets(rule, corpus) {
+  const targets = new Set();
+  for (const effect of collectAttackEffects(rule)) {
+    for (const target of asList(effect?.target?.categories ?? effect?.targetCategories)) {
+      targets.add(normalizeToken(target));
+    }
+  }
+  const textTargets = [
+    ["creature-school", /creature schools?/i],
+    ["filter-feeder", /filter feeders?/i],
+    ["invertebrate", /invertebrates?/i],
+    ["predator", /predators?/i],
+    ["apex", /\bapex\b/i],
+    ["fish", /\bfish\b/i],
+  ];
+  for (const [target, pattern] of textTargets) {
+    if (pattern.test(corpus)) targets.add(target);
+  }
+  return [...targets];
+}
+
+function getStrategicHabitatName(corpus) {
+  const habitatPatterns = [
+    ["Coral Reef", /\bcoral reef\b/i],
+    ["Open Ocean", /\bopen ocean\b/i],
+    ["Drop Off", /\bdrop[ -]?off\b/i],
+    ["Abyss", /\babyss\b/i],
+  ];
+  return habitatPatterns.find(([, pattern]) => pattern.test(corpus))?.[0] ?? "";
+}
+
+function getCreatureStrategicSignals(entry, card) {
   const normalized = toCardReferenceRule(entry.rule, entry.label, entry.index);
-  if (!normalized) return "";
-  const name = normalized.name || entry.label;
-  const fallbackText = "Read the highlighted lesson for this rule's timing and effect.";
-  const printedText = normalized.text === fallbackText ? "" : normalized.text;
-  const effectText = printedText ? "" : getCreatureIntroductionEffectText(entry.rule);
-  const attackText = [...new Set(
-    (getAttackRuleSummary(entry.rule).match(/[^.!?]+[.!?]/g) ?? []).map((sentence) => sentence.trim()),
-  )].join(" ");
-  const details = [printedText, effectText, attackText].filter(Boolean).join(" ");
-  if (entry.label === "On Play") {
-    return `${name} is an On Play ability, so it resolves when ${getCardNarrativeSubject(card)} enters play.${details ? ` ${details}` : ""}`;
-  }
-  if (entry.label === "Action") {
-    const cost = getRuleCost(entry.rule);
-    return `${name} is an Action you can choose during your turn.${cost > 0 ? ` It costs ${cost} RP.` : ""}${details ? ` ${details}` : ""}`;
-  }
-  return `${name} is a Passive that remains available while ${getCardNarrativeSubject(card)} is in play.${details ? ` ${details}` : ""}`;
+  const corpus = getStrategicRuleCorpus(entry.rule);
+  const attacks = collectAttackEffects(entry.rule);
+  const activeAttackText = entry.label !== "Passive"
+    && /\b(?:attacks?|bite|hunt|strike|snap|crunch|shatter|slash|ram|ravage|decimate|jaws|frenzy)\b/i.test(corpus);
+  const isAttack = attacks.length > 0
+    || activeAttackText;
+  const name = normalized?.name || entry.label;
+  const nameKey = normalizeToken(name).replaceAll(" ", "-");
+  const handTrade = /discardthensearchdeck|discard.{0,80}search (?:your |the )?deck|\bsift\b/i.test(corpus);
+  const toxicImmunity = /toxic immunity|immune.{0,35}toxic|ignoreeffect.{0,35}toxic/i.test(corpus);
+  const attackWard = /if targeted.{0,80}attack fails|attack fails.{0,80}if targeted/i.test(corpus);
+  const toxic = !toxicImmunity && !attackWard
+    && /if eaten|consuming (?:card|creature)|toxicwheneaten/i.test(corpus);
+  const opponentDiscard = !handTrade && !toxic
+    && /discardrandomcard|discardtopcards|opponent.{0,50}discards?|(?:make|have|force) (?:your )?opponent.{0,30}discard/i.test(corpus);
+  const coralHeal = /\b(?:restore|heal)\b.{0,60}coral|coral.{0,60}\b(?:restore|heal)\b/i.test(corpus);
+  const coralPressure = /(?:damage|stun).{0,65}coral|coral.{0,65}(?:damage|stun)/i.test(corpus);
+  const recoverToHand = /recovercardfromdiscard.{0,80}(?:destination.{0,20}hand)|discard pile.{0,100}(?:place|put).{0,40}(?:your )?hand|discard.{0,80}(?:place|put).{0,40}(?:your )?hand/i.test(corpus);
+  const returnDiscardToDeck = /discard pile.{0,100}(?:shuffle|return).{0,60}(?:your )?deck|recovercardfromdiscard.{0,100}(?:destination.{0,20}deck)/i.test(corpus);
+  return {
+    ...entry,
+    card,
+    name,
+    nameKey,
+    corpus,
+    attack: isAttack,
+    attackTargets: isAttack ? getStrategicAttackTargets(entry.rule, corpus) : [],
+    coralPressure,
+    coralHeal,
+    toxic,
+    toxicImmunity,
+    attackWard,
+    opponentDiscard,
+    handTrade,
+    recoverToHand,
+    returnDiscardToDeck,
+    search: /search (?:your |the )?deck|look at the top|rearrange|vantage point|surface scan|darkness scan|call for family|tuna school/i.test(corpus),
+    draw: /drawcards|\bdraw\b|fast swimmer|echo locate|filter feed/i.test(corpus),
+    recover: !opponentDiscard && !handTrade && (
+      recoverToHand
+      || returnDiscardToDeck
+      || /discard pile.{0,100}(?:hand|deck)|(?:hand|deck).{0,100}discard pile|\brecycle\b|\bplenteous\b/i.test(corpus)
+    ),
+    economy: /resource bank|bank cap|collect.{0,20}\brp\b|gain.{0,20}\brp\b|eco ?boost|eco foundation|nutrient rich|pearl hunting/i.test(corpus),
+    rpSteal: /(?:collect|take|steal|drain).{0,35}\brp\b.{0,35}(?:from )?(?:your )?opponent/i.test(corpus),
+    protection: !coralHeal && /defen[cs]|protection|attack fails|immune|keep (?:this|it)|camouflage|scatter|agility|fierce fighter|shroud|resilience|transparency|charm|massive|regenerate/i.test(corpus),
+    survival: /regenerate|keep (?:this|it) card|remains? on your reef/i.test(corpus),
+    attackSupport: /all of your attacks|all your attacks|next (?:on play )?attack|attack rolls? you perform|grantadvantage|advantage on attacks|defending creature gets/i.test(corpus),
+    concealmentCounter: /hidden by the abyss|can target creatures hidden/i.test(corpus),
+    counterAttack: /if targeted unsuccessfully|whatever creature attacked|counter.?attack/i.test(corpus),
+    control: /opponent(?:'s)? (?:fish|creatures?|cards?) cost|opponent (?:cannot|must|re-roll)|nerve agent|intimidation|echo disruption|shred|drain|target:/i.test(corpus),
+    placement: /anemone|placed inside|attach|slot/i.test(corpus),
+    habitatSynergy: /habitat|coral reef|open ocean|abyss/i.test(corpus),
+    habitatName: getStrategicHabitatName(corpus),
+  };
 }
 
-function getCreatureIntroductionChoice(card, entries, cardClassLabel, { specialPlacement = false } = {}) {
-  const vp = getCardVp(card);
-  const defense = getCardDefense(card);
-  const cost = getCardRp(card);
-  const names = entries.map((entry) => (
-    toCardReferenceRule(entry.rule, entry.label, entry.index)?.name || entry.label
-  ));
-  const creatureLabel = vp > 0 ? `a ${vp} VP creature` : `this ${cardClassLabel}`;
-
-  if (specialPlacement) {
-    const abilities = names.length ? ` and use ${joinNaturalLanguage(names)}` : "";
-    return `Choose it when you want to place a creature in your opponent's ecosystem${abilities}.`;
-  }
-  if (entries.length > 1) {
-    return `Choose it when you want ${creatureLabel} that combines ${joinNaturalLanguage(names)}.`;
-  }
-  if (entries.length === 1) {
-    const [entry] = entries;
-    const name = names[0];
-    if (entry.label === "On Play") {
-      return `Choose it when you want ${creatureLabel} whose ${name} ability resolves as it enters play.`;
-    }
-    if (entry.label === "Action") {
-      return `Choose it when you want ${creatureLabel} with access to ${name} during your turns.`;
-    }
-    return `Choose it when you want ${creatureLabel} with ${name} available while it remains in play.`;
-  }
-  if (vp > 0 && defense && cost > 0) {
-    return `Choose it when you want ${vp} VP and ${defense} defense for ${cost} RP.`;
-  }
-  if (vp > 0 && defense) {
-    return `Choose it when you want a creature worth ${vp} VP with ${defense} defense.`;
-  }
-  return `Choose it when you want ${withIndefiniteArticle(cardClassLabel)} with the printed cost and stats shown on this card.`;
+function formatStrategicTargets(targets) {
+  const labels = {
+    "creature-school": "Creature Schools",
+    "filter-feeder": "Filter Feeders",
+    invertebrate: "Invertebrates",
+    predator: "Predators",
+    apex: "Apex creatures",
+    fish: "Fish",
+  };
+  return joinNaturalLanguage(targets.map((target) => labels[target]).filter(Boolean));
 }
 
-function getRequirementPhrase(rule, index) {
-  const text = toCardReferenceRule(rule, "Requirement", index)?.text ?? "";
-  return text
-    .trim()
-    .replace(/[.!]+$/, "")
-    .replace(/^requires\s+/i, "")
-    .replace(/^can only be played if\s+/i, "");
+function describeStrategicAbility(signal, grammar) {
+  const { name, nameKey } = signal;
+  const cardId = normalizeToken(signal.card?.id);
+  const targets = formatStrategicTargets(signal.attackTargets);
+  const abilityDescriptions = {
+    "take-to-the-skies": `${name} can make an incoming attack miss before its dice are rolled`,
+    agility: `${name} can stop an incoming attack before it reaches combat`,
+    "fierce-fighter": `${name} forces the opponent to reroll their first successful attack`,
+    scatter: `${name} forces the opponent to reroll their first successful attack`,
+    camouflage: `${name} forces the opponent to reroll their first successful attack`,
+    "stinging-tentacles": `${name} can stop an incoming attack before it lands`,
+    charm: `${name} weakens every attack made against ${grammar.object}`,
+    transparency: `${name} screens out attacks that rely on larger dice`,
+    "toxic-immunity": `${name} lets ${grammar.object} hunt Toxic prey without risking Toxic's usual retaliation`,
+    sift: `${name} trades spare cards from your hand for the specific card your plan needs`,
+    target: `${name} strips an option from the opponent's hand before they can use it`,
+    shred: `${name} removes upcoming cards from the opponent's deck and disrupts their future draws`,
+    "ancient-presence": `${name} removes upcoming cards from the opponent's deck and disrupts their future draws`,
+    drain: `${name} removes upcoming cards from the opponent's deck and disrupts their future draws`,
+    eat: `${name} immediately pressures one of the opponent's Coral foundations`,
+    chomp: `${name} immediately pressures one of the opponent's Coral foundations and improves beside Coral Reef`,
+    "venom-spines": `${name} gives you another chance to damage an opposing Coral foundation`,
+    "coral-heal": `${name} repairs a damaged Coral foundation as the card enters play`,
+    "slow-eat": `${name} hunts the opponent's Sea Urchins and Anemones`,
+    "starfish-hunt": `${name} hunts opposing Starfish`,
+    invader: `${name} threatens a Fish each turn, but its coin flip can redirect the attack into your own reef`,
+    parasite: `${name} siphons RP from an opponent who relies on Predators or Apex creatures`,
+    "big-eyes": `${name} lets ${grammar.object} hunt through the concealment provided by Abyss`,
+    regenerate: `${name} can spend RP to survive an attack that would otherwise remove ${grammar.object}`,
+    "echo-locate": `${name} refills your hand as the creature enters play`,
+    "phantom-boost": `${name} improves every attack you make while the creature remains in play`,
+    massive: `${name} makes attacks against ${grammar.object} less reliable`,
+    "tail-whip": `${name} softens the opponent's defense before the follow-up attack`,
+    ensnare: `${name} can soften a defender before the next attack`,
+    highlight: `${name} prepares a stronger On Play attack for your next creature`,
+    "flashing-alarm": `${name} turns an enemy attack into a boost for your next offensive turn`,
+    "expert-hunter": `${name} rewards Coral Reef by making attacks against Fish more reliable`,
+    "bite-back": `${name} threatens an immediate counterattack when an opponent misses`,
+    "filter-feed": `${name} turns unwanted cards into fresh options`,
+    "grab-from-the-deep": `${name} delivers repeated pressure across every creature class`,
+    "quick-strikes": `${name} overwhelms opposing Fish with repeated attacks`,
+    "apex-hunter": `${name} delivers repeated pressure against the opponent's largest creatures`,
+    intimidation: `${name} makes opposing Fish more expensive and slows the opponent's development`,
+    "parasite-clean": `${name} gives a chosen Fish or Predator a defensive edge through the opponent's turn`,
+    spines: `${name} increases the durability of the Coral hosting the Sea Urchin`,
+    "night-vision": `${name} improves attacks against creatures whose names identify them as Deep`,
+    "battle-of-the-titans": `${name} improves its matchup against Giant and Colossal Squids`,
+    territorial: `${name} fortifies a chosen Creature School while this card remains in play`,
+    corral: `${name} strengthens attacks aimed at opposing Creature Schools`,
+    "darkness-shroud": `${name} turns Abyss into extra defensive protection`,
+    "ancient-resilience": `${name} can keep the creature in play through an otherwise successful removal`,
+    "eyes-bigger-than-stomach": `${name} challenges oversized prey but can cost you the attacker after a successful meal`,
+  };
+  if (nameKey === "scavenge") {
+    if (signal.handTrade) return `${name} trades spare cards from your hand for the specific card your plan needs`;
+    if (signal.recoverToHand) return `${name} recovers a spent card directly to your hand`;
+    if (signal.returnDiscardToDeck) return `${name} recycles a spent card into your deck for a future draw`;
+    if (signal.draw) return `${name} draws fresh cards to keep your options flowing`;
+  }
+  if (nameKey === "toxic" && signal.attackWard) {
+    return `${name} can make an incoming attack fail before combat begins`;
+  }
+  if (nameKey === "toxic-immunity" && cardId === "giant-triton") {
+    return `${name} specifically protects ${grammar.object} from Crown of Thorns' Toxic retaliation`;
+  }
+  if (nameKey === "munch") {
+    return signal.attack
+      ? `${name} lets ${grammar.object} hunt opposing Invertebrates and improves against Man O' War`
+      : `${name} temporarily reduces an opposing Coral's RP production`;
+  }
+  if (nameKey === "coral-protector") {
+    return `${name} reinforces the Coral hosting ${grammar.object}, making that foundation harder to destroy`;
+  }
+  if (nameKey === "nutrient-rich") {
+    return `${name} gives you an immediate RP boost as the creature enters play`;
+  }
+  if (nameKey === "hover-strike") return `${name} pressures opposing Deep Fish and Deep Invertebrates`;
+  if (nameKey === "quick-grab") return `${name} pressures opposing Deep Invertebrates`;
+  if (nameKey === "plenteous") {
+    return `${name} can return a base Krill Bloom from your discard to your deck after this School is attacked and destroyed`;
+  }
+  if (nameKey === "symbiosis") {
+    return normalizeToken(signal.card?.id) === "anemone"
+      ? `${name} recruits a clownfish from your hand and hosts it inside the anemone`
+      : `${name} lets ${grammar.object} live inside an Anemone, opening a protected Anemone partnership`;
+  }
+  if (nameKey === "stinging-fortress") return `${name} adds protection to clownfish hosted inside the anemone`;
+  if (abilityDescriptions[nameKey]) return abilityDescriptions[nameKey];
+  if (signal.toxic) return `${name} makes consuming ${grammar.object} a risky way to remove ${grammar.object}`;
+  if (signal.attack && signal.coralPressure) return `${name} pressures both the opponent's foundations and their creatures`;
+  if (signal.attack && signal.habitatSynergy) return targets
+    ? `${name} gains stronger pressure against opposing ${targets} when ${signal.habitatName || "the required Habitat"} is established`
+    : `${name} gains a stronger attack when ${signal.habitatName || "the required Habitat"} is established`;
+  if (signal.attack) return targets
+    ? `${name} lets ${grammar.object} pressure opposing ${targets}`
+    : `${name} gives ${grammar.object} a proactive way to pressure the opposing ecosystem`;
+  if (normalizeToken(name) === "recycle") return `${name} softens the loss of your Fish by returning part of their value to your economy`;
+  if (signal.coralPressure) return `${name} pressures the opponent's Coral foundations`;
+  if (signal.coralHeal) return `${name} repairs a damaged Coral foundation`;
+  if (signal.opponentDiscard) return `${name} strips options from the opponent before they can use them`;
+  if (signal.handTrade) return `${name} trades expendable cards for the specific card your plan needs`;
+  if (signal.recover) return `${name} recovers value from cards that have already been spent`;
+  if (signal.search) return `${name} improves consistency by setting up the card your plan needs next`;
+  if (signal.draw) return `${name} keeps useful options flowing into your hand`;
+  if (signal.rpSteal) return `${name} drains the opponent's RP and redirects it into your own economy`;
+  if (signal.economy) return `${name} strengthens the RP engine behind future turns`;
+  if (signal.attackSupport) return `${name} improves the reliability of a future attack`;
+  if (signal.counterAttack) return `${name} punishes an opponent whose attack misses`;
+  if (signal.concealmentCounter) return `${name} counters an opponent's concealment plan`;
+  if (signal.control) return `${name} disrupts the opponent's ability to carry out their plan`;
+  if (signal.protection) return `${name} makes the card or its ecosystem harder to remove`;
+  if (signal.placement) return `${name} creates flexible placement through a specialized ecosystem partnership`;
+  if (signal.habitatSynergy) return `${name} rewards you for establishing the right Habitat first`;
+  if (signal.label === "On Play") return `${name} creates immediate value as it enters play`;
+  if (signal.label === "Action") return `${name} gives you an active tool for shaping the turn`;
+  return `${name} supports your plan while the creature remains in play`;
 }
 
-export function getCreatureGameplayIntroduction(card, cardClassLabel = "") {
+function describeStrategicAbilityCombination(signals, grammar) {
+  const phrases = signals.slice(0, 3).map((signal) => describeStrategicAbility(signal, grammar));
+  if (phrases.length === 0) return "";
+  if (phrases.length === 1) return `${phrases[0]}.`;
+  if (phrases.length === 2) return `${phrases[0]}, while ${phrases[1]}.`;
+  return `${phrases[0]}; ${phrases[1]}; and ${phrases[2]}.`;
+}
+
+function getCreatureStrategicOverview(card, signals, { specialPlacement, isSchool, isFilterFeeder, grammar }) {
+  const { subject, be } = grammar;
+  const category = normalizeToken(card?.class ?? card?.category);
+  const attackSignals = signals.filter((signal) => signal.attack);
+  const attackTargets = [...new Set(attackSignals.flatMap((signal) => signal.attackTargets))];
+  const has = (key) => signals.some((signal) => signal[key]);
+  const authoredOverview = CREATURE_STRATEGY_OVERVIEWS[normalizeToken(card?.id)];
+
+  if (authoredOverview) return `${subject} ${authoredOverview}.`;
+  if (specialPlacement) return `${subject} ${be} an invasive disruptor that occupies the opponent's ecosystem and forces an awkward response.`;
+  if (isSchool) return `${subject} ${be} a foundation engine that expands what your ocean ecosystem can support while helping future turns keep pace.`;
+  if (isFilterFeeder) return `${subject} ${be} a late-game scoring payoff that rewards a carefully developed ocean ecosystem.`;
+  if (hasCoralReefScoring(card)) return `${subject} ${be} a scoring specialist that becomes more valuable beside Coral Reef.`;
+  if (has("toxic") && attackTargets.includes("invertebrate")) return `${subject} ${be} a disruptive hunter built to break up an opponent's utility engine.`;
+  if (has("rpSteal")) return `${subject} ${be} a resource-denial piece that turns the opponent's economy into fuel for your plan.`;
+  if (has("opponentDiscard")) return `${subject} ${be} a disruption piece that reduces the opponent's future options before applying board pressure.`;
+  if (has("coralHeal")) return `${subject} ${be} a defensive utility play that restores the foundation supporting your ecosystem.`;
+  if (has("coralPressure") && !attackSignals.length) return `${subject} ${be} a foundation saboteur that pressures the opponent without relying on ordinary creature combat.`;
+  if (attackSignals.length && (has("search") || has("draw") || has("recover") || has("economy"))) {
+    return `${subject} ${be} a flexible attacker that pairs board pressure with tools for sustaining your own plan.`;
+  }
+  if (attackSignals.length && has("control")) return `${subject} ${be} a tempo attacker that damages the opponent's position while limiting their response.`;
+  if (attackSignals.length && has("coralPressure")) return `${subject} ${be} a mixed-pressure attacker that threatens both creatures and the opponent's foundations.`;
+  if (category === "apex") return `${subject} ${be} a late-game finisher that turns a developed ecosystem into immediate board pressure.`;
+  if (attackSignals.length) return targetsOverview(subject, category, be);
+  if ((has("search") || has("draw") || has("recover") || has("handTrade")) && has("economy")) return `${subject} ${be} a utility engine that improves both your resources and access to the right cards.`;
+  if (has("handTrade")) return `${subject} ${be} a hand-shaping specialist that turns expendable cards into the option your plan needs.`;
+  if (has("recover")) return `${subject} ${be} a recovery specialist that turns spent cards back into useful options.`;
+  if (has("search") || has("draw")) return `${subject} ${be} an access specialist that improves consistency and helps you find the right follow-up.`;
+  if (has("attackSupport")) return `${subject} ${be} an offensive support piece that makes a planned attack sequence more reliable.`;
+  if (has("economy")) return `${subject} ${be} an economy engine that creates room for more ambitious turns later in the game.`;
+  if (has("protection") || has("survival")) return `${subject} ${be} a defensive specialist that helps your ecosystem withstand opposing pressure.`;
+  if (hasHabitatRequirement(card)) return `${subject} ${be} a Habitat payoff that converts an established ecosystem into straightforward board development.`;
+  if (category === "predator") return `${subject} ${be} a proactive hunter that rewards you for keeping pressure on opposing creatures.`;
+  if (category === "invertebrate") return `${subject} ${be} a utility piece that helps a developing ecosystem stay flexible.`;
+  return `${subject} ${be} a dependable ecosystem builder that fills an important role while advancing your board.`;
+}
+
+function targetsOverview(subject, category, be = "is") {
+  if (category === "predator") return `${subject} ${be} a proactive hunter that keeps pressure on the opponent's creatures.`;
+  return `${subject} ${be} an active board-control option that turns an established creature into offensive pressure.`;
+}
+
+function getCreatureStrategicChoice(card, signals, { specialPlacement, isSchool, isFilterFeeder }) {
+  const category = normalizeToken(card?.class ?? card?.category);
+  const attackTargets = [...new Set(signals.filter((signal) => signal.attack).flatMap((signal) => signal.attackTargets))];
+  const has = (key) => signals.some((signal) => signal[key]);
+  const authoredChoice = CREATURE_STRATEGY_CHOICES[normalizeToken(card?.id)];
+
+  if (authoredChoice) return authoredChoice;
+  if (has("toxic") && attackTargets.includes("invertebrate")) {
+    return "Choose it when opposing Invertebrates are powering search, recovery, or other utility and you want an attacker that is dangerous to consume.";
+  }
+  if (specialPlacement) return "Choose it when you want to disrupt the opponent's available space and make them spend effort cleaning up their own ecosystem.";
+  if (isSchool) return "Choose it when you are building the capacity and economy needed to support larger ocean creatures.";
+  if (isFilterFeeder) return "Choose it when your ocean engine is established and you are ready to convert that preparation into a major scoring play.";
+  if (hasCoralReefScoring(card)) return "Choose it when Coral Reef is supporting your board and you want that Habitat to contribute extra scoring value.";
+  if (has("rpSteal")) return "Choose it when the opponent's resource engine is strong and you want to turn that strength against them.";
+  if (has("opponentDiscard")) return "Choose it when denying the opponent's future options is more valuable than adding another dedicated attacker.";
+  if (has("coralHeal")) return "Choose it when preserving a damaged foundation will protect the rest of your ecosystem.";
+  if (has("coralPressure") && !signals.some((signal) => signal.attack)) return "Choose it when you need to pressure the opponent's foundations without winning an ordinary faceoff first.";
+  if (category === "apex") return "Choose it when your ecosystem is fully prepared and you want a finisher that can swing the board immediately.";
+  if (attackTargets.length) return "Choose it when its prey matchup lines up with the opponent's board and you want direct removal pressure.";
+  if ((has("search") || has("draw") || has("recover") || has("handTrade")) && has("economy")) return "Choose it when you want a long-term engine that improves both resources and card quality.";
+  if (has("search") || has("draw") || has("recover") || has("handTrade")) return "Choose it when consistency matters and you need better access to the cards that complete your plan.";
+  if (has("attackSupport")) return "Choose it when another attacker is ready and improving that faceoff is the best way to advance your turn.";
+  if (has("economy")) return "Choose it when investing early in your RP engine will unlock stronger turns later.";
+  if (has("toxic") || has("protection")) return "Choose it when you need a resilient board piece that makes removal costly or unreliable.";
+  if (hasHabitatRequirement(card)) return "Choose it when its Habitat is established and you want to convert that setup into lasting board value.";
+  if (category === "predator") return "Choose it when you want to turn an open hunting space into steady pressure on opposing creatures.";
+  if (category === "invertebrate") return "Choose it when your ecosystem needs a flexible utility piece rather than another dedicated attacker.";
+  return "Choose it when you need straightforward scoring and board development without another activated ability to manage.";
+}
+
+export function getCreatureGameplayIntroduction(card, _cardClassLabel = "") {
   if (!card || normalizeToken(card.kind) !== "creature") return "";
-  const subject = getCardNarrativeSubject(card);
-  const sentenceSubject = capitalizeFirst(subject);
-  const effectiveClassLabel = getCreatureIntroductionClassLabel(card, cardClassLabel);
   const tags = asList(card.tags).map(normalizeToken);
   const isSchool = tags.includes("creature-school");
-  const schoolDensity = Math.max(0, Number(card.schoolDensity ?? 0));
-
-  if (isSchool) {
-    const ecoFoundation = asList(card.passives).find((passive) => {
-      const normalized = toCardReferenceRule(passive, "Passive", 0);
-      return normalizeToken(normalized?.name).includes("eco-foundation")
-        || /collect\s+\d+\s+RP/i.test(normalized?.text ?? "")
-        || normalizeToken(passive?.effect?.type) === "gainresource";
-    });
-    const normalizedPassive = ecoFoundation
-      ? toCardReferenceRule(ecoFoundation, "Passive", 0)
-      : null;
-    const densitySentence = schoolDensity > 0
-      ? `${sentenceSubject} is ${withIndefiniteArticle(effectiveClassLabel)} that acts as a Foundation and supplies ${schoolDensity} School Density without using a Coral's creature slot.`
-      : `${sentenceSubject} is ${withIndefiniteArticle(effectiveClassLabel)} that acts as a Foundation without using a Coral's creature slot.`;
-    const economySentence = normalizedPassive
-      ? `Its ${normalizedPassive.name || "Passive"} ability says: ${normalizedPassive.text}`
-      : "";
-    const onPlayEntry = asList(card.onPlay).length
-      ? { label: "On Play", rule: asList(card.onPlay)[0], index: 0 }
-      : null;
-    return [
-      densitySentence,
-      economySentence,
-      onPlayEntry ? getCreatureIntroductionRuleSentence(card, onPlayEntry) : "",
-      "Choose it when you are building toward cards with a School Density requirement.",
-    ].filter(Boolean).join(" ");
-  }
-
   const isFilterFeeder = normalizeToken(card.class ?? card.category) === "filter-feeder";
-  if (isFilterFeeder) {
-    const vp = getCardVp(card);
-    const defense = getCardDefense(card);
-    const densityRequirement = Math.max(0, Number(card.schoolDensityRequirement ?? 0));
-    const otherRequirements = asList(card.playRequirements ?? card.requirements)
-      .map(getRequirementPhrase)
-      .filter((text) => text && !/school density/i.test(text));
-    const requirementParts = [
-      densityRequirement > 0 ? `${densityRequirement} School Density` : "",
-      ...otherRequirements,
-    ].filter(Boolean);
-    const passiveEntry = asList(card.passives).length
-      ? { label: "Passive", rule: asList(card.passives)[0], index: 0 }
-      : null;
-    return [
-      `${sentenceSubject} is ${withIndefiniteArticle(effectiveClassLabel)} whose gameplay role is scoring: it contributes ${vp > 0 ? `${vp} VP` : "its printed VP"}${defense ? ` and uses ${defense} defense` : ""}.`,
-      requirementParts.length ? `It requires ${joinNaturalLanguage(requirementParts)}.` : "",
-      passiveEntry ? getCreatureIntroductionRuleSentence(card, passiveEntry) : "",
-      `Choose it when you can meet its printed requirements and want ${vp > 0 ? `a creature worth ${vp} VP` : "its printed VP payoff"}${defense ? ` with ${defense} defense` : ""}.`,
-    ].filter(Boolean).join(" ");
-  }
-
-  const entries = getCreatureIntroductionRules(card);
-  const requirements = asList(card.playRequirements ?? card.requirements)
-    .map(getRequirementPhrase)
-    .filter(Boolean);
   const specialPlacement = card.specialPlacement
     && (normalizeToken(card.specialPlacement.controller) === "opponent"
       || ["opponent-reef", "opponentreef"].includes(normalizeToken(card.specialPlacement.zone)));
-  const placementSentence = specialPlacement
-    ? `It uses special placement. ${describeSpecialPlacement(card.specialPlacement)}`
-    : "";
-  const ruleSentences = entries.map((entry) => getCreatureIntroductionRuleSentence(card, entry)).filter(Boolean);
+  const grammar = getCreatureStrategicGrammar(card);
+  const signals = getCreatureStrategicEntries(card).map((entry) => getCreatureStrategicSignals(entry, card));
+  const context = { specialPlacement, isSchool, isFilterFeeder, grammar };
+
   return [
-    `${sentenceSubject} is ${withIndefiniteArticle(effectiveClassLabel)}.`,
-    placementSentence,
-    requirements.length ? `Before you play it, meet ${requirements.length === 1 ? "this printed requirement" : "these printed requirements"}: ${joinNaturalLanguage(requirements)}.` : "",
-    ...ruleSentences,
-    getCreatureIntroductionChoice(card, entries, effectiveClassLabel, { specialPlacement }),
+    getCreatureStrategicOverview(card, signals, context),
+    describeStrategicAbilityCombination(signals, grammar),
+    getCreatureStrategicChoice(card, signals, context),
   ].filter(Boolean).join(" ");
 }
 
