@@ -330,6 +330,33 @@ test("creature tours introduce the printed name with strategy before teaching th
   assert.doesNotMatch(arrowCrabLesson.segments[0].message, /Reef Invertebrate/i);
 });
 
+test("later tutorials can stop after the strategic introduction before placement", () => {
+  const introduction = createGuidedAcademyCardLesson(clownfish, {
+    cardClassLabel: "Reef Fish",
+    introductionOnly: true,
+  });
+
+  assert.deepEqual(
+    introduction.segments.map((segment) => segment.id),
+    ["card:clownfish:name"],
+  );
+  assert.equal(introduction.segments[0].focus, "name");
+  assert.match(introduction.segments[0].message, /ecosystem builder/i);
+  assert.match(introduction.segments[0].message, /Symbiosis.*Anemone.*partnership/i);
+  assert.match(introduction.segments[0].message, /Choose it when/i);
+  assert.equal(introduction.advanceLabel, "Continue to placement");
+  assert.deepEqual(introduction.conceptKeys, []);
+
+  const detailed = createGuidedAcademyCardLesson(clownfish, { cardClassLabel: "Reef Fish" });
+  assert.deepEqual(
+    detailed.segments.map((segment) => segment.focus),
+    ["name", "type", "class-icon", "cost", "rules", "defense", "victory"],
+    "the default used by Tutorials 1 and 2 must retain the complete card walkthrough",
+  );
+  assert.equal(detailed.advanceLabel, "Continue with the clownfish");
+  assert.ok(detailed.conceptKeys.length > 0);
+});
+
 test("creature introductions pitch strategy while leaving exact specs for later steps", () => {
   const examples = [
     {

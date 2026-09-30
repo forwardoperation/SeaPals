@@ -31,6 +31,37 @@ test("new hand cards wait for a click, keep draw order, and cannot be played bef
   assert.match(simulatorSource, /function finishTutorialCardLesson\(\)[\s\S]*mergeTutorialSeenCardIds[\s\S]*setTutorialPendingCardIds[\s\S]*setTutorialCardLesson\(null\)/);
 });
 
+test("Tutorial 3 onward uses a quick card introduction before returning to placement", () => {
+  assert.match(
+    simulatorSource,
+    /const tutorialUsesIntroOnlyCardLessons = Number\(embeddedLesson\?\.number \?\? 0\) >= 3;/,
+    "Tutorials 1 and 2 should keep the detailed walkthrough while Tutorial 3 and later use the short introduction",
+  );
+
+  const handClick = simulatorSource.slice(
+    simulatorSource.indexOf("function openHandCardPopover"),
+    simulatorSource.indexOf("function closeHandCardPopover"),
+  );
+  assert.match(
+    handClick,
+    /createGuidedAcademyCardLesson\(card, \{[\s\S]*introductionOnly: tutorialUsesIntroOnlyCardLessons,[\s\S]*\}\)/,
+    "the lesson-number boundary must be passed to every newly clicked hand card",
+  );
+  assert.match(
+    simulatorSource,
+    /return tutorialUsesIntroOnlyCardLessons[\s\S]*?Tap on your \$\{cardName\} for a quick introduction before placing it\.[\s\S]*?: `Tap on your \$\{cardName\} and finish its card tour before continuing\.`/,
+    "the later-lesson review copy should lead back to placement while the earlier detailed-tour copy remains intact",
+  );
+
+  const finishReview = simulatorSource.slice(
+    simulatorSource.indexOf("function finishTutorialCardLesson"),
+    simulatorSource.indexOf("function finishTutorialBoardTour"),
+  );
+  assert.match(finishReview, /mergeTutorialSeenCardIds\(current, \[completedCardId\]\)/);
+  assert.match(finishReview, /current\.filter\(\(cardId\) => cardId !== completedCardId\)/);
+  assert.match(finishReview, /setTutorialCardLesson\(null\)/);
+});
+
 test("hand-limit choices wait until every newly drawn tutorial card has been reviewed", () => {
   assert.match(
     simulatorSource,

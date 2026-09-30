@@ -4587,6 +4587,7 @@ export default function Simulator({
   const tutorialRuntime = storyMode?.tutorial ?? null;
   const embeddedLesson = previewExperience ? tutorialRuntime?.lesson ?? null : null;
   const embeddedLessonPresentationStarted = !embeddedLesson || tutorialRuntime?.lessonStarted === true;
+  const tutorialUsesIntroOnlyCardLessons = Number(embeddedLesson?.number ?? 0) >= 3;
   const tutorialPreviouslyTaughtConcepts = Array.isArray(tutorialRuntime?.previouslyTaughtConcepts)
     ? tutorialRuntime.previouslyTaughtConcepts
     : [];
@@ -6184,7 +6185,9 @@ export default function Simulator({
   function getEmbeddedLessonBlock(action, details = {}) {
     if (tutorialRequiredCardReviewId) {
       const cardName = cardsById[tutorialRequiredCardReviewId]?.name ?? "the new card";
-      return `Tap on your ${cardName} and finish its card tour before continuing.`;
+      return tutorialUsesIntroOnlyCardLessons
+        ? `Tap on your ${cardName} for a quick introduction before placing it.`
+        : `Tap on your ${cardName} and finish its card tour before continuing.`;
     }
     return getSimulatorV2LessonActionBlock({
       lesson: embeddedLesson, checkpoint: tutorialCurrentCheckpoint,
@@ -7729,8 +7732,12 @@ export default function Simulator({
         title: `Meet ${tutorialRequiredCardReviewSubject}`,
         lead: "",
         message: pendingTutorialCardReviewId
-          ? `You drew ${tutorialRequiredCardReviewSubject}! Open it before continuing so we can walk through its type, cost, abilities, and stats.`
-          : `${tutorialRequiredCardReviewSubjectAtSentenceStart} is new to this lesson. Open it before using it so we can read every gameplay detail together.`,
+          ? tutorialUsesIntroOnlyCardLessons
+            ? `You drew ${tutorialRequiredCardReviewSubject}! Open it for a quick strategy introduction, then continue to placement.`
+            : `You drew ${tutorialRequiredCardReviewSubject}! Open it before continuing so we can walk through its type, cost, abilities, and stats.`
+          : tutorialUsesIntroOnlyCardLessons
+            ? `${tutorialRequiredCardReviewSubjectAtSentenceStart} is new to this lesson. Open it for a quick strategy introduction, then continue to placement.`
+            : `${tutorialRequiredCardReviewSubjectAtSentenceStart} is new to this lesson. Open it before using it so we can read every gameplay detail together.`,
         action: `Tap on your ${tutorialRequiredCardReview.name}.`,
         target: "hand",
         interaction: "tap",
@@ -11755,6 +11762,7 @@ export default function Simulator({
         seenConceptKeys: tutorialSeenCardConceptKeys,
         seenCardIds: tutorialSeenCardIds,
         cardClassLabel: getCardClassLabel(card),
+        introductionOnly: tutorialUsesIntroOnlyCardLessons,
       });
       if (lesson) {
         setHandPopoverCardId(null);

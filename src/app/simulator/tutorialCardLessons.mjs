@@ -1439,17 +1439,19 @@ export function createGuidedAcademyCardLesson(card, {
   seenConceptKeys = [],
   seenCardIds = [],
   cardClassLabel = "Card",
+  introductionOnly = false,
 } = {}) {
   if (!card?.id || seenCardIds.includes(card.id)) return null;
   const seen = new Set(seenConceptKeys);
   const callouts = getTutorialCardConcepts(card).filter((entry) => !seen.has(entry.key));
-  const segments = getCardSpecificLessonSegments(card, cardClassLabel);
+  const detailedSegments = getCardSpecificLessonSegments(card, cardClassLabel);
+  const segments = introductionOnly ? detailedSegments.slice(0, 1) : detailedSegments;
   const subject = getCardNarrativeSubject(card);
   return {
     id: `guided-academy-card-lesson:${card.id}`,
     cueId: `guided-academy-card-lesson:${card.id}`,
     cardId: card.id,
-    conceptKeys: callouts.map((entry) => entry.key),
+    conceptKeys: introductionOnly ? [] : callouts.map((entry) => entry.key),
     title: getCardLessonTitle(card),
     eyebrow: "New card lesson",
     cardClassLabel,
@@ -1457,7 +1459,7 @@ export function createGuidedAcademyCardLesson(card, {
     message: `Before you use ${subject}, read its gameplay type, cost, abilities, and stats. You will return to the same tutorial step when you finish.`,
     callouts,
     segments,
-    advanceLabel: `Continue with ${subject}`,
+    advanceLabel: introductionOnly ? "Continue to placement" : `Continue with ${subject}`,
   };
 }
 
