@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { SIMULATOR_V2_LESSONS } from "./simulatorV2Lessons.mjs";
 
 const componentSource = await readFile(new URL("./VictoryCelebration.jsx", import.meta.url), "utf8");
 const styleSource = await readFile(new URL("./VictoryCelebration.module.css", import.meta.url), "utf8");
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
 const experienceSource = await readFile(new URL("./SimulatorV2Experience.jsx", import.meta.url), "utf8");
 const lessonPanelSource = await readFile(new URL("./SimulatorV2LessonPanel.jsx", import.meta.url), "utf8");
-const lessonsSource = await readFile(new URL("./simulatorV2Lessons.mjs", import.meta.url), "utf8");
 
 test("victory celebration is a focused accessible dialog with an action slot", () => {
   assert.match(componentSource, /data-victory-celebration/);
@@ -67,7 +67,10 @@ test("the simulator celebrates both match wins and completed embedded VP lessons
   );
   assert.match(simulatorSource, /<VictoryCelebration[\s\S]*?embeddedLesson\.celebration[\s\S]*?VP goal reached/);
   assert.match(simulatorSource, /embeddedLesson \? "Replay Lesson" : "Retry Practice Duel"/);
-  assert.match(simulatorSource, /embeddedLesson \? "Continue to Lessons" : `Return to \$\{storyReturnLabel\}`/);
+  assert.match(simulatorSource, /embeddedLesson \? tutorialRuntime\?\.continueLabel \?\? "Continue to Lessons" : `Return to \$\{storyReturnLabel\}`/);
+  assert.match(simulatorSource, /data-victory-primary-action onClick=\{embeddedLesson && tutorialRuntime\?\.onContinue \? tutorialRuntime\.onContinue : \(\) => returnToStoryTown\("duel-complete"\)\}/);
+  assert.match(experienceSource, /onContinue: nextLesson \? \(\) => selectLesson\(nextLesson\.id\) : returnToSimulator/);
+  assert.match(experienceSource, /continueLabel: nextLesson \? "Next lesson" : "Return to simulator"/);
   assert.match(simulatorSource, /data-victory-primary-action[\s\S]*?Play Again/);
   assert.doesNotMatch(
     simulatorSource,
@@ -81,19 +84,16 @@ test("the simulator celebrates both match wins and completed embedded VP lessons
 });
 
 test("embedded lessons pause on Mr. Easterling's authored exit dialogue before opening their victory celebration", () => {
-  assert.ok(
-    lessonsSource.includes('preVictoryMessage: "Excellent! Your ecosystem is really starting to build momentum."'),
-  );
-  assert.ok(
-    lessonsSource.includes('preVictoryMessage: "Excellent work! You followed the food web from Fish to Predator, used an Action, defended a faceoff, saw a Passive ability work, recovered a discarded creature, and triggered an On Play attack. Great Barracuda showed how a creature’s class controls both where it lives and what it can hunt. You’re ready for the next lesson!"'),
-  );
+  for (const lesson of SIMULATOR_V2_LESSONS) {
+    assert.ok(lesson.preVictoryMessage?.trim().length > 40, `${lesson.id} needs an authored explanation before victory`);
+  }
   assert.match(
     simulatorSource,
     /const \[embeddedLessonPreVictoryAcknowledged, setEmbeddedLessonPreVictoryAcknowledged\] = useState\(false\);/,
   );
   assert.match(
     simulatorSource,
-    /const embeddedLessonVictoryGateOpen = Boolean\([\s\S]*?!embeddedLesson[\s\S]*?tutorialProgress\?\.status === "complete"[\s\S]*?!embeddedLesson\.preVictoryMessage \|\| embeddedLessonPreVictoryAcknowledged[\s\S]*?\);/,
+    /const embeddedLessonVictoryGateOpen = Boolean\([\s\S]*?!embeddedLesson[\s\S]*?tutorialProgress\?\.status === "complete"[\s\S]*?!embeddedLesson\.preVictoryMessage \|\| embeddedLessonPreVictoryAcknowledged[\s\S]*?!embeddedLesson\.knowledgeCheck \|\| embeddedLessonKnowledgeCheckPassed[\s\S]*?\);/,
   );
   assert.match(
     simulatorSource,
@@ -126,7 +126,8 @@ test("embedded lessons pause on Mr. Easterling's authored exit dialogue before o
   assert.match(preVictoryBranch, /<ProfessorGuideCard/);
   assert.match(preVictoryBranch, /help=\{embeddedLessonPreVictoryHelp\}/);
   assert.match(preVictoryBranch, /onAdvance=\{\(\) => setEmbeddedLessonPreVictoryAcknowledged\(true\)\}/);
-  assert.match(preVictoryBranch, /advanceLabel="Celebrate"/);
+  assert.match(preVictoryBranch, /advanceLabel=\{embeddedLesson\.knowledgeCheck \? "Continue" : "Celebrate"\}/);
+  assert.match(preVictoryBranch, /embeddedLessonKnowledgeCheckOpen \? \([\s\S]*?<SimulatorV2KnowledgeCheck[\s\S]*?check=\{embeddedLesson\.knowledgeCheck\}[\s\S]*?onComplete=\{\(\) => setEmbeddedLessonKnowledgeCheckPassed\(true\)\}/);
 });
 
 test("embedded lesson progress is saved at the real VP victory", () => {

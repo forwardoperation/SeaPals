@@ -126,11 +126,21 @@ test("the played Oceanic instance owns its normalized position", () => {
     new RegExp(`createCreatureInstance\\([\\s\\S]*?\\{[\\s\\S]*?position:\\s*${storedPositionName}\\b[\\s\\S]*?\\}\\)`),
     "position belongs to the stable creature instance so later insertions, removals, and saves cannot retarget it",
   );
-  assert.match(
-    oceanicPlay,
-    new RegExp(`if \\(\\s*${storedPositionName}\\s*\\) setPlayerViewportTouched\\(true\\)`),
-    "auto-fit must not immediately move the camera after an explicit spatial drop",
+  const viewportUpdate = oceanicPlay.match(
+    new RegExp(`if \\(\\s*${storedPositionName}\\s*\\) setPlayerViewportTouched\\(!embeddedLesson\\)`),
   );
+  assert.ok(viewportUpdate, "normal spatial drops retain their camera while tutorial placements allow auto-fit");
+  const updateViewport = new Function(
+    normalizedAssignment?.[1] ?? completionSignature[1],
+    "embeddedLesson",
+    "setPlayerViewportTouched",
+    viewportUpdate[0],
+  );
+  const calls = [];
+  updateViewport({ x: 30, y: 60 }, null, (value) => calls.push(value));
+  updateViewport({ x: 30, y: 60 }, { id: "filter-feeder" }, (value) => calls.push(value));
+  updateViewport(null, null, (value) => calls.push(value));
+  assert.deepEqual(calls, [true, false], "only normal explicit placement locks the viewport; tutorials fit the new card into view");
 });
 
 test("positioned Oceanic cards render at board coordinates while click-play and legacy cards keep the centered fallback", () => {

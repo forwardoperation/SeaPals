@@ -1282,7 +1282,7 @@ export function createGuidedFoundationCardLesson(card) {
       {
         id: "health",
         title: "Health shows what it can survive",
-        message: `${health} HP is how much damage this Coral can take. If its remaining Health reaches zero, it is destroyed and leaves your ecosystem.`,
+        message: `${health} HP is how much damage this Coral can take. At zero Health, it is destroyed and goes to discard. Its creatures survive: they move to compatible open slots, or remain displaced until a suitable home is available.`,
         focus: "health",
       },
       {
@@ -1440,6 +1440,7 @@ export function createGuidedAcademyCardLesson(card, {
   seenCardIds = [],
   cardClassLabel = "Card",
   introductionOnly = false,
+  nextStep = "placement",
 } = {}) {
   if (!card?.id || seenCardIds.includes(card.id)) return null;
   const seen = new Set(seenConceptKeys);
@@ -1459,7 +1460,13 @@ export function createGuidedAcademyCardLesson(card, {
     message: `Before you use ${subject}, read its gameplay type, cost, abilities, and stats. You will return to the same tutorial step when you finish.`,
     callouts,
     segments,
-    advanceLabel: introductionOnly ? "Continue to placement" : `Continue with ${subject}`,
+    advanceLabel: introductionOnly
+      ? nextStep === "placement"
+        ? "Continue to placement"
+        : nextStep === "support"
+          ? "Continue to the Support effect"
+          : "Return to the lesson"
+      : `Continue with ${subject}`,
   };
 }
 

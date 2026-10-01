@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
+const lessonPanelStyles = await readFile(new URL("./SimulatorV2LessonPanel.module.css", import.meta.url), "utf8");
 
 function sourceSection(start, end) {
   const startIndex = simulatorSource.indexOf(start);
@@ -130,7 +131,7 @@ test("the pointer hand has a natural silhouette and a calibrated fingertip", () 
 test("the board exposes prepared ecosystem, matching Coral, and compatible slot destinations before dragging", () => {
   assert.match(
     simulatorSource,
-    /embeddedLessonEcosystemDropPosition[\s\S]*?getGuidedAcademyFoundationPlacementTarget\(playerCorals\)[\s\S]*?\{ x: 72, y: 38 \}/,
+    /embeddedLessonEcosystemDropPosition[\s\S]*?getLessonFoundationPlacement\(embeddedLessonEcosystemDropCardIds\.find[\s\S]*?getLessonOpenWaterPlacement\(embeddedLessonEcosystemDropCardIds\[0\]\)/,
   );
   assert.match(
     simulatorSource,
@@ -237,7 +238,10 @@ test("embedded coaching stays centered above the reef divider while the hand poi
     simulatorSource,
     /\.seapals-professor-coach-wrap-divider:not\(\.seapals-professor-coach-wrap-anchored\)\s*\{[^}]*visibility:\s*hidden;/,
   );
-  assert.match(simulatorSource, /\.seapals-professor-coach-wrap > \[data-v2-lesson-panel="coach"\]\s*\{[^}]*overflow-y:\s*auto/);
+  assert.match(simulatorSource, /\.seapals-professor-coach-wrap > \[data-v2-lesson-panel="coach"\]\s*\{[^}]*max-height:\s*inherit;[^}]*overflow:\s*visible/);
+  assert.match(lessonPanelStyles, /\.messageViewport\s*\{[^}]*overflow-y:\s*auto/);
+  assert.match(lessonPanelStyles, /\.coachBody\s*\{[^}]*display:\s*flex;[^}]*min-height:\s*0/);
+  assert.match(lessonPanelStyles, /\.coach :is\(\.advanceButton, \.passiveAdvance, \.diceLadder, \.feedback\)\s*\{[^}]*flex-shrink:\s*0/);
 
   assert.match(simulatorSource, /<ProfessorCoachOverlay placementMode="reef-divider" measureKey=\{`pre-victory:\$\{mobileReefSplit\}`\}>[\s\S]*?help=\{embeddedLessonPreVictoryHelp\}/);
   assert.match(simulatorSource, /<ProfessorCoachOverlay placementMode="reef-divider" measureKey=\{`\$\{mobileReefSplit\}:\$\{compactTurnSequence\.stageIndex\}`\}>[\s\S]*?help=\{embeddedCompactCoachHelp\}/);

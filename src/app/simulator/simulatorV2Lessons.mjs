@@ -180,9 +180,18 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     id: "first-reef", moduleId: "reef-basics", number: 1,
     title: "Build Your First Reef", duration: "6 min", goalLabel: "Set up and reach 1 VP",
     summary: "Build two Corals, read changing Conditions, place a creature, and level up your reef.",
-    introduction: "In this lesson, you will learn the basics of setting up your ecosystem. Let’s get started!",
+    introduction: "Build an ecosystem and be first to reach the agreed Victory Point (VP) target: 10 for a learning game or 30 for a full game. Only cards currently in your ecosystem count toward your score. These lessons use prepared boards, arranged draws, and smaller goals so you can learn one idea at a time. Let's start by building a home for your first creature!",
     completion: "You built two Corals, adapted to Coral Disease, and upgraded Brain Coral to open a Predator slot.",
-    preVictoryMessage: "Excellent! Your ecosystem is really starting to build momentum.",
+    preVictoryMessage: "Your reef now produces RP and houses a creature worth 1 VP. RP pays for plays; VP is your current score. If a creature leaves your ecosystem, you lose its VP immediately. In a normal game, begin with 3 RP and draw four Foundation and four Main cards, then play a starting Foundation. Our smaller practice hand let you learn that setup one step at a time.",
+    knowledgeCheck: {
+      prompt: "You have 6 VP in play. Your only 2-VP fish is removed. What is your score now?",
+      correctChoiceId: "four",
+      choices: [
+        { id: "six", text: "6 VP — points stay once earned", feedback: "VP is not a running total of everything you have played. Count only the cards still in your ecosystem." },
+        { id: "four", text: "4 VP — the removed fish no longer counts", feedback: "Exactly. Losing a creature can lower your score. Protecting your ecosystem matters as much as growing it." },
+        { id: "eight", text: "8 VP — add the fish's points again", feedback: "The fish is leaving play, so its points are removed rather than added." },
+      ],
+    },
     celebration: "Your ecosystem has momentum!",
     skills: ["Conditions", "Corals", "Reef layout", "Resource Points", "Drawing", "Creature slots", "Coral upgrades", "Victory Points"],
     introducedConcepts: [
@@ -260,7 +269,16 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     summary: "Lead an attack, defend a counterattack, trigger a passive, recover a card, and unleash an On Play ability.",
     introduction: "In our next lesson, we will learn about the relationships between different sea creatures. In each ecosystem, there is a well defined food web which tells what creatures prey on other creatures. Certain fish may hunt invertebrates, while predators may consume both. Beware, there’s always a bigger fish! Let’s get started!",
     completion: "You led and read a full faceoff, defended a counterattack, saw a passive work automatically, recovered a card with a non-attack action, and triggered a Predator's On Play attack.",
-    preVictoryMessage: "Excellent work! You followed the food web from Fish to Predator, used an Action, defended a faceoff, saw a Passive ability work, recovered a discarded creature, and triggered an On Play attack. Great Barracuda showed how a creature’s class controls both where it lives and what it can hunt. You’re ready for the next lesson!",
+    preVictoryMessage: "You used three ability timings: Passive works automatically while a card is in play, On Play happens when it enters, and Action waits for your command and any RP payment. Read each attack's targeting symbols; a creature's class alone does not tell you what every ability can hunt. Ordinary defeated creatures enter discard and can be recovered by effects such as Scavenge. Destroyed Apex and Filter Feeders go to the Lost Zone instead.",
+    knowledgeCheck: {
+      prompt: "Your attack and the defender both finish on 4. No other effects apply. What happens?",
+      correctChoiceId: "defender",
+      choices: [
+        { id: "reroll", text: "Both players reroll", feedback: "There is no automatic tie reroll. A tied total has a winner under the normal faceoff rules." },
+        { id: "attacker", text: "The attacker wins because it started the fight", feedback: "Starting the attack gives no tie advantage. The attacker must beat the defender's total." },
+        { id: "defender", text: "The defender wins; both creatures stay", feedback: "Right. Ties favor the defender. A failed normal attack does not destroy the attacker or deal retaliation damage." },
+      ],
+    },
     celebration: "Every ability had a job to do!",
     fitAllPlayerSlots: true,
     skills: ["Attack actions", "Offense and defense", "Passive abilities", "Recovery actions", "On Play abilities"],
@@ -292,7 +310,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
         },
         {
           title: "How a faceoff is decided",
-          message: "In a faceoff, the attacker rolls the die named by its ability and the defender rolls the Defense die printed on its card. After any modifiers, the higher total wins. If the totals tie, the defender wins and stays safe. That defender advantage makes choosing the right target important!",
+          message: "The attacker rolls the die named by its ability; the defender uses the Defense die printed on its card. After modifiers, the higher total wins, and ties go to the defender. A successful normal attack sends the defender to discard. If the defender wins, both creatures stay: the attacker takes no retaliation damage. Card abilities can change these results, so read their text.",
           action: "Remember: higher wins, and ties go to the defender.",
         },
         {
@@ -428,6 +446,16 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     summary: "Meet Coral Reef's creature requirements, play the Habitat, upgrade a Coral, and welcome Hammerhead.",
     introduction: "In this lesson, you’ll learn how a thriving Habitat unlocks powerful creatures! Complete the required Fish and Invertebrate counts, place Coral Reef, and prepare an Apex slot for Hammerhead.",
     completion: "You supplied four Reef Corals, two Reef Fish, and two Reef Invertebrates to sustain Coral Reef. That Habitat and a Stage 2 Apex slot let Hammerhead enter and use Ravage.",
+    preVictoryMessage: "Your Habitat unlocked the hammerhead, and you resolved all of Ravage before finishing. A Habitat is an extra requirement, not a home or a payment: the supporting creatures stay in play, and the Apex still needs a legal slot and enough RP. Keep Coral Reef's required population alive. If any count is short at the end of your turn, the Habitat takes 10 HP damage.",
+    knowledgeCheck: {
+      prompt: "Coral Reef is in play, but your only Apex slot is occupied. You have enough RP for another hammerhead. Can you play it?",
+      correctChoiceId: "slot",
+      choices: [
+        { id: "habitat", text: "Yes — the Habitat replaces the need for a slot", feedback: "The Habitat unlocks the card, but does not replace its home. A Reef Apex still needs a compatible open slot." },
+        { id: "slot", text: "No — it also needs an open Apex slot", feedback: "Correct. Check every requirement: the Habitat, the RP cost, and a compatible open home." },
+        { id: "sacrifice", text: "Yes — discard a required Fish to make room", feedback: "Habitat requirements are creatures you keep in play, not sacrifices. Removing a Fish would not create an Apex slot." },
+      ],
+    },
     celebration: "Your thriving reef welcomed an Apex!",
     skills: ["Habitat requirements", "Maintaining a Habitat", "Apex slots", "Multi-attack abilities", "Turn planning"],
     introducedConcepts: [
@@ -497,7 +525,16 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     summary: "Search for a precise card, refresh your hand, and reuse Great Barracuda's Quick Strike.",
     introduction: "In this lesson, you’ll learn three ways Support cards shape a turn: Coral Gardener searches for a precise Foundation, Dr. Evans exchanges a stale hand for seven new cards, and Spearfishing converts a creature into RP. Then Blue Crab will retrieve that creature so its On Play ability can fire again!",
     completion: "You searched for and built a Foundation, watched Recycle refund an eaten Fish, cycled a stale hand, converted Great Barracuda into RP, and used Scavenge to replay Quick Strike.",
-    preVictoryMessage: "Excellent! Support cards can find the exact tool you need, replace a weak hand, or turn a creature already in play into the start of a new combo.",
+    preVictoryMessage: "You used a search to choose a specific card, a hand cycle to draw fresh options, and Spearfishing plus Scavenge to replay an On Play attack. Recycle was different: it refunded RP when your Fish was eaten, but did not return the card. Read each Support's timing restriction; the three we used prevent another Support that turn. Also watch your decks: you lose if you cannot complete a required draw, not merely because a deck becomes empty.",
+    knowledgeCheck: {
+      prompt: "Spearfishing sends your barracuda to discard. How can you trigger its On Play Quick Strike again?",
+      correctChoiceId: "recover-replay",
+      choices: [
+        { id: "recycle", text: "Wait for Blue Crab's Recycle to replay it", feedback: "Recycle gives RP when one of your Fish is eaten. It neither retrieves a card nor triggers from Spearfishing." },
+        { id: "tap-discard", text: "Use Quick Strike while it is in discard", feedback: "On Play triggers when the creature enters your ecosystem. It cannot attack from the discard pile." },
+        { id: "recover-replay", text: "Pay for Scavenge, then pay to play the barracuda again", feedback: "Exactly. Scavenge returns it to hand; replaying it pays its current cost and creates a new On Play trigger." },
+      ],
+    },
     celebration: "One Barracuda delivered two entrances!",
     fitAllPlayerSlots: true,
     skills: ["Support timing", "Deck search", "Hand cycling", "Spearfishing", "Discard recovery", "On Play combos"],
@@ -622,8 +659,18 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     randomSeed: (LESSON_RANDOM_SEED_BASE + 7) >>> 0,
     title: "Build an open-water ecosystem", duration: "12 min", goalLabel: "Build Open Ocean from 0 School Density and play Ocean Sunfish",
     summary: "Start with a bare board, build an open-water food web, and create enough shared School Density for Ocean Sunfish.",
-    introduction: "In this lesson, you’ll learn to build an ecosystem from a bare board! Creature Schools replace Corals as Foundations. They create no creature slots; instead, they supply shared School Density to creatures placed in open water. Build four Schools, meet Open Ocean’s food-web requirements, and grow from 0 Density to an Ocean Sunfish.",
+    introduction: "Build an ecosystem from a bare board and 0 School Density! Creature Schools are another kind of Foundation; you can use them alongside Corals. They create no slots, but supply shared Density for creatures in open water. This practice hand and extra starting RP let you focus on Schools. Build the food web that will support an ocean sunfish!",
     completion: "You began with a bare board and 0 School Density, built four Creature Schools instead of Corals, added open-water Fish and Invertebrates without using slots, established Open Ocean, and welcomed Ocean Sunfish with 10 Density still open.",
+    preVictoryMessage: "You built two kinds of homes across these lessons: Coral slots for compatible reef creatures, and shared School Density for creatures in open water. For your first normal match, try 10 VP. Each turn, draw one card from either deck, collect RP, then make the plays and use the abilities you can afford. Check the active Condition and printed requirements, resolve every effect, and end your turn when ready. Keep your score in play while disrupting your opponent's plan!",
+    knowledgeCheck: {
+      prompt: "Your Schools supply 60 Density and your creatures use all 60. A creature using 20 Density leaves play. How much capacity is now free?",
+      correctChoiceId: "twenty",
+      choices: [
+        { id: "zero", text: "0 — Density was spent permanently", feedback: "School Density is shared capacity, not spent currency. A creature releases its commitment when it leaves." },
+        { id: "twenty", text: "20 — the departing creature releases it", feedback: "Right. RP is spent to play a card; School Density is reserved only while that creature stays in your ecosystem." },
+        { id: "sixty", text: "60 — all creatures stop using it", feedback: "The creatures still in play continue reserving 40. Only the departing creature's 20 becomes free." },
+      ],
+    },
     celebration: "Your open-water ecosystem supports a giant!",
     fitAllPlayerSlots: true,
     skills: ["Creature Schools", "School Density", "Foundation upgrades", "Open-water placement", "Open Ocean requirements", "Filter Feeders"],
@@ -689,7 +736,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       drawCheckpoint({ id: "v2-draw-open-ocean", title: "Draw Open Ocean", deckType: "pals" }),
       buildCheckpoint("v2-play-open-ocean", "Establish Open Ocean", "open-ocean", { cardKind: "habitat", placement: "habitat" }),
       checkpoint("v2-fund-ocean-sunfish", ACTION.TURN_ENDED, "Prepare the Filter Feeder turn", "End the turn so the Schools can fund Ocean Sunfish."),
-      checkpoint("v2-collect-for-ocean-sunfish", ACTION.RP_COLLECTED, "Collect 8 RP", "Collect the RP needed to play Ocean Sunfish.", [atLeast("details.collected", 1)]),
+      checkpoint("v2-collect-for-ocean-sunfish", ACTION.RP_COLLECTED, "Keep enough RP for Ocean Sunfish", "Review your bank before drawing Ocean Sunfish; a full bank cannot gain more RP.", [atLeast("details.collected", 0), atLeast("details.bankAfter", 8)]),
       drawCheckpoint({ id: "v2-draw-ocean-sunfish", title: "Draw Ocean Sunfish", deckType: "pals" }),
       buildCheckpoint("v2-play-filter-feeder", "Welcome Ocean Sunfish", "ocean-sunfish", { placement: "open-water" }),
       victoryCheckpoint(13),
@@ -918,10 +965,10 @@ const OPEN_WATER_DENSITY_BY_CARD = Object.freeze({
 const name = (cardId) => CARD_NAMES[cardId] ?? cardId ?? "the highlighted card";
 
 const FIRST_REEF_VISIBLE_COPY = Object.freeze({
-  "brain-coral-base": "Let's begin your ecosystem by playing Brain Coral! This Base Coral costs 1 RP and provides your first homes for sea creatures. Drag it from your hand into the highlighted open water.",
-  "sea-urchin": "Sea Urchin is ready for a home! Creature slots are the round symbols connected to a Coral. Each slot inherits its Coral's habitat, and its icon shows the creature class it accepts. A creature must match both. Fish slots accept Fish. Predator slots accept Fish or Predators, but Predators cannot use Fish slots. Apex slots accept Fish, Predators, or Apex creatures. Invertebrate and Filter Feeder slots accept only their matching class. Sea Urchin is a Reef Invertebrate, and its printed 1 VP counts while it stays in your ecosystem. Drag it into the glowing Reef Invertebrate slot.",
-  "mustard-hill-coral-base": "Great—your first creature is home! A Base Coral begins a separate Foundation, while a Stage card upgrades an existing Coral. Mustard Hill is a Base Coral, so place it in empty water beside Brain Coral instead of on top of it. It produces 2 RP and has no Disease weakness. Drag it into the highlighted open water.",
-  "brain-coral-stage-1": "Time to level up your reef! A Coral can upgrade after its current stage has survived a full turn. Put the matching next Stage on that Coral; its position, existing damage, and compatible residents remain. Brain Coral Stage 1 costs 2 RP. It raises health from 10 to 20 HP so it can withstand more damage, raises production from 1 to 2 RP each round, and adds a Predator slot plus a second Invertebrate slot so more creatures can live there. Drag Stage 1 onto the glowing Brain Coral.",
+  "brain-coral-base": "Your ecosystem is below the middle bar; your opponent's is above it. Let's begin by playing Brain Coral! This Base Coral costs 1 of your 3 Resource Points (RP) and provides homes for sea creatures. Drag it from your hand into the highlighted open water.",
+  "sea-urchin": "Creature slots are the round symbols connected to a Coral. Each slot inherits its Coral's habitat, and its icon shows the creature class it accepts. Match both: the sea urchin is a Reef Invertebrate, so it needs a Reef Invertebrate slot. Its printed 1 VP counts while it stays in your ecosystem. Drag it into the glowing Reef Invertebrate slot.",
+  "mustard-hill-coral-base": "You can play several cards in one turn while you can afford them. Spend 2 RP on Mustard Hill Coral. A Base starts a separate Foundation; a Stage upgrades one already in play. This Base produces 2 RP and has no Disease weakness. Drag it into the highlighted open water beside Brain Coral.",
+  "brain-coral-stage-1": "A Coral can upgrade after its current stage has survived a full turn. Put the matching next Stage on it; position, damage, and compatible residents remain. Brain Coral Stage 1 costs 2 RP. Its printed health rises from 10 to 20 HP; the sea urchin still adds 20, giving it 40 total. Production rises from 1 to 2 RP, and it gains a Predator slot plus another Invertebrate slot. Drag Stage 1 onto the glowing Brain Coral.",
 });
 
 function firstReefVisiblePlacementCopy(cardId) {
@@ -945,7 +992,7 @@ function firstReefDrawVisibleCopy(expectedDraw) {
     return "Your first Coral upgrade is ready! Coral stages live in the Foundation Deck. To upgrade, you need the matching next Stage in your hand, and the current stage must have survived a full turn. Choose one card from the Foundation Deck, then confirm your draw.";
   }
   if (expectedDraw?.cardId === "sea-urchin") {
-    return "Time to welcome your first creature! Each round, you choose which deck to draw from. The Foundation Deck holds Corals and Coral upgrades. The Main Deck holds creatures, Habitats, and Support cards. Sea Urchin is a creature, so choose one card from the Main Deck, then confirm your draw.";
+    return "Each turn you normally draw one card total, from either personal deck. Foundation holds Corals, Creature Schools, and their upgrades; Main holds other creatures, Habitats, and Support cards. Drawing takes the top card without searching. This practice deck has a sea urchin ready: choose one Main card, then confirm your draw.";
   }
   return null;
 }
@@ -1033,13 +1080,13 @@ function allowedBuildCards(selected, current, uiState) {
 function placementCopy(cardId) {
   if (cardId === "coral-reef") {
     return {
-      message: "Coral Reef is a Habitat: it stays in its own zone and unlocks creatures that require it. It needs four Reef Corals, two Reef Fish, and two Reef Invertebrates in play; if those counts later fall short, it takes 10 HP damage at the end of each turn.",
+      message: "Coral Reef is a Habitat: it stays in its own zone and unlocks creatures that require it. Keep four Reef Corals, two Reef Fish, and two Reef Invertebrates in play; these are not sacrificed. If any count falls short, it takes 10 HP damage at the end of your turn.",
       action: "Choose Play Card to establish Coral Reef in your Habitat zone.",
     };
   }
   if (cardId === "open-ocean") {
     return {
-      message: "Open Ocean is a Habitat with a different food-web requirement: four Creature Schools, two Oceanic Fish, and two Oceanic Invertebrates. It stays in the Habitat zone while your creatures remain in open water.",
+      message: "Open Ocean needs four Creature Schools, two Oceanic Fish, and two Oceanic Invertebrates. They stay in play to sustain it. Like Coral Reef, this Habitat loses 10 HP at the end of your turn if any required count is short.",
       action: "Choose Play Card to establish Open Ocean in your Habitat zone.",
     };
   }
@@ -1081,7 +1128,7 @@ function placementCopy(cardId) {
       action: "Choose the glowing Apex slot on Brain Coral.",
     };
   }
-  const slot = ["sea-urchin", "blue-crab"].includes(cardId)
+  const slot = ["sea-urchin", "blue-crab", "arrow-crab"].includes(cardId)
     ? "Invertebrate"
     : cardId === "great-barracuda"
       ? "Predator"
@@ -1135,7 +1182,7 @@ function dragActionCopy(cardId, candidates, selected, current) {
   if (cardId === "hammerhead") {
     return "Drag Hammerhead from your hand into the highlighted Apex slot.";
   }
-  const slot = ["sea-urchin", "blue-crab"].includes(cardId)
+  const slot = ["sea-urchin", "blue-crab", "arrow-crab"].includes(cardId)
     ? "Invertebrate"
     : cardId === "great-barracuda"
       ? "Predator"
@@ -1165,7 +1212,9 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   }
 
   if (uiState.modal === "draw-result") {
-    return help("continue-actions", "Your draw is ready. Next you can play cards and use actions.", "Continue to Actions.");
+    return help("continue-actions", selected.id === "first-reef"
+      ? "Your draw joins your hand. In a normal game, you can make multiple legal plays and use abilities while you can afford their costs; you do not have to empty your hand. The lesson highlights one step at a time."
+      : "Your draw joins your hand. Next you can play cards and use abilities.", "Continue to Actions.");
   }
   if (uiState.modal === "turn-draw" || uiState.gamePhase === "draw") {
     const firstReefDrawCopy = selected.id === "first-reef"
@@ -1191,7 +1240,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (Number(uiState.drawSelected ?? 0) >= Number(uiState.drawTarget ?? 1) && Number(uiState.drawTarget ?? 1) > 0) {
       return help(
         "confirm-draw",
-        "Your deck choice is ready. Draw the card to add it to your hand.",
+        firstReefDrawCopy ? "" : "Your deck choice is ready. Draw the card to add it to your hand.",
         firstReefDrawCopy ?? "Confirm selection to draw your card.",
         firstReefDrawCopy ? {
           cue: firstReefDrawCue,
@@ -1226,7 +1275,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       : firstReefUpgradeDraw
         ? "Brain Coral Stage 1 is on top of your Foundation Deck. Draw it so you can level up the Coral you placed last round."
       : firstAttackOpeningDraw
-        ? "A turn begins with its required draw. Porcupine Fish is on top of your Main Deck; draw it now so we can explore how creatures interact through the food web."
+        ? "You are at the start of a turn, with RP already collected automatically. Draw one card before playing or attacking. This prepared Main Deck has a porcupine fish on top; draw it to explore how creatures interact through the food web."
       : firstAttackPredatorDraw
         ? `${seaUrchinWasDefeated
           ? "Scavenge brought Sea Urchin back to your hand for this round."
@@ -1245,7 +1294,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const drawCount = Math.max(1, Number(uiState.drawTarget ?? 1));
     return help(
       "draw-controls",
-      drawMessage,
+      firstReefDrawCopy ? "" : drawMessage,
       firstReefDrawCopy
         ?? `Choose ${drawCount === 1 ? "one card" : `${drawCount} cards`} from the ${expectedDraw?.deckType === "foundation" ? "Foundation" : "Main"} Deck.`,
       {
@@ -1267,7 +1316,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       : null;
     return help(
       "placement",
-      conceptCopy(uiState, placementConcept(uiState.playingCardId), copy.message),
+      firstReefCopy ? "" : conceptCopy(uiState, placementConcept(uiState.playingCardId), copy.message),
       firstReefCopy ?? copy.action,
       {
         cue: firstReefCopy ? `first-reef-place:${uiState.playingCardId}` : "placement:" + uiState.playingCardId,
@@ -1293,7 +1342,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         : null;
       return help(
         selectedCard ? "play-card" : "hand",
-        selectedCard
+        firstReefCopy ? "" : selectedCard
           ? "Card details are open. Play Card will let you choose its place in the reef."
           : `You start with 3 RP. ${name(cardId)} costs ${cardId === "brain-coral-base" ? 1 : 2} and creates a home for creatures.`,
         firstReefCopy ?? (selectedCard ? "Choose Play Card." : `Drag ${name(cardId)} from your hand into your ecosystem.`),
@@ -1321,7 +1370,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     ) {
       return help(
         "slot-drag",
-        "The connected circles are creature slots: homes for the creatures you will play. A slot can move around its Coral without changing which creatures fit there.",
+        "",
         "Nice work! The connected circles are creature slots: homes for the creatures you will play. Press and hold the highlighted round slot, then drag it left or right and release in open water. It stays connected to Brain Coral and accepts the same kind of creature.",
         {
           actionId: "move-slot",
@@ -1341,7 +1390,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     ) {
       return help(
         "foundation-drag",
-        `Your reef layout is flexible. Drag ${name(selected.setupCardId)} and its whole branch moves with it. Moving cards only organizes your board; it never changes their rules.`,
+        "",
         "Brain Coral and its whole branch can move together. Press and hold Brain Coral by its card, then drag it left or right and release in open water. Its connected slots move with it; only the layout changes.",
         {
           actionId: "move-foundation",
@@ -1367,7 +1416,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       conceptWasPreviouslyTaught(uiState, SIMULATOR_V2_LESSON_CONCEPTS.RESOURCE_POINTS)
         ? "Press Begin Round."
         : selected.id === "first-reef"
-          ? "Your first Foundation is ready! At the start of every round, a Condition changes the rules for both ecosystems, then you collect RP and draw. Press Begin Round to see the sequence."
+          ? "Each round reveals a shared Condition that can change both players' rules. Each turn you draw one card and collect 1 RP plus active Foundation income, then play cards and use abilities. The simulator collects RP automatically before showing your deck choice. Press Begin Round to see the sequence."
           : "Press Begin Round and watch your RP bank.",
       selected.id === "first-reef" ? {
         pointerPrompt: "Press Begin Round.",
@@ -1396,13 +1445,13 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         "Dr. Evans discards every other card in your hand, then draws seven replacements. Eight cards remain in your Main Deck; choose seven now and leave one for the normal draw next turn.",
         allocationReady
           ? "Discard the stale hand and draw the seven selected cards."
-          : "Allocate all seven remaining cards between the Foundation and Main decks.",
+          : "Choose seven Main draws, leaving one card for next turn, then confirm.",
       );
     }
     if (cardId === "spearfishing" && uiState.eventOverlayType === "choose-spearfishing-target") {
       return help(
         "support-effect-choice",
-        "Spearfishing can discard one of your Fish or Predators and return its printed RP cost. Choose Great Barracuda: the card goes to your discard pile, but the recovered 3 RP will help you play it again.",
+        "Spearfishing discards one of your Fish or Predators and returns its printed RP cost. The barracuda refunds 3 RP even though Clear Water made you pay 4 RP to play it. Its VP leaves your score until you replay it.",
         "Choose Great Barracuda.",
         { targetCardId: "great-barracuda" },
       );
@@ -1410,12 +1459,12 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const selectedCard = uiState.selectedHandCard === cardId
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
     const message = cardId === "coral-gardener"
-      ? "Support cards create one-time effects during your main phase, then go to the discard pile. Coral Gardener searches your personal decks for one Coral, which is useful when a specific Foundation or upgrade completes your plan. Its text also prevents another Support this turn."
+      ? "Support cards normally resolve once and go to discard, unless their text says otherwise. Coral Gardener searches your personal decks for one Coral: you choose a specific card instead of taking a blind draw. Its printed restriction prevents another Support this turn; that limit is not a rule for every Support."
       : cardId === "dr-evans"
         ? "Coral Gardener found a Coral, but imagine the rest of this hand no longer fits your plan. Dr. Evans discards the cards you are holding and replaces them with seven new cards. It is a powerful reset when hand quality matters more than keeping individual cards."
         : cardId === "spearfishing"
           ? "Spearfishing turns a Fish or Predator already on your reef into immediate RP equal to its printed cost. The creature and Support both go to discard, so the best target is one you can profitably recover or no longer need."
-          : "Support cards create one-time effects during your main phase, then go to the discard pile.";
+          : "Support cards normally resolve once and go to discard, unless their text says otherwise.";
     const action = selectedCard
       ? "Choose Play Card."
       : `Select ${name(cardId)} in your hand, then play it.`;
@@ -1500,7 +1549,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       }
       return help(
         "opponent-board",
-        "Hammerhead's Ravage begins with Coral damage, then performs two attacks.",
+        "Ravage first deals a D4 roll times 10 damage to an opposing Coral's HP, without a defense roll. A destroyed Coral goes to discard; its creatures survive and need compatible homes. Then resolve two D8 faceoffs against different legal creatures.",
         "Finish Ravage and resolve both faceoffs.",
         { targetCardId: "hammerhead" },
       );
@@ -1540,7 +1589,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     return help(
       target,
       introduceActions
-        ? "Porcupine Fish is ready! Crunch is an Action: an ability you choose during your turn, up to once each turn."
+        ? "Crunch is an Action: you choose when to use it during your turn and pay its 1 RP separately from the fish's play cost. Actions normally work once per turn, but read extra restrictions: Crunch cannot be used again on your next turn."
         : chooseFirstAttack
           ? "Porcupine Fish is your attacker. Crunch costs 1 RP and can target an opposing Invertebrate."
           : "Crunch costs 1 RP and targets an opposing Invertebrate.",
@@ -1578,15 +1627,15 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (selected.id === "apex-predators" && cardId === "arrow-crab") {
       message = "Great—your Fish count is ready! Sea Urchin is the only Reef Invertebrate so far. Add Arrow Crab to reach the second one; then your reef will meet Coral Reef's full 4 Coral, 2 Fish, 2 Invertebrate requirement.";
     } else if (selected.id === "apex-predators" && cardId === "coral-reef") {
-      message = "You did it—all three Coral Reef counts are met! Four Reef Corals, two Reef Fish, and two Reef Invertebrates now sustain this zero-RP Habitat and unlock Hammerhead. Keep those creatures in play: if a count falls short, the Habitat takes 10 HP each turn.";
+      message = "All three Coral Reef counts are met! Four Reef Corals, two Reef Fish, and two Reef Invertebrates sustain this zero-RP Habitat and unlock the hammerhead. They stay in play; they are not sacrificed. If a count falls short at the end of your turn, the Habitat takes 10 HP damage.";
     } else if (selected.id === "support-strategies" && cardId === "mustard-hill-coral-base") {
       message = "Coral Gardener turned a Support card into the exact Foundation your plan needed. Build Mustard Hill Coral for 2 RP now. Its 2 RP production will help fund the later Barracuda combo.";
     } else if (selected.id === "support-strategies" && cardId === "sea-urchin") {
       message = "Dr. Evans replaced the stale hand with seven new cards. Sea Urchin is the inexpensive first play: it costs 1 RP, scores 1 VP, and leaves enough RP for the combo that follows.";
     } else if (selected.id === "support-strategies" && cardId === "great-barracuda") {
       message = current.id === "v2-replay-barracuda"
-        ? "Scavenge moved Great Barracuda from your discard pile back to your hand. Replay it in the same Predator slot; entering play a second time triggers Quick Strike a second time."
-        : "Play Great Barracuda in Brain Coral's Predator slot. Quick Strike is an On Play ability, so its Bite begins immediately after the creature enters your ecosystem.";
+        ? "Scavenge returned the barracuda to your hand. Pay its current 4 RP cost under Clear Water and replay it in the same Predator slot. Entering play again triggers Quick Strike again."
+        : "Clear Water makes Predators cost 1 extra RP, so the barracuda costs 4 RP now instead of its printed 3. Its Predator slot is ready. Quick Strike is On Play: its Bite begins immediately when it enters, with no separate Action cost.";
     } else if (selected.id === "support-strategies" && cardId === "arrow-crab") {
       message = "The Support chain is complete. Arrow Crab costs the final 1 RP, fits Mustard Hill Coral's Invertebrate slot, and supplies the last VP needed to finish the lesson.";
     } else if (selected.id === "filter-feeder" && cardId === "herring-ball-base") {
@@ -1604,21 +1653,21 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (selected.id === "filter-feeder" && cardId === "herring-ball-stage2") {
       message = "One Stage 1 Herring Ball has survived a full turn. Upgrade it from 60 to 140 Density for 7 RP. The 80-point increase takes your four-School ecosystem from 140 to 220 total Density.";
     } else if (selected.id === "filter-feeder" && cardId === "halfbeak") {
-      message = "Creature Schools provide the capacity; open-water creatures use it instead of slots. Halfbeak costs 2 RP and reserves 10 of the 220 School Density while it remains in your ecosystem.";
+      message = "Schools provide shared capacity; open-water creatures use it instead of slots. Pay 2 RP for the halfbeak and reserve 10 of your 220 School Density (SD). RP is spent, but SD is only occupied: that 10 becomes free again if the halfbeak leaves play.";
     } else if (selected.id === "filter-feeder" && cardId === "bonito-tuna") {
-      message = "Bonito Tuna is the second Oceanic Fish Open Ocean requires. It also lives directly in open water and reserves 10 Density, bringing the shared commitment to 20 of 220.";
+      message = "The bonito tuna is the second Oceanic Fish Open Ocean requires. It lives directly in open water and reserves 10 Density, bringing your total to 20 used out of 220. Every School contributes to the same pool; a creature does not belong to one particular School.";
     } else if (selected.id === "filter-feeder" && cardId === "blue-sea-dragon") {
       message = "Blue Sea Dragon is an Oceanic Invertebrate, but it does not need an Invertebrate slot. It reserves 20 shared Density in open water, bringing the total commitment to 40.";
     } else if (selected.id === "filter-feeder" && cardId === "market-squid") {
       message = "Market Squid is the second Oceanic Invertebrate. It reserves another 20 Density, so 60 of 220 is committed and 160 remains open—enough for Ocean Sunfish later.";
     } else if (selected.id === "filter-feeder" && cardId === "open-ocean") {
-      message = "Your bare board has become a complete open-water food web: four Creature Schools, two Oceanic Fish, and two Oceanic Invertebrates. Those cards now satisfy Open Ocean, so establish the zero-RP Habitat in its own zone.";
+      message = "Four Schools, two Oceanic Fish, and two Oceanic Invertebrates now satisfy Open Ocean. Establish the zero-RP Habitat in its own zone. Keep that population in play: like Coral Reef, it loses 10 HP at the end of your turn if any required count is short.";
     } else if (cardId === "mustard-hill-coral-base" && selected.id === "first-reef") {
       message = "Build Mustard Hill Coral as a second Foundation. It has no Disease weakness, so Coral Disease will not stop its 2 RP production next round.";
     } else if (cardId === "porcupine-fish" && selected.id === "first-attack") {
       message = "Porcupine Fish is a Reef Fish, so it fits Brain Coral's open Fish slot. Play it for 2 RP. Once it is settled, we’ll learn how its Crunch Action chooses prey and how every faceoff die works.";
     } else if (cardId === "blue-crab" && selected.id === "first-attack") {
-      message = "Some abilities help without waiting for a command. Blue Crab’s Eco Boost is a Passive ability, so it works automatically while Blue Crab remains in your ecosystem and raises your maximum RP bank by 1.";
+      message = "Blue Crab's Eco Boost is Passive: it works automatically while the crab remains in your ecosystem. It raises your RP bank cap from 8 to 9. It creates room for more RP, but does not itself add RP to your bank.";
     } else if (cardId === "sea-urchin" && selected.id === "first-attack") {
       message = "Scavenge recovered Sea Urchin instead of attacking. Return it to Brain Coral now, and its Spines passive will again add 20 HP to that Coral.";
     } else if (cardId === "brain-coral-stage-1") {
@@ -1626,7 +1675,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         ? "Upgrade Brain Coral for 2 RP. Its resilience rises from 10 to 20 HP, it can produce 2 RP instead of 1 when a Condition is not blocking it, and it gains a Predator slot plus another Invertebrate slot. Sea Urchin stays attached."
         : "Coral Heal cleared Stunned, so Brain Coral can upgrade for 2 RP. You’ve seen the payoff: 20 HP of resilience, 2 RP each round, a Predator slot, and another Invertebrate slot.";
     } else if (cardId === "brain-coral-stage-2") {
-      message = "Upgrade Brain Coral to Stage 2 for 5 RP. The payoff is huge: resilience rises from 20 to 60 HP, production grows from 2 to 5 RP each round, and its reef opens two Predator, one Apex, and three Invertebrate slots. Stage 2 has no Fish slot, so check attached creatures first.";
+      message = "Upgrade Brain Coral to Stage 2 for 5 RP. Printed health rises from 20 to 60 HP, production grows from 2 to 5 RP each round, and it opens two Predator, one Apex, and three Invertebrate slots. Stage 2 has no Fish slot, so check attached creatures first; a Fish can move to a compatible Predator or Apex slot.";
     } else if (cardId === "sardine-ball-base") {
       message = "Sardine Ball costs 1 RP. As a Creature School it acts as a Foundation and supplies 10 School Density.";
     } else if (cardId === "halfbeak") {
@@ -1636,15 +1685,15 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
         ? "Ocean Sunfish is the payoff for the whole ecosystem. Open Ocean satisfies its Habitat requirement, your four smaller creatures use 60 of 220 Density, and the remaining 160 can support its 150-Density requirement. Pay 8 RP to place it in open water, leaving 10 Density free and reaching 13 VP."
         : "Ocean Sunfish costs 8 RP, needs Coral Reef or Open Ocean, and commits 150 School Density.";
     } else if (cardId === "hammerhead") {
-      message = "Hammerhead costs 6 RP, needs Coral Reef, and must occupy an Apex slot. Stage 2 Brain Coral supplies that slot.";
+      message = "The hammerhead costs 6 RP and needs both Coral Reef and an open Apex slot. A Reef Apex slot can house Reef Fish, Predators, or Apex creatures, but an Apex cannot use the smaller Fish or Predator slots. Stage 2 Brain Coral supplies the home you need.";
     } else if (cardId === "great-barracuda") {
       message = selected.id === "first-attack"
-        ? "Great Barracuda’s type line identifies it as a Reef Predator. A Reef Predator slot can house a Reef Fish or Reef Predator, and an Apex slot can house either class too. A Reef Predator cannot use a Fish slot. Place it in Brain Coral's highlighted Predator slot for 3 RP. Its Quick Strike On Play ability will immediately begin one D6 Bite against an opposing Fish or Predator—there is no separate Action button or extra RP cost."
+        ? "The great barracuda is a Reef Predator. Predator slots also accept Fish, but a Predator cannot use a Fish slot. Murky Water discounts its printed 3 RP cost to 2 RP this round. Quick Strike is On Play: placing it immediately begins a D6 Bite against an opposing Fish or Predator, with no separate Action cost."
         : "Each attack tells you which die to roll. Porcupine Fish's Crunch uses a D4 (1–4); Great Barracuda's Bite uses a D6 (1–6), giving it a wider possible range.";
     }
     return help(
       selectedCard ? "play-card" : "hand",
-      selectedCard ? name(cardId) + " is selected. Play Card will show its legal placement." : message,
+      firstReefCopy ? "" : selectedCard ? name(cardId) + " is selected. Play Card will show its legal placement." : message,
       firstReefCopy ?? (selectedCard ? "Choose Play Card." : dragActionCopy(cardId, candidates, selected, current)),
       {
         cue: firstReefCopy ? `first-reef-place:${cardId}` : undefined,
@@ -1668,14 +1717,14 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       conceptCopy(
         uiState,
         SIMULATOR_V2_LESSON_CONCEPTS.VICTORY_POINTS,
-        "Victory Points come from cards in your ecosystem. Reach " + selected.victoryTarget + " VP to finish this lesson.",
+        "Only VP on cards currently in your ecosystem counts; your score falls when they leave. Reach " + selected.victoryTarget + " VP for this practice goal.",
       ),
       "Watch your VP total.",
     );
   }
   if (current.actionType === ACTION.TURN_ENDED) {
     if (selected.id === "first-reef") {
-      const message = "Ready to test your reef? End your turn. Coral Disease will appear next round, and you can compare RP from Brain Coral and Mustard Hill.";
+      const message = "The turn button ends your actions and passes play to the opponent. You keep unused RP and cards in hand. After both players finish, a new round reveals the next Condition. End your turn now; this practice opponent will pass, then Coral Disease lets us compare your Corals' RP production.";
       return help("turn-button", message, message, {
         pointerPrompt: "End the turn to reveal Coral Disease.",
         targetLabel: "the End Turn button",
@@ -1699,8 +1748,8 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
                 : current.id === "v2-fund-second-open-water-invertebrate"
                   ? "Blue Sea Dragon lives in open water without a Coral slot and commits 20 Density. End the turn to draw the second Oceanic Invertebrate."
                   : current.id === "v2-prepare-open-ocean"
-                    ? "Your food web now has four Schools, two Oceanic Fish, and two Oceanic Invertebrates. Sixty of 220 Density is committed, leaving 160 open. End the turn so you can draw and establish Open Ocean."
-                    : "Open Ocean is established and 160 Density remains free. End the turn once more so the Schools can refill the 8 RP needed for Ocean Sunfish."
+                    ? "Your four Schools, two Oceanic Fish, and two Oceanic Invertebrates meet Open Ocean's requirements. Protect those Schools: attacks against them deal the attack roll times 10 HP instead of a defense faceoff. End the turn to draw the Habitat."
+                    : "Open Ocean is established, your RP bank is full, and 160 Density remains free. End the turn once more to draw Ocean Sunfish. Protect your Schools: losing capacity can block future plays. If you become over capacity, creatures already in play stay, but you cannot add another creature that needs Density until enough is free."
       : selected.id === "first-attack"
         ? current.id === "v2-pass-to-counterattack"
           ? "Excellent—you completed every step of an attack! Your opponent will now play Spanish Hogfish and use Crunch on your Sea Urchin, so you can watch the same faceoff from the defender’s side."
@@ -1716,7 +1765,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const diseaseRound = current.id === "v2-collect-under-coral-disease";
     const action = diseaseRound
       ? "That’s resilience in action! Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
-      : "Nice! Your bank increased from 2 RP to 4 RP. Unspent RP stays in your bank for later rounds. Continue to your draw.";
+      : "Your bank increased from 2 RP to 4 RP: 1 for the turn and 1 from Brain Coral. Unspent RP carries forward, but the normal bank cap is 8; extra income above your current cap is lost. Continue to your draw.";
     return help(
       "rp-bank",
       action,
@@ -1740,7 +1789,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       "rp-bank",
       firstSupportCollection
         ? "Recycle already returned 1 RP when Great Barracuda ate Clownfish. Now the new round adds its normal income. That refund is separate from Spearfishing: Recycle only triggers when one of your Fish is eaten."
-        : "A new turn resets the one-Support-per-turn lock. Your RP bank is full enough for Sea Urchin, two Great Barracuda plays under Clear Water, and Blue Crab's 2 RP Scavenge after Spearfishing refunds Barracuda's printed 3 RP cost.",
+        : "A new turn ends Dr. Evans's printed restriction on playing another Support. Your bank can fund Sea Urchin, two 4-RP barracuda plays under Clear Water, and Scavenge for 2 RP, because Spearfishing returns the barracuda's printed 3 RP cost between plays.",
       firstSupportCollection
         ? "Continue to draw Dr. Evans from the Main Deck."
         : "Continue to draw Arrow Crab from the Main Deck.",
@@ -1754,7 +1803,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       "v2-collect-for-blue-sea-dragon": "Your Schools refilled the RP bank. Blue Sea Dragon costs 2 RP and will reserve 20 School Density in open water rather than occupy a Coral slot.",
       "v2-collect-for-market-squid": "Your Schools refilled the bank again. Market Squid costs 2 RP, supplies the second Oceanic Invertebrate, and raises the bank cap through EcoBoost.",
       "v2-collect-for-open-ocean": "The four Schools continue to fund the ecosystem. Open Ocean itself costs 0 RP, but it can enter only because all four School, two Fish, and two Invertebrate requirements are now met.",
-      "v2-collect-for-ocean-sunfish": "Your Creature Schools refilled the expanded RP bank. Ocean Sunfish needs 8 RP, Open Ocean, and 150 free School Density; all three requirements are now ready.",
+      "v2-collect-for-ocean-sunfish": "Your expanded RP bank was already full, so this collection adds 0 RP. You still have enough: Ocean Sunfish needs 8 RP, Open Ocean, and 150 free School Density. All three requirements are ready.",
     };
     return help(
       "rp-bank",

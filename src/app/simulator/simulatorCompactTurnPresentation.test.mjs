@@ -93,7 +93,7 @@ test("Condition and RP-source teaching use the embedded coach only when needed",
   );
   assert.match(
     conditionHelp,
-    /Every round begins with one card from the shared Condition Deck\.[\s\S]*?both ecosystems[\s\S]*?Tap Clear Water in the middle bar/,
+    /Every round begins with one card from the shared Condition Deck\.[\s\S]*?both ecosystems[\s\S]*?Tap Clear Water in the middle bar to read its rule, then press Continue\./,
   );
   assert.match(
     conditionHelp,
@@ -108,7 +108,7 @@ test("Condition and RP-source teaching use the embedded coach only when needed",
   );
   assert.match(
     conditionHelp,
-    /Your bank increased from \$\{compactTurnSequence\.rpBefore\} RP to \$\{compactTurnSequence\.rpAfter\} RP\.[\s\S]*?Unspent RP stays in your bank/,
+    /You collected \$\{compactTurnSequence\.collectedRp\} RP, taking your bank from \$\{compactTurnSequence\.rpBefore\} to \$\{compactTurnSequence\.rpAfter\} RP\.[\s\S]*?Unspent RP carries over[\s\S]*?up to 8 RP[\s\S]*?Any income above the cap is lost/,
   );
   assert.match(
     conditionHelp,
@@ -263,7 +263,7 @@ test("RP defers progress for a teacher summary only when earlier lessons have no
   );
   assert.match(
     conditionCopy,
-    /Coral Disease blocked Brain Coral's 1 RP\. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP\.[\s\S]*?varied ecosystem/,
+    /Coral Disease blocked Brain Coral's 1 RP\. Mustard Hill still produced 2 RP, and the round added 1\. You collected \$\{compactTurnSequence\.collectedRp\} RP[\s\S]*?\$\{compactTurnSequence\.rpAfter\} of \$\{playerRpCap\} RP[\s\S]*?varied ecosystem/,
   );
 
   assert.match(rpSummaryContinue, /stage\?\.kind !== CompactTurnStage\.RP_SUMMARY/);

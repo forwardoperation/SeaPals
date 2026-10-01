@@ -14,6 +14,7 @@ import AnimatedVpBadge from "./AnimatedVpBadge";
 import CardActionProxyOverlay from "./CardActionProxyOverlay";
 import SimulatorV2NewGameSetup from "./SimulatorV2NewGameSetup";
 import SimulatorV2LessonPanel, { LessonDialogueMessage } from "./SimulatorV2LessonPanel";
+import SimulatorV2KnowledgeCheck from "./SimulatorV2KnowledgeCheck";
 import {
   SIMULATOR_V2_LESSON_CONCEPTS,
   SIMULATOR_V2_LESSONS,
@@ -172,7 +173,10 @@ import {
   completeGuidedAcademyLayoutAction,
   createGuidedAcademyLayoutProgress,
   getGuidedAcademyFoundationPlacementTarget,
+  getGuidedAcademyOpenWaterPlacementTarget,
   getPreparedTutorialFoundationPlacement,
+  getTutorialFoundationFootprint,
+  TUTORIAL_OPEN_WATER_FOOTPRINT,
 } from "./tutorialLayoutLesson.mjs";
 import { createProfessorAnnouncement, createProfessorSpeechKey, createProfessorSpokenMessage, getProfessorSpeechDuration, getProfessorVisibleGraphemeCount, segmentProfessorMessage } from "./tutorialDialogue.mjs";
 import {
@@ -4654,6 +4658,7 @@ export default function Simulator({
   };
   const [tutorialHelpDismissedId, setTutorialHelpDismissedId] = useState(null);
   const [embeddedLessonPreVictoryAcknowledged, setEmbeddedLessonPreVictoryAcknowledged] = useState(false);
+  const [embeddedLessonKnowledgeCheckPassed, setEmbeddedLessonKnowledgeCheckPassed] = useState(false);
   const [weaknessTourAcknowledged, setWeaknessTourAcknowledged] = useState(false);
   const [embeddedLessonPrimerStep, setEmbeddedLessonPrimerStep] = useState(0);
   useEffect(() => {
@@ -6027,7 +6032,7 @@ export default function Simulator({
       ? "Begin Round"
       : isStartOfTurn
         ? "Draw First"
-        : "Next Round";
+        : previewExperience ? "End Turn" : "Next Round";
   const turnControlDescription = opponentTurnInProgress
     ? "The opponent turn is in progress."
     : isSetup
@@ -6114,6 +6119,7 @@ export default function Simulator({
     || (
       tutorialProgress?.status === "complete"
       && (!embeddedLesson.preVictoryMessage || embeddedLessonPreVictoryAcknowledged)
+      && (!embeddedLesson.knowledgeCheck || embeddedLessonKnowledgeCheckPassed)
     )
   );
   const getResolvedVictoryResult = (nextPlayerVp, nextOpponentVp) => (
@@ -6186,7 +6192,7 @@ export default function Simulator({
     if (tutorialRequiredCardReviewId) {
       const cardName = cardsById[tutorialRequiredCardReviewId]?.name ?? "the new card";
       return tutorialUsesIntroOnlyCardLessons
-        ? `Tap on your ${cardName} for a quick introduction before placing it.`
+        ? `Tap on your ${cardName} for a quick introduction before continuing.`
         : `Tap on your ${cardName} and finish its card tour before continuing.`;
     }
     return getSimulatorV2LessonActionBlock({
@@ -7735,10 +7741,10 @@ export default function Simulator({
         lead: "",
         message: pendingTutorialCardReviewId
           ? tutorialUsesIntroOnlyCardLessons
-            ? `You drew ${tutorialRequiredCardReviewSubject}! Open it for a quick strategy introduction, then continue to placement.`
+            ? `You drew ${tutorialRequiredCardReviewSubject}! Open it for a quick strategy introduction, then return to the lesson's next step.`
             : `You drew ${tutorialRequiredCardReviewSubject}! Open it before continuing so we can walk through its type, cost, abilities, and stats.`
           : tutorialUsesIntroOnlyCardLessons
-            ? `${tutorialRequiredCardReviewSubjectAtSentenceStart} is new to this lesson. Open it for a quick strategy introduction, then continue to placement.`
+            ? `${tutorialRequiredCardReviewSubjectAtSentenceStart} is new to this lesson. Open it for a quick strategy introduction, then return to the lesson's next step.`
             : `${tutorialRequiredCardReviewSubjectAtSentenceStart} is new to this lesson. Open it before using it so we can read every gameplay detail together.`,
         action: `Tap on your ${tutorialRequiredCardReview.name}.`,
         target: "hand",
@@ -7814,12 +7820,12 @@ export default function Simulator({
         cueId: `embedded-condition:${tutorialConditionRound}:${tutorialConditionCard.id}`,
         title: `${tutorialConditionCard.name} changes this round`,
         message: embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "clear-water"
-          ? "Here comes your first Condition! Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar whenever you want to read its exact rule, then continue."
+          ? "Here comes your first Condition! Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar to read its rule, then press Continue."
           : embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "coral-disease"
             ? "Your reef's next test is here! This round's Condition is Coral Disease. It blocks RP from Corals with the Disease weakness. Brain Coral is vulnerable, while Mustard Hill Coral is not. Tap Coral Disease in the middle bar to read its exact rule, then continue."
             : `A Condition changes the rules for both reefs each round. ${tutorialConditionCard.name}: ${tutorialConditionCard.text}`,
         action: embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "clear-water"
-          ? "Here comes your first Condition! Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar whenever you want to read its exact rule, then continue."
+          ? "Here comes your first Condition! Every round begins with one card from the shared Condition Deck. It changes the rules for both ecosystems until the next round. Clear Water makes Predator and Apex cards cost 1 more RP. Tap Clear Water in the middle bar to read its rule, then press Continue."
           : embeddedLesson.id === "first-reef" && tutorialConditionCard.id === "coral-disease"
             ? "Your reef's next test is here! This round's Condition is Coral Disease. It blocks RP from Corals with the Disease weakness. Brain Coral is vulnerable, while Mustard Hill Coral is not. Tap Coral Disease in the middle bar to read its exact rule, then continue."
             : `Tap ${tutorialConditionCard.name} for its details, then continue.`,
@@ -7848,14 +7854,14 @@ export default function Simulator({
         cueId: `embedded-rp-summary:${compactTurnSequence.id}`,
         title: "Your RP bank is ready",
         message: embeddedLesson.id === "first-reef" && compactTurnSequence.condition?.id === "coral-disease"
-          ? "That's resilience in action! Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
+          ? `That's resilience in action! Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1. You collected ${compactTurnSequence.collectedRp} RP, bringing your bank to ${compactTurnSequence.rpAfter} of ${playerRpCap} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP was lost at the cap` : ""}. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw.`
           : embeddedLesson.id === "first-reef"
-            ? `Nice! Your bank increased from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
-            : `RP pays for cards and abilities. Every round gives you 1 RP, and cards in your ecosystem can add more. You collected ${compactTurnSequence.collectedRp} RP, so your bank now holds ${compactTurnSequence.rpAfter} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP could not fit under the cap` : ""}. Unspent RP stays in your bank for later rounds.`,
+            ? `You collected ${compactTurnSequence.collectedRp} RP, taking your bank from ${compactTurnSequence.rpBefore} to ${compactTurnSequence.rpAfter} RP. Unspent RP carries over to later rounds. Your bank normally holds up to 8 RP; some cards can raise that cap. Any income above the cap is lost${compactTurnSequence.cappedRp ? `, including ${compactTurnSequence.cappedRp} RP this round` : ""}. Continue to your draw.`
+            : `RP pays for cards and abilities. Every round gives you 1 RP, and cards in your ecosystem can add more. You collected ${compactTurnSequence.collectedRp} RP, so your bank now holds ${compactTurnSequence.rpAfter} of ${playerRpCap} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP was lost at the cap` : ""}. Unspent RP stays in your bank for later rounds.`,
         action: embeddedLesson.id === "first-reef" && compactTurnSequence.condition?.id === "coral-disease"
-          ? "That's resilience in action! Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1, so you collected 3 RP. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw."
+          ? `That's resilience in action! Coral Disease blocked Brain Coral's 1 RP. Mustard Hill still produced 2 RP, and the round added 1. You collected ${compactTurnSequence.collectedRp} RP, bringing your bank to ${compactTurnSequence.rpAfter} of ${playerRpCap} RP${compactTurnSequence.cappedRp ? `; ${compactTurnSequence.cappedRp} RP was lost at the cap` : ""}. A varied ecosystem keeps one Condition from shutting down your whole economy. Continue to your draw.`
           : embeddedLesson.id === "first-reef"
-            ? `Nice! Your bank increased from ${compactTurnSequence.rpBefore} RP to ${compactTurnSequence.rpAfter} RP. Unspent RP stays in your bank for later rounds. Continue to your draw.`
+            ? `You collected ${compactTurnSequence.collectedRp} RP, taking your bank from ${compactTurnSequence.rpBefore} to ${compactTurnSequence.rpAfter} RP. Unspent RP carries over to later rounds. Your bank normally holds up to 8 RP; some cards can raise that cap. Any income above the cap is lost${compactTurnSequence.cappedRp ? `, including ${compactTurnSequence.cappedRp} RP this round` : ""}. Continue to your draw.`
             : "Continue, then choose your card draw.",
         interaction: "tap",
         lessonStep: tutorialStepNumber,
@@ -8064,13 +8070,24 @@ export default function Simulator({
         cueId: `embedded-pre-victory:${embeddedLesson.id}`,
         title: "Lesson complete",
         message: embeddedLesson.preVictoryMessage,
-        action: "Continue to celebrate.",
+        action: embeddedLesson.knowledgeCheck ? "Continue when you are ready." : "Continue to celebrate.",
         target: "vp-score",
         targetLabel: "your completed VP goal",
       }
     : null;
   const embeddedLessonPreVictoryOpen = Boolean(
     embeddedLessonPreVictoryHelp && !embeddedLessonPresentationBlocked
+  );
+  const embeddedLessonKnowledgeCheckOpen = Boolean(
+    embeddedLesson?.knowledgeCheck
+    && tutorialProgress?.status === "complete"
+    && playerVp >= victoryTarget
+    && (!embeddedLesson.preVictoryMessage || embeddedLessonPreVictoryAcknowledged)
+    && !embeddedLessonKnowledgeCheckPassed
+    && !embeddedLessonPresentationBlocked
+    && !pendingEvents.length && !modal && !inspectedCardData
+    && !playingCardId && !attackContext && !searchContext && !pendingCreatureAction
+    && !consumedAttackFlight && !faceoffRolling && !effectRollRolling
   );
   const embeddedLessonRecoveryTargetId = eventOverlay?.type === "choose-action-discard"
     ? embeddedLesson?.abilityRecoveryTargets?.[tutorialCurrentCheckpoint?.id] ?? null
@@ -8290,10 +8307,76 @@ export default function Simulator({
       || card.zone === CreatureZone.OCEAN
       || cardUsesOpponentReef(card);
   });
+  function getLessonFoundationFootprint(slots, cardId) {
+    // Adding a live Foundation ends the compact seed-only layout. Measure the
+    // resulting slot network, including any offsets the player has dragged.
+    const footprint = getTutorialFoundationFootprint(slots, getBracketSlotPositions(slots.length));
+    const plannedCards = new Set(Object.values(embeddedLesson?.buildCards ?? {}).flat());
+    let nextCardId = cardsById[cardId]?.upgrade?.nextCardId;
+    while (nextCardId && plannedCards.has(nextCardId)) {
+      const nextSlots = createCoralSlots(cardsById[nextCardId], "tutorial-upgrade-preview");
+      const upgradeFootprint = getTutorialFoundationFootprint(nextSlots, getBracketSlotPositions(nextSlots.length));
+      footprint.minX = Math.min(footprint.minX, upgradeFootprint.minX);
+      footprint.maxX = Math.max(footprint.maxX, upgradeFootprint.maxX);
+      footprint.minY = Math.min(footprint.minY, upgradeFootprint.minY);
+      footprint.maxY = Math.max(footprint.maxY, upgradeFootprint.maxY);
+      plannedCards.delete(nextCardId);
+      nextCardId = cardsById[nextCardId]?.upgrade?.nextCardId;
+    }
+    return footprint;
+  }
+  function getLessonFoundationPlacement(cardId) {
+    const rect = ecosystemRef.current?.getBoundingClientRect();
+    const card = cardsById[cardId];
+    return getGuidedAcademyFoundationPlacementTarget(playerCorals, {
+      boardWidth: rect?.width ?? 1040,
+      boardHeight: rect?.height ?? 585,
+      incomingFootprint: getLessonFoundationFootprint(createCoralSlots(card, "tutorial-placement-preview"), cardId),
+      existingFootprints: playerCorals.map((coral) => getLessonFoundationFootprint(coral.slots, coral.cardId)),
+    });
+  }
+  function getLessonFloatingCardFootprint(cardId) {
+    return cardsById[cardId]?.kind === CardKind.HABITAT
+      ? { ...TUTORIAL_OPEN_WATER_FOOTPRINT, minY: -170 }
+      : TUTORIAL_OPEN_WATER_FOOTPRINT;
+  }
+  function getLessonOpenWaterPlacement(cardId) {
+    const element = ecosystemRef.current;
+    const rect = element?.getBoundingClientRect();
+    const boardWidth = rect?.width || 1040;
+    const boardHeight = rect?.height || 585;
+    const existingCards = [...playerCorals];
+    const existingFootprints = playerCorals.map((coral) => getLessonFoundationFootprint(coral.slots, coral.cardId));
+    const floatingInstances = [
+      ...playerReefCreatureInstances.map((instance) => ({ instance, key: `player-reef-${instance.instanceId}`, anchor: instance.instanceId })),
+      ...playerHabitatInstances.map((instance) => ({ instance, key: `player-habitat-${instance.instanceId}`, anchor: `habitat:${instance.instanceId}` })),
+    ];
+    for (const { instance, key, anchor } of floatingInstances) {
+      const position = normalizeOpenWaterPlacementPosition(instance.position);
+      let actualPosition;
+      if (position) {
+        const offset = floatingCardOffsets[key] ?? {};
+        actualPosition = { x: position.x + Number(offset.x ?? 0) / boardWidth * 100, y: position.y + Number(offset.y ?? 0) / boardHeight * 100 };
+      } else {
+        // Measure the live flex row when an older card has no saved position.
+        const cardElement = [...(element?.querySelectorAll("[data-card-instance-id]") ?? [])]
+          .find((entry) => entry.getAttribute("data-card-instance-id") === anchor);
+        const cardRect = cardElement?.getBoundingClientRect();
+        if (!cardRect?.width || !cardRect.height) continue;
+        actualPosition = getPlacementCoordinatesFromPoint(element, cardRect.left + cardRect.width / 2, cardRect.top + cardRect.height / 2, playerCameraRef.current.zoom, playerCameraRef.current.offset);
+      }
+      existingCards.push(actualPosition);
+      existingFootprints.push(getLessonFloatingCardFootprint(instance.cardId));
+    }
+    return getGuidedAcademyOpenWaterPlacementTarget(existingCards, {
+      boardWidth, boardHeight, existingFootprints,
+      incomingFootprint: getLessonFloatingCardFootprint(cardId),
+    });
+  }
   const embeddedLessonEcosystemDropPosition = embeddedLessonEcosystemDropCardIds.length
     ? embeddedLessonEcosystemDropCardIds.some((cardId) => isFoundationCard(cardsById[cardId]))
-      ? getGuidedAcademyFoundationPlacementTarget(playerCorals)
-      : { x: 72, y: 38 }
+      ? getLessonFoundationPlacement(embeddedLessonEcosystemDropCardIds.find((cardId) => isFoundationCard(cardsById[cardId])))
+      : getLessonOpenWaterPlacement(embeddedLessonEcosystemDropCardIds[0])
     : null;
   const embeddedLessonClearWaterDragPosition = embeddedLesson
     && tutorialHelpTargetActive
@@ -8309,8 +8392,25 @@ export default function Simulator({
   const guidedFoundationPlacementTarget = (tutorialUsesScriptedScenario || embeddedLesson)
     && isPlacingCoral
     && tutorialHelp?.target === "placement"
-      ? getGuidedAcademyFoundationPlacementTarget(playerCorals)
+      ? getLessonFoundationPlacement(playingCardId)
       : null;
+  const tutorialPendingFoundationCardId = guidedFoundationPlacementTarget
+    ? playingCardId
+    : embeddedLessonEcosystemDropCardIds.find((cardId) => isFoundationCard(cardsById[cardId]));
+  const tutorialPendingFoundationPlacement = guidedFoundationPlacementTarget
+    ?? (tutorialPendingFoundationCardId ? embeddedLessonEcosystemDropPosition : null);
+  useEffect(() => {
+    if (!tutorialPendingFoundationPlacement) return;
+    const frame = requestAnimationFrame(() => zoomEcosystemToFit("player"));
+    return () => cancelAnimationFrame(frame);
+  }, [tutorialPendingFoundationCardId, tutorialPendingFoundationPlacement?.x, tutorialPendingFoundationPlacement?.y]);
+  const tutorialPendingOpenWaterCardId = embeddedLessonEcosystemDropCardIds.find((cardId) => !isFoundationCard(cardsById[cardId]));
+  const tutorialPendingOpenWaterPlacement = tutorialPendingOpenWaterCardId ? embeddedLessonEcosystemDropPosition : null;
+  useEffect(() => {
+    if (!tutorialPendingOpenWaterPlacement) return;
+    const frame = requestAnimationFrame(() => zoomEcosystemToFit("player"));
+    return () => cancelAnimationFrame(frame);
+  }, [tutorialPendingOpenWaterCardId, tutorialPendingOpenWaterPlacement?.x, tutorialPendingOpenWaterPlacement?.y]);
   const upgradeableCoralIds = new Set(
     isPreviewingCoralUpgrade
       ? playerCorals
@@ -9182,12 +9282,16 @@ export default function Simulator({
       const position = normalizeOpenWaterPlacementPosition(instance.position);
       return position ? [{ instance, position }] : [];
     });
+    const positionedPlayerHabitats = isOpponent ? [] : playerHabitatInstances.flatMap((instance) => {
+      const position = normalizeOpenWaterPlacementPosition(instance.position);
+      return position ? [{ instance, position }] : [];
+    });
     const centeredPlayerOpenWaterCount = isOpponent
       ? 0
       : playerReefCreatureInstances.length - positionedPlayerOpenWater.length;
     const floatingTopRowCount = isOpponent
       ? opponent.habitats.length + opponent.reefCreatures.length
-      : playerHabitats.length + centeredPlayerOpenWaterCount;
+      : playerHabitats.length - positionedPlayerHabitats.length + centeredPlayerOpenWaterCount;
     const floatingTopClearance = isOpponent
       ? opponent.habitats.length ? 40 : 16
       : playerHabitats.length ? 48 : 24;
@@ -9201,7 +9305,9 @@ export default function Simulator({
       const floatingOffset = floatingCardsPresent ? 360 : 0;
       return { x: rect.width / 2 + offset.x, y: rect.height / 2 + offset.y + floatingOffset, absolute: true };
     });
-    if (!positions.length && !floatingCardsPresent) {
+    const pendingFoundation = !isOpponent ? tutorialPendingFoundationPlacement : null;
+    const pendingOpenWater = !isOpponent ? tutorialPendingOpenWaterPlacement : null;
+    if (!positions.length && !floatingCardsPresent && !pendingFoundation && !pendingOpenWater) {
       commitBoardCamera(owner, { zoom: 1, offset: { x: 0, y: 0 } });
       return;
     }
@@ -9247,6 +9353,18 @@ export default function Simulator({
       });
       return cardBounds;
     });
+    if (pendingFoundation && tutorialPendingFoundationCardId) {
+      const footprint = getLessonFoundationFootprint(createCoralSlots(cardsById[tutorialPendingFoundationCardId], "tutorial-placement-preview"), tutorialPendingFoundationCardId);
+      const centerX = pendingFoundation.x / 100 * rect.width;
+      const centerY = pendingFoundation.y / 100 * rect.height;
+      bounds.push({ minX: centerX + footprint.minX, maxX: centerX + footprint.maxX, minY: centerY + footprint.minY, maxY: centerY + footprint.maxY });
+    }
+    if (pendingOpenWater && tutorialPendingOpenWaterCardId) {
+      const footprint = getLessonFloatingCardFootprint(tutorialPendingOpenWaterCardId);
+      const centerX = pendingOpenWater.x / 100 * rect.width;
+      const centerY = pendingOpenWater.y / 100 * rect.height;
+      bounds.push({ minX: centerX + footprint.minX, maxX: centerX + footprint.maxX, minY: centerY + footprint.minY, maxY: centerY + footprint.maxY });
+    }
     const floatingTopRegionPresent = isOpponent
       ? floatingCardsPresent
       : floatingTopRowCount > 0 || playerOrphanCreatures.length > 0;
@@ -9269,6 +9387,12 @@ export default function Simulator({
         minY: centerY - 110,
         maxY: centerY + 110,
       });
+    });
+    positionedPlayerHabitats.forEach(({ instance, position }) => {
+      const offset = floatingCardOffsets[`player-habitat-${instance.instanceId}`] ?? {};
+      const centerX = position.x / 100 * rect.width + Number(offset.x ?? 0);
+      const centerY = position.y / 100 * rect.height + Number(offset.y ?? 0);
+      bounds.push({ minX: centerX - 90, maxX: centerX + 90, minY: centerY - 170, maxY: centerY + 110 });
     });
     const padding = 36;
     const minX = Math.min(...bounds.map((entry) => entry.minX)) - padding;
@@ -11216,8 +11340,8 @@ export default function Simulator({
       upgradeCoral(target.coralId, cardId);
     } else if (isFoundationCard(card) && Number(card.stage ?? 0) === 0) {
       const coordinates = (
-        (tutorialUsesScriptedScenario || embeddedLesson) && tutorialHelp?.target === "placement"
-          ? embeddedLessonEcosystemDropPosition ?? getGuidedAcademyFoundationPlacementTarget(playerCorals)
+        (tutorialUsesScriptedScenario || embeddedLesson) && (tutorialHelp?.target === "placement" || embeddedLessonEcosystemDropCardIds.includes(cardId))
+          ? embeddedLessonEcosystemDropPosition ?? getLessonFoundationPlacement(cardId)
           : null
       ) ?? getPlacementCoordinatesFromPoint(
         ecosystemRef.current,
@@ -11303,6 +11427,30 @@ export default function Simulator({
       completeGuidedAcademyLayoutAction(current, actionId)
     ));
     setTutorialHelpDismissedId(null);
+  }
+
+  function handleTutorialLayoutKeyDown(event, coralId, slotId = null, slotPosition = null) {
+    const delta = {
+      ArrowLeft: [-5, 0], ArrowRight: [5, 0], ArrowUp: [0, -5], ArrowDown: [0, 5],
+    }[event.key];
+    const actionId = slotId
+      ? GUIDED_ACADEMY_LAYOUT_ACTIONS.MOVE_SLOT
+      : GUIDED_ACADEMY_LAYOUT_ACTIONS.MOVE_FOUNDATION;
+    if (!delta || gamePhase !== "setup" || tutorialHelp?.actionId !== actionId) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    setPlayerCorals((current) => current.map((coral) => coral.id !== coralId ? coral : slotId ? {
+      ...coral,
+      slots: coral.slots.map((slot) => slot.id !== slotId ? slot : {
+        ...slot,
+        position: {
+          left: `${Number.parseFloat(slot.position?.left ?? slotPosition?.left ?? "50%") + delta[0]}%`,
+          top: `${Number.parseFloat(slot.position?.top ?? slotPosition?.top ?? "50%") + delta[1]}%`,
+        },
+      }),
+    } : { ...coral, x: coral.x + delta[0], y: coral.y + delta[1] }));
+    completeTutorialLayoutLessonAction(actionId);
+    return true;
   }
 
   function handleEcosystemClick(event) {
@@ -11775,6 +11923,11 @@ export default function Simulator({
         seenCardIds: tutorialSeenCardIds,
         cardClassLabel: getCardClassLabel(card),
         introductionOnly: tutorialUsesIntroOnlyCardLessons,
+        nextStep: embeddedLesson?.buildCards?.[tutorialCurrentCheckpoint?.id]?.includes(cardId)
+          ? "placement"
+          : embeddedLesson?.supportCards?.[tutorialCurrentCheckpoint?.id]?.includes(cardId)
+            ? "support"
+            : "lesson",
       });
       if (lesson) {
         setHandPopoverCardId(null);
@@ -13236,7 +13389,7 @@ export default function Simulator({
       setPlayError(`${card.name} still needs ${densityRequirementAtPlay} available School Density after that sacrifice, but the choice would open only ${densityAvailableAfterSacrifice}.`);
       return;
     }
-    if (placementPosition) setPlayerViewportTouched(true);
+    if (placementPosition) setPlayerViewportTouched(!embeddedLesson);
     const sacrificedSlotIds = new Set(sacrifices.filter((entry) => entry.location === "slot").map((entry) => entry.slotId));
     const sacrificedReefIds = sacrifices.filter((entry) => entry.location === "reef").map((entry) => entry.instanceId);
     const sacrificedOrphanIds = sacrifices.filter((entry) => entry.location === "orphan").map((entry) => entry.instanceId);
@@ -13444,7 +13597,7 @@ export default function Simulator({
         return;
       }
       if (card.zone === CreatureZone.OCEAN && !isCreatureSchool(card)) {
-        const normalizedPlacementPosition = normalizeOpenWaterPlacementPosition(placementPosition);
+        const normalizedPlacementPosition = normalizeOpenWaterPlacementPosition(embeddedLesson ? getLessonOpenWaterPlacement(cardId) : placementPosition);
         const choices = getPlayerOceanicSacrificeChoices(card);
         if (choices.length) {
           setSearchContext({ mode: "oceanic-sacrifice", cardId: card.id, choices, placementPosition: normalizedPlacementPosition });
@@ -13466,7 +13619,9 @@ export default function Simulator({
         createStableInstanceId(`habitat-${card.id}`),
         cardsById,
       );
+      if (embeddedLesson) habitatInstance.position = normalizeOpenWaterPlacementPosition(getLessonOpenWaterPlacement(cardId));
       const nextHabitatInstances = [...playerHabitatInstances, habitatInstance];
+      if (embeddedLesson) setPlayerViewportTouched(false);
       const nextBoardStats = getPlayerBoardStatSnapshot({
         habitats: nextHabitatInstances.map((instance) => instance.cardId),
       });
@@ -22895,8 +23050,7 @@ export default function Simulator({
         }
         .seapals-professor-coach-wrap > [data-v2-lesson-panel="coach"] {
           max-height: inherit;
-          overflow-y: auto;
-          overscroll-behavior: contain;
+          overflow: visible;
         }
         .seapals-professor-card {
           position: relative;
@@ -26538,9 +26692,16 @@ export default function Simulator({
                 step={tutorialContract.checkpoints.length}
                 total={tutorialContract.checkpoints.length}
                 onAdvance={() => setEmbeddedLessonPreVictoryAcknowledged(true)}
-                advanceLabel="Celebrate"
+                advanceLabel={embeddedLesson.knowledgeCheck ? "Continue" : "Celebrate"}
               />
             </ProfessorCoachOverlay>
+          ) : embeddedLessonKnowledgeCheckOpen ? (
+            <SimulatorV2KnowledgeCheck
+              key={embeddedLesson.id}
+              check={embeddedLesson.knowledgeCheck}
+              guide={tutorialGuide}
+              onComplete={() => setEmbeddedLessonKnowledgeCheckPassed(true)}
+            />
           ) : embeddedCompactCoachOpen ? (
             <ProfessorCoachOverlay placementMode="reef-divider" measureKey={`${mobileReefSplit}:${compactTurnSequence.stageIndex}`}>
               <ProfessorGuideCard
@@ -27166,8 +27327,9 @@ export default function Simulator({
                                 const habitat = cardsById[cardId];
                                 const key = `player-habitat-${habitatInstance.instanceId}`;
                                 const offset = floatingCardOffsets[key] ?? { x: 0, y: 0 };
+                                const placementPosition = normalizeOpenWaterPlacementPosition(habitatInstance.position);
                                 return (
-                                  <button key={habitatInstance.instanceId} type="button" data-card-id={cardId} data-card-instance-id={`habitat:${habitatInstance.instanceId}`} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId })} style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }} className="seapals-in-play-card pointer-events-auto relative h-[220px] w-[180px] cursor-grab rounded-[1.5rem] text-center active:cursor-grabbing">
+                                  <button key={habitatInstance.instanceId} type="button" data-card-id={cardId} data-card-instance-id={`habitat:${habitatInstance.instanceId}`} onPointerDown={(event) => handleFloatingCardPointerDown(key, event)} onPointerMove={handleFloatingCardPointerMove} onPointerUp={handleFloatingCardPointerUp} onClick={() => inspectFloatingCard({ owner: "player", cardId, coralId: null, slotId: key, habitatInstanceId: habitatInstance.instanceId })} style={getOpenWaterCardLayoutStyle(placementPosition, offset)} className={`seapals-in-play-card pointer-events-auto ${placementPosition ? "absolute" : "relative"} h-[220px] w-[180px] cursor-grab rounded-[1.5rem] text-center active:cursor-grabbing`}>
                                     <InPlayHoverLabel card={habitat} zoom={ecosystemZoom} placement="below" />
                                     <img src={habitat?.image} alt={habitat?.name} className="h-full w-full rounded-[1.5rem] object-contain shadow-lg" />
                                     {habitatInstance.maxHealth ? <span data-board-card-vitals="above" className="pointer-events-none absolute inset-x-2 z-50 rounded-full bg-slate-950/85 px-2 py-1 text-[9px] font-black text-rose-100 shadow">{habitatInstance.currentHealth}/{habitatInstance.maxHealth} HP</span> : null}
@@ -27315,7 +27477,10 @@ export default function Simulator({
                                  tabIndex={0}
                                  aria-label={canUpgradeThisCoral
                                    ? `Upgrade ${coral.name} to ${cardsById[playingCardId]?.name ?? "its next stage"}.`
+                                   : isLayoutFoundationTarget
+                                     ? `Move ${coral.name}. Drag it or use the arrow keys.`
                                    : `Inspect ${coral.name}. ${coral.health ?? coral.maxHealth} of ${coral.maxHealth} HP${densityBucket ? `; ${densityBucket.used} of ${densityBucket.capacity} School Density used` : ""}.`}
+                                 aria-keyshortcuts={isLayoutFoundationTarget ? "ArrowUp ArrowDown ArrowLeft ArrowRight" : undefined}
                                   className={`seapals-in-play-card relative z-20 mx-auto h-[220px] w-[180px] rounded-[1.5rem] shadow-xl${canUpgradeThisCoral ? " seapals-hand-drop-valid" : ""}${mobileHandDrag?.target?.kind === "coral" && mobileHandDrag.target.coralId === coral.id ? " is-hand-drag-target" : ""} ${
                                    draggingCoralId === coral.id ? "ring-2 ring-emerald-300" : ""
                                  } ${
@@ -27324,6 +27489,7 @@ export default function Simulator({
                                  onPointerDown={(event) => handleCoralPointerDown(coral.id, event)}
                                  onClick={(event) => handleCoralClick(coral.id, event)}
                                  onKeyDown={(event) => {
+                                   if (isLayoutFoundationTarget && handleTutorialLayoutKeyDown(event, coral.id)) return;
                                    if (event.key === "Enter" || event.key === " ") handleCoralClick(coral.id, event);
                                  }}
                                 >
@@ -27456,6 +27622,11 @@ export default function Simulator({
                                        data-v2-lesson-drop-cards={embeddedLessonSlotDropCardIds.join(" ") || undefined}
                                        data-v2-lesson-drop-kind={embeddedLessonSlotDropCardIds.length ? "slot" : undefined}
                                        data-hand-drop-valid={validTarget ? "true" : undefined}
+                                       role={isLayoutSlotTarget ? "button" : undefined}
+                                       tabIndex={isLayoutSlotTarget ? 0 : undefined}
+                                       aria-label={isLayoutSlotTarget ? `Move the ${getCreatureSlotLabel(slot)} slot. Drag it or use the arrow keys.` : undefined}
+                                       aria-keyshortcuts={isLayoutSlotTarget ? "ArrowUp ArrowDown ArrowLeft ArrowRight" : undefined}
+                                       onKeyDown={isLayoutSlotTarget ? (event) => handleTutorialLayoutKeyDown(event, coral.id, slot.id, position) : undefined}
                                        data-tutorial-target={validTarget
                                          ? "placement"
                                          : isLayoutSlotTarget
@@ -28537,8 +28708,8 @@ export default function Simulator({
                   {embeddedLesson ? "Replay Lesson" : "Retry Practice Duel"}
                 </button>
               ) : null}
-              <button type="button" data-victory-primary-action onClick={() => returnToStoryTown("duel-complete")} className={`rounded-full bg-gradient-to-r ${embeddedLesson ? "from-cyan-200 to-amber-300" : "from-amber-300 to-emerald-300"} px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105`}>
-                {embeddedLesson ? "Continue to Lessons" : `Return to ${storyReturnLabel}`}
+              <button type="button" data-victory-primary-action onClick={embeddedLesson && tutorialRuntime?.onContinue ? tutorialRuntime.onContinue : () => returnToStoryTown("duel-complete")} className={`rounded-full bg-gradient-to-r ${embeddedLesson ? "from-cyan-200 to-amber-300" : "from-amber-300 to-emerald-300"} px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:brightness-105`}>
+                {embeddedLesson ? tutorialRuntime?.continueLabel ?? "Continue to Lessons" : `Return to ${storyReturnLabel}`}
               </button>
             </>
           ) : (

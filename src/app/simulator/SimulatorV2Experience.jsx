@@ -56,13 +56,15 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
     setPanel(null);
   }
 
+  const nextLesson = lesson ? SIMULATOR_V2_LESSONS[SIMULATOR_V2_LESSONS.findIndex((entry) => entry.id === lesson.id) + 1] : null;
   const runtime = lesson ? {
     ...createSimulatorV2LessonRuntime(lesson.id, { completedLessonIds }),
     lessonStarted: panel === null,
     onComplete: completeLesson,
     onReplay: () => selectLesson(lesson.id),
+    onContinue: nextLesson ? () => selectLesson(nextLesson.id) : returnToSimulator,
+    continueLabel: nextLesson ? "Next lesson" : "Return to simulator",
   } : null;
-  const nextLesson = lesson ? SIMULATOR_V2_LESSONS[SIMULATOR_V2_LESSONS.findIndex((entry) => entry.id === lesson.id) + 1] : null;
 
   return (
     <>

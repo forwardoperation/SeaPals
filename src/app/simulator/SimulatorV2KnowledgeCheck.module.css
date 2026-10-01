@@ -1,0 +1,44 @@
+.dialog {
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  width: min(34rem, calc(100vw - 1.5rem - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  margin: auto;
+  padding: clamp(1rem, 4vw, 1.6rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 2px solid #8595a5;
+  border-radius: 1.2rem;
+  color: #182a3c;
+  background: #f8fcfc;
+  box-shadow: 0 1.5rem 5rem #03162880;
+  font-family: inherit;
+}
+
+.dialog::backdrop { background: #061b2b99; backdrop-filter: blur(3px); }
+.dialog * { box-sizing: border-box; }
+.heading { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; }
+.heading h2 { margin: 0; font-size: clamp(1.2rem, 4.5vw, 1.6rem); font-weight: 850; line-height: 1.2; }
+.heading h2:focus { outline: none; }
+.portrait { width: 2.75rem; height: 2.75rem; flex: 0 0 2.75rem; object-fit: cover; border: 1px solid #b3d7da; border-radius: 0.9rem; background: #d9f4f4; }
+.prompt { margin: 0; font-size: 1.05rem; line-height: 1.55; }
+.choices { display: grid; gap: 0.65rem; margin-top: 1.1rem; }
+.choice { min-height: 3rem; width: 100%; padding: 0.85rem 1rem; border: 1px solid #a5b9c4; border-radius: 0.8rem; color: #183043; background: #fff; text-align: left; overflow-wrap: anywhere; font: inherit; font-weight: 650; line-height: 1.45; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.choice:hover:not(:disabled) { border-color: #168c9d; background: #eafafa; }
+.choice[data-result="retry"] { border-color: #a99358; background: #fff8df; }
+.choice[data-result="correct"] { border-color: #148776; background: #d8f5ed; }
+.choice:disabled { cursor: default; }
+.choice:disabled:not([data-result="correct"]) { color: #637982; background: #edf2f4; }
+.dialog button:focus-visible { outline: 3px solid #0786a4; outline-offset: 3px; }
+.feedback { color: #3a5363; font-size: 0.95rem; line-height: 1.55; }
+.feedback p { margin: 1rem 0 0; }
+.feedback strong { color: #183b4e; }
+.actions { display: flex; justify-content: flex-end; margin-top: 1.15rem; }
+.continueButton { display: flex; gap: 1.2rem; align-items: center; justify-content: center; min-height: 3rem; padding: 0.75rem 1.4rem; border: 1px solid #008b91; border-radius: 999px; color: #053640; background: linear-gradient(110deg, #66e4ee, #64ebc8); font: inherit; font-weight: 800; cursor: pointer; }
+.continueButton:hover { filter: brightness(1.04); }
+
+@media (max-width: 380px) {
+  .choice { padding: 0.75rem; }
+  .continueButton { width: 100%; }
+}

@@ -78,6 +78,85 @@ const COLLISION_AWARE_FOUNDATION_POSITIONS = Object.freeze([
 const FOUNDATION_CLEARANCE = Object.freeze({ x: 30, y: 38 });
 const PREPARED_FOUNDATION_COLUMN_GAP = 140;
 const PREPARED_FOUNDATION_ROW_GAP = 240;
+export const TUTORIAL_OPEN_WATER_FOOTPRINT = Object.freeze({ minX: -90, maxX: 90, minY: -110, maxY: 110 });
+
+/** World-pixel bounds around a 240x280 Foundation anchor. Reserve full cards
+ * even for empty slots, so a later creature does not undo the safe placement.
+ */
+export function getTutorialFoundationFootprint(slots = [], anchorPositions = []) {
+  const bounds = { minX: -120, maxX: 120, minY: -200, maxY: 140 };
+  slots.forEach((slot, index) => {
+    const position = slot.position ?? anchorPositions[index];
+    const left = Number.parseFloat(position?.left);
+    const top = Number.parseFloat(position?.top);
+    if (!Number.isFinite(left) || !Number.isFinite(top)) return;
+    const x = (left - 50) / 100 * 240;
+    const y = (top - 50) / 100 * 280;
+    bounds.minX = Math.min(bounds.minX, x - 90);
+    bounds.maxX = Math.max(bounds.maxX, x + 90);
+    bounds.minY = Math.min(bounds.minY, y - 110);
+    bounds.maxY = Math.max(bounds.maxY, y + 110);
+  });
+  return bounds;
+}
+
+function getMeasuredFoundationPlacement(existingFoundations, layout) {
+  const width = Number(layout?.boardWidth);
+  const height = Number(layout?.boardHeight);
+  if (!(width > 0 && height > 0) || !layout.incomingFootprint) return null;
+  const incoming = layout.incomingFootprint;
+  const occupied = existingFoundations.flatMap((foundation, index) => {
+    const x = Number(foundation.x) / 100 * width;
+    const y = Number(foundation.y) / 100 * height;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return [];
+    const footprint = layout.existingFootprints?.[index] ?? getTutorialFoundationFootprint();
+    return [{ minX: x + footprint.minX, maxX: x + footprint.maxX, minY: y + footprint.minY, maxY: y + footprint.maxY }];
+  });
+  if (!occupied.length) return COLLISION_AWARE_FOUNDATION_POSITIONS[0];
+  const gap = 24;
+  const candidates = COLLISION_AWARE_FOUNDATION_POSITIONS.map(({ x, y }) => ({ x: x / 100 * width, y: y / 100 * height }));
+  const wholeReef = occupied.reduce((bounds, current) => ({
+    minX: Math.min(bounds.minX, current.minX), maxX: Math.max(bounds.maxX, current.maxX),
+    minY: Math.min(bounds.minY, current.minY), maxY: Math.max(bounds.maxY, current.maxY),
+  }));
+  // Also consider open water outside the original viewport. Fit can show it;
+  // choosing a least-bad overlapping point on a crowded board cannot.
+  for (const bounds of [...occupied, wholeReef]) {
+    const x = (bounds.minX + bounds.maxX - incoming.minX - incoming.maxX) / 2;
+    const y = (bounds.minY + bounds.maxY - incoming.minY - incoming.maxY) / 2;
+    candidates.push(
+      { x: bounds.maxX + gap - incoming.minX, y },
+      { x: bounds.minX - gap - incoming.maxX, y },
+      { x, y: bounds.maxY + gap - incoming.minY },
+      { x, y: bounds.minY - gap - incoming.maxY },
+    );
+  }
+  const placedBounds = ({ x, y }) => ({ minX: x + incoming.minX, maxX: x + incoming.maxX, minY: y + incoming.minY, maxY: y + incoming.maxY });
+  const isClear = (candidate) => {
+    const next = placedBounds(candidate);
+    return occupied.every((bounds) => next.maxX + gap <= bounds.minX || next.minX >= bounds.maxX + gap || next.maxY + gap <= bounds.minY || next.minY >= bounds.maxY + gap);
+  };
+  const fitScore = (candidate) => {
+    const next = placedBounds(candidate);
+    return Math.max(
+      (Math.max(wholeReef.maxX, next.maxX) - Math.min(wholeReef.minX, next.minX)) / width,
+      (Math.max(wholeReef.maxY, next.maxY) - Math.min(wholeReef.minY, next.minY)) / height,
+    );
+  };
+  const target = candidates.filter(isClear).reduce((best, candidate) => !best || fitScore(candidate) < fitScore(best) ? candidate : best, null);
+  return Object.freeze({ x: target.x / width * 100, y: target.y / height * 100 });
+}
+
+/** Uses the same world-space clearance as Foundations, with an ordinary
+ * creature's footprint. Existing cards can include Schools, Corals, Habitats,
+ * and already positioned creatures without changing any of their positions.
+ */
+export function getGuidedAcademyOpenWaterPlacementTarget(existingCards, layout) {
+  return getMeasuredFoundationPlacement(existingCards, {
+    ...layout,
+    incomingFootprint: layout?.incomingFootprint ?? TUTORIAL_OPEN_WATER_FOOTPRINT,
+  }) ?? { x: 72, y: 38 };
+}
 
 /**
  * Spreads a prepared lesson reef into roomy, centered rows. Four-foundation
@@ -155,8 +234,10 @@ export function getGuidedAcademyLayoutLessonStep(
   });
 }
 
-export function getGuidedAcademyFoundationPlacementTarget(existingFoundations) {
+export function getGuidedAcademyFoundationPlacementTarget(existingFoundations, layout = null) {
   if (Array.isArray(existingFoundations)) {
+    const measuredTarget = layout && getMeasuredFoundationPlacement(existingFoundations, layout);
+    if (measuredTarget) return measuredTarget;
     const occupied = existingFoundations
       .map(({ x, y }) => ({ x: Number(x), y: Number(y) }))
       .filter(({ x, y }) => Number.isFinite(x) && Number.isFinite(y));

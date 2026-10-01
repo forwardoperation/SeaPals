@@ -287,6 +287,26 @@ function lessonGoal(lesson) {
     || (lesson?.victoryTarget ? `Reach ${lesson.victoryTarget} VP` : "Complete the lesson");
 }
 
+export function composeLessonDialogueMessage({ explanation = "", instruction = "", messageKey = "", advanceOnly = false } = {}) {
+  const teaching = String(explanation).trim();
+  const nextAction = String(instruction).trim();
+  // Card inspection has its own introduction immediately after this brief tap cue.
+  if (String(messageKey).startsWith("tutorial-card-review:")) return nextAction || teaching;
+  if (advanceOnly || !nextAction) return teaching || nextAction;
+  if (!teaching) return nextAction;
+
+  const normalize = (text) => text.replace(/\s+/gu, " ").trim().toLowerCase();
+  const normalizedTeaching = normalize(teaching);
+  const normalizedAction = normalize(nextAction);
+  if (normalizedTeaching.includes(normalizedAction)) return teaching;
+  if (normalizedAction.includes(normalizedTeaching)) return nextAction;
+
+  const teachingSentences = new Set(teaching.split(/(?<=[.!?])\s+/u).map(normalize));
+  const actionSentences = nextAction.split(/(?<=[.!?])\s+/u)
+    .filter((sentence) => !teachingSentences.has(normalize(sentence)));
+  return [teaching, ...actionSentences].join(" ");
+}
+
 function LessonModal({ mode, title, description, children, onExit, className }) {
   const dialogRef = useRef(null);
   const headingRef = useRef(null);
@@ -376,7 +396,12 @@ export default function SimulatorV2LessonPanel({
   const currentInstruction = instruction || (interaction === "drag"
     ? "Drag the highlighted card into your ecosystem."
     : activeLesson?.description || activeLesson?.summary || "Follow the highlighted move on the board.");
-  const dialogueMessage = onAdvance ? explanation || currentInstruction : currentInstruction;
+  const dialogueMessage = composeLessonDialogueMessage({
+    explanation,
+    instruction: currentInstruction,
+    messageKey,
+    advanceOnly: Boolean(onAdvance),
+  });
   const dialogueKey = createProfessorSpeechKey(
     messageKey || `${activeLesson?.id ?? "lesson"}:${progress?.stepIndex ?? 0}`,
     dialogueMessage,

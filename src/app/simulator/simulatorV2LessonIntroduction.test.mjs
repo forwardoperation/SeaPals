@@ -191,20 +191,27 @@ test("the lesson start overlay keeps only the guide, title, short dialogue, and 
   assert.doesNotMatch(panelStyleSource, /\.introSpeaker\b|\.introGoalRow\b|\.introSkills\b/);
 });
 
-test("every lesson opens with an authored Mr. Easterling learning promise", () => {
+test("every lesson opens with a focused game orientation or learning promise", () => {
   for (const lesson of SIMULATOR_V2_LESSONS) {
-    assert.match(lesson.introduction, /^In (?:this|our next) lesson, (?:you|we)(?:(?:'|’|â€™)ll| will) learn\b/);
+    if (lesson.id === "first-reef") {
+      assert.match(lesson.introduction, /^Build an ecosystem.*Victory Point \(VP\) target/);
+    } else if (lesson.id === "filter-feeder") {
+      assert.match(lesson.introduction, /bare board.*0 School Density.*another kind of Foundation.*alongside Corals.*no slots.*shared Density.*practice hand.*extra starting RP.*ocean sunfish/i);
+    } else {
+      assert.match(lesson.introduction, /^In (?:this|our next) lesson, (?:you|we)(?:(?:'|’|â€™)ll| will) learn\b/);
+    }
     assert.match(lesson.introduction, /!/, `${lesson.id} intro should include one upbeat beat`);
     assert.ok((lesson.introduction.match(/!/g) ?? []).length <= 2, `${lesson.id} intro should stay enthusiastic without shouting`);
-    assert.ok(lesson.introduction.length <= 340, `${lesson.id} intro should stay focused`);
+    assert.ok(lesson.introduction.length <= 380, `${lesson.id} intro should stay focused`);
   }
 });
 
-test("the first lesson uses the requested concise setup promise", () => {
-  assert.equal(
-    SIMULATOR_V2_LESSONS[0].introduction,
-    "In this lesson, you will learn the basics of setting up your ecosystem. Let’s get started!",
-  );
+test("the first lesson explains how to win and distinguishes practice from a normal game", () => {
+  const introduction = SIMULATOR_V2_LESSONS[0].introduction;
+  assert.match(introduction, /be first.*Victory Point \(VP\) target.*10.*learning game.*30.*full game/i);
+  assert.match(introduction, /Only cards currently in your ecosystem count toward your score/i);
+  assert.match(introduction, /prepared boards.*arranged draws.*smaller goals/i);
+  assert.match(introduction, /building a home for your first creature/i);
 });
 
 test("the second lesson introduces creature interactions and food webs", () => {

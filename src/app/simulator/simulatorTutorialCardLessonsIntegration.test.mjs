@@ -31,7 +31,7 @@ test("new hand cards wait for a click, keep draw order, and cannot be played bef
   assert.match(simulatorSource, /function finishTutorialCardLesson\(\)[\s\S]*mergeTutorialSeenCardIds[\s\S]*setTutorialPendingCardIds[\s\S]*setTutorialCardLesson\(null\)/);
 });
 
-test("Tutorial 3 onward uses a quick card introduction before returning to placement", () => {
+test("Tutorial 3 onward uses a quick card introduction before returning to the current lesson action", () => {
   assert.match(
     simulatorSource,
     /const tutorialUsesIntroOnlyCardLessons = Number\(embeddedLesson\?\.number \?\? 0\) >= 3;/,
@@ -49,8 +49,13 @@ test("Tutorial 3 onward uses a quick card introduction before returning to place
   );
   assert.match(
     simulatorSource,
-    /return tutorialUsesIntroOnlyCardLessons[\s\S]*?Tap on your \$\{cardName\} for a quick introduction before placing it\.[\s\S]*?: `Tap on your \$\{cardName\} and finish its card tour before continuing\.`/,
-    "the later-lesson review copy should lead back to placement while the earlier detailed-tour copy remains intact",
+    /return tutorialUsesIntroOnlyCardLessons[\s\S]*?Tap on your \$\{cardName\} for a quick introduction before continuing\.[\s\S]*?: `Tap on your \$\{cardName\} and finish its card tour before continuing\.`/,
+    "the review must not promise placement for a card drawn before its authored play step",
+  );
+  assert.match(
+    handClick,
+    /nextStep: embeddedLesson\?\.buildCards\?\.\[tutorialCurrentCheckpoint\?\.id\]\?\.includes\(cardId\)[\s\S]*?\? "placement"[\s\S]*?embeddedLesson\?\.supportCards\?\.\[tutorialCurrentCheckpoint\?\.id\]\?\.includes\(cardId\)[\s\S]*?\? "support"[\s\S]*?: "lesson"/,
+    "the return button must follow the ready placement, Support effect, or current lesson step",
   );
 
   const finishReview = simulatorSource.slice(

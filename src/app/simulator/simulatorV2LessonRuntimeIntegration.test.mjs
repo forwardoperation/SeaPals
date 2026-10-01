@@ -400,9 +400,11 @@ test("Lesson 2 blocks the opening attack behind a three-step dice and food-web p
 
   const rulesStep = primer.steps[1];
   assert.match(rulesStep.message, /attacker rolls the die named by its ability/i);
-  assert.match(rulesStep.message, /defender rolls the Defense die printed on its card/i);
+  assert.match(rulesStep.message, /defender (?:rolls|uses) the Defense die printed on its card/i);
   assert.match(rulesStep.message, /higher total wins/i);
-  assert.match(rulesStep.message, /tie, the defender wins/i);
+  assert.match(rulesStep.message, /tie, the defender wins|ties go to the defender/i);
+  assert.match(rulesStep.message, /successful normal attack sends the defender to discard/i);
+  assert.match(rulesStep.message, /both creatures stay.*no retaliation damage/i);
 
   const ecologyStep = primer.steps[2];
   assert.match(ecologyStep.message, /fused teeth form a powerful beak/i);
