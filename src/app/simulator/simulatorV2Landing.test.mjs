@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { SIMULATOR_V2_LESSONS } from "./simulatorV2Lessons.mjs";
+import {
+  SIMULATOR_V2_LESSONS,
+  parseSimulatorV2LessonProgress,
+  recordSimulatorV2LessonCompletion,
+} from "./simulatorV2Lessons.mjs";
 
 const simulatorDirectory = new URL("./", import.meta.url);
 const simulatorSource = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
@@ -158,7 +162,7 @@ test("the normal V2 opening screen keeps deck setup primary and offers a guided 
   assert.doesNotMatch(landing, /aria-pressed=/, "difficulty should not fall back to a wall of option buttons");
 });
 
-test("the lesson chooser is a clean direct list of four numbered title-only buttons", () => {
+test("the lesson chooser is a clean direct list of five numbered title-only buttons", () => {
   const chooser = sourceSection(
     lessonPanelSource,
     'if (mode === "chooser") {',
@@ -170,10 +174,11 @@ test("the lesson chooser is a clean direct list of four numbered title-only butt
   assert.deepEqual(
     SIMULATOR_V2_LESSONS.map(({ number, title }) => ({ number, title })),
     [
-      { number: 1, title: "Build your first reef" },
+      { number: 1, title: "Build Your First Reef" },
       { number: 2, title: "Interactions" },
       { number: 3, title: "Build a Habitat for an Apex" },
-      { number: 4, title: "Make room for a giant" },
+      { number: 4, title: "Turn Support into a combo" },
+      { number: 5, title: "Build an open-water ecosystem" },
     ],
   );
   assert.match(lessonList, /^<ol\b/);
@@ -196,6 +201,24 @@ test("the lesson chooser is a clean direct list of four numbered title-only butt
   assert.doesNotMatch(chooser, /lessonSummary|lessonMeta|lessonGoal|lessonArrow|doneNumber/);
   assert.doesNotMatch(chooser, /modalFooter|textButton|Back to game/);
   assert.doesNotMatch(chooser, /\bdescription=/);
+});
+
+test("version 4 progress reopens the two new lessons while retaining the original first three", () => {
+  const migrated = parseSimulatorV2LessonProgress({
+    version: 3,
+    completedLessonIds: ["first-reef", "first-attack", "apex-predators", "filter-feeder"],
+  });
+
+  assert.deepEqual(migrated, {
+    version: 4,
+    completedLessonIds: ["first-reef", "first-attack", "apex-predators"],
+  });
+
+  const afterSupportLesson = recordSimulatorV2LessonCompletion(migrated, "support-strategies");
+  assert.deepEqual(afterSupportLesson, {
+    version: 4,
+    completedLessonIds: ["first-reef", "first-attack", "apex-predators", "support-strategies"],
+  });
 });
 
 test("the streamlined V2 opening names decks directly and keeps difficulty labels free of explanatory copy", () => {

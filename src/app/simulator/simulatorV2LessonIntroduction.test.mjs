@@ -45,6 +45,23 @@ test("selecting any lesson opens its teacher introduction before the board becom
   );
 });
 
+test("lesson completion writes the current version 4 progress schema", () => {
+  const completion = sourceSection(
+    experienceSource,
+    "const completeLesson = useCallback(() => {",
+    "const beginLesson = useCallback(() => {",
+  );
+
+  assert.match(
+    completion,
+    /recordSimulatorV2LessonCompletion\(\{ version: 4, completedLessonIds: current \}, lessonId\)/,
+  );
+  assert.match(
+    completion,
+    /window\.localStorage\.setItem\(SIMULATOR_V2_LESSON_PROGRESS_KEY, JSON\.stringify\(next\)\)/,
+  );
+});
+
 test("the board teacher stays unmounted until Start Lesson is pressed", () => {
   assert.match(
     simulatorSource,

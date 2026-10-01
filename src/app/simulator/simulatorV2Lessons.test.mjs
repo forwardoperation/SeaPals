@@ -34,7 +34,7 @@ import {
 import { addResourceWithinCap, calculateRpBankCap, calculateVictoryPoints, determineVictoryResult } from "./gameRules.mjs";
 import { attackCanTargetCard } from "./combatRules.mjs";
 import { createCombatRollPacket } from "./combatRollPresentation.mjs";
-import { evaluateCoralReefComposition, getHabitatRequirementError } from "./habitatRules.mjs";
+import { evaluateCoralReefComposition, evaluateHabitatComposition, getHabitatRequirementError } from "./habitatRules.mjs";
 import { createSchoolDensityBucketState } from "./schoolDensityRules.mjs";
 import { createSimulatorRandomStream, sampleSimulatorRandom } from "./simulatorRandomStream.mjs";
 import { getPreparedTutorialFoundationPlacement } from "./tutorialLayoutLesson.mjs";
@@ -127,8 +127,8 @@ test("each concept has one teaching owner and the first two lessons own their ex
   assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.PASSIVE_ABILITIES), ["first-attack"]);
   assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.ON_PLAY_ABILITIES), ["first-attack"]);
   assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.NON_ATTACK_ACTIONS), ["first-attack"]);
-  assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.SUPPORT_CARDS), ["filter-feeder"]);
-  assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.DECK_SEARCH), ["filter-feeder"]);
+  assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.SUPPORT_CARDS), ["support-strategies"]);
+  assert.deepEqual(owners.get(SIMULATOR_V2_LESSON_CONCEPTS.DECK_SEARCH), ["support-strategies"]);
   assert.equal(
     Object.hasOwn(SIMULATOR_V2_LESSON_CONCEPTS, "STATUS_EFFECTS"),
     false,
@@ -152,7 +152,7 @@ test("each concept has one teaching owner and the first two lessons own their ex
     SIMULATOR_V2_LESSONS
       .filter((selected) => selected.contract.checkpoints.some(({ actionType }) => actionType === "rp-collected"))
       .map(({ id }) => id),
-    ["first-reef", "first-attack", "apex-predators", "filter-feeder"],
+    ["first-reef", "first-attack", "apex-predators", "support-strategies", "filter-feeder"],
     "later RP checkpoints still sequence the real round without reteaching RP",
   );
 
@@ -168,16 +168,17 @@ test("each concept has one teaching owner and the first two lessons own their ex
   );
 });
 
-test("four continuous lessons form ordered modules and supply legal deterministic real-engine seeds", () => {
+test("five continuous lessons form ordered modules and supply legal deterministic real-engine seeds", () => {
   assert.equal(SIMULATOR_V2_LESSON_PROGRESS_KEY, "seapals-simulator-v2-lessons-v2");
-  assert.equal(SIMULATOR_V2_LESSONS.length, 4);
+  assert.equal(SIMULATOR_V2_LESSONS.length, 5);
   assert.deepEqual(
     Object.fromEntries(SIMULATOR_V2_LESSONS.map(({ id, victoryTarget }) => [id, victoryTarget])),
     {
       "first-reef": 1,
       "first-attack": 7,
       "apex-predators": 12,
-      "filter-feeder": 21,
+      "support-strategies": 6,
+      "filter-feeder": 13,
     },
   );
   assert.deepEqual(
@@ -186,10 +187,11 @@ test("four continuous lessons form ordered modules and supply legal deterministi
       { id: "reef-basics", lessonIds: ["first-reef"] },
       { id: "battle-basics", lessonIds: ["first-attack"] },
       { id: "habitat-apex", lessonIds: ["apex-predators"] },
+      { id: "support-tools", lessonIds: ["support-strategies"] },
       { id: "open-water", lessonIds: ["filter-feeder"] },
     ],
   );
-  assert.equal(getSimulatorV2Lesson("support-search"), null, "Support practice is incorporated into the final lesson instead of standing alone");
+  assert.equal(getSimulatorV2Lesson("support-search"), null, "the retired Support lesson id does not alias the rewritten lesson");
   assert.deepEqual(
     SIMULATOR_V2_LESSON_MODULES.flatMap(({ lessonIds }) => lessonIds),
     SIMULATOR_V2_LESSONS.map(({ id }) => id),
@@ -212,7 +214,7 @@ test("four continuous lessons form ordered modules and supply legal deterministi
     assert.equal(runtime.guide.name, "Mr. Easterling");
     assert.match(selected.celebration, /!$/);
     assert.match(selected.introduction, /^In (?:this|our next) lesson, (?:you|we)(?: will|[’']ll) learn\b/, `${selected.id} opens in Mr. Easterling's teaching voice`);
-    assert.ok(selected.introduction.length <= 340, `${selected.id} keeps its introduction focused`);
+    assert.ok(selected.introduction.length <= 380, `${selected.id} keeps its introduction focused`);
     const victoryCheckpointIndex = selected.contract.checkpoints.findIndex(({ actionType }) => actionType === "vp-earned");
     assert.ok(victoryCheckpointIndex >= 0, `${selected.id} has a real VP checkpoint`);
     assert.equal(
@@ -253,13 +255,15 @@ test("four continuous lessons form ordered modules and supply legal deterministi
       }
     }
     assert.equal(seed.startingPlayer, "player");
-    assert.equal(seed.opponentTurnMode, selected.id === "first-attack" ? "play" : "observe");
+    assert.equal(seed.opponentTurnMode, ["first-attack", "support-strategies"].includes(selected.id) ? "play" : "observe");
     assert.equal(Object.hasOwn(seed, "forcedWinner"), false);
     assert.equal(Object.hasOwn(seed, "combatRolls"), false);
-    const condition = cardsById[seed.activeConditionId];
-    for (const cardId of [...seed.hand, ...seed.palsDeck]) {
-      const card = cardsById[cardId];
-      assert.equal((condition?.effects ?? []).some((effect) => effect.type === "modifyPlayCost" && effect.targetKind === card.kind && effect.targetCategories.includes(card.category)), false);
+    if (selected.id !== "support-strategies") {
+      const condition = cardsById[seed.activeConditionId];
+      for (const cardId of [...seed.hand, ...seed.palsDeck]) {
+        const card = cardsById[cardId];
+        assert.equal((condition?.effects ?? []).some((effect) => effect.type === "modifyPlayCost" && effect.targetKind === card.kind && effect.targetCategories.includes(card.category)), false);
+      }
     }
   }
   assert.equal(randomSeeds.size, SIMULATOR_V2_LESSONS.length);
@@ -928,115 +932,374 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
   }]).progress.status, "active", "a regular attack cannot replace Great Barracuda's On Play ability");
 });
 
-test("the final Open Water lesson teaches a Support search before playing its Filter Feeder", () => {
-  const selected = getSimulatorV2Lesson("filter-feeder");
-  const halfbeak = cardsById.halfbeak;
-  const anchovyStageOne = cardsById["anchovy-ball-stage1"];
-  const captainDani = cardsById["capt-dani"];
-  const sunfish = cardsById["ocean-sunfish"];
-  const filterFeederSearch = captainDani.effects.find((effect) => effect.type === "searchDeck");
-  const foundations = materializeTableau(selected.seed.playerTableau);
-  const density = createSchoolDensityBucketState(foundations, 0, cardsById);
-  assert.equal(captainDani.kind, CardKind.SUPPORT);
-  assert.equal(captainDani.locksFurtherSupportsThisTurn, true);
-  assert.equal(filterFeederSearch.targetKind, CardKind.CREATURE);
-  assert.deepEqual(filterFeederSearch.targetCategories, ["filter-feeder"]);
-  assert.equal(filterFeederSearch.destination, "hand");
-  assert.equal(filterFeederSearch.shuffleAfterwards, true);
-  assert.equal(selected.searchCardId, sunfish.id);
-  assert.deepEqual(selected.seed.palsDeck, [captainDani.id, sunfish.id]);
-  assert.ok(selected.introducedCardIds.includes(captainDani.id));
-  assert.deepEqual(selected.supportCards["v2-search-filter-feeder"], [captainDani.id]);
+test("lesson four chains Coral Gardener, Dr. Evans, Spearfishing, and Blue Crab into a repeated On Play attack", () => {
+  const selected = getSimulatorV2Lesson("support-strategies");
+  const coralGardener = cardsById["coral-gardener"];
+  const drEvans = cardsById["dr-evans"];
+  const spearfishing = cardsById.spearfishing;
+  const blueCrab = cardsById["blue-crab"];
+  const barracuda = cardsById["great-barracuda"];
+  const searchedCoralId = selected.supportSearchTargets["v2-search-for-coral"];
+  const gardenerSearch = coralGardener.effects.find((effect) => effect.type === "searchDeck");
+  const evansDraw = drEvans.effects.find((effect) => effect.type === "drawCards");
+  const fishingMove = spearfishing.effects.find((effect) => effect.type === "moveCard");
+  const scavenge = blueCrab.actions.find((action) => action.id === "scavenge");
+
+  assert.equal(coralGardener.kind, CardKind.SUPPORT);
+  assert.equal(drEvans.kind, CardKind.SUPPORT);
+  assert.equal(spearfishing.kind, CardKind.SUPPORT);
+  assert.equal(coralGardener.locksFurtherSupportsThisTurn, true);
+  assert.equal(drEvans.locksFurtherSupportsThisTurn, true);
+  assert.equal(spearfishing.locksFurtherSupportsThisTurn, true);
+  assert.equal(gardenerSearch.targetKind, CardKind.CORAL);
+  assert.equal(gardenerSearch.destination, "hand");
+  assert.equal(evansDraw.amount, 7);
+  assert.deepEqual(fishingMove.target.categories, ["fish", "predator"]);
+  assert.equal(fishingMove.then.amountSource, "cardCost");
+  assert.equal(scavenge.effect.type, "recoverCardFromDiscard");
+  const clearWaterSurcharge = cardsById["clear-water"].effects.find((effect) => (
+    effect.type === "modifyPlayCost"
+    && effect.targetCategories.includes(barracuda.category)
+  ));
+  assert.equal(clearWaterSurcharge.amount, 1);
+  assert.equal(
+    cardsById["sea-urchin"].cost.rp
+      + barracuda.cost.rp + clearWaterSurcharge.amount
+      - barracuda.cost.rp
+      + scavenge.cost.rp
+      + barracuda.cost.rp + clearWaterSurcharge.amount
+      + cardsById["arrow-crab"].cost.rp,
+    9,
+    "the final bank exactly funds both Clear Water Barracuda plays after Spearfishing's printed-cost refund",
+  );
+  assert.equal(selected.seed.hand[0], coralGardener.id);
+  assert.ok(selected.seed.foundationDeck.includes(searchedCoralId), "Coral Gardener can find the authored search target");
+  let supportRandomStream = createSimulatorRandomStream(selected.randomSeed);
+  const nextSupportRandom = () => {
+    const sample = sampleSimulatorRandom(supportRandomStream);
+    supportRandomStream = sample.state;
+    return sample.value;
+  };
+  const shuffledSupportDeck = selected.seed.palsDeck.slice();
+  for (let index = shuffledSupportDeck.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(nextSupportRandom() * (index + 1));
+    [shuffledSupportDeck[index], shuffledSupportDeck[swapIndex]] = [shuffledSupportDeck[swapIndex], shuffledSupportDeck[index]];
+  }
+  const deckAfterEvansDraw = shuffledSupportDeck.slice();
+  deckAfterEvansDraw.splice(deckAfterEvansDraw.indexOf(drEvans.id), 1);
+  assert.deepEqual(
+    deckAfterEvansDraw.slice(7),
+    ["arrow-crab"],
+    "after Dr. Evans draws seven, Arrow Crab must remain as the authored final draw",
+  );
+  assert.ok(deckAfterEvansDraw.slice(0, 7).includes("sea-urchin"));
+  assert.ok(deckAfterEvansDraw.slice(0, 7).includes(barracuda.id));
+  assert.ok(deckAfterEvansDraw.slice(0, 7).includes(spearfishing.id));
+  const recycleFaceoff = createCombatRollPacket(barracuda.onPlay[0].effects[0].attackDice, cardsById.clownfish.defense.dice, nextSupportRandom);
+  assert.ok(
+    recycleFaceoff.attack > recycleFaceoff.defense,
+    `the scripted Recycle demonstration must eat Clownfish; rolled ${recycleFaceoff.attack} against ${recycleFaceoff.defense}`,
+  );
+  assert.deepEqual(selected.buildCards["v2-build-searched-coral"], [searchedCoralId]);
+  assert.deepEqual(selected.supportCards, {
+    "v2-search-for-coral": [coralGardener.id],
+    "v2-cycle-hand": [drEvans.id],
+    "v2-cash-in-barracuda": [spearfishing.id],
+  });
+  assert.deepEqual(selected.supportEffectTargets, {
+    "v2-cash-in-barracuda": barracuda.id,
+  });
+  assert.equal(selected.abilityRecoveryTargets["v2-scavenge-barracuda"], barracuda.id);
   assert.deepEqual(
     selected.contract.checkpoints.map(({ id }) => id),
     [
-      "v2-spend-density",
-      "v2-expand-density",
-      "v2-fund-filter-feeder",
-      "tutorial-collect-rp",
-      "v2-draw-filter-support",
-      "v2-search-filter-feeder",
+      "v2-search-for-coral",
+      "v2-build-searched-coral",
+      "v2-pass-after-search",
+      "v2-see-recycle",
+      "v2-collect-for-cycle",
+      "v2-draw-dr-evans",
+      "v2-cycle-hand",
+      "v2-pass-after-cycle",
+      "v2-collect-for-combo",
+      "v2-draw-final-support-card",
+      "v2-place-sea-urchin",
+      "v2-play-first-barracuda",
+      "v2-first-quick-strike",
+      "v2-cash-in-barracuda",
+      "v2-scavenge-barracuda",
+      "v2-replay-barracuda",
+      "v2-repeat-quick-strike",
+      "v2-play-final-arrow-crab",
+      "tutorial-earn-vp",
+    ],
+  );
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-dr-evans"), { deckType: "pals", cardId: drEvans.id });
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-final-support-card"), { deckType: "pals", cardId: "arrow-crab" });
+
+  const gardenerStep = selected.contract.checkpoints[0];
+  const gardenerHelp = getSimulatorV2LessonHelp(selected, gardenerStep, { gamePhase: "main", hand: [coralGardener.id] });
+  assert.equal(gardenerHelp.targetCardId, coralGardener.id);
+  assert.match(gardenerHelp.message, /Support cards.*one-time.*Coral Gardener.*Coral/is);
+  const searchHelp = getSimulatorV2LessonHelp(selected, gardenerStep, { gamePhase: "main", modal: "search" });
+  assert.equal(searchHelp.target, "search-card");
+  assert.equal(searchHelp.targetSearchCardId, searchedCoralId);
+  const spearfishingStep = selected.contract.checkpoints.find(({ id }) => id === "v2-cash-in-barracuda");
+  const spearfishingHelp = getSimulatorV2LessonHelp(selected, spearfishingStep, {
+    gamePhase: "main",
+    eventOverlayType: "choose-spearfishing-target",
+  });
+  assert.equal(spearfishingHelp.targetCardId, barracuda.id);
+  assert.match(spearfishingHelp.message, /printed RP cost.*discard.*3 RP/is);
+  const scavengeStep = selected.contract.checkpoints.find(({ id }) => id === "v2-scavenge-barracuda");
+  const scavengeHelp = getSimulatorV2LessonHelp(selected, scavengeStep, {
+    gamePhase: "main",
+    eventOverlayType: "choose-action-discard",
+  });
+  assert.equal(scavengeHelp.targetSearchCardId ?? selected.abilityRecoveryTargets[scavengeStep.id], barracuda.id);
+  assert.match(scavengeHelp.message, /Spearfishing.*Great Barracuda.*Scavenge.*2 RP.*Recycle/is);
+
+  const support = (cardId) => ({ actionType: "support-played", details: { accepted: true, cardId } });
+  const quickStrike = {
+    actionType: "attack-resolved",
+    details: { accepted: true, attackerCardId: barracuda.id, onPlay: true },
+  };
+  const route = [
+    support(coralGardener.id),
+    build(searchedCoralId, "foundation"),
+    { actionType: "turn-ended", details: {} },
+    {
+      actor: "opponent",
+      actionType: "attack-resolved",
+      details: {
+        accepted: true,
+        attackerCardId: barracuda.id,
+        defenderCardId: "clownfish",
+        discardedCardId: "clownfish",
+      },
+    },
+    { actionType: "rp-collected", details: { collected: 3 } },
+    { actionType: "card-drawn", details: { count: 1, palsCount: 1 } },
+    support(drEvans.id),
+    { actionType: "turn-ended", details: {} },
+    { actionType: "rp-collected", details: { collected: 3 } },
+    { actionType: "card-drawn", details: { count: 1, palsCount: 1 } },
+    build("sea-urchin"),
+    build(barracuda.id),
+    quickStrike,
+    support(spearfishing.id),
+    {
+      actionType: "ability-resolved",
+      details: {
+        accepted: true,
+        sourceCardId: blueCrab.id,
+        actionId: "scavenge",
+        actionName: "Scavenge",
+        targetCardId: barracuda.id,
+      },
+    },
+    build(barracuda.id),
+    quickStrike,
+    build("arrow-crab"),
+    vp(6, 1),
+  ];
+  assert.equal(observe(selected.id, route).progress.status, "complete");
+  assert.equal(observe(selected.id, [support(drEvans.id)]).progress.completedCheckpointIds.length, 0, "Dr. Evans cannot skip Coral Gardener");
+  assert.equal(observe(selected.id, route.slice(0, -1)).progress.status, "active", "the Support combo alone does not bypass the VP goal");
+  assert.equal(observe(selected.id, [
+    ...route.slice(0, 13),
+    { ...support(spearfishing.id), details: { accepted: false, cardId: spearfishing.id } },
+  ]).progress.completedCheckpointIds.length, 13, "a cancelled Spearfishing play does not advance the combo");
+});
+
+test("lesson five builds a bare open-water food web from 0 Density to Ocean Sunfish", () => {
+  const selected = getSimulatorV2Lesson("filter-feeder");
+  const herringBase = cardsById["herring-ball-base"];
+  const herringStageOne = cardsById["herring-ball-stage1"];
+  const herringStageTwo = cardsById["herring-ball-stage2"];
+  const sardineBase = cardsById["sardine-ball-base"];
+  const anchovyBase = cardsById["anchovy-ball-base"];
+  const halfbeak = cardsById.halfbeak;
+  const bonito = cardsById["bonito-tuna"];
+  const blueSeaDragon = cardsById["blue-sea-dragon"];
+  const marketSquid = cardsById["market-squid"];
+  const openOcean = cardsById["open-ocean"];
+  const sunfish = cardsById["ocean-sunfish"];
+  const densityFor = (foundationCardIds, committed = 0) => createSchoolDensityBucketState(
+    materializeTableau(foundationCardIds.map((foundationCardId) => ({ foundationCardId, placements: [] }))),
+    committed,
+    cardsById,
+  );
+
+  assert.deepEqual(selected.seed.playerTableau, [], "the open-water board begins without a prepared School");
+  assert.deepEqual(selected.seed.playerHabitats, [], "Open Ocean must be earned on the bare board");
+  assert.deepEqual(selected.seed.hand, [herringBase.id, herringBase.id, sardineBase.id, anchovyBase.id]);
+  assert.deepEqual(selected.seed.foundationDeck.slice(0, 3), [herringStageOne.id, herringStageOne.id, herringStageTwo.id]);
+  assert.deepEqual(selected.seed.palsDeck, [halfbeak.id, bonito.id, blueSeaDragon.id, marketSquid.id, openOcean.id, sunfish.id]);
+  const emptyDensity = createSchoolDensityBucketState([], 0, cardsById);
+  assert.equal(emptyDensity.capacity, 0);
+  assert.equal(emptyDensity.available, 0);
+  assert.deepEqual(emptyDensity.buckets, []);
+  assert.equal(densityFor([herringBase.id, herringBase.id, sardineBase.id, anchovyBase.id]).capacity, 60);
+  assert.equal(densityFor([herringStageOne.id, herringStageOne.id, sardineBase.id, anchovyBase.id]).capacity, 140);
+  const matureSchoolIds = [herringStageTwo.id, herringStageOne.id, sardineBase.id, anchovyBase.id];
+  const matureDensity = densityFor(matureSchoolIds);
+  assert.equal(matureDensity.capacity, 220);
+  assert.deepEqual(selected.schoolMomentumTargets, {
+    "v2-upgrade-second-herring-stage1": herringStageOne.id,
+    "v2-grow-herring-stage1s": herringStageTwo.id,
+  }, "Momentum supplies the second Stage 1 and Stage 2 without extra Foundation draws");
+  const firstMomentumHelp = getSimulatorV2LessonHelp(
+    selected,
+    selected.contract.checkpoints.find(({ id }) => id === "v2-upgrade-second-herring-stage1"),
+    { eventOverlayType: "choose-school-momentum" },
+  );
+  assert.equal(firstMomentumHelp.target, "search-card");
+  assert.equal(firstMomentumHelp.targetSearchCardId, herringStageOne.id);
+  const secondMomentumHelp = getSimulatorV2LessonHelp(
+    selected,
+    selected.contract.checkpoints.find(({ id }) => id === "v2-grow-herring-stage1s"),
+    { eventOverlayType: "choose-school-momentum" },
+  );
+  assert.equal(secondMomentumHelp.target, "search-card");
+  assert.equal(secondMomentumHelp.targetSearchCardId, herringStageTwo.id);
+
+  const openWaterCreatures = [halfbeak, bonito, blueSeaDragon, marketSquid];
+  const committedBeforeSunfish = openWaterCreatures.reduce((total, card) => total + card.schoolDensityRequirement, 0);
+  const beforeSunfish = densityFor(matureSchoolIds, committedBeforeSunfish);
+  assert.equal(committedBeforeSunfish, 60);
+  assert.equal(beforeSunfish.available, 160);
+  const afterSunfish = densityFor(matureSchoolIds, committedBeforeSunfish + sunfish.schoolDensityRequirement);
+  assert.equal(afterSunfish.committed, 210);
+  assert.equal(afterSunfish.available, 10);
+  assert.equal(afterSunfish.overCapacity, 0);
+  assert.deepEqual(
+    evaluateHabitatComposition("open-ocean", [
+      ...matureSchoolIds.map((cardId) => cardsById[cardId]),
+      ...openWaterCreatures,
+    ]),
+    {
+      habitatId: "open-ocean",
+      valid: true,
+      counts: { creatureSchools: 4, fish: 2, invertebrates: 2 },
+      required: { creatureSchools: 4, fish: 2, invertebrates: 2 },
+      missing: { creatureSchools: 0, fish: 0, invertebrates: 0 },
+    },
+  );
+  assert.equal(openOcean.kind, CardKind.HABITAT);
+  assert.equal(openOcean.cost.rp, 0);
+  assert.match(getHabitatRequirementError(sunfish, []), /Open Ocean or Coral Reef/);
+  assert.equal(getHabitatRequirementError(sunfish, [openOcean.id]), "");
+  assert.equal(calculateVictoryPoints(openWaterCreatures) + sunfish.victoryPoints, selected.victoryTarget);
+  assert.deepEqual(
+    selected.contract.checkpoints.map(({ id }) => id),
+    [
+      "v2-place-first-herring-school",
+      "v2-place-second-herring-school",
+      "v2-place-sardine-school",
+      "v2-place-anchovy-school",
+      "v2-grow-school-bases",
+      "v2-collect-for-herring-stage1",
+      "v2-draw-herring-stage1",
+      "v2-upgrade-first-herring-stage1",
+      "v2-upgrade-second-herring-stage1",
+      "v2-grow-herring-stage1s",
+      "v2-collect-for-herring-stage2",
+      "v2-draw-halfbeak",
+      "v2-upgrade-herring-stage2",
+      "v2-fund-open-water-fish",
+      "v2-collect-for-open-water-fish",
+      "v2-draw-bonito-tuna",
+      "v2-play-halfbeak",
+      "v2-play-bonito-tuna",
+      "v2-fund-first-open-water-invertebrate",
+      "v2-collect-for-blue-sea-dragon",
+      "v2-draw-blue-sea-dragon",
+      "v2-play-blue-sea-dragon",
+      "v2-fund-second-open-water-invertebrate",
+      "v2-collect-for-market-squid",
+      "v2-draw-market-squid",
+      "v2-play-market-squid",
+      "v2-prepare-open-ocean",
+      "v2-collect-for-open-ocean",
+      "v2-draw-open-ocean",
+      "v2-play-open-ocean",
+      "v2-fund-ocean-sunfish",
+      "v2-collect-for-ocean-sunfish",
+      "v2-draw-ocean-sunfish",
       "v2-play-filter-feeder",
       "tutorial-earn-vp",
     ],
-    "the final lesson builds capacity before using a Support to find its scoring creature",
   );
-  assert.deepEqual(selected.seed.playerHabitats, ["coral-reef"]);
-  assert.equal(evaluateCoralReefComposition(allCardsInPlay(foundations)).valid, true, "the completed Apex reef remains able to sustain its Habitat");
-  assert.ok(allCardsInPlay(foundations).some(({ id }) => id === "hammerhead"), "the Apex creature remains visible in the next lesson");
-  assert.match(getHabitatRequirementError(sunfish, []), /Open Ocean or Coral Reef/);
-  assert.equal(getHabitatRequirementError(sunfish, selected.seed.playerHabitats), "");
-  assert.equal(density.capacity, 130);
-  assert.equal(density.available, 130);
-  assert.equal(halfbeak.schoolDensityRequirement, 10);
-  assert.equal(anchovyStageOne.schoolDensity, 50);
-  assert.equal(sunfish.schoolDensityRequirement, 150);
-  assert.ok(selected.seed.rp >= halfbeak.cost.rp + anchovyStageOne.cost.rp, "the opening teaches capacity before the next round's costly Sunfish");
-  const startingVp = calculateVictoryPoints(allCardsInPlay(foundations));
-  assert.equal(startingVp, 12);
-  assert.equal(startingVp + halfbeak.victoryPoints + sunfish.victoryPoints, selected.victoryTarget);
-  const afterHalfbeak = createSchoolDensityBucketState(foundations, halfbeak.schoolDensityRequirement, cardsById);
-  assert.equal(afterHalfbeak.available, 120);
-  assert.equal(afterHalfbeak.available < sunfish.schoolDensityRequirement, true, "the player needs more capacity before the Filter Feeder");
-  const expanded = materializeTableau(selected.seed.playerTableau.map((entry) => entry.foundationCardId === "anchovy-ball-base"
-    ? { ...entry, foundationCardId: anchovyStageOne.id }
-    : entry));
-  const afterPlay = createSchoolDensityBucketState(expanded, halfbeak.schoolDensityRequirement + sunfish.schoolDensityRequirement, cardsById);
-  assert.equal(afterPlay.capacity, 170);
-  assert.equal(afterPlay.available, 10);
-  assert.equal(afterPlay.overCapacity, 0);
-  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-filter-support"), { deckType: "pals", cardId: captainDani.id });
-  assert.equal(getSimulatorV2ExpectedDraw(selected, "v2-draw-filter-feeder"), null, "Ocean Sunfish is searched into hand instead of drawn directly");
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-herring-stage1"), { deckType: "foundation", cardId: herringStageOne.id });
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-halfbeak"), { deckType: "pals", cardId: halfbeak.id });
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-bonito-tuna"), { deckType: "pals", cardId: bonito.id });
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-blue-sea-dragon"), { deckType: "pals", cardId: blueSeaDragon.id });
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-market-squid"), { deckType: "pals", cardId: marketSquid.id });
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-open-ocean"), { deckType: "pals", cardId: openOcean.id });
+  assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-ocean-sunfish"), { deckType: "pals", cardId: sunfish.id });
 
-  const supportCheckpoint = selected.contract.checkpoints.find(({ id }) => id === "v2-search-filter-feeder");
-  const supportHelp = getSimulatorV2LessonHelp(selected, supportCheckpoint, {
+  const herringHelp = getSimulatorV2LessonHelp(selected, selected.contract.checkpoints[0], {
     gamePhase: "main",
-    hand: [captainDani.id],
+    hand: selected.seed.hand,
   });
-  assert.equal(supportHelp.target, "hand");
-  assert.equal(supportHelp.targetCardId, captainDani.id);
-  assert.match(supportHelp.message, /Support.*(?:one-time|one-shot)/is);
-  assert.match(supportHelp.message, /discard/i);
-  assert.match(supportHelp.message, /Capt\. Dani.*Filter Feeder/is);
-  const searchHelp = getSimulatorV2LessonHelp(selected, supportCheckpoint, {
-    gamePhase: "main",
-    modal: "search",
-    hand: [],
-  });
-  assert.equal(searchHelp.target, "search-card");
-  assert.equal(searchHelp.targetSearchCardId, sunfish.id);
-  assert.match(searchHelp.action, /Ocean Sunfish/i);
+  assert.equal(herringHelp.targetCardId, herringBase.id);
+  assert.match(herringHelp.message, /(?:0 School Density.*)?Creature School Foundation.*open water.*20.*Density/is);
+  const habitatStep = selected.contract.checkpoints.find(({ id }) => id === "v2-play-open-ocean");
+  const habitatHelp = getSimulatorV2LessonHelp(selected, habitatStep, { gamePhase: "main", hand: [openOcean.id] });
+  assert.match(habitatHelp.message, /four Creature Schools.*two Oceanic Fish.*two Oceanic Invertebrates.*Open Ocean/is);
+  const sunfishStep = selected.contract.checkpoints.find(({ id }) => id === "v2-play-filter-feeder");
+  const sunfishHelp = getSimulatorV2LessonHelp(selected, sunfishStep, { gamePhase: "main", hand: [sunfish.id] });
+  assert.equal(sunfishHelp.targetCardId, sunfish.id);
+  assert.match(sunfishHelp.message, /Ocean Sunfish.*Open Ocean/is);
+  assert.match(sunfishHelp.message, /60 of 220 Density.*160.*150-Density/is);
+  assert.match(sunfishHelp.message, /8 RP.*10 Density.*13 VP/is);
+  assert.doesNotMatch(sunfishHelp.message, /Capt\. Dani|170 Density|Anchovy Ball upgrade/i);
 
-  const captainDaniEvent = {
-    actionType: "support-played",
-    details: { accepted: true, cardId: captainDani.id, locksFurtherSupports: true },
-  };
+  const turn = { actionType: "turn-ended", details: {} };
+  const collect = (collected) => ({ actionType: "rp-collected", details: { collected } });
+  const drawFoundation = { actionType: "card-drawn", details: { count: 1, foundationCount: 1 } };
+  const drawMain = { actionType: "card-drawn", details: { count: 1, palsCount: 1 } };
   const route = [
+    build(herringBase.id, "foundation"),
+    build(herringBase.id, "foundation"),
+    build(sardineBase.id, "foundation"),
+    build(anchovyBase.id, "foundation"),
+    turn,
+    collect(5),
+    drawFoundation,
+    build(herringStageOne.id, "foundation-upgrade"),
+    build(herringStageOne.id, "foundation-upgrade"),
+    turn,
+    collect(9),
+    drawMain,
+    build(herringStageTwo.id, "foundation-upgrade"),
+    turn,
+    collect(12),
+    drawMain,
     build(halfbeak.id, "open-water"),
-    build(anchovyStageOne.id, "foundation-upgrade"),
-    { actionType: "turn-ended", details: {} },
-    { actionType: "rp-collected", phase: "draw", details: { collected: 4 } },
-    { actionType: "card-drawn", phase: "draw", details: { count: 1, palsCount: 1 } },
-    captainDaniEvent,
+    build(bonito.id, "open-water"),
+    turn,
+    collect(12),
+    drawMain,
+    build(blueSeaDragon.id, "open-water"),
+    turn,
+    collect(12),
+    drawMain,
+    build(marketSquid.id, "open-water"),
+    turn,
+    collect(12),
+    drawMain,
+    build(openOcean.id, "habitat"),
+    turn,
+    collect(12),
+    drawMain,
     build(sunfish.id, "open-water"),
-    vp(21, 8),
+    vp(13, 8),
   ];
   assert.equal(observe(selected.id, route).progress.status, "complete");
-  assert.equal(observe(selected.id, [build(sunfish.id, "open-water")]).progress.completedCheckpointIds.length, 0, "Sunfish cannot skip the capacity lesson");
-  assert.equal(observe(selected.id, [build(halfbeak.id, "foundation")]).progress.completedCheckpointIds.length, 0);
-  const beforeSupport = route.slice(0, 5);
-  const beforeSupportState = observe(selected.id, beforeSupport);
-  assert.equal(getSimulatorTutorialCurrentCheckpoint(beforeSupportState.contract, beforeSupportState.progress).id, "v2-search-filter-feeder");
-  assert.equal(observe(selected.id, [
-    ...beforeSupport,
-    { ...captainDaniEvent, details: { ...captainDaniEvent.details, accepted: false } },
-  ]).progress.completedCheckpointIds.length, 5, "a cancelled Support does not satisfy the lesson");
-  assert.equal(observe(selected.id, [
-    ...beforeSupport,
-    { ...captainDaniEvent, details: { ...captainDaniEvent.details, cardId: "coral-heal" } },
-  ]).progress.completedCheckpointIds.length, 5, "another Support cannot replace Capt. Dani's Filter Feeder search");
-  assert.equal(observe(selected.id, [...beforeSupport, build(sunfish.id, "open-water")]).progress.completedCheckpointIds.length, 5, "playing Sunfish cannot skip its Support search");
-  assert.equal(observe(selected.id, route.slice(0, -2)).progress.status, "active", "the search alone does not finish the lesson");
+  assert.equal(observe(selected.id, [build(sunfish.id, "open-water")]).progress.completedCheckpointIds.length, 0, "Ocean Sunfish cannot skip School construction");
+  assert.equal(observe(selected.id, [build(sardineBase.id, "foundation")]).progress.completedCheckpointIds.length, 0, "Sardine Ball cannot replace the authored first School");
   assert.equal(observe(selected.id, route.slice(0, -1)).progress.status, "active");
 });
 
@@ -1240,14 +1503,40 @@ test("sequencing gates block spending or passing out of order while leaving actu
   assert.ok(block(apex, apex.contract.checkpoints[0], "play-card", { cardId: "coral-reef", gamePhase: "main" }));
   assert.equal(block(apex, apex.contract.checkpoints[2], "play-card", { cardId: "coral-reef", gamePhase: "main" }), "");
   assert.ok(block(apex, apex.contract.checkpoints[2], "play-card", { cardId: "hammerhead", gamePhase: "main" }));
+
+  const supportLesson = getSimulatorV2Lesson("support-strategies");
+  const coralSearch = lessonStep(supportLesson, "v2-search-for-coral");
+  assert.equal(block(supportLesson, coralSearch, "play-card", { cardId: "coral-gardener", gamePhase: "main" }), "");
+  assert.ok(block(supportLesson, coralSearch, "play-card", { cardId: "dr-evans", gamePhase: "main" }));
+  const cycleHand = lessonStep(supportLesson, "v2-cycle-hand");
+  assert.equal(block(supportLesson, cycleHand, "play-card", { cardId: "dr-evans", gamePhase: "main" }), "");
+  assert.ok(block(supportLesson, cycleHand, "play-card", { cardId: "spearfishing", gamePhase: "main" }));
+  const cashInBarracuda = lessonStep(supportLesson, "v2-cash-in-barracuda");
+  assert.equal(block(supportLesson, cashInBarracuda, "play-card", { cardId: "spearfishing", gamePhase: "main" }), "");
+  assert.ok(block(supportLesson, cashInBarracuda, "play-card", { cardId: "coral-gardener", gamePhase: "main" }));
+  const scavengeBarracuda = lessonStep(supportLesson, "v2-scavenge-barracuda");
+  assert.equal(block(supportLesson, scavengeBarracuda, "utility", { cardId: "blue-crab", actionId: "scavenge", actionName: "Scavenge" }), "");
+  assert.ok(block(supportLesson, scavengeBarracuda, "utility", { cardId: "blue-crab", actionId: "recycle", actionName: "Recycle" }));
+
   const openWater = getSimulatorV2Lesson("filter-feeder");
-  const supportDraw = lessonStep(openWater, "v2-draw-filter-support");
-  assert.equal(block(openWater, supportDraw, "draw", { deckType: "pals" }), "");
-  assert.ok(block(openWater, supportDraw, "draw", { deckType: "foundation" }));
-  const filterSearch = lessonStep(openWater, "v2-search-filter-feeder");
-  assert.equal(block(openWater, filterSearch, "play-card", { cardId: "capt-dani", gamePhase: "main" }), "");
-  assert.ok(block(openWater, filterSearch, "play-card", { cardId: "coral-heal", gamePhase: "main" }));
-  assert.ok(block(openWater, filterSearch, "play-card", { cardId: "ocean-sunfish", gamePhase: "main" }));
+  const herringBase = lessonStep(openWater, "v2-place-first-herring-school");
+  assert.equal(block(openWater, herringBase, "play-card", { cardId: "herring-ball-base", gamePhase: "main" }), "");
+  assert.ok(block(openWater, herringBase, "play-card", { cardId: "sardine-ball-base", gamePhase: "main" }));
+  const secondHerringBase = lessonStep(openWater, "v2-place-second-herring-school");
+  assert.equal(block(openWater, secondHerringBase, "play-card", { cardId: "herring-ball-base", gamePhase: "main" }), "");
+  assert.ok(block(openWater, secondHerringBase, "play-card", { cardId: "sardine-ball-base", gamePhase: "main" }));
+  const sardineBase = lessonStep(openWater, "v2-place-sardine-school");
+  assert.equal(block(openWater, sardineBase, "play-card", { cardId: "sardine-ball-base", gamePhase: "main" }), "");
+  assert.ok(block(openWater, sardineBase, "play-card", { cardId: "ocean-sunfish", gamePhase: "main" }));
+  const firstSchoolDraw = lessonStep(openWater, "v2-draw-herring-stage1");
+  assert.equal(block(openWater, firstSchoolDraw, "draw", { deckType: "foundation" }), "");
+  assert.ok(block(openWater, firstSchoolDraw, "draw", { deckType: "pals" }));
+  const sunfishDraw = lessonStep(openWater, "v2-draw-ocean-sunfish");
+  assert.equal(block(openWater, sunfishDraw, "draw", { deckType: "pals" }), "");
+  assert.ok(block(openWater, sunfishDraw, "draw", { deckType: "foundation" }));
+  const openOceanBuild = lessonStep(openWater, "v2-play-open-ocean");
+  assert.equal(block(openWater, openOceanBuild, "play-card", { cardId: "open-ocean", gamePhase: "main" }), "");
+  assert.ok(block(openWater, openOceanBuild, "play-card", { cardId: "ocean-sunfish", gamePhase: "main" }));
   const sunfishBuild = lessonStep(openWater, "v2-play-filter-feeder");
   assert.equal(block(openWater, sunfishBuild, "play-card", { cardId: "ocean-sunfish", gamePhase: "main" }), "");
   assert.equal(block(null, null, "play-card", { cardId: "anything" }), "", "regular matches are unaffected");
@@ -1719,22 +2008,38 @@ test("later lessons direct familiar actions without repeating their introductory
     "replaying a lesson should replay its own card explanations while retaining earlier lessons",
   );
 
-  const openWater = getSimulatorV2Lesson("filter-feeder");
-  const supportDraw = openWater.contract.checkpoints.find(({ id }) => id === "v2-draw-filter-support");
-  const openWaterPriorConcepts = getSimulatorV2PreviouslyTaughtConcepts(openWater, [
+  const supportStrategies = getSimulatorV2Lesson("support-strategies");
+  const supportDraw = supportStrategies.contract.checkpoints.find(({ id }) => id === "v2-draw-dr-evans");
+  const supportPriorConcepts = getSimulatorV2PreviouslyTaughtConcepts(supportStrategies, [
     "first-reef",
     "first-attack",
     "apex-predators",
   ]);
-  const supportDrawHelp = getSimulatorV2LessonHelp(openWater, supportDraw, {
+  const supportDrawHelp = getSimulatorV2LessonHelp(supportStrategies, supportDraw, {
+    gamePhase: "draw",
+    drawSelected: 0,
+    drawTarget: 1,
+    previouslyTaughtConcepts: supportPriorConcepts,
+  });
+  assert.match(supportDrawHelp.message, /Dr\. Evans.*(?:Support|hand|seven)/is);
+  assert.doesNotMatch(supportDrawHelp.message, /Main Deck holds creatures, Habitats, and Support cards/i);
+
+  const openWater = getSimulatorV2Lesson("filter-feeder");
+  const sunfishDraw = openWater.contract.checkpoints.find(({ id }) => id === "v2-draw-ocean-sunfish");
+  const openWaterPriorConcepts = getSimulatorV2PreviouslyTaughtConcepts(openWater, [
+    "first-reef",
+    "first-attack",
+    "apex-predators",
+    "support-strategies",
+  ]);
+  const sunfishDrawHelp = getSimulatorV2LessonHelp(openWater, sunfishDraw, {
     gamePhase: "draw",
     drawSelected: 0,
     drawTarget: 1,
     previouslyTaughtConcepts: openWaterPriorConcepts,
   });
-  assert.match(supportDrawHelp.message, /Capt\. Dani.*Support/is);
-  assert.match(supportDrawHelp.message, /Ocean Sunfish/i);
-  assert.doesNotMatch(supportDrawHelp.message, /Main Deck holds creatures, Habitats, and Support cards/i);
+  assert.match(sunfishDrawHelp.message, /Ocean Sunfish.*Main Deck/is);
+  assert.doesNotMatch(sunfishDrawHelp.message, /Capt\. Dani|Main Deck holds creatures, Habitats, and Support cards/i);
 });
 
 test("Apex coaching points to the Habitat prerequisites before inviting an Apex play", () => {
@@ -1803,46 +2108,51 @@ test("seed copies, restarts, and saved lesson progress stay independent", () => 
   assert.equal(createSimulatorV2LessonSeed("first-attack").playerTableau[0].placements[0].cardId, "sea-urchin");
   assert.throws(() => createSimulatorV2LessonRuntime("missing"), RangeError);
   assert.equal(getSimulatorV2Lesson("missing"), null);
-  const blank = { version: 3, completedLessonIds: [] };
+  const blank = { version: 4, completedLessonIds: [] };
   assert.deepEqual(parseSimulatorV2LessonProgress("{bad"), blank);
   assert.deepEqual(parseSimulatorV2LessonProgress({ version: 0, completedLessonIds: ["first-reef"] }), blank);
-  const migratedV2 = parseSimulatorV2LessonProgress({
-    version: 2,
-    completedLessonIds: ["filter-feeder", "support-search", "apex-predators", "first-attack", "first-reef"],
+  const saved = parseSimulatorV2LessonProgress({
+    version: 4,
+    completedLessonIds: ["filter-feeder", "support-strategies", "apex-predators", "first-attack", "first-reef", "first-reef", "unknown"],
   });
   assert.deepEqual(
-    migratedV2,
-    { version: 3, completedLessonIds: ["first-reef", "first-attack", "apex-predators", "filter-feeder"] },
-    "finishing both former lessons preserves the merged final lesson completion",
+    saved,
+    { version: 4, completedLessonIds: ["first-reef", "first-attack", "apex-predators", "support-strategies", "filter-feeder"] },
+    "current progress is deduplicated and restored in curriculum order",
   );
   assert.deepEqual(
     parseSimulatorV2LessonProgress({
-      version: 2,
+      version: 3,
       completedLessonIds: ["filter-feeder", "apex-predators", "first-attack", "first-reef"],
     }).completedLessonIds,
     ["first-reef", "first-attack", "apex-predators"],
-    "a player who skipped the old Support lesson must see Support teaching in the merged final lesson",
+    "the old merged finale reopens both rewritten lessons while the first three completions survive",
   );
   assert.deepEqual(
     parseSimulatorV2LessonProgress({
       version: 2,
-      completedLessonIds: ["support-search", "apex-predators", "first-attack", "first-reef"],
+      completedLessonIds: ["filter-feeder", "support-search", "apex-predators", "first-attack", "first-reef"],
     }).completedLessonIds,
     ["first-reef", "first-attack", "apex-predators"],
-    "a player who skipped the old Open Water lesson must still complete the merged final lesson",
+    "the former separate Support and Open Water lessons do not skip either new curriculum",
   );
-  const saved = parseSimulatorV2LessonProgress(JSON.stringify({
+  assert.deepEqual(parseSimulatorV2LessonProgress(JSON.stringify({
     version: 1,
     completedLessonIds: ["winning-turn", "apex-predators", "filter-feeder", "school-density", "clear-stun", "support-search", "first-attack", "first-reef", "first-reef", "unknown"],
-  }));
-  assert.deepEqual(saved, {
-    version: 3,
-    completedLessonIds: ["first-reef", "first-attack", "filter-feeder"],
-  }, "legacy completion carries forward only when both halves of the merged final lesson were covered; the expanded Apex lesson reopens");
-  assert.deepEqual(parseSimulatorV2LessonProgress({ version: 1, completedLessonIds: ["support-search", "filter-feeder"] }), blank, "a single half of a merged lesson does not skip its new content");
+  })), {
+    version: 4,
+    completedLessonIds: ["first-reef", "first-attack"],
+  }, "legacy progress retains only lessons whose curriculum still matches");
   assert.deepEqual(recordSimulatorV2LessonCompletion(saved, "first-reef"), saved);
-  const after = recordSimulatorV2LessonCompletion(saved, "apex-predators");
-  assert.deepEqual(after.completedLessonIds, ["first-reef", "first-attack", "apex-predators", "filter-feeder"]);
-  assert.deepEqual(parseSimulatorV2LessonProgress(JSON.stringify(after)), after, "new Apex completion survives reload");
+  assert.deepEqual(recordSimulatorV2LessonCompletion(saved, "unknown"), saved);
+  const beforeFinale = parseSimulatorV2LessonProgress({
+    version: 4,
+    completedLessonIds: ["first-reef", "first-attack", "apex-predators"],
+  });
+  const afterSupport = recordSimulatorV2LessonCompletion(beforeFinale, "support-strategies");
+  assert.deepEqual(afterSupport.completedLessonIds, ["first-reef", "first-attack", "apex-predators", "support-strategies"]);
+  const after = recordSimulatorV2LessonCompletion(afterSupport, "filter-feeder");
+  assert.deepEqual(after.completedLessonIds, ["first-reef", "first-attack", "apex-predators", "support-strategies", "filter-feeder"]);
+  assert.deepEqual(parseSimulatorV2LessonProgress(JSON.stringify(after)), after, "the five-lesson completion survives reload");
   assert.deepEqual(createSimulatorTutorialProgress(getSimulatorV2Lesson("first-attack").contract).completedCheckpointIds, []);
 });

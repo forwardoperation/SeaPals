@@ -656,6 +656,42 @@ test("round collection reports the Condition and which Corals were blocked or pr
   assert.match(startRound, /emitTutorialEvent\([\s\S]*?SIMULATOR_TUTORIAL_ACTION_TYPES\.RP_COLLECTED,[\s\S]*?tutorialRpEvent\.details/);
 });
 
+test("Lesson 5 Momentum only accepts the Creature School authored for the active checkpoint", () => {
+  const completeMomentum = sourceSection(
+    "function completeSchoolMomentum(cardId)",
+    "function spendResolvedSupport(supportCard)",
+  );
+  assert.match(
+    completeMomentum,
+    /const (\w+) = embeddedLesson\?\.schoolMomentumTargets\?\.\[tutorialCurrentCheckpoint\?\.id\] \?\? null;\s*if \(\1 && cardId !== \1\) return;/,
+  );
+
+  const momentumChoices = sourceSection(
+    ') : eventOverlay.type === "choose-school-momentum" ? (',
+    ') : eventOverlay.type === "choose-inspection-deck" ? (',
+  );
+  assert.match(
+    momentumChoices,
+    /chooseDisabled=\{Boolean\(tutorialHelp\?\.targetSearchCardId && tutorialHelp\.targetSearchCardId !== cardId\)\}/,
+  );
+});
+
+test("Lesson 4 Spearfishing only accepts Great Barracuda for the authored recovery combo", () => {
+  const completeSpearfishing = sourceSection(
+    "function completeSpearfishing(target)",
+    "function completeWhirlpool(coralId)",
+  );
+  assert.match(completeSpearfishing, /supportEffectTargets\?\.\[tutorialCurrentCheckpoint\?\.id\]/);
+  assert.match(completeSpearfishing, /if \(expectedTutorialTarget && target\.cardId !== expectedTutorialTarget\) return;/);
+
+  const spearfishingChoices = sourceSection(
+    ') : eventOverlay.type === "choose-spearfishing-target" ? (',
+    ') : eventOverlay.type === "choose-friendly-creature" ? (',
+  );
+  assert.match(spearfishingChoices, /disabled=\{Boolean\(expectedTarget && !tutorialTarget\)\}/);
+  assert.match(spearfishingChoices, /data-tutorial-target=\{tutorialTarget \? "support-effect-choice" : undefined\}/);
+});
+
 test("Blue Crab Scavenge is gated to its authored lesson step and emits committed recovery evidence", () => {
   const lesson = getSimulatorV2Lesson("first-attack");
   const checkpoint = lesson.contract.checkpoints.find(({ id }) => id === "v2-recover-sea-urchin");

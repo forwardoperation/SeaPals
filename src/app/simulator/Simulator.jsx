@@ -7652,6 +7652,8 @@ export default function Simulator({
     playingCardId,
     playingCardName: playingCard?.name,
     modal,
+    eventOverlayType: eventOverlay?.type ?? null,
+    searchContextMode: searchContext?.mode ?? null,
     selectedHandCard: selectedTutorialHandCardId,
     selectedCardIsSupport: selectedTutorialCard?.kind === CardKind.SUPPORT,
     selectedCardPlayError: selectedTutorialCard ? getPlayError(selectedTutorialCard) : "",
@@ -8022,6 +8024,16 @@ export default function Simulator({
   );
   const tutorialHelpDismissalKey = tutorialHelp?.cueId ?? tutorialHelp?.id ?? null;
   const tutorialHelpOpen = Boolean(tutorialHelp && tutorialHelpDismissedId !== tutorialHelpDismissalKey);
+  const embeddedLessonEventChoiceHelp = embeddedLesson
+    && eventOverlay
+    && tutorialHelp
+    && ["choose-school-momentum", "choose-spearfishing-target", "choose-action-discard"].includes(eventOverlay.type)
+    && ["search-card", "support-effect-choice"].includes(tutorialHelp.target)
+    ? tutorialHelp
+    : null;
+  const embeddedLessonEventChoiceHelpOpen = Boolean(
+    embeddedLessonEventChoiceHelp && tutorialHelpOpen,
+  );
   const embeddedLessonPresentationBlocked = Boolean(
     !embeddedLessonPresentationStarted
     || tutorialIntroductionOpen
@@ -13784,6 +13796,8 @@ export default function Simulator({
 
   function completeSpearfishing(target) {
     if (searchContext?.mode !== "spearfishing" || !searchContext.candidates.some((candidate) => candidate.coralId === target.coralId && candidate.slotId === target.slotId)) return;
+    const expectedTutorialTarget = embeddedLesson?.supportEffectTargets?.[tutorialCurrentCheckpoint?.id] ?? null;
+    if (expectedTutorialTarget && target.cardId !== expectedTutorialTarget) return;
     const supportCard = cardsById[searchContext.supportCardId];
     const targetCard = cardsById[target.cardId];
     if (!supportCard || !targetCard || !hand.includes(supportCard.id)) return;
@@ -13883,6 +13897,8 @@ export default function Simulator({
 
   function completeSchoolMomentum(cardId) {
     if (searchContext?.mode !== "school-momentum" || !searchContext.candidates?.includes(cardId)) return;
+    const expectedTutorialTarget = embeddedLesson?.schoolMomentumTargets?.[tutorialCurrentCheckpoint?.id] ?? null;
+    if (expectedTutorialTarget && cardId !== expectedTutorialTarget) return;
     const sourceCard = cardsById[searchContext.sourceCardId];
     const foundCard = cardsById[cardId];
     const cardIsStillInDeck = foundationDeck.includes(cardId) || palsDeck.includes(cardId);
@@ -26604,8 +26620,8 @@ export default function Simulator({
             dragging={Boolean(mobileHandDrag || draggingCoralId || slotDragStart)}
           />
           <EmbeddedLessonActionCue
-            help={embeddedLessonRecoveryChoiceHelp}
-            active={Boolean(embeddedLessonRecoveryChoiceHelp)}
+            help={embeddedLessonEventChoiceHelp ?? embeddedLessonRecoveryChoiceHelp}
+            active={Boolean(embeddedLessonEventChoiceHelp ?? embeddedLessonRecoveryChoiceHelp)}
             measureKey={eventOverlay?.type ?? ""}
           />
           {embeddedLessonActionReady && !embeddedLessonPresentationBlocked ? (
@@ -28760,6 +28776,12 @@ export default function Simulator({
                         <button type="button" data-compact-search-control onClick={() => setTutorialHelpDismissedId(scriptedTutorialOverlayHelpKey)} className="min-h-11 shrink-0 rounded-lg border border-amber-800/20 px-3 text-xs font-black">Hide</button>
                       </div>
                     ) : null}
+                    {embeddedLessonEventChoiceHelpOpen ? (
+                      <div className="seapals-compact-search-tip mt-2 flex shrink-0 items-center gap-2 rounded-xl border border-amber-300/45 bg-amber-100 px-3 py-2 text-xs font-bold leading-relaxed text-amber-950" role="note" aria-label={`${tutorialGuide.name} lesson guidance`}>
+                        <span className="min-w-0 flex-1"><strong>{tutorialGuide.name}:</strong> {embeddedLessonEventChoiceHelp.message} {embeddedLessonEventChoiceHelp.action}</span>
+                        <button type="button" data-compact-search-control onClick={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)} className="min-h-11 shrink-0 rounded-lg border border-amber-800/20 px-3 text-xs font-black">Hide</button>
+                      </div>
+                    ) : null}
                     {eventOverlay.message ? <p id="seapals-event-message" className="sr-only">{eventOverlay.message}</p> : null}
                   </>
                 ) : compactDeckOrderEvent ? (
@@ -28797,6 +28819,18 @@ export default function Simulator({
                     {!["condition-reveal", "opponent-status"].includes(eventOverlay.type) && eventOverlay.message ? <p id="seapals-event-message" className={`${compactDrawResultEvent ? "seapals-compact-draw-copy mt-1 text-sm" : "mt-4 text-lg"} text-slate-200`}>{eventOverlay.message}</p> : null}
                   </>
                 )}
+                {embeddedLessonEventChoiceHelpOpen && !compactDeckSearchEvent ? (
+                  <div className="mt-4 text-left">
+                    <ProfessorGuideCard
+                      guide={tutorialGuide}
+                      help={embeddedLessonEventChoiceHelp}
+                      step={Math.min(tutorialStepNumber, tutorialContract.checkpoints.length)}
+                      total={tutorialContract.checkpoints.length}
+                      inline
+                      onDismiss={() => setTutorialHelpDismissedId(tutorialHelpDismissalKey)}
+                    />
+                  </div>
+                ) : null}
                 {compactDrawResultEvent ? (
                   <div className="seapals-compact-draw-body mt-2 min-w-0">
                     <div className="seapals-compact-draw-summary flex flex-wrap gap-2 text-xs font-black uppercase tracking-[0.08em]">
@@ -29277,7 +29311,8 @@ export default function Simulator({
                       <CompactSearchRail railRef={compactSearchRailRef} label={`${searchContext.candidates.length} Creature School choices. Choose one to add to your hand.`}>
                         {searchContext.candidates.map((cardId, index) => {
                           const card = cardsById[cardId];
-                          return <DeckSearchChoice key={cardId} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => completeSchoolMomentum(cardId)} meta={card?.stageLabel ?? getCardClassLabel(card)} compact autoFocus={index === 0} />;
+                          const tutorialSearchTarget = tutorialHelpTargetActive && tutorialHelp?.targetSearchCardId === cardId;
+                          return <DeckSearchChoice key={cardId} card={card} onInspect={() => inspectSearchResult(cardId)} onChoose={() => completeSchoolMomentum(cardId)} chooseDisabled={Boolean(tutorialHelp?.targetSearchCardId && tutorialHelp.targetSearchCardId !== cardId)} meta={card?.stageLabel ?? getCardClassLabel(card)} tutorialTarget={tutorialSearchTarget ? "search-card" : undefined} tutorialSearchCardId={tutorialSearchTarget ? cardId : undefined} compact autoFocus={tutorialSearchTarget || (!tutorialHelp?.targetSearchCardId && index === 0)} />;
                         })}
                       </CompactSearchRail>
                     ) : (
@@ -29354,7 +29389,9 @@ export default function Simulator({
                     {(searchContext?.candidates ?? []).map((candidate) => {
                       const card = cardsById[candidate.cardId];
                       const foreignInvader = candidate.owner && candidate.owner !== "player";
-                      return <button key={`${candidate.coralId}-${candidate.slotId}`} type="button" onClick={() => completeSpearfishing(candidate)} className="flex w-full items-center gap-3 rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-3 text-left transition hover:bg-rose-400/25"><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}{foreignInvader ? " — opponent's invader" : ""}</strong><span className="text-sm text-rose-200">Discard to recover {Number(card?.cost?.rp ?? 0)} RP{foreignInvader ? "; card returns to opponent" : ""}</span></span></button>;
+                      const expectedTarget = embeddedLesson?.supportEffectTargets?.[tutorialCurrentCheckpoint?.id] ?? null;
+                      const tutorialTarget = expectedTarget === candidate.cardId;
+                      return <button key={`${candidate.coralId}-${candidate.slotId}`} type="button" disabled={Boolean(expectedTarget && !tutorialTarget)} data-tutorial-target={tutorialTarget ? "support-effect-choice" : undefined} onClick={() => completeSpearfishing(candidate)} className={`flex w-full items-center gap-3 rounded-2xl border-2 border-rose-400 bg-rose-400/10 p-3 text-left transition hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-35${tutorialTarget ? tutorialTargetClass("support-effect-choice") : ""}`}><img src={card?.image} alt={card?.name} className="h-24 w-16 rounded-lg bg-white object-contain" /><span><strong className="block">{card?.name}{foreignInvader ? " — opponent's invader" : ""}</strong><span className="text-sm text-rose-200">Discard to recover {Number(card?.cost?.rp ?? 0)} RP{foreignInvader ? "; card returns to opponent" : ""}</span></span></button>;
                     })}
                     <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Spearfishing</button>
                   </div>
@@ -29739,7 +29776,7 @@ export default function Simulator({
                 <button type="button" onClick={() => setModal(null)} className={`mt-5 w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950${tutorialTargetClass("continue-actions")}`} data-tutorial-target="continue-actions">Continue to Actions</button>
               </div>
             ) : modal === "support-draw" ? (
-              <div>
+              <div className={tutorialTargetClass("support-draw-controls")} data-tutorial-target="support-draw-controls">
                 <p className="mb-4 text-sm text-cyan-100/65">Discard your current hand, then allocate {turnDrawSelection?.target ?? 0} draws between both personal decks.</p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {[
@@ -29754,7 +29791,7 @@ export default function Simulator({
                     </div>
                   ))}
                 </div>
-                <button type="button" disabled={!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target} onClick={completeDrEvans} className="mt-5 w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400">Discard Hand &amp; Draw Selected Cards</button>
+                <button type="button" disabled={!turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target} onClick={completeDrEvans} className={`mt-5 w-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 px-6 py-3 font-black text-slate-950 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400${tutorialTargetClass("confirm-support-draw")}`} data-tutorial-target="confirm-support-draw">Discard Hand &amp; Draw Selected Cards</button>
               </div>
             ) : modal === "hand" ? (
               <div className="flex min-h-0 flex-col gap-3 lg:grid lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-4">

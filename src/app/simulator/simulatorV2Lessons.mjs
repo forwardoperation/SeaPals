@@ -170,14 +170,15 @@ export const SIMULATOR_V2_LESSON_MODULES = deepFreeze([
   { id: "reef-basics", title: "Reef Basics", summary: "Build a home and welcome your first SeaPals.", lessonIds: ["first-reef"] },
   { id: "battle-basics", title: "Ability Basics", summary: "Use attacks, passive abilities, and a planned recovery action.", lessonIds: ["first-attack"] },
   { id: "habitat-apex", title: "Build a Habitat", summary: "Meet Coral Reef's creature requirements, then unlock an Apex predator.", lessonIds: ["apex-predators"] },
-  { id: "open-water", title: "Grow into Open Water", summary: "Make room for a giant Filter Feeder, then use a one-time Support to find it.", lessonIds: ["filter-feeder"] },
+  { id: "support-tools", title: "Support Strategies", summary: "Cycle a hand, search a deck, and reuse an On Play creature.", lessonIds: ["support-strategies"] },
+  { id: "open-water", title: "Grow into Open Water", summary: "Build Creature Schools from zero Density, then welcome Ocean Sunfish.", lessonIds: ["filter-feeder"] },
 ]);
 
 /** Short positions prepared inside the real Simulator. */
 export const SIMULATOR_V2_LESSONS = Object.freeze([
   lesson({
     id: "first-reef", moduleId: "reef-basics", number: 1,
-    title: "Build your first reef", duration: "6 min", goalLabel: "Set up and reach 1 VP",
+    title: "Build Your First Reef", duration: "6 min", goalLabel: "Set up and reach 1 VP",
     summary: "Build two Corals, read changing Conditions, place a creature, and level up your reef.",
     introduction: "In this lesson, you will learn the basics of setting up your ecosystem. Let’s get started!",
     completion: "You built two Corals, adapted to Coral Disease, and upgraded Brain Coral to open a Predator slot.",
@@ -490,60 +491,222 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     },
   }),
   lesson({
-    id: "filter-feeder", moduleId: "open-water", number: 4,
-    randomSeed: (LESSON_RANDOM_SEED_BASE + 5) >>> 0,
-    title: "Make room for a giant", duration: "6 min", goalLabel: "Use Support, balance School Density, and reach 21 VP",
-    summary: "Expand School Density, then use Capt. Dani to find the giant Filter Feeder your plan needs.",
-    introduction: "In this lesson, you’ll learn how Support cards can complete a bigger plan! First, make room by balancing and expanding School Density. Then use Capt. Dani as a one-time Support to find Ocean Sunfish and welcome this giant Filter Feeder.",
-    completion: "You balanced School Density, used Capt. Dani as a one-time Support to search for Ocean Sunfish, and brought the giant Filter Feeder into open water without removing Halfbeak.",
-    celebration: "Your Support play made room for a giant!",
+    id: "support-strategies", moduleId: "support-tools", number: 4,
+    randomSeed: 0x5EA9400D,
+    title: "Turn Support into a combo", duration: "10 min", goalLabel: "Use three Supports and repeat an On Play ability",
+    summary: "Search for a precise card, refresh your hand, and reuse Great Barracuda's Quick Strike.",
+    introduction: "In this lesson, you’ll learn three ways Support cards shape a turn: Coral Gardener searches for a precise Foundation, Dr. Evans exchanges a stale hand for seven new cards, and Spearfishing converts a creature into RP. Then Blue Crab will retrieve that creature so its On Play ability can fire again!",
+    completion: "You searched for and built a Foundation, watched Recycle refund an eaten Fish, cycled a stale hand, converted Great Barracuda into RP, and used Scavenge to replay Quick Strike.",
+    preVictoryMessage: "Excellent! Support cards can find the exact tool you need, replace a weak hand, or turn a creature already in play into the start of a new combo.",
+    celebration: "One Barracuda delivered two entrances!",
     fitAllPlayerSlots: true,
-    skills: ["Creature Schools", "School Density", "Support cards", "Deck search", "Open water", "Filter Feeders"],
+    skills: ["Support timing", "Deck search", "Hand cycling", "Spearfishing", "Discard recovery", "On Play combos"],
     introducedConcepts: [
-      SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY,
       SIMULATOR_V2_LESSON_CONCEPTS.SUPPORT_CARDS,
       SIMULATOR_V2_LESSON_CONCEPTS.DECK_SEARCH,
+    ],
+    introducedCardIds: ["coral-gardener", "dr-evans", "spearfishing"],
+    focusCardId: "coral-gardener", attackCardId: "great-barracuda", abilityCardId: "blue-crab", victoryTarget: 6,
+    supportSearchTargets: {
+      "v2-search-for-coral": "mustard-hill-coral-base",
+    },
+    supportEffectTargets: {
+      "v2-cash-in-barracuda": "great-barracuda",
+    },
+    abilityRecoveryTargets: {
+      "v2-scavenge-barracuda": "great-barracuda",
+    },
+    seed: seed({
+      hand: ["coral-gardener", "porcupine-fish", "coral-reef", "hammerhead"],
+      foundationDeck: ["mustard-hill-coral-base"],
+      palsDeck: ["dr-evans", "spearfishing", "great-barracuda", "sea-urchin", "porcupine-fish", "coral-reef", "hammerhead", "clownfish", "arrow-crab"],
+      playerTableau: [
+        tableau("brain-coral-stage-1", [["clownfish", "fish"], ["blue-crab", "invertebrate"]]),
+      ],
+      opponentTableau: [
+        tableau("brain-coral-stage-1"),
+        tableau("mustard-hill-coral-base", [["bluestriped-grunt", "fish"]]),
+        tableau("mustard-hill-coral-base", [["bluestriped-grunt", "fish"]]),
+      ],
+      opponentTurnMode: "play",
+      opponent: {
+        hand: ["great-barracuda"],
+        foundationDeck: [],
+        palsDeck: ["blue-whale", "blue-whale"],
+        rp: 4,
+      },
+      rp: 2,
+      activeConditionId: "clear-water",
+      conditionDeck: ["coral-disease", "clear-water"],
+    }),
+    expectedDraws: {
+      "v2-draw-dr-evans": { deckType: "pals", cardId: "dr-evans" },
+      "v2-draw-final-support-card": { deckType: "pals", cardId: "arrow-crab" },
+    },
+    checkpoints: [
+      supportCheckpoint("v2-search-for-coral", "Search for the right Foundation", "coral-gardener"),
+      buildCheckpoint("v2-build-searched-coral", "Build the searched Foundation", "mustard-hill-coral-base", { cardKind: "coral", placement: "foundation" }),
+      checkpoint("v2-pass-after-search", ACTION.TURN_ENDED, "Watch Recycle protect your economy", "End your turn so the opponent can eat Clownfish while Blue Crab is in play."),
+      checkpoint("v2-see-recycle", ACTION.ATTACK_RESOLVED, "See Recycle refund an eaten Fish", "Watch Blue Crab return half of Clownfish's printed RP cost after the opponent eats it.", [
+        truthy("details.accepted"),
+        equals("details.attackerCardId", "great-barracuda"),
+        equals("details.defenderCardId", "clownfish"),
+        equals("details.discardedCardId", "clownfish"),
+      ], { actor: "opponent" }),
+      checkpoint("v2-collect-for-cycle", ACTION.RP_COLLECTED, "Begin the hand-cycle turn", "Collect RP for your next plan.", [atLeast("details.collected", 1)]),
+      drawCheckpoint({ id: "v2-draw-dr-evans", title: "Draw Dr. Evans", deckType: "pals" }),
+      supportCheckpoint("v2-cycle-hand", "Cycle the stale hand", "dr-evans"),
+      checkpoint("v2-pass-after-cycle", ACTION.TURN_ENDED, "Reset Support timing again", "End your turn after Dr. Evans resolves."),
+      checkpoint("v2-collect-for-combo", ACTION.RP_COLLECTED, "Fund the Support combo", "Collect enough RP to reuse Great Barracuda.", [atLeast("details.collected", 1)]),
+      drawCheckpoint({ id: "v2-draw-final-support-card", title: "Draw the final card", deckType: "pals" }),
+      buildCheckpoint("v2-place-sea-urchin", "Add a safe scoring card", "sea-urchin"),
+      buildCheckpoint("v2-play-first-barracuda", "Play Great Barracuda", "great-barracuda"),
+      checkpoint("v2-first-quick-strike", ACTION.ATTACK_RESOLVED, "Resolve Quick Strike", "Resolve Great Barracuda's first On Play Bite.", [
+        truthy("details.accepted"),
+        equals("details.attackerCardId", "great-barracuda"),
+        truthy("details.onPlay"),
+      ]),
+      supportCheckpoint("v2-cash-in-barracuda", "Convert a creature into RP", "spearfishing"),
+      abilityCheckpoint("v2-scavenge-barracuda", "Retrieve the spent creature", "blue-crab", "Scavenge", "great-barracuda"),
+      buildCheckpoint("v2-replay-barracuda", "Replay Great Barracuda", "great-barracuda"),
+      checkpoint("v2-repeat-quick-strike", ACTION.ATTACK_RESOLVED, "Trigger Quick Strike again", "Resolve Great Barracuda's repeated On Play Bite.", [
+        truthy("details.accepted"),
+        equals("details.attackerCardId", "great-barracuda"),
+        truthy("details.onPlay"),
+      ]),
+      buildCheckpoint("v2-play-final-arrow-crab", "Finish the support plan", "arrow-crab"),
+      victoryCheckpoint(6),
+    ],
+    supportCards: {
+      "v2-search-for-coral": ["coral-gardener"],
+      "v2-cycle-hand": ["dr-evans"],
+      "v2-cash-in-barracuda": ["spearfishing"],
+    },
+    buildCards: {
+      "v2-build-searched-coral": ["mustard-hill-coral-base"],
+      "v2-place-sea-urchin": ["sea-urchin"],
+      "v2-play-first-barracuda": ["great-barracuda"],
+      "v2-replay-barracuda": ["great-barracuda"],
+      "v2-play-final-arrow-crab": ["arrow-crab"],
+    },
+    placementTargets: {
+      "v2-place-sea-urchin": {
+        cardId: "sea-urchin",
+        foundationCardId: "brain-coral-stage-1",
+        slotClass: "invertebrate",
+        slotOrdinal: 1,
+      },
+      "v2-play-first-barracuda": {
+        cardId: "great-barracuda",
+        foundationCardId: "brain-coral-stage-1",
+        slotClass: "predator",
+        slotOrdinal: 0,
+      },
+      "v2-replay-barracuda": {
+        cardId: "great-barracuda",
+        foundationCardId: "brain-coral-stage-1",
+        slotClass: "predator",
+        slotOrdinal: 0,
+        blockMessage: "Return Great Barracuda to Brain Coral's highlighted Predator slot so Quick Strike can trigger again.",
+      },
+      "v2-play-final-arrow-crab": {
+        cardId: "arrow-crab",
+        foundationCardId: "mustard-hill-coral-base",
+        slotClass: "invertebrate",
+        slotOrdinal: 0,
+      },
+    },
+  }),
+  lesson({
+    id: "filter-feeder", moduleId: "open-water", number: 5,
+    randomSeed: (LESSON_RANDOM_SEED_BASE + 7) >>> 0,
+    title: "Build an open-water ecosystem", duration: "12 min", goalLabel: "Build Open Ocean from 0 School Density and play Ocean Sunfish",
+    summary: "Start with a bare board, build an open-water food web, and create enough shared School Density for Ocean Sunfish.",
+    introduction: "In this lesson, you’ll learn to build an ecosystem from a bare board! Creature Schools replace Corals as Foundations. They create no creature slots; instead, they supply shared School Density to creatures placed in open water. Build four Schools, meet Open Ocean’s food-web requirements, and grow from 0 Density to an Ocean Sunfish.",
+    completion: "You began with a bare board and 0 School Density, built four Creature Schools instead of Corals, added open-water Fish and Invertebrates without using slots, established Open Ocean, and welcomed Ocean Sunfish with 10 Density still open.",
+    celebration: "Your open-water ecosystem supports a giant!",
+    fitAllPlayerSlots: true,
+    skills: ["Creature Schools", "School Density", "Foundation upgrades", "Open-water placement", "Open Ocean requirements", "Filter Feeders"],
+    introducedConcepts: [
+      SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY,
       SIMULATOR_V2_LESSON_CONCEPTS.OPEN_WATER,
       SIMULATOR_V2_LESSON_CONCEPTS.FILTER_FEEDERS,
     ],
-    introducedCardIds: ["halfbeak", "anchovy-ball-stage1", "capt-dani", "ocean-sunfish"],
-    focusCardId: "ocean-sunfish", searchCardId: "ocean-sunfish", victoryTarget: 21,
+    introducedCardIds: ["herring-ball-base", "herring-ball-stage1", "herring-ball-stage2", "sardine-ball-base", "anchovy-ball-base", "halfbeak", "bonito-tuna", "blue-sea-dragon", "market-squid", "open-ocean", "ocean-sunfish"],
+    focusCardId: "ocean-sunfish", victoryTarget: 13,
+    schoolMomentumTargets: {
+      "v2-upgrade-second-herring-stage1": "herring-ball-stage1",
+      "v2-grow-herring-stage1s": "herring-ball-stage2",
+    },
     expectedDraws: {
-      "v2-draw-filter-support": { deckType: "pals", cardId: "capt-dani" },
+      "v2-draw-herring-stage1": { deckType: "foundation", cardId: "herring-ball-stage1" },
+      "v2-draw-halfbeak": { deckType: "pals", cardId: "halfbeak" },
+      "v2-draw-bonito-tuna": { deckType: "pals", cardId: "bonito-tuna" },
+      "v2-draw-blue-sea-dragon": { deckType: "pals", cardId: "blue-sea-dragon" },
+      "v2-draw-market-squid": { deckType: "pals", cardId: "market-squid" },
+      "v2-draw-open-ocean": { deckType: "pals", cardId: "open-ocean" },
+      "v2-draw-ocean-sunfish": { deckType: "pals", cardId: "ocean-sunfish" },
     },
     seed: seed({
-      hand: ["halfbeak", "anchovy-ball-stage1"],
-      foundationDeck: [],
-      palsDeck: ["capt-dani", "ocean-sunfish"],
-      playerTableau: [
-        tableau("brain-coral-stage-2", [["hammerhead", "apex"]]),
-        homeReef(),
-        tableau("pillar-coral-base", [["clownfish", "fish"], ["arrow-crab", "invertebrate"]]),
-        tableau("lettuce-coral-base"),
-        tableau("sardine-ball-stage2"),
-        tableau("anchovy-ball-base"),
-      ],
-      playerHabitats: ["coral-reef"],
+      hand: ["herring-ball-base", "herring-ball-base", "sardine-ball-base", "anchovy-ball-base"],
+      foundationDeck: ["herring-ball-stage1", "herring-ball-stage1", "herring-ball-stage2", "brain-coral-base"],
+      palsDeck: ["halfbeak", "bonito-tuna", "blue-sea-dragon", "market-squid", "open-ocean", "ocean-sunfish"],
+      playerTableau: [],
+      playerHabitats: [],
       rp: 8,
-      activeConditionId: null,
-      conditionDeck: ["abundant-sunlight"],
+      activeConditionId: "clear-water",
+      conditionDeck: ["clear-water", "clear-water", "clear-water", "clear-water", "clear-water", "clear-water", "clear-water"],
     }),
     checkpoints: [
-      buildCheckpoint("v2-spend-density", "See how a small Fish uses Density", "halfbeak", { placement: "open-water" }),
-      buildCheckpoint("v2-expand-density", "Upgrade Anchovy Ball", "anchovy-ball-stage1", { placement: "foundation-upgrade" }),
-      checkpoint("v2-fund-filter-feeder", ACTION.TURN_ENDED, "Prepare the next round", "End your turn so the reef can fund your giant Filter Feeder."),
-      collectCheckpoint(),
-      drawCheckpoint({ id: "v2-draw-filter-support", title: "Draw Capt. Dani", deckType: "pals" }),
-      supportCheckpoint("v2-search-filter-feeder", "Search for Ocean Sunfish", "capt-dani"),
+      buildCheckpoint("v2-place-first-herring-school", "Place the first Creature School", "herring-ball-base", { cardKind: "creature", placement: "foundation" }),
+      buildCheckpoint("v2-place-second-herring-school", "Place another Herring Ball", "herring-ball-base", { cardKind: "creature", placement: "foundation" }),
+      buildCheckpoint("v2-place-sardine-school", "Add Sardine Ball", "sardine-ball-base", { cardKind: "creature", placement: "foundation" }),
+      buildCheckpoint("v2-place-anchovy-school", "Add Anchovy Ball", "anchovy-ball-base", { cardKind: "creature", placement: "foundation" }),
+      checkpoint("v2-grow-school-bases", ACTION.TURN_ENDED, "Let the Schools establish", "End the turn so both Herring Ball Schools can become eligible for upgrades."),
+      checkpoint("v2-collect-for-herring-stage1", ACTION.RP_COLLECTED, "Collect from four Schools", "Begin the next round and collect RP from every Creature School.", [atLeast("details.collected", 1)]),
+      drawCheckpoint({ id: "v2-draw-herring-stage1", title: "Draw Herring Ball Stage 1", deckType: "foundation" }),
+      buildCheckpoint("v2-upgrade-first-herring-stage1", "Upgrade the first Herring Ball", "herring-ball-stage1", { cardKind: "creature", placement: "foundation-upgrade" }),
+      buildCheckpoint("v2-upgrade-second-herring-stage1", "Upgrade the second Herring Ball", "herring-ball-stage1", { cardKind: "creature", placement: "foundation-upgrade" }),
+      checkpoint("v2-grow-herring-stage1s", ACTION.TURN_ENDED, "Let both Stage 1 Schools establish", "End the turn so a Herring Ball can reach Stage 2."),
+      checkpoint("v2-collect-for-herring-stage2", ACTION.RP_COLLECTED, "Fund the final School upgrade", "Collect the 7 RP needed for Herring Ball Stage 2.", [atLeast("details.collected", 1)]),
+      drawCheckpoint({ id: "v2-draw-halfbeak", title: "Draw the first open-water Fish", deckType: "pals" }),
+      buildCheckpoint("v2-upgrade-herring-stage2", "Raise capacity to 220 Density", "herring-ball-stage2", { cardKind: "creature", placement: "foundation-upgrade" }),
+      checkpoint("v2-fund-open-water-fish", ACTION.TURN_ENDED, "Prepare the open-water food web", "End the turn so your Schools can fund the creatures Open Ocean requires."),
+      checkpoint("v2-collect-for-open-water-fish", ACTION.RP_COLLECTED, "Collect from the upgraded Schools", "Collect RP from the four Schools.", [atLeast("details.collected", 1)]),
+      drawCheckpoint({ id: "v2-draw-bonito-tuna", title: "Draw the second open-water Fish", deckType: "pals" }),
+      buildCheckpoint("v2-play-halfbeak", "Place Halfbeak in open water", "halfbeak", { placement: "open-water" }),
+      buildCheckpoint("v2-play-bonito-tuna", "Place Bonito Tuna in open water", "bonito-tuna", { placement: "open-water" }),
+      checkpoint("v2-fund-first-open-water-invertebrate", ACTION.TURN_ENDED, "Prepare an open-water Invertebrate", "End the turn to prepare the next part of Open Ocean's food web."),
+      checkpoint("v2-collect-for-blue-sea-dragon", ACTION.RP_COLLECTED, "Collect for Blue Sea Dragon", "Collect RP from the Schools.", [atLeast("details.collected", 1)]),
+      drawCheckpoint({ id: "v2-draw-blue-sea-dragon", title: "Draw Blue Sea Dragon", deckType: "pals" }),
+      buildCheckpoint("v2-play-blue-sea-dragon", "Place Blue Sea Dragon in open water", "blue-sea-dragon", { placement: "open-water" }),
+      checkpoint("v2-fund-second-open-water-invertebrate", ACTION.TURN_ENDED, "Prepare the second Invertebrate", "End the turn so the last Open Ocean requirement can join your ecosystem."),
+      checkpoint("v2-collect-for-market-squid", ACTION.RP_COLLECTED, "Collect for Market Squid", "Collect RP from the Schools.", [atLeast("details.collected", 1)]),
+      drawCheckpoint({ id: "v2-draw-market-squid", title: "Draw Market Squid", deckType: "pals" }),
+      buildCheckpoint("v2-play-market-squid", "Place Market Squid in open water", "market-squid", { placement: "open-water" }),
+      checkpoint("v2-prepare-open-ocean", ACTION.TURN_ENDED, "Prepare the Habitat turn", "End the turn after meeting Open Ocean's four School, two Fish, and two Invertebrate requirements."),
+      checkpoint("v2-collect-for-open-ocean", ACTION.RP_COLLECTED, "Begin the Habitat turn", "Collect RP before drawing Open Ocean.", [atLeast("details.collected", 1)]),
+      drawCheckpoint({ id: "v2-draw-open-ocean", title: "Draw Open Ocean", deckType: "pals" }),
+      buildCheckpoint("v2-play-open-ocean", "Establish Open Ocean", "open-ocean", { cardKind: "habitat", placement: "habitat" }),
+      checkpoint("v2-fund-ocean-sunfish", ACTION.TURN_ENDED, "Prepare the Filter Feeder turn", "End the turn so the Schools can fund Ocean Sunfish."),
+      checkpoint("v2-collect-for-ocean-sunfish", ACTION.RP_COLLECTED, "Collect 8 RP", "Collect the RP needed to play Ocean Sunfish.", [atLeast("details.collected", 1)]),
+      drawCheckpoint({ id: "v2-draw-ocean-sunfish", title: "Draw Ocean Sunfish", deckType: "pals" }),
       buildCheckpoint("v2-play-filter-feeder", "Welcome Ocean Sunfish", "ocean-sunfish", { placement: "open-water" }),
-      victoryCheckpoint(21),
+      victoryCheckpoint(13),
     ],
-    supportCards: {
-      "v2-search-filter-feeder": ["capt-dani"],
-    },
     buildCards: {
-      "v2-spend-density": ["halfbeak"],
-      "v2-expand-density": ["anchovy-ball-stage1"],
+      "v2-place-first-herring-school": ["herring-ball-base"],
+      "v2-place-second-herring-school": ["herring-ball-base"],
+      "v2-place-sardine-school": ["sardine-ball-base"],
+      "v2-place-anchovy-school": ["anchovy-ball-base"],
+      "v2-upgrade-first-herring-stage1": ["herring-ball-stage1"],
+      "v2-upgrade-second-herring-stage1": ["herring-ball-stage1"],
+      "v2-upgrade-herring-stage2": ["herring-ball-stage2"],
+      "v2-play-halfbeak": ["halfbeak"],
+      "v2-play-bonito-tuna": ["bonito-tuna"],
+      "v2-play-blue-sea-dragon": ["blue-sea-dragon"],
+      "v2-play-market-squid": ["market-squid"],
+      "v2-play-open-ocean": ["open-ocean"],
       "v2-play-filter-feeder": ["ocean-sunfish"],
     },
   }),
@@ -708,12 +871,23 @@ const CARD_NAMES = Object.freeze({
   "arrow-crab": "Arrow Crab",
   flounder: "Southern Flounder",
   "coral-gardener": "Coral Gardener",
+  "dr-evans": "Dr. Evans",
+  spearfishing: "Spearfishing",
   "coral-heal": "Coral Heal",
   "capt-dani": "Capt. Dani",
   "coral-reef": "Coral Reef",
+  "open-ocean": "Open Ocean",
+  "lettuce-coral-base": "Lettuce Coral",
   "sardine-ball-base": "Sardine Ball",
+  "anchovy-ball-base": "Anchovy Ball",
+  "herring-ball-base": "Herring Ball",
+  "herring-ball-stage1": "Herring Ball Stage 1",
+  "herring-ball-stage2": "Herring Ball Stage 2",
   "anchovy-ball-stage1": "Anchovy Ball Stage 1",
   halfbeak: "Halfbeak",
+  "bonito-tuna": "Bonito Tuna",
+  "blue-sea-dragon": "Blue Sea Dragon",
+  "market-squid": "Market Squid",
   "ocean-sunfish": "Ocean Sunfish",
   hammerhead: "Hammerhead",
 });
@@ -722,10 +896,25 @@ const FOUNDATION_CARD_IDS = new Set([
   "mustard-hill-coral-base",
   "brain-coral-base",
   "sardine-ball-base",
+  "anchovy-ball-base",
+  "herring-ball-base",
 ]);
 const UPGRADE_CARD_IDS = new Set(["brain-coral-stage-1", "brain-coral-stage-2"]);
-const SCHOOL_UPGRADE_CARD_IDS = new Set(["anchovy-ball-stage1"]);
-const OPEN_WATER_CARD_IDS = new Set(["halfbeak", "ocean-sunfish"]);
+const SCHOOL_BASE_CARD_IDS = new Set(["sardine-ball-base", "anchovy-ball-base", "herring-ball-base"]);
+const SCHOOL_UPGRADE_CARD_IDS = new Set(["anchovy-ball-stage1", "herring-ball-stage1", "herring-ball-stage2"]);
+const OPEN_WATER_CARD_IDS = new Set(["halfbeak", "bonito-tuna", "blue-sea-dragon", "market-squid", "ocean-sunfish"]);
+const SCHOOL_DENSITY_BY_CARD = Object.freeze({
+  "sardine-ball-base": 10,
+  "anchovy-ball-base": 10,
+  "herring-ball-base": 20,
+});
+const OPEN_WATER_DENSITY_BY_CARD = Object.freeze({
+  halfbeak: 10,
+  "bonito-tuna": 10,
+  "blue-sea-dragon": 20,
+  "market-squid": 20,
+  "ocean-sunfish": 150,
+});
 const name = (cardId) => CARD_NAMES[cardId] ?? cardId ?? "the highlighted card";
 
 const FIRST_REEF_VISIBLE_COPY = Object.freeze({
@@ -771,12 +960,12 @@ function conceptCopy(uiState, concept, teachingCopy, practiceCopy = "") {
 }
 
 function placementConcept(cardId) {
-  if (cardId === "coral-reef") return SIMULATOR_V2_LESSON_CONCEPTS.HABITATS;
+  if (["coral-reef", "open-ocean"].includes(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.HABITATS;
   if (SCHOOL_UPGRADE_CARD_IDS.has(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY;
-  if (cardId === "sardine-ball-base") return SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY;
+  if (SCHOOL_BASE_CARD_IDS.has(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.SCHOOL_DENSITY;
   if (FOUNDATION_CARD_IDS.has(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.CORALS;
   if (UPGRADE_CARD_IDS.has(cardId)) return SIMULATOR_V2_LESSON_CONCEPTS.CORAL_UPGRADES;
-  if (cardId === "halfbeak") return SIMULATOR_V2_LESSON_CONCEPTS.OPEN_WATER;
+  if (OPEN_WATER_CARD_IDS.has(cardId) && cardId !== "ocean-sunfish") return SIMULATOR_V2_LESSON_CONCEPTS.OPEN_WATER;
   if (cardId === "ocean-sunfish") return SIMULATOR_V2_LESSON_CONCEPTS.FILTER_FEEDERS;
   if (cardId === "hammerhead") return SIMULATOR_V2_LESSON_CONCEPTS.APEX;
   return SIMULATOR_V2_LESSON_CONCEPTS.CREATURE_SLOTS;
@@ -848,10 +1037,21 @@ function placementCopy(cardId) {
       action: "Choose Play Card to establish Coral Reef in your Habitat zone.",
     };
   }
-  if (SCHOOL_UPGRADE_CARD_IDS.has(cardId)) {
+  if (cardId === "open-ocean") {
     return {
-      message: "Anchovy Ball Stage 1 replaces the matching Base School. Its supply rises from 10 to 50 School Density, making more room for open-water creatures.",
-      action: "Choose the glowing Anchovy Ball School to upgrade it.",
+      message: "Open Ocean is a Habitat with a different food-web requirement: four Creature Schools, two Oceanic Fish, and two Oceanic Invertebrates. It stays in the Habitat zone while your creatures remain in open water.",
+      action: "Choose Play Card to establish Open Ocean in your Habitat zone.",
+    };
+  }
+  if (SCHOOL_UPGRADE_CARD_IDS.has(cardId)) {
+    const densityChange = cardId === "herring-ball-stage1"
+      ? "Herring Ball Stage 1 replaces the Base School and raises its supply from 20 to 60 School Density."
+      : cardId === "herring-ball-stage2"
+        ? "Herring Ball Stage 2 replaces Stage 1 and raises its supply from 60 to 140 School Density."
+        : "Anchovy Ball Stage 1 replaces the matching Base School and raises its supply from 10 to 50 School Density.";
+    return {
+      message: densityChange + " The School keeps its place in open water while its capacity grows.",
+      action: "Choose the glowing matching Creature School to upgrade it.",
     };
   }
   if (UPGRADE_CARD_IDS.has(cardId)) {
@@ -862,14 +1062,14 @@ function placementCopy(cardId) {
   }
   if (FOUNDATION_CARD_IDS.has(cardId)) {
     return {
-      message: cardId === "sardine-ball-base"
-        ? "Creature Schools are Foundations in open water. Sardine Ball supplies 10 School Density and produces RP each turn."
+      message: SCHOOL_BASE_CARD_IDS.has(cardId)
+        ? `${name(cardId)} is a Creature School Foundation. It sits directly in open water, supplies ${SCHOOL_DENSITY_BY_CARD[cardId]} School Density, and produces RP each turn instead of creating Coral slots.`
         : "Foundations create homes and produce RP at the start of your turns.",
       action: "Choose an open space in your ecosystem.",
     };
   }
   if (OPEN_WATER_CARD_IDS.has(cardId)) {
-    const density = cardId === "ocean-sunfish" ? 150 : 10;
+    const density = OPEN_WATER_DENSITY_BY_CARD[cardId];
     return {
       message: name(cardId) + " lives in open water and commits " + density + " School Density while it remains in your ecosystem.",
       action: "Choose a glowing open-water space.",
@@ -905,20 +1105,23 @@ function dragActionCopy(cardId, candidates, selected, current) {
   if (selected?.id === "apex-predators" && cardId === "hammerhead") {
     return "Here comes Hammerhead! Drag it from your hand into the highlighted Apex slot.";
   }
-  if (selected?.id === "filter-feeder" && cardId === "halfbeak") {
-    return "Let’s see School Density in action! Drag Halfbeak from your hand into the highlighted open-water area.";
+  if (selected?.id === "filter-feeder" && SCHOOL_BASE_CARD_IDS.has(cardId)) {
+    return `Drag ${name(cardId)} from your hand into the highlighted open water as a Creature School Foundation.`;
   }
-  if (selected?.id === "filter-feeder" && cardId === "anchovy-ball-stage1") {
-    return "Ocean Sunfish needs more room—let’s make it! Drag Anchovy Ball Stage 1 onto the highlighted School.";
+  if (selected?.id === "filter-feeder" && SCHOOL_UPGRADE_CARD_IDS.has(cardId)) {
+    return `Drag ${name(cardId)} onto the highlighted Herring Ball School.`;
   }
   if (selected?.id === "filter-feeder" && cardId === "ocean-sunfish") {
     return "You made enough room—now welcome a giant! Drag Ocean Sunfish from your hand into the highlighted open-water area.";
   }
-  if (cardId === "coral-reef") {
-    return "Select Coral Reef in your hand, then choose Play Card to put it in the Habitat zone.";
+  if (selected?.id === "filter-feeder" && cardId === "open-ocean") {
+    return "Your food web meets every requirement! Select Open Ocean, then choose Play Card to establish the Habitat.";
+  }
+  if (["coral-reef", "open-ocean"].includes(cardId)) {
+    return `Select ${name(cardId)} in your hand, then choose Play Card to put it in the Habitat zone.`;
   }
   if (SCHOOL_UPGRADE_CARD_IDS.has(cardId)) {
-    return "Drag Anchovy Ball Stage 1 from your hand onto the highlighted Anchovy Ball School.";
+    return `Drag ${name(cardId)} from your hand onto the highlighted matching Creature School.`;
   }
   if (UPGRADE_CARD_IDS.has(cardId)) {
     return "Drag " + name(cardId) + " from your hand onto the highlighted matching Coral.";
@@ -946,6 +1149,20 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   if (!selected || !current) return null;
   const help = (target, message, action, extra) => helpFor(selected, current, target, message, action, extra);
   const expectedDraw = getSimulatorV2ExpectedDraw(selected, current);
+
+  if (selected.id === "filter-feeder" && uiState.eventOverlayType === "choose-school-momentum") {
+    const targetCardId = selected.schoolMomentumTargets?.[current.id] ?? null;
+    if (targetCardId) {
+      return help(
+        "search-card",
+        targetCardId === "herring-ball-stage1"
+          ? "Herring Ball Stage 1 has Momentum. Its upgrade replaces one School, then searches your personal decks for another Creature School. Find the second Stage 1 now so both Herring Balls can grow this turn."
+          : "The second Stage 1 also triggers Momentum. Find Herring Ball Stage 2 now; it will wait in your hand until a Stage 1 School has survived a full turn.",
+        `Choose ${name(targetCardId)}.`,
+        { targetSearchCardId: targetCardId },
+      );
+    }
+  }
 
   if (uiState.modal === "draw-result") {
     return help("continue-actions", "Your draw is ready. Next you can play cards and use actions.", "Continue to Actions.");
@@ -988,10 +1205,24 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const firstAttackPredatorDraw = selected.id === "first-attack" && expectedDraw?.cardId === "great-barracuda";
     const seaUrchinWasDefeated = Array.isArray(uiState.discardPileCardIds)
       && uiState.discardPileCardIds.includes("sea-urchin");
+    const supportDrawMessage = expectedDraw?.cardId === "dr-evans"
+      ? "Blue Crab's Recycle just returned 1 RP when Clownfish was eaten. Dr. Evans is now on top of your Main Deck. Draw it to replace the familiar cards still in your hand with seven new options."
+      : "Dr. Evans refreshed your hand and left one card in the Main Deck. Draw Arrow Crab now; its 1 VP will finish the Support plan after the Barracuda combo."
+    const openWaterDrawMessages = {
+      "herring-ball-stage1": "Your four Base Schools now supply 60 School Density and produce enough RP for two upgrades. Draw Herring Ball Stage 1 from the Foundation Deck; its Momentum will find the second copy.",
+      halfbeak: "Both Stage 1 Schools survived a full turn, and Momentum already placed Stage 2 in your hand. Draw Halfbeak from the Main Deck before you make the final School upgrade.",
+      "bonito-tuna": "Your Schools now supply 220 School Density. Draw Bonito Tuna so you can place both required Oceanic Fish directly in open water, without Coral slots.",
+      "blue-sea-dragon": "Open Ocean also needs two Oceanic Invertebrates. Draw Blue Sea Dragon from the Main Deck; it will reserve 20 shared School Density instead of using a slot.",
+      "market-squid": "Draw Market Squid, the second Oceanic Invertebrate. Once it joins Blue Sea Dragon, your creature counts will satisfy the last part of Open Ocean's requirement.",
+      "open-ocean": "You now have four Creature Schools, two Oceanic Fish, and two Oceanic Invertebrates. Draw Open Ocean from the Main Deck so those cards can sustain the Habitat.",
+      "ocean-sunfish": "Open Ocean is established and 160 of your 220 School Density remains available. Draw Ocean Sunfish from the Main Deck; it needs 150 of that shared capacity.",
+    };
     const scenarioDrawMessage = selected.id === "apex-predators"
       ? "Your Coral Reef is established and Brain Coral has an Apex slot. Draw Hammerhead from the Main Deck so you can use the RP you collected for the final play."
+      : selected.id === "support-strategies"
+        ? supportDrawMessage
       : selected.id === "filter-feeder"
-      ? "You expanded School Density and saved enough RP for a giant creature. Ocean Sunfish is still in your deck, so draw Capt. Dani from the Main Deck and use her Support effect to find it."
+        ? openWaterDrawMessages[expectedDraw?.cardId] ?? "Choose the highlighted personal deck for the next part of your open-water ecosystem."
       : firstReefUpgradeDraw
         ? "Brain Coral Stage 1 is on top of your Foundation Deck. Draw it so you can level up the Coral you placed last round."
       : firstAttackOpeningDraw
@@ -1147,28 +1378,59 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
 
   if (current.actionType === ACTION.SUPPORT_PLAYED) {
     const cardId = selected.supportCards?.[current.id]?.[0];
-    if (uiState.modal === "search" && selected.searchCardId) {
+    const searchTargetCardId = selected.supportSearchTargets?.[current.id] ?? selected.searchCardId;
+    if (uiState.modal === "search" && searchTargetCardId) {
       return help(
         "search-card",
-        name(cardId) + " found the eligible Filter Feeders in your Main Deck. Choose the creature that completes this plan.",
-        "Choose " + name(selected.searchCardId) + ".",
-        { targetSearchCardId: selected.searchCardId },
+        cardId === "coral-gardener"
+          ? "Coral Gardener found the eligible Corals in your Foundation Deck. Search effects trade one Support card for the exact card your plan needs."
+          : name(cardId) + " found the eligible cards in your personal decks.",
+        "Choose " + name(searchTargetCardId) + ".",
+        { targetSearchCardId: searchTargetCardId },
+      );
+    }
+    if (cardId === "dr-evans" && uiState.modal === "support-draw") {
+      const allocationReady = Number(uiState.drawSelected ?? 0) >= Number(uiState.drawTarget ?? 7);
+      return help(
+        allocationReady ? "confirm-support-draw" : "support-draw-controls",
+        "Dr. Evans discards every other card in your hand, then draws seven replacements. Eight cards remain in your Main Deck; choose seven now and leave one for the normal draw next turn.",
+        allocationReady
+          ? "Discard the stale hand and draw the seven selected cards."
+          : "Allocate all seven remaining cards between the Foundation and Main decks.",
+      );
+    }
+    if (cardId === "spearfishing" && uiState.eventOverlayType === "choose-spearfishing-target") {
+      return help(
+        "support-effect-choice",
+        "Spearfishing can discard one of your Fish or Predators and return its printed RP cost. Choose Great Barracuda: the card goes to your discard pile, but the recovered 3 RP will help you play it again.",
+        "Choose Great Barracuda.",
+        { targetCardId: "great-barracuda" },
       );
     }
     const selectedCard = uiState.selectedHandCard === cardId
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
-    const message = "Support cards create one-time effects during your main phase, then go to the discard pile. Capt. Dani searches your Main Deck for a Filter Feeder. Her text also prevents another Support this turn, so play her when you are ready to find Ocean Sunfish!";
+    const message = cardId === "coral-gardener"
+      ? "Support cards create one-time effects during your main phase, then go to the discard pile. Coral Gardener searches your personal decks for one Coral, which is useful when a specific Foundation or upgrade completes your plan. Its text also prevents another Support this turn."
+      : cardId === "dr-evans"
+        ? "Coral Gardener found a Coral, but imagine the rest of this hand no longer fits your plan. Dr. Evans discards the cards you are holding and replaces them with seven new cards. It is a powerful reset when hand quality matters more than keeping individual cards."
+        : cardId === "spearfishing"
+          ? "Spearfishing turns a Fish or Predator already on your reef into immediate RP equal to its printed cost. The creature and Support both go to discard, so the best target is one you can profitably recover or no longer need."
+          : "Support cards create one-time effects during your main phase, then go to the discard pile.";
     const action = selectedCard
       ? "Choose Play Card."
-      : "Select Capt. Dani in your hand, then play her to begin the search.";
+      : `Select ${name(cardId)} in your hand, then play it.`;
     return help(
       selectedCard ? "play-card" : "hand",
-      selectedCard ? message + " Capt. Dani is selected and ready to resolve." : message,
+      selectedCard ? message + ` ${name(cardId)} is selected and ready to resolve.` : message,
       action,
       {
         interaction: "tap",
         targetCardId: cardId,
-        hint: "After playing her, choose Ocean Sunfish in the deck search.",
+        hint: cardId === "coral-gardener"
+          ? "After playing it, choose Mustard Hill Coral in the deck search."
+          : cardId === "spearfishing"
+            ? "After playing it, choose Great Barracuda as the creature to convert into RP."
+            : "Finish the replacement-draw choice to resolve Dr. Evans.",
       },
     );
   }
@@ -1179,15 +1441,28 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       : uiState.readyUtilityAction?.cardId === selected.abilityCardId
         ? uiState.readyUtilityAction
         : null;
-    const target = uiState.inspectedUtilityAction?.cardId === selected.abilityCardId
+    const choosingSupportComboRecovery = selected.id === "support-strategies"
+      && uiState.eventOverlayType === "choose-action-discard";
+    const target = choosingSupportComboRecovery
+      ? "search-card"
+      : uiState.inspectedUtilityAction?.cardId === selected.abilityCardId
       ? "utility-action-button"
       : "player-board";
+    const supportComboMessage = "Spearfishing put Great Barracuda in your discard pile and recovered its 3 RP. Blue Crab's Scavenge is the recycling step: pay 2 RP to move Barracuda back to your hand. Blue Crab's separate Recycle passive only triggers when one of your Fish is eaten, so Spearfishing does not trigger Recycle.";
     return help(
       target,
-      "Not every ability is an attack! An Action waits for your command during your turn. You decide when to use it and pay any RP cost shown beside it. Blue Crab’s Scavenge costs 2 RP to recover the defeated Sea Urchin from your discard pile and set up your next round. Let’s bring it home!",
-      target === "utility-action-button"
-        ? "Use Scavenge, then choose Sea Urchin."
-        : "Select Blue Crab, then use Scavenge.",
+      selected.id === "support-strategies"
+        ? supportComboMessage
+        : "Not every ability is an attack! An Action waits for your command during your turn. You decide when to use it and pay any RP cost shown beside it. Blue Crab’s Scavenge costs 2 RP to recover the defeated Sea Urchin from your discard pile and set up your next round. Let’s bring it home!",
+      selected.id === "support-strategies"
+        ? choosingSupportComboRecovery
+          ? "Choose Great Barracuda from the discard pile."
+          : target === "utility-action-button"
+            ? "Use Scavenge, then choose Great Barracuda."
+            : "Select Blue Crab, then use Scavenge."
+        : target === "utility-action-button"
+          ? "Use Scavenge, then choose Sea Urchin."
+          : "Select Blue Crab, then use Scavenge.",
       {
         targetCardId: selected.abilityCardId,
         targetActionKey: utility?.actionKey ?? utility?.utilityActionKey ?? null,
@@ -1202,6 +1477,17 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     if (opponentAttack) return null;
     if (uiState.inspectedCardOpen && (uiState.attackContext || !uiState.inspectedPlayerCard)) {
       return help("close-modal", "Close these details so you can reach the live attack controls.", "Close the card details.");
+    }
+    if (selected.id === "support-strategies") {
+      const repeated = current.id === "v2-repeat-quick-strike";
+      return help(
+        "opponent-board",
+        repeated
+          ? "Great Barracuda entered play again, so its On Play Quick Strike fires again. Spearfishing and Scavenge did more than move a card: together they reset the timing that makes this second Bite possible."
+          : "Great Barracuda's Quick Strike began automatically when it entered play. This first Bite establishes the value you will repeat after Spearfishing sends Barracuda to discard and Scavenge returns it.",
+        "Choose a glowing opposing Fish or Predator and resolve the D6 Bite.",
+        { targetCardId: "great-barracuda" },
+      );
     }
     if (selected.id === "apex-predators") {
       if (uiState.attackContext) {
@@ -1293,8 +1579,40 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       message = "Great—your Fish count is ready! Sea Urchin is the only Reef Invertebrate so far. Add Arrow Crab to reach the second one; then your reef will meet Coral Reef's full 4 Coral, 2 Fish, 2 Invertebrate requirement.";
     } else if (selected.id === "apex-predators" && cardId === "coral-reef") {
       message = "You did it—all three Coral Reef counts are met! Four Reef Corals, two Reef Fish, and two Reef Invertebrates now sustain this zero-RP Habitat and unlock Hammerhead. Keep those creatures in play: if a count falls short, the Habitat takes 10 HP each turn.";
-    } else if (selected.id === "filter-feeder" && cardId === "anchovy-ball-stage1") {
-      message = "Halfbeak committed 10 School Density. Your Schools now supply 130, leaving only 120 free: not enough for Ocean Sunfish's 150. Upgrade Anchovy Ball for 3 RP to raise its supply from 10 to 50. That leaves 160 free—enough room for Ocean Sunfish!";
+    } else if (selected.id === "support-strategies" && cardId === "mustard-hill-coral-base") {
+      message = "Coral Gardener turned a Support card into the exact Foundation your plan needed. Build Mustard Hill Coral for 2 RP now. Its 2 RP production will help fund the later Barracuda combo.";
+    } else if (selected.id === "support-strategies" && cardId === "sea-urchin") {
+      message = "Dr. Evans replaced the stale hand with seven new cards. Sea Urchin is the inexpensive first play: it costs 1 RP, scores 1 VP, and leaves enough RP for the combo that follows.";
+    } else if (selected.id === "support-strategies" && cardId === "great-barracuda") {
+      message = current.id === "v2-replay-barracuda"
+        ? "Scavenge moved Great Barracuda from your discard pile back to your hand. Replay it in the same Predator slot; entering play a second time triggers Quick Strike a second time."
+        : "Play Great Barracuda in Brain Coral's Predator slot. Quick Strike is an On Play ability, so its Bite begins immediately after the creature enters your ecosystem.";
+    } else if (selected.id === "support-strategies" && cardId === "arrow-crab") {
+      message = "The Support chain is complete. Arrow Crab costs the final 1 RP, fits Mustard Hill Coral's Invertebrate slot, and supplies the last VP needed to finish the lesson.";
+    } else if (selected.id === "filter-feeder" && cardId === "herring-ball-base") {
+      message = current.id === "v2-place-first-herring-school"
+        ? "Your ecosystem is completely bare: no Corals, no creature slots, and 0 School Density. Herring Ball is a Creature School Foundation. Place it directly in open water to create 20 shared Density and produce 1 RP each turn."
+        : "A second Herring Ball creates another independent Foundation. It does not attach to the first School or create slots; its 20 Density joins the same shared capacity pool, raising the total to 40.";
+    } else if (selected.id === "filter-feeder" && cardId === "sardine-ball-base") {
+      message = "Sardine Ball is another School Foundation. Its 10 Density raises the shared pool from 40 to 50, and it produces 1 RP each turn without creating a Coral branch.";
+    } else if (selected.id === "filter-feeder" && cardId === "anchovy-ball-base") {
+      message = "Anchovy Ball supplies the fourth School Open Ocean will eventually require. Its 10 Density raises total capacity to 60, while all four Foundations remain free of Coral slots.";
+    } else if (selected.id === "filter-feeder" && cardId === "herring-ball-stage1") {
+      message = current.id === "v2-upgrade-first-herring-stage1"
+        ? "Upgrade one Herring Ball from 20 to 60 Density. Replacing the Base adds 40 capacity, raising the shared total from 60 to 100. Its Momentum ability will then search for another Creature School."
+        : "Use the Stage 1 card found by Momentum on the other Herring Ball. Another 40 Density raises total capacity from 100 to 140, and this copy's Momentum can find Stage 2 for the following turn.";
+    } else if (selected.id === "filter-feeder" && cardId === "herring-ball-stage2") {
+      message = "One Stage 1 Herring Ball has survived a full turn. Upgrade it from 60 to 140 Density for 7 RP. The 80-point increase takes your four-School ecosystem from 140 to 220 total Density.";
+    } else if (selected.id === "filter-feeder" && cardId === "halfbeak") {
+      message = "Creature Schools provide the capacity; open-water creatures use it instead of slots. Halfbeak costs 2 RP and reserves 10 of the 220 School Density while it remains in your ecosystem.";
+    } else if (selected.id === "filter-feeder" && cardId === "bonito-tuna") {
+      message = "Bonito Tuna is the second Oceanic Fish Open Ocean requires. It also lives directly in open water and reserves 10 Density, bringing the shared commitment to 20 of 220.";
+    } else if (selected.id === "filter-feeder" && cardId === "blue-sea-dragon") {
+      message = "Blue Sea Dragon is an Oceanic Invertebrate, but it does not need an Invertebrate slot. It reserves 20 shared Density in open water, bringing the total commitment to 40.";
+    } else if (selected.id === "filter-feeder" && cardId === "market-squid") {
+      message = "Market Squid is the second Oceanic Invertebrate. It reserves another 20 Density, so 60 of 220 is committed and 160 remains open—enough for Ocean Sunfish later.";
+    } else if (selected.id === "filter-feeder" && cardId === "open-ocean") {
+      message = "Your bare board has become a complete open-water food web: four Creature Schools, two Oceanic Fish, and two Oceanic Invertebrates. Those cards now satisfy Open Ocean, so establish the zero-RP Habitat in its own zone.";
     } else if (cardId === "mustard-hill-coral-base" && selected.id === "first-reef") {
       message = "Build Mustard Hill Coral as a second Foundation. It has no Disease weakness, so Coral Disease will not stop its 2 RP production next round.";
     } else if (cardId === "porcupine-fish" && selected.id === "first-attack") {
@@ -1314,7 +1632,9 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (cardId === "halfbeak") {
       message = "I've added two Creature Schools to your reef: Sardine Ball supplies 120 School Density and Anchovy Ball supplies 10. Halfbeak costs 2 RP and commits 10 of that 130. Afterward, only 120 is free, which is too little for Ocean Sunfish's 150.";
     } else if (cardId === "ocean-sunfish") {
-      message = "Capt. Dani found the Filter Feeder your plan needed! Ocean Sunfish costs 8 RP, needs Coral Reef or Open Ocean, and commits 150 School Density. Your Anchovy Ball upgrade raised supply to 170; with 10 used by Halfbeak, 160 remains. Play Sunfish to commit 150 and score 8 VP.";
+      message = selected.id === "filter-feeder"
+        ? "Ocean Sunfish is the payoff for the whole ecosystem. Open Ocean satisfies its Habitat requirement, your four smaller creatures use 60 of 220 Density, and the remaining 160 can support its 150-Density requirement. Pay 8 RP to place it in open water, leaving 10 Density free and reaching 13 VP."
+        : "Ocean Sunfish costs 8 RP, needs Coral Reef or Open Ocean, and commits 150 School Density.";
     } else if (cardId === "hammerhead") {
       message = "Hammerhead costs 6 RP, needs Coral Reef, and must occupy an Apex slot. Stage 2 Brain Coral supplies that slot.";
     } else if (cardId === "great-barracuda") {
@@ -1328,7 +1648,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       firstReefCopy ?? (selectedCard ? "Choose Play Card." : dragActionCopy(cardId, candidates, selected, current)),
       {
         cue: firstReefCopy ? `first-reef-place:${cardId}` : undefined,
-        interaction: selectedCard || cardId === "coral-reef" ? "tap" : "drag",
+        interaction: selectedCard || ["coral-reef", "open-ocean"].includes(cardId) ? "tap" : "drag",
         targetCardId: cardId,
         targetCardIds: candidates,
         ...(firstReefCopy ? {
@@ -1363,8 +1683,24 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     }
     const message = selected.id === "apex-predators"
       ? "Your Coral Reef is thriving! All four Corals, two Fish, and two Invertebrates are still here. Brain Coral's new Apex slot is ready; end the turn and refill your RP bank so Hammerhead can enter next round."
+      : selected.id === "support-strategies"
+        ? current.id === "v2-pass-after-search"
+          ? "End the turn now. The opponent will play Great Barracuda, and its Quick Strike can eat Clownfish. Watch Blue Crab's Recycle passive: because one of your Fish is eaten, it returns half of Clownfish's printed 2 RP cost, rounded up."
+          : "Dr. Evans discarded the stale cards and drew seven replacements, but its Support lock lasts for the rest of this turn. End now; the next turn resets that limit so Spearfishing can begin the combo."
       : selected.id === "filter-feeder"
-      ? "Your upgraded Schools now supply 170 Density. Halfbeak uses 10, leaving 160 free for Ocean Sunfish. End the turn to collect the RP needed for its 8 RP cost."
+        ? current.id === "v2-grow-school-bases"
+          ? "Four Creature Schools now sit where Coral Foundations normally would. Together they provide 60 School Density and 4 RP of Foundation income. End the turn so both Herring Ball bases become eligible to upgrade."
+          : current.id === "v2-grow-herring-stage1s"
+            ? "Both Herring Balls are now Stage 1, and their combined upgrades raised total capacity to 140. Stage 2 is already in your hand from Momentum, but a Stage 1 must survive a full turn before it can upgrade again."
+            : current.id === "v2-fund-open-water-fish"
+              ? "Your School Foundations now supply 220 Density. End the turn and refill your RP bank so you can begin placing creatures directly in open water."
+              : current.id === "v2-fund-first-open-water-invertebrate"
+                ? "Halfbeak and Bonito Tuna meet Open Ocean's two-Fish requirement and commit 20 Density together. End the turn to prepare the first required Invertebrate."
+                : current.id === "v2-fund-second-open-water-invertebrate"
+                  ? "Blue Sea Dragon lives in open water without a Coral slot and commits 20 Density. End the turn to draw the second Oceanic Invertebrate."
+                  : current.id === "v2-prepare-open-ocean"
+                    ? "Your food web now has four Schools, two Oceanic Fish, and two Oceanic Invertebrates. Sixty of 220 Density is committed, leaving 160 open. End the turn so you can draw and establish Open Ocean."
+                    : "Open Ocean is established and 160 Density remains free. End the turn once more so the Schools can refill the 8 RP needed for Ocean Sunfish."
       : selected.id === "first-attack"
         ? current.id === "v2-pass-to-counterattack"
           ? "Excellent—you completed every step of an attack! Your opponent will now play Spanish Hogfish and use Crunch on your Sea Urchin, so you can watch the same faceoff from the defender’s side."
@@ -1398,11 +1734,34 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       "Continue to draw Hammerhead from the Main Deck.",
     );
   }
-  if (current.actionType === ACTION.RP_COLLECTED && selected.id === "filter-feeder") {
+  if (current.actionType === ACTION.RP_COLLECTED && selected.id === "support-strategies") {
+    const firstSupportCollection = current.id === "v2-collect-for-cycle";
     return help(
       "rp-bank",
-      "Your plan worked! You made room in School Density last turn, and your Foundations refilled the RP needed for Ocean Sunfish. First, draw Capt. Dani and use her one-time Support effect to search for that Filter Feeder.",
-      "Continue to draw Capt. Dani from the Main Deck.",
+      firstSupportCollection
+        ? "Recycle already returned 1 RP when Great Barracuda ate Clownfish. Now the new round adds its normal income. That refund is separate from Spearfishing: Recycle only triggers when one of your Fish is eaten."
+        : "A new turn resets the one-Support-per-turn lock. Your RP bank is full enough for Sea Urchin, two Great Barracuda plays under Clear Water, and Blue Crab's 2 RP Scavenge after Spearfishing refunds Barracuda's printed 3 RP cost.",
+      firstSupportCollection
+        ? "Continue to draw Dr. Evans from the Main Deck."
+        : "Continue to draw Arrow Crab from the Main Deck.",
+    );
+  }
+  if (current.actionType === ACTION.RP_COLLECTED && selected.id === "filter-feeder") {
+    const messages = {
+      "v2-collect-for-herring-stage1": "All four Base Schools produced RP, and the round added 1 more. Your bank now has exactly 6 RP—enough to upgrade both Herring Balls to Stage 1 after Momentum finds the second copy.",
+      "v2-collect-for-herring-stage2": "Two Stage 1 Herring Balls plus Sardine Ball and Anchovy Ball produced 6 RP; the round added 1. Your 7 RP bank can pay the complete Stage 2 upgrade cost.",
+      "v2-collect-for-open-water-fish": "Herring Ball Stage 2, Herring Ball Stage 1, Sardine Ball, and Anchovy Ball generate more than the 8 RP base bank can hold. That full bank can place both required Oceanic Fish.",
+      "v2-collect-for-blue-sea-dragon": "Your Schools refilled the RP bank. Blue Sea Dragon costs 2 RP and will reserve 20 School Density in open water rather than occupy a Coral slot.",
+      "v2-collect-for-market-squid": "Your Schools refilled the bank again. Market Squid costs 2 RP, supplies the second Oceanic Invertebrate, and raises the bank cap through EcoBoost.",
+      "v2-collect-for-open-ocean": "The four Schools continue to fund the ecosystem. Open Ocean itself costs 0 RP, but it can enter only because all four School, two Fish, and two Invertebrate requirements are now met.",
+      "v2-collect-for-ocean-sunfish": "Your Creature Schools refilled the expanded RP bank. Ocean Sunfish needs 8 RP, Open Ocean, and 150 free School Density; all three requirements are now ready.",
+    };
+    return help(
+      "rp-bank",
+      messages[current.id] ?? "Your Creature Schools produced RP at the start of the turn.",
+      current.id === "v2-collect-for-ocean-sunfish"
+        ? "Continue to draw Ocean Sunfish from the Main Deck."
+        : "Continue to the highlighted draw.",
     );
   }
   return help(
@@ -1516,28 +1875,15 @@ export function parseSimulatorV2LessonProgress(raw) {
     }
   }
   const savedIds = Array.isArray(value?.completedLessonIds) ? value.completedLessonIds : [];
-  const completed = value?.version === 3
+  const completed = value?.version === 4
     ? savedIds
-    : value?.version === 2
-      ? [
-          ...savedIds.filter((id) => id === "first-reef" || id === "first-attack" || id === "apex-predators"),
-          ...(savedIds.includes("support-search") && savedIds.includes("filter-feeder") ? ["filter-feeder"] : []),
-        ]
+    : value?.version === 3 || value?.version === 2
+      ? savedIds.filter((id) => id === "first-reef" || id === "first-attack" || id === "apex-predators")
     : value?.version === 1
-      ? [
-          ...savedIds.filter((id) => id === "first-reef" || id === "first-attack"),
-          ...(
-            savedIds.includes("support-search")
-            && savedIds.includes("clear-stun")
-            && savedIds.includes("school-density")
-            && savedIds.includes("filter-feeder")
-              ? ["filter-feeder"]
-              : []
-          ),
-        ]
+      ? savedIds.filter((id) => id === "first-reef" || id === "first-attack")
       : [];
   return {
-    version: 3,
+    version: 4,
     completedLessonIds: SIMULATOR_V2_LESSONS
       .map(({ id }) => id)
       .filter((id) => completed.includes(id)),
