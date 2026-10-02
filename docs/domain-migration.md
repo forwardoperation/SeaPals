@@ -57,9 +57,9 @@ still pending authentication and checkout validation.
 | Checkout guard checks | On both hosts, an empty same-origin cart returns `400 invalid_checkout_request_id`, cross-origin checkout returns `403`, unsigned webhook returns `400 Invalid signature`, and unsigned save reads return `401`. No orders or inventory were changed. |
 | Additional automated checks | 50 cloud-save tests and 42 checkout/webhook tests passed. Full paid lifecycle and cross-browser gameplay remain pending. |
 | Stripe webhook migrated | With explicit approval for the production routing change, saved active endpoint `we_1U4kjuE82MgJzjAx06e4EKNL` at `https://searealm.com/api/store/webhook`. Name `SeaPals Production Order Lifecycle`, API version `2026-07-29.dahlia`, and all 10 subscriptions are unchanged. The signing secret was not rotated. The older disabled seven-event endpoint remains untouched. |
-| Signed webhook verification | The active endpoint's Event deliveries tab reports `No event deliveries found`; there is no recent delivery available to replay in that view. Signed delivery and duplicate handling on the new hostname remain unverified. Do not enable the final browser redirect based only on an unsigned-request rejection. |
-| Unpaid live checkout check | Owner approved accepting the purchase terms for one unpaid live session. Hosted Stripe Checkout opened for one Accessories Kit ($12) plus Standard Shipping & Handling ($10), with no customer or payment information entered. Stripe confirms `unpaid`, no PaymentIntent, and SeaRealm success/cancel URLs. The Back link returned to SeaRealm's cancellation page. Order `SP-261002-83878C` is pending; SKU `SP-ACC-SET` moved from 10 on hand / 0 reserved to 10 on hand / 1 reserved. |
-| Expiration check pending | The existing Stripe CLI session can read live sessions but lacks `checkout_session_write`; the expire operation was denied. No API key permissions were expanded. Stripe's automatic expiration is October 2, 2026 at 11:38:36 UTC (07:38:36 Eastern). Verify its signed expiration delivery and inventory returning to 10 on hand / 0 reserved before cutover. Exact session/order identifiers are retained locally in `tmp/domain-migration/unpaid-checkout-check.json`. |
+| Signed webhook verification | Stripe delivered the smoke-test `checkout.session.expired` event to `https://searealm.com/api/store/webhook` at 07:38:37 Eastern with HTTP `200`, `received: true`, `processed: true`, and `merchantNotification: not_applicable`. The request identifies the exact unpaid smoke-test session and order. |
+| Unpaid live checkout check | Owner approved accepting the purchase terms for one unpaid live session. Hosted Stripe Checkout opened for one Accessories Kit ($12) plus Standard Shipping & Handling ($10), with no customer or payment information entered. Stripe confirms `expired`, `unpaid`, no PaymentIntent, and SeaRealm success/cancel URLs. The Back link returned to SeaRealm's cancellation page. Order `SP-261002-83878C` now has payment status `failed` (the app's expired-unpaid state), inventory state `released`, and release reason `Stripe event: checkout.session.expired`. SKU `SP-ACC-SET` returned to its baseline of 10 on hand / 0 reserved. |
+| Expiration and replay verified | Automatic expiration occurred October 2, 2026 at 11:38:36 UTC. The CLI lacked write permissions for expiration and replay; no permissions were expanded. The authenticated Stripe Dashboard allowed one replay at 07:50:01 Eastern. That delivery returned HTTP `200`, `processed: false`, and `merchantNotification: not_applicable`. A read-only SQL query confirmed exactly one processed expiration-event row, zero notification rows/sends, unchanged order update/release timestamps, and baseline stock after replay. Direct REST reads of the two private audit tables were denied, so verification used the existing SQL Editor access without adding grants. Exact identifiers and evidence are retained locally under `tmp/domain-migration/`. |
 | Gameplay persistence | Owner created a game, saved, signed out, and signed back into the same Gmail account; progress remained. This establishes same-browser persistence, not cross-browser cloud synchronization. |
 | Local checkpoint committed | Commit `4b9492c` preserves the SeaRealm Worker domain attachment, migration runbook, and history-cleanup schedule. No push or rebuilt Worker deployment has been made. |
 
@@ -69,9 +69,11 @@ The remaining three GoDaddy records are two provider NS records and its SOA;
 Cloudflare supplies its own NS and SOA. All GoDaddy records had a one-hour TTL.
 Supabase callback settings, SMTP, and real Google/email sign-ins are verified.
 Google Cloud branding/origin settings have not been inspected separately.
-Stripe endpoint URL is updated; signed delivery to SeaRealm and full Checkout
-returns remain pending. The passing local tests
-do not establish those services' readiness.
+Stripe's signed expiration delivery, duplicate handling, stock release, and
+Checkout cancellation return are verified on SeaRealm. The success URL is
+verified in Stripe's session configuration; the paid success return and full
+isolated paid/refund lifecycle remain pending. Local tests and the unpaid check
+do not establish those remaining paths' readiness.
 
 ### Immediate handoff
 
@@ -91,10 +93,10 @@ do not establish those services' readiness.
    The temporary restrictive RLS policy must remain until the public-rollout
    review in `docs/adventure-account-setup.md` is complete. Reapplying the base
    save schema will not remove this additional policy.
-6. SMTP, email sign-in, and the production Stripe endpoint URL update are
-   complete. Verify a signed webhook delivery to SeaRealm and duplicate-event
-   handling before enabling the final redirect. Full isolated checkout
-   lifecycle checks remain outstanding; no payment was made during migration.
+6. SMTP, email sign-in, the production Stripe endpoint URL update, signed
+   expiration delivery, replay idempotency, and inventory release are complete.
+   Full isolated paid/refund checkout lifecycle and paid success-return checks
+   remain outstanding; no payment was made during migration.
    Keep the current canonical URL, redirect flags, and operational email
    identity through this validation phase.
 
