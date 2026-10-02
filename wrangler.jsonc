@@ -17,6 +17,10 @@
 			"custom_domain": true
 		},
 		{
+			"pattern": "searealm.com",
+			"custom_domain": true
+		},
+		{
 			// The proxied www DNS record reaches the Worker only to perform the
 			// canonical redirect; the application never renders on this hostname.
 			"pattern": "www.seapalstcg.com/*",

@@ -70,7 +70,8 @@ with a server-side scheduler authorized as `service_role` (for example, a
 Supabase scheduled database job or an authenticated maintenance worker). The
 function is intentionally unavailable to browser roles. Verify the job after
 deployment; creating the function alone does not enforce the published 30-day
-history limit.
+history limit. `supabase/adventure-save-history-schedule.sql` installs the daily
+04:17 UTC Supabase Cron job. Reapplying it updates the same named job.
 
 After applying the migration, use two separate test accounts to verify account
 isolation. Account A must be able to create, list, update, conflict, and delete

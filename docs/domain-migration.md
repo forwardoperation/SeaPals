@@ -11,6 +11,98 @@ DNS for a Worker custom domain. A standard Cloudflare Worker custom domain
 requires the domain's zone and DNS to be active in the same Cloudflare account as
 the Worker.
 
+## Migration checkpoint: October 2, 2026
+
+Read-only checks against public DNS and the authenticated Cloudflare API found
+that the application preparation is already deployed. SeaRealm has now been
+added to the same Cloudflare account on the Free plan, with five DNS records
+imported. With explicit owner approval, the GoDaddy nameserver change was
+submitted and verified as saved. Cloudflare now reports **Your domain is now
+protected by Cloudflare**, and a public NS query through `1.1.1.1` returns both
+assigned Cloudflare nameservers. The owner removed the two imported parking A
+records, and `searealm.com` is now connected to the existing production `seapals`
+Worker. Both apex domains serve the app over HTTPS. The canonical cutover is
+still pending authentication and checkout validation.
+
+| Check | Observed state |
+| --- | --- |
+| Existing site | `https://seapalstcg.com/` returns `200`; its Cloudflare zone is active. |
+| Production Worker | `seapals` has both `seapalstcg.com` and `searealm.com` attached to production. The existing `www.seapalstcg.com/*` route remains present. |
+| SeaRealm Cloudflare zone | Activated on the Free plan; dashboard confirms the domain is protected by Cloudflare. |
+| Assigned Cloudflare nameservers | `anirban.ns.cloudflare.com` and `eve.ns.cloudflare.com`, verified on SeaRealm's activation page. |
+| SeaRealm nameserver delegation | GoDaddy and public resolver `1.1.1.1` show `anirban.ns.cloudflare.com` and `eve.ns.cloudflare.com`. Previous values were `ns49.domaincontrol.com` and `ns50.domaincontrol.com`. |
+| Registrar status | GoDaddy lists the domain as leased. The custom nameserver change was accepted and saved. |
+| SeaRealm apex routing | Owner removed parking A records `15.197.225.128` and `3.33.251.168`. Cloudflare successfully attached the root hostname to `seapals`; those saved IP values are historical rollback information only. |
+| SeaRealm `www` | CNAME to `searealm.com`. |
+| SeaRealm email records | No MX records in GoDaddy's full eight-record list. Existing `_dmarc` TXT policy matches Cloudflare's import. |
+| SeaRealm DNSSEC | GoDaddy shows **Turn On DNSSEC**, consistent with the earlier absence of public DS records. |
+| Imported DNS | Two apex A records, `www` CNAME, `_domainconnect` CNAME, and `_dmarc` TXT. All four A/CNAME records were imported as proxied; TXT is DNS-only. |
+| DNS correction completed | With explicit owner approval, `_domainconnect` was saved as DNS-only. Its CNAME target remains `_domainconnect.gd.domaincontrol.com`; verified in the saved DNS table. |
+| Onboarding defaults | Bot Preference Sync remains enabled; Search, Agent, and Training crawler categories were set to Allow. |
+| Deployed migration variables | `SITE_URL` is SeaPals, both apex origins are allowed for checkout, and both legacy-redirect flags are `false`, matching the local configuration. |
+| Automated verification | All 23 site identity, redirect, checkout-origin, and same-origin mutation tests pass. |
+| SeaRealm edge redirect | Active rule `681b6fd9b3b7489a824f891a6516a1e9` sends HTTP apex and both `www` schemes to HTTPS apex with status `308`, preserving path and query. All three variants passed a public `/store?migration=check&item=1` request. |
+| Supabase callbacks | Project `ehlrzpcusxsbdsddyykm` now allows both domains' exact `/auth/callback` and `/auth/callback?next=/adventure` URLs (four entries). Site URL remains `https://seapalstcg.com`. |
+| Magic-link template | Saved template uses `{{ .ConfirmationURL }}`. Owner verified a fresh email login on SeaRealm in the same normal browser. |
+| Supabase email delivery | Owner saved custom SMTP. Dashboard confirms enabled, host `smtp.resend.com`, port `465`, sender `SeaPals`, 60-second per-user interval, and stored password. Owner received the sign-in email. |
+| Real email login | Initial browser-handoff attempt returned `code_exchange_failed`. Owner then requested and opened a fresh email link entirely in the same normal browser and confirmed successful login on SeaRealm. |
+| Admin protection | Unauthenticated requests to the existing site's orders, bug-reports, and survey-responses admin APIs return `401`. Cloudflare Zero Trust shows initial onboarding, with no existing Access application available to copy. App-level admin-token protection remains in place. |
+| Dual-domain public checks | Home, Store, and Adventure return `200` on both apex hosts. All three admin APIs also return `401` on SeaRealm. SeaRealm renders the expected homepage artwork and Adventure login screen. |
+| Canonical identity | Both homepage responses still emit `https://seapalstcg.com` as canonical, as intended during validation. |
+| Deployment configuration | Added SeaRealm's custom-domain route to local `wrangler.jsonc` to preserve it on future deployments; all 23 targeted tests pass after this change. The live attachment was made directly in Cloudflare without rebuilding the Worker. |
+| Real Google login | Owner completed Google sign-in on SeaRealm; authenticated Adventure screen confirmed. Owner later noted this may not be the browser where they previously played. No save loss is established. |
+| Cloud-save pilot | With explicit owner approval, installed the save/history tables, indexes, triggers, owner-only RLS, and a temporary restrictive policy named `SeaRealm owner pilot only`. That policy limits sync to the migration owner's existing account. After reload, all three SeaRealm slots show `Saved to account`; slots are still empty. Public rollout remains gated. |
+| Live database verification | A rolled-back fixture verified owner read/update, revision archival, denial of cross-account read/update/insert, denial of non-pilot own-account insertion, anonymous read denial, private history, and direct-delete denial. No fixture saves were retained. This is database-role verification, not a full two-browser gameplay test. |
+| History cleanup | Installed `pg_cron` job `adventure-save-history-prune`, active daily at `04:17 UTC`, invoking the pruning function as `service_role`. A manual invocation succeeded. The first scheduled run has not yet been observed. Current saves and tombstones are excluded from this cleanup. |
+| Checkout guard checks | On both hosts, an empty same-origin cart returns `400 invalid_checkout_request_id`, cross-origin checkout returns `403`, unsigned webhook returns `400 Invalid signature`, and unsigned save reads return `401`. No orders or inventory were changed. |
+| Additional automated checks | 50 cloud-save tests and 42 checkout/webhook tests passed. Full paid lifecycle and cross-browser gameplay remain pending. |
+| Stripe webhook migrated | With explicit approval for the production routing change, saved active endpoint `we_1U4kjuE82MgJzjAx06e4EKNL` at `https://searealm.com/api/store/webhook`. Name `SeaPals Production Order Lifecycle`, API version `2026-07-29.dahlia`, and all 10 subscriptions are unchanged. The signing secret was not rotated. The older disabled seven-event endpoint remains untouched. |
+| Signed webhook verification | The active endpoint's Event deliveries tab reports `No event deliveries found`; there is no recent delivery available to replay in that view. Signed delivery and duplicate handling on the new hostname remain unverified. Do not enable the final browser redirect based only on an unsigned-request rejection. |
+
+GoDaddy's complete eight-record list was compared with Cloudflare's five-record
+import: both apex A records, both CNAME records, and the DMARC TXT value match.
+The remaining three GoDaddy records are two provider NS records and its SOA;
+Cloudflare supplies its own NS and SOA. All GoDaddy records had a one-hour TTL.
+Supabase callback settings, SMTP, and real Google/email sign-ins are verified.
+Google Cloud branding/origin settings have not been inspected separately.
+Stripe endpoint URL is updated; signed delivery to SeaRealm and full Checkout
+returns remain pending. The passing local tests
+do not establish those services' readiness.
+
+### Immediate handoff
+
+1. Cloudflare onboarding, GoDaddy sign-in, and DNS comparison are complete.
+   The available Wrangler OAuth login has only `zone:read` for zones; DNS
+   changes require dashboard access.
+2. `_domainconnect` is now DNS-only with its CNAME target preserved.
+   Review the onboarding Bot Preference Sync setting and its
+   effect on robots.txt before serving the application on SeaRealm.
+3. The registrar nameserver switch, Cloudflare activation, Worker attachment,
+   and HTTPS page checks are complete. SeaRealm now serves the same app.
+4. Supabase callbacks and the SeaRealm edge redirect are saved. The local
+   deployment configuration now includes SeaRealm's custom-domain route.
+5. Google sign-in and the owner-only cloud-save pilot work. Check an actual
+   saved game across the two hosts before claiming save migration complete.
+   Old local saves must be opened in their original browser to synchronize.
+   The temporary restrictive RLS policy must remain until the public-rollout
+   review in `docs/adventure-account-setup.md` is complete. Reapplying the base
+   save schema will not remove this additional policy.
+6. SMTP, email sign-in, and the production Stripe endpoint URL update are
+   complete. Verify a signed webhook delivery to SeaRealm and duplicate-event
+   handling before enabling the final redirect. Full isolated checkout
+   lifecycle checks remain outstanding; no payment was made during migration.
+   Keep the current canonical URL, redirect flags, and operational email
+   identity through this validation phase.
+
+Repeat the automated checks with:
+
+```powershell
+node --test src/lib/siteIdentity.test.mjs src/lib/siteRedirect.test.mjs src/lib/store/checkoutOrigin.test.mjs src/lib/sameOriginMutation.test.mjs
+```
+
+References: [Cloudflare zone onboarding](https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/),
+[GoDaddy nameserver changes](https://www.godaddy.com/help/change-my-domain-nameservers-664).
+
 ## Configuration states
 
 | Setting | Dual-domain validation | Final cutover |
@@ -59,8 +151,10 @@ References: [Worker custom domains](https://developers.cloudflare.com/workers/co
 
 In Supabase Authentication > URL Configuration:
 
-- retain `https://seapalstcg.com/auth/callback` and the localhost callback;
-- add the exact `https://searealm.com/auth/callback` path;
+- retain the existing SeaPals callbacks;
+- add the exact `https://searealm.com/auth/callback` and
+  `https://searealm.com/auth/callback?next=/adventure` URLs (the latter is used
+  by the current adventure login flow);
 - leave the Site URL on SeaPals until the final cutover; and
 - inspect the magic-link template to ensure it preserves Supabase's confirmation
   token and honors the requested `RedirectTo`. The default
