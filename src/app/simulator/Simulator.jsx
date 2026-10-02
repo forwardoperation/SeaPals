@@ -4956,11 +4956,11 @@ export default function Simulator({
     initial: true,
     title: previewExperience && tutorialUsesScriptedScenario
       ? "Build your first living reef"
-      : isStoryMode ? `${storyOpponentName} challenges you!` : "Welcome to the SeaPals Simulator",
+      : isStoryMode ? `${storyOpponentName} challenges you!` : "Welcome to the SeaRealm Simulator",
     message: isStoryMode
       ? previewExperience && tutorialUsesScriptedScenario
         ? `${tutorialGuide.name} will stay with you on the board and point to one legal action at a time.`
-        : `${storyOpponentName} is ready for a SeaPals duel. Build your ecosystem and be the first to reach ${storyVictoryTarget} VP.`
+        : `${storyOpponentName} is ready for a SeaRealm duel. Build your ecosystem and be the first to reach ${storyVictoryTarget} VP.`
       : `Your ${initialPlayerDeckName} is selected. Choose an opponent deck and victory target, then begin the setup round with four Foundation and four Main Deck cards.`,
   }));
   useEffect(() => () => {
@@ -6210,7 +6210,7 @@ export default function Simulator({
     try {
       callback(...args);
     } catch (error) {
-      console.error(`SeaPals tutorial callback ${name} failed.`, error);
+      console.error(`SeaRealm tutorial callback ${name} failed.`, error);
     }
   }
 
@@ -21582,7 +21582,7 @@ export default function Simulator({
     setPendingOpponentDifficulty(opponentDifficulty);
     setEventOverlay({
       type: "new-game-setup",
-      title: "Start a New SeaPals Game",
+      title: "Start a New SeaRealm Game",
       message: "Choose a deck for each side. You will open with four Foundation and four Main Deck cards, play a base Coral or Creature School during setup, then race to the selected VP target.",
     });
   }
@@ -26498,7 +26498,7 @@ export default function Simulator({
                   </button>
                 )}
                 <div className="seapals-simulator-title">
-                  <h1 className="text-lg font-black tracking-tight text-white">SeaPals Simulator{previewExperience ? " V2" : ""}</h1>
+                  <h1 className="text-lg font-black tracking-tight text-white">SeaRealm Simulator{previewExperience ? " V2" : ""}</h1>
                   <p className="hidden text-xs text-cyan-100/60 sm:block">Build your reef. Outsmart the opposing ecosystem.</p>
                 </div>
               </div>
@@ -29253,7 +29253,7 @@ export default function Simulator({
                     <label className="mt-4 block rounded-2xl border border-cyan-400 bg-cyan-400/10 p-4"><span className="text-xs font-black uppercase tracking-wider text-cyan-300">Victory Target</span><select value={pendingVictoryTarget} onChange={(event) => setPendingVictoryTarget(Number(event.target.value))} className="ml-4 rounded-xl bg-slate-950 px-3 py-2 font-bold text-white"><option value={10}>10 VP — Quick Game</option><option value={26}>26 VP — Guided Strategy</option><option value={30}>30 VP — Full Game</option></select></label>
                     <div className="mt-4 rounded-2xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">How a turn works:</strong> reveal the round condition, collect and cap RP, choose your draw(s), play legal cards and actions, then end your turn. Every illegal play explains what is missing before you commit.</div>
                     <div className="mt-4 rounded-2xl border border-cyan-300/35 bg-cyan-400/10 p-4 text-sm leading-relaxed text-cyan-50">
-                      <strong className="block text-base text-white">New to SeaPals?</strong>
+                      <strong className="block text-base text-white">New to SeaRealm?</strong>
                       <span className="mt-1 block">Learn the board and each turn by playing Mr. Easterling&apos;s guided aquarium lesson. Your selected trial deck will still be waiting when you return.</span>
                       <Link
                         href={{

@@ -9,18 +9,18 @@ import {
 import { SEAPALS_OPERATOR } from "@/lib/legalPrivacy.mjs";
 
 export const metadata = {
-  title: "Terms of Use | SeaPals TCG",
+  title: "Terms of Use | SeaRealm TCG",
   description:
-    "Terms governing use of the SeaPals TCG website, online tools, surveys, store, and Reefbound adventure.",
+    "Terms governing use of the SeaRealm TCG website, online tools, surveys, store, and Reefbound adventure.",
   alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {
   return (
     <LegalDocument
-      eyebrow="SeaPals website and online game"
+      eyebrow="SeaRealm website and online game"
       title="Terms of Use"
-      summary="These terms describe the rules for using the SeaPals website, family account, Reefbound adventure, online tools, surveys, and store."
+      summary="These terms describe the rules for using the SeaRealm website, family account, Reefbound adventure, online tools, surveys, and store."
     >
       <LegalNotice title="A note for families">
         <p>
@@ -37,8 +37,8 @@ export default function TermsPage() {
       <LegalSection id="agreement" title="1. Agreement and operator">
         <p>
           These Terms of Use (“Terms”) are an agreement between the person
-          using SeaPals and {SEAPALS_OPERATOR.legalName} (“Sea Realm,” “we,”
-          “us,” or “our”), the operator of SeaPals TCG. By using the site or
+          using SeaRealm and {SEAPALS_OPERATOR.legalName} (“Sea Realm,” “we,”
+          “us,” or “our”), the operator of SeaRealm TCG. By using the site or
           creating an account, an adult agrees to these Terms and acknowledges
           the <Link href="/privacy">Privacy Policy</Link>.
         </p>
@@ -50,9 +50,9 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection id="service" title="2. The SeaPals service">
+      <LegalSection id="service" title="2. The SeaRealm service">
         <p>
-          SeaPals includes a card-game website, educational marine-life
+          SeaRealm includes a card-game website, educational marine-life
           content, game instructions and tools, surveys, a store or store
           preview, and the Reefbound browser adventure.
           Features may be added, changed, paused, or removed as the project
@@ -114,7 +114,7 @@ export default function TermsPage() {
       </LegalSection>
 
       <LegalSection id="conduct" title="4. Acceptable use">
-        <p>You may not use SeaPals to:</p>
+        <p>You may not use SeaRealm to:</p>
         <ul>
           <li>break the law or violate another person’s rights;</li>
           <li>
@@ -134,7 +134,7 @@ export default function TermsPage() {
             inappropriate material in a free-text submission; or
           </li>
           <li>
-            copy, scrape, resell, or commercially exploit SeaPals content
+            copy, scrape, resell, or commercially exploit SeaRealm content
             except as permitted by law or written permission.
           </li>
         </ul>
@@ -152,7 +152,7 @@ export default function TermsPage() {
           You retain ownership of original material you submit. You give Sea
           Realm a non-exclusive, worldwide, royalty-free license to host, copy,
           format, review, and display that material only as reasonably needed
-          to operate the submitted survey or related SeaPals feature.
+          to operate the submitted survey or related SeaRealm feature.
         </p>
         <p>
           We may reject, remove, de-identify, or moderate a submission that
@@ -197,7 +197,7 @@ export default function TermsPage() {
           orders ready, within five business days after payment. If purchased,
           one-business-day production changes that production window to one
           business day for the whole order; it does not promise one-business-day
-          delivery. Expedited production is limited to ten orders per SeaPals
+          delivery. Expedited production is limited to ten orders per SeaRealm
           production day and remains subject to server-confirmed availability
           when checkout begins.
         </p>
@@ -249,9 +249,9 @@ export default function TermsPage() {
         </ul>
       </LegalSection>
 
-      <LegalSection id="ownership" title="8. SeaPals content and ownership">
+      <LegalSection id="ownership" title="8. SeaRealm content and ownership">
         <p>
-          SeaPals names, logos, card designs, artwork, text, game rules,
+          SeaRealm names, logos, card designs, artwork, text, game rules,
           software, music, and other original materials are owned by Sea Realm
           or used with permission and are protected by applicable intellectual
           property laws. These Terms give you a limited, personal,
@@ -262,7 +262,7 @@ export default function TermsPage() {
 
       <LegalSection id="providers" title="9. Third-party services">
         <p>
-          SeaPals relies on service providers such as Supabase, Google,
+          SeaRealm relies on service providers such as Supabase, Google,
           Cloudflare, Kit, Stripe, and Resend. Their services may have separate
           terms and privacy practices. Sea Realm is not responsible for a
           third-party service outside its reasonable control, but our{" "}
@@ -283,7 +283,7 @@ export default function TermsPage() {
 
       <LegalSection id="disclaimers" title="11. Disclaimers and limits">
         <p>
-          To the extent permitted by law, SeaPals is provided “as is” and “as
+          To the extent permitted by law, SeaRealm is provided “as is” and “as
           available.” Sea Realm does not guarantee that every feature will be
           uninterrupted, error-free, compatible with every device, or that
           every local or synchronized version of progress can be recovered.

@@ -109,7 +109,7 @@ test("creature commerce copy uses natural singular and plural references", async
   assert.match(pageSource, /Bring \{demonstrative\} \{creature\.name\} home/);
   assert.match(pageSource, /cards"\}\{" "\}\s*featuring \{creature\.name\}/);
   assert.match(pageSource, /Also included in a bundle/);
-  assert.match(pageSource, /SeaPals card featuring \$\{creature\.name\}/);
+  assert.match(pageSource, /SeaRealm card featuring \$\{creature\.name\}/);
   assert.match(pageSource, /\$\{creature\.name\}: Facts for Kids/);
 });
 

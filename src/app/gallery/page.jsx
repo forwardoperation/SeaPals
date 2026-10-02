@@ -5,8 +5,8 @@ import { formatCreatureType } from "@/data/cards/types";
 import { encyclopediaSlugByCardId } from "@/data/encyclopedia";
 
 export const metadata = {
-  title: "Gallery | SeaPals TCG",
-  description: "Browse SeaPals cards by zone, class, and category.",
+  title: "Gallery | SeaRealm TCG",
+  description: "Browse SeaRealm cards by zone, class, and category.",
   alternates: { canonical: "/gallery" },
 };
 
@@ -143,7 +143,7 @@ function ArtProgress({ categories }) {
             Set Art Progress
           </p>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-            The SeaPals set is {overallPercent}% illustrated
+            The SeaRealm set is {overallPercent}% illustrated
           </h2>
           <p className="mt-3 text-base leading-relaxed text-slate-600 md:text-lg">
             New card art is landing zone by zone as the game swims toward
@@ -354,7 +354,7 @@ function ZoneSection({ zone }) {
               No {zone.title.toLowerCase()} cards yet.
             </p>
             <p className="mt-2">
-              This set is ready for future SeaPals cards when the game expands.
+              This set is ready for future SeaRealm cards when the game expands.
             </p>
           </div>
         )}
@@ -381,7 +381,7 @@ export default async function GalleryPage() {
 
       <section className="rounded-[2rem] border border-cyan-100 bg-white/80 p-8 shadow-sm backdrop-blur">
         <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-700">
-          SeaPals Gallery
+          SeaRealm Gallery
         </p>
 
         <h1 className="text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
@@ -389,7 +389,7 @@ export default async function GalleryPage() {
         </h1>
 
         <p className="mt-4 max-w-3xl text-base text-slate-600 md:text-lg">
-          Browse SeaPals cards by zone, then by card type.
+          Browse SeaRealm cards by zone, then by card type.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">

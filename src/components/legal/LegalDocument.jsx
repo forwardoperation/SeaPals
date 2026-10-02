@@ -17,7 +17,7 @@ export function LegalDocument({
   return (
     <main className={styles.page}>
       <Link className={styles.backLink} href="/">
-        ← Back to SeaPals
+        ← Back to SeaRealm
       </Link>
 
       <header className={styles.hero}>

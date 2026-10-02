@@ -28,14 +28,14 @@ export default function Header() {
     <header className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
       <Link
         href="/"
-        aria-label="SeaPals home"
+        aria-label="SeaRealm home"
         className="rounded-xl focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
       >
         <Image
-          src="/images/brand/sea-pals-tcg-logo.png"
-          alt="SeaPals Logo"
-          width={300}
-          height={120}
+          src="/images/brand/searealm-tcg-logo-black.png"
+          alt="SeaRealm Logo"
+          width={1500}
+          height={421}
           className="h-12 w-auto"
         />
       </Link>

@@ -103,6 +103,16 @@ const simulatorRules = [
 
 const rules = buildRulesKnowledgeBank({ cards, simulatorRules });
 
+test("both brand names resolve to the same cited player-count answer", () => {
+  const brandRules = buildRulesKnowledgeBank({ cards, simulatorRules: SIMULATOR_RULES });
+  for (const brand of ["SeaRealm", "Sea Realm", "SeaPals", "Sea Pals"]) {
+    const answer = answerRulesQuestion(`How many people can play ${brand}?`, brandRules);
+    assert.equal(answer.kind, "answer");
+    assert.match(answer.text, /2 to 4 players/);
+    assert.ok(answer.sources.some(({ id }) => id === "knowledge:how-many-players-can-play-and-recommended-vp-targets"));
+  }
+});
+
 function buildWeakPointRules() {
   return buildRulesKnowledgeBank({
     cards: [...cards, {

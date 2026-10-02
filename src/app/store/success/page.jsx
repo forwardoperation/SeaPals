@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { retrieveStripeCheckoutSession } from "@/lib/store/stripe.mjs";
+import { stripeReceiptUrl } from "@/lib/store/receiptUrl.mjs";
 import ClearCart from "./ClearCart";
 
 export const metadata = {
-  title: "Order received | SeaPals TCG",
-  description: "Review the payment status for your SeaPals order.",
+  title: "Order received | SeaRealm TCG",
+  description: "Review the payment status for your SeaRealm order.",
   robots: { index: false, follow: false },
 };
 
@@ -112,27 +113,6 @@ function formatProductionAmount(cents, currency) {
   }
 }
 
-function getReceiptUrl(session) {
-  const candidate = firstString(
-    session?.receiptUrl,
-    session?.receipt_url,
-    session?.invoice?.hosted_invoice_url,
-    session?.payment_intent?.latest_charge?.receipt_url
-  );
-
-  if (!candidate) return null;
-
-  try {
-    const url = new URL(candidate);
-    const hostname = url.hostname.toLowerCase();
-    const isStripeHost =
-      hostname === "stripe.com" || hostname.endsWith(".stripe.com");
-    return url.protocol === "https:" && isStripeHost ? url.toString() : null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function StoreSuccessPage({ searchParams }) {
   const params = await searchParams;
   const sessionId =
@@ -149,7 +129,7 @@ export default async function StoreSuccessPage({ searchParams }) {
 
   const orderNumber = getOrderNumber(session);
   const paymentState = getPaymentState(session);
-  const receiptUrl = getReceiptUrl(session);
+  const receiptUrl = stripeReceiptUrl(session);
   const fulfillment = getFulfillmentDetails(session);
   const production = getProductionDetails(session);
   const localPickup = fulfillment.method === "pickup";
@@ -285,7 +265,7 @@ export default async function StoreSuccessPage({ searchParams }) {
               href="/"
               className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/25 bg-white/10 px-6 py-3 font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
             >
-              SeaPals home
+              SeaRealm home
             </Link>
           </div>
         </div>

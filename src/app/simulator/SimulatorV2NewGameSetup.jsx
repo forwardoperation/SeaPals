@@ -120,11 +120,11 @@ export default function SimulatorV2NewGameSetup({
 
           <header className={styles.header}>
             <img
-              src="/images/brand/SeaPalsTCGLogo.svg"
-              alt="SeaPals Trading Card Game"
+              src="/images/brand/searealm-tcg-logo.png"
+              alt="SeaRealm Trading Card Game"
               className={styles.logo}
             />
-            <p className={styles.eyebrow}>SeaPals Simulator</p>
+            <p className={styles.eyebrow}>SeaRealm Simulator</p>
             <h2 id="seapals-v2-setup-title" className={styles.title}>Choose your Decks</h2>
             <p id="seapals-v2-setup-description" className={styles.subtitle}>
               Pick both decks, set the challenge, and dive in.
@@ -215,7 +215,7 @@ export default function SimulatorV2NewGameSetup({
             </button>
 
             <div className={styles.tutorialChoice}>
-              <span className={styles.tutorialQuestion}>New to SeaPals?</span>
+              <span className={styles.tutorialQuestion}>New to SeaRealm?</span>
               {onTutorial ? (
                 <button type="button" onClick={() => onTutorial(playerDeckId)} className={styles.tutorialButton} data-v2-tutorial-link>
                   <span>Learn to play · {SIMULATOR_V2_LESSONS.length} lessons</span>

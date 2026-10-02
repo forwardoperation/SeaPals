@@ -16,7 +16,7 @@ export default function SiteFooter() {
     <footer className="mt-14 border-t border-cyan-200/80 py-8 text-sm text-slate-600">
       <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <p className="max-w-xl leading-6">
-          <strong className="text-slate-800">SeaPals TCG</strong> is operated by{" "}
+          <strong className="text-slate-800">SeaRealm TCG</strong> is operated by{" "}
           {SEAPALS_OPERATOR.legalName} in Pennsylvania, USA.
         </p>
         <nav

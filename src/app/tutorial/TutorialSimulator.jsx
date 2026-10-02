@@ -800,7 +800,7 @@ export default function TutorialSimulator() {
           Reef Practice Tutorial
         </p>
         <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
-          SeaPals Practice Duel
+          SeaRealm Practice Duel
         </h1>
       </section>
 

@@ -17,9 +17,9 @@ import {
 } from "@/lib/siteIdentity.mjs";
 
 export const metadata = {
-  title: "Privacy Policy | SeaPals TCG",
+  title: "Privacy Policy | SeaRealm TCG",
   description:
-    "How Sea Realm, LLC collects, uses, shares, protects, retains, and deletes information for SeaPals TCG.",
+    "How Sea Realm, LLC collects, uses, shares, protects, retains, and deletes information for SeaRealm TCG.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
     <LegalDocument
       eyebrow="For families and players"
       title="Privacy Policy"
-      summary="This policy explains what Sea Realm collects through SeaPals, why it is used, when it is shared, how long it is kept, and how families can ask to review or delete it."
+      summary="This policy explains what Sea Realm collects through SeaRealm, why it is used, when it is shared, how long it is kept, and how families can ask to review or delete it."
     >
       <LegalNotice title="The short version for parents">
         <p>
@@ -99,16 +99,16 @@ export default function PrivacyPage() {
         </p>
       </LegalNotice>
 
-      <LegalSection id="scope" title="1. Who operates SeaPals">
+      <LegalSection id="scope" title="1. Who operates SeaRealm">
         <p>
           {SEAPALS_OPERATOR.legalName} (“Sea Realm,” “we,” “us,” or “our”)
-          operates the SeaPals TCG website, online tools, store preview,
+          operates the SeaRealm TCG website, online tools, store preview,
           surveys, and the Reefbound adventure at{" "}
           <a href={CANONICAL_SITE_ORIGIN}>{CANONICAL_SITE_HOSTNAME}</a>. This policy
           applies to information handled through those services.
         </p>
         <p>
-          SeaPals is designed for families, including children. Parents and
+          SeaRealm is designed for families, including children. Parents and
           legal guardians should review this policy and supervise a child’s use
           of the site. A public privacy policy does not replace any direct
           notice or verified parental permission that applicable law may
@@ -152,7 +152,7 @@ export default function PrivacyPage() {
         <p>
           If an adult requests updates, we send the email address to Kit. The
           homepage signup may also collect an optional first name and referral
-          answer. We use this information only for requested SeaPals news,
+          answer. We use this information only for requested SeaRealm news,
           product announcements, card updates, and parent resources. After a
           completed game session, the adventure may separately invite the adult
           account holder to request a confirmation email. Both the adult-account
@@ -349,7 +349,7 @@ export default function PrivacyPage() {
         <p>
           Children should not submit their own email address, full legal name,
           home address, phone number, school information, or other contact
-          details through SeaPals. The adventure instructs players under 13 to
+          details through SeaRealm. The adventure instructs players under 13 to
           ask a parent or guardian to create and manage the family account.
           Adventure access is not conditioned on joining the marketing list.
         </p>
@@ -374,14 +374,14 @@ export default function PrivacyPage() {
 
       <LegalSection id="changes" title="9. Changes to this policy">
         <p>
-          We may update this policy as SeaPals changes. The effective date at
+          We may update this policy as SeaRealm changes. The effective date at
           the top will be revised, and material changes affecting previously
           collected information may also be communicated directly to the
           relevant adult account holder when required.
         </p>
         <p>
           The accompanying <Link href="/terms">Terms of Use</Link> describes
-          the rules for using SeaPals.
+          the rules for using SeaRealm.
         </p>
       </LegalSection>
 

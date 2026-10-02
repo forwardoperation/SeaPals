@@ -41,7 +41,7 @@ export async function generateMetadata({ params }) {
 
   if (!creature) return {};
 
-  const title = `${creature.name}: Facts for Kids | SeaPals`;
+  const title = `${creature.name}: Facts for Kids | SeaRealm`;
   const description = `${creature.tagline} Explore this SeaPal's habitat, diet, ocean superpower, and four kid-friendly facts.`;
 
   return {
@@ -325,7 +325,7 @@ export default async function CreaturePage({ params }) {
                 <div className="rotate-2 rounded-[1.6rem] bg-white p-2.5 shadow-2xl shadow-black/40 ring-1 ring-white/70">
                   <Image
                     src={creature.image}
-                    alt={`SeaPals card featuring ${creature.name}`}
+                    alt={`SeaRealm card featuring ${creature.name}`}
                     width={450}
                     height={630}
                     priority

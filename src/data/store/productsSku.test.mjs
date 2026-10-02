@@ -235,6 +235,6 @@ test("the Starter Kit, Accessories Kit, and prepared components preserve the own
   assert.equal(productsById.get("conditions-deck")?.cardsIncluded, 18);
   assert.equal(
     productsById.get("conditions-deck")?.details,
-    "18 condition cards for SeaPals gameplay"
+    "18 condition cards for SeaRealm gameplay"
   );
 });

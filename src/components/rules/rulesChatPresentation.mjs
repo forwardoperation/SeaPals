@@ -32,7 +32,7 @@ export function getRulesChatGreeting(placement = RULES_CHAT_PLACEMENTS.SITE) {
   if (placement === RULES_CHAT_PLACEMENTS.SIMULATOR) {
     return "Hi! I’m Finn. Ask me about a rule, a card, or a simulator control. Opening this chat will not change your match.";
   }
-  return "Ahoy! I’m Finn, your SeaPals rules buddy. What would you like to know?";
+  return "Ahoy! I’m Finn, your SeaRealm rules buddy. What would you like to know?";
 }
 
 export function getRulesChatSuggestions({

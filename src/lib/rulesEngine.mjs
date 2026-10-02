@@ -240,7 +240,7 @@ const INTENT_ROUTES = [
     title: /^School Density requirements$/i,
   },
   {
-    question: /^\s*(?:how|where)\s+(?:do|should|can)\s+(?:i|we)\s+(?:start|begin)(?:\s+(?:playing|the game|a game|seapals|sea pals))?\s*[?.!]*$/i,
+    question: /^\s*(?:how|where)\s+(?:do|should|can)\s+(?:i|we)\s+(?:start|begin)(?:\s+(?:playing|the game|a game|seapals|sea pals|searealm|sea realm))?\s*[?.!]*$/i,
     title: /^Starting a game$/i,
   },
   {
@@ -318,6 +318,7 @@ const CONCEPT_INTENT_ROUTES = [
 function normalize(value) {
   return String(value ?? "")
     .toLowerCase()
+    .replace(/\b(?:sea ?pals|sea ?realm)\b/g, "searealm")
     .replace(/[’']/g, " ")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
@@ -813,7 +814,7 @@ function unsupportedDefinition(question, relevant) {
   const options = uniqueRules(relevant).slice(0, 3).map((rule) => rule.title);
   return {
     kind: "clarification",
-    title: "Which SeaPals term do you mean?",
+    title: "Which SeaRealm term do you mean?",
     text: `I don't have a strong enough match for “${String(question).trim().replace(/[.!?]+$/, "")},” and I don't want to substitute a merely related rule. ${options.length ? `The closest documented topics are ${joinList(options)}—which one did you mean?` : "Please name the card label, icon, phase, or ability you are looking at."}`,
     options,
     sources: [],
@@ -1840,7 +1841,7 @@ function answerRulesQuestionInternal(question, rules, context = {}) {
   if (OUT_OF_SCOPE_PATTERN.test(cleanQuestion)) {
     const result = {
       kind: "unknown",
-      text: "That isn't covered by the SeaPals gameplay rules or card data I use, so I don't have a supported answer.",
+      text: "That isn't covered by the SeaRealm gameplay rules or card data I use, so I don't have a supported answer.",
       showRulesLink: false,
       sources: [],
     };

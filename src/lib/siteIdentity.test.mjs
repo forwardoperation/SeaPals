@@ -10,8 +10,8 @@ import {
 } from "./siteIdentity.mjs";
 
 test("site identity keeps canonical, migration, and support identities explicit", () => {
-  assert.equal(CANONICAL_SITE_ORIGIN, SEAPALS_LEGACY_SITE_ORIGIN);
-  assert.equal(CANONICAL_SITE_HOSTNAME, "seapalstcg.com");
+  assert.equal(CANONICAL_SITE_ORIGIN, SEAREALM_SITE_ORIGIN);
+  assert.equal(CANONICAL_SITE_HOSTNAME, "searealm.com");
   assert.equal(SEAREALM_SITE_ORIGIN, "https://searealm.com");
   assert.notEqual(SEAREALM_SITE_ORIGIN, SEAPALS_LEGACY_SITE_ORIGIN);
   assert.equal(PUBLIC_SUPPORT_EMAIL, "maker@seapalstcg.com");

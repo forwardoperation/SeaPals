@@ -165,7 +165,7 @@ test("admin URLs select only the canonical quarter and discard configured paths 
     paQuarterlyReportAdminUrl("2026-09-30", {
       SITE_URL: "javascript:alert(1)",
     }),
-    "https://seapalstcg.com/admin/orders?paPeriodEnd=2026-09-30#pa-sales-tax-filing"
+    "https://searealm.com/admin/orders?paPeriodEnd=2026-09-30#pa-sales-tax-filing"
   );
   assert.throws(
     () => paQuarterlyReportAdminUrl("2026-09-31", configuredEnvironment),

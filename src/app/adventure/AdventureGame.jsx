@@ -1731,7 +1731,7 @@ function TitleScreen({
   return (
     <div ref={dialogRef} tabIndex={-1} inert={blocked} aria-hidden={blocked || undefined} data-adventure-modal="true" className={`${styles.introLayer} ${styles.titleLayer}`} role="dialog" aria-modal="true" aria-labelledby="adventure-title">
       <div className={`${styles.introCard} ${styles.titleCard}`}>
-        <div className={styles.introEyebrow}>A SeaPals Story</div>
+        <div className={styles.introEyebrow}>A SeaRealm Story</div>
         <h1 id="adventure-title">REEFBOUND</h1>
         <div className={styles.introDivider}><span>◆</span></div>
         <p>
@@ -1770,7 +1770,7 @@ function TitleScreen({
                 <>
                   <strong>{profile.playerName ?? "Explorer"}</strong>
                   <span>Elverson · {profile.completedEncounterCount} encounters complete</span>
-                  {profile.starterDeckId ? <em>{getAdventureStarterDeck(profile.starterDeckId)?.name ?? "SeaPals"} starter</em> : null}
+                  {profile.starterDeckId ? <em>{getAdventureStarterDeck(profile.starterDeckId)?.name ?? "SeaRealm"} starter</em> : null}
                   <small>{formatPlaytime(profile.playtimeSeconds)} · {formatSavedAt(profile.savedAt)}</small>
                   {profile.status === "recovered" ? <em>Backup recovery available</em> : null}
                   {isCloudSaveSlotLocked(cloudStatuses?.[profile.profileId])
@@ -1811,7 +1811,7 @@ function TitleScreen({
           <span><kbd>ENTER</kbd> to interact</span>
           <span><kbd>ESC</kbd> to pause</span>
         </div>
-        <a className={styles.titleExitLink} href="/">Return to SeaPals</a>
+        <a className={styles.titleExitLink} href="/">Return to SeaRealm</a>
       </div>
     </div>
   );
@@ -1887,7 +1887,7 @@ function LegacySavePrompt({
         <p id="legacy-save-description">
           We found {saveLabel} from before family accounts. Choose whether to
           copy them into {accountEmail}. The original device copies will be
-          preserved, and SeaPals will not offer them to another account in this
+          preserved, and SeaRealm will not offer them to another account in this
           browser profile.
         </p>
         <div className={styles.confirmActions}>
@@ -1936,10 +1936,10 @@ function NewsletterOptInModal({
     >
       <section className={`${styles.confirmCard} ${styles.newsletterOptInCard}`}>
         <div className={styles.introEyebrow}>For a parent or grown-up</div>
-        <h2 id="newsletter-opt-in-title">Keep up with SeaPals?</h2>
+        <h2 id="newsletter-opt-in-title">Keep up with SeaRealm?</h2>
         <p id="newsletter-opt-in-description">
           The adult who owns this family account can choose to receive
-          occasional SeaPals news and learning resources. This is optional:
+          occasional SeaRealm news and learning resources. This is optional:
           playing Reefbound does not subscribe anyone, and choosing Not now
           changes nothing about the game.
         </p>
@@ -1966,7 +1966,7 @@ function NewsletterOptInModal({
                 onChange={(event) => setMarketingConsent(event.target.checked)}
               />
               <span>
-                I want occasional SeaPals news and learning resources sent to
+                I want occasional SeaRealm news and learning resources sent to
                 the email on this family account.
               </span>
             </label>
@@ -1993,7 +1993,7 @@ function NewsletterOptInModal({
               Not now
             </button>
             <button type="submit" disabled={!canSubmit}>
-              {submitting ? "Requesting updates…" : "Request SeaPals updates"}
+              {submitting ? "Requesting updates…" : "Request SeaRealm updates"}
             </button>
           </div>
         </form>
@@ -2324,7 +2324,7 @@ function InventoryModal({
         <header className={styles.inventoryHeader}>
           <div>
             <div className={styles.introEyebrow}>Elverson inventory</div>
-            <h2 id="inventory-title">Your SeaPals collection</h2>
+            <h2 id="inventory-title">Your SeaRealm collection</h2>
             <p>Cards stay in your collection. Booster packs are earned through adventure challenges and opened here.</p>
           </div>
           <button type="button" className={styles.inventoryClose} aria-label="Close inventory" onClick={onClose}>
@@ -2387,7 +2387,7 @@ function InventoryModal({
                     ) : <span className={styles.inventoryCardPlaceholder} aria-hidden="true">?</span>}
                     <span>
                       <strong>{card?.name ?? inventoryItemLabel(cardId)}</strong>
-                      <small>{[card?.category, card?.kind].filter(Boolean).join(" / ") || "SeaPals card"}</small>
+                      <small>{[card?.category, card?.kind].filter(Boolean).join(" / ") || "SeaRealm card"}</small>
                     </span>
                     <b aria-label={`${quantity} owned`}>x{quantity}</b>
                   </article>
@@ -2623,7 +2623,7 @@ function TournamentRegistrationModal({
         <header className={styles.tournamentRegistrationHeader}>
           <div>
             <span>Director Vela · Registration Hall</span>
-            <h2 id="tournament-registration-title">Register for the SeaPals Tournament</h2>
+            <h2 id="tournament-registration-title">Register for the SeaRealm Tournament</h2>
             <p>Three ordered rounds. Every match is a complete 30 VP game.</p>
           </div>
           <button type="button" onClick={onClose}>Close</button>
@@ -2703,10 +2703,10 @@ function TournamentRegistrationModal({
 const CHAMPIONSHIP_ENDING_COPY = Object.freeze({
   ceremony: Object.freeze({
     speaker: "Director Amara Vela",
-    role: "SeaPals Tournament Director",
+    role: "SeaRealm Tournament Director",
     character: "champions-wake-director",
     title: "The Championship Ceremony",
-    message: "Welcome, SeaPals Champion! Across three complete 30 VP games, you protected your economy, adapted your ecosystem, and kept every conclusion proportional to the evidence. The five communities now present the SeaPals Championship Cup to you.",
+    message: "Welcome, SeaRealm Champion! Across three complete 30 VP games, you protected your economy, adapted your ecosystem, and kept every conclusion proportional to the evidence. The five communities now present the SeaRealm Championship Cup to you.",
     button: "Visit the Reflection Pavilion",
   }),
   epilogue: Object.freeze({
@@ -2777,7 +2777,7 @@ function ChampionshipEnding({
           ) : null}
           {stage === "credits" ? (
             <div className={styles.championshipCredits} aria-label="Game credits">
-              <strong>SeaPals: Reefbound</strong>
+              <strong>SeaRealm: Reefbound</strong>
               <span>Created for young ocean learners and card-game explorers</span>
               <span>Ocean habitats · evidence-based choices · deck strategy</span>
               <small>Thank you for caring for every place you visit.</small>
@@ -3573,7 +3573,7 @@ export default function AdventureGame({
       setSaveNotice({
         kind: "info",
         message:
-          "SeaPals updates were requested. The adult account owner must confirm the email from Kit before updates begin.",
+          "SeaRealm updates were requested. The adult account owner must confirm the email from Kit before updates begin.",
       });
     } catch (error) {
       setNewsletterInviteError(
@@ -8041,7 +8041,7 @@ export default function AdventureGame({
         <div className={styles.oceanGlow} aria-hidden="true" />
         <div className={styles.introLayer} role="status">
           <div className={styles.introCard}>
-            <div className={styles.introEyebrow}>A SeaPals Story</div>
+            <div className={styles.introEyebrow}>A SeaRealm Story</div>
             <h1>REEFBOUND</h1>
             <p>Checking your Elverson saves…</p>
           </div>
@@ -8479,7 +8479,7 @@ export default function AdventureGame({
             label: `${tournamentCompletedCount} / 3 rounds won`,
           }
         : {
-            title: "Register for the SeaPals Tournament",
+            title: "Register for the SeaRealm Tournament",
             description: "Meet Director Vela in the Registration Hall. Review all five Tide Marks and Field Notes, then lock one legal 60-card deck for the bracket.",
             value: 0,
             total: 3,
@@ -8601,7 +8601,7 @@ export default function AdventureGame({
           }}
         >☰</button>
         <div className={styles.brandLockup}>
-          <img src="/images/brand/SeaPalsTCGLogoWhite.svg" alt="SeaPals TCG" />
+          <img src="/images/brand/searealm-tcg-logo.png" alt="SeaRealm TCG" />
           <span>REEFBOUND</span>
         </div>
         <div className={styles.locationPill}>

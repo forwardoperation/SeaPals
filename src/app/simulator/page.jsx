@@ -2,7 +2,7 @@ import Simulator from "./Simulator";
 import { getValidSimulatorDeck } from "./simulatorDeckRoute.mjs";
 
 export const metadata = {
-  title: "Simulator | SeaPals TCG",
+  title: "Simulator | SeaRealm TCG",
   description: "A turn-based simulator for experimenting with play patterns.",
   alternates: { canonical: "/simulator" },
 };

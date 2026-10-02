@@ -6,8 +6,8 @@ import { prebuiltDecks } from "@/data/decks/prebuiltDecks";
 import { getDeckAnalytics } from "@/lib/decks/deckAnalytics";
 
 export const metadata = {
-  title: "Decks | SeaPals TCG",
-  description: "Explore SeaPals prebuilt deck lists and performance profiles.",
+  title: "Decks | SeaRealm TCG",
+  description: "Explore SeaRealm prebuilt deck lists and performance profiles.",
   alternates: { canonical: "/decks" },
 };
 
@@ -274,7 +274,7 @@ function DeckSection({ deck }) {
         <div>
           <h2 className="text-3xl font-bold text-slate-950">{deck.name}</h2>
           <p className="mt-2 max-w-3xl text-slate-600">
-            {DECK_NOTES[deck.id] ?? "A SeaPals prebuilt deck."}
+            {DECK_NOTES[deck.id] ?? "A SeaRealm prebuilt deck."}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
@@ -333,7 +333,7 @@ export default function DecksPage() {
         <div className="relative aspect-[6596/1202] min-h-[150px]">
           <Image
             src="/images/promo/decks-promo.png"
-            alt="SeaPals prebuilt deck boxes"
+            alt="SeaRealm prebuilt deck boxes"
             width={6596}
             height={1202}
             priority
@@ -345,7 +345,7 @@ export default function DecksPage() {
             Prebuilt Deck Guide
           </p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
-            SeaPals Decks
+            SeaRealm Decks
           </h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
             Compare each ready-to-play deck, see what is inside, and review the

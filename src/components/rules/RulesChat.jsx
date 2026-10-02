@@ -165,7 +165,7 @@ export default function RulesChat({
     >
       {open ? (
         <section
-          aria-label="SeaPals rules chat"
+          aria-label="SeaRealm rules chat"
           className={`${simulatorPlacement ? "absolute right-0" : "mb-3"} flex flex-col overflow-hidden rounded-3xl border border-cyan-200 bg-white shadow-2xl shadow-cyan-950/20`}
           style={{
             ...(simulatorPlacement ? { top: "calc(100% + 0.75rem)", zIndex: 66 } : null),
@@ -178,7 +178,7 @@ export default function RulesChat({
             <BotMark />
             <div className="min-w-0 flex-1">
               <h2 className="font-bold">Ask Finn</h2>
-              <p className="text-xs text-cyan-50">SeaPals rules buddy</p>
+              <p className="text-xs text-cyan-50">SeaRealm rules buddy</p>
             </div>
             <button
               aria-label="Close rules chat"
@@ -277,7 +277,7 @@ export default function RulesChat({
           </div>
 
           <form className="border-t border-cyan-100 bg-white p-3" onSubmit={handleSubmit}>
-            <label className="sr-only" htmlFor="rules-question">Ask a SeaPals rules question</label>
+            <label className="sr-only" htmlFor="rules-question">Ask a SeaRealm rules question</label>
             <div className="flex gap-2">
               <input
                 className="min-w-0 flex-1 rounded-full border border-slate-300 px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100"
@@ -303,7 +303,7 @@ export default function RulesChat({
 
       <button
         aria-expanded={open}
-        aria-label={open ? "Close SeaPals rules chat" : "Open SeaPals rules chat"}
+        aria-label={open ? "Close SeaRealm rules chat" : "Open SeaRealm rules chat"}
         className={simulatorPlacement
           ? "flex min-h-11 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-400/10 px-3 py-2 text-xs font-black uppercase tracking-wider text-cyan-100 shadow-lg transition hover:border-cyan-200/50 hover:bg-cyan-300/15 focus:outline-none focus:ring-2 focus:ring-cyan-300"
           : "ml-auto flex items-center gap-2 rounded-full bg-cyan-700 p-2.5 pr-4 font-bold text-white shadow-xl shadow-cyan-950/25 transition hover:-translate-y-0.5 hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-200"}

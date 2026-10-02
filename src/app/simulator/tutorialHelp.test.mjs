@@ -39,7 +39,7 @@ test("condition lessons explain the exact effect as a short conversation", () =>
   }, 1);
   assert.equal(sunlight.title, "Begin by reading the water");
   assert.equal(sunlight.target, "condition-continue");
-  assert.match(sunlight.message, /In the ocean.*photosynthesis.*depth.*water clarity.*weather.*season.*In SeaPals/i);
+  assert.match(sunlight.message, /In the ocean.*photosynthesis.*depth.*water clarity.*weather.*season.*In SeaRealm/i);
   assert.match(sunlight.message, /bank caps by 2.*does not add RP/i);
   assert.match(sunlight.playerThought, /hold more.*actually collected/i);
   assert.match(sunlight.cueId, /condition:r1:abundant-sunlight/);
@@ -50,7 +50,7 @@ test("condition lessons explain the exact effect as a short conversation", () =>
     text: "Predator and Apex cost 1 more RP to play.",
   }, 2);
   assert.match(clearWater.message, /Predator and Apex.*1 more RP/i);
-  assert.match(clearWater.message, /clear water.*suspended particles.*predators and prey.*In SeaPals.*visibility shift/i);
+  assert.match(clearWater.message, /clear water.*suspended particles.*predators and prey.*In SeaRealm.*visibility shift/i);
   assert.match(clearWater.message, /other Fish and Invertebrates.*normal costs/i);
   assert.match(clearWater.playerThought, /Arrow Crab.*Porcupine Fish/i);
 
@@ -60,7 +60,7 @@ test("condition lessons explain the exact effect as a short conversation", () =>
     text: "Players cannot have more than 7 cards in their hands.",
   }, 3);
   assert.match(algaeBloom.message, /In the ocean.*rapid increases.*not all blooms are harmful.*block light.*lower oxygen/i);
-  assert.match(algaeBloom.message, /In SeaPals.*seven-card hand limit.*Complete.*draw.*choose cards from your entire hand.*discard.*seven remain/i);
+  assert.match(algaeBloom.message, /In SeaRealm.*seven-card hand limit.*Complete.*draw.*choose cards from your entire hand.*discard.*seven remain/i);
   assert.match(algaeBloom.playerThought, /keep the cards.*best support my plan.*choose the rest to discard/i);
 
   const murkyWater = getSimulatorTutorialConditionHelp({
@@ -69,7 +69,7 @@ test("condition lessons explain the exact effect as a short conversation", () =>
     text: "Predator and Apex cost 1 less RP to play.",
   }, 4);
   assert.match(murkyWater.message, /suspended sediment.*plankton.*reduce visibility.*not automatically mean polluted/i);
-  assert.match(murkyWater.message, /In SeaPals.*possible advantage.*Predator and Apex.*1 RP/i);
+  assert.match(murkyWater.message, /In SeaRealm.*possible advantage.*Predator and Apex.*1 RP/i);
 
   const bleaching = getSimulatorTutorialConditionHelp({
     id: "severe-coral-bleaching",
@@ -77,7 +77,7 @@ test("condition lessons explain the exact effect as a short conversation", () =>
     text: "Heat-sensitive Corals do not generate RP this round.",
   }, 5);
   assert.match(bleaching.message, /heat stress.*symbiotic algae.*stressed, not necessarily dead/i);
-  assert.match(bleaching.message, /In SeaPals.*remain in play.*keep their slots.*no RP/i);
+  assert.match(bleaching.message, /In SeaRealm.*remain in play.*keep their slots.*no RP/i);
 
   const krillBloom = getSimulatorTutorialConditionHelp({
     id: "krill-ball",
@@ -93,7 +93,7 @@ test("condition lessons explain the exact effect as a short conversation", () =>
     name: "Bleak Overcast",
     text: "All players' RP bank cap is decreased by 2.",
   }, 7);
-  assert.match(bleakOvercast.message, /cloud cover.*sunlight.*photosynthesis.*In SeaPals/i);
+  assert.match(bleakOvercast.message, /cloud cover.*sunlight.*photosynthesis.*In SeaRealm/i);
   assert.match(bleakOvercast.message, /bank caps by 2.*discarding RP above.*not card costs/i);
   assert.match(bleakOvercast.encouragement, /zero-cost Support.*Apex/i);
 

@@ -114,7 +114,7 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
                 checked={value === option}
                 onChange={() => onChange(option)}
               >
-                {option}
+                {option === "SeaPals" ? "SeaRealm" : option}
               </ChoiceButton>
             ))}
           </div>
@@ -138,7 +138,7 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
                     disabled={!checked && maxReached}
                     onChange={() => toggleCheckbox(option)}
                   >
-                    {option}
+                    {option === "SeaPals" ? "SeaRealm" : option}
                   </ChoiceButton>
                 );
               })}
@@ -234,7 +234,7 @@ export default function SurveyPage() {
         <section className="rounded-3xl border border-cyan-200 bg-white p-8 text-center shadow-sm">
           <h1 className="text-4xl font-bold text-slate-900">Thank you!</h1>
           <p className="mt-3 text-lg text-slate-600">
-            Your SeaPals survey was submitted. We saved your name so it can be counted
+            Your SeaRealm survey was submitted. We saved your name so it can be counted
             for rewards.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -269,7 +269,7 @@ export default function SurveyPage() {
             {SURVEY_TITLE}
           </p>
           <h1 className="mt-2 text-4xl font-bold text-slate-900">
-            Help us make SeaPals even better
+            Help us make SeaRealm even better
           </h1>
           <p className="mt-3 max-w-2xl text-slate-600">
             Answer a few questions about what you like, what could improve, and what

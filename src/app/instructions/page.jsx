@@ -5,9 +5,9 @@ import Faq from "./Faq";
 import InstructionsNav from "./InstructionsNav";
 
 export const metadata = {
-  title: "How to Play SeaPals | Beginner Guide & Complete Rules",
+  title: "How to Play SeaRealm | Beginner Guide & Complete Rules",
   description:
-    "Learn SeaPals TCG through a guided interactive lesson, then use the complete rules, examples, glossary, and FAQ as a reference.",
+    "Learn SeaRealm TCG through a guided interactive lesson, then use the complete rules, examples, glossary, and FAQ as a reference.",
   alternates: { canonical: "/instructions" },
 };
 
@@ -75,7 +75,7 @@ const faqQuestions = [
   {
     question: "What do we need for a first game?",
     answer:
-      "SeaPals is for 2–4 players. Each player needs a legal 60-card deck separated into a Foundation Deck and a Main Deck. Share one Conditions Deck, and gather RP counters, damage or HP counters, and the dice named on your cards (D4, D6, D8, D10, D12, and D20).",
+      "SeaRealm is for 2–4 players. Each player needs a legal 60-card deck separated into a Foundation Deck and a Main Deck. Share one Conditions Deck, and gather RP counters, damage or HP counters, and the dice named on your cards (D4, D6, D8, D10, D12, and D20).",
   },
   {
     question: "Should beginners play to 10 VP or 30 VP?",
@@ -251,7 +251,7 @@ function SimulatorPromo() {
     <aside
       id="learn-by-doing"
       data-rules-ignore
-      aria-label="SeaPals guided tutorial"
+      aria-label="SeaRealm guided tutorial"
       className="relative mt-8 scroll-mt-6 overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"
     >
       <div aria-hidden="true" className="absolute -left-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
@@ -301,12 +301,12 @@ function SimulatorPromo() {
 
       <Link
         href="/instructions/tutorial"
-        aria-label="Start Mr. Easterling's guided SeaPals tutorial"
+        aria-label="Start Mr. Easterling's guided SeaRealm tutorial"
         className="group relative block border-t border-white/10 bg-gradient-to-br from-cyan-950 to-emerald-900 p-2 sm:p-3 md:p-5"
       >
         <Image
           src="/images/promo/seapals-simulator-gameplay.png"
-          alt="A full SeaPals Simulator match showing the player's ecosystem, rival ecosystem, hand, Conditions, RP bank, and current scores"
+          alt="A full SeaRealm Simulator match showing the player's ecosystem, rival ecosystem, hand, Conditions, RP bank, and current scores"
           width={1800}
           height={1254}
           sizes="(min-width: 1280px) 1152px, 100vw"
@@ -329,10 +329,10 @@ export default function InstructionsPage() {
         <div className="relative grid gap-9 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
           <div>
             <p data-rules-ignore className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">
-              SeaPals how-to-play guide
+              SeaRealm how-to-play guide
             </p>
             <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight md:text-6xl md:leading-[1.05]">
-              How to get started with SeaPals
+              How to get started with SeaRealm
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 md:text-lg md:leading-8">
               Begin with Mr. Easterling&apos;s hands-on aquarium lesson. Once you
@@ -376,7 +376,7 @@ export default function InstructionsPage() {
 
           <div className="relative rounded-3xl border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur md:p-7">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-300">
-              SeaPals at a glance
+              SeaRealm at a glance
             </p>
             <p className="mt-4 text-xl font-bold leading-8 text-white md:text-2xl md:leading-9">
               Build an ocean ecosystem with Foundations and Pals. Cards in your
@@ -662,7 +662,7 @@ export default function InstructionsPage() {
               <div className="rounded-3xl border border-cyan-100 bg-cyan-50 p-4 shadow-sm">
                 <Image
                   src="/images/cards/fish/Reef/picasso-triggerfish.webp"
-                  alt="Picasso Triggerfish SeaPals card used as a reading example"
+                  alt="Picasso Triggerfish SeaRealm card used as a reading example"
                   width={500}
                   height={700}
                   className="mx-auto h-auto w-full max-w-sm rounded-2xl shadow-lg"
@@ -794,7 +794,7 @@ export default function InstructionsPage() {
                 <div className="mt-5 rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-100">
                   <Image
                     src={`${iconBase}/attack-icon.png`}
-                    alt="SeaPals attack indicator showing attack die, legal target icons, and repeated attack count"
+                    alt="SeaRealm attack indicator showing attack die, legal target icons, and repeated attack count"
                     width={520}
                     height={260}
                     className="mx-auto h-auto w-full max-w-md"
@@ -1092,7 +1092,7 @@ export default function InstructionsPage() {
                 <h3 className="text-2xl font-black">Still not sure?</h3>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
                   Ask Finn in plain language. Finn uses this guide and the structured
-                  SeaPals rules knowledge to answer without guessing.
+                  SeaRealm rules knowledge to answer without guessing.
                 </p>
               </div>
               <AskFinnButton className="mt-5 shrink-0 rounded-full bg-amber-300 px-6 py-3 text-sm font-black text-slate-950 hover:bg-amber-200 md:mt-0">

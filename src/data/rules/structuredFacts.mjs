@@ -18,7 +18,7 @@ export const STRUCTURED_RULE_FACTS = [
     intents: ["how many", "can play", "minimum", "maximum"],
     answerTypes: ["quantity"],
     values: { minimum: 2, maximum: 4 },
-    text: "SeaPals is designed for 2 to 4 players.",
+    text: "SeaRealm is designed for 2 to 4 players.",
   },
   {
     id: "deck-size",
@@ -27,7 +27,7 @@ export const STRUCTURED_RULE_FACTS = [
     intents: ["how many", "size", "build", "construction"],
     answerTypes: ["quantity"],
     values: { cards: 60, maximumCopies: 4, minimumPrintedVP: 30 },
-    text: "A standard SeaPals deck has 60 cards, permits up to 4 copies of one card, includes a base Foundation, and contains at least 30 printed VP.",
+    text: "A standard SeaRealm deck has 60 cards, permits up to 4 copies of one card, includes a base Foundation, and contains at least 30 printed VP.",
   },
   {
     id: "copy-limit",

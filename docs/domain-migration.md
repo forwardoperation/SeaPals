@@ -2,8 +2,8 @@
 
 This runbook moves the existing Cloudflare Worker application from
 `seapalstcg.com` to `searealm.com` without treating a DNS alias as an application
-cutover. The code is intentionally staged so both apex domains can be tested
-before SeaRealm becomes canonical.
+cutover. SeaRealm is now canonical; the old host permanently redirects browser
+requests after successful authentication, cloud-save, and payment checks.
 
 The registrar and authoritative DNS provider are separate choices. The domain
 may be registered at GoDaddy or Namecheap while Cloudflare remains authoritative
@@ -21,12 +21,13 @@ submitted and verified as saved. Cloudflare now reports **Your domain is now
 protected by Cloudflare**, and a public NS query through `1.1.1.1` returns both
 assigned Cloudflare nameservers. The owner removed the two imported parking A
 records, and `searealm.com` is now connected to the existing production `seapals`
-Worker. Both apex domains serve the app over HTTPS. The canonical cutover is
-still pending authentication and checkout validation.
+Worker. SeaRealm serves the app over HTTPS; old-host browser requests now
+redirect to SeaRealm. The following table includes historical setup evidence
+and the current cutover state.
 
 | Check | Observed state |
 | --- | --- |
-| Existing site | `https://seapalstcg.com/` returns `200`; its Cloudflare zone is active. |
+| Existing site | Its Cloudflare zone remains active. Browser GET/HEAD requests redirect to SeaRealm; APIs, auth callbacks, and other methods are excluded. |
 | Production Worker | `seapals` has both `seapalstcg.com` and `searealm.com` attached to production. The existing `www.seapalstcg.com/*` route remains present. |
 | SeaRealm Cloudflare zone | Activated on the Free plan; dashboard confirms the domain is protected by Cloudflare. |
 | Assigned Cloudflare nameservers | `anirban.ns.cloudflare.com` and `eve.ns.cloudflare.com`, verified on SeaRealm's activation page. |
@@ -39,29 +40,34 @@ still pending authentication and checkout validation.
 | Imported DNS | Two apex A records, `www` CNAME, `_domainconnect` CNAME, and `_dmarc` TXT. All four A/CNAME records were imported as proxied; TXT is DNS-only. |
 | DNS correction completed | With explicit owner approval, `_domainconnect` was saved as DNS-only. Its CNAME target remains `_domainconnect.gd.domaincontrol.com`; verified in the saved DNS table. |
 | Onboarding defaults | Bot Preference Sync remains enabled; Search, Agent, and Training crawler categories were set to Allow. |
-| Deployed migration variables | `SITE_URL` is SeaPals, both apex origins are allowed for checkout, and both legacy-redirect flags are `false`, matching the local configuration. |
+| Deployed migration variables | `SITE_URL=https://searealm.com`; checkout allows SeaRealm only; both legacy redirect flags are `true`. Permanent redirect Worker version `8834d3f6-45ba-4ec6-8062-3d0f11e39c8c`; the preceding temporary phase was version `4e7f30f2-a20e-4f84-bdf6-6f60f7b22a0d`. |
 | Automated verification | All 23 site identity, redirect, checkout-origin, and same-origin mutation tests pass. |
 | SeaRealm edge redirect | Active rule `681b6fd9b3b7489a824f891a6516a1e9` sends HTTP apex and both `www` schemes to HTTPS apex with status `308`, preserving path and query. All three variants passed a public `/store?migration=check&item=1` request. |
-| Supabase callbacks | Project `ehlrzpcusxsbdsddyykm` now allows both domains' exact `/auth/callback` and `/auth/callback?next=/adventure` URLs (four entries). Site URL remains `https://seapalstcg.com`. |
+| Supabase callbacks | Production project `ehlrzpcusxsbdsddyykm` allows both domains' exact `/auth/callback` and `/auth/callback?next=/adventure` URLs (four entries). Site URL is saved as `https://searealm.com`. |
 | Magic-link template | Saved template uses `{{ .ConfirmationURL }}`. Owner verified a fresh email login on SeaRealm in the same normal browser. |
 | Supabase email delivery | Owner saved custom SMTP. Dashboard confirms enabled, host `smtp.resend.com`, port `465`, sender `SeaPals`, 60-second per-user interval, and stored password. Owner received the sign-in email. |
 | Real email login | Initial browser-handoff attempt returned `code_exchange_failed`. Owner then requested and opened a fresh email link entirely in the same normal browser and confirmed successful login on SeaRealm. |
 | Admin protection | Unauthenticated requests to the existing site's orders, bug-reports, and survey-responses admin APIs return `401`. Cloudflare Zero Trust shows initial onboarding, with no existing Access application available to copy. App-level admin-token protection remains in place. |
 | Dual-domain public checks | Home, Store, and Adventure return `200` on both apex hosts. All three admin APIs also return `401` on SeaRealm. SeaRealm renders the expected homepage artwork and Adventure login screen. |
-| Canonical identity | Both homepage responses still emit `https://seapalstcg.com` as canonical, as intended during validation. |
+| Canonical identity | Live homepage canonical, robots sitemap directive, and sitemap URLs use `https://searealm.com`. Home, Store, and Adventure return `200`. |
 | Deployment configuration | Added SeaRealm's custom-domain route to local `wrangler.jsonc` to preserve it on future deployments; all 23 targeted tests pass after this change. The live attachment was made directly in Cloudflare without rebuilding the Worker. |
 | Real Google login | Owner completed Google sign-in on SeaRealm; authenticated Adventure screen confirmed. Owner later noted this may not be the browser where they previously played. No save loss is established. |
 | Cloud-save pilot | With explicit owner approval, installed the save/history tables, indexes, triggers, owner-only RLS, and a temporary restrictive policy named `SeaRealm owner pilot only`. That policy limits sync to the migration owner's existing account. After reload, all three SeaRealm slots show `Saved to account`; slots are still empty. Public rollout remains gated. |
 | Live database verification | A rolled-back fixture verified owner read/update, revision archival, denial of cross-account read/update/insert, denial of non-pilot own-account insertion, anonymous read denial, private history, and direct-delete denial. No fixture saves were retained. This is database-role verification, not a full two-browser gameplay test. |
 | History cleanup | Installed `pg_cron` job `adventure-save-history-prune`, active daily at `04:17 UTC`, invoking the pruning function as `service_role`. A manual invocation succeeded. The first scheduled run has not yet been observed. Current saves and tombstones are excluded from this cleanup. |
 | Checkout guard checks | On both hosts, an empty same-origin cart returns `400 invalid_checkout_request_id`, cross-origin checkout returns `403`, unsigned webhook returns `400 Invalid signature`, and unsigned save reads return `401`. No orders or inventory were changed. |
-| Additional automated checks | 50 cloud-save tests and 42 checkout/webhook tests passed. Full paid lifecycle and cross-browser gameplay remain pending. |
+| Additional automated checks | Cloud-save and checkout/webhook suites passed. Isolated paid/refund lifecycle is now verified below; cross-browser gameplay was confirmed by the owner. |
 | Stripe webhook migrated | With explicit approval for the production routing change, saved active endpoint `we_1U4kjuE82MgJzjAx06e4EKNL` at `https://searealm.com/api/store/webhook`. Name `SeaPals Production Order Lifecycle`, API version `2026-07-29.dahlia`, and all 10 subscriptions are unchanged. The signing secret was not rotated. The older disabled seven-event endpoint remains untouched. |
 | Signed webhook verification | Stripe delivered the smoke-test `checkout.session.expired` event to `https://searealm.com/api/store/webhook` at 07:38:37 Eastern with HTTP `200`, `received: true`, `processed: true`, and `merchantNotification: not_applicable`. The request identifies the exact unpaid smoke-test session and order. |
 | Unpaid live checkout check | Owner approved accepting the purchase terms for one unpaid live session. Hosted Stripe Checkout opened for one Accessories Kit ($12) plus Standard Shipping & Handling ($10), with no customer or payment information entered. Stripe confirms `expired`, `unpaid`, no PaymentIntent, and SeaRealm success/cancel URLs. The Back link returned to SeaRealm's cancellation page. Order `SP-261002-83878C` now has payment status `failed` (the app's expired-unpaid state), inventory state `released`, and release reason `Stripe event: checkout.session.expired`. SKU `SP-ACC-SET` returned to its baseline of 10 on hand / 0 reserved. |
 | Expiration and replay verified | Automatic expiration occurred October 2, 2026 at 11:38:36 UTC. The CLI lacked write permissions for expiration and replay; no permissions were expanded. The authenticated Stripe Dashboard allowed one replay at 07:50:01 Eastern. That delivery returned HTTP `200`, `processed: false`, and `merchantNotification: not_applicable`. A read-only SQL query confirmed exactly one processed expiration-event row, zero notification rows/sends, unchanged order update/release timestamps, and baseline stock after replay. Direct REST reads of the two private audit tables were denied, so verification used the existing SQL Editor access without adding grants. Exact identifiers and evidence are retained locally under `tmp/domain-migration/`. |
-| Gameplay persistence | Owner created a game, saved, signed out, and signed back into the same Gmail account; progress remained. This establishes same-browser persistence, not cross-browser cloud synchronization. |
-| Local checkpoint committed | Commit `4b9492c` preserves the SeaRealm Worker domain attachment, migration runbook, and history-cleanup schedule. No push or rebuilt Worker deployment has been made. |
+| Gameplay persistence | Owner created and saved a game under the same Gmail account, then confirmed on October 2 that the game appeared in a second browser. Actual cross-browser cloud-save synchronization is verified for the owner pilot. |
+| Cloudflare capacity | Workers Paid is already active ($5/month minimum plus usage); the domain's separate Free zone plan does not mean the Worker is on the free tier. |
+| GitHub broadcast URL | Repository variable `SITE_URL` is now `https://searealm.com`. Kit broadcast mode remains draft and the verified old-domain sender is retained. |
+| Final authentication check | After changing Supabase's Site URL and enabling temporary redirects, the owner confirmed fresh Google and email-link sign-ins both still work. |
+| Analytics | Existing stream `14699630171` is saved as `SeaRealm TCG` at `https://searealm.com`; measurement ID `G-WT26D58KF0` and history retained. |
+| Final verification | All 2,311 tests pass. All 16 live checks passed in both temporary and permanent redirect phases. Legacy apex, HTTP, and `www` return path/query-preserving `301` with a one-hour cache; admin APIs remain protected, webhooks are not redirected, and new checkout is allowed only on SeaRealm. Production build passed; the Windows OpenNext deploy wrapper reported exit 1 despite Wrangler confirming successful uploads, routing deployment, and version IDs; live HTTP checks verify the actual result. |
+| Public branding | SeaRealm text, metadata, header/Adventure/simulator logos, storefront labels, and rules aliases deployed. Reefbound remains the adventure title. Saved survey values, storage keys, SKUs, database/Worker identifiers, historical quotations, and the verified support address are preserved. Physical card artwork and some social/fallback assets still carry SeaPals. |
 
 GoDaddy's complete eight-record list was compared with Cloudflare's five-record
 import: both apex A records, both CNAME records, and the DMARC TXT value match.
@@ -70,35 +76,60 @@ Cloudflare supplies its own NS and SOA. All GoDaddy records had a one-hour TTL.
 Supabase callback settings, SMTP, and real Google/email sign-ins are verified.
 Google Cloud branding/origin settings have not been inspected separately.
 Stripe's signed expiration delivery, duplicate handling, stock release, and
-Checkout cancellation return are verified on SeaRealm. The success URL is
-verified in Stripe's session configuration; the paid success return and full
-isolated paid/refund lifecycle remain pending. Local tests and the unpaid check
-do not establish those remaining paths' readiness.
+Checkout cancellation return are verified on SeaRealm. Paid success-return and
+refund behavior were subsequently verified with Stripe test mode and the
+isolated staging database described below. No real payment was made.
 
-### Immediate handoff
+### Isolated paid checkout and refund verification
 
-1. Cloudflare onboarding, GoDaddy sign-in, and DNS comparison are complete.
-   The available Wrangler OAuth login has only `zone:read` for zones; DNS
-   changes require dashboard access.
-2. `_domainconnect` is now DNS-only with its CNAME target preserved.
-   Review the onboarding Bot Preference Sync setting and its
-   effect on robots.txt before serving the application on SeaRealm.
-3. The registrar nameserver switch, Cloudflare activation, Worker attachment,
-   and HTTPS page checks are complete. SeaRealm now serves the same app.
-4. Supabase callbacks and the SeaRealm edge redirect are saved. The local
-   deployment configuration now includes SeaRealm's custom-domain route.
-5. Google sign-in and the owner-only cloud-save pilot work. Check an actual
-   saved game across the two hosts before claiming save migration complete.
-   Old local saves must be opened in their original browser to synchronize.
-   The temporary restrictive RLS policy must remain until the public-rollout
-   review in `docs/adventure-account-setup.md` is complete. Reapplying the base
-   save schema will not remove this additional policy.
-6. SMTP, email sign-in, the production Stripe endpoint URL update, signed
-   expiration delivery, replay idempotency, and inventory release are complete.
-   Full isolated paid/refund checkout lifecycle and paid success-return checks
-   remain outstanding; no payment was made during migration.
-   Keep the current canonical URL, redirect flags, and operational email
-   identity through this validation phase.
+The owner created **SeaRealm Checkout Staging**, project
+`rcbibkqonspvglluyiud`. Installed `supabase/store-orders.sql` there, confirmed
+`check_store_inventory_contract_v7()`, and seeded only test SKU
+`SP-ACC-CONDITIONS-DECK` at 10 on hand / 0 reserved. Production Supabase and
+production inventory were not used by this paid test.
+
+An isolated localhost server used the existing restricted Stripe test key,
+cards-only payment configuration `pmc_1U4twwE82MgJzjAxBURdNDmt`, and a Stripe CLI
+test webhook listener. Synthetic customer data and Stripe's test card completed
+order `SP-261002-D0465D` (`df5f81e8-460f-462d-837d-c94a96a7f7e9`), totaling $15
+including shipping. The signed completed event
+`evt_1UM6YPE82MgJzjAx0hZLi9ba` returned `200`; the database recorded paid,
+`livemode=false`, inventory committed, and stock 9 on hand / 0 reserved.
+Stripe returned the browser to the confirmation page with the matching order.
+
+A $5 test refund produced `partially_refunded`; a second $10 refund produced
+`refunded` with `amount_refunded=1500` and two succeeded refund rows. Refunds
+correctly did not automatically restock inventory. A locally signed replay of
+the retrieved paid event returned `200`, `processed=false`. Final SQL confirmed
+one paid-event row and exactly one sent merchant notification with one delivery
+attempt and a provider ID. Its recipient was Resend's official
+`delivered@resend.dev` simulator, not the merchant inbox. This local signed replay
+is distinct from the production Dashboard expiration replay verified above.
+
+The confirmation check exposed an existing 80-character receipt-URL truncation
+bug. A dedicated Stripe HTTPS receipt-URL parser now preserves long links and
+rejects unsafe destinations; regression tests cover both behaviors. The
+rendered Stripe receipt link retained all 156 characters. Both the test server
+and webhook listener were stopped after verification. Evidence, exact session
+IDs, and credentials remain in ignored `tmp/domain-migration/`; never commit
+that directory.
+
+### Remaining cutover and rollout work
+
+1. Search Console opened without any verified website in the signed-in Google
+   account. A SeaRealm domain property is prepared but unverified; owner approval
+   for DNS verification of both domains is pending. Submit the new sitemap and
+   eligible Change of Address requests after verification. No DNS verification
+   record or Google-to-Cloudflare delegation was added.
+2. Inspect Google OAuth public branding and review Kit links/templates. Kit
+   requires sign-in; no forms, subscriptions, or broadcasts were changed.
+3. Keep the owner-only cloud-save restrictive policy until the public-rollout
+   review in `docs/adventure-account-setup.md` is complete. Cross-browser sync
+   for the owner is verified; broad public access is a separate rollout.
+4. Finish old branding in artwork/social assets and provider email/receipt
+   labels. Provision and verify the new email identity before replacing the
+   working `maker@seapalstcg.com` address. Old local-only saves still require
+   their original browser/device to synchronize.
 
 Repeat the automated checks with:
 

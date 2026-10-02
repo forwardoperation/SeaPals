@@ -8,14 +8,14 @@ import {
 } from "@/data/encyclopedia";
 
 export const metadata = {
-  title: "Marine Encyclopedia for Kids | SeaPals",
+  title: "Marine Encyclopedia for Kids | SeaRealm",
   description:
-    "Meet every real marine creature in SeaPals with kid-friendly facts, ocean superpowers, habitats, diets, sizes, and research links.",
+    "Meet every real marine creature in SeaRealm with kid-friendly facts, ocean superpowers, habitats, diets, sizes, and research links.",
   alternates: { canonical: "/encyclopedia" },
   openGraph: {
     title: "Meet Every SeaPal | A Marine Encyclopedia for Kids",
     description:
-      "Dive into kid-friendly facts about every real marine creature in SeaPals.",
+      "Dive into kid-friendly facts about every real marine creature in SeaRealm.",
     url: "/encyclopedia",
     type: "website",
     images: [
@@ -31,7 +31,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Meet Every SeaPal | A Marine Encyclopedia for Kids",
     description:
-      "Dive into kid-friendly facts about every real marine creature in SeaPals.",
+      "Dive into kid-friendly facts about every real marine creature in SeaRealm.",
     images: ["/images/encyclopedia/social-card.png"],
   },
 };
@@ -67,7 +67,7 @@ export default function EncyclopediaPage() {
         <div className="relative grid items-center gap-12 lg:grid-cols-[1.06fr_.94fr]">
           <div>
             <p className="inline-flex rounded-full border border-cyan-200/25 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">
-              SeaPals marine encyclopedia
+              SeaRealm marine encyclopedia
             </p>
             <h1 className="mt-6 max-w-3xl font-serif text-4xl font-bold leading-[1.03] tracking-tight text-white sm:text-5xl md:text-6xl">
               Meet the real animals behind every SeaPal.
@@ -130,7 +130,7 @@ export default function EncyclopediaPage() {
               >
                 <Image
                   src={creature.image}
-                  alt={`${creature.name} SeaPals card`}
+                  alt={`${creature.name} SeaRealm card`}
                   width={300}
                   height={420}
                   priority
@@ -157,7 +157,7 @@ export default function EncyclopediaPage() {
             Found a new favorite?
           </h2>
           <p className="mt-3 max-w-2xl leading-7 text-slate-600">
-            Spot its SeaPals card, then bring that creature’s real ocean talents
+            Spot its SeaRealm card, then bring that creature’s real ocean talents
             back to your next game.
           </p>
         </div>

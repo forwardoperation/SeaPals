@@ -2,8 +2,8 @@ import SimulatorV2Experience from "@/app/simulator/SimulatorV2Experience";
 import { getValidSimulatorDeck } from "@/app/simulator/simulatorDeckRoute.mjs";
 
 export const metadata = {
-  title: "Simulator V2 Preview | SeaPals TCG",
-  description: "A work-in-progress preview of the redesigned SeaPals simulator.",
+  title: "Simulator V2 Preview | SeaRealm TCG",
+  description: "A work-in-progress preview of the redesigned SeaRealm simulator.",
   robots: { index: false, follow: false },
 };
 

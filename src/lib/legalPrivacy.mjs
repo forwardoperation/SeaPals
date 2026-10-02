@@ -1,11 +1,11 @@
-import { PUBLIC_SUPPORT_EMAIL } from "./siteIdentity.mjs";
+import { PUBLIC_SUPPORT_EMAIL, SITE_BRAND_NAME } from "./siteIdentity.mjs";
 
 export const LEGAL_EFFECTIVE_DATE_ISO = "2026-08-15";
 export const LEGAL_EFFECTIVE_DATE_LABEL = "August 15, 2026";
 
 export const SEAPALS_OPERATOR = Object.freeze({
   legalName: "Sea Realm, LLC",
-  brandName: "SeaPals TCG",
+  brandName: SITE_BRAND_NAME,
   mailingAddress: Object.freeze([
     "PO Box 11",
     "Elverson, PA 19520",

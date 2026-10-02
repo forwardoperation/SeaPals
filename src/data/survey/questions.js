@@ -1,4 +1,4 @@
-export const SURVEY_TITLE = "SeaPals Survey";
+export const SURVEY_TITLE = "SeaRealm Survey";
 
 export const SURVEY_SECTIONS = [
   {
@@ -51,13 +51,13 @@ export const SURVEY_SECTIONS = [
       {
         id: "other_games_enjoyed",
         number: 2,
-        label: "Besides SeaPals, what other games do you enjoy playing?",
+        label: "Besides SeaRealm, what other games do you enjoy playing?",
         type: "textarea",
       },
       {
         id: "seapals_alternative",
         number: 3,
-        label: "If you couldn't play SeaPals, what would you most likely do instead?",
+        label: "If you couldn't play SeaRealm, what would you most likely do instead?",
         type: "radio",
         options: [
           "Play another card game",
@@ -99,14 +99,14 @@ export const SURVEY_SECTIONS = [
       {
         id: "seapals_play_count",
         number: 8,
-        label: "How many times have you played SeaPals?",
+        label: "How many times have you played SeaRealm?",
         type: "radio",
         options: ["1 time", "2-5 times", "6-10 times", "More than 10 times"],
       },
       {
         id: "heard_about_seapals",
         number: 9,
-        label: "How did you hear about SeaPals?",
+        label: "How did you hear about SeaRealm?",
         type: "radio",
         options: ["Friend", "Family", "Church", "School", "Social Media", "YouTube", "Event or Club"],
         other: true,
@@ -114,7 +114,7 @@ export const SURVEY_SECTIONS = [
       {
         id: "friends_playing",
         number: 10,
-        label: "How many of your friends play SeaPals?",
+        label: "How many of your friends play SeaRealm?",
         type: "radio",
         options: ["Most of them", "Some of them", "Not many", "None"],
       },
@@ -135,7 +135,7 @@ export const SURVEY_SECTIONS = [
       {
         id: "typical_seapals_duration",
         number: 13,
-        label: "About how long does a typical game of SeaPals take?",
+        label: "About how long does a typical game of SeaRealm take?",
         type: "radio",
         options: ["Less than 10 minutes", "10-20 minutes", "20-30 minutes", "More than 30 minutes"],
       },
@@ -143,18 +143,18 @@ export const SURVEY_SECTIONS = [
   },
   {
     id: "comparison",
-    title: "Section 2 - Comparing SeaPals to Other Games",
+    title: "Section 2 - Comparing SeaRealm to Other Games",
     questions: [
       {
         id: "three_best_things",
         number: 14,
-        label: "What are the THREE best things about SeaPals?",
+        label: "What are the THREE best things about SeaRealm?",
         type: "textarea",
       },
       {
         id: "seapals_words",
         number: 15,
-        label: "Which words describe SeaPals?",
+        label: "Which words describe SeaRealm?",
         helper: "Check up to 5.",
         type: "checkbox",
         maxSelections: 5,
@@ -178,26 +178,26 @@ export const SURVEY_SECTIONS = [
       {
         id: "compared_to_other_games",
         number: 16,
-        label: "Compared to other games, SeaPals is:",
+        label: "Compared to other games, SeaRealm is:",
         type: "radio",
         options: ["Much better", "Better", "About the same", "Worse", "Much worse"],
       },
       {
         id: "better_than_other_games",
         number: 17,
-        label: "What makes SeaPals better than other games?",
+        label: "What makes SeaRealm better than other games?",
         type: "textarea",
       },
       {
         id: "favorite_thing",
         number: 18,
-        label: "What is your favorite thing about SeaPals?",
+        label: "What is your favorite thing about SeaRealm?",
         type: "textarea",
       },
       {
         id: "favorite_part",
         number: 19,
-        label: "Which part of SeaPals is your favorite?",
+        label: "Which part of SeaRealm is your favorite?",
         type: "radio",
         options: [
           "Collecting cards",
@@ -226,13 +226,13 @@ export const SURVEY_SECTIONS = [
       {
         id: "confusing_parts",
         number: 21,
-        label: "Is anything confusing about SeaPals?",
+        label: "Is anything confusing about SeaRealm?",
         type: "textarea",
       },
       {
         id: "one_change",
         number: 22,
-        label: "What is one thing you would change to make SeaPals even better?",
+        label: "What is one thing you would change to make SeaRealm even better?",
         type: "textarea",
       },
       {
@@ -258,14 +258,14 @@ export const SURVEY_SECTIONS = [
       {
         id: "recommend_to_friend",
         number: 24,
-        label: "Would you recommend SeaPals to a friend?",
+        label: "Would you recommend SeaRealm to a friend?",
         type: "radio",
         options: ["Definitely", "Probably", "Maybe", "Probably not", "Definitely not"],
       },
       {
         id: "disappointment_if_gone",
         number: 25,
-        label: "If SeaPals disappeared tomorrow, how disappointed would you be?",
+        label: "If SeaRealm disappeared tomorrow, how disappointed would you be?",
         type: "radio",
         options: ["Very disappointed", "Somewhat disappointed", "A little disappointed", "Not disappointed"],
       },
@@ -279,7 +279,7 @@ export const SURVEY_SECTIONS = [
       {
         id: "tell_a_friend",
         number: 27,
-        label: "What is one thing you would tell a friend about SeaPals?",
+        label: "What is one thing you would tell a friend about SeaRealm?",
         type: "textarea",
       },
     ],
@@ -291,7 +291,7 @@ export const SURVEY_SECTIONS = [
       {
         id: "main_competitor",
         number: 28,
-        label: "Which game do you think SeaPals competes with the most?",
+        label: "Which game do you think SeaRealm competes with the most?",
         type: "radio",
         options: ["Pokemon", "Minecraft", "Roblox", "Magic", "Lorcana"],
         other: true,
@@ -306,7 +306,7 @@ export const SURVEY_SECTIONS = [
       {
         id: "tell_friend_likelihood",
         number: 30,
-        label: "How likely are you to tell a friend about SeaPals?",
+        label: "How likely are you to tell a friend about SeaRealm?",
         type: "scale",
         min: 1,
         max: 10,
@@ -314,7 +314,7 @@ export const SURVEY_SECTIONS = [
       {
         id: "favorite_game_condition",
         number: 31,
-        label: "What would make SeaPals your favorite game?",
+        label: "What would make SeaRealm your favorite game?",
         type: "textarea",
       },
       {
@@ -340,7 +340,7 @@ export const SURVEY_SECTIONS = [
       {
         id: "seapals_special_because",
         number: 33,
-        label: "Finish this sentence: SeaPals is special because...",
+        label: "Finish this sentence: SeaRealm is special because...",
         type: "textarea",
       },
     ],

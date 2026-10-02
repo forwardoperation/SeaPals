@@ -24,15 +24,15 @@ test("public launch copy advertises the Starter Kit, seven decks, three Dive Pac
   assert.doesNotMatch(storefrontSource, /Choose how your reef grows\./);
   assert.match(
     storefrontSource,
-    /The two-player Starter Kit, plus optional ready-to-play SeaPals\s+decks, three set-specific Dive Packs, and the Accessories Kit,\s+built to order for your next reef\./
+    /The two-player Starter Kit, plus optional ready-to-play SeaRealm\s+decks, three set-specific Dive Packs, and the Accessories Kit,\s+built to order for your next reef\./
   );
   assert.match(
     storePageSource,
-    /Shop the made-to-order SeaPals Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit/
+    /Shop the made-to-order SeaRealm Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit/
   );
   assert.match(
     storePageSource,
-    /Preview the made-to-order SeaPals Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit/
+    /Preview the made-to-order SeaRealm Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit/
   );
   assert.match(
     homePageSource,

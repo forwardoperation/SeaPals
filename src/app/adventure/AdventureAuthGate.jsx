@@ -29,7 +29,7 @@ function friendlyAuthError(error, fallback) {
     || message.includes("network")
     || message.includes("offline")
   ) {
-    return "We could not reach SeaPals sign-in. Check your connection and try again.";
+    return "We could not reach SeaRealm sign-in. Check your connection and try again.";
   }
 
   return fallback;
@@ -125,7 +125,7 @@ export default function AdventureAuthGate({
             setNotice({
               kind: "error",
               message:
-                "We could not check your SeaPals account. You can still try signing in.",
+                "We could not check your SeaRealm account. You can still try signing in.",
             });
             return;
           }
@@ -137,7 +137,7 @@ export default function AdventureAuthGate({
           setNotice({
             kind: "error",
             message:
-              "We could not check your SeaPals account. Check your connection and try signing in.",
+              "We could not check your SeaRealm account. Check your connection and try signing in.",
           });
         });
     } catch {
@@ -145,7 +145,7 @@ export default function AdventureAuthGate({
       setNotice({
         kind: "error",
         message:
-          "SeaPals sign-in is not available right now. Please try again later.",
+          "SeaRealm sign-in is not available right now. Please try again later.",
       });
     }
 
@@ -202,7 +202,7 @@ export default function AdventureAuthGate({
       setNotice({
         kind: "error",
         message:
-          "SeaPals could not save the temporary account approval. Allow site cookies, then try again.",
+          "SeaRealm could not save the temporary account approval. Allow site cookies, then try again.",
       });
       return false;
     }
@@ -274,7 +274,7 @@ export default function AdventureAuthGate({
       setNotice({
         kind: "error",
         message:
-          "SeaPals sign-in is still getting ready. Wait a moment and try again.",
+          "SeaRealm sign-in is still getting ready. Wait a moment and try again.",
       });
       return;
     }
@@ -328,7 +328,7 @@ export default function AdventureAuthGate({
       setNotice({
         kind: "error",
         message:
-          "SeaPals sign-in is still getting ready. Wait a moment and try again.",
+          "SeaRealm sign-in is still getting ready. Wait a moment and try again.",
       });
       return;
     }
@@ -434,8 +434,8 @@ export default function AdventureAuthGate({
         >
           <img
             className={styles.logo}
-            src="/images/brand/SeaPalsTCGLogoWhite.svg"
-            alt="SeaPals TCG"
+            src="/images/brand/searealm-tcg-logo.png"
+            alt="SeaRealm TCG"
           />
           <div className={styles.spinner} aria-hidden="true" />
           <h1 id={headingId}>
@@ -469,10 +469,10 @@ export default function AdventureAuthGate({
         <header className={styles.header}>
           <img
             className={styles.logo}
-            src="/images/brand/SeaPalsTCGLogoWhite.svg"
-            alt="SeaPals TCG"
+            src="/images/brand/searealm-tcg-logo.png"
+            alt="SeaRealm TCG"
           />
-          <p className={styles.eyebrow}>A SeaPals Story</p>
+          <p className={styles.eyebrow}>A SeaRealm Story</p>
           <h1 id={headingId} ref={headingRef} tabIndex={-1}>
             {view === "email-sent"
               ? "Check your inbox"
@@ -497,7 +497,7 @@ export default function AdventureAuthGate({
             </p>
           ) : (
             <p id={descriptionId} className={styles.intro}>
-              Sign in or create a free SeaPals account to play.
+              Sign in or create a free SeaRealm account to play.
             </p>
           )}
         </header>
@@ -614,7 +614,7 @@ export default function AdventureAuthGate({
                 />
                 <span>
                   <strong>
-                    SeaPals updates <em>Optional</em>
+                    SeaRealm updates <em>Optional</em>
                   </strong>
                   <small>
                     Email me launch news, early purchase updates, and new card
@@ -790,7 +790,7 @@ export default function AdventureAuthGate({
         )}
 
         <a className={styles.exitLink} href="/">
-          Return to SeaPals
+          Return to SeaRealm
         </a>
       </section>
     </main>

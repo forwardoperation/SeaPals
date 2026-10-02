@@ -135,6 +135,6 @@ test("the rush queue uses server due dates and New York production-day semantics
 });
 
 test("purchase terms disclose the ten-order daily rush limit", () => {
-  assert.match(terms, /limited to ten orders per SeaPals\s+production day/);
+  assert.match(terms, /limited to ten orders per SeaRealm\s+production day/);
   assert.match(terms, /server-confirmed availability/);
 });

@@ -9,7 +9,7 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "Reefbound Adventure | SeaPals TCG",
+  title: "Reefbound Adventure | SeaRealm TCG",
   description:
     "Explore coastal Elverson and help Mr. Easterling create a new community aquarium exhibit.",
   alternates: { canonical: "/adventure" },
@@ -23,24 +23,24 @@ const AUTH_ERROR_MESSAGES = Object.freeze({
   code_exchange_failed:
     "That sign-in link expired or was already used. Request a new one to continue.",
   service_unavailable:
-    "SeaPals sign-in is temporarily unavailable. Please try again in a moment.",
+    "SeaRealm sign-in is temporarily unavailable. Please try again in a moment.",
 });
 
 const ACCOUNT_NOTICE_MESSAGES = Object.freeze({
   newsletter_failed: {
     kind: "error",
     message:
-      "Your family account is ready, but the optional SeaPals updates signup did not finish. You can use Join the Crew on the home page to try again.",
+      "Your family account is ready, but the optional SeaRealm updates signup did not finish. You can use Join the Crew on the home page to try again.",
   },
   newsletter_submitted: {
     kind: "info",
     message:
-      "Your SeaPals updates signup was submitted. Check your inbox and confirm it if Kit asks you to.",
+      "Your SeaRealm updates signup was submitted. Check your inbox and confirm it if Kit asks you to.",
   },
   newsletter_subscribed: {
     kind: "info",
     message:
-      "You’re signed in and subscribed to SeaPals updates. You can unsubscribe from any email.",
+      "You’re signed in and subscribed to SeaRealm updates. You can unsubscribe from any email.",
   },
 });
 
@@ -72,7 +72,7 @@ export default async function AdventurePage({ searchParams }) {
     authorizationUser = await getAdventureAuthorizationUser(claims.sub);
   } catch {
     authorizationError =
-      "SeaPals could not check family-account approval. Review the approval below and try again.";
+      "SeaRealm could not check family-account approval. Review the approval below and try again.";
   }
 
   const accountEmail =

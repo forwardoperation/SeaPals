@@ -129,7 +129,7 @@ test("the normal V2 opening screen keeps deck setup primary and offers a guided 
     /function startMatch\([^)]*\)[\s\S]*?onStart\(playerDeckId,\s*opponentDeckId,\s*selectedDifficulty\.id\)/,
   );
 
-  assert.match(landing, /New to SeaPals\?/);
+  assert.match(landing, /New to SeaRealm\?/);
   assert.match(landingComponentSource, /import \{ SIMULATOR_V2_LESSONS \} from "\.\/simulatorV2Lessons\.mjs";/);
   assert.equal(
     (landing.match(/Learn to play · \{SIMULATOR_V2_LESSONS\.length\} lessons/g) ?? []).length,

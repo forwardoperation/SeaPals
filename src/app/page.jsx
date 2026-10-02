@@ -12,17 +12,17 @@ export const metadata = {
 const heroCards = [
   {
     src: "/images/cards/fish/Reef/french-angelfish.png",
-    alt: "French Angelfish SeaPals card",
+    alt: "French Angelfish SeaRealm card",
     className: "-rotate-7 translate-y-7",
   },
   {
     src: "/images/cards/apex/Reef/bull-shark.png",
-    alt: "Bull Shark SeaPals card",
+    alt: "Bull Shark SeaRealm card",
     className: "relative z-10 -translate-y-2",
   },
   {
     src: "/images/cards/filter-feeders/Oceanic/blue-whale.png",
-    alt: "Blue Whale SeaPals card",
+    alt: "Blue Whale SeaRealm card",
     className: "rotate-7 translate-y-7",
   },
 ];
@@ -53,7 +53,7 @@ const familyBenefits = [
     number: "01",
     title: "A worldview stated plainly",
     copy:
-      "SeaPals explores real marine life as part of God’s creation. Parents know the theme, the boundaries, and the perspective before the first card is played.",
+      "SeaRealm explores real marine life as part of God’s creation. Parents know the theme, the boundaries, and the perspective before the first card is played.",
   },
   {
     number: "02",
@@ -77,7 +77,7 @@ const familyBenefits = [
     number: "05",
     title: "Easy to bring along",
     copy:
-      "Minimal setup and teardown make SeaPals ready for the kitchen table, co-op, a friend’s house, or vacation.",
+      "Minimal setup and teardown make SeaRealm ready for the kitchen table, co-op, a friend’s house, or vacation.",
   },
 ];
 
@@ -98,19 +98,19 @@ const howItWorks = [
 
 const questions = [
   {
-    question: "What exactly is SeaPals?",
+    question: "What exactly is SeaRealm?",
     answer:
-      "SeaPals is an ocean-inspired trading card game. Players grow coral, add marine creatures to their ecosystem, and use card abilities and strategy to build the strongest reef.",
+      "SeaRealm is an ocean-inspired trading card game. Players grow coral, add marine creatures to their ecosystem, and use card abilities and strategy to build the strongest reef.",
   },
   {
     question: "What worldview does it reflect?",
     answer:
-      "SeaPals invites kids to discover marine life as part of God’s creation. Its world is grounded in real creatures, ocean habitats, strategic play, and a clearly Christian perspective.",
+      "SeaRealm invites kids to discover marine life as part of God’s creation. Its world is grounded in real creatures, ocean habitats, strategic play, and a clearly Christian perspective.",
   },
   {
     question: "Can younger and older siblings enjoy it together?",
     answer:
-      "SeaPals is being developed for families with kids ages 6–14, with an approachable core for younger players and strategy that older players can keep exploring.",
+      "SeaRealm is being developed for families with kids ages 6–14, with an approachable core for younger players and strategy that older players can keep exploring.",
   },
   {
     question: "How long does a game take?",
@@ -126,7 +126,7 @@ const questions = [
           href="/store"
           className="font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950"
         >
-          SeaPals Store
+          SeaRealm Store
         </Link>
         . Online checkout will open after the final launch checks are complete.
         Join the crew below to hear when ordering begins.
@@ -157,7 +157,7 @@ export default function HomePage() {
               A card game your kids will love, and you will too.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-cyan-50/90 md:text-xl">
-              SeaPals turns the wonder of God’s creation into fast, face-to-face fun. Kids build living reefs, discover real ocean creatures, and make strategic choices with siblings and friends.
+              SeaRealm turns the wonder of God’s creation into fast, face-to-face fun. Kids build living reefs, discover real ocean creatures, and make strategic choices with siblings and friends.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -270,7 +270,7 @@ export default function HomePage() {
               Know the world your kids are stepping into.
             </h2>
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-              SeaPals has a clear focus: exploring creation through a genuinely fun strategy game about marine life. The theme, content, and worldview are stated plainly—so you can make a confident yes.
+              SeaRealm has a clear focus: exploring creation through a genuinely fun strategy game about marine life. The theme, content, and worldview are stated plainly—so you can make a confident yes.
             </p>
           </div>
 
@@ -309,7 +309,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-amber-800">From one mom to another</p>
           <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            Why moms are glad they said yes to SeaPals.
+            Why moms are glad they said yes to SeaRealm.
           </h2>
         </div>
         <div className="mt-10 grid gap-5 lg:grid-cols-2">
@@ -339,7 +339,7 @@ export default function HomePage() {
               Fun first. Learning comes along for the ride.
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              We asked the kids who have actually played SeaPals. Here is the small-sample result, with the numbers shown plainly.
+              We asked the kids who have actually played SeaRealm, previously called SeaPals. Here is the small-sample result, with the numbers shown plainly.
             </p>
 
             <p className="mt-8 border-l-4 border-[#f7c948] pl-5 font-serif text-xl leading-8 text-slate-800">
@@ -358,7 +358,7 @@ export default function HomePage() {
           </div>
         </div>
         <p className="mt-8 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-500">
-          Source: {youngPlayerSurvey.responseCount} SeaPals player survey responses. {youngPlayerSurvey.audienceNote} Counts reflect the exact wording described on each card.
+          Source: {youngPlayerSurvey.responseCount} SeaPals player survey responses, collected before the SeaRealm name change. {youngPlayerSurvey.audienceNote} Counts reflect the exact wording described on each card.
         </p>
       </section>
 
@@ -403,7 +403,7 @@ export default function HomePage() {
               />
               <Image
                 src="/images/cards/apex/Oceanic/killer-whale.png"
-                alt="Killer Whale SeaPals card"
+                alt="Killer Whale SeaRealm card"
                 width={375}
                 height={525}
                 sizes="(max-width: 640px) 38vw, 220px"
@@ -490,7 +490,7 @@ export default function HomePage() {
             <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-white p-3 shadow-2xl shadow-cyan-950/20 sm:p-4">
               <Image
                 src="/images/promo/decks-promo.png"
-                alt="The seven SeaPals ready-to-play deck designs"
+                alt="The seven SeaRealm ready-to-play deck designs"
                 width={6596}
                 height={1202}
                 sizes="(max-width: 1024px) 90vw, 520px"
@@ -531,7 +531,7 @@ export default function HomePage() {
             <div className="relative flex h-full items-center justify-center">
               <Image
                 src="/images/cards/filter-feeders/Oceanic/blue-whale.png"
-                alt="Blue Whale SeaPals card"
+                alt="Blue Whale SeaRealm card"
                 width={375}
                 height={525}
                 sizes="290px"
@@ -539,7 +539,7 @@ export default function HomePage() {
               />
               <Image
                 src="/images/cards/apex/Reef/bull-shark.png"
-                alt="Bull Shark SeaPals card"
+                alt="Bull Shark SeaRealm card"
                 width={375}
                 height={525}
                 sizes="230px"
@@ -554,7 +554,7 @@ export default function HomePage() {
               Give family game night a world worth exploring.
             </h2>
             <p className="mt-5 max-w-xl text-lg leading-8 text-cyan-50/80">
-              SeaPals is coming soon. Get launch news, early purchase updates, and new card reveals in your inbox.
+              SeaRealm is coming soon. Get launch news, early purchase updates, and new card reveals in your inbox.
             </p>
 
             <form
@@ -602,7 +602,7 @@ export default function HomePage() {
                 type="submit"
                 className="inline-flex min-h-13 w-full items-center justify-center rounded-xl bg-[#f7c948] px-5 py-3.5 text-lg font-black text-[#082f49] shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/50"
               >
-                Get SeaPals updates
+                Get SeaRealm updates
               </button>
               <div className="rounded-xl border border-cyan-200/20 bg-cyan-950/35 px-4 py-3 text-sm leading-6 text-cyan-50/80">
                 <strong className="text-white">For grown-ups:</strong> Sea Realm,

@@ -3,7 +3,7 @@
 export default function AskFinnButton({ className = "", children = "Ask Finn" }) {
   const openFinn = () => {
     document
-      .querySelector('[aria-label="Open SeaPals rules chat"]')
+      .querySelector('[aria-label="Open SeaRealm rules chat"]')
       ?.click();
   };
 

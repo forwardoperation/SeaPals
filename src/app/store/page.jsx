@@ -6,11 +6,11 @@ export function generateMetadata() {
 
   return {
     title: checkoutEnabled
-      ? "Shop | SeaPals TCG"
-      : "Store Preview | SeaPals TCG",
+      ? "Shop | SeaRealm TCG"
+      : "Store Preview | SeaRealm TCG",
     description: checkoutEnabled
-      ? "Shop the made-to-order SeaPals Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit with five-business-day standard production or optional one-business-day production."
-      : "Preview the made-to-order SeaPals Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit before ordering opens.",
+      ? "Shop the made-to-order SeaRealm Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit with five-business-day standard production or optional one-business-day production."
+      : "Preview the made-to-order SeaRealm Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit before ordering opens.",
     alternates: { canonical: "/store" },
   };
 }

@@ -60,7 +60,7 @@ const CATEGORY_META = {
     label: "Dive Packs",
     eyebrow: "Discover a new current",
     description:
-      "Choose an Oceanic, Reef, or Deep Dive Pack and add cards from your chosen set to your SeaPals collection. Dive Pack-only mailed orders up to 1 lb qualify for $5 Standard or $10 Priority Shipping & Handling.",
+      "Choose an Oceanic, Reef, or Deep Dive Pack and add cards from your chosen set to your SeaRealm collection. Dive Pack-only mailed orders up to 1 lb qualify for $5 Standard or $10 Priority Shipping & Handling.",
   },
   "game-accessories": {
     label: "Game Accessories",
@@ -70,7 +70,7 @@ const CATEGORY_META = {
   },
   apparel: {
     label: "Custom T-Shirts",
-    eyebrow: "Wear SeaPals",
+    eyebrow: "Wear SeaRealm",
     description:
       "Custom apparel is previewed here while size, color, design, and pricing choices are prepared.",
   },
@@ -78,13 +78,13 @@ const CATEGORY_META = {
     label: "Binders & Backpacks",
     eyebrow: "Carry the reef",
     description:
-      "SeaPals storage gear for organizing cards and bringing a full play setup along.",
+      "SeaRealm storage gear for organizing cards and bringing a full play setup along.",
   },
   "plush-toys": {
     label: "Plush Toys",
     eyebrow: "Meet the crew",
     description:
-      "A future collection of soft SeaPals character companions for players and ocean fans.",
+      "A future collection of soft SeaRealm character companions for players and ocean fans.",
   },
 };
 
@@ -247,9 +247,9 @@ export default function Storefront({
         return {
           id: category,
           meta: CATEGORY_META[category] ?? {
-            label: "More SeaPals Gear",
+            label: "More SeaRealm Gear",
             eyebrow: "Explore the shop",
-            description: "More products being prepared for the SeaPals store.",
+            description: "More products being prepared for the SeaRealm store.",
           },
           products: categoryProducts,
         };
@@ -695,7 +695,7 @@ export default function Storefront({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <p className="inline-flex rounded-full border border-cyan-200/25 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">
-                {checkoutEnabled ? "SeaPals shop" : "SeaPals store preview"}
+                {checkoutEnabled ? "SeaRealm shop" : "SeaRealm store preview"}
               </p>
               <span
                 className={
@@ -717,7 +717,7 @@ export default function Storefront({
               Master the Sea
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
-              The two-player Starter Kit, plus optional ready-to-play SeaPals
+              The two-player Starter Kit, plus optional ready-to-play SeaRealm
               decks, three set-specific Dive Packs, and the Accessories Kit,
               built to order for your next reef.
             </p>
@@ -733,7 +733,7 @@ export default function Storefront({
           <div className="overflow-hidden rounded-[1.5rem] border border-cyan-200/15 bg-slate-950/20 p-2 shadow-2xl shadow-black/20">
             <Image
               src="/images/promo/decks-promo.png"
-              alt="The seven SeaPals prebuilt deck designs"
+              alt="The seven SeaRealm prebuilt deck designs"
               width={6596}
               height={1202}
               priority
@@ -790,14 +790,14 @@ export default function Storefront({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-700">
-                The SeaPals collection
+                The SeaRealm collection
               </p>
               <h2
                 id="store-products-heading"
                 className="mt-2 font-serif text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl"
               >
                 {checkoutEnabled
-                  ? "Shop the SeaPals collection"
+                  ? "Shop the SeaRealm collection"
                   : "Preview the launch collection"}
               </h2>
             </div>
@@ -1071,7 +1071,7 @@ export default function Storefront({
                 Products are being prepared
               </h3>
               <p className="mt-2 text-slate-600">
-                Check back soon to explore the SeaPals store.
+                Check back soon to explore the SeaRealm store.
               </p>
             </div>
           )}
@@ -1244,8 +1244,8 @@ export default function Storefront({
                     <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-950">
                       Expedited production is limited to{" "}
                       {hasExpeditedDailyOrderLimit
-                        ? `${normalizedExpeditedDailyOrderLimit} orders per SeaPals production day`
-                        : "a fixed number of orders per SeaPals production day"}
+                        ? `${normalizedExpeditedDailyOrderLimit} orders per SeaRealm production day`
+                        : "a fixed number of orders per SeaRealm production day"}
                       {normalizedExpeditedTimeZone
                         ? ` (${normalizedExpeditedTimeZone})`
                         : ""}
@@ -1455,7 +1455,7 @@ export default function Storefront({
             )}
 
             <p className="mt-5 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500">
-              Prices and availability shown here come from the current SeaPals
+              Prices and availability shown here come from the current SeaRealm
               store catalog. {checkoutEnabled
                 ? "The checkout service verifies them again before payment."
                 : "Ordering will open after the final launch checks are complete."}

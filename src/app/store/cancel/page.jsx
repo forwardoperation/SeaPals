@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Checkout canceled | SeaPals TCG",
-  description: "Return to your saved SeaPals cart or keep browsing the store.",
+  title: "Checkout canceled | SeaRealm TCG",
+  description: "Return to your saved SeaRealm cart or keep browsing the store.",
   robots: { index: false, follow: false },
 };
 

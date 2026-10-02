@@ -499,7 +499,7 @@ export async function createStripeCheckoutSession({
     "payment_intent_data[metadata][fulfillment_method]",
     fulfillmentOption.fulfillmentMethod
   );
-  form.set("payment_intent_data[description]", `SeaPals order ${order.orderNumber}`);
+  form.set("payment_intent_data[description]", `SeaRealm order ${order.orderNumber}`);
   if (fulfillmentOption.pickupLocation) {
     form.set("metadata[pickup_location]", fulfillmentOption.pickupLocation);
     form.set(

@@ -65,11 +65,11 @@ export const CHAMPIONS_WAKE_ACTION_IDS = Object.freeze({
 });
 
 const npcRoleDefinitions = [
-  { id: "mentor", purpose: "Introduces SeaPals, starter choice, and safe field practice." },
+  { id: "mentor", purpose: "Introduces SeaRealm, starter choice, and safe field practice." },
   { id: "local-guide", purpose: "Frames what has changed without supplying the answer." },
   { id: "field-partner", purpose: "Teaches one investigation tool through play." },
   { id: "resident", purpose: "Presents a practical constraint or common misconception." },
-  { id: "town-challenger", purpose: "Connects the local habitat to a SeaPals deck strategy." },
+  { id: "town-challenger", purpose: "Connects the local habitat to a SeaRealm deck strategy." },
   { id: "reflection-character", purpose: "Prompts an evidence-based explanation and later callback." },
   { id: "tournament-director", purpose: "Registers legal decks and explains the 30 VP bracket." },
   { id: "spectator", purpose: "Connects tournament play to the archipelago communities watching and learning together." },
@@ -3271,7 +3271,7 @@ const conversations = [
         "Excellent choice. This deck is yours for the aquarium project, so let's learn what its cards can do.",
       ],
       tutorialIntro: [
-        "I'm glad you're here. Before we design the aquarium exhibit, let's explore a complete SeaPals match together.",
+        "I'm glad you're here. Before we design the aquarium exhibit, let's explore a complete SeaRealm match together.",
         "I'll stay beside you as we read the board, build a dependable RP economy, use cards only when they improve our position, and save attacks for targets that make them worthwhile.",
         "We'll play to 26 VP and finish the core lesson by establishing a Coral Reef habitat, building School Density for a Filter Feeder, and supporting an Apex predator. The next strategic choice will stay highlighted, so you'll always know what we are building toward.",
       ],
@@ -3898,7 +3898,7 @@ const conversations = [
     lines: {
       intro: [
         "Welcome to Champion's Wake, Reefkeeper! I'm Director Amara Vela. Every community whose Tide Mark you earned helped raise this floating arena, and today they are cheering for you.",
-        "This is a three-round SeaPals bracket. Each duel is a complete 30 VP game, so your registered deck must be legal, owned, and ready to adapt across a long match.",
+        "This is a three-round SeaRealm bracket. Each duel is a complete 30 VP game, so your registered deck must be legal, owned, and ready to adapt across a long match.",
       ],
       guidance: [
         "Before registration, visit the Tide Mark display and review what each Field Note actually supports. The strongest answer is not one remedy for every habitat; it is a habit of matching evidence, relationships, uncertainty, and tradeoffs to the place in front of you.",
@@ -3912,7 +3912,7 @@ const conversations = [
       ],
       champion: [
         "Champion! You built more than a winning board. You kept asking what the evidence supported, what it could not prove, and what a careful next step would protect.",
-        "The SeaPals Championship Cup is yours. Join Dr. Ivo Kestrel in the Reflection Pavilion; the voyage has an ending, but every habitat's observation story continues.",
+        "The SeaRealm Championship Cup is yours. Join Dr. Ivo Kestrel in the Reflection Pavilion; the voyage has an ending, but every habitat's observation story continues.",
       ],
       postgame: [
         "Welcome back, Champion. Your bracket is complete, your registered list is archived, and the open sea lanes are yours to revisit for Field Notes, conversations, and rematches.",
@@ -3944,7 +3944,7 @@ const conversations = [
         "Well read! You kept adapting without treating one murky moment as the whole story. The semifinal berth is yours.",
       ],
       roundVictory: [
-        "You separated observation from explanation, then built a flexible SeaPals answer. Director Vela has recorded the quarterfinal exactly once.",
+        "You separated observation from explanation, then built a flexible SeaRealm answer. Director Vela has recorded the quarterfinal exactly once.",
       ],
       postgame: [
         "Champion or challenger, a changing estuary always rewards another careful comparison. I'd be glad to rematch when the postgame arena is open.",
@@ -4440,7 +4440,7 @@ const npcs = [
     sceneId: "champions-wake-registration-hall",
     roleId: "tournament-director",
     name: "Director Amara Vela",
-    title: "SeaPals Tournament Director",
+    title: "SeaRealm Tournament Director",
     color: "gold",
     crest: null,
     conversationId: "conversation-champions-wake-director",
@@ -4476,7 +4476,7 @@ const npcs = [
     sceneId: "champions-wake-arena",
     roleId: "town-challenger",
     name: "Sabine Rook",
-    title: "Defending SeaPals Champion",
+    title: "Defending SeaRealm Champion",
     color: "deep",
     crest: "Champion's Wake Crest",
     conversationId: "conversation-tournament-champion",
@@ -4792,7 +4792,7 @@ const fieldNotes = [
       "Drifter tracks and aligned reports can estimate a bounded search corridor for floating material, while wind, waves, buoyancy, and changing currents limit exact prediction and ownership claims.",
       "A predator-to-grazer-to-kelp pathway may fit one repeated local pattern without becoming the only driver of every kelp forest. Reference sites and physical conditions remain part of the test.",
       "Darkness, pressure, marine snow, and bioluminescence describe a measured deep route. They do not prove a vent, one food source, or one purpose for every light-producing organism.",
-      "The same SeaPals deck does not answer every board state. In both gameplay and ecosystem decisions, foundations, relationships, resources, timing, and revisable plans matter.",
+      "The same SeaRealm deck does not answer every board state. In both gameplay and ecosystem decisions, foundations, relationships, resources, timing, and revisable plans matter.",
     ],
     checklistTitle: "Evidence-to-action reflection",
     checklist: [
@@ -4885,7 +4885,7 @@ const questDefinitions = [
   ["quest-current-ghost-gear", "current-commons", "Currents and Ghost Gear", "dialogue-current-ghost-gear", "reward-current-fieldwork"],
   ["quest-kelpwatch-balance", "kelpwatch-island", "A Forest of Connections", "dialogue-kelpwatch-balance", "reward-kelpwatch-fieldwork"],
   ["quest-trenchlight-sensor", "trenchlight-station", "Sensor in the Dark", "dialogue-trenchlight-sensor", "reward-trenchlight-fieldwork"],
-  ["quest-champions-wake", "champions-wake", "The SeaPals Tournament", "dialogue-champions-wake", "reward-tournament-champion"],
+  ["quest-champions-wake", "champions-wake", "The SeaRealm Tournament", "dialogue-champions-wake", "reward-tournament-champion"],
 ];
 
 const quests = questDefinitions.map(([id, townId, title, dialogueId, rewardId]) => ({

@@ -7,7 +7,7 @@
 export const SIMULATOR_RULES = [
   {
     title: "How many players can play and recommended VP targets",
-    text: "SeaPals is designed for 2 to 4 players. A recommended full game uses a 30 VP target, while a quick game can use 10 VP. Players should agree on the target before play begins.",
+    text: "SeaRealm is designed for 2 to 4 players. A recommended full game uses a 30 VP target, while a quick game can use 10 VP. Players should agree on the target before play begins.",
   },
   {
     title: "Deck construction",

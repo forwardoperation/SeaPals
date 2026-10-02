@@ -58,7 +58,7 @@ function CreatureArtwork({ creature }) {
       {creature.hasArtwork ? (
         <Image
           src={creature.image}
-          alt={`${creature.name} SeaPals card`}
+          alt={`${creature.name} SeaRealm card`}
           width={240}
           height={336}
           sizes="(max-width: 640px) 42vw, (max-width: 1024px) 28vw, 230px"

@@ -7,11 +7,11 @@ import { CANONICAL_SITE_ORIGIN } from "@/lib/siteIdentity.mjs";
 
 export const metadata = {
   metadataBase: new URL(CANONICAL_SITE_ORIGIN),
-  title: "SeaPals TCG | Creation-Focused Family Card Game",
+  title: "SeaRealm TCG | Creation-Focused Family Card Game",
   description:
     "A fast, face-to-face marine-life strategy game for families who want fun, learning, and a clear Christian worldview.",
   openGraph: {
-    title: "SeaPals TCG | A family game with a world you can trust",
+    title: "SeaRealm TCG | A family game with a world you can trust",
     description:
       "Build living reefs, discover real ocean creatures, and bring siblings and friends back to the same table.",
     type: "website",
@@ -20,13 +20,13 @@ export const metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "SeaPals cards underwater with the message: A family game with a world you can trust.",
+        alt: "SeaRealm cards underwater with the message: A family game with a world you can trust.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SeaPals TCG | A family game with a world you can trust",
+    title: "SeaRealm TCG | A family game with a world you can trust",
     description:
       "Real marine life, face-to-face play, and a clear creation-focused worldview.",
     images: ["/og.png"],

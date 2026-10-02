@@ -100,6 +100,7 @@ const SYNONYM_CANONICAL = new Map(
 function normalize(value) {
   return String(value ?? "")
     .toLowerCase()
+    .replace(/\b(?:sea ?pals|sea ?realm)\b/g, "searealm")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
@@ -341,7 +342,7 @@ export function explainDieNotation(question) {
 
   return {
     title: `Dice notation: ${notation}`,
-    text: `${notation} means ${rollExplanation}.${modifierExplanation}${multiplierExplanation} The natural dice total can be any whole number from ${naturalMinimum} through ${naturalMaximum}. In SeaPals, use the final result for the damage, healing, attack, defense, or other effect named by the card.`,
+    text: `${notation} means ${rollExplanation}.${modifierExplanation}${multiplierExplanation} The natural dice total can be any whole number from ${naturalMinimum} through ${naturalMaximum}. In SeaRealm, use the final result for the damage, healing, attack, defense, or other effect named by the card.`,
     confidence: "high",
   };
 }

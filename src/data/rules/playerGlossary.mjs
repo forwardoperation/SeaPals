@@ -70,5 +70,5 @@ export const PLAYER_GLOSSARY = entries.map((entry) => ({
   keywords: [entry.category, "definition", "glossary"],
   source: "glossary",
   sourceHref: entry.category === "card-language" ? "/gallery" : "/instructions",
-  sourceLabel: `SeaPals glossary — ${entry.title}`,
+  sourceLabel: `SeaRealm glossary — ${entry.title}`,
 }));

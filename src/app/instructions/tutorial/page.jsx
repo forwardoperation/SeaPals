@@ -9,9 +9,9 @@ import {
 } from "./standaloneTutorialConfig.mjs";
 
 export const metadata = {
-  title: "Guided Interactive Tutorial | SeaPals TCG",
+  title: "Guided Interactive Tutorial | SeaRealm TCG",
   description:
-    "Learn SeaPals by playing Mr. Easterling's complete guided aquarium lesson.",
+    "Learn SeaRealm by playing Mr. Easterling's complete guided aquarium lesson.",
   alternates: { canonical: "/instructions/tutorial" },
 };
 

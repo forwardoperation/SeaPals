@@ -82,7 +82,7 @@ const HELP_BY_CHECKPOINT = Object.freeze({
   "tutorial-earn-vp": Object.freeze({
     message: "Victory Points measure the ecosystem you have built. Cards in play add VP automatically, including some relationship bonuses.",
     playerThought: "So attacking can disrupt an opponent, but my main race is still to build a healthy ecosystem that produces enough VP.",
-    encouragement: "Exactly right. SeaPals rewards relationships and planning as much as combat. Keep asking what each card contributes to the ecosystem as a whole.",
+    encouragement: "Exactly right. SeaRealm rewards relationships and planning as much as combat. Keep asking what each card contributes to the ecosystem as a whole.",
     action: "Watch your VP counter grow until you reach the tutorial goal shown on the scoreboard.",
   }),
 });
@@ -90,43 +90,43 @@ const HELP_BY_CHECKPOINT = Object.freeze({
 const CONDITION_HELP_BY_ID = Object.freeze({
   "abundant-sunlight": Object.freeze({
     title: "Begin by reading the water",
-    message: "In the ocean, sunlight powers photosynthesis in algae, seagrasses, and the symbiotic algae that help feed corals. How much light reaches a reef changes with depth, water clarity, weather, and season. In SeaPals, Abundant Sunlight simplifies that energy opportunity by raising both players' RP bank caps by 2 this round. The larger cap gives you more storage, but it does not add RP by itself.",
+    message: "In the ocean, sunlight powers photosynthesis in algae, seagrasses, and the symbiotic algae that help feed corals. How much light reaches a reef changes with depth, water clarity, weather, and season. In SeaRealm, Abundant Sunlight simplifies that energy opportunity by raising both players' RP bank caps by 2 this round. The larger cap gives you more storage, but it does not add RP by itself.",
     playerThought: "My bank can hold more this round, but I still collect only the amount shown below. I should plan from what I actually collected, not treat the empty space as though it were already RP.",
     encouragement: "Exactly so. Conditions change the rules around your plan; they do not replace careful counting. Notice the larger cap, then compare it with what you actually collected.",
   }),
   "clear-water": Object.freeze({
     title: "Ask exactly who is affected",
-    message: "In the ocean, clear water has fewer suspended particles, so light travels farther and animals can see one another more easily. That can change how predators and prey hunt or hide. In SeaPals, Clear Water simplifies that visibility shift by making Predator and Apex cards cost 1 more RP this round. Corals, other Fish and Invertebrates, and actions already in play keep their normal costs.",
+    message: "In the ocean, clear water has fewer suspended particles, so light travels farther and animals can see one another more easily. That can change how predators and prey hunt or hide. In SeaRealm, Clear Water simplifies that visibility shift by making Predator and Apex cards cost 1 more RP this round. Corals, other Fish and Invertebrates, and actions already in play keep their normal costs.",
     playerThought: "Then I should not treat this as a tax on every card. Arrow Crab and Porcupine Fish follow their printed costs because neither is a Predator or Apex.",
     encouragement: "Beautifully read. Conditions often look broad at first glance. Check the named card types, players, and duration before changing your plan.",
   }),
   "algae-bloom": Object.freeze({
     title: "A full hand has a limit",
-    message: "In the ocean, algae blooms are rapid increases in algae or phytoplankton. Not all blooms are harmful, but dense blooms can block light, and their decay can lower oxygen. In SeaPals, Algae Bloom models that crowded, stressed system with a seven-card hand limit this round. Complete each required draw, search, or recovery first. If your hand then has more than seven cards, choose cards from your entire hand to discard until seven remain.",
+    message: "In the ocean, algae blooms are rapid increases in algae or phytoplankton. Not all blooms are harmful, but dense blooms can block light, and their decay can lower oxygen. In SeaRealm, Algae Bloom models that crowded, stressed system with a seven-card hand limit this round. Complete each required draw, search, or recovery first. If your hand then has more than seven cards, choose cards from your entire hand to discard until seven remain.",
     playerThought: "If a draw takes me over seven cards, I can keep the cards that best support my plan and choose the rest to discard.",
     encouragement: "Exactly. The hand limit forces a difficult choice, but it does not make that choice for you. Compare your whole hand before deciding what to discard.",
   }),
   "murky-water": Object.freeze({
     title: "Conditions can create opportunities",
-    message: "In the ocean, murky water can contain suspended sediment, plankton, or other particles that reduce visibility; murky does not automatically mean polluted. Different species respond differently. In SeaPals, Murky Water models one possible advantage—predators approaching unseen—by reducing Predator and Apex play costs by 1 RP this round.",
+    message: "In the ocean, murky water can contain suspended sediment, plankton, or other particles that reduce visibility; murky does not automatically mean polluted. Different species respond differently. In SeaRealm, Murky Water models one possible advantage—predators approaching unseen—by reducing Predator and Apex play costs by 1 RP this round.",
     playerThought: "I should look at my actual hand before deciding whether this condition is good for me. A discount matters only if I can use the affected cards.",
     encouragement: "Precisely. Good strategy begins with evidence from this board, this hand, and this round—not a rule of thumb applied blindly.",
   }),
   "severe-coral-bleaching": Object.freeze({
     title: "Bleaching can weaken reef productivity",
-    message: "In the ocean, prolonged heat stress can cause reef-building corals to expel the symbiotic algae that supply much of their food and color. A bleached coral is stressed, not necessarily dead. In SeaPals, Severe Coral Bleaching models that lost productivity: heat-sensitive Corals remain in play and keep their slots, but they generate no RP this round.",
+    message: "In the ocean, prolonged heat stress can cause reef-building corals to expel the symbiotic algae that supply much of their food and color. A bleached coral is stressed, not necessarily dead. In SeaRealm, Severe Coral Bleaching models that lost productivity: heat-sensitive Corals remain in play and keep their slots, but they generate no RP this round.",
     playerThought: "The affected Coral still provides its slots, but I must count this round's smaller collection before deciding what the reef can afford.",
     encouragement: "Exactly. Environmental stress can change what an ecosystem can support even when its structure is still visible. Our earlier economy gives us enough resilience to establish a Creature School this round.",
   }),
   "krill-ball": Object.freeze({
     title: "A bloom can open a brief opportunity",
-    message: "In the ocean, currents and seasonal productivity can concentrate krill into dense swarms, creating a temporary food pulse for whales and other filter feeders. In SeaPals, Krill Bloom models that brief opportunity by lowering each player's next Filter Feeder School Density requirement by 150. The reduction can be used only once per player.",
+    message: "In the ocean, currents and seasonal productivity can concentrate krill into dense swarms, creating a temporary food pulse for whales and other filter feeders. In SeaRealm, Krill Bloom models that brief opportunity by lowering each player's next Filter Feeder School Density requirement by 150. The reduction can be used only once per player.",
     playerThought: "Whale Shark normally needs 180 School Density. After the 150-point reduction, White Grunt's 30 is exactly enough; Whale Shark commits all of that capacity, filling the School's bucket until Whale Shark leaves or another School adds capacity.",
     encouragement: "That is the calculation. Conditions can change whether a play is legal, so compare the printed requirement with the active reduction before spending RP.",
   }),
   "bleak-overcast": Object.freeze({
     title: "A smaller bank changes the final budget",
-    message: "In the ocean, cloud cover reduces incoming sunlight and can temporarily limit photosynthesis near the surface, although the effect depends on duration and habitat. In SeaPals, Bleak Overcast models a smaller energy window by lowering both players' RP bank caps by 2 this round and discarding RP above the new cap. It changes storage, not card costs.",
+    message: "In the ocean, cloud cover reduces incoming sunlight and can temporarily limit photosynthesis near the surface, although the effect depends on duration and habitat. In SeaRealm, Bleak Overcast models a smaller energy window by lowering both players' RP bank caps by 2 this round and discarding RP above the new cap. It changes storage, not card costs.",
     playerThought: "I should check the reduced cap before planning the turn. The reef was built ahead of time, so its remaining 6 RP can still support Hammerhead.",
     encouragement: "Precisely. A resilient plan leaves room for changing conditions. We can use a zero-cost Support to find the Apex, then spend the bank on the card that ends the lesson.",
   }),

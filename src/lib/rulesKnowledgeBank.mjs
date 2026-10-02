@@ -271,8 +271,8 @@ function normalizeRule(rule, _index, source) {
   const normalizedSource = rule.source ?? source;
   const sourceLabels = {
     current: "How to Play",
-    glossary: "SeaPals glossary",
-    knowledge: "SeaPals rules reference",
+    glossary: "SeaRealm glossary",
+    knowledge: "SeaRealm rules reference",
     ruling: "Official ruling",
   };
   return {
@@ -282,7 +282,7 @@ function normalizeRule(rule, _index, source) {
     aliases: rule.aliases ?? [],
     keywords: rule.keywords ?? [],
     source: normalizedSource,
-    sourceLabel: rule.sourceLabel ?? `${sourceLabels[normalizedSource] ?? "SeaPals source"} — ${rule.title}`,
+    sourceLabel: rule.sourceLabel ?? `${sourceLabels[normalizedSource] ?? "SeaRealm source"} — ${rule.title}`,
     sourceHref: rule.sourceHref ?? "/instructions",
   };
 }
