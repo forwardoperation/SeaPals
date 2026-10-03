@@ -101,7 +101,7 @@ function ProgressBar({ value }) {
 
 function ArtProgress({ categories }) {
   const countsAsPrerelease = (image, zoneSlug) =>
-    zoneSlug === "deep" || image.card?.zone === "deep" || image.card?.prerelease;
+    zoneSlug === "deep" || image.card?.zone === "deep" || image.prerelease;
 
   const categoryStats = categories
     .map((zone) => {
@@ -324,8 +324,8 @@ function TypeSection({ title, slug, images }) {
                   <Image
                     src={image.src}
                     alt={cardDisplayName(image.card, image.name)}
-                    width={400}
-                    height={560}
+                    width={image.width}
+                    height={image.height}
                     loading="lazy"
                     className="h-auto w-full drop-shadow-lg"
                   />

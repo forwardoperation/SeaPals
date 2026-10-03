@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "audit:rules": "node scripts/audit-rules-chat.cjs --seed=0x5ea5a1 --enforce && node scripts/audit-rules-chat.cjs --seed=0xc0a1be --enforce && node scripts/audit-rules-chat.cjs --seed=0x0cea11 --enforce",
-    "build": "next build",
+    "build": "npm run gallery:check && next build",
+    "gallery:check": "node scripts/check-gallery-images.mjs",
     "test": "node --test \"src/**/*.test.mjs\"",
     "test:adventure": "node --test src/app/adventure/*.test.mjs src/lib/decks/*.test.mjs src/lib/adventureAccount.test.mjs src/lib/adventureAuthorization.test.mjs src/lib/adventureNewsletterOptIn.test.mjs src/lib/adventurePendingAuth.test.mjs src/lib/newsletter.test.mjs src/lib/sameOriginMutation.test.mjs",
     "test:simulator": "node --test src/app/simulator/*.test.mjs src/components/rules/*.test.mjs",
@@ -12,7 +13,7 @@
     "test:api": "node --test \"src/app/api/**/*.test.mjs\"",
     "dev": "next dev",
     "start": "next start",
-    "cloudflare:build": "next build --webpack && opennextjs-cloudflare build --skipNextBuild",
+    "cloudflare:build": "npm run gallery:check && next build --webpack && opennextjs-cloudflare build --skipNextBuild",
     "store:check": "node scripts/check-store-readiness.mjs",
     "store:check:launch": "node scripts/check-store-readiness.mjs --launch-catalog",
     "store:check:online": "node scripts/check-store-readiness.mjs --online",
