@@ -1,18 +1,20 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Simulator from "@/app/simulator/Simulator";
+import SimulatorV2Experience from "@/app/simulator/SimulatorV2Experience";
 
-export default function StandaloneTutorial({ storyModeData, returnPath, previewExperience = false }) {
+export default function StandaloneTutorial({ initialDeckId, returnPath }) {
   const router = useRouter();
   const returnToInstructions = useCallback(() => {
     router.replace(returnPath);
   }, [returnPath, router]);
-  const storyMode = useMemo(
-    () => ({ ...storyModeData, onExit: returnToInstructions }),
-    [returnToInstructions, storyModeData],
-  );
 
-  return <Simulator storyMode={storyMode} previewExperience={previewExperience} />;
+  return (
+    <SimulatorV2Experience
+      initialDeckId={initialDeckId}
+      initialTutorial
+      onExitTutorial={returnToInstructions}
+    />
+  );
 }

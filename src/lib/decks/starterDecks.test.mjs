@@ -178,7 +178,6 @@ test("revised Oceanic cards and habitats expose their printed metadata", () => {
 
   const oceanJake = cardsById["ocean-jake"];
   assert.equal(oceanJake.cost.rp, 0);
-  assert.equal(oceanJake.hideFromGallery, true);
   assert.equal(oceanJake.destinationAfterUse, "lost");
   assert.deepEqual(oceanJake.effects, [
     {
@@ -218,6 +217,7 @@ test("gallery exposes revised card art and complete rule text", async () => {
     "clubfinger-coral-base",
     "clubfinger-coral-stage-1",
     "sea-urchin",
+    "ocean-jake",
   ]) {
     assert.equal(byId[cardId]?.hasImage, true, `${cardId} should show its card art`);
   }
@@ -226,7 +226,7 @@ test("gallery exposes revised card art and complete rule text", async () => {
   assert.match(byId["loggerhead-sea-turtle"].card.onPlay[0].text, /20 HP/i);
   assert.match(byId["open-ocean"].card.maintenance[0].text, /10 HP damage/i);
   assert.equal(byId.halfbeak.card.schoolDensity, 10);
-  assert.equal(byId["ocean-jake"], undefined, "Ocean Jake should stay out of the gallery for now");
+  assert.equal(byId["ocean-jake"].name, "Ocean Jake");
 });
 
 test("every planned story encounter references a legal playable opponent deck", () => {

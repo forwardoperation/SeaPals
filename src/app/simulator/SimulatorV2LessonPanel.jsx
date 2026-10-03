@@ -346,7 +346,7 @@ function LessonModal({ mode, title, description, children, onExit, className }) 
           <span className={styles.kicker}>Mr. Easterling</span>
           <h2 ref={headingRef} tabIndex={-1} id={titleId}>{title}</h2>
         </div>
-        {onExit ? <button type="button" className={styles.closeButton} onClick={onExit} aria-label={mode === "intro" ? "Return to the lesson list" : "Close lessons and return to game"}>×</button> : null}
+        {onExit ? <button type="button" className={styles.closeButton} onClick={onExit} aria-label={mode === "intro" ? "Return to the lesson list" : "Close lessons"}>×</button> : null}
       </div>
       {description ? <p id={descriptionId} className={styles.modalDescription}>{description}</p> : null}
       {children}

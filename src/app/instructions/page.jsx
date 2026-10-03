@@ -3,11 +3,12 @@ import Link from "next/link";
 import AskFinnButton from "./AskFinnButton";
 import Faq from "./Faq";
 import InstructionsNav from "./InstructionsNav";
+import { SIMULATOR_V2_LESSONS } from "@/app/simulator/simulatorV2Lessons.mjs";
 
 export const metadata = {
   title: "How to Play SeaRealm | Beginner Guide & Complete Rules",
   description:
-    "Learn SeaRealm TCG through a guided interactive lesson, then use the complete rules, examples, glossary, and FAQ as a reference.",
+    "Learn SeaRealm TCG through guided interactive simulator lessons, then use the complete rules, examples, glossary, and FAQ as a reference.",
   alternates: { canonical: "/instructions" },
 };
 
@@ -261,20 +262,20 @@ function SimulatorPromo() {
             Start here · Learn by doing
           </p>
           <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-tight md:text-5xl">
-            Play the lesson before you read the rulebook
+            Play the lessons before you read the rulebook
           </h2>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 md:text-lg md:leading-8">
-            Mr. Easterling stays beside you through a complete scripted aquarium
-            lesson. He introduces the board, highlights each exact control, explains
-            why a move matters, and helps you build from your first Foundation to a
-            26 VP Apex finish.
+            Mr. Easterling guides you through hands-on simulator lessons. Start
+            with your first reef, practice interactions and attacks, then learn
+            Apex creatures, Support combos, and open-water ecosystems. Choose a
+            lesson and replay it whenever you like.
           </p>
           <ul className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-cyan-50 md:text-sm">
             {[
-              "Guided board tour",
-              "Prepared teaching draws",
+              "Step-by-step lessons",
+              "Replay any lesson",
               "Supports, Actions, and attacks",
-              "Build through an Apex",
+              "Reefs and open water",
             ].map((benefit) => (
               <li key={benefit} className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2">
                 <span aria-hidden="true" className="text-emerald-300">✓</span>
@@ -335,7 +336,7 @@ export default function InstructionsPage() {
               How to get started with SeaRealm
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 md:text-lg md:leading-8">
-              Begin with Mr. Easterling&apos;s hands-on aquarium lesson. Once you
+              Begin with Mr. Easterling&apos;s hands-on simulator lessons. Once you
               have played through the turn flow yourself, use the written rules below
               whenever a card or interaction raises a question.
             </p>
@@ -364,8 +365,8 @@ export default function InstructionsPage() {
                 <dd className="font-black text-white">2–4</dd>
               </div>
               <div className="flex items-baseline gap-2">
-                <dt className="text-slate-400">Guided lesson</dt>
-                <dd className="font-black text-white">26 VP</dd>
+                <dt className="text-slate-400">Guided lessons</dt>
+                <dd className="font-black text-white">{SIMULATOR_V2_LESSONS.length}</dd>
               </div>
               <div className="flex items-baseline gap-2">
                 <dt className="text-slate-400">Full game</dt>

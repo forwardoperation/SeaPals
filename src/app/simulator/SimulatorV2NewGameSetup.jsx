@@ -223,7 +223,7 @@ export default function SimulatorV2NewGameSetup({
                 </button>
               ) : <Link
                 href={{
-                  pathname: "/simulator-v2",
+                  pathname: "/simulator",
                   query: { deck: playerDeckId, tutorial: "1" },
                 }}
                 className={styles.tutorialButton}

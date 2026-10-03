@@ -1,6 +1,9 @@
 # Simulator opponent strategy
 
-Simulator V2 and the original simulator share `src/app/simulator/Simulator.jsx`.
+Simulator V2 is the official simulator at `/simulator`; `/simulator-v2` remains
+a compatible alias. The instructions tutorial uses its lesson chooser, while
+Reefbound uses the same V2 board in `src/app/simulator/Simulator.jsx` with its
+campaign tutorial checkpoints, deck snapshots, and duel-result callbacks.
 Difficulty changes decision policy and action budgets, never card legality or dice.
 
 | Difficulty | Permanent plays | Optional actions | Combat decisions |

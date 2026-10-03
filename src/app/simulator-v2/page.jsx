@@ -1,21 +1,2 @@
-import SimulatorV2Experience from "@/app/simulator/SimulatorV2Experience";
-import { getValidSimulatorDeck } from "@/app/simulator/simulatorDeckRoute.mjs";
-
-export const metadata = {
-  title: "Simulator V2 Preview | SeaRealm TCG",
-  description: "A work-in-progress preview of the redesigned SeaRealm simulator.",
-  robots: { index: false, follow: false },
-};
-
-export default async function SimulatorV2Page({ searchParams }) {
-  const params = await searchParams;
-  const initialDeckId = getValidSimulatorDeck(params?.deck)?.id ?? null;
-
-  return (
-    <SimulatorV2Experience
-      key={initialDeckId ?? "default"}
-      initialDeckId={initialDeckId}
-      initialTutorial={params?.tutorial === "1"}
-    />
-  );
-}
+// Keep existing V2 bookmarks working with the official simulator and canonical URL.
+export { default, metadata } from "../simulator/page";

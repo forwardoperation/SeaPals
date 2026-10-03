@@ -4582,7 +4582,7 @@ function getSlotConnectorStyle(position) {
 export default function Simulator({
   storyMode = null,
   initialDeckId = null,
-  previewExperience = false,
+  previewExperience = true,
   accessibilitySettings = null,
   onOpenAccessibilitySettings = null,
   onStartTutorial = null,
@@ -29257,7 +29257,7 @@ export default function Simulator({
                       <span className="mt-1 block">Learn the board and each turn by playing Mr. Easterling&apos;s guided aquarium lesson. Your selected trial deck will still be waiting when you return.</span>
                       <Link
                         href={{
-                          pathname: previewExperience ? "/instructions/tutorial-v2" : "/instructions/tutorial",
+                          pathname: "/instructions/tutorial",
                           query: { returnDeck: selectedDeckId },
                         }}
                         className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 py-2.5 text-sm font-black text-slate-950 transition hover:bg-cyan-200 focus:outline-none focus:ring-4 focus:ring-cyan-100/70"

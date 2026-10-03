@@ -8,7 +8,7 @@ const tutorialV2PageSource = (await readFile(new URL("../instructions/tutorial-v
   .replaceAll("\r\n", "\n");
 const simulatorV2ExperienceSource = (await readFile(new URL("./SimulatorV2Experience.jsx", import.meta.url), "utf8"))
   .replaceAll("\r\n", "\n");
-const standaloneTutorialConfigSource = (await readFile(new URL("../instructions/tutorial/standaloneTutorialConfig.mjs", import.meta.url), "utf8"))
+const adventureSource = (await readFile(new URL("../adventure/AdventureGame.jsx", import.meta.url), "utf8"))
   .replaceAll("\r\n", "\n");
 
 function sourceSection(source, startMarker, endMarker) {
@@ -32,11 +32,11 @@ test("every V2 match conceals the rival setup card for the entire setup phase", 
   );
 });
 
-test("V2 tutorial entry keeps the real preview board covered by setup secrecy", () => {
+test("V2 tutorial entry and Reefbound keep the real board covered by setup secrecy", () => {
   assert.match(
     tutorialV2PageSource,
-    /redirect\(`\/simulator-v2\?tutorial=1/,
-    "the former tutorial-v2 route should enter lessons on the simulator-v2 route",
+    /redirect\(`\/simulator\?tutorial=1/,
+    "the former tutorial-v2 route should enter lessons on the official simulator route",
   );
   assert.match(
     simulatorV2ExperienceSource,
@@ -44,9 +44,9 @@ test("V2 tutorial entry keeps the real preview board covered by setup secrecy", 
     "the lesson runtime should use the real preview board with its setup secrecy guard",
   );
   assert.match(
-    standaloneTutorialConfigSource,
-    /tutorial:\s*\{[\s\S]*?scriptedDecks:\s*true/,
-    "the regression fixture should continue to model the scripted tutorial that exposed its rival foundation",
+    adventureSource,
+    /tutorial:\s*\{[\s\S]*?scriptedDecks:\s*gameSave\?\.tutorial\?\.status !== "complete"/,
+    "Reefbound's unfinished tutorial still uses scripted setup and must conceal the rival foundation",
   );
 
   const scriptedTutorialOpeningToss = {

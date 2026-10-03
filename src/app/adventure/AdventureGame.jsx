@@ -8138,6 +8138,7 @@ export default function AdventureGame({
       <div inert={settingsOpen || undefined} aria-hidden={settingsOpen || undefined}>
         <Simulator
         key={`reefbound-${trainer.encounterId}-${activeDuelDeckSnapshot.fingerprint}`}
+        previewExperience
         accessibilitySettings={gameSave?.settings}
         onOpenAccessibilitySettings={() => setSettingsOpen(true)}
         storyMode={{

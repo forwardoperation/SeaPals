@@ -59,10 +59,17 @@ test("all 19 updated cards render their authored artwork in the gallery", async 
     assert.equal(entry.hasImage, true, `${cardId} should not render Coming Soon`);
   }
 
-  assert.equal(galleryCards.get("cleaner-shrimp").src, "/images/cards/invertebrates/Reef/Cleaner Shrimp.png");
-  assert.equal(galleryCards.get("frogfish").src, "/images/cards/fish/Reef/Frogfish.png");
-  assert.equal(galleryCards.get("porcupine-fish").src, "/images/cards/fish/Reef/Porcupinefish.png");
-  assert.equal(galleryCards.get("gulper-eel").src, "/images/cards/predator/Deep/gulper-eel.png");
+  const expectedArtworkPaths = {
+    "cleaner-shrimp": "/images/cards/invertebrates/Reef/Cleaner Shrimp.png",
+    "frogfish": "/images/cards/fish/Reef/Frogfish.png",
+    "porcupine-fish": "/images/cards/fish/Reef/Porcupinefish.png",
+    "gulper-eel": "/images/cards/predator/Deep/gulper-eel.png",
+  };
+  for (const [cardId, expectedPath] of Object.entries(expectedArtworkPaths)) {
+    // Artwork identity is the path; its cache version changes when the image does.
+    const artworkUrl = new URL(galleryCards.get(cardId).src, "https://searealm.test");
+    assert.equal(decodeURIComponent(artworkUrl.pathname), expectedPath, `${cardId} should use its authored artwork`);
+  }
 });
 
 test("updated Reef cards preserve their printed targets, immunity, and destinations", () => {

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 export const metadata = {
   title: "Guided Interactive Tutorial | SeaRealm TCG",
   description:
-    "Learn SeaRealm by playing Mr. Easterling's complete guided aquarium lesson.",
+    "Learn SeaRealm with Mr. Easterling's guided simulator lessons.",
   alternates: { canonical: "/instructions/tutorial" },
 };
 

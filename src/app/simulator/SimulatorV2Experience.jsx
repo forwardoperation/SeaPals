@@ -15,7 +15,7 @@ const {
 } = lessonCurriculum;
 const SIMULATOR_V2_LESSON_MODULES = lessonCurriculum.SIMULATOR_V2_LESSON_MODULES ?? [];
 
-export default function SimulatorV2Experience({ initialDeckId, initialTutorial = false }) {
+export default function SimulatorV2Experience({ initialDeckId, initialTutorial = false, onExitTutorial = null }) {
   const [lessonId, setLessonId] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const [panel, setPanel] = useState(initialTutorial ? "chooser" : null);
@@ -95,7 +95,7 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
           feedback={lesson?.completion}
           progress={{ completedLessonIds }}
           onSelect={selectLesson}
-          onExit={panel === "intro" ? () => setPanel("chooser") : returnToSimulator}
+          onExit={panel === "intro" ? () => setPanel("chooser") : onExitTutorial ?? returnToSimulator}
           onReplay={lesson ? () => selectLesson(lesson.id) : null}
           onNext={panel === "intro"
             ? beginLesson

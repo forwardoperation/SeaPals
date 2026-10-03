@@ -142,7 +142,7 @@ test("the normal V2 opening screen keeps deck setup primary and offers a guided 
   assert.match(tutorialAction, /type="button"/);
   assert.match(tutorialAction, /onClick=\{\(\) => onTutorial\(playerDeckId\)\}/);
   assert.match(tutorialFallback, /^<Link\b/);
-  assert.match(tutorialFallback, /pathname:\s*"\/simulator-v2"/);
+  assert.match(tutorialFallback, /pathname:\s*"\/simulator"/);
   assert.match(tutorialFallback, /query:\s*\{\s*deck:\s*playerDeckId,\s*tutorial:\s*"1"\s*\}/);
   assert.doesNotMatch(tutorialAction, /type="submit"/);
   assert.doesNotMatch(tutorialFallback, /type="submit"/);

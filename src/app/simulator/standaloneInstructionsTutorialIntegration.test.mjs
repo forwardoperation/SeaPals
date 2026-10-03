@@ -3,14 +3,6 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { resolveAdventureTutorial } from "../adventure/adventureContent.mjs";
-import {
-  STANDALONE_TUTORIAL_ID,
-  STANDALONE_TUTORIAL_PLAYER_DECK_ID,
-  STANDALONE_TUTORIAL_RETURN_PATH,
-  createStandaloneTutorialStoryModeData,
-} from "../instructions/tutorial/standaloneTutorialConfig.mjs";
-import { SCRIPTED_TUTORIAL_FINISH_PLAN } from "./tutorialScenario.mjs";
 
 const filename = fileURLToPath(import.meta.url);
 const simulatorDirectory = path.dirname(filename);
@@ -20,81 +12,61 @@ async function readAppSource(...segments) {
   return readFile(path.join(appDirectory, ...segments), "utf8");
 }
 
-function collectFunctions(value, currentPath = "storyMode", found = []) {
-  if (typeof value === "function") {
-    found.push(currentPath);
-    return found;
-  }
-  if (!value || typeof value !== "object") return found;
-  for (const [key, nestedValue] of Object.entries(value)) {
-    collectFunctions(nestedValue, `${currentPath}.${key}`, found);
-  }
-  return found;
-}
-
-test("instructions tutorial reuses the canonical authored opening lesson", () => {
-  const authoredTutorial = resolveAdventureTutorial(STANDALONE_TUTORIAL_ID);
-  const storyMode = createStandaloneTutorialStoryModeData();
-
-  assert.equal(storyMode.encounterId, authoredTutorial.practiceEncounter.id);
-  assert.equal(storyMode.opponentId, authoredTutorial.mentor.id);
-  assert.equal(storyMode.opponentDeckId, authoredTutorial.practiceEncounter.opponentDeckId);
-  assert.equal(storyMode.victoryTarget, authoredTutorial.victoryTarget);
-  assert.equal(storyMode.victoryTarget, SCRIPTED_TUTORIAL_FINISH_PLAN.victoryTarget);
-  assert.equal(storyMode.difficulty, authoredTutorial.practiceEncounter.difficulty);
-  assert.equal(storyMode.opponentName, authoredTutorial.mentor.name);
-  assert.equal(storyMode.playerDeckId, STANDALONE_TUTORIAL_PLAYER_DECK_ID);
-  assert.equal(storyMode.playerDeckId, "coral-garden");
-  assert.equal(storyMode.returnLabel, "Instructions");
-  assert.equal(storyMode.tutorial.scriptedDecks, true);
-  assert.deepEqual(
-    storyMode.tutorial.contract.checkpoints.map(({ id, actionType }) => ({ id, actionType })),
-    authoredTutorial.checkpoints.map(({ id, actionType }) => ({ id, actionType })),
-  );
-  assert.deepEqual(JSON.parse(JSON.stringify(storyMode)), storyMode);
-});
-
-test("standalone tutorial is isolated from adventure saves and only adds a return callback", async () => {
-  const storyMode = createStandaloneTutorialStoryModeData();
-  assert.deepEqual(collectFunctions(storyMode), []);
-  assert.equal("onResult" in storyMode, false);
-  assert.equal("onVictory" in storyMode, false);
-  assert.equal("onDefeat" in storyMode, false);
-  assert.equal("initialProgress" in storyMode.tutorial, false);
-  assert.equal("onCheckpoint" in storyMode.tutorial, false);
-  assert.equal("onProgress" in storyMode.tutorial, false);
-  assert.equal("onRetry" in storyMode.tutorial, false);
-
+test("instructions opens V2 lessons with an exit back to instructions or the selected deck trial", async () => {
+  const pageSource = await readAppSource("instructions", "tutorial", "page.jsx");
   const clientSource = await readAppSource("instructions", "tutorial", "StandaloneTutorial.jsx");
-  assert.match(clientSource, /<Simulator storyMode=\{storyMode\}/);
+  const experienceSource = await readAppSource("simulator", "SimulatorV2Experience.jsx");
+
+  assert.match(pageSource, /getValidSimulatorDeck\(params\?\.returnDeck\)/);
+  assert.match(pageSource, /createSimulatorDeckHref\(returnDeck\?\.id\) \?\? "\/instructions#learn-by-doing"/);
+  assert.match(pageSource, /initialDeckId=\{returnDeck\?\.id \?\? null\}/);
+  assert.match(clientSource, /<SimulatorV2Experience[\s\S]*?initialDeckId=\{initialDeckId\}[\s\S]*?initialTutorial[\s\S]*?onExitTutorial=\{returnToInstructions\}/);
   assert.match(clientSource, /router\.replace\(returnPath\)/);
+  assert.match(experienceSource, /useState\(initialTutorial \? "chooser" : null\)/);
+  assert.match(experienceSource, /onExit=\{panel === "intro" \? \(\) => setPanel\("chooser"\) : onExitTutorial \?\? returnToSimulator\}/);
   assert.doesNotMatch(
     clientSource,
-    /adventureStorage|adventureOnboarding|recordTutorialCheckpoint|recordPracticeDuelResult|localStorage|sessionStorage/,
+    /adventureStorage|adventureOnboarding|recordTutorialCheckpoint|recordPracticeDuelResult|storyModeData|localStorage|sessionStorage/,
   );
-  assert.equal(STANDALONE_TUTORIAL_RETURN_PATH, "/instructions#learn-by-doing");
 });
 
-test("V2 tutorial entry uses the real simulator preview without changing canonical routes", async () => {
-  const [simulatorPreview, simulatorExperience, tutorialPreview, tutorialClient, canonicalSimulator] = await Promise.all([
+test("the official simulator and existing V2 bookmarks share the V2 board and lesson runtime", async () => {
+  const [simulatorAlias, simulatorExperience, tutorialPreview, canonicalSimulator] = await Promise.all([
     readAppSource("simulator-v2", "page.jsx"),
     readAppSource("simulator", "SimulatorV2Experience.jsx"),
     readAppSource("instructions", "tutorial-v2", "page.jsx"),
-    readAppSource("instructions", "tutorial", "StandaloneTutorial.jsx"),
     readAppSource("simulator", "page.jsx"),
   ]);
 
-  assert.match(simulatorPreview, /<SimulatorV2Experience[\s\S]*initialDeckId=\{initialDeckId\}/);
-  assert.match(simulatorPreview, /initialTutorial=\{params\?\.tutorial === "1"\}/);
+  assert.match(simulatorAlias, /export \{ default, metadata \} from "\.\.\/simulator\/page"/);
+  assert.match(canonicalSimulator, /<SimulatorV2Experience[\s\S]*initialDeckId=\{initialDeckId\}/);
+  assert.match(canonicalSimulator, /initialTutorial = params\?\.tutorial === "1"/);
+  assert.match(canonicalSimulator, /initialTutorial=\{initialTutorial\}/);
+  assert.match(canonicalSimulator, /canonical: "\/simulator"/);
+  assert.doesNotMatch(canonicalSimulator, /Preview|work-in-progress|index: false/);
   assert.match(simulatorExperience, /<Simulator\b[\s\S]*previewExperience/);
   assert.match(simulatorExperience, /createSimulatorV2LessonRuntime\(lesson\.id, \{ completedLessonIds \}\)/);
   assert.match(simulatorExperience, /tutorial:\s*runtime/);
   assert.match(tutorialPreview, /getValidSimulatorDeck\(params\?\.returnDeck\)/);
-  assert.match(tutorialPreview, /redirect\(`\/simulator-v2\?tutorial=1/);
+  assert.match(tutorialPreview, /redirect\(`\/simulator\?tutorial=1/);
   assert.match(tutorialPreview, /&deck=\$\{encodeURIComponent\(deck\.id\)\}/);
   assert.doesNotMatch(tutorialPreview, /<StandaloneTutorial|<TutorialV2Course/);
-  assert.match(tutorialClient, /<Simulator storyMode=\{storyMode\} previewExperience=\{previewExperience\}/);
-  assert.doesNotMatch(canonicalSimulator, /previewExperience/);
+});
+
+test("Reefbound uses the V2 board while retaining its campaign duel and tutorial contract", async () => {
+  const adventure = await readAppSource("adventure", "AdventureGame.jsx");
+  const simulator = await readAppSource("simulator", "Simulator.jsx");
+  const duel = adventure.slice(adventure.indexOf("<Simulator"), adventure.indexOf("const baseConversationTrainer"));
+
+  assert.match(simulator, /previewExperience = true/);
+  assert.match(duel, /\bpreviewExperience\s+accessibilitySettings=\{gameSave\?\.settings\}/);
+  assert.match(duel, /playerDeckSnapshot: activeDuelDeckSnapshot/);
+  assert.match(duel, /initialProgress: gameSave\?\.tutorial/);
+  assert.match(duel, /onCheckpoint: recordSimulatorTutorialCheckpoint/);
+  assert.match(duel, /onExit: \(\) => exitDuel\(activeTrainerId\)/);
+  assert.match(duel, /onResult: \(result\) => recordDuelResult\(activeTrainerId, result\)/);
+  assert.match(simulator, /simulatorResumeEnabled = Boolean\(previewExperience && !isStoryMode && !tutorialRuntime\)/);
+  assert.match(simulator, /simulatorAnalyticsEnabled = Boolean\(previewExperience && !isStoryMode && !tutorialRuntime\)/);
 });
 
 test("learn by doing appears before the written rules and legacy tutorial links redirect", async () => {

@@ -45,7 +45,7 @@ test("the simulator page preselects only a validated player deck and story mode 
 
   assert.match(pageSource, /await searchParams/);
   assert.match(pageSource, /getValidSimulatorDeck\(params\?\.deck\)\?\.id \?\? null/);
-  assert.match(pageSource, /key=\{initialDeckId \?\? "default"\}/);
+  assert.match(pageSource, /key=\{`\$\{initialDeckId \?\? "default"\}:\$\{initialTutorial \? "tutorial" : "match"\}`\}/);
   assert.match(pageSource, /initialDeckId=\{initialDeckId\}/);
   assert.match(simulatorSource, /normalInitialDeckId = resolveSimulatorDeckId\(initialDeckId\)/);
   assert.match(
@@ -82,8 +82,8 @@ test("the guided tutorial preserves a validated selected deck as its return targ
 
   assert.match(tutorialPageSource, /getValidSimulatorDeck\(params\?\.returnDeck\)/);
   assert.match(tutorialPageSource, /createSimulatorDeckHref\(returnDeck\?\.id\)/);
-  assert.match(tutorialPageSource, /\? `\$\{returnDeckName\} Trial` : "Instructions"/);
-  assert.match(simulatorSource, /pathname: previewExperience \? "\/instructions\/tutorial-v2" : "\/instructions\/tutorial"/);
+  assert.match(tutorialPageSource, /initialDeckId=\{returnDeck\?\.id \?\? null\}/);
+  assert.match(simulatorSource, /pathname: "\/instructions\/tutorial"/);
   assert.match(simulatorSource, /query: \{ returnDeck: selectedDeckId \}/);
   assert.match(simulatorSource, /Start guided tutorial/);
 });
