@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getGalleryData } from "@/lib/gallery";
+import { getGalleryArtProgress } from "@/lib/galleryData.mjs";
 import { formatCreatureType } from "@/data/cards/types";
 import { encyclopediaSlugByCardId } from "@/data/encyclopedia";
 
@@ -100,40 +101,8 @@ function ProgressBar({ value }) {
 }
 
 function ArtProgress({ categories }) {
-  const countsAsPrerelease = (image, zoneSlug) =>
-    zoneSlug === "deep" || image.card?.zone === "deep" || image.prerelease;
-
-  const categoryStats = categories
-    .map((zone) => {
-      const total = zone.images.length;
-      const complete = zone.images.filter(
-        (image) => image.hasImage && !countsAsPrerelease(image, zone.slug)
-      ).length;
-      const percent = total > 0 ? Math.round((complete / total) * 100) : 0;
-
-      return {
-        ...zone,
-        total,
-        complete,
-        percent,
-      };
-    })
-    .filter((category) => category.total > 0);
-
-  const uniqueCards = new Map();
-
-  for (const category of categories) {
-    for (const image of category.images) {
-      uniqueCards.set(image.cardId, image);
-    }
-  }
-
-  const totalCards = uniqueCards.size;
-  const completedCards = Array.from(uniqueCards.values()).filter((image) => {
-    return image.hasImage && !countsAsPrerelease(image);
-  }).length;
-  const overallPercent =
-    totalCards > 0 ? Math.round((completedCards / totalCards) * 100) : 0;
+  const { categoryStats, totalCards, completedCards, overallPercent } =
+    getGalleryArtProgress(categories);
 
   return (
     <section className="rounded-[2rem] border border-cyan-100 bg-white/85 p-8 shadow-sm backdrop-blur">
@@ -146,8 +115,9 @@ function ArtProgress({ categories }) {
             The SeaRealm set is {overallPercent}% illustrated
           </h2>
           <p className="mt-3 text-base leading-relaxed text-slate-600 md:text-lg">
-            New card art is landing zone by zone as the game swims toward
-            a complete first set.
+            Progress follows the master set list, with one entry per card and
+            stage. Cards marked Prerelease and cards awaiting artwork do not
+            count as complete.
           </p>
         </div>
 
@@ -201,6 +171,24 @@ function ComingSoonTile({ name }) {
   );
 }
 
+function SetMetadata({ image }) {
+  return (
+    <div className="mt-3 space-y-1 text-slate-600">
+      <MetadataRow label="Set" value={image.setTitle} />
+      <MetadataRow label="Stage" value={image.stageLabel} />
+      <MetadataRow
+        label="Printings"
+        value={image.printings.map(({ number, rarity }) =>
+          `${number}/${image.totalPrintings} (${rarity})`
+        ).join(", ")}
+      />
+      {image.prerelease && (
+        <p className="font-semibold text-amber-700">Prerelease — artwork in progress</p>
+      )}
+    </div>
+  );
+}
+
 function CardMetadata({ image }) {
   const card = image.card;
 
@@ -208,20 +196,11 @@ function CardMetadata({ image }) {
     return (
       <div className="mt-3 rounded-2xl border border-cyan-100 bg-white/90 p-4 text-sm shadow-sm">
         <h3 className="text-base font-semibold text-slate-900">{image.name}</h3>
+        <SetMetadata image={image} />
       </div>
     );
   }
 
-  const setLabel = card.set?.name
-    ? [
-        card.set.name,
-        card.set.collectorNumber && card.set.totalInSet
-          ? `${card.set.collectorNumber}/${card.set.totalInSet}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" ")
-    : null;
   const encyclopediaSlug = encyclopediaSlugByCardId[image.cardId];
 
   return (
@@ -237,6 +216,8 @@ function CardMetadata({ image }) {
           <p className="mt-1 italic text-slate-500">{card.bio.scientificName}</p>
         )}
       </div>
+
+      <SetMetadata image={image} />
 
       <dl className="mt-4 grid grid-cols-2 gap-2">
         <StatPill label="Cost" value={formatCost(card.cost)} />
@@ -265,7 +246,6 @@ function CardMetadata({ image }) {
         <MetadataRow label="Weight" value={card.bio?.weight} />
         <MetadataRow label="Weaknesses" value={formatList(card.weaknesses)} />
         <MetadataRow label="Tags" value={formatList(card.tags)} />
-        <MetadataRow label="Set" value={setLabel} />
       </div>
 
       {card.bonusVictoryPoints?.text && (

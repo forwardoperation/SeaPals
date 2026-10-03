@@ -1,0 +1,2350 @@
+{
+  "sourceUrl": "https://docs.google.com/spreadsheets/d/1tXlN5fW1cWgbfLqIxXKJYd1bjdhXsHNHO2GirGZj_Ic/edit",
+  "syncedAt": "2026-10-03T12:49:17.231Z",
+  "nameOverrides": {
+    "Butterflyfish - Twinspot": "Spotfin Butterflyfish"
+  },
+  "sets": [
+    {
+      "zone": "reef",
+      "title": "Reef Set",
+      "totalPrintings": 102,
+      "cards": [
+        {
+          "cardId": "manta-ray",
+          "name": "Reef Manta Ray",
+          "category": "filter-feeder",
+          "printings": [
+            {
+              "number": 1,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 16,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "great-white",
+          "name": "Great White",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 2,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 17,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "tiger-shark",
+          "name": "Tiger Shark",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 3,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 18,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "bull-shark",
+          "name": "Bull Shark",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 4,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 19,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "hammerhead",
+          "name": "Hammerhead",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 5,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 20,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "bottlenose-dolphin",
+          "name": "Bottlenose Dolphin",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 6,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 21,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "goliath-grouper",
+          "name": "Goliath Grouper",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 7,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 22,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "spinner-dolphins",
+          "name": "Spinner Dolphins",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 8,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 23,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "emperor-angelfish",
+          "name": "Emperor Angelfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 9,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 24,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "queen-angelfish",
+          "name": "Queen Angelfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 10,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 25,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "giant-triton",
+          "name": "Giant Triton",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 11,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 26,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "oysters",
+          "name": "Oysters",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 12,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 27,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "boulder-star-coral-stage-2",
+          "name": "Boulder Star Coral",
+          "category": "coral",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 13,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 28,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "brain-coral-stage-2",
+          "name": "Brain Coral",
+          "category": "coral",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 14,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 29,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "elkhorn-coral-stage-2",
+          "name": "Elkhorn Coral",
+          "category": "coral",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 15,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 30,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "name": "Mustard Hill Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 31,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "great-barracuda",
+          "name": "Great Barracuda",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 32,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "green-moray-eel",
+          "name": "Green Moray Eel",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 33,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "green-sea-turtle",
+          "name": "Green Sea Turtle",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 34,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "reef-shark",
+          "name": "Reef Shark",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 35,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "nurse-shark",
+          "name": "Nurse Shark",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 36,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "yellow-lipped-sea-krait",
+          "name": "Yellow-Lipped Sea Krait",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 37,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "longhorn-cowfish",
+          "name": "Longhorn Cowfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 38,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "lionfish",
+          "name": "Lionfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 39,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "french-angelfish",
+          "name": "French Angelfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 40,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "frogfish",
+          "name": "Frogfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 41,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "spectacled-parrotfish",
+          "name": "Parrotfish - Spectacled",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 42,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "anemone",
+          "name": "Anemone",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 43,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "giant-clam",
+          "name": "Giant Clam",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 44,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "mantis-shrimp",
+          "name": "Mantis Shrimp",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 45,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "octopus",
+          "name": "Octopus",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 46,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "box-jellyfish",
+          "name": "Box Jellyfish",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 47,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "boulder-star-coral-stage-1",
+          "name": "Boulder Star Coral",
+          "category": "coral",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 48,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "brain-coral-stage-1",
+          "name": "Brain Coral",
+          "category": "coral",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 49,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "clubfinger-coral-stage-1",
+          "name": "Clubfinger Coral",
+          "category": "coral",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 50,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "elkhorn-coral-stage-1",
+          "name": "Elkhorn Coral",
+          "category": "coral",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 51,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "name": "Lettuce Coral",
+          "category": "coral",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 52,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "pillar-coral-base",
+          "name": "Pillar Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 53,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "capt-dani",
+          "name": "Capt. Dani",
+          "category": "support",
+          "printings": [
+            {
+              "number": 54,
+              "rarity": "Uncommon"
+            }
+          ],
+          "sourceName": "capt-dani"
+        },
+        {
+          "cardId": "dr-evans",
+          "name": "Dr. Evans",
+          "category": "support",
+          "printings": [
+            {
+              "number": 55,
+              "rarity": "Uncommon"
+            }
+          ],
+          "sourceName": "dr-evans"
+        },
+        {
+          "cardId": "scientist-jes",
+          "name": "Scientist Jes",
+          "category": "support",
+          "printings": [
+            {
+              "number": 56,
+              "rarity": "Uncommon"
+            }
+          ],
+          "sourceName": "scientist-jes"
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "name": "Deep Sea Fishing",
+          "category": "support",
+          "printings": [
+            {
+              "number": 57,
+              "rarity": "Uncommon"
+            }
+          ],
+          "sourceName": "deep-sea-fishing"
+        },
+        {
+          "cardId": "remote-search",
+          "name": "Remote Search",
+          "category": "support",
+          "printings": [
+            {
+              "number": 58,
+              "rarity": "Uncommon"
+            }
+          ],
+          "sourceName": "remote-search"
+        },
+        {
+          "cardId": "crab-trap",
+          "name": "Crab Trap",
+          "category": "support",
+          "printings": [
+            {
+              "number": 59,
+              "rarity": "Uncommon"
+            }
+          ],
+          "sourceName": "crab-trap"
+        },
+        {
+          "cardId": "crown-of-thorns",
+          "name": "Crown of Thorns",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 60,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "spotfin-butterflyfish",
+          "name": "Spotfin Butterflyfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 61,
+              "rarity": "Common"
+            }
+          ],
+          "sourceName": "Butterflyfish - Twinspot"
+        },
+        {
+          "cardId": "blue-tang",
+          "name": "Blue Tang",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 62,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "clownfish",
+          "name": "Clownfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 63,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "bluestriped-grunt",
+          "name": "Grunt - Bluestriped",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 64,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "fairy-parrotfish",
+          "name": "Parrotfish - Fairy",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 65,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "porcupine-fish",
+          "name": "Porcupine Fish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 66,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "sargeant-major",
+          "name": "Sargeant Major",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 67,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "flounder",
+          "name": "Southern Flounder",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 68,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "spanish-hogfish",
+          "name": "Spanish Hogfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 69,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "picasso-triggerfish",
+          "name": "Triggerfish - Picasso",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 70,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "cleaner-wrasse",
+          "name": "Wrasse - Cleaner",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 71,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "arrow-crab",
+          "name": "Arrow Crab",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 72,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "blue-crab",
+          "name": "Blue Crab",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 73,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "cleaner-shrimp",
+          "name": "Cleaner Shrimp",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 74,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "emerald-crab",
+          "name": "Emerald Crab",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 75,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "leather-starfish",
+          "name": "Leather Starfish",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 76,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "nudibranch",
+          "name": "Nudibranch",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 77,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "sea-urchin",
+          "name": "Sea Urchin",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 78,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "boulder-star-coral-base",
+          "name": "Boulder Star Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 79,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "brain-coral-base",
+          "name": "Brain Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 80,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "clubfinger-coral-base",
+          "name": "Clubfinger Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 81,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "elkhorn-coral-base",
+          "name": "Elkhorn Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 82,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "name": "Lettuce Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 83,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "staghorn-coral-base",
+          "name": "Staghorn Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 84,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "spearfishing",
+          "name": "Spearfishing",
+          "category": "support",
+          "printings": [
+            {
+              "number": 85,
+              "rarity": "Common"
+            }
+          ],
+          "sourceName": "spearfishing"
+        },
+        {
+          "cardId": "coral-gardener",
+          "name": "Coral Gardener",
+          "category": "support",
+          "printings": [
+            {
+              "number": 86,
+              "rarity": "Common"
+            }
+          ],
+          "sourceName": "coral-gardener"
+        },
+        {
+          "cardId": "restocking",
+          "name": "Restocking",
+          "category": "support",
+          "printings": [
+            {
+              "number": 87,
+              "rarity": "Common"
+            }
+          ],
+          "sourceName": "restocking"
+        },
+        {
+          "cardId": "robotic-survey",
+          "name": "Robotic Survey",
+          "category": "support",
+          "printings": [
+            {
+              "number": 88,
+              "rarity": "Common"
+            }
+          ],
+          "sourceName": "robotic-survey"
+        },
+        {
+          "cardId": "coral-cement",
+          "name": "Coral Cement",
+          "category": "support",
+          "printings": [
+            {
+              "number": 89,
+              "rarity": "Common"
+            }
+          ],
+          "sourceName": "coral-cement"
+        },
+        {
+          "cardId": "poison-heal",
+          "name": "Toxic Heal",
+          "category": "support",
+          "printings": [
+            {
+              "number": 90,
+              "rarity": "Common"
+            }
+          ],
+          "sourceName": "toxic-heal"
+        },
+        {
+          "cardId": "fishing",
+          "name": "Fishing",
+          "category": "support",
+          "printings": [
+            {
+              "number": 91,
+              "rarity": "Common"
+            }
+          ],
+          "sourceName": "fishing"
+        },
+        {
+          "cardId": "recovery",
+          "name": "Recovery",
+          "category": "support",
+          "printings": [
+            {
+              "number": 92,
+              "rarity": "Common"
+            }
+          ],
+          "sourceName": "recovery"
+        },
+        {
+          "cardId": "ocean-jake",
+          "name": "Ocean Jake",
+          "category": "support",
+          "printings": [
+            {
+              "number": 93,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "horseshoe-crab",
+          "name": "Horseshoe Crab",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 94,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "seafan-base",
+          "name": "Seafan",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 95,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "yellow-tang",
+          "name": "Yellow Tang",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 96,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "bicolor-dottyback",
+          "name": "Bicolor Dottyback",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 97,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "copperband-butterflyfish",
+          "name": "Copperband Butterflyfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 98,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "yellowwatchman-goby",
+          "name": "Yellowwatchman Goby",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 99,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "hermit-crab",
+          "name": "Hermit Crab",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 100,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "sea-cucumber",
+          "name": "Sea Cucumber",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 101,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "coral-reef",
+          "name": "Coral Reef",
+          "category": "habitat",
+          "printings": [
+            {
+              "number": 102,
+              "rarity": "Common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "zone": "ocean",
+      "title": "Oceanic Set",
+      "totalPrintings": 64,
+      "cards": [
+        {
+          "cardId": "blue-whale",
+          "name": "Blue Whale",
+          "category": "filter-feeder",
+          "printings": [
+            {
+              "number": 1,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 7,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "oceanic-manta-ray",
+          "name": "Oceanic Manta Ray",
+          "category": "filter-feeder",
+          "printings": [
+            {
+              "number": 2,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 8,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "humpback-whale",
+          "name": "Humpback Whale",
+          "category": "filter-feeder",
+          "printings": [
+            {
+              "number": 3,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 9,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "killer-whale-oceanic",
+          "name": "Killer Whale",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 4,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 6,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "shortfin-mako-shark",
+          "name": "Shortfin Mako Shark",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 5,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 13,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "basking-shark",
+          "name": "Basking Shark",
+          "category": "filter-feeder",
+          "printings": [
+            {
+              "number": 10,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "whale-shark",
+          "name": "Whale Shark",
+          "category": "filter-feeder",
+          "printings": [
+            {
+              "number": 11,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "ocean-sunfish",
+          "name": "Ocean Sunfish",
+          "category": "filter-feeder",
+          "printings": [
+            {
+              "number": 12,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "bluefin-tuna",
+          "name": "Bluefin Tuna",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 14,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "swordfish",
+          "name": "Swordfish",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 15,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "black-marlin",
+          "name": "Black Marlin",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 16,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "thresher-shark",
+          "name": "Thresher Shark",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 17,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "remora",
+          "name": "Remora",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 18,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "krill-bloom-stage2",
+          "name": "Krill Bloom",
+          "category": "baitball",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 19,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "sardine-ball-stage2",
+          "name": "Sardine School",
+          "category": "baitball",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 20,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "anchovy-ball-stage2",
+          "name": "Anchovy Swarm",
+          "category": "baitball",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 21,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "silverside-ball-stage2",
+          "name": "Silverside Flash",
+          "category": "baitball",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 22,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "herring-ball-stage2",
+          "name": "Herring Run",
+          "category": "baitball",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 23,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "blue-shark-oceanic",
+          "name": "Blue Shark",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 24,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "silky-shark",
+          "name": "Silky Shark",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 25,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "galapagos-shark",
+          "name": "Galápagos Shark",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 26,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "oceanic-whitetip-shark",
+          "name": "Oceanic Whitetip Shark",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 27,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "yellowfin-tuna",
+          "name": "Yellowfin Tuna",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 28,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "sailfish",
+          "name": "Sailfish",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 29,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "wahoo",
+          "name": "Wahoo",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 30,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "loggerhead-sea-turtle",
+          "name": "Loggerhead",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 31,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "barracuda-oceanic",
+          "name": "Barracuda",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 32,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "mahi-mahi",
+          "name": "Mahi-Mahi (Dolphinfish)",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 33,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "king-mackerel",
+          "name": "King Mackerel",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 34,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "tripletail",
+          "name": "Tripletail",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 35,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "blue-sea-dragon",
+          "name": "Blue Sea Dragon",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 36,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "man-o-war",
+          "name": "Portuguese Man O’ War",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 37,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "krill-bloom-stage1",
+          "name": "Krill Bloom",
+          "category": "baitball",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 38,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "sardine-ball-stage1",
+          "name": "Sardine School",
+          "category": "baitball",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 39,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "anchovy-ball-stage1",
+          "name": "Anchovy Swarm",
+          "category": "baitball",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 40,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "silverside-ball-stage1",
+          "name": "Silverside Flash",
+          "category": "baitball",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 41,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "herring-ball-stage1",
+          "name": "Herring Run",
+          "category": "baitball",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 42,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "african-pompano",
+          "name": "African Pompano",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 43,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "yellowtail-amberjack",
+          "name": "Yellowtail Amberjack",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 44,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "needlefish",
+          "name": "Needlefish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 45,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "bluefin-tuna-juvenile",
+          "name": "Bluefin Tuna (Juvenile)",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 46,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "flying-fish",
+          "name": "Flying Fish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 47,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "bluefish",
+          "name": "Bluefish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 48,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "bonito-tuna",
+          "name": "Bonito",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 49,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "crevalle-jack",
+          "name": "Crevalle Jack",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 50,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "halfbeak",
+          "name": "Halfbeak",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 51,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "frigate-tuna",
+          "name": "Frigate Tuna",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 52,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "lookdown",
+          "name": "Lookdown",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 53,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "pompano",
+          "name": "Pompano",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 54,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "ocean-triggerfish",
+          "name": "Ocean Triggerfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 55,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "market-squid",
+          "name": "Market Squid",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 56,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "krill-bloom-base",
+          "name": "Krill Bloom",
+          "category": "baitball",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 57,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "sardine-ball-base",
+          "name": "Sardine School",
+          "category": "baitball",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 58,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "anchovy-ball-base",
+          "name": "Anchovy Swarm",
+          "category": "baitball",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 59,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "silverside-ball-base",
+          "name": "Silverside Flash",
+          "category": "baitball",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 60,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "herring-ball-base",
+          "name": "Herring Run",
+          "category": "baitball",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 61,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "open-ocean",
+          "name": "Open Ocean",
+          "category": "habitat",
+          "printings": [
+            {
+              "number": 62,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "cast-net",
+          "name": "Cast Net",
+          "category": "support",
+          "printings": [
+            {
+              "number": 63,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "chum-bucket",
+          "name": "Chum Bucket",
+          "category": "support",
+          "printings": [
+            {
+              "number": 64,
+              "rarity": "Common"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "zone": "deep",
+      "title": "Deep Set",
+      "totalPrintings": 62,
+      "cards": [
+        {
+          "cardId": "megamouth-shark",
+          "name": "Megamouth Shark",
+          "category": "filter-feeder",
+          "printings": [
+            {
+              "number": 1,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 16,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "colossal-squid",
+          "name": "Colossal Squid",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 2,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 17,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "sperm-whale",
+          "name": "Sperm Whale",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 3,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 18,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "giant-phantom-jelly",
+          "name": "Giant Phantom Jelly",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 4,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 19,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "giant-squid",
+          "name": "Giant Squid",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 5,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 20,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "greenland-shark",
+          "name": "Greenland Shark",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 6,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 21,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "pilot-whale-oceanic",
+          "name": "Pilot Whale",
+          "category": "apex",
+          "printings": [
+            {
+              "number": 7,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 22,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "goblin-shark",
+          "name": "Goblin Shark",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 8,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 39,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "giant-isopod",
+          "name": "Giant Isopod",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 9,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 24,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "vampire-squid",
+          "name": "Vampire Squid",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 10,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 25,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "barrel-eye-fish",
+          "name": "Barrel Eye Fish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 11,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 26,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "coelacanth",
+          "name": "Coelacanth",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 12,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 27,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "bamboo_coral_stage2",
+          "name": "Bamboo Coral",
+          "category": "coral",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 13,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 30,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "black_coral_stage2",
+          "name": "Black Coral",
+          "category": "coral",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 14,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 31,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "deep_mushroom_stage2",
+          "name": "Deep Mushroom",
+          "category": "coral",
+          "stageLabel": "Stage 2",
+          "printings": [
+            {
+              "number": 15,
+              "rarity": "Holo Rare"
+            },
+            {
+              "number": 32,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "frilled-shark",
+          "name": "Frilled Shark",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 23,
+              "rarity": "Rare"
+            }
+          ]
+        },
+        {
+          "cardId": "humpback-anglerfish",
+          "name": "Anglerfish - Humpback",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 28,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "tripod-fish",
+          "name": "Tripod Fish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 29,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "bamboo_coral_stage1",
+          "name": "Bamboo Coral",
+          "category": "coral",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 33,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "black_coral_stage1",
+          "name": "Black Coral",
+          "category": "coral",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 34,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "deep_mushroom_stage1",
+          "name": "Deep Mushroom",
+          "category": "coral",
+          "stageLabel": "Stage 1",
+          "printings": [
+            {
+              "number": 35,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "deep_sea_vent",
+          "name": "Deep Sea Vent",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 36,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "dumbo-octopus",
+          "name": "Dumbo Octopus",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 37,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "peacock-squid",
+          "name": "Peacock Squid",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 38,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "deep-sea-skate",
+          "name": "Deep Sea Skate",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 40,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "chimera",
+          "name": "Chimera",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 41,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "cookie-cutter-shark",
+          "name": "Cookie Cutter",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 42,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "gulper-eel",
+          "name": "Gulper Eel",
+          "category": "predator",
+          "printings": [
+            {
+              "number": 43,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "bamboo_coral_base",
+          "name": "Bamboo Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 44,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "black_coral_base",
+          "name": "Black Coral",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 45,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "deep_mushroom_base",
+          "name": "Deep Mushroom",
+          "category": "coral",
+          "stageLabel": "Base",
+          "printings": [
+            {
+              "number": 46,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "black-swallower",
+          "name": "Black Swallower",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 47,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "bristlemouth",
+          "name": "Bristlemouth",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 48,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "fangtooth-fish",
+          "name": "Fangtooth Fish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 49,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "owlfish",
+          "name": "Owlfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 50,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "pacific-grenadier",
+          "name": "Pacific Grenadier",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 51,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "viperfish",
+          "name": "Viperfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 52,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "brittlestar",
+          "name": "Brittlestar",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 53,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "deep-cucumber",
+          "name": "Deep Cucumber",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 54,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "deep-sea-jelly",
+          "name": "Deep Sea Jelly",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 55,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "giant-red-shrimp",
+          "name": "Giant Red Shrimp",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 56,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "giant-tube-worm",
+          "name": "Giant Tube Worm",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 57,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "rov-lights",
+          "name": "ROV Lights",
+          "category": "support",
+          "printings": [
+            {
+              "number": 58,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "abyss",
+          "name": "The Abyss",
+          "category": "habitat",
+          "printings": [
+            {
+              "number": 59,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "yeti-crab",
+          "name": "Yeti Crab",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 60,
+              "rarity": "Uncommon"
+            }
+          ]
+        },
+        {
+          "cardId": "hatchetfish",
+          "name": "Hatchetfish",
+          "category": "fish",
+          "printings": [
+            {
+              "number": 61,
+              "rarity": "Common"
+            }
+          ]
+        },
+        {
+          "cardId": "bloody-belly-comb-jelly",
+          "name": "Bloody-Belly Comb Jelly",
+          "category": "invertebrate",
+          "printings": [
+            {
+              "number": 62,
+              "rarity": "Uncommon"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

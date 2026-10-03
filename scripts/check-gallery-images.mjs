@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -44,11 +45,38 @@ export async function auditGalleryImages() {
     assert.equal(metadata.format, "png", `Expected PNG: ${entry.src}`);
     assert.equal(metadata.width, entry.width, `Incorrect preview width: ${entry.src}`);
     assert.equal(metadata.height, entry.height, `Incorrect preview height: ${entry.src}`);
+    const contentHash = createHash("sha256")
+      .update(await readFile(path.join(ROOT, "public", entry.src)))
+      .digest("hex")
+      .slice(0, 12);
+    assert.equal(entry.contentHash, contentHash, `Update the gallery cache version for changed artwork: ${entry.src}`);
     if (entry.nodeId) {
       assert.equal(manifest.exportScale, 0.5);
       assert.ok(entry.width <= Math.ceil(entry.sourceWidth * manifest.exportScale));
       assert.ok(entry.height <= Math.ceil(entry.sourceHeight * manifest.exportScale));
     }
+  }
+
+  const master = JSON.parse(
+    await readFile(path.join(ROOT, "src", "data", "gallery-set-list.json"), "utf8")
+  );
+  const galleryIds = new Set();
+  for (const set of master.sets) {
+    const printingNumbers = [];
+    for (const card of set.cards) {
+      assert.ok(!galleryIds.has(card.cardId), `Duplicate master gallery card: ${card.cardId}`);
+      galleryIds.add(card.cardId);
+      printingNumbers.push(...card.printings.map((printing) => printing.number));
+      const image = manifest.cards.find((entry) => entry.cardId === card.cardId);
+      if (image) {
+        assert.equal(typeof image.prerelease, "boolean", `Audit the Prerelease label: ${card.cardId}`);
+      }
+    }
+    assert.deepEqual(
+      printingNumbers.sort((a, b) => a - b),
+      Array.from({ length: set.totalPrintings }, (_, index) => index + 1),
+      `Missing or duplicate master set numbers in ${set.title}`
+    );
   }
 
   return { galleryPreviews: manifest.cards.length, publicCardImages: images.size };

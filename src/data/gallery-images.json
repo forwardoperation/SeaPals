@@ -19,7 +19,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "2a033c047128",
+      "prerelease": true
     },
     {
       "cardId": "oceanic-manta-ray",
@@ -37,7 +39,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "5a36c0996c79",
+      "prerelease": false
     },
     {
       "cardId": "ocean-sunfish",
@@ -55,7 +59,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "5e52d26c0b44",
+      "prerelease": true
     },
     {
       "cardId": "whale-shark",
@@ -73,7 +79,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "b595f57d06a6",
+      "prerelease": false
     },
     {
       "cardId": "blue-whale",
@@ -91,7 +99,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e4ed0fb7e5b0",
+      "prerelease": false
     },
     {
       "cardId": "basking-shark",
@@ -109,7 +119,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "ab30bbf34f68",
+      "prerelease": true
     },
     {
       "cardId": "megamouth-shark",
@@ -127,11 +139,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "d2a9a40c81f9",
+      "prerelease": true
     },
     {
       "cardId": "manta-ray",
-      "name": "Manta Ray",
+      "name": "Reef Manta Ray",
       "src": "/images/cards/filter-feeders/Reef/manta-ray.png",
       "category": "filter-feeder",
       "zone": "reef",
@@ -145,7 +159,11 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "ce3e4196c709",
+      "prerelease": false,
+      "exportedAt": "2026-10-03T13:08:30.506Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "hammerhead",
@@ -163,7 +181,11 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "41697bf09cbd",
+      "prerelease": false,
+      "exportedAt": "2026-10-03T13:03:21.532Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "great-white",
@@ -181,7 +203,11 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "bc433c863984",
+      "prerelease": false,
+      "exportedAt": "2026-10-03T13:03:21.532Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "bull-shark",
@@ -199,7 +225,11 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "80753b7e7719",
+      "prerelease": false,
+      "exportedAt": "2026-10-03T13:03:21.532Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "tiger-shark",
@@ -217,7 +247,11 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "9f238c6b3c91",
+      "prerelease": false,
+      "exportedAt": "2026-10-03T13:03:21.532Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "killer-whale-oceanic",
@@ -235,14 +269,16 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "41f737ea0e27",
+      "prerelease": false
     },
     {
       "cardId": "pilot-whale-oceanic",
       "name": "Pilot Whale",
       "src": "/images/cards/apex/Oceanic/pilot-whale.png",
       "category": "apex",
-      "zone": "ocean",
+      "zone": "deep",
       "galleryOnly": false,
       "hidden": false,
       "sourcePageId": "92:140",
@@ -253,7 +289,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "42820bdbff21",
+      "prerelease": false
     },
     {
       "cardId": "bottlenose-dolphin",
@@ -271,7 +309,11 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "901bab55c7c7",
+      "prerelease": false,
+      "exportedAt": "2026-10-03T13:03:21.532Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "giant-squid",
@@ -289,7 +331,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "686560ee84a4",
+      "prerelease": true
     },
     {
       "cardId": "colossal-squid",
@@ -307,7 +351,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "40a1fc77ebad",
+      "prerelease": false
     },
     {
       "cardId": "greenland-shark",
@@ -325,7 +371,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "0c4349be142a",
+      "prerelease": true
     },
     {
       "cardId": "giant-phantom-jelly",
@@ -343,14 +391,16 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "1188a9c57fa4",
+      "prerelease": true
     },
     {
       "cardId": "sperm-whale",
       "name": "Sperm Whale",
       "src": "/images/cards/apex/Oceanic/sperm-whale.png",
       "category": "apex",
-      "zone": "ocean",
+      "zone": "deep",
       "galleryOnly": false,
       "hidden": false,
       "sourcePageId": "92:140",
@@ -361,11 +411,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "941f7ae72209",
+      "prerelease": true
     },
     {
       "cardId": "shortfin-mako-shark",
-      "name": "Shortfin Mako",
+      "name": "Shortfin Mako Shark",
       "src": "/images/cards/apex/Oceanic/shortfin-mako.png",
       "category": "apex",
       "zone": "ocean",
@@ -379,7 +431,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "7e2766455326",
+      "prerelease": true
     },
     {
       "cardId": "black-marlin",
@@ -397,7 +451,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "28396b6676ae",
+      "prerelease": true
     },
     {
       "cardId": "swordfish",
@@ -415,7 +471,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "6c4638d6b6ef",
+      "prerelease": true
     },
     {
       "cardId": "bluefin-tuna",
@@ -433,7 +491,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "38983b81ed44",
+      "prerelease": true
     },
     {
       "cardId": "lionfish",
@@ -451,7 +511,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "261f4951e026",
+      "prerelease": false
     },
     {
       "cardId": "winter-flounder",
@@ -469,11 +531,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "7837c09f87be",
+      "prerelease": false
     },
     {
       "cardId": "cleaner-wrasse",
-      "name": "Wrasse",
+      "name": "Wrasse - Cleaner",
       "src": "/images/cards/fish/Reef/cleaner-wrasse.png",
       "category": "fish",
       "zone": "reef",
@@ -487,11 +551,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "32c697e7db5d",
+      "prerelease": false
     },
     {
       "cardId": "fairy-parrotfish",
-      "name": "Parrotfish",
+      "name": "Parrotfish - Fairy",
       "src": "/images/cards/fish/Reef/fairy-parrotfish.png",
       "category": "fish",
       "zone": "reef",
@@ -505,11 +571,13 @@
       "sourceHeight": 1052,
       "width": 375,
       "height": 526,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "958856646486",
+      "prerelease": false
     },
     {
       "cardId": "bluestriped-grunt",
-      "name": "Grunt",
+      "name": "Grunt - Bluestriped",
       "src": "/images/cards/fish/Reef/bluestriped-grunt.png",
       "category": "fish",
       "zone": "reef",
@@ -523,7 +591,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "25f14ac81e46",
+      "prerelease": false
     },
     {
       "cardId": "clownfish",
@@ -541,7 +611,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f4d18538e00e",
+      "prerelease": false
     },
     {
       "cardId": "spanish-hogfish",
@@ -559,11 +631,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "5829795b91fe",
+      "prerelease": false
     },
     {
       "cardId": "picasso-triggerfish",
-      "name": "Triggerfish",
+      "name": "Triggerfish - Picasso",
       "src": "/images/cards/fish/Reef/picasso-triggerfish.png",
       "category": "fish",
       "zone": "reef",
@@ -577,7 +651,9 @@
       "sourceHeight": 1050,
       "width": 376,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e606a9aed556",
+      "prerelease": false
     },
     {
       "cardId": "porcupine-fish",
@@ -595,7 +671,9 @@
       "sourceHeight": 1050,
       "width": 376,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f408ce5b3f5b",
+      "prerelease": false
     },
     {
       "cardId": "french-angelfish",
@@ -613,7 +691,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f66db371e0b0",
+      "prerelease": false
     },
     {
       "cardId": "sargeant-major",
@@ -631,7 +711,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "325119951a9c",
+      "prerelease": false
     },
     {
       "cardId": "longhorn-cowfish",
@@ -649,7 +731,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "051d067f08cc",
+      "prerelease": false
     },
     {
       "cardId": "spotfin-butterflyfish",
@@ -667,7 +751,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "b183d53c0227",
+      "prerelease": false
     },
     {
       "cardId": "queen-angelfish",
@@ -685,7 +771,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "810070e8dc1f",
+      "prerelease": false
     },
     {
       "cardId": "blue-tang",
@@ -703,7 +791,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "9b62e1d4ac1f",
+      "prerelease": false
     },
     {
       "cardId": "frogfish",
@@ -721,11 +811,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "81ca0d6634c7",
+      "prerelease": false
     },
     {
       "cardId": "spectacled-parrotfish",
-      "name": "Parrotfish",
+      "name": "Parrotfish - Spectacled",
       "src": "/images/cards/fish/Reef/spectacled-parrotfish.png",
       "category": "fish",
       "zone": "reef",
@@ -739,7 +831,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "0f72cf509046",
+      "prerelease": false
     },
     {
       "cardId": "bristlemouth",
@@ -757,7 +851,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "16a1c189b914",
+      "prerelease": true
     },
     {
       "cardId": "owlfish",
@@ -775,7 +871,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "6d5bbbea6313",
+      "prerelease": true
     },
     {
       "cardId": "pacific-grenadier",
@@ -793,7 +891,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e62b59ed1e73",
+      "prerelease": true
     },
     {
       "cardId": "viperfish",
@@ -811,11 +911,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "9f3070cb3024",
+      "prerelease": true
     },
     {
       "cardId": "humpback-anglerfish",
-      "name": "Anglerfish",
+      "name": "Anglerfish - Humpback",
       "src": "/images/cards/fish/Deep/humpback-anglerfish.png",
       "category": "fish",
       "zone": "deep",
@@ -829,7 +931,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "294f0e8e15e4",
+      "prerelease": true
     },
     {
       "cardId": "barrel-eye-fish",
@@ -847,7 +951,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "1e0f18410225",
+      "prerelease": true
     },
     {
       "cardId": "fangtooth-fish",
@@ -865,7 +971,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "adf9bc900f91",
+      "prerelease": true
     },
     {
       "cardId": "black-swallower",
@@ -883,7 +991,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "37de1b32a22a",
+      "prerelease": true
     },
     {
       "cardId": "tripod-fish",
@@ -901,7 +1011,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "42769f90defe",
+      "prerelease": true
     },
     {
       "cardId": "coelacanth",
@@ -919,7 +1031,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "4432950cf7a8",
+      "prerelease": true
     },
     {
       "cardId": "flying-fish",
@@ -937,7 +1051,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "9989e3d40d7a",
+      "prerelease": true
     },
     {
       "cardId": "barracuda-oceanic",
@@ -955,11 +1071,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "0d6da7aab5a8",
+      "prerelease": true
     },
     {
       "cardId": "mahi-mahi",
-      "name": "Mahi-Mahi",
+      "name": "Mahi-Mahi (Dolphinfish)",
       "src": "/images/cards/fish/Oceanic/mahi-mahi.png",
       "category": "fish",
       "zone": "ocean",
@@ -973,7 +1091,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e09a59b1ebe9",
+      "prerelease": true
     },
     {
       "cardId": "king-mackerel",
@@ -991,7 +1111,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "a10126687e1c",
+      "prerelease": true
     },
     {
       "cardId": "tripletail",
@@ -1009,7 +1131,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "cf2d85442d27",
+      "prerelease": true
     },
     {
       "cardId": "halfbeak",
@@ -1027,7 +1151,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f0a7db8984f0",
+      "prerelease": true
     },
     {
       "cardId": "needlefish",
@@ -1045,11 +1171,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "c1d88f960ed6",
+      "prerelease": true
     },
     {
       "cardId": "bluefin-tuna-juvenile",
-      "name": "Bluefin Tuna",
+      "name": "Bluefin Tuna (Juvenile)",
       "src": "/images/cards/fish/Oceanic/bluefin-tuna-juvenile.png",
       "category": "fish",
       "zone": "ocean",
@@ -1063,7 +1191,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "da7dacc6aeb2",
+      "prerelease": true
     },
     {
       "cardId": "remora",
@@ -1081,7 +1211,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "985b6ff99c76",
+      "prerelease": true
     },
     {
       "cardId": "bluefish",
@@ -1099,11 +1231,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "c4daaa22ba95",
+      "prerelease": true
     },
     {
       "cardId": "bonito-tuna",
-      "name": "Bonito Tuna",
+      "name": "Bonito",
       "src": "/images/cards/fish/Oceanic/bonito-tuna.png",
       "category": "fish",
       "zone": "ocean",
@@ -1117,7 +1251,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "38e1b32ae39c",
+      "prerelease": true
     },
     {
       "cardId": "crevalle-jack",
@@ -1135,7 +1271,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f5b0a6729cf9",
+      "prerelease": true
     },
     {
       "cardId": "yellowtail-amberjack",
@@ -1153,7 +1291,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e881259acfbc",
+      "prerelease": true
     },
     {
       "cardId": "frigate-tuna",
@@ -1171,7 +1311,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "84b92b86f89d",
+      "prerelease": true
     },
     {
       "cardId": "lookdown",
@@ -1189,7 +1331,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "6318c775d419",
+      "prerelease": true
     },
     {
       "cardId": "pompano",
@@ -1207,7 +1351,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "60fd8da0e447",
+      "prerelease": true
     },
     {
       "cardId": "ocean-triggerfish",
@@ -1225,7 +1371,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f4ad05364466",
+      "prerelease": true
     },
     {
       "cardId": "african-pompano",
@@ -1243,13 +1391,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "6484b933b0d5",
+      "prerelease": true
     },
     {
       "cardId": "krill-bloom-base",
       "name": "Krill Bloom",
       "src": "/images/cards/fish/Oceanic/krill-bloom-base.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1261,13 +1411,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "cf129e506bc2",
+      "prerelease": true
     },
     {
       "cardId": "krill-bloom-stage1",
       "name": "Krill Bloom",
       "src": "/images/cards/fish/Oceanic/krill-bloom-stage-1.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1279,13 +1431,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "15de1ca09027",
+      "prerelease": true
     },
     {
       "cardId": "krill-bloom-stage2",
       "name": "Krill Bloom",
       "src": "/images/cards/fish/Oceanic/krill-bloom-stage-2.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1297,13 +1451,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "348632480f94",
+      "prerelease": true
     },
     {
       "cardId": "sardine-ball-base",
-      "name": "Sardine Ball",
+      "name": "Sardine School",
       "src": "/images/cards/fish/Oceanic/sardine-ball-base.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1315,13 +1471,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "6bfc886f6bce",
+      "prerelease": true
     },
     {
       "cardId": "anchovy-ball-base",
-      "name": "Anchovy Ball",
+      "name": "Anchovy Swarm",
       "src": "/images/cards/fish/Oceanic/anchovy-ball-base.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1333,13 +1491,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "ba6d6b655530",
+      "prerelease": true
     },
     {
       "cardId": "silverside-ball-base",
-      "name": "Silverside Ball",
+      "name": "Silverside Flash",
       "src": "/images/cards/fish/Oceanic/silverside-ball-base.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1351,13 +1511,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "17128afe5ef1",
+      "prerelease": true
     },
     {
       "cardId": "sardine-ball-stage1",
-      "name": "Sardine Ball",
+      "name": "Sardine School",
       "src": "/images/cards/fish/Oceanic/sardine-ball-stage-1.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1369,13 +1531,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "c254b02575fb",
+      "prerelease": true
     },
     {
       "cardId": "anchovy-ball-stage1",
-      "name": "Anchovy Ball",
+      "name": "Anchovy Swarm",
       "src": "/images/cards/fish/Oceanic/anchovy-ball-stage-1.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1387,13 +1551,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "c69fef232470",
+      "prerelease": true
     },
     {
       "cardId": "silverside-ball-stage1",
-      "name": "Silverside Ball",
+      "name": "Silverside Flash",
       "src": "/images/cards/fish/Oceanic/silverside-ball-stage-1.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1405,13 +1571,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e7ce36423e37",
+      "prerelease": true
     },
     {
       "cardId": "sardine-ball-stage2",
-      "name": "Sardine Ball",
+      "name": "Sardine School",
       "src": "/images/cards/fish/Oceanic/sardine-ball-stage-2.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1423,13 +1591,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "303bd8d710dc",
+      "prerelease": true
     },
     {
       "cardId": "anchovy-ball-stage2",
-      "name": "Anchovy Ball",
+      "name": "Anchovy Swarm",
       "src": "/images/cards/fish/Oceanic/anchovy-ball-stage-2.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1441,13 +1611,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "971abd4d177e",
+      "prerelease": true
     },
     {
       "cardId": "silverside-ball-stage2",
-      "name": "Silverside Ball",
+      "name": "Silverside Flash",
       "src": "/images/cards/fish/Oceanic/silverside-ball-stage-2.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1459,13 +1631,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "90c659c3858e",
+      "prerelease": true
     },
     {
       "cardId": "herring-ball-base",
-      "name": "Herring Ball",
+      "name": "Herring Run",
       "src": "/images/cards/fish/Oceanic/herring-ball-base.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1477,13 +1651,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "a3911eae0f13",
+      "prerelease": true
     },
     {
       "cardId": "herring-ball-stage1",
-      "name": "Herring Ball",
+      "name": "Herring Run",
       "src": "/images/cards/fish/Oceanic/herring-ball-stage-1.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1495,13 +1671,15 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "5bde0b939aba",
+      "prerelease": true
     },
     {
       "cardId": "herring-ball-stage2",
-      "name": "Herring Ball",
+      "name": "Herring Run",
       "src": "/images/cards/fish/Oceanic/herring-ball-stage-2.png",
-      "category": "fish",
+      "category": "baitball",
       "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
@@ -1513,7 +1691,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "5680d3f12469",
+      "prerelease": true
     },
     {
       "cardId": "white-grunt",
@@ -1531,7 +1711,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "31748a5380ed",
+      "prerelease": true
     },
     {
       "cardId": "emperor-angelfish",
@@ -1549,7 +1731,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "3928dcd12230",
+      "prerelease": false
     },
     {
       "cardId": "great-barracuda",
@@ -1567,7 +1751,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "49815e99a006",
+      "prerelease": false
     },
     {
       "cardId": "green-moray-eel",
@@ -1585,7 +1771,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "1da73668e8d5",
+      "prerelease": false
     },
     {
       "cardId": "reef-shark",
@@ -1603,7 +1791,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "04b119c720c4",
+      "prerelease": false
     },
     {
       "cardId": "goliath-grouper",
@@ -1621,7 +1811,9 @@
       "sourceHeight": 1050,
       "width": 376,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "4f0390679a29",
+      "prerelease": false
     },
     {
       "cardId": "green-sea-turtle",
@@ -1639,7 +1831,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "a9b7a96f40d7",
+      "prerelease": false
     },
     {
       "cardId": "spinner-dolphins",
@@ -1657,7 +1851,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f6245dcfadd0",
+      "prerelease": false
     },
     {
       "cardId": "thresher-shark",
@@ -1675,7 +1871,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "941ce4dd3653",
+      "prerelease": true
     },
     {
       "cardId": "goblin-shark",
@@ -1693,7 +1891,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "4ea618c3c1d1",
+      "prerelease": true
     },
     {
       "cardId": "gulper-eel",
@@ -1711,7 +1911,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "0f67c78f8b10",
+      "prerelease": true
     },
     {
       "cardId": "deep-sea-skate",
@@ -1729,7 +1931,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "8880c88c2597",
+      "prerelease": true
     },
     {
       "cardId": "chimera",
@@ -1747,7 +1951,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "3990777b6a99",
+      "prerelease": true
     },
     {
       "cardId": "frilled-shark",
@@ -1765,7 +1971,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "d1755e93aad3",
+      "prerelease": true
     },
     {
       "cardId": "cookie-cutter-shark",
@@ -1783,7 +1991,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "c04a8d64b4f8",
+      "prerelease": true
     },
     {
       "cardId": "silky-shark",
@@ -1801,11 +2011,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f06a70d7cd57",
+      "prerelease": true
     },
     {
       "cardId": "oceanic-whitetip-shark",
-      "name": "Oceanic Whitetip",
+      "name": "Oceanic Whitetip Shark",
       "src": "/images/cards/predator/oceanic/oceanic-whitetip.png",
       "category": "predator",
       "zone": "ocean",
@@ -1819,7 +2031,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "9720d2718c70",
+      "prerelease": true
     },
     {
       "cardId": "blue-shark-oceanic",
@@ -1837,11 +2051,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "827a7cd3f6da",
+      "prerelease": true
     },
     {
       "cardId": "galapagos-shark",
-      "name": "Galapagos Shark",
+      "name": "Galápagos Shark",
       "src": "/images/cards/predator/oceanic/galapagos-shark.png",
       "category": "predator",
       "zone": "ocean",
@@ -1855,7 +2071,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "2d8bd5ac59cc",
+      "prerelease": true
     },
     {
       "cardId": "yellowfin-tuna",
@@ -1873,7 +2091,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "264129e44b07",
+      "prerelease": true
     },
     {
       "cardId": "sailfish",
@@ -1891,7 +2111,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "3cbd646abb48",
+      "prerelease": true
     },
     {
       "cardId": "wahoo",
@@ -1909,7 +2131,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e92d092be780",
+      "prerelease": true
     },
     {
       "cardId": "loggerhead-sea-turtle",
@@ -1927,7 +2151,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "aca7b625845c",
+      "prerelease": true
     },
     {
       "cardId": "nurse-shark",
@@ -1946,7 +2172,8 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "prerelease": true
+      "prerelease": true,
+      "contentHash": "92d012747880"
     },
     {
       "cardId": "yellow-lipped-sea-krait",
@@ -1964,7 +2191,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "fe508301aea3",
+      "prerelease": false
     },
     {
       "cardId": "emerald-crab",
@@ -1982,7 +2211,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "3f1b72e39da8",
+      "prerelease": false
     },
     {
       "cardId": "sea-urchin",
@@ -2000,7 +2231,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "4231775c9241",
+      "prerelease": false
     },
     {
       "cardId": "anemone",
@@ -2018,7 +2251,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "609f5ca170bd",
+      "prerelease": false
     },
     {
       "cardId": "blue-crab",
@@ -2036,7 +2271,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "876bd19a5593",
+      "prerelease": false
     },
     {
       "cardId": "arrow-crab",
@@ -2054,7 +2291,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "6629f11ba80a",
+      "prerelease": false
     },
     {
       "cardId": "mantis-shrimp",
@@ -2072,7 +2311,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "dfe99ce32c3b",
+      "prerelease": false
     },
     {
       "cardId": "leather-starfish",
@@ -2090,7 +2331,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e1d072460a96",
+      "prerelease": false
     },
     {
       "cardId": "cleaner-shrimp",
@@ -2108,7 +2351,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "9ea69a4bb7f6",
+      "prerelease": false
     },
     {
       "cardId": "crown-of-thorns",
@@ -2126,7 +2371,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "aa091b9b1a92",
+      "prerelease": false
     },
     {
       "cardId": "nudibranch",
@@ -2144,7 +2391,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "9bb335049d1f",
+      "prerelease": false
     },
     {
       "cardId": "giant-triton",
@@ -2162,7 +2411,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "eba97c14d1db",
+      "prerelease": false
     },
     {
       "cardId": "octopus",
@@ -2180,7 +2431,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "6b31d14dfd31",
+      "prerelease": false
     },
     {
       "cardId": "oysters",
@@ -2198,7 +2451,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "cd8b78f35404",
+      "prerelease": false
     },
     {
       "cardId": "giant-clam",
@@ -2216,7 +2471,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "dba6e3c07cd7",
+      "prerelease": false
     },
     {
       "cardId": "deep-cucumber",
@@ -2234,7 +2491,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "a6433bca2470",
+      "prerelease": true
     },
     {
       "cardId": "brittlestar",
@@ -2252,7 +2511,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "abc3f1b5ce7d",
+      "prerelease": true
     },
     {
       "cardId": "vampire-squid",
@@ -2270,7 +2531,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "065414c67dc4",
+      "prerelease": true
     },
     {
       "cardId": "giant-isopod",
@@ -2288,7 +2551,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "0f6503905289",
+      "prerelease": true
     },
     {
       "cardId": "giant-tube-worm",
@@ -2306,7 +2571,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "6f23bedea86f",
+      "prerelease": true
     },
     {
       "cardId": "peacock-squid",
@@ -2324,7 +2591,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "fbe5b77d8a98",
+      "prerelease": true
     },
     {
       "cardId": "deep-sea-jelly",
@@ -2342,7 +2611,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "a8ea006f60ac",
+      "prerelease": true
     },
     {
       "cardId": "dumbo-octopus",
@@ -2360,7 +2631,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "691cd7cb32ba",
+      "prerelease": true
     },
     {
       "cardId": "giant-red-shrimp",
@@ -2378,11 +2651,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "b3b794a0c288",
+      "prerelease": true
     },
     {
       "cardId": "man-o-war",
-      "name": "Man O' War",
+      "name": "Portuguese Man O’ War",
       "src": "/images/cards/invertebrates/Oceanic/portugese-man-o-war.png",
       "category": "invertebrate",
       "zone": "ocean",
@@ -2396,7 +2671,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e7893905b5bd",
+      "prerelease": true
     },
     {
       "cardId": "blue-sea-dragon",
@@ -2414,7 +2691,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "ddbf37b2f4b3",
+      "prerelease": true
     },
     {
       "cardId": "market-squid",
@@ -2432,7 +2711,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "627c99866a35",
+      "prerelease": true
     },
     {
       "cardId": "box-jellyfish",
@@ -2450,7 +2731,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "dfdf53c57042",
+      "prerelease": false
     },
     {
       "cardId": "brain-coral-stage-2",
@@ -2468,7 +2751,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "545540d55fb0",
+      "prerelease": false
     },
     {
       "cardId": "elkhorn-coral-base",
@@ -2486,7 +2771,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "122f2508dc79",
+      "prerelease": false
     },
     {
       "cardId": "elkhorn-coral-stage-1",
@@ -2504,7 +2791,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "04a754eb6bac",
+      "prerelease": false
     },
     {
       "cardId": "elkhorn-coral-stage-2",
@@ -2522,7 +2811,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "1745d68157c2",
+      "prerelease": false
     },
     {
       "cardId": "boulder-star-coral-base",
@@ -2540,7 +2831,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e60f7c8c1373",
+      "prerelease": false
     },
     {
       "cardId": "boulder-star-coral-stage-1",
@@ -2558,7 +2851,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "00237cc92bde",
+      "prerelease": false
     },
     {
       "cardId": "boulder-star-coral-stage-2",
@@ -2576,7 +2871,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "efb205d4e66b",
+      "prerelease": false
     },
     {
       "cardId": "pillar-coral-base",
@@ -2594,7 +2891,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "167a134729f6",
+      "prerelease": false
     },
     {
       "cardId": "lettuce-coral-base",
@@ -2612,7 +2911,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "34e0216e4472",
+      "prerelease": false
     },
     {
       "cardId": "lettuce-coral-stage-1",
@@ -2630,7 +2931,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "55a42700c625",
+      "prerelease": false
     },
     {
       "cardId": "brain-coral-base",
@@ -2648,7 +2951,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f914e349025d",
+      "prerelease": false
     },
     {
       "cardId": "brain-coral-stage-1",
@@ -2666,7 +2971,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "bd604733f0ef",
+      "prerelease": false
     },
     {
       "cardId": "staghorn-coral-base",
@@ -2684,7 +2991,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f0d930a18978",
+      "prerelease": false
     },
     {
       "cardId": "clubfinger-coral-base",
@@ -2702,7 +3011,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "2bff0040a41c",
+      "prerelease": false
     },
     {
       "cardId": "clubfinger-coral-stage-1",
@@ -2720,7 +3031,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "4cd362529649",
+      "prerelease": false
     },
     {
       "cardId": "mustard-hill-coral-base",
@@ -2738,7 +3051,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "0a0201154040",
+      "prerelease": false
     },
     {
       "cardId": "deep_sea_vent",
@@ -2756,7 +3071,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "1e081f503096",
+      "prerelease": true
     },
     {
       "cardId": "deep_mushroom_base",
@@ -2774,7 +3091,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "52145148a8a6",
+      "prerelease": true
     },
     {
       "cardId": "deep_mushroom_stage1",
@@ -2792,7 +3111,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "c4ae26be42dd",
+      "prerelease": true
     },
     {
       "cardId": "deep_mushroom_stage2",
@@ -2810,7 +3131,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "5fb6fabefb34",
+      "prerelease": true
     },
     {
       "cardId": "bamboo_coral_base",
@@ -2828,7 +3151,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "49a945eab313",
+      "prerelease": true
     },
     {
       "cardId": "black_coral_base",
@@ -2846,7 +3171,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "468022bbf4a0",
+      "prerelease": true
     },
     {
       "cardId": "bamboo_coral_stage1",
@@ -2864,7 +3191,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "9d981f66c85f",
+      "prerelease": true
     },
     {
       "cardId": "black_coral_stage1",
@@ -2882,7 +3211,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "3be9eebce684",
+      "prerelease": true
     },
     {
       "cardId": "bamboo_coral_stage2",
@@ -2900,7 +3231,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "7e51c6b58cfc",
+      "prerelease": true
     },
     {
       "cardId": "black_coral_stage2",
@@ -2918,7 +3251,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "d9950f08c317",
+      "prerelease": true
     },
     {
       "cardId": "clear-water",
@@ -2936,7 +3271,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "b78d36f9db84"
     },
     {
       "cardId": "murky-water",
@@ -2954,7 +3290,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "a3c7a667fe79"
     },
     {
       "cardId": "bleak-overcast",
@@ -2972,7 +3309,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "bdb53dc1d136"
     },
     {
       "cardId": "undertow",
@@ -2990,7 +3328,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "c24f66b93029"
     },
     {
       "cardId": "algae-bloom",
@@ -3008,7 +3347,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "f6f4e62ed7ad"
     },
     {
       "cardId": "jelly-field",
@@ -3026,7 +3366,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "0e8316ad2eff"
     },
     {
       "cardId": "severe-coral-bleaching",
@@ -3044,7 +3385,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e4cc3df7724c"
     },
     {
       "cardId": "abundant-sunlight",
@@ -3062,7 +3404,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "8a93aa9f5833"
     },
     {
       "cardId": "fishing-nets",
@@ -3080,7 +3423,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "fca43d40fda9"
     },
     {
       "cardId": "coral-disease",
@@ -3098,7 +3442,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "c8515e830065"
     },
     {
       "cardId": "hurricane",
@@ -3116,7 +3461,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "7a8d563f162b"
     },
     {
       "cardId": "red-tide",
@@ -3134,7 +3480,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "2ad9452f3665"
     },
     {
       "cardId": "tropical-storm",
@@ -3152,7 +3499,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "976fdb1f605f"
     },
     {
       "cardId": "sardine-run",
@@ -3170,7 +3518,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "d49a2a4b8194"
     },
     {
       "cardId": "krill-ball",
@@ -3188,7 +3537,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "82f7a54bbab0"
     },
     {
       "cardId": "nutrient-rich",
@@ -3206,7 +3556,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e3ee0cea55dd"
     },
     {
       "cardId": "midnight",
@@ -3224,7 +3575,8 @@
       "sourceHeight": 750,
       "width": 525,
       "height": 375,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "210d86be9c82"
     },
     {
       "cardId": "coral-reef",
@@ -3242,7 +3594,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "bde8297f0549",
+      "prerelease": false
     },
     {
       "cardId": "open-ocean",
@@ -3260,11 +3614,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "6099e6ec766e",
+      "prerelease": false
     },
     {
       "cardId": "abyss",
-      "name": "Abyss",
+      "name": "The Abyss",
       "src": "/images/cards/habitats/abyss.png",
       "category": "habitat",
       "zone": "deep",
@@ -3278,7 +3634,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "dd0c8faf05b2",
+      "prerelease": false
     },
     {
       "cardId": "whirlpool",
@@ -3296,7 +3654,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "ae8dca9d4b0c",
+      "prerelease": false
     },
     {
       "cardId": "spearfishing",
@@ -3314,7 +3674,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "d360c7c493f3",
+      "prerelease": false
     },
     {
       "cardId": "coral-gardener",
@@ -3332,7 +3694,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "85dc705c054b",
+      "prerelease": false
     },
     {
       "cardId": "super-whirlpool",
@@ -3350,7 +3714,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "7f2001c20e06",
+      "prerelease": false
     },
     {
       "cardId": "restocking",
@@ -3368,7 +3734,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "2b7d3d660fb7",
+      "prerelease": false
     },
     {
       "cardId": "robotic-survey",
@@ -3386,7 +3754,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "3b5c7d5e723a",
+      "prerelease": false
     },
     {
       "cardId": "scientist-jes",
@@ -3404,7 +3774,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "3f1b70d0b1f1",
+      "prerelease": false
     },
     {
       "cardId": "coral-heal",
@@ -3422,7 +3794,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "e6a64be8c5bb",
+      "prerelease": false
     },
     {
       "cardId": "capt-dani",
@@ -3440,7 +3814,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "4c3bbdac3a3a",
+      "prerelease": false
     },
     {
       "cardId": "dr-evans",
@@ -3458,7 +3834,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "0fd0086811db",
+      "prerelease": false
     },
     {
       "cardId": "deep-sea-fishing",
@@ -3476,7 +3854,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "ae9c7a8a4ed4",
+      "prerelease": false
     },
     {
       "cardId": "coral-cement",
@@ -3494,7 +3874,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "458f65321624",
+      "prerelease": false
     },
     {
       "cardId": "remote-search",
@@ -3512,11 +3894,13 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "09df7857fe59",
+      "prerelease": false
     },
     {
       "cardId": "poison-heal",
-      "name": "Poison Heal",
+      "name": "Toxic Heal",
       "src": "/images/cards/support/poison-heal.png",
       "category": "support",
       "zone": "reef",
@@ -3530,7 +3914,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "ba2cd4b1a5b5",
+      "prerelease": false
     },
     {
       "cardId": "fishing",
@@ -3548,7 +3934,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "859f2ea7832c",
+      "prerelease": false
     },
     {
       "cardId": "crab-trap",
@@ -3566,14 +3954,16 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "396c80532b69",
+      "prerelease": false
     },
     {
       "cardId": "cast-net",
       "name": "Cast Net",
       "src": "/images/cards/support/cast-net.png",
       "category": "support",
-      "zone": "reef",
+      "zone": "ocean",
       "galleryOnly": false,
       "hidden": false,
       "sourcePageId": "219:2",
@@ -3584,7 +3974,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "dbd32c29fa1c",
+      "prerelease": false
     },
     {
       "cardId": "recovery",
@@ -3602,7 +3994,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "bfaf3d58875e",
+      "prerelease": false
     },
     {
       "cardId": "explorer-jordan",
@@ -3620,14 +4014,16 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "715752e267bb",
+      "prerelease": false
     },
     {
       "cardId": "rov-lights",
       "name": "ROV Lights",
       "src": "/images/cards/support/Deep/rov-lights.png",
       "category": "support",
-      "zone": "reef",
+      "zone": "deep",
       "galleryOnly": false,
       "hidden": false,
       "sourcePageId": "219:2",
@@ -3638,7 +4034,9 @@
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
-      "sourceStatus": "figma-export"
+      "sourceStatus": "figma-export",
+      "contentHash": "020666c6adb4",
+      "prerelease": false
     },
     {
       "cardId": "flounder",
@@ -3649,7 +4047,10 @@
       "galleryOnly": false,
       "width": 375,
       "height": 525,
-      "sourceStatus": "existing-preview"
+      "sourceStatus": "existing-preview",
+      "contentHash": "09e115c69cdf",
+      "prerelease": false
     }
-  ]
+  ],
+  "prereleaseCheckedAt": "2026-10-03T12:48:00.251Z"
 }
