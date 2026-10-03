@@ -507,8 +507,7 @@ export const supportCards = [
     name: "Ocean Jake",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
-    hideFromGallery: true,
-    image: "/images/brand/SeaPalsTCGLogoWhite.svg",
+    image: "/images/cards/support/ocean-jake.png",
     sortOrder: 520,
     cost: { rp: 0 },
 

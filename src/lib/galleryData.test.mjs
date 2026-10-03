@@ -18,7 +18,7 @@ test("gallery follows all 228 master printings, combining finishes into 193 card
   assert.equal(cards.length, 193);
   assert.equal(byId.size, 193);
   assert.equal(cards.reduce((total, card) => total + card.printings.length, 0), 228);
-  assert.equal(cards.filter((card) => !card.hasImage).length, 13);
+  assert.equal(cards.filter((card) => !card.hasImage).length, 12);
   for (const set of gallery) {
     assert.deepEqual(
       new Set(set.groups.flatMap((group) => group.images.map((card) => card.cardId))),
@@ -40,7 +40,9 @@ test("retired placeholders and off-list previews cannot leak from the playable c
   assert.equal(byId.get("spotfin-butterflyfish").name, "Spotfin Butterflyfish");
   assert.equal(byId.get("manta-ray").name, "Reef Manta Ray");
   assert.equal(byId.get("manta-ray").card.name, "Reef Manta Ray");
-  assert.ok(byId.has("ocean-jake"));
+  assert.equal(byId.get("ocean-jake").hasImage, true);
+  assert.equal(byId.get("ocean-jake").prerelease, false);
+  assert.match(byId.get("ocean-jake").src, /ocean-jake\.png\?v=[a-f0-9]{12}$/);
 });
 
 test("master set placement and baitball stages override catalog classifications", () => {
@@ -56,17 +58,24 @@ test("master set placement and baitball stages override catalog classifications"
 
 test("Prerelease cards are excluded from completed counts but remain in set totals", () => {
   const progress = getGalleryArtProgress(gallery);
-  assert.equal(cards.filter((card) => card.prerelease).length, 95);
+  assert.equal(cards.filter((card) => card.prerelease).length, 108);
   assert.equal(progress.totalCards, 193);
-  assert.equal(progress.completedCards, 85);
+  assert.equal(progress.completedCards, 73);
+  assert.equal(progress.overallPercent, 38);
   assert.deepEqual(progress.categoryStats.map((set) => [set.zone, set.complete]), [
-    ["reef", 77], ["ocean", 5], ["deep", 3],
+    ["reef", 65], ["ocean", 5], ["deep", 3],
   ]);
   assert.equal(byId.get("nurse-shark").prerelease, true);
   assert.equal(byId.get("humpback-whale").prerelease, true);
   assert.equal(byId.get("colossal-squid").prerelease, false);
   assert.equal(byId.get("open-ocean").prerelease, true);
   assert.equal(byId.get("abyss").prerelease, true);
+  for (const id of ["recovery", "fishing", "robotic-survey", "restocking",
+    "coral-gardener", "spearfishing", "scientist-jes", "capt-dani", "dr-evans",
+    "leather-starfish", "giant-triton", "oysters", "green-sea-turtle"]) {
+    assert.equal(byId.get(id).hasImage, true, id);
+    assert.equal(byId.get(id).prerelease, true, id);
+  }
   assert.equal(byId.get("coral-reef").prerelease, false);
   assert.equal(byId.get("rov-lights").prerelease, false);
   const marked = gallery.map((set) => ({ ...set, images: set.images.map((card) => ({ ...card, prerelease: true })) }));

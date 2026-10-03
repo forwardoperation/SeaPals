@@ -1832,8 +1832,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "a9b7a96f40d7",
-      "prerelease": false
+      "contentHash": "fde58bc6b7a8",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "spinner-dolphins",
@@ -2332,8 +2335,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e1d072460a96",
-      "prerelease": false
+      "contentHash": "0a39e588bec8",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "cleaner-shrimp",
@@ -2412,8 +2418,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "eba97c14d1db",
-      "prerelease": false
+      "contentHash": "670c1848fa9b",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "octopus",
@@ -2452,8 +2461,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "cd8b78f35404",
-      "prerelease": false
+      "contentHash": "253d04373ebc",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "giant-clam",
@@ -3615,9 +3627,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6099e6ec766e",
+      "contentHash": "381b66d303c4",
       "prerelease": true,
-      "prereleaseSource": "artist-confirmed"
+      "prereleaseSource": "figma-label",
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "abyss",
@@ -3636,9 +3650,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "dd0c8faf05b2",
+      "contentHash": "3e27fa02f06c",
       "prerelease": true,
-      "prereleaseSource": "artist-confirmed"
+      "prereleaseSource": "figma-label",
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "whirlpool",
@@ -3677,8 +3693,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "d360c7c493f3",
-      "prerelease": false
+      "contentHash": "e34891a2903d",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "coral-gardener",
@@ -3697,8 +3716,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "85dc705c054b",
-      "prerelease": false
+      "contentHash": "02e82ccf9e00",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "super-whirlpool",
@@ -3737,8 +3759,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "2b7d3d660fb7",
-      "prerelease": false
+      "contentHash": "19d54c923577",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "robotic-survey",
@@ -3757,8 +3782,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "3b5c7d5e723a",
-      "prerelease": false
+      "contentHash": "6edf196453db",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "scientist-jes",
@@ -3777,8 +3805,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "3f1b70d0b1f1",
-      "prerelease": false
+      "contentHash": "fe7bde758126",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "coral-heal",
@@ -3817,8 +3848,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "4c3bbdac3a3a",
-      "prerelease": false
+      "contentHash": "99564d2dc2cc",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "dr-evans",
@@ -3837,8 +3871,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "0fd0086811db",
-      "prerelease": false
+      "contentHash": "861968da49a9",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "deep-sea-fishing",
@@ -3937,8 +3974,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "859f2ea7832c",
-      "prerelease": false
+      "contentHash": "299b6785f249",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "crab-trap",
@@ -3997,8 +4037,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "bfaf3d58875e",
-      "prerelease": false
+      "contentHash": "063adc2092e7",
+      "prerelease": true,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor",
+      "prereleaseSource": "figma-label"
     },
     {
       "cardId": "explorer-jordan",
@@ -4052,6 +4095,28 @@
       "sourceStatus": "existing-preview",
       "contentHash": "09e115c69cdf",
       "prerelease": false
+    },
+    {
+      "cardId": "ocean-jake",
+      "name": "Ocean Jake",
+      "src": "/images/cards/support/ocean-jake.png",
+      "category": "support",
+      "zone": "reef",
+      "galleryOnly": false,
+      "hidden": false,
+      "sourcePageId": "219:2",
+      "sourcePage": "Support",
+      "nodeId": "2738:113536",
+      "sourceName": "ocean-jake",
+      "sourceWidth": 750,
+      "sourceHeight": 1050,
+      "width": 375,
+      "height": 525,
+      "sourceStatus": "figma-export",
+      "contentHash": "156d2fc6ef07",
+      "prerelease": false,
+      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportMethod": "figma-editor"
     }
   ],
   "prereleaseCheckedAt": "2026-10-03T12:48:00.251Z"
