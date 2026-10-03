@@ -116,7 +116,7 @@ function ArtProgress({ categories }) {
           </h2>
           <p className="mt-3 text-base leading-relaxed text-slate-600 md:text-lg">
             Progress follows the master set list, with one entry per card and
-            stage. Cards marked Prerelease and cards awaiting artwork do not
+            stage. Prerelease cards and cards awaiting artwork do not
             count as complete.
           </p>
         </div>

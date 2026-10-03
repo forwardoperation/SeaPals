@@ -54,17 +54,21 @@ test("master set placement and baitball stages override catalog classifications"
   assert.equal(byId.get("sardine-ball-stage1").stageLabel, "Stage 1");
 });
 
-test("visible Prerelease labels exclude cards from all completed counts but not totals", () => {
+test("Prerelease cards are excluded from completed counts but remain in set totals", () => {
   const progress = getGalleryArtProgress(gallery);
-  assert.equal(cards.filter((card) => card.prerelease).length, 93);
+  assert.equal(cards.filter((card) => card.prerelease).length, 95);
   assert.equal(progress.totalCards, 193);
-  assert.equal(progress.completedCards, 87);
+  assert.equal(progress.completedCards, 85);
   assert.deepEqual(progress.categoryStats.map((set) => [set.zone, set.complete]), [
-    ["reef", 77], ["ocean", 6], ["deep", 4],
+    ["reef", 77], ["ocean", 5], ["deep", 3],
   ]);
   assert.equal(byId.get("nurse-shark").prerelease, true);
   assert.equal(byId.get("humpback-whale").prerelease, true);
   assert.equal(byId.get("colossal-squid").prerelease, false);
+  assert.equal(byId.get("open-ocean").prerelease, true);
+  assert.equal(byId.get("abyss").prerelease, true);
+  assert.equal(byId.get("coral-reef").prerelease, false);
+  assert.equal(byId.get("rov-lights").prerelease, false);
   const marked = gallery.map((set) => ({ ...set, images: set.images.map((card) => ({ ...card, prerelease: true })) }));
   assert.equal(getGalleryArtProgress(marked).completedCards, 0);
   assert.equal(getGalleryArtProgress(marked).totalCards, 193);

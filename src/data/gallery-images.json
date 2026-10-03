@@ -3616,7 +3616,8 @@
       "height": 525,
       "sourceStatus": "figma-export",
       "contentHash": "6099e6ec766e",
-      "prerelease": false
+      "prerelease": true,
+      "prereleaseSource": "artist-confirmed"
     },
     {
       "cardId": "abyss",
@@ -3636,7 +3637,8 @@
       "height": 525,
       "sourceStatus": "figma-export",
       "contentHash": "dd0c8faf05b2",
-      "prerelease": false
+      "prerelease": true,
+      "prereleaseSource": "artist-confirmed"
     },
     {
       "cardId": "whirlpool",

@@ -69,7 +69,7 @@ export function buildGalleryData(masterSetList, imageManifest, catalogCards) {
         // A changed PNG gets a different URL, including at browser/CDN caches.
         src: hasImage ? `${image.src}?v=${image.contentHash}` : null,
         hasImage,
-        // This is audited from visible Figma card text, not inferred from zone.
+        // Status comes from visible Figma labels or the artist's confirmation.
         prerelease: hasImage && image.prerelease === true,
         width: image?.width ?? 375,
         height: image?.height ?? 525,
