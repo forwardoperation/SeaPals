@@ -1875,8 +1875,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "941ce4dd3653",
-      "prerelease": true
+      "contentHash": "5c3edacff103",
+      "prerelease": false,
+      "exportedAt": "2026-10-03T17:16:09.312Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "goblin-shark",
