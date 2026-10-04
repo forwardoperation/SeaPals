@@ -82,7 +82,7 @@ test("White Grunt matches its printed Creature School data", () => {
 
   assert.ok(card);
   assert.equal(card.name, "White Grunt");
-  assert.equal(card.image, "/images/cards/fish/Reef/white-grunt.png");
+  assert.match(card.image, /^\/images\/cards\/fish\/Reef\/white-grunt\.png\?v=[a-f0-9]{12}$/);
   assert.equal(card.kind, "creature");
   assert.equal(card.category, "fish");
   assert.equal(card.subtype, "baitball");
@@ -190,7 +190,7 @@ test("revised Oceanic cards and habitats expose their printed metadata", () => {
 
   const openOcean = cardsById["open-ocean"];
   assert.equal(openOcean.health, 40);
-  assert.equal(openOcean.image, "/images/cards/habitats/open-ocean.png");
+  assert.match(openOcean.image, /^\/images\/cards\/habitats\/open-ocean\.png\?v=[a-f0-9]{12}$/);
   assert.deepEqual(openOcean.playRequirements[0], {
     type: "ecosystemComposition",
     minimumCreatureSchools: 4,

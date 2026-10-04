@@ -14,6 +14,8 @@ import { habitatCards } from "./environments";
 import { conditionCards } from "./conditions";
 import { validateCards } from "./validation";
 import { CardCategory, CardKind, CreatureClass, CreatureZone } from "./types";
+import galleryImages from "../gallery-images.json";
+import { applyGalleryImages } from "../../lib/cardImages.mjs";
 
 const creatureClassByCategory = {
   [CardCategory.APEX]: CreatureClass.APEX,
@@ -56,7 +58,7 @@ function normalizeCreatureCard(card) {
   };
 }
 
-export const allCards = [
+export const allCards = applyGalleryImages([
   ...coralCards,
   ...fishCards,
   ...deepCoralCards,
@@ -69,7 +71,7 @@ export const allCards = [
   ...habitatCards,
   ...supportCards,
   ...conditionCards,
-]
+], galleryImages)
   .filter((card) => !card.galleryHidden)
   .map(normalizeCreatureCard)
   .sort((a, b) => a.sortOrder - b.sortOrder);
@@ -82,6 +84,11 @@ export const cardsById = Object.fromEntries(
 
 export function getCardById(id) {
   return cardsById[id] ?? null;
+}
+
+// Saved foundation instances can contain an image URL from an older release.
+export function getCardImage(card) {
+  return cardsById[card?.cardId ?? card?.id]?.image ?? card?.image;
 }
 
 export function getCardsByCategory(category) {

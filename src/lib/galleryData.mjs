@@ -1,3 +1,5 @@
+import { getGalleryImageSrc } from "./cardImages.mjs";
+
 const TYPE_CONFIG = [
   { slug: "filter-feeders", title: "Filter Feeders", category: "filter-feeder" },
   { slug: "apex", title: "Apex", category: "apex" },
@@ -59,7 +61,8 @@ export function buildGalleryData(masterSetList, imageManifest, catalogCards) {
     const label = set.title.replace(/ Set$/, "");
     const images = set.cards.map((entry) => {
       const image = imageByCardId.get(entry.cardId);
-      const hasImage = Boolean(image && !image.hidden);
+      const src = getGalleryImageSrc(image);
+      const hasImage = Boolean(src);
 
       return {
         ...entry,
@@ -67,7 +70,7 @@ export function buildGalleryData(masterSetList, imageManifest, catalogCards) {
         setTitle: set.title,
         totalPrintings: set.totalPrintings,
         // A changed PNG gets a different URL, including at browser/CDN caches.
-        src: hasImage ? `${image.src}?v=${image.contentHash}` : null,
+        src,
         hasImage,
         // Status comes from visible Figma labels or the artist's confirmation.
         prerelease: hasImage && image.prerelease === true,

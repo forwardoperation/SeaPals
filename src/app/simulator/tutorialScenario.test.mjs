@@ -197,7 +197,7 @@ test("the authored Fish attack lesson uses Porcupine Fish's current-format card"
   const card = cardsById[SCRIPTED_TUTORIAL_FINISH_PLAN.attackCardId];
   const crunch = card.actions.find((action) => action.id === "crunch");
   assert.equal(card.id, "porcupine-fish");
-  assert.equal(card.image, "/images/cards/fish/Reef/Porcupinefish.png");
+  assert.match(card.image, /^\/images\/cards\/fish\/Reef\/Porcupinefish\.png\?v=[a-f0-9]{12}$/);
   assert.equal(card.cost.rp, 2);
   assert.equal(card.victoryPoints, 2);
   assert.equal(crunch.cost.rp, 1);

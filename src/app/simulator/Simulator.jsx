@@ -67,7 +67,7 @@ import {
   allocateCollectedRpSources,
   createCompactTurnStages,
 } from "./compactTurnSequence.mjs";
-import { cardsById } from "@/data/cards";
+import { cardsById, getCardImage } from "@/data/cards";
 import { CardCategory, CardKind, CreatureZone, EffectType, canCardOccupySlot } from "@/data/cards/types";
 import { conditionCards } from "@/data/cards/conditions";
 import { getPlayableDeckById, prebuiltDecks } from "@/data/decks/prebuiltDecks";
@@ -27495,7 +27495,7 @@ export default function Simulator({
                                 >
                                 <InPlayHoverLabel card={cardsById[coral.cardId]} zoom={ecosystemZoom} placement="below" />
                                 <img
-                                  src={coral.image}
+                                  src={getCardImage(coral)}
                                   alt={coral.name}
                                   onDragStart={(event) => event.preventDefault()}
                                   className={`absolute inset-0 h-full w-full rounded-[1.5rem] object-contain ${
