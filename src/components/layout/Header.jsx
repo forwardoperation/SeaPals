@@ -17,7 +17,7 @@ export default function Header() {
         ? pathname === "/"
         : pathname.startsWith(href);
 
-    return `flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold text-center transition-all duration-200 ${
+    return `flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold text-center transition-all duration-200 md:px-3 ${
       isActive
         ? "bg-sky-600 text-white shadow-sm"
         : "text-slate-700 hover:bg-sky-50 hover:text-sky-700"
@@ -29,7 +29,7 @@ export default function Header() {
       <Link
         href="/"
         aria-label="SeaRealm home"
-        className="rounded-xl focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+        className="shrink-0 rounded-xl focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
       >
         <Image
           src="/images/brand/searealm-tcg-logo-black.png"
@@ -42,7 +42,7 @@ export default function Header() {
 
       <nav
         aria-label="Primary navigation"
-        className="grid w-full grid-cols-2 gap-2 rounded-3xl border border-cyan-200 bg-white/90 p-2.5 shadow-sm backdrop-blur md:flex md:w-auto md:flex-wrap md:items-center md:rounded-full"
+        className="grid w-full grid-cols-2 gap-2 rounded-3xl border border-cyan-200 bg-white/90 p-2.5 shadow-sm backdrop-blur md:flex md:w-auto md:flex-wrap md:items-center md:justify-center md:gap-1 md:rounded-full"
       >
         <Link href="/" aria-current={pathname === "/" ? "page" : undefined} className={linkClass("/")}>
           Home
@@ -54,6 +54,10 @@ export default function Header() {
 
         <Link href="/gallery" aria-current={pathname.startsWith("/gallery") ? "page" : undefined} className={linkClass("/gallery")}>
           Gallery
+        </Link>
+
+        <Link href="/set-list" aria-current={pathname.startsWith("/set-list") ? "page" : undefined} className={linkClass("/set-list")}>
+          Set List
         </Link>
 
         <Link href="/encyclopedia" aria-current={pathname.startsWith("/encyclopedia") ? "page" : undefined} className={linkClass("/encyclopedia")}>
@@ -78,7 +82,7 @@ export default function Header() {
 
         <a
           href="/#signup"
-          className="flex items-center justify-center rounded-full bg-[#f7c948] px-4 py-2.5 text-center text-sm font-bold text-[#073d58] transition-all duration-200 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+          className="flex items-center justify-center rounded-full bg-[#f7c948] px-4 py-2.5 text-center text-sm font-bold text-[#073d58] transition-all duration-200 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/70 md:px-3"
         >
           Join the Crew
         </a>

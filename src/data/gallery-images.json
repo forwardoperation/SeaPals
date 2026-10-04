@@ -60,8 +60,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "5e52d26c0b44",
-      "prerelease": true
+      "contentHash": "df27344bff61",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "whale-shark",
@@ -492,8 +494,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "38983b81ed44",
-      "prerelease": true
+      "contentHash": "852ec7360e1b",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "lionfish",
@@ -952,8 +956,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "1e0f18410225",
-      "prerelease": true
+      "contentHash": "d914e911f954",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "fangtooth-fish",
@@ -1012,8 +1018,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "42769f90defe",
-      "prerelease": true
+      "contentHash": "3cdffb85f1f3",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "coelacanth",
@@ -1072,8 +1080,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "0d6da7aab5a8",
-      "prerelease": true
+      "contentHash": "c80b2a9b059a",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "mahi-mahi",
@@ -1092,8 +1102,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e09a59b1ebe9",
-      "prerelease": true
+      "contentHash": "a403965553af",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "king-mackerel",
@@ -1112,8 +1124,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "a10126687e1c",
-      "prerelease": true
+      "contentHash": "f593c73997bb",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "tripletail",
@@ -1132,8 +1146,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "cf2d85442d27",
-      "prerelease": true
+      "contentHash": "798c8cc468a8",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "halfbeak",
@@ -1212,8 +1228,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "985b6ff99c76",
-      "prerelease": true
+      "contentHash": "eab91c644ba3",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "bluefish",
@@ -1292,8 +1310,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e881259acfbc",
-      "prerelease": true
+      "contentHash": "57075fad1477",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "frigate-tuna",
@@ -1392,8 +1412,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6484b933b0d5",
-      "prerelease": true
+      "contentHash": "73cbda171379",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "krill-bloom-base",
@@ -1875,9 +1897,9 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "5c3edacff103",
+      "contentHash": "0dc873161a7f",
       "prerelease": false,
-      "exportedAt": "2026-10-03T17:16:09.312Z",
+      "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
     },
     {
@@ -1937,8 +1959,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "8880c88c2597",
-      "prerelease": true
+      "contentHash": "26dbd5bee625",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "chimera",
@@ -1977,8 +2001,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "d1755e93aad3",
-      "prerelease": true
+      "contentHash": "e3daad5b8de9",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "cookie-cutter-shark",
@@ -2546,8 +2572,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "065414c67dc4",
-      "prerelease": true
+      "contentHash": "edcebfb44e77",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "giant-isopod",
@@ -2566,8 +2594,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "0f6503905289",
-      "prerelease": true
+      "contentHash": "a96d391d37d7",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "giant-tube-worm",
@@ -2606,8 +2636,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "fbe5b77d8a98",
-      "prerelease": true
+      "contentHash": "94474b97480a",
+      "prerelease": true,
+      "exportedAt": "2026-10-04T01:03:20.888Z",
+      "exportMethod": "figma-editor"
     },
     {
       "cardId": "deep-sea-jelly",

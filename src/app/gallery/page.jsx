@@ -373,6 +373,12 @@ export default async function GalleryPage() {
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            href="/set-list"
+            className="rounded-full bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-200"
+          >
+            Rarity set list →
+          </Link>
           {categories.map((category) => (
             <a
               key={category.slug}

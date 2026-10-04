@@ -8,6 +8,7 @@ const PUBLIC_PATHS = Object.freeze([
   "/decks",
   "/encyclopedia",
   "/gallery",
+  "/set-list",
   "/instructions",
   "/instructions/tutorial",
   "/privacy",
