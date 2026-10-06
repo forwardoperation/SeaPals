@@ -25,15 +25,15 @@ test("set list preserves every numbered printing, including separate Holo Rare v
 
 test("rarity totals match the revised master set list", () => {
   assert.deepEqual(sets.map(({ zone, rarities }) => ({ zone, rarities })), [
-    { zone: "reef", rarities: { Common: 42, Uncommon: 28, Rare: 17, "Holo Rare": 15 } },
-    { zone: "ocean", rarities: { Common: 26, Uncommon: 19, Rare: 14, "Holo Rare": 5 } },
+    { zone: "reef", rarities: { Common: 39, Uncommon: 30, Rare: 18, "Holo Rare": 15 } },
+    { zone: "ocean", rarities: { Common: 26, Uncommon: 18, Rare: 15, "Holo Rare": 5 } },
     { zone: "deep", rarities: { Common: 21, Uncommon: 15, Rare: 11, "Holo Rare": 15 } },
   ]);
   const revised = {
     "frilled-shark": "Uncommon", "giant-isopod": "Uncommon", "vampire-squid": "Uncommon",
     "barrel-eye-fish": "Uncommon", "tripod-fish": "Common", "deep-sea-skate": "Common",
     "peacock-squid": "Common", "bloody-belly-comb-jelly": "Common", "ocean-sunfish": "Uncommon",
-    "bluefin-tuna": "Uncommon", "thresher-shark": "Uncommon", remora: "Common",
+    "bluefin-tuna": "Rare", "thresher-shark": "Uncommon", remora: "Common",
     "barracuda-oceanic": "Common", "mahi-mahi": "Common", "king-mackerel": "Common",
     tripletail: "Common", "african-pompano": "Common", "yellowtail-amberjack": "Common",
     "chum-bucket": "Uncommon",

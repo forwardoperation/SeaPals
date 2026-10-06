@@ -1,0 +1,22 @@
+{
+  "calibrationConfirmed": false,
+  "siteOrigin": "https://searealm.com",
+  "sumatraPath": "C:\\Program Files\\SumatraPDF\\SumatraPDF.exe",
+  "fronts": {
+    "printerName": "ET-8550 Series(Network)",
+    "printSettings": "noscale,simplex,color,paper=letter",
+    "media": "Thin photo paper; set the Epson driver media type and standard tray before calibrating."
+  },
+  "backs": {
+    "printerName": "Canon MF750C II Series UFR II",
+    "printSettings": "noscale,simplex,color,paper=letter",
+    "media": "Separate laser-compatible backing sheets; set the Canon driver media type and tray before calibrating."
+  },
+  "ticket": {
+    "printerName": "Canon MF750C II Series UFR II",
+    "printSettings": "noscale,simplex,monochrome,paper=letter",
+    "media": "Uses the Canon backing-paper tray unless a separate plain-paper bin is configured. Do not pause between orders to swap stock."
+  },
+  "assembly": "Glue the separately printed fronts and backs together.",
+  "holoFinishing": "Manually apply each listed holo sticker. Confirm all stickers before quality check."
+}

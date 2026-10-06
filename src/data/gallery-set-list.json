@@ -505,7 +505,7 @@
           "printings": [
             {
               "number": 54,
-              "rarity": "Uncommon"
+              "rarity": "Rare"
             }
           ],
           "sourceName": "capt-dani"
@@ -859,7 +859,7 @@
           "printings": [
             {
               "number": 85,
-              "rarity": "Common"
+              "rarity": "Uncommon"
             }
           ],
           "sourceName": "spearfishing"
@@ -895,7 +895,7 @@
           "printings": [
             {
               "number": 88,
-              "rarity": "Common"
+              "rarity": "Uncommon"
             }
           ],
           "sourceName": "robotic-survey"
@@ -919,7 +919,7 @@
           "printings": [
             {
               "number": 90,
-              "rarity": "Common"
+              "rarity": "Uncommon"
             }
           ],
           "sourceName": "toxic-heal"
@@ -1181,7 +1181,7 @@
           "printings": [
             {
               "number": 14,
-              "rarity": "Uncommon"
+              "rarity": "Rare"
             }
           ]
         },
@@ -2346,5 +2346,16 @@
         }
       ]
     }
-  ]
+  ],
+  "raritySource": {
+    "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+    "verifiedAt": "2026-10-05",
+    "updatedCardIds": [
+      "capt-dani",
+      "spearfishing",
+      "robotic-survey",
+      "poison-heal",
+      "bluefin-tuna"
+    ]
+  }
 }

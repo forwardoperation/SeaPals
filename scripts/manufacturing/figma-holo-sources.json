@@ -1,0 +1,165 @@
+{
+  "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "pageId": "3961:6979",
+  "verifiedAt": "2026-10-04T23:07:48.847Z",
+  "sets": [
+    {
+      "id": "3961:6980",
+      "name": "Reef Set — Holo Rare",
+      "cards": [
+        {
+          "id": "3961:7866",
+          "name": "holo-reef-001-manta-ray"
+        },
+        {
+          "id": "3961:11858",
+          "name": "holo-reef-002-great-white"
+        },
+        {
+          "id": "3961:16232",
+          "name": "holo-reef-003-tiger-shark"
+        },
+        {
+          "id": "3961:18357",
+          "name": "holo-reef-004-bull-shark"
+        },
+        {
+          "id": "3961:20579",
+          "name": "holo-reef-005-hammerhead"
+        },
+        {
+          "id": "3961:23802",
+          "name": "holo-reef-006-bottlenose-dolphin"
+        },
+        {
+          "id": "3961:27664",
+          "name": "holo-reef-007-goliath-grouper"
+        },
+        {
+          "id": "3961:30364",
+          "name": "holo-reef-008-spinner-dolphins"
+        },
+        {
+          "id": "3961:33382",
+          "name": "holo-reef-009-emperor-angelfish"
+        },
+        {
+          "id": "3961:39224",
+          "name": "holo-reef-010-queen-angelfish"
+        },
+        {
+          "id": "3961:42158",
+          "name": "holo-reef-011-giant-triton"
+        },
+        {
+          "id": "3961:42254",
+          "name": "holo-reef-012-oysters"
+        },
+        {
+          "id": "3961:45647",
+          "name": "holo-reef-013-boulder-star-coral-stage-2"
+        },
+        {
+          "id": "3961:49365",
+          "name": "holo-reef-014-brain-coral-stage-2"
+        },
+        {
+          "id": "3961:51822",
+          "name": "holo-reef-015-elkhorn-coral-stage-2"
+        }
+      ]
+    },
+    {
+      "id": "3962:26155",
+      "name": "Oceanic Set — Holo Rare",
+      "cards": [
+        {
+          "id": "3962:26162",
+          "name": "holo-ocean-001-blue-whale"
+        },
+        {
+          "id": "3962:27263",
+          "name": "holo-ocean-002-oceanic-manta-ray"
+        },
+        {
+          "id": "3962:27992",
+          "name": "holo-ocean-003-humpback-whale"
+        },
+        {
+          "id": "3962:30546",
+          "name": "holo-ocean-004-killer-whale-oceanic"
+        },
+        {
+          "id": "3962:32799",
+          "name": "holo-ocean-005-shortfin-mako-shark"
+        }
+      ]
+    },
+    {
+      "id": "3962:33782",
+      "name": "Deep Set — Holo Rare",
+      "cards": [
+        {
+          "id": "3962:33790",
+          "name": "holo-deep-001-megamouth-shark"
+        },
+        {
+          "id": "3962:35714",
+          "name": "holo-deep-002-colossal-squid"
+        },
+        {
+          "id": "3962:37999",
+          "name": "holo-deep-003-sperm-whale"
+        },
+        {
+          "id": "3962:40373",
+          "name": "holo-deep-004-giant-phantom-jelly"
+        },
+        {
+          "id": "3962:42053",
+          "name": "holo-deep-005-giant-squid"
+        },
+        {
+          "id": "3962:43966",
+          "name": "holo-deep-006-greenland-shark"
+        },
+        {
+          "id": "3962:45957",
+          "name": "holo-deep-007-pilot-whale-oceanic"
+        },
+        {
+          "id": "3962:48661",
+          "name": "holo-deep-008-goblin-shark"
+        },
+        {
+          "id": "3962:51002",
+          "name": "holo-deep-009-giant-isopod"
+        },
+        {
+          "id": "3962:52434",
+          "name": "holo-deep-010-vampire-squid"
+        },
+        {
+          "id": "3962:54556",
+          "name": "holo-deep-011-barrel-eye-fish"
+        },
+        {
+          "id": "3962:55990",
+          "name": "holo-deep-012-coelacanth"
+        },
+        {
+          "id": "3962:57784",
+          "name": "holo-deep-013-bamboo_coral_stage2"
+        },
+        {
+          "id": "3962:59370",
+          "name": "holo-deep-014-black_coral_stage2"
+        },
+        {
+          "id": "3962:60977",
+          "name": "holo-deep-015-deep_mushroom_stage2"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "orderId": "demo-two-printer-workflow",
+  "orderNumber": "DEMO-001",
+  "items": [
+    { "productId": "reef-dive-pack", "quantity": 1 },
+    { "productId": "deep-dive-pack", "quantity": 1 },
+    { "productId": "oceanic-dive-pack", "quantity": 1 }
+  ]
+}

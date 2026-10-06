@@ -1849,6 +1849,7 @@ export default function OrdersDashboard() {
               Review paid orders, prepare product shipments, and keep tracking and
               packing notes together.
             </p>
+            <a href="/admin/manufacturing" className="mt-4 inline-block rounded-xl border border-cyan-300/50 px-4 py-2 text-sm font-bold text-white hover:bg-white/10">Open manufacturing queue</a>
           </div>
           {lastUpdated ? (
             <p className="text-sm font-semibold text-cyan-100/70">

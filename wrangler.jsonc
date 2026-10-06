@@ -28,6 +28,9 @@
 		}
 	],
 	"vars": {
+		"MANUFACTURING_ENABLED": "false",
+		"MANUFACTURING_ALLOW_TEST_ORDERS": "false",
+		"MANUFACTURING_BUYER_NOTIFICATIONS_ENABLED": "false",
 		"SITE_URL": "https://searealm.com",
 		// New checkout sessions must originate on the canonical SeaRealm hostname.
 		// Legacy API and auth routes stay reachable for in-flight operations.

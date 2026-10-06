@@ -12,6 +12,7 @@ import { reconcileOverdueInventoryReservations } from "./src/lib/store/inventory
 import { drainFulfillmentDueNotifications } from "./src/lib/store/fulfillmentDueNotificationDrain.mjs";
 import { drainMerchantPurchaseNotifications } from "./src/lib/store/merchantOrderNotificationDrain.mjs";
 import { drainPaQuarterlyReportEmail } from "./src/lib/store/paQuarterlyReportDrain.mjs";
+import { drainManufacturingNotifications } from "./src/lib/manufacturing/notifications.mjs";
 
 export {
   BucketCachePurge,
@@ -89,6 +90,7 @@ export default {
       dueReminderResult,
       reservationResult,
       paQuarterlyReportResult,
+      manufacturingResult,
     ] =
       await Promise.allSettled([
         drainMerchantPurchaseNotifications({ environment }),
@@ -102,7 +104,10 @@ export default {
           environment,
           now: new Date(controller.scheduledTime),
         }),
+        drainManufacturingNotifications({ environment }),
       ]);
+
+    console.log(JSON.stringify({ message: "Manufacturing buyer notification cron", ...(manufacturingResult.status === "fulfilled" ? manufacturingResult.value : { failed: true }) }));
 
     if (notificationResult.status === "fulfilled") {
       console.log(

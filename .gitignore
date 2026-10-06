@@ -155,3 +155,6 @@ seapals-pa-sales-tax-*.csv
 .env
 .env.*
 !.env.example
+
+# Private print masters, customer work tickets, manifests, and printer journals
+/.private/
