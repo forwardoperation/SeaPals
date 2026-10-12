@@ -1174,6 +1174,75 @@
   will-change: left, top;
 }
 
+/* One cropped ground surface; actors and facades are upright billboards. */
+.map.perspectiveMap {
+  aspect-ratio: 16 / 10;
+  background: #16899a;
+  contain: layout paint;
+}
+
+.mapWorld.perspectiveWorld {
+  inset: 0;
+  display: block;
+  will-change: auto;
+}
+
+.perspectiveGround {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  transform-origin: 0 0;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Legacy animated overlays belong to their flat artwork, not the cropped plane. */
+.perspectiveGround::before,
+.perspectiveGround::after { display: none; }
+
+.perspectiveObjectShadow {
+  position: absolute;
+  z-index: 1;
+  border-radius: 50%;
+  background: rgb(13 38 35 / 24%);
+  transform: skewX(-24deg);
+  pointer-events: none;
+}
+
+.perspectiveWorld :is(.characterCell, .spriteArtwork) {
+  will-change: auto;
+}
+
+.perspectiveWorld :is(.spriteArtwork, .characterShadow) {
+  filter: none;
+}
+
+.map[data-world-active="false"] *,
+.map[data-world-active="false"] *::before,
+.map[data-world-active="false"] *::after {
+  animation-play-state: paused !important;
+}
+
+.batterySaverMode .trainerMarker,
+.batterySaverMode .actionCue,
+.batterySaverMode .worldCueArrow,
+.batterySaverMode .spriteIdleWalking,
+.batterySaverMode .boatWake { animation: none; }
+
+@media (max-width: 700px) and (orientation: portrait) {
+  .map.perspectiveMap { aspect-ratio: 1.05; }
+}
+
+@media (max-height: 620px) and (orientation: landscape) {
+  .map.perspectiveMap {
+    aspect-ratio: 16 / 9;
+    width: min(100%, calc((100dvh - 140px) * 16 / 9));
+  }
+}
+
 .mapSceneDeparting,
 .mapSceneArriving {
   border-color: #fef3c7;
@@ -3704,6 +3773,20 @@
 .directionleft { grid-area: 2 / 1; border-radius: 8px 0 0 8px; }
 .directionright { grid-area: 2 / 3; border-radius: 0 8px 8px 0; }
 .directiondown { grid-area: 3 / 2; border-radius: 0 0 8px 8px; }
+.dpad:not(.aquariumGalleryDpad):not(.handNetDockDpad) .directionButton::before {
+  content: "";
+  display: block;
+  margin: auto;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  pointer-events: none;
+}
+.directionup::before { transform: rotate(-135deg); }
+.directionleft::before { transform: rotate(135deg); }
+.directionright::before { transform: rotate(-45deg); }
+.directiondown::before { transform: rotate(45deg); }
 .dpadCenter { grid-area: 2 / 2; position: relative; }
 .dpadCenter::after { content: ""; position: absolute; inset: 36%; border-radius: 50%; background: #0b2736; }
 

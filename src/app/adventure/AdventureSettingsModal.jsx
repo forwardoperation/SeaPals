@@ -116,6 +116,7 @@ function BooleanSetting({ checked, description, disabled, label, onChange }) {
 
 export default function AdventureSettingsModal({
   save,
+  mobileDevice = false,
   notice = null,
   blocked = false,
   onCommit,
@@ -209,6 +210,29 @@ export default function AdventureSettingsModal({
 
         <fieldset className={styles.settingsList} disabled={disabled}>
           <legend className={styles.visuallyHidden}>Adventure settings</legend>
+
+          <label className={styles.selectRow} htmlFor={`${titleId}-graphics`}>
+            <span>
+              <strong>World view</strong>
+              <small>{draft.graphicsMode === "auto"
+                ? `3D perspective with battery saver automatically enabled on mobile. Currently: ${mobileDevice ? "battery saver" : "full quality"}.`
+                : draft.graphicsMode === "battery"
+                ? "The same depth with fewer animations and a 30 fps limit to save power."
+                : draft.graphicsMode === "classic"
+                  ? "The original overhead view."
+                  : "Explore with an angled camera, upright characters, and a sense of depth."}</small>
+            </span>
+            <select
+              id={`${titleId}-graphics`}
+              value={draft.graphicsMode}
+              onChange={(event) => setSetting("graphicsMode", event.target.value)}
+            >
+              <option value="auto">Automatic (recommended)</option>
+              <option value="perspective">3D perspective</option>
+              <option value="battery">Battery saver</option>
+              <option value="classic">Classic overhead</option>
+            </select>
+          </label>
 
           <label className={styles.selectRow} htmlFor={`${titleId}-text-speed`}>
             <span>

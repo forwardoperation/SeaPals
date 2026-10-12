@@ -5,11 +5,14 @@ export const ADVENTURE_TEXT_SPEEDS = Object.freeze([
   "instant",
 ]);
 
+export const ADVENTURE_GRAPHICS_MODES = Object.freeze(["auto", "perspective", "battery", "classic"]);
+
 export const DEFAULT_ADVENTURE_SETTINGS = Object.freeze({
   textSpeed: "normal",
   reducedMotion: false,
   highContrast: false,
   boatAutoSteer: false,
+  graphicsMode: "auto",
 });
 
 const TEXT_SPEED_SET = new Set(ADVENTURE_TEXT_SPEEDS);
@@ -20,6 +23,7 @@ const BOOLEAN_SETTING_KEYS = Object.freeze([
 ]);
 const SETTING_KEYS = Object.freeze([
   "textSpeed",
+  "graphicsMode",
   ...BOOLEAN_SETTING_KEYS,
 ]);
 const SETTING_KEY_SET = new Set(SETTING_KEYS);
@@ -34,7 +38,7 @@ function settingsMatch(left, right) {
 }
 
 /**
- * Returns the canonical four-field settings shape. This tolerant read helper is
+ * Returns the canonical settings shape. This tolerant read helper is
  * useful for legacy or interrupted saves: malformed stored values fall back to
  * the schema's existing defaults and unsupported fields are removed.
  */
@@ -53,6 +57,9 @@ export function normalizeAdventureSettings(value) {
     boatAutoSteer: typeof settings.boatAutoSteer === "boolean"
       ? settings.boatAutoSteer
       : DEFAULT_ADVENTURE_SETTINGS.boatAutoSteer,
+    graphicsMode: ADVENTURE_GRAPHICS_MODES.includes(settings.graphicsMode)
+      ? settings.graphicsMode
+      : DEFAULT_ADVENTURE_SETTINGS.graphicsMode,
   };
 }
 
@@ -89,6 +96,9 @@ export function updateAdventureSettings(saveValue, updatesValue = {}) {
     if (Object.hasOwn(updatesValue, key) && typeof updatesValue[key] !== "boolean") {
       throw new TypeError(`Adventure setting ${key} must be true or false.`);
     }
+  }
+  if (Object.hasOwn(updatesValue, "graphicsMode") && !ADVENTURE_GRAPHICS_MODES.includes(updatesValue.graphicsMode)) {
+    throw new RangeError(`Unknown adventure graphics mode: ${String(updatesValue.graphicsMode)}.`);
   }
 
   const currentSettings = normalizeAdventureSettings(saveValue.settings);

@@ -4,6 +4,7 @@ import {
   ADVENTURE_OPENING_STATUSES,
   ELVERSON_PROLOGUE_BEAT_IDS,
 } from "./adventureOpeningContract.mjs";
+import { DEFAULT_ADVENTURE_SETTINGS, normalizeAdventureSettings } from "./adventureSettings.mjs";
 import {
   ELVERSON_TOWN_LAYOUT_VERSION,
   ELVERSON_TOWN_LAYOUT_VERSION_EXPANDED_WATERFRONT,
@@ -417,12 +418,7 @@ function createInitialState(
     fieldNotes: {
       entryIds: [],
     },
-    settings: {
-      textSpeed: "normal",
-      reducedMotion: false,
-      highContrast: false,
-      boatAutoSteer: false,
-    },
+    settings: { ...DEFAULT_ADVENTURE_SETTINGS },
     playtimeSeconds: 0,
     rewardLedger: [],
   };
@@ -671,6 +667,7 @@ export function normalizeAdventureSave(value) {
     },
     settings: {
       textSpeed,
+      graphicsMode: normalizeAdventureSettings(settings).graphicsMode,
       reducedMotion: normalizeBoolean(
         settings.reducedMotion,
         "save.settings.reducedMotion",

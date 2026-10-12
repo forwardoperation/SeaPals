@@ -8,7 +8,8 @@ import { SEAPALS_OPERATOR } from "@/lib/legalPrivacy.mjs";
 export default function SiteFooter() {
   const pathname = usePathname();
   const isAccountGameRoute =
-    pathname.startsWith("/adventure") || pathname.startsWith("/auth");
+    pathname.startsWith("/adventure") || pathname.startsWith("/auth")
+    || pathname.startsWith("/dev/reefbound/play");
 
   if (isAccountGameRoute) return null;
 

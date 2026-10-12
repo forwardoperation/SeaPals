@@ -7,7 +7,9 @@ const styles = readFileSync(new URL("./adventure.module.css", import.meta.url), 
 
 test("compiled scene objects render as decorative sprites over the ground layer", () => {
   assert.match(component, /function AdventureLayeredMapObject\(\{ object, scene \}\)/);
-  assert.match(component, /style=\{getLayeredSceneObjectStyle\(object, scene\)\}/);
+  assert.match(component, /getPerspectiveObjectRect\(object, scene\.projection\)/);
+  assert.match(component, /: getLayeredSceneObjectStyle\(object, scene\)/);
+  assert.match(component, /style=\{objectStyle\}/);
   assert.match(component, /renderedLayeredObjects\.map\(\(object\) => \(/);
   assert.match(component, /key=\{object\.renderId \?\? object\.id\}/);
   assert.match(component, /className=\{styles\.layeredMapObject\}/);

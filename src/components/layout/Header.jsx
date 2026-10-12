@@ -7,7 +7,8 @@ import { usePathname } from "next/navigation";
 export default function Header() {
   const pathname = usePathname();
   const isAccountGameRoute =
-    pathname.startsWith("/adventure") || pathname.startsWith("/auth");
+    pathname.startsWith("/adventure") || pathname.startsWith("/auth")
+    || pathname.startsWith("/dev/reefbound/play");
 
   if (isAccountGameRoute) return null;
 

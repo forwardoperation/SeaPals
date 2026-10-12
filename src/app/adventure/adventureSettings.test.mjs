@@ -9,13 +9,14 @@ import {
 } from "./adventureSettings.mjs";
 import { createInitialAdventureSave } from "./adventureProgression.mjs";
 
-test("adventure settings use the four schema-backed defaults", () => {
+test("adventure settings use the schema-backed graphics and accessibility defaults", () => {
   assert.deepEqual(ADVENTURE_TEXT_SPEEDS, ["slow", "normal", "fast", "instant"]);
   assert.deepEqual(DEFAULT_ADVENTURE_SETTINGS, {
     textSpeed: "normal",
     reducedMotion: false,
     highContrast: false,
     boatAutoSteer: false,
+    graphicsMode: "auto",
   });
   assert.deepEqual(normalizeAdventureSettings(null), DEFAULT_ADVENTURE_SETTINGS);
 });
@@ -26,6 +27,7 @@ test("stored settings normalize malformed values and remove unsupported fields",
     reducedMotion: "yes",
     highContrast: true,
     boatAutoSteer: false,
+    graphicsMode: "perspective",
     audioVolume: 0.5,
   });
 
@@ -34,6 +36,7 @@ test("stored settings normalize malformed values and remove unsupported fields",
     reducedMotion: false,
     highContrast: true,
     boatAutoSteer: false,
+    graphicsMode: "perspective",
   });
 });
 
@@ -53,6 +56,7 @@ test("a partial settings update is immutable and preserves the rest of the save"
     reducedMotion: true,
     highContrast: false,
     boatAutoSteer: false,
+    graphicsMode: "auto",
   });
   assert.notEqual(result.save, save);
   assert.notEqual(result.save.settings, originalSettings);
@@ -88,6 +92,7 @@ test("an empty update repairs a noncanonical settings object without touching ot
     reducedMotion: true,
     highContrast: false,
     boatAutoSteer: false,
+    graphicsMode: "auto",
   });
   assert.equal(result.save.progression, interrupted.progression);
 });

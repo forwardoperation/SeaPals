@@ -54,6 +54,10 @@ const TERRAIN_ROWS = Object.freeze([
 ]);
 
 const ARCHETYPES = {
+  "street-tree": {
+    sprite: { src: `${OBJECT_ROOT}/street-tree.webp`, width: 1.65, height: 2.15, anchorX: 0.5, anchorY: 1 },
+    colliders: [],
+  },
   "blue-home-left-door": building("blue-home", 4.1, 3.95),
   "tan-home-door": building("tan-home", 3.5, 3.98),
   "green-home-door": building("green-home", 3.4, 4.27),
@@ -72,6 +76,19 @@ const OBJECTS = ELVERSON_TOWN_PORTALS.map((portal) => ({
   at: portal.at,
   ...(portal.scale === undefined ? {} : { scale: portal.scale }),
   interactionId: portal.id,
+}));
+
+// Render-only lawn decoration. Keep the original game's collision geometry,
+// doorway approaches, patrol routes, and saved positions unchanged.
+const STREET_TREES = [
+  [1.1, 4.35], [8.1, 4.35], [10.2, 4.35], [17.8, 4.35],
+  [23.4, 4.35], [32, 4.35], [34.4, 4.35], [40.6, 4.35],
+  [1.1, 15.45], [8.1, 15.45], [10.3, 15.45], [18, 15.45],
+  [23.3, 15.45], [26.6, 15.45], [34.1, 15.45], [40.5, 15.45],
+].map(([x, y], index) => ({
+  id: `elverson-street-tree-${index + 1}`,
+  archetype: "street-tree",
+  at: { x, y },
 }));
 
 export const ELVERSON_LAYERED_SCENE = compileLayeredScene({
@@ -94,5 +111,5 @@ export const ELVERSON_LAYERED_SCENE = compileLayeredScene({
     { id: "aquarium-deck", ...ELVERSON_TOWN_AQUARIUM_DECK },
   ],
   archetypes: ARCHETYPES,
-  objects: OBJECTS,
+  objects: [...OBJECTS, ...STREET_TREES],
 });

@@ -124,7 +124,8 @@ test("world exposes the 42-by-28 Elverson v5 town, aquarium galleries, public in
   assert.equal(SCENES.town.width, ELVERSON_TOWN_DIMENSIONS.width);
   assert.equal(SCENES.town.height, ELVERSON_TOWN_DIMENSIONS.height);
   assert.equal(SCENES.town.artPath, "/images/adventure/elverson-ground-v5.webp");
-  assert.equal(SCENES.town.layeredObjects.length, 9);
+  assert.equal(SCENES.town.layeredObjects.filter(({ interactionId }) => interactionId).length, 9);
+  assert.equal(SCENES.town.layeredObjects.filter(({ archetype }) => archetype === "street-tree").length, 16);
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "central-pier"));
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "wharf-platform"));
   assert.ok(SCENES.town.walkableRegions.some(({ id }) => id === "west-cove-shallows"));

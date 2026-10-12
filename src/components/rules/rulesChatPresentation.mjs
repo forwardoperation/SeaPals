@@ -22,6 +22,7 @@ export function shouldRenderRulesChat(pathname, placement = RULES_CHAT_PLACEMENT
   return !route.startsWith("/simulator")
     && route !== "/instructions/tutorial"
     && !route.startsWith("/adventure")
+    && !route.startsWith("/dev/reefbound")
     && !route.startsWith("/auth")
     && !route.startsWith("/privacy")
     && !route.startsWith("/store")

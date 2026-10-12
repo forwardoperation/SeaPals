@@ -1,5 +1,6 @@
 const EXCLUDED_ANALYTICS_PATHS = Object.freeze([
   "/adventure",
+  "/dev/reefbound",
   "/auth",
   "/store/success",
   "/store/cancel",

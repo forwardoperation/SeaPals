@@ -21,6 +21,15 @@ import {
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
 import { getAdventureCameraLayout } from "./adventureCamera.mjs";
+import AdventurePerspectiveGround, { useAdventureGraphics, useAdventureViewport } from "./AdventurePerspective";
+import {
+  createAdventureFrameGate,
+  createAdventurePerspective,
+  getPerspectiveActorStyle,
+  getPerspectiveObjectRect,
+  isPerspectiveActorVisible,
+  isPerspectiveRectVisible,
+} from "./adventurePerspective.mjs";
 import {
   createLayeredActorRenderable,
   getLayeredSceneObjectStyle,
@@ -164,6 +173,10 @@ import {
   inspectUnscopedAdventureSaves,
 } from "./adventureStorage.mjs";
 import { createAdventureCloudSaveClient } from "./adventureCloudClient.mjs";
+import {
+  createAdventureLocalPreviewStorage,
+  isAdventureLocalPreviewEnabled,
+} from "./adventureLocalPreview.mjs";
 import {
   acknowledgeAdventureCloudSyncAction,
   createAdventureCloudLocalState,
@@ -656,11 +669,29 @@ function actorPosition(position, scene, actorId = null) {
     width: `${100 / scene.width}%`,
     height: `${100 / scene.height}%`,
     zIndex: layeredZIndex ?? 20 + Math.round(position.y * 10),
+    ...(scene.projection ? getPerspectiveActorStyle(position, scene.projection) : {}),
   };
 }
 
-function AdventureLayeredMapObject({ object, scene }) {
+export function AdventureLayeredMapObject({ object, scene }) {
+  const projected = scene.projection ? getPerspectiveObjectRect(object, scene.projection) : null;
+  const objectStyle = scene.projection
+    ? { ...(projected ?? { display: "none" }), zIndex: getLayeredSceneZIndex(object) }
+    : getLayeredSceneObjectStyle(object, scene);
   return (
+    <>
+    {projected ? (
+      <span
+        className={styles.perspectiveObjectShadow}
+        aria-hidden="true"
+        style={{
+          left: projected.left + projected.width * 0.12,
+          top: projected.top + projected.height * object.sprite.anchorY - projected.width * 0.055,
+          width: projected.width * 0.85,
+          height: projected.width * 0.12,
+        }}
+      />
+    ) : null}
     <Image
       className={styles.layeredMapObject}
       src={object.sprite.src}
@@ -671,8 +702,9 @@ function AdventureLayeredMapObject({ object, scene }) {
       sizes="100vw"
       draggable={false}
       unoptimized
-      style={getLayeredSceneObjectStyle(object, scene)}
+      style={objectStyle}
     />
+    </>
   );
 }
 
@@ -777,7 +809,7 @@ function CharacterGroundShadow({ character = "player", facing = "down" }) {
   );
 }
 
-function AdventureTrainerSprite({
+export function AdventureTrainerSprite({
   trainer,
   position,
   facing = "down",
@@ -820,7 +852,7 @@ function AdventureTrainerSprite({
   );
 }
 
-function AdventurePlayerSprite({
+export function AdventurePlayerSprite({
   position,
   facing,
   moving,
@@ -1562,7 +1594,7 @@ function OpeningSetupModal({ profileId, onCancel, onBegin }) {
   );
 }
 
-function DirectionButton({ direction, ariaLabel = `Walk ${direction}`, onStart, onStop }) {
+export function DirectionButton({ direction, ariaLabel = `Walk ${direction}`, onStart, onStop }) {
   const suppressClickRef = useRef(false);
   const clickStopTimerRef = useRef(null);
 
@@ -1718,6 +1750,7 @@ function TitleScreen({
   profiles,
   notice,
   account,
+  localPreview = false,
   cloudStatuses,
   blocked = false,
   onContinue,
@@ -1740,13 +1773,14 @@ function TitleScreen({
         </p>
         <div className={styles.accountBar}>
           <span>
-            <small>Family account</small>
+            <small>{localPreview ? "Development playtest" : "Family account"}</small>
             <strong>{account.email}</strong>
           </span>
-          <button type="button" onClick={onSignOut}>Sign out</button>
+          <button type="button" onClick={onSignOut}>{localPreview ? "Back to viewer demo" : "Sign out"}</button>
           <p>
-            Saves stay available on this device and sync to this family
-            account whenever Reefbound is online.
+            {localPreview
+              ? "Full game, no email required. Test saves stay in this browser, separate from account saves."
+              : "Saves stay available on this device and sync to this family account whenever Reefbound is online."}
           </p>
         </div>
         {notice ? (
@@ -2004,6 +2038,7 @@ function NewsletterOptInModal({
 
 function PauseMenu({
   profileId,
+  localPreview = false,
   notice,
   cloudStatus,
   blocked = false,
@@ -2026,7 +2061,9 @@ function PauseMenu({
       <div className={styles.pauseCard}>
         <div className={styles.introEyebrow}>Elverson save {ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1}</div>
         <h2 id="pause-title">Adventure paused</h2>
-        <p>Your current safe position and quest progress save to this device first, then sync to your family account.</p>
+        <p>{localPreview
+          ? "Your playtest progress saves in this browser only, separate from account saves."
+          : "Your current safe position and quest progress save to this device first, then sync to your family account."}</p>
         <CloudSaveStatus status={cloudStatus} />
         <div className={styles.pauseLoadout} aria-label="Current card loadout">
           <span><small>Active deck</small><strong>{activeDeckName}</strong></span>
@@ -2841,7 +2878,7 @@ function interactionLabel(
   return "Interact";
 }
 
-function mapThemeClassForScene(scene) {
+export function mapThemeClassForScene(scene) {
   const themeClasses = {
     "coastal-elverson": styles.elversonTownMap,
     "sunlit-reef": styles.townMap,
@@ -2919,8 +2956,11 @@ export default function AdventureGame({
   account,
   accountNotice = null,
   onSignOut,
+  localPreview = false,
 }) {
+  const isLocalPreview = isAdventureLocalPreviewEnabled(localPreview, process.env.NODE_ENV);
   const [screen, setScreen] = useState("boot");
+  const [mapViewportRef, mapViewport] = useAdventureViewport();
   const [profiles, setProfiles] = useState(() => ADVENTURE_PROFILE_IDS.map((profileId, index) => ({
     profileId,
     slot: index + 1,
@@ -3055,12 +3095,12 @@ export default function AdventureGame({
     if (!account?.id) {
       throw new Error("A signed-in family account is required for saving.");
     }
-    const backend = createAccountScopedAdventureStorage({
+    const backend = isLocalPreview ? createAdventureLocalPreviewStorage(window.localStorage) : createAccountScopedAdventureStorage({
       backend: window.localStorage,
       accountId: account.id,
     });
     return createAdventureStorageAdapter({ backend });
-  }, [account?.id]);
+  }, [account?.id, isLocalPreview]);
 
   const updateCloudStatus = useCallback((profileId, state, message = null) => {
     if (!cloudSyncMountedRef.current) return;
@@ -3458,6 +3498,13 @@ export default function AdventureGame({
   scheduleCloudSyncRef.current = scheduleCloudSync;
 
   const initializeCloudSync = useCallback(async ({ force = false } = {}) => {
+    if (isLocalPreview) {
+      cloudSyncReadyRef.current = false;
+      for (const profileId of ADVENTURE_PROFILE_IDS) {
+        updateCloudStatus(profileId, "local", "Playtest save stays in this browser only.");
+      }
+      return;
+    }
     if (cloudInitializePromiseRef.current) return cloudInitializePromiseRef.current;
     const generation = cloudAccountGenerationRef.current;
     const operation = (async () => {
@@ -3512,7 +3559,7 @@ export default function AdventureGame({
         cloudInitializePromiseRef.current = null;
       }
     }
-  }, [enqueueCloudSync, loadCloudRecords, updateCloudStatus]);
+  }, [enqueueCloudSync, isLocalPreview, loadCloudRecords, updateCloudStatus]);
   cloudInitializeRef.current = initializeCloudSync;
 
   function rememberNewsletterInviteDismissal() {
@@ -3806,6 +3853,7 @@ export default function AdventureGame({
     [actorStates],
   );
   const effectiveReducedMotion = gameSave?.settings?.reducedMotion === true || systemReducedMotion;
+  const { mode: graphicsMode, batterySaver, worldFrameRate, mobileDevice } = useAdventureGraphics(gameSave?.settings?.graphicsMode);
   const dockSpeechGestureActive = Boolean(
     dockCutscenePhase === "speech"
     && conversation?.dockSpeech === true
@@ -4074,7 +4122,8 @@ export default function AdventureGame({
       });
       refreshProfiles();
       cloudSyncEpochRef.current[nextSave.profileId] += 1;
-      updateCloudStatus(nextSave.profileId, "queued", "Progress is waiting to sync.");
+      updateCloudStatus(nextSave.profileId, isLocalPreview ? "local" : "queued",
+        isLocalPreview ? "Playtest saved in this browser." : "Progress is waiting to sync.");
       scheduleCloudSyncRef.current?.(nextSave.profileId);
     } else {
       setDirty(true);
@@ -4084,7 +4133,7 @@ export default function AdventureGame({
       });
     }
     return result;
-  }, [refreshProfiles, setDirty, updateCloudStatus]);
+  }, [isLocalPreview, refreshProfiles, setDirty, updateCloudStatus]);
 
   const startElversonHandNetGuidedWalk = useCallback((sourceSave) => {
     if (!sourceSave || sourceSave.world.sceneId !== "town") return false;
@@ -4445,6 +4494,11 @@ export default function AdventureGame({
     setNewsletterInviteSubmitting(false);
     setNewsletterInviteError(null);
     setNewsletterInviteStatus(account.newsletter?.status ?? "not_requested");
+    if (isLocalPreview) {
+      setNewsletterInviteDismissed(true);
+      setNewsletterInvitePreferenceReady(true);
+      return;
+    }
     let dismissed = false;
     try {
       dismissed =
@@ -4456,7 +4510,7 @@ export default function AdventureGame({
     }
     setNewsletterInviteDismissed(dismissed);
     setNewsletterInvitePreferenceReady(true);
-  }, [account.id, account.newsletter?.status]);
+  }, [account.id, account.newsletter?.status, isLocalPreview]);
 
   useEffect(() => {
     let active = true;
@@ -4486,15 +4540,15 @@ export default function AdventureGame({
     try {
       const adapter = createAccountStorageAdapter();
       storageRef.current = adapter;
-      cloudClientRef.current = createAdventureCloudSaveClient({
+      cloudClientRef.current = isLocalPreview ? null : createAdventureCloudSaveClient({
         expectedAccountId: account.id,
       });
       cloudMetadataStoreRef.current = createAdventureCloudSyncMetadataStore({
-        backend: window.localStorage,
+        backend: isLocalPreview ? createAdventureLocalPreviewStorage(window.localStorage) : window.localStorage,
         accountId: account.id,
       });
       let listed = adapter.listProfileSummaries();
-      const unscoped = inspectUnscopedAdventureSaves({
+      const unscoped = isLocalPreview ? { ok: true, hasImportableSaves: false } : inspectUnscopedAdventureSaves({
         backend: window.localStorage,
         accountId: account.id,
       });
@@ -4513,7 +4567,7 @@ export default function AdventureGame({
         });
         waitForLegacyChoice = true;
         setScreen("title");
-      } else if (listed.profiles.every((profile) => !profile.occupied)) {
+      } else if (!isLocalPreview && listed.profiles.every((profile) => !profile.occupied)) {
         const migration = adapter.migrateLegacyProfile("profile-1");
         if (migration.ok && migration.migrated) {
           setSaveNotice({ kind: "info", message: "Your earlier Elverson progress was recovered into Save 1." });
@@ -4550,7 +4604,7 @@ export default function AdventureGame({
       }
       cloudSyncTimersRef.current.clear();
     };
-  }, [account.id, createAccountStorageAdapter, initializeCloudSync]);
+  }, [account.id, createAccountStorageAdapter, initializeCloudSync, isLocalPreview]);
 
   useEffect(() => {
     function refreshCloudSaves() {
@@ -5336,6 +5390,15 @@ export default function AdventureGame({
   function deleteProfileEverywhere(profileId) {
     if (blockProtectedCloudProfileMutation(profileId)) return;
     const adapter = storageRef.current;
+    if (isLocalPreview) {
+      const deleted = adapter?.deleteProfile(profileId, { confirmed: true });
+      refreshProfiles();
+      setSaveNotice({
+        kind: deleted?.ok ? "info" : "error",
+        message: deleted?.ok ? "Local playtest save deleted." : "This playtest save could not be deleted.",
+      });
+      return;
+    }
     const metadataStore = cloudMetadataStoreRef.current;
     if (!adapter || !metadataStore) {
       setSaveNotice({
@@ -5394,9 +5457,11 @@ export default function AdventureGame({
   function requestDeleteProfile(profileId) {
     setConfirmation({
       profileId,
-      title: `Delete Save ${ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1} everywhere?`,
-      message: "This removes the profile from this device and your family account. Other devices will remove their copy when they reconnect.",
-      confirmLabel: "Delete everywhere",
+      title: `Delete Save ${ADVENTURE_PROFILE_IDS.indexOf(profileId) + 1}${isLocalPreview ? " from this playtest" : " everywhere"}?`,
+      message: isLocalPreview
+        ? "This removes only this local playtest slot and its backups."
+        : "This removes the profile from this device and your family account. Other devices will remove their copy when they reconnect.",
+      confirmLabel: isLocalPreview ? "Delete playtest save" : "Delete everywhere",
       onConfirm: () => deleteProfileEverywhere(profileId),
     });
   }
@@ -5786,7 +5851,8 @@ export default function AdventureGame({
 
   useEffect(() => {
     if (
-      !newsletterInviteEligible
+      isLocalPreview
+      || !newsletterInviteEligible
       || !newsletterInvitePreferenceReady
       || newsletterInviteDismissed
       || newsletterInviteOpen
@@ -5837,6 +5903,7 @@ export default function AdventureGame({
     inventoryOpen,
     newsletterInviteDismissed,
     newsletterInviteEligible,
+    isLocalPreview,
     newsletterInviteOpen,
     newsletterInvitePreferenceReady,
     newsletterInviteStatus,
@@ -5892,11 +5959,10 @@ export default function AdventureGame({
     }
 
     let animationFrame = 0;
-    let previousTime = null;
 
+    const actorFrameGate = createAdventureFrameGate(worldFrameRate);
     function updateActors(timestamp) {
-      const elapsedMs = previousTime === null ? 0 : Math.min(timestamp - previousTime, 80);
-      previousTime = timestamp;
+      const elapsedMs = actorFrameGate(timestamp);
       const currentSave = saveRef.current;
       const currentRuntime = actorRuntimeRef.current?.sceneId === sceneId
         ? actorRuntimeRef.current
@@ -5938,6 +6004,7 @@ export default function AdventureGame({
     sceneCharacterInteractions,
     sceneId,
     screen,
+    worldFrameRate,
   ]);
 
   useEffect(() => {
@@ -5965,11 +6032,9 @@ export default function AdventureGame({
     if (movementPaused || !isMoving) return undefined;
 
     let animationFrame = 0;
-    let previousTime = null;
 
     function updateMovement(timestamp) {
-      const elapsedMs = previousTime === null ? 0 : Math.min(timestamp - previousTime, 50);
-      previousTime = timestamp;
+      const elapsedMs = movementFrameGate(timestamp);
       if (elapsedMs > 0) {
         const current = saveRef.current;
         if (current?.world.sceneId !== sceneId) return;
@@ -6095,9 +6160,10 @@ export default function AdventureGame({
       animationFrame = window.requestAnimationFrame(updateMovement);
     }
 
+    const movementFrameGate = createAdventureFrameGate(worldFrameRate, 50);
     animationFrame = window.requestAnimationFrame(updateMovement);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [anchoredActorStates, boatMode, isMoving, movementPaused, requestSceneTransition, scene, sceneId, setDirty, setMovementActive]);
+  }, [anchoredActorStates, boatMode, isMoving, movementPaused, requestSceneTransition, scene, sceneId, setDirty, setMovementActive, worldFrameRate]);
 
   useEffect(() => {
     if (movementPaused) {
@@ -8056,6 +8122,7 @@ export default function AdventureGame({
         <div className={styles.oceanGlow} aria-hidden="true" />
         <TitleScreen
           profiles={profiles}
+          localPreview={isLocalPreview}
           notice={accountNotice ?? saveNotice}
           account={account}
           cloudStatuses={cloudStatuses}
@@ -8181,6 +8248,7 @@ export default function AdventureGame({
       {settingsOpen ? (
         <AdventureSettingsModal
           save={gameSave}
+          mobileDevice={mobileDevice}
           notice={saveNotice}
           onCommit={(nextSave, meta) => {
             const saved = commitAdventureMutation(nextSave, meta.checkpointId, meta.message);
@@ -8248,18 +8316,32 @@ export default function AdventureGame({
     playerX: cameraTarget.x,
     playerY: cameraTarget.y,
   }, scene.camera ?? {});
+  // The aquarium promenade has its own side-on camera and remains side-on.
+  const projection = graphicsMode !== "classic" && !aquariumGalleryMode && !vehicleMode
+    ? createAdventurePerspective(scene, cameraTarget, mapViewport)
+    : null;
+  const renderScene = projection ? { ...scene, projection } : scene;
   // Elverson is the first layered scene large enough for off-camera DOM to be
   // meaningful. Runtime actors, collision, and interaction lists stay whole;
   // only the mounted visual elements are filtered with a wide safety margin.
   const renderBounds = scene.layeredObjects.length
     ? getAdventureCameraRenderBounds(cameraLayout)
     : null;
-  const renderedLayeredObjects = renderBounds
+  const renderedLayeredObjects = projection
+    ? scene.layeredObjects.filter((object) => (
+        isPerspectiveRectVisible(getPerspectiveObjectRect(object, projection), projection)
+      ))
+    : renderBounds
     ? scene.layeredObjects.filter((object) => (
         isAdventureLayeredObjectInRenderBounds(object, renderBounds)
       ))
     : scene.layeredObjects;
-  const renderedCharacterInteractions = renderBounds
+  const renderedCharacterInteractions = projection
+    ? sceneCharacterInteractions.filter((candidate) => (
+        candidate.id === activeConversationInteractionId
+        || isPerspectiveActorVisible(actorStates[candidate.id]?.position ?? candidate.at, projection)
+      ))
+    : renderBounds
     ? sceneCharacterInteractions.filter((characterInteraction) => (
         characterInteraction.id === activeConversationInteractionId
         || isAdventureActorInRenderBounds(
@@ -8508,6 +8590,7 @@ export default function AdventureGame({
     styles.gameShell,
     gameSave.settings.highContrast ? styles.highContrastMode : "",
     gameSave.settings.reducedMotion || systemReducedMotion ? styles.reducedMotionMode : "",
+    batterySaver ? styles.batterySaverMode : "",
   ].filter(Boolean).join(" ");
   const maximumBoatSpeed = scene.movement?.speed ?? BOAT_MOTION_DEFAULTS.maxForwardSpeed;
   const sceneTransitionVector = sceneTransition
@@ -8713,18 +8796,23 @@ export default function AdventureGame({
           ) : (
             <>
           <div
-            className={`${styles.map} ${sceneTransition ? styles[`mapScene${sceneTransition.phase === "departing" ? "Departing" : "Arriving"}`] : ""}`}
+            ref={mapViewportRef}
+            className={`${styles.map} ${projection ? styles.perspectiveMap : ""} ${sceneTransition ? styles[`mapScene${sceneTransition.phase === "departing" ? "Departing" : "Arriving"}`] : ""}`}
+            data-world-view={projection ? "perspective" : "classic"}
+            data-graphics-mode={graphicsMode}
+            data-world-frame-rate={worldFrameRate}
+            data-world-active={pageVisible && !pauseOpen && !settingsOpen}
             role="application"
             aria-busy={Boolean(sceneTransition)}
             aria-label={boatMode
-              ? `Top-down sea route at ${LOCATION_NAMES[sceneId]}. Up or W increases throttle. Down or S brakes and reverses. Left and right or A and D move the rudder. Coast toward a dock and press Enter, Space, or the on-screen A button when it is in reach.`
+              ? `${projection ? "Angled" : "Top-down"} sea route at ${LOCATION_NAMES[sceneId]}. Up or W increases throttle. Down or S brakes and reverses. Left and right or A and D move the rudder. Coast toward a dock and press Enter, Space, or the on-screen A button when it is in reach.`
               : aquariumGalleryMode
                 ? `Side-scrolling aquarium promenade at ${LOCATION_NAMES[sceneId]}. Use left and right or A and D to walk past the habitat windows. The explorer faces the glass when standing still.`
-                : `Top-down map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk. Walk into doorways to enter or leave, and press Enter, Space, or the on-screen A button to interact.`}
+                : `${projection ? "Angled" : "Top-down"} map of ${LOCATION_NAMES[sceneId]}. Use arrow keys or WASD to walk. Walk into doorways to enter or leave, and press Enter, Space, or the on-screen A button to interact.`}
           >
             <div
-              className={`${styles.mapWorld} ${mapThemeClass} ${sceneTransition ? styles[`mapWorldScene${sceneTransition.phase === "departing" ? "Departing" : "Arriving"}`] : ""}`}
-              style={{
+              className={`${styles.mapWorld} ${projection ? styles.perspectiveWorld : mapThemeClass} ${sceneTransition ? styles[`mapWorldScene${sceneTransition.phase === "departing" ? "Departing" : "Arriving"}`] : ""}`}
+              style={projection ? undefined : {
                 width: `${cameraLayout.worldWidthPercent}%`,
                 height: `${cameraLayout.worldHeightPercent}%`,
                 left: `${cameraLayout.leftPercent}%`,
@@ -8734,6 +8822,9 @@ export default function AdventureGame({
                 backgroundImage: scene.artPath ? `url("${scene.artPath}")` : undefined,
               }}
             >
+            {projection ? (
+              <AdventurePerspectiveGround scene={scene} camera={projection} themeClass={mapThemeClass} />
+            ) : null}
             <AdventureAquariumGallery
               scene={scene}
               aquariumModel={aquariumExhibitModel}
@@ -8743,14 +8834,14 @@ export default function AdventureGame({
               <AdventureLayeredMapObject
                 key={object.renderId ?? object.id}
                 object={object}
-                scene={scene}
+                scene={renderScene}
               />
             ))}
-            {worldCueInteractions.map((candidate) => (
+            {worldCueInteractions.filter((candidate) => !projection || isPerspectiveActorVisible(candidate.at, projection)).map((candidate) => (
               <AdventureWorldCue
                 key={`world-cue:${candidate.id}`}
                 interaction={candidate}
-                scene={scene}
+                scene={renderScene}
                 active={interaction?.interactionId === candidate.id}
                 recommended={worldCueIsRecommended(
                   candidate,
@@ -8814,7 +8905,7 @@ export default function AdventureGame({
                   idleGesture={idleGesture}
                   defeated={trainerDefeated}
                   status={tournamentStatus?.startsWith("Won") ? "Won" : tournamentStatus}
-                  scene={scene}
+                  scene={renderScene}
                 />
               );
             })}
@@ -8824,7 +8915,7 @@ export default function AdventureGame({
                 style={actorPosition(
                   actorStates["interaction-elverson-prologue-player-mom"]?.position
                     ?? { x: 4.75, y: 4.55 },
-                  scene,
+                  renderScene,
                   "opening-mom-greeting",
                 )}
                 aria-live="assertive"
@@ -8840,7 +8931,7 @@ export default function AdventureGame({
                 speed={displayedBoatMotion.speed}
                 moving={Math.abs(displayedBoatMotion.speed) > BOAT_MOTION_DEFAULTS.stoppedSpeed}
                 interaction={actionInteraction}
-                scene={scene}
+                scene={renderScene}
               />
             ) : (
               <AdventurePlayerSprite
@@ -8849,7 +8940,7 @@ export default function AdventureGame({
                 moving={playerWalking}
                 walkSpeed={playerWalkSpeed}
                 interaction={actionInteraction}
-                scene={scene}
+                scene={renderScene}
                 transitionPhase={sceneTransition?.phase ?? null}
                 transitionVector={sceneTransitionVector}
               />
@@ -9172,6 +9263,7 @@ export default function AdventureGame({
       {settingsOpen ? (
         <AdventureSettingsModal
           save={gameSave}
+          mobileDevice={mobileDevice}
           notice={saveNotice}
           blocked={Boolean(confirmation)}
           onCommit={(nextSave, meta) => {
@@ -9189,6 +9281,7 @@ export default function AdventureGame({
       {pauseOpen ? (
         <PauseMenu
           profileId={gameSave.profileId}
+          localPreview={isLocalPreview}
           notice={saveNotice}
           cloudStatus={cloudStatuses[gameSave.profileId]}
           blocked={Boolean(confirmation)}

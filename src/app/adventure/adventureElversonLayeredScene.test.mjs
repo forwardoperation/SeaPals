@@ -14,14 +14,19 @@ test("Elverson v5 compiles the stair-access cove and exactly nine public facades
   assert.equal(ELVERSON_LAYERED_SCENE.groundPath, "/images/adventure/elverson-ground-v5.webp");
   assert.equal(ELVERSON_LAYERED_SCENE.width, ELVERSON_TOWN_DIMENSIONS.width);
   assert.equal(ELVERSON_LAYERED_SCENE.height, ELVERSON_TOWN_DIMENSIONS.height);
-  assert.equal(ELVERSON_LAYERED_SCENE.objects.length, 9);
-  assert.equal(ELVERSON_LAYERED_SCENE.collisionRects.length, 9);
-  assert.ok(ELVERSON_LAYERED_SCENE.objects.every(({ interactionId }) => interactionId));
+  assert.equal(ELVERSON_LAYERED_SCENE.objects.filter(({ interactionId }) => interactionId).length, 9);
+  const trees = ELVERSON_LAYERED_SCENE.objects.filter(({ archetype }) => archetype === "street-tree");
+  assert.equal(trees.length, 16);
+  assert.ok(trees.every(({ collisionRects }) => collisionRects.length === 0));
+  assert.deepEqual(ELVERSON_LAYERED_SCENE.collisionRects,
+    ELVERSON_LAYERED_SCENE.objects.filter(({ interactionId }) => interactionId)
+      .flatMap(({ collisionRects }) => collisionRects),
+    "viewer decorations must not add obstacles to the original world");
 });
 
 test("all authored facade links match the town portal contract", () => {
   assert.deepEqual(
-    ELVERSON_LAYERED_SCENE.objects.map(({ id, interactionId }) => ({ id, interactionId })),
+    ELVERSON_LAYERED_SCENE.objects.filter(({ interactionId }) => interactionId).map(({ id, interactionId }) => ({ id, interactionId })),
     ELVERSON_TOWN_PORTALS.map(({ objectId, id }) => ({ id: objectId, interactionId: id })),
   );
 });

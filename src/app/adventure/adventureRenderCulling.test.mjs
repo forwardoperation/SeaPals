@@ -177,8 +177,8 @@ test("the overscan margin provides more than half a second of invisible lead tim
 test("AdventureGame filters only mounted layered visuals using live actor positions", () => {
   const component = readFileSync(new URL("./AdventureGame.jsx", import.meta.url), "utf8");
   assert.match(component, /const renderBounds = scene\.layeredObjects\.length[\s\S]*getAdventureCameraRenderBounds\(cameraLayout\)/);
-  assert.match(component, /const renderedLayeredObjects = renderBounds[\s\S]*isAdventureLayeredObjectInRenderBounds\(object, renderBounds\)/);
-  assert.match(component, /const renderedCharacterInteractions = renderBounds[\s\S]*characterInteraction\.id === activeConversationInteractionId/);
+  assert.match(component, /const renderedLayeredObjects = projection[\s\S]*isPerspectiveRectVisible[\s\S]*isAdventureLayeredObjectInRenderBounds\(object, renderBounds\)/);
+  assert.match(component, /const renderedCharacterInteractions = projection[\s\S]*isPerspectiveActorVisible[\s\S]*characterInteraction\.id === activeConversationInteractionId/);
   assert.match(component, /actorStates\[characterInteraction\.id\]\?\.position \?\? characterInteraction\.at/);
   assert.match(component, /renderedLayeredObjects\.map\(\(object\) => \(/);
   assert.match(component, /renderedCharacterInteractions\.map\(\(characterInteraction\) => \{/);

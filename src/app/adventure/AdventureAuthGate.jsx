@@ -502,6 +502,15 @@ export default function AdventureAuthGate({
           )}
         </header>
 
+        {process.env.NODE_ENV === "development" ? (
+          <div className={styles.deviceNotice}>
+            <span>
+              <strong>Testing locally?</strong>
+              <small><Link href="/dev/reefbound/play">Play the full game without email sign-in</Link>. Test progress stays in this browser.</small>
+            </span>
+          </div>
+        ) : null}
+
         <div id={saveNoteId} className={styles.deviceNotice}>
           <DeviceMark />
           <span>

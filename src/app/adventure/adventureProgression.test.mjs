@@ -266,6 +266,7 @@ test("schema-v2 migration preserves every prior domain and cannot replay the bir
     { ...migratedDomains, world: migratedWorld },
     {
       ...legacyDomains,
+      settings: { ...legacyDomains.settings, graphicsMode: "auto" },
       player: {
         name: DEFAULT_ADVENTURE_PLAYER_NAME,
         bestFriendName: DEFAULT_ADVENTURE_BEST_FRIEND_NAME,

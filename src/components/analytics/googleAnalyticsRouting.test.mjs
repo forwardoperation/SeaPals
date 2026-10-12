@@ -6,6 +6,8 @@ test("analytics excludes private and checkout-result routes", () => {
   for (const pathname of [
     "/adventure",
     "/adventure/save",
+    "/dev/reefbound",
+    "/dev/reefbound/play",
     "/auth",
     "/auth/callback",
     "/store/success",

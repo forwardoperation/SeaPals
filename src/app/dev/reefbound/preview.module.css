@@ -1,0 +1,26 @@
+.shell { position: fixed; inset: 0; z-index: 1000; overflow: auto; background: #061e2b; color: #e2f3ec; font-family: system-ui, sans-serif; padding: 20px max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left)); }
+.header { display: flex; align-items: center; justify-content: space-between; max-width: 900px; margin: 0 auto 16px; }
+.header small { font-size: 10px; letter-spacing: 0.18em; color: #8fb5b4; }
+.header h1 { font-size: 26px; font-weight: 800; margin: 0; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px; max-width: 900px; margin: 0 auto 18px; }
+.toolbar label { display: grid; gap: 4px; font-size: 11px; color: #a5c5cb; flex: 1; }
+.shell button, .shell select { min-height: 44px; color: #effcef; background: #173b45; border: 1px solid #3f666e; border-radius: 10px; padding: 8px 12px; font-size: 12px; touch-action: none; }
+.shell button { cursor: pointer; }
+.shell button:focus-visible, .shell select:focus-visible { outline: 3px solid #99e8c6; outline-offset: 3px; }
+.stage { max-width: 900px; margin: auto; }
+.location { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin: 0 0 12px; font-size: 13px; }
+.location span { font-size: 10px; color: #a5c5cb; text-align: right; }
+.hint { font-size: 12px; max-width: 180px; color: #aed3ce; }
+.footer { display: grid; justify-items: center; gap: 9px; max-width: 900px; margin: 15px auto; font-size: 11px; color: #a5c5cb; text-align: center; }
+.footer output { color: #caf2cf; }
+.phone { display: block; margin: auto; width: 390px; max-width: 100%; height: 844px; border: 5px solid #3f666e; border-radius: 28px; background: #061e2b; }
+@media(max-width: 700px) { .shell { padding: 12px; } .header { margin-bottom: 12px; } .toolbar { gap: 8px; } .toolbar select { max-width: 100%; } }
+@media(max-height: 500px) and (orientation: landscape) {
+  .shell { padding: 8px; }
+  .header { margin-bottom: 4px; }
+  .header small, .footer { display: none; }
+  .header h1 { font-size: 18px; }
+  .header button, .toolbar select { min-height: 32px; padding: 4px 10px; }
+  .toolbar { margin-bottom: 8px; gap: 8px; }
+  .location { margin-bottom: 6px; }
+}

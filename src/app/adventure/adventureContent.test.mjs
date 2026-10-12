@@ -1233,12 +1233,13 @@ test("Elverson v5 layers its portal buildings while streets, the west cove, and 
     "elverson-supply-company",
     "aquarium-workshop",
   ];
-  assert.deepEqual(town.world.layeredObjects.map(({ id }) => id), expectedObjectIds);
+  const facadeObjects = town.world.layeredObjects.filter(({ interactionId }) => interactionId);
+  assert.deepEqual(facadeObjects.map(({ id }) => id), expectedObjectIds);
   assert.deepEqual(
     town.world.collisionRects.map(({ id }) => id),
     expectedObjectIds.map((objectId) => `${objectId}:facade`),
   );
-  assert.ok(town.world.layeredObjects.every((object) => (
+  assert.ok(facadeObjects.every((object) => (
     object.interactionId
     && object.collisionRects.length === 1
     && object.collisionRects[0].id === `${object.id}:facade`

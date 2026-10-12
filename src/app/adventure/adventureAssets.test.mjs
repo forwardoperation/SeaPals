@@ -346,7 +346,7 @@ test("Elverson ships its mobile-sized layered ground and transparent WebP facade
   assert.equal(ground.metadata.height, 1024, "layered Elverson ground height");
   assert.ok(ground.asset.byteLength < 650_000, "the Elverson ground must remain mobile-sized");
 
-  const objects = town.world.layeredObjects;
+  const objects = town.world.layeredObjects.filter(({ interactionId }) => interactionId);
   assert.equal(objects.length, 9, "Elverson v5 should expose one facade for each town portal");
   assert.deepEqual(
     objects.map(({ id, interactionId }) => ({ id, interactionId })),
@@ -359,7 +359,8 @@ test("Elverson ships its mobile-sized layered ground and transparent WebP facade
     && spritePath.endsWith(".webp")
   )));
 
-  for (const spritePath of spritePaths) {
+  const allSpritePaths = [...new Set(town.world.layeredObjects.map((object) => object.sprite.src))];
+  for (const spritePath of allSpritePaths) {
     const webp = await readWebpAsset(spritePath);
     assert.ok(webp.metadata.width > 0 && webp.metadata.height > 0, `${spritePath} dimensions`);
     assert.equal(webp.metadata.hasAlpha, true, `${spritePath} must retain transparency`);

@@ -132,8 +132,8 @@ test("Elverson uses a close-follow camera and compact human-toned overworld spri
     component,
     /const cameraTarget = conversation\?\.dockSpeech[\s\S]{0,120}ELVERSON_DOCK_SPEECH_CAMERA_POSITION/,
   );
-  assert.match(component, /className=\{`\$\{styles\.map\} \$\{sceneTransition/);
-  assert.match(component, /className=\{`\$\{styles\.mapWorld\} \$\{mapThemeClass\} \$\{sceneTransition/);
+  assert.match(component, /className=\{`\$\{styles\.map\} \$\{projection \? styles\.perspectiveMap/);
+  assert.match(component, /className=\{`\$\{styles\.mapWorld\} \$\{projection \? styles\.perspectiveWorld : mapThemeClass\} \$\{sceneTransition/);
   assert.match(component, /width: `\$\{cameraLayout\.worldWidthPercent\}%`/);
   assert.match(component, /left: `\$\{cameraLayout\.leftPercent\}%`/);
   assert.match(styles, /\.map\s*\{[\s\S]*?aspect-ratio:\s*16\s*\/\s*9/);
