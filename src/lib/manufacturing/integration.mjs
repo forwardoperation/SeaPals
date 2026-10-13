@@ -334,6 +334,10 @@ export function manufacturingService(db) {
     claim,
     event,
     unpack,
+    async sendToPrinters(id) {
+      if (!uuid(id)) throw new Error("Invalid order ID.");
+      return unpack(await rpc("send_to_printers", { p_order: id }));
+    },
     async inventory() {
       const [stock, jobs, movements] = await Promise.all([
         result(
@@ -403,7 +407,7 @@ export function manufacturingService(db) {
         db
           .from("manufacturing_orders")
           .select(
-            "order_id,job_kind,display_number,inventory_plan,inventory_posted_at,phase,revision,issue,release_id,created_at,updated_at,store_orders(order_number,payment_status,fulfillment_status,production_due_date,payment_livemode)",
+            "order_id,job_kind,display_number,inventory_plan,inventory_posted_at,print_requested_at,phase,revision,issue,release_id,created_at,updated_at,store_orders(order_number,payment_status,fulfillment_status,production_due_date,payment_livemode)",
           )
           .order("created_at", { ascending: false })
           .limit(100),

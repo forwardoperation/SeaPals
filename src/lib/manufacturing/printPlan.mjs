@@ -11,17 +11,34 @@ import {
   fixedSheetAssets,
 } from "./recipes.mjs";
 
+const cutterWidth = 738.59521484375,
+  cutterHeight = 1034.0333251953125;
+const cutterPositions = (xs, ys) => Object.freeze(
+  ys.flatMap((y) => xs.map((x) => Object.freeze({
+    x, y, width: cutterWidth, height: cutterHeight,
+  }))),
+);
+
+// Measured from the owner's die-cut templates on 2026-10-13. Geometry is saved
+// inside each immutable manifest; old manifests retain their original layout.
 export const PRINT_LAYOUT = Object.freeze({
-  version: "figma-letter-nine-up-v1",
+  version: "figma-cutter-nine-up-v2",
+  fileKey: "xeol2YE0jCE0N5vAD6tjzx",
+  nodeId: "4099:61637",
+  name: "print-test-die-cut-front-epson",
   width: 2550,
   height: 3300,
   dpi: 300,
   columns: 3,
   rows: 3,
-  cardWidth: 720,
-  cardHeight: 1008,
-  left: 195,
-  top: 138,
+  cardWidth: cutterWidth,
+  cardHeight: cutterHeight,
+  left: 164.702392578125,
+  top: 61.316650390625,
+  positions: cutterPositions(
+    [164.702392578125, 944.702392578125, 1724.702392578125],
+    [61.316650390625, 1117.9832763671875, 2174.64990234375],
+  ),
 });
 
 export const PRINTER_ROUTES = Object.freeze({
@@ -29,16 +46,27 @@ export const PRINTER_ROUTES = Object.freeze({
   backs: "Canon MF750C II Series UFR II",
 });
 
-export const BACK_TEMPLATE = Object.freeze({
+// This older frame contains the actual card-back artwork. The new cutting
+// template contains only placeholders and must never replace the art source.
+export const BACK_ART_SOURCE = Object.freeze({
   fileKey: "xeol2YE0jCE0N5vAD6tjzx",
   nodeId: "3758:338124",
   name: "card-back-sea-realm-laser-print",
   width: 2550,
   height: 3300,
-  contentScale: 0.96,
-  translateX: 51,
-  translateY: 66,
-  calibrationRequired: true,
+  crop: Object.freeze({ x: 150, y: 75, width: 750, height: 1050 }),
+});
+
+export const BACK_TEMPLATE = Object.freeze({
+  fileKey: PRINT_LAYOUT.fileKey,
+  nodeId: "4099:61666",
+  name: "print-test-die-cut-rear-canon",
+  width: 2550,
+  height: 3300,
+  positions: cutterPositions(
+    [85.702392578125, 865.702392578125, 1645.702392578125],
+    [79.316650390625, 1135.9832763671875, 2192.64990234375],
+  ),
 });
 
 export function validateOrderRequest(request) {
@@ -151,8 +179,7 @@ export function createManufacturingManifest({
     slots: pack.cards.map((card) => ({
       printingId: card.printingId,
       slot: card.slot,
-      x: PRINT_LAYOUT.left + (card.column - 1) * PRINT_LAYOUT.cardWidth,
-      y: PRINT_LAYOUT.top + (card.row - 1) * PRINT_LAYOUT.cardHeight,
+      ...PRINT_LAYOUT.positions[card.slot - 1],
     })),
   }));
   const accessoryChecklist = [];
@@ -310,6 +337,15 @@ export function preflightPrintAssets(manifest, release) {
           Math.abs(asset.width / asset.height - 5 / 7) > 0.003
     )
       errors.push(`${id}: incorrect dimensions or insufficient resolution`);
+    if (
+      manifest.layout.version === "figma-cutter-nine-up-v2" &&
+      id.startsWith("sheet-") &&
+      (!Array.isArray(asset?.positions) || asset.positions.length !== 9 ||
+        asset.positions.some((p) =>
+          ![p.x, p.y, p.width, p.height].every(Number.isFinite) ||
+          p.x < 0 || p.y < 0 || p.width <= 0 || p.height <= 0 ||
+          p.x + p.width > asset.width || p.y + p.height > asset.height))
+    ) errors.push(`${id}: nine source card positions are required for the cutting template`);
   }
   return {
     ready: errors.length === 0,

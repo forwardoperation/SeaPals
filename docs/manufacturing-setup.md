@@ -37,14 +37,57 @@ stock movements, or stock operations were created in production by testing.
 Applied inventory migration SHA-256:
 `68fbe8f008aa8e33f012453a5e3fe4da29d2edd58a55f94aaeb874021a330c42`.
 
-For a new database, apply `manufacturing.sql` and then
-`manufacturing-inventory.sql`. For this existing database, the inventory
-extension is already applied. If the base migration is ever reapplied, apply
-the inventory extension again afterward; it replaces the base job functions.
-Both migrations are rerunnable without resetting existing stock.
+For a new database, apply `manufacturing.sql`, `manufacturing-inventory.sql`,
+then `manufacturing-dispatch.sql`, in that order. Always reapply the later
+migrations after rerunning an earlier one: each replaces shared job functions.
+The migrations are rerunnable without resetting stock, saved cards, or dispatch
+approval.
+
+## Sending work to the printers
+
+Applied `manufacturing-dispatch.sql` to the existing production Supabase project
+on October 13, 2026. All thirteen read-only verification checks passed, including
+nineteen server-only functions and the claim/submission approval gates.
+Migration SHA-256:
+`d4a95136f3de0fbe11891b66b3e72d053758050672df102b0c5d7f8ce2064100`.
+
+Creating a paid-order job or an independent stock build leaves it **Awaiting
+send**. Open the job in `/admin/manufacturing`, review the quantities from stock
+and to make, then click **Send to printers**. The database records one approval
+timestamp. Repeated clicks return that original request and cannot create a new
+draw, duplicate a print, retry blocked work, or restart completed work.
+
+```json
+{"action":"send_to_printers","orderId":"<workshop-job-uuid>"}
+```
+
+This authenticated `POST /api/admin/manufacturing` action applies to customer
+orders and stock builds. Approval does not consume inventory or notify a buyer.
+Printing still waits for the global printing switch and the local agent.
+The first eligible agent claim generates and saves randomized packs for the
+shortfall; retries and explicit reprints use those saved contents. Fully stocked
+orders need only their work ticket. A blocked preparation must be retried
+explicitly; a repeated Send request does not clear it. Reasoned reprints after
+initial approval keep the existing reprint workflow.
+
+The dispatch migration leaves existing jobs unapproved too. The agent must
+check approval both when claiming a job and immediately before every new spool
+submission, including an old lease acquired before the migration. An already
+submitted physical print can still finish; its late acknowledgement remains
+recordable. Ordinary website users cannot call the dispatch database function.
 
 ## Verified in this workspace
 
+- October 13: all 56 manufacturing tests passed, including manual dispatch,
+  duplicate clicks, old leases, refunds, frozen draws, new cutting-template
+  rendering, and legacy layout compatibility. The isolated current-main
+  checkout passed all 2,400 repository tests. Synthetic front/back PDFs were
+  rendered and visually compared with the supplied Figma templates; these
+  were preview files only. The offline browser walkthrough confirmed separate
+  approval for customer orders and independent stock builds.
+- The live database has one existing workshop job, no approved jobs, zero
+  finished/reserved units, and no active artwork release as of this check.
+  No production job was sent by the implementation or its verification.
 - Before the main-branch push, an isolated checkout containing this integration
   and its required rarity definitions passed all 2,361 repository tests and the
   Next/Cloudflare production build. Its source-map check also passed using the
@@ -92,7 +135,7 @@ In the workshop's **Finished inventory** section:
   Enter a positive or negative change and a reason. Stock reserved for an
   order cannot be removed. The ledger records every change.
 - Use **Build stock without an order** to make up to 100 finished units per
-  job. This uses the existing private artwork, Epson fronts, Canon backs,
+  job, then open the build and click **Send to printers**. This uses the existing private artwork, Epson fronts, Canon backs,
   QR work ticket, and manual finishing checklist. Packs keep the same odds
   and saved draw. Stock is credited only after QC and **Packed — receive into
   stock**. A completed build cannot credit stock twice or email a buyer.
@@ -130,11 +173,11 @@ including across refreshes. Stock builds never insert into `store_orders`.
 
 ## Remaining activation steps
 
-1. Deploy the integrated application after reviewing the working tree. Keep
+1. Keep
    `MANUFACTURING_ENABLED`, `MANUFACTURING_ALLOW_TEST_ORDERS`, and
    `MANUFACTURING_BUYER_NOTIFICATIONS_ENABLED` false initially. Existing store,
    Supabase, and Resend configuration remains in use. No R2 billing activation
-   or bucket binding is needed. No deployment was made by this integration turn.
+   or bucket binding is needed.
 2. Set the Worker secret `MANUFACTURING_AGENT_TOKEN` to the value in the private
    `agent.env` file using Wrangler's interactive secret input. Do not put it in
    `NEXT_PUBLIC_*`, the QR, a tracked file, or browser JavaScript. The staff
@@ -154,7 +197,8 @@ including across refreshes. Stock builds never insert into `store_orders`.
    step did not activate the printers. Confirm the existing profiles in that
    setting when enabling the printer agent.
 6. Enable agent claiming and explicitly allow test orders for one controlled
-   paid test order. Test orders never enqueue buyer emails. Confirm an actual
+   paid test order, then explicitly send that selected order to the printers.
+   Unapproved orders remain waiting. Test orders never enqueue buyer emails. Confirm an actual
    work-ticket scan and both printer outputs. Turn test-order allowance back
    off, enable buyer milestone emails, then install the Windows startup task.
 
@@ -245,9 +289,9 @@ The default export mode requires complete mappings.
 
 ## Operational behavior
 
-- Live paid transitions queue one manufacturing record. Neither checkout-page
+- Live paid transitions create one manufacturing record awaiting staff dispatch. Neither checkout-page
   visits nor repeated Stripe events create additional prints. Old orders can
-  be explicitly queued in the staff screen by UUID if still eligible.
+  be added to the workshop by UUID if still eligible, then explicitly sent.
 - Three Dive Pack recipes use 5 common + 3 uncommon + 1 premium, with a 25%
   independent holo replacement chance, strictly within their set. Prerelease
   printings remain eligible. The first saved draw is never rerolled.
@@ -257,12 +301,14 @@ The default export mode requires complete mappings.
   Conditions, dice, and tokens. Standalone prepared accessory SKUs are supported.
   Existing packaging supplies are checked during packing; this integration
   does not generate new box/wrapper artwork or carrier labels.
-- Boosters use the measured 720 × 1008 slots at (195,138). Canon's back template
-  is reduced to 96% once inside the Letter PDF. Fixed-sheet backs are imposed
-  at matching card positions captured from each Figma frame; Conditions has
-  slightly different gaps. Their positions are reflected left-to-right so they
-  align after gluing with the printed faces outward. Artwork itself is never
-  mirrored, and no automatic duplexing is used.
+- New jobs use the October 13 cutting-machine templates: nine 738.5952 ×
+  1034.0333 pixel cards per Letter page, with independent Epson/Canon positions.
+  Fixed deck and Conditions cards are cropped from their original Figma sheets
+  and arranged on that same grid. The Canon template's −79 X / +18 Y offset is
+  used directly; the old 96% scaling and position reflection apply only to
+  legacy saved manifests. Actual back art comes from the original back frame,
+  never the cutting template's numbered placeholders. No automatic duplexing
+  is used. See `manufacturing-workflow.md` for the exact template references.
 - Work tickets, fronts, and backs have separate durable attempt states. The
   Canon ticket defaults to the same stock/tray as backs; configure a dedicated
   plain-paper bin in its profile if desired. Sumatra submits exact-size PDFs
@@ -301,6 +347,7 @@ The default export mode requires complete mappings.
   private access, and buyer outbox.
 - `supabase/manufacturing-inventory.sql`: finished goods, reservations, movement
   ledger, independent stock builds, and atomic receipt/consumption hooks.
+- `supabase/manufacturing-dispatch.sql`: per-job staff approval and print gates.
 - `src/lib/manufacturing/`: recipes, generation, workflow, integration, storage,
   notifications, and tests.
 - `/api/admin/manufacturing`: staff checklist and private release publishing.

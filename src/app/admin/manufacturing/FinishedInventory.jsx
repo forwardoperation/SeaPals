@@ -24,8 +24,8 @@ export default function FinishedInventory({
       </summary>
       <p className="my-3 text-sm text-slate-600">
         Ready-to-sell sealed packs, decks, and kits. Paid orders reserve
-        available stock and print the shortfall. Checkout production-capacity
-        limits remain separate.
+        available stock. Send a workshop job to printers when you are ready to
+        make its shortfall. Checkout production-capacity limits remain separate.
       </p>
       <div className="grid gap-5 xl:grid-cols-[1fr_300px]">
         <div className="min-w-0 overflow-x-auto">
@@ -140,9 +140,9 @@ export default function FinishedInventory({
             </>
           ) : (
             <p className="text-xs text-slate-600">
-              Creates a workshop job using the same printers and finishing
-              checklist. It adds stock after you confirm QC and receive the
-              completed batch.
+              Creates a workshop job for review. Choose Send to printers on the
+              job to start its print queue. It adds stock after you confirm QC
+              and receive the completed batch.
             </p>
           )}
           <button

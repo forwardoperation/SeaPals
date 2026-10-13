@@ -32,6 +32,35 @@ verified status, remaining artwork mappings, deployment steps, and commands.
 
 ## Source artwork and sheet geometry
 
+New jobs use the cutting-machine templates supplied on October 13, 2026:
+[Epson fronts](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4099-61637)
+and [Canon backs](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4099-61666).
+Both are 2550 × 3300 pixels, printed on Letter at actual size, with nine upright
+738.5952 × 1034.0333 pixel cards. Positions below are measured from the page's
+upper-left corner, in pixels:
+
+| Template | Column X positions | Row Y positions |
+|---|---|---|
+| Epson front | 164.7024, 944.7024, 1724.7024 | 61.3167, 1117.9833, 2174.6499 |
+| Canon back | 85.7024, 865.7024, 1645.7024 | 79.3167, 1135.9833, 2192.6499 |
+
+The Canon template includes its own −79 X / +18 Y offset. Apply these positions
+directly, with no extra 96% reduction or reflection. The templates' numbered
+dashed rectangles are placeholders: they are replaced with card art, not
+printed over it. Card-page identification stays on the separate work ticket.
+Fixed deck/Conditions sheets are cropped at their saved source card positions
+and laid out on this same new grid. The actual back art still comes from the
+original card-back frame; the cutting template does not contain card-back art.
+
+The layout version `figma-cutter-nine-up-v2` and exact coordinates are saved in
+each new manifest. Existing saved manifests remain on their original layout;
+reprinting cannot silently resize them or change their cards. The Figma sync
+checks both template geometries at the pinned file version before exporting.
+A changed template requires an explicit layout update. No separate alignment
+print is required by this workflow, per the owner's request.
+
+### Original artwork sources and legacy saved jobs
+
 Figma remains the artwork source:
 [SeaRealm design file](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx).
 The local set list supplies explicit set membership, rarity, and collector
@@ -44,23 +73,19 @@ exports PNG at 2550 x 3300 pixels. Its 3 x 3 grid starts at (195, 138) and uses
 300 pixels per inch and nominal 2.4 x 3.36 inch card slots. These are measured
 layout dimensions, not a claim about the printer's current scaling settings.
 
-The existing [Canon laser back sheet](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx?node-id=3758-338124)
+The original [Canon laser back sheet](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx?node-id=3758-338124)
 also exports PNG at 2550 x 3300, but its grid starts at (150, 75) and uses
-750 x 1050 slots. The booster renderer scales the complete back image to 96%
+750 x 1050 slots. Legacy saved jobs scale the complete back image to 96%
 and centers it on the letter page. Its translation is (51, 66) pixels:
 
 - Left edge: `150 * 0.96 + 51 = 195`.
 - Top edge: `75 * 0.96 + 66 = 138`.
 - Card size: `750 * 0.96 = 720`; `1050 * 0.96 = 1008`.
 
-This makes the artwork grids match mathematically. Confirm actual alignment,
-orientation, margins, colors, media selection, and any laser registration
-offset using a physical sheet pair before enabling unattended printing. The
-96% adjustment belongs in the generated page, once; a subsequent printer
-"fit" setting would shrink it again. Send the explicit letter PDF at actual
-size after calibration. Fixed deck/Conditions sheet backs use their own saved
-Figma card positions, because the Conditions gaps differ slightly. If a physical
-offset remains, correct the driver profile or rendering template and re-proof it.
+These calculations describe the original layout only. They remain available
+for previously saved jobs and are not added to the new cutting template.
+Always print the generated Letter PDF at actual size. Legacy fixed-sheet backs
+use their original saved Figma card positions, including Conditions' gaps.
 
 Verified Windows queue names:
 
@@ -75,7 +100,8 @@ its own document/media profile so it does not unexpectedly consume card stock.
 
 ## Operator workflow and holo finishing
 
-1. Both printers receive independently tracked jobs with the same order,
+1. Open an order or stock build, review stock versus quantities to make, and
+   click **Send to printers**. Both printers receive independently tracked jobs with the same order,
    pack, and sheet-pair identifiers. All pages for the order must pass artwork
    preflight before the first printer receives a job.
 2. An operator confirms the front sheet and back sheet actually printed.

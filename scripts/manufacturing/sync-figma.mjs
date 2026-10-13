@@ -3,7 +3,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPrintingCatalog } from "../../src/lib/manufacturing/boosters.mjs";
 import { fixedArtworkSources } from "../../src/lib/manufacturing/recipes.mjs";
-import { BACK_TEMPLATE } from "../../src/lib/manufacturing/printPlan.mjs";
+import {
+  BACK_ART_SOURCE,
+  BACK_TEMPLATE,
+  PRINT_LAYOUT,
+} from "../../src/lib/manufacturing/printPlan.mjs";
 import {
   pngDimensions,
   sha256,
@@ -48,18 +52,117 @@ export function buildSourceMap(
     expectedNumber: `${c.collectorNumber}/${c.setTotal}`,
   }));
   sources.push(
-    { id: "standard-back-sheet", kind: "back", nodeId: BACK_TEMPLATE.nodeId },
+    // The cutter template contains numbered placeholders, not card artwork.
+    { id: "standard-back-sheet", kind: "back", nodeId: BACK_ART_SOURCE.nodeId },
     ...fixedArtworkSources(),
   );
+  const reference = (template) => ({
+    fileKey: template.fileKey,
+    nodeId: template.nodeId,
+    name: template.name,
+    width: template.width,
+    height: template.height,
+    positions: template.positions,
+  });
   return {
     fileKey: gallery.fileKey,
     catalog,
     sources,
+    // Geometry participates in the source hash, so changing a cutter template
+    // invalidates the unchanged-version shortcut and any partial export cache.
+    templates: {
+      version: PRINT_LAYOUT.version,
+      fronts: reference(PRINT_LAYOUT),
+      backs: reference(BACK_TEMPLATE),
+    },
     missing: sources
       .filter((s) => !s.nodeId)
       .map((s) => ({ id: s.id, cardId: s.cardId })),
   };
 }
+
+export function validateCutterTemplate(document, template) {
+  const label = template.name ?? template.nodeId;
+  const invalid = (detail) => {
+    throw new Error(
+      `Cutter template ${label}: ${detail}. Review the Figma template and saved print geometry before syncing; the active artwork release is unchanged.`,
+    );
+  };
+  const origin = document?.absoluteBoundingBox;
+  if (
+    !document ||
+    document.type !== "FRAME" ||
+    document.visible === false ||
+    document.id !== template.nodeId ||
+    document.name !== template.name
+  )
+    invalid("the expected template frame is missing or renamed");
+  if (
+    !origin ||
+    ![origin.x, origin.y, origin.width, origin.height].every(Number.isFinite) ||
+    Math.abs(origin.width - 2550) > 0.01 ||
+    Math.abs(origin.height - 3300) > 0.01
+  )
+    invalid("the page must be 2550 × 3300 pixels");
+  const grids = (document.children ?? []).filter(
+    (child) => child.type === "FRAME" && child.name === "card_backs" && child.visible !== false,
+  );
+  if (grids.length !== 1) invalid("one visible card_backs frame is required");
+  const slots = (grids[0].children ?? []).filter(
+    (child) => child.type === "GROUP" && child.visible !== false,
+  );
+  if (slots.length !== 9) invalid("exactly nine visible card groups are required");
+  const positions = slots.map((slot) => {
+    const bounds = slot.absoluteBoundingBox;
+    if (
+      !bounds ||
+      ![bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite) ||
+      bounds.width <= 0 ||
+      bounds.height <= 0
+    )
+      invalid("a card group has missing or invalid bounds");
+    const position = {
+      x: bounds.x - origin.x,
+      y: bounds.y - origin.y,
+      width: bounds.width,
+      height: bounds.height,
+    };
+    if (
+      position.x < 0 ||
+      position.y < 0 ||
+      position.x + position.width > origin.width ||
+      position.y + position.height > origin.height
+    )
+      invalid("a card group extends outside the page");
+    return position;
+  }).sort((a, b) => Math.abs(a.y - b.y) < 0.01 ? a.x - b.x : a.y - b.y);
+  if (!Array.isArray(template.positions) || template.positions.length !== 9)
+    invalid("the saved template geometry is incomplete");
+  for (const [index, position] of positions.entries()) {
+    for (const field of ["x", "y", "width", "height"]) {
+      if (
+        !Number.isFinite(template.positions[index][field]) ||
+        Math.abs(position[field] - template.positions[index][field]) > 0.01
+      )
+        invalid(`card ${Math.floor(index / 3) + 1}:${index % 3 + 1} ${field} differs from the saved geometry by more than 0.01 pixel`);
+    }
+  }
+  return positions;
+}
+
+export async function checkCutterTemplates(figma, source, version) {
+  const templates = [source.templates.fronts, source.templates.backs];
+  if (!version) throw new Error("A pinned Figma version is required to check cutter templates.");
+  if (templates.some((template) => template.fileKey !== source.fileKey))
+    throw new Error("Cutter templates and print artwork must come from the same versioned Figma file.");
+  const ids = templates.map((template) => template.nodeId).join(",");
+  const response = await figma(
+    `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&version=${encodeURIComponent(version)}`,
+  );
+  for (const template of templates)
+    validateCutterTemplate(response.nodes?.[template.nodeId]?.document, template);
+}
+
 export function sheetPositions(document) {
   const grid = document.children?.find((n) => n.name === "card_backs");
   if (!grid || !document.absoluteBoundingBox)
@@ -182,6 +285,9 @@ async function main() {
       if (error.code !== "ENOENT") throw error;
     }
   }
+  // Read both guides at the exact version used for every artwork export. They
+  // are checked as geometry only and are never exported as printable assets.
+  await checkCutterTemplates(figma, source, version);
   const releaseId =
     value("--release") ?? `figma-${version}-${sourceHash.slice(0, 8)}`;
   if (!/^[A-Za-z0-9._-]{1,100}$/.test(releaseId))
@@ -193,6 +299,7 @@ async function main() {
     releaseId,
     figmaFileKey: source.fileKey,
     figmaVersion: version,
+    printTemplates: source.templates,
     catalog: source.catalog,
     missing: source.missing,
     assets: {},

@@ -1,4 +1,5 @@
--- Read-only verification after manufacturing.sql and manufacturing-inventory.sql.
+-- Read-only verification after manufacturing.sql, manufacturing-inventory.sql,
+-- and manufacturing-dispatch.sql (in that order).
 -- Does not create orders, claim print jobs, or enqueue buyer messages.
 with manufacturing_tables as (
   select c.oid, c.relrowsecurity
@@ -28,8 +29,8 @@ with manufacturing_tables as (
       and has_table_privilege('service_role', oid, 'UPDATE')
       and has_table_privilege('service_role', oid, 'DELETE')
     ) from manufacturing_tables)
-  union all select 5, 'All 18 manufacturing functions are server-only',
-    (select count(*) = 18 and bool_and(
+  union all select 5, 'All 19 manufacturing functions are server-only',
+    (select count(*) = 19 and bool_and(
       prosecdef and 'search_path=public, pg_temp' = any(proconfig)
       and has_function_privilege('service_role', oid, 'EXECUTE')
       and not has_function_privilege('anon', oid, 'EXECUTE')
@@ -56,5 +57,14 @@ with manufacturing_tables as (
       and tgname = 'manufacturing_refund_changed' and tgenabled = 'O')
   union all select 11, 'Finished stock catalog and counters valid',
     (select count(*) = 15 and bool_and(on_hand >= reserved and reserved >= 0) from public.manufacturing_stock)
+  union all select 12, 'New jobs require an explicit print request',
+    exists(select 1 from information_schema.columns where table_schema='public'
+      and table_name='manufacturing_orders' and column_name='print_requested_at'
+      and data_type='timestamp with time zone' and is_nullable='YES' and column_default is null)
+  union all select 13, 'Both job claiming and print submission enforce dispatch approval',
+    exists(select 1 from pg_proc where oid='public.manufacturing_claim(uuid,boolean)'::regprocedure
+      and prosrc like '%q.print_requested_at is not null%' and prosrc like '%m.print_requested_at is null%')
+    and exists(select 1 from pg_proc where oid='public.manufacturing_commit(uuid,uuid,integer,jsonb,jsonb,text)'::regprocedure
+      and prosrc like '%submission_started%and m.print_requested_at is null%')
 )
 select check_name, coalesce(passed, false) as passed from checks order by position;

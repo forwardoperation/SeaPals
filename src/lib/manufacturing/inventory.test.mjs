@@ -107,6 +107,7 @@ async function fixture() {
     "manufacturing.sql",
     "manufacturing-inventory.sql",
     "manufacturing-inventory.sql",
+    "manufacturing-dispatch.sql",
   ])
     await db.exec(
       await readFile(
@@ -230,8 +231,9 @@ test("the service prepares stock-only orders and independent accessory builds wi
       2,
       "Opening count",
     ]);
-    const id = await order(2),
-      job = await s.claim(randomUUID());
+    const id = await order(2);
+    await rpc("send_to_printers", [id]);
+    const job = await s.claim(randomUUID());
     assert.equal(job.order_id, id);
     assert.equal(job.manifest.packs.length, 0);
     assert.equal(job.manifest.sheets.length, 0);
@@ -239,6 +241,7 @@ test("the service prepares stock-only orders and independent accessory builds wi
     assert.equal(job.release.releaseId, "stock-only");
     const stockId = randomUUID();
     await s.createStock(stockId, [{ productId: "dice-pack", quantity: 2 }]);
+    await rpc("send_to_printers", [stockId]);
     const built = await s.claim(randomUUID());
     assert.equal(built.order_id, stockId);
     assert.equal(built.manifest.jobKind, "stock");
@@ -338,8 +341,9 @@ test("stock-only paid order can claim without artwork; packing consumes once and
       4,
       "Opening count",
     ]);
-    const id = await order(2),
-      token = randomUUID(),
+    const id = await order(2);
+    await rpc("send_to_printers", [id]);
+    const token = randomUUID(),
       claimed = await rpc("claim", [token, false]);
     assert.equal(claimed.order_id, id);
     assert.equal(claimed.release_id, null);
@@ -423,6 +427,7 @@ test("independent stock builds are received once after finishing and have no cus
     );
     assert.equal((await stock()).on_hand, 0);
     assert.equal((await db.query("select * from store_orders")).rows.length, 0);
+    await rpc("send_to_printers", [id]);
     const claimed = await rpc("claim", [token, false]);
     assert.equal(claimed.job_kind, "stock");
     await rpc("publish", ["test", JSON.stringify({ releaseId: "test" })]);
@@ -527,9 +532,11 @@ test("pending refund releases a reservation before packing, and a late stock rec
     await rpc("allocate_stock", [id]);
     assert.deepEqual((await row(id)).inventory_plan, original);
     await db.exec(await readFile(new URL("../../../supabase/manufacturing-inventory.sql",import.meta.url),"utf8"));
+    await db.exec(await readFile(new URL("../../../supabase/manufacturing-dispatch.sql",import.meta.url),"utf8"));
     assert.equal((await stock()).on_hand,7,"Rerunning the migration does not reset physical stock");
     assert.equal((await stock()).reserved,2);
     await rpc("publish",["test",JSON.stringify({releaseId:"test"})]);
+    await rpc("send_to_printers", [id]);
     const token=randomUUID(),claimed=await rpc("claim",[token,false]);
     const manifest=createManufacturingManifest({request:{...request(3),orderId:id,orderNumber:"ORDER-TEST"},catalog,artworkRelease:"test",inventoryPlan:claimed.inventory_plan});
     let state=createManufacturingState(manifest);

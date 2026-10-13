@@ -5,7 +5,7 @@ import {
   AdventureLayeredMapObject, AdventurePlayerSprite, AdventureTrainerSprite,
   DirectionButton, mapThemeClassForScene,
 } from "../../adventure/AdventureGame";
-import AdventurePerspectiveGround, { useAdventureGraphics, useAdventureViewport } from "../../adventure/AdventurePerspective";
+import AdventurePerspectiveGround, { useAdventureGraphics, useAdventureViewport } from "../../adventure/AdventurePerspective.jsx";
 import {
   createAdventureFrameGate, createAdventurePerspective, getPerspectiveObjectRect,
   isPerspectiveActorVisible, isPerspectiveRectVisible,

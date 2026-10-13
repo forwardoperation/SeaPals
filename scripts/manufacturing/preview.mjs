@@ -8,6 +8,7 @@ import { buildPrintingCatalog } from "../../src/lib/manufacturing/boosters.mjs";
 import {
   createManufacturingManifest,
   PRINT_LAYOUT,
+  BACK_TEMPLATE,
 } from "../../src/lib/manufacturing/printPlan.mjs";
 import {
   createManufacturingState,
@@ -26,6 +27,8 @@ export async function previewFixture({
   items = [{ productId: "deep-dive-pack", quantity: 1 }],
   inventoryPlan,
   jobKind = "order",
+  orderNumber,
+  awaitingSend = false,
 } = {}) {
   const load = async (name) =>
     JSON.parse(await readFile(path.join(REPO_ROOT, "src/data", name), "utf8"));
@@ -37,7 +40,8 @@ export async function previewFixture({
     request: {
       orderId: id,
       orderNumber:
-        jobKind === "stock" ? `STOCK-DEMO-${id.slice(0, 8)}` : "DEMO-1001",
+        orderNumber ??
+        (jobKind === "stock" ? `STOCK-DEMO-${id.slice(0, 8)}` : "DEMO-1001"),
       items,
     },
     catalog,
@@ -72,10 +76,13 @@ export async function previewFixture({
     order_id: id,
     job_kind: jobKind,
     display_number: manifest.order.orderNumber,
-    manifest,
-    state,
-    revision: state.revision,
-    phase: "awaiting_operator",
+    stock_request: jobKind === "stock" ? items : null,
+    inventory_plan: manifest.inventoryPlan,
+    print_requested_at: awaitingSend ? null : new Date().toISOString(),
+    manifest: awaitingSend ? null : manifest,
+    state: awaitingSend ? null : state,
+    revision: awaitingSend ? 0 : state.revision,
+    phase: awaitingSend ? "queued" : "awaiting_operator",
     release_id: "preview-only",
     order: {
       id,
@@ -83,7 +90,7 @@ export async function previewFixture({
       payment_status: jobKind === "stock" ? "stock build" : "paid",
       payment_livemode: jobKind === "stock",
       fulfillment_method: jobKind === "stock" ? "inventory" : "shipping",
-      fulfillment_status: "awaiting_operator",
+      fulfillment_status: "unfulfilled",
       production_due_date: jobKind === "stock" ? null : "2026-10-12",
       production_option_name: "Standard production",
       store_order_items: items.map((i) => ({
@@ -93,6 +100,29 @@ export async function previewFixture({
       })),
     },
   };
+}
+export function approvePreviewJob(detail) {
+  if (detail.print_requested_at) return detail;
+  if (detail.phase === "blocked" || detail.state?.hold)
+    throw new Error("Resolve the job hold before sending to printers");
+  if (
+    detail.phase === "complete" ||
+    detail.state?.packed ||
+    detail.inventory_posted_at ||
+    detail.inventory_consumed_at
+  )
+    throw new Error("This job is already complete");
+  if (
+    detail.inventory_released_at ||
+    (detail.job_kind !== "stock" &&
+      (detail.order.payment_status !== "paid" ||
+        !["unfulfilled", "in_production", "packing"].includes(
+          detail.order.fulfillment_status,
+        )))
+  )
+    throw new Error("This order is not eligible for manufacturing");
+  detail.print_requested_at = new Date().toISOString();
+  return detail;
 }
 async function calibration(file) {
   const doc = await PDFDocument.create(),
@@ -111,18 +141,19 @@ async function calibration(file) {
     );
     for (let row = 0; row < 3; row++)
       for (let col = 0; col < 3; col++) {
-        const x = (PRINT_LAYOUT.left + col * 720) * 0.24,
-          y = 792 - (PRINT_LAYOUT.top + row * 1008 + 1008) * 0.24;
+        const position = (side === "CANON BACK" ? BACK_TEMPLATE : PRINT_LAYOUT).positions[row * 3 + col];
+        const x = position.x * 0.24,
+          y = 792 - (position.y + position.height) * 0.24;
         p.drawRectangle({
           x,
           y,
-          width: 720 * 0.24,
-          height: 1008 * 0.24,
+          width: position.width * 0.24,
+          height: position.height * 0.24,
           borderColor: rgb(0, 0, 0),
           borderWidth: 0.5,
         });
         p.drawText(
-          `${row + 1}:${side === "CANON BACK" ? 3 - col : col + 1} / ${side}`,
+          `${row + 1}:${col + 1} / ${side}`,
           {
             x: x + 10,
             y: y + 12,
@@ -151,8 +182,22 @@ async function main() {
     inventoryPlan: [
       { productId: "deep-dive-pack", quantity: 5, fromStock: 3, toMake: 2 },
     ],
+    awaitingSend: true,
   });
-  const jobs = new Map([[detail.order_id, detail]]),
+  const stockBuild = await previewFixture({
+      id: "20000000-0000-4000-8000-000000000002",
+      items: [{ productId: "reef-dive-pack", quantity: 3 }],
+      jobKind: "stock",
+      awaitingSend: true,
+    }),
+    preparedJob = await previewFixture({
+      id: "30000000-0000-4000-8000-000000000003",
+      orderNumber: "DEMO-1002",
+      items: [{ productId: "oceanic-dive-pack", quantity: 1 }],
+    });
+  const jobs = new Map(
+      [detail, stockBuild, preparedJob].map((job) => [job.order_id, job]),
+    ),
     operations = new Set(),
     movements = [];
   const { storeProductDefinitions, storePreparedProductIds } =
@@ -181,8 +226,8 @@ async function main() {
   const dir = path.join(PRIVATE_ROOT, "preview");
   await mkdir(dir, { recursive: true });
   await renderTicket({
-    manifest: detail.manifest,
-    order: detail.order,
+    manifest: preparedJob.manifest,
+    order: preparedJob.order,
     siteOrigin: "https://searealm.com",
     file: path.join(dir, "work-ticket.pdf"),
   });
@@ -239,6 +284,7 @@ async function main() {
                   id: payload.id,
                   items: payload.items,
                   jobKind: "stock",
+                  awaitingSend: true,
                 }),
               );
             res.end(JSON.stringify(jobs.get(payload.id)));
@@ -246,6 +292,20 @@ async function main() {
           }
           detail = jobs.get(payload.orderId);
           if (!detail) throw new Error("Unknown preview job");
+          if (payload.action === "send_to_printers") {
+            res.end(JSON.stringify(approvePreviewJob(detail)));
+            return;
+          }
+          if (payload.action === "retry") {
+            if (detail.state?.hold || detail.phase === "complete")
+              throw new Error("This job cannot be retried");
+            detail.phase = "queued";
+            detail.issue = null;
+            res.end(JSON.stringify({ queued: true }));
+            return;
+          }
+          if (!detail.manifest || !detail.state)
+            throw new Error("This preview job is waiting in the print queue");
           detail.state = applyManufacturingEvent(
             detail.state,
             detail.manifest,
@@ -297,7 +357,7 @@ async function main() {
                       .reduce(
                         (n, j) =>
                           n +
-                          (j.manifest.order.items.find(
+                          (j.stock_request.find(
                             (i) => i.productId === s.product_id,
                           )?.quantity ?? 0),
                         0,

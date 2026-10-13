@@ -206,21 +206,23 @@ test("broken pools and invalid random sources fail rather than silently changing
   );
 });
 
-test("two printer routes, separate sheets, and Canon correction match the measured Figma grid", () => {
+test("two printer routes and separate sheets use the measured cutting-machine templates", () => {
   const saved = manifest();
   assert.match(saved.sheets[0].fronts.printerName, /ET-8550/);
   assert.match(saved.sheets[0].backs.printerName, /Canon/);
   assert.equal(saved.assembly, "separate-sheets-glued-together");
-  assert.equal(
-    150 * BACK_TEMPLATE.contentScale + BACK_TEMPLATE.translateX,
-    PRINT_LAYOUT.left,
-  );
-  assert.equal(
-    75 * BACK_TEMPLATE.contentScale + BACK_TEMPLATE.translateY,
-    PRINT_LAYOUT.top,
-  );
-  assert.equal(750 * BACK_TEMPLATE.contentScale, PRINT_LAYOUT.cardWidth);
-  assert.equal(1050 * BACK_TEMPLATE.contentScale, PRINT_LAYOUT.cardHeight);
+  assert.equal(saved.layout.version, "figma-cutter-nine-up-v2");
+  assert.equal(saved.layout.nodeId, "4099:61637");
+  assert.equal(saved.sheets[0].backs.template.nodeId, "4099:61666");
+  assert.equal(PRINT_LAYOUT.positions.length, 9);
+  for (const [i, p] of PRINT_LAYOUT.positions.entries()) {
+    assert.equal(saved.sheets[0].slots[i].x, p.x);
+    assert.equal(saved.sheets[0].slots[i].y, p.y);
+    assert.equal(BACK_TEMPLATE.positions[i].x, p.x - 79);
+    assert.equal(BACK_TEMPLATE.positions[i].y, p.y + 18);
+    assert.ok(p.x + p.width < 2550 && p.y + p.height < 3300);
+  }
+  assert.equal(BACK_TEMPLATE.contentScale, undefined);
   assert.equal(saved.holoChecklist[0].slot, 9);
 });
 

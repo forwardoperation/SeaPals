@@ -69,13 +69,14 @@ if (flags.includes("--online")) {
       process.env.SUPABASE_SERVICE_ROLE_KEY,
       { auth: { persistSession: false } },
     );
-    const [schema, bucket] = await Promise.all([
+    const [schema, bucket, dispatch] = await Promise.all([
       db
         .from("manufacturing_settings")
         .select("active_release")
         .eq("id", true)
         .maybeSingle(),
       db.storage.getBucket("searealm-manufacturing-private"),
+      db.from("manufacturing_orders").select("print_requested_at").limit(1),
     ]);
     record(
       "database migration",
@@ -89,6 +90,13 @@ if (flags.includes("--online")) {
       Boolean(schema.data?.active_release),
     );
     record("private artwork bucket", bucket.data?.public === false);
+    record(
+      "manual print dispatch migration",
+      !dispatch.error,
+      dispatch.error
+        ? "Apply manufacturing.sql, manufacturing-inventory.sql, then manufacturing-dispatch.sql."
+        : undefined,
+    );
   }
 }
 console.log(JSON.stringify(checks, null, 2));

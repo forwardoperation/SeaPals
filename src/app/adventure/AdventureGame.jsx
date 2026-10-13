@@ -21,7 +21,7 @@ import {
   movePlayerContinuous,
 } from "./adventureWorld.mjs";
 import { getAdventureCameraLayout } from "./adventureCamera.mjs";
-import AdventurePerspectiveGround, { useAdventureGraphics, useAdventureViewport } from "./AdventurePerspective";
+import AdventurePerspectiveGround, { useAdventureGraphics, useAdventureViewport } from "./AdventurePerspective.jsx";
 import {
   createAdventureFrameGate,
   createAdventurePerspective,

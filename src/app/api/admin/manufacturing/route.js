@@ -34,7 +34,7 @@ export async function GET(request) {
     return json(
       {
         error:
-          "Could not load manufacturing. Check that manufacturing.sql and manufacturing-inventory.sql have been applied.",
+          "Could not load manufacturing. Check that manufacturing.sql, manufacturing-inventory.sql, and manufacturing-dispatch.sql have been applied in that order.",
       },
       503,
     );
@@ -78,6 +78,8 @@ export async function POST(request) {
       return json({ published: release.releaseId });
     }
     if (!uuid(payload.orderId)) throw new Error("Invalid order ID.");
+    if (payload.action === "send_to_printers")
+      return json(await s.sendToPrinters(payload.orderId));
     if (payload.action === "retry")
       return json({
         queued: await s.rpc("retry", { p_order: payload.orderId }),

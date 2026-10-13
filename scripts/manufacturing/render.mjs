@@ -7,7 +7,8 @@ import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs"
 import { sha256 } from "../../src/lib/manufacturing/integration.mjs";
 
 const POINT = 72 / 300,
-  LETTER = [612, 792];
+  LETTER = [612, 792],
+  CUTTER_LAYOUT = "figma-cutter-nine-up-v2";
 const ink = rgb(0.06, 0.19, 0.25),
   muted = rgb(0.27, 0.36, 0.4);
 const safeText = (value) =>
@@ -48,6 +49,53 @@ export function backPositionForGlue(position, pageWidth = 2550) {
   // With top edges aligned and printed faces outward, turning the backing
   // sheet over a vertical edge reverses its column positions, not the artwork.
   return { ...position, x: pageWidth - position.x - position.width };
+}
+function drawCard(page, image, position) {
+  page.drawImage(image, {
+    x: position.x * POINT,
+    y: LETTER[1] - (position.y + position.height) * POINT,
+    width: position.width * POINT,
+    height: position.height * POINT,
+  });
+}
+function cropCard(original, position) {
+  // Raster crops use the nearest exported pixel on each edge. Placement keeps
+  // the exact Figma dimensions, including fractional pixel coordinates.
+  const x = Math.round(position.x),
+    y = Math.round(position.y),
+    width = Math.round(position.x + position.width) - x,
+    height = Math.round(position.y + position.height) - y;
+  if (
+    ![x, y, width, height].every(Number.isSafeInteger) ||
+    x < 0 ||
+    y < 0 ||
+    width <= 0 ||
+    height <= 0 ||
+    x + width > original.width ||
+    y + height > original.height
+  )
+    throw new Error("The saved card crop is outside its private artwork.");
+  const crop = new PNG({ width, height });
+  PNG.bitblt(original, crop, x, y, width, height, 0, 0);
+  return PNG.sync.write(crop);
+}
+function cutterPositions(positions, name) {
+  if (
+    !Array.isArray(positions) ||
+    positions.length !== 9 ||
+    positions.some(
+      (p) =>
+        ![p.x, p.y, p.width, p.height].every(Number.isFinite) ||
+        p.x < 0 ||
+        p.y < 0 ||
+        p.width <= 0 ||
+        p.height <= 0 ||
+        p.x + p.width > 2550 ||
+        p.y + p.height > 3300,
+    )
+  )
+    throw new Error(`The saved ${name} needs nine valid Letter card positions.`);
+  return positions;
 }
 function marginLabel(page, font, text) {
   // Outside the nine-card rectangle, including on the scaled back template.
@@ -94,7 +142,49 @@ export async function renderJob({
       const doc = await PDFDocument.create(),
         page = doc.addPage(LETTER),
         font = await doc.embedFont(StandardFonts.Helvetica);
-      if (side === "fronts" && sheet.fronts.assetId) {
+      if (manifest.layout.version === CUTTER_LAYOUT) {
+        if (side === "fronts" && sheet.fronts.assetId) {
+          const original = PNG.sync.read(bytes.get(sheet.fronts.assetId)),
+            sourcePositions = cutterPositions(
+              release.assets[sheet.fronts.assetId].positions,
+              "fixed-sheet source",
+            ).toSorted((a, b) =>
+              Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
+            ),
+            positions = cutterPositions(manifest.layout.positions, "front template");
+          for (const [index, position] of positions.entries()) {
+            const image = await doc.embedPng(
+              cropCard(original, sourcePositions[index]),
+            );
+            drawCard(page, image, position);
+          }
+        } else if (side === "fronts") {
+          const positions = cutterPositions(
+            sheet.slots.map((slot) => ({
+              ...slot,
+              width: slot.width ?? manifest.layout.cardWidth,
+              height: slot.height ?? manifest.layout.cardHeight,
+            })),
+            "booster front",
+          );
+          for (const position of positions) {
+            const image = await doc.embedPng(bytes.get(position.printingId));
+            drawCard(page, image, position);
+          }
+        } else {
+          const original = PNG.sync.read(bytes.get(sheet.backs.assetId)),
+            image = await doc.embedPng(
+              cropCard(original, { x: 150, y: 75, width: 750, height: 1050 }),
+            );
+          for (const position of cutterPositions(
+            sheet.backs.template.positions,
+            "rear template",
+          ))
+            // The cutter's rear template already defines the correct offsets.
+            // Do not apply the legacy 96% transform or mirror these positions.
+            drawCard(page, image, position);
+        }
+      } else if (side === "fronts" && sheet.fronts.assetId) {
         const image = await doc.embedPng(bytes.get(sheet.fronts.assetId));
         page.drawImage(image, { x: 0, y: 0, width: 612, height: 792 });
       } else if (side === "fronts") {
@@ -137,11 +227,12 @@ export async function renderJob({
           height: 792 * t.contentScale,
         });
       }
-      marginLabel(
-        page,
-        font,
-        `${sheet.sheetId} / ${sheet.set ?? sheet.productId ?? ""} / ${side.toUpperCase()} / ${manifest.manifestHash.slice(0, 12)}`,
-      );
+      if (manifest.layout.version !== CUTTER_LAYOUT)
+        marginLabel(
+          page,
+          font,
+          `${sheet.sheetId} / ${sheet.set ?? sheet.productId ?? ""} / ${side.toUpperCase()} / ${manifest.manifestHash.slice(0, 12)}`,
+        );
       const file = path.join(outputDir, `${sheet.sheetId}-${side}.pdf`);
       await save(doc, file);
       jobs.push({ sheetId: sheet.sheetId, side, file });
@@ -152,7 +243,8 @@ export async function renderJob({
 export async function renderTicket({ manifest, order, siteOrigin, file }) {
   const doc = await PDFDocument.create(),
     font = await doc.embedFont(StandardFonts.Helvetica),
-    bold = await doc.embedFont(StandardFonts.HelveticaBold);
+    bold = await doc.embedFont(StandardFonts.HelveticaBold),
+    cutterLayout = manifest.layout.version === CUTTER_LAYOUT;
   const url = staffUrl(siteOrigin, manifest.order.orderId);
   const qr = await doc.embedPng(
     await QRCode.toBuffer(url, {
@@ -249,7 +341,17 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
       "Keep each reserved finished product intact. Only the shortfall gets new card sheets.",
     );
   }
-  if (manifest.packs.length) {
+  if (cutterLayout && manifest.sheets.length) {
+    y -= 10;
+    line("PRINT SHEET ORDER", { heading: true, gap: 23 });
+    for (const [index, sheet] of manifest.sheets.entries())
+      line(
+        `${index + 1}. ${sheet.sheetId} : ${sheet.set ? `${{ reef: "Reef", deep: "Deep", ocean: "Oceanic" }[sheet.set]} Dive Pack` : sheet.productId} / front + back`,
+      );
+    line(
+      "Card pages have no printed job labels. Keep both printer stacks in this order and match each front with the corresponding back.",
+    );
+  } else if (manifest.packs.length) {
     y -= 10;
     line("PACK SHEET MAP", { heading: true, gap: 23 });
     for (const pack of manifest.packs)
@@ -263,7 +365,9 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
     `${manifest.sheets.length} front sheet(s) on Epson + ${manifest.sheets.length} separate back sheet(s) on Canon.`,
   );
   line(
-    "Match the sheet IDs, check alignment, glue pairs, allow to dry, then cut.",
+    cutterLayout
+      ? "Use Actual size (100%). Follow the sheet order above, glue pairs, allow to dry, then cut."
+      : "Match the sheet IDs, check alignment, glue pairs, allow to dry, then cut.",
   );
   line(
     "Confirm each physical print in the staff checklist. Printer acceptance alone is not confirmation.",

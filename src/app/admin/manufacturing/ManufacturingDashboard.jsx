@@ -106,6 +106,7 @@ export default function ManufacturingDashboard() {
     }
   }
   async function retry(id) {
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -113,6 +114,20 @@ export default function ManufacturingDashboard() {
       await load(id);
     } catch (e) {
       setError(e.message);
+      setBusy(false);
+    }
+  }
+  async function sendToPrinters() {
+    if (busy || !detail || detail.print_requested_at) return;
+    setBusy(true);
+    setError("");
+    try {
+      await request({ action: "send_to_printers", orderId: selected });
+      await load(selected);
+    } catch (e) {
+      setError(
+        `${e.message} Refresh to check the queue. Retrying Send to printers will not create another print request.`,
+      );
       setBusy(false);
     }
   }
@@ -154,7 +169,30 @@ export default function ManufacturingDashboard() {
   }
   const state = detail?.state,
     manifest = detail?.manifest,
-    ready = state ? workflowReadiness(state) : null;
+    ready = state ? workflowReadiness(state) : null,
+    inventoryPlan =
+      detail?.inventory_plan ??
+      manifest?.inventoryPlan ??
+      (detail?.job_kind === "stock"
+        ? detail.stock_request?.map((item) => ({
+            ...item,
+            fromStock: 0,
+            toMake: item.quantity,
+          }))
+        : null),
+    sendUnavailable =
+      detail?.phase === "blocked" ||
+      detail?.phase === "complete" ||
+      state?.hold ||
+      state?.packed ||
+      !!detail?.inventory_released_at ||
+      !!detail?.inventory_consumed_at ||
+      !!detail?.inventory_posted_at ||
+      (detail?.job_kind !== "stock" &&
+        (detail?.order.payment_status !== "paid" ||
+          !["unfulfilled", "in_production", "packing"].includes(
+            detail?.order.fulfillment_status,
+          )));
   function printControl(sheetId, side, status) {
     return (
       <div className="rounded-xl bg-slate-50 p-3" key={side}>
@@ -168,7 +206,9 @@ export default function ManufacturingDashboard() {
         <p
           className={`my-2 text-sm ${status === "needs_review" ? "text-amber-800" : "text-slate-600"}`}
         >
-          {labels[status] ?? status}
+          {status === "queued" && !detail.print_requested_at
+            ? "Waiting for Send to printers"
+            : (labels[status] ?? status)}
         </p>
         <div className="flex flex-wrap gap-2">
           {status === "submitting" &&
@@ -306,8 +346,8 @@ export default function ManufacturingDashboard() {
       )}
       {loggedIn && !enabled && (
         <p className="rounded-xl bg-amber-50 p-4 text-amber-900">
-          Automatic printer submission is disabled. The queue and saved
-          checklists remain available.
+          Printing is not activated yet. You can send a job to the print queue;
+          it will wait there until printing is activated.
         </p>
       )}
       {loggedIn && (
@@ -338,7 +378,11 @@ export default function ManufacturingDashboard() {
                     {row.display_number ?? row.store_orders?.order_number}
                   </span>
                   <span className="text-sm capitalize">
-                    {row.phase.replaceAll("_", " ")}
+                    {row.phase === "queued"
+                      ? row.print_requested_at
+                        ? "Sent to print queue"
+                        : "Awaiting send"
+                      : row.phase.replaceAll("_", " ")}
                   </span>
                   {row.job_kind === "stock" && (
                     <span className="ml-2 text-xs font-bold">STOCK BUILD</span>
@@ -370,8 +414,11 @@ export default function ManufacturingDashboard() {
                   />
                 </label>
                 <button className={button} disabled={busy}>
-                  Queue order
+                  Add order to workshop
                 </button>
+                <p className="mt-2 text-xs text-slate-600">
+                  Review its stock plan, then choose Send to printers.
+                </p>
               </form>
             </aside>
             <section className="min-w-0 space-y-4" aria-label="Selected order">
@@ -397,6 +444,61 @@ export default function ManufacturingDashboard() {
                       </li>
                     ))}
                   </ul>
+                  <div className="my-4 rounded-xl border border-cyan-200 bg-cyan-50 p-4">
+                    {detail.print_requested_at ? (
+                      <>
+                        <p className="font-bold">Sent to print queue</p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {new Date(detail.print_requested_at).toLocaleString()}
+                          {" · "}
+                          {detail.phase === "complete"
+                            ? "This job is complete."
+                            : detail.phase === "blocked" || state?.hold
+                              ? "This job is paused and needs attention."
+                              : !enabled
+                                ? "Waiting for printing to be activated."
+                                : "The print helper will process any pending pages."}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="font-bold">Review and send this job</h3>
+                        <p className="my-2 text-sm text-slate-600">
+                          {detail.job_kind === "stock"
+                            ? "Print the fronts, backs, and work ticket for this stock build."
+                            : "Use reserved finished stock and print only the shortfall, plus a work ticket."}
+                          {" "}Any new booster gets 5 commons, 3 uncommons, and
+                          1 rare or holo rare from its set. Its cards are saved
+                          once and stay the same for reprints.
+                        </p>
+                        {inventoryPlan && (
+                          <p className="mb-3 text-sm font-bold text-cyan-950">
+                            {inventoryPlan.reduce((n, p) => n + p.fromStock, 0)}
+                            {" "}finished products from stock ·{" "}
+                            {inventoryPlan.reduce((n, p) => n + p.toMake, 0)} to
+                            make
+                          </p>
+                        )}
+                        <button
+                          className={button}
+                          disabled={busy || sendUnavailable}
+                          onClick={sendToPrinters}
+                        >
+                          Send to printers
+                        </button>
+                        {sendUnavailable && (
+                          <p className="mt-2 text-sm text-amber-800">
+                            {detail.phase === "complete" ||
+                            state?.packed ||
+                            detail.inventory_posted_at ||
+                            detail.inventory_consumed_at
+                              ? "This job is already complete."
+                              : "Resolve the hold or order issue before sending this job."}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
                   {detail.issue && (
                     <p className="my-3 rounded-lg bg-amber-50 p-3 text-amber-900">
                       {detail.issue}
@@ -442,13 +544,13 @@ export default function ManufacturingDashboard() {
                   {printControl("work-ticket", "ticket", state.ticket.ticket)}
                 </div>
               )}
-              {manifest?.inventoryPlan && (
+              {inventoryPlan && (
                 <div className={panel}>
                   <h3 className="font-bold">
                     Stock to pick and products to make
                   </h3>
                   <ul className="mt-3 space-y-3">
-                    {manifest.inventoryPlan.map((p) => (
+                    {inventoryPlan.map((p) => (
                       <li key={p.productId}>
                         <p className="text-sm">
                           {detail.order.store_order_items.find(
@@ -457,7 +559,7 @@ export default function ManufacturingDashboard() {
                           : <strong>{p.fromStock} from stock</strong> ·{" "}
                           {p.toMake} to make
                         </p>
-                        {p.fromStock > 0 && (
+                        {p.fromStock > 0 && state && (
                           <button
                             className={`${button} mt-2`}
                             disabled={
@@ -485,6 +587,12 @@ export default function ManufacturingDashboard() {
                     </p>
                   )}
                 </div>
+              )}
+              {detail && !inventoryPlan && (
+                <p className={`${panel} text-sm text-slate-600`}>
+                  Stock allocation is pending. Sending this job will reserve
+                  available finished products and print the remaining quantity.
+                </p>
               )}
               {detail?.job_kind === "stock" && (
                 <div className={panel}>
