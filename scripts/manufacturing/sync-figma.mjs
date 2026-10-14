@@ -22,8 +22,13 @@ export function buildSourceMap(
   holoVerification,
   overrides = {},
 ) {
-  // Verified by collector number in the Figma file; gallery naming differs.
-  overrides = { "reef-068": "193:27", "reef-095": "92:310", ...overrides };
+  // Verified by collector number in Figma; gallery names or artwork versions can differ.
+  overrides = {
+    "reef-017": "3277:51900", // Great White standard, 17/102; the gallery uses full art 2/102.
+    "reef-068": "193:27",
+    "reef-095": "92:310",
+    ...overrides,
+  };
   const catalog = buildPrintingCatalog(setList, gallery),
     previews = new Map(gallery.cards.map((c) => [c.cardId, c]));
   const holos = new Map(
@@ -78,6 +83,51 @@ export function buildSourceMap(
     missing: sources
       .filter((s) => !s.nodeId)
       .map((s) => ({ id: s.id, cardId: s.cardId })),
+  };
+}
+
+// This approved list describes unfinished artwork, not a general fallback for
+// missing exports. A mapped printing always stays eligible and must validate.
+export function applyUnfinishedArtworkPolicy(source, policy) {
+  const catalog = new Map(source.catalog.map((card) => [card.printingId, card]));
+  const cardSources = new Map(
+    source.sources.filter((item) => item.kind === "card").map((item) => [item.id, item]),
+  );
+  if (
+    policy?.schemaVersion !== 1 ||
+    typeof policy.reason !== "string" ||
+    !policy.reason.trim() ||
+    policy.reason.length > 500 ||
+    !Array.isArray(policy.printingIds) ||
+    new Set(policy.printingIds).size !== policy.printingIds.length ||
+    policy.printingIds.some(
+      (id) =>
+        typeof id !== "string" ||
+        !/^(reef|deep|ocean)-\d{3}$/.test(id) ||
+        !catalog.has(id) ||
+        !cardSources.has(id),
+    )
+  )
+    throw new Error("Invalid approved unfinished-artwork policy. Review its printing IDs and reason.");
+  const approved = new Set(policy.printingIds);
+  const excludedUnfinished = source.sources
+    .filter((item) => item.kind === "card" && !item.nodeId && approved.has(item.id))
+    .map((item) => ({
+      printingId: item.id,
+      cardId: catalog.get(item.id).cardId,
+      name: catalog.get(item.id).name,
+      reason: policy.reason.trim(),
+    }));
+  const excluded = new Set(excludedUnfinished.map((item) => item.printingId));
+  const sources = source.sources.filter((item) => !excluded.has(item.id));
+  return {
+    ...source,
+    catalog: source.catalog.filter((card) => !excluded.has(card.printingId)),
+    sources,
+    missing: sources
+      .filter((item) => !item.nodeId)
+      .map((item) => ({ id: item.id, cardId: item.cardId })),
+    excludedUnfinished,
   };
 }
 
@@ -202,20 +252,35 @@ function texts(node, found = []) {
   for (const child of node.children ?? []) texts(child, found);
   return found;
 }
+export function parseBatchSize(args) {
+  const index = args.indexOf("--batch-size");
+  if (index === -1) return 10;
+  if (
+    args.lastIndexOf("--batch-size") !== index ||
+    !/^(?:[1-9]|10)$/.test(args[index + 1] ?? "")
+  )
+    throw new Error("--batch-size must be an integer from 1 to 10.");
+  return Number(args[index + 1]);
+}
 async function main() {
   const args = process.argv.slice(2),
     value = (flag) =>
       args.includes(flag) ? args[args.indexOf(flag) + 1] : null;
+  // Validate before credentials, API requests, or any local export writes.
+  const batchSize = parseBatchSize(args);
   const read = async (relative) =>
     JSON.parse(await readFile(path.join(REPO_ROOT, relative), "utf8"));
   const overrides = value("--overrides")
     ? JSON.parse(await readFile(value("--overrides"), "utf8"))
     : {};
-  const source = buildSourceMap(
-    await read("src/data/gallery-set-list.json"),
-    await read("src/data/gallery-images.json"),
-    await read("scripts/manufacturing/figma-holo-sources.json"),
-    overrides,
+  const source = applyUnfinishedArtworkPolicy(
+    buildSourceMap(
+      await read("src/data/gallery-set-list.json"),
+      await read("src/data/gallery-images.json"),
+      await read("scripts/manufacturing/figma-holo-sources.json"),
+      overrides,
+    ),
+    await read("scripts/manufacturing/figma-unfinished-printings.json"),
   );
   await mkdir(PRIVATE_ROOT, { recursive: true });
   await atomicJson(path.join(PRIVATE_ROOT, "source-map.json"), source);
@@ -226,6 +291,7 @@ async function main() {
           mapped: source.sources.length - source.missing.length,
           total: source.sources.length,
           missing: source.missing,
+          excludedUnfinished: source.excludedUnfinished,
         },
         null,
         2,
@@ -235,7 +301,7 @@ async function main() {
   }
   if (source.missing.length && !args.includes("--allow-incomplete"))
     throw new Error(
-      `Map ${source.missing.length} missing Figma nodes first. See .private/manufacturing/source-map.json; use --overrides. No cards were removed from the pool. --allow-incomplete can publish available artwork; orders needing incomplete sets will be held before a draw.`,
+      `Map ${source.missing.length} missing Figma nodes first. See .private/manufacturing/source-map.json; use --overrides. These cards remain in the pool; only the explicitly approved unfinished printings can be excluded. --allow-incomplete can publish available artwork; orders needing incomplete sets will be held before a draw.`,
     );
   if (!process.env.FIGMA_ACCESS_TOKEN)
     throw new Error("Set FIGMA_ACCESS_TOKEN locally with file read access.");
@@ -248,11 +314,24 @@ async function main() {
     }
   } catch(error) { if(error.code!=="ENOENT")throw error; }
   async function figma(route) {
-    const response = await fetch(`https://api.figma.com/v1/${route}`, {
-      headers: { "X-Figma-Token": process.env.FIGMA_ACCESS_TOKEN },
-      signal: AbortSignal.timeout(90_000),
-      redirect: "error",
-    });
+    const imageExport = route.startsWith("images/");
+    const endpoint = imageExport
+      ? "image export"
+      : route.includes("/nodes?") ? "node lookup" : "file metadata";
+    const timeout = imageExport ? 300_000 : 90_000;
+    let response;
+    try {
+      response = await fetch(`https://api.figma.com/v1/${route}`, {
+        headers: { "X-Figma-Token": process.env.FIGMA_ACCESS_TOKEN },
+        signal: AbortSignal.timeout(timeout),
+        redirect: "error",
+      });
+    } catch (error) {
+      const detail = ["TimeoutError", "AbortError"].includes(error.name)
+        ? `timed out after ${timeout / 1000} seconds`
+        : "could not be completed";
+      throw new Error(`Figma ${endpoint} request ${detail}. Completed exports are saved; the active release is unchanged.`);
+    }
     if(response.status===429) {
       const raw=response.headers.get("retry-after")??"60";
       let notBefore=/^\d+$/.test(raw)?Date.now()+Number(raw)*1000:Date.parse(raw);
@@ -262,10 +341,14 @@ async function main() {
     if (!response.ok)
       throw new Error(
         response.status === 429
-          ? `Figma rate limited the sync. Retry after ${response.headers.get("retry-after") ?? "the indicated interval"}; the active release is unchanged.`
-          : `Figma request failed (${response.status}).`,
+          ? `Figma rate limited the ${endpoint} request. Retry after ${response.headers.get("retry-after") ?? "the indicated interval"}; the active release is unchanged.`
+          : `Figma ${endpoint} request failed (${response.status}).`,
       );
-    return response.json();
+    try {
+      return await response.json();
+    } catch {
+      throw new Error(`Figma ${endpoint} returned an unreadable response. Completed exports are saved; the active release is unchanged.`);
+    }
   }
   // Pin the file version once. Every node read and image export uses this version.
   const head = await figma(`files/${source.fileKey}?depth=1`),
@@ -302,6 +385,7 @@ async function main() {
     printTemplates: source.templates,
     catalog: source.catalog,
     missing: source.missing,
+    excludedUnfinished: source.excludedUnfinished,
     assets: {},
   };
   const files = {};
@@ -330,8 +414,8 @@ async function main() {
   const mapped = source.sources.filter(
     (s) => s.nodeId && !release.assets[s.id],
   );
-  for (let offset = 0; offset < mapped.length; offset += 10) {
-    const batch = mapped.slice(offset, offset + 10),
+  for (let offset = 0; offset < mapped.length; offset += batchSize) {
+    const batch = mapped.slice(offset, offset + batchSize),
       ids = [...new Set(batch.map((s) => s.nodeId))].join(",");
     const nodes = await figma(
       `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&version=${encodeURIComponent(version)}`,

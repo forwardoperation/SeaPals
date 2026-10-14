@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "reason": "Artwork is unfinished. The owner approved excluding these printings from new booster draws until their Figma source is mapped and validated.",
+  "printingIds": [
+    "deep-060",
+    "deep-061",
+    "deep-062",
+    "ocean-064",
+    "reef-094",
+    "reef-096",
+    "reef-097",
+    "reef-098",
+    "reef-099",
+    "reef-100",
+    "reef-101"
+  ]
+}

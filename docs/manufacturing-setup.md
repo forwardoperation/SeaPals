@@ -78,6 +78,10 @@ recordable. Ordinary website users cannot call the dispatch database function.
 
 ## Verified in this workspace
 
+- October 13: the Figma API and staff manufacturing API returned HTTP 200
+  using the credentials in the ignored local environment file. All three
+  manufacturing switches remain false. Private artwork export is in progress;
+  no release has been published at this checkpoint.
 - October 13: all 56 manufacturing tests passed, including manual dispatch,
   duplicate clicks, old leases, refunds, frozen draws, new cutting-template
   rendering, and legacy layout compatibility. The isolated current-main
@@ -182,13 +186,16 @@ including across refreshes. Stock builds never insert into `store_orders`.
    `agent.env` file using Wrangler's interactive secret input. Do not put it in
    `NEXT_PUBLIC_*`, the QR, a tracked file, or browser JavaScript. The staff
    screen reuses `STORE_ADMIN_TOKEN`; both tokens must be at least 24 characters.
-3. Provide a local `FIGMA_ACCESS_TOKEN` with file read access for unattended
-   export. The Figma connector inspected source nodes, but its connection is
-   not a reusable credential for a scheduled Node process. Keep this token on
-   the sync PC. Supply `STORE_ADMIN_TOKEN` to that process for publishing.
-4. Resolve the eleven missing card mappings below, then publish a private
-   artwork release. The script pins one Figma version for every export and
-   checks collector numbers, dimensions, sheet positions, and checksums.
+3. Keep `FIGMA_ACCESS_TOKEN` with file read access and `STORE_ADMIN_TOKEN`
+   in the ignored local `sync.env` for unattended export and publishing. Both
+   credentials were verified on October 13. The Figma connector's connection
+   is not a reusable credential for a scheduled Node process.
+4. Export and validate the eligible artwork, then publish a private release.
+   The owner-approved eleven unfinished printings below are excluded until
+   their sources are mapped and validated; finished prerelease cards remain
+   included. Any other missing mapping must be resolved. The script pins one
+   Figma version for every export and checks collector numbers, dimensions,
+   sheet positions, and checksums.
 5. Use the established Epson and Canon printer profiles with Letter, actual
    size, simplex, and the intended trays/media settings. The owner opted to
    skip the separate alignment-check print on October 5, 2026. That print is
@@ -233,7 +240,7 @@ node --env-file=.private/manufacturing/agent.env scripts/manufacturing/agent.mjs
 # Optional Windows sign-in startup; installer refuses uncalibrated profiles.
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/manufacturing/install-startup-task.ps1
 
-# Optional hourly Figma sync, after setting up sync.env and all source mappings.
+# Optional hourly Figma sync, after setting up sync.env and eligible source mappings.
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/manufacturing/install-sync-task.ps1
 
 # Targeted integration checks and an offline PDF preview.
@@ -250,14 +257,52 @@ flag off. Never remove an uncertain print attempt to make the queue retry it.
 The sync installer creates `SeaRealm Figma Print Artwork Sync`, an hourly local
 job using the private `sync.env` and optional `figma-overrides.json`. It runs
 while the user is signed in, preserves completed exports after interruptions,
-and observes Figma's retry time after rate limits. No recurring chat task or
+and observes Figma's retry time after rate limits. Image export requests can
+take up to five minutes; metadata requests retain a 90-second limit. To resume
+an interrupted manual sync after Figma changes, pass `--version <saved-version>`
+to continue the same version and reuse its verified exports. For slow batches,
+add `--batch-size 1` through `--batch-size 10` (the default is 10); this does
+not change the release or its saved cards. No recurring chat task or
 Windows sync schedule has been installed yet. Publishing is independent of
 printing: existing saved manifests keep their original artwork and booster draw.
 
-## Missing artwork
+### Separate recurring chat handoff
 
-269 of 280 required source nodes are mapped, including the shared back and 51
-fixed deck/Conditions sheets. The complete set catalog remains 228 printings.
+The workflow stores pre-downloaded artwork in the private Supabase bucket
+and the local `.private/manufacturing/releases` cache. Each release is
+versioned and immutable. Orders use those saved PNGs without calling Figma;
+a separate private Git repository is not required for this workflow.
+
+Use the following instructions when creating a separate recurring chat:
+
+> In `C:\Users\jacob\Documents\SeaPals`, run
+> `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/manufacturing/run-sync.ps1`.
+> The script loads `FIGMA_ACCESS_TOKEN` and `STORE_ADMIN_TOKEN` from the ignored
+> `.private/manufacturing/sync.env`; do not display or copy those secrets.
+> It reads optional `.private/manufacturing/figma-overrides.json`, checks for
+> changed Figma versions or source mappings, resumes verified local downloads,
+> and publishes validated PNGs to the private artwork bucket. Keep the exact
+> 11-card unfinished-artwork policy: finished prerelease cards remain eligible,
+> mapped cards must pass validation, and any newly unmapped card outside that
+> list must stop the sync rather than being excluded. Do not add
+> `--allow-incomplete`. Keep printing and buyer-notification settings unchanged;
+> do not dispatch orders or start the print agent. Observe Figma's retry time
+> after rate limits. Report a newly published release or an actionable failure;
+> stay quiet when nothing has changed.
+
+This handoff does not create a chat or install a schedule. Use either that
+recurring chat or the Windows hourly sync task to avoid overlapping publishers.
+
+## Unfinished artwork and release eligibility
+
+The owner approved using finished artwork only while the following 11 cards
+are unfinished. The exact list is recorded in
+`scripts/manufacturing/figma-unfinished-printings.json`. These printings are
+excluded from new booster draws only while they have no Figma source mapping.
+The current configuration therefore exports 217 eligible printings and
+269 mapped assets, including the shared back and 51 fixed deck/Conditions
+sheets. The store/gallery catalog remains 228 printings. Finished prerelease
+cards remain eligible, and collector numbers and printed set totals are unchanged.
 
 | Printing | Card |
 |---|---|
@@ -273,19 +318,31 @@ fixed deck/Conditions sheets. The complete set catalog remains 228 printings.
 | reef-100 | Hermit Crab |
 | reef-101 | Sea Cucumber |
 
+Regular Great White (`reef-017`) maps to the `great-white-standard` frame
+`3277:51900`, verified by `17/102`. The gallery's full-art frame carries `2/102`
+and is not used for that regular printing.
+
 Southern Flounder (`reef-068`) maps to Figma's `winter-flounder` component
 `193:27`, verified by `68/102`. Sea Fan (`reef-095`) maps to `92:310`, verified
 by `95/102`. These name differences do not change the catalog.
 
 Provide an overrides JSON object such as `{ "deep-060": "1234:5678" }` and pass
-`--overrides <file>`. Export validation still requires the correct collector
-number. Missing nodes are not replaced with public previews or removed from
-the random pool. With explicit `--allow-incomplete`, available artwork can be
-published for fixed decks and ready orders. An order needing an incomplete
-booster set is held before its first draw; no cards are excluded from that set's
-pool. Once the complete artwork is published, explicitly retry preparation to
-use that release. Already saved draws retain their original artwork and contents.
-The default export mode requires complete mappings.
+`--overrides <file>`, or put it in `.private/manufacturing/figma-overrides.json`
+for the hourly sync. Once a listed card has a mapping, it automatically returns
+to the next release's pool after its export passes validation. Adding artwork
+in Figma alone does not discover its node ID: update the gallery mapping or
+the private overrides. The correct collector number and full-resolution image
+are still required; a mapped card that fails export or validation stops the sync.
+
+The source-map audit (`--check`) and each release manifest record the specific
+unfinished printings excluded from that release. Any newly missing card outside
+the approved list stays in the pool and blocks the default sync. Missing assets
+are never replaced with public previews. With explicit `--allow-incomplete`,
+available artwork can still be published for fixed decks and ready orders; any
+booster set missing eligible artwork is held before its first draw. Once the
+needed artwork is published, explicitly retry preparation to use that release.
+Already saved draws retain their original artwork and contents. The default
+export mode requires complete mappings for every eligible printing.
 
 ## Operational behavior
 

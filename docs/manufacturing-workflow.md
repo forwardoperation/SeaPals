@@ -9,7 +9,7 @@ This document records the agreed workflow. Paid-order intake, private versioned
 artwork synchronization, PDF/QR rendering, the Windows printer agent, staff
 screen, and buyer notifications are now implemented. Production activation is
 still pending. See [the integration setup guide](manufacturing-setup.md) for the
-verified status, remaining artwork mappings, deployment steps, and commands.
+verified status, artwork eligibility, deployment steps, and commands.
 
 ## Confirmed production rules
 
@@ -22,8 +22,14 @@ verified status, remaining artwork mappings, deployment steps, and commands.
 - Choose uniformly within a rarity, without repeating an underlying card in
   the same pack. Choose the premium first so Deep cards with both uncommon and
   holo printings cannot appear twice.
-- Prerelease cards remain eligible. Preserve the printed prerelease stamp in
+- Finished prerelease cards remain eligible. Preserve the printed prerelease stamp in
   the source artwork. Public gallery visibility does not determine eligibility.
+- The owner approved excluding exactly eleven unfinished printings from new
+  booster releases while their artwork is unmapped. The explicit list is in
+  `scripts/manufacturing/figma-unfinished-printings.json`. A mapped printing
+  must pass normal export validation before returning to a new release;
+  newly missing artwork outside the list blocks sync. Existing saved packs
+  retain their cards and pinned release.
 - Epson fronts use thin photo paper in the standard tray. Canon backs use
   separate sheets. The two sheets are glued together; this is not duplex
   printing and the same sheet does not pass through both printers.
@@ -211,7 +217,7 @@ workspace. Fixed decks, Starter Kit, Conditions, dice, and tokens have explicit
 recipes. The HTTP handlers derive roles from their authentication credentials.
 
 The production switches remain disabled. Follow [manufacturing-setup.md](manufacturing-setup.md)
-for the verified integration status, eleven missing Figma mappings, deployment,
+for the verified integration status, approved unfinished-artwork policy, deployment,
 credentials, printer profiles, and recovery steps. The production database
 migration was applied and verified on October 5, 2026. The separate alignment
 check print was skipped at the owner's request.
