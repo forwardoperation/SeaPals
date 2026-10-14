@@ -410,6 +410,29 @@ Use Node 24 and `npm ci` (including dev dependencies on the printer PC). The PDF
 renderer, PNG decoder, and QR generator are local tools and are not imported by
 the public website. `npm.cmd` avoids Windows PowerShell script-policy issues.
 
+For a first Reef-only activation, export a complete eligible Reef pool with
+`--products reef-dive-pack`. This selects all 95 eligible Reef printings plus
+the back and two backgrounds (98 assets). It retains the full 217-printing
+catalog; it never narrows random draws to whichever images are available.
+Deep, Oceanic, and fixed products with missing artwork stop before drawing.
+Already-finished inventory can still be fulfilled without new card artwork.
+The product scope participates in the source hash and release ID, so its cache
+cannot collide with the full-catalog export. Omitting `--products` keeps the
+existing full-export behavior. Comma-separated product IDs are supported.
+
+```powershell
+# Export privately for review; no publication or printing.
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products reef-dive-pack --batch-size 1 --concurrency 2
+
+# Publish the reviewed scope at its exact saved version and release ID.
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products reef-dive-pack --version <reviewed-version> --release <reviewed-release-id> --publish
+```
+
+Review the new release before publishing. All included assets must be complete
+and validated; `--allow-incomplete` is not a substitute for the full Reef pool.
+Publishing a later scope replaces the active release for future preparation;
+existing jobs retain their pinned release and saved draw.
+
 ```powershell
 # Read-only source audit; no Figma token needed.
 node scripts/manufacturing/sync-figma.mjs --check

@@ -9,9 +9,9 @@ try {
     await readFile(path.join(PRIVATE_ROOT, "printers.json"), "utf8"),
   );
   record(
-    "printer calibration",
+    "printer profiles confirmed",
     config.calibrationConfirmed === true,
-    "Use preview/alignment-check.pdf on the intended paper and driver profiles.",
+    "Confirm the intended Letter, actual-size, single-sided printer profiles and paper. A separate alignment-check print is optional.",
   );
   try {
     await access(config.sumatraPath);

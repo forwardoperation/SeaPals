@@ -2,7 +2,12 @@ import { readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPrintingCatalog } from "../../src/lib/manufacturing/boosters.mjs";
-import { fixedArtworkSources } from "../../src/lib/manufacturing/recipes.mjs";
+import {
+  BOOSTER_PRODUCTS,
+  FIXED_PRODUCTS,
+  fixedArtworkSources,
+  fixedSheetAssets,
+} from "../../src/lib/manufacturing/recipes.mjs";
 import {
   BACK_ART_SOURCE,
   BACK_TEMPLATE,
@@ -134,6 +139,55 @@ export function applyUnfinishedArtworkPolicy(source, policy) {
       .filter((item) => !item.nodeId)
       .map((item) => ({ id: item.id, cardId: item.cardId })),
     excludedUnfinished,
+  };
+}
+
+function validateProducts(products) {
+  if (
+    !Array.isArray(products) || !products.length ||
+    new Set(products).size !== products.length ||
+    products.some((id) => typeof id !== "string" ||
+      (!Object.hasOwn(BOOSTER_PRODUCTS, id) && !Object.hasOwn(FIXED_PRODUCTS, id)))
+  ) throw new Error("--products must list unique known product IDs separated by commas.");
+  return [...products].sort();
+}
+
+export function parseProducts(args) {
+  const index = args.indexOf("--products");
+  if (index === -1) return null;
+  if (args.lastIndexOf("--products") !== index ||
+      typeof args[index + 1] !== "string" || args[index + 1].startsWith("--"))
+    throw new Error("--products must list unique known product IDs separated by commas.");
+  return validateProducts(args[index + 1].split(",").map((id) => id.trim()));
+}
+
+export function selectProductArtwork(source, products = null) {
+  if (products === null) return source;
+  const selected = validateProducts(products), required = new Set();
+  for (const productId of selected) {
+    const set = BOOSTER_PRODUCTS[productId];
+    if (set) {
+      // Select the whole eligible pool, including every rare/holo outcome.
+      for (const card of source.catalog.filter((card) => card.set === set))
+        required.add(card.printingId);
+    } else for (const id of fixedSheetAssets(productId)) required.add(id);
+  }
+  if (!required.size)
+    throw new Error("The selected products have no printable artwork to export.");
+  required.add("standard-back-sheet");
+  for (const template of [PRINT_LAYOUT, BACK_TEMPLATE])
+    required.add(template.background.assetId);
+  const sources = source.sources.filter((item) => required.has(item.id));
+  if (sources.length !== required.size)
+    throw new Error("The selected products are missing required artwork source entries.");
+  return {
+    ...source,
+    // Catalog stays complete: unsupported sets fail before drawing, rather than
+    // acquiring a smaller pool. Scope also participates in the cache/release hash.
+    exportScope: { products: selected },
+    sources,
+    missing: sources.filter((item) => !item.nodeId)
+      .map((item) => ({ id: item.id, cardId: item.cardId })),
   };
 }
 
@@ -347,12 +401,13 @@ async function main() {
   // Validate before credentials, API requests, or any local export writes.
   const batchSize = parseBatchSize(args);
   const concurrency = parseConcurrency(args);
+  const products = parseProducts(args);
   const read = async (relative) =>
     JSON.parse(await readFile(path.join(REPO_ROOT, relative), "utf8"));
   const overrides = value("--overrides")
     ? JSON.parse(await readFile(value("--overrides"), "utf8"))
     : {};
-  const source = applyUnfinishedArtworkPolicy(
+  const source = selectProductArtwork(applyUnfinishedArtworkPolicy(
     buildSourceMap(
       await read("src/data/gallery-set-list.json"),
       await read("src/data/gallery-images.json"),
@@ -360,7 +415,7 @@ async function main() {
       overrides,
     ),
     await read("scripts/manufacturing/figma-unfinished-printings.json"),
-  );
+  ), products);
   await mkdir(PRIVATE_ROOT, { recursive: true });
   await atomicJson(path.join(PRIVATE_ROOT, "source-map.json"), source);
   if (args.includes("--check")) {
@@ -369,6 +424,7 @@ async function main() {
         {
           mapped: source.sources.length - source.missing.length,
           total: source.sources.length,
+          ...(source.exportScope ? { exportScope: source.exportScope } : {}),
           missing: source.missing,
           excludedUnfinished: source.excludedUnfinished,
         },
@@ -479,6 +535,7 @@ async function main() {
     catalog: source.catalog,
     missing: source.missing,
     excludedUnfinished: source.excludedUnfinished,
+    ...(source.exportScope ? { exportScope: source.exportScope } : {}),
     assets: {},
   };
   const files = {};
