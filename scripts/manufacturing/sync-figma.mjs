@@ -25,7 +25,6 @@ export function buildSourceMap(
 ) {
   // Verified by collector number in Figma; gallery names or artwork versions can differ.
   overrides = {
-    "reef-017": "4129:195183", // Great White standard component, 17/102; the gallery uses full art 2/102.
     "reef-068": "193:27",
     "reef-095": "92:310",
     ...overrides,

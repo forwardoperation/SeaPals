@@ -488,19 +488,20 @@ cards remain eligible, and collector numbers and printed set totals are unchange
 | reef-100 | Hermit Crab |
 | reef-101 | Sea Cucumber |
 
-Regular Great White (`reef-017`) maps to the `great-white-standard` component
-`4129:195183`, verified by `17/102`. Converting the former frame `3277:51900`
-to a component changed its node ID; historical release manifests and caches
-retain the old reference. The gallery's full-art frame carries `2/102` and is
-not used for that regular printing.
+Regular Great White (`reef-017`) follows the gallery mapping to the `great-white`
+component `241:1124`, verified by `17/102`. Its holo instance `4132:62194`
+(`reef-002`) inherits that artwork and displays `2/102`. No separate Great
+White manufacturing override is needed. Historical release manifests and caches
+retain their original source references.
 
 The `Holo Rare — Production` page (`3961:6979`) now contains 35 linked
-regular-card instances: 15 Reef, 15 Deep, and 5 Oceanic. Each existing holo
-component retains its export node ID and contains one instance of its matching
-regular component, with only the collector-number text overridden. Edit artwork
-and layout on the regular component so the holo printing inherits the changes;
-keep the holo instance attached. Existing exported releases remain snapshots
-and require a fresh artwork sync to include these changes.
+regular-card instances: 15 Reef, 15 Deep, and 5 Oceanic. Great White is a direct
+instance; the other 34 retain their original component-wrapper export IDs.
+Each holo printing inherits regular artwork and displays its holo number.
+Update `scripts/manufacturing/figma-holo-sources.json` if an export node is
+replaced. Edit artwork and layout on the regular component so the holo printing
+inherits the changes; keep the holo instance attached. Existing exported
+releases remain snapshots and require a fresh artwork sync to include these changes.
 
 Southern Flounder (`reef-068`) maps to Figma's `winter-flounder` component
 `193:27`, verified by `68/102`. Sea Fan (`reef-095`) maps to `92:310`, verified
