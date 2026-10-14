@@ -306,6 +306,8 @@ async function main() {
   if (!process.env.FIGMA_ACCESS_TOKEN)
     throw new Error("Set FIGMA_ACCESS_TOKEN locally with file read access.");
   const retryFile=path.join(PRIVATE_ROOT,"figma-retry.json");
+  let retryNotBefore = 0;
+  let retryWrite = Promise.resolve();
   try {
     const retry=JSON.parse(await readFile(retryFile,"utf8"));
     if(Date.parse(retry.notBefore)>Date.now()) {
@@ -336,7 +338,13 @@ async function main() {
       const raw=response.headers.get("retry-after")??"60";
       let notBefore=/^\d+$/.test(raw)?Date.now()+Number(raw)*1000:Date.parse(raw);
       if(!Number.isFinite(notBefore)||notBefore<=Date.now())notBefore=Date.now()+60_000;
-      await atomicJson(retryFile,{notBefore:new Date(notBefore).toISOString()});
+      retryNotBefore = Math.max(retryNotBefore, notBefore);
+      // Concurrent node/image responses must preserve the longest pause and
+      // serialize atomic writes to their shared retry journal.
+      retryWrite = retryWrite.catch(() => {}).then(() =>
+        atomicJson(retryFile, { notBefore: new Date(retryNotBefore).toISOString() }),
+      );
+      await retryWrite;
     }
     if (!response.ok)
       throw new Error(
@@ -417,12 +425,18 @@ async function main() {
   for (let offset = 0; offset < mapped.length; offset += batchSize) {
     const batch = mapped.slice(offset, offset + batchSize),
       ids = [...new Set(batch.map((s) => s.nodeId))].join(",");
-    const nodes = await figma(
-      `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&version=${encodeURIComponent(version)}`,
-    );
-    const images = await figma(
-      `images/${source.fileKey}?ids=${encodeURIComponent(ids)}&format=png&scale=1&version=${encodeURIComponent(version)}`,
-    );
+    const responses = await Promise.allSettled([
+      figma(
+        `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&version=${encodeURIComponent(version)}`,
+      ),
+      figma(
+        `images/${source.fileKey}?ids=${encodeURIComponent(ids)}&format=png&scale=1&version=${encodeURIComponent(version)}`,
+      ),
+    ]);
+    const failures = responses.filter((response) => response.status === "rejected");
+    if (failures.length)
+      throw new Error(failures.map((response) => response.reason.message).join(" "));
+    const [nodes, images] = responses.map((response) => response.value);
     for (const item of batch) {
       const node = nodes.nodes?.[item.nodeId]?.document,
         url = images.images?.[item.nodeId];

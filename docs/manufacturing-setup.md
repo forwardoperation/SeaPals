@@ -82,8 +82,9 @@ recordable. Ordinary website users cannot call the dispatch database function.
   using the credentials in the ignored local environment file. All three
   manufacturing switches remain false. Private artwork export is in progress;
   no release has been published at this checkpoint.
-- October 13: all 56 manufacturing tests passed, including manual dispatch,
-  duplicate clicks, old leases, refunds, frozen draws, new cutting-template
+- October 13: all 67 manufacturing tests passed, including approved unfinished
+  artwork exclusions, printable prerelease cards, manual dispatch, duplicate
+  clicks, old leases, refunds, frozen draws, new cutting-template
   rendering, and legacy layout compatibility. The isolated current-main
   checkout passed all 2,400 repository tests. Synthetic front/back PDFs were
   rendered and visually compared with the supplied Figma templates; these
@@ -273,6 +274,10 @@ and the local `.private/manufacturing/releases` cache. Each release is
 versioned and immutable. Orders use those saved PNGs without calling Figma;
 a separate private Git repository is not required for this workflow.
 
+Run the recurring chat on this same Windows PC and local checkout. The private
+credentials, overrides, and downloaded cache are ignored by Git, so they are
+not available automatically in another worktree, clone, or cloud chat.
+
 Use the following instructions when creating a separate recurring chat:
 
 > In `C:\Users\jacob\Documents\SeaPals`, run
@@ -289,6 +294,17 @@ Use the following instructions when creating a separate recurring chat:
 > do not dispatch orders or start the print agent. Observe Figma's retry time
 > after rate limits. Report a newly published release or an actionable failure;
 > stay quiet when nothing has changed.
+
+For slow image exports, append `-BatchSize 1` to the `run-sync.ps1` command.
+The wrapper accepts sizes 1 through 10 and defaults to 10. This changes only
+request grouping; it preserves the same release and cached exports.
+
+The unchanged check compares the Figma file version and source mappings with
+the last successfully published release. Each new file version exports the
+complete eligible artwork set, even if only one card changed; it can therefore
+be a lengthy run. Interrupted downloads resume only when the pinned version
+and source mappings match. This is version-level caching, not a per-card change
+detector.
 
 This handoff does not create a chat or install a schedule. Use either that
 recurring chat or the Windows hourly sync task to avoid overlapping publishers.
