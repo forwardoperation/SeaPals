@@ -57,6 +57,9 @@ printed over it. Card-page identification stays on the separate work ticket.
 Fixed deck/Conditions sheets are cropped at their saved source card positions
 and laid out on this same new grid. The actual back art still comes from the
 original card-back frame; the cutting template does not contain card-back art.
+The back source's page frame (`3758:338124`) and card grid (`3758:338139`)
+have no fills. Preserve that PNG transparency so the white SeaRealm logos
+print directly over the ocean backdrop instead of opaque white rectangles.
 
 The October 14 templates add an ocean backdrop behind the cards. Each backdrop
 is exported separately from its image-only Figma rectangle (front

@@ -78,6 +78,21 @@ recordable. Ordinary website users cannot call the dispatch database function.
 
 ## Verified in this workspace
 
+- October 14, transparent card backs: the owner confirmed white logos over the
+  blue ocean backdrop. Removed only the white fills on source frame
+  `3758:338124` and its grid `3758:338139` in Figma. All nine logos and source
+  dimensions are unchanged; the existing renderer already preserves PNG alpha.
+  Live REST metadata confirms both fills are empty. Figma still reported
+  version `2410243403523590401` while `lastModified` advanced to 16:04:28 UTC;
+  an explicit request for that version also returned the updated fills. Keep
+  the earlier candidate/proofs intact. A subsequent complete export must use
+  a fresh cache and verify the source timestamp/content, rather than treating
+  that version number alone as proof that cached artwork is current.
+  The new back-only proof is saved as `LOCAL-LIVE-TRANSPARENT-BACK-QA.pdf` in
+  `.private/manufacturing/live-proofs/transparent-back-2026-10-14T16-08-25-603Z/`.
+  It uses current native PNG exports, with identical source/template node
+  fingerprints before and after export, and is explicitly a local proof.
+  No production artwork release or printer job was created.
 - October 14, updated template snapshot: native exports pinned to Figma version
   `2410243403523590401` contain the two ocean backdrop layers and the six
   previously flagged card printings. The backdrop renderer uses saved v3
