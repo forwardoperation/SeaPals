@@ -2,15 +2,16 @@
 import { useEffect, useState, useRef } from "react";
 import { workflowReadiness } from "@/lib/manufacturing/readiness.mjs";
 import FinishedInventory from "./FinishedInventory";
+import { createRefreshGuard, printFeedback } from "./printFeedback.mjs";
 
 const TOKEN_KEY = "seapals-store-admin-token";
 const STOCK_RETRY_KEY = "seapals-manufacturing-stock-retry";
-const panel = "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm";
+const panel = "min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm [overflow-wrap:anywhere]";
 const button =
   "rounded-xl bg-cyan-900 px-4 py-3 text-sm font-bold text-white disabled:opacity-40";
 const labels = {
   queued: "Waiting for printer",
-  submitting: "Submission in progress",
+  submitting: "Sending to printer",
   submitted: "Sent to printer — check paper",
   needs_review: "Print outcome needs review",
   confirmed: "Printed and checked",
@@ -31,9 +32,37 @@ export default function ManufacturingDashboard() {
     [movements, setMovements] = useState([]);
   const pendingStock = useRef(null);
   const [stockRetry, setStockRetry] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null),
+    [refreshError, setRefreshError] = useState("");
+  const reads = useRef(null);
+  if (!reads.current) reads.current = createRefreshGuard();
+  const busyRef = useRef(false),
+    tokenRef = useRef(""),
+    selectedRef = useRef(""),
+    authVersion = useRef(0),
+    refreshRef = useRef(null);
+  function setWorking(value) {
+    busyRef.current = value;
+    setBusy(value);
+  }
+  function invalidateSession() {
+    authVersion.current += 1;
+    reads.current.invalidate();
+    setWorking(false);
+    setLoggedIn(false);
+    setRows([]);
+    setStock([]);
+    setMovements([]);
+    setDetail(null);
+    setReprint(null);
+    setLastUpdated(null);
+    setRefreshError("");
+  }
   useEffect(() => {
-    setToken(sessionStorage.getItem(TOKEN_KEY) ?? "");
-    setSelected(new URLSearchParams(location.search).get("order") ?? "");
+    tokenRef.current = sessionStorage.getItem(TOKEN_KEY) ?? "";
+    selectedRef.current = new URLSearchParams(location.search).get("order") ?? "";
+    setToken(tokenRef.current);
+    setSelected(selectedRef.current);
     try {
       const pending = JSON.parse(sessionStorage.getItem(STOCK_RETRY_KEY));
       if (pending?.id && pending.payload) {
@@ -42,50 +71,132 @@ export default function ManufacturingDashboard() {
       }
     } catch {}
   }, []);
-  async function request(payload, id) {
+  async function request(payload, id, { signal, credential = tokenRef.current } = {}) {
     const r = await fetch(
       `/api/admin/manufacturing${id ? `?orderId=${encodeURIComponent(id)}` : ""}`,
       {
         method: payload ? "POST" : "GET",
         headers: {
-          "x-admin-token": token,
+          "x-admin-token": credential,
           ...(payload ? { "Content-Type": "application/json" } : {}),
         },
         ...(payload ? { body: JSON.stringify(payload) } : {}),
         cache: "no-store",
+        signal,
       },
     );
     const data = await r.json();
-    if (!r.ok) throw new Error(data.error ?? "Request failed.");
+    if (!r.ok) {
+      const error = new Error(data.error ?? "Request failed.");
+      error.status = r.status;
+      throw error;
+    }
     return data;
   }
-  async function load(id = selected) {
-    setBusy(true);
-    setError("");
+  async function load(id = selectedRef.current, { background = false } = {}) {
+    if (background && busyRef.current) return;
+    const read = reads.current.begin({ replace: !background });
+    if (!read) return;
+    const credential = tokenRef.current;
+    const version = authVersion.current;
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      read.abort();
+    }, 20000);
+    if (!background) {
+      setWorking(true);
+      setError("");
+      if (id !== selectedRef.current) {
+        setDetail(null);
+        setReprint(null);
+      }
+      selectedRef.current = id;
+      setSelected(id);
+      history.replaceState(null, "", id ? `?order=${encodeURIComponent(id)}` : location.pathname);
+    }
+    const isCurrent = () => read.isCurrent() && version === authVersion.current;
     try {
-      const list = await request();
+      const [list, nextDetail] = await Promise.all([
+        request(null, null, { signal: read.signal, credential }),
+        id ? request(null, id, { signal: read.signal, credential }) : null,
+      ]);
+      if (!isCurrent()) return;
       setRows(list.orders);
       setStock(list.stock ?? []);
       setMovements(list.movements ?? []);
       setEnabled(list.enabled);
+      setDetail(nextDetail);
       setLoggedIn(true);
-      sessionStorage.setItem(TOKEN_KEY, token);
-      if (id) {
-        const d = await request(null, id);
-        setDetail(d);
-        setSelected(id);
-        history.replaceState(null, "", `?order=${encodeURIComponent(id)}`);
-      } else setDetail(null);
+      setLastUpdated(new Date());
+      setRefreshError("");
+      sessionStorage.setItem(TOKEN_KEY, credential);
     } catch (e) {
-      setError(e.message);
+      if (!isCurrent() || (e.name === "AbortError" && !timedOut)) return;
+      if (e.status === 401) {
+        invalidateSession();
+        setError("Staff authentication expired. Open the queue again with your staff token.");
+      } else if (background) {
+        setRefreshError("Live refresh could not connect. Showing the last update; retrying automatically.");
+      } else setError(timedOut ? "The queue refresh timed out. Please try again." : e.message);
     } finally {
-      setBusy(false);
+      clearTimeout(timeout);
+      if (isCurrent() && !background) setWorking(false);
+      // Also cancels the companion GET if either half of the refresh failed.
+      if (read.isCurrent()) reads.current.invalidate();
     }
   }
-  async function update(type, fields = {}) {
-    if (!detail?.state || busy) return;
-    setBusy(true);
+  refreshRef.current = load;
+  useEffect(() => {
+    if (!loggedIn) return;
+    let stopped = false;
+    let running = false;
+    let timer;
+    async function tick() {
+      clearTimeout(timer);
+      if (stopped || running || document.visibilityState !== "visible") return;
+      running = true;
+      try {
+        await refreshRef.current(undefined, { background: true });
+      } finally {
+        running = false;
+        if (!stopped && document.visibilityState === "visible")
+          timer = setTimeout(tick, 5000);
+      }
+    }
+    function visibilityChanged() {
+      clearTimeout(timer);
+      if (document.visibilityState === "visible") tick();
+      else if (!busyRef.current) reads.current.invalidate();
+    }
+    timer = setTimeout(tick, 5000);
+    document.addEventListener("visibilitychange", visibilityChanged);
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", visibilityChanged);
+      reads.current.invalidate();
+    };
+  }, [loggedIn]);
+  useEffect(() => () => {
+    authVersion.current += 1;
+    reads.current.invalidate();
+  }, []);
+  function beginMutation() {
+    if (busyRef.current) return null;
+    reads.current.invalidate();
+    setWorking(true);
     setError("");
+    const version = authVersion.current;
+    return {
+      credential: tokenRef.current,
+      isCurrent: () => version === authVersion.current,
+    };
+  }
+  async function update(type, fields = {}) {
+    if (!detail?.state) return;
+    const mutation = beginMutation();
+    if (!mutation) return;
     try {
       await request({
         action: "event",
@@ -96,43 +207,48 @@ export default function ManufacturingDashboard() {
           expectedRevision: detail.revision,
           ...fields,
         },
-      });
+      }, null, mutation);
+      if (!mutation.isCurrent()) return;
       setReprint(null);
       setReason("");
       await load(selected);
     } catch (e) {
+      if (!mutation.isCurrent()) return false;
       setError(`${e.message} Refresh before trying again.`);
-      setBusy(false);
+      setWorking(false);
     }
   }
   async function retry(id) {
-    if (busy) return;
-    setBusy(true);
-    setError("");
+    const mutation = beginMutation();
+    if (!mutation) return;
     try {
-      await request({ action: "retry", orderId: id });
+      await request({ action: "retry", orderId: id }, null, mutation);
+      if (!mutation.isCurrent()) return;
       await load(id);
     } catch (e) {
+      if (!mutation.isCurrent()) return false;
       setError(e.message);
-      setBusy(false);
+      setWorking(false);
     }
   }
   async function sendToPrinters() {
-    if (busy || !detail || detail.print_requested_at) return;
-    setBusy(true);
-    setError("");
+    if (!detail || detail.print_requested_at) return;
+    const mutation = beginMutation();
+    if (!mutation) return;
     try {
-      await request({ action: "send_to_printers", orderId: selected });
+      await request({ action: "send_to_printers", orderId: selected }, null, mutation);
+      if (!mutation.isCurrent()) return;
       await load(selected);
     } catch (e) {
+      if (!mutation.isCurrent()) return false;
       setError(
         `${e.message} Refresh to check the queue. Retrying Send to printers will not create another print request.`,
       );
-      setBusy(false);
+      setWorking(false);
     }
   }
   async function stockOperation(payload) {
-    if (busy) return false;
+    if (busyRef.current) return false;
     const fingerprint = JSON.stringify(payload);
     if (
       pendingStock.current &&
@@ -143,8 +259,8 @@ export default function ManufacturingDashboard() {
       );
       return false;
     }
-    setBusy(true);
-    setError("");
+    const mutation = beginMutation();
+    if (!mutation) return false;
     if (!pendingStock.current)
       pendingStock.current = { fingerprint, payload, id: crypto.randomUUID() };
     sessionStorage.setItem(
@@ -153,20 +269,23 @@ export default function ManufacturingDashboard() {
     );
     setStockRetry(pendingStock.current);
     try {
-      const result = await request({ ...payload, id: pendingStock.current.id });
+      const result = await request({ ...payload, id: pendingStock.current.id }, null, mutation);
+      if (!mutation.isCurrent()) return false;
       pendingStock.current = null;
       sessionStorage.removeItem(STOCK_RETRY_KEY);
       setStockRetry(null);
       await load(result.order_id ?? selected);
       return true;
     } catch (e) {
+      if (!mutation.isCurrent()) return false;
       setError(
         `${e.message} Retry the same stock change if the connection failed.`,
       );
-      setBusy(false);
+      setWorking(false);
       return false;
     }
   }
+  const feedback = printFeedback(detail, enabled);
   const state = detail?.state,
     manifest = detail?.manifest,
     ready = state ? workflowReadiness(state) : null,
@@ -257,7 +376,7 @@ export default function ManufacturingDashboard() {
     );
   }
   return (
-    <main className="mx-auto max-w-6xl space-y-6 px-4 py-10 text-slate-900">
+    <main className="mx-auto min-w-0 max-w-6xl space-y-6 px-4 py-10 text-slate-900 [overflow-wrap:anywhere]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           {stockRetry && (
@@ -310,13 +429,17 @@ export default function ManufacturingDashboard() {
           load();
         }}
       >
-        <label className="flex-1 text-sm font-bold">
+        <label className="min-w-0 basis-64 flex-1 text-sm font-bold">
           Staff token
           <input
             type="password"
             autoComplete="off"
             value={token}
-            onChange={(e) => setToken(e.target.value)}
+            onChange={(e) => {
+              invalidateSession();
+              tokenRef.current = e.target.value;
+              setToken(e.target.value);
+            }}
             className="mt-2 block w-full rounded-lg border border-slate-300 p-3"
           />
         </label>
@@ -329,10 +452,9 @@ export default function ManufacturingDashboard() {
             className="p-3 text-sm underline"
             onClick={() => {
               sessionStorage.removeItem(TOKEN_KEY);
+              invalidateSession();
+              tokenRef.current = "";
               setToken("");
-              setRows([]);
-              setDetail(null);
-              setLoggedIn(false);
             }}
           >
             Sign out
@@ -351,7 +473,11 @@ export default function ManufacturingDashboard() {
         </p>
       )}
       {loggedIn && (
-        <div>
+        <div className="min-w-0">
+          <p className={`mb-3 text-sm ${refreshError ? "text-amber-800" : "text-slate-500"}`}>
+            {refreshError || "Live updates every 5 seconds while this page is visible."}
+            {lastUpdated && ` Last updated ${lastUpdated.toLocaleTimeString()}.`}
+          </p>
           <FinishedInventory
             stock={stock}
             movements={movements}
@@ -359,7 +485,7 @@ export default function ManufacturingDashboard() {
             onOperation={stockOperation}
             selected={selected}
           />
-          <div className="grid items-start gap-5 lg:grid-cols-[280px_1fr]">
+          <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
             <aside className={`${panel} space-y-3`}>
               <h2 className="font-black">Workshop queue</h2>
               {rows.length === 0 && (
@@ -372,15 +498,17 @@ export default function ManufacturingDashboard() {
                   key={row.order_id}
                   disabled={busy}
                   onClick={() => load(row.order_id)}
-                  className={`block w-full rounded-xl border p-3 text-left ${selected === row.order_id ? "border-cyan-700 bg-cyan-50" : "border-slate-200"}`}
+                  className={`block min-w-0 w-full rounded-xl border p-3 text-left ${selected === row.order_id ? "border-cyan-700 bg-cyan-50" : "border-slate-200"}`}
                 >
-                  <span className="block font-bold">
+                  <span className="block [overflow-wrap:anywhere] font-bold">
                     {row.display_number ?? row.store_orders?.order_number}
                   </span>
                   <span className="text-sm capitalize">
-                    {row.phase === "queued"
+                    {selected === row.order_id && feedback
+                      ? feedback.title
+                      : row.phase === "queued"
                       ? row.print_requested_at
-                        ? "Sent to print queue"
+                        ? "Waiting for local print helper"
                         : "Awaiting send"
                       : row.phase.replaceAll("_", " ")}
                   </span>
@@ -429,7 +557,7 @@ export default function ManufacturingDashboard() {
               )}
               {detail && (
                 <div className={panel}>
-                  <h2 className="break-words text-2xl font-black">
+                  <h2 className="[overflow-wrap:anywhere] text-2xl font-black">
                     {detail.order.order_number}
                   </h2>
                   <p className="mt-1 text-sm capitalize">
@@ -446,20 +574,23 @@ export default function ManufacturingDashboard() {
                   </ul>
                   <div className="my-4 rounded-xl border border-cyan-200 bg-cyan-50 p-4">
                     {detail.print_requested_at ? (
-                      <>
-                        <p className="font-bold">Sent to print queue</p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {new Date(detail.print_requested_at).toLocaleString()}
-                          {" · "}
-                          {detail.phase === "complete"
-                            ? "This job is complete."
-                            : detail.phase === "blocked" || state?.hold
-                              ? "This job is paused and needs attention."
-                              : !enabled
-                                ? "Waiting for printing to be activated."
-                                : "The print helper will process any pending pages."}
+                      <div role="status" aria-live="polite" aria-atomic="true">
+                        <p className={`font-bold ${feedback.attention ? "text-amber-900" : ""}`}>
+                          {feedback.title}
                         </p>
-                      </>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {feedback.description}
+                        </p>
+                        {!!feedback.total && (
+                          <p className="mt-2 text-sm font-bold">
+                            {feedback.sent}/{feedback.total} print jobs sent &middot;{" "}
+                            {feedback.checked}/{feedback.total} checked
+                          </p>
+                        )}
+                        <p className="mt-2 text-xs text-slate-500">
+                          Requested {new Date(detail.print_requested_at).toLocaleString()}
+                        </p>
+                      </div>
                     ) : (
                       <>
                         <h3 className="font-bold">Review and send this job</h3>

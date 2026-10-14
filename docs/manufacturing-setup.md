@@ -149,6 +149,12 @@ draw, duplicate a print, retry blocked work, or restart completed work.
 This authenticated `POST /api/admin/manufacturing` action applies to customer
 orders and stock builds. Approval does not consume inventory or notify a buyer.
 Printing still waits for the global printing switch and the local agent.
+The authenticated dashboard refreshes the queue and selected job every five
+seconds while visible. It shows waiting, preparation, submission, and review
+states with sent/checked counts. Successful submission means the local print
+helper handed the job to Windows; it does not confirm that paper emerged or
+printed correctly. Check the output and use **Paper checked** for each side.
+Background refreshes cannot send, retry, reroll, or confirm a job.
 The first eligible agent claim generates and saves randomized packs for the
 shortfall; retries and explicit reprints use those saved contents. Fully stocked
 orders need only their work ticket. A blocked preparation must be retried
