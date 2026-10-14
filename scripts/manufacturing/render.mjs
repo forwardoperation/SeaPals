@@ -378,7 +378,7 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
   );
   if (manifest.sheets.some((s) => s.productId))
     line(
-      "Fixed deck frames include their Figma reference inserts. Check the 60-card deck contents separately.",
+      "Fixed products use the saved Figma sheets. Separate any reference inserts before packing.",
     );
   y -= 12;
   line(`HOLO STICKERS: ${manifest.holoChecklist.length}`, {

@@ -78,12 +78,21 @@ recordable. Ordinary website users cannot call the dispatch database function.
 
 ## Verified in this workspace
 
+- October 14: commit `5f389de` passed the isolated Next/Cloudflare build and was
+  deployed as Worker version `394be2ba-3437-41e0-8bd1-87bc2437c8a9`. The live staff
+  API returned HTTP 200 afterward. Printing, test-order manufacturing, and buyer
+  manufacturing notifications remain disabled; the existing job is unapproved
+  and finished/reserved stock remains zero.
 - October 14: all 51 fixed source pages were checked against the pinned Figma
   version. Source crops retain their measured sizes, including the two smaller
   Robotic Survey instances and the slightly taller card instances. The three
   final pages for Murky Water, Stinging Fortress, and Disruption contain eight
   cards; their ninth front slot stays blank. Other pages still require nine.
   These source differences do not change the front or rear cutter templates.
+  The actual Murky Water final-page preview was rendered and visually checked:
+  eight front crops, a fully blank ninth front slot, nine backs, Letter pages,
+  and a readable ticket QR all passed. Its ticket labels it as a local page-only
+  review, with no production job attached.
 - Real-artwork Reef, Deep, and Oceanic booster previews now contain saved random
   draws from their complete eligible pools. Each has a Letter front, back, and
   QR work ticket. A separately labeled deterministic holo demonstration shows
