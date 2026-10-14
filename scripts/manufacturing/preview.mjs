@@ -29,6 +29,7 @@ export async function previewFixture({
   jobKind = "order",
   orderNumber,
   awaitingSend = false,
+  printTemplates,
 } = {}) {
   const load = async (name) =>
     JSON.parse(await readFile(path.join(REPO_ROOT, "src/data", name), "utf8"));
@@ -46,6 +47,7 @@ export async function previewFixture({
     },
     catalog,
     artworkRelease: "preview-only",
+    printTemplates,
     randomIndex: () => 0,
     inventoryPlan,
     jobKind,

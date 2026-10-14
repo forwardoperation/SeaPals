@@ -24,6 +24,10 @@ import {
   createManufacturingState,
   workflowReadiness,
 } from "../../src/lib/manufacturing/workflow.mjs";
+import {
+  requireOrderArtwork,
+  validateRelease,
+} from "../../src/lib/manufacturing/integration.mjs";
 
 export const REPO_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 export const PRIVATE_ROOT = path.join(REPO_ROOT, ".private", "manufacturing");
@@ -77,6 +81,7 @@ export async function saveOrder({
   request,
   catalog,
   artworkRelease,
+  printTemplates,
   randomIndex,
 }) {
   const normalized = validateOrderRequest(request);
@@ -91,6 +96,7 @@ export async function saveOrder({
       request: normalized,
       catalog,
       artworkRelease,
+      printTemplates,
       randomIndex,
     });
     const saved = { manifest, state: createManufacturingState(manifest) };
@@ -148,14 +154,31 @@ async function main() {
   const options = argumentsMap(args);
   if (command === "create") {
     const request = await readJson(options.request);
-    const [sets, gallery] = await Promise.all([
-      readJson(path.join(REPO_ROOT, "src/data/gallery-set-list.json")),
-      readJson(path.join(REPO_ROOT, "src/data/gallery-images.json")),
-    ]);
+    if (!/^[A-Za-z0-9._-]{1,100}$/.test(options.release ?? ""))
+      throw new Error("An explicit artwork release is required.");
+    const releaseFile = path.join(PRIVATE_ROOT, "releases", options.release, "release.json");
+    let catalog, printTemplates;
+    if (await exists(releaseFile)) {
+      const release = validateRelease(await readJson(releaseFile));
+      if (release.releaseId !== options.release)
+        throw new Error("The local artwork release does not match the requested release ID.");
+      requireOrderArtwork(validateOrderRequest(request).items, release);
+      catalog = release.catalog;
+      printTemplates = release.printTemplates;
+    } else {
+      // Keep the original local-fixture workflow when no private release has
+      // been downloaded. Its manifests retain the legacy v2 layout.
+      const [sets, gallery] = await Promise.all([
+        readJson(path.join(REPO_ROOT, "src/data/gallery-set-list.json")),
+        readJson(path.join(REPO_ROOT, "src/data/gallery-images.json")),
+      ]);
+      catalog = buildPrintingCatalog(sets, gallery);
+    }
     const saved = await saveOrder({
       request,
-      catalog: buildPrintingCatalog(sets, gallery),
+      catalog,
       artworkRelease: options.release,
+      printTemplates,
     });
     console.log(JSON.stringify(summary(saved), null, 2));
   } else if (command === "status") {

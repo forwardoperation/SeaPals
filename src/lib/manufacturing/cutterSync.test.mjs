@@ -36,9 +36,17 @@ function templateNode(back = false) {
   return {
     id: template.nodeId, name: template.name, type: "FRAME",
     absoluteBoundingBox: origin,
-    children: [{ name: "card_backs", type: "FRAME", children }],
+    children: [
+      {
+        id: back ? "4116:234589" : "4116:234587", type: "RECTANGLE", name: "Ocean backdrop",
+        absoluteBoundingBox: { x: origin.x + 36, y: origin.y + 20, width: 2467, height: 3240 },
+        fills: [{ type: "IMAGE", imageRef: "private-ocean-art", scaleMode: "FILL" }],
+      },
+      { name: "card_backs", type: "FRAME", children },
+    ],
   };
 }
+const grid = (node) => node.children.find((child) => child.name === "card_backs");
 const readJson = async (relative) => JSON.parse(await readFile(new URL(relative, import.meta.url), "utf8"));
 const source = buildSourceMap(
   await readJson("../../data/gallery-set-list.json"),
@@ -47,11 +55,11 @@ const source = buildSourceMap(
 );
 
 test("source mapping keeps actual back artwork and records cutter geometry separately", () => {
-  assert.equal(source.sources.length, 280);
+  assert.equal(source.sources.length, 282);
   assert.equal(source.sources.find((s) => s.id === "standard-back-sheet").nodeId, "3758:338124");
   assert.equal(BACK_ART_SOURCE.nodeId, "3758:338124");
   assert.equal(source.sources.some((s) => ["4099:61637", "4099:61666"].includes(s.nodeId)), false);
-  assert.equal(source.templates.version, "figma-cutter-nine-up-v2");
+  assert.equal(source.templates.version, "figma-cutter-nine-up-v3");
   assert.deepEqual(source.templates.fronts.positions, measuredPositions());
   assert.deepEqual(source.templates.backs.positions, measuredPositions(true));
   const changed = structuredClone(source);
@@ -59,18 +67,70 @@ test("source mapping keeps actual back artwork and records cutter geometry separ
   assert.notEqual(sha256(Buffer.from(JSON.stringify(changed))), sha256(Buffer.from(JSON.stringify(source))));
 });
 
+test("print sources export only the two ocean layers, excluding guide frames and numbered placeholders", () => {
+  const backdrops = source.sources.filter((item) => item.kind === "backdrop");
+  assert.deepEqual(backdrops, [
+    { id: "print-template-front-background", kind: "backdrop", nodeId: "4116:234587" },
+    { id: "print-template-back-background", kind: "backdrop", nodeId: "4116:234589" },
+  ]);
+  for (const [side, index] of [["fronts", 0], ["backs", 1]]) {
+    assert.deepEqual(source.templates[side].background, {
+      assetId: backdrops[index].id, nodeId: backdrops[index].nodeId,
+      x: 36, y: 20, width: 2467, height: 3240,
+    });
+    assert.ok(!source.sources.some((item) => item.nodeId === source.templates[side].nodeId));
+  }
+  assert.equal(new Set(source.sources.map((item) => item.id)).size, source.sources.length);
+});
+
+test("a changed, hidden or contaminated ocean layer blocks synchronization", () => {
+  const changes = [
+    (node) => { node.children.shift(); },
+    (node) => { node.children[0].visible = false; },
+    (node) => { node.children[0].id = "4099:61637"; },
+    (node) => { node.children[0].type = "FRAME"; },
+    (node) => { node.children[0].children = [{ type: "TEXT", characters: "1:1 Front" }]; },
+    (node) => { node.children[0].strokes = [{ type: "SOLID", color: { r: 0, g: 0, b: 0 } }]; },
+    (node) => { node.children[0].effects = [{ type: "DROP_SHADOW", visible: true }]; },
+    (node) => { node.children[0].fills = [{ type: "SOLID" }]; },
+    (node) => { node.children[0].fills[0].opacity = 0.5; },
+    (node) => { node.children[0].fills[0].blendMode = "MULTIPLY"; },
+    (node) => { node.children[0].blendMode = "MULTIPLY"; },
+    (node) => { node.children[0].isMask = true; },
+    (node) => { node.children[0].opacity = 0.5; },
+    (node) => { node.children[0].rotation = 45; },
+    (node) => { node.opacity = 0.5; },
+    (node) => { node.rotation = 45; },
+    (node) => { node.blendMode = "MULTIPLY"; },
+    (node) => { node.isMask = true; },
+    (node) => { node.effects = [{ type: "DROP_SHADOW", visible: true }]; },
+    (node) => { node.children.reverse(); },
+    (node) => { node.children[0].absoluteBoundingBox.x += 0.02; },
+    (node) => { node.children[0].absoluteBoundingBox.width = 2550; },
+  ];
+  for (const change of changes) {
+    const node = templateNode();
+    change(node);
+    assert.throws(() => validateCutterTemplate(node, PRINT_LAYOUT), /ocean backdrop/i);
+  }
+});
+
 test("both cutter templates produce row-major positions regardless of Figma child order", () => {
   assert.deepEqual(validateCutterTemplate(templateNode(), PRINT_LAYOUT), measuredPositions());
   assert.deepEqual(validateCutterTemplate(templateNode(true), BACK_TEMPLATE), measuredPositions(true));
+  const passThrough = templateNode();
+  passThrough.blendMode = "PASS_THROUGH";
+  passThrough.children[0].blendMode = "PASS_THROUGH";
+  assert.doesNotThrow(() => validateCutterTemplate(passThrough, PRINT_LAYOUT));
   const rounded = templateNode();
-  rounded.children[0].children[0].absoluteBoundingBox.x += 0.005;
+  grid(rounded).children[0].absoluteBoundingBox.x += 0.005;
   assert.doesNotThrow(() => validateCutterTemplate(rounded, PRINT_LAYOUT), "Figma floating-point rounding within 0.01 pixel is tolerated");
 });
 
 test("geometry drift, wrong pages, missing groups and invalid bounds stop a cutter sync", () => {
   for (const field of ["x", "y", "width", "height"]) {
     const changed = templateNode();
-    changed.children[0].children[0].absoluteBoundingBox[field] += 0.02;
+    grid(changed).children[0].absoluteBoundingBox[field] += 0.02;
     assert.throws(() => validateCutterTemplate(changed, PRINT_LAYOUT), /differs.*0\.01 pixel/);
   }
   for (const field of ["width", "height"]) {
@@ -79,16 +139,16 @@ test("geometry drift, wrong pages, missing groups and invalid bounds stop a cutt
     assert.throws(() => validateCutterTemplate(changed, PRINT_LAYOUT), /2550 × 3300/);
   }
   const missing = templateNode();
-  missing.children[0].children.pop();
+  grid(missing).children.pop();
   assert.throws(() => validateCutterTemplate(missing, PRINT_LAYOUT), /nine visible card groups/);
   const outside = templateNode();
-  outside.children[0].children[0].absoluteBoundingBox.x = outside.absoluteBoundingBox.x - 1;
+  grid(outside).children[0].absoluteBoundingBox.x = outside.absoluteBoundingBox.x - 1;
   assert.throws(() => validateCutterTemplate(outside, PRINT_LAYOUT), /outside the page/);
   const invalid = templateNode();
-  invalid.children[0].children[0].absoluteBoundingBox.width = Number.NaN;
+  grid(invalid).children[0].absoluteBoundingBox.width = Number.NaN;
   assert.throws(() => validateCutterTemplate(invalid, PRINT_LAYOUT), /invalid bounds/);
   const noBounds = templateNode();
-  delete noBounds.children[0].children[0].absoluteBoundingBox;
+  delete grid(noBounds).children[0].absoluteBoundingBox;
   assert.throws(() => validateCutterTemplate(noBounds, PRINT_LAYOUT), /invalid bounds/);
 });
 
@@ -104,9 +164,9 @@ test("missing, renamed or hidden templates and grids cannot silently fall back",
     assert.throws(() => validateCutterTemplate(node, PRINT_LAYOUT), /missing or renamed/);
   }
   for (const change of [
-    (node) => { node.children[0].name = "Renamed grid"; },
-    (node) => { node.children[0].visible = false; },
-    (node) => { node.children.push(structuredClone(node.children[0])); },
+    (node) => { grid(node).name = "Renamed grid"; },
+    (node) => { grid(node).visible = false; },
+    (node) => { node.children.push(structuredClone(grid(node))); },
   ]) {
     const node = templateNode();
     change(node);

@@ -58,8 +58,18 @@ Fixed deck/Conditions sheets are cropped at their saved source card positions
 and laid out on this same new grid. The actual back art still comes from the
 original card-back frame; the cutting template does not contain card-back art.
 
-The layout version `figma-cutter-nine-up-v2` and exact coordinates are saved in
-each new manifest. Existing saved manifests remain on their original layout;
+The October 14 templates add an ocean backdrop behind the cards. Each backdrop
+is exported separately from its image-only Figma rectangle (front
+`4116:234587`, rear `4116:234589`), at x 36 / y 20 and 2467 × 3240 pixels.
+The outside page margin stays white. Crop marks and numbered guide labels are
+excluded. An unused card slot shows ocean; it does not create an extra card.
+
+New releases save `figma-cutter-nine-up-v3`, both private backdrop assets, and
+the exact coordinates. New manifests take their templates from the pinned
+release. A missing or invalid backdrop blocks preparation before a booster
+draw; changed PNG bytes block rendering before any PDFs are written.
+Releases without versioned templates retain the v2 layout without backdrops.
+Existing saved manifests remain on their original layout;
 reprinting cannot silently resize them or change their cards. The Figma sync
 checks both template geometries at the pinned file version before exporting.
 A changed template requires an explicit layout update. No separate alignment

@@ -6,6 +6,7 @@ import {
   assertRequestMatchesManifest,
   productionItemsForPlan,
   validateOrderRequest,
+  resolvePrintTemplates,
 } from "./printPlan.mjs";
 import {
   applyManufacturingEvent,
@@ -14,6 +15,12 @@ import {
 import { validateBoosterPool } from "./boosters.mjs";
 import { BOOSTER_PRODUCTS, fixedSheetAssets } from "./recipes.mjs";
 import { validFixedSheetPositions } from "./sourceGeometry.mjs";
+import {
+  CUTTER_LAYOUT_V3,
+  PRINT_BACKGROUNDS,
+  backgroundSide,
+  validateBackgroundAsset,
+} from "./backdrops.mjs";
 
 export const PRIVATE_HEADERS = {
   "Cache-Control": "private, no-store, max-age=0",
@@ -87,7 +94,16 @@ export function requireOrderArtwork(items, release) {
         ids.add(card.printingId);
     else for (const id of fixedSheetAssets(item.productId)) ids.add(id);
   }
-  if (ids.size) ids.add("standard-back-sheet");
+  if (ids.size) {
+    ids.add("standard-back-sheet");
+    if (release.printTemplates?.version === CUTTER_LAYOUT_V3) {
+      resolvePrintTemplates(release.printTemplates);
+      for (const [side, background] of Object.entries(PRINT_BACKGROUNDS)) {
+        ids.add(background.assetId);
+        validateBackgroundAsset(release.assets?.[background.assetId], side);
+      }
+    }
+  }
   const missing = [...ids].filter((id) => !release.assets?.[id]);
   if (missing.length)
     throw new Error(
@@ -118,10 +134,20 @@ export function validateRelease(release) {
     throw new Error("A versioned artwork release and catalog are required.");
   for (const set of ["reef", "deep", "ocean"])
     validateBoosterPool(release.catalog, set);
+  if (release.printTemplates !== undefined)
+    resolvePrintTemplates(release.printTemplates);
+  if (release.printTemplates?.version === CUTTER_LAYOUT_V3)
+    for (const [side, background] of Object.entries(PRINT_BACKGROUNDS))
+      validateBackgroundAsset(release.assets?.[background.assetId], side);
   for (const [id, asset] of Object.entries(release.assets ?? {})) {
     if (!/^[A-Za-z0-9_-]{1,150}$/.test(id) || asset.path !== assetKey(asset))
       throw new Error("Invalid private asset entry.");
-    if (id === "standard-back-sheet" || id.startsWith("sheet-")) {
+    const side = backgroundSide(id);
+    if (side) {
+      if (release.printTemplates?.version !== CUTTER_LAYOUT_V3)
+        throw new Error("A private background requires matching versioned print templates.");
+      validateBackgroundAsset(asset, side);
+    } else if (id === "standard-back-sheet" || id.startsWith("sheet-")) {
       if (asset.width !== 2550 || asset.height !== 3300)
         throw new Error(`Incorrect Letter sheet dimensions: ${id}`);
       if (
@@ -243,6 +269,7 @@ export function manufacturingService(db) {
           },
           catalog: art.catalog,
           artworkRelease: art.releaseId,
+          printTemplates: art.printTemplates,
           inventoryPlan: r.inventory_plan ?? undefined,
           jobKind: r.job_kind ?? "order",
         });

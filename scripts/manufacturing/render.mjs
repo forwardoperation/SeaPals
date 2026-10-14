@@ -6,10 +6,10 @@ import { PNG } from "pngjs";
 import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs";
 import { sha256 } from "../../src/lib/manufacturing/integration.mjs";
 import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
+import { isCutterLayout } from "../../src/lib/manufacturing/backdrops.mjs";
 
 const POINT = 72 / 300,
-  LETTER = [612, 792],
-  CUTTER_LAYOUT = "figma-cutter-nine-up-v2";
+  LETTER = [612, 792];
 const ink = rgb(0.06, 0.19, 0.25),
   muted = rgb(0.27, 0.36, 0.4);
 const safeText = (value) =>
@@ -143,7 +143,16 @@ export async function renderJob({
       const doc = await PDFDocument.create(),
         page = doc.addPage(LETTER),
         font = await doc.embedFont(StandardFonts.Helvetica);
-      if (manifest.layout.version === CUTTER_LAYOUT) {
+      if (isCutterLayout(manifest.layout.version)) {
+        // The backdrop is its own private image-only Figma layer. The guide
+        // frames contain numbered placeholders and are never printed.
+        const background = side === "fronts"
+          ? manifest.layout.background
+          : sheet.backs.template.background;
+        if (manifest.layout.version === "figma-cutter-nine-up-v3") {
+          const image = await doc.embedPng(bytes.get(background.assetId));
+          drawCard(page, image, background);
+        }
         if (side === "fronts" && sheet.fronts.assetId) {
           const savedPositions = release.assets[sheet.fronts.assetId].positions;
           if (!validFixedSheetPositions(savedPositions, sheet.fronts.assetId))
@@ -228,7 +237,7 @@ export async function renderJob({
           height: 792 * t.contentScale,
         });
       }
-      if (manifest.layout.version !== CUTTER_LAYOUT)
+      if (!isCutterLayout(manifest.layout.version))
         marginLabel(
           page,
           font,
@@ -245,7 +254,7 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
   const doc = await PDFDocument.create(),
     font = await doc.embedFont(StandardFonts.Helvetica),
     bold = await doc.embedFont(StandardFonts.HelveticaBold),
-    cutterLayout = manifest.layout.version === CUTTER_LAYOUT;
+    cutterLayout = isCutterLayout(manifest.layout.version);
   const url = staffUrl(siteOrigin, manifest.order.orderId);
   const qr = await doc.embedPng(
     await QRCode.toBuffer(url, {

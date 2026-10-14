@@ -78,6 +78,33 @@ recordable. Ordinary website users cannot call the dispatch database function.
 
 ## Verified in this workspace
 
+- October 14, updated template snapshot: native exports pinned to Figma version
+  `2410243403523590401` contain the two ocean backdrop layers and the six
+  previously flagged card printings. The backdrop renderer uses saved v3
+  templates, preserves the cutter positions and white outside margins, and
+  omits guide marks and labels. All 105 manufacturing tests pass, including
+  legacy v1/v2 rendering, backdrop validation before a draw, PNG corruption,
+  separate front/rear backgrounds, and ocean in an unused card slot.
+  Candidate assets and their provenance are retained in ignored
+  `.private/manufacturing/candidates/2410243403523590401/`; they are not a
+  complete or published release. Five photo windows are corrected. Holo
+  Bamboo Coral (`deep-013`) still extends outside its picture window, and
+  Krill (`ocean-057`) and Silverside (`ocean-060`) still contain faint duplicate
+  ability text. Finish those source edits before exporting the next complete
+  private release. The earlier incomplete release and saved proofs are preserved.
+- The updated local proof is
+  `.private/manufacturing/candidates/2410243403523590401/local-v3-artwork-qa/LOCAL-ARTWORK-QA-v3-bundle.pdf`.
+  Its three Letter pages use six reviewed card sources plus three explicitly
+  repeated samples, the new backgrounds, and a QR work ticket. This is an
+  artwork fixture, not a random booster or live job. The QR decodes from the
+  rendered PDF. The native back artwork also changed from blue/black lettering
+  to a nearly white embossed logo on white; its intended appearance needs
+  review. The renderer preserves that source appearance.
+- The isolated Next/Cloudflare build passed and backdrop support was deployed
+  as Worker version `0bd71995-d1e0-4fd4-bf33-223018fd40d0`. The staff API returned
+  HTTP 200 afterward; printing, test-order manufacturing, and buyer manufacturing
+  notifications remain disabled. The existing job is unapproved, finished and
+  reserved stock are zero, and no artwork release is active.
 - October 14: the initial private export contains 266 of 269 required assets:
   all 217 eligible card printings, the shared back, and 48 of 51 fixed sheets.
   Those assets are uploaded privately, but there is no published or active
@@ -268,7 +295,14 @@ including across refreshes. Stock builds never insert into `store_orders`.
 
 No live buyer emails or physical prints were sent during implementation.
 
-## Initial artwork release recovery checkpoint
+## Earlier artwork release recovery checkpoint
+
+This checkpoint predates the October 14 source corrections and ocean
+backdrops. It preserves the older version for reproducibility; completing it
+would not deliver the updated artwork. The next production release needs a
+fresh pinned source map and all 271 required assets, including both backdrops.
+Do not mix the updated candidate PNGs into this older release or overwrite its
+saved manifests.
 
 The approved release is `figma-2409981651040810260-daaea18f`, pinned to Figma
 version `2409981651040810260` (file last modified October 13, 2026 at 23:14:07
@@ -417,8 +451,9 @@ are unfinished. The exact list is recorded in
 `scripts/manufacturing/figma-unfinished-printings.json`. These printings are
 excluded from new booster draws only while they have no Figma source mapping.
 The current configuration therefore exports 217 eligible printings and
-269 mapped assets, including the shared back and 51 fixed deck/Conditions
-sheets. The store/gallery catalog remains 228 printings. Finished prerelease
+271 mapped assets, including the shared back, 51 fixed deck/Conditions
+sheets, and two private ocean backdrops. The store/gallery catalog remains
+228 printings. Finished prerelease
 cards remain eligible, and collector numbers and printed set totals are unchanged.
 
 | Printing | Card |

@@ -61,6 +61,11 @@ export function buildSourceMap(
     // The cutter template contains numbered placeholders, not card artwork.
     { id: "standard-back-sheet", kind: "back", nodeId: BACK_ART_SOURCE.nodeId },
     ...fixedArtworkSources(),
+    ...[PRINT_LAYOUT, BACK_TEMPLATE].map((template) => ({
+      id: template.background.assetId,
+      kind: "backdrop",
+      nodeId: template.background.nodeId,
+    })),
   );
   const reference = (template) => ({
     fileKey: template.fileKey,
@@ -69,6 +74,7 @@ export function buildSourceMap(
     width: template.width,
     height: template.height,
     positions: template.positions,
+    background: template.background,
   });
   return {
     fileKey: gallery.fileKey,
@@ -159,6 +165,41 @@ export function validateCutterTemplate(document, template) {
     (child) => child.type === "FRAME" && child.name === "card_backs" && child.visible !== false,
   );
   if (grids.length !== 1) invalid("one visible card_backs frame is required");
+  if (template.background) {
+    if (
+      (document.opacity ?? 1) !== 1 || (document.rotation ?? 0) !== 0 ||
+      !["NORMAL", "PASS_THROUGH"].includes(document.blendMode ?? "NORMAL") ||
+      document.isMask === true ||
+      (document.effects ?? []).some((effect) => effect.visible !== false)
+    ) invalid("the ocean backdrop parent frame cannot alter its compositing or orientation");
+    const expected = template.background;
+    const background = (document.children ?? []).find((child) => child.id === expected.nodeId);
+    const fills = background?.fills?.filter((fill) => fill.visible !== false);
+    if (
+      !background || background.type !== "RECTANGLE" || background.visible === false ||
+      (background.opacity ?? 1) !== 1 || (background.rotation ?? 0) !== 0 ||
+      !["NORMAL", "PASS_THROUGH"].includes(background.blendMode ?? "NORMAL") ||
+      background.isMask === true ||
+      (background.children?.length ?? 0) !== 0 ||
+      (background.effects ?? []).some((effect) => effect.visible !== false) ||
+      (background.strokes ?? []).some((stroke) => stroke.visible !== false) ||
+      fills?.length !== 1 || fills[0].type !== "IMAGE" ||
+      (fills[0].opacity ?? 1) !== 1 ||
+      (fills[0].blendMode ?? "NORMAL") !== "NORMAL" ||
+      document.children.indexOf(background) >= document.children.indexOf(grids[0])
+    ) invalid("the ocean backdrop must be a visible image-only rectangle behind the card grid");
+    const bounds = background.absoluteBoundingBox;
+    const measured = bounds && {
+      x: bounds.x - origin.x, y: bounds.y - origin.y,
+      width: bounds.width, height: bounds.height,
+    };
+    if (!measured || ["x", "y", "width", "height"].some((field) =>
+      !Number.isFinite(measured[field]) || !Number.isFinite(expected[field]) ||
+      Math.abs(measured[field] - expected[field]) > 0.01) ||
+      measured.x < 0 || measured.y < 0 || measured.width <= 0 || measured.height <= 0 ||
+      measured.x + measured.width > origin.width || measured.y + measured.height > origin.height
+    ) invalid("the ocean backdrop bounds differ from the saved template");
+  }
   const slots = (grids[0].children ?? []).filter(
     (child) => child.type === "GROUP" && child.visible !== false,
   );

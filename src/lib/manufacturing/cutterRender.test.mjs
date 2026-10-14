@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -29,6 +29,13 @@ const CARD_WIDTH = 738.59521484375,
   backs = positions(BACK_X, BACK_Y),
   sources = positions([195, 918.333, 1641.667], [138, 1146, 2154], 720, 1008),
   colors = Array.from({ length: 9 }, (_, i) => [35 + 20 * i, 180 - 12 * i, 75 + 15 * i]);
+const backgroundBounds = { x: 36, y: 20, width: 2467, height: 3240 },
+  background = (back = false) => ({
+    ...backgroundBounds,
+    assetId: `print-template-${back ? "back" : "front"}-background`,
+    nodeId: back ? "4116:234589" : "4116:234587",
+  }),
+  oceanColors = [[18, 111, 161], [11, 72, 118]];
 
 function paint(png, rect, color) {
   const left = Math.round(rect.x), top = Math.round(rect.y),
@@ -44,7 +51,7 @@ function blank(width, height) {
   paint(png, { x: 0, y: 0, width, height }, [255, 0, 255]);
   return png;
 }
-function makeManifest({ legacy = false, fixed = false, sourceAssetId = "sheet-test" } = {}) {
+function makeManifest({ legacy = false, fixed = false, sourceAssetId = "sheet-test", ocean = false } = {}) {
   const order = {
     orderId: "10000000-0000-4000-8000-000000000001",
     orderNumber: "CUTTER-TEST",
@@ -52,7 +59,7 @@ function makeManifest({ legacy = false, fixed = false, sourceAssetId = "sheet-te
   },
     layout = legacy
       ? { version: "figma-letter-nine-up-v1", width: 2550, height: 3300, dpi: 300, cardWidth: 720, cardHeight: 1008, left: 195, top: 138, columns: 3, rows: 3 }
-      : { version: "figma-cutter-nine-up-v2", width: 2550, height: 3300, dpi: 300, cardWidth: CARD_WIDTH, cardHeight: CARD_HEIGHT, positions: fronts, columns: 3, rows: 3 },
+      : { version: ocean ? "figma-cutter-nine-up-v3" : "figma-cutter-nine-up-v2", width: 2550, height: 3300, dpi: 300, cardWidth: CARD_WIDTH, cardHeight: CARD_HEIGHT, positions: fronts, columns: 3, rows: 3, ...(ocean ? { background: background() } : {}) },
     body = {
       schemaVersion: 1,
       order,
@@ -69,7 +76,7 @@ function makeManifest({ legacy = false, fixed = false, sourceAssetId = "sheet-te
         fronts: fixed ? { assetId: sourceAssetId } : { assetIds: colors.map((_, i) => `deep-${i + 1}`) },
         backs: { assetId: "standard-back-sheet", template: legacy
           ? { contentScale: 0.96, translateX: 51, translateY: 66 }
-          : { positions: backs } },
+          : { positions: backs, ...(ocean ? { background: background(true) } : {}) } },
         slots: fixed ? [] : (legacy ? sources : fronts).map((p, i) => ({ ...p, printingId: `deep-${i + 1}`, slot: i + 1 })),
       }],
     };
@@ -81,7 +88,7 @@ async function fixture(dir, options = {}) {
     const bytes = PNG.sync.write(png);
     assetFiles[id] = path.join(dir, `${id}.png`);
     await writeFile(assetFiles[id], bytes);
-    assets[id] = { path: `private/${id}`, sha256: sha256(bytes), width: png.width, height: png.height, ...extra };
+    assets[id] = { path: `manufacturing/sha256/${sha256(bytes)}.png`, sha256: sha256(bytes), width: png.width, height: png.height, ...extra };
   }
   const rear = blank(2550, 3300);
   paint(rear, { x: 150, y: 75, width: 750, height: 1050 }, [12, 82, 122]);
@@ -89,6 +96,13 @@ async function fixture(dir, options = {}) {
   paint(rear, { x: 150, y: 75, width: 1, height: 1050 }, [250, 20, 30]);
   paint(rear, { x: 899, y: 75, width: 1, height: 1050 }, [20, 30, 250]);
   await asset("standard-back-sheet", rear);
+  if (options.ocean) {
+    for (const [index, back] of [false, true].entries()) {
+      const source = background(back), png = blank(source.width, source.height);
+      paint(png, { x: 0, y: 0, width: png.width, height: png.height }, oceanColors[index]);
+      await asset(source.assetId, png, { nodeId: source.nodeId });
+    }
+  }
   if (options.fixed) {
     const front = blank(2550, 3300), sourcePositions = options.sourcePositions ?? sources;
     for (const [i, rect] of sourcePositions.entries()) paint(front, rect, colors[i]);
@@ -101,7 +115,12 @@ async function fixture(dir, options = {}) {
       await asset(`deep-${i + 1}`, front);
     }
   }
-  return { manifest, release: { releaseId: manifest.artworkRelease, assets }, assetFiles, outputDir: dir, siteOrigin: "https://searealm.com" };
+  const printTemplates = options.ocean ? {
+    version: "figma-cutter-nine-up-v3",
+    fronts: { ...manifest.layout, fileKey: "xeol2YE0jCE0N5vAD6tjzx", nodeId: "4099:61637", name: "print-test-die-cut-front-epson" },
+    backs: { ...manifest.sheets[0].backs.template, fileKey: "xeol2YE0jCE0N5vAD6tjzx", nodeId: "4099:61666", name: "print-test-die-cut-rear-canon", width: 2550, height: 3300 },
+  } : undefined;
+  return { manifest, release: { releaseId: manifest.artworkRelease, assets, ...(printTemplates ? { printTemplates } : {}) }, assetFiles, outputDir: dir, siteOrigin: "https://searealm.com" };
 }
 async function inspect(file) {
   const pdf = await PDFDocument.load(await readFile(file));
@@ -159,6 +178,71 @@ test("cutter booster PDFs use exact front/rear geometry without labels or reflec
   assert.deepEqual([...image.pixels.slice(0, 3)], [250, 20, 30]);
   assert.deepEqual([...image.pixels.slice(3, 6)], [12, 82, 122]);
   assert.deepEqual([...image.pixels.slice(749 * 3, 750 * 3)], [20, 30, 250]);
+}));
+
+test("v3 fronts and backs paint their own ocean first, retaining card offsets and unprinted outer margins", () => temporary(async (dir) => {
+  const jobs = await renderJob(await fixture(dir, { ocean: true }));
+  for (const [index, side] of ["fronts", "backs"].entries()) {
+    const page = await inspect(jobs.find((job) => job.side === side).file);
+    assertPlacements(page.content, [backgroundBounds, ...(side === "fronts" ? fronts : backs)]);
+    // Resource pixels prove each page uses its own private backdrop; content
+    // ordering proves the opaque card artwork sits on top of it.
+    assert.equal(page.images[0].width, 2467);
+    assert.equal(page.images[0].height, 3240);
+    assert.deepEqual([...page.images[0].pixels.slice(0, 3)], oceanColors[index]);
+    assert.deepEqual([...page.images[0].pixels.slice(-3)], oceanColors[index]);
+    assert.equal(page.images.length, side === "fronts" ? 10 : 2);
+    assert.doesNotMatch(page.content, /\b(?:BT|Tj|TJ|re|S|f)\b/, "No labels, guide strokes, or full-page fill may cover the ocean or margins");
+    // All painted images stay inside the measured frame. Letter's untouched
+    // edges therefore stay white: 36/47 px left/right and 20/40 px top/bottom.
+    for (const placed of imagePlacements(page.content)) {
+      assert.ok(placed.x >= 36 * 0.24 - 1e-6);
+      assert.ok(placed.x + placed.width <= (2550 - 47) * 0.24 + 1e-6);
+      assert.ok(placed.y >= 40 * 0.24 - 1e-6);
+      assert.ok(placed.y + placed.height <= (3300 - 20) * 0.24 + 1e-6);
+    }
+  }
+}));
+
+test("the unused ninth slot of a v3 eight-card sheet shows ocean, with no placeholder or extra card", () => temporary(async (dir) => {
+  const jobs = await renderJob(await fixture(dir, {
+    ocean: true,
+    fixed: true,
+    sourceAssetId: "sheet-murky-water-7",
+    sourcePositions: positions([167, 887, 1607], [106, 1114, 2122], 720, 1008).slice(0, 8),
+  }));
+  const page = await inspect(jobs.find((job) => job.side === "fronts").file);
+  assertPlacements(page.content, [backgroundBounds, ...fronts.slice(0, 8)]);
+  assert.equal(page.images.length, 9);
+  assert.deepEqual([...page.images[0].pixels.slice(0, 3)], oceanColors[0]);
+  page.images.slice(1).forEach((image, index) => assert.deepEqual([...image.pixels.slice(0, 3)], colors[index]));
+  const empty = fronts[8], sample = { x: empty.x + empty.width / 2, y: empty.y + empty.height / 2 };
+  assert.ok(sample.x > backgroundBounds.x && sample.x < backgroundBounds.x + backgroundBounds.width);
+  assert.ok(sample.y > backgroundBounds.y && sample.y < backgroundBounds.y + backgroundBounds.height);
+  assert.ok(fronts.slice(0, 8).every((p) => sample.x < p.x || sample.x > p.x + p.width || sample.y < p.y || sample.y > p.y + p.height));
+  assert.doesNotMatch(page.content, /\b(?:BT|Tj|TJ|re|S|f)\b/);
+}));
+
+test("missing, corrupt or wrong-sized v3 background art stops before any PDF is written", () => temporary(async (dir) => {
+  const base = await fixture(dir, { ocean: true }), id = "print-template-back-background";
+  const cases = [
+    ["missing", (release) => { delete release.assets[id]; }, null, /background|backdrop/i],
+    ["wrong-size", (release) => { release.assets[id].width -= 1; }, null, /background|backdrop|dimensions/i],
+    ["wrong-source", (release) => { release.assets[id].nodeId = "4116:234587"; }, null, /background|backdrop/i],
+    ["tampered", () => {}, Buffer.from("not the pinned PNG"), /checksum/i],
+    ["corrupt", (release) => { release.assets[id].sha256 = sha256(Buffer.from("not a PNG")); }, Buffer.from("not a PNG"), /PNG|buffer|stream|signature/i],
+  ];
+  for (const [name, mutate, bytes, message] of cases) {
+    const release = structuredClone(base.release), assetFiles = { ...base.assetFiles }, outputDir = path.join(dir, `output-${name}`);
+    mutate(release);
+    if (bytes) {
+      assetFiles[id] = path.join(dir, `${name}.png`);
+      await writeFile(assetFiles[id], bytes);
+      if (name === "corrupt") release.assets[id].path = `manufacturing/sha256/${release.assets[id].sha256}.png`;
+    }
+    await assert.rejects(renderJob({ ...base, release, assetFiles, outputDir }), message, name);
+    assert.deepEqual(await readdir(outputDir).catch((error) => error.code === "ENOENT" ? [] : Promise.reject(error)), [], name);
+  }
 }));
 
 test("cutter fixed sheets crop each saved card and impose it in template order", () => temporary(async (dir) => {
