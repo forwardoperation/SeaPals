@@ -4,6 +4,52 @@ The implementation connects paid-order intake, immutable booster draws, private
 Figma PNG releases, separate Epson/Canon print jobs, a QR work ticket, a staff
 checklist, and buyer milestone emails. It is **not enabled in production yet**.
 
+## Local printer connection and test - October 14, 2026
+
+The owner confirmed the printer profiles. The ignored local `printers.json`
+now has `calibrationConfirmed: true`. The existing device credential was
+registered as `MANUFACTURING_AGENT_TOKEN` on Worker `seapals`, using secret
+stdin and the owner's explicit approval. Agent authentication succeeded; a
+single agent poll returned `disabled`. All three manufacturing switches remain
+false. No physical print, live job, stock movement, or buyer notification was
+created by these checks.
+
+A full artwork release is not required to test the local printers. The prepared
+private packet is `.private/manufacturing/printer-test/reef-one-pack/packet.json`.
+Its three one-page Letter PDFs contain one saved Reef booster draw, its backs,
+and a clearly labeled local test ticket. It uses cached card fronts plus the
+current ocean backgrounds and transparent white logos. It is a mixed-source
+printer test, not a production artwork release. The saved draw is unchanged:
+five commons, three uncommons, and one rare, with no holo in this sample.
+
+The preview is `printer-test-preview.pdf` in that directory. All three pages
+were rendered and visually checked; the ticket QR decoded correctly. This QR
+uses a local preview UUID and cannot update a live workshop job.
+
+From the repository directory:
+
+```powershell
+# Validate all PDFs and routes without printing or creating a receipt.
+node scripts/manufacturing/print-local-test.mjs --packet .private/manufacturing/printer-test/reef-one-pack/packet.json --config .private/manufacturing/printers.json
+
+# Physically print exactly this packet: Canon ticket, Epson front, Canon back.
+node scripts/manufacturing/print-local-test.mjs --packet .private/manufacturing/printer-test/reef-one-pack/packet.json --config .private/manufacturing/printers.json --print
+```
+
+The local-only command checks every PDF checksum, page count, Letter size,
+private path, executable, and single-copy printer profile before submission.
+It requires actual size, simplex, Letter, and an explicit color mode. The
+Canon ticket uses its configured tray, which is currently the backing-sheet
+tray. An exclusive, durable `print-receipt.json` prevents repeated or concurrent
+submissions. An uncertain result stops the packet; inspect the paper and queue
+instead of deleting that receipt and retrying. Printer acceptance is not proof
+that paper physically printed. No staff token, agent token, or online artwork
+release is needed for this local command.
+
+The admin **Send to printers** workflow still needs a published private artwork
+release and an enabled agent. This local printer check does not enable those
+production steps or exercise QR-driven manufacturing status updates.
+
 ## Database setup completed — October 5, 2026
 
 Applied `supabase/manufacturing.sql` successfully to the existing SeaPalsTCG
@@ -224,7 +270,8 @@ recordable. Ordinary website users cannot call the dispatch database function.
 - Official portable SumatraPDF 3.6.1 was downloaded to `.private/manufacturing/tools`.
   Windows verified its Authenticode signature. No printer job was submitted.
 - `.private/manufacturing/printers.json` and `agent.env` were prepared. The device
-  token is a separate random credential; calibration remains `false`.
+  token is a separate random credential. The initial profile gate was `false`;
+  see the October 14 connection and test status above for the later confirmation.
 
 ## Finished inventory and independent builds
 
@@ -284,8 +331,8 @@ including across refreshes. Stock builds never insert into `store_orders`.
    `MANUFACTURING_BUYER_NOTIFICATIONS_ENABLED` false initially. Existing store,
    Supabase, and Resend configuration remains in use. No R2 billing activation
    or bucket binding is needed.
-2. Set the Worker secret `MANUFACTURING_AGENT_TOKEN` to the value in the private
-   `agent.env` file using Wrangler's interactive secret input. Do not put it in
+2. Completed October 14: the Worker secret `MANUFACTURING_AGENT_TOKEN` matches
+   the private `agent.env` file. Future rotations must use secret stdin. Do not put it in
    `NEXT_PUBLIC_*`, the QR, a tracked file, or browser JavaScript. The staff
    screen reuses `STORE_ADMIN_TOKEN`; both tokens must be at least 24 characters.
 3. Keep `FIGMA_ACCESS_TOKEN` with file read access and `STORE_ADMIN_TOKEN`
@@ -301,10 +348,9 @@ including across refreshes. Stock builds never insert into `store_orders`.
 5. Use the established Epson and Canon printer profiles with Letter, actual
    size, simplex, and the intended trays/media settings. The owner opted to
    skip the separate alignment-check print on October 5, 2026. That print is
-   optional; it is not a database setup or activation prerequisite. The local
-   `calibrationConfirmed` setting is still false because this database-only
-   step did not activate the printers. Confirm the existing profiles in that
-   setting when enabling the printer agent.
+   optional; it is not a database setup or activation prerequisite. The owner
+   confirmed the profiles on October 14 and `calibrationConfirmed` is now true.
+   The local three-page printer test above is ready without a full release.
 6. Enable agent claiming and explicitly allow test orders for one controlled
    paid test order, then explicitly send that selected order to the printers.
    Unapproved orders remain waiting. Test orders never enqueue buyer emails. Confirm an actual
@@ -378,7 +424,7 @@ node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma
 # Read-only readiness check, including the deployed database and private bucket.
 node --env-file=.env.local --env-file=.private/manufacturing/agent.env scripts/manufacturing/doctor.mjs --online
 
-# One production poll; blocked by the local calibration flag until confirmed.
+# One production poll; can claim approved work when server printing is enabled.
 node --env-file=.private/manufacturing/agent.env scripts/manufacturing/agent.mjs --config .private/manufacturing/printers.json --once
 
 # Continuous outbound polling every 15 seconds while this PC is awake.
