@@ -28,7 +28,7 @@
 		}
 	],
 	"vars": {
-		"MANUFACTURING_ENABLED": "false",
+		"MANUFACTURING_ENABLED": "true",
 		"MANUFACTURING_ALLOW_TEST_ORDERS": "false",
 		"MANUFACTURING_BUYER_NOTIFICATIONS_ENABLED": "false",
 		"SITE_URL": "https://searealm.com",

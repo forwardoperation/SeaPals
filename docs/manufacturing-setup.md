@@ -2,7 +2,46 @@
 
 The implementation connects paid-order intake, immutable booster draws, private
 Figma PNG releases, separate Epson/Canon print jobs, a QR work ticket, a staff
-checklist, and buyer milestone emails. It is **not enabled in production yet**.
+checklist, and buyer milestone emails. **Printing is enabled for Reef booster
+jobs approved with Send to printers.** Buyer manufacturing notifications and
+paid test-order intake remain disabled.
+
+## Reef printing enabled - October 14, 2026
+
+The active private artwork release is
+`figma-2410259424823644926-49a271a8`, pinned to Figma version
+`2410259424823644926`. Its 98 assets include every eligible Reef printing (95),
+the transparent card-back artwork, and both ocean backgrounds. All PNG hashes,
+dimensions, and CRCs passed. The Letter page proofs were rendered at 300 DPI
+and visually checked, including the updated regular/holo Great White and the
+white logos over ocean backs. The sample ticket QR decoded successfully.
+The storage bucket is private; an anonymous printable-artwork request was
+denied, and an authenticated download matched its recorded hash.
+
+The catalog still contains all 217 eligible printings. Deep, Oceanic, and fixed
+decks with missing assets are held before a draw. Reef packs use five commons,
+three uncommons, and one rare slot with a 25% holo chance. Finished prerelease
+cards remain eligible; the approved unfinished cards remain excluded.
+
+The Windows task **SeaRealm Manufacturing Agent** is installed and running. It
+starts at user login and checks for approved jobs every 15 seconds while this
+PC is awake and signed in. Fronts route to `ET-8550 Series(Network)`; separate
+backs and the work ticket route to `Canon MF750C II Series UFR II`. Profiles use
+Letter paper, actual size, and simplex printing. Holo stickers remain a manual
+checklist step.
+
+For the first print, open `https://searealm.com/admin/manufacturing`, choose
+**Build stock without an order**, select one **Reef Dive Pack**, and create the
+workshop job. Open that job and click **Send to printers**. The agent saves the
+random card selection before rendering and printing; repeated Send clicks do
+not reroll it. Scan the printed work-ticket QR to open its staff checklist.
+Finished inventory increases only after the batch is checked and received.
+
+Only `MANUFACTURING_ENABLED` was switched on. Test-order intake and buyer
+manufacturing notifications remain off. Activation created no jobs, stock
+movements, buyer messages, or physical prints; the existing job was unapproved.
+The ignored `.private/manufacturing/` directory holds the activation receipt,
+release checks, and local QA proofs.
 
 ## Local printer connection and test - October 14, 2026
 
@@ -10,8 +49,8 @@ The owner confirmed the printer profiles. The ignored local `printers.json`
 now has `calibrationConfirmed: true`. The existing device credential was
 registered as `MANUFACTURING_AGENT_TOKEN` on Worker `seapals`, using secret
 stdin and the owner's explicit approval. Agent authentication succeeded; a
-single agent poll returned `disabled`. All three manufacturing switches remain
-false. No physical print, live job, stock movement, or buyer notification was
+single agent poll returned `disabled`. All three manufacturing switches were
+false at that stage. No physical print, live job, stock movement, or buyer notification was
 created by these checks.
 
 A full artwork release is not required to test the local printers. The prepared
@@ -46,9 +85,9 @@ instead of deleting that receipt and retrying. Printer acceptance is not proof
 that paper physically printed. No staff token, agent token, or online artwork
 release is needed for this local command.
 
-The admin **Send to printers** workflow still needs a published private artwork
-release and an enabled agent. This local printer check does not enable those
-production steps or exercise QR-driven manufacturing status updates.
+The local printer packet does not exercise QR-driven manufacturing status
+updates. The subsequent Reef activation above completed the private release
+publication and enabled the admin **Send to printers** workflow.
 
 ## Database setup completed — October 5, 2026
 
@@ -122,7 +161,10 @@ submission, including an old lease acquired before the migration. An already
 submitted physical print can still finish; its late acknowledgement remains
 recordable. Ordinary website users cannot call the dispatch database function.
 
-## Verified in this workspace
+## Historical implementation checks
+
+These dated checkpoints record the state at each check. The current activation
+status is in the Reef printing section above.
 
 - October 14, transparent card backs: the owner confirmed white logos over the
   blue ocean backdrop. Removed only the white fills on source frame
@@ -324,11 +366,11 @@ and planned) and recent `movements`. Job details include `job_kind` and the
 saved `inventoryPlan`. The staff UI retains an uncertain operation for retry,
 including across refreshes. Stock builds never insert into `store_orders`.
 
-## Remaining activation steps
+## Activation checklist and remaining rollout
 
-1. Keep
-   `MANUFACTURING_ENABLED`, `MANUFACTURING_ALLOW_TEST_ORDERS`, and
-   `MANUFACTURING_BUYER_NOTIFICATIONS_ENABLED` false initially. Existing store,
+1. Reef printing is enabled with `MANUFACTURING_ENABLED=true`.
+   `MANUFACTURING_ALLOW_TEST_ORDERS` and
+   `MANUFACTURING_BUYER_NOTIFICATIONS_ENABLED` remain false. Existing store,
    Supabase, and Resend configuration remains in use. No R2 billing activation
    or bucket binding is needed.
 2. Completed October 14: the Worker secret `MANUFACTURING_AGENT_TOKEN` matches
@@ -339,7 +381,9 @@ including across refreshes. Stock builds never insert into `store_orders`.
    in the ignored local `sync.env` for unattended export and publishing. Both
    credentials were verified on October 13. The Figma connector's connection
    is not a reusable credential for a scheduled Node process.
-4. Export and validate the eligible artwork, then publish a private release.
+4. The complete Reef artwork scope is published. Export and validate additional
+   product scopes before making those products; publish a release containing
+   all product pools that should be available together.
    The owner-approved eleven unfinished printings below are excluded until
    their sources are mapped and validated; finished prerelease cards remain
    included. Any other missing mapping must be resolved. The script pins one
@@ -351,11 +395,11 @@ including across refreshes. Stock builds never insert into `store_orders`.
    optional; it is not a database setup or activation prerequisite. The owner
    confirmed the profiles on October 14 and `calibrationConfirmed` is now true.
    The local three-page printer test above is ready without a full release.
-6. Enable agent claiming and explicitly allow test orders for one controlled
-   paid test order, then explicitly send that selected order to the printers.
-   Unapproved orders remain waiting. Test orders never enqueue buyer emails. Confirm an actual
-   work-ticket scan and both printer outputs. Turn test-order allowance back
-   off, enable buyer milestone emails, then install the Windows startup task.
+6. The Windows startup task is installed and running. Use one independent Reef
+   stock build for the first print; paid test-order intake is not needed. Click
+   Send to printers for that job, confirm both physical printer outputs, and
+   scan its work-ticket QR. Unapproved jobs remain waiting. Enable buyer
+   milestone emails separately after the physical workflow has been confirmed.
 
 No live buyer emails or physical prints were sent during implementation.
 
@@ -364,7 +408,8 @@ No live buyer emails or physical prints were sent during implementation.
 This checkpoint predates the October 14 source corrections and ocean
 backdrops. It preserves the older version for reproducibility; completing it
 would not deliver the updated artwork. The next production release needs a
-fresh pinned source map and all 271 required assets, including both backdrops.
+fresh pinned source map. A full-catalog release needs all 271 assets, including
+both backdrops; the active Reef scope above needs only its complete 98 assets.
 Do not mix the updated candidate PNGs into this older release or overwrite its
 saved manifests.
 
@@ -398,7 +443,9 @@ filenames. Before importing, verify their source version, complete sheet
 contents, 2550 × 3300 dimensions, PNG CRC decoding, checksums, and measured
 card positions. Then resume the pinned exporter, validate all 269 assets,
 upload the remaining PNGs, and publish the complete private release. Verify
-the live manifest and denied public access afterward. Keep printing disabled.
+the live manifest and denied public access afterward. These historical recovery
+instructions do not supersede the active October 14 Reef release; do not publish
+the older artwork over it.
 
 The existing three booster manifests and Conditions manifest must be reused
 when rebuilding the review bundle against the complete release. A rerun
