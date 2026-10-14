@@ -60,6 +60,8 @@ original card-back frame; the cutting template does not contain card-back art.
 The back source's page frame (`3758:338124`) and card grid (`3758:338139`)
 have no fills. Preserve that PNG transparency so the white SeaRealm logos
 print directly over the ocean backdrop instead of opaque white rectangles.
+Keep its old sheet-guide group (`3758:338125`) hidden too: with transparency,
+those white marks would otherwise be repeated inside each rendered back.
 
 The October 14 templates add an ocean backdrop behind the cards. Each backdrop
 is exported separately from its image-only Figma rectangle (front
