@@ -13,6 +13,7 @@ import {
 } from "./workflow.mjs";
 import { validateBoosterPool } from "./boosters.mjs";
 import { BOOSTER_PRODUCTS, fixedSheetAssets } from "./recipes.mjs";
+import { validFixedSheetPositions } from "./sourceGeometry.mjs";
 
 export const PRIVATE_HEADERS = {
   "Cache-Control": "private, no-store, max-age=0",
@@ -125,18 +126,7 @@ export function validateRelease(release) {
         throw new Error(`Incorrect Letter sheet dimensions: ${id}`);
       if (
         id.startsWith("sheet-") &&
-        (!Array.isArray(asset.positions) ||
-          asset.positions.length !== 9 ||
-          asset.positions.some(
-            (p) =>
-              ![p.x, p.y, p.width, p.height].every(Number.isFinite) ||
-              Math.abs(p.width - 720) > 1 ||
-              Math.abs(p.height - 1008) > 1 ||
-              p.x < 0 ||
-              p.y < 0 ||
-              p.x + p.width > 2550 ||
-              p.y + p.height > 3300,
-          ))
+        !validFixedSheetPositions(asset.positions, id)
       )
         throw new Error(`Missing or invalid Figma card positions: ${id}`);
     } else if (

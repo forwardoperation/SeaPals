@@ -78,6 +78,39 @@ recordable. Ordinary website users cannot call the dispatch database function.
 
 ## Verified in this workspace
 
+- October 14: all 51 fixed source pages were checked against the pinned Figma
+  version. Source crops retain their measured sizes, including the two smaller
+  Robotic Survey instances and the slightly taller card instances. The three
+  final pages for Murky Water, Stinging Fortress, and Disruption contain eight
+  cards; their ninth front slot stays blank. Other pages still require nine.
+  These source differences do not change the front or rear cutter templates.
+- Real-artwork Reef, Deep, and Oceanic booster previews now contain saved random
+  draws from their complete eligible pools. Each has a Letter front, back, and
+  QR work ticket. A separately labeled deterministic holo demonstration shows
+  the manual sticker checklist; it does not alter the 25% production pull rate.
+  All four ticket QR codes decoded from the rendered PDFs. These are private
+  local previews with no live workshop jobs or printer submissions.
+- October 14: all 95 manufacturing tests passed in the isolated checkout,
+  including bounded export concurrency, checkpoint serialization, transient
+  failures, immediate scheduling stops after authentication or rate limits,
+  audited source-crop sizes, and eight-card final-page rendering.
+  The real-artwork Deep preview uses a saved random draw from the complete
+  59-printing Deep pool. Its front, back, and work ticket are Letter pages;
+  the QR decoded correctly from the rendered PDF. This preview has no live
+  workshop job and sends nothing to a printer.
+- The real-artwork preview exposed a Figma source issue on Bamboo Coral
+  `deep-044`, `deep-033`, `deep-030`, and holo `deep-013`: the image spills
+  beyond the card's artwork window. The pinned Base metadata confirms an
+  image outside that window; the other three show the same visible spill.
+  Correct these masks in Figma and publish a new artwork version before
+  physical production. The 750-by-1050 PNGs and cutter placement are correct;
+  changing page geometry would not repair the source. Details and visual
+  evidence are in ignored `.private/manufacturing/source-artwork-review.json`.
+  Oceanic's real-artwork preview also shows image spill and faint duplicate
+  ability text in the source PNGs for `ocean-057` (Krill) and `ocean-060`
+  (Silverside); these findings are recorded in the same review. Its saved draw
+  used the complete 63-printing Oceanic pool, and its rendered QR and Letter
+  pages passed verification too.
 - October 13: the Figma API and staff manufacturing API returned HTTP 200
   using the credentials in the ignored local environment file. All three
   manufacturing switches remain false. Private artwork export is in progress;
@@ -90,8 +123,8 @@ recordable. Ordinary website users cannot call the dispatch database function.
   rendered and visually compared with the supplied Figma templates; these
   were preview files only. The offline browser walkthrough confirmed separate
   approval for customer orders and independent stock builds.
-- The live database has one existing workshop job, no approved jobs, zero
-  finished/reserved units, and no active artwork release as of this check.
+- At the October 13 checkpoint, the live database had one existing workshop job,
+  no approved jobs, zero finished/reserved units, and no active artwork release.
   No production job was sent by the implementation or its verification.
 - Before the main-branch push, an isolated checkout containing this integration
   and its required rarity definitions passed all 2,361 repository tests and the
@@ -262,8 +295,13 @@ and observes Figma's retry time after rate limits. Image export requests can
 take up to five minutes; metadata requests retain a 90-second limit. To resume
 an interrupted manual sync after Figma changes, pass `--version <saved-version>`
 to continue the same version and reuse its verified exports. For slow batches,
-add `--batch-size 1` through `--batch-size 10` (the default is 10); this does
-not change the release or its saved cards. No recurring chat task or
+add `--batch-size 1` through `--batch-size 10` (the direct CLI default is 10),
+and `--concurrency 1` through `--concurrency 3` (the direct CLI default is 1).
+Progress writes are serialized. A timed-out batch or server error allows other
+pending batches to finish, but any failed batch prevents publication; rerun
+the same version to retry only missing assets. Authentication and rate-limit
+errors stop new batches immediately and preserve in-flight successes. These
+options do not change the release or its saved cards. No recurring chat task or
 Windows sync schedule has been installed yet. Publishing is independent of
 printing: existing saved manifests keep their original artwork and booster draw.
 
@@ -295,9 +333,11 @@ Use the following instructions when creating a separate recurring chat:
 > after rate limits. Report a newly published release or an actionable failure;
 > stay quiet when nothing has changed.
 
-For slow image exports, append `-BatchSize 1` to the `run-sync.ps1` command.
-The wrapper accepts sizes 1 through 10 and defaults to 10. This changes only
-request grouping; it preserves the same release and cached exports.
+The wrapper defaults to one asset per batch with 2 concurrent batches, following
+timeouts on grouped deck-sheet requests during the initial export. It accepts `-BatchSize`
+from 1 through 10 and `-Concurrency` from 1 through 3. To use one request group
+at a time, append `-Concurrency 1`. These options change only request grouping;
+they preserve the same release and cached exports.
 
 The unchanged check compares the Figma file version and source mappings with
 the last successfully published release. Each new file version exports the

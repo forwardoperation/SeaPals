@@ -10,6 +10,7 @@ import {
   FIXED_PRODUCTS,
   fixedSheetAssets,
 } from "./recipes.mjs";
+import { validFixedSheetPositions } from "./sourceGeometry.mjs";
 
 const cutterWidth = 738.59521484375,
   cutterHeight = 1034.0333251953125;
@@ -340,12 +341,8 @@ export function preflightPrintAssets(manifest, release) {
     if (
       manifest.layout.version === "figma-cutter-nine-up-v2" &&
       id.startsWith("sheet-") &&
-      (!Array.isArray(asset?.positions) || asset.positions.length !== 9 ||
-        asset.positions.some((p) =>
-          ![p.x, p.y, p.width, p.height].every(Number.isFinite) ||
-          p.x < 0 || p.y < 0 || p.width <= 0 || p.height <= 0 ||
-          p.x + p.width > asset.width || p.y + p.height > asset.height))
-    ) errors.push(`${id}: nine source card positions are required for the cutting template`);
+      !validFixedSheetPositions(asset?.positions, id)
+    ) errors.push(`${id}: valid source card positions are required for the cutting template`);
   }
   return {
     ready: errors.length === 0,

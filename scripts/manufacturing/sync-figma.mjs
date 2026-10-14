@@ -15,6 +15,7 @@ import {
   validateRelease,
 } from "../../src/lib/manufacturing/integration.mjs";
 import { PRIVATE_ROOT, REPO_ROOT, atomicJson } from "./orders.mjs";
+import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
 
 export function buildSourceMap(
   setList,
@@ -229,20 +230,9 @@ export function sheetPositions(document) {
         height: b.height,
       };
     });
-  if (
-    positions.length !== 9 ||
-    positions.some(
-      (p) =>
-        Math.abs(p.width - 720) > 1 ||
-        Math.abs(p.height - 1008) > 1 ||
-        p.x < 0 ||
-        p.y < 0 ||
-        p.x + p.width > 2550 ||
-        p.y + p.height > 3300,
-    )
-  )
+  if (!validFixedSheetPositions(positions, document.id))
     throw new Error(
-      "The fixed sheet is not a supported nine-card Letter layout. Review its Figma frames.",
+      "The fixed sheet is not a supported card-count or Letter layout. Review its Figma frames.",
     );
   return positions;
 }
@@ -262,12 +252,61 @@ export function parseBatchSize(args) {
     throw new Error("--batch-size must be an integer from 1 to 10.");
   return Number(args[index + 1]);
 }
+export function parseConcurrency(args) {
+  const index = args.indexOf("--concurrency");
+  if (index === -1) return 1;
+  if (args.lastIndexOf("--concurrency") !== index || !/^[1-3]$/.test(args[index + 1] ?? ""))
+    throw new Error("--concurrency must be an integer from 1 to 3.");
+  return Number(args[index + 1]);
+}
+export function isTransientExportError(error) {
+  if ([401, 403, 429].includes(error?.status)) return false;
+  if (error instanceof AggregateError)
+    return error.errors.length > 0 && error.errors.every(isTransientExportError);
+  return error?.transient === true || (error?.status >= 500 && error.status < 600) ||
+    ["TimeoutError", "AbortError"].includes(error?.name) ||
+    /^UND_ERR_(?:CONNECT|HEADERS|BODY)_TIMEOUT$/.test(error?.code ?? "") ||
+    Boolean(error?.cause && error.cause !== error && isTransientExportError(error.cause));
+}
+export async function runExportBatches(batches, { concurrency = 1, runBatch, checkpoint = async () => {} }) {
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 3)
+    throw new Error("Export concurrency must be an integer from 1 to 3.");
+  let next = 0, stopped = false, writes = Promise.resolve();
+  const failures = [];
+  const stopScheduling = () => { stopped = true; };
+  const saveProgress = () => {
+    const write = writes.then(() => checkpoint());
+    writes = write.catch(() => {});
+    return write;
+  };
+  const worker = async () => {
+    while (!stopped && next < batches.length) {
+      const batch = batches[next++];
+      try { await runBatch(batch, saveProgress, stopScheduling); }
+      catch (error) {
+        failures.push(error);
+        if (!isTransientExportError(error)) stopScheduling();
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, batches.length) }, worker));
+  await writes;
+  if (failures.length) {
+    const messages = (error) => error instanceof AggregateError && error.errors.length
+      ? error.errors.flatMap(messages)
+      : [String(error?.message ?? "Unknown export failure.")
+        .replace(/\bhttps?:\/\/[^\s"'<>]+/gi, "[redacted URL]")];
+    const details = [...new Set(failures.flatMap(messages))].join("; ");
+    throw new AggregateError(failures, `${failures.length} export batch(es) failed. ${details} Completed assets are saved; no release was written or published by this run.`);
+  }
+}
 async function main() {
   const args = process.argv.slice(2),
     value = (flag) =>
       args.includes(flag) ? args[args.indexOf(flag) + 1] : null;
   // Validate before credentials, API requests, or any local export writes.
   const batchSize = parseBatchSize(args);
+  const concurrency = parseConcurrency(args);
   const read = async (relative) =>
     JSON.parse(await readFile(path.join(REPO_ROOT, relative), "utf8"));
   const overrides = value("--overrides")
@@ -315,7 +354,7 @@ async function main() {
       return;
     }
   } catch(error) { if(error.code!=="ENOENT")throw error; }
-  async function figma(route) {
+  async function figma(route, stopScheduling = () => {}) {
     const imageExport = route.startsWith("images/");
     const endpoint = imageExport
       ? "image export"
@@ -329,11 +368,13 @@ async function main() {
         redirect: "error",
       });
     } catch (error) {
-      const detail = ["TimeoutError", "AbortError"].includes(error.name)
+      const detail = isTransientExportError(error)
         ? `timed out after ${timeout / 1000} seconds`
         : "could not be completed";
-      throw new Error(`Figma ${endpoint} request ${detail}. Completed exports are saved; the active release is unchanged.`);
+      if (!isTransientExportError(error)) stopScheduling();
+      throw new Error(`Figma ${endpoint} request ${detail}. Completed exports are saved; the active release is unchanged.`, { cause: error });
     }
+    if ([401, 403, 429].includes(response.status)) stopScheduling();
     if(response.status===429) {
       const raw=response.headers.get("retry-after")??"60";
       let notBefore=/^\d+$/.test(raw)?Date.now()+Number(raw)*1000:Date.parse(raw);
@@ -346,16 +387,20 @@ async function main() {
       );
       await retryWrite;
     }
-    if (!response.ok)
-      throw new Error(
+    if (!response.ok) {
+      const error = Object.assign(new Error(
         response.status === 429
           ? `Figma rate limited the ${endpoint} request. Retry after ${response.headers.get("retry-after") ?? "the indicated interval"}; the active release is unchanged.`
           : `Figma ${endpoint} request failed (${response.status}).`,
-      );
+      ), { status: response.status });
+      if (!isTransientExportError(error)) stopScheduling();
+      throw error;
+    }
     try {
       return await response.json();
-    } catch {
-      throw new Error(`Figma ${endpoint} returned an unreadable response. Completed exports are saved; the active release is unchanged.`);
+    } catch (error) {
+      if (!isTransientExportError(error)) stopScheduling();
+      throw new Error(`Figma ${endpoint} returned an unreadable response. Completed exports are saved; the active release is unchanged.`, { cause: error });
     }
   }
   // Pin the file version once. Every node read and image export uses this version.
@@ -422,66 +467,71 @@ async function main() {
   const mapped = source.sources.filter(
     (s) => s.nodeId && !release.assets[s.id],
   );
-  for (let offset = 0; offset < mapped.length; offset += batchSize) {
-    const batch = mapped.slice(offset, offset + batchSize),
-      ids = [...new Set(batch.map((s) => s.nodeId))].join(",");
-    const responses = await Promise.allSettled([
-      figma(
-        `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&version=${encodeURIComponent(version)}`,
-      ),
-      figma(
-        `images/${source.fileKey}?ids=${encodeURIComponent(ids)}&format=png&scale=1&version=${encodeURIComponent(version)}`,
-      ),
-    ]);
-    const failures = responses.filter((response) => response.status === "rejected");
-    if (failures.length)
-      throw new Error(failures.map((response) => response.reason.message).join(" "));
-    const [nodes, images] = responses.map((response) => response.value);
-    for (const item of batch) {
-      const node = nodes.nodes?.[item.nodeId]?.document,
-        url = images.images?.[item.nodeId];
-      if (!node || !url)
-        throw new Error(`Missing Figma export for ${item.id}.`);
-      if (
-        item.kind === "card" &&
-        !texts(node).some((t) => t.replaceAll(" ", "") === item.expectedNumber)
-      )
-        throw new Error(
-          `Collector number mismatch on ${item.id}. Correct the source mapping; do not reroll.`,
-        );
-      const parsed = new URL(url);
-      if (parsed.protocol !== "https:")
-        throw new Error("Invalid Figma export URL.");
-      // These temporary Figma URLs are never stored in the release or published.
-      const response = await fetch(parsed, {
-        signal: AbortSignal.timeout(90_000),
-      });
-      if (!response.ok) throw new Error(`Could not download ${item.id}.`);
-      const bytes = Buffer.from(await response.arrayBuffer());
-      if (bytes.length > 30_000_000)
-        throw new Error("Figma export is too large.");
-      const hash = sha256(bytes),
-        dimensions = pngDimensions(bytes),
-        file = path.join(dir, `${hash}.png`);
-      await writeFile(file, bytes, { flush: true });
-      files[item.id] = file;
-      release.assets[item.id] = {
-        path: assetKey({ sha256: hash }),
-        sha256: hash,
-        ...dimensions,
-        nodeId: item.nodeId,
-        ...(item.kind === "sheet" ? { positions: sheetPositions(node) } : {}),
-      };
-      await atomicJson(progressFile, {
-        version,
-        sourceHash,
-        assets: release.assets,
-      });
-    }
-    console.log(
-      `Exported ${Object.keys(release.assets).length} / ${source.sources.length - source.missing.length} private assets.`,
-    );
-  }
+  const batches = Array.from({ length: Math.ceil(mapped.length / batchSize) }, (_, index) =>
+    mapped.slice(index * batchSize, (index + 1) * batchSize));
+  await runExportBatches(batches, {
+    concurrency,
+    checkpoint: () => atomicJson(progressFile, { version, sourceHash, assets: release.assets }),
+    runBatch: async (batch, saveProgress, stopScheduling) => {
+      const ids = [...new Set(batch.map((s) => s.nodeId))].join(",");
+      const responses = await Promise.allSettled([
+        figma(
+          `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&version=${encodeURIComponent(version)}`,
+          stopScheduling,
+        ),
+        figma(
+          `images/${source.fileKey}?ids=${encodeURIComponent(ids)}&format=png&scale=1&version=${encodeURIComponent(version)}`,
+          stopScheduling,
+        ),
+      ]);
+      const failures = responses.filter((response) => response.status === "rejected");
+      if (failures.length)
+        throw new AggregateError(failures.map((response) => response.reason), failures.map((response) => response.reason.message).join(" "));
+      const [nodes, images] = responses.map((response) => response.value);
+      for (const item of batch) {
+        const node = nodes.nodes?.[item.nodeId]?.document,
+          url = images.images?.[item.nodeId];
+        if (!node || !url)
+          throw new Error(`Missing Figma export for ${item.id}.`);
+        if (
+          item.kind === "card" &&
+          !texts(node).some((t) => t.replaceAll(" ", "") === item.expectedNumber)
+        )
+          throw new Error(
+            `Collector number mismatch on ${item.id}. Correct the source mapping; do not reroll.`,
+          );
+        const parsed = new URL(url);
+        if (parsed.protocol !== "https:")
+          throw new Error("Invalid Figma export URL.");
+        // These temporary Figma URLs are never stored in the release or published.
+        const response = await fetch(parsed, {
+          signal: AbortSignal.timeout(90_000),
+        });
+        if (!response.ok) throw Object.assign(new Error(`Could not download ${item.id} (${response.status}).`), { status: response.status });
+        const bytes = Buffer.from(await response.arrayBuffer());
+        if (bytes.length > 30_000_000)
+          throw new Error("Figma export is too large.");
+        const hash = sha256(bytes),
+          dimensions = pngDimensions(bytes),
+          file = path.join(dir, `${hash}.png`);
+        await writeFile(file, bytes, { flush: true });
+        files[item.id] = file;
+        release.assets[item.id] = {
+          path: assetKey({ sha256: hash }),
+          sha256: hash,
+          ...dimensions,
+          nodeId: item.nodeId,
+          ...(item.kind === "sheet" ? { positions: sheetPositions(node) } : {}),
+        };
+        await saveProgress();
+      }
+      console.log(
+        `Exported ${Object.keys(release.assets).length} / ${source.sources.length - source.missing.length} private assets.`,
+      );
+    },
+  });
+  if (mapped.some((item) => !release.assets[item.id]))
+    throw new Error("Required artwork is still missing. Completed assets are saved; no release was written or published by this run.");
   release.assets = Object.fromEntries(
     Object.entries(release.assets).sort(([a], [b]) => a.localeCompare(b)),
   );

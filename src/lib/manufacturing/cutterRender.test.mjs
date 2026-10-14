@@ -44,7 +44,7 @@ function blank(width, height) {
   paint(png, { x: 0, y: 0, width, height }, [255, 0, 255]);
   return png;
 }
-function makeManifest({ legacy = false, fixed = false } = {}) {
+function makeManifest({ legacy = false, fixed = false, sourceAssetId = "sheet-test" } = {}) {
   const order = {
     orderId: "10000000-0000-4000-8000-000000000001",
     orderNumber: "CUTTER-TEST",
@@ -66,7 +66,7 @@ function makeManifest({ legacy = false, fixed = false } = {}) {
       sheets: [{
         sheetId: "CUTTER-TEST-001",
         ...(fixed ? { productId: "coral-garden" } : { set: "deep" }),
-        fronts: fixed ? { assetId: "sheet-test" } : { assetIds: colors.map((_, i) => `deep-${i + 1}`) },
+        fronts: fixed ? { assetId: sourceAssetId } : { assetIds: colors.map((_, i) => `deep-${i + 1}`) },
         backs: { assetId: "standard-back-sheet", template: legacy
           ? { contentScale: 0.96, translateX: 51, translateY: 66 }
           : { positions: backs } },
@@ -90,10 +90,10 @@ async function fixture(dir, options = {}) {
   paint(rear, { x: 899, y: 75, width: 1, height: 1050 }, [20, 30, 250]);
   await asset("standard-back-sheet", rear);
   if (options.fixed) {
-    const front = blank(2550, 3300);
-    for (const [i, rect] of sources.entries()) paint(front, rect, colors[i]);
+    const front = blank(2550, 3300), sourcePositions = options.sourcePositions ?? sources;
+    for (const [i, rect] of sourcePositions.entries()) paint(front, rect, colors[i]);
     // Figma layer order need not match the sheet's visual reading order.
-    await asset("sheet-test", front, { positions: options.legacy ? sources : sources.toReversed() });
+    await asset(options.sourceAssetId ?? "sheet-test", front, { positions: options.legacy ? sourcePositions : sourcePositions.toReversed() });
   } else {
     for (const [i, color] of colors.entries()) {
       const front = blank(750, 1050);
@@ -174,6 +174,78 @@ test("cutter fixed sheets crop each saved card and impose it in template order",
     assert.deepEqual([...image.pixels.slice(0, 3)], colors[i]);
     assert.deepEqual([...image.pixels.slice(-3)], colors[i]);
   });
+}));
+
+test("mixed Blue Water source sizes keep exact crops and unchanged cutter placement", () => temporary(async (dir) => {
+  // Measured from Blue Water 1, Figma node 2224:257783, pinned version
+  // 2409981651040810260. Its two smaller Robotic Survey cards share the
+  // bottom row with a normal card; their top edges are aligned.
+  const measuredSources = positions([167, 887, 1607], [106, 1114, 2122], 720, 1008)
+    .map((position, index) => index >= 7 ? { ...position, width: 705, height: 987 } : position);
+  const jobs = await renderJob(await fixture(dir, { fixed: true, sourcePositions: measuredSources })),
+    front = await inspect(jobs.find((j) => j.side === "fronts").file),
+    rear = await inspect(jobs.find((j) => j.side === "backs").file);
+
+  assertPlacements(front.content, fronts);
+  assertPlacements(rear.content, backs);
+  assert.equal(front.images.length, 9);
+  front.images.forEach((image, index) => {
+    const expected = measuredSources[index];
+    assert.equal(image.width, expected.width);
+    assert.equal(image.height, expected.height);
+    // Distinct colors prove visual ordering. All four corners must remain
+    // inside the saved crop, without the magenta sheet background bleeding in.
+    const corners = [0, image.width - 1, (image.height - 1) * image.width, image.height * image.width - 1];
+    for (const corner of corners)
+      assert.deepEqual([...image.pixels.slice(corner * 3, corner * 3 + 3)], colors[index]);
+  });
+}));
+
+test("an approved eight-card final sheet leaves the ninth front empty and keeps nine backs", () => temporary(async (dir) => {
+  // Murky Water 7, node 2241:485700, has these eight measured source crops
+  // at pinned Figma version 2409981651040810260; bottom-right is empty.
+  const measuredSources = positions([167, 887, 1607], [106, 1114, 2122], 720, 1008).slice(0, 8);
+  const jobs = await renderJob(await fixture(dir, {
+    fixed: true,
+    sourceAssetId: "sheet-murky-water-7",
+    sourcePositions: measuredSources,
+  })),
+    front = await inspect(jobs.find((j) => j.side === "fronts").file),
+    rear = await inspect(jobs.find((j) => j.side === "backs").file);
+
+  assertPlacements(front.content, fronts.slice(0, 8));
+  assertPlacements(rear.content, backs);
+  assert.equal(front.images.length, 8);
+  front.images.forEach((image, index) => {
+    assert.equal(image.width, 720);
+    assert.equal(image.height, 1008);
+    assert.deepEqual([...image.pixels.slice(0, 3)], colors[index]);
+    assert.deepEqual([...image.pixels.slice(-3)], colors[index]);
+  });
+  assert.equal(rear.images.length, 1);
+}));
+
+test("rendering rejects unknown eight-card sheets and wrong counts on approved final sheets", () => temporary(async (dir) => {
+  const base = await fixture(dir, { fixed: true });
+  const cases = [
+    { sourceAssetId: "sheet-unapproved-final", count: 8 },
+    ...["sheet-murky-water-7", "sheet-stinging-fortress-7", "sheet-disruption-7"]
+      .flatMap((sourceAssetId) => [7, 9].map((count) => ({ sourceAssetId, count }))),
+  ];
+  for (const { sourceAssetId, count } of cases) {
+    await assert.rejects(renderJob({
+      ...base,
+      manifest: makeManifest({ fixed: true, sourceAssetId }),
+      release: {
+        ...base.release,
+        assets: {
+          ...base.release.assets,
+          [sourceAssetId]: { ...base.release.assets["sheet-test"], positions: sources.slice(0, count) },
+        },
+      },
+      assetFiles: { ...base.assetFiles, [sourceAssetId]: base.assetFiles["sheet-test"] },
+    }), /valid source card positions/, `${sourceAssetId} must reject ${count} sources`);
+  }
 }));
 
 test("saved v1 boosters keep their original back scaling and margin labels", () => temporary(async (dir) => {

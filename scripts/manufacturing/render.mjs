@@ -5,6 +5,7 @@ import path from "node:path";
 import { PNG } from "pngjs";
 import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs";
 import { sha256 } from "../../src/lib/manufacturing/integration.mjs";
+import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
 
 const POINT = 72 / 300,
   LETTER = [612, 792],
@@ -144,19 +145,19 @@ export async function renderJob({
         font = await doc.embedFont(StandardFonts.Helvetica);
       if (manifest.layout.version === CUTTER_LAYOUT) {
         if (side === "fronts" && sheet.fronts.assetId) {
+          const savedPositions = release.assets[sheet.fronts.assetId].positions;
+          if (!validFixedSheetPositions(savedPositions, sheet.fronts.assetId))
+            throw new Error("The saved fixed sheet needs valid source card positions.");
           const original = PNG.sync.read(bytes.get(sheet.fronts.assetId)),
-            sourcePositions = cutterPositions(
-              release.assets[sheet.fronts.assetId].positions,
-              "fixed-sheet source",
-            ).toSorted((a, b) =>
+            sourcePositions = savedPositions.toSorted((a, b) =>
               Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
             ),
             positions = cutterPositions(manifest.layout.positions, "front template");
-          for (const [index, position] of positions.entries()) {
+          for (const [index, sourcePosition] of sourcePositions.entries()) {
             const image = await doc.embedPng(
-              cropCard(original, sourcePositions[index]),
+              cropCard(original, sourcePosition),
             );
-            drawCard(page, image, position);
+            drawCard(page, image, positions[index]);
           }
         } else if (side === "fronts") {
           const positions = cutterPositions(
