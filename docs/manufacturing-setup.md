@@ -78,6 +78,20 @@ recordable. Ordinary website users cannot call the dispatch database function.
 
 ## Verified in this workspace
 
+- October 14: the initial private export contains 266 of 269 required assets:
+  all 217 eligible card printings, the shared back, and 48 of 51 fixed sheets.
+  Those assets are uploaded privately, but there is no published or active
+  release. Three native PNG exports return Figma server timeouts; see the
+  recovery checkpoint below. Alternate SVG output failed visual comparison
+  and has not been accepted into the release.
+- The private real-artwork review bundle now contains 14 Letter pages: Reef,
+  Deep, and Oceanic booster fronts, backs, and tickets, plus both Conditions
+  fronts, their backs, and its ticket. All four saved manifests are preserved.
+  Each booster has 5 commons, 3 uncommons, and 1 rare slot from its own set;
+  the 25% holo policy is unchanged. Ticket QR codes decode, but their preview
+  UUIDs do not identify live workshop jobs. The bundle is saved under ignored
+  `.private/manufacturing/artwork-preview/figma-2409981651040810260-daaea18f/`
+  as `LOCAL-PREVIEW-review-bundle.pdf`.
 - October 14: commit `5f389de` passed the isolated Next/Cloudflare build and was
   deployed as Worker version `394be2ba-3437-41e0-8bd1-87bc2437c8a9`. The live staff
   API returned HTTP 200 afterward. Printing, test-order manufacturing, and buyer
@@ -253,6 +267,44 @@ including across refreshes. Stock builds never insert into `store_orders`.
    off, enable buyer milestone emails, then install the Windows startup task.
 
 No live buyer emails or physical prints were sent during implementation.
+
+## Initial artwork release recovery checkpoint
+
+The approved release is `figma-2409981651040810260-daaea18f`, pinned to Figma
+version `2409981651040810260` (file last modified October 13, 2026 at 23:14:07
+UTC / 7:14:07 p.m. Eastern). Its source hash, cached PNGs, upload journal,
+and restart instructions are retained in ignored `.private/manufacturing/`.
+No exporter or diagnostic render process remains running at this checkpoint.
+
+The remaining sheets are:
+
+| Source | Figma node | Required image |
+|---|---|---|
+| `sheet-blue-water-5` | `2224:312946` | 2550 × 3300 PNG |
+| `sheet-blue-water-7` | `2224:312950` | 2550 × 3300 PNG |
+| `sheet-stinging-fortress-4` | `2363:254617` | 2550 × 3300 PNG |
+
+Individual page retries with a longer client deadline reached Figma's HTTP
+504 after about six minutes. A native child PNG and a PDF export also timed
+out. SVG sources downloaded, but a Chrome rendering of the Blue Water 6
+comparison sheet changed the verse lettering and coral textures. The pinned
+node metadata confirms the native PNG's small white italic verse label;
+the SVG's large cyan outlined label is unsuitable. Keep those SVGs and their
+derived PNGs diagnostic-only. Do not use `--allow-incomplete` to bypass this
+checkpoint or mix a newer Figma version into the saved release.
+
+To recover manually, export the three full frames above as PNG at 1× from
+that saved Figma version and place them in the ignored
+`.private/manufacturing/manual-imports/` directory, using the source IDs as
+filenames. Before importing, verify their source version, complete sheet
+contents, 2550 × 3300 dimensions, PNG CRC decoding, checksums, and measured
+card positions. Then resume the pinned exporter, validate all 269 assets,
+upload the remaining PNGs, and publish the complete private release. Verify
+the live manifest and denied public access afterward. Keep printing disabled.
+
+The existing three booster manifests and Conditions manifest must be reused
+when rebuilding the review bundle against the complete release. A rerun
+must not generate replacement random draws.
 
 ## Local commands
 
