@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import ProductDetails from "./ProductDetails";
+import { getStoreProductPath } from "@/lib/store/productDetails.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveStoreShippingRateTier } from "@/data/store/shipping.js";
 import { getStorePreorderCampaign } from "@/data/store/preorders.js";
@@ -202,6 +204,7 @@ export default function Storefront({
   products,
   preorderCampaign: initialPreorderCampaign,
   highlightedProductId,
+  detailProductId,
 }) {
   const testCheckout = checkoutEnabled && paymentMode === "test";
   const [preorderCampaign, setPreorderCampaign] = useState(
@@ -218,6 +221,7 @@ export default function Storefront({
     () => new Map(catalogProducts.map((product) => [product.id, product])),
     [catalogProducts]
   );
+  const detailProduct = detailProductId ? productById.get(detailProductId) : null;
   const highlightedProduct = useMemo(
     () => {
       const requestedProductId = String(highlightedProductId ?? "").trim();
@@ -698,6 +702,7 @@ export default function Storefront({
           : "pb-16 md:pb-24")
       }
     >
+      {!detailProduct ? (<>
       <section className="relative isolate overflow-hidden rounded-[2rem] bg-[#062f46] text-white shadow-2xl shadow-cyan-950/15 md:rounded-[2.75rem]">
         <div
           aria-hidden="true"
@@ -802,8 +807,30 @@ export default function Storefront({
         </p>
       </section>
 
-      <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <section aria-labelledby="store-products-heading">
+      </>) : null}
+
+      {detailProduct && testCheckout ? (
+        <p role="status" className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-950">
+          Stripe sandbox mode is on. Use test payment details only; no real
+          charge or payout will occur.
+        </p>
+      ) : null}
+
+      <div className={(detailProduct ? "" : "mt-10 ") + "grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]"}>
+        <section aria-labelledby={detailProduct ? "product-detail-heading" : "store-products-heading"}>
+          {detailProduct ? (
+            <ProductDetails
+              product={detailProduct}
+              products={catalogProducts}
+              currency={currency}
+              preorderCampaign={preorderCampaign}
+              checkoutEnabled={checkoutEnabled}
+              quantityInCart={cart[detailProduct.id] ?? 0}
+              cartCount={cartCount}
+              isCheckingOut={isCheckingOut}
+              onAddToCart={addToCart}
+            />
+          ) : (<>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-700">
@@ -909,174 +936,53 @@ export default function Storefront({
                                 : "border-slate-200 hover:-translate-y-1 hover:border-cyan-300 hover:shadow-xl")
                             }
                           >
-                            <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50">
-                              <div
-                                aria-hidden="true"
-                                className="absolute -right-8 -top-10 h-40 w-40 rounded-full border-[24px] border-white/45"
-                              />
+                            <Link
+                              href={getStoreProductPath(product.id)}
+                              aria-label={`View ${product.name} details`}
+                              className="relative block aspect-[4/3] overflow-hidden bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-cyan-400"
+                            >
                               <Image
                                 src={product.image}
                                 alt={product.imageAlt || `${product.name} product preview`}
                                 fill
-                                loading={
-                                  categoryIndex === 0 && productIndex === 0
-                                    ? "eager"
-                                    : "lazy"
-                                }
+                                loading={categoryIndex === 0 && productIndex === 0 ? "eager" : "lazy"}
                                 sizes="(max-width: 640px) 90vw, (max-width: 1024px) 44vw, 340px"
                                 className="object-contain p-5 transition duration-300 group-hover:scale-[1.03]"
                               />
-
-                              <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                                {product.preorder ? (
-                                  <span className="rounded-full bg-amber-300 px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-amber-950 shadow-sm">
-                                    Pre-order
-                                  </span>
-                                ) : null}
-                                {isHighlighted ? (
-                                  <span className="rounded-full bg-[#f7c948] px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-[#082f49] shadow-sm">
-                                    Your selection
-                                  </span>
-                                ) : product.featured ? (
-                                  <span className="rounded-full bg-[#073d58] px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-white shadow-sm">
-                                    Featured
-                                  </span>
-                                ) : null}
-
-                                {!product.available ? (
-                                  <span className="rounded-full bg-slate-900/85 px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-white shadow-sm">
-                                    {comingSoonLabel}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
+                              {product.preorder || !product.available ? (
+                                <span className="absolute left-4 top-4 rounded-full bg-amber-300 px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-amber-950 shadow-sm">
+                                  {product.preorder ? "Pre-order" : comingSoonLabel}
+                                </span>
+                              ) : null}
+                            </Link>
 
                             <div className="flex flex-1 flex-col p-5 sm:p-6">
                               <div className="flex items-start justify-between gap-4">
-                                <div>
-                                  <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">
-                                    {product.productLabel || product.shortName}
-                                  </p>
-                                  <h4 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                                <h4 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+                                  <Link href={getStoreProductPath(product.id)} className="rounded-sm transition hover:text-cyan-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200">
                                     {product.name}
-                                  </h4>
-                                </div>
+                                  </Link>
+                                </h4>
                                 <p className="shrink-0 text-lg font-black text-[#075b7d]">
                                   {formatCatalogPrice(product.priceCents, currency)}
                                 </p>
                               </div>
 
-                              <p className="mt-4 leading-7 text-slate-600">
-                                {product.description}
-                              </p>
-
-                              {product.playerSetupNote ? (
-                                <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-950">
-                                  <p className="font-black">
-                                    One kit supports two players
-                                  </p>
-                                  <p className="mt-1">
-                                    {product.playerSetupNote}
-                                  </p>
-                                </div>
-                              ) : null}
-
-                              {product.preorder ? (
-                                <p className="mt-3 text-sm font-bold leading-6 text-amber-800">
-                                  {preorderCampaign.fulfillmentLabel}
-                                </p>
-                              ) : product.madeToOrder ? (
-                                <p className="mt-3 text-sm font-bold leading-6 text-cyan-800">
-                                  Made to order
-                                  {product.buildDispatchMaxBusinessDays
-                                    ? ` · standard dispatch within ${product.buildDispatchMaxBusinessDays} business days`
-                                    : ""}
-                                </p>
-                              ) : null}
-
-                              {product.includedItems?.length ? (
-                                <div className="mt-5 rounded-2xl bg-cyan-50/70 p-4">
-                                  <p className="text-xs font-black uppercase tracking-[0.15em] text-cyan-800">
-                                    Includes
-                                  </p>
-                                  <ul className="mt-2 space-y-1.5 text-sm leading-5 text-slate-700">
-                                    {product.includedItems.map((item) => (
-                                      <li key={item} className="flex gap-2">
-                                        <span
-                                          aria-hidden="true"
-                                          className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-400"
-                                        />
-                                        <span>{item}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ) : null}
-
-                              <div className="mt-auto flex items-start justify-between gap-4 border-t border-slate-100 pt-4 text-sm">
-                                <span className="inline-flex items-start gap-2 font-bold leading-5 text-slate-700">
-                                  <span
-                                    aria-hidden="true"
-                                    className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400"
-                                  />
-                                  {product.details}
-                                </span>
-                                {product.fullContentsHref ? (
-                                  <Link
-                                    href={product.fullContentsHref}
-                                    className="shrink-0 font-bold text-cyan-700 underline decoration-cyan-300 underline-offset-4 transition hover:text-cyan-900 focus:outline-none focus:ring-4 focus:ring-cyan-200/60"
-                                  >
-                                    Full contents
-                                  </Link>
-                                ) : null}
-                              </div>
-
                               {product.trialDecks?.length ? (
-                                <div
-                                  className="mt-4"
-                                  aria-label={
-                                    product.simulatorNote
-                                      ? `Preview decks included with ${product.name} in the online simulator`
-                                      : `Try ${product.name} decks in the simulator`
-                                  }
-                                >
-                                  {product.simulatorNote ? (
-                                    <div className="mb-3">
-                                      <p className="text-xs font-black uppercase tracking-[0.15em] text-cyan-800">
-                                        Optional online deck demos
-                                      </p>
-                                      <p className="mt-1 text-sm leading-5 text-slate-600">
-                                        {product.simulatorNote}
-                                      </p>
-                                    </div>
-                                  ) : null}
-                                  <div className="flex flex-wrap gap-2">
-                                    {product.trialDecks.map((deck) => (
+                                <div className="mt-auto flex flex-wrap gap-2 pt-4" aria-label={`Preview ${product.name} decks in the simulator`}>
+                                  {product.trialDecks.map((deck) => {
+                                    const deckName = (catalogProducts.find((item) => item.deckId === deck.id)?.shortName ?? deck.name).replace(/\s+Deck$/i, "");
+                                    return (
                                       <Link
                                         key={deck.id}
                                         href={deck.href}
-                                        className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border-2 border-cyan-700 bg-cyan-50 px-4 py-2 text-center text-sm font-black text-cyan-900 transition hover:-translate-y-0.5 hover:bg-cyan-100 focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+                                        className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border-2 border-cyan-700 bg-cyan-50 px-3 py-2 text-center text-sm font-black text-cyan-900 transition hover:bg-cyan-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200/70"
                                       >
-                                        {product.simulatorNote
-                                          ? `Preview ${deck.name.replace(/\s+Deck$/i, "")} online`
-                                          : product.trialDecks.length > 1
-                                            ? `Try ${deck.name.replace(/\s+Deck$/i, "")}`
-                                            : "Try this deck"}
+                                        {product.trialDecks.length > 1 ? `Preview ${deckName}` : "Preview deck"}
                                       </Link>
-                                    ))}
-                                  </div>
+                                    );
+                                  })}
                                 </div>
-                              ) : null}
-
-                              {product.availabilityNote &&
-                              !(
-                                checkoutEnabled &&
-                                paymentMode === "live" &&
-                                product.available
-                              ) ? (
-                                <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">
-                                  {product.availabilityNote}
-                                </p>
                               ) : null}
 
                               <button
@@ -1118,6 +1024,7 @@ export default function Storefront({
               </p>
             </div>
           )}
+          </>)}
         </section>
 
         <aside

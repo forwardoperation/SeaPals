@@ -7,6 +7,10 @@ const storefrontSource = readFileSync(
   new URL("../../app/store/Storefront.jsx", import.meta.url),
   "utf8"
 );
+const productDetailsSource = readFileSync(
+  new URL("../../app/store/ProductDetails.jsx", import.meta.url),
+  "utf8"
+);
 const storePageSource = readFileSync(
   new URL("../../app/store/page.jsx", import.meta.url),
   "utf8"
@@ -82,11 +86,13 @@ test("the Starter Kit clearly explains the complete two-player setup and optiona
     storefrontSource,
     /One Starter Kit gives two players a ready-to-play deck each, plus the shared Conditions Deck/
   );
-  assert.match(storefrontSource, />\s*One kit supports two players\s*</);
-  assert.match(storefrontSource, />\s*Optional online deck demos\s*</);
+  assert.match(productDetailsSource, />\s*One kit supports two players\s*</);
+  assert.match(productDetailsSource, /\{product\.playerSetupNote\}/);
+  assert.match(productDetailsSource, /Preview the \{trialDecks\.length > 1 \? "decks" : "deck"\}/);
+  assert.match(productDetailsSource, /product\.simulatorNote \|\|/);
   assert.match(
-    storefrontSource,
-    /`Preview \$\{deck\.name\.replace\(\/\\s\+Deck\$\/i, ""\)\} online`/
+    productDetailsSource,
+    /Preview \{retailName\} online/
   );
   assert.match(
     storeProductsSource,
@@ -100,4 +106,24 @@ test("the Starter Kit clearly explains the complete two-player setup and optiona
     storefrontSource,
     /Optional ready-to-play 60-card decks for different strategies\. The Starter Kit already includes Coral Garden and Drop Off\./
   );
+});
+
+test("compact product cards link photos and names to details while retaining concise deck previews", () => {
+  const cardStart = storefrontSource.indexOf("{group.products.map(");
+  const cardEnd = storefrontSource.indexOf("</article>", cardStart);
+  assert.ok(cardStart >= 0 && cardEnd > cardStart);
+  const cardSource = storefrontSource.slice(cardStart, cardEnd);
+
+  assert.equal(
+    cardSource.match(/href=\{getStoreProductPath\(product\.id\)\}/g)?.length,
+    2
+  );
+  assert.match(cardSource, /href=\{getStoreProductPath\(product\.id\)\}[\s\S]*?<Image/);
+  assert.match(cardSource, /<h4\b[\s\S]*?<Link href=\{getStoreProductPath\(product\.id\)\}[\s\S]*?\{product\.name\}/);
+  assert.doesNotMatch(cardSource, /product\.(?:description|playerSetupNote|includedItems|details)\b/);
+  assert.match(cardSource, /product\.trialDecks\?\.length/);
+  assert.match(cardSource, /href=\{deck\.href\}/);
+  assert.match(cardSource, /`Preview \$\{deckName\}` : "Preview deck"/);
+  assert.match(productDetailsSource, /\{product\.description\}/);
+  assert.match(productDetailsSource, /includedItems\.map/);
 });

@@ -89,9 +89,10 @@ test("the guided tutorial preserves a validated selected deck as its return targ
 });
 
 test("deck discovery, storefront trials, and post-game shopping complete the trial loop", async () => {
-  const [decksSource, storefrontSource, simulatorSource, catalogSource] = await Promise.all([
+  const [decksSource, storefrontSource, productDetailsSource, simulatorSource, catalogSource] = await Promise.all([
     readSourceFromApp("decks", "page.jsx"),
     readSourceFromApp("store", "Storefront.jsx"),
+    readSourceFromApp("store", "ProductDetails.jsx"),
     readSourceFromApp("simulator", "Simulator.jsx"),
     readFile(path.join(srcDirectory, "lib", "store", "catalog.js"), "utf8"),
   ]);
@@ -100,7 +101,12 @@ test("deck discovery, storefront trials, and post-game shopping complete the tri
   assert.match(decksSource, /Try this deck/);
   assert.match(storefrontSource, /product\.trialDecks\?\.length/);
   assert.match(storefrontSource, /href=\{deck\.href\}/);
-  assert.match(storefrontSource, /Try \$\{deck\.name\.replace/);
+  assert.match(storefrontSource, /`Preview \$\{deckName\}` : "Preview deck"/);
+  assert.match(storefrontSource, /href=\{getStoreProductPath\(product\.id\)\}/);
+  assert.match(productDetailsSource, /trialDecks\.map\(\(deck\)/);
+  assert.match(productDetailsSource, /href=\{deck\.href\}/);
+  assert.match(productDetailsSource, /Preview \{retailName\} online/);
+  assert.match(productDetailsSource, /product\.simulatorNote/);
   assert.match(catalogSource, /includedDeckIds/);
   assert.match(catalogSource, /trialDecks/);
   assert.match(simulatorSource, /query: \{ deck: selectedPlayerDeck\.id \}/);
