@@ -1,0 +1,26 @@
+{
+  "createdAt": "2026-10-16",
+  "tool": "Built-in image_gen",
+  "useCase": "compositing",
+  "asset": "public/images/store/product-photos/deck-collection-collage-v1.webp",
+  "sourcePhotos": [
+    "public/images/store/product-photos/deck-drop-off-v2.png",
+    "public/images/store/product-photos/deck-coral-garden.png",
+    "public/images/store/product-photos/deck-murky-water.png",
+    "public/images/store/product-photos/deck-disruption.png",
+    "public/images/store/product-photos/deck-stinging-fortress.png",
+    "public/images/store/product-photos/deck-pelagic-zone.png",
+    "public/images/store/product-photos/deck-darkness-shroud.png"
+  ],
+  "passes": [
+    {
+      "purpose": "Combine the first three product references within the five-reference tool limit",
+      "prompt": "Use case: compositing. Create an intermediate product-photo collage of exactly these three supplied deck boxes: image1 Drop Off, image2 Coral Garden, image3 Murky Water. Preserve each source product's precise packaging, branding, lettering, front artwork, colors, and proportions. Arrange the three complete upright boxes side by side, slight natural stagger, all front titles visible and no occlusion, on a clean very pale icy aqua studio sweep with soft contact shadows. Wide 2:1 landscape framing, products fill the frame with restrained padding, photorealistic catalog quality. No additional text, props, boxes, cards or watermarks. This trio will be combined with four more deck boxes later; keep these three clearly separate and recognizable."
+    },
+    {
+      "purpose": "Compose the final seven-product banner from the trio and four remaining product references",
+      "prompt": "Use case: compositing. Asset type: final wide product-photography banner for the SeaRealm Decks page. Build one cohesive collage of exactly SEVEN different deck boxes from the supplied product references. Reference1 contains THREE boxes: Drop Off, Coral Garden, Murky Water; include ALL THREE, not just one. Reference2 is Disruption; reference3 Stinging Fortress; reference4 Pelagic Zone; reference5 Darkness Shroud. Include exactly one of each of those seven named products. Keep their actual front packaging artwork, SeaRealm branding, printed names and colors faithful to the references. Do not replace fronts with old statistics-back designs. Composition: very wide landscape about 3:1, all seven complete upright boxes forming a gently staggered shallow arc across the frame, enough separation that all seven front titles and main illustrations are visible, restrained overlap only at side panels, no cropped boxes. Equal realistic product scale, soft coherent studio lighting and contact shadows on a clean very pale icy aqua seamless studio surface. Photorealistic premium catalog collection shot, crisp packaging details; fill the wide composition with boxes and keep outside padding modest. No overlay headline or labels, no extra text, no cards, dice, people, scenery, props, watermarks, duplicates, or additional boxes."
+    }
+  ],
+  "webPreparation": "Encoded to WebP without cropping or resizing."
+}

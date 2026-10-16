@@ -128,16 +128,15 @@ export default function DecksPage() {
   return (
     <main className="space-y-8 pb-12">
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <div className="relative aspect-[6596/1202] min-h-[150px]">
-          <Image
-            src="/images/promo/decks-promo.png"
-            alt="SeaRealm prebuilt deck boxes"
-            width={6596}
-            height={1202}
-            priority
-            className="h-full w-full object-cover object-center"
-          />
-        </div>
+        <Image
+          src="/images/store/product-photos/deck-collection-collage-v1.webp"
+          alt="SeaRealm deck boxes: Drop Off, Coral Garden, Murky Water, Disruption, Stinging Fortress, Pelagic Zone, and Darkness Shroud"
+          width={2172}
+          height={724}
+          priority
+          sizes="(max-width: 767px) calc(100vw - 48px), (max-width: 1151px) calc(100vw - 80px), 1070px"
+          className="block h-auto w-full object-contain"
+        />
         <div className="border-t border-slate-200 px-6 py-6 md:px-8">
           <p className="text-sm font-bold uppercase tracking-wide text-cyan-700">Prebuilt Deck Guide</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">SeaRealm Decks</h1>
