@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import ProductDetails from "./ProductDetails";
+import StoreHero from "./StoreHero";
 import { getStoreProductPath } from "@/lib/store/productDetails.mjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveStoreShippingRateTier } from "@/data/store/shipping.js";
@@ -202,6 +203,7 @@ export default function Storefront({
   expeditedProductionTimeZone,
   automaticTaxEnabled,
   products,
+  heroCards = [],
   preorderCampaign: initialPreorderCampaign,
   highlightedProductId,
   detailProductId,
@@ -703,86 +705,18 @@ export default function Storefront({
       }
     >
       {!detailProduct ? (<>
-      <section className="relative isolate overflow-hidden rounded-[2rem] bg-[#062f46] text-white shadow-2xl shadow-cyan-950/15 md:rounded-[2.75rem]">
-        <div
-          aria-hidden="true"
-          className="absolute -right-24 -top-32 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute -bottom-36 -left-24 h-80 w-80 rounded-full bg-emerald-400/15 blur-3xl"
-        />
-
-        <div className="relative grid gap-8 px-6 pb-7 pt-9 sm:px-9 md:px-12 md:pt-12 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:gap-12 lg:px-14">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="inline-flex rounded-full border border-cyan-200/25 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">
-                {checkoutEnabled ? "SeaRealm shop" : "SeaRealm store preview"}
-              </p>
-              <span
-                className={
-                  "inline-flex rounded-full px-3 py-2 text-xs font-black uppercase tracking-[0.14em] " +
-                  (checkoutEnabled && !testCheckout
-                    ? "bg-emerald-300 text-emerald-950"
-                    : "bg-[#f7c948] text-[#082f49]")
-                }
-              >
-                {testCheckout
-                  ? "Test checkout"
-                  : checkoutEnabled
-                    ? "Checkout open"
-                    : "Store preview"}
-              </span>
-            </div>
-
-            <h1 className="mt-6 max-w-2xl font-serif text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">
-              Master the Sea
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
-              Explore Oceanic, Reef, and Deep Dive Packs, or pre-order the
-              two-player Starter Kit and ready-to-play expansion decks for
-              Christmas. Add an Accessories Kit to complete your table.
-            </p>
-
-            {highlightedProduct ? (
-              <p className="mt-6 rounded-2xl border border-[#f7c948]/40 bg-[#f7c948]/10 px-4 py-3 text-sm font-semibold text-amber-50">
-                You came to see {highlightedProduct.name}. It is highlighted
-                in its collection below.
-              </p>
-            ) : null}
-          </div>
-
-          <div className="overflow-hidden rounded-[1.5rem] border border-cyan-200/15 bg-slate-950/20 p-2 shadow-2xl shadow-black/20">
-            <Image
-              src="/images/promo/decks-promo.png"
-              alt="The seven SeaRealm prebuilt deck designs"
-              width={6596}
-              height={1202}
-              priority
-              sizes="(max-width: 1024px) 90vw, 560px"
-              className="h-auto w-full rounded-[1.1rem]"
-            />
-          </div>
-        </div>
-
-        {testCheckout ? (
-          <div
-            role="status"
-            className="relative border-t border-amber-200/20 bg-amber-300/10 px-6 py-4 text-sm font-semibold leading-6 text-amber-50 sm:px-9 md:px-12 lg:px-14"
-          >
-            Stripe sandbox mode is on. Use test payment details only; no real
-            charge or payout will occur.
-          </div>
-        ) : !checkoutEnabled ? (
-          <div
-            role="status"
-            className="relative border-t border-white/10 bg-white/5 px-6 py-4 text-sm leading-6 text-cyan-50/80 sm:px-9 md:px-12 lg:px-14"
-          >
-            Store preview is on. Ordering stays disabled while shipping-rate,
-            inventory, tax, and fulfillment launch checks are completed.
-          </div>
-        ) : null}
-      </section>
+      <StoreHero cards={heroCards} />
+      {testCheckout ? (
+        <p role="status" className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-950">
+          Stripe sandbox mode is on. Use test payment details only; no real
+          charge or payout will occur.
+        </p>
+      ) : !checkoutEnabled ? (
+        <p role="status" className="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 text-sm text-cyan-950">
+          Store preview is on. Ordering stays disabled while shipping-rate,
+          inventory, tax, and fulfillment launch checks are completed.
+        </p>
+      ) : null}
 
       <section
         aria-label="Made-to-order production timing"

@@ -1,4 +1,7 @@
 import { getStoreConfiguration } from "@/lib/store/catalog";
+import galleryImages from "@/data/gallery-images.json";
+import masterSetList from "@/data/gallery-set-list.json";
+import { getStoreBannerCards } from "@/lib/store/bannerCards.mjs";
 import Storefront from "./Storefront";
 
 export function generateMetadata() {
@@ -29,6 +32,7 @@ export default async function StorePage({ searchParams }) {
   return (
     <Storefront
       {...configuration}
+      heroCards={getStoreBannerCards(galleryImages, masterSetList)}
       highlightedProductId={getRequestedProduct(params)}
     />
   );

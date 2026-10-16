@@ -7,6 +7,10 @@ const storefrontSource = readFileSync(
   new URL("../../app/store/Storefront.jsx", import.meta.url),
   "utf8"
 );
+const storeHeroSource = readFileSync(
+  new URL("../../app/store/StoreHero.jsx", import.meta.url),
+  "utf8"
+);
 const productDetailsSource = readFileSync(
   new URL("../../app/store/ProductDetails.jsx", import.meta.url),
   "utf8"
@@ -24,13 +28,11 @@ const homePageSource = readFileSync(
   "utf8"
 );
 
-test("public launch copy advertises Dive Packs, Christmas preorders, and accessories", () => {
-  assert.match(storefrontSource, />\s*Master the Sea\s*</);
+test("the shop hero uses the collection headline and metadata describes the products", () => {
+  assert.match(storeHeroSource, /Collect all the Cards and Become a[\s\S]*Master of the Sea!/);
+  assert.match(storefrontSource, /<StoreHero cards=\{heroCards\}/);
+  assert.doesNotMatch(storeHeroSource, /SeaRealm shop|Checkout open|<p\b/);
   assert.doesNotMatch(storefrontSource, /Choose how your reef grows\./);
-  assert.match(
-    storefrontSource,
-    /Oceanic, Reef, and Deep Dive Packs[\s\S]*pre-order[\s\S]*Starter Kit[\s\S]*expansion decks[\s\S]*Christmas/
-  );
   assert.match(
     storePageSource,
     /Shop Oceanic, Reef, and Deep Dive Packs, game accessories, and Christmas pre-orders for the SeaRealm Starter Kit and expansion decks/
