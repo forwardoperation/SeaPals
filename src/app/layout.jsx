@@ -7,29 +7,29 @@ import { CANONICAL_SITE_ORIGIN } from "@/lib/siteIdentity.mjs";
 
 export const metadata = {
   metadataBase: new URL(CANONICAL_SITE_ORIGIN),
-  title: "SeaRealm TCG | Creation-Focused Family Card Game",
+  title: "SeaRealm Trading Card Game",
   description:
     "A fast, face-to-face marine-life strategy game for families who want fun, learning, and a clear Christian worldview.",
   openGraph: {
-    title: "SeaRealm TCG | A family game with a world you can trust",
+    title: "SeaRealm Trading Card Game",
     description:
-      "Build living reefs, discover real ocean creatures, and bring siblings and friends back to the same table.",
+      "Discover real ocean creatures, build your ecosystem, and bring SeaRealm to the table.",
     type: "website",
     images: [
       {
-        url: "/og.png",
+        url: "/og-searealm-2026-10-v2.png",
         width: 1200,
         height: 630,
-        alt: "SeaRealm cards underwater with the message: A family game with a world you can trust.",
+        alt: "SeaRealm Trading Card Game logo above full-art Reef Manta Ray, Humpback Whale, and Great White cards.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SeaRealm TCG | A family game with a world you can trust",
+    title: "SeaRealm Trading Card Game",
     description:
-      "Real marine life, face-to-face play, and a clear creation-focused worldview.",
-    images: ["/og.png"],
+      "Discover real ocean creatures, build your ecosystem, and bring SeaRealm to the table.",
+    images: ["/og-searealm-2026-10-v2.png"],
   },
 };
 
